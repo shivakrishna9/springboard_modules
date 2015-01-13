@@ -12,6 +12,194 @@ function fundraiser_sustainers_views_default_views() {
   $views = array();
 
   $view = new view();
+  $view->name = 'failed_sustainers_by_date';
+  $view->description = 'Shows sustainer log entries for a given date';
+  $view->tag = 'default';
+  $view->base_table = 'fundraiser_sustainers_log';
+  $view->human_name = 'Failed sustainers by date';
+  $view->core = 7;
+  $view->api_version = '3.0';
+  $view->disabled = FALSE; /* Edit this to true to make a default view disabled initially */
+
+  /* Display: Master */
+  $handler = $view->new_display('default', 'Master', 'default');
+  $handler->display->display_options['title'] = 'Failed sustainers';
+  $handler->display->display_options['use_more_always'] = FALSE;
+  $handler->display->display_options['access']['type'] = 'perm';
+  $handler->display->display_options['access']['perm'] = 'administrate recurring donations';
+  $handler->display->display_options['cache']['type'] = 'time';
+  $handler->display->display_options['cache']['results_lifespan'] = '60';
+  $handler->display->display_options['cache']['results_lifespan_custom'] = '0';
+  $handler->display->display_options['cache']['output_lifespan'] = '60';
+  $handler->display->display_options['cache']['output_lifespan_custom'] = '0';
+  $handler->display->display_options['query']['type'] = 'views_query';
+  $handler->display->display_options['exposed_form']['type'] = 'basic';
+  $handler->display->display_options['pager']['type'] = 'mini';
+  $handler->display->display_options['pager']['options']['items_per_page'] = '50';
+  $handler->display->display_options['pager']['options']['offset'] = '0';
+  $handler->display->display_options['pager']['options']['id'] = '0';
+  $handler->display->display_options['style_plugin'] = 'table';
+  $handler->display->display_options['style_options']['columns'] = array(
+    'lid' => 'lid',
+    'timestamp' => 'timestamp',
+    'did' => 'did',
+    'old_state' => 'old_state',
+    'new_state' => 'new_state',
+    'next_charge' => 'next_charge',
+    'attempts' => 'attempts',
+    'lock_id' => 'lock_id',
+    'cancellation_reason' => 'cancellation_reason',
+  );
+  $handler->display->display_options['style_options']['default'] = 'timestamp';
+  $handler->display->display_options['style_options']['info'] = array(
+    'lid' => array(
+      'sortable' => 0,
+      'default_sort_order' => 'asc',
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
+    'timestamp' => array(
+      'sortable' => 1,
+      'default_sort_order' => 'asc',
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
+    'did' => array(
+      'sortable' => 0,
+      'default_sort_order' => 'asc',
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
+    'old_state' => array(
+      'sortable' => 0,
+      'default_sort_order' => 'asc',
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
+    'new_state' => array(
+      'sortable' => 0,
+      'default_sort_order' => 'asc',
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
+    'next_charge' => array(
+      'sortable' => 1,
+      'default_sort_order' => 'asc',
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
+    'attempts' => array(
+      'sortable' => 0,
+      'default_sort_order' => 'asc',
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
+    'lock_id' => array(
+      'sortable' => 0,
+      'default_sort_order' => 'asc',
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
+    'cancellation_reason' => array(
+      'sortable' => 0,
+      'default_sort_order' => 'asc',
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
+  );
+  $handler->display->display_options['style_options']['sticky'] = TRUE;
+  /* No results behavior: Global: Text area */
+  $handler->display->display_options['empty']['area']['id'] = 'area';
+  $handler->display->display_options['empty']['area']['table'] = 'views';
+  $handler->display->display_options['empty']['area']['field'] = 'area';
+  $handler->display->display_options['empty']['area']['label'] = 'No results text';
+  $handler->display->display_options['empty']['area']['empty'] = TRUE;
+  $handler->display->display_options['empty']['area']['content'] = 'No failed sustainers on this date.';
+  $handler->display->display_options['empty']['area']['format'] = 'filtered_html';
+  /* Field: Fundraiser sustainers log: Sustainer Log ID */
+  $handler->display->display_options['fields']['lid']['id'] = 'lid';
+  $handler->display->display_options['fields']['lid']['table'] = 'fundraiser_sustainers_log';
+  $handler->display->display_options['fields']['lid']['field'] = 'lid';
+  /* Field: Fundraiser sustainers log: Activity Date */
+  $handler->display->display_options['fields']['timestamp']['id'] = 'timestamp';
+  $handler->display->display_options['fields']['timestamp']['table'] = 'fundraiser_sustainers_log';
+  $handler->display->display_options['fields']['timestamp']['field'] = 'timestamp';
+  $handler->display->display_options['fields']['timestamp']['date_format'] = 'short';
+  /* Field: Fundraiser sustainers log: Donation ID */
+  $handler->display->display_options['fields']['did']['id'] = 'did';
+  $handler->display->display_options['fields']['did']['table'] = 'fundraiser_sustainers_log';
+  $handler->display->display_options['fields']['did']['field'] = 'did';
+  $handler->display->display_options['fields']['did']['alter']['make_link'] = TRUE;
+  $handler->display->display_options['fields']['did']['alter']['path'] = 'admin/springboard/reports/sustainers/[did]';
+  $handler->display->display_options['fields']['did']['separator'] = '';
+  /* Field: Fundraiser sustainers log: Old state */
+  $handler->display->display_options['fields']['old_state']['id'] = 'old_state';
+  $handler->display->display_options['fields']['old_state']['table'] = 'fundraiser_sustainers_log';
+  $handler->display->display_options['fields']['old_state']['field'] = 'old_state';
+  /* Field: Fundraiser sustainers log: New state */
+  $handler->display->display_options['fields']['new_state']['id'] = 'new_state';
+  $handler->display->display_options['fields']['new_state']['table'] = 'fundraiser_sustainers_log';
+  $handler->display->display_options['fields']['new_state']['field'] = 'new_state';
+  /* Field: Fundraiser sustainers log: Next Charge Date */
+  $handler->display->display_options['fields']['next_charge']['id'] = 'next_charge';
+  $handler->display->display_options['fields']['next_charge']['table'] = 'fundraiser_sustainers_log';
+  $handler->display->display_options['fields']['next_charge']['field'] = 'next_charge';
+  $handler->display->display_options['fields']['next_charge']['date_format'] = 'short';
+  /* Field: Fundraiser sustainers log: Attempts */
+  $handler->display->display_options['fields']['attempts']['id'] = 'attempts';
+  $handler->display->display_options['fields']['attempts']['table'] = 'fundraiser_sustainers_log';
+  $handler->display->display_options['fields']['attempts']['field'] = 'attempts';
+  /* Field: Fundraiser sustainers log: Lock ID */
+  $handler->display->display_options['fields']['lock_id']['id'] = 'lock_id';
+  $handler->display->display_options['fields']['lock_id']['table'] = 'fundraiser_sustainers_log';
+  $handler->display->display_options['fields']['lock_id']['field'] = 'lock_id';
+  /* Field: Fundraiser sustainers log: Cancellation reason */
+  $handler->display->display_options['fields']['cancellation_reason']['id'] = 'cancellation_reason';
+  $handler->display->display_options['fields']['cancellation_reason']['table'] = 'fundraiser_sustainers_log';
+  $handler->display->display_options['fields']['cancellation_reason']['field'] = 'cancellation_reason';
+  /* Sort criterion: Fundraiser sustainers log: Activity Date */
+  $handler->display->display_options['sorts']['timestamp']['id'] = 'timestamp';
+  $handler->display->display_options['sorts']['timestamp']['table'] = 'fundraiser_sustainers_log';
+  $handler->display->display_options['sorts']['timestamp']['field'] = 'timestamp';
+  /* Contextual filter: Fundraiser sustainers log: Activity Date */
+  $handler->display->display_options['arguments']['timestamp']['id'] = 'timestamp';
+  $handler->display->display_options['arguments']['timestamp']['table'] = 'fundraiser_sustainers_log';
+  $handler->display->display_options['arguments']['timestamp']['field'] = 'timestamp';
+  $handler->display->display_options['arguments']['timestamp']['title_enable'] = TRUE;
+  $handler->display->display_options['arguments']['timestamp']['title'] = 'Failed sustainers on %1';
+  $handler->display->display_options['arguments']['timestamp']['summary']['number_of_records'] = '0';
+  $handler->display->display_options['arguments']['timestamp']['summary']['format'] = 'default_summary';
+  $handler->display->display_options['arguments']['timestamp']['summary_options']['items_per_page'] = '25';
+  $handler->display->display_options['arguments']['timestamp']['year_range'] = '-1:+1';
+  $handler->display->display_options['arguments']['timestamp']['granularity'] = 'day';
+  $handler->display->display_options['arguments']['timestamp']['use_fromto'] = 'no';
+  /* Filter criterion: Fundraiser sustainers log: New state */
+  $handler->display->display_options['filters']['new_state']['id'] = 'new_state';
+  $handler->display->display_options['filters']['new_state']['table'] = 'fundraiser_sustainers_log';
+  $handler->display->display_options['filters']['new_state']['field'] = 'new_state';
+  $handler->display->display_options['filters']['new_state']['operator'] = '!=';
+  $handler->display->display_options['filters']['new_state']['value'] = 'success';
+  /* Filter criterion: Fundraiser sustainers log: Old state */
+  $handler->display->display_options['filters']['old_state']['id'] = 'old_state';
+  $handler->display->display_options['filters']['old_state']['table'] = 'fundraiser_sustainers_log';
+  $handler->display->display_options['filters']['old_state']['field'] = 'old_state';
+  $handler->display->display_options['filters']['old_state']['value'] = 'processing';
+
+  /* Display: Page */
+  $handler = $view->new_display('page', 'Page', 'page');
+  $handler->display->display_options['path'] = 'admin/springboard/reports/sustainers/failure';
+  $views['failed_sustainers_by_date'] = $view;
+
+  $view = new view();
   $view->name = 'scheduled_sustainers_by_date';
   $view->description = 'Shows sustainer log entries for a given date';
   $view->tag = 'default';
@@ -27,7 +215,11 @@ function fundraiser_sustainers_views_default_views() {
   $handler->display->display_options['use_more_always'] = FALSE;
   $handler->display->display_options['access']['type'] = 'perm';
   $handler->display->display_options['access']['perm'] = 'administrate recurring donations';
-  $handler->display->display_options['cache']['type'] = 'none';
+  $handler->display->display_options['cache']['type'] = 'time';
+  $handler->display->display_options['cache']['results_lifespan'] = '60';
+  $handler->display->display_options['cache']['results_lifespan_custom'] = '0';
+  $handler->display->display_options['cache']['output_lifespan'] = '60';
+  $handler->display->display_options['cache']['output_lifespan_custom'] = '0';
   $handler->display->display_options['query']['type'] = 'views_query';
   $handler->display->display_options['exposed_form']['type'] = 'basic';
   $handler->display->display_options['pager']['type'] = 'mini';
@@ -405,7 +597,11 @@ function fundraiser_sustainers_views_default_views() {
   $handler->display->display_options['use_more_always'] = FALSE;
   $handler->display->display_options['access']['type'] = 'perm';
   $handler->display->display_options['access']['perm'] = 'administrate recurring donations';
-  $handler->display->display_options['cache']['type'] = 'none';
+  $handler->display->display_options['cache']['type'] = 'time';
+  $handler->display->display_options['cache']['results_lifespan'] = '60';
+  $handler->display->display_options['cache']['results_lifespan_custom'] = '0';
+  $handler->display->display_options['cache']['output_lifespan'] = '60';
+  $handler->display->display_options['cache']['output_lifespan_custom'] = '0';
   $handler->display->display_options['query']['type'] = 'views_query';
   $handler->display->display_options['exposed_form']['type'] = 'basic';
   $handler->display->display_options['pager']['type'] = 'mini';
@@ -497,7 +693,7 @@ function fundraiser_sustainers_views_default_views() {
   $handler->display->display_options['empty']['area']['field'] = 'area';
   $handler->display->display_options['empty']['area']['label'] = 'No results text';
   $handler->display->display_options['empty']['area']['empty'] = TRUE;
-  $handler->display->display_options['empty']['area']['content'] = 'No sustainer activity on this date.';
+  $handler->display->display_options['empty']['area']['content'] = 'No successful sustainer were found on this date.';
   $handler->display->display_options['empty']['area']['format'] = 'filtered_html';
   /* Field: Fundraiser sustainers log: Sustainer Log ID */
   $handler->display->display_options['fields']['lid']['id'] = 'lid';
@@ -588,7 +784,11 @@ function fundraiser_sustainers_views_default_views() {
   $handler->display->display_options['use_more_always'] = FALSE;
   $handler->display->display_options['access']['type'] = 'perm';
   $handler->display->display_options['access']['perm'] = 'administrate recurring donations';
-  $handler->display->display_options['cache']['type'] = 'none';
+  $handler->display->display_options['cache']['type'] = 'time';
+  $handler->display->display_options['cache']['results_lifespan'] = '60';
+  $handler->display->display_options['cache']['results_lifespan_custom'] = '0';
+  $handler->display->display_options['cache']['output_lifespan'] = '60';
+  $handler->display->display_options['cache']['output_lifespan_custom'] = '0';
   $handler->display->display_options['query']['type'] = 'views_query';
   $handler->display->display_options['exposed_form']['type'] = 'basic';
   $handler->display->display_options['pager']['type'] = 'mini';
@@ -761,7 +961,11 @@ function fundraiser_sustainers_views_default_views() {
   $handler->display->display_options['use_more_always'] = FALSE;
   $handler->display->display_options['access']['type'] = 'perm';
   $handler->display->display_options['access']['perm'] = 'administrate recurring donations';
-  $handler->display->display_options['cache']['type'] = 'none';
+  $handler->display->display_options['cache']['type'] = 'time';
+  $handler->display->display_options['cache']['results_lifespan'] = '60';
+  $handler->display->display_options['cache']['results_lifespan_custom'] = '0';
+  $handler->display->display_options['cache']['output_lifespan'] = '60';
+  $handler->display->display_options['cache']['output_lifespan_custom'] = '0';
   $handler->display->display_options['query']['type'] = 'views_query';
   $handler->display->display_options['exposed_form']['type'] = 'basic';
   $handler->display->display_options['pager']['type'] = 'mini';
@@ -853,7 +1057,7 @@ function fundraiser_sustainers_views_default_views() {
   $handler->display->display_options['empty']['area']['field'] = 'area';
   $handler->display->display_options['empty']['area']['label'] = 'No results text';
   $handler->display->display_options['empty']['area']['empty'] = TRUE;
-  $handler->display->display_options['empty']['area']['content'] = 'No sustainer activity on this date.';
+  $handler->display->display_options['empty']['area']['content'] = 'No sustainer activity found for this donation.';
   $handler->display->display_options['empty']['area']['format'] = 'filtered_html';
   /* Field: Fundraiser sustainers log: Sustainer Log ID */
   $handler->display->display_options['fields']['lid']['id'] = 'lid';
@@ -925,7 +1129,11 @@ function fundraiser_sustainers_views_default_views() {
   $handler->display->display_options['use_more_always'] = FALSE;
   $handler->display->display_options['access']['type'] = 'perm';
   $handler->display->display_options['access']['perm'] = 'administrate recurring donations';
-  $handler->display->display_options['cache']['type'] = 'none';
+  $handler->display->display_options['cache']['type'] = 'time';
+  $handler->display->display_options['cache']['results_lifespan'] = '60';
+  $handler->display->display_options['cache']['results_lifespan_custom'] = '0';
+  $handler->display->display_options['cache']['output_lifespan'] = '60';
+  $handler->display->display_options['cache']['output_lifespan_custom'] = '0';
   $handler->display->display_options['query']['type'] = 'views_query';
   $handler->display->display_options['exposed_form']['type'] = 'basic';
   $handler->display->display_options['exposed_form']['options']['reset_button'] = TRUE;
@@ -1001,190 +1209,6 @@ function fundraiser_sustainers_views_default_views() {
   $handler->display->display_options['menu']['name'] = 'management';
   $handler->display->display_options['menu']['context'] = 0;
   $views['sustainer_log'] = $view;
-
-  $view = new view();
-  $view->name = 'failed_sustainers_by_date';
-  $view->description = 'Shows sustainer log entries for a given date';
-  $view->tag = 'default';
-  $view->base_table = 'fundraiser_sustainers_log';
-  $view->human_name = 'Failed sustainers by date';
-  $view->core = 7;
-  $view->api_version = '3.0';
-  $view->disabled = FALSE; /* Edit this to true to make a default view disabled initially */
-
-  /* Display: Master */
-  $handler = $view->new_display('default', 'Master', 'default');
-  $handler->display->display_options['title'] = 'Failed sustainers';
-  $handler->display->display_options['use_more_always'] = FALSE;
-  $handler->display->display_options['access']['type'] = 'perm';
-  $handler->display->display_options['access']['perm'] = 'administrate recurring donations';
-  $handler->display->display_options['cache']['type'] = 'none';
-  $handler->display->display_options['query']['type'] = 'views_query';
-  $handler->display->display_options['exposed_form']['type'] = 'basic';
-  $handler->display->display_options['pager']['type'] = 'mini';
-  $handler->display->display_options['pager']['options']['items_per_page'] = '50';
-  $handler->display->display_options['pager']['options']['offset'] = '0';
-  $handler->display->display_options['pager']['options']['id'] = '0';
-  $handler->display->display_options['style_plugin'] = 'table';
-  $handler->display->display_options['style_options']['columns'] = array(
-    'lid' => 'lid',
-    'timestamp' => 'timestamp',
-    'did' => 'did',
-    'old_state' => 'old_state',
-    'new_state' => 'new_state',
-    'next_charge' => 'next_charge',
-    'attempts' => 'attempts',
-    'lock_id' => 'lock_id',
-    'cancellation_reason' => 'cancellation_reason',
-  );
-  $handler->display->display_options['style_options']['default'] = 'timestamp';
-  $handler->display->display_options['style_options']['info'] = array(
-    'lid' => array(
-      'sortable' => 0,
-      'default_sort_order' => 'asc',
-      'align' => '',
-      'separator' => '',
-      'empty_column' => 0,
-    ),
-    'timestamp' => array(
-      'sortable' => 1,
-      'default_sort_order' => 'asc',
-      'align' => '',
-      'separator' => '',
-      'empty_column' => 0,
-    ),
-    'did' => array(
-      'sortable' => 0,
-      'default_sort_order' => 'asc',
-      'align' => '',
-      'separator' => '',
-      'empty_column' => 0,
-    ),
-    'old_state' => array(
-      'sortable' => 0,
-      'default_sort_order' => 'asc',
-      'align' => '',
-      'separator' => '',
-      'empty_column' => 0,
-    ),
-    'new_state' => array(
-      'sortable' => 0,
-      'default_sort_order' => 'asc',
-      'align' => '',
-      'separator' => '',
-      'empty_column' => 0,
-    ),
-    'next_charge' => array(
-      'sortable' => 1,
-      'default_sort_order' => 'asc',
-      'align' => '',
-      'separator' => '',
-      'empty_column' => 0,
-    ),
-    'attempts' => array(
-      'sortable' => 0,
-      'default_sort_order' => 'asc',
-      'align' => '',
-      'separator' => '',
-      'empty_column' => 0,
-    ),
-    'lock_id' => array(
-      'sortable' => 0,
-      'default_sort_order' => 'asc',
-      'align' => '',
-      'separator' => '',
-      'empty_column' => 0,
-    ),
-    'cancellation_reason' => array(
-      'sortable' => 0,
-      'default_sort_order' => 'asc',
-      'align' => '',
-      'separator' => '',
-      'empty_column' => 0,
-    ),
-  );
-  $handler->display->display_options['style_options']['sticky'] = TRUE;
-  /* No results behavior: Global: Text area */
-  $handler->display->display_options['empty']['area']['id'] = 'area';
-  $handler->display->display_options['empty']['area']['table'] = 'views';
-  $handler->display->display_options['empty']['area']['field'] = 'area';
-  $handler->display->display_options['empty']['area']['label'] = 'No results text';
-  $handler->display->display_options['empty']['area']['empty'] = TRUE;
-  $handler->display->display_options['empty']['area']['content'] = 'No failed sustainers on this date.';
-  $handler->display->display_options['empty']['area']['format'] = 'filtered_html';
-  /* Field: Fundraiser sustainers log: Sustainer Log ID */
-  $handler->display->display_options['fields']['lid']['id'] = 'lid';
-  $handler->display->display_options['fields']['lid']['table'] = 'fundraiser_sustainers_log';
-  $handler->display->display_options['fields']['lid']['field'] = 'lid';
-  /* Field: Fundraiser sustainers log: Activity Date */
-  $handler->display->display_options['fields']['timestamp']['id'] = 'timestamp';
-  $handler->display->display_options['fields']['timestamp']['table'] = 'fundraiser_sustainers_log';
-  $handler->display->display_options['fields']['timestamp']['field'] = 'timestamp';
-  $handler->display->display_options['fields']['timestamp']['date_format'] = 'short';
-  /* Field: Fundraiser sustainers log: Donation ID */
-  $handler->display->display_options['fields']['did']['id'] = 'did';
-  $handler->display->display_options['fields']['did']['table'] = 'fundraiser_sustainers_log';
-  $handler->display->display_options['fields']['did']['field'] = 'did';
-  $handler->display->display_options['fields']['did']['alter']['make_link'] = TRUE;
-  $handler->display->display_options['fields']['did']['alter']['path'] = 'admin/springboard/reports/sustainers/[did]';
-  $handler->display->display_options['fields']['did']['separator'] = '';
-  /* Field: Fundraiser sustainers log: Old state */
-  $handler->display->display_options['fields']['old_state']['id'] = 'old_state';
-  $handler->display->display_options['fields']['old_state']['table'] = 'fundraiser_sustainers_log';
-  $handler->display->display_options['fields']['old_state']['field'] = 'old_state';
-  /* Field: Fundraiser sustainers log: New state */
-  $handler->display->display_options['fields']['new_state']['id'] = 'new_state';
-  $handler->display->display_options['fields']['new_state']['table'] = 'fundraiser_sustainers_log';
-  $handler->display->display_options['fields']['new_state']['field'] = 'new_state';
-  /* Field: Fundraiser sustainers log: Next Charge Date */
-  $handler->display->display_options['fields']['next_charge']['id'] = 'next_charge';
-  $handler->display->display_options['fields']['next_charge']['table'] = 'fundraiser_sustainers_log';
-  $handler->display->display_options['fields']['next_charge']['field'] = 'next_charge';
-  $handler->display->display_options['fields']['next_charge']['date_format'] = 'short';
-  /* Field: Fundraiser sustainers log: Attempts */
-  $handler->display->display_options['fields']['attempts']['id'] = 'attempts';
-  $handler->display->display_options['fields']['attempts']['table'] = 'fundraiser_sustainers_log';
-  $handler->display->display_options['fields']['attempts']['field'] = 'attempts';
-  /* Field: Fundraiser sustainers log: Lock ID */
-  $handler->display->display_options['fields']['lock_id']['id'] = 'lock_id';
-  $handler->display->display_options['fields']['lock_id']['table'] = 'fundraiser_sustainers_log';
-  $handler->display->display_options['fields']['lock_id']['field'] = 'lock_id';
-  /* Field: Fundraiser sustainers log: Cancellation reason */
-  $handler->display->display_options['fields']['cancellation_reason']['id'] = 'cancellation_reason';
-  $handler->display->display_options['fields']['cancellation_reason']['table'] = 'fundraiser_sustainers_log';
-  $handler->display->display_options['fields']['cancellation_reason']['field'] = 'cancellation_reason';
-  /* Sort criterion: Fundraiser sustainers log: Activity Date */
-  $handler->display->display_options['sorts']['timestamp']['id'] = 'timestamp';
-  $handler->display->display_options['sorts']['timestamp']['table'] = 'fundraiser_sustainers_log';
-  $handler->display->display_options['sorts']['timestamp']['field'] = 'timestamp';
-  /* Contextual filter: Fundraiser sustainers log: Activity Date */
-  $handler->display->display_options['arguments']['timestamp']['id'] = 'timestamp';
-  $handler->display->display_options['arguments']['timestamp']['table'] = 'fundraiser_sustainers_log';
-  $handler->display->display_options['arguments']['timestamp']['field'] = 'timestamp';
-  $handler->display->display_options['arguments']['timestamp']['title_enable'] = TRUE;
-  $handler->display->display_options['arguments']['timestamp']['title'] = 'Failed sustainers on %1';
-  $handler->display->display_options['arguments']['timestamp']['summary']['number_of_records'] = '0';
-  $handler->display->display_options['arguments']['timestamp']['summary']['format'] = 'default_summary';
-  $handler->display->display_options['arguments']['timestamp']['summary_options']['items_per_page'] = '25';
-  $handler->display->display_options['arguments']['timestamp']['year_range'] = '-1:+1';
-  $handler->display->display_options['arguments']['timestamp']['granularity'] = 'day';
-  $handler->display->display_options['arguments']['timestamp']['use_fromto'] = 'no';
-  /* Filter criterion: Fundraiser sustainers log: New state */
-  $handler->display->display_options['filters']['new_state']['id'] = 'new_state';
-  $handler->display->display_options['filters']['new_state']['table'] = 'fundraiser_sustainers_log';
-  $handler->display->display_options['filters']['new_state']['field'] = 'new_state';
-  $handler->display->display_options['filters']['new_state']['operator'] = '!=';
-  $handler->display->display_options['filters']['new_state']['value'] = 'success';
-  /* Filter criterion: Fundraiser sustainers log: Old state */
-  $handler->display->display_options['filters']['old_state']['id'] = 'old_state';
-  $handler->display->display_options['filters']['old_state']['table'] = 'fundraiser_sustainers_log';
-  $handler->display->display_options['filters']['old_state']['field'] = 'old_state';
-  $handler->display->display_options['filters']['old_state']['value'] = 'processing';
-
-  /* Display: Page */
-  $handler = $view->new_display('page', 'Page', 'page');
-  $handler->display->display_options['path'] = 'admin/springboard/reports/sustainers/failure';
-  $views['failed_sustainers_by_date'] = $view;
 
   return $views;
 }
