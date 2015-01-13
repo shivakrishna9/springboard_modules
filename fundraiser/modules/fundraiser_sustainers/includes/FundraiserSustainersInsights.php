@@ -74,8 +74,7 @@ class FundraiserSustainersInsights {
    */
   public function getHistoricalReportPreset($string) {
     $string = '-' . $string;
-    // So it includes today.
-    $end = new DateTime('+1 day');
+    $end = new DateTime();
 
     try {
       $begin = new DateTime($string);

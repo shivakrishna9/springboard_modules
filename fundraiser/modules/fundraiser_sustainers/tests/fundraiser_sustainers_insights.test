@@ -37,8 +37,7 @@ class FundraiserSustainersInsightsTestCase extends DrupalWebTestCase {
     $this->debugReport($report, 30);
 
     $last_ten_days = $insights->getHistoricalReportPreset('10 days');
-    // The presets include today, so we get 10 days of snapshots plus today.
-    $this->debugReport($last_ten_days, 11);
+    $this->debugReport($last_ten_days, 10);
   }
 
   public function testForecasts() {
