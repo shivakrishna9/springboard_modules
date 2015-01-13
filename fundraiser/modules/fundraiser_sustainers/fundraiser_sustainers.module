@@ -330,6 +330,8 @@ function fundraiser_sustainers_standalone_cron() {
  * redirects the user to the referring page.
  */
 function fundraiser_sustainers_charge_now($did) {
+  // Modify the sustainer log to ignore previously scheduled dates.
+  fundraiser_sustainers_log_advance_charge($did);
   $new_charge = REQUEST_TIME;
   $recurring = array(
     'did' => $did,
@@ -3127,4 +3129,20 @@ function fundraiser_sustainers_log_record(array $values, $old_record = NULL) {
   }
 
   return drupal_write_record('fundraiser_sustainers_log', $new_record);
+}
+
+/**
+ * Marks all scheduled log entries for a donation sustainer as 'advance_charge'.
+ *
+ * This way it won't get counted in metrics for scheduled donations.
+ *
+ * @param int $did
+ *   Donation ID.
+ */
+function fundraiser_sustainers_log_advance_charge($did) {
+  db_update('fundraiser_sustainers_log')
+    ->fields(array('new_state' => 'advance_charge'))
+    ->condition('did', $did)
+    ->condition('new_state', 'scheduled')
+    ->execute();
 }
