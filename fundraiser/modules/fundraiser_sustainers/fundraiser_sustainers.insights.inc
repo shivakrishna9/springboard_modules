@@ -7,7 +7,7 @@
 function fundraiser_sustainers_insights_dashboard() {
   $insights = new FundraiserSustainersInsights();
   $today = $insights->getTodaysSnapshot();
-  $range = '7 days';
+  $range = '3 months';
   $date_format = 'n/j/Y';
 
   $historical_report = $insights->getHistoricalReportPreset($range);
