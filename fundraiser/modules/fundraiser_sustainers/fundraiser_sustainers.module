@@ -1668,6 +1668,7 @@ function fundraiser_sustainers_change_charge_date($master_did, $new_day) {
         'new_state' => 'scheduled',
       );
       $log = fundraiser_sustainers_log();
+      $log->changedChargeDay($donation->did);
       $log->log($log_record);
 
       // Add a comment.

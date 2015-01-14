@@ -112,7 +112,7 @@ class FundraiserSustainersLog {
   }
 
   /**
-   * Marks all scheduled log entries for a sustainer as 'advanceCharge'.
+   * Marks all scheduled log entries for a sustainer as 'advance_charge'.
    *
    * This way it won't get counted in metrics for scheduled donations.
    *
@@ -121,7 +121,23 @@ class FundraiserSustainersLog {
    */
   public function advanceCharge($did) {
     db_update('fundraiser_sustainers_log')
-      ->fields(array('new_state' => 'advanceCharge'))
+      ->fields(array('new_state' => 'advance_charge'))
+      ->condition('did', $did)
+      ->condition('new_state', 'scheduled')
+      ->execute();
+  }
+
+  /**
+   * Marks all scheduled log entries for a sustainer as 'changed_charge_day'.
+   *
+   * This way it won't get counted in metrics for scheduled donations.
+   *
+   * @param int $did
+   *   Donation ID.
+   */
+  public function changedChargeDay($did) {
+    db_update('fundraiser_sustainers_log')
+      ->fields(array('new_state' => 'changed_charge_day'))
       ->condition('did', $did)
       ->condition('new_state', 'scheduled')
       ->execute();
