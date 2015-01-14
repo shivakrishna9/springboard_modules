@@ -4,7 +4,6 @@ package = Salesforce
 core = 7.x
 version = 7.x-3.x-dev
 dependencies[] = entity
-dependencies[] = fundraiser
 dependencies[] = salesforce
 dependencies[] = salesforce_mapping
 dependencies[] = salesforce_queue
