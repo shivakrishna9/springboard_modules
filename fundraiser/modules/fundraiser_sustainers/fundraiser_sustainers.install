@@ -224,6 +224,12 @@ function fundraiser_sustainers_schema() {
       ),
     ),
     'primary key' => array('lid'),
+    'indexes' => array(
+      'fundraiser_sustainers_log_timestamp' => array('timestamp'),
+      'fundraiser_sustainers_log_next_charge' => array('next_charge'),
+      'fundraiser_sustainers_log_old_state' => array('old_state'),
+      'fundraiser_sustainers_log_new_state' => array('new_state'),
+    ),
   );
 
   $schema['fundraiser_sustainers_charge_date'] = array(
@@ -563,4 +569,14 @@ function fundraiser_sustainers_update_7009() {
 
   db_drop_field('fundraiser_sustainers_log', 'success');
   db_drop_field('fundraiser_sustainers_log', 'gateway');
+}
+
+/**
+ * Adds indexes to the sustainers log table.
+ */
+function fundraiser_sustainers_update_7010() {
+  db_add_index('fundraiser_sustainers_log', 'fundraiser_sustainers_log_timestamp', array('timestamp'));
+  db_add_index('fundraiser_sustainers_log', 'fundraiser_sustainers_log_next_charge', array('next_charge'));
+  db_add_index('fundraiser_sustainers_log', 'fundraiser_sustainers_log_old_state', array('old_state'));
+  db_add_index('fundraiser_sustainers_log', 'fundraiser_sustainers_log_new_state', array('new_state'));
 }
