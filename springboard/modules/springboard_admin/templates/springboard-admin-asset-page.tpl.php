@@ -21,18 +21,18 @@
 
         <?php // @todo make the menu below dynamic or contextual? ?>
         <ul class="dropdown-menu views-widget-dropdown">
-          <li><a href="/admin/springboard/donation-forms/all"><?php print t('Donation Forms'); ?></a></li>
-          <li><a href="/admin/springboard/forms/all"><?php print t('Forms'); ?></a></li>
+          <li><a href="<?php print base_path(); ?>admin/springboard/donation-forms/all"><?php print t('Donation Forms'); ?></a></li>
+          <li><a href="<?php print base_path(); ?>admin/springboard/forms/all"><?php print t('Forms'); ?></a></li>
         </ul>
       </div><!--// btn-group -->
-
-      <a href="/node/add/<?php print preg_replace('/_/', '-', $type->type); ?>" class="button add-button"><?php print t('Create'); ?> <?php print $type->name; ?></a>
+<?php print_r(base_path()); ?>
+      <a href="<?php print base_path(); ?>node/add/<?php print preg_replace('/_/', '-', $type->type); ?>" class="button add-button"><?php print t('Create'); ?> <?php print $type->name; ?></a>
 
     </div><!-- // buttons-wrapper -->
 
     <?php print($tables[$type->type]); ?>
     <?php $zebra++; ?>
-    <a class="button more-button" href="/admin/springboard/asset-library/<?php print $type->type; ?>"><?php print t('View all');?> <?php print $type->name; ?><?php print t('s');?> </a>
+    <a class="button more-button" href="<?php print base_path(); ?>admin/springboard/asset-library/<?php print $type->type; ?>"><?php print t('View all');?> <?php print $type->name; ?><?php print t('s');?> </a>
 
   </div>
 
