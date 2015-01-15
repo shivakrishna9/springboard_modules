@@ -25,7 +25,6 @@
           <li><a href="<?php print base_path(); ?>admin/springboard/forms/all"><?php print t('Forms'); ?></a></li>
         </ul>
       </div><!--// btn-group -->
-<?php print_r(base_path()); ?>
       <a href="<?php print base_path(); ?>node/add/<?php print preg_replace('/_/', '-', $type->type); ?>" class="button add-button"><?php print t('Create'); ?> <?php print $type->name; ?></a>
 
     </div><!-- // buttons-wrapper -->
