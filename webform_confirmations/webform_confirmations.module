@@ -128,6 +128,8 @@ function webform_confirmations_webform_submission_insert($node, $submission) {
  * Log submission ID and current session id.
  */
 function webform_confirmations_save_submission_session($sid) {
+  // Ensure a session has started before getting the id.
+  drupal_session_start();
   $sessid = session_id();
   $record = array('sid' => $sid, 'sessid' => $sessid, 'timestamp' => time());
   drupal_write_record('webform_confirmations_submissions', $record);
