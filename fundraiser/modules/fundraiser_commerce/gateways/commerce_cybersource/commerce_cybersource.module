@@ -489,25 +489,33 @@ function commerce_cybersource_soap_cc_submit_form_submit($payment_method, $pane_
     'run' => 'true',
   );
 
+  //https://www.drupal.org/files/1740346-cardonfile.patch
   // If the customer specified payment using a card on file, use the subscriptionID
   // instead of credit card info.
-  // Card on file integration from patch: https://www.drupal.org/files/1740346-cardonfile.patch
-  if (
-    module_exists('commerce_cardonfile')
-    && $payment_method['settings']['credit_card']['cardonfile']
-    && !empty($pane_values['cardonfile'])
-    && $pane_values['cardonfile'] !== 'new'
-  ) {
-    $card_data = commerce_cardonfile_load($pane_values['cardonfile']);
 
-    // Fail now if it is no longer available or the card is inactive.
+  // there's a hack in fundraiser_commerce which always sets $pane_values['cardonfile'] to "new"
+  // so we need to test whether it's a new card by some other means:
+  $store =  (isset($pane_values['credit_card']['cardonfile_store']) && $pane_values['credit_card']['cardonfile_store'] === TRUE) ? TRUE : FALSE;
+  $new = isset($pane_values['cardonfile']) && $pane_values['cardonfile'] =='new' ? TRUE : FALSE;
+
+  if (module_exists('commerce_cardonfile') && ($payment_method['settings']['credit_card']['cardonfile']
+    && !empty($pane_values['cardonfile'])) && (!$store && !$new)) {
+    // First attempt to load the card on file.
+    if(isset($pane_values['the_real_cardonfile_value'])) {
+      $card_data = commerce_cardonfile_load($pane_values['the_real_cardonfile_value']);
+    }
+    else {
+      $card_data = commerce_cardonfile_load($pane_values['cardonfile']);
+    }
+
+  //https://www.drupal.org/files/1740346-cardonfile.patch
+  // Fail now if it is no longer available or the card is inactive.
     if (empty($card_data) || $card_data->status == 0) {
       drupal_set_message(t('The requested card on file is no longer valid.'), 'error');
       return FALSE;
     }
-
     $request->recurringSubscriptionInfo = (object) array('subscriptionID' => $card_data->remote_id);
-  }
+  } 
   else {
     // Add the billing information.
     $request->billTo = commerce_cybersource_address('billing', $order, 'commerce_customer_billing');
@@ -573,8 +581,9 @@ function commerce_cybersource_soap_cc_submit_form_submit($payment_method, $pane_
       $avs[] = $avs_code;
     }
   }
-  $declines = !empty($avs) ? implode(',', $avs) : 'N';
+  $declines = !empty($avs) ? implode(' ', $avs) : 'N';
   $request->businessRules_declineAVSFlags = $declines;
+  $request->businessRules_ignoreAVSResult = false;
 
   if ($response = commerce_cybersource_soap_api_request($payment_method, $request)) {
     // Prepare a transaction object to log the API response.
