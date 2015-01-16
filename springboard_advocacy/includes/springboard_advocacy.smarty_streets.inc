@@ -29,6 +29,9 @@ function springboard_advocacy_smarty_lookup($values) {
       $geo = array();
       $geo['zip'] = isset($data[0]->components->zipcode) ? $data[0]->components->zipcode : '';
       $geo['plus4'] = isset($data[0]->components->plus4_code) ? $data[0]->components->plus4_code : '';
+      $geo['county'] = isset($data[0]->metadata->county_name) ? $data[0]->metadata->county_name : '';
+      $geo['fips'] = isset($data[0]->metadata->county_fips) ? $data[0]->metadata->county_fips : '';
+
       //$district = $data[0]->metadata->congressional_district;
       $geo['latitude'] = isset($data[0]->metadata->latitude) ? $data[0]->metadata->latitude : '';
       $geo['longitude'] = isset($data[0]->metadata->longitude) ? $data[0]->metadata->longitude : '';
