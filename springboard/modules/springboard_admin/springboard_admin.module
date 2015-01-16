@@ -53,28 +53,30 @@ function springboard_admin_admin_menu_output_alter(&$content) {
  * administration pages.
  */
 function springboard_admin_custom_theme() {
-  // If the springboard_backend theme is disabled, do nothing.
-  if (variable_get('springboard_theme_enable', 1) == 0) {
-    return;
-  }
-  // If the springboard_backend theme does not exist, we can do nothing.
-  $themes = list_themes();
-  if (!isset($themes['springboard_backend'])) {
-    return;
-  }
-
-  // If the page is using a page wrapper, do nothing.
-  if(module_exists('page_wrappers')) {
-    $wrapper = page_wrappers_check();
-    if(!empty($wrapper['wrapper'])) {
+  // Does the current user get SBUX (i.e., are the following checks relevant)?
+  if (springboard_admin_user_gets_sbux($GLOBALS['user'])) {
+    // If the springboard_backend theme is disabled, do nothing.
+    if (variable_get('springboard_theme_enable', 1) == 0) {
       return;
     }
-  }
-  // If either the current Drupal path or its SBUX alias begins with /springboard/, we know the theme applies.
-  if (preg_match("|^springboard(\/.*)?|", $_GET['q'])
-    || preg_match("|^springboard(\/.*)?|", springboard_admin_build_admin_path('/' . $_GET['q'], 'path'))
-  ) {
-    return 'springboard_backend';
+    // If the springboard_backend theme does not exist, we can do nothing.
+    $themes = list_themes();
+    if (!isset($themes['springboard_backend'])) {
+      return;
+    }
+    // If the page is using a page wrapper, do nothing.
+    if(module_exists('page_wrappers')) {
+      $wrapper = page_wrappers_check();
+      if(!empty($wrapper['wrapper'])) {
+        return;
+      }
+    }
+    // If either the current Drupal path or its SBUX alias begins with /springboard/, then the theme applies.
+    if (preg_match("|^springboard(\/.*)?|", $_GET['q'])
+      || preg_match("|^springboard(\/.*)?|", springboard_admin_build_admin_path('/' . $_GET['q'], 'path'))
+    ) {
+      return 'springboard_backend';
+    }
   }
 }
 
