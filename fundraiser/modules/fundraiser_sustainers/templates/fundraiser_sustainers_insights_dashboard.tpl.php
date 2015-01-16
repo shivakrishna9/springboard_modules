@@ -1,5 +1,7 @@
 <h2>Today's Snapshot <?php print $today ?></h2>
 
+<div><?php print $time_range_links; ?></div>
+
 <div class="row">
   <div class="insights-today-box span3">
     <h3>Scheduled Charges</h3>
@@ -28,12 +30,12 @@
 <hr>
 
 <div class="insights-historical-report">
-  <h3>Last <?php print $range ?></h3>
-  <?php print $historical_report_table ?>
+  <h3><?php print $historical_report_heading; ?></h3>
+  <?php print $historical_report_table; ?>
 </div>
 
 <div class="insights-forecast-chart">
-  <h3>Next <?php print $range ?></h3>
+  <h3><?php print $forecast_report_heading; ?></h3>
   <canvas id="forecastChart" height="200"></canvas>
 </div>
 

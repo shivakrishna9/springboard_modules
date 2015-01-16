@@ -224,6 +224,7 @@ function fundraiser_sustainers_menu() {
   $items['admin/springboard/reports/sustainers/insights'] = array(
     'title' => 'Sustainer Insights',
     'page callback' => 'fundraiser_sustainers_insights_dashboard',
+    'arguments' => array(5),
     'access arguments' => array('administrate recurring donations'),
     'file' => 'fundraiser_sustainers.insights.inc',
     'type' => MENU_CALLBACK,

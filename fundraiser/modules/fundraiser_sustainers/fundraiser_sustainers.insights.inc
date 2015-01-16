@@ -4,13 +4,48 @@
  * Page callbacks for Fundraiser Sustainer Insights.
  */
 
-function fundraiser_sustainers_insights_dashboard() {
+function fundraiser_sustainers_insights_dashboard($path_range = 'last-7-days') {
+
   $insights = new FundraiserSustainersInsights();
   $today = $insights->getTodaysSnapshot();
-  $range = '3 months';
   $date_format = 'n/j/Y';
 
-  $historical_report = $insights->getHistoricalReportPreset($range);
+  switch ($path_range) {
+    case 'last-7-days':
+      $range = '7 days';
+      $historical_report = $insights->getHistoricalReportPreset($range);
+      $historical_report_heading = 'Last 7 days';
+      $future_range = '7 days';
+      break;
+
+    case 'last-30-days':
+      $range = '30 days';
+      $historical_report = $insights->getHistoricalReportPreset($range);
+      $historical_report_heading = 'Last 30 days';
+      $future_range = '30 days';
+      break;
+
+    case 'last-month':
+      $begin = new DateTime('first day of last month midnight');
+      $end = new DateTime('first day of this month midnight');
+      $historical_report = $insights->getHistoricalReport($begin, $end);
+      $historical_report_heading = 'Last month';
+
+      $future_range = '30 days';
+      break;
+
+    case 'this-month':
+      $begin = new DateTime('first day of this month midnight');
+      $end = new DateTime('first day of next month midnight');
+      $historical_report = $insights->getHistoricalReport($begin, $end);
+      $historical_report_heading = 'This month';
+      $future_range = '30 days';
+      break;
+
+    default:
+      return MENU_NOT_FOUND;
+  }
+
   $report_snapshots = $historical_report->getSnapshots();
 
   $headers = array(
@@ -79,7 +114,8 @@ function fundraiser_sustainers_insights_dashboard() {
 
   $forecast_labels = array();
   $forecast_data = array();
-  $forecast_report = $insights->getForecastPreset($range);
+  $forecast_report = $insights->getForecastPreset($future_range);
+  $forecast_report_heading = 'Next ' . $future_range;
   $future_snapshots = $forecast_report->getSnapshots();
   foreach ($future_snapshots as $date => $snapshot) {
     $forecast_labels[] = $snapshot->getDate()->format($date_format);
@@ -94,7 +130,8 @@ function fundraiser_sustainers_insights_dashboard() {
 
   $variables = array(
     'today' => $today->getDate()->format('d M Y'),
-    'range' => $range,
+    'historical_report_heading' => $historical_report_heading,
+    'forecast_report_heading' => $forecast_report_heading,
     'scheduled_charges' => $today->getScheduledCharges(),
     'total_value' => '$ ' . number_format($today->getTotalValue() / 100, 2),
     'successes' => $today->getSuccesses(),
@@ -108,6 +145,7 @@ function fundraiser_sustainers_insights_dashboard() {
     'today_scheduled_path' => 'springboard/reports/sustainers/scheduled/' . $url_date,
     'today_success_path' => 'springboard/reports/sustainers/success/' . $url_date,
     'today_failure_path' => 'springboard/reports/sustainers/failure/' . $url_date,
+    'time_range_links' => theme('links', fundraiser_sustainers_insights_dashboard_links()),
   );
 
   $path = drupal_get_path('module', 'fundraiser_sustainers');
@@ -115,4 +153,26 @@ function fundraiser_sustainers_insights_dashboard() {
   drupal_add_js($path . '/js/Chart.js');
 
   return theme('fundraiser_sustainers_insights_dashboard', $variables);
+}
+
+function fundraiser_sustainers_insights_dashboard_links() {
+  $base = 'springboard/reports/sustainers/insights';
+
+  return array(
+    'links' => array(
+      'week' => array(
+        'title' => 'Last week',
+        'href' => $base,
+      ),
+      'last-month' => array(
+        'title' => 'Last month',
+        'href' => $base . '/last-month',
+      ),
+      'this-month' => array(
+        'title' => 'This month',
+        'href' => $base . '/this-month',
+      ),
+    ),
+    'heading' => 'Time Range',
+  );
 }
