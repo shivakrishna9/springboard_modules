@@ -26,8 +26,8 @@ class SalesforceSyncSyncTestCase extends SalesforceSyncTestCase {
   /**
    * Implementation of setUp().
    */
-  public function setUp($modules = array()) {
-    parent::setUp($modules);
+  public function setUp($modules = array(), $permissions = array()) {
+    parent::setUp($modules, $permissions);
 
     // Set up the processor's Salesforce connection. This is special for
     // simpletest due to the access token being stored in the session.
