@@ -856,8 +856,15 @@ function email_wrappers_load_defaults_from_template($nid) {
 
   // BCC gets special handling as it's the only field that may have
   // multiple values.
-  foreach ($bcc_email as $bcc) {
-    $bcc_addresses[] = $bcc['value'];
+  if (is_array($bcc_email)) {
+    $bcc_addresses = array();
+    foreach ($bcc_email as $bcc) {
+      $bcc_addresses[] = $bcc['value'];
+    }
+  }
+  else {
+    // This is to match the existing behavior when the bcc field ie empty.
+    $bcc_addresses = NULL;
   }
 
   return array(
