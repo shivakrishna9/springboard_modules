@@ -1,4 +1,8 @@
 <?php
+/**
+ * @file
+ * A class to represent a single day's worth of sustainer log data.
+ */
 
 /**
  * Class FundraiserSustainersDailySnapshot
@@ -7,115 +11,121 @@ class FundraiserSustainersDailySnapshot {
 
   /**
    * @var DateTime
-   * Today.
+   *   Today. Used for some calculations and display.
    */
   protected $today;
 
   /**
    * @var DateTime
-   * The day of this Snapshot.
+   *   The day of this Snapshot.
    */
   protected $date;
 
   /**
    * @var int
-   * The timestamp of the day start. Used for database queries.
+   *   The timestamp of the day start.
+   *
+   * Used for database queries.
    */
   protected $beginTimestamp;
 
   /**
    * @var int
-   * The timestamp of the day start of the following day. Used for database
-   * queries.
+   *   The timestamp of the day start of the following day.
+   *
+   * Used for database queries.
    */
   protected $endTimestamp;
 
   /**
-   * @var bool
-   */
-  protected $isNew;
-
-  /**
-   * @var bool
-   */
-  protected $isComplete;
-
-  /**
    * @var int
-   * Timestamp when this was last saved.
-   */
-  protected $lastUpdated;
-
-  /**
-   * @var int
-   * Number of charges scheduled, including processed.
+   *   Number of charges scheduled, including processed.
    */
   protected $scheduledCharges;
 
   /**
    * @var int
-   * Value (in cents) charges scheduled, including processed.
+   *   Value (in cents) of charges scheduled, including processed.
    */
   protected $scheduledValue;
 
   /**
    * @var int
+   *   Number of charges that were retried on this day.
    */
   protected $retriedCharges;
 
   /**
    * @var int
+   *   Value (in cents) retried on this day.
    */
   protected $retriedValue;
 
   /**
    * @var int
+   *   Number of charges processed.
    */
   protected $processedCharges;
 
   /**
    * @var int
+   *   Value (in cents) processed.
    */
   protected $processedValue;
 
   /**
    * @var int
+   *   Number of charges that are rescheduled after being processed on this day.
    */
   protected $rescheduledCharges;
 
   /**
    * @var int
+   *   Value (in cents) rescheduled after being processed.
    */
   protected $rescheduledValue;
 
   /**
    * @var int
+   *   Number of charges that permanently failed after being processed.
    */
   protected $abandonedCharges;
 
   /**
    * @var int
+   *   Value (in cents) that permanently failed.
    */
   protected $abandonedValue;
 
   /**
    * @var int
-   * Number of successful charges completed so far in this day.
+   *   Number of successful charges completed so far in this day.
    */
   protected $successes;
 
   /**
    * @var int
-   * Number of failed charges attempted so far in this day.
+   *   Value (in cents) of successful charges completed.
+   */
+  protected $successValue;
+
+  /**
+   * @var int
+   *   Number of failed charges attempted so far in this day.
    */
   protected $failures;
 
-  protected $successValue;
-
+  /**
+   * @var int
+   *   Value (in cents) of failed charges attempted.
+   */
   protected $failureValue;
 
   /**
+   * Constructs a snapshot sets up some values, and loads data.
+   *
    * @param DateTime $date
+   *   The date of the desired snapshot.
    */
   public function __construct(DateTime $date) {
     $this->date = $date;
@@ -131,235 +141,210 @@ class FundraiserSustainersDailySnapshot {
     $this->today = new DateTime();
     $this->today->setTime(0, 0, 0);
 
-    $this->isNew = TRUE;
-    $this->isComplete = FALSE;
-
     $this->load();
   }
 
   /**
+   * Get the DateTime instance for this snapshot.
    *
-   */
-  public function save() {
-    $this->lastUpdated = REQUEST_TIME;
-
-    // Save to the database.
-    $this->saveRow();
-  }
-
-  /**
    * @return DateTime
+   *   The DateTime for this snapshot data.
    */
   public function getDate() {
     return $this->date;
   }
 
   /**
+   * Get the scheduled charges.
+   *
    * @return int
+   *   Number of charges scheduled.
    */
   public function getScheduledCharges() {
     return $this->scheduledCharges;
   }
 
   /**
+   * Get the scheduled value.
+   *
    * @return int
+   *   Value in cents.
    */
   public function getScheduledValue() {
     return $this->scheduledValue;
   }
 
   /**
+   * Total value in the UI is the same thing as scheduled value.
    *
    * @return int
+   *   Value in cents.
    */
   public function getTotalValue() {
     return $this->getScheduledValue();
   }
 
   /**
+   * Get the number of successfully processed sustainers for this report date.
+   *
    * @return int
+   *   Count of successes.
    */
   public function getSuccesses() {
     return $this->successes;
   }
 
   /**
+   * Get the number of sustainers that failed to process for this report date.
+   *
+   * Includes temporary and permanent failures.
+   *
    * @return int
+   *   Count of failures.
    */
   public function getFailures() {
     return $this->failures;
   }
 
   /**
+   * Get the count of charges that permanently failed while processing.
+   *
    * @return int
+   *   Count of sustainers.
    */
   public function getAbandonedCharges() {
     return $this->abandonedCharges;
   }
 
   /**
+   * Get the value of the abandoned sustainers.
+   *
    * @return int
+   *   Value in cents.
    */
   public function getAbandonedValue() {
     return $this->abandonedValue;
   }
 
   /**
+   * Get the total number of sustainers processed on this report date.
+   *
    * @return int
+   *   Count of charges processed.
    */
   public function getProcessedCharges() {
     return $this->getSuccesses() + $this->getFailures();
   }
 
   /**
+   * Get the value of of the sustainers processed on this report date.
+   *
    * @return int
+   *   Value in cents.
    */
   public function getProcessedValue() {
     return $this->getSuccessValue() + $this->getFailureValue();
   }
 
+  /**
+   * Get the value of the successfully processed sustainer on this report date.
+   *
+   * @return int
+   *   Value in cents.
+   */
   public function getSuccessValue() {
     return $this->successValue;
   }
 
+  /**
+   * Get the value of the sustainers that failed processing on this report date.
+   *
+   * Includes both temporary and permanent failures.
+   *
+   * @return int
+   *   Value in cents.
+   */
   public function getFailureValue() {
     return $this->failureValue;
   }
 
   /**
+   * Get the charges that failed on this report date but will be retried.
+   *
    * @return int
+   *   Count of sustainers.
    */
   public function getRescheduledCharges() {
     return $this->rescheduledCharges;
   }
 
   /**
+   * Get the value of charges failed on this report date but will be retried.
+   *
    * @return int
+   *   Value in cents.
    */
   public function getRescheduledValue() {
     return $this->rescheduledValue;
   }
 
   /**
+   * Get the count of charges that previously failed processing.
+   *
    * @return int
+   *   Count of sustainers.
    */
   public function getRetriedCharges() {
     return $this->retriedCharges;
   }
 
   /**
+   * Get the value of retried charges.
+   *
    * @return int
+   *   Value in cents.
    */
   public function getRetriedValue() {
     return $this->retriedValue;
   }
 
   /**
-   * @return bool
-   */
-  protected function shouldUseLiveData() {
-    return $this->today->format('Y-m-d') == $this->date->format('Y-m-d');
-  }
-
-  /**
-   *
+   * Populates the snapshot instance with data.
    */
   protected function load() {
     $this->initializeValues();
-    // Look for a record in the DB and load it.
-    // If there's no existing record, calculate new values.
-    $row = $this->findRow();
-
-    if (is_object($row)) {
-      $this->isNew = FALSE;
-      $this->loadRow($row);
-    }
-
-    if (!$this->isComplete || $this->shouldUseLiveData()) {
-      $this->calculateValues();
-
-      if ($this->endTimestamp <= $this->today->getTimestamp()) {
-        $this->isComplete = TRUE;
-      }
-      $this->save();
-    }
-  }
-
-  protected function loadRow($row) {
-    $this->lastUpdated = $row->last_updated;
-    $this->isComplete = $row->complete;
-    $this->scheduledCharges = $row->scheduled_charges;
-    $this->scheduledValue = $row->scheduled_value;
-    $this->successes = $row->successes;
-    $this->successValue = $row->success_value;
-    $this->failures = $row->failures;
-    $this->failureValue = $row->failure_value;
-    $this->retriedCharges = $row->retried_charges;
-    $this->retriedValue = $row->retried_value;
-    $this->rescheduledCharges = $row->rescheduled_charges;
-    $this->rescheduledValue = $row->rescheduled_value;
-    $this->abandonedCharges = $row->abandoned_charges;
-    $this->abandonedValue = $row->abandoned_value;
+    $this->calculateValues();
   }
 
   /**
-   * Set up a record array for drupal_write_record.
-   */
-  protected function saveRow() {
-
-    $record = array(
-      'date' => $this->getDate()->format('Y-m-d'),
-      'last_updated' => $this->lastUpdated,
-      'complete' => $this->isComplete,
-      'scheduled_charges' => $this->scheduledCharges,
-      'scheduled_value' => $this->scheduledValue,
-      'successes' => $this->successes,
-      'success_value' => $this->successValue,
-      'failures' => $this->failures,
-      'failure_value' => $this->failureValue,
-      'retried_charges' => $this->retriedCharges,
-      'retried_value' => $this->retriedValue,
-      'rescheduled_charges' => $this->rescheduledCharges,
-      'rescheduled_value' => $this->rescheduledValue,
-      'abandoned_charges' => $this->abandonedCharges,
-      'abandoned_value' => $this->abandonedValue,
-    );
-
-    if ($this->isNew) {
-      drupal_write_record('fundraiser_sustainers_insights_snapshot', $record);
-    }
-    else {
-      drupal_write_record('fundraiser_sustainers_insights_snapshot', $record, 'date');
-    }
-  }
-
-  /**
-   * @return array
-   */
-  protected function findRow() {
-    // Query for rows by the Y-m-d date string.
-    // return db_query("SELECT * FROM {fundraiser_sustainers_insights_snapshot} WHERE date = :date", array(':date' => $this->getDate()->format('Y-m-d')))->fetchObject();
-    return FALSE;
-  }
-
-  /**
-   *
+   * Calculates and sets the properties for this snapshot instance.
    */
   protected function calculateValues() {
-    // Do the DB queries and math stuff here.
     $this->calculateScheduledProperties();
-
     $this->calculateOtherProperties();
   }
 
+  /**
+   * Gets the order amount from a donation/order.
+   *
+   * Does not handle currency code. Assumes everything is in cents.
+   *
+   * @param int $did
+   *   Donation/order ID.
+   *
+   * @return int
+   *   The value in cents.
+   */
   protected function getValueFromOrder($did) {
     $order = commerce_order_load($did);
     $wrapper = entity_metadata_wrapper('commerce_order', $order);
-//      $currency_code = $wrapper->commerce_order_total->currency_code->value();
 
     return $wrapper->commerce_order_total->amount->value();
   }
 
+  /**
+   * Calculates the scheduled charges and value.
+   */
   protected function calculateScheduledProperties() {
     // success, canceled, skipped, failed, retry, processing, NULL
     $replacements = array(
@@ -382,6 +367,9 @@ class FundraiserSustainersDailySnapshot {
     $this->scheduledValue = $total;
   }
 
+  /**
+   * Calculates all other properties for the snapshot.
+   */
   protected function calculateOtherProperties() {
     $successes = 0;
     $failures = 0;
@@ -459,7 +447,7 @@ class FundraiserSustainersDailySnapshot {
   }
 
   /**
-   *
+   * Sets initial values to zero.
    */
   protected function initializeValues() {
     $this->scheduledCharges = 0;

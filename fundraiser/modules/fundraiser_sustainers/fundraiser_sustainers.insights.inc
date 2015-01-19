@@ -4,6 +4,16 @@
  * Page callbacks for Fundraiser Sustainer Insights.
  */
 
+/**
+ * Page callback for the Sustainer Insights dashboard page.
+ *
+ * @param string $path_range
+ *   An optional path argument to specify a date range.
+ *
+ * @return string
+ *   Themed HTML.
+ * @throws Exception
+ */
 function fundraiser_sustainers_insights_dashboard($path_range = 'last-7-days') {
 
   $insights = new FundraiserSustainersInsights();
@@ -122,30 +132,26 @@ function fundraiser_sustainers_insights_dashboard($path_range = 'last-7-days') {
     $forecast_data[] = $snapshot->getScheduledCharges();
   }
 
-  $chart_labels = json_encode(array_reverse($label_data));
-  $chart_successes_data = json_encode(array_reverse($successes_data));
-  $chart_failure_data = json_encode(array_reverse($failures_data));
-
   $url_date = $today->getDate()->format('Y-m-d');
 
   $variables = array(
+    'time_range_links' => theme('links', fundraiser_sustainers_insights_dashboard_links()),
     'today' => $today->getDate()->format('d M Y'),
-    'historical_report_heading' => $historical_report_heading,
-    'forecast_report_heading' => $forecast_report_heading,
     'scheduled_charges' => $today->getScheduledCharges(),
+    'today_scheduled_path' => 'springboard/reports/sustainers/scheduled/' . $url_date,
     'total_value' => '$ ' . number_format($today->getTotalValue() / 100, 2),
     'successes' => $today->getSuccesses(),
+    'today_success_path' => 'springboard/reports/sustainers/success/' . $url_date,
     'failures' => $today->getFailures(),
+    'today_failure_path' => 'springboard/reports/sustainers/failure/' . $url_date,
+    'historical_report_heading' => $historical_report_heading,
     'historical_report_table' => theme('table', $table_variables),
-    'chart_labels' => $chart_labels,
-    'successes_data' => $chart_successes_data,
-    'failure_data' => $chart_failure_data,
+    'forecast_report_heading' => $forecast_report_heading,
     'forecast_labels' => json_encode($forecast_labels),
     'forecast_data' => json_encode($forecast_data),
-    'today_scheduled_path' => 'springboard/reports/sustainers/scheduled/' . $url_date,
-    'today_success_path' => 'springboard/reports/sustainers/success/' . $url_date,
-    'today_failure_path' => 'springboard/reports/sustainers/failure/' . $url_date,
-    'time_range_links' => theme('links', fundraiser_sustainers_insights_dashboard_links()),
+    'chart_labels' => json_encode(array_reverse($label_data)),
+    'successes_data' => json_encode(array_reverse($successes_data)),
+    'failure_data' => json_encode(array_reverse($failures_data)),
   );
 
   $path = drupal_get_path('module', 'fundraiser_sustainers');
@@ -155,6 +161,12 @@ function fundraiser_sustainers_insights_dashboard($path_range = 'last-7-days') {
   return theme('fundraiser_sustainers_insights_dashboard', $variables);
 }
 
+/**
+ * Creates the links for time range.
+ *
+ * @return array
+ *   The links render array for theming.
+ */
 function fundraiser_sustainers_insights_dashboard_links() {
   $base = 'springboard/reports/sustainers/insights';
 
