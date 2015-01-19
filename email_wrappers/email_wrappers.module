@@ -342,6 +342,10 @@ function email_wrappers_email_validate_callback(&$form, &$form_state) {
       if (isset($form_state['input'][$full_key])) {
         $form_state['values'][$full_key] = $form_state['input'][$full_key];
       }
+      else {
+        // Maintain current behavior when the input value is not set.
+        $form_state['values'][$full_key] = NULL;
+      }
     }
   }
 }
