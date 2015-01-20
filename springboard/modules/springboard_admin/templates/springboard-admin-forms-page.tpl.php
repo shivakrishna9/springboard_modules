@@ -34,7 +34,6 @@
 
     <?php print($tables[$type->type]); ?>
     <?php $zebra++; ?>
-    <?php print_r(base_path()); ?>
     <a class="button more-button" href="<?php print base_path(); ?>admin/springboard/<?php print ($springboard_type == 'fundraiser') ? 'donation-forms' : 'forms'; ?>/<?php print $type->type; ?>">
       <?php print t('View all');?> <?php print $type->name; ?><?php print t('s');?> </a>
 
