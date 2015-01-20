@@ -1682,11 +1682,6 @@ function springboard_views_views_default_views() {
   $handler->display->display_options['relationships']['uid_1']['table'] = 'commerce_order';
   $handler->display->display_options['relationships']['uid_1']['field'] = 'uid';
   $handler->display->display_options['relationships']['uid_1']['relationship'] = 'did';
-  /* Relationship: Commerce Order: Payment Transaction */
-  $handler->display->display_options['relationships']['payment_transaction']['id'] = 'payment_transaction';
-  $handler->display->display_options['relationships']['payment_transaction']['table'] = 'commerce_order';
-  $handler->display->display_options['relationships']['payment_transaction']['field'] = 'payment_transaction';
-  $handler->display->display_options['relationships']['payment_transaction']['relationship'] = 'did';
   /* Relationship: Fundraiser donations: Webform Submission */
   $handler->display->display_options['relationships']['sid_2']['id'] = 'sid_2';
   $handler->display->display_options['relationships']['sid_2']['table'] = 'fundraiser_donation';
@@ -1943,14 +1938,6 @@ function springboard_views_views_default_views() {
   $handler->display->display_options['fields']['view_order']['relationship'] = 'did';
   $handler->display->display_options['fields']['view_order']['label'] = 'Actions';
   $handler->display->display_options['fields']['view_order']['text'] = 'View order';
-  /* Field: Commerce Payment Transaction: Transaction ID */
-  $handler->display->display_options['fields']['transaction_id']['id'] = 'transaction_id';
-  $handler->display->display_options['fields']['transaction_id']['table'] = 'commerce_payment_transaction';
-  $handler->display->display_options['fields']['transaction_id']['field'] = 'transaction_id';
-  $handler->display->display_options['fields']['transaction_id']['relationship'] = 'payment_transaction';
-  $handler->display->display_options['fields']['transaction_id']['label'] = '';
-  $handler->display->display_options['fields']['transaction_id']['exclude'] = TRUE;
-  $handler->display->display_options['fields']['transaction_id']['element_label_colon'] = FALSE;
   /* Field: Global: Custom text */
   $handler->display->display_options['fields']['nothing']['id'] = 'nothing';
   $handler->display->display_options['fields']['nothing']['table'] = 'views';
@@ -2053,14 +2040,6 @@ function springboard_views_views_default_views() {
   $handler->display->display_options['fields']['view_order']['relationship'] = 'did';
   $handler->display->display_options['fields']['view_order']['label'] = 'Actions';
   $handler->display->display_options['fields']['view_order']['text'] = 'View order';
-  /* Field: Commerce Payment Transaction: Transaction ID */
-  $handler->display->display_options['fields']['transaction_id']['id'] = 'transaction_id';
-  $handler->display->display_options['fields']['transaction_id']['table'] = 'commerce_payment_transaction';
-  $handler->display->display_options['fields']['transaction_id']['field'] = 'transaction_id';
-  $handler->display->display_options['fields']['transaction_id']['relationship'] = 'payment_transaction';
-  $handler->display->display_options['fields']['transaction_id']['label'] = '';
-  $handler->display->display_options['fields']['transaction_id']['exclude'] = TRUE;
-  $handler->display->display_options['fields']['transaction_id']['element_label_colon'] = FALSE;
   /* Field: Global: Custom text */
   $handler->display->display_options['fields']['nothing']['id'] = 'nothing';
   $handler->display->display_options['fields']['nothing']['table'] = 'views';
@@ -2112,12 +2091,6 @@ function springboard_views_views_default_views() {
   $handler->display->display_options['fields']['created']['label'] = 'Date';
   $handler->display->display_options['fields']['created']['date_format'] = 'custom';
   $handler->display->display_options['fields']['created']['custom_date_format'] = 'n/j/Y';
-  /* Field: Commerce Payment Transaction: Amount */
-  $handler->display->display_options['fields']['amount']['id'] = 'amount';
-  $handler->display->display_options['fields']['amount']['table'] = 'commerce_payment_transaction';
-  $handler->display->display_options['fields']['amount']['field'] = 'amount';
-  $handler->display->display_options['fields']['amount']['relationship'] = 'payment_transaction';
-  $handler->display->display_options['fields']['amount']['exclude'] = TRUE;
   /* Field: Commerce Order: Order total */
   $handler->display->display_options['fields']['commerce_order_total']['id'] = 'commerce_order_total';
   $handler->display->display_options['fields']['commerce_order_total']['table'] = 'field_data_commerce_order_total';
@@ -2173,14 +2146,6 @@ function springboard_views_views_default_views() {
   $handler->display->display_options['fields']['view_order']['relationship'] = 'did';
   $handler->display->display_options['fields']['view_order']['label'] = 'Actions';
   $handler->display->display_options['fields']['view_order']['text'] = 'View order';
-  /* Field: Commerce Payment Transaction: Transaction ID */
-  $handler->display->display_options['fields']['transaction_id']['id'] = 'transaction_id';
-  $handler->display->display_options['fields']['transaction_id']['table'] = 'commerce_payment_transaction';
-  $handler->display->display_options['fields']['transaction_id']['field'] = 'transaction_id';
-  $handler->display->display_options['fields']['transaction_id']['relationship'] = 'payment_transaction';
-  $handler->display->display_options['fields']['transaction_id']['label'] = '';
-  $handler->display->display_options['fields']['transaction_id']['exclude'] = TRUE;
-  $handler->display->display_options['fields']['transaction_id']['element_label_colon'] = FALSE;
   /* Field: Global: Custom text */
   $handler->display->display_options['fields']['nothing']['id'] = 'nothing';
   $handler->display->display_options['fields']['nothing']['table'] = 'views';
