@@ -373,6 +373,15 @@ function springboard_advocacy_views_default_views() {
   $handler = $view->new_display('page', 'Search Custom Targets', 'page');
   $handler->display->display_options['defaults']['title'] = FALSE;
   $handler->display->display_options['title'] = 'Custom Targets';
+  $handler->display->display_options['defaults']['header'] = FALSE;
+  /* Header: Global: Text area */
+  $handler->display->display_options['header']['area']['id'] = 'area';
+  $handler->display->display_options['header']['area']['table'] = 'views';
+  $handler->display->display_options['header']['area']['field'] = 'area';
+  $handler->display->display_options['header']['area']['label'] = 'Add Custom Target';
+  $handler->display->display_options['header']['area']['empty'] = TRUE;
+  $handler->display->display_options['header']['area']['content'] = '<a href = "/admin/springboard/advocacy/targets/custom-targets/add">Add new Target</a>';
+  $handler->display->display_options['header']['area']['format'] = 'filtered_html';
   $handler->display->display_options['defaults']['fields'] = FALSE;
   /* Field: Advocacy: Salutation */
   $handler->display->display_options['fields']['salutation']['id'] = 'salutation';
@@ -407,12 +416,15 @@ function springboard_advocacy_views_default_views() {
   $handler->display->display_options['fields']['id']['table'] = 'advocacy';
   $handler->display->display_options['fields']['id']['field'] = 'id';
   $handler->display->display_options['fields']['id']['exclude'] = TRUE;
-  /* Field: Global: Custom text */
-  $handler->display->display_options['fields']['nothing']['id'] = 'nothing';
-  $handler->display->display_options['fields']['nothing']['table'] = 'views';
-  $handler->display->display_options['fields']['nothing']['field'] = 'nothing';
-  $handler->display->display_options['fields']['nothing']['label'] = 'Actions';
-  $handler->display->display_options['fields']['nothing']['alter']['text'] = '<a href = \'/admin/springboard/advocacy/custom-targets/[id]/edit\'>Edit</a>';
+  /* Field: Advocacy: Target Actions */
+  $handler->display->display_options['fields']['target_actions']['id'] = 'target_actions';
+  $handler->display->display_options['fields']['target_actions']['table'] = 'advocacy';
+  $handler->display->display_options['fields']['target_actions']['field'] = 'target_actions';
+  $handler->display->display_options['fields']['target_actions']['which_links'] = array(
+    'edit' => 'edit',
+    'delete' => 'delete',
+    'view' => 0,
+  );
   $handler->display->display_options['defaults']['filter_groups'] = FALSE;
   $handler->display->display_options['defaults']['filters'] = FALSE;
   /* Filter criterion: Advocacy: Search By Type */
@@ -987,7 +999,6 @@ function springboard_advocacy_views_default_views() {
     ),
   );
   $handler->display->display_options['path'] = 'admin/config/springboard/advocacy/targets';
-
   $views[$view->name] = $view;
 
   // Return all the views.
