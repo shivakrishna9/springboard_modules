@@ -126,6 +126,7 @@ function springboard_letter_add_content_type() {
   node_type_save($type);
   node_types_rebuild();
   node_add_body_field($type);
+  springboard_letter_add_fields();
 
   // Add as a webform.
   $webform_node_types = variable_get('webform_node_types', array('webform'));
@@ -159,6 +160,40 @@ function springboard_letter_add_content_type() {
   db_query('UPDATE {system} SET weight = :weight WHERE name = :name', array(':weight' => 1000, ':name' => 'springboard_letter'));
 }
 
+function springboard_letter_add_fields() {
+
+  $fields = array(
+
+    'field_sba_call_to_action' => array(
+      'field_name' => 'sba_message_call_to_action',
+      'type' => 'text_long',
+      'cardinality' => 1,
+      'settings' => array(),
+      'entity_types' => array('node'),
+      '_instance' => array(
+        'field_name' => 'sba_message_subject',
+        'entity_type' => 'node',
+        'bundle' => 'springboard_letter',
+        'required' => TRUE,
+        'label' => st('Call to Action Text'),
+        'description' => st(''),
+        'widget' => array(
+          'type' => 'text_textarea',
+          'weight' => 5,
+          'settings' => array(),
+        ),
+      ),
+    ),
+  );
+
+  foreach ($fields as $key => $values) {
+    $instance = $values['_instance'];
+    unset($values['_instance']);
+
+    field_create_field($values);
+    field_create_instance($instance);
+  }
+}
 
 
 function springboard_letter_add_example_letter() {
