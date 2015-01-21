@@ -1,29 +1,42 @@
 <?php
 
-/*
- *  Menu/config hooks and Common functions used by multiple message types will go here
+
+/**
+ * Implements hook_menu().
  */
+function springboard_messages_menu() {
+  $items['node/%node/messages'] = array(
+    'title' => 'Messages',
+    'description' => '',
+    'page callback' => 'springboard_messages_messages',
+    'page arguments' => array(1),
+    'access callback' => 'springboard_messages_access_node_settings',
+    'access arguments' => array(1),
+    'file' => 'includes/messages.admin.inc',
+    'type' => MENU_LOCAL_TASK,
+  );
 
 
-function springboard_messages_node_insert($node) {
-  $types = variable_get('springboard_advocacy_message_types', array());
-  if(in_array($node->type, $types)) {
-    $uuid = array(
-      'nid' => $node->nid,
-      'advocacy_id' => uniqid(variable_get('site_name', 'Drupal') . '-'),
-    );
-    drupal_write_record('springboard_messages_form_id', $uuid);
-  }
+  return $items;
 }
 
-function springboard_messages_node_load($nodes, $types) {
-  $message_types = variable_get('springboard_advocacy_message_types', array());
-  if (count(array_intersect($message_types, $types))) {  
-     $result = db_query(
-      'SELECT advocacy_id, nid FROM {springboard_messages_form_id} WHERE nid IN (:nids)', 
-       array(':nids' => array_keys($nodes)));
-    foreach ($result as $record) {
-      $nodes[$record->nid]->advocacy_id = $record->advocacy_id;
-    }
+/**
+ * Access callback for node share content form.
+ */
+function springboard_messages_access_node_settings($node) {
+  global $user;
+  // Hide share content settings tab on disabled content types.
+  $types = variable_get('springboard_advocacy_message_types', array());
+  if (!in_array($node->type, $types)) {
+    return FALSE;
   }
+  // Grant access to content owned by user that they have permissions to edit.
+  if (user_access('administer springboard advocacy') && $node->uid == $user->uid && node_access('update', $node)) {
+    return TRUE;
+  }
+  // Grant access to content user can edit regardless of ownership.
+  elseif (user_access('administer springboard advocacy') && node_access('update', $node)) {
+    return TRUE;
+  }
+  return FALSE;
 }

@@ -16,7 +16,7 @@ function springboard_letter_node_insert($node) {
     //add custom fields for the messages
     $fields[] = array(
       'nid' => $node->nid,
-      'form_key' => 'springboard_letter_phone',
+      'form_key' => 'sba_phone',
       'pid' => 0,
       'name' => t('Phone Number'),
       'type' => 'textfield',
@@ -28,19 +28,6 @@ function springboard_letter_node_insert($node) {
       ),
     );
 
-    $fields[] = array(
-        'nid' => $node->nid,
-        'form_key' => 'springboard_letter_message',
-        'pid' => 0,
-        'name' => t('Message'),
-        'type' => 'textarea',
-        'mandatory' => 1,
-        'weight' => 18,
-        'email' => 1,
-        'extra' => array(
-        'description' => t('Customize your message'),
-      ),
-    );
     //limit the state field to US states
     $fields[] = array(
         'nid' => $node->nid,
@@ -70,9 +57,10 @@ function springboard_letter_node_insert($node) {
         'maxlength' => 5,
       ),
     );
+
     // Add the component to the Webform.
+
     foreach ($fields as $field) {
-      //dpm($field);
       $cid = webform_component_insert($field);
       //user map the state field
       if ($field['form_key'] == 'sbp_state' || $field['form_key'] == 'sbp_zip') {
@@ -119,145 +107,13 @@ function springboard_letter_webform_user_profile_fields_alter(&$fields, $node) {
  * 
  * Add our submit handler.
  */
-function springboard_letter_form_alter(&$form, &$form_state, $form_id) {
-  if(isset($form['#node']) && $form['#node']->type == 'springboard_letter') {
-    $pos = strpos($form_id, 'client_form');
-    if($pos !== FALSE) {
-      $form['#submit'][] = 'springboard_letter_submit';
-    }
-  }
-}
+// function springboard_letter_form_alter(&$form, &$form_state, $form_id) {
+//   if(isset($form['#node']) && $form['#node']->type == 'springboard_letter') {
+//     $pos = strpos($form_id, 'client_form');
+//     if($pos !== FALSE) {
+//       $form['#submit'][] = 'springboard_letter_submit';
+//     }
+//   }
+// }
 
-/**
- * Submit handler
- * 
- * Gets Zip+4 from Smarty streets.
- * Asks the Advocacy API for a list of Legislators for the zip.
- * Places list in session for use on confirmation page.
- */
-function springboard_letter_submit($form, $form_state) {
-  $values = $form_state['values']['submitted_tree'];
 
-  module_load_include('inc', 'springboard_advocacy', 'includes/springboard_advocacy.smarty_streets');
-  $geo = springboard_advocacy_smarty_lookup($values);
-  if (!empty($geo)) {
-    $_SESSION['letter_geo'] = $geo;
-    if(!empty($geo['zip']) && !empty($geo['plus4'])) {
-       $zip = $geo['zip'] . '-' . $geo['plus4'];
-    }
-  }
-
-  if(!empty($zip)) {
-    $loader = new AdvocacyApiClientLoader();
-    $client = $loader->getClient();
-    $response = $client->getLegislators($zip);
-    if (!empty($response->data)) {
-      $persons = springboard_letter_prep_for_display($response->data);
-      $_SESSION['legislators'] = $persons;
-    }
-  }
-}
-
-/**
- * Formats API response for presentaion by theme_item_list
- * 
- */
-function springboard_letter_prep_for_display($data) {
-  $items = array();
-
-  foreach ($data as $district => $legistors) {
-    foreach($legistors as $legislator) {
-      $items[]['data'] = $legislator->salutation . 
-      ' ' . $legislator->first_name . 
-      ' ' . $legislator->last_name . 
-      ': ' . $legislator->district_name;
-    }
-  }
-  $title = t('Legislators');
-  $attributes = array(
-    'id' => 'legislator-list',
-  );
-  if (empty($items)) {
-    $items[]['data'] = 'No Results';
-  }
-  return theme_item_list(array('items' => $items, 'title' => $title, 'type' => 'ul', 'attributes' => $attributes));;
-}
-
-/*
- * Implements hook_preprocess_webform_confirmation
- *
- * Show the list of legislators on the confirmation page
- */
-function springboard_letter_preprocess_webform_confirmation(&$vars) {
-  if ($vars['node']->type == 'springboard_letter') {
-    if (!empty($_SESSION['legislators'])) {
-      $vars['confirmation_message'] = $_SESSION['legislators'];
-      unset($_SESSION['legislators']);
-    }
-  }
-}
-
-/**
- * Implements hook_webfrom_submission insert
- *
- * Save our letter writer's zip and geolocation info
- */
-function springboard_letter_webform_submission_insert($node, $submission) {
-  if(isset($_SESSION['letter_geo']) && $node->type == 'springboard_letter') {
-    $data = array(
-      'nid' => $submission->nid,
-      'sid' => $submission->sid,
-      'uid' => $submission->uid,
-      'zip' => isset($_SESSION['letter_geo']['zip']) ? $_SESSION['letter_geo']['zip'] : '',
-      'plus4' => isset($_SESSION['letter_geo']['plus4']) ? $_SESSION['letter_geo']['plus4'] : '',
-      'lat' => isset($_SESSION['letter_geo']['latitude']) ? $_SESSION['letter_geo']['latitude'] : '',
-      'lon' => isset($_SESSION['letter_geo']['longitude']) ? $_SESSION['letter_geo']['longitude'] : '',
-    );
-    drupal_write_record('springboard_messages_location', $data);
-    unset($_SESSION['letter_geo']);
-  };
-}
-
-/**
- * Implements hook_FORMID_form_alter
- *
- * Vertical nav for letter add/edit pages
- */
-function springboard_letter_form_springboard_letter_node_form_alter(&$form, &$form_state) {
-  $form['options'] = array(
-    '#title' => t('Options'),
-    '#type' => 'fieldset',
-    '#group' => 'additional_settings',
-    '#weight' => -20,
-  ); 
-  $form['targets'] = array(
-    '#title' => t('Targets'),
-    '#type' => 'fieldset',
-    '#group' => 'additional_settings',
-    '#weight' => -19,
-  ); 
-  $form['messages'] = array(
-    '#title' => t('Messages'),
-    '#type' => 'fieldset',
-    '#group' => 'additional_settings',
-    '#weight' => -18,
-  );
-  $form['social'] = array(
-    '#title' => t('Social'),
-    '#type' => 'fieldset',
-    '#group' => 'additional_settings',
-    '#weight' => -17,
-  );
-  $form['goals'] = array(
-    '#title' => t('Goals'),
-    '#type' => 'fieldset',
-    '#group' => 'additional_settings',
-    '#weight' => -16,
-  );
-  $form['display'] = array(
-    '#title' => t('Display'),
-    '#type' => 'fieldset',
-    '#group' => 'additional_settings',
-    '#weight' => -15,
-  ); 
-}

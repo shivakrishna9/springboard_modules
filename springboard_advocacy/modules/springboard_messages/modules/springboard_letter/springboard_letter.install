@@ -137,9 +137,9 @@ function springboard_letter_add_content_type() {
   variable_set('webform_node_types_primary', array_unique($webform_node_types_primary));
 
   // Add as an advocacy message type.
-  $springboard_advocacy_message_types = variable_get('springboard_advocacy_message_types', array(''));
-  $springboard_advocacy_message_types = array_merge($springboard_advocacy_message_types, array('springboard_letter'));
-  variable_set('springboard_advocacy_message_types', array_unique($springboard_advocacy_message_types));
+  $springboard_advocacy_alert_types = variable_get('springboard_advocacy_alert_types', array(''));
+  $springboard_advocacy_alert_types = array_merge($springboard_advocacy_alert_types, array('springboard_letter'));
+  variable_set('springboard_advocacy_alert_types', array_unique($springboard_advocacy_alert_types));
 
 
   require_once(drupal_get_path('module', 'webform_user') . '/includes/webform_user.fields.inc');

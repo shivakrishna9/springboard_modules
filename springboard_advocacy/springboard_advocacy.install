@@ -29,3 +29,43 @@ function springboard_advocacy_requirements($phase) {
 
   return $requirements;
 }
+
+
+/**
+ * Implements hook_schema().
+ *
+ * Table to save unique alert IDs
+ */
+function springboard_advocacy_schema() {
+
+  // Store a unique ID for use with advocacy server
+  $schema['springboard_advocacy_alert_id'] = array(
+    'description' => 'Store messaging information.',
+    'fields' => array(
+      'nid' => array(
+        'description' => 'messages node id',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'advocacy_id' => array(
+        'description' => 'form unique ID',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+      ),
+    ),
+    'primary key' => array('nid'),
+  );
+    return $schema;
+}
+
+ /**
+  *  Add springboard_advocacy alert id table
+  */
+function springboard_advocacy_update_7001() {
+  $schema = module_invoke('springboard_advocacy', 'schema');
+  if(db_table_exists('springboard_advocacy_alert_id') == FALSE) {
+    db_create_table('springboard_advocacy_alert_id', $schema['springboard_advocacy_alert_id']);
+  }
+}
