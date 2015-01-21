@@ -132,6 +132,41 @@ function springboard_p2p_menu() {
 }
 
 /**
+ * Implements hook_springboard_admin_admin_menu_items_alter().
+ */
+function springboard_p2p_springboard_admin_admin_menu_items_alter(&$items) {
+  // Top Level: P2P.
+  $items['admin/springboard/p2p'] = array(
+    'link_path' => 'admin/springboard/p2p',
+    'link_title' => t('P2P'),
+    'menu_name' => 'springboard_admin_menu',
+    'expanded' => 1,
+    'customized' => 1,
+    'weight' => 6,
+    '_children' => array(),
+  );
+  // P2P > Dashboard.
+  $items['admin/springboard/p2p']['_children']['dashboard'] = array(
+    'link_path' => 'admin/springboard/p2p',
+    'link_title' => 'Dashboard',
+    'menu_name' => 'springboard_admin_menu',
+    'expanded' => 1,
+    'customized' => 1,
+    'weight' => 0,
+  );
+
+  // P2P > Settings.
+  $items['admin/springboard/p2p']['_children']['settings'] = array(
+    'link_path' => 'admin/springboard/p2p/settings',
+    'link_title' => 'Settings',
+    'menu_name' => 'springboard_admin_menu',
+    'expanded' => 1,
+    'customized' => 1,
+    'weight' => 0,
+  );
+}
+ 
+/**
  * Implements hook_theme().
  */
 function springboard_p2p_theme($existing, $type, $theme) {

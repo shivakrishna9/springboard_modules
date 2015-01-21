@@ -53,26 +53,30 @@ function springboard_admin_admin_menu_output_alter(&$content) {
  * administration pages.
  */
 function springboard_admin_custom_theme() {
-  // If the springboard_backend theme is disabled, do nothing.
-  if (variable_get('springboard_theme_enable', 1) == 0) {
-    return;
-  }
-  // If the springboard_backend theme does not exist, we can do nothing.
-  $themes = list_themes();
-  if (!isset($themes['springboard_backend'])) {
-    return;
-  }
-  
-  // If the page is using a page wrapper, do nothing.
-  if(module_exists('page_wrappers')) {
-    $wrapper = page_wrappers_check();
-    if(!empty($wrapper['wrapper'])) {
+  // Does the current user get SBUX (i.e., are the following checks relevant)?
+  if (springboard_admin_user_gets_sbux($GLOBALS['user'])) {
+    // If the springboard_backend theme is disabled, do nothing.
+    if (variable_get('springboard_theme_enable', 1) == 0) {
       return;
     }
-  }
-  // If the path begins with /springboard/, we know the theme applies
-  if (preg_match("|^\/springboard/.*?|", request_uri()) || preg_match("|^\/springboard\?.*?|", request_uri()) || preg_match("|^\/springboard$|", request_uri()) ) {
-    return 'springboard_backend';
+    // If the springboard_backend theme does not exist, we can do nothing.
+    $themes = list_themes();
+    if (!isset($themes['springboard_backend'])) {
+      return;
+    }
+    // If the page is using a page wrapper, do nothing.
+    if(module_exists('page_wrappers')) {
+      $wrapper = page_wrappers_check();
+      if(!empty($wrapper['wrapper'])) {
+        return;
+      }
+    }
+    // If either the current Drupal path or its SBUX alias begins with /springboard/, then the theme applies.
+    if (preg_match("|^springboard(\/.*)?|", $_GET['q'])
+      || preg_match("|^springboard(\/.*)?|", springboard_admin_build_admin_path('/' . $_GET['q'], 'path'))
+    ) {
+      return 'springboard_backend';
+    }
   }
 }
 
@@ -237,173 +241,18 @@ function springboard_admin_init() {
     // If a form is being submitted, there's no need to redirect.
     if(isset($_POST['form_build_id'])) {
       return;
-    }  
+    }
         
     // Set up requested path and goto path.
     $path = str_replace("?".$_SERVER['QUERY_STRING'], '', request_uri());    
-    $goto_path = FALSE;
-    // Node add pages,
-    if (preg_match('|^/node/add(/.*)?|', $path, $matches)) {
-      if (preg_match('|^/node/add$|', $path)) {
-        $goto_path = 'springboard/add';
-      } 
-      else {
-        $goto_path = 'springboard/add' . $matches[1];
-      }
-    }
 
-    /*
-     * Node edit pages.
-     */ 
-    elseif (preg_match('|^/node/([0-9]*)((?:/[a-zA-Z0-9_\-]*)*)?|', $path, $matches)) {
-      if (preg_match('|^/node/([0-9]*)$|', $path) || preg_match('|^/node/([0-9]*)/view$|', $path) || preg_match('|^/node/([0-9]*)/done$|', $path)) {
-        // If we're viewing the node, bypass any aliasing.
-        return; 
-      }
-      /**
-       * Webform configuration pages.
-       */
-      if (preg_match('|^/node/([0-9]*)/webform?|', $path, $m1)) {
-        // node/%/webform/emails -> /springboard/node/%/form/confirmation-emails.
-        if (preg_match('|^/node/([0-9]*)/webform/emails((?:/[a-zA-Z0-9_\-]*)*)?|',  $path, $m2)) {
-          // node/%/webform/emails
-          if (preg_match('|^/node/([0-9]*)/webform/emails$|',  $path, $m3)) {
-            $goto_path = 'springboard/node/' . $m3[1] . '/form-components/confirmation-emails';
-          }
-          // Everything under node/&/webform/emails
-          else {
-            $goto_path = 'springboard/node/' . $m2[1] . '/form-components/confirmation-emails' . $m2[2];
-          }
-        }
-        // node/%/webform/configure -> /springboard/node/%/form/confirmation-page-settings.
-        elseif (preg_match('|^/node/([0-9]*)/webform/configure?|',  $path, $m2)) {
-          $goto_path = 'springboard/node/' . $m2[1] . '/form-components/confirmation-page-settings';
-        }
-        /**
-         * Webform results pages.
-         */
-        elseif (preg_match('|^/node/([0-9]*)/webform-results?|',  $path, $m2)) {
-          // EVerything under node/%/webform-results
-          if (preg_match('|^/node/([0-9]*)/webform-results((?:/[a-zA-Z0-9_\-]*)*)?|',  $path, $m3)) {
-            $goto_path = 'springboard/node/' . $m3[1] . '/results' . $m3[2];
-          }
-          // node/%/webform-results -> springboard/node/%/results
-          else {
-            $goto_path = 'springboard/node/' . $m2[1] . '/results' . $m2[2];
-          }
-        }
-        // Webform_ab list of associated Webforms
-        elseif (preg_match('|^/node/([0-9]*)/webforms((?:/[a-zA-Z0-9_\-]*)*)?|',  $path, $m2)) {
-          $goto_path = 'springboard/node/' . $m2[1] . '/included-forms' . $m2[2];
-        }
-        // All other pages under node/%/webform.
-        elseif (preg_match('|^/node/([0-9]*)/webform((?:/[a-zA-Z0-9_\-]*)*)?|',  $path, $m2)) {
-          $goto_path = 'springboard/node/' . $m2[1] . '/form-components' . $m2[2];
-        }        
-        // node/%/webform -> /springboard/node/%/form-components.
-        else {
-          $goto_path = 'springboard/node/' . $m1[1] . '/form-components';
-        }
-      }
-      // All other pages under node/%
-      else {
-        $goto_path = 'springboard/node/' . $matches[1] . $matches[2];
-      }
+    // Check to see if the current path is an alias to a Drupal system path. If
+    // so, convert the path to the Drupal system path.
+    if($lookup_path = drupal_lookup_path('source', preg_replace('/^\//', '', $path))) {
+      $path = '/' . $lookup_path;
     }
-    /**
-     * Admin paths that match the admin/springboard pattern.
-     */
-    elseif (preg_match('|^/admin/springboard((?:/[a-zA-Z0-9_\-]*)*)?|', $path, $matches)) {
-      if (preg_match('|^/admin/springboard$|', $path)) {
-        $goto_path = 'springboard';
-      }
-      elseif (preg_match('|^/admin/springboard/settings/administrators$|', $path)) {
-        $goto_path = 'springboard/administrators';
-      }
-      else {
-        $goto_path = 'springboard' . $matches[1];
-      }
-    }
-    /**
-     * Other paths that don't match a pattern.
-     */
-    elseif (preg_match('|^/admin/reports/salesforce/donations((?:/[a-zA-Z0-9_\-]*)*)?|', $path, $matches)) {
-      $goto_path = 'springboard/reports/donations' . $matches[1];
-    }
-    elseif (preg_match('|^/admin/config/content/webform_goals((?:/[a-zA-Z0-9_\-]*)*)?|', $path, $m1)) {
-      if (preg_match('|^/admin/config/content/webform_goals$|', $path)) {
-        $goto_path = 'springboard/goals';
-      } 
-      else {
-        $goto_path = 'springboard/goals' . $m1[1];  
-      }
-    }
-    elseif (preg_match('|^/admin/config/content/webform_ab$|', $path)) {
-      $goto_path = 'springboard/settings/config/multivariate-testing';
-    }
-    elseif (preg_match('|^/admin/content/webform_ab$|', $path)) {
-      $goto_path = 'springboard/multivariate-testing';
-    }
-    elseif (preg_match('|^/admin/config/services/springboard_social$|', $path)) {
-      $goto_path = 'springboard/sb-social';
-    }
-    elseif (preg_match('|^/admin/config/search/market-source$|', $path)) {
-      $goto_path = 'springboard/market-source';
-    }
-    elseif (preg_match('|^/admin/config/system/googleanalytics$|', $path)) {
-      $goto_path = 'springboard/ga';
-    }
-    elseif (preg_match('|^/admin/springboard/reports/contacts$|', $path)) {
-      $goto_path = 'springboard/reports/contacts';
-    }
-    elseif (preg_match('|^/admin/reports/salesforce((?:/[a-zA-Z0-9_\-]*)*)?|', $path, $m1)) {
-      if (preg_match('|^/admin/reports/salesforce$|', $path)) {
-        $goto_path = 'admin/springboard/reports/integration-reports';
-      }
-      else {
-        $goto_path = 'admin/springboard/reports/integration-reports' . $m1[1];
-      }
-    }
-    elseif (preg_match('|^/admin/springboard/options/fundraiser/fundraiser_upsell$|', $path)) {
-      $goto_path = 'springboard/settings/config/upsell';
-    }
-    elseif (preg_match('|^/admin/springboard/options/fundraiser/fundraiser_upsell/thank-you$|', $path)) {
-      $goto_path = 'springboard/settings/config/upsell-thank-you';
-    }
-    elseif (preg_match('|^/admin/structure/salesforce/mappings$|', $path)) {
-      $goto_path = 'springboard/settings/config/mappings';
-    }
-    elseif (preg_match('|^/admin/structure/salesforce/mappings/add$|', $path)) {
-      $goto_path = 'springboard/settings/config/mappings-add';
-    }
-    elseif (preg_match('|^/admin/structure/salesforce/mappings/import$|', $path)) {
-      $goto_path = 'springboard/settings/config/mappings-import';
-    }
-    elseif (preg_match('|^/admin/commerce/orders((?:/[a-zA-Z0-9_\-]*)*)?|', $path, $m1)) {
-      $goto_path = 'springboard/donations' . $m1[1];
-    }
-    elseif (preg_match('|^/admin/commerce/products((?:/[a-zA-Z0-9_\-]*)*)?|', $path, $m1)){
-      $goto_path = 'springboard/commerce/products' . $m1[1];
-    }
-    elseif (preg_match('|^/fundraiser_sustainers/([0-9]*)/skip/([0-9]*)?|', $path, $m1)){
-      $goto_path = 'springboard/donations/' . $m1[1] . '/skip/' . $m1[2];
-    }
-    /**
-     * User paths.
-     */
-    elseif (preg_match('|^/user?|', $path) && !preg_match('|^/user/logout$|', $path)) {
-      if (preg_match('|^/user/([0-9]*)?|', $path, $matches)) {
-        if (preg_match('|^/user/([0-9]*)((?:/[a-zA-Z0-9_\-]*)*)?|', $path, $m1)) {
-          $goto_path = 'springboard/user/' . $m1[1] . $m1[2];
-        }
-        else {
-          $goto_path = 'springboard/user/' . $matches[1];
-        }
-      }
-      else {
-        $goto_path = 'springboard/user';
-      }
-    }
+    // Find the Springboard alias of the Drupal system path, if it exists.
+    $goto_path = springboard_admin_build_admin_path($path, 'path');
     if ($goto_path) {
       // If a redirect destination is included in the query string, clear it from
       // $_GET and it will be added back to the path later.
@@ -622,165 +471,24 @@ function springboard_admin_theme($existing, $type, $theme, $path) {
  * Implements administrative url aliases for the Springboard UX.
  */
 function springboard_admin_url_inbound_alter(&$path, $original_path, $path_language) {
-  // Node add pages for all types.
-  if (preg_match('|^springboard/add(/.*)?|', $path, $matches)) {
-    if(preg_match('|^springboard/add$|', $path)) {
-      $path = 'node/add';
-    }
-    else {
-      $path = 'node/add' . $matches[1];
-    }
+  if($final_path = springboard_admin_build_admin_path($path, 'alias')) {
+    $path = $final_path;
   }
-  /**
-   * Node edit pages.
-   */ 
-  elseif (preg_match('|^springboard/node/([0-9]*)((?:/[a-zA-Z0-9_\-]*)*)?|', $path, $matches)) {
-    /**
-     * Webform configuration pages.
-     */
-    if (preg_match('|^springboard/node/([0-9]*)/form-components?|', $path, $m1)) {
+}
 
-      // /springboard/node/%/form-components/confirmation-emails. -> node/%/webform/emails 
-      if (preg_match('|^springboard/node/([0-9]*)/form-components/confirmation-emails((?:/[a-zA-Z0-9_\-]*)*)?|', $path, $m2)) {
-        // /springboard/node/%/form-components/confirmation-emails. -> node/%/webform/emails 
-        if (preg_match('|^springboard/node/([0-9]*)/form-components/confirmation-emails$|', $path, $m3)) {
-          $path = 'node/' . $m3[1] . '/webform/emails';
-        }
-        // Everything Under /springboard/node/%/form-components/confirmation-emails/* -> node/%/webform/emails/*
-        else {
-          $path = 'node/' . $m2[1] . '/webform/emails' . $m2[2];
-          }
-      }
-      // /springboard/node/%/form-components/confirmation-page-settings -> node/%/webform/configure
-      elseif (preg_match('|^springboard/node/([0-9]*)/form-components/confirmation-page-settings?|', $path, $m2)) {
-        $path = 'node/' . $m2[1] . '/webform/configure';
-      }
-      // All other pages under springboard/node/%/form-components.
-      elseif (preg_match('|^springboard/node/([0-9]*)/form-components((?:/[a-zA-Z0-9_\-]*)*)?|', $path, $m2)) {
-        $path = 'node/' . $m2[1] . '/webform' . $m2[2];
-      }
-      // springboard/node/%/form-components -> node/%/webform
-      else {
-        $path = 'node/' . $m1[1] . '/webform';
-      }
+/**
+ * Implements hook_url_outbound_alter().
+ * 
+ * Outputs administrative url aliases for Springboard UX users.
+ */
+function springboard_admin_url_outbound_alter(&$path, &$options, $original_path) {
+  global $user;
+  // Only output admin path aliases for Springboard UX users.
+  if (springboard_admin_user_gets_sbux($user)) {
+    $admin_alias = springboard_admin_build_admin_path('/' . $original_path, 'path');
+    if (!empty($admin_alias)) {
+      $path = $admin_alias;
     }
-    /**
-     * Webform results pages.
-     */
-    elseif (preg_match('|^springboard/node/([0-9]*)/results?|', $path, $m1)) {
-      // Everything under springboard/node/%/results
-      if (preg_match('|^springboard/node/([0-9]*)/results((?:/[a-zA-Z0-9_\-]*)*)?|', $path, $m2)) {
-        $path = 'node/' . $m2[1] . '/webform-results' . $m2[2];
-      }
-      // springboard/node/%/results -> node/%/webform-results
-      else {
-        $path = 'node/' . $m1[1] . '/webform-results';
-      }
-    }
-    /**
-     * Webform AB list of related webforms.
-     */
-    else if (preg_match('|^springboard/node/([0-9]*)/included-forms((?:/[a-zA-Z0-9_\-]*)*)?|', $path, $m1)) {
-      $path = 'node/' . $m1[1] . '/webforms' . $m1[2];
-    }
-    // All other pages under springboard/node/%
-    else { 
-      $path = 'node/' . $matches[1] . $matches[2];
-    }  
-  }
-  /**
-   * User paths.
-   */
-  elseif (preg_match('|^springboard/user((?:/[a-zA-Z0-9_\-]*)*)?|', $path, $matches)) {
-    if (preg_match('|^springboard/user/([0-9]*)?|', $path, $m1)) {
-      if (preg_match('|^springboard/user/([0-9]*)((?:/[a-zA-Z0-9_\-]*)*)?|', $path, $m2)) {
-        $path = 'user/' . $m2[1] . $m2[2];
-      }
-      else {
-        $path = 'user/' . $m1[1];
-      }
-    }
-    else {
-      $path = 'user' . $matches[1];
-    }
-  }
-  /**
-   * All other springboard paths.
-   */
-  elseif (preg_match('|^springboard((?:/[a-zA-Z0-9_\-]*)*)?|', $path, $matches)) {
-    if (preg_match('|^springboard$|', $path)) {
-      $path = 'admin/springboard';
-    }
-    /** 
-     * Springboard paths that don't match the pattern.
-     */
-    elseif (preg_match('|^springboard/reports/donations((?:/[a-zA-Z0-9_\-]*)*)?|', $path, $m1)) {
-      $path = 'admin/reports/salesforce/donations' . $m1[1];
-    }
-    elseif (preg_match('|^springboard/goals((?:/[a-zA-Z0-9_\-]*)*)?|', $path, $m1)) {
-      if (preg_match('|^springboard/goals$|', $path)) {
-        $path = 'admin/config/content/webform_goals';
-      } 
-      else {
-        $path = 'admin/config/content/webform_goals' . $m1[1];
-      }
-    }
-    elseif (preg_match('|^springboard/multivariate-testing$|', $path)) {
-      $path = 'admin/content/webform_ab';
-    }
-    elseif (preg_match('|^springboard/settings/config/multivariate-testing$|', $path)) {
-      $path = 'admin/config/content/webform_ab';
-    }
-    elseif (preg_match('|^springboard/sb-social$|', $path)) {
-      $path = 'admin/config/services/springboard_social';
-    }
-    elseif (preg_match('|^springboard/market-source$|', $path)) {
-      $path = 'admin/config/search/market-source';
-    }
-    elseif (preg_match('|^springboard/ga$|', $path)) {
-      $path = 'admin/config/system/googleanalytics';
-    }
-    elseif (preg_match('|^springboard/reports/contacts$|', $path)) {
-      $path = 'admin/springboard/reports/contacts';
-    } 
-    elseif (preg_match('|^springboard/administrators$|', $path)) {
-      $path = 'admin/springboard/settings/administrators';
-    }
-    elseif (preg_match('|^springboard/settings/config$|', $path)) {
-      $path = 'admin/springboard/settings/config';
-    }
-    elseif (preg_match('|^springboard/settings/config/upsell$|', $path)) {
-      $path = 'admin/springboard/options/fundraiser/fundraiser_upsell';
-    }
-    elseif (preg_match('|^springboard/settings/config/upsell-thank-you$|', $path)) {
-      $path = 'admin/springboard/options/fundraiser/fundraiser_upsell/thank-you';
-    }
-    elseif (preg_match('|^springboard/settings/config/mappings$|', $path)) {
-      $path = 'admin/structure/salesforce/mappings';
-    }
-    elseif (preg_match('|^springboard/settings/config/mappings-add$|', $path)) {
-      $path = 'admin/structure/salesforce/mappings/add';
-    }
-    elseif (preg_match('|^springboard/settings/config/mappings-import$|', $path)) {
-      $path = 'admin/structure/salesforce/mappings/import';
-    }
-    elseif (preg_match('|^springboard/donations((?:/[a-zA-Z0-9_\-]*)*)?|', $path, $m1)) {
-      if (preg_match('|^springboard/donations/([0-9]*)/skip/([0-9]*)?|', $path, $m2)){
-        $path = 'fundraiser_sustainers/' . $m2[1] . '/skip/' . $m2[2];
-      }
-      else {
-        $path = 'admin/commerce/orders' . $m1[1];
-      }
-    }
-    elseif (preg_match('|^springboard/commerce/products((?:/[a-zA-Z0-9_\-]*)*)?|', $path, $m1)){
-      $path = 'admin/commerce/products' . $m1[1];
-    }
-    /**
-     * All other springboard paths.
-     */
-    elseif (preg_match("|^springboard/.*?|", $path) && preg_match('|^springboard((?:/[a-zA-Z0-9_\-]*)*)?|', $path, $matches)) {
-      $path = 'admin/springboard' . $matches[1];
-    }    
   }
 }
 
@@ -1067,6 +775,276 @@ function springboard_drupal_path_validate(&$form, &$form_state) {
 }
 
 /**
+ * API Function
+ * Assembles an associative array of paths and their Springboard aliases. Allows
+ * other modules to add to or alter the array of paths.
+ * 
+ * @return $patterns
+ * An array of path + alias pattern pairs. Each item is an array containing:
+ *   - path: An associative array describing the original menu router path.
+ *     - regex: A regular expression that matches the path.
+ *     - replacement: The original path with arguments in the form of '%1'.
+ *   - alias: An associative array describing the springboard alias.
+ *     - regex: A regular expression that matches the path.
+ *     - replacement: The original path with arguments in the form of '%1'.
+ * 
+ */
+
+function springboard_admin_alias_patterns() {
+  $patterns = module_invoke_all('springboard_admin_alias_patterns');
+  drupal_alter('springboard_admin_alias_patterns', $patterns);
+  return($patterns);
+}
+
+/** 
+ * Implements hook_springboard_admin_alias_patterns().
+ */
+function springboard_admin_springboard_admin_alias_patterns() {
+  return array(
+    // Node add page.
+    'node/add/%type' => array(
+      'path' => array(
+        'regex' => '|^/node/add(/.*)?$|',
+        'replacement' => 'node/add$1',
+      ),
+      'alias' => array(
+        'regex' => '|^springboard/add(/.*)?$|',
+        'replacement' => 'springboard/add$1',
+      ),
+    ),
+    // Node view pages.
+    'node/%' => array(
+      'path' => array(
+        'regex' => '|^/node(/[0-9]*)?$|',
+        'replacement' => 'node$1',
+      ),
+      'alias' => array(
+        'regex' => '|^springboard/node(/[0-9]+)?$|',
+        'replacement' => FALSE,  // don't redirect node/123 to anything, even for Admin UI users
+      ),
+    ),
+    // Webform A/B Associated Webforms page.
+    'node/%/webforms' => array(
+      'path' => array(
+        'regex' => '|^/node/([0-9]+)/webforms(/.*)?$|',
+        'replacement' => 'node/$1/webforms$2',
+      ),
+      'alias' => array(
+        'regex' => '|^springboard/node/([0-9]+)/included-forms(/.*)?$|',
+        'replacement' => 'springboard/node/$1/included-forms$2',
+      ),
+    ),
+    // Webform submission confirmation pages.
+    'node/%/done' => array(
+      'path' => array(
+        'regex' => '|^/node/([0-9]+)/done$|',
+        'replacement' => 'node/$1/done',
+      ),
+      'alias' => array(
+        'regex' => '|^springboard/node/([0-9]+)/done$|',
+        'replacement' => FALSE,  // don't redirect confirmation pages to springboard/...
+      ),
+    ),
+    // Webform node, confirmation page settings.
+    'node/%/webform/emails' => array(
+      'path' => array(
+        'regex' => '|^/node/([0-9]+)/webform/emails(/.*)?|',
+        'replacement' => 'node/$1/webform/emails$2',
+      ),
+      'alias' => array(
+        'regex' => '|^springboard/node/([0-9]+)/form-components/confirmation-emails(/.*)?$|',
+        'replacement' => 'springboard/node/$1/form-components/confirmation-emails$2',
+      ),
+    ),
+    // Webform node, confirmation page settings.
+    'node/%/webform/configure' => array(
+      'path' => array(
+        'regex' => '|^/node/([0-9]+)/webform/configure$|',
+        'replacement' => 'node/$1/webform/configure',
+      ),
+      'alias' => array(
+        'regex' => '|^springboard/node/([0-9]+)/form-components/confirmation-page-settings$|',
+        'replacement' => 'springboard/node/$1/form-components/confirmation-page-settings',
+      ),
+    ),
+    // Webform node, other settings pages.
+    'node/%/webform' => array(
+      'path' => array(
+        'regex' => '|^/node/([0-9]+)/webform(/.*)?$|',
+        'replacement' => 'node/$1/webform$2',
+      ),
+      'alias' => array(
+        'regex' => '|^springboard/node/([0-9]*)/form-components(/.*)?$|',
+        'replacement' => 'springboard/node/$1/form-components$2',
+      ),
+    ),
+    // Webform results pages.
+    'node/%/webform-results' => array(
+      'path' => array(
+        'regex' => '|^/node/([0-9]+)/webform-results(/.*)?$|',
+        'replacement' => 'node/$1/webform-results$2',
+      ),
+      'alias' => array(
+        'regex' => '|^springboard/node/([0-9]+)/results(/.*)?$|',
+        'replacement' => 'springboard/node/$1/results$2',
+      ),
+    ),
+    // Generic node admin pages.
+    'node/%/%' => array(
+      'path' => array(
+        'regex' => '|^/node/([0-9]+)/(.+)$|',
+        'replacement' => 'node/$1/$2',
+      ),
+      'alias' => array(
+        'regex' => '|^springboard/node/([0-9]+)/(.+)$|',
+        'replacement' => 'springboard/node/$1/$2',
+      ),
+    ),
+    // Current user's page.
+    'user' => array(
+      'path' => array(
+        'regex' => '|^/user$|',
+        'replacement' => 'user',
+      ),
+      'alias' => array(
+        'regex' => '|^springboard/user$|',
+        'replacement' => 'springboard/user',
+      ),
+    ),
+    // All user pages.
+    'user/%' => array(
+      'path' => array(
+        'regex' => '|^/user/([0-9]+)(/.*)?$|',
+        'replacement' => 'user/$1$2',
+      ),
+      'alias' => array(
+        'regex' => '|^springboard/user/([0-9]+)(/.*)?$|',
+        'replacement' => 'springboard/user/$1$2',
+      ),
+    ),
+    // Donation reports.
+    'admin/reports/salesforce/donations' => array(
+      'path' => array(
+        'regex' => '|^/admin/reports/salesforce/donations(/.*)?$|',
+        'replacement' => 'admin/reports/salesforce/donations$1',
+      ),
+      'alias' => array(
+        'regex' => '|^springboard/reports/donations(/.*)?$|',
+        'replacement' => 'springboard/reports/donations$1',
+      ),
+    ),
+    // Webform AB content page.
+    'admin/config/content/webform_ab' => array(
+      'path' => array(
+        'regex' => '|^/admin/config/content/webform_ab$|',
+        'replacement' => 'admin/config/content/webform_ab',
+      ),
+      'alias' => array(
+        'regex' => '|^springboard/settings/config/multivariate-testing$|',
+        'replacement' => 'springboard/settings/config/multivariate-testing',
+      ),
+    ),
+    // Webform AB config page.
+    'admin/content/webform_ab' => array(
+      'path' => array(
+        'regex' => '|^/admin/content/webform_ab$|',
+        'replacement' => 'admin/content/webform_ab',
+      ),
+      'alias' => array(
+        'regex' => '|^springboard/multivariate-testing$|',
+        'replacement' => 'springboard/multivariate-testing',
+      ),
+    ),    
+    // Google Analytics.
+    'admin/config/system/googleanalytics' => array(
+      'path' => array(
+        'regex' => '|^/admin/config/system/googleanalytics$|',
+        'replacement' => 'admin/config/system/googleanalytics',
+      ),
+      'alias' => array(
+        'regex' => '|^springboard/ga$|',
+        'replacement' => 'springboard/ga',
+      ),
+    ),
+    // Salesforce mappings page.
+    'admin/structure/salesforce/mappings' => array(
+      'path' => array(
+        'regex' => '|^/admin/structure/salesforce/mappings(/.*)?$|',
+        'replacement' => 'admin/structure/salesforce/mappings$1',
+      ),
+      'alias' => array(
+        'regex' => '|^springboard/settings/config/mappings(/.*)?$|',
+        'replacement' => 'springboard/settings/config/mappings$1',
+      ),
+    ),
+    // Commerce orders.
+    'admin/commerce/orders' => array(
+      'path' => array(
+        'regex' => '|^/admin/commerce/orders(/.*)?$|',
+        'replacement' => 'admin/commerce/orders$1',
+      ),
+      'alias' => array(
+        'regex' => '|^springboard/donations(/.*)?$|',
+        'replacement' => 'springboard/donations$1',
+      ),
+    ),
+    // Commerce products.
+    'admin/commerce/products' => array(
+      'path' => array(
+        'regex' => '|^/admin/commerce/products(/.*)?$|',
+        'replacement' => 'admin/commerce/products$1',
+      ),
+      'alias' => array(
+        'regex' => '|^springboard/commerce/products(/.*)?$|',
+        'replacement' => 'springboard/commerce/products$1',
+      ),
+    ),  
+    // Springboard pages.
+    'admin/springboard' => array(
+      'path' => array(
+        'regex' => '|^/admin/springboard(/.*)?$|',
+        'replacement' => 'admin/springboard$1',
+      ),
+      'alias' => array(
+        'regex' => '|^springboard(/.*)?$|',
+        'replacement' => 'springboard$1',
+      ),
+    ),
+  );
+}
+
+/**
+ * Helper Function
+ * Given a path, parses through the available Springboard alias patterns and 
+ * returns the appropriate altered path.
+ * 
+ * @param $path
+ *   The path to be checked for matching aliases.
+ * 
+ * @param $type
+ *   The type of path supplied in $path. 'path' if it is the original router path,
+ *   'alias' if it is the Springboard path alias.
+ * 
+ * @return $final_path
+ *   The altered path or FALSE if no alias pattern matched.
+ */
+function springboard_admin_build_admin_path($path, $type) {
+  $final_type = ($type == 'path' ? 'alias' : 'path');
+  $final_path = FALSE;
+  $patterns = springboard_admin_alias_patterns();
+  foreach ($patterns as $key => $pattern) {
+    if (!empty($pattern[$type]['regex']) && preg_match($pattern[$type]['regex'], $path, $matches)) {
+      $final_path = $pattern[$final_type]['replacement'];
+      if (!empty($final_path)) {
+        $final_path = preg_replace($pattern[$type]['regex'], $final_path, $path);
+      }
+      break;
+    }
+  }
+  return $final_path;
+}
+
+/**
  * Helper function.
  * 
  * Allows a user to confirm the action of rebuilding the Springboard Admin Menu.
@@ -1256,15 +1234,19 @@ function springboard_admin_menu_node_delete_link($type) {
  * True if the user does get the SBUX.
  */
 function springboard_admin_user_gets_sbux($account) {
-  $available_roles = user_roles(TRUE, 'access springboard dashboard');
-  $redirect_roles = variable_get('springboard_user_experience', array_keys($available_roles));
-  // Check if the user has ones of the roles that gets redirected to the
-  // Sprinboard dashboard
-  foreach ($account->roles as $rid => $assigned_role) {
-    // If any role matches, change the redirect and end the function.
-    if ($assigned_role && in_array($rid, $redirect_roles)) {
-      return TRUE;
+  static $result = array();
+  if (!isset($result[$account->uid])) {
+    $result[$account->uid] = FALSE;
+    $available_roles = user_roles(TRUE, 'access springboard dashboard');
+    $redirect_roles = variable_get('springboard_user_experience', array_keys($available_roles));
+    // Check if the user has ones of the roles that gets redirected to the
+    // Sprinboard dashboard
+    foreach ($account->roles as $rid => $assigned_role) {
+      // If any role matches, change the redirect and end the function.
+      if ($assigned_role && in_array($rid, $redirect_roles)) {
+        $result[$account->uid] = TRUE;
+      }
     }
   }
-  return FALSE;
+  return $result[$account->uid];
 }
