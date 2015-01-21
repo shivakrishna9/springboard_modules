@@ -65,14 +65,14 @@ function springboard_target_form($target_id = NULL) {
     '#attributes' => array('class' => array('target-add', 'target-organization')),
   );
 
-  $form['target_type'] = array(
-    '#type' => 'select',
-    '#title' => t('Target Type'),
-    '#default_value' => isset($target->target_type) ? $target->target_type : '',
-    '#options' => springboard_target_types(),
-    '#required' => TRUE,
-    '#attributes' => array('class' => array('target-add', 'target-target-type')),
-  );
+  // $form['target_type'] = array(
+  //   '#type' => 'select',
+  //   '#title' => t('Target Type'),
+  //   '#default_value' => isset($target->target_type) ? $target->target_type : '',
+  //   '#options' => springboard_target_types(),
+  //   '#required' => TRUE,
+  //   '#attributes' => array('class' => array('target-add', 'target-target-type')),
+  // );
 
   $form['party'] = array(
     '#type' => 'select',
