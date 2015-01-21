@@ -45,7 +45,6 @@ class springboard_advocacy_views_handler_filter_search_types extends views_handl
       // not a multi-select
       $values = $this->value;
    }
-
    $field = str_replace('search_', '', $this->real_field);
    $this->query->search_terms[$field][] = $values;
   } 

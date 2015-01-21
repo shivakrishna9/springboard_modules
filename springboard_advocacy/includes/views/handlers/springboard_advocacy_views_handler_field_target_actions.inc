@@ -16,6 +16,7 @@ class springboard_advocacy_views_handler_field_target_actions extends views_hand
    * Prevent the default database query.
    */
   function query() {
+
   }
 
   /**
@@ -24,7 +25,7 @@ class springboard_advocacy_views_handler_field_target_actions extends views_hand
   function option_definition() {
     $options = parent::option_definition();
     $options['which_links'] = array(
-      'default' => array('view', 'edit', 'delete'), 
+      //'default' => array('view', 'edit', 'delete'), 
       'translatable' => TRUE);
     return $options;
   }
@@ -47,6 +48,7 @@ class springboard_advocacy_views_handler_field_target_actions extends views_hand
    * Render links.
    */
   function render($values) {
+
     return $this->render_links($values);
   }
 
@@ -56,14 +58,15 @@ class springboard_advocacy_views_handler_field_target_actions extends views_hand
    * Display links based on option choices, result class type and user permission.
    */
   function render_links($values) {
+
     global $user; 
     $legislator = TRUE;
 
-    if (isset($values->class_name) && $values->class_name = "Legislator") {
+    if (isset($values->class_name) && $values->class_name == "Legislator") {
       $path = 'springboard/advocacy/targets/legislator';
     }
     else {
-      $path = 'springboard/advocacy/targets/custom-targets/';
+      $path = 'springboard/advocacy/targets/custom-targets';
       $legislator = FALSE;
     }
 
@@ -78,9 +81,10 @@ class springboard_advocacy_views_handler_field_target_actions extends views_hand
         $links[] = l(t('edit'), $path . '/' . $values->id . '/edit');
       }
       if (user_access('delete targets') && !empty($this->options['which_links']['delete'])) {
-        $links[] = l(t('edit'), $path . '/' . $values->id . '/delete');
+        $links[] = l(t('delete'), $path . '/' . $values->id . '/delete');
       }
     }
+
 
     return implode(' | ', $links);
   }

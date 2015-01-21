@@ -14,6 +14,7 @@ class springboard_advocacy_views_handler_field_group_actions extends views_handl
 
   function query() {
    // override
+
   }
 
   function option_definition() {
@@ -48,7 +49,7 @@ class springboard_advocacy_views_handler_field_group_actions extends views_handl
       $links[] = l('edit', 'springboard/advocacy/groups/'. $values->id . '/edit');
     }
     if ($values->class_name != "Legislator" && user_access('delete targets') && !empty($this->options['which_links']['delete'])) {
-      $links[] = l('edit', 'springboard/advocacy/groups/'. $values->id . '/delete');
+      $links[] = l('delete', 'springboard/advocacy/groups/'. $values->id . '/delete');
     }
     return implode(' | ', $links);
   }
