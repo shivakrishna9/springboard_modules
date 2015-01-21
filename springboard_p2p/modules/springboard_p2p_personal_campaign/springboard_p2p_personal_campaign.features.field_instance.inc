@@ -134,9 +134,9 @@ function springboard_p2p_personal_campaign_field_default_field_instances() {
       'active' => 1,
       'module' => 'text',
       'settings' => array(
-        'size' => 60,
+        'rows' => 5,
       ),
-      'type' => 'text_textfield',
+      'type' => 'text_textarea',
       'weight' => 13,
     ),
   );
@@ -205,17 +205,18 @@ function springboard_p2p_personal_campaign_field_default_field_instances() {
     'entity_type' => 'node',
     'field_name' => 'field_ms_referrer',
     'label' => 'Referrer',
-    'required' => FALSE,
+    'required' => 0,
     'settings' => array(
       'text_processing' => 0,
       'user_register_form' => FALSE,
     ),
     'widget' => array(
+      'active' => 1,
       'module' => 'text',
       'settings' => array(
-        'size' => 60,
+        'rows' => 5,
       ),
-      'type' => 'text_textfield',
+      'type' => 'text_textarea',
       'weight' => 12,
     ),
   );
