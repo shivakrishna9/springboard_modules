@@ -156,6 +156,39 @@ function springboard_admin_admin_menu_items() {
     }
   }
 
+  // Top Level: Springboard Advocacy.
+  $items['admin/springboard/advocacy'] = array(
+    'link_path' => 'admin/springboard/advocacy',
+    'link_title' => t('Advocacy'),
+    'menu_name' => 'springboard_admin_menu',
+    'expanded' => 1,
+    'customized' => 1,
+    'weight' => 3,
+    '_children' => array(),
+  );
+
+  if(module_exists('views')) {
+
+    $items['admin/springboard/advocacy']['_children']['admin/springboard/advocacy/alerts'] = array(
+      'link_path' => 'admin/springboard/advocacy/alerts',
+      'link_title' => 'Alerts',
+      'menu_name' => 'springboard_admin_menu',
+      'expanded' => 1,
+      'customized' => 1,
+      'weight' => 0,
+    );
+
+    // Springboard Advocacy > Custom Targets.
+    $items['admin/springboard/advocacy']['_children']['admin/springboard/advocacy/custom-targets'] = array(
+      'link_path' => 'admin/springboard/advocacy/custom-targets',
+      'link_title' => 'Custom Targets',
+      'menu_name' => 'springboard_admin_menu',
+      'expanded' => 1,
+      'customized' => 1,
+      'weight' => 0,
+    );
+  }
+
   // Top Level: Asset Library.
   $items['admin/springboard/asset-library'] = array(
     'link_path' => 'admin/springboard/asset-library',
