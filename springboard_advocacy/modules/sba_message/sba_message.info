@@ -1,0 +1,16 @@
+name = Springboard Advocacy Message
+description = Provides entity functionality as an example to use in your own development projects
+core = 7.x
+
+dependencies[] = entity
+dependencies[] = views
+
+files[] = sba_message.admin.inc
+files[] = sba_message_type.admin.inc
+files[] = views/sba_message.views.inc
+files[] = views/sba_message_handler_link_field.inc
+files[] = views/sba_message_handler_delete_link_field.inc
+files[] = views/sba_message_handler_edit_link_field.inc
+files[] = views/sba_message_handler_sba_message_operations_field.inc
+package = Springboard Advocacy
+
