@@ -1942,7 +1942,9 @@ function springboard_views_views_default_views() {
   $handler->display->display_options['fields']['nothing']['id'] = 'nothing';
   $handler->display->display_options['fields']['nothing']['table'] = 'views';
   $handler->display->display_options['fields']['nothing']['field'] = 'nothing';
-  $handler->display->display_options['fields']['nothing']['alter']['text'] = '<a href="/admin/commerce/orders/[order_id]/payment/[transaction_id]/refund">Refund</a>';
+  $handler->display->display_options['fields']['nothing']['alter']['text'] = 'Payments';
+  $handler->display->display_options['fields']['nothing']['alter']['make_link'] = TRUE;
+  $handler->display->display_options['fields']['nothing']['alter']['path'] = 'admin/commerce/orders/[order_id]/payment';
   /* Field: Content: Nid */
   $handler->display->display_options['fields']['nid']['id'] = 'nid';
   $handler->display->display_options['fields']['nid']['table'] = 'node';
@@ -2044,7 +2046,9 @@ function springboard_views_views_default_views() {
   $handler->display->display_options['fields']['nothing']['id'] = 'nothing';
   $handler->display->display_options['fields']['nothing']['table'] = 'views';
   $handler->display->display_options['fields']['nothing']['field'] = 'nothing';
-  $handler->display->display_options['fields']['nothing']['alter']['text'] = '<a href="/admin/commerce/orders/[order_id]/payment/[transaction_id]/refund">Refund</a>';
+  $handler->display->display_options['fields']['nothing']['alter']['text'] = 'Payments';
+  $handler->display->display_options['fields']['nothing']['alter']['make_link'] = TRUE;
+  $handler->display->display_options['fields']['nothing']['alter']['path'] = 'admin/commerce/orders/[order_id]/payment';
   /* Field: Content: Nid */
   $handler->display->display_options['fields']['nid']['id'] = 'nid';
   $handler->display->display_options['fields']['nid']['table'] = 'node';
@@ -2150,7 +2154,9 @@ function springboard_views_views_default_views() {
   $handler->display->display_options['fields']['nothing']['id'] = 'nothing';
   $handler->display->display_options['fields']['nothing']['table'] = 'views';
   $handler->display->display_options['fields']['nothing']['field'] = 'nothing';
-  $handler->display->display_options['fields']['nothing']['alter']['text'] = '<a href="/admin/commerce/orders/[order_id]/payment/[transaction_id]/refund">Refund</a>';
+  $handler->display->display_options['fields']['nothing']['alter']['text'] = 'Payments';
+  $handler->display->display_options['fields']['nothing']['alter']['make_link'] = TRUE;
+  $handler->display->display_options['fields']['nothing']['alter']['path'] = 'admin/commerce/orders/[order_id]/payment';
   /* Field: Content: Nid */
   $handler->display->display_options['fields']['nid']['id'] = 'nid';
   $handler->display->display_options['fields']['nid']['table'] = 'node';
