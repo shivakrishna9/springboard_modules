@@ -31,6 +31,6 @@ class sba_message_handler_edit_link_field extends sba_message_handler_link_field
     else {
       $nid = '';
     }
-    return l($text, 'admin/content/sba_messages/sba_message/' . $sba_message_id . '/edit', array('query' => array('field_sba_alert_id' => $nid)));
+    return l($text, 'admin/springboard/sba_messages/sba_message/' . $sba_message_id . '/edit', array('query' => array('field_sba_alert_id' => $nid)));
   }
 }

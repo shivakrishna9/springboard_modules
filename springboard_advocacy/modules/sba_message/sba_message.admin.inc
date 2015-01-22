@@ -187,6 +187,22 @@ function sba_message_edit_form($form, &$form_state, $sba_message) {
   $form_state['sba_message'] = $sba_message;
   field_attach_form('sba_message', $sba_message, $form, $form_state);
 
+
+
+  $form['quick_groups'] = array(
+    '#type' => 'container',
+    '#attributes' => array('class' => array('form-quick-groups')),
+    '#weight' => 400,
+  );
+
+
+  $form['quick_groups']['us_house'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Us House'),
+    '#value' => t('fr'),
+  );
+
+
   $form['actions'] = array(
     '#type' => 'container',
     '#attributes' => array('class' => array('form-actions')),
@@ -211,7 +227,7 @@ function sba_message_edit_form($form, &$form_state, $sba_message) {
     $form['actions']['delete'] = array(
       '#type' => 'submit',
       '#value' => t('Delete sba_message'),
-      '#suffix' => l(t('Cancel'), 'admin/content/sba_messages'),
+      '#suffix' => l(t('Cancel'), 'admin/springboard/sba_messages'),
       '#submit' => $submit + array('sba_message_form_submit_delete'),
       '#weight' => 45,
     );
@@ -263,7 +279,7 @@ function sba_message_edit_form_submit(&$form, &$form_state) {
  * @todo Remove hard-coded path
  */
 function sba_message_form_submit_delete(&$form, &$form_state) {
-  $form_state['redirect'] = 'admin/content/sba_messages/sba_message/' . $form_state['sba_message']->sba_message_id . '/delete';
+  $form_state['redirect'] = 'admin/springboard/sba_messages/sba_message/' . $form_state['sba_message']->sba_message_id . '/delete';
 }
 
 
@@ -282,7 +298,7 @@ function sba_message_delete_form($form, &$form_state, $sba_message) {
 
   $form = confirm_form($form,
     t('Are you sure you want to delete sba_message %name?', array('%name' => $sba_message->name)),
-    'admin/content/sba_messages/sba_message',
+    'admin/springboard/sba_messages/sba_message',
     '<p>' . t('This action cannot be undone.') . '</p>',
     t('Delete'),
     t('Cancel'),
@@ -303,7 +319,7 @@ function sba_message_delete_form_submit($form, &$form_state) {
   drupal_set_message(t('The sba_message %name has been deleted.', array('%name' => $sba_message->name)));
   watchdog('sba_message', 'Deleted sba_message %name.', array('%name' => $sba_message->name));
 
-  $form_state['redirect'] = 'admin/content/sba_messages';
+  $form_state['redirect'] = 'admin/springboard/sba_messages';
 }
 
 
@@ -358,8 +374,8 @@ function sba_message_set_breadcrumb() {
   $breadcrumb = array(
     l(t('Home'), '<front>'),
     l(t('Administration'), 'admin'),
-    l(t('Content'), 'admin/content'),
-    l(t('SBA Messages'), 'admin/content/sba_messages'),
+    l(t('Content'), 'admin/springboard'),
+    l(t('SBA Messages'), 'admin/springboard/sba_messages'),
   );
 
   drupal_set_breadcrumb($breadcrumb);

@@ -82,7 +82,7 @@ function sba_message_entity_info() {
     'module' => 'sba_message',
     // The information below is used by the SBA MessageUIController (which extends the EntityDefaultUIController)
     'admin ui' => array(
-      'path' => 'admin/content/sba_messages',
+      'path' => 'admin/springboard/sba_messages',
       'file' => 'sba_message.admin.inc',
       'controller class' => 'SbaMessageUIController',
       'menu wildcard' => '%sba_message',
@@ -399,8 +399,8 @@ function sba_message_theme() {
  */
 function sba_message_menu_local_tasks_alter(&$data, $router_item, $root_path) {
   // Add action link 'admin/structure/sba_messages/add' on 'admin/structure/sba_messages'.
-  if ($root_path == 'admin/content/sba_messages') {
-    $item = menu_get_item('admin/content/sba_messages/add');
+  if ($root_path == 'admin/springboard/sba_messages') {
+    $item = menu_get_item('admin/springboard/sba_messages/add');
     if ($item['access']) {
       $data['actions']['output'][] = array(
         '#theme' => 'menu_local_action',

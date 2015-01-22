@@ -26,6 +26,6 @@ class sba_message_handler_delete_link_field extends sba_message_handler_link_fie
     $text = !empty($this->options['text']) ? $this->options['text'] : t('delete');
     $sba_message_id = $values->{$this->aliases['sba_message_id']};
     
-    return l($text, 'admin/content/sba_messages/sba_message/' . $sba_message_id . '/delete');
+    return l($text, 'admin/springboard/sba_messages/sba_message/' . $sba_message_id . '/delete');
   }
 }

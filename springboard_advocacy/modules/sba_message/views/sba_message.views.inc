@@ -179,7 +179,7 @@ function sba_message_views_default_views() {
   
   /* Display: Page */
   $handler = $view->new_display('page', 'Page', 'sba_messages_admin_page');
-  $handler->display->display_options['path'] = 'admin/content/sba_messages/list';
+  $handler->display->display_options['path'] = 'admin/springboard/sba_messages/list';
   $handler->display->display_options['menu']['type'] = 'default tab';
   $handler->display->display_options['menu']['title'] = 'List';
   $handler->display->display_options['menu']['weight'] = '-10';
