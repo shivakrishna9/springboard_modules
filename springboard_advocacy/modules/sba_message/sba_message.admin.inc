@@ -13,42 +13,41 @@
  * UI controller.
  */
 class SbaMessageUIController extends EntityDefaultUIController {
-
   /**
    * Overrides hook_menu() defaults. Main reason for doing this is that
    * parent class hook_menu() is optimized for entity type administration.
    */
   public function hook_menu() {
-    
+
     $items = array();
     $id_count = count(explode('/', $this->path));
     $wildcard = isset($this->entityInfo['admin ui']['menu wildcard']) ? $this->entityInfo['admin ui']['menu wildcard'] : '%' . $this->entityType;
 
-    $items[$this->path] = array(
-      'title' => 'SBA Messages',
-      'description' => 'Add edit and update sba_messages.',
-      'page callback' => 'system_admin_menu_block_page',
-      'access arguments' => array('access administration pages'),
-      'file path' => drupal_get_path('module', 'system'),
-      'file' => 'system.admin.inc',
-    );
+    // $items[$this->path] = array(
+    //   'title' => 'SBA Messages',
+    //   'description' => 'Add edit and update sba_messages.',
+    //   'page callback' => 'system_admin_menu_block_page',
+    //   'access arguments' => array('access administration pages'),
+    //   'file path' => drupal_get_path('module', 'system'),
+    //   'file' => 'system.admin.inc',
+    // );
     
     // Change the overview menu type for the list of sba_messages.
-    $items[$this->path]['type'] = MENU_LOCAL_TASK;
+    //$items[$this->path]['type'] = MENU_LOCAL_TASK;
     
     // Change the add page menu to multiple types of entities
-    $items[$this->path . '/add'] = array(
-      'title' => 'Add a sba_message',
-      'description' => 'Add a new sba_message',
-      'page callback'  => 'sba_message_add_page',
-      'access callback'  => 'sba_message_access',
-      'access arguments' => array('edit'),
-      'type' => MENU_NORMAL_ITEM,
-      'weight' => 20,
-      'file' => 'sba_message.admin.inc',
-      'file path' => drupal_get_path('module', $this->entityInfo['module'])
+    // $items[$this->path . '/add'] = array(
+    //   'title' => 'Add a sba_message',
+    //   'description' => 'Add a new sba_message',
+    //   'page callback'  => 'sba_message_add_page',
+    //   'access callback'  => 'sba_message_access',
+    //   'access arguments' => array('edit'),
+    //   'type' => MENU_NORMAL_ITEM,
+    //   'weight' => 20,
+    //   'file' => 'sba_message.admin.inc',
+    //   'file path' => drupal_get_path('module', $this->entityInfo['module'])
 
-    );
+    // );
     
     // Add menu items to add each different type of entity.
     foreach (sba_message_get_types() as $type) {
@@ -113,17 +112,16 @@ class SbaMessageUIController extends EntityDefaultUIController {
    * Create the markup for the add SBA Message Entities page within the class
    * so it can easily be extended/overriden.
    */ 
-  public function addPage() {
-    $item = menu_get_item();
-    $content = system_admin_menu_block($item);
-
-    if (count($content) == 1) {
-      $item = array_shift($content);
-      drupal_goto($item['href']);
-    }    
+  // public function addPage() {
+  //   $item = menu_get_item();
+  //   $content = system_admin_menu_block($item);
+  //   if (count($content) == 1) {
+  //     $item = array_shift($content);
+  //     drupal_goto($item['href']);
+  //   }    
         
-    return theme('sba_message_add_list', array('content' => $content));
-  }
+  //  // return theme('sba_message_add_list', array('content' => $content));
+  // }
   
 }
 
@@ -169,7 +167,7 @@ function sba_message_edit_form($form, &$form_state, $sba_message) {
   // Add the default field elements.
   $form['name'] = array(
     '#type' => 'textfield',
-    '#title' => t('SBA Message Name'),
+    '#title' => t('Internal Title'),
     '#default_value' => isset($sba_message->name) ? $sba_message->name : '',
     '#maxlength' => 255,
     '#required' => TRUE,
@@ -329,10 +327,10 @@ function sba_message_delete_form_submit($form, &$form_state) {
  *
  * @todo Pass this through a proper theme function
  */
-function sba_message_add_page() {
-  $controller = entity_ui_controller('sba_message');
-  return $controller->addPage();
-}
+// function sba_message_add_page() {
+//   $controller = entity_ui_controller('sba_message');
+//   return $controller->addPage();
+// }
 
 
 /**
@@ -340,28 +338,28 @@ function sba_message_add_page() {
  *
  * @ingroup themeable
  */
-function theme_sba_message_add_list($variables) {
-  $content = $variables['content'];
-  $output = '';
-  if ($content) {
-    $output = '<dl class="sba_message-type-list">';
-    foreach ($content as $item) {
-      $output .= '<dt>' . l($item['title'], $item['href']) . '</dt>';
-      $output .= '<dd>' . filter_xss_admin($item['description']) . '</dd>';
-    }
-    $output .= '</dl>';
-  }
-  else {
-    if (user_access('administer sba message types')) {
-      $output = '<p>' . t('SBA Message Entities cannot be added because you have not created any sba_message types yet. Go to the <a href="@create-sba_message-type">sba_message type creation page</a> to add a new sba_message type.', array('@create-sba_message-type' => url('admin/structure/sba_message_types/add'))) . '</p>';
-    }
-    else {
-      $output = '<p>' . t('No sba_message types have been created yet for you to use.') . '</p>';
-    }
-  }
+// function theme_sba_message_add_list($variables) {
+  // $content = $variables['content'];
+  // $output = '';
+  // if ($content) {
+  //   $output = '<dl class="sba_message-type-list">';
+  //   foreach ($content as $item) {
+  //     $output .= '<dt>' . l($item['title'], $item['href']) . '</dt>';
+  //     $output .= '<dd>' . filter_xss_admin($item['description']) . '</dd>';
+  //   }
+  //   $output .= '</dl>';
+  // }
+  // else {
+  //   if (user_access('administer sba message types')) {
+  //     $output = '<p>' . t('SBA Message Entities cannot be added because you have not created any sba_message types yet. Go to the <a href="@create-sba_message-type">sba_message type creation page</a> to add a new sba_message type.', array('@create-sba_message-type' => url('admin/structure/sba_message_types/add'))) . '</p>';
+  //   }
+  //   else {
+  //     $output = '<p>' . t('No sba_message types have been created yet for you to use.') . '</p>';
+  //   }
+  // }
 
-  return $output;
-}
+  // return $output;
+// }
 
 
 
