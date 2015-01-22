@@ -25,7 +25,12 @@ class sba_message_handler_edit_link_field extends sba_message_handler_link_field
     
     $text = !empty($this->options['text']) ? $this->options['text'] : t('edit');
     $sba_message_id = $values->{$this->aliases['sba_message_id']};
-    
-    return l($text, 'admin/content/sba_messages/sba_message/' . $sba_message_id . '/edit');
+    if (is_numeric(arg(1)) && arg(2) == 'messages') {
+      $nid = arg(1);
+    }
+    else {
+      $nid = '';
+    }
+    return l($text, 'admin/content/sba_messages/sba_message/' . $sba_message_id . '/edit', array('query' => array('field_sba_alert_id' => $nid)));
   }
 }

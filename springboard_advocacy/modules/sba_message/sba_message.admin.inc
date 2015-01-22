@@ -253,7 +253,8 @@ function sba_message_edit_form_submit(&$form, &$form_state) {
   $sba_message->changed = time();
   
   $sba_message->save();
-  $form_state['redirect'] = 'admin/content/sba_messages';
+  $nid = $_GET['field_sba_alert_id'];
+  $form_state['redirect'] = 'node/' . $nid . '/messages';
 }
 
 /**
