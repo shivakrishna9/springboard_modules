@@ -10,17 +10,19 @@
 /**
  * Implements hook_menu().
  */
-function sba_messages_menu_alter(&$items) {
+function sba_message_menu_alter(&$items) {
   // Set a custom access callback function for our view page display path.
   $items['node/%/messages']['access callback'] = 'sba_message_access_node_settings';
+  $items['node/%/messages']['access arguments'] = array(1);
 }
 
 /**
  * Access callback for node share content form.
  */
-function sba_message_access_node_settings($node) {
+function sba_message_access_node_settings($nid) {
   global $user;
   // Hide share content settings tab on disabled content types.
+  $node = node_load($nid);
   $types = variable_get('springboard_advocacy_alert_types', array());
   if (!in_array($node->type, $types)) {
     return FALSE;
@@ -36,14 +38,14 @@ function sba_message_access_node_settings($node) {
   return FALSE;
 }
 
-function sba_messages_module_implements_alter(&$implementations, $hook) {
+function sba_message_module_implements_alter(&$implementations, $hook) {
   // When the implementations of hook_menu_alter are called, we need our module
   // to be called after views, so let's remove it from the implementations then
   // add it to the end.
   if ($hook == 'menu_alter') {
-    if (isset($implementations['sba_messages'])) {
-      unset($implementations['sba_messages']);
-      $implementations['sba_messages'] = FALSE;
+    if (isset($implementations['sba_message'])) {
+      unset($implementations['sba_message']);
+      $implementations['sba_message'] = FALSE;
     }
   }
 }
