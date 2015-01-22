@@ -26,7 +26,7 @@ function springboard_messages_menu() {
 function springboard_messages_access_node_settings($node) {
   global $user;
   // Hide share content settings tab on disabled content types.
-  $types = variable_get('springboard_advocacy_message_types', array());
+  $types = variable_get('springboard_advocacy_alert_types', array());
   if (!in_array($node->type, $types)) {
     return FALSE;
   }

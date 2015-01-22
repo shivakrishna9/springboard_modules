@@ -22,7 +22,7 @@ function springboard_advocacy_webform_submit($form, $form_state) {
   if(!empty($zip)) {
     $values = $form_state['values']['submitted_tree'];
     $contact = springboard_advocacy_build_contact($values, $geo);
-    $message =array(
+    $message = array(
       'form_id' => $values['advocacy_id'],
       'message' => $values['sba_message'],
       'subject' => $values['sba_message_subject'],
