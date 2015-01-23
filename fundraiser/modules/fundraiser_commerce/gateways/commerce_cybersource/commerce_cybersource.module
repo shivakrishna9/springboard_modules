@@ -582,10 +582,10 @@ function commerce_cybersource_soap_cc_submit_form_submit($payment_method, $pane_
     }
   }
   $declines = !empty($avs) ? implode(' ', $avs) : 'N';
-  $request->businessRules_declineAVSFlags = $declines;
-  // $request->businessRules = (object) array(
-  //   'decline_AVSFlags' => $declines,
-  //   );
+  //$request->businessRules_declineAVSFlags = $declines;
+  $request->businessRules = (object) array(
+    'decline_AVSFlags' => $declines,
+    );
 
   if ($response = commerce_cybersource_soap_api_request($payment_method, $request)) {
     // Prepare a transaction object to log the API response.
