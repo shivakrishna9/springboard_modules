@@ -52,7 +52,7 @@ function sba_message_views_default_views() {
   $view = new view();
   $view->name = 'sba_messages_node';
   $view->description = '';
-  $view->tag = 'default';
+  $view->tag = 'Advocacy';
   $view->base_table = 'sba_message';
   $view->human_name = 'SBA  Messges';
   $view->core = 7;
@@ -108,8 +108,12 @@ function sba_message_views_default_views() {
   $handler->display->display_options['header']['area_text_custom']['table'] = 'views';
   $handler->display->display_options['header']['area_text_custom']['field'] = 'area_text_custom';
   $handler->display->display_options['header']['area_text_custom']['empty'] = TRUE;
-  $handler->display->display_options['header']['area_text_custom']['content'] = '<a href = "/node/%node/messages/add/sba_letter_to_target_message?field_sba_alert_id=%1">Create Message</a>';
+  $handler->display->display_options['header']['area_text_custom']['content'] = '<a href = "/node//messages/add/sba_letter_to_target_message?field_sba_alert_id=%1">Create Message</a>';
   $handler->display->display_options['header']['area_text_custom']['tokenize'] = TRUE;
+  /* Relationship: Entity Reference: Referenced Entity */
+  $handler->display->display_options['relationships']['field_sba_alert_id_target_id']['id'] = 'field_sba_alert_id_target_id';
+  $handler->display->display_options['relationships']['field_sba_alert_id_target_id']['table'] = 'field_data_field_sba_alert_id';
+  $handler->display->display_options['relationships']['field_sba_alert_id_target_id']['field'] = 'field_sba_alert_id_target_id';
   /* Field: SBA Message: Internal Title */
   $handler->display->display_options['fields']['field_sba_internal_title']['id'] = 'field_sba_internal_title';
   $handler->display->display_options['fields']['field_sba_internal_title']['table'] = 'field_data_field_sba_internal_title';
@@ -149,6 +153,40 @@ function sba_message_views_default_views() {
 
   /* Display: Page */
   $handler = $view->new_display('page', 'Page', 'page');
+  $handler->display->display_options['defaults']['header'] = FALSE;
+  /* Header: Global: Unfiltered text */
+  $handler->display->display_options['header']['area_text_custom']['id'] = 'area_text_custom';
+  $handler->display->display_options['header']['area_text_custom']['table'] = 'views';
+  $handler->display->display_options['header']['area_text_custom']['field'] = 'area_text_custom';
+  $handler->display->display_options['header']['area_text_custom']['empty'] = TRUE;
+  $handler->display->display_options['header']['area_text_custom']['content'] = '<a href = "/node/[nid]/messages/add/sba_letter_to_target_message?field_sba_alert_id=%1">Create Message</a>';
+  $handler->display->display_options['header']['area_text_custom']['tokenize'] = TRUE;
+  $handler->display->display_options['defaults']['fields'] = FALSE;
+  /* Field: SBA Message: Internal Title */
+  $handler->display->display_options['fields']['field_sba_internal_title']['id'] = 'field_sba_internal_title';
+  $handler->display->display_options['fields']['field_sba_internal_title']['table'] = 'field_data_field_sba_internal_title';
+  $handler->display->display_options['fields']['field_sba_internal_title']['field'] = 'field_sba_internal_title';
+  /* Field: SBA Message: Subject */
+  $handler->display->display_options['fields']['field_sba_subject']['id'] = 'field_sba_subject';
+  $handler->display->display_options['fields']['field_sba_subject']['table'] = 'field_data_field_sba_subject';
+  $handler->display->display_options['fields']['field_sba_subject']['field'] = 'field_sba_subject';
+  $handler->display->display_options['fields']['field_sba_subject']['delta_offset'] = '0';
+  /* Field: SBA Message: Alert ID */
+  $handler->display->display_options['fields']['field_sba_alert_id']['id'] = 'field_sba_alert_id';
+  $handler->display->display_options['fields']['field_sba_alert_id']['table'] = 'field_data_field_sba_alert_id';
+  $handler->display->display_options['fields']['field_sba_alert_id']['field'] = 'field_sba_alert_id';
+  $handler->display->display_options['fields']['field_sba_alert_id']['settings'] = array(
+    'link' => 0,
+  );
+  /* Field: SBA Message: Edit Link */
+  $handler->display->display_options['fields']['edit_sba_message']['id'] = 'edit_sba_message';
+  $handler->display->display_options['fields']['edit_sba_message']['table'] = 'sba_message';
+  $handler->display->display_options['fields']['edit_sba_message']['field'] = 'edit_sba_message';
+  /* Field: Content: Nid */
+  $handler->display->display_options['fields']['nid']['id'] = 'nid';
+  $handler->display->display_options['fields']['nid']['table'] = 'node';
+  $handler->display->display_options['fields']['nid']['field'] = 'nid';
+  $handler->display->display_options['fields']['nid']['relationship'] = 'field_sba_alert_id_target_id';
   $handler->display->display_options['path'] = 'node/%/messages';
   $handler->display->display_options['menu']['type'] = 'tab';
   $handler->display->display_options['menu']['title'] = 'Messages';
@@ -189,6 +227,7 @@ function sba_message_views_default_views() {
   $handler->display->display_options['bundles'] = array(
     0 => 'springboard_letter',
   );
+
   $views[$view->name] = $view;
 
   return $views;
