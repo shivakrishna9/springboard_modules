@@ -2,8 +2,12 @@
 /**
  * Administration tests for my module.
  */
-class securePrepopulateUnitTestCase extends DrupalWebTestCase {
+class SecurePrepopulateUnitTestCase extends DrupalWebTestCase {
 
+  /**
+   * @var string
+   */
+  protected $encrypted;
 
   /**
    * Implements getInfo().
@@ -11,17 +15,27 @@ class securePrepopulateUnitTestCase extends DrupalWebTestCase {
   public static function getInfo() {
     return array(
       'name' => t('Secure pre-populate unit tests'),
-      'description' => t('Administration tests for my module.'),
+      'description' => t('Tests secure prepopulate encryption and decryption.'),
       'group' => t('Secure Prepopulate'),
     );
   }
 
   public function setUp() {
-    // Enable any module that you will need in your tests.
-    parent::setUp('secure_prepopulate');
+    parent::setUp(array('secure_prepopulate'));
+
+    // Set up some default variables
+    variable_set('secure_prepopulate_key', '12345678901234561234567890123456');
+    variable_set('secure_prepopulate_iv', '1234567890123456');
+    variable_set('secure_prepopulate_precedence', 'url');
+
+    // encrypted = first_name=Euro&last_name=Guy&uid=29
+    $this->encrypted = 'zBYBEVb6oX39UMG3b7HFlWTHbQ/L6Gd20MM2JexIVQ6msawBjeTa/MMjQFc9jnNA';
   }
 
-  public function testCrypt() {
+  /**
+   * Tests encrypting a query string.
+   */
+  public function testEncrypt() {
     $settings = array(
       'first_name' => 'Allen',
       'last_name' => 'Freeman',
@@ -33,6 +47,7 @@ class securePrepopulateUnitTestCase extends DrupalWebTestCase {
       'state' => 'IL',
       'zip' => '55555',
     );
+    $query = array();
     foreach ($settings as $key => $value) {
       $query[] = "$key=$value";
     }
@@ -48,11 +63,24 @@ class securePrepopulateUnitTestCase extends DrupalWebTestCase {
   }
 
   /**
+   * Test the decryption of a string.
+   */
+  public function testDecrypt() {
+    $decrypted = secure_prepopulate_decrypt_qs($this->encrypted);
+    $this->assertEqual($decrypted['first_name'], 'Euro', t('Decrypted first_name field = Euro'));
+    $this->assertEqual($decrypted['last_name'], 'Guy', t('Decrypted last_name field = Guy'));
+    $this->assertEqual($decrypted['uid'], '29', t('Decrypted uid field = 29'));
+  }
+
+  /**
    * Ensure cron jobs are working correctly.
    */
   public function testCron() {
+    $expire_days = 30;
+    variable_set('secure_prepopulate_expired_date_limit', $expire_days);
+
     // Create dummy entries.
-    foreach (range(0, 60) as $num) {
+    foreach (range(0, (2 * $expire_days)) as $num) {
       $row = array(
         'hash' => md5($num),
         'expire_date' => (REQUEST_TIME - ($num * 24 * 60 * 60)),
@@ -64,7 +92,7 @@ class securePrepopulateUnitTestCase extends DrupalWebTestCase {
     $this->cronRun();
 
     // Verify entries were removed.
-    $max_date = REQUEST_TIME - (30 * 24 * 60 * 60);
+    $max_date = REQUEST_TIME - ($expire_days * 24 * 60 * 60);
     $expired_count = db_select('secure_prepopulate_expired', 's')
       ->fields('s', array('hash'))
       ->condition('expire_date', $max_date, '<')

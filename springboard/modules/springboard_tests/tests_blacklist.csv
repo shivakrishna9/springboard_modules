@@ -39,7 +39,6 @@ SalesforceSyncQueueTokenTestCase
 SalesforceSyncSyncTestCase
 SalesforceSyncTestCase
 SalesforceSyncTokenTestCase
-securePrepopulateUnitTestCase
 SpringboardAPITestCase
 SpringboardGaTestCase
 SpringboardPetitionQuicksignTestCase
