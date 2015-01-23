@@ -49,16 +49,18 @@ function commerce_sage_payments_credit_request($payment_method, $transaction, $o
     watchdog('commerce_sage_payments', 'Sage Payments Credit response: !param', array('!param' => '<pre>' . check_plain(print_r($response, TRUE)) . '</pre>', WATCHDOG_DEBUG));
   }
 
+  // Create a new transaction to record the credit.
+  $credit_transaction = commerce_payment_transaction_new($payment_method['method_id'], $order->order_id);
+  $credit_transaction->instance_id = $payment_method['instance_id'];
+  $credit_transaction->remote_id = isset($response['REFERENCE']) ? $response['REFERENCE'] : '';
+  $credit_transaction->amount = $credit_amount * -1;
+  $credit_transaction->currency_code = $transaction->currency_code;
+  $credit_transaction->payload[REQUEST_TIME] = check_plain(print_r($response, TRUE));
+
   if (trim($response['APPROVAL_INDICATOR']) == 'A') {
     drupal_set_message(t('Credit for @amount issued successfully', array('@amount' => commerce_currency_format($credit_amount, $transaction->currency_code))));
 
-    // Create a new transaction to record the credit.
-    $credit_transaction = commerce_payment_transaction_new('commerce_sage_payments_cc', $order->order_id);
-    $credit_transaction->instance_id = $payment_method['instance_id'];
-    $credit_transaction->remote_id = $response['REFERENCE'];
-    $credit_transaction->amount = $credit_amount * -1;
-    $credit_transaction->currency_code = $transaction->currency_code;
-    $credit_transaction->payload[REQUEST_TIME] = check_plain(print_r($response, TRUE));
+    // Set the statuses.
     $credit_transaction->status = COMMERCE_PAYMENT_STATUS_SUCCESS;
     $credit_transaction->remote_status = COMMERCE_CREDIT_AUTH_CAPTURE;
 
@@ -73,8 +75,11 @@ function commerce_sage_payments_credit_request($payment_method, $transaction, $o
     return TRUE;
   }
   else {
-    // Save the failure response message to the original transaction.
-    $transaction->payload[REQUEST_TIME] = check_plain(print_r($response, TRUE));
+    // Set the statuses.
+    $credit_transaction->status = COMMERCE_PAYMENT_STATUS_FAILURE;
+    $credit_transaction->remote_status = '';
+
+    _commerce_sage_payments_build_transaction_message($credit_transaction, $response);
 
     // Display a failure message and response reason from Sage Payments.
     $message = $response['MESSAGE'];
@@ -84,7 +89,7 @@ function commerce_sage_payments_credit_request($payment_method, $transaction, $o
     // if ($response[2] == 54) {
     //   drupal_set_message(t('The transaction must be setted before a credit can be issued. This usually takes 24 hours'), 'error');
     // }
-    commerce_payment_transaction_save($transaction);
+    commerce_payment_transaction_save($credit_transaction);
   }
 
   return FALSE;
