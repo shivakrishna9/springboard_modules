@@ -5,11 +5,6 @@
 class SecurePrepopulateUnitTestCase extends DrupalWebTestCase {
 
   /**
-   * @var string
-   */
-  protected $encrypted;
-
-  /**
    * Implements getInfo().
    */
   public static function getInfo() {
@@ -22,54 +17,39 @@ class SecurePrepopulateUnitTestCase extends DrupalWebTestCase {
 
   public function setUp() {
     parent::setUp(array('secure_prepopulate'));
-
-    // Set up some default variables
-    variable_set('secure_prepopulate_key', '12345678901234561234567890123456');
-    variable_set('secure_prepopulate_iv', '1234567890123456');
-    variable_set('secure_prepopulate_precedence', 'url');
-
-    // encrypted = first_name=Euro&last_name=Guy&uid=29
-    $this->encrypted = 'zBYBEVb6oX39UMG3b7HFlWTHbQ/L6Gd20MM2JexIVQ6msawBjeTa/MMjQFc9jnNA';
   }
 
   /**
    * Tests encrypting a query string.
    */
   public function testEncrypt() {
-    $settings = array(
-      'first_name' => 'Allen',
-      'last_name' => 'Freeman',
-      'email' => 'allen.freeman@example.com',
-      'address' => '12345 Test Dr',
-      'address_line_2' => 'Apt 2',
-      'city' => 'Springfield',
-      'country' => 'US',
-      'state' => 'IL',
-      'zip' => '55555',
-    );
-    $query = array();
-    foreach ($settings as $key => $value) {
-      $query[] = "$key=$value";
-    }
-    $query_string = implode('&', $query);
-    variable_set('secure_prepopulate_iv', 'cae023134cfcbf45');
-    variable_set('secure_prepopulate_key', '7576586e4a5cb0611e3a1f080a30615a');
-    $crypt = secure_prepopulate_encrypt($query_string);
-    $expected = '7vGjVvf/xlO/nVEq8FtS+/VAjjZGbAYBHddPjrpNCN5twzqjTrOf4W/RV5MEdvbpGAZ1c5wjBeIjljD8a9A5O2iQuxjk/lVnUWBO8Vg+WRCqH0basvWtivCxQg060w4vaDEZvoBcgzkkODZ9om4pR5psjwL1Q2wtcZQxmBoOsED8UTtjo73ufEOmXR411N93bIEMiJMJnS3Wb97F2FKCRA==';
+    $data = $this->getEncryptTestData();
 
-    $result = !strcmp($expected, $crypt);
-    $message = 'secure_prepopulate_encrypt() returns expected values.';
-    $this->assertTrue($result, $message);
+    foreach ($data as $case) {
+      $this->setVariables($case['variables']);
+      $query_string = $this->constructQueryString($case['input']);
+
+      $encrypted = secure_prepopulate_encrypt($query_string);
+
+      $this->assertIdentical(strcmp($case['output'], $encrypted), 0, 'secure_prepopulate_encrypt() returns expected values.');
+    }
   }
 
   /**
-   * Test the decryption of a string.
+   * Tests the decryption of an encrypted string.
    */
   public function testDecrypt() {
-    $decrypted = secure_prepopulate_decrypt_qs($this->encrypted);
-    $this->assertEqual($decrypted['first_name'], 'Euro', t('Decrypted first_name field = Euro'));
-    $this->assertEqual($decrypted['last_name'], 'Guy', t('Decrypted last_name field = Guy'));
-    $this->assertEqual($decrypted['uid'], '29', t('Decrypted uid field = 29'));
+    $data = $this->getDecryptTestData();
+
+    foreach ($data as $case) {
+      $this->setVariables($case['variables']);
+
+      $decrypted = secure_prepopulate_decrypt_qs($case['input']);;
+
+      foreach ($case['output'] as $key => $value) {
+        $this->assertEqual($decrypted[$key], $value, 'Decrypted ' . $key . ' field equals expected value of  ' . $value);
+      }
+    }
   }
 
   /**
@@ -108,4 +88,91 @@ class SecurePrepopulateUnitTestCase extends DrupalWebTestCase {
       ->rowCount();
     $this->assertEqual(30, $not_expired_count);
   }
+
+  /**
+   * Provide test cases for the encrypt test case.
+   *
+   * @return array
+   *   An array of test cases.
+   */
+  protected function getEncryptTestData() {
+    $cases = array();
+
+    $cases[] = array(
+      'variables' => array(
+        'secure_prepopulate_iv' => 'cae023134cfcbf45',
+        'secure_prepopulate_key' => '7576586e4a5cb0611e3a1f080a30615a',
+      ),
+      'input' => array(
+        'first_name' => 'Allen',
+        'last_name' => 'Freeman',
+        'email' => 'allen.freeman@example.com',
+        'address' => '12345 Test Dr',
+        'address_line_2' => 'Apt 2',
+        'city' => 'Springfield',
+        'country' => 'US',
+        'state' => 'IL',
+        'zip' => '55555',
+      ),
+      'output' => '7vGjVvf/xlO/nVEq8FtS+/VAjjZGbAYBHddPjrpNCN5twzqjTrOf4W/RV5MEdvbpGAZ1c5wjBeIjljD8a9A5O2iQuxjk/lVnUWBO8Vg+WRCqH0basvWtivCxQg060w4vaDEZvoBcgzkkODZ9om4pR5psjwL1Q2wtcZQxmBoOsED8UTtjo73ufEOmXR411N93bIEMiJMJnS3Wb97F2FKCRA==',
+    );
+
+    return $cases;
+  }
+
+  /**
+   * Provide test data for the decrypt test.
+   *
+   * @return array
+   *   An array of test cases.
+   */
+  protected function getDecryptTestData() {
+    $cases = array();
+
+    $cases[] = array(
+      'variables' => array(
+        'secure_prepopulate_iv' => '1234567890123456',
+        'secure_prepopulate_key' => '12345678901234561234567890123456',
+        'secure_prepopulate_precedence' => 'url',
+      ),
+      'input' => 'zBYBEVb6oX39UMG3b7HFlWTHbQ/L6Gd20MM2JexIVQ6msawBjeTa/MMjQFc9jnNA',
+      'output' => array(
+        'first_name' => 'Euro',
+        'last_name' => 'Guy',
+        'uid' => '29',
+      ),
+    );
+
+    return $cases;
+  }
+
+  /**
+   * Sets some drupal variables.
+   *
+   * @param array $variables
+   *   An array keyed by drupal variable name with variable value.
+   */
+  protected function setVariables(array $variables) {
+    foreach ($variables as $key => $value) {
+      variable_set($key, $value);
+    }
+  }
+
+  /**
+   * Converts an array of fields into a query string.
+   *
+   * @param array $fields
+   *   The field names and values.
+   *
+   * @return string
+   *   The query string, without the leading ?.
+   */
+  protected function constructQueryString(array $fields) {
+    $query = array();
+    foreach ($fields as $key => $value) {
+      $query[] = "$key=$value";
+    }
+    return implode('&', $query);
+  }
+
 }
