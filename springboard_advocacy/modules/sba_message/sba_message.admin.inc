@@ -33,8 +33,8 @@ class SbaMessageUIController extends EntityDefaultUIController {
         'access arguments' => array('edit', 'edit ' . $type->type),
         'file' => 'sba_message.admin.inc',
         'file path' => drupal_get_path('module', $this->entityInfo['module']),
-        'type' => MENU_DEFAULT_LOCAL_TASK,
-        'context' =>  MENU_CONTEXT_INLINE
+        // 'type' => MENU_DEFAULT_LOCAL_TASK,
+        // 'context' =>  MENU_CONTEXT_INLINE
       );
     }
 
@@ -124,6 +124,8 @@ function sba_message_delete_form_wrapper($sba_message) {
  *     with only a sba_message type defined.
  */
 function sba_message_edit_form($form, &$form_state, $sba_message) {
+
+  $node = menu_get_object();
   // Add the default field elements.
   $form['name'] = array(
     '#type' => 'textfield',
@@ -136,11 +138,10 @@ function sba_message_edit_form($form, &$form_state, $sba_message) {
   
   $form['data']['#tree'] = TRUE;
 
-  // $form['data']['sample_data'] = array(
-  //   '#type' => 'checkbox',
-  //   '#title' => t('An interesting sba_message switch'),
-  //   '#default_value' => isset($sba_message->data['sample_data']) ? $sba_message->data['sample_data'] : 1,
-  // );
+  $form['data']['message_id'] = array(
+    '#type' => 'hidden',
+    '#value' => isset($sba_message->data['message_id']) ? $sba_message->data['message_id'] : uniqid(variable_get('site_name', 'Drupal') . '-'),
+  );
 
   // Add the field related form elements.
   $form_state['sba_message'] = $sba_message;
@@ -154,13 +155,16 @@ function sba_message_edit_form($form, &$form_state, $sba_message) {
     '#weight' => 400,
   );
 
-
   $form['quick_groups']['us_house'] = array(
     '#type' => 'checkbox',
     '#title' => t('US House'),
     '#value' => t('fr'),
   );
 
+  $form['quick_groups']['advocacy_id'] = array(
+    '#type' => 'hidden',
+    '#value' => $node->advocacy_id,
+  );
 
   $form['actions'] = array(
     '#type' => 'container',
@@ -191,7 +195,6 @@ function sba_message_edit_form($form, &$form_state, $sba_message) {
       '#weight' => 45,
     );
   }
-
   // We append the validate handler to #validate in case a form callback_wrapper
   // is used to add validate handlers earlier.
   $form['#validate'][] = 'sba_message_edit_form_validate';
@@ -216,13 +219,30 @@ function sba_message_edit_form_validate(&$form, &$form_state) {
  * @todo remove hard-coded link
  */
 function sba_message_edit_form_submit(&$form, &$form_state) {
-  
   $sba_message = entity_ui_controller('sba_message')->entityFormSubmitBuildEntity($form, $form_state);
   // Save the sba_message and go back to the list of sba_messages
   
   // Add in created and changed times.
   if ($sba_message->is_new = isset($sba_message->is_new) ? $sba_message->is_new : 0){
     $sba_message->created = time();
+    $values = $form_state['values'];
+    $loader = new AdvocacyApiClientLoader();
+    $client = $loader->getClient();
+    $response = 
+    $client->createTargetGroup(
+      array(
+        'name' => $sba_message->name, 
+        'chambers' => array (
+           0 => array(
+             'chamber' => $values['us_house']
+           )
+        ),
+        'message' => array(
+          'message_id' => $values['data']['message_id'],
+          'form_id' => $values['advocacy_id'],
+        ),
+      )
+    );
   }
 
   $sba_message->changed = time();
