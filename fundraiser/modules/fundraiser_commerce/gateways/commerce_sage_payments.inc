@@ -213,7 +213,7 @@ function commerce_sage_payments_fundraiser_commerce_cardonfile($donation) {
     // If we have a profile for this user update it locally.
     if ($card_data) {
       // Make the update request to authorize.net
-      commerce_litle_fundraiser_commerce_update($donation, $card_data);
+      commerce_sage_payments_fundraiser_commerce_update($donation, $card_data);
     }
   }
 
