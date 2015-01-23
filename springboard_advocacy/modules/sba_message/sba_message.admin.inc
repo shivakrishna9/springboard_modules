@@ -33,7 +33,7 @@ class SbaMessageUIController extends EntityDefaultUIController {
         'access arguments' => array('edit', 'edit ' . $type->type),
         'file' => 'sba_message.admin.inc',
         'file path' => drupal_get_path('module', $this->entityInfo['module']),
-      //  'type' => MENU_LOCAL_TASK,
+        'type' => MENU_DEFAULT_LOCAL_TASK,
         'context' =>  MENU_CONTEXT_INLINE
       );
     }
@@ -97,8 +97,7 @@ class SbaMessageUIController extends EntityDefaultUIController {
  * @see sba_message_edit_form()
  */
 function sba_message_form_wrapper($sba_message) {
-  // Add the breadcrumb for the form's location.
-  sba_message_set_breadcrumb();
+  // Add the breadcrumb for the form's location
   return drupal_get_form('sba_message_edit_form', $sba_message);
 }
 
@@ -113,7 +112,6 @@ function sba_message_form_wrapper($sba_message) {
  */
 function sba_message_delete_form_wrapper($sba_message) {
   // Add the breadcrumb for the form's location.
-  //sba_message_set_breadcrumb();
   return drupal_get_form('sba_message_delete_form', $sba_message);
 }
 
@@ -281,20 +279,6 @@ function sba_message_delete_form_submit($form, &$form_state) {
   watchdog('sba_message', 'Deleted sba_message %name.', array('%name' => $sba_message->name));
 
   $form_state['redirect'] = 'node/%node/messages';
-}
-
-/**
- * Sets the breadcrumb for administrative sba_message pages.
- */
-function sba_message_set_breadcrumb() {
-  $breadcrumb = array(
-    l(t('Home'), '<front>'),
-    l(t('Administration'), 'admin'),
-    l(t('Content'), 'admin/springboard'),
-    l(t('SBA Messages'), 'node/%node/messages'),
-  );
-
-  drupal_set_breadcrumb($breadcrumb);
 }
 
 
