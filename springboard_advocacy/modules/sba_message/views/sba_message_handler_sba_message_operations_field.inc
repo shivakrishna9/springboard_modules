@@ -18,7 +18,7 @@ class sba_message_handler_sba_message_operations_field extends views_handler_fie
 
   function render($values) {
 
-    $links = menu_contextual_links('sba_message', 'admin/springboard/sba_messages/sba_message', array($this->get_value($values, 'sba_message_id')));
+    $links = menu_contextual_links('sba_message', 'node/%node/messages/message', array($this->get_value($values, 'sba_message_id')));
     
     if (!empty($links)) {
       return theme('links', array('links' => $links, 'attributes' => array('class' => array('links', 'inline', 'operations'))));

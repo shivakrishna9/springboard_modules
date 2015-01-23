@@ -23,32 +23,6 @@ class SbaMessageUIController extends EntityDefaultUIController {
     $id_count = count(explode('/', $this->path));
     $wildcard = isset($this->entityInfo['admin ui']['menu wildcard']) ? $this->entityInfo['admin ui']['menu wildcard'] : '%' . $this->entityType;
 
-    // $items[$this->path] = array(
-    //   'title' => 'SBA Messages',
-    //   'description' => 'Add edit and update sba_messages.',
-    //   'page callback' => 'system_admin_menu_block_page',
-    //   'access arguments' => array('access administration pages'),
-    //   'file path' => drupal_get_path('module', 'system'),
-    //   'file' => 'system.admin.inc',
-    // );
-    
-    // Change the overview menu type for the list of sba_messages.
-    //$items[$this->path]['type'] = MENU_LOCAL_TASK;
-    
-    // Change the add page menu to multiple types of entities
-    // $items[$this->path . '/add'] = array(
-    //   'title' => 'Add a sba_message',
-    //   'description' => 'Add a new sba_message',
-    //   'page callback'  => 'sba_message_add_page',
-    //   'access callback'  => 'sba_message_access',
-    //   'access arguments' => array('edit'),
-    //   'type' => MENU_NORMAL_ITEM,
-    //   'weight' => 20,
-    //   'file' => 'sba_message.admin.inc',
-    //   'file path' => drupal_get_path('module', $this->entityInfo['module'])
-
-    // );
-    
     // Add menu items to add each different type of entity.
     foreach (sba_message_get_types() as $type) {
       $items[$this->path . '/add/' . $type->type] = array(
@@ -58,7 +32,9 @@ class SbaMessageUIController extends EntityDefaultUIController {
         'access callback' => 'sba_message_access',
         'access arguments' => array('edit', 'edit ' . $type->type),
         'file' => 'sba_message.admin.inc',
-        'file path' => drupal_get_path('module', $this->entityInfo['module'])
+        'file path' => drupal_get_path('module', $this->entityInfo['module']),
+      //  'type' => MENU_LOCAL_TASK,
+        'context' =>  MENU_CONTEXT_INLINE
       );
     }
 
@@ -69,15 +45,17 @@ class SbaMessageUIController extends EntityDefaultUIController {
       'access callback' => 'sba_message_access',
       'access arguments' => array('edit', $id_count + 1),
       'weight' => 0,
-      'context' => MENU_CONTEXT_PAGE | MENU_CONTEXT_INLINE,
+    //  'context' => MENU_CONTEXT_INLINE,
       'file' => 'sba_message.admin.inc',
-      'file path' => drupal_get_path('module', $this->entityInfo['module'])
+      'file path' => drupal_get_path('module', $this->entityInfo['module']),
+      'type' => MENU_LOCAL_TASK,
+
     );
     $items[$this->path . '/sba_message/' . $wildcard . '/edit'] = array(
       'title' => 'Edit',
       'type' => MENU_DEFAULT_LOCAL_TASK,
       'weight' => -10,
-      'context' => MENU_CONTEXT_PAGE | MENU_CONTEXT_INLINE,
+    //  'context' => MENU_CONTEXT_INLINE,
     );
     
     $items[$this->path . '/sba_message/' . $wildcard . '/delete'] = array(
@@ -94,34 +72,18 @@ class SbaMessageUIController extends EntityDefaultUIController {
     );
     
     // Menu item for viewing sba_messages
-    $items['sba_message/' . $wildcard] = array(
-      //'title' => 'Title',
-      'title callback' => 'sba_message_page_title',
-      'title arguments' => array(1),
-      'page callback' => 'sba_message_page_view',
-      'page arguments' => array(1),
-      'access callback' => 'sba_message_access',
-      'access arguments' => array('view', 1),
-      'type' => MENU_CALLBACK,
-    );
+    // $items['sba_message/' . $wildcard] = array(
+    //   //'title' => 'Title',
+    //   'title callback' => 'sba_message_page_title',
+    //   'title arguments' => array(1),
+    //   'page callback' => 'sba_message_page_view',
+    //   'page arguments' => array(1),
+    //   'access callback' => 'sba_message_access',
+    //   'access arguments' => array('view', 1),
+    //   'type' => MENU_CALLBACK,
+    // );
     return $items;
   }
-  
-  
-  /**
-   * Create the markup for the add SBA Message Entities page within the class
-   * so it can easily be extended/overriden.
-   */ 
-  // public function addPage() {
-  //   $item = menu_get_item();
-  //   $content = system_admin_menu_block($item);
-  //   if (count($content) == 1) {
-  //     $item = array_shift($content);
-  //     drupal_goto($item['href']);
-  //   }    
-        
-  //  // return theme('sba_message_add_list', array('content' => $content));
-  // }
   
 }
 
@@ -175,6 +137,7 @@ function sba_message_edit_form($form, &$form_state, $sba_message) {
   );
   
   $form['data']['#tree'] = TRUE;
+
   // $form['data']['sample_data'] = array(
   //   '#type' => 'checkbox',
   //   '#title' => t('An interesting sba_message switch'),
@@ -196,7 +159,7 @@ function sba_message_edit_form($form, &$form_state, $sba_message) {
 
   $form['quick_groups']['us_house'] = array(
     '#type' => 'checkbox',
-    '#title' => t('Us House'),
+    '#title' => t('US House'),
     '#value' => t('fr'),
   );
 
@@ -225,7 +188,7 @@ function sba_message_edit_form($form, &$form_state, $sba_message) {
     $form['actions']['delete'] = array(
       '#type' => 'submit',
       '#value' => t('Delete sba_message'),
-      '#suffix' => l(t('Cancel'), 'admin/springboard/sba_messages'),
+      '#suffix' => l(t('Cancel'), 'node/%node/messages'),
       '#submit' => $submit + array('sba_message_form_submit_delete'),
       '#weight' => 45,
     );
@@ -277,7 +240,7 @@ function sba_message_edit_form_submit(&$form, &$form_state) {
  * @todo Remove hard-coded path
  */
 function sba_message_form_submit_delete(&$form, &$form_state) {
-  $form_state['redirect'] = 'admin/springboard/sba_messages/sba_message/' . $form_state['sba_message']->sba_message_id . '/delete';
+  $form_state['redirect'] = 'node/%node/messages/sba_message/' . $form_state['sba_message']->sba_message_id . '/delete';
 }
 
 
@@ -296,7 +259,7 @@ function sba_message_delete_form($form, &$form_state, $sba_message) {
 
   $form = confirm_form($form,
     t('Are you sure you want to delete sba_message %name?', array('%name' => $sba_message->name)),
-    'admin/springboard/sba_messages/sba_message',
+    'node/%node/messages/sba_message',
     '<p>' . t('This action cannot be undone.') . '</p>',
     t('Delete'),
     t('Cancel'),
@@ -317,53 +280,8 @@ function sba_message_delete_form_submit($form, &$form_state) {
   drupal_set_message(t('The sba_message %name has been deleted.', array('%name' => $sba_message->name)));
   watchdog('sba_message', 'Deleted sba_message %name.', array('%name' => $sba_message->name));
 
-  $form_state['redirect'] = 'admin/springboard/sba_messages';
+  $form_state['redirect'] = 'node/%node/messages';
 }
-
-
-
-/**
- * Page to add SBA Message Entities.
- *
- * @todo Pass this through a proper theme function
- */
-// function sba_message_add_page() {
-//   $controller = entity_ui_controller('sba_message');
-//   return $controller->addPage();
-// }
-
-
-/**
- * Displays the list of available sba_message types for sba_message creation.
- *
- * @ingroup themeable
- */
-// function theme_sba_message_add_list($variables) {
-  // $content = $variables['content'];
-  // $output = '';
-  // if ($content) {
-  //   $output = '<dl class="sba_message-type-list">';
-  //   foreach ($content as $item) {
-  //     $output .= '<dt>' . l($item['title'], $item['href']) . '</dt>';
-  //     $output .= '<dd>' . filter_xss_admin($item['description']) . '</dd>';
-  //   }
-  //   $output .= '</dl>';
-  // }
-  // else {
-  //   if (user_access('administer sba message types')) {
-  //     $output = '<p>' . t('SBA Message Entities cannot be added because you have not created any sba_message types yet. Go to the <a href="@create-sba_message-type">sba_message type creation page</a> to add a new sba_message type.', array('@create-sba_message-type' => url('admin/structure/sba_message_types/add'))) . '</p>';
-  //   }
-  //   else {
-  //     $output = '<p>' . t('No sba_message types have been created yet for you to use.') . '</p>';
-  //   }
-  // }
-
-  // return $output;
-// }
-
-
-
-
 
 /**
  * Sets the breadcrumb for administrative sba_message pages.
@@ -373,7 +291,7 @@ function sba_message_set_breadcrumb() {
     l(t('Home'), '<front>'),
     l(t('Administration'), 'admin'),
     l(t('Content'), 'admin/springboard'),
-    l(t('SBA Messages'), 'admin/springboard/sba_messages'),
+    l(t('SBA Messages'), 'node/%node/messages'),
   );
 
   drupal_set_breadcrumb($breadcrumb);

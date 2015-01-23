@@ -108,7 +108,7 @@ function sba_message_views_default_views() {
   $handler->display->display_options['header']['area_text_custom']['table'] = 'views';
   $handler->display->display_options['header']['area_text_custom']['field'] = 'area_text_custom';
   $handler->display->display_options['header']['area_text_custom']['empty'] = TRUE;
-  $handler->display->display_options['header']['area_text_custom']['content'] = '<a href = "/admin/springboard/sba_messages/add/sba_letter_to_target_message?field_sba_alert_id=%1">Create Message</a>';
+  $handler->display->display_options['header']['area_text_custom']['content'] = '<a href = "/node/%node/messages/add/sba_letter_to_target_message?field_sba_alert_id=%1">Create Message</a>';
   $handler->display->display_options['header']['area_text_custom']['tokenize'] = TRUE;
   /* Field: SBA Message: Internal Title */
   $handler->display->display_options['fields']['field_sba_internal_title']['id'] = 'field_sba_internal_title';
