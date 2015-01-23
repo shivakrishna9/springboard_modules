@@ -23,15 +23,15 @@ class SecurePrepopulateUnitTestCase extends DrupalWebTestCase {
    * Tests encrypting a query string.
    */
   public function testEncrypt() {
-    $data = $this->getEncryptTestData();
+    $data = $this->getTestData();
 
     foreach ($data as $case) {
       $this->setVariables($case['variables']);
-      $query_string = $this->constructQueryString($case['input']);
+      $query_string = $this->constructQueryString($case['decrypted']);
 
       $encrypted = secure_prepopulate_encrypt($query_string);
 
-      $this->assertIdentical(strcmp($case['output'], $encrypted), 0, 'secure_prepopulate_encrypt() returns expected values.');
+      $this->assertIdentical($case['encrypted'], $encrypted, 'secure_prepopulate_encrypt() returns expected values.');
     }
   }
 
@@ -39,14 +39,14 @@ class SecurePrepopulateUnitTestCase extends DrupalWebTestCase {
    * Tests the decryption of an encrypted string.
    */
   public function testDecrypt() {
-    $data = $this->getDecryptTestData();
+    $data = $this->getTestData();
 
     foreach ($data as $case) {
       $this->setVariables($case['variables']);
 
-      $decrypted = secure_prepopulate_decrypt_qs($case['input']);;
+      $decrypted = secure_prepopulate_decrypt_qs($case['encrypted']);;
 
-      foreach ($case['output'] as $key => $value) {
+      foreach ($case['decrypted'] as $key => $value) {
         $this->assertEqual($decrypted[$key], $value, 'Decrypted ' . $key . ' field equals expected value of  ' . $value);
       }
     }
@@ -90,12 +90,12 @@ class SecurePrepopulateUnitTestCase extends DrupalWebTestCase {
   }
 
   /**
-   * Provide test cases for the encrypt test case.
+   * Provide test cases for the encrypt and decrypt tests.
    *
    * @return array
    *   An array of test cases.
    */
-  protected function getEncryptTestData() {
+  protected function getTestData() {
     $cases = array();
 
     $cases[] = array(
@@ -103,7 +103,7 @@ class SecurePrepopulateUnitTestCase extends DrupalWebTestCase {
         'secure_prepopulate_iv' => 'cae023134cfcbf45',
         'secure_prepopulate_key' => '7576586e4a5cb0611e3a1f080a30615a',
       ),
-      'input' => array(
+      'decrypted' => array(
         'first_name' => 'Allen',
         'last_name' => 'Freeman',
         'email' => 'allen.freeman@example.com',
@@ -114,33 +114,37 @@ class SecurePrepopulateUnitTestCase extends DrupalWebTestCase {
         'state' => 'IL',
         'zip' => '55555',
       ),
-      'output' => '7vGjVvf/xlO/nVEq8FtS+/VAjjZGbAYBHddPjrpNCN5twzqjTrOf4W/RV5MEdvbpGAZ1c5wjBeIjljD8a9A5O2iQuxjk/lVnUWBO8Vg+WRCqH0basvWtivCxQg060w4vaDEZvoBcgzkkODZ9om4pR5psjwL1Q2wtcZQxmBoOsED8UTtjo73ufEOmXR411N93bIEMiJMJnS3Wb97F2FKCRA==',
+      'encrypted' => '7vGjVvf/xlO/nVEq8FtS+/VAjjZGbAYBHddPjrpNCN5twzqjTrOf4W/RV5MEdvbpGAZ1c5wjBeIjljD8a9A5O2iQuxjk/lVnUWBO8Vg+WRCqH0basvWtivCxQg060w4vaDEZvoBcgzkkODZ9om4pR5psjwL1Q2wtcZQxmBoOsED8UTtjo73ufEOmXR411N93bIEMiJMJnS3Wb97F2FKCRA==',
     );
-
-    return $cases;
-  }
-
-  /**
-   * Provide test data for the decrypt test.
-   *
-   * @return array
-   *   An array of test cases.
-   */
-  protected function getDecryptTestData() {
-    $cases = array();
 
     $cases[] = array(
       'variables' => array(
         'secure_prepopulate_iv' => '1234567890123456',
         'secure_prepopulate_key' => '12345678901234561234567890123456',
-        'secure_prepopulate_precedence' => 'url',
       ),
-      'input' => 'zBYBEVb6oX39UMG3b7HFlWTHbQ/L6Gd20MM2JexIVQ6msawBjeTa/MMjQFc9jnNA',
-      'output' => array(
+      'decrypted' => array(
         'first_name' => 'Euro',
         'last_name' => 'Guy',
         'uid' => '29',
       ),
+      'encrypted' => 'zBYBEVb6oX39UMG3b7HFlWTHbQ/L6Gd20MM2JexIVQ6msawBjeTa/MMjQFc9jnNA',
+    );
+
+    $cases[] = array(
+      'variables' => array(
+        'secure_prepopulate_iv' => '2QzFjpkYq8CsscZM',
+        'secure_prepopulate_key' => 'P4FLWBTjp2]ciKEMuy2h2rpemofXJLKf',
+      ),
+      'decrypted' => array(
+        'first_name' => 'Gary',
+        'last_name' => '',
+        'email' => 'gary@example.com',
+        'address' => '',
+        'address_line_2' => '',
+        'city' => '',
+        'zip' => '',
+      ),
+      'encrypted' => 'ggFLo2N6X8/SirEmw6RM3p2wc4K5dYoW3nJDfw3ZFpaHkmEjvzRStv5iKL3L9mYrEn+rs2WXxjj+aAVKfUc8x+ArjwuOKLpUfJC5WQZKa2OQ7EAS4iiiUNxwUvwcnZcK',
     );
 
     return $cases;
