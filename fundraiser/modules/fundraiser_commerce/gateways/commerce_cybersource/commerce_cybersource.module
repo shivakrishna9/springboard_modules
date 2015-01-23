@@ -582,12 +582,10 @@ function commerce_cybersource_soap_cc_submit_form_submit($payment_method, $pane_
     }
   }
   $declines = !empty($avs) ? implode(' ', $avs) : 'N';
-  // $request->businessRules_declineAVSFlags = $declines;
-  // $request->businessRules_ignoreAVSResult = false;
+  //$request->businessRules_declineAVSFlags = $declines;
 
   $request->businessRules = (object) array(
     'decline_AVSFlags' => $declines,
-    'ignoreAVSResult' => false,
     );
 
   if ($response = commerce_cybersource_soap_api_request($payment_method, $request)) {
