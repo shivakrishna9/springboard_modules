@@ -4,6 +4,9 @@ core = 7.x
 
 dependencies[] = entity
 dependencies[] = views
+dependencies[] = eva
+dependencies[] = entityreference_prepopulate
+
 
 files[] = sba_message.admin.inc
 files[] = sba_message_type.admin.inc
