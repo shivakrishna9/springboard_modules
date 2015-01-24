@@ -23,6 +23,7 @@ class SbaMessageUIController extends EntityDefaultUIController {
     $id_count = count(explode('/', $this->path));
     $wildcard = isset($this->entityInfo['admin ui']['menu wildcard']) ? $this->entityInfo['admin ui']['menu wildcard'] : '%' . $this->entityType;
 
+
     // Add menu items to add each different type of entity.
     foreach (sba_message_get_types() as $type) {
       $items[$this->path . '/add/' . $type->type] = array(
@@ -33,8 +34,8 @@ class SbaMessageUIController extends EntityDefaultUIController {
         'access arguments' => array('edit', 'edit ' . $type->type),
         'file' => 'sba_message.admin.inc',
         'file path' => drupal_get_path('module', $this->entityInfo['module']),
-        // 'type' => MENU_DEFAULT_LOCAL_TASK,
-        // 'context' =>  MENU_CONTEXT_INLINE
+         'type' => MENU_DEFAULT_LOCAL_TASK,
+         'context' =>  MENU_CONTEXT_INLINE
       );
     }
 
@@ -126,7 +127,13 @@ function sba_message_delete_form_wrapper($sba_message) {
 function sba_message_edit_form($form, &$form_state, $sba_message) {
 
   $node = menu_get_object();
+
+  $form['parent_node']['nid'] = array(
+    '#type' => 'hidden',
+    '#value' => $node->nid,
+  );
   // Add the default field elements.
+
   $form['name'] = array(
     '#type' => 'textfield',
     '#title' => t('Internal Title'),
@@ -190,7 +197,7 @@ function sba_message_edit_form($form, &$form_state, $sba_message) {
     $form['actions']['delete'] = array(
       '#type' => 'submit',
       '#value' => t('Delete sba_message'),
-      '#suffix' => l(t('Cancel'), 'node/%node/messages'),
+      '#suffix' => l(t('Cancel'), 'node/' . $node->nid . '/messages'),
       '#submit' => $submit + array('sba_message_form_submit_delete'),
       '#weight' => 45,
     );
@@ -221,7 +228,6 @@ function sba_message_edit_form_validate(&$form, &$form_state) {
 function sba_message_edit_form_submit(&$form, &$form_state) {
   $sba_message = entity_ui_controller('sba_message')->entityFormSubmitBuildEntity($form, $form_state);
   // Save the sba_message and go back to the list of sba_messages
-  
   // Add in created and changed times.
   if ($sba_message->is_new = isset($sba_message->is_new) ? $sba_message->is_new : 0){
     $sba_message->created = time();
@@ -248,7 +254,8 @@ function sba_message_edit_form_submit(&$form, &$form_state) {
   $sba_message->changed = time();
   
   $sba_message->save();
-  $nid = $_GET['field_sba_alert_id'];
+  $wrapper = entity_metadata_wrapper('sba_message', $sba_message);
+  $nid = $wrapper->field_sba_alert_id->value()->nid;
   $form_state['redirect'] = 'node/' . $nid . '/messages';
 }
 
@@ -258,7 +265,8 @@ function sba_message_edit_form_submit(&$form, &$form_state) {
  * @todo Remove hard-coded path
  */
 function sba_message_form_submit_delete(&$form, &$form_state) {
-  $form_state['redirect'] = 'node/%node/messages/sba_message/' . $form_state['sba_message']->sba_message_id . '/delete';
+  $nid =  $form_state['values']['nid'];
+  $form_state['redirect'] = 'node/' . $nid . '/messages/sba_message/' . $form_state['sba_message']->sba_message_id . '/delete';
 }
 
 
@@ -292,13 +300,12 @@ function sba_message_delete_form($form, &$form_state, $sba_message) {
  */
 function sba_message_delete_form_submit($form, &$form_state) {
   $sba_message = $form_state['sba_message'];
-
+  $nid =  $form_state['values']['nid'];
   sba_message_delete($sba_message);
-
   drupal_set_message(t('The sba_message %name has been deleted.', array('%name' => $sba_message->name)));
   watchdog('sba_message', 'Deleted sba_message %name.', array('%name' => $sba_message->name));
 
-  $form_state['redirect'] = 'node/%node/messages';
+  $form_state['redirect'] = 'node/' . $nid . '/messages';
 }
 
 

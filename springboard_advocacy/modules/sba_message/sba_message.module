@@ -12,31 +12,58 @@
  */
 function sba_message_menu_alter(&$items) {
   // Set a custom access callback function for our message view page display path.
-  $items['node/%/messages']['access callback'] = 'sba_message_access_node_settings';
-  $items['node/%/messages']['access arguments'] = array(1);
+  $items['node/%/messages']['access callback'] = 'sba_message_access';
+  $items['node/%/messages']['access arguments'] = array('edit');
 }
 
+
 /**
- * Access callback for node share content form.
+ * Determines whether the given user has access to a sba_message.
+ *
+ * @param $op
+ *   The operation being performed. One of 'view', 'update', 'create', 'delete'
+ *   or just 'edit' (being the same as 'create' or 'update').
+ * @param $sba_message
+ *   Optionally a sba_message or a sba_message type to check access for. If nothing is
+ *   given, access for all sba_messages is determined.
+ * @param $account
+ *   The user to check for. Leave it to NULL to check for the global user.
+ * @return boolean
+ *   Whether access is allowed or not.
  */
-function sba_message_access_node_settings($nid) {
+function sba_message_access($op, $sba_message = NULL, $account = NULL) {
+
   global $user;
-  // Hide share content settings tab on disabled content types.
-  $node = node_load($nid);
-  $types = variable_get('springboard_advocacy_alert_types', array());
-  if (!in_array($node->type, $types)) {
-    return FALSE;
+
+  if (arg(0) == 'node' && is_numeric(arg(1))) {
+    $node = node_load(arg(1));
+    $types = variable_get('springboard_advocacy_alert_types', array());
+    if (!in_array($node->type, $types)) {
+      return FALSE;
+    }
+    // Grant access to content owned by user that they have permissions to edit.
+    if (user_access('administer springboard advocacy') && $node->uid == $user->uid && node_access('update', $node)) {
+      return TRUE;
+    }
+    // Grant access to content user can edit regardless of ownership.
+    elseif (user_access('administer springboard advocacy') && node_access('update', $node)) {
+      return TRUE;
+    }
   }
-  // Grant access to content owned by user that they have permissions to edit.
-  if (user_access('administer springboard advocacy') && $node->uid == $user->uid && node_access('update', $node)) {
+
+  if (user_access('administer sba messages', $account)) {
     return TRUE;
   }
-  // Grant access to content user can edit regardless of ownership.
-  elseif (user_access('administer springboard advocacy') && node_access('update', $node)) {
-    return TRUE;
+
+  if (isset($sba_message) && $type_name = $sba_message->type) {
+    $op = ($op == 'view') ? 'view' : 'edit';
+    if (user_access("$op any $type_name sba message", $account)) {
+      return TRUE;
+    }
   }
   return FALSE;
 }
+
 
 function sba_message_module_implements_alter(&$implementations, $hook) {
   // When the implementations of hook_menu_alter are called, we need our module
@@ -49,6 +76,40 @@ function sba_message_module_implements_alter(&$implementations, $hook) {
     }
   }
 }
+
+/**
+ * Implement hook_entityreference_prepopulate_providers_inf().
+ *
+ * Grab our entity reference fromthe node url rather than query string
+ */
+function sba_message_entityreference_prepopulate_providers_info() {
+  return array(
+    'node_url' => array(
+      'title' => t('Node URL'),
+      'description' => t('Prepopulate from node/%/message URL'),
+      'callback' => 'sba_message_prepopulate_get_values_from_node_url',
+    ),
+  );
+}
+
+/**
+ * Get values for prepopulating fields via URL.
+ *
+ * @param $field
+ *   The field info array.
+ * @param $instance
+ *   The instance info array.
+ *
+ * @see
+ *   entityreference_prepopulate_get_values()
+ */
+function sba_message_prepopulate_get_values_from_node_url($field, $instance) {
+  $field_name = $field['field_name'];
+  if (arg(0) == 'node' && arg(2) == 'messages' && is_numeric(arg(1))) {
+    return array(arg(1));
+  }
+}
+
 
 /**
  * Implement hook_entity_info().
@@ -171,34 +232,6 @@ function sba_message_permission() {
     );
   }
   return $permissions;  
-}
-
-
-/**
- * Determines whether the given user has access to a sba_message.
- *
- * @param $op
- *   The operation being performed. One of 'view', 'update', 'create', 'delete'
- *   or just 'edit' (being the same as 'create' or 'update').
- * @param $sba_message
- *   Optionally a sba_message or a sba_message type to check access for. If nothing is
- *   given, access for all sba_messages is determined.
- * @param $account
- *   The user to check for. Leave it to NULL to check for the global user.
- * @return boolean
- *   Whether access is allowed or not.
- */
-function sba_message_access($op, $sba_message = NULL, $account = NULL) {
-  if (user_access('administer sba messages', $account)) {
-    return TRUE;
-  }
-  if (isset($sba_message) && $type_name = $sba_message->type) {
-    $op = ($op == 'view') ? 'view' : 'edit';
-    if (user_access("$op any $type_name sba message", $account)) {
-      return TRUE;
-    }
-  }
-  return FALSE;
 }
 
 
@@ -400,16 +433,27 @@ function sba_message_theme() {
  * Implements hook_menu_local_tasks_alter().
  */
 function sba_message_menu_local_tasks_alter(&$data, $router_item, $root_path) {
-  // Add action link 'admin/structure/sba_messages/add' on 'admin/structure/sba_messages'.
-  if ($root_path == 'node/%node/messages') {
-    $item = menu_get_item('node/%node/messages/add');
-    if ($item['access']) {
-      $data['actions']['output'][] = array(
-        '#theme' => 'menu_local_action',
-        '#link' => $item,
-      );
-    }
+
+  // Add action link on node/%/messages page
+  $on_message_landing = !arg(3);
+  if ($root_path == 'node/%/messages' && !empty($on_message_landing) && is_numeric(arg(1))) {
+    $message_types = variable_get('sba_message_node_types', array());
+    $node = node_load(arg(1));
+    $data['actions']['output'][] = array(
+      '#theme' => 'menu_local_action',
+      '#link' => array(
+        'title' => t('Add message'),
+        'href' => 'node/' . arg(1) . '/messages/add/' . $message_types[$node->type],
+        'localized_options' => array(
+          'path' => 'g',
+          'attributes' => array(
+            'title' => t('Add new message'),
+          ),
+        ),
+      ),
+    );
   }
+
 }
 
 
