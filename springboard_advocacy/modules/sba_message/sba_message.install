@@ -271,8 +271,9 @@ function sba_message_install() {
           'action_on_edit' => 1,
           'fallback' => 'form_error',
           'providers' => array(
+            'node_url' => 1,
             'og_context' => FALSE,
-            'url' => 1,
+            'url' => 0,
           ),
           'skip_perm' => 0,
           'status' => 1,
@@ -426,10 +427,11 @@ function sba_message_install() {
       'weight' => 1,
     ),
   );
-foreach ($field_instances as $instance) {
-  field_create_instance($instance);
-}
+  foreach ($field_instances as $instance) {
+    field_create_instance($instance);
+  }
 
+  variable_set('sba_message_node_types', array('springboard_letter' => 'sba_letter_to_target_message'));
 
 }
 /**
