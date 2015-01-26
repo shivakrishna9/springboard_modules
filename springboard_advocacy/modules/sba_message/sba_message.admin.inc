@@ -156,19 +156,64 @@ function sba_message_edit_form($form, &$form_state, $sba_message) {
 
 
 
-  $form['quick_groups'] = array(
-    '#type' => 'container',
+
+  $form['quick_targets'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Quick Target'),
     '#attributes' => array('class' => array('form-quick-groups')),
-    '#weight' => 400,
+    '#weight' => 10,
   );
 
-  $form['quick_groups']['us_house'] = array(
+  $form['quick_targets']['#tree'] = TRUE;
+
+  $form['quick_targets']['chambers'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Chamber'),
+    '#attributes' => array('class' => array('form-quick-groups')),
+    '#weight' => 1,
+  );
+
+    $form['quick_targets']['chambers']['us_house'] = array(
     '#type' => 'checkbox',
     '#title' => t('US House'),
     '#value' => t('fr'),
   );
 
-  $form['quick_groups']['advocacy_id'] = array(
+  $form['quick_targets']['chambers']['us_senate'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('US Senate'),
+    '#value' => t('fs'),
+  );
+
+  $form['quick_targets']['chambers']['state_house'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('State House'),
+    '#value' => t('sr'),
+  );
+
+  $form['quick_targets']['chambers']['state_senate'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('State Senate'),
+    '#value' => t('ss'),
+  );
+  $form['quick_targets']['party'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Party'),
+    '#attributes' => array('class' => array('form-quick-groups')),
+    '#weight' => 2,
+  );
+
+  $form['quick_targets']['party']['republican'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Republican'),
+    '#value' => t('r'),
+  );
+  $form['quick_targets']['party']['democrat'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Democrat'),
+    '#value' => t('d'),
+  );
+  $form['advocacy_id'] = array(
     '#type' => 'hidden',
     '#value' => $node->advocacy_id,
   );
@@ -223,32 +268,63 @@ function sba_message_edit_form_validate(&$form, &$form_state) {
 /**
  * Form API submit callback for the sba_message form.
  * 
- * @todo remove hard-coded link
  */
 function sba_message_edit_form_submit(&$form, &$form_state) {
   $sba_message = entity_ui_controller('sba_message')->entityFormSubmitBuildEntity($form, $form_state);
   // Save the sba_message and go back to the list of sba_messages
   // Add in created and changed times.
-  if ($sba_message->is_new = isset($sba_message->is_new) ? $sba_message->is_new : 0){
+
+  // Load the API client
+  $loader = new AdvocacyApiClientLoader();
+  $client = $loader->getClient();
+  $values = $form_state['values'];
+  
+  // array(
+  //  'name' => 'group name', //required
+  //  'chambers' => array(
+  //       0 => array('chamber' => 'fs', 'party =>'r', state => 'MA'),
+  //       1 => array('chamber' => 'fs', 'party =>'d', state => 'MA')
+  //     )
+  //  'executives' => array(
+  //       0 => array('role' => 'PRES01', 'party =>'r'),
+  //       1 => array('role' => 'PRES03', 'party =>'d')
+  //     )
+  //   )
+  //   'target_ids' => array('1', '2', '3', '4', '5', '6', '7'),
+  // )
+  
+  $chambers = array();
+  foreach ($values['quick_targets']['chambers'] as $chamber) {
+    foreach ($values['quick_targets']['party'] as $party) {
+      $chambers[] = array('chamber' => $chamber, 'party' => $party, 'state' => '');
+    }
+  }
+
+  //New message
+  if ($sba_message->is_new = isset($sba_message->is_new) ? $sba_message->is_new : 0) {
     $sba_message->created = time();
-    $values = $form_state['values'];
-    $loader = new AdvocacyApiClientLoader();
-    $client = $loader->getClient();
+    // response should contain group_id and save it locally?
     $response = 
     $client->createTargetGroup(
       array(
         'name' => $sba_message->name, 
-        'chambers' => array (
-           0 => array(
-             'chamber' => $values['us_house']
-           )
-        ),
+        'chambers' => $chambers,
         'message' => array(
           'message_id' => $values['data']['message_id'],
           'form_id' => $values['advocacy_id'],
         ),
       )
     );
+  }
+  else {
+    // Editing an existing message
+    
+    // if group id is not saved locally:
+    // $group_id = $client->getTargetGroupMessageGroupId(message_id)
+
+    //  dthen
+    // $response = $client->updateTargetGroup($values, $group_id)
+
   }
 
   $sba_message->changed = time();
