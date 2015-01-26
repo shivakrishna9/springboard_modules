@@ -6,7 +6,6 @@ CoderReviewStyleTest
 CoderUpgradeWebTestCase
 DsrTestCase
 EmailWrappersTestCase
-FormLayoutsTestCase
 FundraiserCommerceGatewayAuthnetTest
 FundraiserCommerceUnitTestCase
 FundraiserDateModeTest
