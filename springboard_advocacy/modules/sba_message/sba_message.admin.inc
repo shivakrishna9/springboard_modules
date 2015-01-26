@@ -292,7 +292,7 @@ function sba_message_edit_form_submit(&$form, &$form_state) {
   //   )
   //   'target_ids' => array('1', '2', '3', '4', '5', '6', '7'),
   // )
-  
+
   $chambers = array();
   foreach ($values['quick_targets']['chambers'] as $chamber) {
     foreach ($values['quick_targets']['party'] as $party) {
@@ -376,7 +376,8 @@ function sba_message_delete_form($form, &$form_state, $sba_message) {
  */
 function sba_message_delete_form_submit($form, &$form_state) {
   $sba_message = $form_state['sba_message'];
-  $nid =  $form_state['values']['nid'];
+  $wrapper = entity_metadata_wrapper('sba_message', $sba_message);
+  $nid = $wrapper->field_sba_alert_id->value()->nid;
   sba_message_delete($sba_message);
   drupal_set_message(t('The sba_message %name has been deleted.', array('%name' => $sba_message->name)));
   watchdog('sba_message', 'Deleted sba_message %name.', array('%name' => $sba_message->name));
