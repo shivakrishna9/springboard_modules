@@ -16,7 +16,6 @@ class sba_message_handler_edit_link_field extends sba_message_handler_link_field
 
   function render($values) {
     $type = $values->{$this->aliases['type']};
-    
     //Creating a dummy sba_message to check access against
     $dummy_sba_message = (object) array('type' => $type);
     if (!sba_message_access('edit', $dummy_sba_message)) {
@@ -25,12 +24,11 @@ class sba_message_handler_edit_link_field extends sba_message_handler_link_field
     
     $text = !empty($this->options['text']) ? $this->options['text'] : t('edit');
     $sba_message_id = $values->{$this->aliases['sba_message_id']};
-    if (is_numeric(arg(1)) && arg(2) == 'messages') {
-      $nid = arg(1);
-    }
-    else {
-      $nid = '';
-    }
-    return l($text, 'node/' . $nid . '/messages/sba_message/' . $sba_message_id . '/edit', array('query' => array('field_sba_alert_id' => $nid)));
+
+    $message = sba_message_load($sba_message_id);
+    $wrapper = entity_metadata_wrapper('sba_message', $message);
+    $nid = $wrapper->field_sba_alert_id->value()->nid;
+
+    return l($text, 'node/' . $nid . '/messages/sba_message/' . $sba_message_id . '/edit');
   }
 }

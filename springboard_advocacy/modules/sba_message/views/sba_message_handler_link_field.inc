@@ -40,7 +40,9 @@ class sba_message_handler_link_field extends views_handler_field {
   function render($values) {
     $text = !empty($this->options['text']) ? $this->options['text'] : t('view');
     $sba_message_id = $values->{$this->aliases['sba_message_id']};
-
-    return l($text, 'sba_message/' . $sba_message_id);
+    $message = sba_message_load($sba_message_id);
+    $wrapper = entity_metadata_wrapper('sba_message', $message);
+    $nid = $wrapper->field_sba_alert_id->value()->nid;
+    return l($text, 'node/' . $nid . '/messages/sba_message/' . $sba_message_id);
   }
 }
