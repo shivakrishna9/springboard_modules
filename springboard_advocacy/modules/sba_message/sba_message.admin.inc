@@ -173,46 +173,30 @@ function sba_message_edit_form($form, &$form_state, $sba_message) {
     '#weight' => 1,
   );
 
-    $form['quick_targets']['chambers']['us_house'] = array(
-    '#type' => 'checkbox',
-    '#title' => t('US House'),
-    '#value' => t('fr'),
+   
+
+   $form['quick_targets']['chambers'] = array(
+    '#type' => 'checkboxes',
+    '#options' => 
+      array(
+      'fs' => t('Federal Senate'),
+      'fr' => t('Federal House'),
+      // 'ss' => t('State Senate'),
+      // 'sr' => t('State House')
+      ),
+    '#title' => t('Chamber'),
   );
 
-  $form['quick_targets']['chambers']['us_senate'] = array(
-    '#type' => 'checkbox',
-    '#title' => t('US Senate'),
-    '#value' => t('fs'),
-  );
-
-  $form['quick_targets']['chambers']['state_house'] = array(
-    '#type' => 'checkbox',
-    '#title' => t('State House'),
-    '#value' => t('sr'),
-  );
-
-  $form['quick_targets']['chambers']['state_senate'] = array(
-    '#type' => 'checkbox',
-    '#title' => t('State Senate'),
-    '#value' => t('ss'),
-  );
-  $form['quick_targets']['party'] = array(
-    '#type' => 'fieldset',
+   $form['quick_targets']['party'] = array(
+    '#type' => 'checkboxes',
+    '#options' => array(
+      'd' => t('Democrat'),
+      'r' => t('Republican')
+      ),
+    
     '#title' => t('Party'),
-    '#attributes' => array('class' => array('form-quick-groups')),
-    '#weight' => 2,
   );
 
-  $form['quick_targets']['party']['republican'] = array(
-    '#type' => 'checkbox',
-    '#title' => t('Republican'),
-    '#value' => t('r'),
-  );
-  $form['quick_targets']['party']['democrat'] = array(
-    '#type' => 'checkbox',
-    '#title' => t('Democrat'),
-    '#value' => t('d'),
-  );
   $form['advocacy_id'] = array(
     '#type' => 'hidden',
     '#value' => $node->advocacy_id,
@@ -293,36 +277,59 @@ function sba_message_edit_form_submit(&$form, &$form_state) {
   //   'target_ids' => array('1', '2', '3', '4', '5', '6', '7'),
   // )
 
-  $chambers = array();
-  foreach ($values['quick_targets']['chambers'] as $chamber) {
-    foreach ($values['quick_targets']['party'] as $party) {
-      $chambers[] = array('chamber' => $chamber, 'party' => $party, 'state' => '');
+  $chambers = array_flip($values['quick_targets']['chambers']);
+  unset($chambers[0]);
+
+  $parties = array_flip($values['quick_targets']['party']);
+  unset($parties[0]);
+
+  $chamber_count = count($chambers);
+  $party_count = count($parties);
+  $exec_is_checked = FALSE; //isset(yadda)
+
+  $selected = array();
+  
+  if ($chamber_count == 0 && exec_is_checked == FALSE) {
+    $chambers = array('fr', 'fs');
+  }
+  if ($party_count == 0) {
+    $parties = array('r', 'd');
+  }
+  
+  if (!empty($chamber_count) || (!empty($party_count) && exec_is_checked == FALSE)) {
+    foreach ($chambers as $chamber) {
+      foreach ($values['quick_targets']['party'] as $party) {
+        $selected[] = array('chamber' => $chamber, 'party' => $party, 'state' => '');
+      }
     }
   }
+  // Executive build goes here.
 
   //New message
   if ($sba_message->is_new = isset($sba_message->is_new) ? $sba_message->is_new : 0) {
     $sba_message->created = time();
-    // response should contain group_id and save it locally?
     $response = 
     $client->createTargetGroup(
       array(
         'name' => $sba_message->name, 
-        'chambers' => $chambers,
+        'chambers' => $selected,
         'message' => array(
           'message_id' => $values['data']['message_id'],
           'form_id' => $values['advocacy_id'],
         ),
       )
     );
+    if (!empty($response->data->id)) {
+      $sba_message->data['group_id'] = $response->data->id;
+    }
+    else {
+      drupal_set_message('There was a problem retrieving the group ID');
+    }
   }
   else {
     // Editing an existing message
-    
-    // if group id is not saved locally:
-    // $group_id = $client->getTargetGroupMessageGroupId(message_id)
 
-    //  dthen
+    //
     // $response = $client->updateTargetGroup($values, $group_id)
 
   }
@@ -379,6 +386,9 @@ function sba_message_delete_form_submit($form, &$form_state) {
   $wrapper = entity_metadata_wrapper('sba_message', $sba_message);
   $nid = $wrapper->field_sba_alert_id->value()->nid;
   sba_message_delete($sba_message);
+
+  //need to invoke client
+
   drupal_set_message(t('The sba_message %name has been deleted.', array('%name' => $sba_message->name)));
   watchdog('sba_message', 'Deleted sba_message %name.', array('%name' => $sba_message->name));
 
