@@ -227,7 +227,7 @@ function sba_message_edit_form($form, &$form_state, $sba_message) {
   if (!empty($sba_message->name)) {
     $form['actions']['delete'] = array(
       '#type' => 'submit',
-      '#value' => t('Delete sba_message'),
+      '#value' => t('Delete message'),
       '#suffix' => l(t('Cancel'), 'node/' . $node->nid . '/messages'),
       '#submit' => $submit + array('sba_message_form_submit_delete'),
       '#weight' => 45,
