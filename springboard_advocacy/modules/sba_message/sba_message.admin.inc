@@ -191,7 +191,9 @@ function sba_message_edit_form($form, &$form_state, $sba_message) {
     '#type' => 'checkboxes',
     '#options' => array(
       'd' => t('Democrat'),
-      'r' => t('Republican')
+      'r' => t('Republican'),
+      'o' => t('Other')
+
       ),
     
     '#title' => t('Party'),
@@ -289,20 +291,44 @@ function sba_message_edit_form_submit(&$form, &$form_state) {
 
   $selected = array();
   
-  if ($chamber_count == 0 && exec_is_checked == FALSE) {
-    $chambers = array('fr', 'fs');
-  }
-  if ($party_count == 0) {
-    $parties = array('r', 'd');
-  }
-  
-  if (!empty($chamber_count) || (!empty($party_count) && exec_is_checked == FALSE)) {
-    foreach ($chambers as $chamber) {
-      foreach ($values['quick_targets']['party'] as $party) {
-        $selected[] = array('chamber' => $chamber, 'party' => $party, 'state' => '');
+  // make chambers
+  switch (true) {
+
+    case (($chamber_count != 0 && $chamber_count != 2) && $party_count != 0 && $party_count != 3):
+      foreach ($chambers as $chamber) {
+        foreach ($parties as $party) {
+          $selected[] = array('chamber' => $chamber, 'party' => $party, 'state' => '');
+        }
       }
-    }
+      break;
+
+    case (($chamber_count != 0 && $chamber_count != 2) && ($party_count == 0 || $party_count == 3)):
+      foreach ($chambers as $chamber) {
+          $selected[] = array('chamber' => $chamber, 'party' => '', 'state' => '');
+      }
+      break;
+
+    case ($chamber_count == 0 && $party_count != 0 && $exec_is_checked == FALSE):
+      foreach ($parties as $party) {
+        $selected[] = array('chamber' => '', 'party' => $party, 'state' => '');
+      }
+      break;
+
+    case ($chamber_count == 2 && $party_count != 0):
+      foreach ($parties as $party) {
+        $selected[] = array('chamber' => '', 'party' => $party, 'state' => '');
+      }
+      break;
+
+    case ($chamber_count == 2 && $party_count == 0):
+      foreach ($chambers as $chamber) {
+        $selected[] = array('chamber' => $chamber, 'party' => '', 'state' => '');
+      }
+      break;
+
+    default:
   }
+
   // Executive build goes here.
 
   //New message
