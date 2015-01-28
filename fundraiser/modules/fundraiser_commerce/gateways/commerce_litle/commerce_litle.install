@@ -9,12 +9,37 @@
  * Implements hook_requirements().
  */
 function commerce_litle_requirements($phase) {
+
+  $requirements = array();
+  // Ensure translations don't break at install time.
+  $t = get_t();
+
+  if ($phase == 'runtime') {
+    $requirements['commerce_litle_sdk'] = array(
+      'title' => $t('Litle SDK for PHP'),
+      'description' => $t('The Commerce Litle module requires the Litle SDK for PHP.'),
+      'value' => $t('Present'),
+      'severtiy' => REQUIREMENT_OK,
+    );
+
+    if (!libraries_get_path('litle')) {
+      $requirements['commerce_litle_sdk']['description'] = $t(
+          'The Commerce Litle module requires the !sdk in a valid library location. Consider installing it using the included make file.',
+          array(
+            '!sdk' => l($t('Litle SDK for PHP'), 'https://github.com/LitleCo/litle-sdk-for-php'),
+          ));
+      $requirements['commerce_litle_sdk']['value'] = 'Missing';
+      $requirements['commerce_litle_sdk']['severity'] = REQUIREMENT_ERROR;
+
+    }
+  }
+
   // Skip the requirements check if SimpleTest is installed to avoid multiple
   // cURL rows.
   if (module_exists('simpletest')) {
-    return;
+    return $requirements;
   }
-  $t = get_t();
+
   $has_curl = function_exists('curl_init');
   $requirements['commerce_litle_curl'] = array(
     'title' => $t('cURL'),
@@ -126,4 +151,20 @@ function commerce_litle_update_7002() {
     'description' => 'Approve, decline status',
     )
   );
+}
+
+/**
+ * Rebuild the registry to find the new account updater class.
+ */
+function commerce_litle_update_7003() {
+  registry_rebuild();
+}
+
+/**
+ * Remove unused variables now that Commerce Litle uses the libraries module.
+ */
+function commerce_litle_update_7004() {
+  variable_del('commerce_litle_sdk_path');
+  variable_del('commerce_litle_sdk_mode');
+  registry_rebuild();
 }

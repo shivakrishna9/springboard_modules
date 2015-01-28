@@ -177,7 +177,9 @@ function salesforce_npsp_save_account_ids($account_ids) {
 function salesforce_npsp_salesforce_sync_fail_item($item, $message, $result) {
 
   // If sync fails because LastName is empty, item lastname to standard value
-  if (array_key_exists('LastName', $item->sobject->fields) && $result->errors[0]->message == "Required fields are missing: [LastName]") {
+  if (!empty($item->sobject->fields) && array_key_exists('LastName', $item->sobject->fields) 
+    && $result->errors[0]->message == "Required fields are missing: [LastName]"
+  ) {
     $lastname = variable_get('salesforce_npsp_lastname', SALESFORCE_NPSP_DEFAULT_LASTNAME);
     $item->sobject->fields['LastName'] = $lastname;
   }

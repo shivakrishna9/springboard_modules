@@ -1,18 +1,24 @@
 <?php
-
 /**
  * @file
+ * Email related functions for dsr.
  */
 
 /**
- * Implements hook_mail().
+ * Creates a multipart email for dsr_mail().
+ *
+ * @param array $params
+ *   The parameters provided by hook_mail().
+ *
+ * @return array
+ *   An array for merging into the mail in dsr_mail().
  */
 function dsr_create_multipart_email($params) {
   $stats = $params['stats'];
   $start_date = $params['start_date'];
   $end_date = $params['end_date'];
 
-  // To make the HTML email work, implement all our own headers
+  // To make the HTML email work, implement all our own headers.
   $boundary = '----=_NextPart_' . md5(uniqid());
 
   $headers = array(
@@ -26,9 +32,8 @@ function dsr_create_multipart_email($params) {
     $headers['Bcc'] = $params['bcc_address'];
   }
   //
-  // Now create the message, with an HTML component and a plaintext component
+  // Now create the message, with an HTML component and a plaintext component.
   //
-
 
   $body_html = '<html><head></head><body>';
   $body_html .= dsr_collect_stats($start_date, $end_date, FALSE);
@@ -59,6 +64,13 @@ $body_html
   return $email;
 }
 
+/**
+ * @param string $start_date
+ * @param string $end_date
+ * @param array $stats
+ *
+ * @return string
+ */
 function dsr_create_text_email($start_date, $end_date, $stats) {
   $sf_posted_amount = number_format($stats['salesforce_posted']['total_amount'], 2, '.', ',');
   $drupal_posted_amount = number_format($stats['drupal_posted']['total_amount'], 2, '.', ',');
@@ -120,11 +132,24 @@ EOT;
 
 }
 
+/**
+ * @param string $type
+ * @param string $start_date
+ * @param string $end_date
+ *
+ * @return string
+ */
 function dsr_email_report_link($type, $start_date, $end_date) {
   global $base_url;
   return $base_url . '/' . DSR_RECONCILIATION_PATH . '/report/' . $type . '/' . date('Y-m-d', strtotime($start_date)) . '/' . date('Y-m-d', strtotime($end_date)) . "\n";
 }
 
+/**
+ * @param string $suffix
+ * @param array $stats
+ *
+ * @return null|string
+ */
 function _dsr_text_results($suffix, $stats) {
   if (isset($stats["salesforce_$suffix"]['types'])) {
     foreach ($stats["salesforce_$suffix"]['types'] as $label => $data) {

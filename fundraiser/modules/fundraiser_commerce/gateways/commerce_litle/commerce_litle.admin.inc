@@ -317,16 +317,20 @@ function commerce_litle_credit_request($payment_method, $transaction, $order, $a
     watchdog('commerce_litle', 'Litle Credit request: !param', array('!param' => '<pre>' . check_plain(print_r($nvp, TRUE)) . '</pre>'), WATCHDOG_DEBUG);
   }
 
+  $litle = _commerce_litle_get_litle();
+  $nvp = array_merge($nvp, _commerce_litle_get_litle_config($payment_method));
+  $nvp['id'] = $nvp['litleTxnId'];
+
   // Submit the request to Litle.
   if ($payment_method['method_id'] == 'commerce_litle_cc') {
-    $response = _commerce_litle_request_credit($payment_method, $nvp);
+    $response = $litle->creditRequest($nvp);
   }
   else {
-    $response = _commerce_litle_request_echeck_credit($payment_method, $nvp);
+    $response = $litle->echeckCreditRequest($nvp);
   }
 
-  $response_string = XmlParser::getDomDocumentAsString($response);
-  $response_code = XmlParser::getNode($response, 'response');
+  $response_string = $litle->getDomDocumentAsString($response);
+  $response_code = $litle->getNode($response, 'response');
 
   // Log the response if specified.
   if ($payment_method['settings']['log']['response'] === 'response') {
@@ -339,7 +343,7 @@ function commerce_litle_credit_request($payment_method, $transaction, $order, $a
     // Create a new transaction to record the credit.
     $credit_transaction = commerce_payment_transaction_new('commerce_litle_cc', $order->order_id);
     $credit_transaction->instance_id = $payment_method['instance_id'];
-    $credit_transaction->remote_id = XmlParser::getNode($response, 'litleTxnId');
+    $credit_transaction->remote_id = $litle->getNode($response, 'litleTxnId');
     $credit_transaction->amount = $credit_amount * -1;
     $credit_transaction->currency_code = $transaction->currency_code;
     $credit_transaction->payload[REQUEST_TIME] = $response_string;
@@ -349,6 +353,7 @@ function commerce_litle_credit_request($payment_method, $transaction, $order, $a
 
     // Save the credit transaction.
     commerce_payment_transaction_save($credit_transaction);
+
     return TRUE;
   }
   else {
@@ -356,7 +361,7 @@ function commerce_litle_credit_request($payment_method, $transaction, $order, $a
     $transaction->payload[REQUEST_TIME] = $response_string;
 
     // Display a failure message and response reason from Litle .
-    $message = XmlParser::getNode($response, 'message');
+    $message = $litle->getNode($response, 'message');
     drupal_set_message(t('Credit failed: @reason', array('@reason' => check_plain($message))), 'error');
 
     commerce_payment_transaction_save($transaction);
