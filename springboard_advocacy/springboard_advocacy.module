@@ -22,6 +22,21 @@ function springboard_advocacy_menu() {
     'type' => MENU_DEFAULT_LOCAL_TASK,
   );
 
+  $items['admin/springboard/advocacy'] = array(
+    'title' => 'Alerts',
+    'page callback' => 'springboard_advocacy_dashboard',
+    'file' => 'springboard_advocacy.admin.inc',
+    'file path' => drupal_get_path('module', 'springboard_advocacy') . '/includes',
+    'access arguments' => array('administer springboard advocacy'),
+    'type' => MENU_NORMAL_ITEM,
+  );
+
+  $items['admin/springboard/advocacy/dashboard'] = array(
+    'title' => 'Dashboard',
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+    'access arguments' => array('administer springboard advocacy'),
+  );
+
   return $items;
 }
 
@@ -260,4 +275,24 @@ function springboard_advocacy_target_gender() {
     'F' => 'Female'
   );
   return $value_options;
+}
+
+/**
+ * Implements hook_theme().
+ */
+function springboard_advocacy_theme($existing, $type, $theme) {
+  $path = drupal_get_path('module', 'springboard_advocacy');
+
+  $templates = array(
+    'springboard_advocacy_dashboard' => array(
+      'variables' => array('views' => array()),
+      'template' => drupal_get_path('theme', $theme) . '/templates/springboard-advocacy-dashboard',
+    ),
+  );
+
+  // Look for theme templates in springboard_advocacy.
+  $templates += drupal_find_theme_functions($existing, array($theme));
+  $templates += drupal_find_theme_templates($existing, '.tpl.php', $path);
+
+  return $templates;
 }
