@@ -57,7 +57,7 @@ function sba_message_access($op, $sba_message = NULL, $account = NULL) {
     return TRUE;
   }
 
-  if (isset($sba_message) && $type_name = $sba_message->type) {
+  if (is_object($sba_message) && $type_name = $sba_message->type) {
     $op = ($op == 'view') ? 'view' : 'edit';
     if (user_access("$op any $type_name sba message", $account)) {
       return TRUE;
