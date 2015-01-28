@@ -22,22 +22,34 @@ function springboard_advocacy_menu() {
     'type' => MENU_DEFAULT_LOCAL_TASK,
   );
 
-  $items['admin/springboard/advocacy'] = array(
-    'title' => 'Alerts',
+  $items['admin/springboard/advocacy/alerts'] = array(
+    'title' => 'Advocacy',
     'page callback' => 'springboard_advocacy_dashboard',
+    'page arguments' => array('alerts'),
+  ) + springbaord_advocacy_menu_common();
+
+  $items['admin/springboard/advocacy/alerts/all'] = array(
+    'title' => 'Advocacy',
+    'page callback' => 'springboard_advocacy_dashboard',
+    'page arguments' => array('alerts/all'),
+  ) + springbaord_advocacy_menu_common();
+
+   $items['admin/springboard/advocacy/custom-targets'] = array(
+    'title' => 'Advocacy',
+    'page callback' => 'springboard_advocacy_dashboard',
+    'page arguments' => array('custom-targets'),
+  ) + springbaord_advocacy_menu_common();
+
+  return $items;
+}
+
+function springbaord_advocacy_menu_common() {
+  return array(
     'file' => 'springboard_advocacy.admin.inc',
     'file path' => drupal_get_path('module', 'springboard_advocacy') . '/includes',
     'access arguments' => array('administer springboard advocacy'),
-    'type' => MENU_NORMAL_ITEM,
-  );
-
-  $items['admin/springboard/advocacy/dashboard'] = array(
-    'title' => 'Dashboard',
-    'type' => MENU_DEFAULT_LOCAL_TASK,
-    'access arguments' => array('administer springboard advocacy'),
-  );
-
-  return $items;
+    'type' => MENU_NORMAL_ITEM
+    );
 }
 
 /**

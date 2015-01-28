@@ -114,29 +114,46 @@ function springboard_advocacy_settings_form() {
 }
 
 /**
- * Page callback for the p2p dashboard.
+ * Page callback for the advocacy dashboard.
  */
-function springboard_advocacy_dashboard() {
-  $types = variable_get('springboard_advocacy_alert_types', array());
+function springboard_advocacy_dashboard($path) {
 
-  if (empty($types)) {
-    drupal_set_message('No content types have been enabled for Springboard Advocacy.', 'error');
+  switch($path) {
+  
+    case 'alerts':
+      $views = array(
+        'sba_alerts' => array(
+          'header' => t('Site alerts'),
+          'content' => views_embed_view('sba_alerts', 'block_1'),
+          'create_link' => array('title' => t('Create a new alert'), 'href' => 'node/add/springboard-letter'),
+          'viewmore_link' => array('title' => t('View all'), 'href' => 'admin/springboard/advocacy/alerts/all'),
+        ),
+      );
+      break;
+
+    case 'alerts/all':
+      $views = array(
+        'sba_alerts' => array(
+          'header' => t('All Site alerts'),
+          'content' => views_embed_view('sba_alerts', 'block_2'),
+          'create_link' => array('title' => t('Create a new alert'), 'href' => 'node/add/springboard-letter'),
+        ),
+      );
+      break;
+
+    case 'custom-targets':
+      $views = array(
+        'sba_targets' => array(
+          'header' => t('Custom Targets'),
+          'content' => views_embed_view('targets', 'block_1'),
+          'create_link' => array('title' => t('Create a new target'), 'href' => 'admin/springboard/advocacy/targets/custom-targets/add'),
+        ),
+      );
+
+      break;
+      
+    default:  
   }
-  
-  $views = array(
-    'sba_alerts' => array(
-      'header' => t('Site alerts'),
-      'content' => views_embed_view('sba_alerts', 'block_1'),
-      'create_link' => array('title' => t('Create a new alert'), 'href' => 'node/add/springboard-letter'),
-      'viewmore_link' => array('title' => t('View all'), 'href' => 'admin/springboard/advocacy/alerts/all'),
-    ),
-    'sba_alerts' => array(
-      'header' => t('All site alerts'),
-      'content' => views_embed_view('sba_alerts', 'block_2'),
-      'create_link' => array('title' => t('Create a new alert'), 'href' => 'node/add/springboard-letter'),
-    ),
-  );
-  
   return theme('springboard_advocacy_dashboard', array('views' => $views));
 
 }
