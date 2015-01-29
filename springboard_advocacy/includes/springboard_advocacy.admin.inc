@@ -126,6 +126,8 @@ function springboard_advocacy_dashboard($path) {
           'header' => t('Site alerts'),
           'content' => views_embed_view('sba_alerts', 'block_1'),
           'create_link' => array('title' => t('Create a new alert'), 'href' => 'node/add/springboard-letter'),
+          'manage_link' => array('title' => t('Manage Custom Targets'), 'href' => 'admin/springboard/advocacy/custom-targets'),
+
           'viewmore_link' => array('title' => t('View all'), 'href' => 'admin/springboard/advocacy/alerts/all'),
         ),
       );
@@ -137,6 +139,7 @@ function springboard_advocacy_dashboard($path) {
           'header' => t('All Site alerts'),
           'content' => views_embed_view('sba_alerts', 'block_2'),
           'create_link' => array('title' => t('Create a new alert'), 'href' => 'node/add/springboard-letter'),
+          'manage_link' => array('title' => t('Manage Custom Targets'), 'href' => 'admin/springboard/advocacy/targets/custom-targets'),
         ),
       );
       break;
@@ -151,7 +154,7 @@ function springboard_advocacy_dashboard($path) {
       );
 
       break;
-      
+
     default:  
   }
   return theme('springboard_advocacy_dashboard', array('views' => $views));

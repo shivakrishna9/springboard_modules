@@ -26,24 +26,24 @@ function springboard_advocacy_menu() {
     'title' => 'Advocacy',
     'page callback' => 'springboard_advocacy_dashboard',
     'page arguments' => array('alerts'),
-  ) + springbaord_advocacy_menu_common();
+  ) + springboard_advocacy_menu_common();
 
   $items['admin/springboard/advocacy/alerts/all'] = array(
     'title' => 'Advocacy',
     'page callback' => 'springboard_advocacy_dashboard',
     'page arguments' => array('alerts/all'),
-  ) + springbaord_advocacy_menu_common();
+  ) + springboard_advocacy_menu_common();
 
    $items['admin/springboard/advocacy/custom-targets'] = array(
     'title' => 'Advocacy',
     'page callback' => 'springboard_advocacy_dashboard',
     'page arguments' => array('custom-targets'),
-  ) + springbaord_advocacy_menu_common();
+  ) + springboard_advocacy_menu_common();
 
   return $items;
 }
 
-function springbaord_advocacy_menu_common() {
+function springboard_advocacy_menu_common() {
   return array(
     'file' => 'springboard_advocacy.admin.inc',
     'file path' => drupal_get_path('module', 'springboard_advocacy') . '/includes',
