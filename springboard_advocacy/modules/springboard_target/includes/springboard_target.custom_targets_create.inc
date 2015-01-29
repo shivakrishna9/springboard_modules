@@ -16,6 +16,12 @@ function springboard_target_create_custom_targets_form() {
   return $form;
 }
 
+
+/**
+ * Submit function for target create form
+ * @param $form
+ * @param $form_state
+ */
 function springboard_target_create_custom_targets_form_submit($form, &$form_state) {
   $input = $form_state['values'];
   $loader = new AdvocacyApiClientLoader();

@@ -5,10 +5,13 @@
  * Form definition for Target creation and editing.
  */
 
-/*
+/**
  * Implements hook_form
  *
  * Serves a dual function as target add and edit form
+ *
+ * @param null $target_id
+ * @return array
  */
 function springboard_target_form($target_id = NULL) {
   $form = array();
@@ -25,9 +28,18 @@ function springboard_target_form($target_id = NULL) {
     $target = $target->data;
   }
 
-  //@TODO: uncomment "required" as development nears completion.
+  //TODO: uncomment "required" as development nears completion.
+  $form['row_one'] = array(
+    '#type' => 'container',
+    '#attributes' => array(
+      'class' => array(
+        'edit-target-row-one',
+      ),
+    ),
+    '#weight' => -5,
+  );
 
-  $form['salutation'] = array(
+  $form['row_one']['salutation'] = array(
     '#type' => 'textfield',
     '#title' => t('Title'),
     '#default_value' => isset($target->salutation) ? $target->salutation : '',
@@ -36,7 +48,7 @@ function springboard_target_form($target_id = NULL) {
     '#attributes' => array('class' => array('target-add', 'target-salutation')),
   );
 
-  $form['first_name'] = array(
+  $form['row_one']['first_name'] = array(
     '#type' => 'textfield',
     '#title' => t('First Name'),
     '#default_value' => isset($target->first_name) ? $target->first_name : '',
@@ -46,7 +58,7 @@ function springboard_target_form($target_id = NULL) {
     '#attributes' => array('class' => array('target-add', 'target-first-name')),
   );
 
-  $form['last_name'] = array(
+  $form['row_one']['last_name'] = array(
     '#type' => 'textfield',
     '#title' => t('Last Name'),
     '#default_value' => isset($target->last_name) ? $target->last_name : '',
@@ -56,7 +68,7 @@ function springboard_target_form($target_id = NULL) {
     '#attributes' => array('class' => array('target-add', 'target-last-name')),
   );
 
-  $form['organization'] = array(
+  $form['row_one']['organization'] = array(
     '#type' => 'textfield',
     '#title' => t('Organization/Affiliation'),
     '#default_value' => isset($target->organization) ? $target->organization : '',
@@ -65,7 +77,7 @@ function springboard_target_form($target_id = NULL) {
     '#attributes' => array('class' => array('target-add', 'target-organization')),
   );
 
-  // $form['target_type'] = array(
+  // $form['row_one']['target_type'] = array(
   //   '#type' => 'select',
   //   '#title' => t('Target Type'),
   //   '#default_value' => isset($target->target_type) ? $target->target_type : '',
@@ -74,15 +86,15 @@ function springboard_target_form($target_id = NULL) {
   //   '#attributes' => array('class' => array('target-add', 'target-target-type')),
   // );
 
-  $form['party'] = array(
-    '#type' => 'select',
-    '#title' => t('Party (If applicable)'),
-    '#default_value' => isset($target->party) ? array($target->party) : '',
-    '#options' => springboard_target_parties(), 
-    '#attributes' => array('class' => array('target-add', 'target-party')),
-  );
+//  $form['row_one']['party'] = array(
+//    '#type' => 'select',
+//    '#title' => t('Party (If applicable)'),
+//    '#default_value' => isset($target->party) ? array($target->party) : '',
+//    '#options' => springboard_target_parties(),
+//    '#attributes' => array('class' => array('target-add', 'target-party')),
+//  );
 
-  $form['gender'] = array(
+  $form['row_one']['gender'] = array(
     '#type' => 'select',
     '#title' => t('Gender'),
     '#default_value' => isset($target->gender) ? array($target->gender) : '',
@@ -90,7 +102,17 @@ function springboard_target_form($target_id = NULL) {
     '#attributes' => array('class' => array('target-add', 'target-first-name')),
   );
 
-  $form['area_code'] = array(
+  $form['row_two'] = array(
+    '#type' => 'container',
+    '#attributes' => array(
+      'class' => array(
+        'edit-target-row-two',
+      ),
+    ),
+    '#weight' => -4,
+  );
+
+  $form['row_two']['area_code'] = array(
     '#type' => 'textfield',
     '#title' => t('Phone Area code'),
     '#default_value' => isset($target->addresses[0]->area_code) ? $target->addresses[0]->area_code : '',
@@ -99,7 +121,7 @@ function springboard_target_form($target_id = NULL) {
     '#attributes' => array('class' => array('target-add', 'target-phone-area-code')),
   );
 
-  $form['phone'] = array(
+  $form['row_two']['phone'] = array(
     '#type' => 'textfield',
     '#title' => t('Phone'),
     '#default_value' => isset($target->addresses[0]->phone) ? $target->addresses[0]->phone : '',
@@ -108,7 +130,7 @@ function springboard_target_form($target_id = NULL) {
     '#attributes' => array('class' => array('target-add', 'target-phone')),
   );
 
-  $form['ext'] = array(
+  $form['row_two']['ext'] = array(
     '#type' => 'textfield',
     '#title' => t('Extension'),
     '#default_value' => isset($target->addresses[0]->ext) ? $target->addresses[0]->ext : '',
@@ -117,7 +139,7 @@ function springboard_target_form($target_id = NULL) {
     '#attributes' => array('class' => array('target-add', 'target-phone-extension')),
   );
 
-  $form['fax_area_code'] = array(
+  $form['row_two']['fax_area_code'] = array(
     '#type' => 'textfield',
     '#title' => t('Fax Area Code'),
     '#default_value' => isset($target->addresses[0]->fax_area_code) ? $target->addresses[0]->fax_area_code : '',
@@ -126,7 +148,7 @@ function springboard_target_form($target_id = NULL) {
     '#attributes' => array('class' => array('target-add', 'target-fax-area-code')),
   );
 
-  $form['fax'] = array(
+  $form['row_two']['fax'] = array(
     '#type' => 'textfield',
     '#title' => t('Fax'),
     '#default_value' => isset($target->addresses[0]->fax) ? $target->addresses[0]->fax : '',
@@ -135,7 +157,16 @@ function springboard_target_form($target_id = NULL) {
     '#attributes' => array('class' => array('target-add', 'target-fax')),
   );
 
-  $form['street'] = array(
+  $form['row_three'] = array(
+    '#type' => 'container',
+    '#attributes' => array(
+      'class' => array(
+        'edit-target-row-three',
+      ),
+    ),
+    '#weight' => -3,
+  );
+  $form['row_three']['street'] = array(
     '#type' => 'textfield',
     '#title' => t('Address'),
     '#default_value' => isset($target->addresses[0]->street) ? $target->addresses[0]->street : '',
@@ -145,7 +176,7 @@ function springboard_target_form($target_id = NULL) {
     '#attributes' => array('class' => array('target-add', 'target-address')),
   );
 
-    $form['street_2'] = array(
+  $form['row_three']['street_2'] = array(
     '#type' => 'textfield',
     '#title' => t('Address Line 2'),
     '#default_value' => isset($target->addresses[0]->street_2) ? $target->addresses[0]->street_2 : '',
@@ -154,7 +185,7 @@ function springboard_target_form($target_id = NULL) {
     '#attributes' => array('class' => array('target-add', 'target-address-2')),
   );
 
-    $form['city'] = array(
+  $form['row_three']['city'] = array(
     '#type' => 'textfield',
     '#title' => t('City'),
     '#default_value' => isset($target->addresses[0]->city) ? $target->addresses[0]->city : '',
@@ -164,7 +195,7 @@ function springboard_target_form($target_id = NULL) {
     '#attributes' => array('class' => array('target-add', 'target-city')),
   );
 
-    $form['state'] = array(
+  $form['row_three']['state'] = array(
     '#type' => 'select',
     '#title' => t('State'),
     '#default_value' => isset($target->addresses[0]->state) ? array($target->addresses[0]->state) : '',
@@ -173,7 +204,7 @@ function springboard_target_form($target_id = NULL) {
     '#attributes' => array('class' => array('target-add', 'target-state')),
   );
 
-  $form['zip_code'] = array(
+  $form['row_three']['zip_code'] = array(
     '#type' => 'textfield',
     '#title' => t('Zip Code'),
     '#default_value' => isset($target->addresses[0]->zip_code) ? $target->addresses[0]->zip_code : '',
@@ -183,7 +214,17 @@ function springboard_target_form($target_id = NULL) {
     '#attributes' => array('class' => array('target-add', 'target-zip')),
   );
 
-  $form['email'] = array(
+  $form['row_four'] = array(
+    '#type' => 'container',
+    '#attributes' => array(
+      'class' => array(
+        'edit-target-row-four',
+      ),
+    ),
+    '#weight' => -2,
+  );
+
+  $form['row_four']['email'] = array(
     '#type' => 'textfield',
     '#title' => t('Email Address'),
     '#default_value' => isset($target->email) ? $target->email : '',
@@ -192,7 +233,7 @@ function springboard_target_form($target_id = NULL) {
     '#attributes' => array('class' => array('target-add', 'target-email')),
   );
 
-  $form['facebook'] = array(
+  $form['row_four']['facebook'] = array(
     '#type' => 'textfield',
     '#title' => t('Facebook'),
     '#default_value' => isset($target->facebook) ? $target->facebook : '',
@@ -201,7 +242,7 @@ function springboard_target_form($target_id = NULL) {
     '#attributes' => array('class' => array('target-add', 'target-facebook')),
   );
 
-    $form['twitter'] = array(
+  $form['row_four']['twitter'] = array(
     '#type' => 'textfield',
     '#title' => t('Twitter'),
     '#default_value' => isset($target->twitter) ? $target->twitter : '',
@@ -210,7 +251,7 @@ function springboard_target_form($target_id = NULL) {
     '#attributes' => array('class' => array('target-add', 'target-twitter')),
   );
 
-  $form['website'] = array(
+  $form['row_four']['website'] = array(
     '#type' => 'textfield',
     '#title' => t('Web site'),
     '#default_value' => isset($target->website) ? $target->website : '',
@@ -219,7 +260,7 @@ function springboard_target_form($target_id = NULL) {
     '#attributes' => array('class' => array('target-add', 'target-website')),
   );
 
-  $form['class_name'] = array(
+  $form['row_four']['class_name'] = array(
     '#type' => 'hidden',
     '#value' => 'Target'
   );
@@ -244,6 +285,10 @@ function springboard_target_parties() {
   return $parties;
 }
 
+/**
+ * List states from target edit form.
+ * @return array
+ */
 function springboard_target_states() {
   $states = array(
     'AL' => 'Alabama',
@@ -301,6 +346,11 @@ function springboard_target_states() {
   return $states;
 }
 
+/**
+ * Target edit form validation.
+ * @param $form
+ * @param $form_state
+ */
 function springboard_target_form_validate($form, &$form_state) {
 
   if (!empty($form_state['values']['email'])) {

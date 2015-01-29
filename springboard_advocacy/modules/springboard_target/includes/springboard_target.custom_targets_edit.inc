@@ -19,6 +19,11 @@ function springboard_target_edit_custom_targets_form($form, &$form_state, $targe
 
 }
 
+/**
+ * Submit function for target edit form
+ * @param $form
+ * @param $form_state
+ */
 function springboard_target_edit_custom_targets_form_submit($form, &$form_state) {
   $id = $form_state['build_info']['args'][0];
   $input = $form_state['values'];
