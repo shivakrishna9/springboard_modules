@@ -5,8 +5,11 @@
  * Dynamic Gift Strings standard test.
  */
 
-class GiftStringTestCase extends DynamicGiftStringsTestCase {
+class GiftStringTestCase extends DynamicGiftStringsTestSetup {
 
+  /**
+   * Test info.
+   */
   public static function getInfo() {
     return array(
       'name' => 'Dynamic Gift String standard string test',
@@ -20,12 +23,12 @@ class GiftStringTestCase extends DynamicGiftStringsTestCase {
    */
   public function testGiftString() {
     $this->drupalGet(
-      'node/' . $this->_donation_form->nid,
+      'node/' . $this->donationForm->nid,
       array(
         'query' => array(
-          'af' => $this->_encrypted_af,
-          'gs' => $this->_encrypted_gs_no_default,
-        )
+          'af' => $this->encryptedAF,
+          'gs' => $this->encryptedGSNoDefault,
+        ),
       )
     );
 

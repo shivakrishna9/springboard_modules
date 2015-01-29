@@ -5,8 +5,11 @@
  * Dynamic Gift Strings standard test.
  */
 
-class GiftStringFormSubmitTestCase extends DynamicGiftStringsTestCase {
+class GiftStringFormSubmitTestCase extends DynamicGiftStringsTestSetup {
 
+  /**
+   * Test info.
+   */
   public static function getInfo() {
     return array(
       'name' => 'Dynamic Gift String decryption with form submit',
@@ -16,7 +19,7 @@ class GiftStringFormSubmitTestCase extends DynamicGiftStringsTestCase {
   }
 
   /**
-   * Confirm an error message appears when no default amount is passed or selected.
+   * Confirm an error message appears when no default amount is passed/selected.
    */
   public function testErrorMessage() {
     // Standard post values.
@@ -31,14 +34,14 @@ class GiftStringFormSubmitTestCase extends DynamicGiftStringsTestCase {
 
     // Post to the form with the af and gs query parameters.
     $this->drupalPost(
-      'node/' . $this->_donation_form->nid,
+      'node/' . $this->donationForm->nid,
       $post,
       t('Donate'),
       array(
         'query' => array(
-          'af' => $this->_encrypted_af,
-          'gs' => $this->_encrypted_gs_no_default,
-        )
+          'af' => $this->encryptedAF,
+          'gs' => $this->encryptedGSNoDefault,
+        ),
       )
     );
 
@@ -61,14 +64,14 @@ class GiftStringFormSubmitTestCase extends DynamicGiftStringsTestCase {
 
     // Post to the form with the af and gs query parameters.
     $this->drupalPost(
-      'node/' . $this->_donation_form->nid,
+      'node/' . $this->donationForm->nid,
       $post,
       t('Donate'),
       array(
         'query' => array(
-          'af' => $this->_encrypted_af,
-          'gs' => $this->_encrypted_gs_w_default,
-        )
+          'af' => $this->encryptedAF,
+          'gs' => $this->encryptedGSWithDefault,
+        ),
       )
     );
 

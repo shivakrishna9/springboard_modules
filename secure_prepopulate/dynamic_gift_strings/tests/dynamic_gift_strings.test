@@ -5,13 +5,34 @@
  * Common functions for all the secure prepopulate tests.
  */
 
-// Include the setup test class.
-module_load_include('test', 'fundraiser', 'tests/fundraiser.setup');
-
 /**
  * Setup and tear down web class. Does nothing else.
  */
-class DynamicGiftStringsTestCase extends FundraiserSetup {
+abstract class DynamicGiftStringsTestSetup extends FundraiserSetup {
+
+  /**
+   * @var string
+   *   Encrypted gift string with no default.
+   */
+  protected $encryptedGSNoDefault;
+
+  /**
+   * @var string
+   *   Encrypted gift string with a default.
+   */
+  protected $encryptedGSWithDefault;
+
+  /**
+   * @var string
+   *   Encrypted secure prepopulate string.
+   */
+  protected $encryptedAF;
+
+  /**
+   * @var stdClass
+   *   A donation form node object.
+   */
+  protected $donationForm;
 
   /**
    * Implementation of setUp().
@@ -21,11 +42,11 @@ class DynamicGiftStringsTestCase extends FundraiserSetup {
     $additional_modules = array(
       'secure_prepopulate',
       'dynamic_gift_strings',
-      'webform_confirmations'
+      'webform_confirmations',
     );
     parent::setUp($additional_modules);
 
-    // set up some default variables
+    // Set up some default variables.
     variable_set('secure_prepopulate_key', '12345678901234561234567890123456');
     variable_set('secure_prepopulate_iv', '1234567890123456');
     variable_set('secure_prepopulate_precedence', 'url');
@@ -36,12 +57,13 @@ class DynamicGiftStringsTestCase extends FundraiserSetup {
       'default' => 'null',
     );
 
+    $query = array();
     foreach ($amounts as $key => $value) {
       $query[] = "$key=$value";
     }
 
     $query_string = implode('&', $query);
-    $this->_encrypted_gs_no_default = secure_prepopulate_encrypt($query_string);
+    $this->encryptedGSNoDefault = secure_prepopulate_encrypt($query_string);
 
     // Create an encrypted gift string with a default.
     $amounts = array(
@@ -54,7 +76,7 @@ class DynamicGiftStringsTestCase extends FundraiserSetup {
     }
 
     $query_string = implode('&', $query);
-    $this->_encrypted_gs_w_default = secure_prepopulate_encrypt($query_string);
+    $this->encryptedGSWithDefault = secure_prepopulate_encrypt($query_string);
 
     // Create an encrypted secure pre-pop string.
     $settings = array(
@@ -72,9 +94,9 @@ class DynamicGiftStringsTestCase extends FundraiserSetup {
       $query[] = "$key=$value";
     }
     $query_string = implode('&', $query);
-    $this->_encrypted_af = secure_prepopulate_encrypt($query_string);
+    $this->encryptedAF = secure_prepopulate_encrypt($query_string);
 
     // Create the form.
-    $this->_donation_form = $this->createDonationForm();
+    $this->donationForm = $this->createDonationForm();
   }
 }
