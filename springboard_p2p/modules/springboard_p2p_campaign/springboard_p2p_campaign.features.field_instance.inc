@@ -70,7 +70,7 @@ function springboard_p2p_campaign_field_default_field_instances() {
         'label' => 'above',
         'settings' => array(),
         'type' => 'hidden',
-        'weight' => 20,
+        'weight' => 7,
       ),
       'teaser' => array(
         'label' => 'above',
@@ -113,7 +113,7 @@ function springboard_p2p_campaign_field_default_field_instances() {
         'module' => 'list',
         'settings' => array(),
         'type' => 'list_default',
-        'weight' => 7,
+        'weight' => 25,
       ),
       'teaser' => array(
         'label' => 'above',
@@ -156,7 +156,7 @@ function springboard_p2p_campaign_field_default_field_instances() {
         'module' => 'text',
         'settings' => array(),
         'type' => 'text_default',
-        'weight' => 15,
+        'weight' => 34,
       ),
       'teaser' => array(
         'label' => 'above',
@@ -198,7 +198,7 @@ function springboard_p2p_campaign_field_default_field_instances() {
           'image_style' => 'p2p_campaign_image_slideshow',
         ),
         'type' => 'image',
-        'weight' => 3,
+        'weight' => 17,
       ),
       'teaser' => array(
         'label' => 'above',
@@ -210,7 +210,7 @@ function springboard_p2p_campaign_field_default_field_instances() {
     'entity_type' => 'node',
     'field_name' => 'field_p2p_campaign_banner',
     'label' => 'Campaign banner',
-    'required' => 1,
+    'required' => 0,
     'settings' => array(
       'alt_field' => 1,
       'default_image' => 0,
@@ -244,7 +244,7 @@ function springboard_p2p_campaign_field_default_field_instances() {
         'label' => 'above',
         'settings' => array(),
         'type' => 'hidden',
-        'weight' => 23,
+        'weight' => 10,
       ),
       'teaser' => array(
         'label' => 'above',
@@ -283,7 +283,7 @@ function springboard_p2p_campaign_field_default_field_instances() {
           'image_style' => '',
         ),
         'type' => 'image',
-        'weight' => 4,
+        'weight' => 18,
       ),
       'teaser' => array(
         'label' => 'above',
@@ -333,7 +333,7 @@ function springboard_p2p_campaign_field_default_field_instances() {
           'image_style' => '',
         ),
         'type' => 'image',
-        'weight' => 2,
+        'weight' => 16,
       ),
       'teaser' => array(
         'label' => 'above',
@@ -384,7 +384,7 @@ function springboard_p2p_campaign_field_default_field_instances() {
         'label' => 'hidden',
         'settings' => array(),
         'type' => 'hidden',
-        'weight' => 17,
+        'weight' => 3,
       ),
       'teaser' => array(
         'label' => 'above',
@@ -425,7 +425,7 @@ function springboard_p2p_campaign_field_default_field_instances() {
           'link' => 1,
         ),
         'type' => 'entityreference_label',
-        'weight' => 1,
+        'weight' => 2,
       ),
       'teaser' => array(
         'label' => 'above',
@@ -444,7 +444,9 @@ function springboard_p2p_campaign_field_default_field_instances() {
     'widget' => array(
       'active' => 1,
       'module' => 'options',
-      'settings' => array(),
+      'settings' => array(
+        'apply_chosen' => 0,
+      ),
       'type' => 'options_select',
       'weight' => 1,
     ),
@@ -462,7 +464,7 @@ function springboard_p2p_campaign_field_default_field_instances() {
         'module' => 'text',
         'settings' => array(),
         'type' => 'text_default',
-        'weight' => 8,
+        'weight' => 27,
       ),
       'teaser' => array(
         'label' => 'above',
@@ -506,7 +508,7 @@ function springboard_p2p_campaign_field_default_field_instances() {
         'module' => 'list',
         'settings' => array(),
         'type' => 'list_default',
-        'weight' => 13,
+        'weight' => 32,
       ),
       'teaser' => array(
         'label' => 'above',
@@ -549,7 +551,7 @@ function springboard_p2p_campaign_field_default_field_instances() {
         'module' => 'list',
         'settings' => array(),
         'type' => 'list_default',
-        'weight' => 9,
+        'weight' => 28,
       ),
       'teaser' => array(
         'label' => 'above',
@@ -568,7 +570,9 @@ function springboard_p2p_campaign_field_default_field_instances() {
     'widget' => array(
       'active' => 1,
       'module' => 'options',
-      'settings' => array(),
+      'settings' => array(
+        'apply_chosen' => 0,
+      ),
       'type' => 'options_select',
       'weight' => 18,
     ),
@@ -588,7 +592,7 @@ function springboard_p2p_campaign_field_default_field_instances() {
           'link' => FALSE,
         ),
         'type' => 'entityreference_label',
-        'weight' => 5,
+        'weight' => 19,
       ),
       'teaser' => array(
         'label' => 'above',
@@ -666,7 +670,7 @@ function springboard_p2p_campaign_field_default_field_instances() {
         'label' => 'above',
         'settings' => array(),
         'type' => 'hidden',
-        'weight' => 18,
+        'weight' => 4,
       ),
       'teaser' => array(
         'label' => 'above',
@@ -717,7 +721,7 @@ function springboard_p2p_campaign_field_default_field_instances() {
         'label' => 'above',
         'settings' => array(),
         'type' => 'hidden',
-        'weight' => 27,
+        'weight' => 14,
       ),
       'teaser' => array(
         'label' => 'above',
@@ -756,7 +760,7 @@ function springboard_p2p_campaign_field_default_field_instances() {
         'module' => 'link',
         'settings' => array(),
         'type' => 'link_default',
-        'weight' => 10,
+        'weight' => 29,
       ),
       'teaser' => array(
         'label' => 'above',
@@ -810,7 +814,7 @@ function springboard_p2p_campaign_field_default_field_instances() {
         'module' => 'text',
         'settings' => array(),
         'type' => 'text_default',
-        'weight' => 11,
+        'weight' => 30,
       ),
       'teaser' => array(
         'label' => 'above',
@@ -849,7 +853,7 @@ function springboard_p2p_campaign_field_default_field_instances() {
         'label' => 'above',
         'settings' => array(),
         'type' => 'hidden',
-        'weight' => 24,
+        'weight' => 11,
       ),
       'teaser' => array(
         'label' => 'above',
@@ -893,7 +897,7 @@ function springboard_p2p_campaign_field_default_field_instances() {
         'label' => 'above',
         'settings' => array(),
         'type' => 'hidden',
-        'weight' => 25,
+        'weight' => 12,
       ),
       'teaser' => array(
         'label' => 'above',
@@ -936,7 +940,7 @@ function springboard_p2p_campaign_field_default_field_instances() {
         'label' => 'above',
         'settings' => array(),
         'type' => 'hidden',
-        'weight' => 26,
+        'weight' => 13,
       ),
       'teaser' => array(
         'label' => 'above',
@@ -975,7 +979,7 @@ function springboard_p2p_campaign_field_default_field_instances() {
         'module' => 'text',
         'settings' => array(),
         'type' => 'text_default',
-        'weight' => 6,
+        'weight' => 20,
       ),
       'teaser' => array(
         'label' => 'above',
@@ -1018,7 +1022,7 @@ function springboard_p2p_campaign_field_default_field_instances() {
         'label' => 'above',
         'settings' => array(),
         'type' => 'hidden',
-        'weight' => 21,
+        'weight' => 8,
       ),
       'teaser' => array(
         'label' => 'above',
@@ -1060,7 +1064,7 @@ function springboard_p2p_campaign_field_default_field_instances() {
         'label' => 'above',
         'settings' => array(),
         'type' => 'hidden',
-        'weight' => 22,
+        'weight' => 9,
       ),
       'teaser' => array(
         'label' => 'above',
@@ -1104,7 +1108,7 @@ function springboard_p2p_campaign_field_default_field_instances() {
           'thousand_separator' => ' ',
         ),
         'type' => 'number_decimal',
-        'weight' => 14,
+        'weight' => 33,
       ),
       'teaser' => array(
         'label' => 'above',
@@ -1144,7 +1148,7 @@ function springboard_p2p_campaign_field_default_field_instances() {
         'label' => 'above',
         'settings' => array(),
         'type' => 'hidden',
-        'weight' => 19,
+        'weight' => 6,
       ),
       'teaser' => array(
         'label' => 'above',
@@ -1186,7 +1190,7 @@ function springboard_p2p_campaign_field_default_field_instances() {
         'label' => 'above',
         'settings' => array(),
         'type' => 'hidden',
-        'weight' => 28,
+        'weight' => 15,
       ),
       'teaser' => array(
         'label' => 'above',
@@ -1225,7 +1229,7 @@ function springboard_p2p_campaign_field_default_field_instances() {
         'module' => 'text',
         'settings' => array(),
         'type' => 'text_default',
-        'weight' => 12,
+        'weight' => 31,
       ),
       'teaser' => array(
         'label' => 'above',
