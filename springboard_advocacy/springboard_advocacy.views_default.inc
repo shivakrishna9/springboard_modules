@@ -14,13 +14,12 @@ function springboard_advocacy_views_default_views() {
 /**
  * Alerts Administration
  */
- $view = new view();
   $view = new view();
   $view->name = 'sba_alerts';
-  $view->description = '';
+  $view->description = 'Alert management screens';
   $view->tag = 'Advocacy';
   $view->base_table = 'node';
-  $view->human_name = 'Sba Alerts';
+  $view->human_name = 'SBA Alerts';
   $view->core = 7;
   $view->api_version = '3.0';
   $view->disabled = FALSE; /* Edit this to true to make a default view disabled initially */
@@ -108,15 +107,22 @@ function springboard_advocacy_views_default_views() {
   $handler->display->display_options['fields']['field_webform_user_internal_name']['id'] = 'field_webform_user_internal_name';
   $handler->display->display_options['fields']['field_webform_user_internal_name']['table'] = 'field_data_field_webform_user_internal_name';
   $handler->display->display_options['fields']['field_webform_user_internal_name']['field'] = 'field_webform_user_internal_name';
+  /* Field: Content: Post date */
+  $handler->display->display_options['fields']['created']['id'] = 'created';
+  $handler->display->display_options['fields']['created']['table'] = 'node';
+  $handler->display->display_options['fields']['created']['field'] = 'created';
+  $handler->display->display_options['fields']['created']['label'] = 'Date';
+  $handler->display->display_options['fields']['created']['date_format'] = 'custom';
+  $handler->display->display_options['fields']['created']['custom_date_format'] = 'm/d/Y';
   /* Field: Content: Type */
   $handler->display->display_options['fields']['type']['id'] = 'type';
   $handler->display->display_options['fields']['type']['table'] = 'node';
   $handler->display->display_options['fields']['type']['field'] = 'type';
   $handler->display->display_options['fields']['type']['label'] = '';
   $handler->display->display_options['fields']['type']['exclude'] = TRUE;
-  $handler->display->display_options['fields']['type']['element_type'] = 'h2';
+  $handler->display->display_options['fields']['type']['alter']['alter_text'] = TRUE;
+  $handler->display->display_options['fields']['type']['alter']['text'] = '<h3>[type]</h3>';
   $handler->display->display_options['fields']['type']['element_label_colon'] = FALSE;
-  $handler->display->display_options['fields']['type']['element_wrapper_type'] = 'h2';
   /* Field: Webform: Webform submission count */
   $handler->display->display_options['fields']['webform_submission_count_node']['id'] = 'webform_submission_count_node';
   $handler->display->display_options['fields']['webform_submission_count_node']['table'] = 'node';
@@ -159,17 +165,15 @@ function springboard_advocacy_views_default_views() {
     'springboard_letter' => 'springboard_letter',
   );
 
-  /* Display: Block */
-  $handler = $view->new_display('block', 'Block', 'block_1');
+  /* Display: Letter to Target Paged Block */
+  $handler = $view->new_display('block', 'Letter to Target Paged Block', 'block_1');
 
-  /* Display: Block 2 */
-  $handler = $view->new_display('block', 'Block 2', 'block_2');
+  /* Display: Letter to Target Show All Block */
+  $handler = $view->new_display('block', 'Letter to Target Show All Block', 'block_2');
   $handler->display->display_options['defaults']['pager'] = FALSE;
   $handler->display->display_options['pager']['type'] = 'none';
   $handler->display->display_options['pager']['options']['offset'] = '0';
-
-
- $views[$view->name] = $view;
+  $views[$view->name] = $view;
 
 /*******************************************************************
  * Target Admin
