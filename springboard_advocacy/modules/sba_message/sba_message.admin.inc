@@ -11,8 +11,7 @@
  */
 class SbaMessageUIController extends EntityDefaultUIController {
   /**
-   * Overrides hook_menu() defaults. Main reason for doing this is that
-   * parent class hook_menu() is optimized for entity type administration.
+   * Overrides hook_menu() defaults.
    */
   public function hook_menu() {
 
@@ -20,8 +19,6 @@ class SbaMessageUIController extends EntityDefaultUIController {
     $id_count = count(explode('/', $this->path));
     $wildcard = isset($this->entityInfo['admin ui']['menu wildcard']) ? $this->entityInfo['admin ui']['menu wildcard'] : '%' . $this->entityType;
 
-
-    // Add menu items to add each different type of entity.
     // @todo the menu type and context definitions here are definitely not "correct"
     // but they do allow the tabs to remain consistent throughout editing workflow
     foreach (sba_message_get_types() as $type) {

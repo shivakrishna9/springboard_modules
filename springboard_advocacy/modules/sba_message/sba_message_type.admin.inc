@@ -23,6 +23,8 @@ class SbaMessageTypeUIController extends EntityDefaultUIController {
 
 /**
  * Generates the sba_message type editing form.
+ *
+ * @todo remove before production
  */
 function sba_message_type_form($form, &$form_state, $sba_message_type, $op = 'edit') {
 
@@ -81,6 +83,8 @@ function sba_message_type_form($form, &$form_state, $sba_message_type, $op = 'ed
 
 /**
  * Form API submit callback for the type form.
+ *
+ * @todo remove
  */
 function sba_message_type_form_submit(&$form, &$form_state) {
   $sba_message_type = entity_ui_form_submit_build_entity($form, $form_state);
@@ -90,6 +94,8 @@ function sba_message_type_form_submit(&$form, &$form_state) {
 
 /**
  * Form API submit callback for the delete button.
+ *
+ * @todo remove
  */
 function sba_message_type_form_submit_delete(&$form, &$form_state) {
   $form_state['redirect'] = 'admin/structure/sba_message_types/manage/' . $form_state['sba_message_type']->type . '/delete';

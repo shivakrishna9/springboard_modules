@@ -11,6 +11,8 @@
  * Implements hook_menu_alter().
  *
  * Add a complex permission for views message landing page.
+ *
+ *  @todo refactor as normal menu item, remove path from view?
  */
 function sba_message_menu_alter(&$items) {
   // Set a custom access callback function for our message view page display path.
@@ -67,6 +69,16 @@ function sba_message_access($op, $sba_message = NULL, $account = NULL) {
 }
 
 
+/**
+ * Implements hook_module_implements_alter
+ *
+ * Helps add custom access control to a path defined in sba_message views.
+ *
+ * @param $implementations
+ * @param $hook
+ *
+ * @todo refactor as normal menu item, remove path from view?
+ */
 function sba_message_module_implements_alter(&$implementations, $hook) {
   // When the implementations of hook_menu_alter are called, we need our module
   // to be called after views, so let's remove it from the implementations then
@@ -80,7 +92,7 @@ function sba_message_module_implements_alter(&$implementations, $hook) {
 }
 
 /**
- * Implement hook_entityreference_prepopulate_providers_inf().
+ * Implement hook_entityreference_prepopulate_providers_info().
  *
  * Grab our entity reference fromthe node url rather than query string
  */
@@ -88,7 +100,7 @@ function sba_message_entityreference_prepopulate_providers_info() {
   return array(
     'node_url' => array(
       'title' => t('Node URL'),
-      'description' => t('Prepopulate from node/%/message URL'),
+      'description' => t('Prepopulate reference ID from node/%/message URL. Only for use by Springboard Advocacy content types.'),
       'callback' => 'sba_message_prepopulate_get_values_from_node_url',
     ),
   );
@@ -186,6 +198,7 @@ function sba_message_entity_info() {
     'access callback' => 'sba_message_type_access',
     'module' => 'sba_message',
     // Enable the entity API's admin UI.
+   // @todo remove
     'admin ui' => array(
       'path' => 'admin/structure/sba_message_types',
       'file' => 'sba_message_type.admin.inc',
@@ -203,7 +216,7 @@ function sba_message_entity_info() {
  * We are adding the info about the sba_message types via a hook to avoid a recursion
  * issue as loading the sba_message types requires the entity info as well.
  *
- *  @TODO items defining admin paths for the entites will be removed, eventually.
+ *  @TODO items defining admin paths for the message entities will be removed, eventually.
  */
 function sba_message_entity_info_alter(&$entity_info) {
   foreach (sba_message_get_types() as $type => $info) {
@@ -493,7 +506,7 @@ class SbaMessage extends Entity {
   protected function defaultLabel() {
     return $this->name;
   }
-
+// @todo remove if we don't need a view path
   protected function defaultUri() {
     return array('path' => 'sba_message/' . $this->sba_message_id);
   }
@@ -557,9 +570,9 @@ class SbaMessageController extends EntityAPIController {
    */
   public function buildContent($entity, $view_mode = 'full', $langcode = NULL, $content = array()) {
     $content = parent::buildContent($entity, $view_mode, $langcode, $content);
-    $content['sba_message_sample_data'] =  array(
-      '#markup' => theme('sba_message_sample_data', array('sba_message_sample_data' => check_plain($entity->data['sample_data']), 'sba_message' => $entity)),
-    );
+//    $content['sba_message_sample_data'] =  array(
+//      '#markup' => theme('sba_message_sample_data', array('sba_message_sample_data' => check_plain($entity->data['sample_data']), 'sba_message' => $entity)),
+//    );
 
     return $content;
   }
