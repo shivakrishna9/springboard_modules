@@ -9,40 +9,58 @@
  */
 function springboard_advocacy_webform_submit($form, $form_state) {
   module_load_include('inc', 'springboard_advocacy', 'includes/springboard_advocacy.smarty_streets');
-  $values = $form_state['values']['submitted_tree'];
-  $geo = springboard_advocacy_smarty_lookup($values);
+
+  $values =$form_state['values'];
+  $webform_values = $values['submitted_tree'];
+  $geo = springboard_advocacy_smarty_lookup($webform_values);
 
   if (!empty($geo)) {
-    $_SESSION['message_geo'] = $geo;
+    $_SESSION['alert_geo'] = $geo;
     if(!empty($geo['zip']) && !empty($geo['plus4'])) {
        $zip = $geo['zip'] . '-' . $geo['plus4'];
     }
   }
 
   if(!empty($zip)) {
-    $values = $form_state['values']['submitted_tree'];
-    $contact = springboard_advocacy_build_contact($values, $geo);
-    $message = array(
-      'form_id' => $values['advocacy_id'],
-      'message' => $values['sba_message'],
-      'subject' => $values['sba_message_subject'],
-      'message_id' => '',
-    );
+    $contact = springboard_advocacy_build_contact($webform_values, $zip, $geo);
+    $form_id = $values['advocacy_id'];
+    $messages = springboard_advocacy_build_messages($values['messages']);
 
+    $submission = array(
+      'contact' => $contact,
+      'form_id' => $form_id,
+      'messages' => $messages,
+    );
     $loader = new AdvocacyApiClientLoader();
     $client = $loader->getClient();
-    $response = $client->resolveTargets($contact, $message);
-
+    $response = $client->resolveTargets($submission);
     if (!empty($response->data)) {
-      $persons = springboard_advocacy_prep_for_display($response->data);
-      $_SESSION['legislators'] = $persons;
+//      $persons = springboard_advocacy_prep_for_display($response->data);
+//      $_SESSION['legislators'] = $persons;
     }
 
   }
 }
 
+function springboard_advocacy_build_messages($message_ids) {
+    $all_messages = entity_load('sba_message', $message_ids);
+    $messages = array();
+    foreach ($all_messages as $message) {
+      $message_wrapper = entity_metadata_wrapper('sba_message', $message);
+      $message_id = $message->data['message_id'];
+      //$group_id = $message->data['group_id'];
+      $body = $message_wrapper->field_sba_message[0]->value();
+      $subject = $message_wrapper->field_sba_subject[0]->value();
+      $messages[] = array(
+        'message_id' => $message_id,
+        'subject' => $subject,
+        'body' => $body,
+       );
+    }
+    return $messages;
+}
 
-function springboard_advocacy_build_contact($form_values, $geo) {
+function springboard_advocacy_build_contact($values, $zip, $geo) {
 
   $contact = array(
     'first_name' => $values['sbp_first_name'],
@@ -51,11 +69,11 @@ function springboard_advocacy_build_contact($form_values, $geo) {
     'address_line_2' => $values['sbp_address_line_2'], 
     'city' => $values['sbp_city'],
     'state' => $values['sbp_state'],
-    'phone' => $values['springboard_advocacy_phone'], 
-    'zip' => $values['sbp_zip'], 
+    'phone' => $values['sba_phone'],
+    'zip' => $zip,
     'email' => $values['mail'],
-    'county' => $geo['county'],
-    'fips' => $geo['fips'],
+//    'county' => $geo['county'],
+//    'fips' => $geo['fips'],
   );
 
   return $contact;
@@ -69,7 +87,7 @@ function springboard_advocacy_build_contact($form_values, $geo) {
 function springboard_advocacy_prep_for_display($data) {
   $items = array();
 
-  foreach ($data as $legistor) {
+  foreach ($data as $legislator) {
     $items[]['data'] = $legislator->salutation . 
     ' ' . $legislator->first_name . 
     ' ' . $legislator->last_name . 
@@ -105,17 +123,17 @@ function springboard_advocacy_preprocess_webform_confirmation(&$vars) {
 //  * Save our letter writer's zip and geolocation info
 //  */
 // function springboard_advocacy_webform_submission_insert($node, $submission) {
-//   if(isset($_SESSION['message_geo']) && $node->type == 'springboard_advocacy') {
+//   if(isset($_SESSION['alert_geo']) && $node->type == 'springboard_advocacy') {
 //     $data = array(
 //       'nid' => $submission->nid,
 //       'sid' => $submission->sid,
 //       'uid' => $submission->uid,
-//       'zip' => isset($_SESSION['message_geo']['zip']) ? $_SESSION['message_geo']['zip'] : '',
-//       'plus4' => isset($_SESSION['message_geo']['plus4']) ? $_SESSION['message_geo']['plus4'] : '',
-//       'lat' => isset($_SESSION['message_geo']['latitude']) ? $_SESSION['message_geo']['latitude'] : '',
-//       'lon' => isset($_SESSION['message_geo']['longitude']) ? $_SESSION['message_geo']['longitude'] : '',
+//       'zip' => isset($_SESSION['alert_geo']['zip']) ? $_SESSION['alert_geo']['zip'] : '',
+//       'plus4' => isset($_SESSION['alert_geo']['plus4']) ? $_SESSION['alert_geo']['plus4'] : '',
+//       'lat' => isset($_SESSION['alert_geo']['latitude']) ? $_SESSION['alert_geo']['latitude'] : '',
+//       'lon' => isset($_SESSION['alert_geo']['longitude']) ? $_SESSION['alert_geo']['longitude'] : '',
 //     );
 //     drupal_write_record('springboard_advocacy_location', $data);
-//     unset($_SESSION['message_geo']);
+//     unset($_SESSION['alert_geo']);
 //   };
 // }

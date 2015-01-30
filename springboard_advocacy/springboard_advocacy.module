@@ -24,19 +24,16 @@ function springboard_advocacy_menu() {
 
   $items['admin/springboard/advocacy/alerts'] = array(
     'title' => 'Advocacy',
-    'page callback' => 'springboard_advocacy_dashboard',
     'page arguments' => array('alerts'),
   ) + springboard_advocacy_menu_common();
 
   $items['admin/springboard/advocacy/alerts/all'] = array(
     'title' => 'Advocacy',
-    'page callback' => 'springboard_advocacy_dashboard',
     'page arguments' => array('alerts/all'),
   ) + springboard_advocacy_menu_common();
 
    $items['admin/springboard/advocacy/custom-targets'] = array(
     'title' => 'Advocacy',
-    'page callback' => 'springboard_advocacy_dashboard',
     'page arguments' => array('custom-targets'),
   ) + springboard_advocacy_menu_common();
 
@@ -45,6 +42,7 @@ function springboard_advocacy_menu() {
 
 function springboard_advocacy_menu_common() {
   return array(
+    'page callback' => 'springboard_advocacy_dashboard',
     'file' => 'springboard_advocacy.admin.inc',
     'file path' => drupal_get_path('module', 'springboard_advocacy') . '/includes',
     'access arguments' => array('administer springboard advocacy'),
@@ -125,18 +123,47 @@ function springboard_advocacy_node_update($node) {
   }  
 }
 
+/**
+  *
+  * Implements hook_node_load
+  *
+  * @param $nodes
+  *   An array of the nodes being loaded, keyed by nid.
+  * @param $types
+  *   An array containing the node types present in $nodes. Allows for an early
+  *   return for modules that only support certain node types. However, if your
+  *   module defines a content type, you can use hook_load() to respond to
+  *   loading of just that content type.
+  *
+  * Add the unique form_id and messages references to node.
+  *
+  */
 function springboard_advocacy_node_load($nodes, $types) {
-  $message_types = variable_get('springboard_advocacy_alert_types', array());
-  if (count(array_intersect($message_types, $types))) {  
-     $result = db_query(
+  $alert_types = variable_get('springboard_advocacy_alert_types', array());
+  if (count(array_intersect($alert_types, $types))) {
+    $form_ids = db_query(
       'SELECT advocacy_id, nid FROM {springboard_advocacy_alert_id} WHERE nid IN (:nids)', 
-       array(':nids' => array_keys($nodes)));
-    foreach ($result as $record) {
-      $nodes[$record->nid]->advocacy_id = $record->advocacy_id;
+       array(':nids' => array_keys($nodes))
+     );
+    foreach ($form_ids as $form_id) {
+      $nodes[$form_id->nid]->advocacy_id = $form_id->advocacy_id;
+    }
+
+    $entity_ids = db_query(
+      'SELECT entity_id, field_sba_alert_id_target_id FROM {field_data_field_sba_alert_id} WHERE field_sba_alert_id_target_id IN (:nids)',
+      array(':nids' => array_keys($nodes)));
+    foreach ($entity_ids as $entity_id) {
+      $nodes[$entity_id->field_sba_alert_id_target_id]->message_ids[] = $entity_id->entity_id;
     }
   }
 }
 
+/**
+ * Implemenets hook_form_alter
+ * @param $form
+ * @param $form_state
+ * @param $form_id
+ */
 function springboard_advocacy_form_alter(&$form, &$form_state, $form_id) {
   module_load_include('inc', 'springboard_advocacy', 'includes/springboard_advocacy.webform');
 
@@ -150,21 +177,22 @@ function springboard_advocacy_form_alter(&$form, &$form_state, $form_id) {
 
       $pos = strpos($form['form_id']['#value'], 'webform_client_form');
 
-      if (!empty($node->advocacy_id) && $pos !== FALSE) {
+      if (!empty($node->message_ids) && $pos !== FALSE) {
+        $form['messages']['#tree'] = TRUE;
+        foreach ($node->message_ids as $id) {
+          $form['messages'][$id] = array(
+            '#type' => 'hidden',
+            '#value' => $id,
+          );
+        }
+      }
 
+      if (!empty($node->advocacy_id) && $pos !== FALSE) {
         $form['advocacy_id'] = array('#type' => 'hidden', '#value' => $node->advocacy_id);
         $form['#submit'][] = 'springboard_advocacy_webform_submit';
-
       }
 
-      $pos = strpos($form['form_id']['#value'], 'node_form');
-
-      if ($pos !== FALSE) {
-        //$form['quick_groups'] = springboard_advocacy_quick_group_form();
-      }
-    
     }
-
   }
 }
 

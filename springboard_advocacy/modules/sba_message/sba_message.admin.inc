@@ -154,9 +154,6 @@ function sba_message_edit_form($form, &$form_state, $sba_message) {
   $form_state['sba_message'] = $sba_message;
   field_attach_form('sba_message', $sba_message, $form, $form_state);
 
-
-
-
   $form['quick_targets'] = array(
     '#type' => 'fieldset',
     '#title' => t('Quick Target'),
