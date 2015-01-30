@@ -567,11 +567,13 @@ function _sba_message_delete_fields() {
   );
   foreach ($fields as $field_name) {
     foreach (sba_message_get_types() as $type => $info) {
-      $field = field_info_instance('node', $field_name, $type);
+      $field = field_info_instance('sba_message', $field_name, $type);
       field_delete_instance($field);
     }
-    $field = field_info_field($field_name);
-    field_delete_field($field_name);
+    // Just in case
+    if($field = field_info_field($field_name)){
+      field_delete_field($field_name);
+    }
   }
   drupal_set_message('Sba Message fields deleted.');
 }
