@@ -28,7 +28,6 @@ function springboard_target_form($target_id = NULL) {
     $target = $target->data;
   }
 
-  //TODO: uncomment "required" as development nears completion.
   $form['row_one'] = array(
     '#type' => 'container',
     '#attributes' => array(
