@@ -3,6 +3,7 @@ description = Main controller feature for Springboard Advocacy
 core = 7.x
 package = Springboard Advocacy
 dependencies[] = libraries
+dependencies[] = views
 
 configure = 'admin/config/springboard/advocacy'
 
