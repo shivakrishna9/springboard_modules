@@ -1,5 +1,5 @@
 name = Springboard Advocacy Message
-description = Provides entity functionality as an example to use in your own development projects
+description = Provides message entity types for use by Springboard Advocacy submodules.
 core = 7.x
 
 dependencies[] = entity
