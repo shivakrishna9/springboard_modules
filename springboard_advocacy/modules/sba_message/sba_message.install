@@ -540,3 +540,38 @@ function sba_message_schema() {
 
   return $schema;
 }
+
+/**
+ * Implements hook_uninstall().
+ */
+function springboard_letter_uninstall() {
+
+  // Remove fields implemented by this module.
+  _sba_message_delete_fields();
+
+  field_purge_batch(1000);
+}
+
+
+/**
+ * Delete springboard message fields
+ */
+function _sba_message_delete_fields() {
+  $fields = array(
+    'field_sba_salutation',
+    'field_sba_alert_id',
+    'field_sba_placeholder_greeting',
+    'field_sba_greeting',
+    'field_sba_message',
+    'field_sba_subject',
+  );
+  foreach ($fields as $field_name) {
+    foreach (sba_message_get_types() as $type => $info) {
+      $field = field_info_instance('node', $field_name, $type);
+      field_delete_instance($field);
+    }
+    $field = field_info_field($field_name);
+    field_delete_field($field_name);
+  }
+  drupal_set_message('Sba Message fields deleted.');
+}
