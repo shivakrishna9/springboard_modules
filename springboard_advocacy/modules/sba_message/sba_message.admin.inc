@@ -4,9 +4,6 @@
  * @file
  * SBA Message editing UI.
  *
- * We make very little use of the EntityAPI interface for this - preferring instead to use
- * views. That offers more flexibility to change a UI that will, more often than not,
- * be end-user facing.
  */
 
 /**
@@ -25,6 +22,8 @@ class SbaMessageUIController extends EntityDefaultUIController {
 
 
     // Add menu items to add each different type of entity.
+    // @todo the menu type and context definitions here are definitely not "correct"
+    // but they do allow the tabs to remain consistent throughout editing workflow
     foreach (sba_message_get_types() as $type) {
       $items[$this->path . '/add/' . $type->type] = array(
         'title' => 'Add ' . $type->label,
@@ -71,7 +70,8 @@ class SbaMessageUIController extends EntityDefaultUIController {
       'file' => 'sba_message.admin.inc',
       'file path' => drupal_get_path('module', $this->entityInfo['module'])
     );
-    
+
+    //@todo remove if we don't need a view path
     // Menu item for viewing sba_messages
     // $items['sba_message/' . $wildcard] = array(
     //   //'title' => 'Title',
@@ -87,7 +87,6 @@ class SbaMessageUIController extends EntityDefaultUIController {
   }
   
 }
-
 
 /**
  * Form callback wrapper: create or edit a sba_message.
@@ -116,24 +115,33 @@ function sba_message_delete_form_wrapper($sba_message) {
   return drupal_get_form('sba_message_delete_form', $sba_message);
 }
 
-
 /**
- * Form callback: create or edit a sba_message.
+ * Message create/edit form
  *
+ * This is where all the targeting elements are added.
+ *
+ * @param $form
+ * @param $form_state
  * @param $sba_message
- *   The sba_message object to edit or for a create form an empty sba_message object
- *     with only a sba_message type defined.
+ * @return mixed
  */
 function sba_message_edit_form($form, &$form_state, $sba_message) {
 
+  // This form should only appear at node/%/messages.
+  // Grab the node so we can get the alert form UUID and node ID
   $node = menu_get_object();
 
   $form['parent_node']['nid'] = array(
     '#type' => 'hidden',
     '#value' => $node->nid,
   );
-  // Add the default field elements.
 
+  $form['advocacy_id'] = array(
+    '#type' => 'hidden',
+    '#value' => $node->advocacy_id,
+  );
+
+  // Add the default field elements.
   $form['name'] = array(
     '#type' => 'textfield',
     '#title' => t('Internal Title'),
@@ -144,7 +152,7 @@ function sba_message_edit_form($form, &$form_state, $sba_message) {
   );
   
   $form['data']['#tree'] = TRUE;
-
+  // Get/Set the message UUID
   $form['data']['message_id'] = array(
     '#type' => 'hidden',
     '#value' => isset($sba_message->data['message_id']) ? $sba_message->data['message_id'] : uniqid(variable_get('site_name', 'Drupal') . '-'),
@@ -154,52 +162,8 @@ function sba_message_edit_form($form, &$form_state, $sba_message) {
   $form_state['sba_message'] = $sba_message;
   field_attach_form('sba_message', $sba_message, $form, $form_state);
 
-  $form['quick_targets'] = array(
-    '#type' => 'fieldset',
-    '#title' => t('Quick Target'),
-    '#attributes' => array('class' => array('form-quick-groups')),
-    '#weight' => 10,
-  );
-
-  $form['quick_targets']['#tree'] = TRUE;
-
-  $form['quick_targets']['chambers'] = array(
-    '#type' => 'fieldset',
-    '#title' => t('Chamber'),
-    '#attributes' => array('class' => array('form-quick-groups')),
-    '#weight' => 1,
-  );
-
-   
-
-   $form['quick_targets']['chambers'] = array(
-    '#type' => 'checkboxes',
-    '#options' => 
-      array(
-      'fs' => t('Federal Senate'),
-      'fr' => t('Federal House'),
-      // 'ss' => t('State Senate'),
-      // 'sr' => t('State House')
-      ),
-    '#title' => t('Chamber'),
-  );
-
-   $form['quick_targets']['party'] = array(
-    '#type' => 'checkboxes',
-    '#options' => array(
-      'd' => t('Democrat'),
-      'r' => t('Republican'),
-      'o' => t('Other')
-
-      ),
-    
-    '#title' => t('Party'),
-  );
-
-  $form['advocacy_id'] = array(
-    '#type' => 'hidden',
-    '#value' => $node->advocacy_id,
-  );
+  // Add the quick targets form
+  sba_message_quick_targets_form($form, $form_state);
 
   $form['actions'] = array(
     '#type' => 'container',
@@ -207,8 +171,7 @@ function sba_message_edit_form($form, &$form_state, $sba_message) {
     '#weight' => 400,
   );
 
-  // We add the form's #submit array to this button along with the actual submit
-  // handler to preserve any submit handlers added by a form callback_wrapper.
+
   $submit = array();
 
   if (!empty($form['#submit'])) {
@@ -236,13 +199,52 @@ function sba_message_edit_form($form, &$form_state, $sba_message) {
   return $form;
 }
 
+function sba_message_quick_targets_form(&$form, &$form_state) {
+  $form['quick_targets'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Quick Target'),
+    '#attributes' => array('class' => array('form-quick-groups')),
+    '#weight' => 10,
+  );
+
+  $form['quick_targets']['#tree'] = TRUE;
+
+  $form['quick_targets']['chambers'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Chamber'),
+    '#attributes' => array('class' => array('form-quick-groups')),
+    '#weight' => 1,
+  );
+
+  $form['quick_targets']['chambers'] = array(
+    '#type' => 'checkboxes',
+    '#options' =>
+      array(
+        'fs' => t('Federal Senate'),
+        'fr' => t('Federal House'),
+        // 'ss' => t('State Senate'),
+        // 'sr' => t('State House')
+      ),
+    '#title' => t('Chamber'),
+  );
+
+  $form['quick_targets']['party'] = array(
+    '#type' => 'checkboxes',
+    '#options' => array(
+      'd' => t('Democrat'),
+      'r' => t('Republican'),
+      'o' => t('Other')
+    ),
+    '#title' => t('Party'),
+  );
+
+}
 
 /**
  * Form API validate callback for the sba_message form
  */
 function sba_message_edit_form_validate(&$form, &$form_state) {
   $sba_message = $form_state['sba_message'];
-  
   // Notify field widgets to validate their data.
   field_attach_form_validate('sba_message', $sba_message, $form, $form_state);
 }
@@ -276,6 +278,7 @@ function sba_message_edit_form_submit(&$form, &$form_state) {
   //   'target_ids' => array('1', '2', '3', '4', '5', '6', '7'),
   // )
 
+  // Get chamber form values and unset unselected values
   $chambers = array_flip($values['quick_targets']['chambers']);
   unset($chambers[0]);
 
@@ -288,7 +291,7 @@ function sba_message_edit_form_submit(&$form, &$form_state) {
 
   $selected = array();
   
-  // make chambers
+  // Make chambers. This hurts my brain.
   switch (true) {
 
     case (($chamber_count != 0 && $chamber_count != 2) && $party_count != 0 && $party_count != 3):
@@ -328,7 +331,7 @@ function sba_message_edit_form_submit(&$form, &$form_state) {
 
   // Executive build goes here.
 
-  //New message
+  // Is this a new message? Then create a new target group for it.
   if ($sba_message->is_new = isset($sba_message->is_new) ? $sba_message->is_new : 0) {
     $sba_message->created = time();
     $response = 
@@ -368,7 +371,7 @@ function sba_message_edit_form_submit(&$form, &$form_state) {
 /**
  * Form API submit callback for the delete button.
  * 
- * @todo Remove hard-coded path
+ * @todo Remove hard-coded path?
  */
 function sba_message_form_submit_delete(&$form, &$form_state) {
   $nid =  $form_state['values']['nid'];
@@ -417,6 +420,3 @@ function sba_message_delete_form_submit($form, &$form_state) {
 
   $form_state['redirect'] = 'node/' . $nid . '/messages';
 }
-
-
-
