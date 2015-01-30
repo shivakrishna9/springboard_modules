@@ -40,6 +40,10 @@ function springboard_advocacy_menu() {
   return $items;
 }
 
+/**
+ * Defines common values for advocacy menu items.
+ * Including a themed page callback for advocacy admin views.
+ */
 function springboard_advocacy_menu_common() {
   return array(
     'page callback' => 'springboard_advocacy_dashboard',
@@ -106,21 +110,7 @@ function springboard_advocacy_node_insert($node) {
       'advocacy_id' => uniqid(variable_get('site_name', 'Drupal') . '-'),
     );
     drupal_write_record('springboard_advocacy_alert_id', $uuid);
-
-    if (!empty($node->target_groups)) {
-
-    }
-
   }
-}
-
-function springboard_advocacy_node_update($node) {
-  $types = variable_get('springboard_advocacy_alert_types', array());
-  if(in_array($node->type, $types)) {
-    if (!empty($node->target_groups)) {
-      
-    }
-  }  
 }
 
 /**
@@ -130,30 +120,28 @@ function springboard_advocacy_node_update($node) {
   * @param $nodes
   *   An array of the nodes being loaded, keyed by nid.
   * @param $types
-  *   An array containing the node types present in $nodes. Allows for an early
-  *   return for modules that only support certain node types. However, if your
-  *   module defines a content type, you can use hook_load() to respond to
-  *   loading of just that content type.
+  *   An array containing the node types present in $nodes.
   *
-  * Add the unique form_id and messages references to node.
+  * Add the unique form_id and messages references to alert nodes.
   *
   */
 function springboard_advocacy_node_load($nodes, $types) {
   $alert_types = variable_get('springboard_advocacy_alert_types', array());
+
   if (count(array_intersect($alert_types, $types))) {
-    $form_ids = db_query(
+    $uuids = db_query(
       'SELECT advocacy_id, nid FROM {springboard_advocacy_alert_id} WHERE nid IN (:nids)', 
        array(':nids' => array_keys($nodes))
      );
-    foreach ($form_ids as $form_id) {
-      $nodes[$form_id->nid]->advocacy_id = $form_id->advocacy_id;
+    foreach ($uuids as $uuid) {
+      $nodes[$uuid->nid]->advocacy_id = $uuid->advocacy_id;
     }
 
-    $entity_ids = db_query(
+    $message_ids = db_query(
       'SELECT entity_id, field_sba_alert_id_target_id FROM {field_data_field_sba_alert_id} WHERE field_sba_alert_id_target_id IN (:nids)',
       array(':nids' => array_keys($nodes)));
-    foreach ($entity_ids as $entity_id) {
-      $nodes[$entity_id->field_sba_alert_id_target_id]->message_ids[] = $entity_id->entity_id;
+    foreach ($message_ids as $message_id) {
+      $nodes[$message_id->field_sba_alert_id_target_id]->message_ids[] = $message_id->entity_id;
     }
   }
 }
@@ -163,6 +151,9 @@ function springboard_advocacy_node_load($nodes, $types) {
  * @param $form
  * @param $form_state
  * @param $form_id
+ *
+ * Add alert UUIDs and Message IDs to hidden fields on the alert form.
+ * Define a custom submit handler for alert node types.
  */
 function springboard_advocacy_form_alter(&$form, &$form_state, $form_id) {
   module_load_include('inc', 'springboard_advocacy', 'includes/springboard_advocacy.webform');
@@ -196,129 +187,10 @@ function springboard_advocacy_form_alter(&$form, &$form_state, $form_id) {
   }
 }
 
-
-/**
- * Returns default options for views field configuration
- * Here in the main module because might be used by multiple
- * submodules.
- */
-function springboard_advocacy_target_type() {
-  $value_options = array(
-    'Target' => t('Custom Target'), 
-    'Legislator' => t('Legislator'), 
-    'group' => t('Group')
-    );
-  return $value_options;
-}
-
-/**
- * Returns default options for views field configuration
- */
-function springboard_advocacy_target_level() {
-  $value_options = array(
-    'SR|SS' => t('State'), 
-    'FR|FS' => t('Federal'), 
-  );
-  return $value_options;
-}
-
-/**
- * Returns default options for views field configuration
- */
-function springboard_advocacy_target_branch() {
-  $value_options = array(
-    'executive' => t('Executive'), 
-    'legislative' => t('Legislative'), 
-  );
-  return $value_options;
-}
-
-/**
- * Returns default options for views field configuration
- */
-function springboard_advocacy_target_party() {
-  $value_options = array(
-    'D' => t('Democrat'), 
-    'R' => t('Republican'), 
-    'I' => t('Independent'), 
-    'O' => t('Other'),  
-  );
-  return $value_options;
-}
-
-/**
- * Returns default options for views field configuration
- */
-function springboard_advocacy_target_state() {
-  $value_options = array(
-    'AL' => 'Alabama',
-    'AK' => 'Alaska',
-    'AZ' => 'Arizona',
-    'AR' => 'Arkansas',
-    'CA' => 'California',
-    'CO' => 'Colorado',
-    'CT' => 'Connecticut',
-    'DE' => 'Delaware',
-    'DC' => 'District Of Columbia',
-    'FL' => 'Florida',
-    'GA' => 'Georgia',
-    'HI' => 'Hawaii',
-    'ID' => 'Idaho',
-    'IL' => 'Illinois',
-    'IN' => 'Indiana',
-    'IA' => 'Iowa',
-    'KS' => 'Kansas',
-    'KY' => 'Kentucky',
-    'LA' => 'Louisiana',
-    'ME' => 'Maine',
-    'MD' => 'Maryland',
-    'MA' => 'Massachusetts',
-    'MI' => 'Michigan',
-    'MN' => 'Minnesota',
-    'MS' => 'Mississippi',
-    'MO' => 'Missouri',
-    'MT' => 'Montana',
-    'NE' => 'Nebraska',
-    'NV' => 'Nevada',
-    'NH' => 'New Hampshire',
-    'NJ' => 'New Jersey',
-    'NM' => 'New Mexico',
-    'NY' => 'New York',
-    'NC' => 'North Carolina',
-    'ND' => 'North Dakota',
-    'OH' => 'Ohio',
-    'OK' => 'Oklahoma',
-    'OR' => 'Oregon',
-    'PA' => 'Pennsylvania',
-    'RI' => 'Rhode Island',
-    'SC' => 'South Carolina',
-    'SD' => 'South Dakota',
-    'TN' => 'Tennessee',
-    'TX' => 'Texas',
-    'UT' => 'Utah',
-    'VT' => 'Vermont',
-    'VA' => 'Virginia',
-    'WA' => 'Washington',
-    'WV' => 'West Virginia',
-    'WI' => 'Wisconsin',
-    'WY' => 'Wyoming',
-  );
-  return $value_options;
-}
-
-/**
- * Returns default options for views field configuration
- */
-function springboard_advocacy_target_gender() {
-  $value_options = array(
-    'M' => 'Male',
-    'F' => 'Female'
-  );
-  return $value_options;
-}
-
 /**
  * Implements hook_theme().
+ *
+ * Wraps various views in a common theme template
  */
 function springboard_advocacy_theme($existing, $type, $theme) {
   $path = drupal_get_path('module', 'springboard_advocacy');

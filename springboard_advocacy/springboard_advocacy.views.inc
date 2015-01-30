@@ -228,3 +228,122 @@ function springboard_advocacy_views_plugins() {
   return $plugins;
 }
 
+/**
+ * Returns default options for views field configuration
+ * Here in the main module because might be used by multiple
+ * submodules.
+ */
+function springboard_advocacy_target_type() {
+  $value_options = array(
+    'Target' => t('Custom Target'),
+    'Legislator' => t('Legislator'),
+    'group' => t('Group')
+  );
+  return $value_options;
+}
+
+/**
+ * Returns default options for views field configuration
+ */
+function springboard_advocacy_target_level() {
+  $value_options = array(
+    'SR|SS' => t('State'),
+    'FR|FS' => t('Federal'),
+  );
+  return $value_options;
+}
+
+/**
+ * Returns default options for views field configuration
+ */
+function springboard_advocacy_target_branch() {
+  $value_options = array(
+    'executive' => t('Executive'),
+    'legislative' => t('Legislative'),
+  );
+  return $value_options;
+}
+
+/**
+ * Returns default options for views field configuration
+ */
+function springboard_advocacy_target_party() {
+  $value_options = array(
+    'D' => t('Democrat'),
+    'R' => t('Republican'),
+    'I' => t('Independent'),
+    'O' => t('Other'),
+  );
+  return $value_options;
+}
+
+/**
+ * Returns default options for views field configuration
+ */
+function springboard_advocacy_target_state() {
+  $value_options = array(
+    'AL' => 'Alabama',
+    'AK' => 'Alaska',
+    'AZ' => 'Arizona',
+    'AR' => 'Arkansas',
+    'CA' => 'California',
+    'CO' => 'Colorado',
+    'CT' => 'Connecticut',
+    'DE' => 'Delaware',
+    'DC' => 'District Of Columbia',
+    'FL' => 'Florida',
+    'GA' => 'Georgia',
+    'HI' => 'Hawaii',
+    'ID' => 'Idaho',
+    'IL' => 'Illinois',
+    'IN' => 'Indiana',
+    'IA' => 'Iowa',
+    'KS' => 'Kansas',
+    'KY' => 'Kentucky',
+    'LA' => 'Louisiana',
+    'ME' => 'Maine',
+    'MD' => 'Maryland',
+    'MA' => 'Massachusetts',
+    'MI' => 'Michigan',
+    'MN' => 'Minnesota',
+    'MS' => 'Mississippi',
+    'MO' => 'Missouri',
+    'MT' => 'Montana',
+    'NE' => 'Nebraska',
+    'NV' => 'Nevada',
+    'NH' => 'New Hampshire',
+    'NJ' => 'New Jersey',
+    'NM' => 'New Mexico',
+    'NY' => 'New York',
+    'NC' => 'North Carolina',
+    'ND' => 'North Dakota',
+    'OH' => 'Ohio',
+    'OK' => 'Oklahoma',
+    'OR' => 'Oregon',
+    'PA' => 'Pennsylvania',
+    'RI' => 'Rhode Island',
+    'SC' => 'South Carolina',
+    'SD' => 'South Dakota',
+    'TN' => 'Tennessee',
+    'TX' => 'Texas',
+    'UT' => 'Utah',
+    'VT' => 'Vermont',
+    'VA' => 'Virginia',
+    'WA' => 'Washington',
+    'WV' => 'West Virginia',
+    'WI' => 'Wisconsin',
+    'WY' => 'Wyoming',
+  );
+  return $value_options;
+}
+
+/**
+ * Returns default options for views field configuration
+ */
+function springboard_advocacy_target_gender() {
+  $value_options = array(
+    'M' => 'Male',
+    'F' => 'Female'
+  );
+  return $value_options;
+}
