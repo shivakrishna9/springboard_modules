@@ -544,7 +544,7 @@ function sba_message_schema() {
 /**
  * Implements hook_uninstall().
  */
-function springboard_letter_uninstall() {
+function sba_message_uninstall() {
 
   // Remove fields implemented by this module.
   _sba_message_delete_fields();
