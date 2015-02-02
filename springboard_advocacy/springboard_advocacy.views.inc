@@ -79,7 +79,7 @@ function springboard_advocacy_views_data() {
 
   // Party
   $data['advocacy']['party'] = array(
-    'title' => t('Politcal Party'),
+    'title' => t('Political Party'),
     'help' => t('Target Party'),
     'field' => array(
       'handler' => 'springboard_advocacy_views_handler_field',
@@ -102,6 +102,15 @@ function springboard_advocacy_views_data() {
     ),
   );
 
+  // Party
+  $data['advocacy']['party'] = array(
+    'title' => t('Politcal Party'),
+    'help' => t('Target Party'),
+    'field' => array(
+      'handler' => 'springboard_advocacy_views_handler_field',
+    ),
+  );
+
   $data['advocacy']['target_actions'] = array(
     'title' => t('Target Actions'),
     'help' => t('Action links for target displays'),
@@ -118,13 +127,13 @@ function springboard_advocacy_views_data() {
     ),
   );
 
-  // $data['advocacy']['combine'] = array(
-  //  'title' => t('Search Multiple Target Fields by Keywords'),
-  //   'help' => t('Combine multiple fields together and search targets by them.'),
-  //   'filter' => array(
-  //     'handler' => 'springboard_advocacy_views_handler_filter_combine',
-  //   ),
-  // );
+   $data['advocacy']['combine'] = array(
+    'title' => t('Search Multiple Target Fields by Keywords'),
+     'help' => t('Combine multiple fields together and search targets by them.'),
+     'filter' => array(
+       'handler' => 'springboard_advocacy_views_handler_filter_combine',
+     ),
+   );
 
   $data['advocacy']['search_class_name'] = array(
    'title' => t('Search By Type'),
@@ -185,6 +194,14 @@ function springboard_advocacy_views_data() {
     ),
   );
 
+  $data['advocacy']['search_social'] = array(
+    'title' => t('Search By Social Media Presence'),
+    'help' => t('Adds a filter to limit searches by targets who have social media profiles'),
+    'filter' => array(
+      'handler' => 'springboard_advocacy_views_handler_filter_search_types',
+      'options callback' => 'springboard_advocacy_target_social'
+    ),
+  );
   return $data;
 }
 
@@ -259,7 +276,9 @@ function springboard_advocacy_target_level() {
 function springboard_advocacy_target_branch() {
   $value_options = array(
     'executive' => t('Executive'),
-    'legislative' => t('Legislative'),
+    'senate' => t('Senate'),
+    'house' => t('House'),
+
   );
   return $value_options;
 }
@@ -273,6 +292,17 @@ function springboard_advocacy_target_party() {
     'R' => t('Republican'),
     'I' => t('Independent'),
     'O' => t('Other'),
+  );
+  return $value_options;
+}
+
+/**
+ * Returns default options for views field configuration
+ */
+function springboard_advocacy_target_social() {
+  $value_options = array(
+    'facebook' => t('Has Facebook Profile'),
+    'twitter' => t('Has Twitter Profile'),
   );
   return $value_options;
 }
@@ -343,7 +373,9 @@ function springboard_advocacy_target_state() {
 function springboard_advocacy_target_gender() {
   $value_options = array(
     'M' => 'Male',
-    'F' => 'Female'
+    'F' => 'Female',
+    'O' => 'Other'
+
   );
   return $value_options;
 }
