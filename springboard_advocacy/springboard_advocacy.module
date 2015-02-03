@@ -68,6 +68,8 @@ function springboard_advocacy_permission() {
 
 /**
  * Implements hook_libraries_info().
+ *
+ * Define the advocacy php sdk
  */
 function springboard_advocacy_libraries_info() {
   $libraries['springboard_advocacy'] = array(
@@ -129,7 +131,7 @@ function springboard_advocacy_node_insert($node) {
   * @param $types
   *   An array containing the node types present in $nodes.
   *
-  * Add the unique form_id and messages references to alert nodes.
+  * Add the unique form_id and message entity references to alert nodes.
   *
   */
 function springboard_advocacy_node_load($nodes, $types) {
@@ -154,7 +156,7 @@ function springboard_advocacy_node_load($nodes, $types) {
 }
 
 /**
- * Implemenets hook_form_alter
+ * Implements hook_form_alter
  * @param $form
  * @param $form_state
  * @param $form_id
@@ -193,6 +195,174 @@ function springboard_advocacy_form_alter(&$form, &$form_state, $form_id) {
     }
   }
 }
+
+/**
+ * Implements hook_form_FORMID_alter
+ *
+ * Add ajax functionality to views exposed form to enable district lookups by state.
+ *
+ * @param $form
+ * @param $form_state
+ * @param $form_id
+ */
+function springboard_advocacy_form_views_exposed_form_alter(&$form, &$form_state, $form_id)
+{
+
+  if ($form_id == 'views_exposed_form' && $form_state['view']->name == 'targets' && $form['#id'] == 'views-exposed-form-targets-page-1') {
+
+    if (isset($form['search_district_name'])) {
+      $form['#after_build'][] = 'springboard_advocacy_views_exposed_form_ajax_enable';
+
+      $form['search_district_name']['#prefix'] = '<div id="district">';
+      $form['search_district_name']['#suffix'] = '</div>';
+
+      $form['search_state']['#ajax'] = array(
+        'callback' => 'springboard_advocacy_update_districts_field_callback',
+        'wrapper' => 'district',
+        'method' => 'replace',
+        'effect' => 'fade',
+      );
+
+      if (empty($form_state['values']['search_state']) && $form_state['input']['search_state'] == 'All') {
+        $form['search_district_name']['#disabled'] = TRUE;
+      }
+      if (!empty($form_state['values']['search_state']) && $form_state['values']['search_state'] == 'All') {
+        $form['search_district_name']['#disabled'] = TRUE;
+      }
+      $form['search_district_name']['#options'] = springboard_advocacy_update_districts_field_options($form, $form_state);
+    }
+  }
+}
+
+/**
+ * Ajax callback for views exposed form
+ *
+ * @param $form
+ * @param $form_state
+ * @return mixed
+ */
+function springboard_advocacy_update_districts_field_callback($form, $form_state) {
+  return $form['search_district_name'];
+}
+
+/**
+ * Build the "districts" options array for views exposed form
+ *
+ * @param $form
+ * @param $form_state
+ * @return mixed
+ */
+function springboard_advocacy_update_districts_field_options($form, $form_state)
+{
+  if (!empty($form_state['values']['search_state']) || $form_state['input']['search_state'] != 'All') {
+    if (!empty($form_state['values']['search_state'])) {
+      // lookup districts by  $form_state['values']['search_state']
+      $options = springboard_advocacy_get_districts($form_state['values']['search_state']);
+      return $options;
+    } else {
+      // lookup districts by  $form_state['input']['search_state']
+      // or retrieve from a cache
+      $options = springboard_advocacy_get_districts($form_state['input']['search_state']);
+      return $options;
+    }
+  } else {
+    return $form['search_district_name']['#options'];
+  }
+}
+
+function springboard_advocacy_get_districts($state) {
+    $loader = new AdvocacyApiClientLoader();
+    $client = $loader->getClient();
+    $response = $client->getDistrictsByState($state);
+    if (isset($response->data)) {
+      $options = array('All' => '-Any-');
+      foreach ($response->data as $district) {
+        $options[$district->DistrictDesc] = $district->DistrictDesc;
+      }
+      return $options;
+    }
+}
+
+
+/**
+ * Checks whether the exposed form will use ajax and passes required
+ * form information removed in views_form_views_exposed_form_alter().
+ *
+ * Taken from patch at https://www.drupal.org/node/1183418
+ */
+function springboard_advocacy_views_exposed_form_ajax_enable(&$form, &$form_state) {
+  // In order for Ajax to work, we need the form build info. Here we
+  // check if #ajax has been added to any form elements, and if so,
+  // pass this info as settings via Javascript, which get attached to
+  // the submitted form on Ajax form submissions.
+  // #ajax property can be set not only for the first level of the form,
+  // so we look for it in the whole form.
+  $ajax_info = array();
+  $ajax_elements = springboard_advocacy_views_exposed_form_ajax_lookup_recursive($form);
+  // Determine if form is being processed.
+  $triggering_element_name = '';
+  if (!empty($form_state['input']['_triggering_element_name'])) {
+    $triggering_element_name = $form_state['input']['_triggering_element_name'];
+  }
+  // When we have multiple elements with #ajax set on exposed form
+  // we need to pass only triggering element name to Javascript.
+  // Otherwise #ajax will work only for the first element.
+  if (!empty($triggering_element_name) && !empty($ajax_elements)) {
+    // Check if element has #ajax property set.
+    if (in_array($triggering_element_name, $ajax_elements)) {
+      $ajax_elements = array(
+        $triggering_element_name => $triggering_element_name,
+      );
+    }
+    else {
+      $ajax_elements = array();
+    }
+  }
+  if (!empty($ajax_elements)) {
+    $form_info = array(
+      'form_id' => $form['#form_id'],
+      'form_build_id' => $form['#build_id'],
+    );
+    // Anonymous users don't get a token.
+    if (!empty($form['#token'])) {
+      $form_info['form_token'] = $form['#token'];
+    }
+    foreach ($ajax_elements as $element_name) {
+      $ajax_info[$element_name] = $form_info;
+    }
+    drupal_add_js(array('AdvocacyViewsExposedFormInfo' => $ajax_info), 'setting');
+
+    // Add the javascript behavior that will handle this data.
+    $form['#attached']['js'][] = array(
+      'weight' => 100,
+      'data' => drupal_get_path('module', 'springboard_advocacy') . '/js/exposed-form-ajax.js',
+    );
+  }
+  return $form;
+}
+
+/**
+ * Recursively looks for the #ajax property for every form elemet.
+ * @param $elements
+ *   The element array to look for #ajax property.
+ *
+ * @return
+ *   Array of the elements names where #ajax was found.
+ *
+ * From patch at https://www.drupal.org/node/1183418
+ */
+function springboard_advocacy_views_exposed_form_ajax_lookup_recursive($elements) {
+  $ajax_elements = array();
+  foreach (element_children($elements) as $key) {
+    if (!empty($elements[$key]['#name']) && !empty($elements[$key]['#ajax'])) {
+      $ajax_elements[$elements[$key]['#name']] = $elements[$key]['#name'];
+    }
+    // Recursive call to look for #ajax in element's childrens.
+    $ajax_elements += springboard_advocacy_views_exposed_form_ajax_lookup_recursive($elements[$key]);
+  }
+  return $ajax_elements;
+}
+
 
 /**
  * Implements hook_theme().

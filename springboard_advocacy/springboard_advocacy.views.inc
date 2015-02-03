@@ -184,6 +184,15 @@ function springboard_advocacy_views_data() {
     ),
   );
 
+  $data['advocacy']['search_district_name'] = array(
+    'title' => t('Search By District'),
+    'help' => t('Adds a filter to limit searches by District'),
+    'filter' => array(
+      'handler' => 'springboard_advocacy_views_handler_filter_search_types',
+      'options callback' => 'springboard_advocacy_target_district'
+    ),
+  );
+
   $data['advocacy']['search_gender'] = array(
    'title' => t('Search By Gender'),
     'help' => t('Adds a filter to limit searches by Gender'),
@@ -366,6 +375,16 @@ function springboard_advocacy_target_state() {
   );
   return $value_options;
 }
+
+/**
+ * Returns default options for views field configuration
+ */
+function springboard_advocacy_target_district() {
+  //values are populated via ajax call in form alter
+  $value_options = array();
+  return $value_options;
+}
+
 
 /**
  * Returns default options for views field configuration
