@@ -13,7 +13,6 @@ function springboard_advocacy_webform_submit($form, $form_state) {
   $values =$form_state['values'];
   $webform_values = $values['submitted_tree'];
   $geo = springboard_advocacy_smarty_lookup($webform_values);
-
   if (!empty($geo)) {
     $_SESSION['alert_geo'] = $geo;
     if(!empty($geo['zip']) && !empty($geo['plus4'])) {
@@ -24,21 +23,22 @@ function springboard_advocacy_webform_submit($form, $form_state) {
   if(!empty($zip)) {
     $contact = springboard_advocacy_build_contact($webform_values, $zip, $geo);
     $form_id = $values['advocacy_id'];
-    $messages = springboard_advocacy_build_messages($values['messages']);
+    if(isset($values['messages'])) {
+      $messages = springboard_advocacy_build_messages($values['messages']);
 
-    $submission = array(
-      'contact' => $contact,
-      'form_id' => $form_id,
-      'messages' => $messages,
-    );
-    $loader = new AdvocacyApiClientLoader();
-    $client = $loader->getClient();
-    $response = $client->resolveTargets($submission);
-    if (!empty($response->data)) {
+      $submission = array(
+        'contact' => $contact,
+        'form_id' => $form_id,
+        'messages' => $messages,
+      );
+      $loader = new AdvocacyApiClientLoader();
+      $client = $loader->getClient();
+      $response = $client->resolveTargets($submission);
+      if (!empty($response->data)) {
 //      $persons = springboard_advocacy_prep_for_display($response->data);
 //      $_SESSION['legislators'] = $persons;
+      }
     }
-
   }
 }
 
@@ -72,8 +72,10 @@ function springboard_advocacy_build_contact($values, $zip, $geo) {
     'phone' => $values['sba_phone'],
     'zip' => $zip,
     'email' => $values['mail'],
-//    'county' => $geo['county'],
-//    'fips' => $geo['fips'],
+    'county' => isset($geo['county']) ? $geo['county'] : '',
+    'fips' => isset($geo['fips']) ? $geo['fips'] : '',
+    'latitude' => isset($geo['latitude']) ? $geo['latitude'] : '',
+    'longitude' => isset($geo['longitude']) ? $geo['longitude'] : '',
   );
 
   return $contact;
