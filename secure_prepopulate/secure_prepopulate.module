@@ -505,6 +505,9 @@ function &_secure_prepopulate_find_field(&$form, $path) {
  *
  * @param $input
  *   The string to encrypt.
+ *
+ * @return string
+ *   The encrypted string.
  */
 function secure_prepopulate_encrypt($input) {
   $key = variable_get('secure_prepopulate_key', NULL);  // The 128 bit key to use to decrypt the string.
