@@ -1,3 +1,43 @@
+/*time-range-links*/
+
+.content .time-range-links ul {
+  border-bottom: 1px solid #a9a9a9;
+  list-style: none;
+  margin: 0 0 30px 0;
+}
+
+.content .time-range-links li {
+  display: inline-block;
+  margin: 2px 0 7px 0;
+  padding: 2px 2px 0 0;
+}
+
+.time-range-links li a {
+  background-color: #8fdce5;
+  background-image: -webkit-linear-gradient(#85C4CB, #3dc3d1);
+  background-image: linear-gradient(#85C4CB, #3dc3d1);
+  border: none;
+  border-radius: 4px 4px 0 0;
+  -moz-border-radius: 4px 4px 0 0;
+  -webkit-border-radius: 4px 4px 0 0;
+  color: #333;
+  font-weight: bold;
+  height: 40px;
+  line-height: 14px;
+  margin-right: 2px;
+  padding: 8px 12px;
+}
+
+.time-range-links li a:hover {
+  background-color: #44E7F5;
+  background-image: -webkit-linear-gradient(#85C4CB, #44E7F5);
+  background-image: linear-gradient(#85C4CB, #44E7F5);
+}
+
+.time-range-links li a:hover {
+  text-decoration: none;
+}
+
 /*insights-today-box*/
 
 .insights-today-box {
@@ -12,19 +52,19 @@
   }
 }
 
-.insights-today-box:nth-child(4n+1) {
+.insights-today-box.icharges {
   background-color: #d2c26a;
 }
 
-.insights-today-box:nth-child(4n+2) {
+.insights-today-box.isuccesses {
   background-color: #b4c6af;
 }
 
-.insights-today-box:nth-child(4n+3) {
+.insights-today-box.itotal-value {
   background-color: #58a8a9;
 }
 
-.insights-today-box:nth-child(4n+4) {
+.insights-today-box.ifailures {
   background-color: #da675d;
 }
 
@@ -32,27 +72,37 @@
   background-color: #575757;
   border-radius: 6px;
   color: #eaeaea;
-  padding: 2px 12px;
+  padding: 2px 2px 2px 12px;
 }
 
 .foot a:hover {
   background-color: #ccc;
+  border: 1px solid #7B7B7B;
   color: #333;
   text-decoration: none;
+}
+
+.foot a:after {
+  content: "\f0a9";
+  display: inline-block;
+  font-family: FontAwesome;
+  font-size: 14px;
+  margin: 0px 8px 0 8px;
+
 }
 
 .insights-today-box .big-metric {
   font-size: 50px;
   font-weight: bold;
-  text-align: center;
   margin-bottom: 26px;
+  text-align: center;
 }
 
 .insights-today-box h3 {
   font-weight: bold;
+  line-height: 26px;
   margin-bottom: 20px;
   padding-left: 10px;
-  line-height: 26px;
 }
 
 .insights-today-box .foot {
