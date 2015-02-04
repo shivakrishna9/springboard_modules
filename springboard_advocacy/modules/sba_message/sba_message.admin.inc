@@ -95,7 +95,19 @@ class SbaMessageUIController extends EntityDefaultUIController {
  */
 function sba_message_form_wrapper($sba_message) {
   // Add the breadcrumb for the form's location
-  return drupal_get_form('sba_message_edit_form', $sba_message);
+  $build = array();
+  $build['content'] = array(
+    'sba_message_edit_form' => drupal_get_form('sba_message_edit_form', $sba_message),
+    'find_targets' => array(
+      '#id' => 'springboard-advocacy-find-targets',
+      '#type' => 'markup',
+      '#markup' => views_embed_view('targets', 'block_2'),
+      '#prefix' => '<div class="springboard-advocacy-find-targets">',
+      '#suffix' => '</div>',
+    ),
+  );
+  return $build;
+
 }
 
 
