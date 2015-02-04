@@ -121,6 +121,15 @@
   background-color: #f0f0f0;
 }
 
+.insights-historical-report thead th {
+  border-right: 1px solid #eaeaea;
+}
+
+.insights-historical-report th.first,
+.insights-historical-report th.itamount {
+  border-right: 1px solid #eaeaea;
+}
+
 /*charts*/
 
 canvas#processingStats,

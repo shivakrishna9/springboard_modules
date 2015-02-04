@@ -35,6 +35,8 @@
 
       } // End if equalheight function.
 
+      // Add a class to the amount col.
+      $('.insights-historical-report .subhead_row th:contains("$")').addClass('itamount');
 
       // End context.
     }
