@@ -16,7 +16,7 @@
 }
 
 .insights-today-box .foot {
-  padding-left: 10px;
-  margin: 20px 0 10px 0;
   border-top: 2px solid #eee;
+  margin: 20px 0 10px 0;
+  padding-left: 10px;
 }

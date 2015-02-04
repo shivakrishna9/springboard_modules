@@ -157,6 +157,8 @@ function fundraiser_sustainers_insights_dashboard($path_range = 'last-7-days') {
   $path = drupal_get_path('module', 'fundraiser_sustainers');
   drupal_add_css($path . '/css/fundraiser_sustainers.insights.css');
   drupal_add_js($path . '/js/Chart.js');
+  drupal_add_js($path . '/js/jquery.equalheights.js');
+  drupal_add_js($path . '/js/fundraiser_sustainers.insights.js');
 
   return theme('fundraiser_sustainers_insights_dashboard', $variables);
 }
