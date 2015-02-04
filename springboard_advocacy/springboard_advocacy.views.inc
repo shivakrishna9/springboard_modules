@@ -145,21 +145,21 @@ function springboard_advocacy_views_data() {
   );
 
   $data['advocacy']['search_role'] = array(
-   'title' => t('Search By Level'),
-    'help' => t('Adds a filter to limit searches by Federal or State Level'),
+   'title' => t('Search By Branch'),
+    'help' => t('Adds a filter to limit searches by Federal or State Branch'),
     'filter' => array(
       'handler' => 'springboard_advocacy_views_handler_filter_search_types',
-      'options callback' => 'springboard_advocacy_target_level'
+      'options callback' => 'springboard_advocacy_target_branch'
     ),
   );
 
 
-  $data['advocacy']['search_branch'] = array(
-   'title' => t('Search By Branch'),
-    'help' => t('Adds a filter to limit searches by Legislative Branch'),
+  $data['advocacy']['search_level'] = array(
+   'title' => t('Search By Level'),
+    'help' => t('Adds a filter to limit searches by State or Federal level'),
     'filter' => array(
       'handler' => 'springboard_advocacy_views_handler_filter_search_types',
-      'options callback' => 'springboard_advocacy_target_branch'
+      'options callback' => 'springboard_advocacy_target_level'
 
     ),
   );
@@ -271,10 +271,18 @@ function springboard_advocacy_target_type() {
 /**
  * Returns default options for views field configuration
  */
-function springboard_advocacy_target_level() {
+function springboard_advocacy_target_branch() {
   $value_options = array(
-    'SR|SS' => t('State'),
-    'FR|FS' => t('Federal'),
+    'SR|SS' => t('Both Chambers, State'),
+    'FR|FS' => t('Both Chambers, Federal'),
+    'FS' => t('Federal Senate'),
+    'FR' => t('Federal House'),
+    'SR' => t('State House'),
+    'SS' => t('State Senate'),
+    'SS' => t('State Senate'),
+    'FX|SX' => t('State and Federal Executives'),
+    'FX' => t('Federal Executives'),
+    'SX' => t('State Executives'),
   );
   return $value_options;
 }
@@ -282,11 +290,10 @@ function springboard_advocacy_target_level() {
 /**
  * Returns default options for views field configuration
  */
-function springboard_advocacy_target_branch() {
+function springboard_advocacy_target_level() {
   $value_options = array(
-    'executive' => t('Executive'),
-    'senate' => t('Senate'),
-    'house' => t('House'),
+    'federal' => t('Federal'),
+    'state' => t('State'),
 
   );
   return $value_options;

@@ -208,9 +208,14 @@ function springboard_advocacy_form_alter(&$form, &$form_state, $form_id) {
 function springboard_advocacy_form_views_exposed_form_alter(&$form, &$form_state, $form_id)
 {
 
-  if ($form_id == 'views_exposed_form' && $form_state['view']->name == 'targets' && $form['#id'] == 'views-exposed-form-targets-page-1') {
+  if ($form_id == 'views_exposed_form' && $form_state['view']->name == 'targets') {
+    $districted = array('views-exposed-form-targets-page-1', 'views-exposed-form-targets-block-2');
+//    if(isset($form['search_role_1'])) {
+//      $form['search_role_1']['#type'] = 'checkboxes';
+//    }
 
-    if (isset($form['search_district_name'])) {
+
+    if (isset($form['search_district_name']) && in_array($form['#id'], $districted)) {
       $form['#after_build'][] = 'springboard_advocacy_views_exposed_form_ajax_enable';
 
       $form['search_district_name']['#prefix'] = '<div id="district">';
@@ -222,7 +227,6 @@ function springboard_advocacy_form_views_exposed_form_alter(&$form, &$form_state
         'method' => 'replace',
         'effect' => 'fade',
       );
-
       if (empty($form_state['values']['search_state']) && $form_state['input']['search_state'] == 'All') {
         $form['search_district_name']['#disabled'] = TRUE;
       }
@@ -230,6 +234,7 @@ function springboard_advocacy_form_views_exposed_form_alter(&$form, &$form_state
         $form['search_district_name']['#disabled'] = TRUE;
       }
       $form['search_district_name']['#options'] = springboard_advocacy_update_districts_field_options($form, $form_state);
+
     }
   }
 }
