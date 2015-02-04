@@ -1,22 +1,79 @@
+/*insights-today-box*/
+
 .insights-today-box {
   background-color: #ccc;
-  border-radius: 10px;
+  border-radius: 6px;
+}
+
+@media (max-width: 767px) {
+  .insights-today-box {
+    display: inline-block !important;
+    margin-bottom: 20px;
+  }
+}
+
+.insights-today-box:nth-child(4n+1) {
+  background-color: #d2c26a;
+}
+
+.insights-today-box:nth-child(4n+2) {
+  background-color: #b4c6af;
+}
+
+.insights-today-box:nth-child(4n+3) {
+  background-color: #58a8a9;
+}
+
+.insights-today-box:nth-child(4n+4) {
+  background-color: #da675d;
+}
+
+.foot a {
+  background-color: #575757;
+  border-radius: 6px;
+  color: #eaeaea;
+  padding: 2px 12px;
+}
+
+.foot a:hover {
+  background-color: #ccc;
+  color: #333;
+  text-decoration: none;
 }
 
 .insights-today-box .big-metric {
   font-size: 50px;
   font-weight: bold;
   text-align: center;
+  margin-bottom: 26px;
 }
 
 .insights-today-box h3 {
-  border-bottom: 2px solid #eee;
+  font-weight: bold;
   margin-bottom: 20px;
   padding-left: 10px;
+  line-height: 26px;
 }
 
 .insights-today-box .foot {
-  border-top: 2px solid #eee;
   margin: 20px 0 10px 0;
   padding-left: 10px;
+}
+
+/*insights-historical-report*/
+
+.insights-historical-report tr td {
+  border-bottom: none;
+  border-top: none;
+}
+
+.insights-historical-report tr.odd td {
+  background-color: #f0f0f0;
+}
+
+/*charts*/
+
+canvas#processingStats,
+canvas#forecastChart {
+  background-color: #fff;
 }
