@@ -94,20 +94,36 @@ class SbaMessageUIController extends EntityDefaultUIController {
  * @see sba_message_edit_form()
  */
 function sba_message_form_wrapper($sba_message) {
-  // Add the breadcrumb for the form's location
   $build = array();
+
+  $build['#attached']['css'] = array(
+    drupal_get_path('module', 'sba_message') . '/css/sba_message.css',
+  );
+
+  $build['#attached']['js'] = array(
+    drupal_get_path('module', 'sba_message') . '/js/sba_message.js',
+  );
+
   $build['content'] = array(
     'sba_message_edit_form' => drupal_get_form('sba_message_edit_form', $sba_message),
+    'message_recipients' => array(
+      '#id' => 'springboard-advocacy-message-recipients',
+      '#type' => 'markup',
+      '#markup' => '<h3>Message Recipients</h3>',
+      '#prefix' => '<div class="springboard-advocacy-message-recipients">',
+      '#suffix' => '</div>',
+      '#weight' => 2,
+    ),
     'find_targets' => array(
       '#id' => 'springboard-advocacy-find-targets',
       '#type' => 'markup',
-      '#markup' => views_embed_view('targets', 'block_2'),
+      '#markup' => views_embed_view('targets', 'block_3'),
       '#prefix' => '<div class="springboard-advocacy-find-targets">',
       '#suffix' => '</div>',
+      '#weight' => 3,
     ),
   );
   return $build;
-
 }
 
 
@@ -139,7 +155,11 @@ function sba_message_edit_form($form, &$form_state, $sba_message) {
   // This form should only appear at node/%/messages.
   // Grab the node so we can get the alert form UUID and node ID
   $node = menu_get_object();
-
+  $form['message_error'] = array (
+    '#markup' => '',
+    '#prefix' => '<div id = "advo-error-wrapper">',
+    '#suffix' => '</div>'
+  );
   $form['parent_node']['nid'] = array(
     '#type' => 'hidden',
     '#value' => $node->nid,
@@ -191,6 +211,10 @@ function sba_message_edit_form($form, &$form_state, $sba_message) {
     '#type' => 'submit',
     '#value' => t('Save message'),
     '#submit' => $submit + array('sba_message_edit_form_submit'),
+//    '#ajax' => array(
+//      'callback' => 'sba_message_edit_form_submit',
+//      'wrapper' => 'advo-error-wrapper',
+//    ),
   );
   
   if (!empty($sba_message->name)) {
@@ -211,7 +235,7 @@ function sba_message_edit_form($form, &$form_state, $sba_message) {
 function sba_message_quick_targets_form(&$form, &$form_state) {
   $form['quick_targets'] = array(
     '#type' => 'fieldset',
-    '#title' => t('Quick Target'),
+    '#title' => t('Temporary Quick Target form for testing'),
     '#attributes' => array('class' => array('form-quick-groups')),
     '#weight' => 10,
   );
@@ -264,6 +288,14 @@ function sba_message_edit_form_validate(&$form, &$form_state) {
  * 
  */
 function sba_message_edit_form_submit(&$form, &$form_state) {
+
+//  $element = $form['message_error'];
+//
+//  if (form_get_errors()) {
+//    $element['#markup'] = "";
+//    return $element;
+//  }
+
   $sba_message = entity_ui_controller('sba_message')->entityFormSubmitBuildEntity($form, $form_state);
   // Save the sba_message and go back to the list of sba_messages
   // Add in created and changed times.

@@ -458,6 +458,11 @@ function sba_message_theme() {
       'variables' => array('sba_message_sample_data', 'sba_message' => NULL),
       'template' => 'sba_message-sample-data',
     ),
+    'views_exposed_form' => array(
+      'template' => 'templates/views-exposed-form--targets',
+      'render element' => 'form',
+
+    ),
   );
 }  
 

@@ -209,15 +209,16 @@ function springboard_advocacy_form_views_exposed_form_alter(&$form, &$form_state
 {
 
   if ($form_id == 'views_exposed_form' && $form_state['view']->name == 'targets') {
-    $districted = array('views-exposed-form-targets-page-1', 'views-exposed-form-targets-block-2');
-//    if(isset($form['search_role_1'])) {
-//      $form['search_role_1']['#type'] = 'checkboxes';
-//    }
+    $districted = array('views-exposed-form-targets-page-1', 'views-exposed-form-targets-block-3');
+    if(isset($form['search_role_1'])) {
+      $form['search_role_1']['#type'] = 'checkboxes';
+    }
 
 
     if (isset($form['search_district_name']) && in_array($form['#id'], $districted)) {
       $form['#after_build'][] = 'springboard_advocacy_views_exposed_form_ajax_enable';
-
+//      $form['search_state']['#prefix'] = '<div id="state_wrapper">';
+//      $form['search_district_name']['#suffix'] = '</div>';
       $form['search_district_name']['#prefix'] = '<div id="district">';
       $form['search_district_name']['#suffix'] = '</div>';
 
@@ -376,7 +377,6 @@ function springboard_advocacy_views_exposed_form_ajax_lookup_recursive($elements
  */
 function springboard_advocacy_theme($existing, $type, $theme) {
   $path = drupal_get_path('module', 'springboard_advocacy');
-
   $templates = array(
     'springboard_advocacy_dashboard' => array(
       'variables' => array('views' => array()),

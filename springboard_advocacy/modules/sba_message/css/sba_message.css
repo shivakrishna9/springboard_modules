@@ -1,0 +1,67 @@
+
+#sba-message-edit-form {
+    float:left;
+    width: 70%;
+}
+
+.springboard-advocacy-message-recipients {
+    width:30%;
+    float:right;
+    background: #fff;
+    position: fixed;
+    left: 70%;
+}
+
+.springboard-advocacy-find-targets {
+    clear: both;
+    width: 70%;
+    background: #fff;
+}
+
+.springboard-advocacy-find-targets .views-exposed-form {
+   padding:1em;
+}
+
+.springboard-advocacy-find-targets .views-exposed-widget {
+    vertical-align: top;
+    margin-right: 2.5em;
+    margin-top: 1em;
+}
+
+.springboard-advocacy-find-targets  #edit-combine-wrapper {
+    display: block;
+}
+
+.springboard-advocacy-find-targets  #state-district-wrapper {
+    min-width: 50%;
+}
+
+.springboard-advocacy-find-targets #state-district-wrapper #edit-search-district-name-wrapper
+{
+    display:block;
+}
+
+.springboard-advocacy-find-targets #state-district-wrapper,
+.springboard-advocacy-find-targets  #edit-search-role-1-wrapper,
+.springboard-advocacy-find-targets  #edit-search-party-wrapper,
+.springboard-advocacy-find-targets #edit-search-gender-wrapper,
+.springboard-advocacy-find-targets  #edit-search-social-wrapper
+{
+    float:left;
+    display: block;
+}
+
+.springboard-advocacy-find-targets  #edit-search-party-wrapper{
+    clear:right;
+}
+
+.springboard-advocacy-find-targets  #edit-search-gender-wrapper
+{
+    clear:left;
+}
+
+.springboard-advocacy-find-targets  div.views-exposed-widget.views-submit-button {
+    display:block;
+    clear:left;
+    float:right;
+}
