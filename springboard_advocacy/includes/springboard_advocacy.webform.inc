@@ -49,8 +49,8 @@ function springboard_advocacy_build_messages($message_ids) {
       $message_wrapper = entity_metadata_wrapper('sba_message', $message);
       $message_id = $message->data['message_id'];
       //$group_id = $message->data['group_id'];
-      $body = $message_wrapper->field_sba_message[0]->value();
-      $subject = $message_wrapper->field_sba_subject[0]->value();
+      $body = $message_wrapper->field_sba_message->value();
+      $subject = $message_wrapper->field_sba_subject->value();
       $messages[] = array(
         'message_id' => $message_id,
         'subject' => $subject,
