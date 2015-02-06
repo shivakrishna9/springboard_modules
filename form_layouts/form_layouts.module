@@ -287,6 +287,16 @@ function form_layouts_form_layouts_info() {
     'hide title' => FALSE,
   );
 
+  $templates['two_col_hybrid_donation_btn'] = array(
+    'name' => t('Hybrid two col: donation form with buttons'),
+    'types' => array('fundraiser'),
+    'theme' => 'two_col_hybrid_donation_btn',
+    'pattern' => 'two_col_hybrid_donation_btn\'0-9\'+',
+    'template' => 'two-column-hybrid-donation-buttons',
+    'path' => drupal_get_path('module', 'form_layouts') . '/templates/',
+    'hide title' => FALSE,
+  );
+
   $templates['two_column_left_right'] = array(
     'name' => t('Two column: left-right fieldsets'),
     'types' => array('fundraiser'),
@@ -365,6 +375,17 @@ function form_layouts_preprocess_two_column_donation(&$vars) {
  */
 function form_layouts_preprocess_two_column_hybrid_donation(&$vars) {
   form_layouts_fundraiser_preprocess($vars);
+}
+
+/**
+ * Implements hook_preprocess_HOOK() for two-column-hybrid-donation-buttons.tpl.php.
+ */
+function form_layouts_preprocess_two_col_hybrid_donation_btn(&$vars) {
+  form_layouts_fundraiser_preprocess($vars);
+
+  // Add js to this form.
+  $base = drupal_get_path('module', 'form_layouts');
+  drupal_add_js($base . '/js/two-col-btn.js');
 }
 
 /**
