@@ -37,6 +37,11 @@ function springboard_update_7000() {
  * Add the Admin field_group to the user entity move standard fields under it.
  */
 function springboard_update_7001() {
+  if (!module_exists('field_group')) {
+    $t = get_t();
+    throw new DrupalUpdateException($t('Springboard update 7001 requires the Field Group module. Install this module and run the update again.'));
+  }
+
   module_load_include('inc', 'springboard', 'springboard.admin');
   // Check for an existing or disabled field group to set update message.
   $existing = field_group_load_field_group('group_profile_admin', 'user', 'user', 'form');
