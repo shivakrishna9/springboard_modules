@@ -28,7 +28,6 @@
   </div>
 
 </div>
-<hr>
 
 <div class="insights-historical-report">
   <h3><?php print $historical_report_heading; ?></h3>

@@ -3057,3 +3057,33 @@ function fundraiser_sustainers_entity_property_info() {
 function fundraiser_sustainers_log() {
   return new FundraiserSustainersLog();
 }
+
+
+/**
+ * Implements template_preprocess_html().
+ */
+function fundraiser_sustainers_preprocess_html(&$vars) {
+
+  // Add body classes for insights.
+
+  $path = drupal_get_path_alias();
+  $aliases = explode('/', $path);
+
+
+
+  if (arg(2) == 'reports' && arg(4) == 'insights' && arg(5) == NULL) {
+    $vars['classes_array'][] = 'insights-home';
+    foreach($aliases as $alias) {
+      $vars['classes_array'][] = drupal_clean_css_identifier($alias);
+    }
+  }
+
+  if (arg(2) == 'reports' && arg(4) == 'insights' && arg(5) == 'last-month') {
+    $vars['classes_array'][] = 'insights-last-month';
+  }
+
+  if (arg(2) == 'reports' && arg(4) == 'insights' && arg(5) == 'this-month') {
+    $vars['classes_array'][] = 'insights-this-month';
+  }
+
+}
