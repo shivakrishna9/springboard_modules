@@ -36,7 +36,7 @@ class springboard_advocacy_views_handler_field_target_actions extends views_hand
   function options_form(&$form, &$form_state) {
     $form['which_links'] = array(
       '#type' => 'checkboxes',
-      '#options' => drupal_map_assoc(array(t('view'), t('edit'), t('delete'))),
+      '#options' => drupal_map_assoc(array(t('view'), t('edit'), t('delete'), t('add'))),
       '#title' => t('Which links should show'),
       '#default_value' => $this->options['which_links'],
       '#description' => t('Select whether view, edit and/or delete links are visible. Edit and Delete links will only be visible on custom targets, and to properly permissioned users.')
@@ -71,7 +71,18 @@ class springboard_advocacy_views_handler_field_target_actions extends views_hand
     }
 
     $links  = array();
-
+    if (user_access('add target to campaign') && !empty($this->options['which_links']['add'])) {
+      $links[] = l(t('add'), 'add-target', array(
+        'external' => TRUE,
+        'attributes' => array('class' => array('advocacy-add-target')),
+        'query' => array(
+          'id' => $values->id,
+          'first' => $values->first_name,
+          'last' => $values->last_name,
+          'sal' => $values->salutation
+        )
+      ));
+    }
     if (user_access('view targets') && !empty($this->options['which_links']['view'])) {
       $links[] = l(t('view'), $path . '/' . $values->id . '/view');
     }

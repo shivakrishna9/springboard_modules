@@ -25,10 +25,10 @@ class springboard_advocacy_views_plugin_query extends views_plugin_query {
     $view->init_pager($view);
     $this->pager->query();
     $view->build_info['springboard_advocacy_request'] = $this->client;
-    // not sure we need this
-    // if (isset($view->query->search_terms)) {
-    //   $view->build_info['springboard_advocacy_search'] = $view->query->search_terms;  
-    // } 
+    // helpful for the "add all link"
+     if (isset($view->query->search_terms)) {
+       $view->build_info['springboard_advocacy_search'] = $view->query->search_terms;
+     }
   }
 
   function execute(&$view) {

@@ -109,7 +109,7 @@ function sba_message_form_wrapper($sba_message) {
     'message_recipients' => array(
       '#id' => 'springboard-advocacy-message-recipients',
       '#type' => 'markup',
-      '#markup' => '<h3>Message Recipients</h3>',
+      '#markup' => '<h3>Message Recipients</h3><div id="springboard-advocacy-message-recipients-container"></div>',
       '#prefix' => '<div class="springboard-advocacy-message-recipients">',
       '#suffix' => '</div>',
       '#weight' => 2,

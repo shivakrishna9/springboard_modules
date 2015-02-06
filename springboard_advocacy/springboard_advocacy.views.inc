@@ -405,3 +405,27 @@ function springboard_advocacy_target_gender() {
   );
   return $value_options;
 }
+
+function springboard_advocacy_views_pre_render(&$view) {
+  if ($view->name == 'targets' && $view->current_display == 'block_3' && !empty($view->build_info['springboard_advocacy_search'])) {
+    $search_terms = $view->build_info['springboard_advocacy_search'];
+    $total_rows = $view->total_rows;
+    $query = array();
+    foreach ($search_terms as $field => $terms) {
+      $query[$field] = implode('|', $terms);
+    }
+    $view->attachment_before = theme('springboard_advocacy_views_attachment_before', array('view' => $view, 'total_rows' => $total_rows, 'query' => $query));
+  }
+}
+
+
+function theme_springboard_advocacy_views_attachment_before($variables) {
+  extract($variables);
+  if(!empty($total_rows)) {
+    $output = '<div id="advocacy-attachment-before"><div id ="advocacy-attachment-before-rows">Total Rows: ' . $total_rows . '</div>';
+    $output .= '<div id ="advocacy-attachment-before-add-all">';
+    $output .=  l(t('Add all'), "add-all", array(attributes => array('id' => 'advo-add-all'), 'query' => $query, 'external' => TRUE));
+    $output .= '</div></div>';
+    return $output;
+  }
+}
