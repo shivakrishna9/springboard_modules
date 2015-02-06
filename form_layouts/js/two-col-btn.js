@@ -42,14 +42,14 @@
       });
 
       // Show / hide other amount input box when other amount is clicked / touched.
-      $('.webform-client-form .option.radio-other.radio-label').click(function () {
-        $('#webform-component-donation--other-amount').css('display', 'inline-block');
-      });
-
-      // Now hide it if something else in the group is clicked.
-      $('.webform-client-form #webform-component-donation--amount .option.radio-label:not(".radio-other")').click(function () {
-          $('#webform-component-donation--other-amount').css('display', 'none');
-      });
+      //$('.webform-client-form .option.radio-other.radio-label').click(function () {
+      //  $('#webform-component-donation--other-amount').css('display', 'inline-block');
+      //});
+      //
+      //// Now hide it if something else in the group is clicked.
+      //$('.webform-client-form #webform-component-donation--amount .option.radio-label:not(".radio-other")').click(function () {
+      //    $('#webform-component-donation--other-amount').css('display', 'none');
+      //});
 
 
     }

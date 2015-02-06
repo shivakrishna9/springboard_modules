@@ -176,9 +176,9 @@ table td {
   margin-left: 10px;
 }
 
-.chkbtns #webform-component-donation--other-amount {
-  display: none;
-}
+/*.chkbtns #webform-component-donation--other-amount {*/
+  /*display: none;*/
+/*}*/
 
 .chkbtns #webform-component-donation--amount input[type=radio] {
   margin: 0;
@@ -204,13 +204,27 @@ table td {
 
   .chkbtns #webform-component-donation--other-amount,
   .chkbtns #webform-component-donation--amount {
+    clear: both;
     float: none;
     width: 100%;
-    clear: both;
   }
 
   .chkbtns #webform-component-donation--other-amount {
     margin-top: 20px;
+  }
+
+}
+
+@media (max-width: 480px) {
+
+  .chkbtns #edit-submitted-donation-amount .control-group {
+    clear: both;
+    margin: 0 0 10px 0;
+    width: 100%;
+  }
+
+  .chkbtns #edit-submitted-donation-amount .control-group label {
+    width: 100%;
   }
 
 }
