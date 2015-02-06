@@ -72,7 +72,7 @@
             });
         });
 
-        if (typeof(queryObj.id) !== 'undefined') {
+        if (typeof(queryObj.Id) !== 'undefined') {
             return "Individual: " + queryObj.sal + " " +  queryObj.first + " " + queryObj.last;
         }
 
@@ -87,7 +87,7 @@
             .replace(/\]/g, '. ')
             .replace(/. ,/g, '. ');
 
-        if (typeof(queryObj.gender) !== 'undefined' || typeof(queryObj.social) !== 'undefined' ||  typeof(queryObj.district) !== 'undefined') {
+        if (typeof(queryObj.Gender) !== 'undefined' || typeof(queryObj.Social) !== 'undefined' ||  typeof(queryObj.District) !== 'undefined') {
             return "Multilple Individuals: " +  cleanUp;
         }
         return "Group: " +  cleanUp;
