@@ -187,12 +187,15 @@ function sba_message_edit_form($form, &$form_state, $sba_message) {
     '#value' => isset($sba_message->data['message_id']) ? $sba_message->data['message_id'] : uniqid(variable_get('site_name', 'Drupal') . '-'),
   );
 
+  $form['data']['recipients'] = array(
+    '#type' => 'hidden',
+    '#default_value' => isset($sba_message->data['message_recipients']) ? $sba_message->data['message_recipients'] : '',
+  );
+
+
   // Add the field related form elements.
   $form_state['sba_message'] = $sba_message;
   field_attach_form('sba_message', $sba_message, $form, $form_state);
-
-  // Add the quick targets form
-  sba_message_quick_targets_form($form, $form_state);
 
   $form['actions'] = array(
     '#type' => 'container',
@@ -232,47 +235,6 @@ function sba_message_edit_form($form, &$form_state, $sba_message) {
   return $form;
 }
 
-function sba_message_quick_targets_form(&$form, &$form_state) {
-  $form['quick_targets'] = array(
-    '#type' => 'fieldset',
-    '#title' => t('Temporary Quick Target form for testing'),
-    '#attributes' => array('class' => array('form-quick-groups')),
-    '#weight' => 10,
-  );
-
-  $form['quick_targets']['#tree'] = TRUE;
-
-  $form['quick_targets']['chambers'] = array(
-    '#type' => 'fieldset',
-    '#title' => t('Chamber'),
-    '#attributes' => array('class' => array('form-quick-groups')),
-    '#weight' => 1,
-  );
-
-  $form['quick_targets']['chambers'] = array(
-    '#type' => 'checkboxes',
-    '#options' =>
-      array(
-        'fs' => t('Federal Senate'),
-        'fr' => t('Federal House'),
-        // 'ss' => t('State Senate'),
-        // 'sr' => t('State House')
-      ),
-    '#title' => t('Chamber'),
-  );
-
-  $form['quick_targets']['party'] = array(
-    '#type' => 'checkboxes',
-    '#options' => array(
-      'd' => t('Democrat'),
-      'r' => t('Republican'),
-      'o' => t('Other')
-    ),
-    '#title' => t('Party'),
-  );
-
-}
-
 /**
  * Form API validate callback for the sba_message form
  */
@@ -297,113 +259,19 @@ function sba_message_edit_form_submit(&$form, &$form_state) {
 //  }
 
   $sba_message = entity_ui_controller('sba_message')->entityFormSubmitBuildEntity($form, $form_state);
-  // Save the sba_message and go back to the list of sba_messages
   // Add in created and changed times.
-
-  // Load the API client
-  $loader = new AdvocacyApiClientLoader();
-  $client = $loader->getClient();
-  $values = $form_state['values'];
-  
-  // array(
-  //  'name' => 'group name', //required
-  //  'chambers' => array(
-  //       0 => array('chamber' => 'fs', 'party =>'r', state => 'MA'),
-  //       1 => array('chamber' => 'fs', 'party =>'d', state => 'MA')
-  //     )
-  //  'executives' => array(
-  //       0 => array('role' => 'PRES01', 'party =>'r'),
-  //       1 => array('role' => 'PRES03', 'party =>'d')
-  //     )
-  //   )
-  //   'target_ids' => array('1', '2', '3', '4', '5', '6', '7'),
-  // )
-
-  // Get chamber form values and unset unselected values
-  $chambers = array_flip($values['quick_targets']['chambers']);
-  unset($chambers[0]);
-
-  $parties = array_flip($values['quick_targets']['party']);
-  unset($parties[0]);
-
-  $chamber_count = count($chambers);
-  $party_count = count($parties);
-  $exec_is_checked = FALSE; //isset(yadda)
-
-  $selected = array();
-  
-  // Make chambers. This hurts my brain.
-  switch (true) {
-
-    case (($chamber_count != 0 && $chamber_count != 2) && $party_count != 0 && $party_count != 3):
-      foreach ($chambers as $chamber) {
-        foreach ($parties as $party) {
-          $selected[] = array('chamber' => $chamber, 'party' => $party, 'state' => '');
-        }
-      }
-      break;
-
-    case (($chamber_count != 0 && $chamber_count != 2) && ($party_count == 0 || $party_count == 3)):
-      foreach ($chambers as $chamber) {
-          $selected[] = array('chamber' => $chamber, 'party' => '', 'state' => '');
-      }
-      break;
-
-    case ($chamber_count == 0 && $party_count != 0 && $exec_is_checked == FALSE):
-      foreach ($parties as $party) {
-        $selected[] = array('chamber' => '', 'party' => $party, 'state' => '');
-      }
-      break;
-
-    case ($chamber_count == 2 && $party_count != 0):
-      foreach ($parties as $party) {
-        $selected[] = array('chamber' => '', 'party' => $party, 'state' => '');
-      }
-      break;
-
-    case ($chamber_count == 2 && $party_count == 0):
-      foreach ($chambers as $chamber) {
-        $selected[] = array('chamber' => $chamber, 'party' => '', 'state' => '');
-      }
-      break;
-
-    default:
-  }
-
-  // Executive build goes here.
-
-  // Is this a new message? Then create a new target group for it.
+  $is_new = FALSE;
   if ($sba_message->is_new = isset($sba_message->is_new) ? $sba_message->is_new : 0) {
     $sba_message->created = time();
-    $response = 
-    $client->createTargetGroup(
-      array(
-        'name' => $sba_message->name, 
-        'chambers' => $selected,
-        'message' => array(
-          'message_id' => $values['data']['message_id'],
-          'form_id' => $values['advocacy_id'],
-        ),
-      )
-    );
-    if (!empty($response->data->id)) {
-      $sba_message->data['group_id'] = $response->data->id;
-    }
-    else {
-      drupal_set_message('There was a problem retrieving the group ID');
-    }
+    $is_new = TRUE;
   }
-  else {
-    // Editing an existing message
-
-    //
-    // $response = $client->updateTargetGroup($values, $group_id)
-
-  }
-
   $sba_message->changed = time();
   
   $sba_message->save();
+
+  sba_message_api_save($sba_message, $is_new, $form_state);
+
+
   $wrapper = entity_metadata_wrapper('sba_message', $sba_message);
   $nid = $wrapper->field_sba_alert_id->value()->nid;
   $form_state['redirect'] = 'node/' . $nid . '/messages';
@@ -460,4 +328,110 @@ function sba_message_delete_form_submit($form, &$form_state) {
   watchdog('sba_message', 'Deleted sba_message %name.', array('%name' => $sba_message->name));
 
   $form_state['redirect'] = 'node/' . $nid . '/messages';
+}
+
+function sba_message_api_save($sba_message, $is_new, $form_state){
+  dpm($sba_message);
+  $loader = new AdvocacyApiClientLoader();
+  $client = $loader->getClient();
+  $values = $form_state['values'];
+  $targets = json_decode(str_replace('&quot;','"', $values['data']['recipients']));
+  // array(
+  //  'name' => 'group name', //required
+  //  'chambers' => array(
+  //       0 => array('chamber' => 'fs', 'party =>'r', state => 'MA'),
+  //       1 => array('chamber' => 'fs', 'party =>'d', state => 'MA')
+  //     )
+  //  'executives' => array(
+  //       0 => array('role' => 'PRES01', 'party =>'r'),
+  //       1 => array('role' => 'PRES03', 'party =>'d')
+  //     )
+  //   )
+  //   'target_ids' => array('1', '2', '3', '4', '5', '6', '7'),
+  // )
+  $inds = array();
+  $groups = array();
+  foreach ($targets as $target) {
+    if (isset($target->id)) {
+      $inds[] = $target;
+    }
+    else {
+      $groups[] = $target;
+    }
+  }
+  $chambers = sba_message_build_chambers($groups);
+  // Executive build goes here.
+  // Is this a new message? Then create a new target group for it.
+  if ($is_new) {
+    $response =
+      $client->createTargetGroup(
+        array(
+          'name' => $sba_message->name,
+          'chambers' => $chambers,
+          'message' => array(
+            'message_id' => $values['data']['message_id'],
+            'form_id' => $values['advocacy_id'],
+          ),
+        )
+      );
+    if (!empty($response->data->id)) {
+      $sba_message->data['group_id'] = $response->data->id;
+    }
+    else {
+      drupal_set_message('There was a problem retrieving the group ID');
+    }
+  }
+  else {
+    // Editing an existing message
+
+    //
+    // $response = $client->updateTargetGroup($values, $group_id)
+
+  }
+}
+
+function sba_message_build_chambers($groups) {
+  $selected = array();
+
+  foreach ($groups as $id => $group_segments) {
+    $selected[$id] = array();
+    foreach ($group_segments as $name => $segment_values) {
+      $segment_values = explode('|', $segment_values);
+      if ($name == 'role') {
+        $name = 'chamber';
+      }
+      $i = 0;
+      $num = count($selected[$id]);
+      if ($num) {
+        foreach ($selected[$id] as $select) {
+          foreach ($segment_values as $value) {
+            $chamber = isset($select['chamber']) ? $select['chamber'] : '';
+            $party = isset($select['party']) ? $select['party'] : '';
+            $gender = isset($select['gender']) ? $select['gender'] : '';
+            $selected[$id][$i]['chamber'] = $chamber;
+            $selected[$id][$i]['party'] = $party;
+            $selected[$id][$i]['gender'] = $gender;
+            $selected[$id][$i][$name] = $value;
+            $i++;
+          }
+        }
+      } else {
+        foreach ($segment_values as $value) {
+          $selected[$id][$i]['chamber'] = '';
+          $selected[$id][$i]['party'] = '';
+          $selected[$id][$i]['gender'] = '';
+          $selected[$id][$i][$name] = $value;
+          $i++;
+        }
+      }
+    }
+  }
+
+  $chambers = array();
+  foreach ($selected as $subselect)  {
+    foreach ($subselect as $chamber) {
+      $chambers[] = $chamber;
+    }
+  }
+  return $chambers;
 }

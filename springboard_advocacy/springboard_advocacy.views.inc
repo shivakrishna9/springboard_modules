@@ -412,7 +412,12 @@ function springboard_advocacy_views_pre_render(&$view) {
     $total_rows = $view->total_rows;
     $query = array();
     foreach ($search_terms as $field => $terms) {
-      $query[$field] = implode('|', $terms);
+      if (is_array($terms)) {
+        $query[$field] = implode('|', $terms);
+      }
+      else {
+        $query[$field] = str_replace(' ', '|',   $terms);
+      }
     }
     $view->attachment_before = theme('springboard_advocacy_views_attachment_before', array('view' => $view, 'total_rows' => $total_rows, 'query' => $query));
   }

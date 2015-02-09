@@ -9,15 +9,20 @@
                 $(this, context).once('advocacy-add-target', function() {
                     $(this).click(function (e){
                         e.preventDefault();
-                        count = $('target-recipient').length;
+                        if($('.target-recipient').length !== 0) {
+                            count = parseInt($('.target-recipient').last().attr('id').replace('target-', '')) + 1;
+                        }
+                        else {
+                            count = 0;
+                        }
                         var query = $(this).attr('href').replace('add-all?','').replace('add-target?','').split('&');
+                       //  console.log(query);
                         var readable = buildReadableQuery(query);
                         $('#springboard-advocacy-message-recipients-container')
-                            .append('<div id = "target-' + count + '" class = "target-recipient" style="height: 40px">' + readable + '</div>');
+                            .append('<div id = "target-' + count + '" class = "target-recipient" style="height: 40px">' + readable + ' <span><a class ="target-delete" href="#">delete</a></span></div>');
                         $(query).each(function(index, value) {
                             value = value.split('=');
-                            $('#target-' + count).attr('data-' + value[0], value[1]);
-
+                            $('#target-' + count).attr('data-' + value[0], value[1].replace(/%7C/g, '|'));
                         });
                         buildFormValue();
                     });
@@ -26,11 +31,21 @@
         }
     };
 
+    function buildFormValue() {
+        var arr = {};
+        $('.target-recipient').each(function(i) {
+            arr[i] = $(this).data();
+        });
+        recipients = JSON.stringify(arr).replace(/"/g, '&quot;');
+        $('input[name="data[recipients]"]').val(recipients);
+    }
+
     function buildReadableQuery(query) {
         var queryObj = {};
         $(query).each(function(index, value) {
             var segments = value.split('=');
             segments[0] = segments[0].ucfirst();
+
             queryObj[segments[0]] = segments[1].split('%7C');
             $(queryObj[segments[0]]).each(function(i, v){
                 switch(v) {
@@ -61,7 +76,6 @@
                     case '0':
                         queryObj[segments[0]][i] = 'Other';
                         break;
-
                     case 'M':
                         queryObj[segments[0]][i] = 'Male';
                         break;
@@ -73,32 +87,29 @@
         });
 
         if (typeof(queryObj.Id) !== 'undefined') {
-            return "Individual: " + queryObj.sal + " " +  queryObj.first + " " + queryObj.last;
+            return "Individual: " + queryObj.Sal + " " +  queryObj.First + " " + queryObj.Last;
         }
 
-        asString = JSON.stringify(queryObj);
-        cleanUp = asString
-            .replace(/{/g, '')
-            .replace(/}/g, '')
-            .replace(/"/g, '')
-            .replace(/,/g, ', ')
-            .replace(/:/g, ': ')
-            .replace(/\[/g, '')
-            .replace(/\]/g, '. ')
-            .replace(/. ,/g, '. ');
-
-        if (typeof(queryObj.Gender) !== 'undefined' || typeof(queryObj.Social) !== 'undefined' ||  typeof(queryObj.District) !== 'undefined') {
-            return "Multilple Individuals: " +  cleanUp;
+        cleanUp = JSON.stringify(queryObj).jsonToReadable();
+        if (typeof(queryObj.Fields) !== 'undefined' || typeof(queryObj.Gender) !== 'undefined' || typeof(queryObj.Social) !== 'undefined' ||  typeof(queryObj.District) !== 'undefined') {
+            return "Multiple Individuals: " +  cleanUp;
         }
         return "Group: " +  cleanUp;
     }
 
-    function buildFormValue() {
-        recipients =  $('.target-recipient');
-    }
     String.prototype.ucfirst = function()
     {
         return this.charAt(0).toUpperCase() + this.substr(1);
     }
 
+    String.prototype.jsonToReadable = function()
+    {
+      return this.replace(/{"/g, '<ul><li>')
+            .replace(/]}/g, '</li></ul>')
+            .replace(/\["/g, '')
+            .replace(/\],"/g, '</li><li>')
+            .replace(/:/g, ': ')
+            .replace(/","/g, ', ')
+            .replace(/"/g, '')
+    }
 })(jQuery);
