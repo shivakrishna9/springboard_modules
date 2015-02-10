@@ -15,12 +15,21 @@
     position: fixed;
     margin-left: 1em;
     width: 30%;
+    min-height: 300px;
+    max-height:500px;
+    overflow-y: auto;
 }
 
 #springboard-advocacy-message-recipients h3 {
     margin-left: 1em;
-
 }
+
+#springboard-advocacy-message-recipients .sba-message-status {
+    margin-left: 1em;
+    display: none;
+    color: #ff0000;
+}
+
 #springboard-advocacy-message-recipients .target-recipient {
     margin: 1em;
     border: 1px dotted #ccc;

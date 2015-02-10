@@ -32,6 +32,7 @@
                         var readable = buildReadableQuery(query);
 
                         buildDivs(count, readable, query);
+                        buildUpdateMessage();
                         buildFormValue();
                     });
                 });
@@ -60,12 +61,17 @@
 
     function buildDivs(count, readable, query) {
         $('#springboard-advocacy-message-recipients')
-            .append('<div id = "target-' + count + '" class = "target-recipient">' + readable +
+            .append('<div id = "target-' + count + '" class = "target-recipient" style="display: none;">' + readable +
             ' <span><a class ="target-delete" href="#">delete</a></span></div>');
-
+        $('#target-' + count).show(300);
         $('#target-' + count + ' a').click(function(ev){
             ev.preventDefault();
-            $(this).closest('.target-recipient').remove();
+            $(this).closest('.target-recipient').hide(300, function(){
+                $(this).remove();
+                buildUpdateMessage();
+                buildFormValue();
+            });
+
         })
         $(query).each(function(index, value) {
             value = value.split('=');
@@ -80,6 +86,10 @@
         });
         recipients = JSON.stringify(arr).replace(/"/g, '&quot;');
         $('input[name="data[recipients]"]').val(recipients);
+    }
+
+    function buildUpdateMessage() {
+        $('.sba-message-status').text('You have unsaved changes').show('slow');
     }
 
     function buildReadableQuery(query) {

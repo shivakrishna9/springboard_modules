@@ -109,7 +109,7 @@ function sba_message_form_wrapper($sba_message) {
     'message_recipients' => array(
       '#id' => 'springboard-advocacy-message-recipients',
       '#type' => 'markup',
-      '#markup' => '<div id="springboard-advocacy-message-recipients"><h3>Message Recipients</h3></div>',
+      '#markup' => '<div id="springboard-advocacy-message-recipients"><h3>Message Recipients</h3><div class = "sba-message-status"></div></div>',
       '#prefix' => '<div id="springboard-advocacy-message-recipients-container">',
       '#suffix' => '</div>',
       '#weight' => 2,
@@ -191,7 +191,10 @@ function sba_message_edit_form($form, &$form_state, $sba_message) {
     '#type' => 'hidden',
     '#default_value' => isset($sba_message->data['recipients']) ? $sba_message->data['recipients'] : '',
   );
-
+  $form['data']['group_id'] = array(
+    '#type' => 'hidden',
+    '#default_value' => isset($sba_message->data['group_id']) ? $sba_message->data['group_id'] : '',
+  );
 
   // Add the field related form elements.
   $form_state['sba_message'] = $sba_message;
@@ -250,12 +253,12 @@ function sba_message_edit_form_validate(&$form, &$form_state) {
  */
 function sba_message_edit_form_submit(&$form, &$form_state) {
 
-//  $element = $form['message_error'];
-//
-//  if (form_get_errors()) {
-//    $element['#markup'] = "";
-//    return $element;
-//  }
+  $element = $form['message_error'];
+
+  if (form_get_errors()) {
+    $element['#markup'] = "";
+    return $element;
+  }
 
   $form_state['values']['data']['recipients'] = str_replace('&quot;', '"', $form_state['values']['data']['recipients']);
 
@@ -323,7 +326,9 @@ function sba_message_delete_form_submit($form, &$form_state) {
   $nid = $wrapper->field_sba_alert_id->value()->nid;
   sba_message_delete($sba_message);
 
-  //need to invoke client
+  $loader = new AdvocacyApiClientLoader();
+  $client = $loader->getClient();
+  $client->deleteTargetGroup($sba_message->data['group_id']);
 
   drupal_set_message(t('The sba_message %name has been deleted.', array('%name' => $sba_message->name)));
   watchdog('sba_message', 'Deleted sba_message %name.', array('%name' => $sba_message->name));
@@ -359,15 +364,14 @@ function sba_message_delete_form_submit($form, &$form_state) {
 function _sba_message_api_save($sba_message, $is_new, $form_state) {
 
   $values = $form_state['values'];
+  $indvds = array();
+  $unstructured_chambers = array();
 
+  $loader = new AdvocacyApiClientLoader();
+  $client = $loader->getClient();
   if(!empty($values['data']['recipients'])) {
 
-    $loader = new AdvocacyApiClientLoader();
-    $client = $loader->getClient();
     $targets = json_decode($values['data']['recipients']);
-
-    $indvds = array();
-    $unstructured_chambers = array();
 
     foreach ($targets as $target) {
       if (isset($target->id)) {
@@ -376,38 +380,47 @@ function _sba_message_api_save($sba_message, $is_new, $form_state) {
         $unstructured_chambers[] = $target;
       }
     }
-
+  }
+  if (!empty($unstructured_chambers)) {
     $chamber_rows = _sba_message_build_chambers($unstructured_chambers);
+  }
+  // Executive build call goes here.
 
-    // Executive build call goes here.
+  // Is this a new message? Then create a new target group for it.
+  if ($is_new) {
+    $response =
+      $client->createTargetGroup(
+        array(
+          'name' => $sba_message->name,
+          'chambers' => $chamber_rows,
+          'target_ids' => $indvds,
+          'message' => array(
+            'message_id' => $values['data']['message_id'],
+            'form_id' => $values['advocacy_id'],
+          ),
+        )
+      );
+    if (!empty($response->data->id)) {
+      $sba_message->data['group_id'] = $response->data->id;
+      $sba_message->changed = time();
+      $sba_message->save();
 
-    // Is this a new message? Then create a new target group for it.
-    if ($is_new) {
-
-      $response =
-        $client->createTargetGroup(
-          array(
-            'name' => $sba_message->name,
-            'chambers' => $chamber_rows,
-            'target_ids' => $indvds,
-            'message' => array(
-              'message_id' => $values['data']['message_id'],
-              'form_id' => $values['advocacy_id'],
-            ),
-          )
-        );
-      if (!empty($response->data->id)) {
-        $sba_message->data['group_id'] = $response->data->id;
-      } else {
-        drupal_set_message('There was a problem retrieving the group ID');
-      }
     } else {
-      // Editing an existing message
-
-      //
-      // $response = $client->updateTargetGroup($values, $group_id)
-
+      drupal_set_message('There was a problem retrieving the group ID');
     }
+  } else {
+     $response =
+       $client->updateTargetGroup(
+       array(
+       'name' => $sba_message->name,
+       'chambers' => $chamber_rows,
+       'target_ids' => $indvds,
+       'message' => array(
+         'message_id' => $values['data']['message_id'],
+         'form_id' => $values['advocacy_id'],
+       ),
+     ), $sba_message->data['group_id']);
+
   }
 }
 
