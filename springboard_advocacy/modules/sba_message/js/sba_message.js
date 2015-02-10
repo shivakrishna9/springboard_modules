@@ -5,6 +5,12 @@
     Drupal.behaviors.AdvocacyMessageRecipients = {
         attach: function(context, settings) {
 
+            finder = $('.springboard-advocacy-find-targets-container');
+            actions = $('#sba-message-edit-form #edit-actions');
+            actions.remove();
+            finder.append(actions);
+            $('#sba-message-edit-form').append(finder);
+
             var recipients =  $('input[name="data[recipients]"]').val();
             if(recipients.length > 0) {
                 $('body').once('edit-page', function() {
@@ -97,8 +103,8 @@
         $(query).each(function(index, value) {
             var segments = value.split('=');
             segments[0] = segments[0].ucfirst();
-
-            queryObj[segments[0]] = segments[1].split('%7C');
+            segments[1] = segments[1].replace(/%7C/, '|');
+            queryObj[segments[0]] = segments[1].split('|');
             $(queryObj[segments[0]]).each(function(i, v){
                 switch(v) {
                     case 'FR':

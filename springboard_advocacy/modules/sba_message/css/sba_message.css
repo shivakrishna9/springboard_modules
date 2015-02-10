@@ -39,10 +39,17 @@
 #springboard-advocacy-message-recipients .target-recipient ul li {
     position: relative; left: 1em;
 }
-.springboard-advocacy-find-targets {
+.springboard-advocacy-find-targets-container {
     clear: both;
     width: 70%;
+}
+
+#sba-message-edit-form .springboard-advocacy-find-targets-container {
+    width: 100%;
+}
+.springboard-advocacy-find-targets {
     background: #fff;
+    border: 1px solid #ccc;
 }
 
 .springboard-advocacy-find-targets .views-exposed-form {

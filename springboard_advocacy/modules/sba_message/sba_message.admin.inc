@@ -117,9 +117,16 @@ function sba_message_form_wrapper($sba_message) {
     'find_targets' => array(
       '#id' => 'springboard-advocacy-find-targets',
       '#type' => 'markup',
-      '#markup' => views_embed_view('targets', 'block_3'),
-      '#prefix' => '<div class="springboard-advocacy-find-targets">',
-      '#suffix' => '</div>',
+      '#markup' => theme(
+        'ctools_collapsible',
+        array(
+          'handle' => 'Find Targets',
+          'content' => views_embed_view('targets', 'block_3'),
+          'collapsed' => TRUE
+        )
+      ),
+      '#prefix' => '<div class="springboard-advocacy-find-targets-container"><div class="springboard-advocacy-find-targets">',
+      '#suffix' => '</div></div>',
       '#weight' => 3,
     ),
   );
