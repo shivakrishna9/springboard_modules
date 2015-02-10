@@ -189,7 +189,7 @@ function sba_message_edit_form($form, &$form_state, $sba_message) {
 
   $form['data']['recipients'] = array(
     '#type' => 'hidden',
-    '#default_value' => isset($sba_message->data['message_recipients']) ? $sba_message->data['message_recipients'] : '',
+    '#default_value' => isset($sba_message->data['recipients']) ? $sba_message->data['recipients'] : '',
   );
 
 
@@ -256,6 +256,8 @@ function sba_message_edit_form_submit(&$form, &$form_state) {
 //    $element['#markup'] = "";
 //    return $element;
 //  }
+
+  $form_state['values']['data']['recipients'] = str_replace('&quot;', '"', $form_state['values']['data']['recipients']);
 
   $sba_message = entity_ui_controller('sba_message')->entityFormSubmitBuildEntity($form, $form_state);
   // Add in created and changed times.
@@ -362,7 +364,7 @@ function _sba_message_api_save($sba_message, $is_new, $form_state) {
 
     $loader = new AdvocacyApiClientLoader();
     $client = $loader->getClient();
-    $targets = json_decode(str_replace('&quot;', '"', $values['data']['recipients']));
+    $targets = json_decode($values['data']['recipients']);
 
     $indvds = array();
     $unstructured_chambers = array();
@@ -444,7 +446,6 @@ function _sba_message_build_chambers($unstructured_chambers) {
   foreach ($chamber_rows_container as $container)  {
     $chamber_rows = array_values($container);
   }
-
   return $chamber_rows;
 }
 

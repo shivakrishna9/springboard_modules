@@ -4,14 +4,24 @@
 (function ($) {
     Drupal.behaviors.AdvocacyMessageRecipients = {
         attach: function(context, settings) {
+
+            var recipients =  $('input[name="data[recipients]"]').val();
+            if(recipients.length > 0) {
+                $('body').once('edit-page', function() {
+                   $(document).ready(function($){
+                      buildEditPage(recipients);
+                    });
+                });
+            }
+
             links = $('a.advocacy-add-target, a#advo-add-all');
             links.each(function(){
                 $(this, context).once('advocacy-add-target', function() {
-
                     $(this).click(function (e){
                         e.preventDefault();
+                        var count;
 
-                        if($('.target-recipient').length !== 0) {
+                        if ($('.target-recipient').length !== 0) {
                             count = parseInt($('.target-recipient').last().attr('id').replace('target-', '')) + 1;
                         }
                         else {
@@ -21,25 +31,47 @@
                         var query = $(this).attr('href').replace('add-all?','').replace('add-target?','').split('&');
                         var readable = buildReadableQuery(query);
 
-                        $('#springboard-advocacy-message-recipients')
-                            .append('<div id = "target-' + count + '" class = "target-recipient">' + readable +
-                            ' <span><a class ="target-delete" href="#">delete</a></span></div>');
-
-                        $('#target-' + count + ' a').click(function(ev){
-                            ev.preventDefault();
-                            $(this).closest('.target-recipient').remove();
-                        })
-                        $(query).each(function(index, value) {
-                            value = value.split('=');
-                            $('#target-' + count).attr('data-' + value[0], value[1].replace(/%7C/g, '|'));
-                        });
-
+                        buildDivs(count, readable, query);
                         buildFormValue();
                     });
                 });
             });
         }
     };
+
+    function buildEditPage(recipients) {
+        var count = 0;
+        $.each(JSON.parse(recipients), function(idx, obj) {
+            var query = '';
+            query = JSON.stringify(obj)
+                .replace(/"/g, '')
+                .replace(/,/g, '&')
+                .replace(/:/g, '=')
+                .replace('{', '')
+                .replace('}', '')
+                .split('&');
+
+            var readable = buildReadableQuery(query);
+
+            buildDivs(count,readable, query);
+            count++;
+        });
+    }
+
+    function buildDivs(count, readable, query) {
+        $('#springboard-advocacy-message-recipients')
+            .append('<div id = "target-' + count + '" class = "target-recipient">' + readable +
+            ' <span><a class ="target-delete" href="#">delete</a></span></div>');
+
+        $('#target-' + count + ' a').click(function(ev){
+            ev.preventDefault();
+            $(this).closest('.target-recipient').remove();
+        })
+        $(query).each(function(index, value) {
+            value = value.split('=');
+            $('#target-' + count).attr('data-' + value[0], value[1].replace(/%7C/g, '|'));
+        });
+    }
 
     function buildFormValue() {
         var arr = {};
