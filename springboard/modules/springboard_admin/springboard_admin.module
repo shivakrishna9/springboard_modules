@@ -8,7 +8,7 @@ include_once 'springboard_admin.menu.inc';
 
 /**
  * Implements hook_admin_menu_output_build().
- *
+ * 
  * Creates a custom top-level menu item and its children for the admin_menu
  * module.
  */
@@ -34,7 +34,7 @@ function springboard_admin_admin_menu_output_build(&$content) {
 
 /**
  * Implements hook_admin_menu_output_alter().
- *
+ * 
  * Removes extraneous Springboard-releated menu items from the admin_menu menu.
  */
 function springboard_admin_admin_menu_output_alter(&$content) {
@@ -53,26 +53,30 @@ function springboard_admin_admin_menu_output_alter(&$content) {
  * administration pages.
  */
 function springboard_admin_custom_theme() {
-  // If the springboard_backend theme is disabled, do nothing.
-  if (variable_get('springboard_theme_enable', 1) == 0) {
-    return;
-  }
-  // If the springboard_backend theme does not exist, we can do nothing.
-  $themes = list_themes();
-  if (!isset($themes['springboard_backend'])) {
-    return;
-  }
-
-  // If the page is using a page wrapper, do nothing.
-  if(module_exists('page_wrappers')) {
-    $wrapper = page_wrappers_check();
-    if(!empty($wrapper['wrapper'])) {
+  // Does the current user get SBUX (i.e., are the following checks relevant)?
+  if (springboard_admin_user_gets_sbux($GLOBALS['user'])) {
+    // If the springboard_backend theme is disabled, do nothing.
+    if (variable_get('springboard_theme_enable', 1) == 0) {
       return;
     }
-  }
-  // If the path begins with /springboard/, we know the theme applies
-  if (preg_match("|^\/springboard/.*?|", request_uri()) || preg_match("|^\/springboard\?.*?|", request_uri()) || preg_match("|^\/springboard$|", request_uri()) ) {
-    return 'springboard_backend';
+    // If the springboard_backend theme does not exist, we can do nothing.
+    $themes = list_themes();
+    if (!isset($themes['springboard_backend'])) {
+      return;
+    }
+    // If the page is using a page wrapper, do nothing.
+    if(module_exists('page_wrappers')) {
+      $wrapper = page_wrappers_check();
+      if(!empty($wrapper['wrapper'])) {
+        return;
+      }
+    }
+    // If either the current Drupal path or its SBUX alias begins with /springboard/, then the theme applies.
+    if (preg_match("|^springboard(\/.*)?|", $_GET['q'])
+      || preg_match("|^springboard(\/.*)?|", springboard_admin_build_admin_path('/' . $_GET['q'], 'path'))
+    ) {
+      return 'springboard_backend';
+    }
   }
 }
 
@@ -121,7 +125,7 @@ function springboard_admin_form_views_exposed_form_alter(&$form, &$form_state, $
 
   if(isset($form['date_filter']) && is_object($form_state['view'])) {
     $view = $form_state['view'];
-
+    
     // Alter the date format for all views date filters.
     $form['date_filter']['min']['#date_format'] = 'n/j/Y';
     $form['date_filter']['max']['#date_format'] = 'n/j/Y';
@@ -219,11 +223,11 @@ function springboard_admin_form_springboard_admin_settings_alter(&$form, &$form_
 
 /**
  * Implements hook_init().
- *
- * Checks to see if the current user receives the Springboard UX. If so, make
- * sure they are always redirected to the Springboard admin path rather than the
+ * 
+ * Checks to see if the current user receives the Springboard UX. If so, make 
+ * sure they are always redirected to the Springboard admin path rather than the 
  * Drupal admin path.
- *
+ * 
  * To add a new item, follow this template:
  * elseif (preg_match([Regex to match the path(s)], $path, $matches)) {
       $goto_path = [String to match the new path(s)] . $matches[1] . [Any additional matches from the regex];
@@ -233,14 +237,14 @@ function springboard_admin_init() {
   global $user;
   // If user is to have the Springboard Admin UX, make sure they are redirecitng
   // to the proper admin interface.
-  if (springboard_admin_user_gets_sbux($user)) {
+  if (springboard_admin_user_gets_sbux($user)) {    
     // If a form is being submitted, there's no need to redirect.
     if(isset($_POST['form_build_id'])) {
       return;
     }
-
+        
     // Set up requested path and goto path.
-    $path = str_replace("?".$_SERVER['QUERY_STRING'], '', request_uri());
+    $path = str_replace("?".$_SERVER['QUERY_STRING'], '', request_uri());    
 
     // Check to see if the current path is an alias to a Drupal system path. If
     // so, convert the path to the Drupal system path.
@@ -258,8 +262,8 @@ function springboard_admin_init() {
       // Set up any query string that might exist for use in drupal_goto().
       parse_str($_SERVER['QUERY_STRING'], $query);
       drupal_goto($goto_path, array('query' => $query, 'alias' => TRUE));
-    }
-  }
+    } 
+  }  
 }
 
 /**
@@ -344,40 +348,8 @@ function springboard_admin_menu() {
     'page callback' => 'drupal_goto',
     'page arguments' => array('user/logout'),
   );
-
+  
   return $items;
-}
-
-/**
- * Title callback used to change the menu titles based on whether a user gets
- * the Springboard admin UI.
- *
- * @param $original_title
- *   Original title for users who do not get the Springboard admin ui.
- *
- * @param $new_title
- *   Replacement title for users who get the the Springboard admin ui.
- */
-function springboard_admin_menu_title_callback($original_title, $new_title) {
-  global $user;
-  if (springboard_admin_user_gets_sbux($user)) {
-    return $new_title;
-  }
-
-  return $original_title;
-}
-
-/**
- * Page callback used to redirect from /admin to /springboard when the
- * user gets the Springboard admin ui.
- */
-function sprinboard_admin_admin_redirect() {
-  global $user;
-  if (springboard_admin_user_gets_sbux($user)) {
-    drupal_goto('springboard');
-  }
-
-  return system_admin_menu_block_page();
 }
 
 /**
@@ -386,31 +358,28 @@ function sprinboard_admin_admin_redirect() {
  * Alterations to menu items to maintain the Springboard User Experience.
  */
 function springboard_admin_menu_alter(&$items) {
-  // Add a callback to handle redirection from /admin
-  $items['admin']['page callback'] = 'sprinboard_admin_admin_redirect';
-
-  // Remove the orders tab from the user's profile page.
-  unset($items['user/%views_arg/orders']);
-
-  // Customizations to menu item titles
-  $items['node/%webform_menu/webform']['title callback'] = 'springboard_admin_menu_title_callback';
-  $items['node/%webform_menu/webform']['title arguments'] = array($items['node/%webform_menu/webform']['title'], t('Form components'));
-
-  $items['node/%webform_menu/webform/components']['title callback'] = 'springboard_admin_menu_title_callback';
-  $items['node/%webform_menu/webform/components']['title arguments'] = array($items['node/%webform_menu/webform/components']['title'], t('Form fields'));
-
-  $items['node/%webform_menu/webform/emails']['title callback'] = 'springboard_admin_menu_title_callback';
-  $items['node/%webform_menu/webform/emails']['title arguments'] = array($items['node/%webform_menu/webform/emails']['title'], t('Confirmation emails'));
-
-  $items['node/%webform_menu/webform/configure']['title callback'] = 'springboard_admin_menu_title_callback';
-  $items['node/%webform_menu/webform/configure']['title arguments'] = array($items['node/%webform_menu/webform/configure']['title'], t('Confirmation page & settings'));
+  global $user;
+  if (springboard_admin_user_gets_sbux($user)) {
+    // Redirect to /admin to /springboard
+    $items['admin']['page callback'] = 'drupal_goto';
+    $items['admin']['page arguments'] = array('springboard');
+    
+    // Customizations to menu item titles
+    $items['node/%webform_menu/webform']['title'] = 'Form components';
+    $items['node/%webform_menu/webform/components']['title'] = 'Form fields';
+    $items['node/%webform_menu/webform/emails']['title'] = 'Confirmation emails';
+    $items['node/%webform_menu/webform/configure']['title'] = 'Confirmation page & settings';
+    
+    // Disable the User Orders tab since it's irrelevant
+    unset($items['user/%views_arg/orders']);
+  }
 }
 
 define('SPRINGBOARD_MENU_MODULES', serialize(array('email_wrappers','fundraiser', 'fundraiser_upsell', 'market_source', 'page_wrappers', 'salesforce_mapping', 'springboard_ga', 'springboard_social', 'springboard_views', 'webform_ab', 'webform_user')));
 
 /**
  * Implements hook_modules_enabled().
- *
+ * 
  * Rebuilds the Springboard Admin Menu if a Springboard module is enabled.
  */
 
@@ -422,10 +391,10 @@ function springboard_admin_modules_enabled($modules) {
     }
   }
 }
-
+ 
 /**
  * Implements hook_modules_disabled().
- *
+ * 
  * Rebuilds the Springboard Admin Menu if a Springboard module is enabled.
  */
 
@@ -437,7 +406,7 @@ function springboard_admin_modules_disabled($modules) {
     }
   }
 }
-
+ 
 /**
  * Implements hook_node_type_delete().
  *
@@ -450,7 +419,7 @@ function springboard_admin_node_type_delete($info) {
 /**
  * Implements hook_node_type_insert().
  *
- * Adds a link to the springboard admin menu to create a new node of this
+ * Adds a link to the springboard admin menu to create a new node of this 
  * content type if it is Fundraiser or Webform User enabled.
  */
 function springboard_admin_node_type_insert($info) {
@@ -498,7 +467,7 @@ function springboard_admin_theme($existing, $type, $theme, $path) {
 
 /**
  * Implements hook_url_inbound_alter().
- *
+ * 
  * Implements administrative url aliases for the Springboard UX.
  */
 function springboard_admin_url_inbound_alter(&$path, $original_path, $path_language) {
@@ -509,7 +478,7 @@ function springboard_admin_url_inbound_alter(&$path, $original_path, $path_langu
 
 /**
  * Implements hook_url_outbound_alter().
- *
+ * 
  * Outputs administrative url aliases for Springboard UX users.
  */
 function springboard_admin_url_outbound_alter(&$path, &$options, $original_path) {
@@ -600,11 +569,11 @@ function springboard_admin_asset_page() {
  *
  * @param string path
  *   The path to the current page that is an aggregate of child links.
- *
+ * 
  * @param array parents
- *   An array of paths to parent pages in the Springboard Admin Menu definition.
+ *   An array of paths to parent pages in the Springboard Admin Menu definition. 
  *   In order of least to most depth.
- *
+ * 
  * @return string
  *   HTML output for the page.
  */
@@ -625,11 +594,11 @@ function springboard_admin_aggregate_links_page($path, $parents = array()) {
     }
     $item = isset($parent['_children'][$path]) ? $parent['_children'][$path] : array();
   // If there are no parents, then load a top-level menu item.
-  }
+  } 
   else {
     $item = isset($menu[$path]) ? $menu[$path] : array();
   }
-
+  
   // Build our array of links if applicable.
   $links = array();
   if (isset($item['_children'])) {
@@ -664,11 +633,11 @@ function springboard_admin_aggregate_links_page($path, $parents = array()) {
 /**
  * Page callback for the "Donation Forms" and "Forms" admin pages.
  *
- * Renders page content for the "Donation Forms" and "Forms" administrative
+ * Renders page content for the "Donation Forms" and "Forms" administrative 
  * pages.
  *
  * @param $springboard_type
- *   'fundraiser' to show forms that utilize the Fundraiser module,
+ *   'fundraiser' to show forms that utilize the Fundraiser module, 
  *   'webform_user' to show forms that utilize the Webform User module. If no
  *   type is specified, all other content types are displayed.
  * @return string
@@ -776,7 +745,7 @@ function springboard_admin_node_delete($form) {
 }
 
 /**
- * Submit handler for springboard_admin_settings form. Updates the
+ * Submit handler for springboard_admin_settings form. Updates the 
  * configurable link to the organization website in the springboard_admin menu.
  *
  * We do this so that users who are allowed to administer Springboard can change
@@ -796,7 +765,7 @@ function springboard_drupal_path_submit(&$form, &$form_state) {
 }
 
 /**
- * Validation handler for springboard_admin_settings form. Checks that the
+ * Validation handler for springboard_admin_settings form. Checks that the 
  * submitted URL is valid.
  */
 function springboard_drupal_path_validate(&$form, &$form_state) {
@@ -809,7 +778,7 @@ function springboard_drupal_path_validate(&$form, &$form_state) {
  * API Function
  * Assembles an associative array of paths and their Springboard aliases. Allows
  * other modules to add to or alter the array of paths.
- *
+ * 
  * @return $patterns
  * An array of path + alias pattern pairs. Each item is an array containing:
  *   - path: An associative array describing the original menu router path.
@@ -818,7 +787,7 @@ function springboard_drupal_path_validate(&$form, &$form_state) {
  *   - alias: An associative array describing the springboard alias.
  *     - regex: A regular expression that matches the path.
  *     - replacement: The original path with arguments in the form of '%1'.
- *
+ * 
  */
 
 function springboard_admin_alias_patterns() {
@@ -827,7 +796,7 @@ function springboard_admin_alias_patterns() {
   return($patterns);
 }
 
-/**
+/** 
  * Implements hook_springboard_admin_alias_patterns().
  */
 function springboard_admin_springboard_admin_alias_patterns() {
@@ -985,7 +954,7 @@ function springboard_admin_springboard_admin_alias_patterns() {
         'regex' => '|^springboard/multivariate-testing$|',
         'replacement' => 'springboard/multivariate-testing',
       ),
-    ),
+    ),    
     // Google Analytics.
     'admin/config/system/googleanalytics' => array(
       'path' => array(
@@ -1029,7 +998,7 @@ function springboard_admin_springboard_admin_alias_patterns() {
         'regex' => '|^springboard/commerce/products(/.*)?$|',
         'replacement' => 'springboard/commerce/products$1',
       ),
-    ),
+    ),  
     // Springboard pages.
     'admin/springboard' => array(
       'path' => array(
@@ -1046,16 +1015,16 @@ function springboard_admin_springboard_admin_alias_patterns() {
 
 /**
  * Helper Function
- * Given a path, parses through the available Springboard alias patterns and
+ * Given a path, parses through the available Springboard alias patterns and 
  * returns the appropriate altered path.
- *
+ * 
  * @param $path
  *   The path to be checked for matching aliases.
- *
+ * 
  * @param $type
  *   The type of path supplied in $path. 'path' if it is the original router path,
  *   'alias' if it is the Springboard path alias.
- *
+ * 
  * @return $final_path
  *   The altered path or FALSE if no alias pattern matched.
  */
@@ -1077,7 +1046,7 @@ function springboard_admin_build_admin_path($path, $type) {
 
 /**
  * Helper function.
- *
+ * 
  * Allows a user to confirm the action of rebuilding the Springboard Admin Menu.
  */
 function springboard_admin_rebuild_menu_confirm($form, &$form_state) {
@@ -1087,8 +1056,8 @@ function springboard_admin_rebuild_menu_confirm($form, &$form_state) {
 }
 
 /**
- * Submit function.
- *
+ * Submit function. 
+ * 
  * Initiates a rebuild of the Springboard Admin Menu.
  */
 
@@ -1100,15 +1069,15 @@ function springboard_admin_rebuild_menu_confirm_submit($form, &$form_state) {
 
 /**
  * Helper function.
- *
- * Builds an associative array of menu items from the Springboard Admin Menu,
+ * 
+ * Builds an associative array of menu items from the Springboard Admin Menu, 
  * as needed by hook_admin_menu_output_build.
- *
+ * 
  * @param $items
  *   The menu tree as returned by menu_tree() for the menu to be built out.
- *
+ * 
  * @return $nav
- *   An associative array of child menu items as required by
+ *   An associative array of child menu items as required by 
  *   hook_admin_menu_output_build.
  */
 function springboard_admin_build_admin_menu_subnav($items) {
@@ -1126,7 +1095,7 @@ function springboard_admin_build_admin_menu_subnav($items) {
 
 /**
  * Helper function.
- *
+ * 
  * Constructs an associative array of properties needed for an admin_menu menu
  * item from the output given by Drupal's menu_tree() function.
  */
@@ -1144,7 +1113,7 @@ function springboard_admin_build_admin_menu_item($item) {
  *
  * @param string sbadmin_path
  *   The link_path value of the menu item to return.
- * @param int plid
+ * @param int plid 
  *   The parent ID of the menu item to return.
  * @return array
  *   An associative array as required for menu_link_save() or FALSE if no item
@@ -1153,7 +1122,7 @@ function springboard_admin_build_admin_menu_item($item) {
 function springboard_admin_menu_find_link($sbadmin_path, $plid = -1) {
   // Load all link items from the Springboard Admin Menu
   $sb_menu = menu_load_links('springboard_admin_menu');
-  // If parent link ID is specified, return the first menu item with the defined
+  // If parent link ID is specified, return the first menu item with the defined 
   // path and defined plid
   if ($plid >= 0) {
     foreach ($sb_menu as $item) {
@@ -1176,7 +1145,7 @@ function springboard_admin_menu_find_link($sbadmin_path, $plid = -1) {
 }
 
 /**
- * Helper Function. Creates an "add content" item in the Springboard Admin Menu
+ * Helper Function. Creates an "add content" item in the Springboard Admin Menu 
  * for new content types if they are Fundraiser or Webform User enabled.
  *
  * @param object $type
@@ -1214,7 +1183,7 @@ function springboard_admin_menu_node_add_link($type) {
         // Otherwise, the parent item is "Forms".
         'plid' => $parent_link,
       );
-
+      
       // Save that menu link.
       $mlid = menu_link_save($menu_link);
       // If saving the link fails, return a helpful error message.

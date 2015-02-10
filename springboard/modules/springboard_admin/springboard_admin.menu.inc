@@ -349,6 +349,10 @@ function springboard_admin_create_menu($rebuild = FALSE) {
   menu_save($sb_menu);
   // Define and add default menu items to the Springboard Administration menu.
   $sb_menu_items = springboard_admin_admin_menu_items();
+
+  // Allow other modules to alter the menu items.
+  drupal_alter('springboard_admin_menu_items', $sb_menu_items);
+
   /*
    * Iterate through each item. Save the parent and then the children using the
    * parent's newly assign mlid as the child's plid. If the menu ever advances
@@ -377,6 +381,12 @@ function springboard_admin_create_menu_item($item, &$mlids, $plid = 0, $parent =
   if ($plid > 0) {
     $item['plid'] = $plid;
   }
+
+  // Set a default module value.
+  if (!isset($item['module'])) {
+    $item['module'] = 'menu';
+  }
+
   // Save a the item.
   $mlid = menu_link_save($item, array(), array($plid => $parent));
   $mlids[] = $mlid;
