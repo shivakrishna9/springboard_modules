@@ -109,8 +109,8 @@ function sba_message_form_wrapper($sba_message) {
     'message_recipients' => array(
       '#id' => 'springboard-advocacy-message-recipients',
       '#type' => 'markup',
-      '#markup' => '<h3>Message Recipients</h3><div id="springboard-advocacy-message-recipients-container"></div>',
-      '#prefix' => '<div class="springboard-advocacy-message-recipients">',
+      '#markup' => '<div id="springboard-advocacy-message-recipients"><h3>Message Recipients</h3></div>',
+      '#prefix' => '<div id="springboard-advocacy-message-recipients-container">',
       '#suffix' => '</div>',
       '#weight' => 2,
     ),
@@ -203,7 +203,6 @@ function sba_message_edit_form($form, &$form_state, $sba_message) {
     '#weight' => 400,
   );
 
-
   $submit = array();
 
   if (!empty($form['#submit'])) {
@@ -269,7 +268,7 @@ function sba_message_edit_form_submit(&$form, &$form_state) {
   
   $sba_message->save();
 
-  sba_message_api_save($sba_message, $is_new, $form_state);
+  _sba_message_api_save($sba_message, $is_new, $form_state);
 
 
   $wrapper = entity_metadata_wrapper('sba_message', $sba_message);
@@ -330,108 +329,140 @@ function sba_message_delete_form_submit($form, &$form_state) {
   $form_state['redirect'] = 'node/' . $nid . '/messages';
 }
 
-function sba_message_api_save($sba_message, $is_new, $form_state){
-  dpm($sba_message);
-  $loader = new AdvocacyApiClientLoader();
-  $client = $loader->getClient();
+
+
+/**
+ *
+ * Save the target message data to the API server
+ * @param $sba_message
+ * @param $is_new
+ * @param $form_state
+ *
+ * The api is expecting an array structured like so:
+ *
+    array(
+    'name' => 'group name', //required
+    'chambers' => array(
+    0 => array('chamber' => 'fs', 'party =>'r', state => 'MA'),
+    1 => array('chamber' => 'fs', 'party =>'d', state => 'MA')
+    )
+    'executives' => array(
+    0 => array('role' => 'PRES01', 'party =>'r'),
+    1 => array('role' => 'PRES03', 'party =>'d')
+    )
+    )
+    'target_ids' => array('1', '2', '3', '4', '5', '6', '7'),
+    )
+ */
+function _sba_message_api_save($sba_message, $is_new, $form_state) {
+
   $values = $form_state['values'];
-  $targets = json_decode(str_replace('&quot;','"', $values['data']['recipients']));
-  // array(
-  //  'name' => 'group name', //required
-  //  'chambers' => array(
-  //       0 => array('chamber' => 'fs', 'party =>'r', state => 'MA'),
-  //       1 => array('chamber' => 'fs', 'party =>'d', state => 'MA')
-  //     )
-  //  'executives' => array(
-  //       0 => array('role' => 'PRES01', 'party =>'r'),
-  //       1 => array('role' => 'PRES03', 'party =>'d')
-  //     )
-  //   )
-  //   'target_ids' => array('1', '2', '3', '4', '5', '6', '7'),
-  // )
-  $inds = array();
-  $groups = array();
-  foreach ($targets as $target) {
-    if (isset($target->id)) {
-      $inds[] = $target;
-    }
-    else {
-      $groups[] = $target;
-    }
-  }
-  $chambers = sba_message_build_chambers($groups);
-  // Executive build goes here.
-  // Is this a new message? Then create a new target group for it.
-  if ($is_new) {
-    $response =
-      $client->createTargetGroup(
-        array(
-          'name' => $sba_message->name,
-          'chambers' => $chambers,
-          'message' => array(
-            'message_id' => $values['data']['message_id'],
-            'form_id' => $values['advocacy_id'],
-          ),
-        )
-      );
-    if (!empty($response->data->id)) {
-      $sba_message->data['group_id'] = $response->data->id;
-    }
-    else {
-      drupal_set_message('There was a problem retrieving the group ID');
-    }
-  }
-  else {
-    // Editing an existing message
 
-    //
-    // $response = $client->updateTargetGroup($values, $group_id)
+  if(!empty($values['data']['recipients'])) {
 
+    $loader = new AdvocacyApiClientLoader();
+    $client = $loader->getClient();
+    $targets = json_decode(str_replace('&quot;', '"', $values['data']['recipients']));
+
+    $indvds = array();
+    $unstructured_chambers = array();
+
+    foreach ($targets as $target) {
+      if (isset($target->id)) {
+        $indvds[] = $target->id;
+      } else {
+        $unstructured_chambers[] = $target;
+      }
+    }
+
+    $chamber_rows = _sba_message_build_chambers($unstructured_chambers);
+
+    // Executive build call goes here.
+
+    // Is this a new message? Then create a new target group for it.
+    if ($is_new) {
+
+      $response =
+        $client->createTargetGroup(
+          array(
+            'name' => $sba_message->name,
+            'chambers' => $chamber_rows,
+            'target_ids' => $indvds,
+            'message' => array(
+              'message_id' => $values['data']['message_id'],
+              'form_id' => $values['advocacy_id'],
+            ),
+          )
+        );
+      if (!empty($response->data->id)) {
+        $sba_message->data['group_id'] = $response->data->id;
+      } else {
+        drupal_set_message('There was a problem retrieving the group ID');
+      }
+    } else {
+      // Editing an existing message
+
+      //
+      // $response = $client->updateTargetGroup($values, $group_id)
+
+    }
   }
 }
 
-function sba_message_build_chambers($groups) {
-  $selected = array();
-
-  foreach ($groups as $id => $group_segments) {
-    $selected[$id] = array();
-    foreach ($group_segments as $name => $segment_values) {
+/**
+ * Take the chambers form input and format it for the API callback.
+ * @param $unstructured_chambers
+ * @return array
+ */
+function _sba_message_build_chambers($unstructured_chambers) {
+  $chamber_rows_container = array();
+  foreach ($unstructured_chambers as $segment_id => $chamber_segments) {
+    $chamber_rows_container[$segment_id] = array();
+    foreach ($chamber_segments as $name => $segment_values) {
       $segment_values = explode('|', $segment_values);
       if ($name == 'role') {
         $name = 'chamber';
       }
       $i = 0;
-      $num = count($selected[$id]);
+      $num = count($chamber_rows_container[$segment_id]);
       if ($num) {
-        foreach ($selected[$id] as $select) {
+        foreach ($chamber_rows_container[$segment_id] as $chamber_field) {
           foreach ($segment_values as $value) {
-            $chamber = isset($select['chamber']) ? $select['chamber'] : '';
-            $party = isset($select['party']) ? $select['party'] : '';
-            $gender = isset($select['gender']) ? $select['gender'] : '';
-            $selected[$id][$i]['chamber'] = $chamber;
-            $selected[$id][$i]['party'] = $party;
-            $selected[$id][$i]['gender'] = $gender;
-            $selected[$id][$i][$name] = $value;
+            _sba_message_build_chambers_shmoosher($chamber_rows_container, $segment_id, $i, $name, $value, $chamber_field);
             $i++;
           }
         }
       } else {
         foreach ($segment_values as $value) {
-          $selected[$id][$i]['chamber'] = '';
-          $selected[$id][$i]['party'] = '';
-          $selected[$id][$i]['gender'] = '';
-          $selected[$id][$i][$name] = $value;
+          _sba_message_build_chambers_shmoosher($chamber_rows_container, $segment_id, $i, $name, $value);
           $i++;
         }
       }
     }
   }
-
-  $chambers = array();
-  foreach ($selected as $subselect)  {
-    foreach ($subselect as $chamber) {
-      $chambers[] = $chamber;
-    }
+  $chamber_rows = array();
+  foreach ($chamber_rows_container as $container)  {
+    $chamber_rows = array_values($container);
   }
-  return $chambers;
+
+  return $chamber_rows;
+}
+
+/**
+ * Helper function to build chamber rows
+ * @param $chamber_rows_container
+ * @param $segment_id
+ * @param $i
+ * @param $name
+ * @param $value
+ * @param array $chamber_field
+ */
+function _sba_message_build_chambers_shmoosher(&$chamber_rows_container, $segment_id, $i, $name, $value, $chamber_field = array()) {
+  $chamber = isset($chamber_field['chamber']) ? $chamber_field['chamber'] : '';
+  $party = isset($chamber_field['party']) ? $chamber_field['party'] : '';
+  $gender = isset($chamber_field['gender']) ? $chamber_field['gender'] : '';
+  $chamber_rows_container[$segment_id][$i]['chamber'] = $chamber;
+  $chamber_rows_container[$segment_id][$i]['party'] = $party;
+  $chamber_rows_container[$segment_id][$i]['gender'] = $gender;
+  $chamber_rows_container[$segment_id][$i][$name] = $value;
 }
