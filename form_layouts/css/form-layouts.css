@@ -217,14 +217,12 @@ table td {
 
 @media (max-width: 480px) {
 
-  .chkbtns #edit-submitted-donation-amount .control-group {
-    clear: both;
-    margin: 0 0 10px 0;
-    width: 100%;
-  }
-
   .chkbtns #edit-submitted-donation-amount .control-group label {
-    width: 100%;
+    font-weight: bold;
+    height: 64px;
+    letter-spacing: 1px;
+    padding: 0 8px;
+    width: 50px;
   }
 
 }

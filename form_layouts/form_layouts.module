@@ -290,7 +290,7 @@ function form_layouts_form_layouts_info() {
   );
 
   $templates['two_col_hybrid_donation_btn'] = array(
-    'name' => t('Hybrid two col: donation form with buttons'),
+    'name' => t('Hybrid two column: donation form with graphical buttons'),
     'types' => array('fundraiser'),
     'theme' => 'two_col_hybrid_donation_btn',
     'pattern' => 'two_col_hybrid_donation_btn\'0-9\'+',
