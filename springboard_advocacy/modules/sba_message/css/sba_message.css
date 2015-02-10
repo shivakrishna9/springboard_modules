@@ -4,14 +4,32 @@
     width: 70%;
 }
 
-.springboard-advocacy-message-recipients {
+#springboard-advocacy-message-recipients-container {
     width:30%;
+    height:100%;
     float:right;
-    background: #fff;
-    position: fixed;
     left: 70%;
 }
+#springboard-advocacy-message-recipients {
+    background: #fcfcfc;
+    position: fixed;
+    margin-left: 1em;
+    width: 30%;
+}
 
+#springboard-advocacy-message-recipients h3 {
+    margin-left: 1em;
+
+}
+#springboard-advocacy-message-recipients .target-recipient {
+    margin: 1em;
+    border: 1px dotted #ccc;
+    padding: 0.5em;
+}
+
+#springboard-advocacy-message-recipients .target-recipient ul li {
+    position: relative; left: 1em;
+}
 .springboard-advocacy-find-targets {
     clear: both;
     width: 70%;
@@ -65,3 +83,4 @@
     clear:left;
     float:right;
 }
+

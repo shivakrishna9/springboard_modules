@@ -7,23 +7,33 @@
             links = $('a.advocacy-add-target, a#advo-add-all');
             links.each(function(){
                 $(this, context).once('advocacy-add-target', function() {
+
                     $(this).click(function (e){
                         e.preventDefault();
+
                         if($('.target-recipient').length !== 0) {
                             count = parseInt($('.target-recipient').last().attr('id').replace('target-', '')) + 1;
                         }
                         else {
                             count = 0;
                         }
+
                         var query = $(this).attr('href').replace('add-all?','').replace('add-target?','').split('&');
-                       //  console.log(query);
                         var readable = buildReadableQuery(query);
-                        $('#springboard-advocacy-message-recipients-container')
-                            .append('<div id = "target-' + count + '" class = "target-recipient" style="height: 40px">' + readable + ' <span><a class ="target-delete" href="#">delete</a></span></div>');
+
+                        $('#springboard-advocacy-message-recipients')
+                            .append('<div id = "target-' + count + '" class = "target-recipient">' + readable +
+                            ' <span><a class ="target-delete" href="#">delete</a></span></div>');
+
+                        $('#target-' + count + ' a').click(function(ev){
+                            ev.preventDefault();
+                            $(this).closest('.target-recipient').remove();
+                        })
                         $(query).each(function(index, value) {
                             value = value.split('=');
                             $('#target-' + count).attr('data-' + value[0], value[1].replace(/%7C/g, '|'));
                         });
+
                         buildFormValue();
                     });
                 });
@@ -91,7 +101,8 @@
         }
 
         cleanUp = JSON.stringify(queryObj).jsonToReadable();
-        if (typeof(queryObj.Fields) !== 'undefined' || typeof(queryObj.Gender) !== 'undefined' || typeof(queryObj.Social) !== 'undefined' ||  typeof(queryObj.District) !== 'undefined') {
+        if (typeof(queryObj.Fields) !== 'undefined' || typeof(queryObj.Gender) !== 'undefined'
+            || typeof(queryObj.Social) !== 'undefined' ||  typeof(queryObj.District) !== 'undefined') {
             return "Multiple Individuals: " +  cleanUp;
         }
         return "Group: " +  cleanUp;
@@ -112,4 +123,5 @@
             .replace(/","/g, ', ')
             .replace(/"/g, '')
     }
+
 })(jQuery);
