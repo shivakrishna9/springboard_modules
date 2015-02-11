@@ -409,11 +409,12 @@ function _springboard_letter_delete_nodes() {
   $nids = $result->fetchCol();
 
   if (!empty($nids)) {
-    $message_ids = db_query(
-      'SELECT entity_id FROM {field_data_field_sba_alert_id} WHERE field_sba_alert_id_target_id IN (:nids)',
-      array(':nids' => $nids))->fetchAssoc();
-
-    sba_message_delete_multiple($message_ids);
+    //@todo fix this so can be deleted if both modules are disabled.
+//    $message_ids = db_query(
+//      'SELECT entity_id FROM {field_data_field_sba_alert_id} WHERE field_sba_alert_id_target_id IN (:nids)',
+//      array(':nids' => $nids))->fetchAssoc();
+//
+//    sba_message_delete_multiple($message_ids);
     node_delete_multiple($nids);
 
     drupal_set_message('Springboard Letters have been deleted.');

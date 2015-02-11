@@ -566,13 +566,14 @@ function _sba_message_delete_fields() {
     'field_sba_subject',
   );
   foreach ($fields as $field_name) {
-    $types = entity_load_multiple_by_name('sba_message_type', isset($type_name) ? array($type_name) : FALSE);
-    if($types) {
-      foreach ($types as $type => $info) {
-        $field = field_info_instance('sba_message', $field_name, $type);
-        field_delete_instance($field);
-      }
-    }
+    //@todo do we need this?
+//    $types = entity_load_multiple_by_name('sba_message_type', FALSE);
+//    if($types) {
+//      foreach ($types as $type => $info) {
+//        $field = field_info_instance('sba_message', $field_name, $type);
+//        field_delete_instance($field);
+//      }
+//    }
     // Just in case
     if($field = field_info_field($field_name)){
       field_delete_field($field_name);
