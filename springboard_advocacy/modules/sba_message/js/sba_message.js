@@ -1,16 +1,23 @@
 /**
  * @file
  */
+
+/**
+ * Advocacy recipients list  and search page
+ */
 (function ($) {
     Drupal.behaviors.AdvocacyMessageRecipients = {
         attach: function(context, settings) {
 
+            // Append the search div to the message form, and the message form actions
+            // to the search div.
             finder = $('.springboard-advocacy-find-targets-container');
             actions = $('#sba-message-edit-form #edit-actions');
-            actions.remove();
             finder.append(actions);
             $('#sba-message-edit-form').append(finder);
 
+            // Editing a pre-existing message, append the recipients
+            // to the recipients div using hidden form value
             var recipients =  $('input[name="data[recipients]"]').val();
             if(recipients.length > 0) {
                 $('body').once('edit-page', function() {
@@ -20,6 +27,8 @@
                 });
             }
 
+            // Apply click event to the search form add links
+            // Allows views search results to be appended to the recipients list
             links = $('a.advocacy-add-target, a#advo-add-all');
             links.each(function(){
                 $(this, context).once('advocacy-add-target', function() {
@@ -36,7 +45,6 @@
 
                         var query = $(this).attr('href').replace('add-all?','').replace('add-target?','').split('&');
                         var readable = buildReadableQuery(query);
-
                         buildDivs(count, readable, query);
                         buildUpdateMessage();
                         buildFormValue();
@@ -46,6 +54,7 @@
         }
     };
 
+    // Rebuild the recipients list on existing messages
     function buildEditPage(recipients) {
         var count = 0;
         $.each(JSON.parse(recipients), function(idx, obj) {
@@ -65,9 +74,12 @@
         });
     }
 
+    // Create the recipients list divs, apply data attributes which
+    // will be aggregated as a JSON string used by a hidden form field
+    // for submission to the API
     function buildDivs(count, readable, query) {
-        $('#springboard-advocacy-message-recipients')
-            .append('<div id = "target-' + count + '" class = "target-recipient" style="display: none;">' + readable +
+        $('#springboard-advocacy-message-recipients-content')
+            .prepend('<div id = "target-' + count + '" class = "target-recipient" style="display: none;">' + readable +
             ' <span><a class ="target-delete" href="#">delete</a></span></div>');
         $('#target-' + count).show(300);
         $('#target-' + count + ' a').click(function(ev){
@@ -85,6 +97,7 @@
         });
     }
 
+    // attaches JSONified data atrributes of the recipients list to a hidden form field
     function buildFormValue() {
         var arr = {};
         $('.target-recipient').each(function(i) {
@@ -98,6 +111,8 @@
         $('.sba-message-status').text('You have unsaved changes').show('slow');
     }
 
+    // Takes a url query string from the search form "add" links
+    // and builds readable text for the recipients list.
     function buildReadableQuery(query) {
         var queryObj = {};
         $(query).each(function(index, value) {
