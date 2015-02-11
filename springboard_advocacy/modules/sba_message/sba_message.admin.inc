@@ -373,9 +373,10 @@ function sba_message_delete_form_submit($form, &$form_state) {
     )
  */
 function _sba_message_api_save($sba_message, $is_new, $form_state) {
-
   $values = $form_state['values'];
   $indvds = array();
+  $multi_indvds = array();
+  $chamber_rows = array();
   $unstructured_chambers = array();
 
   $loader = new AdvocacyApiClientLoader();
@@ -388,7 +389,11 @@ function _sba_message_api_save($sba_message, $is_new, $form_state) {
     foreach ($targets as $target) {
       if (isset($target->id)) {
         $indvds[] = $target->id;
-      } else {
+      }
+      elseif(isset($target->fields)  || isset($target->gender) || isset($target->social)  ||  isset($target->district)) {
+        $multi_indvds[] =  $target;
+      }
+      else {
         $unstructured_chambers[] = $target;
       }
     }
@@ -397,8 +402,14 @@ function _sba_message_api_save($sba_message, $is_new, $form_state) {
   if (!empty($unstructured_chambers)) {
     $chamber_rows = _sba_message_build_chambers($unstructured_chambers);
   }
+  if (!empty($multi_indvds)) {
+    $multi =  sba_message_get_multi_indvds($client, $multi_indvds);
+  }
+  if (!empty($multi)) {
+    $indvds = array_merge($multi, $indvds);
+  }
 
-  // Executive build call goes here.
+    // Executive build call goes here.
 
   // Is this a new message? Then create a new target group for it.
   if ($is_new) {
@@ -409,22 +420,25 @@ function _sba_message_api_save($sba_message, $is_new, $form_state) {
       sba_message_invalid_response($sba_message);
     }
   }
-
-  if (!$is_new) {
+  elseif (!$is_new) {
     // Perhaps during group creation the response was interrupted
+    // or the group creaton failed
     if ($sba_message->data['group_id'] == 'no_response') {
       $response = sba_message_get_group_by_message_id($client, $sba_message->data['group_id']);
+      if (!empty($response) && !empty($response->data->id)) {
+        $update = sba_message_update_group($client, $sba_message, $chamber_rows, $indvds, $values);
+      } else {
+        $update = sba_message_create_group($client, $sba_message, $chamber_rows, $indvds, $values);
+      }
     }
-    if (!empty($response->data->id)) {
+    // everything was OK.
+    else {
       $update = sba_message_update_group($client, $sba_message, $chamber_rows, $indvds, $values);
     }
-    else {
-      $update = sba_message_create_group($client, $sba_message, $chamber_rows, $indvds, $values);
-      if (!empty($update->data->id)) {
-        sba_message_valid_response($sba_message, $update);
-      } else {
-        sba_message_invalid_response($sba_message);
-      }
+    if (!empty($update->data->id)) {
+      sba_message_valid_response($sba_message, $update);
+    } else {
+      sba_message_invalid_response($sba_message);
     }
   }
 }
@@ -479,13 +493,22 @@ function _sba_message_build_chambers($unstructured_chambers) {
 function _sba_message_build_chambers_shmoosher(&$chamber_rows_container, $segment_id, $i, $name, $value, $chamber_field = array()) {
   $chamber = isset($chamber_field['chamber']) ? $chamber_field['chamber'] : '';
   $party = isset($chamber_field['party']) ? $chamber_field['party'] : '';
-  $gender = isset($chamber_field['gender']) ? $chamber_field['gender'] : '';
+  //$gender = isset($chamber_field['gender']) ? $chamber_field['gender'] : '';
   $chamber_rows_container[$segment_id][$i]['chamber'] = $chamber;
   $chamber_rows_container[$segment_id][$i]['party'] = $party;
-  $chamber_rows_container[$segment_id][$i]['gender'] = $gender;
+  //$chamber_rows_container[$segment_id][$i]['gender'] = $gender;
   $chamber_rows_container[$segment_id][$i][$name] = $value;
 }
 
+/**
+ * Create a target group and targets on the API server.
+ * @param $client
+ * @param $sba_message
+ * @param $chamber_rows
+ * @param $indvds
+ * @param $values
+ * @return mixed
+ */
 function sba_message_create_group($client, $sba_message, $chamber_rows, $indvds, $values) {
   $response =
     $client->createTargetGroup(
@@ -502,6 +525,15 @@ function sba_message_create_group($client, $sba_message, $chamber_rows, $indvds,
   return $response;
 }
 
+/**
+ * Update existing message group on the API server
+ * @param $client
+ * @param $sba_message
+ * @param $chamber_rows
+ * @param $indvds
+ * @param $values
+ * @return mixed
+ */
 function sba_message_update_group($client, $sba_message, $chamber_rows, $indvds, $values) {
   $response =
     $client->updateTargetGroup(
@@ -517,19 +549,64 @@ function sba_message_update_group($client, $sba_message, $chamber_rows, $indvds,
   return $response;
 }
 
+/**
+ * If a group ID is missing in an existing message entity
+ * try to retrieve it via the message id. This would happen if the
+ * group creation fails or if the creation response was interrupted.
+ *
+ * @param $client
+ * @param $message_id
+ * @return mixed
+ */
 function sba_message_get_group_by_message_id($client, $message_id) {
   $response = $client->getTargetGroupByMessageID($message_id);
   return $response;
 }
 
+/**
+ *  Helper function to help negotiate remote
+ *  or the interruption thereof.
+ * @param $sba_message
+ */
 function sba_message_invalid_response($sba_message) {
   drupal_set_message('There was a problem retrieving the group ID. Please save the message again, or try resaving at a later time.');
   $sba_message->data['group_id'] = 'no_response';
   $sba_message->save();
 }
 
+/**
+ * Helper function to help negotiate remote
+ * or the interruption thereof.
+ * @param $sba_message
+ * @param $response
+ */
 function sba_message_valid_response($sba_message, $response) {
   $sba_message->data['group_id'] = $response->data->id;
   $sba_message->changed = time();
   $sba_message->save();
+}
+
+/**
+ * Get the target IDs for message recipients who can't be "chambers"
+ * "executives" or individuals"
+ *
+ * @param $client
+ * @param $queries
+ * @return array of target IDs
+ */
+function sba_message_get_multi_indvds($client, $queries) {
+  $targets = array();
+  $ids = array();
+  foreach ($queries as $query) {
+    $query->ids_only = TRUE;
+    $targets[] = $client->searchTargets($query);
+  }
+  foreach ($targets as $target) {
+    if (!empty($target->data->targets)) {
+      foreach ($target->data->targets as $obj) {
+        $ids[] = $obj->id;
+      }
+    }
+  }
+  return $ids;
 }
