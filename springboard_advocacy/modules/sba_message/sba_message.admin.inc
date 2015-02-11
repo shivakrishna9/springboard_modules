@@ -109,7 +109,7 @@ function sba_message_form_wrapper($sba_message) {
     'message_recipients' => array(
       '#id' => 'springboard-advocacy-message-recipients',
       '#type' => 'markup',
-      '#markup' => '<div id="springboard-advocacy-message-recipients"><h3>Message Recipients</h3><div class = "sba-message-status"></div></div>',
+      '#markup' => '<div id="springboard-advocacy-message-recipients"><h3>Message Recipients</h3><div class = "sba-message-status"></div><div id="springboard-advocacy-message-recipients-content"></div></div>',
       '#prefix' => '<div id="springboard-advocacy-message-recipients-container">',
       '#suffix' => '</div>',
       '#weight' => 2,
@@ -167,11 +167,11 @@ function sba_message_edit_form($form, &$form_state, $sba_message) {
     '#prefix' => '<div id = "advo-error-wrapper">',
     '#suffix' => '</div>'
   );
+
   $form['parent_node']['nid'] = array(
     '#type' => 'hidden',
     '#value' => $node->nid,
   );
-
   $form['advocacy_id'] = array(
     '#type' => 'hidden',
     '#value' => $node->advocacy_id,
@@ -198,10 +198,15 @@ function sba_message_edit_form($form, &$form_state, $sba_message) {
     '#type' => 'hidden',
     '#default_value' => isset($sba_message->data['recipients']) ? $sba_message->data['recipients'] : '',
   );
+
   $form['data']['group_id'] = array(
     '#type' => 'hidden',
     '#default_value' => isset($sba_message->data['group_id']) ? $sba_message->data['group_id'] : '',
   );
+
+  if (isset($sba_message->data['group_id']) && $sba_message->data['group_id'] == 'no_response') {
+    drupal_set_message('A remote group ID could not be found.');
+  }
 
   // Add the field related form elements.
   $form_state['sba_message'] = $sba_message;
@@ -281,7 +286,6 @@ function sba_message_edit_form_submit(&$form, &$form_state) {
   $sba_message->save();
 
   _sba_message_api_save($sba_message, $is_new, $form_state);
-
 
   $wrapper = entity_metadata_wrapper('sba_message', $sba_message);
   $nid = $wrapper->field_sba_alert_id->value()->nid;
@@ -376,6 +380,7 @@ function _sba_message_api_save($sba_message, $is_new, $form_state) {
 
   $loader = new AdvocacyApiClientLoader();
   $client = $loader->getClient();
+
   if(!empty($values['data']['recipients'])) {
 
     $targets = json_decode($values['data']['recipients']);
@@ -388,46 +393,39 @@ function _sba_message_api_save($sba_message, $is_new, $form_state) {
       }
     }
   }
+
   if (!empty($unstructured_chambers)) {
     $chamber_rows = _sba_message_build_chambers($unstructured_chambers);
   }
+
   // Executive build call goes here.
 
   // Is this a new message? Then create a new target group for it.
   if ($is_new) {
-    $response =
-      $client->createTargetGroup(
-        array(
-          'name' => $sba_message->name,
-          'chambers' => $chamber_rows,
-          'target_ids' => $indvds,
-          'message' => array(
-            'message_id' => $values['data']['message_id'],
-            'form_id' => $values['advocacy_id'],
-          ),
-        )
-      );
+    $response = sba_message_create_group($client, $sba_message, $chamber_rows, $indvds, $values);
     if (!empty($response->data->id)) {
-      $sba_message->data['group_id'] = $response->data->id;
-      $sba_message->changed = time();
-      $sba_message->save();
-
+      sba_message_valid_response($sba_message, $response);
     } else {
-      drupal_set_message('There was a problem retrieving the group ID');
+      sba_message_invalid_response($sba_message);
     }
-  } else {
-     $response =
-       $client->updateTargetGroup(
-       array(
-       'name' => $sba_message->name,
-       'chambers' => $chamber_rows,
-       'target_ids' => $indvds,
-       'message' => array(
-         'message_id' => $values['data']['message_id'],
-         'form_id' => $values['advocacy_id'],
-       ),
-     ), $sba_message->data['group_id']);
+  }
 
+  if (!$is_new) {
+    // Perhaps during group creation the response was interrupted
+    if ($sba_message->data['group_id'] == 'no_response') {
+      $response = sba_message_get_group_by_message_id($client, $sba_message->data['group_id']);
+    }
+    if (!empty($response->data->id)) {
+      $update = sba_message_update_group($client, $sba_message, $chamber_rows, $indvds, $values);
+    }
+    else {
+      $update = sba_message_create_group($client, $sba_message, $chamber_rows, $indvds, $values);
+      if (!empty($update->data->id)) {
+        sba_message_valid_response($sba_message, $update);
+      } else {
+        sba_message_invalid_response($sba_message);
+      }
+    }
   }
 }
 
@@ -486,4 +484,52 @@ function _sba_message_build_chambers_shmoosher(&$chamber_rows_container, $segmen
   $chamber_rows_container[$segment_id][$i]['party'] = $party;
   $chamber_rows_container[$segment_id][$i]['gender'] = $gender;
   $chamber_rows_container[$segment_id][$i][$name] = $value;
+}
+
+function sba_message_create_group($client, $sba_message, $chamber_rows, $indvds, $values) {
+  $response =
+    $client->createTargetGroup(
+      array(
+        'name' => $sba_message->name,
+        'chambers' => $chamber_rows,
+        'target_ids' => $indvds,
+        'message' => array(
+          'message_id' => $values['data']['message_id'],
+          'form_id' => $values['advocacy_id'],
+        ),
+      )
+    );
+  return $response;
+}
+
+function sba_message_update_group($client, $sba_message, $chamber_rows, $indvds, $values) {
+  $response =
+    $client->updateTargetGroup(
+      array(
+        'name' => $sba_message->name,
+        'chambers' => $chamber_rows,
+        'target_ids' => $indvds,
+        'message' => array(
+          'message_id' => $values['data']['message_id'],
+          'form_id' => $values['advocacy_id'],
+        ),
+      ), $sba_message->data['group_id']);
+  return $response;
+}
+
+function sba_message_get_group_by_message_id($client, $message_id) {
+  $response = $client->getTargetGroupByMessageID($message_id);
+  return $response;
+}
+
+function sba_message_invalid_response($sba_message) {
+  drupal_set_message('There was a problem retrieving the group ID. Please save the message again, or try resaving at a later time.');
+  $sba_message->data['group_id'] = 'no_response';
+  $sba_message->save();
+}
+
+function sba_message_valid_response($sba_message, $response) {
+  $sba_message->data['group_id'] = $response->data->id;
+  $sba_message->changed = time();
+  $sba_message->save();
 }
