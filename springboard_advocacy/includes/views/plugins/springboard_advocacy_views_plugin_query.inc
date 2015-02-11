@@ -54,11 +54,14 @@ class springboard_advocacy_views_plugin_query extends views_plugin_query {
         if (is_array($term)) {
           $terms[$key] = implode('|', $term);
         }
+        else {
+          $terms[$key] = str_replace(' ', '|', $term);
+
+        }
       }
 
       $terms['limit'] = $this->pager->options['items_per_page'];
       $terms['offset'] = $this->offset;
-
       // Get the targets
       $targets = $client->searchTargets($terms);
       // Build the pager
