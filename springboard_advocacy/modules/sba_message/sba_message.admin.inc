@@ -390,7 +390,7 @@ function _sba_message_api_save($sba_message, $is_new, $form_state) {
       if (isset($target->id)) {
         $indvds[] = $target->id;
       }
-      elseif(isset($target->fields)  || isset($target->gender) || isset($target->social)  ||  isset($target->district)) {
+      elseif(isset($target->fields)  || isset($target->gender) || isset($target->social)  ||  isset($target->district_name)) {
         $multi_indvds[] =  $target;
       }
       else {
@@ -398,7 +398,6 @@ function _sba_message_api_save($sba_message, $is_new, $form_state) {
       }
     }
   }
-
   if (!empty($unstructured_chambers)) {
     $chamber_rows = _sba_message_build_chambers($unstructured_chambers);
   }
@@ -597,6 +596,7 @@ function sba_message_valid_response($sba_message, $response) {
 function sba_message_get_multi_indvds($client, $queries) {
   $targets = array();
   $ids = array();
+  dpm($queries);
   foreach ($queries as $query) {
     $query->ids_only = TRUE;
     $targets[] = $client->searchTargets($query);

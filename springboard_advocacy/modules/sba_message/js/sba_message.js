@@ -185,6 +185,7 @@
             .replace(/:/g, ': ')
             .replace(/","/g, ', ')
             .replace(/"/g, '')
+            .replace(/%20/g, ' ')
     }
 
 })(jQuery);
