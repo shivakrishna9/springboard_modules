@@ -5,10 +5,8 @@
 }
 
 #springboard-advocacy-message-recipients-container {
-    width:30%;
-    height:100%;
+    width:100%;
     float:right;
-    left: 70%;
 }
 #springboard-advocacy-message-recipients {
     background: #fcfcfc;
@@ -113,3 +111,17 @@
     float:right;
 }
 
+
+
+#springboard-advocacy-message-recipients {
+    position: absolute;
+    right: -20px;
+    top: 0;
+    width: 30%;
+    border:1px solid #ccc;
+}
+
+/* adjust the summary box position when admin menu is in use. */
+.admin-menu #springboard-advocacy-message-recipients.summary-fixed {
+    margin-top: 34px;
+}

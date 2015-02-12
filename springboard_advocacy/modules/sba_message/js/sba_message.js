@@ -190,5 +190,24 @@
             .replace(/"/g, '')
             .replace(/%20/g, ' ')
     }
+    $(document).ready(function () {
+
+    var pos = $('#springboard-advocacy-message-recipients').offset();
+    $(window).scroll(function() {
+        // On scroll, update the 'top' value for the summary box to match the
+        // scroll distance. If the summary box is absolutely positioned, this
+        // will make it folow the scroll down the page.
+        console.log(pos)
+
+        if(pos.top <= $(window).scrollTop() && $('#springboard-advocacy-message-recipients').css('position') == 'absolute') {
+            $('#springboard-advocacy-message-recipients').css('top', ($(window).scrollTop() - pos.top)).addClass('summary-fixed');
+        }
+        // Clear the positioning if the Summary field is not absolutely positioned.
+        // This allows themes to override the fixed position easily.
+        else {
+            $('#springboard-advocacy-message-recipients').css('top', 0).removeClass('summary-fixed');
+        }
+    });
+    });
 
 })(jQuery);
