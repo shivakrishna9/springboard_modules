@@ -282,7 +282,6 @@ function sba_message_edit_form_submit(&$form, &$form_state) {
     $is_new = TRUE;
   }
   $sba_message->changed = time();
-  
   $sba_message->save();
 
   _sba_message_api_save($sba_message, $is_new, $form_state);
@@ -432,8 +431,11 @@ function _sba_message_api_save($sba_message, $is_new, $form_state) {
     // Perhaps during group creation the response was interrupted
     // or the group creaton failed
     if ($sba_message->data['group_id'] == 'no_response') {
-      $response = sba_message_get_group_by_message_id($client, $sba_message->data['group_id']);
+      $response = sba_message_get_group_by_message_id($client, $sba_message->data['message_id']);
       if (!empty($response) && !empty($response->data->id)) {
+        $sba_message->data['group_id'] = $response->data->id;
+        $sba_message->changed = time();
+        $sba_message->save();
         $update = sba_message_update_group($client, $sba_message, $chamber_rows, $indvds, $values);
       } else {
         $update = sba_message_create_group($client, $sba_message, $chamber_rows, $indvds, $values);
