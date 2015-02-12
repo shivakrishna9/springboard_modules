@@ -388,9 +388,9 @@ function _sba_message_api_save($sba_message, $is_new, $form_state) {
 
     foreach ($targets as $target) {
       if (isset($target->id)) {
-        $indvds[] = $target->id;
+        $indvds[$target->id] = $target->id;
       }
-      elseif(isset($target->fields)  || isset($target->gender) || isset($target->social)  ||  isset($target->district_name)) {
+      elseif(isset($target->ids)) {
         $multi_indvds[] =  $target;
       }
       else {
@@ -402,13 +402,22 @@ function _sba_message_api_save($sba_message, $is_new, $form_state) {
     $chamber_rows = _sba_message_build_chambers($unstructured_chambers);
   }
   if (!empty($multi_indvds)) {
-    $multi =  sba_message_get_multi_indvds($client, $multi_indvds);
-  }
-  if (!empty($multi)) {
-    $indvds = array_merge($multi, $indvds);
+    //$multi =  sba_message_get_multi_indvds($client, $multi_indvds);
+    $group_combine = array();
+    foreach ($multi_indvds as $group) {
+      $group_combine += explode('|', $group->ids);
+    }
+    $rekeyed = array();
+    foreach ($group_combine as $combine_id) {
+      $rekeyed[$combine_id] = $combine_id;
+    }
   }
 
-    // Executive build call goes here.
+  if (!empty($rekeyed)) {
+    $indvds = json_encode($rekeyed + $indvds);
+  }
+
+   // Executive build call goes here.
 
   // Is this a new message? Then create a new target group for it.
   if ($is_new) {
@@ -593,20 +602,20 @@ function sba_message_valid_response($sba_message, $response) {
  * @param $queries
  * @return array of target IDs
  */
-function sba_message_get_multi_indvds($client, $queries) {
-  $targets = array();
-  $ids = array();
-  dpm($queries);
-  foreach ($queries as $query) {
-    $query->ids_only = TRUE;
-    $targets[] = $client->searchTargets($query);
-  }
-  foreach ($targets as $target) {
-    if (!empty($target->data->targets)) {
-      foreach ($target->data->targets as $obj) {
-        $ids[] = $obj->id;
-      }
-    }
-  }
-  return $ids;
-}
+//function sba_message_get_multi_indvds($client, $queries) {
+//  $targets = array();
+//  $ids = array();
+//  foreach ($queries as $query) {
+//    $query->ids_only = TRUE;
+//    $targets[] = $client->searchTargets($query);
+//  }
+//  foreach ($targets as $target) {
+//    if (!empty($target->data->targets)) {
+//      foreach ($target->data->targets as $obj) {
+//        $ids[$obj->id] = $obj->id;
+//      }
+//    }
+//  }
+//
+//  return $ids;
+//}
