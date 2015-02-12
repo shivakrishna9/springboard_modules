@@ -45,6 +45,7 @@ function springboard_advocacy_views_data() {
     'title' => t('First Name'),
     'help' => t('Target First Name'),
     'field' => array(
+      'click sortable' => TRUE,
       'handler' => 'springboard_advocacy_views_handler_field',
     ),
      'filter' => array(
@@ -57,6 +58,7 @@ function springboard_advocacy_views_data() {
     'title' => t('Last Name'),
     'help' => t('Target Last Name'),
     'field' => array(
+      'click sortable' => TRUE,
       'handler' => 'springboard_advocacy_views_handler_field',
     ),
      'filter' => array(
@@ -81,6 +83,7 @@ function springboard_advocacy_views_data() {
     'title' => t('Political Party'),
     'help' => t('Target Party'),
     'field' => array(
+      'click sortable' => TRUE,
       'handler' => 'springboard_advocacy_views_handler_field',
     ),
   );
@@ -89,6 +92,7 @@ function springboard_advocacy_views_data() {
     'title' => t('State'),
     'help' => t('Target State'),
     'field' => array(
+      'click sortable' => TRUE,
       'handler' => 'springboard_advocacy_views_handler_field',
     ),
   );
@@ -97,6 +101,7 @@ function springboard_advocacy_views_data() {
     'title' => t('Role'),
     'help' => t('Target Role'),
     'field' => array(
+      'click sortable' => TRUE,
       'handler' => 'springboard_advocacy_views_handler_field',
     ),
   );
@@ -106,6 +111,7 @@ function springboard_advocacy_views_data() {
     'title' => t('Politcal Party'),
     'help' => t('Target Party'),
     'field' => array(
+      'click sortable' => TRUE,
       'handler' => 'springboard_advocacy_views_handler_field',
     ),
   );

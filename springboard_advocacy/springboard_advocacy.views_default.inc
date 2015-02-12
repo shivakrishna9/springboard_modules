@@ -447,6 +447,97 @@ function springboard_advocacy_views_default_views() {
   $handler->display->display_options['defaults']['title'] = FALSE;
   $handler->display->display_options['title'] = 'Search Legislators';
   $handler->display->display_options['defaults']['use_ajax'] = FALSE;
+  $handler->display->display_options['defaults']['style_plugin'] = FALSE;
+  $handler->display->display_options['style_plugin'] = 'table';
+  $handler->display->display_options['style_options']['columns'] = array(
+    'salutation' => 'salutation',
+    'first_name' => 'first_name',
+    'last_name' => 'last_name',
+    'email' => 'email',
+    'party' => 'party',
+    'role' => 'role',
+    'state' => 'state',
+  );
+  $handler->display->display_options['style_options']['default'] = 'last_name';
+  $handler->display->display_options['style_options']['info'] = array(
+    'salutation' => array(
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
+    'first_name' => array(
+      'sortable' => 1,
+      'default_sort_order' => 'asc',
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
+    'last_name' => array(
+      'sortable' => 1,
+      'default_sort_order' => 'asc',
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
+    'email' => array(
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
+    'party' => array(
+      'sortable' => 1,
+      'default_sort_order' => 'asc',
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
+    'role' => array(
+      'sortable' => 1,
+      'default_sort_order' => 'asc',
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
+    'state' => array(
+      'sortable' => 1,
+      'default_sort_order' => 'asc',
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
+  );
+  $handler->display->display_options['defaults']['style_options'] = FALSE;
+  $handler->display->display_options['defaults']['row_plugin'] = FALSE;
+  $handler->display->display_options['defaults']['row_options'] = FALSE;
+  $handler->display->display_options['defaults']['fields'] = FALSE;
+  /* Field: Advocacy: Salutation */
+  $handler->display->display_options['fields']['salutation']['id'] = 'salutation';
+  $handler->display->display_options['fields']['salutation']['table'] = 'advocacy';
+  $handler->display->display_options['fields']['salutation']['field'] = 'salutation';
+  /* Field: Advocacy: First Name */
+  $handler->display->display_options['fields']['first_name']['id'] = 'first_name';
+  $handler->display->display_options['fields']['first_name']['table'] = 'advocacy';
+  $handler->display->display_options['fields']['first_name']['field'] = 'first_name';
+  /* Field: Advocacy: Last Name */
+  $handler->display->display_options['fields']['last_name']['id'] = 'last_name';
+  $handler->display->display_options['fields']['last_name']['table'] = 'advocacy';
+  $handler->display->display_options['fields']['last_name']['field'] = 'last_name';
+  /* Field: Advocacy: Email */
+  $handler->display->display_options['fields']['email']['id'] = 'email';
+  $handler->display->display_options['fields']['email']['table'] = 'advocacy';
+  $handler->display->display_options['fields']['email']['field'] = 'email';
+  /* Field: Advocacy: Politcal Party */
+  $handler->display->display_options['fields']['party']['id'] = 'party';
+  $handler->display->display_options['fields']['party']['table'] = 'advocacy';
+  $handler->display->display_options['fields']['party']['field'] = 'party';
+  /* Field: Advocacy: Role */
+  $handler->display->display_options['fields']['role']['id'] = 'role';
+  $handler->display->display_options['fields']['role']['table'] = 'advocacy';
+  $handler->display->display_options['fields']['role']['field'] = 'role';
+  /* Field: Advocacy: State */
+  $handler->display->display_options['fields']['state']['id'] = 'state';
+  $handler->display->display_options['fields']['state']['table'] = 'advocacy';
+  $handler->display->display_options['fields']['state']['field'] = 'state';
   $handler->display->display_options['defaults']['filter_groups'] = FALSE;
   $handler->display->display_options['defaults']['filters'] = FALSE;
   /* Filter criterion: Advocacy: Search By Type */
@@ -1483,6 +1574,82 @@ function springboard_advocacy_views_default_views() {
   $handler->display->display_options['display_description'] = 'For use in message add form';
   $handler->display->display_options['defaults']['use_ajax'] = FALSE;
   $handler->display->display_options['use_ajax'] = TRUE;
+  $handler->display->display_options['defaults']['style_plugin'] = FALSE;
+  $handler->display->display_options['style_plugin'] = 'table';
+  $handler->display->display_options['style_options']['columns'] = array(
+    'salutation' => 'salutation',
+    'first_name' => 'first_name',
+    'last_name' => 'last_name',
+    'email' => 'email',
+    'party' => 'party',
+    'role' => 'role',
+    'state' => 'state',
+    'target_actions' => 'target_actions',
+    'last_name_1' => 'last_name_1',
+  );
+  $handler->display->display_options['style_options']['default'] = 'last_name';
+  $handler->display->display_options['style_options']['info'] = array(
+    'salutation' => array(
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
+    'first_name' => array(
+      'sortable' => 1,
+      'default_sort_order' => 'asc',
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
+    'last_name' => array(
+      'sortable' => 1,
+      'default_sort_order' => 'asc',
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
+    'email' => array(
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
+    'party' => array(
+      'sortable' => 1,
+      'default_sort_order' => 'asc',
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
+    'role' => array(
+      'sortable' => 1,
+      'default_sort_order' => 'asc',
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
+    'state' => array(
+      'sortable' => 1,
+      'default_sort_order' => 'asc',
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
+    'target_actions' => array(
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
+    'last_name_1' => array(
+      'sortable' => 1,
+      'default_sort_order' => 'asc',
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
+  );
+  $handler->display->display_options['defaults']['style_options'] = FALSE;
+  $handler->display->display_options['defaults']['row_plugin'] = FALSE;
+  $handler->display->display_options['defaults']['row_options'] = FALSE;
   $handler->display->display_options['defaults']['fields'] = FALSE;
   /* Field: Advocacy: Salutation */
   $handler->display->display_options['fields']['salutation']['id'] = 'salutation';
@@ -1895,8 +2062,8 @@ function springboard_advocacy_views_default_views() {
         'facebook' => 0,
       ),
     ),
-
   );
+
   $views[$view->name] = $view;
 
 

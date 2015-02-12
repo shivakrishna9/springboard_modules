@@ -36,7 +36,6 @@ class springboard_advocacy_views_plugin_query extends views_plugin_query {
     $client = $view->build_info['springboard_advocacy_request'];
 
     $start = microtime(true);
-
     // should we pull the terms from $view->query? Why use $view->build_info?
     $terms = !empty($view->query->search_terms) ? $view->query->search_terms : NULL;
 
@@ -63,6 +62,9 @@ class springboard_advocacy_views_plugin_query extends views_plugin_query {
 
       $terms['limit'] = $this->pager->options['items_per_page'];
       $terms['offset'] = $this->offset;
+      $terms['sort'] = $this->orderby[0]['field'];
+      $terms['direction'] = $this->orderby[0]['direction'];
+
       // Get the targets
       $targets = $client->searchTargets($terms);
       // Build the pager
@@ -100,4 +102,12 @@ class springboard_advocacy_views_plugin_query extends views_plugin_query {
       $view->execute_time = microtime(true) - $start;
     }
   }
+
+  function add_orderby($table, $field = NULL, $order = 'ASC', $alias = '', $params = array()) {
+    $this->orderby[] = array(
+      'field' => $alias,
+      'direction' => strtoupper($order)
+    );
+  }
+
 }
