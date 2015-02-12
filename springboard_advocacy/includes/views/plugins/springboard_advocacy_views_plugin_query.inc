@@ -25,6 +25,7 @@ class springboard_advocacy_views_plugin_query extends views_plugin_query {
     $view->init_pager($view);
     $this->pager->query();
     $view->build_info['springboard_advocacy_request'] = $this->client;
+    $view->build_info['target_ids'] = array();
     // helpful for the "add all link"
      if (isset($view->query->search_terms)) {
        $view->build_info['springboard_advocacy_search'] = $view->query->search_terms;
@@ -80,7 +81,7 @@ class springboard_advocacy_views_plugin_query extends views_plugin_query {
         //   $offset = intval(!empty($this->offset) ? $this->offset : 0);
         //   $targets->data = array_slice($targets->data->targets, $offset, $limit, TRUE);
         // }
-
+        $view->build_info['target_ids'] = $targets->data->ids;
       }
       else {
         // No results
