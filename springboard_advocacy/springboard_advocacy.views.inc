@@ -76,7 +76,6 @@ function springboard_advocacy_views_data() {
     // ),
   );
 
-
   // Party
   $data['advocacy']['party'] = array(
     'title' => t('Political Party'),
@@ -422,7 +421,6 @@ function springboard_advocacy_views_pre_render(&$view) {
     $view->attachment_before = theme('springboard_advocacy_views_attachment_before', array('view' => $view, 'total_rows' => $total_rows, 'query' => $query));
   }
 }
-
 
 function theme_springboard_advocacy_views_attachment_before($vars) {
   if (!empty($vars['query'])) {

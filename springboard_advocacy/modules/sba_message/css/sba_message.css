@@ -64,10 +64,14 @@
 
 .springboard-advocacy-find-targets  #edit-combine-wrapper {
     display: block;
+    float:left;
+    min-width: 40%;
 }
 
 .springboard-advocacy-find-targets  #state-district-wrapper {
-    min-width: 50%;
+    min-width: 40%;
+    position: relative;
+    margin-top: 0;
 }
 
 .springboard-advocacy-find-targets #state-district-wrapper #edit-search-district-name-wrapper
@@ -91,9 +95,18 @@
 
 .springboard-advocacy-find-targets  #edit-search-gender-wrapper
 {
-    clear:left;
 }
 
+.springboard-advocacy-find-targets  .control-group
+{
+    margin-bottom: 0;
+}
+.springboard-advocacy-find-targets .views-exposed-widget label {
+  margin: 0;
+}
+.springboard-advocacy-find-targets .views-exposed-widget label.option {
+   top:4px;
+}
 .springboard-advocacy-find-targets  div.views-exposed-widget.views-submit-button {
     display:block;
     clear:left;

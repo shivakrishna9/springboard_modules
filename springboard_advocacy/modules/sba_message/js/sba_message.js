@@ -121,7 +121,7 @@
                 return false;
             }
             segments[0] = segments[0].ucfirst();
-            segments[1] = segments[1].replace(/%7C/, '|');
+            segments[1] = segments[1].replace(/%7C/g, '|');
             queryObj[segments[0]] = segments[1].split('|');
             $(queryObj[segments[0]]).each(function(i, v){
                 switch(v) {
