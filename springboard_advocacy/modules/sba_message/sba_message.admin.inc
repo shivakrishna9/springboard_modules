@@ -401,21 +401,21 @@ function _sba_message_api_save($sba_message, $is_new, $form_state) {
   if (!empty($unstructured_chambers)) {
     $chamber_rows = _sba_message_build_chambers($unstructured_chambers);
   }
+
+  $rekeyed = array();
   if (!empty($multi_indvds)) {
     //$multi =  sba_message_get_multi_indvds($client, $multi_indvds);
     $group_combine = array();
     foreach ($multi_indvds as $group) {
       $group_combine += explode('|', $group->ids);
     }
-    $rekeyed = array();
     foreach ($group_combine as $combine_id) {
       $rekeyed[$combine_id] = $combine_id;
     }
   }
 
-  if (!empty($rekeyed)) {
-    $indvds = json_encode($rekeyed + $indvds);
-  }
+  $indvds = json_encode($rekeyed + $indvds);
+
 
    // Executive build call goes here.
 
