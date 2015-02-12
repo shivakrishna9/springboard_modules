@@ -117,6 +117,9 @@
         var queryObj = {};
         $(query).each(function(index, value) {
             var segments = value.split('=');
+            if (segments[0] == 'ids') {
+                return false;
+            }
             segments[0] = segments[0].ucfirst();
             segments[1] = segments[1].replace(/%7C/, '|');
             queryObj[segments[0]] = segments[1].split('|');
@@ -146,7 +149,7 @@
                     case 'D':
                         queryObj[segments[0]][i] = 'Democrats';
                         break;
-                    case '0':
+                    case 'O':
                         queryObj[segments[0]][i] = 'Other';
                         break;
                     case 'M':
