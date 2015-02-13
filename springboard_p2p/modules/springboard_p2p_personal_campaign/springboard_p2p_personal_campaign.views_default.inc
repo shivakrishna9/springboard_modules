@@ -790,6 +790,70 @@ function springboard_p2p_personal_campaign_views_default_views() {
 
   /* Display: Page */
   $handler = $view->new_display('page', 'Page', 'page');
+  $handler->display->display_options['defaults']['fields'] = FALSE;
+  /* Field: Content: Title */
+  $handler->display->display_options['fields']['title']['id'] = 'title';
+  $handler->display->display_options['fields']['title']['table'] = 'node';
+  $handler->display->display_options['fields']['title']['field'] = 'title';
+  $handler->display->display_options['fields']['title']['label'] = '';
+  $handler->display->display_options['fields']['title']['alter']['word_boundary'] = FALSE;
+  $handler->display->display_options['fields']['title']['alter']['ellipsis'] = FALSE;
+  $handler->display->display_options['fields']['title']['element_label_colon'] = FALSE;
+  /* Field: Content: Submission Goal */
+  $handler->display->display_options['fields']['field_p2p_personal_submit_goal']['id'] = 'field_p2p_personal_submit_goal';
+  $handler->display->display_options['fields']['field_p2p_personal_submit_goal']['table'] = 'field_data_field_p2p_personal_submit_goal';
+  $handler->display->display_options['fields']['field_p2p_personal_submit_goal']['field'] = 'field_p2p_personal_submit_goal';
+  /* Field: Content: Fundraising Goal */
+  $handler->display->display_options['fields']['field_p2p_personal_campaign_goal']['id'] = 'field_p2p_personal_campaign_goal';
+  $handler->display->display_options['fields']['field_p2p_personal_campaign_goal']['table'] = 'field_data_field_p2p_personal_campaign_goal';
+  $handler->display->display_options['fields']['field_p2p_personal_campaign_goal']['field'] = 'field_p2p_personal_campaign_goal';
+  $handler->display->display_options['fields']['field_p2p_personal_campaign_goal']['settings'] = array(
+    'thousand_separator' => ',',
+    'decimal_separator' => '.',
+    'scale' => '2',
+    'prefix_suffix' => 1,
+  );
+  /* Field: Content: Progress */
+  $handler->display->display_options['fields']['field_p2p_campaign_progress']['id'] = 'field_p2p_campaign_progress';
+  $handler->display->display_options['fields']['field_p2p_campaign_progress']['table'] = 'field_data_field_p2p_campaign_progress';
+  $handler->display->display_options['fields']['field_p2p_campaign_progress']['field'] = 'field_p2p_campaign_progress';
+  $handler->display->display_options['fields']['field_p2p_campaign_progress']['click_sort_column'] = 'amount';
+  $handler->display->display_options['fields']['field_p2p_campaign_progress']['type'] = 'springboard_p2p_fields_personal_campaign_progress_auto';
+  $handler->display->display_options['fields']['field_p2p_campaign_progress']['group_column'] = 'amount';
+  /* Field: Content: Campaign Deadline */
+  $handler->display->display_options['fields']['field_p2p_fundraising_deadline']['id'] = 'field_p2p_fundraising_deadline';
+  $handler->display->display_options['fields']['field_p2p_fundraising_deadline']['table'] = 'field_data_field_p2p_fundraising_deadline';
+  $handler->display->display_options['fields']['field_p2p_fundraising_deadline']['field'] = 'field_p2p_fundraising_deadline';
+  $handler->display->display_options['fields']['field_p2p_fundraising_deadline']['label'] = 'Deadline';
+  $handler->display->display_options['fields']['field_p2p_fundraising_deadline']['settings'] = array(
+    'format_type' => 'long',
+    'fromto' => 'both',
+    'multiple_number' => '',
+    'multiple_from' => '',
+    'multiple_to' => '',
+  );
+  /* Field: Content: Edit link */
+  $handler->display->display_options['fields']['edit_node']['id'] = 'edit_node';
+  $handler->display->display_options['fields']['edit_node']['table'] = 'views_entity_node';
+  $handler->display->display_options['fields']['edit_node']['field'] = 'edit_node';
+  $handler->display->display_options['fields']['edit_node']['label'] = '';
+  $handler->display->display_options['fields']['edit_node']['element_label_colon'] = FALSE;
+  $handler->display->display_options['fields']['edit_node']['text'] = 'Edit';
+  /* Field: Content: Nid */
+  $handler->display->display_options['fields']['nid_1']['id'] = 'nid_1';
+  $handler->display->display_options['fields']['nid_1']['table'] = 'node';
+  $handler->display->display_options['fields']['nid_1']['field'] = 'nid';
+  $handler->display->display_options['fields']['nid_1']['label'] = 'personal campaign nid';
+  $handler->display->display_options['fields']['nid_1']['exclude'] = TRUE;
+  /* Field: Content: Nid */
+  $handler->display->display_options['fields']['nid']['id'] = 'nid';
+  $handler->display->display_options['fields']['nid']['table'] = 'node';
+  $handler->display->display_options['fields']['nid']['field'] = 'nid';
+  $handler->display->display_options['fields']['nid']['relationship'] = 'form_nid';
+  $handler->display->display_options['fields']['nid']['label'] = 'Actions';
+  $handler->display->display_options['fields']['nid']['alter']['alter_text'] = TRUE;
+  $handler->display->display_options['fields']['nid']['alter']['text'] = '<a href="/user/!1/personal-campaigns/campaign-donors/[nid]/[nid_1]">Donors</a>';
+  $handler->display->display_options['fields']['nid']['alter']['alt'] = 'Donors';
   $handler->display->display_options['path'] = 'p2p/campaigns/user';
   $export['p2p_personal_campaigns_by_campaigner'] = $view;
 

@@ -61,7 +61,9 @@ function springboard_p2p_personal_campaign_field_default_field_bases() {
     ),
     'locked' => 0,
     'module' => 'text',
-    'settings' => array(),
+    'settings' => array(
+      'max_length' => 255,
+    ),
     'translatable' => 0,
     'type' => 'text_long',
   );
@@ -117,7 +119,9 @@ function springboard_p2p_personal_campaign_field_default_field_bases() {
     ),
     'locked' => 0,
     'module' => 'text',
-    'settings' => array(),
+    'settings' => array(
+      'max_length' => 255,
+    ),
     'translatable' => 0,
     'type' => 'text_long',
   );
