@@ -162,6 +162,12 @@ function sba_message_edit_form($form, &$form_state, $sba_message) {
   // This form should only appear at node/%/messages.
   // Grab the node so we can get the alert form UUID and node ID
   $node = menu_get_object();
+
+  $form = array(
+    '#prefix' => '<div id="springboard-advocacy-message-form-container">',
+    '#suffix' => '</div>',
+  );
+
   $form['message_error'] = array (
     '#markup' => '',
     '#prefix' => '<div id = "advo-error-wrapper">',
