@@ -997,6 +997,7 @@ function springboard_p2p_landing_views_default_views() {
     'title' => 'title',
     'sbp_first_name' => 'sbp_first_name',
     'sbp_last_name' => 'sbp_first_name',
+    'mail' => 'mail',
   );
   $handler->display->display_options['style_options']['default'] = '-1';
   $handler->display->display_options['style_options']['info'] = array(
@@ -1010,11 +1011,18 @@ function springboard_p2p_landing_views_default_views() {
     'sbp_first_name' => array(
       'sortable' => 0,
       'default_sort_order' => 'asc',
-      'align' => 'views-align-left',
+      'align' => '',
       'separator' => ' ',
       'empty_column' => 0,
     ),
     'sbp_last_name' => array(
+      'sortable' => 0,
+      'default_sort_order' => 'asc',
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
+    'mail' => array(
       'sortable' => 0,
       'default_sort_order' => 'asc',
       'align' => '',
@@ -1048,6 +1056,7 @@ function springboard_p2p_landing_views_default_views() {
   $handler->display->display_options['fields']['title']['id'] = 'title';
   $handler->display->display_options['fields']['title']['table'] = 'node';
   $handler->display->display_options['fields']['title']['field'] = 'title';
+  $handler->display->display_options['fields']['title']['label'] = '';
   $handler->display->display_options['fields']['title']['alter']['word_boundary'] = FALSE;
   $handler->display->display_options['fields']['title']['alter']['ellipsis'] = FALSE;
   $handler->display->display_options['fields']['title']['element_type'] = '0';
@@ -1060,6 +1069,7 @@ function springboard_p2p_landing_views_default_views() {
   $handler->display->display_options['fields']['sbp_first_name']['field'] = 'sbp_first_name';
   $handler->display->display_options['fields']['sbp_first_name']['relationship'] = 'uid';
   $handler->display->display_options['fields']['sbp_first_name']['label'] = 'Name';
+  $handler->display->display_options['fields']['sbp_first_name']['exclude'] = TRUE;
   $handler->display->display_options['fields']['sbp_first_name']['element_type'] = '0';
   $handler->display->display_options['fields']['sbp_first_name']['element_label_type'] = '0';
   $handler->display->display_options['fields']['sbp_first_name']['element_label_colon'] = FALSE;
@@ -1070,6 +1080,7 @@ function springboard_p2p_landing_views_default_views() {
   $handler->display->display_options['fields']['sbp_last_name']['field'] = 'sbp_last_name';
   $handler->display->display_options['fields']['sbp_last_name']['relationship'] = 'uid';
   $handler->display->display_options['fields']['sbp_last_name']['label'] = '';
+  $handler->display->display_options['fields']['sbp_last_name']['exclude'] = TRUE;
   $handler->display->display_options['fields']['sbp_last_name']['element_type'] = '0';
   $handler->display->display_options['fields']['sbp_last_name']['element_label_type'] = '0';
   $handler->display->display_options['fields']['sbp_last_name']['element_label_colon'] = FALSE;
