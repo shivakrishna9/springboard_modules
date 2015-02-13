@@ -62,8 +62,12 @@ class springboard_advocacy_views_plugin_query extends views_plugin_query {
 
       $terms['limit'] = $this->pager->options['items_per_page'];
       $terms['offset'] = $this->offset;
-      $terms['sort'] = $this->orderby[0]['field'];
-      $terms['direction'] = $this->orderby[0]['direction'];
+
+      if (isset($this->orderby)) {
+        $terms['sort'] = $this->orderby[0]['field'];
+        $terms['direction'] = $this->orderby[0]['direction'];
+      }
+
 
       // Get the targets
       $targets = $client->searchTargets($terms);
