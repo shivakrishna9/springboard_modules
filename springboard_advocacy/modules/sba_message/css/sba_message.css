@@ -127,3 +127,8 @@
     top: 10px;
     padding-left: 10px;
 }
+
+#advo-error-wrapper {
+    display:inline-block;
+   padding-left:20px;
+}

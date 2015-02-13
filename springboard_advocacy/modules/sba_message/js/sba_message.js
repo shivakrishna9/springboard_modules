@@ -21,23 +21,25 @@
                     });
                 });
             });
-
-            finder = $('.springboard-advocacy-find-targets-container');
-            actions = $('#sba-message-edit-form #edit-actions');
-            message = $('#advo-error-wrapper');
-            alert = $('div.alert')
-            message.css({'display':'inline-block', 'padding-left':'20px'});
-            $('#springboard-advocacy-message-form-container').append(finder);
-            $(finder).append(actions);
-            $(actions).append(message);
-            alert.css('margin-bottom', 0);
-            alert.parent().css({'float':'left'});
-            $('#views-exposed-form-targets-block-3').once('edit-page-submitfdsfs', function() {
+            $(document).ready(function () {
+                finder = $('.springboard-advocacy-find-targets-container');
+                actions = $('#sba-message-edit-form #edit-actions');
+                message = $('#advo-error-wrapper');
+                alert = $('div.alert')
+                message.css({'display': 'inline-block', 'padding-left': '20px'});
+                $('#springboard-advocacy-message-form-container').append(finder);
+                $(finder).append(actions);
+                $(actions).append(message);
+                alert.css('margin-bottom', 0);
+                alert.parent().css({'float': 'left'});
+                console.log(context[0])
                 message.hide();
+                if ($(context[0]).attr('id') == 'advo-error-wrapper') {
+                    message.fadeIn(500)
+                    .fadeOut(5000);
+                    $('.sba-message-status').hide();
+                }
             });
-            if($(context[0]).attr('id') == 'advo-error-wrapper') {
-                message.fadeIn(500).fadeOut(5000);
-            }
 
 
             // Editing a pre-existing message, append the recipients

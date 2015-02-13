@@ -429,9 +429,9 @@ function _sba_message_api_save($sba_message, $is_new, $form_state) {
       $rekeyed[$combine_id] = $combine_id;
     }
   }
+  $combined = $rekeyed + $indvds;
 
-  $indvds = json_encode($rekeyed + $indvds);
-
+  $indvds = !empty($combined) ? json_encode($combined) : '';
 
    // Executive build call goes here.
 
