@@ -299,7 +299,6 @@ function springboard_advocacy_target_level() {
   $value_options = array(
     'federal' => t('Federal'),
     'state' => t('State'),
-
   );
   return $value_options;
 }
@@ -439,6 +438,62 @@ function theme_springboard_advocacy_views_attachment_before($vars) {
       $output .= l(t('Add all'), "add-all", array(attributes => array('id' => 'advo-add-all'), 'query' => $vars['query'], 'external' => TRUE));
       $output .= '</div></div>';
       return $output;
+    }
+  }
+}
+
+/**
+ * @todo remove this if fixed in future views release.
+ * Override a bug in the original preprocess
+ * See https://www.drupal.org/node/2315365 for a similar issue.
+ */
+function springboard_advocacy_preprocess_views_view_table(&$vars)
+{
+  $view = $vars['view'];
+  $options  = $view->style_plugin->options;
+  $handler  = $view->style_plugin;
+  $fields = &$view->field;
+  $columns = $handler->sanitize_columns($options['columns'], $fields);
+
+  $active = !empty($handler->active) ? $handler->active : '';
+  $order = !empty($handler->order) ? $handler->order : 'asc';
+
+  $query = tablesort_get_query_parameters();
+
+  // bug override
+  // $query += $view->exposed_raw_input
+  // broke sort link queries
+  $exposed = $view->get_exposed_input();
+  if (!empty($exposed)) {
+    $query += $exposed;
+  }
+
+  foreach ($columns as $field => $column) {
+    // render the header labels
+    if ($field == $column && empty($fields[$field]->options['exclude'])) {
+      $label = check_plain(!empty($fields[$field]) ? $fields[$field]->label() : '');
+      if (!empty($options['info'][$field]['sortable']) || $fields[$field]->click_sortable()) {
+        // $vars['header'][$field] = $label;
+        $initial = !empty($options['info'][$field]['default_sort_order']) ? $options['info'][$field]['default_sort_order'] : 'asc';
+
+        if ($active == $field) {
+          $initial = ($order == 'asc') ? 'desc' : 'asc';
+        }
+
+        $title = t('sort by @s', array('@s' => $label));
+        if ($active == $field) {
+          $label .= theme('tablesort_indicator', array('style' => $initial));
+        }
+
+        $query['order'] = $field;
+        $query['sort'] = $initial;
+        $link_options = array(
+          'html' => TRUE,
+          'attributes' => array('title' => $title),
+          'query' => $query,
+        );
+        $vars['header'][$field] = l($label, $_GET['q'], $link_options);
+      }
     }
   }
 }
