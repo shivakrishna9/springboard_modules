@@ -168,12 +168,6 @@ function sba_message_edit_form($form, &$form_state, $sba_message) {
     '#suffix' => '</div>',
   );
 
-  $form['message_error'] = array (
-    '#markup' => '',
-    '#prefix' => '<div id = "advo-error-wrapper">',
-    '#suffix' => '</div>'
-  );
-
   $form['parent_node']['nid'] = array(
     '#type' => 'hidden',
     '#value' => $node->nid,
@@ -230,24 +224,38 @@ function sba_message_edit_form($form, &$form_state, $sba_message) {
     $submit += $form['#submit'];
   }
 
+  $form['message_error'] = array (
+    '#markup' => '',
+    '#prefix' => '<div id = "advo-error-wrapper">',
+    '#suffix' => '</div>',
+    '#weight' => 10,
+
+  );
+
   $form['actions']['submit'] = array(
     '#type' => 'submit',
     '#value' => t('Save message'),
     '#submit' => $submit + array('sba_message_edit_form_submit'),
-//    '#ajax' => array(
-//      'callback' => 'sba_message_edit_form_submit',
-//      'wrapper' => 'advo-error-wrapper',
-//    ),
+    '#ajax' => array(
+      'callback' => 'sba_message_edit_form_submit',
+      'wrapper' => 'advo-error-wrapper',
+      'progress' => array(
+        'type' => 'throbber',
+        'message' => 'Message saving. Please wait.',
+      ),
+    ),
   );
   
   if (!empty($sba_message->name)) {
-    $form['actions']['delete'] = array(
-      '#type' => 'submit',
-      '#value' => t('Delete message'),
-      '#suffix' => l(t('Cancel'), 'node/' . $node->nid . '/messages'),
-      '#submit' => $submit + array('sba_message_form_submit_delete'),
-      '#weight' => 45,
-    );
+//    $form['actions']['delete'] = array(
+//      '#type' => 'submit',
+//      '#value' => t('Delete message'),
+//      '#prefix' => '<br />',
+//
+//      '#suffix' => l(t('Cancel'), 'node/' . $node->nid . '/messages'),
+//      '#submit' => $submit + array('sba_message_form_submit_delete'),
+//      '#weight' => 45,
+//    );
   }
   // We append the validate handler to #validate in case a form callback_wrapper
   // is used to add validate handlers earlier.
@@ -274,7 +282,7 @@ function sba_message_edit_form_submit(&$form, &$form_state) {
   $element = $form['message_error'];
 
   if (form_get_errors()) {
-    $element['#markup'] = "";
+    $element['#markup'] = "Field validation error. Please correct.";
     return $element;
   }
 
@@ -295,6 +303,8 @@ function sba_message_edit_form_submit(&$form, &$form_state) {
   $wrapper = entity_metadata_wrapper('sba_message', $sba_message);
   $nid = $wrapper->field_sba_alert_id->value()->nid;
   $form_state['redirect'] = 'node/' . $nid . '/messages';
+  $element['#markup'] = "Message Saved";
+  return $element;
 }
 
 /**

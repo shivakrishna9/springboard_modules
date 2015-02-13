@@ -10,21 +10,32 @@
         attach: function(context, settings) {
             // Append the search div to the message form, and the message form actions
             // to the search div.
-            $(document).ready(function () {
-
-                $("#edit-submit, #edit-delete").click(function (e) {
-                    if (this.id == "edit-delete") {
-                        action = $("#sba-message-edit-form").attr('action').replace('edit', 'delete');
-                        $("#sba-message-edit-form").attr('action' , action);
-                    }
-                    $("#sba-message-edit-form").submit();
+            $('body').once('edit-page-submit', function() {
+                $(document).ready(function () {
+                    $("#edit-submit, #edit-delete").click(function (e) {
+                        if (this.id == "edit-delete") {
+                            action = $("#sba-message-edit-form").attr('action').replace('edit', 'delete');
+                            $("#sba-message-edit-form").attr('action' , action);
+                        }
+                        $("#sba-message-edit-form").submit();
+                    });
                 });
             });
 
-            finder = $('.springboard-advocacy-find-targets-container');
-            actions = $('#sba-message-edit-form #edit-actions');
+                finder = $('.springboard-advocacy-find-targets-container');
+                actions = $('#sba-message-edit-form #edit-actions');
+                message = $('#advo-error-wrapper');
+                message.css({'display':'inline-block', 'padding-left':'20px'});
             $('#springboard-advocacy-message-form-container').append(finder);
-            $(finder).append(actions)
+            $(finder).append(actions);
+            $(actions).append(message);
+            if($(context[0]).attr('id') == 'advo-error-wrapper') {
+                $('#advo-error-wrapper').hide()
+                $('#advo-error-wrapper').fadeIn(500);
+                $('#advo-error-wrapper').fadeOut(5000);
+            }
+
+
             // Editing a pre-existing message, append the recipients
             // to the recipients div using hidden form value
             var recipients =  $('input[name="data[recipients]"]').val();
