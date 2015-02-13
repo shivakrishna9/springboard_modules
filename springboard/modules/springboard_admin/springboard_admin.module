@@ -353,26 +353,61 @@ function springboard_admin_menu() {
 }
 
 /**
+ * Title callback used to change the menu titles based on whether a user gets
+ * the Springboard admin UI.
+ *
+ * @param $original_title
+ *   Original title for users who do not get the Springboard admin ui.
+ *
+ * @param $new_title
+ *   Replacement title for users who get the the Springboard admin ui.
+ */
+function springboard_admin_menu_title_callback($original_title, $new_title) {
+  global $user;
+  if (springboard_admin_user_gets_sbux($user)) {
+    return $new_title;
+  }
+
+  return $original_title;
+}
+
+/**
+ * Page callback used to redirect from /admin to /springboard when the
+ * user gets the Springboard admin ui.
+ */
+function sprinboard_admin_admin_redirect() {
+  global $user;
+  if (springboard_admin_user_gets_sbux($user)) {
+    drupal_goto('springboard');
+  }
+
+  return system_admin_menu_block_page();
+}
+
+/**
  * Implements hook_menu_alter().
  *
  * Alterations to menu items to maintain the Springboard User Experience.
  */
 function springboard_admin_menu_alter(&$items) {
-  global $user;
-  if (springboard_admin_user_gets_sbux($user)) {
-    // Redirect to /admin to /springboard
-    $items['admin']['page callback'] = 'drupal_goto';
-    $items['admin']['page arguments'] = array('springboard');
-    
-    // Customizations to menu item titles
-    $items['node/%webform_menu/webform']['title'] = 'Form components';
-    $items['node/%webform_menu/webform/components']['title'] = 'Form fields';
-    $items['node/%webform_menu/webform/emails']['title'] = 'Confirmation emails';
-    $items['node/%webform_menu/webform/configure']['title'] = 'Confirmation page & settings';
-    
-    // Disable the User Orders tab since it's irrelevant
-    unset($items['user/%views_arg/orders']);
-  }
+  // Add a callback to handle redirection from /admin
+  $items['admin']['page callback'] = 'sprinboard_admin_admin_redirect';
+
+  // Remove the orders tab from the user's profile page.
+  unset($items['user/%views_arg/orders']);
+
+  // Customizations to menu item titles
+  $items['node/%webform_menu/webform']['title callback'] = 'springboard_admin_menu_title_callback';
+  $items['node/%webform_menu/webform']['title arguments'] = array($items['node/%webform_menu/webform']['title'], t('Form components'));
+
+  $items['node/%webform_menu/webform/components']['title callback'] = 'springboard_admin_menu_title_callback';
+  $items['node/%webform_menu/webform/components']['title arguments'] = array($items['node/%webform_menu/webform/components']['title'], t('Form fields'));
+
+  $items['node/%webform_menu/webform/emails']['title callback'] = 'springboard_admin_menu_title_callback';
+  $items['node/%webform_menu/webform/emails']['title arguments'] = array($items['node/%webform_menu/webform/emails']['title'], t('Confirmation emails'));
+
+  $items['node/%webform_menu/webform/configure']['title callback'] = 'springboard_admin_menu_title_callback';
+  $items['node/%webform_menu/webform/configure']['title arguments'] = array($items['node/%webform_menu/webform/configure']['title'], t('Confirmation page & settings'));
 }
 
 define('SPRINGBOARD_MENU_MODULES', serialize(array('email_wrappers','fundraiser', 'fundraiser_upsell', 'market_source', 'page_wrappers', 'salesforce_mapping', 'springboard_ga', 'springboard_social', 'springboard_views', 'webform_ab', 'webform_user')));
