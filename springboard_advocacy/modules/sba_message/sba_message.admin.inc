@@ -239,6 +239,7 @@ function sba_message_edit_form($form, &$form_state, $sba_message) {
     '#ajax' => array(
       'callback' => 'sba_message_edit_form_submit',
       'wrapper' => 'advo-error-wrapper',
+      'effect' => 'slide',
       'progress' => array(
         'type' => 'throbber',
         'message' => 'Message saving. Please wait.',
@@ -282,7 +283,7 @@ function sba_message_edit_form_submit(&$form, &$form_state) {
   $element = $form['message_error'];
 
   if (form_get_errors()) {
-    $element['#markup'] = "Field validation error. Please correct.";
+    $element['#markup'] = '<div id="not-saved">Message was not saved.</div>';
     return $element;
   }
 

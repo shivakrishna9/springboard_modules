@@ -121,3 +121,9 @@
 .admin-menu #springboard-advocacy-message-recipients.summary-fixed {
     margin-top: 34px;
 }
+
+#not-saved {
+    float: left;
+    top: 10px;
+    padding-left: 10px;
+}

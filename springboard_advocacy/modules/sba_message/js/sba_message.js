@@ -22,17 +22,21 @@
                 });
             });
 
-                finder = $('.springboard-advocacy-find-targets-container');
-                actions = $('#sba-message-edit-form #edit-actions');
-                message = $('#advo-error-wrapper');
-                message.css({'display':'inline-block', 'padding-left':'20px'});
+            finder = $('.springboard-advocacy-find-targets-container');
+            actions = $('#sba-message-edit-form #edit-actions');
+            message = $('#advo-error-wrapper');
+            alert = $('div.alert')
+            message.css({'display':'inline-block', 'padding-left':'20px'});
             $('#springboard-advocacy-message-form-container').append(finder);
             $(finder).append(actions);
             $(actions).append(message);
+            alert.css('margin-bottom', 0);
+            alert.parent().css({'float':'left'});
+            $('#views-exposed-form-targets-block-3').once('edit-page-submitfdsfs', function() {
+                message.hide();
+            });
             if($(context[0]).attr('id') == 'advo-error-wrapper') {
-                $('#advo-error-wrapper').hide()
-                $('#advo-error-wrapper').fadeIn(500);
-                $('#advo-error-wrapper').fadeOut(5000);
+                message.fadeIn(500).fadeOut(5000);
             }
 
 
@@ -232,5 +236,4 @@
             }
         });
     });
-
 })(jQuery);
