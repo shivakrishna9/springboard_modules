@@ -1,7 +1,8 @@
 
-#sba-message-edit-form {
+#springboard-advocacy-message-form-container {
     float:left;
     width: 70%;
+    margin-bottom: 1em;
 }
 
 #springboard-advocacy-message-recipients-container {
@@ -37,10 +38,7 @@
 #springboard-advocacy-message-recipients .target-recipient ul li {
     position: relative; left: 1em;
 }
-.springboard-advocacy-find-targets-container {
-    clear: both;
-    width: 70%;
-}
+
 
 #sba-message-edit-form .springboard-advocacy-find-targets-container {
     width: 100%;
@@ -110,8 +108,6 @@
     clear:left;
     float:right;
 }
-
-
 
 #springboard-advocacy-message-recipients {
     position: absolute;

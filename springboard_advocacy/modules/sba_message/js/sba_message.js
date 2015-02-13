@@ -8,14 +8,23 @@
 (function ($) {
     Drupal.behaviors.AdvocacyMessageRecipients = {
         attach: function(context, settings) {
-
             // Append the search div to the message form, and the message form actions
             // to the search div.
+            $(document).ready(function () {
+
+                $("#edit-submit, #edit-delete").click(function (e) {
+                    if (this.id == "edit-delete") {
+                        action = $("#sba-message-edit-form").attr('action').replace('edit', 'delete');
+                        $("#sba-message-edit-form").attr('action' , action);
+                    }
+                    $("#sba-message-edit-form").submit();
+                });
+            });
+
             finder = $('.springboard-advocacy-find-targets-container');
             actions = $('#sba-message-edit-form #edit-actions');
-            finder.append(actions);
-            $('#sba-message-edit-form').append(finder);
-
+            $('#springboard-advocacy-message-form-container').append(finder);
+            $(finder).append(actions)
             // Editing a pre-existing message, append the recipients
             // to the recipients div using hidden form value
             var recipients =  $('input[name="data[recipients]"]').val();
@@ -46,6 +55,7 @@
                         var query = $(this).attr('href').replace('add-all?','').replace('add-target?','').split('&');
                         var readable = buildReadableQuery(query);
                         buildDivs(count, readable, query);
+                        window.topper = $('#springboard-advocacy-message-recipients').height();
                         buildUpdateMessage();
                         buildFormValue();
                     });
@@ -88,6 +98,7 @@
                 $(this).remove();
                 buildUpdateMessage();
                 buildFormValue();
+                window.topper = $('#springboard-advocacy-message-recipients').height();
             });
 
         })
@@ -192,22 +203,23 @@
     }
     $(document).ready(function () {
 
-    var pos = $('#springboard-advocacy-message-recipients').offset();
-    $(window).scroll(function() {
-        // On scroll, update the 'top' value for the summary box to match the
-        // scroll distance. If the summary box is absolutely positioned, this
-        // will make it folow the scroll down the page.
-        console.log(pos)
+        var offset = $('#springboard-advocacy-message-recipients').offset();
 
-        if(pos.top <= $(window).scrollTop() && $('#springboard-advocacy-message-recipients').css('position') == 'absolute') {
-            $('#springboard-advocacy-message-recipients').css('top', ($(window).scrollTop() - pos.top)).addClass('summary-fixed');
-        }
-        // Clear the positioning if the Summary field is not absolutely positioned.
-        // This allows themes to override the fixed position easily.
-        else {
-            $('#springboard-advocacy-message-recipients').css('top', 0).removeClass('summary-fixed');
-        }
-    });
+        $(window).scroll(function() {
+            // On scroll, update the 'top' value for the summary box to match the
+            // scroll distance. If the summary box is absolutely positioned, this
+            // will make it folow the scroll down the page.
+            if(offset.top <= $(window).scrollTop() && $('#springboard-advocacy-message-recipients').css('position') == 'absolute') {
+                newTop =$(window).scrollTop() - offset.top;
+                $('#springboard-advocacy-message-recipients').css('top', newTop).addClass('summary-fixed');
+
+            }
+            // Clear the positioning if the Summary field is not absolutely positioned.
+            // This allows themes to override the fixed position easily.
+            else {
+                $('#springboard-advocacy-message-recipients').css('top', 0).removeClass('summary-fixed');
+            }
+        });
     });
 
 })(jQuery);
