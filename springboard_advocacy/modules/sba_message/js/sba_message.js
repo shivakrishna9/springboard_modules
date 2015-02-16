@@ -13,32 +13,31 @@
             $('body').once('edit-page-submit', function() {
                 $(document).ready(function () {
                     $("#edit-submit, #edit-delete").click(function (e) {
-                        if (this.id == "edit-delete") {
-                            action = $("#sba-message-edit-form").attr('action').replace('edit', 'delete');
-                            $("#sba-message-edit-form").attr('action' , action);
-                        }
-                        $("#sba-message-edit-form").submit();
+                        $('input.required').each(function() {
+                            if ($(this).val() == '') {
+                                alert = $('#advo-error-wrapper');
+                                alert.hide();
+                                alert.css('margin-bottom', 0);
+                                alert.parent().css({'float': 'left'});
+                                alert.text(this.name + ' is required');
+                                alert.fadeIn(500);
+                                return false;
+                            }
+                            else {
+                                $("#sba-message-edit-form").submit();
+                            }
+                        })
                     });
                 });
-            });
+           });
             $(document).ready(function () {
                 finder = $('.springboard-advocacy-find-targets-container');
                 actions = $('#sba-message-edit-form #edit-actions');
-                message = $('#advo-error-wrapper');
-                alert = $('div.alert')
-                message.css({'display': 'inline-block', 'padding-left': '20px'});
+                alert = $('#advo-error-wrapper');
+                alert.css({'display': 'inline-block', 'padding-left': '20px'});
                 $('#springboard-advocacy-message-form-container').append(finder);
                 $(finder).append(actions);
-                $(actions).append(message);
-                alert.css('margin-bottom', 0);
-                alert.parent().css({'float': 'left'});
-                console.log(context[0])
-                message.hide();
-                if ($(context[0]).attr('id') == 'advo-error-wrapper') {
-                    message.fadeIn(500)
-                    .fadeOut(5000);
-                    $('.sba-message-status').hide();
-                }
+                $(actions).append(alert);
             });
 
 

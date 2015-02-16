@@ -236,15 +236,6 @@ function sba_message_edit_form($form, &$form_state, $sba_message) {
     '#type' => 'submit',
     '#value' => t('Save message'),
     '#submit' => $submit + array('sba_message_edit_form_submit'),
-    '#ajax' => array(
-      'callback' => 'sba_message_edit_form_submit',
-      'wrapper' => 'advo-error-wrapper',
-      'effect' => 'slide',
-      'progress' => array(
-        'type' => 'throbber',
-        'message' => 'Message saving. Please wait.',
-      ),
-    ),
   );
   
   if (!empty($sba_message->name)) {
@@ -273,19 +264,11 @@ function sba_message_edit_form_validate(&$form, &$form_state) {
   field_attach_form_validate('sba_message', $sba_message, $form, $form_state);
 }
 
-
 /**
  * Form API submit callback for the sba_message form.
  * 
  */
 function sba_message_edit_form_submit(&$form, &$form_state) {
-
-  $element = $form['message_error'];
-
-  if (form_get_errors()) {
-    $element['#markup'] = '<div id="not-saved">Message was not saved.</div>';
-    return $element;
-  }
 
   $form_state['values']['data']['recipients'] = str_replace('&quot;', '"', $form_state['values']['data']['recipients']);
 
@@ -297,15 +280,16 @@ function sba_message_edit_form_submit(&$form, &$form_state) {
     $is_new = TRUE;
   }
   $sba_message->changed = time();
-  $sba_message->save();
-
+  $status = $sba_message->save();
+  if($status) {
+    drupal_set_message(t('Message saved.'));
+  }
   _sba_message_api_save($sba_message, $is_new, $form_state);
 
   $wrapper = entity_metadata_wrapper('sba_message', $sba_message);
   $nid = $wrapper->field_sba_alert_id->value()->nid;
   $form_state['redirect'] = 'node/' . $nid . '/messages';
-  $element['#markup'] = "Message Saved";
-  return $element;
+
 }
 
 /**
