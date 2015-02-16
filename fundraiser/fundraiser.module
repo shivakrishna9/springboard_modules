@@ -1465,7 +1465,7 @@ function fundraiser_donation_form(&$form, &$form_state) {
     drupal_get_path('module', 'fundraiser') . '/js/donation_validation.min.js',
   );
 
-  // Add the validation configuation settings array.
+  // Add the validation configuration settings array.
   $form_validation_js = _fundraiser_donation_form_js_validation_config($node);
   if (!empty($form_validation_js)) {
     $form['#attached']['js'][] = array(
