@@ -6,6 +6,7 @@
  * Advocacy recipients list  and search page
  */
 (function ($) {
+
     Drupal.behaviors.AdvocacyMessageRecipients = {
         attach: function(context, settings) {
 
@@ -195,11 +196,11 @@
             e.preventDefault();
             var submit = true;
             var messages = [];
-            if(!$('[name*="field_subject_editable"]').is(':checked')) {
+            if($('[name*="field_subject_editable"]').length != 0 && !$('[name*="field_subject_editable"]').is(':checked')) {
                 messages.push( 'Subject is editable');
                 submit = false;
             }
-            if(!$('[name*="field_message_editable"]').is(':checked')) {
+            if($('[name*="field_message_editable"]').length != 0 && !$('[name*="field_message_editable"]').is(':checked')) {
                 messages.push('Message is editable');
                 submit = false;
             }
