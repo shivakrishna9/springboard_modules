@@ -8,37 +8,6 @@
 (function ($) {
     Drupal.behaviors.AdvocacyMessageRecipients = {
         attach: function(context, settings) {
-            // Append the search div to the message form, and the message form actions
-            // to the search div.
-            $('body').once('edit-page-submit', function() {
-                $(document).ready(function () {
-                    $("#edit-submit, #edit-delete").click(function (e) {
-                        e.preventDefault();
-                        var submit = true;
-                        var messages = [];
-                        if(!$('[name*="field_subject_editable"]').is(':checked')) {
-                            messages.push( 'Subject is editable');
-                            submit = false;
-                        }
-                        if(!$('[name*="field_message_editable"]').is(':checked')) {
-                            messages.push('Message is editable');
-                            submit = false;
-                        }
-                        $('input.required').each(function() {
-                            if ($(this).val() == '') {
-                                messages.push($("label[for='" + this.id + "']").text().replace('*', ''));
-                                submit = false;
-                            }
-                        });
-                        if(submit == true) {
-                          $("#sba-message-edit-form").submit();
-                        }
-                        else {
-                            buildError(messages);
-                        }
-                    });
-                });
-           });
 
             // Apply click event to the search form add links
             // Allows views search results to be appended to the recipients list
@@ -222,6 +191,31 @@
     }
 
     $(document).ready(function () {
+        $("#edit-submit, #edit-delete").click(function (e) {
+            e.preventDefault();
+            var submit = true;
+            var messages = [];
+            if(!$('[name*="field_subject_editable"]').is(':checked')) {
+                messages.push( 'Subject is editable');
+                submit = false;
+            }
+            if(!$('[name*="field_message_editable"]').is(':checked')) {
+                messages.push('Message is editable');
+                submit = false;
+            }
+            $('input.required').each(function() {
+                if ($(this).val() == '') {
+                    messages.push($("label[for='" + this.id + "']").text().replace('*', ''));
+                    submit = false;
+                }
+            });
+            if(submit == true) {
+                $("#sba-message-edit-form").submit();
+            }
+            else {
+                buildError(messages);
+            }
+        });
 
         finder = $('.springboard-advocacy-find-targets-container');
         actions = $('#sba-message-edit-form #edit-actions');
