@@ -132,3 +132,10 @@
     display:inline-block;
    padding-left:20px;
 }
+
+#springboard-advocacy-message-form-container #edit-field-subject-editable .control-group,
+#springboard-advocacy-message-form-container #edit-field-message-editable .control-group {
+    display: inline-block;
+    margin-right: 10px;
+
+}
