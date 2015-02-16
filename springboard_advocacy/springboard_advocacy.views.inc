@@ -435,7 +435,7 @@ function theme_springboard_advocacy_views_attachment_before($vars) {
     if (!empty($vars['total_rows'])) {
       $output = '<div id="advocacy-attachment-before"><div id ="advocacy-attachment-before-rows">Total Rows: ' . $vars['total_rows'] . '</div>';
       $output .= '<div id ="advocacy-attachment-before-add-all">';
-      $output .= l(t('Add all'), "add-all", array(attributes => array('id' => 'advo-add-all'), 'query' => $vars['query'], 'external' => TRUE));
+      $output .= l(t('Add all'), "add-all", array('attributes' => array('id' => 'advo-add-all'), 'query' => $vars['query'], 'external' => TRUE));
       $output .= '</div></div>';
       return $output;
     }
