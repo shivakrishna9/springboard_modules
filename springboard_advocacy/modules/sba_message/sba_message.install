@@ -21,190 +21,237 @@ function sba_message_install() {
     );
 
   $field_bases = array();
-    // Exported field_base: 'field_sba_salutation'
-    $field_bases['field_sba_salutation'] = array(
-      'active' => 1,
-      'cardinality' => 1,
-      'deleted' => 0,
-      'entity_types' => array(),
-      'field_name' => 'field_sba_salutation',
-      'foreign keys' => array(
-        'format' => array(
-          'columns' => array(
-            'format' => 'format',
-          ),
-          'table' => 'filter_format',
-        ),
-      ),
-      'indexes' => array(
-        'format' => array(
-          0 => 'format',
-        ),
-      ),
-      'locked' => 0,
-      'module' => 'text',
-      'settings' => array(),
-      'translatable' => 0,
-      'type' => 'text_long',
-    );
 
-    // Exported field_base: 'field_sba_alert_id'
-   $field_bases['field_sba_alert_id'] = array(
-      'active' => 1,
-      'cardinality' => 1,
-      'deleted' => 0,
-      'entity_types' => array(),
-      'field_name' => 'field_sba_alert_id',
-      'foreign keys' => array(
-        'node' => array(
-          'columns' => array(
-            'target_id' => 'nid',
-          ),
-          'table' => 'node',
-        ),
+  // Exported field_base: 'field_message_editable'
+  $field_bases['field_message_editable'] = array(
+    'active' => 1,
+    'cardinality' => 1,
+    'deleted' => 0,
+    'entity_types' => array(),
+    'field_name' => 'field_message_editable',
+    'foreign keys' => array(),
+    'indexes' => array(
+      'value' => array(
+        0 => 'value',
       ),
-      'indexes' => array(
-        'target_id' => array(
-          0 => 'target_id',
-        ),
+    ),
+    'locked' => 0,
+    'module' => 'list',
+    'settings' => array(
+      'allowed_values' => array(
+        'Editable' => 'Editable',
+        'Not editable' => 'Not editable',
+        'Editing is required' => 'Editing is required',
       ),
-      'locked' => 0,
-      'module' => 'entityreference',
-      'settings' => array(
-        'handler' => 'base',
-        'handler_settings' => array(
-          'behaviors' => array(
-            'views-select-list' => array(
-              'status' => 0,
-            ),
-          ),
-          'sort' => array(
-            'type' => 'none',
-          ),
-          'target_bundles' => array(
-            'springboard_letter' => 'springboard_letter',
-          ),
-        ),
-        'target_type' => 'node',
-      ),
-      'translatable' => 0,
-      'type' => 'entityreference',
-    );
+      'allowed_values_function' => '',
+    ),
+    'translatable' => 0,
+    'type' => 'list_text',
+  );
 
-    // Exported field_base: 'field_sba_greeting'
-    $field_bases['field_sba_greeting'] = array(
-      'active' => 1,
-      'cardinality' => 1,
-      'deleted' => 0,
-      'entity_types' => array(),
-      'field_name' => 'field_sba_greeting',
-      'foreign keys' => array(
-        'format' => array(
-          'columns' => array(
-            'format' => 'format',
+  // Exported field_base: 'field_sba_alert_id'
+  $field_bases['field_sba_alert_id'] = array(
+    'active' => 1,
+    'cardinality' => 1,
+    'deleted' => 0,
+    'entity_types' => array(),
+    'field_name' => 'field_sba_alert_id',
+    'foreign keys' => array(),
+    'indexes' => array(
+      'target_id' => array(
+        0 => 'target_id',
+      ),
+    ),
+    'locked' => 0,
+    'module' => 'entityreference',
+    'settings' => array(
+      'handler' => 'base',
+      'handler_settings' => array(
+        'behaviors' => array(
+          'views-select-list' => array(
+            'status' => 0,
           ),
-          'table' => 'filter_format',
+        ),
+        'sort' => array(
+          'type' => 'none',
+        ),
+        'target_bundles' => array(
+          'springboard_letter' => 'springboard_letter',
         ),
       ),
-      'indexes' => array(
-        'format' => array(
-          0 => 'format',
-        ),
-      ),
-      'locked' => 0,
-      'module' => 'text',
-      'settings' => array(
-        'max_length' => 255,
-      ),
-      'translatable' => 0,
-      'type' => 'text',
-    );
+      'target_type' => 'node',
+    ),
+    'translatable' => 0,
+    'type' => 'entityreference',
+  );
 
-    // Exported field_base: 'field_sba_message'
-    $field_bases['field_sba_message'] = array(
-      'active' => 1,
-      'cardinality' => -1,
-      'deleted' => 0,
-      'entity_types' => array(),
-      'field_name' => 'field_sba_message',
-      'foreign keys' => array(
-        'format' => array(
-          'columns' => array(
-            'format' => 'format',
-          ),
-          'table' => 'filter_format',
+  // Exported field_base: 'field_sba_greeting'
+  $field_bases['field_sba_greeting'] = array(
+    'active' => 1,
+    'cardinality' => 1,
+    'deleted' => 0,
+    'entity_types' => array(),
+    'field_name' => 'field_sba_greeting',
+    'foreign keys' => array(
+      'format' => array(
+        'columns' => array(
+          'format' => 'format',
         ),
+        'table' => 'filter_format',
       ),
-      'indexes' => array(
-        'format' => array(
-          0 => 'format',
-        ),
+    ),
+    'indexes' => array(
+      'format' => array(
+        0 => 'format',
       ),
-      'locked' => 0,
-      'module' => 'text',
-      'settings' => array(),
-      'translatable' => 0,
-      'type' => 'text_long',
-    );
+    ),
+    'locked' => 0,
+    'module' => 'text',
+    'settings' => array(
+      'max_length' => 255,
+    ),
+    'translatable' => 0,
+    'type' => 'text',
+  );
 
-    // Exported field_base: 'field_sba_placeholder_greeting'
-    $field_bases['field_sba_placeholder_greeting'] = array(
-      'active' => 1,
-      'cardinality' => 1,
-      'deleted' => 0,
-      'entity_types' => array(),
-      'field_name' => 'field_sba_placeholder_greeting',
-      'foreign keys' => array(
-        'format' => array(
-          'columns' => array(
-            'format' => 'format',
-          ),
-          'table' => 'filter_format',
+  // Exported field_base: 'field_sba_message'
+  $field_bases['field_sba_message'] = array(
+    'active' => 1,
+    'cardinality' => 1,
+    'deleted' => 0,
+    'entity_types' => array(),
+    'field_name' => 'field_sba_message',
+    'foreign keys' => array(
+      'format' => array(
+        'columns' => array(
+          'format' => 'format',
         ),
+        'table' => 'filter_format',
       ),
-      'indexes' => array(
-        'format' => array(
-          0 => 'format',
-        ),
+    ),
+    'indexes' => array(
+      'format' => array(
+        0 => 'format',
       ),
-      'locked' => 0,
-      'module' => 'text',
-      'settings' => array(
-        'max_length' => 255,
-      ),
-      'translatable' => 0,
-      'type' => 'text',
-    );
+    ),
+    'locked' => 0,
+    'module' => 'text',
+    'settings' => array(),
+    'translatable' => 0,
+    'type' => 'text_long',
+  );
 
-    // Exported field_base: 'field_sba_subject'
-    $field_bases['field_sba_subject'] = array(
-      'active' => 1,
-      'cardinality' => -1,
-      'deleted' => 0,
-      'entity_types' => array(),
-      'field_name' => 'field_sba_subject',
-      'foreign keys' => array(
-        'format' => array(
-          'columns' => array(
-            'format' => 'format',
-          ),
-          'table' => 'filter_format',
+  // Exported field_base: 'field_sba_placeholder_greeting'
+  $field_bases['field_sba_placeholder_greeting'] = array(
+    'active' => 1,
+    'cardinality' => 1,
+    'deleted' => 0,
+    'entity_types' => array(),
+    'field_name' => 'field_sba_placeholder_greeting',
+    'foreign keys' => array(
+      'format' => array(
+        'columns' => array(
+          'format' => 'format',
         ),
+        'table' => 'filter_format',
       ),
-      'indexes' => array(
-        'format' => array(
-          0 => 'format',
-        ),
+    ),
+    'indexes' => array(
+      'format' => array(
+        0 => 'format',
       ),
-      'locked' => 0,
-      'module' => 'text',
-      'settings' => array(
-        'max_length' => 255,
-      ),
-      'translatable' => 0,
-      'type' => 'text',
-    );
+    ),
+    'locked' => 0,
+    'module' => 'text',
+    'settings' => array(
+      'max_length' => 255,
+    ),
+    'translatable' => 0,
+    'type' => 'text',
+  );
 
+  // Exported field_base: 'field_sba_salutation'
+  $field_bases['field_sba_salutation'] = array(
+    'active' => 1,
+    'cardinality' => 1,
+    'deleted' => 0,
+    'entity_types' => array(),
+    'field_name' => 'field_sba_salutation',
+    'foreign keys' => array(
+      'format' => array(
+        'columns' => array(
+          'format' => 'format',
+        ),
+        'table' => 'filter_format',
+      ),
+    ),
+    'indexes' => array(
+      'format' => array(
+        0 => 'format',
+      ),
+    ),
+    'locked' => 0,
+    'module' => 'text',
+    'settings' => array(),
+    'translatable' => 0,
+    'type' => 'text_long',
+  );
+
+  // Exported field_base: 'field_sba_subject'
+  $field_bases['field_sba_subject'] = array(
+    'active' => 1,
+    'cardinality' => 1,
+    'deleted' => 0,
+    'entity_types' => array(),
+    'field_name' => 'field_sba_subject',
+    'foreign keys' => array(
+      'format' => array(
+        'columns' => array(
+          'format' => 'format',
+        ),
+        'table' => 'filter_format',
+      ),
+    ),
+    'indexes' => array(
+      'format' => array(
+        0 => 'format',
+      ),
+    ),
+    'locked' => 0,
+    'module' => 'text',
+    'settings' => array(
+      'max_length' => 255,
+    ),
+    'translatable' => 0,
+    'type' => 'text',
+  );
+
+  // Exported field_base: 'field_subject_editable'
+  $field_bases['field_subject_editable'] = array(
+    'active' => 1,
+    'cardinality' => 1,
+    'deleted' => 0,
+    'entity_types' => array(),
+    'field_name' => 'field_subject_editable',
+    'foreign keys' => array(),
+    'indexes' => array(
+      'value' => array(
+        0 => 'value',
+      ),
+    ),
+    'locked' => 0,
+    'module' => 'list',
+    'settings' => array(
+      'allowed_values' => array(
+        'Not editable' => 'Not editable',
+        'Editable' => 'Editable',
+        'Editing is required' => 'Editing is required',
+      ),
+      'allowed_values_function' => '',
+    ),
+    'translatable' => 0,
+    'type' => 'list_text',
+  );
 
   foreach ($field_bases as $field) {
     field_create_field($field);
@@ -212,41 +259,43 @@ function sba_message_install() {
 
   $field_instances = array();
 
-  // Exported field_instance: 'sba_message-sba_letter_to_target_message-field_sba_salutation'
-  $field_instances['sba_message-sba_letter_to_target_message-field_sba_salutation'] = array(
+  // Exported field_instance: 'sba_message-sba_letter_to_target_message-field_message_editable'
+  $field_instances['sba_message-sba_letter_to_target_message-field_message_editable'] = array(
     'bundle' => 'sba_letter_to_target_message',
-    'default_value' => NULL,
+    'default_value' => array(
+      0 => array(
+        'value' => 'Editable',
+      ),
+    ),
     'deleted' => 0,
     'description' => '',
     'display' => array(
       'default' => array(
-        'label' => 'hidden',
+        'label' => 'above',
+        'module' => 'list',
         'settings' => array(),
-        'type' => 'hidden',
-        'weight' => 6,
+        'type' => 'list_default',
+        'weight' => 8,
       ),
     ),
     'entity_type' => 'sba_message',
-    'field_name' => 'field_sba_salutation',
-    'label' => 'Salutation',
-    'required' => 0,
+    'field_name' => 'field_message_editable',
+    'label' => 'Message editable by action taker?',
+    'required' => 1,
     'settings' => array(
-      'text_processing' => 0,
       'user_register_form' => FALSE,
     ),
     'widget' => array(
       'active' => 1,
-      'module' => 'text',
-      'settings' => array(
-        'rows' => 5,
-      ),
-      'type' => 'text_textarea',
-      'weight' => 5,
+      'module' => 'options',
+      'settings' => array(),
+      'type' => 'options_buttons',
+      'weight' => 4,
     ),
   );
 
   // Exported field_instance: 'sba_message-sba_letter_to_target_message-field_sba_alert_id'
- $field_instances['sba_message-sba_letter_to_target_message-field_sba_alert_id'] = array(
+  $field_instances['sba_message-sba_letter_to_target_message-field_sba_alert_id'] = array(
     'bundle' => 'sba_letter_to_target_message',
     'default_value' => NULL,
     'default_value_function' => 'entityreference_prepopulate_field_default_value',
@@ -290,7 +339,7 @@ function sba_message_install() {
         'size' => 60,
       ),
       'type' => 'entityreference_autocomplete',
-      'weight' => 6,
+      'weight' => 7,
     ),
   );
 
@@ -357,7 +406,7 @@ function sba_message_install() {
         'rows' => 5,
       ),
       'type' => 'text_textarea',
-      'weight' => 4,
+      'weight' => 5,
     ),
   );
 
@@ -394,6 +443,39 @@ function sba_message_install() {
     ),
   );
 
+  // Exported field_instance: 'sba_message-sba_letter_to_target_message-field_sba_salutation'
+  $field_instances['sba_message-sba_letter_to_target_message-field_sba_salutation'] = array(
+    'bundle' => 'sba_letter_to_target_message',
+    'default_value' => NULL,
+    'deleted' => 0,
+    'description' => '',
+    'display' => array(
+      'default' => array(
+        'label' => 'hidden',
+        'settings' => array(),
+        'type' => 'hidden',
+        'weight' => 6,
+      ),
+    ),
+    'entity_type' => 'sba_message',
+    'field_name' => 'field_sba_salutation',
+    'label' => 'Salutation',
+    'required' => 0,
+    'settings' => array(
+      'text_processing' => 0,
+      'user_register_form' => FALSE,
+    ),
+    'widget' => array(
+      'active' => 1,
+      'module' => 'text',
+      'settings' => array(
+        'rows' => 5,
+      ),
+      'type' => 'text_textarea',
+      'weight' => 6,
+    ),
+  );
+
   // Exported field_instance: 'sba_message-sba_letter_to_target_message-field_sba_subject'
   $field_instances['sba_message-sba_letter_to_target_message-field_sba_subject'] = array(
     'bundle' => 'sba_letter_to_target_message',
@@ -427,6 +509,52 @@ function sba_message_install() {
       'weight' => 1,
     ),
   );
+
+  // Exported field_instance: 'sba_message-sba_letter_to_target_message-field_subject_editable'
+  $field_instances['sba_message-sba_letter_to_target_message-field_subject_editable'] = array(
+    'bundle' => 'sba_letter_to_target_message',
+    'default_value' => array(
+      0 => array(
+        'value' => 'Not Editable',
+      ),
+    ),
+    'deleted' => 0,
+    'description' => '',
+    'display' => array(
+      'default' => array(
+        'label' => 'above',
+        'module' => 'list',
+        'settings' => array(),
+        'type' => 'list_default',
+        'weight' => 7,
+      ),
+    ),
+    'entity_type' => 'sba_message',
+    'field_name' => 'field_subject_editable',
+    'label' => 'Subject editable by action taker?',
+    'required' => 1,
+    'settings' => array(
+      'user_register_form' => FALSE,
+    ),
+    'widget' => array(
+      'active' => 1,
+      'module' => 'options',
+      'settings' => array(),
+      'type' => 'options_buttons',
+      'weight' => 0,
+    ),
+  );
+
+  // Translatables
+  // Included for use with string extractors like potx.
+  t('Alert ID');
+  t('Editable by action taker?');
+  t('Greeting');
+  t('Message');
+  t('Placeholder Greeting');
+  t('Salutation');
+  t('Subject');
+
   foreach ($field_instances as $instance) {
     field_create_instance($instance);
   }
