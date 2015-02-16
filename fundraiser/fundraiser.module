@@ -1447,7 +1447,7 @@ function _fundraiser_donation_form_js_validation_config($node) {
   }
   // Give 3rd party modules an opportunity to alter.
   drupal_alter('fundraiser_donation_form_js_validation', $settings, $node);
-  drupal_add_js(array('fundraiser' => array('js_validation_settings' => $settings)), 'setting');
+
   return $settings;
 }
 
@@ -1457,13 +1457,23 @@ function _fundraiser_donation_form_js_validation_config($node) {
  */
 function fundraiser_donation_form(&$form, &$form_state) {
   $node = $form['#node'];
-  $form_validation_js_config = _fundraiser_donation_form_js_validation_config($node);
+
   // Attach the js files
   $form['#attached']['js'] = array(
     drupal_get_path('module', 'fundraiser') . '/js/jquery.alphanumeric.min.js',
     drupal_get_path('module', 'fundraiser') . '/js/jquery.validate.min.js',
     drupal_get_path('module', 'fundraiser') . '/js/donation_validation.min.js',
   );
+
+  // Add the validation configuation settings array.
+  $form_validation_js = _fundraiser_donation_form_js_validation_config($node);
+  if (!empty($form_validation_js)) {
+    $form['#attached']['js'][] = array(
+      'data' => array('fundraiser' => array('js_validation_settings' => $form_validation_js)),
+      'type' => 'setting',
+    );
+  }
+
   if(isset($form['#node']->minimum_donation_amount)) {
     $min = array('minimum_donation_amount' => $form['#node']->minimum_donation_amount);
     $form['#attached']['js'][] = array(
