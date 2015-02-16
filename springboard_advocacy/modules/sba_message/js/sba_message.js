@@ -13,44 +13,32 @@
             $('body').once('edit-page-submit', function() {
                 $(document).ready(function () {
                     $("#edit-submit, #edit-delete").click(function (e) {
+                        e.preventDefault();
+                        var submit = true;
+                        var messages = [];
+                        if(!$('[name*="field_subject_editable"]').is(':checked')) {
+                            messages.push( 'Subject is editable');
+                            submit = false;
+                        }
+                        if(!$('[name*="field_message_editable"]').is(':checked')) {
+                            messages.push('Message is editable');
+                            submit = false;
+                        }
                         $('input.required').each(function() {
                             if ($(this).val() == '') {
-                                alert = $('#advo-error-wrapper');
-                                alert.hide();
-                                alert.css('margin-bottom', 0);
-                                alert.parent().css({'float': 'left'});
-                                alert.text(this.name + ' is required');
-                                alert.fadeIn(500);
-                                return false;
+                                messages.push($("label[for='" + this.id + "']").text().replace('*', ''));
+                                submit = false;
                             }
-                            else {
-                                $("#sba-message-edit-form").submit();
-                            }
-                        })
+                        });
+                        if(submit == true) {
+                          $("#sba-message-edit-form").submit();
+                        }
+                        else {
+                            buildError(messages);
+                        }
                     });
                 });
            });
-            $(document).ready(function () {
-                finder = $('.springboard-advocacy-find-targets-container');
-                actions = $('#sba-message-edit-form #edit-actions');
-                alert = $('#advo-error-wrapper');
-                alert.css({'display': 'inline-block', 'padding-left': '20px'});
-                $('#springboard-advocacy-message-form-container').append(finder);
-                $(finder).append(actions);
-                $(actions).append(alert);
-            });
-
-
-            // Editing a pre-existing message, append the recipients
-            // to the recipients div using hidden form value
-            var recipients =  $('input[name="data[recipients]"]').val();
-            if(recipients.length > 0) {
-                $('body').once('edit-page', function() {
-                   $(document).ready(function($){
-                      buildEditPage(recipients);
-                    });
-                });
-            }
 
             // Apply click event to the search form add links
             // Allows views search results to be appended to the recipients list
@@ -80,8 +68,23 @@
         }
     };
 
+    function buildError(messages) {
+        alert = $('#advo-error-wrapper');
+        alert.text('');
+        alert.hide();
+        alert.css('margin-bottom', 0);
+        alert.parent().css({'float': 'left'});
+        $.each(messages, function(i, message) {
+            alert.append('<div>' + message + ' field is required </div>');
+        });
+        alert.fadeIn(500);
+        alert.fadeOut(5000);
+    }
+
+
     // Rebuild the recipients list on existing messages
     function buildEditPage(recipients) {
+       // $('#springboard-advocacy-message-recipients-content').text('');
         var count = 0;
         $.each(JSON.parse(recipients), function(idx, obj) {
             var query = '';
@@ -95,7 +98,7 @@
 
             var readable = buildReadableQuery(query);
 
-            buildDivs(count,readable, query);
+            buildDivs(count, readable, query);
             count++;
         });
     }
@@ -217,7 +220,27 @@
             .replace(/"/g, '')
             .replace(/%20/g, ' ')
     }
+
     $(document).ready(function () {
+
+        finder = $('.springboard-advocacy-find-targets-container');
+        actions = $('#sba-message-edit-form #edit-actions');
+        alert = $('#advo-error-wrapper');
+        alert.css({'display': 'inline-block', 'padding-left': '20px'});
+        $('#springboard-advocacy-message-form-container').append(finder);
+        $(finder).append(actions);
+        $(actions).append(alert);
+
+        // Editing a pre-existing message, append the recipients
+        // to the recipients div using hidden form value
+        var recipients =  $('input[name="data[recipients]"]').val();
+        if(recipients.length > 0) {
+            $('body').once('edit-page', function() {
+                $(document).ready(function($){
+                    buildEditPage(recipients);
+                });
+            });
+        }
 
         var offset = $('#springboard-advocacy-message-recipients').offset();
 
