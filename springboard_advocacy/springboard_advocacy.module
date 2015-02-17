@@ -37,6 +37,17 @@ function springboard_advocacy_menu() {
     'page arguments' => array('custom-targets'),
   ) + springboard_advocacy_menu_common();
 
+  $items['node/%/messages'] = array(
+    'title' => 'Messages',
+    'page arguments' => array(1),
+    'page callback' => 'springboard_advocacy_dashboard',
+    'file' => 'springboard_advocacy.admin.inc',
+    'file path' => drupal_get_path('module', 'springboard_advocacy') . '/includes',
+    'access arguments' => array('administer sba messages'),
+    'type' => MENU_LOCAL_TASK
+
+  );
+
   return $items;
 }
 

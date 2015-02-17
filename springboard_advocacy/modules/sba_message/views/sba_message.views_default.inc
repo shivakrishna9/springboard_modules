@@ -11,7 +11,7 @@
  */
 function sba_message_views_default_views() {
   $views = array();
-
+  /* Header: Global: Unfiltered text */
   $view = new view();
   $view->name = 'sba_messages_node';
   $view->description = '';
@@ -72,21 +72,10 @@ function sba_message_views_default_views() {
       'empty_column' => 0,
     ),
   );
-  /* Header: Global: Unfiltered text */
-  $handler->display->display_options['header']['area_text_custom']['id'] = 'area_text_custom';
-  $handler->display->display_options['header']['area_text_custom']['table'] = 'views';
-  $handler->display->display_options['header']['area_text_custom']['field'] = 'area_text_custom';
-  $handler->display->display_options['header']['area_text_custom']['empty'] = TRUE;
-  $handler->display->display_options['header']['area_text_custom']['content'] = '<a href = "/node//messages/add/sba_letter_to_target_message?field_sba_alert_id=%1">Create Message</a>';
-  $handler->display->display_options['header']['area_text_custom']['tokenize'] = TRUE;
   /* Relationship: Entity Reference: Referenced Entity */
   $handler->display->display_options['relationships']['field_sba_alert_id_target_id']['id'] = 'field_sba_alert_id_target_id';
   $handler->display->display_options['relationships']['field_sba_alert_id_target_id']['table'] = 'field_data_field_sba_alert_id';
   $handler->display->display_options['relationships']['field_sba_alert_id_target_id']['field'] = 'field_sba_alert_id_target_id';
-  /* Field: Broken/missing handler */
-  $handler->display->display_options['fields']['field_sba_internal_title']['id'] = 'field_sba_internal_title';
-  $handler->display->display_options['fields']['field_sba_internal_title']['table'] = 'field_data_field_sba_internal_title';
-  $handler->display->display_options['fields']['field_sba_internal_title']['field'] = 'field_sba_internal_title';
   /* Field: SBA Message: Subject */
   $handler->display->display_options['fields']['field_sba_subject']['id'] = 'field_sba_subject';
   $handler->display->display_options['fields']['field_sba_subject']['table'] = 'field_data_field_sba_subject';
@@ -120,54 +109,6 @@ function sba_message_views_default_views() {
     'sba_letter_to_target_message' => 'sba_letter_to_target_message',
   );
 
-  /* Display: Page */
-  $handler = $view->new_display('page', 'Page', 'page');
-  $handler->display->display_options['defaults']['header'] = FALSE;
-  $handler->display->display_options['defaults']['empty'] = FALSE;
-  /* No results behavior: Global: Unfiltered text */
-  $handler->display->display_options['empty']['area_text_custom']['id'] = 'area_text_custom';
-  $handler->display->display_options['empty']['area_text_custom']['table'] = 'views';
-  $handler->display->display_options['empty']['area_text_custom']['field'] = 'area_text_custom';
-  $handler->display->display_options['empty']['area_text_custom']['label'] = 'No results message';
-  $handler->display->display_options['empty']['area_text_custom']['empty'] = TRUE;
-  $handler->display->display_options['empty']['area_text_custom']['content'] = 'No messages have been added yet.';
-  $handler->display->display_options['defaults']['fields'] = FALSE;
-  /* Field: SBA Message: Name */
-  $handler->display->display_options['fields']['name']['id'] = 'name';
-  $handler->display->display_options['fields']['name']['table'] = 'sba_message';
-  $handler->display->display_options['fields']['name']['field'] = 'name';
-  $handler->display->display_options['fields']['name']['label'] = 'Internal Title';
-  /* Field: SBA Message: Subject */
-  $handler->display->display_options['fields']['field_sba_subject']['id'] = 'field_sba_subject';
-  $handler->display->display_options['fields']['field_sba_subject']['table'] = 'field_data_field_sba_subject';
-  $handler->display->display_options['fields']['field_sba_subject']['field'] = 'field_sba_subject';
-  $handler->display->display_options['fields']['field_sba_subject']['delta_offset'] = '0';
-  /* Field: SBA Message: Edit Link */
-  $handler->display->display_options['fields']['edit_sba_message']['id'] = 'edit_sba_message';
-  $handler->display->display_options['fields']['edit_sba_message']['table'] = 'sba_message';
-  $handler->display->display_options['fields']['edit_sba_message']['field'] = 'edit_sba_message';
-  $handler->display->display_options['fields']['edit_sba_message']['label'] = 'Actions';
-  $handler->display->display_options['fields']['edit_sba_message']['element_label_colon'] = FALSE;
-  /* Field: Content: Nid */
-  $handler->display->display_options['fields']['nid']['id'] = 'nid';
-  $handler->display->display_options['fields']['nid']['table'] = 'node';
-  $handler->display->display_options['fields']['nid']['field'] = 'nid';
-  $handler->display->display_options['fields']['nid']['relationship'] = 'field_sba_alert_id_target_id';
-  $handler->display->display_options['fields']['nid']['exclude'] = TRUE;
-  /* Field: SBA Message: Delete Link */
-  $handler->display->display_options['fields']['delete_sba_message']['id'] = 'delete_sba_message';
-  $handler->display->display_options['fields']['delete_sba_message']['table'] = 'sba_message';
-  $handler->display->display_options['fields']['delete_sba_message']['field'] = 'delete_sba_message';
-  $handler->display->display_options['fields']['delete_sba_message']['label'] = '';
-  $handler->display->display_options['fields']['delete_sba_message']['element_label_colon'] = FALSE;
-  $handler->display->display_options['path'] = 'node/%/messages';
-  $handler->display->display_options['menu']['type'] = 'tab';
-  $handler->display->display_options['menu']['title'] = 'Messages';
-  $handler->display->display_options['menu']['weight'] = '0';
-  $handler->display->display_options['menu']['context'] = 0;
-  $handler->display->display_options['menu']['context_only_inline'] = 0;
-  $handler->display->display_options['tab_options']['weight'] = '0';
-
   /* Display: EVA Field */
   $handler = $view->new_display('entity_view', 'EVA Field', 'entity_view_1');
   $handler->display->display_options['defaults']['style_plugin'] = FALSE;
@@ -200,6 +141,90 @@ function sba_message_views_default_views() {
   $handler->display->display_options['bundles'] = array(
     0 => 'springboard_letter',
   );
+
+  /* Display: Embedded node/%/messages Block */
+  $handler = $view->new_display('block', 'Embedded node/%/messages Block', 'block_1');
+  $handler->display->display_options['display_description'] = 'Embedded block for edit page';
+  $handler->display->display_options['defaults']['use_ajax'] = FALSE;
+  $handler->display->display_options['use_ajax'] = TRUE;
+  $handler->display->display_options['defaults']['style_plugin'] = FALSE;
+  $handler->display->display_options['style_plugin'] = 'table';
+  $handler->display->display_options['style_options']['columns'] = array(
+    'name' => 'name',
+    'field_sba_subject' => 'field_sba_subject',
+    'field_sba_alert_id' => 'field_sba_alert_id',
+    'edit_sba_message' => 'edit_sba_message',
+    'delete_sba_message' => 'edit_sba_message',
+  );
+  $handler->display->display_options['style_options']['default'] = '-1';
+  $handler->display->display_options['style_options']['info'] = array(
+    'name' => array(
+      'sortable' => 0,
+      'default_sort_order' => 'asc',
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
+    'field_sba_subject' => array(
+      'sortable' => 0,
+      'default_sort_order' => 'asc',
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
+    'field_sba_alert_id' => array(
+      'sortable' => 0,
+      'default_sort_order' => 'asc',
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
+    'edit_sba_message' => array(
+      'align' => '',
+      'separator' => ' | ',
+      'empty_column' => 0,
+    ),
+    'delete_sba_message' => array(
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
+  );
+  $handler->display->display_options['defaults']['style_options'] = FALSE;
+  $handler->display->display_options['defaults']['row_plugin'] = FALSE;
+  $handler->display->display_options['defaults']['row_options'] = FALSE;
+  $handler->display->display_options['defaults']['empty'] = FALSE;
+  /* No results behavior: Global: Unfiltered text */
+  $handler->display->display_options['empty']['area_text_custom']['id'] = 'area_text_custom';
+  $handler->display->display_options['empty']['area_text_custom']['table'] = 'views';
+  $handler->display->display_options['empty']['area_text_custom']['field'] = 'area_text_custom';
+  $handler->display->display_options['empty']['area_text_custom']['empty'] = TRUE;
+  $handler->display->display_options['empty']['area_text_custom']['content'] = 'No messages have been added yet.';
+  $handler->display->display_options['defaults']['fields'] = FALSE;
+  /* Field: SBA Message: Name */
+  $handler->display->display_options['fields']['name']['id'] = 'name';
+  $handler->display->display_options['fields']['name']['table'] = 'sba_message';
+  $handler->display->display_options['fields']['name']['field'] = 'name';
+  /* Field: SBA Message: Subject */
+  $handler->display->display_options['fields']['field_sba_subject']['id'] = 'field_sba_subject';
+  $handler->display->display_options['fields']['field_sba_subject']['table'] = 'field_data_field_sba_subject';
+  $handler->display->display_options['fields']['field_sba_subject']['field'] = 'field_sba_subject';
+  $handler->display->display_options['fields']['field_sba_subject']['delta_offset'] = '0';
+  /* Field: SBA Message: Edit Link */
+  $handler->display->display_options['fields']['edit_sba_message']['id'] = 'edit_sba_message';
+  $handler->display->display_options['fields']['edit_sba_message']['table'] = 'sba_message';
+  $handler->display->display_options['fields']['edit_sba_message']['field'] = 'edit_sba_message';
+  $handler->display->display_options['fields']['edit_sba_message']['label'] = 'Actions';
+  /* Field: SBA Message: Delete Link */
+  $handler->display->display_options['fields']['delete_sba_message']['id'] = 'delete_sba_message';
+  $handler->display->display_options['fields']['delete_sba_message']['table'] = 'sba_message';
+  $handler->display->display_options['fields']['delete_sba_message']['field'] = 'delete_sba_message';
+  $handler->display->display_options['defaults']['sorts'] = FALSE;
+  /* Sort criterion: SBA Message: Sba message ID */
+  $handler->display->display_options['sorts']['sba_message_id']['id'] = 'sba_message_id';
+  $handler->display->display_options['sorts']['sba_message_id']['table'] = 'sba_message';
+  $handler->display->display_options['sorts']['sba_message_id']['field'] = 'sba_message_id';
+  $handler->display->display_options['sorts']['sba_message_id']['order'] = 'DESC';
 
   $views[$view->name] = $view;
 

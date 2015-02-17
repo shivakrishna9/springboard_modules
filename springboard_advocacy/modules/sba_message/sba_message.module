@@ -474,29 +474,29 @@ function sba_message_theme() {
  *
  * @todo replace with springboard theme wrapper?
  */
-function sba_message_menu_local_tasks_alter(&$data, $router_item, $root_path) {
-
-  // Add action link on node/%/messages page
-  $on_message_landing = !arg(3);
-  if ($root_path == 'node/%/messages' && !empty($on_message_landing) && is_numeric(arg(1))) {
-    $message_types = variable_get('sba_message_node_types', array());
-    $node = node_load(arg(1));
-    $data['actions']['output'][] = array(
-      '#theme' => 'menu_local_action',
-      '#link' => array(
-        'title' => t('Add message'),
-        'href' => 'node/' . arg(1) . '/messages/add/' . $message_types[$node->type],
-        'localized_options' => array(
-          'path' => 'g',
-          'attributes' => array(
-            'title' => t('Add new message'),
-          ),
-        ),
-      ),
-    );
-  }
-
-}
+//function sba_message_menu_local_tasks_alter(&$data, $router_item, $root_path) {
+//
+//  // Add action link on node/%/messages page
+//  $on_message_landing = !arg(3);
+//  if ($root_path == 'node/%/messages' && !empty($on_message_landing) && is_numeric(arg(1))) {
+//    $message_types = variable_get('sba_message_node_types', array());
+//    $node = node_load(arg(1));
+//    $data['actions']['output'][] = array(
+//      '#theme' => 'menu_local_action',
+//      '#link' => array(
+//        'title' => t('Add message'),
+//        'href' => 'node/' . arg(1) . '/messages/add/' . $message_types[$node->type],
+//        'localized_options' => array(
+//          'path' => 'g',
+//          'attributes' => array(
+//            'title' => t('Add new message'),
+//          ),
+//        ),
+//      ),
+//    );
+//  }
+//
+//}
 
 
 /**

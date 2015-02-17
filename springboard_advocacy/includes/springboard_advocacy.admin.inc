@@ -117,9 +117,8 @@ function springboard_advocacy_settings_form() {
  * Page callback for the advocacy dashboard.
  */
 function springboard_advocacy_dashboard($path) {
-
   switch($path) {
-  
+
     case 'alerts':
       $views = array(
         'sba_alerts' => array(
@@ -150,6 +149,19 @@ function springboard_advocacy_dashboard($path) {
           'header' => t('Custom Targets'),
           'content' => views_embed_view('targets', 'block_1'),
           'create_link' => array('title' => t('Create a new target'), 'href' => 'admin/springboard/advocacy/targets/custom-targets/add'),
+        ),
+      );
+
+      break;
+
+    case ($path == arg(1)):
+      $message_types = variable_get('sba_message_node_types', array());
+      $node = node_load($path);
+      $views = array(
+        'sba_messages_node' => array(
+          'header' => t('Messages'),
+          'content' => views_embed_view('sba_messages_node', 'block_1', $path),
+          'create_link' => array('title' => t('Create a new message'), 'href' => 'node/' . arg(1) . '/messages/add/' . $message_types[$node->type]),
         ),
       );
 
