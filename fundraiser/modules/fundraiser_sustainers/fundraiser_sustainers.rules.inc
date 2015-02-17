@@ -17,7 +17,14 @@ function fundraiser_sustainers_rules_event_info() {
         'order_id' => array('type' => 'text', 'label' => t('The id of the order.')),
         ),
       ),
-   );
+    'fundraiser_sustainer_health_check_failure' => array(
+      'label' => t('A Fundraiser sustainer health check failed.'),
+      'group' => t('Fundraiser Sustainers'),
+      'variables' => array(
+        'message' => array('type' => 'text', 'label' => t('The message.')),
+      ),
+    ),
+  );
 
   return $events;
 }

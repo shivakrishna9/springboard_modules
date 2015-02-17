@@ -168,7 +168,7 @@ function springboard_views_action_info() {
   );
 }
 
-/** 
+/**
  * Implements hook_springboard_admin_alias_patterns().
  */
 function springboard_views_springboard_admin_alias_patterns() {
@@ -223,6 +223,16 @@ function springboard_views_springboard_admin_admin_menu_items_alter(&$items) {
   $items['admin/springboard/reports']['_children']['admin/reports/salesforce/donations'] = array(
     'link_path' => 'admin/reports/salesforce/donations',
     'link_title' => 'Donations',
+    'menu_name' => 'springboard_admin_menu',
+    'expanded' => 1,
+    'customized' => 1,
+    'weight' => 0,
+  );
+
+  // Reports > Contacts.
+  $items['admin/springboard/reports']['_children']['admin/springboard/reports/contacts'] = array(
+    'link_path' => 'admin/springboard/reports/contacts',
+    'link_title' => 'Contacts',
     'menu_name' => 'springboard_admin_menu',
     'expanded' => 1,
     'customized' => 1,
@@ -286,6 +296,9 @@ function springboard_views_sf_drupal_types() {
 
 /**
  * Helper function, returns a list of the possible gateway responses.
+ *
+ * @deprecated Used to be an options callback for sustainers views data.
+ *             Doesn't appear to be used anywhere else.
  */
 function springboard_views_gateway_response_options() {
   return array(
@@ -381,7 +394,7 @@ function springboard_views_springboard_dashboard_panes() {
    'description' => t('Configuration and submissions summary for recently created or updated springboard donation forms.'),
    'content' => '<h2>' . t('Recent donation forms ') .  '</h2>' .
      (module_exists('webform') ? l(t('Create donation form'), $base_url . '/node/add/donation-form', array('attributes' => array('class' => array('button', 'add-button')))) : '' ) .
-     (module_exists('views') ? views_embed_view('sbv_forms', 'block_4', implode('+', $fundraiser_types)) : t('Please enable the Views module to improve your Springboard experience.')) . 
+     (module_exists('views') ? views_embed_view('sbv_forms', 'block_4', implode('+', $fundraiser_types)) : t('Please enable the Views module to improve your Springboard experience.')) .
      l(t('View All Donation Forms'), 'admin/springboard/donation-forms/all', array('attributes' => array('class' => array('more-link button more-button')))),
    'position' => 'column_left',
    'weight' => 0,
@@ -391,7 +404,7 @@ function springboard_views_springboard_dashboard_panes() {
     'description' => t('Configuration and submissions summary for recently created or updated springboard forms.'),
     'content' => '<h2>' . t('Recent forms ') .   '</h2>' .
       (module_exists('fundraiser') ? l(t('Create form'), $base_url . '/node/add/webform', array('attributes' => array('class' => array('button', 'add-button')))) : '')  .
-      (module_exists('views') ? views_embed_view('sbv_forms', 'block_3', implode('+', $webform_types)) : t('Please enable the Views module to improve your Springboard experience.')) . 
+      (module_exists('views') ? views_embed_view('sbv_forms', 'block_3', implode('+', $webform_types)) : t('Please enable the Views module to improve your Springboard experience.')) .
       l(t('View All Forms'), 'admin/springboard/forms/all', array('attributes' => array('class' => array('more-link button more-button')))),
     'position' => 'column_left',
     'weight' => 2,

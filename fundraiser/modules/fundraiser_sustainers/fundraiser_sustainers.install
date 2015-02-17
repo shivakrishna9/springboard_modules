@@ -481,3 +481,22 @@ function fundraiser_sustainers_update_7007() {
     db_create_table('fundraiser_sustainers_charge_date', $schema);
   }
 }
+
+/**
+ * Rebuilds the registry to find the new Health Checks class.
+ */
+function fundraiser_sustainers_update_7008() {
+  registry_rebuild();
+}
+
+/**
+ * Update failing donations to the retry status.
+ */
+function fundraiser_sustainers_update_7009() {
+  db_update('fundraiser_sustainers')
+    ->fields(array('gateway_resp' => 'retry'))
+    ->condition('gateway_resp', 'failed')
+    ->condition('attempts', 3, '<')
+    ->condition('lock_id', 0)
+    ->execute();
+}

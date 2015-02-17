@@ -283,6 +283,31 @@ function salesforce_donation_fundraiser_donation_cancel($donation) {
 }
 
 /**
+ * Implements hook_fundraiser_sustainers_donation_fail().
+ *
+ * Recurring donations that fail should be exported to Salesforce with
+ * a new status.
+ */
+function salesforce_donation_fundraiser_sustainers_donation_fail($donation) {
+  $stages = variable_get('salesforce_donation_mapped_stages', salesforce_donation_default_stage_map());
+  foreach ($stages as $salesforce_name => $commerce_name) {
+    if ($commerce_name == 'failed') {
+       $stage = $salesforce_name;
+    }
+  }
+  if (isset($stage)) {
+    $donation->recurring->sf_stagename = $stage;
+    // If a failed stage is mapped, re-queue the failed transaction for export.
+    salesforce_genmap_send_object_to_queue('salesforce_donation', 'update', $donation->node, $donation->did, $donation, 'donation');
+  }
+  else {
+    $donation->recurring->sf_stagename = 'Donation failed, but stage could not be mapped.';
+    watchdog('salesforce_donation', 'Sustainer payment failure for donation @id will not be exported
+      to Salesforce because the failed order status has not been mapped to an appropriate Opportunity stage. If you wish to export failed sustainer payments you need to add a failed stage in Salesforce and map it on the Salesforce donation settings page.', array('@id' => $donation->did), WATCHDOG_DEBUG, l('Salesforce donation settings', 'admin/config/salesforce/salesforce-donation'));
+  }
+}
+
+/**
  * Implements hook_fundraiser_donation_delete().
  *
  * Donations that have been deleted should be added to the queue.
@@ -545,7 +570,7 @@ function salesforce_donation_salesforce_genmap_map_fields(stdClass $donation, En
         $fields['Transaction_Date_Time__c']  = gmdate('c', $refund->changed);
         $fields['CloseDate']  = gmdate('c', $refund->changed);
       }
-      $fields['StageName'] = 'Refunded';
+
       //$fields['Parent_Donation__c'] = '[Opportunity:donation:' . $donation->did . ']';
       $fields['Probability'] = 0;
       // Remove the donation id mapping if it's been set. No dupes for refunds!

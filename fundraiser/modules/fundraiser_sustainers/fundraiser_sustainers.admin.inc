@@ -49,23 +49,21 @@ function fundraiser_sustainers_admin_view($did) {
 
   if (arg(4) == 'recurring' && arg(6) == 'view') {
     $headers = array(
-      'Master ID',
       'Donation ID',
-      'User',
       'Amount',
       'Charge Date',
       'Sustainer Key',
-      'Status',
+      'Processed Status',
+      'Attempts',
     );
   }
   else {
     $headers = array(
-      'Master ID',
       'Donation ID',
-      'User',
       'Amount',
       'Charge Date',
-      'Status',
+      'Processed Status',
+      'Attempts',
     );
   }
   $rows = array();
@@ -79,15 +77,19 @@ function fundraiser_sustainers_admin_view($did) {
     foreach ($donation_set as $this_donation) {
       $this_donation = fundraiser_donation_get_donation($this_donation->did);
       $row = array();
-      $row[] = $this_donation->recurring->master_did;
-      $row[] = $this_donation->did;
-      $row[] = $this_donation->user->name;
+      if (user_access('view any commerce_order entity of bundle commerce_order')) {
+        $row[] = l($this_donation->did, 'admin/commerce/orders/' . $this_donation->did);
+      }
+      else {
+        $row[] = $this_donation->did;
+      }
       $row[] = '$' . money_format('%i', $this_donation->donation['amount']);
       $row[] = date('m/d/y', $this_donation->recurring->next_charge);
       if (arg(4) == 'recurring' && arg(6) == 'view') {
         $row[] = $this_donation->recurring->sustainer_key;
       }
-      $row[] = $this_donation->recurring->gateway_resp;
+      $row[] = $this_donation->status_label;
+      $row[] = $this_donation->recurring->attempts;
       $rows[] = $row;
     }
   }

@@ -1,3 +1,106 @@
+build:
+    environment:
+        timezone: 'US/Eastern'
+        php:
+            version: 5.4.30
+            ini:
+                allow_url_fopen: "On"
+                allow_url_include: "Off"
+                always_populate_raw_post_data: "Off"
+                apc.cache_by_default: "1"
+                apc.canonicalize: "1"
+                apc.coredump_unmap: "1"
+                apc.enable_cli: "0"
+                apc.enabled: "1"
+                apc.file_update_protection: "2"
+                apc.gc_ttl: "3600"
+                apc.include_once_override: "0"
+                apc.local_size: 128M
+                apc.localcache: "1"
+                apc.max_file_size: 128K
+                apc.mmap_file_mask: /apc.shm.XXXXXX
+                apc.num_files_hint: "1024"
+                apc.optimization: "0"
+                apc.report_autofilter: "0"
+                apc.rfc1867: "1"
+                apc.rfc1867_freq: "5"
+                apc.rfc1867_name: APC_UPLOAD_PROGRESS
+                apc.rfc1867_prefix: upload_
+                apc.shm_segments: "1"
+                apc.shm_size: 128M
+                apc.stat: "1"
+                apc.stat_ctime: "1"
+                apc.ttl: "7200"
+                apc.user_ttl: "7200"
+                apc.write_lock: "1"
+                cgi.fix_pathinfo: "1"
+                date.timezone: America/New_York
+                display_errors: "On"
+                error_reporting: E_ALL
+                max_execution_time: "300"
+                max_input_time: "300"
+                memory_limit: 256M
+                post_max_size: 32M
+                register_long_arrays: "Off"
+                session.cookie_httponly: "0"
+                short_open_tag: "Off"
+                upload_max_filesize: 32M
+        hosts:
+            local.dev: '127.0.0.1'
+        apache2:
+            modules: ['rewrite']
+            sites:
+                springboard:
+                    web_root: '.'
+                    host: 'local.dev'
+    dependencies:
+        before:
+            - 'cd'
+            - 'sudo composer self-update'
+            - 'if [ -n "${GITHUB_ACCESS_TOKEN}" ]; then composer global config github-oauth.github.com $GITHUB_ACCESS_TOKEN; fi'
+            - 'composer global require drush/drush:6.5.0'
+            - 'composer global require codeception/codeception:2.0.8'
+            - 'wget http://selenium-release.storage.googleapis.com/2.44/selenium-server-standalone-2.44.0.jar'
+            - "xvfb-run -a -s '-screen 0 1024x768x16' java -Xmx256m -jar selenium-server-standalone-2.44.0.jar >> artifacts/selenium.log 2>&1 &"
+            - 'mysql -uroot -e "CREATE DATABASE springboard"'
+            - 'sudo apt-get install ack-grep -y'
+    project_setup:
+        before:
+            - 'cd ~/build'
+            - 'find . -type f \( -name "*.php" -or -name "*.module" -or -name "*.install" -or -name "*.inc" -or -name "*.profile" -or -name "*.test" -or -name "*.theme" \) -print0 | xargs -0 -n1 -P8 php -l'
+            # Negate the return value of ack, because not finding these
+            # strings should be a pass.
+            - '! ack-grep -i "<<<<<<<|^=======$|>>>>>>>|dpm\(|dsm\(|var_dump\(|var_export\(|debug\(|dpq|dvm|dpr\(|kpr|dvr|kprint_r|dprint_r|devel_render|ddebug_backtrace|debug_backtrace|debug_print_backtrace|debug_to_file" --ignore-file=ext:txt,html,yml,js'
+            - 'cd'
+            - 'mv build repo'
+            - 'git clone --branch 7.x-4.x https://github.com/JacksonRiver/Springboard-Build.git build-tools'
+            - 'echo "projects[springboard][download][branch] = $SCRUTINIZER_SHA1" >> build-tools/springboard-core.make'
+            - 'drush make build-tools/springboard-mtsb.make build'
+            - 'cd ~/build'
+            - 'chmod -R 777 sites/default'
+            - "drush si sbsetup install_configure_form.update_status_module='array(FALSE,FALSE)' --account-name=admin --account-pass=admin --account-mail=david.barbarisi@jacksonriver.com --clean-url=1 --site-mail=david.barbarisi@jacksonriver.com --site-name=4x --db-url=mysql://root:@127.0.0.1/springboard --yes"
+            - 'drush -l http://local.dev sql-dump --result-file=../dump.sql'
+            - 'cd'
+            - 'git clone https://github.com/JacksonRiver/acceptance-tests.git acceptance-tests'
+            - 'cd acceptance-tests'
+            - 'cp codeception.yml.ci codeception.yml'
+            - 'cp tests/acceptance.suite.yml.ci tests/acceptance.suite.yml'
+
+    tests:
+        before:
+        override:
+            - 'cd ~/build'
+            - 'drush -l http://local.dev cc all'
+            - 'drush -l http://local.dev status'
+            - 'curl --max-time 20 http://local.dev | grep "DONATE"'
+            - 'drush -l http://local.dev en springboard_tests -y'
+            - 'drush -l http://local.dev sb-test-run springboard --xml=../artifacts'
+            # Should fail the build if any failures are found, I hope.
+            # Not working. Might not be needed.
+            # -bash: [: -neq: binary operator expected
+            # - 'if [ `cat ../artifacts/*.xml | grep -c "failure message"` -neq 0 ]; then exit 1; fi'
+            - 'cd ~/acceptance-tests && codecept run --html --xml'
+
 filter:
     paths:
         - '*.php'
@@ -6,6 +109,7 @@ filter:
         - '*.inc'
         - '*.profile'
         - '*.test'
+        - '*.theme'
     excluded_paths:
         - 'vendor/*'
         - 'app/*'
@@ -24,6 +128,7 @@ tools:
             - inc
             - profile
             - test
+            - theme
         filter:
             excluded_paths: ['vendor/*', 'app/*', 'web/*']
         config:
@@ -75,6 +180,7 @@ tools:
             - inc
             - profile
             - test
+            - theme
         filter:
             excluded_paths: ['vendor/*', 'app/*', 'web/*']
         config:
@@ -89,6 +195,7 @@ tools:
             - '*.inc'
             - '*.profile'
             - '*.test'
+            - '*.theme'
         filter:
             excluded_paths: ['vendor/*', 'app/*', 'web/*']
 
@@ -100,6 +207,7 @@ tools:
             - '*.inc'
             - '*.profile'
             - '*.test'
+            - '*.theme'
     php_pdepend:
         suffixes:
             - php
@@ -108,6 +216,7 @@ tools:
             - inc
             - profile
             - test
+            - theme
     php_sim: false
     php_changetracking: true
     php_analyzer:
@@ -128,6 +237,7 @@ tools:
             - inc
             - profile
             - test
+            - theme
 
     sensiolabs_security_checker: false
 
@@ -140,6 +250,7 @@ tools:
             - inc
             - profile
             - test
+            - theme
         filter:
             excluded_paths: ['vendor/*', 'app/*', 'web/*']
         config:

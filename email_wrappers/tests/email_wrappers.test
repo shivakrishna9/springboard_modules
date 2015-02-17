@@ -111,9 +111,6 @@ class EmailWrappersTestCase extends DrupalWebTestCase {
     // confirm email sent
     $mails = $this->drupalGetMails();
     foreach ($mails as $mail) {
-      // debug(print_r($mail, TRUE));
-      // debug($mail['subject']);
-      // debug($mail['body']);
       if ($mail['id'] == 'webform_submission') {
         $this->assertEqual($mail['subject'], 'Test webform custom subject', 'Email subject matches.');
 
