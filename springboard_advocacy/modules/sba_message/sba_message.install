@@ -39,8 +39,8 @@ function sba_message_install() {
     'module' => 'list',
     'settings' => array(
       'allowed_values' => array(
-        'Editable' => 'Editable',
         'Not editable' => 'Not editable',
+        'Editable' => 'Editable',
         'Editing is required' => 'Editing is required',
       ),
       'allowed_values_function' => '',
@@ -264,7 +264,7 @@ function sba_message_install() {
     'bundle' => 'sba_letter_to_target_message',
     'default_value' => array(
       0 => array(
-        'value' => 'Editable',
+        'value' => 'Not editable',
       ),
     ),
     'deleted' => 0,
@@ -515,7 +515,7 @@ function sba_message_install() {
     'bundle' => 'sba_letter_to_target_message',
     'default_value' => array(
       0 => array(
-        'value' => 'Not Editable',
+        'value' => 'Not editable',
       ),
     ),
     'deleted' => 0,
