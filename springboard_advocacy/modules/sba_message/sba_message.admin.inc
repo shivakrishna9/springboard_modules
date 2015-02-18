@@ -384,7 +384,6 @@ function _sba_message_api_save($sba_message, $is_new, $form_state) {
   if(!empty($values['data']['recipients'])) {
 
     $targets = json_decode($values['data']['recipients']);
-
     foreach ($targets as $target) {
       if (isset($target->id)) {
         $indvds[$target->id] = $target->id;

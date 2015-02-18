@@ -9,6 +9,7 @@
 
     Drupal.behaviors.AdvocacyMessageRecipients = {
         attach: function(context, settings) {
+            addButtonState();
 
             // Apply click event to the search form add links
             // Allows views search results to be appended to the recipients list
@@ -21,6 +22,7 @@
                     });
                 });
             });
+
             $('#quick-target', context).once('advocacy-add-quick-target', function() {
                 $('#views-exposed-form-targets-block-3 input, #views-exposed-form-targets-block-3 select').on('change', function(){
                     addButtonState();
