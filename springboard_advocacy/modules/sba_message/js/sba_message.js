@@ -23,13 +23,14 @@
                 });
             });
 
+            $('#views-exposed-form-targets-block-3 input, #views-exposed-form-targets-block-3 select').on('change', function(){
+                addButtonState();
+            })
+            $('#edit-combine').on('input', function() {
+                addButtonState();
+            })
+
             $('#quick-target', context).once('advocacy-add-quick-target', function() {
-                $('#views-exposed-form-targets-block-3 input, #views-exposed-form-targets-block-3 select').on('change', function(){
-                    addButtonState();
-                })
-                $('#edit-combine').on('input', function() {
-                    addButtonState();
-                })
                 $('input#quick-target').click(function() {
                     addQuickTarget();
                 });
@@ -43,10 +44,8 @@
         var empty = true;
         $('#views-exposed-form-targets-block-3 input, #views-exposed-form-targets-block-3 select').each(function(){
            if(this.name.indexOf('combine') != -1 || this.name.indexOf('gender') != -1 ||
-               this.name.indexOf('social')  != -1 || this.name.indexOf('district') != -1
-               || this.name.indexOf('combine') != -1) {
-
-               if ($(this).prop('checked')) {
+               this.name.indexOf('social')  != -1 || this.name.indexOf('district') != -1) {
+               if ($(this).prop('checked') || (this.name.indexOf('district') != -1 && $(this).val() != 'All')) {
                    hasValue = true;
                }
               if( this.name.indexOf('combine') != -1) {
@@ -55,11 +54,12 @@
                   }
               }
            } else {
-               if ($(this).prop('checked') || $(this).val() != 'All') {
+               if ((this.type=='checkbox' && $(this).prop('checked')) || (this.name == 'search_state' && $(this).val() != 'All')) {
                    empty = false;
                }
            }
         });
+        console.log(hasValue)
         if(hasValue == true || empty == true) {
             $('input#quick-target').prop("disabled", true).fadeTo(400, 0.6).css({'cursor': 'default'}).addClass('cancel-hover');
         }
