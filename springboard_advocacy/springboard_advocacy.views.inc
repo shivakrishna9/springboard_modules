@@ -435,7 +435,6 @@ function theme_springboard_advocacy_views_attachment_before($vars) {
       $ids_required = array_intersect(array_keys($vars['query']), $ids_required);
 
       if(!empty($ids_required)) {
-        unset($vars['query']);
         $vars['query']['ids'] = implode('|', $vars['view']->build_info['target_ids']);
       }
     }
