@@ -218,13 +218,14 @@ function springboard_advocacy_form_alter(&$form, &$form_state, $form_id) {
  */
 function springboard_advocacy_form_views_exposed_form_alter(&$form, &$form_state, $form_id)
 {
-
   if ($form_id == 'views_exposed_form' && $form_state['view']->name == 'targets') {
     $districted = array('views-exposed-form-targets-page-1', 'views-exposed-form-targets-block-3');
     if(isset($form['search_role_1'])) {
       $form['search_role_1']['#type'] = 'checkboxes';
     }
-
+    if(isset($form['search_party'])) {
+      $form['search_party']['#type'] = 'checkboxes';
+    }
     if(isset($form['search_gender'])) {
       $form['search_gender']['#type'] = 'checkboxes';
     }
@@ -249,7 +250,6 @@ function springboard_advocacy_form_views_exposed_form_alter(&$form, &$form_state
         $form['search_district_name']['#disabled'] = TRUE;
       }
       $form['search_district_name']['#options'] = springboard_advocacy_update_districts_field_options($form, $form_state);
-
     }
   }
 }

@@ -17,38 +17,108 @@
                 $(this, context).once('advocacy-add-target', function() {
                     $(this).click(function (e){
                         e.preventDefault();
-                        var count;
-
-                        if ($('.target-recipient').length !== 0) {
-                            count = parseInt($('.target-recipient').last().attr('id').replace('target-', '')) + 1;
-                        }
-                        else {
-                            count = 0;
-                        }
-
-                        var query = $(this).attr('href').replace('add-all?','').replace('add-target?','').split('&');
-                        var readable = buildReadableQuery(query);
-                        buildDivs(count, readable, query);
-                        window.topper = $('#springboard-advocacy-message-recipients').height();
-                        buildUpdateMessage();
-                        buildFormValue();
+                        addTargets('search', this);
                     });
                 });
+            });
+            $('#views-exposed-form-targets-block-3 input, #views-exposed-form-targets-block-3 select').on('change', function(){
+                addButtonState();
+            })
+            $('#edit-combine').on('input', function() {
+                addButtonState();
+            })
+            $('input#quick-target').click(function() {
+                addQuickTarget();
             });
         }
     };
 
-    function buildError(messages) {
-        alert = $('#advo-error-wrapper');
-        alert.text('');
-        alert.hide();
-        alert.css('margin-bottom', 0);
-        alert.parent().css({'float': 'left'});
-        $.each(messages, function(i, message) {
-            alert.append('<div>' + message + ' field is required </div>');
+    function addButtonState() {
+        var hasValue = false;
+        var empty = true;
+        $('#views-exposed-form-targets-block-3 input, #views-exposed-form-targets-block-3 select').each(function(){
+           if(this.name.indexOf('combine') != -1 || this.name.indexOf('gender') != -1 ||
+               this.name.indexOf('social')  != -1 || this.name.indexOf('district') != -1
+               || this.name.indexOf('combine') != -1) {
+
+               if ($(this).prop('checked')) {
+                   hasValue = true;
+               }
+              if( this.name.indexOf('combine') != -1) {
+                  if ($(this).val().length > 0) {
+                      hasValue = true;
+                  }
+              }
+           } else {
+               if ($(this).prop('checked') || $(this).val() != 'All') {
+                   empty = false;
+               }
+           }
         });
-        alert.fadeIn(500);
-        alert.fadeOut(5000);
+        if(hasValue == true || empty == true) {
+            $('input#quick-target').prop("disabled", true).fadeTo(400, 0.6).css({'cursor': 'default'}).addClass('cancel-hover');
+        }
+        else if(empty == false && hasValue == false) {
+            $('input#quick-target').prop("disabled", false).fadeTo(200, 1).css({'cursor': 'pointer'}).removeClass('cancel-hover');
+        }
+    }
+
+    function addQuickTarget() {
+        var item = [];
+        $('#views-exposed-form-targets-block-3 input, #views-exposed-form-targets-block-3 select').each(function(){
+            if ($(this).prop('checked') || (this.name == 'search_state')) {
+                name = this.name
+                if (name.indexOf('role') != -1) {
+                    name = 'role'
+                }
+                if (name.indexOf('party') != -1) {
+                    name = 'party'
+                }
+                if (name.indexOf('state') != -1) {
+                    name = 'state'
+                }
+                if (this.value != "All") {
+                    item.push(name + '=' + this.value);
+                }
+            }
+        });
+        addTargets('quick', item);
+    }
+
+    function addTargets(type, item) {
+        var count;
+
+        if ($('.target-recipient').length !== 0) {
+            count = parseInt($('.target-recipient').last().attr('id').replace('target-', '')) + 1;
+        }
+        else {
+            count = 0;
+        }
+        if (type == 'search') {
+            var query = $(item).attr('href').replace('add-all?', '').replace('add-target?', '').split('&');
+            console.log(query);
+        }
+        else {
+           query = item;
+        }
+        var readable = buildReadableQuery(query);
+        buildDivs(count, readable, query);
+        window.topper = $('#springboard-advocacy-message-recipients').height();
+        buildUpdateMessage();
+        buildFormValue();
+    }
+
+    function buildError(messages) {
+        err = $('#advo-error-wrapper');
+        err.text('');
+        err.hide();
+        err.css('margin-bottom', 0);
+        err.parent().css({'float': 'left'});
+        $.each(messages, function(i, message) {
+            err.append('<div>' + message + ' field is required </div>');
+        });
+        err.fadeIn(500);
+        err.fadeOut(5000);
     }
 
 
@@ -220,11 +290,12 @@
 
         finder = $('.springboard-advocacy-find-targets-container');
         actions = $('#sba-message-edit-form #edit-actions');
-        alert = $('#advo-error-wrapper');
-        alert.css({'display': 'inline-block', 'padding-left': '20px'});
+        err = $('#advo-error-wrapper');
+        err.css({'display': 'inline-block', 'padding-left': '20px'});
         $('#springboard-advocacy-message-form-container').append(finder);
         $(finder).append(actions);
-        $(actions).append(alert);
+        $(actions).append(err);
+        $('input#quick-target').prop("disabled", true).fadeTo(400, 0.6).css({'cursor': 'default'}).addClass('cancel-hover');
 
         // Editing a pre-existing message, append the recipients
         // to the recipients div using hidden form value
@@ -235,6 +306,9 @@
                     buildEditPage(recipients);
                 });
             });
+        }
+        else {
+            $('.sba-message-status').text('No recipients have been selected.').show('slow');
         }
 
         var offset = $('#springboard-advocacy-message-recipients').offset();

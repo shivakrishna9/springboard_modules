@@ -75,8 +75,12 @@
         <?php print $offset; ?>
       </div>
     <?php endif; ?>
+
     <div class="views-exposed-widget views-submit-button">
-      <?php print $button; ?>
+      <?php print $target_button; ?>
+    </div>
+    <div class="views-exposed-widget views-targets-button">
+      <input type="button" id="quick-target" name="" value="Quick Target" />
     </div>
     <?php if (!empty($reset_button)): ?>
       <div class="views-exposed-widget views-reset-button">

@@ -1196,377 +1196,6 @@ function springboard_advocacy_views_default_views() {
   );
   $handler->display->display_options['filters']['search_state']['expose']['reduce'] = TRUE;
 
-  /* Display: FInd Targets Block */
-  $handler = $view->new_display('block', 'FInd Targets Block', 'block_2');
-  $handler->display->display_options['defaults']['title'] = FALSE;
-  $handler->display->display_options['title'] = 'Find Targets';
-  $handler->display->display_options['display_description'] = 'For use in message add form';
-  $handler->display->display_options['defaults']['use_ajax'] = FALSE;
-  $handler->display->display_options['use_ajax'] = TRUE;
-  $handler->display->display_options['defaults']['filter_groups'] = FALSE;
-  $handler->display->display_options['defaults']['filters'] = FALSE;
-  /* Filter criterion: Advocacy: Search Multiple Target Fields by Keywords */
-  $handler->display->display_options['filters']['combine']['id'] = 'combine';
-  $handler->display->display_options['filters']['combine']['table'] = 'advocacy';
-  $handler->display->display_options['filters']['combine']['field'] = 'combine';
-  $handler->display->display_options['filters']['combine']['group'] = 1;
-  $handler->display->display_options['filters']['combine']['exposed'] = TRUE;
-  $handler->display->display_options['filters']['combine']['expose']['operator_id'] = 'combine_op';
-  $handler->display->display_options['filters']['combine']['expose']['description'] = 'First name, last name';
-  $handler->display->display_options['filters']['combine']['expose']['operator'] = 'combine_op';
-  $handler->display->display_options['filters']['combine']['expose']['identifier'] = 'combine';
-  $handler->display->display_options['filters']['combine']['expose']['remember_roles'] = array(
-    2 => '2',
-    1 => 0,
-    3 => 0,
-    4 => 0,
-    5 => 0,
-    6 => 0,
-  );
-  $handler->display->display_options['filters']['combine']['fields'] = array(
-    'first_name' => 'first_name',
-    'last_name' => 'last_name',
-  );
-  /* Filter criterion: Advocacy: Search By Level */
-  $handler->display->display_options['filters']['search_level']['id'] = 'search_level';
-  $handler->display->display_options['filters']['search_level']['table'] = 'advocacy';
-  $handler->display->display_options['filters']['search_level']['field'] = 'search_level';
-  $handler->display->display_options['filters']['search_level']['value'] = array(
-    'federal' => 'federal',
-  );
-  $handler->display->display_options['filters']['search_level']['group'] = 1;
-  $handler->display->display_options['filters']['search_level']['exposed'] = TRUE;
-  $handler->display->display_options['filters']['search_level']['expose']['operator_id'] = 'search_level_op';
-  $handler->display->display_options['filters']['search_level']['expose']['label'] = 'Search By Level';
-  $handler->display->display_options['filters']['search_level']['expose']['operator'] = 'search_level_op';
-  $handler->display->display_options['filters']['search_level']['expose']['identifier'] = 'search_level';
-  $handler->display->display_options['filters']['search_level']['expose']['multiple'] = TRUE;
-  $handler->display->display_options['filters']['search_level']['expose']['remember_roles'] = array(
-    2 => '2',
-    1 => 0,
-    3 => 0,
-    4 => 0,
-    5 => 0,
-    6 => 0,
-  );
-  $handler->display->display_options['filters']['search_level']['is_grouped'] = TRUE;
-  $handler->display->display_options['filters']['search_level']['group_info']['label'] = 'Level';
-  $handler->display->display_options['filters']['search_level']['group_info']['identifier'] = 'search_level';
-  $handler->display->display_options['filters']['search_level']['group_info']['widget'] = 'radios';
-  $handler->display->display_options['filters']['search_level']['group_info']['multiple'] = TRUE;
-  $handler->display->display_options['filters']['search_level']['group_info']['group_items'] = array(
-    1 => array(
-      'title' => 'Federal',
-      'operator' => 'in',
-      'value' => array(
-        'federal' => 'federal',
-        'all' => 0,
-        'state' => 0,
-      ),
-    ),
-  );
-  /* Filter criterion: Advocacy: Search By State */
-  $handler->display->display_options['filters']['search_state']['id'] = 'search_state';
-  $handler->display->display_options['filters']['search_state']['table'] = 'advocacy';
-  $handler->display->display_options['filters']['search_state']['field'] = 'search_state';
-  $handler->display->display_options['filters']['search_state']['value'] = array(
-    'AL' => 'AL',
-    'AK' => 'AK',
-    'AZ' => 'AZ',
-    'AR' => 'AR',
-    'CA' => 'CA',
-    'CO' => 'CO',
-    'CT' => 'CT',
-    'DE' => 'DE',
-    'DC' => 'DC',
-    'FL' => 'FL',
-    'GA' => 'GA',
-    'HI' => 'HI',
-    'ID' => 'ID',
-    'IL' => 'IL',
-    'IN' => 'IN',
-    'IA' => 'IA',
-    'KS' => 'KS',
-    'KY' => 'KY',
-    'LA' => 'LA',
-    'ME' => 'ME',
-    'MD' => 'MD',
-    'MA' => 'MA',
-    'MI' => 'MI',
-    'MN' => 'MN',
-    'MS' => 'MS',
-    'MO' => 'MO',
-    'MT' => 'MT',
-    'NE' => 'NE',
-    'NV' => 'NV',
-    'NH' => 'NH',
-    'NJ' => 'NJ',
-    'NM' => 'NM',
-    'NY' => 'NY',
-    'NC' => 'NC',
-    'ND' => 'ND',
-    'OH' => 'OH',
-    'OK' => 'OK',
-    'OR' => 'OR',
-    'PA' => 'PA',
-    'RI' => 'RI',
-    'SC' => 'SC',
-    'SD' => 'SD',
-    'TN' => 'TN',
-    'TX' => 'TX',
-    'UT' => 'UT',
-    'VT' => 'VT',
-    'VA' => 'VA',
-    'WA' => 'WA',
-    'WV' => 'WV',
-    'WI' => 'WI',
-    'WY' => 'WY',
-  );
-  $handler->display->display_options['filters']['search_state']['group'] = 1;
-  $handler->display->display_options['filters']['search_state']['exposed'] = TRUE;
-  $handler->display->display_options['filters']['search_state']['expose']['operator_id'] = 'search_state_op';
-  $handler->display->display_options['filters']['search_state']['expose']['label'] = 'State';
-  $handler->display->display_options['filters']['search_state']['expose']['operator'] = 'search_state_op';
-  $handler->display->display_options['filters']['search_state']['expose']['identifier'] = 'search_state';
-  $handler->display->display_options['filters']['search_state']['expose']['remember_roles'] = array(
-    2 => '2',
-    1 => 0,
-    3 => 0,
-    4 => 0,
-    5 => 0,
-    6 => 0,
-  );
-  $handler->display->display_options['filters']['search_state']['expose']['reduce'] = TRUE;
-  /* Filter criterion: Advocacy: Search By District */
-  $handler->display->display_options['filters']['search_district_name']['id'] = 'search_district_name';
-  $handler->display->display_options['filters']['search_district_name']['table'] = 'advocacy';
-  $handler->display->display_options['filters']['search_district_name']['field'] = 'search_district_name';
-  $handler->display->display_options['filters']['search_district_name']['group'] = 1;
-  $handler->display->display_options['filters']['search_district_name']['exposed'] = TRUE;
-  $handler->display->display_options['filters']['search_district_name']['expose']['operator_id'] = 'search_district_name_op';
-  $handler->display->display_options['filters']['search_district_name']['expose']['label'] = 'District';
-  $handler->display->display_options['filters']['search_district_name']['expose']['operator'] = 'search_district_name_op';
-  $handler->display->display_options['filters']['search_district_name']['expose']['identifier'] = 'search_district_name';
-  $handler->display->display_options['filters']['search_district_name']['expose']['remember_roles'] = array(
-    2 => '2',
-    1 => 0,
-    3 => 0,
-    4 => 0,
-    5 => 0,
-    6 => 0,
-  );
-  /* Filter criterion: Advocacy: Search By Branch */
-  $handler->display->display_options['filters']['search_role_1']['id'] = 'search_role_1';
-  $handler->display->display_options['filters']['search_role_1']['table'] = 'advocacy';
-  $handler->display->display_options['filters']['search_role_1']['field'] = 'search_role';
-  $handler->display->display_options['filters']['search_role_1']['group'] = 1;
-  $handler->display->display_options['filters']['search_role_1']['exposed'] = TRUE;
-  $handler->display->display_options['filters']['search_role_1']['expose']['operator_id'] = 'search_role_1_op';
-  $handler->display->display_options['filters']['search_role_1']['expose']['label'] = 'Search By Level';
-  $handler->display->display_options['filters']['search_role_1']['expose']['operator'] = 'search_role_1_op';
-  $handler->display->display_options['filters']['search_role_1']['expose']['identifier'] = 'search_role_1';
-  $handler->display->display_options['filters']['search_role_1']['expose']['multiple'] = TRUE;
-  $handler->display->display_options['filters']['search_role_1']['is_grouped'] = TRUE;
-  $handler->display->display_options['filters']['search_role_1']['group_info']['label'] = 'Branch';
-  $handler->display->display_options['filters']['search_role_1']['group_info']['identifier'] = 'search_role_1';
-  $handler->display->display_options['filters']['search_role_1']['group_info']['widget'] = 'radios';
-  $handler->display->display_options['filters']['search_role_1']['group_info']['multiple'] = TRUE;
-  $handler->display->display_options['filters']['search_role_1']['group_info']['group_items'] = array(
-    1 => array(
-      'title' => 'Executive',
-      'operator' => 'in',
-      'value' => array(
-        'FX|SX' => 'FX|SX',
-        'all' => 0,
-        'SR|SS' => 0,
-        'FR|FS' => 0,
-        'FS' => 0,
-        'FR' => 0,
-        'SR' => 0,
-        'SS' => 0,
-        'FX' => 0,
-        'SX' => 0,
-      ),
-    ),
-    2 => array(
-      'title' => 'House members',
-      'operator' => 'in',
-      'value' => array(
-        'FR' => 'FR',
-        'SR' => 'SR',
-        'all' => 0,
-        'SR|SS' => 0,
-        'FR|FS' => 0,
-        'FS' => 0,
-        'SS' => 0,
-        'FX|SX' => 0,
-        'FX' => 0,
-        'SX' => 0,
-      ),
-    ),
-    3 => array(
-      'title' => 'Senate Members',
-      'operator' => 'in',
-      'value' => array(
-        'FS' => 'FS',
-        'SS' => 'SS',
-        'all' => 0,
-        'SR|SS' => 0,
-        'FR|FS' => 0,
-        'FR' => 0,
-        'SR' => 0,
-        'FX|SX' => 0,
-        'FX' => 0,
-        'SX' => 0,
-      ),
-    ),
-  );
-  /* Filter criterion: Advocacy: Search By Party */
-  $handler->display->display_options['filters']['search_party']['id'] = 'search_party';
-  $handler->display->display_options['filters']['search_party']['table'] = 'advocacy';
-  $handler->display->display_options['filters']['search_party']['field'] = 'search_party';
-  $handler->display->display_options['filters']['search_party']['group'] = 1;
-  $handler->display->display_options['filters']['search_party']['exposed'] = TRUE;
-  $handler->display->display_options['filters']['search_party']['expose']['operator_id'] = 'search_party_op';
-  $handler->display->display_options['filters']['search_party']['expose']['label'] = 'Search By Party';
-  $handler->display->display_options['filters']['search_party']['expose']['operator'] = 'search_party_op';
-  $handler->display->display_options['filters']['search_party']['expose']['identifier'] = 'search_party';
-  $handler->display->display_options['filters']['search_party']['expose']['multiple'] = TRUE;
-  $handler->display->display_options['filters']['search_party']['is_grouped'] = TRUE;
-  $handler->display->display_options['filters']['search_party']['group_info']['label'] = 'Party';
-  $handler->display->display_options['filters']['search_party']['group_info']['identifier'] = 'search_party';
-  $handler->display->display_options['filters']['search_party']['group_info']['widget'] = 'radios';
-  $handler->display->display_options['filters']['search_party']['group_info']['multiple'] = TRUE;
-  $handler->display->display_options['filters']['search_party']['group_info']['group_items'] = array(
-    1 => array(
-      'title' => 'Democrat',
-      'operator' => 'in',
-      'value' => array(
-        'D' => 'D',
-        'all' => 0,
-        'R' => 0,
-        'I' => 0,
-        'O' => 0,
-      ),
-    ),
-    2 => array(
-      'title' => 'Republican',
-      'operator' => 'in',
-      'value' => array(
-        'R' => 'R',
-        'all' => 0,
-        'D' => 0,
-        'I' => 0,
-        'O' => 0,
-      ),
-    ),
-    3 => array(
-      'title' => 'Other',
-      'operator' => 'in',
-      'value' => array(
-        'O' => 'O',
-        'all' => 0,
-        'D' => 0,
-        'R' => 0,
-        'I' => 0,
-      ),
-    ),
-  );
-  /* Filter criterion: Advocacy: Search By Gender */
-  $handler->display->display_options['filters']['search_gender']['id'] = 'search_gender';
-  $handler->display->display_options['filters']['search_gender']['table'] = 'advocacy';
-  $handler->display->display_options['filters']['search_gender']['field'] = 'search_gender';
-  $handler->display->display_options['filters']['search_gender']['value'] = array(
-    'M' => 'M',
-    'F' => 'F',
-  );
-  $handler->display->display_options['filters']['search_gender']['group'] = 1;
-  $handler->display->display_options['filters']['search_gender']['exposed'] = TRUE;
-  $handler->display->display_options['filters']['search_gender']['expose']['operator_id'] = 'search_gender_op';
-  $handler->display->display_options['filters']['search_gender']['expose']['label'] = 'Search By Gender';
-  $handler->display->display_options['filters']['search_gender']['expose']['operator'] = 'search_gender_op';
-  $handler->display->display_options['filters']['search_gender']['expose']['identifier'] = 'search_gender';
-  $handler->display->display_options['filters']['search_gender']['expose']['multiple'] = TRUE;
-  $handler->display->display_options['filters']['search_gender']['expose']['remember_roles'] = array(
-    2 => '2',
-    1 => 0,
-    3 => 0,
-    4 => 0,
-    5 => 0,
-  );
-  $handler->display->display_options['filters']['search_gender']['expose']['reduce'] = TRUE;
-  $handler->display->display_options['filters']['search_gender']['is_grouped'] = TRUE;
-  $handler->display->display_options['filters']['search_gender']['group_info']['label'] = 'Search By Gender';
-  $handler->display->display_options['filters']['search_gender']['group_info']['identifier'] = 'search_gender';
-  $handler->display->display_options['filters']['search_gender']['group_info']['multiple'] = TRUE;
-  $handler->display->display_options['filters']['search_gender']['group_info']['group_items'] = array(
-    1 => array(
-      'title' => 'Male',
-      'operator' => 'in',
-      'value' => array(
-        'F' => 'F',
-        'all' => 0,
-        'M' => 0,
-        'O' => 0,
-      ),
-    ),
-    2 => array(
-      'title' => 'Female',
-      'operator' => 'in',
-      'value' => array(
-        'F' => 'F',
-        'all' => 0,
-        'M' => 0,
-        'O' => 0,
-      ),
-    ),
-    3 => array(
-      'title' => 'Other',
-      'operator' => 'in',
-      'value' => array(
-        'O' => 'O',
-        'all' => 0,
-        'M' => 0,
-        'F' => 0,
-      ),
-    ),
-  );
-  /* Filter criterion: Advocacy: Search By Social Media Presence */
-  $handler->display->display_options['filters']['search_social']['id'] = 'search_social';
-  $handler->display->display_options['filters']['search_social']['table'] = 'advocacy';
-  $handler->display->display_options['filters']['search_social']['field'] = 'search_social';
-  $handler->display->display_options['filters']['search_social']['exposed'] = TRUE;
-  $handler->display->display_options['filters']['search_social']['expose']['operator_id'] = 'search_social_op';
-  $handler->display->display_options['filters']['search_social']['expose']['label'] = 'Search By Social Media Presence';
-  $handler->display->display_options['filters']['search_social']['expose']['operator'] = 'search_social_op';
-  $handler->display->display_options['filters']['search_social']['expose']['identifier'] = 'search_social';
-  $handler->display->display_options['filters']['search_social']['expose']['multiple'] = TRUE;
-  $handler->display->display_options['filters']['search_social']['is_grouped'] = TRUE;
-  $handler->display->display_options['filters']['search_social']['group_info']['label'] = 'Social Media';
-  $handler->display->display_options['filters']['search_social']['group_info']['identifier'] = 'search_social';
-  $handler->display->display_options['filters']['search_social']['group_info']['widget'] = 'radios';
-  $handler->display->display_options['filters']['search_social']['group_info']['multiple'] = TRUE;
-  $handler->display->display_options['filters']['search_social']['group_info']['group_items'] = array(
-    1 => array(
-      'title' => 'Facebook',
-      'operator' => 'in',
-      'value' => array(
-        'facebook' => 'facebook',
-        'all' => 0,
-        'twitter' => 0,
-      ),
-    ),
-    2 => array(
-      'title' => 'Twitter',
-      'operator' => 'in',
-      'value' => array(
-        'twitter' => 'twitter',
-        'all' => 0,
-        'facebook' => 0,
-      ),
-    ),
-  );
-
   /* Display: Alt FInd Targets Block */
   $handler = $view->new_display('block', 'Alt FInd Targets Block', 'block_3');
   $handler->display->display_options['defaults']['title'] = FALSE;
@@ -1574,6 +1203,10 @@ function springboard_advocacy_views_default_views() {
   $handler->display->display_options['display_description'] = 'For use in message add form';
   $handler->display->display_options['defaults']['use_ajax'] = FALSE;
   $handler->display->display_options['use_ajax'] = TRUE;
+  $handler->display->display_options['defaults']['exposed_form'] = FALSE;
+  $handler->display->display_options['exposed_form']['type'] = 'basic';
+  $handler->display->display_options['exposed_form']['options']['submit_button'] = 'Search';
+  $handler->display->display_options['exposed_form']['options']['autosubmit_hide'] = FALSE;
   $handler->display->display_options['defaults']['style_plugin'] = FALSE;
   $handler->display->display_options['style_plugin'] = 'table';
   $handler->display->display_options['style_options']['columns'] = array(
@@ -1808,6 +1441,14 @@ function springboard_advocacy_views_default_views() {
   $handler->display->display_options['filters']['search_role_1']['id'] = 'search_role_1';
   $handler->display->display_options['filters']['search_role_1']['table'] = 'advocacy';
   $handler->display->display_options['filters']['search_role_1']['field'] = 'search_role';
+  $handler->display->display_options['filters']['search_role_1']['value'] = array(
+    'FS' => 'FS',
+    'FR' => 'FR',
+    'SR' => 'SR',
+    'SS' => 'SS',
+    'FX' => 'FX',
+    'SX' => 'SX',
+  );
   $handler->display->display_options['filters']['search_role_1']['group'] = 1;
   $handler->display->display_options['filters']['search_role_1']['exposed'] = TRUE;
   $handler->display->display_options['filters']['search_role_1']['expose']['operator_id'] = 'search_role_1_op';
@@ -1815,7 +1456,14 @@ function springboard_advocacy_views_default_views() {
   $handler->display->display_options['filters']['search_role_1']['expose']['operator'] = 'search_role_1_op';
   $handler->display->display_options['filters']['search_role_1']['expose']['identifier'] = 'search_role_1';
   $handler->display->display_options['filters']['search_role_1']['expose']['multiple'] = TRUE;
-  $handler->display->display_options['filters']['search_role_1']['is_grouped'] = TRUE;
+  $handler->display->display_options['filters']['search_role_1']['expose']['remember_roles'] = array(
+    2 => 0,
+    1 => 0,
+    3 => 0,
+    4 => 0,
+    5 => 0,
+  );
+  $handler->display->display_options['filters']['search_role_1']['expose']['reduce'] = TRUE;
   $handler->display->display_options['filters']['search_role_1']['group_info']['label'] = 'Branch';
   $handler->display->display_options['filters']['search_role_1']['group_info']['identifier'] = 'search_role_1';
   $handler->display->display_options['filters']['search_role_1']['group_info']['widget'] = 'radios';
@@ -1922,6 +1570,11 @@ function springboard_advocacy_views_default_views() {
   $handler->display->display_options['filters']['search_party']['id'] = 'search_party';
   $handler->display->display_options['filters']['search_party']['table'] = 'advocacy';
   $handler->display->display_options['filters']['search_party']['field'] = 'search_party';
+  $handler->display->display_options['filters']['search_party']['value'] = array(
+    'D' => 'D',
+    'R' => 'R',
+    'O' => 'O',
+  );
   $handler->display->display_options['filters']['search_party']['group'] = 1;
   $handler->display->display_options['filters']['search_party']['exposed'] = TRUE;
   $handler->display->display_options['filters']['search_party']['expose']['operator_id'] = 'search_party_op';
@@ -1929,7 +1582,14 @@ function springboard_advocacy_views_default_views() {
   $handler->display->display_options['filters']['search_party']['expose']['operator'] = 'search_party_op';
   $handler->display->display_options['filters']['search_party']['expose']['identifier'] = 'search_party';
   $handler->display->display_options['filters']['search_party']['expose']['multiple'] = TRUE;
-  $handler->display->display_options['filters']['search_party']['is_grouped'] = TRUE;
+  $handler->display->display_options['filters']['search_party']['expose']['remember_roles'] = array(
+    2 => 0,
+    1 => 0,
+    3 => 0,
+    4 => 0,
+    5 => 0,
+  );
+  $handler->display->display_options['filters']['search_party']['expose']['reduce'] = TRUE;
   $handler->display->display_options['filters']['search_party']['group_info']['label'] = 'Party';
   $handler->display->display_options['filters']['search_party']['group_info']['identifier'] = 'search_party';
   $handler->display->display_options['filters']['search_party']['group_info']['widget'] = 'radios';

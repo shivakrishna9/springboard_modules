@@ -429,8 +429,15 @@ function springboard_advocacy_views_pre_render(&$view) {
 
 function theme_springboard_advocacy_views_attachment_before($vars) {
   if (!empty($vars['query'])) {
+
     if (!empty($vars['view']->build_info['target_ids'])) {
-      $vars['query']['ids'] = implode('|', $vars['view']->build_info['target_ids']);
+      $ids_required =  array('fields', 'gender', 'district_name', 'gender', 'social');
+      $ids_required = array_intersect(array_keys($vars['query']), $ids_required);
+
+      if(!empty($ids_required)) {
+        unset($vars['query']);
+        $vars['query']['ids'] = implode('|', $vars['view']->build_info['target_ids']);
+      }
     }
     if (!empty($vars['total_rows'])) {
       $output = '<div id="advocacy-attachment-before"><div id ="advocacy-attachment-before-rows">Total Rows: ' . $vars['total_rows'] . '</div>';
@@ -495,5 +502,17 @@ function springboard_advocacy_preprocess_views_view_table(&$vars)
         $vars['header'][$field] = l($label, $_GET['q'], $link_options);
       }
     }
+  }
+}
+
+/**
+ * Override springboard theme's conversion of button text.
+ * @param $vars
+ * @param $hook
+ */
+function springboard_advocacy_preprocess_views_exposed_form(&$vars, $hook) {
+  if($vars['theme_hook_suggestion'] == 'views_exposed_form__targets') {
+    unset($vars['form']['submit']['#printed']);
+    $vars['target_button'] = drupal_render($vars['form']['submit']);
   }
 }
