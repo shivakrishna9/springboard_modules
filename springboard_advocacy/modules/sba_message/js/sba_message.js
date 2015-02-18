@@ -26,10 +26,18 @@
             $('#views-exposed-form-targets-block-3 input, #views-exposed-form-targets-block-3 select').on('change', function(){
                 addButtonState();
             })
-            $('#edit-combine').on('input', function() {
-                addButtonState();
-            })
 
+            var combine, oldVal;
+            $('#edit-combine').on('keyup', function() {
+                clearTimeout(combine);
+                var newVal = $(this).val();
+                if (oldVal != newVal) {
+                    combine = setTimeout(function() {
+                        oldVal = newVal;
+                        addButtonState();
+                    }, 400);
+                }
+            })
             $('#quick-target', context).once('advocacy-add-quick-target', function() {
                 $('input#quick-target').click(function() {
                     addQuickTarget();
@@ -59,7 +67,7 @@
                }
            }
         });
-        console.log(hasValue)
+
         if(hasValue == true || empty == true) {
             $('input#quick-target').prop("disabled", true).fadeTo(400, 0.6).css({'cursor': 'default'}).addClass('cancel-hover');
         }
