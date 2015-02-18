@@ -21,15 +21,18 @@
                     });
                 });
             });
-            $('#views-exposed-form-targets-block-3 input, #views-exposed-form-targets-block-3 select').on('change', function(){
-                addButtonState();
-            })
-            $('#edit-combine').on('input', function() {
-                addButtonState();
-            })
-            $('input#quick-target').click(function() {
-                addQuickTarget();
+            $('#quick-target', context).once('advocacy-add-quick-target', function() {
+                $('#views-exposed-form-targets-block-3 input, #views-exposed-form-targets-block-3 select').on('change', function(){
+                    addButtonState();
+                })
+                $('#edit-combine').on('input', function() {
+                    addButtonState();
+                })
+                $('input#quick-target').click(function() {
+                    addQuickTarget();
+                });
             });
+
         }
     };
 
@@ -82,6 +85,7 @@
                 }
             }
         });
+        console.log(item);
         addTargets('quick', item);
     }
 
