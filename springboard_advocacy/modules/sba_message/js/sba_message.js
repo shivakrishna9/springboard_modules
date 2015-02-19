@@ -9,7 +9,6 @@
 
     Drupal.behaviors.AdvocacyMessageRecipients = {
         attach: function(context, settings) {
-            addButtonState();
 
             // Apply click event to the search form add links
             // Allows views search results to be appended to the recipients list
@@ -23,9 +22,14 @@
                 });
             });
 
-            $('#views-exposed-form-targets-block-3 input, #views-exposed-form-targets-block-3 select').on('change', function(){
-                addButtonState();
-            })
+            $('select[name="search_district_name"]', context).once('advocacy-district-reloaded', function() {
+                elementStates(this);
+                $('#views-exposed-form-targets-block-3 input, #views-exposed-form-targets-block-3 select').on('change', function(){
+                    if(this.type != 'button' && this.type !='hidden') {
+                        elementStates(this);
+                    }
+                });
+            });
 
             var combine, oldVal;
             $('#edit-combine').on('keyup', function() {
@@ -34,45 +38,102 @@
                 if (oldVal != newVal) {
                     combine = setTimeout(function() {
                         oldVal = newVal;
-                        addButtonState();
+                        elementStates(this);
                     }, 400);
                 }
-            })
+            });
+
             $('#quick-target', context).once('advocacy-add-quick-target', function() {
+                elementStates(this);
                 $('input#quick-target').click(function() {
                     addQuickTarget();
                 });
             });
-
         }
     };
 
-    function addButtonState() {
-        var hasValue = false;
-        var empty = true;
-        $('#views-exposed-form-targets-block-3 input, #views-exposed-form-targets-block-3 select').each(function(){
-           if(this.name.indexOf('combine') != -1 || this.name.indexOf('gender') != -1 ||
-               this.name.indexOf('social')  != -1 || this.name.indexOf('district') != -1) {
-               if ($(this).prop('checked') || (this.name.indexOf('district') != -1 && $(this).val() != 'All')) {
-                   hasValue = true;
+    function elementStates(item) {
+
+        var notGroupable = false;
+        var groupable = false;
+        var hasDistrict = false;
+        var hasState = false;
+        var combine = $('input#edit-combine');
+        var district = $('select[name="search_district_name"]');
+        var state = $('select[name="search_state"]');
+        var allBoxes = $('#views-exposed-form-targets-block-3 input[type="checkbox"]');
+        var allInputs =$('#views-exposed-form-targets-block-3 input, #views-exposed-form-targets-block-3 select');
+
+        allInputs.each(function(){
+
+            var nm = this.name;
+            if(nm.indexOf('combine') != -1 || nm.indexOf('gender') != -1 ||
+               nm.indexOf('social')  != -1 || nm.indexOf('district') != -1) {
+               if ($(this).prop('checked') || (nm.indexOf('district') != -1 && district.val() != 'All')) {
+                   notGroupable = true;
+                   if (nm.indexOf('district') != -1) {
+                       hasDistrict = true;
+                   }
                }
-              if( this.name.indexOf('combine') != -1) {
+               if(nm.indexOf('district') != -1 && district.val() == 'All') {
+                   hasDistrict = false;
+               }
+
+               if( nm.indexOf('combine') != -1) {
                   if ($(this).val().length > 0) {
-                      hasValue = true;
+                      notGroupable = true;
                   }
               }
            } else {
-               if ((this.type=='checkbox' && $(this).prop('checked')) || (this.name == 'search_state' && $(this).val() != 'All')) {
-                   empty = false;
+               if ((this.type=='checkbox' && $(this).prop('checked'))) {
+                   groupable = true;
+               }
+               if((nm == 'search_state' && $(this).val() != 'All')) {
+                   hasState = true;
                }
            }
         });
+        //
 
-        if(hasValue == true || empty == true) {
+
+        if(hasDistrict == true){
+            allBoxes.each(function(){
+                $(this).prop('disabled', true);
+                $(this).closest('.views-exposed-widget').addClass('disabled');
+            })
+            combine.prop('disabled', true);
+            combine.closest('.views-exposed-widget').addClass('disabled');
+
+        }
+
+        if(hasDistrict == false) {
+            allBoxes.each(function(){
+                if($(this).prop('disabled') == true) {
+                    $(this).prop('disabled', false);
+                    $(this).closest('.views-exposed-widget').removeClass('disabled');
+                }
+            });
+            combine.prop('disabled', false);
+            combine.closest('.views-exposed-widget').removeClass('disabled');
+            if(state.val() != "All" && groupable == false && notGroupable == false) {
+                district.prop('disabled', false);
+                //jquery uniform
+                $('#edit-search-district-name-wrapper div.disabled').removeClass('disabled');
+            }
+            else {
+                district.prop('disabled', true);
+                //jquery uniform
+                $('#edit-search-district-name-wrapper div.selector').addClass('disabled');
+
+            }
+        }
+
+        if(notGroupable == true || hasDistrict == true || (groupable == false && hasState == false)) {
             $('input#quick-target').prop("disabled", true).fadeTo(400, 0.6).css({'cursor': 'default'}).addClass('cancel-hover');
         }
-        else if(empty == false && hasValue == false) {
-            $('input#quick-target').prop("disabled", false).fadeTo(200, 1).css({'cursor': 'pointer'}).removeClass('cancel-hover');
+
+        if((groupable == true || hasState == true)  && hasDistrict == false && notGroupable == false) {
+            $('input#quick-target').prop("disabled", false).fadeTo(200, 1).css({'cursor': 'not-allowed'}).removeClass('cancel-hover');
         }
     }
 

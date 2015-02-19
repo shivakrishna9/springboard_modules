@@ -20,8 +20,8 @@
     top: 0;
     width: 30%;
     border:1px solid #ccc;
-    border-radius: 2em;
-    box-shadow: 5px 5px 4px -1px #ccc;
+    border-radius: 1.5em;
+    box-shadow: -5px -8px 3px -5px #ccc;
 }
 
 #springboard-advocacy-message-recipients h3 {
@@ -130,7 +130,7 @@
 }
 .springboard-advocacy-find-targets  div.views-exposed-widget.views-targets-button input {
     margin: 10px 10px 12px 0px;
-    width: 90   px;
+    width: 90px;
     padding: 4px 6px;
 
 }
@@ -163,6 +163,11 @@
     display: inline-block;
     margin-right: 10px;
 
+}
+
+
+.springboard-advocacy-find-targets .views-exposed-widget.disabled {
+    color: #ccc;
 }
 
 
