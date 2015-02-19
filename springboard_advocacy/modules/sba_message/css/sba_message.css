@@ -9,6 +9,7 @@
     width:100%;
     float:right;
 }
+
 #springboard-advocacy-message-recipients {
     background: #fcfcfc;
     margin-left: 1em;
@@ -64,13 +65,7 @@
    padding:1em;
 }
 
-.springboard-advocacy-find-targets .views-exposed-widget {
-    vertical-align: top;
-    margin-right: 2.5em;
-    margin-top: 1em;
-}
-
-.springboard-advocacy-find-targets  #edit-combine-wrapper {
+.springboard-advocacy-find-targets  [id*=search_combine] {
     display: block;
     float:left;
     min-width: 40%;
@@ -82,38 +77,36 @@
     margin-top: 0;
 }
 
-.springboard-advocacy-find-targets #edit-search-district-name-wrapper select,
-.springboard-advocacy-find-targets #edit-search-state {
+.springboard-advocacy-find-targets state-district-wrapper select {
     width: 160px;
 }
 
-.springboard-advocacy-find-targets #state-district-wrapper #edit-search-district-name-wrapper
-{
-    display:block;
-}
 
-.springboard-advocacy-find-targets #state-district-wrapper,
-.springboard-advocacy-find-targets  #edit-search-role-1-wrapper,
-.springboard-advocacy-find-targets  #edit-search-party-wrapper,
-.springboard-advocacy-find-targets #edit-search-gender-wrapper,
-.springboard-advocacy-find-targets  #edit-search-social-wrapper
+.springboard-advocacy-find-targets div[id$=wrapper]
 {
     float:left;
     display: block;
 }
+.springboard-advocacy-find-targets #state-district-wrapper div[id*=search_state],
+.springboard-advocacy-find-targets #state-district-wrapper div[id*=search_district]
 
-.springboard-advocacy-find-targets  #edit-search-party-wrapper{
-    clear:right;
-}
-
-.springboard-advocacy-find-targets  #edit-search-gender-wrapper
 {
+float:none;
+}
+.springboard-advocacy-find-targets  div[id*=search_party] {
+    clear:right;
 }
 
 .springboard-advocacy-find-targets  .control-group
 {
     margin-bottom: 0;
 }
+.springboard-advocacy-find-targets .views-exposed-widget {
+    vertical-align: top;
+    margin-right: 2.5em;
+    margin-top: 1em;
+}
+
 .springboard-advocacy-find-targets .views-exposed-widget label {
   margin: 0;
 }
@@ -142,12 +135,17 @@
 .springboard-advocacy-find-targets  div.views-exposed-widget.views-submit-button input {
   width: 85px;
 }
+
+.springboard-advocacy-find-targets .views-exposed-widget.disabled {
+    color: #ccc;
+}
+
 /* adjust the recipients box position when admin menu is in use. */
 #springboard-advocacy-message-recipients.recipients-fixed {
     margin-top: 44px;
 }
 
-#not-saved {
+#springboard-advocacy-message-recipients #not-saved {
     float: left;
     top: 10px;
     padding-left: 10px;
@@ -155,7 +153,7 @@
 
 #advo-error-wrapper {
     display:inline-block;
-   padding-left:20px;
+    padding-left:20px;
 }
 
 #springboard-advocacy-message-form-container #edit-field-subject-editable .control-group,
@@ -165,12 +163,7 @@
 
 }
 
-
-.springboard-advocacy-find-targets .views-exposed-widget.disabled {
-    color: #ccc;
-}
-
-
+/* override springboard theme*/
 /* ie 9 hack */
 input[type="submit"].cancel-hover  {
     background: url(data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiA/Pgo8c3ZnIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgdmlld0JveD0iMCAwIDEgMSIgcHJlc2VydmVBc3BlY3RSYXRpbz0ibm9uZSI+CiAgPGxpbmVhckdyYWRpZW50IGlkPSJncmFkLXVjZ2ctZ2VuZXJhdGVkIiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSIgeDE9IjAlIiB5MT0iMCUiIHgyPSIwJSIgeTI9IjEwMCUiPgogICAgPHN0b3Agb2Zmc2V0PSIwJSIgc3RvcC1jb2xvcj0iIzMxODJiMiIgc3RvcC1vcGFjaXR5PSIxIi8+CiAgICA8c3RvcCBvZmZzZXQ9IjEwMCUiIHN0b3AtY29sb3I9IiMwMjY1YTAiIHN0b3Atb3BhY2l0eT0iMSIvPgogICAgPHN0b3Agb2Zmc2V0PSIxMDAlIiBzdG9wLWNvbG9yPSIjN2RiOWU4IiBzdG9wLW9wYWNpdHk9IjEiLz4KICA8L2xpbmVhckdyYWRpZW50PgogIDxyZWN0IHg9IjAiIHk9IjAiIHdpZHRoPSIxIiBoZWlnaHQ9IjEiIGZpbGw9InVybCgjZ3JhZC11Y2dnLWdlbmVyYXRlZCkiIC8+Cjwvc3ZnPg==)!important;
