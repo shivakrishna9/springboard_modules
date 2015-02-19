@@ -115,35 +115,60 @@ function springboard_advocacy_settings_form() {
 
 /**
  * Page callback for the advocacy dashboard.
+ *
+ * Embeds and themes various views landing pages.
  */
 function springboard_advocacy_dashboard($path) {
   switch($path) {
 
     case 'alerts':
-      $views = array(
-        'sba_alerts' => array(
-          'header' => t('Site alerts'),
-          'content' => views_embed_view('sba_alerts', 'block_1'),
-          'create_link' => array('title' => t('Create a new alert'), 'href' => 'node/add/springboard-letter'),
-          'manage_link' => array('title' => t('Manage Custom Targets'), 'href' => 'admin/springboard/advocacy/custom-targets'),
-
-          'viewmore_link' => array('title' => t('View all'), 'href' => 'admin/springboard/advocacy/alerts/all'),
-        ),
-      );
+      $view = views_get_view('sba_alerts');
+      if($view && isset($view->display['block_1'])) {
+        $views = array(
+          'sba_alerts' => array(
+            'header' => t('Site alerts'),
+            'content' => views_embed_view('sba_alerts', 'block_1'),
+            'create_link' => array('title' => t('Create a new alert'), 'href' => 'node/add/springboard-letter'),
+            'manage_link' => array('title' => t('Manage Custom Targets'), 'href' => 'admin/springboard/advocacy/custom-targets'),
+            'viewmore_link' => array('title' => t('View all'), 'href' => 'admin/springboard/advocacy/alerts/all'),
+          ),
+        );
+      }
+      else {
+        $views = array(
+          'sba_alerts' => array(
+            'header' => t('Site alerts'),
+            'content' => '<div>Alerts view or view display "block_1" not found.</div>',
+          ),
+        );
+      }
       break;
 
     case 'alerts/all':
-      $views = array(
-        'sba_alerts' => array(
-          'header' => t('All Site alerts'),
-          'content' => views_embed_view('sba_alerts', 'block_2'),
-          'create_link' => array('title' => t('Create a new alert'), 'href' => 'node/add/springboard-letter'),
-          'manage_link' => array('title' => t('Manage Custom Targets'), 'href' => 'admin/springboard/advocacy/targets/custom-targets'),
-        ),
-      );
+      $view = views_get_view('sba_alerts');
+      if($view && isset($view->display['block_2'])) {
+        $views = array(
+          'sba_alerts' => array(
+            'header' => t('All Site alerts'),
+            'content' => views_embed_view('sba_alerts', 'block_2'),
+            'create_link' => array('title' => t('Create a new alert'), 'href' => 'node/add/springboard-letter'),
+            'manage_link' => array('title' => t('Manage Custom Targets'), 'href' => 'admin/springboard/advocacy/targets/custom-targets'),
+          ),
+        );
+      }
+      else {
+        $views = array(
+          'sba_alerts' => array(
+            'header' => t('All Site alerts'),
+            'content' => '<div>Alerts view or view display "block_2" not found.</div>',
+          ),
+        );
+      }
       break;
 
     case 'custom-targets':
+      $view = views_get_view('targets');
+      if($view && isset($view->display['block_1'])) {
       $views = array(
         'sba_targets' => array(
           'header' => t('Custom Targets'),
@@ -151,20 +176,48 @@ function springboard_advocacy_dashboard($path) {
           'create_link' => array('title' => t('Create a new target'), 'href' => 'admin/springboard/advocacy/targets/custom-targets/add'),
         ),
       );
+      }
+      else {
+        $views = array(
+          'sba_targets' => array(
+            'header' => t('Custom Targets'),
+            'content' => '<div>Target view or view display "block_1" not found.</div>',
+          ),
+        );
+      }
 
       break;
 
     case ($path == arg(1)):
       $message_types = variable_get('sba_message_node_types', array());
       $node = node_load($path);
-      $views = array(
-        'sba_messages_node' => array(
-          'header' => t('Messages'),
-          'content' => views_embed_view('sba_messages_node', 'block_1', $path),
-          'create_link' => array('title' => t('Create a new message'), 'href' => 'node/' . arg(1) . '/messages/add/' . $message_types[$node->type]),
-        ),
-      );
-
+      if(isset($message_types[$node->type])) {
+        $view = views_get_view('sba_messages_node');
+        if ($view && isset($view->display['block_1'])) {
+          $views = array(
+            'sba_messages_node' => array(
+              'header' => t('Messages'),
+              'content' => views_embed_view('sba_messages_node', 'block_1', $path),
+              'create_link' => array('title' => t('Create a new message'), 'href' => 'node/' . arg(1) . '/messages/add/' . $message_types[$node->type]),
+            ),
+          );
+        } else {
+          $views = array(
+            'sba_targets' => array(
+              'header' => t('Messages'),
+              'content' => '<div>Message view or view display "block_1" not found.</div>',
+            ),
+          );
+        }
+      }
+      else {
+        $views = array(
+          'sba_targets' => array(
+            'header' => t('Messages'),
+            'content' => '<div>There was a problem locating the message type for this node type.</div>',
+          ),
+        );
+      }
       break;
 
     default:  
