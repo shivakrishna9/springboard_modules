@@ -22,6 +22,7 @@
                 });
             });
 
+            //update exposed form element states when a district is selected
             $('select[name="search_district_name"]', context).once('advocacy-district-reloaded', function() {
                 elementStates(this);
                 $('#views-exposed-form-targets-block-3 input, #views-exposed-form-targets-block-3 select').on('change', function(){
@@ -31,6 +32,7 @@
                 });
             });
 
+            //update exposed form element states when the text search field is changed
             var combine, oldVal;
             $('#edit-combine').on('keyup', function() {
                 clearTimeout(combine);
@@ -43,29 +45,33 @@
                 }
             });
 
+            //set the click event for the quick target button
             $('#quick-target', context).once('advocacy-add-quick-target', function() {
-                elementStates(this);
+                elementStates(this);//need this?
                 $('input#quick-target').click(function() {
-                    addQuickTarget();
+                    prepareQuickTarget();
                 });
             });
         }
     };
 
+    // selectively disable/enable exposed form elements based on user actions
     function elementStates(item) {
 
+        //element state meta-variables
         var notGroupable = false;
         var groupable = false;
         var hasDistrict = false;
         var hasState = false;
+        //elements
         var combine = $('input#edit-combine');
         var district = $('select[name="search_district_name"]');
         var state = $('select[name="search_state"]');
         var allBoxes = $('#views-exposed-form-targets-block-3 input[type="checkbox"]');
-        var allInputs =$('#views-exposed-form-targets-block-3 input, #views-exposed-form-targets-block-3 select');
+        var allInputs =$('#views-exposed-form-targets-block-3 input[type="checkbox"], #views-exposed-form-targets-block-3 input[type="text"], #views-exposed-form-targets-block-3 select');
 
-        allInputs.each(function(){
-
+        allInputs.each(function() {
+            //update our element state meta-variables
             var nm = this.name;
             if(nm.indexOf('combine') != -1 || nm.indexOf('gender') != -1 ||
                nm.indexOf('social')  != -1 || nm.indexOf('district') != -1) {
@@ -93,9 +99,8 @@
                }
            }
         });
-        //
 
-
+        //update form element states based on meta-variables
         if(hasDistrict == true){
             allBoxes.each(function(){
                 $(this).prop('disabled', true);
@@ -105,7 +110,6 @@
             combine.closest('.views-exposed-widget').addClass('disabled');
 
         }
-
         if(hasDistrict == false) {
             allBoxes.each(function(){
                 if($(this).prop('disabled') == true) {
@@ -128,6 +132,7 @@
             }
         }
 
+        //update quick target button based on meta-variables
         if(notGroupable == true || hasDistrict == true || (groupable == false && hasState == false)) {
             $('input#quick-target').prop("disabled", true).fadeTo(400, 0.6).css({'cursor': 'default'}).addClass('cancel-hover');
         }
@@ -137,7 +142,8 @@
         }
     }
 
-    function addQuickTarget() {
+    // quick target click function, prepares selected items
+    function prepareQuickTarget() {
         var item = [];
         $('#views-exposed-form-targets-block-3 input, #views-exposed-form-targets-block-3 select').each(function(){
             if ($(this).prop('checked') || (this.name == 'search_state')) {
@@ -156,10 +162,10 @@
                 }
             }
         });
-        console.log(item);
         addTargets('quick', item);
     }
 
+    // add taret
     function addTargets(type, item) {
         var count;
 
@@ -178,22 +184,19 @@
         }
         var readable = buildReadableQuery(query);
         buildDivs(count, readable, query);
-        window.topper = $('#springboard-advocacy-message-recipients').height();
+        //window.topper = $('#springboard-advocacy-message-recipients').height();
         buildUpdateMessage();
         buildFormValue();
     }
 
+    // validation error message displayed next to save button
     function buildError(messages) {
-        err = $('#advo-error-wrapper');
-        err.text('');
-        err.hide();
-        err.css('margin-bottom', 0);
+        err = $('#advo-error-wrapper').text('').hide().css('margin-bottom', 0);
         err.parent().css({'float': 'left'});
         $.each(messages, function(i, message) {
             err.append('<div>' + message + ' field is required </div>');
         });
-        err.fadeIn(500);
-        err.fadeOut(5000);
+        err.fadeIn(500).fadeOut(5000);
     }
 
 
@@ -232,7 +235,7 @@
                 $(this).remove();
                 buildUpdateMessage();
                 buildFormValue();
-                window.topper = $('#springboard-advocacy-message-recipients').height();
+               // window.topper = $('#springboard-advocacy-message-recipients').height();
             });
 
         })
@@ -242,7 +245,7 @@
         });
     }
 
-    // attaches JSONified data atrributes of the recipients list to a hidden form field
+    // attaches JSONified data attributes of the recipients list to a hidden form field
     function buildFormValue() {
         var arr = {};
         $('.target-recipient').each(function(i) {
@@ -257,6 +260,7 @@
     }
 
     // Takes a url query string from the search form "add" links
+    // or the quick target parameters
     // and builds readable text for the recipients list.
     function buildReadableQuery(query) {
         var queryObj = {};
@@ -337,25 +341,23 @@
     }
 
     $(document).ready(function () {
+
+        // submit the form or return error message
         $("#edit-submit, #edit-delete").click(function (e) {
             e.preventDefault();
-            var submit = true;
             var messages = [];
             if($('[name*="field_subject_editable"]').length != 0 && !$('[name*="field_subject_editable"]').is(':checked')) {
                 messages.push( 'Subject is editable');
-                submit = false;
             }
             if($('[name*="field_message_editable"]').length != 0 && !$('[name*="field_message_editable"]').is(':checked')) {
                 messages.push('Message is editable');
-                submit = false;
             }
             $('input.required').each(function() {
                 if ($(this).val() == '') {
                     messages.push($("label[for='" + this.id + "']").text().replace('*', ''));
-                    submit = false;
                 }
             });
-            if(submit == true) {
+            if(messages.length === 0) {
                 $("#sba-message-edit-form").submit();
             }
             else {
@@ -363,6 +365,7 @@
             }
         });
 
+        // rearrange some divs
         finder = $('.springboard-advocacy-find-targets-container');
         actions = $('#sba-message-edit-form #edit-actions');
         err = $('#advo-error-wrapper');
@@ -386,21 +389,16 @@
             $('.sba-message-status').text('No recipients have been selected.').show('slow');
         }
 
+        // scroll the recipients box
         var offset = $('#springboard-advocacy-message-recipients').offset();
-
         $(window).scroll(function() {
-            // On scroll, update the 'top' value for the summary box to match the
-            // scroll distance. If the summary box is absolutely positioned, this
-            // will make it folow the scroll down the page.
             if(offset.top <= $(window).scrollTop() && $('#springboard-advocacy-message-recipients').css('position') == 'absolute') {
                 newTop =$(window).scrollTop() - offset.top;
-                $('#springboard-advocacy-message-recipients').css('top', newTop).addClass('summary-fixed');
+                $('#springboard-advocacy-message-recipients').css('top', newTop).addClass('recipients-fixed');
 
             }
-            // Clear the positioning if the Summary field is not absolutely positioned.
-            // This allows themes to override the fixed position easily.
             else {
-                $('#springboard-advocacy-message-recipients').css('top', 0).removeClass('summary-fixed');
+                $('#springboard-advocacy-message-recipients').css('top', 0).removeClass('recipients-fixed');
             }
         });
     });

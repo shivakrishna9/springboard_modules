@@ -142,8 +142,8 @@
 .springboard-advocacy-find-targets  div.views-exposed-widget.views-submit-button input {
   width: 85px;
 }
-/* adjust the summary box position when admin menu is in use. */
-#springboard-advocacy-message-recipients.summary-fixed {
+/* adjust the recipients box position when admin menu is in use. */
+#springboard-advocacy-message-recipients.recipients-fixed {
     margin-top: 44px;
 }
 
