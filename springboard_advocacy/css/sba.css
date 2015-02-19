@@ -4,10 +4,11 @@
     margin: 6px 5px;
 }
 
-.sba-button .button:after {
+
+.sba-add-button.button:before {
     display: inline-block;
-    margin: 0px 8px;
-    content: "";
-    font-size: 14px;
+    margin: 0px 8px 0px 0px;
+    color: #FFF;
+    content: "";
     font-family: FontAwesome;
 }
