@@ -194,8 +194,7 @@
 }
 .springboard-advocacy-find-targets  div.views-exposed-widget.views-targets-button input {
     margin: 10px 10px 12px 0px;
-    width: 90px;
-    padding: 4px 6px;
+    padding: 4px 20px;
 
 }
 .springboard-advocacy-find-targets  div.views-exposed-widget.views-submit-button {
@@ -231,6 +230,21 @@
 #springboard-advocacy-message-form-container #edit-field-message-editable .control-group {
     display: inline-block;
     margin-right: 10px;
+}
+.views-targets-button{
+    display: inline-block;
+    margin: 6px 5px;
+}
+.views-targets-button:before {
+    display: inline-block;
+    margin: 0px 8px 0px 0px;
+    color: #FFF;
+    content: "";
+    font-family: FontAwesome;
+    position: absolute;
+    left: 5px;
+    top:16px;
+    z-index:100;
 
 }
 
