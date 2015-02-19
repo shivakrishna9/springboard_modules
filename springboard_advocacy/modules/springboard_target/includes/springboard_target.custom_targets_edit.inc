@@ -10,6 +10,17 @@ function springboard_target_edit_custom_targets_form($form, &$form_state, $targe
   module_load_include('inc', 'springboard_target', 'includes/springboard_target.custom_targets');
 
   $form = springboard_target_form($target_id);
+  //@todo theme function
+  $form['header'] = array(
+     '#markup'=> '<h2>'
+       . check_plain($form['row_one']['salutation']['#default_value'])
+      . ' '
+       . check_plain($form['row_one']['first_name']['#default_value'])
+       . ' '
+       . check_plain($form['row_one']['last_name']['#default_value'])
+       . '</h2>',
+    '#weight' => '-100' ,
+  );
   if (!isset($form['not_found'])) {
     $form['submit'] = array('#type' => 'submit', '#value' => t('Update'));
   }
