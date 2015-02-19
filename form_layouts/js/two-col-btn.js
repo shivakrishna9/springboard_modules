@@ -7,6 +7,10 @@
   Drupal.behaviors.twocolbtnMisc = {
     attach: function (context) {
 
+      // Define vars.
+      var radioButtons = $('.webform-client-form input[type="radio"]');
+      var otherInput = $('#webform-component-donation--other-amount input');
+
       // Test for checkboxes checked / not checked.
       $('input[type=checkbox]').click(function () {
         if ($(this).is(':checked')) {
@@ -21,39 +25,49 @@
       $('input[type=checkbox]').addClass('checkbox-input');
       $('input[type=checkbox]').next('label').addClass('checkbox-label');
 
-      $('.webform-client-form input[type="radio"]').each(function () {
+      $(radioButtons).each(function () {
         $(this).next("label").addClass($(this).attr("type") + '-' + $(this).attr("value"));
         $(this).addClass('radio-button-input');
         $(this).next("label").addClass('radio-label');
       });
 
       // Test for which radio checked onload.
-      var $radioButtonsLoad = $('.webform-client-form input[type="radio"]');
-      $radioButtonsLoad.each(function () {
+      radioButtons.each(function () {
         $(this).next("label").toggleClass('radio-checked', this.checked);
       });
 
       // Test for radio onclick.
-      var $radioButtons = $('.webform-client-form input[type="radio"]');
-      $radioButtons.click(function () {
-        $radioButtons.each(function () {
+      radioButtons.click(function () {
+        radioButtons.each(function () {
           $(this).next('label').toggleClass('radio-checked', this.checked);
         });
       });
 
-      // Show / hide other amount input box when other amount is clicked / touched.
-      //$('.webform-client-form .option.radio-other.radio-label').click(function () {
-      //  $('#webform-component-donation--other-amount').css('display', 'inline-block');
-      //});
-      //
-      //// Now hide it if something else in the group is clicked.
-      //$('.webform-client-form #webform-component-donation--amount .option.radio-label:not(".radio-other")').click(function () {
-      //    $('#webform-component-donation--other-amount').css('display', 'none');
-      //});
+      // Add class to top level amount button wrappers.
+      $('#edit-submitted-donation-amount .control-group').each(function() {
+        var radio = $(this).find('input[type="radio"]');
+        // Add special classes to "other" option.
+        if (radio.val() == "other") {
+          $(this).addClass('other-option');
+        }
+        else {
+          $(this).addClass('reg-option');
+        }
+      });
 
+      // Add / remove classes depending if other gets focus or not.
+      $(otherInput).blur(function() {
+        $('.reg-option').addClass('not-selected').removeClass('selected');
+      });
+
+      $(otherInput).focus(function() {
+        $('.reg-option').addClass('selected').removeClass('not-selected');
+      });
+
+      // Move the other amount field next to the main buttons for better theming.
+      $('#webform-component-donation--other-amount').insertAfter('#edit-submitted-donation-amount');
 
     }
   };
-
 
 })(jQuery, Drupal);

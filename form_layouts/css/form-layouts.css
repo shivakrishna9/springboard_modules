@@ -137,35 +137,41 @@ table td {
 
 .chkbtns #edit-submitted-donation-amount .control-group label {
   background: #efefef;
-  margin: 0;
   border-radius: 2px;
   -moz-border-radius: 2px;
   color: #315c8a;
-  text-align: center;
   cursor: pointer;
-  width: 44px;
-  height: 56px;
   font-size: 16px;
+  height: 56px;
   line-height: 58px;
+  margin: 0;
   padding: 0 6px;
+  text-align: center;
+  width: 44px;
 }
 
 .chkbtns #edit-submitted-donation-amount .control-group label.radio-checked,
 .chkbtns #edit-submitted-donation-amount .control-group label:hover {
-  color: white;
   background: #808080;
+  color: white;
 }
 
-.chkbtns #webform-component-donation--amount {
-  float: left;
-  width: 50%;
-  clear: none;
+.chkbtns #edit-submitted-donation-amount .control-group.selected label.radio-checked,
+.chkbtns #edit-submitted-donation-amount .control-group.selected label:hover {
+  background: #efefef;
+  color: #315c8a;
+}
+
+.chkbtns .other-option {
+  display: none;
+  visibility: hidden;
 }
 
 .chkbtns #webform-component-donation--other-amount {
-  float: left;
-  width: 40%;
   clear: none;
+  float: left;
+  margin-left: 30px;
+  width: 50%;
 }
 
 .chkbtns label[for=edit-submitted-donation-amount] {
@@ -175,10 +181,6 @@ table td {
 .chkbtns #quantity-total {
   margin-left: 10px;
 }
-
-/*.chkbtns #webform-component-donation--other-amount {*/
-  /*display: none;*/
-/*}*/
 
 .chkbtns #webform-component-donation--amount input[type=radio] {
   margin: 0;
@@ -207,6 +209,12 @@ table td {
     clear: both;
     float: none;
     width: 100%;
+    margin-left: 0;
+  }
+
+  .chkbtns #edit-submitted-donation-amount {
+    position: relative;
+    overflow: hidden;
   }
 
   .chkbtns #webform-component-donation--other-amount {
