@@ -15,6 +15,8 @@
  */
 function springboard_target_form($target_id = NULL) {
   $form = array();
+  $form['#attached']['css'][] =  drupal_get_path('module', 'springboard_target') . '/css/sba_target.css';
+  $form['#attributes']['class'][] =  'target-edit-form';
 
   if (isset($target_id) && is_numeric($target_id)) {
     $loader = new AdvocacyApiClientLoader();
@@ -32,7 +34,8 @@ function springboard_target_form($target_id = NULL) {
     '#type' => 'container',
     '#attributes' => array(
       'class' => array(
-        'edit-target-row-one',
+        'target-row-one',
+        'target-row'
       ),
     ),
     '#weight' => -5,
@@ -97,7 +100,7 @@ function springboard_target_form($target_id = NULL) {
     '#type' => 'select',
     '#title' => t('Gender'),
     '#default_value' => isset($target->gender) ? array($target->gender) : '',
-    '#options' => array('M' => 'Male', 'F' => 'Female', 'O' => 'Not Specified'), 
+    '#options' => array('O' => 'Not Specified', 'M' => 'Male', 'F' => 'Female', ),
     '#attributes' => array('class' => array('target-add', 'target-first-name')),
   );
 
@@ -105,7 +108,8 @@ function springboard_target_form($target_id = NULL) {
     '#type' => 'container',
     '#attributes' => array(
       'class' => array(
-        'edit-target-row-two',
+        'target-row-two',
+        'target-row'
       ),
     ),
     '#weight' => -4,
@@ -113,7 +117,7 @@ function springboard_target_form($target_id = NULL) {
 
   $form['row_two']['area_code'] = array(
     '#type' => 'textfield',
-    '#title' => t('Phone Area code'),
+    '#title' => t('Area code'),
     '#default_value' => isset($target->addresses[0]->area_code) ? $target->addresses[0]->area_code : '',
     '#size' => 10,
     '#maxlength' => 3,
@@ -160,7 +164,8 @@ function springboard_target_form($target_id = NULL) {
     '#type' => 'container',
     '#attributes' => array(
       'class' => array(
-        'edit-target-row-three',
+        'target-row-three',
+        'target-row'
       ),
     ),
     '#weight' => -3,
@@ -217,7 +222,8 @@ function springboard_target_form($target_id = NULL) {
     '#type' => 'container',
     '#attributes' => array(
       'class' => array(
-        'edit-target-row-four',
+        'target-row-four',
+        'target-row'
       ),
     ),
     '#weight' => -2,
@@ -290,6 +296,7 @@ function springboard_target_parties() {
  */
 function springboard_target_states() {
   $states = array(
+    '' => '',
     'AL' => 'Alabama',
     'AK' => 'Alaska',
     'AZ' => 'Arizona',
