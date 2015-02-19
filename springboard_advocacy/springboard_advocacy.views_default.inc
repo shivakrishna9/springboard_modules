@@ -1452,7 +1452,7 @@ function springboard_advocacy_views_default_views() {
   $handler->display->display_options['filters']['search_role_1']['group'] = 1;
   $handler->display->display_options['filters']['search_role_1']['exposed'] = TRUE;
   $handler->display->display_options['filters']['search_role_1']['expose']['operator_id'] = 'search_role_1_op';
-  $handler->display->display_options['filters']['search_role_1']['expose']['label'] = 'Search By Level';
+  $handler->display->display_options['filters']['search_role_1']['expose']['label'] = 'Branch';
   $handler->display->display_options['filters']['search_role_1']['expose']['operator'] = 'search_role_1_op';
   $handler->display->display_options['filters']['search_role_1']['expose']['identifier'] = 'search_role_1';
   $handler->display->display_options['filters']['search_role_1']['expose']['multiple'] = TRUE;
@@ -1578,7 +1578,7 @@ function springboard_advocacy_views_default_views() {
   $handler->display->display_options['filters']['search_party']['group'] = 1;
   $handler->display->display_options['filters']['search_party']['exposed'] = TRUE;
   $handler->display->display_options['filters']['search_party']['expose']['operator_id'] = 'search_party_op';
-  $handler->display->display_options['filters']['search_party']['expose']['label'] = 'Search By Party';
+  $handler->display->display_options['filters']['search_party']['expose']['label'] = 'Party';
   $handler->display->display_options['filters']['search_party']['expose']['operator'] = 'search_party_op';
   $handler->display->display_options['filters']['search_party']['expose']['identifier'] = 'search_party';
   $handler->display->display_options['filters']['search_party']['expose']['multiple'] = TRUE;
@@ -1653,7 +1653,7 @@ function springboard_advocacy_views_default_views() {
   );
   $handler->display->display_options['filters']['search_gender']['expose']['reduce'] = TRUE;
   $handler->display->display_options['filters']['search_gender']['is_grouped'] = TRUE;
-  $handler->display->display_options['filters']['search_gender']['group_info']['label'] = 'Search By Gender';
+  $handler->display->display_options['filters']['search_gender']['group_info']['label'] = 'Gender';
   $handler->display->display_options['filters']['search_gender']['group_info']['identifier'] = 'search_gender';
   $handler->display->display_options['filters']['search_gender']['group_info']['multiple'] = TRUE;
   $handler->display->display_options['filters']['search_gender']['group_info']['group_items'] = array(
@@ -1723,6 +1723,7 @@ function springboard_advocacy_views_default_views() {
       ),
     ),
   );
+
 
   $views[$view->name] = $view;
 
