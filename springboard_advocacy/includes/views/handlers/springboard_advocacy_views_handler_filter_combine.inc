@@ -15,13 +15,20 @@ class springboard_advocacy_views_handler_filter_combine extends springboard_advo
    */
   public $query;
 
+  /**
+   * Create a combination field "fields"
+   * @return array
+   */
   function option_definition() {
     $options = parent::option_definition();
     $options['fields'] = array('default' => array());
-
     return $options;
   }
 
+  /**
+   * @param $form
+   * @param $form_state
+   */
   function options_form(&$form, &$form_state) {
     parent::options_form($form, $form_state);
     $this->view->init_style();
@@ -48,6 +55,11 @@ class springboard_advocacy_views_handler_filter_combine extends springboard_advo
     }
   }
 
+  /**
+   * Format the combined fields into a query-string compatible format of:
+   * 'fields' => field names
+   * 'values' => field values
+   */
   function query() {
     $this->view->_build('field');
     $fields = array();
@@ -59,7 +71,7 @@ class springboard_advocacy_views_handler_filter_combine extends springboard_advo
     if (!empty($fields)) {
       $query_string['fields'] = implode(' ', $fields);
       $query_string['values'] = $this->value;
-      $query_string['search_type'] = 'custom';
+     // $query_string['search_type'] = 'custom';
       $info = $this->operators();
       if (!empty($info[$this->operator]['method'])) {
         $this->{$info[$this->operator]['method']}($query_string);
@@ -67,6 +79,10 @@ class springboard_advocacy_views_handler_filter_combine extends springboard_advo
     }
   }
 
+  /**
+   * Add the query to the view object.
+   * @param Array $query_string
+   */
   function op_contains($query_string) {
     $this->query->search_terms = $query_string;
   }
