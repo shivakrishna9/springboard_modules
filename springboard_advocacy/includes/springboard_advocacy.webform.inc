@@ -1,11 +1,14 @@
 <?php
 
 /**
- * Submit handler
+ * Submit handler sends to Target Resolver on API server
  * 
  * Gets Zip+4 from Smarty streets.
- * Asks the Advocacy API for a list of Legislators for the zip.
- * Places list in session for use on confirmation page.
+ * Builds a webform user contact array with zip, county and lat/long
+ * Gets the messages associated with the webform and prepares them for sending
+ * to the API.
+ * Merges the contact, messages, and form_id and sends to the target resolver.
+ *
  */
 function springboard_advocacy_webform_submit($form, $form_state) {
   module_load_include('inc', 'springboard_advocacy', 'includes/springboard_advocacy.smarty_streets');
@@ -42,6 +45,12 @@ function springboard_advocacy_webform_submit($form, $form_state) {
   }
 }
 
+/**
+ * Loads the messages associated with this webform and formats
+ * them into an array for the target resolver.
+ * @param $message_ids
+ * @return array
+ */
 function springboard_advocacy_build_messages($message_ids) {
     $all_messages = entity_load('sba_message', $message_ids);
     $messages = array();
@@ -60,6 +69,15 @@ function springboard_advocacy_build_messages($message_ids) {
     return $messages;
 }
 
+/**
+ * Merges the webform users contact data with data returned from smarty streets
+ * in preparation for sending to target resolver.
+ *
+ * @param $values
+ * @param $zip
+ * @param $geo
+ * @return array
+ */
 function springboard_advocacy_build_contact($values, $zip, $geo) {
 
   $contact = array(
@@ -83,8 +101,8 @@ function springboard_advocacy_build_contact($values, $zip, $geo) {
 
 
 /**
+ * @todo complete this when wireframes finalized
  * Formats API response for presentaion by theme_item_list
- * 
  */
 function springboard_advocacy_prep_for_display($data) {
   $items = array();
