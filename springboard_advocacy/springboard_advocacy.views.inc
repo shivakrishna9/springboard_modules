@@ -523,7 +523,7 @@ function springboard_advocacy_preprocess_views_view_table(&$vars)
  * @param $hook
  */
 function springboard_advocacy_preprocess_views_exposed_form(&$vars, $hook) {
-  if(isset($vars['theme_hook_suggestion']) &&  $vars['theme_hook_suggestion'] == 'views_exposed_form__targets') {
+  if(isset($vars['theme_hook_suggestion']) &&  $vars['theme_hook_suggestion'] == 'views_exposed_form__targets__block_3') {
     unset($vars['form']['submit']['#printed']);
     $vars['target_button'] = drupal_render($vars['form']['submit']);
   }
