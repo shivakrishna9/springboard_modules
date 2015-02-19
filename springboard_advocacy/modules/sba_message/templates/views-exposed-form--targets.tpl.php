@@ -30,9 +30,12 @@
   <div class="views-exposed-widgets clearfix">
     <?php foreach ($widgets as $id => $widget): ?>
 
+      <!-- Wrap the state and district form elements in a container -->
       <?php if (in_array('filter-search_district_name', array_keys($widgets)) && $id == 'filter-search_state'): ?>
         <div id="state-district-wrapper" class = "views-exposed-widget">
       <?php endif; ?>
+
+
       <div id="<?php print $widget->id; ?>-wrapper" class="views-exposed-widget views-widget-<?php print $id; ?>">
         <?php if (!empty($widget->label)): ?>
           <label for="<?php print $widget->id; ?>">
@@ -53,9 +56,12 @@
           </div>
         <?php endif; ?>
       </div>
+
+      <!-- End of wrapping the state and district form elements in a container -->
       <?php if (in_array('filter-search_district_name', array_keys($widgets)) && $id == 'filter-search_district_name'): ?>
         </div>
       <?php endif; ?>
+
     <?php endforeach; ?>
     <?php if (!empty($sort_by)): ?>
       <div class="views-exposed-widget views-widget-sort-by">
@@ -79,9 +85,12 @@
     <div class="views-exposed-widget views-submit-button">
       <?php print $target_button; ?>
     </div>
+
+    <!-- Quick target button -->
     <div class="views-exposed-widget views-targets-button">
       <input type="button" id="quick-target" name="" value="Quick Target" />
     </div>
+
     <?php if (!empty($reset_button)): ?>
       <div class="views-exposed-widget views-reset-button">
         <?php print $reset_button; ?>
