@@ -410,6 +410,14 @@ function springboard_advocacy_target_gender() {
   return $value_options;
 }
 
+/**
+ * Implements hook_views_pre_render
+ *
+ * Takes the target search views query and prepares it as string for
+ * inclusion in the search form add-all link query string
+ *
+ * @param $view
+ */
 function springboard_advocacy_views_pre_render(&$view) {
   if ($view->name == 'targets' && $view->current_display == 'block_3' && !empty($view->build_info['springboard_advocacy_search'])) {
     $search_terms = $view->build_info['springboard_advocacy_search'];
@@ -427,6 +435,11 @@ function springboard_advocacy_views_pre_render(&$view) {
   }
 }
 
+/**
+ *  Creates the "add-all link on message target search results
+ * @param $vars
+ * @return string
+ */
 function theme_springboard_advocacy_views_attachment_before($vars) {
   if (!empty($vars['query'])) {
 

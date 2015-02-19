@@ -165,7 +165,7 @@
         addTargets('quick', item);
     }
 
-    // add taret
+    // add target
     function addTargets(type, item) {
         var count;
 
