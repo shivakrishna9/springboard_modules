@@ -77,7 +77,7 @@
     margin-top: 0;
 }
 
-.springboard-advocacy-find-targets state-district-wrapper select {
+.springboard-advocacy-find-targets #state-district-wrapper select {
     width: 160px;
 }
 
