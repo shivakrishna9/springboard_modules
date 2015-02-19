@@ -13,6 +13,8 @@ class springboard_advocacy_views_handler_filter_search_types extends views_handl
  * can be removed after springboard upgrades to views 7.x-3.8
  * which should be before this module is released  
  * not sure what unintended side effects this may have.
+ *
+ * Allows exposed filter "groups" to function properly.
  */
   function init(&$view, &$options) {
     if (!isset($options['group_info']['default_group_multiple'])) {
@@ -27,7 +29,8 @@ class springboard_advocacy_views_handler_filter_search_types extends views_handl
   }
 
   /**
-   * Format a search query
+   * Format a search query for API
+   * Add search terms to the views object.
    */
   function query() {
 
