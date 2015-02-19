@@ -59,10 +59,11 @@
 
       <!-- End of wrapping the state and district form elements in a container -->
       <?php if (in_array('filter-search_district_name', array_keys($widgets)) && $id == 'filter-search_district_name'): ?>
-        </div>
+        </div><div class = "radio-widgets">
       <?php endif; ?>
 
     <?php endforeach; ?>
+      </div>
     <?php if (!empty($sort_by)): ?>
       <div class="views-exposed-widget views-widget-sort-by">
         <?php print $sort_by; ?>

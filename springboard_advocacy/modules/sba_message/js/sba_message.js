@@ -373,7 +373,7 @@
         $('#springboard-advocacy-message-form-container').append(finder);
         $(finder).append(actions);
         $(actions).append(err);
-        $('input#quick-target').prop("disabled", true).fadeTo(400, 0.6).css({'cursor': 'default'}).addClass('cancel-hover');
+        $('input#quick-target').prop("disabled", true).fadeTo(400, 0.6).css({'cursor': 'not-allowe'}).addClass('cancel-hover');
 
         // Editing a pre-existing message, append the recipients
         // to the recipients div using hidden form value
