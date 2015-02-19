@@ -1,0 +1,13 @@
+.sba-button, .sba-add-button.button {
+    float: right;
+    display: inline-block;
+    margin: 6px 5px;
+}
+
+.sba-button .button:after {
+    display: inline-block;
+    margin: 0px 8px;
+    content: "";
+    font-size: 14px;
+    font-family: FontAwesome;
+}

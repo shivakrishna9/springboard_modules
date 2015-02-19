@@ -131,6 +131,7 @@ function springboard_advocacy_dashboard($path) {
             'create_link' => array('title' => t('Create a new alert'), 'href' => 'node/add/springboard-letter'),
             'manage_link' => array('title' => t('Manage Custom Targets'), 'href' => 'admin/springboard/advocacy/custom-targets'),
             'viewmore_link' => array('title' => t('View all'), 'href' => 'admin/springboard/advocacy/alerts/all'),
+            'css' => drupal_get_path('module', 'springboard_advocacy') . '/css/sba.css',
           ),
         );
       }

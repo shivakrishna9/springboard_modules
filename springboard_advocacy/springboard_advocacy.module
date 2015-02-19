@@ -370,6 +370,7 @@ function springboard_advocacy_views_exposed_form_ajax_enable(&$form, &$form_stat
  *   Array of the elements names where #ajax was found.
  *
  * From patch at https://www.drupal.org/node/1183418
+ * @todo remove if future views version is patched
  */
 function springboard_advocacy_views_exposed_form_ajax_lookup_recursive($elements) {
   $ajax_elements = array();
