@@ -48,11 +48,21 @@
 
 #sba-message-edit-form .springboard-advocacy-find-targets-container {
     width: 100%;
+
 }
 .springboard-advocacy-find-targets {
-    background: #fff;
-    border: 1px solid #ccc;
-    box-shadow: 1px 1px 3px #ccc;
+    margin: 0px;
+    padding: 0px;
+    border-width: 1px 1px 2px;
+    border-style: solid;
+    border-color: #DFDFDF #DFDFDF #EAEAEA;
+    -moz-border-top-colors: none;
+    -moz-border-right-colors: none;
+    -moz-border-bottom-colors: none;
+    -moz-border-left-colors: none;
+    border-image: none;
+    border-radius: 6px;
+    background: none repeat scroll 0% 0% #F5FBFE;
 }
 .springboard-advocacy-find-targets .ctools-collapsible-container {
 }
@@ -69,8 +79,27 @@
 
 .springboard-advocacy-find-targets .views-exposed-form {
    padding:1em;
+    margin: 10px 20px;
+    padding: 20px;
+    border-width: 1px 1px 2px;
+    border-style: solid;
+    border-color: #DFDFDF #DFDFDF #EAEAEA;
+    -moz-border-top-colors: none;
+    -moz-border-right-colors: none;
+    -moz-border-bottom-colors: none;
+    -moz-border-left-colors: none;
+    border-image: none;
+    border-radius: 6px;
+    background: none repeat scroll 0% 0% #fff;
+}
+.springboard-advocacy-find-targets .attachment-before {
+    margin: 0 20px;
+    font-weight:bold;
 }
 
+.springboard-advocacy-find-targets .view-content  {
+    margin: 5px 20px 20px;
+}
 .springboard-advocacy-find-targets  div[id*=combine] {
     display: block;
     float:left;
@@ -118,6 +147,7 @@
 
 .springboard-advocacy-find-targets .views-exposed-widget label {
   margin: 0;
+    font-weight:bold;
 }
 .springboard-advocacy-find-targets .views-exposed-widget label.option {
    top:4px;

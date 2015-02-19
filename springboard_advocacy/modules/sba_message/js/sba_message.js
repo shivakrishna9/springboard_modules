@@ -138,7 +138,7 @@
         }
 
         if((groupable == true || hasState == true)  && hasDistrict == false && notGroupable == false) {
-            $('input#quick-target').prop("disabled", false).fadeTo(200, 1).css({'cursor': 'default'}).removeClass('cancel-hover');
+            $('input#quick-target').prop("disabled", false).fadeTo(200, 1).css({'cursor': 'pointer'}).removeClass('cancel-hover');
         }
     }
 
