@@ -134,11 +134,11 @@
 
         //update quick target button based on meta-variables
         if(notGroupable == true || hasDistrict == true || (groupable == false && hasState == false)) {
-            $('input#quick-target').prop("disabled", true).fadeTo(400, 0.6).css({'cursor': 'default'}).addClass('cancel-hover');
+            $('input#quick-target').prop("disabled", true).fadeTo(400, 0.6).css({'cursor': 'not-allowed'}).addClass('cancel-hover');
         }
 
         if((groupable == true || hasState == true)  && hasDistrict == false && notGroupable == false) {
-            $('input#quick-target').prop("disabled", false).fadeTo(200, 1).css({'cursor': 'not-allowed'}).removeClass('cancel-hover');
+            $('input#quick-target').prop("disabled", false).fadeTo(200, 1).css({'cursor': 'default'}).removeClass('cancel-hover');
         }
     }
 
