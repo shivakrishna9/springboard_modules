@@ -231,6 +231,7 @@ function springboard_advocacy_dashboard($path, $arg = NULL) {
               'header' => t('Messages'),
               'content' => views_embed_view('sba_messages_node', 'block_1', $path),
               'create_link' => array('title' => t('Create a new message'), 'href' => 'node/' . arg(1) . '/messages/add/' . $message_types[$node->type]),
+              'css' => drupal_get_path('module', 'springboard_advocacy') . '/css/sba.css',
             ),
           );
         } else {
