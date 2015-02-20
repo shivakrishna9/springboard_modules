@@ -144,25 +144,47 @@
 
     // quick target click function, prepares selected items
     function prepareQuickTarget() {
-        var item = [];
-        $('#views-exposed-form-targets-block-3 input, #views-exposed-form-targets-block-3 select').each(function(){
+        item = {role:'', party:''};
+        values = [];
+        values["role"] = []
+        values["party"] = []
+        values["state"] = []
+
+        $('#views-exposed-form-targets-block-3 input[type="checkbox"], #views-exposed-form-targets-block-3 select').each(function(i){
             if ($(this).prop('checked') || (this.name == 'search_state')) {
                 name = this.name
                 if (name.indexOf('role') != -1) {
-                    name = 'role'
+                    values["role"].push(this.value);
                 }
                 if (name.indexOf('party') != -1) {
-                    name = 'party'
+                    values["party"].push(this.value);
                 }
                 if (name.indexOf('state') != -1) {
-                    name = 'state'
+                    if (this.value != "All")
+                    {
+                        values["state"].push(this.value);
+                    }
                 }
-                if (this.value != "All") {
-                    item.push(name + '=' + this.value);
-                }
+
             }
         });
-        addTargets('quick', item);
+
+        roles = values["role"].toString().replace(/,/g, '|');
+        parties = values["party"].toString().replace(/,/g, '|');
+        states = values["state"].toString().replace(/,/g, '|');
+
+        query = [];
+        if(roles.length > 0) {
+            query.push('roles=' + roles)
+        }
+        if(states.length > 0) {
+            query.push('state=' + states)
+        }
+        if(parties.length > 0) {
+            query.push('party=' + parties)
+        }
+
+        addTargets('quick', query);
     }
 
     // add target
@@ -251,7 +273,8 @@
         $('.target-recipient').each(function(i) {
             arr[i] = $(this).data();
         });
-        recipients = JSON.stringify(arr).replace(/"/g, '&quot;');
+        //@todo causes issue on reload if quotes are replaced
+        recipients = JSON.stringify(arr)//.replace(/"/g, '&quot;');
         $('input[name="data[recipients]"]').val(recipients);
     }
 
