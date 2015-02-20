@@ -1,4 +1,4 @@
-<?php
+  <?php
 
 /**
  * @file
@@ -182,8 +182,8 @@ function springboard_admin_admin_menu_items() {
   if(module_exists('springboard_target')) {
 
     // Springboard Advocacy > Custom Targets.
-    $items['admin/springboard/advocacy/alerts']['_children']['admin/springboard/advocacy/custom-targets'] = array(
-      'link_path' => 'admin/springboard/advocacy/custom-targets',
+    $items['admin/springboard/advocacy/alerts']['_children']['admin/springboard/advocacy/targets/custom-targets'] = array(
+      'link_path' => 'admin/springboard/advocacy/targets/custom-targets',
       'link_title' => 'Custom Targets',
       'menu_name' => 'springboard_admin_menu',
       'expanded' => 1,
