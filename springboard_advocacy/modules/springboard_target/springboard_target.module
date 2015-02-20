@@ -17,13 +17,13 @@ function springboard_target_menu() {
     ) + springboard_advocacy_menu_common(FALSE, TRUE);
 
   $items['admin/springboard/advocacy/targets/custom-targets/add'] = array(
-      'title' => 'Target Center',
+      'title' => 'Advocacy: Target Center: Add',
       'access arguments' => array('create targets'),
       'page arguments' => array('add-custom-targets'),
     ) + springboard_advocacy_menu_common(FALSE, TRUE);
 
   $items['admin/springboard/advocacy/targets/custom-targets/%/edit'] = array(
-      'title' => 'Target Center',
+      'title' => 'Advocacy: Target Center: Edit',
       'access arguments' => array('edit targets'),
       'page arguments' => array('edit-custom-targets', 5),
     ) + springboard_advocacy_menu_common(FALSE, TRUE);
