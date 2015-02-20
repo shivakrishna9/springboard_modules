@@ -23,30 +23,20 @@ function springboard_advocacy_menu() {
   );
 
   $items['admin/springboard/advocacy/alerts'] = array(
-    'title' => 'Advocacy',
+    'title' => 'Advocacy: Alerts',
     'page arguments' => array('alerts'),
   ) + springboard_advocacy_menu_common();
 
   $items['admin/springboard/advocacy/alerts/all'] = array(
-    'title' => 'Advocacy',
+    'title' => 'Advocacy: Alerts',
     'page arguments' => array('alerts/all'),
-  ) + springboard_advocacy_menu_common();
-
-   $items['admin/springboard/advocacy/custom-targets'] = array(
-    'title' => 'Advocacy',
-    'page arguments' => array('custom-targets'),
   ) + springboard_advocacy_menu_common();
 
   $items['node/%/messages'] = array(
     'title' => 'Messages',
     'page arguments' => array(1),
-    'page callback' => 'springboard_advocacy_dashboard',
-    'file' => 'springboard_advocacy.admin.inc',
-    'file path' => drupal_get_path('module', 'springboard_advocacy') . '/includes',
-    'access arguments' => array('administer sba messages'),
     'type' => MENU_LOCAL_TASK
-
-  );
+  ) + springboard_advocacy_menu_common(TRUE);
 
   return $items;
 }
@@ -55,14 +45,20 @@ function springboard_advocacy_menu() {
  * Defines common values for advocacy menu items.
  * Including a themed page callback for advocacy admin views.
  */
-function springboard_advocacy_menu_common() {
-  return array(
+function springboard_advocacy_menu_common($override_type = FALSE, $override_access = FALSE) {
+  $params = array(
     'page callback' => 'springboard_advocacy_dashboard',
     'file' => 'springboard_advocacy.admin.inc',
     'file path' => drupal_get_path('module', 'springboard_advocacy') . '/includes',
-    'access arguments' => array('administer springboard advocacy'),
-    'type' => MENU_NORMAL_ITEM
-    );
+
+  );
+  if(!$override_type) {
+    $params['type'] = MENU_NORMAL_ITEM;
+  }
+  if(!$override_access) {
+    $params['access arguments'] = array('administer springboard advocacy');
+  }
+  return $params;
 }
 
 /**

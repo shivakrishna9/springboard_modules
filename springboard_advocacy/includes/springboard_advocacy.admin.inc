@@ -118,8 +118,36 @@ function springboard_advocacy_settings_form() {
  *
  * Embeds and themes various views landing pages.
  */
-function springboard_advocacy_dashboard($path) {
+function springboard_advocacy_dashboard($path, $arg = NULL) {
+
   switch($path) {
+    case 'add-custom-targets':
+        module_load_include('inc', 'springboard_target', 'includes/springboard_target.custom_targets_create');
+        drupal_add_css(drupal_get_path('module', 'springboard_target') . '/css/sba_target.css');
+        $form = drupal_get_form('springboard_target_create_custom_targets_form');
+        $views = array(
+          'add-targets' => array(
+            'header' => t('Create Target'),
+            'content' => drupal_render($form),
+            'manage_link' => array('title' => t('Return to targets list'), 'href' => 'admin/springboard/advocacy/targets/custom-targets'),
+            'css' => drupal_get_path('module', 'springboard_advocacy') . '/css/sba.css',
+          ),
+        );
+      break;
+    case 'edit-custom-targets':
+      module_load_include('inc', 'springboard_target', 'includes/springboard_target.custom_targets_edit');
+      drupal_add_css(drupal_get_path('module', 'springboard_target') . '/css/sba_target.css');
+      $form = drupal_get_form('springboard_target_edit_custom_targets_form', $arg);
+      $views = array(
+        'add-targets' => array(
+          'header' => t('Edit Target'),
+          'content' => drupal_render($form),
+          'create_link' => array('title' => t('Create a new target'), 'href' => 'admin/springboard/advocacy/targets/custom-targets/add'),
+          'manage_link' => array('title' => t('Return to targets list'), 'href' => 'admin/springboard/advocacy/targets/custom-targets'),
+          'css' => drupal_get_path('module', 'springboard_advocacy') . '/css/sba.css',
+        ),
+      );
+      break;
 
     case 'alerts':
       $view = views_get_view('sba_alerts');
@@ -129,7 +157,7 @@ function springboard_advocacy_dashboard($path) {
             'header' => t('Site alerts'),
             'content' => views_embed_view('sba_alerts', 'block_1'),
             'create_link' => array('title' => t('Create a new alert'), 'href' => 'node/add/springboard-letter'),
-            'manage_link' => array('title' => t('Manage Custom Targets'), 'href' => 'admin/springboard/advocacy/custom-targets'),
+            'manage_link' => array('title' => t('Manage Custom Targets'), 'href' => 'admin/springboard/advocacy/targets/custom-targets'),
             'viewmore_link' => array('title' => t('View all'), 'href' => 'admin/springboard/advocacy/alerts/all'),
             'css' => drupal_get_path('module', 'springboard_advocacy') . '/css/sba.css',
           ),
