@@ -105,7 +105,23 @@ function springboard_advocacy_views_data() {
       'handler' => 'springboard_advocacy_views_handler_field',
     ),
   );
+  $data['advocacy']['district_name'] = array(
+    'title' => t('District Name'),
+    'help' => t('District Name'),
+    'field' => array(
+      'click sortable' => TRUE,
+      'handler' => 'springboard_advocacy_views_handler_field',
+    ),
+  );
 
+  $data['advocacy']['district_code'] = array(
+    'title' => t('District Code'),
+    'help' => t('District Code'),
+    'field' => array(
+      'click sortable' => TRUE,
+      'handler' => 'springboard_advocacy_views_handler_field',
+    ),
+  );
   // Party
   $data['advocacy']['party'] = array(
     'title' => t('Politcal Party'),
