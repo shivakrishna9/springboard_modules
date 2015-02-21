@@ -195,7 +195,7 @@ function sba_message_edit_form($form, &$form_state, $sba_message) {
 
   $form['data']['recipients'] = array(
     '#type' => 'hidden',
-    '#default_value' => isset($sba_message->data['recipients']) ? $sba_message->data['recipients'] : '',
+    '#default_value' => isset($sba_message->data['recipients']) ? str_replace('"', '&quot;', $sba_message->data['recipients']) : '',
   );
 
   $form['data']['group_id'] = array(
