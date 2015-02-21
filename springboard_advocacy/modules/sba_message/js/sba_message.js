@@ -13,7 +13,7 @@
             // Apply click event to the search form add links
             // Allows views search results to be appended to the recipients list
             links = $('a.advocacy-add-target, a#advo-add-all');
-            links.each(function(){
+            links.each(function() {
                 $(this, context).once('advocacy-add-target', function() {
                     $(this).click(function (e){
                         e.preventDefault();
@@ -144,7 +144,6 @@
 
     // quick target click function, prepares selected items
     function prepareQuickTarget() {
-        item = {role:'', party:''};
         values = [];
         values["role"] = []
         values["party"] = []
@@ -152,17 +151,18 @@
 
         $('#views-exposed-form-targets-block-3 input[type="checkbox"], #views-exposed-form-targets-block-3 select').each(function(i){
             if ($(this).prop('checked') || (this.name == 'search_state')) {
-                name = this.name
-                if (name.indexOf('role') != -1) {
-                    values["role"].push(this.value);
+                var nm = this.name
+                var v = this.value
+                if (nm.indexOf('role') != -1) {
+                    values["role"].push(v);
                 }
-                if (name.indexOf('party') != -1) {
-                    values["party"].push(this.value);
+                if (nm.indexOf('party') != -1) {
+                    values["party"].push(v);
                 }
-                if (name.indexOf('state') != -1) {
-                    if (this.value != "All")
+                if (nm.indexOf('state') != -1) {
+                    if (v != "All")
                     {
-                        values["state"].push(this.value);
+                        values["state"].push(v);
                     }
                 }
 
@@ -173,39 +173,42 @@
         parties = values["party"].toString().replace(/,/g, '|');
         states = values["state"].toString().replace(/,/g, '|');
 
-        query = [];
+        item = [];
         if(roles.length > 0) {
-            query.push('roles=' + roles)
+            item.push('roles=' + roles)
         }
         if(states.length > 0) {
-            query.push('state=' + states)
+            item.push('state=' + states)
         }
         if(parties.length > 0) {
-            query.push('party=' + parties)
+            item.push('party=' + parties)
         }
 
-        addTargets('quick', query);
+        addTargets('quick', item);
     }
 
     // add target
     function addTargets(type, item) {
-        var count;
-
+        // create unique ids for target divs
         if ($('.target-recipient').length !== 0) {
-            count = parseInt($('.target-recipient').last().attr('id').replace('target-', '')) + 1;
+            var count = $(".target-recipient").map(function() {
+                    return $(this).attr('id').replace('target-', '');
+                }).get().sort(function(a, b){
+                    return a-b
+                });
+            idx = parseInt(count.pop()) + 1;
         }
         else {
-            count = 0;
+            idx = 0;
         }
         if (type == 'search') {
             var query = $(item).attr('href').replace('add-all?', '').replace('add-target?', '').split('&');
-            console.log(query);
         }
         else {
            query = item;
         }
         var readable = buildReadableQuery(query);
-        buildDivs(count, readable, query);
+        buildDivs(idx, readable, query);
         //window.topper = $('#springboard-advocacy-message-recipients').height();
         buildUpdateMessage();
         buildFormValue();
@@ -224,9 +227,10 @@
 
     // Rebuild the recipients list on existing messages
     function buildEditPage(recipients) {
-       // $('#springboard-advocacy-message-recipients-content').text('');
-        var count = 0;
-        $.each(JSON.parse(recipients), function(idx, obj) {
+       $('#springboard-advocacy-message-recipients-content').text('');
+       //var count = 0;
+        recipients = recipients.replace(/&quot;/g, '"')
+         $.each(JSON.parse(recipients), function(idx, obj) {
             var query = '';
             query = JSON.stringify(obj)
                 .replace(/"/g, '')
@@ -238,20 +242,23 @@
 
             var readable = buildReadableQuery(query);
 
-            buildDivs(count, readable, query);
-            count++;
-        });
+            buildDivs(idx, readable, query);
+            //count++;
+       });
+        var content = $('#springboard-advocacy-message-recipients-content');
+        var contentItems = content.children('.target-recipient');
+        content.append(contentItems.get().reverse());
     }
 
     // Create the recipients list divs, apply data attributes which
     // will be aggregated as a JSON string used by a hidden form field
     // for submission to the API
-    function buildDivs(count, readable, query) {
+    function buildDivs(idx, readable, query) {
         $('#springboard-advocacy-message-recipients-content')
-            .prepend('<div id = "target-' + count + '" class = "target-recipient" style="display: none;">' + readable +
+            .prepend('<div id = "target-' + idx + '" class = "target-recipient" style="display: none;">' + readable +
             ' <span><a class ="target-delete" href="#">delete</a></span></div>');
-        $('#target-' + count).show(300);
-        $('#target-' + count + ' a').click(function(ev){
+        $('#target-' + idx).show(300);
+        $('#target-' + idx + ' a').click(function(ev){
             ev.preventDefault();
             $(this).closest('.target-recipient').hide(300, function(){
                 $(this).remove();
@@ -263,7 +270,7 @@
         })
         $(query).each(function(index, value) {
             value = value.split('=');
-            $('#target-' + count).attr('data-' + value[0], value[1].replace(/%7C/g, '|'));
+            $('#target-' + idx).attr('data-' + value[0], value[1].replace(/%7C/g, '|'));
         });
     }
 
@@ -273,8 +280,7 @@
         $('.target-recipient').each(function(i) {
             arr[i] = $(this).data();
         });
-        //@todo causes issue on reload if quotes are replaced
-        recipients = JSON.stringify(arr)//.replace(/"/g, '&quot;');
+        recipients = JSON.stringify(arr).replace(/"/g, '&quot;')//.replace('}}', '}');
         $('input[name="data[recipients]"]').val(recipients);
     }
 
@@ -403,9 +409,7 @@
         var recipients =  $('input[name="data[recipients]"]').val();
         if(recipients.length > 0) {
             $('body').once('edit-page', function() {
-                $(document).ready(function($){
-                    buildEditPage(recipients);
-                });
+                buildEditPage(recipients);
             });
         }
         else {
