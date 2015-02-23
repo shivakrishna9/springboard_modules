@@ -18,7 +18,7 @@ class springboard_advocacy_views_handler_filter_search_types extends views_handl
  */
   function init(&$view, &$options) {
     if (!isset($options['group_info']['default_group_multiple'])) {
-      if (isset($this->options['group_info']['default_group_multiple'])) {
+      if (is_array($this->options['group_info']['default_group_multiple'])) {
         $options['group_info']['default_group_multiple'] = $this->options['group_info']['default_group_multiple'];
       }
       else {

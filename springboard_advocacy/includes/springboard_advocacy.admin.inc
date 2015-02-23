@@ -156,7 +156,7 @@ function springboard_advocacy_dashboard($path, $arg = NULL) {
           'sba_alerts' => array(
             'header' => t('Site alerts'),
             'content' => views_embed_view('sba_alerts', 'block_1'),
-            'create_link' => array('title' => t('Create a new alert'), 'href' => 'node/add/springboard-letter'),
+            'create_link' => array('title' => t('Create a new alert'), 'href' => 'node/add/sba-message-action'),
             'manage_link' => array('title' => t('Manage Custom Targets'), 'href' => 'admin/springboard/advocacy/targets/custom-targets'),
             'viewmore_link' => array('title' => t('View all'), 'href' => 'admin/springboard/advocacy/alerts/all'),
             'css' => drupal_get_path('module', 'springboard_advocacy') . '/css/sba.css',
@@ -180,7 +180,7 @@ function springboard_advocacy_dashboard($path, $arg = NULL) {
           'sba_alerts' => array(
             'header' => t('All Site alerts'),
             'content' => views_embed_view('sba_alerts', 'block_2'),
-            'create_link' => array('title' => t('Create a new alert'), 'href' => 'node/add/springboard-letter'),
+            'create_link' => array('title' => t('Create a new alert'), 'href' => 'node/add/sba-message-action'),
             'manage_link' => array('title' => t('Manage Custom Targets'), 'href' => 'admin/springboard/advocacy/targets/custom-targets'),
             'css' => drupal_get_path('module', 'springboard_advocacy') . '/css/sba.css',
 
@@ -222,6 +222,7 @@ function springboard_advocacy_dashboard($path, $arg = NULL) {
 
     case ($path == arg(1)):
       $message_types = variable_get('sba_message_node_types', array());
+      dpm($message_types);
       $node = node_load($path);
       if(isset($message_types[$node->type])) {
         $view = views_get_view('sba_messages_node');

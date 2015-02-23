@@ -162,7 +162,7 @@ function springboard_advocacy_views_default_views() {
   $handler->display->display_options['filters']['type']['table'] = 'node';
   $handler->display->display_options['filters']['type']['field'] = 'type';
   $handler->display->display_options['filters']['type']['value'] = array(
-    'springboard_letter' => 'springboard_letter',
+    'sba_message_action' => 'sba_message_action',
   );
 
   /* Display: Letter to Target Paged Block */

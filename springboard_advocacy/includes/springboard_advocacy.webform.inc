@@ -129,7 +129,7 @@ function springboard_advocacy_prep_for_display($data) {
  * Show the list of legislators on the confirmation page
  */
 function springboard_advocacy_preprocess_webform_confirmation(&$vars) {
-  if ($vars['node']->type == 'springboard_letter') {
+  if ($vars['node']->type == 'sba_message_action') {
     if (!empty($_SESSION['legislators'])) {
       $vars['confirmation_message'] = $_SESSION['legislators'];
       unset($_SESSION['legislators']);

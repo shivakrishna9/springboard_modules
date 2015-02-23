@@ -1,18 +1,18 @@
 <?php
 /**
  * @file
- * Sets up the springboard letter module and content type.
+ * Sets up the springboard message action module and content type.
  */
 
 /**
  * Implements hook_install().
  */
-function springboard_letter_install() {
+function sba_message_action_install() {
   $webform_node_types = variable_get('webform_node_types', array());
-  $webform_node_types[] = 'springboard_letter';
+  $webform_node_types[] = 'sba_message_action';
   variable_set('webform_node_types', $webform_node_types);
   $webform_node_types_primary = variable_get('webform_node_types_primary', array());
-  $webform_node_types_primary[] = 'springboard_letter';
+  $webform_node_types_primary[] = 'sba_message_action';
   variable_set('webform_node_types_primary', $webform_node_types_primary);
   // Create default SF map insert into table.
   if (module_exists('salesforce_genmap')) {
@@ -60,27 +60,27 @@ function springboard_letter_install() {
       'delete' => 'delete',
     );
     $map->status = 1;
-    $map->module = 'springboard_letter';
+    $map->module = 'sba_message_action';
     salesforce_genmap_save_map($map, 'webform');
   }
-  springboard_letter_add_content_type();
-  springboard_letter_add_example_letter();
+  sba_message_action_add_content_type();
+  sba_message_action_add_example_lett();
 }
 
 /**
- * Creates the springboard_letter content type.
+ * Creates the sba_message_action content type.
  */
-function springboard_letter_add_content_type() {
+function sba_message_action_add_content_type() {
   $type = node_type_set_defaults();
-  $type->name = t('Letter to Target');
-  $type->type = 'springboard_letter';
+  $type->name = t('Message Action');
+  $type->type = 'sba_message_action';
   $type->description = '';
   $type->title_label = t('Title');
   $type->has_title = TRUE;
   $type->base = 'node_content';
   $type->custom = TRUE;
   $type->modified = TRUE;
-  $type->module = 'springboard_letter';
+  $type->module = 'sba_message_action';
   // Save or reset persistent variable values.
   $variables = array(
     'additional_settings__active_tab' => 'edit-webform-user',
@@ -126,54 +126,54 @@ function springboard_letter_add_content_type() {
   node_type_save($type);
   node_types_rebuild();
   node_add_body_field($type);
-  springboard_letter_add_fields();
+  sba_message_action_add_fields();
 
   // Add as a webform.
   $webform_node_types = variable_get('webform_node_types', array('webform'));
   $webform_node_types_primary = variable_get('webform_node_types_primary', array('webform'));
-  $webform_node_types = array_merge($webform_node_types, array('springboard_letter'));
-  $webform_node_types_primary = array_merge($webform_node_types_primary, array('springboard_letter'));
+  $webform_node_types = array_merge($webform_node_types, array('sba_message_action'));
+  $webform_node_types_primary = array_merge($webform_node_types_primary, array('sba_message_action'));
   variable_set('webform_node_types', array_unique($webform_node_types));
   variable_set('webform_node_types_primary', array_unique($webform_node_types_primary));
 
   // Add as an advocacy message type.
   $springboard_advocacy_alert_types = variable_get('springboard_advocacy_alert_types', array(''));
-  $springboard_advocacy_alert_types = array_merge($springboard_advocacy_alert_types, array('springboard_letter'));
+  $springboard_advocacy_alert_types = array_merge($springboard_advocacy_alert_types, array('sba_message_action'));
   variable_set('springboard_advocacy_alert_types', array_unique($springboard_advocacy_alert_types));
 
 
   require_once(drupal_get_path('module', 'webform_user') . '/includes/webform_user.fields.inc');
-  _webform_user_add_default_fields('springboard_letter');
+  _webform_user_add_default_fields('sba_message_action');
   // Done.
   drupal_set_message(t('The content type Springboard Message to Target has been added.'));
-  watchdog('springboard_letter', 'Added content type Message to Target.');
+  watchdog('sba_message_action', 'Added content type Message to Target.');
 
   // Add opt-in field to list of default fields enabled for this content type.
   // This keeps Webform User happy and ensures our opt-in component gets created.
-  $default_fields = variable_get('webform_user_default_fields_springboard_letter', '');
-  //$default_fields[] = 'springboard_letter_optin';
-  variable_set('webform_user_default_fields_springboard_letter', $default_fields);
+  $default_fields = variable_get('webform_user_default_fields_sba_message_action', '');
+  //$default_fields[] = 'sba_message_action_optin';
+  variable_set('webform_user_default_fields_sba_message_action', $default_fields);
 
   // Weighting the module to ensure submission handlers run after Webform User.
   // This ensures that the user id in webform_submissions has been updated by
   // Webform User before we get to it.
-  db_query('UPDATE {system} SET weight = :weight WHERE name = :name', array(':weight' => 1000, ':name' => 'springboard_letter'));
+  db_query('UPDATE {system} SET weight = :weight WHERE name = :name', array(':weight' => 1000, ':name' => 'sba_message_action'));
 }
 
-function springboard_letter_add_fields() {
+function sba_message_action_add_fields() {
 
   $fields = array(
 
     'field_sba_call_to_action' => array(
-      'field_name' => 'sba_letter_call_to_action',
+      'field_name' => 'sba_message_action_call_to_action',
       'type' => 'text_long',
       'cardinality' => 1,
       'settings' => array(),
       'entity_types' => array('node'),
       '_instance' => array(
-        'field_name' => 'sba_letter_call_to_action',
+        'field_name' => 'sba_message_action_call_to_action',
         'entity_type' => 'node',
-        'bundle' => 'springboard_letter',
+        'bundle' => 'sba_message_action',
         'required' => TRUE,
         'label' => st('Call to Action Text'),
         'description' => st(''),
@@ -196,13 +196,13 @@ function springboard_letter_add_fields() {
 }
 
 
-function springboard_letter_add_example_letter() {
+function sba_message_action_add_example_message_action() {
   $node = new stdClass();
   $node->is_new = 1;
-  $node->type = 'springboard_letter';
+  $node->type = 'sba_message_action';
   $node->language = LANGUAGE_NONE;
   $node->uid = 1;
-  $node->title = 'Example Letter to Target Form';
+  $node->title = 'Example Message Action Form';
   $node->status = 1;
   $node->promote = 0;
   $node->body[LANGUAGE_NONE][0]['value'] = 'Donec placerat. Nullam nibh dolor, blandit sed, fermentum id, ' .
@@ -241,7 +241,7 @@ function springboard_letter_add_example_letter() {
     'emails' => array(),
     'components' => array(),
   );
-  $email_nid =springboard_letter_email_wrapper_add();
+  $email_nid =sba_message_action_email_wrapper_add();
   if ($email_nid != NULL) {
     $node->webform['emails'][1] = array(
       'email' => '',
@@ -288,13 +288,13 @@ function springboard_letter_add_example_letter() {
   drupal_set_message(t('An example message to target form has been created.'));
 }
 
-function springboard_letter_email_wrapper_add() {
+function sba_message_action_email_wrapper_add() {
   $node = new stdClass();
   $node->is_new = 1;
   $node->type = 'email_wrapper';
   $node->language = LANGUAGE_NONE;
   $node->uid = 1;
-  $node->title = 'Example Letter to Target Email Wrapper';
+  $node->title = 'Example Message Action Email Wrapper';
   $node->status = 0;
   $node->promote = 0;
   $node->email_wrapper_from_name[LANGUAGE_NONE][0] = array(
@@ -366,44 +366,44 @@ function springboard_letter_email_wrapper_add() {
 /**
  * Implements hook_uninstall().
  */
-function springboard_letter_uninstall() {
+function sba_message_action_uninstall() {
   // Delete email_wrapper nodes.
-  _springboard_letter_delete_nodes();
+  _sba_message_action_delete_nodes();
 
   // Remove fields implemented by this module.
-  _springboard_letter_delete_fields();
+  _sba_message_action_delete_fields();
 
   // Delete the email wrapper content type.
-  node_type_delete('springboard_letter');
+  node_type_delete('sba_message_action');
   field_purge_batch(1000);
 }
 
 
 /**
- * Delete springboard letter fields
+ * Delete springboard message action fields
  */
-function _springboard_letter_delete_fields() {
+function _sba_message_action_delete_fields() {
   $fields = array(
-    'sba_letter_call_to_action',
+    'sba_message_action_call_to_action',
   );
   foreach ($fields as $field_name) {
-    $field = field_info_instance('node', $field_name, 'springboard_letter');
+    $field = field_info_instance('node', $field_name, 'sba_message_action');
     field_delete_instance($field);
     $field = field_info_field($field_name);
     field_delete_field($field_name);
   }
-  drupal_set_message('Springboard Letter fields deleted.');
+  drupal_set_message('Springboard message action fields deleted.');
 }
 
 
 /**
- * Delete springboard letter nodes and their messages.
+ * Delete springboard message action nodes and their messages.
  */
-function _springboard_letter_delete_nodes() {
+function _sba_message_action_delete_nodes() {
 
   $result = db_select('node', 'n')
     ->fields('n', array('nid'))
-    ->condition('type', 'springboard_letter')
+    ->condition('type', 'sba_message_action')
     ->execute();
 
   $nids = $result->fetchCol();
@@ -417,6 +417,6 @@ function _springboard_letter_delete_nodes() {
 //    sba_message_delete_multiple($message_ids);
     node_delete_multiple($nids);
 
-    drupal_set_message('Springboard Letters have been deleted.');
+    drupal_set_message('Springboard message actions have been deleted.');
   }
 }

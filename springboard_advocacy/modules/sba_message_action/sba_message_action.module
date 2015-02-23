@@ -1,7 +1,7 @@
 <?php
 /**
  * @file
- * Provides content type and config for letters to targets.
+ * Provides content type and config for message actions.
  */
 
 /**
@@ -9,8 +9,8 @@
  * 
  * Adds some custom fields to new webforms.
  */
-function springboard_letter_node_insert($node) {
-  if($node->type == 'springboard_letter') {
+function sba_message_action_node_insert($node) {
+  if($node->type == 'sba_message_action') {
     module_load_include('inc', 'webform', 'includes/webform.components');
 
     //add custom fields for the messages
@@ -79,8 +79,8 @@ function springboard_letter_node_insert($node) {
  * Implements hook_webform_user_profile_fields_alter
  *
  */
-function springboard_letter_webform_user_profile_fields_alter(&$fields, $node) {
-  if($node->type == 'springboard_letter') {
+function sba_message_action_webform_user_profile_fields_alter(&$fields, $node) {
+  if($node->type == 'sba_message_action') {
     foreach ($fields as $index => $profile_field) {
       //make all fields except address2 mandatory
       if ($profile_field['name'] != 'sbp_address_line_2'){
@@ -107,11 +107,11 @@ function springboard_letter_webform_user_profile_fields_alter(&$fields, $node) {
  * 
  * Add our submit handler.
  */
-// function springboard_letter_form_alter(&$form, &$form_state, $form_id) {
-//   if(isset($form['#node']) && $form['#node']->type == 'springboard_letter') {
+// function sba_message_action_form_alter(&$form, &$form_state, $form_id) {
+//   if(isset($form['#node']) && $form['#node']->type == 'sba_message_action') {
 //     $pos = strpos($form_id, 'client_form');
 //     if($pos !== FALSE) {
-//       $form['#submit'][] = 'springboard_letter_submit';
+//       $form['#submit'][] = 'sba_message_action_submit';
 //     }
 //   }
 // }

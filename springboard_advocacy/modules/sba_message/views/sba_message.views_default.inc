@@ -106,7 +106,7 @@ function sba_message_views_default_views() {
   $handler->display->display_options['filters']['type']['table'] = 'sba_message';
   $handler->display->display_options['filters']['type']['field'] = 'type';
   $handler->display->display_options['filters']['type']['value'] = array(
-    'sba_letter_to_target_message' => 'sba_letter_to_target_message',
+    'sba_message_action_message' => 'sba_message_action_message',
   );
 
   /* Display: EVA Field */
@@ -139,7 +139,7 @@ function sba_message_views_default_views() {
   $handler->display->display_options['fields']['field_sba_message']['delta_offset'] = '0';
   $handler->display->display_options['entity_type'] = 'node';
   $handler->display->display_options['bundles'] = array(
-    0 => 'springboard_letter',
+    0 => 'sba_message_action',
   );
 
   /* Display: Embedded node/%/messages Block */
