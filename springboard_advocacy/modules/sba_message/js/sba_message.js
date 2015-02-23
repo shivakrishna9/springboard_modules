@@ -216,7 +216,7 @@
     }
 
     // validation error message displayed next to save button
-        function setError(messages) {
+    function setError(messages) {
         var err = $('#advo-error-wrapper').text('').hide().css('margin-bottom', 0);
         err.parent().css({'float': 'left'});
         $.each(messages, function(i, message) {
@@ -243,6 +243,7 @@
             var readable = buildReadableQuery(query);
             buildDiv(id, readable, query);
        });
+        //reverse the display order
         var content = $('#springboard-advocacy-message-recipients-content');
         var contentItems = content.children('.target-recipient');
         content.append(contentItems.get().reverse());
@@ -273,11 +274,11 @@
 
     // attaches JSONified data attributes of the recipients list to a hidden form field
     function setFormValue() {
-        var arr = {};
+        var obj = {};
         $('.target-recipient').each(function(i) {
-            arr[i] = $(this).data();
+            obj[i] = $(this).data();
         });
-        recipients = JSON.stringify(arr).replace(/"/g, '&quot;')//.replace('}}', '}');
+        recipients = JSON.stringify(obj).replace(/"/g, '&quot;');
         $('input[name="data[recipients]"]').val(recipients);
     }
 
@@ -349,11 +350,13 @@
         return "Group: " +  cleanUp;
     }
 
+    //Uc first helper
     String.prototype.ucfirst = function()
     {
         return this.charAt(0).toUpperCase() + this.substr(1);
     }
 
+    //json notation to readable string helper
     String.prototype.jsonToReadable = function()
     {
       return this.replace(/{"/g, '<ul><li>')
@@ -366,6 +369,7 @@
             .replace(/%20/g, ' ')
     }
 
+    // Main set of functions which need to happen on every page load
     $(document).ready(function () {
 
         // submit the form or return error message
@@ -392,14 +396,17 @@
             }
         });
 
-        // rearrange some divs
+        // rearrange some div orders
+        var recipContainer = $('#springboard-advocacy-message-recipients-container');
+
         var finder = $('.springboard-advocacy-find-targets-container');
         var actions = $('#sba-message-edit-form #edit-actions');
         var err = $('#advo-error-wrapper');
         err.css({'display': 'inline-block', 'padding-left': '20px'});
         $('#springboard-advocacy-message-form-container').append(finder);
-        $(finder).append(actions);
-        $(actions).append(err);
+        finder.append(recipContainer)
+        finder.append(actions);
+        actions.append(err);
         $('input#quick-target').prop("disabled", true).fadeTo(400, 0.6).css({'cursor': 'not-allowe'}).addClass('cancel-hover');
 
         // Editing a pre-existing message, append the recipients
@@ -427,4 +434,5 @@
             }
         });
     });
+
 })(jQuery);

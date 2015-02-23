@@ -1,25 +1,60 @@
+/***************** Message Add/Edit form ****************/
 
 #springboard-advocacy-message-form-container {
-    float:left;
-    width: 70%;
+    width: 100%;
     margin-bottom: 1em;
 }
+#springboard-advocacy-message-form-container .form-wrapper {
+    margin-top: 5px;
+    padding:  0 1em;
+}
+#springboard-advocacy-message-form-container fieldset {
+    border-top: 1px solid #ccc;
+    border-left: 1px solid #ccc;
+    border-right: 1px solid #ccc;
+}
+#springboard-advocacy-message-form-container .fieldset-legend {
+    margin-left: 0;
+    padding-bottom: 0;
+}
 
+#springboard-advocacy-message-form-container .fieldset-wrapper  {
+    padding: 1em 0;
+}
+
+#springboard-advocacy-message-form-container fieldset legend {
+    float: left;
+    margin: 5px 0 0;
+    top:-1em;
+}
+#springboard-advocacy-message-form-container fieldset fieldset {
+    border: none;
+}
+
+#springboard-advocacy-message-form-container fieldset fieldset legend{
+    margin-left: 5px;
+}
+#springboard-advocacy-message-form-container fieldset fieldset .fieldset-wrapper {
+    padding: 1em;
+
+}
 #springboard-advocacy-message-recipients-container {
-    width:100%;
+    width:30%;
+    background:#fff;
     float:right;
+    position:relative;
 }
 
 #springboard-advocacy-message-recipients {
     background: #fcfcfc;
-    margin-left: 1em;
+    /margin-left: 1em;
     min-height: 100px;
     max-height:500px;
     overflow-y: auto;
     position: absolute;
-    right: -20px;
-    top: 0;
-    width: 30%;
+    right: 10px;
+    top: 0px;
+    width: 100%;
     border:1px solid #ccc;
     border-radius: 1.5em;
     box-shadow: -5px -8px 3px -5px #ccc;
@@ -49,17 +84,35 @@
 }
 
 
-#sba-message-edit-form .springboard-advocacy-find-targets-container {
+ .springboard-advocacy-find-targets-container {
     width: 100%;
-
-}
-.springboard-advocacy-find-targets {
+    position: relative;
     background:#fff;
-    padding: 0px;
     border: 1px solid #CCC;
+    position: relative;
 }
+.springboard-advocacy-find-targets-container:after {
+    clear: both;
+    content: "";
+    display: table;
+}
+.springboard-advocacy-find-targets-container #edit-actions {
+    clear:both;
+    background: none;
+}
+.springboard-advocacy-find-targets-container h3 {
+    margin: 0 0 0 1em;
+}
+
+.springboard-advocacy-find-targets {
+    padding: 0px;
+    width:65%;
+    float:left;
+    background:#fff;
+}
+
 .springboard-advocacy-find-targets div.view-targets {
-    margin: 20px;
+    margin: 0 20px 20px;
     padding: 10px;
     border-width: 1px 1px 2px;
     border-style: solid;
@@ -71,6 +124,7 @@
     border-image: none;
     border-radius: 6px;
     background: none repeat scroll 0% 0% #F5FBFE;
+    width:95%;
 }
 .springboard-advocacy-find-targets .ctools-collapsible-container {
 }
@@ -106,6 +160,7 @@
 
 .springboard-advocacy-find-targets .view-content  {
 }
+
 .springboard-advocacy-find-targets  div[id*=combine] {
     display: block;
     float:left;
@@ -190,7 +245,6 @@
     clear:left;
     float:right;
     margin-right: 1em;
-
 }
 .springboard-advocacy-find-targets  div.views-exposed-widget.views-targets-button input {
     margin: 10px 10px 12px 0px;
@@ -231,10 +285,13 @@
     display: inline-block;
     margin-right: 10px;
 }
+
+
 .views-targets-button{
     display: inline-block;
     margin: 6px 5px;
 }
+
 .views-targets-button:before {
     display: inline-block;
     margin: 0px 8px 0px 0px;
@@ -245,7 +302,6 @@
     left: 5px;
     top:16px;
     z-index:100;
-
 }
 
 /* override springboard theme*/

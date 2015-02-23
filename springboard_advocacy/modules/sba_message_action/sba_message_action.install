@@ -64,7 +64,7 @@ function sba_message_action_install() {
     salesforce_genmap_save_map($map, 'webform');
   }
   sba_message_action_add_content_type();
-  sba_message_action_add_example_lett();
+  sba_message_action_add_example_message_action();
 }
 
 /**
@@ -125,7 +125,7 @@ function sba_message_action_add_content_type() {
   }
   node_type_save($type);
   node_types_rebuild();
-  node_add_body_field($type);
+  node_add_body_field($type, 'Call to Action');
   sba_message_action_add_fields();
 
   // Add as a webform.
@@ -161,38 +161,38 @@ function sba_message_action_add_content_type() {
 }
 
 function sba_message_action_add_fields() {
-
-  $fields = array(
-
-    'field_sba_call_to_action' => array(
-      'field_name' => 'sba_message_action_call_to_action',
-      'type' => 'text_long',
-      'cardinality' => 1,
-      'settings' => array(),
-      'entity_types' => array('node'),
-      '_instance' => array(
-        'field_name' => 'sba_message_action_call_to_action',
-        'entity_type' => 'node',
-        'bundle' => 'sba_message_action',
-        'required' => TRUE,
-        'label' => st('Call to Action Text'),
-        'description' => st(''),
-        'widget' => array(
-          'type' => 'text_textarea',
-          'weight' => 5,
-          'settings' => array(),
-        ),
-      ),
-    ),
-  );
-
-  foreach ($fields as $key => $values) {
-    $instance = $values['_instance'];
-    unset($values['_instance']);
-
-    field_create_field($values);
-    field_create_instance($instance);
-  }
+//
+//  $fields = array(
+//
+//    'field_sba_call_to_action' => array(
+//      'field_name' => 'sba_message_action_call_to_action',
+//      'type' => 'text_long',
+//      'cardinality' => 1,
+//      'settings' => array(),
+//      'entity_types' => array('node'),
+//      '_instance' => array(
+//        'field_name' => 'sba_message_action_call_to_action',
+//        'entity_type' => 'node',
+//        'bundle' => 'sba_message_action',
+//        'required' => TRUE,
+//        'label' => st('Call to Action Text'),
+//        'description' => st(''),
+//        'widget' => array(
+//          'type' => 'text_textarea',
+//          'weight' => 5,
+//          'settings' => array(),
+//        ),
+//      ),
+//    ),
+//  );
+//
+//  foreach ($fields as $key => $values) {
+//    $instance = $values['_instance'];
+//    unset($values['_instance']);
+//
+//    field_create_field($values);
+//    field_create_instance($instance);
+//  }
 }
 
 
