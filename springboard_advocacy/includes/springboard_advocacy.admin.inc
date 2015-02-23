@@ -222,7 +222,6 @@ function springboard_advocacy_dashboard($path, $arg = NULL) {
 
     case ($path == arg(1)):
       $message_types = variable_get('sba_message_node_types', array());
-      dpm($message_types);
       $node = node_load($path);
       if(isset($message_types[$node->type])) {
         $view = views_get_view('sba_messages_node');
