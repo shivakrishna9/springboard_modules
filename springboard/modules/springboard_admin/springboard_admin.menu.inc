@@ -167,11 +167,11 @@ function springboard_admin_admin_menu_items() {
     '_children' => array(),
   );
 
-  if(module_exists('springboard_letter')) {
+  if(module_exists('sba_message_action')) {
 
     $items['admin/springboard/advocacy/alerts']['_children']['admin/springboard/advocacy/alerts'] = array(
       'link_path' => 'admin/springboard/advocacy/alerts',
-      'link_title' => 'Alerts',
+      'link_title' => 'Actions',
       'menu_name' => 'springboard_admin_menu',
       'expanded' => 1,
       'customized' => 1,
