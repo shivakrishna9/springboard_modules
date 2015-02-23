@@ -12,22 +12,22 @@
 
             // Apply click event to the search form add links
             // Allows views search results to be appended to the recipients list
-            links = $('a.advocacy-add-target, a#advo-add-all');
+            var links = $('a.advocacy-add-target, a#advo-add-all');
             links.each(function() {
                 $(this, context).once('advocacy-add-target', function() {
                     $(this).click(function (e){
                         e.preventDefault();
-                        addTargets('search', this);
+                        addTarget('search', this);
                     });
                 });
             });
 
             //update exposed form element states when a district is selected
             $('select[name="search_district_name"]', context).once('advocacy-district-reloaded', function() {
-                elementStates(this);
+                setElStates();
                 $('#views-exposed-form-targets-block-3 input, #views-exposed-form-targets-block-3 select').on('change', function(){
                     if(this.type != 'button' && this.type !='hidden') {
-                        elementStates(this);
+                        setElStates();
                     }
                 });
             });
@@ -40,23 +40,24 @@
                 if (oldVal != newVal) {
                     combine = setTimeout(function() {
                         oldVal = newVal;
-                        elementStates(this);
+                        setElStates();
                     }, 400);
                 }
             });
 
             //set the click event for the quick target button
             $('#quick-target', context).once('advocacy-add-quick-target', function() {
-                elementStates(this);//need this?
+                setElStates();//need this?
                 $('input#quick-target').click(function() {
-                    prepareQuickTarget();
+                    var query = getQuickQuery();
+                    addTarget('quick', query);
                 });
             });
         }
     };
 
     // selectively disable/enable exposed form elements based on user actions
-    function elementStates(item) {
+    function setElStates() {
 
         //element state meta-variables
         var notGroupable = false;
@@ -128,7 +129,6 @@
                 district.prop('disabled', true);
                 //jquery uniform
                 $('#edit-search-district-name-wrapper div.selector').addClass('disabled');
-
             }
         }
 
@@ -142,81 +142,82 @@
         }
     }
 
-    // quick target click function, prepares selected items
-    function prepareQuickTarget() {
-        values = [];
-        values["role"] = []
-        values["party"] = []
-        values["state"] = []
+    // quick target click function, builds query array
+    function getQuickQuery() {
+
+        var roles = []
+        var parties = []
+        var states = []
 
         $('#views-exposed-form-targets-block-3 input[type="checkbox"], #views-exposed-form-targets-block-3 select').each(function(i){
-            if ($(this).prop('checked') || (this.name == 'search_state')) {
+            if ($(this).prop('checked') || (this.name == 'search_state' && this.value != "All")) {
                 var nm = this.name
                 var v = this.value
                 if (nm.indexOf('role') != -1) {
-                    values["role"].push(v);
+                    roles.push(v);
                 }
-                if (nm.indexOf('party') != -1) {
-                    values["party"].push(v);
+                else if (nm.indexOf('party') != -1) {
+                    parties.push(v);
                 }
-                if (nm.indexOf('state') != -1) {
-                    if (v != "All")
-                    {
-                        values["state"].push(v);
-                    }
+                else if (nm.indexOf('state') != -1) {
+                    states.push(v);
                 }
-
+                else return false;
             }
         });
 
-        roles = values["role"].toString().replace(/,/g, '|');
-        parties = values["party"].toString().replace(/,/g, '|');
-        states = values["state"].toString().replace(/,/g, '|');
+        roles = roles.toString().replace(/,/g, '|');
+        parties = parties.toString().replace(/,/g, '|');
+        states = states.toString().replace(/,/g, '|');
 
-        item = [];
+        var query = [];
         if(roles.length > 0) {
-            item.push('roles=' + roles)
+            query.push('roles=' + roles)
         }
         if(states.length > 0) {
-            item.push('state=' + states)
+            query.push('state=' + states)
         }
         if(parties.length > 0) {
-            item.push('party=' + parties)
+            query.push('party=' + parties)
         }
-
-        addTargets('quick', item);
+        return query;
     }
 
     // add target
-    function addTargets(type, item) {
+    function addTarget(type, query) {
         // create unique ids for target divs
+        if (type == 'search') {
+            var qArr = $(query).attr('href').replace('add-all?', '').replace('add-target?', '').split('&');
+        }
+        else {
+           qArr = query;
+        }
+
+        var readable = buildReadableQuery(qArr);
+        var id = calcDivId()
+        buildDiv(id, readable, qArr);
+        setUpdateMessage();
+        setFormValue();
+    }
+
+    function calcDivId(){
         if ($('.target-recipient').length !== 0) {
             var count = $(".target-recipient").map(function() {
-                    return $(this).attr('id').replace('target-', '');
-                }).get().sort(function(a, b){
-                    return a-b
-                });
-            idx = parseInt(count.pop()) + 1;
+                return $(this).attr('id').replace('target-', '');
+            }).get().sort(function(a, b){
+                return a-b
+            });
+            var  id = parseInt(count.pop()) + 1;
         }
         else {
-            idx = 0;
+            id = 0;
         }
-        if (type == 'search') {
-            var query = $(item).attr('href').replace('add-all?', '').replace('add-target?', '').split('&');
-        }
-        else {
-           query = item;
-        }
-        var readable = buildReadableQuery(query);
-        buildDivs(idx, readable, query);
-        //window.topper = $('#springboard-advocacy-message-recipients').height();
-        buildUpdateMessage();
-        buildFormValue();
+        return id;
     }
 
     // validation error message displayed next to save button
-    function buildError(messages) {
-        err = $('#advo-error-wrapper').text('').hide().css('margin-bottom', 0);
+        function setError(messages) {
+        var err = $('#advo-error-wrapper').text('').hide().css('margin-bottom', 0);
         err.parent().css({'float': 'left'});
         $.each(messages, function(i, message) {
             err.append('<div>' + message + ' field is required </div>');
@@ -228,9 +229,8 @@
     // Rebuild the recipients list on existing messages
     function buildEditPage(recipients) {
        $('#springboard-advocacy-message-recipients-content').text('');
-       //var count = 0;
         recipients = recipients.replace(/&quot;/g, '"')
-         $.each(JSON.parse(recipients), function(idx, obj) {
+         $.each(JSON.parse(recipients), function(id, obj) {
             var query = '';
             query = JSON.stringify(obj)
                 .replace(/"/g, '')
@@ -241,9 +241,7 @@
                 .split('&');
 
             var readable = buildReadableQuery(query);
-
-            buildDivs(idx, readable, query);
-            //count++;
+            buildDiv(id, readable, query);
        });
         var content = $('#springboard-advocacy-message-recipients-content');
         var contentItems = content.children('.target-recipient');
@@ -253,29 +251,28 @@
     // Create the recipients list divs, apply data attributes which
     // will be aggregated as a JSON string used by a hidden form field
     // for submission to the API
-    function buildDivs(idx, readable, query) {
+    function buildDiv(id, readable, query) {
         $('#springboard-advocacy-message-recipients-content')
-            .prepend('<div id = "target-' + idx + '" class = "target-recipient" style="display: none;">' + readable +
+            .prepend('<div id = "target-' + id + '" class = "target-recipient" style="display: none;">' + readable +
             ' <span><a class ="target-delete" href="#">delete</a></span></div>');
-        $('#target-' + idx).show(300);
-        $('#target-' + idx + ' a').click(function(ev){
+        $('#target-' + id).show(300);
+        $('#target-' + id + ' a').click(function(ev){
             ev.preventDefault();
             $(this).closest('.target-recipient').hide(300, function(){
                 $(this).remove();
-                buildUpdateMessage();
-                buildFormValue();
-               // window.topper = $('#springboard-advocacy-message-recipients').height();
+                setUpdateMessage();
+                setFormValue();
             });
 
         })
-        $(query).each(function(index, value) {
-            value = value.split('=');
-            $('#target-' + idx).attr('data-' + value[0], value[1].replace(/%7C/g, '|'));
+        $(query).each(function(i, v) {
+            v = v.split('=');
+            $('#target-' + id).attr('data-' + v[0], v[1].replace(/%7C/g, '|'));
         });
     }
 
     // attaches JSONified data attributes of the recipients list to a hidden form field
-    function buildFormValue() {
+    function setFormValue() {
         var arr = {};
         $('.target-recipient').each(function(i) {
             arr[i] = $(this).data();
@@ -284,7 +281,7 @@
         $('input[name="data[recipients]"]').val(recipients);
     }
 
-    function buildUpdateMessage() {
+    function setUpdateMessage() {
         $('.sba-message-status').text('You have unsaved changes').show('slow');
     }
 
@@ -344,7 +341,7 @@
             return "Individual: " + queryObj.Sal + " " +  queryObj.First + " " + queryObj.Last;
         }
 
-        cleanUp = JSON.stringify(queryObj).jsonToReadable();
+        var cleanUp = JSON.stringify(queryObj).jsonToReadable();
         if (typeof(queryObj.Fields) !== 'undefined' || typeof(queryObj.Gender) !== 'undefined'
             || typeof(queryObj.Social) !== 'undefined' ||  typeof(queryObj.District) !== 'undefined') {
             return "Multiple Individuals: " +  cleanUp;
@@ -375,6 +372,7 @@
         $("#edit-submit, #edit-delete").click(function (e) {
             e.preventDefault();
             var messages = [];
+            //@todo add the rest of required fields
             if($('[name*="field_subject_editable"]').length != 0 && !$('[name*="field_subject_editable"]').is(':checked')) {
                 messages.push( 'Subject is editable');
             }
@@ -390,14 +388,14 @@
                 $("#sba-message-edit-form").submit();
             }
             else {
-                buildError(messages);
+                setError(messages);
             }
         });
 
         // rearrange some divs
-        finder = $('.springboard-advocacy-find-targets-container');
-        actions = $('#sba-message-edit-form #edit-actions');
-        err = $('#advo-error-wrapper');
+        var finder = $('.springboard-advocacy-find-targets-container');
+        var actions = $('#sba-message-edit-form #edit-actions');
+        var err = $('#advo-error-wrapper');
         err.css({'display': 'inline-block', 'padding-left': '20px'});
         $('#springboard-advocacy-message-form-container').append(finder);
         $(finder).append(actions);
