@@ -434,3 +434,40 @@ input[type="submit"].cancel-hover {
     top: 0px;
     z-index: 100;
 }
+
+@media only screen and (min-width: 769px) and (max-width: 1200px) {
+    .springboard-advocacy-find-targets  div.views-exposed-widget.views-targets-button-wrapper {
+        float:right;
+        margin-right: 1em;
+        margin-top: 0px;
+    }
+    .springboard-advocacy-find-targets  div.views-exposed-widget.views-submit-button {
+        margin-top: 50px;
+    }
+}
+
+@media only screen and (min-width: 769px) and (max-width: 979px) {
+    .springboard-advocacy-find-targets  div.views-exposed-widget.views-targets-button-wrapper {
+        float: none;
+        width:100%;
+    }
+    .springboard-advocacy-find-targets  div.views-exposed-widget.views-targets-button-wrapper .target-button-header{
+        margin: 0 auto;
+        text-align: center;
+    }
+    .springboard-advocacy-find-targets  div.views-exposed-widget.views-targets-button-wrapper .target-button-help {
+        margin: 0 auto;
+        text-align: center;
+    }
+
+    .springboard-advocacy-find-targets  div.views-exposed-widget.views-targets-button {
+        margin: 0 auto;
+        text-align: center;
+    }
+    .springboard-advocacy-find-targets  div.views-exposed-widget.views-submit-button {
+        margin: 0 auto;
+        float:none;
+        text-align: center;
+    }
+
+}
