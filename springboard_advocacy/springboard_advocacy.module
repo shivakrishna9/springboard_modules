@@ -409,3 +409,12 @@ function springboard_advocacy_theme($existing, $type, $theme) {
 
   return $templates;
 }
+
+function springboard_advocacy_preprocess_pager(&$variables, $hook) {
+  if (isset($variables['parameters']['search_state'])) {
+    $variables['tags'][0] = '<<';
+    $variables['tags'][1] = '<';
+    $variables['tags'][3] = '>';
+    $variables['tags'][4] = '>>';
+  }
+}
