@@ -149,16 +149,16 @@ function springboard_advocacy_dashboard($path, $arg = NULL) {
       );
       break;
 
-    case 'alerts':
+    case 'actions':
       $view = views_get_view('sba_alerts');
       if($view && isset($view->display['block_1'])) {
         $views = array(
           'sba_alerts' => array(
-            'header' => t('Site alerts'),
+            'header' => t('Message Actions'),
             'content' => views_embed_view('sba_alerts', 'block_1'),
-            'create_link' => array('title' => t('Create a new alert'), 'href' => 'node/add/sba-message-action'),
+            'create_link' => array('title' => t('Create a new message action'), 'href' => 'node/add/sba-message-action'),
             'manage_link' => array('title' => t('Manage Custom Targets'), 'href' => 'admin/springboard/advocacy/targets/custom-targets'),
-            'viewmore_link' => array('title' => t('View all'), 'href' => 'admin/springboard/advocacy/alerts/all'),
+            'viewmore_link' => array('title' => t('View all'), 'href' => 'admin/springboard/advocacy/message-actions/all'),
             'css' => drupal_get_path('module', 'springboard_advocacy') . '/css/sba.css',
           ),
         );
@@ -166,21 +166,21 @@ function springboard_advocacy_dashboard($path, $arg = NULL) {
       else {
         $views = array(
           'sba_alerts' => array(
-            'header' => t('Site alerts'),
-            'content' => '<div>Alerts view or view display "block_1" not found.</div>',
+            'header' => t('Message Actions'),
+            'content' => '<div>Message Actions view or view display "block_1" not found.</div>',
           ),
         );
       }
       break;
 
-    case 'alerts/all':
+    case 'message-actions/all':
       $view = views_get_view('sba_alerts');
       if($view && isset($view->display['block_2'])) {
         $views = array(
           'sba_alerts' => array(
-            'header' => t('All Site alerts'),
+            'header' => t('All Message Actions'),
             'content' => views_embed_view('sba_alerts', 'block_2'),
-            'create_link' => array('title' => t('Create a new alert'), 'href' => 'node/add/sba-message-action'),
+            'create_link' => array('title' => t('Create a new message action'), 'href' => 'node/add/sba-message-action'),
             'manage_link' => array('title' => t('Manage Custom Targets'), 'href' => 'admin/springboard/advocacy/targets/custom-targets'),
             'css' => drupal_get_path('module', 'springboard_advocacy') . '/css/sba.css',
 
@@ -190,8 +190,8 @@ function springboard_advocacy_dashboard($path, $arg = NULL) {
       else {
         $views = array(
           'sba_alerts' => array(
-            'header' => t('All Site alerts'),
-            'content' => '<div>Alerts view or view display "block_2" not found.</div>',
+            'header' => t('All Message Actions'),
+            'content' => '<div>Message Actions view or view display "block_2" not found.</div>',
           ),
         );
       }

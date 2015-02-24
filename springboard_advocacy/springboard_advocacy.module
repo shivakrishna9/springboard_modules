@@ -22,14 +22,14 @@ function springboard_advocacy_menu() {
     'type' => MENU_DEFAULT_LOCAL_TASK,
   );
 
-  $items['admin/springboard/advocacy/alerts'] = array(
-    'title' => 'Advocacy: Alerts',
-    'page arguments' => array('alerts'),
+  $items['admin/springboard/advocacy/actions'] = array(
+    'title' => 'Advocacy: Actions',
+    'page arguments' => array('actions'),
   ) + springboard_advocacy_menu_common();
 
-  $items['admin/springboard/advocacy/alerts/all'] = array(
-    'title' => 'Advocacy: Alerts',
-    'page arguments' => array('alerts/all'),
+  $items['admin/springboard/advocacy/message-actions/all'] = array(
+    'title' => 'Advocacy: All Message Actions',
+    'page arguments' => array('message-actions/all'),
   ) + springboard_advocacy_menu_common();
 
   $items['node/%/messages'] = array(

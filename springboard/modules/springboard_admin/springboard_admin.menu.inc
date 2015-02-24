@@ -157,8 +157,8 @@ function springboard_admin_admin_menu_items() {
   }
 
   // Top Level: Springboard Advocacy.
-  $items['admin/springboard/advocacy/alerts'] = array(
-    'link_path' => 'admin/springboard/advocacy/alerts',
+  $items['admin/springboard/advocacy/actions'] = array(
+    'link_path' => 'admin/springboard/advocacy/actions',
     'link_title' => t('Advocacy'),
     'menu_name' => 'springboard_admin_menu',
     'expanded' => 1,
@@ -168,9 +168,8 @@ function springboard_admin_admin_menu_items() {
   );
 
   if(module_exists('sba_message_action')) {
-
-    $items['admin/springboard/advocacy/alerts']['_children']['admin/springboard/advocacy/alerts'] = array(
-      'link_path' => 'admin/springboard/advocacy/alerts',
+    $items['admin/springboard/advocacy/actions']['_children']['admin/springboard/advocacy/actions'] = array(
+      'link_path' => 'admin/springboard/advocacy/actions',
       'link_title' => 'Actions',
       'menu_name' => 'springboard_admin_menu',
       'expanded' => 1,
@@ -182,7 +181,7 @@ function springboard_admin_admin_menu_items() {
   if(module_exists('springboard_target')) {
 
     // Springboard Advocacy > Custom Targets.
-    $items['admin/springboard/advocacy/alerts']['_children']['admin/springboard/advocacy/targets/custom-targets'] = array(
+    $items['admin/springboard/advocacy/actions']['_children']['admin/springboard/advocacy/targets/custom-targets'] = array(
       'link_path' => 'admin/springboard/advocacy/targets/custom-targets',
       'link_title' => 'Custom Targets',
       'menu_name' => 'springboard_admin_menu',
