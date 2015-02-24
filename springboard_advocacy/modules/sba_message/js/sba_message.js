@@ -10,6 +10,16 @@
     Drupal.behaviors.AdvocacyMessageRecipients = {
         attach: function(context, settings) {
 
+
+            if ($('#edit-combine').text().length == 0) {
+                var placeholder = $('#edit-combine-wrapper .description').text().trim();
+                $('#edit-combine-wrapper .description').hide();
+                $('#edit-combine').attr('placeholder', placeholder);
+                $('#edit-combine').focus(function () {
+                    $(this).attr('placeholder', '');
+                });
+            }
+
             // Apply click event to the search form add links
             // Allows views search results to be appended to the recipients list
             var links = $('a.advocacy-add-target, a#advo-add-all');

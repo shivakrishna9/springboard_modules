@@ -88,10 +88,13 @@
     </div>
 
     <!-- Quick target button -->
-    <div class="views-exposed-widget views-targets-button">
-      <input type="button" id="quick-target" name="" value="Quick Target" />
-    </div>
-
+    <div class="views-exposed-widget views-targets-button-wrapper">
+    <div class="target-button-header">Quick Group Targeting</div>
+    <div class="target-button-help">Add this group in one click.</div>
+      <div class="views-exposed-widget views-targets-button">
+        <input type="button" id="quick-target" name="" value="Add Now" />
+      </div>
+</div>
     <?php if (!empty($reset_button)): ?>
       <div class="views-exposed-widget views-reset-button">
         <?php print $reset_button; ?>

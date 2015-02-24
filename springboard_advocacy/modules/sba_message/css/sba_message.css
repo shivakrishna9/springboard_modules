@@ -9,9 +9,9 @@
     padding:  0 1em;
 }
 #springboard-advocacy-message-form-container fieldset {
-    border-top: 1px solid #ccc;
-    border-left: 1px solid #ccc;
-    border-right: 1px solid #ccc;
+    border-top: 1px solid #d5d5d5;
+    border-left: 1px solid #d5d5d5;
+    border-right: 1px solid #d5d5d5;
 }
 #springboard-advocacy-message-form-container .fieldset-legend {
     margin-left: 0;
@@ -40,14 +40,11 @@
 }
 #springboard-advocacy-message-recipients-container {
     width:30%;
-    background:#fff;
     float:right;
     position:relative;
 }
 
 #springboard-advocacy-message-recipients {
-    background: #fcfcfc;
-    /margin-left: 1em;
     min-height: 100px;
     max-height:500px;
     overflow-y: auto;
@@ -55,9 +52,8 @@
     right: 10px;
     top: 0px;
     width: 100%;
-    border:1px solid #ccc;
-    border-radius: 1.5em;
-    box-shadow: -5px -8px 3px -5px #ccc;
+    border:1px solid #d5d5d5;
+    background:#fff;
 }
 
 #springboard-advocacy-message-recipients h3 {
@@ -72,11 +68,11 @@
 
 #springboard-advocacy-message-recipients .target-recipient {
     margin: 1em;
-    border: 1px dotted #ccc;
+    border: 1px dotted #d5d5d5;
     padding: 0.5em;
     background:#fff;
     border-radius: 0.5em;
-    box-shadow: -4px -8px 3px -5px #ccc;
+    box-shadow: -4px -8px 3px -5px #d5d5d5;
 }
 
 #springboard-advocacy-message-recipients .target-recipient ul li {
@@ -87,8 +83,8 @@
  .springboard-advocacy-find-targets-container {
     width: 100%;
     position: relative;
-    background:#fff;
-    border: 1px solid #CCC;
+    background: none;
+    border: none;
     position: relative;
 }
 .springboard-advocacy-find-targets-container:after {
@@ -99,8 +95,17 @@
 .springboard-advocacy-find-targets-container #edit-actions {
     clear:both;
     background: none;
+    padding: 0;
 }
-.springboard-advocacy-find-targets-container h3 {
+
+.springboard-advocacy-find-targets-container #edit-actions input{
+   width: 65%;
+    font-size: 1.8em;
+    line-height: 2em;
+    display: block;
+}
+
+.springboard-advocacy-find-targets h3 {
     margin: 0 0 0 1em;
 }
 
@@ -109,22 +114,16 @@
     width:65%;
     float:left;
     background:#fff;
+    border: 1px solid #d5d5d5;
 }
 
 .springboard-advocacy-find-targets div.view-targets {
-    margin: 0 20px 20px;
-    padding: 10px;
-    border-width: 1px 1px 2px;
-    border-style: solid;
-    border-color: #DFDFDF #DFDFDF #EAEAEA;
-    -moz-border-top-colors: none;
-    -moz-border-right-colors: none;
-    -moz-border-bottom-colors: none;
-    -moz-border-left-colors: none;
-    border-image: none;
-    border-radius: 6px;
-    background: none repeat scroll 0% 0% #F5FBFE;
-    width:95%;
+    margin: 0;
+    padding: 0;
+}
+.springboard-advocacy-find-targets div.view-filters {
+    margin: 3em;
+    padding: 0;
 }
 .springboard-advocacy-find-targets .ctools-collapsible-container {
 }
@@ -140,56 +139,60 @@
 }
 
 .springboard-advocacy-find-targets .views-exposed-form {
-    padding:1em;
-    margin: 10px 0;
-    border-width: 1px 1px 2px;
-    border-style: solid;
-    border-color: #DFDFDF #DFDFDF #EAEAEA;
-    -moz-border-top-colors: none;
-    -moz-border-right-colors: none;
-    -moz-border-bottom-colors: none;
-    -moz-border-left-colors: none;
-    border-image: none;
-    border-radius: 6px;
-    background: none repeat scroll 0% 0% #f0f0f0
+    padding:0;
+    margin: 0;
 }
 .springboard-advocacy-find-targets .attachment-before {
     margin: 0px;
     font-weight:bold;
 }
-
-.springboard-advocacy-find-targets .view-content  {
-}
-
-.springboard-advocacy-find-targets  div[id*=combine] {
-    display: block;
-    float:left;
-    margin-bottom:30px;
-}
-
-.springboard-advocacy-find-targets  #state-district-wrapper {
-    min-width: 40%;
-    position: relative;
-    margin-top: -20px;
-    margin-bottom: 30px;
-}
-
-.springboard-advocacy-find-targets #state-district-wrapper select {
-    width: 160px;
-}
-
-
 .springboard-advocacy-find-targets div[id$=wrapper]
 {
     float:left;
     display:block;
 
 }
-/*.springboard-advocacy-find-targets #state-district-wrapper div[id*=search_state],*/
-/*.springboard-advocacy-find-targets #state-district-wrapper div[id*=search_district]*/
-/*{*/
-/*float:none;*/
-/*}*/
+
+.springboard-advocacy-find-targets  div#edit-combine-wrapper {
+    display: block;
+    margin-bottom:1em;
+    float: none;
+}
+
+.springboard-advocacy-find-targets  .views-widget input#edit-combine {
+    border-radius: 5px;
+    max-width: 660px;
+    width: 100%;
+}
+
+.springboard-advocacy-find-targets  #state-district-wrapper {
+    width: 100%;
+    max-width: 660px;
+    position: relative;
+    margin: 0;
+}
+
+.springboard-advocacy-find-targets #state-district-wrapper select {
+    width: 100%;
+    clear: left;
+}
+
+.springboard-advocacy-find-targets #state-district-wrapper div[id*=search-state],
+.springboard-advocacy-find-targets #state-district-wrapper div[id*=search-district]
+{
+    margin: 0;
+    width: 45%;
+}
+.springboard-advocacy-find-targets #state-district-wrapper div[id*=search-district]{
+    margin-left: 10%;
+}
+
+/* Grrr..... jQuery Uniform overide **/
+.springboard-advocacy-find-targets #state-district-wrapper div[id*=search-district] div.selector {
+    margin: 0 0 0 -10px;
+    padding: 0 0 0 10px;
+}
+
 
 .springboard-advocacy-find-targets  div[id*=search-role] {
     clear:left;
@@ -207,15 +210,9 @@
 }
 
 .springboard-advocacy-find-targets .radio-widgets {
-    background: #fcfcfc;
     clear:both;
     padding: 1em;
-    padding: 1em;
-    border-width: 1px 1px 2px;
-    border-style: solid;
-    border-color: #DFDFDF #DFDFDF #EAEAEA;
-    border-image: none;;
-    border-radius: 6px;
+
 }
 .radio-widgets:after {
     clear: both;
@@ -225,7 +222,11 @@
 .springboard-advocacy-find-targets .views-exposed-widget {
     vertical-align: top;
     margin-right: 2.5em;
-    margin-top: 1em;
+    margin-top: 0;
+}
+.springboard-advocacy-find-targets .radio-widgets .views-exposed-widget {
+    margin-right: 5em;
+    margin-top:1em;
 }
 
 .springboard-advocacy-find-targets #state-district-wrapper .views-exposed-widget {
@@ -239,29 +240,51 @@
 .springboard-advocacy-find-targets .views-exposed-widget label.option {
    top:4px;
 }
+.springboard-advocacy-find-targets  div.views-exposed-widget.views-targets-button-wrapper {
+    float:right;
+    margin-right: 1em;
+    margin-top: -50px;
+}
+
+.springboard-advocacy-find-targets  div.views-exposed-widget.views-targets-button-wrapper .target-button-header{
+    font-weight: bold;
+    line-height: 30px;
+    font-size: 1.1em;
+}
+.springboard-advocacy-find-targets  div.views-exposed-widget.views-targets-button-wrapper .target-button-help{
+    color: #999;
+    font-weight: bold;
+}
 
 .springboard-advocacy-find-targets  div.views-exposed-widget.views-targets-button {
     display:block;
-    clear:left;
-    float:right;
-    margin-right: 1em;
 }
 .springboard-advocacy-find-targets  div.views-exposed-widget.views-targets-button input {
     margin: 10px 10px 12px 0px;
-    padding: 4px 20px;
-
+    padding: 10px 6px;
+    font-size: 1.4em;
+    text-align: center;
+    font-weight: bold;
+    width: 180px;
 }
 .springboard-advocacy-find-targets  div.views-exposed-widget.views-submit-button {
     display:block;
     clear:left;
-    float:right;
+    float:left;
 }
 .springboard-advocacy-find-targets  div.views-exposed-widget.views-submit-button input {
-  width: 85px;
+    width: 220px;
+    padding: 10px 6px;
+    font-size: 1.4em;
+    text-align: center;
+    font-weight: bold;
 }
+.springboard-advocacy-find-targets  div.views-exposed-widget.views-submit-button:before{
+    content: '';
 
+}
 .springboard-advocacy-find-targets .views-exposed-widget.disabled {
-    color: #ccc;
+    color: #d5d5d5;
 }
 
 /* adjust the recipients box position when admin menu is in use. */
@@ -292,18 +315,54 @@
     margin: 6px 5px;
 }
 
-.views-targets-button:before {
-    display: inline-block;
-    margin: 0px 8px 0px 0px;
-    color: #FFF;
-    content: "";
-    font-family: FontAwesome;
-    position: absolute;
-    left: 5px;
-    top:16px;
-    z-index:100;
+/*.views-targets-button:before {*/
+    /*display: inline-block;*/
+    /*margin: 0px 8px 0px 0px;*/
+    /*color: #FFF;*/
+    /*content: "";*/
+    /*font-family: FontAwesome;*/
+    /*position: absolute;*/
+    /*left: 5px;*/
+    /*top:16px;*/
+    /*z-index:100;*/
+/*}*/
+
+#springboard-advocacy-message-form-container .springboard-advocacy-find-targets ul.pager {
+    float: right;
+    margin-right: 2em;
 }
 
+.springboard-advocacy-find-targets .pager li > a, .springboard-advocacy-find-targets .pager li > span{
+    display: inline-block;
+    padding: 5px 10px;
+    border-radius: 0;
+    color: #7E7E7E;
+    background: #fff;
+    border: 1px solid #DFDFDF;
+    margin-left: -5px;
+}
+
+.springboard-advocacy-find-targets li.pager-current {
+    background: #336699;
+    color: #fff;
+    font-weight: bold;
+    display: inline-block;
+    border: 1px solid #DFDFDF;
+    margin-left: -5px;
+    padding: 5px 10px;
+}
+
+.springboard-advocacy-find-targets .pager-ellipsis,
+.springboard-advocacy-find-targets .pager-first,
+.springboard-advocacy-find-targets .pager-last
+{
+    display:none;
+}
+
+.springboard-advocacy-find-targets .pager li > a:hover, .springboard-advocacy-find-targets .pager li > a:focus {
+    text-decoration: none;
+    background-color: #6699cc;
+}
 /* override springboard theme*/
 /* ie 9 hack */
 input[type="submit"].cancel-hover  {
@@ -321,4 +380,49 @@ input[type="submit"].cancel-hover {
     background: linear-gradient(to bottom, #3182b2 0%, #0265a0 100%, #7db9e8 100%)!important;
     color: #fff!important;
     text-shadow: none!important;
+}
+.springboard-advocacy-find-targets  #advocacy-attachment-before-rows {
+    float: left;
+    margin: 0 1em 1em;
+}
+
+.springboard-advocacy-find-targets  #advocacy-attachment-before-rows .target-results {
+    font-size: 1.3em;
+}
+
+.springboard-advocacy-find-targets  #advocacy-attachment-before-rows .target-count {
+   color: #ccc;
+    margin-left: 1em;
+}
+.springboard-advocacy-find-targets #advocacy-attachment-before-add-all a {
+    float: right;
+    margin-right: 1em;
+    padding: 4px 6px;
+    border: 1px solid #01598e;
+    -webkit-border-radius: 5px;
+    -moz-border-radius: 5px;
+    border-radius: 5px;
+    background: -moz-linear-gradient(top, #3182b2 0%, #0265a0 100%, #7db9e8 100%);
+    background: -webkit-gradient(linear, left top, left bottom, color-stop(0%, #3182b2), color-stop(100%, #0265a0), color-stop(100%, #7db9e8));
+    background: -webkit-linear-gradient(top, #3182b2 0%, #0265a0 100%, #7db9e8 100%);
+    background: -o-linear-gradient(top, #3182b2 0%, #0265a0 100%, #7db9e8 100%);
+    background: -ms-linear-gradient(top, #3182b2 0%, #0265a0 100%, #7db9e8 100%);
+    background: linear-gradient(to bottom, #3182b2 0%, #0265a0 100%, #7db9e8 100%);
+    color: #fff;
+    text-shadow: none;
+}
+
+.springboard-advocacy-find-targets #advocacy-attachment-before-add-all a:hover {
+    text-decoration:none;
+}
+.springboard-advocacy-find-targets #advocacy-attachment-before-add-all a:before {
+    display: inline-block;
+    margin: 0px 8px 0px 0px;
+    color: #fff;
+    content: "";
+    font-family: FontAwesome;
+    position: relative;
+    left: 0px;
+    top: 0px;
+    z-index: 100;
 }

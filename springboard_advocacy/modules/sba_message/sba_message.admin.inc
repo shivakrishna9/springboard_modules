@@ -124,7 +124,7 @@ function sba_message_form_wrapper($sba_message) {
 //          'collapsed' => TRUE
 //        )
       //),
-      '#prefix' => '<div class="springboard-advocacy-find-targets-container"><h3>Find Targets</h3><div class="springboard-advocacy-find-targets">',
+      '#prefix' => '<div class="springboard-advocacy-find-targets-container"><div class="springboard-advocacy-find-targets"><h3>Find Targets</h3>',
       '#suffix' => '</div></div>',
       '#weight' => 3,
     ),

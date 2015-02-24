@@ -40,5 +40,12 @@ function sba_message_views_data_alter(&$data) {
       'handler' => 'sba_message_handler_sba_message_operations_field',
     ),
   );
+  $data['sba_message']['data'] = array(
+    'field' => array(
+      'title' => t('Recipients'),
+      'help' => t('Display all operations available for this sba_message.'),
+      'handler' => 'views_handler_field',
+    ),
+  );
 }
 
