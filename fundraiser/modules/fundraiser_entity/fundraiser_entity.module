@@ -27,6 +27,17 @@ function fundraiser_entity_menu() {
     'weight' => -10,
     'context' => MENU_CONTEXT_PAGE | MENU_CONTEXT_INLINE,
   );
+  $items['admin/springboard/reports/donation-entity/%fundraiser_entity_donation/edit'] = array(
+    'title' => 'Edit',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('fundraiser_entity_donation_entity_form', 4),
+    'access callback' => 'fundraiser_entity_donation_access',
+    'access arguments' => array('update', 4),
+    'type' => MENU_LOCAL_TASK,
+    'weight' => -5,
+    'context' => MENU_CONTEXT_PAGE | MENU_CONTEXT_INLINE,
+    'file' => 'includes/fundraiser_entity.admin.inc',
+  );
 
   // Donation Entity admin.
   $items['admin/springboard/settings/donation-entity'] = array(
@@ -247,7 +258,7 @@ function fundraiser_entity_donation_uri($fundraiser_donation) {
   // Only return a value if the user has permission to view the donation.
   if (entity_access('view', 'fundraiser_donation', $fundraiser_donation)) {
     return array(
-      'path' => 'admin/springboard/reports/donation-entity/' . $donation->did,
+      'path' => 'admin/springboard/reports/donation-entity/' . $fundraiser_donation->did,
     );
   }
 
@@ -458,7 +469,7 @@ function fundraiser_entity_donation_access($op, $task, $account = NULL) {
     case 'view':
       return user_access('administer fundraiser entity donations', $account)
           || user_access('view fundraiser entity donations', $account);
-    case 'edit':
+    case 'update':
       return user_access('administer fundraiser entity donations')
           || user_access('edit fundraiser entity donations');
   }
