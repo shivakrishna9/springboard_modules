@@ -323,9 +323,11 @@
 
         countMessage =     '<strong>Targeting: </strong> ' + message.join(' & ');
         var counter = '<div class="targeting-count">' + countMessage + '</div><a class="remove-all-targets">Remove All Targets</a></div>';
-        $('#springboard-advocacy-message-recipients-content').append(counter);
+        if(individs > 0 && groups > 0) {
+            $('#springboard-advocacy-message-recipients-content').append(counter);
+        }
+
         $('.remove-all-targets').click(function(){
-            console.log('d');
             $('.target-recipient').remove();
             $('.targeting-count, .remove-all-targets').remove();
             setUpdateMessage();
