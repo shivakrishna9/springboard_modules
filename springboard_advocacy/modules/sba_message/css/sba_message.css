@@ -79,6 +79,8 @@
 #edit-field-sba-greeting,
 #edit-field-sba-subject{
     display: inline-block;
+    -webkit-boxsizing: border-box;
+    -moz-box-sizing: border-box;
     box-sizing: border-box;
     width: 50%;
 }
@@ -146,6 +148,8 @@
     color: #333;
     margin-bottom: 1em;
     margin-left:10px;
+    -webkit-boxsizing: border-box;
+    -moz-box-sizing: border-box;
     box-sizing: border-box;
 
 }
@@ -292,6 +296,8 @@
     width: 100%;
     margin: 0;
     background: url("../img/icon-search.jpg") no-repeat scroll 14px 10px transparent;
+    -webkit-boxsizing: border-box;
+    -moz-box-sizing: border-box;
     box-sizing: border-box;
     padding: 8px 20px 8px 40px;
     height: auto;
@@ -419,6 +425,7 @@
     width: 223px;
     background: url("../img/arrow-quick-target.png") no-repeat scroll 0px 20px transparent;
     padding-left: 56px;
+    display:none;
 }
 
 .springboard-advocacy-find-targets  div.views-exposed-widget.views-targets-button-wrapper .target-button-header{
