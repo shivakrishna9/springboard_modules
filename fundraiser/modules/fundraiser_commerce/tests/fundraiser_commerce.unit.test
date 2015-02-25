@@ -30,7 +30,7 @@ class FundraiserCommerceUnitTestCase extends DrupalWebTestCase {
   /**
    * Unit test DB functions for fundraiser_donation.
    */
-  public function testcommerceDBFunctions() {
+  public function testCommerceDbFunctions() {
     $countries_count = 250;
     $us_zones_count = 64;
     $zones_count = 194;
@@ -113,7 +113,6 @@ class FundraiserCommerceUnitTestCase extends DrupalWebTestCase {
     // fundraiser_commerce_fundraiser_donation_cancel
     // fundraiser_commerce_fundraiser_donation_refund
     // fundraiser_commerce_fundraiser_donation_get_donation
-
   }
 
 }
