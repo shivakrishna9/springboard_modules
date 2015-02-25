@@ -106,7 +106,7 @@
 }
 
 .springboard-advocacy-find-targets h3 {
-    margin: 0 0 0 2em;
+    margin: 1em 1em 1em 2em;
 }
 
 .springboard-advocacy-find-targets {
@@ -118,11 +118,11 @@
 }
 
 .springboard-advocacy-find-targets div.view-targets {
-    margin: 0;
+    margin:  0;
     padding: 0;
 }
 .springboard-advocacy-find-targets div.view-filters {
-    margin: 1em 3em 3em;
+    margin: 0 3em 1em 3em;
     padding: 0;
 }
 .springboard-advocacy-find-targets .ctools-collapsible-container {
@@ -142,14 +142,14 @@
     padding:0;
     margin: 0;
 }
-.springboard-advocacy-find-targets .attachment-before {
-    border-top: 1px solid #F4F3e1;
-}
+
 .springboard-advocacy-find-targets #advocacy-attachment-before {
-    margin: 0px;
+
+    margin:0;
     font-weight:bold;
-    padding-top: 1em;
-    border-top: 10px solid #F4F3EE;
+    padding-top: 20px;
+    background: url("../img/search-gradient-ramp.jpg") no-repeat scroll center 65% transparent;
+
 }
 .springboard-advocacy-find-targets div[id$=wrapper]
 {
@@ -163,19 +163,22 @@
     margin-bottom:1em;
     margin-right: 0;
     float: none;
-
 }
 
 .springboard-advocacy-find-targets  .views-widget input#edit-combine {
-    border-radius: 5px;
-    max-width: 660px;
+    border-radius: 4px;
+    max-width: 680px;
     width: 100%;
     margin: 0;
+    background: url("../img/icon-search.jpg") no-repeat scroll 14px 10px transparent;
+    box-sizing: border-box;
+    padding: 8px 20px 8px 40px;
+    height: auto;
 }
 
 .springboard-advocacy-find-targets  #state-district-wrapper {
     width: 100%;
-    max-width: 670px;
+    max-width: 680px;
     position: relative;
     margin: 0;
     overflow: visible;
@@ -266,7 +269,7 @@
     margin-top: 0;
 }
 .springboard-advocacy-find-targets .radio-widgets .views-exposed-widget {
-    margin-right: 5em;
+    margin-right: 4em;
     margin-top:1em;
 }
 
@@ -274,9 +277,15 @@
     margin-right: 1em;
 }
 
-.springboard-advocacy-find-targets .views-exposed-widget label {
+.springboard-advocacy-find-targets .views-exposed-widget > label {
     margin: 0;
     font-weight:bold;
+    display: block;
+    margin-bottom: 10px;
+    font-size: 14px;
+    margin-left: 15px;
+    font-weight: 600;
+    font-family: "Open Sans",sans-serif;
 }
 .springboard-advocacy-find-targets .views-exposed-widget label.option {
    top:4px;
@@ -285,16 +294,21 @@
     float:right;
     margin-right: 1em;
     margin-top: -50px;
+    float: right;
+    width: 223px;
+    background: url("../img/arrow-quick-target.png") no-repeat scroll 0px 20px transparent;
+    padding-left: 56px;
 }
 
 .springboard-advocacy-find-targets  div.views-exposed-widget.views-targets-button-wrapper .target-button-header{
-    font-weight: bold;
+    font-weight: 600;
     line-height: 30px;
-    font-size: 1.1em;
+    font-size: 16px;
 }
 .springboard-advocacy-find-targets  div.views-exposed-widget.views-targets-button-wrapper .target-button-help{
     color: #999;
-    font-weight: bold;
+    font-weight: 400;
+    margin-left: 4px;
 }
 
 .springboard-advocacy-find-targets  div.views-exposed-widget.views-targets-button {
@@ -424,11 +438,13 @@ input[type="submit"].cancel-hover {
 }
 .springboard-advocacy-find-targets  #advocacy-attachment-before-rows {
     float: left;
-    margin: 0.7em;
+    margin: 1.4em 0.7em 0.7em 2em;
 }
 
 .springboard-advocacy-find-targets  #advocacy-attachment-before-rows .target-results {
-    font-size: 1.3em;
+    font-weight: 600;
+    font-size: 18px;
+    font-family: "Open Sans",sans-serif;
 }
 
 .springboard-advocacy-find-targets  #advocacy-attachment-before-rows .target-count {
@@ -436,6 +452,8 @@ input[type="submit"].cancel-hover {
     margin-left: 1em;
 }
 .springboard-advocacy-find-targets #advocacy-attachment-before-add-all {
+    margin: 1em;
+
 }
 .springboard-advocacy-find-targets #advocacy-attachment-before-add-all a {
     float: right;
@@ -453,6 +471,7 @@ input[type="submit"].cancel-hover {
     background: linear-gradient(to bottom, #3182b2 0%, #0265a0 100%, #7db9e8 100%);
     color: #fff;
     text-shadow: none;
+    font-weight: 400;
 }
 
 .springboard-advocacy-find-targets #advocacy-attachment-before-add-all a:hover {
@@ -481,6 +500,54 @@ input[type="submit"].cancel-hover {
     top: -10px;
 }
 
+
+
+.springboard-advocacy-find-targets th {
+    background: #247AAD;
+    color: #FFF;
+    padding: 10px 6px;
+    font-weight: 100;
+    text-align: center;
+    letter-spacing: 0.03em;
+    font-size: 13px;
+    font-family: "Open Sans",sans-serif;
+}
+.springboard-advocacy-find-targets th.first,
+.springboard-advocacy-find-targets th.last {
+    border-radius: 0;
+}
+
+.springboard-advocacy-find-targets td {
+    padding: 8px 14px;
+    border-bottom: none;
+    border-top: none;
+    border-right: none;
+    font-size: 14px;
+    line-height: 18px;
+}
+.springboard-advocacy-find-targets tr.even td{
+    background: #EFF9FF;
+}
+
+.springboard-advocacy-find-targets td.views-field-target-actionss {
+    text-align:center;
+}
+
+.springboard-advocacy-find-targets td.views-field-target-actions a {
+    border-radius: 4px;
+    background-color: #247AAD;
+    padding: 2px 10px;
+    color: #FFF;
+    float: right;
+    display: inline;
+    margin-right: 5px;
+    font-size: 11px;
+    cursor: pointer;
+}
+
+.springboard-advocacy-find-targets td.views-field-target-actions a:hover {
+   text-decoration: none;
+}
 
 @media only screen and (min-width: 769px) and (max-width: 1200px) {
     .springboard-advocacy-find-targets  div.views-exposed-widget.views-targets-button-wrapper {
