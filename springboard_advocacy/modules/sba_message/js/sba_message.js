@@ -9,7 +9,6 @@
 
     Drupal.behaviors.AdvocacyMessageRecipients = {
         attach: function(context, settings) {
-            $('.views-targets-button-wrapper').hide();
 
             if ($('#edit-combine').text().length == 0) {
                 var placeholder = $('#edit-combine-wrapper .description').text().trim();
@@ -35,6 +34,7 @@
             //update exposed form element states when a district is selected
             $('select[name="search_district_name"]', context).once('advocacy-district-reloaded', function() {
                 setElStates();
+
                 $('#views-exposed-form-targets-block-3 input, #views-exposed-form-targets-block-3 select').on('change', function(){
                     if(this.type != 'button' && this.type !='hidden') {
                         setElStates();

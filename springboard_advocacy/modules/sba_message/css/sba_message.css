@@ -141,10 +141,13 @@
 #springboard-advocacy-message-recipients .target-recipient ul  {
     display: block;
     float: left;
-    width: 50%;
+    width: 45%;
     list-style-type: none;
     color: #333;
     margin-bottom: 1em;
+    margin-left:10px;
+    box-sizing: border-box;
+
 }
 
 #springboard-advocacy-message-recipients .target-recipient:after {
