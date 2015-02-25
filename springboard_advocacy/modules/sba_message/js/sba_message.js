@@ -11,7 +11,6 @@
         attach: function(context, settings) {
             $('.views-targets-button-wrapper').hide();
 
-
             if ($('#edit-combine').text().length == 0) {
                 var placeholder = $('#edit-combine-wrapper .description').text().trim();
                 $('#edit-combine-wrapper .description').hide();
@@ -209,6 +208,7 @@
         var id = calcDivId()
         buildDiv(id, readable, qArr, false);
         setUpdateMessage();
+        setCountMessage();
         setFormValue();
     }
 
@@ -259,6 +259,7 @@
         var content = $('#springboard-advocacy-message-recipients-content');
         var contentItems = content.children('.target-recipient');
         content.append(contentItems.get().reverse());
+        setCountMessage();
     }
 
     // Create the recipients list divs, apply data attributes which
@@ -302,6 +303,33 @@
 
     function setUpdateMessage() {
         $('.sba-message-status').text('You have unsaved changes').show('slow');
+    }
+
+    function setCountMessage() {
+        $('.targeting-count, .remove-all-targets').remove();
+        var message = [];
+        var groups = parseInt($('.target-recipient .title').length);
+        var individs = parseInt($('.target-recipient .individual').length);
+        var gCount = groups > 1 ? 'groups' : 'group'
+        var iCount = individs > 1 ? 'individuals' : 'individual';
+        //'<strong>Targeting: </strong> '
+        if(groups > 0) {
+            message.push(groups + ' ' + gCount);
+        }
+        if(individs > 0 ) {
+            message.push(individs + ' ' + iCount)
+        }
+
+        countMessage =     '<strong>Targeting: </strong> ' + message.join(' & ');
+        var counter = '<div class="targeting-count">' + countMessage + '</div><a class="remove-all-targets">Remove All Targets</a></div>';
+        $('#springboard-advocacy-message-recipients-content').append(counter);
+        $('.remove-all-targets').click(function(){
+            console.log('d');
+            $('.target-recipient').remove();
+            $('.targeting-count, .remove-all-targets').remove();
+            setUpdateMessage();
+            setFormValue();
+        });
     }
 
     // Takes a url query string from the search form "add" links
@@ -429,7 +457,6 @@
         finder.append(actions);
         actions.append(err);
         $('.views-targets-button-wrapper').hide();
-
         // Editing a pre-existing message, append the recipients
         // to the recipients div using hidden form value
         var recipients =  $('input[name="data[recipients]"]').val();

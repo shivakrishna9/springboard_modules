@@ -502,26 +502,9 @@
 
 .springboard-advocacy-find-targets .pager li > a:hover, .springboard-advocacy-find-targets .pager li > a:focus {
     text-decoration: none;
-    background-color: #6699cc;
-}
-/* override springboard theme*/
-/* ie 9 hack */
-input[type="submit"].cancel-hover  {
-    background: url(data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiA/Pgo8c3ZnIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgdmlld0JveD0iMCAwIDEgMSIgcHJlc2VydmVBc3BlY3RSYXRpbz0ibm9uZSI+CiAgPGxpbmVhckdyYWRpZW50IGlkPSJncmFkLXVjZ2ctZ2VuZXJhdGVkIiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSIgeDE9IjAlIiB5MT0iMCUiIHgyPSIwJSIgeTI9IjEwMCUiPgogICAgPHN0b3Agb2Zmc2V0PSIwJSIgc3RvcC1jb2xvcj0iIzMxODJiMiIgc3RvcC1vcGFjaXR5PSIxIi8+CiAgICA8c3RvcCBvZmZzZXQ9IjEwMCUiIHN0b3AtY29sb3I9IiMwMjY1YTAiIHN0b3Atb3BhY2l0eT0iMSIvPgogICAgPHN0b3Agb2Zmc2V0PSIxMDAlIiBzdG9wLWNvbG9yPSIjN2RiOWU4IiBzdG9wLW9wYWNpdHk9IjEiLz4KICA8L2xpbmVhckdyYWRpZW50PgogIDxyZWN0IHg9IjAiIHk9IjAiIHdpZHRoPSIxIiBoZWlnaHQ9IjEiIGZpbGw9InVybCgjZ3JhZC11Y2dnLWdlbmVyYXRlZCkiIC8+Cjwvc3ZnPg==)!important;
-    filter: none!important;
+    background-color: #eee;
 }
 
-
-input[type="submit"].cancel-hover {
-    background: -moz-linear-gradient(top, #3182b2 0%, #0265a0 100%, #7db9e8 100%)!important;
-    background: -webkit-gradient(linear, left top, left bottom, color-stop(0%, #3182b2), color-stop(100%, #0265a0), color-stop(100%, #7db9e8));
-    background: -webkit-linear-gradient(top, #3182b2 0%, #0265a0 100%, #7db9e8 100%)!important;
-    background: -o-linear-gradient(top, #3182b2 0%, #0265a0 100%, #7db9e8 100%)!important;
-    background: -ms-linear-gradient(top, #3182b2 0%, #0265a0 100%, #7db9e8 100%)!important;
-    background: linear-gradient(to bottom, #3182b2 0%, #0265a0 100%, #7db9e8 100%)!important;
-    color: #fff!important;
-    text-shadow: none!important;
-}
 .springboard-advocacy-find-targets  #advocacy-attachment-before-rows {
     float: left;
     margin: 1.4em 0.7em 0.7em 2em;
@@ -590,6 +573,9 @@ input[type="submit"].cancel-hover {
 color: #fff;
 }
 
+.view-targets ul.pager li a:hover {
+    color: #337AB7;
+}
 
 .springboard-advocacy-find-targets th {
     background: #247AAD;
@@ -618,7 +604,7 @@ color: #fff;
     background: #EFF9FF;
 }
 
-.springboard-advocacy-find-targets td.views-field-target-actionss {
+.springboard-advocacy-find-targets td.views-field-target-actions {
     text-align:center;
 }
 
@@ -636,6 +622,37 @@ color: #fff;
 
 .springboard-advocacy-find-targets td.views-field-target-actions a:hover {
    text-decoration: none;
+}
+
+#springboard-advocacy-message-recipients .targeting-count {
+    font-size: 12px;
+    text-align: right;
+    font-size: 14px;
+    margin: 20px;
+    font-family: 'Open Sans', sans-serif;
+}
+
+#springboard-advocacy-message-recipients .targeting-count strong {
+    font-weight: 700;
+}
+
+#springboard-advocacy-message-recipients .remove-all-targets {
+    -webkit-border-radius: 4px;
+    -moz-border-radius: 4px;
+    border-radius: 4px;
+    background-color: #fcc289;
+    color:#fff;
+    padding: 5px 15px;
+    float:right;
+    display: inline;
+    margin: 0 20px 20px 0;
+    font-size: 12px;
+    cursor:pointer;
+}
+
+#springboard-advocacy-message-recipients .remove-all-targets:hover {
+    text-decoration: none;
+    background-color: #FFB063;
 }
 
 @media only screen and (min-width: 769px) and (max-width: 1200px) {
