@@ -265,7 +265,7 @@
     function buildDiv(id, readable, query) {
         $('#springboard-advocacy-message-recipients-content')
             .prepend('<div id = "target-' + id + '" class = "target-recipient" style="display: none;">' + readable +
-            ' <span><a class ="target-delete" href="#">delete</a></span></div>');
+            ' <span><a class ="target-delete remove-target" href="#"></a></span></div>');
         $('#target-' + id).show(300);
         $('#target-' + id + ' a').click(function(ev){
             ev.preventDefault();
@@ -349,15 +349,14 @@
         });
 
         if (typeof(queryObj.Id) !== 'undefined') {
-            return "Individual: " + queryObj.Sal + " " +  queryObj.First + " " + queryObj.Last;
+            return  '<div class="individual">' + queryObj.Sal + " " +  queryObj.First + " " + queryObj.Last + '</div>';
         }
-
         var cleanUp = JSON.stringify(queryObj).jsonToReadable();
         if (typeof(queryObj.Fields) !== 'undefined' || typeof(queryObj.Gender) !== 'undefined'
             || typeof(queryObj.Social) !== 'undefined' ||  typeof(queryObj.District) !== 'undefined') {
-            return "Multiple Individuals: " +  cleanUp;
+            return '<div class="title"><h4>Group Target</h4>h4></div>' +  cleanUp;
         }
-        return "Group: " +  cleanUp;
+        return '<div class="title"><h4>Group Target</h4></div> ' +  cleanUp;
     }
 
     //Uc first helper
@@ -369,12 +368,12 @@
     //json notation to readable string helper
     String.prototype.jsonToReadable = function()
     {
-      return this.replace(/{"/g, '<ul><li>')
+      return this.replace(/{"/g, '<ul><li class ="heading">')
             .replace(/]}/g, '</li></ul>')
-            .replace(/\["/g, '')
-            .replace(/\],"/g, '</li><li>')
-            .replace(/:/g, ': ')
-            .replace(/","/g, ', ')
+            .replace(/\["/g, '<li>')
+            .replace(/\],"/g, '</li></ul><ul><li class ="heading">')
+            .replace(/:/g, '</li>')
+            .replace(/","/g, '<li>')
             .replace(/"/g, '')
             .replace(/%20/g, ' ')
     }

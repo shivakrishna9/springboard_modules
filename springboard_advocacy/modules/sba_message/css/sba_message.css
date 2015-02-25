@@ -72,13 +72,54 @@
     padding: 0.5em;
     background:#fff;
     border-radius: 0.5em;
-    box-shadow: -4px -8px 3px -5px #d5d5d5;
+    position: relative;
+}
+#springboard-advocacy-message-recipients .target-recipient ul  {
+    display: block;
+    float: left;
+    width: 50%;
+    list-style-type: none;
+    color: #333;
+    margin-bottom: 1em;
 }
 
+#springboard-advocacy-message-recipients .target-recipient:after {
+    clear: both;
+    content: "";
+    display: table;
+}
+#springboard-advocacy-message-recipients .target-recipient ul li.heading {
+    font-weight: 600;
+    font-size: 12px;
+}
 #springboard-advocacy-message-recipients .target-recipient ul li {
     position: relative; left: 1.5em;
+    margin-bottom: 0;
+}
+#springboard-advocacy-message-recipients .target-recipient .remove-target {
+    position: absolute;
+    top: -13px;
+    right: -4px;
+    cursor: pointer;
+    background: url("../img/icon-close.png");
+    display: block;
+    width: 22px;
+    height: 22px;
 }
 
+#springboard-advocacy-message-recipients .target-recipient .title h4 {
+    margin: 2px 0px 10px 10px;
+    padding: 0px;
+    font-size: 1.2em;
+    background: url("../img/icon-group.jpg") left center no-repeat;
+    padding: 5px 40px;
+}
+
+#springboard-advocacy-message-recipients .target-recipient .individual {
+
+    background: url("../img/icon-user.jpg") left center no-repeat;
+    padding: 5px 40px;
+}
 
  .springboard-advocacy-find-targets-container {
     width: 100%;
