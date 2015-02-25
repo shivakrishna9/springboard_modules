@@ -282,6 +282,7 @@
                 $(this).remove();
                 setUpdateMessage();
                 setFormValue();
+                setCountMessage();
             });
 
         })
