@@ -276,6 +276,7 @@
             .prepend('<div id = "target-' + id + '" class = "target-recipient ' + isnew +'" style="display: none;">' + readable +
             ' <span><a class ="target-delete remove-target" href="#"></a></span></div>');
         $('#target-' + id).show(300);
+        $('#target-' + id).addClass('trans');
         $('#target-' + id + ' a').click(function(ev){
             ev.preventDefault();
             $(this).closest('.target-recipient').hide(300, function(){
