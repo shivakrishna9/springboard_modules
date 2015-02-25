@@ -161,7 +161,9 @@
 .springboard-advocacy-find-targets  div#edit-combine-wrapper {
     display: block;
     margin-bottom:1em;
+    margin-right: 0;
     float: none;
+
 }
 
 .springboard-advocacy-find-targets  .views-widget input#edit-combine {
@@ -173,9 +175,10 @@
 
 .springboard-advocacy-find-targets  #state-district-wrapper {
     width: 100%;
-    max-width: 660px;
+    max-width: 670px;
     position: relative;
     margin: 0;
+    overflow: visible;
 }
 
 .springboard-advocacy-find-targets #state-district-wrapper select {
@@ -183,22 +186,53 @@
     clear: left;
 }
 
+
 .springboard-advocacy-find-targets #state-district-wrapper div[id*=search-state],
 .springboard-advocacy-find-targets #state-district-wrapper div[id*=search-district]
 {
     margin: 0;
-    width: 45%;
-}
-.springboard-advocacy-find-targets #state-district-wrapper div[id*=search-district]{
-    margin-left: 10%;
+    width: 48%;
 }
 
-/* Grrr..... jQuery Uniform overide **/
+.springboard-advocacy-find-targets #state-district-wrapper div[id*=search-state] .selector,
+.springboard-advocacy-find-targets #state-district-wrapper div[id*=search-district] .selector
+{
+    margin: 0;
+    width: 100%!important;
+    padding: 0 0 0 10px;
+}
+.springboard-advocacy-find-targets #state-district-wrapper div[id*=search-state] .selector {
+    margin-left: -5px;
+}
+
+.springboard-advocacy-find-targets #state-district-wrapper div[id*=search-state] .selector span,
+.springboard-advocacy-find-targets #state-district-wrapper div[id*=search-district] .selector span
+{
+    margin: 0;
+    width: auto!important;
+}
+
+.springboard-advocacy-find-targets #state-district-wrapper div[id*=search-district]{
+    margin-left: 5%;
+    margin-right: -5%;
+}
+
+/* Grrr..... jQuery Uniform override **/
 .springboard-advocacy-find-targets #state-district-wrapper div[id*=search-district] div.selector {
     margin: 0 0 0 -10px;
     padding: 0 0 0 10px;
 }
-
+.springboard-advocacy-find-targets #state-district-wrapper div[id*=search-district] div.selector.disabled {
+    border: 1px solid #eee;
+    border-radius: 5px;
+    padding-left: 2px;
+    margin-top: 4px;
+    height: 30px;
+}
+.springboard-advocacy-find-targets #state-district-wrapper div[id*=search-district] div.selector.disabled span{
+    åline-height: 30px;
+    height: 30px;
+}
 
 .springboard-advocacy-find-targets  div[id*=search-role] {
     clear:left;
@@ -240,7 +274,7 @@
 }
 
 .springboard-advocacy-find-targets .views-exposed-widget label {
-  margin: 0;
+    margin: 0;
     font-weight:bold;
 }
 .springboard-advocacy-find-targets .views-exposed-widget label.option {
