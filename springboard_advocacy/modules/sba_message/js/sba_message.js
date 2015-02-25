@@ -381,6 +381,10 @@
 
     // Main set of functions which need to happen on every page load
     $(document).ready(function () {
+        //stop views ajax auto scroll
+        $('.pager-item a, #edit-submit-targets').click(function(){
+            Drupal.ajax.prototype.commands.viewsScrollTop = null;
+        });
 
         // submit the form or return error message
         $("#edit-submit, #edit-delete").click(function (e) {
