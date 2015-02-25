@@ -17,6 +17,8 @@
     margin-left: 0;
     padding-bottom: 0;
     margin-bottom: 1em;
+    font-size: 1em;
+
 }
 
 #springboard-advocacy-message-form-container .fieldset-wrapper  {
@@ -27,7 +29,6 @@
     float: left;
     margin: 5px 0 0;
     top:-1em;
-    font-size: 1.5em;
 }
 #springboard-advocacy-message-form-container fieldset fieldset {
     border: none;
