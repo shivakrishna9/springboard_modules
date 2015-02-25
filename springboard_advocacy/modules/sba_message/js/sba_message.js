@@ -144,11 +144,11 @@
 
         //update quick target button based on meta-variables
         if(notGroupable == true || hasDistrict == true || (groupable == false && hasState == false)) {
-            $('input#quick-target').prop("disabled", true).fadeTo(400, 0.6).css({'cursor': 'not-allowed'}).addClass('cancel-hover');
+            $('.views-targets-button-wrapper').prop("disabled", true).fadeTo(400, 0).css({'cursor': 'not-allowed'}).addClass('cancel-hover');
         }
 
         if((groupable == true || hasState == true)  && hasDistrict == false && notGroupable == false) {
-            $('input#quick-target').prop("disabled", false).fadeTo(200, 1).css({'cursor': 'pointer'}).removeClass('cancel-hover');
+            $('.views-targets-button-wrapper').prop("disabled", false).fadeTo(200, 1).css({'cursor': 'pointer'}).removeClass('cancel-hover');
         }
     }
 
@@ -426,7 +426,7 @@
         finder.append(recipContainer)
         finder.append(actions);
         actions.append(err);
-        $('input#quick-target').prop("disabled", true).fadeTo(400, 0.6).css({'cursor': 'not-allowe'}).addClass('cancel-hover');
+        $('.views-targets-button-wrapper').prop("disabled", true).fadeTo(400, 0);
 
         // Editing a pre-existing message, append the recipients
         // to the recipients div using hidden form value
