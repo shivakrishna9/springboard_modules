@@ -205,7 +205,7 @@
 
         var readable = buildReadableQuery(qArr);
         var id = calcDivId()
-        buildDiv(id, readable, qArr);
+        buildDiv(id, readable, qArr, false);
         setUpdateMessage();
         setFormValue();
     }
@@ -251,7 +251,7 @@
                 .split('&');
 
             var readable = buildReadableQuery(query);
-            buildDiv(id, readable, query);
+            buildDiv(id, readable, query, 'reload');
        });
         //reverse the display order
         var content = $('#springboard-advocacy-message-recipients-content');
@@ -262,9 +262,15 @@
     // Create the recipients list divs, apply data attributes which
     // will be aggregated as a JSON string used by a hidden form field
     // for submission to the API
-    function buildDiv(id, readable, query) {
+    function buildDiv(id, readable, query, reload) {
+        if (reload == false) {
+            var isnew = 'new';
+        }
+        else{
+            isnew = 'reloaded';
+        }
         $('#springboard-advocacy-message-recipients-content')
-            .prepend('<div id = "target-' + id + '" class = "target-recipient" style="display: none;">' + readable +
+            .prepend('<div id = "target-' + id + '" class = "target-recipient ' + isnew +'" style="display: none;">' + readable +
             ' <span><a class ="target-delete remove-target" href="#"></a></span></div>');
         $('#target-' + id).show(300);
         $('#target-' + id + ' a').click(function(ev){
