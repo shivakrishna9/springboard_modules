@@ -6,7 +6,6 @@ CoderReviewStyleTest
 CoderUpgradeWebTestCase
 DsrTestCase
 EmailWrappersTestCase
-FormLayoutsTestCase
 FundraiserCommerceGatewayAuthnetTest
 FundraiserCommerceUnitTestCase
 FundraiserDateModeTest
@@ -39,7 +38,6 @@ SalesforceSyncQueueTokenTestCase
 SalesforceSyncSyncTestCase
 SalesforceSyncTestCase
 SalesforceSyncTokenTestCase
-securePrepopulateUnitTestCase
 SpringboardAPITestCase
 SpringboardGaTestCase
 SpringboardPetitionQuicksignTestCase

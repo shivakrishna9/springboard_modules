@@ -570,7 +570,7 @@ function salesforce_donation_salesforce_genmap_map_fields(stdClass $donation, En
         $fields['Transaction_Date_Time__c']  = gmdate('c', $refund->changed);
         $fields['CloseDate']  = gmdate('c', $refund->changed);
       }
-      $fields['StageName'] = 'Refunded';
+
       //$fields['Parent_Donation__c'] = '[Opportunity:donation:' . $donation->did . ']';
       $fields['Probability'] = 0;
       // Remove the donation id mapping if it's been set. No dupes for refunds!
