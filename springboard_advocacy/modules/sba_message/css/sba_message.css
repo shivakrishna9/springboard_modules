@@ -9,14 +9,14 @@
     padding:  0 1em;
 }
 #springboard-advocacy-message-form-container fieldset {
-    border-top: 1px solid #d5d5d5;
-    border-left: 1px solid #d5d5d5;
-    border-right: 1px solid #d5d5d5;
+    border: 1px solid #d5d5d5;
+    margin-bottom: 2em;
+   border-radius: 4px;
 }
 #springboard-advocacy-message-form-container .fieldset-legend {
     margin-left: 0;
     padding-bottom: 0;
-    margin-bottom: 1em;
+    margin-bottom: 0.7em;
     font-size: 1em;
 }
 
@@ -27,7 +27,10 @@
 #springboard-advocacy-message-form-container fieldset legend {
     float: left;
     margin: 5px 0 0;
-    top:-1em;
+    top: -1em;
+    font-weight: bold;
+    font-size: 1.4em;
+
 }
 #springboard-advocacy-message-form-container fieldset fieldset {
     border: none;
@@ -44,11 +47,38 @@
 }
 #springboard-advocacy-message-form-container fieldset fieldset .fieldset-wrapper {
     padding: 1em;
-    background: #fff;
+    background: #edf9ff;
 }
 #springboard-advocacy-message-form-container fieldset .fieldset-wrapper .control-group label{
    font-weight: 400;
+    font-size: 1.1em;
 }
+
+#springboard-advocacy-message-form-container .form-item-name {
+    background: #fff;
+    border: 1px solid #d5d5d5;
+    padding: 1em;
+    margin-bottom: 2em;
+}
+#springboard-advocacy-message-form-container .form-item-name label {
+    font-weight:normal;
+    font-size:1.3em;
+    margin-bottom: 1em;
+}
+
+#springboard-advocacy-message-form-container #edit-field-subject-editable,
+#springboard-advocacy-message-form-container #edit-field-sba-placeholder-greeting,
+#edit-field-sba-greeting,
+#edit-field-sba-subject{
+    display: inline-block;
+    box-sizing: border-box;
+    width: 50%;
+}
+
+#springboard-advocacy-message-form-container #edit-field-editable-area-optional- {
+    margin: 15px 0;
+}
+
 #springboard-advocacy-message-recipients-container {
     width:30%;
     float:right;
@@ -721,5 +751,11 @@ color: #fff;
     .springboard-advocacy-find-targets div.views-exposed-widget.views-targets-button {
         margin-right: auto;
         text-align:center;
+    }
+    .springboard-advocacy-find-targets-container #edit-actions input {
+        background:  #247AAD;
+    }
+    .springboard-advocacy-find-targets-container #edit-actions input:hover {
+        background:  #1E72A3;
     }
 }
