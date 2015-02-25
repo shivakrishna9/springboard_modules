@@ -512,9 +512,21 @@ function fundraiser_sustainers_update_7008() {
 }
 
 /**
- * Adds and removes fields to the sustainer log table.
+ * Update failing donations to the retry status.
  */
 function fundraiser_sustainers_update_7009() {
+  db_update('fundraiser_sustainers')
+    ->fields(array('gateway_resp' => 'retry'))
+    ->condition('gateway_resp', 'failed')
+    ->condition('attempts', 3, '<')
+    ->condition('lock_id', 0)
+    ->execute();
+}
+
+/**
+ * Adds and removes fields to the sustainer log table.
+ */
+function fundraiser_sustainers_update_7010() {
   registry_rebuild();
   $field = array(
     'description' => 'Unix timestamp of when to make the next charge.',
@@ -574,7 +586,7 @@ function fundraiser_sustainers_update_7009() {
 /**
  * Adds indexes to the sustainers log table.
  */
-function fundraiser_sustainers_update_7010() {
+function fundraiser_sustainers_update_7011() {
   db_add_index('fundraiser_sustainers_log', 'fundraiser_sustainers_log_timestamp', array('timestamp'));
   db_add_index('fundraiser_sustainers_log', 'fundraiser_sustainers_log_next_charge', array('next_charge'));
   db_add_index('fundraiser_sustainers_log', 'fundraiser_sustainers_log_old_state', array('old_state'));

@@ -165,7 +165,7 @@ function springboard_p2p_springboard_admin_admin_menu_items_alter(&$items) {
     'weight' => 0,
   );
 }
- 
+
 /**
  * Implements hook_theme().
  */
@@ -596,7 +596,8 @@ function _filter_tips_p2p_campaign_intro(&$form) {
   // Unset / remove the filter tips area for campaign intros.
   $form[LANGUAGE_NONE][0]['format']['guidelines']['#access'] = FALSE;
   $form[LANGUAGE_NONE][0]['format']['help']['#access'] = FALSE;
-  // We use js here as it can't be done with form alter for just the filters select list.
+  // We use js here as it can't be done with form alter for just the filters
+  // select list.
   // We also get rid of the disable rich text for wysiwyg.
   $filterjs = 'jQuery(document).ready(function($) {
   $("fieldset.filter-wrapper, .wysiwyg-toggle-wrapper").remove();
@@ -659,7 +660,7 @@ function springboard_p2p_personal_campaign_ajax(&$form, &$form_state) {
 /**
  * Determines if a path for personal campaign already exists in the system.
  *
- * @param $alias
+ * @param string $alias
  *   The user-entered alias to check.
  */
 function springboard_p2p_personal_campaign_alias_exists($alias, $language, $nid = NULL) {
@@ -1643,10 +1644,7 @@ function springboard_p2p_validate_email_as_username($mail) {
 /**
  * Implements hook_fundraiser_donation_post_create().
  *
- * At this point in the process there is enough information
- * to determine if the donation is being made to a personal
- * campaign. Let's go ahead and record that fact here because
- * downstream processing might need it.
+ * Adds p2p_pcid to $donation.
  */
 function springboard_p2p_fundraiser_donation_post_create($donation) {
   // Check to see if donation is being made to a personal campaign.
@@ -1655,16 +1653,6 @@ function springboard_p2p_fundraiser_donation_post_create($donation) {
     // Add the peer to peer personal campaign id to the donation
     // object so that it can be utilized downstream.
     $donation->p2p_pcid = $_GET['p2p_pcid'];
-
-    // Create a minimum action record. This record be completed in
-    // springboard_p2p_fundraiser_donation_post_submit.
-    $record['sid'] = $donation->sid;
-    $record['form_nid'] = $donation->nid;
-    $record['personal_campaign_nid'] = $_GET['p2p_pcid'];
-    $record['action_type'] = 'fundraiser';
-    $record['comment'] = '';
-
-    springboard_p2p_save_personal_campaign_action($record);
   }
 }
 
@@ -1951,27 +1939,36 @@ function springboard_p2p_webform_submission_update($node, $submission) {
  * Increments the submissions counter for the personal campaign. We do this here
  * instead of in the post_submit below so we can count submissions on
  * non-fundraiser forms.
+ *
+ * Also saves the personal campaign action.
  */
 function springboard_p2p_webform_client_form_submit($form, &$form_state) {
   if (!empty($form_state['values']['springboard_p2p_personal_campaign_action'])) {
     $action = $form_state['values']['springboard_p2p_personal_campaign_action'];
-
-    if ($action['action_type'] == 'webform_user') {
-      $action['sid'] = $form_state['values']['details']['sid'];
-      // If a user is logged in, add that to the action record.
-      // Otherwise webform_user will update the submission with the uid and
-      // we'll add the new uid in our hook_webform_submission_update
-      // implementation.
-      global $user;
-      if ($user->uid) {
-        $action['uid'] = $user->uid;
-      }
-      springboard_p2p_submit_personal_campaign_action($action);
+    $action['sid'] = $form_state['values']['details']['sid'];
+    // If a user is logged in, add that to the action record.
+    // Otherwise webform_user will update the submission with the uid and
+    // we'll add the new uid in our hook_webform_submission_update
+    // implementation.
+    global $user;
+    if ($user->uid) {
+      $action['uid'] = $user->uid;
     }
 
-    $form_state['redirect'][1]['query']['p2p_pcid'] = $form_state['values']['springboard_p2p_personal_campaign_action']['personal_campaign_nid'];
+    if (!empty($action['personal_campaign_nid'])) {
+      springboard_p2p_update_personal_campaign_submissions_progress($action['personal_campaign_nid']);
+    }
 
+    // If this is a webform user action, then it should be marked as visible.
+    // If it's a fundraiser action, it will be marked as visible when
+    // the donation is a success.
+    $action['status'] = ($action['action_type'] == 'fundraiser') ? 0 : 1;
+
+    springboard_p2p_save_personal_campaign_action($action);
+
+    $form_state['redirect'][1]['query']['p2p_pcid'] = $form_state['values']['springboard_p2p_personal_campaign_action']['personal_campaign_nid'];
   }
+
   // Pass personal campaign id to Social for use when constructing share URLs.
   if (module_exists('sb_social') && !empty($form_state['values']['personal_campaign_id'])) {
     $url_context = array(
@@ -2070,30 +2067,6 @@ function springboard_p2p_sb_social_tokens_data_alter(&$node) {
 }
 
 /**
- * Implements hook_fundraiser_donation_post_submit().
- *
- * Adds the initial donation amount to the personal campaign progress.
- */
-function springboard_p2p_fundraiser_donation_post_submit($form, $form_state, $donation) {
-
-  if (!empty($donation->recurring) && ($donation->recurring->master_did != $donation->did)) {
-    return;
-  }
-
-  if (!$donation->result['success']) {
-    return;
-  }
-
-  if (!empty($form_state['values']['springboard_p2p_personal_campaign_action'])) {
-    $action = $form_state['values']['springboard_p2p_personal_campaign_action'];
-    if ($action['action_type'] == 'fundraiser') {
-      springboard_p2p_submit_personal_campaign_action($action, $donation);
-    }
-  }
-
-}
-
-/**
  * Formats a user's full name using the first name and last name fields.
  *
  * @param object $account
@@ -2115,42 +2088,59 @@ function springboard_p2p_format_user_full_name($account) {
 }
 
 /**
- * Increment the personal campaign progress and save the action.
+ * Implements hook_fundraiser_donation_success().
  *
- * @param array $action
- *   The action array as it came from form_state.
- * @param object|null $donation
- *   If this is a fundraiser action, pass in the donation.
+ * Updates the personal campaign node with new amount progress and saves the
+ * amount to the personal campaign action.
  */
-function springboard_p2p_submit_personal_campaign_action($action, $donation = NULL) {
-  $key = NULL;
-  if (!empty($action['personal_campaign_nid'])) {
-    $personal_campaign = node_load($action['personal_campaign_nid']);
+function springboard_p2p_fundraiser_donation_success($donation) {
 
-    // Incremenet the submissions progress.
-    ++$personal_campaign->field_p2p_campaign_progress[$personal_campaign->language][0]['submissions'];
-
-    // If a donation was passed in then we have a fundraiser action
-    // and should increment the amount progress.
-    if (!is_null(($donation))) {
-      // In the case of a donation, an action record will have been
-      // created in springboard_p2p_fundraiser_donation_post_create.
-      // Set the $key to sid so the record will get updated with the
-      // remaining information.
-      $key = array('sid');
-      $action['uid'] = $donation->uid;
-      $action['sid'] = $donation->sid;
-      $amount = $donation->donation['amount'];
-      if (!empty($donation->donation['quantity'])) {
-        $amount = $amount * $donation->donation['quantity'];
-      }
-      $personal_campaign->field_p2p_campaign_progress[$personal_campaign->language][0]['amount'] += $amount;
-      $action['amount'] = $amount * 100;
-    }
-    node_save($personal_campaign);
+  // We don't care about counting recurring donations.
+  if (!empty($donation->recurring) && ($donation->recurring->master_did != $donation->did)) {
+    return;
   }
 
-  springboard_p2p_save_personal_campaign_action($action, $key);
+  $action = springboard_p2p_get_personal_campaign_action_by_sid($donation->sid);
+  if ($action) {
+    $amount = $donation->donation['amount'];
+    if (!empty($donation->donation['quantity'])) {
+      $amount = $amount * $donation->donation['quantity'];
+    }
+
+    springboard_p2p_update_personal_campaign_amount_progress($action['personal_campaign_nid'], $amount);
+
+    $action['amount'] = $amount * 100;
+
+    // Now that the donation is successful, mark the action as visible.
+    $action['status'] = 1;
+    springboard_p2p_save_personal_campaign_action($action, array('sid'));
+  }
+}
+
+/**
+ * Update the personal campaign amount progress.
+ *
+ * @param int $nid
+ *   The node ID of the personal campaign.
+ * @param float $amount
+ *   The amount in USD to add to the amount progress.
+ */
+function springboard_p2p_update_personal_campaign_amount_progress($nid, $amount) {
+  $personal_campaign = node_load($nid);
+  $personal_campaign->field_p2p_campaign_progress[$personal_campaign->language][0]['amount'] += $amount;
+  node_save($personal_campaign);
+}
+
+/**
+ * Update the personal campaign submissions progress.
+ *
+ * @param int $nid
+ *   The node ID of the personal campaign.
+ */
+function springboard_p2p_update_personal_campaign_submissions_progress($nid) {
+  $personal_campaign = node_load($nid);
+  ++$personal_campaign->field_p2p_campaign_progress[$personal_campaign->language][0]['submissions'];
+  node_save($personal_campaign);
 }
 
 /**
@@ -2186,7 +2176,7 @@ function springboard_p2p_save_personal_campaign_action($record, $key = NULL) {
  *   An associative array, or FALSE.
  */
 function springboard_p2p_get_personal_campaign_action_by_sid($sid) {
-  $query = "SELECT category_nid, campaign_nid, personal_campaign_nid, personal_campaign_uid, form_nid, action_type, uid, show_name, comment, amount, created, sid FROM {springboard_p2p_personal_campaign_action} WHERE sid = :sid";
+  $query = "SELECT category_nid, campaign_nid, personal_campaign_nid, personal_campaign_uid, form_nid, action_type, uid, show_name, comment, amount, created, sid, status FROM {springboard_p2p_personal_campaign_action} WHERE sid = :sid";
 
   return db_query($query, array(':sid' => $sid))->fetchAssoc();
 }
@@ -2271,7 +2261,8 @@ function springboard_p2p_page_alter(&$page, $form) {
     // Define the module path for use below.
     $mod_path = drupal_get_path('module', 'springboard_p2p');
 
-    // Query the url string to see if it's a p2p donation form or p2p webform_user form.
+    // Query the url string to see if it's a p2p donation form or p2p
+    // webform_user form.
     if ($is_fundraiser_type || $is_webform_user_type) {
       // Query the url string to see if it belongs to P2P.
       if (!empty($_GET['p2p_pcid'])) {
@@ -2483,7 +2474,7 @@ function springboard_p2p_preprocess_html(&$vars) {
  *   An array of personal campaign actions, keyed by column name.
  */
 function springboard_p2p_get_personal_campaign_comments($nid, $exclude_empty_comments = FALSE) {
-  $query = "SELECT action_type, uid, show_name, amount, comment, created FROM {springboard_p2p_personal_campaign_action} WHERE personal_campaign_nid = :nid";
+  $query = "SELECT action_type, uid, show_name, amount, comment, created FROM {springboard_p2p_personal_campaign_action} WHERE personal_campaign_nid = :nid AND status = :status";
 
   if ($exclude_empty_comments) {
     $query .= " AND comment != ''";
@@ -2491,7 +2482,9 @@ function springboard_p2p_get_personal_campaign_comments($nid, $exclude_empty_com
 
   $query .= " ORDER BY created DESC";
 
-  return db_query($query, array(':nid' => $nid))->fetchAll(PDO::FETCH_ASSOC);
+  $replacements = array(':nid' => $nid, ':status' => 1);
+
+  return db_query($query, $replacements)->fetchAll(PDO::FETCH_ASSOC);
 }
 
 /**

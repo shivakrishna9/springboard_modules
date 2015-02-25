@@ -183,6 +183,8 @@ function form_layouts_form_webform_client_form_alter(&$form, &$form_state, $form
 
   if (form_layouts_template_themes_webform($template)) {
     $form['#theme'] = array($template['theme'] . '_' . $nid, $template['theme']);
+    $form['#attributes']['class'][] = 'form-layouts';
+    $form['#attributes']['class'][] = $template['template'];
   }
 }
 
