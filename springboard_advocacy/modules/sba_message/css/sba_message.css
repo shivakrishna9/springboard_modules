@@ -129,11 +129,11 @@
 }
 #springboard-advocacy-message-recipients .target-recipient.trans {
     background-color: #FFF;
-    -moz-transition: background-color  3s linear;
-    -webkit-transition: background-color 3s linear;
-    -o-transition: background-color  3s linear;
-    -ms-transition: background-color 3s linear;
-    transition: background-color 3s linear;
+    -moz-transition: background-color  350ms linear 250ms;
+    -webkit-transition: background-color  350ms linear 250ms;
+    -o-transition: background-color  350ms linear 250ms;
+    -ms-transition: background-color 350ms linear 250ms;
+    transition: background-color 350ms linear 250ms;
 }
 
 
