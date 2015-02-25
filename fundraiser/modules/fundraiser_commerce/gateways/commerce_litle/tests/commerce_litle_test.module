@@ -34,12 +34,9 @@ function commerce_litle_test_menu_site_status_alter(&$menu_site_status, $path) {
  */
 function commerce_litle_test_endpoint() {
   drupal_add_http_header('Content-Type', 'text/xml');
-  global $HTTP_RAW_POST_DATA;
+  $xml = $GLOBALS['HTTP_RAW_POST_DATA'];
 
-  if (!empty($HTTP_RAW_POST_DATA)) {
-    $xml = $HTTP_RAW_POST_DATA;
-  }
-  elseif (isset($_FILES[0]['tmp_name'])) {
+  if (empty($xml) && isset($_FILES[0]['tmp_name'])) {
     $xml = file_get_contents($_FILES[0]['tmp_name']);
   }
 
@@ -194,7 +191,7 @@ function commerce_litle_test_register_token(DOMNode $node) {
     }
   }
 
-  $xml = "<litleOnlineResponse version='8.22' response='0' message='Valid Format' xmlns='http://www.litle.com/schema'>";
+  $xml = "<litleOnlineResponse version='8.27' response='0' message='Valid Format' xmlns='http://www.litle.com/schema'>";
   $xml .= "<registerTokenResponse id='ididid' reportGroup='rtpGrp' customerId='12345'>";
   $xml .= "<litleTxnId>501000000000000001</litleTxnId>";
 
@@ -227,16 +224,23 @@ function commerce_litle_test_register_token(DOMNode $node) {
  *   The xml to print.
  */
 function commerce_litle_test_sale(DOMNode $node) {
-
+  $token = array();
   $order_id = '0';
   foreach ($node->childNodes as $child) {
     if ($child->tagName == 'orderId') {
       $order_id = $child->nodeValue;
-      break;
+    }
+    elseif ($child->tagName == 'card') {
+      // Untokenized request.
+    }
+    elseif ($child->tagName == 'token') {
+      foreach ($child->childNodes as $token_child) {
+        $token[$token_child->tagName] = $token_child->nodeValue;
+      }
     }
   }
 
-  $xml = "<litleOnlineResponse version='8.22' response='0' message='Valid Format' xmlns='http://www.litle.com/schema'>";
+  $xml = "<litleOnlineResponse version='8.27' response='0' message='Valid Format' xmlns='http://www.litle.com/schema'>";
   $xml .= "<saleResponse id='ididid' reportGroup='rtpGrp' customerId='12345'>";
   $xml .= "<litleTxnId>774506068532487000</litleTxnId>";
   $xml .= "<orderId>" . $order_id . "</orderId>";
@@ -244,8 +248,43 @@ function commerce_litle_test_sale(DOMNode $node) {
   $xml .= "<responseTime>" . commerce_litle_test_get_response_time() . "</responseTime>";
   $xml .= "<message>Approved</message>";
   $xml .= "<authCode>96558</authCode>";
+
+  // If we're using the Account Updater, pass in the current token as the
+  // original, and we'll get a new token and exp date.
+  if (commerce_litle_test_account_updater_enabled()) {
+    $xml .= commerce_litle_test_account_updater_response(TRUE, NULL, $token);
+  }
+
+  // If this is a token transaction respond with a tokenResponse.
+  if (isset($token['litleToken'])) {
+    $xml .= commerce_litle_test_token_response($token);
+  }
+
   $xml .= "</saleResponse>";
   $xml .= "</litleOnlineResponse>";
+
+  return $xml;
+}
+
+/**
+ * Get some dummy tokenResponse XML if we are already using a token.
+ *
+ * @param array $token
+ *   A token array with the litleToken key.
+ *
+ * @return string
+ *   The XML for tokenResponse.
+ */
+function commerce_litle_test_token_response(array $token) {
+  $xml = '<tokenResponse>';
+  $xml .= '<litleToken>' . $token['litleToken'] . '</litleToken>';
+
+  $xml .= '<tokenResponseCode>802</tokenResponseCode>';
+  $xml .= '<tokenMessage>Account number was previously registered</tokenMessage>';
+  $xml .= '<type>VI</type>';
+  $xml .= '<bin>445700</bin>';
+
+  $xml .= '</tokenResponse>';
 
   return $xml;
 }
@@ -269,7 +308,7 @@ function commerce_litle_test_echeck_sale(DOMNode $node) {
     }
   }
 
-  $xml = "<litleOnlineResponse version='8.22' response='0' message='Valid Format' xmlns='http://www.litle.com/schema'>";
+  $xml = "<litleOnlineResponse version='8.27' response='0' message='Valid Format' xmlns='http://www.litle.com/schema'>";
   $xml .= "<echeckSalesResponse id='ididid' reportGroup='rtpGrp' customerId='12345'>";
   $xml .= "<litleTxnId>390936667563420000</litleTxnId>";
   $xml .= "<orderId>" . $order_id . "</orderId>";
@@ -292,17 +331,22 @@ function commerce_litle_test_echeck_sale(DOMNode $node) {
  *   The xml to print.
  */
 function commerce_litle_test_authorization(DOMNode $node) {
-  $xml = "<litleOnlineResponse version='8.22' response='0' message='Valid Format' xmlns='http://www.litle.com/schema'>
+  $xml = "<litleOnlineResponse version='8.27' response='0' message='Valid Format' xmlns='http://www.litle.com/schema'>
   <authorizationResponse id='ididid' reportGroup='rtpGrp' customerId='12345'>
     <litleTxnId>900261330165740000</litleTxnId>
     <orderId>1</orderId>
     <response>000</response>";
 
   $xml .= "<responseTime>" . commerce_litle_test_get_response_time() . "</responseTime>";
-  $xml .= "<message>Approved</message>
-    <authCode>74833</authCode>
-  </authorizationResponse>
-</litleOnlineResponse>";
+  $xml .= '<message>Approved</message>';
+  $xml .= '<authCode>74833</authCode>';
+
+  if (commerce_litle_test_account_updater_enabled()) {
+    $xml .= commerce_litle_test_account_updater_response();
+  }
+
+  $xml .= '</authorizationResponse>';
+  $xml .= '</litleOnlineResponse>';
 
   return $xml;
 }
@@ -317,7 +361,7 @@ function commerce_litle_test_authorization(DOMNode $node) {
  *   The xml to print.
  */
 function commerce_litle_test_unimplemented_request(DOMNode $node) {
-  $xml = "<litleOnlineResponse version='8.22' response='0' message='Valid Format' xmlns='http://www.litle.com/schema'>";
+  $xml = "<litleOnlineResponse version='8.27' response='0' message='Valid Format' xmlns='http://www.litle.com/schema'>";
   $xml .= "<error>Tag is known but not implemented in this mock API:  $node->tagName</error>";
   $xml .= "</litleOnlineResponse>";
   return $xml;
@@ -333,7 +377,7 @@ function commerce_litle_test_unimplemented_request(DOMNode $node) {
  *   The xml to print.
  */
 function commerce_litle_test_unknown_request(DOMNode $node) {
-  $xml = "<litleOnlineResponse version='8.22' response='0' message='Valid Format' xmlns='http://www.litle.com/schema'>";
+  $xml = "<litleOnlineResponse version='8.27' response='0' message='Valid Format' xmlns='http://www.litle.com/schema'>";
   $xml .= "<error>Tag is unknown:  $node->tagName</error>";
   $xml .= "</litleOnlineResponse>";
   return $xml;
@@ -342,11 +386,13 @@ function commerce_litle_test_unknown_request(DOMNode $node) {
 /**
  * The response when we can't find a request in the usual places.
  *
+ * Keep in mind this is not a normal Litle response.
+ *
  * @return string
  *   The xml to print.
  */
 function commerce_litle_test_no_request_found() {
-  $xml = "<litleOnlineResponse version='8.22' response='0' message='Valid Format' xmlns='http://www.litle.com/schema'>";
+  $xml = "<litleOnlineResponse version='8.27' response='0' message='Valid Format' xmlns='http://www.litle.com/schema'>";
   $xml .= "<error>No request found.</error>";
   $xml .= "</litleOnlineResponse>";
 
@@ -362,4 +408,115 @@ function commerce_litle_test_no_request_found() {
 function commerce_litle_test_get_response_time() {
   $response_time = new DateTime('now');
   return $response_time->format('Y-m-d\TH:i:s');
+}
+
+/**
+ * Return the xml element for accountUpdater.
+ *
+ * @param bool $show_card_data
+ *   Whether to include the old and new card data.
+ * @param null|int $extended_card_response
+ *   Whether to include the extendedCardResponse element.
+ *   Can be NULL to exclude, or 501 or 504 for the message code.
+ * @param array $token
+ *   If the request includes a token, use that as the original token here
+ *   so we will update it with this new token info.
+ *
+ * @return string
+ *   The xml for accountUpdater.
+ */
+function commerce_litle_test_account_updater_response($show_card_data = TRUE, $extended_card_response = NULL, array $token = array()) {
+  $xml = '';
+
+  $xml .= '<accountUpdater>';
+
+  if ($show_card_data) {
+    $xml .= '<originalCardTokenInfo>';
+
+    $xml .= '<litleToken>';
+    if (isset($token['litleToken'])) {
+      $xml .= $token['litleToken'];
+    }
+    else {
+      $xml .= '7';
+    }
+    $xml .= '</litleToken>';
+
+    $xml .= '<type>VI</type>';
+    $xml .= '<bin>411111</bin>';
+
+    $xml .= '<expDate>';
+    if (isset($token['expDate'])) {
+      $xml .= $token['expDate'];
+    }
+    else {
+      $xml .= '1214';
+    }
+    $xml .= '</expDate>';
+
+    $xml .= '</originalCardTokenInfo>';
+
+    $xml .= '<newCardTokenInfo>';
+    $xml .= '<litleToken>6666</litleToken>';
+    $xml .= '<type>MC</type>';
+    $xml .= '<bin>511200</bin>';
+    $xml .= '<expDate>0220</expDate>';
+    $xml .= '</newCardTokenInfo>';
+  }
+
+  $xml .= commerce_litle_test_extended_card_response($extended_card_response);
+
+  $xml .= '</accountUpdater>';
+
+  return $xml;
+}
+
+/**
+ * Returns the xml for extendedCardResponse.
+ *
+ * Possible responses:
+ * "501 - The Account Was Closed.”
+ * “504 - Contact the cardholder for updated information."
+ *
+ * @param null|int $extended_card_response
+ *   Currently 501 or 504.
+ */
+function commerce_litle_test_extended_card_response($extended_card_response) {
+  $xml = '';
+
+  $extended_card_response_values = array(
+    501 => 'The Account Was Closed.',
+    504 => 'Contact the cardholder for updated information.',
+  );
+
+  if (isset($extended_card_response_values[$extended_card_response])) {
+    $xml .= '<extendedCardResponse>';
+    $xml .= '<message>' . $extended_card_response_values[$extended_card_response] . '</message>';
+    $xml .= '<code>' . $extended_card_response . '</code>';
+    $xml .= '</extendedCardResponse>';
+  }
+
+  return $xml;
+}
+
+/**
+ * Change the account updater enabled status.
+ *
+ * @param bool $set
+ *   TRUE to enable account updater responses.
+ */
+function commerce_litle_test_account_updater_set($set) {
+  variable_set('commerce_litle_test_account_updater_enabled', $set);
+}
+
+/**
+ * Checks if account updater is enabled.
+ *
+ * This is so responses know whether to include that data.
+ *
+ * @return bool
+ *   TRUE if account updater is enabled.
+ */
+function commerce_litle_test_account_updater_enabled() {
+  return variable_get('commerce_litle_test_account_updater_enabled', TRUE);
 }

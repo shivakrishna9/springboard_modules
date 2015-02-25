@@ -96,8 +96,10 @@ function page_wrappers_preprocess_page(&$vars) {
 
       // if there is theme CSS allowed, add those files.
       if ($theme_css = _page_wrappers_get_theme_css($wrapper_node)) {
+        // Use an incrementing variable to keep the existing theme's stylesheets in the proper order.
+        $weight = 9;
         foreach ($theme_css as $stylesheet) {
-          $stylesheet['options']['weight'] = 10;
+          $stylesheet['options']['weight'] = $weight++;
           drupal_add_css($stylesheet['path'], $stylesheet['options']);
         }
       }

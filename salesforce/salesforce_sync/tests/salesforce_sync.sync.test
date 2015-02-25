@@ -13,6 +13,13 @@ include_once dirname(__FILE__) . '/salesforce_sync.test';
 class SalesforceSyncSyncTestCase extends SalesforceSyncTestCase {
 
   /**
+   * The SalesforceSync object created in setUp().
+   *
+   * @var \SalesforceSync
+   */
+  public $salesforceSync;
+
+  /**
    * Implementation of getInfo().
    */
   public static function getInfo() {

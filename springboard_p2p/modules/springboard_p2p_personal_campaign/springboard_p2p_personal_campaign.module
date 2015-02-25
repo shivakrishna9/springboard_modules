@@ -314,7 +314,15 @@ function springboard_p2p_personal_campaign_webform_confirmations_token_replace_a
   }
 }
 
+/**
+ * Implements hook_email_wrappers_token_set_alter().
+ */
 function springboard_p2p_personal_campaign_email_wrappers_token_set_alter(&$token_set, $message) {
+  // Not all email wrapper messages come with a submission.
+  if (!isset($message['params']['submission'])) {
+    return;
+  }
+
   $submission = $message['params']['submission'];
   $components = _fundraiser_webform_get_components_by_nid($submission->nid);
   $personal_campaign = _springboard_p2p_personal_campaign_lookup_personal_campaign($submission, $components);
