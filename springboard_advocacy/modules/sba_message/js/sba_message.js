@@ -392,7 +392,7 @@
         var cleanUp = JSON.stringify(queryObj).jsonToReadable();
         if (typeof(queryObj.Fields) !== 'undefined' || typeof(queryObj.Gender) !== 'undefined'
             || typeof(queryObj.Social) !== 'undefined' ||  typeof(queryObj.District) !== 'undefined') {
-            return '<div class="title"><h4>Group Target</h4>h4></div>' +  cleanUp;
+            return '<div class="title"><h4>Group Target</h4><h4></div>' +  cleanUp;
         }
         return '<div class="title"><h4>Group Target</h4></div> ' +  cleanUp;
     }
