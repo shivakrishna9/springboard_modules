@@ -60,3 +60,8 @@
   width:210px;
   float:left;
 }
+
+/* Remove background image for error style in system.messages.css */
+.control-group.error {
+  background:none;
+}

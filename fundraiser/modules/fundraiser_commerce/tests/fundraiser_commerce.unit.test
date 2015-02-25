@@ -68,15 +68,6 @@ class FundraiserCommerceUnitTestCase extends DrupalWebTestCase {
    * Unit test DB functions for fundraiser_donation.
    */
   public function testcommerceCardFunctions() {
-    // Check path for encryption path.
-    $path = fundraiser_commerce_fundraiser_get_credit_encryption_path();
-    $expected = t('Not configured, see below.');
-    $this->assertEqual($path, $expected, 'fundraiser_commerce_fundraiser_get_credit_encryption_path() got correct path value.');
-    variable_set('encrypt_secure_key_path', 'set_path');
-    $path = fundraiser_commerce_fundraiser_get_credit_encryption_path();
-    $expected = 'set_path';
-    $this->assertEqual($path, $expected, 'fundraiser_commerce_fundraiser_get_credit_encryption_path() got correct path value.');
-
     // Check that card identification is correct based on card number.
     $card_type = _fundraiser_commerce_get_cc_type('');
     $expected = 'UNKNOWN';
