@@ -230,7 +230,6 @@
     // validation error message displayed next to save button
     function setError(messages) {
         var err = $('#advo-error-wrapper').text('').hide().css('margin-bottom', 0);
-        err.parent().css({'float': 'left'});
         $.each(messages, function(i, message) {
             err.append('<div>' + message + ' field is required </div>');
         });
