@@ -9,6 +9,7 @@
 
     Drupal.behaviors.AdvocacyMessageRecipients = {
         attach: function(context, settings) {
+            $('.views-targets-button-wrapper').hide();
 
 
             if ($('#edit-combine').text().length == 0) {
@@ -144,6 +145,7 @@
 
         //update quick target button based on meta-variables
         if(notGroupable == true || hasDistrict == true || (groupable == false && hasState == false)) {
+
             $('.views-targets-button-wrapper').prop("disabled", true).fadeTo(400, 0).css({'cursor': 'not-allowed'}).addClass('cancel-hover');
         }
 
@@ -426,7 +428,7 @@
         finder.append(recipContainer)
         finder.append(actions);
         actions.append(err);
-        $('.views-targets-button-wrapper').prop("disabled", true).fadeTo(400, 0);
+        $('.views-targets-button-wrapper').hide();
 
         // Editing a pre-existing message, append the recipients
         // to the recipients div using hidden form value
