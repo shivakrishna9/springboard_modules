@@ -54,7 +54,27 @@
 }
 #springboard-advocacy-message-form-container fieldset fieldset .fieldset-wrapper {
     padding: 1em;
+    background: #fff;
+}
+fieldset fieldset#sba_message_sba_message_action_message_form_group_editable .fieldset-wrapper {
     background: #edf9ff;
+}
+
+fieldset fieldset#sba_message_sba_message_action_message_form_group_edit_container legend .fieldset-legend{
+  margin-left:0;
+    padding-left:0;
+}
+
+fieldset fieldset#sba_message_sba_message_action_message_form_group_edit_container.collapsed a.fieldset-title:before {
+    left: 0px;
+    width: 14px;
+}
+
+
+
+
+#springboard-advocacy-message-form-container #sba_message_sba_message_action_message_form_group_edit_container fieldset fieldset .fieldset-wrapper {
+    background: #fff;
 }
 #springboard-advocacy-message-form-container fieldset .fieldset-wrapper .control-group label{
    font-weight: 400;
@@ -147,8 +167,6 @@
     -ms-transition: background-color 350ms linear 250ms;
     transition: background-color 350ms linear 250ms;
 }
-
-
 
 #springboard-advocacy-message-recipients .target-recipient ul  {
     display: block;

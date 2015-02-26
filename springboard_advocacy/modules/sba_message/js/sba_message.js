@@ -422,6 +422,8 @@
         $('.pager-item a, #edit-submit-targets').click(function(){
             Drupal.ajax.prototype.commands.viewsScrollTop = null;
         });
+        $('#sba_message_sba_message_action_message_form_group_edit_container')
+            .removeClass('collapse-processed').addClass('collapsed')
 
         // submit the form or return error message
         $("#edit-submit, #edit-delete").click(function (e) {
