@@ -76,13 +76,13 @@ function sba_message_install() {
     'type' => 'text_long',
   );
 
-  // Exported field_base: 'field_editable_area_optional_'
-  $field_bases['field_editable_area_optional_'] = array(
+  // Exported field_base: 'field_editable_area_optional'
+  $field_bases['field_editable_area_optional'] = array(
     'active' => 1,
     'cardinality' => 2,
     'deleted' => 0,
     'entity_types' => array(),
-    'field_name' => 'field_editable_area_optional_',
+    'field_name' => 'field_editable_area_optional',
     'foreign keys' => array(),
     'indexes' => array(
       'value' => array(
@@ -93,7 +93,7 @@ function sba_message_install() {
     'module' => 'list',
     'settings' => array(
       'allowed_values' => array(
-        'required' => 'Yes',
+        'required' => 'Editing is required',
       ),
       'allowed_values_function' => '',
     ),
@@ -108,14 +108,7 @@ function sba_message_install() {
     'deleted' => 0,
     'entity_types' => array(),
     'field_name' => 'field_sba_alert_id',
-    'foreign keys' => array(
-      'node' => array(
-        'columns' => array(
-          'target_id' => 'nid',
-        ),
-        'table' => 'node',
-      ),
-    ),
+    'foreign keys' => array(),
     'indexes' => array(
       'target_id' => array(
         0 => 'target_id',
@@ -229,13 +222,13 @@ function sba_message_install() {
     'type' => 'text',
   );
 
-  // Exported field_base: 'field_sba_salutation'
-  $field_bases['field_sba_salutation'] = array(
+  // Exported field_base: 'field_sba_signature'
+  $field_bases['field_sba_signature'] = array(
     'active' => 1,
     'cardinality' => 1,
     'deleted' => 0,
     'entity_types' => array(),
-    'field_name' => 'field_sba_salutation',
+    'field_name' => 'field_sba_signature',
     'foreign keys' => array(
       'format' => array(
         'columns' => array(
@@ -312,6 +305,30 @@ function sba_message_install() {
     'type' => 'list_text',
   );
 
+  // Exported field_base: 'field_user_editable'
+  $field_bases['field_user_editable'] = array(
+    'active' => 1,
+    'cardinality' => 2,
+    'deleted' => 0,
+    'entity_types' => array(),
+    'field_name' => 'field_user_editable',
+    'foreign keys' => array(),
+    'indexes' => array(
+      'value' => array(
+        0 => 'value',
+      ),
+    ),
+    'locked' => 0,
+    'module' => 'list',
+    'settings' => array(
+      'allowed_values' => array(
+        'editable' => 'I want the user to be able to edit this message',
+      ),
+      'allowed_values_function' => '',
+    ),
+    'translatable' => 0,
+    'type' => 'list_text',
+  );
 
   foreach ($field_bases as $field) {
     field_create_field($field);
@@ -319,7 +336,7 @@ function sba_message_install() {
 
   $field_instances = array();
 
-// Exported field_instance: 'sba_message-sba_message_action_message-field_bottom_conclusion'
+  // Exported field_instance: 'sba_message-sba_message_action_message-field_bottom_conclusion'
   $field_instances['sba_message-sba_message_action_message-field_bottom_conclusion'] = array(
     'bundle' => 'sba_message_action_message',
     'default_value' => NULL,
@@ -349,7 +366,7 @@ function sba_message_install() {
         'rows' => 5,
       ),
       'type' => 'text_textarea',
-      'weight' => 10,
+      'weight' => 14,
     ),
   );
 
@@ -370,7 +387,7 @@ function sba_message_install() {
     ),
     'entity_type' => 'sba_message',
     'field_name' => 'field_editable_area',
-    'label' => 'Editable area default text',
+    'label' => 'Default text that the user may alter:',
     'required' => 0,
     'settings' => array(
       'text_processing' => 0,
@@ -387,8 +404,8 @@ function sba_message_install() {
     ),
   );
 
-  // Exported field_instance: 'sba_message-sba_message_action_message-field_editable_area_optional_'
-  $field_instances['sba_message-sba_message_action_message-field_editable_area_optional_'] = array(
+  // Exported field_instance: 'sba_message-sba_message_action_message-field_editable_area_optional'
+  $field_instances['sba_message-sba_message_action_message-field_editable_area_optional'] = array(
     'bundle' => 'sba_message_action_message',
     'default_value' => NULL,
     'deleted' => 0,
@@ -403,7 +420,7 @@ function sba_message_install() {
       ),
     ),
     'entity_type' => 'sba_message',
-    'field_name' => 'field_editable_area_optional_',
+    'field_name' => 'field_editable_area_optional',
     'label' => 'Editing is required?',
     'required' => 0,
     'settings' => array(
@@ -530,7 +547,7 @@ function sba_message_install() {
         'rows' => 5,
       ),
       'type' => 'text_textarea',
-      'weight' => 6,
+      'weight' => 11,
     ),
   );
 
@@ -567,8 +584,8 @@ function sba_message_install() {
     ),
   );
 
-  // Exported field_instance: 'sba_message-sba_message_action_message-field_sba_salutation'
-  $field_instances['sba_message-sba_message_action_message-field_sba_salutation'] = array(
+  // Exported field_instance: 'sba_message-sba_message_action_message-field_sba_signature'
+  $field_instances['sba_message-sba_message_action_message-field_sba_signature'] = array(
     'bundle' => 'sba_message_action_message',
     'default_value' => array(
       0 => array(
@@ -587,8 +604,8 @@ function sba_message_install() {
       ),
     ),
     'entity_type' => 'sba_message',
-    'field_name' => 'field_sba_salutation',
-    'label' => 'Salutation',
+    'field_name' => 'field_sba_signature',
+    'label' => 'Signature',
     'required' => 0,
     'settings' => array(
       'text_processing' => 0,
@@ -674,18 +691,50 @@ function sba_message_install() {
     ),
   );
 
+  // Exported field_instance: 'sba_message-sba_message_action_message-field_user_editable'
+  $field_instances['sba_message-sba_message_action_message-field_user_editable'] = array(
+    'bundle' => 'sba_message_action_message',
+    'default_value' => NULL,
+    'deleted' => 0,
+    'description' => '',
+    'display' => array(
+      'default' => array(
+        'label' => 'above',
+        'module' => 'list',
+        'settings' => array(),
+        'type' => 'list_default',
+        'weight' => 11,
+      ),
+    ),
+    'entity_type' => 'sba_message',
+    'field_name' => 'field_user_editable',
+    'label' => 'User editable',
+    'required' => 0,
+    'settings' => array(
+      'user_register_form' => FALSE,
+    ),
+    'widget' => array(
+      'active' => 1,
+      'module' => 'options',
+      'settings' => array(),
+      'type' => 'options_buttons',
+      'weight' => 12,
+    ),
+  );
+
   // Translatables
   // Included for use with string extractors like potx.
   t('Alert ID');
   t('Bottom/Conclusion');
-  t('Editable area default text');
+  t('Default text that the user may alter:');
   t('Editing is required?');
   t('Greeting (for message to be delivered)');
   t('Message');
   t('Placeholder Greeting (for display on the alert)');
-  t('Salutation');
+  t('Signature');
   t('Subject editable by action taker? (for single message alerts only)');
   t('Subject text');
+  t('User editable');
 
   foreach ($field_instances as $instance) {
     field_create_instance($instance);
@@ -693,7 +742,6 @@ function sba_message_install() {
 
   $export = array();
 
- 
   $field_group = new stdClass();
   $field_group->disabled = FALSE; /* Edit this to true to make a default field_group disabled initially */
   $field_group->api_version = 1;
@@ -704,13 +752,13 @@ function sba_message_install() {
   $field_group->mode = 'form';
   $field_group->parent_name = 'group_message_body';
   $field_group->label = 'Editable Area';
-  $field_group->weight = '7';
+  $field_group->weight = '13';
   $field_group->children = array(
-      0 => 'field_editable_area',
-      1 => 'field_editable_area_optional_',
-    );
-  $field_group->format_type = 'fieldset';
-  $field_group->format_settings = array(
+    0 => 'field_editable_area',
+    1 => 'field_editable_area_optional',
+  );
+    $field_group->format_type = 'fieldset';
+    $field_group->format_settings = array(
       'label' => 'Editable Area',
       'instance_settings' => array(
         'required_fields' => 1,
@@ -718,7 +766,8 @@ function sba_message_install() {
         'description' => 'If you are creating only one message for this action, you can use the message region below to create an area of your message that will be editable by your advocates. Actions with multiple messages cannot be edited by advocates.',
       ),
       'formatter' => 'open',
-    );
+   );
+
   $export['group_editable|sba_message|sba_message_action_message|form'] = $field_group;
 
   $field_group = new stdClass();
@@ -731,21 +780,21 @@ function sba_message_install() {
   $field_group->mode = 'form';
   $field_group->parent_name = '';
   $field_group->label = 'Greeting';
-  $field_group->weight = '1';
-  $field_group->children = array(
-      0 => 'field_sba_greeting',
-      1 => 'field_sba_placeholder_greeting',
-    );
-  $field_group->format_type = 'fieldset';
-  $field_group->format_settings = array(
+    $field_group->weight = '1';
+    $field_group->children = array(
+    0 => 'field_sba_greeting',
+    1 => 'field_sba_placeholder_greeting',
+  );
+    $field_group->format_type = 'fieldset';
+    $field_group->format_settings = array(
       'label' => 'Greeting',
       'instance_settings' => array(
         'required_fields' => 1,
         'classes' => 'group-greeting field-group-fieldset',
         'description' => '',
       ),
-      'formatter' => 'open',
-    );
+     'formatter' => 'open',
+  );
   $export['group_greeting|sba_message|sba_message_action_message|form'] = $field_group;
 
   $field_group = new stdClass();
@@ -757,15 +806,16 @@ function sba_message_install() {
   $field_group->bundle = 'sba_message_action_message';
   $field_group->mode = 'form';
   $field_group->parent_name = '';
-     $field_group->label = 'Message Body';
-     $field_group->weight = '2';
-     $field_group->children = array(
-      0 => 'field_bottom_conclusion',
-      1 => 'field_sba_message',
-      2 => 'group_editable',
-    );
-     $field_group->format_type = 'fieldset';
-     $field_group->format_settings = array(
+  $field_group->label = 'Message Body';
+    $field_group->weight = '2';
+    $field_group->children = array(
+    0 => 'field_bottom_conclusion',
+    1 => 'field_sba_message',
+    2 => 'field_user_editable',
+    3 => 'group_editable',
+  );
+    $field_group->format_type = 'fieldset';
+    $field_group->format_settings = array(
       'label' => 'Message Body',
       'instance_settings' => array(
         'required_fields' => 1,
@@ -773,8 +823,8 @@ function sba_message_install() {
         'description' => 'Use the fields below to create the message to be sent. If you want to create an uneditable message, use the top field only.',
       ),
       'formatter' => 'open',
-    );
-    $export['group_message_body|sba_message|sba_message_action_message|form'] = $field_group;
+  );
+  $export['group_message_body|sba_message|sba_message_action_message|form'] = $field_group;
 
   $field_group = new stdClass();
   $field_group->disabled = FALSE; /* Edit this to true to make a default field_group disabled initially */
@@ -786,21 +836,21 @@ function sba_message_install() {
   $field_group->mode = 'form';
   $field_group->parent_name = '';
   $field_group->label = 'Subject';
-  $field_group->weight = '0';
-  $field_group->children = array(
-      0 => 'field_sba_subject',
-      1 => 'field_subject_editable',
-    );
-  $field_group->format_type = 'fieldset';
-  $field_group->format_settings = array(
+    $field_group->weight = '0';
+    $field_group->children = array(
+    0 => 'field_sba_subject',
+    1 => 'field_subject_editable',
+  );
+    $field_group->format_type = 'fieldset';
+    $field_group->format_settings = array(
       'label' => 'Subject',
       'instance_settings' => array(
         'required_fields' => 1,
         'classes' => 'group-subject field-group-fieldset',
         'description' => '',
       ),
-      'formatter' => 'open',
-    );
+     'formatter' => 'open',
+  );
   $export['group_subject|sba_message|sba_message_action_message|form'] = $field_group;
   foreach($export as $field_group) {
     field_group_group_save($field_group);
@@ -933,14 +983,14 @@ function sba_message_uninstall() {
  */
 function _sba_message_delete_fields() {
   $fields = array(
-    'field_sba_salutation',
+    'field_sba_signature',
     'field_sba_alert_id',
     'field_sba_placeholder_greeting',
     'field_sba_greeting',
     'field_sba_message',
     'field_sba_subject',
     'field_subject_editable',
-    'field_editable_area_optional_',
+    'field_editable_area_optional',
     'field_editable_area',
     'field_bottom_conclusion'
   );
