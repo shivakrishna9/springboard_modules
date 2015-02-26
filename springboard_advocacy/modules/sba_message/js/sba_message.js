@@ -397,6 +397,26 @@
         return '<div class="title"><h4>Group Target</h4></div> ' +  cleanUp;
     }
 
+    function scroller() {
+        setTimeout(function() {
+            var offset = $('#springboard-advocacy-message-recipients').offset();
+            var newTop;
+            $(window).scroll(function() {
+                if(offset.top <= $(window).scrollTop() && $('#springboard-advocacy-message-recipients').css('position') == 'absolute') {
+                    console.log(offset.top);
+
+                    newTop =$(window).scrollTop() - offset.top;
+                    //console.log(newTop);
+                    $('#springboard-advocacy-message-recipients').css('top', newTop).addClass('recipients-fixed');
+                }
+                else {
+                    $('#springboard-advocacy-message-recipients').css('top', 0).removeClass('recipients-fixed');
+                }
+            });
+
+        }, 500);
+    }
+
     //Uc first helper
     String.prototype.ucfirst = function()
     {
@@ -427,14 +447,16 @@
         var editable = $('#sba_message_sba_message_action_message_form_group_editable, #edit-field-bottom-conclusion')
          if(showEdit.prop('checked')) {
             editable.show();
-        }
-
+             scroller();
+         }
         showEdit.on('change', function() {
             if(this.checked) {
                 editable.show(400, 'linear');
+                scroller();
             }
             else {
                  editable.hide(400, 'linear');
+                 scroller();
             }
         });
 
@@ -487,18 +509,7 @@
             $('.sba-message-status').text('No recipients have been selected.').show('slow');
         }
 
-        // scroll the recipients box
-        var offset = $('#springboard-advocacy-message-recipients').offset();
-        $(window).scroll(function() {
-            if(offset.top <= $(window).scrollTop() && $('#springboard-advocacy-message-recipients').css('position') == 'absolute') {
-                newTop =$(window).scrollTop() - offset.top;
-                $('#springboard-advocacy-message-recipients').css('top', newTop).addClass('recipients-fixed');
-
-            }
-            else {
-                $('#springboard-advocacy-message-recipients').css('top', 0).removeClass('recipients-fixed');
-            }
-        });
+        scroller();
     });
 
 })(jQuery);
