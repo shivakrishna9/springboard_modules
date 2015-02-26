@@ -40,14 +40,14 @@ class FundraiserSustainersDailySnapshot {
   protected $endTimestamp;
 
   /**
-   * Number of charges scheduled, including processed.
+   * Number of charges originally scheduled.
    *
    * @var int
    */
   protected $scheduledCharges;
 
   /**
-   * Value (in cents) of charges scheduled, including processed.
+   * Value (in cents) of charges originally scheduled.
    *
    * @var int
    */
@@ -68,74 +68,46 @@ class FundraiserSustainersDailySnapshot {
   protected $retriedValue;
 
   /**
-   * Number of charges processed.
-   *
-   * @var int
-   */
-  protected $processedCharges;
-
-  /**
-   * Value (in cents) processed.
-   *
-   * @var int
-   */
-  protected $processedValue;
-
-  /**
-   * Number of charges that are rescheduled after being processed on this day.
-   *
-   * @var int
-   */
-  protected $rescheduledCharges;
-
-  /**
-   * Value (in cents) rescheduled after being processed.
-   *
-   * @var int
-   */
-  protected $rescheduledValue;
-
-  /**
-   * Number of charges that permanently failed after being processed.
-   *
-   * @var int
-   */
-  protected $abandonedCharges;
-
-  /**
-   * Value (in cents) that permanently failed.
-   *
-   * @var int
-   */
-  protected $abandonedValue;
-
-  /**
    * Number of successful charges completed so far in this day.
    *
    * @var int
    */
-  protected $successes;
+  protected $successfulCharges;
 
   /**
    * Value (in cents) of successful charges completed.
    *
    * @var int
    */
-  protected $successValue;
+  protected $successfulValue;
 
   /**
-   * Number of failed charges attempted so far in this day.
+   * Number of charges that are rescheduled after failing to complete.
    *
    * @var int
    */
-  protected $failures;
+  protected $failedRescheduledCharges;
 
   /**
-   * Value (in cents) of failed charges attempted.
+   * Value (in cents) rescheduled after failing to complete.
    *
    * @var int
    */
-  protected $failureValue;
+  protected $failedRescheduledValue;
+
+  /**
+   * Number of charges that permanently failed.
+   *
+   * @var int
+   */
+  protected $failedAbandonedCharges;
+
+  /**
+   * Value (in cents) that permanently failed.
+   *
+   * @var int
+   */
+  protected $failedAbandonedValue;
 
   /**
    * Constructs a snapshot sets up some values, and loads data.
@@ -191,120 +163,6 @@ class FundraiserSustainersDailySnapshot {
   }
 
   /**
-   * Total value in the UI is the same thing as scheduled value.
-   *
-   * @return int
-   *   Value in cents.
-   */
-  public function getTotalValue() {
-    return $this->getScheduledValue();
-  }
-
-  /**
-   * Get the number of successfully processed sustainers for this report date.
-   *
-   * @return int
-   *   Count of successes.
-   */
-  public function getSuccesses() {
-    return $this->successes;
-  }
-
-  /**
-   * Get the number of sustainers that failed to process for this report date.
-   *
-   * Includes temporary and permanent failures.
-   *
-   * @return int
-   *   Count of failures.
-   */
-  public function getFailures() {
-    return $this->failures;
-  }
-
-  /**
-   * Get the count of charges that permanently failed while processing.
-   *
-   * @return int
-   *   Count of sustainers.
-   */
-  public function getAbandonedCharges() {
-    return $this->abandonedCharges;
-  }
-
-  /**
-   * Get the value of the abandoned sustainers.
-   *
-   * @return int
-   *   Value in cents.
-   */
-  public function getAbandonedValue() {
-    return $this->abandonedValue;
-  }
-
-  /**
-   * Get the total number of sustainers processed on this report date.
-   *
-   * @return int
-   *   Count of charges processed.
-   */
-  public function getProcessedCharges() {
-    return $this->getSuccesses() + $this->getFailures();
-  }
-
-  /**
-   * Get the value of of the sustainers processed on this report date.
-   *
-   * @return int
-   *   Value in cents.
-   */
-  public function getProcessedValue() {
-    return $this->getSuccessValue() + $this->getFailureValue();
-  }
-
-  /**
-   * Get the value of the successfully processed sustainer on this report date.
-   *
-   * @return int
-   *   Value in cents.
-   */
-  public function getSuccessValue() {
-    return $this->successValue;
-  }
-
-  /**
-   * Get the value of the sustainers that failed processing on this report date.
-   *
-   * Includes both temporary and permanent failures.
-   *
-   * @return int
-   *   Value in cents.
-   */
-  public function getFailureValue() {
-    return $this->failureValue;
-  }
-
-  /**
-   * Get the charges that failed on this report date but will be retried.
-   *
-   * @return int
-   *   Count of sustainers.
-   */
-  public function getRescheduledCharges() {
-    return $this->rescheduledCharges;
-  }
-
-  /**
-   * Get the value of charges failed on this report date but will be retried.
-   *
-   * @return int
-   *   Value in cents.
-   */
-  public function getRescheduledValue() {
-    return $this->rescheduledValue;
-  }
-
-  /**
    * Get the count of charges that previously failed processing.
    *
    * @return int
@@ -322,6 +180,90 @@ class FundraiserSustainersDailySnapshot {
    */
   public function getRetriedValue() {
     return $this->retriedValue;
+  }
+
+  /**
+   * Get the number of successfully processed sustainers for this report date.
+   *
+   * @return int
+   *   Count of successes.
+   */
+  public function getSuccessfulCharges() {
+    return $this->successfulCharges;
+  }
+
+  /**
+   * Get the value of the successfully processed sustainer on this report date.
+   *
+   * @return int
+   *   Value in cents.
+   */
+  public function getSuccessfulValue() {
+    return $this->successfulValue;
+  }
+
+  /**
+   * Get the number of sustainers that failed to process for this report date.
+   *
+   * Includes temporary and permanent failures.
+   *
+   * @return int
+   *   Count of failures.
+   */
+  public function getFailedCharges() {
+    return $this->getFailedRescheduledCharges() + $this->getFailedAbandonedCharges();
+  }
+
+  /**
+   * Get the value of the sustainers that failed processing on this report date.
+   *
+   * Includes both temporary and permanent failures.
+   *
+   * @return int
+   *   Value in cents.
+   */
+  public function getFailedValue() {
+    return $this->getFailedRescheduledValue() + $this->getFailedAbandonedValue();
+  }
+
+  /**
+   * Get the count of charges that permanently failed while processing.
+   *
+   * @return int
+   *   Count of sustainers.
+   */
+  public function getFailedAbandonedCharges() {
+    return $this->failedAbandonedCharges;
+  }
+
+  /**
+   * Get the value of the abandoned sustainers.
+   *
+   * @return int
+   *   Value in cents.
+   */
+  public function getFailedAbandonedValue() {
+    return $this->failedAbandonedValue;
+  }
+
+  /**
+   * Get the charges that failed on this report date but will be retried.
+   *
+   * @return int
+   *   Count of sustainers.
+   */
+  public function getFailedRescheduledCharges() {
+    return $this->failedRescheduledCharges;
+  }
+
+  /**
+   * Get the value of charges failed on this report date but will be retried.
+   *
+   * @return int
+   *   Value in cents.
+   */
+  public function getFailedRescheduledValue() {
+    return $this->failedRescheduledValue;
   }
 
   /**
@@ -387,12 +329,12 @@ class FundraiserSustainersDailySnapshot {
    * Calculates all other properties for the snapshot.
    */
   protected function calculateOtherProperties() {
-    $successes = 0;
-    $failures = 0;
-    $success_value = 0;
-    $failure_value = 0;
     $retried_charges = 0;
     $retried_value = 0;
+
+    $successes = 0;
+    $success_value = 0;
+
     $rescheduled_charges = 0;
     $rescheduled_value = 0;
     $abandoned_charges = 0;
@@ -430,9 +372,6 @@ class FundraiserSustainersDailySnapshot {
           $success_value += $value;
         }
         else {
-          $failures++;
-          $failure_value += $value;
-
           if ($row->new_state == 'retry') {
             $rescheduled_charges++;
             $rescheduled_value += $value;
@@ -449,17 +388,16 @@ class FundraiserSustainersDailySnapshot {
       }
     }
 
-    $this->successes = $successes;
-    $this->failures = $failures;
-    $this->successValue = $success_value;
-    $this->failureValue = $failure_value;
-
     $this->retriedCharges = $retried_charges;
     $this->retriedValue = $retried_value;
-    $this->rescheduledCharges = $rescheduled_charges;
-    $this->rescheduledValue = $rescheduled_value;
-    $this->abandonedCharges = $abandoned_charges;
-    $this->abandonedValue = $abandoned_value;
+
+    $this->successfulCharges = $successes;
+    $this->successfulValue = $success_value;
+
+    $this->failedRescheduledCharges = $rescheduled_charges;
+    $this->failedRescheduledValue = $rescheduled_value;
+    $this->failedAbandonedCharges = $abandoned_charges;
+    $this->failedAbandonedValue = $abandoned_value;
   }
 
   /**
@@ -467,19 +405,17 @@ class FundraiserSustainersDailySnapshot {
    */
   protected function initializeValues() {
     $this->scheduledCharges = 0;
-    $this->scheduledCharges = 0;
-    $this->successes = 0;
-    $this->failures = 0;
-    $this->successValue = 0;
-    $this->failureValue = 0;
-
-    $this->abandonedCharges = 0;
-    $this->abandonedValue = 0;
-    $this->rescheduledCharges = 0;
-    $this->rescheduledValue = 0;
-    $this->processedCharges = 0;
-    $this->processedValue = 0;
+    $this->scheduledValue = 0;
     $this->retriedCharges = 0;
     $this->retriedValue = 0;
+
+    $this->successfulCharges = 0;
+    $this->successfulValue = 0;
+
+    $this->failedRescheduledCharges = 0;
+    $this->failedRescheduledValue = 0;
+    $this->failedAbandonedCharges = 0;
+    $this->failedAbandonedValue = 0;
+
   }
 }

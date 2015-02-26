@@ -60,24 +60,24 @@ class FundraiserSustainersInsightsTestCase extends DrupalWebTestCase {
   public function testSnapshotData() {
     $snapshot = new MockFundraiserSustainersDailySnapshot(new DateTime());
 
-    $this->assertIdentical($snapshot->getScheduledCharges(), 1);
-    $this->assertIdentical($snapshot->getScheduledValue(), 200);
+    $this->assertIdentical($snapshot->getScheduledCharges(), 10);
+    $this->assertIdentical($snapshot->getScheduledValue(), 10000);
 
-    $this->assertIdentical($snapshot->getRetriedCharges(), 13);
-    $this->assertIdentical($snapshot->getRetriedValue(), 1400);
+    $this->assertIdentical($snapshot->getRetriedCharges(), 5);
+    $this->assertIdentical($snapshot->getRetriedValue(), 4000);
 
-    $this->assertIdentical($snapshot->getProcessedCharges(), 8);
-    $this->assertIdentical($snapshot->getProcessedValue(), 1000);
+    $this->assertIdentical($snapshot->getSuccessfulCharges(), 10);
+    $this->assertIdentical($snapshot->getSuccessfulValue(), 9000);
 
-    $this->assertIdentical($snapshot->getRescheduledCharges(), 9);
-    $this->assertIdentical($snapshot->getRescheduledValue(), 1000);
+    $this->assertIdentical($snapshot->getFailedRescheduledCharges(), 2);
+    $this->assertIdentical($snapshot->getFailedRescheduledValue(), 2000);
 
-    $this->assertIdentical($snapshot->getAbandonedCharges(), 7);
-    $this->assertIdentical($snapshot->getAbandonedValue(), 800);
+    $this->assertIdentical($snapshot->getFailedAbandonedCharges(), 3);
+    $this->assertIdentical($snapshot->getFailedAbandonedValue(), 3000);
 
-    $this->assertIdentical($snapshot->getTotalValue(), 200);
-    $this->assertIdentical($snapshot->getSuccesses(), 3);
-    $this->assertIdentical($snapshot->getFailures(), 5);
+    // These are really the only ones that do calculations.
+    $this->assertIdentical($snapshot->getFailedCharges(), 5);
+    $this->assertIdentical($snapshot->getFailedValue(), 5000);
   }
 
   protected function debugReport(FundraiserSustainersSnapshotReport $report, $count) {
@@ -97,23 +97,18 @@ class FundraiserSustainersInsightsTestCase extends DrupalWebTestCase {
 class MockFundraiserSustainersDailySnapshot extends FundraiserSustainersDailySnapshot {
 
   public function mockSnapshotDate() {
-    $i = 0;
     return array(
       0 => array(
-        'scheduledCharges' => ++$i,
-        'scheduledValue' => ++$i * 100,
-        'successes' => ++$i,
-        'successValue' => ++$i * 100,
-        'failures' => ++$i,
-        'failureValue' => ++$i * 100,
-        'abandonedCharges' => ++$i,
-        'abandonedValue' => ++$i * 100,
-        'rescheduledCharges' => ++$i,
-        'rescheduledValue' => ++$i * 100,
-        'processedCharges' => ++$i,
-        'processedValue' => ++$i * 100,
-        'retriedCharges' => ++$i,
-        'retriedValue' => ++$i * 100,
+        'scheduledCharges' => 10,
+        'scheduledValue' => 10000,
+        'retriedCharges' => 5,
+        'retriedValue' => 4000,
+        'successfulCharges' => 10,
+        'successfulValue' => 9000,
+        'failedRescheduledCharges' => 2,
+        'failedRescheduledValue' => 2000,
+        'failedAbandonedCharges' => 3,
+        'failedAbandonedValue' => 3000,
       ),
     );
   }

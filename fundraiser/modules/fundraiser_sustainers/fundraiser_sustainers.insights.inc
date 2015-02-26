@@ -101,17 +101,17 @@ function fundraiser_sustainers_insights_dashboard($path_range = 'last-7-days') {
       number_format($snapshot->getScheduledValue() / 100, 2),
       $snapshot->getRetriedCharges(),
       number_format($snapshot->getRetriedValue() / 100, 2),
-      $snapshot->getProcessedCharges(),
-      number_format($snapshot->getProcessedValue() / 100, 2),
-      $snapshot->getRescheduledCharges(),
-      number_format($snapshot->getRescheduledValue() / 100, 2),
-      $snapshot->getAbandonedCharges(),
-      number_format($snapshot->getAbandonedValue() / 100, 2),
+      $snapshot->getSuccessfulCharges(),
+      number_format($snapshot->getSuccessfulValue() / 100, 2),
+      $snapshot->getFailedRescheduledCharges(),
+      number_format($snapshot->getFailedRescheduledValue() / 100, 2),
+      $snapshot->getFailedAbandonedCharges(),
+      number_format($snapshot->getFailedAbandonedValue() / 100, 2),
     );
 
     $label_data[] = $friendly_date;
-    $successes_data[] = $snapshot->getSuccesses();
-    $failures_data[] = $snapshot->getFailures();
+    $successes_data[] = $snapshot->getSuccessfulCharges();
+    $failures_data[] = $snapshot->getFailedCharges();
 
     $rows[] = $row;
   }
@@ -138,10 +138,10 @@ function fundraiser_sustainers_insights_dashboard($path_range = 'last-7-days') {
     'today' => $today->getDate()->format('d M Y'),
     'scheduled_charges' => $today->getScheduledCharges(),
     'today_scheduled_path' => 'springboard/reports/sustainers/scheduled/' . $url_date,
-    'total_value' => '$ ' . number_format($today->getTotalValue() / 100, 2),
-    'successes' => $today->getSuccesses(),
+    'total_value' => '$ ' . number_format($today->getScheduledValue() / 100, 2),
+    'successes' => $today->getSuccessfulCharges(),
     'today_success_path' => 'springboard/reports/sustainers/success/' . $url_date,
-    'failures' => $today->getFailures(),
+    'failures' => $today->getFailedCharges(),
     'today_failure_path' => 'springboard/reports/sustainers/failure/' . $url_date,
     'historical_report_heading' => $historical_report_heading,
     'historical_report_table' => theme('table', $table_variables),
