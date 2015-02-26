@@ -5,119 +5,135 @@
  */
 
 /**
- * Class FundraiserSustainersDailySnapshot
+ * Class FundraiserSustainersDailySnapshot.
  */
 class FundraiserSustainersDailySnapshot {
 
   /**
+   * Today. Used for some calculations and display.
+   *
    * @var DateTime
-   *   Today. Used for some calculations and display.
    */
   protected $today;
 
   /**
+   * The day of this Snapshot.
+   *
    * @var DateTime
-   *   The day of this Snapshot.
    */
   protected $date;
 
   /**
-   * @var int
-   *   The timestamp of the day start.
+   * The timestamp of the day start. Used for database queries.
    *
-   * Used for database queries.
+   * @var int
    */
   protected $beginTimestamp;
 
   /**
-   * @var int
-   *   The timestamp of the day start of the following day.
+   * The timestamp of the day start of the following day.
    *
    * Used for database queries.
+   *
+   * @var int
    */
   protected $endTimestamp;
 
   /**
+   * Number of charges scheduled, including processed.
+   *
    * @var int
-   *   Number of charges scheduled, including processed.
    */
   protected $scheduledCharges;
 
   /**
+   * Value (in cents) of charges scheduled, including processed.
+   *
    * @var int
-   *   Value (in cents) of charges scheduled, including processed.
    */
   protected $scheduledValue;
 
   /**
+   * Number of charges that were retried on this day.
+   *
    * @var int
-   *   Number of charges that were retried on this day.
    */
   protected $retriedCharges;
 
   /**
+   * Value (in cents) retried on this day.
+   *
    * @var int
-   *   Value (in cents) retried on this day.
    */
   protected $retriedValue;
 
   /**
+   * Number of charges processed.
+   *
    * @var int
-   *   Number of charges processed.
    */
   protected $processedCharges;
 
   /**
+   * Value (in cents) processed.
+   *
    * @var int
-   *   Value (in cents) processed.
    */
   protected $processedValue;
 
   /**
+   * Number of charges that are rescheduled after being processed on this day.
+   *
    * @var int
-   *   Number of charges that are rescheduled after being processed on this day.
    */
   protected $rescheduledCharges;
 
   /**
+   * Value (in cents) rescheduled after being processed.
+   *
    * @var int
-   *   Value (in cents) rescheduled after being processed.
    */
   protected $rescheduledValue;
 
   /**
+   * Number of charges that permanently failed after being processed.
+   *
    * @var int
-   *   Number of charges that permanently failed after being processed.
    */
   protected $abandonedCharges;
 
   /**
+   * Value (in cents) that permanently failed.
+   *
    * @var int
-   *   Value (in cents) that permanently failed.
    */
   protected $abandonedValue;
 
   /**
+   * Number of successful charges completed so far in this day.
+   *
    * @var int
-   *   Number of successful charges completed so far in this day.
    */
   protected $successes;
 
   /**
+   * Value (in cents) of successful charges completed.
+   *
    * @var int
-   *   Value (in cents) of successful charges completed.
    */
   protected $successValue;
 
   /**
+   * Number of failed charges attempted so far in this day.
+   *
    * @var int
-   *   Number of failed charges attempted so far in this day.
    */
   protected $failures;
 
   /**
+   * Value (in cents) of failed charges attempted.
+   *
    * @var int
-   *   Value (in cents) of failed charges attempted.
    */
   protected $failureValue;
 
@@ -346,7 +362,7 @@ class FundraiserSustainersDailySnapshot {
    * Calculates the scheduled charges and value.
    */
   protected function calculateScheduledProperties() {
-    // success, canceled, skipped, failed, retry, processing, NULL
+    // success, canceled, skipped, failed, retry, processing, NULL.
     $replacements = array(
       ':begin' => $this->beginTimestamp,
       ':end' => $this->endTimestamp,
@@ -373,14 +389,14 @@ class FundraiserSustainersDailySnapshot {
   protected function calculateOtherProperties() {
     $successes = 0;
     $failures = 0;
-    $successValue = 0;
-    $failureValue = 0;
-    $retriedCharges = 0;
-    $retriedValue = 0;
-    $rescheduledCharges = 0;
-    $rescheduledValue = 0;
-    $abandonedCharges = 0;
-    $abandonedValue = 0;
+    $success_value = 0;
+    $failure_value = 0;
+    $retried_charges = 0;
+    $retried_value = 0;
+    $rescheduled_charges = 0;
+    $rescheduled_value = 0;
+    $abandoned_charges = 0;
+    $abandoned_value = 0;
 
     $replacements = array(
       ':begin' => $this->beginTimestamp,
@@ -411,39 +427,39 @@ class FundraiserSustainersDailySnapshot {
 
         if ($row->new_state == 'success') {
           $successes++;
-          $successValue += $value;
+          $success_value += $value;
         }
         else {
           $failures++;
-          $failureValue += $value;
+          $failure_value += $value;
 
           if ($row->new_state == 'retry') {
-            $rescheduledCharges++;
-            $rescheduledValue += $value;
+            $rescheduled_charges++;
+            $rescheduled_value += $value;
           }
           elseif ($row->new_state == 'failed') {
-            $abandonedCharges++;
-            $abandonedValue += $value;
+            $abandoned_charges++;
+            $abandoned_value += $value;
           }
         }
       }
       elseif ($row->old_state == 'retry' && $row->new_state == 'processing') {
-        $retriedCharges++;
-        $retriedValue += $value;
+        $retried_charges++;
+        $retried_value += $value;
       }
     }
 
     $this->successes = $successes;
     $this->failures = $failures;
-    $this->successValue = $successValue;
-    $this->failureValue = $failureValue;
+    $this->successValue = $success_value;
+    $this->failureValue = $failure_value;
 
-    $this->retriedCharges = $retriedCharges;
-    $this->retriedValue = $retriedValue;
-    $this->rescheduledCharges = $rescheduledCharges;
-    $this->rescheduledValue = $rescheduledValue;
-    $this->abandonedCharges = $abandonedCharges;
-    $this->abandonedValue = $abandonedValue;
+    $this->retriedCharges = $retried_charges;
+    $this->retriedValue = $retried_value;
+    $this->rescheduledCharges = $rescheduled_charges;
+    $this->rescheduledValue = $rescheduled_value;
+    $this->abandonedCharges = $abandoned_charges;
+    $this->abandonedValue = $abandoned_value;
   }
 
   /**

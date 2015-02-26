@@ -12,7 +12,6 @@
  *
  * @return string
  *   Themed HTML.
- * @throws Exception
  */
 function fundraiser_sustainers_insights_dashboard($path_range = 'last-7-days') {
 

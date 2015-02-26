@@ -5,27 +5,30 @@
  */
 
 /**
- * Class FundraiserSustainersSnapshotReport
+ * Class FundraiserSustainersSnapshotReport.
  *
  * Common functionality between historical reports and forecast reports.
  */
 abstract class FundraiserSustainersSnapshotReport {
 
   /**
+   * The start date for the items in the report.
+   *
    * @var DateTime
-   *   The start date for the items in the report.
    */
   protected $begin;
 
   /**
+   * The end date for the items in the report.
+   *
    * @var DateTime
-   *   The end date for the items in the report.
    */
   protected $end;
 
   /**
+   * An array of the daily snapshots that are included in this report.
+   *
    * @var FundraiserSustainersDailySnapshot[]
-   *   An array of the daily snapshots that are included in this report.
    */
   protected $snapshots;
 
@@ -40,7 +43,6 @@ abstract class FundraiserSustainersSnapshotReport {
   public function __construct(DateTime $begin, DateTime $end) {
     // @todo Throw an Exception if begin is after end.
     // @todo Throw an Exception if the range is too big, beyond some threshold.
-
     $this->begin = $begin;
     $this->end = $end;
 

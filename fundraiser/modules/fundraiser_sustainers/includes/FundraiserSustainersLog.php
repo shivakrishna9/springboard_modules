@@ -4,6 +4,9 @@
  * Methods for working with the Fundraiser Sustainers Log.
  */
 
+/**
+ * Class FundraiserSustainersLog.
+ */
 class FundraiserSustainersLog {
 
   /**
@@ -12,8 +15,8 @@ class FundraiserSustainersLog {
    * @param array $values
    *   Values to save that are different from the old values, plus did. Donation
    *   ID (did) is a required key.
-   * @param null|stdClass  $old_record
-   *   The original record. If one is not provides it gets queried. This is used
+   * @param null|object $old_record
+   *   The original record. If one is not provided it gets queried. This is used
    *   for default values and the old_state.
    *
    * @return bool|int
