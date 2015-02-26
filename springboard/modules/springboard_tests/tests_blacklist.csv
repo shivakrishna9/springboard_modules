@@ -7,7 +7,6 @@ CoderUpgradeWebTestCase
 DsrTestCase
 FormLayoutsTestCase
 FundraiserCommerceGatewayAuthnetTest
-FundraiserCommerceUnitTestCase
 FundraiserDateModeTest
 FundraiserSustainerTest
 MarketSourceTestCase
