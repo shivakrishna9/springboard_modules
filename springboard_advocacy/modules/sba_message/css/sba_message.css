@@ -57,16 +57,25 @@
     background: #fff;
 }
 
-#springboard-advocacy-message-form-container fieldset fieldset fieldset .fieldset-wrapper {
-    padding: 1em;
+#edit-field-user-editable .form-item-field-user-editable-und > label {
+    display:none;
+}
+#edit-field-user-editable label {
+  float: left;
+    margin-right: 0.5em;
+    vertical-align: middle;
 }
 
+#sba_message_sba_message_action_message_form_group_editable,
+#edit-field-bottom-conclusion {
+    display: none;
+}
 fieldset fieldset#sba_message_sba_message_action_message_form_group_editable .fieldset-wrapper {
     background: #edf9ff;
 }
 
 fieldset fieldset#sba_message_sba_message_action_message_form_group_edit_container legend .fieldset-legend{
-  margin-left:0;
+    margin-left:0;
     padding-left:0;
 }
 
@@ -75,7 +84,7 @@ fieldset fieldset#sba_message_sba_message_action_message_form_group_edit_contain
     width: 14px;
 }
 fieldset fieldset#sba_message_sba_message_action_message_form_group_editable legend .fieldset-legend {
-    margin-left:0.5em;
+    margin-left: 1em;
 }
 
 
@@ -106,7 +115,6 @@ fieldset fieldset#sba_message_sba_message_action_message_form_group_editable leg
 
 #edit-field-sba-salutation label {
     margin-top: 1em;
-
 }
 
 #springboard-advocacy-message-form-container #edit-field-subject-editable,

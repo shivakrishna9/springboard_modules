@@ -94,7 +94,6 @@ class SbaMessageUIController extends EntityDefaultUIController {
  */
 function sba_message_form_wrapper($sba_message) {
   $build = array();
-drupal_add_js('$("").not("#edit-search-state").uniform()', array('group' =>JS_THEME, 'weight' => 999, 'type' => 'inline', 'scope' => 'footer'));
   $build['#attached']['css'] = array(
     drupal_get_path('module', 'sba_message') . '/css/sba_message.css',
   );

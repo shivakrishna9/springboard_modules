@@ -421,10 +421,24 @@
         //stop views ajax auto scroll
         $('.pager-item a, #edit-submit-targets').click(function(){
             Drupal.ajax.prototype.commands.viewsScrollTop = null;
-        });
-        $('#sba_message_sba_message_action_message_form_group_edit_container')
-            .removeClass('collapse-processed').addClass('collapsed')
+            });
 
+        var showEdit = $('input[name*=field_user_editable]');
+        var editable = $('#sba_message_sba_message_action_message_form_group_editable, #edit-field-bottom-conclusion')
+         if(showEdit.prop('checked')) {
+            editable.show();
+        }
+
+        showEdit.on('change', function() {
+            if(this.checked) {
+                editable.show(400, 'linear');
+            }
+            else {
+                 editable.hide(400, 'linear');
+            }
+        });
+
+        $('input[name*="field_i_want_the_user_to_be_able"]')
         // submit the form or return error message
         $("#edit-submit, #edit-delete").click(function (e) {
             e.preventDefault();
