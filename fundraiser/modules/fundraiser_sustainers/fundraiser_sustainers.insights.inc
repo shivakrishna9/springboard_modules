@@ -62,9 +62,9 @@ function fundraiser_sustainers_insights_dashboard($path_range = 'last-7-days') {
     array('data' => ''),
     array('data' => 'Scheduled', 'colspan' => 2),
     array('data' => 'Retried', 'colspan' => 2),
-    array('data' => 'Processed', 'colspan' => 2),
-    array('data' => 'Rescheduled', 'colspan' => 2),
-    array('data' => 'Abandoned', 'colspan' => 2),
+    array('data' => 'Successful', 'colspan' => 2),
+    array('data' => 'Failed/Rescheduled', 'colspan' => 2),
+    array('data' => 'Failed/Abandoned', 'colspan' => 2),
   );
 
   $rows = array();
