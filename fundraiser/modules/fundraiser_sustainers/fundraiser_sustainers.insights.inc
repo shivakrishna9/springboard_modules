@@ -99,15 +99,15 @@ function fundraiser_sustainers_insights_dashboard($path_range = 'last-7-days') {
     $row = array(
       l($friendly_date, $date_report_path . $date),
       $snapshot->getScheduledCharges(),
-      $snapshot->getScheduledValue() / 100,
+      number_format($snapshot->getScheduledValue() / 100, 2),
       $snapshot->getRetriedCharges(),
-      $snapshot->getRetriedValue() / 100,
+      number_format($snapshot->getRetriedValue() / 100, 2),
       $snapshot->getProcessedCharges(),
-      $snapshot->getProcessedValue() / 100,
+      number_format($snapshot->getProcessedValue() / 100, 2),
       $snapshot->getRescheduledCharges(),
-      $snapshot->getRescheduledValue() / 100,
+      number_format($snapshot->getRescheduledValue() / 100, 2),
       $snapshot->getAbandonedCharges(),
-      $snapshot->getAbandonedValue() / 100,
+      number_format($snapshot->getAbandonedValue() / 100, 2),
     );
 
     $label_data[] = $friendly_date;
