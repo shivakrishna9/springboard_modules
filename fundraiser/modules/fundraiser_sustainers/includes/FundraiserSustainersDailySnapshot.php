@@ -267,6 +267,23 @@ class FundraiserSustainersDailySnapshot {
   }
 
   /**
+   * Indicates if we should warn about this snapshot's data not making sense.
+   *
+   * @return bool
+   *   TRUE if the snapshot data doesn't match and needs investigation.
+   */
+  public function shouldWarn() {
+    if ($this->getScheduledCharges() + $this->getRetriedCharges() != $this->getSuccessfulCharges() + $this->getFailedCharges()) {
+      return TRUE;
+    }
+    elseif ($this->getScheduledValue() + $this->getRetriedValue() != $this->getSuccessfulValue() + $this->getFailedValue()) {
+      return TRUE;
+    }
+
+    return FALSE;
+  }
+
+  /**
    * Populates the snapshot instance with data.
    */
   protected function load() {

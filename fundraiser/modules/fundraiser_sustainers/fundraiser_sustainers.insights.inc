@@ -83,7 +83,7 @@ function fundraiser_sustainers_insights_dashboard($path_range = 'last-7-days') {
       array('data' => '$', 'header' => TRUE),
     ),
     'no_striping' => TRUE,
-    'class' => 'subhead_row',
+    'class' => array('subhead_row'),
   );
 
   $rows[] = $first_row;
@@ -92,22 +92,29 @@ function fundraiser_sustainers_insights_dashboard($path_range = 'last-7-days') {
   $successes_data = array();
   $failures_data = array();
   $date_report_path = 'springboard/reports/sustainers/activity/';
+
   foreach ($report_snapshots as $date => $snapshot) {
     $friendly_date = $snapshot->getDate()->format($date_format);
 
     $row = array(
-      l($friendly_date, $date_report_path . $date),
-      $snapshot->getScheduledCharges(),
-      number_format($snapshot->getScheduledValue() / 100, 2),
-      $snapshot->getRetriedCharges(),
-      number_format($snapshot->getRetriedValue() / 100, 2),
-      $snapshot->getSuccessfulCharges(),
-      number_format($snapshot->getSuccessfulValue() / 100, 2),
-      $snapshot->getFailedRescheduledCharges(),
-      number_format($snapshot->getFailedRescheduledValue() / 100, 2),
-      $snapshot->getFailedAbandonedCharges(),
-      number_format($snapshot->getFailedAbandonedValue() / 100, 2),
+      'data' => array(
+        l($friendly_date, $date_report_path . $date),
+        $snapshot->getScheduledCharges(),
+        number_format($snapshot->getScheduledValue() / 100, 2),
+        $snapshot->getRetriedCharges(),
+        number_format($snapshot->getRetriedValue() / 100, 2),
+        $snapshot->getSuccessfulCharges(),
+        number_format($snapshot->getSuccessfulValue() / 100, 2),
+        $snapshot->getFailedRescheduledCharges(),
+        number_format($snapshot->getFailedRescheduledValue() / 100, 2),
+        $snapshot->getFailedAbandonedCharges(),
+        number_format($snapshot->getFailedAbandonedValue() / 100, 2),
+      ),
     );
+
+    if ($snapshot->shouldWarn()) {
+      $row['class'] = array('warning');
+    }
 
     $label_data[] = $friendly_date;
     $successes_data[] = $snapshot->getSuccessfulCharges();
@@ -119,6 +126,9 @@ function fundraiser_sustainers_insights_dashboard($path_range = 'last-7-days') {
   $table_variables = array(
     'header' => $headers,
     'rows' => $rows,
+    'attributes' => array(
+      'class' => array('table'),
+    ),
   );
 
   $forecast_labels = array();
