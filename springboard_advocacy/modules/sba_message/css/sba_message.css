@@ -58,7 +58,7 @@
 }
 
 #edit-field-user-editable div.form-type-checkboxes > label,
-#edit-field-editable-area-optional- div.form-type-checkboxes > label {
+div[id*=edit-field-editable-area-optional] div.form-type-checkboxes > label {
     display:none;
 }
 
@@ -100,7 +100,7 @@ fieldset fieldset#sba_message_sba_message_action_message_form_group_editable leg
 }
 
 #springboard-advocacy-message-form-container .form-item-name,
-#edit-field-sba-salutation {
+#edit-field-sba-signature {
     background: #fff;
     border: 1px solid #d5d5d5;
     padding: 1em 1.5em;
@@ -108,14 +108,14 @@ fieldset fieldset#sba_message_sba_message_action_message_form_group_editable leg
     border-radius: 4px;
 }
 #springboard-advocacy-message-form-container .form-item-name label,
-#edit-field-sba-salutation label{
+#edit-field-sba-signature label{
     font-weight:normal;
     font-size: 1.3em;
     margin-bottom: 1em;
     margin-top: 0.3em;
 }
 
-#edit-field-sba-salutation label {
+#edit-field-sba-signature label {
     margin-top: 1em;
 }
 
@@ -132,7 +132,7 @@ fieldset fieldset#sba_message_sba_message_action_message_form_group_editable leg
 
 }
 
-#springboard-advocacy-message-form-container #edit-field-editable-area-optional- {
+#springboard-advocacy-message-form-container div[id*=edit-field-editable-area-optional] {
     margin: 15px 0;
 }
 
@@ -528,7 +528,8 @@ fieldset fieldset#sba_message_sba_message_action_message_form_group_editable leg
     content: '';
 
 }
-.springboard-advocacy-find-targets .views-exposed-widget.disabled {
+#springboard-advocacy-message-form-container .disabled
+{
     color: #d5d5d5;
 }
 

@@ -45,6 +45,24 @@ function sba_message_access($op, $sba_message = NULL, $account = NULL) {
     if (!in_array($node->type, $types)) {
       return FALSE;
     }
+
+    if (arg(2) == 'messages' && arg(3) == 'add') {
+      if (isset($node->message_ids)) {
+        $messages = entity_load('sba_message', $node->message_ids);
+        if (count($messages == 1)) {
+          $message = array_pop($messages);
+          $subject_editable = field_get_items('sba_message', $message, 'field_subject_editable');
+          $user_editable = field_get_items('sba_message', $message, 'field_user_editable');
+          if ($subject_editable[0]['value'] == 'Not editable' || !empty($user_editable)) {
+            $loglink = l("Return to message admin.", 'springboard/node/' . $node->nid . '/messages');
+            drupal_set_message(t('This action\'s current message is user-editable, additional messages may not be created for this action until user editing is disabled. !link', array('!link' => $loglink)), 'error', FALSE);
+            return false;
+          }
+        }
+      }
+    }
+
+
     // Grant access to content owned by user that they have permissions to edit.
     if (user_access('administer springboard advocacy') && $node->uid == $user->uid && node_access('update', $node)) {
       return TRUE;
@@ -65,6 +83,7 @@ function sba_message_access($op, $sba_message = NULL, $account = NULL) {
       return TRUE;
     }
   }
+
   return FALSE;
 }
 

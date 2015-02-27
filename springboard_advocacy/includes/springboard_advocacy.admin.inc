@@ -224,6 +224,21 @@ function springboard_advocacy_dashboard($path, $arg = NULL) {
       $message_types = variable_get('sba_message_node_types', array());
       $node = node_load($path);
       if(isset($message_types[$node->type])) {
+        if(isset($node->message_ids)) {
+          $messages = entity_load('sba_message', $node->message_ids);
+          if(count($messages == 1)) {
+            $message = array_pop($messages);
+            $subject_editable = field_get_items('sba_message', $message, 'field_subject_editable');
+            $user_editable = field_get_items('sba_message', $message, 'field_user_editable');
+            if($subject_editable[0]['value'] != 'Not editable' || !empty($user_editable)) {
+              $no_create = TRUE;
+              drupal_set_message(t('This action\'s current message is user-editable, additional messages may not be created for this action until user editing is disabled.'), 'warning', FALSE);
+
+            }
+          }
+        }
+
+
         $view = views_get_view('sba_messages_node');
         if ($view && isset($view->display['block_1'])) {
           $views = array(
@@ -234,6 +249,9 @@ function springboard_advocacy_dashboard($path, $arg = NULL) {
               'css' => drupal_get_path('module', 'springboard_advocacy') . '/css/sba.css',
             ),
           );
+          if (!empty($no_create)) {
+            unset($views['sba_messages_node']['create_link']);
+          }
         } else {
           $views = array(
             'sba_targets' => array(
