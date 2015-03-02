@@ -210,7 +210,7 @@ function springboard_p2p_campaign_field_default_field_instances() {
     'entity_type' => 'node',
     'field_name' => 'field_p2p_campaign_banner',
     'label' => 'Campaign banner',
-    'required' => 1,
+    'required' => 0,
     'settings' => array(
       'alt_field' => 1,
       'default_image' => 0,
@@ -444,7 +444,9 @@ function springboard_p2p_campaign_field_default_field_instances() {
     'widget' => array(
       'active' => 1,
       'module' => 'options',
-      'settings' => array(),
+      'settings' => array(
+        'apply_chosen' => 0,
+      ),
       'type' => 'options_select',
       'weight' => 1,
     ),
@@ -568,7 +570,9 @@ function springboard_p2p_campaign_field_default_field_instances() {
     'widget' => array(
       'active' => 1,
       'module' => 'options',
-      'settings' => array(),
+      'settings' => array(
+        'apply_chosen' => 0,
+      ),
       'type' => 'options_select',
       'weight' => 18,
     ),

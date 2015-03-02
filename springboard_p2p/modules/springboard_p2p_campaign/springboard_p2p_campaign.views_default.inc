@@ -47,6 +47,7 @@ function springboard_p2p_campaign_views_default_views() {
   $handler->display->display_options['fields']['field_p2p_campaign_thumbnail']['table'] = 'field_data_field_p2p_campaign_thumbnail';
   $handler->display->display_options['fields']['field_p2p_campaign_thumbnail']['field'] = 'field_p2p_campaign_thumbnail';
   $handler->display->display_options['fields']['field_p2p_campaign_thumbnail']['label'] = '';
+  $handler->display->display_options['fields']['field_p2p_campaign_thumbnail']['exclude'] = TRUE;
   $handler->display->display_options['fields']['field_p2p_campaign_thumbnail']['element_type'] = 'span';
   $handler->display->display_options['fields']['field_p2p_campaign_thumbnail']['element_class'] = 'p2p-thumbnail';
   $handler->display->display_options['fields']['field_p2p_campaign_thumbnail']['element_label_type'] = '0';
@@ -63,8 +64,6 @@ function springboard_p2p_campaign_views_default_views() {
   $handler->display->display_options['fields']['body']['table'] = 'field_data_body';
   $handler->display->display_options['fields']['body']['field'] = 'body';
   $handler->display->display_options['fields']['body']['label'] = '';
-  $handler->display->display_options['fields']['body']['element_type'] = 'span';
-  $handler->display->display_options['fields']['body']['element_class'] = 'p2p-body';
   $handler->display->display_options['fields']['body']['element_label_type'] = '0';
   $handler->display->display_options['fields']['body']['element_label_colon'] = FALSE;
   $handler->display->display_options['fields']['body']['element_wrapper_type'] = '0';
@@ -74,6 +73,7 @@ function springboard_p2p_campaign_views_default_views() {
   $handler->display->display_options['fields']['nid']['table'] = 'node';
   $handler->display->display_options['fields']['nid']['field'] = 'nid';
   $handler->display->display_options['fields']['nid']['label'] = '';
+  $handler->display->display_options['fields']['nid']['exclude'] = TRUE;
   $handler->display->display_options['fields']['nid']['alter']['alter_text'] = TRUE;
   $handler->display->display_options['fields']['nid']['alter']['text'] = '<a href="/p2p/register?p2p_cid=[nid]">Get Started</a>';
   $handler->display->display_options['fields']['nid']['element_type'] = 'span';
@@ -134,7 +134,7 @@ function springboard_p2p_campaign_views_default_views() {
   $handler->display->display_options['fields']['title']['relationship'] = 'field_p2p_campaign_target_id';
   $handler->display->display_options['fields']['title']['label'] = '';
   $handler->display->display_options['fields']['title']['alter']['alter_text'] = TRUE;
-  $handler->display->display_options['fields']['title']['alter']['text'] = 'Want to start your own personal campaign for [title]?';
+  $handler->display->display_options['fields']['title']['alter']['text'] = 'Want to start your own Team ASPCA campaign?';
   $handler->display->display_options['fields']['title']['element_type'] = '0';
   $handler->display->display_options['fields']['title']['element_label_type'] = '0';
   $handler->display->display_options['fields']['title']['element_label_colon'] = FALSE;
@@ -147,7 +147,7 @@ function springboard_p2p_campaign_views_default_views() {
   $handler->display->display_options['fields']['nid']['relationship'] = 'field_p2p_campaign_target_id';
   $handler->display->display_options['fields']['nid']['label'] = '';
   $handler->display->display_options['fields']['nid']['alter']['alter_text'] = TRUE;
-  $handler->display->display_options['fields']['nid']['alter']['text'] = '<a class="get-started-link" href="/p2p/register?p2p_cid=[nid]">Get Started<i class="fa fa-cog  get-started-spinner"></i></a>';
+  $handler->display->display_options['fields']['nid']['alter']['text'] = '<a class="get-started-link" href="http://www.aspca.org/team/aspca">Choose a Team ASPCA Campaign</a>';
   $handler->display->display_options['fields']['nid']['element_type'] = 'span';
   $handler->display->display_options['fields']['nid']['element_class'] = 'p2p-link';
   $handler->display->display_options['fields']['nid']['element_label_type'] = '0';
