@@ -741,7 +741,12 @@ class SalesforceSync {
         // Truncate the value of the field to the maximum length allowed by SF.
         $item->sobject->fields[$field_name] = substr($item->sobject->fields[$field_name], 0, $field_length);
         // Make sure no XML entity was truncated.
-        $item->sobject->fields[$field_name] = preg_replace("|\\&[^;]*\$|", '', $item->sobject->fields[$field_name]);
+        // This regex looks for ampersands followed by zero or more
+        // non-space and non-semicolons at the end of the string.
+        // This would indicate a broken entity due to truncation.
+        // Note that at this point the string has already been escaped, so
+        // there shouldn't be stray ampersands without matching semicolons.
+        $item->sobject->fields[$field_name] = preg_replace("|\\&[^\\s;]*\$|", '', $item->sobject->fields[$field_name]);
       }
     }
   }

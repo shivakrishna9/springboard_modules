@@ -346,10 +346,14 @@ function fundraiser_commerce_commerce_order_status_info() {
  * Implements hook_commerce_order_status_info_alter().
  */
 function fundraiser_commerce_commerce_order_status_info_alter(&$order_statuses) {
-  // Loop through the statuses used by fundraiser and flag them.
-  foreach (_fundraiser_commerce_commerce_order_statuses_used() as $status) {
-    if (isset($order_statuses[$status])) {
+  // Loop through the statuses and flag the one's fundraiser uses.
+  $fundraiser_statuses = _fundraiser_commerce_commerce_order_statuses_used();
+  foreach ($order_statuses as $status => $properties) {
+    if (in_array($status, $fundraiser_statuses)) {
       $order_statuses[$status]['fundraiser_status'] = TRUE;
+    }
+    else {
+      $order_statuses[$status]['fundraiser_status'] = FALSE;
     }
   }
 }
@@ -366,6 +370,7 @@ function _fundraiser_commerce_commerce_order_statuses_used() {
     'refunded',
     'partially_refunded',
     'payment_received',
+    'skipped',
   );
 }
 
@@ -826,6 +831,8 @@ function _fundraiser_commerce_zone_field_display($form, $form_state, $field) {
  * Implements hook_fundraiser_get_credit_encryption_path().
  * This is called by modules that need to check for processing availablity outside of normal.
  * Such as sustainer.
+ *
+ * @deprecated This hook has been removed because it's only used by one module.
  */
 function fundraiser_commerce_fundraiser_get_credit_encryption_path() {
   return variable_get('encrypt_secure_key_path', t('Not configured, see below.')); // From the encrypt module.

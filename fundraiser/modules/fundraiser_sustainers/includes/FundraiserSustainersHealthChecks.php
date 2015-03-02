@@ -59,18 +59,22 @@ class FundraiserSustainersHealthChecks {
   /**
    * Queries for stuck sustainers.
    *
-   * A "stuck" sustainer means its lock id is non-zero and gateway response
-   * is not null, 'success', or 'failed' and the number of attempts is not 3.
+   * A "stuck" sustainer means its lock id is non-zero, but did not process.
    *
-   * This usually means that a sustainer was marked to process it, but was not
+   * This usually means that a sustainer was marked for processing, but was not
    * updated with a response, for whatever reason.
    *
    * @return NULL|array
    *   An array of donation IDs.
    */
   protected function getStuckDids() {
-    $query = "SELECT did FROM {fundraiser_sustainers} WHERE lock_id != '0' AND attempts != 3 AND (gateway_resp NOT IN ('success', 'failed') OR gateway_resp IS NULL)";
+    $query = "SELECT did FROM {fundraiser_sustainers} WHERE next_charge < :time AND lock_id != '0' AND attempts < :max_processing_attempts AND (gateway_resp NOT IN ('success', 'failed') OR gateway_resp IS NULL)";
+    $replacements = array(
+      ':max_processing_attempts' => variable_get('fundraiser_sustainers_max_processing_attempts', 3),
+      // Filter on next charge earlier than an hour in the past to avoid pulling currently processing sustainers.
+      ':time' => time() - 3600,
+    );
 
-    return db_query($query)->fetchCol();
+    return db_query($query, $replacements)->fetchCol();
   }
 }

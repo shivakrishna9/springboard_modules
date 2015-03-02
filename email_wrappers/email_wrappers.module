@@ -54,6 +54,7 @@ function email_wrappers_menu_alter(&$items) {
   }
 }
 
+
 /**
  * Modal display window for email preview.
  *
@@ -97,7 +98,7 @@ function email_wrappers_preview_modal() {
 }
 
 /**
- * Implements hook_form_FORMID_alter
+ *  Implements hook_form_FORMID_alter
  *
  * $message['send'] = FALSE in email_wrappers_mail_alter causes
  * improper error message to appear to site admins on resend.
@@ -331,11 +332,20 @@ function email_wrappers_email_validate_callback(&$form, &$form_state) {
   // This is caused by setting #value on header detail fields. Note: simply
   // setting #default_value on these fields causes defaults to not render
   // after the template select ajax event has executed.
-  $keys = array('subject', 'from_address', 'from_name',);
+  $keys = array('subject', 'from_address', 'from_name');
   foreach ($keys as $key) {
     $fields = array('option', 'custom', 'component');
     foreach ($fields as $field) {
-      $form_state['values'][$key . '_' . $field] = $form_state['input'][$key . '_' . $field];
+      $full_key = $key . '_' . $field;
+      // Not all of these input items are available when using the AJAX
+      // prefill template selector.
+      if (isset($form_state['input'][$full_key])) {
+        $form_state['values'][$full_key] = $form_state['input'][$full_key];
+      }
+      else {
+        // Maintain current behavior when the input value is not set.
+        $form_state['values'][$full_key] = NULL;
+      }
     }
   }
 }
@@ -850,8 +860,15 @@ function email_wrappers_load_defaults_from_template($nid) {
 
   // BCC gets special handling as it's the only field that may have
   // multiple values.
-  foreach ($bcc_email as $bcc) {
-    $bcc_addresses[] = $bcc['value'];
+  if (is_array($bcc_email)) {
+    $bcc_addresses = array();
+    foreach ($bcc_email as $bcc) {
+      $bcc_addresses[] = $bcc['value'];
+    }
+  }
+  else {
+    // This is to match the existing behavior when the bcc field ie empty.
+    $bcc_addresses = NULL;
   }
 
   return array(

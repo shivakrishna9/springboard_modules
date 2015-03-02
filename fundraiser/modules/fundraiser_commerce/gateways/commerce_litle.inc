@@ -121,13 +121,16 @@ function commerce_litle_fundraiser_commerce_expire($submission_fields, $info = N
       // pretend expiration date for sustainers
       $exp_timestamp = strtotime('+24 months');
     }
+
     return array(
       'month' => date('m', $exp_timestamp),
       'year' => date('Y', $exp_timestamp),
     );
   }
 
+  // It's a credit card.
   module_load_include('inc', 'fundraiser_commerce', 'includes/fundraiser_commerce.credit_card');
+
   return _fundraiser_commerce_credit_card_expire($submission_fields);
 }
 
@@ -521,4 +524,16 @@ function commerce_litle_fundraiser_commerce_refund($payment_method, $refund) {
   // Submit the donation form.
   module_load_include('inc', 'commerce_litle', 'commerce_litle.admin');
   return commerce_litle_credit_request($payment_method, $transaction, $refunding_order, $refund->amount);
+}
+
+/**
+ * Implements hook_commerce_litle_request_alter().
+ *
+ * Change the orderSource to recurring if this is a recurring
+ * (but not original) sustainer charge via a credit card.
+ */
+function commerce_litle_commerce_litle_request_alter(&$request, $context) {
+  if ($context['type'] == 'cc_vault') {
+    $request['orderSource'] = 'recurring';
+  }
 }

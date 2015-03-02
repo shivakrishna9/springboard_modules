@@ -53,10 +53,7 @@ function salesforce_p2p_salesforce_queue_create_item_alter(&$item) {
   if ($item['module'] == 'salesforce_donation' && $item['delta'] == 'donation') {
 
     $action = db_query("
-      SELECT
-        sa.personal_campaign_nid,
-        sa.campaign_nid,
-        sa.category_nid
+      SELECT sa.personal_campaign_nid
       FROM {fundraiser_donation} fd
       INNER JOIN {springboard_p2p_personal_campaign_action} sa
       ON sa.sid = fd.sid
