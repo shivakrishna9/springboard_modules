@@ -54,18 +54,22 @@ function springboard_advocacy_webform_submit($form, $form_state) {
 function springboard_advocacy_build_messages($message_ids) {
     $all_messages = entity_load('sba_message', $message_ids);
     $messages = array();
+    $x = 0;
     foreach ($all_messages as $message) {
       $message_wrapper = entity_metadata_wrapper('sba_message', $message);
       $message_id = $message->data['message_id'];
+      $weight = !empty($message->data['precedence']) ? $message->data['weight'] : $x++;
       //$group_id = $message->data['group_id'];
       $body = $message_wrapper->field_sba_message->value();
       $subject = $message_wrapper->field_sba_subject->value();
-      $messages[] = array(
+      $messages[$weight] = array(
         'message_id' => $message_id,
         'subject' => $subject,
         'body' => $body,
+        'precedence' => isset($message->data['precedence']) ? 1 : 0,
        );
     }
+    ksort($messages);
     return $messages;
 }
 

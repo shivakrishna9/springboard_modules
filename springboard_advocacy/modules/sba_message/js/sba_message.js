@@ -460,7 +460,6 @@
             }
         });
 
-        $('input[name*="field_i_want_the_user_to_be_able"]')
         // submit the form or return error message
         $("#edit-submit, #edit-delete").click(function (e) {
             e.preventDefault();
