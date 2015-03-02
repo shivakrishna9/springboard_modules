@@ -123,7 +123,7 @@ function sba_message_form_wrapper($sba_message) {
 //          'collapsed' => TRUE
 //        )
       //),
-      '#prefix' => '<div class="springboard-advocacy-find-targets-container"><div class="springboard-advocacy-find-targets"><h3>Find Targets</h3>',
+      '#prefix' => '<div id="springboard-advocacy-find-targets-container"><div id="springboard-advocacy-find-targets"><h3>Find Targets</h3>',
       '#suffix' => '</div></div>',
       '#weight' => 3,
     ),

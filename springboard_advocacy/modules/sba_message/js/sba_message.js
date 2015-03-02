@@ -229,11 +229,13 @@
 
     // validation error message displayed next to save button
     function setError(messages) {
-        var err = $('#advo-error-wrapper').text('').hide().css('margin-bottom', 0);
+        var err = $('#advo-error-wrapper');
+        err.text('').hide().css('margin-bottom', 0);
+        err.prepend('<div class = "advo-warning"><strong>Oops!</strong> it looks like you missed the following required fields:</div>');
         $.each(messages, function(i, message) {
             err.append('<div>' + message + ' field is required </div>');
         });
-        err.fadeIn(500).fadeOut(5000);
+        err.fadeIn(500);//.delay(7000).fadeOut(1000);
     }
 
 
@@ -487,10 +489,9 @@
         // rearrange some div orders
         var recipContainer = $('#springboard-advocacy-message-recipients-container');
 
-        var finder = $('.springboard-advocacy-find-targets-container');
+        var finder = $('#springboard-advocacy-find-targets-container');
         var actions = $('#sba-message-edit-form #edit-actions');
         var err = $('#advo-error-wrapper');
-        err.css({'display': 'inline-block', 'padding-left': '20px'});
         $('#springboard-advocacy-message-form-container').append(finder);
         finder.append(recipContainer)
         finder.append(actions);

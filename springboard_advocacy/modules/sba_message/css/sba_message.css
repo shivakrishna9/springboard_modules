@@ -1,140 +1,140 @@
 /***************** Message Add/Edit form ****************/
 
+/**** Field API field Styles **************/
 #springboard-advocacy-message-form-container {
     width: 100%;
     margin-bottom: 1em;
 }
-#springboard-advocacy-message-form-container .form-wrapper {
-    margin-top: 5px;
-    padding:  0 2em;
-}
-#springboard-advocacy-message-form-container fieldset {
-    border: 1px solid #d5d5d5;
-    margin-bottom: 2em;
-   border-radius: 4px;
-}
-#springboard-advocacy-message-form-container fieldset.form-wrapper {
-    padding:  0 1em 0 2em;
-}
-#springboard-advocacy-message-form-container fieldset .form-wrapper {
-    padding:  0 1em 0 0;
-}
-#springboard-advocacy-message-form-container .fieldset-legend {
-    margin-left: 0;
-    padding-bottom: 0;
-    margin-bottom: 10px;
-    margin-top: 5px;
-    font-size: 1em;
-}
+    #springboard-advocacy-message-form-container .form-wrapper {
+        margin-top: 5px;
+        padding:  0 2em;
+    }
 
-#springboard-advocacy-message-form-container .fieldset-wrapper  {
-    padding: 1em 0;
-}
+    #springboard-advocacy-message-form-container fieldset {
+        border: 1px solid #d5d5d5;
+        margin-bottom: 2em;
+        border-radius: 4px;
+    }
 
-#springboard-advocacy-message-form-container fieldset legend {
-    float: left;
-    margin: 5px 0 0;
-    top: -1em;
-    font-weight: bold;
-    font-size: 1.4em;
+    #springboard-advocacy-message-form-container fieldset.form-wrapper {
+        padding: 0 1em 0 2em;
+    }
 
-}
-#springboard-advocacy-message-form-container fieldset fieldset {
-    border: none;
-}
+        #springboard-advocacy-message-form-container fieldset .form-wrapper {
+            padding:  0 1em 0 0;
+        }
 
-#springboard-advocacy-message-form-container fieldset fieldset legend{
-    margin-left: 5px;
-}
+        #springboard-advocacy-message-form-container fieldset .fieldset-legend {
+            margin: 5px 0 10px 0;
+            padding-bottom: 0;
+            font-size: 1em;
+        }
 
-#springboard-advocacy-message-form-container fieldset fieldset legend .fieldset-legend {
-    margin: 0.5em;
-    padding: 0px;
-    font-size: 0.9em;
-}
-#springboard-advocacy-message-form-container fieldset fieldset .fieldset-wrapper {
-    padding: 1em 1em 1em 2em;
-    background: #fff;
-}
+        #springboard-advocacy-message-form-container fieldset .fieldset-wrapper  {
+            padding: 1em 0;
+        }
 
-#edit-field-user-editable div.form-type-checkboxes > label,
-div[id*=edit-field-editable-area-optional] div.form-type-checkboxes > label {
-    display:none;
-}
+        #springboard-advocacy-message-form-container #edit-field-subject-editable .control-group,
+        #springboard-advocacy-message-form-container #edit-field-message-editable .control-group {
+            display: inline-block;
+            margin-right: 10px;
+        }
 
-#edit-field-user-editable label {
-  float: left;
-    margin-right: 0.5em;
-    vertical-align: middle;
-}
+            #springboard-advocacy-message-form-container fieldset .fieldset-wrapper .control-group label{
+                    font-weight: 400;
+                    font-size: 1.1em;
+                }
 
-#sba_message_sba_message_action_message_form_group_editable,
-#edit-field-bottom-conclusion {
-    display: none;
-}
-fieldset fieldset#sba_message_sba_message_action_message_form_group_editable .fieldset-wrapper {
-    background: #edf9ff;
-}
+        #springboard-advocacy-message-form-container fieldset legend {
+            float: left;
+            margin: 5px 0 0;
+            top: -1em;
+            font-weight: bold;
+            font-size: 1.4em;
+        }
 
-fieldset fieldset#sba_message_sba_message_action_message_form_group_edit_container legend .fieldset-legend{
-    margin-left:0;
-    padding-left:0;
-}
+            #springboard-advocacy-message-form-container fieldset fieldset {
+                border: none;
+            }
 
-fieldset fieldset#sba_message_sba_message_action_message_form_group_edit_container.collapsed a.fieldset-title:before {
-    left: 0px;
-    width: 14px;
-}
-fieldset fieldset#sba_message_sba_message_action_message_form_group_editable legend .fieldset-legend {
-    margin-left: 1em;
-}
+            #springboard-advocacy-message-form-container fieldset fieldset#sba_message_sba_message_action_message_form_group_editable,
+            #edit-field-bottom-conclusion {
+                display: none;
+            }
+
+                #springboard-advocacy-message-form-container fieldset fieldset legend{
+                    margin-left: 5px;
+                }
+
+                #springboard-advocacy-message-form-container fieldset fieldset legend .fieldset-legend {
+                    margin: 0.5em;
+                    padding: 0px;
+                    font-size: 0.9em;
+                }
+                #springboard-advocacy-message-form-container fieldset fieldset .fieldset-wrapper {
+                    padding: 1em 1em 1em 2em;
+                    background: #fff;
+                }
+
+                    #springboard-advocacy-message-form-container fieldset fieldset#edit-field-user-editable div.form-type-checkboxes > label,
+                    #springboard-advocacy-message-form-container fieldset fieldset div[id*=edit-field-editable-area-optional] div.form-type-checkboxes > label {
+                        display:none;
+                    }
+
+                #springboard-advocacy-message-form-container fieldset fieldset #edit-field-user-editable label {
+                    float: left;
+                    margin-right: 0.5em;
+                    vertical-align: middle;
+                }
+
+                #springboard-advocacy-message-form-container fieldset fieldset#sba_message_sba_message_action_message_form_group_editable .fieldset-wrapper {
+                    background: #edf9ff;
+                }
 
 
+    #springboard-advocacy-message-form-container .form-item-name,
+    #edit-field-sba-signature {
+        background: #fff;
+        border: 1px solid #d5d5d5;
+        padding: 1em 1.5em;
+        margin-bottom: 2em;
+        border-radius: 4px;
+    }
 
-#springboard-advocacy-message-form-container #sba_message_sba_message_action_message_form_group_edit_container fieldset fieldset .fieldset-wrapper {
-    background: #fff;
-}
-#springboard-advocacy-message-form-container fieldset .fieldset-wrapper .control-group label{
-   font-weight: 400;
-    font-size: 1.1em;
-}
+    #springboard-advocacy-message-form-container .disabled {
+        color: #d5d5d5;
+    }
 
-#springboard-advocacy-message-form-container .form-item-name,
-#edit-field-sba-signature {
-    background: #fff;
-    border: 1px solid #d5d5d5;
-    padding: 1em 1.5em;
-    margin-bottom: 2em;
-    border-radius: 4px;
-}
-#springboard-advocacy-message-form-container .form-item-name label,
-#edit-field-sba-signature label{
-    font-weight:normal;
-    font-size: 1.3em;
-    margin-bottom: 1em;
-    margin-top: 0.3em;
-}
+        #springboard-advocacy-message-form-container .form-item-name label,
+        #edit-field-sba-signature label{
+            font-weight:normal;
+            font-size: 1.3em;
+            margin-bottom: 1em;
+            margin-top: 0.3em;
+        }
 
-#edit-field-sba-signature label {
-    margin-top: 1em;
-}
+        #edit-field-sba-signature label {
+            margin-top: 1em;
+        }
 
-#springboard-advocacy-message-form-container #edit-field-subject-editable,
-#springboard-advocacy-message-form-container #edit-field-sba-placeholder-greeting,
-#edit-field-sba-greeting,
-#edit-field-sba-subject{
-    display: inline-block;
-    -webkit-boxsizing: border-box;
-    -moz-box-sizing: border-box;
-    box-sizing: border-box;
-    width: 50%;
-    margin-top: 0;
+    #springboard-advocacy-message-form-container #edit-field-subject-editable,
+    #springboard-advocacy-message-form-container #edit-field-sba-placeholder-greeting,
+    #edit-field-sba-greeting,
+    #edit-field-sba-subject{
+        display: inline-block;
+        -webkit-box-sizing: border-box;
+        -moz-box-sizing: border-box;
+        box-sizing: border-box;
+        width: 50%;
+        margin-top: 0;
 
-}
+    }
 
-#springboard-advocacy-message-form-container div[id*=edit-field-editable-area-optional] {
-    margin: 15px 0;
-}
+    #springboard-advocacy-message-form-container div[id*=edit-field-editable-area-optional] {
+        margin: 15px 0;
+    }
+
+/********** Floating Recipients "block"  **************/
 
 #springboard-advocacy-message-recipients-container {
     width:30%;
@@ -142,695 +142,690 @@ fieldset fieldset#sba_message_sba_message_action_message_form_group_editable leg
     position:relative;
 }
 
-#springboard-advocacy-message-recipients {
-    min-height: 100px;
-    max-height:500px;
-    overflow-y: auto;
-    position: absolute;
-    right: 0;
-    top: 0px;
-    width: 100%;
-    border:1px solid #d5d5d5;
-    background:#fff;
-}
+    #springboard-advocacy-message-recipients {
+        min-height: 100px;
+        max-height:500px;
+        overflow-y: auto;
+        position: absolute;
+        right: 0;
+        top: 0px;
+        width: 100%;
+        border:1px solid #d5d5d5;
+        background:#fff;
+    }
+    /* adjust the recipients box position when admin menu is in use. */
+    #springboard-advocacy-message-recipients.recipients-fixed {
+        margin-top: 44px;
+    }
 
-#springboard-advocacy-message-recipients h3 {
-    margin-left: 1em;
-}
+        #springboard-advocacy-message-recipients #not-saved {
+            float: left;
+            top: 10px;
+            padding-left: 10px;
+        }
 
-#springboard-advocacy-message-recipients .sba-message-status {
-    margin-left: 1em;
-    display: none;
-    color: #ff0000;
-}
+        #springboard-advocacy-message-recipients h3 {
+            margin-left: 1em;
+        }
 
-#springboard-advocacy-message-recipients .target-recipient {
-    margin: 1em;
-    border: 1px dotted #d5d5d5;
-    padding: 0.5em;
-    background:#fff;
-    border-radius: 0.5em;
-    position: relative;
-}
+        #springboard-advocacy-message-recipients .sba-message-status {
+            margin-left: 1em;
+            display: none;
+            color: #ff0000;
+        }
 
-#springboard-advocacy-message-recipients .target-recipient.new {
-    background: #FFFFD8;
-}
-#springboard-advocacy-message-recipients .target-recipient.trans {
-    background-color: #FFF;
-    -moz-transition: background-color  350ms linear 250ms;
-    -webkit-transition: background-color  350ms linear 250ms;
-    -o-transition: background-color  350ms linear 250ms;
-    -ms-transition: background-color 350ms linear 250ms;
-    transition: background-color 350ms linear 250ms;
-}
+        #springboard-advocacy-message-recipients .target-recipient {
+            margin: 1em;
+            border: 1px dotted #d5d5d5;
+            padding: 0.5em;
+            background:#fff;
+            border-radius: 0.5em;
+            position: relative;
+        }
 
-#springboard-advocacy-message-recipients .target-recipient ul  {
-    display: block;
-    float: left;
-    width: 45%;
-    list-style-type: none;
-    color: #333;
-    margin-bottom: 1em;
-    margin-left:10px;
-    -webkit-boxsizing: border-box;
-    -moz-box-sizing: border-box;
-    box-sizing: border-box;
+        #springboard-advocacy-message-recipients .target-recipient.new {
+            background: #FFFFD8;
+        }
+        #springboard-advocacy-message-recipients .target-recipient.trans {
+            background-color: #FFF;
+            -moz-transition: background-color  350ms linear 250ms;
+            -webkit-transition: background-color  350ms linear 250ms;
+            -o-transition: background-color  350ms linear 250ms;
+            -ms-transition: background-color 350ms linear 250ms;
+            transition: background-color 350ms linear 250ms;
+        }
 
-}
+        #springboard-advocacy-message-recipients .target-recipient:after {
+            clear: both;
+            content: "";
+            display: table;
+        }
+            #springboard-advocacy-message-recipients .target-recipient ul  {
+                display: block;
+                float: left;
+                width: 45%;
+                list-style-type: none;
+                color: #333;
+                margin-bottom: 1em;
+                margin-left:10px;
+                -webkit-boxsizing: border-box;
+                -moz-box-sizing: border-box;
+                box-sizing: border-box;
+            }
 
-#springboard-advocacy-message-recipients .target-recipient:after {
-    clear: both;
-    content: "";
-    display: table;
-}
-#springboard-advocacy-message-recipients .target-recipient ul li.heading {
-    font-weight: 600;
-    font-size: 12px;
-}
-#springboard-advocacy-message-recipients .target-recipient ul li {
-    position: relative; left: 1.5em;
-    margin-bottom: 0;
-}
-#springboard-advocacy-message-recipients .target-recipient .remove-target {
-    position: absolute;
-    top: -13px;
-    right: -4px;
-    cursor: pointer;
-    background: url("../img/icon-close.png");
-    display: block;
-    width: 22px;
-    height: 22px;
-}
+                #springboard-advocacy-message-recipients .target-recipient ul li.heading {
+                    font-weight: 600;
+                    font-size: 12px;
+                }
 
-#springboard-advocacy-message-recipients .target-recipient .title h4 {
-    margin: 2px 0px 10px 10px;
-    padding: 0px;
-    font-size: 1.2em;
-    background: url("../img/icon-group.jpg") left center no-repeat;
-    padding: 5px 40px;
-}
+                #springboard-advocacy-message-recipients .target-recipient ul li {
+                    position: relative; left: 1.5em;
+                    margin-bottom: 0;
+                }
 
-#springboard-advocacy-message-recipients .target-recipient .individual {
+            #springboard-advocacy-message-recipients .target-recipient .remove-target {
+                position: absolute;
+                top: -13px;
+                right: -4px;
+                cursor: pointer;
+                background: url("../img/icon-close.png");
+                display: block;
+                width: 22px;
+                height: 22px;
+            }
 
-    background: url("../img/icon-user.jpg") left center no-repeat;
-    padding: 5px 30px;
-}
+            #springboard-advocacy-message-recipients .target-recipient .individual {
 
- .springboard-advocacy-find-targets-container {
+                background: url("../img/icon-user.jpg") left center no-repeat;
+                padding: 5px 30px;
+            }
+
+            #springboard-advocacy-message-recipients .target-recipient .title h4 {
+                margin: 2px 0px 10px 10px;
+                padding: 0px;
+                font-size: 1.2em;
+                background: url("../img/icon-group.jpg") left center no-repeat;
+                padding: 5px 40px;
+            }
+
+        #springboard-advocacy-message-recipients .targeting-count {
+            font-size: 12px;
+            text-align: right;
+            font-size: 14px;
+            margin: 20px;
+            font-family: 'Open Sans', sans-serif;
+        }
+
+        #springboard-advocacy-message-recipients .targeting-count strong {
+            font-weight: 700;
+        }
+
+        #springboard-advocacy-message-recipients .remove-all-targets {
+            -webkit-border-radius: 4px;
+            -moz-border-radius: 4px;
+            border-radius: 4px;
+            background-color: #fcc289;
+            color:#fff;
+            padding: 5px 15px;
+            float:right;
+            display: inline;
+            margin: 0 20px 20px 0;
+            font-size: 12px;
+            cursor:pointer;
+        }
+
+        #springboard-advocacy-message-recipients .remove-all-targets:hover {
+            text-decoration: none;
+            background-color: #FFB063;
+        }
+
+/************** Views exposed form *****************/
+
+
+ #springboard-advocacy-find-targets-container {
     width: 100%;
     position: relative;
     background: none;
     border: none;
     position: relative;
 }
-.springboard-advocacy-find-targets-container:after {
+#springboard-advocacy-find-targets-container:after {
     clear: both;
     content: "";
     display: table;
 }
-.springboard-advocacy-find-targets-container #edit-actions {
-    clear:both;
-    background: none;
-    padding: 0;
-    margin-top:0;
-}
+    #springboard-advocacy-find-targets-container #edit-actions {
+        clear:both;
+        background: none;
+        padding: 0;
+        margin-top:0;
+    }
 
-.springboard-advocacy-find-targets-container #edit-actions input{
-   width: 65%;
-    line-height: 2em;
-    display: block;
-    border-radius: 4px;
-    border:none;
-    background: url("../img/arrow-message-save-button.png") 34% center no-repeat #247AAD;
-    font-family: "Open Sans";
-    font-size: 28px;
-    font-weight: 400;
-    color: #FFF;
-    text-align: center;
-    margin-bottom: 25px;
-    margin-top: 20px;
-}
+        #springboard-advocacy-find-targets-container #edit-actions input {
+            width: 65%;
+            line-height: 2em;
+            display: block;
+            border-radius: 4px;
+            border:none;
+            background: url("../img/arrow-message-save-button.png") 34% center no-repeat #247AAD;
+            font-family: "Open Sans";
+            font-size: 28px;
+            font-weight: 400;
+            color: #FFF;
+            text-align: center;
+            margin-bottom: 25px;
+            margin-top: 20px;
+        }
 
-.springboard-advocacy-find-targets-container #edit-actions input:hover {
-    background: url("../img/arrow-message-save-button.png") 34% center no-repeat #1E72A3;
-}
-.springboard-advocacy-find-targets h3 {
-    margin: 1em 1em 1em 2em;
-}
-
-.springboard-advocacy-find-targets {
-    padding: 0px;
-    width:65%;
-    float:left;
-    background:#fff;
-    border: 1px solid #d5d5d5;
-}
-
-.springboard-advocacy-find-targets div.view-targets {
-    margin:  0;
-    padding: 0;
-}
-.springboard-advocacy-find-targets div.view-filters {
-    margin: 0 3em 1em 3em;
-    padding: 0;
-}
-.springboard-advocacy-find-targets .ctools-collapsible-container {
-}
-.springboard-advocacy-find-targets .ctools-collapsible-handle {
-    font-size: 1.2em;
-    font-weight: bold;
-    padding: 0.8em;
-
-}
-.springboard-advocacy-find-targets .ctools-collapsible-container  .ctools-toggle {
-    padding: 0.8em 0;
-    background-position: center;
-}
-
-.springboard-advocacy-find-targets .views-exposed-form {
-    padding:0;
-    margin: 0;
-}
-
-.springboard-advocacy-find-targets #advocacy-attachment-before {
-
-    margin:0;
-    font-weight:bold;
-    padding-top: 20px;
-    background: url("../img/search-gradient-ramp.jpg") no-repeat scroll center 65% transparent;
-
-}
-.springboard-advocacy-find-targets div[id$=wrapper]
-{
-    float:left;
-    display:block;
-
-}
-
-.springboard-advocacy-find-targets  div#edit-combine-wrapper {
-    display: block;
-    margin-bottom:1em;
-    margin-right: 0;
-    float: none;
-}
-
-.springboard-advocacy-find-targets  .views-widget input#edit-combine {
-    border-radius: 4px;
-    max-width: 680px;
-    width: 100%;
-    margin: 0;
-    background: url("../img/icon-search.jpg") no-repeat scroll 14px 10px transparent;
-    -webkit-boxsizing: border-box;
-    -moz-box-sizing: border-box;
-    box-sizing: border-box;
-    padding: 8px 20px 8px 40px;
-    height: auto;
-}
-
-.springboard-advocacy-find-targets  #state-district-wrapper {
-    width: 100%;
-    max-width: 680px;
-    position: relative;
-    margin: 0;
-    overflow: visible;
-}
-
-.springboard-advocacy-find-targets #state-district-wrapper select {
-    width: 100%;
-    clear: left;
-}
+        #springboard-advocacy-find-targets-container #edit-actions input:hover {
+            background: url("../img/arrow-message-save-button.png") 34% center no-repeat #1E72A3;
+        }
 
 
-.springboard-advocacy-find-targets #state-district-wrapper div[id*=search-state],
-.springboard-advocacy-find-targets #state-district-wrapper div[id*=search-district]
-{
-    margin: 0;
-    width: 48%;
-}
+    #springboard-advocacy-find-targets {
+        padding: 0px;
+        width:65%;
+        float:left;
+        background:#fff;
+        border: 1px solid #d5d5d5;
+    }
+        #springboard-advocacy-find-targets h3 {
+            margin: 1em 1em 1em 2em;
+        }
 
-.springboard-advocacy-find-targets #state-district-wrapper div[id*=search-state] .selector,
-.springboard-advocacy-find-targets #state-district-wrapper div[id*=search-district] .selector
-{
-    margin: 0;
-    width: 100%!important;
-    padding: 0 0 0 10px;
-}
-.springboard-advocacy-find-targets #state-district-wrapper div[id*=search-state] .selector {
-    margin-left: -5px;
-}
+        #springboard-advocacy-find-targets div.view-targets {
+            margin:  0;
+            padding: 0;
+        }
+        #springboard-advocacy-find-targets div.view-filters {
+            margin: 0 3em 1em 3em;
+            padding: 0;
+        }
 
-.springboard-advocacy-find-targets #state-district-wrapper div[id*=search-state] .selector span,
-.springboard-advocacy-find-targets #state-district-wrapper div[id*=search-district] .selector span
-{
-    margin: 0;
-    width: auto!important;
-}
+        #springboard-advocacy-find-targets .views-exposed-form {
+            padding:0;
+            margin: 0;
+        }
 
-.springboard-advocacy-find-targets #state-district-wrapper div[id*=search-district]{
-    margin-left: 5%;
-    margin-right: -5%;
-}
+        #springboard-advocacy-find-targets #advocacy-attachment-before {
 
-/* Grrr..... jQuery Uniform override **/
-.springboard-advocacy-find-targets #state-district-wrapper div[id*=search-district] div.selector {
-    margin: 0 0 0 -10px;
-    padding: 0 0 0 10px;
-}
-.springboard-advocacy-find-targets #state-district-wrapper div[id*=search-district] div.selector.disabled {
-    border: 1px solid #eee;
-    border-radius: 5px;
-    padding-left: 2px;
-    margin-top: 4px;
-    height: 30px;
-}
+            margin:0;
+            font-weight:bold;
+            padding-top: 20px;
+            background: url("../img/search-gradient-ramp.jpg") no-repeat scroll center 65% transparent;
 
-.springboard-advocacy-find-targets #state-district-wrapper div[id*=search-district] div.selector.disabled span{
-    line-height: 30px;
-    height: 30px;
-}
+        }
 
-.springboard-advocacy-find-targets  div[id*=search-role] {
-    clear:left;
-}
+        #springboard-advocacy-find-targets div[id$=wrapper] {
+            float:left;
+            display:block;
+        }
 
-.springboard-advocacy-find-targets  .control-group
-{
-    margin-bottom: 0;
-}
+        #springboard-advocacy-find-targets  div#edit-combine-wrapper {
+            display: block;
+            margin-bottom:1em;
+            margin-right: 0;
+            float: none;
+        }
 
-.springboard-advocacy-find-targets  .views-widget .control-group label,
-.springboard-advocacy-find-targets  .description
-{
-    font-weight: lighter;
-}
 
-.springboard-advocacy-find-targets .radio-widgets {
-    clear:both;
-    padding: 1em;
+        #springboard-advocacy-find-targets  #state-district-wrapper {
+            width: 100%;
+            max-width: 680px;
+            position: relative;
+            margin: 0;
+            overflow: visible;
+        }
 
-}
-.radio-widgets:after {
-    clear: both;
-    content: "";
-    display: table;
-}
-.springboard-advocacy-find-targets .views-exposed-widget {
-    vertical-align: top;
-    margin-right: 2.5em;
-    margin-top: 0;
-}
-.springboard-advocacy-find-targets .radio-widgets .views-exposed-widget {
-    margin-right: 4em;
-    margin-top:1em;
-}
+            #springboard-advocacy-find-targets #state-district-wrapper select {
+                width: 100%;
+                clear: left;
+            }
 
-.springboard-advocacy-find-targets #state-district-wrapper .views-exposed-widget {
-    margin-right: 1em;
-}
 
-.springboard-advocacy-find-targets .views-exposed-widget > label {
-    margin: 0;
-    font-weight:bold;
-    display: block;
-    margin-bottom: 10px;
-    font-size: 14px;
-    margin-left: 15px;
-    font-weight: 600;
-    font-family: "Open Sans",sans-serif;
-}
-.springboard-advocacy-find-targets .views-exposed-widget label.option {
-   top:4px;
-}
-.springboard-advocacy-find-targets  div.views-exposed-widget.views-targets-button-wrapper {
-    float:right;
-    margin-right: 1em;
-    margin-top: -45px;
-    float: right;
-    width: 223px;
-    background: url("../img/arrow-quick-target.png") no-repeat scroll 0px 20px transparent;
-    padding-left: 56px;
-    display:none;
-}
+            #springboard-advocacy-find-targets #state-district-wrapper div[id*=search-state],
+            #springboard-advocacy-find-targets #state-district-wrapper div[id*=search-district] {
+                margin: 0;
+                width: 48%;
+            }
 
-.springboard-advocacy-find-targets  div.views-exposed-widget.views-targets-button-wrapper .target-button-header{
-    font-weight: 600;
-    line-height: 30px;
-    font-size: 16px;
-}
-.springboard-advocacy-find-targets  div.views-exposed-widget.views-targets-button-wrapper .target-button-help{
-    color: #999;
-    font-weight: 400;
-    margin-left: 4px;
-}
+                #springboard-advocacy-find-targets #state-district-wrapper div[id*=search-state] .selector,
+                #springboard-advocacy-find-targets #state-district-wrapper div[id*=search-district] .selector
+                {
+                    margin: 0;
+                    width: 100%!important;
+                    padding: 0 0 0 10px;
+                }
+                #springboard-advocacy-find-targets #state-district-wrapper div[id*=search-state] .selector {
+                    margin-left: -5px;
+                }
 
-.springboard-advocacy-find-targets  div.views-exposed-widget.views-targets-button {
-    display:block;
-}
-.springboard-advocacy-find-targets  div.views-exposed-widget.views-targets-button input {
-    margin: 10px 10px 12px 0px;
-    padding: 12px 6px;
-    font-size: 1.4em;
-    text-align: center;
-    font-weight: 400;
-    width: 180px;
-    background: #75C1EE;
-    border:none;
-    border-radius: 4px;
-}
+                    #springboard-advocacy-find-targets #state-district-wrapper div[id*=search-state] .selector span,
+                    #springboard-advocacy-find-targets #state-district-wrapper div[id*=search-district] .selector span
+                    {
+                        margin: 0;
+                        width: auto!important;
+                    }
 
-.springboard-advocacy-find-targets  div.views-exposed-widget.views-targets-button input:hover {
-    background: #72BEEC;
-}
-.springboard-advocacy-find-targets  div.views-exposed-widget.views-submit-button {
-    display:block;
-    clear:left;
-    float:left;
-}
-.springboard-advocacy-find-targets  div.views-exposed-widget.views-submit-button input {
-    width: 220px;
-    padding: 12px 6px;
-    border-radius: 4px;
-    border: none;
-    background: #247AAD;
-    text-align: center;
-    color: #FFF;
-    margin-top: 20px;
-    font-size: 19px;
-    font-weight: 400;
-    cursor: pointer;
-}
+            #springboard-advocacy-find-targets #state-district-wrapper div[id*=search-district]{
+                margin-left: 5%;
+                margin-right: -5%;
+            }
 
-.springboard-advocacy-find-targets  div.views-exposed-widget.views-submit-button input:hover {
-    background: #1E72A3
-}
-.springboard-advocacy-find-targets  div.views-exposed-widget.views-submit-button:before{
-    content: '';
+            /* Grrr..... jQuery Uniform override **/
+            #springboard-advocacy-find-targets #state-district-wrapper div[id*=search-district] div.selector {
+                margin: 0 0 0 -10px;
+                padding: 0 0 0 10px;
+            }
 
-}
-#springboard-advocacy-message-form-container .disabled
-{
-    color: #d5d5d5;
-}
+            #springboard-advocacy-find-targets #state-district-wrapper div[id*=search-district] div.selector.disabled {
+                border: 1px solid #eee;
+                border-radius: 5px;
+                padding-left: 2px;
+                margin-top: 4px;
+                height: 30px;
+            }
 
-/* adjust the recipients box position when admin menu is in use. */
-#springboard-advocacy-message-recipients.recipients-fixed {
-    margin-top: 44px;
-}
+                #springboard-advocacy-find-targets #state-district-wrapper div[id*=search-district] div.selector.disabled span{
+                    line-height: 30px;
+                    height: 30px;
+                }
 
-#springboard-advocacy-message-recipients #not-saved {
-    float: left;
-    top: 10px;
-    padding-left: 10px;
-}
+
+            #springboard-advocacy-find-targets  .views-widget input#edit-combine {
+                border-radius: 4px;
+                max-width: 680px;
+                width: 100%;
+                margin: 0;
+                background: url("../img/icon-search.jpg") no-repeat scroll 14px 10px transparent;
+                -webkit-boxsizing: border-box;
+                -moz-box-sizing: border-box;
+                box-sizing: border-box;
+                padding: 8px 20px 8px 40px;
+                height: auto;
+            }
+
+
+        #springboard-advocacy-find-targets  div[id*=search-role] {
+            clear:left;
+        }
+
+        #springboard-advocacy-find-targets  .control-group
+        {
+            margin-bottom: 0;
+        }
+
+            #springboard-advocacy-find-targets  .views-widget .control-group label,
+            #springboard-advocacy-find-targets  .description
+            {
+                font-weight: lighter;
+            }
+
+        #springboard-advocacy-find-targets .radio-widgets {
+            clear:both;
+            padding: 1em;
+        }
+
+        .radio-widgets:after {
+            clear: both;
+            content: "";
+            display: table;
+        }
+
+            #springboard-advocacy-find-targets .radio-widgets .views-exposed-widget {
+                margin-right: 4em;
+                margin-top:1em;
+            }
+
+        #springboard-advocacy-find-targets .views-exposed-widget {
+            vertical-align: top;
+            margin-right: 2.5em;
+            margin-top: 0;
+        }
+
+            #springboard-advocacy-find-targets #state-district-wrapper .views-exposed-widget {
+                margin-right: 1em;
+            }
+
+            #springboard-advocacy-find-targets .views-exposed-widget > label {
+                margin: 0;
+                font-weight:bold;
+                display: block;
+                margin-bottom: 10px;
+                font-size: 14px;
+                margin-left: 15px;
+                font-weight: 600;
+                font-family: "Open Sans",sans-serif;
+            }
+
+            #springboard-advocacy-find-targets .views-exposed-widget label.option {
+               top:4px;
+            }
+
+        #springboard-advocacy-find-targets  div.views-exposed-widget.views-targets-button-wrapper {
+            float:right;
+            margin-right: 1em;
+            margin-top: -45px;
+            float: right;
+            width: 223px;
+            background: url("../img/arrow-quick-target.png") no-repeat scroll 0px 20px transparent;
+            padding-left: 56px;
+            display:none;
+        }
+
+            #springboard-advocacy-find-targets  div.views-exposed-widget.views-targets-button-wrapper .target-button-header {
+                font-weight: 600;
+                line-height: 30px;
+                font-size: 16px;
+            }
+
+            #springboard-advocacy-find-targets  div.views-exposed-widget.views-targets-button-wrapper .target-button-help {
+                color: #999;
+                font-weight: 400;
+                margin-left: 4px;
+            }
+
+        #springboard-advocacy-find-targets  div.views-exposed-widget.views-targets-button {
+            display:block;
+        }
+
+            #springboard-advocacy-find-targets  div.views-exposed-widget.views-targets-button input {
+                margin: 10px 10px 12px 0px;
+                padding: 12px 6px;
+                font-size: 1.4em;
+                text-align: center;
+                font-weight: 400;
+                width: 180px;
+                background: #75C1EE;
+                border:none;
+                border-radius: 4px;
+            }
+
+            #springboard-advocacy-find-targets  div.views-exposed-widget.views-targets-button input:hover {
+                background: #72BEEC;
+            }
+
+        #springboard-advocacy-find-targets  div.views-exposed-widget.views-submit-button {
+            display:block;
+            clear:left;
+            float:left;
+        }
+
+            #springboard-advocacy-find-targets  div.views-exposed-widget.views-submit-button input {
+                width: 220px;
+                padding: 12px 6px;
+                border-radius: 4px;
+                border: none;
+                background: #247AAD;
+                text-align: center;
+                color: #FFF;
+                margin-top: 20px;
+                font-size: 19px;
+                font-weight: 400;
+                cursor: pointer;
+            }
+
+            #springboard-advocacy-find-targets  div.views-exposed-widget.views-submit-button input:hover {
+                background: #1E72A3
+            }
+
+        #springboard-advocacy-find-targets  div.views-exposed-widget.views-submit-button:before{
+            content: '';
+        }
+
+        #springboard-advocacy-find-targets .views-targets-button{
+            display: inline-block;
+            margin: 6px 5px;
+        }
+
+        #springboard-advocacy-find-targets  .pager {
+            float: right;
+            margin-right: 2em;
+        }
+
+        .view-targets  .pager .ajax-progress-throbber {
+            position: absolute;
+            left:-40px;
+            top: -10px;
+        }
+
+        #springboard-advocacy-find-targets  .pager li.pager-current {
+                background: #336699;
+                color: #fff;
+                font-weight: bold;
+                display: inline-block;
+                border: 1px solid #DFDFDF;
+                margin-left: -5px;
+                padding: 5px 10px;
+            }
+
+            #springboard-advocacy-find-targets .pager-ellipsis,
+            #springboard-advocacy-find-targets .pager-first,
+            #springboard-advocacy-find-targets .pager-last {
+                display:none;
+            }
+
+                #springboard-advocacy-find-targets .pager li > a,
+                #springboard-advocacy-find-targets .pager li > span {
+                    display: inline-block;
+                    padding: 5px 10px;
+                    border-radius: 0;
+                    color: #337AB7;
+                    background: #fff;
+                    border: 1px solid #DFDFDF;
+                    margin-left: -5px;
+                }
+
+                #springboard-advocacy-find-targets .pager li a:hover {
+                    color: #337AB7;
+                }
+
+                #springboard-advocacy-find-targets .pager li > a:hover,
+                #springboard-advocacy-find-targets .pager li > a:focus {
+                    text-decoration: none;
+                    background-color: #eee;
+                }
+
+                #springboard-advocacy-find-targets  .pager li .progress-disabled {
+                    color: #fff;
+                }
+
+
+        #springboard-advocacy-find-targets  #advocacy-attachment-before-rows {
+            float: left;
+            margin: 1.4em 0.7em 0.7em 2em;
+        }
+
+            #springboard-advocacy-find-targets  #advocacy-attachment-before-rows .target-results {
+                font-weight: 600;
+                font-size: 18px;
+                font-family: "Open Sans",sans-serif;
+            }
+
+            #springboard-advocacy-find-targets  #advocacy-attachment-before-rows .target-count {
+               color: #ccc;
+                margin-left: 1em;
+            }
+
+        #springboard-advocacy-find-targets #advocacy-attachment-before-add-all {
+            margin: 1em;
+        }
+            #springboard-advocacy-find-targets #advocacy-attachment-before-add-all a {
+                float: right;
+                margin: 0 1em 1em;
+                padding: 4px 6px;
+                border: none;
+                -webkit-border-radius: 4px;
+                -moz-border-radius: 4px;
+                border-radius: 4px;
+                background: #247AAD;
+                color: #fff;
+                text-shadow: none;
+                font-weight: 400;
+            }
+            #springboard-advocacy-find-targets #advocacy-attachment-before-add-all a:hover {
+                background: #1E72A3;
+                text-decoration:none;
+
+            }
+
+            #springboard-advocacy-find-targets #advocacy-attachment-before-add-all a:before {
+                display: inline-block;
+                margin: 0px 8px 0px 0px;
+                color: #fff;
+                content: "";
+                font-family: FontAwesome;
+                position: relative;
+                left: 0px;
+                top: 0px;
+                z-index: 100;
+            }
+
+            #springboard-advocacy-find-targets .view-targets > div.item-list {
+                display: block;
+                position: relative;
+                width: 100%;
+            }
+
+        #springboard-advocacy-find-targets th {
+            background: #247AAD;
+            color: #FFF;
+            padding: 10px 6px;
+            font-weight: 100;
+            text-align: center;
+            letter-spacing: 0.03em;
+            font-size: 13px;
+            font-family: "Open Sans",sans-serif;
+        }
+
+        #springboard-advocacy-find-targets th.first,
+        #springboard-advocacy-find-targets th.last {
+            border-radius: 0;
+        }
+
+        #springboard-advocacy-find-targets td {
+            padding: 8px 14px;
+            border-bottom: none;
+            border-top: none;
+            border-right: none;
+            font-size: 14px;
+            line-height: 18px;
+        }
+
+        #springboard-advocacy-find-targets tr.even td {
+            background: #EFF9FF;
+        }
+
+        #springboard-advocacy-find-targets td.views-field-target-actions {
+            text-align:center;
+        }
+
+        #springboard-advocacy-find-targets td.views-field-target-actions a {
+            border-radius: 4px;
+            background-color: #247AAD;
+            padding: 2px 10px;
+            color: #FFF;
+            float: right;
+            display: inline;
+            margin-right: 5px;
+            font-size: 11px;
+            cursor: pointer;
+        }
+
+        #springboard-advocacy-find-targets td.views-field-target-actions a:hover {
+           text-decoration: none;
+        }
+
 
 #advo-error-wrapper {
-    display:inline-block;
-    padding-left:20px;
-}
 
-#springboard-advocacy-message-form-container #edit-field-subject-editable .control-group,
-#springboard-advocacy-message-form-container #edit-field-message-editable .control-group {
-    display: inline-block;
-    margin-right: 10px;
-}
-
-
-.views-targets-button{
-    display: inline-block;
-    margin: 6px 5px;
-}
-
-/*.views-targets-button:before {*/
-    /*display: inline-block;*/
-    /*margin: 0px 8px 0px 0px;*/
-    /*color: #FFF;*/
-    /*content: "";*/
-    /*font-family: FontAwesome;*/
-    /*position: absolute;*/
-    /*left: 5px;*/
-    /*top:16px;*/
-    /*z-index:100;*/
-/*}*/
-
-#springboard-advocacy-message-form-container .springboard-advocacy-find-targets ul.pager {
-    float: right;
-    margin-right: 2em;
-}
-
-.springboard-advocacy-find-targets .pager li > a, .springboard-advocacy-find-targets .pager li > span{
-    display: inline-block;
-    padding: 5px 10px;
-    border-radius: 0;
-    color: #337AB7;
+    border-radius: 4px;
+    border: 1px solid #d5d5d5;
+    width: 65%;
     background: #fff;
-    border: 1px solid #DFDFDF;
-    margin-left: -5px;
-}
-
-.springboard-advocacy-find-targets li.pager-current {
-    background: #336699;
-    color: #fff;
-    font-weight: bold;
-    display: inline-block;
-    border: 1px solid #DFDFDF;
-    margin-left: -5px;
-    padding: 5px 10px;
-}
-
-.springboard-advocacy-find-targets .pager-ellipsis,
-.springboard-advocacy-find-targets .pager-first,
-.springboard-advocacy-find-targets .pager-last
-{
     display:none;
 }
+    #advo-error-wrapper div {
+        padding:5px 20px;
+    }
+    #advo-error-wrapper .advo-warning{
+        background: #ff3333;
+        color: #fff;
+        padding:20px;
 
-.springboard-advocacy-find-targets .pager li > a:hover, .springboard-advocacy-find-targets .pager li > a:focus {
-    text-decoration: none;
-    background-color: #eee;
-}
-
-.springboard-advocacy-find-targets  #advocacy-attachment-before-rows {
-    float: left;
-    margin: 1.4em 0.7em 0.7em 2em;
-}
-
-.springboard-advocacy-find-targets  #advocacy-attachment-before-rows .target-results {
-    font-weight: 600;
-    font-size: 18px;
-    font-family: "Open Sans",sans-serif;
-}
-
-.springboard-advocacy-find-targets  #advocacy-attachment-before-rows .target-count {
-   color: #ccc;
-    margin-left: 1em;
-}
-.springboard-advocacy-find-targets #advocacy-attachment-before-add-all {
-    margin: 1em;
-
-}
-.springboard-advocacy-find-targets #advocacy-attachment-before-add-all a {
-    float: right;
-    margin: 0 1em 1em;
-    padding: 4px 6px;
-    border: 1px solid #01598e;
-    -webkit-border-radius: 5px;
-    -moz-border-radius: 5px;
-    border-radius: 5px;
-    background: -moz-linear-gradient(top, #3182b2 0%, #0265a0 100%, #7db9e8 100%);
-    background: -webkit-gradient(linear, left top, left bottom, color-stop(0%, #3182b2), color-stop(100%, #0265a0), color-stop(100%, #7db9e8));
-    background: -webkit-linear-gradient(top, #3182b2 0%, #0265a0 100%, #7db9e8 100%);
-    background: -o-linear-gradient(top, #3182b2 0%, #0265a0 100%, #7db9e8 100%);
-    background: -ms-linear-gradient(top, #3182b2 0%, #0265a0 100%, #7db9e8 100%);
-    background: linear-gradient(to bottom, #3182b2 0%, #0265a0 100%, #7db9e8 100%);
-    color: #fff;
-    text-shadow: none;
-    font-weight: 400;
-}
-
-.springboard-advocacy-find-targets #advocacy-attachment-before-add-all a:hover {
-    text-decoration:none;
-}
-.springboard-advocacy-find-targets #advocacy-attachment-before-add-all a:before {
-    display: inline-block;
-    margin: 0px 8px 0px 0px;
-    color: #fff;
-    content: "";
-    font-family: FontAwesome;
-    position: relative;
-    left: 0px;
-    top: 0px;
-    z-index: 100;
-}
-
-.view-targets > div.item-list {
-    display: block;
-    position: relative;
-    width: 100%;
-}
-.view-targets ul.pager .ajax-progress-throbber {
-    position: absolute;
-    left:-40px;
-    top: -10px;
-}
-
-.view-targets ul.pager li .progress-disabled {
-color: #fff;
-}
-
-.view-targets ul.pager li a:hover {
-    color: #337AB7;
-}
-
-.springboard-advocacy-find-targets th {
-    background: #247AAD;
-    color: #FFF;
-    padding: 10px 6px;
-    font-weight: 100;
-    text-align: center;
-    letter-spacing: 0.03em;
-    font-size: 13px;
-    font-family: "Open Sans",sans-serif;
-}
-.springboard-advocacy-find-targets th.first,
-.springboard-advocacy-find-targets th.last {
-    border-radius: 0;
-}
-
-.springboard-advocacy-find-targets td {
-    padding: 8px 14px;
-    border-bottom: none;
-    border-top: none;
-    border-right: none;
-    font-size: 14px;
-    line-height: 18px;
-}
-.springboard-advocacy-find-targets tr.even td{
-    background: #EFF9FF;
-}
-
-.springboard-advocacy-find-targets td.views-field-target-actions {
-    text-align:center;
-}
-
-.springboard-advocacy-find-targets td.views-field-target-actions a {
-    border-radius: 4px;
-    background-color: #247AAD;
-    padding: 2px 10px;
-    color: #FFF;
-    float: right;
-    display: inline;
-    margin-right: 5px;
-    font-size: 11px;
-    cursor: pointer;
-}
-
-.springboard-advocacy-find-targets td.views-field-target-actions a:hover {
-   text-decoration: none;
-}
-
-#springboard-advocacy-message-recipients .targeting-count {
-    font-size: 12px;
-    text-align: right;
-    font-size: 14px;
-    margin: 20px;
-    font-family: 'Open Sans', sans-serif;
-}
-
-#springboard-advocacy-message-recipients .targeting-count strong {
-    font-weight: 700;
-}
-
-#springboard-advocacy-message-recipients .remove-all-targets {
-    -webkit-border-radius: 4px;
-    -moz-border-radius: 4px;
-    border-radius: 4px;
-    background-color: #fcc289;
-    color:#fff;
-    padding: 5px 15px;
-    float:right;
-    display: inline;
-    margin: 0 20px 20px 0;
-    font-size: 12px;
-    cursor:pointer;
-}
-
-#springboard-advocacy-message-recipients .remove-all-targets:hover {
-    text-decoration: none;
-    background-color: #FFB063;
-}
+    }
 
 @media only screen and (min-width: 769px) and (max-width: 1200px) {
-    .springboard-advocacy-find-targets  div.views-exposed-widget.views-targets-button-wrapper {
+    #springboard-advocacy-find-targets  div.views-exposed-widget.views-targets-button-wrapper {
         float:right;
         margin-right: 1em;
-        margin-top: 10px;
+        margin-top: 4px;
     }
-    .springboard-advocacy-find-targets  div.views-exposed-widget.views-submit-button {
+    #springboard-advocacy-find-targets  div.views-exposed-widget.views-submit-button {
         margin-top: 50px;
         margin-right:0.5em;
     }
 
-    .springboard-advocacy-find-targets-container #edit-actions input {
+    #springboard-advocacy-find-targets-container #edit-actions input {
         background: url("../img/arrow-message-save-button.png") 30% center no-repeat #247AAD;
     }
-    .springboard-advocacy-find-targets-container #edit-actions input:hover {
+    #springboard-advocacy-find-targets-container #edit-actions input:hover {
         background: url("../img/arrow-message-save-button.png") 30% center no-repeat #1E72A3;
     }
 }
 
 @media only screen and (min-width: 769px) and (max-width: 979px) {
-    .springboard-advocacy-find-targets  div.views-exposed-widget.views-targets-button-wrapper {
+    #springboard-advocacy-find-targets  div.views-exposed-widget.views-targets-button-wrapper {
              float: none;
              width:66%;
          }
-    .springboard-advocacy-find-targets  div.views-exposed-widget.views-targets-button-wrapper .target-button-header{
+    #springboard-advocacy-find-targets  div.views-exposed-widget.views-targets-button-wrapper .target-button-header{
         margin: 0 auto;
         text-align: center;
     }
-    .springboard-advocacy-find-targets  div.views-exposed-widget.views-targets-button-wrapper .target-button-help {
+    #springboard-advocacy-find-targets  div.views-exposed-widget.views-targets-button-wrapper .target-button-help {
         margin: 0 auto;
         text-align: center;
     }
 
-    .springboard-advocacy-find-targets  div.views-exposed-widget.views-targets-button {
+    #springboard-advocacy-find-targets  div.views-exposed-widget.views-targets-button {
         margin: 0 auto;
         text-align: center;
     }
-    .springboard-advocacy-find-targets  div.views-exposed-widget.views-submit-button {
+    #springboard-advocacy-find-targets  div.views-exposed-widget.views-submit-button {
         margin: 0 auto;
         float:none;
         text-align: center;
     }
-    .springboard-advocacy-find-targets-container #edit-actions input {
+    #springboard-advocacy-find-targets-container #edit-actions input {
         background: url("../img/arrow-message-save-button.png") 25% center no-repeat #247AAD;
     }
-    .springboard-advocacy-find-targets-container #edit-actions input:hover {
+    #springboard-advocacy-find-targets-container #edit-actions input:hover {
         background: url("../img/arrow-message-save-button.png") 25% center no-repeat #1E72A3;
     }
 
 }
 
 @media only screen and (min-width: 320px) and (max-width: 769px) {
-    .springboard-advocacy-find-targets div.views-exposed-widget.views-targets-button-wrapper {
+    #springboard-advocacy-find-targets div.views-exposed-widget.views-targets-button-wrapper {
         float: none;
         width: 66%;
         margin-top: 10px;
         text-align:center;
     }
-    .springboard-advocacy-find-targets  div.views-exposed-widget.views-submit-button {
+    #springboard-advocacy-find-targets  div.views-exposed-widget.views-submit-button {
         margin: 0 auto;
         float:none;
         text-align: center;
     }
-    .springboard-advocacy-find-targets div.views-exposed-widget.views-targets-button {
+    #springboard-advocacy-find-targets div.views-exposed-widget.views-targets-button {
         margin-right: auto;
         text-align:center;
     }
-    .springboard-advocacy-find-targets-container #edit-actions input {
+    #springboard-advocacy-find-targets-container #edit-actions input {
         background:  #247AAD;
     }
-    .springboard-advocacy-find-targets-container #edit-actions input:hover {
+    #springboard-advocacy-find-targets-container #edit-actions input:hover {
         background:  #1E72A3;
     }
 }
