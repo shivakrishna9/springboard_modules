@@ -8,7 +8,7 @@
  * Implements hook_menu().
  */
 function springboard_advocacy_menu() {
-  $items['admin/config/springboard/advocacy'] = array(
+  $items['admin/springboard/advocacy/settings'] = array(
     'title' => 'Springboard Advocacy Settings',
     'description' => 'Configuration settings for Springboard advocacy features.',
     'page callback' => 'springboard_advocacy_settings_page',
@@ -40,6 +40,60 @@ function springboard_advocacy_menu() {
 
   return $items;
 }
+
+/**
+ * Implements hook_springboard_admin_admin_menu_items_alter().
+ */
+function springboard_advocacy_springboard_admin_admin_menu_items_alter(&$items) {
+
+  if(module_exists('sba_message_action')) {
+    // Top Level: Springboard Advocacy.
+    $items['admin/springboard/advocacy/actions'] = array(
+      'link_path' => 'admin/springboard/advocacy/actions',
+      'link_title' => t('Advocacy'),
+      'menu_name' => 'springboard_admin_menu',
+      'expanded' => 1,
+      'customized' => 1,
+      'weight' => 3,
+      '_children' => array(),
+    );
+
+    $items['admin/springboard/advocacy/actions']['_children']['admin/springboard/advocacy/actions'] = array(
+      'link_path' => 'admin/springboard/advocacy/actions',
+      'link_title' => 'Actions',
+      'menu_name' => 'springboard_admin_menu',
+      'expanded' => 1,
+      'customized' => 1,
+      'weight' => 1,
+    );
+  }
+
+  if(module_exists('springboard_target')) {
+
+    // Springboard Advocacy > Custom Targets.
+    $items['admin/springboard/advocacy/actions']['_children']['admin/springboard/advocacy/targets/custom-targets'] = array(
+      'link_path' => 'admin/springboard/advocacy/targets/custom-targets',
+      'link_title' => 'Custom Targets',
+      'menu_name' => 'springboard_admin_menu',
+      'expanded' => 1,
+      'customized' => 1,
+      'weight' => 2,
+    );
+  }
+
+
+  // Springboard Advocacy > Custom Targets.
+  $items['admin/springboard/advocacy/actions']['_children']['admin/springboard/advocacy/settings'] = array(
+    'link_path' => 'admin/springboard/advocacy/settings',
+    'link_title' => 'Settings',
+    'menu_name' => 'springboard_admin_menu',
+    'expanded' => 1,
+    'customized' => 1,
+    'weight' => 2,
+  );
+
+}
+
 
 /**
  * Defines common values for advocacy menu items.
