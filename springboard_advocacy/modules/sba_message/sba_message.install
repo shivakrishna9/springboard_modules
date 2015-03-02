@@ -544,7 +544,7 @@ function sba_message_install() {
       'active' => 1,
       'module' => 'text',
       'settings' => array(
-        'rows' => 5,
+        'rows' => 10,
       ),
       'type' => 'text_textarea',
       'weight' => 11,
@@ -589,8 +589,7 @@ function sba_message_install() {
     'bundle' => 'sba_message_action_message',
     'default_value' => array(
       0 => array(
-        'value' => 'Sincerely,
-%first-name% %last-name%',
+        'value' => 'Sincerely, %first-name% %last-name%',
       ),
     ),
     'deleted' => 0,
