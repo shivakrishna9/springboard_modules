@@ -4,6 +4,7 @@ core = 7.x
 
 dependencies[] = entity
 dependencies[] = views
+dependencies[] = draggableviews
 dependencies[] = eva
 dependencies[] = entityreference_prepopulate
 dependencies[] = springboard_advocacy
