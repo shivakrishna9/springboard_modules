@@ -9,10 +9,10 @@
  */
 class FundraiserSustainersHealthChecksTestCase extends DrupalWebTestCase {
   // Fake donation ID so we can cheat on creating sustainers.
-  protected $next_did = 1;
+  protected $nextDid = 1;
 
   // Fake master donation ID.
-  protected $master_did = 1;
+  protected $masterDid = 1;
 
   /**
    * Implements getInfo(). Declares this test class to fundraiser testing.
@@ -48,9 +48,13 @@ class FundraiserSustainersHealthChecksTestCase extends DrupalWebTestCase {
 
     $this->assertEqual(count($results), 0, 'No stuck sustainers found.');
 
-    // Add a not-stuck and a stuck sustainer.
-    $this->insertSustainerRecord(FALSE);
-    $stuck_did = $this->insertSustainerRecord(TRUE);
+    // Add a not-stuck sustainer whose next charege is 2 hours ago,
+    // a stuck sustainer whose next charge is 2 hours ago,
+    // and a stuck sustainer whose next charge is within the last hour.
+    // Only the second one should get counted as stuck.
+    $this->insertSustainerRecord(FALSE, REQUEST_TIME - 7200);
+    $stuck_did = $this->insertSustainerRecord(TRUE, REQUEST_TIME - 7200);
+    $this->insertSustainerRecord(TRUE, REQUEST_TIME - 60);
 
     $checks = new FundraiserSustainersHealthChecks();
     $results = $checks->runChecks();
@@ -75,9 +79,9 @@ class FundraiserSustainersHealthChecksTestCase extends DrupalWebTestCase {
 
     $this->assertEqual(count($results), 0, 'No stuck sustainers found.');
 
-    // Add a few not-stuck sustainers.
+    // Add a few not-stuck sustainers at different times.
     for ($i = 0; $i < 5; $i++) {
-      $this->insertSustainerRecord(FALSE);
+      $this->insertSustainerRecord(FALSE, REQUEST_TIME - ($i * 3600));
     }
 
     $checks = new FundraiserSustainersHealthChecks();
@@ -95,11 +99,11 @@ class FundraiserSustainersHealthChecksTestCase extends DrupalWebTestCase {
    * @return int
    *   The donation ID that was just saved.
    */
-  protected function insertSustainerRecord($stuck = FALSE) {
+  protected function insertSustainerRecord($stuck = FALSE, $next_charge = REQUEST_TIME) {
     $record = array(
-      'master_did' => $this->master_did,
-      'did' => $this->next_did++,
-      'next_charge' => REQUEST_TIME,
+      'master_did' => $this->masterDid,
+      'did' => $this->nextDid++,
+      'next_charge' => $next_charge,
       'gateway_resp' => 'success',
       'attempts' => 1,
       'sustainer_key' => 'example.com',

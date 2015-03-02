@@ -26,8 +26,8 @@ class SalesforceSyncEntitiesTestCase extends SalesforceSyncTestCase {
   /**
    * Implementation of setUp().
    */
-  public function setUp($modules = array()) {
-    parent::setUp($modules);
+  public function setUp($modules = array(), $permissions = array()) {
+    parent::setUp($modules, $permissions);
 
     // Create an example record.
     $this->example_record = array(

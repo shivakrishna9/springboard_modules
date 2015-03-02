@@ -56,14 +56,14 @@ build:
     dependencies:
         before:
             - 'cd'
+            - 'sudo composer self-update'
+            - 'if [ -n "${GITHUB_ACCESS_TOKEN}" ]; then composer global config github-oauth.github.com $GITHUB_ACCESS_TOKEN; fi'
+            - 'composer global require drush/drush:6.5.0'
+            - 'composer global require codeception/codeception:2.0.8'
             - 'wget http://selenium-release.storage.googleapis.com/2.44/selenium-server-standalone-2.44.0.jar'
             - "xvfb-run -a -s '-screen 0 1024x768x16' java -Xmx256m -jar selenium-server-standalone-2.44.0.jar >> artifacts/selenium.log 2>&1 &"
             - 'mysql -uroot -e "CREATE DATABASE springboard"'
             - 'sudo apt-get install ack-grep -y'
-            - 'composer global config github-oauth.github.com $GITHUB_ACCESS_TOKEN'
-            - 'sudo composer self-update'
-            - 'composer global require drush/drush:6.5.0'
-            - 'composer global require codeception/codeception:2.0.8'
     project_setup:
         before:
             - 'cd ~/build'

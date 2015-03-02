@@ -20,8 +20,9 @@ class WebformUserConfirmationTestCase extends WebformUserTestSetup {
   /**
    * Implementation of setUp().
    */
-  public function setUp() {
-    parent::setUp(array('webform_confirmations'));
+  public function setUp($additional_modules = array()) {
+    $additional_modules[] = 'webform_confirmations';
+    parent::setUp($additional_modules);
   }
 
   /**

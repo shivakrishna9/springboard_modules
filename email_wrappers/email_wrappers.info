@@ -11,3 +11,4 @@ dependencies[] = ctools
 dependencies[] = system (>=7.17)
 
 files[] = tests/email_wrappers.test
+files[] = tests/email_wrappers_load_template.test

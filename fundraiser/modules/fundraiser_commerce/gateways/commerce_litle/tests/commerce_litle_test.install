@@ -1,5 +1,4 @@
 <?php
-
 /**
  * @file
  * Install, update and uninstall functions for the commerce_litle_test module.
@@ -53,4 +52,11 @@ function commerce_litle_test_schema() {
   );
 
   return $schema;
+}
+
+/**
+ * Implements hook_uninstall().
+ */
+function commerce_litle_test_uninstall() {
+  variable_del('commerce_litle_test_account_updater_enabled');
 }
