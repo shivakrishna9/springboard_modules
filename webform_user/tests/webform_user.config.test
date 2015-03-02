@@ -20,8 +20,8 @@ class WebformUserConfigTestCase extends WebformUserTestSetup {
   /**
    * Implementation of setUp().
    */
-  public function setUp() {
-    parent::setUp();
+  public function setUp($additional_modules = array()) {
+    parent::setUp($additional_modules);
   }
 
   /**

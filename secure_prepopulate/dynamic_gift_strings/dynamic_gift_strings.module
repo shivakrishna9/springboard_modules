@@ -53,9 +53,14 @@ function dynamic_gift_strings_form_alter(&$form, &$form_state, $form_id) {
             $amounts['other'] = t('Other');
           }
           $amount_field['#options'] = $amounts;
-          // set the default if available
-          if (is_numeric($default)) {
+
+          // Set the default if available and in the options.
+          if (is_numeric($default) && isset($amount_field['#options'][$default])) {
             $amount_field['#default_value'] = $default;
+          }
+          // Unset if the default value isn't set nor in the options.
+          else {
+            unset($amount_field['#default_value']);
           }
         }
         // add a submit handler to clear out gift strings if the user donates

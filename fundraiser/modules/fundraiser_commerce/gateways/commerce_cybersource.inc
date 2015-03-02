@@ -92,12 +92,6 @@ function commerce_cybersource_fundraiser_commerce_charge($payment_method, $donat
   $pane_values = _fundraiser_commerce_credit_card_pane_values($donation);
   _fundraiser_commerce_submit_handler_pane_values($pane_values, $donation);
 
-  // there's a hack in fundraiser_commerce which always sets $pane_values['cardonfile'] to "new"
-  // so we need to test whether it's a new card by some other means:
-  if (isset($donation->data['cardonfile'])) {
-    $pane_values['the_real_cardonfile_value'] = $donation->data['cardonfile'];
-  }
-
   // Customer data for charge pulls from the customer profile given on the order, so we can ignore that.
   // If the charge fails, returns false, else nothing.
   $result = commerce_cybersource_soap_cc_submit_form_submit($payment_method, $pane_form, $pane_values, $order, $charge);
