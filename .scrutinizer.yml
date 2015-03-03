@@ -99,7 +99,7 @@ build:
             # Not working. Might not be needed.
             # -bash: [: -neq: binary operator expected
             # - 'if [ `cat ../artifacts/*.xml | grep -c "failure message"` -neq 0 ]; then exit 1; fi'
-            - 'cd ~/acceptance-tests && ./vendor/bin/codecept run --html --xml'
+            - 'cd ~/acceptance-tests && ./vendor/bin/codecept run --html --xml -vvv'
 
 filter:
     paths:
