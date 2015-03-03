@@ -26,8 +26,8 @@ class SalesforceQueueProcessorTestCase extends SalesforceQueueTestCase {
   /**
    * Implementation of setUp().
    */
-  public function setUp($modules = array()) {
-    parent::setUp($modules);
+  public function setUp($modules = array(), $permissions = array()) {
+    parent::setUp($modules, $permissions);
 
     // Initiate a processor.
     $this->queue = salesforce_queue_load();

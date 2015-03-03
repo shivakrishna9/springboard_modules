@@ -495,7 +495,7 @@ function fundraiser_sustainers_update_7006(&$sandbox) {
 }
 
 /**
- * Adds an additional table to store changed cahrge dates.
+ * Adds an additional table to store changed charge dates.
  */
 function fundraiser_sustainers_update_7007() {
   if (!db_table_exists('fundraiser_sustainers_charge_date')) {

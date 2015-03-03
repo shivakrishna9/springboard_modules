@@ -26,11 +26,11 @@ class SalesforceLogRulesTestCase extends SalesforceLogTestCase {
   /**
    * Implementation of setUp().
    */
-  public function setUp($modules = array()) {
+  public function setUp($modules = array(), $permissions = array()) {
     $modules = array_merge($modules, array(
       'rules',
     ));
-    parent::setUp($modules);
+    parent::setUp($modules, $permissions);
   }
 
   /**
