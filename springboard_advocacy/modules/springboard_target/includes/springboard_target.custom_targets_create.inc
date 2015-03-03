@@ -31,7 +31,7 @@ function springboard_target_create_custom_targets_form_submit($form, &$form_stat
   if (empty($target->error)) {
     $message = implode(' ', (array)$target->data->status);
     if (isset($target->data->id)) {
-      $form_state['redirect'] = 'admin/springboard/advocacy/custom-targets/';
+      $form_state['redirect'] = 'admin/springboard/advocacy/targets/custom-targets/';
      }
   }
   else {
