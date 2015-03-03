@@ -472,3 +472,25 @@ function springboard_advocacy_preprocess_pager(&$variables, $hook) {
     $variables['tags'][4] = '>>';
   }
 }
+
+/**
+ * Determines if a content type is a petition type.
+ *
+ * @param string $type
+ *   The content type name.
+ *
+ * @return bool
+ *   TRUE if the content type is a petition type.
+ */
+function springboard_advocacy_is_action_type($type) {
+  static $action_types;
+  if (!isset($action_types[$type])) {
+    $action_types = variable_get('springboard_advocacy_alert_types', array());
+  }
+  if(in_array($type, $action_types)) {
+    return $type;
+  }
+  else {
+    return FALSE;
+  }
+}
