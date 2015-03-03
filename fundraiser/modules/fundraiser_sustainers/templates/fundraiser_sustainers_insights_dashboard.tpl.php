@@ -154,10 +154,10 @@
     tooltipXOffset: 10,
 
     // String - Template string for single tooltips
-    tooltipTemplate: "<%if (label){%><%= label %>: <%}%><%= value %>",
+    tooltipTemplate: "<%if (label){%><%= label %>: <%}%><%= value %> <%= datasetLabel %>",
 
     // String - Template string for single tooltips
-    multiTooltipTemplate: "<%= value %>",
+    multiTooltipTemplate: "<%= value %> <%= datasetLabel %>",
 
     // Function - Will fire on animation progression.
     onAnimationProgress: function(){},
@@ -170,7 +170,7 @@
     labels: <?php print $chart_labels ?>,
     datasets: [
       {
-        label: "Successes",
+        label: "Successful",
         strokeColor: "rgba(220,220,220,1)",
         pointColor: "rgba(220,220,220,1)",
         pointStrokeColor: "#fff",
@@ -179,7 +179,7 @@
         data: <?php print $successes_data ?>
       },
       {
-        label: "Failures",
+        label: "Failed",
         strokeColor: "rgba(151,187,205,1)",
         pointColor: "rgba(151,187,205,1)",
         pointStrokeColor: "#fff",
@@ -233,14 +233,13 @@
   };
 
   var ctx = document.getElementById("processingStats").getContext("2d");
-  var myNewChart = new Chart(ctx).Line(processing_data, processing_options);
-
+  var processing_chart = new Chart(ctx).Line(processing_data, processing_options);
 
   var forecast_data = {
     labels: <?php print $forecast_labels ?>,
     datasets: [
       {
-        label: "Scheduled Count",
+        label: "Scheduled Charges",
         fillColor: "rgba(220,220,220,0.5)",
         strokeColor: "rgba(220,220,220,0.8)",
         highlightFill: "rgba(220,220,220,0.75)",
