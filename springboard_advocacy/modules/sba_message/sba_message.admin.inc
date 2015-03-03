@@ -96,6 +96,7 @@ function sba_message_form_wrapper($sba_message) {
   $build = array();
   $build['#attached']['css'] = array(
     drupal_get_path('module', 'sba_message') . '/css/sba_message.css',
+    'https://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800',
   );
 
   $build['#attached']['js'] = array(
