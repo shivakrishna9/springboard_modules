@@ -29,34 +29,6 @@ function sba_message_action_node_load($nodes, $types) {
 }
 
 /**
- * Implements hook_theme().
- */
-function sba_message_action_theme() {
-  return array(
-    'sba_message_action_messages' => array(
-      'variables' => array('messages' => NULL),
-    ),
-  );
-}
-
-/**
- * Default theme implementation.
- *
- * Take each message assigned to the action and convert it
- * to the appropriate markup.
- */
-function theme_sba_message_action_messages($variables) {
-  $output = '<div id="sba-messages">';
-  foreach ($variables['messages'] as $message) {
-    $message_form = drupal_get_form('sba_message_action_editable_message_form', $message);
-    $output .= drupal_render($message_form);
-  }
-  $output .= '</div>';
-
-  return $output;
-}
-
-/**
  * Implements hook_node_view.
  *
  * Theme the messages into the node's content.
@@ -78,16 +50,23 @@ function sba_message_action_node_view($node, $view_mode, $langcode) {
  * 'value' type field elements so they can be read on submission (alternately
  * read-only messages could be reloaded during submission if that's easier -
  * might be a peformance hit though.
+ *
+ * $form in this case represents the webform_client_form.
  */
-function sba_message_action_editable_message_form($form, &$form_state, $message) {
+function sba_message_action_editable_message_form(&$form, $message) {
   $wrapper = entity_metadata_wrapper('sba_message', $message);
 
-  $form = array();
+  dsm($message);
 
   $form['message'] = array(
     '#type' => 'fieldset',
     '#title' => t('Your Message'),
     '#attributes' => array('class' => array('sba-message')),
+  );
+
+  $form['message']['message_id'] = array(
+    '#type' => 'hidden',
+    '#value' => $message->data['message_id'],
   );
 
   $form['message']['subject'] = array(
@@ -100,9 +79,20 @@ function sba_message_action_editable_message_form($form, &$form_state, $message)
     '#markup' => $wrapper->field_sba_message->value(),
   );
 
-  // ... Rest of form.
+  if ($wrapper->field_user_editable[0]->value() == 'editable') {
+    $form['message']['body_editable'] = array(
+      '#type' => 'textarea',
+      '#default_value' => $wrapper->field_editable_area->value(),
+    );
+  }
 
-  return $form;
+  $form['message']['body_bottom'] = array(
+    '#markup' => $wrapper->field_bottom_conclusion->value(),
+  );
+
+  $form['message']['signature'] = array(
+    '#markup' => '<p>' . $wrapper->field_sba_signature->value() . '</p>',
+  );
 }
 
 /**
@@ -204,17 +194,63 @@ function sba_message_action_webform_user_profile_fields_alter(&$fields, $node) {
 }
 
 /**
- * Implements hook_form_alter
+ * Implements hook_form_alter().
  *
- * Add our submit handler.
+ * Add message fields to the main webform form.
  */
-// function sba_message_action_form_alter(&$form, &$form_state, $form_id) {
-//   if(isset($form['#node']) && $form['#node']->type == 'sba_message_action') {
-//     $pos = strpos($form_id, 'client_form');
-//     if($pos !== FALSE) {
-//       $form['#submit'][] = 'sba_message_action_submit';
-//     }
-//   }
-// }
+function sba_message_action_form_alter(&$form, &$form_state, $form_id) {
+  if (isset($form['#node']) && $form['#node']->type == 'sba_message_action') {
+   $pos = strpos($form_id, 'client_form');
 
+   if ($pos !== FALSE) {
+      // Create a container on the form for all messages.
+      $form['sba_messages'] = array(
+        '#type' => 'container',
+        '#tree' => TRUE,
+        '#attributes' => array(
+          'id' => array('sba-messages'),
+        ),
+      );
 
+      // Create a set of fields for each message assigned to the form.
+      foreach ($form['#node']->messages as $message) {
+        sba_message_action_editable_message_form($form['sba_messages'], $message);
+      }
+
+     $form['#submit'][] = 'sba_message_action_form_submit';
+   }
+  }
+}
+
+/**
+ * Submit handler for message action forms.
+ *
+ * Capture all messages, combine with contact information and
+ * submit to API.
+ */
+function sba_message_action_form_submit($form, &$form_state) {
+
+  // Rebuild message here. There are 2 options. One, reload
+  // the message entity and reconstruct it using whatever the
+  // user edited on the form or pass along the other field values
+  // in hidden form fields. Passing in hidden fields could avoid
+  // reloading the messages, althought it probably isn't a big deal.
+  $messages = array();
+  foreach ($form_state['values']['sba_messages'] as $message) {
+    $messages[] = sba_message_action_build_message($message['message_id'], $message['subject'], $message['body_editable']);
+  }
+
+  // Take the messages, combine with contact information submitted in webform
+  // fields and submit to API.
+  dsm($messages);
+}
+
+/**
+ * Combines user edited message data with other static properties
+ * to create the final message to deliver to the transaction server.
+ */
+function sba_message_action_build_message($message_id, $subject, $body_editable) {
+  // Load the message entity using message_id. Extract other properties and make a complete message.
+  $message = $body_editable;
+  return $message;
+}
