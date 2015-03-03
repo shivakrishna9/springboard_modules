@@ -158,7 +158,7 @@ function sba_message_form_views_form_sba_messages_node_block_1_alter(&$form, &$f
    $val = '';
    $messages = $form_state['build_info']['args'][0]->result;
    if (isset($messages) && count($messages) > 1) {
-     $val = $messages[0]->_field_data['sba_message_id']['entity']->data['precedence'];
+     $val = isset($messages[0]->_field_data['sba_message_id']['entity']->data['precedence']) ? $messages[0]->_field_data['sba_message_id']['entity']->data['precedence']: 0;
 
      $form['precedence'] = array(
        '#type' => 'checkbox',
