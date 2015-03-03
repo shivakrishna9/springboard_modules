@@ -103,6 +103,31 @@ function sba_message_action_webform_user_profile_fields_alter(&$fields, $node) {
 }
 
 /**
+ * Implements hook_form_layouts_info().
+ */
+function sba_message_action_form_layouts_info() {
+  $templates = array();
+
+  $templates['two_column_message_right'] = array(
+    'name' => t('Message action two column: message right'),
+    'types' => array('sba_message_action'),
+    'theme' => 'two_column_message_right',
+    'pattern' => 'two_column_message_right\'0-9\'+',
+    'template' => 'two-column-message-right',
+    'path' => drupal_get_path('module', 'sba_message_action') . '/templates/form_layouts',
+    'hide title' => FALSE,
+  );
+
+  return $templates;
+}
+
+function sba_message_action_preprocess_two_column_message_right(&$vars) {
+  $vars['message_fieldset'] = drupal_render($vars['element']['submitted']['message_fieldset']);
+  $vars['form'] = $vars['element'];
+}
+
+
+/**
  * Implements hook_form_alter
  * 
  * Add our submit handler.
