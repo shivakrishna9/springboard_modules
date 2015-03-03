@@ -72,15 +72,16 @@ build:
             - '! ack-grep -i "<<<<<<<|^=======$|>>>>>>>|dpm\(|dsm\(|var_dump\(|var_export\(|debug\(|dpq|dvm|dpr\(|kpr|dvr|kprint_r|dprint_r|devel_render|ddebug_backtrace|debug_backtrace|debug_print_backtrace|debug_to_file" --ignore-file=ext:txt,html,yml,js'
             - 'cd'
             - 'mv build repo'
-            - 'git clone --branch 7.x-4.x https://github.com/JacksonRiver/Springboard-Build.git build-tools'
+            - 'git clone --depth 1 --branch 7.x-4.x https://github.com/JacksonRiver/Springboard-Build.git build-tools'
             - 'echo "projects[springboard][download][branch] = $SCRUTINIZER_SHA1" >> build-tools/springboard-core.make'
             - 'drush make build-tools/springboard-mtsb.make build'
             - 'cd ~/build'
             - 'chmod -R 777 sites/default'
             - "drush si sbsetup install_configure_form.update_status_module='array(FALSE,FALSE)' --account-name=admin --account-pass=admin --account-mail=david.barbarisi@jacksonriver.com --clean-url=1 --site-mail=david.barbarisi@jacksonriver.com --site-name=4x --db-url=mysql://root:@127.0.0.1/springboard --yes"
+            - 'drush -l http://local.dev cc all'
             - 'drush -l http://local.dev sql-dump --result-file=../dump.sql'
             - 'cd'
-            - 'git clone https://github.com/JacksonRiver/acceptance-tests.git acceptance-tests'
+            - 'git clone --depth 1 --branch master https://github.com/JacksonRiver/acceptance-tests.git acceptance-tests'
             - 'cd acceptance-tests'
             - 'composer install --no-dev'
             - 'cp codeception.yml.ci codeception.yml'
@@ -90,16 +91,11 @@ build:
         before:
         override:
             - 'cd ~/build'
-            - 'drush -l http://local.dev cc all'
             - 'drush -l http://local.dev status'
             - 'curl --max-time 20 http://local.dev | grep "DONATE"'
             - 'drush -l http://local.dev en springboard_tests -y'
             - 'drush -l http://local.dev sb-test-run springboard --xml=../artifacts'
-            # Should fail the build if any failures are found, I hope.
-            # Not working. Might not be needed.
-            # -bash: [: -neq: binary operator expected
-            # - 'if [ `cat ../artifacts/*.xml | grep -c "failure message"` -neq 0 ]; then exit 1; fi'
-            - 'cd ~/acceptance-tests && ./vendor/bin/codecept run --html --xml -vvv'
+            - 'cd ~/acceptance-tests && ./vendor/bin/codecept run --html --xml -vv'
 
 filter:
     paths:
