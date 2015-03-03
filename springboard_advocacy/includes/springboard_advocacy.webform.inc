@@ -66,7 +66,7 @@ function springboard_advocacy_build_messages($message_ids) {
         'message_id' => $message_id,
         'subject' => $subject,
         'body' => $body,
-        'precedence' => isset($message->data['precedence']) ? 1 : 0,
+        'precedence' => !empty($message->data['precedence']) ? 1 : 0,
        );
     }
     ksort($messages);
