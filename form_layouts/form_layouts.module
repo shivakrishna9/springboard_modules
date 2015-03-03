@@ -37,6 +37,7 @@ function form_layouts_form_node_form_alter(&$form, &$form_state, $form_id) {
     // Different layouts support fundraiser types or petiton types or general
     // webform types.
     $fundraiser_enabled = fundraiser_is_donation_type($form['#node']->type);
+
     if (module_exists('springboard_petition')) {
       $petition_enabled = springboard_petition_is_petition_type($form['#node']->type);
     }
@@ -44,10 +45,17 @@ function form_layouts_form_node_form_alter(&$form, &$form_state, $form_id) {
       $petition_enabled = FALSE;
     }
 
+    if (module_exists('springboard_advocacy')) {
+      $advocacy_enabled = springboard_advocacy_is_action_type($form['#node']->type);
+    }
+    else {
+      $advocacy_enabled = FALSE;
+    }
+
     $options = array();
     foreach ($templates as $template) {
       // Only show compatible layouts.
-      if (form_layouts_options_should_include_template_type($template['types'], $fundraiser_enabled, $petition_enabled)) {
+      if (form_layouts_options_should_include_template_type($template['types'], $fundraiser_enabled, $petition_enabled, $advocacy_enabled)) {
         $options[$template['theme']] = $template['name'];
       }
     }
@@ -90,14 +98,17 @@ function form_layouts_form_node_form_alter(&$form, &$form_state, $form_id) {
  *   TRUE if this template type should be displayed in the list of
  *   layout options.
  */
-function form_layouts_options_should_include_template_type($template_types, $fundraiser_enabled, $petition_enabled) {
+function form_layouts_options_should_include_template_type($template_types, $fundraiser_enabled, $petition_enabled, $advocacy_enabled) {
   if ($fundraiser_enabled && in_array('fundraiser', $template_types)) {
     return TRUE;
   }
   elseif ($petition_enabled && in_array('petition', $template_types)) {
     return TRUE;
   }
-  elseif (!$fundraiser_enabled && !$petition_enabled && in_array('webform', $template_types)) {
+  elseif ($advocacy_enabled && in_array($advocacy_enabled, $template_types)) {
+    return TRUE;
+  }
+  elseif (!$fundraiser_enabled && !$petition_enabled && !$advocacy_enabled && in_array('webform', $template_types)) {
     return TRUE;
   }
 
