@@ -161,38 +161,96 @@ function sba_message_action_add_content_type() {
 }
 
 function sba_message_action_add_fields() {
-//
-//  $fields = array(
-//
-//    'field_sba_call_to_action' => array(
-//      'field_name' => 'sba_message_action_call_to_action',
-//      'type' => 'text_long',
-//      'cardinality' => 1,
-//      'settings' => array(),
-//      'entity_types' => array('node'),
-//      '_instance' => array(
-//        'field_name' => 'sba_message_action_call_to_action',
-//        'entity_type' => 'node',
-//        'bundle' => 'sba_message_action',
-//        'required' => TRUE,
-//        'label' => st('Call to Action Text'),
-//        'description' => st(''),
-//        'widget' => array(
-//          'type' => 'text_textarea',
-//          'weight' => 5,
-//          'settings' => array(),
-//        ),
-//      ),
-//    ),
-//  );
-//
-//  foreach ($fields as $key => $values) {
-//    $instance = $values['_instance'];
-//    unset($values['_instance']);
-//
-//    field_create_field($values);
-//    field_create_instance($instance);
-//  }
+
+  $fields = array(
+    'field_message_action_img' => array(
+      'active' => 1,
+      'cardinality' => 1,
+      'deleted' => 0,
+      'entity_types' => array('node'),
+      'field_name' => 'field_message_action_img',
+      'foreign keys' => array(
+        'fid' => array(
+          'columns' => array(
+            'fid' => 'fid',
+          ),
+          'table' => 'file_managed',
+        ),
+      ),
+      'indexes' => array(
+        'fid' => array(
+          0 => 'fid',
+        ),
+      ),
+      'locked' => 0,
+      'module' => 'image',
+      'settings' => array(
+        'default_image' => 0,
+        'uri_scheme' => 'public',
+      ),
+      'translatable' => 0,
+      'type' => 'image',
+
+      '_instance' => array(
+        'bundle' => 'sba_message_action',
+        'deleted' => 0,
+        'description' => '',
+        'display' => array(
+          'default' => array(
+            'label' => 'hidden',
+            'module' => 'image',
+            'settings' => array(
+              'image_link' => '',
+              'image_style' => '',
+            ),
+            'type' => 'image',
+            'weight' => 3,
+          ),
+          'teaser' => array(
+            'label' => 'above',
+            'settings' => array(),
+            'type' => 'hidden',
+            'weight' => 0,
+          ),
+        ),
+        'entity_type' => 'node',
+        'field_name' => 'field_message_action_img',
+        'label' => 'Image',
+        'required' => 0,
+        'settings' => array(
+          'alt_field' => 1,
+          'default_image' => 0,
+          'file_directory' => '',
+          'file_extensions' => 'png gif jpg jpeg',
+          'max_filesize' => '',
+          'max_resolution' => '',
+          'min_resolution' => '',
+          'title_field' => 0,
+          'user_register_form' => FALSE,
+        ),
+        'widget' => array(
+          'active' => 1,
+          'module' => 'image',
+          'settings' => array(
+            'preview_image_style' => 'thumbnail',
+            'progress_indicator' => 'throbber',
+          ),
+          'type' => 'image_image',
+          'weight' => 2,
+        ),
+      ),
+    ),
+  );
+
+
+
+  foreach ($fields as $key => $values) {
+    $instance = $values['_instance'];
+    unset($values['_instance']);
+
+    field_create_field($values);
+    field_create_instance($instance);
+  }
 }
 
 

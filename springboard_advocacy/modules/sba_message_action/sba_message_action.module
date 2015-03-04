@@ -109,7 +109,7 @@ function sba_message_action_form_layouts_info() {
   $templates = array();
 
   $templates['two_column_message_right'] = array(
-    'name' => t('Message action two column: message right'),
+    'name' => t('Two column: message right, CTA & Image top.'),
     'types' => array('sba_message_action'),
     'theme' => 'two_column_message_right',
     'pattern' => 'two_column_message_right\'0-9\'+',
@@ -122,23 +122,10 @@ function sba_message_action_form_layouts_info() {
 }
 
 function sba_message_action_preprocess_two_column_message_right(&$vars) {
+  $vars['message_call_to_action'] = drupal_render($vars['element']['body']);
+  $vars['message_image'] = drupal_render($vars['element']['field_message_action_img']);
   $vars['message_fieldset'] = drupal_render($vars['element']['submitted']['message_fieldset']);
   $vars['form'] = $vars['element'];
 }
-
-
-/**
- * Implements hook_form_alter
- * 
- * Add our submit handler.
- */
-// function sba_message_action_form_alter(&$form, &$form_state, $form_id) {
-//   if(isset($form['#node']) && $form['#node']->type == 'sba_message_action') {
-//     $pos = strpos($form_id, 'client_form');
-//     if($pos !== FALSE) {
-//       $form['#submit'][] = 'sba_message_action_submit';
-//     }
-//   }
-// }
 
 
