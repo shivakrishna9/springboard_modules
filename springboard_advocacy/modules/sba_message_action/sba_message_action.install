@@ -64,6 +64,19 @@ function sba_message_action_install() {
     salesforce_genmap_save_map($map, 'webform');
   }
   sba_message_action_add_content_type();
+
+  $instance_info = field_read_instance('node', 'field_webform_user_internal_name', 'sba_message_action');
+  $instance_info['widget']['weight'] = 1;
+  field_update_instance($instance_info);
+
+  $instance_info = field_read_instance('node', 'field_message_action_img', 'sba_message_action');
+  $instance_info['widget']['weight'] = 2;
+  field_update_instance($instance_info);
+
+  $instance_info = field_read_instance('node', 'body', 'sba_message_action');
+  $instance_info['widget']['weight'] = 3;
+  field_update_instance($instance_info);
+
   sba_message_action_add_example_message_action();
 }
 
@@ -99,12 +112,12 @@ function sba_message_action_add_content_type() {
     'webform_user_default_fields' => array(
       'sbp_first_name' => 'sbp_first_name',
       'sbp_last_name' => 'sbp_last_name',
+      'mail' => 'mail',
       'sbp_address' => 'sbp_address',
       'sbp_address_line_2' => 'sbp_address_line_2',
       'sbp_city' => 'sbp_city',
       'sbp_state' => 'sbp_state',
       'sbp_zip' => 'sbp_zip',
-      'mail' => 'mail',
       'sbp_cid' => 'sbp_cid',
       'sbp_market_source' => 'sbp_market_source',
       'sbp_referrer' => 'sbp_referrer',
@@ -135,6 +148,9 @@ function sba_message_action_add_content_type() {
   $webform_node_types_primary = array_merge($webform_node_types_primary, array('sba_message_action'));
   variable_set('webform_node_types', array_unique($webform_node_types));
   variable_set('webform_node_types_primary', array_unique($webform_node_types_primary));
+
+  //enable form_layuts
+  variable_set('form_layouts_sba_message_action', 1);
 
   // Add as an advocacy message type.
   $springboard_advocacy_alert_types = variable_get('springboard_advocacy_alert_types', array(''));
@@ -204,7 +220,7 @@ function sba_message_action_add_fields() {
               'image_style' => '',
             ),
             'type' => 'image',
-            'weight' => 3,
+            'weight' => -1,
           ),
           'teaser' => array(
             'label' => 'above',
@@ -236,7 +252,7 @@ function sba_message_action_add_fields() {
             'progress_indicator' => 'throbber',
           ),
           'type' => 'image_image',
-          'weight' => 2,
+          'weight' => 0,
         ),
       ),
     ),

@@ -1,0 +1,36 @@
+#sba-messages-form label {
+    font-weight: bold;
+}
+
+#edit-sba-messages-message-body-editable {
+    width: 100%;
+    min-height: 300px;
+}
+
+#message-action-form-column-wrapper #edit-actions {
+    clear:both;
+    background-color: #fff;
+    border-top: none;
+    padding: 0;
+    margin: 0;
+}
+
+#message-action-form-column-wrapper #edit-actions input {
+    width: 100%;
+    background: #247AAD;
+    border: none;
+    border-radius: 4px;
+    color: #fff;
+    margin-left: 0;
+    font-size: 1.5em;
+    padding: 10px 0;
+    text-shadow: none;
+
+
+}
+#message-action-form-column-wrapper #edit-actions input:hover {
+    background: #1E72A3;
+}
+#sba-messages-form {
+    clear: both;
+}

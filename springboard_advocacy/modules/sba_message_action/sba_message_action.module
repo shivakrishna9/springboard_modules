@@ -4,9 +4,15 @@
  * Provides content type and config for message actions.
  */
 
+function sba_message_action_node_presave($node) {
+  if (!$node->nid) {
+    $node->webform['submit_text'] = t('Send your message');
+  }
+}
+
 /**
  * Implements hook_node_insert
- * 
+ *
  * Adds some custom fields to new webforms.
  */
 function sba_message_action_node_insert($node) {
@@ -24,36 +30,36 @@ function sba_message_action_node_insert($node) {
       'weight' => 13,
       'email' => 1,
       'extra' => array(
-      'description' => t(''),
+        'description' => t(''),
       ),
     );
 
     //limit the state field to US states
     $fields[] = array(
-        'nid' => $node->nid,
-        'form_key' => 'sbp_state',
-        'pid' => 0,
-        'name' => t('State'),
-        'type' => 'select',
-        'mandatory' => 1,
-        'weight' => 12,
-        'email' => 1,
-        'extra' => array(
+      'nid' => $node->nid,
+      'form_key' => 'sbp_state',
+      'pid' => 0,
+      'name' => t('State'),
+      'type' => 'select',
+      'mandatory' => 1,
+      'weight' => 12,
+      'email' => 1,
+      'extra' => array(
         'options_source' => 'united_states', //may have to remove some.
         'aslist' => 'Y',
         'multiple' => 0,
       ),
     );
     $fields[] = array(
-        'nid' => $node->nid,
-        'form_key' => 'sbp_zip',
-        'pid' => 0,
-        'name' => t('Zip Code'),
-        'type' => 'textfield',
-        'mandatory' => 1,
-        'weight' => 13,
-        'email' => 1,
-        'extra' => array(
+      'nid' => $node->nid,
+      'form_key' => 'sbp_zip',
+      'pid' => 0,
+      'name' => t('Zip Code'),
+      'type' => 'textfield',
+      'mandatory' => 1,
+      'weight' => 13,
+      'email' => 1,
+      'extra' => array(
         'maxlength' => 5,
       ),
     );
@@ -64,12 +70,12 @@ function sba_message_action_node_insert($node) {
       $cid = webform_component_insert($field);
       //user map the state field
       if ($field['form_key'] == 'sbp_state' || $field['form_key'] == 'sbp_zip') {
-            $map = array(
-            'nid' => $node->nid,
-            'cid' => $cid,
-            'map_id' => $field['form_key'],
-          );
-          drupal_write_record('webform_user_component_map', $map);
+        $map = array(
+          'nid' => $node->nid,
+          'cid' => $cid,
+          'map_id' => $field['form_key'],
+        );
+        drupal_write_record('webform_user_component_map', $map);
       }
     }
   }
@@ -95,12 +101,234 @@ function sba_message_action_webform_user_profile_fields_alter(&$fields, $node) {
         unset($fields[$index]);
       }
       //move email field lower
-      if ($profile_field['name'] == 'mail'){
-        $fields[$index]['weight'] = 14;
+      if ($profile_field['name'] == 'sbp_first_name'){
+        $fields[$index]['weight'] = -5;
       }
-    } 
+      //move email field lower
+      if ($profile_field['name'] == 'sbp_last_name'){
+        $fields[$index]['weight'] = -4;
+      }
+      //move email field lower
+      if ($profile_field['name'] == 'mail'){
+        $fields[$index]['weight'] = -3;
+      }
+    }
   }
 }
+
+
+/**
+ * Implements hook_node_load.
+ */
+function sba_message_action_node_load($nodes, $types) {
+  // If no message_action nodes are loaded no need to continue.
+  if (!in_array('sba_message_action', $types)) {
+    return;
+  }
+
+  // Add full messages to each node so we can utilize them later.
+  foreach ($nodes as $nid => $node) {
+    if ($node->type == 'sba_message_action') {
+      if (!empty($node->message_ids)) {
+        $messages = sba_message_load_multiple($node->message_ids);
+        $node->messages = $messages;
+      }
+      else {
+        $node->messages = array();
+      }
+    }
+  }
+}
+
+/*
+ * Implements hook_form_alter().
+ *
+ * Add message fields to the main webform form.
+ */
+
+function sba_message_action_form_alter(&$form, &$form_state, $form_id) {
+  if (isset($form['#node']) && $form['#node']->type == 'sba_message_action') {
+    $pos = strpos($form_id, 'client_form');
+
+    if ($pos !== FALSE) {
+      $form['#attached']['css'][] = drupal_get_path('module', 'sba_message_action')
+        . '/css/message-action-form-layouts.css';
+
+      // Create a container on the form for all messages.
+      $form['sba_messages'] = array(
+        '#type' => 'container',
+        '#tree' => TRUE,
+        '#attributes' => array(
+          'id' => array('sba-messages-form'),
+        ),
+      );
+
+      $multiple = count($form['#node']->messages) > 1 ? TRUE : FALSE;
+      // Create a set of fields for each message assigned to the form.
+      foreach ($form['#node']->messages as $message) {
+        sba_message_action_editable_message_form($form['sba_messages'], $message, $multiple);
+      }
+
+      $form['#validate'][] = 'sba_message_action_form_validate';
+      $form['#submit'][] = 'sba_message_action_form_submit';
+    }
+  }
+}
+
+
+/**
+ * Build a form to represent each message attached to the action node. This
+ * function will need to be sophisticated enough to handle both read-only
+ * and editable messages. If it is a ready only message the form should be
+ * presented without inputs and the message properties can be stashed in
+ * 'value' type field elements so they can be read on submission (alternately
+ * read-only messages could be reloaded during submission if that's easier -
+ * might be a peformance hit though.
+ *
+ * $form in this case represents the webform_client_form.
+ */
+function sba_message_action_editable_message_form(&$form, $message, $multiple) {
+  $wrapper = entity_metadata_wrapper('sba_message', $message);
+
+  $form['message'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Your Message'),
+    '#attributes' => array('class' => array('sba-message')),
+  );
+
+  $form['message']['message_id'] = array(
+    '#type' => 'value',
+    '#value' => $message->data['message_id'],
+  );
+
+  $form['message']['sba_message_id'] = array(
+    '#type' => 'value',
+    '#value' => $message->sba_message_id,
+  );
+
+  $subject = $wrapper->field_sba_subject->value();
+
+  if ($wrapper->field_subject_editable->value() == 1) {
+    $form['message']['subject'] = array(
+      '#type' => 'textfield',
+      '#title' => t('Subject'),
+      '#default_value' => $subject,
+    );
+  }
+  else {
+
+    $form['message']['subject_show'] = array(
+      '#type' => 'item',
+      '#title' => t('Subject'),
+      '#markup' => check_plain($subject),
+    );
+
+    $form['message']['subject'] = array(
+      '#type' => 'value',
+      '#value' => $subject,
+    );
+  }
+
+  $body = $wrapper->field_sba_message->value();
+  $editable = $wrapper->field_user_editable[0]->value() == 'editable' ? TRUE : FALSE;
+  $required = $wrapper->field_editable_area_optional[0]->value() == 'required' ? TRUE : FALSE;
+
+  $form['message']['body'] = array(
+    '#type' => 'value',
+    '#value' => $body,
+  );
+
+
+  if(!empty($body)) {
+    if($editable) {
+      $title = t('Introduction');
+    }
+    else {
+      $title = t('Message');
+    }
+    $form['message']['body_show'] = array(
+      '#type' => 'item',
+      '#title' => $title,
+      '#markup' => $body,
+    );
+  }
+
+  if ($wrapper->field_user_editable[0]->value() == 'editable') {
+
+    $form['message']['body_editable'] = array(
+      '#title' => t('Your Message'),
+      '#type' => 'textarea',
+      '#default_value' => $wrapper->field_editable_area->value(),
+    );
+
+    $concl = $wrapper->field_bottom_conclusion->value();
+    if(!empty($concl)) {
+      $form['message']['body_bottom'] = array(
+        '#type' => 'item',
+        '#title' => t('Conclusion'),
+        '#markup' => check_plain($concl),
+      );
+    }
+  }
+
+  $form['message']['signature'] = array(
+    '#markup' => '<p>' . $wrapper->field_sba_signature->value() . '</p>',
+  );
+}
+
+
+/**
+ * Validation handler for message action forms.
+ */
+function sba_message_action_form_validate($form, &$form_state) {
+  // Check to see if the editable body field was required to be
+  // edited by the user. If so compare the field to ensure it was
+  // indeed changed. If it wasn't set a validation error.
+}
+
+/**
+ * Submit handler for message action forms.
+ *
+ * Capture all messages, combine with contact information and
+ * submit to API.
+ */
+function sba_message_action_form_submit($form, &$form_state) {
+  // Create array of messages to submit for target resolution.
+  $messages = array();
+
+  foreach ($form_state['values']['sba_messages'] as $message) {
+    $messages[] = sba_message_action_build_message($message['sba_message_id'], $message['subject'], $message['body_editable']);
+  }
+
+  // Take the messages, combine with contact information submitted in webform
+  // fields and submit to API. Some of the logic in springboard_advocacy_webform_submit
+  // should probably broken out and callable from here.
+
+}
+
+/**
+ * Combines user edited message data with other static properties
+ * to create the final message to deliver to the transaction server.
+ */
+function sba_message_action_build_message($sba_message_id, $subject, $body_editable) {
+  // Load the message entity using the message entity id. We'll use the entity
+  // to construct the full message.
+  $message = entity_load('sba_message', array($sba_message_id));
+  $message = array_shift($message);
+  $wrapper = entity_metadata_wrapper('sba_message', $message);
+
+  // Construct message using static information in the entity and data changed by
+  // the end user. Something like:
+  $user_message = $wrapper->field_sba_greeting->value();
+  $user_message .= $wrapper->field_sba_message->value();
+  $user_message .= $body_editable;
+  $user_message .= $wrapper->field_bottom_conclusion->value();
+  $user_message .= $wrapper->field_sba_signature->value();
+
+  return $user_message;
+}
+
+
 
 /**
  * Implements hook_form_layouts_info().
@@ -124,8 +352,48 @@ function sba_message_action_form_layouts_info() {
 function sba_message_action_preprocess_two_column_message_right(&$vars) {
   $vars['message_call_to_action'] = drupal_render($vars['element']['body']);
   $vars['message_image'] = drupal_render($vars['element']['field_message_action_img']);
-  $vars['message_fieldset'] = drupal_render($vars['element']['submitted']['message_fieldset']);
+  $vars['message_fieldset'] = drupal_render($vars['element']['webform']['#form']['sba_messages']);
   $vars['form'] = $vars['element'];
 }
 
 
+
+
+
+
+
+
+
+
+/**
+ * Implements hook_node_view.
+ *
+ * Theme the messages into the node's content.
+ */
+//function sba_message_action_node_view($node, $view_mode, $langcode) {
+//  if ($node->type == 'sba_message_action') {
+//    $node->content['messages'] = array(
+//      '#markup' => theme('sba_message_action_messages', array('messages' => $node->messages)),
+//      '#weight' => 100,
+//    );
+//  }
+//}
+
+
+//function sba_message_action_theme() {
+//  return array(
+//    'sba_message_action_messages' => array(
+//      'variables' => array('messages' => array()),
+//    ),
+//  );
+//}
+//
+//function theme_sba_message_action_messages($vars) {
+//  $output = '';
+//  foreach ($vars['messages'] as $message) {
+//    $controller = entity_get_controller('sba_message');
+//    $content = $controller->view(array($message->sba_message_id => $message));
+//      $output .= drupal_render($content);
+//  }
+//   return $output;
+//}

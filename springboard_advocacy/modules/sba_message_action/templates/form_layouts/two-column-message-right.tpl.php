@@ -22,7 +22,7 @@
       <?php print drupal_render_children($form); ?>
     </div>
     <div id="right" class="span6">
-      <?php print $message_fieldset; ?> d
+      <?php print $message_fieldset; ?>
     </div>
   </div>
 </div>
