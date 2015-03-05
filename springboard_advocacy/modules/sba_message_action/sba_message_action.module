@@ -19,6 +19,26 @@ function sba_message_action_node_insert($node) {
   if($node->type == 'sba_message_action') {
     module_load_include('inc', 'webform', 'includes/webform.components');
 
+    $fields[] = array(
+      'nid' => $node->nid,
+      'form_key' => 'sba_salutation',
+      'pid' => 0,
+      'name' => t('Salutation'),
+      'type' => 'select',
+      'mandatory' => 1,
+      'weight' => -10,
+      'email' => 1,
+      'value' => 'mr',
+      'extra' => array(
+        'description' => t(''),
+        'items' => "mr|Mr. \nmrs|Mrs. \nms|Ms.",
+        'multiple' => 0,
+        'aslist' => 1,
+        'title_display' => 'none',
+
+      ),
+    );
+
     //add custom fields for the messages
     $fields[] = array(
       'nid' => $node->nid,
@@ -187,21 +207,29 @@ function sba_message_action_form_alter(&$form, &$form_state, $form_id) {
  *
  * $form in this case represents the webform_client_form.
  */
-function sba_message_action_editable_message_form(&$form, $message, $multiple) {
+function sba_message_action_editable_message_form(&$form, $message, $multiple)
+{
   $wrapper = entity_metadata_wrapper('sba_message', $message);
+  if (!$multiple) {
+    $form['message'][] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Your Message'),
+      '#attributes' => array('class' => array('sba-message')),
+    );
+  }
+  else {
+    $form['message'][] = array(
+      '#type' => 'container',
+      '#attributes' => array('class' => array('sba-message')),
+    );
+  }
 
-  $form['message'] = array(
-    '#type' => 'fieldset',
-    '#title' => t('Your Message'),
-    '#attributes' => array('class' => array('sba-message')),
-  );
-
-  $form['message']['message_id'] = array(
+  $form['message'][]['message_id'] = array(
     '#type' => 'value',
     '#value' => $message->data['message_id'],
   );
 
-  $form['message']['sba_message_id'] = array(
+  $form['message'][]['sba_message_id'] = array(
     '#type' => 'value',
     '#value' => $message->sba_message_id,
   );
@@ -209,21 +237,22 @@ function sba_message_action_editable_message_form(&$form, $message, $multiple) {
   $subject = $wrapper->field_sba_subject->value();
 
   if ($wrapper->field_subject_editable->value() == 1) {
-    $form['message']['subject'] = array(
+    $form['message'][]['subject'] = array(
       '#type' => 'textfield',
       '#title' => t('Subject'),
       '#default_value' => $subject,
     );
   }
   else {
+    if (!$multiple) {
+      $form['message'][]['subject_show'] = array(
+        '#type' => 'item',
+        '#title' => t('Subject'),
+        '#markup' => check_plain($subject),
+      );
+    }
 
-    $form['message']['subject_show'] = array(
-      '#type' => 'item',
-      '#title' => t('Subject'),
-      '#markup' => check_plain($subject),
-    );
-
-    $form['message']['subject'] = array(
+    $form['message'][]['subject'] = array(
       '#type' => 'value',
       '#value' => $subject,
     );
@@ -233,29 +262,27 @@ function sba_message_action_editable_message_form(&$form, $message, $multiple) {
   $editable = $wrapper->field_user_editable[0]->value() == 'editable' ? TRUE : FALSE;
   $required = $wrapper->field_editable_area_optional[0]->value() == 'required' ? TRUE : FALSE;
 
-  $form['message']['body'] = array(
+  $form['message'][]['body'] = array(
     '#type' => 'value',
     '#value' => $body,
   );
 
-
-  if(!empty($body)) {
-    if($editable) {
-      $title = t('Introduction');
-    }
-    else {
-      $title = t('Message');
-    }
-    $form['message']['body_show'] = array(
-      '#type' => 'item',
-      '#title' => $title,
-      '#markup' => $body,
-    );
+  if(!empty($body) && !$multiple) {
+      if ($editable) {
+        $title = t('Introduction');
+      } else {
+        $title = t('Message');
+      }
+      $form['message'][]['body_show'] = array(
+        '#type' => 'item',
+        '#title' => $title,
+        '#markup' => $body,
+      );
   }
 
-  if ($wrapper->field_user_editable[0]->value() == 'editable') {
+  if ($wrapper->field_user_editable[0]->value() == 'editable' && !$multiple) {
 
-    $form['message']['body_editable'] = array(
+    $form['message'][]['body_editable'] = array(
       '#title' => t('Your Message'),
       '#type' => 'textarea',
       '#default_value' => $wrapper->field_editable_area->value(),
@@ -263,17 +290,18 @@ function sba_message_action_editable_message_form(&$form, $message, $multiple) {
 
     $concl = $wrapper->field_bottom_conclusion->value();
     if(!empty($concl)) {
-      $form['message']['body_bottom'] = array(
+      $form['message'][]['body_bottom'] = array(
         '#type' => 'item',
         '#title' => t('Conclusion'),
         '#markup' => check_plain($concl),
       );
     }
   }
-
-  $form['message']['signature'] = array(
-    '#markup' => '<p>' . $wrapper->field_sba_signature->value() . '</p>',
-  );
+  if(!$multiple) {
+    $form['message'][]['signature'] = array(
+      '#markup' => '<p>' . $wrapper->field_sba_signature->value() . '</p>',
+    );
+  }
 }
 
 
