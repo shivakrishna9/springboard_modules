@@ -100,9 +100,9 @@
     width: 95%;
 }
 
-#edit-sba-messages-message-body-editable {
+textarea[id*="edit-sba-messages-message"] {
 width: 100%;
-min-height: 300px;
+min-height: 200px;
 }
 
 #edit-actions {

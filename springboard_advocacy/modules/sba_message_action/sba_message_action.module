@@ -5,7 +5,7 @@
  */
 
 function sba_message_action_node_presave($node) {
-  if (!$node->nid) {
+  if (empty($node->nid)) {
     $node->webform['submit_text'] = t('Send your message');
   }
 }
