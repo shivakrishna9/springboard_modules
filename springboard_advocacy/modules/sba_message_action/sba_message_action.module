@@ -236,7 +236,7 @@ function sba_message_action_editable_message_form(&$form, $message, $multiple)
 
   $subject = $wrapper->field_sba_subject->value();
 
-  if ($wrapper->field_subject_editable->value() == 1) {
+  if ($wrapper->field_subject_editable->value() != 'Not editable') {
     $form['message'][]['subject'] = array(
       '#type' => 'textfield',
       '#title' => t('Subject'),
