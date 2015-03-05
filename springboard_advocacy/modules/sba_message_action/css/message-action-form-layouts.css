@@ -1,13 +1,14 @@
+.row-fluid,
+.row-fluid[class*="span"] {
+    min-height: 1px;
+}
+
+
 #sba-messages-form label {
     font-weight: bold;
 }
 
-#edit-sba-messages-message-body-editable {
-    width: 100%;
-    min-height: 300px;
-}
-
-#message-action-form-column-wrapper #edit-actions {
+#message-action-form-2col-right-column-wrapper #edit-actions {
     clear:both;
     background-color: #fff;
     border-top: none;
@@ -15,8 +16,8 @@
     margin: 0;
 }
 
-#message-action-form-column-wrapper #edit-actions input {
-    width: 100%;
+#message-action-form-2col-right-column-wrapper #edit-actions input {
+    width: 97.5%;
     background: #247AAD;
     border: none;
     border-radius: 4px;
@@ -25,12 +26,126 @@
     font-size: 1.5em;
     padding: 10px 0;
     text-shadow: none;
-
-
 }
-#message-action-form-column-wrapper #edit-actions input:hover {
+
+
+#message-action-form-2col-right-column-wrapper #image img {
+    display: block;
+    margin: 0 auto;
+}
+
+#message-action-form-2col-right-column-wrapper #edit-actions input:hover {
     background: #1E72A3;
 }
-#sba-messages-form {
+
+#message-action-form-2col-right-column-wrapper #sba-messages-form {
     clear: both;
 }
+
+#message-action-form-2col-right-column-wrapper #webform-component-sba-salutation.control-group {
+    width: 20%;
+    float: left;
+    clear:none;
+    margin-top: 24px;
+}
+#message-action-form-2col-right-column-wrapper #webform-component-sbp-first-name.control-group,
+#message-action-form-2col-right-column-wrapper #webform-component-sbp-last-name.control-group {
+    float: left;
+    clear:none;
+    width:39.5%;
+}
+#message-action-form-2col-right-column-wrapper #webform-component-sba-salutation.control-group select {
+    width: 90%;
+}
+
+
+#message-action-form-2col-right-column-wrapper #webform-component-sbp-first-name.control-group input,
+#message-action-form-2col-right-column-wrapper #webform-component-sbp-last-name.control-group input {
+    width:90%;
+}
+
+#message-action-form-2col-right-column-wrapper #webform-component-mail.control-group input {
+    width: 95%;
+}
+
+#message-action-form-2col-right-column-wrapper #webform-component-sbp-address.control-group,
+#message-action-form-2col-right-column-wrapper #webform-component-sbp-address-line-2.control-group {
+    float: left;
+    clear:none;
+    width:50%;
+}
+
+#message-action-form-2col-right-column-wrapper #webform-component-sbp-address.control-group input,
+#message-action-form-2col-right-column-wrapper #webform-component-sbp-address-line-2.control-group input {
+    width:90%;
+}
+
+#message-action-form-2col-right-column-wrapper #webform-component-sbp-city.control-group input {
+    width: 95%;
+}
+
+#message-action-form-2col-right-column-wrapper #webform-component-sbp-state.control-group,
+#message-action-form-2col-right-column-wrapper #webform-component-sbp-zip.control-group {
+    float: left;
+    clear:none;
+    width:50%;
+}
+
+#message-action-form-2col-right-column-wrapper #webform-component-sbp-state.control-group select,
+#message-action-form-2col-right-column-wrapper #webform-component-sbp-zip.control-group input {
+    width:90%;
+}
+
+#message-action-form-2col-right-column-wrapper #webform-component-sba-phone.control-group input {
+    width: 95%;
+}
+
+#edit-sba-messages-message-body-editable {
+width: 100%;
+min-height: 300px;
+}
+
+#edit-actions {
+clear: both;
+}
+
+
+
+
+
+/*div.field-name-field-message-action-img {*/
+/*float: right;*/
+/*margin-left: 20px;*/
+/*min-width: 30%;*/
+/*}*/
+
+/*.webform-client-form {*/
+/*position: relative;*/
+/*margin-top: 1em;*/
+/*}*/
+/*.webform-client-form .control-group {*/
+/*width: 60%;*/
+/*}*/
+
+/*#webform-component-sbp-first-name.control-group,*/
+/*#webform-component-sbp-last-name.control-group {*/
+/*width: 30%;*/
+/*float: left;*/
+/*clear:none;*/
+/*}*/
+
+
+/*#sba-messages-form {*/
+/*position: absolute;*/
+/*right: 0;*/
+/*width: 40%;*/
+/*clear: none;*/
+/*}*/
+
+/*#sba-messages-form .control-group {*/
+/*width: auto;*/
+/*float: none;*/
+/*}*/
+
+
+
