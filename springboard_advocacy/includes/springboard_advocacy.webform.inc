@@ -1,8 +1,7 @@
 <?php
 
 /**
- * Submit handler sends to Target Resolver on API server
- * 
+ *
  * Gets Zip+4 from Smarty streets.
  * Builds a webform user contact array with zip, county and lat/long
  * Gets the messages associated with the webform and prepares them for sending
@@ -10,37 +9,38 @@
  * Merges the contact, messages, and form_id and sends to the target resolver.
  *
  */
-function springboard_advocacy_webform_submit($form, $form_state) {
+
+
+function springboard_advocacy_send_message($user_message, $form_state) {
+
+  $values = $form_state['values'];
+  $webform_values = $values['submitted_tree'];
+  $zip = '';
+
   module_load_include('inc', 'springboard_advocacy', 'includes/springboard_advocacy.smarty_streets');
 
-  $values =$form_state['values'];
-  $webform_values = $values['submitted_tree'];
   $geo = springboard_advocacy_smarty_lookup($webform_values);
-  if (!empty($geo)) {
-    $_SESSION['alert_geo'] = $geo;
-    if(!empty($geo['zip']) && !empty($geo['plus4'])) {
-       $zip = $geo['zip'] . '-' . $geo['plus4'];
-    }
-  }
 
+  if (!empty($geo) && !empty($geo['zip']) && !empty($geo['plus4'])) {
+    $zip = $geo['zip'] . '-' . $geo['plus4'];
+  }
   if(!empty($zip)) {
     $contact = springboard_advocacy_build_contact($webform_values, $zip, $geo);
     $form_id = $values['advocacy_id'];
-    if(isset($values['messages'])) {
-      $messages = springboard_advocacy_build_messages($values['messages']);
+    $messages = springboard_advocacy_build_messages($user_message);
 
-      $submission = array(
-        'contact' => $contact,
-        'form_id' => $form_id,
-        'messages' => $messages,
-      );
-      $loader = new AdvocacyApiClientLoader();
-      $client = $loader->getClient();
-      $response = $client->resolveTargets($submission);
-      if (!empty($response->data)) {
+    $submission = array(
+      'contact' => $contact,
+      'form_id' => $form_id,
+      'messages' => $messages,
+    );
+
+    $loader = new AdvocacyApiClientLoader();
+    $client = $loader->getClient();
+    $response = $client->resolveTargets($submission);
+    if (!empty($response->data)) {
 //      $persons = springboard_advocacy_prep_for_display($response->data);
 //      $_SESSION['legislators'] = $persons;
-      }
     }
   }
 }
@@ -51,21 +51,19 @@ function springboard_advocacy_webform_submit($form, $form_state) {
  * @param $message_ids
  * @return array
  */
-function springboard_advocacy_build_messages($message_ids) {
-    $all_messages = entity_load('sba_message', $message_ids);
+function springboard_advocacy_build_messages($user_message) {
+    $all_messages = entity_load('sba_message', array_keys($user_message));
     $messages = array();
     $x = 0;
     foreach ($all_messages as $message) {
       $message_wrapper = entity_metadata_wrapper('sba_message', $message);
-      $message_id = $message->data['message_id'];
+      $message_unique_id = $message->data['message_id'];
       $weight = !empty($message->data['precedence']) ? $message->data['weight'] : $x++;
       //$group_id = $message->data['group_id'];
-      $body = $message_wrapper->field_sba_message->value();
-      $subject = $message_wrapper->field_sba_subject->value();
       $messages[$weight] = array(
-        'message_id' => $message_id,
-        'subject' => $subject,
-        'body' => $body,
+        'message_id' => $message_unique_id,
+        'subject' => $user_message[$message->sba_message_id]['subject'],
+        'body' => $user_message[$message->sba_message_id]['body'],
         'precedence' => !empty($message->data['precedence']) ? 1 : 0,
        );
     }

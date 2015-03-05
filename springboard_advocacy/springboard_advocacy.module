@@ -250,7 +250,7 @@ function springboard_advocacy_form_alter(&$form, &$form_state, $form_id) {
 
       if (!empty($node->advocacy_id) && $pos !== FALSE) {
         $form['advocacy_id'] = array('#type' => 'hidden', '#value' => $node->advocacy_id);
-        $form['#submit'][] = 'springboard_advocacy_webform_submit';
+       // $form['#submit'][] = 'springboard_advocacy_webform_submit';
       }
 
     }

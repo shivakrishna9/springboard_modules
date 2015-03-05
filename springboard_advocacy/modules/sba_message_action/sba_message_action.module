@@ -211,25 +211,25 @@ function sba_message_action_editable_message_form(&$form, $message, $multiple)
 {
   $wrapper = entity_metadata_wrapper('sba_message', $message);
   if (!$multiple) {
-    $form['message'][] = array(
+    $form['message'][$message->sba_message_id] = array(
       '#type' => 'fieldset',
       '#title' => t('Your Message'),
       '#attributes' => array('class' => array('sba-message')),
     );
   }
   else {
-    $form['message'][] = array(
+    $form['message'][$message->sba_message_id] = array(
       '#type' => 'container',
       '#attributes' => array('class' => array('sba-message')),
     );
   }
 
-  $form['message'][]['message_id'] = array(
+  $form['message'][$message->sba_message_id]['message_id'] = array(
     '#type' => 'value',
     '#value' => $message->data['message_id'],
   );
 
-  $form['message'][]['sba_message_id'] = array(
+  $form['message'][$message->sba_message_id]['sba_message_id'] = array(
     '#type' => 'value',
     '#value' => $message->sba_message_id,
   );
@@ -237,7 +237,7 @@ function sba_message_action_editable_message_form(&$form, $message, $multiple)
   $subject = $wrapper->field_sba_subject->value();
 
   if ($wrapper->field_subject_editable->value() != 'Not editable') {
-    $form['message'][]['subject'] = array(
+    $form['message'][$message->sba_message_id]['subject'] = array(
       '#type' => 'textfield',
       '#title' => t('Subject'),
       '#default_value' => $subject,
@@ -245,14 +245,14 @@ function sba_message_action_editable_message_form(&$form, $message, $multiple)
   }
   else {
     if (!$multiple) {
-      $form['message'][]['subject_show'] = array(
+      $form['message'][$message->sba_message_id]['subject_show'] = array(
         '#type' => 'item',
         '#title' => t('Subject'),
         '#markup' => check_plain($subject),
       );
     }
 
-    $form['message'][]['subject'] = array(
+    $form['message'][$message->sba_message_id]['subject'] = array(
       '#type' => 'value',
       '#value' => $subject,
     );
@@ -263,18 +263,18 @@ function sba_message_action_editable_message_form(&$form, $message, $multiple)
   $required = $wrapper->field_editable_area_optional[0]->value() == 'required' ? TRUE : FALSE;
   $greeting = $wrapper->field_sba_placeholder_greeting->value();
 
-  $form['message'][]['greeting_show'] = array(
+  $form['message'][$message->sba_message_id]['greeting_show'] = array(
     '#type' => 'item',
     '#title' =>'',
     '#markup' => $greeting,
   );
 
-  $form['message'][]['greeting'] = array(
+  $form['message'][$message->sba_message_id]['greeting'] = array(
     '#type' => 'value',
     '#value' => $wrapper->field_sba_greeting->value(),
   );
 
-  $form['message'][]['body'] = array(
+  $form['message'][$message->sba_message_id]['body'] = array(
     '#type' => 'value',
     '#value' => $body,
   );
@@ -285,7 +285,7 @@ function sba_message_action_editable_message_form(&$form, $message, $multiple)
       } else {
         $title = t('Message');
       }
-      $form['message'][]['body_show'] = array(
+      $form['message'][$message->sba_message_id]['body_show'] = array(
         '#type' => 'item',
         '#title' => $title,
         '#markup' => $body,
@@ -294,7 +294,7 @@ function sba_message_action_editable_message_form(&$form, $message, $multiple)
 
   if ($wrapper->field_user_editable[0]->value() == 'editable' && !$multiple) {
 
-    $form['message'][]['body_editable'] = array(
+    $form['message'][$message->sba_message_id]['body_editable'] = array(
       '#title' => t('Your Message'),
       '#type' => 'textarea',
       '#default_value' => $wrapper->field_editable_area->value(),
@@ -302,7 +302,7 @@ function sba_message_action_editable_message_form(&$form, $message, $multiple)
 
     $concl = $wrapper->field_bottom_conclusion->value();
     if(!empty($concl)) {
-      $form['message'][]['body_bottom'] = array(
+      $form['message'][$message->sba_message_id]['body_bottom'] = array(
         '#type' => 'item',
         '#title' => t('Conclusion'),
         '#markup' => check_plain($concl),
@@ -310,7 +310,7 @@ function sba_message_action_editable_message_form(&$form, $message, $multiple)
     }
   }
   if(!$multiple) {
-    $form['message'][]['signature'] = array(
+    $form['message'][$message->sba_message_id]['signature'] = array(
       '#markup' => '<p>' . $wrapper->field_sba_signature->value() . '</p>',
     );
   }
@@ -336,13 +336,12 @@ function sba_message_action_form_submit($form, &$form_state) {
   // Create array of messages to submit for target resolution.
   $messages = array();
 
-  foreach ($form_state['values']['sba_messages'] as $message) {
-    $messages[] = sba_message_action_build_message($message['sba_message_id'], $message['subject'], $message['body_editable']);
+  foreach ($form_state['values']['sba_messages']['message'] as $id => $message) {
+    $messages[$id]['body'] = sba_message_action_build_message_bodies($message['sba_message_id'], $message['body_editable']);
+    $messages[$id]['subject'] = $message['subject'];
   }
-
-  // Take the messages, combine with contact information submitted in webform
-  // fields and submit to API. Some of the logic in springboard_advocacy_webform_submit
-  // should probably broken out and callable from here.
+  module_load_include('inc', 'springboard_advocacy', 'includes/springboard_advocacy.webform');
+  springboard_advocacy_send_message($messages, $form_state);
 
 }
 
@@ -350,25 +349,24 @@ function sba_message_action_form_submit($form, &$form_state) {
  * Combines user edited message data with other static properties
  * to create the final message to deliver to the transaction server.
  */
-function sba_message_action_build_message($sba_message_id, $subject, $body_editable) {
+function sba_message_action_build_message_bodies($sba_message_id, $body_editable) {
   // Load the message entity using the message entity id. We'll use the entity
   // to construct the full message.
   $message = entity_load('sba_message', array($sba_message_id));
   $message = array_shift($message);
   $wrapper = entity_metadata_wrapper('sba_message', $message);
 
-  // Construct message using static information in the entity and data changed by
-  // the end user. Something like:
-  $user_message = $wrapper->field_sba_greeting->value();
-  $user_message .= $wrapper->field_sba_message->value();
-  $user_message .= $body_editable;
-  $user_message .= $wrapper->field_bottom_conclusion->value();
-  $user_message .= $wrapper->field_sba_signature->value();
+  $user_message = array();
+  $user_message[] =  $wrapper->field_sba_greeting->value();
+  $user_message[] = $wrapper->field_sba_message->value();
+  $user_message[] = $body_editable;
+  $user_message[] = $wrapper->field_bottom_conclusion->value();
+  $user_message[] = $wrapper->field_sba_signature->value();
+
+  $user_message = implode("\n\n", array_filter($user_message));
 
   return $user_message;
 }
-
-
 
 /**
  * Implements hook_form_layouts_info().
