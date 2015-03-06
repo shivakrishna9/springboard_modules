@@ -29,10 +29,6 @@
 }
 
 
-#message-action-form-2col-right-column-wrapper #image img {
-    display: block;
-    margin: 0 auto;
-}
 
 #message-action-form-2col-right-column-wrapper #edit-actions input:hover {
     background: #1E72A3;
@@ -108,7 +104,15 @@ min-height: 200px;
 #edit-actions {
 clear: both;
 }
-
+.field-name-field-message-action-img {
+    float:right;
+    width: 30%;
+    padding-bottom: 2em;
+}
+.field-name-field-message-action-img img {
+    display: block;
+    margin: 0 auto;
+}
 
 
 
