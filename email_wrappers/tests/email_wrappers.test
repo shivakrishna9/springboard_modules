@@ -5,7 +5,7 @@
  * Common functions for all the secure prepopulate tests.
  */
 
-class EmailWrappersTestCase extends DrupalWebTestCase {
+class EmailWrappersTestCase extends AJAXTestCase {
 
   public static function getInfo() {
     return array(
@@ -73,15 +73,69 @@ class EmailWrappersTestCase extends DrupalWebTestCase {
     // confirm settings ui available
     $this->assertOptionSelected('edit-email-wrappers-email-template', 0, t('Email template selection field present on form with no default selected.'));
 
-    // confirm select ajax populates fields
+    // Confirm ajax commands are correct.
     $edit['email_wrappers_email_template'] = 2;
-    $this->drupalPostAJAX(NULL, $edit, 'email_wrappers_email_template');
-    $this->assertFieldByName('email_wrappers_bcc', 'bcc0@example.com', t('BCC default inherited from template selection'));
-    $this->assertFieldByName('subject_custom', 'Test webform submission mail', t('Subject default inherited from template selection'));
-    $this->assertFieldByName('from_address_custom', 'from@example.com', t('From address default inherited from template selection'));
-    $this->assertFieldByName('from_name_custom', 'Email Wrappers Test', t('From name default inherited from template selection'));
-    $this->assertFieldByName('email_wrappers_html_message', '<p>This is an html message</p>', t('HTML message default inherited from template selection'));
-    $this->assertFieldByName('email_wrappers_text_message', 'This is a text message', t('Text message default inherited from template selection'));
+    $commands = $this->drupalPostAJAX(NULL, $edit, 'email_wrappers_email_template');
+
+    $expected = array(
+      'command' => 'invoke',
+      'selector' => 'input[name=email_wrappers_bcc]',
+      'method' => 'val',
+      'arguments' => array(
+        0 => 'bcc0@example.com',
+      ),
+    );
+    $this->assertCommand($commands, $expected, 'BCC default inherited from template selection');
+
+    $expected = array(
+      'command' => 'invoke',
+      'selector' => 'input[name=subject_custom]',
+      'method' => 'val',
+      'arguments' => array(
+        0 => 'Test webform submission mail',
+      ),
+    );
+    $this->assertCommand($commands, $expected, 'Subject default inherited from template selection');
+
+    $expected = array (
+      'command' => 'invoke',
+      'selector' => 'input[name=from_address_custom]',
+      'method' => 'val',
+      'arguments' => array(
+        0 => 'from@example.com',
+      ),
+    );
+    $this->assertCommand($commands, $expected, 'From address default inherited from template selection');
+
+    $expected = array(
+      'command' => 'invoke',
+      'selector' => 'input[name=from_name_custom]',
+      'method' => 'val',
+      'arguments' => array(
+        0 => 'Email Wrappers Test',
+      ),
+    );
+    $this->assertCommand($commands, $expected, 'From name default inherited from template selection');
+
+    $expected = array(
+      'command' => 'invoke',
+      'selector' => 'textarea[name=email_wrappers_html_message]',
+      'method' => 'val',
+      'arguments' => array(
+         0 => '<p>This is an html message</p>',
+       ),
+    );
+    $this->assertCommand($commands, $expected, 'HTML message default inherited from template selection');
+
+    $expected = array(
+      'command' => 'invoke',
+      'selector' => 'textarea[name=email_wrappers_text_message]',
+      'method' => 'val',
+      'arguments' => array(
+        0 => 'This is a text message',
+      ),
+    );
+    $this->assertCommand($commands, $expected, 'Text message default inherited from template selection');
 
     // save
     $edit = array(
