@@ -352,7 +352,6 @@ function sba_message_action_form_validate($form, &$form_state) {
  * submit to API.
  */
 function sba_message_action_form_submit($form, &$form_state) {
-  dpm($form_state);
   // Create array of messages to submit for target resolution.
 //  $messages = array();
 //
