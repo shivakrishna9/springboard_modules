@@ -408,8 +408,8 @@ function sba_message_action_form_layouts_info() {
 }
 
 function sba_message_action_preprocess_two_column_message_right(&$vars) {
-  $vars['message_call_to_action'] = drupal_render($vars['element']['body']);
-  $vars['message_image'] = drupal_render($vars['element']['field_message_action_img']);
+//  $vars['message_call_to_action'] = drupal_render($vars['element']['body']);
+//  $vars['message_image'] = drupal_render($vars['element']['field_message_action_img']);
   $vars['webform'] = drupal_render($vars['element']['submitted']);
   $vars['message_fieldset'] = drupal_render($vars['element']['sba_messages']);
   $vars['form'] = $vars['element'];

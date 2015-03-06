@@ -391,7 +391,7 @@ function form_layouts_fundraiser_preprocess(&$vars) {
     $vars['payment_information_fieldset'] = drupal_render($vars['element']['submitted']['payment_information']);
     $vars['tribute_fieldset'] = drupal_render($vars['element']['submitted']['tribute_information']);
     // Place in a location the end template can pick up.
-    $vars['form'] = $vars['element']['webform']['#form'];
+    $vars['form'] = $vars['element'];
   }
 }
 
@@ -418,7 +418,7 @@ function form_layouts_type_is_layouts_enabled($type) {
  *   TRUE if the template is meant to theme the webform and not the whole node.
  */
 function form_layouts_template_themes_webform($template) {
-  if (isset($template['types']) && (in_array('fundraiser', $template['types']) || in_array('sba_message_action', $template['types']))) {
+  if (isset($template['types']) && (in_array('fundraiser', $template['types']))) {
     return TRUE;
   }
 
