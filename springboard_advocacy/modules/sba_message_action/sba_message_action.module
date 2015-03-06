@@ -337,7 +337,8 @@ function sba_message_action_form_submit($form, &$form_state) {
   $messages = array();
 
   foreach ($form_state['values']['sba_messages']['message'] as $id => $message) {
-    $messages[$id]['body'] = sba_message_action_build_message_bodies($message['sba_message_id'], $message['body_editable']);
+    $body_editable = isset( $message['body_editable']) ?  $message['body_editable'] : '';
+    $messages[$id]['body'] = sba_message_action_build_message_bodies($message['sba_message_id'], $body_editable);
     $messages[$id]['subject'] = $message['subject'];
   }
   module_load_include('inc', 'springboard_advocacy', 'includes/springboard_advocacy.webform');
@@ -388,10 +389,12 @@ function sba_message_action_form_layouts_info() {
 }
 
 function sba_message_action_preprocess_two_column_message_right(&$vars) {
+  $vars['goals'] = '<div class="wg-goal" style="display: none;" data-gid="1"></div>';
   $vars['message_call_to_action'] = drupal_render($vars['element']['body']);
   $vars['message_image'] = drupal_render($vars['element']['field_message_action_img']);
   $vars['message_fieldset'] = drupal_render($vars['element']['webform']['#form']['sba_messages']);
   $vars['form'] = $vars['element'];
+  $vars['social'] = token_replace('[sb_social:share_links]', array('node' => $vars['element']['#node']));
 }
 
 
