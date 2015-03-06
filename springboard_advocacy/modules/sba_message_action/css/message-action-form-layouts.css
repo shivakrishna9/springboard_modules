@@ -104,17 +104,19 @@ min-height: 200px;
 #edit-actions {
 clear: both;
 }
-.field-name-field-message-action-img {
+.node-sba-message-action .field-name-field-message-action-img {
     float:right;
     width: 30%;
-    padding-bottom: 2em;
+    padding: 5px 5px 2em 10px;
 }
-.field-name-field-message-action-img img {
+.node-sba-message-action .field-name-field-message-action-img img {
     display: block;
     margin: 0 auto;
 }
 
-
+.node-sba-message-action .field-name-body {
+    padding-left: 20px;
+}
 
 
 /*div.field-name-field-message-action-img {*/
