@@ -3,7 +3,13 @@
     min-height: 1px;
 }
 
+#take-action-wrapper {
+    width: 100%;
+}
 
+#take-action-wrapper fieldset legend {
+font-size: 18px;
+}
 #sba-messages-form label {
     font-weight: bold;
 }
@@ -28,8 +34,6 @@
     text-shadow: none;
 }
 
-
-
 #message-action-form-2col-right-column-wrapper #edit-actions input:hover {
     background: #1E72A3;
 }
@@ -44,16 +48,22 @@
     clear:none;
     margin-top: 24px;
 }
+
 #message-action-form-2col-right-column-wrapper #webform-component-sbp-first-name.control-group,
 #message-action-form-2col-right-column-wrapper #webform-component-sbp-last-name.control-group {
     float: left;
     clear:none;
     width:39.5%;
+    -webkit-box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    box-sizing: border-box;
+    padding-left: 10px;
+
 }
+
 #message-action-form-2col-right-column-wrapper #webform-component-sba-salutation.control-group select {
     width: 90%;
 }
-
 
 #message-action-form-2col-right-column-wrapper #webform-component-sbp-first-name.control-group input,
 #message-action-form-2col-right-column-wrapper #webform-component-sbp-last-name.control-group input {
@@ -97,13 +107,14 @@
 }
 
 textarea[id*="edit-sba-messages-message"] {
-width: 100%;
+width: 95%;
 min-height: 200px;
 }
 
 #edit-actions {
 clear: both;
 }
+
 .node-sba-message-action .field-name-field-message-action-img {
     float:right;
     width: 30%;

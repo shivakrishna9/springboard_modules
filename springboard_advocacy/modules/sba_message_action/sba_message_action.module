@@ -171,9 +171,14 @@ function sba_message_action_form_alter(&$form, &$form_state, $form_id) {
     $pos = strpos($form_id, 'client_form');
 
     if ($pos !== FALSE) {
-      $form['#attached']['css'][] = drupal_get_path('module', 'sba_message_action')
-        . '/css/message-action-form-layouts.css';
-
+      if(!empty($form['#node']->form_layouts)) {
+        $form['#attached']['css'][] = drupal_get_path('module', 'sba_message_action')
+          . '/css/message-action-form-layouts.css';
+      }
+      else {
+        $form['#attached']['css'][] = drupal_get_path('module', 'sba_message_action')
+          . '/css/no-form-layouts.css';
+      }
       // Create a container on the form for all messages.
       $form['sba_messages'] = array(
         '#type' => 'container',
@@ -282,7 +287,7 @@ function sba_message_action_editable_message_form(&$form, $message, $multiple)
 
   if(!empty($body) && !$multiple) {
       if ($editable) {
-        $title = t('Introduction');
+        $title = t('');
       } else {
         $title = t('Message');
       }
@@ -296,7 +301,7 @@ function sba_message_action_editable_message_form(&$form, $message, $multiple)
   if ($wrapper->field_user_editable[0]->value() == 'editable' && !$multiple) {
 
     $form['message'][$message->sba_message_id]['body_editable'] = array(
-      '#title' => t('Your Message'),
+      //'#title' => t('Your Message'),
       '#type' => 'textarea',
       '#default_value' => $wrapper->field_editable_area->value(),
     );
@@ -408,21 +413,62 @@ function sba_message_action_form_layouts_info() {
 }
 
 function sba_message_action_preprocess_two_column_message_right(&$vars) {
+   // dpm($vars);
 //  $vars['message_call_to_action'] = drupal_render($vars['element']['body']);
 //  $vars['message_image'] = drupal_render($vars['element']['field_message_action_img']);
   $vars['webform'] = drupal_render($vars['element']['submitted']);
   $vars['message_fieldset'] = drupal_render($vars['element']['sba_messages']);
   $vars['form'] = $vars['element'];
   $vars['social'] = token_replace('[sb_social:share_links]', array('node' => $vars['element']['#node']));
+  $vars['form_legend'] = t('Take action now!');
+  $vars['user_legend'] = t('Your Information');
+  $field = field_get_items('node', $vars['element']['#node'], 'field_message_action_img');
+  $output = field_view_value('node', $vars['element']['#node'], 'field_message_action_img', $field[0]);
+  $vars['image'] = drupal_render($output);
+  $field = field_get_items('node', $vars['element']['#node'], 'body');
+  $output = field_view_value('node', $vars['element']['#node'], 'body', $field[0]);
+  $vars['body'] = drupal_render($output);
+
 }
 
+function sba_message_action_preprocess_node(&$vars) {
+  if($vars['node']->type == 'sba_message_action') {
+    $vars['use_layouts'] = !empty($vars['form_layouts']) ? TRUE : FALSE;
+    if (empty($vars['use_layouts'])) {
+      $vars['content']['webform']['#theme_wrappers'][] = 'message_action_webform_wrapper';
+      $vars['content']['webform']['#form']['submitted']['#theme_wrappers'][] = 'message_action_submitted_wrapper';
+      $vars['content']['webform']['#form']['sba_messages']['#theme_wrappers'][] = 'message_action_messages_wrapper';
+    }
+  }
+}
 
+function theme_message_action_submitted_wrapper($vars) {
+  $legend = t('Your Information');
+  return '<div id = "left" class = "span5"><fieldset id="your-information-wrapper" class = "form-wrapper"><legend>' . $legend . '</legend>' . $vars['element']['#children']  . '</fieldset></div>';
+}
 
+function theme_message_action_messages_wrapper($vars) {
+  return '<div id = "right" class = "span7">' . $vars['element']['#children']  . '</div>';
+}
 
+function theme_message_action_webform_wrapper($vars) {
+  $legend = t('Take action now');
+  return ' <div class="row-fluid"><fieldset id="your-information-wrapper" class = "form-wrapper"><legend>' . $legend . '</legend>' . $vars['element']['#children']  . '</fieldset></div>';
+}
 
-
-
-
+function sba_message_action_theme() {
+  return array(
+    'message_action_submitted_wrapper' => array(
+      'render element'  => 'element',
+    ),
+    'message_action_messages_wrapper' => array(
+      'render element'  => 'element',
+    ),
+    'message_action_webform_wrapper' => array(
+      'render element'  => 'element',
+    ),
+  );
+}
 
 
 /**
