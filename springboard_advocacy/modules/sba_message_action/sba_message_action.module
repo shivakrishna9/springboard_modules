@@ -442,9 +442,7 @@ function sba_message_action_form_layouts_info() {
 }
 
 function sba_message_action_preprocess_two_column_message_right(&$vars) {
-
   sba_message_action_build_preprocess($vars);
-
 }
 
 function sba_message_action_preprocess_two_column_message_left(&$vars) {
@@ -464,7 +462,7 @@ function sba_message_action_build_preprocess(&$vars) {
   $vars['message_fieldset'] = drupal_render($vars['element']['sba_messages']);
   $vars['form'] = $vars['element'];
   $vars['social'] = token_replace('[sb_social:share_links]', array('node' => $vars['element']['#node']));
-  $vars['form_legend'] = t('Take action now!');
+  $vars['form_legend'] = t('Take Action Now!');
   $vars['user_legend'] = t('Your Information');
   $field = field_get_items('node', $vars['element']['#node'], 'field_message_action_img');
   $output = field_view_value('node', $vars['element']['#node'], 'field_message_action_img', $field[0]);
