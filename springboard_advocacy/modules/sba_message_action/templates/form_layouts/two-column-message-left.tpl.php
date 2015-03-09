@@ -18,19 +18,17 @@
   <fieldset id="take-action-wrapper" class = "form-wrapper"><legend><?php print $form_legend ?></legend>
     <div class = "fieldset-wrapper">
   <div class="row-fluid">
-    <div id="left" class="span5">
+    <div id="left" class="span7">
+      <?php print $message_fieldset; ?>
+    </div>
+    <div id="right" class="span5">
       <fieldset id="user-information-wrapper" class = "form-wrapper"><legend><?php print $user_legend ?></legend>
         <div class = "fieldset-wrapper">
-
-        <p><?php print $webform ?></p>
+          <p><?php print $webform ?></p>
         </div>
       </fieldset>
       <?php print drupal_render_children($form); ?>
-
       <p><?php print $social ?></p>
-    </div>
-    <div id="right" class="span7">
-      <?php print $message_fieldset; ?>
     </div>
     </div>
   </div>

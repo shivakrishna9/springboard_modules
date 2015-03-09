@@ -408,6 +408,15 @@ function sba_message_action_form_layouts_info() {
     'path' => drupal_get_path('module', 'sba_message_action') . '/templates/form_layouts',
     'hide title' => FALSE,
   );
+  $templates['two_column_message_left'] = array(
+    'name' => t('Two column: message left, CTA & Image top.'),
+    'types' => array('sba_message_action'),
+    'theme' => 'two_column_message_left',
+    'pattern' => 'two_column_message_left\'0-9\'+',
+    'template' => 'two-column-message-left',
+    'path' => drupal_get_path('module', 'sba_message_action') . '/templates/form_layouts',
+    'hide title' => FALSE,
+  );
 
   return $templates;
 }
@@ -416,6 +425,16 @@ function sba_message_action_preprocess_two_column_message_right(&$vars) {
    // dpm($vars);
 //  $vars['message_call_to_action'] = drupal_render($vars['element']['body']);
 //  $vars['message_image'] = drupal_render($vars['element']['field_message_action_img']);
+
+  sba_message_action_build_preprocess($vars);
+
+}
+
+function sba_message_action_preprocess_two_column_message_left(&$vars) {
+  sba_message_action_build_preprocess($vars);
+}
+
+function sba_message_action_build_preprocess(&$vars) {
   $vars['webform'] = drupal_render($vars['element']['submitted']);
   $vars['message_fieldset'] = drupal_render($vars['element']['sba_messages']);
   $vars['form'] = $vars['element'];
@@ -428,7 +447,6 @@ function sba_message_action_preprocess_two_column_message_right(&$vars) {
   $field = field_get_items('node', $vars['element']['#node'], 'body');
   $output = field_view_value('node', $vars['element']['#node'], 'body', $field[0]);
   $vars['body'] = drupal_render($output);
-
 }
 
 function sba_message_action_preprocess_node(&$vars) {
@@ -441,6 +459,7 @@ function sba_message_action_preprocess_node(&$vars) {
     }
   }
 }
+
 
 function theme_message_action_submitted_wrapper($vars) {
   $legend = t('Your Information');
