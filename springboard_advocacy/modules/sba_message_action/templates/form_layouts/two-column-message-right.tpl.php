@@ -6,7 +6,7 @@
 ?>
 
 
-<div id="message-action-form-2col-column-wrapper" class="container-fluid">
+<div id="message-action-form-2col-column-wrapper" class="container-fluid action-message-right">
   <div class="row-fluid">
     <div id="call-to-action" class="span8">
       <?php print $body; ?>
