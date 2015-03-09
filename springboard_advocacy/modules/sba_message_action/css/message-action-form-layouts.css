@@ -47,6 +47,9 @@ font-size: 18px;
     float: left;
     clear:none;
     margin-top: 24px;
+    -webkit-box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    box-sizing: border-box;
 }
 
 #message-action-form-2col-column-wrapper #webform-component-sbp-first-name.control-group,
@@ -62,7 +65,7 @@ font-size: 18px;
 }
 
 #message-action-form-2col-column-wrapper #webform-component-sba-salutation.control-group select {
-    width: 90%;
+    width: 100%;
 }
 
 #message-action-form-2col-column-wrapper #webform-component-sbp-first-name.control-group input,
@@ -79,6 +82,12 @@ font-size: 18px;
     float: left;
     clear:none;
     width:50%;
+    -webkit-box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    box-sizing: border-box;
+}
+#message-action-form-2col-column-wrapper #webform-component-sbp-address-line-2.control-group {
+    padding-left: 10px;
 }
 
 #message-action-form-2col-column-wrapper #webform-component-sbp-address.control-group input,
