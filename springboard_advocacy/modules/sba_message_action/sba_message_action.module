@@ -166,6 +166,11 @@ function sba_message_action_node_load($nodes, $types) {
  * Add message fields to the main webform form.
  */
 
+/**
+ * @param $form
+ * @param $form_state
+ * @param $form_id
+ */
 function sba_message_action_form_alter(&$form, &$form_state, $form_id) {
   if (isset($form['#node']) && $form['#node']->type == 'sba_message_action') {
     $pos = strpos($form_id, 'client_form');
@@ -322,7 +327,7 @@ function sba_message_action_editable_message_form(&$form, $message, $multiple)
   }
   if(!$multiple) {
     $form['message'][$message->sba_message_id]['signature'] = array(
-      '#markup' => '<p>Sincerely,<br />[Your name]<br />{Your Address]<br />[City, State, Zip]</p>',
+      '#markup' => '<p>Sincerely,<br />[Your name]<br />[Your Address]<br />[City, State, Zip]</p>',
     );
   }
 }
@@ -452,26 +457,59 @@ function sba_message_action_form_layouts_info() {
   return $templates;
 }
 
+/**
+ * @param $vars
+ */
 function sba_message_action_preprocess_two_column_message_right(&$vars) {
   sba_message_action_build_preprocess($vars);
 }
 
+/**
+ * @param $vars
+ */
 function sba_message_action_preprocess_two_column_message_left(&$vars) {
   sba_message_action_build_preprocess($vars);
 }
 
+/**
+ *
+ * Implements hook_preprocess_hook.
+ *
+ * Form layouts preprocess function.
+ *
+ * @param $vars
+ */
 function sba_message_action_preprocess_two_column_message_left_vertical(&$vars) {
   sba_message_action_build_preprocess($vars);
 }
 
+/**
+ * Implements hook_preprocess_hook.
+ *
+ * Form layouts preprocess function.
+ *
+ * @param $vars
+ */
 function sba_message_action_preprocess_two_column_body_left(&$vars) {
   sba_message_action_build_preprocess($vars);
 }
 
+/**
+ * Implements hook_preprocess_hook.
+ *
+ * Form layouts preprocess function.
+ *
+ * @param $vars
+ */
 function sba_message_action_preprocess_two_column_body_right(&$vars) {
   sba_message_action_build_preprocess($vars);
 }
 
+/**
+ * Helper function for form layouts preprocessors.
+ *
+ * @param $vars
+ */
 function sba_message_action_build_preprocess(&$vars) {
   $element = $vars['element'];
   $node = $element['#node'];
@@ -481,6 +519,7 @@ function sba_message_action_build_preprocess(&$vars) {
   $vars['form'] = $element;
   $vars['social'] = '';
 
+  // insert social icons
   if(module_exists('sb_social')) {
     $social_enabled = in_array($node->type, array_filter(variable_get('springboard_social_enabled_content_types', array())));
     $social_configured = variable_get('springboard_social_addthis_profile_id', FALSE);
@@ -489,16 +528,25 @@ function sba_message_action_build_preprocess(&$vars) {
     }
   }
 
+  //fieldset legends
   $vars['form_legend'] = t('Take Action Now!');
   $vars['user_legend'] = t('Your Information');
+
+  // We remove image field in the default node--sba-message-action.tpl.php
+  // and put it into form layouts here
   $image_field = field_get_items('node', $node, 'field_message_action_img');
   $image = field_view_value('node', $node, 'field_message_action_img', $image_field[0]);
   if(!empty($image['#item'])) {
     $vars['image'] = drupal_render($image);
   }
+
+  // We remove call to action field in the default node--sba-message-action.tpl.php
+  // and put it into form layouts here
   $body_field = field_get_items('node', $node, 'body');
   $body = field_view_value('node', $node, 'body', $body_field[0]);
   $vars['body'] = drupal_render($body);
+
+  // Insert webform goals.
   if (module_exists('webform_goals')) {
     $goals = webform_goal_load_multiple($node->nid);
     $goal = array_pop($goals);  //get the most recently enabled goal
@@ -509,6 +557,14 @@ function sba_message_action_build_preprocess(&$vars) {
 
 }
 
+/**
+ * Implements hook_preprocess_node.
+ *
+ * Define theme wrappers for non-form-layouts nodes.
+ * So they can have a "layout".
+ *
+ * @param $vars
+ */
 function sba_message_action_preprocess_node(&$vars) {
   if($vars['node']->type == 'sba_message_action') {
     $vars['use_layouts'] = !empty($vars['form_layouts']) ? TRUE : FALSE;
@@ -521,20 +577,45 @@ function sba_message_action_preprocess_node(&$vars) {
 }
 
 
+/**
+ * Theme wrapper to create "Your Information" fieldset
+ * and fluid bootstrap divs on non-form-layout nodes.
+ *
+ * @param $vars
+ * @return string
+ */
 function theme_message_action_submitted_wrapper($vars) {
   $legend = t('Your Information');
   return '<div id = "left" class = "span5"><fieldset id="your-information-wrapper" class = "form-wrapper"><legend>' . $legend . '</legend>' . $vars['element']['#children']  . '</fieldset></div>';
 }
 
+/**
+ * Theme wrapper to create fluid bootstrap divs around "Your Message" fieldset
+ * on non-form-layout nodes.
+ *
+ * @param $vars
+ * @return string
+ */
 function theme_message_action_messages_wrapper($vars) {
   return '<div id = "right" class = "span7">' . $vars['element']['#children']  . '</div>';
 }
 
+/**
+ * Theme wrapper to create "Take Action Now" fieldset
+ * and fluid bootstrap divs on non-form-layout nodes.
+ *
+ * @param $vars
+ * @return string
+ */
 function theme_message_action_webform_wrapper($vars) {
   $legend = t('Take action now');
   return ' <div class="row-fluid"><fieldset id="webform-wrapper" class = "form-wrapper"><legend>' . $legend . '</legend>' . $vars['element']['#children']  . '</fieldset></div>';
 }
 
+/**
+ * Implements hook_theme
+ * @return array
+ */
 function sba_message_action_theme() {
   return array(
     'message_action_submitted_wrapper' => array(
