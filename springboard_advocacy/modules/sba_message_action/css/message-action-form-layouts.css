@@ -64,6 +64,18 @@ font-size: 18px;
     box-sizing: border-box;
 }
 
+#message-action-form-2col-column-wrapper.user-form-vertical #webform-component-sba-salutation.control-group {
+    width: 100%;
+    float: none;
+    clear:both;
+    margin-top: 0;
+    -webkit-box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    box-sizing: border-box;
+}
+
+
+
 #message-action-form-2col-column-wrapper #webform-component-sbp-first-name.control-group,
 #message-action-form-2col-column-wrapper #webform-component-sbp-last-name.control-group {
     float: left;
@@ -73,16 +85,32 @@ font-size: 18px;
     -moz-box-sizing: border-box;
     box-sizing: border-box;
     padding-left: 10px;
-
 }
 
-#message-action-form-2col-column-wrapper #webform-component-sba-salutation.control-group select {
+#message-action-form-2col-column-wrapper.user-form-vertical #webform-component-sbp-first-name.control-group,
+#message-action-form-2col-column-wrapper.user-form-vertical #webform-component-sbp-last-name.control-group {
+    float: none;
+    clear:both;
     width: 100%;
+    -webkit-box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    box-sizing: border-box;
+    padding-left: 0px;
+}
+
+
+#message-action-form-2col-column-wrapper #webform-component-sba-salutation.control-group select {
+    width: 98.5%;
 }
 
 #message-action-form-2col-column-wrapper #webform-component-sbp-first-name.control-group input,
 #message-action-form-2col-column-wrapper #webform-component-sbp-last-name.control-group input {
     width:90%;
+}
+
+#message-action-form-2col-column-wrapper.user-form-vertical #webform-component-sbp-first-name.control-group input,
+#message-action-form-2col-column-wrapper.user-form-vertical #webform-component-sbp-last-name.control-group input {
+    width:95%;
 }
 
 #message-action-form-2col-column-wrapper #webform-component-mail.control-group input {
@@ -98,13 +126,34 @@ font-size: 18px;
     -moz-box-sizing: border-box;
     box-sizing: border-box;
 }
+
+#message-action-form-2col-column-wrapper.user-form-vertical #webform-component-sbp-address.control-group,
+#message-action-form-2col-column-wrapper.user-form-vertical #webform-component-sbp-address-line-2.control-group {
+    float: none;
+    clear:both;
+    width:100%;
+    -webkit-box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    box-sizing: border-box;
+}
+
+
 #message-action-form-2col-column-wrapper #webform-component-sbp-address-line-2.control-group {
     padding-left: 10px;
+}
+
+#message-action-form-2col-column-wrapper.user-form-vertical #webform-component-sbp-address-line-2.control-group {
+    padding-left: 0;
 }
 
 #message-action-form-2col-column-wrapper #webform-component-sbp-address.control-group input,
 #message-action-form-2col-column-wrapper #webform-component-sbp-address-line-2.control-group input {
     width:90%;
+}
+
+#message-action-form-2col-column-wrapper.user-form-vertical #webform-component-sbp-address.control-group input,
+#message-action-form-2col-column-wrapper.user-form-vertical #webform-component-sbp-address-line-2.control-group input {
+    width:95%;
 }
 
 #message-action-form-2col-column-wrapper #webform-component-sbp-city.control-group input {
@@ -118,9 +167,24 @@ font-size: 18px;
     width:50%;
 }
 
+#message-action-form-2col-column-wrapper.user-form-vertical #webform-component-sbp-state.control-group,
+#message-action-form-2col-column-wrapper.user-form-vertical #webform-component-sbp-zip.control-group {
+    float: none;
+    clear:both;
+    width:100%;
+}
+
 #message-action-form-2col-column-wrapper #webform-component-sbp-state.control-group select,
 #message-action-form-2col-column-wrapper #webform-component-sbp-zip.control-group input {
     width:90%;
+}
+
+#message-action-form-2col-column-wrapper.user-form-vertical #webform-component-sbp-state.control-group select {
+    width:98.5%;
+
+}
+#message-action-form-2col-column-wrapper.user-form-vertical #webform-component-sbp-zip.control-group input {
+    width:95%;
 }
 
 #message-action-form-2col-column-wrapper #webform-component-sba-phone.control-group input {

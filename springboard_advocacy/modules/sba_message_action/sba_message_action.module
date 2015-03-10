@@ -322,7 +322,7 @@ function sba_message_action_editable_message_form(&$form, $message, $multiple)
   }
   if(!$multiple) {
     $form['message'][$message->sba_message_id]['signature'] = array(
-      '#markup' => '<p>' . $wrapper->field_sba_signature->value() . '</p>',
+      '#markup' => '<p>Sincerely,<br />[Your name]<br />{Your Address]<br />[City, State, Zip]</p>',
     );
   }
 }
@@ -399,17 +399,18 @@ function sba_message_action_build_message_bodies($sba_message_id, $body_editable
 function sba_message_action_form_layouts_info() {
   $templates = array();
 
-  $templates['two_column_message_right'] = array(
-    'name' => t('Two column: message right, CTA & Image top.'),
+  $templates['two_column_message_left_vertical'] = array(
+    'name' => t('Two column: message form left, vertical user form right'),
     'types' => array('sba_message_action'),
-    'theme' => 'two_column_message_right',
-    'pattern' => 'two_column_message_right\'0-9\'+',
-    'template' => 'two-column-message-right',
+    'theme' => 'two_column_message_left_vertical',
+    'pattern' => 'two_column_message_left_vertical\'0-9\'+',
+    'template' => 'two-column-message-left-vertical',
     'path' => drupal_get_path('module', 'sba_message_action') . '/templates/form_layouts',
     'hide title' => FALSE,
   );
+
   $templates['two_column_message_left'] = array(
-    'name' => t('Two column: message left, CTA & Image top.'),
+    'name' => t('Two column: message form left, horizontal user form right'),
     'types' => array('sba_message_action'),
     'theme' => 'two_column_message_left',
     'pattern' => 'two_column_message_left\'0-9\'+',
@@ -418,8 +419,18 @@ function sba_message_action_form_layouts_info() {
     'hide title' => FALSE,
   );
 
+  $templates['two_column_message_right'] = array(
+    'name' => t('Two column: message form right, horizontal user form Left.'),
+    'types' => array('sba_message_action'),
+    'theme' => 'two_column_message_right',
+    'pattern' => 'two_column_message_right\'0-9\'+',
+    'template' => 'two-column-message-right',
+    'path' => drupal_get_path('module', 'sba_message_action') . '/templates/form_layouts',
+    'hide title' => FALSE,
+  );
+
   $templates['two_column_body_left'] = array(
-    'name' => t('Two column: call to action and image left, form right.'),
+    'name' => t('Two column: call to action and image left, forms right.'),
     'types' => array('sba_message_action'),
     'theme' => 'two_column_body_left',
     'pattern' => 'two_column_body_left\'0-9\'+',
@@ -429,7 +440,7 @@ function sba_message_action_form_layouts_info() {
   );
 
   $templates['two_column_body_right'] = array(
-    'name' => t('Two column: call to action and image right, form left.'),
+    'name' => t('Two column: call to action and image right, forms left.'),
     'types' => array('sba_message_action'),
     'theme' => 'two_column_body_right',
     'pattern' => 'two_column_body_right\'0-9\'+',
@@ -446,6 +457,10 @@ function sba_message_action_preprocess_two_column_message_right(&$vars) {
 }
 
 function sba_message_action_preprocess_two_column_message_left(&$vars) {
+  sba_message_action_build_preprocess($vars);
+}
+
+function sba_message_action_preprocess_two_column_message_left_vertical(&$vars) {
   sba_message_action_build_preprocess($vars);
 }
 
