@@ -105,6 +105,11 @@
     ?>
 
   <?php if(!$use_layouts): ?>
+    <?php if(!empty($goal)): ?>
+      <div class="row-fluid">
+        <?php print $goal; ?>
+      </div>
+    <?php endif; ?>
     <div class="row-fluid">
       <div id="call-to-action" class="span8">
         <?php print render($content['body']); ?>

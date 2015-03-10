@@ -458,18 +458,36 @@ function sba_message_action_preprocess_two_column_body_right(&$vars) {
 }
 
 function sba_message_action_build_preprocess(&$vars) {
-  $vars['webform'] = drupal_render($vars['element']['submitted']);
-  $vars['message_fieldset'] = drupal_render($vars['element']['sba_messages']);
-  $vars['form'] = $vars['element'];
-  $vars['social'] = token_replace('[sb_social:share_links]', array('node' => $vars['element']['#node']));
+  $element = $vars['element'];
+  $node = $element['#node'];
+
+  $vars['webform'] = drupal_render($element['submitted']);
+  $vars['message_fieldset'] = drupal_render($element['sba_messages']);
+  $vars['form'] = $element;
+  $vars['social'] = '';
+
+  if(module_exists('sb_social')) {
+    $social_enabled = in_array($node->type, array_filter(variable_get('springboard_social_enabled_content_types', array())));
+    $social_configured = variable_get('springboard_social_addthis_profile_id', FALSE);
+    if ($social_enabled && !empty($social_configured)) {
+      $vars['social'] = token_replace('[sb_social:share_links]', array('node' => $node));
+    }
+  }
   $vars['form_legend'] = t('Take Action Now!');
   $vars['user_legend'] = t('Your Information');
-  $field = field_get_items('node', $vars['element']['#node'], 'field_message_action_img');
-  $output = field_view_value('node', $vars['element']['#node'], 'field_message_action_img', $field[0]);
-  $vars['image'] = drupal_render($output);
-  $field = field_get_items('node', $vars['element']['#node'], 'body');
-  $output = field_view_value('node', $vars['element']['#node'], 'body', $field[0]);
-  $vars['body'] = drupal_render($output);
+  $image_field = field_get_items('node', $node, 'field_message_action_img');
+  $image = field_view_value('node', $node, 'field_message_action_img', $image_field[0]);
+  $vars['image'] = drupal_render($image);
+  $body_field = field_get_items('node', $node, 'body');
+  $body = field_view_value('node', $node, 'body', $body_field[0]);
+  $vars['body'] = drupal_render($body);
+
+  $goals = webform_goal_load_multiple($node->nid);
+  $goal = array_pop($goals);  //get the most recently enabled goal
+  if(!empty($goal)) {
+    $vars['goal'] = '<div class="wg-goal" style="display: none;" data-gid="' . $goal['gid'] . '"></div>';
+  }
+
 }
 
 function sba_message_action_preprocess_node(&$vars) {
@@ -495,7 +513,7 @@ function theme_message_action_messages_wrapper($vars) {
 
 function theme_message_action_webform_wrapper($vars) {
   $legend = t('Take action now');
-  return ' <div class="row-fluid"><fieldset id="your-information-wrapper" class = "form-wrapper"><legend>' . $legend . '</legend>' . $vars['element']['#children']  . '</fieldset></div>';
+  return ' <div class="row-fluid"><fieldset id="webform-wrapper" class = "form-wrapper"><legend>' . $legend . '</legend>' . $vars['element']['#children']  . '</fieldset></div>';
 }
 
 function sba_message_action_theme() {

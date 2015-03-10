@@ -7,6 +7,11 @@
 
 
 <div id="message-action-form-2col-column-wrapper" class="container-fluid action-message-left">
+  <?php if(!empty($goal)): ?>
+    <div class="row-fluid">
+      <?php print $goal; ?>
+    </div>
+  <?php endif; ?>
   <div class="row-fluid">
     <div id="call-to-action" class="span8">
       <?php print $body; ?>

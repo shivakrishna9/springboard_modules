@@ -7,7 +7,11 @@
 
 
 <div id="message-action-form-2col-column-wrapper" class="container-fluid action-body-right">
-
+  <?php if(!empty($goal)): ?>
+    <div class="row-fluid">
+      <?php print $goal; ?>
+    </div>
+  <?php endif; ?>
   <div class="row-fluid">
     <div id="left" class="span7">
 
@@ -21,7 +25,7 @@
           </fieldset>
           <?php print drupal_render_children($form); ?>
         </div>
-    </fieldset>
+      </fieldset>
     </div>
 
     <div id="right" class="span5">
@@ -33,6 +37,7 @@
         <p><?php print $social ?></p>
       </div>
     </div>
+
   </div>
 
 </div>
