@@ -7,18 +7,19 @@
 
 
 <div id="message-action-form-2col-column-wrapper" class="container-fluid action-message-left">
-  <?php if(!empty($goal)): ?>
-    <div class="row-fluid">
-      <?php print $goal; ?>
-    </div>
-  <?php endif; ?>
   <div class="row-fluid">
-    <div id="call-to-action" class="span8">
+    <?php if(!empty($image)): ?>
+      <div id="call-to-action" class="span8">
       <?php print $body; ?>
     </div>
-    <div id="image" class="span4">
-      <?php print $image; ?>
-    </div>
+      <div id="image" class = "span4">
+        <?php print $image; ?>
+      </div>
+    <?php else: ?>
+    <div id="call-to-action" class="span12">
+        <?php print $body; ?>
+      </div>
+    <?php endif; ?>
   </div>
   <fieldset id="take-action-wrapper" class = "form-wrapper"><legend><?php print $form_legend ?></legend>
     <div class = "fieldset-wrapper">

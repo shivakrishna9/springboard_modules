@@ -15,9 +15,12 @@
 
   <div class="row-fluid">
     <div id="left" class="span5">
+      <?php if(!empty($image)): ?>
       <div id="image">
         <?php print $image; ?>
       </div>
+      <?php endif; ?>
+
       <div id="call-to-action">
         <?php print $body; ?>
         <p><?php print $social ?></p>

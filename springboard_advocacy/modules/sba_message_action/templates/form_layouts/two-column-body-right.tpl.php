@@ -29,9 +29,11 @@
     </div>
 
     <div id="right" class="span5">
-      <div id="image">
-        <?php print $image; ?>
-      </div>
+      <?php if(!empty($image)): ?>
+        <div id="image">
+          <?php print $image; ?>
+        </div>
+      <?php endif; ?>
       <div id="call-to-action">
         <?php print $body; ?>
         <p><?php print $social ?></p>

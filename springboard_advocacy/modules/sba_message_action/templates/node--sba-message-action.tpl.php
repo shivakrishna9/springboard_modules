@@ -105,23 +105,34 @@
     ?>
 
   <?php if(!$use_layouts): ?>
+
     <?php if(!empty($goal)): ?>
       <div class="row-fluid">
         <?php print $goal; ?>
       </div>
     <?php endif; ?>
+
     <div class="row-fluid">
-      <div id="call-to-action" class="span8">
-        <?php print render($content['body']); ?>
-      </div>
-      <div id="image" class="span4">
-        <?php  print render($content['field_message_action_img']) ?>
-      </div>
+      <?php if(!empty($content['field_message_action_img'][0]))  : ?>
+        <div id="call-to-action" class="span8">
+          <?php print render($content['body']); ?>
+        </div>
+        <div id="image" class="span4">
+          <?php  print render($content['field_message_action_img']) ?>
+        </div>
+      <?php else: ?>
+        <div id="call-to-action" class="span12">
+          <?php print render($content['body']); ?>
+        </div>
+      <?php endif; ?>
+
     </div>
-    <?php endif; ?>
-    <?php
-      print render($content);
-    ?>
+
+  <?php endif; ?>
+
+  <?php
+    print render($content);
+  ?>
   </div>
 
   <?php print render($content['links']); ?>

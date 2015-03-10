@@ -473,19 +473,23 @@ function sba_message_action_build_preprocess(&$vars) {
       $vars['social'] = token_replace('[sb_social:share_links]', array('node' => $node));
     }
   }
+
   $vars['form_legend'] = t('Take Action Now!');
   $vars['user_legend'] = t('Your Information');
   $image_field = field_get_items('node', $node, 'field_message_action_img');
   $image = field_view_value('node', $node, 'field_message_action_img', $image_field[0]);
-  $vars['image'] = drupal_render($image);
+  if(!empty($image['#item'])) {
+    $vars['image'] = drupal_render($image);
+  }
   $body_field = field_get_items('node', $node, 'body');
   $body = field_view_value('node', $node, 'body', $body_field[0]);
   $vars['body'] = drupal_render($body);
-
-  $goals = webform_goal_load_multiple($node->nid);
-  $goal = array_pop($goals);  //get the most recently enabled goal
-  if(!empty($goal)) {
-    $vars['goal'] = '<div class="wg-goal" style="display: none;" data-gid="' . $goal['gid'] . '"></div>';
+  if (module_exists('webform_goals')) {
+    $goals = webform_goal_load_multiple($node->nid);
+    $goal = array_pop($goals);  //get the most recently enabled goal
+    if (!empty($goal)) {
+      $vars['goal'] = '<div class="wg-goal" style="display: none;" data-gid="' . $goal['gid'] . '"></div>';
+    }
   }
 
 }
