@@ -32,6 +32,16 @@ function springboard_advocacy_menu() {
     'page arguments' => array('message-actions/all'),
   ) + springboard_advocacy_menu_common();
 
+  $items['admin/springboard/advocacy/message-actions/all'] = array(
+      'title' => 'Advocacy: All Message Actions',
+      'page arguments' => array('message-actions/all'),
+    ) + springboard_advocacy_menu_common();
+
+  $items['admin/springboard/advocacy/petitions/all'] = array(
+      'title' => 'Advocacy: All Petitions',
+      'page arguments' => array('petitions/all'),
+    ) + springboard_advocacy_menu_common();
+
   $items['node/%/messages'] = array(
     'title' => 'Messages',
     'page arguments' => array(1),
@@ -60,12 +70,31 @@ function springboard_advocacy_springboard_admin_admin_menu_items_alter(&$items) 
 
     $items['admin/springboard/advocacy/actions']['_children']['admin/springboard/advocacy/actions'] = array(
       'link_path' => 'admin/springboard/advocacy/actions',
-      'link_title' => 'Actions',
+      'link_title' => 'View All Actions',
       'menu_name' => 'springboard_admin_menu',
       'expanded' => 1,
       'customized' => 1,
-      'weight' => 1,
+      'weight' => -2,
     );
+  }
+
+  $types = node_type_get_types();
+  foreach ($types as $type) {
+    // Only create the item if the node type uses Webform User but not Fundraiser.
+    if ($type && _webform_user_is_webform_user_node_type($type->type)
+      && !fundraiser_is_donation_type($type->type)
+      && (springboard_advocacy_is_action_type($type->type)  || springboard_petition_is_petition_type($type->type))
+    ) {
+      // Forms > $type->type.
+      $items['admin/springboard/advocacy/actions']['_children']['node/add/' . preg_replace('/_/', '-', $type->type)] = array(
+        'link_path' => 'node/add/' . preg_replace('/_/', '-', $type->type),
+        'link_title' => 'Create a ' . $type->name,
+        'menu_name' => 'springboard_admin_menu',
+        'expanded' => 1,
+        'customized' => 1,
+        'weight' => -1,
+      );
+    }
   }
 
   if(module_exists('springboard_target')) {
@@ -83,14 +112,15 @@ function springboard_advocacy_springboard_admin_admin_menu_items_alter(&$items) 
 
 
   // Springboard Advocacy > Custom Targets.
-  $items['admin/springboard/advocacy/actions']['_children']['admin/springboard/advocacy/settings'] = array(
-    'link_path' => 'admin/springboard/advocacy/settings',
-    'link_title' => 'Settings',
-    'menu_name' => 'springboard_admin_menu',
-    'expanded' => 1,
-    'customized' => 1,
-    'weight' => 2,
-  );
+//  $items['admin/springboard/advocacy/actions']['_children']['admin/springboard/advocacy/settings'] = array(
+//    'link_path' => 'admin/springboard/advocacy/settings',
+//    'link_title' => 'Manage Settings',
+//    'menu_name' => 'springboard_admin_menu',
+//    'expanded' => 1,
+//    'customized' => 1,
+//    'weight' => 2,
+//  );
+
 
 }
 
@@ -163,7 +193,6 @@ function springboard_advocacy_views_api() {
     'api' => 3.0,
   );
 }
-
 
 /**
  * Implements hook_node_insert
@@ -480,7 +509,7 @@ function springboard_advocacy_preprocess_pager(&$variables, $hook) {
  *   The content type name.
  *
  * @return bool
- *   TRUE if the content type is a petition type.
+ *   TRUE if the content type is a action type.
  */
 function springboard_advocacy_is_action_type($type) {
   static $action_types;
@@ -492,5 +521,15 @@ function springboard_advocacy_is_action_type($type) {
   }
   else {
     return FALSE;
+  }
+}
+
+function springboard_advocacy_preprocess_block_admin_display_form(&$vars) {
+  foreach ($vars['block_listing'][BLOCK_REGION_NONE] as $name => $block) {
+    $pos = strpos($name, 'views_sba');
+    $pos2 = strpos($name, 'views_target');
+    if ($pos !==FALSE || $pos2 !== FALSE) {
+      unset($vars['block_listing'][BLOCK_REGION_NONE][$name]);
+    }
   }
 }

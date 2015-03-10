@@ -692,7 +692,11 @@ function springboard_admin_forms_page($springboard_type) {
         }
       break;
       case 'webform_user':
-        if (_webform_user_is_webform_user_node_type($type->type) && !fundraiser_is_donation_type($type->type)) {
+        if (_webform_user_is_webform_user_node_type($type->type)
+          && !fundraiser_is_donation_type($type->type)
+          && !springboard_advocacy_is_action_type($type->type)
+          && !springboard_petition_is_petition_type($type->type)
+        ) {
           $display_types[$type->type] = $type;
         }
       break;
