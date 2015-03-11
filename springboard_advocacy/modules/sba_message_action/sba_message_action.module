@@ -46,7 +46,7 @@ function sba_message_action_node_insert($node) {
       'pid' => 0,
       'name' => t('Phone Number'),
       'type' => 'textfield',
-      'mandatory' => 1,
+      'mandatory' => 0,
       'weight' => 13,
       'email' => 1,
       'extra' => array(
