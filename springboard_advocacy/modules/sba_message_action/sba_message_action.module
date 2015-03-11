@@ -273,13 +273,13 @@ function sba_message_action_editable_message_form(&$form, $message, $multiple)
   $editable = $wrapper->field_user_editable[0]->value() == 'editable' ? TRUE : FALSE;
   $required = $wrapper->field_editable_area_optional[0]->value() == 'required' ? TRUE : FALSE;
   $greeting = $wrapper->field_sba_placeholder_greeting->value();
-
-  $form['message'][$message->sba_message_id]['greeting_show'] = array(
-    '#type' => 'item',
-    '#title' =>'',
-    '#markup' => $greeting,
-  );
-
+  if(!$multiple) {
+    $form['message'][$message->sba_message_id]['greeting_show'] = array(
+      '#type' => 'item',
+      '#title' => '',
+      '#markup' => $greeting,
+    );
+  }
   $form['message'][$message->sba_message_id]['greeting'] = array(
     '#type' => 'value',
     '#value' => $wrapper->field_sba_greeting->value(),
