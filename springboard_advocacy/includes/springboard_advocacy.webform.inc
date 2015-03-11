@@ -14,7 +14,7 @@
 function springboard_advocacy_send_message($user_message, $form_state) {
 
   $values = $form_state['values'];
-  $webform_values = $values['submitted_tree'];
+  $webform_values = $values['submitted'];
   $zip = '';
 
   module_load_include('inc', 'springboard_advocacy', 'includes/springboard_advocacy.smarty_streets');
