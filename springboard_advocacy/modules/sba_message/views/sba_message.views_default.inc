@@ -109,40 +109,6 @@ function sba_message_views_default_views() {
     'sba_message_action_message' => 'sba_message_action_message',
   );
 
-  /* Display: EVA Field */
-  $handler = $view->new_display('entity_view', 'EVA Field', 'entity_view_1');
-  $handler->display->display_options['enabled'] = FALSE;
-  $handler->display->display_options['defaults']['style_plugin'] = FALSE;
-  $handler->display->display_options['style_plugin'] = 'default';
-  $handler->display->display_options['defaults']['style_options'] = FALSE;
-  $handler->display->display_options['defaults']['row_plugin'] = FALSE;
-  $handler->display->display_options['row_plugin'] = 'fields';
-  $handler->display->display_options['defaults']['row_options'] = FALSE;
-  $handler->display->display_options['defaults']['header'] = FALSE;
-  $handler->display->display_options['defaults']['fields'] = FALSE;
-  /* Field: SBA Message: Subject text */
-  $handler->display->display_options['fields']['field_sba_subject']['id'] = 'field_sba_subject';
-  $handler->display->display_options['fields']['field_sba_subject']['table'] = 'field_data_field_sba_subject';
-  $handler->display->display_options['fields']['field_sba_subject']['field'] = 'field_sba_subject';
-  $handler->display->display_options['fields']['field_sba_subject']['delta_offset'] = '0';
-  /* Field: SBA Message: Alert ID */
-  $handler->display->display_options['fields']['field_sba_alert_id']['id'] = 'field_sba_alert_id';
-  $handler->display->display_options['fields']['field_sba_alert_id']['table'] = 'field_data_field_sba_alert_id';
-  $handler->display->display_options['fields']['field_sba_alert_id']['field'] = 'field_sba_alert_id';
-  $handler->display->display_options['fields']['field_sba_alert_id']['exclude'] = TRUE;
-  $handler->display->display_options['fields']['field_sba_alert_id']['settings'] = array(
-    'link' => 0,
-  );
-  /* Field: SBA Message: Message */
-  $handler->display->display_options['fields']['field_sba_message']['id'] = 'field_sba_message';
-  $handler->display->display_options['fields']['field_sba_message']['table'] = 'field_data_field_sba_message';
-  $handler->display->display_options['fields']['field_sba_message']['field'] = 'field_sba_message';
-  $handler->display->display_options['fields']['field_sba_message']['delta_offset'] = '0';
-  $handler->display->display_options['entity_type'] = 'node';
-  $handler->display->display_options['bundles'] = array(
-    0 => 'sba_message_action',
-  );
-
   /* Display: Embedded node/%/messages Block */
   $handler = $view->new_display('block', 'Embedded node/%/messages Block', 'block_1');
   $handler->display->display_options['display_description'] = 'Embedded block for edit page';
@@ -238,6 +204,40 @@ function sba_message_views_default_views() {
   $handler->display->display_options['sorts']['sba_message_id']['table'] = 'sba_message';
   $handler->display->display_options['sorts']['sba_message_id']['field'] = 'sba_message_id';
   $handler->display->display_options['sorts']['sba_message_id']['order'] = 'DESC';
+
+  /* Display: Block 2 */
+  $handler = $view->new_display('block', 'Block 2', 'block_2');
+  $handler->display->display_options['defaults']['use_ajax'] = FALSE;
+  $handler->display->display_options['use_ajax'] = TRUE;
+  $handler->display->display_options['defaults']['pager'] = FALSE;
+  $handler->display->display_options['pager']['type'] = 'mini';
+  $handler->display->display_options['pager']['options']['items_per_page'] = '1';
+  $handler->display->display_options['pager']['options']['offset'] = '0';
+  $handler->display->display_options['pager']['options']['id'] = '0';
+  $handler->display->display_options['defaults']['style_plugin'] = FALSE;
+  $handler->display->display_options['style_plugin'] = 'default';
+  $handler->display->display_options['defaults']['style_options'] = FALSE;
+  $handler->display->display_options['defaults']['row_plugin'] = FALSE;
+  $handler->display->display_options['row_plugin'] = 'fields';
+  $handler->display->display_options['defaults']['row_options'] = FALSE;
+  $handler->display->display_options['defaults']['fields'] = FALSE;
+  /* Field: SBA Message: Subject text */
+  $handler->display->display_options['fields']['field_sba_subject']['id'] = 'field_sba_subject';
+  $handler->display->display_options['fields']['field_sba_subject']['table'] = 'field_data_field_sba_subject';
+  $handler->display->display_options['fields']['field_sba_subject']['field'] = 'field_sba_subject';
+  $handler->display->display_options['fields']['field_sba_subject']['label'] = '';
+  $handler->display->display_options['fields']['field_sba_subject']['element_label_colon'] = FALSE;
+  $handler->display->display_options['fields']['field_sba_subject']['delta_offset'] = '0';
+  /* Field: SBA Message: Placeholder Greeting (for display on the alert) */
+  $handler->display->display_options['fields']['field_sba_placeholder_greeting']['id'] = 'field_sba_placeholder_greeting';
+  $handler->display->display_options['fields']['field_sba_placeholder_greeting']['table'] = 'field_data_field_sba_placeholder_greeting';
+  $handler->display->display_options['fields']['field_sba_placeholder_greeting']['field'] = 'field_sba_placeholder_greeting';
+  $handler->display->display_options['fields']['field_sba_placeholder_greeting']['label'] = '';
+  $handler->display->display_options['fields']['field_sba_placeholder_greeting']['element_label_colon'] = FALSE;
+  /* Field: SBA Message: Message */
+  $handler->display->display_options['fields']['field_sba_message']['id'] = 'field_sba_message';
+  $handler->display->display_options['fields']['field_sba_message']['table'] = 'field_data_field_sba_message';
+  $handler->display->display_options['fields']['field_sba_message']['field'] = 'field_sba_message';
 
   $views[$view->name] = $view;
 
