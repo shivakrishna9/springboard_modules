@@ -49,9 +49,9 @@ function springboard_advocacy_views_default_views() {
     'type' => 'type',
     'webform_submission_count_node' => 'webform_submission_count_node',
     'status' => 'status',
-    'edit_node' => 'edit_node',
-    'delete_node' => 'edit_node',
     'clone_node' => 'edit_node',
+    'edit_node' => 'edit_node',
+    'view_node' => 'edit_node',
   );
   $handler->display->display_options['style_options']['default'] = '-1';
   $handler->display->display_options['style_options']['info'] = array(
@@ -95,17 +95,17 @@ function springboard_advocacy_views_default_views() {
       'separator' => '',
       'empty_column' => 0,
     ),
+    'clone_node' => array(
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
     'edit_node' => array(
       'align' => '',
       'separator' => ' | ',
       'empty_column' => 0,
     ),
-    'delete_node' => array(
-      'align' => '',
-      'separator' => '',
-      'empty_column' => 0,
-    ),
-    'clone_node' => array(
+    'view_node' => array(
       'align' => '',
       'separator' => '',
       'empty_column' => 0,
@@ -148,23 +148,24 @@ function springboard_advocacy_views_default_views() {
   $handler->display->display_options['fields']['status']['label'] = 'Status';
   $handler->display->display_options['fields']['status']['type'] = 'published-notpublished';
   $handler->display->display_options['fields']['status']['not'] = 0;
-  /* Field: Content: Edit link */
-  $handler->display->display_options['fields']['edit_node']['id'] = 'edit_node';
-  $handler->display->display_options['fields']['edit_node']['table'] = 'views_entity_node';
-  $handler->display->display_options['fields']['edit_node']['field'] = 'edit_node';
-  $handler->display->display_options['fields']['edit_node']['label'] = 'Actions';
-  /* Field: Content: Delete link */
-  $handler->display->display_options['fields']['delete_node']['id'] = 'delete_node';
-  $handler->display->display_options['fields']['delete_node']['table'] = 'views_entity_node';
-  $handler->display->display_options['fields']['delete_node']['field'] = 'delete_node';
-  $handler->display->display_options['fields']['delete_node']['label'] = '';
-  $handler->display->display_options['fields']['delete_node']['element_label_colon'] = FALSE;
   /* Field: Content: Clone link */
   $handler->display->display_options['fields']['clone_node']['id'] = 'clone_node';
   $handler->display->display_options['fields']['clone_node']['table'] = 'node';
   $handler->display->display_options['fields']['clone_node']['field'] = 'clone_node';
   $handler->display->display_options['fields']['clone_node']['label'] = '';
   $handler->display->display_options['fields']['clone_node']['element_label_colon'] = FALSE;
+  /* Field: Content: Edit link */
+  $handler->display->display_options['fields']['edit_node']['id'] = 'edit_node';
+  $handler->display->display_options['fields']['edit_node']['table'] = 'views_entity_node';
+  $handler->display->display_options['fields']['edit_node']['field'] = 'edit_node';
+  $handler->display->display_options['fields']['edit_node']['label'] = 'Actions';
+  /* Field: Content: Link */
+  $handler->display->display_options['fields']['view_node']['id'] = 'view_node';
+  $handler->display->display_options['fields']['view_node']['table'] = 'views_entity_node';
+  $handler->display->display_options['fields']['view_node']['field'] = 'view_node';
+  $handler->display->display_options['fields']['view_node']['label'] = '';
+  $handler->display->display_options['fields']['view_node']['element_label_colon'] = FALSE;
+  $handler->display->display_options['fields']['view_node']['text'] = 'View';
   /* Sort criterion: Content: Post date */
   $handler->display->display_options['sorts']['created']['id'] = 'created';
   $handler->display->display_options['sorts']['created']['table'] = 'node';
@@ -180,13 +181,6 @@ function springboard_advocacy_views_default_views() {
   $handler->display->display_options['arguments']['type']['summary']['format'] = 'default_summary';
   $handler->display->display_options['arguments']['type']['summary_options']['items_per_page'] = '25';
   $handler->display->display_options['arguments']['type']['limit'] = '0';
-  /* Filter criterion: Content: Published */
-  $handler->display->display_options['filters']['status']['id'] = 'status';
-  $handler->display->display_options['filters']['status']['table'] = 'node';
-  $handler->display->display_options['filters']['status']['field'] = 'status';
-  $handler->display->display_options['filters']['status']['value'] = 1;
-  $handler->display->display_options['filters']['status']['group'] = 1;
-  $handler->display->display_options['filters']['status']['expose']['operator'] = FALSE;
   /* Filter criterion: Content: Type */
   $handler->display->display_options['filters']['type']['id'] = 'type';
   $handler->display->display_options['filters']['type']['table'] = 'node';
@@ -195,6 +189,10 @@ function springboard_advocacy_views_default_views() {
     'sba_message_action' => 'sba_message_action',
     'springboard_petition' => 'springboard_petition',
   );
+  /* Filter criterion: Content: Published or admin */
+  $handler->display->display_options['filters']['status_extra']['id'] = 'status_extra';
+  $handler->display->display_options['filters']['status_extra']['table'] = 'node';
+  $handler->display->display_options['filters']['status_extra']['field'] = 'status_extra';
 
   /* Display: Actions Paged Block */
   $handler = $view->new_display('block', 'Actions Paged Block', 'block_1');
@@ -213,7 +211,10 @@ function springboard_advocacy_views_default_views() {
   $handler->display->display_options['pager']['options']['offset'] = '0';
   $handler->display->display_options['pager']['options']['id'] = '0';
   $handler->display->display_options['pager']['options']['quantity'] = '9';
+
   $views[$view->name] = $view;
+
+
   /*******************************************************************
  * Target Admin
  */
