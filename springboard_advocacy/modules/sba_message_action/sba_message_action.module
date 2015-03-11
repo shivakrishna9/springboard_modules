@@ -176,6 +176,9 @@ function sba_message_action_form_alter(&$form, &$form_state, $form_id) {
     $pos = strpos($form_id, 'client_form');
 
     if ($pos !== FALSE) {
+      $form['#attached']['js'][]= drupal_get_path('module', 'sba_message_action')
+        . '/js/sba_message_action.js';
+
       if(!empty($form['#node']->form_layouts)) {
         $form['#attached']['css'][] = drupal_get_path('module', 'sba_message_action')
           . '/css/message-action-form-layouts.css';
@@ -345,9 +348,6 @@ function sba_message_action_form_validate($form, &$form_state) {
     if ($message['body_required']['#value'] == 1) {
       $default = $message['body_editable']['#value'];
       $edited = $form_state['values']['sba_messages']['message'][$message_id[0]]['body_editable'];
-//      dpm($edited);
-//      dpm($default);
-//      dpm($form_state);
       if ($edited == $default) {
         form_set_error('body_editable', t('Editing of the the default message is required.'));
       }

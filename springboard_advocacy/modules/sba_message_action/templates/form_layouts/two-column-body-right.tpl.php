@@ -13,7 +13,7 @@
     </div>
   <?php endif; ?>
   <div class="row-fluid">
-    <div id="left" class="span7">
+    <div id="left" class="span7 message-column">
 
       <fieldset id="take-action-wrapper" class = "form-wrapper"><legend><?php print $form_legend ?></legend>
         <div class = "fieldset-wrapper">
@@ -28,7 +28,7 @@
       </fieldset>
     </div>
 
-    <div id="right" class="span5">
+    <div id="right" class="span5 message-column">
       <?php if(!empty($image)): ?>
         <div id="image">
           <?php print $image; ?>

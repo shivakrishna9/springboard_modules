@@ -24,10 +24,10 @@
   <fieldset id="take-action-wrapper" class = "form-wrapper"><legend><?php print $form_legend ?></legend>
     <div class = "fieldset-wrapper">
   <div class="row-fluid">
-    <div id="left" class="span7">
+    <div id="left" class="span7 message-column">
       <?php print $message_fieldset; ?>
     </div>
-    <div id="right" class="span5">
+    <div id="right" class="span5 message-column">
       <fieldset id="user-information-wrapper" class = "form-wrapper"><legend><?php print $user_legend ?></legend>
         <div class = "fieldset-wrapper">
           <p><?php print $webform ?></p>
