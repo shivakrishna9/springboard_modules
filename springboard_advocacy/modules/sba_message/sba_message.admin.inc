@@ -24,7 +24,7 @@ class SbaMessageUIController extends EntityDefaultUIController {
       $items[$this->path . '/add/' . $type->type] = array(
         'title' => 'Add ' . $type->label,
         'page callback' => 'sba_message_form_wrapper',
-        'page arguments' => array(sba_message_create(array('type' => $type->type))),
+        'page arguments' => array($type->type),
         'access callback' => 'sba_message_access',
         'access arguments' => array('edit', 'edit ' . $type->type),
         'file' => 'sba_message.admin.inc',
@@ -93,6 +93,9 @@ class SbaMessageUIController extends EntityDefaultUIController {
  * @see sba_message_edit_form()
  */
 function sba_message_form_wrapper($sba_message) {
+  if(is_string($sba_message)) {
+    $sba_message =   sba_message_create(array('type' => $sba_message));
+  }
   $build = array();
   $build['#attached']['css'] = array(
     drupal_get_path('module', 'sba_message') . '/css/sba_message.css',
