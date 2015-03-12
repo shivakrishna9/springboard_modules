@@ -225,19 +225,21 @@ function sba_message_views_default_views() {
   $handler->display->display_options['fields']['field_sba_subject']['id'] = 'field_sba_subject';
   $handler->display->display_options['fields']['field_sba_subject']['table'] = 'field_data_field_sba_subject';
   $handler->display->display_options['fields']['field_sba_subject']['field'] = 'field_sba_subject';
-  $handler->display->display_options['fields']['field_sba_subject']['label'] = '';
+  $handler->display->display_options['fields']['field_sba_subject']['label'] = 'Subject';
   $handler->display->display_options['fields']['field_sba_subject']['element_label_colon'] = FALSE;
   $handler->display->display_options['fields']['field_sba_subject']['delta_offset'] = '0';
   /* Field: SBA Message: Placeholder Greeting (for display on the alert) */
   $handler->display->display_options['fields']['field_sba_placeholder_greeting']['id'] = 'field_sba_placeholder_greeting';
   $handler->display->display_options['fields']['field_sba_placeholder_greeting']['table'] = 'field_data_field_sba_placeholder_greeting';
   $handler->display->display_options['fields']['field_sba_placeholder_greeting']['field'] = 'field_sba_placeholder_greeting';
-  $handler->display->display_options['fields']['field_sba_placeholder_greeting']['label'] = '';
+  $handler->display->display_options['fields']['field_sba_placeholder_greeting']['label'] = 'Greeting';
   $handler->display->display_options['fields']['field_sba_placeholder_greeting']['element_label_colon'] = FALSE;
+  $handler->display->display_options['fields']['field_sba_placeholder_greeting']['hide_empty'] = TRUE;
   /* Field: SBA Message: Message */
   $handler->display->display_options['fields']['field_sba_message']['id'] = 'field_sba_message';
   $handler->display->display_options['fields']['field_sba_message']['table'] = 'field_data_field_sba_message';
   $handler->display->display_options['fields']['field_sba_message']['field'] = 'field_sba_message';
+
 
   $views[$view->name] = $view;
 

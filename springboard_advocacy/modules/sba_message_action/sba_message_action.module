@@ -4,6 +4,64 @@
  * Provides content type and config for message actions.
  */
 
+function sba_message_action_menu() {
+  $items['messages/%ctools_js/%'] = array(
+    'title' => 'Possible messages',
+    'page arguments' => array(1, 2),
+    'page callback' => 'sba_message_action_modal_page',
+    'access callback' => TRUE,
+    'type' => MENU_NORMAL_ITEM,
+  );
+  return $items;
+}
+
+function sba_message_action_modal_page($js = NULL, $nid = NULL) {
+  if ($nid == NULL) {
+    return;
+  }
+  if ($js) {
+    ctools_include('modal');
+    ctools_include('ajax');
+  }
+  $node = node_load($nid);
+  $contents = views_embed_view('sba_messages_node', 'block_2', $nid);
+  return ctools_modal_render(t('Possible Messages'), $contents) ;
+}
+
+/**
+ * Implements hook_node_view.
+ *
+ * Theme the messages into the node's content.
+ */
+function sba_message_action_node_view($node, $view_mode, $langcode) {
+  if ($node->type == 'sba_message_action') {
+    ctools_include('ajax');
+    ctools_include('modal');
+    ctools_modal_add_js();
+    $message_window = array(
+      'message-window-style' => array(
+        'modalSize' => array(
+          'type' => 'fixed',
+          'width' => 600,
+          'height' => 440,
+          'addWidth' => 10,
+          'addHeight' => 100,
+          'contentRight' => 0,
+          'contentBottom' => 0,
+        ),
+        'modalOptions' => array(
+          'opacity' => .4,
+          'background-color' => '#000',
+        ),
+        'animation' => 'fadeIn',
+      ),
+    );
+    drupal_add_js($message_window, 'setting');
+    ctools_add_css('springboard_message_action', 'modal');
+
+  }
+}
+
 function sba_message_action_node_presave($node) {
   if (empty($node->nid)) {
     $node->webform['submit_text'] = t('Send your message');
@@ -178,10 +236,12 @@ function sba_message_action_form_alter(&$form, &$form_state, $form_id) {
     if ($pos !== FALSE) {
       $form['#attached']['js'][]= drupal_get_path('module', 'sba_message_action')
         . '/js/sba_message_action.js';
-
+      $form['#attached']['css'][] = drupal_get_path('module', 'sba_message_action')
+        . '/css/message-modal.css';
       if(!empty($form['#node']->form_layouts)) {
         $form['#attached']['css'][] = drupal_get_path('module', 'sba_message_action')
           . '/css/message-action-form-layouts.css';
+
       }
       else {
         $form['#attached']['css'][] = drupal_get_path('module', 'sba_message_action')
@@ -197,6 +257,21 @@ function sba_message_action_form_alter(&$form, &$form_state, $form_id) {
       );
 
       $multiple = count($form['#node']->messages) > 1 ? TRUE : FALSE;
+      if($multiple) {
+        ctools_include('ajax');
+        ctools_include('modal');
+        $href = 'messages/nojs/' . arg(1);
+        $form['sba_messages']['multiple'] = array(
+          '#type' => 'fieldset',
+          '#title' => t('Your Message'),
+          '#attributes' => array('class' => array('sba-message')),
+        );
+        $form['sba_messages']['multilple']['message'] = array(
+          '#type' => 'item',
+          '#markup' => '<p>' . t('We have crafted multiple messages for this action. We will select the right message or messages for your legislators, or others we are targeting, based on their position on this issue and the address you enter below.')
+            . '</p><p></p>' . ctools_modal_text_button('View all possible messages.', $href, t('View messages'), 'ctools-modal-message-window-style') . '</p>',
+        );
+      }
       // Create a set of fields for each message assigned to the form.
       foreach ($form['#node']->messages as $message) {
         sba_message_action_editable_message_form($form['sba_messages'], $message, $multiple);
@@ -258,6 +333,7 @@ function sba_message_action_editable_message_form(&$form, $message, $multiple)
     );
   }
   else {
+
     if (!$multiple) {
       $form['message'][$message->sba_message_id]['subject_show'] = array(
         '#type' => 'item',
@@ -265,6 +341,7 @@ function sba_message_action_editable_message_form(&$form, $message, $multiple)
         '#markup' => check_plain($subject),
       );
     }
+
 
     $form['message'][$message->sba_message_id]['subject'] = array(
       '#type' => 'value',
@@ -276,7 +353,8 @@ function sba_message_action_editable_message_form(&$form, $message, $multiple)
   $editable = $wrapper->field_user_editable[0]->value() == 'editable' ? TRUE : FALSE;
   $required = $wrapper->field_editable_area_optional[0]->value() == 'required' ? TRUE : FALSE;
   $greeting = $wrapper->field_sba_placeholder_greeting->value();
-  if(!$multiple) {
+
+  if (!$multiple) {
     $form['message'][$message->sba_message_id]['greeting_show'] = array(
       '#type' => 'item',
       '#title' => '',
@@ -631,19 +709,7 @@ function sba_message_action_theme() {
 }
 
 
-/**
- * Implements hook_node_view.
- *
- * Theme the messages into the node's content.
- */
-//function sba_message_action_node_view($node, $view_mode, $langcode) {
-//  if ($node->type == 'sba_message_action') {
-//    $node->content['messages'] = array(
-//      '#markup' => theme('sba_message_action_messages', array('messages' => $node->messages)),
-//      '#weight' => 100,
-//    );
-//  }
-//}
+
 
 
 //function sba_message_action_theme() {

@@ -208,7 +208,7 @@ clear: both;
 .node-sba-message-action .field-name-field-message-action-img img,
 #message-action-form-2col-column-wrapper #image img{
     display: block;
-    margin: 0 auto;
+    margin: 0 auto 20px auto;
 }
 
 .node-sba-message-action .field-name-body {
