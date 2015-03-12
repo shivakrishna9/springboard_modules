@@ -98,19 +98,19 @@ function sba_message_action_node_insert($node) {
     );
 
     //add custom fields for the messages
-    $fields[] = array(
-      'nid' => $node->nid,
-      'form_key' => 'sba_phone',
-      'pid' => 0,
-      'name' => t('Phone Number'),
-      'type' => 'textfield',
-      'mandatory' => 0,
-      'weight' => 13,
-      'email' => 1,
-      'extra' => array(
-        'description' => t(''),
-      ),
-    );
+//    $fields[] = array(
+//      'nid' => $node->nid,
+//      'form_key' => 'sba_phone',
+//      'pid' => 0,
+//      'name' => t('Phone Number'),
+//      'type' => 'textfield',
+//      'mandatory' => 0,
+//      'weight' => 13,
+//      'email' => 1,
+//      'extra' => array(
+//        'description' => t(''),
+//      ),
+//    );
 
     //limit the state field to US states
     $fields[] = array(
@@ -159,12 +159,14 @@ function sba_message_action_node_insert($node) {
   }
 }
 
+
 /**
  * Implements hook_webform_user_profile_fields_alter
  *
  */
 function sba_message_action_webform_user_profile_fields_alter(&$fields, $node) {
   if($node->type == 'sba_message_action') {
+
     foreach ($fields as $index => $profile_field) {
       //make all fields except address2 mandatory
       if ($profile_field['name'] != 'sbp_address_line_2'){
@@ -268,7 +270,7 @@ function sba_message_action_form_alter(&$form, &$form_state, $form_id) {
         );
         $form['sba_messages']['multilple']['message'] = array(
           '#type' => 'item',
-          '#markup' => '<p>' . t('We have crafted multiple messages for this action. We will select the right message or messages for your legislators, or others we are targeting, based on their position on this issue and the address you enter below.')
+          '#markup' => '<p>' . t('We have crafted multiple messages for this action. We will select the right message or messages for your legislators, or others we are targeting, based on their position on this issue, and on the address you enter.')
             . '</p><p></p>' . ctools_modal_text_button('View all possible messages.', $href, t('View messages'), 'ctools-modal-message-window-style') . '</p>',
         );
       }

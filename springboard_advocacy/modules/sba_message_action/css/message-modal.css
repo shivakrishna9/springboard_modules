@@ -32,7 +32,7 @@ div.ctools-modal-content a.close {
 }
 div.ctools-modal-content a.close img{
     padding-left: 20px;
-    margin: auto 0;
+    top: 0;
 }
 #modal-content {
     border: 1px solid #d5d5d5;

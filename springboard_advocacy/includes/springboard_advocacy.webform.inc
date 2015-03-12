@@ -89,7 +89,7 @@ function springboard_advocacy_build_contact($values, $zip, $geo) {
     'address_line_2' => $values['sbp_address_line_2'], 
     'city' => $values['sbp_city'],
     'state' => $values['sbp_state'],
-    'phone' => $values['sba_phone'],
+    'phone' => $values['sbp_phone'],
     'zip' => $zip,
     'email' => $values['mail'],
     'county' => isset($geo['county']) ? $geo['county'] : '',

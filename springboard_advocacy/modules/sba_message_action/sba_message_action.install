@@ -118,6 +118,8 @@ function sba_message_action_add_content_type() {
       'sbp_city' => 'sbp_city',
       'sbp_state' => 'sbp_state',
       'sbp_zip' => 'sbp_zip',
+      'sbp_phone' => 'sbp_phone',
+
       'sbp_cid' => 'sbp_cid',
       'sbp_market_source' => 'sbp_market_source',
       'sbp_referrer' => 'sbp_referrer',
@@ -176,7 +178,8 @@ function sba_message_action_add_content_type() {
   db_query('UPDATE {system} SET weight = :weight WHERE name = :name', array(':weight' => 1000, ':name' => 'sba_message_action'));
 }
 
-function sba_message_action_add_fields() {
+function sba_message_action_add_fields()
+{
 
   $fields = array(
     'field_message_action_img' => array(
@@ -259,7 +262,6 @@ function sba_message_action_add_fields() {
   );
 
 
-
   foreach ($fields as $key => $values) {
     $instance = $values['_instance'];
     unset($values['_instance']);
@@ -267,8 +269,32 @@ function sba_message_action_add_fields() {
     field_create_field($values);
     field_create_instance($instance);
   }
-}
 
+  $phone_exists = field_info_field('sbp_phone');
+
+  $profile_phone = array(
+    'label' => t('Phone'),
+    'field_name' => 'sbp_phone',
+    'type' => 'text',
+    'widget' => array(
+      'type' => 'text_textfield',
+    ),
+  );
+
+  if (empty($phone_exists)) {
+    field_create_field($profile_phone);
+  }
+
+  $instance_exists = field_info_instance('user', 'sbp_phone', 'user');
+  if (empty($instance_exists)) {
+    $instance = array(
+      'entity_type' => 'user',
+      'bundle' => 'user',
+    );
+    $instance = array_merge($profile_phone, $instance);
+    field_create_instance($instance);
+  }
+}
 
 function sba_message_action_add_example_message_action() {
   $node = new stdClass();
@@ -315,7 +341,7 @@ function sba_message_action_add_example_message_action() {
     'emails' => array(),
     'components' => array(),
   );
-  $email_nid =sba_message_action_email_wrapper_add();
+  $email_nid = sba_message_action_email_wrapper_add();
   if ($email_nid != NULL) {
     $node->webform['emails'][1] = array(
       'email' => '',
@@ -329,6 +355,10 @@ function sba_message_action_add_example_message_action() {
     );
   }
   $node->is_webform_user = 1;
+  $node->field_webform_user_internal_name[LANGUAGE_NONE][0]['value'] = "Example Message Action Form";
+  if (module_exists('form_layouts')) {
+    $node->form_layouts = 'two_column_message_left_vertical';
+  }
   $node->send_new_user_email = 0;
   node_save($node);
   $node = node_load($node->nid);
