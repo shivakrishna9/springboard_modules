@@ -136,31 +136,37 @@ class FundraiserSustainersEOMTestCase extends DrupalUnitTestCase {
     $interval = $end->diff($current);
     $months = ($interval->format('%y') * 12) + $interval->format('%m');
 
-    // Get the day of the month.
-    $day_of_month = $current->format('j');
-
-    // Include the start time in the array.
-    $times = array($current->format('U'));
-
     // Create timestamps for each month until the end time is reached.
     for ($x = 0; $x <= $months; $x++) {
       // Get the next months starting date.
-      $next_month_start = clone $current;
-      $next_month_start->modify('first day of next month');
-
-      // If the next months number of days doesn't have enough days of the month, use its last day.
-      if ($next_month_start->format('t') < $day_of_month) {
-        $current->modify('last day of +1 month');
-        $times[] = $current->format('U');
-      }
-      else {
-        // Set the current date to the next months day.
-        $current->setDate($next_month_start->format('Y'), $next_month_start->format('m'), $day_of_month);
-        $times[] =  $current->format('U');
-      }
+      $next = $this->month_timestamps_add_month($current, $x);
+      $times[] = $next->format('U');
     }
 
     return $times;
+  }
+
+  /**
+   * Return a datetime object incremented to the number of months.
+   */
+  function month_timestamps_add_month($datetime, $num) {
+    $next = clone $datetime;
+    $date = $datetime->format('Y-n-j');
+    list($y, $m, $d) = explode('-', $date);
+
+    $m += $num;
+    while ($m > 12) {
+      $m -= 12;
+      $y++;
+    }
+
+    $last_day = date('t', strtotime("$y-$m-1"));
+    if ($d > $last_day) {
+      $d = $last_day;
+    }
+
+    $next->setDate($y, $m, $d);
+    return $next;
   }
 
 }
