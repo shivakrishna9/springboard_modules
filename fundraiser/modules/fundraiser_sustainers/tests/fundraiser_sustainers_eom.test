@@ -1,0 +1,166 @@
+<?php
+/**
+ * @file
+ * Fundraiser sustainer tests for end of month behavior change implemented
+ * in version 4.6.3.
+ */
+
+/**
+ * Setup and tear down web class. Does nothing else.
+ */
+class FundraiserSustainersEOMTestCase extends DrupalUnitTestCase {
+
+  /**
+   * Implements getInfo().
+   */
+  public static function getInfo() {
+    return array(
+      'name' => 'Fundraiser sustainers end of month handling',
+      'description' => 'Tests fundraiser sustainers end of month behavior change.',
+      'group' => 'Fundraiser Sustainers',
+    );
+  }
+
+  /**
+   * Ensures non-leap year Feburary's are handled correctly when the
+   * initial date is the 29th of the month.
+   */
+  function testTwentyNinethHandling() {
+    $start = date('Y-m-d', strtotime('2015-1-29'));
+    $end = date('Y-m-d', strtotime('+10 months', strtotime($start)));
+
+    $timestamps = $this->month_timestamps($start, $end);
+
+    foreach($timestamps as $timestamp) {
+      $month_number = date('n', $timestamp);
+      $day = date('d', $timestamp);
+      $month_name = date('F', $timestamp);
+
+      // If the month is Feburary the payment date should be the 28th because there is no 29th in a non-leap year.
+      if ($month_number == 2) {
+        $this->assertEqual(28, $day, 'Payment for Feburary falls on the 28th.');
+      }
+      else {
+        $this->assertEqual(29, $day, t('Payment for @month_name falls on the 29th (@date).', array('@month_name' => $month_name, '@date' => date('m-d-Y', $timestamp))));
+      }
+    }
+  }
+
+  /**
+   * Ensures non-leap year Feburary's are handled correctly when the
+   * initial date is the 30th of the month.
+   */
+  function testThirtiethHandling() {
+    $start = date('Y-m-d', strtotime('2015-1-30'));
+    $end = date('Y-m-d', strtotime('+10 months', strtotime($start)));
+
+    $timestamps = $this->month_timestamps($start, $end);
+
+    foreach($timestamps as $timestamp) {
+      $month_number = date('n', $timestamp);
+      $day = date('d', $timestamp);
+      $month_name = date('F', $timestamp);
+
+      // If the month is Feburary the payment date should be the 28th because there is no 30th in a non-leap year.
+      if ($month_number == 2) {
+        $this->assertEqual(28, $day, 'Payment for Feburary falls on the 28th.');
+      }
+      else {
+        $this->assertEqual(30, $day, t('Payment for @month_name falls on the 30th (@date).', array('@month_name' => $month_name, '@date' => date('m-d-Y', $timestamp))));
+      }
+    }
+  }
+
+  /**
+   * Ensures all generated dates are the last day in the month.
+   */
+  function testThirtyFirstHandling() {
+    $start = date('Y-m-d', strtotime('2015-1-31'));
+    $end = date('Y-m-d', strtotime('+10 months', strtotime($start)));
+
+    $timestamps = $this->month_timestamps($start, $end);
+
+    foreach ($timestamps as $timestamp) {
+      $is_last_day_in_month = $this->dayIsLastDayOfMonth($timestamp);
+      $date = date('m-d-Y', $timestamp);
+      $month_name = date('F', $timestamp);
+      $this->assertTrue($is_last_day_in_month, t('Payment for @month_name falls on the last day of the month, @date.', array('@month_name' => $month_name, '@date' => $date)));
+    }
+  }
+
+  /**
+   * Ensures leap year Feburary's are handled correctly.
+   */
+  function testLeapYearHandling() {
+    $start = date('Y-m-d', strtotime('2012-1-31'));
+    $end = date('Y-m-d', strtotime('+10 months', strtotime($start)));
+
+    $timestamps = $this->month_timestamps($start, $end);
+
+    foreach($timestamps as $timestamp) {
+      $month_number = date('n', $timestamp);
+      $day = date('d', $timestamp);
+
+      // If the month is Feburary the payment date should be the 29th in a leap year.
+      if ($month_number == 2) {
+        $this->assertEqual(29, $day, 'Payment for Feburary on a leap year falls on the 29th.');
+      }
+      // TODO: Check other months just to be safe.
+    }
+  }
+
+  function testMultipleYearHandling() {
+    // TODO: Create a multi-year series and check all dates. Bonus for running it over both
+    // non-leap and leap years.
+  }
+
+  /**
+   * Determines if a given date is the last day of the month.
+   */
+  function dayIsLastDayOfMonth($timestamp) {
+    $days_in_month = date('t', $timestamp);
+    $computed_day = date('d', $timestamp);
+    return $days_in_month == $computed_day;
+  }
+
+  /**
+   * Create array of timestamps for sustainers.
+   *
+   * TODO: This would get removed and we'd call the actual fundraiser sustainers function instead.
+   */
+  function month_timestamps($start, $end) {
+    $current = new DateTime($start);
+    $end = new DateTime($end);
+
+    // Get the amount of months needed.
+    $interval = $end->diff($current);
+    $months = ($interval->format('%y') * 12) + $interval->format('%m');
+
+    // Get the day of the month.
+    $day_of_month = $current->format('j');
+
+    // Include the start time in the array.
+    $times = array($current->format('U'));
+
+    // Create timestamps for each month until the end time is reached.
+    for ($x = 0; $x <= $months; $x++) {
+      // Get the next months starting date.
+      $next_month_start = clone $current;
+      $next_month_start->modify('first day of next month');
+
+      // If the next months number of days doesn't have enough days of the month, use its last day.
+      if ($next_month_start->format('t') < $day_of_month) {
+        $current->modify('last day of +1 month');
+        $times[] = $current->format('U');
+      }
+      else {
+        // Set the current date to the next months day.
+        $current->setDate($next_month_start->format('Y'), $next_month_start->format('m'), $day_of_month);
+        $times[] =  $current->format('U');
+      }
+    }
+
+    return $times;
+  }
+
+}
