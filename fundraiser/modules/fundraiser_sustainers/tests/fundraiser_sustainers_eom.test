@@ -110,7 +110,7 @@ class FundraiserSustainersEOMTestCase extends DrupalUnitTestCase {
       if ($month_number == 2 && $year == 2012) {
         $this->assertEqual(29, $day, 'Payment for Feburary on a leap year falls on the 29th.');
       }
-      else if ($month_number == 2 && $year = 2013) {
+      else if ($month_number == 2 && $year == 2013) {
         // Non-leap year should go back to the 28th.
         $this->assertEqual(28, $day, 'Payment for Feburary on a non-leap year falls on the 28th.');
       }
