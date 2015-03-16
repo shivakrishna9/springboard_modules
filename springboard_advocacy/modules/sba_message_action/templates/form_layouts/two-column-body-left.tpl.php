@@ -28,17 +28,11 @@
     </div>
 
     <div id="right" class="span7 message-column">
-      <fieldset id="take-action-wrapper" class = "form-wrapper"><legend><?php print $form_legend ?></legend>
-        <div class = "fieldset-wrapper">
-          <?php print $message_fieldset; ?>
-          <fieldset id="user-information-wrapper" class = "form-wrapper"><legend><?php print $user_legend ?></legend>
-            <div class = "fieldset-wrapper">
-              <p><?php print $webform ?></p>
-            </div>
-          </fieldset>
-          <?php print drupal_render_children($form); ?>
-        </div>
-      </fieldset>
+      <?php print $take_action_open; ?>
+      <?php print $your_message; ?>
+      <?php print $your_info ?><
+      <?php print drupal_render_children($form); ?>
+      <?php print $take_action_close; ?>
     </div>
 
 

@@ -5,9 +5,11 @@
 (function ($) {
 
     $(document).ready(function () {
+        $('#your-information-wrapper').append($('.form-layouts.one-column #edit-actions'));
+
         setColumnHeight();
         var sizer;
-        $(window).resize(function(){
+        $(window).resize(function() {
             clearTimeout(sizer);
             sizer = setTimeout(function() {
                 setColumnHeight();

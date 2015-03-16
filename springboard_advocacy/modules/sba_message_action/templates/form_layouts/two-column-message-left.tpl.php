@@ -21,22 +21,17 @@
       </div>
     <?php endif; ?>
   </div>
-  <fieldset id="take-action-wrapper" class = "form-wrapper"><legend><?php print $form_legend ?></legend>
-    <div class = "fieldset-wrapper">
+  <?php print $take_action_open; ?>
+
   <div class="row-fluid">
     <div id="left" class="span7 message-column">
-      <?php print $message_fieldset; ?>
+      <?php print $your_message; ?>
     </div>
     <div id="right" class="span5 message-column">
-      <fieldset id="user-information-wrapper" class = "form-wrapper"><legend><?php print $user_legend ?></legend>
-        <div class = "fieldset-wrapper">
-          <p><?php print $webform ?></p>
-        </div>
-      </fieldset>
+          <?php print $your_info ?>
       <?php print drupal_render_children($form); ?>
       <p><?php print $social ?></p>
     </div>
     </div>
-  </div>
-</fieldset>
+  <?php print $take_action_close; ?>
 </div>

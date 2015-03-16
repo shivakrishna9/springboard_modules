@@ -11,21 +11,19 @@
  */
 
 
-function springboard_advocacy_send_message($user_message, $form_state) {
+function springboard_advocacy_send_message($user_message, $user_values, $form_state) {
 
   $values = $form_state['values'];
-  $webform_values = $values['submitted'];
   $zip = '';
-
   module_load_include('inc', 'springboard_advocacy', 'includes/springboard_advocacy.smarty_streets');
 
-  $geo = springboard_advocacy_smarty_lookup($webform_values);
+  $geo = springboard_advocacy_smarty_lookup($user_values);
 
   if (!empty($geo) && !empty($geo['zip']) && !empty($geo['plus4'])) {
     $zip = $geo['zip'] . '-' . $geo['plus4'];
   }
   if(!empty($zip)) {
-    $contact = springboard_advocacy_build_contact($webform_values, $zip, $geo);
+    $contact = springboard_advocacy_build_contact($user_values, $zip, $geo);
     $form_id = $values['advocacy_id'];
     $messages = springboard_advocacy_build_messages($user_message);
 

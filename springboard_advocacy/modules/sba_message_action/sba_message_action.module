@@ -15,6 +15,10 @@ function sba_message_action_menu() {
   return $items;
 }
 
+/**
+ * @param null $js
+ * @param null $nid
+ */
 function sba_message_action_modal_page($js = NULL, $nid = NULL) {
   if ($nid == NULL) {
     return;
@@ -62,8 +66,13 @@ function sba_message_action_node_view($node, $view_mode, $langcode) {
   }
 }
 
+/**
+ * Implements hook_node_presave.
+ *
+ * @param $node
+ */
 function sba_message_action_node_presave($node) {
-  if (empty($node->nid)) {
+  if (empty($node->nid) && $node->type == 'sba_message_action') {
     $node->webform['submit_text'] = t('Send your message');
   }
 }
@@ -79,7 +88,7 @@ function sba_message_action_node_insert($node) {
 
     $fields[] = array(
       'nid' => $node->nid,
-      'form_key' => 'sba_salutation',
+      'form_key' => 'sbp_salutation',
       'pid' => 0,
       'name' => t('Salutation'),
       'type' => 'select',
@@ -98,19 +107,42 @@ function sba_message_action_node_insert($node) {
     );
 
     //add custom fields for the messages
-//    $fields[] = array(
-//      'nid' => $node->nid,
-//      'form_key' => 'sba_phone',
-//      'pid' => 0,
-//      'name' => t('Phone Number'),
-//      'type' => 'textfield',
-//      'mandatory' => 0,
-//      'weight' => 13,
-//      'email' => 1,
-//      'extra' => array(
-//        'description' => t(''),
-//      ),
-//    );
+    $fields[] = array(
+      'nid' => $node->nid,
+      'form_key' => 'sba_take_action',
+      'pid' => 0,
+      'name' => t('Take Action'),
+      'type' => 'fieldset',
+      'weight' => -20,
+      'extra' => array(
+        'description' => t(''),
+      ),
+    );
+
+    $fields[] = array(
+      'nid' => $node->nid,
+      'form_key' => 'sba_your_info',
+      'pid' => 0,
+      'name' => t('Your Information'),
+      'type' => 'fieldset',
+      'weight' => -20,
+      'extra' => array(
+        'description' => t(''),
+      ),
+    );
+
+    $fields[] = array(
+      'nid' => $node->nid,
+      'form_key' => 'sba_your_message',
+      'pid' => 0,
+      'name' => t('Your Message'),
+      'type' => 'fieldset',
+      'weight' => -20,
+      'extra' => array(
+        'description' => t(''),
+      ),
+    );
+
 
     //limit the state field to US states
     $fields[] = array(
@@ -143,9 +175,21 @@ function sba_message_action_node_insert($node) {
     );
 
     // Add the component to the Webform.
-
+    static $action_cid;
     foreach ($fields as $field) {
+
+      if($field['form_key'] == 'sba_your_info' ||  $field['form_key'] == 'sba_your_message') {
+        $field['pid'] = $action_cid;
+      }
+
       $cid = webform_component_insert($field);
+      if($field['form_key'] == 'sba_take_action') {
+        $action_cid = $cid;
+      }
+      if ($field['form_key'] == 'sba_your_info') {
+        $info_cid = $field['cid'];
+      }
+
       //user map the state field
       if ($field['form_key'] == 'sbp_state' || $field['form_key'] == 'sbp_zip') {
         $map = array(
@@ -154,6 +198,15 @@ function sba_message_action_node_insert($node) {
           'map_id' => $field['form_key'],
         );
         drupal_write_record('webform_user_component_map', $map);
+      }
+    }
+
+    $updated = node_load($node->nid);
+
+    foreach ($updated->webform['components'] as $cid => $component) {
+      if(strpos($component['form_key'], 'sbp_') !== FALSE || $component['form_key'] == 'mail') {
+        $component['pid'] = $info_cid;
+        webform_component_update($component);
       }
     }
   }
@@ -196,6 +249,39 @@ function sba_message_action_webform_user_profile_fields_alter(&$fields, $node) {
   }
 }
 
+
+/**
+ * @param $implementations
+ * @param $hook
+ */
+function sba_message_action_module_implements_alter(&$implementations, $hook) {
+  if ($hook == 'node_insert') {
+
+    $group = $implementations['sba_message_action'];
+    unset($implementations['sba_message_action']);
+    $implementations['sba_message_action'] = $group;
+  }
+}
+
+/**
+ * @param $component
+ */
+function sba_message_action_webform_component_insert($component) {
+//  $node = node_load($component['nid']);
+//  static $info_cid;
+//  if($node->type == 'sba_message_action') {
+//    dpm($node);
+//    foreach ($node->webform['components'] as $cid => $component) {
+//      if ($component['form_key'] == 'sba_your_info') {
+//        $info_cid = $component['cid'];
+//      }
+//      if(strpos($component['form_key'], 'sbp_') !== FALSE) {
+//        $component['pid'] = $info_cid;
+//        webform_component_update($component);
+//      }
+//    }
+//  }
+}
 
 /**
  * Implements hook_node_load.
@@ -250,7 +336,7 @@ function sba_message_action_form_alter(&$form, &$form_state, $form_id) {
           . '/css/no-form-layouts.css';
       }
       // Create a container on the form for all messages.
-      $form['sba_messages'] = array(
+      $form['submitted']['sba_take_action']['sba_your_info']['sba_messages'] = array(
         '#type' => 'container',
         '#tree' => TRUE,
         '#attributes' => array(
@@ -276,11 +362,11 @@ function sba_message_action_form_alter(&$form, &$form_state, $form_id) {
       }
       // Create a set of fields for each message assigned to the form.
       foreach ($form['#node']->messages as $message) {
-        sba_message_action_editable_message_form($form['sba_messages'], $message, $multiple);
+        sba_message_action_editable_message_form($form['submitted']['sba_take_action']['sba_your_message'], $message, $multiple);
       }
       $form['#validate'][] = 'sba_message_action_form_validate';
-
       array_unshift($form['#submit'], 'sba_message_action_form_submit');
+
     }
   }
 }
@@ -300,11 +386,10 @@ function sba_message_action_form_alter(&$form, &$form_state, $form_id) {
 function sba_message_action_editable_message_form(&$form, $message, $multiple)
 {
   $wrapper = entity_metadata_wrapper('sba_message', $message);
-
   if (!$multiple) {
     $form['message'][$message->sba_message_id] = array(
-      '#type' => 'fieldset',
-      '#title' => t('Your Message'),
+      '#type' => 'container',
+      //'#title' => t('Your Messagesss'),
       '#attributes' => array('class' => array('sba-message')),
     );
   }
@@ -420,15 +505,18 @@ function sba_message_action_editable_message_form(&$form, $message, $multiple)
  * Validation handler for message action forms.
  */
 function sba_message_action_form_validate($form, &$form_state) {
-  $is_single = count($form_state['values']['sba_messages']['message']) == 1 ? TRUE : FALSE;
 
+  $messages = _springboard_advocacy_webform_submission_flatten($form['#node']->nid, $form_state['values']['submitted'], array('message'));
+  $defaults = _springboard_advocacy_webform_submission_flatten($form['#node']->nid, $form_state['complete form'], array('message'));
+  $is_single = count($messages['message']) == 1 ? TRUE : FALSE;
   if ($is_single) {
-    $message_id = array_keys($form_state['values']['sba_messages']['message']);
-    $message = $form['sba_messages']['message'][$message_id[0]];
-    if ($message['body_required']['#value'] == 1) {
-      $default = $message['body_editable']['#value'];
-      $edited = $form_state['values']['sba_messages']['message'][$message_id[0]]['body_editable'];
-      if ($edited == $default) {
+    $message_id = array_keys($messages['message']);
+    $message = $messages['message'][$message_id[0]];
+
+    if (isset($message['body_required']) && $message['body_required'] == 1) {
+      $default_value = $defaults['message'][$message_id[0]]['body_editable']['#default_value'];
+      $edited = $message['body_editable'];
+      if ($edited == $default_value) {
         form_set_error('body_editable', t('Editing of the the default message is required.'));
       }
     }
@@ -445,15 +533,115 @@ function sba_message_action_form_submit($form, &$form_state) {
   // Create array of messages to submit for target resolution.
   $messages = array();
 
-  foreach ($form_state['values']['sba_messages']['message'] as $id => $message) {
+  $user_fields = _springboard_advocacy_webform_submission_flatten($form['#node']->nid, $form_state['values']['submitted']);
+  $messages = _springboard_advocacy_webform_submission_flatten($form['#node']->nid, $form_state['values']['submitted'], array('message'));
+
+  foreach ($messages['message'] as $id => $message) {
     $body_editable = isset( $message['body_editable']) ?  $message['body_editable'] : '';
     $messages[$id]['body'] = sba_message_action_build_message_bodies($message['sba_message_id'], $body_editable);
     $messages[$id]['subject'] = $message['subject'];
   }
-  module_load_include('inc', 'springboard_advocacy', 'includes/springboard_advocacy.webform');
-  springboard_advocacy_send_message($messages, $form_state);
 
+  module_load_include('inc', 'springboard_advocacy', 'includes/springboard_advocacy.webform');
+  springboard_advocacy_send_message($messages, $user_fields, $form_state);
+
+  //remove our non-webform message elements from form_state before webform.module can get confused by them
+  $message_parents = sba_message_action_webform_get_parents_recursive('message', $form_state['values']);
+  $message_values = &$form_state['values'];
+  foreach ($message_parents as $parent) {
+    $message_values = &$message_values[$parent];
+  }
+  unset($message_values['message']);
 }
+
+
+/**
+ * Admins can move fields around in webform UI, and thereby change their parent tree.
+ * So we need to retrieve them in a flattened array.
+ *
+ * @param $nid
+ * @param $submit_tree
+ * @param null $submission_keys
+ * @param null $fieldset_keys
+ * @return array
+ */
+function _springboard_advocacy_webform_submission_flatten($nid, $submit_tree, $submission_keys = NULL) {
+  if ($submission_keys == NULL) {
+    $components = _springboard_advocacy_get_components_by_nid($nid);
+    foreach ($components as $component) {
+      if ($component->type != 'fieldset') {
+        $submission_keys[] = $component->form_key;
+      }
+    }
+  }
+  $flat_array = array();
+  foreach ($submit_tree as $key => $value) {
+    $flat_array[$key] = $value;
+    if (is_array($value)) {
+      $flat_array = array_merge($flat_array, _springboard_advocacy_webform_submission_flatten($nid, $value, $submission_keys));
+    }
+  }
+  // Filter to only submission key results.
+  $flat_array = array_intersect_key($flat_array, array_combine($submission_keys, $submission_keys));
+  return $flat_array;
+}
+
+/**
+ * DB function, get webform component form elements.
+ */
+function _springboard_advocacy_get_components_by_nid($nid) {
+  return db_query('SELECT * FROM {webform_component} ' .
+    'WHERE nid = :nid',
+    array(':nid' => $nid))->fetchAll();
+}
+
+/**
+ * Retrieves the parent tree of a field, in an indexed array
+ *
+ * @param $field_name
+ * @param $submitted
+ * @param array $parents
+ * @return array|bool
+ */
+function sba_message_action_webform_get_parents_recursive($field_name, $submitted, &$parents = array()) {
+  foreach ($submitted as $k => $v) {
+    if ($k == $field_name) {
+      krsort($parents);
+      return $parents;
+    } else {
+      if (is_array($v)) {
+        $parent = sba_message_action_webform_get_parents_recursive($field_name, $v, $parents);
+        if (is_array($parent)) {
+          $parents[] = $k;
+          krsort($parents);
+          return $parents;
+        }
+      }
+    }
+  }
+  return false;
+}
+
+/**
+ * Retrieves a field value from form_state['values']['submitted'] tree.
+ *
+ * @param $field_name
+ * @param $submitted
+ * @param array $result
+ * @return array
+ */
+function sba_message_action_webform_get_value_recursive($field_name, &$submitted, &$result = array()){
+  foreach($submitted as $key => $value) {
+    if($field_name == $key) {
+      $result = $value;
+    }
+    elseif($field_name != $key && is_array($value)) {
+      sba_message_action_webform_get_value_recursive($field_name, $value, $result);
+    }
+  }
+  return $result;
+}
+
 
 /**
  * Combines user edited message data with other static properties
@@ -594,8 +782,18 @@ function sba_message_action_build_preprocess(&$vars) {
   $element = $vars['element'];
   $node = $element['#node'];
 
-  $vars['webform'] = drupal_render($element['submitted']);
-  $vars['message_fieldset'] = drupal_render($element['sba_messages']);
+  $element['submitted']['sba_take_action']['sba_your_info']['#attributes']['id'] = 'user-information-wrapper';
+  $vars['your_info'] = drupal_render($element['submitted']['sba_take_action']['sba_your_info']);
+
+  $vars['your_message'] = drupal_render($element['submitted']['sba_take_action']['sba_your_message']);
+
+  $element['submitted']['sba_take_action']['#attributes']['id'] = 'take-action-wrapper';
+  $take_action = trim(drupal_render($element['submitted']['sba_take_action']));
+  $pattern = '~(<fieldset\b[^>]*><legend\b[^>]*>.*?|\s?</legend><div\b[^>]*>.*?|\s?)</div></fieldset>~s';
+  preg_match($pattern, $take_action, $matches);
+  $vars['take_action_open'] = $matches[1];
+  $vars['take_action_close'] = '</div></fieldset>';
+
   $vars['form'] = $element;
   $vars['social'] = '';
 
@@ -649,28 +847,29 @@ function sba_message_action_preprocess_node(&$vars) {
   if($vars['node']->type == 'sba_message_action') {
     $vars['use_layouts'] = !empty($vars['form_layouts']) ? TRUE : FALSE;
     if (empty($vars['use_layouts'])) {
+      $vars['content']['webform']['#form']['submitted']['sba_take_action']['#attributes']['id'] = 'take-action-wrapper';
       $vars['content']['webform']['#theme_wrappers'][] = 'message_action_webform_wrapper';
-      $vars['content']['webform']['#form']['submitted']['#theme_wrappers'][] = 'message_action_submitted_wrapper';
-      $vars['content']['webform']['#form']['sba_messages']['#theme_wrappers'][] = 'message_action_messages_wrapper';
+      $vars['content']['webform']['#form']['submitted']['sba_take_action']['sba_your_info']['#attributes']['id'] = 'your-information-wrapper';
+      $vars['content']['webform']['#form']['submitted']['sba_take_action']['sba_your_info']['#theme_wrappers'][] = 'message_action_submitted_wrapper';
+      $vars['content']['webform']['#form']['submitted']['sba_take_action']['sba_your_message']['#attributes']['id'] = 'your-message-wrapper';
+      $vars['content']['webform']['#form']['submitted']['sba_take_action']['sba_your_message']['#theme_wrappers'][] = 'message_action_messages_wrapper';
     }
   }
 }
 
 
 /**
- * Theme wrapper to create "Your Information" fieldset
- * and fluid bootstrap divs on non-form-layout nodes.
+ * Theme wrapper to create fluid bootstrap divs on non-form-layout nodes.
  *
  * @param $vars
  * @return string
  */
 function theme_message_action_submitted_wrapper($vars) {
-  $legend = t('Your Information');
-  return '<div id = "left" class = "span5"><fieldset id="your-information-wrapper" class = "form-wrapper"><legend>' . $legend . '</legend>' . $vars['element']['#children']  . '</fieldset></div>';
+   return '<div id = "left" class = "span5">' . $vars['element']['#children']  . '</div>';
 }
 
 /**
- * Theme wrapper to create fluid bootstrap divs around "Your Message" fieldset
+ * Theme wrapper to create fluid bootstrap divs
  * on non-form-layout nodes.
  *
  * @param $vars
@@ -688,8 +887,7 @@ function theme_message_action_messages_wrapper($vars) {
  * @return string
  */
 function theme_message_action_webform_wrapper($vars) {
-  $legend = t('Take action now');
-  return ' <div class="row-fluid"><fieldset id="webform-wrapper" class = "form-wrapper"><legend>' . $legend . '</legend>' . $vars['element']['#children']  . '</fieldset></div>';
+  return ' <div class="row-fluid">' . $vars['element']['#children']  . '</div>';
 }
 
 /**
