@@ -27,7 +27,7 @@ class FundraiserSustainersEOMTestCase extends DrupalUnitTestCase {
    */
   function testTwentyNinethHandling() {
     $start = date('Y-m-d', strtotime('2015-1-29'));
-    $end = date('Y-m-d', strtotime('+10 months', strtotime($start)));
+    $end = date('Y-m-d', strtotime('+11 months', strtotime($start)));
 
     $timestamps = $this->month_timestamps($start, $end);
 
@@ -52,7 +52,7 @@ class FundraiserSustainersEOMTestCase extends DrupalUnitTestCase {
    */
   function testThirtiethHandling() {
     $start = date('Y-m-d', strtotime('2015-1-30'));
-    $end = date('Y-m-d', strtotime('+10 months', strtotime($start)));
+    $end = date('Y-m-d', strtotime('+11 months', strtotime($start)));
 
     $timestamps = $this->month_timestamps($start, $end);
 
@@ -76,7 +76,7 @@ class FundraiserSustainersEOMTestCase extends DrupalUnitTestCase {
    */
   function testThirtyFirstHandling() {
     $start = date('Y-m-d', strtotime('2015-1-31'));
-    $end = date('Y-m-d', strtotime('+10 months', strtotime($start)));
+    $end = date('Y-m-d', strtotime('+11 months', strtotime($start)));
 
     $timestamps = $this->month_timestamps($start, $end);
 
@@ -90,28 +90,53 @@ class FundraiserSustainersEOMTestCase extends DrupalUnitTestCase {
 
   /**
    * Ensures leap year Feburary's are handled correctly.
+   *
+   * Extend the dates over a 2 year period to test non-leap years as well.
    */
   function testLeapYearHandling() {
     $start = date('Y-m-d', strtotime('2012-1-31'));
-    $end = date('Y-m-d', strtotime('+10 months', strtotime($start)));
+    $end = date('Y-m-d', strtotime('+23 months', strtotime($start)));
 
     $timestamps = $this->month_timestamps($start, $end);
 
     foreach($timestamps as $timestamp) {
       $month_number = date('n', $timestamp);
       $day = date('d', $timestamp);
+      $date = date('m-d-Y', $timestamp);
+      $year = date('Y', $timestamp);
+      $month_name = date('F', $timestamp);
 
       // If the month is Feburary the payment date should be the 29th in a leap year.
-      if ($month_number == 2) {
+      if ($month_number == 2 && $year == 2012) {
         $this->assertEqual(29, $day, 'Payment for Feburary on a leap year falls on the 29th.');
       }
-      // TODO: Check other months just to be safe.
+      else if ($month_number == 2 && $year = 2013) {
+        // Non-leap year should go back to the 28th.
+        $this->assertEqual(28, $day, 'Payment for Feburary on a non-leap year falls on the 28th.');
+      }
+      else {
+        $is_last_day_in_month = $this->dayIsLastDayOfMonth($timestamp);
+        $this->assertTrue($is_last_day_in_month, t('Payment for @month_name falls on the last day of the month, @date.', array('@month_name' => $month_name, '@date' => $date)));
+      }
     }
   }
 
-  function testMultipleYearHandling() {
-    // TODO: Create a multi-year series and check all dates. Bonus for running it over both
-    // non-leap and leap years.
+  /**
+   * Ensures payment date that exists in all months is calculated properly.
+   */
+  function testNormalDayHandling() {
+    $start = date('Y-m-d', strtotime('2015-1-15'));
+    $end = date('Y-m-d', strtotime('+11 months', strtotime($start)));
+
+    $timestamps = $this->month_timestamps($start, $end);
+
+    foreach($timestamps as $timestamp) {
+      $day = date('d', $timestamp);
+      $month_name = date('F', $timestamp);
+
+      // Every payment should fall on the 15th of the month.
+      $this->assertEqual(15, $day, t('Payment for @month_name falls on the 15th (@date).', array('@month_name' => $month_name, '@date' => date('m-d-Y', $timestamp))));
+    }
   }
 
   /**
