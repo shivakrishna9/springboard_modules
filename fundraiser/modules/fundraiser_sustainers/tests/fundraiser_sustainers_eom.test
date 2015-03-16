@@ -44,6 +44,9 @@ class FundraiserSustainersEOMTestCase extends DrupalUnitTestCase {
         $this->assertEqual(29, $day, t('Payment for @month_name falls on the 29th (@date).', array('@month_name' => $month_name, '@date' => date('m-d-Y', $timestamp))));
       }
     }
+
+    // Ensure 12 dates were generated.
+    $this->assertEqual(12, count($timestamps), t('12 payment dates where generated the first year.'));
   }
 
   /**
@@ -69,6 +72,9 @@ class FundraiserSustainersEOMTestCase extends DrupalUnitTestCase {
         $this->assertEqual(30, $day, t('Payment for @month_name falls on the 30th (@date).', array('@month_name' => $month_name, '@date' => date('m-d-Y', $timestamp))));
       }
     }
+
+    // Ensure 12 dates were generated.
+    $this->assertEqual(12, count($timestamps), t('12 payment dates where generated the first year.'));
   }
 
   /**
@@ -86,6 +92,9 @@ class FundraiserSustainersEOMTestCase extends DrupalUnitTestCase {
       $month_name = date('F', $timestamp);
       $this->assertTrue($is_last_day_in_month, t('Payment for @month_name falls on the last day of the month, @date.', array('@month_name' => $month_name, '@date' => $date)));
     }
+
+    // Ensure 12 dates were generated.
+    $this->assertEqual(12, count($timestamps), t('12 payment dates where generated the first year.'));
   }
 
   /**
@@ -99,12 +108,19 @@ class FundraiserSustainersEOMTestCase extends DrupalUnitTestCase {
 
     $timestamps = $this->month_timestamps($start, $end);
 
+    $first_year_transaction_count = 0;
+
     foreach($timestamps as $timestamp) {
       $month_number = date('n', $timestamp);
       $day = date('d', $timestamp);
       $date = date('m-d-Y', $timestamp);
       $year = date('Y', $timestamp);
       $month_name = date('F', $timestamp);
+
+      // Keep track of the first year's count so we can check it later.
+      if ($year == 2012) {
+        $first_year_transaction_count++;
+      }
 
       // If the month is Feburary the payment date should be the 29th in a leap year.
       if ($month_number == 2 && $year == 2012) {
@@ -119,6 +135,9 @@ class FundraiserSustainersEOMTestCase extends DrupalUnitTestCase {
         $this->assertTrue($is_last_day_in_month, t('Payment for @month_name falls on the last day of the month, @date.', array('@month_name' => $month_name, '@date' => $date)));
       }
     }
+
+    // Ensure 12 dates were generated.
+    $this->assertEqual(12, $first_year_transaction_count, t('12 payment dates where generated the first year.'));
   }
 
   /**
@@ -137,6 +156,9 @@ class FundraiserSustainersEOMTestCase extends DrupalUnitTestCase {
       // Every payment should fall on the 15th of the month.
       $this->assertEqual(15, $day, t('Payment for @month_name falls on the 15th (@date).', array('@month_name' => $month_name, '@date' => date('m-d-Y', $timestamp))));
     }
+
+    // Ensure 12 dates were generated.
+    $this->assertEqual(12, count($timestamps), t('12 payment dates where generated the first year.'));
   }
 
   /**
