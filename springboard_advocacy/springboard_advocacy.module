@@ -259,6 +259,85 @@ function springboard_advocacy_form_alter(&$form, &$form_state, $form_id) {
 
   $types = variable_get('springboard_advocacy_alert_types', array());
 
+  if (!empty($form['#node_edit_form']) && $form['#node']->type == 'sba_message_action') {
+    $language = $form['language']['#value'];
+    // Add a vertical-tab fieldset for "Alert options."
+    $form['springboard_advocacy_options'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Alert options'),
+      '#weight' => -1,
+      '#collapsible' => TRUE,
+      '#collapsed' => FALSE,
+      '#group' => 'additional_settings',
+    );
+    // Include JS to layout long lists of checkboxes in columns.
+    drupal_add_js(drupal_get_path('module', 'springboard_advocacy') . '/js/jquery.columnizer.min.js');
+    drupal_add_js(drupal_get_path('module', 'springboard_advocacy') . '/js/message-action-edit-form.js');
+    // Include CSS for special layout.
+    drupal_add_css(drupal_get_path('module', 'springboard_advocacy') . '/css/message-action-edit-form.css');
+
+    // Congressional Issues selection
+    if (isset($form['field_sba_congressional_issues']) && !empty($form['field_sba_congressional_issues'][$language])) {
+      // Filter out all but the top-tier terms.
+      $options =& $form['field_sba_congressional_issues'][$language]['#options'];
+      $vocabulary = taxonomy_vocabulary_machine_name_load('sba_congressional_issues');
+      // Add indentation class to non-top-tier org issue terms.
+      $terms = array();
+      foreach (taxonomy_get_tree($vocabulary->vid) as $term) {
+        $terms[$term->tid] = $term;
+      }
+      foreach ($options as $tid => $label) {
+        if ($terms[$tid]->depth > 0) {
+          unset($options[$tid]);
+        }
+      }
+
+      // Move the field to a special fieldset inside "Alert options."
+      $form['springboard_advocacy_options']['congressional_issues'] = array(
+        '#type' => 'fieldset',
+        '#title' => t('Choose Congressional Issue'),
+        '#description' => t(
+          "Many members of Congress require an issue/topic to be selected for each message they receive. "
+          . "If your alert is targeting members of Congress, please select the issue that best matches the topic of your message. "
+          . "Based on your choice, Springboard will choose the best available match on each legislator's web form."
+        ),
+        '#collapsible' => TRUE,
+        '#collapsed' => FALSE,
+      );
+      $form['field_sba_congressional_issues'][$language]['#title'] = '';
+      $form['springboard_advocacy_options']['congressional_issues']['field_sba_congressional_issues'] =
+        $form['field_sba_congressional_issues']
+      ;
+      unset($form['field_sba_congressional_issues']);
+    }
+
+    // Organization Issues selection
+    if (isset($form['field_sba_organization_issues']) && !empty($form['field_sba_organization_issues'][$language])) {
+      $form['field_sba_organization_issues']['#pre_render'][] = 'springboard_advocacy_sba_organization_issues_pre_render';
+      // Remove any leading dashes from option labels. (We'll indent them in the pre-render instead.)
+      $options =& $form['field_sba_organization_issues'][$language]['#options'];
+      foreach ($options as $tid => $label) {
+        $options[$tid] = preg_replace("/^\\-+/", '', $options[$tid]);
+      }
+
+      // Move the field to a special fieldset inside "Alert options."
+      $form['springboard_advocacy_options']['organization_issues'] = array(
+        '#type' => 'fieldset',
+        '#title' => t('Choose Organization Issue'),
+        '#description' => t(
+          "Select the issues from this alert. These are your organization's issues, which can be used to auto-generate feeds "
+          . "and lists of related alerts for your action center and other areas."
+        ),
+        '#collapsible' => TRUE,
+        '#collapsed' => FALSE,
+      );
+      $form['field_sba_organization_issues'][$language]['#title'] = '';
+      $form['springboard_advocacy_options']['organization_issues']['field_sba_organization_issues'] =
+        $form['field_sba_organization_issues']
+      ;
+      unset($form['field_sba_organization_issues']);
+    }
+  }
   if (isset($form['#node']) && in_array($form['#node']->type, $types)) {
     //springboard_advocacy_form_vertical_nav($form);
     $node = $form['#node'];
@@ -284,6 +363,21 @@ function springboard_advocacy_form_alter(&$form, &$form_state, $form_id) {
 
     }
   }
+}
+
+function springboard_advocacy_sba_organization_issues_pre_render($element) {
+  $vocabulary = taxonomy_vocabulary_machine_name_load('sba_organization_issues');
+  // Add indentation class to non-top-tier org issue terms.
+  $terms = array();
+  foreach (taxonomy_get_tree($vocabulary->vid) as $term) {
+    $terms[$term->tid] = $term;
+  }
+  foreach ($element[$element['#language']]['#options'] as $tid => $name) {
+    if ($terms[$tid]->depth > 0) {
+      $element[$element['#language']][$tid]['#attributes']['class'][] = 'sba-term-indent';
+    }
+  }
+  return $element;
 }
 
 /**
