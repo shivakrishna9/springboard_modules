@@ -276,11 +276,11 @@ function springboard_advocacy_form_alter(&$form, &$form_state, $form_id) {
     // Include CSS for special layout.
     drupal_add_css(drupal_get_path('module', 'springboard_advocacy') . '/css/message-action-edit-form.css');
 
-    // Congressional Issues selection
-    if (isset($form['field_sba_congressional_issues']) && !empty($form['field_sba_congressional_issues'][$language])) {
+    // Legislative Issues selection
+    if (isset($form['field_sba_legislative_issues']) && !empty($form['field_sba_legislative_issues'][$language])) {
       // Filter out all but the top-tier terms.
-      $options =& $form['field_sba_congressional_issues'][$language]['#options'];
-      $vocabulary = taxonomy_vocabulary_machine_name_load('sba_congressional_issues');
+      $options =& $form['field_sba_legislative_issues'][$language]['#options'];
+      $vocabulary = taxonomy_vocabulary_machine_name_load('sba_legislative_issues');
       // Add indentation class to non-top-tier org issue terms.
       $terms = array();
       foreach (taxonomy_get_tree($vocabulary->vid) as $term) {
@@ -293,9 +293,9 @@ function springboard_advocacy_form_alter(&$form, &$form_state, $form_id) {
       }
 
       // Move the field to a special fieldset inside "Alert options."
-      $form['springboard_advocacy_options']['congressional_issues'] = array(
+      $form['springboard_advocacy_options']['legislative_issues'] = array(
         '#type' => 'fieldset',
-        '#title' => t('Choose Congressional Issue'),
+        '#title' => t('Choose Legislative Issue'),
         '#description' => t(
           "Many members of Congress require an issue/topic to be selected for each message they receive. "
           . "If your alert is targeting members of Congress, please select the issue that best matches the topic of your message. "
@@ -304,11 +304,11 @@ function springboard_advocacy_form_alter(&$form, &$form_state, $form_id) {
         '#collapsible' => TRUE,
         '#collapsed' => FALSE,
       );
-      $form['field_sba_congressional_issues'][$language]['#title'] = '';
-      $form['springboard_advocacy_options']['congressional_issues']['field_sba_congressional_issues'] =
-        $form['field_sba_congressional_issues']
+      $form['field_sba_legislative_issues'][$language]['#title'] = '';
+      $form['springboard_advocacy_options']['legislative_issues']['field_sba_legislative_issues'] =
+        $form['field_sba_legislative_issues']
       ;
-      unset($form['field_sba_congressional_issues']);
+      unset($form['field_sba_legislative_issues']);
     }
 
     // Organization Issues selection

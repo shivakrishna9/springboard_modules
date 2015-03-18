@@ -12,22 +12,22 @@
      */
     Drupal.behaviors.AdvocacyMessageActionEditForm = {
         attach: function(context, settings) {
-            // Columnize the Congressional Issues list based on the average label width.
+            // Columnize the Legislative Issues list based on the average label width.
             var labelWidthsTotal = 0;
             var labelCount = 0;
-            $('#edit-springboard-advocacy-options .field-name-field-sba-congressional-issues .form-type-checkbox').each(function(){
+            $('#edit-springboard-advocacy-options .field-name-field-sba-legislative-issues .form-type-checkbox').each(function(){
                 labelWidthsTotal += $(this).find('label').outerWidth();
                 labelCount++;
             });
             var checkboxWidth =
-                $('#edit-springboard-advocacy-options .field-name-field-sba-congressional-issues .form-type-checkbox input')
+                $('#edit-springboard-advocacy-options .field-name-field-sba-legislative-issues .form-type-checkbox input')
                     .outerWidth()
             ;
             if (labelCount > 0) {
                 var averageLabelWidth = labelWidthsTotal / labelCount;
                 var bufferWidth = averageLabelWidth * 1.2;  // Add 20% buffer.
                 var columnWidth = Math.ceil(averageLabelWidth + checkboxWidth + bufferWidth);
-                $('#edit-springboard-advocacy-options .field-name-field-sba-congressional-issues .form-type-checkbox')
+                $('#edit-springboard-advocacy-options .field-name-field-sba-legislative-issues .form-type-checkbox')
                     .parent().columnize({width: columnWidth})
                 ;
             }
