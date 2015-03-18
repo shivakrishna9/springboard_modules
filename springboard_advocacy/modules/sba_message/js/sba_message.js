@@ -85,7 +85,8 @@
             //update our element state meta-variables
             var nm = this.name;
             if(nm.indexOf('combine') != -1 || nm.indexOf('gender') != -1 ||
-               nm.indexOf('social')  != -1 || nm.indexOf('district') != -1) {
+               nm.indexOf('social')  != -1 || nm.indexOf('district') != -1 ||
+                nm.indexOf('PRES')  != -1 || nm.indexOf('GOVNR') != -1) {
                if ($(this).prop('checked') || (nm.indexOf('district') != -1 && district.val() != 'All')) {
                    notGroupable = true;
                    if (nm.indexOf('district') != -1) {
@@ -102,7 +103,9 @@
                   }
               }
            } else {
-               if ((this.type=='checkbox' && $(this).prop('checked'))) {
+                //console.log(this)
+
+                if ((this.type=='checkbox' && $(this).prop('checked'))) {
                    groupable = true;
                }
                if((nm == 'search_state' && $(this).val() != 'All')) {
@@ -183,7 +186,7 @@
 
         var query = [];
         if(roles.length > 0) {
-            query.push('roles=' + roles)
+            query.push('role=' + roles)
         }
         if(states.length > 0) {
             query.push('state=' + states)
@@ -203,7 +206,6 @@
         else {
            qArr = query;
         }
-
         var readable = buildReadableQuery(qArr);
         var id = calcDivId()
         buildDiv(id, readable, qArr, false);
@@ -267,6 +269,7 @@
     // will be aggregated as a JSON string used by a hidden form field
     // for submission to the API
     function buildDiv(id, readable, query, reload) {
+        console.log(query)
         if (reload == false) {
             var isnew = 'new';
         }
@@ -363,11 +366,14 @@
                     case 'SS':
                         queryObj[segments[0]][i] = 'State Senators';
                         break;
-                    case 'SX':
-                        queryObj[segments[0]][i] = 'State Executives';
+                    case 'PRES01':
+                        queryObj[segments[0]][i] = 'US President';
                         break;
-                    case 'FX':
-                        queryObj[segments[0]][i] = 'Federal Executive';
+                    case 'PRES03':
+                        queryObj[segments[0]][i] = 'US Vice-President';
+                        break;
+                    case 'GOVNR':
+                        queryObj[segments[0]][i] = 'State Governors';
                         break;
                     case 'R':
                         queryObj[segments[0]][i] = 'Republicans';
@@ -405,7 +411,7 @@
             var newTop;
             $(window).scroll(function() {
                 if(offset.top <= $(window).scrollTop() && $('#springboard-advocacy-message-recipients').css('position') == 'absolute') {
-                    console.log(offset.top);
+                    //console.log(offset.top);
 
                     newTop =$(window).scrollTop() - offset.top;
                     //console.log(newTop);
