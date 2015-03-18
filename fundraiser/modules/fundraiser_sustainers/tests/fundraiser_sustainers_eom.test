@@ -21,6 +21,13 @@ class FundraiserSustainersEOMTestCase extends DrupalUnitTestCase {
     );
   }
 
+  function setUp() {
+    // Load the include files.
+    module_load_include('inc', 'fundraiser_sustainers', 'includes/schedules/sustainersMonthlySchedule');
+    module_load_include('inc', 'fundraiser_sustainers', 'includes/schedules/sustainersBaseSchedule');
+    parent::setUp();
+  }
+
   /**
    * Ensures non-leap year Feburary's are handled correctly when the
    * initial date is the 29th of the month.
@@ -176,44 +183,19 @@ class FundraiserSustainersEOMTestCase extends DrupalUnitTestCase {
    * TODO: This would get removed and we'd call the actual fundraiser sustainers function instead.
    */
   function month_timestamps($start, $end) {
-    $current = new DateTime($start);
-    $end = new DateTime($end);
-
-    // Get the amount of months needed.
-    $interval = $end->diff($current);
-    $months = ($interval->format('%y') * 12) + $interval->format('%m');
+    $schedule = new sustainersMonthlySchedule($start, $end);
 
     // Create timestamps for each month until the end time is reached.
-    for ($x = 0; $x <= $months; $x++) {
-      // Get the next months starting date.
-      $next = $this->month_timestamps_add_month($current, $x);
+    $processed = 0;
+
+    // This while loop matches the one sustainers uses to generate the series.
+    while ($processed <= $schedule->scheduleAmount()) {
+      // Get the next months charge date.
+      $next = $schedule->advanceDate($processed);
       $times[] = $next->format('U');
+      $processed++;
     }
 
     return $times;
   }
-
-  /**
-   * Return a datetime object incremented to the number of months.
-   */
-  function month_timestamps_add_month($datetime, $num) {
-    $next = clone $datetime;
-    $date = $datetime->format('Y-n-j');
-    list($y, $m, $d) = explode('-', $date);
-
-    $m += $num;
-    while ($m > 12) {
-      $m -= 12;
-      $y++;
-    }
-
-    $last_day = date('t', strtotime("$y-$m-1"));
-    if ($d > $last_day) {
-      $d = $last_day;
-    }
-
-    $next->setDate($y, $m, $d);
-    return $next;
-  }
-
 }
