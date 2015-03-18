@@ -406,6 +406,7 @@ function _sba_message_api_save($sba_message, $is_new, $form_state) {
       }
     }
   }
+
   if (!empty($unstructured_chambers)) {
     $chamber_rows = _sba_message_build_chambers($unstructured_chambers);
   }
@@ -493,10 +494,14 @@ function _sba_message_build_chambers($unstructured_chambers) {
       }
     }
   }
+
   $chamber_rows = array();
   foreach ($chamber_rows_container as $container)  {
-    $chamber_rows = array_values($container);
+    foreach ($container as $row) {
+     $chamber_rows[] = $row;
+    }
   }
+
   return $chamber_rows;
 }
 
