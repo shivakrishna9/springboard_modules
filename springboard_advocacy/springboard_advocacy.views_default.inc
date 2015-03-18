@@ -1246,6 +1246,7 @@ function springboard_advocacy_views_default_views() {
   $handler->display->display_options['defaults']['exposed_form'] = FALSE;
   $handler->display->display_options['exposed_form']['type'] = 'basic';
   $handler->display->display_options['exposed_form']['options']['submit_button'] = 'Search';
+  $handler->display->display_options['exposed_form']['options']['expose_sort_order'] = FALSE;
   $handler->display->display_options['exposed_form']['options']['autosubmit_hide'] = FALSE;
   $handler->display->display_options['defaults']['style_plugin'] = FALSE;
   $handler->display->display_options['style_plugin'] = 'table';
@@ -1258,7 +1259,7 @@ function springboard_advocacy_views_default_views() {
     'role' => 'role',
     'state' => 'state',
     'target_actions' => 'target_actions',
-    'last_name_1' => 'last_name_1',
+    'committee_memberships' => 'committee_memberships',
   );
   $handler->display->display_options['style_options']['default'] = 'last_name';
   $handler->display->display_options['style_options']['info'] = array(
@@ -1312,12 +1313,12 @@ function springboard_advocacy_views_default_views() {
       'separator' => '',
       'empty_column' => 0,
     ),
-    'last_name_1' => array(
-      'sortable' => 1,
+    'committee_memberships' => array(
+      'sortable' => 0,
       'default_sort_order' => 'asc',
       'align' => '',
       'separator' => '',
-      'empty_column' => 0,
+      'empty_column' => 1,
     ),
   );
   $handler->display->display_options['defaults']['style_options'] = FALSE;
@@ -1352,11 +1353,20 @@ function springboard_advocacy_views_default_views() {
   $handler->display->display_options['fields']['state']['id'] = 'state';
   $handler->display->display_options['fields']['state']['table'] = 'advocacy';
   $handler->display->display_options['fields']['state']['field'] = 'state';
+  /* Field: Advocacy: Committee Memberships */
+  $handler->display->display_options['fields']['committee_memberships']['id'] = 'committee_memberships';
+  $handler->display->display_options['fields']['committee_memberships']['table'] = 'advocacy';
+  $handler->display->display_options['fields']['committee_memberships']['field'] = 'committee_memberships';
+  $handler->display->display_options['fields']['committee_memberships']['label'] = '';
+  $handler->display->display_options['fields']['committee_memberships']['element_label_colon'] = FALSE;
+  $handler->display->display_options['fields']['committee_memberships']['hide_empty'] = TRUE;
+  $handler->display->display_options['fields']['committee_memberships']['empty_zero'] = TRUE;
   /* Field: Advocacy: Target Actions */
   $handler->display->display_options['fields']['target_actions']['id'] = 'target_actions';
   $handler->display->display_options['fields']['target_actions']['table'] = 'advocacy';
   $handler->display->display_options['fields']['target_actions']['field'] = 'target_actions';
-  $handler->display->display_options['fields']['target_actions']['label'] = 'Action';
+  $handler->display->display_options['fields']['target_actions']['label'] = '';
+  $handler->display->display_options['fields']['target_actions']['element_label_colon'] = FALSE;
   $handler->display->display_options['fields']['target_actions']['which_links'] = array(
     'add' => 'add',
     'view' => 0,
@@ -1372,7 +1382,7 @@ function springboard_advocacy_views_default_views() {
   $handler->display->display_options['filters']['combine']['group'] = 1;
   $handler->display->display_options['filters']['combine']['exposed'] = TRUE;
   $handler->display->display_options['filters']['combine']['expose']['operator_id'] = 'combine_op';
-  $handler->display->display_options['filters']['combine']['expose']['description'] = 'First name, last name';
+  $handler->display->display_options['filters']['combine']['expose']['description'] = 'Use first name and/or last name. For committees, use committee:"keyword or phrase"';
   $handler->display->display_options['filters']['combine']['expose']['operator'] = 'combine_op';
   $handler->display->display_options['filters']['combine']['expose']['identifier'] = 'combine';
   $handler->display->display_options['filters']['combine']['expose']['remember_roles'] = array(
@@ -1486,8 +1496,8 @@ function springboard_advocacy_views_default_views() {
     'FR' => 'FR',
     'SR' => 'SR',
     'SS' => 'SS',
-    'FX' => 'FX',
-    'SX' => 'SX',
+    'PRES01|PRES03' => 'PRES01|PRES03',
+    'GOVNR' => 'GOVNR',
   );
   $handler->display->display_options['filters']['search_role_1']['group'] = 1;
   $handler->display->display_options['filters']['search_role_1']['exposed'] = TRUE;
@@ -1502,6 +1512,7 @@ function springboard_advocacy_views_default_views() {
     3 => 0,
     4 => 0,
     5 => 0,
+    6 => 0,
   );
   $handler->display->display_options['filters']['search_role_1']['expose']['reduce'] = TRUE;
   $handler->display->display_options['filters']['search_role_1']['group_info']['label'] = 'Branch';
@@ -1763,7 +1774,6 @@ function springboard_advocacy_views_default_views() {
       ),
     ),
   );
-
 
   $views[$view->name] = $view;
 

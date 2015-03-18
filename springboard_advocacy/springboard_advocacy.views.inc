@@ -132,6 +132,15 @@ function springboard_advocacy_views_data() {
     ),
   );
 
+  $data['advocacy']['committee_memberships'] = array(
+    'title' => t('Committee Memberships'),
+    'help' => t('Committee Memberships'),
+    'field' => array(
+      'click sortable' => TRUE,
+      'handler' => 'springboard_advocacy_views_handler_field',
+    ),
+  );
+
   $data['advocacy']['target_actions'] = array(
     'title' => t('Target Actions'),
     'help' => t('Action links for target displays'),
