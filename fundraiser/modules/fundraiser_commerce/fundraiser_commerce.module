@@ -1022,7 +1022,9 @@ function fundraiser_commerce_fundraiser_donation_create($donation) {
     $profile = commerce_customer_profile_new('billing', $user->uid); // Billing type comes with Commerce by default.
   }
   // Update profile with the billing information.
-  $profile->commerce_customer_address[LANGUAGE_NONE][0] = addressfield_default_values();
+  $field = field_info_field('commerce_customer_address');
+  $instance =field_info_instance('commerce_customer_profile', 'commerce_customer_address', 'billing');
+  $profile->commerce_customer_address[LANGUAGE_NONE][0] = addressfield_default_values($field, $instance);
   $profile->commerce_customer_address[LANGUAGE_NONE][0]['country'] = $donation->donation['country'];
   $profile->commerce_customer_address[LANGUAGE_NONE][0]['name_line'] = $donation->donation['first_name'] . ' ' . $donation->donation['last_name'];
   $profile->commerce_customer_address[LANGUAGE_NONE][0]['first_name'] = $donation->donation['first_name'];
