@@ -399,7 +399,7 @@ function _sba_message_api_save($sba_message, $is_new, $form_state) {
         $indvds[$target->id] = $target->id;
       }
       elseif(isset($target->ids)) {
-        $multi_indvds[] =  $target;
+        $multi_indvds =  array_merge($multi_indvds, explode('|', $target->ids));
       }
       else {
         $unstructured_chambers[] = $target;
@@ -411,22 +411,8 @@ function _sba_message_api_save($sba_message, $is_new, $form_state) {
     $chamber_rows = _sba_message_build_chambers($unstructured_chambers);
   }
 
-  $rekeyed = array();
-  if (!empty($multi_indvds)) {
-    //$multi =  sba_message_get_multi_indvds($client, $multi_indvds);
-    $group_combine = array();
-    foreach ($multi_indvds as $group) {
-      $group_combine += explode('|', $group->ids);
-    }
-    foreach ($group_combine as $combine_id) {
-      $rekeyed[$combine_id] = $combine_id;
-    }
-  }
-  $combined = $rekeyed + $indvds;
-
+  $combined = array_merge($multi_indvds, $indvds);
   $indvds = !empty($combined) ? json_encode($combined) : '';
-
-   // Executive build call goes here.
 
   // Is this a new message? Then create a new target group for it.
   if ($is_new) {
@@ -497,11 +483,8 @@ function _sba_message_build_chambers($unstructured_chambers) {
 
   $chamber_rows = array();
   foreach ($chamber_rows_container as $container)  {
-    foreach ($container as $row) {
-     $chamber_rows[] = $row;
-    }
+    $chamber_rows = array_merge($chamber_rows, $container);
   }
-
   return $chamber_rows;
 }
 
