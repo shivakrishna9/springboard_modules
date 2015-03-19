@@ -19,7 +19,7 @@ class FundraiserSustainerTest extends FundraiserSetup {
     return array(
       'name' => 'Fundraiser sustainers',
       'description' => 'Tests fundraiser sustainers behavior.',
-      'group' => 'Fundraiser',
+      'group' => 'Fundraiser Sustainers',
     );
   }
 
@@ -87,7 +87,7 @@ class FundraiserSustainerTest extends FundraiserSetup {
    */
   public function testSustainerRetries() {
     // Set up a valid sustainer key.
-    $this->setSustainerKey(trim($_SERVER['HTTP_HOST']));
+    $this->setSustainerKey(trim($_SERVER['HTTP_HOST']) . rtrim(base_path(), '/'));
 
     // Use 55555 which will cause the example gateway to fail future charges.
     $post = array(
@@ -332,7 +332,7 @@ class FundraiserSustainerTest extends FundraiserSetup {
     $this->assertText('All future payments cancelled.', t('The donation sequence is cancelled.'), t('Fundraiser Cancel'));
     // Check display in table.
     $this->drupalGet('user/' . $created_user->uid . '/recurring_overview');
-    $this->assertText('Cancelled', t('The donation sequence is listed as cancelled in overview.'), t('Fundraiser Cancel'));
+    $this->assertText('Canceled', t('The donation sequence is listed as cancelled in overview.'), t('Fundraiser Cancel'));
     // Check display in page.
     $this->drupalGet('user/' . $created_user->uid . '/recurring_overview/' . $master_did);
     $this->assertText('Canceled', t('The donation sequence is listed as cancelled in overview.'), t('Fundraiser Cancel'));
@@ -428,7 +428,7 @@ class FundraiserSustainerTest extends FundraiserSetup {
       }
     }
 
-    $this->setSustainerKey(trim($_SERVER['HTTP_HOST']));
+    $this->setSustainerKey(trim($_SERVER['HTTP_HOST']) . rtrim(base_path(), '/'));
     // With key setup, advance one charge and check the state afterwards.
     $yesterday = strtotime('-1 day'); // Use yesterday because the cron run happens right after setting this
     db_update('fundraiser_sustainers')
@@ -453,7 +453,7 @@ class FundraiserSustainerTest extends FundraiserSetup {
    */
   public function testFundraiserSustainerProcessOnEnvironmentMatch() {
     // Set up a legitimate sustainer key value.
-    $this->setSustainerKey(trim($_SERVER['HTTP_HOST']));
+    $this->setSustainerKey(trim($_SERVER['HTTP_HOST']) . rtrim(base_path(), '/'));
     // Create a recurring donation to test with. These donations should have example.production
     // as their sustainer key.
     $master_did = $this->fundraiserSustainerCreateRecurringDonation();
@@ -462,7 +462,7 @@ class FundraiserSustainerTest extends FundraiserSetup {
     foreach ($donations as $donation) {
       // Skip the first order.
       if ($donation->did != $donation->master_did) {
-        $this->assertEqual(trim($_SERVER['HTTP_HOST']), $donation->sustainer_key, 'Sustainer record contains the correct sustainer key.');
+        $this->assertEqual(trim($_SERVER['HTTP_HOST']) . rtrim(base_path(), '/'), $donation->sustainer_key, 'Sustainer record contains the correct sustainer key.');
       }
     }
     // With key setup, advance one charge and check the state afterwards.
