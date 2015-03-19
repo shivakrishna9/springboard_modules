@@ -46,7 +46,6 @@ class springboard_advocacy_views_plugin_query extends views_plugin_query {
     if ((count($terms) == 1) && isset($terms['class_name'])) {
       //$suppress_results = $view->filter['search_class_name']->options['exposed'] == FALSE;
     }
-
     if (!empty($terms) && empty($suppress_results)) {
       foreach ($terms as $key => $term) {
         // is it a multiple value checkbox or select?
@@ -55,8 +54,28 @@ class springboard_advocacy_views_plugin_query extends views_plugin_query {
           $terms[$key] = implode('|', $term);
         }
         else {
-          $terms[$key] = str_replace(' ', '|', $term);
+          //strip leading and multiple whitespaces
+          $term = trim($term);
+          $term = preg_replace('/\s+/', ' ', $term);
 
+          //no committees
+          if(strpos($term, 'committee:') === FALSE) {
+            $terms[$key] = str_replace(' ', '|', $term);
+          }
+          else {
+            //has committees
+            $pattern = '/(committee:".*?")/';
+            preg_match_all($pattern, $term, $matches);
+
+            if(!empty($matches[1])) {
+              foreach($matches[1] as $match) {
+                $terms[$key] = str_replace($match, ' ', $terms[$key] );
+              }
+              $non_matches = !empty($terms[$key]) ? $terms[$key] . '|' : NULL;
+              $committees = implode('|', $matches[1]);
+              $terms[$key] =  $non_matches . $committees;
+            }
+          }
         }
       }
 
