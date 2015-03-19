@@ -456,25 +456,64 @@ function _sba_message_api_save($sba_message, $is_new, $form_state) {
  */
 function _sba_message_build_chambers($unstructured_chambers) {
   $chamber_rows_container = array();
-  foreach ($unstructured_chambers as $segment_id => $chamber_segments) {
-    $chamber_rows_container[$segment_id] = array();
-    foreach ($chamber_segments as $name => $segment_values) {
-      $segment_values = explode('|', $segment_values);
-      if ($name == 'role') {
-        $name = 'chamber';
+
+  // An "Unstructured chambers" example:
+  //    0 (Object)
+  //        role => FR
+  //        party => D
+  //    1 (Object)
+  //        role => PRES01|PRES03|GOVNR
+  //    2 (Object)
+  //        state => NY
+  //        role => SR|SS
+
+
+  //Unstructured chambers above will become:
+  //0 =>
+  //    chamber =>FR
+  //    party  => D
+  //1 =>
+  //    chamber => PRES01
+  //    party =>
+  //2 =>
+  //    chamber => PRES03
+  //    party =>
+  //3 =>
+  //    chamber => GOVNR
+  //    party =>
+  //4 =>
+  //    chamber => SR
+  //    party =>
+  //    state => NY
+  //5 =>
+  //    chamber => SS
+  //    party =>
+  //    state => NY
+
+  foreach ($unstructured_chambers as $chamber_id => $chamber_fields) {
+
+    //create a new container to rewrap our chambers
+    $chamber_rows_container[$chamber_id] = array();
+
+    foreach ($chamber_fields as $field_name => $chamber_field_values) {
+      $chamber_field_values = explode('|', $chamber_field_values);
+      if ($field_name == 'role') {
+        $field_name = 'chamber';
       }
+
       $i = 0;
-      $num = count($chamber_rows_container[$segment_id]);
+      $num = count($chamber_rows_container[$chamber_id]);
+
       if ($num) {
-        foreach ($chamber_rows_container[$segment_id] as $chamber_field) {
-          foreach ($segment_values as $value) {
-            _sba_message_build_chambers_shmoosher($chamber_rows_container, $segment_id, $i, $name, $value, $chamber_field);
+        foreach ($chamber_rows_container[$chamber_id] as $chamber_field) {
+          foreach ($chamber_field_values as $value) {
+            _sba_message_build_chambers_shmoosher($chamber_rows_container, $chamber_id, $i, $field_name, $value, $chamber_field);
             $i++;
           }
         }
       } else {
-        foreach ($segment_values as $value) {
-          _sba_message_build_chambers_shmoosher($chamber_rows_container, $segment_id, $i, $name, $value);
+        foreach ($chamber_field_values as $value) {
+          _sba_message_build_chambers_shmoosher($chamber_rows_container, $chamber_id, $i, $field_name, $value);
           $i++;
         }
       }
@@ -491,20 +530,26 @@ function _sba_message_build_chambers($unstructured_chambers) {
 /**
  * Helper function to build chamber rows
  * @param $chamber_rows_container
- * @param $segment_id
+ * @param $chamber_id
  * @param $i
- * @param $name
+ * @param $field_name
  * @param $value
  * @param array $chamber_field
  */
-function _sba_message_build_chambers_shmoosher(&$chamber_rows_container, $segment_id, $i, $name, $value, $chamber_field = array()) {
+function _sba_message_build_chambers_shmoosher(&$chamber_rows_container, $chamber_id, $i, $field_name, $value, $chamber_field = array()) {
+
   $chamber = isset($chamber_field['chamber']) ? $chamber_field['chamber'] : '';
   $party = isset($chamber_field['party']) ? $chamber_field['party'] : '';
-  //$gender = isset($chamber_field['gender']) ? $chamber_field['gender'] : '';
-  $chamber_rows_container[$segment_id][$i]['chamber'] = $chamber;
-  $chamber_rows_container[$segment_id][$i]['party'] = $party;
-  //$chamber_rows_container[$segment_id][$i]['gender'] = $gender;
-  $chamber_rows_container[$segment_id][$i][$name] = $value;
+  $state = isset($chamber_field['state']) ? $chamber_field['state'] : '';
+
+  $chamber_rows_container[$chamber_id][$i]['chamber'] = $chamber;
+  $chamber_rows_container[$chamber_id][$i]['party'] = $party;
+  $chamber_rows_container[$chamber_id][$i]['state'] = $state;
+
+  //$chamber_rows_container[$chamber_id][$i]['gender'] = $gender;
+
+  //this is set first time through ($num == 0)
+  $chamber_rows_container[$chamber_id][$i][$field_name] = $value;
 }
 
 /**
