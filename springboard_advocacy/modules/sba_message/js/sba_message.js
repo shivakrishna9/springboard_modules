@@ -185,11 +185,11 @@
         states = states.toString().replace(/,/g, '|');
 
         var query = [];
-        if(roles.length > 0) {
-            query.push('role=' + roles)
-        }
         if(states.length > 0) {
             query.push('state=' + states)
+        }
+        if(roles.length > 0) {
+            query.push('role=' + roles)
         }
         if(parties.length > 0) {
             query.push('party=' + parties)
