@@ -2,7 +2,7 @@
 
 /**
  * @file
- * Contains class for generating a montly payment schedule.
+ * Contains class for generating a monthly payment schedule.
  */
 
 class sustainersMonthlySchedule extends sustainersBaseSchedule {
@@ -31,7 +31,7 @@ class sustainersMonthlySchedule extends sustainersBaseSchedule {
     // Get the start date string.
     $date = $this->start->format('Y-n-j');
 
-    // Create an array of the individual date valuses.
+    // Create an array of the individual date values.
     list($y, $m, $d) = explode('-', $date);
 
     // Add the number of months to the current count, loop through to add to the years.

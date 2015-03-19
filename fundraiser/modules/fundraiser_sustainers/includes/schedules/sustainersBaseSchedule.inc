@@ -74,7 +74,7 @@ class sustainersBaseSchedule {
   /**
    * Return the amount of payments for this schedule.
    *
-   * This function is called sustainers when creating future orders.
+   * This function is called by sustainers when creating future orders.
    */
   public function scheduleAmount() {
     return $this->scheduleAmount;
