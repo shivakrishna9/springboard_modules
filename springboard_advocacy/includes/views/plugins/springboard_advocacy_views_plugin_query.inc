@@ -37,59 +37,64 @@ class springboard_advocacy_views_plugin_query extends views_plugin_query {
 
     $start = microtime(true);
     // should we pull the terms from $view->query? Why use $view->build_info?
-    $terms = !empty($view->query->search_terms) ? $view->query->search_terms : NULL;
-
+    $fields = !empty($view->query->search_terms) ? $view->query->search_terms : NULL;
     // If a non-exposed class_name search is present and it is the only search
     // suppress results because no search has actually been performed yet
 
     // Will need to further limit this by view block name so the main admin screens have results by default.
-    if ((count($terms) == 1) && isset($terms['class_name'])) {
+    if ((count($fields) == 1) && isset($fields['class_name'])) {
       //$suppress_results = $view->filter['search_class_name']->options['exposed'] == FALSE;
     }
-    if (!empty($terms) && empty($suppress_results)) {
-      foreach ($terms as $key => $term) {
+    if (!empty($fields) && empty($suppress_results)) {
+      foreach ($fields as $field_name => $search_terms) {
         // is it a multiple value checkbox or select?
         // then format in a way the api expects
-        if (is_array($term)) {
-          $terms[$key] = implode('|', $term);
+        if (is_array($search_terms)) {
+          $fields[$field_name] = implode('|', $search_terms);
         }
         else {
           //strip leading and multiple whitespaces
-          $term = trim($term);
-          $term = preg_replace('/\s+/', ' ', $term);
+          $search_terms = trim($search_terms);
+          $search_terms = preg_replace('/\s+/', ' ', $search_terms);
 
           //no committees
-          if(strpos($term, 'committee:') === FALSE) {
-            $terms[$key] = str_replace(' ', '|', $term);
+          if(strpos($search_terms, 'committee:') === FALSE) {
+            $fields[$field_name] = str_replace(' ', '|', $search_terms);
           }
           else {
             //has committees
             $pattern = '/(committee:".*?")/';
-            preg_match_all($pattern, $term, $matches);
+            preg_match_all($pattern, $search_terms, $matches);
 
             if(!empty($matches[1])) {
               foreach($matches[1] as $match) {
-                $terms[$key] = str_replace($match, ' ', $terms[$key] );
+                $fields[$field_name] = trim(str_replace($match, '', $fields[$field_name]));
               }
-              $non_matches = !empty($terms[$key]) ? $terms[$key] . '|' : NULL;
+
+              $non_matches = !empty($fields[$field_name]) ? $fields[$field_name] . '|' : NULL;
+              if(!empty($non_matches)) {
+                $non_matches = preg_replace('/\s+/', ' ', $non_matches);
+                $non_matches = str_replace(' ', '|', $non_matches);
+              }
+
               $committees = implode('|', $matches[1]);
-              $terms[$key] =  $non_matches . $committees;
+              $fields[$field_name] =  $non_matches . $committees;
             }
           }
         }
       }
 
-      $terms['limit'] = $this->pager->options['items_per_page'];
-      $terms['offset'] = $this->offset;
+      $fields['limit'] = $this->pager->options['items_per_page'];
+      $fields['offset'] = $this->offset;
 
       if (isset($this->orderby)) {
-        $terms['sort'] = $this->orderby[0]['field'];
-        $terms['direction'] = $this->orderby[0]['direction'];
+        $fields['sort'] = $this->orderby[0]['field'];
+        $fields['direction'] = $this->orderby[0]['direction'];
       }
 
 
       // Get the targets
-      $targets = $client->searchTargets($terms);
+      $targets = $client->searchTargets($fields);
       // Build the pager
       if (!empty($targets->data->targets))  {
         if ($this->pager->use_pager()) {
