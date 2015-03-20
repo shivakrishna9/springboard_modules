@@ -57,6 +57,10 @@ function springboard_advocacy_build_messages($user_message) {
     $x = 0;
     foreach ($all_messages as $message) {
       $message_wrapper = entity_metadata_wrapper('sba_message', $message);
+      $legislative_parent_terms = $message_wrapper->field_sba_alert_id  // field_sba_alert_id is a reference to the alert webform
+        ->field_sba_legislative_issues->value()
+      ;
+      $legislative_terms = springboard_advocacy_legislative_terms($legislative_parent_terms);
       $message_unique_id = $message->data['message_id'];
       $weight = !empty($message->data['precedence']) ? $message->data['weight'] : $x++;
       //$group_id = $message->data['group_id'];
@@ -64,11 +68,36 @@ function springboard_advocacy_build_messages($user_message) {
         'message_id' => $message_unique_id,
         'subject' => $user_message[$message->sba_message_id]['subject'],
         'body' => $user_message[$message->sba_message_id]['body'],
+        'topic' => $legislative_terms,
         'precedence' => !empty($message->data['precedence']) ? 1 : 0,
        );
     }
     ksort($messages);
     return $messages;
+}
+
+function springboard_advocacy_legislative_terms($parent_terms) {
+  $terms = array();
+  if (!empty($parent_terms)) {
+    $tree = taxonomy_get_tree($parent_terms[0]->vid);
+    foreach ($parent_terms as $parent_term) {
+      $children = _springboard_advocacy_legislative_terms_descendents($parent_term->tid, $tree);
+      $terms = array_merge($terms, $children);
+    }
+  }
+  return $terms;
+}
+
+function _springboard_advocacy_legislative_terms_descendents($ancestor_tid, $tree) {
+  $children = array();
+  foreach ($tree as $term) {
+    foreach ($term->parents as $parent_tid) {
+      if ($parent_tid == $ancestor_tid || !empty($children[$parent_tid])) {
+        $children[$term->tid] = $term->name;
+      }
+    }
+  }
+  return $children;
 }
 
 /**
