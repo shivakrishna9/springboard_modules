@@ -9,7 +9,6 @@
 
     Drupal.behaviors.AdvocacyMessageRecipients = {
         attach: function(context, settings) {
-
             if ($('#edit-combine').text().length == 0) {
                 var placeholder = $('#edit-combine-wrapper .description').text().trim();
                 $('#edit-combine-wrapper .description').hide();
@@ -58,6 +57,7 @@
             //set the click event for the quick target button
             $('#quick-target', context).once('advocacy-add-quick-target', function() {
                 setElStates();//need this?
+                reset();
                 $('input#quick-target').click(function() {
                     var query = getQuickQuery();
                     addTarget('quick', query);
@@ -425,6 +425,32 @@
         }, 500);
     }
 
+    function reset() {
+        $('.views-submit-button').append('<a class = "search-reset" href ="#">reset</a>');
+        $('.search-reset').click(function(){
+            var allInputs =$('#views-exposed-form-targets-block-3 input[type="checkbox"], #views-exposed-form-targets-block-3 input[type="text"], #views-exposed-form-targets-block-3 select');
+            allInputs.each(function() {
+                if($(this).prop('tagName') == "SELECT") {
+                    $(this).prop('selectedIndex', 0);
+                    if ($.isFunction($.fn.uniform)) {
+                        $(this).uniform();
+                    }
+                }
+                if(this.type == 'checkbox') {
+                    $(this).prop('checked', false);
+                }
+                if(this.type == 'text') {
+                    $(this).val('');
+                }
+            });
+            $('.views-targets-button-wrapper').hide();
+            $('.view-content').hide();
+            $('.attachment').hide();
+
+            return false;
+        });
+    }
+
     //Uc first helper
     String.prototype.ucfirst = function()
     {
@@ -450,7 +476,6 @@
         $('.pager-item a, #edit-submit-targets').click(function(){
             Drupal.ajax.prototype.commands.viewsScrollTop = null;
             });
-
         var showEdit = $('input[name*=field_user_editable]');
         var editable = $('#sba_message_sba_message_action_message_form_group_editable, #edit-field-bottom-conclusion')
          if(showEdit.prop('checked')) {
