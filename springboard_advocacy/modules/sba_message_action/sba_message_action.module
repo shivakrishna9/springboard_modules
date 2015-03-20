@@ -31,7 +31,7 @@ function sba_message_action_modal_page($js = NULL, $nid = NULL) {
 /**
  * Implements hook_node_view.
  *
- * Theme the messages into the node's content.
+ *  Set up the ctools modal fr viewing multi-messages
  */
 function sba_message_action_node_view($node, $view_mode, $langcode) {
   if ($node->type == 'sba_message_action') {
@@ -58,10 +58,13 @@ function sba_message_action_node_view($node, $view_mode, $langcode) {
     );
     drupal_add_js($message_window, 'setting');
     ctools_add_css('springboard_message_action', 'modal');
-
   }
 }
 
+/**
+ * Implements hook_node_presave
+ * @param $node
+ */
 function sba_message_action_node_presave($node) {
   if (empty($node->nid)) {
     $node->webform['submit_text'] = t('Send your message');
@@ -96,21 +99,6 @@ function sba_message_action_node_insert($node) {
 
       ),
     );
-
-    //add custom fields for the messages
-//    $fields[] = array(
-//      'nid' => $node->nid,
-//      'form_key' => 'sba_phone',
-//      'pid' => 0,
-//      'name' => t('Phone Number'),
-//      'type' => 'textfield',
-//      'mandatory' => 0,
-//      'weight' => 13,
-//      'email' => 1,
-//      'extra' => array(
-//        'description' => t(''),
-//      ),
-//    );
 
     //limit the state field to US states
     $fields[] = array(
@@ -227,6 +215,8 @@ function sba_message_action_node_load($nodes, $types) {
  */
 
 /**
+ * Implements hook_form_alter
+ *
  * @param $form
  * @param $form_state
  * @param $form_id
@@ -249,6 +239,7 @@ function sba_message_action_form_alter(&$form, &$form_state, $form_id) {
         $form['#attached']['css'][] = drupal_get_path('module', 'sba_message_action')
           . '/css/no-form-layouts.css';
       }
+
       // Create a container on the form for all messages.
       $form['sba_messages'] = array(
         '#type' => 'container',
@@ -425,8 +416,8 @@ function sba_message_action_form_validate($form, &$form_state) {
   if ($is_single) {
     $message_id = array_keys($form_state['values']['sba_messages']['message']);
     $message = $form['sba_messages']['message'][$message_id[0]];
-    if ($message['body_required']['#value'] == 1) {
-      $default = $message['body_editable']['#value'];
+    if (isset($message['body_required']) && $message['body_required']['#value'] == 1) {
+      $default = $message['body_editable']['#default_value'];
       $edited = $form_state['values']['sba_messages']['message'][$message_id[0]]['body_editable'];
       if ($edited == $default) {
         form_set_error('body_editable', t('Editing of the the default message is required.'));
@@ -709,25 +700,3 @@ function sba_message_action_theme() {
     ),
   );
 }
-
-
-
-
-
-//function sba_message_action_theme() {
-//  return array(
-//    'sba_message_action_messages' => array(
-//      'variables' => array('messages' => array()),
-//    ),
-//  );
-//}
-//
-//function theme_sba_message_action_messages($vars) {
-//  $output = '';
-//  foreach ($vars['messages'] as $message) {
-//    $controller = entity_get_controller('sba_message');
-//    $content = $controller->view(array($message->sba_message_id => $message));
-//      $output .= drupal_render($content);
-//  }
-//   return $output;
-//}
