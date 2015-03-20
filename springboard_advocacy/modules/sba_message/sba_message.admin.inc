@@ -538,17 +538,18 @@ function _sba_message_build_chambers($unstructured_chambers) {
  */
 function _sba_message_build_chambers_shmoosher(&$chamber_rows_container, $chamber_id, $i, $field_name, $value, $chamber_field = array()) {
 
+  // the container is passed by reference
+  // make sure that values that are already set, get maintained.
   $chamber = isset($chamber_field['chamber']) ? $chamber_field['chamber'] : '';
   $party = isset($chamber_field['party']) ? $chamber_field['party'] : '';
   $state = isset($chamber_field['state']) ? $chamber_field['state'] : '';
+  //$gender = isset($chamber_field['gender']) ? $chamber_field['gender'] : '';
 
   $chamber_rows_container[$chamber_id][$i]['chamber'] = $chamber;
   $chamber_rows_container[$chamber_id][$i]['party'] = $party;
   $chamber_rows_container[$chamber_id][$i]['state'] = $state;
-
   //$chamber_rows_container[$chamber_id][$i]['gender'] = $gender;
 
-  //this is set first time through ($num == 0)
   $chamber_rows_container[$chamber_id][$i][$field_name] = $value;
 }
 
