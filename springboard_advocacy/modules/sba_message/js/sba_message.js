@@ -433,7 +433,8 @@
                 if($(this).prop('tagName') == "SELECT") {
                     $(this).prop('selectedIndex', 0);
                     if ($.isFunction($.fn.uniform)) {
-                        $(this).uniform();
+                        $.uniform.update(this);
+                        //$.uniform.restore(this);
                     }
                 }
                 if(this.type == 'checkbox') {

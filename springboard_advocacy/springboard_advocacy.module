@@ -578,6 +578,13 @@ function springboard_advocacy_theme($existing, $type, $theme) {
         'file' => 'springboard_advocacy.views.inc',
       ),
     ),
+    'springboard_advocacy_webform_confirmations' => array(
+      'variables' => array(
+        'recipients' => array(),
+        'subject' => '',
+        'file' => 'springboard_advocacy.webform.inc',
+      ),
+    ),
   );
 
   // Look for theme templates in springboard_advocacy.
@@ -626,4 +633,45 @@ function springboard_advocacy_preprocess_block_admin_display_form(&$vars) {
       unset($vars['block_listing'][BLOCK_REGION_NONE][$name]);
     }
   }
+}
+
+function springboard_advocacy_token_info() {
+  $types['action'] = array(
+    'name' => t("Advocacy Actions"),
+    'description' => t("Tokens for Advocacy."),
+  );
+
+  $tokens['recipients'] = array(
+    'name' => t("Recipients"),
+    'description' => t(''),
+  );
+
+  return array(
+    'types' => $types,
+    'tokens' => array(
+      'action' => $tokens,
+    ),
+  );
+}
+
+/**
+ * Implements hook_tokens().
+ */
+function springboard_advocacy_tokens($type, $tokens, array $data = array(), array $options = array()) {
+
+  $recipients = '';
+  $replacements = array();
+  if ($type == 'action') {
+    foreach ($tokens as $name => $original) {
+      switch ($name) {
+        case 'recipients':
+          if (isset($_SESSION['message_recipients'])) {
+            $recipients = $_SESSION['message_recipients'];
+          }
+          $replacements[$original] = $recipients;
+          break;
+      }
+    }
+  }
+  return $replacements;
 }

@@ -17,6 +17,10 @@ function springboard_advocacy_send_message($user_message, $form_state) {
   $webform_values = $values['submitted'];
   $zip = '';
 
+  if(isset($_SESSION['message_recipients'])) {
+    unset($_SESSION['message_recipients']);
+  }
+
   module_load_include('inc', 'springboard_advocacy', 'includes/springboard_advocacy.smarty_streets');
 
   $geo = springboard_advocacy_smarty_lookup($webform_values);
@@ -24,25 +28,95 @@ function springboard_advocacy_send_message($user_message, $form_state) {
   if (!empty($geo) && !empty($geo['zip']) && !empty($geo['plus4'])) {
     $zip = $geo['zip'] . '-' . $geo['plus4'];
   }
+
   if(!empty($zip)) {
     $contact = springboard_advocacy_build_contact($webform_values, $zip, $geo);
     $form_id = $values['advocacy_id'];
-    $messages = springboard_advocacy_build_messages($user_message);
+    $user_messages = springboard_advocacy_build_messages($user_message);
 
     $submission = array(
       'contact' => $contact,
       'form_id' => $form_id,
-      'messages' => $messages,
+      'messages' => $user_messages,
     );
 
     $loader = new AdvocacyApiClientLoader();
     $client = $loader->getClient();
     $response = $client->resolveTargets($submission);
-    if (!empty($response->data)) {
-//      $persons = springboard_advocacy_prep_for_display($response->data);
-//      $_SESSION['legislators'] = $persons;
+
+    $recipients = array();
+    $message_count = 0;
+    $deliverable_count = 0;
+
+    if (!empty($response->messages)) {
+      foreach ($response->messages as $id => $message) {
+        if (!empty($message->deliverable)) {
+          $message_count++;
+          $deliverable_count += count($message->deliverable);
+          $messages[$id]['deliverable'] = $message->deliverable;
+          $messages[$id]['subject'] = $message->message->subject;
+          $messages[$id]['body'] = $message->message->body;
+        }
+      }
+
+      $message_text = format_plural($message_count, 'message', 'messages');
+      $deliverable_text = format_plural($deliverable_count, 'target', 'targets');
+      $_SESSION['message_recipients'] = t('@message_count @message_text were delivered to @deliverable_count @deliverable_text.', array(
+        '@message_count' => $message_count,
+        '@message_text' => $message_text,
+        '@deliverable_count' => $deliverable_count,
+        '@deliverable_text' => $deliverable_text,
+      ));
+
+      foreach ($messages as $id => $message) {
+        foreach ($messages[$id]['deliverable'] as $target) {
+
+          $person = array();
+          if(!empty($target->salutation)) {
+            array_push($person, $target->salutation);
+          }
+          if(!empty($target->first_name)) {
+            array_push($person, $target->first_name);
+          }
+          if(!empty($target->last_name)) {
+            array_push($person, $target->last_name);
+          }
+          if(!empty($target->party)) {
+            array_push($person, '(' . $target->party . ')');
+          }
+          if(!empty($target->state) && empty($target->district_name)) {
+            array_push($person, $target->state);
+          }
+          if(!empty($target->district_name)) {
+            array_push($person, $target->district_name);
+          }
+
+          $target_messages[$id]['people'][] = implode(' ', $person);
+          $target_messages[$id]['subject'] = $messages[$id]['subject'];
+        }
+      }
+
+      if(!empty($target_messages)) {
+        foreach($target_messages as $id => $message) {
+          $_SESSION['message_recipients'] .= theme('springboard_advocacy_webform_confirmations', array('subject' => $target_messages[$id]['subject'], 'recipients' => $message['people']));
+        }
+      }
     }
   }
+}
+
+function theme_springboard_advocacy_webform_confirmations($vars) {
+  $items = array();
+  foreach ($vars['recipients'] as $person) {
+    $items[]['data'] = $person;
+  }
+  $attributes = array(
+    'class' => 'legislator-list',
+  );
+  if (empty($items)) {
+    $items[]['data'] = 'No Results';
+  }
+  return theme_item_list(array('items' => $items, 'title' => $vars['subject'], 'type' => 'ul', 'attributes' => $attributes));;
 }
 
 /**
@@ -131,42 +205,6 @@ function springboard_advocacy_build_contact($values, $zip, $geo) {
 }
 
 
-/**
- * @todo complete this when wireframes finalized
- * Formats API response for presentaion by theme_item_list
- */
-function springboard_advocacy_prep_for_display($data) {
-  $items = array();
-
-  foreach ($data as $legislator) {
-    $items[]['data'] = $legislator->salutation . 
-    ' ' . $legislator->first_name . 
-    ' ' . $legislator->last_name . 
-    ': ' . $legislator->district_name;
-  }
-  $title = t('Legislators');
-  $attributes = array(
-    'id' => 'legislator-list',
-  );
-  if (empty($items)) {
-    $items[]['data'] = 'No Results';
-  }
-  return theme_item_list(array('items' => $items, 'title' => $title, 'type' => 'ul', 'attributes' => $attributes));;
-}
-
-/*
- * Implements hook_preprocess_webform_confirmation
- *
- * Show the list of legislators on the confirmation page
- */
-function springboard_advocacy_preprocess_webform_confirmation(&$vars) {
-  if ($vars['node']->type == 'sba_message_action') {
-    if (!empty($_SESSION['legislators'])) {
-      $vars['confirmation_message'] = $_SESSION['legislators'];
-      unset($_SESSION['legislators']);
-    }
-  }
-}
 
 // /**
 //  * Implements hook_webfrom_submission insert
