@@ -62,6 +62,17 @@ function commerce_sage_payments_cc_settings_form($settings = array()) {
     '#default_value' => isset($settings['commerce_sage_payments_settings_application_id']) ? $settings['commerce_sage_payments_settings_application_id'] : '',
   );
 
+  $form['transaction_type'] = array(
+    '#type' => 'radios',
+    '#title' => t('Default credit card transaction type'),
+    '#description' => t('The default will be used to process transactions during checkout.'),
+    '#default_value' => isset($settings['transaction_type']) ? $settings['transaction_type'] : COMMERCE_CREDIT_AUTH_CAPTURE,
+    '#options' => array(
+      COMMERCE_CREDIT_AUTH_CAPTURE => t('Authorization and capture'),
+      COMMERCE_CREDIT_AUTH_ONLY => t('Authorization only (requires manual or automated capture after checkout)'),
+    ),
+  );
+
   if (module_exists('commerce_cardonfile')) {
     $form['cardonfile'] = array(
       '#type' => 'checkbox',
@@ -149,7 +160,8 @@ function commerce_sage_payments_cc_submit_form_submit($payment_method, $pane_for
 
   $order_wrapper = entity_metadata_wrapper('commerce_order', $order);
 
-  $txn_type = COMMERCE_CREDIT_AUTH_CAPTURE;
+  // Set this conditionally.
+  $transaction_type = !empty($payment_method['settings']['transaction_type']) ? $payment_method['settings']['transaction_type'] : COMMERCE_CREDIT_AUTH_CAPTURE;
 
   $request_parameters = array (
     'T_AMT'        => commerce_currency_amount_to_decimal($charge['amount'], $charge['currency_code']),
@@ -242,7 +254,7 @@ function commerce_sage_payments_cc_submit_form_submit($payment_method, $pane_for
   }
   else {
     // Set the transaction status based on the type of transaction this was.
-    switch ($txn_type) {
+    switch ($transaction_type) {
       case COMMERCE_CREDIT_AUTH_ONLY:
         $transaction->status = COMMERCE_PAYMENT_STATUS_PENDING;
         break;
@@ -930,12 +942,26 @@ function _commerce_sage_payments_request_sale($gateway, $request_parameters) {
 
   $request_parameters = array_merge($request_parameters, _commerce_sage_payments_get_sage_payments_config($gateway));
 
-  // Determine the correct request type to use 
-  switch($gateway['method_id']) {
-    case 'commerce_sage_payments_cc' :
-      $type = 'BANKCARD_SALE';
+  // Determine the correct request type to use.
+  switch ($gateway['method_id']) {
+    case 'commerce_sage_payments_cc':
+      if (!empty($gateway['settings']['transaction_type'])) {
+        switch ($gateway['settings']['transaction_type']) {
+          case COMMERCE_CREDIT_AUTH_CAPTURE:
+            $type = 'BANKCARD_SALE';
+            break;
+
+          case COMMERCE_CREDIT_AUTH_ONLY:
+            $type = 'BANKCARD_AUTHONLY';
+            break;
+        }
+      }
+      else {
+        $type = 'BANKCARD_SALE';
+      }
       break;
-    case 'commerce_sage_payments_eft' :
+
+    case 'commerce_sage_payments_eft':
       $type = 'VIRTUAL_CHECK_WEB_SALE';
       break;
   }
@@ -973,7 +999,7 @@ function _commerce_sage_payments_request_credit($gateway, $request_parameters) {
   $sage_client = _commerce_sage_payments_get_sage_payments_client();
   $request_parameters = array_merge($request_parameters, _commerce_sage_payments_get_sage_payments_config($gateway));
 
-  // Determine the correct request type to use 
+  // Determine the correct request type to use
   switch($gateway['method_id']) {
     case 'commerce_sage_payments_cc' :
       $type = 'BANKCARD_CREDIT';
@@ -1009,7 +1035,7 @@ function commerce_sage_payments_vault_request_insert($gateway, $request_paramete
   $vault_client = _commerce_sage_payments_get_sage_payments_vault_management_client();
   $request_parameters += _commerce_sage_payments_get_sage_payments_config($gateway);
 
-  // Determine the correct request type to use 
+  // Determine the correct request type to use
   switch($gateway['method_id']) {
     case 'commerce_sage_payments_cc' :
       $type = 'INSERT_CREDIT_CARD_DATA';
@@ -1093,7 +1119,7 @@ function commerce_sage_payments_vault_request_delete($gateway, $request_paramete
 function _commerce_sage_payments_vault_request_sale($gateway, $request_parameters) {
   $request_parameters = array_merge($request_parameters, _commerce_sage_payments_get_sage_payments_config($gateway));
 
-  // Determine the correct client and request type to use 
+  // Determine the correct client and request type to use
   switch($gateway['method_id']) {
     case 'commerce_sage_payments_cc' :
       $sage_client = _commerce_sage_payments_get_sage_payments_vault_bankcard_client();
