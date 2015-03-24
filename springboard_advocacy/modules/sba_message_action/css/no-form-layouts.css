@@ -1,9 +1,30 @@
 .webform-client-form {
     clear: both;
 }
+
+#take-action-wrapper {
+    -webkit-box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    box-sizing: border-box;
+    width: 100%;
+    border: 1px solid #d5d5d5;
+    padding: 0 20px 20px ;
+    border-radius: 4px;
+}
+#take-action-wrapper > legend{
+    border:none;
+    padding: 0 10px;
+    margin-bottom: 0;
+    width: auto;
+}
+
+#take-action-wrapper fieldset legend {
+    font-size: 18px;
+}
+
 #your-information-wrapper {
     clear: left;
-      -webkit-box-sizing: border-box;
+    -webkit-box-sizing: border-box;
   -moz-box-sizing: border-box;
   box-sizing: border-box;
     padding-right: 20px;
@@ -17,7 +38,7 @@
     font-weight: bold;
 }
 
-#your-information-wrapper #edit-actions {
+ #edit-actions {
     clear:both;
     background-color: #fff;
     border-top: none;
@@ -25,7 +46,7 @@
     margin: 0;
 }
 
-#your-information-wrapper #edit-actions input {
+ #edit-actions input {
     width: 94.5%;
     background: #247AAD;
     border: none;
@@ -37,11 +58,11 @@
     text-shadow: none;
 }
 
-#your-information-wrapper #edit-actions input:hover {
+ #edit-actions input:hover {
     background: #1E72A3;
 }
 
-#your-information-wrapper #sba-messages-form {
+ #sba-messages-form {
     clear: both;
 }
 
@@ -49,7 +70,7 @@
     width: 20%;
     float: left;
     clear:none;
-    margin-top: 24px;
+    margin-top: 0px;
     -webkit-box-sizing: border-box;
     -moz-box-sizing: border-box;
     box-sizing: border-box;
@@ -123,10 +144,8 @@ textarea[id*="edit-sba-messages-message"] {
 }
 
 #edit-actions {
-    clear: both;
+    clear: none;
 }
-
-
 
 .node-sba-message-action .field-name-field-message-action-img img {
     display: block;

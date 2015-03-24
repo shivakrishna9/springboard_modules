@@ -660,7 +660,7 @@ function theme_message_action_messages_wrapper($vars) {
  */
 function theme_message_action_webform_wrapper($vars) {
   $legend = t('Take action now');
-  return ' <div class="row-fluid"><fieldset id="webform-wrapper" class = "form-wrapper"><legend>' . $legend . '</legend>' . $vars['element']['#children']  . '</fieldset></div>';
+  return ' <div class="row-fluid"><fieldset id="take-action-wrapper" class = "form-wrapper"><legend>' . $legend . '</legend>' . $vars['element']['#children']  . '</fieldset></div>';
 }
 
 /**
