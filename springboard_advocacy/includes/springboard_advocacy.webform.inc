@@ -156,6 +156,7 @@ function springboard_advocacy_build_contact($values, $zip, $geo) {
 
 function springboard_advocacy_build_confirmation($response) {
   $recipients = array();
+  $messages = array();
   $message_count = 0;
   $deliverable_count = 0;
 
@@ -206,7 +207,6 @@ function springboard_advocacy_build_confirmation($response) {
         $target_messages[$id]['subject'] = $messages[$id]['subject'];
       }
     }
-
     if(!empty($target_messages)) {
       foreach($target_messages as $id => $message) {
         $_SESSION['message_recipients'] .= theme('springboard_advocacy_webform_confirmations', array('subject' => $target_messages[$id]['subject'], 'recipients' => $message['people']));
