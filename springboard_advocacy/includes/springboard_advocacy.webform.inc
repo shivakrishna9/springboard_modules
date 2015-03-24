@@ -12,7 +12,6 @@
 
 
 function springboard_advocacy_send_message($user_message, $form_state) {
-
   $values = $form_state['values'];
   $webform_values = $values['submitted'];
   $zip = '';
@@ -32,76 +31,18 @@ function springboard_advocacy_send_message($user_message, $form_state) {
   if(!empty($zip)) {
     $contact = springboard_advocacy_build_contact($webform_values, $zip, $geo);
     $form_id = $values['advocacy_id'];
-    $user_messages = springboard_advocacy_build_messages($user_message);
+    $message_build = springboard_advocacy_build_messages($user_message);
 
     $submission = array(
       'contact' => $contact,
       'form_id' => $form_id,
-      'messages' => $user_messages,
+      'messages' => $message_build,
     );
 
     $loader = new AdvocacyApiClientLoader();
     $client = $loader->getClient();
     $response = $client->resolveTargets($submission);
-
-    $recipients = array();
-    $message_count = 0;
-    $deliverable_count = 0;
-
-    if (!empty($response->messages)) {
-      foreach ($response->messages as $id => $message) {
-        if (!empty($message->deliverable)) {
-          $message_count++;
-          $deliverable_count += count($message->deliverable);
-          $messages[$id]['deliverable'] = $message->deliverable;
-          $messages[$id]['subject'] = $message->message->subject;
-          $messages[$id]['body'] = $message->message->body;
-        }
-      }
-
-      $message_text = format_plural($message_count, 'message', 'messages');
-      $deliverable_text = format_plural($deliverable_count, 'target', 'targets');
-      $_SESSION['message_recipients'] = t('@message_count @message_text were delivered to @deliverable_count @deliverable_text.', array(
-        '@message_count' => $message_count,
-        '@message_text' => $message_text,
-        '@deliverable_count' => $deliverable_count,
-        '@deliverable_text' => $deliverable_text,
-      ));
-
-      foreach ($messages as $id => $message) {
-        foreach ($messages[$id]['deliverable'] as $target) {
-
-          $person = array();
-          if(!empty($target->salutation)) {
-            array_push($person, $target->salutation);
-          }
-          if(!empty($target->first_name)) {
-            array_push($person, $target->first_name);
-          }
-          if(!empty($target->last_name)) {
-            array_push($person, $target->last_name);
-          }
-          if(!empty($target->party)) {
-            array_push($person, '(' . $target->party . ')');
-          }
-          if(!empty($target->state) && empty($target->district_name)) {
-            array_push($person, $target->state);
-          }
-          if(!empty($target->district_name)) {
-            array_push($person, $target->district_name);
-          }
-
-          $target_messages[$id]['people'][] = implode(' ', $person);
-          $target_messages[$id]['subject'] = $messages[$id]['subject'];
-        }
-      }
-
-      if(!empty($target_messages)) {
-        foreach($target_messages as $id => $message) {
-          $_SESSION['message_recipients'] .= theme('springboard_advocacy_webform_confirmations', array('subject' => $target_messages[$id]['subject'], 'recipients' => $message['people']));
-        }
-      }
-    }
+    springboard_advocacy_build_confirmation($response);
   }
 }
 
@@ -129,14 +70,21 @@ function springboard_advocacy_build_messages($user_message) {
     $all_messages = entity_load('sba_message', array_keys($user_message));
     $messages = array();
     $x = 0;
+
+
     foreach ($all_messages as $message) {
       $message_wrapper = entity_metadata_wrapper('sba_message', $message);
       $legislative_parent_terms = $message_wrapper->field_sba_alert_id  // field_sba_alert_id is a reference to the alert webform
         ->field_sba_legislative_issues->value()
       ;
       $legislative_terms = springboard_advocacy_legislative_terms($legislative_parent_terms);
+
+      $test_mode = $message_wrapper->field_sba_alert_id->field_test_mode[0]->value();
+      $test_email = $message_wrapper->field_sba_alert_id->field_test_mode_email->value();
+
       $message_unique_id = $message->data['message_id'];
       $weight = !empty($message->data['precedence']) ? $message->data['weight'] : $x++;
+
       //$group_id = $message->data['group_id'];
       $messages[$weight] = array(
         'message_id' => $message_unique_id,
@@ -144,7 +92,9 @@ function springboard_advocacy_build_messages($user_message) {
         'body' => $user_message[$message->sba_message_id]['body'],
         'topic' => $legislative_terms,
         'precedence' => !empty($message->data['precedence']) ? 1 : 0,
-       );
+        'test_mode' => !empty($test_mode) ? 1 : 0,
+        'test_email' => !empty($test_email) ? $test_email : '',
+      );
     }
     ksort($messages);
     return $messages;
@@ -204,6 +154,66 @@ function springboard_advocacy_build_contact($values, $zip, $geo) {
   return $contact;
 }
 
+function springboard_advocacy_build_confirmation($response) {
+  $recipients = array();
+  $message_count = 0;
+  $deliverable_count = 0;
+
+  if (!empty($response->messages)) {
+    foreach ($response->messages as $id => $message) {
+      if (!empty($message->deliverable)) {
+        $message_count++;
+        $deliverable_count += count($message->deliverable);
+        $messages[$id]['deliverable'] = $message->deliverable;
+        $messages[$id]['subject'] = $message->message->subject;
+        $messages[$id]['body'] = $message->message->body;
+      }
+    }
+
+    $message_text = format_plural($message_count, 'message', 'messages');
+    $deliverable_text = format_plural($deliverable_count, 'target', 'targets');
+    $_SESSION['message_recipients'] = t('@message_count @message_text were delivered to @deliverable_count @deliverable_text.', array(
+      '@message_count' => $message_count,
+      '@message_text' => $message_text,
+      '@deliverable_count' => $deliverable_count,
+      '@deliverable_text' => $deliverable_text,
+    ));
+
+    foreach ($messages as $id => $message) {
+      foreach ($messages[$id]['deliverable'] as $target) {
+
+        $person = array();
+        if(!empty($target->salutation)) {
+          array_push($person, $target->salutation);
+        }
+        if(!empty($target->first_name)) {
+          array_push($person, $target->first_name);
+        }
+        if(!empty($target->last_name)) {
+          array_push($person, $target->last_name);
+        }
+        if(!empty($target->party)) {
+          array_push($person, '(' . $target->party . ')');
+        }
+        if(!empty($target->state) && empty($target->district_name)) {
+          array_push($person, $target->state);
+        }
+        if(!empty($target->district_name)) {
+          array_push($person, $target->district_name);
+        }
+
+        $target_messages[$id]['people'][] = implode(' ', $person);
+        $target_messages[$id]['subject'] = $messages[$id]['subject'];
+      }
+    }
+
+    if(!empty($target_messages)) {
+      foreach($target_messages as $id => $message) {
+        $_SESSION['message_recipients'] .= theme('springboard_advocacy_webform_confirmations', array('subject' => $target_messages[$id]['subject'], 'recipients' => $message['people']));
+      }
+    }
+  }
+}
 
 
 // /**
