@@ -8,82 +8,20 @@
  * Implements hook_install().
  */
 function sba_message_action_install() {
-  $webform_node_types = variable_get('webform_node_types', array());
-  $webform_node_types[] = 'sba_message_action';
-  variable_set('webform_node_types', $webform_node_types);
-  $webform_node_types_primary = variable_get('webform_node_types_primary', array());
-  $webform_node_types_primary[] = 'sba_message_action';
-  variable_set('webform_node_types_primary', $webform_node_types_primary);
-  // Create default SF map insert into table.
+
   if (module_exists('salesforce_genmap')) {
-    $map = array();
-    $map = entity_create('salesforce_genmap_map', $map);
-    $map->nid = -1;
-    $map->map_handler = 'webform';
-    $map->salesforce_object_type = 'Actions__c';
-    $object_type = '';
-    module_load_include('inc', 'salesforce_genmap', 'includes/salesforce_genmap.map');
-    if (function_exists('salesforce_get_api')) {
-      $sfapi = salesforce_get_api();
-      if ($sfapi->isAuthorized()) {
-        if (function_exists('_sfw_salesforce_record_type_list')) {
-          $sf_records = _sfw_salesforce_record_type_list($sfapi, 'Actions__c');
-          $sf_records = array_flip($sf_records);
-          $object_type = $sf_records['Message to Target Submission'];
-        }
-      }
-    }
-    $map->salesforce_record_type = $object_type;
-    $map->field_map = array(
-      'webform_map' => array(
-        'cid' => 'Campaign__c',
-        'ms' => 'Market_Source__c',
-        'referrer' => 'Referrer__c',
-        'initial_referrer' => 'Initial_Referrer__c',
-        'search_engine' => 'Search_Engine__c',
-        'search_string' => 'Search_String__c',
-        'user_agent' => 'User_Agent__c',
-      ),
-      'salesforce_node_map' => array(
-        'nid' => 'Drupal_Node_ID__c',
-        'title' => 'Action_Name__c',
-      ),
-      'salesforce_submission_map' => array(
-        'sid' => 'Submission_ID__c',
-        'date' => 'Action_Date__c',
-      ),
-    );
-
-    $map->sync_options = array(
-      'insert' => 'insert',
-      'update' => 'update',
-      'delete' => 'delete',
-    );
-    $map->status = 1;
-    $map->module = 'sba_message_action';
-    salesforce_genmap_save_map($map, 'webform');
+    _sba_message_action_salesforce_map();
   }
-  sba_message_action_add_content_type();
+  _sba_message_action_create_content_type();
+  _sba_message_action_reorder_internal_name();
+  _sba_message_action_create_example_message_action();
 
-  $instance_info = field_read_instance('node', 'field_webform_user_internal_name', 'sba_message_action');
-  $instance_info['widget']['weight'] = 1;
-  field_update_instance($instance_info);
-
-  $instance_info = field_read_instance('node', 'field_message_action_img', 'sba_message_action');
-  $instance_info['widget']['weight'] = 2;
-  field_update_instance($instance_info);
-
-  $instance_info = field_read_instance('node', 'body', 'sba_message_action');
-  $instance_info['widget']['weight'] = 3;
-  field_update_instance($instance_info);
-
-  sba_message_action_add_example_message_action();
 }
 
 /**
  * Creates the sba_message_action content type.
  */
-function sba_message_action_add_content_type() {
+function _sba_message_action_create_content_type() {
   $type = node_type_set_defaults();
   $type->name = t('Message Action');
   $type->type = 'sba_message_action';
@@ -94,7 +32,31 @@ function sba_message_action_add_content_type() {
   $type->custom = TRUE;
   $type->modified = TRUE;
   $type->module = 'sba_message_action';
+
   // Save or reset persistent variable values.
+  _sba_message_action_set_vars();
+
+  node_type_save($type);
+  node_types_rebuild();
+
+  node_add_body_field($type, 'Call to Action');
+  _sba_message_action_create_node_fields();
+  _sbp_message_action_create_user_profile_fields();
+
+  require_once(drupal_get_path('module', 'webform_user') . '/includes/webform_user.fields.inc');
+  _webform_user_add_default_fields('sba_message_action');
+
+  drupal_set_message(t('The content type Springboard Message Action has been added.'));
+  watchdog('sba_message_action', 'Added content type Springboard Message Action.');
+
+  // Weighting the module to ensure submission handlers run after Webform User.
+  // This ensures that the user id in webform_submissions has been updated by
+  // Webform User before we get to it.
+  db_query('UPDATE {system} SET weight = :weight WHERE name = :name', array(':weight' => 1000, ':name' => 'sba_message_action'));
+}
+
+function _sba_message_action_set_vars() {
+
   $variables = array(
     'additional_settings__active_tab' => 'edit-webform-user',
     'field_bundle_settings_node_' => array(),
@@ -120,8 +82,6 @@ function sba_message_action_add_content_type() {
       'sbp_state' => 'sbp_state',
       'sbp_zip' => 'sbp_zip',
       'sbp_phone' => 'sbp_phone',
-
-
       'sbp_cid' => 'sbp_cid',
       'sbp_market_source' => 'sbp_market_source',
       'sbp_referrer' => 'sbp_referrer',
@@ -134,16 +94,12 @@ function sba_message_action_add_content_type() {
     ),
   );
   foreach ($variables as $key => $value) {
-    $variable_new = $key . '_' . $type->type;
+    $variable_new = $key . '_sba_message_action';
     if (is_array($value)) {
       $value = array_keys(array_filter($value));
     }
     variable_set($variable_new, $value);
   }
-  node_type_save($type);
-  node_types_rebuild();
-  node_add_body_field($type, 'Call to Action');
-  sba_message_action_add_fields();
 
   // Add as a webform.
   $webform_node_types = variable_get('webform_node_types', array('webform'));
@@ -160,27 +116,9 @@ function sba_message_action_add_content_type() {
   $springboard_advocacy_alert_types = variable_get('springboard_advocacy_alert_types', array(''));
   $springboard_advocacy_alert_types = array_merge($springboard_advocacy_alert_types, array('sba_message_action'));
   variable_set('springboard_advocacy_alert_types', array_unique($springboard_advocacy_alert_types));
-
-
-  require_once(drupal_get_path('module', 'webform_user') . '/includes/webform_user.fields.inc');
-  _webform_user_add_default_fields('sba_message_action');
-  // Done.
-  drupal_set_message(t('The content type Springboard Message to Target has been added.'));
-  watchdog('sba_message_action', 'Added content type Message to Target.');
-
-  // Add opt-in field to list of default fields enabled for this content type.
-  // This keeps Webform User happy and ensures our opt-in component gets created.
-  $default_fields = variable_get('webform_user_default_fields_sba_message_action', '');
-  //$default_fields[] = 'sba_message_action_optin';
-  variable_set('webform_user_default_fields_sba_message_action', $default_fields);
-
-  // Weighting the module to ensure submission handlers run after Webform User.
-  // This ensures that the user id in webform_submissions has been updated by
-  // Webform User before we get to it.
-  db_query('UPDATE {system} SET weight = :weight WHERE name = :name', array(':weight' => 1000, ':name' => 'sba_message_action'));
 }
 
-function sba_message_action_add_fields() {
+function _sba_message_action_create_node_fields() {
 
   $fields = array(
     'field_message_action_img' => array(
@@ -262,15 +200,16 @@ function sba_message_action_add_fields() {
     ),
   );
 
-
   foreach ($fields as $key => $values) {
     $instance = $values['_instance'];
     unset($values['_instance']);
     field_create_field($values);
     field_create_instance($instance);
   }
+}
 
-  $phone_exists = field_info_field('sbp_phone');
+function _sbp_message_action_create_user_profile_fields () {
+$phone_exists = field_info_field('sbp_phone');
 
   $profile_phone = array(
     'label' => t('Phone'),
@@ -362,10 +301,9 @@ function sba_message_action_add_fields() {
     field_create_instance($sbp_salutation);
   }
 
-
 }
 
-function sba_message_action_add_example_message_action() {
+function _sba_message_action_create_example_message_action() {
   $node = new stdClass();
   $node->is_new = 1;
   $node->type = 'sba_message_action';
@@ -534,6 +472,68 @@ function sba_message_action_email_wrapper_add() {
   // Save extras.
   drupal_set_message(t('An example message to target email wrapper has been created.'));
   return $node->nid;
+}
+
+function _sba_message_action_salesforce_map() {
+  $map = array();
+  $map = entity_create('salesforce_genmap_map', $map);
+  $map->nid = -1;
+  $map->map_handler = 'webform';
+  $map->salesforce_object_type = 'Actions__c';
+  $object_type = '';
+  module_load_include('inc', 'salesforce_genmap', 'includes/salesforce_genmap.map');
+  if (function_exists('salesforce_get_api')) {
+    $sfapi = salesforce_get_api();
+    if ($sfapi->isAuthorized()) {
+      if (function_exists('_sfw_salesforce_record_type_list')) {
+        $sf_records = _sfw_salesforce_record_type_list($sfapi, 'Actions__c');
+        $sf_records = array_flip($sf_records);
+        $object_type = $sf_records['Springboard Advocacy Message Action Submission'];
+      }
+    }
+  }
+  $map->salesforce_record_type = $object_type;
+  $map->field_map = array(
+    'webform_map' => array(
+      'cid' => 'Campaign__c',
+      'ms' => 'Market_Source__c',
+      'referrer' => 'Referrer__c',
+      'initial_referrer' => 'Initial_Referrer__c',
+      'search_engine' => 'Search_Engine__c',
+      'search_string' => 'Search_String__c',
+      'user_agent' => 'User_Agent__c',
+    ),
+    'salesforce_node_map' => array(
+      'nid' => 'Drupal_Node_ID__c',
+      'title' => 'Action_Name__c',
+    ),
+    'salesforce_submission_map' => array(
+      'sid' => 'Submission_ID__c',
+      'date' => 'Action_Date__c',
+    ),
+  );
+  $map->sync_options = array(
+    'insert' => 'insert',
+    'update' => 'update',
+    'delete' => 'delete',
+  );
+  $map->status = 1;
+  $map->module = 'sba_message_action';
+  salesforce_genmap_save_map($map, 'webform');
+}
+
+function _sba_message_action_reorder_internal_name() {
+  $instance_info = field_read_instance('node', 'field_webform_user_internal_name', 'sba_message_action');
+  $instance_info['widget']['weight'] = 1;
+  field_update_instance($instance_info);
+
+  $instance_info = field_read_instance('node', 'field_message_action_img', 'sba_message_action');
+  $instance_info['widget']['weight'] = 2;
+  field_update_instance($instance_info);
+
+  $instance_info = field_read_instance('node', 'body', 'sba_message_action');
+  $instance_info['widget']['weight'] = 3;
+  field_update_instance($instance_info);
 }
 
 /**
