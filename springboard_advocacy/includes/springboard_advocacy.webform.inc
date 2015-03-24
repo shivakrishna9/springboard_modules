@@ -171,9 +171,9 @@ function springboard_advocacy_build_confirmation($response) {
       }
     }
 
-    $message_text = format_plural($message_count, 'message', 'messages');
+    $message_text = format_plural($message_count, 'message was', 'messages were');
     $deliverable_text = format_plural($deliverable_count, 'target', 'targets');
-    $_SESSION['message_recipients'] = t('@message_count @message_text were delivered to @deliverable_count @deliverable_text.', array(
+    $_SESSION['message_recipients'] = t('@message_count @message_text delivered to @deliverable_count @deliverable_text.', array(
       '@message_count' => $message_count,
       '@message_text' => $message_text,
       '@deliverable_count' => $deliverable_count,
