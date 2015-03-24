@@ -393,9 +393,10 @@ function sba_message_action_editable_message_form(&$form, $message, $multiple)
  * Validation handler for message action forms.
  */
 function sba_message_action_form_validate($form, &$form_state) {
-  $is_single = count($form_state['values']['sba_messages']['message']) == 1 ? TRUE : FALSE;
-
-  if ($is_single) {
+  if (isset($form_state['values']['sba_messages'])) {
+    $is_single = count($form_state['values']['sba_messages']['message']) == 1 ? TRUE : FALSE;
+  }
+  if (!empty($is_single)) {
     $message_id = array_keys($form_state['values']['sba_messages']['message']);
     $message = $form['sba_messages']['message'][$message_id[0]];
     if (isset($message['body_required']) && $message['body_required']['#value'] == 1) {
@@ -416,15 +417,20 @@ function sba_message_action_form_validate($form, &$form_state) {
  */
 function sba_message_action_form_submit($form, &$form_state) {
   // Create array of messages to submit for target resolution.
-  $messages = array();
+  if(isset($form_state['values']['sba_messages'])) {
+    $messages = array();
 
-  foreach ($form_state['values']['sba_messages']['message'] as $id => $message) {
-    $body_editable = isset( $message['body_editable']) ?  $message['body_editable'] : '';
-    $messages[$id]['body'] = sba_message_action_build_message_bodies($message['sba_message_id'], $body_editable);
-    $messages[$id]['subject'] = $message['subject'];
+    foreach ($form_state['values']['sba_messages']['message'] as $id => $message) {
+      $body_editable = isset($message['body_editable']) ? $message['body_editable'] : '';
+      $messages[$id]['body'] = sba_message_action_build_message_bodies($message['sba_message_id'], $body_editable);
+      $messages[$id]['subject'] = $message['subject'];
+    }
+    module_load_include('inc', 'springboard_advocacy', 'includes/springboard_advocacy.webform');
+    springboard_advocacy_send_message($messages, $form_state);
   }
-  module_load_include('inc', 'springboard_advocacy', 'includes/springboard_advocacy.webform');
-  springboard_advocacy_send_message($messages, $form_state);
+  else {
+    drupal_set_message(t('No messages were configured for this action.'));
+  }
 
 }
 
