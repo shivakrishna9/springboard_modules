@@ -110,6 +110,7 @@ function sba_message_action_add_content_type() {
     'fundraiser' => 0,
     'webform_user' => 1,
     'webform_user_default_fields' => array(
+      'sbp_salutation' => 'sbp_salutation',
       'sbp_first_name' => 'sbp_first_name',
       'sbp_last_name' => 'sbp_last_name',
       'mail' => 'mail',
@@ -119,6 +120,7 @@ function sba_message_action_add_content_type() {
       'sbp_state' => 'sbp_state',
       'sbp_zip' => 'sbp_zip',
       'sbp_phone' => 'sbp_phone',
+
 
       'sbp_cid' => 'sbp_cid',
       'sbp_market_source' => 'sbp_market_source',
@@ -178,8 +180,7 @@ function sba_message_action_add_content_type() {
   db_query('UPDATE {system} SET weight = :weight WHERE name = :name', array(':weight' => 1000, ':name' => 'sba_message_action'));
 }
 
-function sba_message_action_add_fields()
-{
+function sba_message_action_add_fields() {
 
   $fields = array(
     'field_message_action_img' => array(
@@ -265,7 +266,6 @@ function sba_message_action_add_fields()
   foreach ($fields as $key => $values) {
     $instance = $values['_instance'];
     unset($values['_instance']);
-
     field_create_field($values);
     field_create_instance($instance);
   }
@@ -294,6 +294,75 @@ function sba_message_action_add_fields()
     $instance = array_merge($profile_phone, $instance);
     field_create_instance($instance);
   }
+
+  $salutation_exists = field_info_field('sbp_salutation');
+
+  $profile_salutation = array(
+    'active' => 1,
+    'cardinality' => 1,
+    'deleted' => 0,
+    'entity_types' => array(),
+    'field_name' => 'sbp_salutation',
+    'foreign keys' => array(),
+    'indexes' => array(
+      'value' => array(
+        0 => 'value',
+      ),
+    ),
+    'locked' => 0,
+    'module' => 'list',
+    'settings' => array(
+      'allowed_values' => array(
+        'Mr' => 'Mr',
+        'Mrs' => 'Mrs',
+        'Ms' => 'Ms',
+      ),
+      'allowed_values_function' => '',
+    ),
+    'translatable' => 0,
+    'type' => 'list_text',
+  );
+
+  if (empty($salutation_exists)) {
+    field_create_field($profile_salutation);
+  }
+
+  $sbp_salutation = array(
+    'bundle' => 'user',
+    'default_value' => NULL,
+    'deleted' => 0,
+    'description' => '',
+    'display' => array(
+      'default' => array(
+        'label' => 'above',
+        'module' => 'list',
+        'settings' => array(),
+        'type' => 'list_default',
+        'weight' => 0,
+      ),
+    ),
+    'entity_type' => 'user',
+    'field_name' => 'sbp_salutation',
+    'label' => 'Salutation',
+    'required' => 0,
+    'settings' => array(
+      'user_register_form' => 0,
+    ),
+    'widget' => array(
+      'active' => 1,
+      'module' => 'options',
+      'settings' => array(),
+      'type' => 'options_select',
+      'weight' => 4,
+    ),
+  );
+
+  $sal_instance_exists = field_info_instance('user', 'sbp_salutation', 'user');
+  if (empty($sal_instance_exists)) {
+    field_create_instance($sbp_salutation);
+  }
+
+
 }
 
 function sba_message_action_add_example_message_action() {

@@ -45,7 +45,7 @@
     clear: both;
 }
 
-#your-information-wrapper #webform-component-sba-salutation.control-group {
+#your-information-wrapper #webform-component-sbp-salutation.control-group {
     width: 20%;
     float: left;
     clear:none;
@@ -66,7 +66,7 @@
     box-sizing: border-box;
     padding-left:10px;
 }
-#your-information-wrapper #webform-component-sba-salutation.control-group select {
+#your-information-wrapper #webform-component-sbp-salutation.control-group select {
     width: 100%;
 }
 

@@ -80,26 +80,6 @@ function sba_message_action_node_insert($node) {
   if($node->type == 'sba_message_action') {
     module_load_include('inc', 'webform', 'includes/webform.components');
 
-    $fields[] = array(
-      'nid' => $node->nid,
-      'form_key' => 'sba_salutation',
-      'pid' => 0,
-      'name' => t('Salutation'),
-      'type' => 'select',
-      'mandatory' => 1,
-      'weight' => -10,
-      'email' => 1,
-      'value' => 'mr',
-      'extra' => array(
-        'description' => t(''),
-        'items' => "mr|Mr. \nmrs|Mrs. \nms|Ms.",
-        'multiple' => 0,
-        'aslist' => 1,
-        'title_display' => 'none',
-
-      ),
-    );
-
     //limit the state field to US states
     $fields[] = array(
       'nid' => $node->nid,
@@ -168,15 +148,15 @@ function sba_message_action_webform_user_profile_fields_alter(&$fields, $node) {
       if ($profile_field['name'] == 'sbp_zip'){
         unset($fields[$index]);
       }
-      //move email field lower
+      if ($profile_field['name'] == 'sbp_salutation'){
+        $fields[$index]['weight'] = -6;
+      }
       if ($profile_field['name'] == 'sbp_first_name'){
         $fields[$index]['weight'] = -5;
       }
-      //move email field lower
       if ($profile_field['name'] == 'sbp_last_name'){
         $fields[$index]['weight'] = -4;
       }
-      //move email field lower
       if ($profile_field['name'] == 'mail'){
         $fields[$index]['weight'] = -3;
       }
