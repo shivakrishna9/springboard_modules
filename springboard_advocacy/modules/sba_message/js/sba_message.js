@@ -36,7 +36,11 @@
 
                 $('#views-exposed-form-targets-block-3 input, #views-exposed-form-targets-block-3 select').on('change', function(){
                     if(this.type != 'button' && this.type !='hidden') {
+                        if($('div.view-targets').is(':visible')) {
+                            reset();
+                        }
                         setElStates();
+
                     }
                 });
             });
@@ -49,6 +53,9 @@
                 if (oldVal != newVal) {
                     combine = setTimeout(function() {
                         oldVal = newVal;
+                        if($('div.view-targets').is(':visible')) {
+                            reset();
+                        }
                         setElStates();
                     }, 400);
                 }
@@ -57,7 +64,7 @@
             //set the click event for the quick target button
             $('#quick-target', context).once('advocacy-add-quick-target', function() {
                 setElStates();//need this?
-                reset();
+                reset('all');
                 $('input#quick-target').click(function() {
                     var query = getQuickQuery();
                     addTarget('quick', query);
@@ -425,33 +432,38 @@
         }, 500);
     }
 
-    function reset() {
-        $('.views-submit-button').append('<a class = "search-reset" href ="#">reset</a>');
-        $('.search-reset').click(function(){
-            var allInputs =$('#views-exposed-form-targets-block-3 input[type="checkbox"], #views-exposed-form-targets-block-3 input[type="text"], #views-exposed-form-targets-block-3 select');
-            allInputs.each(function() {
-                if($(this).prop('tagName') == "SELECT") {
-                    $(this).prop('selectedIndex', 0);
-                    if ($.isFunction($.fn.uniform)) {
-                        $.uniform.update(this);
-                        //$.uniform.restore(this);
+    function reset($type) {
+        if ($type == 'all') {
+            $('.views-submit-button').append('<a class = "search-reset" href ="#">reset</a>');
+            $('.search-reset').click(function () {
+                var allInputs = $('#views-exposed-form-targets-block-3 input[type="checkbox"], #views-exposed-form-targets-block-3 input[type="text"], #views-exposed-form-targets-block-3 select');
+                allInputs.each(function () {
+                    if ($(this).prop('tagName') == "SELECT") {
+                        $(this).prop('selectedIndex', 0);
+                        if ($.isFunction($.fn.uniform)) {
+                            $.uniform.update(this);
+                            //$.uniform.restore(this);
+                        }
                     }
-                }
-                if(this.type == 'checkbox') {
-                    $(this).prop('checked', false);
-                }
-                if(this.type == 'text') {
-                    $(this).val('');
-                }
+                    if (this.type == 'checkbox') {
+                        $(this).prop('checked', false);
+                    }
+                    if (this.type == 'text') {
+                        $(this).val('');
+                    }
+                });
+                $('.views-targets-button-wrapper').fadeOut(333);
+                $('.view-content').fadeOut(333);
+                $('.attachment').fadeOut(333);
+                $('div.view-targets .item-list').fadeOut(333);
+                return false;
             });
-            $('.views-targets-button-wrapper').hide();
-            $('.view-content').hide();
-            $('.attachment').hide();
-            $('div.view-targets .item-list').hide();
-
-
-            return false;
-        });
+        }
+        else {
+            $('.view-content').fadeOut(333);
+            $('.attachment').fadeOut(333);
+            $('div.view-targets .item-list').fadeOut(333);
+        }
     }
 
     //Uc first helper
