@@ -110,16 +110,14 @@ function springboard_advocacy_springboard_admin_admin_menu_items_alter(&$items) 
     );
   }
 
-
-  // Springboard Advocacy > Custom Targets.
-//  $items['admin/springboard/advocacy/actions']['_children']['admin/springboard/advocacy/settings'] = array(
-//    'link_path' => 'admin/springboard/advocacy/settings',
-//    'link_title' => 'Manage Settings',
-//    'menu_name' => 'springboard_admin_menu',
-//    'expanded' => 1,
-//    'customized' => 1,
-//    'weight' => 2,
-//  );
+  $items['admin/springboard/advocacy/actions']['_children']['admin/springboard/advocacy/settings'] = array(
+    'link_path' => 'admin/springboard/advocacy/settings',
+    'link_title' => 'Manage Settings',
+    'menu_name' => 'springboard_admin_menu',
+    'expanded' => 1,
+    'customized' => 1,
+    'weight' => 8,
+  );
 
 
 }
@@ -483,6 +481,18 @@ function springboard_advocacy_get_districts($state) {
         $options[$district->DistrictDesc] = $district->DistrictDesc;
       }
       return $options;
+    }
+    else {
+      if(user_access('administer springboard advocacy')) {
+        if(isset($response->error)) {
+          drupal_set_message(t('An error occurred when attempting to retrieve
+        district information'), 'error');
+        }
+        else {
+          drupal_set_message(t('A response was not received from the server when attempting to retrieve
+        district information'), 'error');
+        }
+      }
     }
 }
 

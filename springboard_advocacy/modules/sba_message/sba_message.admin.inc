@@ -341,17 +341,29 @@ function sba_message_delete_form($form, &$form_state, $sba_message) {
  * Submit callback for sba_message_delete_form
  */
 function sba_message_delete_form_submit($form, &$form_state) {
+  //delete the message
   $sba_message = $form_state['sba_message'];
   $wrapper = entity_metadata_wrapper('sba_message', $sba_message);
   $nid = $wrapper->field_sba_alert_id->value()->nid;
   sba_message_delete($sba_message);
+  drupal_set_message(t('%name has been deleted.', array('%name' => $sba_message->name)));
+  watchdog('sba_message', 'Deleted sba_message: %name.', array('%name' => $sba_message->name));
 
+  //delete the remote API message group.
   $loader = new AdvocacyApiClientLoader();
   $client = $loader->getClient();
-  $client->deleteTargetGroup($sba_message->data['group_id']);
-
-  drupal_set_message(t('The sba_message %name has been deleted.', array('%name' => $sba_message->name)));
-  watchdog('sba_message', 'Deleted sba_message %name.', array('%name' => $sba_message->name));
+  $response = $client->deleteTargetGroup($sba_message->data['group_id']);
+  if (isset($response->data)) {
+    drupal_set_message(t('The message\'s remote target group was deleted.'));
+  } else {
+    if (user_access('administer springboard advocacy')) {
+      if (isset($response->error)) {
+        drupal_set_message(t('An error occurred when attempting to delete the message\'s target group: @message:', array('@message' => $response->error->message)), 'error');
+      } else {
+        drupal_set_message(t('A response was not received from the API server when attempting to delete the message\'s target group.'), 'error');
+      }
+    }
+  }
 
   $form_state['redirect'] = 'node/' . $nid . '/messages';
 }

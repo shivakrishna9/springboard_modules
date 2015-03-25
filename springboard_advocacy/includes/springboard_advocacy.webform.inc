@@ -42,7 +42,18 @@ function springboard_advocacy_send_message($user_message, $form_state) {
     $loader = new AdvocacyApiClientLoader();
     $client = $loader->getClient();
     $response = $client->resolveTargets($submission);
-    springboard_advocacy_build_confirmation($response);
+    if(isset($response->data)) {
+      springboard_advocacy_build_confirmation($response->data);
+    }
+    else {
+      if (user_access('administer springboard advocacy')) {
+        if (isset($response->error)) {
+          drupal_set_message(t('An error occurred when attempting to resolve targets'), 'error');
+        } else {
+          drupal_set_message(t('A response was not received from the server when attempting to resolve targets'), 'error');
+        }
+      }
+    }
   }
 }
 
@@ -74,10 +85,10 @@ function springboard_advocacy_build_messages($user_message) {
 
     foreach ($all_messages as $message) {
       $message_wrapper = entity_metadata_wrapper('sba_message', $message);
-      $legislative_parent_terms = $message_wrapper->field_sba_alert_id  // field_sba_alert_id is a reference to the alert webform
-        ->field_sba_legislative_issues->value()
-      ;
-      $legislative_terms = springboard_advocacy_legislative_terms($legislative_parent_terms);
+//      $legislative_parent_terms = $message_wrapper->field_sba_alert_id  // field_sba_alert_id is a reference to the alert webform
+//        ->field_sba_legislative_issues->value()
+//      ;
+//      $legislative_terms = springboard_advocacy_legislative_terms($legislative_parent_terms);
 
       $test_mode = $message_wrapper->field_sba_alert_id->field_test_mode[0]->value();
       $test_email = $message_wrapper->field_sba_alert_id->field_test_mode_email->value();

@@ -424,7 +424,7 @@ function sba_message_load_multiple($sba_message_ids = array(), $conditions = arr
  * Deletes a sba_message.
  */
 function sba_message_delete(SbaMessage $sba_message) {
-  $sba_message->delete();
+  $status = $sba_message->delete();
 }
 
 
