@@ -760,14 +760,20 @@
 @media only screen and (min-width: 769px) and (max-width: 1200px) {
     #springboard-advocacy-find-targets  div.views-exposed-widget.views-targets-button-wrapper {
         float:right;
-        margin-right: 1em;
+        margin-right: 0em;
         margin-top: 4px;
+        width:40%;
+
     }
     #springboard-advocacy-find-targets  div.views-exposed-widget.views-submit-button {
         margin-top: 50px;
-        margin-right:0.5em;
+        margin-right:0;
+        width:45%;
+        overflow: visible;
     }
-
+    #springboard-advocacy-find-targets  div.views-exposed-widget.views-submit-button input{
+        width:70%;
+    }
     #springboard-advocacy-find-targets-container #edit-actions input {
         background: url("../img/arrow-message-save-button.png") 30% center no-repeat #247AAD;
     }
