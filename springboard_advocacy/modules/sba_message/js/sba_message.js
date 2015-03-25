@@ -447,6 +447,8 @@
             $('.views-targets-button-wrapper').hide();
             $('.view-content').hide();
             $('.attachment').hide();
+            $('div.view-targets .item-list').hide();
+
 
             return false;
         });
