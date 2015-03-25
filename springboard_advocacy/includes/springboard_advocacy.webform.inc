@@ -85,16 +85,21 @@ function springboard_advocacy_build_messages($user_message) {
 
     foreach ($all_messages as $message) {
       $message_wrapper = entity_metadata_wrapper('sba_message', $message);
-//      $legislative_parent_terms = $message_wrapper->field_sba_alert_id  // field_sba_alert_id is a reference to the alert webform
-//        ->field_sba_legislative_issues->value()
-//      ;
-//      $legislative_terms = springboard_advocacy_legislative_terms($legislative_parent_terms);
+
+      $message_unique_id = $message->data['message_id'];
+      $weight = !empty($message->data['precedence']) ? $message->data['weight'] : $x++;
 
       $test_mode = $message_wrapper->field_sba_alert_id->field_test_mode[0]->value();
       $test_email = $message_wrapper->field_sba_alert_id->field_test_mode_email->value();
 
-      $message_unique_id = $message->data['message_id'];
-      $weight = !empty($message->data['precedence']) ? $message->data['weight'] : $x++;
+      // Attach legislative issue search terms.
+      $legislative_terms = array("Other");  // provide a generic default
+      if ($message_wrapper->field_sba_alert_id->__isset('field_sba_legislative_issues')) {  // field_sba_alert_id is a reference to the alert webform
+        $legislative_parent_terms = $message_wrapper->field_sba_alert_id
+          ->field_sba_legislative_issues->value()
+        ;
+        $legislative_terms = springboard_advocacy_legislative_terms($legislative_parent_terms);
+      }
 
       //$group_id = $message->data['group_id'];
       $messages[$weight] = array(
