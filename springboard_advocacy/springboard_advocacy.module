@@ -376,7 +376,7 @@ function springboard_advocacy_sba_organization_issues_pre_render($element) {
     $terms[$term->tid] = $term;
   }
   foreach ($element[$element['#language']]['#options'] as $tid => $name) {
-    if ($terms[$tid]->depth > 0) {
+    if ($tid != '_none' && $terms[$tid]->depth > 0) {
       $element[$element['#language']][$tid]['#attributes']['class'][] = 'sba-term-indent';
     }
   }
