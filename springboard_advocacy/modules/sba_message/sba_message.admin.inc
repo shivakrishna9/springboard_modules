@@ -193,7 +193,7 @@ function sba_message_edit_form($form, &$form_state, $sba_message) {
   // Get/Set the message UUID
   $form['data']['message_id'] = array(
     '#type' => 'hidden',
-    '#value' => isset($sba_message->data['message_id']) ? $sba_message->data['message_id'] : uniqid(variable_get('site_name', 'Drupal') . '-'),
+    '#value' => isset($sba_message->data['message_id']) ? $sba_message->data['message_id'] : str_replace(' ', '-', uniqid(substr(variable_get('site_name', ''), 0, 10) . '-' . substr($node->title, 0, 10) . '-', TRUE)),
   );
 
   $form['data']['recipients'] = array(

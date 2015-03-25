@@ -206,7 +206,7 @@ function springboard_advocacy_node_insert($node) {
   if(in_array($node->type, $types)) {
     $uuid = array(
       'nid' => $node->nid,
-      'advocacy_id' => uniqid(variable_get('site_name', 'Drupal') . '-'),
+      'advocacy_id' => str_replace(' ', '-', uniqid(substr(variable_get('site_name', ''), 0, 10) . '-' . substr($node->title, 0, 10) . '-')),
     );
     drupal_write_record('springboard_advocacy_alert_id', $uuid);
   }
