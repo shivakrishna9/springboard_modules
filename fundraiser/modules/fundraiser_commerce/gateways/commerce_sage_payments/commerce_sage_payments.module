@@ -270,7 +270,7 @@ function commerce_sage_payments_cc_submit_form_submit($payment_method, $pane_for
   }
 
   // Store the type of transaction in the remote status.
-  $transaction->remote_status = COMMERCE_CREDIT_AUTH_CAPTURE;
+  $transaction->remote_status = $transaction_type;
 
   // Store the remote id.
   $transaction->remote_id = $transaction_response['REFERENCE'];
