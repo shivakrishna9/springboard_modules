@@ -234,12 +234,12 @@ function springboard_advocacy_dashboard($path, $arg = NULL) {
       break;
 
     case 'custom-targets':
-      $view = views_get_view('targets');
+      $view = views_get_view('sba_custom_targets');
       if($view && isset($view->display['block_1'])) {
       $views = array(
         'sba_targets' => array(
           'header' => t('Custom Targets'),
-          'content' => views_embed_view('targets', 'block_1'),
+          'content' => views_embed_view('sba_custom_targets', 'block_1'),
           'create_link' => array('title' => t('Create a new target'), 'href' => 'admin/springboard/advocacy/targets/custom-targets/add'),
           'css' => drupal_get_path('module', 'springboard_advocacy') . '/css/sba.css',
         ),

@@ -63,3 +63,9 @@ function springboard_target_permission() {
     ),
   );
 }
+
+function springboard_target_views_api() {
+  return array(
+    'api' => 3.0,
+  );
+}
