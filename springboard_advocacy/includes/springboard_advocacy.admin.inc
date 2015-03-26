@@ -217,7 +217,7 @@ function springboard_advocacy_dashboard($path, $arg = NULL) {
           'sba_alerts' => array(
             'header' => t('All Petitions'),
             'content' => views_embed_view('sba_alerts', 'block_2', 'sba_message_action', 'springboard_petition'),
-            'create_link' => array('title' => t('Create a new petitins'), 'href' => 'node/add/springboard-petition'),
+            'create_link' => array('title' => t('Create a new petition'), 'href' => 'node/add/springboard-petition'),
             'css' => drupal_get_path('module', 'springboard_advocacy') . '/css/sba.css',
 
           ),
