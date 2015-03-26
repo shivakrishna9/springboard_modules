@@ -71,7 +71,7 @@ class springboard_advocacy_views_handler_field_target_actions extends views_hand
     }
 
     $links  = array();
-    if (user_access('add target to campaign') && !empty($this->options['which_links']['add'])) {
+    if (user_access('add target to action') && !empty($this->options['which_links']['add'])) {
       $links[] = l(t('add'), 'add-target', array(
         'external' => TRUE,
         'attributes' => array('class' => array('advocacy-add-target')),

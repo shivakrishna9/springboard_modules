@@ -267,7 +267,7 @@ function springboard_advocacy_form_alter(&$form, &$form_state, $form_id) {
     // Add a vertical-tab fieldset for "Alert options."
     $form['springboard_advocacy_options'] = array(
       '#type' => 'fieldset',
-      '#title' => t('Alert options'),
+      '#title' => t('Action options'),
       '#weight' => -1,
       '#collapsible' => TRUE,
       '#collapsed' => FALSE,
