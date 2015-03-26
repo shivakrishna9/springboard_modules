@@ -9,6 +9,7 @@
 
     Drupal.behaviors.AdvocacyMessageRecipients = {
         attach: function(context, settings) {
+
             if ($('#edit-combine').text().length == 0) {
                 var placeholder = $('#edit-combine-wrapper .description').text().trim();
                 $('#edit-combine-wrapper .description').hide();
@@ -30,6 +31,16 @@
                 });
             });
 
+            if ($.isFunction($.fn.uniform)) {
+                var deUniform
+                clearTimeout(deUniform);
+                deUniform = setTimeout(function () {
+                    $('select').each(function () {
+                        $.uniform.restore(this);
+                    });
+                }, 10);
+            }
+
             //update exposed form element states when a district is selected
             $('select[name="search_district_name"]', context).once('advocacy-district-reloaded', function() {
                 setElStates();
@@ -40,7 +51,6 @@
                             reset();
                         }
                         setElStates();
-
                     }
                 });
             });
@@ -142,11 +152,15 @@
             combine.closest('.views-exposed-widget').removeClass('disabled');
             if(state.val() != "All" && groupable == false && notGroupable == false) {
                 district.prop('disabled', false);
+                district.removeClass('disabled');
+
                 //jquery uniform
                 $('#edit-search-district-name-wrapper div.disabled').removeClass('disabled');
             }
             else {
                 district.prop('disabled', true);
+                district.addClass('disabled');
+
                 //jquery uniform
                 $('#edit-search-district-name-wrapper div.selector').addClass('disabled');
             }
@@ -163,7 +177,6 @@
        else if((groupable == true || hasState == true)  && hasDistrict == false && notGroupable == false) {
             $('.views-targets-button-wrapper').prop("disabled", false).fadeTo(200, 1).css({'cursor': 'pointer'}).removeClass('cancel-hover');
             $('.views-targets-button-wrapper input').prop("disabled", false).fadeTo(200, 1).css({'cursor': 'pointer'}).removeClass('cancel-hover');
-
         }
     }
 
@@ -445,8 +458,7 @@
                     if ($(this).prop('tagName') == "SELECT") {
                         $(this).prop('selectedIndex', 0);
                         if ($.isFunction($.fn.uniform)) {
-                            $.uniform.update(this);
-                            //$.uniform.restore(this);
+                            $.uniform.restore(this);
                         }
                     }
                     if (this.type == 'checkbox') {
@@ -491,10 +503,15 @@
 
     // Main set of functions which need to happen on every page load
     $(document).ready(function () {
+        if ($.isFunction($.fn.uniform)) {
+            $('select').each(function () {
+                $.uniform.restore(this);
+            });
+        }
         //stop views ajax auto scroll
         $('.pager-item a, #edit-submit-targets').click(function(){
             Drupal.ajax.prototype.commands.viewsScrollTop = null;
-            });
+        });
         var showEdit = $('input[name*=field_user_editable]');
         var editable = $('#sba_message_sba_message_action_message_form_group_editable, #edit-field-bottom-conclusion')
          if(showEdit.prop('checked')) {

@@ -5,6 +5,32 @@
     width: 100%;
     margin-bottom: 1em;
 }
+    #springboard-advocacy-message-form-container select {
+        width: 100%;
+        -webkit-border-radius: 4px;
+        -moz-border-radius: 4px;
+        border-radius: 4px;
+        background-color: #fff;
+        border: solid 1px #ccc;
+        padding:8px 20px 8px 15px;
+        display: block;
+        margin-right: 20px;
+        font-size: 14px;
+        box-sizing: border-box;
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        appearance: none;
+        color:#6c6c6c;
+        background: url('../img/icon-arrow-down.jpg') 96% 53% no-repeat;
+        height: auto;
+
+    }
+
+    #springboard-advocacy-message-form-container option {
+        padding:4px 20px 14px 40px;
+        display: block;
+    }
+
     #springboard-advocacy-message-form-container .form-wrapper {
         margin-top: 5px;
         padding:  0 2em;
@@ -388,7 +414,7 @@
             #springboard-advocacy-find-targets #state-district-wrapper div[id*=search-state],
             #springboard-advocacy-find-targets #state-district-wrapper div[id*=search-district] {
                 margin: 0;
-                width: 48%;
+                width: 47.5%;
             }
 
                 #springboard-advocacy-find-targets #state-district-wrapper div[id*=search-state] .selector,
