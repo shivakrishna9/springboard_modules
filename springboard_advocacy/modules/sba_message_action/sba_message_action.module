@@ -175,10 +175,14 @@ function sba_message_action_node_load($nodes, $types) {
   if (!in_array('sba_message_action', $types)) {
     return;
   }
-
   // Add full messages to each node so we can utilize them later.
   foreach ($nodes as $nid => $node) {
     if ($node->type == 'sba_message_action') {
+
+      if(isset($node->form_layouts) &&  $node->form_layouts == 'one_column') {
+        unset($node->form_layouts);
+      }
+
       if (!empty($node->message_ids)) {
         $messages = sba_message_load_multiple($node->message_ids);
         $node->messages = $messages;
@@ -186,6 +190,7 @@ function sba_message_action_node_load($nodes, $types) {
       else {
         $node->messages = array();
       }
+
     }
   }
 }
@@ -688,3 +693,4 @@ function sba_message_action_theme() {
     ),
   );
 }
+
