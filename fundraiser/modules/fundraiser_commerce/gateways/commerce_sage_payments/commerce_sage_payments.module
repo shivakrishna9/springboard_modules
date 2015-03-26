@@ -510,6 +510,10 @@ function commerce_sage_payments_cc_vault_cardonfile_delete($form, &$form_state, 
 function commerce_sage_payments_eft_settings_form($settings = array()) {
   // Merge default settings into the stored settings array.
   $form = commerce_sage_payments_cc_settings_form($settings);
+  // Transaction type applies only to credit card, not EFT.
+  if (isset($form['transaction_type'])) {
+    unset($form['transaction_type']);
+  }
   return $form;
 }
 
