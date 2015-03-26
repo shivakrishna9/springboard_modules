@@ -156,10 +156,14 @@
         if(notGroupable == true || hasDistrict == true || (groupable == false && hasState == false)) {
 
             $('.views-targets-button-wrapper').prop("disabled", true).fadeTo(400, 0).css({'cursor': 'not-allowed'}).addClass('cancel-hover');
+            $('.views-targets-button-wrapper input').prop("disabled", true).fadeTo(400, 0).css({'cursor': 'not-allowed'}).addClass('cancel-hover');
+
         }
 
-        if((groupable == true || hasState == true)  && hasDistrict == false && notGroupable == false) {
+       else if((groupable == true || hasState == true)  && hasDistrict == false && notGroupable == false) {
             $('.views-targets-button-wrapper').prop("disabled", false).fadeTo(200, 1).css({'cursor': 'pointer'}).removeClass('cancel-hover');
+            $('.views-targets-button-wrapper input').prop("disabled", false).fadeTo(200, 1).css({'cursor': 'pointer'}).removeClass('cancel-hover');
+
         }
     }
 
