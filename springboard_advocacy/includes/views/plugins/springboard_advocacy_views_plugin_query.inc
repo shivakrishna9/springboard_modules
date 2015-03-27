@@ -115,6 +115,9 @@ class springboard_advocacy_views_plugin_query extends views_plugin_query {
       }
       else {
         // No results
+        if (isset($targets->error)) {
+          watchdog('advocacy', 'An error occurred while searching for targets: @message', array('@message' => $targets->error->message), WATCHDOG_ERROR);
+        }
         $targets->data->targets = array();
       }
 

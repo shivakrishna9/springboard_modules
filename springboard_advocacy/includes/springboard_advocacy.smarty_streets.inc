@@ -6,8 +6,7 @@
  */
 
 function springboard_advocacy_smarty_lookup($values) {
-  
-  $responses = array();
+
   $query =  array(
     'street' => $values['sbp_address'],
     'city' => $values['sbp_city'],
@@ -18,20 +17,43 @@ function springboard_advocacy_smarty_lookup($values) {
   );
 
   $url = url('https://api.smartystreets.com/street-address', array('query' => $query));
-
   $response = drupal_http_request($url);
   $geo = array();
+  $data = array();
+  if(isset($response->error)) {
+    if(user_access('administer springboard advocacy')) {
+      drupal_set_message(t('An error occurred when attempting to retrieve zip code information: @message', array('@message' => $response->status_message)), 'error');
+    }
+    watchdog('advocacy', 'An error occurred when attempting to retrieve zip code information: @message', array('@message' => $response->status_message), WATCHDOG_ERROR);
+    return $geo;
+  }
 
-  if (!empty($response->data)) {
+  if(isset($response->data)) {
 
     $data = json_decode($response->data);
- 
-    if(!empty($data)) {
+
+    if (empty($data)){
+      if(user_access('administer springboard advocacy')) {
+        drupal_set_message(t('A zip code + four could not be found for the address entered.'), 'error');
+      }
+      watchdog('advocacy', 'A zip code + four could not be found for the address entered.', array(), WATCHDOG_ERROR);
+
+      return $geo;
+    }
+
+    if (!empty($data) && empty($data[0]->components->plus4_code)) {
+      if(user_access('administer springboard advocacy')) {
+        drupal_set_message(t('A plus four extension could not be found'), 'error');
+      }
+      watchdog('advocacy', 'A + four extension could not be found for the address entered.', array(), WATCHDOG_ERROR);
+      return $geo;
+    }
+
+    if (!empty($data) && !empty($data[0]->components->plus4_code)) {
       $geo['zip'] = isset($data[0]->components->zipcode) ? $data[0]->components->zipcode : '';
       $geo['plus4'] = isset($data[0]->components->plus4_code) ? $data[0]->components->plus4_code : '';
       $geo['county'] = isset($data[0]->metadata->county_name) ? $data[0]->metadata->county_name : '';
       $geo['fips'] = isset($data[0]->metadata->county_fips) ? $data[0]->metadata->county_fips : '';
-
       //$district = $data[0]->metadata->congressional_district;
       $geo['latitude'] = isset($data[0]->metadata->latitude) ? $data[0]->metadata->latitude : '';
       $geo['longitude'] = isset($data[0]->metadata->longitude) ? $data[0]->metadata->longitude : '';

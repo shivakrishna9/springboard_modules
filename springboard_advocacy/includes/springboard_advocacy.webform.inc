@@ -23,7 +23,6 @@ function springboard_advocacy_send_message($user_message, $form_state) {
   module_load_include('inc', 'springboard_advocacy', 'includes/springboard_advocacy.smarty_streets');
 
   $geo = springboard_advocacy_smarty_lookup($webform_values);
-
   if (!empty($geo) && !empty($geo['zip']) && !empty($geo['plus4'])) {
     $zip = $geo['zip'] . '-' . $geo['plus4'];
   }
@@ -54,6 +53,10 @@ function springboard_advocacy_send_message($user_message, $form_state) {
         }
       }
     }
+  }
+  else {
+    //@todo
+    //set message for confirmation page
   }
 }
 

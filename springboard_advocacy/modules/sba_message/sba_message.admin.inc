@@ -193,7 +193,7 @@ function sba_message_edit_form($form, &$form_state, $sba_message) {
   // Get/Set the message UUID
   $form['data']['message_id'] = array(
     '#type' => 'hidden',
-    '#value' => isset($sba_message->data['message_id']) ? $sba_message->data['message_id'] : str_replace(' ', '-', uniqid(substr(variable_get('site_name', ''), 0, 10) . '-' . substr($node->title, 0, 10) . '-', TRUE)),
+    '#value' => isset($sba_message->data['message_id']) ? $sba_message->data['message_id'] : str_replace(' ', '-', uniqid(substr(variable_get('site_name', ''), 0, 10) . '-' . substr($node->title, 0, 10) . '-')),
   );
 
   $form['data']['recipients'] = array(
@@ -208,6 +208,7 @@ function sba_message_edit_form($form, &$form_state, $sba_message) {
 
   if (isset($sba_message->data['group_id']) && $sba_message->data['group_id'] == 'no_response') {
     drupal_set_message('A remote group ID could not be found.');
+    watchdog('advocacy', 'A remote group ID could not be found. Local ID: @message', array('@message' => $sba_message->data['group_id']), WATCHDOG_ERROR);
   }
 
   // Add the field related form elements.
@@ -359,8 +360,12 @@ function sba_message_delete_form_submit($form, &$form_state) {
     if (user_access('administer springboard advocacy')) {
       if (isset($response->error)) {
         drupal_set_message(t('An error occurred when attempting to delete the message\'s target group: @message:', array('@message' => $response->error->message)), 'error');
+        watchdog('advocacy', 'An error occurred when attempting to delete the message\'s target group @id: @message:', array('@id' => $sba_message->data['group_id'], '@message' => $response->error->message), WATCHDOG_ERROR);
+
       } else {
         drupal_set_message(t('A response was not received from the API server when attempting to delete the message\'s target group.'), 'error');
+        watchdog('advocacy', 'A response was not received from the API server when attempting to delete the message\'s target group: @id', array('@id' => $sba_message->data['group_id']), WATCHDOG_ERROR);
+
       }
     }
   }

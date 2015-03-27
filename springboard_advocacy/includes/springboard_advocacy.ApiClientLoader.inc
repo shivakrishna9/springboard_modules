@@ -24,6 +24,7 @@ class AdvocacyApiClientLoader
     else {
       if (!empty($token->error)) {
         drupal_set_message('Springboard Advocacy: ' . implode('. ', (array)$token));
+        watchdog('advocacy', 'An error occurred when attempting to set an api token', array('@message' => implode('. ', (array)$token)), WATCHDOG_ERROR);
       }
     }
 
