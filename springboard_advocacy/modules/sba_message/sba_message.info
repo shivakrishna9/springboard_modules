@@ -2,15 +2,13 @@ name = Springboard Advocacy Message
 description = Provides message entity types for use by Springboard Advocacy submodules.
 core = 7.x
 
-dependencies[] = entity
-dependencies[] = views
 dependencies[] = draggableviews
-dependencies[] = eva
 dependencies[] = entityreference_prepopulate
 dependencies[] = springboard_advocacy
 
 
 files[] = sba_message.admin.inc
+files[] = sba_message.api_calls.inc
 files[] = sba_message_type.admin.inc
 files[] = views/sba_message.views.inc
 files[] = views/sba_message_handler_link_field.inc
