@@ -136,6 +136,7 @@
             allBoxes.each(function(){
                 $(this).prop('disabled', true);
                 $(this).closest('.views-exposed-widget').addClass('disabled');
+                $(this).siblings('label').css({'cursor': 'not-allowed'});
             })
             combine.prop('disabled', true);
             combine.closest('.views-exposed-widget').addClass('disabled');
@@ -146,6 +147,8 @@
                 if($(this).prop('disabled') == true) {
                     $(this).prop('disabled', false);
                     $(this).closest('.views-exposed-widget').removeClass('disabled');
+                    $(this).siblings('label').css({'cursor': 'pointer'});
+
                 }
             });
             combine.prop('disabled', false);
@@ -169,8 +172,8 @@
         //update quick target button based on meta-variables
         if(notGroupable == true || hasDistrict == true || (groupable == false && hasState == false)) {
 
-            $('.views-targets-button-wrapper').prop("disabled", true).fadeTo(400, 0).css({'cursor': 'not-allowed'}).addClass('cancel-hover');
-            $('.views-targets-button-wrapper input').prop("disabled", true).fadeTo(400, 0).css({'cursor': 'not-allowed'}).addClass('cancel-hover');
+            $('.views-targets-button-wrapper').prop("disabled", true).fadeTo(400, 0).css({'cursor': 'default'}).addClass('cancel-hover');
+            $('.views-targets-button-wrapper input').prop("disabled", true).fadeTo(400, 0).css({'cursor': 'default'}).addClass('cancel-hover');
 
         }
 
@@ -463,6 +466,10 @@
                     }
                     if (this.type == 'checkbox') {
                         $(this).prop('checked', false);
+                        $(this).prop('disabled', false);
+                        $(this).removeClass('disabled');
+                        $(this).siblings('label').removeClass('disabled').css({'cursor': 'pointer'});
+                        $(this).closest('.views-exposed-widget').removeClass('disabled');
                     }
                     if (this.type == 'text') {
                         $(this).val('');
@@ -472,6 +479,7 @@
                 $('.view-content').fadeOut(333);
                 $('.attachment').fadeOut(333);
                 $('div.view-targets .item-list').fadeOut(333);
+                $('select[name="search_district_name"]').prop('disabled', true).addClass('disabled');
                 return false;
             });
         }

@@ -533,7 +533,6 @@ function sba_message_theme() {
     'views_exposed_form' => array(
       'template' => 'templates/views-exposed-form--targets-block-3',
       'render element' => 'form',
-
     ),
   );
 }
