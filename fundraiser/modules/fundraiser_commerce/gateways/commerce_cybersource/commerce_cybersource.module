@@ -1139,7 +1139,7 @@ function commerce_cybersource_soap_api_request($payment_method, $request) {
     $response = $soapClient->runTransaction($request);
   }
   catch (SoapFault $exception) {
-    watchdog('commerce_cybersource', 'CyberSource SOAP error: !exception', array('!exception' => $exception->getMessage()), WATCHDOG_ERROR);
+    watchdog('commerce_cybersource', 'CyberSource SOAP error: @exception', array('@exception' => $exception->getMessage()), WATCHDOG_ERROR);
     return FALSE;
   }
 
