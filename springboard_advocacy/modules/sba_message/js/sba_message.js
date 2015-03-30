@@ -10,7 +10,6 @@
     Drupal.behaviors.AdvocacyMessageRecipients = {
         attach: function(context, settings) {
 
-
             $('.view-targets').once('advocacy-committee-search', function() {
                 var finder = $('#springboard-advocacy-find-targets-container .view-targets');
                 finder.prepend('<div class="faux-tab-container"><div class="faux-tab"' +
@@ -19,6 +18,7 @@
             });
 
             $('.committee-search').click(function () {
+                reset('committee');
                 $('.radio-widgets, #state-district-wrapper,#edit-combine-wrapper, .search-reset, .views-targets-button-wrapper').hide();
                 $('#edit-search-committee-wrapper').show(300);
                 $('a.committee-search').closest('.faux-tab').addClass('active');
@@ -27,6 +27,7 @@
                 return false;
 
             });
+
             $('.full-search').click(function () {
                 $('#edit-search-committee-wrapper').hide();
                 $('a.committee-search').closest('.faux-tab').removeClass('active');
@@ -36,6 +37,7 @@
                 return false;
 
             });
+
             if(window.search_state == 'committee') {
                 $('.radio-widgets,#state-district-wrapper,#edit-combine-wrapper, .search-reset, .views-targets-button-wrapper').hide();
                 $('#edit-search-committee-wrapper').show(300);
@@ -43,7 +45,7 @@
             else {
                 $('a.committee-search').closest('.faux-tab').removeClass('active');
                 $('a.full-search').closest('.faux-tab').addClass('active');
-                $('.radio-widgets,#state-district-wrapper,#edit-combine-wrapper, .search-reset, .views-targets-button-wrapper').show(300);
+                $('.radio-widgets,#state-district-wrapper,#edit-combine-wrapper, .search-reset').show(300);
                 $('#edit-search-committee-wrapper').hide();
             }
 
@@ -55,6 +57,7 @@
                     $(this).attr('placeholder', '');
                 });
             }
+
             if ($('#edit-search-committee').text().length == 0) {
                 var placeholder = $('#edit-search-committee-wrapper .description').text().trim();
                 $('#edit-search-committee-wrapper .description').hide();
@@ -500,32 +503,12 @@
         if ($type == 'all') {
             $('.views-submit-button').append('<a class = "search-reset" href ="#">reset</a>');
             $('.search-reset').click(function () {
-                var allInputs = $('#views-exposed-form-targets-block-3 input[type="checkbox"], #views-exposed-form-targets-block-3 input[type="text"], #views-exposed-form-targets-block-3 select');
-                allInputs.each(function () {
-                    if ($(this).prop('tagName') == "SELECT") {
-                        $(this).prop('selectedIndex', 0);
-                        if ($.isFunction($.fn.uniform)) {
-                            $.uniform.restore(this);
-                        }
-                    }
-                    if (this.type == 'checkbox') {
-                        $(this).prop('checked', false);
-                        $(this).prop('disabled', false);
-                        $(this).removeClass('disabled');
-                        $(this).siblings('label').removeClass('disabled').css({'cursor': 'pointer'});
-                        $(this).closest('.views-exposed-widget').removeClass('disabled');
-                    }
-                    if (this.type == 'text') {
-                        $(this).val('');
-                    }
-                });
-                $('.views-targets-button-wrapper').fadeOut(333);
-                $('.view-content').fadeOut(333);
-                $('.attachment').fadeOut(333);
-                $('div.view-targets .item-list').fadeOut(333);
-                $('select[name="search_district_name"]').prop('disabled', true).addClass('disabled');
+                resetFull();
                 return false;
             });
+        }
+        else if ($type == 'committee') {
+            resetFull();
         }
         else {
             $('.view-content').fadeOut(333);
@@ -534,6 +517,33 @@
         }
     }
 
+    function resetFull() {
+        var allInputs = $('#views-exposed-form-targets-block-3 input[type="checkbox"], #views-exposed-form-targets-block-3 input[type="text"], #views-exposed-form-targets-block-3 select');
+        allInputs.each(function () {
+            if ($(this).prop('tagName') == "SELECT") {
+                $(this).prop('selectedIndex', 0);
+                if ($.isFunction($.fn.uniform)) {
+                    $.uniform.restore(this);
+                }
+            }
+            if (this.type == 'checkbox') {
+                $(this).prop('checked', false);
+                $(this).prop('disabled', false);
+                $(this).removeClass('disabled');
+                $(this).siblings('label').removeClass('disabled').css({'cursor': 'pointer'});
+                $(this).closest('.views-exposed-widget').removeClass('disabled');
+            }
+            if (this.type == 'text') {
+                $(this).val('');
+            }
+        });
+        $('.views-targets-button-wrapper').fadeOut(333);
+        $('.view-content').fadeOut(333);
+        $('.attachment').fadeOut(333);
+        $('div.view-targets .item-list').fadeOut(333);
+        $('select[name="search_district_name"]').prop('disabled', true).addClass('disabled');
+        return false;
+    }
     //Uc first helper
     String.prototype.ucfirst = function()
     {
