@@ -32,7 +32,7 @@
                 $('#edit-search-committee-wrapper').hide();
                 $('a.committee-search').closest('.faux-tab').removeClass('active');
                 $('a.full-search').closest('.faux-tab').addClass('active');
-                $('.radio-widgets,#state-district-wrapper,#edit-combine-wrapper, .search-reset, .views-targets-button-wrapper').show(300);
+                $('.radio-widgets,#state-district-wrapper,#edit-combine-wrapper, .search-reset').show(300);
                 window.search_state = 'full-search';
                 return false;
 
