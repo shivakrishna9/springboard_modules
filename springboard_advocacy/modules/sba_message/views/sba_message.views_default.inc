@@ -416,6 +416,23 @@ function sba_message_views_default_views() {
   );
   $handler->display->display_options['defaults']['filter_groups'] = FALSE;
   $handler->display->display_options['defaults']['filters'] = FALSE;
+  /* Filter criterion: Advocacy: Search by Committee Name */
+  $handler->display->display_options['filters']['search_committee']['id'] = 'search_committee';
+  $handler->display->display_options['filters']['search_committee']['table'] = 'advocacy';
+  $handler->display->display_options['filters']['search_committee']['field'] = 'search_committee';
+  $handler->display->display_options['filters']['search_committee']['group'] = 1;
+  $handler->display->display_options['filters']['search_committee']['exposed'] = TRUE;
+  $handler->display->display_options['filters']['search_committee']['expose']['operator_id'] = 'search_committee_op';
+  $handler->display->display_options['filters']['search_committee']['expose']['description'] = 'Search by Committee Name';
+  $handler->display->display_options['filters']['search_committee']['expose']['operator'] = 'search_committee_op';
+  $handler->display->display_options['filters']['search_committee']['expose']['identifier'] = 'search_committee';
+  $handler->display->display_options['filters']['search_committee']['expose']['remember_roles'] = array(
+    2 => '2',
+    1 => 0,
+    3 => 0,
+    4 => 0,
+    5 => 0,
+  );
   /* Filter criterion: Advocacy: Search Multiple Target Fields by Keywords */
   $handler->display->display_options['filters']['combine']['id'] = 'combine';
   $handler->display->display_options['filters']['combine']['table'] = 'advocacy';
@@ -784,6 +801,7 @@ function sba_message_views_default_views() {
   $handler->display->display_options['filters']['search_social']['id'] = 'search_social';
   $handler->display->display_options['filters']['search_social']['table'] = 'advocacy';
   $handler->display->display_options['filters']['search_social']['field'] = 'search_social';
+  $handler->display->display_options['filters']['search_social']['group'] = 1;
   $handler->display->display_options['filters']['search_social']['exposed'] = TRUE;
   $handler->display->display_options['filters']['search_social']['expose']['operator_id'] = 'search_social_op';
   $handler->display->display_options['filters']['search_social']['expose']['label'] = 'Search By Social Media Presence';
@@ -815,6 +833,7 @@ function sba_message_views_default_views() {
       ),
     ),
   );
+
   $views[$view->name] = $view;
 
   /******* Message Landing page *************/

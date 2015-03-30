@@ -10,6 +10,43 @@
     Drupal.behaviors.AdvocacyMessageRecipients = {
         attach: function(context, settings) {
 
+
+            $('body').once('advocacy-commiteee-search', function() {
+                var finder = $('#springboard-advocacy-find-targets-container .view-targets');
+                finder.prepend('<div class="faux-tab-container"><div class="faux-tab"' +
+                '><a href ="#full" class="full-search">Full Search</a></div><' +
+                'div class="faux-tab"><a href ="#committee" class="committee-search">Committee Search</a></div>');
+            });
+
+            $('.committee-search').click(function () {
+                $('.radio-widgets, #state-district-wrapper,#edit-combine-wrapper, .search-reset ').hide();
+                $('#edit-search-committee-wrapper').show(300);
+                $('a.committee-search').closest('.faux-tab').addClass('active');
+                $('a.full-search').closest('.faux-tab').removeClass('active');
+                window.search_state = 'committee';
+                return false;
+
+            });
+            $('.full-search').click(function () {
+                $('#edit-search-committee-wrapper').hide();
+                $('a.committee-search').closest('.faux-tab').removeClass('active');
+                $('a.full-search').closest('.faux-tab').addClass('active');
+                $('.radio-widgets,#state-district-wrapper,#edit-combine-wrapper, .search-reset  ').show(300);
+                window.search_state = 'full-search';
+                return false;
+
+            });
+            if(window.search_state == 'committee') {
+                $('.radio-widgets,#state-district-wrapper,#edit-combine-wrapper, .search-reset  ').hide();
+                $('#edit-search-committee-wrapper').show(300);
+            }
+            else {
+                $('a.committee-search').closest('.faux-tab').removeClass('active');
+                $('a.full-search').closest('.faux-tab').addClass('active');
+                $('.radio-widgets,#state-district-wrapper,#edit-combine-wrapper, .search-reset  ').show(300);
+                $('#edit-search-committee-wrapper').hide();
+            }
+
             if ($('#edit-combine').text().length == 0) {
                 var placeholder = $('#edit-combine-wrapper .description').text().trim();
                 $('#edit-combine-wrapper .description').hide();
@@ -18,7 +55,14 @@
                     $(this).attr('placeholder', '');
                 });
             }
-
+            if ($('#edit-search-committee').text().length == 0) {
+                var placeholder = $('#edit-search-committee-wrapper .description').text().trim();
+                $('#edit-search-committee-wrapper .description').hide();
+                $('#edit-search-committee').attr('placeholder', placeholder);
+                $('#edit-search-committee').focus(function () {
+                    $(this).attr('placeholder', '');
+                });
+            }
             // Apply click event to the search form add links
             // Allows views search results to be appended to the recipients list
             var links = $('a.advocacy-add-target, a#advo-add-all');
@@ -565,6 +609,7 @@
         var recipContainer = $('#springboard-advocacy-message-recipients-container');
 
         var finder = $('#springboard-advocacy-find-targets-container');
+
         var actions = $('#sba-message-edit-form #edit-actions');
         var err = $('#advo-error-wrapper');
         $('#springboard-advocacy-message-form-container').append(finder);

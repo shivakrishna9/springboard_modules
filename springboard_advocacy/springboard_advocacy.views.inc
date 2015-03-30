@@ -241,6 +241,16 @@ function springboard_advocacy_views_data() {
       'options callback' => 'springboard_advocacy_target_social'
     ),
   );
+
+  // First Name
+  $data['advocacy']['search_committee'] = array(
+    'title' => t('Search by Committee Name'),
+    'help' => t('Commiteee name search'),
+    'filter' => array(
+      'handler' => 'springboard_advocacy_views_handler_filter_string',
+    ),
+  );
+
   return $data;
 }
 

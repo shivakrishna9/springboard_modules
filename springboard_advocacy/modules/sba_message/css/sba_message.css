@@ -321,6 +321,7 @@
     content: "";
     display: table;
 }
+
     #springboard-advocacy-find-targets-container #edit-actions {
         clear:both;
         background: none;
@@ -365,6 +366,28 @@
             margin:  0;
             padding: 0;
         }
+            #springboard-advocacy-find-targets-container .view-targets .faux-tab-container {
+               margin: 0 3em;
+                margin-bottom: 1.5em;
+                border-bottom: 1px solid #ccc;
+            }
+                #springboard-advocacy-find-targets-container .view-targets .faux-tab-container:after {
+                    clear: both;
+                    content: "";
+                    display: table;
+                }
+                #springboard-advocacy-find-targets-container .view-targets .faux-tab {
+                    border: 1px solid #ccc;
+                    border-bottom:none;
+                    float: left;
+                    padding:10px;
+                    font-weight: bold;
+                    background: #fff;
+                }
+                #springboard-advocacy-find-targets-container .view-targets .faux-tab.active {
+                    background: #EFF9FF;
+
+                }
         #springboard-advocacy-find-targets div.view-filters {
             margin: 0 3em 1em 3em;
             padding: 0;
@@ -389,7 +412,8 @@
             display:block;
         }
 
-        #springboard-advocacy-find-targets  div#edit-combine-wrapper {
+        #springboard-advocacy-find-targets  div#edit-combine-wrapper ,
+        #springboard-advocacy-find-targets  div#edit-search-committee-wrapper {
             display: block;
             margin-bottom:1em;
             margin-right: 0;
@@ -404,6 +428,11 @@
             margin: 0;
             overflow: visible;
         }
+            #springboard-advocacy-find-targets  #state-district-wrapper .ajax-progress-throbber {
+                position: absolute;
+                right:80px;
+                top: 5px;
+            }
 
             #springboard-advocacy-find-targets #state-district-wrapper select {
                 width: 100%;
@@ -460,7 +489,8 @@
                 }
 
 
-            #springboard-advocacy-find-targets  .views-widget input#edit-combine {
+            #springboard-advocacy-find-targets  .views-widget input#edit-combine,
+            #springboard-advocacy-find-targets  .views-widget input#edit-search-committee{
                 border-radius: 4px;
                 max-width: 680px;
                 width: 100%;
