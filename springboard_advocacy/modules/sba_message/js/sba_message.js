@@ -11,7 +11,7 @@
         attach: function(context, settings) {
 
 
-            $('body').once('advocacy-commiteee-search', function() {
+            $('.view-targets').once('advocacy-committee-search', function() {
                 var finder = $('#springboard-advocacy-find-targets-container .view-targets');
                 finder.prepend('<div class="faux-tab-container"><div class="faux-tab"' +
                 '><a href ="#full" class="full-search">Full Search</a></div><' +
