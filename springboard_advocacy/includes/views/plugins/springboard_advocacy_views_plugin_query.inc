@@ -95,7 +95,18 @@ class springboard_advocacy_views_plugin_query extends views_plugin_query {
 
       // Get the targets
       $targets = $client->searchTargets($fields);
-      // Build the pager
+
+      if(!isset($targets->data)) {
+        if (isset($targets->error)) {
+          drupal_set_message(t('An error occurred when attempting to search: @message', array('@message' => $targets->error->message)), 'error');
+          watchdog('advocacy', 'An error occurred when attempting to search: @message', array('@message' => $targets->error->message), WATCHDOG_ERROR);
+
+        } else {
+          drupal_set_message(t('A response was not received from the server when attempting to search for targets'), 'error');
+          watchdog('advocacy', 'A response was not received when attempting to search for targets.', WATCHDOG_ERROR);
+
+        }
+      }      // Build the pager
       if (!empty($targets->data->targets))  {
         if ($this->pager->use_pager()) {
           $this->pager->total_items = $targets->data->count;
