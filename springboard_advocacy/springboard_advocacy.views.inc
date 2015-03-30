@@ -525,6 +525,7 @@ function springboard_advocacy_preprocess_views_view_table(&$vars)
 
   foreach ($columns as $field => $column) {
     // render the header labels
+
     if ($field == $column && empty($fields[$field]->options['exclude'])) {
       $label = check_plain(!empty($fields[$field]) ? $fields[$field]->label() : '');
       if (!empty($options['info'][$field]['sortable']) || $fields[$field]->click_sortable()) {
@@ -547,8 +548,13 @@ function springboard_advocacy_preprocess_views_view_table(&$vars)
           'attributes' => array('title' => $title),
           'query' => $query,
         );
+
         $vars['header'][$field] = l($label, $_GET['q'], $link_options);
       }
+    }
+    if (isset($vars['rows'][0]['committee_memberships']) && $field == 'committee_memberships' && $label ==  '') {
+      $label = t('Committees');
+      $vars['header'][$field] = t($label);
     }
   }
 }
