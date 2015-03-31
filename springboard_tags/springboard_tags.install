@@ -1,0 +1,65 @@
+<?php
+
+/**
+ * Schema for Springboard Tags.
+ */
+function springboard_tags_schema() {
+  $schema = array();
+
+  $schema['springboard_tags'] = array(
+    'description' => 'Contains exportable tag content for this site.',
+    'export' => array(
+      'key' => 'name',
+      'key name' => 'Name',
+      'primary key' => 'tid',
+      'identifier' => 'preset',
+      'create callback' => '_springboard_tags_new',
+      'api' => array(
+        'owner' => 'springboard_tags',
+        'api' => 'springboard_tags',
+        'minimum_version' => 1,
+        'current_version' => 1,
+      ),
+    ),
+    'fields' => array(
+      'tid' => array(
+        'type' => 'serial',
+        'description' => 'A database primary key to ensure uniqueness',
+        'not null' => TRUE,
+        'no export' => TRUE,
+      ),
+      'name' => array(
+        'type' => 'varchar',
+        'length' => '255',
+        'description' => 'Unique ID for this content. Used to identify it programmatically.',
+      ),
+      'admin_title' => array(
+        'type' => 'varchar',
+        'length' => '255',
+        'description' => 'Administrative title for this content.',
+      ),
+      'admin_description' => array(
+        'type' => 'text',
+        'size' => 'big',
+        'description' => 'Administrative description for this content.',
+        'object default' => '',
+      ),
+      'tag' => array(
+        'type' => 'text',
+        'size' => 'big',
+        'description' => 'Tag content',
+        'object default' => '',
+      ),
+      'settings' => array(
+        'type' => 'text',
+        'size' => 'big',
+        'description' => 'Serialized settings for the tag.',
+        'serialize' => TRUE,
+        'object default' => array(),
+      ),
+    ),
+    'primary key' => array('tid'),
+  );
+
+  return $schema;
+}

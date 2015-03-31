@@ -1,0 +1,114 @@
+<?php
+
+/**
+ * Implements hook_permission()
+ */
+function springboard_tags_permission() {
+  return array(
+    'administer springboard tags' => array(
+      'title' => t('Administer Springboard tags'),
+      'description' => t('Add, delete and edit tags.'),
+    ),
+  );
+}
+
+/**
+ * Implements hook_ctools_plugin_directory().
+ */
+function springboard_tags_ctools_plugin_directory($module, $plugin) {
+  // Most of this module is implemented as an export ui plugin, and the
+  // rest is in ctools/includes/ctools_access_ruleset.inc
+  if ($module == 'ctools' && $plugin == 'export_ui') {
+    return 'plugins/' . $plugin;
+  }
+}
+
+/**
+ * Implements hook_springboard_admin_menu_items_alter().
+ */
+function springboard_tags_springboard_admin_admin_menu_items_alter(&$items) {
+  // Add a menu item for the admin page.
+  $items['admin/springboard/marketing-analytics']['_children']['admin/springboard/springboard-tags'] = array(
+    'link_path' => 'admin/springboard/springboard-tags',
+    'link_title' => 'Tags',
+    'menu_name' => 'springboard_admin_menu',
+    'expanded' => 1,
+    'customized' => 1,
+    'weight' => 10,
+  );
+}
+
+/**
+ * Implements hook_page_alter().
+ *
+ * @param array $page
+ */
+function springboard_tags_page_alter(&$page) {
+  // Load all the configured tags.
+  ctools_include('export');
+  $items = ctools_export_crud_load_all('springboard_tags');
+  if (empty($items)) {
+    return;
+  }
+
+  foreach ($items as $tag) {
+    switch ($tag->settings['placement']) {
+      case 'after body tag' :
+        $after_body[] = _springboard_tags_generate_tag($tag->tag);
+        break;
+      case 'content' :
+        $content[] = _springboard_tags_generate_tag($tag->tag);
+        break;
+    }
+  }
+
+  if (!empty($after_body)) {
+    // Add a post render function, and the tags.
+    $page['#post_render'][] = '_springboard_tags_post_render';
+    $page['#springboard_tags_after_body'] = implode($after_body);
+  }
+
+  if (!empty($content)) {
+    // Add the content tags.
+    $page['content']['springboard_tags'] = array(
+      '#markup' => implode($content),
+    );
+  }
+}
+
+function _springboard_tags_post_render(&$children, $elements) {
+  // Insert snippet after the opening body tag.
+  $children = preg_replace('@<body[^>]*>@', '$0' . $elements['#springboard_tags_after_body'], $children, 1);
+  return $children;
+}
+
+/**
+ * Return an array of placement options.
+ */
+function _springboard_tags_placement_options() {
+  return array(
+    'after body tag' => 'Directly after the opening body tag',
+    'content' => 'Main content',
+  );
+}
+
+/**
+ * Create callback for creating a new CTools custom content type.
+ *
+ * This ensures we get proper defaults from the plugin for its settings.
+ */
+function _springboard_tags_new($set_defaults) {
+  $item = ctools_export_new_object('springboard_tags', $set_defaults);
+  $plugin = ctools_get_plugins('ctools', 'export_ui', 'springboard_tags');
+  $item->settings = $plugin['defaults']['settings'];
+  return $item;
+}
+
+/**
+ * Generate the tag snippet.
+ */
+function _springboard_tags_generate_tag($snippet) {
+  return token_replace($snippet);
+}
+
+
