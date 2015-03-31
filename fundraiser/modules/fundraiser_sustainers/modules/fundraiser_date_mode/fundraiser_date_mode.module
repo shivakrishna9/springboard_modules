@@ -262,8 +262,21 @@ function _fundraiser_date_mode_calculate_delta($charge_time, $date) {
  */
 function _fundraiser_date_mode_validate_order_dates($series_orders, $master_order_day = NULL) {
   $dates = array();
-  foreach ($series_orders as $order) {
-    $date = _fundraiser_date_mode_explode_date($order['next_charge']);
+  // Return FALSE if no orders.
+  if (empty($series_orders)) {
+    return FALSE;
+  }
+
+  // Pull all the next charge values for these dids.
+  $next_charges = db_select('fundraiser_sustainers', 's')
+    ->fields('s', array('did', 'next_charge'))
+    ->condition('did', $series_orders)
+    ->execute()
+    ->fetchAllKeyed();
+
+  foreach ($series_orders as $did) {
+    $date = _fundraiser_date_mode_explode_date($next_charges[$did]);
+
     // If supplied, validate order days against the master order day.
     if ($master_order_day && $master_order_day != $date['day']) {
       return FALSE;
