@@ -17,7 +17,12 @@ function webform_form_salesforce_genmap_map_form_alter(&$form, &$form_state) {
   // Check to see if this form has been designated as a webform user form. If
   // so, we add an additional submit handler that will scan the fields in the
   // mapped Salesforce object for a foreign key to the contact object.
-  $fundraiser = fundraiser_is_donation_type($form['#node']->type);
+  if (module_exists('fundraiser')) {
+    $fundraiser = fundraiser_is_donation_type($form['#node']->type);
+  }
+  else {
+    $fundraiser = FALSE;
+  }
   if (module_exists('webform_user') && !$fundraiser) {
     if (!empty($form['#node']) && _webform_user_is_webform_user_node($form['#node'])) {
       $sobject_type = $form['salesforce_object_info']['salesforce_object_type']['#default_value'];
@@ -31,7 +36,7 @@ function webform_form_salesforce_genmap_map_form_alter(&$form, &$form_state) {
             if ($field['type'] == 'reference' && $field['referenceTo'][0] == 'Contact') {
               $options[$field['name']] = $field['label'];
             }
-          } 
+          }
         }
         if (!empty($options) && count($options) > 1) {
           $form['webform_user'] = array(
@@ -72,7 +77,7 @@ function salesforce_genmap_node_insert($node) {
     if (array_key_exists($nid, $webform_user_reference_fields)) {
       $webform_user_reference_fields[$node->nid] = $webform_user_reference_fields[$nid];
       variable_set('webform_user_reference_fields', $webform_user_reference_fields);
-    }  
+    }
     $map = salesforce_genmap_load_map($nid, 'webform');
     if (!empty($map)) {
       // Copy the map to the node.

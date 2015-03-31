@@ -78,30 +78,46 @@ function commerce_payment_example_fundraiser_commerce_expire($submission_fields)
 /**
  * Callback function, charge the gateway.
  */
-function commerce_payment_example_fundraiser_commerce_charge($payment_method, $donation) {
-  // Translate from donation settings to the correct values for the plugin.
+function commerce_payment_example_fundraiser_commerce_charge($method_instance, $donation) {
+  module_load_include('inc', 'fundraiser_commerce', 'includes/fundraiser_commerce.credit_card');
+
+  // Translate donation settings to the correct values for the commerce gateway.
   $order = commerce_order_load($donation->did);
-  $charge = $order->commerce_order_total[LANGUAGE_NONE][0];
-  $name = $donation->donation['first_name'] . ' ' . $donation->donation['last_name'];
-  // Use 0000000000000000 to test a failed payment, anything else for a good one. Use
-  // zipcode 55555 to simulate failed sustainer payments.
-  if ($donation->donation['payment_fields']['credit']['card_number'] == '0000000000000000' || ($donation->reference_charge && $donation->donation['zip'] == '55555')) {
+  $order_wrapper = entity_metadata_wrapper('commerce_order', $order);
+  $charge = $order_wrapper->commerce_order_total->value();
+  $pane_values = _fundraiser_commerce_credit_card_pane_values($donation);
+
+  // Add fundraiser commerce data to the pane values array.
+  _fundraiser_commerce_submit_handler_pane_values($pane_values, $donation);
+
+  // Process the transaction. First look for special values that force a failure.
+  if (
+    // Use 4222222222222 to test a failed payment, anything else for a good one.
+    $donation->donation['payment_fields']['credit']['card_number'] == '4222222222222'
+    // Use zipcode 55555 to simulate failed sustainer payments.
+    || ($donation->reference_charge && $donation->donation['zip'] == '55555')
+  ) {
     $success = FALSE;
     // Add a payment transaction record for failed payments.
     $transaction = commerce_payment_transaction_new('commerce_payment_example', $order->order_id);
-    $transaction->instance_id = $payment_method['instance_id'];
+    $transaction->instance_id = $method_instance['instance_id'];
     $transaction->amount = $charge['amount'];
     $transaction->status = COMMERCE_PAYMENT_STATUS_FAILURE;
     $transaction->remote_status = 'remote_failed';
     $transaction->message = t('Failed due to sustainer failure simulation mode.');
     commerce_payment_transaction_save($transaction);
   }
+  // Pass the values through to the submit function.
   else {
     $success = TRUE;
-    // commerce_payment_example has helpfully split submission efforts outside of form submission,
-    // so we can directly call it as follows:
-    commerce_payment_example_transaction($payment_method, $order, $charge, $name);
+    // During a reference charge the example gateway expects a credit card of a certain length for the transaction message.
+    if (!empty($donation->reference_charge)) {
+      $pane_values['credit_card']['number']  = str_pad($pane_values['credit_card']['number'], 8, 'x', STR_PAD_LEFT);
+    }
+
+    commerce_payment_example_submit_form_submit($method_instance, array(), $pane_values, $order, $charge);
   }
+
   return $success;
 }
 

@@ -26,7 +26,7 @@ class SalesforceWebformSalesforceQueueTestCase extends SalesforceWebformTestCase
   /**
    * Implementation of setUp().
    */
-  public function setUp($modules = array()) {
+  public function setUp($modules = array(), $permissions = array()) {
     $modules = array_merge($modules, array(
       'salesforce_sync',
       'salesforce_soap',
@@ -34,7 +34,7 @@ class SalesforceWebformSalesforceQueueTestCase extends SalesforceWebformTestCase
       'salesforce_log',
       'fundraiser',
     ));
-    parent::setUp($modules);
+    parent::setUp($modules, $permissions);
 
     // Create webforms.
     $this->webform1 = $this->createWebform();

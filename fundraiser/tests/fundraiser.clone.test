@@ -23,7 +23,7 @@ class FundraiserCloneTest extends FundraiserSetup {
   /**
    * Implementation of setUp().
    */
-  public function setUp() {
+  public function setUp($additional_modules = array()) {
     parent::setUp(array('clone', 'webform_confirmations'));
     // Make sure the new permissions for the content type get added to the permission cache.
     $this->checkPermissions(array('create donation_form content'), TRUE);

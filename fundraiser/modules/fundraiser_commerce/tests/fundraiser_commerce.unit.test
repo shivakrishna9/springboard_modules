@@ -14,58 +14,54 @@ class FundraiserCommerceUnitTestCase extends DrupalWebTestCase {
    */
   public static function getInfo() {
     return array(
-      'name' => 'Fundraiser commerce unit tests',
+      'name' => 'Fundraiser Commerce unit tests',
       'description' => 'Tests fundraiser commerce functions as unit tests.',
-      'group' => 'Fundraiser',
+      'group' => 'Fundraiser Commerce',
     );
   }
 
   /**
-   * Implemenation of setUp().
+   * Implementation of setUp().
    */
   public function setUp() {
-    // Call the parent to set all of the base modules up.
-    parent::setUp( array(
-        'fundraiser_commerce',
-      )
-    );
+    parent::setUp(array('fundraiser_commerce'));
   }
 
   /**
    * Unit test DB functions for fundraiser_donation.
    */
-  public function testcommerceDBFunctions() {
+  public function testCommerceDbFunctions() {
+    $countries_count = 250;
+    $us_zones_count = 64;
+    $zones_count = 194;
+
     // Check countries created.
     $countries = _fundraiser_commerce_get_countries();
-    $this->assertEqual(count($countries), 243, '_fundraiser_commerce_get_countries() got correct default number of countries.', 'testcommerceDBFunctions');
+    $this->assertEqual(count($countries), $countries_count, '_fundraiser_commerce_get_countries() got correct default number of countries.');
 
     // Check zones.
-    $zones = _fundraiser_commerce_get_zone_by_country(840); // For US.
-    $this->assertEqual(count($zones), 65, '_fundraiser_commerce_get_zone_by_country() got correct default number of zones for US.', 'testcommerceDBFunctions');
+    $zones = _fundraiser_commerce_get_zone_by_country('US');
+    $this->assertEqual(count($zones), $us_zones_count, '_fundraiser_commerce_get_zone_by_country() got correct default number of zones for US.');
 
     // Check the higher level related array construction of this data.
     $countries_to_zones = fundraiser_commerce_get_countries();
-    $this->assertEqual(count($countries_to_zones->countries), 243, 'fundraiser_commerce_get_countries() got correct default number of countries.', 'testcommerceDBFunctions');
-    $this->assertEqual($countries_to_zones->countries[124]->country_name, 'Canada', '_fundraiser_commerce_get_countries() got correct name for US.', 'testcommerceDBFunctions');
-    $this->assertEqual($countries_to_zones->countries[840]->country_name, 'United States', '_fundraiser_commerce_get_countries() got correct name for US.', 'testcommerceDBFunctions');
-    $this->assertEqual(count($countries_to_zones->countries[840]->zones), 65, 'fundraiser_commerce_get_countries() got correct default number of zones for US.', 'testcommerceDBFunctions');
-    $this->assertEqual($countries_to_zones->countries[840]->zones[2]->zone_name, 'Alaska', '_fundraiser_commerce_get_countries() got correct name for Alaska.', 'testcommerceDBFunctions');
-    $this->assertEqual(count($countries_to_zones->zones), 78, 'fundraiser_commerce_get_countries() got correct default number of zones for countries.', 'testcommerceDBFunctions');
-    $this->assertEqual($countries_to_zones->zones[2]->zone_name, 'Alaska', '_fundraiser_commerce_get_countries() got correct name for Alaska.', 'testcommerceDBFunctions');
+
+    $this->assertEqual(count($countries_to_zones->countries), $countries_count, 'fundraiser_commerce_get_countries() got correct default number of countries.');
+    $this->assertEqual($countries_to_zones->countries['CA']->country_name, 'Canada', '_fundraiser_commerce_get_countries() got correct name for US.');
+    $this->assertEqual($countries_to_zones->countries['US']->country_name, 'United States', '_fundraiser_commerce_get_countries() got correct name for US.');
+    $this->assertEqual(count($countries_to_zones->countries['US']->zones), $us_zones_count, 'fundraiser_commerce_get_countries() got correct default number of zones for US.');
+    $this->assertEqual($countries_to_zones->countries['US']->zones['AK']->zone_name, 'Alaska', '_fundraiser_commerce_get_countries() got correct name for Alaska.');
+
+    $this->assertEqual(count($countries_to_zones->zones), $zones_count, 'fundraiser_commerce_get_countries() got correct default number of zones for countries.');
+    $this->assertEqual($countries_to_zones->zones['AK']->zone_name, 'Alaska', '_fundraiser_commerce_get_countries() got correct name for Alaska.');
 
     // Test updating default order status.
-    $defaults = array(
-      'order_id' => 1,
-      'uid' => 1,
-      'order_status' => 'created',
-      'order_total' => 1,
-      'product_count' => 1,
-      'primary_email' => 'example@example.com',
-    );
-    drupal_write_record('uc_orders', $defaults);
-    _fundraiser_commerce_update_order_status('updated', 1);
-    $status = db_query('SELECT order_status FROM {uc_orders} WHERE order_id = 1')->fetchColumn();
-    $this->assertEqual($status, 'updated', '_fundraiser_commerce_update_order_status() correctly updated status.', 'testcommerceDBFunctions');
+    $order = commerce_order_new(1, 'created');
+    commerce_order_save($order);
+
+    _fundraiser_commerce_update_order_status('updated', $order->order_id);
+    $status = db_query('SELECT status FROM {commerce_order} WHERE order_id = :id', array(':id' => $order->order_id))->fetchColumn();
+    $this->assertEqual($status, 'updated', '_fundraiser_commerce_update_order_status() correctly updated status.');
   }
 
   /**
@@ -75,25 +71,25 @@ class FundraiserCommerceUnitTestCase extends DrupalWebTestCase {
     // Check that card identification is correct based on card number.
     $card_type = _fundraiser_commerce_get_cc_type('');
     $expected = 'UNKNOWN';
-    $this->assertEqual($card_type, $expected, '_fundraiser_commerce_get_cc_type() got correct path value.', 'testcommerceCardFunctions');
+    $this->assertEqual($card_type, $expected, '_fundraiser_commerce_get_cc_type() got correct path value.');
     $card_type = _fundraiser_commerce_get_cc_type('1234567890');
     $expected = 'UNKNOWN';
-    $this->assertEqual($card_type, $expected, '_fundraiser_commerce_get_cc_type() got correct path value.', 'testcommerceCardFunctions');
+    $this->assertEqual($card_type, $expected, '_fundraiser_commerce_get_cc_type() got correct path value.');
     $card_type = _fundraiser_commerce_get_cc_type('323456789012345');
     $expected = 'amex';
-    $this->assertEqual($card_type, $expected, '_fundraiser_commerce_get_cc_type() got correct path value.', 'testcommerceCardFunctions');
+    $this->assertEqual($card_type, $expected, '_fundraiser_commerce_get_cc_type() got correct path value.');
     $card_type = _fundraiser_commerce_get_cc_type('6011567890123456');
     $expected = 'discover';
-    $this->assertEqual($card_type, $expected, '_fundraiser_commerce_get_cc_type() got correct path value.', 'testcommerceCardFunctions');
+    $this->assertEqual($card_type, $expected, '_fundraiser_commerce_get_cc_type() got correct path value.');
     $card_type = _fundraiser_commerce_get_cc_type('5234567890123456');
     $expected = 'mc';
-    $this->assertEqual($card_type, $expected, '_fundraiser_commerce_get_cc_type() got correct path value.', 'testcommerceCardFunctions');
+    $this->assertEqual($card_type, $expected, '_fundraiser_commerce_get_cc_type() got correct path value.');
     $card_type = _fundraiser_commerce_get_cc_type('4234567890123456');
     $expected = 'visa';
-    $this->assertEqual($card_type, $expected, '_fundraiser_commerce_get_cc_type() got correct path value.', 'testcommerceCardFunctions');
+    $this->assertEqual($card_type, $expected, '_fundraiser_commerce_get_cc_type() got correct path value.');
     $card_type = _fundraiser_commerce_get_cc_type('4234567890123');
     $expected = 'visa';
-    $this->assertEqual($card_type, $expected, '_fundraiser_commerce_get_cc_type() got correct path value.', 'testcommerceCardFunctions');
+    $this->assertEqual($card_type, $expected, '_fundraiser_commerce_get_cc_type() got correct path value.');
   }
 
   /**
@@ -105,21 +101,18 @@ class FundraiserCommerceUnitTestCase extends DrupalWebTestCase {
     $form_state['donation']['amount'] = 'Please select your tax-deductible gift amount below';
     $form_state['mail'] = 'Email';
     $flattened = _fundraiser_commerce_submission_flatten($form_state);
-    $this->assertEqual($flattened['amount'], 'Please select your tax-deductible gift amount below', print_r($flattened, 1) . '_fundraiser_commerce_submission_flatten() got correct field.', 'testcommerceCardFunctions');
-    $this->assertEqual($flattened['mail'], 'Email', '_fundraiser_commerce_submission_flatten() got correct field.', 'testcommerceCardFunctions');
+    $this->assertEqual($flattened['amount'], 'Please select your tax-deductible gift amount below', print_r($flattened, 1) . '_fundraiser_commerce_submission_flatten() got correct field.');
+    $this->assertEqual($flattened['mail'], 'Email', '_fundraiser_commerce_submission_flatten() got correct field.');
 
-    /**
-     * test creation and execution of an order by donation_process stages.
-fundraiser_commerce_fundraiser_donation_create
-fundraiser_commerce_fundraiser_donation_process
-fundraiser_commerce_fundraiser_donation_update
-fundraiser_commerce_fundraiser_donation_success
-fundraiser_commerce_fundraiser_donation_decline
-fundraiser_commerce_fundraiser_donation_cancel
-fundraiser_commerce_fundraiser_donation_refund
-fundraiser_commerce_fundraiser_donation_get_donation
-
-     */
+    // Test creation and execution of an order by donation_process stages.
+    // fundraiser_commerce_fundraiser_donation_create
+    // fundraiser_commerce_fundraiser_donation_process
+    // fundraiser_commerce_fundraiser_donation_update
+    // fundraiser_commerce_fundraiser_donation_success
+    // fundraiser_commerce_fundraiser_donation_decline
+    // fundraiser_commerce_fundraiser_donation_cancel
+    // fundraiser_commerce_fundraiser_donation_refund
+    // fundraiser_commerce_fundraiser_donation_get_donation
   }
 
 }
