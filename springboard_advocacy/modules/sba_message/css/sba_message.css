@@ -43,11 +43,10 @@
     }
 
     #springboard-advocacy-message-form-container fieldset.form-wrapper {
-        padding: 0 1em 0 2em;
+        padding: 0 2em 0 2em;
     }
-
         #springboard-advocacy-message-form-container fieldset .form-wrapper {
-            padding:  0 1em 0 0;
+            padding:  0;
         }
 
         #springboard-advocacy-message-form-container fieldset .fieldset-legend {
@@ -63,14 +62,24 @@
         #springboard-advocacy-message-form-container #edit-field-subject-editable .control-group,
         #springboard-advocacy-message-form-container #edit-field-message-editable .control-group {
             display: inline-block;
-            margin-right: 10px;
+            margin-right: 25px;
         }
 
             #springboard-advocacy-message-form-container fieldset .fieldset-wrapper .control-group label{
                     font-weight: 400;
                     font-size: 1.1em;
                 }
-
+                #springboard-advocacy-message-form-container fieldset.form-wrapper input.form-text,
+                #springboard-advocacy-message-form-container fieldset.form-wrapper textarea{
+                    width: 100%;
+                    max-width: -webkit-calc(100% - 12px);
+                    max-width: -moz-calc(100% - 12px);
+                    max-width: calc(100% - 12px);
+                    margin: 0;
+                }
+                #springboard-advocacy-message-form-container fieldset.form-wrapper input#edit-field-sba-placeholder-greeting-und-0-value {
+                    width: 90%;
+                }
         #springboard-advocacy-message-form-container fieldset legend {
             float: left;
             margin: 5px 0 0;
@@ -82,7 +91,9 @@
             #springboard-advocacy-message-form-container fieldset fieldset {
                 border: none;
             }
-
+#springboard-advocacy-message-form-container fieldset fieldset .form-wrapper {
+    padding:   0;
+}
             #springboard-advocacy-message-form-container fieldset fieldset#sba_message_sba_message_action_message_form_group_editable,
             #edit-field-bottom-conclusion {
                 display: none;
@@ -122,7 +133,7 @@
     #edit-field-sba-signature {
         background: #fff;
         border: 1px solid #d5d5d5;
-        padding: 1em 1.5em;
+        padding: 1em 2em;
         margin-bottom: 2em;
         border-radius: 4px;
     }
@@ -163,7 +174,7 @@
 /********** Floating Recipients "block"  **************/
 
 #springboard-advocacy-message-recipients-container {
-    width:30%;
+    width:33%;
     float:right;
     position:relative;
 }
@@ -196,14 +207,14 @@
         }
 
         #springboard-advocacy-message-recipients .sba-message-status {
-            margin-left: 1em;
+            margin-left: 1.5em;
             display: none;
             color: #ff0000;
         }
 
         #springboard-advocacy-message-recipients .target-recipient {
-            margin: 1em;
-            border: 1px dotted #d5d5d5;
+            margin: 1em 1.75em;
+            border: 1px solid #d5d5d5;
             padding: 0.5em;
             background:#fff;
             border-radius: 0.5em;
@@ -234,7 +245,7 @@
                 list-style-type: none;
                 color: #333;
                 margin-bottom: 1em;
-                margin-left:10px;
+                margin-left:0px;
                 -webkit-boxsizing: border-box;
                 -moz-box-sizing: border-box;
                 box-sizing: border-box;
@@ -246,7 +257,7 @@
                 }
 
                 #springboard-advocacy-message-recipients .target-recipient ul li {
-                    position: relative; left: 1.5em;
+                    position: relative; left: 1em;
                     margin-bottom: 0;
                 }
 
@@ -279,7 +290,7 @@
             font-size: 12px;
             text-align: right;
             font-size: 14px;
-            margin: 20px;
+            margin: 20px 1.75em;
             font-family: 'Open Sans', sans-serif;
         }
 
@@ -296,7 +307,7 @@
             padding: 5px 15px;
             float:right;
             display: inline;
-            margin: 0 20px 20px 0;
+            margin: 0 1.75em 20px 0;
             font-size: 12px;
             cursor:pointer;
         }
@@ -367,7 +378,7 @@
             padding: 0;
         }
             #springboard-advocacy-find-targets-container .view-targets .faux-tab-container {
-               margin: 0 3em;
+               margin: 0 2em;
                 margin-bottom: 1.5em;
                 border-bottom: 1px solid #ccc;
             }
@@ -389,7 +400,7 @@
 
                 }
         #springboard-advocacy-find-targets div.view-filters {
-            margin: 0 3em 1em 3em;
+            margin: 0 2em 1em 2em;
             padding: 0;
         }
 
@@ -423,7 +434,7 @@
 
         #springboard-advocacy-find-targets  #state-district-wrapper {
             width: 100%;
-            max-width: 680px;
+            max-width: 708px;
             position: relative;
             margin: 0;
             overflow: visible;
@@ -492,7 +503,7 @@
             #springboard-advocacy-find-targets  .views-widget input#edit-combine,
             #springboard-advocacy-find-targets  .views-widget input#edit-search-committee{
                 border-radius: 4px;
-                max-width: 680px;
+                max-width: 708px;
                 width: 100%;
                 margin: 0;
                 background: url("../img/icon-search.jpg") no-repeat scroll 14px 10px transparent;
@@ -551,7 +562,7 @@
                 display: block;
                 margin-bottom: 10px;
                 font-size: 14px;
-                margin-left: 15px;
+                margin-left: 0;
                 font-weight: 600;
                 font-family: "Open Sans",sans-serif;
             }
@@ -562,7 +573,7 @@
 
         #springboard-advocacy-find-targets  div.views-exposed-widget.views-targets-button-wrapper {
             float:right;
-            margin-right: 1em;
+            margin-right: -2.75em;
             margin-top: -45px;
             float: right;
             width: 223px;
@@ -706,11 +717,11 @@
             }
 
         #springboard-advocacy-find-targets #advocacy-attachment-before-add-all {
-            margin: 1em;
+            margin: 1em 2em;
         }
             #springboard-advocacy-find-targets #advocacy-attachment-before-add-all a {
                 float: right;
-                margin: 0 1em 1em;
+                margin: 0 0 1em;
                 padding: 4px 6px;
                 border: none;
                 -webkit-border-radius: 4px;
@@ -768,8 +779,16 @@
             border-right: none;
             font-size: 14px;
             line-height: 18px;
+            text-align: center;
         }
-
+        #springboard-advocacy-find-targets  th.views-field-last-name,
+        #springboard-advocacy-find-targets  td.views-field-last-name {
+            text-align: left;
+            padding-left:10px;
+        }
+        #springboard-advocacy-find-targets tbody td.views-field-target-actions {
+            text-align: right;
+        }
         #springboard-advocacy-find-targets tr.even td {
             background: #EFF9FF;
         }
