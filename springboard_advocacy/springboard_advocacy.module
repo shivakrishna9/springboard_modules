@@ -385,7 +385,7 @@ function springboard_advocacy_sba_organization_issues_pre_render($element) {
 
 function springboard_advocacy_settings_submit($form, $form_state) {
   variable_del('springboard_advocacy_access_token');
-
+  variable_del('sba_subscription');
 }
 
 /**
@@ -431,6 +431,42 @@ function springboard_advocacy_form_views_exposed_form_alter(&$form, &$form_state
         $form['search_district_name']['#disabled'] = TRUE;
       }
       $form['search_district_name']['#options'] = springboard_advocacy_update_districts_field_options($form, $form_state);
+    }
+
+    $subscription = springboard_advocacy_get_subscription();
+    if($subscription) {
+      switch ($subscription['subscription_type']) {
+        case 'federal-and-states':
+          break;
+        case 'federal-only':
+          unset($form['search_role_1']['#options']['SS']);
+          unset($form['search_role_1']['#options']['SR']);
+          unset($form['search_role_1']['#options']['GOVNR']);
+
+          break;
+        case 'states-only':
+          unset($form['search_role_1']['#options']['FS']);
+          unset($form['search_role_1']['#options']['FR']);
+          unset($form['search_role_1']['#options']['PRES01|PRES03']);
+
+          break;
+        case 'states-selected':
+
+          unset($form['search_role_1']['#options']['FS']);
+          unset($form['search_role_1']['#options']['FR']);
+          unset($form['search_role_1']['#options']['PRES01|PRES03']);
+
+          $arr = array_reverse($subscription['states_custom'], true);
+          $arr['- Any - '] = 'All';
+          $subscription['states_custom'] = array_reverse($arr, true);
+          $form['search_state']['#options'] = array_flip(
+            array_intersect(
+              array_flip($form['search_state']['#options']),
+              $subscription['states_custom']
+            )
+          );
+          break;
+      }
     }
   }
 }
@@ -699,4 +735,33 @@ function springboard_advocacy_tokens($type, $tokens, array $data = array(), arra
     }
   }
   return $replacements;
+}
+
+function springboard_advocacy_get_subscription() {
+
+  $subscription = variable_get('sba_subscription', array());
+
+  if(empty($subscription)) {
+    $loader = new AdvocacyApiClientLoader();
+    $client = $loader->getClient();
+    $response = $client->getSubscription();
+    if (isset($response->data)) {
+      $subscription = $response->data;
+      variable_set('sba_subscription', array('subscription_type' => $response->data->subscription_type, 'states_custom' => $response->data->states_custom));
+    } else {
+      if (user_access('administer springboard advocacy')) {
+        if (isset($response->error)) {
+          drupal_set_message(t('An error occurred when attempting to retrieve the account subscription: @message:', array('@message' => $response->error->message)), 'error');
+          watchdog('advocacy', 'An error occurred when attempting to retrieve the account subscription: @message:', array('@message' => $response->error->message), WATCHDOG_ERROR);
+
+        } else {
+          drupal_set_message(t('A response was not received from the API server when attempting to retrieve the account subscription.'), 'error');
+          watchdog('advocacy', 'A response was not received from the API server when attempting to retrieve the account subscription', WATCHDOG_ERROR);
+
+        }
+      }
+      return false;
+    }
+  }
+  return $subscription;
 }

@@ -15,7 +15,10 @@ function springboard_advocacy_settings_page() {
     'page_description' => array(
       '#id' => 'springboard-advocacy-settings-page',
       '#type' => 'markup',
-      '#markup' => '<p>' . t('Configure settings for Springboard advocacy.') . '</p>',
+      '#markup' => '<p>' . t('Configure settings for Springboard advocacy.') .
+      '<q/p><p>' .
+      t('Saving this form will also force a rebuild of the advocacy subscription settings and renew the Oauth Access Token.') .
+      '</p>',
       '#prefix' => '<div class="springboard-advocacy-settings-page">',
       '#suffix' => '</div>',
     ),
