@@ -370,7 +370,7 @@
         border-radius: 4px;
     }
         #springboard-advocacy-find-targets h3 {
-            margin: 1em 1em 1em 2em;
+            margin: 1em 1em 1em 1.5em;
         }
 
         #springboard-advocacy-find-targets div.view-targets {
@@ -533,6 +533,7 @@
         #springboard-advocacy-find-targets .radio-widgets {
             clear:both;
             padding: 1em;
+
         }
 
         .radio-widgets:after {
