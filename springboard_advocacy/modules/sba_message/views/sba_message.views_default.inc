@@ -293,14 +293,14 @@ function sba_message_views_default_views() {
   $handler->display->display_options['style_plugin'] = 'table';
   $handler->display->display_options['style_options']['columns'] = array(
     'salutation' => 'salutation',
-    'first_name' => 'first_name',
+    'first_name' => 'last_name',
     'last_name' => 'last_name',
     'email' => 'email',
     'party' => 'party',
     'role' => 'role',
     'state' => 'state',
-    'target_actions' => 'target_actions',
     'committee_memberships' => 'committee_memberships',
+    'target_actions' => 'target_actions',
   );
   $handler->display->display_options['style_options']['default'] = 'last_name';
   $handler->display->display_options['style_options']['info'] = array(
@@ -320,7 +320,7 @@ function sba_message_views_default_views() {
       'sortable' => 1,
       'default_sort_order' => 'asc',
       'align' => '',
-      'separator' => '',
+      'separator' => ' ',
       'empty_column' => 0,
     ),
     'email' => array(
@@ -349,17 +349,17 @@ function sba_message_views_default_views() {
       'separator' => '',
       'empty_column' => 0,
     ),
-    'target_actions' => array(
-      'align' => '',
-      'separator' => '',
-      'empty_column' => 0,
-    ),
     'committee_memberships' => array(
       'sortable' => 0,
       'default_sort_order' => 'asc',
       'align' => '',
       'separator' => '',
       'empty_column' => 1,
+    ),
+    'target_actions' => array(
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
     ),
   );
   $handler->display->display_options['defaults']['style_options'] = FALSE;
@@ -378,10 +378,12 @@ function sba_message_views_default_views() {
   $handler->display->display_options['fields']['last_name']['id'] = 'last_name';
   $handler->display->display_options['fields']['last_name']['table'] = 'advocacy';
   $handler->display->display_options['fields']['last_name']['field'] = 'last_name';
+  $handler->display->display_options['fields']['last_name']['label'] = 'Name';
   /* Field: Advocacy: Email */
   $handler->display->display_options['fields']['email']['id'] = 'email';
   $handler->display->display_options['fields']['email']['table'] = 'advocacy';
   $handler->display->display_options['fields']['email']['field'] = 'email';
+  $handler->display->display_options['fields']['email']['exclude'] = TRUE;
   /* Field: Advocacy: Politcal Party */
   $handler->display->display_options['fields']['party']['id'] = 'party';
   $handler->display->display_options['fields']['party']['table'] = 'advocacy';
