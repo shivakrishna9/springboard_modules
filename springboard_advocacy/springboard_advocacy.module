@@ -746,7 +746,7 @@ function springboard_advocacy_get_subscription() {
     $client = $loader->getClient();
     $response = $client->getSubscription();
     if (isset($response->data)) {
-      $subscription = $response->data;
+      $subscription = (array)$response->data;
       variable_set('sba_subscription', array('subscription_type' => $response->data->subscription_type, 'states_custom' => $response->data->states_custom));
     } else {
       if (user_access('administer springboard advocacy')) {
