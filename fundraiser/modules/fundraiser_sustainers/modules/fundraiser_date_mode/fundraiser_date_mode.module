@@ -188,12 +188,11 @@ function fundraiser_date_mode_max_records() {
  *
  * @param array $orders
  *   An array of sustainer series order records.
- *
- * @param int $new_date
+ * @param int|null $new_date
  *   Day of the month sustainers should be processed.
  *
- * @return array
- *   Returns an array of sustainer series records that have next_charge
+ * @return int[]
+ *   Returns an array of sustainer series Donation IDs that have next_charge
  *   values that will need to be updated based on the day selection.
  */
 function _fundraiser_date_mode_orders_to_change($orders, $new_date = NULL) {
@@ -225,6 +224,7 @@ function _fundraiser_date_mode_orders_to_change($orders, $new_date = NULL) {
 
     $selected_orders[] = $order['did'];
   }
+
   return $selected_orders;
 }
 
@@ -254,8 +254,10 @@ function _fundraiser_date_mode_calculate_delta($charge_time, $date) {
 /**
  * Verify all series orders fall on the same day of the month.
  *
- * @param array $series_orders
- *   Array of sustainer series order records.
+ * @param int[] $series_orders
+ *   Array of sustainer series Donation IDs.
+ * @param int|null $master_order_day
+ *   The day number of the month.
  *
  * @return bool
  *   Returns TRUE if all orders fall on the same day of the month.
@@ -285,6 +287,7 @@ function _fundraiser_date_mode_validate_order_dates($series_orders, $master_orde
       $dates[] = $date['day'];
     }
   }
+
   return count($dates) === 1 ? TRUE : FALSE;
 }
 
@@ -425,6 +428,13 @@ function fundraiser_date_mode_get_sustainer_series_data() {
 
 /**
  * Update next_charge for an entire sustainer series.
+ *
+ * @param int $time_delta
+ *   The number of seconds to shift the next_charge date by.
+ * @param int $master_did
+ *   The Donation ID of the master donation.
+ * @param int[]|int $dids
+ *   The Donation ID or Donation IDs to modify.
  */
 function fundraiser_date_mode_update_sustainer_date($time_delta, $master_did, $dids) {
   if ($time_delta < 0) {
@@ -534,12 +544,13 @@ function fundraiser_date_mode_update_date_mode_finished() {
  *   Associative array of series orders.
  */
 function _fundraiser_date_mode_alter_next_charge($date, $master_order, $series_orders) {
-  $orders_to_process = _fundraiser_date_mode_orders_to_change($series_orders, $date);
+  // This is an array of Donation IDs.
+  $dids_to_process = _fundraiser_date_mode_orders_to_change($series_orders, $date);
 
   $master_order_date = _fundraiser_date_mode_explode_date($master_order['next_charge']);
-  $orders_on_same_day = _fundraiser_date_mode_validate_order_dates($orders_to_process, $master_order_date['day']);
+  $orders_on_same_day = _fundraiser_date_mode_validate_order_dates($dids_to_process, $master_order_date['day']);
 
-  if (count($orders_to_process) == 0) {
+  if (count($dids_to_process) == 0) {
     return;
   }
   else {
@@ -549,7 +560,7 @@ function _fundraiser_date_mode_alter_next_charge($date, $master_order, $series_o
     if ($orders_on_same_day) {
       // Do mass date conversion.
       $time_delta = _fundraiser_date_mode_calculate_delta($master_order['next_charge'], $date);
-      fundraiser_date_mode_update_sustainer_date($time_delta, $master_order['master_did'], $orders_to_process);
+      fundraiser_date_mode_update_sustainer_date($time_delta, $master_order['master_did'], $dids_to_process);
     }
     else {
       // Some of the next_charge dates in this series are on different days
