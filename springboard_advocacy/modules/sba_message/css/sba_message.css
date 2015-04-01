@@ -543,8 +543,7 @@
         }
 
             #springboard-advocacy-find-targets .radio-widgets .views-exposed-widget {
-                margin-right: 4em;
-                margin-top:1em;
+                margin: 1em 4em 1em 0;
             }
 
         #springboard-advocacy-find-targets .views-exposed-widget {
