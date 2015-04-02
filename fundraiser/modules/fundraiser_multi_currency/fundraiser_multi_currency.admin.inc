@@ -29,10 +29,12 @@ function fundraiser_multi_currency_admin() {
   }
 
   if (empty($rows)) {
-    $rows[] = array(array(
-      'data' => t('No currencies have been created. Click the Add Currency link above to add your first.'),
-      'colspan' => count($headers),
-    ));
+    $rows[] = array(
+      array(
+        'data' => t('No currencies have been created. Click the Add Currency link above to add your first.'),
+        'colspan' => count($headers),
+      ),
+    );
   }
 
   return theme('table', array('header' => $headers, 'rows' => $rows));
@@ -125,7 +127,10 @@ function fundraiser_multi_currency_currency_form($values) {
 }
 
 /**
- * Save a new or updated currency
+ * Save a new or updated currency.
+ *
+ * @return bool
+ *   Always returns TRUE;
  */
 function _fundraiser_multi_currency_save($values) {
   $record = (object) $values;
@@ -134,8 +139,10 @@ function _fundraiser_multi_currency_save($values) {
 }
 
 /**
- * Delete form for currencies
- * Calls fundraiser_multi_currency_confirm_delete() to build the confirmation form
+ * Delete form for currencies.
+ *
+ * Calls fundraiser_multi_currency_confirm_delete() to build the
+ * confirmation form.
  */
 function fundraiser_multi_currency_delete($currency_id = NULL) {
   if ($currency_id != NULL) {
@@ -151,7 +158,7 @@ function fundraiser_multi_currency_delete($currency_id = NULL) {
 }
 
 /**
- * Confirmation form for deleting currency
+ * Confirmation form for deleting currency.
  */
 function fundraiser_multi_currency_confirm_delete($form, &$form_state, $currency) {
   $form = array();
