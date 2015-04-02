@@ -172,7 +172,7 @@ function springboard_advocacy_dashboard($path, $arg = NULL) {
           ),
         );
         if (module_exists('springboard_target') && springboard_target_user_can_access_targets()) {
-          $views['sba_alerts']['manage_link'] = array('title' => t('Manage Custom Targets'), 'href' => 'admin/springboard/advocacy/targets/custom-targets');
+          $views['sba_actions']['manage_link'] = array('title' => t('Manage Custom Targets'), 'href' => 'admin/springboard/advocacy/targets/custom-targets');
         }
       }
 
