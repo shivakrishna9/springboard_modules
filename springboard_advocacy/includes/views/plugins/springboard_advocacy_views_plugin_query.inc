@@ -103,7 +103,7 @@ class springboard_advocacy_views_plugin_query extends views_plugin_query {
 
         } else {
           drupal_set_message(t('A response was not received from the server when attempting to search for targets'), 'error');
-          watchdog('advocacy', 'A response was not received when attempting to search for targets.', WATCHDOG_ERROR);
+          watchdog('advocacy', 'A response was not received when attempting to search for targets.', array(), WATCHDOG_ERROR);
 
         }
       }      // Build the pager
