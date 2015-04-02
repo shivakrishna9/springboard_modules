@@ -154,16 +154,16 @@ function springboard_advocacy_dashboard($path, $arg = NULL) {
       break;
 
     case 'actions':
-      $view = views_get_view('sba_alerts');
+      $view = views_get_view('sba_actions');
       $view -> set_display('block_1');
       $view -> set_arguments(array('sba_message_action'));
       $view -> pre_execute();
       $view -> execute();
       if ($view && $view -> access('block_1') && !empty($view -> result)) {
         $views = array(
-          'sba_alerts' => array(
+          'sba_actions' => array(
             'header' => t('Message Actions'),
-            'content' => $view->preview(), //views_embed_view('sba_alerts', 'block_1', 'sba_message_action'),
+            'content' => $view->preview(), //views_embed_view('sba_actions', 'block_1', 'sba_message_action'),
             'create_link' => array('title' => t('Create a new message action'), 'href' => 'node/add/sba-message-action'),
             'manage_link' => array('title' => t('Manage Custom Targets'), 'href' => 'admin/springboard/advocacy/targets/custom-targets'),
             'viewmore_link' => array('title' => t('View all'), 'href' => 'admin/springboard/advocacy/message-actions/all'),
@@ -172,7 +172,7 @@ function springboard_advocacy_dashboard($path, $arg = NULL) {
         );
       }
 
-      $view = views_get_view('sba_alerts');
+      $view = views_get_view('sba_actions');
       $view -> set_display('block_1');
       $view -> set_arguments(array('springboard_petition'));
       $view -> pre_execute();
@@ -190,12 +190,12 @@ function springboard_advocacy_dashboard($path, $arg = NULL) {
       break;
 
     case 'message-actions/all':
-      $view = views_get_view('sba_alerts');
+      $view = views_get_view('sba_actions');
       if($view && isset($view->display['block_2'])) {
         $views = array(
-          'sba_alerts' => array(
+          'sba_actions' => array(
             'header' => t('All Message Actions'),
-            'content' => views_embed_view('sba_alerts', 'block_2', 'sba_message_action'),
+            'content' => views_embed_view('sba_actions', 'block_2', 'sba_message_action'),
             'create_link' => array('title' => t('Create a new message action'), 'href' => 'node/add/sba-message-action'),
             'manage_link' => array('title' => t('Manage Custom Targets'), 'href' => 'admin/springboard/advocacy/targets/custom-targets'),
             'css' => drupal_get_path('module', 'springboard_advocacy') . '/css/sba.css',
@@ -205,7 +205,7 @@ function springboard_advocacy_dashboard($path, $arg = NULL) {
       }
       else {
         $views = array(
-          'sba_alerts' => array(
+          'sba_actions' => array(
             'header' => t('All Message Actions'),
             'content' => '<div>Message Actions view or view display "block_2" not found.</div>',
           ),
@@ -214,12 +214,12 @@ function springboard_advocacy_dashboard($path, $arg = NULL) {
       break;
 
     case 'petitions/all':
-      $view = views_get_view('sba_alerts');
+      $view = views_get_view('sba_actions');
       if($view && isset($view->display['block_2'])) {
         $views = array(
-          'sba_alerts' => array(
+          'sba_actions' => array(
             'header' => t('All Petitions'),
-            'content' => views_embed_view('sba_alerts', 'block_2', 'sba_message_action', 'springboard_petition'),
+            'content' => views_embed_view('sba_actions', 'block_2', 'sba_message_action', 'springboard_petition'),
             'create_link' => array('title' => t('Create a new petition'), 'href' => 'node/add/springboard-petition'),
             'css' => drupal_get_path('module', 'springboard_advocacy') . '/css/sba.css',
 
@@ -228,7 +228,7 @@ function springboard_advocacy_dashboard($path, $arg = NULL) {
       }
       else {
         $views = array(
-          'sba_alerts' => array(
+          'sba_actions' => array(
             'header' => t('All Petitions'),
             'content' => '<div>Petitions view or view display "block_2" not found.</div>',
           ),

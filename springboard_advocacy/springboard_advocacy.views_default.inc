@@ -15,7 +15,7 @@ function springboard_advocacy_views_default_views() {
  * Advocacy Actions  Administration
  */
   $view = new view();
-  $view->name = 'sba_alerts';
+  $view->name = 'sba_actions';
   $view->description = 'Action management screens';
   $view->tag = 'Advocacy';
   $view->base_table = 'node';

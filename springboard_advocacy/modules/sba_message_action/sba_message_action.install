@@ -113,9 +113,9 @@ function _sba_message_action_set_vars() {
   variable_set('form_layouts_sba_message_action', 1);
 
   // Add as an advocacy message type.
-  $springboard_advocacy_alert_types = variable_get('springboard_advocacy_alert_types', array(''));
-  $springboard_advocacy_alert_types = array_merge($springboard_advocacy_alert_types, array('sba_message_action'));
-  variable_set('springboard_advocacy_alert_types', array_unique($springboard_advocacy_alert_types));
+  $sba_action_types = variable_get('sba_action_types', array(''));
+  $sba_action_types = array_merge($sba_action_types, array('sba_message_action'));
+  variable_set('sba_action_types', array_unique($sba_action_types));
 }
 
 function _sba_message_action_create_node_fields() {
@@ -744,7 +744,7 @@ function _sba_message_action_delete_nodes() {
 
   if (!empty($nids)) {
     $message_ids = db_query(
-      'SELECT entity_id FROM {field_data_field_sba_alert_id} WHERE field_sba_alert_id_target_id IN (:nids)',
+      'SELECT entity_id FROM {field_data_field_sba_action_id} WHERE field_sba_action_id_target_id IN (:nids)',
       array(':nids' => $nids))->fetchAssoc();
 
     sba_message_delete_multiple($message_ids);
@@ -752,4 +752,13 @@ function _sba_message_action_delete_nodes() {
 
     drupal_set_message('Springboard message actions have been deleted.');
   }
+}
+
+/**
+ * rename alert var to action
+ */
+function sba_message_action_update_7001() {
+  $types = variable_get('springboard_advocacy_alert_types', array(''));
+  variable_set('sba_action_types', $types);
+  variable_del('springboard_advocacy_alert_types');
 }

@@ -902,34 +902,34 @@ function sba_message_views_default_views() {
     ),
   );
   /* Relationship: Entity Reference: Referenced Entity */
-  $handler->display->display_options['relationships']['field_sba_alert_id_target_id']['id'] = 'field_sba_alert_id_target_id';
-  $handler->display->display_options['relationships']['field_sba_alert_id_target_id']['table'] = 'field_data_field_sba_alert_id';
-  $handler->display->display_options['relationships']['field_sba_alert_id_target_id']['field'] = 'field_sba_alert_id_target_id';
+  $handler->display->display_options['relationships']['field_sba_action_id_target_id']['id'] = 'field_sba_action_id_target_id';
+  $handler->display->display_options['relationships']['field_sba_action_id_target_id']['table'] = 'field_data_field_sba_action_id';
+  $handler->display->display_options['relationships']['field_sba_action_id_target_id']['field'] = 'field_sba_action_id_target_id';
   /* Field: SBA Message: Subject text */
   $handler->display->display_options['fields']['field_sba_subject']['id'] = 'field_sba_subject';
   $handler->display->display_options['fields']['field_sba_subject']['table'] = 'field_data_field_sba_subject';
   $handler->display->display_options['fields']['field_sba_subject']['field'] = 'field_sba_subject';
   $handler->display->display_options['fields']['field_sba_subject']['delta_offset'] = '0';
-  /* Field: SBA Message: Alert ID */
-  $handler->display->display_options['fields']['field_sba_alert_id']['id'] = 'field_sba_alert_id';
-  $handler->display->display_options['fields']['field_sba_alert_id']['table'] = 'field_data_field_sba_alert_id';
-  $handler->display->display_options['fields']['field_sba_alert_id']['field'] = 'field_sba_alert_id';
-  $handler->display->display_options['fields']['field_sba_alert_id']['settings'] = array(
+  /* Field: SBA Message: Action ID */
+  $handler->display->display_options['fields']['field_sba_action_id']['id'] = 'field_sba_action_id';
+  $handler->display->display_options['fields']['field_sba_action_id']['table'] = 'field_data_field_sba_action_id';
+  $handler->display->display_options['fields']['field_sba_action_id']['field'] = 'field_sba_action_id';
+  $handler->display->display_options['fields']['field_sba_action_id']['settings'] = array(
     'link' => 0,
   );
   /* Field: SBA Message: Edit Link */
   $handler->display->display_options['fields']['edit_sba_message']['id'] = 'edit_sba_message';
   $handler->display->display_options['fields']['edit_sba_message']['table'] = 'sba_message';
   $handler->display->display_options['fields']['edit_sba_message']['field'] = 'edit_sba_message';
-  /* Contextual filter: SBA Message: Alert ID (field_sba_alert_id) */
-  $handler->display->display_options['arguments']['field_sba_alert_id_target_id']['id'] = 'field_sba_alert_id_target_id';
-  $handler->display->display_options['arguments']['field_sba_alert_id_target_id']['table'] = 'field_data_field_sba_alert_id';
-  $handler->display->display_options['arguments']['field_sba_alert_id_target_id']['field'] = 'field_sba_alert_id_target_id';
-  $handler->display->display_options['arguments']['field_sba_alert_id_target_id']['default_action'] = 'access denied';
-  $handler->display->display_options['arguments']['field_sba_alert_id_target_id']['default_argument_type'] = 'fixed';
-  $handler->display->display_options['arguments']['field_sba_alert_id_target_id']['summary']['number_of_records'] = '0';
-  $handler->display->display_options['arguments']['field_sba_alert_id_target_id']['summary']['format'] = 'default_summary';
-  $handler->display->display_options['arguments']['field_sba_alert_id_target_id']['summary_options']['items_per_page'] = '25';
+  /* Contextual filter: SBA Message: Action ID (field_sba_action_id) */
+  $handler->display->display_options['arguments']['field_sba_action_id_target_id']['id'] = 'field_sba_action_id_target_id';
+  $handler->display->display_options['arguments']['field_sba_action_id_target_id']['table'] = 'field_data_field_sba_action_id';
+  $handler->display->display_options['arguments']['field_sba_action_id_target_id']['field'] = 'field_sba_action_id_target_id';
+  $handler->display->display_options['arguments']['field_sba_action_id_target_id']['default_action'] = 'access denied';
+  $handler->display->display_options['arguments']['field_sba_action_id_target_id']['default_argument_type'] = 'fixed';
+  $handler->display->display_options['arguments']['field_sba_action_id_target_id']['summary']['number_of_records'] = '0';
+  $handler->display->display_options['arguments']['field_sba_action_id_target_id']['summary']['format'] = 'default_summary';
+  $handler->display->display_options['arguments']['field_sba_action_id_target_id']['summary_options']['items_per_page'] = '25';
   /* Filter criterion: SBA Message: Type */
   $handler->display->display_options['filters']['type']['id'] = 'type';
   $handler->display->display_options['filters']['type']['table'] = 'sba_message';
@@ -1057,7 +1057,7 @@ function sba_message_views_default_views() {
   $handler->display->display_options['fields']['field_sba_subject']['label'] = 'Subject';
   $handler->display->display_options['fields']['field_sba_subject']['element_label_colon'] = FALSE;
   $handler->display->display_options['fields']['field_sba_subject']['delta_offset'] = '0';
-  /* Field: SBA Message: Placeholder Greeting (for display on the alert) */
+  /* Field: SBA Message: Placeholder Greeting (for display on the action) */
   $handler->display->display_options['fields']['field_sba_placeholder_greeting']['id'] = 'field_sba_placeholder_greeting';
   $handler->display->display_options['fields']['field_sba_placeholder_greeting']['table'] = 'field_data_field_sba_placeholder_greeting';
   $handler->display->display_options['fields']['field_sba_placeholder_greeting']['field'] = 'field_sba_placeholder_greeting';

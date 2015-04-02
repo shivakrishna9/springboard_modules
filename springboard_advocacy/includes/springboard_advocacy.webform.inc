@@ -92,13 +92,13 @@ function springboard_advocacy_build_messages($user_message) {
       $message_unique_id = $message->data['message_id'];
       $weight = !empty($message->data['precedence']) ? $message->data['weight'] : $x++;
 
-      $test_mode = $message_wrapper->field_sba_alert_id->field_test_mode[0]->value();
-      $test_email = $message_wrapper->field_sba_alert_id->field_test_mode_email->value();
+      $test_mode = $message_wrapper->field_sba_action_id->field_test_mode[0]->value();
+      $test_email = $message_wrapper->field_sba_action_id->field_test_mode_email->value();
 
       // Attach legislative issue search terms.
       $legislative_terms = array("Other");  // provide a generic default
-      if ($message_wrapper->field_sba_alert_id->__isset('field_sba_legislative_issues')) {  // field_sba_alert_id is a reference to the alert webform
-        $legislative_parent_terms = $message_wrapper->field_sba_alert_id
+      if ($message_wrapper->field_sba_action_id->__isset('field_sba_legislative_issues')) {  // field_sba_action_id is a reference to the action webform
+        $legislative_parent_terms = $message_wrapper->field_sba_action_id
           ->field_sba_legislative_issues->value()
         ;
         $legislative_terms = springboard_advocacy_legislative_terms($legislative_parent_terms);
@@ -241,17 +241,17 @@ function springboard_advocacy_build_confirmation($response) {
 //  * Save our letter writer's zip and geolocation info
 //  */
 // function springboard_advocacy_webform_submission_insert($node, $submission) {
-//   if(isset($_SESSION['alert_geo']) && $node->type == 'springboard_advocacy') {
+//   if(isset($_SESSION['action_geo']) && $node->type == 'springboard_advocacy') {
 //     $data = array(
 //       'nid' => $submission->nid,
 //       'sid' => $submission->sid,
 //       'uid' => $submission->uid,
-//       'zip' => isset($_SESSION['alert_geo']['zip']) ? $_SESSION['alert_geo']['zip'] : '',
-//       'plus4' => isset($_SESSION['alert_geo']['plus4']) ? $_SESSION['alert_geo']['plus4'] : '',
-//       'lat' => isset($_SESSION['alert_geo']['latitude']) ? $_SESSION['alert_geo']['latitude'] : '',
-//       'lon' => isset($_SESSION['alert_geo']['longitude']) ? $_SESSION['alert_geo']['longitude'] : '',
+//       'zip' => isset($_SESSION['action_geo']['zip']) ? $_SESSION['action_geo']['zip'] : '',
+//       'plus4' => isset($_SESSION['action_geo']['plus4']) ? $_SESSION['action_geo']['plus4'] : '',
+//       'lat' => isset($_SESSION['action_geo']['latitude']) ? $_SESSION['action_geo']['latitude'] : '',
+//       'lon' => isset($_SESSION['action_geo']['longitude']) ? $_SESSION['action_geo']['longitude'] : '',
 //     );
 //     drupal_write_record('springboard_advocacy_location', $data);
-//     unset($_SESSION['alert_geo']);
+//     unset($_SESSION['action_geo']);
 //   };
 // }

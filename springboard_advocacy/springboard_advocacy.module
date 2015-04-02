@@ -195,18 +195,18 @@ function springboard_advocacy_views_api() {
 /**
  * Implements hook_node_insert
  *
- * Saves a UUID for alert nodes.
+ * Saves a UUID for action nodes.
  *
  * @param $node
  */
 function springboard_advocacy_node_insert($node) {
-  $types = variable_get('springboard_advocacy_alert_types', array());
+  $types = variable_get('sba_action_types', array());
   if(in_array($node->type, $types)) {
     $uuid = array(
       'nid' => $node->nid,
       'advocacy_id' => str_replace(' ', '-', uniqid(substr(variable_get('site_name', ''), 0, 10) . '-' . substr($node->title, 0, 10) . '-')),
     );
-    drupal_write_record('springboard_advocacy_alert_id', $uuid);
+    drupal_write_record('sba_form_id', $uuid);
   }
 }
 
@@ -219,15 +219,15 @@ function springboard_advocacy_node_insert($node) {
   * @param $types
   *   An array containing the node types present in $nodes.
   *
-  * Add the unique form_id and message entity references to alert nodes.
+  * Add the unique form_id and message entity references to action nodes.
   *
   */
 function springboard_advocacy_node_load($nodes, $types) {
-  $alert_types = variable_get('springboard_advocacy_alert_types', array());
+  $action_types = variable_get('sba_action_types', array());
 
-  if (count(array_intersect($alert_types, $types))) {
+  if (count(array_intersect($action_types, $types))) {
     $uuids = db_query(
-      'SELECT advocacy_id, nid FROM {springboard_advocacy_alert_id} WHERE nid IN (:nids)', 
+      'SELECT advocacy_id, nid FROM {sba_form_id} WHERE nid IN (:nids)',
        array(':nids' => array_keys($nodes))
      );
     foreach ($uuids as $uuid) {
@@ -235,10 +235,10 @@ function springboard_advocacy_node_load($nodes, $types) {
     }
 
     $message_ids = db_query(
-      'SELECT entity_id, field_sba_alert_id_target_id FROM {field_data_field_sba_alert_id} WHERE field_sba_alert_id_target_id IN (:nids)',
+      'SELECT entity_id, field_sba_action_id_target_id FROM {field_data_field_sba_action_id} WHERE field_sba_action_id_target_id IN (:nids)',
       array(':nids' => array_keys($nodes)));
     foreach ($message_ids as $message_id) {
-      $nodes[$message_id->field_sba_alert_id_target_id]->message_ids[] = $message_id->entity_id;
+      $nodes[$message_id->field_sba_action_id_target_id]->message_ids[] = $message_id->entity_id;
     }
   }
 }
@@ -249,8 +249,8 @@ function springboard_advocacy_node_load($nodes, $types) {
  * @param $form_state
  * @param $form_id
  *
- * Add alert UUIDs and Message IDs to hidden fields on the alert form.
- * Define a custom submit handler for alert node types.
+ * Add action UUIDs and Message IDs to hidden fields on the action form.
+ * Define a custom submit handler for action node types.
  */
 function springboard_advocacy_form_alter(&$form, &$form_state, $form_id) {
 
@@ -258,13 +258,13 @@ function springboard_advocacy_form_alter(&$form, &$form_state, $form_id) {
     $form['#submit'][] = 'springboard_advocacy_settings_submit';
   }
 
-  $types = variable_get('springboard_advocacy_alert_types', array());
+  $types = variable_get('sba_action_types', array());
 
   if (!empty($form['#node_edit_form']) && $form['#node']->type == 'sba_message_action') {
     module_load_include('inc', 'springboard_advocacy', 'includes/springboard_advocacy.webform');
 
     $language = $form['language']['#value'];
-    // Add a vertical-tab fieldset for "Alert options."
+    // Add a vertical-tab fieldset for "Action options."
     $form['springboard_advocacy_options'] = array(
       '#type' => 'fieldset',
       '#title' => t('Action options'),
@@ -295,13 +295,13 @@ function springboard_advocacy_form_alter(&$form, &$form_state, $form_id) {
         }
       }
 
-      // Move the field to a special fieldset inside "Alert options."
+      // Move the field to a special fieldset inside "Action options."
       $form['springboard_advocacy_options']['legislative_issues'] = array(
         '#type' => 'fieldset',
         '#title' => t('Choose Legislative Issue'),
         '#description' => t(
           "Many members of Congress require an issue/topic to be selected for each message they receive. "
-          . "If your alert is targeting members of Congress, please select the issue that best matches the topic of your message. "
+          . "If your action is targeting members of Congress, please select the issue that best matches the topic of your message. "
           . "Based on your choice, Springboard will choose the best available match on each legislator's web form."
         ),
         '#collapsible' => TRUE,
@@ -323,13 +323,13 @@ function springboard_advocacy_form_alter(&$form, &$form_state, $form_id) {
         $options[$tid] = preg_replace("/^\\-+/", '', $options[$tid]);
       }
 
-      // Move the field to a special fieldset inside "Alert options."
+      // Move the field to a special fieldset inside "Action options."
       $form['springboard_advocacy_options']['organization_issues'] = array(
         '#type' => 'fieldset',
         '#title' => t('Choose Organization Issue'),
         '#description' => t(
-          "Select the issues from this alert. These are your organization's issues, which can be used to auto-generate feeds "
-          . "and lists of related alerts for your action center and other areas."
+          "Select the issues from this action. These are your organization's issues, which can be used to auto-generate feeds "
+          . "and lists of related actions for your action center and other areas."
         ),
         '#collapsible' => TRUE,
         '#collapsed' => FALSE,
@@ -676,7 +676,7 @@ function springboard_advocacy_preprocess_pager(&$variables, $hook) {
 function springboard_advocacy_is_action_type($type) {
   static $action_types;
   if (!isset($action_types[$type])) {
-    $action_types = variable_get('springboard_advocacy_alert_types', array());
+    $action_types = variable_get('sba_action_types', array());
   }
   if(in_array($type, $action_types)) {
     return $type;

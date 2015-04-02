@@ -27,7 +27,7 @@ class sba_message_handler_edit_link_field extends sba_message_handler_link_field
 
     $message = sba_message_load($sba_message_id);
     $wrapper = entity_metadata_wrapper('sba_message', $message);
-    $nid = $wrapper->field_sba_alert_id->value()->nid;
+    $nid = $wrapper->field_sba_action_id->value()->nid;
 
     return l($text, 'node/' . $nid . '/messages/sba_message/' . $sba_message_id . '/edit');
   }

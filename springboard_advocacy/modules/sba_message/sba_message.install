@@ -101,13 +101,13 @@ function sba_message_install() {
     'type' => 'list_text',
   );
 
-  // Exported field_base: 'field_sba_alert_id'
-  $field_bases['field_sba_alert_id'] = array(
+  // Exported field_base: 'field_sba_action_id'
+  $field_bases['field_sba_action_id'] = array(
     'active' => 1,
     'cardinality' => 1,
     'deleted' => 0,
     'entity_types' => array(),
-    'field_name' => 'field_sba_alert_id',
+    'field_name' => 'field_sba_action_id',
     'foreign keys' => array(),
     'indexes' => array(
       'target_id' => array(
@@ -435,8 +435,8 @@ function sba_message_install() {
     ),
   );
 
-  // Exported field_instance: 'sba_message-sba_message_action_message-field_sba_alert_id'
-  $field_instances['sba_message-sba_message_action_message-field_sba_alert_id'] = array(
+  // Exported field_instance: 'sba_message-sba_message_action_message-field_sba_action_id'
+  $field_instances['sba_message-sba_message_action_message-field_sba_action_id'] = array(
     'bundle' => 'sba_message_action_message',
     'default_value' => NULL,
     'default_value_function' => 'entityreference_prepopulate_field_default_value',
@@ -451,8 +451,8 @@ function sba_message_install() {
       ),
     ),
     'entity_type' => 'sba_message',
-    'field_name' => 'field_sba_alert_id',
-    'label' => 'Alert ID',
+    'field_name' => 'field_sba_action_id',
+    'label' => 'Action ID',
     'required' => 0,
     'settings' => array(
       'behaviors' => array(
@@ -567,7 +567,7 @@ function sba_message_install() {
     ),
     'entity_type' => 'sba_message',
     'field_name' => 'field_sba_placeholder_greeting',
-    'label' => 'Placeholder Greeting (for display on the alert)',
+    'label' => 'Placeholder Greeting (for display on the action)',
     'required' => 0,
     'settings' => array(
       'text_processing' => 0,
@@ -676,7 +676,7 @@ function sba_message_install() {
     ),
     'entity_type' => 'sba_message',
     'field_name' => 'field_subject_editable',
-    'label' => 'Subject editable by action taker? (for single message alerts only)',
+    'label' => 'Subject editable by action taker? (for single message actions only)',
     'required' => 1,
     'settings' => array(
       'user_register_form' => FALSE,
@@ -723,15 +723,15 @@ function sba_message_install() {
 
   // Translatables
   // Included for use with string extractors like potx.
-  t('Alert ID');
+  t('Action ID');
   t('Bottom/Conclusion');
   t('Default text that the user may alter:');
   t('Editing is required?');
   t('Greeting (for message to be delivered)');
   t('Message');
-  t('Placeholder Greeting (for display on the alert)');
+  t('Placeholder Greeting (for display on the action)');
   t('Signature');
-  t('Subject editable by action taker? (for single message alerts only)');
+  t('Subject editable by action taker? (for single message actions only)');
   t('Subject text');
   t('User editable');
 
@@ -983,7 +983,7 @@ function sba_message_uninstall() {
 function _sba_message_delete_fields() {
   $fields = array(
     'field_sba_signature',
-    'field_sba_alert_id',
+    'field_sba_action_id',
     'field_sba_placeholder_greeting',
     'field_sba_greeting',
     'field_sba_message',
@@ -1009,4 +1009,33 @@ function _sba_message_delete_fields() {
   }
   drupal_set_message('Sba Message fields deleted.');
   field_group_field_attach_delete_bundle('sba_message','sba_message_action_message');
+}
+
+/**
+ * rename alert table to actions, if it exists.
+ */
+function sba_message_update_7001() {
+  $field_info = field_info_field('field_sba_alert_id');
+  if(!empty($field_info)) {
+    foreach ($field_info['storage']['details']['sql']['FIELD_LOAD_CURRENT'] as $field) {
+      foreach ($field as $key => $value) {
+        db_change_field('field_data_field_sba_alert_id', $value, 'field_sba_action_id' . "_" . $key, $field_info['columns'][$key]);
+        db_change_field('field_revision_field_sba_alert_id', $value, 'field_sba_action_id' . "_" . $key, $field_info['columns'][$key]);
+
+      }
+    }
+
+    db_rename_table('field_data_field_sba_alert_id', 'field_data_field_sba_action_id');
+    db_rename_table('field_revision_field_sba_alert_id', 'field_revision_field_sba_action_id');
+
+    db_update('field_config')
+      ->fields(array('field_name' => 'field_sba_action_id'))
+      ->condition('field_name', 'field_sba_alert_id', '=')
+      ->execute();
+
+    db_update('field_config_instance')
+      ->fields(array('field_name' => 'field_sba_action_id'))
+      ->condition('field_name', 'field_sba_alert_id', '=')
+      ->execute();
+  }
 }

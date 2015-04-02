@@ -162,7 +162,7 @@ function sba_message_delete_form_wrapper($sba_message) {
 function sba_message_edit_form($form, &$form_state, $sba_message) {
 
   // This form should only appear at node/%/messages.
-  // Grab the node so we can get the alert form UUID and node ID
+  // Grab the node so we can get the action form UUID and node ID
   $node = menu_get_object();
 
   $form = array(
@@ -299,7 +299,7 @@ function sba_message_edit_form_submit(&$form, &$form_state) {
   _sba_message_api_save($sba_message, $is_new, $form_state);
 
   $wrapper = entity_metadata_wrapper('sba_message', $sba_message);
-  $nid = $wrapper->field_sba_alert_id->value()->nid;
+  $nid = $wrapper->field_sba_action_id->value()->nid;
   $form_state['redirect'] = 'node/' . $nid . '/messages';
 
 }
@@ -347,7 +347,7 @@ function sba_message_delete_form_submit($form, &$form_state) {
   //delete the message
   $sba_message = $form_state['sba_message'];
   $wrapper = entity_metadata_wrapper('sba_message', $sba_message);
-  $nid = $wrapper->field_sba_alert_id->value()->nid;
+  $nid = $wrapper->field_sba_action_id->value()->nid;
   sba_message_delete($sba_message);
   drupal_set_message(t('%name has been deleted.', array('%name' => $sba_message->name)));
   watchdog('sba_message', 'Deleted sba_message: %name.', array('%name' => $sba_message->name));

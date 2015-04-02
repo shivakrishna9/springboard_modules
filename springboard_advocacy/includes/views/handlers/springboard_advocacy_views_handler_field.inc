@@ -33,7 +33,7 @@ class springboard_advocacy_views_handler_field extends views_handler_field
   function get_value($values, $field = NULL) {
     $alias = isset($field) ? $this->aliases[$field] : $this->field_alias;
 
-    if($alias == 'committee_memberships') {
+    if($alias == 'committee_memberships' && isset($values->committee_memberships)) {
       foreach($values->committee_memberships as $membership) {
         $result[] = $membership->committee_name;
       };
