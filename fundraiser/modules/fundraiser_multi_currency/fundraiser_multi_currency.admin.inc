@@ -166,7 +166,7 @@ function fundraiser_multi_currency_confirm_delete($form, &$form_state, $currency
   return confirm_form(
     $form,
     t('Are you sure you want to delete the currency %name?', array('%name' => $currency->name)),
-    'admin/config/currencies',
+    'admin/config/system/currencies',
     t('This action cannot be undone.'),
     t('Delete'),
     t('Cancel'),
