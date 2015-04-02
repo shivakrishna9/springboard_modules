@@ -77,14 +77,17 @@ function fundraiser_multi_currency_fundraiser_field_info() {
 }
 
 /**
- * Creation callback for the currency field, set the value to the setting in the donation form.
+ * Creation callback for the currency field.
+ *
+ * Set the value to the setting in the donation form.
  */
 function _fundraiser_multi_currency_field_create($fundraiser, $field) {
   // Set a default currancy per the fundraiser settings.
   if (isset($fundraiser->default_currency)) {
     $field['#value'] = $fundraiser->default_currency;
   }
-  // If they chose to allow users to pick their currency, add a dropdown for currencies
+  // If they chose to allow users to pick their currency,
+  // add a dropdown for currencies.
   if (isset($fundraiser->multiple_currency_support) && ($fundraiser->multiple_currency_support == 'show')) {
     // Get a list of currencies to use as defaults.
     $currencies = fundraiser_multi_currency_get_currencies();
@@ -102,15 +105,18 @@ function _fundraiser_multi_currency_field_create($fundraiser, $field) {
 }
 
 /**
- * Implements hook_form_BASE_FORM_ID_alter() for node forms.
+ * Implements hook_form_BASE_FORM_ID_alter() for node_form().
  */
 function fundraiser_multi_currency_form_node_form_alter(&$form, &$form_state, $form_id) {
   // If this isn't a fundraiser type, ignore it.
   if (fundraiser_is_donation_type($form['#node']->type)) {
-    // Only add the multi-currency option to the form when creating a donation form, not when editing it.
-    // Why? Because we DO NOT STORE THESE VALUES. They are only used during the creation of fields.
-    // Sicne we don't store them, we don't update the fields, and we don't want to confused users,
-    // we only show this information when a node is new.
+    // Only add the multi-currency option to the form when creating a
+    // donation form, not when editing it.
+    // Why? Because we DO NOT STORE THESE VALUES. They are only used
+    // during the creation of fields.
+    // Since we don't store them, we don't update the fields,
+    // and we don't want to confuse users,
+    // We only show this information when a node is new.
     if (!(isset($form['#node']->nid))) {
       $form['fundraiser_settings']['fundraiser_multi_currency'] = array(
         '#type' => 'fieldset',
@@ -129,10 +135,10 @@ function fundraiser_multi_currency_form_node_form_alter(&$form, &$form_state, $f
         '#default_value' => 'hide',
       );
       $form['fundraiser_settings']['fundraiser_multi_currency']['default_currency'] = array(
-        '#type' => 'textfield', // TODO this should be a dropdown based on available currencies.
+        // @todo This should be a dropdown based on available currencies.
+        '#type' => 'textfield',
         '#title' => t('Default currency'),
-        '#description' => t('If you give users the option to choose their currency, this will be selected by default. ' .
-          'Otherwise, this will be used for all donations.'),
+        '#description' => t('If you give users the option to choose their currency, this will be selected by default. Otherwise, this will be used for all donations.'),
         '#size' => 40,
         '#maxlength' => 10,
         '#default_value' => 'USD',
@@ -150,14 +156,16 @@ function fundraiser_multi_currency_fundraiser_donation_form($form, $form_state) 
   // Get the available currencies.
   $currencies = fundraiser_multi_currency_get_currencies();
 
-  // Set the symbol shown on the form amount and other-amount fields to match the default.
-  $currency_field = fundraiser_get_form_field('fundraiser_multi_currency', $form, 'currency'); // From fundraiser.module, get a field.
+  // Set the symbol shown on the form amount and other-amount fields
+  // to match the default.
+  $currency_field = fundraiser_get_form_field('fundraiser_multi_currency', $form, 'currency');
   if (isset($currency_field) && !empty($currency_field)) {
     // Add js to support switching as needed.
     if ($currency_field['#type'] != 'hidden') {
       drupal_add_js(drupal_get_path('module', 'fundraiser_multi_currency') . '/js/fundraiser_multi_currency.js');
       // Pass the default value up so our js knows where to start.
-      drupal_add_js(array('fundraiser_multi_currency' => array(
+      drupal_add_js(array(
+        'fundraiser_multi_currency' => array(
           'currencies' => $currencies,
           'original' => isset($currency_field['#default_value']) ? $currency_field['#default_value'] : 'USD',
         )),
@@ -187,7 +195,8 @@ function fundraiser_multi_currency_fundraiser_donation_form($form, $form_state) 
           }
         }
         else {
-          // No ask amounts, so the regular Amount field will actually be the Other field
+          // No ask amounts, so the regular Amount field will actually
+          // be the Other field.
           // Nobody said this had to be straightforward, right?
           $amount_field['#field_prefix'] = $currencies[$selected_currency]['symbol'];
         }
@@ -210,12 +219,14 @@ function fundraiser_multi_currency_fundraiser_donation_create($donation) {
 
 /**
  * Implements hook_fundraiser_donation_get_donation().
+ *
+ * Add the currency information to the donation array.
  */
 function fundraiser_multi_currency_fundraiser_donation_get_donation($donation) {
-  // Add the currency information to the donation array
   if (isset($donation->data['currency'])) {
     $donation->donation['currency'] = $donation->data['currency'];
-  } else if (isset($donation->currency)) {
+  }
+  elseif (isset($donation->currency)) {
     $donation->donation['currency'] = $donation->data['currency'] = $donation->currency;
   }
 }
