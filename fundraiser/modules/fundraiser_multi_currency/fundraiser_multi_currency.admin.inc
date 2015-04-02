@@ -15,6 +15,7 @@ function fundraiser_multi_currency_admin() {
     t('Operations'),
   );
   $currencies = fundraiser_multi_currency_get_currencies();
+
   $rows = array();
   foreach ($currencies as $currency) {
     $links = l(t('edit'), 'admin/config/system/currencies/edit/' . $currency['currency_id']) .
@@ -26,12 +27,14 @@ function fundraiser_multi_currency_admin() {
       $links,
     );
   }
-  if (empty($table_rows)) {
+
+  if (empty($rows)) {
     $rows[] = array(array(
       'data' => t('No currencies have been created. Click the Add Currency link above to add your first.'),
       'colspan' => count($headers),
     ));
   }
+
   return theme('table', array('header' => $headers, 'rows' => $rows));
 }
 
