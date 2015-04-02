@@ -424,6 +424,7 @@ function springboard_modules_enabled($modules) {
         'delete targets',
         'edit targets',
         'create targets',
+        'view targets',
         )
       );
     }
