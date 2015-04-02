@@ -78,7 +78,7 @@ function springboard_advocacy_settings_form() {
   //   '#description' => t('Choose the geocoding service to use. All but Google Javascript API require an API Key'),
   //   '#default_value' => variable_get('springboard_advocacy_geocoder', ''),
   // );
-  
+
   $form['geo']['springboard_advocacy_geocoder'] = array(
   '#type' => 'hidden',
   '#value' => 'smartystreets_rest',
@@ -146,11 +146,13 @@ function springboard_advocacy_dashboard($path, $arg = NULL) {
         'add-targets' => array(
           'header' => t('Edit Target'),
           'content' => drupal_render($form),
-          'create_link' => array('title' => t('Create a new target'), 'href' => 'admin/springboard/advocacy/targets/custom-targets/add'),
           'manage_link' => array('title' => t('Return to targets list'), 'href' => 'admin/springboard/advocacy/targets/custom-targets'),
           'css' => drupal_get_path('module', 'springboard_advocacy') . '/css/sba.css',
         ),
       );
+      if (user_access('create targets')) {
+        $views['add-targets']['create_link'] = array('title' => t('Create a new target'), 'href' => 'admin/springboard/advocacy/targets/custom-targets/add');
+      };
       break;
 
     case 'actions':
@@ -165,11 +167,13 @@ function springboard_advocacy_dashboard($path, $arg = NULL) {
             'header' => t('Message Actions'),
             'content' => $view->preview(), //views_embed_view('sba_actions', 'block_1', 'sba_message_action'),
             'create_link' => array('title' => t('Create a new message action'), 'href' => 'node/add/sba-message-action'),
-            'manage_link' => array('title' => t('Manage Custom Targets'), 'href' => 'admin/springboard/advocacy/targets/custom-targets'),
             'viewmore_link' => array('title' => t('View all'), 'href' => 'admin/springboard/advocacy/message-actions/all'),
             'css' => drupal_get_path('module', 'springboard_advocacy') . '/css/sba.css',
           ),
         );
+        if (module_exists('springboard_target') && springboard_target_user_can_access_targets()) {
+          $views['sba_alerts']['manage_link'] = array('title' => t('Manage Custom Targets'), 'href' => 'admin/springboard/advocacy/targets/custom-targets');
+        }
       }
 
       $view = views_get_view('sba_actions');
@@ -239,14 +243,16 @@ function springboard_advocacy_dashboard($path, $arg = NULL) {
     case 'custom-targets':
       $view = views_get_view('sba_custom_targets');
       if($view && isset($view->display['block_1'])) {
-      $views = array(
-        'sba_targets' => array(
-          'header' => t('Custom Targets'),
-          'content' => views_embed_view('sba_custom_targets', 'block_1'),
-          'create_link' => array('title' => t('Create a new target'), 'href' => 'admin/springboard/advocacy/targets/custom-targets/add'),
-          'css' => drupal_get_path('module', 'springboard_advocacy') . '/css/sba.css',
-        ),
-      );
+        $views = array(
+          'sba_targets' => array(
+            'header' => t('Custom Targets'),
+            'content' => views_embed_view('sba_custom_targets', 'block_1'),
+            'css' => drupal_get_path('module', 'springboard_advocacy') . '/css/sba.css',
+          ),
+        );
+        if (user_access('create targets')) {
+          $views['sba_targets']['create_link'] = array('title' => t('Create a new target'), 'href' => 'admin/springboard/advocacy/targets/custom-targets/add');
+        };
       }
       else {
         $views = array(
@@ -310,7 +316,7 @@ function springboard_advocacy_dashboard($path, $arg = NULL) {
       }
       break;
 
-    default:  
+    default:
   }
   return theme('springboard_advocacy_dashboard', array('views' => $views));
 

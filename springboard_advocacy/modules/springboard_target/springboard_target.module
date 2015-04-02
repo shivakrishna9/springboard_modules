@@ -37,10 +37,6 @@ function springboard_target_menu() {
  */
 function springboard_target_permission() {
   return array(
-    'administer targets' => array(
-      'title' => t('Administer Targets'),
-      'description' => t('Perform administration tasks for my targets.'),
-    ),
     'view targets' => array(
       'title' => t('View Targets'),
       'description' => t('View Custom targets.'),
@@ -68,4 +64,14 @@ function springboard_target_views_api() {
   return array(
     'api' => 3.0,
   );
+}
+
+/**
+ * Determines if a user can access any target management features.
+ */
+function springboard_target_user_can_access_targets() {
+  return user_access('view targets')
+    || user_access('create targets')
+    || user_access('edit targets')
+    || user_access('delete targets');
 }

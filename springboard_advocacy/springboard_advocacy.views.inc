@@ -2,7 +2,7 @@
 
 /**
  * @file springboard_advocacy.views.inc
- * 
+ *
  * Define our advocacy views. May move some or all to Target module.
  */
 
@@ -489,9 +489,12 @@ function theme_springboard_advocacy_views_attachment_before($vars) {
     if (!empty($vars['total_rows'])) {
       $plural = $vars['total_rows'] > 1 ? 'matches found' : 'match found';
       $output = '<div id="advocacy-attachment-before"><div id ="advocacy-attachment-before-rows"><span class = "target-results">Search Results </span><span class = "target-count">' . $vars['total_rows'] . ' ' . $plural . '</span></div>';
-      $output .= '<div id ="advocacy-attachment-before-add-all">';
-      $output .= l(t('Add All Targets'), "add-all", array('attributes' => array('id' => 'advo-add-all'), 'query' => $vars['query'], 'external' => TRUE));
-      $output .= '</div></div>';
+      if (user_access('add target to action')) {
+        $output .= '<div id ="advocacy-attachment-before-add-all">';
+        $output .= l(t('Add All Targets'), "add-all", array('attributes' => array('id' => 'advo-add-all'), 'query' => $vars['query'], 'external' => TRUE));
+        $output .= '</div>';
+      }
+      $output .= '</div>';
       return $output;
     }
   }

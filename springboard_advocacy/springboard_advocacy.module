@@ -8,8 +8,8 @@
  * Implements hook_menu().
  */
 function springboard_advocacy_menu() {
-  $items['admin/springboard/advocacy/settings'] = array(
-    'title' => 'Springboard Advocacy Settings',
+  $items['admin/config/services/advocacy'] = array(
+    'title' => 'Springboard advocacy',
     'description' => 'Configuration settings for Springboard advocacy features.',
     'page callback' => 'springboard_advocacy_settings_page',
     'access arguments' => array('administer springboard advocacy'),
@@ -20,26 +20,35 @@ function springboard_advocacy_menu() {
   $items['admin/config/springboard/advocacy/index'] = array(
     'title' => 'Springboard Advocacy',
     'type' => MENU_DEFAULT_LOCAL_TASK,
+    'access callback' => 'springboard_advocacy_user_can_create_advocacy_type',
   );
 
   $items['admin/springboard/advocacy/actions'] = array(
     'title' => 'Advocacy: Actions',
     'page arguments' => array('actions'),
-  ) + springboard_advocacy_menu_common();
+    'access callback' => 'springboard_advocacy_user_can_create_advocacy_type',
+  ) + springboard_advocacy_menu_common(FALSE, TRUE);
 
   $items['admin/springboard/advocacy/message-actions/all'] = array(
     'title' => 'Advocacy: All Message Actions',
     'page arguments' => array('message-actions/all'),
-  ) + springboard_advocacy_menu_common();
-
-  $items['admin/springboard/advocacy/message-actions/all'] = array(
-      'title' => 'Advocacy: All Message Actions',
-      'page arguments' => array('message-actions/all'),
-    ) + springboard_advocacy_menu_common();
+    'access arguments' => array(
+      'create sba_message_action content',
+    ),
+  ) + springboard_advocacy_menu_common(FALSE, TRUE);
 
   $items['admin/springboard/advocacy/petitions/all'] = array(
       'title' => 'Advocacy: All Petitions',
       'page arguments' => array('petitions/all'),
+      'access arguments' => array(
+        'create springboard_petition content',
+      ),
+    ) + springboard_advocacy_menu_common(FALSE, TRUE);
+
+  $items['admin/springboard/advocacy/reports'] = array(
+    'title' => 'Advocacy Reports',
+    'page arguments' => array('reports'),
+    'page callback' => 'springboard_advocacy_settings_page',
     ) + springboard_advocacy_menu_common();
 
   $items['node/%/messages'] = array(
@@ -49,6 +58,16 @@ function springboard_advocacy_menu() {
   ) + springboard_advocacy_menu_common(TRUE);
 
   return $items;
+}
+
+/**
+ * Access checking function to ensure a user can create an
+ * advocacy type. This should be checked before allowing access
+ * to the advocacy landing page that lists all the types.
+ */
+function springboard_advocacy_user_can_create_advocacy_type() {
+  // Any new advocacy types will have to be added here in the future.
+  return (user_access('create sba_message_action content') || user_access('create springboard_petition content'));
 }
 
 /**
@@ -93,6 +112,10 @@ function springboard_advocacy_springboard_admin_admin_menu_items_alter(&$items) 
         'expanded' => 1,
         'customized' => 1,
         'weight' => -1,
+        'access callback' => 'user_access',
+        'access arguments' => array(
+          'create ' . $type->type . ' content',
+        ),
       );
     }
   }
@@ -109,17 +132,6 @@ function springboard_advocacy_springboard_admin_admin_menu_items_alter(&$items) 
       'weight' => 2,
     );
   }
-
-  $items['admin/springboard/advocacy/actions']['_children']['admin/springboard/advocacy/settings'] = array(
-    'link_path' => 'admin/springboard/advocacy/settings',
-    'link_title' => 'Manage Settings',
-    'menu_name' => 'springboard_admin_menu',
-    'expanded' => 1,
-    'customized' => 1,
-    'weight' => 8,
-  );
-
-
 }
 
 
@@ -151,6 +163,10 @@ function springboard_advocacy_permission() {
     'administer springboard advocacy' => array(
       'title' => t('Administer Springboard advocacy'),
       'description' => t('Perform administration tasks for Springboard advocacy.'),
+    ),
+    'view springboard advocacy reports' => array(
+      'title' => t('View Springboard advocacy reports'),
+      'description' => t('View reports related to Springboard advocacy activity.'),
     ),
   );
 }

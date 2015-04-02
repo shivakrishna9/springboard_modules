@@ -5,7 +5,7 @@ package = Springboard Advocacy
 dependencies[] = libraries
 dependencies[] = views
 
-configure = 'admin/config/springboard/advocacy'
+configure = 'admin/config/services/advocacy'
 
 files[] = includes/springboard_advocacy.admin.inc
 files[] = includes/springboard_advocacy.webform.inc
@@ -16,6 +16,6 @@ files[] = includes/views/handlers/springboard_advocacy_views_handler_field.inc
 files[] = includes/views/handlers/springboard_advocacy_views_handler_field_target_actions.inc
 files[] = includes/views/handlers/springboard_advocacy_views_handler_field_group_actions.inc
 files[] = includes/views/handlers/springboard_advocacy_views_handler_filter_string.inc
-files[] = includes/views/handlers/springboard_advocacy_views_handler_filter_combine.inc 
-files[] = includes/views/handlers/springboard_advocacy_views_handler_filter_search_types.inc 
+files[] = includes/views/handlers/springboard_advocacy_views_handler_filter_combine.inc
+files[] = includes/views/handlers/springboard_advocacy_views_handler_filter_search_types.inc
 files[] = includes/views/plugins/springboard_advocacy_views_plugin_cache_time.inc
