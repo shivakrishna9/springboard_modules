@@ -1,7 +1,7 @@
 <?php
 /**
  * @file
- * Install, update and uninstall functions for the fundraiser_multi_currency module.
+ * Install, update and uninstall functions for fundraiser_multi_currency.
  */
 
 /**
@@ -60,24 +60,25 @@ function fundraiser_multi_currency_uninstall() {
  */
 function _fundraiser_multi_currency_insert_defaults() {
   $ret = array();
-  $currencies[] =  array(
+  $currencies[] = array(
     'symbol' => '$',
     'code' => 'USD',
     'name' => 'US Dollars',
   );
-  $currencies[] =  array(
+  $currencies[] = array(
     'symbol' => '€',
     'code' => 'EUR',
     'name' => 'Euros',
   );
-  $currencies[] =  array(
+  $currencies[] = array(
     'symbol' => '£',
     'code' => 'GBP',
     'name' => 'UK Pounds',
   );
   foreach ($currencies as $record) {
     if (!db_query('SELECT 1 FROM {fundraiser_currencies} WHERE code = :code', array(':code' => $record['code']))->fetchField()) {
-      //drupal_write_record('fundraiser_currencies', $record); Not using write record here per doc.
+      // drupal_write_record('fundraiser_currencies', $record);
+      // Not using write record here per doc.
       db_insert('fundraiser_currencies')->fields($record)->execute();
     }
   }
