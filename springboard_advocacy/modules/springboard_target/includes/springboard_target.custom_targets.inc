@@ -42,11 +42,10 @@ function springboard_target_form($target_id = NULL) {
   );
 
   $form['row_one']['salutation'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Title'),
+    '#type' => 'select',
+    '#title' => t('Salutation'),
     '#default_value' => isset($target->salutation) ? $target->salutation : '',
-    '#size' => 10,
-    '#maxlength' => 128,
+    '#options' => array('Mr.', 'Ms.', 'Mrs.', 'Miss', 'Dr.', 'Prof.', 'Hon.', 'Rev.', 'Rabbi', 'Imam', 'Pres.', "Dean"),
     '#attributes' => array('class' => array('target-add', 'target-salutation')),
   );
 
@@ -54,7 +53,7 @@ function springboard_target_form($target_id = NULL) {
     '#type' => 'textfield',
     '#title' => t('First Name'),
     '#default_value' => isset($target->first_name) ? $target->first_name : '',
-    '#size' => 30,
+    '#size' => 40,
     '#maxlength' => 128,
     '#required' => TRUE,
     '#attributes' => array('class' => array('target-add', 'target-first-name')),
@@ -64,19 +63,10 @@ function springboard_target_form($target_id = NULL) {
     '#type' => 'textfield',
     '#title' => t('Last Name'),
     '#default_value' => isset($target->last_name) ? $target->last_name : '',
-    '#size' => 30,
+    '#size' => 40,
     '#maxlength' => 128,
     '#required' => TRUE,
     '#attributes' => array('class' => array('target-add', 'target-last-name')),
-  );
-
-  $form['row_one']['organization'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Organization/Affiliation'),
-    '#default_value' => isset($target->organization) ? $target->organization : '',
-    '#size' => 60,
-    '#maxlength' => 128,
-    '#attributes' => array('class' => array('target-add', 'target-organization')),
   );
 
   // $form['row_one']['target_type'] = array(
@@ -104,6 +94,24 @@ function springboard_target_form($target_id = NULL) {
     '#attributes' => array('class' => array('target-add', 'target-first-name')),
   );
 
+  $form['row_one']['organization'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Organization/Affiliation'),
+    '#default_value' => isset($target->organization) ? $target->organization : '',
+    '#size' => 40,
+    '#maxlength' => 128,
+    '#attributes' => array('class' => array('target-add', 'target-organization')),
+  );
+
+  $form['row_one']['title'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Organization Title or Position'),
+    '#default_value' => isset($target->title) ? $target->title : '',
+    '#size' => 40,
+    '#maxlength' => 128,
+    '#attributes' => array('class' => array('target-add', 'target-title')),
+  );
+
   $form['row_two'] = array(
     '#type' => 'container',
     '#attributes' => array(
@@ -114,6 +122,8 @@ function springboard_target_form($target_id = NULL) {
     ),
     '#weight' => -4,
   );
+
+
 
   $form['row_two']['area_code'] = array(
     '#type' => 'textfield',

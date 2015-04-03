@@ -11,6 +11,7 @@
 function springboard_target_views_default_views() {
 
   $view = new view();
+  $view = new view();
   $view->name = 'sba_custom_targets';
   $view->description = 'Advocacy Custom Target Landing page and search';
   $view->tag = 'Advocacy';
@@ -293,6 +294,10 @@ function springboard_target_views_default_views() {
   $handler->display->display_options['fields']['last_name']['id'] = 'last_name';
   $handler->display->display_options['fields']['last_name']['table'] = 'advocacy';
   $handler->display->display_options['fields']['last_name']['field'] = 'last_name';
+  /* Field: Advocacy: Organization */
+  $handler->display->display_options['fields']['organization']['id'] = 'organization';
+  $handler->display->display_options['fields']['organization']['table'] = 'advocacy';
+  $handler->display->display_options['fields']['organization']['field'] = 'organization';
   /* Field: Advocacy: Email */
   $handler->display->display_options['fields']['email']['id'] = 'email';
   $handler->display->display_options['fields']['email']['table'] = 'advocacy';
@@ -493,7 +498,6 @@ function springboard_target_views_default_views() {
     5 => 0,
   );
   $handler->display->display_options['filters']['search_state']['expose']['reduce'] = TRUE;
-
 
   $views[$view->name] = $view;
 

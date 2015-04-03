@@ -132,6 +132,27 @@ function springboard_advocacy_views_data() {
     ),
   );
 
+  $data['advocacy']['organization'] = array(
+    'title' => t('Organization'),
+    'help' => t('Organization'),
+    'field' => array(
+      'click sortable' => TRUE,
+      'handler' => 'springboard_advocacy_views_handler_field',
+    ),
+    'filter' => array(
+      'handler' => 'springboard_advocacy_views_handler_filter_string',
+    ),
+  );
+
+  $data['advocacy']['title'] = array(
+    'title' => t('Organization title'),
+    'help' => t('Organization position or title'),
+    'field' => array(
+      'click sortable' => TRUE,
+      'handler' => 'springboard_advocacy_views_handler_field',
+    ),
+  );
+
   $data['advocacy']['committee_memberships'] = array(
     'title' => t('Committee Memberships'),
     'help' => t('Committee Memberships'),
