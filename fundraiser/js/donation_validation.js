@@ -32,7 +32,7 @@
           else {
             var total = $('select[name*="quantity"]').val() * amount;
           }
-          $('select[name*="quantity"]').after('<span id="quantity-total">Total: $' + total + '</span>');
+          $('select[name*="quantity"]').after('<span id="quantity-total">Total: ' + Drupal.settings.fundraiser.currency.symbol + total + '</span>');
         }
 
         // When the amount changes, change the displayed total.
