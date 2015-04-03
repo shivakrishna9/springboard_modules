@@ -45,7 +45,7 @@ function springboard_target_form($target_id = NULL) {
     '#type' => 'select',
     '#title' => t('Salutation'),
     '#default_value' => isset($target->salutation) ? $target->salutation : '',
-    '#options' => array('Mr.', 'Ms.', 'Mrs.', 'Miss', 'Dr.', 'Prof.', 'Hon.', 'Rev.', 'Rabbi', 'Imam', 'Pres.', "Dean"),
+    '#options' => array('Mr.' => 'Mr.', 'Ms.' => 'Ms.', 'Mrs.' => 'Mrs.', 'Miss' => 'Miss', 'Dr.' => 'Dr.', 'Prof.' => 'Prof.', 'Hon.' => 'Hon.', 'Rev.' => 'Rev.', 'Rabbi' => 'Rabbi', 'Imam' => 'Imam', 'Pres.' => 'Pres.', 'Dean' => 'Dean'),
     '#attributes' => array('class' => array('target-add', 'target-salutation')),
   );
 

@@ -38,11 +38,71 @@ function springboard_target_views_default_views() {
   $handler->display->display_options['pager']['options']['quantity'] = '9';
   $handler->display->display_options['style_plugin'] = 'table';
   $handler->display->display_options['style_options']['columns'] = array(
-    'id' => 'id',
+    'salutation' => 'salutation',
+    'first_name' => 'last_name',
+    'last_name' => 'last_name',
+    'organization' => 'organization',
+    'title' => 'title',
+    'email' => 'email',
+    'party' => 'party',
+    'state' => 'state',
+    'target_actions' => 'target_actions',
   );
   $handler->display->display_options['style_options']['default'] = '-1';
   $handler->display->display_options['style_options']['info'] = array(
-    'id' => array(
+    'salutation' => array(
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
+    'first_name' => array(
+      'sortable' => 0,
+      'default_sort_order' => 'asc',
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
+    'last_name' => array(
+      'sortable' => 1,
+      'default_sort_order' => 'asc',
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
+    'organization' => array(
+      'sortable' => 1,
+      'default_sort_order' => 'asc',
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
+    'title' => array(
+      'sortable' => 0,
+      'default_sort_order' => 'asc',
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
+    'email' => array(
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
+    'party' => array(
+      'sortable' => 1,
+      'default_sort_order' => 'asc',
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
+    'state' => array(
+      'sortable' => 1,
+      'default_sort_order' => 'asc',
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
+    'target_actions' => array(
       'align' => '',
       'separator' => '',
       'empty_column' => 0,
@@ -294,10 +354,15 @@ function springboard_target_views_default_views() {
   $handler->display->display_options['fields']['last_name']['id'] = 'last_name';
   $handler->display->display_options['fields']['last_name']['table'] = 'advocacy';
   $handler->display->display_options['fields']['last_name']['field'] = 'last_name';
+  $handler->display->display_options['fields']['last_name']['label'] = 'Name';
   /* Field: Advocacy: Organization */
   $handler->display->display_options['fields']['organization']['id'] = 'organization';
   $handler->display->display_options['fields']['organization']['table'] = 'advocacy';
   $handler->display->display_options['fields']['organization']['field'] = 'organization';
+  /* Field: Advocacy: Organization title */
+  $handler->display->display_options['fields']['title']['id'] = 'title';
+  $handler->display->display_options['fields']['title']['table'] = 'advocacy';
+  $handler->display->display_options['fields']['title']['field'] = 'title';
   /* Field: Advocacy: Email */
   $handler->display->display_options['fields']['email']['id'] = 'email';
   $handler->display->display_options['fields']['email']['table'] = 'advocacy';
@@ -306,10 +371,6 @@ function springboard_target_views_default_views() {
   $handler->display->display_options['fields']['party']['id'] = 'party';
   $handler->display->display_options['fields']['party']['table'] = 'advocacy';
   $handler->display->display_options['fields']['party']['field'] = 'party';
-  /* Field: Advocacy: Role */
-  $handler->display->display_options['fields']['role']['id'] = 'role';
-  $handler->display->display_options['fields']['role']['table'] = 'advocacy';
-  $handler->display->display_options['fields']['role']['field'] = 'role';
   /* Field: Advocacy: State */
   $handler->display->display_options['fields']['state']['id'] = 'state';
   $handler->display->display_options['fields']['state']['table'] = 'advocacy';
