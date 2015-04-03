@@ -359,10 +359,6 @@ function springboard_target_views_default_views() {
   $handler->display->display_options['fields']['email']['id'] = 'email';
   $handler->display->display_options['fields']['email']['table'] = 'advocacy';
   $handler->display->display_options['fields']['email']['field'] = 'email';
-  /* Field: Advocacy: State */
-  $handler->display->display_options['fields']['state']['id'] = 'state';
-  $handler->display->display_options['fields']['state']['table'] = 'advocacy';
-  $handler->display->display_options['fields']['state']['field'] = 'state';
   /* Field: Advocacy: Target Actions */
   $handler->display->display_options['fields']['target_actions']['id'] = 'target_actions';
   $handler->display->display_options['fields']['target_actions']['table'] = 'advocacy';
