@@ -44,7 +44,6 @@ function springboard_target_views_default_views() {
     'organization' => 'organization',
     'title' => 'title',
     'email' => 'email',
-    'party' => 'party',
     'state' => 'state',
     'target_actions' => 'target_actions',
   );
@@ -66,7 +65,7 @@ function springboard_target_views_default_views() {
       'sortable' => 1,
       'default_sort_order' => 'asc',
       'align' => '',
-      'separator' => '',
+      'separator' => ' ',
       'empty_column' => 0,
     ),
     'organization' => array(
@@ -84,13 +83,6 @@ function springboard_target_views_default_views() {
       'empty_column' => 0,
     ),
     'email' => array(
-      'align' => '',
-      'separator' => '',
-      'empty_column' => 0,
-    ),
-    'party' => array(
-      'sortable' => 1,
-      'default_sort_order' => 'asc',
       'align' => '',
       'separator' => '',
       'empty_column' => 0,
