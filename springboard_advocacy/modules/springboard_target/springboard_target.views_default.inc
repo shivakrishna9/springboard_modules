@@ -367,10 +367,6 @@ function springboard_target_views_default_views() {
   $handler->display->display_options['fields']['email']['id'] = 'email';
   $handler->display->display_options['fields']['email']['table'] = 'advocacy';
   $handler->display->display_options['fields']['email']['field'] = 'email';
-  /* Field: Advocacy: Politcal Party */
-  $handler->display->display_options['fields']['party']['id'] = 'party';
-  $handler->display->display_options['fields']['party']['table'] = 'advocacy';
-  $handler->display->display_options['fields']['party']['field'] = 'party';
   /* Field: Advocacy: State */
   $handler->display->display_options['fields']['state']['id'] = 'state';
   $handler->display->display_options['fields']['state']['table'] = 'advocacy';
@@ -394,7 +390,7 @@ function springboard_target_views_default_views() {
   $handler->display->display_options['filters']['combine']['group'] = 1;
   $handler->display->display_options['filters']['combine']['exposed'] = TRUE;
   $handler->display->display_options['filters']['combine']['expose']['operator_id'] = 'combine_op';
-  $handler->display->display_options['filters']['combine']['expose']['label'] = 'FIrst name or Last name';
+  $handler->display->display_options['filters']['combine']['expose']['label'] = 'Name or Organization Name';
   $handler->display->display_options['filters']['combine']['expose']['operator'] = 'combine_op';
   $handler->display->display_options['filters']['combine']['expose']['identifier'] = 'combine';
   $handler->display->display_options['filters']['combine']['expose']['remember_roles'] = array(
@@ -403,11 +399,11 @@ function springboard_target_views_default_views() {
     3 => 0,
     4 => 0,
     5 => 0,
-    6 => 0,
   );
   $handler->display->display_options['filters']['combine']['fields'] = array(
     'first_name' => 'first_name',
     'last_name' => 'last_name',
+    'organization' => 'organization',
   );
   /* Filter criterion: Advocacy: Search By Type */
   $handler->display->display_options['filters']['search_class_name']['id'] = 'search_class_name';
@@ -436,6 +432,7 @@ function springboard_target_views_default_views() {
   $handler->display->display_options['filters']['search_gender']['value'] = array(
     'M' => 'M',
     'F' => 'F',
+    'O' => 'O',
   );
   $handler->display->display_options['filters']['search_gender']['group'] = 1;
   $handler->display->display_options['filters']['search_gender']['exposed'] = TRUE;
@@ -443,7 +440,6 @@ function springboard_target_views_default_views() {
   $handler->display->display_options['filters']['search_gender']['expose']['label'] = 'Search By Gender';
   $handler->display->display_options['filters']['search_gender']['expose']['operator'] = 'search_gender_op';
   $handler->display->display_options['filters']['search_gender']['expose']['identifier'] = 'search_gender';
-  $handler->display->display_options['filters']['search_gender']['expose']['multiple'] = TRUE;
   $handler->display->display_options['filters']['search_gender']['expose']['remember_roles'] = array(
     2 => '2',
     1 => 0,
@@ -452,7 +448,6 @@ function springboard_target_views_default_views() {
     5 => 0,
   );
   $handler->display->display_options['filters']['search_gender']['expose']['reduce'] = TRUE;
-  $handler->display->display_options['filters']['search_gender']['is_grouped'] = TRUE;
   $handler->display->display_options['filters']['search_gender']['group_info']['label'] = 'Search By Gender';
   $handler->display->display_options['filters']['search_gender']['group_info']['identifier'] = 'search_gender';
   $handler->display->display_options['filters']['search_gender']['group_info']['multiple'] = TRUE;
