@@ -384,11 +384,11 @@ function fundraiser_multi_currency_currency_field_instance($bundle_name) {
 }
 
 /**
- * Implements hook_form_FORM_ID_alter() for webform_client form().
+ * Implements hook_fundraiser_donation_form().
  *
  * Alters the display of known currency symbols.
  */
-function fundraiser_multi_currency_form_webform_client_form_alter(&$form, &$form_state, $form_id) {
+function fundraiser_multi_currency_fundraiser_donation_form($form, $form_state) {
   $node = $form['#node'];
   if (fundraiser_is_donation_type($node->type)) {
     $wrapper = entity_metadata_wrapper('node', $node);
@@ -396,8 +396,7 @@ function fundraiser_multi_currency_form_webform_client_form_alter(&$form, &$form
 
     if (!empty($currency_code)) {
 
-      // @todo Consider replacing with commerce_currency_load().
-      $currency = fundraiser_multi_currency_load_currancy_by_code($currency_code);
+      $currency = commerce_currency_load($currency_code);
       if (!empty($currency)) {
         $symbol = $currency['symbol'];
 
@@ -425,7 +424,15 @@ function fundraiser_multi_currency_form_webform_client_form_alter(&$form, &$form
           }
         }
 
+        // Change the currency.
+        $form['#attached']['js'][] = array(
+          'data' => array('fundraiser' => array('currency' => $currency)),
+          'type' => 'setting',
+        );
+
       }
     }
   }
+
+  return $form;
 }
