@@ -105,109 +105,6 @@ function _fundraiser_multi_currency_field_create($fundraiser, $field) {
 }
 
 /**
- * Implements hook_form_BASE_FORM_ID_alter() for node_form().
- */
-function fundraiser_multi_currency_form_node_form_alter(&$form, &$form_state, $form_id) {
-  // If this isn't a fundraiser type, ignore it.
-  if (fundraiser_is_donation_type($form['#node']->type)) {
-    // Only add the multi-currency option to the form when creating a
-    // donation form, not when editing it.
-    // Why? Because we DO NOT STORE THESE VALUES. They are only used
-    // during the creation of fields.
-    // Since we don't store them, we don't update the fields,
-    // and we don't want to confuse users,
-    // We only show this information when a node is new.
-    if (!(isset($form['#node']->nid))) {
-      $form['fundraiser_settings']['fundraiser_multi_currency'] = array(
-        '#type' => 'fieldset',
-        '#title' => t('Fundraiser multiple currencies'),
-        '#collapsible' => TRUE,
-        '#collapsed' => FALSE,
-      );
-      $form['fundraiser_settings']['fundraiser_multi_currency']['multiple_currency_support'] = array(
-        '#type' => 'radios',
-        '#title' => t('Support multiple currencies'),
-        '#description' => t('Should this form support multiple currencies?'),
-        '#options' => array(
-          'hide' => t('Hide currency from user and always use the default.'),
-          'show' => t('Allow the user to choose their currency from a dropdown.'),
-        ),
-        '#default_value' => 'hide',
-      );
-      $form['fundraiser_settings']['fundraiser_multi_currency']['default_currency'] = array(
-        // @todo This should be a dropdown based on available currencies.
-        '#type' => 'textfield',
-        '#title' => t('Default currency'),
-        '#description' => t('If you give users the option to choose their currency, this will be selected by default. Otherwise, this will be used for all donations.'),
-        '#size' => 40,
-        '#maxlength' => 10,
-        '#default_value' => 'USD',
-        '#required' => TRUE,
-      );
-    }
-  }
-}
-
-/**
- * Implements hook_fundraiser_donation_form().
- */
-function fundraiser_multi_currency_fundraiser_donation_form($form, $form_state) {
-  // Get the list of currencies in use and save them to the JS object
-  // Get the available currencies.
-  $currencies = fundraiser_multi_currency_get_currencies();
-
-  // Set the symbol shown on the form amount and other-amount fields
-  // to match the default.
-  $currency_field = fundraiser_get_form_field('fundraiser_multi_currency', $form, 'currency');
-  if (isset($currency_field) && !empty($currency_field)) {
-    // Add js to support switching as needed.
-    if ($currency_field['#type'] != 'hidden') {
-      drupal_add_js(drupal_get_path('module', 'fundraiser_multi_currency') . '/js/fundraiser_multi_currency.js');
-      // Pass the default value up so our js knows where to start.
-      drupal_add_js(array(
-        'fundraiser_multi_currency' => array(
-          'currencies' => $currencies,
-          'original' => isset($currency_field['#default_value']) ? $currency_field['#default_value'] : 'USD',
-        )),
-        'setting');
-    }
-    // Then set defaults for other fields.
-    $selected_currency = isset($currency_field['#default_value']) ? $currency_field['#default_value'] : '';
-    if (isset($currencies[$selected_currency])) {
-      // First check for other amount.
-      $other_amount_field = fundraiser_get_form_field('fundraiser_multi_currency', $form, 'other_amount');
-      if (isset($other_amount_field) && !empty($other_amount_field)) {
-        $other_amount_field['#field_prefix'] = $currencies[$selected_currency]['symbol'];
-        if (isset($other_amount_field['#description'])) {
-          $other_amount_field['#description'] = str_replace('Minimum payment $',
-            'Minimum payment ' . $currencies[$selected_currency]['symbol'],
-            $other_amount_field['#description']);
-        }
-        $form = fundraiser_update_form_field('fundraiser_multi_currency', $form, 'other_amount', $other_amount_field);
-        // From fundraiser.module, update a form with new field information.
-      }
-      // Then update them on regular amount fields as needed.
-      $amount_field = fundraiser_get_form_field('fundraiser_multi_currency', $form, 'amount');
-      if (isset($amount_field) && !empty($amount_field)) {
-        if (isset($amount_field['#options'])) {
-          foreach ($amount_field['#options'] as $val => $label) {
-            $amount_field['#options'][$val] = str_replace('$', $currencies[$selected_currency]['symbol'], $label);
-          }
-        }
-        else {
-          // No ask amounts, so the regular Amount field will actually
-          // be the Other field.
-          // Nobody said this had to be straightforward, right?
-          $amount_field['#field_prefix'] = $currencies[$selected_currency]['symbol'];
-        }
-        $form = fundraiser_update_form_field('fundraiser_multi_currency', $form, 'amount', $amount_field);
-      }
-    }
-  }
-  return $form;
-}
-
-/**
  * Implements hook_fundraiser_donation_create().
  */
 function fundraiser_multi_currency_fundraiser_donation_create($donation) {
@@ -232,21 +129,39 @@ function fundraiser_multi_currency_fundraiser_donation_get_donation($donation) {
 }
 
 /**
- * Database functions.
+ * Retrieves and formats the currencies for a form select element.
+ *
+ * @return array
+ *   The options array for a select form element.
  */
+function fundraiser_multi_currency_get_currency_options() {
+  $options = array();
+
+  foreach (fundraiser_multi_currency_get_currencies() as $currency_code => $currency) {
+    $options[$currency_code] = t('@code - !name', array('@code' => $currency['code'], '!name' => $currency['name']));
+
+    if (!empty($currency['symbol'])) {
+      $options[$currency_code] .= ' - ' . check_plain($currency['symbol']);
+    }
+  }
+
+  return $options;
+}
 
 /**
  * Database function, get an array of the available currencies.
+ *
+ * @return array
+ *   An array of associative arrays, one per currency, keyed by
+ *   the currency code.
  */
 function fundraiser_multi_currency_get_currencies() {
   // Cache the currency list locally.
   static $currencies = array();
   if (empty($currencies)) {
-    $results = db_query('SELECT * FROM {fundraiser_currencies}');
-    foreach ($results as $row) {
-      $row = (array) $row;
-      $currencies[$row['code']] = $row;
-    }
+    // @todo Consider integrating with commerce_currencies.
+    $currencies = db_query("SELECT currency_id, symbol, code, name FROM {fundraiser_currencies}")
+      ->fetchAllAssoc('code', PDO::FETCH_ASSOC);
   }
   return $currencies;
 }
@@ -266,6 +181,20 @@ function fundraiser_multi_currency_create_currancy($record) {
   else {
     fundraiser_multi_currency_update_currancy($record);
   }
+}
+
+/**
+ * Retrieve a currency by its code into an array.
+ *
+ * @param string $currency_code
+ *   The code that represents the currency. For example, 'USD'.
+ *
+ * @return mixed
+ *   An associative array with currency data.
+ */
+function fundraiser_multi_currency_load_currancy_by_code($currency_code) {
+  return db_query('SELECT * FROM {fundraiser_currencies} WHERE code = :currency_code',
+    array(':currency_code' => $currency_code))->fetchAssoc();
 }
 
 /**
@@ -299,4 +228,204 @@ function fundraiser_multi_currency_update_currancy($record) {
  */
 function fundraiser_multi_currency_delete_currancy($currency_id) {
   db_delete('fundraiser_currencies')->condition('currency_id', $currency_id)->execute();
+}
+
+/**
+ * Implements hook_node_type_insert().
+ *
+ * Adds the currency field if the new content type is a donation type.
+ */
+function fundraiser_multi_currency_node_type_insert($type) {
+  if (fundraiser_is_donation_type($type->type)) {
+    fundraiser_multi_currency_add_currency_field($type->type);
+  }
+}
+
+/**
+ * Implements hook_node_type_update().
+ *
+ * Adds the currency field if the updated content type is a donation type.
+ */
+function fundraiser_multi_currency_node_type_update($type) {
+  if (fundraiser_is_donation_type($type->type)) {
+    fundraiser_multi_currency_add_currency_field($type->type);
+  }
+}
+
+/**
+ * Adds the currency field and instance to the given content type.
+ *
+ * Checks if the field and instance already exists and leaves them alone if so.
+ *
+ * @param string $bundle_name
+ *   The content type name to add the field to.
+ */
+function fundraiser_multi_currency_add_currency_field($bundle_name) {
+  $config = fundraiser_multi_currency_currency_field_definition();
+  $field_name = $config['field_name'];
+  $entity_type = 'node';
+
+  if (!field_info_field($field_name)) {
+    field_create_field($config);
+  }
+
+  if (!field_info_instance($entity_type, $field_name, $bundle_name)) {
+    $instance = fundraiser_multi_currency_currency_field_instance($bundle_name);
+    field_create_instance($instance);
+  }
+
+}
+
+/**
+ * The currency field definition.
+ *
+ * @return array
+ *   The field definition for the currency fundraiser field.
+ */
+function fundraiser_multi_currency_currency_field_definition() {
+  return array(
+    'translatable' => '0',
+    'entity_types' => array(),
+    'settings' => array(
+      'allowed_values_function' => 'fundraiser_multi_currency_get_currency_options',
+    ),
+    'storage' => array(
+      'type' => 'field_sql_storage',
+      'settings' => array(),
+      'module' => 'field_sql_storage',
+      'active' => '1',
+      'details' => array(
+        'sql' => array(
+          'FIELD_LOAD_CURRENT' => array(
+            'field_data_field_default_currency' => array(
+              'value' => 'field_fundraiser_currency_value',
+            ),
+          ),
+          'FIELD_LOAD_REVISION' => array(
+            'field_revision_field_default_currency' => array(
+              'value' => 'field_fundraiser_currency_value',
+            ),
+          ),
+        ),
+      ),
+    ),
+    'foreign keys' => array(
+      'code' => array(
+        'table' => 'fundraiser_currencies',
+        'columns' => array('code' => 'value'),
+      ),
+    ),
+    'indexes' => array(
+      'value' => array('value'),
+    ),
+    'field_name' => 'field_fundraiser_currency',
+    'type' => 'list_text',
+    'module' => 'list',
+    'active' => '1',
+    'locked' => '0',
+    'cardinality' => '1',
+    'deleted' => '0',
+    'columns' => array(
+      'value' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => FALSE,
+      ),
+    ),
+  );
+}
+
+/**
+ * Provides the currency field instance configuration.
+ *
+ * @param string $bundle_name
+ *   The name of the bundle to add the instance to.
+ *
+ * @return array
+ *   The currency field instance array with included bundle name.
+ */
+function fundraiser_multi_currency_currency_field_instance($bundle_name) {
+  return array(
+    'label' => 'Default Currency',
+    'widget' => array(
+      'weight' => '2',
+      'type' => 'options_select',
+      'module' => 'options',
+      'active' => 1,
+      'settings' => array(),
+    ),
+    'settings' => array(
+      'user_register_form' => FALSE,
+    ),
+    'display' => array(
+      'default' => array(
+        'type' => 'hidden',
+        'label' => 'above',
+        'settings' => array(),
+        'weight' => 4,
+      ),
+      'teaser' => array(
+        'type' => 'hidden',
+        'label' => 'above',
+        'settings' => array(),
+        'weight' => 0,
+      ),
+    ),
+    'required' => 1,
+    'description' => 'The default currency.',
+    'default_value' => array(
+      array('value' => 'USD'),
+    ),
+    'field_name' => 'field_fundraiser_currency',
+    'entity_type' => 'node',
+    'bundle' => $bundle_name,
+    'deleted' => '0',
+  );
+}
+
+/**
+ * Implements hook_form_FORM_ID_alter() for webform_client form().
+ *
+ * Alters the display of known currency symbols.
+ */
+function fundraiser_multi_currency_form_webform_client_form_alter(&$form, &$form_state, $form_id) {
+  $node = $form['#node'];
+  if (fundraiser_is_donation_type($node->type)) {
+    $wrapper = entity_metadata_wrapper('node', $node);
+    $currency_code = $wrapper->field_fundraiser_currency->value();
+
+    if (!empty($currency_code)) {
+
+      // @todo Consider replacing with commerce_currency_load().
+      $currency = fundraiser_multi_currency_load_currancy_by_code($currency_code);
+      if (!empty($currency)) {
+        $symbol = $currency['symbol'];
+
+        // Edit the other amount field directly using its reference.
+        $other_amount_field = &$form['submitted']['donation']['other_amount'];
+        if (isset($other_amount_field) && !empty($other_amount_field)) {
+          $other_amount_field['#field_prefix'] = $symbol;
+          if (isset($other_amount_field['#description'])) {
+            $other_amount_field['#description'] = str_replace('Minimum payment $',
+              'Minimum payment ' . $symbol,
+              $other_amount_field['#description']);
+          }
+        }
+
+        // Edit the ask amount field directly using its reference.
+        $amount_field = &$form['submitted']['donation']['amount'];
+        if (isset($amount_field) && !empty($amount_field)) {
+          if (isset($amount_field['#options'])) {
+            foreach ($amount_field['#options'] as $val => $label) {
+              $amount_field['#options'][$val] = str_replace('$', $symbol, $label);
+            }
+          }
+          else {
+            $amount_field['#field_prefix'] = $symbol;
+          }
+        }
+
+      }
+    }
+  }
 }
