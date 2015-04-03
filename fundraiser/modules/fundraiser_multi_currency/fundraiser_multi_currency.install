@@ -46,6 +46,13 @@ function fundraiser_multi_currency_schema() {
  */
 function fundraiser_multi_currency_install() {
   _fundraiser_multi_currency_insert_defaults();
+
+  $types = node_type_get_types();
+  foreach ($types as $type => $type_info) {
+    if (fundraiser_is_donation_type($type)) {
+      fundraiser_multi_currency_add_currency_field($type);
+    }
+  }
 }
 
 /**
@@ -89,4 +96,16 @@ function _fundraiser_multi_currency_insert_defaults() {
  */
 function fundraiser_multi_currency_update_last_removed() {
   return 6001;
+}
+
+/**
+ * Add the default currency field to existing donation content types.
+ */
+function fundraiser_multi_currency_update_7001() {
+  $types = node_type_get_types();
+  foreach ($types as $type => $type_info) {
+    if (fundraiser_is_donation_type($type)) {
+      fundraiser_multi_currency_add_currency_field($type);
+    }
+  }
 }
