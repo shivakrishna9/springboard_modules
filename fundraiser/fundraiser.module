@@ -1462,8 +1462,15 @@ function fundraiser_donation_form(&$form, &$form_state) {
   $form['#attached']['js'] = array(
     drupal_get_path('module', 'fundraiser') . '/js/jquery.alphanumeric.min.js',
     drupal_get_path('module', 'fundraiser') . '/js/jquery.validate.min.js',
-    drupal_get_path('module', 'fundraiser') . '/js/donation_validation.min.js',
+    drupal_get_path('module', 'fundraiser') . '/js/donation_validation.js',
   );
+
+  // Add the site default currency array as a JS setting.
+  $form['#attached']['js'][] = array(
+    'data' => array('fundraiser' => array('currency' => commerce_currency_load())),
+    'type' => 'setting',
+  );
+
   if(isset($form['#node']->minimum_donation_amount)) {
     $min = array('minimum_donation_amount' => $form['#node']->minimum_donation_amount);
     $form['#attached']['js'][] = array(
