@@ -70,38 +70,10 @@ function fundraiser_multi_currency_fundraiser_field_info() {
   $fields['donation']['currency'] = array(
     '#title' => 'Currency',
     '#type' => 'hidden',
+    '#value' => '',
     '#required' => 1,
-    '#create_callback' => '_fundraiser_multi_currency_field_create',
   );
   return $fields;
-}
-
-/**
- * Creation callback for the currency field.
- *
- * Set the value to the setting in the donation form.
- */
-function _fundraiser_multi_currency_field_create($fundraiser, $field) {
-  // Set a default currancy per the fundraiser settings.
-  if (isset($fundraiser->default_currency)) {
-    $field['#value'] = $fundraiser->default_currency;
-  }
-  // If they chose to allow users to pick their currency,
-  // add a dropdown for currencies.
-  if (isset($fundraiser->multiple_currency_support) && ($fundraiser->multiple_currency_support == 'show')) {
-    // Get a list of currencies to use as defaults.
-    $currencies = fundraiser_multi_currency_get_currencies();
-    $default_currencies = '';
-    foreach ($currencies as $code => $row) {
-      $default_currencies .= $code . '|' . $row['name'] . "\n";
-    }
-    $default_currencies = trim($default_currencies);
-    $field['#type'] = 'select';
-    $field['#extra']['items'] = $default_currencies;
-    $field['#extra']['multiple'] = 0;
-    $field['#extra']['aslist'] = 'Y';
-  }
-  return $field;
 }
 
 /**
@@ -422,6 +394,11 @@ function fundraiser_multi_currency_fundraiser_donation_form($form, $form_state) 
           else {
             $amount_field['#field_prefix'] = $symbol;
           }
+        }
+
+        $currency_field = &$form['submitted']['donation']['currency'];
+        if (isset($currency_field) && !empty($currency_field)) {
+          $currency_field['#value'] = $currency['code'];
         }
 
         // Change the currency.
