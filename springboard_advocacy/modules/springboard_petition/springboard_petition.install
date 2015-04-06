@@ -92,9 +92,7 @@ function springboard_petition_add_content_type() {
     ),
     'node_submitted' => 0,
     'node_preview' => 1,
-    'node_options' => array(
-      0 => 'status',
-    ),
+    'node_options' => array('status' => 'status'),
     'fundraiser' => 0,
     'webform_user' => 1,
     'webform_user_default_fields' => array(
