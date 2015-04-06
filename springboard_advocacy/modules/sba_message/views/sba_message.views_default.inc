@@ -50,6 +50,12 @@ function sba_message_views_default_views() {
       'empty_column' => 0,
     ),
   );
+  /* No results behavior: Global: Unfiltered text */
+  $handler->display->display_options['empty']['area_text_custom']['id'] = 'area_text_custom';
+  $handler->display->display_options['empty']['area_text_custom']['table'] = 'views';
+  $handler->display->display_options['empty']['area_text_custom']['field'] = 'area_text_custom';
+  $handler->display->display_options['empty']['area_text_custom']['empty'] = TRUE;
+  $handler->display->display_options['empty']['area_text_custom']['content'] = 'Whoops, your search returned 0 results. Please try again.';
   /* Field: Advocacy: Salutation */
   $handler->display->display_options['fields']['salutation']['id'] = 'salutation';
   $handler->display->display_options['fields']['salutation']['table'] = 'advocacy';
@@ -835,6 +841,7 @@ function sba_message_views_default_views() {
       ),
     ),
   );
+
 
   $views[$view->name] = $view;
 
