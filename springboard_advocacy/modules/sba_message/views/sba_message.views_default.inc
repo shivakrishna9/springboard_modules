@@ -394,6 +394,7 @@ function sba_message_views_default_views() {
   $handler->display->display_options['fields']['party']['id'] = 'party';
   $handler->display->display_options['fields']['party']['table'] = 'advocacy';
   $handler->display->display_options['fields']['party']['field'] = 'party';
+  $handler->display->display_options['fields']['party']['label'] = 'Party';
   /* Field: Advocacy: Role */
   $handler->display->display_options['fields']['role']['id'] = 'role';
   $handler->display->display_options['fields']['role']['table'] = 'advocacy';
