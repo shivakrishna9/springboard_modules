@@ -11,7 +11,6 @@
 function springboard_target_views_default_views() {
 
   $view = new view();
-  $view = new view();
   $view->name = 'sba_custom_targets';
   $view->description = 'Advocacy Custom Target Landing page and search';
   $view->tag = 'Advocacy';
@@ -351,14 +350,12 @@ function springboard_target_views_default_views() {
   $handler->display->display_options['fields']['organization']['id'] = 'organization';
   $handler->display->display_options['fields']['organization']['table'] = 'advocacy';
   $handler->display->display_options['fields']['organization']['field'] = 'organization';
+  $handler->display->display_options['fields']['organization']['label'] = 'Organization/Affiliation';
   /* Field: Advocacy: Organization title */
   $handler->display->display_options['fields']['title']['id'] = 'title';
   $handler->display->display_options['fields']['title']['table'] = 'advocacy';
   $handler->display->display_options['fields']['title']['field'] = 'title';
-  /* Field: Advocacy: Email */
-  $handler->display->display_options['fields']['email']['id'] = 'email';
-  $handler->display->display_options['fields']['email']['table'] = 'advocacy';
-  $handler->display->display_options['fields']['email']['field'] = 'email';
+  $handler->display->display_options['fields']['title']['label'] = 'Title/Role';
   /* Field: Advocacy: Target Actions */
   $handler->display->display_options['fields']['target_actions']['id'] = 'target_actions';
   $handler->display->display_options['fields']['target_actions']['table'] = 'advocacy';
