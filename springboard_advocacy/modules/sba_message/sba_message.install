@@ -341,7 +341,7 @@ function sba_message_install() {
     'bundle' => 'sba_message_action_message',
     'default_value' => NULL,
     'deleted' => 0,
-    'description' => '',
+    'description' => 'Use this field to add a non-editable area to the bottom of your message.',
     'display' => array(
       'default' => array(
         'label' => 'above',
@@ -353,7 +353,7 @@ function sba_message_install() {
     ),
     'entity_type' => 'sba_message',
     'field_name' => 'field_bottom_conclusion',
-    'label' => 'Bottom/Conclusion',
+    'label' => 'Conclusion',
     'required' => 0,
     'settings' => array(
       'text_processing' => 0,
@@ -534,7 +534,7 @@ function sba_message_install() {
     ),
     'entity_type' => 'sba_message',
     'field_name' => 'field_sba_message',
-    'label' => 'Message',
+    'label' => 'Message/Intro',
     'required' => 0,
     'settings' => array(
       'text_processing' => 0,
@@ -724,7 +724,7 @@ function sba_message_install() {
   // Translatables
   // Included for use with string extractors like potx.
   t('Action ID');
-  t('Bottom/Conclusion');
+  t('Conclusion');
   t('Default text that the user may alter:');
   t('Editing is required?');
   t('Greeting (for message to be delivered)');
@@ -762,7 +762,7 @@ function sba_message_install() {
       'instance_settings' => array(
         'required_fields' => 1,
         'classes' => 'group-editable field-group-fieldset',
-        'description' => 'If you are creating only one message for this action, you can use the message region below to create an area of your message that will be editable by your advocates. Actions with multiple messages cannot be edited by advocates.',
+        'description' => 'For single message actions only: use this field to create an area of your message that will be editable by advocates. Actions with multiple messages cannot be edited by advocates.',
       ),
       'formatter' => 'open',
    );
@@ -819,7 +819,7 @@ function sba_message_install() {
       'instance_settings' => array(
         'required_fields' => 1,
         'classes' => 'group-message-body field-group-fieldset',
-        'description' => 'Use the fields below to create the message to be sent. If you want to create an uneditable message, use the top field only.',
+        'description' => 'Enter the message to be sent. If you don\'t want advocates to edit the message, use only this field.',
       ),
       'formatter' => 'open',
   );
