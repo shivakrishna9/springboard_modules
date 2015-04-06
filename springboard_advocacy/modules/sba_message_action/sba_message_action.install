@@ -66,9 +66,7 @@ function _sba_message_action_set_vars() {
     ),
     'node_submitted' => 0,
     'node_preview' => 1,
-    'node_options' => array(
-      0 => 'status',
-    ),
+    'node_options' => array(),
     'fundraiser' => 0,
     'webform_user' => 1,
     'webform_user_default_fields' => array(
