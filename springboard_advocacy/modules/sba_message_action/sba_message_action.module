@@ -23,6 +23,12 @@ function sba_message_action_menu() {
   return $items;
 }
 
+/**
+ * Multi-message popup modal callback
+ *
+ * @param null $js
+ * @param null $nid
+ */
 function sba_message_action_modal_page($js = NULL, $nid = NULL) {
   if ($nid == NULL) {
     return;
@@ -715,15 +721,17 @@ function sba_message_action_theme() {
  * @param $form_state
  */
 function sba_message_action_form_webform_configure_form_alter(&$form, &$form_state) {
+
   if ($form['#node']->type == 'sba_message_action') {
+    // Does this node have a custom confirmation record?
+    $custom_status = isset($form['#node']->custom_confirmation) ? $form['#node']->custom_confirmation : 0;
 
-    $custom = isset($form['#node']->custom_confirmation) ? $form['#node']->custom_confirmation : 0;
-
+    // Add the ajax-enabled custom confirmation checkbox with a default value.
     $form['submission']['confirmation']['custom_confirmation'] = array(
       '#type' => 'checkbox',
       '#title' => t('Use custom confirmation'),
       '#weight' => 0,
-      '#default_value' => $custom,
+      '#default_value' => $custom_status,
       '#ajax' => array(
         'callback' => 'sba_message_action_form_webform_configure_callback',
         'wrapper' => 'confirmation-div',
@@ -732,6 +740,7 @@ function sba_message_action_form_webform_configure_form_alter(&$form, &$form_sta
       ),
     );
 
+    //Alter the confirmation textarea to have an ajax wrapper and drupal_process_states array.
     $form['submission']['confirmation']['#prefix'] = '<div id="confirmation-div">';
     $form['submission']['confirmation']['#suffix'] = '</div>';
     $form['submission']['confirmation']['#states'] = array(
@@ -740,22 +749,40 @@ function sba_message_action_form_webform_configure_form_alter(&$form, &$form_sta
       ),
     );
 
-    $new_custom = isset($form_state['values']['confirmation']['custom_confirmation']) ? $form_state['values']['confirmation']['custom_confirmation'] : NULL;
-    if($new_custom === 1 ) {
-      unset($form_state['input']['confirmation']['value']);
+    // Intercept the Ajax reload and change the confirmation message value according to confirmation status.
+    $new_custom_status = isset($form_state['values']['confirmation']['custom_confirmation']) ? $form_state['values']['confirmation']['custom_confirmation'] : NULL;
+    if ($new_custom_status === 1 ) {
+      unset($form_state['input']['confirmation']['value']);  // Value does not get reset without this.
+      // Use custom message is enabled so use the local node's confirmation message
       $form['submission']['confirmation']['#default_value'] = $form['#node']->webform['confirmation'];
     }
-    elseif($new_custom === 0 ) {
+    elseif ($new_custom_status === 0 ) {
+      // Use custom message is disabled so use the global confirmation message
       $form['submission']['confirmation']['#default_value'] =   variable_get('sba_message_action_confirm', '');;
     }
+    // Add a custom submit function to save the confirmation status value.
     $form['#submit'][] = 'sba_message_confirmation_submit';
   }
 }
 
+/**
+ * Ajax callback for webform confirmation field which has been altered above
+ * to be an ajax field.
+ * @param $form
+ * @param $form_state
+ * @return mixed
+ */
 function sba_message_action_form_webform_configure_callback($form, $form_state) {
   return $form['submission']['confirmation'];
 }
 
+/**
+ * Submit callback for webform settings page
+ * If this form has a custom confirmation overriding the global confirmation, save
+ * a record registering that status.
+ * @param $form
+ * @param $form_state
+ */
 function sba_message_confirmation_submit($form, $form_state) {
   if (isset($form_state['values']['confirmation']['custom_confirmation'])) {
     $record = array(
@@ -771,6 +798,11 @@ function sba_message_confirmation_submit($form, $form_state) {
   }
 }
 
+/**
+ * Message action settings page, menu callback.
+ *
+ * @return array
+ */
 function sba_message_action_settings_page() {
   $build = array();
   $build['content'] = array(
@@ -786,13 +818,22 @@ function sba_message_action_settings_page() {
   return $build;
 }
 
+/**
+ * Message action settings form
+ * Provides a textarea for a global confirmation message
+ * and available tokens.
+ * @return mixed
+ */
 function sba_message_action_settings_form() {
 
+  //Create the confirmation form textarea
   $form['sba_message_action_confirm'] = array(
     '#type' => 'textarea',
     '#title' => t('Default Message Action Confirmation'),
     '#default_value' => variable_get('sba_message_action_confirm', ''),
   );
+
+  //Create the token fieldset
   $form['template']['tokens'] = array(
     '#type' => 'fieldset',
     '#title' => t('Available tokens'),
@@ -800,16 +841,15 @@ function sba_message_action_settings_form() {
     '#collapsed' => TRUE,
     '#weight' => 9,
   );
+
+  //Get the node tokens.
   $token_set = array('node');
-
-
   $form['template']['tokens']['tokens'] = array(
     '#type' => 'item',
     '#title' => t('Drupal tokens'),
     '#description' => theme('token_tree', array('token_types' => $token_set, 'recursion_limit' => 2, 'click_insert' => FALSE)),
-
   );
-
+  // Get the webform tokens.
   $webform_token_help = theme('webform_token_help', array());
   $webform_token_help = str_replace('%post', '%value', $webform_token_help);
   $webform_token_help = str_replace('POST ', '', $webform_token_help);
@@ -824,12 +864,22 @@ function sba_message_action_settings_form() {
 }
 
 
+/**
+ * Submit function for message action settings.
+ *
+ * Updates all message action nodes which do not use a custom confirmation
+ * with the global confirmation.
+ * @param $form
+ * @param $form_state
+ */
 function sba_message_action_settings_form_submit($form, $form_state) {
+  // Get all action node nids that do not have a custom confirmation record.
   $result = db_query('SELECT n.nid, s.custom_confirmation FROM {node} n
     LEFT JOIN {sba_message_action_confirm} s
     ON s.nid = n.nid WHERE n.type = :type && (s.custom_confirmation = 0
     OR s.nid IS NULL)', array(':type' => 'sba_message_action'));
 
+  // Update the results with the global confirmation.
   foreach ($result as $node) {
     $record = array(
       'nid' => $node->nid,
