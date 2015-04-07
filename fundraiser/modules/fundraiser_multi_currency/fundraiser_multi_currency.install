@@ -1,7 +1,11 @@
 <?php
 /**
  * @file
- * Install, update and uninstall functions for fundraiser_multi_currency.
+ * The schema for the multi currency module.
+ *
+ * This module is deprecated. The schema is here so fundraiser can uninstall it.
+ * After it's been in this state for long enough, this module will be removed
+ * entirely.
  */
 
 /**
@@ -42,70 +46,8 @@ function fundraiser_multi_currency_schema() {
 }
 
 /**
- * Implements hook_install().
- */
-function fundraiser_multi_currency_install() {
-  _fundraiser_multi_currency_insert_defaults();
-
-  $types = node_type_get_types();
-  foreach ($types as $type => $type_info) {
-    if (fundraiser_is_donation_type($type)) {
-      fundraiser_multi_currency_add_currency_field($type);
-    }
-  }
-}
-
-/**
- * Implements hook_uninstall().
- */
-function fundraiser_multi_currency_uninstall() {
-  drupal_set_message(t('Nodes that previously had a currancy field - still do. Be sure to update your donation forms.'));
-}
-
-/**
- * Insert default available currancies.
- */
-function _fundraiser_multi_currency_insert_defaults() {
-  $ret = array();
-  $currencies[] = array(
-    'symbol' => '$',
-    'code' => 'USD',
-    'name' => 'US Dollars',
-  );
-  $currencies[] = array(
-    'symbol' => '€',
-    'code' => 'EUR',
-    'name' => 'Euros',
-  );
-  $currencies[] = array(
-    'symbol' => '£',
-    'code' => 'GBP',
-    'name' => 'UK Pounds',
-  );
-  foreach ($currencies as $record) {
-    if (!db_query('SELECT 1 FROM {fundraiser_currencies} WHERE code = :code', array(':code' => $record['code']))->fetchField()) {
-      // drupal_write_record('fundraiser_currencies', $record);
-      // Not using write record here per doc.
-      db_insert('fundraiser_currencies')->fields($record)->execute();
-    }
-  }
-}
-
-/**
  * Implements hook_update_last_removed().
  */
 function fundraiser_multi_currency_update_last_removed() {
   return 6001;
-}
-
-/**
- * Add the default currency field to existing donation content types.
- */
-function fundraiser_multi_currency_update_7001() {
-  $types = node_type_get_types();
-  foreach ($types as $type => $type_info) {
-    if (fundraiser_is_donation_type($type)) {
-      fundraiser_multi_currency_add_currency_field($type);
-    }
-  }
 }
