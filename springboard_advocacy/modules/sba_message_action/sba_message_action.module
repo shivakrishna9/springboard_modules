@@ -193,10 +193,12 @@ function sba_message_action_node_load($nodes, $types) {
     if ($node->type == 'sba_message_action') {
 
       $confirm_fail = db_query('select custom_confirmation, fail_message FROM sba_message_action_confirm WHERE nid = :nid', array(':nid' => $node->nid))->fetchAll();
-        if(is_numeric($confirm_fail[0]->custom_confirmation)) {
+      if(isset($confirm_fail[0]) && is_numeric($confirm_fail[0]->custom_confirmation)) {
         $node->custom_confirmation = $confirm_fail[0]->custom_confirmation;
       }
-      $node->custom_fail_message = $confirm_fail[0]->fail_message;
+      if(isset( $confirm_fail[0]->fail_message)) {
+        $node->custom_fail_message = $confirm_fail[0]->fail_message;
+      }
 
 
       if(isset($node->form_layouts) &&  $node->form_layouts == 'one_column') {
@@ -932,9 +934,9 @@ function sba_message_action_settings_form_submit($form, $form_state) {
   foreach ($result as $node) {
     $record = array(
       'nid' => $node->nid,
-      'confirmation' => variable_get('sba_message_action_confirm', ''),
+      'fail_message' => variable_get('sba_message_action_confirm', ''),
     );
-      drupal_write_record('webform', $record, 'nid');
+      drupal_write_record('sba_message_action_confirm', $record, 'nid');
   }
 }
 
