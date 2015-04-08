@@ -220,48 +220,51 @@ function springboard_advocacy_build_confirmation($response) {
 
     $message_text = format_plural($message_count, 'message was', 'messages were');
     $deliverable_text = format_plural($deliverable_count, 'target', 'targets');
-    $_SESSION['message_recipients'] = t('@message_count @message_text delivered to @deliverable_count @deliverable_text.', array(
-      '@message_count' => $message_count,
-      '@message_text' => $message_text,
-      '@deliverable_count' => $deliverable_count,
-      '@deliverable_text' => $deliverable_text,
-    ));
+    if($deliverable_count > 0) {
+      $_SESSION['message_recipients'] = t('@message_count @message_text delivered to @deliverable_count @deliverable_text.', array(
+        '@message_count' => $message_count,
+        '@message_text' => $message_text,
+        '@deliverable_count' => $deliverable_count,
+        '@deliverable_text' => $deliverable_text,
+      ));
 
-    foreach ($messages as $id => $message) {
-      foreach ($messages[$id]['deliverable'] as $target) {
+      foreach ($messages as $id => $message) {
+        foreach ($messages[$id]['deliverable'] as $target) {
 
-        $person = array();
-        if(!empty($target->salutation)) {
-          array_push($person, $target->salutation);
-        }
-        if(!empty($target->first_name)) {
-          array_push($person, $target->first_name);
-        }
-        if(!empty($target->last_name)) {
-          array_push($person, $target->last_name);
-        }
-        if(!empty($target->party)) {
-          array_push($person, '(' . $target->party . ')');
-        }
-        if(!empty($target->state) && empty($target->district_name)) {
-          array_push($person, $target->state);
-        }
-        if(!empty($target->district_name)) {
-          array_push($person, $target->district_name);
-        }
+          $person = array();
+          if (!empty($target->salutation)) {
+            array_push($person, $target->salutation);
+          }
+          if (!empty($target->first_name)) {
+            array_push($person, $target->first_name);
+          }
+          if (!empty($target->last_name)) {
+            array_push($person, $target->last_name);
+          }
+          if (!empty($target->party)) {
+            array_push($person, '(' . $target->party . ')');
+          }
+          if (!empty($target->state) && empty($target->district_name)) {
+            array_push($person, $target->state);
+          }
+          if (!empty($target->district_name)) {
+            array_push($person, $target->district_name);
+          }
 
-        $target_messages[$id]['people'][] = implode(' ', $person);
-        $target_messages[$id]['subject'] = $messages[$id]['subject'];
+          $target_messages[$id]['people'][] = implode(' ', $person);
+          $target_messages[$id]['subject'] = $messages[$id]['subject'];
+        }
       }
-    }
-    if(!empty($target_messages)) {
-      foreach($target_messages as $id => $message) {
-        $_SESSION['message_recipients'] .= theme('springboard_advocacy_webform_confirmations', array('subject' => $target_messages[$id]['subject'], 'recipients' => $message['people']));
+      if (!empty($target_messages)) {
+        foreach ($target_messages as $id => $message) {
+          $_SESSION['message_recipients'] .= theme('springboard_advocacy_webform_confirmations', array('subject' => $target_messages[$id]['subject'], 'recipients' => $message['people']));
+        }
       }
     }
   }
   else {
-    // there were no messages in the response. No valid recipients.
+    //empty($response->messages)
+    // there were no messages in the response. log to watchdof
   }
 }
 

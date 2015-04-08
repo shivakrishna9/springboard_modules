@@ -27,6 +27,11 @@ function sba_message_action_schema() {
         'unsigned' => TRUE,
         'not null' => TRUE,
       ),
+      'fail_message' => array(
+        'description' => 'confirmation fail message',
+        'type' => 'text',
+        'not null' => FALSE,
+      ),
     ),
     'primary key' => array('nid'),
   );
@@ -141,7 +146,8 @@ function _sba_message_action_set_vars() {
   //enable form_layuts
   variable_set('form_layouts_sba_message_action', 1);
   //default confirmation message.
-  variable_set('sba_message_action_confirm', 'Thank you, %value[sbp_first_name] for participating in the messaging campaign.' . "\n\n" . '[action:recipients]');
+  //variable_set('sba_message_action_confirm', 'Thank you, %value[sbp_first_name] for participating in the messaging campaign.' . "\n\n" . '[action:recipients]');
+  variable_set('sba_message_action_confirm', '');
 
   // Add as an advocacy message type.
   $sba_action_types = variable_get('sba_action_types', array(''));
@@ -801,5 +807,12 @@ function sba_message_action_update_7002() {
   $schema = module_invoke('sba_message_action', 'schema');
   if(db_table_exists('sba_message_action_confirm') == FALSE) {
     db_create_table('sba_message_action_confirm', $schema['sba_message_action_confirm']);
+  }
+}
+
+function sba_message_action_update_7003() {
+  $schema = module_invoke('sba_message_action', 'schema');
+  if(db_field_exists('sba_message_action_confirm', 'fail_message') == FALSE) {
+    db_add_field('sba_message_action_confirm', 'fail_message', $schema['sba_message_action_confirm']['fields']['fail_message']);
   }
 }
