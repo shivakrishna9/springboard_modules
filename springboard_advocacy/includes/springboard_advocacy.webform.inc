@@ -3,7 +3,7 @@
 /**
  *
  * Gets Zip+4 from Smarty streets.
- * Builds a webform user contact array with zip, county and lat/long
+ * Builds a user contact array with zip, county and lat/long
  * Gets the messages associated with the webform and prepares them for sending
  * to the API.
  * Merges the contact, messages, and form_id and sends to the target resolver.
@@ -16,32 +16,41 @@ function springboard_advocacy_send_message($user_message, $form_state) {
   $webform_values = $values['submitted'];
   $zip = '';
 
+  // Unset the recipients from any prior submissions.
   if(isset($_SESSION['message_recipients'])) {
     unset($_SESSION['message_recipients']);
   }
 
+  // Get the zip+4 from smarty streets.
   module_load_include('inc', 'springboard_advocacy', 'includes/springboard_advocacy.smarty_streets');
-
   $geo = springboard_advocacy_smarty_lookup($webform_values);
   if (!empty($geo) && !empty($geo['zip']) && !empty($geo['plus4'])) {
     $zip = $geo['zip'] . '-' . $geo['plus4'];
   }
 
+  // We've got a full zip, so we can prepare the submission to send to the resolver.
   if(!empty($zip)) {
+
+    // Build the contact array.
     $contact = springboard_advocacy_build_contact($webform_values, $zip, $geo);
-    $form_id = $values['advocacy_id'];
+
+    // Build the message array.
     $message_build = springboard_advocacy_build_messages($user_message);
 
+    // Build the submission array
     $submission = array(
       'contact' => $contact,
-      'form_id' => $form_id,
+      'form_id' => $values['advocacy_id'],
       'messages' => $message_build,
     );
 
+    // Send submission to API Client
     $loader = new AdvocacyApiClientLoader();
     $client = $loader->getClient();
     $response = $client->resolveTargets($submission);
+
     if(isset($response->data)) {
+      // We got a valid response, build the confirmation message array.
       springboard_advocacy_build_confirmation($response->data);
     }
     else {
@@ -60,6 +69,11 @@ function springboard_advocacy_send_message($user_message, $form_state) {
   }
 }
 
+/**
+ * Theme the message recipients in an item list for each message.
+ * @param $vars
+ * @return string
+ */
 function theme_springboard_advocacy_webform_confirmations($vars) {
   $items = array();
   foreach ($vars['recipients'] as $person) {
@@ -84,7 +98,6 @@ function springboard_advocacy_build_messages($user_message) {
     $all_messages = entity_load('sba_message', array_keys($user_message));
     $messages = array();
     $x = 0;
-
 
     foreach ($all_messages as $message) {
       $message_wrapper = entity_metadata_wrapper('sba_message', $message);
@@ -119,6 +132,10 @@ function springboard_advocacy_build_messages($user_message) {
     return $messages;
 }
 
+/**
+ * @param $parent_terms
+ * @return array
+ */
 function springboard_advocacy_legislative_terms($parent_terms) {
   $terms = array();
   if (!empty($parent_terms)) {
@@ -131,6 +148,11 @@ function springboard_advocacy_legislative_terms($parent_terms) {
   return $terms;
 }
 
+/**
+ * @param $ancestor_tid
+ * @param $tree
+ * @return array
+ */
 function _springboard_advocacy_legislative_terms_descendents($ancestor_tid, $tree) {
   $children = array();
   foreach ($tree as $term) {
@@ -173,7 +195,13 @@ function springboard_advocacy_build_contact($values, $zip, $geo) {
   return $contact;
 }
 
+/**
+ * Create a confirmation message from the API server response.
+ * Then place it into Session for use by the confirmation page token.
+ * @param $response
+ */
 function springboard_advocacy_build_confirmation($response) {
+
   $recipients = array();
   $messages = array();
   $message_count = 0;
@@ -231,6 +259,9 @@ function springboard_advocacy_build_confirmation($response) {
         $_SESSION['message_recipients'] .= theme('springboard_advocacy_webform_confirmations', array('subject' => $target_messages[$id]['subject'], 'recipients' => $message['people']));
       }
     }
+  }
+  else {
+    // there were no messages in the response. No valid recipients.
   }
 }
 
