@@ -403,6 +403,25 @@ function springboard_advocacy_settings_submit($form, $form_state) {
   variable_del('sba_subscription');
 }
 
+function springboard_advocacy_committees() {
+  $committee_list = &drupal_static(__FUNCTION__);
+  if (!isset($committee_list)) {
+    if ($cache = cache_get('committee_list')) {
+      $committee_list = $cache->data;
+    }
+    else {
+      $loader = new AdvocacyApiClientLoader();
+      $client = $loader->getClient();
+      $response = $client->getCommitteeList();
+      if (isset($response->data)) {
+        $committee_list = (array)$response->data;
+        cache_set('committee_list', $committee_list, 'cache');
+      }
+    }
+  }
+  return $committee_list;
+}
+
 /**
  * Implements hook_form_FORMID_alter
  *
@@ -415,6 +434,15 @@ function springboard_advocacy_settings_submit($form, $form_state) {
 function springboard_advocacy_form_views_exposed_form_alter(&$form, &$form_state, $form_id)
 {
   if ($form_id == 'views_exposed_form' && $form_state['view']->name == 'targets') {
+
+
+    //$path =  drupal_get_path('module', 'sba_message_action');
+    $form['search_committee']['#autocomplete_path'] = 'message-action/committee/autocomplete';
+
+    $form['#attached']['js'] = array(
+      drupal_get_path('module', 'sba_message') . '/js/autocomplete_override.js',
+    );
+
     $districted = array('views-exposed-form-targets-page-1', 'views-exposed-form-targets-block-3');
     if(isset($form['search_role_1'])) {
       $form['search_role_1']['#type'] = 'checkboxes';
@@ -762,12 +790,13 @@ function springboard_advocacy_get_subscription() {
     $response = $client->getSubscription();
     if (isset($response->data)) {
       $subscription = (array)$response->data;
-      variable_set('sba_subscription', array('subscription_type' => $response->data->subscription_type, 'states_custom' => $response->data->states_custom));
+      variable_set('sba_subscription', array('subscription_type' => $response->data->subscription_type, 'states_custom' => isset($response->data->states_custom) ? $response->data->states_custom : NULL));
     } else {
       if (user_access('administer springboard advocacy')) {
         if (isset($response->error)) {
-          drupal_set_message(t('An error occurred when attempting to retrieve the account subscription: @message:', array('@message' => $response->error->message)), 'error');
-          watchdog('advocacy', 'An error occurred when attempting to retrieve the account subscription: @message:', array('@message' => $response->error->message), WATCHDOG_ERROR);
+          $message = isset($response->error->message) ? $response->error->message : $response->error;
+          drupal_set_message(t('An error occurred when attempting to retrieve the account subscription: @message:', array('@message' => $message)), 'error');
+          watchdog('advocacy', 'An error occurred when attempting to retrieve the account subscription: @message:', array('@message' => $message), WATCHDOG_ERROR);
 
         } else {
           drupal_set_message(t('A response was not received from the API server when attempting to retrieve the account subscription.'), 'error');

@@ -19,10 +19,44 @@ function sba_message_action_menu() {
     'access arguments' => array('administer springboard advocacy'),
     'type' => MENU_NORMAL_ITEM,
   );
+  //$path =  drupal_get_path('module', 'sba_message_action');
+  $items['message-action/committee/autocomplete'] = array(
+    'page callback' => '_sba_message_action_committee_autocomplete',
+    'access callback' =>TRUE ,
+    'type' => MENU_CALLBACK,
+  );
 
   return $items;
 }
 
+function _sba_message_action_committee_autocomplete($name, $state, $chamber) {
+  $matches = array();
+
+  $committee_list = springboard_advocacy_committees();
+
+  $name_pattern = "/.*" . $name . ".*/";
+  $state_pattern = "/.*" . $state . ".*/";
+  $chamber_pattern = "/.*" . $chamber . ".*/";
+
+  $results = preg_grep($name_pattern, $committee_list);
+  if($state != 'All') {
+    $results = preg_grep($state_pattern, $results);
+  }
+  if($chamber != 'All') {
+    $results = preg_grep($chamber_pattern, $results);
+  }
+  $num = count($results);
+  $results = array_slice($results, 0 , 5);
+  $rest = $num - 5;
+  if($rest > 0) {
+    $results[] = 'Plus ' . $rest . ' more. Try narrowing your search with more words or filters';
+  }
+  foreach ($results as $key => $row) {
+    $matches[$row] = $row;
+  }
+
+  drupal_json_output($matches);
+}
 /**
  * Multi-message popup modal callback
  *

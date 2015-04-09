@@ -250,7 +250,6 @@ function springboard_advocacy_views_data() {
     'filter' => array(
       'handler' => 'springboard_advocacy_views_handler_filter_search_types',
       'options callback' => 'springboard_advocacy_target_gender'
-
     ),
   );
 
@@ -266,9 +265,19 @@ function springboard_advocacy_views_data() {
   // First Name
   $data['advocacy']['search_committee'] = array(
     'title' => t('Search by Committee Name'),
-    'help' => t('Commiteee name search'),
+    'help' => t('Committee name search'),
     'filter' => array(
       'handler' => 'springboard_advocacy_views_handler_filter_string',
+    ),
+  );
+
+
+  $data['advocacy']['search_committee_chamber'] = array(
+    'title' => t('Search By Committee Chamber'),
+    'help' => t('Adds a filter to limit searches by committee chamber'),
+    'filter' => array(
+      'handler' => 'springboard_advocacy_views_handler_filter_search_types',
+      'options callback' => 'springboard_advocacy_target_committee_chamber'
     ),
   );
 
@@ -368,6 +377,22 @@ function springboard_advocacy_target_party() {
     'R' => t('Republican'),
     'I' => t('Independent'),
     'O' => t('Other'),
+  );
+  return $value_options;
+}
+
+/**
+ * Returns default options for views field configuration
+ */
+function springboard_advocacy_target_committee_chamber() {
+  $value_options = array(
+    'FH' => t('Federal House'),
+    'FS' => t('Federal Senate'),
+    'FJ' => t('Federal Joint'),
+    'SH' => t('State House'),
+    'SS' => t('State Senate'),
+    'SJ' => t('State Joint'),
+
   );
   return $value_options;
 }

@@ -19,34 +19,33 @@
 
             $('.committee-search').click(function () {
                 reset('committee');
-                $('.radio-widgets, #state-district-wrapper,#edit-combine-wrapper, .search-reset, .views-targets-button-wrapper').hide();
-                $('#edit-search-committee-wrapper').show(300);
+                $('#edit-search-role-1-wrapper, #edit-search-party-wrapper, #edit-search-social-wrapper, #edit-search-gender-wrapper, #edit-search-district-name-wrapper, #edit-combine-wrapper, .search-reset, .views-targets-button-wrapper').hide();
+                $('#edit-search-committee-chamber-wrapper, #edit-search-committee-wrapper').show(300);
                 $('a.committee-search').closest('.faux-tab').addClass('active');
                 $('a.full-search').closest('.faux-tab').removeClass('active');
                 window.search_state = 'committee';
                 return false;
-
             });
 
             $('.full-search').click(function () {
-                $('#edit-search-committee-wrapper').hide();
+                $('#edit-search-committee-chamber-wrapper, #edit-search-committee-wrapper').hide();
                 $('a.committee-search').closest('.faux-tab').removeClass('active');
                 $('a.full-search').closest('.faux-tab').addClass('active');
-                $('.radio-widgets,#state-district-wrapper,#edit-combine-wrapper, .search-reset').show(300);
+                $('#edit-search-role-1-wrapper, #edit-search-party-wrapper, #edit-search-social-wrapper, #edit-search-gender-wrapper,#edit-search-district-name-wrapper,#edit-combine-wrapper, .search-reset').show(300);
                 window.search_state = 'full-search';
                 return false;
 
             });
 
             if(window.search_state == 'committee') {
-                $('.radio-widgets,#state-district-wrapper,#edit-combine-wrapper, .search-reset, .views-targets-button-wrapper').hide();
-                $('#edit-search-committee-wrapper').show(300);
+                $('#edit-search-role-1-wrapper, #edit-search-party-wrapper, #edit-search-social-wrapper, #edit-search-gender-wrapper, #edit-search-district-name-wrapper, #edit-combine-wrapper, .search-reset, .views-targets-button-wrapper').hide();
+                $('#edit-search-committee-chamber-wrapper, #edit-search-committee-wrapper').show(300);
             }
             else {
                 $('a.committee-search').closest('.faux-tab').removeClass('active');
                 $('a.full-search').closest('.faux-tab').addClass('active');
-                $('.radio-widgets,#state-district-wrapper,#edit-combine-wrapper, .search-reset').show(300);
-                $('#edit-search-committee-wrapper').hide();
+                $('#edit-search-party-wrapper, #edit-search-social-wrapper, #edit-search-gender-wrapper, #edit-search-district-name-wrapper, #edit-combine-wrapper, .search-reset').show(300);
+                $('#edit-search-committee-chamber-wrapper, #edit-search-committee-wrapper').hide();
             }
 
             if ($('#edit-combine').text().length == 0) {
@@ -215,16 +214,15 @@
                 $('#edit-search-district-name-wrapper div.selector').addClass('disabled');
             }
         }
-
         //update quick target button based on meta-variables
-        if(notGroupable == true || hasDistrict == true || (groupable == false && hasState == false)) {
+        if(window.search_state == 'committee' || notGroupable == true || hasDistrict == true || (groupable == false && hasState == false)) {
 
             $('.views-targets-button-wrapper').prop("disabled", true).fadeTo(400, 0).css({'cursor': 'default'}).addClass('cancel-hover');
             $('.views-targets-button-wrapper input').prop("disabled", true).fadeTo(400, 0).css({'cursor': 'default'}).addClass('cancel-hover');
 
         }
 
-       else if((groupable == true || hasState == true)  && hasDistrict == false && notGroupable == false) {
+       else if((groupable == true || hasState == true)  && window.search_state != 'committee' && hasDistrict == false && notGroupable == false) {
             $('.views-targets-button-wrapper').prop("disabled", false).fadeTo(200, 1).css({'cursor': 'pointer'}).removeClass('cancel-hover');
             $('.views-targets-button-wrapper input').prop("disabled", false).fadeTo(200, 1).css({'cursor': 'pointer'}).removeClass('cancel-hover');
         }
@@ -565,6 +563,7 @@
 
     // Main set of functions which need to happen on every page load
     $(document).ready(function () {
+
         if ($.isFunction($.fn.uniform)) {
             $('select').each(function () {
                 $.uniform.restore(this);
