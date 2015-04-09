@@ -289,7 +289,8 @@ function _sba_message_api_delete_target_group ($sba_message) {
   } else {
     if (user_access('administer springboard advocacy')) {
       if (isset($response->error)) {
-        drupal_set_message(t('An error occurred when attempting to delete the message\'s target group: @message:', array('@message' => $response->error->message)), 'error');
+        $message = isset($response->error->message) ? $response->error->message : $response->error;
+        drupal_set_message(t('An error occurred when attempting to delete the message\'s target group: @message:', array('@message' => $message)), 'error');
         watchdog('advocacy', 'An error occurred when attempting to delete the message\'s target group @id: @message:', array('@id' => $sba_message->data['group_id'], '@message' => $response->error->message), WATCHDOG_ERROR);
 
       } else {
