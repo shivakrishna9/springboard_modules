@@ -36,16 +36,21 @@ class springboard_advocacy_views_plugin_query extends views_plugin_query {
     $client = $view->build_info['springboard_advocacy_request'];
 
     $start = microtime(true);
+
     // should we pull the terms from $view->query? Why use $view->build_info?
     $fields = !empty($view->query->search_terms) ? $view->query->search_terms : NULL;
+
+
     // If a non-exposed class_name search is present and it is the only search
     // suppress results because no search has actually been performed yet
-
     // Will need to further limit this by view block name so the main admin screens have results by default.
     if ((count($fields) == 1) && isset($fields['class_name'])) {
       //$suppress_results = $view->filter['search_class_name']->options['exposed'] == FALSE;
     }
+
+
     if (!empty($fields) && empty($suppress_results)) {
+
       foreach ($fields as $field_name => $search_terms) {
         // is it a multiple value checkbox or select?
         // then format in a way the api expects
@@ -53,16 +58,17 @@ class springboard_advocacy_views_plugin_query extends views_plugin_query {
           $fields[$field_name] = implode('|', $search_terms);
         }
         else {
+
           //strip leading and multiple whitespaces
           $search_terms = trim($search_terms);
           $search_terms = preg_replace('/\s+/', ' ', $search_terms);
 
-          //no committees
-          if(strpos($search_terms, 'committee:') === FALSE) {
+          //no committees in the main search tab text input
+          if(strpos($search_terms, 'committee:') === FALSE && $field_name != 'search_committee') {
             $fields[$field_name] = str_replace(' ', '|', $search_terms);
           }
-          else {
-            //has committees
+          elseif( $field_name != 'search_committee') {
+            //has committees in the main search tab text input
             $pattern = '/(committee:".*?")/';
             preg_match_all($pattern, $search_terms, $matches);
 
@@ -81,6 +87,8 @@ class springboard_advocacy_views_plugin_query extends views_plugin_query {
               $fields[$field_name] =  $non_matches . $committees;
             }
           }
+          //end main tab text input committee parsing
+
         }
       }
 
@@ -91,7 +99,6 @@ class springboard_advocacy_views_plugin_query extends views_plugin_query {
         $fields['sort'] = $this->orderby[0]['field'];
         $fields['direction'] = $this->orderby[0]['direction'];
       }
-
 
       // Get the targets
       $targets = $client->searchTargets($fields);
