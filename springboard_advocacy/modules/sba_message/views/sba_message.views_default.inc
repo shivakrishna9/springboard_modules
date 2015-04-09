@@ -842,6 +842,22 @@ function sba_message_views_default_views() {
       ),
     ),
   );
+  /* Filter criterion: Advocacy: Search By Committee Chamber */
+  $handler->display->display_options['filters']['search_committee_chamber']['id'] = 'search_committee_chamber';
+  $handler->display->display_options['filters']['search_committee_chamber']['table'] = 'advocacy';
+  $handler->display->display_options['filters']['search_committee_chamber']['field'] = 'search_committee_chamber';
+  $handler->display->display_options['filters']['search_committee_chamber']['exposed'] = TRUE;
+  $handler->display->display_options['filters']['search_committee_chamber']['expose']['operator_id'] = 'search_committee_chamber_op';
+  $handler->display->display_options['filters']['search_committee_chamber']['expose']['label'] = 'Committee Chamber';
+  $handler->display->display_options['filters']['search_committee_chamber']['expose']['operator'] = 'search_committee_chamber_op';
+  $handler->display->display_options['filters']['search_committee_chamber']['expose']['identifier'] = 'search_committee_chamber';
+  $handler->display->display_options['filters']['search_committee_chamber']['expose']['remember_roles'] = array(
+    2 => '2',
+    1 => 0,
+    3 => 0,
+    4 => 0,
+    5 => 0,
+  );
 
 
   $views[$view->name] = $view;
