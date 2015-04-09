@@ -20,9 +20,21 @@ $plugin = array(
   'defaults' => array(
     'settings' => array(
       'placement' => key($placements),
-      'page_visibility' => BLOCK_VISIBILITY_NOTLISTED,
-      'pages' => '',
-      'node_type' => array(),
+      'visibility' => array(
+        'path' => array(
+          'page_specific' => BLOCK_VISIBILITY_NOTLISTED,
+          'pages' => '',
+        ),
+        'node' => array(
+          'type' => array(),
+        ),
+        'fundraiser' => array(
+          'confirmation' => 0,
+        ),
+        'user' => array(
+          'roles' => array(),
+        ),
+      ),
     ),
   ),
 

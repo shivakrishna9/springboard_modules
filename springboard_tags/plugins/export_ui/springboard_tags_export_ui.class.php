@@ -18,43 +18,82 @@ class springboard_tags_export_ui extends ctools_export_ui {
       '#options' => _springboard_tags_placement_options(),
     );
 
+    // Visibility options.
+    $form['visibility'] = array(
+      '#type' => 'container',
+      '#tree' => TRUE,
+    );
+
+    // Fundraiser visibility options.
+    $form['visibility']['fundraiser'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Fundraiser Visibility'),
+      '#collapsible' => TRUE,
+      '#collapsed' => TRUE,
+      '#access' => module_exists('fundraiser'),
+    );
+
+    $form['visibility']['fundraiser']['confirmation'] = array(
+      '#type' => 'checkbox',
+      '#title' => t('Show only on donation form confirmation pages'),
+      '#default_value' => $form_state['item']->settings['visibility']['fundraiser']['confirmation'],
+    );
+
+    // Fundraiser visibility options.
+    $form['visibility']['user'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('User Visibility'),
+      '#collapsible' => TRUE,
+      '#collapsed' => TRUE,
+      '#access' => module_exists('fundraiser'),
+    );
+
+    $role_options = array_map('check_plain', user_roles());
+    $form['visibility']['user']['roles'] = array(
+      '#type' => 'checkboxes',
+      '#title' => t('Show tag for specific user roles'),
+      '#default_value' => $form_state['item']->settings['visibility']['user']['roles'],
+      '#options' => $role_options,
+      '#description' => t('Show this tag only for the selected role(s). If you select no roles, the tag will be visible to all users.'),
+    );
+
     // Per-path visibility.
-    $form['path_visibility'] = array(
+    $form['visibility']['path'] = array(
       '#type' => 'fieldset',
       '#title' => t('Path Visibility'),
       '#collapsible' => TRUE,
       '#collapsed' => TRUE,
     );
 
-    $form['path_visibility']['page_visibility'] = array(
+    $form['visibility']['path']['page_specific'] = array(
       '#type' => 'radios',
       '#title' => t('Include tag on specific pages'),
       '#options' => array(
         BLOCK_VISIBILITY_NOTLISTED => t('All pages except those listed'),
         BLOCK_VISIBILITY_LISTED => t('Only the listed pages'),
       ),
-      '#default_value' => $form_state['item']->settings['page_visibility'],
+      '#default_value' => $form_state['item']->settings['visibility']['path']['page_specific'],
     );
 
-    $form['path_visibility']['pages'] = array(
+    $form['visibility']['path']['pages'] = array(
       '#type' => 'textarea',
       '#title' => 'Pages',
-      '#default_value' => $form_state['item']->settings['pages'],
+      '#default_value' => $form_state['item']->settings['visibility']['path']['pages'],
       '#description' => t("Specify pages by using their paths. Enter one path per line. The '*' character is a wildcard."),
     );
 
     // Per-node type visibility.
-    $form['node_visibility'] = array(
+    $form['visibility']['node'] = array(
       '#type' => 'fieldset',
-      '#title' => t('Node Visibility'),
+      '#title' => t('Content Visibility'),
       '#collapsible' => TRUE,
       '#collapsed' => TRUE,
     );
 
-    $form['node_visibility']['node_type'] = array(
+    $form['visibility']['node']['type'] = array(
       '#type' => 'checkboxes',
       '#title' => t('Show tag for specific content types'),
-      '#default_value' => $form_state['item']->settings['node_type'],
+      '#default_value' => $form_state['item']->settings['visibility']['node']['type'],
       '#options' => node_type_get_names(),
       '#description' => t('Show this tag only on nodes of the given type(s). If you select no types, there will be no type-specific limitation.'),
     );
@@ -65,9 +104,7 @@ class springboard_tags_export_ui extends ctools_export_ui {
 
     // Since items in our settings are not in the schema, we have to do these manually:
     $form_state['item']->settings['placement'] = $form_state['values']['placement'];
-    $form_state['item']->settings['page_visibility'] = $form_state['values']['page_visibility'];
-    $form_state['item']->settings['pages'] = $form_state['values']['pages'];
-    $form_state['item']->settings['node_type'] = $form_state['values']['node_type'];
+    $form_state['item']->settings['visibility'] = $form_state['values']['visibility'];
   }
 
   function list_form(&$form, &$form_state) {
