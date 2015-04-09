@@ -19,10 +19,11 @@ function sba_message_action_menu() {
     'access arguments' => array('administer springboard advocacy'),
     'type' => MENU_NORMAL_ITEM,
   );
+
   //$path =  drupal_get_path('module', 'sba_message_action');
   $items['message-action/committee/autocomplete'] = array(
     'page callback' => '_sba_message_action_committee_autocomplete',
-    'access callback' =>TRUE ,
+    'access arguments' => array('add target to action'),
     'type' => MENU_CALLBACK,
   );
 
