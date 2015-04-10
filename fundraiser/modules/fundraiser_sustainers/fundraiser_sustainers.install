@@ -524,63 +524,79 @@ function fundraiser_sustainers_update_7009() {
 }
 
 /**
- * Adds and removes fields to the sustainer log table.
+ * Create new sustainers log table.
  */
 function fundraiser_sustainers_update_7010() {
   registry_rebuild();
-  $field = array(
-    'description' => 'Unix timestamp of when to make the next charge.',
-    'type' => 'int',
-    'not null' => TRUE,
+
+  /**
+   * Rename the old log table to leave previous records alone.
+   *
+   * These records aren't used anymore but we leave them for historical purposes.
+   */ 
+  db_rename_table('fundraiser_sustainers_log', 'fundraiser_sustainers_log_pre_insights');
+
+  // Create the new table.
+  $fundraiser_sustainers_log_schema = array(
+    'description' => 'Stores the result of sustainer processing.',
+    'fields' => array(
+      'lid' => array(
+        'description' => 'Unqiue id of the log entry.',
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'did' => array(
+        'description' => 'The id of the donation being processed.',
+        'type' => 'int',
+        'not null' => TRUE,
+      ),
+      'timestamp' => array(
+        'description' => 'The time that the activity occurred.',
+        'type' => 'int',
+        'not null' => TRUE,
+      ),
+      'lock_id' => array(
+        'description' => 'The id of the lock that was put on the records during processing.',
+        'type' => 'varchar',
+        'length' => '55',
+        'not null' => FALSE,
+        'default' => '0',
+      ),
+      'next_charge' => array(
+        'description' => 'Unix timestamp of when to make the next charge.',
+        'type' => 'int',
+        'not null' => TRUE,
+      ),
+      'old_state' => array(
+        'description' => 'Initial state.',
+        'type' => 'varchar',
+        'length' => '255',
+        'not null' => FALSE,
+      ),
+      'new_state' => array(
+        'description' => 'New state.',
+        'type' => 'varchar',
+        'length' => '255',
+        'not null' => FALSE,
+      ),
+      'attempts' => array(
+        'description' => 'Number of attempts made to charge.',
+        'type' => 'int',
+        'not null' => FALSE,
+        'default' => 0,
+      ),
+      'cancellation_reason' => array(
+        'description' => 'If cancelled, reason why.',
+        'type' => 'varchar',
+        'length' => '500',
+        'not null' => FALSE,
+      ),
+    ),
+    'primary key' => array('lid'),
   );
-  db_add_field('fundraiser_sustainers_log', 'next_charge', $field);
 
-  $field = array(
-    'description' => 'Initial state.',
-    'type' => 'varchar',
-    'length' => '255',
-    'not null' => FALSE,
-  );
-  db_add_field('fundraiser_sustainers_log', 'old_state', $field);
-
-  $field = array(
-    'description' => 'New state.',
-    'type' => 'varchar',
-    'length' => '255',
-    'not null' => FALSE,
-  );
-  db_add_field('fundraiser_sustainers_log', 'new_state', $field);
-
-  $field = array(
-    'description' => 'Number of attempts made to charge.',
-    'type' => 'int',
-    'not null' => FALSE,
-    'default' => 0,
-  );
-  db_add_field('fundraiser_sustainers_log', 'attempts', $field);
-
-  $field = array(
-    'description' => 'If cancelled, reason why.',
-    'type' => 'varchar',
-    'length' => '500',
-    'not null' => FALSE,
-  );
-  db_add_field('fundraiser_sustainers_log', 'cancellation_reason', $field);
-
-  $field = array(
-    'description' => 'The time that the activity occurred.',
-    'type' => 'int',
-    'not null' => TRUE,
-  );
-  db_add_field('fundraiser_sustainers_log', 'timestamp', $field);
-
-  if (db_field_exists('fundraiser_sustainers_log', 'date_processed')) {
-    db_query('UPDATE {fundraiser_sustainers_log} SET timestamp = date_processed');
-    db_drop_field('fundraiser_sustainers_log', 'date_processed');
-  }
-
-  db_drop_field('fundraiser_sustainers_log', 'success');
-  db_drop_field('fundraiser_sustainers_log', 'gateway');
+  db_create_table('fundraiser_sustainers_log', $fundraiser_sustainers_log_schema);
 }
 
 /**
