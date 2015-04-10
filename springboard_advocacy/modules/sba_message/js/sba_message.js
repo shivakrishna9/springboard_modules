@@ -498,6 +498,7 @@
     }
 
     function reset($type) {
+
         if ($type == 'all') {
             $('.views-submit-button').append('<a class = "search-reset" href ="#">reset</a>');
             $('.search-reset').click(function () {
@@ -516,6 +517,8 @@
     }
 
     function resetFull() {
+        $('.view-empty').hide();
+
         var allInputs = $('#views-exposed-form-targets-block-3 input[type="checkbox"], #views-exposed-form-targets-block-3 input[type="text"], #views-exposed-form-targets-block-3 select');
         allInputs.each(function () {
             if ($(this).prop('tagName') == "SELECT") {
@@ -569,6 +572,9 @@
                 $.uniform.restore(this);
             });
         }
+
+        $('.view-empty').hide();
+
         //stop views ajax auto scroll
         $('.pager-item a, #edit-submit-targets').click(function(){
             Drupal.ajax.prototype.commands.viewsScrollTop = null;
