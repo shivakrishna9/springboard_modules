@@ -9,7 +9,7 @@
 
     Drupal.behaviors.AdvocacyMessageRecipients = {
         attach: function(context, settings) {
-
+           // Drupal.settings.ajax['edit-search-state'] = {}
             $('.view-targets').once('advocacy-committee-search', function() {
                 var finder = $('#springboard-advocacy-find-targets-container .view-targets');
                 finder.prepend('<div class="faux-tab-container"><div class="faux-tab"' +
@@ -24,10 +24,12 @@
                 $('a.committee-search').closest('.faux-tab').addClass('active');
                 $('a.full-search').closest('.faux-tab').removeClass('active');
                 window.search_state = 'committee';
+                $('#edit-search-state').unbind('change', Drupal.ajax('edit-search-state', Drupal.ajax['edit-search-state'].element_settings.element, Drupal.ajax['edit-search-state'].element_settings));
                 return false;
             });
 
             $('.full-search').click(function () {
+                new Drupal.ajax('edit-search-state', Drupal.ajax['edit-search-state'].element_settings.element, Drupal.ajax['edit-search-state'].element_settings);
                 $('#edit-search-committee-chamber-wrapper, #edit-search-committee-wrapper').hide();
                 $('a.committee-search').closest('.faux-tab').removeClass('active');
                 $('a.full-search').closest('.faux-tab').addClass('active');
