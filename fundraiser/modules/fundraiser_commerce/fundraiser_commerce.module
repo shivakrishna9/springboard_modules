@@ -251,11 +251,16 @@ function commerce_donation_line_item_add_form($element, &$form_state) {
   foreach ($multi_currancy as $currency_code => $currency) {
     $available_currency[$currency_code] = $currency['name'];
   }
+
+  // This default value isn't great but it's what we have at this point.
+  // Ideally it should be the currency of the other
+  // line items or original donation.
   $form['currency'] = array(
     '#type' => 'select',
     '#title' => t('Currency'),
     '#description' => t('Enter the currency of the donation to add to the order.'),
     '#options' => $available_currency,
+    '#default_value' => commerce_default_currency(),
   );
 
   // TODO - select a fundraiser to associate this with.
@@ -265,9 +270,10 @@ function commerce_donation_line_item_add_form($element, &$form_state) {
   // For now, display a 'not from here' message.
   $form['fundraiser_donation'] = array(
     '#markup' => '<div class="commerce-donation-line-item-warning">' .
-      t('Warning: Donation line items added through this interface do not generate an additional donation object in the Fundraiser system,' .
-        'or update a donation associated with this order to the new amount. Please do not use this to update donations on orders.') . '</div>',
+      t('Warning: Donation line items added through this interface do not generate an additional donation object in the Fundraiser system, or update a donation associated with this order to the new amount. Please do not use this to update donations on orders.') .
+      '</div>',
   );
+
   return $form;
 }
 
