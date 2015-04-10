@@ -48,12 +48,7 @@ function fundraiser_date_mode_fundraiser_sustainers_process_recurring_alter(&$pr
       }
       else {
         // Skip record & unlock.
-        db_query('
-         UPDATE {fundraiser_sustainers}
-         SET lock_id = 0
-         WHERE did = :did',
-          array(':did' => $recurring->did)
-        );
+        _fundraiser_sustainers_update_recurring(array('did' => $recurring->did, 'lock_id' => 0));
       }
     }
   }
@@ -374,13 +369,11 @@ function _fundraiser_date_mode_revert_sustainer_dates($master_order, $series_ord
 
   foreach ($orders_to_revert as $did) {
     if (isset($original_dates[$did]['original_next_charge'])) {
-      db_update('fundraiser_sustainers')
-        ->fields(array(
-          'next_charge' => $original_dates[$did]['original_next_charge'],
-        ))
-        ->condition('master_did', $master_order['master_did'], '=')
-        ->condition('did', $did, '=')
-        ->execute();
+      $recurring = array(
+        'did' => $did,
+        'next_charge' => $original_dates[$did]['original_next_charge'],
+      );
+      _fundraiser_sustainers_update_recurring($recurring);
     }
   }
 }
@@ -453,6 +446,19 @@ function fundraiser_date_mode_update_sustainer_date($time_delta, $master_did, $d
     $query->condition('did', $dids, '=');
   }
   $query->execute();
+
+  // Log the change.
+  // This should pick up the new next_charge from the previous query.
+  $dids_to_log = is_array($dids) ? $dids : array($dids);
+  foreach ($dids_to_log as $did_to_log) {
+    $log_record = array(
+      'did' => $did_to_log,
+      'new_state' => 'scheduled',
+    );
+
+    $log = fundraiser_sustainers_log();
+    $log->log($log_record);
+  }
 
   // If Salesforce integration is available, requeue affected orders for
   // resync to Salesforce.
