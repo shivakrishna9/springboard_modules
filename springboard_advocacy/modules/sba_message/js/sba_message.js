@@ -37,10 +37,11 @@
                 return false;
 
             });
-
-            if(window.search_state == 'committee') {
+            if(window.search_state == 'committee' ) {
                 $('#edit-search-role-1-wrapper, #edit-search-party-wrapper, #edit-search-social-wrapper, #edit-search-gender-wrapper, #edit-search-district-name-wrapper, #edit-combine-wrapper, .search-reset, .views-targets-button-wrapper').hide();
                 $('#edit-search-committee-chamber-wrapper, #edit-search-committee-wrapper').show(300);
+                $('a.committee-search').closest('.faux-tab').addClass('active');
+
             }
             else {
                 $('a.committee-search').closest('.faux-tab').removeClass('active');
@@ -536,7 +537,6 @@
                 $(this).closest('.views-exposed-widget').removeClass('disabled');
             }
             if (this.type == 'text') {
-                console.log(this);
                 $(this).val('');
             }
         });
