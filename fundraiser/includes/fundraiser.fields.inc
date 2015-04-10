@@ -5,7 +5,7 @@
  */
 
 /**
- * Add fields needed by fundraiser to a node type
+ * Add fields needed by fundraiser to a node type.
  *
  * @param string $type
  *   The content type to check if the fundraiser fields exist,
@@ -14,15 +14,15 @@
 function _fundraiser_add_default_fields($type) {
   $fields = _fundraiser_default_fields_settings($type);
   foreach ($fields as $field_name => $field) {
-    // These should be added on each page request, but to be sure do it again
+    // These should be added on each page request, but to be sure do it again.
     module_load_include('inc', 'field', 'field.crud');
     module_load_include('inc', 'field', 'field.info');
 
-    // If the field doesn't exist create it
+    // If the field doesn't exist create it.
     if (!field_info_field($field_name)) {
       field_create_field($field['field_config']);
     }
-    // Before adding the field check that it does not exist on the node type
+    // Before adding the field check that it does not exist on the node type.
     if (!field_info_instance('node', $field_name, $type)) {
       field_create_instance($field['field_instance']);
     }
@@ -30,13 +30,13 @@ function _fundraiser_add_default_fields($type) {
 }
 
 /**
- * Returns an array of field configurations
+ * Returns an array of field configurations.
  *
  * This is copied from a features export.
  *
  * @param string $type
  *    The type of node these fields will be added to,
- *    used to populate the bundle property
+ *    used to populate the bundle property.
  */
 function _fundraiser_default_fields_settings($type) {
   $fields = array();
