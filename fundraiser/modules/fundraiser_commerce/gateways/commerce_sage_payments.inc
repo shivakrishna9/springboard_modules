@@ -135,6 +135,9 @@ function commerce_sage_payments_fundraiser_commerce_charge($method_instance, $do
   $order = commerce_order_load($donation->did);
   $wrapper = entity_metadata_wrapper('commerce_order', $order);
   $charge = $wrapper->commerce_order_total->value();
+  if (!isset($charge['recurs_monthly']) && isset($donation->donation['recurs_monthly'])) {
+    $charge['recurs_monthly'] = $donation->donation['recurs_monthly'];
+  }
 
   $pane_form = array(); // Not actually used anywhere in this system, so ignore it.
 
