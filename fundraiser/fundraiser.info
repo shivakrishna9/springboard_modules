@@ -7,6 +7,8 @@ configure = admin/config/system/fundraiser
 
 dependencies[] = token
 dependencies[] = commerce
+dependencies[] = list
+dependencies[] = entity
 
 ;Testing files
 files[] = tests/fundraiser.test
