@@ -40,7 +40,6 @@ class springboard_advocacy_views_plugin_query extends views_plugin_query {
     // should we pull the terms from $view->query? Why use $view->build_info?
     $fields = !empty($view->query->search_terms) ? $view->query->search_terms : NULL;
 
-
     // If a non-exposed class_name search is present and it is the only search
     // suppress results because no search has actually been performed yet
     // Will need to further limit this by view block name so the main admin screens have results by default.

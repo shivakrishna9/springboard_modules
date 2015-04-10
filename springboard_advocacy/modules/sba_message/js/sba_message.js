@@ -33,6 +33,7 @@
                 $('a.full-search').closest('.faux-tab').addClass('active');
                 $('#edit-search-role-1-wrapper, #edit-search-party-wrapper, #edit-search-social-wrapper, #edit-search-gender-wrapper,#edit-search-district-name-wrapper,#edit-combine-wrapper, .search-reset').show(300);
                 window.search_state = 'full-search';
+                reset('committee');
                 return false;
 
             });
@@ -535,6 +536,7 @@
                 $(this).closest('.views-exposed-widget').removeClass('disabled');
             }
             if (this.type == 'text') {
+                console.log(this);
                 $(this).val('');
             }
         });
