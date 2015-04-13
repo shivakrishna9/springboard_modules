@@ -1,8 +1,8 @@
 <?php
 
-$placements = _springboard_tags_placement_options();
+$placements = _springboard_tag_placement_options();
 $plugin = array(
-  'schema' => 'springboard_tags',
+  'schema' => 'springboard_tag',
   'access' => 'administer springboard tags',
 
   'menu' => array(
@@ -18,6 +18,8 @@ $plugin = array(
   'title plural proper' => t('Tags'),
 
   'defaults' => array(
+    'tag' => '',
+    'weight' => 0,
     'settings' => array(
       'placement' => key($placements),
       'visibility' => array(
@@ -38,5 +40,5 @@ $plugin = array(
     ),
   ),
 
-  'handler' => 'springboard_tags_export_ui',
+  'handler' => 'springboard_tag_export_ui',
 );

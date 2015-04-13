@@ -3,7 +3,7 @@
 /**
  * Implements hook_permission()
  */
-function springboard_tags_permission() {
+function springboard_tag_permission() {
   return array(
     'administer springboard tags' => array(
       'title' => t('Administer Springboard tags'),
@@ -15,7 +15,7 @@ function springboard_tags_permission() {
 /**
  * Implements hook_ctools_plugin_directory().
  */
-function springboard_tags_ctools_plugin_directory($module, $plugin) {
+function springboard_tag_ctools_plugin_directory($module, $plugin) {
   // Most of this module is implemented as an export ui plugin, and the
   // rest is in ctools/includes/ctools_access_ruleset.inc
   if ($module == 'ctools' && $plugin == 'export_ui') {
@@ -24,9 +24,18 @@ function springboard_tags_ctools_plugin_directory($module, $plugin) {
 }
 
 /**
+ * Implements hook_ctools_plugin_api().
+ */
+function springboard_tag_ctools_plugin_api($module, $api) {
+  if ($module == 'springboard_tag' && $api == 'springboard_tag') {
+    return array('version' => 1);
+  }
+}
+
+/**
  * Implements hook_springboard_admin_menu_items_alter().
  */
-function springboard_tags_springboard_admin_admin_menu_items_alter(&$items) {
+function springboard_tag_springboard_admin_admin_menu_items_alter(&$items) {
   // Add a menu item for the admin page.
   $items['admin/springboard/marketing-analytics']['_children']['admin/springboard/springboard-tags'] = array(
     'link_path' => 'admin/springboard/springboard-tags',
@@ -39,52 +48,9 @@ function springboard_tags_springboard_admin_admin_menu_items_alter(&$items) {
 }
 
 /**
- * Implements hook_page_alter().
- *
- * @param array $page
+ * Return an array of tag placement options.
  */
-function springboard_tags_page_alter(&$page) {
-  // Load the tags for this page.
-  $tags = _springboard_tags_load_tags();
-  if (empty($tags)) {
-    return;
-  }
-
-  foreach ($tags as $tag) {
-    switch ($tag->settings['placement']) {
-      case 'after body tag' :
-        $after_body[] = _springboard_tags_generate_tag($tag->tag);
-        break;
-      case 'content' :
-        $content[] = _springboard_tags_generate_tag($tag->tag);
-        break;
-    }
-  }
-
-  if (!empty($after_body)) {
-    // Add a post render function, and the tags.
-    $page['#post_render'][] = '_springboard_tags_post_render';
-    $page['#springboard_tags_after_body'] = implode($after_body);
-  }
-
-  if (!empty($content)) {
-    // Add the content tags.
-    $page['content']['springboard_tags'] = array(
-      '#markup' => implode($content),
-    );
-  }
-}
-
-function _springboard_tags_post_render(&$children, $elements) {
-  // Insert snippet after the opening body tag.
-  $children = preg_replace('@<body[^>]*>@', '$0' . $elements['#springboard_tags_after_body'], $children, 1);
-  return $children;
-}
-
-/**
- * Return an array of placement options.
- */
-function _springboard_tags_placement_options() {
+function _springboard_tag_placement_options() {
   return array(
     'after body tag' => 'Directly after the opening body tag',
     'content' => 'Main content',
@@ -96,45 +62,145 @@ function _springboard_tags_placement_options() {
  *
  * This ensures we get proper defaults from the plugin for its settings.
  */
-function _springboard_tags_new($set_defaults) {
-  $item = ctools_export_new_object('springboard_tags', $set_defaults);
-  $plugin = ctools_get_plugins('ctools', 'export_ui', 'springboard_tags');
+function _springboard_tag_new($set_defaults) {
+  $item = ctools_export_new_object('springboard_tag', $set_defaults);
+  $plugin = ctools_get_plugins('ctools', 'export_ui', 'springboard_tag');
   $item->settings = $plugin['defaults']['settings'];
   return $item;
 }
 
 /**
- * Generate the tag snippet.
+ * Implements hook_page_alter().
+ *
+ * @param array $page
  */
-function _springboard_tags_generate_tag($snippet) {
-  return token_replace($snippet);
+function springboard_tag_page_alter(&$page) {
+  // Load the tags for this page.
+  $tags = _springboard_tag_load_tags(FALSE);
+  if (empty($tags)) {
+    return;
+  }
+
+  foreach ($tags as $tag) {
+    switch ($tag->settings['placement']) {
+      case 'after body tag' :
+        $after_body[] = _springboard_tag_generate_tag($tag->tag);
+        break;
+      case 'content' :
+        $content[] = _springboard_tag_generate_tag($tag->tag);
+        break;
+    }
+  }
+
+  if (!empty($after_body)) {
+    // Add a post render function, and the tags.
+    $page['#post_render'][] = '_springboard_tag_post_render';
+    $page['#springboard_tag_after_body'] = implode("\n", $after_body);
+  }
+
+  if (!empty($content)) {
+    // Add the content tags.
+    $page['content']['springboard_tag'] = array(
+      '#markup' => implode("\n", $content),
+    );
+  }
+}
+
+/**
+ * Add the after body tags to the page HTML.
+ */
+function _springboard_tag_post_render(&$children, $elements) {
+  // Insert snippet after the opening body tag.
+  $children = preg_replace('@<body[^>]*>@', '$0' . "\n" . $elements['#springboard_tag_after_body'] . "\n", $children, 1);
+  return $children;
+}
+
+/**
+ * Generate the tag snippet.
+ *
+ * @param $string $snippet
+ *   The contents of the tag.
+ */
+function _springboard_tag_generate_tag($snippet) {
+  global $user;
+
+  // Build an array of context for the tag generating script.
+  $token_set = array();
+
+  // Include the the current node.
+  if (arg(0) == 'node' && is_numeric(arg(1))) {
+    $token_set['node'] = node_load(arg(1));
+  }
+
+  // Include the current user.
+  $token_set['user'] = user_load($user->uid);
+
+  // Add the donation if this is a donation confirmation.
+  if (arg(0) == 'node' && arg(2) == 'done' && !empty($_GET['sid'])) {
+    $donation = _fundraiser_webform_get_donation_by_sid($_GET['sid']);
+    if ($donation) {
+      $token_set['donation'] = $donation;
+    }
+  }
+
+  return token_replace($snippet, $token_set, array('clear' => TRUE));
 }
 
 /**
  * Load the tags for a specific page request.
  */
-function _springboard_tags_load_tags() {
+function _springboard_tag_load_tags() {
   // Load all the configured tags.
   ctools_include('export');
-  $tags = ctools_export_crud_load_all('springboard_tags');
+  $tags = ctools_export_crud_load_all('springboard_tag');
+
+  usort($tags, '_springboard_tag_load_tags_sort');
 
   // Allow modules to modify the tag list.
-  drupal_alter('springboard_tags_list', $tags);
+  drupal_alter('springboard_tag_list', $tags);
 
   return $tags;
 }
 
-function springboard_tags_springboard_tags_list_alter(&$tags) {
+/**
+ * Array sort function to sort by weight.
+ */
+function _springboard_tag_load_tags_sort($a, $b) {
+  if ($a->weight == $b->weight) {
+    return 0;
+  }
+
+  return $a->weight < $b->weight ? -1 : 1;
+}
+
+/**
+ * Implements hook_springboard_tag_list_alter().
+ */
+function springboard_tag_springboard_tag_list_alter(&$tags) {
   $account = $GLOBALS['user'];
 
   foreach ($tags as $key => $tag) {
-    // Extract the visibilty array. Beware contains the keys: fundraiser, user, path, node.
+    // Extract the visibilty array. Contains the keys: fundraiser, user, path, node.
     extract($tag->settings['visibility']);
 
-    // Check if this is a donation form confirmation page.
-    if (!empty($fundraiser['confirmation']) && arg(0) == 'node' && arg(2) == 'done') {
-      $webform_node = node_load(arg(1));
-      if (fundraiser_is_donation_type($webform_node->type)) {
+    // Remove disabled tags.
+    if (!empty($tag->disabled)) {
+      unset($tags[$key]);
+      continue;
+    }
+
+    // Check if the fundraiser confirmation option is checked.
+    if (!empty($fundraiser['confirmation'])) {
+      // This tag should only appear on a confirmation page.
+      if (arg(0) == 'node' && arg(2) == 'done') {
+        $webform_node = node_load(arg(1));
+        // If this is not a donation type, unset the tag.
+        if (!fundraiser_is_donation_type($webform_node->type)) {
+          unset($tags[$key]);
+          continue;
+        }
+      }
+      else {
         unset($tags[$key]);
         continue;
       }
@@ -196,7 +262,7 @@ function springboard_tags_springboard_tags_list_alter(&$tags) {
       if (!empty($current_node)) {
         // This is a node page.
         if (!isset($node['type'][$current_node->type])) {
-          // This block should not be displayed for this node type.
+          // This tag should not be displayed for this node type.
          unset($tags[$key]);
         }
       }

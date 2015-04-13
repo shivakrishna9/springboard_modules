@@ -1,4 +1,4 @@
-name = Springboard Tags
+name = Springboard Tag
 description = Embeds third-party javascript snippets
 package = Jackson River Springboard - extras
 core = 7.x

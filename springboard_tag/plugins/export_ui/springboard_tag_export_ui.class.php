@@ -1,6 +1,6 @@
 <?php
 
-class springboard_tags_export_ui extends ctools_export_ui {
+class springboard_tag_export_ui extends ctools_export_ui {
 
   function edit_form(&$form, &$form_state) {
     parent::edit_form($form, $form_state);
@@ -15,7 +15,15 @@ class springboard_tags_export_ui extends ctools_export_ui {
       '#type' => 'select',
       '#title' => t('Placement'),
       '#default_value' => $form_state['item']->settings['placement'],
-      '#options' => _springboard_tags_placement_options(),
+      '#options' => _springboard_tag_placement_options(),
+    );
+
+    $form['weight'] = array(
+      '#type' => 'weight',
+      '#title' => t('Weight'),
+      '#default_value' => $form_state['item']->weight,
+      '#delta' => 10,
+      '#description' => t('Optional. Set a heavier value to have a tag rendered below others in the document.'),
     );
 
     // Visibility options.
@@ -107,6 +115,12 @@ class springboard_tags_export_ui extends ctools_export_ui {
     $form_state['item']->settings['visibility'] = $form_state['values']['visibility'];
   }
 
+  // ------------------------------------------------------------------------
+  // These methods are the API for generating the list of exportable items.
+
+  /**
+   * Hide the top row of form items on the admin form.
+   */
   function list_form(&$form, &$form_state) {
     parent::list_form($form, $form_state);
     $form['top row'] = $form['top row'] + array(
@@ -125,52 +139,95 @@ class springboard_tags_export_ui extends ctools_export_ui {
     return FALSE;
   }
 
+  /**
+   * Provide a list of sort options.
+   *
+   * Override this if you wish to provide more or change how these work.
+   * The actual handling of the sorting will happen in build_row().
+   */
   function list_sort_options() {
-    return array(
-      'disabled' => t('Enabled, title'),
-      'title' => t('Title'),
+    $options = array(
+      'weight' => t('Weight'),
       'name' => t('Name'),
       'storage' => t('Storage'),
     );
+
+    return $options;
   }
 
+  /**
+   * Build a row based on the item.
+   *
+   * By default all of the rows are placed into a table by the render
+   * method, so this is building up a row suitable for theme('table').
+   * This doesn't have to be true if you override both.
+   */
   function list_build_row($item, &$form_state, $operations) {
     // Set up sorting
+    $name = $item->{$this->plugin['export']['key']};
+    $schema = ctools_export_get_schema($this->plugin['schema']);
+
+    // Note: $item->{$schema['export']['export type string']} should have already been set up by export.inc so
+    // we can use it safely.
     switch ($form_state['values']['order']) {
       case 'disabled':
-        $this->sorts[$item->name] = empty($item->disabled) . $item->admin_title;
+        $this->sorts[$name] = empty($item->disabled) . $name;
         break;
       case 'title':
-        $this->sorts[$item->name] = $item->admin_title;
+        $this->sorts[$name] = $item->{$this->plugin['export']['admin_title']};
         break;
       case 'name':
-        $this->sorts[$item->name] = $item->name;
+        $this->sorts[$name] = $name;
+        break;
+      case 'weight':
+        $this->sorts[$name] = $item->weight;
         break;
       case 'storage':
-        $this->sorts[$item->name] = $item->type . $item->admin_title;
+        $this->sorts[$name] = $item->{$schema['export']['export type string']} . $name;
         break;
     }
 
+    $this->rows[$name]['data'] = array();
+
+    // Add the draggable class.
+    $this->rows[$name]['class'] = array('draggable');
+    $this->rows[$name]['class'][] = !empty($item->disabled) ? 'ctools-export-ui-disabled' : 'ctools-export-ui-enabled';
+
+    // If we have an admin title, make it the first row.
+    if (!empty($this->plugin['export']['admin_title'])) {
+      $this->rows[$name]['data'][] = array('data' => check_plain($item->{$this->plugin['export']['admin_title']}), 'class' => array('ctools-export-ui-title'));
+    }
+    $this->rows[$name]['data'][] = array('data' => check_plain($name), 'class' => array('ctools-export-ui-name'));
+    $this->rows[$name]['data'][] = array('data' => check_plain($item->{$schema['export']['export type string']}), 'class' => array('ctools-export-ui-storage'));
+
     $ops = theme('links__ctools_dropbutton', array('links' => $operations, 'attributes' => array('class' => array('links', 'inline'))));
 
-    $this->rows[$item->name] = array(
-      'data' => array(
-        array('data' => check_plain($item->admin_title), 'class' => array('ctools-export-ui-title')),
-        array('data' => check_plain($item->name), 'class' => array('ctools-export-ui-name')),
-        array('data' => $ops, 'class' => array('ctools-export-ui-operations')),
-      ),
-      'title' => check_plain($item->admin_description),
-      'class' => array(!empty($item->disabled) ? 'ctools-export-ui-disabled' : 'ctools-export-ui-enabled'),
-    );
+    // Add the order column. This is only a placeholder replaced later in the form theme function.
+    $this->rows[$name]['data'][] = array('data' => check_plain($item->weight));
+
+    $this->rows[$name]['data'][] = array('data' => $ops, 'class' => array('ctools-export-ui-operations'));
+
+    // Add an automatic mouseover of the description if one exists.
+    if (!empty($this->plugin['export']['admin_description'])) {
+      $this->rows[$name]['title'] = $item->{$this->plugin['export']['admin_description']};
+    }
   }
 
+  /**
+   * Provide the table header.
+   *
+   * If you've added columns via list_build_row() but are still using a
+   * table, override this method to set up the table header.
+   */
   function list_table_header() {
-    return array(
-      array('data' => t('Title'), 'class' => array('ctools-export-ui-title')),
-      array('data' => t('Name'), 'class' => array('ctools-export-ui-name')),
-      array('data' => t('Operations'), 'class' => array('ctools-export-ui-operations')),
-    );
+    $header = parent::list_table_header();
+
+    // Add the order columns as the next to last.
+    $last = array_pop($header);
+    $header[] = array('data' => t('Weight'));
+    $header[] = $last;
+
+    return $header;
   }
 
 }
-
