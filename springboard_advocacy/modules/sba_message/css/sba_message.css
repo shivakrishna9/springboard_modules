@@ -1,5 +1,6 @@
 /***************** Message Add/Edit form ****************/
 
+
 /**** Field API field Styles **************/
 #springboard-advocacy-message-form-container {
     width: 100%;
@@ -422,7 +423,14 @@
             float:left;
             display:block;
         }
-
+        #springboard-advocacy-find-targets #committee-wrapper{
+          float: none;
+            width: 100%;
+        }
+        #springboard-advocacy-find-targets #edit-search-committee-wrapper .selected {
+            background-color: #EFF9FF!important;
+            cursor: pointer!important;
+        }
         #springboard-advocacy-find-targets  div#edit-combine-wrapper ,
         #springboard-advocacy-find-targets  div#edit-search-committee-wrapper {
             display: block;

@@ -1,48 +1,85 @@
 (function ($) {
     /**
-     * Performs a cached and delayed search.
+     * Overrides  Drupal.ACDB.prototype.search in order to
+     * pass extra options for state and chamber
+     * to the autocomplete menu callback
      */
+
+
+    /**
+     * Fills the suggestion popup with any matches received.
+     */
+    Drupal.jsAC.prototype.found = function (matches) {
+        // If no value in the textfield, do not show the popup.
+        if (!this.input.value.length) {
+            return false;
+        }
+
+        // Prepare matches.
+        var ul = $('<ul></ul>');
+        var ac = this;
+        if(this.db.uri.indexOf('message-action') != -1) {
+
+            var message = matches[Object.keys(matches)[Object.keys(matches).length - 1]]
+            delete matches[Object.keys(matches)[Object.keys(matches).length - 1]]
+        }
+
+        for (key in matches) {
+
+            $('<li></li>')
+                .html($('<div></div>').html(matches[key]))
+                .mousedown(function () { ac.select(this); })
+                .mouseover(function () { ac.highlight(this); })
+                .mouseout(function () { ac.unhighlight(this); })
+                .data('autocompleteValue', key)
+                .appendTo(ul);
+        }
+
+        if(this.db.uri.indexOf('message-action') != -1 && Object.keys(matches).length > 0) {
+            $('<li></li>')
+                .html($('<strong></strong>').html(message))
+                .appendTo(ul);
+        }
+
+        // Show popup with matches, if any.
+        if (this.popup) {
+            if (ul.children().length) {
+                $(this.popup).empty().append(ul).show();
+                $(this.ariaLive).html(Drupal.t('Autocomplete popup'));
+            }
+            else {
+                $(this.popup).css({ visibility: 'hidden' });
+                this.hidePopup();
+            }
+        }
+    };
+
+
     Drupal.ACDB.prototype.search = function (searchString) {
         var db = this;
         this.searchString = searchString;
 
+        //this is the extent of the change
         if(db.uri.indexOf('message-action') != -1) {
-            //chamberArr = [];
-            //var checkBoxes = $('#edit-search-committee-chamber-wrapper input[type="checkbox"]');
-            //checkBoxes.each(function () {
-            //    if ($(this).prop('checked')) {
-            //        chamberArr.push(this.value)
-            //    }
-            //});
-            //
-            //var values = chamberArr.join('-');
-
-            chamber = $('#edit-search-committee-chamber-wrapper select').val();
-
-            searchString = searchString + "/" + $("#edit-search-state").val()  + "/" + chamber
+            var chamber = $('#edit-search-committee-chamber-wrapper select').val();
+            var state = $("#edit-search-state").val();
+            searchString = searchString + "/" +  state + "/" + chamber
             this.searchString = searchString;
         }
 
-        // See if this string needs to be searched for anyway.
         searchString = searchString.replace(/^\s+|\s+$/, '');
         if (searchString.length <= 0 ||
             searchString.charAt(searchString.length - 1) == ',') {
             return;
         }
-
-        // See if this key has been searched for before.
         if (this.cache[searchString]) {
             return this.owner.found(this.cache[searchString]);
         }
-        // Initiate delayed search.
         if (this.timer) {
             clearTimeout(this.timer);
         }
         this.timer = setTimeout(function () {
             db.owner.setStatus('begin');
-
-            // Ajax GET request for autocompletion. We use Drupal.encodePath instead of
-            // encodeURIComponent to allow autocomplete search terms to contain slashes.
             $.ajax({
                 type: 'GET',
                 url: db.uri + '/' + Drupal.encodePath(searchString),
@@ -50,10 +87,7 @@
                 success: function (matches) {
                     if (typeof matches.status == 'undefined' || matches.status != 0) {
                         db.cache[searchString] = matches;
-                        // Verify if these are still the matches the user wants to see.
-
                         if (db.searchString == searchString) {
-
                             db.owner.found(matches);
                         }
                         db.owner.setStatus('found');
@@ -65,6 +99,8 @@
             });
         }, this.delay);
     };
+
+
 
 
 })(jQuery);

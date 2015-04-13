@@ -51,7 +51,7 @@ function _sba_message_action_committee_autocomplete($name, $state, $chamber) {
       $results = array_slice($results, 0, 5);
       $rest = $num - 5;
       if ($rest > 0) {
-        $results[] = 'Plus ' . $rest . ' more. Try narrowing your search with more words or filters';
+        $results['message'] = 'Plus ' . $rest . ' more. Try narrowing your search with more letters, words or filters';
       }
       foreach ($results as $key => $row) {
         $matches[$row] = $row;

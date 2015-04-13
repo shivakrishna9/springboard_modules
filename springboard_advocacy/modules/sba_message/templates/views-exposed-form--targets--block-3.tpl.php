@@ -18,6 +18,8 @@
  *
  * @ingroup views_templates
  */
+
+
 ?>
 <?php if (!empty($q)): ?>
   <?php
@@ -34,6 +36,13 @@
       <?php if (in_array('filter-search_district_name', array_keys($widgets)) && $id == 'filter-search_state'): ?>
         <div id="state-district-wrapper" class = "views-exposed-widget">
       <?php endif; ?>
+
+      <!-- Wrap the state and district form elements in a container -->
+      <?php if (in_array('filter-search_committee', array_keys($widgets)) && $id == 'filter-search_committee'): ?>
+        </div><!-- close the radio widgets wrapper -->
+        <div id="committee-wrapper" class = "views-exposed-widget">
+      <?php endif; ?>
+
 
 
       <div id="<?php print $widget->id; ?>-wrapper" class="views-exposed-widget views-widget-<?php print $id; ?>">
@@ -59,11 +68,15 @@
 
       <!-- End of wrapping the state and district form elements in a container -->
       <?php if (in_array('filter-search_district_name', array_keys($widgets)) && $id == 'filter-search_district_name'): ?>
-        </div><div class = "radio-widgets">
+        </div>
+            <div class = "radio-widgets">
+      <?php endif; ?>
+
+      <?php if (in_array('filter-search_committee', array_keys($widgets)) && $id == 'filter-search_committee'): ?>
+      </div>
       <?php endif; ?>
 
     <?php endforeach; ?>
-      </div>
     <?php if (!empty($sort_by)): ?>
       <div class="views-exposed-widget views-widget-sort-by">
         <?php print $sort_by; ?>
