@@ -468,6 +468,7 @@ function springboard_advocacy_form_views_exposed_form_alter(&$form, &$form_state
         'wrapper' => 'district',
         'method' => 'replace',
         'effect' => 'fade',
+        'event' => 'custom_event'
       );
       if (empty($form_state['values']['search_state']) && $form_state['input']['search_state'] == 'All') {
         $form['search_district_name']['#disabled'] = TRUE;
@@ -487,14 +488,19 @@ function springboard_advocacy_form_views_exposed_form_alter(&$form, &$form_state
           unset($form['search_role_1']['#options']['SS']);
           unset($form['search_role_1']['#options']['SR']);
           unset($form['search_role_1']['#options']['GOVNR']);
-
           break;
+
         case 'states-only':
           unset($form['search_role_1']['#options']['FS']);
           unset($form['search_role_1']['#options']['FR']);
           unset($form['search_role_1']['#options']['PRES01|PRES03']);
-
           break;
+
+        case 'federal-and-states-selected':
+          $settings = array('sbaAllowedStates' => $subscription['states_custom']);
+          $form['#attached']['js'][] = array('data' => $settings, 'type' => 'setting');
+          break;
+
         case 'states-selected':
 
           unset($form['search_role_1']['#options']['FS']);

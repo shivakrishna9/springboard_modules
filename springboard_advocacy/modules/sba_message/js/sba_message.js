@@ -9,7 +9,7 @@
 
     Drupal.behaviors.AdvocacyMessageRecipients = {
         attach: function(context, settings) {
-           // Drupal.settings.ajax['edit-search-state'] = {}
+
             $('.view-targets').once('advocacy-committee-search', function() {
                 var finder = $('#springboard-advocacy-find-targets-container .view-targets');
                 finder.prepend('<div class="faux-tab-container"><div class="faux-tab"' +
@@ -17,7 +17,20 @@
                 'div class="faux-tab"><a href ="#committee" class="committee-search">Committee Search</a></div>');
             });
 
-            var stateAjax = Drupal.ajax['edit-search-state'];
+
+            if(typeof(Drupal.settings.sbaAllowedStates) != undefined) {
+                $('#edit-search-state').on('change', function (e) {
+                    if($.inArray($(this).val(), Drupal.settings.sbaAllowedStates) !=-1) {
+                        $(this).trigger('custom_event');
+                    }
+                });
+            }
+            else {
+                $('#edit-search-state').on('change', function (e) {
+                    $(this).trigger('custom_event');
+                });
+            }
+
             $('.committee-search').click(function (e) {
                 reset('committee');
                 $('#edit-search-role-1-wrapper, #edit-search-party-wrapper, #edit-search-social-wrapper, #edit-search-gender-wrapper, #edit-search-district-name-wrapper, #edit-combine-wrapper, .search-reset, .views-targets-button-wrapper').hide();
@@ -26,7 +39,7 @@
                 $('a.full-search').closest('.faux-tab').removeClass('active');
                 window.search_state = 'committee';
                 $('#state-district-wrapper').append($('#edit-search-committee-chamber-wrapper'));
-                $('#edit-search-state').unbind('change', Drupal.ajax('edit-search-state', '#edit-search-state', stateAjax.element_settings));
+                $('#edit-search-state').unbind('custom_event', Drupal.ajax('edit-search-state', '#edit-search-state', Drupal.ajax['edit-search-state'].element_settings));
                 return false;
             });
 
@@ -40,11 +53,13 @@
                 reset('committee');
                 return false;
             });
+
             if(window.search_state == 'committee' ) {
                 $('#edit-search-role-1-wrapper, #edit-search-party-wrapper, #edit-search-social-wrapper, #edit-search-gender-wrapper, #edit-search-district-name-wrapper, #edit-combine-wrapper, .search-reset, .views-targets-button-wrapper').hide();
                 $('#edit-search-committee-chamber-wrapper, #edit-search-committee-wrapper').show(300);
                 $('a.committee-search').closest('.faux-tab').addClass('active');
-                $('#state-district-wrapper').append($('#edit-search-committee-chamber-wrapper'));
+                $('#state-district-wrapper').append($('#edit-search-committee-chamber-wrapper'))
+                $('#edit-search-state').unbind('custom_event', Drupal.ajax('edit-search-state', '#edit-search-state', stateAjax.element_settings));
             }
             else {
                 $('a.committee-search').closest('.faux-tab').removeClass('active');
@@ -571,7 +586,10 @@
 
     // Main set of functions which need to happen on every page load
     $(document).ready(function () {
-
+        //if(typeof(Drupal.settings.sbaAllowedStates) != undefined) {
+        //    var stateAjax = Drupal.ajax['edit-search-state'];
+        //    $('#edit-search-state').unbind('change', Drupal.ajax('edit-search-state', '#edit-search-state', stateAjax.element_settings));
+        //}
         if ($.isFunction($.fn.uniform)) {
             $('select').each(function () {
                 $.uniform.restore(this);
