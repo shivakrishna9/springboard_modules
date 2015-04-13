@@ -38,7 +38,6 @@
                 window.search_state = 'full-search';
                 reset('committee');
                 return false;
-
             });
             if(window.search_state == 'committee' ) {
                 $('#edit-search-role-1-wrapper, #edit-search-party-wrapper, #edit-search-social-wrapper, #edit-search-gender-wrapper, #edit-search-district-name-wrapper, #edit-combine-wrapper, .search-reset, .views-targets-button-wrapper').hide();
