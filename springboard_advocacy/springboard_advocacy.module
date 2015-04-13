@@ -408,6 +408,7 @@ function springboard_advocacy_committees() {
   if (!isset($committee_list)) {
     if ($cache = cache_get('committee_list')) {
       $committee_list = $cache->data;
+
     }
     else {
       $loader = new AdvocacyApiClientLoader();
@@ -415,7 +416,7 @@ function springboard_advocacy_committees() {
       $response = $client->getCommitteeList();
       if (isset($response->data)) {
         $committee_list = (array)$response->data;
-        $expire = now() + 3600;
+        $expire = time() + 3600;
         cache_set('committee_list', $committee_list, 'cache', $expire);
       }
     }
