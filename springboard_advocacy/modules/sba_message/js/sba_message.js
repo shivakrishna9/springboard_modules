@@ -17,19 +17,20 @@
                 'div class="faux-tab"><a href ="#committee" class="committee-search">Committee Search</a></div>');
             });
 
-            $('.committee-search').click(function () {
+            var stateAjax = Drupal.ajax['edit-search-state'];
+            $('.committee-search').click(function (e) {
                 reset('committee');
                 $('#edit-search-role-1-wrapper, #edit-search-party-wrapper, #edit-search-social-wrapper, #edit-search-gender-wrapper, #edit-search-district-name-wrapper, #edit-combine-wrapper, .search-reset, .views-targets-button-wrapper').hide();
                 $('#edit-search-committee-chamber-wrapper, #edit-search-committee-wrapper').show(300);
                 $('a.committee-search').closest('.faux-tab').addClass('active');
                 $('a.full-search').closest('.faux-tab').removeClass('active');
                 window.search_state = 'committee';
-                $('#edit-search-state').unbind('change', Drupal.ajax('edit-search-state', Drupal.ajax['edit-search-state'].element_settings.element, Drupal.ajax['edit-search-state'].element_settings));
+                $('#edit-search-state').unbind('change', Drupal.ajax('edit-search-state', '#edit-search-state', stateAjax.element_settings));
                 return false;
             });
 
-            $('.full-search').click(function () {
-                new Drupal.ajax('edit-search-state', Drupal.ajax['edit-search-state'].element_settings.element, Drupal.ajax['edit-search-state'].element_settings);
+            $('.full-search').click(function (e) {
+                new Drupal.ajax('edit-search-state', '#edit-search-state', stateAjax.element_settings);
                 $('#edit-search-committee-chamber-wrapper, #edit-search-committee-wrapper').hide();
                 $('a.committee-search').closest('.faux-tab').removeClass('active');
                 $('a.full-search').closest('.faux-tab').addClass('active');
