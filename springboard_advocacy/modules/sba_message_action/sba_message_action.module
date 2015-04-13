@@ -35,9 +35,10 @@ function _sba_message_action_committee_autocomplete($name, $state, $chamber) {
 
   $committee_list = springboard_advocacy_committees();
 
-  $name_pattern = "/.*" . $name . ".*/i";
-  $state_pattern = "/.*" . $state . ".*/i";
-  $chamber_pattern = "/.*" . $chamber . ".*/i";
+  $name_pattern = '/' . $name . '/i';
+  $state_pattern = '/\(' . $state . '\)/i';
+  $chamber_pattern = '/\(' . $chamber . '\)/i';
+
   if(!empty($committee_list)) {
     $results = preg_grep($name_pattern, $committee_list);
     if($state != 'All') {
