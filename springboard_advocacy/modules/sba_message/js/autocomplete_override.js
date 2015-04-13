@@ -5,7 +5,28 @@
      * to the autocomplete menu callback
      */
 
+    Drupal.jsAC.prototype.onkeydown = function (input, e) {
+        if (!e) {
+            e = window.event;
+        }
 
+        switch (e.keyCode) {
+
+            case 40: // down arrow.
+                this.selectDown();
+                return false;
+            case 38: // up arrow.
+                this.selectUp();
+                return false;
+            case 13: // enter
+                if(this.db.uri.indexOf('message-action') != -1) {
+                    return false;
+                }
+                return true;
+            default: // All other keys.
+                return true;
+        }
+    };
     /**
      * Fills the suggestion popup with any matches received.
      */
@@ -99,8 +120,6 @@
             });
         }, this.delay);
     };
-
-
 
 
 })(jQuery);
