@@ -25,6 +25,7 @@
                 $('a.committee-search').closest('.faux-tab').addClass('active');
                 $('a.full-search').closest('.faux-tab').removeClass('active');
                 window.search_state = 'committee';
+                $('#state-district-wrapper').append($('#edit-search-committee-chamber-wrapper'));
                 $('#edit-search-state').unbind('change', Drupal.ajax('edit-search-state', '#edit-search-state', stateAjax.element_settings));
                 return false;
             });
@@ -43,7 +44,7 @@
                 $('#edit-search-role-1-wrapper, #edit-search-party-wrapper, #edit-search-social-wrapper, #edit-search-gender-wrapper, #edit-search-district-name-wrapper, #edit-combine-wrapper, .search-reset, .views-targets-button-wrapper').hide();
                 $('#edit-search-committee-chamber-wrapper, #edit-search-committee-wrapper').show(300);
                 $('a.committee-search').closest('.faux-tab').addClass('active');
-
+                $('#state-district-wrapper').append($('#edit-search-committee-chamber-wrapper'));
             }
             else {
                 $('a.committee-search').closest('.faux-tab').removeClass('active');
