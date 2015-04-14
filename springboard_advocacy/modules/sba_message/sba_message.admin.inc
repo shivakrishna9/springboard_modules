@@ -103,7 +103,7 @@ function sba_message_form_wrapper($sba_message) {
   );
 
   $build['#attached']['js'] = array(
-    drupal_get_path('module', 'sba_message') . '/js/sba_message.js',
+    drupal_get_path('module', 'sba_message') . '/js/sba_message.js' => array('group' => JS_THEME, 'weight' => 99999)
   );
 
   $build['content'] = array(

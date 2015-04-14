@@ -7,158 +7,321 @@
  */
 (function ($) {
 
+    // Functions which need to fire on initial page load AND ajax reloads.
     Drupal.behaviors.AdvocacyMessageRecipients = {
         attach: function(context, settings) {
 
-            $('.view-targets').once('advocacy-committee-search', function() {
-                var finder = $('#springboard-advocacy-find-targets-container .view-targets');
-                finder.prepend('<div class="faux-tab-container"><div class="faux-tab"' +
-                '><a href ="#full" class="full-search">Full Search</a></div><' +
-                'div class="faux-tab"><a href ="#committee" class="committee-search">Committee Search</a></div>');
-            });
+            //manipulate form elements based on subscription level
+            buildSubscriptions();
 
+            // define trigger for custom event handler used by State dropdown's ajax callback.
+            // Reset option elements to default on change.
+            buildStateField();
 
-            if(typeof(Drupal.settings.sbaAllowedStates) !== "undefined") {
-                $('#edit-search-state').on('change', function (e) {
-                    if($.inArray($(this).val(), Drupal.settings.sbaAllowedStates) !=-1) {
-                        $(this).trigger('custom_event');
-                    }
-                    else {
-                        $('select[name="search_district_name"]').html('<option selected="selected" value="All">- Any -</option>');
-                    }
-                });
-            }
-            else {
-                $('#edit-search-state').on('change', function (e) {
-                    $('select[name="search_district_name"]').html('<option selected="selected" value="All">- Any -</option>');
-                    $(this).trigger('custom_event');
-                });
-            }
+            // Set up tabs, click handlers and other customizations for committee search
+            buildCommitteeSearch();
 
-            $('.committee-search').click(function (e) {
-                reset('committee');
-                $('#edit-search-role-1-wrapper, #edit-search-party-wrapper, #edit-search-social-wrapper, #edit-search-gender-wrapper, #edit-search-district-name-wrapper, #edit-combine-wrapper, .search-reset, .views-targets-button-wrapper').hide();
-                $('#edit-search-committee-chamber-wrapper, #edit-search-committee-wrapper').show(300);
-                $('a.committee-search').closest('.faux-tab').addClass('active');
-                $('a.full-search').closest('.faux-tab').removeClass('active');
-                window.search_state = 'committee';
-                $('#state-district-wrapper').append($('#edit-search-committee-chamber-wrapper'));
-                $('#edit-search-state').unbind('custom_event', Drupal.ajax('edit-search-state', '#edit-search-state', Drupal.ajax['edit-search-state'].element_settings));
-                return false;
-            });
+            // Define click events for add target links
+            buildTargetLinkEvent(context);
 
-            $('.full-search').click(function (e) {
-                new Drupal.ajax('edit-search-state', '#edit-search-state', Drupal.ajax['edit-search-state'].element_settings);
-                $('#edit-search-committee-chamber-wrapper, #edit-search-committee-wrapper').hide();
-                $('a.committee-search').closest('.faux-tab').removeClass('active');
-                $('a.full-search').closest('.faux-tab').addClass('active');
-                $('#edit-search-role-1-wrapper, #edit-search-party-wrapper, #edit-search-social-wrapper, #edit-search-gender-wrapper,#edit-search-district-name-wrapper,#edit-combine-wrapper, .search-reset').show(300);
-                window.search_state = 'full-search';
-                reset('committee');
-                return false;
-            });
+            // Remove jQuery Unifrom from selectors
+            deUniform();
 
-            if(window.search_state == 'committee' ) {
-                $('#edit-search-role-1-wrapper, #edit-search-party-wrapper, #edit-search-social-wrapper, #edit-search-gender-wrapper, #edit-search-district-name-wrapper, #edit-combine-wrapper, .search-reset, .views-targets-button-wrapper').hide();
-                $('#edit-search-committee-chamber-wrapper, #edit-search-committee-wrapper').show(300);
-                $('a.committee-search').closest('.faux-tab').addClass('active');
-                $('#state-district-wrapper').append($('#edit-search-committee-chamber-wrapper'))
-                $('#edit-search-state').unbind('custom_event', Drupal.ajax('edit-search-state', '#edit-search-state', Drupal.ajax['edit-search-state'].element_settings));
-            }
-            else {
-                $('a.committee-search').closest('.faux-tab').removeClass('active');
-                $('a.full-search').closest('.faux-tab').addClass('active');
-                $('#edit-search-party-wrapper, #edit-search-social-wrapper, #edit-search-gender-wrapper, #edit-search-district-name-wrapper, #edit-combine-wrapper, .search-reset').show(300);
-                $('#edit-search-committee-chamber-wrapper, #edit-search-committee-wrapper').hide();
-            }
+            //Update exposed form element states when a district is selected
+            districtReloader(context);
 
-            if ($('#edit-combine').text().length == 0) {
-                var placeholder = $('#edit-combine-wrapper .description').text().trim();
-                $('#edit-combine-wrapper .description').hide();
-                $('#edit-combine').attr('placeholder', placeholder);
-                $('#edit-combine').focus(function () {
-                    $(this).attr('placeholder', '');
-                });
-            }
-
-            if ($('#edit-search-committee').text().length == 0) {
-                var placeholder = $('#edit-search-committee-wrapper .description').text().trim();
-                $('#edit-search-committee-wrapper .description').hide();
-                $('#edit-search-committee').attr('placeholder', placeholder);
-                $('#edit-search-committee').focus(function () {
-                    $(this).attr('placeholder', '');
-                });
-            }
-            // Apply click event to the search form add links
-            // Allows views search results to be appended to the recipients list
-            var links = $('a.advocacy-add-target, a#advo-add-all');
-            links.each(function() {
-                $(this, context).once('advocacy-add-target', function() {
-                    $(this).click(function (e){
-                        e.preventDefault();
-                        addTarget('search', this);
-                    });
-                });
-            });
-
-            if ($.isFunction($.fn.uniform)) {
-                var deUniform
-                clearTimeout(deUniform);
-                deUniform = setTimeout(function () {
-                    $('select').each(function () {
-                        $.uniform.restore(this);
-                    });
-                }, 10);
-            }
-
-
-            $('#edit-search-committee-wrapper input').on('keydown', function(input, e){
-                if($('div.view-targets').is(':visible')) {
-                    reset();
-                }
-                setElStates();
-            });
-
-            //update exposed form element states when a district is selected
-            $('select[name="search_district_name"]', context).once('advocacy-district-reloaded', function() {
-                setElStates();
-                $('#views-exposed-form-targets-block-3 input, #views-exposed-form-targets-block-3 select').on('change', function(){
-                    if(this.type != 'button' && this.type !='hidden') {
-                        if($('div.view-targets').is(':visible')) {
-                            reset();
-                        }
-                        setElStates();
-                    }
-                });
-            });
-
-            //update exposed form element states when the text search field is changed
-            var combine, oldVal;
-            $('#edit-combine').on('keyup', function() {
-                clearTimeout(combine);
-                var newVal = $(this).val();
-                if (oldVal != newVal) {
-                    combine = setTimeout(function() {
-                        oldVal = newVal;
-                        if($('div.view-targets').is(':visible')) {
-                            reset();
-                        }
-                        setElStates();
-                    }, 400);
-                }
-            });
-
-            //set the click event for the quick target button
-            $('#quick-target', context).once('advocacy-add-quick-target', function() {
-                setElStates();//need this?
-                reset('all');
-                $('input#quick-target').click(function() {
-                    var query = getQuickQuery();
-                    addTarget('quick', query);
-                });
-            });
+            // Insert placeholder text and update exposed form elements when combo search is changed.
+            comboSearchUpdater();
         }
     };
+
+
+    // Functions which need to happen on initial page load, but not ajax reload
+    $(document).ready(function () {
+
+        // Hide the no search results message
+        $('.view-empty').hide();
+
+        //stop views ajax auto scroll from moving the exposed search form to top of screen
+        $('.pager-item a, #edit-submit-targets').click(function(){
+            Drupal.ajax.prototype.commands.viewsScrollTop = null;
+        });
+
+        // Add the show/hide toggle for admin-facing user-editable text
+        userEditableFormDisplay();
+
+        // Define click events for submit and delete buttons
+        messageFormSubmitter();
+
+        // rearrange/append recipeints container, error message div, submit button
+        rearrangeMessageForm()
+
+        // Editing a pre-existing message, append the recipients
+        // to the recipients div using hidden form value
+        var recipients =  $('input[name="data[recipients]"]').val();
+        if(recipients.length > 0) {
+            $('body').once('edit-page', function() {
+                buildEditPage(recipients);
+            });
+        }
+        else {
+            $('.sba-message-status').text('No recipients have been selected.').show('slow');
+        }
+        scroller();
+    });
+
+    function rearrangeMessageForm() {
+        var recipContainer = $('#springboard-advocacy-message-recipients-container');
+        var finder = $('#springboard-advocacy-find-targets-container');
+        var actions = $('#sba-message-edit-form #edit-actions');
+        var err = $('#advo-error-wrapper');
+        $('#springboard-advocacy-message-form-container').append(finder);
+        finder.append(recipContainer)
+        finder.append(actions);
+        actions.append(err);
+        $('.views-targets-button-wrapper').hide();
+    }
+
+    function messageFormSubmitter() {
+        $("#edit-submit, #edit-delete").click(function (e) {
+            e.preventDefault();
+            var messages = [];
+            //@todo add the rest of required fields
+            if($('[name*="field_subject_editable"]').length != 0 && !$('[name*="field_subject_editable"]').is(':checked')) {
+                messages.push( 'Subject is editable');
+            }
+            if($('[name*="field_message_editable"]').length != 0 && !$('[name*="field_message_editable"]').is(':checked')) {
+                messages.push('Message is editable');
+            }
+            $('input.required').each(function() {
+                if ($(this).val() == '') {
+                    messages.push($("label[for='" + this.id + "']").text().replace('*', ''));
+                }
+            });
+            if(messages.length === 0) {
+                $("#sba-message-edit-form").submit();
+            }
+            else {
+                setError(messages);
+            }
+        });
+    }
+
+    function userEditableFormDisplay() {
+        var showEdit = $('input[name*=field_user_editable]');
+        var editable = $('#sba_message_sba_message_action_message_form_group_editable, #edit-field-bottom-conclusion')
+        if(showEdit.prop('checked')) {
+            editable.show();
+            scroller();
+        }
+        showEdit.on('change', function() {
+            if(this.checked) {
+                editable.show(400, 'linear');
+                scroller();
+            }
+            else {
+                editable.hide(400, 'linear');
+                scroller();
+            }
+        });
+    }
+
+    function comboSearchUpdater() {
+        if ($('#edit-combine').text().length == 0) {
+            var placeholder = $('#edit-combine-wrapper .description').text().trim();
+            $('#edit-combine-wrapper .description').hide();
+            $('#edit-combine').attr('placeholder', placeholder);
+            $('#edit-combine').focus(function () {
+                $(this).attr('placeholder', '');
+            });
+        }
+
+        //update exposed form element states when the text search field is changed
+        var combine, oldVal;
+        $('#edit-combine').on('keyup', function() {
+            clearTimeout(combine);
+            var newVal = $(this).val();
+            if (oldVal != newVal) {
+                combine = setTimeout(function() {
+                    oldVal = newVal;
+                    if($('div.view-targets').is(':visible')) {
+                        reset();
+                    }
+                    setElStates();
+                }, 400);
+            }
+        });
+    }
+
+    function districtReloader(context) {
+        $('select[name="search_district_name"]', context).once('advocacy-district-reloaded', function() {
+            setElStates();
+            $('#views-exposed-form-targets-block-3 input, #views-exposed-form-targets-block-3 select').on('change', function(){
+                if(this.type != 'button' && this.type !='hidden') {
+                    if($('div.view-targets').is(':visible')) {
+                        reset();
+                    }
+                    setElStates();
+                }
+            });
+        });
+    }
+
+    function buildTargetLinkEvent(context) {
+        // Apply click event to the search form add links
+        // Allows views search results to be appended to the recipients list
+        var links = $('a.advocacy-add-target, a#advo-add-all');
+        links.each(function() {
+            $(this, context).once('advocacy-add-target', function() {
+                $(this).click(function (e){
+                    e.preventDefault();
+                    addTarget('search', this);
+                });
+            });
+        });
+
+        //set the click event for the quick target button
+        $('#quick-target', context).once('advocacy-add-quick-target', function() {
+            setElStates();//need this?
+            reset('all');
+            $('input#quick-target').click(function() {
+                var query = getQuickQuery();
+                addTarget('quick', query);
+            });
+        });
+    }
+
+    function deUniform() {
+        if ($.isFunction($.fn.uniform)) {
+            $('select').each(function () {
+                $.uniform.restore(this);
+            });
+        }
+    }
+
+    function buildStateField() {
+        if(typeof(Drupal.settings.sbaAllowedStates) !== "undefined") {
+            $('#edit-search-state').on('change', function (e) {
+                if($.inArray($(this).val(), Drupal.settings.sbaAllowedStates) !=-1) {
+                    $(this).trigger('custom_event');
+                }
+                else {
+                    $('select[name="search_district_name"]').html('<option selected="selected" value="All">- Any -</option>');
+                }
+            });
+        }
+        else {
+            $('#edit-search-state').on('change', function (e) {
+                $('select[name="search_district_name"]').html('<option selected="selected" value="All">- Any -</option>');
+                $(this).trigger('custom_event');
+            });
+        }
+    }
+
+    function buildCommitteeSearch() {
+
+        $('.view-targets').once('advocacy-committee-search', function() {
+            var finder = $('#springboard-advocacy-find-targets-container .view-targets');
+            finder.prepend('<div class="faux-tab-container"><div class="faux-tab"' +
+            '><a href ="#full" class="full-search">Full Search</a></div><' +
+            'div class="faux-tab"><a href ="#committee" class="committee-search">Committee Search</a></div>');
+        });
+
+        $('.committee-search').click(function (e) {
+            reset('committee');
+            $('#edit-search-role-1-wrapper, #edit-search-party-wrapper, #edit-search-social-wrapper, #edit-search-gender-wrapper, #edit-search-district-name-wrapper, #edit-combine-wrapper, .search-reset, .views-targets-button-wrapper').hide();
+            $('#edit-search-committee-chamber-wrapper, #edit-search-committee-wrapper').show(300);
+            $('a.committee-search').closest('.faux-tab').addClass('active');
+            $('a.full-search').closest('.faux-tab').removeClass('active');
+            window.search_state = 'committee';
+            buildSubscriptions();
+            $('#state-district-wrapper').append($('#edit-search-committee-chamber-wrapper'));
+            $('#edit-search-state').unbind('custom_event', Drupal.ajax('edit-search-state', '#edit-search-state', Drupal.ajax['edit-search-state'].element_settings));
+            return false;
+        });
+
+        $('.full-search').click(function (e) {
+            new Drupal.ajax('edit-search-state', '#edit-search-state', Drupal.ajax['edit-search-state'].element_settings);
+            $('#edit-search-committee-chamber-wrapper, #edit-search-committee-wrapper').hide();
+            $('a.committee-search').closest('.faux-tab').removeClass('active');
+            $('a.full-search').closest('.faux-tab').addClass('active');
+            $('#edit-search-role-1-wrapper, #edit-search-party-wrapper, #edit-search-social-wrapper, #edit-search-gender-wrapper,#edit-search-district-name-wrapper,#edit-combine-wrapper, .search-reset').show(300);
+            window.search_state = 'full-search';
+            buildSubscriptions();
+            reset('committee');
+            return false;
+        });
+
+        if(window.search_state == 'committee' ) {
+            $('#edit-search-role-1-wrapper, #edit-search-party-wrapper, #edit-search-social-wrapper, #edit-search-gender-wrapper, #edit-search-district-name-wrapper, #edit-combine-wrapper, .search-reset, .views-targets-button-wrapper').hide();
+            $('#edit-search-committee-chamber-wrapper, #edit-search-committee-wrapper').show(300);
+            $('a.committee-search').closest('.faux-tab').addClass('active');
+            $('#state-district-wrapper').append($('#edit-search-committee-chamber-wrapper'))
+            $('#edit-search-state').unbind('custom_event', Drupal.ajax('edit-search-state', '#edit-search-state', Drupal.ajax['edit-search-state'].element_settings));
+        }
+        else {
+            $('a.committee-search').closest('.faux-tab').removeClass('active');
+            $('a.full-search').closest('.faux-tab').addClass('active');
+            $('#edit-search-party-wrapper, #edit-search-social-wrapper, #edit-search-gender-wrapper, #edit-search-district-name-wrapper, #edit-combine-wrapper, .search-reset').show(300);
+            $('#edit-search-committee-chamber-wrapper, #edit-search-committee-wrapper').hide();
+        }
+
+        if ($('#edit-search-committee').text().length == 0) {
+            var placeholder = $('#edit-search-committee-wrapper .description').text().trim();
+            $('#edit-search-committee-wrapper .description').hide();
+            $('#edit-search-committee').attr('placeholder', placeholder);
+            $('#edit-search-committee').focus(function () {
+                $(this).attr('placeholder', '');
+            });
+        }
+
+        $('#edit-search-committee-wrapper input').on('keydown', function(input, e){
+            if($('div.view-targets').is(':visible')) {
+                reset();
+            }
+            setElStates();
+        });
+    }
+
+    function buildSubscriptions() {
+
+        if(typeof(Drupal.settings.sbaSubscriptionLevel) !== "undefined") {
+            if(Drupal.settings.sbaSubscriptionLevel == 'federal-only') {
+                $("#edit-search-committee-chamber option").each(function() {
+                    if($(this).html().indexOf('State') != -1) {
+                        $(this).remove();
+                    }
+                });
+                if(window.search_state == 'committee') {
+                    $('#edit-search-state-wrapper').hide();
+                }
+                else {
+                    $('#edit-search-state-wrapper').show();
+                }
+            }
+            if(Drupal.settings.sbaSubscriptionLevel == 'states-only') {
+                $("#edit-search-committee-chamber option").each(function() {
+                    if($(this).html().indexOf('Federal') != -1) {
+                        $(this).remove();
+                    }
+                });
+            }
+
+            if(Drupal.settings.sbaSubscriptionLevel == 'states-selected') {
+                $("#edit-search-committee-chamber option").each(function() {
+                    if($(this).html().indexOf('Federal') != -1) {
+                        $(this).remove();
+                    }
+                });
+                $("#edit-search-state option").each(function() {
+                    if($.inArray($(this).val(), Drupal.settings.sbaAllowedStates) == -1) {
+                        $(this).remove();
+                    }
+                });
+            }
+
+        }
+    }
 
     // selectively disable/enable exposed form elements based on user actions
     function setElStates() {
@@ -593,88 +756,5 @@
             .replace(/"/g, '')
             .replace(/%20/g, ' ')
     }
-
-    // Main set of functions which need to happen on every page load
-    $(document).ready(function () {
-
-        if ($.isFunction($.fn.uniform)) {
-            $('select').each(function () {
-                $.uniform.restore(this);
-            });
-        }
-
-        $('.view-empty').hide();
-
-        //stop views ajax auto scroll
-        $('.pager-item a, #edit-submit-targets').click(function(){
-            Drupal.ajax.prototype.commands.viewsScrollTop = null;
-        });
-        var showEdit = $('input[name*=field_user_editable]');
-        var editable = $('#sba_message_sba_message_action_message_form_group_editable, #edit-field-bottom-conclusion')
-         if(showEdit.prop('checked')) {
-            editable.show();
-             scroller();
-         }
-        showEdit.on('change', function() {
-            if(this.checked) {
-                editable.show(400, 'linear');
-                scroller();
-            }
-            else {
-                 editable.hide(400, 'linear');
-                 scroller();
-            }
-        });
-
-        // submit the form or return error message
-        $("#edit-submit, #edit-delete").click(function (e) {
-            e.preventDefault();
-            var messages = [];
-            //@todo add the rest of required fields
-            if($('[name*="field_subject_editable"]').length != 0 && !$('[name*="field_subject_editable"]').is(':checked')) {
-                messages.push( 'Subject is editable');
-            }
-            if($('[name*="field_message_editable"]').length != 0 && !$('[name*="field_message_editable"]').is(':checked')) {
-                messages.push('Message is editable');
-            }
-            $('input.required').each(function() {
-                if ($(this).val() == '') {
-                    messages.push($("label[for='" + this.id + "']").text().replace('*', ''));
-                }
-            });
-            if(messages.length === 0) {
-                $("#sba-message-edit-form").submit();
-            }
-            else {
-                setError(messages);
-            }
-        });
-
-        // rearrange some div orders
-        var recipContainer = $('#springboard-advocacy-message-recipients-container');
-
-        var finder = $('#springboard-advocacy-find-targets-container');
-
-        var actions = $('#sba-message-edit-form #edit-actions');
-        var err = $('#advo-error-wrapper');
-        $('#springboard-advocacy-message-form-container').append(finder);
-        finder.append(recipContainer)
-        finder.append(actions);
-        actions.append(err);
-        $('.views-targets-button-wrapper').hide();
-        // Editing a pre-existing message, append the recipients
-        // to the recipients div using hidden form value
-        var recipients =  $('input[name="data[recipients]"]').val();
-        if(recipients.length > 0) {
-            $('body').once('edit-page', function() {
-                buildEditPage(recipients);
-            });
-        }
-        else {
-            $('.sba-message-status').text('No recipients have been selected.').show('slow');
-        }
-
-        scroller();
-    });
 
 })(jQuery);
