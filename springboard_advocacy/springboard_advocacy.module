@@ -543,6 +543,8 @@ function springboard_advocacy_update_districts_field_callback($form, $form_state
 function springboard_advocacy_update_districts_field_options($form, $form_state)
 {
   $subscription = springboard_advocacy_get_subscription();
+  $options = $form['search_district_name']['#options'];
+
   if (!empty($form_state['values']['search_state']) || $form_state['input']['search_state'] != 'All') {
     if (!empty($form_state['values']['search_state'])) {
       $state = $form_state['values']['search_state'];
@@ -550,19 +552,14 @@ function springboard_advocacy_update_districts_field_options($form, $form_state)
       $state = $form_state['input']['search_state'];
     }
 
-    if($subscription['subscription_type'] == 'federal-and-states-selected' && in_array($state, $subscription['states_custom'])) {
+    if ($subscription['subscription_type'] == 'federal-and-states-selected' && in_array($state, $subscription['states_custom'])) {
+      $options = springboard_advocacy_get_districts($state);
+    } elseif ($subscription['subscription_type'] != 'federal-and-states-selected') {
       $options = springboard_advocacy_get_districts($state);
     }
-    elseif($subscription['subscription_type'] != 'federal-and-states-selected'){
-      $options = springboard_advocacy_get_districts($state);
-    }
-    else {
-      $options = $form['search_district_name']['#options'];
-    }
-    return $options;
-  } else {
-    return $form['search_district_name']['#options'];
   }
+
+  return $options;
 }
 
 function springboard_advocacy_get_districts($state) {

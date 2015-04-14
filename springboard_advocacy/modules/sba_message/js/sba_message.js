@@ -23,10 +23,14 @@
                     if($.inArray($(this).val(), Drupal.settings.sbaAllowedStates) !=-1) {
                         $(this).trigger('custom_event');
                     }
+                    else {
+                        $('select[name="search_district_name"]').html('<option selected="selected" value="All">- Any -</option>');
+                    }
                 });
             }
             else {
                 $('#edit-search-state').on('change', function (e) {
+                    $('select[name="search_district_name"]').html('<option selected="selected" value="All">- Any -</option>');
                     $(this).trigger('custom_event');
                 });
             }
@@ -226,7 +230,7 @@
             });
             combine.prop('disabled', false);
             combine.closest('.views-exposed-widget').removeClass('disabled');
-            if(state.val() != "All" && groupable == false && notGroupable == false) {
+            if(state.val() != "All" && groupable == false && notGroupable == false && $('select[name="search_district_name"] option').size() > 1) {
                 district.prop('disabled', false);
                 district.removeClass('disabled');
 
@@ -236,7 +240,6 @@
             else {
                 district.prop('disabled', true);
                 district.addClass('disabled');
-
                 //jquery uniform
                 $('#edit-search-district-name-wrapper div.selector').addClass('disabled');
             }
