@@ -12,7 +12,7 @@ function springboard_tag_default_springboard_tag() {
   $presets = array();
 
   $preset = new stdClass();
-  $preset->disabled = FALSE; /* Edit this to true to make a default preset disabled initially */
+  $preset->disabled = TRUE; /* Edit this to true to make a default preset disabled initially */
   $preset->api_version = 1;
   $preset->name = 'donation_datalayer';
   $preset->admin_title = 'Donation Datalayer';
@@ -68,7 +68,7 @@ function springboard_tag_default_springboard_tag() {
   $presets['donation_datalayer'] = $preset;
 
   $preset = new stdClass();
-  $preset->disabled = FALSE; /* Edit this to true to make a default preset disabled initially */
+  $preset->disabled = TRUE; /* Edit this to true to make a default preset disabled initially */
   $preset->api_version = 1;
   $preset->name = 'general_datalayer';
   $preset->admin_title = 'General Datalayer';
@@ -116,7 +116,7 @@ function springboard_tag_default_springboard_tag() {
   $presets['general_datalayer'] = $preset;
 
   $preset = new stdClass();
-  $preset->disabled = FALSE; /* Edit this to true to make a default preset disabled initially */
+  $preset->disabled = TRUE; /* Edit this to true to make a default preset disabled initially */
   $preset->api_version = 1;
   $preset->name = 'google_tag_manager';
   $preset->admin_title = 'Google Tag Manager';
