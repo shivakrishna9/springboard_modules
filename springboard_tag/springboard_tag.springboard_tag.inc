@@ -16,7 +16,7 @@ function springboard_tag_default_springboard_tag() {
   $preset->api_version = 1;
   $preset->name = 'donation_datalayer';
   $preset->admin_title = 'Donation Datalayer';
-  $preset->admin_description = 'Datelayer example for a donation confirmation. Scripted so multiple datalayer instances can be present on the same page.';
+  $preset->admin_description = 'Datelayer example for a donation confirmation. Scripted so multiple datalayer instances can be present on the same page. If this will be used for Google Analytics eCommerce tracking, the Springboard GA module should be disabled to avoid double-tracking.';
   $preset->tag = '<script>
   var dataLayer = dataLayer || [];
   dataLayer.push({
