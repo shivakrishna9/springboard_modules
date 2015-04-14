@@ -18,7 +18,7 @@
             });
 
 
-            if(typeof(Drupal.settings.sbaAllowedStates) != undefined) {
+            if(typeof(Drupal.settings.sbaAllowedStates) !== "undefined") {
                 $('#edit-search-state').on('change', function (e) {
                     if($.inArray($(this).val(), Drupal.settings.sbaAllowedStates) !=-1) {
                         $(this).trigger('custom_event');
@@ -44,7 +44,7 @@
             });
 
             $('.full-search').click(function (e) {
-                new Drupal.ajax('edit-search-state', '#edit-search-state', stateAjax.element_settings);
+                new Drupal.ajax('edit-search-state', '#edit-search-state', Drupal.ajax['edit-search-state'].element_settings);
                 $('#edit-search-committee-chamber-wrapper, #edit-search-committee-wrapper').hide();
                 $('a.committee-search').closest('.faux-tab').removeClass('active');
                 $('a.full-search').closest('.faux-tab').addClass('active');
@@ -59,7 +59,7 @@
                 $('#edit-search-committee-chamber-wrapper, #edit-search-committee-wrapper').show(300);
                 $('a.committee-search').closest('.faux-tab').addClass('active');
                 $('#state-district-wrapper').append($('#edit-search-committee-chamber-wrapper'))
-                $('#edit-search-state').unbind('custom_event', Drupal.ajax('edit-search-state', '#edit-search-state', stateAjax.element_settings));
+                $('#edit-search-state').unbind('custom_event', Drupal.ajax('edit-search-state', '#edit-search-state', Drupal.ajax['edit-search-state'].element_settings));
             }
             else {
                 $('a.committee-search').closest('.faux-tab').removeClass('active');
@@ -107,10 +107,17 @@
                 }, 10);
             }
 
+
+            $('#edit-search-committee-wrapper input').on('keydown', function(input, e){
+                if($('div.view-targets').is(':visible')) {
+                    reset();
+                }
+                setElStates();
+            });
+
             //update exposed form element states when a district is selected
             $('select[name="search_district_name"]', context).once('advocacy-district-reloaded', function() {
                 setElStates();
-
                 $('#views-exposed-form-targets-block-3 input, #views-exposed-form-targets-block-3 select').on('change', function(){
                     if(this.type != 'button' && this.type !='hidden') {
                         if($('div.view-targets').is(':visible')) {
@@ -586,10 +593,7 @@
 
     // Main set of functions which need to happen on every page load
     $(document).ready(function () {
-        //if(typeof(Drupal.settings.sbaAllowedStates) != undefined) {
-        //    var stateAjax = Drupal.ajax['edit-search-state'];
-        //    $('#edit-search-state').unbind('change', Drupal.ajax('edit-search-state', '#edit-search-state', stateAjax.element_settings));
-        //}
+
         if ($.isFunction($.fn.uniform)) {
             $('select').each(function () {
                 $.uniform.restore(this);
