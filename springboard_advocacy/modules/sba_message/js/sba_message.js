@@ -75,36 +75,36 @@
 
     Sba.buildSubscriptions = function () {
 
-        if(typeof(Drupal.settings.sbaSubscriptionLevel) !== "undefined") {
-            if(Drupal.settings.sbaSubscriptionLevel == 'federal-only') {
-                $("#edit-search-committee-chamber option").each(function() {
-                    if($(this).html().indexOf('State') != -1) {
+        if (typeof(Drupal.settings.sbaSubscriptionLevel) !== "undefined") {
+            if (Drupal.settings.sbaSubscriptionLevel == 'federal-only') {
+                $("#edit-search-committee-chamber option").each(function () {
+                    if ($(this).html().indexOf('State') != -1) {
                         $(this).remove();
                     }
                 });
-                if(window.search_state == 'committee') {
+                if (window.search_state == 'committee') {
                     $('#edit-search-state-wrapper').hide();
                 }
                 else {
                     $('#edit-search-state-wrapper').show();
                 }
             }
-            if(Drupal.settings.sbaSubscriptionLevel == 'states-only') {
-                $("#edit-search-committee-chamber option").each(function() {
-                    if($(this).html().indexOf('Federal') != -1) {
+            if (Drupal.settings.sbaSubscriptionLevel == 'states-only') {
+                $("#edit-search-committee-chamber option").each(function () {
+                    if ($(this).html().indexOf('Federal') != -1) {
                         $(this).remove();
                     }
                 });
             }
 
-            if(Drupal.settings.sbaSubscriptionLevel == 'states-selected') {
-                $("#edit-search-committee-chamber option").each(function() {
-                    if($(this).html().indexOf('Federal') != -1) {
+            if (Drupal.settings.sbaSubscriptionLevel == 'states-selected') {
+                $("#edit-search-committee-chamber option").each(function () {
+                    if ($(this).html().indexOf('Federal') != -1) {
                         $(this).remove();
                     }
                 });
-                $("#edit-search-state option").each(function() {
-                    if($.inArray($(this).val(), Drupal.settings.sbaAllowedStates) == -1) {
+                $("#edit-search-state option").each(function () {
+                    if ($.inArray($(this).val(), Drupal.settings.sbaAllowedStates) == -1) {
                         $(this).remove();
                     }
                 });
@@ -149,6 +149,7 @@
             $('a.full-search').closest('.faux-tab').removeClass('active');
             window.search_state = 'committee';
             Sba.buildSubscriptions();
+            Sba.toggleStateAndChambers();
             $('#state-district-wrapper').append($('#edit-search-committee-chamber-wrapper'));
             $('#edit-search-state').unbind('custom_event', Drupal.ajax('edit-search-state', '#edit-search-state', Drupal.ajax['edit-search-state'].element_settings));
             return false;
@@ -195,17 +196,6 @@
             }
             Sba.setElStates();
         });
-
-        //state/chamber event driven enabling goes here.
-        if (window.search_state == 'committee') {
-            $('#state-district-wrapper select').change(function() {
-                v = this.id
-                if($( v + ' option').val()) {
-
-                }
-
-            });
-        }
     }
 
     Sba.buildTargetLinkEvent = function (context) {
@@ -253,7 +243,6 @@
             });
         });
     }
-
 
     Sba.comboSearchUpdater = function () {
         if ($('#edit-combine').text().length == 0) {
@@ -358,6 +347,42 @@
         }, 500);
     }
 
+
+    Sba.toggleStateAndChambers = function () {
+        //state/chamber event driven enabling goes here.
+        if (window.search_state == 'committee') {
+            $('#edit-search-committee-chamber-wrapper select').change(function() {
+                text = $( '#' + this.id + ' option:selected').text();
+                if(text.indexOf('Federal') != -1 ) {
+                    $('#edit-search-state').prop('disabled', true);
+                    $('#edit-search-state').addClass('disabled');
+                    $('#edit-search-state').siblings('label').css({'cursor': 'not-allowed'});
+                }
+                else {
+                    $('#edit-search-state').prop('disabled', false);
+                    $('#edit-search-state').removeClass('disabled');
+                    $('#edit-search-state').siblings('label').css({'cursor': 'default'});
+                }
+            });
+
+            $('select', '#edit-search-state-wrapper').change(function() {
+                if (this.value != 'All') {
+                    $("#edit-search-committee-chamber option").each(function() {
+                        if($(this).html().indexOf('Federal') != -1) {
+                            $(this).hide();
+                        }
+                    });
+                }
+                else {
+                    $("#edit-search-committee-chamber option").each(function() {
+                        if($(this).html().indexOf('Federal') != -1) {
+                            $(this).show();
+                        }
+                    });
+                }
+            });
+        }
+    }
 
     // selectively disable/enable exposed form elements based on user actions
     Sba.setElStates = function () {
