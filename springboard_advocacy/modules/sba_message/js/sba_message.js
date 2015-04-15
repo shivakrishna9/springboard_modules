@@ -32,6 +32,21 @@
 
             // Insert placeholder text and update exposed form elements when combo search is changed.
             Sba.comboSearchUpdater();
+
+            var subscr = Drupal.settings.sbaSubscriptionLevel;
+            if (subscr == 'federal-and-states-selected') {
+
+                Sba.toggleStateAndChambers();
+
+                Sba.toggleStateAndBranchState();
+
+                Sba.toggleStateAndBranchBranch();
+
+                Sba.toggleStateAndChambersState();
+
+                Sba.toggleStateAndChambersChamber();
+            }
+
         }
     };
 
@@ -353,36 +368,47 @@
         //state/chamber event driven enabling goes here.
         if (window.search_state == 'committee') {
             $('#edit-search-committee-chamber-wrapper select').change(function() {
-                text = $( '#' + this.id + ' option:selected').text();
-                if(text.indexOf('Federal') != -1 ) {
-                    $('#edit-search-state').prop('disabled', true);
-                    $('#edit-search-state').addClass('disabled');
-                    $('#edit-search-state').siblings('label').css({'cursor': 'not-allowed'});
-                }
-                else {
-                    $('#edit-search-state').prop('disabled', false);
-                    $('#edit-search-state').removeClass('disabled');
-                    $('#edit-search-state').siblings('label').css({'cursor': 'default'});
-                }
+                sba.toggleStateAndChambersChamber();
             });
 
             $('select', '#edit-search-state-wrapper').change(function() {
-                if (this.value != 'All') {
-                    $("#edit-search-committee-chamber option").each(function() {
-                        if($(this).html().indexOf('Federal') != -1) {
-                            $(this).hide();
-                        }
-                    });
-                }
-                else {
-                    $("#edit-search-committee-chamber option").each(function() {
-                        if($(this).html().indexOf('Federal') != -1) {
-                            $(this).show();
-                        }
-                    });
+                Sba.toggleStateAndChambersState();
+            });
+        }
+    }
+
+    Sba.toggleStateAndChambersChamber = function () {
+        chamber = $('#edit-search-committee-chamber-wrapper select')
+        text = $( '#' + chamber.id + ' option:selected').text();
+        if(text.indexOf('Federal') != -1 ) {
+            $('#edit-search-state').prop('disabled', true);
+            $('#edit-search-state').addClass('disabled');
+            $('#edit-search-state').siblings('label').css({'cursor': 'not-allowed'});
+        }
+        else {
+            $('#edit-search-state').prop('disabled', false);
+            $('#edit-search-state').removeClass('disabled');
+            $('#edit-search-state').siblings('label').css({'cursor': 'default'});
+        }
+    }
+
+    Sba.toggleStateAndChambersState = function () {
+        state = $('select', '#edit-search-state-wrapper')
+        if (state.val() != 'All') {
+            $("#edit-search-committee-chamber option").each(function() {
+                if($(this).html().indexOf('Federal') != -1) {
+                    $(this).hide();
                 }
             });
         }
+        else {
+            $("#edit-search-committee-chamber option").each(function() {
+                if($(this).html().indexOf('Federal') != -1) {
+                    $(this).show();
+                }
+            });
+        }
+
     }
 
     Sba.toggleStateAndBranch = function () {
@@ -390,46 +416,54 @@
         if (subscr == 'federal-and-states-selected') {
             var states = Drupal.settings.sbaAllowedStates;
             $('select', '#edit-search-state-wrapper').change(function () {
-                if ($.inArray($(this).val(), Drupal.settings.sbaAllowedStates) == -1) {
-                    $("#edit-search-role-1-wrapper input").each(function () {
-                        if ($(this).siblings('label').html().indexOf('Federal') == -1) {
-                            console.log($(this).siblings('label').html());
-                            $(this).closest('.control-group').hide();
-                        }
-                    });
-                }
-                else {
-                    $("#edit-search-role-1-wrapper input").each(function () {
-                        $(this).closest('.control-group').show();
-                    });
-                }
+                Sba.toggleStateAndBranchState();
             });
 
             $('input', '#edit-search-role-1-wrapper').change(function () {
-               var checkedState = false;
-               $boxes = $('input', '#edit-search-role-1-wrapper');
-               $boxes.each(function(){
-                   var fed = $(this).siblings('label').html().indexOf('State');
-                   if($(this).prop('checked') &&  fed != -1) {
-                       checkedState = true;
-                   }
-               });
-
-                var options = $('select option', '#edit-search-state-wrapper');
-                options.each(function () {
-                    if ($.inArray($(this).val(), Drupal.settings.sbaAllowedStates) == -1) {
-                        if (checkedState == true) {
-                            $(this).hide();
-                        }
-                        else {
-                            $(this).show();
-                        }
-                    }
-                });
+                Sba.toggleStateAndBranchBranch();
             });
         }
     }
 
+    Sba.toggleStateAndBranchState = function () {
+        value = $('select', '#edit-search-state-wrapper').val();
+        if (value != 'All' && $.inArray(value, Drupal.settings.sbaAllowedStates) == -1) {
+            $("#edit-search-role-1-wrapper input").each(function () {
+                if ($(this).siblings('label').html().indexOf('Federal') == -1) {
+                    $(this).closest('.control-group').hide();
+                }
+            });
+        }
+        else {
+            $("#edit-search-role-1-wrapper input").each(function () {
+                $(this).closest('.control-group').show();
+            });
+        }
+    }
+
+    Sba.toggleStateAndBranchBranch = function () {
+        var checkedState = false;
+        $boxes = $('input', '#edit-search-role-1-wrapper');
+        $boxes.each(function(){
+            var fed = $(this).siblings('label').html().indexOf('State');
+            if($(this).prop('checked') &&  fed != -1) {
+                checkedState = true;
+            }
+        });
+
+        var options = $('select option', '#edit-search-state-wrapper');
+        options.each(function () {
+            if ($.inArray($(this).val(), Drupal.settings.sbaAllowedStates) == -1) {
+                if (checkedState == true) {
+                    $(this).hide();
+                }
+                else {
+                    $(this).show();
+                }
+            }
+        });
+
+    }
 
     // selectively disable/enable exposed form elements based on user actions
     Sba.setElStates = function () {
