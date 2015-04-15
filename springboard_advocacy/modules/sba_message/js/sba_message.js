@@ -175,6 +175,7 @@
             $('#edit-search-state').unbind('custom_event', Drupal.ajax('edit-search-state', '#edit-search-state', Drupal.ajax['edit-search-state'].element_settings));
         }
         else {
+            Sba.toggleStateAndBranch();
             $('a.committee-search').closest('.faux-tab').removeClass('active');
             $('a.full-search').closest('.faux-tab').addClass('active');
             $('#edit-search-party-wrapper, #edit-search-social-wrapper, #edit-search-gender-wrapper, #edit-search-district-name-wrapper, #edit-combine-wrapper, .search-reset').show(300);
@@ -383,6 +384,52 @@
             });
         }
     }
+
+    Sba.toggleStateAndBranch = function () {
+        var subscr = Drupal.settings.sbaSubscriptionLevel;
+        if (subscr == 'federal-and-states-selected') {
+            var states = Drupal.settings.sbaAllowedStates;
+            $('select', '#edit-search-state-wrapper').change(function () {
+                if ($.inArray($(this).val(), Drupal.settings.sbaAllowedStates) == -1) {
+                    $("#edit-search-role-1-wrapper input").each(function () {
+                        if ($(this).siblings('label').html().indexOf('Federal') == -1) {
+                            console.log($(this).siblings('label').html());
+                            $(this).closest('.control-group').hide();
+                        }
+                    });
+                }
+                else {
+                    $("#edit-search-role-1-wrapper input").each(function () {
+                        $(this).closest('.control-group').show();
+                    });
+                }
+            });
+
+            $('input', '#edit-search-role-1-wrapper').change(function () {
+               var checkedState = false;
+               $boxes = $('input', '#edit-search-role-1-wrapper');
+               $boxes.each(function(){
+                   var fed = $(this).siblings('label').html().indexOf('State');
+                   if($(this).prop('checked') &&  fed != -1) {
+                       checkedState = true;
+                   }
+               });
+
+                var options = $('select option', '#edit-search-state-wrapper');
+                options.each(function () {
+                    if ($.inArray($(this).val(), Drupal.settings.sbaAllowedStates) == -1) {
+                        if (checkedState == true) {
+                            $(this).hide();
+                        }
+                        else {
+                            $(this).show();
+                        }
+                    }
+                });
+            });
+        }
+    }
+
 
     // selectively disable/enable exposed form elements based on user actions
     Sba.setElStates = function () {
