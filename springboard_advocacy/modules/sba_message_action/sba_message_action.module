@@ -341,13 +341,13 @@ function sba_message_action_editable_message_form(&$form, $message, $multiple)
   $wrapper = entity_metadata_wrapper('sba_message', $message);
 
   $subject = check_plain($wrapper->field_sba_subject->value());
-  $message_body = check_plain($wrapper->field_sba_message->value());
-  $editable_message = check_plain($wrapper->field_editable_area->value());
+  $message_body = check_markup($wrapper->field_sba_message->value(), 'plain_text');
+  $editable_message = check_markup($wrapper->field_editable_area->value(), 'plain_text');;
   $editable = $wrapper->field_user_editable[0]->value() == 'editable' ? TRUE : FALSE;
   $required = $wrapper->field_editable_area_optional[0]->value() == 'required' ? TRUE : FALSE;
   $placeholder_greeting = check_plain($wrapper->field_sba_placeholder_greeting->value());
   $greeting = check_plain($wrapper->field_sba_greeting->value());
-  $conclusion = check_plain($wrapper->field_bottom_conclusion->value());
+  $conclusion = check_markup($wrapper->field_bottom_conclusion->value(), 'plain_text');
 
 
   if (!$multiple) {
@@ -373,8 +373,6 @@ function sba_message_action_editable_message_form(&$form, $message, $multiple)
     '#type' => 'value',
     '#value' => $message->sba_message_id,
   );
-
-
 
   if ($wrapper->field_subject_editable->value() != 'Not editable') {
     $form['message'][$message->sba_message_id]['subject'] = array(
@@ -491,7 +489,7 @@ function sba_message_action_form_submit($form, &$form_state) {
 
     foreach ($form_state['values']['sba_messages']['message'] as $id => $message) {
       $body_editable = isset($message['body_editable']) ? $message['body_editable'] : '';
-      $messages[$id]['body'] = check_plain(sba_message_action_build_message_bodies($message['sba_message_id'], $body_editable));
+      $messages[$id]['body'] = check_markup(sba_message_action_build_message_bodies($message['sba_message_id'], $body_editable), 'plain_text');
       $messages[$id]['subject'] = check_plain($message['subject']);
     }
     module_load_include('inc', 'springboard_advocacy', 'includes/springboard_advocacy.webform');
