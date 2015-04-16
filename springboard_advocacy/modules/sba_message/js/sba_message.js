@@ -35,18 +35,11 @@
 
             var subscr = Drupal.settings.sbaSubscriptionLevel;
             if (subscr == 'federal-and-states-selected') {
-
-                Sba.toggleStateAndChambers();
-
                 Sba.toggleStateAndBranchState();
-
                 Sba.toggleStateAndBranchBranch();
-
                 Sba.toggleStateAndChambersState();
-
                 Sba.toggleStateAndChambersChamber();
             }
-
         }
     };
 
@@ -131,7 +124,8 @@
     Sba.buildStateField = function () {
         if(typeof(Drupal.settings.sbaAllowedStates) !== "undefined") {
             $('#edit-search-state').on('change', function (e) {
-                if($.inArray($(this).val(), Drupal.settings.sbaAllowedStates) !=-1) {
+                if($.inArray($(this).val(), Drupal.settings.sbaAllowedStates) !=-1
+                    || Drupal.settings.sbaSubscriptionLevel == 'federal-and-states-selected') {
                     $(this).trigger('custom_event');
                 }
                 else {

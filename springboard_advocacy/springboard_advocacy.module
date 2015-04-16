@@ -555,7 +555,7 @@ function springboard_advocacy_update_districts_field_options($form, $form_state)
       $state = $form_state['input']['search_state'];
     }
 
-    if ($subscription['subscription_type'] == 'federal-and-states-selected' && in_array($state, $subscription['states_custom'])) {
+    if ($subscription['subscription_type'] == 'federal-and-states-selected') {
       $options = springboard_advocacy_get_districts($state);
     } elseif ($subscription['subscription_type'] != 'federal-and-states-selected') {
       $options = springboard_advocacy_get_districts($state);
