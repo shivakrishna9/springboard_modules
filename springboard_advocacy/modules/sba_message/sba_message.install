@@ -347,7 +347,7 @@ function sba_message_install() {
         'label' => 'above',
         'module' => 'text',
         'settings' => array(),
-        'type' => 'text_default',
+        'type' => 'text_plain',
         'weight' => 10,
       ),
     ),
@@ -381,7 +381,7 @@ function sba_message_install() {
         'label' => 'above',
         'module' => 'text',
         'settings' => array(),
-        'type' => 'text_default',
+        'type' => 'text_plain',
         'weight' => 9,
       ),
     ),
@@ -487,7 +487,11 @@ function sba_message_install() {
   // Exported field_instance: 'sba_message-sba_message_action_message-field_sba_greeting'
   $field_instances['sba_message-sba_message_action_message-field_sba_greeting'] = array(
     'bundle' => 'sba_message_action_message',
-    'default_value' => NULL,
+    'default_value' => array(
+      0 => array(
+        'value' => 'Dear %target.salutation% %target.lastname%',
+      ),
+    ),
     'deleted' => 0,
     'description' => '',
     'display' => array(
@@ -528,7 +532,7 @@ function sba_message_install() {
         'label' => 'above',
         'module' => 'text',
         'settings' => array(),
-        'type' => 'text_default',
+        'type' => 'text_plain',
         'weight' => 1,
       ),
     ),
@@ -544,7 +548,7 @@ function sba_message_install() {
       'active' => 1,
       'module' => 'text',
       'settings' => array(
-        'rows' => 10,
+        'rows' => 15,
       ),
       'type' => 'text_textarea',
       'weight' => 11,
@@ -589,7 +593,7 @@ function sba_message_install() {
     'bundle' => 'sba_message_action_message',
     'default_value' => array(
       0 => array(
-        'value' => 'Sincerely, %first-name% %last-name%',
+        'value' => 'Sincerely, %contact.first-name% %contact.last-name%',
       ),
     ),
     'deleted' => 0,
@@ -988,6 +992,7 @@ function _sba_message_delete_fields() {
     'field_sba_greeting',
     'field_sba_message',
     'field_sba_subject',
+    'field_user_editable',
     'field_subject_editable',
     'field_editable_area_optional',
     'field_editable_area',
@@ -1004,6 +1009,7 @@ function _sba_message_delete_fields() {
 //    }
     // Just in case
     if($field = field_info_field($field_name)){
+      if (isset($field['bundles']['sba_message']))
       field_delete_field($field_name);
     }
   }
