@@ -551,7 +551,7 @@ function sba_message_install() {
         'rows' => 15,
       ),
       'type' => 'text_textarea',
-      'weight' => 11,
+      'weight' => 12,
     ),
   );
 
@@ -721,7 +721,7 @@ function sba_message_install() {
       'module' => 'options',
       'settings' => array(),
       'type' => 'options_buttons',
-      'weight' => 12,
+      'weight' => 11,
     ),
   );
 
