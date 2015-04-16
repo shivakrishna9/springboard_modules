@@ -119,10 +119,12 @@
                         display:none;
                     }
 
-                #springboard-advocacy-message-form-container fieldset fieldset #edit-field-user-editable label {
-                    float: left;
+                #springboard-advocacy-message-form-container  #edit-field-user-editable  .form-type-checkbox label {
                     margin-right: 0.5em;
-                    vertical-align: middle;
+                }
+
+                #springboard-advocacy-message-form-container  #edit-field-user-editable .form-type-checkboxes > label {
+                    display:none;
                 }
 
                 #springboard-advocacy-message-form-container fieldset fieldset#sba_message_sba_message_action_message_form_group_editable .fieldset-wrapper {
