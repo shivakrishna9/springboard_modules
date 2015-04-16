@@ -340,6 +340,16 @@ function sba_message_action_editable_message_form(&$form, $message, $multiple)
 {
   $wrapper = entity_metadata_wrapper('sba_message', $message);
 
+  $subject = check_plain($wrapper->field_sba_subject->value());
+  $message_body = check_plain($wrapper->field_sba_message->value());
+  $editable_message = check_plain($wrapper->field_editable_area->value());
+  $editable = $wrapper->field_user_editable[0]->value() == 'editable' ? TRUE : FALSE;
+  $required = $wrapper->field_editable_area_optional[0]->value() == 'required' ? TRUE : FALSE;
+  $placeholder_greeting = check_plain($wrapper->field_sba_placeholder_greeting->value());
+  $greeting = check_plain($wrapper->field_sba_greeting->value());
+  $conclusion = check_plain($wrapper->field_bottom_conclusion->value());
+
+
   if (!$multiple) {
     $form['message'][$message->sba_message_id] = array(
       '#type' => 'fieldset',
@@ -364,7 +374,7 @@ function sba_message_action_editable_message_form(&$form, $message, $multiple)
     '#value' => $message->sba_message_id,
   );
 
-  $subject = $wrapper->field_sba_subject->value();
+
 
   if ($wrapper->field_subject_editable->value() != 'Not editable') {
     $form['message'][$message->sba_message_id]['subject'] = array(
@@ -379,10 +389,9 @@ function sba_message_action_editable_message_form(&$form, $message, $multiple)
       $form['message'][$message->sba_message_id]['subject_show'] = array(
         '#type' => 'item',
         '#title' => t('Subject'),
-        '#markup' => check_plain($subject),
+        '#markup' => $subject,
       );
     }
-
 
     $form['message'][$message->sba_message_id]['subject'] = array(
       '#type' => 'value',
@@ -390,29 +399,24 @@ function sba_message_action_editable_message_form(&$form, $message, $multiple)
     );
   }
 
-  $body = $wrapper->field_sba_message->value();
-  $editable = $wrapper->field_user_editable[0]->value() == 'editable' ? TRUE : FALSE;
-  $required = $wrapper->field_editable_area_optional[0]->value() == 'required' ? TRUE : FALSE;
-  $greeting = $wrapper->field_sba_placeholder_greeting->value();
-
   if (!$multiple) {
     $form['message'][$message->sba_message_id]['greeting_show'] = array(
       '#type' => 'item',
       '#title' => '',
-      '#markup' => $greeting,
+      '#markup' => $placeholder_greeting,
     );
   }
   $form['message'][$message->sba_message_id]['greeting'] = array(
     '#type' => 'value',
-    '#value' => $wrapper->field_sba_greeting->value(),
+    '#value' => $greeting,
   );
 
   $form['message'][$message->sba_message_id]['body'] = array(
     '#type' => 'value',
-    '#value' => $body,
+    '#value' => $message_body,
   );
 
-  if(!empty($body) && !$multiple) {
+  if(!empty($message_body) && !$multiple) {
       if ($editable) {
         $title = t('');
       } else {
@@ -421,7 +425,7 @@ function sba_message_action_editable_message_form(&$form, $message, $multiple)
       $form['message'][$message->sba_message_id]['body_show'] = array(
         '#type' => 'item',
         '#title' => $title,
-        '#markup' => $body,
+        '#markup' => $message_body,
       );
   }
 
@@ -430,7 +434,7 @@ function sba_message_action_editable_message_form(&$form, $message, $multiple)
     $form['message'][$message->sba_message_id]['body_editable'] = array(
       //'#title' => t('Your Message'),
       '#type' => 'textarea',
-      '#default_value' => $wrapper->field_editable_area->value(),
+      '#default_value' => $editable_message,
     );
 
     $form['message'][$message->sba_message_id]['body_required'] = array(
@@ -438,12 +442,11 @@ function sba_message_action_editable_message_form(&$form, $message, $multiple)
       '#value' => $required,
     );
 
-    $concl = $wrapper->field_bottom_conclusion->value();
-    if(!empty($concl)) {
+    if(!empty($conclusion)) {
       $form['message'][$message->sba_message_id]['body_bottom'] = array(
         '#type' => 'item',
         '#title' => t('Conclusion'),
-        '#markup' => check_plain($concl),
+        '#markup' => $conclusion,
       );
     }
   }
@@ -488,8 +491,8 @@ function sba_message_action_form_submit($form, &$form_state) {
 
     foreach ($form_state['values']['sba_messages']['message'] as $id => $message) {
       $body_editable = isset($message['body_editable']) ? $message['body_editable'] : '';
-      $messages[$id]['body'] = sba_message_action_build_message_bodies($message['sba_message_id'], $body_editable);
-      $messages[$id]['subject'] = $message['subject'];
+      $messages[$id]['body'] = check_plain(sba_message_action_build_message_bodies($message['sba_message_id'], $body_editable));
+      $messages[$id]['subject'] = check_plain($message['subject']);
     }
     module_load_include('inc', 'springboard_advocacy', 'includes/springboard_advocacy.webform');
     springboard_advocacy_send_message($messages, $form_state);
@@ -512,7 +515,7 @@ function sba_message_action_build_message_bodies($sba_message_id, $body_editable
   $wrapper = entity_metadata_wrapper('sba_message', $message);
 
   $user_message = array();
-  $user_message[] =  $wrapper->field_sba_greeting->value();
+  $user_message[] = $wrapper->field_sba_greeting->value();
   $user_message[] = $wrapper->field_sba_message->value();
   $user_message[] = $body_editable;
   $user_message[] = $wrapper->field_bottom_conclusion->value();
@@ -980,6 +983,8 @@ function sba_message_action_settings_form_submit($form, $form_state) {
 
 function sba_message_action_preprocess_webform_confirmation(&$vars) {
   if ($vars['node']->type = 'sba_message_action' && empty($_SESSION['message_recipients'])) {
-    $vars['confirmation_message'] = check_markup($vars['node']->custom_fail_message, 'full_html');
+    if(isset($vars['node']->custom_fail_message)) {
+      $vars['confirmation_message'] = check_markup($vars['node']->custom_fail_message, 'full_html');
+    }
   }
 }
