@@ -49,6 +49,10 @@ function springboard_advocacy_send_message($user_message, $form_state) {
     $client = $loader->getClient();
     $response = $client->resolveTargets($submission);
 
+    if ($client->isDebugMode()) {
+      watchdog('springboard_advocacy', 'Transaction server API call details: !request', array('!request' => '<pre>' . check_plain(print_r($client->getDebugInfo(), TRUE)) . '</pre>'), WATCHDOG_DEBUG);
+    }
+
     if(isset($response->data)) {
       // We got a valid response, build the confirmation message array.
       springboard_advocacy_build_confirmation($response->data);
@@ -179,8 +183,8 @@ function springboard_advocacy_build_contact($values, $zip, $geo) {
   $contact = array(
     'first_name' => $values['sbp_first_name'],
     'last_name' => $values['sbp_last_name'],
-    'address' => $values['sbp_address'], 
-    'address_line_2' => $values['sbp_address_line_2'], 
+    'address' => $values['sbp_address'],
+    'address_line_2' => $values['sbp_address_line_2'],
     'city' => $values['sbp_city'],
     'state' => $values['sbp_state'],
     'phone' => $values['sbp_phone'],

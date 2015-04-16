@@ -5,18 +5,22 @@
  * Loads and instantiates an SpringboardAdvocacyApiClient object.
  */
 
-class AdvocacyApiClientLoader 
+class AdvocacyApiClientLoader
 
 {
   /**
    * maybe we should use __construct and save a line when calling
    * -- depends if getToken ever needs to be static method
    */
-  public function getClient() 
+  public function getClient()
   {
     $lib = libraries_load('springboard_advocacy');
     $domain = variable_get('springboard_advocacy_server_url', '');
     $client = new SpringboardAdvocacyAPIClient($domain);
+    // Put client into debug mode if needed.
+    if (variable_get('springboard_advocacy_api_debug_mode', FALSE)) {
+      $client->enableDebugMode();
+    }
     $token = $this->getToken($client);
     if (!empty($token->access_token)) {
       $client->setToken($token->access_token);
@@ -34,7 +38,7 @@ class AdvocacyApiClientLoader
   /**
    * Get or Refresh an Oauth access token.
    */
-  private function getToken($client) 
+  private function getToken($client)
   {
     $token = variable_get('springboard_advocacy_access_token', array());
     if (!empty($token->access_token)) {

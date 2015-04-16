@@ -59,6 +59,13 @@ function springboard_advocacy_settings_form() {
     '#default_value' => variable_get('springboard_advocacy_client_secret', ''),
   );
 
+  $form['transaction']['springboard_advocacy_api_debug_mode'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Debug mode'),
+    '#description' => t('Logs all API requests and responses to watchdog. Do not use in production environments.'),
+    '#default_value' => variable_get('springboard_advocacy_api_debug_mode', FALSE),
+  );
+
    $form['geo'] = array(
     '#type' => 'fieldset',
     '#title' => t('Geocoding configuration'),
