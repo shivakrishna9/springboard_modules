@@ -403,6 +403,12 @@ function sba_message_views_default_views() {
   $handler->display->display_options['fields']['state']['id'] = 'state';
   $handler->display->display_options['fields']['state']['table'] = 'advocacy';
   $handler->display->display_options['fields']['state']['field'] = 'state';
+  /* Field: Advocacy: District Code */
+  $handler->display->display_options['fields']['district_code']['id'] = 'district_code';
+  $handler->display->display_options['fields']['district_code']['table'] = 'advocacy';
+  $handler->display->display_options['fields']['district_code']['field'] = 'district_code';
+  $handler->display->display_options['fields']['district_code']['label'] = 'District';
+  $handler->display->display_options['fields']['district_code']['hide_empty'] = TRUE;
   /* Field: Advocacy: Committee Memberships */
   $handler->display->display_options['fields']['committee_memberships']['id'] = 'committee_memberships';
   $handler->display->display_options['fields']['committee_memberships']['table'] = 'advocacy';
@@ -425,23 +431,6 @@ function sba_message_views_default_views() {
   );
   $handler->display->display_options['defaults']['filter_groups'] = FALSE;
   $handler->display->display_options['defaults']['filters'] = FALSE;
-  /* Filter criterion: Advocacy: Search by Committee Name */
-  $handler->display->display_options['filters']['search_committee']['id'] = 'search_committee';
-  $handler->display->display_options['filters']['search_committee']['table'] = 'advocacy';
-  $handler->display->display_options['filters']['search_committee']['field'] = 'search_committee';
-  $handler->display->display_options['filters']['search_committee']['group'] = 1;
-  $handler->display->display_options['filters']['search_committee']['exposed'] = TRUE;
-  $handler->display->display_options['filters']['search_committee']['expose']['operator_id'] = 'search_committee_op';
-  $handler->display->display_options['filters']['search_committee']['expose']['description'] = 'Search by Committee Name';
-  $handler->display->display_options['filters']['search_committee']['expose']['operator'] = 'search_committee_op';
-  $handler->display->display_options['filters']['search_committee']['expose']['identifier'] = 'search_committee';
-  $handler->display->display_options['filters']['search_committee']['expose']['remember_roles'] = array(
-    2 => '2',
-    1 => 0,
-    3 => 0,
-    4 => 0,
-    5 => 0,
-  );
   /* Filter criterion: Advocacy: Search Multiple Target Fields by Keywords */
   $handler->display->display_options['filters']['combine']['id'] = 'combine';
   $handler->display->display_options['filters']['combine']['table'] = 'advocacy';
@@ -463,6 +452,23 @@ function sba_message_views_default_views() {
   $handler->display->display_options['filters']['combine']['fields'] = array(
     'first_name' => 'first_name',
     'last_name' => 'last_name',
+  );
+  /* Filter criterion: Advocacy: Search by Committee Name */
+  $handler->display->display_options['filters']['search_committee']['id'] = 'search_committee';
+  $handler->display->display_options['filters']['search_committee']['table'] = 'advocacy';
+  $handler->display->display_options['filters']['search_committee']['field'] = 'search_committee';
+  $handler->display->display_options['filters']['search_committee']['group'] = 1;
+  $handler->display->display_options['filters']['search_committee']['exposed'] = TRUE;
+  $handler->display->display_options['filters']['search_committee']['expose']['operator_id'] = 'search_committee_op';
+  $handler->display->display_options['filters']['search_committee']['expose']['description'] = 'Search by Committee Name';
+  $handler->display->display_options['filters']['search_committee']['expose']['operator'] = 'search_committee_op';
+  $handler->display->display_options['filters']['search_committee']['expose']['identifier'] = 'search_committee';
+  $handler->display->display_options['filters']['search_committee']['expose']['remember_roles'] = array(
+    2 => '2',
+    1 => 0,
+    3 => 0,
+    4 => 0,
+    5 => 0,
   );
   /* Filter criterion: Advocacy: Search By State */
   $handler->display->display_options['filters']['search_state']['id'] = 'search_state';
@@ -846,6 +852,7 @@ function sba_message_views_default_views() {
   $handler->display->display_options['filters']['search_committee_chamber']['id'] = 'search_committee_chamber';
   $handler->display->display_options['filters']['search_committee_chamber']['table'] = 'advocacy';
   $handler->display->display_options['filters']['search_committee_chamber']['field'] = 'search_committee_chamber';
+  $handler->display->display_options['filters']['search_committee_chamber']['group'] = 1;
   $handler->display->display_options['filters']['search_committee_chamber']['exposed'] = TRUE;
   $handler->display->display_options['filters']['search_committee_chamber']['expose']['operator_id'] = 'search_committee_chamber_op';
   $handler->display->display_options['filters']['search_committee_chamber']['expose']['label'] = 'Committee Chamber';
@@ -859,8 +866,10 @@ function sba_message_views_default_views() {
     5 => 0,
   );
 
-
   $views[$view->name] = $view;
+
+
+
 
   /******* Message Landing page *************/
 
