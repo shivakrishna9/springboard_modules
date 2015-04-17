@@ -384,6 +384,10 @@ function springboard_advocacy_form_alter(&$form, &$form_state, $form_id) {
   }
 }
 
+/**
+ * @param $element
+ * @return mixed
+ */
 function springboard_advocacy_sba_organization_issues_pre_render($element) {
   $vocabulary = taxonomy_vocabulary_machine_name_load('sba_organization_issues');
   // Add indentation class to non-top-tier org issue terms.
@@ -399,11 +403,22 @@ function springboard_advocacy_sba_organization_issues_pre_render($element) {
   return $element;
 }
 
+/**
+ * Reset the API access token and subscription level variables when
+ * submitting the advocacy configuration form.
+ * @param $form
+ * @param $form_state
+ */
 function springboard_advocacy_settings_submit($form, $form_state) {
   variable_del('springboard_advocacy_access_token');
   variable_del('sba_subscription');
 }
 
+/**
+ * Get/Set a list of available committees.
+ * Called from the committee field's autocomplete callback
+ * @return array
+ */
 function springboard_advocacy_committees() {
   $committee_list = &drupal_static(__FUNCTION__);
   if (!isset($committee_list)) {
@@ -566,6 +581,12 @@ function springboard_advocacy_update_districts_field_options($form, $form_state)
   return $options;
 }
 
+/**
+ * Get a list of districts for a state.
+ * Called from the state dropdown's ajax callback.
+ * @param $state
+ * @return array
+ */
 function springboard_advocacy_get_districts($state) {
     $loader = new AdvocacyApiClientLoader();
     $client = $loader->getClient();
@@ -714,6 +735,11 @@ function springboard_advocacy_theme($existing, $type, $theme) {
   return $templates;
 }
 
+/**
+ * Implements hook_preprocess_hook
+ * @param $variables
+ * @param $hook
+ */
 function springboard_advocacy_preprocess_pager(&$variables, $hook) {
   if (isset($variables['parameters']['search_state'])) {
     $variables['tags'][0] = '<<';
@@ -745,6 +771,12 @@ function springboard_advocacy_is_action_type($type) {
   }
 }
 
+/**
+ * Implements hook_preprocess_block_admin_display_form
+ * Remove advocacy views blocks from the block admin page list.
+ * They should never be added to a page that way.
+ * @param $vars
+ */
 function springboard_advocacy_preprocess_block_admin_display_form(&$vars) {
   foreach ($vars['block_listing'][BLOCK_REGION_NONE] as $name => $block) {
     $pos = strpos($name, 'views_sba');
@@ -755,6 +787,10 @@ function springboard_advocacy_preprocess_block_admin_display_form(&$vars) {
   }
 }
 
+/**
+ * IMplements hook_token_info
+ * @return array
+ */
 function springboard_advocacy_token_info() {
   $types['action'] = array(
     'name' => t("Advocacy Actions"),
@@ -796,6 +832,13 @@ function springboard_advocacy_tokens($type, $tokens, array $data = array(), arra
   return $replacements;
 }
 
+/**
+ * Get subscription details from API server.
+ * Called from springboard_advocacy_form_views_exposed_form_alter
+ * So we can alter form components based on subscription level.
+ *
+ * @return array|bool|null
+ */
 function springboard_advocacy_get_subscription() {
 
   $subscription = variable_get('sba_subscription', array());
