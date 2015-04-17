@@ -3834,7 +3834,7 @@ function springboard_views_views_default_views() {
   $handler->display->display_options['fields']['bid']['field'] = 'bid';
   $handler->display->display_options['fields']['bid']['label'] = 'Batch #';
   $handler->display->display_options['fields']['bid']['alter']['make_link'] = TRUE;
-  $handler->display->display_options['fields']['bid']['alter']['path'] = 'admin/reports/salesforce/item?bid=[bid]';
+  $handler->display->display_options['fields']['bid']['alter']['path'] = 'admin/springboard/reports/integration-reports/item?bid=[bid]';
   $handler->display->display_options['fields']['bid']['alter']['alt'] = 'View the items synced in this batch.';
   $handler->display->display_options['fields']['bid']['separator'] = '';
   /* Field: Salesforce batch log: Module */
