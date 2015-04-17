@@ -167,7 +167,7 @@ function springboard_advocacy_dashboard($path, $arg = NULL) {
             'header' => t('Message Actions'),
             'content' => $view->preview(), //views_embed_view('sba_actions', 'block_1', 'sba_message_action'),
             'create_link' => array('title' => t('Create a new message action'), 'href' => 'node/add/sba-message-action'),
-            'viewmore_link' => array('title' => t('View all'), 'href' => 'admin/springboard/advocacy/message-actions/all'),
+            'viewmore_link' => array('title' => t('View All Message Actions'), 'href' => 'admin/springboard/advocacy/message-actions/all'),
             'css' => drupal_get_path('module', 'springboard_advocacy') . '/css/sba.css',
           ),
         );
@@ -187,7 +187,7 @@ function springboard_advocacy_dashboard($path, $arg = NULL) {
             'header' => t('Petitions'),
             'content' => $view->preview(), //views_embed_view('sbv_forms', 'block_1', 'springboard_petition'),
             'create_link' => array('title' => t('Create a new petition'), 'href' => 'node/add/springboard-petition'),
-            'viewmore_link' => array('title' => t('View all'), 'href' => 'admin/springboard/advocacy/petitions/all'),
+            'viewmore_link' => array('title' => t('View All Petitions'), 'href' => 'admin/springboard/advocacy/petitions/all'),
             'css' => drupal_get_path('module', 'springboard_advocacy') . '/css/sba.css',
         );
       }
