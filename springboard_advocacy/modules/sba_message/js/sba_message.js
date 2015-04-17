@@ -33,6 +33,13 @@
             // Insert placeholder text and update exposed form elements when combo search is changed.
             Sba.comboSearchUpdater();
 
+            if($('.view-targets div.view-empty:visible').length != 0) {
+                var actions = $('#sba-message-edit-form #edit-actions');
+                $('div.view-empty').clone().appendTo(actions);
+                $('.view-targets div.view-empty').remove();
+                $('#edit-actions .view-empty').show();
+            }
+
             var subscr = Drupal.settings.sbaSubscriptionLevel;
             if (subscr == 'federal-and-states-selected') {
                 Sba.toggleStateAndBranchState();
@@ -62,19 +69,8 @@
         Sba.messageFormSubmitter();
 
         // rearrange/append recipients container, error message div, submit button
-        Sba.rearrangeMessageForm()
+        Sba.prepareMessageForm()
 
-        // Editing a pre-existing message, append the recipients
-        // to the recipients div using hidden form value
-        var recipients =  $('input[name="data[recipients]"]').val();
-        if(recipients.length > 0) {
-            $('body').once('edit-page', function() {
-                Sba.buildEditPage(recipients);
-            });
-        }
-        else {
-            $('.sba-message-status').text('No recipients have been selected.').show('slow');
-        }
         Sba.scroller();
     });
 
@@ -122,10 +118,11 @@
     }
 
     Sba.buildStateField = function () {
+
         if(typeof(Drupal.settings.sbaAllowedStates) !== "undefined") {
             $('#edit-search-state').on('change', function (e) {
-                if($.inArray($(this).val(), Drupal.settings.sbaAllowedStates) !=-1
-                    || Drupal.settings.sbaSubscriptionLevel == 'federal-and-states-selected') {
+                if($(this).val() != 'All' && ($.inArray($(this).val(), Drupal.settings.sbaAllowedStates) !=-1
+                    || Drupal.settings.sbaSubscriptionLevel == 'federal-and-states-selected')) {
                     $(this).trigger('custom_event');
                 }
                 else {
@@ -136,7 +133,9 @@
         else {
             $('#edit-search-state').on('change', function (e) {
                 $('select[name="search_district_name"]').html('<option selected="selected" value="All">- Any -</option>');
-                $(this).trigger('custom_event');
+                if($(this).val() != 'All') {
+                    $(this).trigger('custom_event');
+                }
             });
         }
     }
@@ -248,6 +247,8 @@
                     if($('div.view-targets').is(':visible')) {
                         Sba.reset();
                     }
+                    $( '#edit-actions .view-empty').hide();
+
                     Sba.setElStates();
                 }
             });
@@ -325,16 +326,29 @@
         });
     }
 
-    Sba.rearrangeMessageForm = function () {
+    Sba.prepareMessageForm = function () {
         var recipContainer = $('#springboard-advocacy-message-recipients-container');
         var finder = $('#springboard-advocacy-find-targets-container');
         var actions = $('#sba-message-edit-form #edit-actions');
         var err = $('#advo-error-wrapper');
+
         $('#springboard-advocacy-message-form-container').append(finder);
         finder.append(recipContainer)
         finder.append(actions);
         actions.append(err);
         $('.views-targets-button-wrapper').hide();
+
+        // Editing a pre-existing message, append the recipients
+        // to the recipients div using hidden form value
+        var recipients =  $('input[name="data[recipients]"]').val();
+        if(recipients.length > 0) {
+            $('body').once('edit-page', function() {
+                Sba.buildEditPage(recipients);
+            });
+        }
+        else {
+            $('.sba-message-status').text('No recipients have been selected.').show('slow');
+        }
     }
 
     Sba.scroller = function () {
@@ -498,7 +512,6 @@
                     }
                 }
             } else {
-                //console.log(this)
 
                 if ((this.type=='checkbox' && $(this).prop('checked'))) {
                     groupable = true;
@@ -811,6 +824,7 @@
 
         if ($type == 'all') {
             $('.views-submit-button').append('<a class = "search-reset" href ="#">reset</a>');
+
             $('.search-reset').click(function () {
                 Sba.resetFull();
                 return false;
@@ -820,9 +834,11 @@
             Sba.resetFull();
         }
         else {
+            $('.view-empty').hide();
             $('.view-content').fadeOut(333);
             $('.attachment').fadeOut(333);
             $('div.view-targets .item-list').fadeOut(333);
+
         }
     }
 

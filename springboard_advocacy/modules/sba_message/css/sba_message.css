@@ -403,7 +403,7 @@
 
                 }
         #springboard-advocacy-find-targets div.view-filters {
-            margin: 0 2em 1em 2em;
+            margin: 0 2em 0em 2em;
             padding: 0;
         }
 
@@ -535,7 +535,7 @@
 
         #springboard-advocacy-find-targets .radio-widgets {
             clear:both;
-            padding: 1em;
+            padding: 1em 1em 0;
 
         }
 
@@ -590,7 +590,8 @@
         #springboard-advocacy-find-targets  div.views-exposed-widget.views-targets-button-wrapper {
             float:right;
             margin-right: -2.75em;
-            margin-top: -45px;
+            margin-top: -40px;
+            margin-bottom: 0;
             float: right;
             width: 223px;
             background: url("../img/arrow-quick-target.png") no-repeat scroll 0px 20px transparent;
@@ -829,23 +830,25 @@
            text-decoration: none;
         }
 
-
 #advo-error-wrapper {
-
+    display:none;
+}
+#advo-error-wrapper, div.view-empty {
     border-radius: 4px;
     border: 1px solid #d5d5d5;
     width: 65%;
     background: #fff;
-    display:none;
 }
-    #advo-error-wrapper div {
+div.view-empty {
+    width: 61.5%;
+}
+    #advo-error-wrapper div, div.view-empty {
         padding:5px 20px;
     }
-    #advo-error-wrapper .advo-warning{
+    #advo-error-wrapper .advo-warning, div.view-empty{
         background: #ff3333;
         color: #fff;
         padding:20px;
-
     }
 
 @media only screen and (min-width: 769px) and (max-width: 1200px) {
