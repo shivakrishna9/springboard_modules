@@ -224,6 +224,12 @@ function webform_user_form_node_type_form_alter(&$form, &$form_state) {
       '#description' => t('Enable this checkbox if this content type should allow webform submissions to set user profile information. ' .
         'Enabling this will also enable webform if not already active.'),
     );
+    $form['webform_user']['webform_user_session_store'] = array(
+      '#type' => 'checkbox',
+      '#title' => t('Store user submitted values in session?'),
+      '#default_value' => variable_get('webform_user_session_store_' . $form['#node_type']->type, FALSE),
+      '#description' => t('Enable this checkbox if this content type should store submitted profile information in the user\'s session.'),
+    );
     $form['webform_user']['settings'] = array(
       '#title' => t('Additional settings'),
       '#type' => 'fieldset',
@@ -401,6 +407,38 @@ function webform_user_form_alter(&$form, &$form_state, $form_id) {
         } // End if field is in component heirarchy.
       } // End foreach
     } // End if the user is logged in.
+    // If not logged in, check to see if the user has profile values in the current session.
+    $webform_user_session_store = user_is_anonymous()
+      && isset($_SESSION['webform_user_submission_field_values'])
+      && is_array($_SESSION['webform_user_submission_field_values']);
+    // @TODO: refactor this and the above into consolidated routine.
+    if ($webform_user_session_store && _webform_user_is_webform_user_node($node)) {
+      $component_hierarchy = __webform_user_parse_components($node->nid, $components);
+      $map = webform_user_user_map($node->nid);
+       // Map each profile field if there's a matching component field.
+      foreach ($map as $webform_field => $profile_field) {
+        if (array_key_exists($webform_field, $component_hierarchy)) {
+          $form_field = &_webform_user_find_field($form, $component_hierarchy[$webform_field]);
+          if (isset($_SESSION['webform_user_submission_field_values'][$webform_field])) {
+            $profile_value = $_SESSION['webform_user_submission_field_values'][$webform_field];
+            // Set the value.
+            switch ($form_field['#type']) {
+              case 'date':
+                $form_field['#default_value'] = $profile_value;
+                break;
+              case 'checkboxes':
+                if ($profile_value) { // Will be a 0 if unchecked.
+                  $form_field['#default_value'] = array($profile_value);
+                }
+                break;
+              default:
+                $form_field['#default_value'] = check_plain($profile_value);
+                break;
+            }
+          }
+        }
+      }
+    }
     // Add a new validation handler.
     $form['#validate'][] = 'webform_user_webform_validate';
     // Add new submit handler.
@@ -498,6 +536,10 @@ function webform_user_webform_submit($form, &$form_state) {
         $submission->webform_user_skip_user_check = TRUE;
       }
       webform_submission_update($node, $submission);
+      // Save webform user fields in user session
+      if (_webform_user_is_webform_user_session_store_type($node->type)) {
+        _webform_user_session_set($node->nid, $map);
+      }
       // Send the e-mail through the user module.
       if ($node->send_new_user_email) {
         // Manually set the password so it appears in the e-mail.
@@ -505,6 +547,29 @@ function webform_user_webform_submit($form, &$form_state) {
         drupal_mail('user', 'register_no_approval_required', $user_fields['mail'], NULL, array('account' => $account), NULL);
       }
     }
+  }
+}
+/**
+ * Save submitted webform user field values in session
+ */
+function _webform_user_session_set($nid, $mapped_submission) {
+  $map = webform_user_user_map($nid);
+  $profile_values = array();
+  // Reverse the mapping back to the webform keys.
+  foreach ($map as $webform_key => $profile_key) {
+    if (isset($mapped_submission[$profile_key])) {
+      $profile_values[$webform_key] = $mapped_submission[$profile_key];
+    }
+  }
+  if (!drupal_session_started()) {
+    drupal_session_start();
+  }
+  // Update any previous stored field values.
+  if (isset($_SESSION['webform_user_submission_field_values']) && is_array($_SESSION['webform_user_submission_field_values'])) {
+    $_SESSION['webform_user_submission_field_values'] = array_merge($_SESSION['webform_user_submission_field_values'], $profile_values);
+  }
+  else {
+    $_SESSION['webform_user_submission_field_values'] = $profile_values;
   }
 }
 
@@ -1066,6 +1131,13 @@ function _webform_user_is_webform_user_node_type($type) {
   }
   $types[$type] = variable_get('webform_user_' . $type, FALSE);
   return $types[$type];
+}
+
+/**
+ * Helper function, check if this node type should save submission values to session
+ */
+function _webform_user_is_webform_user_session_store_type($type) {
+  return variable_get('webform_user_session_store_' . $type, FALSE);
 }
 
 /**
