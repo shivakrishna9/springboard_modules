@@ -498,9 +498,30 @@ function sba_message_action_form_submit($form, &$form_state) {
   else {
     drupal_set_message(t('No messages were configured for this action.'));
   }
-
 }
 
+
+/**
+ *  Implements hook_form_FORMID_alter
+ * @param $form
+ * @param $form_state
+ */
+function sba_message_action_form_sba_message_action_node_form_alter(&$form, &$form_state) {
+  $node = $form['#node'];
+  if (empty($node->nid) && in_array($node->type, webform_variable_get('webform_node_types_primary'))) {
+    $form['actions']['submit']['#submit'][] = 'sba_message_action_form_sba_message_action_node_form_submit';
+  }
+}
+
+/**
+ * Redirect to the messages tab instead of webform tab.
+ * @param $form
+ * @param $form_state
+ */
+function sba_message_action_form_sba_message_action_node_form_submit(&$form, &$form_state) {
+  $path = 'node/' . $form_state['nid'] . '/messages';
+ $form_state['redirect'] = $path;
+}
 /**
  * Combines user edited message data with other static properties
  * to create the final message to deliver to the transaction server.
