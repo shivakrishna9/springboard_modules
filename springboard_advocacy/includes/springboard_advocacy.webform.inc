@@ -63,10 +63,6 @@ function springboard_advocacy_send_message($user_message, $form_state) {
       }
     }
   }
-  else {
-    //@todo
-    //set message for confirmation page
-  }
 }
 
 /**

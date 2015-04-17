@@ -305,7 +305,6 @@
         $("#edit-submit, #edit-delete").click(function (e) {
             e.preventDefault();
             var messages = [];
-            //@todo add the rest of required fields
             if($('[name*="field_subject_editable"]').length != 0 && !$('[name*="field_subject_editable"]').is(':checked')) {
                 messages.push( 'Subject is editable');
             }

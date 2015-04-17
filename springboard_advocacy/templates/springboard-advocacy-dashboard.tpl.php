@@ -1,8 +1,3 @@
-<?php 
-  /** @TODO documentation here **/
-
-?>
-
 <?php foreach ($views as $view): ?>
   <?php if (isset($view['css'])):
     drupal_add_css($view['css']); ?>
