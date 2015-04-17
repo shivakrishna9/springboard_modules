@@ -8,6 +8,7 @@ function springboard_tag_permission() {
     'administer springboard tags' => array(
       'title' => t('Administer Springboard tags'),
       'description' => t('Add, delete and edit tags.'),
+      'restrict access' => TRUE,
     ),
   );
 }
