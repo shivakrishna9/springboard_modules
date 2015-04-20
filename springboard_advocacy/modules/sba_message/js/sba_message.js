@@ -108,11 +108,7 @@
                         $(this).remove();
                     }
                 });
-                $("#edit-search-state option").each(function () {
-                    if ($(this).val() != "All" && $.inArray($(this).val(), Drupal.settings.sbaAllowedStates) == -1) {
-                        $(this).remove();
-                    }
-                });
+
             }
 
             if (Drupal.settings.sbaSubscriptionLevel == 'federal-and-states-selected') {
