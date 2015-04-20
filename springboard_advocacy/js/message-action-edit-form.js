@@ -2,6 +2,10 @@
 
     Drupal.behaviors.AdvocacyMessageActionEditForm = {
         attach: function(context, settings) {
+            // Do all of this only once, on page load.
+            if ($('#edit-springboard-advocacy-options').hasClass('action-edit-form-ready'))
+                return;
+
             // Columnize the Legislative Issues list based on the average label width.
             var labelWidthsTotal = 0;
             var labelCount = 0;
@@ -49,6 +53,9 @@
                 columnWidth = Math.ceil(averageLabelWidth + checkboxWidth + bufferWidth);
                 jqContainer.columnize({width: columnWidth});
             }
+
+            // Done.
+            $('#edit-springboard-advocacy-options').addClass('action-edit-form-ready');
 
         }
     };
