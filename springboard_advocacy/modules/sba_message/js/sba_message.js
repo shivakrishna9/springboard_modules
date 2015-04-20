@@ -114,6 +114,7 @@
                     }
                 });
             }
+
             if (Drupal.settings.sbaSubscriptionLevel == 'federal-and-states-selected') {
                 if(window.search_state == 'committee') {
                     $("#edit-search-state option").each(function () {
@@ -137,7 +138,9 @@
             $('#edit-search-state').on('change', function (e) {
                 if($(this).val() != 'All' && ($.inArray($(this).val(), Drupal.settings.sbaAllowedStates) !=-1
                     || Drupal.settings.sbaSubscriptionLevel == 'federal-and-states-selected')) {
-                    $(this).trigger('custom_event');
+                    if(window.search_state != 'committee') {
+                        $(this).trigger('custom_event');
+                    }
                 }
                 else {
                     $('select[name="search_district_name"]').html('<option selected="selected" value="All">- Any -</option>');
@@ -148,7 +151,9 @@
             $('#edit-search-state').on('change', function (e) {
                 $('select[name="search_district_name"]').html('<option selected="selected" value="All">- Any -</option>');
                 if($(this).val() != 'All') {
-                    $(this).trigger('custom_event');
+                    if(window.search_state != 'committee') {
+                        $(this).trigger('custom_event');
+                    }
                 }
             });
         }
@@ -173,12 +178,10 @@
             Sba.buildSubscriptions();
             Sba.toggleStateAndChambers();
             $('#state-district-wrapper').append($('#edit-search-committee-chamber-wrapper'));
-            $('#edit-search-state').unbind('custom_event', Drupal.ajax('edit-search-state', '#edit-search-state', Drupal.ajax['edit-search-state'].element_settings));
             return false;
         });
 
         $('.full-search').click(function (e) {
-            new Drupal.ajax('edit-search-state', '#edit-search-state', Drupal.ajax['edit-search-state'].element_settings);
             $('#edit-search-committee-chamber-wrapper, #edit-search-committee-wrapper').hide();
             $('a.committee-search').closest('.faux-tab').removeClass('active');
             $('a.full-search').closest('.faux-tab').addClass('active');
