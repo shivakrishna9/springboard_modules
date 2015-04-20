@@ -509,7 +509,7 @@ function springboard_advocacy_form_views_exposed_form_alter(&$form, &$form_state
           unset($form['search_role_1']['#options']['GOVNR']);
           break;
 
-        case 'states-only':
+        case 'state-only':
           unset($form['search_role_1']['#options']['FS']);
           unset($form['search_role_1']['#options']['FR']);
           unset($form['search_role_1']['#options']['PRES01|PRES03']);

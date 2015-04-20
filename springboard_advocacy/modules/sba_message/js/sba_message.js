@@ -78,6 +78,7 @@
     window.Sba = {};
 
     Sba.buildSubscriptions = function () {
+        //console.log(Drupal.settings.sbaSubscriptionLevel);
 
         if (typeof(Drupal.settings.sbaSubscriptionLevel) !== "undefined") {
             if (Drupal.settings.sbaSubscriptionLevel == 'federal-only') {
@@ -93,7 +94,7 @@
                     $('#edit-search-state-wrapper').show();
                 }
             }
-            if (Drupal.settings.sbaSubscriptionLevel == 'states-only') {
+            if (Drupal.settings.sbaSubscriptionLevel == 'state-only') {
                 $("#edit-search-committee-chamber option").each(function () {
                     if ($(this).html().indexOf('Federal') != -1) {
                         $(this).remove();
