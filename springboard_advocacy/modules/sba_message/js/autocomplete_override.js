@@ -107,7 +107,7 @@
                 dataType: 'json',
                 success: function (matches) {
                     if (typeof matches.status == 'undefined' || matches.status != 0) {
-                        db.cache[searchString] = matches;
+                        //db.cache[searchString] = matches;
                         if (db.searchString == searchString) {
                             db.owner.found(matches);
                         }
