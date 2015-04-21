@@ -160,7 +160,7 @@
         $('.view-targets').once('advocacy-committee-search', function() {
             var finder = $('#springboard-advocacy-find-targets-container .view-targets');
             finder.prepend('<div class="faux-tab-container"><div class="faux-tab"' +
-            '><a href ="#full" class="full-search">Full Search</a></div><' +
+            '><a href ="#full" class="full-search">Target Search</a></div><' +
             'div class="faux-tab"><a href ="#committee" class="committee-search">Committee Search</a></div>');
         });
 
