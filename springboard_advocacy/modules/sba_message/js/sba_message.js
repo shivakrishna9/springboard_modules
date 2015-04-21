@@ -189,6 +189,8 @@
             Sba.reset('committee');
             $('#edit-submit-targets').attr('value', 'Search');
             $('#edit-submit-targets').show();
+            $('#edit-search-state').prop('disabled', false);
+            $('#edit-search-state').removeClass('disabled');
             return false;
         });
 

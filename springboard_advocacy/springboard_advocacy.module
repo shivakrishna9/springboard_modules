@@ -412,6 +412,7 @@ function springboard_advocacy_sba_organization_issues_pre_render($element) {
 function springboard_advocacy_settings_submit($form, $form_state) {
   variable_del('springboard_advocacy_access_token');
   variable_del('sba_subscription');
+  cache_clear_all();
 }
 
 /**
