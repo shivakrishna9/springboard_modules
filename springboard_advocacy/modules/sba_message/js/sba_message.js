@@ -173,11 +173,12 @@
             window.search_state = 'committee';
             Sba.buildSubscriptions();
             Sba.toggleStateAndChambers();
-            $('#state-district-wrapper').append($('#edit-search-committee-chamber-wrapper'));
+            Sba.CommitteeElStates();
             return false;
         });
 
         $('.full-search').click(function (e) {
+            $('div.narrow-search').remove();
             $('#edit-search-committee-chamber-wrapper, #edit-search-committee-wrapper').hide();
             $('a.committee-search').closest('.faux-tab').removeClass('active');
             $('a.full-search').closest('.faux-tab').addClass('active');
@@ -185,6 +186,7 @@
             window.search_state = 'full-search';
             Sba.buildSubscriptions();
             Sba.reset('committee');
+            $('#edit-submit-targets').show();
             return false;
         });
 
@@ -193,7 +195,8 @@
             $('#edit-search-committee-chamber-wrapper, #edit-search-committee-wrapper').show(300);
             $('a.committee-search').closest('.faux-tab').addClass('active');
             $('#state-district-wrapper').append($('#edit-search-committee-chamber-wrapper'))
-            $('#edit-search-state').unbind('custom_event', Drupal.ajax('edit-search-state', '#edit-search-state', Drupal.ajax['edit-search-state'].element_settings));
+            $('div.narrow-search').remove();
+            $('#state-district-wrapper').before('<div class = "narrow-search">You may narrow the autocomplete results by state or chamber.</div>');
         }
         else {
             Sba.toggleStateAndBranch();
@@ -201,6 +204,7 @@
             $('a.full-search').closest('.faux-tab').addClass('active');
             $('#edit-search-party-wrapper, #edit-search-social-wrapper, #edit-search-gender-wrapper, #edit-search-district-name-wrapper, #edit-combine-wrapper, .search-reset').show(300);
             $('#edit-search-committee-chamber-wrapper, #edit-search-committee-wrapper').hide();
+            $('#edit-submit-targets').show();
         }
 
         if ($('#edit-search-committee').text().length == 0) {
@@ -409,7 +413,6 @@
         }
         else {
             $('#edit-search-state').prop('disabled', false);
-            $('#edit-search-state').removeClass('disabled');
             $('#edit-search-state').siblings('label').css({'cursor': 'default'});
         }
     }
@@ -571,10 +574,11 @@
             }
         }
         //update quick target button based on meta-variables
-        if(window.search_state == 'committee' || notGroupable == true || hasDistrict == true || (groupable == false && hasState == false)) {
-
-            $('.views-targets-button-wrapper').prop("disabled", true).fadeTo(400, 0).css({'cursor': 'default'}).addClass('cancel-hover');
-            $('.views-targets-button-wrapper input').prop("disabled", true).fadeTo(400, 0).css({'cursor': 'default'}).addClass('cancel-hover');
+        if( notGroupable == true || hasDistrict == true || (groupable == false && hasState == false)) {
+            if(window.search_state != 'committee') {
+                $('.views-targets-button-wrapper').prop("disabled", true).fadeTo(400, 0).css({'cursor': 'default'}).addClass('cancel-hover');
+                $('.views-targets-button-wrapper input').prop("disabled", true).fadeTo(400, 0).css({'cursor': 'default'}).addClass('cancel-hover');
+            }
 
         }
 
@@ -582,6 +586,53 @@
             $('.views-targets-button-wrapper').prop("disabled", false).fadeTo(200, 1).css({'cursor': 'pointer'}).removeClass('cancel-hover');
             $('.views-targets-button-wrapper input').prop("disabled", false).fadeTo(200, 1).css({'cursor': 'pointer'}).removeClass('cancel-hover');
         }
+    }
+
+    Sba.CommitteeElStates = function() {
+        $('#state-district-wrapper').append($('#edit-search-committee-chamber-wrapper'));
+
+        $('div.narrow-search').remove();
+        $('#state-district-wrapper').before('<div class = "narrow-search">You may narrow the autocomplete results by state or chamber.</div>');
+        $('#edit-submit-targets').hide();
+        $('#edit-search-committee').on('change', function() {
+            if($('#edit-search-committee').val().indexOf('(id:') != -1) {
+                $('#edit-submit-targets').show('400');
+                $('#edit-submit-targets').attr('value', 'Get Members');
+                $('#edit-search-state').prop('disabled', true);
+                $('#edit-search-state').addClass('disabled');
+                $('#edit-search-committee-chamber').prop('disabled', true);
+                $('#edit-search-committee-chamber').addClass('disabled');
+            }
+            else {
+                $('#edit-submit-targets').hide('400');
+                $('#edit-search-committee').val('')
+                $(this).attr('placeholder', 'Invalid search. Please select a suggested committee name from the list.');
+                $('#edit-search-state').prop('disabled', false);
+                $('#edit-search-state').removeClass('disabled');
+                $('#edit-search-committee-chamber').prop('disabled', false);
+                $('#edit-search-committee-chamber').removeClass('disabled');
+
+            }
+        });
+
+        var committee, oldVal;
+        $('#edit-search-committee').on('keyup', function() {
+            clearTimeout(committee);
+            var newVal = $(this).val();
+            if (oldVal != newVal) {
+                committee = setTimeout(function() {
+                    oldVal = newVal;
+                    if($('#edit-search-committee').val().indexOf('(id:') != -1) {
+                        $('#edit-submit-targets').show('400');
+
+                    }
+                    else {
+                        $('#edit-submit-targets').hide('400');
+                        $('#edit-search-committee').val('')
+                        $(this).attr('placeholder', 'Invalid search. Please select a suggested committee name from the list.');                    }
+                },3000);
+            }
+        });
     }
 
     // quick target click function, builds query array

@@ -851,6 +851,11 @@ div.view-empty {
         padding:20px;
     }
 
+    div.narrow-search {
+        font-weight: bold;
+        margin: 1.5em 0 ;
+    }
+
 @media only screen and (min-width: 769px) and (max-width: 1200px) {
     #springboard-advocacy-find-targets  div.views-exposed-widget.views-targets-button-wrapper {
         float:right;
