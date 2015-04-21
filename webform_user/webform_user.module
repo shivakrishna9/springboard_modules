@@ -419,8 +419,8 @@ function webform_user_form_alter(&$form, &$form_state, $form_id) {
       foreach ($map as $webform_field => $profile_field) {
         if (array_key_exists($webform_field, $component_hierarchy)) {
           $form_field = &_webform_user_find_field($form, $component_hierarchy[$webform_field]);
-          if (isset($_SESSION['webform_user_submission_field_values'][$webform_field])) {
-            $profile_value = $_SESSION['webform_user_submission_field_values'][$webform_field];
+          if (isset($_SESSION['webform_user_submission_field_values'][$profile_field])) {
+            $profile_value = $_SESSION['webform_user_submission_field_values'][$profile_field];
             // Set the value.
             switch ($form_field['#type']) {
               case 'date':
@@ -566,10 +566,10 @@ function _webform_user_session_set($nid, $mapped_submission) {
   }
   // Update any previous stored field values.
   if (isset($_SESSION['webform_user_submission_field_values']) && is_array($_SESSION['webform_user_submission_field_values'])) {
-    $_SESSION['webform_user_submission_field_values'] = array_merge($_SESSION['webform_user_submission_field_values'], $profile_values);
+    $_SESSION['webform_user_submission_field_values'] = array_merge($_SESSION['webform_user_submission_field_values'], $mapped_submission);
   }
   else {
-    $_SESSION['webform_user_submission_field_values'] = $profile_values;
+    $_SESSION['webform_user_submission_field_values'] = $mapped_submission;
   }
 }
 
