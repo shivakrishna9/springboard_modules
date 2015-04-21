@@ -601,7 +601,9 @@
         $('#state-district-wrapper').before('<div class = "narrow-search">You may narrow the autocomplete results by state or chamber.</div>');
         $('#edit-submit-targets').hide();
         $('#edit-search-committee').on('change', function() {
-            if($('#edit-search-committee').val().indexOf('(id:') != -1) {
+            var pattern = /(id:[0-9]+)/;
+            hasId = pattern.test($('#edit-search-committee').val());
+            if(hasId === true) {
                 $('#edit-submit-targets').show('400');
                 $('#edit-submit-targets').attr('value', 'Get Members');
                 $('#edit-search-state').prop('disabled', true);
