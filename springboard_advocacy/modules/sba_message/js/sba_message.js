@@ -622,25 +622,6 @@
 
             }
         });
-
-        var committee, oldVal;
-        $('#edit-search-committee').on('keyup', function() {
-            clearTimeout(committee);
-            var newVal = $(this).val();
-            if (oldVal != newVal) {
-                committee = setTimeout(function() {
-                    oldVal = newVal;
-                    if($('#edit-search-committee').val().indexOf('(id:') != -1) {
-                        $('#edit-submit-targets').show('400');
-
-                    }
-                    else {
-                        $('#edit-submit-targets').hide('400');
-                        $('#edit-search-committee').val('')
-                        $(this).attr('placeholder', 'Invalid search. Please select a suggested committee name from the list.');                    }
-                },3000);
-            }
-        });
     }
 
     // quick target click function, builds query array
