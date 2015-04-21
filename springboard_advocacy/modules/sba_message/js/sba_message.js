@@ -174,6 +174,7 @@
             Sba.buildSubscriptions();
             Sba.toggleStateAndChambers();
             Sba.CommitteeElStates();
+
             return false;
         });
 
@@ -186,6 +187,7 @@
             window.search_state = 'full-search';
             Sba.buildSubscriptions();
             Sba.reset('committee');
+            $('#edit-submit-targets').attr('value', 'Search');
             $('#edit-submit-targets').show();
             return false;
         });
@@ -197,6 +199,8 @@
             $('#state-district-wrapper').append($('#edit-search-committee-chamber-wrapper'))
             $('div.narrow-search').remove();
             $('#state-district-wrapper').before('<div class = "narrow-search">You may narrow the autocomplete results by state or chamber.</div>');
+            $('#edit-submit-targets').attr('value', 'Get Members');
+
         }
         else {
             Sba.toggleStateAndBranch();
@@ -205,6 +209,8 @@
             $('#edit-search-party-wrapper, #edit-search-social-wrapper, #edit-search-gender-wrapper, #edit-search-district-name-wrapper, #edit-combine-wrapper, .search-reset').show(300);
             $('#edit-search-committee-chamber-wrapper, #edit-search-committee-wrapper').hide();
             $('#edit-submit-targets').show();
+            $('#edit-submit-targets').attr('value', 'Search');
+
         }
 
         if ($('#edit-search-committee').text().length == 0) {
