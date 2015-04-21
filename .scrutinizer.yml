@@ -2,7 +2,7 @@ build:
     environment:
         timezone: 'US/Eastern'
         php:
-            version: 5.4.30
+            version: 5.5.14
             ini:
                 allow_url_fopen: "On"
                 allow_url_include: "Off"
