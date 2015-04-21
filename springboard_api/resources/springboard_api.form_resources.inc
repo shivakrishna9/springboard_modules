@@ -66,7 +66,7 @@ function springboard_api_form_resource_index($node_type = NULL) {
  *   Associative array of webform component form_keys and their submitted
  *   values.
  */
-function springboard_api_form_action_submit($nid, $app_id = NULL, $submission) {
+function springboard_api_form_action_submit($nid, $app_id = NULL, $submission = array()) {
   if (is_numeric($nid)) {
     $node = node_load($nid);
     // Typecast in case the submission was JSON encoded as an object.
@@ -74,18 +74,9 @@ function springboard_api_form_action_submit($nid, $app_id = NULL, $submission) {
     // Convert submission values to nested array.
     $submission = _springboard_api_convert_submission($submission, $node);
 
-    // TODO: find a long term solution here. We have to have the exact text of
-    // the submission button on the form when submitting.
-    // This value is added to the form by post process function or after build.
-    // It is potentially expensive to go through all the steps required to
-    // generate the full form programmatically so we can then crawl the form api
-    // array looking for the submit button title.
-    if (module_exists('fundraiser') && fundraiser_is_donation_type($node->type)) {
-      $submit_text = t('Donate');
-    }
-    else {
-      $submit_text = t('Submit');
-    }
+    // The op value must match the configured submit_text value.
+    $submit_text = empty($node->webform['submit_text']) ? t('Submit') : t($node->webform['submit_text']);
+
     $form_id = 'webform_client_form_' . $nid;
     $form_state['webform_completed'] = 1;
     $form_state['values'] = array(

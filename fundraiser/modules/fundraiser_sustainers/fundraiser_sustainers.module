@@ -2002,7 +2002,8 @@ function _fundraiser_sustainers_create_future_orders($donation, $month, $year, $
     $start = strtotime("now");
   }
 
-  $previous_charge = $start;
+  // Create a DateTime from the start timestamp.
+  $previous_charge = new DateTime("@$start");
 
   // Allow other modules to modify the stop date.
   $end_date = array(
@@ -2017,21 +2018,23 @@ function _fundraiser_sustainers_create_future_orders($donation, $month, $year, $
   $month = $end_date['month'];
   $year = $end_date['year'];
 
-  $stop = mktime(0, 0, 0, $month, 1, $year);
-  $months = ((idate('Y', $stop) * 12) + idate('m', $stop)) - ((idate('Y', $start) * 12) + idate('m', $start));
-  $processed_months = 0;
+  // Create a schedule object from the starting charge and the expiration date.
+  $schedule = new sustainersMonthlySchedule($previous_charge, $month . '/1/' . $year, $donation);
+
   $sustainer_key = fundraiser_sustainers_get_sustainer_key_value();
 
-  // Start counting.
-  $create_limit = variable_get('fundraiser_sustainers_create_limit', 50);
   // Get existing donations, if they exist.
   $existing_recurring = _fundraiser_sustainers_get_donations_recurr_by_masterdid($donation->did);
 
   unset($existing_recurring[0]); // 0 is the master, we don't need to count it.
-  while ($processed_months < $months && $processed_months < $create_limit) {
-    $processed_months++;
-    // Check if we have a donation for this next month.
-    if (!isset($existing_recurring[$processed_months])) {
+
+  $processed = 0;
+  while ($processed <= $schedule->scheduleAmount() && $processed <= $schedule->scheduleLimit()) {
+    // Set the increment value.
+    $increment = $processed + 1;
+
+    // Check if we have a donation for this next period.
+    if (!isset($existing_recurring[$increment])) {
       // Create a new one donation from the source or master donation
       $new_donation = !empty($source_donation) ? _fundraiser_donation_copy($source_donation) : _fundraiser_donation_copy($donation);
       $new_donation->sid = 0; // Not actually submitted, it's automated, so no sid.
@@ -2046,13 +2049,20 @@ function _fundraiser_sustainers_create_future_orders($donation, $month, $year, $
 
       fundraiser_donation_create($new_donation);
 
-      // Build a context to determine the next charge date.
+      // Generate the next_charge timestamp.
+      $next = $schedule->advanceDate($increment);
+      $next_charge = $next->format('U');
+
+      // Build a context array for the next_charge alter function.
       $context = array(
         'master_did' => $donation->did,
         'did' => $new_donation->did,
+        'previous_charge' => $previous_charge,
+        'schedule' => $schedule,
+        'increment' => $increment,
+        'next' => $next,
       );
-
-      $next_charge = fundraiser_sustainers_get_next_charge_time($previous_charge, $context);
+      drupal_alter('fundraiser_sustainers_recurring_next_charge', $next_charge, $context);
 
       fundraiser_donation_comment($new_donation, 'Sustainer donation scheduled to be charged at @next_charge',
         array('@next_charge' => format_date($next_charge)));
@@ -2073,18 +2083,24 @@ function _fundraiser_sustainers_create_future_orders($donation, $month, $year, $
         salesforce_genmap_send_object_to_queue('salesforce_donation', 'insert',
           $sf_donation->node, $sf_donation->did, $sf_donation, 'donation');
       }
+
+      // Update the previous charge object.
+      $previous_charge = $next;
     }
     else {
       // Unset this from the existing recurring. By the time this loop is done,
       // only recurring orders outside of our range will still be in the set.
-      unset($existing_recurring[$processed_months]);
+      unset($existing_recurring[$increment]);
       // If an existing recurring order is changed to use a card with a later
       // expiration than the original card, we will need to add orders to the
       // series. Iterating $previous_charge by a month for each existing order
       // in the series keeps it in sync with the month as we advance through
       // the existing orders.
-      $previous_charge = strtotime('+1 month', $previous_charge);
+      $previous_charge = $schedule->advanceDate($increment);
     }
+
+    // Update the processed counter.
+    $processed++;
   }
 
   // Done with the loop, everything has been created that needs to be created.
@@ -2100,32 +2116,6 @@ function _fundraiser_sustainers_create_future_orders($donation, $month, $year, $
     // Delete these donations so do won't appear in the list of recurring donations.
     fundraiser_donation_delete($this_donation);
   }
-}
-
-/**
- * Determine the next_charge time taking any altering into account.
- *
- * @param null|int $time
- *   A timestamp as provided by strtotime(), or NULL to use now.
- *   Either the current time or the time of the previous charge
- *   in order to get back the next scheduled time to charge.
- * @param array $context
- *   An associative array potentially including a 'master_did' and a new
- *   donation 'did'.
- *
- * @return int
- *   The timestamp of when to make a next charge.
- */
-function fundraiser_sustainers_get_next_charge_time(&$time = NULL, $context = array()) {
-  if (is_null($time)) {
-    $time = strtotime('now');
-  }
-
-  $next_charge = strtotime('+1 month', $time);
-  // Allow other modules to adjust next_charge as needed.
-  $time = $next_charge;
-  drupal_alter('fundraiser_sustainers_recurring_next_charge', $next_charge, $context);
-  return $next_charge;
 }
 
 /**
