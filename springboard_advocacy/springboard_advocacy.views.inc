@@ -509,7 +509,10 @@ function springboard_advocacy_views_pre_render(&$view) {
         $query[$field] = implode('|', $terms);
       }
       else {
-        $query[$field] = str_replace(' ', '|',   $terms);
+        if($field != 'search_committee') {
+          $terms =str_replace(' ', '|',   $terms);
+        }
+        $query[$field] = $terms;
       }
     }
     $view->attachment_before = theme('springboard_advocacy_views_attachment_before', array('view' => $view, 'total_rows' => $total_rows, 'query' => $query));
@@ -525,7 +528,7 @@ function theme_springboard_advocacy_views_attachment_before($vars) {
   if (!empty($vars['query'])) {
 
     if (!empty($vars['view']->build_info['target_ids'])) {
-      $ids_required =  array('fields', 'gender', 'district_name', 'gender', 'social');
+      $ids_required =  array('fields', 'gender', 'district_name', 'gender', 'social', 'search_committee');
       $ids_required = array_intersect(array_keys($vars['query']), $ids_required);
 
       if(!empty($ids_required)) {

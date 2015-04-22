@@ -75,10 +75,11 @@
     });
 
 
+    /*********  Function Definitions **************/
+
     window.Sba = {};
 
     Sba.buildSubscriptions = function () {
-        //console.log(Drupal.settings.sbaSubscriptionLevel);
 
         if (typeof(Drupal.settings.sbaSubscriptionLevel) !== "undefined") {
             if (Drupal.settings.sbaSubscriptionLevel == 'federal-only') {
@@ -198,7 +199,7 @@
             return false;
         });
 
-        $('#edit-search-committee').on('change', function() {
+        $('#edit-search-committee').on('blur', function() { // "change" no work in ie11
             Sba.CommitteeElStates();
         });
 
@@ -388,7 +389,6 @@
             var newTop;
             $(window).scroll(function() {
                 if(offset.top <= $(window).scrollTop() && $('#springboard-advocacy-message-recipients').css('position') == 'absolute') {
-                    //console.log(offset.top);
                     var recipHeight = $('#springboard-advocacy-message-recipients').height();
                     var newTop = $(window).scrollTop() - offset.top;
                     if((offset.top +  newTop + recipHeight + 20) < footerOffset.top) {
@@ -736,7 +736,7 @@
                 .split('&');
 
             var readable = Sba.buildReadableQuery(query);
-            Sba.buildDiv(id, readable, query, 'reload');
+             Sba.buildDiv(id, readable, query, 'reload');
        });
         //reverse the display order
         var content = $('#springboard-advocacy-message-recipients-content');
@@ -749,7 +749,6 @@
     // will be aggregated as a JSON string used by a hidden form field
     // for submission to the API
     Sba.buildDiv = function (id, readable, query, reload) {
-        console.log(query)
         if (reload == false) {
             var isnew = 'new';
         }
@@ -830,8 +829,15 @@
                 return false;
             }
             segments[0] = segments[0].SbaUcfirst();
-            segments[1] = segments[1].replace(/%7C/g, '|');
-            queryObj[segments[0]] = segments[1].split('|');
+            if(segments[0] != 'Search_committee') {
+                segments[1] = segments[1].replace(/%7C/g, '|');
+                queryObj[segments[0]] = segments[1].split('|');
+            }
+            else {
+                segments[1] = segments[1].replace(/%7C/g, ' ');
+                queryObj['Committee'] = segments[1];
+            }
+
             $(queryObj[segments[0]]).each(function(i, v){
                 switch(v) {
                     case 'FR':
@@ -956,6 +962,10 @@
             .replace(/","/g, '<li>')
             .replace(/"/g, '')
             .replace(/%20/g, ' ')
+            .replace(/%2C/g, ', ')
+            .replace(/%28/g, '(')
+            .replace(/%29/g, ')')
+            .replace(/%3A/g, ':')
     }
 
 })(jQuery);

@@ -54,6 +54,7 @@ class springboard_advocacy_views_plugin_query extends views_plugin_query {
         // is it a multiple value checkbox or select?
         // then format in a way the api expects
         if (is_array($search_terms)) {
+
           $fields[$field_name] = implode('|', $search_terms);
         }
         else {
@@ -61,7 +62,6 @@ class springboard_advocacy_views_plugin_query extends views_plugin_query {
           //strip leading and multiple whitespaces
           $search_terms = trim($search_terms);
           $search_terms = preg_replace('/\s+/', ' ', $search_terms);
-
           //no committees in the main search tab text input
           if(strpos($search_terms, 'committee:') === FALSE && $field_name != 'search_committee') {
             $fields[$field_name] = str_replace(' ', '|', $search_terms);
@@ -83,6 +83,7 @@ class springboard_advocacy_views_plugin_query extends views_plugin_query {
               }
 
               $committees = implode('|', $matches[1]);
+
               $fields[$field_name] =  $non_matches . $committees;
             }
           }
