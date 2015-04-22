@@ -515,6 +515,10 @@ function webform_user_webform_submit($form, &$form_state) {
         $submission->webform_user_skip_user_check = TRUE;
       }
       webform_submission_update($node, $submission);
+       // Save webform user fields in user session for the existing user
+      if (_webform_user_is_webform_user_session_store_type($node->type)) {
+        _webform_user_session_set($node->nid, $map);
+      }
     }
     // Anonymous user, new email to Drupal.
     elseif ($form_state['redirect']) {
