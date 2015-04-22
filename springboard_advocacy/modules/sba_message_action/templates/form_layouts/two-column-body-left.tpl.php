@@ -22,7 +22,8 @@
       <?php endif; ?>
 
       <div id="call-to-action">
-        <?php print $body; ?>
+        <div id="call-to-action-call"><?php print $call; ?></div>
+        <div id="call-to-action-body"> <?php print $body; ?></div>
         <p><?php print $social ?></p>
       </div>
     </div>

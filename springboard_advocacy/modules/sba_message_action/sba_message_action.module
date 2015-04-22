@@ -695,6 +695,12 @@ function sba_message_action_build_preprocess(&$vars) {
 
   // We remove call to action field in the default node--sba-message-action.tpl.php
   // and put it into form layouts here
+  $call_to_action = field_get_items('node', $node, 'field_message_call_to_action');
+  $call = field_view_value('node', $node, 'field_message_call_to_action', $call_to_action[0]);
+  $vars['call'] = drupal_render($call);
+
+  // We remove call to action field in the default node--sba-message-action.tpl.php
+  // and put it into form layouts here
   $body_field = field_get_items('node', $node, 'body');
   $body = field_view_value('node', $node, 'body', $body_field[0]);
   $vars['body'] = drupal_render($body);

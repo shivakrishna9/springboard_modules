@@ -17,7 +17,8 @@
       </div>
     <?php else: ?>
     <div id="call-to-action" class="span12">
-        <?php print $body; ?>
+      <div id="call-to-action-call"><?php print $call; ?></div>
+      <div id="call-to-action-body"> <?php print $body; ?></div>
       </div>
     <?php endif; ?>
   </div>

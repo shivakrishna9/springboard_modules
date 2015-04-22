@@ -14,14 +14,16 @@
   <div class="row-fluid">
     <?php if(!empty($image)): ?>
       <div id="call-to-action" class="span8">
-      <?php print $body; ?>
+        <div id="call-to-action-call"><?php print $call; ?></div>
+        <div id="call-to-action-body"> <?php print $body; ?></div>
     </div>
       <div id="image" class = "span4">
         <?php print $image; ?>
       </div>
     <?php else: ?>
     <div id="call-to-action" class="span12">
-        <?php print $body; ?>
+      <div id="call-to-action-call"><?php print $call; ?></div>
+      <div id="call-to-action-body"> <?php print $body; ?></div>
       </div>
     <?php endif; ?>
   </div>

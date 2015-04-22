@@ -75,7 +75,7 @@ function _sba_message_action_create_content_type() {
   node_type_save($type);
   node_types_rebuild();
 
-  node_add_body_field($type, 'Call to Action');
+  //node_add_body_field($type, 'Message Body');
   _sba_message_action_create_node_fields();
   _sbp_message_action_create_user_profile_fields();
 
@@ -155,7 +155,7 @@ function _sba_message_action_set_vars() {
   variable_set('sba_action_types', array_unique($sba_action_types));
 }
 
-function _sba_message_action_create_node_fields() {
+function _sba_message_action_create_node_fields($update = false) {
 
   $fields = array(
     'field_message_action_img' => array(
@@ -235,6 +235,146 @@ function _sba_message_action_create_node_fields() {
         ),
       ),
     ),
+  );
+
+
+  $fields['body'] = array(
+    'active' => 1,
+    'cardinality' => 1,
+    'deleted' => 0,
+    'entity_types' => array(
+      0 => 'node',
+    ),
+    'field_name' => 'body',
+    'foreign keys' => array(
+      'format' => array(
+        'columns' => array(
+          'format' => 'format',
+        ),
+        'table' => 'filter_format',
+      ),
+    ),
+    'indexes' => array(
+      'format' => array(
+        0 => 'format',
+      ),
+    ),
+    'locked' => 0,
+    'module' => 'text',
+    'settings' => array(),
+    'translatable' => 0,
+    'type' => 'text_with_summary',
+    '_instance' => array(
+      'bundle' => 'sba_message_action',
+      'default_value' => NULL,
+      'deleted' => 0,
+      'description' => '',
+      'display' => array(
+        'default' => array(
+          'label' => 'hidden',
+          'module' => 'text',
+          'settings' => array(),
+          'type' => 'text_default',
+          'weight' => 0,
+        ),
+        'teaser' => array(
+          'label' => 'hidden',
+          'module' => 'text',
+          'settings' => array(
+            'trim_length' => 600,
+          ),
+          'type' => 'text_summary_or_trimmed',
+          'weight' => 0,
+        ),
+      ),
+      'entity_type' => 'node',
+      'field_name' => 'body',
+      'label' => 'Body',
+      'required' => 1,
+      'settings' => array(
+        'display_summary' => 1,
+        'text_processing' => 1,
+        'user_register_form' => FALSE,
+      ),
+      'widget' => array(
+        'active' => 1,
+        'module' => 'text',
+        'settings' => array(
+          'rows' => 20,
+          'summary_rows' => 5,
+        ),
+        'type' => 'text_textarea_with_summary',
+        'weight' => 4,
+      ),
+    )
+
+);
+
+  // Exported field_base: 'field_message_call_to_action'
+  $fields['field_message_call_to_action'] = array(
+    'active' => 1,
+    'cardinality' => 1,
+    'deleted' => 0,
+    'entity_types' => array(),
+    'field_name' => 'field_message_call_to_action',
+    'foreign keys' => array(
+      'format' => array(
+        'columns' => array(
+          'format' => 'format',
+        ),
+        'table' => 'filter_format',
+      ),
+    ),
+    'indexes' => array(
+      'format' => array(
+        0 => 'format',
+      ),
+    ),
+    'locked' => 0,
+    'module' => 'text',
+    'settings' => array(
+      'max_length' => 255,
+    ),
+    'translatable' => 0,
+    'type' => 'text',
+    '_instance' => array(
+      'bundle' => 'sba_message_action',
+      'default_value' => NULL,
+      'deleted' => 0,
+      'description' => '',
+      'display' => array(
+        'default' => array(
+          'label' => 'none',
+          'module' => 'text',
+          'settings' => array(),
+          'type' => 'text_default',
+          'weight' => 5,
+        ),
+        'teaser' => array(
+          'label' => 'none',
+          'settings' => array(),
+          'type' => 'hidden',
+          'weight' => 0,
+        ),
+      ),
+      'entity_type' => 'node',
+      'field_name' => 'field_message_call_to_action',
+      'label' => 'Call to Action',
+      'required' => 0,
+      'settings' => array(
+        'text_processing' => 0,
+        'user_register_form' => FALSE,
+      ),
+      'widget' => array(
+        'active' => 1,
+        'module' => 'text',
+        'settings' => array(
+          'size' => 60,
+        ),
+        'type' => 'text_textfield',
+        'weight' => 3,
+      ),
+    )
   );
 
   $fields['field_test_mode'] = array(
@@ -366,44 +506,52 @@ function _sba_message_action_create_node_fields() {
   foreach ($fields as $key => $values) {
     $instance = $values['_instance'];
     unset($values['_instance']);
-    field_create_field($values);
-    field_create_instance($instance);
+    $base = field_info_field($key);
+    $node = field_info_instance('node', $key, 'sba_message_action');
+    if(empty($base)) {
+      field_create_field($values);
+    }
+    if(empty($node)) {
+      field_create_instance($instance);
+    }
+
   }
+  if($update == FALSE) {
 
-  $export = array();
+    $export = array();
 
-  $field_group = new stdClass();
-  $field_group->disabled = FALSE; /* Edit this to true to make a default field_group disabled initially */
-  $field_group->api_version = 1;
-  $field_group->identifier = 'group_test_mode|node|sba_message_action|form';
-  $field_group->group_name = 'group_test_mode';
-  $field_group->entity_type = 'node';
-  $field_group->bundle = 'sba_message_action';
-  $field_group->mode = 'form';
-  $field_group->parent_name = '';
-  $field_group->label = 'Test Mode';
-  $field_group->weight = '33';
-  $field_group->children = array(
+    $field_group = new stdClass();
+    $field_group->disabled = FALSE; /* Edit this to true to make a default field_group disabled initially */
+    $field_group->api_version = 1;
+    $field_group->identifier = 'group_test_mode|node|sba_message_action|form';
+    $field_group->group_name = 'group_test_mode';
+    $field_group->entity_type = 'node';
+    $field_group->bundle = 'sba_message_action';
+    $field_group->mode = 'form';
+    $field_group->parent_name = '';
+    $field_group->label = 'Test Mode';
+    $field_group->weight = '33';
+    $field_group->children = array(
       0 => 'field_test_mode',
       1 => 'field_test_mode_email',
-  );
-  $field_group->format_type = 'fieldset';
-  $field_group->format_settings = array(
-    'label' => 'Test Mode',
-    'instance_settings' => array(
-      'required_fields' => 1,
-      'classes' => 'group-test-mode field-group-fieldset',
-      'description' => '',
-    ),
-    'formatter' => 'collapsible',
-  );
+    );
+    $field_group->format_type = 'fieldset';
+    $field_group->format_settings = array(
+      'label' => 'Test Mode',
+      'instance_settings' => array(
+        'required_fields' => 1,
+        'classes' => 'group-test-mode field-group-fieldset',
+        'description' => '',
+      ),
+      'formatter' => 'collapsible',
+    );
 
-  $export['group_test_mode|node|sba_message_action|form'] = $field_group;
+    $export['group_test_mode|node|sba_message_action|form'] = $field_group;
 
-  foreach($export as $field_group) {
-    field_group_group_save($field_group);
+    foreach ($export as $field_group) {
+      field_group_group_save($field_group);
+    }
   }
-
 }
 
 function _sbp_message_action_create_user_profile_fields () {
@@ -812,10 +960,22 @@ function sba_message_action_update_7002() {
     db_create_table('sba_message_action_confirm', $schema['sba_message_action_confirm']);
   }
 }
-
+/**
+ *  Add message action confirmation table fail message field
+ */
 function sba_message_action_update_7003() {
   $schema = module_invoke('sba_message_action', 'schema');
   if(db_field_exists('sba_message_action_confirm', 'fail_message') == FALSE) {
     db_add_field('sba_message_action_confirm', 'fail_message', $schema['sba_message_action_confirm']['fields']['fail_message']);
   }
+}
+
+/**
+ *  Create call to action field, make body field required.
+ */
+function sba_message_action_update_7004() {
+  _sba_message_action_create_node_fields(TRUE);
+  $instance_info = field_read_instance('node', 'body', 'sba_message_action');
+  $instance_info['required'] = 1;
+  field_update_instance($instance_info);
 }
