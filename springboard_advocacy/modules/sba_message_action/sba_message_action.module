@@ -60,6 +60,9 @@ function _sba_message_action_committee_autocomplete($name, $state, $chamber) {
       if ($rest > 0) {
         $results['message'] = 'Plus ' . $rest . ' more. Try narrowing your search with more letters, words or filters';
       }
+      else {
+        $results['message'] = '';
+      }
       foreach ($results as $key => $row) {
         $matches[$row] = $row;
       }
