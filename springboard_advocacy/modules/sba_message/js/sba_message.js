@@ -164,26 +164,30 @@
             'div class="faux-tab"><a href ="#committee" class="committee-search">Committee Search</a></div>');
         });
 
+        var hideWidgets = $('#edit-search-role-1-wrapper, #edit-search-party-wrapper, #edit-search-social-wrapper, #edit-search-gender-wrapper, #edit-search-district-name-wrapper, #edit-combine-wrapper');
+        var comWidgets = $('#edit-search-committee-chamber-wrapper, #edit-search-committee-wrapper');
         $('.committee-search').click(function (e) {
             Sba.reset('committee');
-            $('#edit-search-role-1-wrapper, #edit-search-party-wrapper, #edit-search-social-wrapper, #edit-search-gender-wrapper, #edit-search-district-name-wrapper, #edit-combine-wrapper, .search-reset, .views-targets-button-wrapper').hide();
-            $('#edit-search-committee-chamber-wrapper, #edit-search-committee-wrapper').show(300);
+            hideWidgets.hide();
+            $('.views-targets-button-wrappers, .search-reset').hide();
+            comWidgets.show(300);
             $('a.committee-search').closest('.faux-tab').addClass('active');
             $('a.full-search').closest('.faux-tab').removeClass('active');
             window.search_state = 'committee';
             Sba.buildSubscriptions();
             Sba.toggleStateAndChambers();
-            Sba.CommitteeElStates();
+            Sba.CommitteeElStates(true);
 
             return false;
         });
 
         $('.full-search').click(function (e) {
             $('div.narrow-search').remove();
-            $('#edit-search-committee-chamber-wrapper, #edit-search-committee-wrapper').hide();
+            comWidgets.hide();
             $('a.committee-search').closest('.faux-tab').removeClass('active');
             $('a.full-search').closest('.faux-tab').addClass('active');
-            $('#edit-search-role-1-wrapper, #edit-search-party-wrapper, #edit-search-social-wrapper, #edit-search-gender-wrapper,#edit-search-district-name-wrapper,#edit-combine-wrapper, .search-reset').show(300);
+            hideWidgets.show(300);
+            $('.search-reset').show(300);
             window.search_state = 'full-search';
             Sba.buildSubscriptions();
             Sba.reset('committee');
@@ -194,22 +198,24 @@
             return false;
         });
 
-        if(window.search_state == 'committee' ) {
-            $('#edit-search-role-1-wrapper, #edit-search-party-wrapper, #edit-search-social-wrapper, #edit-search-gender-wrapper, #edit-search-district-name-wrapper, #edit-combine-wrapper, .search-reset, .views-targets-button-wrapper').hide();
-            $('#edit-search-committee-chamber-wrapper, #edit-search-committee-wrapper').show(300);
-            $('a.committee-search').closest('.faux-tab').addClass('active');
-            $('#state-district-wrapper').append($('#edit-search-committee-chamber-wrapper'))
-            $('div.narrow-search').remove();
-            $('#state-district-wrapper').before('<div class = "narrow-search">You may narrow the autocomplete results by state or chamber.</div>');
-            $('#edit-submit-targets').attr('value', 'Get Members');
+        $('#edit-search-committee').on('change', function() {
+            Sba.CommitteeElStates();
+        });
 
+        if(window.search_state == 'committee' ) {
+            $('.views-targets-button-wrapper').hide();
+            hideWidgets.hide();
+           //$('.views-targets-button-wrappers, .search-reset').hide();
+            comWidgets.show(300);
+            $('a.committee-search').closest('.faux-tab').addClass('active');
+            Sba.CommitteeElStates();
         }
         else {
             Sba.toggleStateAndBranch();
             $('a.committee-search').closest('.faux-tab').removeClass('active');
             $('a.full-search').closest('.faux-tab').addClass('active');
-            $('#edit-search-party-wrapper, #edit-search-social-wrapper, #edit-search-gender-wrapper, #edit-search-district-name-wrapper, #edit-combine-wrapper, .search-reset').show(300);
-            $('#edit-search-committee-chamber-wrapper, #edit-search-committee-wrapper').hide();
+            hideWidgets.show(300);
+            comWidgets.hide();
             $('#edit-submit-targets').show();
             $('#edit-submit-targets').attr('value', 'Search');
 
@@ -441,7 +447,6 @@
                 }
             });
         }
-
     }
 
     Sba.toggleStateAndBranch = function () {
@@ -596,34 +601,40 @@
         }
     }
 
-    Sba.CommitteeElStates = function() {
-        $('#state-district-wrapper').append($('#edit-search-committee-chamber-wrapper'));
+    Sba.CommitteeElStates = function(tab) {
+        var pattern = /(id:[0-9]+)/;
+        var state  = $('#edit-search-state');
+        var submit = $('#edit-submit-targets');
+        var chamber = $('#edit-search-committee-chamber');
+        var commit = $('#edit-search-committee');
 
+        $('#state-district-wrapper').append($('#edit-search-committee-chamber-wrapper'));
         $('div.narrow-search').remove();
         $('#state-district-wrapper').before('<div class = "narrow-search">You may narrow the autocomplete results by state or chamber.</div>');
-        $('#edit-submit-targets').hide();
-        $('#edit-search-committee').on('change', function() {
-            var pattern = /(id:[0-9]+)/;
-            hasId = pattern.test($('#edit-search-committee').val());
-            if(hasId === true) {
-                $('#edit-submit-targets').show('400');
-                $('#edit-submit-targets').attr('value', 'Get Members');
-                $('#edit-search-state').prop('disabled', true);
-                $('#edit-search-state').addClass('disabled');
-                $('#edit-search-committee-chamber').prop('disabled', true);
-                $('#edit-search-committee-chamber').addClass('disabled');
-            }
-            else {
-                $('#edit-submit-targets').hide('400');
-                $('#edit-search-committee').val('')
-                $(this).attr('placeholder', 'Invalid search. Please select a suggested committee name from the list.');
-                $('#edit-search-state').prop('disabled', false);
-                $('#edit-search-state').removeClass('disabled');
-                $('#edit-search-committee-chamber').prop('disabled', false);
-                $('#edit-search-committee-chamber').removeClass('disabled');
 
+        hasId = pattern.test(commit.val());
+        if(hasId === true) {
+            submit.show('400');
+            $('.search-reset').show();
+            submit.attr('value', 'Get Members');
+            state.prop('disabled', true);
+            state.addClass('disabled');
+            chamber.prop('disabled', true);
+            chamber.addClass('disabled');
+        }
+        else {
+            submit.hide('400');
+            $('.search-reset').hide();
+            if (tab != true && commit.val() != '') {
+                commit.val('').attr('placeholder', 'Invalid search. Please select a suggested committee name from the list.');
             }
-        });
+            state.prop('disabled', false);
+            state.removeClass('disabled');
+            chamber.prop('disabled', false);
+            chamber.removeClass('disabled');
+
+        }
+
     }
 
     // quick target click function, builds query array
@@ -874,17 +885,15 @@
         return '<div class="title"><h4>Group Target</h4></div> ' +  cleanUp;
     }
 
-   Sba.reset = function ($type) {
-
-        if ($type == 'all') {
+   Sba.reset = function (type) {
+        if (type == 'all') {
             $('.views-submit-button').append('<a class = "search-reset" href ="#">reset</a>');
-
             $('.search-reset').click(function () {
                 Sba.resetFull();
                 return false;
             });
         }
-        else if ($type == 'committee') {
+        else if (type == 'committee') {
             Sba.resetFull();
         }
         else {
@@ -923,6 +932,10 @@
         $('.attachment').fadeOut(333);
         $('div.view-targets .item-list').fadeOut(333);
         $('select[name="search_district_name"]').prop('disabled', true).addClass('disabled');
+        if(window.search_state == 'committee') {
+            Sba.CommitteeElStates(true);
+        }
+
         return false;
     }
 
