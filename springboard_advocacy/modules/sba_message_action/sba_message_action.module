@@ -351,7 +351,7 @@ function sba_message_action_editable_message_form(&$form, $message, $multiple)
 
   $subject = check_plain($wrapper->field_sba_subject->value());
   $message_body = check_markup($wrapper->field_sba_message->value(), 'plain_text');
-  $editable_message = check_markup($wrapper->field_editable_area->value(), 'plain_text');;
+  $editable_message = check_plain($wrapper->field_editable_area->value());;
   $editable = $wrapper->field_user_editable[0]->value() == 'editable' ? TRUE : FALSE;
   $required = $wrapper->field_editable_area_optional[0]->value() == 'required' ? TRUE : FALSE;
   $placeholder_greeting = check_plain($wrapper->field_sba_placeholder_greeting->value());
