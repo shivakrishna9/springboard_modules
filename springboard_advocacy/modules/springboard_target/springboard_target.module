@@ -28,6 +28,16 @@ function springboard_target_menu() {
       'page arguments' => array('edit-custom-targets', 5),
     ) + springboard_advocacy_menu_common(FALSE, TRUE);
 
+  $items['admin/springboard/advocacy/targets/custom-targets/%/delete'] = array(
+      'title' => 'Advocacy: Target Center: Delete',
+      'access arguments' => array('delete targets'),
+      'page arguments' => array('springboard_target_delete', 5),
+      'page callback' => 'drupal_get_form',
+      'file' => 'springboard_target.custom_targets.inc',
+      'file path' => drupal_get_path('module', 'springboard_target') . '/includes',
+      'type' => MENU_CALLBACK,
+    );
+
   return $items;
 }
 

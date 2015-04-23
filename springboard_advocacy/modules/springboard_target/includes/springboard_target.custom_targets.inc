@@ -402,5 +402,43 @@ function springboard_target_form_validate($form, &$form_state) {
       form_set_error('zip_code', t('Invalid zip code.'));
     }
   }
+}
 
+function springboard_target_delete($form, $form_state, $target_id) {
+  $form['target_id'] = array(
+    '#type' => 'value',
+   '#value' => $target_id,
+  );
+
+  $confirmation_question = t('Delete This Target?');
+  $cancel_path = 'springboard/advocacy/targets/custom-targets';
+  $description = t('Are you sure you want to delete this target?');
+  $yes_button = t('Yes');
+  $no_button = t('Cancel');
+  $confirm_name = 'springboard_target_delete';
+  return confirm_form($form, $confirmation_question, $cancel_path, $description, $yes_button, $no_button, $confirm_name);
+}
+
+function springboard_target_delete_submit(&$form, &$form_state) {
+  $form_state['redirect'] = 'springboard/advocacy/targets/custom-targets';
+
+  $loader = new AdvocacyApiClientLoader();
+  $client = $loader->getClient();
+  $response = $client->deleteCustomTarget($form_state['values']['target_id']);
+
+  if (isset($response->data)) {
+    drupal_set_message('Target deleted.');
+  }
+  else {
+    if(isset($response->error)) {
+      drupal_set_message(t('An error occurred when attempting to delete a custom target: @message', array('@message' => $response->error->message)), 'error');
+      watchdog('advocacy', 'An error occurred when attempting to delete a custom target @message', array('@message' => $response->error->message), WATCHDOG_ERROR);
+    }
+    else {
+      drupal_set_message(t('A response was not received from the server when attempting to retrieve
+      district information'), 'error');
+      watchdog('advocacy', 'A response was not received from the server when attempting to retrieve
+      district information', array(), WATCHDOG_ERROR);
+    }
+  }
 }
