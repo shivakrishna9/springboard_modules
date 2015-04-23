@@ -319,16 +319,16 @@
         var editable = $('#sba_message_sba_message_action_message_form_group_editable, #edit-field-bottom-conclusion')
         if(showEdit.prop('checked')) {
             editable.show();
-            scroller();
+            Sba.scroller();
         }
         showEdit.on('change', function() {
             if(this.checked) {
                 editable.show(400, 'linear');
-                scroller();
+                Sba.scroller();
             }
             else {
                 editable.hide(400, 'linear');
-                scroller();
+                Sba.scroller();
             }
         });
     }
@@ -393,6 +393,9 @@
                     var newTop = $(window).scrollTop() - offset.top;
                     if((offset.top +  newTop + recipHeight + 20) < footerOffset.top) {
                         $('#springboard-advocacy-message-recipients').css('top', newTop).addClass('recipients-fixed');
+                    }
+                    else {
+                        $('#springboard-advocacy-message-recipients').css('top', 0).removeClass('recipients-fixed');
                     }
                 }
                 else {
