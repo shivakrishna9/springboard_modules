@@ -61,7 +61,7 @@ function _sba_message_action_committee_autocomplete($name, $state, $chamber) {
         $results['message'] = 'Plus ' . $rest . ' more. Try narrowing your search with more letters, words or filters';
       }
       else {
-        $results['message'] = '';
+        $results['message'] = ''; //prevent the autocompelte js from bolding the last suggestion.
       }
       foreach ($results as $key => $row) {
         $matches[$row] = $row;
