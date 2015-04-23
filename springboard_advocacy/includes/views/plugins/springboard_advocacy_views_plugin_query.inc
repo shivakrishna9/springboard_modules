@@ -136,11 +136,12 @@ class springboard_advocacy_views_plugin_query extends views_plugin_query {
         if (isset($targets->error)) {
           watchdog('advocacy', 'An error occurred while searching for targets: @message', array('@message' => $targets->error->message), WATCHDOG_ERROR);
         }
-        $targets->data->targets = array();
       }
 
       $view->result = array();
-      $view->result = $targets->data->targets;
+      if(!empty($targets->data->targets)) {
+        $view->result = $targets->data->targets;
+      }
 
       $this->pager->post_execute($view->result);
       
