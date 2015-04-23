@@ -111,9 +111,9 @@ function springboard_tag_page_alter(&$page) {
  * Add the after body tags to the page HTML.
  */
 function _springboard_tag_post_render(&$children, $elements) {
-  // Insert snippet after the opening body tag.
-  $children = preg_replace('@<body[^>]*>@', '$0' . "\n" . $elements['#springboard_tag_after_body'] . "\n", $children, 1);
-  return $children;
+  // Split the document at the body tag and insert snippet after the opening body tag.
+  $matches = preg_split('/(<body.*?>)/i', $children, -1, PREG_SPLIT_NO_EMPTY | PREG_SPLIT_DELIM_CAPTURE);
+  return $matches[0] . $matches[1] . "\n" . $elements['#springboard_tag_after_body'] . $matches[2];
 }
 
 /**
