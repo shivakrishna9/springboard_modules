@@ -186,7 +186,7 @@ function springboard_target_form($target_id = NULL) {
     '#default_value' => isset($target->addresses[0]->street) ? $target->addresses[0]->street : '',
     '#size' => 60,
     '#maxlength' => 128,
-    '#required' => TRUE,
+    '#required' => FALSE,
     '#attributes' => array('class' => array('target-add', 'target-address')),
   );
 
@@ -205,7 +205,7 @@ function springboard_target_form($target_id = NULL) {
     '#default_value' => isset($target->addresses[0]->city) ? $target->addresses[0]->city : '',
     '#size' => 60,
     '#maxlength' => 128,
-    '#required' => TRUE,
+    '#required' => FALSE,
     '#attributes' => array('class' => array('target-add', 'target-city')),
   );
 
@@ -214,7 +214,7 @@ function springboard_target_form($target_id = NULL) {
     '#title' => t('State'),
     '#default_value' => isset($target->addresses[0]->state) ? array($target->addresses[0]->state) : '',
     '#options' => springboard_target_states(),
-    '#required' => TRUE,
+    '#required' => FALSE,
     '#attributes' => array('class' => array('target-add', 'target-state')),
   );
 
@@ -224,7 +224,7 @@ function springboard_target_form($target_id = NULL) {
     '#default_value' => isset($target->addresses[0]->zip_code) ? $target->addresses[0]->zip_code : '',
     '#size' => 10,
     '#maxlength' => 10,
-    '#required' => TRUE,
+    '#required' => FALSE,
     '#attributes' => array('class' => array('target-add', 'target-zip')),
   );
 
@@ -246,6 +246,8 @@ function springboard_target_form($target_id = NULL) {
     '#size' => 60,
     '#maxlength' => 128,
     '#attributes' => array('class' => array('target-add', 'target-email')),
+    '#required' => TRUE,
+
   );
 
   $form['row_four']['facebook'] = array(
