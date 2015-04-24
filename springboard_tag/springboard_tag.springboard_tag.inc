@@ -14,9 +14,9 @@ function springboard_tag_default_springboard_tag() {
   $preset = new stdClass();
   $preset->disabled = TRUE; /* Edit this to true to make a default preset disabled initially */
   $preset->api_version = 1;
-  $preset->name = 'donation_datalayer';
-  $preset->admin_title = 'Donation Datalayer';
-  $preset->admin_description = 'Datelayer example for a donation confirmation. Scripted so multiple datalayer instances can be present on the same page. If this will be used for Google Analytics eCommerce tracking, the Springboard GA module should be disabled to avoid double-tracking.';
+  $preset->name = 'google_analytics_donation_datalayer';
+  $preset->admin_title = 'Google Analtyics Donation Datalayer';
+  $preset->admin_description = 'Datalayer example for a donation confirmation with tracking through Google Analytics and GTM. Scripted so multiple datalayer instances can be present on the same page. If this will be used for Google Analytics eCommerce tracking, the Springboard GA module should be disabled to avoid double-tracking.';
   $preset->tag = '<script>
   var dataLayer = dataLayer || [];
   dataLayer.push({
@@ -164,6 +164,66 @@ j=d.createElement(s),dl=l!=\'dataLayer\'?\'&l=\'+l:\'\';j.async=true;j.src=
     ),
   );
   $presets['google_tag_manager'] = $preset;
+
+  $preset = new stdClass();
+  $preset->disabled = TRUE; /* Edit this to true to make a default preset disabled initially */
+  $preset->api_version = 1;
+  $preset->name = 'google_universal_donation_datalayer';
+  $preset->admin_title = 'Google Universal Donation Datalayer';
+  $preset->admin_description = 'Datalayer example for a donation confirmation with tracking through Google Universal and GTM. Scripted so multiple datalayer instances can be present on the same page.';
+  $preset->tag = '<script>
+  var dataLayer = dataLayer || [];
+     dataLayer.push({
+     "transactionId" : "[donation:did]",
+     "transactionType" : "sale",
+     "transactionAffiliation": "",
+     "transactionTotal" : [donation:amount],
+     "transactionTax": 0,
+     "transactionShipping": 0,
+     "transactionCurrency":"USD",
+     "transactionProducts": [{
+       "name": "[donation:node:title]",
+       "sku": "[donation:node:nid]",
+       "category": "[donation:frequency]",
+       "price":  [donation:amount],
+       "quantity": 1
+     }],
+});
+</script>';
+  $preset->weight = 0;
+  $preset->settings = array(
+    'placement' => 'after body tag',
+    'visibility' => array(
+      'fundraiser' => array(
+        'confirmation' => 1,
+      ),
+      'user' => array(
+        'roles' => array(
+          1 => 0,
+          3 => 0,
+          2 => 0,
+          4 => 0,
+          5 => 0,
+        ),
+      ),
+      'path' => array(
+        'page_specific' => '0',
+        'pages' => '',
+      ),
+      'node' => array(
+        'type' => array(
+          'article' => 0,
+          'page' => 0,
+          'donation_form' => 0,
+          'email_wrapper' => 0,
+          'page_wrapper' => 0,
+          'webform' => 0,
+          'webform_ab' => 0,
+        ),
+      ),
+    ),
+  );
+  $presets['soi_google_universal'] = $preset;
 
   return $presets;
 }
