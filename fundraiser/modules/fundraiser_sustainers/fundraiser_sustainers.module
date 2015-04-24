@@ -1199,6 +1199,25 @@ function fundraiser_sustainers_form_fundraiser_admin_settings_alter(&$form, &$fo
     '#collapsible' => TRUE,
     '#collapsed' => TRUE,
   );
+  // Auto-cancel options for sustainers whose payment are consistently declined.
+  $form['fundraiser_sustainers']['fundraiser_recurring_auto_cancel'] = array (
+    '#type' => 'fieldset',
+    '#title' => t('Recurring Series Auto-Cancellation'),
+    '#collapsible' => TRUE,
+    '#collapsed' => FALSE,
+  );
+  $form['fundraiser_sustainers']['fundraiser_recurring_auto_cancel']['fundraiser_recurring_autocancel_enabled'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Cancel recurring donation series after multiple consecutive permanent failures?'),
+    '#description' => t('If this option is enabled, recurring donation series which consistently fail will be permanently cancelled.'),
+    '#default_value' => variable_get('fundraiser_recurring_autocancel_enabled', 0),
+  );
+  $form['fundraiser_sustainers']['fundraiser_recurring_auto_cancel']['fundraiser_recurring_autocancel_consecutive_failures'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Minimum consecutive failures'),
+    '#description' => t('How many consecutive donation failures after which a permanent cancellation should occur. Please enter a value greater than 3.'),
+    '#default_value' => variable_get('fundraiser_recurring_autocancel_consecutive_failures', 3),
+  );
   $token_set = array('donation', 'user', 'node');
   $form['fundraiser_sustainers']['fundraiser_cc_expiration_message']['tokens']['token_help'] = array(
     '#type' => 'item',
@@ -1214,12 +1233,19 @@ function fundraiser_sustainers_form_fundraiser_admin_settings_alter(&$form, &$fo
  */
 function fundraiser_sustainers_settings_form_validate($form, &$form_state) {
   $max_processing_attempts = $form_state['values']['fundraiser_sustainers_max_processing_attempts'];
+  $min_autocancel_threshold = $form_state['values']['fundraiser_recurring_autocancel_threshold'];
 
-  // Ensure we get a number between 3 and 10.
+  // Ensure we get a number between 3 and 10 for charge attempts.
   if (!is_numeric($max_processing_attempts)
     || $max_processing_attempts < 3
     || $max_processing_attempts > 10) {
     form_set_error('fundraiser_sustainers_max_processing_attempts', t('Maximum charge attempts should be a valid number between 3 and 10.'));
+  }
+
+  // Ensure we get a number above 3 for autocancel threshold.
+  if (!is_numeric($min_autocancel_threshold)
+    || $min_autocancel_threshold < 3) {
+    form_set_error('fundraiser_recurring_autocancel_consecutive_failures', t('Minimum consecutive failures should be a valid number greater than 3.'));
   }
 }
 
