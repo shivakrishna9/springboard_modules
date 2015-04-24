@@ -489,7 +489,7 @@ function sba_message_install() {
     'bundle' => 'sba_message_action_message',
     'default_value' => array(
       0 => array(
-        'value' => 'Dear %target.salutation% %target.lastname%',
+        'value' => 'Dear %target.salutation% %target.last_name%',
       ),
     ),
     'deleted' => 0,
@@ -593,7 +593,7 @@ function sba_message_install() {
     'bundle' => 'sba_message_action_message',
     'default_value' => array(
       0 => array(
-        'value' => 'Sincerely, %contact.first-name% %contact.last-name%',
+        'value' => "Sincerely, %contact.first_name% %contact.last_name%",
       ),
     ),
     'deleted' => 0,
