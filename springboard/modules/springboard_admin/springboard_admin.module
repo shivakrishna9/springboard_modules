@@ -574,6 +574,7 @@ function springboard_admin_page_build(&$page) {
   $page['page_bottom']['springboard_admin'] = array(
     '#attached' => array(
       'css' => array($path . '/css/springboard-admin.home-link.css'),
+      'js' => array($path . '/js/springboard-admin.home-link.js'),
     ),
     '#theme' => 'springboard_admin_home_link',
     '#springboard_link' => l('Springboard', 'springboard'),
