@@ -256,9 +256,12 @@
         $('#quick-target', context).once('advocacy-add-quick-target', function() {
             Sba.setElStates();//need this?
             Sba.reset('all');
-            $('input#quick-target').click(function() {
+            $('input#quick-target').click(function(e) {
+                $('.views-targets-button-wrapper').hide();
                 var query = Sba.getQuickQuery();
                 Sba.addTarget('quick', query);
+                return false;
+
             });
         });
     }
