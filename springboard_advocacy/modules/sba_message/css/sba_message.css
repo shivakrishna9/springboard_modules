@@ -22,12 +22,21 @@
         -moz-appearance: none;
         appearance: none;
         color:#6c6c6c;
-        background: url('../img/icon-arrow-down.jpg') 96% 53% no-repeat;
         height: auto;
+        background: url('../img/icon-arrow-down.jpg') 96% 53% no-repeat;
     }
-select::-ms-expand {
-    display: none;
-}
+
+    /** Internet explorer **/
+    #springboard-advocacy-message-form-container select {background:none\0;}
+    html.ie10 #springboard-advocacy-message-form-container select,
+    html.ie11 #springboard-advocacy-message-form-container select  {
+        background: url('../img/icon-arrow-down.jpg') 96% 53% no-repeat;
+    }
+
+    html.ie10 #springboard-advocacy-message-form-container select::-ms-expand,
+    html.ie11 #springboard-advocacy-message-form-container select::-ms-expand  {
+        display: none;
+    }
 
     #springboard-advocacy-message-form-container option {
         padding:4px 20px 14px 40px;

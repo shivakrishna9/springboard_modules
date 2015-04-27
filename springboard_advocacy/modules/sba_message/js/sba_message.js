@@ -52,7 +52,7 @@
 
 
     // Functions which need to happen on initial page load, but not ajax reload
-    $(document).ready(function () {
+    $(document).ready(function () {;
 
         // Hide the no search results message
         $('.view-empty').hide();
@@ -913,6 +913,7 @@
             $('.view-content').fadeOut(333);
             $('.attachment').fadeOut(333);
             $('div.view-targets .item-list').fadeOut(333);
+            //$('#advocacy-attachment-before-add-all').fadeOut(333);
 
         }
     }
