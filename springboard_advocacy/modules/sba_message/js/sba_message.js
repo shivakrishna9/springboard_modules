@@ -595,15 +595,15 @@
         //update quick target button based on meta-variables
         if( notGroupable == true || hasDistrict == true || (groupable == false && hasState == false)) {
             if(window.search_state != 'committee') {
-                $('.views-targets-button-wrapper').prop("disabled", true).fadeTo(400, 0).css({'cursor': 'default'}).addClass('cancel-hover');
-                $('.views-targets-button-wrapper input').prop("disabled", true).fadeTo(400, 0).css({'cursor': 'default'}).addClass('cancel-hover');
+                $('.views-targets-button-wrapper').prop("disabled", true).fadeOut(400, function(){$(this).hide(500)}).css({'cursor': 'default'}).addClass('cancel-hover');
+                $('.views-targets-button-wrapper input').prop("disabled", true).fadeOut(400,  function(){$(this).hide(500)}).css({'cursor': 'default'}).addClass('cancel-hover');
             }
 
         }
 
         else if((groupable == true || hasState == true)  && window.search_state != 'committee' && hasDistrict == false && notGroupable == false) {
-            $('.views-targets-button-wrapper').prop("disabled", false).fadeTo(200, 1).css({'cursor': 'pointer'}).removeClass('cancel-hover');
-            $('.views-targets-button-wrapper input').prop("disabled", false).fadeTo(200, 1).css({'cursor': 'pointer'}).removeClass('cancel-hover');
+            $('.views-targets-button-wrapper').prop("disabled", false).fadeIn(200).css({'cursor': 'pointer'}).removeClass('cancel-hover');
+            $('.views-targets-button-wrapper input').prop("disabled", false).fadeIn(200).css({'cursor': 'pointer'}).removeClass('cancel-hover');
         }
     }
 
