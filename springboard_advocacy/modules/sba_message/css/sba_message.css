@@ -24,8 +24,10 @@
         color:#6c6c6c;
         background: url('../img/icon-arrow-down.jpg') 96% 53% no-repeat;
         height: auto;
-
     }
+select::-ms-expand {
+    display: none;
+}
 
     #springboard-advocacy-message-form-container option {
         padding:4px 20px 14px 40px;
@@ -411,6 +413,11 @@
             padding:0;
             margin: 0;
         }
+        #springboard-advocacy-find-targets .views-exposed-form:after {
+            clear: both;
+            content: "";
+            display: table;
+        }
 
         #springboard-advocacy-find-targets #advocacy-attachment-before {
 
@@ -535,7 +542,7 @@
 
         #springboard-advocacy-find-targets .radio-widgets {
             clear:both;
-            padding: 1em 1em 0;
+            padding: 1em 1em 1em;
 
         }
 

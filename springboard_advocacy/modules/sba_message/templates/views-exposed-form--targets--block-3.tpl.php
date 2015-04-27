@@ -64,37 +64,19 @@
             <?php print $widget->description; ?>
           </div>
         <?php endif; ?>
-      </div>
+      </div><!-- end views-exposed-widgets-->
 
       <!-- End of wrapping the state and district form elements in a container -->
       <?php if (in_array('filter-search_district_name', array_keys($widgets)) && $id == 'filter-search_district_name'): ?>
         </div>
-            <div class = "radio-widgets">
+        <div class = "radio-widgets">
       <?php endif; ?>
 
       <?php if (in_array('filter-search_committee', array_keys($widgets)) && $id == 'filter-search_committee'): ?>
       </div>
       <?php endif; ?>
-
     <?php endforeach; ?>
-    <?php if (!empty($sort_by)): ?>
-      <div class="views-exposed-widget views-widget-sort-by">
-        <?php print $sort_by; ?>
-      </div>
-      <div class="views-exposed-widget views-widget-sort-order">
-        <?php print $sort_order; ?>
-      </div>
-    <?php endif; ?>
-    <?php if (!empty($items_per_page)): ?>
-      <div class="views-exposed-widget views-widget-per-page">
-        <?php print $items_per_page; ?>
-      </div>
-    <?php endif; ?>
-    <?php if (!empty($offset)): ?>
-      <div class="views-exposed-widget views-widget-offset">
-        <?php print $offset; ?>
-      </div>
-    <?php endif; ?>
+  </div>
 
     <div class="views-exposed-widget views-submit-button">
       <?php print $target_button; ?>
@@ -115,5 +97,5 @@
         <?php print $reset_button; ?>
       </div>
     <?php endif; ?>
-  </div>
+
 </div>
