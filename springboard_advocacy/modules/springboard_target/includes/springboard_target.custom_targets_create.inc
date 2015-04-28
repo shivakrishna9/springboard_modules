@@ -12,7 +12,7 @@ function springboard_target_create_custom_targets_form() {
   $form = springboard_target_form();
   $form['#validate'][] = 'springboard_target_form_validate';
 
-  $form['submit'] = array('#type' => 'submit', '#value' => t('Save'));
+  $form['submit'] = array('#type' => 'submit', '#value' => t('Save'), '#weight' => 10);
   return $form;
 }
 
