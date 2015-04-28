@@ -504,7 +504,7 @@ function sba_message_action_form_submit($form, &$form_state) {
 
     foreach ($form_state['values']['sba_messages']['message'] as $id => $message) {
       $body_editable = isset($message['body_editable']) ? $message['body_editable'] : '';
-      $messages[$id]['body'] = check_markup(sba_message_action_build_message_bodies($message['sba_message_id'], $body_editable), 'plain_text');
+      $messages[$id]['body'] = check_plain(sba_message_action_build_message_bodies($message['sba_message_id'], $body_editable));
       $messages[$id]['subject'] = check_plain($message['subject']);
     }
     module_load_include('inc', 'springboard_advocacy', 'includes/springboard_advocacy.webform');
