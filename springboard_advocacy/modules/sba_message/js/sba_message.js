@@ -257,7 +257,7 @@
             Sba.setElStates();//need this?
             Sba.reset('all');
             $('input#quick-target').click(function(e) {
-                $('.views-targets-button-wrapper').hide();
+                //$('.views-targets-button-wrapper').hide();
                 var query = Sba.getQuickQuery();
                 Sba.addTarget('quick', query);
                 return false;
@@ -693,10 +693,34 @@
         else {
            qArr = query;
         }
+
+        var duplicate;
+        var existing = [];
+        $('.target-recipient').each(function(i) {
+            data = $.makeArray($(this).data())
+            $.each(data, function(index, value){
+                var existing = $.map(value, function(content, name) {
+                    return name + '=' + content;
+                })
+                var newTarget =  qArr.toString().replace(/%7C/g, '|');
+                var oldTarget = existing.toString()
+
+                if (newTarget == oldTarget) {
+                    duplicate = true;
+                }
+            })
+        });
+
+
+        if(duplicate == true) {
+            Sba.setUpdateMessage('Duplicate Target.');
+            return false;
+        }
+
         var readable = Sba.buildReadableQuery(qArr);
-        var id = Sba.calcDivId()
+        var id = Sba.calcDivId();
         Sba.buildDiv(id, readable, qArr, false);
-        Sba.setUpdateMessage();
+        Sba.setUpdateMessage('');
         Sba.setCountMessage();
         Sba.setFormValue();
     }
@@ -769,7 +793,7 @@
             ev.preventDefault();
             $(this).closest('.target-recipient').hide(300, function(){
                 $(this).remove();
-                Sba.setUpdateMessage();
+                Sba.setUpdateMessage('');
                 Sba.setFormValue();
                 Sba.setCountMessage();
             });
@@ -791,8 +815,18 @@
         $('input[name="data[recipients]"]').val(recipients);
     }
 
-    Sba.setUpdateMessage = function () {
-        $('.sba-message-status').text('You have unsaved changes').show('slow');
+    Sba.setUpdateMessage = function (message) {
+        if(message == '') {
+            message = 'You have unsaved changes.'
+        }
+        else {
+          current =  $('.sba-message-status').text();
+            if(current.indexOf('You have') != -1) {
+                message = message + " You have unsaved changes."
+            }
+
+        }
+        $('.sba-message-status').hide().text(message).show('slow');
     }
 
      Sba.setCountMessage = function () {
@@ -819,7 +853,7 @@
         $('.remove-all-targets').click(function(){
             $('.target-recipient').remove();
             $('.targeting-count, .remove-all-targets').remove();
-            Sba.setUpdateMessage();
+            Sba.setUpdateMessage('');
             Sba.setFormValue();
         });
     }
