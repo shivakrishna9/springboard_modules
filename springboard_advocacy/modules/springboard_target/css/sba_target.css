@@ -14,6 +14,7 @@
     border: 1px dotted #ccc;
     padding-left: 2em;
     padding-right: 0;
+    padding-top:0.5em;
     position: relative;
     -webkit-box-sizing: border-box;
     -moz-box-sizing: border-box;
@@ -55,6 +56,7 @@ input#edit-submit {
     clear:left;
     display: block;
 }
+
 input#edit-submit {
     float: right;
 }
@@ -102,14 +104,14 @@ div.form-item-salutation select {
 .target-edit-form .target-row div.form-item.form-item-street,
 .target-edit-form .target-row div.form-item.form-item-city,
 .form-item-street-2,
-#edit-row-seven .form-item{
+#edit-row-four .form-item{
     width: 48%;
 }
 
 .form-item-street input,
 .form-item-street-2 input,
 .form-item-city input,
-#edit-row-seven input{
+#edit-row-four input{
     width: 100%;
 }
 
@@ -121,6 +123,24 @@ div.form-item-salutation select {
 .form-item-state select,
 .form-item-zip-code input{
     width: 98%;
+}
+
+ input#edit-submit.target-add {
+    width: 220px;
+    padding: 12px 6px;
+    border-radius: 4px;
+    border: none;
+    background: #247AAD;
+    text-align: center;
+    color: #FFF;
+    margin-top: 20px;
+    font-size: 19px;
+    font-weight: 400;
+    cursor: pointer;
+}
+
+input#edit-submit.target-add:hover {
+    background: #1E72A3
 }
 
 
