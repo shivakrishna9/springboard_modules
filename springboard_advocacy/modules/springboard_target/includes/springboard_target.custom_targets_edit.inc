@@ -45,6 +45,8 @@ function springboard_target_edit_custom_targets_form_submit($form, &$form_state)
   $target = $client->updateCustomTarget($input, $id);
   if (!empty($target->data)) {
     $message = implode(' ', (array)$target->data->status);
+    $form_state['redirect'] = 'admin/springboard/advocacy/targets/custom-targets/';
+
   }
   elseif(!empty($target->error)) {
     $message = isset($target->error->message) ? $target->error->message : t('An error occurred when attempting to update the target. Please try again.');
