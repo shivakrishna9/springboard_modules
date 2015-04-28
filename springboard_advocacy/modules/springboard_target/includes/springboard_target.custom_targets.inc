@@ -356,30 +356,31 @@ function springboard_target_states() {
 function springboard_target_form_validate($form, &$form_state) {
 
   if (!empty($form_state['values']['email'])) {
-    $valid = valid_email_address($form_state['values']['email']);
+    $valid = valid_email_address($form_state['values']['email'], TRUE);
     if (!$valid) {
       form_set_error('email', t('Invalid email address.'));
     }
   }
 
   if (!empty($form_state['values']['facebook'])) {
-    $valid = valid_url($form_state['values']['facebook']);
+    $valid = valid_url($form_state['values']['facebook'], TRUE);
     if (!$valid) {
-      form_set_error('facebook', t('Invalid facebook url.'));
+      form_set_error('facebook', t('Invalid facebook url.Please check for "http://" and/or path formatting.'));
     }
   }
 
   if (!empty($form_state['values']['website'])) {
-    $valid = valid_url($form_state['values']['website']);
+
+    $valid = valid_url($form_state['values']['website'], TRUE);
     if (!$valid) {
-      form_set_error('website', t('Invalid web site url.'));
+      form_set_error('website', t('Invalid web site url. "Please check for "http://" and/or path formatting.'));
     }
   }
 
   if (!empty($form_state['values']['twitter'])) {
-    $valid = valid_url($form_state['values']['twitter']);
+    $valid = valid_url($form_state['values']['twitter'], TRUE);
     if (!$valid) {
-      form_set_error('twitter', t('Invalid Twitter url.'));
+      form_set_error('twitter', t('Invalid Twitter url. Please check for "http://" and/or path formatting.'));
     }
   }
 
