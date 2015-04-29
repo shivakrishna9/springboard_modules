@@ -593,7 +593,7 @@ function sba_message_install() {
     'bundle' => 'sba_message_action_message',
     'default_value' => array(
       0 => array(
-        'value' => "Sincerely, \n\n %contact.first_name% %contact.last_name%",
+        'value' => "Sincerely, \n\n%contact.first_name% %contact.last_name%",
       ),
     ),
     'deleted' => 0,
