@@ -354,7 +354,7 @@ function sba_message_action_editable_message_form(&$form, $message, $multiple)
   $message_body = check_markup($wrapper->field_sba_message->value(), 'plain_text');
   $editable_message = check_plain($wrapper->field_editable_area->value());;
   $editable = $wrapper->field_user_editable[0]->value() == 'editable' ? TRUE : FALSE;
-  $required = $wrapper->field_editable_area_optional[0]->value() == 'required' ? TRUE : FALSE;
+  $required_body = $wrapper->field_editable_area_optional[0]->value() == 'required' ? TRUE : FALSE;
   $placeholder_greeting = check_plain($wrapper->field_sba_placeholder_greeting->value());
   $greeting = check_plain($wrapper->field_sba_greeting->value());
   $conclusion = check_markup($wrapper->field_bottom_conclusion->value(), 'plain_text');
@@ -437,6 +437,12 @@ function sba_message_action_editable_message_form(&$form, $message, $multiple)
       );
   }
 
+  if ($wrapper->field_subject_editable->value() == 'Editing is required' && !$multiple) {
+    $form['message'][$message->sba_message_id]['subject_required'] = array(
+      '#type' => 'value',
+      '#value' => 1,
+    );
+  }
   if ($wrapper->field_user_editable[0]->value() == 'editable' && !$multiple) {
 
     $form['message'][$message->sba_message_id]['body_editable'] = array(
@@ -447,7 +453,7 @@ function sba_message_action_editable_message_form(&$form, $message, $multiple)
 
     $form['message'][$message->sba_message_id]['body_required'] = array(
       '#type' => 'value',
-      '#value' => $required,
+      '#value' => $required_body,
     );
 
     if(!empty($conclusion)) {
@@ -487,6 +493,14 @@ function sba_message_action_form_validate($form, &$form_state) {
       $edited = $form_state['values']['sba_messages']['message'][$message_id[0]]['body_editable'];
       if ($edited == $default) {
         form_set_error('body_editable', t('Editing of the the default message is required.'));
+      }
+    }
+
+    if (isset($message['subject_required']) && $message['subject_required']['#value'] == 1) {
+      $default = $message['subject']['#default_value'];
+      $edited = $form_state['values']['sba_messages']['message'][$message_id[0]]['subject'];
+      if ($edited == $default) {
+        form_set_error('subject_editable', t('Editing of the the default subject is required.'));
       }
     }
   }
