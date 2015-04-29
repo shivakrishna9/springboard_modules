@@ -25,6 +25,7 @@ function _sba_message_api_save($sba_message, $is_new, $form_state) {
   $indvds = array();
   $multi_indvds = array();
   $has_gender_or_social = array();
+  $gender_or_social_rows = array();
   $chamber_rows = array();
   $unstructured_chambers = array();
 
