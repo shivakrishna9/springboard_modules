@@ -75,7 +75,7 @@ function springboard_target_form($target_id = NULL) {
     '#type' => 'select',
     '#title' => t('Gender'),
     '#default_value' => isset($target->gender) ? array($target->gender) : '',
-    '#options' => array('O' => 'Not Specified', 'M' => 'Male', 'F' => 'Female', ),
+    '#options' => array('F' => 'Female', 'M' => 'Male', 'O' => 'Other',),
     '#attributes' => array('class' => array('target-add', 'target-first-name')),
   );
 
