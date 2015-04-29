@@ -527,8 +527,7 @@
         allInputs.each(function() {
             //update our element state meta-variables
             var nm = this.name;
-            if(nm.indexOf('combine') != -1 || nm.indexOf('gender') != -1 ||
-                nm.indexOf('social')  != -1 || nm.indexOf('district') != -1 ||
+            if(nm.indexOf('combine') != -1 || nm.indexOf('district') != -1 ||
                 nm.indexOf('PRES')  != -1 || nm.indexOf('GOVNR') != -1) {
                 if ($(this).prop('checked') || (nm.indexOf('district') != -1 && district.val() != 'All')) {
                     notGroupable = true;
@@ -649,6 +648,9 @@
         var roles = []
         var parties = []
         var states = []
+        var genders = []
+        var socials = []
+
 
         $('#views-exposed-form-targets-block-3 input[type="checkbox"], #views-exposed-form-targets-block-3 select').each(function(i){
             if ($(this).prop('checked') || (this.name == 'search_state' && this.value != "All")) {
@@ -663,6 +665,12 @@
                 else if (nm.indexOf('state') != -1) {
                     states.push(v);
                 }
+                else if (nm.indexOf('gender') != -1) {
+                    genders.push(v);
+                }
+                else if (nm.indexOf('social') != -1) {
+                    socials.push(v);
+                }
                 else return false;
             }
         });
@@ -670,6 +678,8 @@
         roles = roles.toString().replace(/,/g, '|');
         parties = parties.toString().replace(/,/g, '|');
         states = states.toString().replace(/,/g, '|');
+        genders = genders.toString().replace(/,/g, '|');
+        socials = socials.toString().replace(/,/g, '|');
 
         var query = [];
         if(states.length > 0) {
@@ -680,6 +690,12 @@
         }
         if(parties.length > 0) {
             query.push('party=' + parties)
+        }
+        if(genders.length > 0) {
+            query.push('gender=' + genders)
+        }
+        if(socials.length > 0) {
+            query.push('social=' + socials)
         }
         return query;
     }
@@ -916,6 +932,12 @@
                     case 'F':
                         queryObj[segments[0]][i] = 'Female';
                         break;
+                    case 'twitter':
+                        queryObj[segments[0]][i] = 'Twitter';
+                        break;
+                    case 'facebook':
+                        queryObj[segments[0]][i] = 'Facebook';
+                        break;
                 }
             });
         });
@@ -924,8 +946,8 @@
             return  '<div class="individual">' + queryObj.Sal + " " +  queryObj.First + " " + queryObj.Last + '</div>';
         }
         var cleanUp = JSON.stringify(queryObj).SbaJsonToReadable();
-        if (typeof(queryObj.Fields) !== 'undefined' || typeof(queryObj.Gender) !== 'undefined'
-            || typeof(queryObj.Social) !== 'undefined' ||  typeof(queryObj.District) !== 'undefined') {
+        if (typeof(queryObj.Fields) !== 'undefined' || typeof(queryObj.Genderxxxx) !== 'undefined'
+            || typeof(queryObj.Socialxxxx) !== 'undefined' ||  typeof(queryObj.District) !== 'undefined') {
             return '<div class="title"><h4>Group Target</h4></div>' +  cleanUp;
         }
         return '<div class="title"><h4>Group Target</h4></div> ' +  cleanUp;

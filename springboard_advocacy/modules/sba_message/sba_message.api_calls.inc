@@ -24,6 +24,7 @@ function _sba_message_api_save($sba_message, $is_new, $form_state) {
   $values = $form_state['values'];
   $indvds = array();
   $multi_indvds = array();
+  $has_gender_or_social = array();
   $chamber_rows = array();
   $unstructured_chambers = array();
 
@@ -40,19 +41,25 @@ function _sba_message_api_save($sba_message, $is_new, $form_state) {
       elseif(isset($target->ids)) {
         $multi_indvds =  array_merge($multi_indvds, explode('|', $target->ids));
       }
+      elseif(isset($target->gender) || isset($target->social)) {
+        $has_gender_or_social[] =  $target;
+      }
       else {
         $unstructured_chambers[] = $target;
       }
     }
   }
 
+  if (!empty($has_gender_or_social)) {
+    $gender_or_social_rows = _sba_message_api_get_gender_or_social_ids($has_gender_or_social);
+  }
+
   if (!empty($unstructured_chambers)) {
     $chamber_rows = _sba_message_api_build_chambers($unstructured_chambers);
   }
 
-  $combined = array_merge($multi_indvds, $indvds);
+  $combined = array_merge($multi_indvds, $indvds, $gender_or_social_rows);
   $indvds = !empty($combined) ? json_encode($combined) : '';
-
   // Is this a new message? Then create a new target group for it.
   if ($is_new) {
     $response = _sba_message_api_create_group($client, $sba_message, $chamber_rows, $indvds, $values);
@@ -86,6 +93,30 @@ function _sba_message_api_save($sba_message, $is_new, $form_state) {
       _sba_message_api_invalid_response($sba_message);
     }
   }
+}
+
+function _sba_message_api_get_gender_or_social_ids($target_fields) {
+  $loader = new AdvocacyApiClientLoader();
+  $client = $loader->getClient();
+  $ids = array();
+  $message = FALSE;
+  foreach ($target_fields as $fields) {
+    $fields->limit = 1;
+    $response = $client->searchTargets((array)$fields);
+    if (!empty($response->data->ids)) {
+      $ids = array_unique(array_merge($ids, $response->data->ids));
+    }
+    elseif(!isset($response->data)) {
+      if (isset($response->error)) {
+        drupal_set_message(t('An error occurred when attempting create targets: @message', array('@message' => $response->error->message)), 'error');
+        watchdog('advocacy', 'An error occurred when attempting to create targets: @message', array('@message' => $response->error->message), WATCHDOG_ERROR);
+      } else {
+        drupal_set_message(t('A response was not received from the server when attempting to create targets.'), 'error');
+        watchdog('advocacy', 'A response was not received when attempting to create targets.', array(), WATCHDOG_ERROR);
+      }
+    }
+  }
+  return $ids;
 }
 
 /**

@@ -472,7 +472,9 @@ function springboard_advocacy_form_views_exposed_form_alter(&$form, &$form_state
     if(isset($form['search_gender'])) {
       $form['search_gender']['#type'] = 'checkboxes';
     }
-
+    if(isset($form['search_social'])) {
+      $form['search_social']['#type'] = 'checkboxes';
+    }
     if (isset($form['search_district_name']) && in_array($form['#id'], $districted)) {
       $form['#after_build'][] = 'springboard_advocacy_views_exposed_form_ajax_enable';
 //      $form['search_state']['#prefix'] = '<div id="state_wrapper">';

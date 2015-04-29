@@ -758,13 +758,15 @@ function sba_message_views_default_views() {
   $handler->display->display_options['filters']['search_gender']['table'] = 'advocacy';
   $handler->display->display_options['filters']['search_gender']['field'] = 'search_gender';
   $handler->display->display_options['filters']['search_gender']['value'] = array(
+    'all' => 'all',
     'M' => 'M',
     'F' => 'F',
+    'O' => 'O',
   );
   $handler->display->display_options['filters']['search_gender']['group'] = 1;
   $handler->display->display_options['filters']['search_gender']['exposed'] = TRUE;
   $handler->display->display_options['filters']['search_gender']['expose']['operator_id'] = 'search_gender_op';
-  $handler->display->display_options['filters']['search_gender']['expose']['label'] = 'Search By Gender';
+  $handler->display->display_options['filters']['search_gender']['expose']['label'] = 'Gender';
   $handler->display->display_options['filters']['search_gender']['expose']['operator'] = 'search_gender_op';
   $handler->display->display_options['filters']['search_gender']['expose']['identifier'] = 'search_gender';
   $handler->display->display_options['filters']['search_gender']['expose']['multiple'] = TRUE;
@@ -776,7 +778,6 @@ function sba_message_views_default_views() {
     5 => 0,
   );
   $handler->display->display_options['filters']['search_gender']['expose']['reduce'] = TRUE;
-  $handler->display->display_options['filters']['search_gender']['is_grouped'] = TRUE;
   $handler->display->display_options['filters']['search_gender']['group_info']['label'] = 'Gender';
   $handler->display->display_options['filters']['search_gender']['group_info']['identifier'] = 'search_gender';
   $handler->display->display_options['filters']['search_gender']['group_info']['multiple'] = TRUE;
@@ -816,14 +817,25 @@ function sba_message_views_default_views() {
   $handler->display->display_options['filters']['search_social']['id'] = 'search_social';
   $handler->display->display_options['filters']['search_social']['table'] = 'advocacy';
   $handler->display->display_options['filters']['search_social']['field'] = 'search_social';
+  $handler->display->display_options['filters']['search_social']['value'] = array(
+    'facebook' => 'facebook',
+    'twitter' => 'twitter',
+  );
   $handler->display->display_options['filters']['search_social']['group'] = 1;
   $handler->display->display_options['filters']['search_social']['exposed'] = TRUE;
   $handler->display->display_options['filters']['search_social']['expose']['operator_id'] = 'search_social_op';
-  $handler->display->display_options['filters']['search_social']['expose']['label'] = 'Search By Social Media Presence';
+  $handler->display->display_options['filters']['search_social']['expose']['label'] = 'Social Media';
   $handler->display->display_options['filters']['search_social']['expose']['operator'] = 'search_social_op';
   $handler->display->display_options['filters']['search_social']['expose']['identifier'] = 'search_social';
   $handler->display->display_options['filters']['search_social']['expose']['multiple'] = TRUE;
-  $handler->display->display_options['filters']['search_social']['is_grouped'] = TRUE;
+  $handler->display->display_options['filters']['search_social']['expose']['remember_roles'] = array(
+    2 => '2',
+    1 => 0,
+    3 => 0,
+    4 => 0,
+    5 => 0,
+  );
+  $handler->display->display_options['filters']['search_social']['expose']['reduce'] = TRUE;
   $handler->display->display_options['filters']['search_social']['group_info']['label'] = 'Social Media';
   $handler->display->display_options['filters']['search_social']['group_info']['identifier'] = 'search_social';
   $handler->display->display_options['filters']['search_social']['group_info']['widget'] = 'radios';
@@ -865,6 +877,7 @@ function sba_message_views_default_views() {
     4 => 0,
     5 => 0,
   );
+
 
   $views[$view->name] = $view;
 
