@@ -105,8 +105,8 @@ function springboard_target_views_default_views() {
   $handler->display->display_options['empty']['area']['field'] = 'area';
   $handler->display->display_options['empty']['area']['label'] = 'No results';
   $handler->display->display_options['empty']['area']['empty'] = TRUE;
-  $handler->display->display_options['empty']['area']['content'] = '<h4>No custom targets have been created yet. </h4>
-<p>You can <a href="/springboard/advocacy/targets/custom-targets/add">create one now</a>.</p>';
+  $handler->display->display_options['empty']['area']['content'] = '<h4>No custom targets can be displayed. </h4>
+<p>You can <a href="/springboard/advocacy/targets/custom-targets/add">create one</a>.</p>';
   $handler->display->display_options['empty']['area']['format'] = 'full_html';
   /* Field: Advocacy: Salutation */
   $handler->display->display_options['fields']['salutation']['id'] = 'salutation';
