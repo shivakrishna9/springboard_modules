@@ -179,6 +179,8 @@ function sba_message_edit_form($form, &$form_state, $sba_message) {
     '#value' => $node->advocacy_id,
   );
 
+
+
   // Add the default field elements.
   $form['name'] = array(
     '#type' => 'textfield',
@@ -204,6 +206,11 @@ function sba_message_edit_form($form, &$form_state, $sba_message) {
   $form['data']['group_id'] = array(
     '#type' => 'hidden',
     '#default_value' => isset($sba_message->data['group_id']) ? $sba_message->data['group_id'] : '',
+  );
+
+  $form['data']['precedence'] = array(
+    '#type' => 'hidden',
+    '#default_value' => isset($sba_message->data['precedence']) ? $sba_message->data['precedence'] : 0,
   );
 
   if (isset($sba_message->data['group_id']) && $sba_message->data['group_id'] == 'no_response') {
