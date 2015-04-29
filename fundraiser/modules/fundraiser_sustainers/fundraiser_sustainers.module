@@ -2001,10 +2001,10 @@ function _fundraiser_sustainers_create_future_orders($donation, $month, $year, $
   if (is_null($start)) {
     $start = strtotime("now");
   }
-watchdog('debug', print_r($start, 1));
+
   // Create a DateTime from the start timestamp.
   $previous_charge = new DateTime("@$start");
-watchdog('debug', print_r($previous_charge, 1));
+
   // Allow other modules to modify the stop date.
   $end_date = array(
     'month' => $month,
