@@ -160,7 +160,6 @@ function sba_message_delete_form_wrapper($sba_message) {
  * @return mixed
  */
 function sba_message_edit_form($form, &$form_state, $sba_message) {
-
   // This form should only appear at node/%/messages.
   // Grab the node so we can get the action form UUID and node ID
   $node = menu_get_object();
@@ -178,8 +177,6 @@ function sba_message_edit_form($form, &$form_state, $sba_message) {
     '#type' => 'hidden',
     '#value' => $node->advocacy_id,
   );
-
-
 
   // Add the default field elements.
   $form['name'] = array(
@@ -210,7 +207,7 @@ function sba_message_edit_form($form, &$form_state, $sba_message) {
 
   $form['data']['precedence'] = array(
     '#type' => 'hidden',
-    '#default_value' => isset($sba_message->data['precedence']) ? $sba_message->data['precedence'] : 0,
+    '#default_value' => isset($node->precendence) ? $node->precedence : 0,
   );
 
   if (isset($sba_message->data['group_id']) && $sba_message->data['group_id'] == 'no_response') {

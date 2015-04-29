@@ -246,7 +246,8 @@ function sba_message_action_node_load($nodes, $types) {
       if(isset( $confirm_fail[0]->fail_message)) {
         $node->custom_fail_message = $confirm_fail[0]->fail_message;
       }
-
+      $precedence = db_query("SELECT precedence FROM {sba_form_id} WHERE nid = :nid", array(':nid' => arg(1)))->fetchField();
+      $node->precedence = !empty($precedence) ? $precedence :0;
 
       if(isset($node->form_layouts) &&  $node->form_layouts == 'one_column') {
         unset($node->form_layouts);

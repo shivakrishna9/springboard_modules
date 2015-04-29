@@ -54,6 +54,12 @@ function springboard_advocacy_schema() {
         'length' => 255,
         'not null' => TRUE,
       ),
+      'precedence' => array(
+        'description' => 'Use precedence for messages attached to this form',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => FALSE,
+      ),
     ),
     'primary key' => array('nid'),
   );
@@ -363,5 +369,15 @@ function springboard_advocacy_update_7004() {
   }
   else if(db_table_exists('springboard_advocacy_alert_id') && db_table_exists('sba_form_id')){
     db_drop_table('springboard_advocacy_alert_id');
+  }
+}
+
+/**
+ * Add precedence field the sba_form_id table
+ */
+function springboard_advocacy_update_7005() {
+  $schema = module_invoke('springboard_advocacy', 'schema');
+  if(db_field_exists('sba_form_id', 'precedence') == FALSE) {
+    db_add_field('sba_form_id', 'precedence', $schema['sba_form_id']['fields']['precedence']);
   }
 }

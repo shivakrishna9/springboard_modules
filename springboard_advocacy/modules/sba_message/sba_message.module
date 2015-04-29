@@ -162,7 +162,8 @@ function sba_message_form_views_form_sba_messages_node_block_1_alter(&$form, &$f
    $val = '';
    $messages = $form_state['build_info']['args'][0]->result;
    if (isset($messages) && count($messages) > 1) {
-     $val = isset($messages[0]->_field_data['sba_message_id']['entity']->data['precedence']) ? $messages[0]->_field_data['sba_message_id']['entity']->data['precedence']: 0;
+     $precedence = db_query("SELECT precedence FROM {sba_form_id} WHERE nid = :nid", array(':nid' => arg(1)))->fetchField();
+     $val = !empty($precedence) ? $precedence : 0;
 
      $form['precedence'] = array(
        '#type' => 'checkbox',
@@ -193,6 +194,13 @@ function sba_message_form_views_form_sba_messages_node_block_1_alter(&$form, &$f
  */
 function sba_message_drag_submit(&$form, &$form_state){
     $precedence = $form_state['values']['precedence'];
+    if(arg(0) == 'node' && is_numeric(arg(1))) {
+      $record = array(
+        'nid' => arg(1),
+        'precedence' => $precedence,
+      );
+      drupal_write_record('sba_form_id', $record,  array('nid'));
+    }
     $messages = $form_state['values']['draggableviews'];
       foreach($messages as $message) {
         if (isset($message['id'])) {
