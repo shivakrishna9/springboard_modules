@@ -726,8 +726,8 @@
                 if (newTarget == oldTarget) {
                     duplicate = true;
                 }
-                if(existing.length  < qArr.length) {
-                    missing = false;
+                if(existing.length < qArr.length && duplicate != true) {
+                    var missing = false;
                     $.each(existing, function(index, item) {
                         if($.inArray(item, qArr) == -1) {
                             missing = true;
@@ -736,8 +736,8 @@
                             duplicate = true;
                         }
                     });
-                    if(missing  == true) {
-                        duplicate == false;
+                    if(missing == true) {
+                        duplicate = false;
                     }
                 }
             })
