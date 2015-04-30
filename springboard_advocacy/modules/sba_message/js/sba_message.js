@@ -712,6 +712,7 @@
 
         var duplicate;
         var existing = [];
+        var solo;
         $('.target-recipient').each(function(i) {
             data = $.makeArray($(this).data())
             $.each(data, function(index, value){
@@ -719,17 +720,36 @@
                     return name + '=' + content;
                 })
                 var newTarget =  qArr.toString().replace(/%7C/g, '|');
-                var oldTarget = existing.toString()
+                var oldTarget = existing.toString();
+                solo = newTarget.indexOf('id=');
 
                 if (newTarget == oldTarget) {
                     duplicate = true;
                 }
+                if(existing.length  < qArr.length) {
+                    missing = false;
+                    $.each(existing, function(index, item) {
+                        if($.inArray(item, qArr) == -1) {
+                            missing = true;
+                        }
+                        else {
+                            duplicate = true;
+                        }
+                    });
+                    if(missing  == true) {
+                        duplicate == false;
+                    }
+                }
             })
         });
-
-
+        if(solo == -1) {
+            var message = 'Duplicate Targets. The group you are trying to add is already fully contained within another group.'
+        }
+        else {
+            message = 'Duplicate Target.'
+        }
         if(duplicate == true) {
-            Sba.setUpdateMessage('Duplicate Target.');
+            Sba.setUpdateMessage(message);
             return false;
         }
 
