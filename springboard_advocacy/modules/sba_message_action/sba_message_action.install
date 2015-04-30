@@ -947,14 +947,18 @@ function _sba_message_action_delete_nodes() {
   $nids = $result->fetchCol();
 
   if (!empty($nids)) {
-    $message_ids = db_query(
+    if(module_exists('sba_message')) {
+
+      $message_ids = db_query(
       'SELECT entity_id FROM {field_data_field_sba_action_id} WHERE field_sba_action_id_target_id IN (:nids)',
       array(':nids' => $nids))->fetchAssoc();
 
-    drupal_load('module', 'sba_message');
-    if (is_array($message_ids)) {
-      sba_message_delete_multiple($message_ids);
+      drupal_load('module', 'sba_message');
+      if (is_array($message_ids)) {
+        sba_message_delete_multiple($message_ids);
+      }
     }
+
     node_delete_multiple($nids);
 
     drupal_set_message('Springboard message actions have been deleted.');
