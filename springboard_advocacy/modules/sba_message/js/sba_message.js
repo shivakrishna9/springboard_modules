@@ -710,6 +710,35 @@
            qArr = query;
         }
 
+        var dupe = Sba.addTargetDedupe(qArr);
+        if(dupe == true) {
+            return false;
+        }
+
+        var readable = Sba.buildReadableQuery(qArr);
+        var id = Sba.calcDivId();
+        Sba.buildDiv(id, readable, qArr, false);
+        Sba.setUpdateMessage('');
+        Sba.setCountMessage();
+        Sba.setFormValue();
+    }
+
+    Sba.calcDivId = function (){
+        if ($('.target-recipient').length !== 0) {
+            var count = $(".target-recipient").map(function() {
+                return $(this).attr('id').replace('target-', '');
+            }).get().sort(function(a, b){
+                return a-b
+            });
+            var  id = parseInt(count.pop()) + 1;
+        }
+        else {
+            id = 0;
+        }
+        return id;
+    }
+
+    Sba.addTargetDedupe = function(qArr) {
         var duplicate;
         var existing = [];
         var solo;
@@ -742,38 +771,19 @@
                 }
             })
         });
-        if(solo == -1) {
-            var message = 'Duplicate Targets. The group you are trying to add is already fully contained within another group.'
-        }
-        else {
-            message = 'Duplicate Target.'
-        }
+
         if(duplicate == true) {
+            if(solo == -1) {
+                var message = 'Duplicate Targets. The group you are trying to add is already fully contained within another group.'
+            }
+            else {
+                message = 'Duplicate Target.'
+            }
+            console.log('g')
             Sba.setUpdateMessage(message);
-            return false;
+            return true;
         }
-
-        var readable = Sba.buildReadableQuery(qArr);
-        var id = Sba.calcDivId();
-        Sba.buildDiv(id, readable, qArr, false);
-        Sba.setUpdateMessage('');
-        Sba.setCountMessage();
-        Sba.setFormValue();
-    }
-
-    Sba.calcDivId = function (){
-        if ($('.target-recipient').length !== 0) {
-            var count = $(".target-recipient").map(function() {
-                return $(this).attr('id').replace('target-', '');
-            }).get().sort(function(a, b){
-                return a-b
-            });
-            var  id = parseInt(count.pop()) + 1;
-        }
-        else {
-            id = 0;
-        }
-        return id;
+        return false;
     }
 
     // validation error message displayed next to save button
