@@ -180,7 +180,10 @@
         box-sizing: border-box;
         width: 50%;
         margin-top: 0;
-
+    }
+    #springboard-advocacy-message-form-container #edit-field-sba-placeholder-greeting {
+        vertical-align: top;
+        margin-top: 0.5em;
     }
 
     #springboard-advocacy-message-form-container div[id*=edit-field-sba-editable-area-optional] {
@@ -564,7 +567,7 @@
         }
 
             #springboard-advocacy-find-targets .radio-widgets .views-exposed-widget {
-                margin: 1em 4em 1em 0;
+                margin: 1em 3em 1em 0;
             }
 
         #springboard-advocacy-find-targets .views-exposed-widget {
