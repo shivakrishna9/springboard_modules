@@ -318,8 +318,8 @@
     }
 
     Sba.userEditableFormDisplay = function () {
-        var showEdit = $('input[name*=field_user_editable]');
-        var editable = $('#sba_message_sba_message_action_message_form_group_editable, #edit-field-bottom-conclusion')
+        var showEdit = $('input[name*=field_sba_user_editable]');
+        var editable = $('#sba_message_sba_message_action_message_form_group_sba_editable, #edit-field-sba-bottom-conclusion')
         if(showEdit.prop('checked')) {
             editable.show();
             Sba.scroller();
@@ -340,12 +340,12 @@
         $("#edit-submit, #edit-delete").click(function (e) {
             e.preventDefault();
             var messages = [];
-            if($('[name*="field_subject_editable"]').length != 0 && !$('[name*="field_subject_editable"]').is(':checked')) {
-                messages.push( 'Subject is editable');
-            }
-            if($('[name*="field_message_editable"]').length != 0 && !$('[name*="field_message_editable"]').is(':checked')) {
-                messages.push('Message is editable');
-            }
+            //if($('[name*="field_sba_subject_editable"]').length != 0 && !$('[name*="field_sba_subject_editable"]').is(':checked')) {
+            //    messages.push( 'Subject is editable');
+            //}
+            //if($('[name*="field_message_editable"]').length != 0 && !$('[name*="field_message_editable"]').is(':checked')) {
+            //    messages.push('Message is editable');
+            //}
             $('input.required').each(function() {
                 if ($(this).val() == '') {
                     messages.push($("label[for='" + this.id + "']").text().replace('*', ''));

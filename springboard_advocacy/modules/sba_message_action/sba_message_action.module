@@ -352,12 +352,12 @@ function sba_message_action_editable_message_form(&$form, $message, $multiple)
 
   $subject = check_plain($wrapper->field_sba_subject->value());
   $message_body = check_markup($wrapper->field_sba_message->value(), 'plain_text');
-  $editable_message = check_plain($wrapper->field_editable_area->value());;
-  $editable = $wrapper->field_user_editable[0]->value() == 'editable' ? TRUE : FALSE;
-  $required_body = $wrapper->field_editable_area_optional[0]->value() == 'required' ? TRUE : FALSE;
+  $editable_message = check_plain($wrapper->field_sba_editable_area->value());;
+  $editable = $wrapper->field_sba_user_editable[0]->value() == 'editable' ? TRUE : FALSE;
+  $required_body = $wrapper->field_sba_editable_area_optional[0]->value() == 'required' ? TRUE : FALSE;
   $placeholder_greeting = check_plain($wrapper->field_sba_placeholder_greeting->value());
   $greeting = check_plain($wrapper->field_sba_greeting->value());
-  $conclusion = check_markup($wrapper->field_bottom_conclusion->value(), 'plain_text');
+  $conclusion = check_markup($wrapper->field_sba_bottom_conclusion->value(), 'plain_text');
 
 
   if (!$multiple) {
@@ -384,7 +384,7 @@ function sba_message_action_editable_message_form(&$form, $message, $multiple)
     '#value' => $message->sba_message_id,
   );
 
-  if ($wrapper->field_subject_editable->value() != 'Not editable') {
+  if ($wrapper->field_sba_subject_editable->value() != 'Not editable') {
     $form['message'][$message->sba_message_id]['subject'] = array(
       '#type' => 'textfield',
       '#title' => t('Subject'),
@@ -437,13 +437,13 @@ function sba_message_action_editable_message_form(&$form, $message, $multiple)
       );
   }
 
-  if ($wrapper->field_subject_editable->value() == 'Editing is required' && !$multiple) {
+  if ($wrapper->field_sba_subject_editable->value() == 'Editing is required' && !$multiple) {
     $form['message'][$message->sba_message_id]['subject_required'] = array(
       '#type' => 'value',
       '#value' => 1,
     );
   }
-  if ($wrapper->field_user_editable[0]->value() == 'editable' && !$multiple) {
+  if ($wrapper->field_sba_user_editable[0]->value() == 'editable' && !$multiple) {
 
     $form['message'][$message->sba_message_id]['body_editable'] = array(
       //'#title' => t('Your Message'),
@@ -567,7 +567,7 @@ function sba_message_action_build_message_bodies($sba_message_id, $body_editable
   $user_message[] = $wrapper->field_sba_greeting->value();
   $user_message[] = $wrapper->field_sba_message->value();
   $user_message[] = $body_editable;
-  $user_message[] = $wrapper->field_bottom_conclusion->value();
+  $user_message[] = $wrapper->field_sba_bottom_conclusion->value();
   $user_message[] = $wrapper->field_sba_signature->value();
 
   $user_message = implode("\n\n", array_filter($user_message));

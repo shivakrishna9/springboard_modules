@@ -73,8 +73,8 @@
             padding: 1em 0;
         }
 
-        #springboard-advocacy-message-form-container #edit-field-subject-editable .control-group,
-        #springboard-advocacy-message-form-container #edit-field-message-editable .control-group {
+        #springboard-advocacy-message-form-container #edit-field-sba-subject-editable .control-group,
+        #springboard-advocacy-message-form-container #edit-field-sba-user-editable .control-group {
             display: inline-block;
             margin-right: 25px;
         }
@@ -108,8 +108,8 @@
 #springboard-advocacy-message-form-container fieldset fieldset .form-wrapper {
     padding:   0;
 }
-            #springboard-advocacy-message-form-container fieldset fieldset#sba_message_sba_message_action_message_form_group_editable,
-            #edit-field-bottom-conclusion {
+            #springboard-advocacy-message-form-container fieldset fieldset#sba_message_sba_message_action_message_form_group_sba_editable,
+            #edit-field-sba-bottom-conclusion {
                 display: none;
             }
 
@@ -127,20 +127,20 @@
                     background: #fff;
                 }
 
-                    #springboard-advocacy-message-form-container fieldset fieldset#edit-field-user-editable div.form-type-checkboxes > label,
-                    #springboard-advocacy-message-form-container fieldset fieldset div[id*=edit-field-editable-area-optional] div.form-type-checkboxes > label {
+                    #springboard-advocacy-message-form-container fieldset fieldset#edit-field-sba-user-editable div.form-type-checkboxes > label,
+                    #springboard-advocacy-message-form-container fieldset fieldset div[id*=edit-field-sba-editable-area-optional] div.form-type-checkboxes > label {
                         display:none;
                     }
 
-                #springboard-advocacy-message-form-container  #edit-field-user-editable  .form-type-checkbox label {
+                #springboard-advocacy-message-form-container  #edit-field-sba-user-editable  .form-type-checkbox label {
                     margin-right: 0.5em;
                 }
 
-                #springboard-advocacy-message-form-container  #edit-field-user-editable .form-type-checkboxes > label {
+                #springboard-advocacy-message-form-container  #edit-field-sba-user-editable .form-type-checkboxes > label {
                     display:none;
                 }
 
-                #springboard-advocacy-message-form-container fieldset fieldset#sba_message_sba_message_action_message_form_group_editable .fieldset-wrapper {
+                #springboard-advocacy-message-form-container fieldset fieldset#sba_message_sba_message_action_message_form_group_sba_editable .fieldset-wrapper {
                     background: #edf9ff;
                 }
 
@@ -170,7 +170,7 @@
             margin-top: 1em;
         }
 
-    #springboard-advocacy-message-form-container #edit-field-subject-editable,
+    #springboard-advocacy-message-form-container #edit-field-sba-subject-editable,
     #springboard-advocacy-message-form-container #edit-field-sba-placeholder-greeting,
     #edit-field-sba-greeting,
     #edit-field-sba-subject{
@@ -183,7 +183,7 @@
 
     }
 
-    #springboard-advocacy-message-form-container div[id*=edit-field-editable-area-optional] {
+    #springboard-advocacy-message-form-container div[id*=edit-field-sba-editable-area-optional] {
         margin: 15px 0;
     }
 
