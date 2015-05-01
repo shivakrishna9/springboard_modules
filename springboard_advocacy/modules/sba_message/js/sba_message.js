@@ -755,10 +755,57 @@
                 if (newTarget == oldTarget) {
                     duplicate = true;
                 }
+                if(existing.length == qArr.length && duplicate != true) {
+                    if (newTarget.length < oldTarget.length && oldTarget.indexOf(newTarget != -1)) {
+                        duplicate = true;
+                        var missing = false;
+                        $.each(qArr, function(index, item) {
+                            var pos = item.indexOf('=');
+                            var segment = item.substr(0,pos);
+                            if($.inArray(item, existing) == -1 && oldTarget.indexOf(segment) == -1) {
+                                missing = true;
+                            }
+                            else {
+                                duplicate = true;
+                            }
+                        });
+                        if(missing == true) {
+                            duplicate = false;
+                        }
+                    }
+                }
+
                 if(existing.length < qArr.length && duplicate != true) {
                     var missing = false;
                     $.each(existing, function(index, item) {
+                        var pos = item.indexOf('=');
+                        var key = item.substr(0,pos);
+                        var value = item.substr(pos + 1).split('|');
                         if($.inArray(item, qArr) == -1) {
+                            missing = true;
+                            $.each(value, function(i, name){
+                                if(newTarget.indexOf(key + '=' + name) != -1) {
+                                    missing = false;
+                                    duplicate = true;
+                                }
+                                else {
+                                    missing = true
+                                }
+                            })
+                        }
+                        else {
+                            duplicate = true;
+                        }
+                    });
+                    if(missing == true) {
+                        duplicate = false;
+                    }
+                }
+
+                if(existing.length > qArr.length &&  duplicate != true) {
+                    var missing = false;
+                    $.each(qArr, function(index, item) {
+                        if($.inArray(item, existing) == -1) {
                             missing = true;
                         }
                         else {
@@ -767,6 +814,19 @@
                     });
                     if(missing == true) {
                         duplicate = false;
+                    }
+                    else {
+                        $.each(existing, function(index, item) {
+                            if($.inArray(item, qArr) == -1) {
+                                missing = true;
+                            }
+                            else {
+                                duplicate = true;
+                            }
+                            if(missing == true) {
+                                duplicate = false;
+                            }
+                        });
                     }
                 }
             })
@@ -779,7 +839,6 @@
             else {
                 message = 'Duplicate Target.'
             }
-            console.log('g')
             Sba.setUpdateMessage(message);
             return true;
         }
