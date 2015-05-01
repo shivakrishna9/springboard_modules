@@ -42,12 +42,6 @@ function sba_message_action_schema() {
  * Implements hook_install().
  */
 function sba_message_action_install() {
-
-
-
-  if (module_exists('salesforce_genmap')) {
-    _sba_message_action_salesforce_map();
-  }
   _sba_message_action_create_content_type();
   _sba_message_action_reorder_internal_name();
   _sba_message_action_create_example_message_action();
@@ -819,54 +813,6 @@ function sba_message_action_email_wrapper_add() {
   // Save extras.
   drupal_set_message(t('An example message to target email wrapper has been created.'));
   return $node->nid;
-}
-
-function _sba_message_action_salesforce_map() {
-  $map = array();
-  $map = entity_create('salesforce_genmap_map', $map);
-  $map->nid = -1;
-  $map->map_handler = 'webform';
-  $map->salesforce_object_type = 'Actions__c';
-  $object_type = '';
-  module_load_include('inc', 'salesforce_genmap', 'includes/salesforce_genmap.map');
-  if (function_exists('salesforce_get_api')) {
-    $sfapi = salesforce_get_api();
-    if ($sfapi->isAuthorized()) {
-      if (function_exists('_sfw_salesforce_record_type_list')) {
-        $sf_records = _sfw_salesforce_record_type_list($sfapi, 'Actions__c');
-        $sf_records = array_flip($sf_records);
-        $object_type = $sf_records['Springboard Advocacy Message Action Submission'];
-      }
-    }
-  }
-  $map->salesforce_record_type = $object_type;
-  $map->field_map = array(
-    'webform_map' => array(
-      'cid' => 'Campaign__c',
-      'ms' => 'Market_Source__c',
-      'referrer' => 'Referrer__c',
-      'initial_referrer' => 'Initial_Referrer__c',
-      'search_engine' => 'Search_Engine__c',
-      'search_string' => 'Search_String__c',
-      'user_agent' => 'User_Agent__c',
-    ),
-    'salesforce_node_map' => array(
-      'nid' => 'Drupal_Node_ID__c',
-      'title' => 'Action_Name__c',
-    ),
-    'salesforce_submission_map' => array(
-      'sid' => 'Submission_ID__c',
-      'date' => 'Action_Date__c',
-    ),
-  );
-  $map->sync_options = array(
-    'insert' => 'insert',
-    'update' => 'update',
-    'delete' => 'delete',
-  );
-  $map->status = 1;
-  $map->module = 'sba_message_action';
-  salesforce_genmap_save_map($map, 'webform');
 }
 
 function _sba_message_action_reorder_internal_name() {
