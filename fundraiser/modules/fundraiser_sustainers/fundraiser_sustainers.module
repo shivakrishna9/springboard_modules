@@ -2004,6 +2004,7 @@ function _fundraiser_sustainers_create_future_orders($donation, $month, $year, $
 
   // Create a DateTime from the start timestamp.
   $previous_charge = new DateTime("@$start");
+  date_timezone_set($previous_charge, timezone_open(variable_get('date_default_timezone', @date_default_timezone_get())));
 
   // Allow other modules to modify the stop date.
   $end_date = array(
