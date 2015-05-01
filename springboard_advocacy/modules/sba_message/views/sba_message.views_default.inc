@@ -886,7 +886,6 @@ function sba_message_views_default_views() {
 
   /******* Message Landing page *************/
 
-  /* Header: Global: Unfiltered text */
   $view = new view();
   $view->name = 'sba_messages_node';
   $view->description = '';
@@ -1074,11 +1073,6 @@ function sba_message_views_default_views() {
   $handler->display->display_options['sorts']['weight']['order'] = 'DESC';
   $handler->display->display_options['sorts']['weight']['draggableviews_setting_view'] = 'self';
   $handler->display->display_options['sorts']['weight']['draggableviews_setting_new_items_bottom_list'] = 0;
-  /* Sort criterion: SBA Message: Sba message ID */
-  $handler->display->display_options['sorts']['sba_message_id']['id'] = 'sba_message_id';
-  $handler->display->display_options['sorts']['sba_message_id']['table'] = 'sba_message';
-  $handler->display->display_options['sorts']['sba_message_id']['field'] = 'sba_message_id';
-  $handler->display->display_options['sorts']['sba_message_id']['order'] = 'DESC';
 
   /* Display: Block 2 */
   $handler = $view->new_display('block', 'Block 2', 'block_2');
@@ -1110,10 +1104,17 @@ function sba_message_views_default_views() {
   $handler->display->display_options['fields']['field_sba_placeholder_greeting']['label'] = 'Greeting';
   $handler->display->display_options['fields']['field_sba_placeholder_greeting']['element_label_colon'] = FALSE;
   $handler->display->display_options['fields']['field_sba_placeholder_greeting']['hide_empty'] = TRUE;
-  /* Field: SBA Message: Message */
+  /* Field: SBA Message: Message/Intro */
   $handler->display->display_options['fields']['field_sba_message']['id'] = 'field_sba_message';
   $handler->display->display_options['fields']['field_sba_message']['table'] = 'field_data_field_sba_message';
   $handler->display->display_options['fields']['field_sba_message']['field'] = 'field_sba_message';
+  $handler->display->display_options['defaults']['sorts'] = FALSE;
+  /* Sort criterion: Draggableviews: Weight */
+  $handler->display->display_options['sorts']['weight']['id'] = 'weight';
+  $handler->display->display_options['sorts']['weight']['table'] = 'draggableviews_structure';
+  $handler->display->display_options['sorts']['weight']['field'] = 'weight';
+  $handler->display->display_options['sorts']['weight']['draggableviews_setting_view'] = 'sba_messages_node:block_1';
+  $handler->display->display_options['sorts']['weight']['draggableviews_setting_new_items_bottom_list'] = 1;
 
 
   $views[$view->name] = $view;

@@ -294,16 +294,34 @@ function sba_message_edit_form_submit(&$form, &$form_state) {
     $is_new = TRUE;
   }
   $sba_message->changed = time();
+
   $status = $sba_message->save();
   if($status) {
     drupal_set_message(t('Message saved.'));
   }
 
+  $wrapper = entity_metadata_wrapper('sba_message', $sba_message);
+  $nid = $wrapper->field_sba_action_id->value()->nid;
+
+  //Set a weight and an entry in the draggableviews table if there is no weight;
+  if(!isset($sba_message->data['weight']) && isset($sba_message->sba_message_id)) {
+    $sba_message->data['weight']  = $sba_message->sba_message_id;
+    $sba_message->save();
+    // Create new order record.
+    $record = array(
+      'view_name' => 'sba_messages_node',
+      'view_display' => 'block_1',
+      'args' => json_encode(array($nid)),
+      'entity_id' => $sba_message->sba_message_id,
+      'weight' => $sba_message->sba_message_id,
+    );
+    drupal_write_record('draggableviews_structure', $record);
+  }
+
   module_load_include('inc', 'sba_message', 'sba_message.api_calls');
   _sba_message_api_save($sba_message, $is_new, $form_state);
 
-  $wrapper = entity_metadata_wrapper('sba_message', $sba_message);
-  $nid = $wrapper->field_sba_action_id->value()->nid;
+
   $form_state['redirect'] = 'node/' . $nid . '/messages';
 
 }
