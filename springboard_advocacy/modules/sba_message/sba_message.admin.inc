@@ -210,10 +210,12 @@ function sba_message_edit_form($form, &$form_state, $sba_message) {
     '#default_value' => isset($node->precedence) ? $node->precedence : 0,
   );
 
-  $form['data']['weight'] = array(
-    '#type' => 'hidden',
-    '#default_value' =>  isset($sba_message->data['weight']) ? str_replace('"', '&quot;', $sba_message->data['weight']) : '',
-  );
+  if(empty($sba_message->is_new)) {
+    $form['data']['weight'] = array(
+      '#type' => 'hidden',
+      '#default_value' => isset($sba_message->data['weight']) ? $sba_message->data['weight'] : NULL,
+    );
+  }
 
   if (isset($sba_message->data['group_id']) && $sba_message->data['group_id'] == 'no_response') {
     drupal_set_message('A remote group ID could not be found.');
