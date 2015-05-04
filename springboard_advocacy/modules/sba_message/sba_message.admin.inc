@@ -310,16 +310,22 @@ function sba_message_edit_form_submit(&$form, &$form_state) {
   $wrapper = entity_metadata_wrapper('sba_message', $sba_message);
   $nid = $wrapper->field_sba_action_id->value()->nid;
   //Set a weight and an entry in the draggableviews table if there is no weight;
+
   if(!isset($sba_message->data['weight']) && isset($sba_message->sba_message_id)) {
-    $sba_message->data['weight']  = $sba_message->sba_message_id;
-    $sba_message->save();
+    $arg = json_encode(array($nid));
     // Create new order record.
+    $weight = db_query("SELECT MAX(weight) FROM {draggableviews_structure} WHERE view_name = :name and args = :arg",
+      array(':name' => 'sba_messages_node', ':arg' => $arg))->fetchField();
+
+    $sba_message->data['weight']  = $weight + 1;
+    $sba_message->save();
+
     $record = array(
       'view_name' => 'sba_messages_node',
       'view_display' => 'block_1',
-      'args' => json_encode(array($nid)),
+      'args' => $arg,
       'entity_id' => $sba_message->sba_message_id,
-      'weight' => $sba_message->sba_message_id,
+      'weight' => $weight + 1,
     );
     drupal_write_record('draggableviews_structure', $record);
   }
