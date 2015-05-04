@@ -738,102 +738,94 @@
         return id;
     }
 
-    Sba.addTargetDedupe = function(qArr) {
+    Sba.addTargetDedupe = function(newQueryArr) {
         var duplicate;
-        var existing = [];
-        var solo;
+        var oldQueryArr = [];
+        var soloTarget;
+        var newQueryObj = {}
+
+        $.each(newQueryArr, function(i, v){
+            var segments = v.split('=');
+            newQueryObj[segments[0]] = segments[1];
+        });
+
         $('.target-recipient').each(function(i) {
-            data = $.makeArray($(this).data())
-            $.each(data, function(index, value){
-                var existing = $.map(value, function(content, name) {
-                    return name + '=' + content;
-                })
-                var newTarget =  qArr.toString().replace(/%7C/g, '|');
-                var oldTarget = existing.toString();
-                solo = newTarget.indexOf('id=');
 
-                if (newTarget == oldTarget) {
-                    duplicate = true;
-                }
-                if(existing.length == qArr.length && duplicate != true) {
-                    if (newTarget.length < oldTarget.length && oldTarget.indexOf(newTarget != -1)) {
-                        duplicate = true;
-                        var missing = false;
-                        $.each(qArr, function(index, item) {
-                            var pos = item.indexOf('=');
-                            var segment = item.substr(0,pos);
-                            if($.inArray(item, existing) == -1 && oldTarget.indexOf(segment) == -1) {
-                                missing = true;
-                            }
-                            else {
-                                duplicate = true;
-                            }
-                        });
-                        if(missing == true) {
-                            duplicate = false;
-                        }
-                    }
-                }
-
-                if(existing.length < qArr.length && duplicate != true) {
-                    var missing = false;
-                    $.each(existing, function(index, item) {
-                        var pos = item.indexOf('=');
-                        var key = item.substr(0,pos);
-                        var value = item.substr(pos + 1).split('|');
-                        if($.inArray(item, qArr) == -1) {
-                            missing = true;
-                            $.each(value, function(i, name){
-                                if(newTarget.indexOf(key + '=' + name) != -1) {
-                                    missing = false;
-                                    duplicate = true;
-                                }
-                                else {
-                                    missing = true
-                                }
-                            })
-                        }
-                        else {
-                            duplicate = true;
-                        }
-                    });
-                    if(missing == true) {
-                        duplicate = false;
-                    }
-                }
-
-                if(existing.length > qArr.length &&  duplicate != true) {
-                    var missing = false;
-                    $.each(qArr, function(index, item) {
-                        if($.inArray(item, existing) == -1) {
-                            missing = true;
-                        }
-                        else {
-                            duplicate = true;
-                        }
-                    });
-                    if(missing == true) {
-                        duplicate = false;
-                    }
-                    else {
-                        $.each(existing, function(index, item) {
-                            if($.inArray(item, qArr) == -1) {
-                                missing = true;
-                            }
-                            else {
-                                duplicate = true;
-                            }
-                            if(missing == true) {
-                                duplicate = false;
-                            }
-                        });
-                    }
-                }
+            oldQueryObj = $(this).data();
+            oldQueryArr = $.map(oldQueryObj, function(value, key) {
+                return key + '=' + value;
             })
+
+            var newQueryString =  newQueryArr.toString().replace(/%7C/g, '|');
+            var oldQueryString = oldQueryArr.toString();
+            soloTarget = newQueryString.indexOf('id=');
+
+            // if the queries are identical, we're done here
+            if (newQueryString == oldQueryString) {
+                duplicate = true;
+            }
+
+            //The query arrays have the same segment count, but they are not identical
+            if(oldQueryArr.length == newQueryArr.length && duplicate != true) {
+                var missing;
+                $.each(newQueryObj, function (key, values) {
+
+                    //there's a new segment here, definitely not a dupe
+                    if(!oldQueryObj.hasOwnProperty(key)){
+                        missing = true;
+                    }
+
+                    //It's the same segment, but maybe the values are different.
+                    if (missing != true) {
+                        newQueryValuesArr = values.split('|');
+                        $.each(newQueryValuesArr, function(i, value){
+                            if(oldQueryObj[key].indexOf(value) == -1) {
+                                missing = true
+                            }
+                            else {
+                                duplicate = true
+                            }
+                        });
+                    }
+                });
+
+                if(missing == true) {
+                    duplicate = false;
+                }
+            }
+
+            // if the new query has more segments than the old query
+            if(oldQueryArr.length < newQueryArr.length && duplicate != true) {
+                var missing;
+
+                //it's not a dupe if the overlapping segments have different values
+                $.each(newQueryObj, function (key, values) {
+                    if(oldQueryObj.hasOwnProperty(key)){
+                        newQueryValuesArr = values.split('|');
+                        $.each(newQueryValuesArr, function(i, value){
+                            if(oldQueryObj[key].indexOf(value) == -1) {
+                                missing = true
+                            }
+                            else {
+                                duplicate = true
+                            }
+                        });
+                    }
+                });
+
+                if(missing == true) {
+                    duplicate = false;
+                }
+            }
+
+            //if the new query has less segments than the old query it's not a dupe
+            if(oldQueryArr.length > newQueryArr.length &&  duplicate != true) {
+                duplicate = false;
+            }
         });
 
         if(duplicate == true) {
-            if(solo == -1) {
+            if(soloTarget == -1) {
                 var message = 'Duplicate Targets. The group you are trying to add is already fully contained within another group.'
             }
             else {
