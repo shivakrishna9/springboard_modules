@@ -207,7 +207,12 @@ function sba_message_edit_form($form, &$form_state, $sba_message) {
 
   $form['data']['precedence'] = array(
     '#type' => 'hidden',
-    '#default_value' => isset($node->precendence) ? $node->precedence : 0,
+    '#default_value' => isset($node->precedence) ? $node->precedence : 0,
+  );
+
+  $form['data']['weight'] = array(
+    '#type' => 'hidden',
+    '#default_value' =>  isset($sba_message->data['weight']) ? str_replace('"', '&quot;', $sba_message->data['weight']) : '',
   );
 
   if (isset($sba_message->data['group_id']) && $sba_message->data['group_id'] == 'no_response') {
@@ -302,7 +307,6 @@ function sba_message_edit_form_submit(&$form, &$form_state) {
 
   $wrapper = entity_metadata_wrapper('sba_message', $sba_message);
   $nid = $wrapper->field_sba_action_id->value()->nid;
-
   //Set a weight and an entry in the draggableviews table if there is no weight;
   if(!isset($sba_message->data['weight']) && isset($sba_message->sba_message_id)) {
     $sba_message->data['weight']  = $sba_message->sba_message_id;
