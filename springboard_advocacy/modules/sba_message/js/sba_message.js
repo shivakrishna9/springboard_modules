@@ -33,6 +33,7 @@
             // Insert placeholder text and update exposed form elements when combo search is changed.
             Sba.comboSearchUpdater();
 
+            //No results message div
             if($('.view-targets div.view-empty:visible').length != 0) {
                 var actions = $('#sba-message-edit-form #edit-actions');
                 $('div.view-empty').clone().appendTo(actions);
@@ -40,10 +41,14 @@
                 $('#edit-actions .view-empty').show();
             }
 
+            // Initialize some setup functions for federal-and-states-selected subscription level
+            // to hode/show various options
             var subscr = Drupal.settings.sbaSubscriptionLevel;
             if (subscr == 'federal-and-states-selected') {
+                //main search
                 Sba.toggleStateAndBranchState();
                 Sba.toggleStateAndBranchBranch();
+                //committee search
                 Sba.toggleStateAndChambersState();
                 Sba.toggleStateAndChambersChamber();
             }
@@ -52,7 +57,7 @@
 
 
     // Functions which need to happen on initial page load, but not ajax reload
-    $(document).ready(function () {;
+    $(document).ready(function () {
 
         // Hide the no search results message
         $('.view-empty').hide();
@@ -69,7 +74,7 @@
         Sba.messageFormSubmitter();
 
         // rearrange/append recipients container, error message div, submit button
-        Sba.prepareMessageForm()
+        Sba.prepareMessageForm();
 
         Sba.scroller();
     });
@@ -77,11 +82,14 @@
 
     /*********  Function Definitions **************/
 
+    //namespace
     window.Sba = {};
 
+    //manipulate form elements based on subscription level
     Sba.buildSubscriptions = function () {
 
         if (typeof(Drupal.settings.sbaSubscriptionLevel) !== "undefined") {
+            //Federal Only
             if (Drupal.settings.sbaSubscriptionLevel == 'federal-only') {
                 $("#edit-search-committee-chamber option").each(function () {
                     if ($(this).html().indexOf('State') != -1) {
@@ -95,6 +103,7 @@
                     $('#edit-search-state-wrapper').show();
                 }
             }
+            //State only
             if (Drupal.settings.sbaSubscriptionLevel == 'state-only') {
                 $("#edit-search-committee-chamber option").each(function () {
                     if ($(this).html().indexOf('Federal') != -1) {
@@ -103,6 +112,7 @@
                 });
             }
 
+            //Selected states only
             if (Drupal.settings.sbaSubscriptionLevel == 'states-selected') {
                 $("#edit-search-committee-chamber option").each(function () {
                     if ($(this).html().indexOf('Federal') != -1) {
@@ -112,6 +122,7 @@
 
             }
 
+            //Federal and some states
             if (Drupal.settings.sbaSubscriptionLevel == 'federal-and-states-selected') {
                 if(window.search_state == 'committee') {
                     $("#edit-search-state option").each(function () {
@@ -129,8 +140,12 @@
         }
     }
 
+    // define trigger for custom event handler used by State dropdown's ajax callback.
+    // Reset district option elements to default on State element change.
     Sba.buildStateField = function () {
 
+        // if only some states are allowed, or federal and and some states,
+        // only trigger the district field update if certain criteria are met
         if(typeof(Drupal.settings.sbaAllowedStates) !== "undefined") {
             $('#edit-search-state').on('change', function (e) {
                 if($(this).val() != 'All' && ($.inArray($(this).val(), Drupal.settings.sbaAllowedStates) !=-1
@@ -144,6 +159,7 @@
                 }
             });
         }
+        // Else all states are allowed
         else {
             $('#edit-search-state').on('change', function (e) {
                 $('select[name="search_district_name"]').html('<option selected="selected" value="All">- Any -</option>');
@@ -156,8 +172,10 @@
         }
     }
 
+    // Set up tabs, click events and other customizations for committee search
     Sba.buildCommitteeSearch = function () {
 
+        // tabs
         $('.view-targets').once('advocacy-committee-search', function() {
             var finder = $('#springboard-advocacy-find-targets-container .view-targets');
             finder.prepend('<div class="faux-tab-container"><div class="faux-tab"' +
@@ -165,12 +183,15 @@
             'div class="faux-tab"><a href ="#committee" class="committee-search">Committee Search</a></div>');
         });
 
+        //target search elements to hide
         var hideWidgets = $('#edit-search-role-1-wrapper, #edit-search-party-wrapper, #edit-search-social-wrapper, #edit-search-gender-wrapper, #edit-search-district-name-wrapper, #edit-combine-wrapper');
+       //committee search elements
         var comWidgets = $('#edit-search-committee-chamber-wrapper, #edit-search-committee-wrapper');
+        //committee tab click event
         $('.committee-search').click(function (e) {
             Sba.reset('committee');
             hideWidgets.hide();
-            $('.views-targets-button-wrappers, .search-reset').hide();
+            $('.views-targets-button-wrappers, .search-reset').hide(); //breaks if put in hideWidget object
             comWidgets.show(300);
             $('a.committee-search').closest('.faux-tab').addClass('active');
             $('a.full-search').closest('.faux-tab').removeClass('active');
@@ -178,10 +199,10 @@
             Sba.buildSubscriptions();
             Sba.toggleStateAndChambers();
             Sba.CommitteeElStates(true);
-
             return false;
         });
 
+        //target tab click event
         $('.full-search').click(function (e) {
             $('div.narrow-search').remove();
             comWidgets.hide();
@@ -199,10 +220,12 @@
             return false;
         });
 
+        // update committee fields after autocomplete textfield update
         $('#edit-search-committee').on('blur', function() { // "change" no work in ie11
             Sba.CommitteeElStates();
         });
 
+        //set up some defaults based on current window state after ajax reload
         if(window.search_state == 'committee' ) {
             $('.views-targets-button-wrapper').hide();
             hideWidgets.hide();
@@ -219,9 +242,9 @@
             comWidgets.hide();
             $('#edit-submit-targets').show();
             $('#edit-submit-targets').attr('value', 'Search');
-
         }
 
+        //set up up default placeholder text in textfield
         if ($('#edit-search-committee').text().length == 0) {
             var placeholder = $('#edit-search-committee-wrapper .description').text().trim();
             $('#edit-search-committee-wrapper .description').hide();
@@ -231,6 +254,7 @@
             });
         }
 
+        // Hide target results if search criteria are updated
         $('#edit-search-committee-wrapper input').on('keydown', function(input, e){
             if($('div.view-targets').is(':visible')) {
                 Sba.reset();
@@ -239,6 +263,7 @@
         });
     }
 
+    // Define click events for add target links
     Sba.buildTargetLinkEvent = function (context) {
         // Apply click event to the search form add links
         // Allows views search results to be appended to the recipients list
@@ -266,6 +291,7 @@
         });
     }
 
+    // Remove jQuery Uniform stylings from select elements
     Sba.deUniform = function () {
         if ($.isFunction($.fn.uniform)) {
             $('select').each(function () {
@@ -274,6 +300,7 @@
         }
     }
 
+    // If a district is selected other form elements need to be enabled/disabled/hidden
     Sba.districtReloader = function (context) {
         $('select[name="search_district_name"]', context).once('advocacy-district-reloaded', function() {
             Sba.setElStates();
@@ -290,7 +317,10 @@
         });
     }
 
+    // Update the main search form based on keyword textfield state
     Sba.comboSearchUpdater = function () {
+
+        //placeholder text
         if ($('#edit-combine').text().length == 0) {
             var placeholder = $('#edit-combine-wrapper .description').text().trim();
             $('#edit-combine-wrapper .description').hide();
@@ -317,9 +347,10 @@
         });
     }
 
+    // show/hide user editable textarea, and update the scroller position of the recipients div
     Sba.userEditableFormDisplay = function () {
         var showEdit = $('input[name*=field_sba_user_editable]');
-        var editable = $('#sba_message_sba_message_action_message_form_group_sba_editable, #edit-field-sba-bottom-conclusion')
+        var editable = $('#sba_message_sba_message_action_message_form_group_sba_editable, #edit-field-sba-bottom-conclusion');
         if(showEdit.prop('checked')) {
             editable.show();
             Sba.scroller();
@@ -336,6 +367,7 @@
         });
     }
 
+    //set up the event for the message save button validation and submit
     Sba.messageFormSubmitter = function () {
         $("#edit-submit, #edit-delete").click(function (e) {
             e.preventDefault();
@@ -360,6 +392,7 @@
         });
     }
 
+    //rearrange some elements on the exposed form and recipients container
     Sba.prepareMessageForm = function () {
         var recipContainer = $('#springboard-advocacy-message-recipients-container');
         var finder = $('#springboard-advocacy-find-targets-container');
@@ -367,7 +400,7 @@
         var err = $('#advo-error-wrapper');
 
         $('#springboard-advocacy-message-form-container').append(finder);
-        finder.append(recipContainer)
+        finder.append(recipContainer);
         finder.append(actions);
         actions.append(err);
         $('.views-targets-button-wrapper').hide();
@@ -385,6 +418,7 @@
         }
     }
 
+    //recipients container scroll calculations
     Sba.scroller = function () {
         setTimeout(function() {
             var offset = $('#springboard-advocacy-message-recipients').offset();
@@ -410,6 +444,8 @@
     }
 
 
+    // Update committee search form elements
+    // for federal-and-states-selected subscription level
     Sba.toggleStateAndChambers = function () {
         //state/chamber event driven enabling goes here.
         if (window.search_state == 'committee') {
@@ -423,31 +459,35 @@
         }
     }
 
+    //disable state dropdown if a federal chamber is selected
     Sba.toggleStateAndChambersChamber = function () {
-        chamber = $('#edit-search-committee-chamber-wrapper select')
-        text = $( '#' + chamber.id + ' option:selected').text();
+        var chamber = $('select', '#edit-search-committee-chamber-wrapper');
+        var text = $( '#' + chamber.id + ' option:selected').text();
+        var state = $('#edit-search-state');
         if(text.indexOf('Federal') != -1 ) {
-            $('#edit-search-state').prop('disabled', true);
-            $('#edit-search-state').addClass('disabled');
-            $('#edit-search-state').siblings('label').css({'cursor': 'not-allowed'});
+            state.prop('disabled', true);
+            state.addClass('disabled');
+            state.siblings('label').css({'cursor': 'not-allowed'});
         }
         else {
-            $('#edit-search-state').prop('disabled', false);
-            $('#edit-search-state').siblings('label').css({'cursor': 'default'});
+            state.prop('disabled', false);
+            state.siblings('label').css({'cursor': 'default'});
         }
     }
 
+    //disable federal chambers if a state is selected
     Sba.toggleStateAndChambersState = function () {
-        state = $('select', '#edit-search-state-wrapper')
+        var state = $('select', '#edit-search-state-wrapper');
+        var chamberOption = $("option", '#edit-search-committee-chamber');
         if (state.val() != 'All') {
-            $("#edit-search-committee-chamber option").each(function() {
+           chamberOption.each(function() {
                 if($(this).html().indexOf('Federal') != -1) {
                     $(this).hide();
                 }
             });
         }
         else {
-            $("#edit-search-committee-chamber option").each(function() {
+           chamberOption.each(function() {
                 if($(this).html().indexOf('Federal') != -1) {
                     $(this).show();
                 }
@@ -455,6 +495,8 @@
         }
     }
 
+    // Update target search form elements
+    // for federal-and-states-selected subscription level
     Sba.toggleStateAndBranch = function () {
         var subscr = Drupal.settings.sbaSubscriptionLevel;
         if (subscr == 'federal-and-states-selected') {
@@ -469,6 +511,7 @@
         }
     }
 
+    // Disable state branches when an unsubscribed state is selected
     Sba.toggleStateAndBranchState = function () {
         value = $('select', '#edit-search-state-wrapper').val();
         if (value != 'All' && $.inArray(value, Drupal.settings.sbaAllowedStates) == -1) {
@@ -485,16 +528,16 @@
         }
     }
 
+    // disable unsubscribed states in the state dropdown when a state branch is checked
     Sba.toggleStateAndBranchBranch = function () {
         var checkedState = false;
-        $boxes = $('input', '#edit-search-role-1-wrapper');
-        $boxes.each(function(){
+        var boxes = $('input', '#edit-search-role-1-wrapper');
+        boxes.each(function(){
             var fed = $(this).siblings('label').html().indexOf('State');
             if($(this).prop('checked') &&  fed != -1) {
                 checkedState = true;
             }
         });
-
         var options = $('select option', '#edit-search-state-wrapper');
         options.each(function () {
             if ($.inArray($(this).val(), Drupal.settings.sbaAllowedStates) == -1) {
@@ -506,7 +549,6 @@
                 }
             }
         });
-
     }
 
     // selectively disable/enable exposed form elements based on user actions
@@ -546,10 +588,10 @@
                 }
             } else {
 
-                if ((this.type=='checkbox' && $(this).prop('checked'))) {
+                if (this.type=='checkbox' && $(this).prop('checked')) {
                     groupable = true;
                 }
-                if((nm == 'search_state' && $(this).val() != 'All')) {
+                if(nm == 'search_state' && $(this).val() != 'All') {
                     hasState = true;
                 }
             }
@@ -594,20 +636,31 @@
         //update quick target button based on meta-variables
         if( notGroupable == true || hasDistrict == true || (groupable == false && hasState == false)) {
             if(window.search_state != 'committee') {
-                $('.views-targets-button-wrapper').prop("disabled", true).fadeOut(400, function(){$(this).hide(500)}).css({'cursor': 'default'}).addClass('cancel-hover');
-                $('.views-targets-button-wrapper input').prop("disabled", true).fadeOut(400,  function(){$(this).hide(500)}).css({'cursor': 'default'}).addClass('cancel-hover');
+                $('.views-targets-button-wrapper')
+                    .prop("disabled", true)
+                    .fadeOut(400, function() {
+                        $(this).hide(500);
+                    })
+                    .css({'cursor': 'default'})
+                    .addClass('cancel-hover');
+                $('.views-targets-button-wrapper input')
+                    .prop("disabled", true)
+                    .fadeOut(400,  function() {
+                        $(this).hide(500);
+                    })
+                    .css({'cursor': 'default'})
+                    .addClass('cancel-hover');
             }
-
         }
-
         else if((groupable == true || hasState == true)  && window.search_state != 'committee' && hasDistrict == false && notGroupable == false) {
             $('.views-targets-button-wrapper').prop("disabled", false).fadeIn(200).css({'cursor': 'pointer'}).removeClass('cancel-hover');
             $('.views-targets-button-wrapper input').prop("disabled", false).fadeIn(200).css({'cursor': 'pointer'}).removeClass('cancel-hover');
         }
     }
 
-    Sba.CommitteeElStates = function(tab) {
-        var pattern = /(id:[0-9]+)/;
+    // Update committee search elements based on autocomplete field state
+    Sba.CommitteeElStates = function(committeeTab) {
+
         var state  = $('#edit-search-state');
         var submit = $('#edit-submit-targets');
         var chamber = $('#edit-search-committee-chamber');
@@ -615,9 +668,13 @@
 
         $('#state-district-wrapper').append($('#edit-search-committee-chamber-wrapper'));
         $('div.narrow-search').remove();
-        $('#state-district-wrapper').before('<div class = "narrow-search">You may narrow the autocomplete results by state or chamber.</div>');
+        $('#state-district-wrapper').before('<div class = "narrow-search">You can narrow the autocomplete results by state or chamber.</div>');
 
+        // Find if there is a committee id in the autocomplete field
+        var pattern = /(id:[0-9]+)/;
         hasId = pattern.test(commit.val());
+
+        // If there's a valid committee, enable the search submit button
         if(hasId === true) {
             submit.show('400');
             $('.search-reset').show();
@@ -630,32 +687,30 @@
         else {
             submit.hide('400');
             $('.search-reset').hide();
-            if (tab != true && commit.val() != '') {
+            if (committeeTab != true && commit.val() != '') {
                 commit.val('').attr('placeholder', 'Invalid search. Please select a suggested committee name from the list.');
             }
             state.prop('disabled', false);
             state.removeClass('disabled');
             chamber.prop('disabled', false);
             chamber.removeClass('disabled');
-
         }
-
     }
 
     // quick target click function, builds query array
     Sba.getQuickQuery = function () {
 
-        var roles = []
-        var parties = []
-        var states = []
-        var genders = []
-        var socials = []
+        var roles = [];
+        var parties = [];
+        var states = [];
+        var genders = [];
+        var socials = [];
 
-
+        //iterate through the form elements and build arrays of checked/selected items
         $('#views-exposed-form-targets-block-3 input[type="checkbox"], #views-exposed-form-targets-block-3 select').each(function(i){
             if ($(this).prop('checked') || (this.name == 'search_state' && this.value != "All")) {
-                var nm = this.name
-                var v = this.value
+                var nm = this.name;
+                var v = this.value;
                 if (nm.indexOf('role') != -1) {
                     roles.push(v);
                 }
@@ -683,26 +738,26 @@
 
         var query = [];
         if(states.length > 0) {
-            query.push('state=' + states)
+            query.push('state=' + states);
         }
         if(roles.length > 0) {
-            query.push('role=' + roles)
+            query.push('role=' + roles);
         }
         if(parties.length > 0) {
-            query.push('party=' + parties)
+            query.push('party=' + parties);
         }
         if(genders.length > 0) {
-            query.push('gender=' + genders)
+            query.push('gender=' + genders);
         }
         if(socials.length > 0) {
-            query.push('social=' + socials)
+            query.push('social=' + socials);
         }
         return query;
     }
 
     // add target
     Sba.addTarget = function (type, query) {
-        // create unique ids for target divs
+
         if (type == 'search') {
             var qArr = $(query).attr('href').replace('add-all?', '').replace('add-target?', '').split('&');
         }
@@ -723,6 +778,7 @@
         Sba.setFormValue();
     }
 
+    // create uniqie IDs for each recipient group
     Sba.calcDivId = function (){
         if ($('.target-recipient').length !== 0) {
             var count = $(".target-recipient").map(function() {
@@ -738,18 +794,27 @@
         return id;
     }
 
+    //dedupe add target requests
     Sba.addTargetDedupe = function(newQueryArr) {
-        var duplicate;
-        var oldQueryArr = [];
-        var soloTarget;
-        var newQueryObj = {}
 
+        var duplicate;
+        var soloTarget;
+
+        // the new and old queries get translated into both arrays and objects
+        // in order to facilitate various key/value and string comparisons
+        var newQueryObj = {};
+        var oldQueryArr = [];
+        var oldQueryObj = {};
+
+        //convert the new query array to an object
         $.each(newQueryArr, function(i, v){
             var segments = v.split('=');
             newQueryObj[segments[0]] = segments[1];
         });
 
-        $('.target-recipient').each(function(i) {
+        // iterate through the existing targets and build data object and arrays for each.
+        // then compare them to the new query
+        $('.target-recipient').each(function() {
 
             oldQueryObj = $(this).data();
             oldQueryArr = $.map(oldQueryObj, function(value, key) {
@@ -760,30 +825,32 @@
             var oldQueryString = oldQueryArr.toString();
             soloTarget = newQueryString.indexOf('id=');
 
-            // if the queries are identical, we're done here
+            // if the new and old queries are identical strings, we're done here
             if (newQueryString == oldQueryString) {
                 duplicate = true;
             }
 
-            //The query arrays have the same segment count, but they are not identical
+            //If the queries have the same key count, but they are not identical,
+            // they could be different keys or the same key with different values
             if(oldQueryArr.length == newQueryArr.length && duplicate != true) {
                 var missing;
+
                 $.each(newQueryObj, function (key, values) {
 
-                    //there's a new segment here, definitely not a dupe
+                    //there's a new key here, definitely not a dupe
                     if(!oldQueryObj.hasOwnProperty(key)){
                         missing = true;
                     }
 
-                    //It's the same segment, but maybe the values are different.
+                    //It's the same key, but maybe the values are different.
                     if (missing != true) {
                         newQueryValuesArr = values.split('|');
                         $.each(newQueryValuesArr, function(i, value){
                             if(oldQueryObj[key].indexOf(value) == -1) {
-                                missing = true
+                                missing = true;
                             }
                             else {
-                                duplicate = true
+                                duplicate = true;
                             }
                         });
                     }
@@ -794,20 +861,20 @@
                 }
             }
 
-            // if the new query has more segments than the old query
+            // if the new query has more items than the old query
             if(oldQueryArr.length < newQueryArr.length && duplicate != true) {
                 var missing;
 
-                //it's not a dupe if the overlapping segments have different values
+                //it's not a dupe if the overlapping keys have different values
                 $.each(newQueryObj, function (key, values) {
                     if(oldQueryObj.hasOwnProperty(key)){
                         newQueryValuesArr = values.split('|');
                         $.each(newQueryValuesArr, function(i, value){
                             if(oldQueryObj[key].indexOf(value) == -1) {
-                                missing = true
+                                missing = true;
                             }
                             else {
-                                duplicate = true
+                                duplicate = true;
                             }
                         });
                     }
@@ -818,7 +885,7 @@
                 }
             }
 
-            //if the new query has less segments than the old query it's not a dupe
+            //if the new query has less keys than the old query, it's not a dupe
             if(oldQueryArr.length > newQueryArr.length &&  duplicate != true) {
                 duplicate = false;
             }
@@ -1098,8 +1165,8 @@
     //json notation to readable string helper
     String.prototype.SbaJsonToReadable = function()
     {
-      return this.replace(/{"/g, '<ul><li class ="heading">')
-            .replace(/]}/g, '</li></ul>')
+      return this.replace(/\{"/g, '<ul><li class ="heading">')
+            .replace(/\]\}/g, '</li></ul>')
             .replace(/\["/g, '<li>')
             .replace(/\],"/g, '</li></ul><ul><li class ="heading">')
             .replace(/:/g, '</li>')
