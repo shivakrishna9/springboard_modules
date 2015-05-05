@@ -1340,13 +1340,17 @@ function _springboard_admin_views() {
     'sbv_administrators',
     'sbv_assets',
     'sbv_contacts',
+    'sbv_dblog',
     'sbv_donations',
+    'sbv_email_templates',
     'sbv_forms',
     'sbv_gateway_settings_log',
     'sbv_notes',
-    'sbv_sf_queue',
+    'sbv_page_wrappers',
     'sbv_sf_batch_items',
     'sbv_sf_batches',
+    'sbv_sf_queue',
+    'sbv_soap_errors',
     'p2p_user_approval',
   );
 
