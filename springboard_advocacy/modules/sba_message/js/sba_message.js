@@ -569,8 +569,7 @@
         allInputs.each(function() {
             //update our element state meta-variables
             var nm = this.name;
-            if(nm.indexOf('combine') != -1 || nm.indexOf('district') != -1 ||
-                nm.indexOf('PRES')  != -1 || nm.indexOf('GOVNR') != -1) {
+            if(nm.indexOf('combine') != -1 || nm.indexOf('district') != -1 ) {
                 if ($(this).prop('checked') || (nm.indexOf('district') != -1 && district.val() != 'All')) {
                     notGroupable = true;
                     if (nm.indexOf('district') != -1) {
