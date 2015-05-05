@@ -486,8 +486,12 @@ function springboard_advocacy_form_views_exposed_form_alter(&$form, &$form_state
         'callback' => 'springboard_advocacy_update_districts_field_callback',
         'wrapper' => 'district',
         'method' => 'replace',
-        'effect' => 'fade',
-        'event' => 'custom_event'
+        'effect' => 'none',
+        'event' => 'custom_event',
+        'progress' => array(
+          'message' => NULL,
+          'type' => NULL,
+      ),
       );
       if (empty($form_state['values']['search_state']) && $form_state['input']['search_state'] == 'All') {
         $form['search_district_name']['#disabled'] = TRUE;
@@ -530,7 +534,7 @@ function springboard_advocacy_form_views_exposed_form_alter(&$form, &$form_state
           unset($form['search_role_1']['#options']['PRES01|PRES03']);
 
           $arr = array_reverse($subscription['states_custom'], true);
-          $arr['- Any - '] = 'All';
+          $arr['- Any -'] = 'All';
           $subscription['states_custom'] = array_reverse($arr, true);
           $form['search_state']['#options'] = array_flip(
             array_intersect(
@@ -595,7 +599,7 @@ function springboard_advocacy_get_districts($state) {
     $client = $loader->getClient();
     $response = $client->getDistrictsByState($state);
     if (isset($response->data)) {
-      $options = array('All' => '-Any-');
+      $options = array('All' => '- Any -');
       foreach ($response->data as $district) {
         $options[$district->DistrictDesc] = $district->DistrictDesc;
       }

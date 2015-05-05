@@ -672,7 +672,14 @@
                 cursor: pointer;
             }
 
-            #springboard-advocacy-find-targets  div.views-exposed-widget.views-submit-button input:hover {
+            #springboard-advocacy-find-targets  div.views-exposed-widget.views-submit-button .ajax-progress-throbber {
+                position: absolute;
+                right:-10px;
+                top: 14px;
+            }
+
+
+#springboard-advocacy-find-targets  div.views-exposed-widget.views-submit-button input:hover {
                 background: #1E72A3
             }
 
