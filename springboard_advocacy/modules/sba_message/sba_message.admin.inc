@@ -66,19 +66,6 @@ class SbaMessageUIController extends EntityDefaultUIController {
       'file' => 'sba_message.admin.inc',
       'file path' => drupal_get_path('module', $this->entityInfo['module'])
     );
-
-    //@todo remove if we don't need a view path
-    // Menu item for viewing sba_messages
-    // $items['sba_message/' . $wildcard] = array(
-    //   //'title' => 'Title',
-    //   'title callback' => 'sba_message_page_title',
-    //   'title arguments' => array(1),
-    //   'page callback' => 'sba_message_page_view',
-    //   'page arguments' => array(1),
-    //   'access callback' => 'sba_message_access',
-    //   'access arguments' => array('view', 1),
-    //   'type' => MENU_CALLBACK,
-    // );
     return $items;
   }
   
@@ -119,14 +106,7 @@ function sba_message_form_wrapper($sba_message) {
     'find_targets' => array(
       '#id' => 'springboard-advocacy-find-targets',
       '#type' => 'markup',
-      '#markup' =>  views_embed_view('targets', 'block_3'),//theme(
-//        'ctools_collapsible',
-//        array(
-//          'handle' => 'Find Targets',
-      //    'content' => views_embed_view('targets', 'block_3'),
-//          'collapsed' => TRUE
-//        )
-      //),
+      '#markup' =>  views_embed_view('targets', 'block_3'),
       '#prefix' => '<div id="springboard-advocacy-find-targets-container"><div id="springboard-advocacy-find-targets"><h3>Find Targets</h3>',
       '#suffix' => '</div></div>',
       '#weight' => 3,
@@ -258,8 +238,8 @@ function sba_message_edit_form($form, &$form_state, $sba_message) {
     '#value' => t('Save message'),
     '#submit' => $submit + array('sba_message_edit_form_submit'),
   );
-  
-  if (!empty($sba_message->name)) {
+
+//  if (!empty($sba_message->name)) {
 //    $form['actions']['delete'] = array(
 //      '#type' => 'submit',
 //      '#value' => t('Delete message'),
@@ -269,7 +249,7 @@ function sba_message_edit_form($form, &$form_state, $sba_message) {
 //      '#submit' => $submit + array('sba_message_form_submit_delete'),
 //      '#weight' => 45,
 //    );
-  }
+//  }
   // We append the validate handler to #validate in case a form callback_wrapper
   // is used to add validate handlers earlier.
   $form['#validate'][] = 'sba_message_edit_form_validate';
@@ -333,15 +313,12 @@ function sba_message_edit_form_submit(&$form, &$form_state) {
   module_load_include('inc', 'sba_message', 'sba_message.api_calls');
   _sba_message_api_save($sba_message, $is_new, $form_state);
 
-
   $form_state['redirect'] = 'node/' . $nid . '/messages';
-
 }
 
 /**
  * Form API submit callback for the delete button.
  * 
- * @todo Remove hard-coded path?
  */
 function sba_message_form_submit_delete(&$form, &$form_state) {
   $nid =  $form_state['values']['nid'];
@@ -391,4 +368,3 @@ function sba_message_delete_form_submit($form, &$form_state) {
 
   $form_state['redirect'] = 'node/' . $nid . '/messages';
 }
-

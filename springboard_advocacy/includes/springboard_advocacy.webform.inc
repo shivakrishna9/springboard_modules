@@ -9,8 +9,6 @@
  * Merges the contact, messages, and form_id and sends to the target resolver.
  *
  */
-
-
 function springboard_advocacy_send_message($user_message, $form_state) {
   $values = $form_state['values'];
   $webform_values = $values['submitted'];
@@ -263,25 +261,3 @@ function springboard_advocacy_build_confirmation($response) {
     // there were no messages in the response. log to watchdof
   }
 }
-
-
-// /**
-//  * Implements hook_webfrom_submission insert
-//  *
-//  * Save our letter writer's zip and geolocation info
-//  */
-// function springboard_advocacy_webform_submission_insert($node, $submission) {
-//   if(isset($_SESSION['action_geo']) && $node->type == 'springboard_advocacy') {
-//     $data = array(
-//       'nid' => $submission->nid,
-//       'sid' => $submission->sid,
-//       'uid' => $submission->uid,
-//       'zip' => isset($_SESSION['action_geo']['zip']) ? $_SESSION['action_geo']['zip'] : '',
-//       'plus4' => isset($_SESSION['action_geo']['plus4']) ? $_SESSION['action_geo']['plus4'] : '',
-//       'lat' => isset($_SESSION['action_geo']['latitude']) ? $_SESSION['action_geo']['latitude'] : '',
-//       'lon' => isset($_SESSION['action_geo']['longitude']) ? $_SESSION['action_geo']['longitude'] : '',
-//     );
-//     drupal_write_record('springboard_advocacy_location', $data);
-//     unset($_SESSION['action_geo']);
-//   };
-// }

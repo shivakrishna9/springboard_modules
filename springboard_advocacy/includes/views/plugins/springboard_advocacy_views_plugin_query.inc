@@ -122,13 +122,6 @@ class springboard_advocacy_views_plugin_query extends views_plugin_query {
           }
           $this->pager->update_page_info();
         }
-       
-        // we're gonna do this on the laravel side
-        // if (!empty($this->limit) || !empty($this->offset)) {
-        //   $limit  = intval(!empty($this->limit) ? $this->limit : 999999);
-        //   $offset = intval(!empty($this->offset) ? $this->offset : 0);
-        //   $targets->data = array_slice($targets->data->targets, $offset, $limit, TRUE);
-        // }
         $view->build_info['target_ids'] = $targets->data->ids;
       }
       else {

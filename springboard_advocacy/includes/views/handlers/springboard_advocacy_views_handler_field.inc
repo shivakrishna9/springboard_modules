@@ -16,7 +16,7 @@ class springboard_advocacy_views_handler_field extends views_handler_field
   {
     $this->field_alias = $this->real_field;
   }
-//}
+
 
   /**
    * Make target search results click sortable

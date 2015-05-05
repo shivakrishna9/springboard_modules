@@ -537,19 +537,18 @@ function sba_message_views_api() {
 
 /**
  * Implement hook_theme().
- *
- *  @TODO remove.
+
  */
 function sba_message_theme() {
   return array(
-    'sba_message_add_list' => array(
-      'variables' => array('content' => array()),
-      'file' => 'sba_message.admin.inc',
-    ),
-    'sba_message' => array(
-      'render element' => 'elements',
-      'template' => 'sba_message',
-    ),
+//    'sba_message_add_list' => array(
+//      'variables' => array('content' => array()),
+//      'file' => 'sba_message.admin.inc',
+//    ),
+//    'sba_message' => array(
+//      'render element' => 'elements',
+//      'template' => 'sba_message',
+//    ),
     'views_exposed_form' => array(
       'template' => 'templates/views-exposed-form--targets-block-3',
       'render element' => 'form',
@@ -568,38 +567,6 @@ function sba_message_preprocess_views_exposed_form(&$vars, $hook) {
     $vars['target_button'] = drupal_render($vars['form']['submit']);
   }
 }
-
-
-/**
- * Implements hook_menu_local_tasks_alter().
- *
- * Adds a message add action link node/%/messages
- *
- * @todo replace with springboard theme wrapper?
- */
-//function sba_message_menu_local_tasks_alter(&$data, $router_item, $root_path) {
-//
-//  // Add action link on node/%/messages page
-//  $on_message_landing = !arg(3);
-//  if ($root_path == 'node/%/messages' && !empty($on_message_landing) && is_numeric(arg(1))) {
-//    $message_types = variable_get('sba_message_node_types', array());
-//    $node = node_load(arg(1));
-//    $data['actions']['output'][] = array(
-//      '#theme' => 'menu_local_action',
-//      '#link' => array(
-//        'title' => t('Add message'),
-//        'href' => 'node/' . arg(1) . '/messages/add/' . $message_types[$node->type],
-//        'localized_options' => array(
-//          'path' => 'g',
-//          'attributes' => array(
-//            'title' => t('Add new message'),
-//          ),
-//        ),
-//      ),
-//    );
-//  }
-//
-//}
 
 
 /**

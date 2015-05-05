@@ -13,7 +13,6 @@ class sba_message_handler_edit_link_field extends sba_message_handler_link_field
     $this->additional_fields['type'] = 'type';
   }
 
-
   function render($values) {
     $type = $values->{$this->aliases['type']};
     //Creating a dummy sba_message to check access against

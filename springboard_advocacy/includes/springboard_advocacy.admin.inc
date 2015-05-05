@@ -66,11 +66,6 @@ function springboard_advocacy_settings_form() {
 
   //we may need this commented section if we offer a melissa option
 
-  // $options = array(
-  //   //'smartystreets' => 'SmartyStreets Javascript API (Pay, API key is required)',
-  //   'smartystreets_rest' => 'SmartyStreets REST API (Pay, API key is required)',
-  // );
-
   // $form['geo']['springboard_advocacy_geocoder'] = array(
   //   '#type' => 'radios',
   //   '#title' => t('Active Geocoding service'),
@@ -104,13 +99,6 @@ function springboard_advocacy_settings_form() {
     '#description' => t('Required for the REST AP'),
     '#default_value' => variable_get('springboard_advocacy_smarty_authtoken', ''),
   );
-
-  // $form['geo']['smarty']['springboard_advocacy_smarty_htmltoken'] = array(
-  //   '#type' => 'textfield',
-  //   '#title' => t('Smarty Streets HTML token'),
-  //   '#description' => t('Required for the Javascript API only'),
-  //   '#default_value' => variable_get('springboard_advocacy_smarty_htmltoken', ''),
-  // );
 
   return system_settings_form($form);
 
@@ -282,7 +270,6 @@ function springboard_advocacy_dashboard($path, $arg = NULL) {
             }
           }
         }
-
 
         $view = views_get_view('sba_messages_node');
         if ($view && isset($view->display['block_1'])) {
