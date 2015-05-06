@@ -45,7 +45,6 @@ function sba_message_action_install() {
   _sba_message_action_create_content_type();
   _sba_message_action_reorder_internal_name();
   _sba_message_action_create_example_message_action();
-  _springboard_message_action_install_taxonomy_fields();
 
 }
 
@@ -835,10 +834,11 @@ function _springboard_message_action_install_taxonomy_fields() {
   module_load_install('springboard_advocacy');
   if(function_exists('_springboard_advocacy_install_taxonomy_field_definitions')) {
     foreach (_springboard_advocacy_install_taxonomy_field_definitions() as $field_name => $field) {
-//      // If the field doesn't exist create it.
-//      if (!field_info_field($field_name)) {
-//        field_create_field($field['field_config']);
-//      }
+
+      $exists = field_info_field($field_name);
+      if (empty($exists)) {
+        field_create_field($field['field_config']);
+      }
       // Before adding the field, check that it doesn't exist on the node type.
       if (!field_info_instance('node', $field_name, 'sba_message_action')) {
         field_create_instance($field['field_instance']);
@@ -947,4 +947,9 @@ function sba_message_action_update_7004() {
   $instance_info = field_read_instance('node', 'body', 'sba_message_action');
   $instance_info['required'] = 1;
   field_update_instance($instance_info);
+}
+
+function sba_message_action_update_7005()
+{
+  _springboard_message_action_install_taxonomy_fields();
 }
