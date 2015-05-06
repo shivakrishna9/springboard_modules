@@ -137,6 +137,12 @@ function springboard_admin_form_views_exposed_form_alter(&$form, &$form_state, $
         break;
     }
   }
+
+  // Add a simple js command to reset the form through ajax.
+  $submit_btn_id = $form['submit']['#id'];
+  if (!empty($submit_btn_id) && !empty($form['reset'])) {
+    $form['reset']['#attributes']['onclick'] = "javascript:jQuery(this.form).clearForm();jQuery(this.form).find('#" . $submit_btn_id . "').trigger('click');return false;";
+  }
 }
 
 /**
