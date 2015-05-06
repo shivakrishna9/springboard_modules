@@ -12,7 +12,6 @@
  *
  * Add a complex permission for views message landing page.
  *
- *  @todo refactor as normal menu item, remove path from view?
  */
 function sba_message_menu_alter(&$items) {
   // Set a custom access callback function for our message view page display path.
@@ -100,7 +99,6 @@ function sba_message_access($op, $sba_message = NULL, $account = NULL) {
  * @param $implementations
  * @param $hook
  *
- * @todo refactor as normal menu item, remove path from view?
  */
 function sba_message_module_implements_alter(&$implementations, $hook) {
   // When the implementations of hook_menu_alter are called, we need our module
@@ -283,15 +281,15 @@ function sba_message_entity_info() {
       'name' => 'type',
       'label' => 'label',
     ),
-    'access callback' => 'sba_message_type_access',
+    //'access callback' => 'sba_message_type_access',
     'module' => 'sba_message',
     // Enable the entity API's admin UI.
    // @todo remove
-    'admin ui' => array(
-      'path' => 'admin/structure/sba_message_types',
-      'file' => 'sba_message_type.admin.inc',
-      'controller class' => 'SbaMessageTypeUIController',
-    ),
+//    'admin ui' => array(
+//      'path' => 'admin/structure/sba_message_types',
+//      'file' => 'sba_message_type.admin.inc',
+//      'controller class' => 'SbaMessageTypeUIController',
+//    ),
   );
 
   return $return;
@@ -310,12 +308,12 @@ function sba_message_entity_info_alter(&$entity_info) {
   foreach (sba_message_get_types() as $type => $info) {
     $entity_info['sba_message']['bundles'][$type] = array(
       'label' => $info->label,
-      'admin' => array(
-        'path' => 'admin/structure/sba_message_types/manage/%sba_message_type',
-        'real path' => 'admin/structure/sba_message_types/manage/' . $type,
-        'bundle argument' => 4,
-        'access arguments' => array('administer sba message types'),
-      ),
+//      'admin' => array(
+//        'path' => 'admin/structure/sba_message_types/manage/%sba_message_type',
+//        'real path' => 'admin/structure/sba_message_types/manage/' . $type,
+//        'bundle argument' => 4,
+//        'access arguments' => array('administer sba message types'),
+//      ),
     );
   }
 }
@@ -327,13 +325,13 @@ function sba_message_entity_info_alter(&$entity_info) {
  *  @TODO Admin perms are to be removed.
  */
 function sba_message_permission() {
-  // We set up permisssions to manage entity types, manage all entities and the
+  // We set up permissions to manage entity types, manage all entities and the
   // permissions for each individual entity
   $permissions = array(
-    'administer sba message types' => array(
-      'title' => t('Administer sba message types'),
-      'description' => t('Create and delete fields for sba message types, and set their permissions.'),
-    ),
+//    'administer sba message types' => array(
+//      'title' => t('Administer sba message types'),
+//      'description' => t('Create and delete fields for sba message types, and set their permissions.'),
+//    ),
     'administer sba messages' => array(
       'title' => t('Administer sba_messages'),
       'description' => t('Edit and delete all sba_messages'),
@@ -364,9 +362,9 @@ function sba_message_permission() {
  * Access callback for the entity API.
  * @TODO To be removed.
  */
-function sba_message_type_access($op, $type = NULL, $account = NULL) {
-  return user_access('administer sba message types', $account);
-}
+//function sba_message_type_access($op, $type = NULL, $account = NULL) {
+//  return user_access('administer sba message types', $account);
+//}
 
 
 /**
@@ -582,10 +580,10 @@ class SbaMessage extends Entity {
     return $this->name;
   }
 // @todo remove if we don't need a view path
-  protected function defaultUri() {
-    return array('path' => 'sba_message/' . $this->sba_message_id);
-  }
-  
+//  protected function defaultUri() {
+//    return array('path' => 'sba_message/' . $this->sba_message_id);
+//  }
+//
   
 }
 
