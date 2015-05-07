@@ -616,9 +616,7 @@ function _webform_user_session_set($nid, $mapped_submission) {
       $profile_values[$webform_key] = $mapped_submission[$profile_key];
     }
   }
-  if (!drupal_session_started()) {
-    drupal_session_start();
-  }
+
   // Update any previous stored field values.
   if (isset($_SESSION['webform_user_submission_field_values']) && is_array($_SESSION['webform_user_submission_field_values'])) {
     $_SESSION['webform_user_submission_field_values'] = array_merge($_SESSION['webform_user_submission_field_values'], $mapped_submission);
