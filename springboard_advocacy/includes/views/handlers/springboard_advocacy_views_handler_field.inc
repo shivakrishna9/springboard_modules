@@ -7,7 +7,6 @@
 
 class springboard_advocacy_views_handler_field extends views_handler_field
 {
-
   /**
    * Override the parent method
    * We aren't using a DB, so we won't have to lookup aliases
@@ -16,7 +15,6 @@ class springboard_advocacy_views_handler_field extends views_handler_field
   {
     $this->field_alias = $this->real_field;
   }
-
 
   /**
    * Make target search results click sortable
@@ -48,9 +46,7 @@ class springboard_advocacy_views_handler_field extends views_handler_field
   function render($values) {
 
     $value = $this->get_value($values);
-
     $alias = isset($field) ? $this->aliases[$field] : $this->field_alias;
-
 
     if($alias == 'committee_memberships') {
       $value = $this->sanitize_value($value);

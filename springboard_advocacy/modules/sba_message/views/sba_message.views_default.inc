@@ -438,7 +438,7 @@ function sba_message_views_default_views() {
   $handler->display->display_options['filters']['combine']['group'] = 1;
   $handler->display->display_options['filters']['combine']['exposed'] = TRUE;
   $handler->display->display_options['filters']['combine']['expose']['operator_id'] = 'combine_op';
-  $handler->display->display_options['filters']['combine']['expose']['description'] = 'Use first name and/or last name. For committees, use committee:"keyword or phrase"';
+  $handler->display->display_options['filters']['combine']['expose']['description'] = 'Use first name or last name or organization"';
   $handler->display->display_options['filters']['combine']['expose']['operator'] = 'combine_op';
   $handler->display->display_options['filters']['combine']['expose']['identifier'] = 'combine';
   $handler->display->display_options['filters']['combine']['expose']['remember_roles'] = array(

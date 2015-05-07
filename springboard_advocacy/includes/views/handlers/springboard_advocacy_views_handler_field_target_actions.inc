@@ -16,7 +16,6 @@ class springboard_advocacy_views_handler_field_target_actions extends views_hand
    * Prevent the default database query.
    */
   function query() {
-
   }
 
   /**
@@ -95,7 +94,6 @@ class springboard_advocacy_views_handler_field_target_actions extends views_hand
         $links[] = l(t('delete'), $path . '/' . $values->id . '/delete');
       }
     }
-
 
     return implode(' | ', $links);
   }

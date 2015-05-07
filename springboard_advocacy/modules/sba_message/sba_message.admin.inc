@@ -140,6 +140,7 @@ function sba_message_delete_form_wrapper($sba_message) {
  * @return mixed
  */
 function sba_message_edit_form($form, &$form_state, $sba_message) {
+
   // This form should only appear at node/%/messages.
   // Grab the node so we can get the action form UUID and node ID
   $node = menu_get_object();
@@ -174,6 +175,7 @@ function sba_message_edit_form($form, &$form_state, $sba_message) {
     '#type' => 'hidden',
     '#value' => isset($sba_message->data['message_id']) ? $sba_message->data['message_id'] : str_replace(' ', '-', uniqid(substr(variable_get('site_name', ''), 0, 10) . '-' . substr($node->title, 0, 10) . '-')),
   );
+
 
   $form['data']['recipients'] = array(
     '#type' => 'hidden',
