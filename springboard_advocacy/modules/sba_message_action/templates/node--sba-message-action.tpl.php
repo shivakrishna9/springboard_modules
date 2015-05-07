@@ -117,7 +117,7 @@
     <div class="row-fluid">
       <?php if(!empty($content['field_message_action_img'][0]))  : ?>
         <div id="call-to-action" class="span8">
-          <div id="call-to-action-call"><?php print render($content['field_message_call_to_action']); ?></div>
+          <div id="call-to-action-call"><h2><?php print render($content['field_message_call_to_action']); ?></h2></div>
           <div id="call-to-action-call-body"><?php print render($content['body']); ?></div>
         </div>
         <div id="image" class="span4">
@@ -125,7 +125,7 @@
         </div>
       <?php else: ?>
         <div id="call-to-action" class="span12">
-          <div id="call-to-action-call"><?php print render($content['field_message_call_to_action']); ?></div>
+          <div id="call-to-action-call"><h2><?php print render($content['field_message_call_to_action']); ?></h2></div>
           <div id="call-to-action-call-body"><?php print render($content['body']); ?></div>
         </div>
       <?php endif; ?>

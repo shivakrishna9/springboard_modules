@@ -15,7 +15,7 @@
   <div class="row-fluid">
     <?php if(!empty($image)): ?>
       <div id="call-to-action" class="span8">
-        <div id="call-to-action-call"><?php print $call; ?></div>
+        <div id="call-to-action-call"><h2><?php print $call; ?></h2></div>
         <div id="call-to-action-body"> <?php print $body; ?></div>
       </div>
       <div id="image" class = "span4">
@@ -23,7 +23,7 @@
       </div>
     <?php else: ?>
       <div id="call-to-action" class="span12">
-        <div id="call-to-action-call"><?php print $call; ?></div>
+        <div id="call-to-action-call"><h2><?php print $call; ?></h2></div>
         <div id="call-to-action-body"> <?php print $body; ?></div>
       </div>
     <?php endif; ?>
