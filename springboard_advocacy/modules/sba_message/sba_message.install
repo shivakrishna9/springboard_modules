@@ -489,11 +489,11 @@ function sba_message_install() {
     'bundle' => 'sba_message_action_message',
     'default_value' => array(
       0 => array(
-        'value' => 'Dear %target.salutation% %target.last_name%',
+        'value' => 'Dear [target:salutation] [target:last_name]',
       ),
     ),
     'deleted' => 0,
-    'description' => 'Available tokens: %target.salutation% %target.first_name% %target.last_name%',
+    'description' => 'Available tokens: [target:salutation] [target:first_name] [target:last_name]',
     'display' => array(
       'default' => array(
         'label' => 'hidden',
@@ -593,11 +593,11 @@ function sba_message_install() {
     'bundle' => 'sba_message_action_message',
     'default_value' => array(
       0 => array(
-        'value' => "Sincerely, \n\n%contact.first_name% %contact.last_name%",
+        'value' => "Sincerely, \n\n[contact:first_name] [contact:last_name]",
       ),
     ),
     'deleted' => 0,
-    'description' => 'Available tokens: %contact.first_name% %contact.last_name% %contact.address%',
+    'description' => 'Available tokens: [contact:first_name] [contact:last_name] [contact:address]',
     'display' => array(
       'default' => array(
         'label' => 'hidden',
