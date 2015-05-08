@@ -1645,13 +1645,13 @@ function _fundraiser_donation_submit_after_process($donation) {
 
 /**
  * Submit callback after donation submitted, but before confirmation.
+ *
+ * Provides a hook alter to allow for sub modules to change behavior after
+ * submission. Such as in cases of failures or the like.
  */
 function fundraiser_donation_post_submit(&$form, &$form_state) {
-  // And after all of that is done, provide a hook to allow for sub modules to change behavior after submission.
-  // Such as in cases of failures or the like. Return the donation object and result.
-  // We return form_state here, because we cannot pass arrays by reference in module calls.
-  // See: http://drupal.org/node/353494 for a detailed discussion of this one.
-  $form_state = module_invoke_all('fundraiser_donation_post_submit', $form, $form_state, $form_state['#donation']);
+
+  drupal_alter('fundraiser_donation_post_submit', $form, $form_state, $form_state['#donation']);
 }
 
 /**
