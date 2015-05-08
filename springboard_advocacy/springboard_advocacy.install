@@ -183,9 +183,9 @@ function _springboard_advocacy_install_taxonomy_fields() {
       field_create_field($field['field_config']);
     }
     // Before adding the field, check that it doesn't exist on the node type.
-//    if (!field_info_instance('node', $field_name, 'sba_message_action')) {
-//      field_create_instance($field['field_instance']);
-//    }
+    if (!field_info_instance('node', $field_name, 'sba_message_action')) {
+      field_create_instance($field['field_instance']);
+    }
   }
 }
 

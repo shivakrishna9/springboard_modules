@@ -834,7 +834,6 @@ function _springboard_message_action_install_taxonomy_fields() {
   module_load_install('springboard_advocacy');
   if(function_exists('_springboard_advocacy_install_taxonomy_field_definitions')) {
     foreach (_springboard_advocacy_install_taxonomy_field_definitions() as $field_name => $field) {
-
       $exists = field_info_field($field_name);
       if (empty($exists)) {
         field_create_field($field['field_config']);
@@ -949,7 +948,8 @@ function sba_message_action_update_7004() {
   field_update_instance($instance_info);
 }
 
-function sba_message_action_update_7005()
-{
-  _springboard_message_action_install_taxonomy_fields();
-}
+//function sba_message_action_update_7005()
+//{
+//  cache_clear_all();
+//  _springboard_message_action_install_taxonomy_fields();
+//}
