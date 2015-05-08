@@ -6,6 +6,7 @@ version = 7.x-4.x-dev
 dependencies[] = fundraiser
 dependencies[] = entity
 dependencies[] = rules
+dependencies[] = commerce
 
 files[] = includes/FundraiserSustainersHealthChecks.php
 files[] = includes/FundraiserSustainerRecordViewsController.php
