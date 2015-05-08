@@ -1480,7 +1480,7 @@ function fundraiser_sustainers_donation_amount_form($form, &$form_state, $donati
     '#size' => 10,
     '#required' => TRUE,
     '#description' => t('Your current donation amount is %amount. Minimum donation %minimum.', $fee_replacements),
-    '#field_prefix' => '$',
+    '#field_prefix' => $next_donation->donation['currency']['symbol'],
   );
   $form['submit'] = array(
     '#type' => 'submit',
