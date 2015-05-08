@@ -70,7 +70,7 @@ function salesforce_petition_create_petition_action_fieldmap() {
     'delete' => 'delete',
   );
   $map->status = 1;
-  $map->module = 'springboard_petition';
+  $map->module = 'salesforce_petition';
   salesforce_genmap_save_map($map, 'webform');
 }
 
