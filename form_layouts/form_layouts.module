@@ -32,6 +32,17 @@ function form_layouts_theme($existing, $type, $theme, $path) {
  */
 function form_layouts_form_node_form_alter(&$form, &$form_state, $form_id) {
   if (isset($form['#node']) && form_layouts_type_is_layouts_enabled($form['#node']->type)) {
+    // Share the "Display" fieldset with related modules (e.g., Page Wrappers).
+    if (empty($form['springboard_display'])) {
+      $form['springboard_display'] = array(
+          '#type' => 'fieldset',
+          '#title' => t('Display settings'),
+          '#collapsible' => TRUE,
+          '#collapsed' => FALSE,
+          '#group' => 'additional_settings',
+      );
+    }
+
     $templates = form_layouts_info();
 
     // Different layouts support fundraiser types or petiton types or general
@@ -57,15 +68,14 @@ function form_layouts_form_node_form_alter(&$form, &$form_state, $form_id) {
     if (!empty($template)) {
       $theme = $template['theme'];
     }
-    $form['form_layouts'] = array(
+    $form['springboard_display']['form_layouts'] = array(
       '#type' => 'fieldset',
       '#title' => t('Form layout settings'),
       '#description' => t('Select the form layout for this content. Defaults to one-column layout.'),
       '#collapsible' => TRUE,
-      '#collapsed' => TRUE,
-      '#group' => 'additional_settings',
+      '#collapsed' => FALSE,
     );
-    $form['form_layouts']['form_layouts'] = array(
+    $form['springboard_display']['form_layouts']['form_layouts'] = array(
       '#type' => 'select',
       '#title' => t('Form layout'),
       '#options' => $options,
