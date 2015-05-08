@@ -797,7 +797,10 @@ function _fundraiser_commerce_zone_field_display($form, $form_state, $field) {
     // Provide a default based on the form values.
     $country_field = fundraiser_get_form_field($form['#calling_module'], $form, 'country');
     // Filter options down to just the zones available for this country.
-    if (isset($country_field['#default_value'])) {
+    if (!empty($country_id)) {
+      $default = $country_id;
+    }
+    elseif (isset($country_field['#default_value'])) {
       $default = $country_field['#default_value'];
     }
     elseif(isset($country_field['#webform_component']['value'])) {
