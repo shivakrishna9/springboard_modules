@@ -391,16 +391,13 @@ function fundraiser_sustainers_skip_submit($form, &$form_state) {
 
 /**
  * Implements hook_tokens_alter().
+ *
+ * Adds tokens to the donation for the recurring status.
  */
 function fundraiser_sustainers_tokens_alter(&$replacements, $context) {
-  $type = $context['type'];
-  $tokens = $context['tokens'];
-  $data = $context['data'];
-  $options = $context['options'];
-  // @todo This is probably supposed to be double equals.
-  // Fixing it will require some testing.
-  if ($type = 'donation' && !empty($data['donation'])) {
-    $donation = $data['donation'];
+  // Make sure we have a donation to work with.
+  if ($context['type'] == 'donation' && !empty($context['data']['donation'])) {
+    $donation = $context['data']['donation'];
     $replacements['[donation:recurs_monthly]'] = t('No');
     $replacements['[donation:frequency]'] = t('One-time');
     if (!empty($donation->donation['recurs_monthly']) && $donation->donation['recurs_monthly']) {
