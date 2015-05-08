@@ -458,11 +458,12 @@ function webform_user_form_alter(&$form, &$form_state, $form_id) {
         } // End if field is in component heirarchy.
       } // End foreach
     } // End if the user is logged in.
-    // If not logged in, check to see if the user has profile values in the current session.
+    
+    // If not logged in, check to see if the user has profile values in the current session from a previous submission.
+    // This will only be the case if the global option for saving webform_user submissions is enabled.
     $webform_user_session_store = user_is_anonymous()
       && isset($_SESSION['webform_user_submission_field_values'])
       && is_array($_SESSION['webform_user_submission_field_values']);
-    // @TODO: refactor this and the above into consolidated routine.
     if ($webform_user_session_store && _webform_user_is_webform_user_node($node)) {
       $component_hierarchy = __webform_user_parse_components($node->nid, $components);
       $map = webform_user_user_map($node->nid);
@@ -486,10 +487,11 @@ function webform_user_form_alter(&$form, &$form_state, $form_id) {
                 $form_field['#default_value'] = check_plain($profile_value);
                 break;
             }
-          }
-        }
-      }
-    }
+          } // End if webform empty with a value in the session
+        } // End if field is in component heirarchy
+      } // End foreach
+    }  // End if the user is anonymous
+    
     // Add a new validation handler.
     $form['#validate'][] = 'webform_user_webform_validate';
     // Add new submit handler.
