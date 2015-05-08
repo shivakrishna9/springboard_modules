@@ -974,8 +974,6 @@ function commerce_cybersource_soap_refund($order, $transaction, $amount) {
     }
 
     commerce_payment_transaction_save($transaction);
-
-    return $response;
   }
   else {
     return FALSE;
@@ -1141,7 +1139,7 @@ function commerce_cybersource_soap_api_request($payment_method, $request) {
     $response = $soapClient->runTransaction($request);
   }
   catch (SoapFault $exception) {
-    watchdog('commerce_cybersource', 'SoapFault: !exception', array('!exception' => '<pre>' . print_r($exception, TRUE) . '</pre>'), WATCHDOG_ERROR);
+    watchdog('commerce_cybersource', 'CyberSource SOAP error: @exception', array('@exception' => $exception->getMessage()), WATCHDOG_ERROR);
     return FALSE;
   }
 
@@ -1728,7 +1726,9 @@ function commerce_cybersource_form_commerce_cardonfile_update_form_alter(&$form,
 function commerce_cybersource_cardonfile_update($form, &$form_state, $payment_method, $card_data) {
   $result = commerce_cybersource_update_customer_profile_request($payment_method, $form_state, $card_data);
 
-  return $result->paySubscriptionUpdateReply->reasonCode == 100;
+  if ($result) {
+    return $result->paySubscriptionUpdateReply->reasonCode == 100;
+  }
 }
 
 /**
