@@ -73,9 +73,6 @@ function springboard_advocacy_views_data() {
     'field' => array(
       'handler' => 'springboard_advocacy_views_handler_field',
     ),
-    //  'filter' => array(
-    //    'handler' => 'springboard_advocacy_views_handler_filter_string',
-    // ),
   );
 
   // Party
