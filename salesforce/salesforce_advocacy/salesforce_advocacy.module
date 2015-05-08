@@ -1,0 +1,63 @@
+<?php
+
+/**
+ * @file
+ * Provides advocacy integration support for Salesforce.
+ */
+
+/**
+ * Implements hook_salesforce_queue_create_item_alter()
+ */
+function salesforce_advocacy_salesforce_queue_create_item_alter(&$item) {
+  // Add a token for the peer to peer category to the peer to peer campaign
+  if ($item['module'] == 'webform' && $item['object_type'] == 'sb_Actions_Taken__c') {
+    $item['sobject']->fields['Action__c'] = sprintf('[sb_action__c:sba_message_action:%d]', $item['delta']);
+    $item['sobject']->fields['Action_Type__c'] = 'Message Action';
+    // Allow the action to be updated during the sync.
+    $item['sync_rules']['Action__c'] = 'always';
+  }
+}
+
+/**
+ * Implements hook_node_insert().
+ *
+ * Insert a copy of the default map when a message_action node is created.
+ */
+function salesforce_advocacy_node_insert($node) {
+  // If node is a message action type.
+  if ($node->type == 'sba_message_action') {
+    // And if we have a default map.
+    $nid = -1;
+    if (!empty($node->clone_from_original_nid)) {
+      $nid = $node->clone_from_original_nid;
+    }
+    $map = salesforce_genmap_load_map($nid, 'webform');
+    if (!empty($map)) {
+      // Copy the map to the node.
+      unset($map->mid);
+      $map->nid = $node->nid;
+      salesforce_genmap_save_map($map, 'webform');
+    }
+  }
+
+  // Set the relationship from the submission to the contact.
+  $webform_user_reference_fields = variable_get('webform_user_reference_fields', array());
+  $webform_user_reference_fields[$node->nid] = 'Contact__c';
+  variable_set('webform_user_reference_fields', $webform_user_reference_fields);
+
+}
+
+/**
+ * Implements hook_node_delete().
+ *
+ * Delete a fieldmap when a message action node is deelted.
+ */
+function salesforce_advocacy_node_delete($node) {
+  // If node is a message action type.
+  if ($node->type == 'sba_message_action') {
+    salesforce_genmap_delete_map($node->nid, 'webform');
+    $webform_user_reference_fields = variable_get('webform_user_reference_fields', array());
+    unset($webform_user_reference_fields[$node->nid]);
+    variable_set('webform_user_reference_fields', $webform_user_reference_fields);
+  }
+}

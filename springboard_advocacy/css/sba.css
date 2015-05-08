@@ -1,0 +1,19 @@
+/*** Dashboard landing page styles ***/
+
+.sba-button, .sba-add-button.button {
+    float: right;
+    display: inline-block;
+    margin: 6px 5px;
+}
+
+.sba-add-button.button:before {
+    display: inline-block;
+    margin: 0px 8px 0px 0px;
+    color: #FFF;
+    content: "";
+    font-family: FontAwesome;
+}
+
+#views-form-sba-messages-node-block-1 .tabledrag-toggle-weight-wrapper {
+    display: none;
+}
