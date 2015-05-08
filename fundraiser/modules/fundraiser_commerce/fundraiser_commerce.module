@@ -231,7 +231,9 @@ function commerce_donation_line_item_title($line_item) {
 
 /**
  * Implements hook_LINE_ITEM_BASE_add_form().
- * Returns the elements necessary to add a product line item through a line item manager widget.
+ *
+ * Returns the elements necessary to add a product line item through a
+ * line item manager widget.
  */
 function commerce_donation_line_item_add_form($element, &$form_state) {
   $form = array();
@@ -242,28 +244,36 @@ function commerce_donation_line_item_add_form($element, &$form_state) {
     '#size' => 60,
     '#maxlength' => 255,
   );
-  if (function_exists('fundraiser_multi_currency_get_currencies')) {
-    $multi_currancy = fundraiser_multi_currency_get_currencies();
-    $available_currancy = array();
-    foreach ($multi_currancy as $currancy) {
-      $available_currancy[$currancy->code] = $currancy->name;
-    }
-    $form['currency'] = array(
-      '#type' => 'select',
-      '#title' => t('Currency'),
-      '#description' => t('Enter the currency of the donation to add to the order.'),
-      '#options' => $available_currancy,
-    );
+
+  // Add a currency element.
+  $multi_currancy = commerce_currencies(TRUE, TRUE);
+  $available_currency = array();
+  foreach ($multi_currancy as $currency_code => $currency) {
+    $available_currency[$currency_code] = $currency['name'];
   }
+
+  // This default value isn't great but it's what we have at this point.
+  // Ideally it should be the currency of the other
+  // line items or original donation.
+  $form['currency'] = array(
+    '#type' => 'select',
+    '#title' => t('Currency'),
+    '#description' => t('Enter the currency of the donation to add to the order.'),
+    '#options' => $available_currency,
+    '#default_value' => commerce_default_currency(),
+  );
+
   // TODO - select a fundraiser to associate this with.
-  // AND add support when a donation is submitted via this order form, to update a donation obj and submission with the given amount.
+  // AND add support when a donation is submitted via this order form,
+  // to update a donation obj and submission with the given amount.
   // All this for later.
   // For now, display a 'not from here' message.
   $form['fundraiser_donation'] = array(
     '#markup' => '<div class="commerce-donation-line-item-warning">' .
-      t('Warning: Donation line items added through this interface do not generate an additional donation object in the Fundraiser system,' .
-        'or update a donation associated with this order to the new amount. Please do not use this to update donations on orders.') . '</div>',
+      t('Warning: Donation line items added through this interface do not generate an additional donation object in the Fundraiser system, or update a donation associated with this order to the new amount. Please do not use this to update donations on orders.') .
+      '</div>',
   );
+
   return $form;
 }
 
@@ -273,7 +283,7 @@ function commerce_donation_line_item_add_form($element, &$form_state) {
 function commerce_donation_line_item_add_form_submit(&$line_item, $element, &$form_state, $form) {
   $values = $element['actions'];
   if (!empty($values['amount']['#value']) && is_numeric($values['amount']['#value'])) {
-    $values['currency']['#value'] = isset($values['currency']['#value']) ? $values['currency']['#value'] : 'USD';
+    $values['currency']['#value'] = isset($values['currency']['#value']) ? $values['currency']['#value'] : commerce_default_currency();
     // Create a line item for this order. Contains order amount info.
     $line_item->line_item_label = t('Donation');
     $line_item->quantity = 1;
@@ -851,10 +861,15 @@ function fundraiser_commerce_fundraiser_donation_get_donation($donation) {
 
   // Data from order.
   $donation->donation['mail'] = isset($order->mail) ? $order->mail : '';
+
+  $order_total = $order_wrapper->commerce_order_total->value();
+
   // Reverse the work done by commerce_currency_decimal_to_amount($donation->donation['amount'], $donation->donation['currency'])
   // So we have the correct decimaled value.
-  $donation->donation['amount'] = commerce_currency_amount_to_decimal($order->commerce_order_total[LANGUAGE_NONE][0]['amount'],
-    $order->commerce_order_total[LANGUAGE_NONE][0]['currency_code']);
+  $donation->donation['amount'] = commerce_currency_amount_to_decimal($order_total['amount'], $order_total['currency_code']);
+  $donation->donation['currency'] = commerce_currency_load($order_total['currency_code']);
+  $donation->donation['amount_formatted'] = commerce_currency_format($order_total['amount'], $order_total['currency_code']);
+
   $donation->donation['quantity'] = 1;
   $donation->donation['hostname'] = $order->hostname;
 
@@ -867,6 +882,7 @@ function fundraiser_commerce_fundraiser_donation_get_donation($donation) {
         $line_item_wrapper->commerce_unit_price->amount->value() * $line_item_wrapper->quantity->value(),
         $line_item_wrapper->commerce_unit_price->currency_code->value()
       );
+      $donation->donation['currency'] = commerce_currency_load($line_item_wrapper->commerce_unit_price->currency_code->value());
     }
   }
 
@@ -960,7 +976,7 @@ function fundraiser_commerce_fundraiser_donation_create($donation) {
   if ($donation->donation['amount'] == 'other') {
     $donation->donation['amount'] = preg_replace('/[^\d\.]/i', '', $donation->donation['other_amount']);
   }
-  $donation->donation['currency'] = isset($donation->donation['currency']) ? $donation->donation['currency'] : 'USD';
+  $donation->donation['currency'] = isset($donation->donation['currency']) ? $donation->donation['currency'] : commerce_currency_load(commerce_default_currency());
   // Determine quantity and data from donation values.
   $quantity = isset($donation->donation['quantity']) && !empty($donation->donation['quantity']) ? $donation->donation['quantity'] : 1;
 
@@ -994,8 +1010,8 @@ function fundraiser_commerce_fundraiser_donation_create($donation) {
     $line_item = commerce_line_item_new('donation', $order->order_id);
     $line_item_wrapper = entity_metadata_wrapper('commerce_line_item', $line_item);
     $line_item_wrapper->quantity = $quantity;
-    $line_item_wrapper->commerce_unit_price->amount = commerce_currency_decimal_to_amount($donation->donation['amount'], $donation->donation['currency']);
-    $line_item_wrapper->commerce_unit_price->currency_code = $donation->donation['currency'];
+    $line_item_wrapper->commerce_unit_price->amount = commerce_currency_decimal_to_amount($donation->donation['amount'], $donation->donation['currency']['code']);
+    $line_item_wrapper->commerce_unit_price->currency_code = $donation->donation['currency']['code'];
 
     $line_item_wrapper->commerce_unit_price->data = commerce_price_component_add(
       $line_item_wrapper->commerce_unit_price->value(),
@@ -1587,7 +1603,7 @@ function fundraiser_commerce_fundraiser_donation_update($donation) {
   if ($donation->donation['amount'] == 'other') {
     $donation->donation['amount'] = preg_replace('/[^\d\.]/i', '', $donation->donation['other_amount']);
   }
-  $donation->donation['currency'] = isset($donation->donation['currency']) ? $donation->donation['currency'] : 'USD';
+  $donation->donation['currency'] = isset($donation->donation['currency']) ? $donation->donation['currency'] : commerce_default_currency();
   // Determine quantity and data from donation values.
   $quantity = isset($donation->donation['quantity']) && !empty($donation->donation['quantity']) ? $donation->donation['quantity'] : 1;
 
@@ -1603,9 +1619,9 @@ function fundraiser_commerce_fundraiser_donation_update($donation) {
         $line_item_wrapper->quantity = $quantity;
         $line_item_wrapper->commerce_unit_price->amount = commerce_currency_decimal_to_amount(
           $donation->donation['amount'],
-          $donation->donation['currency']
+          $donation->donation['currency']['code']
         );
-        $line_item_wrapper->commerce_unit_price->currency_code = $donation->donation['currency'];
+        $line_item_wrapper->commerce_unit_price->currency_code = $donation->donation['currency']['code'];
 
         // Recalculate the price
         commerce_line_item_rebase_unit_price($line_item_wrapper->value());
