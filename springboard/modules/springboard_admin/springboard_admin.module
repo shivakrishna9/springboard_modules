@@ -53,30 +53,9 @@ function springboard_admin_admin_menu_output_alter(&$content) {
  * administration pages.
  */
 function springboard_admin_custom_theme() {
-  // Does the current user get SBUX (i.e., are the following checks relevant)?
-  if (springboard_admin_user_gets_sbux($GLOBALS['user'])) {
-    // If the springboard_backend theme is disabled, do nothing.
-    if (variable_get('springboard_theme_enable', 1) == 0) {
-      return;
-    }
-    // If the springboard_backend theme does not exist, we can do nothing.
-    $themes = list_themes();
-    if (!isset($themes['springboard_backend'])) {
-      return;
-    }
-    // If the page is using a page wrapper, do nothing.
-    if(module_exists('page_wrappers')) {
-      $wrapper = page_wrappers_check();
-      if(!empty($wrapper['wrapper'])) {
-        return;
-      }
-    }
-    // If either the current Drupal path or its SBUX alias begins with /springboard/, then the theme applies.
-    if (preg_match("|^springboard(\/.*)?|", $_GET['q'])
-      || preg_match("|^springboard(\/.*)?|", springboard_admin_build_admin_path('/' . $_GET['q'], 'path'))
-    ) {
-      return 'springboard_backend';
-    }
+  // Set the custom theme if the admin UI treatment should be applied.
+  if (_springboard_admin_apply_treatment($GLOBALS['user'])) {
+    return 'springboard_backend';
   }
 }
 
@@ -119,18 +98,28 @@ function springboard_admin_form_alter(&$form, &$form_state, $form_id) {
 
 /**
  * Implements hook_form_ID_alter().
- * views exposed form
+ *
+ * Alter the views exposed form for presentation in the admin UI.
  */
 function springboard_admin_form_views_exposed_form_alter(&$form, &$form_state, $form_id) {
+  // Check if admin UI treatment is applied.
+  if (!_springboard_admin_apply_treatment($GLOBALS['user'])) {
+    return;
+  }
 
-  if(isset($form['date_filter']) && is_object($form_state['view'])) {
-    $view = $form_state['view'];
-    
-    // Alter the date format for all views date filters.
+  $view = $form_state['view'];
+  // If this is an admin view and has the date filters make adjustments.
+  if (
+    in_array($view->name, _springboard_admin_views())
+    && isset($form['date_filter'])
+    && !empty($form['date_filter']['min'])
+    && !empty($form['date_filter']['max'])
+  ) {
+    // Alter the date format for views date filters.
     $form['date_filter']['min']['#date_format'] = 'n/j/Y';
     $form['date_filter']['max']['#date_format'] = 'n/j/Y';
 
-    // Define statements for various views date filters.
+    // Define labels for various views date filters.
     // This can't be done in the ui.
     switch ($view->name) {
       case "sbv_donations";
@@ -141,12 +130,18 @@ function springboard_admin_form_views_exposed_form_alter(&$form, &$form_state, $
         $form['date_filter']['min']['#title'] = 'Requested between';
         $form['date_filter']['max']['#title'] = 'and';
         break;
-      // Default last.
+      // Default will be the updated date.
       default;
-        $form['date_filter']['min']['#title'] = 'Published between';
+        $form['date_filter']['min']['#title'] = 'Last updated between';
         $form['date_filter']['max']['#title'] = 'and';
         break;
     }
+  }
+
+  // Add a simple js command to reset the form through ajax.
+  $submit_btn_id = $form['submit']['#id'];
+  if (!empty($submit_btn_id) && !empty($form['reset'])) {
+    $form['reset']['#attributes']['onclick'] = "javascript:jQuery(this.form).clearForm();jQuery(this.form).find('#" . $submit_btn_id . "').trigger('click');return false;";
   }
 }
 
@@ -1284,4 +1279,89 @@ function springboard_admin_user_gets_sbux($account) {
     }
   }
   return $result[$account->uid];
+}
+
+/**
+ * Determine if the admin UI treatment should be applied to this user and request.
+ *
+ * @param $user Object
+ *   Drupal user object.
+ */
+function _springboard_admin_apply_treatment($user) {
+  // Cache the apply value.
+  $apply = &drupal_static(__FUNCTION__);
+
+  if (isset($apply)) {
+    return $apply;
+  }
+
+  // First check if the current user has access to the admin UI.
+  if (springboard_admin_user_gets_sbux($user)) {
+    // Check that the_backend theme is enabled.
+    if (variable_get('springboard_theme_enable', 1) == 0) {
+      $apply = FALSE;
+    }
+
+    // Check that the springboard_backend theme exist.
+    $themes = list_themes();
+    if (!isset($themes['springboard_backend'])) {
+      $apply = FALSE;
+    }
+
+    // Check if the page is using a page wrapper.
+    // TODO: move this into the page wrapper module.
+    if(module_exists('page_wrappers')) {
+      $wrapper = page_wrappers_check();
+      if(!empty($wrapper['wrapper'])) {
+        $apply = FALSE;
+      }
+    }
+
+    // If either the current Drupal path or its SBUX alias begins with /springboard/, then the treatment applies.
+    if (
+      $apply !== FALSE
+      && (
+        preg_match("|^springboard(\/.*)?|", $_GET['q'])
+        || preg_match("|^springboard(\/.*)?|", springboard_admin_build_admin_path('/' . $_GET['q'], 'path'))
+      )
+    ) {
+      $apply = TRUE;
+    }
+  }
+  else {
+    $apply = FALSE;
+  }
+
+  // Allow other modules to control if the UI applies.
+  drupal_alter('springboard_admin_apply_treatment', $apply);
+
+  return $apply;
+}
+
+/**
+ * Returns an array of views that will be presented in the admin UI.
+ */
+function _springboard_admin_views() {
+  $view_names = array(
+    'sbv_administrators',
+    'sbv_assets',
+    'sbv_contacts',
+    'sbv_dblog',
+    'sbv_donations',
+    'sbv_email_templates',
+    'sbv_forms',
+    'sbv_gateway_settings_log',
+    'sbv_notes',
+    'sbv_page_wrappers',
+    'sbv_sf_batch_items',
+    'sbv_sf_batches',
+    'sbv_sf_queue',
+    'sbv_soap_errors',
+    'p2p_user_approval',
+  );
+
+  // Allow modules to add views names to the array.
+  drupal_alter('springboard_admin_views', $view_names);
+
+  return $view_names;
 }

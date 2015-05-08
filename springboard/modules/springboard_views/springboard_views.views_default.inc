@@ -32,6 +32,7 @@ function springboard_views_views_default_views() {
   $handler->display->display_options['query']['type'] = 'views_query';
   $handler->display->display_options['query']['options']['distinct'] = TRUE;
   $handler->display->display_options['exposed_form']['type'] = 'basic';
+  $handler->display->display_options['exposed_form']['options']['reset_button'] = TRUE;
   $handler->display->display_options['pager']['type'] = 'mini';
   $handler->display->display_options['pager']['options']['items_per_page'] = '5';
   $handler->display->display_options['pager']['options']['offset'] = '0';
@@ -120,6 +121,13 @@ function springboard_views_views_default_views() {
       'empty_column' => 0,
     ),
   );
+  /* No results behavior: Global: Text area */
+  $handler->display->display_options['empty']['area']['id'] = 'area';
+  $handler->display->display_options['empty']['area']['table'] = 'views';
+  $handler->display->display_options['empty']['area']['field'] = 'area';
+  $handler->display->display_options['empty']['area']['empty'] = TRUE;
+  $handler->display->display_options['empty']['area']['content'] = 'Your search returned 0 results, please try again.';
+  $handler->display->display_options['empty']['area']['format'] = 'filtered_html';
   /* Field: Content: Title */
   $handler->display->display_options['fields']['title']['id'] = 'title';
   $handler->display->display_options['fields']['title']['table'] = 'node';
@@ -183,16 +191,6 @@ function springboard_views_views_default_views() {
   $handler->display->display_options['fields']['clone_node']['id'] = 'clone_node';
   $handler->display->display_options['fields']['clone_node']['table'] = 'node';
   $handler->display->display_options['fields']['clone_node']['field'] = 'clone_node';
-  /* Sort criterion: Content revision: Updated date */
-  $handler->display->display_options['sorts']['timestamp']['id'] = 'timestamp';
-  $handler->display->display_options['sorts']['timestamp']['table'] = 'node_revision';
-  $handler->display->display_options['sorts']['timestamp']['field'] = 'timestamp';
-  $handler->display->display_options['sorts']['timestamp']['order'] = 'DESC';
-  /* Sort criterion: Content: Post date */
-  $handler->display->display_options['sorts']['created']['id'] = 'created';
-  $handler->display->display_options['sorts']['created']['table'] = 'node';
-  $handler->display->display_options['sorts']['created']['field'] = 'created';
-  $handler->display->display_options['sorts']['created']['order'] = 'DESC';
   /* Filter criterion: Content: Type */
   $handler->display->display_options['filters']['type_1']['id'] = 'type_1';
   $handler->display->display_options['filters']['type_1']['table'] = 'node';
@@ -350,7 +348,7 @@ function springboard_views_views_default_views() {
   $handler->display->display_options['defaults']['row_plugin'] = FALSE;
   $handler->display->display_options['defaults']['row_options'] = FALSE;
   $handler->display->display_options['defaults']['fields'] = FALSE;
-  /* Field: Content: Internal Name */
+  /* Field: Broken/missing handler */
   $handler->display->display_options['fields']['field_webform_user_internal_name']['id'] = 'field_webform_user_internal_name';
   $handler->display->display_options['fields']['field_webform_user_internal_name']['table'] = 'field_data_field_webform_user_internal_name';
   $handler->display->display_options['fields']['field_webform_user_internal_name']['field'] = 'field_webform_user_internal_name';
@@ -609,7 +607,7 @@ function springboard_views_views_default_views() {
   $handler->display->display_options['fields']['nid']['label'] = 'Form ID';
   $handler->display->display_options['fields']['nid']['exclude'] = TRUE;
   $handler->display->display_options['fields']['nid']['element_label_colon'] = FALSE;
-  /* Field: Content: Internal Name */
+  /* Field: Broken/missing handler */
   $handler->display->display_options['fields']['field_webform_user_internal_name']['id'] = 'field_webform_user_internal_name';
   $handler->display->display_options['fields']['field_webform_user_internal_name']['table'] = 'field_data_field_webform_user_internal_name';
   $handler->display->display_options['fields']['field_webform_user_internal_name']['field'] = 'field_webform_user_internal_name';
@@ -718,15 +716,13 @@ function springboard_views_views_default_views() {
     'title' => 'title',
     'nid' => 'nid',
     'status' => 'status',
-    'created' => 'created',
-    'sbstats_total_transactions' => 'sbstats_total_transactions',
+    'changed' => 'changed',
     'path' => 'path',
     'clone_node' => 'clone_node',
     'edit_node' => 'clone_node',
     'view_node' => 'clone_node',
-    'field_webform_user_internal_name' => 'field_fundraiser_internal_name',
   );
-  $handler->display->display_options['style_options']['default'] = '-1';
+  $handler->display->display_options['style_options']['default'] = 'changed';
   $handler->display->display_options['style_options']['info'] = array(
     'field_fundraiser_internal_name' => array(
       'sortable' => 1,
@@ -756,16 +752,9 @@ function springboard_views_views_default_views() {
       'separator' => '',
       'empty_column' => 0,
     ),
-    'created' => array(
+    'changed' => array(
       'sortable' => 1,
-      'default_sort_order' => 'asc',
-      'align' => '',
-      'separator' => '',
-      'empty_column' => 0,
-    ),
-    'sbstats_total_transactions' => array(
-      'sortable' => 1,
-      'default_sort_order' => 'asc',
+      'default_sort_order' => 'desc',
       'align' => '',
       'separator' => '',
       'empty_column' => 0,
@@ -786,13 +775,6 @@ function springboard_views_views_default_views() {
       'empty_column' => 0,
     ),
     'view_node' => array(
-      'align' => '',
-      'separator' => '',
-      'empty_column' => 0,
-    ),
-    'field_webform_user_internal_name' => array(
-      'sortable' => 0,
-      'default_sort_order' => 'asc',
       'align' => '',
       'separator' => '',
       'empty_column' => 0,
@@ -832,13 +814,14 @@ function springboard_views_views_default_views() {
   $handler->display->display_options['fields']['status']['element_label_colon'] = FALSE;
   $handler->display->display_options['fields']['status']['type'] = 'published-notpublished';
   $handler->display->display_options['fields']['status']['not'] = 0;
-  /* Field: Content: Post date */
-  $handler->display->display_options['fields']['created']['id'] = 'created';
-  $handler->display->display_options['fields']['created']['table'] = 'node';
-  $handler->display->display_options['fields']['created']['field'] = 'created';
-  $handler->display->display_options['fields']['created']['label'] = 'Date Created';
-  $handler->display->display_options['fields']['created']['date_format'] = 'custom';
-  $handler->display->display_options['fields']['created']['custom_date_format'] = 'n/j/o';
+  /* Field: Content: Updated date */
+  $handler->display->display_options['fields']['changed']['id'] = 'changed';
+  $handler->display->display_options['fields']['changed']['table'] = 'node';
+  $handler->display->display_options['fields']['changed']['field'] = 'changed';
+  $handler->display->display_options['fields']['changed']['label'] = 'Last Updated';
+  $handler->display->display_options['fields']['changed']['date_format'] = 'custom';
+  $handler->display->display_options['fields']['changed']['custom_date_format'] = 'n/j/Y';
+  $handler->display->display_options['fields']['changed']['second_date_format'] = 'long';
   /* Field: Content: Path */
   $handler->display->display_options['fields']['path']['id'] = 'path';
   $handler->display->display_options['fields']['path']['table'] = 'node';
@@ -862,12 +845,6 @@ function springboard_views_views_default_views() {
   $handler->display->display_options['fields']['view_node']['element_class'] = 'table-actions';
   $handler->display->display_options['fields']['view_node']['element_label_colon'] = FALSE;
   $handler->display->display_options['fields']['view_node']['text'] = 'view';
-  /* Field: Content: Internal Name */
-  $handler->display->display_options['fields']['field_webform_user_internal_name']['id'] = 'field_webform_user_internal_name';
-  $handler->display->display_options['fields']['field_webform_user_internal_name']['table'] = 'field_data_field_webform_user_internal_name';
-  $handler->display->display_options['fields']['field_webform_user_internal_name']['field'] = 'field_webform_user_internal_name';
-  $handler->display->display_options['fields']['field_webform_user_internal_name']['label'] = '';
-  $handler->display->display_options['fields']['field_webform_user_internal_name']['element_label_colon'] = FALSE;
   $handler->display->display_options['defaults']['arguments'] = FALSE;
   /* Contextual filter: Content: Type */
   $handler->display->display_options['arguments']['type']['id'] = 'type';
@@ -904,15 +881,13 @@ function springboard_views_views_default_views() {
     'title' => 'title',
     'nid' => 'nid',
     'status' => 'status',
-    'created' => 'created',
-    'sbstats_total_transactions' => 'sbstats_total_transactions',
+    'changed' => 'changed',
     'path' => 'path',
     'clone_node' => 'clone_node',
     'edit_node' => 'clone_node',
     'view_node' => 'clone_node',
-    'field_webform_user_internal_name' => 'field_fundraiser_internal_name',
   );
-  $handler->display->display_options['style_options']['default'] = '-1';
+  $handler->display->display_options['style_options']['default'] = 'changed';
   $handler->display->display_options['style_options']['info'] = array(
     'field_fundraiser_internal_name' => array(
       'sortable' => 1,
@@ -942,16 +917,9 @@ function springboard_views_views_default_views() {
       'separator' => '',
       'empty_column' => 0,
     ),
-    'created' => array(
+    'changed' => array(
       'sortable' => 1,
-      'default_sort_order' => 'asc',
-      'align' => '',
-      'separator' => '',
-      'empty_column' => 0,
-    ),
-    'sbstats_total_transactions' => array(
-      'sortable' => 1,
-      'default_sort_order' => 'asc',
+      'default_sort_order' => 'desc',
       'align' => '',
       'separator' => '',
       'empty_column' => 0,
@@ -972,13 +940,6 @@ function springboard_views_views_default_views() {
       'empty_column' => 0,
     ),
     'view_node' => array(
-      'align' => '',
-      'separator' => '',
-      'empty_column' => 0,
-    ),
-    'field_webform_user_internal_name' => array(
-      'sortable' => 0,
-      'default_sort_order' => 'asc',
       'align' => '',
       'separator' => '',
       'empty_column' => 0,
@@ -1016,13 +977,14 @@ function springboard_views_views_default_views() {
   $handler->display->display_options['fields']['status']['element_label_colon'] = FALSE;
   $handler->display->display_options['fields']['status']['type'] = 'published-notpublished';
   $handler->display->display_options['fields']['status']['not'] = 0;
-  /* Field: Content: Post date */
-  $handler->display->display_options['fields']['created']['id'] = 'created';
-  $handler->display->display_options['fields']['created']['table'] = 'node';
-  $handler->display->display_options['fields']['created']['field'] = 'created';
-  $handler->display->display_options['fields']['created']['label'] = 'Date Created';
-  $handler->display->display_options['fields']['created']['date_format'] = 'custom';
-  $handler->display->display_options['fields']['created']['custom_date_format'] = 'n/j/o';
+  /* Field: Content: Updated date */
+  $handler->display->display_options['fields']['changed']['id'] = 'changed';
+  $handler->display->display_options['fields']['changed']['table'] = 'node';
+  $handler->display->display_options['fields']['changed']['field'] = 'changed';
+  $handler->display->display_options['fields']['changed']['label'] = 'Last Updated';
+  $handler->display->display_options['fields']['changed']['date_format'] = 'custom';
+  $handler->display->display_options['fields']['changed']['custom_date_format'] = 'n/j/Y';
+  $handler->display->display_options['fields']['changed']['second_date_format'] = 'long';
   /* Field: Content: Path */
   $handler->display->display_options['fields']['path']['id'] = 'path';
   $handler->display->display_options['fields']['path']['table'] = 'node';
@@ -1046,12 +1008,6 @@ function springboard_views_views_default_views() {
   $handler->display->display_options['fields']['view_node']['element_class'] = 'table-actions';
   $handler->display->display_options['fields']['view_node']['element_label_colon'] = FALSE;
   $handler->display->display_options['fields']['view_node']['text'] = 'view';
-  /* Field: Content: Internal Name */
-  $handler->display->display_options['fields']['field_webform_user_internal_name']['id'] = 'field_webform_user_internal_name';
-  $handler->display->display_options['fields']['field_webform_user_internal_name']['table'] = 'field_data_field_webform_user_internal_name';
-  $handler->display->display_options['fields']['field_webform_user_internal_name']['field'] = 'field_webform_user_internal_name';
-  $handler->display->display_options['fields']['field_webform_user_internal_name']['label'] = '';
-  $handler->display->display_options['fields']['field_webform_user_internal_name']['element_label_colon'] = FALSE;
   $handler->display->display_options['defaults']['arguments'] = FALSE;
   /* Contextual filter: Content: Type */
   $handler->display->display_options['arguments']['type']['id'] = 'type';
@@ -1275,7 +1231,7 @@ function springboard_views_views_default_views() {
   $handler->display->display_options['fields']['view_node']['element_class'] = 'table-actions';
   $handler->display->display_options['fields']['view_node']['element_label_colon'] = FALSE;
   $handler->display->display_options['fields']['view_node']['text'] = 'view';
-  /* Field: Content: Internal Name */
+  /* Field: Broken/missing handler */
   $handler->display->display_options['fields']['field_webform_user_internal_name']['id'] = 'field_webform_user_internal_name';
   $handler->display->display_options['fields']['field_webform_user_internal_name']['table'] = 'field_data_field_webform_user_internal_name';
   $handler->display->display_options['fields']['field_webform_user_internal_name']['field'] = 'field_webform_user_internal_name';
