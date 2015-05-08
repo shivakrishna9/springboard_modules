@@ -492,6 +492,10 @@ function springboard_admin_theme($existing, $type, $theme, $path) {
       'variables' => array('tables' => array(), 'types' => array()),
       'template' => drupal_get_path('theme', $theme) . '/templates/springboard-admin-asset-page',
     ),
+    'springboard_admin_home_link' => array(
+      'variables' => array('springboard_link' => ''),
+      'template' => drupal_get_path('theme', $theme) . '/templates/springboard-admin-home-link',
+    ),
   );
 }
 
@@ -533,6 +537,43 @@ function springboard_admin_user_login(&$edit, $account) {
       $edit['redirect'] = 'springboard';
     }
   }
+}
+
+/**
+ * Implements hook_page_build().
+ *
+ * Add a link and icon for admins to return to the Springboard admin homepage.
+ */
+function springboard_admin_page_build(&$page) {
+  // Do not include this if admin menu is installed.
+  if (module_exists('admin_menu')) {
+    return;
+  }
+
+  global $user;
+  // Do not include if the user doesn't have access to the Springboard admin.
+  if (!springboard_admin_user_gets_sbux($user)) {
+    return;
+  }
+
+  // If either the current Drupal path or its SBUX alias begins with /springboard/ do not add this.
+  if (preg_match("|^springboard(\/.*)?|", $_GET['q'])
+    || preg_match("|^springboard(\/.*)?|", springboard_admin_build_admin_path('/' . $_GET['q'], 'path'))
+  ) {
+    return;
+  }
+
+  $path = drupal_get_path('module', 'springboard_admin');
+
+  // Create a renderable array for the admin home link.
+  $page['page_bottom']['springboard_admin'] = array(
+    '#attached' => array(
+      'css' => array($path . '/css/springboard-admin.home-link.css'),
+      'js' => array($path . '/js/springboard-admin.home-link.js'),
+    ),
+    '#theme' => 'springboard_admin_home_link',
+    '#springboard_link' => l('Springboard', 'springboard'),
+  );
 }
 
 /**
