@@ -1065,20 +1065,21 @@ function sba_message_action_preprocess_webform_confirmation(&$vars) {
   }
 }
 
-
 function sba_message_action_form_webform_component_delete_form_alter(&$form, &$form_state, $form_id) {
   // Make sure we are dealing with a donation form.
   // From fundraiser.module.
   if ($form['node']['#value']->type == 'sba_message_action') {
 
     $required_fields =  array(
+      'sbp_salutation' => 'sbp_salutation',
       'sbp_first_name' => 'sbp_first_name',
       'sbp_last_name' => 'sbp_last_name',
       'mail' => 'mail',
       'sbp_address' => 'sbp_address',
       'sbp_city' => 'sbp_city',
       'sbp_state' => 'sbp_state',
-      'sbp_zip' => 'sbp_zip'
+      'sbp_zip' => 'sbp_zip',
+      'sbp_phone' => 'sbp_phone',
     );
 
     $cid = $form['component']['#value']['cid'];
@@ -1089,6 +1090,45 @@ function sba_message_action_form_webform_component_delete_form_alter(&$form, &$f
         array('!name' => $component['name']));
       $form['description']['#markup'] = $message;
       unset($form['actions']['submit']);
+    }
+  }
+}
+
+/**
+ * Implements hook_form_webform_component_edit_form_alter().
+ *
+ * Disable form-key editing and un-mandatory-ifying of certain profile fields.
+ */
+function sba_message_action_form_webform_component_edit_form_alter(&$form, &$form_state, $form_id) {
+  $locked_fields = array(
+    'sbp_salutation', 'sbp_first_name', 'sbp_last_name', 'mail', 'sbp_address',
+    'sbp_city', 'sbp_state', 'sbp_zip', 'sbp_phone'
+  );
+  if (in_array($form['form_key']['#default_value'], $locked_fields)) {
+    // Check the node type.
+    $node = node_load($form['nid']['#value']);
+    if ($node->type == 'sba_message_action') {
+      $form['form_key']['#disabled'] = TRUE;
+      $form['validation']['mandatory']['#disabled'] = TRUE;
+    }
+  }
+}
+
+/**
+ * Implements hook_form_webform_components_form_alter().
+ *
+ * Disable un-mandatory-ifying of certain profile fields.
+ */
+function sba_message_action_form_webform_components_form_alter(&$form, &$form_state, $form_id) {
+  $locked_fields = array(
+    'sbp_salutation', 'sbp_first_name', 'sbp_last_name', 'mail', 'sbp_address',
+    'sbp_city', 'sbp_state', 'sbp_zip', 'sbp_phone'
+  );
+  if ($form['#node']->type == 'sba_message_action') {
+    foreach ($form['#node']->webform['components'] as $cid => $component) {
+      if (in_array($component['form_key'], $locked_fields)) {
+        $form['components'][$cid]['mandatory']['#disabled'] = TRUE;
+      }
     }
   }
 }
