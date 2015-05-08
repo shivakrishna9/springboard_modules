@@ -422,22 +422,19 @@
     Sba.scroller = function () {
         setTimeout(function() {
             var offset = $('#springboard-advocacy-message-recipients').offset();
-            var footerOffset = $('#footer-wrapper').offset();
             var newTop;
             if($('#springboard-advocacy-message-recipients').hasClass('recipients-fixed')) {
                 newTop = $(window).scrollTop() - offset.top;
                 $('#springboard-advocacy-message-recipients').css('top', newTop).removeClass('recipients-fixed');
             }
             $(window).scroll(function() {
+                var footerOffset = $('#footer-wrapper').offset();
                 if(offset.top <= $(window).scrollTop() && $('#springboard-advocacy-message-recipients').css('position') == 'absolute') {
                     var recipHeight = $('#springboard-advocacy-message-recipients').height();
                     var newTop = $(window).scrollTop() - offset.top;
-             //       if((offset.top +  newTop + recipHeight + 20) < footerOffset.top) {
+                   if((offset.top +  newTop + recipHeight + 20) < footerOffset.top) {
                         $('#springboard-advocacy-message-recipients').css('top', newTop).addClass('recipients-fixed');
-            //        }
-                    //else {
-                    //    $('#springboard-advocacy-message-recipients').css('top', 0).removeClass('recipients-fixed');
-                    //}
+                   }
                 }
                 else {
                     $('#springboard-advocacy-message-recipients').css('top', 0).removeClass('recipients-fixed');
