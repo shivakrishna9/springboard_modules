@@ -858,11 +858,15 @@ function fundraiser_commerce_fundraiser_donation_get_donation($donation) {
 
   // Data from order.
   $donation->donation['mail'] = isset($order->mail) ? $order->mail : '';
+
+  $order_total = $order_wrapper->commerce_order_total->value();
+
   // Reverse the work done by commerce_currency_decimal_to_amount($donation->donation['amount'], $donation->donation['currency'])
   // So we have the correct decimaled value.
-  $donation->donation['amount'] = commerce_currency_amount_to_decimal($order->commerce_order_total[LANGUAGE_NONE][0]['amount'],
-    $order->commerce_order_total[LANGUAGE_NONE][0]['currency_code']);
-  $donation->donation['currency'] = commerce_currency_load($order->commerce_order_total[LANGUAGE_NONE][0]['currency_code']);
+  $donation->donation['amount'] = commerce_currency_amount_to_decimal($order_total['amount'], $order_total['currency_code']);
+  $donation->donation['currency'] = commerce_currency_load($order_total['currency_code']);
+  $donation->donation['amount_formatted'] = commerce_currency_format($order_total['amount'], $order_total['currency_code']);
+
   $donation->donation['quantity'] = 1;
   $donation->donation['hostname'] = $order->hostname;
 
