@@ -1469,6 +1469,11 @@ function fundraiser_sustainers_donation_amount_form($form, &$form_state, $donati
     '#value' => $formatted_minimum,
   );
 
+  $form['fee_currency_code'] = array(
+    '#type' => 'value',
+    '#value' => $next_donation->donation['currency']['code'],
+  );
+
   $fee_replacements = array(
     '%amount' => $next_donation->donation['amount_formatted'],
     '%minimum' => $formatted_minimum,
@@ -1508,7 +1513,7 @@ function fundraiser_sustainers_donation_amount_form_validate($form, &$form_state
  */
 function fundraiser_sustainers_donation_amount_form_submit($form, &$form_state) {
   $amount = $form_state['values']['fee_amount'];
-  $formatted_amount = $amount;
+  $formatted_amount = commerce_currency_format($amount, $form_state['values']['fee_currency_code']);
 
   $master_did = $form_state['values']['master_did'];
   $donations = _fundraiser_sustainers_get_donations_recurr_remaining($master_did);
@@ -1539,9 +1544,8 @@ function fundraiser_sustainers_donation_amount_form_submit($form, &$form_state) 
       salesforce_genmap_send_object_to_queue('salesforce_donation', 'update',
         $donation->node, $donation->did, $donation, 'donation');
     }
-
-    $formatted_amount = $donation->donation['amount_formatted'];
   }
+
   drupal_set_message(t('The amount of all future donations has been updated to @amount.', array('@amount' => $formatted_amount)));
 }
 
