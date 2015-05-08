@@ -556,8 +556,7 @@
 
         #springboard-advocacy-find-targets .radio-widgets {
             clear:both;
-            padding: 1em 1em 1em;
-
+            padding: 1em;
         }
 
         .radio-widgets:after {
@@ -885,6 +884,20 @@ div.view-empty {
     }
 
 @media only screen and (min-width: 769px) and (max-width: 1200px) {
+    #springboard-advocacy-find-targets  div.button-container {
+        margin-top:45px
+    }
+    #edit-search-gender-wrapper {
+        dclear:left;
+    }
+    #springboard-advocacy-find-targets .radio-widgets {
+        padding: 0;
+    }
+
+    #springboard-advocacy-find-targets .radio-widgets .views-exposed-widget {
+        margin: 1em 1.2em 1em 0px;
+    }
+
     #springboard-advocacy-find-targets  div.views-exposed-widget.views-targets-button-wrapper {
         float:right;
         margin-right: 0em;
@@ -910,11 +923,35 @@ div.view-empty {
 }
 
 @media only screen and (min-width: 769px) and (max-width: 979px) {
+
+    #springboard-advocacy-find-targets td {
+        padding: 4px;
+        font-size: 12px;
+    }
+
+    #springboard-advocacy-find-targets  div.button-container {
+        margin-top:0px;
+    }
+
+    #edit-search-gender-wrapper {
+        clear:left;
+    }
+
+    #springboard-advocacy-find-targets  div.views-exposed-widget.views-submit-button {
+        width:70%;
+    }
+
+    #springboard-advocacy-find-targets .radio-widgets .views-exposed-widget {
+        margin: 1em 0em 1em 0px;
+        width: 50%;
+    }
+
     #springboard-advocacy-find-targets  div.views-exposed-widget.views-targets-button-wrapper {
         float: none;
         width:66%;
         margin-top: 5px;
     }
+
     #springboard-advocacy-find-targets  div.views-exposed-widget.views-targets-button-wrapper .target-button-header{
         margin: 0 auto;
         text-align: center;
@@ -943,17 +980,35 @@ div.view-empty {
 }
 
 @media only screen and (min-width: 320px) and (max-width: 769px) {
-    #springboard-advocacy-find-targets div.views-exposed-widget.views-targets-button-wrapper {
-        float: none;
-        width: 66%;
-        margin-top: 5px;
-        text-align:center;
+
+    #springboard-advocacy-find-targets td {
+        padding: 4px;
+        font-size: 12px;
     }
-    #springboard-advocacy-find-targets  div.views-exposed-widget.views-submit-button {
-        margin: 0 auto;
+
+    #springboard-advocacy-find-targets  div.views-exposed-widget.views-submit-button{
+        width:223px;
+        margin-right: -2.75em;
+        padding-left:56px;
         float:none;
         text-align: center;
     }
+    #springboard-advocacy-find-targets div.views-exposed-widget.views-targets-button-wrapper {
+        float: none;
+        swidth: 66%;
+        margin-top: 5px;
+        text-align:center;
+    }
+    #springboard-advocacy-find-targets .radio-widgets .views-exposed-widget {
+        margin: 1em 0em 1em 0px;
+        width: 50%;
+    }
+
+    #edit-search-gender-wrapper {
+        clear:left;
+    }
+
+
     #springboard-advocacy-find-targets div.views-exposed-widget.views-targets-button {
         margin-right: auto;
         text-align:center;
