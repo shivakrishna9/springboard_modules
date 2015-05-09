@@ -2,48 +2,43 @@
 
 /**
  * @file
- * Install and update routines for Salesforce advocacy module.
+ * Install and update routines for Salesforce petition module.
  */
 
 /**
  * Implements hook_install().
  */
-function salesforce_advocacy_install() {
-  // Install the message action fieldmap.
-  $message_action_mapping = entity_import('salesforce_mapping', salesforce_advocacy_message_action_fieldmap());
-  entity_save('salesforce_mapping', $message_action_mapping);
+function salesforce_petition_install() {
+  // Install the petition type fieldmap.
+  salesforce_petition_petition_type_fieldmap();
 
-  // Install the message action default fieldmap.
-  salesforce_advocacy_create_actions_taken_fieldmap();
+  // Install the petition action default fieldmap.
+  salesforce_petition_create_petition_action_fieldmap();
 }
 
 /**
  * Implements hook_uninstall().
  */
-function salesforce_advocacy_uninstall() {
-
+function salesforce_petition_uninstall() {
   $query = new EntityFieldQuery();
   $query->entityCondition('entity_type', 'salesforce_genmap_map');
-  $query->propertyCondition('module', 'sba_message_action');
-  $query->propertyCondition('nid', -1);
+  $query->propertyCondition('module', 'salesforce_petition');
+  $query->propertyCondition('nid', -10); // This should use the constant, but it doesn't work.
   $result = $query->execute();
   if (!empty($result)) {
     $mids = array_keys($result['salesforce_genmap_map']);
     entity_delete('salesforce_genmap_map', $mids[0]);
   }
 
-  $result = salesforce_mapping_load_multiple(array('drupal_bundle' => 'sba_message_action'));
+  $result = salesforce_mapping_load_multiple(array('drupal_bundle' => 'springboard_petition'));
   $mapping = array_shift($result);
   entity_delete('salesforce_mapping', $mapping->salesforce_mapping_id);
 }
 
-/**
- * Creates a default fieldmap for message action form submissions.
- */
-function salesforce_advocacy_create_actions_taken_fieldmap() {
+function salesforce_petition_create_petition_action_fieldmap() {
   $map = array();
   $map = entity_create('salesforce_genmap_map', $map);
-  $map->nid = -1;
+  $map->nid = SALESFORCE_PETITION_DEFAULT_MAP_ID;
   $map->map_handler = 'webform';
   $map->salesforce_object_type = 'sb_Actions_Taken__c';
   $object_type = '';
@@ -61,6 +56,8 @@ function salesforce_advocacy_create_actions_taken_fieldmap() {
     ),
     'salesforce_node_map' => array(
       'title' => 'Name',
+      'action' => 'Action__c',
+      'action_type' => 'Action_Type__c',
     ),
     'salesforce_submission_map' => array(
       'sid' => 'Submission_ID__c',
@@ -73,34 +70,31 @@ function salesforce_advocacy_create_actions_taken_fieldmap() {
     'delete' => 'delete',
   );
   $map->status = 1;
-  $map->module = 'sba_message_action';
+  $map->module = 'salesforce_petition';
   salesforce_genmap_save_map($map, 'webform');
 }
 
-/**
- * Creates a default fieldmap for message action nodes.
- */
-function salesforce_advocacy_message_action_fieldmap() {
+function salesforce_petition_petition_type_fieldmap() {
   module_load_include('inc', 'salesforce_genmap', 'includes/salesforce_genmap.map');
   $sfapi = salesforce_get_api();
   $object_type = '';
   if ($sfapi->isAuthorized()) {
     $sf_records = _sfw_salesforce_record_type_list($sfapi, 'sb_action__c');
     $sf_records = array_flip($sf_records);
-    if (array_key_exists('Message Action', $sf_records)) {
-      $object_type = $sf_records['Message Action'];
+    if (array_key_exists('Petitions', $sf_records)) {
+      $object_type = $sf_records['Petitions'];
     }
   }
 
-  return '{
+  $type = '{
     "type" : "salesforce_mapping",
-    "name" : "message_action",
-    "label" : "Message Action",
+    "name" : "petition",
+    "label" : "Petition",
     "sync_triggers" : "3",
     "salesforce_object_type" : "sb_action__c",
     "salesforce_record_type" : "' . $object_type . '",
     "drupal_entity_type" : "node",
-    "drupal_bundle" : "sba_message_action",
+    "drupal_bundle" : "springboard_petition",
     "field_mappings" : [
       {
         "drupal_field" : { "fieldmap_type" : "property", "fieldmap_value" : "nid" },
@@ -413,69 +407,18 @@ function salesforce_advocacy_message_action_fieldmap() {
         "direction" : "drupal_sf",
         "drupal_sf" : "always",
         "sf_drupal" : "never"
-      },
-      {
-        "drupal_field" : {
-          "fieldmap_type" : "property",
-          "fieldmap_value" : "field_webform_user_internal_name"
-        },
-        "salesforce_field" : {
-          "autoNumber" : false,
-          "byteLength" : 765,
-          "calculated" : false,
-          "calculatedFormula" : null,
-          "cascadeDelete" : false,
-          "caseSensitive" : false,
-          "controllerName" : null,
-          "createable" : true,
-          "custom" : true,
-          "defaultValue" : null,
-          "defaultValueFormula" : null,
-          "defaultedOnCreate" : false,
-          "dependentPicklist" : false,
-          "deprecatedAndHidden" : false,
-          "digits" : 0,
-          "displayLocationInDecimal" : false,
-          "externalId" : false,
-          "filterable" : true,
-          "groupable" : true,
-          "htmlFormatted" : false,
-          "idLookup" : false,
-          "inlineHelpText" : "Internal organizational name for this action, if there is one.",
-          "label" : "Internal Name",
-          "length" : 255,
-          "name" : "Internal_Name__c",
-          "nameField" : false,
-          "namePointing" : false,
-          "nillable" : true,
-          "permissionable" : true,
-          "picklistValues" : [],
-          "precision" : 0,
-          "referenceTo" : [],
-          "relationshipName" : null,
-          "relationshipOrder" : null,
-          "restrictedDelete" : false,
-          "restrictedPicklist" : false,
-          "scale" : 0,
-          "soapType" : "xsd:string",
-          "sortable" : true,
-          "type" : "string",
-          "unique" : false,
-          "updateable" : true,
-          "writeRequiresMasterRead" : false
-        },
-        "key" : false,
-        "direction" : "drupal_sf",
-        "drupal_sf" : "always",
-        "sf_drupal" : "never"
       }
     ],
     "push_async" : "0",
     "push_batch" : "0",
-    "created" : "1430506377",
-    "updated" : "1430507210",
+    "created" : "1431109344",
+    "updated" : "1431109344",
     "weight" : "0",
     "locked" : "0",
     "rdf_mapping" : []
   }';
+
+  $message_action_mapping = entity_import('salesforce_mapping', $type);
+  entity_save('salesforce_mapping', $message_action_mapping);
+
 }
