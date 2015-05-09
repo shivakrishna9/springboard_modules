@@ -8,24 +8,24 @@
 /**
  * Implements hook_install().
  */
-function salesforce_advocacy_install() {
+function salesforce_message_action_install() {
   // Install the message action fieldmap.
-  $message_action_mapping = entity_import('salesforce_mapping', salesforce_advocacy_message_action_fieldmap());
+  $message_action_mapping = entity_import('salesforce_mapping', salesforce_message_action_message_action_fieldmap());
   entity_save('salesforce_mapping', $message_action_mapping);
 
   // Install the message action default fieldmap.
-  salesforce_advocacy_create_actions_taken_fieldmap();
+  salesforce_message_action_create_actions_taken_fieldmap();
 }
 
 /**
  * Implements hook_uninstall().
  */
-function salesforce_advocacy_uninstall() {
+function salesforce_message_action_uninstall() {
 
   $query = new EntityFieldQuery();
   $query->entityCondition('entity_type', 'salesforce_genmap_map');
-  $query->propertyCondition('module', 'sba_message_action');
-  $query->propertyCondition('nid', -1);
+  $query->propertyCondition('module', 'salesforce_message_action');
+  $query->propertyCondition('nid', -20); // This should use the constant, but it doesn't work.
   $result = $query->execute();
   if (!empty($result)) {
     $mids = array_keys($result['salesforce_genmap_map']);
@@ -40,10 +40,10 @@ function salesforce_advocacy_uninstall() {
 /**
  * Creates a default fieldmap for message action form submissions.
  */
-function salesforce_advocacy_create_actions_taken_fieldmap() {
+function salesforce_message_action_create_actions_taken_fieldmap() {
   $map = array();
   $map = entity_create('salesforce_genmap_map', $map);
-  $map->nid = -1;
+  $map->nid = SALESFORCE_MESSAGE_ACTION_DEFAULT_MAP_ID;
   $map->map_handler = 'webform';
   $map->salesforce_object_type = 'sb_Actions_Taken__c';
   $object_type = '';
@@ -61,6 +61,8 @@ function salesforce_advocacy_create_actions_taken_fieldmap() {
     ),
     'salesforce_node_map' => array(
       'title' => 'Name',
+      'action' => 'Action__c',
+      'action_type' => 'Action_Type__c',
     ),
     'salesforce_submission_map' => array(
       'sid' => 'Submission_ID__c',
@@ -73,14 +75,14 @@ function salesforce_advocacy_create_actions_taken_fieldmap() {
     'delete' => 'delete',
   );
   $map->status = 1;
-  $map->module = 'sba_message_action';
+  $map->module = 'salesforce_message_action';
   salesforce_genmap_save_map($map, 'webform');
 }
 
 /**
  * Creates a default fieldmap for message action nodes.
  */
-function salesforce_advocacy_message_action_fieldmap() {
+function salesforce_message_action_message_action_fieldmap() {
   module_load_include('inc', 'salesforce_genmap', 'includes/salesforce_genmap.map');
   $sfapi = salesforce_get_api();
   $object_type = '';

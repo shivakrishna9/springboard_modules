@@ -1,5 +1,7 @@
 <?php
 
+define('SALESFORCE_PETITION_DEFAULT_MAP_ID', -10);
+
 /**
  * @file
  * Provides petition integration support for Salesforce.
@@ -31,10 +33,10 @@ function salesforce_petition_salesforce_genmap_map_fields_alter(&$fields, $conte
  * Insert a copy of the default map when a message_action node is created.
  */
 function salesforce_petition_node_insert($node) {
-  // If node is a petition type.
+  // If node is a springboard petition type.
   if ($node->type == 'springboard_petition') {
-    // And if we have a default map.
-    $nid = -1;
+    // And if we have a default map. Salesforce petition default is -10.
+    $nid = SALESFORCE_PETITION_DEFAULT_MAP_ID;
     if (!empty($node->clone_from_original_nid)) {
       $nid = $node->clone_from_original_nid;
     }
@@ -51,7 +53,6 @@ function salesforce_petition_node_insert($node) {
   $webform_user_reference_fields = variable_get('webform_user_reference_fields', array());
   $webform_user_reference_fields[$node->nid] = 'Contact__c';
   variable_set('webform_user_reference_fields', $webform_user_reference_fields);
-
 }
 
 /**

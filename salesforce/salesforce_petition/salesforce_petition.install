@@ -22,8 +22,8 @@ function salesforce_petition_install() {
 function salesforce_petition_uninstall() {
   $query = new EntityFieldQuery();
   $query->entityCondition('entity_type', 'salesforce_genmap_map');
-  $query->propertyCondition('module', 'springboard_petition');
-  $query->propertyCondition('nid', -1);
+  $query->propertyCondition('module', 'salesforce_petition');
+  $query->propertyCondition('nid', -10); // This should use the constant, but it doesn't work.
   $result = $query->execute();
   if (!empty($result)) {
     $mids = array_keys($result['salesforce_genmap_map']);
@@ -38,7 +38,7 @@ function salesforce_petition_uninstall() {
 function salesforce_petition_create_petition_action_fieldmap() {
   $map = array();
   $map = entity_create('salesforce_genmap_map', $map);
-  $map->nid = -1;
+  $map->nid = SALESFORCE_PETITION_DEFAULT_MAP_ID;
   $map->map_handler = 'webform';
   $map->salesforce_object_type = 'sb_Actions_Taken__c';
   $object_type = '';
