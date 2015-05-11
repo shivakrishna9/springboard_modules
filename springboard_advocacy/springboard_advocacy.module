@@ -875,3 +875,7 @@ function springboard_advocacy_get_subscription() {
   }
   return $subscription;
 }
+
+function springboard_advocacy_springboard_admin_views_alter(&$names) {
+  $names[] = 'sba_actions';
+}
