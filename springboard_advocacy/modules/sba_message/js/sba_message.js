@@ -180,7 +180,7 @@
             var finder = $('#springboard-advocacy-find-targets-container .view-targets');
             finder.prepend('<div class="faux-tab-container"><div class="faux-tab"' +
             '><a href ="#full" class="full-search">Target Search</a></div><' +
-            'div class="faux-tab"><a href ="#committee" class="committee-search">Committee Search</a></div>');
+            'div class="faux-tab committee"><a href ="#committee" class="committee-search">Committee Search</a></div>');
         });
 
         //target search elements to hide

@@ -414,6 +414,9 @@
                     font-weight: bold;
                     background: #fff;
                 }
+                #springboard-advocacy-find-targets-container .view-targets .faux-tab.committee {
+                    border-left:none;
+                }
                 #springboard-advocacy-find-targets-container .view-targets .faux-tab.active {
                     background: #EFF9FF;
 
