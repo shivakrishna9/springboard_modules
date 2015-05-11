@@ -181,22 +181,23 @@ function sba_message_action_node_insert($node) {
     );
 
     // Add the component to the Webform.
-
     foreach ($fields as $field) {
-      $cid = webform_component_insert($field);
-      //user map the state field
-      if ($field['form_key'] == 'sbp_state' || $field['form_key'] == 'sbp_zip') {
-        $map = array(
-          'nid' => $node->nid,
-          'cid' => $cid,
-          'map_id' => $field['form_key'],
-        );
-        drupal_write_record('webform_user_component_map', $map);
+      // Don't insert if cloning
+      if(!isset($node->map) || (isset($node->map) &&  !in_array($field['form_key'], $node->map))) {
+        $cid = webform_component_insert($field);
+        //user map the state field
+        if ($field['form_key'] == 'sbp_state' || $field['form_key'] == 'sbp_zip') {
+          $map = array(
+            'nid' => $node->nid,
+            'cid' => $cid,
+            'map_id' => $field['form_key'],
+          );
+          drupal_write_record('webform_user_component_map', $map);
+        }
       }
     }
   }
 }
-
 
 /**
  * Implements hook_webform_user_profile_fields_alter
