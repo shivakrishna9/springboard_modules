@@ -217,3 +217,7 @@ clear: both;
 .node-sba-message-action .field-name-body {
     padding-left: 20px;
 }
+
+input#edit-sba-messages-message-1-subject {
+    width: 95%;
+}

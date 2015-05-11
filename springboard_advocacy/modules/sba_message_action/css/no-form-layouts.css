@@ -159,3 +159,7 @@ textarea[id*="edit-sba-messages-message"] {
     margin: 0;
     padding: 0;
 }
+
+input#edit-sba-messages-message-1-subject  {
+    width: 95%;
+}
