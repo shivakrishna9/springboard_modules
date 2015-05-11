@@ -1821,7 +1821,7 @@ function fundraiser_donation_create($donation) {
     'sid' => $donation->sid, // Submission id.
     'status' => $donation->status,
     'amount' => $donation->donation['amount'],
-    'currency' => $donation->donation['currency'],
+    'currency' => $donation->currency,
     'txn_id' => '',
     'form_url' => $form_url,
     'created' => REQUEST_TIME,

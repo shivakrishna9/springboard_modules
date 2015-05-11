@@ -976,7 +976,19 @@ function fundraiser_commerce_fundraiser_donation_create($donation) {
   if ($donation->donation['amount'] == 'other') {
     $donation->donation['amount'] = preg_replace('/[^\d\.]/i', '', $donation->donation['other_amount']);
   }
-  $donation->donation['currency'] = isset($donation->donation['currency']) ? $donation->donation['currency'] : commerce_currency_load(commerce_default_currency());
+
+  // Set or convert the $donation->donation currency value to an array of currency values.
+  if (!isset($donation->donation['currency'])) {
+    $currency_code = !empty($donation->currency) ? $donation->currency : commerce_default_currency();
+    $donation->donation['currency'] = commerce_currency_load($currency_code);
+  }
+  elseif (is_string($donation->donation['currency']))  {
+    $donation->donation['currency'] = commerce_currency_load($donation->donation['currency']);
+  }
+
+  // Set the currency code on the root donation object.
+  $donation->currency = $donation->donation['currency']['code'];
+
   // Determine quantity and data from donation values.
   $quantity = isset($donation->donation['quantity']) && !empty($donation->donation['quantity']) ? $donation->donation['quantity'] : 1;
 
