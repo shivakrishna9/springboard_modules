@@ -279,6 +279,26 @@ function sba_message_action_node_load($nodes, $types) {
  * Add message fields to the main webform form.
  */
 
+
+/**
+ *  Implements hook_module_implements alter
+ *
+ * Needed to intercept springboard_admin_form_alter
+ * and its custom submit function: springboard_admin_node_delete
+ * to redirect to the message action landing page after deletion
+ *
+ * @param $implementations
+ * @param $hook
+ */
+function sba_message_action_module_implements_alter(&$implementations, $hook) {
+  if ($hook == 'form_alter') {
+    $group = $implementations ['sba_message_action'];
+    unset($implementations ['sba_message_action']);
+    $implementations ['sba_message_action'] = $group;
+  }
+}
+
+
 /**
  * Implements hook_form_alter
  *
@@ -340,6 +360,27 @@ function sba_message_action_form_alter(&$form, &$form_state, $form_id) {
       array_unshift($form['#submit'], 'sba_message_action_form_submit');
     }
   }
+
+  switch ($form_id) {
+    case 'node_delete_confirm':
+      if($form['#node']->type == 'sba_message_action') {
+        // Redirect to the message action landing page after node deletion.
+        $form['actions']['submit']['#submit'][] = 'node_delete_confirm_submit';
+        $form['actions']['submit']['#submit'][] = '_sba_message_action_redirect';
+
+      }
+      break;
+  }
+}
+
+/**
+ * Redirect to the message action landing page after node deletion
+ * @param $form
+ * @param $form_state
+ */
+function _sba_message_action_redirect($form, &$form_state){
+  $form_state['redirect'] = 'admin/springboard/advocacy/message-actions/all';
+  $_GET['destination'] = url('admin/springboard/advocacy/message-actions/all');
 }
 
 
@@ -1065,6 +1106,11 @@ function sba_message_action_preprocess_webform_confirmation(&$vars) {
   }
 }
 
+/**
+ * @param $form
+ * @param $form_state
+ * @param $form_id
+ */
 function sba_message_action_form_webform_component_delete_form_alter(&$form, &$form_state, $form_id) {
   // Make sure we are dealing with a donation form.
   // From fundraiser.module.
