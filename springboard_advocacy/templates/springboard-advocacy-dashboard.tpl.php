@@ -2,6 +2,9 @@
   <?php if (isset($view['css'])):
     drupal_add_css($view['css']); ?>
   <?php endif; ?>
+  <?php if (isset($view['js'])):
+    drupal_add_js($view['js']); ?>
+  <?php endif; ?>
   <div class="types-wrapper p2p-views">
     <?php if (isset($view['header'])): ?>
       <h2 class="types"><?php print $view['header'];?></h2>

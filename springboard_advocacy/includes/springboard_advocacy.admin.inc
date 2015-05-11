@@ -236,6 +236,8 @@ function springboard_advocacy_dashboard($path, $arg = NULL) {
             'header' => t('Custom Targets'),
             'content' => views_embed_view('sba_custom_targets', 'block_1'),
             'css' => drupal_get_path('module', 'springboard_advocacy') . '/css/sba.css',
+            //'js' => drupal_get_path('module', 'springboard_target') . '/js/sba_target.js',
+
           ),
         );
         if (user_access('create targets')) {
