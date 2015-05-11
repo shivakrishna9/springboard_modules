@@ -1598,7 +1598,7 @@ function fundraiser_commerce_fundraiser_donation_update($donation) {
   if ($donation->donation['amount'] == 'other') {
     $donation->donation['amount'] = preg_replace('/[^\d\.]/i', '', $donation->donation['other_amount']);
   }
-  $donation->donation['currency'] = isset($donation->donation['currency']) ? $donation->donation['currency'] : commerce_default_currency();
+  $donation->donation['currency'] = isset($donation->donation['currency']) ? $donation->donation['currency'] : commerce_currency_load(commerce_default_currency());
   // Determine quantity and data from donation values.
   $quantity = isset($donation->donation['quantity']) && !empty($donation->donation['quantity']) ? $donation->donation['quantity'] : 1;
 
