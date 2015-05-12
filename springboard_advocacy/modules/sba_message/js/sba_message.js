@@ -144,6 +144,10 @@
     // Reset district option elements to default on State element change.
     Sba.buildStateField = function () {
 
+        $('#edit-search-state').ajaxComplete(function( event, xhr, settings ) {
+            $('#edit-submit-targets').prop('disabled', false).css({'cursor': 'pointer'});;
+        });
+
         // if only some states are allowed, or federal and and some states,
         // only trigger the district field update if certain criteria are met
         if(typeof(Drupal.settings.sbaAllowedStates) !== "undefined") {
@@ -152,6 +156,7 @@
                     || Drupal.settings.sbaSubscriptionLevel == 'federal-and-states-selected')) {
                     if(window.search_state != 'committee') {
                         $(this).trigger('custom_event');
+                        $('#edit-submit-targets').prop('disabled', true).css({'cursor': 'not-allowed'});
                     }
                 }
                 else {
@@ -165,7 +170,9 @@
                 $('select[name="search_district_name"]').html('<option selected="selected" value="All">- Any -</option>');
                 if($(this).val() != 'All') {
                     if(window.search_state != 'committee') {
+                        $('#edit-submit-targets').prop('disabled', true).css({'cursor': 'not-allowed'});
                         $(this).trigger('custom_event');
+
                     }
                 }
             });
