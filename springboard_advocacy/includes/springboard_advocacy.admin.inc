@@ -110,6 +110,7 @@ function springboard_advocacy_settings_form() {
  * Embeds and themes various views landing pages.
  */
 function springboard_advocacy_dashboard($path, $arg = NULL) {
+  global $user;
 
   switch($path) {
     case 'add-custom-targets':
@@ -188,12 +189,15 @@ function springboard_advocacy_dashboard($path, $arg = NULL) {
           'sba_actions' => array(
             'header' => t('All Message Actions'),
             'content' => views_embed_view('sba_actions', 'block_2', 'sba_message_action'),
-            'create_link' => array('title' => t('Create a new message action'), 'href' => 'node/add/sba-message-action'),
-            'manage_link' => array('title' => t('Manage Custom Targets'), 'href' => 'admin/springboard/advocacy/targets/custom-targets'),
             'css' => drupal_get_path('module', 'springboard_advocacy') . '/css/sba.css',
-
           ),
         );
+        if (user_access('create sba_message_action content')) {
+          $views['sba_actions']['create_link'] = array('title' => t('Create a new message action'), 'href' => 'node/add/sba-message-action');
+        }
+        if (springboard_target_user_can_access_targets()) {
+          $views['sba_actions']['manage_link'] = array('title' => t('Manage Custom Targets'), 'href' => 'admin/springboard/advocacy/targets/custom-targets');
+        }
       }
       else {
         $views = array(
@@ -212,11 +216,12 @@ function springboard_advocacy_dashboard($path, $arg = NULL) {
           'sba_actions' => array(
             'header' => t('All Petitions'),
             'content' => views_embed_view('sba_actions', 'block_2', 'springboard_petition'),
-            'create_link' => array('title' => t('Create a new petition'), 'href' => 'node/add/springboard-petition'),
             'css' => drupal_get_path('module', 'springboard_advocacy') . '/css/sba.css',
-
           ),
         );
+        if (user_access('create springboard_petition content')) {
+          $views['sba_actions']['create_link'] = array('title' => t('Create a new petition'), 'href' => 'node/add/springboard-petition');
+        }
       }
       else {
         $views = array(
@@ -279,10 +284,12 @@ function springboard_advocacy_dashboard($path, $arg = NULL) {
             'sba_messages_node' => array(
               'header' => t('Messages'),
               'content' => views_embed_view('sba_messages_node', 'block_1', $path),
-              'create_link' => array('title' => t('Create a new message'), 'href' => 'node/' . arg(1) . '/messages/add/' . $message_types[$node->type]),
               'css' => drupal_get_path('module', 'springboard_advocacy') . '/css/sba.css',
             ),
           );
+          if((user_access('edit own sba_message_action content') && $user->uid == $node->uid) || user_access('edit any sba_message_action content')) {
+            $views['sba_messages_node']['create_link'] = array('title' => t('Create a new message'), 'href' => 'node/' . arg(1) . '/messages/add/' . $message_types[$node->type]);
+          }
           if (!empty($no_create)) {
             unset($views['sba_messages_node']['create_link']);
           }
