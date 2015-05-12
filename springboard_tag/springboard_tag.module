@@ -260,15 +260,15 @@ function springboard_tag_springboard_tag_list_alter(&$tags) {
         $current_node = node_load(arg(1));
       }
 
+      // If this is a node page check the node type setting.
       if (!empty($current_node)) {
-        // This is a node page.
-        if (!isset($node['type'][$current_node->type])) {
-          // This tag should not be displayed for this node type.
-         unset($tags[$key]);
+        // Remove if this tag is not set to display on this node type.
+        if (empty($node['type'][$current_node->type])) {
+          unset($tags[$key]);
         }
       }
       else {
-        // This is not a node page, remove the block.
+        // This is not a node page, remove the tag.
         unset($tags[$key]);
       }
     }
