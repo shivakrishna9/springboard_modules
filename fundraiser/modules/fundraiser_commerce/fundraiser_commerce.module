@@ -732,7 +732,9 @@ function _fundraiser_commerce_client_state_ajax_submit($form, $form_state, &$mes
     '#type' => 'ajax',
     '#commands' => array(
       ajax_command_replace('#zone-select-wrapper', render($build_array)),
-      ajax_command_invoke('#edit-submitted-billing-information-state', 'focus'),
+      // Focus on the state field and remove the current value.
+      ajax_command_invoke('input[name="' . $build_array['#name'] . '"]', 'focus'),
+      ajax_command_invoke('input[name="' . $build_array['#name'] . '"]', 'val', array('')),
     ),
   );
 }
