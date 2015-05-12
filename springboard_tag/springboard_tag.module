@@ -233,23 +233,19 @@ function springboard_tag_springboard_tag_list_alter(&$tags) {
       // Convert path to lowercase. This allows comparison of the same path
       // with different case. Ex: /Page, /page, /PAGE.
       $pages = drupal_strtolower($path['pages']);
-      if ($path['page_specific']) {
-        // Convert the Drupal path to lowercase
-        $drupal_path = drupal_strtolower(drupal_get_path_alias($_GET['q']));
-        // Compare the lowercase internal and lowercase path alias (if any).
-        $page_match = drupal_match_path($drupal_path, $path['pages']);
-        if ($path != $_GET['q']) {
-          $page_match = $page_match || drupal_match_path($_GET['q'], $path['pages']);
-        }
-        // When $path['page_specific'] has a value of 0 (BLOCK_VISIBILITY_NOTLISTED),
-        // the block is displayed on all pages except those listed in $path['pages'].
-        // When set to 1 (BLOCK_VISIBILITY_LISTED), it is displayed only on those
-        // pages listed in $path['pages'].
-        $page_match = !($path['page_specific'] xor $page_match);
+
+      // Convert the Drupal path to lowercase
+      $drupal_path = drupal_strtolower(drupal_get_path_alias($_GET['q']));
+      // Compare the lowercase internal and lowercase path alias (if any).
+      $page_match = drupal_match_path($drupal_path, $path['pages']);
+      if ($path != $_GET['q']) {
+        $page_match = $page_match || drupal_match_path($_GET['q'], $path['pages']);
       }
-      else {
-        $page_match = FALSE;
-      }
+      // When $path['page_specific'] has a value of 0 (BLOCK_VISIBILITY_NOTLISTED),
+      // the tag is displayed on all pages except those listed in $path['pages'].
+      // When set to 1 (BLOCK_VISIBILITY_LISTED), it is displayed only on those
+      // pages listed in $path['pages'].
+      $page_match = !($path['page_specific'] xor $page_match);
     }
     else {
       $page_match = TRUE;
