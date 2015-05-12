@@ -65,7 +65,7 @@ function springboard_admin_admin_menu_items() {
     'weight' => 1,
     'options' => array('attributes' => array('target' => '_blank')),
   );
-  
+
   if(module_exists('fundraiser')) {
     // Top Level: Donation Form.
     $items['admin/springboard/donation-forms/all'] = array(
@@ -115,6 +115,7 @@ function springboard_admin_admin_menu_items() {
       'weight' => 3,
     );
   }
+
   if(module_exists('webform_user')) {
     // Top Level: Forms.
     $items['admin/springboard/forms/all'] = array(
@@ -142,7 +143,11 @@ function springboard_admin_admin_menu_items() {
     $types = node_type_get_types();
     foreach ($types as $type) {
       // Only create the item if the node type uses Webform User but not Fundraiser.
-      if ($type && _webform_user_is_webform_user_node_type($type->type) && !fundraiser_is_donation_type($type->type)) {
+      if ($type && _webform_user_is_webform_user_node_type($type->type)
+        && !fundraiser_is_donation_type($type->type)
+        && !springboard_advocacy_is_action_type($type->type)
+        && !springboard_petition_is_petition_type($type->type)
+      ) {
         // Forms > $type->type.
         $items['admin/springboard/forms/all']['_children']['node/add/' . preg_replace('/_/', '-', $type->type)] = array(
           'link_path' => 'node/add/' . preg_replace('/_/', '-', $type->type),
@@ -309,7 +314,7 @@ function springboard_admin_admin_menu_items() {
       'weight' => 5,
     );
   }
-  
+
   //Settings > Logout.
   $items['admin/springboard/settings']['_children']['logout'] = array(
     'link_path' => 'user/logout',
@@ -377,6 +382,12 @@ function springboard_admin_create_menu_item($item, &$mlids, $plid = 0, $parent =
   if ($plid > 0) {
     $item['plid'] = $plid;
   }
+
+  // Set a default module value.
+  if (!isset($item['module'])) {
+    $item['module'] = 'menu';
+  }
+
   // Save a the item.
   $mlid = menu_link_save($item, array(), array($plid => $parent));
   $mlids[] = $mlid;

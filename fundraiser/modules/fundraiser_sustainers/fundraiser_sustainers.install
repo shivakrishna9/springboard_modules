@@ -181,33 +181,55 @@ function fundraiser_sustainers_schema() {
         'type' => 'int',
         'not null' => TRUE,
       ),
-      'gateway' => array(
-        'description' => 'The gateway that was used to process the charge.',
-        'type' => 'varchar',
-        'length' => '255',
-        'not null' => TRUE,
-      ),
-      'date_processed' => array(
-        'description' => 'The date the charge was processed.',
+      'timestamp' => array(
+        'description' => 'The time that the activity occurred.',
         'type' => 'int',
         'not null' => TRUE,
-      ),
-      'success' => array(
-        'description' => 'Flag to indicate whether the charge was successful or not.',
-        'type' => 'int',
-        'size' => 'tiny',
-        'not null' => TRUE,
-        'default' => 0,
       ),
       'lock_id' => array(
-        'description' => 'The if of the lock that was put on the records during processing.',
+        'description' => 'The id of the lock that was put on the records during processing.',
         'type' => 'varchar',
         'length' => '55',
         'not null' => FALSE,
         'default' => '0',
       ),
+      'next_charge' => array(
+        'description' => 'Unix timestamp of when to make the next charge.',
+        'type' => 'int',
+        'not null' => TRUE,
+      ),
+      'old_state' => array(
+        'description' => 'Initial state.',
+        'type' => 'varchar',
+        'length' => '255',
+        'not null' => FALSE,
+      ),
+      'new_state' => array(
+        'description' => 'New state.',
+        'type' => 'varchar',
+        'length' => '255',
+        'not null' => FALSE,
+      ),
+      'attempts' => array(
+        'description' => 'Number of attempts made to charge.',
+        'type' => 'int',
+        'not null' => FALSE,
+        'default' => 0,
+      ),
+      'cancellation_reason' => array(
+        'description' => 'If cancelled, reason why.',
+        'type' => 'varchar',
+        'length' => '500',
+        'not null' => FALSE,
+      ),
     ),
     'primary key' => array('lid'),
+    'indexes' => array(
+      'fundraiser_sustainers_log_timestamp' => array('timestamp'),
+      'fundraiser_sustainers_log_next_charge' => array('next_charge'),
+      'fundraiser_sustainers_log_old_state' => array('old_state'),
+      'fundraiser_sustainers_log_new_state' => array('new_state'),
+    ),
   );
 
   $schema['fundraiser_sustainers_charge_date'] = array(
@@ -499,4 +521,90 @@ function fundraiser_sustainers_update_7009() {
     ->condition('attempts', 3, '<')
     ->condition('lock_id', 0)
     ->execute();
+}
+
+/**
+ * Create new sustainers log table.
+ */
+function fundraiser_sustainers_update_7010() {
+  registry_rebuild();
+
+  /**
+   * Rename the old log table to leave previous records alone.
+   *
+   * These records aren't used anymore but we leave them for historical purposes.
+   */ 
+  db_rename_table('fundraiser_sustainers_log', 'fundraiser_sustainers_log_pre_insights');
+
+  // Create the new table.
+  $fundraiser_sustainers_log_schema = array(
+    'description' => 'Stores the result of sustainer processing.',
+    'fields' => array(
+      'lid' => array(
+        'description' => 'Unqiue id of the log entry.',
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'did' => array(
+        'description' => 'The id of the donation being processed.',
+        'type' => 'int',
+        'not null' => TRUE,
+      ),
+      'timestamp' => array(
+        'description' => 'The time that the activity occurred.',
+        'type' => 'int',
+        'not null' => TRUE,
+      ),
+      'lock_id' => array(
+        'description' => 'The id of the lock that was put on the records during processing.',
+        'type' => 'varchar',
+        'length' => '55',
+        'not null' => FALSE,
+        'default' => '0',
+      ),
+      'next_charge' => array(
+        'description' => 'Unix timestamp of when to make the next charge.',
+        'type' => 'int',
+        'not null' => TRUE,
+      ),
+      'old_state' => array(
+        'description' => 'Initial state.',
+        'type' => 'varchar',
+        'length' => '255',
+        'not null' => FALSE,
+      ),
+      'new_state' => array(
+        'description' => 'New state.',
+        'type' => 'varchar',
+        'length' => '255',
+        'not null' => FALSE,
+      ),
+      'attempts' => array(
+        'description' => 'Number of attempts made to charge.',
+        'type' => 'int',
+        'not null' => FALSE,
+        'default' => 0,
+      ),
+      'cancellation_reason' => array(
+        'description' => 'If cancelled, reason why.',
+        'type' => 'varchar',
+        'length' => '500',
+        'not null' => FALSE,
+      ),
+    ),
+    'primary key' => array('lid'),
+  );
+
+  db_create_table('fundraiser_sustainers_log', $fundraiser_sustainers_log_schema);
+}
+
+/**
+ * Adds indexes to the sustainers log table.
+ */
+function fundraiser_sustainers_update_7011() {
+  db_add_index('fundraiser_sustainers_log', 'fundraiser_sustainers_log_timestamp', array('timestamp'));
+  db_add_index('fundraiser_sustainers_log', 'fundraiser_sustainers_log_next_charge', array('next_charge'));
+  db_add_index('fundraiser_sustainers_log', 'fundraiser_sustainers_log_old_state', array('old_state'));
+  db_add_index('fundraiser_sustainers_log', 'fundraiser_sustainers_log_new_state', array('new_state'));
 }

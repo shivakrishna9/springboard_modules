@@ -444,22 +444,21 @@ function fundraiser_webform_form_node_form_alter(&$form, &$form_state, $form_id)
 
 /**
  * Implements hook_form_alter().
+ *
+ * Alter the webform client form for donation content types.
+ * This is done with hook_form_alter and not hook_form_FORM_ID_alter
+ * because webform's form id varies.
+ * Ex. webform_client_form_NID.
  */
 function fundraiser_webform_form_alter(&$form, &$form_state, $form_id) {
-  // Alter the webform client form.
-  // Why hook_form_alter and not hook_form_FORM_ID_alter?
-  // Because webform's form id varies: webform_client_form_NID.
-  if (strstr($form_id, 'webform_client_form') !== FALSE) {
+  if (strstr($form_id, 'webform_client_form') !== FALSE && fundraiser_is_donation_type($form['#node']->type)) {
     // Handle donation form edit submission pg.
-    // From fundraiser.module.
-    if (fundraiser_is_donation_type($form['#node']->type) && arg(2) == 'submission') {
+    if (arg(2) == 'submission') {
       fundraiser_webform_submission_display($form, $form_state);
     }
     // Handle the donation form display.
-    // From fundraiser.module.
-    if (fundraiser_is_donation_type($form['#node']->type)   && arg(2) != 'submission') {
-      // From fundraiser.module,
-      // calls hooks to create form and submission paths.
+    else {
+      // Calls hooks to create form and submission paths.
       fundraiser_donation_form($form, $form_state);
     }
   }
@@ -504,7 +503,7 @@ function fundraiser_webform_form_alter(&$form, &$form_state, $form_id) {
 }
 
 /**
- * Form, alters the display of webform submissions to prevent edits / display of confusing info.
+ * Alters the display of webform submissions to prevent edits/display of confusing info.
  */
 function fundraiser_webform_submission_display(&$form, &$form_state) {
 
@@ -781,9 +780,9 @@ function fundraiser_webform_fundraiser_donation_submit($form, $form_state, $dona
 }
 
 /**
- * Implements hook_fundraiser_donation_post_submit().
+ * Implements hook_fundraiser_donation_post_submit_alter().
  */
-function fundraiser_webform_fundraiser_donation_post_submit($form, $form_state, $donation) {
+function fundraiser_webform_fundraiser_donation_post_submit_alter(&$form, &$form_state, &$donation) {
   // Handle behavior if it was a failure.
   if (!isset($donation->result['success']) || (isset($donation->result['success']) && $donation->result['success'] == FALSE) ) {
     // Tell webform we're not done and rebuild the form.
@@ -794,7 +793,6 @@ function fundraiser_webform_fundraiser_donation_post_submit($form, $form_state, 
     $form_state['values']['details']['finished'] = 0;
     $form_state['rebuild'] = TRUE;
   }
-  return $form_state;
 }
 
 /**

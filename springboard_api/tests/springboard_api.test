@@ -195,7 +195,7 @@ class SpringboardAPITestCase extends DrupalWebTestCase {
       'hidden' => 'hidden value',
       'textfield_test' => 'textfield value',
     );
-    springboard_api_form_action_submit(1, $values);
+    springboard_api_form_action_submit(1, NULL, $values);
     module_load_include('inc', 'webform', 'includes/webform.submissions');
     return webform_get_submission(1, 1);
   }
@@ -364,7 +364,7 @@ class SpringboardAPITestCase extends DrupalWebTestCase {
         'confirmation_format' => filter_default_format(),
         'redirect_url' => '<confirmation>',
         'teaser' => '0',
-        'allow_draft' => '1',
+        'allow_draft' => '0',
         'submit_text' => '',
         'submit_limit' => '-1',
         'submit_interval' => '-1',
