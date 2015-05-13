@@ -1,0 +1,30 @@
+<?php
+
+/**
+ * @file
+ * Provides NGO Connect specific functionality for Salesforce
+ * integration.
+ */
+
+function salesforce_ngo_connect_menu() {
+  $items = array();
+  $items['ngo-connect-batch-committed'] = array(
+    'title' => t('NGO Connect Batch Commits'),
+    'page callback' => 'salesforce_ngo_connect_capture_ids',
+    'access callback' => TRUE,
+    'type' => MENU_CALLBACK,
+  );
+  return $items;
+}
+
+function salesforce_ngo_connect_capture_ids() {
+  header("Content-Type: text/xml\r\n");
+  ob_start();
+
+  // Get raw post data
+  $data = fopen('php://input', 'rb');
+  $content = fread($data, 5000);
+  ob_end_clean();
+
+  watchdog('salesforce_ngo_connect', '<pre>' . print_r($content, TRUE) . '</pre>', NULL, WATCHDOG_DEBUG);
+}

@@ -1,0 +1,10 @@
+name = Salesforce NGO Connect
+description = Integration functionality specific to NGO Connect.
+package = Salesforce
+core = 7.x
+version = 7.x-4.x-dev
+
+dependencies[] = libraries
+dependencies[] = salesforce
+dependencies[] = salesforce_soap
+dependencies[] = salesforce_sync
