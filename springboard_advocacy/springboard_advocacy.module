@@ -923,7 +923,7 @@ function springboard_advocacy_api_unconfigured($type = 'All') {
  * @return array
  */
 function springboard_advocacy_smarty_vars() {
- return $springboard = array(
+ return array(
    'smarty_auth_id' => variable_get('springboard_advocacy_smarty_authid', ''),
    'smarty_token' => variable_get('springboard_advocacy_smarty_authtoken', ''),
   );
@@ -934,7 +934,7 @@ function springboard_advocacy_smarty_vars() {
  * @return array
  */
 function springboard_advocacy_api_vars() {
-  return $springboard = array(
+  return array(
     'api_url' => variable_get('springboard_advocacy_server_url', ''),
     'client_id' => variable_get('springboard_advocacy_client_id', ''),
     'client_secret' => variable_get('springboard_advocacy_client_secret', ''),

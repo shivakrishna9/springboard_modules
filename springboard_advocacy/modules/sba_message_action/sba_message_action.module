@@ -589,7 +589,7 @@ function sba_message_action_form_validate($form, &$form_state) {
       $default = $message['body_editable']['#default_value'];
       $edited = $form_state['values']['sba_messages']['message'][$message_id[0]]['body_editable'];
       if ($edited == $default) {
-        form_set_error('body_editable', t('Editing of the the default message is required.'));
+        form_set_error('body_editable', t('Please personalize your message before sending.'));
       }
     }
 
@@ -597,7 +597,7 @@ function sba_message_action_form_validate($form, &$form_state) {
       $default = $message['subject']['#default_value'];
       $edited = $form_state['values']['sba_messages']['message'][$message_id[0]]['subject'];
       if ($edited == $default) {
-        form_set_error('subject_editable', t('Editing of the the default subject is required.'));
+        form_set_error('subject_editable', t('Please personalize the subject line before sending your message.'));
       }
     }
   }
