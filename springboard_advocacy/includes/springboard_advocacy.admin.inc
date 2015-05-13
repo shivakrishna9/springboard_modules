@@ -236,10 +236,24 @@ function springboard_advocacy_dashboard($path, $arg = NULL) {
     case 'custom-targets':
       $view = views_get_view('sba_custom_targets');
       if($view && isset($view->display['block_1'])) {
+
+        $view -> set_display('block_1');
+        $view -> pre_execute();
+        $view -> execute();
+
+        // Contextual update the no results message.
+        if(isset($view->empty['area'])) {
+          $result = count($view->result);
+          $query = count($view->build_info['springboard_advocacy_search']);
+          if($result == 0 && $query > 1) {
+            $view->empty['area']->options['content'] = t('No custom targets match your search.');
+          }
+        }
+
         $views = array(
           'sba_targets' => array(
             'header' => t('Custom Targets'),
-            'content' => views_embed_view('sba_custom_targets', 'block_1'),
+            'content' => $view->preview(),
             'css' => drupal_get_path('module', 'springboard_advocacy') . '/css/sba.css',
             //'js' => drupal_get_path('module', 'springboard_target') . '/js/sba_target.js',
 
