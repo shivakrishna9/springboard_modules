@@ -35,11 +35,19 @@ function springboard_advocacy_send_message($user_message, $form_state) {
     // Build the message array.
     $message_build = springboard_advocacy_build_messages($user_message);
 
+    $node = $form_state['complete form']['#node'];
+    $test_mode = field_get_items('node', $node, 'field_test_mode');
+    if(!empty($test_mode[0]['value']) && $test_mode[0]['value'] == 1) {
+      $test_email = field_get_items('node', $node, 'field_test_mode_email');
+    }
+
     // Build the submission array
     $submission = array(
       'contact' => $contact,
       'form_id' => $values['advocacy_id'],
       'messages' => $message_build,
+      'test_mode' => !empty($test_mode[0]) ? $test_mode[0]['value'] : 0,
+      'test_email' => !empty($test_email[0]) ? $test_email[0]['safe_value'] : '',
     );
 
     // Send submission to API Client
@@ -99,9 +107,6 @@ function springboard_advocacy_build_messages($user_message) {
       $message_unique_id = $message->data['message_id'];
       $weight = !empty($message->data['precedence']) ? $message->data['weight'] : $x++;
 
-      $test_mode = $message_wrapper->field_sba_action_id->field_test_mode[0]->value();
-      $test_email = $message_wrapper->field_sba_action_id->field_test_mode_email->value();
-
       // Attach legislative issue search terms.
       $legislative_terms = array("Other");  // provide a generic default
       if ($message_wrapper->field_sba_action_id->__isset('field_sba_legislative_issues')) {  // field_sba_action_id is a reference to the action webform
@@ -118,8 +123,6 @@ function springboard_advocacy_build_messages($user_message) {
         'body' => $user_message[$message->sba_message_id]['body'],
         'topic' => $legislative_terms,
         'precedence' => !empty($message->data['precedence']) ? 1 : 0,
-        'test_mode' => !empty($test_mode) ? 1 : 0,
-        'test_email' => !empty($test_email) ? $test_email : '',
       );
     }
     ksort($messages);
