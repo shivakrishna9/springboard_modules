@@ -2,8 +2,7 @@
 
 /**
  * @file
- * Module for the SBA Message Entity - a starting point to create your own Entity
- * and associated administration interface
+ * Module for the SBA Message Entity
  */  
 
 
@@ -44,6 +43,15 @@ function sba_message_access($op, $sba_message = NULL, $account = NULL) {
     $types = variable_get('sba_action_types', array());
     if ((isset($node->type) && !in_array($node->type, $types)) || empty($node->type)) {
       return FALSE;
+    }
+
+    if (arg(2) == 'messages') {
+      $unconfigured = springboard_advocacy_api_unconfigured('springboard');
+      if(!empty($unconfigured)) {
+        $items = implode(', ', $unconfigured);
+        drupal_set_message(t('Advocacy API is not properly <a href="!url">configured</a>. There are empty values in :items. Configuration is required prior to message creation.', array('!url' => url('admin/config/services/advocacy'), ':items' => $items)));
+        return FALSE;
+      }
     }
 
     // If a message is user editable, disable creation or additional messages for that node

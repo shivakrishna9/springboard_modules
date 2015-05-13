@@ -876,6 +876,67 @@ function springboard_advocacy_get_subscription() {
   return $subscription;
 }
 
+/**
+ * IMPLEMENTS HOOK_springboard_admin_views_alter
+ *
+ * Include sba_actions view in springboard_admin_views in order to
+ * get the views date formatter used in springboard.
+ *
+ * @param $names
+ */
 function springboard_advocacy_springboard_admin_views_alter(&$names) {
   $names[] = 'sba_actions';
+}
+
+/**
+ * Configuration check helper
+ *
+ * @param string $type
+ * @return array
+ */
+function springboard_advocacy_api_unconfigured($type = 'All') {
+
+  $settings = array();
+
+  if ($type == 'springboard') {
+    $settings = springboard_advocacy_api_vars();
+  }
+  elseif ($type == 'smarty') {
+    $settings = springboard_advocacy_smarty_vars();
+  }
+  else {
+    $settings = springboard_advocacy_api_vars() + springboard_advocacy_smarty_vars();
+  }
+
+  $unconfigured  = array();
+  foreach ($settings as $key => $setting)  {
+    if($setting == '') {
+      $unconfigured[] =  $key;
+    }
+  }
+
+  return $unconfigured;
+}
+
+/**
+ * Configuration check helper
+ * @return array
+ */
+function springboard_advocacy_smarty_vars() {
+ return $springboard = array(
+   'smarty_auth_id' => variable_get('springboard_advocacy_smarty_authid', ''),
+   'smarty_token' => variable_get('springboard_advocacy_smarty_authtoken', ''),
+  );
+}
+
+/**
+ * Configuration check helper
+ * @return array
+ */
+function springboard_advocacy_api_vars() {
+  return $springboard = array(
+    'api_url' => variable_get('springboard_advocacy_server_url', ''),
+    'client_id' => variable_get('springboard_advocacy_client_id', ''),
+    'client_secret' => variable_get('springboard_advocacy_client_secret', ''),
+  );
 }
