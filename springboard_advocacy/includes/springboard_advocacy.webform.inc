@@ -46,8 +46,8 @@ function springboard_advocacy_send_message($user_message, $form_state) {
       'contact' => $contact,
       'form_id' => $values['advocacy_id'],
       'messages' => $message_build,
-      'test_mode' => !empty($test_mode[0]) ? $test_mode[0]['value'] : 0,
-      'test_email' => !empty($test_email[0]) ? $test_email[0]['safe_value'] : '',
+      'test_mode' => !empty($test_mode[0]['value']) ? $test_mode[0]['value'] : 0,
+      'test_email' => !empty($test_email[0]['safe_value']) ? $test_email[0]['safe_value'] : '',
     );
 
     // Send submission to API Client
