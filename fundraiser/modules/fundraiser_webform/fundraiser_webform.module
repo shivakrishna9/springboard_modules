@@ -167,6 +167,20 @@ function fundraiser_webform_tokens_alter(&$replacements, &$context) {
   if (!empty($donation)) {
     $replacements += token_generate('donation', $context['tokens'], array('donation' => $donation), $context['options']);
   }
+
+  // If there is a donation load up its webform submission and replace webform-tokens.
+  if (
+    !empty($context['data']['donation'])
+    && module_exists('webform_tokens')
+    && $webform_tokens = token_find_with_prefix($context['tokens'], 'webform-tokens')
+  ) {
+    if (empty($context['data']['webform-submission'])) {
+      module_load_include('inc', 'webform', 'includes/webform.submissions');
+      $context['data']['webform-submission'] = webform_get_submission($context['data']['donation']->nid, $context['data']['donation']->sid);
+    }
+
+    $replacements += token_generate('webform-tokens', $webform_tokens, array('webform-submission' => $context['data']['webform-submission']), $context['options']);
+  }
 }
 
 /**

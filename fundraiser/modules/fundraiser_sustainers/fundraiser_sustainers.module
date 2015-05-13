@@ -364,8 +364,10 @@ function fundraiser_sustainers_tokens_alter(&$replacements, $context) {
   if ($type = 'donation' && !empty($data['donation'])) {
     $donation = $data['donation'];
     $replacements['[donation:recurs_monthly]'] = t('No');
+    $replacements['[donation:frequency]'] = t('One-time');
     if (!empty($donation->donation['recurs_monthly']) && $donation->donation['recurs_monthly']) {
       $replacements['[donation:recurs_monthly]'] = t('Yes');
+      $replacements['[donation:frequency]'] = t('Monthly');
     }
   }
 }
