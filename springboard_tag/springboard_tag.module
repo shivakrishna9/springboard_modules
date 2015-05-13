@@ -77,7 +77,7 @@ function _springboard_tag_new($set_defaults) {
  */
 function springboard_tag_page_alter(&$page) {
   // Load the tags for this page.
-  $tags = _springboard_tag_load_tags(FALSE);
+  $tags = _springboard_tag_load_tags();
   if (empty($tags)) {
     return;
   }
@@ -119,8 +119,11 @@ function _springboard_tag_post_render(&$children, $elements) {
 /**
  * Generate the tag snippet.
  *
- * @param $string $snippet
+ * @param string $snippet
  *   The contents of the tag.
+ *
+ * @return string
+ *   The final tag code to be placed into the page.
  */
 function _springboard_tag_generate_tag($snippet) {
   global $user;
@@ -148,7 +151,7 @@ function _springboard_tag_generate_tag($snippet) {
 }
 
 /**
- * Load the tags for a specific page request.
+ * Load the tags for a page request.
  */
 function _springboard_tag_load_tags() {
   // Load all the configured tags.
@@ -176,6 +179,9 @@ function _springboard_tag_load_tags_sort($a, $b) {
 
 /**
  * Implements hook_springboard_tag_list_alter().
+ *
+ * @param array $tags
+ *   An array of tags loaded through ctools.
  */
 function springboard_tag_springboard_tag_list_alter(&$tags) {
   $account = $GLOBALS['user'];
@@ -227,23 +233,19 @@ function springboard_tag_springboard_tag_list_alter(&$tags) {
       // Convert path to lowercase. This allows comparison of the same path
       // with different case. Ex: /Page, /page, /PAGE.
       $pages = drupal_strtolower($path['pages']);
-      if ($path['page_specific']) {
-        // Convert the Drupal path to lowercase
-        $drupal_path = drupal_strtolower(drupal_get_path_alias($_GET['q']));
-        // Compare the lowercase internal and lowercase path alias (if any).
-        $page_match = drupal_match_path($drupal_path, $path['pages']);
-        if ($path != $_GET['q']) {
-          $page_match = $page_match || drupal_match_path($_GET['q'], $path['pages']);
-        }
-        // When $path['page_specific'] has a value of 0 (BLOCK_VISIBILITY_NOTLISTED),
-        // the block is displayed on all pages except those listed in $path['pages'].
-        // When set to 1 (BLOCK_VISIBILITY_LISTED), it is displayed only on those
-        // pages listed in $path['pages'].
-        $page_match = !($path['page_specific'] xor $page_match);
+
+      // Convert the Drupal path to lowercase
+      $drupal_path = drupal_strtolower(drupal_get_path_alias($_GET['q']));
+      // Compare the lowercase internal and lowercase path alias (if any).
+      $page_match = drupal_match_path($drupal_path, $path['pages']);
+      if ($path != $_GET['q']) {
+        $page_match = $page_match || drupal_match_path($_GET['q'], $path['pages']);
       }
-      else {
-        $page_match = FALSE;
-      }
+      // When $path['page_specific'] has a value of 0 (BLOCK_VISIBILITY_NOTLISTED),
+      // the tag is displayed on all pages except those listed in $path['pages'].
+      // When set to 1 (BLOCK_VISIBILITY_LISTED), it is displayed only on those
+      // pages listed in $path['pages'].
+      $page_match = !($path['page_specific'] xor $page_match);
     }
     else {
       $page_match = TRUE;
@@ -260,19 +262,17 @@ function springboard_tag_springboard_tag_list_alter(&$tags) {
         $current_node = node_load(arg(1));
       }
 
+      // If this is a node page check the node type setting.
       if (!empty($current_node)) {
-        // This is a node page.
-        if (!isset($node['type'][$current_node->type])) {
-          // This tag should not be displayed for this node type.
-         unset($tags[$key]);
+        // Remove if this tag is not set to display on this node type.
+        if (empty($node['type'][$current_node->type])) {
+          unset($tags[$key]);
         }
       }
       else {
-        // This is not a node page, remove the block.
+        // This is not a node page, remove the tag.
         unset($tags[$key]);
       }
     }
   }
-
-  return $tags;
 }
