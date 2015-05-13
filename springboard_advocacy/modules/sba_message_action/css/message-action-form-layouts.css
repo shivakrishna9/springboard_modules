@@ -218,6 +218,6 @@ clear: both;
     padding-left: 20px;
 }
 
-input#edit-sba-messages-message-1-subject {
+fieldset[id*="edit-sba-messages-message"]  input[name*="subject"] {
     width: 95%;
 }

@@ -160,6 +160,6 @@ textarea[id*="edit-sba-messages-message"] {
     padding: 0;
 }
 
-input#edit-sba-messages-message-1-subject  {
+fieldset[id*="edit-sba-messages-message"]  input[name*="subject"] {
     width: 95%;
 }

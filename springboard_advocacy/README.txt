@@ -6,7 +6,7 @@ Springboard Advocacy communicates with the Springboard Advocacy Server via
 a PHP SDK which lives in the Drupal libraries folder. The remote advocacy server stores the targets
 of advocacy actions and sends advocacy messages to them.
 
-The Springboard Adovcacy module acts as a bridge between its submodules and the Advocacy server.
+The Springboard Advocacy module acts as a bridge between its submodules and the Advocacy server.
 It provides configuration and common functions for the submodules, including;
 
 * An SDK loader class which handles Advocacy Server Oauth Token retrieval and creation, as well
