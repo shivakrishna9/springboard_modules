@@ -145,7 +145,6 @@ function sba_message_prepopulate_get_values_from_node_url($field, $instance) {
   }
 }
 
-
 /**
  * Implements hook_form_FORMID_alter
  *
@@ -281,20 +280,11 @@ function sba_message_entity_info() {
       'name' => 'type',
       'label' => 'label',
     ),
-    //'access callback' => 'sba_message_type_access',
     'module' => 'sba_message',
-    // Enable the entity API's admin UI.
-   // @todo remove
-//    'admin ui' => array(
-//      'path' => 'admin/structure/sba_message_types',
-//      'file' => 'sba_message_type.admin.inc',
-//      'controller class' => 'SbaMessageTypeUIController',
-//    ),
   );
 
   return $return;
 }
-
 
 /**
  * Implements hook_entity_info_alter().
@@ -308,16 +298,9 @@ function sba_message_entity_info_alter(&$entity_info) {
   foreach (sba_message_get_types() as $type => $info) {
     $entity_info['sba_message']['bundles'][$type] = array(
       'label' => $info->label,
-//      'admin' => array(
-//        'path' => 'admin/structure/sba_message_types/manage/%sba_message_type',
-//        'real path' => 'admin/structure/sba_message_types/manage/' . $type,
-//        'bundle argument' => 4,
-//        'access arguments' => array('administer sba message types'),
-//      ),
     );
   }
 }
-  
 
 /**
  * Implements hook_permission().
@@ -328,44 +311,13 @@ function sba_message_permission() {
   // We set up permissions to manage entity types, manage all entities and the
   // permissions for each individual entity
   $permissions = array(
-//    'administer sba message types' => array(
-//      'title' => t('Administer sba message types'),
-//      'description' => t('Create and delete fields for sba message types, and set their permissions.'),
-//    ),
     'administer sba messages' => array(
       'title' => t('Administer sba_messages'),
       'description' => t('Edit and delete all sba_messages'),
     ),  
   );
-  
-  //Generate permissions per sba_message
-
-  // We're using the owner node's permission instead.
-
-  //  foreach (sba_message_get_types() as $type) {
-  //    $type_name = check_plain($type->type);
-  //    $permissions += array(
-  //      "edit any $type_name sba message" => array(
-  //        'title' => t('%type_name: Edit any sba message', array('%type_name' => $type->label)),
-  //      ),
-  //      "view any $type_name sba_message" => array(
-  //        'title' => t('%type_name: View any sba message', array('%type_name' => $type->label)),
-  //      ),
-  //    );
-  //  }
-
   return $permissions;  
 }
-
-
-/**
- * Access callback for the entity API.
- * @TODO To be removed.
- */
-//function sba_message_type_access($op, $type = NULL, $account = NULL) {
-//  return user_access('administer sba message types', $account);
-//}
-
 
 /**
  * Gets an array of all sba_message types, keyed by the type name.
@@ -382,7 +334,6 @@ function sba_message_get_types($type_name = NULL) {
   return isset($type_name) ? reset($types) : $types;
 }
 
-
 /**
  * Menu argument loader; Load a sba_message type by string.
  *
@@ -394,7 +345,6 @@ function sba_message_get_types($type_name = NULL) {
 function sba_message_type_load($type) {
   return sba_message_get_types($type);
 }
-
 
 /**
  * Fetch a sba_message object.
@@ -412,7 +362,6 @@ function sba_message_load($sba_message_id, $reset = FALSE) {
   $sba_messages = sba_message_load_multiple(array($sba_message_id), array(), $reset);
   return reset($sba_messages);
 }
-
 
 /**
  * Load multiple sba_messages based on certain conditions.
@@ -433,7 +382,6 @@ function sba_message_load_multiple($sba_message_ids = array(), $conditions = arr
   return entity_load('sba_message', $sba_message_ids, $conditions, $reset);
 }
 
-
 /**
  * Deletes a sba_message.
  */
@@ -445,7 +393,6 @@ function sba_message_delete(SbaMessage $sba_message) {
     ->execute();
 }
 
-
 /**
  * Delete multiple sba_messages.
  *
@@ -456,14 +403,12 @@ function sba_message_delete_multiple(array $sba_message_ids) {
   entity_get_controller('sba_message')->delete($sba_message_ids);
 }
 
-
 /**
  * Create a sba_message object.
  */
 function sba_message_create($values = array()) {
   return entity_get_controller('sba_message')->create($values);
 }
-
 
 /**
  * Saves a sba_message to the database.
@@ -475,7 +420,6 @@ function sba_message_save(SbaMessage $sba_message) {
   return $sba_message->save();
 }
 
-
 /**
  * Saves a sba_message type to the db.
  */
@@ -483,14 +427,12 @@ function sba_message_type_save(SbaMessageType $type) {
   $type->save();
 }
 
-
 /**
  * Deletes a sba_message type from the db.
  */
 function sba_message_type_delete(SbaMessageType $type) {
   $type->delete();
 }
-
 
 /**
  * URI callback for sba_messages
@@ -501,26 +443,12 @@ function sba_message_uri(SbaMessage $sba_message){
   );
 }
 
-
 /**
  * Menu title callback for showing individual entities
  */
 function sba_message_page_title(SbaMessage $sba_message){
   return $sba_message->name;
 }
-
-
-/**
- * Sets up content to show an individual sba_message
- *  @TODO Probably won't need a message page view. Remove.
- */
-//function sba_message_page_view($sba_message, $view_mode = 'full') {
-//  $controller = entity_get_controller('sba_message');
-//  $content = $controller->view(array($sba_message->sba_message_id => $sba_message));
-//  drupal_set_title($sba_message->name);
-//  return $content;
-//}
-//
 
 /**
  * Implements hook_views_api().
@@ -532,21 +460,12 @@ function sba_message_views_api() {
   );
 }
 
-
 /**
  * Implement hook_theme().
 
  */
 function sba_message_theme() {
   return array(
-//    'sba_message_add_list' => array(
-//      'variables' => array('content' => array()),
-//      'file' => 'sba_message.admin.inc',
-//    ),
-//    'sba_message' => array(
-//      'render element' => 'elements',
-//      'template' => 'sba_message',
-//    ),
     'views_exposed_form' => array(
       'template' => 'templates/views-exposed-form--targets-block-3',
       'render element' => 'form',
@@ -579,12 +498,6 @@ class SbaMessage extends Entity {
   protected function defaultLabel() {
     return $this->name;
   }
-// @todo remove if we don't need a view path
-//  protected function defaultUri() {
-//    return array('path' => 'sba_message/' . $this->sba_message_id);
-//  }
-//
-  
 }
 
 
@@ -599,9 +512,7 @@ class SbaMessageType extends Entity {
   public function __construct($values = array()) {
     parent::__construct($values, 'sba_message_type');
   }
-  
 }
-
 
 /**
  * The Controller for SBA Message entities
@@ -637,19 +548,6 @@ class SbaMessageController extends EntityAPIController {
     $sba_message = parent::create($values);
     return $sba_message;
   }
-  
-  /**
-   * Overriding the buldContent function to add entity specific fields
-   */
-//  public function buildContent($entity, $view_mode = 'full', $langcode = NULL, $content = array()) {
-//    $content = parent::buildContent($entity, $view_mode, $langcode, $content);
-////    $content['sba_message_sample_data'] =  array(
-////      '#markup' => theme('sba_message_sample_data', array('sba_message_sample_data' => check_plain($entity->data['sample_data']), 'sba_message' => $entity)),
-////    );
-//
-//    return $content;
-//  }
-  
 }
 
 
@@ -682,5 +580,4 @@ class SbaMessageTypeController extends EntityAPIControllerExportable {
     $sba_message_type = parent::create($values);
     return $sba_message_type;
   }
-
 }

@@ -68,7 +68,6 @@ class SbaMessageUIController extends EntityDefaultUIController {
     );
     return $items;
   }
-  
 }
 
 /**
@@ -114,7 +113,6 @@ function sba_message_form_wrapper($sba_message) {
   );
   return $build;
 }
-
 
 /**
  * Form callback wrapper: delete a sba_message.
@@ -175,7 +173,6 @@ function sba_message_edit_form($form, &$form_state, $sba_message) {
     '#type' => 'hidden',
     '#value' => isset($sba_message->data['message_id']) ? $sba_message->data['message_id'] : str_replace(' ', '-', uniqid(substr(variable_get('site_name', ''), 0, 10) . '-' . substr($node->title, 0, 10) . '-')),
   );
-
 
   $form['data']['recipients'] = array(
     '#type' => 'hidden',
@@ -241,17 +238,6 @@ function sba_message_edit_form($form, &$form_state, $sba_message) {
     '#submit' => $submit + array('sba_message_edit_form_submit'),
   );
 
-//  if (!empty($sba_message->name)) {
-//    $form['actions']['delete'] = array(
-//      '#type' => 'submit',
-//      '#value' => t('Delete message'),
-//      '#prefix' => '<br />',
-//
-//      '#suffix' => l(t('Cancel'), 'node/' . $node->nid . '/messages'),
-//      '#submit' => $submit + array('sba_message_form_submit_delete'),
-//      '#weight' => 45,
-//    );
-//  }
   // We append the validate handler to #validate in case a form callback_wrapper
   // is used to add validate handlers earlier.
   $form['#validate'][] = 'sba_message_edit_form_validate';
@@ -282,6 +268,7 @@ function sba_message_edit_form_submit(&$form, &$form_state) {
     $sba_message->created = time();
     $is_new = TRUE;
   }
+
   $sba_message->changed = time();
 
   $status = $sba_message->save();
@@ -326,7 +313,6 @@ function sba_message_form_submit_delete(&$form, &$form_state) {
   $nid =  $form_state['values']['nid'];
   $form_state['redirect'] = 'node/' . $nid . '/messages/sba_message/' . $form_state['sba_message']->sba_message_id . '/delete';
 }
-
 
 /**
  * Form callback: confirmation form for deleting a sba_message.
