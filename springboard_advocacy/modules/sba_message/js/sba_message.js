@@ -41,17 +41,14 @@
                 $('#edit-actions .view-empty').show();
             }
 
-            // Initialize some setup functions for federal-and-states-selected subscription level
-            // to hode/show various options
-            var subscr = Drupal.settings.sbaSubscriptionLevel;
-            if (subscr == 'federal-and-states-selected') {
-                //main search
-                Sba.toggleStateAndBranchState();
-                Sba.toggleStateAndBranchBranch();
-                //committee search
-                Sba.toggleStateAndChambersState();
-                Sba.toggleStateAndChambersChamber();
-            }
+            // Prevent doubleclicks of target search submit.
+            $('#edit-submit-targets').ajaxStart(function( event, xhr, settings ) {
+                $('#edit-submit-targets').prop('disabled', true).css({'cursor': 'not-allowed'});;
+            });
+            $('#edit-submit-targets').ajaxComplete(function( event, xhr, settings ) {
+                $('#edit-submit-targets').prop('disabled', false).css({'cursor': 'pointer'});;
+            });
+
         }
     };
 
@@ -89,8 +86,9 @@
     Sba.buildSubscriptions = function () {
 
         if (typeof(Drupal.settings.sbaSubscriptionLevel) !== "undefined") {
+            var sub = Drupal.settings.sbaSubscriptionLevel;
             //Federal Only
-            if (Drupal.settings.sbaSubscriptionLevel == 'federal-only') {
+            if (sub == 'federal-only') {
                 $("#edit-search-committee-chamber option").each(function () {
                     if ($(this).html().indexOf('State') != -1) {
                         $(this).remove();
@@ -104,7 +102,7 @@
                 }
             }
             //State only
-            if (Drupal.settings.sbaSubscriptionLevel == 'state-only') {
+            if (sub == 'state-only') {
                 $("#edit-search-committee-chamber option").each(function () {
                     if ($(this).html().indexOf('Federal') != -1) {
                         $(this).remove();
@@ -113,7 +111,7 @@
             }
 
             //Selected states only
-            if (Drupal.settings.sbaSubscriptionLevel == 'states-selected') {
+            if (sub == 'states-selected') {
                 $("#edit-search-committee-chamber option").each(function () {
                     if ($(this).html().indexOf('Federal') != -1) {
                         $(this).remove();
@@ -123,7 +121,7 @@
             }
 
             //Federal and some states
-            if (Drupal.settings.sbaSubscriptionLevel == 'federal-and-states-selected') {
+            if (sub == 'federal-and-states-selected') {
                 if(window.search_state == 'committee') {
                     $("#edit-search-state option").each(function () {
                         if ($(this).val() != "All" && $.inArray($(this).val(), Drupal.settings.sbaAllowedStates) == -1) {
@@ -136,6 +134,17 @@
                         $(this).show();
                     });
                 }
+            }
+
+            // Initialize some setup functions for federal-and-states-selected subscription level
+            // to hide/show various options
+            if (sub == 'federal-and-states-selected') {
+                //main search
+                Sba.toggleStateAndBranchState();
+                Sba.toggleStateAndBranchBranch();
+                //committee search
+                Sba.toggleStateAndChambersState();
+                Sba.toggleStateAndChambersChamber();
             }
         }
     }
@@ -506,8 +515,8 @@
     // Update target search form elements
     // for federal-and-states-selected subscription level
     Sba.toggleStateAndBranch = function () {
-        var subscr = Drupal.settings.sbaSubscriptionLevel;
-        if (subscr == 'federal-and-states-selected') {
+        var sub = Drupal.settings.sbaSubscriptionLevel;
+        if (sub == 'federal-and-states-selected') {
             var states = Drupal.settings.sbaAllowedStates;
             $('select', '#edit-search-state-wrapper').change(function () {
                 Sba.toggleStateAndBranchState();
