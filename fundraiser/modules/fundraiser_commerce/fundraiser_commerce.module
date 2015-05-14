@@ -777,6 +777,9 @@ function _fundraiser_commerce_client_state_ajax_submit($form, $form_state, &$mes
       // Focus on the state field and remove the current value.
       ajax_command_invoke(':input[name="' . $build_array['#name'] . '"]', 'focus'),
       ajax_command_invoke(':input[name="' . $build_array['#name'] . '"]', 'val', array('')),
+
+      // Force the zip code field to re-validate.
+      ajax_command_invoke(':input[name*="[zip]"]', 'trigger', array('keyup')),
     ),
   );
 }
