@@ -10,9 +10,10 @@ function springboard_target_create_custom_targets_form() {
   module_load_include('inc', 'springboard_target', 'includes/springboard_target.custom_targets');
 
   $form = springboard_target_form();
-  $form['#validate'][] = 'springboard_target_form_validate';
-
-  $form['submit'] = array('#type' => 'submit', '#value' => t('Save'), '#weight' => 10,  '#attributes' => array('class' => 'target-add'));
+  if (!isset($form['not_found'])) {
+    $form['#validate'][] = 'springboard_target_form_validate';
+    $form['submit'] = array('#type' => 'submit', '#value' => t('Save'), '#weight' => 10, '#attributes' => array('class' => 'target-add'));
+  }
   return $form;
 }
 

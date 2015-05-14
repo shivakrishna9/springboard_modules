@@ -10,20 +10,20 @@ function springboard_target_edit_custom_targets_form($form, &$form_state, $targe
   module_load_include('inc', 'springboard_target', 'includes/springboard_target.custom_targets');
 
   $form = springboard_target_form($target_id);
-
-  $name = array(
-    $form['row_one']['salutation']['#default_value'],
-    $form['row_one']['first_name']['#default_value'],
-    $form['row_one']['last_name']['#default_value']
-  );
-  $form['header'] = array(
-    '#prefix' => '<h2>',
-    '#suffix' => '</h2>',
-    '#markup'=> check_plain(implode(' ', $name)),
-    '#weight' => '-100' ,
-  );
-
   if (!isset($form['not_found'])) {
+
+    $name = array(
+      $form['row_one']['salutation']['#default_value'],
+      $form['row_one']['first_name']['#default_value'],
+      $form['row_one']['last_name']['#default_value']
+    );
+    $form['header'] = array(
+      '#prefix' => '<h2>',
+      '#suffix' => '</h2>',
+      '#markup'=> check_plain(implode(' ', $name)),
+      '#weight' => '-100' ,
+    );
+
     $form['submit'] = array('#type' => 'submit', '#value' => t('Update'), '#weight' => 10, '#attributes' => array('class' => 'target-add'));
   }
   $form['#validate'][] = 'springboard_target_form_validate';

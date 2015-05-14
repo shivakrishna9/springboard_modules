@@ -18,6 +18,15 @@ function springboard_target_form($target_id = NULL) {
   $form['#attached']['css'][] =  drupal_get_path('module', 'springboard_target') . '/css/sba_target.css';
   $form['#attached']['js'][] =  drupal_get_path('module', 'springboard_target') . '/js/sba_target.js';
 
+  $unconfigured = springboard_advocacy_api_unconfigured('springboard');
+  if(!empty($unconfigured)) {
+    $items = implode(', ', $unconfigured);
+    $message = t('Please <a href="!url">configure</a> the Springboard API settings. There are empty values in :items. Configuration is required prior to target creation.', array('!url' => url('admin/config/services/advocacy'), ':items' => $items));
+    $form = array();
+    $form['not_found']['#markup'] = $message;
+    return $form;
+  }
+
   $form['#attributes']['class'][] =  'target-edit-form';
 
   if (isset($target_id) && is_numeric($target_id)) {

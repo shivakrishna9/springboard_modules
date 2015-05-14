@@ -234,9 +234,15 @@ function springboard_advocacy_dashboard($path, $arg = NULL) {
       break;
 
     case 'custom-targets':
-      $view = views_get_view('sba_custom_targets');
+      $unconfigured = springboard_advocacy_api_unconfigured('springboard');
+      if(!empty($unconfigured)) {
+        $items = implode(', ', $unconfigured);
+        $view = FALSE;
+      }
+      else {
+        $view = views_get_view('sba_custom_targets');
+      }
       if($view && isset($view->display['block_1'])) {
-
         $view -> set_display('block_1');
         $view -> pre_execute();
         $view -> execute();
@@ -255,10 +261,16 @@ function springboard_advocacy_dashboard($path, $arg = NULL) {
         };
       }
       else {
+        if(!empty($unconfigured)) {
+          $message = t('Please <a href="!url">configure</a> the Springboard API settings. There are empty values in :items. Configuration is required prior to target creation.', array('!url' => url('admin/config/services/advocacy'), ':items' => $items));
+        }
+        else {
+          $message = t('Target view or view display "block_1" not found.');
+        }
         $views = array(
           'sba_targets' => array(
             'header' => t('Custom Targets'),
-            'content' => '<div>Target view or view display "block_1" not found.</div>',
+            'content' => '<div>' . $message . '</div>',
           ),
         );
       }
