@@ -265,8 +265,37 @@ function sba_message_action_webform_user_profile_fields_alter(&$fields, $node) {
       }
     }
   }
+  else {
+    foreach ($fields as $index => $profile_field) {
+      // Suppress advocacy-specific profile fields on non-advocacy nodes.
+      if ($profile_field['name'] == 'sbp_phone' || $profile_field['name'] == 'sbp_salutation') {
+        unset($fields[$index]);
+      }
+    }
+  }
 }
 
+/**
+ * Implements hook_form_formid_alter
+ *
+ * Suppress advocacy-specific profile fields on non-advocacy node type forms.
+ *
+ * @param $form
+ * @param $form_state
+ */
+function sba_message_action_form_node_type_form_alter(&$form, &$form_state) {
+  $node = isset($form['#node']) ? $form['#node'] : FALSE;
+
+  if(($node && $node->type != 'sba_message_action') || !$node) {
+    $options = !empty($form['webform_user']['settings']['webform_user_default_fields']['#options']) ? $form['webform_user']['settings']['webform_user_default_fields']['#options'] : FALSE;
+    if($options && isset($options['sbp_salutation'])) {
+      unset($form['webform_user']['settings']['webform_user_default_fields']['#options']['sbp_salutation']);
+    }
+    if($options && isset($options['sbp_phone'])) {
+      unset($form['webform_user']['settings']['webform_user_default_fields']['#options']['sbp_phone']);
+    }
+  }
+}
 
 /**
  * Implements hook_node_load
