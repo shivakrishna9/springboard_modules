@@ -67,11 +67,6 @@ function springboard_target_permission() {
   );
 }
 
-function springboard_target_views_api() {
-  return array(
-    'api' => 3.0,
-  );
-}
 
 /**
  * Determines if a user can access any target management features.
@@ -81,4 +76,36 @@ function springboard_target_user_can_access_targets() {
     || user_access('create targets')
     || user_access('edit targets')
     || user_access('delete targets');
+}
+
+
+/**
+ * Implements hook_views_api
+ *
+ * @return array
+ */
+function springboard_target_views_api() {
+  return array(
+    'api' => 3.0,
+  );
+}
+
+/**
+ * Implements hook_view_pre_render
+ *
+ * Change the no results text in custom target listing.
+ *
+ * @param $view
+ */
+function springboard_target_views_pre_render(&$view) {
+  if ($view->name == 'sba_custom_targets' && $view->current_display == 'block_1') {
+    // Contextual update the no results message.
+    if (isset($view->empty['area'])) {
+      $result = count($view->result);
+      $query = count($view->build_info['springboard_advocacy_search']);
+      if ($result == 0 && $query > 1) {
+        $view->empty['area']->options['content'] = t('No custom targets match your search.');
+      }
+    }
+  }
 }

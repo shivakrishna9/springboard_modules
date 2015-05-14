@@ -241,15 +241,6 @@ function springboard_advocacy_dashboard($path, $arg = NULL) {
         $view -> pre_execute();
         $view -> execute();
 
-        // Contextual update the no results message.
-        if(isset($view->empty['area'])) {
-          $result = count($view->result);
-          $query = count($view->build_info['springboard_advocacy_search']);
-          if($result == 0 && $query > 1) {
-            $view->empty['area']->options['content'] = t('No custom targets match your search.');
-          }
-        }
-
         $views = array(
           'sba_targets' => array(
             'header' => t('Custom Targets'),
