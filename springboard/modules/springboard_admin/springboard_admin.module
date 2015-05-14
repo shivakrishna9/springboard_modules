@@ -130,6 +130,10 @@ function springboard_admin_form_views_exposed_form_alter(&$form, &$form_state, $
         $form['date_filter']['min']['#title'] = 'Requested between';
         $form['date_filter']['max']['#title'] = 'and';
         break;
+      case "sbv_administrator_users";
+        $form['date_filter']['min']['#title'] = 'Created between';
+        $form['date_filter']['max']['#title'] = 'and';
+        break;
       // Default will be the updated date.
       default;
         $form['date_filter']['min']['#title'] = 'Last updated between';
@@ -1395,7 +1399,7 @@ function _springboard_admin_apply_treatment($user) {
  */
 function _springboard_admin_views() {
   $view_names = array(
-    'sbv_administrators',
+    'sbv_administrator_users',
     'sbv_assets',
     'sbv_contacts',
     'sbv_dblog',
