@@ -12,6 +12,6 @@ where they are prompted to create a message to attach to the Message Action webf
 Message targets (recipients) are added during this message creation process. Multiple messages
 with multiple targets can be attached to a single Message Action webform.
 
-The messages are Entity API entities to attached the message actions via entity references. The targets
+The messages are Entity API entities attached to the message actions via entity references. The targets
 are stored on the Advocacy API server. This module will not fully function without a valid, configured API account.
 API configuration is handled by the Springboard Advocacy module.

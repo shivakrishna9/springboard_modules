@@ -1,6 +1,6 @@
 Provides a message entity for use by sba action modules. Does nothing on its own without a parent node module.
 
-Allows message target selection for messages using a views exposed filter search
+Allows message target (recipient) selection for messages using a views exposed filter search
 combined with some javascript, which helps insert the target data into the entity's
 serialized data field.
 
