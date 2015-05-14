@@ -476,11 +476,21 @@ function sba_message_action_editable_message_form(&$form, $message, $multiple) {
     '#value' => $message->sba_message_id,
   );
 
-  if ($wrapper->field_sba_subject_editable->value() != 'Not editable') {
+  $sub_ed =  $wrapper->field_sba_subject_editable->value();
+  if ($sub_ed == 'Editing is required') {
+    $description = t('You must edit the subject line of this message before sending.');
+    $required = TRUE;
+  }
+  else {
+    $required = FALSE;
+  }
+  if ($sub_ed != 'Not editable') {
     $form['message'][$message->sba_message_id]['subject'] = array(
       '#type' => 'textfield',
       '#title' => t('Subject'),
       '#default_value' => $subject,
+      '#description' => !empty($description) ? $description : '',
+      //'#required' => $required,
     );
   }
   else {
@@ -528,7 +538,6 @@ function sba_message_action_editable_message_form(&$form, $message, $multiple) {
         '#markup' => $message_body,
       );
   }
-
   if ($wrapper->field_sba_subject_editable->value() == 'Editing is required' && !$multiple) {
     $form['message'][$message->sba_message_id]['subject_required'] = array(
       '#type' => 'value',
@@ -537,10 +546,21 @@ function sba_message_action_editable_message_form(&$form, $message, $multiple) {
   }
   if ($wrapper->field_sba_user_editable[0]->value() == 'editable' && !$multiple) {
 
+    if ($required_body) {
+      $description = t('You must edit the body of this message before sending.');
+      $required = TRUE;
+    }
+    else {
+      $description = '';
+      $required = FALSE;
+    }
+
     $form['message'][$message->sba_message_id]['body_editable'] = array(
       //'#title' => t('Your Message'),
       '#type' => 'textarea',
       '#default_value' => $editable_message,
+      '#description' => $description,
+      '#required' => $required,
     );
 
     $form['message'][$message->sba_message_id]['body_required'] = array(
