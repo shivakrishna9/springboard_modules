@@ -583,6 +583,33 @@ function _fundraiser_donation_settings_form(&$form, &$form_state) {
     $form['#validate'][] = '_fundraiser_form_payment_method_validate';
   }
 
+  // Make changes to the currency settings field.
+  if (!empty($form['field_fundraiser_currency'])) {
+    $currency_field = &$form['field_fundraiser_currency'][ $form['field_fundraiser_currency']['#language'] ];
+    // Remove the none option.
+    unset($currency_field['#options']['_none']);
+
+    // If there is only one value left hide the field and set the value to the default currency.
+    if (count($currency_field['#options']) === 1) {
+      $currency_field['#type'] = 'value';
+      $currency_field['#default_value'] = commerce_default_currency();
+      $currency_field['#required'] = FALSE;
+    }
+    // Else, move it into the fundraiser group.
+    else {
+      $form['fundraiser_settings']['currency'] = array(
+        '#type' => 'fieldset',
+        '#title' => t('Currency'),
+        '#collapsible' => TRUE,
+        '#collapsed' => FALSE,
+      );
+
+      $currency_field['#title_display'] = 'none';
+      $form['fundraiser_settings']['currency']['field_fundraiser_currency'] = $form['field_fundraiser_currency'];
+      unset($form['field_fundraiser_currency']);
+    }
+  }
+
   // Add specific CSS settings for IE support. Pending http://drupal.org/node/1015798 being resolved,
   // and UC Store accounting for that update. (Should be block not inline-block).
   $style = '.vertical-tabs fieldset fieldset legend {display: block;}';
