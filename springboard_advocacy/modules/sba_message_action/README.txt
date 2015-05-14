@@ -8,8 +8,10 @@ categorize the actions according to the client's preferred categories. These tax
 actually installed by the Springboard Advocacy module, as they should be reusable by other modules.
 
 After creating a new Message Action node, administrators are redirected to the messages tab,
-where they are prompted to create a message to attach to the message webform node.
-Targets are added during this message creation process. Multiple messages with multiple targets
-can be attached to a single Message Action webform node.
+where they are prompted to create a message to attach to the Message Action webform.
+Message targets (recipients) are added during this message creation process. Multiple messages
+with multiple targets can be attached to a single Message Action webform.
 
-The messages are Entity API entities attached via entity references.
+The messages are Entity API entities to attached the message actions via entity references. The targets
+are stored on the Advocacy API server. This module will not fully function without a valid, configured API account.
+API configuration is handled by the Springboard Advocacy module.
