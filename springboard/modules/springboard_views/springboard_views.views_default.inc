@@ -4286,7 +4286,7 @@ function springboard_views_views_default_views() {
   $views[$view->name] = $view;
 
   /**
-   * View sbv_administrators
+   * View sbv_administrator_users
    */
   $view = new view();
   $view->name = 'sbv_administrator_users';
