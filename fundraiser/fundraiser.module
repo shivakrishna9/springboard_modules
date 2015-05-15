@@ -1342,7 +1342,7 @@ function _fundraiser_currency_field_create($fundraiser, $field) {
  */
 function _fundraiser_currency_field_display($form, $form_state, $field) {
   $currency = fundraiser_get_currency_from_node($form['#node']);
-  $field['#default_value'] = $currency['code'];
+  $field['#value'] = $currency['code'];
   return $field;
 }
 
