@@ -747,6 +747,15 @@
                 }
 
 
+        #springboard-advocacy-find-targets   #top-pager:before {
+            clear: both;
+            content: "";
+            display: table;
+        }
+
+        #springboard-advocacy-find-targets   #top-pager .pager{
+          margin: 0 2em 0;
+        }
         #springboard-advocacy-find-targets  #advocacy-attachment-before-rows {
             float: left;
             margin: 1.4em 0.7em 0.7em 2em;

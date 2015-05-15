@@ -478,6 +478,10 @@ function sba_message_theme() {
       'template' => 'templates/views-exposed-form--targets-block-3',
       'render element' => 'form',
     ),
+    'views_view' => array(
+      'template' => 'templates/views-view--targets-block-3',
+      'render element' => 'form',
+    ),
   );
 }
 

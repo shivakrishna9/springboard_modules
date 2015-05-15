@@ -55,7 +55,7 @@ function sba_message_views_default_views() {
   $handler->display->display_options['empty']['area_text_custom']['table'] = 'views';
   $handler->display->display_options['empty']['area_text_custom']['field'] = 'area_text_custom';
   $handler->display->display_options['empty']['area_text_custom']['empty'] = TRUE;
-  $handler->display->display_options['empty']['area_text_custom']['content'] = 'Whoops, your search returned 0 results. Please try again.';
+  $handler->display->display_options['empty']['area_text_custom']['content'] = 'No targets matched your search. Please try again.';
   /* Field: Advocacy: Salutation */
   $handler->display->display_options['fields']['salutation']['id'] = 'salutation';
   $handler->display->display_options['fields']['salutation']['table'] = 'advocacy';
