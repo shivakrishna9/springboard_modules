@@ -1056,6 +1056,7 @@ function fundraiser_fundraiser_field_info() {
     '#allow_update' => 1,
     '#create_callback' => '_fundraiser_other_amount_field_create',
     '#validate_callback' => '_fundraiser_other_amount_field_validate',
+    '#display_callback' => '_fundraiser_other_amount_field_display',
   );
 
   $fields['donation']['currency'] = array(
@@ -1065,7 +1066,8 @@ function fundraiser_fundraiser_field_info() {
     '#required' => 1,
     '#allow_update' => 1,
     '#reset_value' => 1,
-    '#create_callback' => 'fundraiser_currency_field_create',
+    '#create_callback' => '_fundraiser_currency_field_create',
+    '#display_callback' => '_fundraiser_currency_field_display',
   );
 
   $quantity_max = variable_get('fundraiser_default_quantity', '10');
@@ -1265,10 +1267,26 @@ function _fundraiser_other_amount_field_create($fundraiser, $field) {
     return FALSE; // FALSE as opposed to empty, means we delete this field if it exists.
   }
   // Update the min with fundraiser's min.
-  $currency = fundraiser_get_currency_from_node($fundraiser);
-  $field['#extra']['description'] = 'Minimum payment ' . check_plain($currency['symbol']) . number_format($fundraiser->minimum_donation_amount, 2) . '.';
+  $field['#extra']['description'] = 'Minimum payment [currency-symbol]' . number_format($fundraiser->minimum_donation_amount, 2) . '.';
 
   // Return the field to be created.
+  return $field;
+}
+
+/**
+ * Fundraiser field display callback for the other amount field.
+ */
+function _fundraiser_other_amount_field_display($form, $form_state, $field) {
+  $currency = fundraiser_get_currency_from_node($form['#node']);
+
+  $field['#attributes']['class'][] = 'input-medium';
+  $field['#field_prefix'] = $currency['symbol'];
+
+  // Replace the currency-symbol token.
+  if (isset($field['#description'])) {
+    $field['#description'] = str_replace('[currency-symbol]', $currency['symbol'], $field['#description']);
+  }
+
   return $field;
 }
 
@@ -1310,10 +1328,21 @@ function _fundraiser_other_amount_field_validate($form, $form_state, $submission
  *
  * Sets the currency value from the node.
  */
-function fundraiser_currency_field_create($fundraiser, $field) {
+function _fundraiser_currency_field_create($fundraiser, $field) {
   $currency = fundraiser_get_currency_from_node($fundraiser);
   $field['#value'] = $currency['code'];
 
+  return $field;
+}
+
+/**
+ * Fundraiser field display callback.
+ *
+ * Note this field is a value type, so not really displayed.
+ */
+function _fundraiser_currency_field_display($form, $form_state, $field) {
+  $currency = fundraiser_get_currency_from_node($form['#node']);
+  $field['#default_value'] = $currency['code'];
   return $field;
 }
 
@@ -1623,24 +1652,6 @@ function fundraiser_donation_form(&$form, &$form_state) {
       }
     }
     $form = _fundraiser_update_form_field($form, 'amount', $amount);
-
-    // Add class to the other_amount field and adjust currency symbols.
-    $other_amount = _fundraiser_get_form_field($form, 'other_amount');
-    $other_amount['#attributes']['class'][] = 'input-medium';
-    $form = _fundraiser_update_form_field($form, 'other_amount', $other_amount);
-
-    $other_amount['#field_prefix'] = $symbol;
-    if (isset($other_amount['#description'])) {
-      $other_amount['#description'] = str_replace('Minimum payment $', 'Minimum payment ' . $symbol, $other_amount['#description']);
-    }
-
-    $form = _fundraiser_update_form_field($form, 'other_amount', $other_amount);
-
-    // If the currency webform field exists, update it with the currency code.
-    $currency_field = &$form['submitted']['donation']['currency'];
-    if (isset($currency_field) && !empty($currency_field)) {
-      $currency_field['#value'] = $currency['code'];
-    }
 
     // Call hook to allow sub modules to add / manipulate the form.
     // NOTE: we are not using module_invoke_all on purpose here.
