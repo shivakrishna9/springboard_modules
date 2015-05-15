@@ -547,6 +547,7 @@ function  _springboard_advocacy_remove_unsubscribed_elements(&$form, &$form_stat
     switch ($subscription['subscription_type']) {
       case 'federal-and-states':
         break;
+
       case 'federal-only':
         unset($form['search_role_1']['#options']['SS']);
         unset($form['search_role_1']['#options']['SR']);

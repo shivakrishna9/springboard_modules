@@ -7,6 +7,8 @@
 
 /**
  * Implements hook_requirements().
+ *
+ * Make sure the Advocacy API php-sdk exists
  */
 function springboard_advocacy_requirements($phase) {
   $t = get_t();
