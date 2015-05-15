@@ -4,7 +4,12 @@
  * Provides content type and config for message actions.
  */
 
+/**
+ * Implements hook_menu.
+ * @return mixed
+ */
 function sba_message_action_menu() {
+  //Multi-message popup window
   $items['messages/%ctools_js/%'] = array(
     'title' => 'Possible messages',
     'page arguments' => array(1, 2),
@@ -13,6 +18,7 @@ function sba_message_action_menu() {
     'type' => MENU_NORMAL_ITEM,
   );
 
+  // Path to settings for delivery failure webform confirmation
   $items['admin/config/content/sba_message_action'] = array(
     'title' => 'Message Action Default Confirmation',
     'page callback' => 'sba_message_action_settings_page',
@@ -20,7 +26,7 @@ function sba_message_action_menu() {
     'type' => MENU_NORMAL_ITEM,
   );
 
-  //$path =  drupal_get_path('module', 'sba_message_action');
+  // Committee Search Selector autocomplete path
   $items['message-action/committee/autocomplete'] = array(
     'page callback' => '_sba_message_action_committee_autocomplete',
     'access arguments' => array('add target to action'),
@@ -113,7 +119,7 @@ function sba_message_action_node_view($node, $view_mode, $langcode) {
         }
       }
 
-      //smarty streets warning
+      // Smarty streets warning.
       $unconfigured = springboard_advocacy_api_unconfigured('smarty');
       if (!empty($unconfigured)) {
         $items = implode(', ', $unconfigured);
@@ -121,7 +127,7 @@ function sba_message_action_node_view($node, $view_mode, $langcode) {
       }
     }
 
-    //Multi-message modal popup
+    // Multi-message modal popup.
     ctools_include('ajax');
     ctools_include('modal');
     ctools_modal_add_js();
@@ -309,15 +315,17 @@ function sba_message_action_form_node_type_form_alter(&$form, &$form_state) {
  * @param $types
  */
 function sba_message_action_node_load($nodes, $types) {
+
   // If no message_action nodes are loaded no need to continue.
   if (!in_array('sba_message_action', $types)) {
     return;
   }
-  // Add full messages to each node so we can utilize them later.
+
+  // Add full messages to each node so we can use them later.
   foreach ($nodes as $nid => $node) {
     if ($node->type == 'sba_message_action') {
 
-      // Cusotm failure confirmation
+      // Add the custom failure confirmation to the node object.
       $confirm_fail = db_query('select custom_confirmation, fail_message FROM sba_message_action_confirm WHERE nid = :nid', array(':nid' => $node->nid))->fetchAll();
       if(isset($confirm_fail[0]) && is_numeric($confirm_fail[0]->custom_confirmation)) {
         $node->custom_confirmation = $confirm_fail[0]->custom_confirmation;
@@ -326,16 +334,16 @@ function sba_message_action_node_load($nodes, $types) {
         $node->custom_fail_message = $confirm_fail[0]->fail_message;
       }
 
-      // precedence value.
+      // Add the precedence value to the node object.
       $precedence = db_query("SELECT precedence FROM {sba_form_id} WHERE nid = :nid", array(':nid' => arg(1)))->fetchField();
       $node->precedence = !empty($precedence) ? $precedence :0;
 
-      // form layout single column.
+      // Unset form layout if single column.
       if(isset($node->form_layouts) &&  $node->form_layouts == 'one_column') {
         unset($node->form_layouts);
       }
 
-      // messages.
+      // Add messages to the node object.
       if (!empty($node->message_ids)) {
         $messages = sba_message_load_multiple($node->message_ids);
         $node->messages = $messages;
@@ -353,7 +361,7 @@ function sba_message_action_node_load($nodes, $types) {
  *
  * Needed to intercept springboard_admin_form_alter
  * and its custom submit function: springboard_admin_node_delete
- * to redirect to the message action landing page after deletion
+ * in order to redirect to the message action landing page after deletion
  *
  * @param $implementations
  * @param $hook
@@ -385,14 +393,22 @@ function sba_message_action_module_implements_alter(&$implementations, $hook) {
  */
 
 function sba_message_action_form_alter(&$form, &$form_state, $form_id) {
-  if (isset($form['#node']) && $form['#node']->type == 'sba_message_action') {
-    $pos = strpos($form_id, 'client_form');
 
-    if ($pos !== FALSE) {
+  if (isset($form['#node']) && $form['#node']->type == 'sba_message_action') {
+
+    //Is this the user-facing form?
+    $client_form = strpos($form_id, 'client_form');
+
+    // Yes it is the user-facing form.
+    if ($client_form !== FALSE) {
+
+      // Attach the JS and CSS
       $form['#attached']['js'][]= drupal_get_path('module', 'sba_message_action')
         . '/js/sba_message_action.js';
       $form['#attached']['css'][] = drupal_get_path('module', 'sba_message_action')
         . '/css/message-modal.css';
+
+      // Is form layouts enabled?
       if(!empty($form['#node']->form_layouts)) {
         $form['#attached']['css'][] = drupal_get_path('module', 'sba_message_action')
           . '/css/message-action-form-layouts.css';
@@ -411,7 +427,9 @@ function sba_message_action_form_alter(&$form, &$form_state, $form_id) {
         ),
       );
 
+      // Multiple messages for this form?
       $multiple = count($form['#node']->messages) > 1 ? TRUE : FALSE;
+
       if($multiple) {
         ctools_include('ajax');
         ctools_include('modal');
@@ -421,15 +439,16 @@ function sba_message_action_form_alter(&$form, &$form_state, $form_id) {
           '#title' => t('Your Message'),
           '#attributes' => array('class' => array('sba-message')),
         );
-        $form['sba_messages']['multilple']['message'] = array(
+        $form['sba_messages']['multiple']['message'] = array(
           '#type' => 'item',
           '#markup' => '<p>' . t('We have crafted multiple messages for this action. We will select the right message or messages for your legislators, or others we are targeting, based on their position on this issue, and on the address you enter.')
             . '</p><p></p>' . ctools_modal_text_button('View all possible messages.', $href, t('View messages'), 'ctools-modal-message-window-style') . '</p>',
         );
       }
+
       // Create a set of fields for each message assigned to the form.
       foreach ($form['#node']->messages as $message) {
-        sba_message_action_editable_message_form($form['sba_messages'], $message, $multiple);
+        sba_message_action_message_form($form['sba_messages'], $message, $multiple);
       }
 
       $form['#validate'][] = 'sba_message_action_form_validate';
@@ -442,6 +461,7 @@ function sba_message_action_form_alter(&$form, &$form_state, $form_id) {
     case 'node_delete_confirm':
       if($form['#node']->type == 'sba_message_action') {
         // Redirect to the message action landing page after node deletion.
+        // For some unknown reason, you need both of the following.
         $form['actions']['submit']['#submit'][] = 'node_delete_confirm_submit';
         $form['actions']['submit']['#submit'][] = '_sba_message_action_redirect';
 
@@ -468,19 +488,21 @@ function _sba_message_action_redirect($form, &$form_state){
  * @param $message
  * @param $multiple
  */
-function sba_message_action_editable_message_form(&$form, $message, $multiple) {
-  $wrapper = entity_metadata_wrapper('sba_message', $message);
+function sba_message_action_message_form(&$form, $message, $multiple) {
 
+  // Get some message values via an entity wrapper.
+  $wrapper = entity_metadata_wrapper('sba_message', $message);
   $subject = check_plain($wrapper->field_sba_subject->value());
   $message_body = check_markup($wrapper->field_sba_message->value(), 'plain_text');
   $editable_message = check_plain($wrapper->field_sba_editable_area->value());;
-  $editable = $wrapper->field_sba_user_editable[0]->value() == 'editable' ? TRUE : FALSE;
+  $body_editable = $wrapper->field_sba_user_editable[0]->value() == 'editable' ? TRUE : FALSE;
   $required_body = $wrapper->field_sba_editable_area_optional[0]->value() == 'required' ? TRUE : FALSE;
   $placeholder_greeting = check_plain($wrapper->field_sba_placeholder_greeting->value());
   $greeting = check_plain($wrapper->field_sba_greeting->value());
   $conclusion = check_markup($wrapper->field_sba_bottom_conclusion->value(), 'plain_text');
+  $subject_editable =  $wrapper->field_sba_subject_editable->value();
 
-
+  // If it's a multiple message form, use a container instead of a fieldset
   if (!$multiple) {
     $form['message'][$message->sba_message_id] = array(
       '#type' => 'fieldset',
@@ -505,15 +527,25 @@ function sba_message_action_editable_message_form(&$form, $message, $multiple) {
     '#value' => $message->sba_message_id,
   );
 
-  $sub_ed =  $wrapper->field_sba_subject_editable->value();
-  if ($sub_ed == 'Editing is required') {
-    $description = t('You must edit the subject line of this message before sending.');
-    $required = TRUE;
-  }
-  else {
-    $required = FALSE;
-  }
-  if ($sub_ed != 'Not editable') {
+
+  //The subject is editable
+  if ($subject_editable != 'Not editable') {
+
+    // Is it required to edit the subject?
+    if ($subject_editable == 'Editing is required') {
+      $description = t('You must edit the subject line of this message before sending.');
+      $required = TRUE;
+
+      //Validator needs this value?
+      $form['message'][$message->sba_message_id]['subject_required'] = array(
+        '#type' => 'value',
+        '#value' => 1,
+      );
+    }
+    else {
+      $required = FALSE;
+    }
+
     $form['message'][$message->sba_message_id]['subject'] = array(
       '#type' => 'textfield',
       '#title' => t('Subject'),
@@ -522,8 +554,11 @@ function sba_message_action_editable_message_form(&$form, $message, $multiple) {
       //'#required' => $required,
     );
   }
+
+  //The subject is not editable
   else {
 
+    // Show the non-editable subject if there aren't multiple messages
     if (!$multiple) {
       $form['message'][$message->sba_message_id]['subject_show'] = array(
         '#type' => 'item',
@@ -532,12 +567,15 @@ function sba_message_action_editable_message_form(&$form, $message, $multiple) {
       );
     }
 
+    // The subject value field is present in either case.
+    // The value here is eventually passed to the API server
     $form['message'][$message->sba_message_id]['subject'] = array(
       '#type' => 'value',
       '#value' => $subject,
     );
   }
 
+  // Show the greeting field is there aren't multiple messages
   if (!$multiple) {
     $form['message'][$message->sba_message_id]['greeting_show'] = array(
       '#type' => 'item',
@@ -545,35 +583,39 @@ function sba_message_action_editable_message_form(&$form, $message, $multiple) {
       '#markup' => $placeholder_greeting,
     );
   }
+
+  // The greeting value field is present in either case.
+  // The value here is eventually passed to the API server
   $form['message'][$message->sba_message_id]['greeting'] = array(
     '#type' => 'value',
     '#value' => $greeting,
   );
 
+  // The body value field is present in either case.
+  // The value here is eventually passed to the API server
   $form['message'][$message->sba_message_id]['body'] = array(
     '#type' => 'value',
     '#value' => $message_body,
   );
 
+  // If not multiple we show the message body
   if(!empty($message_body) && !$multiple) {
-      if ($editable) {
+
+      // If the message body is editable, suppress the field title
+      if ($body_editable) {
         $title = t('');
       } else {
         $title = t('Message');
       }
+
       $form['message'][$message->sba_message_id]['body_show'] = array(
         '#type' => 'item',
         '#title' => $title,
         '#markup' => $message_body,
       );
   }
-  if ($wrapper->field_sba_subject_editable->value() == 'Editing is required' && !$multiple) {
-    $form['message'][$message->sba_message_id]['subject_required'] = array(
-      '#type' => 'value',
-      '#value' => 1,
-    );
-  }
-  if ($wrapper->field_sba_user_editable[0]->value() == 'editable' && !$multiple) {
+
+  if ($body_editable == 'editable' && !$multiple) {
 
     if ($required_body) {
       $description = t('You must edit the body of this message before sending.');
@@ -604,17 +646,18 @@ function sba_message_action_editable_message_form(&$form, $message, $multiple) {
       );
     }
   }
-  if(!$multiple) {
 
+  // Format the signature display.
+  if(!$multiple) {
     $sig = strip_tags($wrapper->field_sba_signature->value());
     $sig = str_replace('[contact:first_name]', '[First Name]', $sig);
     $sig = str_replace('[contact:last_name]', '[Last Name]', $sig);
     $sig = str_replace('[contact:address]', '[Your Addess]', $sig);
-
     $form['message'][$message->sba_message_id]['signature'] = array(
       '#markup' => check_markup($sig, 'plain_text'),
     );
   }
+
 }
 
 
