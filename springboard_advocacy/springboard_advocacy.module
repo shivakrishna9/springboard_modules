@@ -6,6 +6,8 @@
 
 /**
  * Implements hook_menu().
+ *
+ * Configuration paths and Advocacy Dashboard paths.
  */
 function springboard_advocacy_menu() {
   $items['admin/config/services/advocacy'] = array(
@@ -61,6 +63,26 @@ function springboard_advocacy_menu() {
 }
 
 /**
+ * Defines common values for advocacy menu items.
+ * Including a themed page callback for advocacy admin dashboard views.
+ */
+function springboard_advocacy_menu_common($override_type = FALSE, $override_access = FALSE) {
+  $params = array(
+    'page callback' => 'springboard_advocacy_dashboard',
+    'file' => 'springboard_advocacy.admin.inc',
+    'file path' => drupal_get_path('module', 'springboard_advocacy') . '/includes',
+
+  );
+  if(!$override_type) {
+    $params['type'] = MENU_NORMAL_ITEM;
+  }
+  if(!$override_access) {
+    $params['access arguments'] = array('administer springboard advocacy');
+  }
+  return $params;
+}
+
+/**
  * Access checking function to ensure a user can create an
  * advocacy type. This should be checked before allowing access
  * to the advocacy landing page that lists all the types.
@@ -72,6 +94,9 @@ function springboard_advocacy_user_can_create_advocacy_type() {
 
 /**
  * Implements hook_springboard_admin_admin_menu_items_alter().
+ *
+ * Add the advocacy links to springboard admin.
+ *
  */
 function springboard_advocacy_springboard_admin_admin_menu_items_alter(&$items) {
   if (module_exists('springboard_advocacy')) {
@@ -131,27 +156,6 @@ function springboard_advocacy_springboard_admin_admin_menu_items_alter(&$items) 
       'weight' => 2,
     );
   }
-}
-
-
-/**
- * Defines common values for advocacy menu items.
- * Including a themed page callback for advocacy admin views.
- */
-function springboard_advocacy_menu_common($override_type = FALSE, $override_access = FALSE) {
-  $params = array(
-    'page callback' => 'springboard_advocacy_dashboard',
-    'file' => 'springboard_advocacy.admin.inc',
-    'file path' => drupal_get_path('module', 'springboard_advocacy') . '/includes',
-
-  );
-  if(!$override_type) {
-    $params['type'] = MENU_NORMAL_ITEM;
-  }
-  if(!$override_access) {
-    $params['access arguments'] = array('administer springboard advocacy');
-  }
-  return $params;
 }
 
 /**
@@ -239,7 +243,6 @@ function springboard_advocacy_node_insert($node) {
   */
 function springboard_advocacy_node_load($nodes, $types) {
   $action_types = variable_get('sba_action_types', array());
-
   if (count(array_intersect($action_types, $types))) {
     $uuids = db_query(
       'SELECT advocacy_id, nid FROM {sba_form_id} WHERE nid IN (:nids)',
@@ -272,8 +275,6 @@ function springboard_advocacy_form_alter(&$form, &$form_state, $form_id) {
   if($form_id == 'springboard_advocacy_settings_form') {
     $form['#submit'][] = 'springboard_advocacy_settings_submit';
   }
-
-  $types = variable_get('sba_action_types', array());
 
   if (!empty($form['#node_edit_form']) && $form['#node']->type == 'sba_message_action') {
     module_load_include('inc', 'springboard_advocacy', 'includes/springboard_advocacy.webform');
@@ -357,14 +358,13 @@ function springboard_advocacy_form_alter(&$form, &$form_state, $form_id) {
       unset($form['field_sba_organization_issues']);
     }
   }
+
+  // assign each message to a hidden form field on the user-facing form
+  $types = variable_get('sba_action_types', array());
   if (isset($form['#node']) && in_array($form['#node']->type, $types)) {
-    //springboard_advocacy_form_vertical_nav($form);
     $node = $form['#node'];
-
     if (isset($form['form_id'])) {
-
       $pos = strpos($form['form_id']['#value'], 'webform_client_form');
-
       if (!empty($node->message_ids) && $pos !== FALSE) {
         $form['messages']['#tree'] = TRUE;
         foreach ($node->message_ids as $id) {
@@ -375,9 +375,9 @@ function springboard_advocacy_form_alter(&$form, &$form_state, $form_id) {
         }
       }
 
+      // Assign the form UUID to a hidden field on the user-facing form
       if (!empty($node->advocacy_id) && $pos !== FALSE) {
         $form['advocacy_id'] = array('#type' => 'hidden', '#value' => $node->advocacy_id);
-       // $form['#submit'][] = 'springboard_advocacy_webform_submit';
       }
 
     }

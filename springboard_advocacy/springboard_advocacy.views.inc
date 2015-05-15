@@ -3,16 +3,21 @@
 /**
  * @file springboard_advocacy.views.inc
  *
- * Define our advocacy views. May move some or all to Target module.
+ * Define our advocacy views.
  */
 
 /**
  * Implements hook_views_data().
+ *
+ * Create the views data arrays for each of the
+ * fields returned by the Springboard API remote queries.
+ *
  */
 function springboard_advocacy_views_data() {
   $data = array();
 
-  // Base table definition.
+  // Define our pseudo-DB table and assign the
+  // custom query handler which queries the remote API server
   $data['advocacy']['table'] = array(
     'group' => t('Advocacy'),
     'base' => array(
@@ -22,7 +27,7 @@ function springboard_advocacy_views_data() {
     ),
   );
 
-  // ID
+  // Target ID returned by the API request.
   $data['advocacy']['id'] = array(
     'title' => t('Target ID'),
     'help' => t('Target ID'),
@@ -31,7 +36,7 @@ function springboard_advocacy_views_data() {
     ),
   );
 
-  // Salutation
+  // Salutation returned by the API request.
   $data['advocacy']['salutation'] = array(
     'title' => t('Salutation'),
     'help' => t('Target Salutation'),
@@ -40,7 +45,7 @@ function springboard_advocacy_views_data() {
     ),
   );
 
-  // First Name
+  // First Name returned by the API request.
   $data['advocacy']['first_name'] = array(
     'title' => t('First Name'),
     'help' => t('Target First Name'),
@@ -53,7 +58,7 @@ function springboard_advocacy_views_data() {
     ),
   );
 
-  // Last Name
+  // Last Name returned by the API request.
   $data['advocacy']['last_name'] = array(
     'title' => t('Last Name'),
     'help' => t('Target Last Name'),
@@ -66,7 +71,7 @@ function springboard_advocacy_views_data() {
     ),
   );
 
-  // Email
+  // Email returned by the API request.
   $data['advocacy']['email'] = array(
     'title' => t('Email'),
     'help' => t('Target Email'),
@@ -75,7 +80,7 @@ function springboard_advocacy_views_data() {
     ),
   );
 
-  // Party
+  // Party returned by the API request.
   $data['advocacy']['party'] = array(
     'title' => t('Political Party'),
     'help' => t('Target Party'),
@@ -85,6 +90,7 @@ function springboard_advocacy_views_data() {
     ),
   );
 
+  // State returned by the API request.
   $data['advocacy']['state'] = array(
     'title' => t('State'),
     'help' => t('Target State'),
@@ -94,6 +100,7 @@ function springboard_advocacy_views_data() {
     ),
   );
 
+  //Role returned by the API request.
   $data['advocacy']['role'] = array(
     'title' => t('Role'),
     'help' => t('Target Role'),
@@ -102,6 +109,8 @@ function springboard_advocacy_views_data() {
       'handler' => 'springboard_advocacy_views_handler_field',
     ),
   );
+
+  // District returned by the API request.
   $data['advocacy']['district_name'] = array(
     'title' => t('District Name'),
     'help' => t('District Name'),
@@ -111,6 +120,7 @@ function springboard_advocacy_views_data() {
     ),
   );
 
+  // District code returned by the API request.
   $data['advocacy']['district_code'] = array(
     'title' => t('District Code'),
     'help' => t('District Code'),
@@ -119,7 +129,8 @@ function springboard_advocacy_views_data() {
       'handler' => 'springboard_advocacy_views_handler_field',
     ),
   );
-  // Party
+
+  // Party returned by the API request.
   $data['advocacy']['party'] = array(
     'title' => t('Politcal Party'),
     'help' => t('Target Party'),
@@ -129,6 +140,7 @@ function springboard_advocacy_views_data() {
     ),
   );
 
+  // Organization returned by the API request.
   $data['advocacy']['organization'] = array(
     'title' => t('Organization'),
     'help' => t('Organization'),
@@ -141,6 +153,7 @@ function springboard_advocacy_views_data() {
     ),
   );
 
+  // Organization title returned by the API request.
   $data['advocacy']['title'] = array(
     'title' => t('Organization title'),
     'help' => t('Organization position or title'),
@@ -149,7 +162,7 @@ function springboard_advocacy_views_data() {
       'handler' => 'springboard_advocacy_views_handler_field',
     ),
   );
-
+  // Committee memberships returned by the API request.
   $data['advocacy']['committee_memberships'] = array(
     'title' => t('Committee Memberships'),
     'help' => t('Committee Memberships'),
@@ -159,6 +172,7 @@ function springboard_advocacy_views_data() {
     ),
   );
 
+  // Create/edit/delete/links
   $data['advocacy']['target_actions'] = array(
     'title' => t('Target Actions'),
     'help' => t('Action links for target displays'),
@@ -175,14 +189,16 @@ function springboard_advocacy_views_data() {
     ),
   );
 
-   $data['advocacy']['combine'] = array(
+  // Combination search fields
+  $data['advocacy']['combine'] = array(
     'title' => t('Search Multiple Target Fields by Keywords'),
      'help' => t('Combine multiple fields together and search targets by them.'),
      'filter' => array(
        'handler' => 'springboard_advocacy_views_handler_filter_combine',
      ),
-   );
+  );
 
+  // Search by class name (Target|Legislator).
   $data['advocacy']['search_class_name'] = array(
    'title' => t('Search By Type'),
     'help' => t('Limit results by Legislator or Custom Target. Please note: if this filter is not "exposed", it will return no results *unless* another filter is enabled and actively being searched.'),
@@ -192,6 +208,7 @@ function springboard_advocacy_views_data() {
     ),
   );
 
+  // Search by role.
   $data['advocacy']['search_role'] = array(
    'title' => t('Search By Branch'),
     'help' => t('Adds a filter to limit searches by Federal or State Branch'),
@@ -201,7 +218,7 @@ function springboard_advocacy_views_data() {
     ),
   );
 
-
+  // Search by branch
   $data['advocacy']['search_level'] = array(
    'title' => t('Search By Level'),
     'help' => t('Adds a filter to limit searches by State or Federal level'),
@@ -212,6 +229,7 @@ function springboard_advocacy_views_data() {
     ),
   );
 
+  // Search by party
   $data['advocacy']['search_party'] = array(
    'title' => t('Search By Party'),
     'help' => t('Adds a filter to limit searches by Political Party'),
@@ -222,6 +240,7 @@ function springboard_advocacy_views_data() {
     ),
   );
 
+  // Search by state.
   $data['advocacy']['search_state'] = array(
    'title' => t('Search By State'),
     'help' => t('Adds a filter to limit searches by State'),
@@ -232,6 +251,7 @@ function springboard_advocacy_views_data() {
     ),
   );
 
+  // Search by district name
   $data['advocacy']['search_district_name'] = array(
     'title' => t('Search By District'),
     'help' => t('Adds a filter to limit searches by District'),
@@ -241,6 +261,7 @@ function springboard_advocacy_views_data() {
     ),
   );
 
+  // Search by gender
   $data['advocacy']['search_gender'] = array(
    'title' => t('Search By Gender'),
     'help' => t('Adds a filter to limit searches by Gender'),
@@ -250,6 +271,7 @@ function springboard_advocacy_views_data() {
     ),
   );
 
+  // Search by social media presence
   $data['advocacy']['search_social'] = array(
     'title' => t('Search By Social Media Presence'),
     'help' => t('Adds a filter to limit searches by targets who have social media profiles'),
@@ -259,7 +281,7 @@ function springboard_advocacy_views_data() {
     ),
   );
 
-  // First Name
+  // Search by committee name
   $data['advocacy']['search_committee'] = array(
     'title' => t('Search by Committee Name'),
     'help' => t('Committee name search'),
@@ -268,7 +290,7 @@ function springboard_advocacy_views_data() {
     ),
   );
 
-
+  // Search by committee chamber
   $data['advocacy']['search_committee_chamber'] = array(
     'title' => t('Search By Committee Chamber'),
     'help' => t('Adds a filter to limit searches by committee chamber'),
@@ -283,6 +305,8 @@ function springboard_advocacy_views_data() {
 
 /**
  * Implements hook_views_plugins().
+ *
+ * Define our custom query, cache and pager plugins.
  */
 function springboard_advocacy_views_plugins() {
   $plugins = array(
@@ -364,6 +388,8 @@ function springboard_advocacy_target_level() {
   );
   return $value_options;
 }
+
+/***** Helper functions defining value options for the various fields defined above ******/
 
 /**
  * Returns default options for views field configuration
@@ -488,11 +514,13 @@ function springboard_advocacy_target_gender() {
   return $value_options;
 }
 
+/********** Views Hooks *****************/
+
 /**
  * Implements hook_views_pre_render
  *
  * Takes the target search views query and prepares it as string for
- * inclusion in the search form add-all link query string
+ * inclusion in the search form add-all link query string.
  *
  * @param $view
  */
