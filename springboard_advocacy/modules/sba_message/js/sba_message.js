@@ -1194,6 +1194,7 @@
             .replace(/%28/g, '(')
             .replace(/%29/g, ')')
             .replace(/%3A/g, ':')
+            .replace(/\}/g, '')
     }
 
 })(jQuery);
