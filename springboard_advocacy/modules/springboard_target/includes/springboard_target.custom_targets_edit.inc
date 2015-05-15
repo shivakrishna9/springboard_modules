@@ -1,10 +1,19 @@
 <?php
-
 /**
  * @file
  * Functions for target updates.
  */
 
+
+/**
+ * Add edit form items to the generic form defined
+ * in springboard_target.custom_targets.inc
+ *
+ * @param $form
+ * @param $form_state
+ * @param $target_id
+ * @return array
+ */
 function springboard_target_edit_custom_targets_form($form, &$form_state, $target_id) {
 
   module_load_include('inc', 'springboard_target', 'includes/springboard_target.custom_targets');

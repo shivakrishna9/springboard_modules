@@ -5,7 +5,7 @@ API account is required. The API account configuration is handled by the Springb
 
 A default view is provided for an administrative list of targets.
 
-Create and Edit forms are provided by the files in "includes" and the
+Create and Edit forms are provided by the files in "includes", and the
 functions that call the API server are located there as well.
 
 This module is a dependency of SBA Message Action and SBA Message modules. It has no standalone

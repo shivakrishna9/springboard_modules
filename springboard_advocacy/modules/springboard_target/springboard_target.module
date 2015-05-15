@@ -2,6 +2,8 @@
 
 /**
  * Implements hook_menu
+ *
+ * springboard_advocacy_menu_common provides dashboard settings
  */
 
 function springboard_target_menu() {

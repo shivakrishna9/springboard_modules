@@ -15,9 +15,12 @@
  */
 function springboard_target_form($target_id = NULL) {
   $form = array();
+
+  // Attach our target form js and css.
   $form['#attached']['css'][] =  drupal_get_path('module', 'springboard_target') . '/css/sba_target.css';
   $form['#attached']['js'][] =  drupal_get_path('module', 'springboard_target') . '/js/sba_target.js';
 
+  // Display a warning if the API is unconfigured and reurn an empty form.
   $unconfigured = springboard_advocacy_api_unconfigured('springboard');
   if(!empty($unconfigured)) {
     $items = implode(', ', $unconfigured);
@@ -29,6 +32,7 @@ function springboard_target_form($target_id = NULL) {
 
   $form['#attributes']['class'][] =  'target-edit-form';
 
+  // Load the target if Target ID is present.
   if (isset($target_id) && is_numeric($target_id)) {
     $loader = new AdvocacyApiClientLoader();
     $client = $loader->getClient();
@@ -41,6 +45,7 @@ function springboard_target_form($target_id = NULL) {
     $target = $target->data;
   }
 
+  // Set up the form. Use containers to facilitate styling.
   $form['row_one'] = array(
     '#type' => 'container',
     '#attributes' => array(
@@ -282,13 +287,19 @@ function springboard_target_form($target_id = NULL) {
  * Return an array of target types.
  * This could become user-configurable
  */
+/**
+ * @return array
+ */
 function springboard_target_types() {
-  $types = array('legislator' => 'Elected Offical', 'target' => 'Custom');
+  $types = array('legislator' => 'Elected Official', 'target' => 'Custom');
   return $types;
 }
 
 /*
  * Return an array of target parties.
+ */
+/**
+ * @return array
  */
 function springboard_target_parties() {
   $parties = array('D' => 'Democrat', 'R' => 'Republican', 'I' => 'Independent', 'O' => 'Other');
@@ -364,6 +375,7 @@ function springboard_target_states() {
  */
 function springboard_target_form_validate($form, &$form_state) {
 
+  //Email
   if (!empty($form_state['values']['email'])) {
     $valid = valid_email_address($form_state['values']['email'], TRUE);
     if (!$valid) {
@@ -371,21 +383,19 @@ function springboard_target_form_validate($form, &$form_state) {
     }
   }
 
+  //URLs
   if (!empty($form_state['values']['facebook'])) {
     $valid = valid_url($form_state['values']['facebook'], TRUE);
     if (!$valid) {
       form_set_error('facebook', t('Invalid facebook url.Please check for "http://" and/or path formatting.'));
     }
   }
-
   if (!empty($form_state['values']['website'])) {
-
     $valid = valid_url($form_state['values']['website'], TRUE);
     if (!$valid) {
       form_set_error('website', t('Invalid web site url. "Please check for "http://" and/or path formatting.'));
     }
   }
-
   if (!empty($form_state['values']['twitter'])) {
     $valid = valid_url($form_state['values']['twitter'], TRUE);
     if (!$valid) {
@@ -393,6 +403,7 @@ function springboard_target_form_validate($form, &$form_state) {
     }
   }
 
+  // Zip code.
   if (!empty($form_state['values']['zip_code'])) {
      if (!preg_match("/^\d{5}([\-]?\d{4})?$/i", $form_state['values']['zip_code'])){
       form_set_error('zip_code', t('Invalid zip code.'));
@@ -400,6 +411,14 @@ function springboard_target_form_validate($form, &$form_state) {
   }
 }
 
+/**
+ * Delete a custom target.
+ *
+ * @param $form
+ * @param $form_state
+ * @param $target_id
+ * @return mixed
+ */
 function springboard_target_delete($form, $form_state, $target_id) {
   $form['target_id'] = array(
     '#type' => 'value',
@@ -415,6 +434,11 @@ function springboard_target_delete($form, $form_state, $target_id) {
   return confirm_form($form, $confirmation_question, $cancel_path, $description, $yes_button, $no_button, $confirm_name);
 }
 
+/**
+ * Submit function for target deletion.
+ * @param $form
+ * @param $form_state
+ */
 function springboard_target_delete_submit(&$form, &$form_state) {
   $form_state['redirect'] = 'springboard/advocacy/targets/custom-targets';
 
