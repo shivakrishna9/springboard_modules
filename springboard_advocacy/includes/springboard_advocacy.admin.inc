@@ -16,9 +16,9 @@ function springboard_advocacy_settings_page() {
       '#id' => 'springboard-advocacy-settings-page',
       '#type' => 'markup',
       '#markup' => '<p>' . t('Configure settings for Springboard advocacy.') .
-      '<q/p><p>' .
-      t('Saving this form will also force a rebuild of the advocacy subscription settings and renew the Oauth Access Token.') .
-      '</p>',
+        '</p><p>' .
+        t('Saving this form will also force a rebuild of the advocacy subscription settings and renew the Oauth Access Token.') .
+        '</p>',
       '#prefix' => '<div class="springboard-advocacy-settings-page">',
       '#suffix' => '</div>',
     ),
@@ -59,24 +59,14 @@ function springboard_advocacy_settings_form() {
     '#default_value' => variable_get('springboard_advocacy_client_secret', ''),
   );
 
-   $form['geo'] = array(
+  $form['geo'] = array(
     '#type' => 'fieldset',
     '#title' => t('Geocoding configuration'),
   );
 
-  //we may need this commented section if we offer a melissa option
-
-  // $form['geo']['springboard_advocacy_geocoder'] = array(
-  //   '#type' => 'radios',
-  //   '#title' => t('Active Geocoding service'),
-  //   '#options' => $options,
-  //   '#description' => t('Choose the geocoding service to use. All but Google Javascript API require an API Key'),
-  //   '#default_value' => variable_get('springboard_advocacy_geocoder', ''),
-  // );
-
   $form['geo']['springboard_advocacy_geocoder'] = array(
-  '#type' => 'hidden',
-  '#value' => 'smartystreets_rest',
+    '#type' => 'hidden',
+    '#value' => 'smartystreets_rest',
   );
 
   $form['geo']['smarty'] = array(
@@ -110,229 +100,289 @@ function springboard_advocacy_settings_form() {
  * Embeds and themes various views landing pages.
  */
 function springboard_advocacy_dashboard($path, $arg = NULL) {
+
+  // If the API is not configured, intercept some displays and
+  // show an error message.
+  if($path != 'actions' && $path != 'petitions/all' && $path != 'actions/all') {
+    $unconfigured = springboard_advocacy_api_unconfigured('springboard');
+    if(!empty($unconfigured)) {
+      $items = implode(', ', $unconfigured);
+      $message = t('Please <a href="!url">configure</a> the Springboard API settings. There are empty values in :items. This feature will not function without required configuration.', array('!url' => url('admin/config/services/advocacy'), ':items' => $items));
+      $content = springboard_advocacy_dashboard_error('error', 'Configuration required', $message);
+      return theme('springboard_advocacy_dashboard', array('views' => $content));
+    }
+  }
+
   global $user;
+  // Prepare pages based on path.
 
   switch($path) {
 
+    // Custom Target create form page
     case 'add-custom-targets':
-        module_load_include('inc', 'springboard_target', 'includes/springboard_target.custom_targets_create');
-        drupal_add_css(drupal_get_path('module', 'springboard_target') . '/css/sba_target.css');
-        $form = drupal_get_form('springboard_target_create_custom_targets_form');
-        $views = array(
-          'add-targets' => array(
-            'header' => t('Create Target'),
-            'content' => drupal_render($form),
-            'manage_link' => array('title' => t('Return to targets list'), 'href' => 'admin/springboard/advocacy/targets/custom-targets'),
-            'css' => drupal_get_path('module', 'springboard_advocacy') . '/css/sba.css',
-          ),
-        );
+      $content = springboard_advocacy_custom_targets_admin_form($path);
       break;
 
+    //Custom Target edit form page
     case 'edit-custom-targets':
-      module_load_include('inc', 'springboard_target', 'includes/springboard_target.custom_targets_edit');
-      drupal_add_css(drupal_get_path('module', 'springboard_target') . '/css/sba_target.css');
-      $form = drupal_get_form('springboard_target_edit_custom_targets_form', $arg);
-      $views = array(
-        'add-targets' => array(
-          'header' => t('Edit Target'),
-          'content' => drupal_render($form),
-          'manage_link' => array('title' => t('Return to targets list'), 'href' => 'admin/springboard/advocacy/targets/custom-targets'),
+      $content = springboard_advocacy_custom_targets_admin_form($path, $arg);
+      break;
+
+    // Custom Targets landing page view
+    case 'custom-targets':
+      // Get the view
+      $targets = springboard_advocacy_prepare_dashboard_view('sba_custom_targets', 'block_1');
+      //The view is not found or the display is not found
+      if(!$targets) {
+        $message = t('Target view or view display "block_1" not found.');
+        $content = springboard_advocacy_dashboard_error('sba_targets', 'Custom Targets', $message);
+        break;
+      }
+      $content = array(
+        'sba_targets' => array(
+          'header' => t('Custom Targets'),
+          'content' => $targets->preview(),
           'css' => drupal_get_path('module', 'springboard_advocacy') . '/css/sba.css',
         ),
       );
       if (user_access('create targets')) {
-        $views['add-targets']['create_link'] = array('title' => t('Create a new target'), 'href' => 'admin/springboard/advocacy/targets/custom-targets/add');
+        $content['sba_targets']['create_link'] = array('title' => t('Create a new target'), 'href' => 'admin/springboard/advocacy/targets/custom-targets/add');
       };
       break;
 
+    // Actions landing page view. Includes Actions and Petitions.
     case 'actions':
-      $view = views_get_view('sba_actions');
-      $view -> set_display('block_1');
-      $view -> set_arguments(array('sba_message_action'));
-      $view -> pre_execute();
-      $view -> execute();
-      if ($view && $view -> access('block_1') && !empty($view -> result)) {
-        $views = array(
+
+      // Actions
+      $actions = springboard_advocacy_prepare_dashboard_view('sba_actions', 'block_1', array('sba_message_action'));
+      if ($actions && !empty($actions->result)) {
+        $content = array(
           'sba_actions' => array(
             'header' => t('Message Actions'),
-            'content' => $view->preview(), //views_embed_view('sba_actions', 'block_1', 'sba_message_action'),
+            'content' => $actions->preview(), //views_embed_view('sba_actions', 'block_1', 'sba_message_action'),
             'create_link' => array('title' => t('Create a new message action'), 'href' => 'node/add/sba-message-action'),
             'viewmore_link' => array('title' => t('View All Message Actions'), 'href' => 'admin/springboard/advocacy/message-actions/all'),
             'css' => drupal_get_path('module', 'springboard_advocacy') . '/css/sba.css',
           ),
         );
         if (module_exists('springboard_target') && springboard_target_user_can_access_targets()) {
-          $views['sba_actions']['manage_link'] = array('title' => t('Manage Custom Targets'), 'href' => 'admin/springboard/advocacy/targets/custom-targets');
+          $content['sba_actions']['manage_link'] = array('title' => t('Manage Custom Targets'), 'href' => 'admin/springboard/advocacy/targets/custom-targets');
         }
       }
 
-      $view = views_get_view('sba_actions');
-      $view -> set_display('block_1');
-      $view -> set_arguments(array('springboard_petition'));
-      $view -> pre_execute();
-      $view -> execute();
-
-      if ($view && $view -> access('block_1') && !empty($view -> result)) {
-        $views['sba_petitions'] = array(
-            'header' => t('Petitions'),
-            'content' => $view->preview(), //views_embed_view('sbv_forms', 'block_1', 'springboard_petition'),
-            'create_link' => array('title' => t('Create a new petition'), 'href' => 'node/add/springboard-petition'),
-            'viewmore_link' => array('title' => t('View All Petitions'), 'href' => 'admin/springboard/advocacy/petitions/all'),
-            'css' => drupal_get_path('module', 'springboard_advocacy') . '/css/sba.css',
+      $petitions = springboard_advocacy_prepare_dashboard_view('sba_actions', 'block_1', array('springboard_petition'));
+      if ($petitions && !empty($petitions->result)) {
+        $content['sba_petitions'] = array(
+          'header' => t('Petitions'),
+          'content' => $petitions->preview(), //views_embed_view('sbv_forms', 'block_1', 'springboard_petition'),
+          'create_link' => array('title' => t('Create a new petition'), 'href' => 'node/add/springboard-petition'),
+          'viewmore_link' => array('title' => t('View All Petitions'), 'href' => 'admin/springboard/advocacy/petitions/all'),
+          'css' => drupal_get_path('module', 'springboard_advocacy') . '/css/sba.css',
         );
       }
       break;
 
+    // All message actions view page
     case 'message-actions/all':
-      $view = views_get_view('sba_actions');
-      if($view && isset($view->display['block_2'])) {
-        $views = array(
-          'sba_actions' => array(
-            'header' => t('All Message Actions'),
-            'content' => views_embed_view('sba_actions', 'block_2', 'sba_message_action'),
-            'css' => drupal_get_path('module', 'springboard_advocacy') . '/css/sba.css',
-          ),
-        );
-        if (user_access('create sba_message_action content')) {
-          $views['sba_actions']['create_link'] = array('title' => t('Create a new message action'), 'href' => 'node/add/sba-message-action');
-        }
-        if (springboard_target_user_can_access_targets()) {
-          $views['sba_actions']['manage_link'] = array('title' => t('Manage Custom Targets'), 'href' => 'admin/springboard/advocacy/targets/custom-targets');
-        }
+      $actions_all = springboard_advocacy_prepare_dashboard_view('sba_actions', 'block_2', array('sba_message_action'));
+      if(!$actions_all) {
+        $content = springboard_advocacy_dashboard_error('sba_actions', 'Custom Targets', 'Message Actions view or view display "block_2" not found.');
+        break;
       }
-      else {
-        $views = springboard_advocacy_dashboard_error('sba_actions', 'Custom Targets', 'Message Actions view or view display "block_2" not found.');
+
+      $content = array(
+        'sba_actions' => array(
+          'header' => t('All Message Actions'),
+          'content' => $actions_all->preview(),
+          'css' => drupal_get_path('module', 'springboard_advocacy') . '/css/sba.css',
+        ),
+      );
+
+      if (user_access('create sba_message_action content')) {
+        $content['sba_actions']['create_link'] = array('title' => t('Create a new message action'), 'href' => 'node/add/sba-message-action');
       }
+      if (springboard_target_user_can_access_targets()) {
+        $content['sba_actions']['manage_link'] = array('title' => t('Manage Custom Targets'), 'href' => 'admin/springboard/advocacy/targets/custom-targets');
+      }
+
       break;
 
+    // All Petitions view page
     case 'petitions/all':
-      $view = views_get_view('sba_actions');
-      if($view && isset($view->display['block_2'])) {
-        $views = array(
+      $petitions_all = springboard_advocacy_prepare_dashboard_view('sba_actions', 'block_2', array('springboard_petition'));
+      if($petitions_all) {
+        $content = array(
           'sba_actions' => array(
             'header' => t('All Petitions'),
-            'content' => views_embed_view('sba_actions', 'block_2', 'springboard_petition'),
+            'content' => $petitions_all->preview(),
             'css' => drupal_get_path('module', 'springboard_advocacy') . '/css/sba.css',
           ),
         );
         if (user_access('create springboard_petition content')) {
-          $views['sba_actions']['create_link'] = array('title' => t('Create a new petition'), 'href' => 'node/add/springboard-petition');
+          $content['sba_actions']['create_link'] = array('title' => t('Create a new petition'), 'href' => 'node/add/springboard-petition');
         }
       }
       else {
-        $views = springboard_advocacy_dashboard_error('sba_actions', 'Custom Targets', 'Petitions view or view display "block_2" not found.');
+        $content = springboard_advocacy_dashboard_error('sba_actions', 'Custom Targets', 'Petitions view or view display "block_2" not found.');
       }
       break;
 
-    case 'custom-targets':
-      $unconfigured = springboard_advocacy_api_unconfigured('springboard');
-      if(!empty($unconfigured)) {
-        $items = implode(', ', $unconfigured);
-        $view = FALSE;
-      }
-      else {
-        $view = views_get_view('sba_custom_targets');
-      }
-      if($view && isset($view->display['block_1'])) {
-        $view -> set_display('block_1');
-        $view -> pre_execute();
-        $view -> execute();
-
-        $views = array(
-          'sba_targets' => array(
-            'header' => t('Custom Targets'),
-            'content' => $view->preview(),
-            'css' => drupal_get_path('module', 'springboard_advocacy') . '/css/sba.css',
-            //'js' => drupal_get_path('module', 'springboard_target') . '/js/sba_target.js',
-
-          ),
-        );
-        if (user_access('create targets')) {
-          $views['sba_targets']['create_link'] = array('title' => t('Create a new target'), 'href' => 'admin/springboard/advocacy/targets/custom-targets/add');
-        };
-      }
-      else {
-        if(!empty($unconfigured)) {
-          $message = t('Please <a href="!url">configure</a> the Springboard API settings. There are empty values in :items. Configuration is required prior to target creation.', array('!url' => url('admin/config/services/advocacy'), ':items' => $items));
-        }
-        else {
-          $message = t('Target view or view display "block_1" not found.');
-        }
-        $views = springboard_advocacy_dashboard_error('sba_targets', 'Custom Targets', $message);
-      }
-
-      break;
-
+    // node/%/messages message landing page
     case ($path == arg(1)):
-      $message_types = variable_get('sba_message_node_types', array());
+
       $node = node_load($path);
-      if(isset($message_types[$node->type])) {
-        if(isset($node->message_ids)) {
-          $messages = entity_load('sba_message', $node->message_ids);
-          if(count($messages == 1)) {
-            $message = array_pop($messages);
-            $subject_editable = field_get_items('sba_message', $message, 'field_sba_subject_editable');
-            $user_editable = field_get_items('sba_message', $message, 'field_sba_user_editable');
-            if($subject_editable[0]['value'] != 'Not editable' || !empty($user_editable)) {
-              $no_create = TRUE;
-              drupal_set_message(t('This action\'s current message is user-editable, additional messages may not be created for this action until user editing is disabled.'), 'warning', FALSE);
 
-            }
-          }
-        }
+      // Is this a message type?
+      $message_types = variable_get('sba_message_node_types', array());
+      if(!isset($message_types[$node->type])) {
+        $content = springboard_advocacy_dashboard_error('sba_messages_node', 'Messages', 'There was a problem locating the message type for this node type.');
+        break;
+      }
 
-        $unconfigured = springboard_advocacy_api_unconfigured('springboard');
-        if(!empty($unconfigured)) {
-          $items = implode(', ', $unconfigured);
-          drupal_set_message(t('Advocacy API is not properly <a href="!url">configured</a>. There are empty values in :items. Configuration is required prior to message creation.', array('!url' => url('admin/config/services/advocacy'), ':items' => $items)));
-          $view = FALSE;
-        }
-        else {
-          $view = views_get_view('sba_messages_node');
-        }
+      // Get the view
+      $messages_view = springboard_advocacy_prepare_dashboard_view('sba_messages_node', 'block_1', array($path));
 
-        if ($view && isset($view->display['block_1'])) {
-          $views = array(
-            'sba_messages_node' => array(
-              'header' => t('Messages'),
-              'content' => views_embed_view('sba_messages_node', 'block_1', $path),
-              'css' => drupal_get_path('module', 'springboard_advocacy') . '/css/sba.css',
-            ),
-          );
-          if((user_access('edit own sba_message_action content') && $user->uid == $node->uid) || user_access('edit any sba_message_action content')) {
-            $views['sba_messages_node']['create_link'] = array('title' => t('Create a new message'), 'href' => 'node/' . arg(1) . '/messages/add/' . $message_types[$node->type]);
+      // Couldn't load the correct view?
+      if (!$messages_view) {
+        $error_message = t('Message view or view display "block_1" not found');
+        $content = springboard_advocacy_dashboard_error('sba_messages_node', 'Messages', $error_message);
+        break;
+      }
+
+      // Get the messages for this node and count them
+      if(isset($node->message_ids)) {
+        $messages = entity_load('sba_message', $node->message_ids);
+        // If there's only one message, and it's user-editable
+        // prevent display of create message link.
+        if(count($messages == 1)) {
+          $message = array_pop($messages);
+          $subject_editable = field_get_items('sba_message', $message, 'field_sba_subject_editable');
+          $user_editable = field_get_items('sba_message', $message, 'field_sba_user_editable');
+          if($subject_editable[0]['value'] != 'Not editable' || !empty($user_editable)) {
+            $no_create = TRUE;
+            drupal_set_message(t('This action\'s current message is user-editable, additional messages may not be created for this action until user editing is disabled.'), 'warning', FALSE);
           }
-          if (!empty($no_create)) {
-            unset($views['sba_messages_node']['create_link']);
-          }
-        } else {
-          if(!empty($unconfigured)) {
-            $message = t('Please <a href="!url">configure</a> the Springboard API settings. There are empty values in :items. Configuration is required prior to message creation.', array('!url' => url('admin/config/services/advocacy'), ':items' => $items));
-          }
-          else {
-            $message = t('Message view or view display "block_1" not found');
-          }
-          $views = springboard_advocacy_dashboard_error('sba_messages_node', 'Messages', $message);
         }
       }
-      else {
-        $views = springboard_advocacy_dashboard_error('sba_messages_node', 'Messages', 'There was a problem locating the message type for this node type.');
+
+      // set the content
+      $content = array(
+        'sba_messages_node' => array(
+          'header' => t('Messages'),
+          'content' => $messages_view->preview(),
+          'css' => drupal_get_path('module', 'springboard_advocacy') . '/css/sba.css',
+        ),
+      );
+
+      // Display/hide create link
+      if((user_access('edit own sba_message_action content') && $user->uid == $node->uid) || user_access('edit any sba_message_action content')) {
+        $content['sba_messages_node']['create_link'] = array('title' => t('Create a new message'), 'href' => 'node/' . arg(1) . '/messages/add/' . $message_types[$node->type]);
+      }
+
+      if (!empty($no_create)) {
+        unset($content['sba_messages_node']['create_link']);
       }
       break;
 
     default:
+      $content = array();
   }
-  return theme('springboard_advocacy_dashboard', array('views' => $views));
 
+  return theme('springboard_advocacy_dashboard', array('views' => $content));
 }
 
+/**
+ * Advocacy dashboard Custom Targets form page helper
+ *
+ * @param $path
+ * @param null $arg
+ * @return array
+ */
+function springboard_advocacy_custom_targets_admin_form($path, $arg = NULL) {
+
+  if(!module_exists("springboard_target")) {
+    $content = springboard_advocacy_dashboard_error('sba_target', 'Custom Targets', 'Springboard Target Module is not enabled.');
+    return $content;
+  }
+
+  drupal_add_css(drupal_get_path('module', 'springboard_target') . '/css/sba_target.css');
+
+  if(isset($arg)) {
+    module_load_include('inc', 'springboard_target', 'includes/springboard_target.custom_targets_edit');
+    $form = drupal_get_form('springboard_target_edit_custom_targets_form', $arg);
+    $header = t('Edit Target');
+  }
+  else {
+    module_load_include('inc', 'springboard_target', 'includes/springboard_target.custom_targets_create');
+    $form = drupal_get_form('springboard_target_create_custom_targets_form');
+    $header = t('Create Target');
+  }
+
+  $content = array(
+    'add-targets' => array(
+      'header' => $header,
+      'content' => drupal_render($form),
+      'manage_link' => array('title' => t('Return to targets list'), 'href' => 'admin/springboard/advocacy/targets/custom-targets'),
+      'css' => drupal_get_path('module', 'springboard_advocacy') . '/css/sba.css',
+    ),
+  );
+  if (user_access('create targets') && isset($arg)) {
+    $content['add-targets']['create_link'] = array('title' => t('Create a new target'), 'href' => 'admin/springboard/advocacy/targets/custom-targets/add');
+  };
+
+  return $content;
+}
+
+/**
+ * Advocacy dashboard views constructor.
+ * Will return false if view or view display is missing.
+ * @param $name
+ * @param $display
+ * @param array $args
+ * @return bool|view
+ */
+function springboard_advocacy_prepare_dashboard_view($name, $display, $args = array()) {
+  $view = views_get_view($name);
+
+  if(empty($view)) {
+    return FALSE;
+  }
+
+  if(isset($view->display[$display])) {
+    $view->set_display($display);
+  }
+  else {
+    return FALSE;
+  }
+
+  if(!empty($args)) {
+    $view->set_arguments($args);
+  }
+
+  $view->pre_execute();
+  $view->execute();
+
+  if($view->access($display)) {
+    return $view;
+  }
+  else {
+    return FALSE;
+  }
+}
+
+/**
+ * Format a dashboard error message.
+ * @param $view
+ * @param $title
+ * @param $message
+ * @return array
+ */
 function springboard_advocacy_dashboard_error($view, $title, $message) {
-  $views = array(
-    '{$view}' => array(
+  $content = array(
+    'error' => array(
       'header' => t($title),
       'content' => '<div>' . t($message) . '</div>',
     ),
   );
-  return $views;
+  return $content;
 }
-
