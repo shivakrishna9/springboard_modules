@@ -113,6 +113,7 @@ function springboard_advocacy_dashboard($path, $arg = NULL) {
   global $user;
 
   switch($path) {
+
     case 'add-custom-targets':
         module_load_include('inc', 'springboard_target', 'includes/springboard_target.custom_targets_create');
         drupal_add_css(drupal_get_path('module', 'springboard_target') . '/css/sba_target.css');
@@ -200,12 +201,7 @@ function springboard_advocacy_dashboard($path, $arg = NULL) {
         }
       }
       else {
-        $views = array(
-          'sba_actions' => array(
-            'header' => t('All Message Actions'),
-            'content' => '<div>Message Actions view or view display "block_2" not found.</div>',
-          ),
-        );
+        $views = springboard_advocacy_dashboard_error('sba_actions', 'Custom Targets', 'Message Actions view or view display "block_2" not found.');
       }
       break;
 
@@ -224,12 +220,7 @@ function springboard_advocacy_dashboard($path, $arg = NULL) {
         }
       }
       else {
-        $views = array(
-          'sba_actions' => array(
-            'header' => t('All Petitions'),
-            'content' => '<div>Petitions view or view display "block_2" not found.</div>',
-          ),
-        );
+        $views = springboard_advocacy_dashboard_error('sba_actions', 'Custom Targets', 'Petitions view or view display "block_2" not found.');
       }
       break;
 
@@ -267,12 +258,7 @@ function springboard_advocacy_dashboard($path, $arg = NULL) {
         else {
           $message = t('Target view or view display "block_1" not found.');
         }
-        $views = array(
-          'sba_targets' => array(
-            'header' => t('Custom Targets'),
-            'content' => '<div>' . $message . '</div>',
-          ),
-        );
+        $views = springboard_advocacy_dashboard_error('sba_targets', 'Custom Targets', $message);
       }
 
       break;
@@ -295,7 +281,16 @@ function springboard_advocacy_dashboard($path, $arg = NULL) {
           }
         }
 
-        $view = views_get_view('sba_messages_node');
+        $unconfigured = springboard_advocacy_api_unconfigured('springboard');
+        if(!empty($unconfigured)) {
+          $items = implode(', ', $unconfigured);
+          drupal_set_message(t('Advocacy API is not properly <a href="!url">configured</a>. There are empty values in :items. Configuration is required prior to message creation.', array('!url' => url('admin/config/services/advocacy'), ':items' => $items)));
+          $view = FALSE;
+        }
+        else {
+          $view = views_get_view('sba_messages_node');
+        }
+
         if ($view && isset($view->display['block_1'])) {
           $views = array(
             'sba_messages_node' => array(
@@ -311,21 +306,17 @@ function springboard_advocacy_dashboard($path, $arg = NULL) {
             unset($views['sba_messages_node']['create_link']);
           }
         } else {
-          $views = array(
-            'sba_targets' => array(
-              'header' => t('Messages'),
-              'content' => '<div>Message view or view display "block_1" not found.</div>',
-            ),
-          );
+          if(!empty($unconfigured)) {
+            $message = t('Please <a href="!url">configure</a> the Springboard API settings. There are empty values in :items. Configuration is required prior to message creation.', array('!url' => url('admin/config/services/advocacy'), ':items' => $items));
+          }
+          else {
+            $message = t('Message view or view display "block_1" not found');
+          }
+          $views = springboard_advocacy_dashboard_error('sba_messages_node', 'Messages', $message);
         }
       }
       else {
-        $views = array(
-          'sba_targets' => array(
-            'header' => t('Messages'),
-            'content' => '<div>There was a problem locating the message type for this node type.</div>',
-          ),
-        );
+        $views = springboard_advocacy_dashboard_error('sba_messages_node', 'Messages', 'There was a problem locating the message type for this node type.');
       }
       break;
 
@@ -333,5 +324,15 @@ function springboard_advocacy_dashboard($path, $arg = NULL) {
   }
   return theme('springboard_advocacy_dashboard', array('views' => $views));
 
+}
+
+function springboard_advocacy_dashboard_error($view, $title, $message) {
+  $views = array(
+    '{$view}' => array(
+      'header' => t($title),
+      'content' => '<div>' . t($message) . '</div>',
+    ),
+  );
+  return $views;
 }
 
