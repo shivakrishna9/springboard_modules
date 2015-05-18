@@ -28,7 +28,9 @@
 #take-action-wrapper fieldset legend {
 font-size: 18px;
 }
-#sba-messages-form label {
+
+#sba-messages-form label,
+#sba-messages-form .description {
     font-weight: bold;
 }
 

@@ -1,6 +1,6 @@
 /**
  * @file
- * message textarea sizing.
+ * message textarea equal-heights sizing on user-facing action webforms
  */
 (function ($) {
 
