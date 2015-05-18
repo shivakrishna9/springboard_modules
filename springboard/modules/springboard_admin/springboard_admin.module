@@ -193,11 +193,22 @@ function springboard_admin_form_springboard_admin_settings_alter(&$form, &$form_
     $roles = user_roles(TRUE, 'access springboard dashboard');
     $form['admin']['springboard_user_experience'] = array(
       '#type' => 'checkboxes',
-      '#title' => t('Springboard User Experience.'),
+      '#title' => t('Springboard User Experience'),
       '#description' => t('Choose which user roles will be given the Springboard User Experience. This includes redirecting to the Dashboard on login and after performing some administration functions.'),
       '#options' => $roles,
       '#default_value' => variable_get('springboard_user_experience', array_keys($roles)),
     );
+
+    // Field for selecting form types.
+    $form['admin']['springboard_admin_allowed_form_types'] = array(
+      '#type' => 'checkboxes',
+      '#title' => t('Springboard Admin Allowed Forms'),
+      '#description' => t('Choose which form types are listed in the Springboard Admin pages. Menu items are controlled through the Drupal menu system.'),
+      '#options' => _springboard_admin_enabled_form_types(),
+      '#default_value' => variable_get('springboard_admin_allowed_form_types', array_keys(_springboard_admin_enabled_form_types())),
+    );
+
+    // Create arrays of content types.
     $node_types = node_type_get_types();
     $allowed_types = array();
     foreach ($node_types as $type) {
@@ -210,7 +221,7 @@ function springboard_admin_form_springboard_admin_settings_alter(&$form, &$form_
     }
     $form['admin']['springboard_asset_library'] = array(
       '#type' => 'checkboxes',
-      '#title' => t('Springboard Asset Library.'),
+      '#title' => t('Springboard Admin Asset Library'),
       '#description' => t('Choose which content types are listed in the Springboard Asset Library.'),
       '#options' => $allowed_types,
       '#default_value' => variable_get('springboard_asset_library', array('page_wrapper', 'email_wrapper')),
@@ -754,6 +765,10 @@ function springboard_admin_forms_page($springboard_type) {
       break;
     }
   }
+
+  // Allow modules to alter the types to be displayed.
+  drupal_alter('springboard_admin_form_page_types', $display_types, $springboard_type);
+
   // Render the views tables for the appropriate set of content types.
   foreach ($display_types as $type) {
     $view = views_get_view('sbv_forms');
@@ -762,11 +777,25 @@ function springboard_admin_forms_page($springboard_type) {
     $view -> pre_execute();
     $view -> execute();
 
-    if ($view && $view -> access($display) && !empty($view -> result)) {
+    $tables[$type->type] = '';
+    if ($view && $view -> access($display)) {
       $tables[$type->type] = $view -> render();
     }
   }
   return theme('springboard_admin_forms_page', array('types' => $display_types, 'springboard_type' => $springboard_type, 'tables' => $tables));
+}
+
+/**
+ * Implements hook_springboard_admin_form_page_types_alter().
+ */
+function springboard_admin_springboard_admin_form_page_types_alter(&$display_types, $springboard_type) {
+  // Remove types not checked to display in the settings.
+  $allowed_types = array_filter(variable_get('springboard_admin_allowed_form_types', array_keys(_springboard_admin_enabled_form_types())));
+  foreach ($display_types as $type => $info) {
+    if (!in_array($type, $allowed_types)) {
+      unset($display_types[$type]);
+    }
+  }
 }
 
 /**
@@ -1420,4 +1449,21 @@ function _springboard_admin_views() {
   drupal_alter('springboard_admin_views', $view_names);
 
   return $view_names;
+}
+
+/**
+ * Return an array of Springboard enabled form types.
+ */
+function _springboard_admin_enabled_form_types() {
+  $node_types = node_type_get_types();
+  $sb_types = array();
+
+  // Include webform user and fundraiser enabled forms.
+  foreach ($node_types as $type) {
+    if (_webform_user_is_webform_user_node_type($type->type) || fundraiser_is_donation_type($type->type)) {
+      $sb_types[$type->type] = $type->name;
+    }
+  }
+
+  return $sb_types;
 }
