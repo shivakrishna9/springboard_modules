@@ -62,9 +62,13 @@ function springboard_advocacy_menu() {
   return $items;
 }
 
+
 /**
  * Defines common values for advocacy menu items.
- * Including a themed page callback for advocacy admin dashboard views.
+ * Including a themed page callback for advocacy admin dashboard views
+ * @param bool $override_type
+ * @param bool $override_access
+ * @return array
  */
 function springboard_advocacy_menu_common($override_type = FALSE, $override_access = FALSE) {
   $params = array(
@@ -95,7 +99,7 @@ function springboard_advocacy_user_can_create_advocacy_type() {
  * Implements hook_springboard_admin_admin_menu_items_alter().
  *
  * Add the advocacy links to springboard admin.
- *
+ * @param $items
  */
 function springboard_advocacy_springboard_admin_admin_menu_items_alter(&$items) {
   if (module_exists('springboard_advocacy')) {
@@ -122,11 +126,13 @@ function springboard_advocacy_springboard_admin_admin_menu_items_alter(&$items) 
 
   $types = node_type_get_types();
   foreach ($types as $type) {
+
     // Only create the item if the node type uses Webform User but not Fundraiser.
-    if ($type && _webform_user_is_webform_user_node_type($type->type)
-      && !fundraiser_is_donation_type($type->type)
-      && (springboard_advocacy_is_action_type($type->type)  || springboard_petition_is_petition_type($type->type))
-    ) {
+    if (module_exists('springboard_petition')) {
+      $petition = springboard_petition_is_petition_type($type->type);
+    }
+
+    if ((springboard_advocacy_is_action_type($type->type) || !empty($petition))) {
       // Forms > $type->type.
       $items['admin/springboard/advocacy/actions']['_children']['node/add/' . preg_replace('/_/', '-', $type->type)] = array(
         'link_path' => 'node/add/' . preg_replace('/_/', '-', $type->type),
@@ -501,6 +507,11 @@ function springboard_advocacy_form_views_exposed_form_alter(&$form, &$form_state
   }
 }
 
+/**
+ * @param $form
+ * @param $form_state
+ * @param $form_id
+ */
 function _springboard_advocacy_ajaxify_state_field(&$form, &$form_state, $form_id) {
   // Hack to allow ajax in views exposed forms
   $form['#after_build'][] = 'springboard_advocacy_views_exposed_form_ajax_enable';
@@ -534,6 +545,11 @@ function _springboard_advocacy_ajaxify_state_field(&$form, &$form_state, $form_i
 
 }
 
+/**
+ * @param $form
+ * @param $form_state
+ * @param $form_id
+ */
 function  _springboard_advocacy_remove_unsubscribed_elements(&$form, &$form_state, $form_id) {
   $subscription = springboard_advocacy_get_subscription();
   if($subscription) {
@@ -750,6 +766,11 @@ function springboard_advocacy_views_exposed_form_ajax_lookup_recursive($elements
  * Implements hook_theme().
  *
  * Wraps various views in a common theme template
+ *
+ * @param $existing
+ * @param $type
+ * @param $theme
+ * @return array
  */
 function springboard_advocacy_theme($existing, $type, $theme) {
   $path = drupal_get_path('module', 'springboard_advocacy');
@@ -857,10 +878,17 @@ function springboard_advocacy_token_info() {
   );
 }
 
+
 /**
- * Implements hook_tokens().
+ * Implements hook_tokens
+ *
+ * @param $type
+ * @param $tokens
+ * @param array $data
+ * @param array $options
+ * @return array
  */
-function springboard_advocacy_tokens($type, $tokens, array $data = array(), array $options = array()) {
+function springboard_advocacy_tokens($type, $tokens, $data = array(), $options = array()) {
 
   $recipients = '';
   $replacements = array();
@@ -935,8 +963,6 @@ function springboard_advocacy_springboard_admin_views_alter(&$names) {
  * @return array
  */
 function springboard_advocacy_api_unconfigured($type = 'All') {
-
-  $settings = array();
 
   if ($type == 'springboard') {
     $settings = springboard_advocacy_api_vars();
