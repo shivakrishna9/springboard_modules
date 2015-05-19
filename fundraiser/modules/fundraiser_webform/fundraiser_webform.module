@@ -249,7 +249,7 @@ function fundraiser_webform_webform_component_render_alter(&$element, $component
     return;
   }
 
-  // Add the wrapper function to only certain component types.
+  // Do not add the wrapper to these component types.
   $no_wrapper = array(
     'fieldset',
     'hidden',
@@ -272,11 +272,12 @@ function fundraiser_webform_webform_component_render_alter(&$element, $component
 function theme_fundraiser_webform_field_element_wrapper(&$variables) {
   // Get the component form key for this field.
   $key = $variables['element']['#webform_component']['form_key'];
+  $class = 'fundraiser-' . drupal_clean_css_identifier($key) . '-element';
 
-  // Add a wrapper div around this element with a standard fundraiser class.
-  $output = '<div class="fundraiser-' . drupal_clean_css_identifier($key) . '-form-element">';
-  $output .= $variables['element']['#children'];
-  $output .= "</div>\n";
+  // Add this class between the hardcoded webform classes.
+  $webform_classes = 'form-item webform-component';
+  $output = str_replace($webform_classes, $webform_classes . ' ' . $class, $variables['element']['#children']);
+
   return $output;
 }
 
