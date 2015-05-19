@@ -115,35 +115,34 @@ function springboard_advocacy_dashboard($path, $arg = NULL) {
 
   global $user;
   // Prepare pages based on path.
-
   switch($path) {
 
     //Custom Target edit form page
     case 'add-custom-targets':
     case 'edit-custom-targets':
-      $content = springboard_advocacy_custom_targets_admin_form($path, $arg);
+      $sections = springboard_advocacy_custom_targets_admin_form($path, $arg);
       break;
 
     // Custom Targets landing page view
     case 'custom-targets':
       // Get the view
-      $targets = springboard_advocacy_prepare_dashboard_view('sba_custom_targets', 'block_1');
+      $targets_view = springboard_advocacy_prepare_dashboard_view('sba_custom_targets', 'block_1');
       //The view is not found or the display is not found
-      if(!$targets) {
+      if(!$targets_view) {
         $message = t('Target view or view display "block_1" not found.');
-        $content = springboard_advocacy_dashboard_error('sba_targets', 'Custom Targets', $message);
+        $sections = springboard_advocacy_dashboard_error('sba_targets', 'Custom Targets', $message);
         break;
       }
 
-      $content = array(
+      $sections = array(
         'sba_targets' => array(
           'header' => t('Custom Targets'),
-          'content' => $targets->preview(),
+          'content' => $targets_view->preview(),
           'css' => drupal_get_path('module', 'springboard_advocacy') . '/css/sba.css',
         ),
       );
       if (user_access('create targets')) {
-        $content['sba_targets']['create_link'] = array('title' => t('Create a new target'), 'href' => 'admin/springboard/advocacy/targets/custom-targets/add');
+        $sections['sba_targets']['create_link'] = array('title' => t('Create a new target'), 'href' => 'admin/springboard/advocacy/targets/custom-targets/add');
       };
       break;
 
@@ -151,27 +150,27 @@ function springboard_advocacy_dashboard($path, $arg = NULL) {
     case 'actions':
 
       // Actions
-      $actions = springboard_advocacy_prepare_dashboard_view('sba_actions', 'block_1', array('sba_message_action'));
-      if ($actions && !empty($actions->result)) {
-        $content = array(
+      $actions_view = springboard_advocacy_prepare_dashboard_view('sba_actions', 'block_1', array('sba_message_action'));
+      if ($actions_view && !empty($actions_view->result)) {
+        $sections = array(
           'sba_actions' => array(
             'header' => t('Message Actions'),
-            'content' => $actions->preview(),
+            'content' => $actions_view->preview(),
             'create_link' => array('title' => t('Create a new message action'), 'href' => 'node/add/sba-message-action'),
             'viewmore_link' => array('title' => t('View All Message Actions'), 'href' => 'admin/springboard/advocacy/message-actions/all'),
             'css' => drupal_get_path('module', 'springboard_advocacy') . '/css/sba.css',
           ),
         );
         if (module_exists('springboard_target') && springboard_target_user_can_access_targets()) {
-          $content['sba_actions']['manage_link'] = array('title' => t('Manage Custom Targets'), 'href' => 'admin/springboard/advocacy/targets/custom-targets');
+          $sections['sba_actions']['manage_link'] = array('title' => t('Manage Custom Targets'), 'href' => 'admin/springboard/advocacy/targets/custom-targets');
         }
       }
 
-      $petitions = springboard_advocacy_prepare_dashboard_view('sba_actions', 'block_1', array('springboard_petition'));
-      if ($petitions && !empty($petitions->result)) {
-        $content['sba_petitions'] = array(
+      $petitions_view = springboard_advocacy_prepare_dashboard_view('sba_actions', 'block_1', array('springboard_petition'));
+      if ($petitions_view && !empty($petitions_view->result)) {
+        $sections['sba_petitions'] = array(
           'header' => t('Petitions'),
-          'content' => $petitions->preview(), //views_embed_view('sbv_forms', 'block_1', 'springboard_petition'),
+          'content' => $petitions_view->preview(), //views_embed_view('sbv_forms', 'block_1', 'springboard_petition'),
           'create_link' => array('title' => t('Create a new petition'), 'href' => 'node/add/springboard-petition'),
           'viewmore_link' => array('title' => t('View All Petitions'), 'href' => 'admin/springboard/advocacy/petitions/all'),
           'css' => drupal_get_path('module', 'springboard_advocacy') . '/css/sba.css',
@@ -181,46 +180,46 @@ function springboard_advocacy_dashboard($path, $arg = NULL) {
 
     // All message actions view page
     case 'message-actions/all':
-      $actions_all = springboard_advocacy_prepare_dashboard_view('sba_actions', 'block_2', array('sba_message_action'));
-      if(!$actions_all) {
-        $content = springboard_advocacy_dashboard_error('sba_actions', 'Custom Targets', 'Message Actions view or view display "block_2" not found.');
+      $actions_all_view = springboard_advocacy_prepare_dashboard_view('sba_actions', 'block_2', array('sba_message_action'));
+      if(!$actions_all_view) {
+        $sections = springboard_advocacy_dashboard_error('sba_actions', 'Custom Targets', 'Message Actions view or view display "block_2" not found.');
         break;
       }
 
-      $content = array(
+      $sections = array(
         'sba_actions' => array(
           'header' => t('All Message Actions'),
-          'content' => $actions_all->preview(),
+          'content' => $actions_all_view->preview(),
           'css' => drupal_get_path('module', 'springboard_advocacy') . '/css/sba.css',
         ),
       );
 
       if (user_access('create sba_message_action content')) {
-        $content['sba_actions']['create_link'] = array('title' => t('Create a new message action'), 'href' => 'node/add/sba-message-action');
+        $sections['sba_actions']['create_link'] = array('title' => t('Create a new message action'), 'href' => 'node/add/sba-message-action');
       }
       if (springboard_target_user_can_access_targets()) {
-        $content['sba_actions']['manage_link'] = array('title' => t('Manage Custom Targets'), 'href' => 'admin/springboard/advocacy/targets/custom-targets');
+        $sections['sba_actions']['manage_link'] = array('title' => t('Manage Custom Targets'), 'href' => 'admin/springboard/advocacy/targets/custom-targets');
       }
 
       break;
 
     // All Petitions view page
     case 'petitions/all':
-      $petitions_all = springboard_advocacy_prepare_dashboard_view('sba_actions', 'block_2', array('springboard_petition'));
-      if($petitions_all) {
-        $content = array(
+      $petitions_all_view = springboard_advocacy_prepare_dashboard_view('sba_actions', 'block_2', array('springboard_petition'));
+      if($petitions_all_view) {
+        $sections = array(
           'sba_actions' => array(
             'header' => t('All Petitions'),
-            'content' => $petitions_all->preview(),
+            'content' => $petitions_all_view->preview(),
             'css' => drupal_get_path('module', 'springboard_advocacy') . '/css/sba.css',
           ),
         );
         if (user_access('create springboard_petition content')) {
-          $content['sba_actions']['create_link'] = array('title' => t('Create a new petition'), 'href' => 'node/add/springboard-petition');
+          $sections['sba_actions']['create_link'] = array('title' => t('Create a new petition'), 'href' => 'node/add/springboard-petition');
         }
       }
       else {
-        $content = springboard_advocacy_dashboard_error('sba_actions', 'Custom Targets', 'Petitions view or view display "block_2" not found.');
+        $sections = springboard_advocacy_dashboard_error('sba_actions', 'Custom Targets', 'Petitions view or view display "block_2" not found.');
       }
       break;
 
@@ -232,7 +231,7 @@ function springboard_advocacy_dashboard($path, $arg = NULL) {
       // Is this a message type?
       $message_types = variable_get('sba_message_node_types', array());
       if(!isset($message_types[$node->type])) {
-        $content = springboard_advocacy_dashboard_error('sba_messages_node', 'Messages', 'There was a problem locating the message type for this node type.');
+        $sections = springboard_advocacy_dashboard_error('sba_messages_node', 'Messages', 'There was a problem locating the message type for this node type.');
         break;
       }
 
@@ -242,7 +241,7 @@ function springboard_advocacy_dashboard($path, $arg = NULL) {
       // Couldn't load the correct view?
       if (!$messages_view) {
         $error_message = t('Message view or view display "block_1" not found');
-        $content = springboard_advocacy_dashboard_error('sba_messages_node', 'Messages', $error_message);
+        $sections = springboard_advocacy_dashboard_error('sba_messages_node', 'Messages', $error_message);
         break;
       }
 
@@ -263,7 +262,7 @@ function springboard_advocacy_dashboard($path, $arg = NULL) {
       }
 
       // set the content
-      $content = array(
+      $sections = array(
         'sba_messages_node' => array(
           'header' => t('Messages'),
           'content' => $messages_view->preview(),
@@ -273,19 +272,19 @@ function springboard_advocacy_dashboard($path, $arg = NULL) {
 
       // Display/hide create link
       if((user_access('edit own sba_message_action content') && $user->uid == $node->uid) || user_access('edit any sba_message_action content')) {
-        $content['sba_messages_node']['create_link'] = array('title' => t('Create a new message'), 'href' => 'node/' . arg(1) . '/messages/add/' . $message_types[$node->type]);
+        $sections['sba_messages_node']['create_link'] = array('title' => t('Create a new message'), 'href' => 'node/' . arg(1) . '/messages/add/' . $message_types[$node->type]);
       }
 
       if (!empty($no_create)) {
-        unset($content['sba_messages_node']['create_link']);
+        unset($sections['sba_messages_node']['create_link']);
       }
       break;
 
     default:
-      $content = array();
+      $sections = array();
   }
 
-  return theme('springboard_advocacy_dashboard', array('views' => $content));
+  return theme('springboard_advocacy_dashboard', array('sections' => $sections));
 }
 
 /**
