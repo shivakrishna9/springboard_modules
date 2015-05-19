@@ -102,13 +102,13 @@ function springboard_advocacy_dashboard($path, $arg = NULL) {
 
   // If the API is not configured, intercept some displays and
   // show an error message.
-  if($path != 'actions' && $path != 'petitions/all' && $path != 'actions/all') {
+  if($path != 'actions' && $path != 'petitions/all' && $path != 'message-actions/all') {
     $unconfigured = springboard_advocacy_api_unconfigured('springboard');
     if(!empty($unconfigured)) {
       $items = implode(', ', $unconfigured);
       $message = t('Please <a href="!url">configure</a> the Springboard Advocacy API settings. There are empty values in :items. This feature will not function without required configuration.', array('!url' => url('admin/config/services/advocacy'), ':items' => $items));
-      $content = springboard_advocacy_dashboard_error('error', t('Configuration required'), $message);
-      return theme('springboard_advocacy_dashboard', array('sections' => $content));
+      $sections = springboard_advocacy_dashboard_error('error', t('Configuration required'), $message);
+      return theme('springboard_advocacy_dashboard', array('sections' => $sections));
     }
   }
 
@@ -297,8 +297,8 @@ function springboard_advocacy_dashboard($path, $arg = NULL) {
 function springboard_advocacy_custom_targets_admin_form($path, $arg = NULL) {
 
   if(!module_exists("springboard_target")) {
-    $content = springboard_advocacy_dashboard_error('sba_target', t('Custom Targets'), t('Springboard Target Module is not enabled.'));
-    return $content;
+    $sections = springboard_advocacy_dashboard_error('sba_target', t('Custom Targets'), t('Springboard Target Module is not enabled.'));
+    return $sections;
   }
 
   drupal_add_css(drupal_get_path('module', 'springboard_target') . '/css/sba_target.css');
@@ -314,7 +314,7 @@ function springboard_advocacy_custom_targets_admin_form($path, $arg = NULL) {
     $header = t('Create Target');
   }
 
-  $content = array(
+  $sections = array(
     'add-targets' => array(
       'header' => $header,
       'content' => drupal_render($form),
@@ -323,10 +323,10 @@ function springboard_advocacy_custom_targets_admin_form($path, $arg = NULL) {
     ),
   );
   if (user_access('create targets') && isset($arg)) {
-    $content['add-targets']['create_link'] = array('title' => t('Create a new target'), 'href' => 'admin/springboard/advocacy/targets/custom-targets/add');
+    $sections['add-targets']['create_link'] = array('title' => t('Create a new target'), 'href' => 'admin/springboard/advocacy/targets/custom-targets/add');
   };
 
-  return $content;
+  return $sections;
 }
 
 /**
@@ -374,11 +374,11 @@ function springboard_advocacy_prepare_dashboard_view($name, $display, $args = ar
  * @return array
  */
 function springboard_advocacy_dashboard_error($view, $title, $message) {
-  $content = array(
+  $sections = array(
     'error' => array(
       'header' => t($title),
       'content' => '<div>' . t($message) . '</div>',
     ),
   );
-  return $content;
+  return $sections;
 }
