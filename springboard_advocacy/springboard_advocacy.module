@@ -69,7 +69,7 @@ function springboard_advocacy_menu() {
 function springboard_advocacy_menu_common($override_type = FALSE, $override_access = FALSE) {
   $params = array(
     'page callback' => 'springboard_advocacy_dashboard',
-    'file' => 'springboard_advocacy.admin.inc',
+    'file' => 'springboard_advocacy.dashboard.inc',
     'file path' => drupal_get_path('module', 'springboard_advocacy') . '/includes',
 
   );

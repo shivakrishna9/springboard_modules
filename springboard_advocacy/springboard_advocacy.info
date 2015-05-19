@@ -8,6 +8,7 @@ dependencies[] = views
 configure = 'admin/config/services/advocacy'
 
 files[] = includes/springboard_advocacy.admin.inc
+files[] = includes/springboard_advocacy.dashboard.inc
 files[] = includes/springboard_advocacy.webform.inc
 files[] = includes/springboard_advocacy.ApiClientLoader.inc
 files[] = includes/views/plugins/springboard_advocacy_views_plugin_query.inc
