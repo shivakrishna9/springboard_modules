@@ -42,11 +42,12 @@
             }
 
             // Prevent doubleclicks of target search submit.
-            $('#edit-submit-targets').ajaxStart(function() {
-                $(this).prop('disabled', true).css({'cursor': 'not-allowed'});;
+            var subButton = $('#edit-submit-targets');
+            subButton.ajaxStart(function() {
+                subButton.prop('disabled', true).css({'cursor': 'not-allowed'});
             });
-            $('#edit-submit-targets').ajaxComplete(function()  {
-                $(this).prop('disabled', false).css({'cursor': 'pointer'});;
+            subButton.ajaxComplete(function()  {
+                subButton.prop('disabled', false).css({'cursor': 'pointer'});
             });
 
         }
@@ -152,20 +153,21 @@
     // define trigger for custom event handler used by State dropdown's ajax callback.
     // Reset district option elements to default on State element change.
     Sba.buildStateField = function () {
-
-        $('#edit-search-state').ajaxComplete(function( event, xhr, settings ) {
-            $('#edit-submit-targets').prop('disabled', false).css({'cursor': 'pointer'});;
+        var state = $('#edit-search-state');
+        var searchSub = $('#edit-submit-targets');
+        state.ajaxComplete(function() {
+            searchSub.prop('disabled', false).css({'cursor': 'pointer'});;
         });
 
         // if only some states are allowed, or federal and and some states,
         // only trigger the district field update if certain criteria are met
         if(typeof(Drupal.settings.sbaAllowedStates) !== "undefined") {
-            $('#edit-search-state').on('change', function () {
+            state.on('change', function () {
                 if($(this).val() != 'All' && ($.inArray($(this).val(), Drupal.settings.sbaAllowedStates) !=-1
                     || Drupal.settings.sbaSubscriptionLevel == 'federal-and-states-selected')) {
                     if(window.search_state != 'committee') {
                         $(this).trigger('custom_event');
-                        $('#edit-submit-targets').prop('disabled', true).css({'cursor': 'not-allowed'});
+                        searchSub.prop('disabled', true).css({'cursor': 'not-allowed'});
                     }
                 }
                 else {
@@ -175,11 +177,11 @@
         }
         // Else all states are allowed
         else {
-            $('#edit-search-state').on('change', function () {
+            state.on('change', function () {
                 $('select[name="search_district_name"]').html('<option selected="selected" value="All">- Any -</option>');
                 if($(this).val() != 'All') {
                     if(window.search_state != 'committee') {
-                        $('#edit-submit-targets').prop('disabled', true).css({'cursor': 'not-allowed'});
+                        searchSub.prop('disabled', true).css({'cursor': 'not-allowed'});
                         $(this).trigger('custom_event');
 
                     }
@@ -261,8 +263,9 @@
 
         //set up up default placeholder text in textfield
         if (comField.text().length == 0) {
-            var placeholder = $('#edit-search-committee-wrapper .description').text().trim();
-            $('#edit-search-committee-wrapper .description').hide();
+            var desc = $('.description', '#edit-search-committee-wrapper');
+            var placeholder = desc.text().trim();
+            desc.hide();
             comField.attr('placeholder', placeholder);
             comField.focus(function () {
                 $(this).attr('placeholder', '');
@@ -862,7 +865,7 @@
 
                     //It's the same key, but maybe the values are different.
                     if (missing != true) {
-                        newQueryValuesArr = values.split('|');
+                        var newQueryValuesArr = values.split('|');
                         $.each(newQueryValuesArr, function(i, value){
                             console.log(oldQueryObj[key]);
                             if(oldQueryObj[key].toString().indexOf(value) == -1) {
@@ -1002,12 +1005,13 @@
             message = 'You have unsaved changes.'
         }
         else {
-          current =  $('.sba-message-status').text();
+            var status = $('.sba-message-status');
+            var current =  status.text();
             if(current.indexOf('You have') != -1) {
                 message = message + " You have unsaved changes."
             }
         }
-        $('.sba-message-status').hide().text(message).show('slow');
+        status.hide().text(message).show('slow');
     };
 
      // Count recipients and groups and display a message.
