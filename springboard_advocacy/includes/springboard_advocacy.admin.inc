@@ -146,6 +146,7 @@ function springboard_advocacy_dashboard($path, $arg = NULL) {
       break;
 
     // Actions landing page view. Includes Actions and Petitions.
+    // Since sections here are optional, don't set an error message if one is missing.
     case 'actions':
 
       // Actions
@@ -181,7 +182,7 @@ function springboard_advocacy_dashboard($path, $arg = NULL) {
     case 'message-actions/all':
       $actions_all_view = springboard_advocacy_prepare_dashboard_view('sba_actions', 'block_2', array('sba_message_action'));
       if(!$actions_all_view) {
-        $sections = springboard_advocacy_dashboard_error('sba_actions', t('Custom Targets'), 'Message Actions view or view display "block_2" not found.');
+        $sections = springboard_advocacy_dashboard_error('sba_actions', t('All Message Actions'), 'Message Actions view or view display "block_2" not found.');
         break;
       }
 
@@ -218,7 +219,7 @@ function springboard_advocacy_dashboard($path, $arg = NULL) {
         }
       }
       else {
-        $sections = springboard_advocacy_dashboard_error('sba_actions', t('Custom Targets'), t('Petitions view or view display "block_2" not found.'));
+        $sections = springboard_advocacy_dashboard_error('sba_actions', t('All Petitions'), t('Petitions view or view display "block_2" not found.'));
       }
       break;
 
