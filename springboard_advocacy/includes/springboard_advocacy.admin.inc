@@ -107,7 +107,7 @@ function springboard_advocacy_dashboard($path, $arg = NULL) {
     $unconfigured = springboard_advocacy_api_unconfigured('springboard');
     if(!empty($unconfigured)) {
       $items = implode(', ', $unconfigured);
-      $message = t('Please <a href="!url">configure</a> the Springboard API settings. There are empty values in :items. This feature will not function without required configuration.', array('!url' => url('admin/config/services/advocacy'), ':items' => $items));
+      $message = t('Please <a href="!url">configure</a> the Springboard Advocacy API settings. There are empty values in :items. This feature will not function without required configuration.', array('!url' => url('admin/config/services/advocacy'), ':items' => $items));
       $content = springboard_advocacy_dashboard_error('error', 'Configuration required', $message);
       return theme('springboard_advocacy_dashboard', array('views' => $content));
     }
@@ -118,12 +118,8 @@ function springboard_advocacy_dashboard($path, $arg = NULL) {
 
   switch($path) {
 
-    // Custom Target create form page
-    case 'add-custom-targets':
-      $content = springboard_advocacy_custom_targets_admin_form($path);
-      break;
-
     //Custom Target edit form page
+    case 'add-custom-targets':
     case 'edit-custom-targets':
       $content = springboard_advocacy_custom_targets_admin_form($path, $arg);
       break;
@@ -138,6 +134,7 @@ function springboard_advocacy_dashboard($path, $arg = NULL) {
         $content = springboard_advocacy_dashboard_error('sba_targets', 'Custom Targets', $message);
         break;
       }
+
       $content = array(
         'sba_targets' => array(
           'header' => t('Custom Targets'),
@@ -159,7 +156,7 @@ function springboard_advocacy_dashboard($path, $arg = NULL) {
         $content = array(
           'sba_actions' => array(
             'header' => t('Message Actions'),
-            'content' => $actions->preview(), //views_embed_view('sba_actions', 'block_1', 'sba_message_action'),
+            'content' => $actions->preview(),
             'create_link' => array('title' => t('Create a new message action'), 'href' => 'node/add/sba-message-action'),
             'viewmore_link' => array('title' => t('View All Message Actions'), 'href' => 'admin/springboard/advocacy/message-actions/all'),
             'css' => drupal_get_path('module', 'springboard_advocacy') . '/css/sba.css',
