@@ -227,7 +227,7 @@ function springboard_advocacy_custom_targets_admin_form($path, $arg = NULL) {
   }
 
   $sections = array(
-    'add-targets' => array(
+    'target_form' => array(
       'header' => $header,
       'content' => drupal_render($form),
       'manage_link' => array('title' => t('Return to targets list'), 'href' => 'admin/springboard/advocacy/targets/custom-targets'),
@@ -235,7 +235,7 @@ function springboard_advocacy_custom_targets_admin_form($path, $arg = NULL) {
     ),
   );
   if (user_access('create targets') && isset($arg)) {
-    $sections['add-targets']['create_link'] = array('title' => t('Create a new target'), 'href' => 'admin/springboard/advocacy/targets/custom-targets/add');
+    $sections['target_form']['create_link'] = array('title' => t('Create a new target'), 'href' => 'admin/springboard/advocacy/targets/custom-targets/add');
   };
 
   return $sections;
