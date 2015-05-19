@@ -6,9 +6,13 @@
  */
 
 /**
- * Page callback for the advocacy dashboard.
+ *Page callback for the advocacy dashboard.
  *
  * Embeds and themes various views landing pages and the target creation/edit forms.
+ *
+ * @param $path
+ * @param null $arg
+ * @return mixed
  */
 function springboard_advocacy_dashboard($path, $arg = NULL) {
 
@@ -25,6 +29,7 @@ function springboard_advocacy_dashboard($path, $arg = NULL) {
   }
 
   global $user;
+  $sections  = array();
   // Prepare pages based on path.
   switch($path) {
 
@@ -215,7 +220,7 @@ function springboard_advocacy_custom_targets_admin_form($path, $arg = NULL) {
 
   drupal_add_css(drupal_get_path('module', 'springboard_target') . '/css/sba_target.css');
 
-  if(isset($arg)) {
+  if($path == 'edit-custom-targets') {
     module_load_include('inc', 'springboard_target', 'includes/springboard_target.custom_targets_edit');
     $form = drupal_get_form('springboard_target_edit_custom_targets_form', $arg);
     $header = t('Edit Target');
@@ -287,7 +292,7 @@ function springboard_advocacy_prepare_dashboard_view($name, $display, $args = ar
  */
 function springboard_advocacy_dashboard_error($view, $title, $message) {
   $sections = array(
-    'error' => array(
+    '{$view}' => array(
       'header' => t($title),
       'content' => '<div>' . t($message) . '</div>',
     ),
