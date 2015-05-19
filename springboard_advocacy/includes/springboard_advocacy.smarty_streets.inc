@@ -5,6 +5,13 @@
  * Lookup function for smarty streets api
  */
 
+/**
+ * Lookup 9 digit zip code from address in form submission.
+ * Grab the county, fips and lat/lon too.
+ *
+ * @param $values
+ * @return array
+ */
 function springboard_advocacy_smarty_lookup($values) {
 
   $query =  array(
