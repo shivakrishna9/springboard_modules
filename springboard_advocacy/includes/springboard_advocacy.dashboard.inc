@@ -6,7 +6,7 @@
  */
 
 /**
- *Page callback for the advocacy dashboard.
+ * Page callback for the advocacy dashboard.
  *
  * Embeds and themes various views landing pages and the target creation/edit forms.
  *
@@ -99,7 +99,7 @@ function springboard_advocacy_dashboard($path, $arg = NULL) {
     case 'message-actions/all':
       $actions_all_view = springboard_advocacy_prepare_dashboard_view('sba_actions', 'block_2', array('sba_message_action'));
       if(!$actions_all_view) {
-        $sections = springboard_advocacy_dashboard_error('sba_actions', t('All Message Actions'), 'Message Actions view or view display "block_2" not found.');
+        $sections = springboard_advocacy_dashboard_error('sba_actions', t('All Message Actions'), t('Message Actions view or view display "block_2" not found.'));
         break;
       }
 
@@ -285,14 +285,14 @@ function springboard_advocacy_prepare_dashboard_view($name, $display, $args = ar
 
 /**
  * Format a dashboard error message.
- * @param $view
+ * @param $section_name
  * @param $title
  * @param $message
  * @return array
  */
-function springboard_advocacy_dashboard_error($view, $title, $message) {
+function springboard_advocacy_dashboard_error($section_name, $title, $message) {
   $sections = array(
-    '{$view}' => array(
+    '{$section_name}' => array(
       'header' => t($title),
       'content' => '<div>' . t($message) . '</div>',
     ),
