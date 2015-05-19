@@ -3,21 +3,25 @@
 /**
  * @file
  * Module for the SBA Message Entity
- */  
-
+ */
 
 /**
- * Implements hook_menu_alter().
+ * Implements hook_menu().
  *
- * Add a complex permission for views message landing page.
- *
+ * node/%/messages
  */
-function sba_message_menu_alter(&$items) {
-  // Set a custom access callback function for our message view page display path.
-  $items['node/%/messages']['access callback'] = 'sba_message_access';
-  $items['node/%/messages']['access arguments'] = array('manage-messages');
-}
 
+function sba_message_menu() {
+  $items['node/%/messages'] = array(
+    'title' => 'Messages',
+    'page arguments' => array(1),
+    'access callback' => 'sba_message_access',
+    'access arguments' => array('manage-messages'),
+    'type' => MENU_LOCAL_TASK
+  ) + springboard_advocacy_menu_common(TRUE, TRUE);
+
+  return $items;
+}
 
 /**
  * Determines whether the given user has access to a sba_message.

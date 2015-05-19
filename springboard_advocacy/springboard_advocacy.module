@@ -71,7 +71,6 @@ function springboard_advocacy_menu_common($override_type = FALSE, $override_acce
     'page callback' => 'springboard_advocacy_dashboard',
     'file' => 'springboard_advocacy.dashboard.inc',
     'file path' => drupal_get_path('module', 'springboard_advocacy') . '/includes',
-
   );
   if(!$override_type) {
     $params['type'] = MENU_NORMAL_ITEM;
