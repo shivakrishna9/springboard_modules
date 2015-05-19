@@ -94,7 +94,7 @@ function sba_message_action_modal_page($js = NULL, $nid = NULL) {
     ctools_include('modal');
     ctools_include('ajax');
   }
-  $node = node_load($nid);
+  ///$node = node_load($nid);
   $contents = views_embed_view('sba_messages_node', 'block_2', $nid);
   return ctools_modal_render(t('Possible Messages'), $contents) ;
 }
@@ -1098,10 +1098,9 @@ function sba_message_action_form_webform_configure_form_alter(&$form, &$form_sta
  * Some onerous form manipulations in order to get the webform confirmation failure
  * message form to display nicely.
  * @param $element
- * @param $b
  * @return mixed
  */
-function sba_message_action_configure_form_after_build($element, $b) {
+function sba_message_action_configure_form_after_build($element) {
   $element['submission']['confirmation']['format']['#collapsible'] = TRUE;
   $element['submission']['confirmation']['format']['#collapsed'] = TRUE;
   $element['submission']['confirmation']['format']['#attached']['library'][] =
@@ -1297,10 +1296,14 @@ function sba_message_action_form_webform_component_delete_form_alter(&$form, &$f
   }
 }
 
+
 /**
  * Implements hook_form_webform_component_edit_form_alter.
  *
  * Disable form-key editing and un-mandatory-ifying of certain profile fields.
+ * @param $form
+ * @param $form_state
+ * @param $form_id
  */
 function sba_message_action_form_webform_component_edit_form_alter(&$form, &$form_state, $form_id) {
   $locked_fields = array(
@@ -1317,10 +1320,14 @@ function sba_message_action_form_webform_component_edit_form_alter(&$form, &$for
   }
 }
 
+
 /**
  * Implements hook_form_webform_components_form_alter().
  *
  * Disable un-mandatory-ifying of certain profile fields.
+ * @param $form
+ * @param $form_state
+ * @param $form_id
  */
 function sba_message_action_form_webform_components_form_alter(&$form, &$form_state, $form_id) {
   $locked_fields = array(
