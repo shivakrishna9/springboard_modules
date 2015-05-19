@@ -550,9 +550,10 @@ function springboard_advocacy_views_pre_render(&$view) {
  * @return string
  */
 function theme_springboard_advocacy_views_attachment_before($vars) {
+  $output = '';
   if (!empty($vars['query'])) {
-
     if (!empty($vars['view']->build_info['target_ids'])) {
+
       $ids_required =  array('fields', 'gender', 'district_name', 'gender', 'social', 'search_committee');
       $ids_required = array_intersect(array_keys($vars['query']), $ids_required);
 
@@ -560,6 +561,7 @@ function theme_springboard_advocacy_views_attachment_before($vars) {
         $vars['query']['ids'] = implode('|', $vars['view']->build_info['target_ids']);
       }
     }
+
     if (!empty($vars['total_rows'])) {
       $plural = $vars['total_rows'] > 1 ? 'matches found' : 'match found';
       $output = '<div id ="advocacy-attachment-before-rows"><span class = "target-results">Search Results </span><span class = "target-count">' . $vars['total_rows'] . ' ' . $plural . '</span></div>';
@@ -568,15 +570,16 @@ function theme_springboard_advocacy_views_attachment_before($vars) {
         $output .= l(t('Add All Targets'), "add-all", array('attributes' => array('id' => 'advo-add-all'), 'query' => $vars['query'], 'external' => TRUE));
         $output .= '</div>';
       }
-      return $output;
     }
   }
+  return $output;
 }
 
 /**
  * @todo remove this if fixed in future views release.
  * Override a bug in the original preprocess
  * See https://www.drupal.org/node/2315365 for a similar issue.
+ * @param vars
  */
 function springboard_advocacy_preprocess_views_view_table(&$vars)
 {
@@ -599,6 +602,7 @@ function springboard_advocacy_preprocess_views_view_table(&$vars)
     $query += $exposed;
   }
 
+  $label = '';
   foreach ($columns as $field => $column) {
     // render the header labels
 
@@ -624,13 +628,14 @@ function springboard_advocacy_preprocess_views_view_table(&$vars)
           'attributes' => array('title' => $title),
           'query' => $query,
         );
-
         $vars['header'][$field] = l($label, $_GET['q'], $link_options);
       }
     }
+
     if (isset($vars['rows'][0]['committee_memberships']) && $field == 'committee_memberships' && $label ==  '') {
       $label = t('Committees');
       $vars['header'][$field] = t($label);
     }
+
   }
 }
