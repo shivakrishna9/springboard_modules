@@ -25,12 +25,11 @@
 #your-information-wrapper {
     clear: left;
     -webkit-box-sizing: border-box;
-  -moz-box-sizing: border-box;
-  box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    box-sizing: border-box;
     padding-right: 20px;
-
-
 }
+
 #your-information-wrapper fieldset legend {
     font-size: 18px;
 }
@@ -40,7 +39,7 @@
     font-weight: bold;
 }
 
- #edit-actions {
+#edit-actions {
     clear:both;
     background-color: #fff;
     border-top: none;
@@ -48,7 +47,7 @@
     margin: 0;
 }
 
- #edit-actions input {
+#edit-actions input {
     width: 94.5%;
     background: #247AAD;
     border: none;
@@ -60,11 +59,11 @@
     text-shadow: none;
 }
 
- #edit-actions input:hover {
+#edit-actions input:hover {
     background: #1E72A3;
 }
 
- #sba-messages-form {
+#sba-messages-form {
     clear: both;
 }
 
@@ -76,7 +75,6 @@
     -webkit-box-sizing: border-box;
     -moz-box-sizing: border-box;
     box-sizing: border-box;
-
 }
 
 #your-information-wrapper #webform-component-sbp-first-name.control-group,
@@ -89,6 +87,7 @@
     box-sizing: border-box;
     padding-left:10px;
 }
+
 #your-information-wrapper #webform-component-sbp-salutation.control-group select {
     width: 100%;
 }

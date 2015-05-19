@@ -19,14 +19,14 @@
 }
 
 #take-action-wrapper > legend{
-  border:none;
+    border:none;
     padding: 0 10px;
     margin-bottom: 0;
     width: auto;
 }
 
 #take-action-wrapper fieldset legend {
-font-size: 18px;
+    font-size: 18px;
 }
 
 #sba-messages-form label,
@@ -142,7 +142,6 @@ font-size: 18px;
     box-sizing: border-box;
 }
 
-
 #message-action-form-2col-column-wrapper #webform-component-sbp-address-line-2.control-group {
     padding-left: 10px;
 }
@@ -157,10 +156,7 @@ font-size: 18px;
 }
 
 #message-action-form-2col-column-wrapper.user-form-vertical #webform-component-sbp-address.control-group input,
-#message-action-form-2col-column-wrapper.user-form-vertical #webform-component-sbp-address-line-2.control-group input {
-    width:95%;
-}
-
+#message-action-form-2col-column-wrapper.user-form-vertical #webform-component-sbp-address-line-2.control-group input,
 #message-action-form-2col-column-wrapper #webform-component-sbp-city.control-group input {
     width: 95%;
 }
@@ -186,23 +182,20 @@ font-size: 18px;
 
 #message-action-form-2col-column-wrapper.user-form-vertical #webform-component-sbp-state.control-group select {
     width:98.5%;
-
-}
-#message-action-form-2col-column-wrapper.user-form-vertical #webform-component-sbp-zip.control-group input {
-    width:95%;
 }
 
+#message-action-form-2col-column-wrapper.user-form-vertical #webform-component-sbp-zip.control-group input,
 #message-action-form-2col-column-wrapper #webform-component-sbp-phone.control-group input {
     width: 95%;
 }
 
 textarea[id*="edit-sba-messages-message"] {
-width: 95%;
-min-height: 200px;
+    width: 95%;
+    min-height: 200px;
 }
 
 #edit-actions {
-clear: both;
+    clear: both;
 }
 
 .node-sba-message-action .field-name-field-message-action-img {
@@ -210,6 +203,7 @@ clear: both;
     width: 30%;
     padding: 5px 5px 2em 10px;
 }
+
 .node-sba-message-action .field-name-field-message-action-img img,
 #message-action-form-2col-column-wrapper #image img{
     display: block;
