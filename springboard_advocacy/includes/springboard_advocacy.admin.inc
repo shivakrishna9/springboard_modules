@@ -96,7 +96,7 @@ function springboard_advocacy_settings_form() {
 /**
  * Page callback for the advocacy dashboard.
  *
- * Embeds and themes various views landing pages.
+ * Embeds and themes various views landing pages and the target creation/edit forms.
  */
 function springboard_advocacy_dashboard($path, $arg = NULL) {
 
@@ -108,7 +108,7 @@ function springboard_advocacy_dashboard($path, $arg = NULL) {
       $items = implode(', ', $unconfigured);
       $message = t('Please <a href="!url">configure</a> the Springboard Advocacy API settings. There are empty values in :items. This feature will not function without required configuration.', array('!url' => url('admin/config/services/advocacy'), ':items' => $items));
       $content = springboard_advocacy_dashboard_error('error', t('Configuration required'), $message);
-      return theme('springboard_advocacy_dashboard', array('views' => $content));
+      return theme('springboard_advocacy_dashboard', array('sections' => $content));
     }
   }
 
