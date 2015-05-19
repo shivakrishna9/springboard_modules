@@ -201,14 +201,6 @@ function _springboard_advocacy_install_taxonomy_field_definitions() {
       'type' => 'taxonomy_term_reference',
       'translatable' => '0',
       'cardinality' => '-1',
-      'settings' => array(
-        'allowed_values' => array(
-          0 => array(
-            'vocabulary' => 'sba_legislative_issues',
-            'parent' => '0',
-          ),
-        ),
-      ),
       'foreign keys' => array(
         'tid' => array(
           'columns' => array(
@@ -238,9 +230,6 @@ function _springboard_advocacy_install_taxonomy_field_definitions() {
       'entity_type' => 'node',
       'bundle' => 'sba_message_action',
       'label' => $t("Organization Issues"),
-      'widget' => array(
-        'type' => 'options_buttons',
-      ),
       'default_value' => NULL,
       'description' => '',
       'display' => array(
