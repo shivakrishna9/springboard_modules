@@ -91,7 +91,6 @@ function springboard_advocacy_settings_form() {
   );
 
   return system_settings_form($form);
-
 }
 
 /**
@@ -108,7 +107,7 @@ function springboard_advocacy_dashboard($path, $arg = NULL) {
     if(!empty($unconfigured)) {
       $items = implode(', ', $unconfigured);
       $message = t('Please <a href="!url">configure</a> the Springboard Advocacy API settings. There are empty values in :items. This feature will not function without required configuration.', array('!url' => url('admin/config/services/advocacy'), ':items' => $items));
-      $content = springboard_advocacy_dashboard_error('error', 'Configuration required', $message);
+      $content = springboard_advocacy_dashboard_error('error', t('Configuration required'), $message);
       return theme('springboard_advocacy_dashboard', array('views' => $content));
     }
   }
@@ -130,7 +129,7 @@ function springboard_advocacy_dashboard($path, $arg = NULL) {
       //The view is not found or the display is not found
       if(!$targets_view) {
         $message = t('Target view or view display "block_1" not found.');
-        $sections = springboard_advocacy_dashboard_error('sba_targets', 'Custom Targets', $message);
+        $sections = springboard_advocacy_dashboard_error('sba_targets', t('Custom Targets'), $message);
         break;
       }
 
@@ -182,7 +181,7 @@ function springboard_advocacy_dashboard($path, $arg = NULL) {
     case 'message-actions/all':
       $actions_all_view = springboard_advocacy_prepare_dashboard_view('sba_actions', 'block_2', array('sba_message_action'));
       if(!$actions_all_view) {
-        $sections = springboard_advocacy_dashboard_error('sba_actions', 'Custom Targets', 'Message Actions view or view display "block_2" not found.');
+        $sections = springboard_advocacy_dashboard_error('sba_actions', t('Custom Targets'), 'Message Actions view or view display "block_2" not found.');
         break;
       }
 
@@ -219,7 +218,7 @@ function springboard_advocacy_dashboard($path, $arg = NULL) {
         }
       }
       else {
-        $sections = springboard_advocacy_dashboard_error('sba_actions', 'Custom Targets', 'Petitions view or view display "block_2" not found.');
+        $sections = springboard_advocacy_dashboard_error('sba_actions', t('Custom Targets'), t('Petitions view or view display "block_2" not found.'));
       }
       break;
 
@@ -231,7 +230,7 @@ function springboard_advocacy_dashboard($path, $arg = NULL) {
       // Is this a message type?
       $message_types = variable_get('sba_message_node_types', array());
       if(!isset($message_types[$node->type])) {
-        $sections = springboard_advocacy_dashboard_error('sba_messages_node', 'Messages', 'There was a problem locating the message type for this node type.');
+        $sections = springboard_advocacy_dashboard_error('sba_messages_node', t('Messages'), t('There was a problem locating the message type for this node type.'));
         break;
       }
 
@@ -241,7 +240,7 @@ function springboard_advocacy_dashboard($path, $arg = NULL) {
       // Couldn't load the correct view?
       if (!$messages_view) {
         $error_message = t('Message view or view display "block_1" not found');
-        $sections = springboard_advocacy_dashboard_error('sba_messages_node', 'Messages', $error_message);
+        $sections = springboard_advocacy_dashboard_error('sba_messages_node', t('Messages'), $error_message);
         break;
       }
 
@@ -297,7 +296,7 @@ function springboard_advocacy_dashboard($path, $arg = NULL) {
 function springboard_advocacy_custom_targets_admin_form($path, $arg = NULL) {
 
   if(!module_exists("springboard_target")) {
-    $content = springboard_advocacy_dashboard_error('sba_target', 'Custom Targets', 'Springboard Target Module is not enabled.');
+    $content = springboard_advocacy_dashboard_error('sba_target', t('Custom Targets'), t('Springboard Target Module is not enabled.'));
     return $content;
   }
 
