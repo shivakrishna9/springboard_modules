@@ -1,13 +1,15 @@
 <?php
 
+
 /**
- *
  * Gets Zip+4 from Smarty streets.
  * Builds a user contact array with zip, county and lat/long
  * Gets the messages associated with the webform and prepares them for sending
  * to the API.
  * Merges the contact, messages, and form_id and sends to the target resolver.
  *
+ * @param $user_message
+ * @param $form_state
  */
 function springboard_advocacy_send_message($user_message, $form_state) {
   $values = $form_state['values'];
@@ -93,7 +95,7 @@ function theme_springboard_advocacy_webform_confirmations($vars) {
 /**
  * Loads the messages associated with this webform and formats
  * them into an array for the target resolver.
- * @param $message_ids
+ * @param $user_message
  * @return array
  */
 function springboard_advocacy_build_messages($user_message) {
@@ -199,7 +201,6 @@ function springboard_advocacy_build_contact($values, $zip, $geo) {
  */
 function springboard_advocacy_build_confirmation($response) {
 
-  $recipients = array();
   $messages = array();
   $message_count = 0;
   $deliverable_count = 0;
