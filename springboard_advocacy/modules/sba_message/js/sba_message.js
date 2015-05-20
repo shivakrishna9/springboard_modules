@@ -467,7 +467,7 @@
         //state/chamber event driven enabling goes here.
         if (window.search_state == 'committee') {
             $('#edit-search-committee-chamber-wrapper select').change(function() {
-                sba.toggleStateAndChambersChamber();
+                Sba.toggleStateAndChambersChamber();
             });
 
             $('select', '#edit-search-state-wrapper').change(function() {
