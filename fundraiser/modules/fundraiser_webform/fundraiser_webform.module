@@ -454,7 +454,13 @@ function fundraiser_webform_form_alter(&$form, &$form_state, $form_id) {
   if (strstr($form_id, 'webform_client_form') !== FALSE && fundraiser_is_donation_type($form['#node']->type)) {
     // Handle donation form edit submission pg.
     if (arg(2) == 'submission') {
-      fundraiser_webform_submission_display($form, $form_state);
+      // This submission should have a matching donation.
+      $donation = _fundraiser_webform_get_donation_by_sid(arg(3));
+
+      if ($donation) {
+        $form['#donation'] = $donation;
+        fundraiser_webform_submission_display($form, $form_state);
+      }
     }
     // Handle the donation form display.
     else {
@@ -516,59 +522,46 @@ function fundraiser_webform_submission_display(&$form, &$form_state) {
     }
   }
 
-  // Set up a view only display of the donation amount.
-  $amount_field = _fundraiser_get_form_field($form, 'amount');
-  if ('other' != $amount_field['#default_value']) {
-    $amount = $amount_field['#default_value'];
-  }
-  else {
-    $other_amount_field = _fundraiser_get_form_field($form, 'other_amount');
-    $amount = $other_amount_field['#default_value'];
-  }
-
-  $currency_code = $form['submitted']['donation']['currency']['#value'];
-  $formatted_amount = commerce_currency_format($amount, $currency_code, NULL, FALSE);
-
-  // Add new fields display.
+  $donation = $form['#donation'];
+  // Add a donation information display.
   $form['submitted']['donation_info'] = array(
     '#type' => 'fieldset',
     '#title' => t('Donation Information'),
   );
 
   $form['submitted']['donation_info']['display_amount'] = array(
-    '#markup' => '<div class="form-item"><label>' . t('Donation Amount') . ':</label>' . $formatted_amount . '</div>',
+    '#markup' => '<div class="form-item"><label>' . t('Donation Amount') . ':</label>' . $donation->donation['amount_formatted'] . '</div>',
   );
+
   // Show whether or not it's a recurring donation.
-  $recurs_monthly_field = _fundraiser_get_form_field($form, 'recurs_monthly');
-  if (isset($recurs_monthly_field)) {
-    $recurs = t('No');
-    if (isset($recurs_monthly_field['#default_value'][0])
-       && ($recurs_monthly_field['#default_value'][0] == 'recurs')) {
-      $recurs = t('Yes');
-    }
+  if (module_exists('fundraiser_sustainers')) {
+    $recurs = !empty($donation->donation['recurs_monthly']) ? t('Yes') : t('No');
     $form['submitted']['donation_info']['recurring'] = array(
-      '#markup' => '<div class="form-item"><label>' . t('Recurring Donation?') .
+      '#markup' => '<div class="form-item"><label>' . t('Recurring Donation') .
         '</label>' . $recurs . '</div>',
     );
   }
-  // Clean up the donor info section.
-  // Replace the form fields with read only info.
-  $first_name_field = _fundraiser_get_form_field($form, 'first_name');
+
+  // Display donor info as well.
   $form['submitted']['donation_info']['first_name_readonly'] = array(
     '#markup' => '<div class="form-item"><label>' . t('First Name') . ':</label>' .
-      $first_name_field['#default_value'] . '</div>',
+      $donation->donation['first_name'] . '</div>',
   );
-  $last_name_field = _fundraiser_get_form_field($form, 'last_name');
+
   $form['submitted']['donation_info']['last_name_readonly'] = array(
     '#markup' => '<div class="form-item"><label>' . t('Last Name') . ':</label>' .
-      $last_name_field['#default_value'] . '</div>',
+      $donation->donation['last_name'] . '</div>',
   );
-  $mail_field = _fundraiser_get_form_field($form, 'mail');
+
   $form['submitted']['donation_info']['email_readonly'] = array(
     '#markup' => '<div class="form-item"><label>' . t('Email') . ':</label>' .
-      $mail_field['#default_value'] . '</div>',
+      $donation->donation['mail'] . '</div>',
   );
-  // Unset things.
+
+  // Hide these fields.
+  $first_name_field = _fundraiser_get_form_field($form, 'first_name');
+  $last_name_field = _fundraiser_get_form_field($form, 'last_name');
+  $mail_field = _fundraiser_get_form_field($form, 'mail');
   $donation_field = _fundraiser_get_form_field($form, 'donation');
   $payment_information_field = _fundraiser_get_form_field($form, 'payment_information');
   $payment_method_field = _fundraiser_get_form_field($form, 'payment_method');
@@ -1397,14 +1390,9 @@ function fundraiser_webform_node_delete($node) {
  * submission display page.
  */
 function fundraiser_webform_webform_submission_render_alter(&$renderable) {
-  if (isset($renderable['donation'])) {
-    $currency_code = $renderable['donation']['currency']['#markup'];
-    $currency = commerce_currency_load($currency_code);
-
-    foreach ($renderable['donation']['amount'] as $id => $value) {
-      $renderable['donation']['amount'][$id] = str_replace('$', $currency['symbol'], $value);
-    }
-
-    $renderable['donation']['other_amount']['#field_prefix'] = $currency['symbol'];
+  $donation = _fundraiser_webform_get_donation_by_sid($renderable['#submission']->sid);
+  if (!empty($donation)) {
+    $renderable['donation']['amount']['#value'][0] = $donation->donation['amount_formatted'];
+    $renderable['donation']['other_amount']['#field_prefix'] = $donation->donation['currency']['symbol'];
   }
 }
