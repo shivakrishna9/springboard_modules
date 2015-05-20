@@ -525,14 +525,18 @@ function fundraiser_webform_submission_display(&$form, &$form_state) {
     $other_amount_field = _fundraiser_get_form_field($form, 'other_amount');
     $amount = $other_amount_field['#default_value'];
   }
+
+  $currency_code = $form['submitted']['donation']['currency']['#value'];
+  $formatted_amount = commerce_currency_format($amount, $currency_code, NULL, FALSE);
+
   // Add new fields display.
   $form['submitted']['donation_info'] = array(
     '#type' => 'fieldset',
     '#title' => t('Donation Information'),
   );
+
   $form['submitted']['donation_info']['display_amount'] = array(
-    '#markup' => '<div class="form-item"><label>' . t('Donation Amount') .
-      ':</label>' . '$' . number_format($amount, 2) . '</div>', // TODO this should be updated for an international audience.
+    '#markup' => '<div class="form-item"><label>' . t('Donation Amount') . ':</label>' . $formatted_amount . '</div>',
   );
   // Show whether or not it's a recurring donation.
   $recurs_monthly_field = _fundraiser_get_form_field($form, 'recurs_monthly');
@@ -1384,4 +1388,23 @@ function fundraiser_webform_node_delete($node) {
   db_delete('fundraiser_webform_messages')
     ->condition('nid', $node->nid)
     ->execute();
+}
+
+/**
+ * Implements hook_webform_submission_render_alter().
+ *
+ * Updates the currency symbols on the ask amount and other amount webform
+ * submission display page.
+ */
+function fundraiser_webform_webform_submission_render_alter(&$renderable) {
+  if (isset($renderable['donation'])) {
+    $currency_code = $renderable['donation']['currency']['#markup'];
+    $currency = commerce_currency_load($currency_code);
+
+    foreach ($renderable['donation']['amount'] as $id => $value) {
+      $renderable['donation']['amount'][$id] = str_replace('$', $currency['symbol'], $value);
+    }
+
+    $renderable['donation']['other_amount']['#field_prefix'] = $currency['symbol'];
+  }
 }
