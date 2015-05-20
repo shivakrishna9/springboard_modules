@@ -17,6 +17,10 @@ class AdvocacyApiClientLoader
     $lib = libraries_load('springboard_advocacy');
     $domain = variable_get('springboard_advocacy_server_url', '');
     $client = new SpringboardAdvocacyAPIClient($domain);
+    $debug = variable_get('springboard_advocacy_debug', '');
+    if (!empty($debug)) {
+      $client->enableDebugMode();
+    }
     $token = $this->getToken($client);
     if (!empty($token->access_token)) {
       $client->setToken($token->access_token);

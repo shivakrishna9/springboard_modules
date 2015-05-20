@@ -37,6 +37,9 @@ function springboard_target_form($target_id = NULL) {
     $loader = new AdvocacyApiClientLoader();
     $client = $loader->getClient();
     $target = $client->getCustomTarget($target_id);
+    if($client->isDebugMode()) {
+      watchdog('advocacy', 'Advocacy API Call details: !message', array('!message' => '<pre>' . check_plain(print_r($client->getDebugInfo(), TRUE)) . '</pre>'), WATCHDOG_DEBUG);
+    }
     if (isset($target->error)) {
       $form = array();
       $form['not_found']['#markup'] = $target->error->message;
@@ -445,6 +448,9 @@ function springboard_target_delete_submit(&$form, &$form_state) {
   $loader = new AdvocacyApiClientLoader();
   $client = $loader->getClient();
   $response = $client->deleteCustomTarget($form_state['values']['target_id']);
+  if($client->isDebugMode()) {
+    watchdog('advocacy', 'Advocacy API Call details: !message', array('!message' => '<pre>' . check_plain(print_r($client->getDebugInfo(), TRUE)) . '</pre>'), WATCHDOG_DEBUG);
+  }
 
   if (isset($response->data)) {
     drupal_set_message('Target deleted.');

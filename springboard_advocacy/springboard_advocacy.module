@@ -445,6 +445,9 @@ function springboard_advocacy_committees() {
       $loader = new AdvocacyApiClientLoader();
       $client = $loader->getClient();
       $response = $client->getCommitteeList();
+      if($client->isDebugMode()) {
+        watchdog('advocacy', 'Advocacy API Call details: !message', array('!message' => '<pre>' . check_plain(print_r($client->getDebugInfo(), TRUE)) . '</pre>'), WATCHDOG_DEBUG);
+      }
       if (isset($response->data)) {
         $committee_list = (array)$response->data;
         $expire = time() + 3600;
@@ -642,6 +645,9 @@ function springboard_advocacy_get_districts($state) {
     $loader = new AdvocacyApiClientLoader();
     $client = $loader->getClient();
     $response = $client->getDistrictsByState($state);
+    if($client->isDebugMode()) {
+      watchdog('advocacy', 'Advocacy API Call details: !message', array('!message' => '<pre>' . check_plain(print_r($client->getDebugInfo(), TRUE)) . '</pre>'), WATCHDOG_DEBUG);
+    }
     if (isset($response->data)) {
       $options = array('All' => '- Any -');
       foreach ($response->data as $district) {
@@ -897,6 +903,9 @@ function springboard_advocacy_get_subscription() {
     $loader = new AdvocacyApiClientLoader();
     $client = $loader->getClient();
     $response = $client->getSubscription();
+    if($client->isDebugMode()) {
+      watchdog('advocacy', 'Advocacy API Call details: !message', array('!message' => '<pre>' . check_plain(print_r($client->getDebugInfo(), TRUE)) . '</pre>'), WATCHDOG_DEBUG);
+    }
     if (isset($response->data)) {
       $subscription = (array)$response->data;
       variable_set('sba_subscription', array('subscription_type' => $response->data->subscription_type, 'states_custom' => isset($response->data->states_custom) ? $response->data->states_custom : NULL));

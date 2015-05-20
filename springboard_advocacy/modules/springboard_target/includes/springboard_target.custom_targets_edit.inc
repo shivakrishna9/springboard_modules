@@ -52,6 +52,9 @@ function springboard_target_edit_custom_targets_form_submit($form, &$form_state)
   $loader = new AdvocacyApiClientLoader();
   $client = $loader->getClient();
   $target = $client->updateCustomTarget($input, $id);
+  if($client->isDebugMode()) {
+    watchdog('advocacy', 'Advocacy API Call details: !message', array('!message' => '<pre>' . check_plain(print_r($client->getDebugInfo(), TRUE)) . '</pre>'), WATCHDOG_DEBUG);
+  }
   if (!empty($target->data)) {
     $message = implode(' ', (array)$target->data->status);
     $form_state['redirect'] = 'admin/springboard/advocacy/targets/custom-targets/';
