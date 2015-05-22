@@ -35,12 +35,22 @@ class context_reaction_page_wrappers extends context_reaction {
         '#description' => t('Choose a page wrapper to use when this context is active.'),
         '#type' => 'select',
         '#options' => $options,
-        '#required' => TRUE,
         '#default_value' => isset($settings['page_wrapper']) ? $settings['page_wrapper'] : 0,
       ),
     );
     return $form;
   }
+
+
+  function options_form_submit($values) {
+    // Set an error if no page wrapper value has been selected.
+    if (empty($values['page_wrapper'])) {
+      form_set_error('reactions[plugins][page_wrappers][page_wrapper', t('Please select a Page Wrapper.'));
+    }
+
+    return parent::options_form_submit($values);
+  }
+
 
   /**
    * Return the page wrapper based on the context
