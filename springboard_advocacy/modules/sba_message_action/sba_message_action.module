@@ -1222,7 +1222,7 @@ function sba_message_action_settings_form_submit($form, $form_state) {
  * @param $vars
  */
 function sba_message_action_preprocess_webform_confirmation(&$vars) {
-  if ($vars['node']->type = 'sba_message_action' && empty($_SESSION['message_recipients'])) {
+  if ($vars['node']->type == 'sba_message_action' && empty($_SESSION['message_recipients'])) {
     if(isset($vars['node']->custom_fail_message)) {
       $vars['confirmation_message'] = check_markup($vars['node']->custom_fail_message, 'full_html');
     }
