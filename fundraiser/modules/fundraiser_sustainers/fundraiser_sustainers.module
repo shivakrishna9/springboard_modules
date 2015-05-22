@@ -1212,11 +1212,11 @@ function fundraiser_sustainers_form_fundraiser_admin_settings_alter(&$form, &$fo
     '#description' => t('If this option is enabled, recurring donation series which consistently fail will be permanently cancelled.'),
     '#default_value' => variable_get('fundraiser_recurring_autocancel_enabled', 0),
   );
-  $form['fundraiser_sustainers']['fundraiser_recurring_auto_cancel']['fundraiser_recurring_autocancel_consecutive_failures'] = array(
+  $form['fundraiser_sustainers']['fundraiser_recurring_auto_cancel']['fundraiser_recurring_autocancel_threshold'] = array(
     '#type' => 'textfield',
     '#title' => t('Minimum consecutive failures'),
     '#description' => t('How many consecutive donation failures after which a permanent cancellation should occur. Please enter a value greater than 3.'),
-    '#default_value' => variable_get('fundraiser_recurring_autocancel_consecutive_failures', 3),
+    '#default_value' => variable_get('fundraiser_recurring_autocancel_threshold', 3),
   );
   $token_set = array('donation', 'user', 'node');
   $form['fundraiser_sustainers']['fundraiser_cc_expiration_message']['tokens']['token_help'] = array(
@@ -2455,6 +2455,68 @@ function fundraiser_sustainers_fundraiser_donation_cancel($donation) {
     ->fields(array('gateway_resp' => 'canceled', 'cancellation_reason' => $reason))
     ->condition('did', $donation->did)
     ->execute();
+}
+
+/**
+ * Implements hook_fundraiser_sustainers_donation_fail().
+ */
+function fundraiser_sustainers_fundraiser_sustainers_donation_fail($donation) {
+  // Do not procede if admin setting for auto-cancel is not enabled.
+  if (!variable_get('fundraiser_recurring_autocancel_enabled', NULL)) {
+    return;
+  }
+  // Query the sustainer log to see how many consecutive failures we have.
+  $threshold = variable_get('fundraiser_recurring_autocancel_threshold', 3);
+  $records = db_query_range('
+    SELECT * FROM 
+      {fundraiser_sustainers}
+    WHERE 
+      master_did = :master_did
+    AND
+      did < :did
+    ORDER BY
+      did DESC', 0, $threshold,
+    array(':did' => $donation->did, ':master_did' => $donation->master_did)
+  );
+
+  // Confirm that all our most recent consecutive sustainers failed.
+  foreach ($records as $result) {
+    $response[] = $result->gateway_resp;
+  }
+  // If all gateways responses were failed, then proceed with auto cancel of donation.
+  if (array_unique($response) === array(FUNDRAISER_SUSTAINERS_FAILED_STATUS)) {
+    fundraiser_sustainers_auto_cancel($donation);
+  }
+}
+
+/**
+ * Cancel a recurring donation series.
+ *
+ * @param $donation
+ *   The donation object.
+ */
+function fundraiser_sustainers_auto_cancel($donation) {
+  $master_did = $donation->master_did;
+  $now = time();
+  $threshold = variable_get('fundraiser_recurring_autocancel_threshold', 3);
+  $reason = t('Automatically canceled on @date because of @num successive failures', array('@date' => format_date($now), '@num' => $threshold));
+  // Cancel the donations.
+  $sustainer_donations = _fundraiser_sustainers_get_donations_recurr_remaining($master_did);
+  foreach ($sustainer_donations as $sustainer_donation) {
+    $donation = fundraiser_donation_get_donation($sustainer_donation->did);
+
+    // Add the cancel reason to the donation's recurring object.
+    $donation->recurring->cancellation_reason = $reason;
+
+    // Cancel the donation.
+    // @see fundraiser_sustainers_fundraiser_donation_cancel().
+    fundraiser_donation_cancel($donation);
+
+    // Add a watchdog entry with the did and reason.
+    watchdog('fundraiser_sustainers', 'Donation cancelled for #@did. Reason: @reason',
+      array('@did' => $donation->did, '@reason' => $reason));
+  }
+
 }
 
 /**

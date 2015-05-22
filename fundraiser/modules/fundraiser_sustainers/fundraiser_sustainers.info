@@ -18,3 +18,4 @@ files[] = includes/schedules/sustainersMonthlySchedule.inc
 files[] = tests/fundraiser_sustainers.test
 files[] = tests/fundraiser_sustainers_health_checks.test
 files[] = tests/fundraiser_sustainers_eom.test
+files[] = tests/fundraiser_sustainers_auto_cancel.test

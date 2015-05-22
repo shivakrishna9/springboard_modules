@@ -1,0 +1,107 @@
+<?php
+/**
+ * Tests the functionality of deleting consecutively failed fundraiser sustainers.
+ */
+class FundraiserSustainersAutoCancelTestCase extends FundraiserSetup {
+  // Fake donation ID so we can cheat on creating sustainers.
+  protected $nextDid = 1;
+
+  // Fake master donation ID.
+  protected $masterDid = 1;
+
+  /**
+   * Implements getInfo(). Declares this test class to fundraiser testing.
+   */
+  public static function getInfo() {
+    return array(
+      'name' => 'Fundraiser sustainers auto cancel',
+      'description' => 'Tests auto cancellation of sustainers which fail payment processing consecutively.',
+      'group' => 'Fundraiser Sustainers',
+    );
+  }
+
+  /**
+   * Implements setUp().
+   */
+  public function setUp($additional_modules = array()) {
+    // Call the parent to set all of the base modules up.
+    $additional_modules = array(
+      'fundraiser_sustainers',
+    );
+    parent::setUp($additional_modules);
+  }
+
+  /**
+   * Insert a stuck sustaienr and assert that the check finds it.
+   */
+  public function testConseutiveFailedRecurring() {
+    // Make sure our autocancel settings are enabled.
+    variable_set('fundraiser_recurring_autocancel_enabled', 1);
+    variable_set('fundraiser_recurring_autocancel_threshold', 3);
+
+    // Create a recurring donation.
+    $master_did = $this->fundraiserSustainerCreateRecurringDonation();
+
+    // Create a series of previously failed sustainer payments.
+    $this->insertFailedSustainerRecords($master_did);
+
+    // Process the next scheduled sustainer as failed. This triggers our fundraiser_sustainers_donation_fail hook.
+    $donation = fundraiser_donation_get_donation(4, TRUE);
+    $fail = fundraiser_sustainers_donation_fail($donation);
+
+    $checks = new FundraiserSustainersHealthChecks();
+    $results = $checks->runChecks();
+
+    $this->assertEqual(count($results), 1, 'One stuck sustainer found');
+    $item = $results[0];
+    $this->assertEqual($item['type'], 'fundraiser_sustainers');
+    $this->assertEqual($item['message'], 'The following sustainer donations are locked but not processed: %dids');
+    $this->assertEqual($item['variables'], array('%dids' => $stuck_did));
+    $this->assertEqual($item['severity'], WATCHDOG_CRITICAL);
+    $this->assertEqual($item['link_text'], t('Report'));
+    $this->assertEqual($item['link_url'], 'admin/springboard/reports/reconciliation/locked-not-processed-sustainers');
+  }
+
+  /**
+   * Helper function to create a series of recurring donations.
+   */
+  private function fundraiserSustainerCreateRecurringDonation() {
+    // Create a node.
+    $created_user = $this->createFundraiserUser();
+    $this->drupalLogin($created_user);
+    $node = $this->createDonationForm();
+    // Post to the node.
+    $month = date('n', strtotime('+1 year'));
+    $year = date('Y', strtotime('+1 year'));
+    $post['submitted[payment_information][recurs_monthly][recurs]'] = 'recurs';
+    $post['submitted[payment_information][payment_fields][credit][expiration_date][card_expiration_month]'] = $month;
+    $post['submitted[payment_information][payment_fields][credit][expiration_date][card_expiration_year]'] = $year;
+    $post['submitted[donor_information][mail]'] = $created_user->mail;
+
+    $this->submitDonation($node->nid, $post);
+    // Get the master did.
+    $donations = _fundraiser_get_donations();
+    $master_did = '';
+    foreach ($donations as $donation) {
+      $master_did = $donation->did;
+      break;
+    }
+    return $master_did;
+  }
+
+  /**
+   * Inserts a sustainer record log into the DB.
+   *
+   * @return int
+   *   The donation ID that was just saved.
+   */
+  protected function insertFailedSustainerRecords($master_did) {
+    // Set last n sustainer charge attempts to 'failed'.
+    $status = FUNDRAISER_SUSTAINERS_FAILED_STATUS;
+    db_query("UPDATE {fundraiser_sustainers}
+      SET gateway_resp = :status
+      WHERE master_did = :mdid
+      ORDER BY did ASC
+      LIMIT 3", array(':status' => $status, ':mdid' => $master_did));
+  }
+}
