@@ -2467,6 +2467,8 @@ function fundraiser_sustainers_fundraiser_sustainers_donation_fail($donation) {
   }
   // Query the sustainer log to see how many consecutive failures we have.
   $threshold = variable_get('fundraiser_recurring_autocancel_threshold', 3);
+  // This hook function is called when we have a current donation which failed, so we can subtract 1.
+  --$threshold;
   $records = db_query_range('
     SELECT * FROM 
       {fundraiser_sustainers}
