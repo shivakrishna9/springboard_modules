@@ -324,12 +324,14 @@ function sba_message_form_submit_delete(&$form, &$form_state) {
  */
 function sba_message_delete_form($form, &$form_state, $sba_message) {
   $form_state['sba_message'] = $sba_message;
+  $wrapper = entity_metadata_wrapper('sba_message', $sba_message);
+  $nid = $wrapper->field_sba_action_id->value()->nid;
 
   $form['#submit'][] = 'sba_message_delete_form_submit';
 
   $form = confirm_form($form,
     t('Are you sure you want to delete sba_message %name?', array('%name' => $sba_message->name)),
-    'node/%node/messages/sba_message',
+    'node/' . $nid .'/messages/sba_message',
     '<p>' . t('This action cannot be undone.') . '</p>',
     t('Delete'),
     t('Cancel'),
