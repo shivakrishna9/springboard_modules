@@ -520,7 +520,8 @@ function fundraiser_date_mode_update_date_mode_operation($op, $date, $time, $mas
     default:
       return;
   }
-  // TODO: requeue objects for resync to SF.
+
+  // Requeue objects for resync to SF.
   if (count($series_orders)) {
     _fundraiser_date_mode_requeue_sustainers($series_orders);
   }
@@ -608,7 +609,7 @@ function fundraiser_date_mode_process_queue_item($item) {
 function _fundraiser_date_mode_requeue_sustainers($series_orders) {
   if (module_exists('salesforce_genmap') && is_array($series_orders) && count($series_orders)) {
     foreach ($series_orders as $sustainer) {
-      $donation = fundraiser_donation_get_donation($sustainer->did, TRUE);
+      $donation = fundraiser_donation_get_donation($sustainer['did'], TRUE);
       salesforce_genmap_send_object_to_queue('fundraiser_sustainers', 'update',
       $donation->node, $donation->did, $donation, 'recurring_donation');
     }
