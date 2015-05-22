@@ -48,6 +48,9 @@ class FundraiserSustainersAutoCancelTestCase extends FundraiserSetup {
 
     // Process the next scheduled sustainer as failed. This triggers our fundraiser_sustainers_donation_fail hook.
     $donation = fundraiser_donation_get_donation(4, TRUE);
+    // Set gateway message to prevent exception error during testing.
+    $donation->result['message'] = 'Auto cancel simpletest.';
+    // Manually fail the donation.
     fundraiser_sustainers_donation_fail($donation);
   }
 
