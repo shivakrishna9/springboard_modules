@@ -47,19 +47,7 @@ class FundraiserSustainersAutoCancelTestCase extends FundraiserSetup {
 
     // Process the next scheduled sustainer as failed. This triggers our fundraiser_sustainers_donation_fail hook.
     $donation = fundraiser_donation_get_donation(4, TRUE);
-    $fail = fundraiser_sustainers_donation_fail($donation);
-
-    $checks = new FundraiserSustainersHealthChecks();
-    $results = $checks->runChecks();
-
-    $this->assertEqual(count($results), 1, 'One stuck sustainer found');
-    $item = $results[0];
-    $this->assertEqual($item['type'], 'fundraiser_sustainers');
-    $this->assertEqual($item['message'], 'The following sustainer donations are locked but not processed: %dids');
-    $this->assertEqual($item['variables'], array('%dids' => $stuck_did));
-    $this->assertEqual($item['severity'], WATCHDOG_CRITICAL);
-    $this->assertEqual($item['link_text'], t('Report'));
-    $this->assertEqual($item['link_url'], 'admin/springboard/reports/reconciliation/locked-not-processed-sustainers');
+    fundraiser_sustainers_donation_fail($donation);
   }
 
   /**
