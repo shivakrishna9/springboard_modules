@@ -15,7 +15,7 @@ function springboard_tag_default_springboard_tag() {
   $preset->disabled = TRUE; /* Edit this to true to make a default preset disabled initially */
   $preset->api_version = 1;
   $preset->name = 'google_analytics_donation_datalayer';
-  $preset->admin_title = 'Google Analtyics Donation Datalayer';
+  $preset->admin_title = 'Google Analytics Donation Datalayer';
   $preset->admin_description = 'Datalayer example for a donation confirmation with tracking through Google Analytics and GTM. Scripted so multiple datalayer instances can be present on the same page. If this will be used for Google Analytics eCommerce tracking, the Springboard GA module should be disabled to avoid double-tracking.';
   $preset->tag = '<script>
   var dataLayer = dataLayer || [];
