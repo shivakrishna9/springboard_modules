@@ -1,21 +1,26 @@
 <?php
 
+
 /**
  * @file
  * Module for the SBA Message Entity
- */  
-
+ */
 
 /**
- * Implements hook_menu_alter().
- *
- * Add a complex permission for views message landing page.
- *
+ * Implements hook_menu.
+ * @return array
  */
-function sba_message_menu_alter(&$items) {
-  // Set a custom access callback function for our message view page display path.
-  $items['node/%/messages']['access callback'] = 'sba_message_access';
-  $items['node/%/messages']['access arguments'] = array('manage-messages');
+function sba_message_menu() {
+    $items =  array();
+    $items['node/%/messages'] = array(
+        'title' => 'Messages',
+        'page arguments' => array(1),
+        'type' => MENU_LOCAL_TASK,
+        'access callback' => 'sba_message_access',
+        'access arguments' => array('manage-messages'),
+      ) + springboard_advocacy_menu_common(TRUE, TRUE);
+
+  return $items;
 }
 
 
@@ -34,7 +39,6 @@ function sba_message_menu_alter(&$items) {
  *   Whether access is allowed or not.
  */
 function sba_message_access($op, $sba_message = NULL, $account = NULL) {
-
   // Messages will inherit create/edit/delete permissions from their parent node permissions.
 
   global $user;
@@ -62,8 +66,7 @@ function sba_message_access($op, $sba_message = NULL, $account = NULL) {
       }
     }
 
-    // Inherit parent node permissions
-    if (user_access("{$op} own {$node->type} content") &&  $node->uid == $user->uid) {
+    if (user_access('administer sba messages', $account)) {
       return TRUE;
     }
 
@@ -71,18 +74,28 @@ function sba_message_access($op, $sba_message = NULL, $account = NULL) {
       return TRUE;
     }
 
-    if (user_access("{$op} {$node->type} content")) {
-      return TRUE;
-    }
-
-    if ($op == 'manage-messages') {
+    //message tab on node view page
+    $arg = arg(3);
+    if ($op == 'manage-messages' && empty($arg)) {
       if (user_access("create {$node->type} content")) {
         return TRUE;
       }
     }
 
-    if (user_access('administer sba messages', $account)) {
+    if ($op == 'create' && user_access("create {$node->type} content")) {
+      if(user_access("edit own {$node->type} content") &&  $node->uid == $user->uid) {
+        return TRUE;
+      }
+      if(user_access("edit any {$node->type} content")) {
+        return TRUE;
+      }
+    }
+
+    if (user_access("{$op} own {$node->type} content") &&  $node->uid == $user->uid) {
       return TRUE;
+    }
+    elseif(user_access("{$op} own {$node->type} content") &&  $node->uid != $user->uid) {
+      return FALSE;
     }
   }
 
