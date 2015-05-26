@@ -43,11 +43,15 @@
     total = self.calcTotal(),
     extra = self.calcExtra(),
     totalQuantity = self.calcQuantity();
+    // @todo Change this to support multiple currencies.
+    // See if Commerce provides something like commerce_currency_format in JS.
     $('#fundraiser-tickets-total-cost').text('$ ' + (total).formatMoney(2, '.', ','));
+    // @todo Use the donation form's currency formatting instead.
     $('#fundraiser-tickets-extra-donation-display').text('$ ' + (extra).formatMoney(2, '.', ','));
     $("input[name='submitted[amount]']").val((total).formatMoney(2, '.', ''));
     $('#fundraiser-tickets-total-quant').text(totalQuantity);
     $.each(self.ticketPrices, function(productId, price) {
+      // @todo Adjust the currency formatting.
       $('#product-' + productId + '-tickets-total').text('$ ' + (self.calcField(productId, price)).formatMoney(2, '.', ','));
     });
   }
