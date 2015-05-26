@@ -101,28 +101,6 @@ function sba_message_access($op, $sba_message = NULL, $account = NULL) {
   return FALSE;
 }
 
-
-/**
- * Implements hook_module_implements_alter
- *
- * Helps add custom access control to a path defined in sba_message views.
- *
- * @param $implementations
- * @param $hook
- *
- */
-function sba_message_module_implements_alter(&$implementations, $hook) {
-  // When the implementations of hook_menu_alter are called, we need our module
-  // to be called after views, so let's remove it from the implementations then
-  // add it to the end.
-  if ($hook == 'menu_alter') {
-    if (isset($implementations['sba_message'])) {
-      unset($implementations['sba_message']);
-      $implementations['sba_message'] = FALSE;
-    }
-  }
-}
-
 /**
  * Implement hook_entityreference_prepopulate_providers_info().
  *
