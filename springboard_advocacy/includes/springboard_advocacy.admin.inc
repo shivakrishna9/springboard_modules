@@ -33,6 +33,14 @@ function springboard_advocacy_settings_page() {
 function springboard_advocacy_settings_form() {
   $form = array();
 
+  $form['springboard_advocacy_debug'] = array(
+    '#title' => t('Debug mode'),
+    '#description' => t('Log extensive debug info to watchdog. Not recommended for production sites.'),
+    '#type' => 'checkbox',
+    '#default_value' => variable_get('springboard_advocacy_debug', ''),
+  );
+
+
   $form['transaction'] = array(
     '#type' => 'fieldset',
     '#title' => t('Advocacy Server Configuration'),

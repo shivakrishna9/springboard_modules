@@ -125,14 +125,14 @@ function springboard_advocacy_springboard_admin_admin_menu_items_alter(&$items) 
   }
 
   $types = node_type_get_types();
+
   foreach ($types as $type) {
 
-    // Only create the item if the node type uses Webform User but not Fundraiser.
     if (module_exists('springboard_petition')) {
       $petition = springboard_petition_is_petition_type($type->type);
     }
-
-    if ((springboard_advocacy_is_action_type($type->type) || !empty($petition))) {
+    // Only create the item if the node type uses Webform User but not Fundraiser.
+    if ($type && (springboard_advocacy_is_action_type($type->type)  || !empty($petition))) {
       // Forms > $type->type.
       $items['admin/springboard/advocacy/actions']['_children']['node/add/' . preg_replace('/_/', '-', $type->type)] = array(
         'link_path' => 'node/add/' . preg_replace('/_/', '-', $type->type),
@@ -448,6 +448,9 @@ function springboard_advocacy_committees() {
       $loader = new AdvocacyApiClientLoader();
       $client = $loader->getClient();
       $response = $client->getCommitteeList();
+      if($client->isDebugMode()) {
+        watchdog('advocacy', 'Advocacy API Call details: !message', array('!message' => '<pre>' . check_plain(print_r($client->getDebugInfo(), TRUE)) . '</pre>'), WATCHDOG_DEBUG);
+      }
       if (isset($response->data)) {
         $committee_list = (array)$response->data;
         $expire = time() + 3600;
@@ -655,6 +658,9 @@ function springboard_advocacy_get_districts($state) {
     $loader = new AdvocacyApiClientLoader();
     $client = $loader->getClient();
     $response = $client->getDistrictsByState($state);
+    if($client->isDebugMode()) {
+      watchdog('advocacy', 'Advocacy API Call details: !message', array('!message' => '<pre>' . check_plain(print_r($client->getDebugInfo(), TRUE)) . '</pre>'), WATCHDOG_DEBUG);
+    }
     if (isset($response->data)) {
       $options = array('All' => '- Any -');
       foreach ($response->data as $district) {
@@ -922,6 +928,9 @@ function springboard_advocacy_get_subscription() {
     $loader = new AdvocacyApiClientLoader();
     $client = $loader->getClient();
     $response = $client->getSubscription();
+    if($client->isDebugMode()) {
+      watchdog('advocacy', 'Advocacy API Call details: !message', array('!message' => '<pre>' . check_plain(print_r($client->getDebugInfo(), TRUE)) . '</pre>'), WATCHDOG_DEBUG);
+    }
     if (isset($response->data)) {
       $subscription = (array)$response->data;
       variable_set('sba_subscription', array('subscription_type' => $response->data->subscription_type, 'states_custom' => isset($response->data->states_custom) ? $response->data->states_custom : NULL));

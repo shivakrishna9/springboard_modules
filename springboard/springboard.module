@@ -431,7 +431,11 @@ function springboard_modules_enabled($modules) {
 
     // Set Springboard editor permissions for targets.
     if ($sb_editor_role) {
-      user_role_grant_permissions($sb_editor_role->rid, array('add target to action'));
+      user_role_grant_permissions($sb_editor_role->rid, array(
+        'add target to action',
+        'view targets',
+        )
+      );
     }
   }
 

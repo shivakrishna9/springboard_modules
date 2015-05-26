@@ -544,7 +544,7 @@ function _page_wrappers_assignment_fields($key, $config = array(), $wrappers, $r
     '#prefix' => '<div id="page-wrappers-wrapper-options">',
     '#suffix' => '</div>',
     '#default_value' => (!empty($config['wrapper_nid'])) ? $config['wrapper_nid'] : '',
-    '#options' => $wrappers,
+    '#options' => array('' => t('-- Select --')) + $wrappers,
     '#description' => t('Select a page wrapper to use when displaying this node.'),
     '#parents' => array($parent, $key, 'wrapper_nid'),
     '#attributes' => array('class' => array('page-wrappers-wrapper-select')),
@@ -718,7 +718,6 @@ function _page_wrappers_available_wrappers() {
 
   $result = db_query("SELECT n.title, n.nid FROM {node} n WHERE type = 'page_wrapper'")->fetchAll();
   if (!empty($result)) {
-    $wrappers = array(t('-- Select --'));
     foreach ($result as $data) {
       $wrappers[$data->nid] = $data->title;
     }
@@ -1262,15 +1261,24 @@ function page_wrappers_check() {
   if (module_exists('context')) {
     $contexts = context_active_contexts();
     foreach ($contexts as $context) {
-      // Check if page_wrapper is a reaction for this context
-      if (isset($context->reactions['page_wrappers'])) {
-        $wrapper = array(
-          'wrapper_nid' => $context->reactions['page_wrappers']['page_wrapper'],
-          'ruleset' => 1,
-          'weight' => -20,
-        );
-        if ($node) {
-          $wrapper['nid'] = $node->nid;
+      // Check if page_wrapper is a reaction for this context and that the wrapper is set.
+      if (
+        isset($context->reactions['page_wrappers'])
+        && !empty($context->reactions['page_wrappers']['page_wrapper'])
+      ) {
+        // Ensure the page wrapper node exists.
+        $page_wrapper_node = node_load($context->reactions['page_wrappers']['page_wrapper']);
+        if ($page_wrapper_node) {
+          $wrapper = array(
+            'wrapper_nid' => $page_wrapper_node->nid,
+            'ruleset' => 1,
+            'weight' => -20,
+          );
+
+          // If there was a node include that.
+          if ($node) {
+            $wrapper['nid'] = $node->nid;
+          }
         }
       }
     }

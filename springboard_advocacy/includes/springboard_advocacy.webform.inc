@@ -56,6 +56,9 @@ function springboard_advocacy_send_message($user_message, $form_state) {
     $loader = new AdvocacyApiClientLoader();
     $client = $loader->getClient();
     $response = $client->resolveTargets($submission);
+    if($client->isDebugMode()) {
+      watchdog('advocacy', 'Advocacy API Call details: !message', array('!message' => '<pre>' . check_plain(print_r($client->getDebugInfo(), TRUE)) . '</pre>'), WATCHDOG_DEBUG);
+    }
 
     if(isset($response->data)) {
       // We got a valid response, build the confirmation message array.

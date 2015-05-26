@@ -104,6 +104,9 @@ function _sba_message_api_get_gender_or_social_ids($target_fields) {
   foreach ($target_fields as $fields) {
     $fields->limit = 1;
     $response = $client->searchTargets((array)$fields);
+    if($client->isDebugMode()) {
+      watchdog('advocacy', 'Advocacy API Call details: !message', array('!message' => '<pre>' . check_plain(print_r($client->getDebugInfo(), TRUE)) . '</pre>'), WATCHDOG_DEBUG);
+    }
     if (!empty($response->data->ids)) {
       $ids = array_unique(array_merge($ids, $response->data->ids));
     }
@@ -246,6 +249,9 @@ function _sba_message_api_create_group($client, $sba_message, $chamber_rows, $in
         ),
       )
     );
+  if($client->isDebugMode()) {
+    watchdog('advocacy', 'Advocacy API Call details: !message', array('!message' => '<pre>' . check_plain(print_r($client->getDebugInfo(), TRUE)) . '</pre>'), WATCHDOG_DEBUG);
+  }
   return $response;
 }
 
@@ -270,6 +276,9 @@ function _sba_message_api_update_group($client, $sba_message, $chamber_rows, $in
           'form_id' => $values['advocacy_id'],
         ),
       ), $sba_message->data['group_id']);
+  if($client->isDebugMode()) {
+    watchdog('advocacy', 'Advocacy API Call details: !message', array('!message' => '<pre>' . check_plain(print_r($client->getDebugInfo(), TRUE)) . '</pre>'), WATCHDOG_DEBUG);
+  }
   return $response;
 }
 
@@ -284,6 +293,9 @@ function _sba_message_api_update_group($client, $sba_message, $chamber_rows, $in
  */
 function _sba_message_api_get_group_by_message_id($client, $message_id) {
   $response = $client->getTargetGroupByMessageID($message_id);
+  if($client->isDebugMode()) {
+    watchdog('advocacy', 'Advocacy API Call details: !message', array('!message' => '<pre>' . check_plain(print_r($client->getDebugInfo(), TRUE)) . '</pre>'), WATCHDOG_DEBUG);
+  }
   return $response;
 }
 
@@ -316,6 +328,9 @@ function _sba_message_api_delete_target_group ($sba_message) {
   $loader = new AdvocacyApiClientLoader();
   $client = $loader->getClient();
   $response = $client->deleteTargetGroup($sba_message->data['group_id']);
+  if($client->isDebugMode()) {
+    watchdog('advocacy', 'Advocacy API Call details: !message', array('!message' => '<pre>' . check_plain(print_r($client->getDebugInfo(), TRUE)) . '</pre>'), WATCHDOG_DEBUG);
+  }
   if (isset($response->data)) {
     drupal_set_message(t('The message\'s remote target group was deleted.'));
   } else {

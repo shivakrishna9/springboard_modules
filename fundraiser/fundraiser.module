@@ -1277,7 +1277,13 @@ function _fundraiser_other_amount_field_create($fundraiser, $field) {
  * Fundraiser field display callback for the other amount field.
  */
 function _fundraiser_other_amount_field_display($form, $form_state, $field) {
-  $currency = fundraiser_get_currency_from_node($form['#node']);
+  // Get the currency, either from a current donation or the node.
+  if (!empty($form['#donation'])) {
+    $currency = $form['#donation']->donation['currency'];
+  }
+  else {
+    $currency = fundraiser_get_currency_from_node($form['#node']);
+  }
 
   $field['#attributes']['class'][] = 'input-medium';
   $field['#field_prefix'] = $currency['symbol'];
@@ -1341,7 +1347,14 @@ function _fundraiser_currency_field_create($fundraiser, $field) {
  * Note this field is a value type, so not really displayed.
  */
 function _fundraiser_currency_field_display($form, $form_state, $field) {
-  $currency = fundraiser_get_currency_from_node($form['#node']);
+  // Get the currency, either from a current donation or the node.
+  if (!empty($form['#donation'])) {
+    $currency = $form['#donation']->donation['currency'];
+  }
+  else {
+    $currency = fundraiser_get_currency_from_node($form['#node']);
+  }
+
   $field['#value'] = $currency['code'];
   return $field;
 }
