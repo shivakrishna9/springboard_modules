@@ -244,8 +244,11 @@ function sba_message_edit_form($form, &$form_state, $sba_message) {
   return $form;
 }
 
+
 /**
  * Form API validate callback for the sba_message form
+ * @param $form
+ * @param $form_state
  */
 function sba_message_edit_form_validate(&$form, &$form_state) {
   $sba_message = $form_state['sba_message'];
@@ -253,9 +256,11 @@ function sba_message_edit_form_validate(&$form, &$form_state) {
   field_attach_form_validate('sba_message', $sba_message, $form, $form_state);
 }
 
+
 /**
  * Form API submit callback for the sba_message form.
- * 
+ * @param $form
+ * @param $form_state
  */
 function sba_message_edit_form_submit(&$form, &$form_state) {
 
@@ -305,22 +310,26 @@ function sba_message_edit_form_submit(&$form, &$form_state) {
   $form_state['redirect'] = 'node/' . $nid . '/messages';
 }
 
+
 /**
  * Form API submit callback for the delete button.
- * 
+ * @param $form
+ * @param $form_state
  */
 function sba_message_form_submit_delete(&$form, &$form_state) {
   $nid =  $form_state['values']['nid'];
   $form_state['redirect'] = 'node/' . $nid . '/messages/sba_message/' . $form_state['sba_message']->sba_message_id . '/delete';
 }
 
+
 /**
  * Form callback: confirmation form for deleting a sba_message.
- *
- * @param $sba_message
- *   The sba_message to delete
- *
  * @see confirm_form()
+ *
+ * @param $form
+ * @param $form_state
+ * @param $sba_message  The sba_message to delete
+ * @return mixed
  */
 function sba_message_delete_form($form, &$form_state, $sba_message) {
   $form_state['sba_message'] = $sba_message;
@@ -341,8 +350,11 @@ function sba_message_delete_form($form, &$form_state, $sba_message) {
   return $form;
 }
 
+
 /**
  * Submit callback for sba_message_delete_form
+ * @param $form
+ * @param $form_state
  */
 function sba_message_delete_form_submit($form, &$form_state) {
   //delete the message

@@ -100,7 +100,6 @@ function _sba_message_api_get_gender_or_social_ids($target_fields) {
   $loader = new AdvocacyApiClientLoader();
   $client = $loader->getClient();
   $ids = array();
-  $message = FALSE;
   foreach ($target_fields as $fields) {
     $fields->limit = 1;
     $response = $client->searchTargets((array)$fields);
