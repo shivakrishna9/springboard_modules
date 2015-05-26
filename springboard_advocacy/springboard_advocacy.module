@@ -53,12 +53,6 @@ function springboard_advocacy_menu() {
     'page callback' => 'springboard_advocacy_settings_page',
     ) + springboard_advocacy_menu_common();
 
-  $items['node/%/messages'] = array(
-    'title' => 'Messages',
-    'page arguments' => array(1),
-    'type' => MENU_LOCAL_TASK
-  ) + springboard_advocacy_menu_common(TRUE);
-
   return $items;
 }
 

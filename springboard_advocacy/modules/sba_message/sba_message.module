@@ -1,14 +1,14 @@
 <?php
 
+
 /**
  * @file
  * Module for the SBA Message Entity
  */
 
 /**
- * Implements hook_menu().
- *
- * node/%/messages
+ * Implements hook_menu.
+ * @return array
  */
 
 function sba_message_menu() {
@@ -38,7 +38,6 @@ function sba_message_menu() {
  *   Whether access is allowed or not.
  */
 function sba_message_access($op, $sba_message = NULL, $account = NULL) {
-
   // Messages will inherit create/edit/delete permissions from their parent node permissions.
 
   global $user;
@@ -66,8 +65,7 @@ function sba_message_access($op, $sba_message = NULL, $account = NULL) {
       }
     }
 
-    // Inherit parent node permissions
-    if (user_access("{$op} own {$node->type} content") &&  $node->uid == $user->uid) {
+    if (user_access('administer sba messages', $account)) {
       return TRUE;
     }
 
@@ -75,18 +73,28 @@ function sba_message_access($op, $sba_message = NULL, $account = NULL) {
       return TRUE;
     }
 
-    if (user_access("{$op} {$node->type} content")) {
-      return TRUE;
-    }
-
-    if ($op == 'manage-messages') {
+    //message tab on node view page
+    $arg = arg(3);
+    if ($op == 'manage-messages' && empty($arg)) {
       if (user_access("create {$node->type} content")) {
         return TRUE;
       }
     }
 
-    if (user_access('administer sba messages', $account)) {
+    if ($op == 'create' && user_access("create {$node->type} content")) {
+      if(user_access("edit own {$node->type} content") &&  $node->uid == $user->uid) {
+        return TRUE;
+      }
+      if(user_access("edit any {$node->type} content")) {
+        return TRUE;
+      }
+    }
+
+    if (user_access("{$op} own {$node->type} content") &&  $node->uid == $user->uid) {
       return TRUE;
+    }
+    elseif(user_access("{$op} own {$node->type} content") &&  $node->uid != $user->uid) {
+      return FALSE;
     }
   }
 
