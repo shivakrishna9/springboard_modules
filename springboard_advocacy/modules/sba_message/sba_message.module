@@ -371,8 +371,10 @@ function sba_message_load_multiple($sba_message_ids = array(), $conditions = arr
   return entity_load('sba_message', $sba_message_ids, $conditions, $reset);
 }
 
+
 /**
  * Deletes a sba_message.
+ * @param SbaMessage $sba_message
  */
 function sba_message_delete(SbaMessage $sba_message) {
   $status = $sba_message->delete();
@@ -411,6 +413,7 @@ function sba_message_save(SbaMessage $sba_message) {
 
 /**
  * Saves a sba_message type to the db.
+ *  @param SbaMessageType $type
  */
 function sba_message_type_save(SbaMessageType $type) {
   $type->save();
@@ -418,6 +421,7 @@ function sba_message_type_save(SbaMessageType $type) {
 
 /**
  * Deletes a sba_message type from the db.
+ * @param SbaMessage $sba_message
  */
 function sba_message_type_delete(SbaMessageType $type) {
   $type->delete();
@@ -425,6 +429,7 @@ function sba_message_type_delete(SbaMessageType $type) {
 
 /**
  * URI callback for sba_messages
+ * @param SbaMessage $sba_message
  */
 function sba_message_uri(SbaMessage $sba_message){
   return array(
@@ -432,8 +437,12 @@ function sba_message_uri(SbaMessage $sba_message){
   );
 }
 
+
 /**
  * Menu title callback for showing individual entities
+ *
+ * @param SbaMessage $sba_message
+ * @return mixed
  */
 function sba_message_page_title(SbaMessage $sba_message){
   return $sba_message->name;
