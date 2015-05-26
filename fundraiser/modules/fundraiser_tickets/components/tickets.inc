@@ -151,7 +151,7 @@ function _fundraiser_tickets_validate_webform_field($element, &$form_state) {
     }
     unset($ticket_values['fundraiser-tickets-extra-donation']);
   }
-  
+
   // Grab the selected values and verify we have at least one
   $selected = array_filter($ticket_values);
   if (empty($selected)) {
@@ -181,6 +181,10 @@ function theme_fundraiser_tickets_webform_table($variables) {
 
   $element = $variables['element'];
 
+  $node = node_load($element['#webform_component']['nid']);
+  $node_currency = fundraiser_get_currency_from_node($node);
+  $node_currency_code = $node_currency['code'];
+
   $rows = array();
   $last_row = array();
   $ticket_prices = array();
@@ -188,15 +192,21 @@ function theme_fundraiser_tickets_webform_table($variables) {
   // Loop through the element and output the children fields as rows
   foreach (element_children($element) as $id) {
     if ($id == 'fundraiser-tickets-extra-donation'){
+      // @todo Need to use the currency from the add-on donation form.
       $last_row = array('data' => array(t('Additional Donation'), '', drupal_render($element[$id]), '',array('data' => '$ 0.00', 'id' => 'fundraiser-tickets-extra-donation-display', 'align' => 'right')));
     } elseif (isset($element[$id]['#extra']['product_id'])){
       $product_wrapper = entity_metadata_wrapper('commerce_product', commerce_product_load($element[$id]['#extra']['product_id']));
       $tickets_available = $product_wrapper->fr_tickets_quantity->value() - $product_wrapper->fr_tickets_quantity_sold->value();
+
+      $ticket_currency_code = $product_wrapper->commerce_price->currency_code->value();
+      $formatted_amount = commerce_currency_format($product_wrapper->commerce_price->amount->value(), $ticket_currency_code, $product_wrapper);
       $row  = array();
       $title = array(
-        'data' => check_plain($product_wrapper->title->value()) . ' (' . commerce_currency_format($product_wrapper->commerce_price->amount->value(), $product_wrapper->commerce_price->currency_code->value(), $product_wrapper) . ')',
+        'data' => check_plain($product_wrapper->title->value()) . ' (' . $formatted_amount . ')',
         'class' => 'ticket_type'
       );
+      // @todo Modify this settings array to include currency formatting info.
+      // We need to be able to format amounts from the client side.
       $ticket_prices[$product_wrapper->product_id->value()] = $product_wrapper->commerce_price->amount->value() / 100;
       $description = array(
         'data' => $tickets_available ? check_plain($product_wrapper->fr_tickets_description->value()) : check_plain($product_wrapper->fr_tickets_sold_out_message->value()),
@@ -208,7 +218,7 @@ function theme_fundraiser_tickets_webform_table($variables) {
       );
       // Add a div to contain the ticket total
       $ticket_total = array(
-        'data' => '$ 0.00',
+        'data' => commerce_currency_format(0, $ticket_currency_code),
         'class' => 'fundraiser-ticket-type-total',
         'id' => 'product-' . $element[$id]['#extra']['product_id'] . '-tickets-total',
         'align' => 'right'
@@ -217,7 +227,7 @@ function theme_fundraiser_tickets_webform_table($variables) {
       $rows[] = $row;
     }
   }
-  
+
   $rows[] = $last_row;
 
   // Add a row to contain our totals
@@ -227,7 +237,7 @@ function theme_fundraiser_tickets_webform_table($variables) {
       array('data' => '', 'class' => 'ticket_description'),
       array('data' => 0, 'id' => 'fundraiser-tickets-total-quant', 'class' => 'quantity', 'align' => 'right'),
       array('data' => '', 'class' => 'ticket_warning'),
-      array('data' => '$ 0.00', 'id' => 'fundraiser-tickets-total-cost', 'class' => 'fundraiser-ticket-type-total', 'align' => 'right')
+      array('data' => commerce_currency_format(0, $node_currency_code), 'id' => 'fundraiser-tickets-total-cost', 'class' => 'fundraiser-ticket-type-total', 'align' => 'right')
     )
   );
   $header = array(
@@ -238,7 +248,7 @@ function theme_fundraiser_tickets_webform_table($variables) {
     array('data' => t('Amount'), 'class' => 'fundraiser-ticket-type-total', 'align' => 'right')
   );
   // $attributes = array('class' => $element['#attributes']['class'], 'id' => $id, 'width' => '100%');
-  
+
   // Add the JS for the settings too
   drupal_add_js(array('fundraiserTickets' => array('ticketPrices' => $ticket_prices)), 'setting');
 
