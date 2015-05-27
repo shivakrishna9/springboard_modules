@@ -2449,10 +2449,11 @@ function fundraiser_sustainers_fundraiser_donation_cancel($donation) {
   if (!empty($donation->recurring->cancellation_reason)) {
     $reason = $donation->recurring->cancellation_reason;
   }
+  $canceled = isset($donation->recurring->auto_canceled) ? 'auto_canceled' : 'canceled';
 
   // Set the gateway resp field to canceled.
   db_update('fundraiser_sustainers')
-    ->fields(array('gateway_resp' => 'canceled', 'cancellation_reason' => $reason))
+    ->fields(array('gateway_resp' => $canceled, 'cancellation_reason' => $reason))
     ->condition('did', $donation->did)
     ->execute();
 }
@@ -2509,6 +2510,9 @@ function fundraiser_sustainers_auto_cancel($donation) {
 
     // Add the cancel reason to the donation's recurring object.
     $donation->recurring->cancellation_reason = $reason;
+
+    // Flag the donation as auto_canceled.
+    $donation->recurring->auto_canceled = 'auto_canceled';
 
     // Cancel the donation.
     // @see fundraiser_sustainers_fundraiser_donation_cancel().
