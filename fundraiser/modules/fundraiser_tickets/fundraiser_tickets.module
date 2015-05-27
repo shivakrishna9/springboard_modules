@@ -817,6 +817,28 @@ function fundraiser_tickets_clone_node_alter(&$node, $context) {
   }
 }
 
+/**
+ * Implements hook_node_update().
+ */
+function fundraiser_tickets_node_update($node) {
+  if (!fundraiser_tickets_is_ticket_type($node->type)) {
+    return;
+  }
+
+  // Change the currency value on the ticket products.
+  $node_wrapper = entity_metadata_wrapper('node', $node);
+  if (is_array($node_wrapper->fr_tickets_ticket_types->value())) {
+    foreach ($node_wrapper->fr_tickets_ticket_types->value() as $ticket_type) {
+      $currency = fundraiser_get_currency_from_node($node);
+      $ticket_type->commerce_price[LANGUAGE_NONE][0]['currency_code'] = $currency['code'];
+
+      // Set this value so the inventory processes do not run.
+      $ticket_type->fundraiser_tickets_skip_inventory = TRUE;
+      commerce_product_save($ticket_type);
+    }
+  }
+}
+
 
 /**
  * Implements hook_form_alter().
@@ -901,7 +923,8 @@ function fundraiser_tickets_commerce_product_insert($product) {
  * Update the total available tickets available on the associated ticket page node.
  */
 function fundraiser_tickets_commerce_product_update($product) {
-  if ($product->type == 'fundraiser_ticket') {
+  // Check for the skip inventory flag before updating values.
+  if ($product->type == 'fundraiser_ticket' && empty($product->fundraiser_tickets_skip_inventory)) {
     if ($nid = _fundraiser_tickets_find_product_node($product->product_id)) {
       $node_wrapper = entity_metadata_wrapper('node', node_load($nid));
       fundraiser_tickets_update_inventory($node_wrapper);
