@@ -771,7 +771,7 @@ function springboard_admin_forms_page($springboard_type) {
 
   // If there are no node types to display just show this text.
   if (empty($display_types)) {
-    return t("You haven't yet created any webform types.");
+    return t("You haven't yet created any content types for this kind of webform.");
   }
 
   // Render the views tables for the appropriate set of content types.
