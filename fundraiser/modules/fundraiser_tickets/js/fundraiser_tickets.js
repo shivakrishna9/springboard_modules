@@ -43,12 +43,12 @@
     total = self.calcTotal(),
     extra = self.calcExtra(),
     totalQuantity = self.calcQuantity();
-    $('#fundraiser-tickets-total-cost').text(Drupal.settings.fundraiser.currency.symbol + ' ' + (total).formatMoney(2, '.', ','));
-    $('#fundraiser-tickets-extra-donation-display').text(Drupal.settings.fundraiser.currency.symbol + ' ' + (extra).formatMoney(2, '.', ','));
+    $('#fundraiser-tickets-total-cost').text(Drupal.settings.fundraiser.currency.symbol + (total).formatMoney(2, '.', ','));
+    $('#fundraiser-tickets-extra-donation-display').text(Drupal.settings.fundraiser.currency.symbol + (extra).formatMoney(2, '.', ','));
     $("input[name='submitted[amount]']").val((total).formatMoney(2, '.', ''));
     $('#fundraiser-tickets-total-quant').text(totalQuantity);
     $.each(self.ticketPrices, function(productId, price) {
-      $('#product-' + productId + '-tickets-total').text(price.currency.symbol + ' ' + (self.calcField(productId, price.amount)).formatMoney(2, '.', ','));
+      $('#product-' + productId + '-tickets-total').text(price.currency.symbol + (self.calcField(productId, price.amount)).formatMoney(2, '.', ','));
     });
   }
 
