@@ -225,10 +225,11 @@ function theme_fundraiser_tickets_webform_table($variables) {
       $tickets_available = $product_wrapper->fr_tickets_quantity->value() - $product_wrapper->fr_tickets_quantity_sold->value();
 
       $ticket_amount = $product_wrapper->commerce_price->amount->value();
-      $ticket_currency = commerce_currency_load($product_wrapper->commerce_price->currency_code->value());
+      $ticket_currency_code = $product_wrapper->commerce_price->currency_code->value();
+      $ticket_currency = commerce_currency_load($ticket_currency_code);
       $ticket_currency_symbol = $ticket_currency['symbol'];
 
-      $formatted_amount = commerce_currency_format($product_wrapper->commerce_price->amount->value(), $product_wrapper->commerce_price->currency_code->value());
+      $formatted_amount = commerce_currency_format($ticket_amount, $ticket_currency_code);
       $row = array();
       $title = array(
         'data' => check_plain($product_wrapper->title->value()) . ' (' . $formatted_amount . ')',
@@ -236,7 +237,7 @@ function theme_fundraiser_tickets_webform_table($variables) {
       );
 
       $ticket_prices[$product_wrapper->product_id->value()] = array(
-        'amount' => commerce_currency_amount_to_decimal($product_wrapper->commerce_price->amount->value(), $product_wrapper->commerce_price->currency_code->value()),
+        'amount' => commerce_currency_amount_to_decimal($ticket_amount, $ticket_currency_code),
         'currency' => $ticket_currency,
       );
       $description = array(
