@@ -1,5 +1,4 @@
 <?php
-
 /**
  * @file
  * Springboard Advocacy installation functions.
@@ -9,6 +8,9 @@
  * Implements hook_requirements().
  *
  * Make sure the Advocacy API php-sdk exists
+ *
+ * @param $phase
+ * @return mixed
  */
 function springboard_advocacy_requirements($phase) {
   $t = get_t();
@@ -77,6 +79,9 @@ function springboard_advocacy_install() {
   _springboard_advocacy_install_taxonomy_fields();
 }
 
+/**
+ * Install org issues vocabulary.
+ */
 function _springboard_advocacy_install_vocab_sba_organization_issues() {
   $already_exists = FALSE;
   foreach (taxonomy_get_vocabularies() as $vocab) {
@@ -95,6 +100,9 @@ function _springboard_advocacy_install_vocab_sba_organization_issues() {
   }
 }
 
+/**
+ * Install legislative issues vocabulary.
+ */
 function _springboard_advocacy_install_vocab_sba_legislative_issues() {
   $already_exists = FALSE;
   foreach (taxonomy_get_vocabularies() as $vocab) {
@@ -139,6 +147,10 @@ function _springboard_advocacy_install_vocab_sba_legislative_issues() {
   }
 }
 
+/**
+ * Define legislative issues terms.
+ * @return array
+ */
 function _springboard_advocacy_standard_legislative_issues() {
   $t = get_t();
   return array(
@@ -175,6 +187,9 @@ function _springboard_advocacy_standard_legislative_issues() {
 }
 
 
+/**
+ * Create Advocacy taxonomy fields.
+ */
 function _springboard_advocacy_install_taxonomy_fields() {
   module_load_include('inc', 'field', 'field.crud');
   module_load_include('inc', 'field', 'field.info');
@@ -191,6 +206,9 @@ function _springboard_advocacy_install_taxonomy_fields() {
   }
 }
 
+/**
+ * @return mixed
+ */
 function _springboard_advocacy_install_taxonomy_field_definitions() {
   $t = get_t();
 
