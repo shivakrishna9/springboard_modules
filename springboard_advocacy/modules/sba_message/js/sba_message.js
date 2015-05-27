@@ -1001,11 +1001,11 @@
 
     // Unsaved changes message in recipients box
     Sba.setUpdateMessage = function (message) {
+        var status = $('.sba-message-status');
         if(message == '') {
             message = 'You have unsaved changes.'
         }
         else {
-            var status = $('.sba-message-status');
             var current =  status.text();
             if(current.indexOf('You have') != -1) {
                 message = message + " You have unsaved changes."
