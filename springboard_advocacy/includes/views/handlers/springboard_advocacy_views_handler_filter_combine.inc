@@ -5,9 +5,11 @@
  * Definition of springboard_advocacy_views_handler_filter_combine.
  */
 
+
 /**
- * Filter handler which allows to search on multiple fields.
+ * Class springboard_advocacy_views_handler_filter_combine
  *
+ *  Filter handler which allows to search on multiple fields.
  */
 class springboard_advocacy_views_handler_filter_combine extends springboard_advocacy_views_handler_filter_string {
   /**

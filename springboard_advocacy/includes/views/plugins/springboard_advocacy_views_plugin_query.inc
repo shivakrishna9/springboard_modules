@@ -1,11 +1,13 @@
 <?php
-
 /**
  * @file springbord_advocacy_views_plugin_query.inc
  *
- * Override views default db query with advocacy REST API query
  */
 
+/**
+ * Class springboard_advocacy_views_plugin_query
+ * Override views default db query with advocacy REST API query.
+ */
 class springboard_advocacy_views_plugin_query extends views_plugin_query {
 
   /**
@@ -15,12 +17,20 @@ class springboard_advocacy_views_plugin_query extends views_plugin_query {
    */
   protected $client;
 
+  /**
+   * @param $base_table
+   * @param $base_field
+   * @param $options
+   */
   function init($base_table, $base_field, $options) {
     parent::init($base_table, $base_field, $options);
     $loader = new AdvocacyApiClientLoader();
     $this->client = $loader->getClient();
   }
 
+  /**
+   * @param view $view
+   */
   function build(&$view) {
     $view->init_pager($view);
     $this->pager->query();
@@ -32,6 +42,9 @@ class springboard_advocacy_views_plugin_query extends views_plugin_query {
      }
   }
 
+  /**
+   * @param view $view
+   */
   function execute(&$view) {
     $client = $view->build_info['springboard_advocacy_request'];
 
@@ -49,12 +62,11 @@ class springboard_advocacy_views_plugin_query extends views_plugin_query {
 
 
     if (!empty($fields) && empty($suppress_results)) {
-
       foreach ($fields as $field_name => $search_terms) {
+
         // is it a multiple value checkbox or select?
         // then format in a way the api expects
         if (is_array($search_terms)) {
-
           $fields[$field_name] = implode('|', $search_terms);
         }
         else {
@@ -62,12 +74,16 @@ class springboard_advocacy_views_plugin_query extends views_plugin_query {
           //strip leading and multiple whitespaces
           $search_terms = trim($search_terms);
           $search_terms = preg_replace('/\s+/', ' ', $search_terms);
+
+          // Parsing for the committee:"committee name" search option.
+          // Currently an "undocumented feature".
+
           //no committees in the main search tab text input
           if(strpos($search_terms, 'committee:') === FALSE && $field_name != 'search_committee') {
             $fields[$field_name] = str_replace(' ', '|', $search_terms);
           }
+          // Has committees in the main search tab text input.
           elseif( $field_name != 'search_committee') {
-            //has committees in the main search tab text input
             $pattern = '/(committee:".*?")/';
             preg_match_all($pattern, $search_terms, $matches);
 
@@ -102,6 +118,10 @@ class springboard_advocacy_views_plugin_query extends views_plugin_query {
 
       // Get the targets
       $targets = $client->searchTargets($fields);
+      // Log debug info
+      if($client->isDebugMode()) {
+        watchdog('advocacy', 'Advocacy API Call details: !message', array('!message' => '<pre>' . check_plain(print_r($client->getDebugInfo(), TRUE)) . '</pre>'), WATCHDOG_DEBUG);
+      }
 
       if(!isset($targets->data)) {
         if (isset($targets->error)) {
@@ -111,10 +131,12 @@ class springboard_advocacy_views_plugin_query extends views_plugin_query {
         } else {
           drupal_set_message(t('A response was not received from the server when attempting to search for targets'), 'error');
           watchdog('advocacy', 'A response was not received when attempting to search for targets.', array(), WATCHDOG_ERROR);
-
         }
-      }      // Build the pager
+      }
+
       if (!empty($targets->data->targets))  {
+
+        // Build the pager
         if ($this->pager->use_pager()) {
           $this->pager->total_items = $targets->data->count;
           if (!empty($this->pager->options['offset'])) {
@@ -122,22 +144,20 @@ class springboard_advocacy_views_plugin_query extends views_plugin_query {
           }
           $this->pager->update_page_info();
         }
+
+        // Add target IDs to build info. We retrieve elsewhere for use in Target Add links.
         $view->build_info['target_ids'] = $targets->data->ids;
-      }
-      else {
-        // No results
-        if (isset($targets->error)) {
-          watchdog('advocacy', 'An error occurred while searching for targets: @message', array('@message' => $targets->error->message), WATCHDOG_ERROR);
-        }
       }
 
       $view->result = array();
+
+      // Put target data into results array
       if(!empty($targets->data->targets)) {
         $view->result = $targets->data->targets;
       }
 
+      // Build the pager.
       $this->pager->post_execute($view->result);
-      
       if ($this->pager->use_pager()) {
         $view->total_rows = $this->pager->get_total_items();
       }
@@ -146,6 +166,13 @@ class springboard_advocacy_views_plugin_query extends views_plugin_query {
     }
   }
 
+  /**
+   * @param $table
+   * @param null $field
+   * @param string $order
+   * @param string $alias
+   * @param array $params
+   */
   function add_orderby($table, $field = NULL, $order = 'ASC', $alias = '', $params = array()) {
     $this->orderby[] = array(
       'field' => $alias,
