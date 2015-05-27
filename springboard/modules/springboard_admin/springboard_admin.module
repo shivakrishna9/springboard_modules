@@ -769,6 +769,11 @@ function springboard_admin_forms_page($springboard_type) {
   // Allow modules to alter the types to be displayed.
   drupal_alter('springboard_admin_form_page_types', $display_types, $springboard_type);
 
+  // If there are no node types to display just show this text.
+  if (empty($display_types)) {
+    return t("You haven't yet created any webform types.");
+  }
+
   // Render the views tables for the appropriate set of content types.
   foreach ($display_types as $type) {
     $view = views_get_view('sbv_forms');
