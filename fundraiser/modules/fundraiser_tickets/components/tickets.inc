@@ -228,7 +228,7 @@ function theme_fundraiser_tickets_webform_table($variables) {
       $ticket_currency = commerce_currency_load($product_wrapper->commerce_price->currency_code->value());
       $ticket_currency_symbol = $ticket_currency['symbol'];
 
-      $formatted_amount = $ticket_currency_symbol . ' ' . number_format($ticket_amount, 2);
+      $formatted_amount = commerce_currency_format($product_wrapper->commerce_price->amount->value(), $product_wrapper->commerce_price->currency_code->value());
       $row = array();
       $title = array(
         'data' => check_plain($product_wrapper->title->value()) . ' (' . $formatted_amount . ')',
