@@ -8,7 +8,7 @@
 
 .sba-add-button.button:before {
     display: inline-block;
-    margin: 0px 8px 0px 0px;
+    margin: 0 8px 0px 0px;
     color: #FFF;
     content: "";
     font-family: FontAwesome;
