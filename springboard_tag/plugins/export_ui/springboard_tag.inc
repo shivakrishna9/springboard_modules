@@ -1,6 +1,10 @@
 <?php
 
-$placements = _springboard_tag_placement_options();
+/**
+ * @file
+ * Plugin to provide a ctools exportable class for the springboard tag module.
+ */
+
 $plugin = array(
   'schema' => 'springboard_tag',
   'access' => 'administer springboard tags',
@@ -21,7 +25,7 @@ $plugin = array(
     'tag' => '',
     'weight' => 0,
     'settings' => array(
-      'placement' => key($placements),
+      'placement' => 'after body tag',
       'visibility' => array(
         'path' => array(
           'page_specific' => BLOCK_VISIBILITY_NOTLISTED,
