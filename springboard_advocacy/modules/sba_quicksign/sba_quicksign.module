@@ -51,8 +51,11 @@ function sba_quicksign_form() {
   return $form;
 }
 
+
 /**
  * Validation callback for quicksign form.
+ * @param $form
+ * @param $form_state
  */
 function sba_quicksign_form_validate(&$form, &$form_state) {
   // Validate mail field
@@ -77,6 +80,7 @@ function sba_quicksign_form_validate(&$form, &$form_state) {
   // compare profile to required fields via the Webform User field map.
   $map = webform_user_user_map($node->nid);
   $missing_fields = FALSE;
+  $profile = array();
   foreach ($map as $webform_field => $profile_field) {
     $items  = field_get_items('user', $account, $profile_field);
     $profile[$webform_field] = !empty($items[0]['value']) ? $items[0]['value'] : FALSE;
@@ -98,7 +102,7 @@ function sba_quicksign_form_validate(&$form, &$form_state) {
 
   if ($missing_fields) {
     $_SESSION['sba_quicksign']['profile'] = $profile;
-    drupal_set_message(t("Unfortunately, we don't have enough information to complete your signature via the short form. Please fill out the full form."));
+    drupal_set_message(t("Unfortunately, we don't have enough information to complete your participation via the short form. Please fill out the full form."));
     drupal_redirect_form($form_state);
   }
 
@@ -111,22 +115,28 @@ function sba_quicksign_form_validate(&$form, &$form_state) {
   $_SESSION['sba_quicksign'] = TRUE;
 }
 
+
 /**
  * Submit callback for quicksign form.
+ * @param $form
+ * @param $form_state
  */
 function sba_quicksign_form_submit($form, &$form_state) {
   $node = $form_state['node'];
   $profile = isset($form_state['sba_quicksign']['profile']) ? $form_state['sba_quicksign']['profile'] : FALSE;
   if ($profile) {
     // Build submission
-
     // Execute form submission
     _sba_quicksign_build_submission($form, $form_state, $node, $profile);
   }
 }
 
+
 /**
  * Implements hook_form_BASE_FORM_ID_alter() for node forms.
+ * @param $form
+ * @param $form_state
+ * @param $form_id
  */
 function sba_quicksign_form_node_form_alter(&$form, &$form_state, $form_id) {
   // Modify the options on a specific instance of this node type.
@@ -174,20 +184,10 @@ function sba_quicksign_form_node_form_alter(&$form, &$form_state, $form_id) {
 }
 
 /**
- * Implements hook_form_FORM_ID_alter().
- *
- * Alters the quicksign node view.
- */
-//function sba_quicksign_form_alter(&$form, &$form_state, $form_id) {
-//  // Add wrapper elements to the quicksign fields.
-//  $form['quicksign_label']['#prefix'] = '<h2 class="quicksign-label">';
-//  $form['quicksign_label']['#suffix'] = '</h2>';
-//  $form['quicksign_description']['#prefix'] = '<div class="quicksign-description">';
-//  $form['quicksign_description']['#suffix'] = '</div>';
-//}
-
-/**
  *  Implements hook_form_alter().
+ * @param $form
+ * @param $form_state
+ * @param $form_id
  */
 function sba_quicksign_form_alter(&$form, $form_state, $form_id) {
   // Webform
@@ -253,6 +253,7 @@ function sba_quicksign_form_defaults(&$form, $node, $user_data) {
 
 /**
  * Implements hook_node_insert().
+ * @param $node
  */
 function sba_quicksign_node_insert($node) {
   if (sba_quicksign_is_quicksign_type($node->type) && isset($node->quicksign_enabled)) {
@@ -261,7 +262,8 @@ function sba_quicksign_node_insert($node) {
 }
 
 /**
- * Implements hook_node_update().
+ * Implements hook_node_update()
+ * @param $node
  */
 function sba_quicksign_node_update($node) {
   if (sba_quicksign_is_quicksign_type($node->type) && isset($node->quicksign_enabled)) {
@@ -279,8 +281,12 @@ function sba_quicksign_node_delete($node) {
   }
 }
 
+
 /**
- * Implements hook_node_view().
+ *  Implements hook_node_view().
+ * @param $node
+ * @param $view_mode
+ * @param $langcode
  */
 function sba_quicksign_node_view($node, $view_mode, $langcode) {
   if (sba_quicksign_is_quicksign_type($node->type)) {
@@ -291,8 +297,10 @@ function sba_quicksign_node_view($node, $view_mode, $langcode) {
   }
 }
 
+
 /**
  * Save quick sign settings per-node.
+ * @param $node
  */
 function sba_quicksign_save($node) {
   sba_quicksign_delete($node->nid);
@@ -325,7 +333,7 @@ function sba_quicksign_delete($nid) {
  * @param object $node
  *   Node object
  *
- * @return
+ * @return boolean
  *   returns TRUE if node is a quicksign node type and
  *   quicksign is enabled, otherwise FALSE.
  */
@@ -338,6 +346,10 @@ function sba_quicksign_is_enabled($node) {
   return (bool) $result->fetchColumn();
 }
 
+/**
+ * @param $nid
+ * @return mixed
+ */
 function sba_quicksign_settings($nid) {
   $results = db_query('
     SELECT
@@ -353,8 +365,10 @@ function sba_quicksign_settings($nid) {
   return $results->fetchAssoc();
 }
 
+
 /**
- *
+ * @param $node
+ * @return array
  */
 function sba_quicksign_get_required_fields($node) {
   $required_fields = array();
@@ -371,6 +385,12 @@ function sba_quicksign_get_required_fields($node) {
   return $required_fields;
 }
 
+/**
+ * @param $form
+ * @param $original_form_state
+ * @param $node
+ * @param $submission
+ */
 function _sba_quicksign_build_submission($form, &$original_form_state, $node, $submission) {
   $submit_text = $node->content['webform']['#form']['actions']['submit']['#value']; // sketchy.
   $form_id = 'webform_client_form_' . $node->nid;
@@ -455,6 +475,10 @@ function sba_quicksign_submission_tree_build($submission, $src, &$tree, $parent)
   return $tree;
 }
 
+/**
+ * @param $node
+ * @param $submission
+ */
 function sba_quicksign_webform_submission_insert($node, $submission) {
   $quicksign = isset($_SESSION['sba_quicksign']) ? $_SESSION['sba_quicksign'] : FALSE;
   if ($quicksign) {
@@ -467,6 +491,10 @@ function sba_quicksign_webform_submission_insert($node, $submission) {
   }
 }
 
+/**
+ * @param $type
+ * @return bool
+ */
 function sba_quicksign_is_quicksign_type($type) {
   $types = array('springboard_petition', 'sba_message_action');
   $quicksign = FALSE;
