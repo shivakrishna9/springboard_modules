@@ -40,6 +40,7 @@
         </div>
       </fieldset>
       <?php print drupal_render_children($form); ?>
+      <p><?php print $qsign ?></p>
       <p><?php print $social ?></p>
     </div>
     </div>

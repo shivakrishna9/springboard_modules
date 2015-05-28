@@ -864,14 +864,19 @@ function sba_message_action_preprocess_two_column_body_right(&$vars) {
  * @param $vars
  */
 function sba_message_action_build_preprocess(&$vars) {
+
+  $vars['qsign'] = '';
+  if (module_exists('sba_quicksign') && sba_quicksign_is_enabled($vars['element']['#node'])) {
+    $qsign = drupal_get_form('sba_quicksign_form');
+    $vars['qsign'] = drupal_render($qsign);
+  }
+
   $element = $vars['element'];
   $node = $element['#node'];
-
   $vars['webform'] = drupal_render($element['submitted']);
   $vars['message_fieldset'] = drupal_render($element['sba_messages']);
   $vars['form'] = $element;
   $vars['social'] = '';
-
   // insert social icons
   if(module_exists('sb_social')) {
     $social_enabled = in_array($node->type, array_filter(variable_get('springboard_social_enabled_content_types', array())));
@@ -884,7 +889,7 @@ function sba_message_action_build_preprocess(&$vars) {
   //fieldset legends
   $vars['form_legend'] = t('Take Action Now!');
   $vars['user_legend'] = t('Your Information');
-
+//dpm($vars);
   // We remove image field in the default node--sba-message-action.tpl.php
   // and put it into form layouts here
   $image_field = field_get_items('node', $node, 'field_message_action_img');
@@ -925,6 +930,7 @@ function sba_message_action_build_preprocess(&$vars) {
  * @param $vars
  */
 function sba_message_action_preprocess_node(&$vars) {
+
   if($vars['node']->type == 'sba_message_action') {
     $vars['use_layouts'] = !empty($vars['form_layouts']) ? TRUE : FALSE;
     if (empty($vars['use_layouts'])) {

@@ -103,11 +103,12 @@
       hide($content['body']);
       hide($content['field_message_action_img']);
       hide($content['field_message_call_to_action']);
+      hide($content['sba_quicksign']);
 
     ?>
 
   <?php if(!$use_layouts): ?>
-
+    <?php show($content['sba_quicksign']); ?>
     <?php if(!empty($goal)): ?>
       <div class="row-fluid">
         <?php print $goal; ?>

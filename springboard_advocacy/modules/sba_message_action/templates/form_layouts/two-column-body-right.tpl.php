@@ -24,6 +24,7 @@
             </div>
           </fieldset>
           <?php print drupal_render_children($form); ?>
+          <p><?php print $qsign ?></p>
         </div>
       </fieldset>
     </div>

@@ -17,31 +17,34 @@ function sba_quicksign_form() {
   $node = node_load(arg(1));
   $settings = isset($node->nid) ? sba_quicksign_settings($node->nid) : array();
   $description_format = isset($settings['quicksign_description_format']) ? $settings['quicksign_description_format'] : NULL;
+
   $form = array();
-  // TODO: theme functions for label and description.
-  $form['quicksign_label'] = array(
-    '#markup' => isset($settings['quicksign_label']) ? $settings['quicksign_label'] : '',
+  $form['qsign'] = array(
+    '#type' => 'fieldset',
+    '#title' => isset($settings['quicksign_label']) ? $settings['quicksign_label'] : '',
   );
-  $form['quicksign_description'] = array(
+
+  $form['qsign']['quicksign_description'] = array(
     '#markup' => isset($settings['quicksign_description']) ? check_markup($settings['quicksign_description'], $description_format) : '',
+    '#prefix' => '<div class="quicksign-description">',
+    '#suffix' => '</div>',
   );
-  $form['quicksign_mail'] = array(
+
+  $form['qsign']['quicksign_mail'] = array(
     '#type' => 'textfield',
     '#title' => '',
     '#default_value' => $user->uid ? $user->mail : '',
   );
+
   $form['nid'] = array(
     '#type' => 'value',
     '#value' => $node->nid,
   );
+
   $form['submit'] = array(
     '#type' => 'submit',
     '#value' => isset($settings['quicksign_button_text']) ? check_plain($settings['quicksign_button_text']) : t('Sign our petiton'),
   );
-  $form['quicksign_label']['#prefix'] = '<h2 class="quicksign-label">';
-  $form['quicksign_label']['#suffix'] = '</h2>';
-  $form['quicksign_description']['#prefix'] = '<div class="quicksign-description">';
-  $form['quicksign_description']['#suffix'] = '</div>';
 
   $form['#validate'][] = 'sba_quicksign_form_validate';
   $form['#submit'][] = 'sba_quicksign_form_submit';
