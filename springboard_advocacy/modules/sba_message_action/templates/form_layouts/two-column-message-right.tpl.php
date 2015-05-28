@@ -34,19 +34,20 @@
     <div id="left" class="span5 message-column">
       <fieldset id="user-information-wrapper" class = "form-wrapper"><legend><?php print $user_legend ?></legend>
         <div class = "fieldset-wrapper">
+          <?php print $open_form_tag ?>
 
-        <p><?php print $webform ?></p>
+          <p><?php print $webform ?></p>
         </div>
       </fieldset>
       <?php print drupal_render_children($form); ?>
-      <p><?php print $qsign ?></p>
-
       <p><?php print $social ?></p>
     </div>
     <div id="right" class="span7 message-column">
       <?php print $message_fieldset; ?>
     </div>
     </div>
+      <?php print $close_form_tag ?>
+      <?php print $qsign ?>
   </div>
 </fieldset>
 </div>

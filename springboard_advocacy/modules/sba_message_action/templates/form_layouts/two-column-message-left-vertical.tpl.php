@@ -29,20 +29,22 @@
   </div>
   <fieldset id="take-action-wrapper" class = "form-wrapper"><legend><?php print $form_legend ?></legend>
     <div class = "fieldset-wrapper">
-  <div class="row-fluid">
-    <div id="left" class="span7 message-column">
-      <?php print $message_fieldset; ?>
-    </div>
-    <div id="right" class="span5 message-column">
-      <fieldset id="user-information-wrapper" class = "form-wrapper"><legend><?php print $user_legend ?></legend>
-        <div class = "fieldset-wrapper">
-          <?php print $webform ?>
-        </div>
-      </fieldset>
-      <?php print drupal_render_children($form); ?>
-      <p><?php print $qsign ?></p>
-      <p><?php print $social ?></p>
-    </div>
+      <?php print $open_form_tag ?>
+      <div class="row-fluid">
+        <div id="left" class="span7 message-column">
+          <?php print $message_fieldset; ?>
+       </div>
+      <div id="right" class="span5 message-column">
+        <fieldset id="user-information-wrapper" class = "form-wrapper"><legend><?php print $user_legend ?></legend>
+          <div class = "fieldset-wrapper">
+            <?php print $webform ?>
+          </div>
+        </fieldset>
+        <?php print drupal_render_children($form); ?>
+        <?php print $close_form_tag ?>
+        <?php print $qsign ?>
+        <p><?php print $social ?></p>
+      </div>
     </div>
   </div>
 </fieldset>

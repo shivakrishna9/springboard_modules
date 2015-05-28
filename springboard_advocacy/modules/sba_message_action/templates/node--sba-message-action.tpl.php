@@ -108,7 +108,6 @@
     ?>
 
   <?php if(!$use_layouts): ?>
-    <?php show($content['sba_quicksign']); ?>
     <?php if(!empty($goal)): ?>
       <div class="row-fluid">
         <?php print $goal; ?>
@@ -135,9 +134,10 @@
 
   <?php endif; ?>
 
-  <?php
-    print render($content);
-  ?>
+    <?php print render($content);?>
+    <?php //print render($content['sba_quicksign']); ?>
+
+
   </div>
 
   <?php print render($content['links']); ?>

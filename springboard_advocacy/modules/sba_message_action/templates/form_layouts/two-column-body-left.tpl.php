@@ -31,6 +31,7 @@
     <div id="right" class="span7 message-column">
       <fieldset id="take-action-wrapper" class = "form-wrapper"><legend><?php print $form_legend ?></legend>
         <div class = "fieldset-wrapper">
+          <?php print $open_form_tag ?>
           <?php print $message_fieldset; ?>
           <fieldset id="user-information-wrapper" class = "form-wrapper"><legend><?php print $user_legend ?></legend>
             <div class = "fieldset-wrapper">
@@ -38,7 +39,8 @@
             </div>
           </fieldset>
           <?php print drupal_render_children($form); ?>
-          <p><?php print $qsign ?></p>
+          <?php print $close_form_tag ?>
+          <?php print $qsign ?>
         </div>
       </fieldset>
     </div>

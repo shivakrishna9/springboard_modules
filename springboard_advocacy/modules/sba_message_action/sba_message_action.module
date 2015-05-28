@@ -377,6 +377,19 @@ function sba_message_action_form_alter(&$form, &$form_state, $form_id) {
     // Yes it is the user-facing form.
     if ($client_form !== FALSE) {
 
+      // Override core's theme_form in order to remove <form> tag
+      // and use it in a template variable defined in
+      // sba_message_action_build_preprocess and
+      // theme_message_action_form_layout_form
+      if(!empty($form['#theme_wrappers']) && !empty($form['#node']->form_layouts)) {
+        foreach ($form['#theme_wrappers'] as $key => $wrapper) {
+          if($wrapper == 'form' ) {
+            unset($form['#theme_wrappers'][$key]);
+          }
+        }
+        $form['#theme_wrappers'][] = array('message_action_form_layout_form');
+      }
+
       // Attach the JS and CSS
       $form['#attached']['js'][]= drupal_get_path('module', 'sba_message_action')
         . '/js/sba_message_action.js';
@@ -872,6 +885,20 @@ function sba_message_action_build_preprocess(&$vars) {
   }
 
   $element = $vars['element'];
+
+  //  Override core's theme_form in order to remove <form> tag
+  //  and use it in a template variable.
+  // see: theme_message_action_form_layout_form
+  if (isset($element ['#action'])) {
+    $element ['#attributes']['action'] = drupal_strip_dangerous_protocols($element ['#action']);
+  }
+  element_set_attributes($element, array('method', 'id'));
+  if (empty($element ['#attributes']['accept-charset'])) {
+    $element ['#attributes']['accept-charset'] = "UTF-8";
+  }
+  $vars['open_form_tag']  =  '<form' . drupal_attributes($element ['#attributes']) . '><div>';
+  $vars['close_form_tag'] = '</div></form>';
+
   $node = $element['#node'];
   $vars['webform'] = drupal_render($element['submitted']);
   $vars['message_fieldset'] = drupal_render($element['sba_messages']);
@@ -889,7 +916,6 @@ function sba_message_action_build_preprocess(&$vars) {
   //fieldset legends
   $vars['form_legend'] = t('Take Action Now!');
   $vars['user_legend'] = t('Your Information');
-//dpm($vars);
   // We remove image field in the default node--sba-message-action.tpl.php
   // and put it into form layouts here
   $image_field = field_get_items('node', $node, 'field_message_action_img');
@@ -919,6 +945,30 @@ function sba_message_action_build_preprocess(&$vars) {
     }
   }
 
+}
+
+/**
+ * Override core's theme_form in order to remove <form> tag
+ * and use it in a template variable defined in
+ * sba_message_action_build_preprocess
+ *
+ * @param $vars
+ * @return mixed
+ */
+function theme_message_action_form_layout_form($vars) {
+  $element = $vars['element'];
+
+  // core's version:
+  //  if (isset($element ['#action'])) {
+  //    $element ['#attributes']['action'] = drupal_strip_dangerous_protocols($element ['#action']);
+  //  }
+  //  element_set_attributes($element, array('method', 'id'));
+  //  if (empty($element ['#attributes']['accept-charset'])) {
+  //    $element ['#attributes']['accept-charset'] = "UTF-8";
+  //  }
+  //return '<form' . drupal_attributes($element ['#attributes']) . '><div>' . $element ['#children'] . '</div></form>';
+
+  return  $element['#children'];
 }
 
 /**
@@ -991,6 +1041,10 @@ function sba_message_action_theme() {
     ),
     'message_action_webform_wrapper' => array(
       'render element'  => 'element',
+    ),
+
+    'message_action_form_layout_form' => array(
+      'render element' => 'element',
     ),
   );
 }
