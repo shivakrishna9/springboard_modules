@@ -45,7 +45,9 @@
         </div>
       </div>
       <?php print $close_form_tag ?>
-      <?php print $qsign ?>
+      <?php if(!empty($quicksign)): ?>
+        <div id="quicksign-container"><?php print $quicksign ?></div>
+      <?php endif; ?>
     </div>
   </fieldset>
 </div>

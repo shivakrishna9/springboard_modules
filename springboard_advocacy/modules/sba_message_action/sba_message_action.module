@@ -900,10 +900,10 @@ function sba_message_action_preprocess_two_column_body_right(&$vars) {
  */
 function sba_message_action_build_preprocess(&$vars) {
 
-  $vars['qsign'] = '';
+  $vars['quicksign'] = '';
   if (module_exists('sba_quicksign') && sba_quicksign_is_enabled($vars['element']['#node'])) {
-    $qsign = drupal_get_form('sba_quicksign_form');
-    $vars['qsign'] = drupal_render($qsign);
+    $quicksign = drupal_get_form('sba_quicksign_form');
+    $vars['quicksign'] = drupal_render($quicksign);
   }
 
   $element = $vars['element'];
