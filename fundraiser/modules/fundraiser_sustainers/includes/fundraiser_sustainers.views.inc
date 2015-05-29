@@ -15,8 +15,8 @@ function fundraiser_sustainers_views_data() {
   // Advertise this table as a possible base table.
   $data['fundraiser_sustainers_log']['table']['base'] = array(
     'field' => 'lid',
-    'title' => t('Sustainer log'),
-    'help' => t("Log of sustainer donations processed."),
+    'title' => t('Fundraiser sustainer log entries'),
+    'help' => t("Log of sustainer donations."),
   );
 
   // Fields.
@@ -44,7 +44,7 @@ function fundraiser_sustainers_views_data() {
   // Field did.
   $data['fundraiser_sustainers_log']['did'] = array(
     'title' => t('Donation ID'),
-    'help' => t('The ID of the processed donation.'),
+    'help' => t('The ID of the donation sustainer record.'),
     'field' => array(
       'handler' => 'views_handler_field_numeric',
       'click sortable' => TRUE,
@@ -70,10 +70,27 @@ function fundraiser_sustainers_views_data() {
     ),
   );
 
-  // Field gateway.
-  $data['fundraiser_sustainers_log']['gateway'] = array(
-    'title' => t('Gateway'),
-    'help' => t('The gateway used to process the donation.'),
+  $data['fundraiser_sustainers_log']['timestamp'] = array(
+    'title' => t('Activity Date'),
+    'help' => t('The time that the activity occurred.'),
+    'field' => array(
+      'handler' => 'views_handler_field_date',
+      'click sortable' => TRUE,
+    ),
+    'sort' => array(
+      'handler' => 'views_handler_sort_date',
+    ),
+    'filter' => array(
+      'handler' => 'date_views_filter_handler_simple',
+    ),
+    'argument' => array(
+      'handler' => 'date_views_argument_handler_simple',
+    ),
+  );
+
+  $data['fundraiser_sustainers_log']['lock_id'] = array(
+    'title' => t('Lock ID'),
+    'help' => t('The lock that was placed on the record during processing.'),
     'field' => array(
       'handler' => 'views_handler_field',
       'click sortable' => TRUE,
@@ -86,10 +103,9 @@ function fundraiser_sustainers_views_data() {
     ),
   );
 
-  // Field date_processed.
-  $data['fundraiser_sustainers_log']['date_processed'] = array(
-    'title' => t('Date processed'),
-    'help' => t('Timestamp of when the donation was processed.'),
+  $data['fundraiser_sustainers_log']['next_charge'] = array(
+    'title' => t('Next Charge Date'),
+    'help' => t('The next charge date of the sustainer at the time this log entry was created.'),
     'field' => array(
       'handler' => 'views_handler_field_date',
       'click sortable' => TRUE,
@@ -98,19 +114,48 @@ function fundraiser_sustainers_views_data() {
       'handler' => 'views_handler_sort_date',
     ),
     'filter' => array(
-      'handler' => 'views_handler_filter_date',
+      'handler' => 'date_views_filter_handler_simple',
     ),
     'argument' => array(
-      'handler' => 'views_handler_argument_date',
+      'handler' => 'date_views_argument_handler_simple',
     ),
   );
 
-  // Field success.
-  $data['fundraiser_sustainers_log']['success'] = array(
-    'title' => t('Success'),
-    'help' => t('Flag to indicate whether or not the charge was successful.'),
+  $data['fundraiser_sustainers_log']['old_state'] = array(
+    'title' => t('Old state'),
+    'help' => t('The gateway response (if any) of the sustainer before this log entry was recorded.'),
     'field' => array(
-      'handler' => 'views_handler_field_boolean',
+      'handler' => 'views_handler_field',
+      'click sortable' => TRUE,
+    ),
+    'sort' => array(
+      'handler' => 'views_handler_sort',
+    ),
+    'filter' => array(
+      'handler' => 'views_handler_filter_string',
+    ),
+  );
+
+  $data['fundraiser_sustainers_log']['new_state'] = array(
+    'title' => t('New state'),
+    'help' => t('The new state of the sustainer when theis entry was logged.'),
+    'field' => array(
+      'handler' => 'views_handler_field',
+      'click sortable' => TRUE,
+    ),
+    'sort' => array(
+      'handler' => 'views_handler_sort',
+    ),
+    'filter' => array(
+      'handler' => 'views_handler_filter_string',
+    ),
+  );
+
+  $data['fundraiser_sustainers_log']['attempts'] = array(
+    'title' => t('Attempts'),
+    'help' => t('The number of attempts against the sustainer as of this log entry.'),
+    'field' => array(
+      'handler' => 'views_handler_field_numeric',
       'click sortable' => TRUE,
     ),
     'argument' => array(
@@ -118,17 +163,16 @@ function fundraiser_sustainers_views_data() {
       'numeric' => TRUE,
     ),
     'filter' => array(
-      'handler' => 'views_handler_filter_boolean_operator',
+      'handler' => 'views_handler_filter_numeric',
     ),
     'sort' => array(
       'handler' => 'views_handler_sort',
     ),
   );
 
-  // Field lock_id.
-  $data['fundraiser_sustainers_log']['lock_id'] = array(
-    'title' => t('Lock ID'),
-    'help' => t('The lock that was placed on the record during processing.'),
+  $data['fundraiser_sustainers_log']['cancellation_reason'] = array(
+    'title' => t('Cancellation reason'),
+    'help' => t('Reason why the sustainer was canceled.'),
     'field' => array(
       'handler' => 'views_handler_field',
       'click sortable' => TRUE,

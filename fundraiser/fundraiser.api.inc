@@ -195,7 +195,7 @@ function hook_fundraiser_donation_submit($form, $form_state, $donation) {
  *
  * For all modules.
  */
-function hook_fundraiser_donation_post_submit($form, $form_state, $donation) {
+function hook_fundraiser_donation_post_submit_alter(&$form, &$form_state, &$donation) {
 
 }
 
