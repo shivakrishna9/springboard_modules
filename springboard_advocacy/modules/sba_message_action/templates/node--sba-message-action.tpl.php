@@ -83,7 +83,6 @@
 <div id="node-<?php print $node->nid; ?>" class="<?php print $classes; ?> clearfix"<?php print $attributes; ?>>
 
   <?php print $user_picture; ?>
-
   <?php print render($title_prefix); ?>
   <?php if (!$page): ?>
     <h2<?php print $title_attributes; ?>><a href="<?php print $node_url; ?>"><?php print $title; ?></a></h2>
@@ -104,44 +103,37 @@
       hide($content['field_message_action_img']);
       hide($content['field_message_call_to_action']);
       hide($content['sba_quicksign']);
-
     ?>
 
-  <?php if(!$use_layouts): ?>
-    <?php if(!empty($goal)): ?>
-      <div class="row-fluid">
-        <?php print $goal; ?>
-      </div>
-    <?php endif; ?>
-
-    <div class="row-fluid">
-      <?php if(!empty($content['field_message_action_img'][0]))  : ?>
-        <div id="call-to-action" class="span8">
-          <div id="call-to-action-call"><h2><?php print render($content['field_message_call_to_action']); ?></h2></div>
-          <div id="call-to-action-call-body"><?php print render($content['body']); ?></div>
-        </div>
-        <div id="image" class="span4">
-          <?php  print render($content['field_message_action_img']) ?>
-        </div>
-      <?php else: ?>
-        <div id="call-to-action" class="span12">
-          <div id="call-to-action-call"><h2><?php print render($content['field_message_call_to_action']); ?></h2></div>
-          <div id="call-to-action-call-body"><?php print render($content['body']); ?></div>
+    <?php if(!$use_layouts): ?>
+      <?php if(!empty($goal)): ?>
+        <div class="row-fluid">
+          <?php print $goal; ?>
         </div>
       <?php endif; ?>
 
-    </div>
-
-  <?php endif; ?>
-
+      <div class="row-fluid">
+        <?php if(!empty($content['field_message_action_img'][0]))  : ?>
+          <div id="call-to-action" class="span8">
+            <div id="call-to-action-call"><h2><?php print render($content['field_message_call_to_action']); ?></h2></div>
+            <div id="call-to-action-call-body"><?php print render($content['body']); ?></div>
+          </div>
+          <div id="image" class="span4">
+            <?php  print render($content['field_message_action_img']) ?>
+          </div>
+        <?php else: ?>
+          <div id="call-to-action" class="span12">
+            <div id="call-to-action-call"><h2><?php print render($content['field_message_call_to_action']); ?></h2></div>
+            <div id="call-to-action-call-body"><?php print render($content['body']); ?></div>
+          </div>
+        <?php endif; ?>
+      </div>
+    <?php endif; ?>
     <?php print render($content);?>
-    <?php //print render($content['sba_quicksign']); ?>
-
-
+    <?php if(!$use_layouts): ?>
+      <?php print render($content['sba_quicksign']); ?>
+    <?php endif; ?>
   </div>
-
   <?php print render($content['links']); ?>
-
   <?php print render($content['comments']); ?>
-
 </div>
