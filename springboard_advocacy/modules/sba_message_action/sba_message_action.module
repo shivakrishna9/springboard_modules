@@ -780,6 +780,16 @@ function sba_message_action_form_layouts_info() {
     'hide title' => FALSE,
   );
 
+  $templates['two_column_message_right_vert'] = array(
+    'name' => t('  Call to action top, message right, vertical user form left'),
+    'types' => array('sba_message_action'),
+    'theme' => 'two_column_message_right_vert',
+    'pattern' => 'two_column_message_right_vert\'0-9\'+',
+    'template' => 'two-column-message-right-vertical',
+    'path' => drupal_get_path('module', 'sba_message_action') . '/templates/form_layouts',
+    'hide title' => FALSE,
+  );
+
   $templates['two_column_message_left'] = array(
     'name' => t('Call to action top, message left, horizontal user form right'),
     'types' => array('sba_message_action'),
@@ -846,6 +856,18 @@ function sba_message_action_preprocess_two_column_message_left(&$vars) {
  * @param $vars
  */
 function sba_message_action_preprocess_two_column_message_left_vertical(&$vars) {
+  sba_message_action_build_preprocess($vars);
+}
+
+/**
+ *
+ * Implements hook_preprocess_hook.
+ *
+ * Form layouts preprocess function.
+ *
+ * @param $vars
+ */
+function sba_message_action_preprocess_two_column_message_right_vert(&$vars) {
   sba_message_action_build_preprocess($vars);
 }
 
