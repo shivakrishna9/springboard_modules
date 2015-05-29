@@ -218,3 +218,25 @@ textarea[id*="edit-sba-messages-message"] {
 fieldset[id*="edit-sba-messages-message"]  input[name*="subject"] {
     width: 95%;
 }
+
+#quicksign-container {
+    float: left;
+}
+
+.user-form-vertical-right #right,
+.action-message-left #right{
+    float: right;
+}
+
+.user-form-vertical-right #left,
+.action-message-left #left,
+.user-form-vertical-right #quicksign-container,
+.action-message-left #quicksign-container
+{
+    margin-left: 0;
+}
+
+.action-body-left #quicksign-container,
+.action-body-right #quicksign-container {
+    float:none;
+}

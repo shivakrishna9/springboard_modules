@@ -45,7 +45,7 @@
         </div>
         <?php print $close_form_tag ?>
         <?php if(!empty($quicksign)): ?>
-          <div id="quicksign-container"><?php print $quicksign ?></div>
+          <div id="quicksign-container" class = "span7"><?php print $quicksign ?></div>
         <?php endif; ?>
       </div>
     </div>

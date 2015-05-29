@@ -31,10 +31,10 @@
   <fieldset id="take-action-wrapper" class = "form-wrapper"><legend><?php print $form_legend ?></legend>
     <div class = "fieldset-wrapper">
       <div class="row-fluid">
+        <?php print $open_form_tag ?>
         <div id="left" class="span5 message-column">
           <fieldset id="user-information-wrapper" class = "form-wrapper"><legend><?php print $user_legend ?></legend>
             <div class = "fieldset-wrapper">
-              <?php print $open_form_tag ?>
               <p><?php print $webform ?></p>
             </div>
           </fieldset>
@@ -44,11 +44,11 @@
         <div id="right" class="span7 message-column">
           <?php print $message_fieldset; ?>
         </div>
+        <?php print $close_form_tag ?>
+        <?php if(!empty($quicksign)): ?>
+          <div id="quicksign-container" class="span7"><?php print $quicksign ?></div>
+        <?php endif; ?>
       </div>
-      <?php print $close_form_tag ?>
-      <?php if(!empty($quicksign)): ?>
-        <div id="quicksign-container"><?php print $quicksign ?></div>
-      <?php endif; ?>
     </div>
   </fieldset>
 </div>

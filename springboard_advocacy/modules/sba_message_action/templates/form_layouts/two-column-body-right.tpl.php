@@ -26,10 +26,6 @@
           </fieldset>
           <?php print drupal_render_children($form); ?>
           <?php print $close_form_tag ?>
-          <?php if(!empty($quicksign)): ?>
-            <div id="quicksign-container"><?php print $quicksign ?></div>
-          <?php endif; ?>
-        </div>
       </fieldset>
     </div>
 
@@ -42,6 +38,10 @@
       <div id="call-to-action">
         <div id="call-to-action-call"><h2><?php print $call; ?></h2></div>
         <div id="call-to-action-body"> <?php print $body; ?></div>
+        <?php if(!empty($quicksign)): ?>
+          <div id="quicksign-container"><?php print $quicksign ?></div>
+        <?php endif; ?>
+      </div>
         <p><?php print $social ?></p>
       </div>
     </div>
