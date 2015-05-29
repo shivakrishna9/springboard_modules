@@ -43,7 +43,5 @@
         <p><?php print $social ?></p>
       </div>
     </div>
-
   </div>
-
 </div>
