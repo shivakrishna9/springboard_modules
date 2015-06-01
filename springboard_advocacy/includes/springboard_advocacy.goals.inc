@@ -1,11 +1,14 @@
 <?php
 
 /**
- * Add quick goals settings form to advocacy node forms
- * @param $form
- * @param $form_state
+ * Add quick goals settings form to advocacy node forms.
+ *
+ * @param array $form
+ *    Form array passed from node_form_alter.
+ * @param array $form_state
+ *    Form array passed from node_form_alter.
  */
-function  springboard_advocacy_goals_form(&$form, $form_state) {
+function springboard_advocacy_goals_form(array &$form, array $form_state) {
   $goal_config = variable_get('springboard_advocacy_goal_settings', array());
   $gid = isset($form['#node']->nid) && isset($goal_config[$form['#node']->nid]) ? $goal_config[$form['#node']->nid] : FALSE;
   $goal = !empty($gid) ? webform_goals_goal_retrieve($gid) : array();
@@ -38,23 +41,28 @@ function  springboard_advocacy_goals_form(&$form, $form_state) {
   );
 
   $form['#validate'][] = 'springboard_advocacy_goal_save_validate';
-// Actual submission is handled in hook_node_insert and hook_node_update.
-// This ensures that a node id is present whenever we act on a form
-// submission, a condition that is not guaranteed if we rely on hook_form_alter().
+  // Actual submission is handled in hook_node_insert and hook_node_update.
+  // This ensures that a node id is present whenever we act on a form
+  // submission, a condition that is not guaranteed if we rely
+  // on hook_form_alter().
 }
-
 
 
 /**
  * Form validation callback for petition goal settings fieldset.
+ *
+ * @param array $form
+ *   The form.
+ * @param array $form_state
+ *   The form state.
  */
-function springboard_advocacy_goal_save_validate_include($form, $form_state) {
+function springboard_advocacy_goal_save_validate_include(array $form, array $form_state) {
 
-  // Goal target is NaN
+  // Goal target is NaN.
   if (!empty($form_state['values']['springboard_advocacy_goal_target']) && !is_numeric($form_state['values']['springboard_advocacy_goal_target'])) {
     form_set_error('springboard_advocacy_goal_target', t('Target number of submissions must be a number.'));
   }
-  // Goal minimum is NaN
+  // Goal minimum is NaN.
   if (!empty($form_state['values']['springboard_advocacy_goal_minimum']) && !is_numeric($form_state['values']['springboard_advocacy_goal_minimum'])) {
     form_set_error('springboard_advocacy_goal_minimum', t('Minimum number of submissions must be a number.'));
   }
@@ -62,7 +70,7 @@ function springboard_advocacy_goal_save_validate_include($form, $form_state) {
   if (empty($form_state['values']['springboard_advocacy_goal_target']) && (!empty($form_state['values']['springboard_advocacy_goal_minimum']) || !empty($form_state['values']['springboard_advocacy_starter_message']))) {
     form_set_error('springboard_advocacy_goal_target', t('Please include number of signatures required to meet this goal.'));
   }
-  // Display minimum is larger than the target
+  // Display minimum is larger than the target.
   if (!empty($form_state['values']['springboard_advocacy_goal_target']) && !empty($form_state['values']['springboard_advocacy_goal_minimum'])) {
     if ($form_state['values']['springboard_advocacy_goal_target'] <= $form_state['values']['springboard_advocacy_goal_minimum']) {
       form_set_error('springboard_advocacy_goal_minimum', t('The display minimum supplied would prevent goal progress from ever being displayed. Please supply a value that is less than the target number of submissions.'));
@@ -70,8 +78,12 @@ function springboard_advocacy_goal_save_validate_include($form, $form_state) {
   }
 }
 
+
 /**
  * Save petition goal settings.
+ *
+ * @param object $node
+ *    The node object.
  */
 function springboard_advocacy_goal_save_submit($node) {
   if (!empty($node->springboard_advocacy_goal_target)) {
@@ -90,8 +102,8 @@ function springboard_advocacy_goal_save_submit($node) {
       'end_date' => 0,
       'template' => '[goal:progress-starter]
 <p>The current goal is [goal:target]. We have [goal:total] thus far. That’s nearly [goal:progress-percent]% of our goal! Thanks for your support.</p>', // we may need configurable global defaults here.
-      'template_format' => 'full_html', // and here,
-      'progress_bar' => 'flat_ui', // and here.
+      'template_format' => 'full_html',
+      'progress_bar' => 'flat_ui',
     );
     $goal = $settings['gid'] ? webform_goals_goal_update($settings) : webform_goals_goal_create($settings);
     $goal_settings = variable_get('', array());
@@ -104,8 +116,12 @@ function springboard_advocacy_goal_save_submit($node) {
   }
 }
 
+
 /**
  * Delete goal settings.
+ *
+ * @param object $node
+ *    The node object.
  */
 function springboard_advocacy_goal_delete($node) {
   $goal_config = variable_get('springboard_advocacy_goal_settings', array());
