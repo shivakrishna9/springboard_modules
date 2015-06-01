@@ -207,6 +207,7 @@ function springboard_advocacy_library_version($library) {
 function springboard_advocacy_views_api() {
   return array(
     'api' => 3.0,
+    'path' => drupal_get_path('module', 'springboard_advocacy') . '/includes/views',
   );
 }
 
