@@ -509,6 +509,14 @@ function salesforce_donation_salesforce_genmap_map_fields(stdClass $donation, En
     }
   }
 
+  // Reset the currency to just the code.
+  if (isset($map->field_map['salesforce_donation_map']['currency'])) {
+    if (isset($donation->donation['currency'])) {
+      $sf_field = $map->field_map['salesforce_donation_map']['currency'];
+      $fields[$sf_field] = $donation->donation['currency']['code'];
+    }
+  }
+
   // Salesforce webform map.
   if (isset($donation->submission_data)) {
     foreach ($donation->submission_data as $form_key => $submission_value) {
