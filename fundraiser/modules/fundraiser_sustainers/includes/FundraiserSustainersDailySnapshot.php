@@ -110,6 +110,20 @@ class FundraiserSustainersDailySnapshot {
   protected $failedAbandonedValue;
 
   /**
+   * Number of charges that were auto-canceled.
+   *
+   * @var int
+   */
+  protected $failedAutocanceledCharges;
+
+  /**
+   * Value (in cents) that were auto-canceled.
+   *
+   * @var int
+   */
+  protected $failedAutocanceledValue;
+
+  /**
    * Constructs a snapshot sets up some values, and loads data.
    *
    * @param DateTime $date
@@ -247,6 +261,26 @@ class FundraiserSustainersDailySnapshot {
   }
 
   /**
+   * Get the count of charges that were auto-canceled while processing.
+   *
+   * @return int
+   *   Count of sustainers.
+   */
+  public function getFailedAutocanceledCharges() {
+    return $this->failedAutocanceledCharges;
+  }
+
+  /**
+   * Get the value of the auto-canceled sustainers.
+   *
+   * @return int
+   *   Value in cents.
+   */
+  public function getFailedAutocanceledValue() {
+    return $this->failedAutocanceledValue;
+  }
+
+  /**
    * Get the charges that failed on this report date but will be retried.
    *
    * @return int
@@ -356,6 +390,8 @@ class FundraiserSustainersDailySnapshot {
     $rescheduled_value = 0;
     $abandoned_charges = 0;
     $abandoned_value = 0;
+    $autocanceled_charges = 0;
+    $autocanceled_value = 0;
 
     $replacements = array(
       ':begin' => $this->beginTimestamp,
@@ -397,6 +433,10 @@ class FundraiserSustainersDailySnapshot {
             $abandoned_charges++;
             $abandoned_value += $value;
           }
+          elseif ($row->new_state == 'auto_canceled') {
+            $autocanceled_charges++;
+            $autocanceled_value += $value;
+          }
         }
       }
       elseif ($row->old_state == 'retry' && $row->new_state == 'processing') {
@@ -415,6 +455,8 @@ class FundraiserSustainersDailySnapshot {
     $this->failedRescheduledValue = $rescheduled_value;
     $this->failedAbandonedCharges = $abandoned_charges;
     $this->failedAbandonedValue = $abandoned_value;
+    $this->failedAutocanceledCharges = $autocanceled_charges;
+    $this->failedAutocanceledValue = $autocanceled_value;
   }
 
   /**
@@ -433,6 +475,8 @@ class FundraiserSustainersDailySnapshot {
     $this->failedRescheduledValue = 0;
     $this->failedAbandonedCharges = 0;
     $this->failedAbandonedValue = 0;
+    $this->failedAutocanceledCharges = 0;
+    $this->failedAutocanceledValue = 0;
 
   }
 }
