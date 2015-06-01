@@ -390,3 +390,11 @@ function springboard_advocacy_update_7005() {
     db_add_field('sba_form_id', 'precedence', $schema['sba_form_id']['fields']['precedence']);
   }
 }
+
+/**
+ * rename alert var to action
+ */
+function springboard_advocacy_update_7006() {
+  $types = array('springboard_petition', 'sba_message_action');
+  variable_set('springboard_advocacy_goal_types', $types);
+}

@@ -26,18 +26,18 @@ function springboard_advocacy_menu() {
   );
 
   $items['admin/springboard/advocacy/actions'] = array(
-    'title' => 'Advocacy: Actions',
-    'page arguments' => array('actions'),
-    'access callback' => 'springboard_advocacy_user_can_create_advocacy_type',
-  ) + springboard_advocacy_menu_common(FALSE, TRUE);
+      'title' => 'Advocacy: Actions',
+      'page arguments' => array('actions'),
+      'access callback' => 'springboard_advocacy_user_can_create_advocacy_type',
+    ) + springboard_advocacy_menu_common(FALSE, TRUE);
 
   $items['admin/springboard/advocacy/message-actions/all'] = array(
-    'title' => 'Advocacy: All Message Actions',
-    'page arguments' => array('message-actions/all'),
-    'access arguments' => array(
-      'create sba_message_action content',
-    ),
-  ) + springboard_advocacy_menu_common(FALSE, TRUE);
+      'title' => 'Advocacy: All Message Actions',
+      'page arguments' => array('message-actions/all'),
+      'access arguments' => array(
+        'create sba_message_action content',
+      ),
+    ) + springboard_advocacy_menu_common(FALSE, TRUE);
 
   $items['admin/springboard/advocacy/petitions/all'] = array(
       'title' => 'Advocacy: All Petitions',
@@ -48,9 +48,9 @@ function springboard_advocacy_menu() {
     ) + springboard_advocacy_menu_common(FALSE, TRUE);
 
   $items['admin/springboard/advocacy/reports'] = array(
-    'title' => 'Advocacy Reports',
-    'page arguments' => array('reports'),
-    'page callback' => 'springboard_advocacy_settings_page',
+      'title' => 'Advocacy Reports',
+      'page arguments' => array('reports'),
+      'page callback' => 'springboard_advocacy_settings_page',
     ) + springboard_advocacy_menu_common();
 
   return $items;
@@ -202,8 +202,8 @@ function springboard_advocacy_library_version($library) {
 }
 
 /**
-* Implements hook_views_api().
-*/
+ * Implements hook_views_api().
+ */
 function springboard_advocacy_views_api() {
   return array(
     'api' => 3.0,
@@ -220,34 +220,61 @@ function springboard_advocacy_views_api() {
  */
 function springboard_advocacy_node_insert($node) {
   $types = variable_get('sba_action_types', array());
-  if(in_array($node->type, $types)) {
+  if (in_array($node->type, $types)) {
     $uuid = array(
       'nid' => $node->nid,
       'advocacy_id' => str_replace(' ', '-', uniqid(substr(variable_get('site_name', ''), 0, 10) . '-' . substr($node->title, 0, 10) . '-')),
     );
     drupal_write_record('sba_form_id', $uuid);
   }
+
+  if (springboard_advocacy_is_goal_type($node->type) && module_exists('webform_goals')) {
+    module_load_include('inc', 'springboard_advocacy', 'includes/springboard_advocacy.goals');
+    springboard_advocacy_goal_save_submit($node);
+  }
 }
 
 /**
-  *
-  * Implements hook_node_load
-  *
-  * @param $nodes
-  *   An array of the nodes being loaded, keyed by nid.
-  * @param $types
-  *   An array containing the node types present in $nodes.
-  *
-  * Add the unique form_id and message entity references to action nodes.
-  *
-  */
+ * Implements hook_node_update().
+ */
+function springboard_advocacy_node_update($node) {
+  if(springboard_advocacy_is_goal_type($node->type) && module_exists('webform_goals')) {
+      module_load_include('inc', 'springboard_advocacy', 'includes/springboard_advocacy.goals');
+      springboard_advocacy_goal_save_submit($node);
+    }
+}
+
+/**
+ * Implements hook_node_delete().
+ *
+ * Insert a copy of the default map when a Fundraiser node is created.
+ */
+function springboard_advocacy_node_delete($node) {
+  if (springboard_advocacy_is_goal_type($node->type) && module_exists('webform_goals')) {
+    module_load_include('inc', 'springboard_advocacy', 'includes/springboard_advocacy.goals');
+    springboard_advocacy_goal_delete($node);
+  }
+}
+
+/**
+ *
+ * Implements hook_node_load
+ *
+ * @param $nodes
+ *   An array of the nodes being loaded, keyed by nid.
+ * @param $types
+ *   An array containing the node types present in $nodes.
+ *
+ * Add the unique form_id and message entity references to action nodes.
+ *
+ */
 function springboard_advocacy_node_load($nodes, $types) {
   $action_types = variable_get('sba_action_types', array());
   if (count(array_intersect($action_types, $types))) {
     $uuids = db_query(
       'SELECT advocacy_id, nid FROM {sba_form_id} WHERE nid IN (:nids)',
-       array(':nids' => array_keys($nodes))
-     );
+      array(':nids' => array_keys($nodes))
+    );
     foreach ($uuids as $uuid) {
       $nodes[$uuid->nid]->advocacy_id = $uuid->advocacy_id;
     }
@@ -301,7 +328,6 @@ function springboard_advocacy_form_alter(&$form, &$form_state, $form_id) {
       if (!empty($node->advocacy_id) && $pos !== FALSE) {
         $form['advocacy_id'] = array('#type' => 'hidden', '#value' => $node->advocacy_id);
       }
-
     }
   }
 }
@@ -391,7 +417,7 @@ function springboard_advocacy_theme($existing, $type, $theme) {
 }
 
 /**
- * Determines if a content type is a petition type.
+ * Determines if a content type is a action type.
  *
  * @param string $type
  *   The content type name.
@@ -411,6 +437,29 @@ function springboard_advocacy_is_action_type($type) {
     return FALSE;
   }
 }
+
+/**
+ * Determines if a content type can have goals.
+ *
+ * @param string $type
+ *   The content type name.
+ *
+ * @return bool
+ *   TRUE if the content type is a goal type.
+ */
+function springboard_advocacy_is_goal_type($type) {
+  static $goal_types;
+  if (!isset($goal_types[$type])) {
+    $goal_types = variable_get('springboard_advocacy_goal_types', array());
+  }
+  if(in_array($type, $goal_types)) {
+    return $type;
+  }
+  else {
+    return FALSE;
+  }
+}
+
 
 /**
  * Implements hook_preprocess_block_admin_display_form
@@ -565,9 +614,9 @@ function springboard_advocacy_api_unconfigured($type = 'All') {
  * @return array
  */
 function springboard_advocacy_smarty_vars() {
- return array(
-   'smarty_auth_id' => variable_get('springboard_advocacy_smarty_authid', ''),
-   'smarty_token' => variable_get('springboard_advocacy_smarty_authtoken', ''),
+  return array(
+    'smarty_auth_id' => variable_get('springboard_advocacy_smarty_authid', ''),
+    'smarty_token' => variable_get('springboard_advocacy_smarty_authtoken', ''),
   );
 }
 
@@ -581,4 +630,24 @@ function springboard_advocacy_api_vars() {
     'client_id' => variable_get('springboard_advocacy_client_id', ''),
     'client_secret' => variable_get('springboard_advocacy_client_secret', ''),
   );
+}
+
+/**
+ * Implements hook_form_FORM_ID_alter().
+ */
+function springboard_advocacy_form_node_form_alter(&$form, $form_state) {
+  if (springboard_advocacy_is_goal_type($form['#node']->type) && module_exists('webform_goals')) {
+    module_load_include('inc', 'springboard_advocacy', 'includes/springboard_advocacy.goals');
+    springboard_advocacy_goals_form($form, $form_state);
+  }
+}
+
+/**
+ * Not sure why the validate hook won't work if left in include file
+ * @param $form
+ * @param $form_state
+ */
+function springboard_advocacy_goal_save_validate(&$form, $form_state) {
+  module_load_include('inc', 'springboard_advocacy', 'includes/springboard_advocacy.goals');
+  springboard_advocacy_goal_save_validate_include($form, $form_state);
 }
