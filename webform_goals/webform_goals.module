@@ -384,7 +384,7 @@ function webform_goal_load_multiple($nid = FALSE) {
       }
     }
   }
-  return $nid ? $goals[$nid] : $goals;
+  return ($nid && !empty($goals[$nid])) ? $goals[$nid] : $goals;
 }
 
 

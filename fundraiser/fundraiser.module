@@ -152,6 +152,21 @@ function fundraiser_token_info() {
         'available only if the user selected a credit card method supporting this token.'),
     );
   }
+
+  // The currency is a special case.
+  $info['tokens']['donation']['currency:code'] = array(
+    'name' => t('Currency code'),
+    'description' => t('The currency code. For example, "USD".'),
+  );
+  $info['tokens']['donation']['currency:name'] = array(
+    'name' => t('Currency name'),
+    'description' => t('The full currency name. For example, "United States Dollar".'),
+  );
+  $info['tokens']['donation']['currency:symbol'] = array(
+    'name' => t('Currency symbol'),
+    'description' => t('The currency symbol. For example, "$".'),
+  );
+
   return $info;
 }
 
@@ -165,7 +180,7 @@ function _fundraiser_donation_token_info($fields = NULL, $tokens = array()) {
   $children = element_children($fields);
   foreach ($children as $child) {
     // TODO Adjust this tokening to account for the new changed in donation fields.
-    $disallowed = array('card_cvv');
+    $disallowed = array('card_cvv', 'currency');
     if (isset($fields[$child]['#type']) && $fields[$child]['#type'] != 'fieldset' && !in_array($child, $disallowed)) {
       // Add children.
       $tokens[$child] = array(
@@ -209,6 +224,12 @@ function fundraiser_tokens($type, $tokens, $data = array(), $options = array()) 
         $donation->donation['payment_fields']['credit']['card_expiration_year'] : '';
       $data['card_type'] = isset($donation->donation['payment_fields']['credit']['card_type']) ?
         $donation->donation['payment_fields']['credit']['card_type'] : '';
+    }
+
+    if (is_array($data['currency'])) {
+      foreach ($data['currency'] as $key => $value) {
+        $data['currency:' . $key] = $value;
+      }
     }
 
     // Replace the given tokens.
@@ -560,6 +581,33 @@ function _fundraiser_donation_settings_form(&$form, &$form_state) {
     $form['fundraiser_settings']['gateways'] = _fundraiser_form_payment_method_config_fieldset($gateways, $configuration, $fieldset, 'gateways');
     // add a validate callback.
     $form['#validate'][] = '_fundraiser_form_payment_method_validate';
+  }
+
+  // Make changes to the currency settings field.
+  if (!empty($form['field_fundraiser_currency'])) {
+    $currency_field = &$form['field_fundraiser_currency'][ $form['field_fundraiser_currency']['#language'] ];
+    // Remove the none option.
+    unset($currency_field['#options']['_none']);
+
+    // If there is only one value left hide the field and set the value to the default currency.
+    if (count($currency_field['#options']) === 1) {
+      $currency_field['#type'] = 'value';
+      $currency_field['#default_value'] = commerce_default_currency();
+      $currency_field['#required'] = FALSE;
+    }
+    // Else, move it into the fundraiser group.
+    else {
+      $form['fundraiser_settings']['currency'] = array(
+        '#type' => 'fieldset',
+        '#title' => t('Currency'),
+        '#collapsible' => TRUE,
+        '#collapsed' => FALSE,
+      );
+
+      $currency_field['#title_display'] = 'none';
+      $form['fundraiser_settings']['currency']['field_fundraiser_currency'] = $form['field_fundraiser_currency'];
+      unset($form['field_fundraiser_currency']);
+    }
   }
 
   // Add specific CSS settings for IE support. Pending http://drupal.org/node/1015798 being resolved,
@@ -1008,7 +1056,20 @@ function fundraiser_fundraiser_field_info() {
     '#allow_update' => 1,
     '#create_callback' => '_fundraiser_other_amount_field_create',
     '#validate_callback' => '_fundraiser_other_amount_field_validate',
+    '#display_callback' => '_fundraiser_other_amount_field_display',
   );
+
+  $fields['donation']['currency'] = array(
+    '#title' => 'Currency',
+    '#type' => 'hidden',
+    '#value' => '',
+    '#required' => 1,
+    '#allow_update' => 1,
+    '#reset_value' => 1,
+    '#create_callback' => '_fundraiser_currency_field_create',
+    '#display_callback' => '_fundraiser_currency_field_display',
+  );
+
   $quantity_max = variable_get('fundraiser_default_quantity', '10');
   $quantitys = range(1, $quantity_max);
   $formatted_quantitys = '';
@@ -1140,10 +1201,13 @@ function fundraiser_fundraiser_field_info() {
  * Field callback, called at runtime to update the field with fundraiser specific settings during creation.
  */
 function _fundraiser_amount_field_create($fundraiser, $field) {
+  $currency = fundraiser_get_currency_from_node($fundraiser);
+  $currency_symbol = check_plain($currency['symbol']);
+
   // If donation amounts don't exist, use amount as is.
   if (empty($fundraiser->donation_amounts) || !is_array($fundraiser->donation_amounts)) {
     // Show the minimum amount when only displaying an amount text box.
-    $field['#extra']['description'] = 'Minimum payment $' . number_format($fundraiser->minimum_donation_amount, 2) . '.';
+    $field['#extra']['description'] = 'Minimum payment ' . $currency_symbol . number_format($fundraiser->minimum_donation_amount, 2) . '.';
     return $field;
   }
   // Else we want a select field.
@@ -1154,7 +1218,7 @@ function _fundraiser_amount_field_create($fundraiser, $field) {
     $formatted_amounts = '';
     foreach ($fundraiser->donation_amounts as $value => $label) {
       if (empty($label)) {
-        $label = '$' . $value;
+        $label = $currency_symbol . $value;
       }
       $formatted_amounts[] = implode('|', array($value, $label));
     }
@@ -1203,8 +1267,32 @@ function _fundraiser_other_amount_field_create($fundraiser, $field) {
     return FALSE; // FALSE as opposed to empty, means we delete this field if it exists.
   }
   // Update the min with fundraiser's min.
-  $field['#extra']['description'] = 'Minimum payment $' . number_format($fundraiser->minimum_donation_amount, 2) . '.';
+  $field['#extra']['description'] = 'Minimum payment [currency-symbol]' . number_format($fundraiser->minimum_donation_amount, 2) . '.';
+
   // Return the field to be created.
+  return $field;
+}
+
+/**
+ * Fundraiser field display callback for the other amount field.
+ */
+function _fundraiser_other_amount_field_display($form, $form_state, $field) {
+  // Get the currency, either from a current donation or the node.
+  if (!empty($form['#donation'])) {
+    $currency = $form['#donation']->donation['currency'];
+  }
+  else {
+    $currency = fundraiser_get_currency_from_node($form['#node']);
+  }
+
+  $field['#attributes']['class'][] = 'input-medium';
+  $field['#field_prefix'] = $currency['symbol'];
+
+  // Replace the currency-symbol token.
+  if (isset($field['#description'])) {
+    $field['#description'] = str_replace('[currency-symbol]', $currency['symbol'], $field['#description']);
+  }
+
   return $field;
 }
 
@@ -1239,6 +1327,36 @@ function _fundraiser_other_amount_field_validate($form, $form_state, $submission
     return array('other_amount' => t('Your donation amount must be greater than or equal to @min_amount.',
       array('@min_amount' => $minimum_donation_amount)));
   }
+}
+
+/**
+ * Fundraiser field create callback.
+ *
+ * Sets the currency value from the node.
+ */
+function _fundraiser_currency_field_create($fundraiser, $field) {
+  $currency = fundraiser_get_currency_from_node($fundraiser);
+  $field['#value'] = $currency['code'];
+
+  return $field;
+}
+
+/**
+ * Fundraiser field display callback.
+ *
+ * Note this field is a value type, so not really displayed.
+ */
+function _fundraiser_currency_field_display($form, $form_state, $field) {
+  // Get the currency, either from a current donation or the node.
+  if (!empty($form['#donation'])) {
+    $currency = $form['#donation']->donation['currency'];
+  }
+  else {
+    $currency = fundraiser_get_currency_from_node($form['#node']);
+  }
+
+  $field['#value'] = $currency['code'];
+  return $field;
 }
 
 /**
@@ -1458,11 +1576,11 @@ function _fundraiser_donation_form_js_validation_config($node) {
 function fundraiser_donation_form(&$form, &$form_state) {
   $node = $form['#node'];
 
-  // Attach the js files
+  // Attach the js files.
   $form['#attached']['js'] = array(
     drupal_get_path('module', 'fundraiser') . '/js/jquery.alphanumeric.min.js',
     drupal_get_path('module', 'fundraiser') . '/js/jquery.validate.min.js',
-    drupal_get_path('module', 'fundraiser') . '/js/donation_validation.min.js',
+    drupal_get_path('module', 'fundraiser') . '/js/donation_validation.js',
   );
 
   // Add the validation configuration settings array.
@@ -1474,22 +1592,20 @@ function fundraiser_donation_form(&$form, &$form_state) {
     );
   }
 
-  if(isset($form['#node']->minimum_donation_amount)) {
-    $min = array('minimum_donation_amount' => $form['#node']->minimum_donation_amount);
+  if(isset($node->minimum_donation_amount)) {
+    $min = array('minimum_donation_amount' => $node->minimum_donation_amount);
     $form['#attached']['js'][] = array(
-    'data' => array('fundraiserWebform' => $min),
-    'type' => 'setting',
+      'data' => array('fundraiserWebform' => $min),
+      'type' => 'setting',
     );
   }
 
   // Check to see if the form is being accessed over HTTPS.
   if ((!_fundraiser_is_secure() && !variable_get('fundraiser_development_mode', 0))) {
     // Return a 404 if the page isn't secure and should be.
-    $node = $form['#node'];
     watchdog('fundraiser', 'The donation form <em>@title</em> is not protected with SSL.',
       array('@title' => $node->title), WATCHDOG_CRITICAL, l('View the donation form', 'node/' . $node->nid));
-    $message = variable_get('fundraiser_http_error_message', t('We\'re sorry, but this ' .
-        'donation form is experiencing a temporary problem. Please try again later.'));
+    $message = variable_get('fundraiser_http_error_message', t('We\'re sorry, but this donation form is experiencing a temporary problem. Please try again later.'));
     // Remove all other form elements.
     foreach (element_children($form) as $child) {
       unset($form[$child]);
@@ -1513,7 +1629,18 @@ function fundraiser_donation_form(&$form, &$form_state) {
     // When confirmations are moved, this goes elsewhere.
     $form['#submit'][] = 'fundraiser_donation_post_submit';
 
-    // Add class to zip code field
+    // Apply currency data to the form.
+    $currency = fundraiser_get_currency_from_node($node);
+    $symbol = check_plain($currency['symbol']);
+
+    // Make the currency available as a JS setting.
+    // Used by quantity to set a Total value.
+    $form['#attached']['js'][] = array(
+      'data' => array('fundraiser' => array('currency' => $currency)),
+      'type' => 'setting',
+    );
+
+    // Add class to quantity field
     $quantity = _fundraiser_get_form_field($form, 'quantity');
     if (!empty($quantity)) {
       $quantity['#attributes']['class'][] = 'input-medium';
@@ -1525,10 +1652,19 @@ function fundraiser_donation_form(&$form, &$form_state) {
     $zip['#attributes']['class'][] = 'input-medium';
     $form = _fundraiser_update_form_field($form, 'zip', $zip);
 
-    // Add class to donation_other field
-    $other_amount = _fundraiser_get_form_field($form, 'other_amount');
-    $other_amount['#attributes']['class'][] = 'input-medium';
-    $form = _fundraiser_update_form_field($form, 'other_amount', $other_amount);
+    // Change ask amount labels.
+    $amount = _fundraiser_get_form_field($form, 'amount');
+    if (isset($amount) && !empty($amount)) {
+      if (isset($amount['#options'])) {
+        foreach ($amount['#options'] as $val => $label) {
+          $amount['#options'][$val] = str_replace('$', $symbol, $label);
+        }
+      }
+      else {
+        $amount['#field_prefix'] = $symbol;
+      }
+    }
+    $form = _fundraiser_update_form_field($form, 'amount', $amount);
 
     // Call hook to allow sub modules to add / manipulate the form.
     // NOTE: we are not using module_invoke_all on purpose here.
@@ -1645,13 +1781,13 @@ function _fundraiser_donation_submit_after_process($donation) {
 
 /**
  * Submit callback after donation submitted, but before confirmation.
+ *
+ * Provides a hook alter to allow for sub modules to change behavior after
+ * submission. Such as in cases of failures or the like.
  */
 function fundraiser_donation_post_submit(&$form, &$form_state) {
-  // And after all of that is done, provide a hook to allow for sub modules to change behavior after submission.
-  // Such as in cases of failures or the like. Return the donation object and result.
-  // We return form_state here, because we cannot pass arrays by reference in module calls.
-  // See: http://drupal.org/node/353494 for a detailed discussion of this one.
-  $form_state = module_invoke_all('fundraiser_donation_post_submit', $form, $form_state, $form_state['#donation']);
+
+  drupal_alter('fundraiser_donation_post_submit', $form, $form_state, $form_state['#donation']);
 }
 
 /**
@@ -1736,7 +1872,7 @@ function fundraiser_donation_create($donation) {
     'sid' => $donation->sid, // Submission id.
     'status' => $donation->status,
     'amount' => $donation->donation['amount'],
-    'currency' => $donation->donation['currency'],
+    'currency' => $donation->currency,
     'txn_id' => '',
     'form_url' => $form_url,
     'created' => REQUEST_TIME,
@@ -2025,6 +2161,7 @@ function fundraiser_donation_get_donation($did, $refresh = FALSE) {
   module_invoke_all('fundraiser_donation_get_donation', $donation);
   // Store the donation information into the cache.
   $donations[$did] = $donation;
+
   return $donation;
 }
 
@@ -2703,7 +2840,7 @@ function _fundraiser_update_fundraiser($fundraiser) {
     // And invoke the hooks for all the other modules to respond.
     module_invoke_all('fundraiser_update_fundraiser_alter', (object) $fundraiser);
     // Fire a hook that other modules can use to add additional processing when a donation form is created.
-    // Called in: fundraiser_multi_currency.module, sf_donation.module
+    // Called in sf_donation.module
     // This can, and should, be replaced with hook_node_insert() implementations.
     // THIS HOOK IS TO BE DEPR.
     // module_invoke_all('fundraiser_form_insert', $node, $components);
@@ -3246,4 +3383,87 @@ function _fundraiser_gateway_status_alert($nodes, $method_type, $gateway_id, $st
     watchdog('fundraiser', 'A test mode gateway configuration has been detected on a live donation form. Gateway: %gateway. Type: %type, Donation forms: %nodes', array('%gateway' => $gateway_id, '%type' => $method_type, '%nodes' => $nodes), WATCHDOG_EMERGENCY);
 
   }
+}
+
+/**
+ * Get the relevant currency data array from a donation enabled node.
+ *
+ * @param stdClass $node
+ *   The donation enabled node.
+ *
+ * @param array
+ *   The currency data as an associative array. Includes keys such as 'name',
+ *   'code', 'symbol', and others provided by Drupal Commerce.
+ */
+function fundraiser_get_currency_from_node($node) {
+  try {
+    // See if we have the currency field on the node.
+    // If we don't then entity_metadata_wrapper will throw an exception.
+    $wrapper = entity_metadata_wrapper('node', $node);
+    $currency_code = $wrapper->field_fundraiser_currency->value();
+
+    $currency = commerce_currency_load($currency_code);
+    // If that currency doesn't exist, use the site default.
+    if (!is_array($currency)) {
+      $currency = commerce_currency_load();
+    }
+  }
+  catch (Exception $e) {
+    // Load the default currency as set by Commerce.
+    $currency = commerce_currency_load();
+  }
+
+  return $currency;
+}
+
+/**
+ * Retrieves and formats the currencies for a form select element.
+ *
+ * @return array
+ *   The options array for a select form element.
+ */
+function fundraiser_currency_field_get_currency_options() {
+  $options = array();
+
+  foreach (commerce_currencies(TRUE, TRUE) as $currency_code => $currency) {
+    $options[$currency_code] = t('@code - !name', array('@code' => $currency['code'], '!name' => $currency['name']));
+
+    if (!empty($currency['symbol'])) {
+      $options[$currency_code] .= ' - ' . check_plain($currency['symbol']);
+    }
+  }
+
+  return $options;
+}
+
+/**
+ * Implements hook_springboard_admin_alias_patterns().
+ */
+function fundraiser_springboard_admin_alias_patterns() {
+  return array(
+    'admin/commerce/config/currency' => array(
+      'path' => array(
+        'regex' => '|^/admin/commerce/config/currency|',
+        'replacement' => 'admin/commerce/config/currency',
+      ),
+      'alias' => array(
+        'regex' => '|^springboard/settings/config/currency|',
+        'replacement' => 'springboard/settings/config/currency',
+      ),
+    ),
+  );
+}
+
+/**
+ * Implements hook_springboard_admin_admin_menu_items_alter().
+ */
+function fundraiser_springboard_admin_admin_menu_items_alter(&$items) {
+  $items['admin/springboard/settings']['_children']['admin/springboard/settings/config']['_children']['admin/commerce/config/currency'] = array(
+    'link_path' => 'admin/commerce/config/currency',
+    'link_title' => 'Manage Currencies',
+    'menu_name' => 'springboard_admin_menu',
+    'expanded' => 0,
+    'customized' => 1,
+    'weight' => 0,
+  );
 }
