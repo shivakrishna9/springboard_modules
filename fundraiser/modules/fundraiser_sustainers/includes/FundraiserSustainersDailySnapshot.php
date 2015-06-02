@@ -407,7 +407,7 @@ class FundraiserSustainersDailySnapshot {
 
       // Sustainer was born and at best is going into locking and processing.
       // Otherwise the charge might be getting advanced or changed.
-      if (is_null($row->old_state)) {
+      if (is_null($row->old_state) && $row->new_state != 'auto_canceled') {
         continue;
       }
 
@@ -433,15 +433,15 @@ class FundraiserSustainersDailySnapshot {
             $abandoned_charges++;
             $abandoned_value += $value;
           }
-          elseif ($row->new_state == 'auto_canceled') {
-            $autocanceled_charges++;
-            $autocanceled_value += $value;
-          }
         }
       }
       elseif ($row->old_state == 'retry' && $row->new_state == 'processing') {
         $retried_charges++;
         $retried_value += $value;
+      }
+      elseif ($row->new_state == 'auto_canceled') {
+        $autocanceled_charges++;
+        $autocanceled_value += $value;
       }
     }
 
