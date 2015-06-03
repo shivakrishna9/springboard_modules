@@ -344,36 +344,6 @@ function springboard_advocacy_settings_submit($form, $form_state) {
   cache_clear_all();
 }
 
-/**
- * Get/Set a list of available committees.
- * Called from the committee field's autocomplete callback
- * @return array
- */
-function springboard_advocacy_committees() {
-  $committee_list = &drupal_static(__FUNCTION__);
-  if (!isset($committee_list)) {
-    if ($cache = cache_get('committee_list')) {
-      $committee_list = $cache->data;
-
-    }
-    else {
-      $loader = new AdvocacyApiClientLoader();
-      $client = $loader->getClient();
-      $response = $client->getCommitteeList();
-      if($client->isDebugMode()) {
-        watchdog('advocacy', 'Advocacy API Call details: !message', array('!message' => '<pre>' . check_plain(print_r($client->getDebugInfo(), TRUE)) . '</pre>'), WATCHDOG_DEBUG);
-      }
-      if (isset($response->data)) {
-        $committee_list = (array)$response->data;
-        $expire = time() + 3600;
-        cache_set('committee_list', $committee_list, 'cache', $expire);
-      }
-    }
-  }
-  return $committee_list;
-}
-
-
 
 /**
  * Implements hook_theme().
@@ -527,46 +497,6 @@ function springboard_advocacy_tokens($type, $tokens, $data = array(), $options =
     }
   }
   return $replacements;
-}
-
-/**
- * Get subscription details from API server.
- * Called from springboard_advocacy_form_views_exposed_form_alter
- * So we can alter form components based on subscription level.
- *
- * @return array|bool|null
- */
-function springboard_advocacy_get_subscription() {
-
-  $subscription = variable_get('sba_subscription', array());
-
-  if(empty($subscription)) {
-    $loader = new AdvocacyApiClientLoader();
-    $client = $loader->getClient();
-    $response = $client->getSubscription();
-    if($client->isDebugMode()) {
-      watchdog('advocacy', 'Advocacy API Call details: !message', array('!message' => '<pre>' . check_plain(print_r($client->getDebugInfo(), TRUE)) . '</pre>'), WATCHDOG_DEBUG);
-    }
-    if (isset($response->data)) {
-      $subscription = (array)$response->data;
-      variable_set('sba_subscription', array('subscription_type' => $response->data->subscription_type, 'states_custom' => isset($response->data->states_custom) ? $response->data->states_custom : NULL));
-    } else {
-      if (user_access('administer springboard advocacy')) {
-        if (isset($response->error)) {
-          $message = isset($response->error->message) ? $response->error->message : $response->error;
-          drupal_set_message(t('An error occurred when attempting to retrieve the account subscription: @message:', array('@message' => $message)), 'error');
-          watchdog('advocacy', 'An error occurred when attempting to retrieve the account subscription: @message:', array('@message' => $message), WATCHDOG_ERROR);
-
-        } else {
-          drupal_set_message(t('A response was not received from the API server when attempting to retrieve the account subscription.'), 'error');
-          watchdog('advocacy', 'A response was not received from the API server when attempting to retrieve the account subscription', array(), WATCHDOG_ERROR);
-
-        }
-      }
-      return false;
-    }
-  }
-  return $subscription;
 }
 
 /**
@@ -748,7 +678,8 @@ function _springboard_advocacy_ajaxify_state_field(&$form, &$form_state, $form_i
  * @param $form_id
  */
 function  _springboard_advocacy_remove_unsubscribed_elements(&$form, &$form_state, $form_id) {
-  $subscription = springboard_advocacy_get_subscription();
+  $api_call = new AdvocacyApiCall();
+  $subscription = $api_call->getSubscription();
   if($subscription) {
 
     // Add subscription info the Drupal.settings for use in javascript.
@@ -820,7 +751,8 @@ function springboard_advocacy_update_districts_field_callback($form, $form_state
  */
 function springboard_advocacy_update_districts_field_options($form, $form_state)
 {
-  $subscription = springboard_advocacy_get_subscription();
+  $api_call = new AdvocacyApiCall();
+  $subscription = $api_call->getSubscription();
   $options = $form['search_district_name']['#options'];
 
   if (!empty($form_state['values']['search_state']) || $form_state['input']['search_state'] != 'All') {
@@ -833,51 +765,13 @@ function springboard_advocacy_update_districts_field_options($form, $form_state)
 
     //hmmmm.
     if ($subscription['subscription_type'] == 'federal-and-states-selected') {
-      $options = springboard_advocacy_get_districts($state);
+      $options = $api_call->getDistricts($state);
     } elseif ($subscription['subscription_type'] != 'federal-and-states-selected') {
-      $options = springboard_advocacy_get_districts($state);
+      $options = $api_call->getDistricts($state);
     }
   }
 
   return $options;
-}
-
-/**
- * Get a list of districts for a state.
- * Called from the state dropdown's ajax callback.
- * @param $state
- * @return array
- */
-function springboard_advocacy_get_districts($state) {
-  $loader = new AdvocacyApiClientLoader();
-  $client = $loader->getClient();
-  $response = $client->getDistrictsByState($state);
-  if($client->isDebugMode()) {
-    watchdog('advocacy', 'Advocacy API Call details: !message', array('!message' => '<pre>' . check_plain(print_r($client->getDebugInfo(), TRUE)) . '</pre>'), WATCHDOG_DEBUG);
-  }
-  if (isset($response->data)) {
-    $options = array('All' => '- Any -');
-    foreach ($response->data as $district) {
-      $options[$district->DistrictDesc] = $district->DistrictDesc;
-    }
-    return $options;
-  }
-  else {
-    if(user_access('administer springboard advocacy')) {
-      if(isset($response->error)) {
-        drupal_set_message(t('An error occurred when attempting to retrieve
-        district information: @message', array('@message' => $response->error->message)), 'error');
-        watchdog('advocacy', 'An error occurred when attempting to retrieve
-        district information: @message', array('@message' => $response->error->message), WATCHDOG_ERROR);
-      }
-      else {
-        drupal_set_message(t('A response was not received from the server when attempting to retrieve
-        district information'), 'error');
-        watchdog('advocacy', 'A response was not received from the server when attempting to retrieve
-        district information', array(), WATCHDOG_ERROR);
-      }
-    }
-  }
 }
 
 

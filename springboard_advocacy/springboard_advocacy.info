@@ -11,6 +11,7 @@ files[] = includes/springboard_advocacy.admin.inc
 files[] = includes/springboard_advocacy.dashboard.inc
 files[] = includes/springboard_advocacy.webform.inc
 files[] = includes/springboard_advocacy.ApiClientLoader.inc
+files[] = includes/springboard_advocacy.ApiCall.inc
 files[] = includes/springboard_advocacy.taxonomy.inc
 files[] = includes/springboard_advocacy.goals.inc
 files[] = includes/views/springboard_advocacy.views.inc

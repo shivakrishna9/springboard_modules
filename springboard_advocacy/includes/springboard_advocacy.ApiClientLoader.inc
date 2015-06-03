@@ -5,9 +5,7 @@
  * Loads and instantiates an SpringboardAdvocacyApiClient object.
  */
 
-class AdvocacyApiClientLoader 
-
-{
+class AdvocacyApiClientLoader {
   /**
    * maybe we should use __construct and save a line when calling
    * -- depends if getToken ever needs to be static method

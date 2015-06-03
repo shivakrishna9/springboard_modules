@@ -34,12 +34,10 @@ function springboard_target_form($target_id = NULL) {
 
   // Load the target if Target ID is present.
   if (isset($target_id) && is_numeric($target_id)) {
-    $loader = new AdvocacyApiClientLoader();
-    $client = $loader->getClient();
-    $target = $client->getCustomTarget($target_id);
-    if($client->isDebugMode()) {
-      watchdog('advocacy', 'Advocacy API Call details: !message', array('!message' => '<pre>' . check_plain(print_r($client->getDebugInfo(), TRUE)) . '</pre>'), WATCHDOG_DEBUG);
-    }
+    $api_call = new AdvocacyApiCall();
+
+    $target = $api_call->invokeRemote('getCustomTarget', $target_id);
+
     if (isset($target->error)) {
       $form = array();
       $form['not_found']['#markup'] = $target->error->message;
@@ -445,12 +443,8 @@ function springboard_target_delete($form, $form_state, $target_id) {
 function springboard_target_delete_submit(&$form, &$form_state) {
   $form_state['redirect'] = 'springboard/advocacy/targets/custom-targets';
 
-  $loader = new AdvocacyApiClientLoader();
-  $client = $loader->getClient();
-  $response = $client->deleteCustomTarget($form_state['values']['target_id']);
-  if($client->isDebugMode()) {
-    watchdog('advocacy', 'Advocacy API Call details: !message', array('!message' => '<pre>' . check_plain(print_r($client->getDebugInfo(), TRUE)) . '</pre>'), WATCHDOG_DEBUG);
-  }
+  $api_call = new AdvocacyApiCall();
+  $response = $api_call->invokeRemote('deleteCustomTarget', $form_state['values']['target_id']);
 
   if (isset($response->data)) {
     drupal_set_message('Target deleted.');

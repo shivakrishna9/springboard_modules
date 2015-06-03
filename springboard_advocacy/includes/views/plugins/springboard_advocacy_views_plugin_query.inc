@@ -24,8 +24,8 @@ class springboard_advocacy_views_plugin_query extends views_plugin_query {
    */
   function init($base_table, $base_field, $options) {
     parent::init($base_table, $base_field, $options);
-    $loader = new AdvocacyApiClientLoader();
-    $this->client = $loader->getClient();
+    $api_call = new AdvocacyApiCall();
+    $this->client = $api_call->client;
   }
 
   /**
@@ -120,7 +120,7 @@ class springboard_advocacy_views_plugin_query extends views_plugin_query {
       $targets = $client->searchTargets($fields);
       // Log debug info
       if($client->isDebugMode()) {
-        watchdog('advocacy', 'Advocacy API Call details: !message', array('!message' => '<pre>' . check_plain(print_r($client->getDebugInfo(), TRUE)) . '</pre>'), WATCHDOG_DEBUG);
+        watchdog('advocacy', 'Advocacy API Call details: !message', array('!message' => '<pre>' . check_plain(print_r($this->client->getDebugInfo(), TRUE)) . '</pre>'), WATCHDOG_DEBUG);
       }
 
       if(!isset($targets->data)) {

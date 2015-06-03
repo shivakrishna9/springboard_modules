@@ -34,12 +34,9 @@ function springboard_target_create_custom_targets_form() {
  */
 function springboard_target_create_custom_targets_form_submit($form, &$form_state) {
   $input = $form_state['values'];
-  $loader = new AdvocacyApiClientLoader();
-  $client = $loader->getClient();
-  $target = $client->createCustomTarget($input);
-  if($client->isDebugMode()) {
-    watchdog('advocacy', 'Advocacy API Call details: !message', array('!message' => '<pre>' . check_plain(print_r($client->getDebugInfo(), TRUE)) . '</pre>'), WATCHDOG_DEBUG);
-  }
+
+  $api_call = new AdvocacyApiCall();
+  $target = $api_call->invokeRemote('createCustomTarget', $input);
 
   if (!empty($target->data)) {
     $message = implode(' ', (array)$target->data->status);
