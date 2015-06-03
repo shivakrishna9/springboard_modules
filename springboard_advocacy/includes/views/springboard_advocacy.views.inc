@@ -53,8 +53,8 @@ function springboard_advocacy_views_data() {
       'click sortable' => TRUE,
       'handler' => 'springboard_advocacy_views_handler_field',
     ),
-     'filter' => array(
-       'handler' => 'springboard_advocacy_views_handler_filter_string',
+    'filter' => array(
+      'handler' => 'springboard_advocacy_views_handler_filter_string',
     ),
   );
 
@@ -66,8 +66,8 @@ function springboard_advocacy_views_data() {
       'click sortable' => TRUE,
       'handler' => 'springboard_advocacy_views_handler_field',
     ),
-     'filter' => array(
-       'handler' => 'springboard_advocacy_views_handler_filter_string',
+    'filter' => array(
+      'handler' => 'springboard_advocacy_views_handler_filter_string',
     ),
   );
 
@@ -192,15 +192,15 @@ function springboard_advocacy_views_data() {
   // Combination search fields
   $data['advocacy']['combine'] = array(
     'title' => t('Search Multiple Target Fields by Keywords'),
-     'help' => t('Combine multiple fields together and search targets by them.'),
-     'filter' => array(
-       'handler' => 'springboard_advocacy_views_handler_filter_combine',
-     ),
+    'help' => t('Combine multiple fields together and search targets by them.'),
+    'filter' => array(
+      'handler' => 'springboard_advocacy_views_handler_filter_combine',
+    ),
   );
 
   // Search by class name (Target|Legislator).
   $data['advocacy']['search_class_name'] = array(
-   'title' => t('Search By Type'),
+    'title' => t('Search By Type'),
     'help' => t('Limit results by Legislator or Custom Target. Please note: if this filter is not "exposed", it will return no results *unless* another filter is enabled and actively being searched.'),
     'filter' => array(
       'handler' => 'springboard_advocacy_views_handler_filter_search_types',
@@ -210,7 +210,7 @@ function springboard_advocacy_views_data() {
 
   // Search by role.
   $data['advocacy']['search_role'] = array(
-   'title' => t('Search By Branch'),
+    'title' => t('Search By Branch'),
     'help' => t('Adds a filter to limit searches by Federal or State Branch'),
     'filter' => array(
       'handler' => 'springboard_advocacy_views_handler_filter_search_types',
@@ -220,7 +220,7 @@ function springboard_advocacy_views_data() {
 
   // Search by branch
   $data['advocacy']['search_level'] = array(
-   'title' => t('Search By Level'),
+    'title' => t('Search By Level'),
     'help' => t('Adds a filter to limit searches by State or Federal level'),
     'filter' => array(
       'handler' => 'springboard_advocacy_views_handler_filter_search_types',
@@ -231,7 +231,7 @@ function springboard_advocacy_views_data() {
 
   // Search by party
   $data['advocacy']['search_party'] = array(
-   'title' => t('Search By Party'),
+    'title' => t('Search By Party'),
     'help' => t('Adds a filter to limit searches by Political Party'),
     'filter' => array(
       'handler' => 'springboard_advocacy_views_handler_filter_search_types',
@@ -242,7 +242,7 @@ function springboard_advocacy_views_data() {
 
   // Search by state.
   $data['advocacy']['search_state'] = array(
-   'title' => t('Search By State'),
+    'title' => t('Search By State'),
     'help' => t('Adds a filter to limit searches by State'),
     'filter' => array(
       'handler' => 'springboard_advocacy_views_handler_filter_search_types',
@@ -263,7 +263,7 @@ function springboard_advocacy_views_data() {
 
   // Search by gender
   $data['advocacy']['search_gender'] = array(
-   'title' => t('Search By Gender'),
+    'title' => t('Search By Gender'),
     'help' => t('Adds a filter to limit searches by Gender'),
     'filter' => array(
       'handler' => 'springboard_advocacy_views_handler_filter_search_types',
@@ -654,4 +654,275 @@ function springboard_advocacy_preprocess_pager(&$variables, $hook) {
 }
 
 
+/**
+ * Implements hook_form_FORMID_alter
+ *
+ * Add ajax functionality to views exposed form to enable district lookups by state.
+ *
+ * @param $form
+ * @param $form_state
+ * @param $form_id
+ */
+function springboard_advocacy_form_views_exposed_form_alter(&$form, &$form_state, $form_id)
+{
+  if ($form_id == 'views_exposed_form' && $form_state['view']->name == 'targets') {
 
+    // Committee autocomplete
+    $form['search_committee']['#autocomplete_path'] = 'message-action/committee/autocomplete';
+
+    // Override stock Drupal autocomplete js
+    // needed to add values from chamber and state fields
+    // to the ajax request path
+    $form['#attached']['js'] = array(
+      drupal_get_path('module', 'sba_message') . '/js/autocomplete_override.js',
+    );
+
+    // Convert select fields to checkeboxes
+    if(isset($form['search_role_1'])) {
+      $form['search_role_1']['#type'] = 'checkboxes';
+    }
+    if(isset($form['search_party'])) {
+      $form['search_party']['#type'] = 'checkboxes';
+    }
+    if(isset($form['search_gender'])) {
+      $form['search_gender']['#type'] = 'checkboxes';
+    }
+    if(isset($form['search_social'])) {
+      $form['search_social']['#type'] = 'checkboxes';
+    }
+
+    form_load_include($form_state, 'inc', 'springboard_advocacy', 'includes/views/springboard_advocacy.views');
+    // Add the state/district field ajax.
+    $districted = array('views-exposed-form-targets-page-1', 'views-exposed-form-targets-block-3');
+    if (isset($form['search_district_name']) && in_array($form['#id'], $districted)) {
+      _springboard_advocacy_ajaxify_state_field($form, $form_state, $form_id);
+    }
+
+    // Remove some field from the exposed form if they aren't allowed by subscription level
+    _springboard_advocacy_remove_unsubscribed_elements($form, $form_state, $form_id);
+
+  }
+}
+
+
+/**
+ * @param $form
+ * @param $form_state
+ * @param $form_id
+ */
+function _springboard_advocacy_ajaxify_state_field(&$form, &$form_state, $form_id) {
+  // Hack to allow ajax in views exposed forms
+  $form['#after_build'][] = 'springboard_advocacy_views_exposed_form_ajax_enable';
+
+  // Set up state and district fields.
+  $form['search_district_name']['#prefix'] = '<div id="district">';
+  $form['search_district_name']['#suffix'] = '</div>';
+
+  $form['search_state']['#ajax'] = array(
+    'callback' => 'springboard_advocacy_update_districts_field_callback',
+    'wrapper' => 'district',
+    'method' => 'replace',
+    'effect' => 'none',
+    'event' => 'custom_event', //use for trigger in js
+    // Suppress the throbber
+    'progress' => array(
+      'message' => NULL,
+      'type' => NULL,
+    ),
+  );
+
+  //Disable the district field if reloaded value of US state field is "all"
+  if (empty($form_state['values']['search_state']) && $form_state['input']['search_state'] == 'All') {
+    $form['search_district_name']['#disabled'] = TRUE;
+  }
+  if (!empty($form_state['values']['search_state']) && $form_state['values']['search_state'] == 'All') {
+    $form['search_district_name']['#disabled'] = TRUE;
+  }
+  // Update the options in the district field according to selected US state.
+  $form['search_district_name']['#options'] = springboard_advocacy_update_districts_field_options($form, $form_state);
+
+}
+
+
+/**
+ * @param $form
+ * @param $form_state
+ * @param $form_id
+ */
+function  _springboard_advocacy_remove_unsubscribed_elements(&$form, &$form_state, $form_id) {
+  $api_call = new AdvocacyApiCall();
+  $subscription = $api_call->getSubscription();
+  if($subscription) {
+
+    // Add subscription info the Drupal.settings for use in javascript.
+    $settings = array('sbaSubscriptionLevel' => $subscription['subscription_type']);
+    $form['#attached']['js'][] = array('data' => $settings, 'type' => 'setting');
+
+    // Remove fields.
+    switch ($subscription['subscription_type']) {
+      case 'federal-and-states':
+        break;
+
+      case 'federal-only':
+        unset($form['search_role_1']['#options']['SS']);
+        unset($form['search_role_1']['#options']['SR']);
+        unset($form['search_role_1']['#options']['GOVNR']);
+        break;
+
+      case 'state-only':
+        unset($form['search_role_1']['#options']['FS']);
+        unset($form['search_role_1']['#options']['FR']);
+        unset($form['search_role_1']['#options']['PRES01|PRES03']);
+        break;
+
+      case 'federal-and-states-selected':
+        // Add allowed US states to Drupal.settings for use by javascript
+        $settings = array('sbaAllowedStates' => $subscription['states_custom']);
+        $form['#attached']['js'][] = array('data' => $settings, 'type' => 'setting');
+        break;
+
+      case 'states-selected':
+
+        unset($form['search_role_1']['#options']['FS']);
+        unset($form['search_role_1']['#options']['FR']);
+        unset($form['search_role_1']['#options']['PRES01|PRES03']);
+
+        // Remove disallowed US states from the state dropdown.
+        $arr = array_reverse($subscription['states_custom'], true);
+        $arr['- Any -'] = 'All';
+        $subscription['states_custom'] = array_reverse($arr, true);
+        $form['search_state']['#options'] = array_flip(
+          array_intersect(
+            array_flip($form['search_state']['#options']),
+            $subscription['states_custom']
+          )
+        );
+        break;
+    }
+  }
+}
+
+
+/**
+ * Ajax callback for views exposed form
+ *
+ * @param $form
+ * @param $form_state
+ * @return mixed
+ */
+function springboard_advocacy_update_districts_field_callback($form, $form_state) {
+  return $form['search_district_name'];
+}
+
+/**
+ * Build the "districts" options array for views exposed form
+ *
+ * @param $form
+ * @param $form_state
+ * @return mixed
+ */
+function springboard_advocacy_update_districts_field_options($form, $form_state)
+{
+  $api_call = new AdvocacyApiCall();
+  $subscription = $api_call->getSubscription();
+  $options = $form['search_district_name']['#options'];
+
+  if (!empty($form_state['values']['search_state']) || $form_state['input']['search_state'] != 'All') {
+
+    if (!empty($form_state['values']['search_state'])) {
+      $state = $form_state['values']['search_state'];
+    } else {
+      $state = $form_state['input']['search_state'];
+    }
+
+    //hmmmm.
+    if ($subscription['subscription_type'] == 'federal-and-states-selected') {
+      $options = $api_call->getDistricts($state);
+    } elseif ($subscription['subscription_type'] != 'federal-and-states-selected') {
+      $options = $api_call->getDistricts($state);
+    }
+  }
+
+  return $options;
+}
+
+
+/**
+ * Checks whether the exposed form will use ajax and passes required
+ * form information removed in views_form_views_exposed_form_alter().
+ *
+ * Taken from patch at https://www.drupal.org/node/1183418
+ */
+function springboard_advocacy_views_exposed_form_ajax_enable(&$form, &$form_state) {
+  // In order for Ajax to work, we need the form build info. Here we
+  // check if #ajax has been added to any form elements, and if so,
+  // pass this info as settings via Javascript, which get attached to
+  // the submitted form on Ajax form submissions.
+  // #ajax property can be set not only for the first level of the form,
+  // so we look for it in the whole form.
+  $ajax_info = array();
+  $ajax_elements = springboard_advocacy_views_exposed_form_ajax_lookup_recursive($form);
+  // Determine if form is being processed.
+  $triggering_element_name = '';
+  if (!empty($form_state['input']['_triggering_element_name'])) {
+    $triggering_element_name = $form_state['input']['_triggering_element_name'];
+  }
+  // When we have multiple elements with #ajax set on exposed form
+  // we need to pass only triggering element name to Javascript.
+  // Otherwise #ajax will work only for the first element.
+  if (!empty($triggering_element_name) && !empty($ajax_elements)) {
+    // Check if element has #ajax property set.
+    if (in_array($triggering_element_name, $ajax_elements)) {
+      $ajax_elements = array(
+        $triggering_element_name => $triggering_element_name,
+      );
+    }
+    else {
+      $ajax_elements = array();
+    }
+  }
+  if (!empty($ajax_elements)) {
+    $form_info = array(
+      'form_id' => $form['#form_id'],
+      'form_build_id' => $form['#build_id'],
+    );
+    // Anonymous users don't get a token.
+    if (!empty($form['#token'])) {
+      $form_info['form_token'] = $form['#token'];
+    }
+    foreach ($ajax_elements as $element_name) {
+      $ajax_info[$element_name] = $form_info;
+    }
+    drupal_add_js(array('AdvocacyViewsExposedFormInfo' => $ajax_info), 'setting');
+
+    // Add the javascript behavior that will handle this data.
+    $form['#attached']['js'][] = array(
+      'weight' => 100,
+      'data' => drupal_get_path('module', 'springboard_advocacy') . '/js/exposed-form-ajax.js',
+    );
+  }
+  return $form;
+}
+
+/**
+ * Recursively looks for the #ajax property for every form elemet.
+ * @param $elements
+ *   The element array to look for #ajax property.
+ *
+ * @return
+ *   Array of the elements names where #ajax was found.
+ *
+ * From patch at https://www.drupal.org/node/1183418
+ * @todo remove if future views version is patched
+ */
+function springboard_advocacy_views_exposed_form_ajax_lookup_recursive($elements) {
+  $ajax_elements = array();
+  foreach (element_children($elements) as $key) {
+    if (!empty($elements[$key]['#name']) && !empty($elements[$key]['#ajax'])) {
+      $ajax_elements[$elements[$key]['#name']] = $elements[$key]['#name'];
+    }
+    // Recursive call to look for #ajax in element's childrens.
+    $ajax_elements += springboard_advocacy_views_exposed_form_ajax_lookup_recursive($elements[$key]);
+  }
+  return $ajax_elements;
+}
