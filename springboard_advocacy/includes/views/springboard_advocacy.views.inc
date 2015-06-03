@@ -11,18 +11,17 @@
  *
  * Create the views data arrays for each of the
  * fields returned by the Springboard API remote queries.
- *
  */
 function springboard_advocacy_views_data() {
   $data = array();
 
   // Define our pseudo-DB table and assign the
-  // custom query handler which queries the remote API server
+  // custom query handler which queries the remote API server.
   $data['advocacy']['table'] = array(
     'group' => t('Advocacy'),
     'base' => array(
       'title' => t('Advocacy'),
-      'help' => t(''),
+      'help' => '',
       'query class' => 'springboard_advocacy_views_plugin_query',
     ),
   );
@@ -172,7 +171,7 @@ function springboard_advocacy_views_data() {
     ),
   );
 
-  // Create/edit/delete/links
+  // Create/edit/delete/links.
   $data['advocacy']['target_actions'] = array(
     'title' => t('Target Actions'),
     'help' => t('Action links for target displays'),
@@ -189,7 +188,7 @@ function springboard_advocacy_views_data() {
     ),
   );
 
-  // Combination search fields
+  // Combination search fields.
   $data['advocacy']['combine'] = array(
     'title' => t('Search Multiple Target Fields by Keywords'),
     'help' => t('Combine multiple fields together and search targets by them.'),
@@ -204,7 +203,7 @@ function springboard_advocacy_views_data() {
     'help' => t('Limit results by Legislator or Custom Target. Please note: if this filter is not "exposed", it will return no results *unless* another filter is enabled and actively being searched.'),
     'filter' => array(
       'handler' => 'springboard_advocacy_views_handler_filter_search_types',
-      'options callback' => 'springboard_advocacy_target_type'
+      'options callback' => 'springboard_advocacy_target_type',
     ),
   );
 
@@ -214,17 +213,17 @@ function springboard_advocacy_views_data() {
     'help' => t('Adds a filter to limit searches by Federal or State Branch'),
     'filter' => array(
       'handler' => 'springboard_advocacy_views_handler_filter_search_types',
-      'options callback' => 'springboard_advocacy_target_branch'
+      'options callback' => 'springboard_advocacy_target_branch',
     ),
   );
 
-  // Search by branch
+  // Search by branch.
   $data['advocacy']['search_level'] = array(
     'title' => t('Search By Level'),
     'help' => t('Adds a filter to limit searches by State or Federal level'),
     'filter' => array(
       'handler' => 'springboard_advocacy_views_handler_filter_search_types',
-      'options callback' => 'springboard_advocacy_target_level'
+      'options callback' => 'springboard_advocacy_target_level',
 
     ),
   );
@@ -235,7 +234,7 @@ function springboard_advocacy_views_data() {
     'help' => t('Adds a filter to limit searches by Political Party'),
     'filter' => array(
       'handler' => 'springboard_advocacy_views_handler_filter_search_types',
-      'options callback' => 'springboard_advocacy_target_party'
+      'options callback' => 'springboard_advocacy_target_party',
 
     ),
   );
@@ -246,42 +245,41 @@ function springboard_advocacy_views_data() {
     'help' => t('Adds a filter to limit searches by State'),
     'filter' => array(
       'handler' => 'springboard_advocacy_views_handler_filter_search_types',
-      'options callback' => 'springboard_advocacy_target_state'
-
+      'options callback' => 'springboard_advocacy_target_state',
     ),
   );
 
-  // Search by district name
+  // Search by district name.
   $data['advocacy']['search_district_name'] = array(
     'title' => t('Search By District'),
     'help' => t('Adds a filter to limit searches by District'),
     'filter' => array(
       'handler' => 'springboard_advocacy_views_handler_filter_search_types',
-      'options callback' => 'springboard_advocacy_target_district'
+      'options callback' => 'springboard_advocacy_target_district',
     ),
   );
 
-  // Search by gender
+  // Search by gender.
   $data['advocacy']['search_gender'] = array(
     'title' => t('Search By Gender'),
     'help' => t('Adds a filter to limit searches by Gender'),
     'filter' => array(
       'handler' => 'springboard_advocacy_views_handler_filter_search_types',
-      'options callback' => 'springboard_advocacy_target_gender'
+      'options callback' => 'springboard_advocacy_target_gender',
     ),
   );
 
-  // Search by social media presence
+  // Search by social media presence.
   $data['advocacy']['search_social'] = array(
     'title' => t('Search By Social Media Presence'),
     'help' => t('Adds a filter to limit searches by targets who have social media profiles'),
     'filter' => array(
       'handler' => 'springboard_advocacy_views_handler_filter_search_types',
-      'options callback' => 'springboard_advocacy_target_social'
+      'options callback' => 'springboard_advocacy_target_social',
     ),
   );
 
-  // Search by committee name
+  // Search by committee name.
   $data['advocacy']['search_committee'] = array(
     'title' => t('Search by Committee Name'),
     'help' => t('Committee name search'),
@@ -290,13 +288,13 @@ function springboard_advocacy_views_data() {
     ),
   );
 
-  // Search by committee chamber
+  // Search by committee chamber.
   $data['advocacy']['search_committee_chamber'] = array(
     'title' => t('Search By Committee Chamber'),
     'help' => t('Adds a filter to limit searches by committee chamber'),
     'filter' => array(
       'handler' => 'springboard_advocacy_views_handler_filter_search_types',
-      'options callback' => 'springboard_advocacy_target_committee_chamber'
+      'options callback' => 'springboard_advocacy_target_committee_chamber',
     ),
   );
 
@@ -310,7 +308,7 @@ function springboard_advocacy_views_data() {
  */
 function springboard_advocacy_views_plugins() {
   $plugins = array(
-    // The query plugin replaces DB queries with API queries
+    // The query plugin replaces DB queries with API queries.
     'query' => array(
       'springboard_advocacy_views_plugin_query' => array(
         'title' => t('Springboard Advocacy APIRequest'),
@@ -320,7 +318,7 @@ function springboard_advocacy_views_plugins() {
       ),
     ),
     // The pager is needed to fix a long-term views bug which causes
-    // the form api to freak about illegal choices
+    // the form api to freak about illegal choices.
     'pager' => array(
       'springboard_advocacy_views_plugin_pager' => array(
         'title' => t('Springboard Advocacy Pager Full'),
@@ -354,7 +352,7 @@ function springboard_advocacy_target_type() {
   $value_options = array(
     'Target' => t('Custom Target'),
     'Legislator' => t('Legislator'),
-    'group' => t('Group')
+    'group' => t('Group'),
   );
   return $value_options;
 }
@@ -378,7 +376,7 @@ function springboard_advocacy_target_branch() {
 }
 
 /**
- * Returns default options for views field configuration
+ * Returns default options for views field configuration.
  */
 function springboard_advocacy_target_level() {
   $value_options = array(
@@ -391,7 +389,7 @@ function springboard_advocacy_target_level() {
 /***** Helper functions defining value options for the various fields defined above ******/
 
 /**
- * Returns default options for views field configuration
+ * Returns default options for views field configuration.
  */
 function springboard_advocacy_target_party() {
   $value_options = array(
@@ -404,7 +402,7 @@ function springboard_advocacy_target_party() {
 }
 
 /**
- * Returns default options for views field configuration
+ * Returns default options for views field configuration.
  */
 function springboard_advocacy_target_committee_chamber() {
   $value_options = array(
@@ -420,7 +418,7 @@ function springboard_advocacy_target_committee_chamber() {
 }
 
 /**
- * Returns default options for views field configuration
+ * Returns default options for views field configuration.
  */
 function springboard_advocacy_target_social() {
   $value_options = array(
@@ -431,7 +429,7 @@ function springboard_advocacy_target_social() {
 }
 
 /**
- * Returns default options for views field configuration
+ * Returns default options for views field configuration.
  */
 function springboard_advocacy_target_state() {
   $value_options = array(
@@ -491,24 +489,23 @@ function springboard_advocacy_target_state() {
 }
 
 /**
- * Returns default options for views field configuration
+ * Returns default options for views field configuration.
  */
 function springboard_advocacy_target_district() {
-  //values are populated via ajax call in form alter
+  // Values are populated via ajax call in form alter.
   $value_options = array();
   return $value_options;
 }
 
 
 /**
- * Returns default options for views field configuration
+ * Returns default options for views field configuration.
  */
 function springboard_advocacy_target_gender() {
   $value_options = array(
     'M' => 'Male',
     'F' => 'Female',
-    'O' => 'Other'
-
+    'O' => 'Other',
   );
   return $value_options;
 }
@@ -516,12 +513,10 @@ function springboard_advocacy_target_gender() {
 /********** Views Hooks *****************/
 
 /**
- * Implements hook_views_pre_render
+ * Implements hook_views_pre_render().
  *
  * Takes the target search views query and prepares it as string for
  * inclusion in the search form add-all link query string.
- *
- * @param $view
  */
 function springboard_advocacy_views_pre_render(&$view) {
   if ($view->name == 'targets' && $view->current_display == 'block_3' && !empty($view->build_info['springboard_advocacy_search'])) {
@@ -533,30 +528,37 @@ function springboard_advocacy_views_pre_render(&$view) {
         $query[$field] = implode('|', $terms);
       }
       else {
-        if($field != 'search_committee') {
-          $terms =str_replace(' ', '|',   $terms);
+        if ($field != 'search_committee') {
+          $terms = str_replace(' ', '|', $terms);
         }
         $query[$field] = $terms;
       }
     }
-    $view->attachment_before = theme('springboard_advocacy_views_attachment_before', array('view' => $view, 'total_rows' => $total_rows, 'query' => $query));
+    $view->attachment_before = theme('springboard_advocacy_views_attachment_before',
+      array('view' => $view, 'total_rows' => $total_rows, 'query' => $query));
   }
 }
 
 /**
- *  Creates the "add-all link on message target search results
- * @param $vars
- * @return string
+ * Implements hook_views_attachment_before().
+ *
+ *  Creates the "add-all link on message target search results.
  */
 function theme_springboard_advocacy_views_attachment_before($vars) {
   $output = '';
   if (!empty($vars['query'])) {
     if (!empty($vars['view']->build_info['target_ids'])) {
 
-      $ids_required =  array('fields', 'gender', 'district_name', 'gender', 'social', 'search_committee');
+      $ids_required = array(
+        'fields',
+        'gender',
+        'district_name',
+        'gender', 'social',
+        'search_committee',
+      );
       $ids_required = array_intersect(array_keys($vars['query']), $ids_required);
 
-      if(!empty($ids_required)) {
+      if (!empty($ids_required)) {
         $vars['query']['ids'] = implode('|', $vars['view']->build_info['target_ids']);
       }
     }
@@ -566,7 +568,17 @@ function theme_springboard_advocacy_views_attachment_before($vars) {
       $output = '<div id ="advocacy-attachment-before-rows"><span class = "target-results">Search Results </span><span class = "target-count">' . $vars['total_rows'] . ' ' . $plural . '</span></div>';
       if (user_access('add target to action')) {
         $output .= '<div id ="advocacy-attachment-before-add-all">';
-        $output .= l(t('Add All Targets'), "add-all", array('attributes' => array('id' => 'advo-add-all'), 'query' => $vars['query'], 'external' => TRUE));
+        $output .= l(
+          t('Add All Targets'),
+          "add-all",
+          array(
+            'attributes' => array(
+              'id' => 'advo-add-all',
+            ),
+            'query' => $vars['query'],
+            'external' => TRUE,
+          )
+        );
         $output .= '</div>';
       }
     }
@@ -575,10 +587,13 @@ function theme_springboard_advocacy_views_attachment_before($vars) {
 }
 
 /**
- * @todo remove this if fixed in future views release.
- * Override a bug in the original preprocess
+ * Implements hook_preprocess_views_view_table().
+ *
+ * Override a bug in the original preprocess.
+ *
  * See https://www.drupal.org/node/2315365 for a similar issue.
- * @param vars
+ *
+ * @todo remove this if fixed in future views release.
  */
 function springboard_advocacy_preprocess_views_view_table(&$vars)
 {
@@ -593,9 +608,9 @@ function springboard_advocacy_preprocess_views_view_table(&$vars)
 
   $query = tablesort_get_query_parameters();
 
-  // bug override
+  // Bug override.
   // $query += $view->exposed_raw_input
-  // broke sort link queries
+  // broke sort link queries.
   $exposed = $view->get_exposed_input();
   if (!empty($exposed)) {
     $query += $exposed;
@@ -603,8 +618,7 @@ function springboard_advocacy_preprocess_views_view_table(&$vars)
 
   $label = '';
   foreach ($columns as $field => $column) {
-    // render the header labels
-
+    // Render the header labels.
     if ($field == $column && empty($fields[$field]->options['exclude'])) {
       $label = check_plain(!empty($fields[$field]) ? $fields[$field]->label() : '');
       if (!empty($options['info'][$field]['sortable']) || $fields[$field]->click_sortable()) {
@@ -631,18 +645,14 @@ function springboard_advocacy_preprocess_views_view_table(&$vars)
       }
     }
 
-    if (isset($vars['rows'][0]['committee_memberships']) && $field == 'committee_memberships' && $label ==  '') {
-      $label = t('Committees');
-      $vars['header'][$field] = t($label);
+    if (isset($vars['rows'][0]['committee_memberships']) && $field == 'committee_memberships' && $label == '') {
+      $vars['header'][$field] = t('Committees');
     }
-
   }
 }
 
 /**
- * Implements hook_preprocess_hook
- * @param $variables
- * @param $hook
+ * Implements hook_preprocess_hook().
  */
 function springboard_advocacy_preprocess_pager(&$variables, $hook) {
   if (isset($variables['parameters']['search_state'])) {
@@ -655,39 +665,35 @@ function springboard_advocacy_preprocess_pager(&$variables, $hook) {
 
 
 /**
- * Implements hook_form_FORMID_alter
+ * Implements hook_form_FORMID_alter().
  *
- * Add ajax functionality to views exposed form to enable district lookups by state.
- *
- * @param $form
- * @param $form_state
- * @param $form_id
+ * Add ajax to views exposed form to enable district lookups by state.
  */
 function springboard_advocacy_form_views_exposed_form_alter(&$form, &$form_state, $form_id)
 {
   if ($form_id == 'views_exposed_form' && $form_state['view']->name == 'targets') {
 
-    // Committee autocomplete
+    // Committee autocomplete.
     $form['search_committee']['#autocomplete_path'] = 'message-action/committee/autocomplete';
 
     // Override stock Drupal autocomplete js
     // needed to add values from chamber and state fields
-    // to the ajax request path
+    // to the ajax request path.
     $form['#attached']['js'] = array(
       drupal_get_path('module', 'sba_message') . '/js/autocomplete_override.js',
     );
 
-    // Convert select fields to checkeboxes
-    if(isset($form['search_role_1'])) {
+    // Convert select fields to checkboxes.
+    if (isset($form['search_role_1'])) {
       $form['search_role_1']['#type'] = 'checkboxes';
     }
-    if(isset($form['search_party'])) {
+    if (isset($form['search_party'])) {
       $form['search_party']['#type'] = 'checkboxes';
     }
-    if(isset($form['search_gender'])) {
+    if (isset($form['search_gender'])) {
       $form['search_gender']['#type'] = 'checkboxes';
     }
-    if(isset($form['search_social'])) {
+    if (isset($form['search_social'])) {
       $form['search_social']['#type'] = 'checkboxes';
     }
 
@@ -698,7 +704,8 @@ function springboard_advocacy_form_views_exposed_form_alter(&$form, &$form_state
       _springboard_advocacy_ajaxify_state_field($form, $form_state, $form_id);
     }
 
-    // Remove some field from the exposed form if they aren't allowed by subscription level
+    // Remove some field from the exposed form if they aren't
+    // allowed by subscription level.
     _springboard_advocacy_remove_unsubscribed_elements($form, $form_state, $form_id);
 
   }
@@ -711,7 +718,7 @@ function springboard_advocacy_form_views_exposed_form_alter(&$form, &$form_state
  * @param $form_id
  */
 function _springboard_advocacy_ajaxify_state_field(&$form, &$form_state, $form_id) {
-  // Hack to allow ajax in views exposed forms
+  // Hack to allow ajax in views exposed forms.
   $form['#after_build'][] = 'springboard_advocacy_views_exposed_form_ajax_enable';
 
   // Set up state and district fields.
@@ -723,15 +730,16 @@ function _springboard_advocacy_ajaxify_state_field(&$form, &$form_state, $form_i
     'wrapper' => 'district',
     'method' => 'replace',
     'effect' => 'none',
-    'event' => 'custom_event', //use for trigger in js
-    // Suppress the throbber
+    // Use for trigger in js.
+    'event' => 'custom_event',
+    // Suppress the throbber.
     'progress' => array(
       'message' => NULL,
       'type' => NULL,
     ),
   );
 
-  //Disable the district field if reloaded value of US state field is "all"
+  // Disable the district field if reloaded value of US state field is "all".
   if (empty($form_state['values']['search_state']) && $form_state['input']['search_state'] == 'All') {
     $form['search_district_name']['#disabled'] = TRUE;
   }
@@ -745,6 +753,8 @@ function _springboard_advocacy_ajaxify_state_field(&$form, &$form_state, $form_i
 
 
 /**
+ * Remove form elements not allowed by subscription type.
+ *
  * @param $form
  * @param $form_state
  * @param $form_id
@@ -752,7 +762,7 @@ function _springboard_advocacy_ajaxify_state_field(&$form, &$form_state, $form_i
 function  _springboard_advocacy_remove_unsubscribed_elements(&$form, &$form_state, $form_id) {
   $api_call = new AdvocacyApiCall();
   $subscription = $api_call->getSubscription();
-  if($subscription) {
+  if ($subscription) {
 
     // Add subscription info the Drupal.settings for use in javascript.
     $settings = array('sbaSubscriptionLevel' => $subscription['subscription_type']);
@@ -776,7 +786,7 @@ function  _springboard_advocacy_remove_unsubscribed_elements(&$form, &$form_stat
         break;
 
       case 'federal-and-states-selected':
-        // Add allowed US states to Drupal.settings for use by javascript
+        // Add allowed US states to Drupal.settings for use by javascript.
         $settings = array('sbaAllowedStates' => $subscription['states_custom']);
         $form['#attached']['js'][] = array('data' => $settings, 'type' => 'setting');
         break;
@@ -788,9 +798,9 @@ function  _springboard_advocacy_remove_unsubscribed_elements(&$form, &$form_stat
         unset($form['search_role_1']['#options']['PRES01|PRES03']);
 
         // Remove disallowed US states from the state dropdown.
-        $arr = array_reverse($subscription['states_custom'], true);
+        $arr = array_reverse($subscription['states_custom'], TRUE);
         $arr['- Any -'] = 'All';
-        $subscription['states_custom'] = array_reverse($arr, true);
+        $subscription['states_custom'] = array_reverse($arr, TRUE);
         $form['search_state']['#options'] = array_flip(
           array_intersect(
             array_flip($form['search_state']['#options']),
@@ -804,7 +814,7 @@ function  _springboard_advocacy_remove_unsubscribed_elements(&$form, &$form_stat
 
 
 /**
- * Ajax callback for views exposed form
+ * Ajax callback for views exposed form.
  *
  * @param $form
  * @param $form_state
@@ -815,7 +825,7 @@ function springboard_advocacy_update_districts_field_callback($form, $form_state
 }
 
 /**
- * Build the "districts" options array for views exposed form
+ * Build the "districts" options array for views exposed form.
  *
  * @param $form
  * @param $form_state
@@ -831,14 +841,16 @@ function springboard_advocacy_update_districts_field_options($form, $form_state)
 
     if (!empty($form_state['values']['search_state'])) {
       $state = $form_state['values']['search_state'];
-    } else {
+    }
+    else {
       $state = $form_state['input']['search_state'];
     }
 
     //hmmmm.
     if ($subscription['subscription_type'] == 'federal-and-states-selected') {
       $options = $api_call->getDistricts($state);
-    } elseif ($subscription['subscription_type'] != 'federal-and-states-selected') {
+    }
+    elseif ($subscription['subscription_type'] != 'federal-and-states-selected') {
       $options = $api_call->getDistricts($state);
     }
   }
@@ -848,6 +860,8 @@ function springboard_advocacy_update_districts_field_options($form, $form_state)
 
 
 /**
+ * Enable ajax in exposed forms.
+ *
  * Checks whether the exposed form will use ajax and passes required
  * form information removed in views_form_views_exposed_form_alter().
  *
@@ -906,14 +920,15 @@ function springboard_advocacy_views_exposed_form_ajax_enable(&$form, &$form_stat
 
 /**
  * Recursively looks for the #ajax property for every form elemet.
- * @param $elements
+ *
+ * @param array $elements
  *   The element array to look for #ajax property.
  *
- * @return
+ * @return array
  *   Array of the elements names where #ajax was found.
  *
- * From patch at https://www.drupal.org/node/1183418
- * @todo remove if future views version is patched
+ * From patch at https://www.drupal.org/node/1183418.
+ * @todo remove if future views version is patched.
  */
 function springboard_advocacy_views_exposed_form_ajax_lookup_recursive($elements) {
   $ajax_elements = array();

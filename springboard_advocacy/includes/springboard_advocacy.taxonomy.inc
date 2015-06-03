@@ -9,7 +9,7 @@
  * @param $form_id
  */
 function springboard_advocacy_taxonomy_form(&$form, &$form_state, $form_id) {
-  module_load_include('inc', 'springboard_advocacy', 'includes/springboard_advocacy.webform');
+  form_load_include($form_state, 'inc', 'springboard_advocacy', 'includes/springboard_advocacy.webform');
 
   $language = $form['language']['#value'];
   // Add a vertical-tab fieldset for "Action options."

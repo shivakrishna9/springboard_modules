@@ -109,7 +109,7 @@ function theme_springboard_advocacy_webform_confirmations(array $vars) {
  * @return array
  *   Messages formatted for the API call.
  */
-function springboard_advocacy_build_messages($user_message) {
+function springboard_advocacy_build_messages(array $user_message) {
   $all_messages = entity_load('sba_message', array_keys($user_message));
   $messages = array();
   $x = 0;

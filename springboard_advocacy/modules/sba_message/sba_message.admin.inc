@@ -304,7 +304,7 @@ function sba_message_edit_form_submit(&$form, &$form_state) {
     drupal_write_record('draggableviews_structure', $record);
   }
 
-  module_load_include('inc', 'sba_message', 'sba_message.api_calls');
+  form_load_include($form_state, 'inc', 'sba_message', 'sba_message.api_calls');
   _sba_message_api_save($sba_message, $is_new, $form_state);
 
   $form_state['redirect'] = 'node/' . $nid . '/messages';
@@ -313,6 +313,7 @@ function sba_message_edit_form_submit(&$form, &$form_state) {
 
 /**
  * Form API submit callback for the delete button.
+ *
  * @param $form
  * @param $form_state
  */
@@ -364,7 +365,7 @@ function sba_message_delete_form_submit($form, &$form_state) {
   sba_message_delete($sba_message);
   drupal_set_message(t('%name has been deleted.', array('%name' => $sba_message->name)));
   watchdog('sba_message', 'Deleted sba_message: %name.', array('%name' => $sba_message->name));
-  module_load_include('inc', 'sba_message', 'sba_message.api_calls');
+  form_load_include($form_state, 'inc', 'sba_message', 'sba_message.api_calls');
 
  _sba_message_api_delete_target_group($sba_message);
 
