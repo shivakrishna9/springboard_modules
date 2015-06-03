@@ -56,7 +56,7 @@ function springboard_advocacy_goals_form(array &$form, array $form_state) {
  * @param array $form_state
  *   The form state.
  */
-function springboard_advocacy_goal_save_validate_include(array $form, array $form_state) {
+function springboard_advocacy_goal_save_validate(array $form, array $form_state) {
 
   // Goal target is NaN.
   if (!empty($form_state['values']['springboard_advocacy_goal_target']) && !is_numeric($form_state['values']['springboard_advocacy_goal_target'])) {
