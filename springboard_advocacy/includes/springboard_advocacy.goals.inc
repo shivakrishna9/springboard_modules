@@ -100,8 +100,7 @@ function springboard_advocacy_goal_save_submit($node) {
       'starter_message_format' => 'filtered_html',
       'start_date' => 0,
       'end_date' => 0,
-      'template' => '[goal:progress-starter]
-<p>The current goal is [goal:target]. We have [goal:total] thus far. That’s nearly [goal:progress-percent]% of our goal! Thanks for your support.</p>', // we may need configurable global defaults here.
+      'template' => '[goal:progress-starter]<p>The current goal is [goal:target]. We have [goal:total] thus far. That’s nearly [goal:progress-percent]% of our goal! Thanks for your support.</p>', // we may need configurable global defaults here.
       'template_format' => 'full_html',
       'progress_bar' => 'flat_ui',
     );

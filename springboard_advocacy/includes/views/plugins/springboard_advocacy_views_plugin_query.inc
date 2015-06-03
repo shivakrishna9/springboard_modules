@@ -11,11 +11,11 @@
 class springboard_advocacy_views_plugin_query extends views_plugin_query {
 
   /**
-   * Advocay API client object
+   * AdvocacyApiCall object.
    *
-   * @var client
+   * @var apiCall
    */
-  protected $api_call;
+  protected $apiCall;
 
   /**
    * @param $base_table
@@ -24,7 +24,7 @@ class springboard_advocacy_views_plugin_query extends views_plugin_query {
    */
   function init($base_table, $base_field, $options) {
     parent::init($base_table, $base_field, $options);
-    $this->api_call = new AdvocacyApiCall();
+    $this->apiCall = new AdvocacyApiCall();
   }
 
   /**
@@ -33,77 +33,75 @@ class springboard_advocacy_views_plugin_query extends views_plugin_query {
   function build(&$view) {
     $view->init_pager($view);
     $this->pager->query();
-    $view->build_info['springboard_advocacy_request'] = $this->api_call;
+    $view->build_info['springboard_advocacy_request'] = $this->apiCall;
     $view->build_info['target_ids'] = array();
-    // helpful for the "add all link"
-     if (isset($view->query->search_terms)) {
-       $view->build_info['springboard_advocacy_search'] = $view->query->search_terms;
-     }
+    // Helpful for the "add all link".
+    if (isset($view->query->search_terms)) {
+      $view->build_info['springboard_advocacy_search'] = $view->query->search_terms;
+    }
   }
 
-  /**
-   * @param view $view
-   */
   function execute(&$view) {
     $api_call = $view->build_info['springboard_advocacy_request'];
 
-    $start = microtime(true);
+    $start = microtime(TRUE);
 
-    // should we pull the terms from $view->query? Why use $view->build_info?
+    // Should we pull the terms from $view->query? Why use $view->build_info?
     $fields = !empty($view->query->search_terms) ? $view->query->search_terms : NULL;
 
     // If a non-exposed class_name search is present and it is the only search
     // suppress results because no search has actually been performed yet
-    // Will need to further limit this by view block name so the main admin screens have results by default.
+    // Will need to further limit this by view block name so the main admin
+    // screens have results by default.
     if ((count($fields) == 1) && isset($fields['class_name'])) {
       //$suppress_results = $view->filter['search_class_name']->options['exposed'] == FALSE;
     }
 
-
     if (!empty($fields) && empty($suppress_results)) {
       foreach ($fields as $field_name => $search_terms) {
 
-        // is it a multiple value checkbox or select?
-        // then format in a way the api expects
+        // Is it a multiple value checkbox or select?
+        // Then format in a way the api expects.
         if (is_array($search_terms)) {
           $fields[$field_name] = implode('|', $search_terms);
         }
         else {
 
-          //strip leading and multiple whitespaces
+          // Strip leading and multiple whitespaces.
           $search_terms = trim($search_terms);
           $search_terms = preg_replace('/\s+/', ' ', $search_terms);
 
           // Parsing for the committee:"committee name" search option.
           // Currently an "undocumented feature".
-
-          //no committees in the main search tab text input
-          if(strpos($search_terms, 'committee:') === FALSE && $field_name != 'search_committee') {
+          // No committees in the main search tab text input.
+          if (strpos($search_terms,
+              'committee:') === FALSE && $field_name != 'search_committee'
+          ) {
             $fields[$field_name] = str_replace(' ', '|', $search_terms);
           }
           // Has committees in the main search tab text input.
-          elseif( $field_name != 'search_committee') {
+          elseif ($field_name != 'search_committee') {
             $pattern = '/(committee:".*?")/';
             preg_match_all($pattern, $search_terms, $matches);
 
-            if(!empty($matches[1])) {
-              foreach($matches[1] as $match) {
-                $fields[$field_name] = trim(str_replace($match, '', $fields[$field_name]));
+            if (!empty($matches[1])) {
+              foreach ($matches[1] as $match) {
+                $fields[$field_name] = trim(str_replace($match, '',
+                  $fields[$field_name]));
               }
 
               $non_matches = !empty($fields[$field_name]) ? $fields[$field_name] . '|' : NULL;
-              if(!empty($non_matches)) {
+              if (!empty($non_matches)) {
                 $non_matches = preg_replace('/\s+/', ' ', $non_matches);
                 $non_matches = str_replace(' ', '|', $non_matches);
               }
 
               $committees = implode('|', $matches[1]);
 
-              $fields[$field_name] =  $non_matches . $committees;
+              $fields[$field_name] = $non_matches . $committees;
             }
           }
-          //end main tab text input committee parsing
-
+          // End main tab text input committee parsing.
         }
       }
 
@@ -115,12 +113,12 @@ class springboard_advocacy_views_plugin_query extends views_plugin_query {
         $fields['direction'] = $this->orderby[0]['direction'];
       }
 
-      // Get the targets
+      // Get the targets.
       $targets = $api_call->invokeRemote('searchTargets', $fields);
 
-      if (!empty($targets->data->targets))  {
+      if (!empty($targets->data->targets)) {
 
-        // Build the pager
+        // Build the pager.
         if ($this->pager->use_pager()) {
           $this->pager->total_items = $targets->data->count;
           if (!empty($this->pager->options['offset'])) {
@@ -129,14 +127,15 @@ class springboard_advocacy_views_plugin_query extends views_plugin_query {
           $this->pager->update_page_info();
         }
 
-        // Add target IDs to build info. We retrieve elsewhere for use in Target Add links.
+        // Add target IDs to build info. We retrieve elsewhere for use in
+        // Target Add links.
         $view->build_info['target_ids'] = $targets->data->ids;
       }
 
       $view->result = array();
 
-      // Put target data into results array
-      if(!empty($targets->data->targets)) {
+      // Put target data into results array.
+      if (!empty($targets->data->targets)) {
         $view->result = $targets->data->targets;
       }
 
@@ -146,7 +145,7 @@ class springboard_advocacy_views_plugin_query extends views_plugin_query {
         $view->total_rows = $this->pager->get_total_items();
       }
 
-      $view->execute_time = microtime(true) - $start;
+      $view->execute_time = microtime(TRUE) - $start;
     }
   }
 
@@ -157,10 +156,16 @@ class springboard_advocacy_views_plugin_query extends views_plugin_query {
    * @param string $alias
    * @param array $params
    */
-  function add_orderby($table, $field = NULL, $order = 'ASC', $alias = '', $params = array()) {
+  function add_orderby(
+    $table,
+    $field = NULL,
+    $order = 'ASC',
+    $alias = '',
+    $params = array()
+  ) {
     $this->orderby[] = array(
       'field' => $alias,
-      'direction' => strtoupper($order)
+      'direction' => strtoupper($order),
     );
   }
 
