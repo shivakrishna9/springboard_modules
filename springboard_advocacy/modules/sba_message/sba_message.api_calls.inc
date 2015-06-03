@@ -110,7 +110,7 @@ function _sba_message_api_get_gender_or_social_ids($target_fields) {
   $ids = array();
   foreach ($target_fields as $fields) {
     $fields->limit = 1;
-    $response = $api_call->invokeRemote('searchTargets', (array) $fields);
+    $response = $api_call->invokeClientMethod('searchTargets', (array) $fields);
 
     if (!empty($response->data->ids)) {
       $ids = array_unique(array_merge($ids, $response->data->ids));
@@ -233,7 +233,7 @@ function _sba_message_api_build_chambers_shmoosher(&$chamber_rows_container, $ch
  * @return mixed
  */
 function _sba_message_api_create_group($api_call, $sba_message, $chamber_rows, $indvds, $values) {
-  $response = $api_call->invokeRemote('createTargetGroup',
+  $response = $api_call->invokeClientMethod('createTargetGroup',
     array(
       'name' => $sba_message->name,
       'chambers' => $chamber_rows,
@@ -258,7 +258,7 @@ function _sba_message_api_create_group($api_call, $sba_message, $chamber_rows, $
  * @return mixed
  */
 function _sba_message_api_update_group($api_call, $sba_message, $chamber_rows, $indvds, $values) {
-  $response = $api_call->invokeRemote('updateTargetGroup',
+  $response = $api_call->invokeClientMethod('updateTargetGroup',
     array(
       'name' => $sba_message->name,
       'chambers' => $chamber_rows,
@@ -282,7 +282,7 @@ function _sba_message_api_update_group($api_call, $sba_message, $chamber_rows, $
  * @return mixed
  */
 function _sba_message_api_get_group_by_message_id($api_call, $message_id) {
-  $response = $api_call->invokeRemote('getTargetGroupByMessageID', $message_id);
+  $response = $api_call->invokeClientMethod('getTargetGroupByMessageID', $message_id);
   return $response;
 }
 
@@ -317,7 +317,7 @@ function _sba_message_api_delete_target_group ($sba_message) {
   //delete the remote API message group.
 
   $api_call = new AdvocacyApiCall();
-  $response = $api_call->invokeRemote('deleteTargetGroup', $sba_message->data['group_id']);
+  $response = $api_call->invokeClientMethod('deleteTargetGroup', $sba_message->data['group_id']);
 
   if (isset($response->data)) {
     drupal_set_message(t("The message's remote target group was deleted."));

@@ -21,7 +21,7 @@ class AdvocacyApiCall {
    * @param $method
    * @return mixed
    */
-  public function invokeRemote($method) {
+  public function invokeClientMethod($method) {
 
     $args = func_get_args();
     unset($args[0]);

@@ -36,7 +36,7 @@ function springboard_target_create_custom_targets_form_submit($form, &$form_stat
   $input = $form_state['values'];
 
   $api_call = new AdvocacyApiCall();
-  $target = $api_call->invokeRemote('createCustomTarget', $input);
+  $target = $api_call->invokeClientMethod('createCustomTarget', $input);
 
   if (!empty($target->data)) {
     $message = implode(' ', (array)$target->data->status);

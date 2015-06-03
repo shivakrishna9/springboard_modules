@@ -36,7 +36,7 @@ function springboard_target_form($target_id = NULL) {
   if (isset($target_id) && is_numeric($target_id)) {
     $api_call = new AdvocacyApiCall();
 
-    $target = $api_call->invokeRemote('getCustomTarget', $target_id);
+    $target = $api_call->invokeClientMethod('getCustomTarget', $target_id);
 
     if (isset($target->error)) {
       $form = array();
@@ -444,7 +444,7 @@ function springboard_target_delete_submit(&$form, &$form_state) {
   $form_state['redirect'] = 'springboard/advocacy/targets/custom-targets';
 
   $api_call = new AdvocacyApiCall();
-  $response = $api_call->invokeRemote('deleteCustomTarget', $form_state['values']['target_id']);
+  $response = $api_call->invokeClientMethod('deleteCustomTarget', $form_state['values']['target_id']);
 
   if (isset($response->data)) {
     drupal_set_message('Target deleted.');

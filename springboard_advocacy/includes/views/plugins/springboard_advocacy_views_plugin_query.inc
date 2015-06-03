@@ -114,7 +114,7 @@ class springboard_advocacy_views_plugin_query extends views_plugin_query {
       }
 
       // Get the targets.
-      $targets = $api_call->invokeRemote('searchTargets', $fields);
+      $targets = $api_call->invokeClientMethod('searchTargets', $fields);
 
       if (!empty($targets->data->targets)) {
 

@@ -936,7 +936,7 @@ function springboard_advocacy_views_exposed_form_ajax_lookup_recursive($elements
     if (!empty($elements[$key]['#name']) && !empty($elements[$key]['#ajax'])) {
       $ajax_elements[$elements[$key]['#name']] = $elements[$key]['#name'];
     }
-    // Recursive call to look for #ajax in element's childrens.
+    // Recursive call to look for #ajax in element's children.
     $ajax_elements += springboard_advocacy_views_exposed_form_ajax_lookup_recursive($elements[$key]);
   }
   return $ajax_elements;

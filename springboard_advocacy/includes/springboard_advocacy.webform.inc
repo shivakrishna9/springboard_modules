@@ -59,7 +59,7 @@ function springboard_advocacy_send_message(array $user_message, array $form_stat
     // Send submission to API Client.
     $api_call = new AdvocacyApiCall();
 
-    $response = $api_call->invokeRemote('resolveTargets', $submission);
+    $response = $api_call->invokeClientMethod('resolveTargets', $submission);
 
     if (isset($response->data)) {
       // We got a valid response, build the confirmation message array.

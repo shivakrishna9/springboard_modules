@@ -50,7 +50,7 @@ function springboard_target_edit_custom_targets_form_submit($form, &$form_state)
   $id = $form_state['build_info']['args'][0];
   $input = $form_state['values'];
   $api_call = new AdvocacyApiCall();
-  $target = $api_call->invokeRemote('updateCustomTarget', $input, $id);
+  $target = $api_call->invokeClientMethod('updateCustomTarget', $input, $id);
 
   if (!empty($target->data)) {
     $message = implode(' ', (array) $target->data->status);
