@@ -61,15 +61,6 @@ function springboard_advocacy_send_message($user_message, $form_state) {
       // We got a valid response, build the confirmation message array.
       springboard_advocacy_build_confirmation($response->data);
     }
-    else {
-      if (user_access('administer springboard advocacy')) {
-        if (isset($response->error)) {
-          drupal_set_message(t('An error occurred when attempting to resolve targets'), 'error');
-        } else {
-          drupal_set_message(t('A response was not received from the server when attempting to resolve targets'), 'error');
-        }
-      }
-    }
   }
 }
 

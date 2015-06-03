@@ -449,16 +449,4 @@ function springboard_target_delete_submit(&$form, &$form_state) {
   if (isset($response->data)) {
     drupal_set_message('Target deleted.');
   }
-  else {
-    if(isset($response->error)) {
-      drupal_set_message(t('An error occurred when attempting to delete a custom target: @message', array('@message' => $response->error->message)), 'error');
-      watchdog('advocacy', 'An error occurred when attempting to delete a custom target @message', array('@message' => $response->error->message), WATCHDOG_ERROR);
-    }
-    else {
-      drupal_set_message(t('A response was not received from the server when attempting to retrieve
-      district information'), 'error');
-      watchdog('advocacy', 'A response was not received from the server when attempting to retrieve
-      district information', array(), WATCHDOG_ERROR);
-    }
-  }
 }

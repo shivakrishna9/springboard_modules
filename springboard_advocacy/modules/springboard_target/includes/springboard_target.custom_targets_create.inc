@@ -40,18 +40,10 @@ function springboard_target_create_custom_targets_form_submit($form, &$form_stat
 
   if (!empty($target->data)) {
     $message = implode(' ', (array)$target->data->status);
+    drupal_set_message($message);
     if (isset($target->data->id)) {
       $form_state['redirect'] = 'admin/springboard/advocacy/targets/custom-targets/';
      }
   }
-  elseif(!empty($target->error)) {
-    $message = isset($target->error->message) ? $target->error->message : t('An error occurred when attempting to create the target. Please try again.');
-  }
-  else {
-    $message = t('A response was not received from the API server when attempting to create the target. Please try again.');
-  }
-  drupal_set_message($message);
-  watchdog('advocacy', '@message', array('@message' => $message), WATCHDOG_ERROR);
-
 }
 

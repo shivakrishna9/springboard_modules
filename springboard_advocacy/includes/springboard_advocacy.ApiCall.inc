@@ -33,6 +33,10 @@ class AdvocacyApiCall {
       $this->setDebug($info);
     }
 
+    if (!isset($response->data)) {
+      $this->buildMessage($response, $method);
+    }
+
     return $response;
   }
 
@@ -80,16 +84,7 @@ class AdvocacyApiCall {
         variable_set('sba_subscription', array('subscription_type' => $response->data->subscription_type, 'states_custom' => isset($response->data->states_custom) ? $response->data->states_custom : NULL));
       }
       else {
-        if (user_access('administer springboard advocacy')) {
-          if (isset($response->error)) {
-            $error = isset($response->error->message) ? $response->error->message : $response->error;
-            $message = t('An error occurred when attempting to retrieve the account subscription: @message:', array('@message' => $error));
-          }
-          else {
-            $message = t('A response was not received when attempting to retrieve the account subscription');
-          }
-          $this->setMessage($message);
-        }
+        $this->buildMessage($response, 'getSubscription');
         return FALSE;
       }
 
@@ -154,17 +149,21 @@ class AdvocacyApiCall {
       }
     }
     else {
-      if (user_access('administer springboard advocacy')) {
-        if (isset($response->error)) {
-          $error = isset($response->error->message) ? $response->error->message : $response->error;
-          $message = t('An error occurred when attempting to retrieve district information: @message:', array('@message' => $error));
-        }
-        else {
-          $message = t('A response was not received when attempting to retrieve district information');
-        }
-        $this->setMessage($message);
-      }
+      $this->buildMessage($response, 'getDistrictsByState');
     }
     return $options;
+  }
+
+  private function buildMessage($response, $method) {
+    if (user_access('administer springboard advocacy')) {
+      if (isset($response->error)) {
+        $error = isset($response->error->message) ? $response->error->message : $response->error;
+        $message = t('An error occurred when attempting to call @method: @message:', array('@method' => $method, '@message' => $error));
+      }
+      else {
+        $message = t('A response was not received from the server when attempting to call @method', array('@method' => $method));
+      }
+      $this->setMessage($message);
+    }
   }
 }

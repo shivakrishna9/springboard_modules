@@ -115,16 +115,6 @@ function _sba_message_api_get_gender_or_social_ids($target_fields) {
     if (!empty($response->data->ids)) {
       $ids = array_unique(array_merge($ids, $response->data->ids));
     }
-    elseif (!isset($response->data)) {
-      if (isset($response->error)) {
-        $error = isset($response->error->message) ? $response->error->message : $response->error;
-        $message = t('An error occurred when attempting to create targets: @message:', array('@message' => $error));
-      }
-      else {
-        $message = t('A response was not received when attempting to create targets');
-      }
-      $api_call->setMessage($message);
-    }
   }
   return $ids;
 }
@@ -331,17 +321,5 @@ function _sba_message_api_delete_target_group ($sba_message) {
 
   if (isset($response->data)) {
     drupal_set_message(t("The message's remote target group was deleted."));
-  }
-  else {
-    if (user_access('administer springboard advocacy')) {
-      if (isset($response->error)) {
-        $error = isset($response->error->message) ? $response->error->message : $response->error;
-        $message = t("An error occurred when attempting to delete the message's target group: @message:", array('@message' => $error));
-      }
-      else {
-        $message = t("A response was not received from the API server when attempting to delete the message's target group");
-      }
-      $api_call->setMessage($message);
-    }
   }
 }

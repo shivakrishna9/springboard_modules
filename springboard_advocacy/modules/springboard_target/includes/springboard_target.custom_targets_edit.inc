@@ -53,16 +53,8 @@ function springboard_target_edit_custom_targets_form_submit($form, &$form_state)
   $target = $api_call->invokeRemote('updateCustomTarget', $input, $id);
 
   if (!empty($target->data)) {
-    $message = implode(' ', (array)$target->data->status);
+    $message = implode(' ', (array) $target->data->status);
+    drupal_set_message($message);
     $form_state['redirect'] = 'admin/springboard/advocacy/targets/custom-targets/';
-
   }
-  elseif(!empty($target->error)) {
-    $message = isset($target->error->message) ? $target->error->message : t('An error occurred when attempting to update the target. Please try again.');
-  }
-  else {
-    $message = t('A response was not received from the API server when attempting to update the target. Please try again.');
-  }
-  drupal_set_message($message);
 }
-
