@@ -15,7 +15,7 @@ class springboard_advocacy_views_plugin_query extends views_plugin_query {
    *
    * @var client
    */
-  protected $client;
+  protected $api_call;
 
   /**
    * @param $base_table
@@ -24,8 +24,7 @@ class springboard_advocacy_views_plugin_query extends views_plugin_query {
    */
   function init($base_table, $base_field, $options) {
     parent::init($base_table, $base_field, $options);
-    $api_call = new AdvocacyApiCall();
-    $this->client = $api_call->client;
+    $this->api_call = new AdvocacyApiCall();
   }
 
   /**
@@ -34,7 +33,7 @@ class springboard_advocacy_views_plugin_query extends views_plugin_query {
   function build(&$view) {
     $view->init_pager($view);
     $this->pager->query();
-    $view->build_info['springboard_advocacy_request'] = $this->client;
+    $view->build_info['springboard_advocacy_request'] = $this->api_call;
     $view->build_info['target_ids'] = array();
     // helpful for the "add all link"
      if (isset($view->query->search_terms)) {
@@ -46,7 +45,7 @@ class springboard_advocacy_views_plugin_query extends views_plugin_query {
    * @param view $view
    */
   function execute(&$view) {
-    $client = $view->build_info['springboard_advocacy_request'];
+    $api_call = $view->build_info['springboard_advocacy_request'];
 
     $start = microtime(true);
 
@@ -117,22 +116,7 @@ class springboard_advocacy_views_plugin_query extends views_plugin_query {
       }
 
       // Get the targets
-      $targets = $client->searchTargets($fields);
-      // Log debug info
-      if($client->isDebugMode()) {
-        watchdog('advocacy', 'Advocacy API Call details: !message', array('!message' => '<pre>' . check_plain(print_r($this->client->getDebugInfo(), TRUE)) . '</pre>'), WATCHDOG_DEBUG);
-      }
-
-      if(!isset($targets->data)) {
-        if (isset($targets->error)) {
-          drupal_set_message(t('An error occurred when attempting to search: @message', array('@message' => $targets->error->message)), 'error');
-          watchdog('advocacy', 'An error occurred when attempting to search: @message', array('@message' => $targets->error->message), WATCHDOG_ERROR);
-
-        } else {
-          drupal_set_message(t('A response was not received from the server when attempting to search for targets'), 'error');
-          watchdog('advocacy', 'A response was not received when attempting to search for targets.', array(), WATCHDOG_ERROR);
-        }
-      }
+      $targets = $api_call->invokeRemote('searchTargets', $fields);
 
       if (!empty($targets->data->targets))  {
 
