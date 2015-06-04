@@ -524,16 +524,12 @@ function sba_message_action_message_form(&$form, $message, $multiple) {
     // Is it required to edit the subject?
     if ($subject_editable == 'Editing is required') {
       $description = t('You must edit the subject line of this message before sending.');
-      $required = TRUE;
 
       // Validator needs this value?
       $form['message'][$message->sba_message_id]['subject_required'] = array(
         '#type' => 'value',
         '#value' => 1,
       );
-    }
-    else {
-      $required = FALSE;
     }
 
     $form['message'][$message->sba_message_id]['subject'] = array(
@@ -680,7 +676,7 @@ function sba_message_action_form_validate($form, &$form_state) {
     }
     if ($subject_edited == $subject_default) {
       if (isset($message['subject_required']) && $message['subject_required']['#value'] == 1) {
-          form_set_error('subject_editable', t('Please personalize the subject line before sending your message.'));
+          form_set_error('subject', t('Please personalize the subject line before sending your message.'));
       }
     }
     else {
@@ -974,7 +970,6 @@ function sba_message_action_build_preprocess(&$vars) {
       $vars['goal'] = '<div class="wg-goal" style="display: none;" data-gid="' . $goal['gid'] . '"></div>';
     }
   }
-
 }
 
 /**
@@ -1340,14 +1335,9 @@ function sba_message_action_preprocess_webform_confirmation(&$vars) {
  * Implements hook_form_FORMID_alter
  *
  * Disable deletion of required advocacy webform fields.
- *
- * @param $form
- * @param $form_state
- * @param $form_id
  */
 function sba_message_action_form_webform_component_delete_form_alter(&$form, &$form_state, $form_id) {
-  // Make sure we are dealing with a donation form.
-  // From fundraiser.module.
+
   if ($form['node']['#value']->type == 'sba_message_action') {
 
     $required_fields =  array(
