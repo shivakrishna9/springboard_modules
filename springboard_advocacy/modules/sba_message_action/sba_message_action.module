@@ -217,6 +217,17 @@ function sba_message_action_node_insert($node) {
       ),
     );
 
+    $fields[] = array(
+      'nid' => $node->nid,
+      'form_key' => 'sba_did_user_edit',
+      'pid' => 0,
+      'name' => t('User Edit Flag'),
+      'type' => 'hidden',
+      'value' => 0,
+      'weight' => 13,
+      'email' => 1,
+    );
+
     // Add the component to the Webform.
     foreach ($fields as $field) {
       // Don't insert fields if cloning.
@@ -646,26 +657,39 @@ function sba_message_action_message_form(&$form, $message, $multiple) {
  * @param $form_state
  */
 function sba_message_action_form_validate($form, &$form_state) {
+
   if (isset($form_state['values']['sba_messages'])) {
     $is_single = count($form_state['values']['sba_messages']['message']) == 1 ? TRUE : FALSE;
   }
   if (!empty($is_single)) {
     $message_id = array_keys($form_state['values']['sba_messages']['message']);
     $message = $form['sba_messages']['message'][$message_id[0]];
-    if (isset($message['body_required']) && $message['body_required']['#value'] == 1) {
-      $default = $message['body_editable']['#default_value'];
-      $edited = $form_state['values']['sba_messages']['message'][$message_id[0]]['body_editable'];
-      if ($edited == $default) {
+    $body_default = $message['body_editable']['#default_value'];
+    $body_edited = $form_state['values']['sba_messages']['message'][$message_id[0]]['body_editable'];
+    $subject_default = $message['subject']['#default_value'];
+    $subject_edited = $form_state['values']['sba_messages']['message'][$message_id[0]]['subject'];
+    $changed = FALSE;
+    // Enforce mandatory editing.
+    if ($body_edited == $body_default) {
+      if (isset($message['body_required']) && $message['body_required']['#value'] == 1) {
         form_set_error('body_editable', t('Please personalize your message before sending.'));
       }
     }
-
-    if (isset($message['subject_required']) && $message['subject_required']['#value'] == 1) {
-      $default = $message['subject']['#default_value'];
-      $edited = $form_state['values']['sba_messages']['message'][$message_id[0]]['subject'];
-      if ($edited == $default) {
-        form_set_error('subject_editable', t('Please personalize the subject line before sending your message.'));
+    else {
+      $changed = TRUE;
+    }
+    if ($subject_edited == $subject_default) {
+      if (isset($message['subject_required']) && $message['subject_required']['#value'] == 1) {
+          form_set_error('subject_editable', t('Please personalize the subject line before sending your message.'));
       }
+    }
+    else {
+      $changed = TRUE;
+    }
+
+    // Set user_edited_flag
+    if ($changed) {
+      form_set_value($form['submitted']['sba_did_user_edit'], 1, $form_state);
     }
   }
 }
