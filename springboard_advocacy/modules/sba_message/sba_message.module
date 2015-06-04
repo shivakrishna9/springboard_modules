@@ -379,7 +379,7 @@ function sba_message_load_multiple($sba_message_ids = array(), $conditions = arr
  * @param SbaMessage $sba_message
  */
 function sba_message_delete(SbaMessage $sba_message) {
-  $status = $sba_message->delete();
+  $sba_message->delete();
   //cleanup draggableviews table
   db_delete('draggableviews_structure')
     ->condition('entity_id', $sba_message->sba_message_id)
