@@ -1684,14 +1684,17 @@ function fundraiser_donation_form(&$form, &$form_state) {
  * Called from glue display module to validate additional data.
  */
 function fundraiser_donation_validate(&$form, &$form_state) {
-  // Call hook to validate donation values against fundraiser needs and sub module needs.
-  // Each is meant to return a not ok response or nothing.
-  // No response = we're all good, otherwise we return an array of values for handling.
-  $errors = module_invoke_all('fundraiser_donation_validate', $form, $form_state);
-  // Then handle our own business.
-  if (!empty($errors)) {
-    // Call the related donation process function.
-    fundraiser_donation_failed_validation($errors);
+  // Don't validate during an ajax submission.
+  if ($form_state['submitted']) {
+    // Call hook to validate donation values against fundraiser needs and sub module needs.
+    // Each is meant to return a not ok response or nothing.
+    // No response = we're all good, otherwise we return an array of values for handling.
+    $errors = module_invoke_all('fundraiser_donation_validate', $form, $form_state);
+    // Then handle our own business.
+    if (!empty($errors)) {
+      // Call the related donation process function.
+      fundraiser_donation_failed_validation($errors);
+    }
   }
 }
 
