@@ -19,7 +19,10 @@ class AdvocacyApiCall {
    * Call a php-sdk API method.
    *
    * @param $method
+   *   The SpringboardAdvocacyAPIClient method name.
+   *
    * @return mixed
+   *   The API response.
    */
   public function invokeClientMethod($method) {
 
@@ -33,6 +36,7 @@ class AdvocacyApiCall {
       $this->setDebug($info);
     }
 
+    // Log to watchdog and DSM if response does not have a data attribute.
     if (!isset($response->data)) {
       $this->buildMessage($response, $method);
     }
@@ -72,22 +76,11 @@ class AdvocacyApiCall {
     $subscription = variable_get('sba_subscription', array());
 
     if (empty($subscription)) {
-      $response = $this->client->getSubscription();
-
-      if ($this->client->isDebugMode()) {
-        $info = $this->client->getDebugInfo();
-        $this->setDebug($info);
-      }
-
+      $response = $this->invokeClientMethod('getSubscription');
       if (isset($response->data)) {
         $subscription = (array) $response->data;
         variable_set('sba_subscription', array('subscription_type' => $response->data->subscription_type, 'states_custom' => isset($response->data->states_custom) ? $response->data->states_custom : NULL));
       }
-      else {
-        $this->buildMessage($response, 'getSubscription');
-        return FALSE;
-      }
-
     }
     return $subscription;
   }
@@ -108,11 +101,7 @@ class AdvocacyApiCall {
         $committee_list = $cache->data;
       }
       else {
-        $response = $this->client->getCommitteeList();
-        if ($this->client->isDebugMode()) {
-          $info = $this->client->getDebugInfo();
-          $this->setDebug($info);
-        }
+        $response = $this->invokeClientMethod('getCommitteeList');
         if (isset($response->data)) {
           $committee_list = (array) $response->data;
           $expire = time() + 3600;
@@ -136,24 +125,26 @@ class AdvocacyApiCall {
    */
   public function getDistricts($state) {
     $options = array('All' => '- Any -');
-    $response = $this->client->getDistrictsByState($state);
 
-    if ($this->client->isDebugMode()) {
-      $info = $this->client->getDebugInfo();
-      $this->setDebug($info);
-    }
+    $response = $this->invokeClientMethod('getDistrictsByState', $state);
 
     if (isset($response->data)) {
       foreach ($response->data as $district) {
         $options[$district->DistrictDesc] = $district->DistrictDesc;
       }
     }
-    else {
-      $this->buildMessage($response, 'getDistrictsByState');
-    }
     return $options;
   }
 
+  /**
+   * Build message text for watchdog and drupal_set_message.
+   *
+   * Usually gets called from Drupal if a response does not have
+   * a data attribute.
+   *
+   * @param object $response
+   * @param string $method
+   */
   private function buildMessage($response, $method) {
     if (user_access('administer springboard advocacy')) {
       if (isset($response->error)) {
