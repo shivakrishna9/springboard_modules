@@ -1,12 +1,7 @@
 <?php
 
 /**
- * Helper function defines advocacy taxonomy fields
- * added via hook_form_alter above.
- *
- * @param $form
- * @param $form_state
- * @param $form_id
+ * Defines advocacy taxonomy fields added via hook_form_alter in .module.
  */
 function springboard_advocacy_taxonomy_form(&$form, &$form_state, $form_id) {
   form_load_include($form_state, 'inc', 'springboard_advocacy', 'includes/springboard_advocacy.webform');
@@ -27,7 +22,7 @@ function springboard_advocacy_taxonomy_form(&$form, &$form_state, $form_id) {
   // Include CSS for special layout.
   drupal_add_css(drupal_get_path('module', 'springboard_advocacy') . '/css/message-action-edit-form.css');
 
-  // Legislative Issues selection
+  // Legislative Issues selection.
   if (isset($form['field_sba_legislative_issues']) && !empty($form['field_sba_legislative_issues'][$language])) {
     // Filter out all but the top-tier terms.
     $options =& $form['field_sba_legislative_issues'][$language]['#options'];
@@ -47,25 +42,21 @@ function springboard_advocacy_taxonomy_form(&$form, &$form_state, $form_id) {
     $form['springboard_advocacy_options']['legislative_issues'] = array(
       '#type' => 'fieldset',
       '#title' => t('Choose Legislative Issue(s)'),
-      '#description' => t(
-        "Many members of Congress require an issue/topic to be selected for each message they receive. "
-        . "If your action is targeting members of Congress, please select the issue that best matches the topic of your message. "
-        . "Based on your choice, Springboard will choose the best available match on each legislator's web form."
-      ),
+      '#description' => t("Many members of Congress require an issue/topic to be selected for each message they receive. If your action is targeting members of Congress, please select the issue that best matches the topic of your message. Based on your choice, Springboard will choose the best available match on each legislator's web form."),
       '#collapsible' => TRUE,
       '#collapsed' => FALSE,
     );
     $form['field_sba_legislative_issues'][$language]['#title'] = '';
-    $form['springboard_advocacy_options']['legislative_issues']['field_sba_legislative_issues'] =
-      $form['field_sba_legislative_issues']
-    ;
+    $form['springboard_advocacy_options']['legislative_issues']['field_sba_legislative_issues']
+      = $form['field_sba_legislative_issues'];
     unset($form['field_sba_legislative_issues']);
   }
 
-  // Organization Issues selection
+  // Organization Issues selection.
   if (isset($form['field_sba_organization_issues']) && !empty($form['field_sba_organization_issues'][$language])) {
     $form['field_sba_organization_issues']['#pre_render'][] = 'springboard_advocacy_sba_organization_issues_pre_render';
-    // Remove any leading dashes from option labels. (We'll indent them in the pre-render instead.)
+    // Remove any leading dashes from option labels.
+    // (We'll indent them in the pre-render instead.)
     $options =& $form['field_sba_organization_issues'][$language]['#options'];
     foreach ($options as $tid => $label) {
       $options[$tid] = preg_replace("/^\\-+/", '', $options[$tid]);
@@ -75,28 +66,28 @@ function springboard_advocacy_taxonomy_form(&$form, &$form_state, $form_id) {
     $form['springboard_advocacy_options']['organization_issues'] = array(
       '#type' => 'fieldset',
       '#title' => t('Choose Organization Issue(s)'),
-      '#description' => t(
-        "Select the issues related to this action. These are your organization's issues, "
-        . "which can be used to generate feeds and lists of related actions in your action center "
-        . "and throughout your website."
-      ),
+      '#description' => t("Select the issues related to this action. These are your organization's issues, which can be used to generate feeds and lists of related actions in your action center and throughout your website."),
       '#collapsible' => TRUE,
       '#collapsed' => FALSE,
     );
     $form['field_sba_organization_issues'][$language]['#title'] = '';
-    $form['springboard_advocacy_options']['organization_issues']['field_sba_organization_issues'] =
-      $form['field_sba_organization_issues']
-    ;
+    $form['springboard_advocacy_options']['organization_issues']['field_sba_organization_issues']
+      = $form['field_sba_organization_issues'];
     unset($form['field_sba_organization_issues']);
   }
 }
 
 
 /**
- * @param $element
- * @return mixed
+ * Add a CSS class to issues elements.
+ *
+ * @param array $element
+ *   A taxonomy term element array.
+ *
+ * @return array
+ *   The element with a new class attribute.
  */
-function springboard_advocacy_sba_organization_issues_pre_render($element) {
+function springboard_advocacy_sba_organization_issues_pre_render(array $element) {
   $vocabulary = taxonomy_vocabulary_machine_name_load('sba_organization_issues');
   // Add indentation class to non-top-tier org issue terms.
   $terms = array();

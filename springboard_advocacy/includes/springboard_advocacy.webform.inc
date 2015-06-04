@@ -144,8 +144,13 @@ function springboard_advocacy_build_messages(array $user_message) {
 }
 
 /**
- * @param $parent_terms
+ * Parse the taxonomy tree.
+ *
+ * @param array $parent_terms
+ *   The parent terms.
+ *
  * @return array
+ *   Terms merged with their children.
  */
 function springboard_advocacy_legislative_terms($parent_terms) {
   $terms = array();
@@ -184,11 +189,15 @@ function _springboard_advocacy_legislative_terms_descendents($ancestor_tid, $tre
  *
  * Preparation for sending to target resolver.
  *
- * @param $values
- * @param $zip
- * @param $geo
+ * @param array $values
+ *    Springboard Profile Values.
+ * @param string $zip
+ *   A zip + 4 code.
+ * @param array $geo
+ *   Array of address data returned from Smarty Streets lookup.
  *
  * @return array
+ *   Contact's profile data plus smarty data.
  */
 function springboard_advocacy_build_contact($values, $zip, $geo) {
 

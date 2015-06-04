@@ -219,7 +219,7 @@ function sba_quicksign_form_alter(&$form, $form_state, $form_id) {
  * @param object $node
  *   Webform Node object.
  *
- * @param array $user_data
+ * @param array|bool $user_data
  *   User profile data to use during substitution
  */
 function sba_quicksign_form_defaults(&$form, $node, $user_data) {
@@ -330,8 +330,8 @@ function sba_quicksign_delete($nid) {
 /**
  * Indicates if a given node has quicksign enabled.
  *
- * @param object $node
- *   Node object
+ * @param object|bool $node
+ *   Node object or FALSE
  *
  * @return boolean
  *   returns TRUE if node is a quicksign node type and
@@ -343,7 +343,7 @@ function sba_quicksign_is_enabled($node) {
   }
 
   $result = db_query('SELECT quicksign_enabled FROM {sba_quicksign} WHERE nid = :nid', array(':nid' => $node->nid));
-  return (bool) $result->fetchColumn();
+  return (bool) $result->fetchCol();
 }
 
 /**

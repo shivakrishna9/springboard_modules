@@ -95,7 +95,7 @@ function springboard_advocacy_user_can_create_advocacy_type() {
 /**
  * Implements hook_springboard_admin_admin_menu_items_alter().
  *
- *   Add the advocacy links to springboard admin.
+ * Add the advocacy links to springboard admin.
  */
 function springboard_advocacy_springboard_admin_admin_menu_items_alter(&$items) {
   if (module_exists('springboard_advocacy')) {
@@ -215,11 +215,9 @@ function springboard_advocacy_views_api() {
 }
 
 /**
- * Implements hook_node_insert()
+ * Implements hook_node_insert().
  *
  *   Saves a UUID for action nodes.
- *
- * @param $node
  */
 function springboard_advocacy_node_insert($node) {
   $types = variable_get('sba_action_types', array());
@@ -429,7 +427,7 @@ function springboard_advocacy_preprocess_block_admin_display_form(&$vars) {
   foreach ($vars['block_listing'][BLOCK_REGION_NONE] as $name => $block) {
     $pos = strpos($name, 'views_sba');
     $pos2 = strpos($name, 'views_target');
-    if ($pos !==FALSE || $pos2 !== FALSE) {
+    if ($pos !== FALSE || $pos2 !== FALSE) {
       unset($vars['block_listing'][BLOCK_REGION_NONE][$name]);
     }
   }
