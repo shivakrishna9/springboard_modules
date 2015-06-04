@@ -954,7 +954,7 @@ function sba_message_action_update_7004() {
 }
 
 /**
- *  Add message action confirmation table fail message field
+ *  Add user edit flag to existing actions
  */
 function sba_message_action_update_7005() {
 
@@ -964,10 +964,12 @@ function sba_message_action_update_7005() {
   );
 
   foreach ($nodes as $node) {
+
     $nid = db_query('select nid from {webform_component}
       WHERE nid = :nid AND form_key = :key',
       array(':nid' => $node->nid, ':key' => 'sba_user_edit_flag')
     )->fetchField();
+
     if(!$nid) {
       $field = array(
         'nid' => $node->nid,
