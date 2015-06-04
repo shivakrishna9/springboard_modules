@@ -953,8 +953,33 @@ function sba_message_action_update_7004() {
   field_update_instance($instance_info);
 }
 
-//function sba_message_action_update_7005()
-//{
-//  cache_clear_all();
-//  _springboard_message_action_install_taxonomy_fields();
-//}
+/**
+ *  Add message action confirmation table fail message field
+ */
+function sba_message_action_update_7005() {
+
+  $nodes = db_query('select n.nid from {node} n
+    WHERE n.type = :type',
+    array(':type' => 'sba_message_action')
+  );
+
+  foreach ($nodes as $node) {
+    $nid = db_query('select nid from {webform_component}
+      WHERE nid = :nid AND form_key = :key',
+      array(':nid' => $node->nid, ':key' => 'sba_user_edit_flag')
+    )->fetchField();
+    if(!$nid) {
+      $field = array(
+        'nid' => $node->nid,
+        'form_key' => 'sba_user_edit_flag',
+        'pid' => 0,
+        'name' => t('User Edit Flag'),
+        'type' => 'hidden',
+        'value' => 0,
+        'weight' => 13,
+        'email' => 1,
+      );
+      webform_component_insert($field);
+    }
+  }
+}

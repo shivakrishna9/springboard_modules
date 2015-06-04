@@ -219,7 +219,7 @@ function sba_message_action_node_insert($node) {
 
     $fields[] = array(
       'nid' => $node->nid,
-      'form_key' => 'sba_did_user_edit',
+      'form_key' => 'sba_user_edit_flag',
       'pid' => 0,
       'name' => t('User Edit Flag'),
       'type' => 'hidden',
@@ -688,8 +688,8 @@ function sba_message_action_form_validate($form, &$form_state) {
     }
 
     // Set user_edited_flag
-    if ($changed) {
-      form_set_value($form['submitted']['sba_did_user_edit'], 1, $form_state);
+    if ($changed && isset($form['submitted']['sba_user_edit_flag'])) {
+      form_set_value($form['submitted']['sba_user_edit_flag'], 1, $form_state);
     }
   }
 }
