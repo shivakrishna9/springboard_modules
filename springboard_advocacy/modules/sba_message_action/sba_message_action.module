@@ -15,6 +15,8 @@ function sba_message_action_menu() {
     'page callback' => 'sba_message_action_modal_page',
     'access callback' => TRUE,
     'type' => MENU_NORMAL_ITEM,
+    'file' => 'sba_message_action.modal.inc',
+    'file path' => drupal_get_path('module', 'sba_message_action') . '/includes',
   );
 
   // Path to settings for delivery failure webform confirmation.
@@ -22,90 +24,13 @@ function sba_message_action_menu() {
     'title' => 'Message Action Default Confirmation',
     'page callback' => 'sba_message_action_settings_page',
     'access arguments' => array('administer springboard advocacy'),
+    'file' => 'sba_message_action.admin.inc',
+    'file path' => drupal_get_path('module', 'sba_message_action') . '/includes',
     'type' => MENU_NORMAL_ITEM,
-  );
-
-  // Committee Search Selector autocomplete path.
-  $items['message-action/committee/autocomplete'] = array(
-    'page callback' => '_sba_message_action_committee_autocomplete',
-    'access arguments' => array('add target to action'),
-    'type' => MENU_CALLBACK,
   );
 
   return $items;
 }
-
-/**
- * Autocomplete callback to populate committee list dropdown.
- *
- * @param string $name
- *   The value of the autocomplete textfield.
- * @param string $state
- *   The value of the state field.
- * @param string $chamber
- *   The value of the chamber field.
- */
-function _sba_message_action_committee_autocomplete($name, $state, $chamber) {
-  $matches = array();
-
-  // Retrieve committee list from cache or via API call if not cached.
-  $api_call = new AdvocacyApiCall();
-  $committee_list = $api_call->getCommittees();
-
-  // Grep the results using patterns based on form input.
-  $name_pattern = '/' . $name . '/i';
-  $state_pattern = '/\(' . $state . '\)/i';
-  $chamber_pattern = '/\(' . $chamber . '\)/i';
-
-  if (!empty($committee_list)) {
-    $results = preg_grep($name_pattern, $committee_list);
-    if ($state != 'All') {
-      $results = preg_grep($state_pattern, $results);
-    }
-    if ($chamber != 'All') {
-      $results = preg_grep($chamber_pattern, $results);
-    }
-    if (is_array($results)) {
-      $num = count($results);
-      // Limit the displayed results (there are 7,000+ committees)
-      // and create a tally message.
-      $results = array_slice($results, 0, 5);
-      $rest = $num - 5;
-      if ($rest > 0) {
-        $results['message'] = 'Plus ' . $rest . ' more. Try narrowing your search with more letters, words or filters';
-      }
-      else {
-        // Prevent the autocompelte js from bolding the last suggestion.
-        $results['message'] = '';
-      }
-      foreach ($results as $key => $row) {
-        $matches[$row] = $row;
-      }
-    }
-  }
-  drupal_json_output($matches);
-}
-
-/**
- * Multi-message popup modal callback for actions with multiple messages.
- *
- * @param bool $js
- *   Is js enabled.
- * @param int $nid
- *   The message action node ID.
- */
-function sba_message_action_modal_page($js = NULL, $nid = NULL) {
-  if ($nid == NULL) {
-    return;
-  }
-  if ($js) {
-    ctools_include('modal');
-    ctools_include('ajax');
-  }
-  $contents = views_embed_view('sba_messages_node', 'block_2', $nid);
-  ctools_modal_render(t('Possible Messages'), $contents);
-}
-
 
 /**
  * Implements hook_node_view().
@@ -136,30 +61,11 @@ function sba_message_action_node_view($node, $view_mode, $langcode) {
       }
     }
 
-    // Multi-message modal popup.
-    ctools_include('ajax');
-    ctools_include('modal');
-    ctools_modal_add_js();
-    $message_window = array(
-      'message-window-style' => array(
-        'modalSize' => array(
-          'type' => 'fixed',
-          'width' => 600,
-          'height' => 440,
-          'addWidth' => 10,
-          'addHeight' => 100,
-          'contentRight' => 0,
-          'contentBottom' => 0,
-        ),
-        'modalOptions' => array(
-          'opacity' => .4,
-          'background-color' => '#000',
-        ),
-        'animation' => 'fadeIn',
-      ),
-    );
-    drupal_add_js($message_window, 'setting');
-    ctools_add_css('springboard_message_action', 'modal');
+    if(isset($node->messages) && count($node->messages) > 1) {
+      module_load_include('inc', 'sba_message_action',
+        'includes/sba_message_action.modal');
+      sba_message_action_build_modal();
+    }
   }
 }
 
@@ -183,108 +89,8 @@ function sba_message_action_node_presave($node) {
  */
 function sba_message_action_node_insert($node) {
   if ($node->type == 'sba_message_action') {
-    module_load_include('inc', 'webform', 'includes/webform.components');
-
-    // Limit the state field to US states.
-    $fields[] = array(
-      'nid' => $node->nid,
-      'form_key' => 'sbp_state',
-      'pid' => 0,
-      'name' => t('State'),
-      'type' => 'select',
-      'mandatory' => 1,
-      'weight' => 12,
-      'email' => 1,
-      'extra' => array(
-        'options_source' => 'united_states',
-        // May have to remove some.
-        'aslist' => 'Y',
-        'multiple' => 0,
-      ),
-    );
-
-    $fields[] = array(
-      'nid' => $node->nid,
-      'form_key' => 'sbp_zip',
-      'pid' => 0,
-      'name' => t('Zip Code'),
-      'type' => 'textfield',
-      'mandatory' => 1,
-      'weight' => 13,
-      'email' => 1,
-      'extra' => array(
-        'maxlength' => 5,
-      ),
-    );
-
-    $fields[] = array(
-      'nid' => $node->nid,
-      'form_key' => 'sba_user_edit_flag',
-      'pid' => 0,
-      'name' => t('User Edit Flag'),
-      'type' => 'hidden',
-      'value' => 0,
-      'weight' => 13,
-      'email' => 1,
-    );
-
-    // Add the component to the Webform.
-    foreach ($fields as $field) {
-      // Don't insert fields if cloning.
-      if (!isset($node->map) || (isset($node->map) &&  !in_array($field['form_key'], $node->map))) {
-        $cid = webform_component_insert($field);
-        // User map the state field.
-        if ($field['form_key'] == 'sbp_state' || $field['form_key'] == 'sbp_zip') {
-          $map = array(
-            'nid' => $node->nid,
-            'cid' => $cid,
-            'map_id' => $field['form_key'],
-          );
-          drupal_write_record('webform_user_component_map', $map);
-        }
-      }
-    }
-  }
-}
-
-
-/**
- * Implements hook_webform_user_profile_fields_alter().
- *
- * Set mandatory fields.
- * Remove zip and state field temporarily so they can be altered elsewhere.
- * Set up advocacy-specific profile field salutation
- * Alter field weights.
- */
-function sba_message_action_webform_user_profile_fields_alter(&$fields, $node) {
-  if ($node->type == 'sba_message_action') {
-
-    foreach ($fields as $index => $profile_field) {
-      // Make all fields except address2 mandatory.
-      if ($profile_field['name'] != 'sbp_address_line_2') {
-        $fields[$index]['mandatory'] = 1;
-      }
-      // Setup removal of non-US provinces.
-      if ($profile_field['name'] == 'sbp_state') {
-        unset($fields[$index]);
-      }
-      // Remove zip.
-      if ($profile_field['name'] == 'sbp_zip') {
-        unset($fields[$index]);
-      }
-      if ($profile_field['name'] == 'sbp_salutation') {
-        $fields[$index]['weight'] = -6;
-      }
-      if ($profile_field['name'] == 'sbp_first_name') {
-        $fields[$index]['weight'] = -5;
-      }
-      if ($profile_field['name'] == 'sbp_last_name') {
-        $fields[$index]['weight'] = -4;
-      }
-      if ($profile_field['name'] == 'mail') {
-        $fields[$index]['weight'] = -3;
-      }
-    }
+    module_load_include('inc', 'sba_message_action', 'includes/sba_message_action.components');
+    sba_message_action_insert_components($node);
   }
 }
 
@@ -338,6 +144,38 @@ function sba_message_action_node_load($nodes, $types) {
 }
 
 /**
+ * Implements hook_preprocess_node().
+ *
+ * Define theme wrappers for non-form-layouts nodes.
+ * So they can have a "layout".
+ *
+ * Insert webform goals widget.
+ */
+function sba_message_action_preprocess_node(&$vars) {
+
+  if ($vars['node']->type == 'sba_message_action') {
+
+    // Add theme wrappers for non-form-layout layouts.
+    $vars['use_layouts'] = !empty($vars['form_layouts']) ? TRUE : FALSE;
+    if (empty($vars['use_layouts'])) {
+      $vars['content']['webform']['#theme_wrappers'][] = 'message_action_webform_wrapper';
+      $vars['content']['webform']['#form']['submitted']['#theme_wrappers'][] = 'message_action_submitted_wrapper';
+      $vars['content']['webform']['#form']['sba_messages']['#theme_wrappers'][] = 'message_action_messages_wrapper';
+
+      // Insert webform goals.
+      if (module_exists('webform_goals')) {
+        $goals = webform_goal_load_multiple($vars['node']->nid);
+        // Get the most recently enabled goal.
+        $goal = array_pop($goals);
+        if (!empty($goal)) {
+          $vars['goal'] = '<div class="wg-goal" style="display: none;" data-gid="' . $goal['gid'] . '"></div>';
+        }
+      }
+    }
+  }
+}
+
+/**
  * Implements hook_module_implements_alter().
  *
  * Needed to intercept springboard_admin_form_alter.
@@ -352,7 +190,6 @@ function sba_message_action_module_implements_alter(&$implementations, $hook) {
     $implementations['sba_message_action'] = $group;
   }
 }
-
 
 /**
  * Implements hook_form_alter().
@@ -374,74 +211,10 @@ function sba_message_action_form_alter(&$form, &$form_state, $form_id) {
 
     // Is this the user-facing form?
     $client_form = strpos($form_id, 'client_form');
-
     // Yes it is the user-facing form.
     if ($client_form !== FALSE) {
-
-      // Override core's theme_form in order to remove <form> tag
-      // and use it in a template variable defined in
-      // sba_message_action_build_preprocess and
-      // theme_message_action_form_layout_form
-      if (!empty($form['#theme_wrappers']) && !empty($form['#node']->form_layouts)) {
-        foreach ($form['#theme_wrappers'] as $key => $wrapper) {
-          if ($wrapper == 'form') {
-            unset($form['#theme_wrappers'][$key]);
-          }
-        }
-        $form['#theme_wrappers'][] = array('message_action_form_layout_form');
-      }
-
-      // Attach the JS and CSS.
-      $form['#attached']['js'][] = drupal_get_path('module', 'sba_message_action')
-        . '/js/sba_message_action.js';
-      $form['#attached']['css'][] = drupal_get_path('module', 'sba_message_action')
-        . '/css/message-modal.css';
-
-      // Is form layouts enabled?
-      if (!empty($form['#node']->form_layouts)) {
-        $form['#attached']['css'][] = drupal_get_path('module', 'sba_message_action')
-          . '/css/message-action-form-layouts.css';
-      }
-      else {
-        $form['#attached']['css'][] = drupal_get_path('module', 'sba_message_action')
-          . '/css/no-form-layouts.css';
-      }
-
-      // Create a container on the form for all messages.
-      $form['sba_messages'] = array(
-        '#type' => 'container',
-        '#tree' => TRUE,
-        '#attributes' => array(
-          'id' => array('sba-messages-form'),
-        ),
-      );
-
-      // Multiple messages for this form?
-      $multiple = count($form['#node']->messages) > 1 ? TRUE : FALSE;
-
-      if ($multiple) {
-        ctools_include('ajax');
-        ctools_include('modal');
-        $href = 'messages/nojs/' . arg(1);
-        $form['sba_messages']['multiple'] = array(
-          '#type' => 'fieldset',
-          '#title' => t('Your Message'),
-          '#attributes' => array('class' => array('sba-message')),
-        );
-        $form['sba_messages']['multiple']['message'] = array(
-          '#type' => 'item',
-          '#markup' => '<p>' . t('We have crafted multiple messages for this action. We will select the right message or messages for your legislators, or others we are targeting, based on their position on this issue, and on the address you enter.')
-            . '</p><p></p>' . ctools_modal_text_button('View all possible messages.', $href, t('View messages'), 'ctools-modal-message-window-style') . '</p>',
-        );
-      }
-
-      // Create a set of fields for each message assigned to the form.
-      foreach ($form['#node']->messages as $message) {
-        sba_message_action_message_form($form['sba_messages'], $message, $multiple);
-      }
-
-      $form['#validate'][] = 'sba_message_action_form_validate';
-      array_unshift($form['#submit'], 'sba_message_action_form_submit');
+      form_load_include($form_state, 'inc', 'sba_message_action', 'includes/sba_message_action.form');
+      sba_message_action_additional_elements($form, $form_state);
     }
   }
 
@@ -469,254 +242,6 @@ function _sba_message_action_redirect($form, &$form_state){
   $_GET['destination'] = url('admin/springboard/advocacy/message-actions/all');
 }
 
-
-/**
- * Build a form to represent each message attached to the action webform node.
- *
- * @param array $form
- *   The webform client form.
- * @param object $message
- *   The message entity.
- * @param bool $multiple
- *    Whether this webform has multiple messages.
- */
-function sba_message_action_message_form(&$form, $message, $multiple) {
-
-  // Get some message values via an entity wrapper.
-  $wrapper = entity_metadata_wrapper('sba_message', $message);
-  $subject = check_plain($wrapper->field_sba_subject->value());
-  $message_body = check_markup($wrapper->field_sba_message->value(), 'plain_text');
-  $editable_message = check_plain($wrapper->field_sba_editable_area->value());
-  $body_editable = $wrapper->field_sba_user_editable[0]->value() == 'editable' ? TRUE : FALSE;
-  $required_body = $wrapper->field_sba_editable_area_optional[0]->value() == 'required' ? TRUE : FALSE;
-  $placeholder_greeting = check_plain($wrapper->field_sba_placeholder_greeting->value());
-  $greeting = check_plain($wrapper->field_sba_greeting->value());
-  $conclusion = check_markup($wrapper->field_sba_bottom_conclusion->value(), 'plain_text');
-  $subject_editable =  $wrapper->field_sba_subject_editable->value();
-
-  // If it's a multiple message form, use a container instead of a fieldset.
-  if (!$multiple) {
-    $form['message'][$message->sba_message_id] = array(
-      '#type' => 'fieldset',
-      '#title' => t('Your Message'),
-      '#attributes' => array('class' => array('sba-message')),
-    );
-  }
-  else {
-    $form['message'][$message->sba_message_id] = array(
-      '#type' => 'container',
-      '#attributes' => array('class' => array('sba-message')),
-    );
-  }
-
-  $form['message'][$message->sba_message_id]['message_id'] = array(
-    '#type' => 'value',
-    '#value' => $message->data['message_id'],
-  );
-
-  $form['message'][$message->sba_message_id]['sba_message_id'] = array(
-    '#type' => 'value',
-    '#value' => $message->sba_message_id,
-  );
-  // The subject is editable.
-  if ($subject_editable != 'Not editable') {
-
-    // Is it required to edit the subject?
-    if ($subject_editable == 'Editing is required') {
-      $description = t('You must edit the subject line of this message before sending.');
-
-      // Validator needs this value?
-      $form['message'][$message->sba_message_id]['subject_required'] = array(
-        '#type' => 'value',
-        '#value' => 1,
-      );
-    }
-
-    $form['message'][$message->sba_message_id]['subject'] = array(
-      '#type' => 'textfield',
-      '#title' => t('Subject'),
-      '#default_value' => $subject,
-      '#description' => !empty($description) ? $description : '',
-    );
-  }
-  // The subject is not editable.
-  else {
-    // Show the non-editable subject if there aren't multiple messages.
-    if (!$multiple) {
-      $form['message'][$message->sba_message_id]['subject_show'] = array(
-        '#type' => 'item',
-        '#title' => t('Subject'),
-        '#markup' => $subject,
-      );
-    }
-
-    // The subject value field is present in either case.
-    // The value here is eventually passed to the API server.
-    $form['message'][$message->sba_message_id]['subject'] = array(
-      '#type' => 'value',
-      '#value' => $subject,
-    );
-  }
-
-  // Show the greeting field is there aren't multiple messages.
-  if (!$multiple) {
-    $form['message'][$message->sba_message_id]['greeting_show'] = array(
-      '#type' => 'item',
-      '#title' => '',
-      '#markup' => $placeholder_greeting,
-    );
-  }
-
-  // The greeting value field is present in either case.
-  // The value here is eventually passed to the API server.
-  $form['message'][$message->sba_message_id]['greeting'] = array(
-    '#type' => 'value',
-    '#value' => $greeting,
-  );
-
-  // The body value field is present in either case.
-  // The value here is eventually passed to the API server.
-  $form['message'][$message->sba_message_id]['body'] = array(
-    '#type' => 'value',
-    '#value' => $message_body,
-  );
-
-  // If not multiple we show the message body.
-  if (!empty($message_body) && !$multiple) {
-
-    // If the message body is editable, suppress the field title.
-    if ($body_editable) {
-      $title = '';
-    }
-    else {
-      $title = t('Message');
-    }
-
-    $form['message'][$message->sba_message_id]['body_show'] = array(
-      '#type' => 'item',
-      '#title' => $title,
-      '#markup' => $message_body,
-    );
-  }
-
-  if ($body_editable == 'editable' && !$multiple) {
-
-    if ($required_body) {
-      $description = t('You must edit the body of this message before sending.');
-      $required = TRUE;
-    }
-    else {
-      $description = '';
-      $required = FALSE;
-    }
-
-    $form['message'][$message->sba_message_id]['body_editable'] = array(
-      '#type' => 'textarea',
-      '#default_value' => $editable_message,
-      '#description' => $description,
-      '#required' => $required,
-    );
-
-    $form['message'][$message->sba_message_id]['body_required'] = array(
-      '#type' => 'value',
-      '#value' => $required_body,
-    );
-
-    if (!empty($conclusion)) {
-      $form['message'][$message->sba_message_id]['body_bottom'] = array(
-        '#type' => 'item',
-        '#markup' => $conclusion,
-      );
-    }
-  }
-
-  // Format the signature display.
-  if (!$multiple) {
-    $sig = strip_tags($wrapper->field_sba_signature->value());
-    $sig = str_replace('[contact:first_name]', '[First Name]', $sig);
-    $sig = str_replace('[contact:last_name]', '[Last Name]', $sig);
-    $sig = str_replace('[contact:address]', '[Your Addess]', $sig);
-    $form['message'][$message->sba_message_id]['signature'] = array(
-      '#markup' => check_markup($sig, 'plain_text'),
-    );
-  }
-
-}
-
-
-/**
- * Validation handler for message action forms.
- *
- * Checks whether editing of subject or body is required.
- *
- * @param $form
- * @param $form_state
- */
-function sba_message_action_form_validate($form, &$form_state) {
-
-  if (isset($form_state['values']['sba_messages'])) {
-    $is_single = count($form_state['values']['sba_messages']['message']) == 1 ? TRUE : FALSE;
-  }
-  if (!empty($is_single)) {
-    $message_id = array_keys($form_state['values']['sba_messages']['message']);
-    $message = $form['sba_messages']['message'][$message_id[0]];
-    $body_default = $message['body_editable']['#default_value'];
-    $body_edited = $form_state['values']['sba_messages']['message'][$message_id[0]]['body_editable'];
-    $subject_default = $message['subject']['#default_value'];
-    $subject_edited = $form_state['values']['sba_messages']['message'][$message_id[0]]['subject'];
-    $changed = FALSE;
-    // Enforce mandatory editing.
-    if ($body_edited == $body_default) {
-      if (isset($message['body_required']) && $message['body_required']['#value'] == 1) {
-        form_set_error('body_editable', t('Please personalize your message before sending.'));
-      }
-    }
-    else {
-      $changed = TRUE;
-    }
-    if ($subject_edited == $subject_default) {
-      if (isset($message['subject_required']) && $message['subject_required']['#value'] == 1) {
-          form_set_error('subject', t('Please personalize the subject line before sending your message.'));
-      }
-    }
-    else {
-      $changed = TRUE;
-    }
-
-    // Set user_edited_flag
-    if ($changed && isset($form['submitted']['sba_user_edit_flag'])) {
-      form_set_value($form['submitted']['sba_user_edit_flag'], 1, $form_state);
-    }
-  }
-}
-
-/**
- * Submit handler for message action forms.
- *
- * Capture all messages, combine with contact information and
- * submit to API.
- *
- * @param $form
- * @param $form_state
- */
-function sba_message_action_form_submit($form, &$form_state) {
-  // Create array of messages to submit for target resolution.
-  if (isset($form_state['values']['sba_messages'])) {
-    $messages = array();
-
-    foreach ($form_state['values']['sba_messages']['message'] as $id => $message) {
-      $body_editable = isset($message['body_editable']) ? $message['body_editable'] : '';
-      $messages[$id]['body'] = check_plain(sba_message_action_build_message_bodies($message['sba_message_id'], $body_editable));
-      $messages[$id]['subject'] = check_plain($message['subject']);
-    }
-    form_load_include($form_state, 'inc', 'springboard_advocacy', 'includes/springboard_advocacy.webform');
-    springboard_advocacy_send_message($messages, $form_state);
-  }
-  else {
-    drupal_set_message(t('No messages were configured for this action.'));
-  }
-}
-
 /**
  *  Implements hook_form_FORMID_alter().
  *
@@ -737,333 +262,16 @@ function sba_message_action_form_sba_message_action_node_form_alter(&$form, &$fo
  */
 function sba_message_action_form_sba_message_action_node_form_submit(&$form, &$form_state) {
   $path = 'node/' . $form_state['nid'] . '/messages';
- $form_state['redirect'] = $path;
-}
-
-
-/**
- * Helper function to build message bodies.
- *
- * Combines user edited message data with other static properties
- * to create the final message to deliver to the transaction server.
- *
- * @param int $sba_message_id
- *   The message ID.
- * @param string $body_editable
- *    The user-editable body.
- *
- * @return string
- *   The message in string format.
- */
-function sba_message_action_build_message_bodies($sba_message_id, $body_editable) {
-  // Load the message entity using the message entity id. We'll use the entity
-  // to construct the full message.
-  $message = entity_load('sba_message', array($sba_message_id));
-  $message = array_shift($message);
-  $wrapper = entity_metadata_wrapper('sba_message', $message);
-
-  $user_message = array();
-  $user_message[] = $wrapper->field_sba_greeting->value();
-  $user_message[] = $wrapper->field_sba_message->value();
-  $user_message[] = $body_editable;
-  $user_message[] = $wrapper->field_sba_bottom_conclusion->value();
-  $user_message[] = $wrapper->field_sba_signature->value();
-
-  $user_message = implode("\n\n", array_filter($user_message));
-
-  return $user_message;
+  $form_state['redirect'] = $path;
 }
 
 /**
  * Implements hook_form_layouts_info().
  */
 function sba_message_action_form_layouts_info() {
-  $templates = array();
-  $templates['two_column_message_left_vertical'] = array(
-    'name' => t('Call to action top, message left, vertical user form right'),
-    'types' => array('sba_message_action'),
-    'theme' => 'two_column_message_left_vertical',
-    'pattern' => 'two_column_message_left_vertical\'0-9\'+',
-    'template' => 'two-column-message-left-vertical',
-    'path' => drupal_get_path('module', 'sba_message_action') . '/templates/form_layouts',
-    'hide title' => FALSE,
-  );
-
-  $templates['two_column_message_right_vert'] = array(
-    'name' => t('Call to action top, message right, vertical user form left'),
-    'types' => array('sba_message_action'),
-    'theme' => 'two_column_message_right_vert',
-    'pattern' => 'two_column_message_right_vert\'0-9\'+',
-    'template' => 'two-column-message-right-vertical',
-    'path' => drupal_get_path('module', 'sba_message_action') . '/templates/form_layouts',
-    'hide title' => FALSE,
-  );
-
-  $templates['two_column_message_left'] = array(
-    'name' => t('Call to action top, message left, horizontal user form right'),
-    'types' => array('sba_message_action'),
-    'theme' => 'two_column_message_left',
-    'pattern' => 'two_column_message_left\'0-9\'+',
-    'template' => 'two-column-message-left',
-    'path' => drupal_get_path('module', 'sba_message_action') . '/templates/form_layouts',
-    'hide title' => FALSE,
-  );
-
-  $templates['two_column_message_right'] = array(
-    'name' => t('Call to action top, message right, horizontal user form left'),
-    'types' => array('sba_message_action'),
-    'theme' => 'two_column_message_right',
-    'pattern' => 'two_column_message_right\'0-9\'+',
-    'template' => 'two-column-message-right',
-    'path' => drupal_get_path('module', 'sba_message_action') . '/templates/form_layouts',
-    'hide title' => FALSE,
-  );
-
-  $templates['two_column_body_left'] = array(
-    'name' => t('Call to action left, message and user form right.'),
-    'types' => array('sba_message_action'),
-    'theme' => 'two_column_body_left',
-    'pattern' => 'two_column_body_left\'0-9\'+',
-    'template' => 'two-column-body-left',
-    'path' => drupal_get_path('module', 'sba_message_action') . '/templates/form_layouts',
-    'hide title' => FALSE,
-  );
-
-  $templates['two_column_body_right'] = array(
-    'name' => t('Call to action right, message and user form left'),
-    'types' => array('sba_message_action'),
-    'theme' => 'two_column_body_right',
-    'pattern' => 'two_column_body_right\'0-9\'+',
-    'template' => 'two-column-body-right',
-    'path' => drupal_get_path('module', 'sba_message_action') . '/templates/form_layouts',
-    'hide title' => FALSE,
-  );
-
+  module_load_include('inc', 'sba_message_action', 'includes/sba_message_action.form_layouts');
+  $templates = sba_message_action_form_layouts();
   return $templates;
-}
-
-/**
- * @param $vars.
- */
-function sba_message_action_preprocess_two_column_message_right(&$vars) {
-  sba_message_action_build_preprocess($vars);
-}
-
-/**
- * @param $vars.
- */
-function sba_message_action_preprocess_two_column_message_left(&$vars) {
-  sba_message_action_build_preprocess($vars);
-}
-
-/**
- * Implements hook_preprocess_hook().
- *
- * Form layouts preprocess function.
- *
- * @param $vars
- */
-function sba_message_action_preprocess_two_column_message_left_vertical(&$vars) {
-  sba_message_action_build_preprocess($vars);
-}
-
-/**
- * Implements hook_preprocess_hook().
- *
- * Form layouts preprocess function.
- *
- * @param $vars
- */
-function sba_message_action_preprocess_two_column_message_right_vert(&$vars) {
-  sba_message_action_build_preprocess($vars);
-}
-
-/**
- * Implements hook_preprocess_hook().
- *
- * Form layouts preprocess function.
- */
-function sba_message_action_preprocess_two_column_body_left(&$vars) {
-  sba_message_action_build_preprocess($vars);
-}
-
-/**
- * Implements hook_preprocess_hook().
- *
- * Form layouts preprocess function.
- */
-function sba_message_action_preprocess_two_column_body_right(&$vars) {
-  sba_message_action_build_preprocess($vars);
-}
-
-/**
- * Helper function for form layouts preprocessors.
- */
-function sba_message_action_build_preprocess(&$vars) {
-
-  $vars['quicksign'] = '';
-  if (module_exists('sba_quicksign') && sba_quicksign_is_enabled($vars['element']['#node'])) {
-    $quicksign = drupal_get_form('sba_quicksign_form');
-    $vars['quicksign'] = drupal_render($quicksign);
-  }
-
-  $element = $vars['element'];
-
-  // Override core's theme_form in order to remove <form> tag
-  // and use it in a template variable.
-  // see: theme_message_action_form_layout_form
-  if (isset($element['#action'])) {
-    $element['#attributes']['action'] = drupal_strip_dangerous_protocols($element['#action']);
-  }
-  element_set_attributes($element, array('method', 'id'));
-  if (empty($element['#attributes']['accept-charset'])) {
-    $element['#attributes']['accept-charset'] = "UTF-8";
-  }
-  $vars['open_form_tag']  = '<form' . drupal_attributes($element['#attributes']) . '><div>';
-  $vars['close_form_tag'] = '</div></form>';
-
-  $node = $element['#node'];
-  $vars['webform'] = drupal_render($element['submitted']);
-  $vars['message_fieldset'] = drupal_render($element['sba_messages']);
-  $vars['form'] = $element;
-  $vars['social'] = '';
-  // Insert social icons.
-  if (module_exists('sb_social')) {
-    $social_enabled = in_array($node->type, array_filter(variable_get('springboard_social_enabled_content_types', array())));
-    $social_configured = variable_get('springboard_social_addthis_profile_id', FALSE);
-    if ($social_enabled && !empty($social_configured)) {
-      $vars['social'] = token_replace('[sb_social:share_links]', array('node' => $node));
-    }
-  }
-
-  // Fieldset legends.
-  $vars['form_legend'] = t('Take Action Now!');
-  $vars['user_legend'] = t('Your Information');
-  // We remove image field in the default node--sba-message-action.tpl.php
-  // and put it into form layouts here.
-  $image_field = field_get_items('node', $node, 'field_message_action_img');
-  $image = field_view_value('node', $node, 'field_message_action_img', $image_field[0]);
-  if (!empty($image['#item'])) {
-    $vars['image'] = drupal_render($image);
-  }
-
-  // We remove call to action field in the default
-  // node--sba-message-action.tpl.php
-  // and put it into form layouts here.
-  $call_to_action = field_get_items('node', $node, 'field_message_call_to_action');
-  $call = field_view_value('node', $node, 'field_message_call_to_action', $call_to_action[0]);
-  $vars['call'] = drupal_render($call);
-
-  // We remove call to action field in the
-  // default node--sba-message-action.tpl.php
-  // and put it into form layouts here.
-  $body_field = field_get_items('node', $node, 'body');
-  $body = field_view_value('node', $node, 'body', $body_field[0]);
-  $vars['body'] = drupal_render($body);
-
-  // Insert webform goals.
-  if (module_exists('webform_goals')) {
-    $goals = webform_goal_load_multiple($node->nid);
-    $goal = array_pop($goals);
-    // Get the most recently enabled goal.
-    if (!empty($goal)) {
-      $vars['goal'] = '<div class="wg-goal" style="display: none;" data-gid="' . $goal['gid'] . '"></div>';
-    }
-  }
-}
-
-/**
- * Override core's theme_form in order to remove <form> tag.
- *
- * And use it in a template variable defined in
- * sba_message_action_build_preprocess.
- *
- * @param array $vars
- *   The template vars.
- *
- * @return mixed
- *   The form without the form tags.
- */
-function theme_message_action_form_layout_form(array $vars) {
-  $element = $vars['element'];
-
-  // core's version:
-  //  if (isset($element['#action'])) {
-  //    $element['#attributes']['action'] = drupal_strip_dangerous_protocols($element['#action']);
-  //  }
-  //  element_set_attributes($element, array('method', 'id'));
-  //  if (empty($element['#attributes']['accept-charset'])) {
-  //    $element['#attributes']['accept-charset'] = "UTF-8";
-  //  }
-  //return '<form' . drupal_attributes($element['#attributes']) . '><div>' . $element['#children'] . '</div></form>';
-
-  return $element['#children'];
-}
-
-/**
- * Implements hook_preprocess_node().
- *
- * Define theme wrappers for non-form-layouts nodes.
- * So they can have a "layout".
- */
-function sba_message_action_preprocess_node(&$vars) {
-
-  if ($vars['node']->type == 'sba_message_action') {
-    $vars['use_layouts'] = !empty($vars['form_layouts']) ? TRUE : FALSE;
-    if (empty($vars['use_layouts'])) {
-      $vars['content']['webform']['#theme_wrappers'][] = 'message_action_webform_wrapper';
-      $vars['content']['webform']['#form']['submitted']['#theme_wrappers'][] = 'message_action_submitted_wrapper';
-      $vars['content']['webform']['#form']['sba_messages']['#theme_wrappers'][] = 'message_action_messages_wrapper';
-
-      // Insert webform goals.
-      if (module_exists('webform_goals')) {
-        $goals = webform_goal_load_multiple($vars['node']->nid);
-        // Get the most recently enabled goal.
-        $goal = array_pop($goals);
-        if (!empty($goal)) {
-          $vars['goal'] = '<div class="wg-goal" style="display: none;" data-gid="' . $goal['gid'] . '"></div>';
-        }
-      }
-    }
-  }
-}
-
-
-/**
- * Theme wrapper to create "Your Information" fieldset.
- *
- * And fluid bootstrap divs on non-form-layout nodes.
- *
- * @param array $vars
- *
- * @return string
- */
-function theme_message_action_submitted_wrapper($vars) {
-  $legend = t('Your Information');
-  return '<div id = "left" class = "span5"><fieldset id="your-information-wrapper" class = "form-wrapper"><legend>' . $legend . '</legend>' . $vars['element']['#children']  . '</fieldset></div>';
-}
-
-/**
- * Theme wrapper to create fluid bootstrap divs around "Your Message" fieldset
- * on non-form-layout nodes.
- *
- * @param $vars
- * @return string
- */
-function theme_message_action_messages_wrapper($vars) {
-  return '<div id = "right" class = "span7">' . $vars['element']['#children']  . '</div>';
-}
-
-/**
- * Theme wrapper to create "Take Action Now" fieldset
- * and fluid bootstrap divs on non-form-layout nodes.
- *
- * @param $vars
- * @return string
- */
-function theme_message_action_webform_wrapper($vars) {
-  $legend = t('Take action now');
-  return ' <div class="row-fluid"><fieldset id="take-action-wrapper" class = "form-wrapper"><legend>' . $legend . '</legend>' . $vars['element']['#children']  . '</fieldset></div>';
 }
 
 /**
@@ -1074,17 +282,61 @@ function sba_message_action_theme() {
   return array(
     'message_action_submitted_wrapper' => array(
       'render element'  => 'element',
+      'file' => 'includes/sba_message_action.form_layouts.inc',
     ),
     'message_action_messages_wrapper' => array(
       'render element'  => 'element',
+      'file' => 'includes/sba_message_action.form_layouts.inc',
     ),
     'message_action_webform_wrapper' => array(
       'render element'  => 'element',
+      'file' => 'includes/sba_message_action.form_layouts.inc',
     ),
     'message_action_form_layout_form' => array(
       'render element' => 'element',
+      'file' => 'includes/sba_message_action.form_layouts.inc',
     ),
   );
+}
+
+/**
+ * Implements hook_webform_user_profile_fields_alter().
+ *
+ * Set mandatory fields.
+ * Remove zip and state field temporarily so they can be altered elsewhere.
+ * Set up advocacy-specific profile field salutation
+ * Alter field weights.
+ */
+function sba_message_action_webform_user_profile_fields_alter(&$fields, $node) {
+  if ($node->type == 'sba_message_action') {
+
+    foreach ($fields as $index => $profile_field) {
+      // Make all fields except address2 mandatory.
+      if ($profile_field['name'] != 'sbp_address_line_2') {
+        $fields[$index]['mandatory'] = 1;
+      }
+      // Setup removal of non-US provinces.
+      if ($profile_field['name'] == 'sbp_state') {
+        unset($fields[$index]);
+      }
+      // Remove zip.
+      if ($profile_field['name'] == 'sbp_zip') {
+        unset($fields[$index]);
+      }
+      if ($profile_field['name'] == 'sbp_salutation') {
+        $fields[$index]['weight'] = -6;
+      }
+      if ($profile_field['name'] == 'sbp_first_name') {
+        $fields[$index]['weight'] = -5;
+      }
+      if ($profile_field['name'] == 'sbp_last_name') {
+        $fields[$index]['weight'] = -4;
+      }
+      if ($profile_field['name'] == 'mail') {
+        $fields[$index]['weight'] = -3;
+      }
+    }
+  }
 }
 
 /**
@@ -1096,232 +348,17 @@ function sba_message_action_theme() {
  * @param $form_state
  */
 function sba_message_action_form_webform_configure_form_alter(&$form, &$form_state) {
-
   if ($form['#node']->type == 'sba_message_action') {
-    $form['submission']['confirmation']['#weight'] = -2;
-    // Does this node have a custom confirmation record?
-    $custom_status = isset($form['#node']->custom_confirmation) ? $form['#node']->custom_confirmation : 0;
-
-    $form['submission']['confirmation_fail'] = array(
-      '#type' => 'fieldset',
-      '#weight' => -1,
-      '#tree' =>TRUE,
-      '#prefix' => '<div id="confirmation-div">',
-      '#suffix' => '</div>',
-    );
-
-    // Add the ajax-enabled custom confirmation checkbox with a default value.
-    $form['submission']['confirmation_fail']['custom_confirmation'] = array(
-      '#type' => 'checkbox',
-      '#title' => t('Use custom failure message'),
-      '#weight' => 6,
-      '#default_value' => $custom_status,
-      '#ajax' => array(
-        'callback' => 'sba_message_action_form_webform_configure_callback',
-        'wrapper' => 'confirmation-div',
-        'method' => 'replace',
-        'effect' => 'fade',
-      ),
-    );
-
-    if ($custom_status == 1) {
-      $default = $form['#node']->custom_fail_message;
-    }
-    else {
-      $default = variable_get('sba_message_action_confirm', '');
-    }
-    //Alter the confirmation textarea to have an ajax wrapper and drupal_process_states array.
-    $form['submission']['confirmation_fail']['fail_message'] = array(
-      '#type' => 'textarea',
-      '#title' => 'Confirmation failure message',
-      '#prefix' => '<p>Message to be shown to the user if the action has no valid recipients.</p>',
-      '#default_value' => $default,
-      '#rows' => 10,
-      '#cols' => 60,
-      '#states' => array(
-         'disabled' => array(
-          ':input[name="confirmation_fail[custom_confirmation]"]' => array('checked' => FALSE),
-        ),
-      ),
-    );
-
-    // Intercept the Ajax reload and change the confirmation message value according to confirmation status.
-    $new_custom_status = isset($form_state['values']['confirmation_fail']['custom_confirmation']) ? $form_state['values']['confirmation_fail']['custom_confirmation'] : NULL;
-
-    if ($new_custom_status === 1 ) {
-     unset($form_state['input']['confirmation_fail']['fail_message']);  // Value does not get reset without this.
-      // Use custom message is enabled so use the local node's confirmation message
-      $form['submission']['confirmation_fail']['fail_message']['#default_value'] = $form['#node']->custom_fail_message;
-    }
-    elseif ($new_custom_status === 0 ) {
-      unset($form_state['input']['confirmation_fail']['fail_message']);
-      // Use custom message is disabled so use the global confirmation message
-      $form['submission']['confirmation_fail']['fail_message']['#default_value'] =   variable_get('sba_message_action_confirm', '');
-    }
-    // Add a custom submit function to save the confirmation status value.
-    $form['#submit'][] = 'sba_message_confirmation_submit';
-
-    // Need this to alter the filter format box
-    $form['#after_build'][] = 'sba_message_action_configure_form_after_build';
-
+    form_load_include($form_state, 'inc', 'sba_message_action','includes/sba_message_action.confirmations');
+    sba_message_action_confirmation($form, $form_state);
   }
 }
 
 /**
- * Some onerous form manipulations in order to get the webform confirmation failure
- * message form to display nicely.
- * @param $element
- * @return mixed
- */
-function sba_message_action_configure_form_after_build($element) {
-  $element['submission']['confirmation']['format']['#collapsible'] = TRUE;
-  $element['submission']['confirmation']['format']['#collapsed'] = TRUE;
-  $element['submission']['confirmation']['format']['#attached']['library'][] =
-    array('system', 'drupal.collapse');
-  $element['submission']['confirmation']['format']['#title'] = 'Text Format';
-  $element['submission']['confirmation']['format']['#weight'] = 20;
-  $element['submission']['confirmation']['format']['#attributes']['class'][] = 'collapsible';
-  $element['submission']['confirmation']['format']['#attributes']['class'][] = 'collapsed';
-  $element['submission']['confirmation']['value']['#title'] = 'Confirmation success message';
-  $element['submission']['confirmation']['value']['#description'] = $element['submission']['confirmation']['#description'];
-  unset($element['submission']['confirmation']['#description']);
-  return $element;
-}
-
-
-
-/**
- * Ajax callback for webform confirmation field which has been altered above
- * to be an ajax field.
- * @param $form
- * @param $form_state
- * @return mixed
- */
-function sba_message_action_form_webform_configure_callback($form, $form_state) {
-  return $form['submission']['confirmation_fail'];
-}
-
-/**
- * Submit callback for webform settings page
- * If this form has a custom confirmation overriding the global confirmation, save
- * a record registering that status.
- * @param $form
- * @param $form_state
- */
-function sba_message_confirmation_submit($form, $form_state) {
-
-  if (isset($form_state['values']['confirmation_fail']['custom_confirmation'])) {
-    $record = array(
-      'nid' => $form['#node']->nid,
-      'custom_confirmation' => $form_state['values']['confirmation_fail']['custom_confirmation'],
-      'fail_message' => $form_state['values']['confirmation_fail']['fail_message'],
-
-    );
-    if (isset($form['#node']->custom_confirmation)) {
-      drupal_write_record('sba_message_action_confirm', $record, 'nid');
-      }
-    else {
-      drupal_write_record('sba_message_action_confirm', $record);
-    }
-  }
-}
-
-/**
- * Message action settings page, menu callback.
+ * Implements hook_preprocess_hook().
  *
- * @return array
- */
-function sba_message_action_settings_page() {
-  $build = array();
-  $build['content'] = array(
-    'page_description' => array(
-      '#id' => 'message-action-settings-page',
-      '#type' => 'markup',
-      '#markup' => '<p>' . t('Configure confirmation settings for Message Actions.'),
-      '#prefix' => '<div class="message-action-settings-page">',
-      '#suffix' => '</div>',
-    ),
-    'springboard_advocacy_settings_form' => drupal_get_form('sba_message_action_settings_form'),
-  );
-  return $build;
-}
-
-/**
- * Message action settings form
- * Provides a textarea for a global confirmation message
- * and available tokens.
- * @return mixed
- */
-function sba_message_action_settings_form() {
-
-  //Create the confirmation form textarea
-  $form['sba_message_action_confirm'] = array(
-    '#type' => 'textarea',
-    '#title' => t('Default Message Action Confirmation Failure Message'),
-    '#default_value' => variable_get('sba_message_action_confirm', ''),
-  );
-
-  //Create the token fieldset
-  $form['template']['tokens'] = array(
-    '#type' => 'fieldset',
-    '#title' => t('Available tokens'),
-    '#collapsible' => TRUE,
-    '#collapsed' => TRUE,
-    '#weight' => 9,
-  );
-
-  //Get the node tokens.
-  $token_set = array('node');
-  $form['template']['tokens']['tokens'] = array(
-    '#type' => 'item',
-    '#title' => t('Drupal tokens'),
-    '#description' => theme('token_tree', array('token_types' => $token_set, 'recursion_limit' => 2, 'click_insert' => FALSE)),
-  );
-  // Get the webform tokens.
-  $webform_token_help = theme('webform_token_help', array());
-  $webform_token_help = str_replace('%post', '%value', $webform_token_help);
-  $webform_token_help = str_replace('POST ', '', $webform_token_help);
-  $form['template']['tokens']['webform_tokens'] = array(
-    '#type' => 'item',
-    '#title' => t('Webform tokens'),
-    '#description' => $webform_token_help,
-  );
-
-  $form['#submit'][] = 'sba_message_action_settings_form_submit';
-  return system_settings_form($form);
-}
-
-
-/**
- * Submit function for message action settings.
- *
- * Updates all message action nodes which do not use a custom confirmation
- * with the global confirmation.
- * @param $form
- * @param $form_state
- */
-function sba_message_action_settings_form_submit($form, $form_state) {
-  // Get all action node nids that do not have a custom confirmation record.
-  $result = db_query('SELECT n.nid, s.custom_confirmation FROM {node} n
-    LEFT JOIN {sba_message_action_confirm} s
-    ON s.nid = n.nid WHERE n.type = :type && (s.custom_confirmation = 0
-    OR s.nid IS NULL)', array(':type' => 'sba_message_action'));
-
-  // Update the results with the global confirmation.
-  foreach ($result as $node) {
-    $record = array(
-      'nid' => $node->nid,
-      'fail_message' => variable_get('sba_message_action_confirm', ''),
-    );
-      drupal_write_record('sba_message_action_confirm', $record, 'nid');
-  }
-}
-
-/**
- * Implements hook_preprocess_hook
  * Get the fail message to show on webform confirmation page
  * if there are no valid message recipients
- * @param $vars
  */
 function sba_message_action_preprocess_webform_confirmation(&$vars) {
   if ($vars['node']->type == 'sba_message_action' && empty($_SESSION['message_recipients'])) {
@@ -1337,76 +374,33 @@ function sba_message_action_preprocess_webform_confirmation(&$vars) {
  * Disable deletion of required advocacy webform fields.
  */
 function sba_message_action_form_webform_component_delete_form_alter(&$form, &$form_state, $form_id) {
-
   if ($form['node']['#value']->type == 'sba_message_action') {
-
-    $required_fields =  array(
-      'sbp_salutation' => 'sbp_salutation',
-      'sbp_first_name' => 'sbp_first_name',
-      'sbp_last_name' => 'sbp_last_name',
-      'mail' => 'mail',
-      'sbp_address' => 'sbp_address',
-      'sbp_city' => 'sbp_city',
-      'sbp_state' => 'sbp_state',
-      'sbp_zip' => 'sbp_zip',
-      'sbp_phone' => 'sbp_phone',
-    );
-
-    $cid = $form['component']['#value']['cid'];
-    $component = $form['node']['#value']->webform['components'][$cid];
-
-    if (in_array($component['form_key'], $required_fields)) {
-      $message = t('<strong>!name</strong> is a required field and cannot be deleted from this form.',
-        array('!name' => $component['name']));
-      $form['description']['#markup'] = $message;
-      unset($form['actions']['submit']);
-    }
+    form_load_include($form_state, 'inc', 'sba_message_action', 'includes/sba_message_action.components');
+    sba_message_action_prevent_component_delete($form, $form_state);
   }
 }
-
 
 /**
  * Implements hook_form_webform_component_edit_form_alter.
  *
  * Disable form-key editing and un-mandatory-ifying of certain profile fields.
- * @param $form
- * @param $form_state
- * @param $form_id
  */
 function sba_message_action_form_webform_component_edit_form_alter(&$form, &$form_state, $form_id) {
-  $locked_fields = array(
-    'sbp_salutation', 'sbp_first_name', 'sbp_last_name', 'mail', 'sbp_address',
-    'sbp_city', 'sbp_state', 'sbp_zip', 'sbp_phone'
-  );
-  if (in_array($form['form_key']['#default_value'], $locked_fields)) {
-    // Check the node type.
-    $node = node_load($form['nid']['#value']);
-    if ($node->type == 'sba_message_action') {
-      $form['form_key']['#disabled'] = TRUE;
-      $form['validation']['mandatory']['#disabled'] = TRUE;
-    }
+  $node = node_load($form['nid']['#value']);
+  if ($node->type == 'sba_message_action') {
+    form_load_include($form_state, 'inc', 'sba_message_action', 'includes/sba_message_action.components');
+    sba_message_action_component_edit_lock($form);
   }
 }
-
 
 /**
  * Implements hook_form_webform_components_form_alter().
  *
  * Disable un-mandatory-ifying of certain profile fields.
- * @param $form
- * @param $form_state
- * @param $form_id
  */
 function sba_message_action_form_webform_components_form_alter(&$form, &$form_state, $form_id) {
-  $locked_fields = array(
-    'sbp_salutation', 'sbp_first_name', 'sbp_last_name', 'mail', 'sbp_address',
-    'sbp_city', 'sbp_state', 'sbp_zip', 'sbp_phone'
-  );
   if ($form['#node']->type == 'sba_message_action') {
-    foreach ($form['#node']->webform['components'] as $cid => $component) {
-      if (in_array($component['form_key'], $locked_fields)) {
-        $form['components'][$cid]['mandatory']['#disabled'] = TRUE;
-      }
-    }
+    form_load_include($form_state, 'inc', 'sba_message_action', 'includes/sba_message_action.components');
+    sba_message_action_component_overview_lock($form);
   }
 }
