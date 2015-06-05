@@ -871,7 +871,9 @@ function fundraiser_commerce_fundraiser_donation_get_donation($donation) {
 
   // Reverse the work done by commerce_currency_decimal_to_amount($donation->donation['amount'], $donation->donation['currency'])
   // So we have the correct decimaled value.
-  $donation->donation['amount'] = commerce_currency_amount_to_decimal($order_total['amount'], $order_total['currency_code']);
+  // Note that commerce_currency_amount_to_decimal() does not pad the decimal
+  // places, but commerce_currency_format() does. (ie. 10.5 vs $10.50).
+  $donation->donation['amount'] = number_format(commerce_currency_amount_to_decimal($order_total['amount'], $order_total['currency_code']), 2);
   $donation->donation['currency'] = commerce_currency_load($order_total['currency_code']);
   $donation->donation['amount_formatted'] = commerce_currency_format($order_total['amount'], $order_total['currency_code']);
 
@@ -883,10 +885,10 @@ function fundraiser_commerce_fundraiser_donation_get_donation($donation) {
     if ($line_item_wrapper->type->value() == 'donation' && $line_item_wrapper->quantity->value() > 1) {
       // Reset the donation amount and quantity from this line item
       $donation->donation['quantity'] = $line_item_wrapper->quantity->value();
-      $donation->donation['amount'] = commerce_currency_amount_to_decimal(
+      $donation->donation['amount'] = number_format(commerce_currency_amount_to_decimal(
         $line_item_wrapper->commerce_unit_price->amount->value() * $line_item_wrapper->quantity->value(),
         $line_item_wrapper->commerce_unit_price->currency_code->value()
-      );
+      ), 2);
       $donation->donation['currency'] = commerce_currency_load($line_item_wrapper->commerce_unit_price->currency_code->value());
     }
   }
