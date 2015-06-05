@@ -33,7 +33,29 @@ function sba_message_action_menu() {
     'type' => MENU_CALLBACK,
   );
 
+  $items['node/%/performance'] = array(
+    'title' => 'Performance',
+    'page arguments' => array(1),
+    'page callback' => 'sba_message_action_performance_page',
+    'type' => MENU_LOCAL_TASK,
+    'access callback' => 'sba_message_action_report_access',
+    'access arguments' => array(1),
+    'file' => 'includes/sba_message_action.reports.inc',
+    'weight' => 10,
+  );
+
   return $items;
+}
+
+/**
+ * Access callback handler for the message action performance tab.
+ */
+function sba_message_action_report_access($nid) {
+  $node = node_load($nid);
+  if ($node->type == 'sba_message_action' && user_access('view message action reports')) {
+    return TRUE;
+  }
+  return FALSE;
 }
 
 /**
