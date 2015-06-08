@@ -695,7 +695,7 @@ function fundraiser_webform_fundraiser_donation_validate($form, $form_state) {
   if ($check_errors || $errors) {
 
     // Don't log during ajax validation or if logging is disabled.
-    if ($form_state['submitted'] && variable_get('fundraiser_log_local_validation_errors', TRUE)) {
+    if ($form_state['submitted'] && variable_get('fundraiser_log_local_validation_errors', FALSE)) {
       $message = "The following donation form fields failed local validation:\n\n";
 
       $validation_errors = is_array($check_errors) ? array_keys($check_errors) : array();
