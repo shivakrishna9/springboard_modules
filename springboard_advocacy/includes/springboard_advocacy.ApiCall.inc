@@ -27,7 +27,7 @@ class AdvocacyApiCall {
   public function invokeClientMethod($method) {
 
     $args = func_get_args();
-    unset($args[0]);
+    array_shift($args);
 
     $response = call_user_func_array(array($this->client, $method), $args);
 
