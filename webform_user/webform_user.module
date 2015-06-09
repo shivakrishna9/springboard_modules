@@ -1196,19 +1196,35 @@ function _webform_user_is_webform_user_session_store() {
 }
 
 /**
- * Helper function, return a map of webform components to user profile fields.
+ * Get an array of webform component values keyed to user profile fields.
+ *
+ * @param int $nid
+ *   Node ID. Used to get the webform component to user profile map.
+ * @param array $fields
+ *   The webform component fields, keyed by the webform form key.
+ * @return array
+ *   An array of field valudes keyed by user profile field names.
  */
 function _webform_user_get_map($nid, $fields) {
-  $map = webform_user_user_map($nid);
-  if ($map) {
-    foreach ($map as $key => $value) {
+  $webform_map = webform_user_user_map($nid);
+  $user_map = array();
+
+  if ($webform_map) {
+    // If address is set in the fields but not address line 2,
+    // then set address line 2 to an empty string so it'll overwrite the
+    // existing value.
+    if (isset($fields['address']) && !isset($fields['address_line_2'])) {
+      $fields['address_line_2'] = '';
+    }
+
+    foreach ($webform_map as $key => $value) {
       if (isset($fields[$key])) {
-        $map2[$value] = $fields[$key];
+        $user_map[$value] = $fields[$key];
       }
     }
-    return $map2;
   }
-  return array();
+
+  return $user_map;
 }
 
 /**
@@ -1225,13 +1241,6 @@ function _webform_user_validate_email($mail) {
 function _webform_user_save_profile_map($uid, &$map) {
   // The saved map has to handle saving to both profile2 / entity fields. And profile.module.
   if ($map) {
-
-    // Add the address line 2 field to the map because we want to accept
-    // blank values for it.
-    if (isset($map['sbp_address']) && !isset($map['sbp_address_line_2'])) {
-      $map['sbp_address_line_2'] = '';
-    }
-
     // First loop through the map and fields to grab results.
     $account = user_load($uid);
     $profile_values = array();
@@ -1442,7 +1451,12 @@ function _webform_user_delete_node_values($node) {
 }
 
 /**
- * Database function, creates an array to map webform component fields to user profile fields from DB.
+ * Creates an array to map webform component fields to user profile fields.
+ *
+ * @param int $nid
+ *   The node ID to lookup.
+ * @return array
+ *   An array of fields names or map ids, keyed by webform form id.
  */
 function webform_user_user_map($nid) {
   $map = array();
