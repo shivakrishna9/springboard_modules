@@ -1170,19 +1170,23 @@ function sba_message_action_update_7005() {
   }
 }
 
-function sba_message_action_update_7006() {
-  $taxonomy_types = variable_get('springboard_taxonomy_node_types', array());
-  $taxonomy_types = array_merge($taxonomy_types, array('sba_message_action' => 'sba_message_action'));
-  variable_set('springboard_taxonomy_node_types', array_unique($taxonomy_types));
-}
 
 /**
  * Enable springboard_taxonomy dependency
  */
-function sba_message_action_update_7007() {
+function sba_message_action_update_7006() {
   if(!module_exists('springboard_taxonomy')) {
     module_enable(array('springboard_taxonomy'));
   }
+}
+
+/**
+ * add message action to taxonomy node types.
+ */
+function sba_message_action_update_7007() {
+  $taxonomy_types = variable_get('springboard_taxonomy_node_types', array());
+  $taxonomy_types = array_merge($taxonomy_types, array('sba_message_action' => 'sba_message_action'));
+  variable_set('springboard_taxonomy_node_types', array_unique($taxonomy_types));
 }
 
 /**
