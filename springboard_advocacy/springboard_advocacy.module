@@ -294,11 +294,6 @@ function springboard_advocacy_form_alter(&$form, &$form_state, $form_id) {
     $form['#submit'][] = 'springboard_advocacy_settings_submit';
   }
 
-  if (!empty($form['#node_edit_form']) && $form['#node']->type == 'sba_message_action') {
-    module_load_include('inc', 'springboard_advocacy', 'includes/springboard_advocacy.taxonomy');
-    springboard_advocacy_taxonomy_form($form, $form_state, $form_id);
-  }
-
   // Assign each message to a hidden form field on the user-facing form.
   $types = variable_get('sba_action_types', array());
   if (isset($form['#node']) && in_array($form['#node']->type, $types)) {
