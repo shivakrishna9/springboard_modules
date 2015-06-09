@@ -16,7 +16,6 @@ define('FUNDRAISER_SUSTAINERS_RETRY_STATUS', 'retry');
 define('FUNDRAISER_SUSTAINERS_FAILED_STATUS', 'failed');
 define('FUNDRAISER_SUSTAINERS_SUCCESS_STATUS', 'success');
 
-
 /**
  * Implements hook_cron().
  */
@@ -2592,7 +2591,13 @@ function fundraiser_sustainers_auto_cancel($donation) {
     watchdog('fundraiser_sustainers', 'Donation cancelled for #@did. Reason: @reason',
       array('@did' => $donation->did, '@reason' => $reason));
   }
-
+  // Invoke a rules event on auto cancellations.
+  if (module_exists("rules")) {
+    rules_invoke_event("fundraiser_sustainers_auto_cancel", $donation);
+  }
+  else {
+    module_invoke_all('fundraiser_sustainers_auto_cancel', $donation);
+  }
 }
 
 /**
