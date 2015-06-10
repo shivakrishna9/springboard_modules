@@ -295,7 +295,7 @@ function sba_message_action_form_sba_message_action_node_form_alter(&$form, &$fo
   if (isset($form['field_sba_legislative_issues'])) {
     form_load_include($form_state, 'inc', 'sba_message_action',
       'includes/sba_message_action.taxonomy');
-    springboard_advocacy_taxonomy_form($form, $form_state, 'sba_message_action_node_form');
+    sba_message_action_taxonomy_form($form, $form_state, 'sba_message_action_node_form');
   }
   $node = $form['#node'];
   if (empty($node->nid) && in_array($node->type, webform_variable_get('webform_node_types_primary'))) {

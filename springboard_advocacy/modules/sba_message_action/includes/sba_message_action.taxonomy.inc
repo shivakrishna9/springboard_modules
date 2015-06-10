@@ -3,7 +3,7 @@
 /**
  * Defines advocacy taxonomy fields added via hook_form_alter in .module.
  */
-function springboard_advocacy_taxonomy_form(&$form, &$form_state, $form_id) {
+function sba_message_action_taxonomy_form(&$form, &$form_state, $form_id) {
 
   $form['springboard_taxonomy_options']['#title'] = t('Action options');
   form_load_include($form_state, 'inc', 'springboard_advocacy',
