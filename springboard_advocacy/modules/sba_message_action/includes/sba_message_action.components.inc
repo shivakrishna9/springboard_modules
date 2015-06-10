@@ -46,6 +46,17 @@ function sba_message_action_insert_components($node) {
     'email' => 1,
   );
 
+  $fields[] = array(
+    'nid' => $node->nid,
+    'form_key' => 'sba_deliverable_count',
+    'pid' => 0,
+    'name' => t('Deliverable message count'),
+    'type' => 'hidden',
+    'value' => 0,
+    'weight' => 13,
+    'email' => 1,
+  );
+
   // Add the component to the Webform.
   foreach ($fields as $field) {
     // Don't insert fields if cloning.
@@ -75,6 +86,8 @@ function sba_message_action_prevent_component_delete(&$form, &$form_state) {
     'sbp_state' => 'sbp_state',
     'sbp_zip' => 'sbp_zip',
     'sbp_phone' => 'sbp_phone',
+    'sba_deliverable_count' => 'sba_deliverable_count',
+    'sba_user_edit_flag' => 'sba_user_edit_flag',
   );
 
   $cid = $form['component']['#value']['cid'];
@@ -98,7 +111,10 @@ function sba_message_action_component_edit_lock(&$form) {
     'sbp_city',
     'sbp_state',
     'sbp_zip',
-    'sbp_phone'
+    'sbp_phone',
+    'sba_deliverable_count',
+    'sba_user_edit_flag',
+
   );
   if (in_array($form['form_key']['#default_value'], $locked_fields)) {
     // Check the node type.
@@ -116,7 +132,9 @@ function sba_message_action_component_overview_lock(&$form) {
     'sbp_city',
     'sbp_state',
     'sbp_zip',
-    'sbp_phone'
+    'sbp_phone',
+    'sba_deliverable_count',
+    'sba_user_edit_flag',
   );
   foreach ($form['#node']->webform['components'] as $cid => $component) {
     if (in_array($component['form_key'], $locked_fields)) {

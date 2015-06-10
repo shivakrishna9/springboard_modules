@@ -320,7 +320,16 @@ function sba_message_action_form_submit($form, &$form_state) {
       $messages[$id]['subject'] = check_plain($message['subject']);
     }
     form_load_include($form_state, 'inc', 'springboard_advocacy', 'includes/springboard_advocacy.webform');
-    springboard_advocacy_send_message($messages, $form_state);
+    $data = springboard_advocacy_send_message($messages, $form_state);
+    if (!empty($data->messages)) {
+      $deliverable = 0;
+      foreach ($data->messages as $key => $message) {
+        $deliverable += count($message->deliverable);
+      }
+      if (isset($form_state['values']['submitted']['sba_deliverable_count'])) {
+        $form_state['values']['submitted']['sba_deliverable_count'] = $deliverable;
+      }
+    }
   }
   else {
     drupal_set_message(t('No messages were configured for this action.'));
