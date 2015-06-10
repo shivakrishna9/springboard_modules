@@ -17,6 +17,17 @@ define('FUNDRAISER_SUSTAINERS_FAILED_STATUS', 'failed');
 define('FUNDRAISER_SUSTAINERS_SUCCESS_STATUS', 'success');
 
 /**
+ * Status for a master donation where sustainer series is pending creation.
+ */
+define('FUNDRAISER_SUSTAINERS_SERIES_STATUS_PENDING', 'pending');
+
+/**
+ * Status for a master donation where sustainer series has completed creation.
+ */
+define('FUNDRAISER_SUSTAINERS_SERIES_STATUS_COMPLETE', 'complete');
+
+
+/**
  * Implements hook_cron().
  */
 function fundraiser_sustainers_cron() {
@@ -1316,6 +1327,14 @@ function fundraiser_sustainers_edit_form($did) {
     return t('You do not have access to this recurring donation.');
   }
 
+  // If the series creation is pending let the user know.
+  if (
+    !empty($donation->data['fundraiser_sustainers_series_status'])
+    && $donation->data['fundraiser_sustainers_series_status'] == FUNDRAISER_SUSTAINERS_SERIES_STATUS_PENDING
+  ) {
+    drupal_set_message(t('The recurring donation schedule for this series will be created soon.'), 'warning');
+  }
+
   // Grab the next to be charged for misc info.
   $remaining = _fundraiser_sustainers_get_donations_recurr_remaining($donation->did);
   $next_donation = $donation;
@@ -2410,6 +2429,8 @@ function fundraiser_sustainers_fundraiser_donation_success($donation) {
 
                 $queue->createItem($item);
 
+                // Set a flag on the donation data array and log the pending creation.
+                $donation->data['fundraiser_sustainers_series_status'] = FUNDRAISER_SUSTAINERS_SERIES_STATUS_PENDING;
                 watchdog('fundraiser_sustainers', 'Master recurring donation @did has been queued for later series creation.', array('@did' => $donation->did));
               }
               // Else, create the series now.
@@ -2417,6 +2438,7 @@ function fundraiser_sustainers_fundraiser_donation_success($donation) {
                 $expires = $expiration_func($donation->donation, $info);
                 if (isset($expires['month']) && isset($expires['year'])) {
                  _fundraiser_sustainers_create_future_orders($donation, $expires['month'], $expires['year']);
+                 $donation->data['fundraiser_sustainers_series_status'] = FUNDRAISER_SUSTAINERS_SERIES_STATUS_COMPLETE;
                 }
               }
             }
@@ -2554,7 +2576,10 @@ function _fundraiser_sustainers_create_series_queue_worker($item) {
   if (isset($expires['month']) && isset($expires['year'])) {
     _fundraiser_sustainers_create_future_orders($donation, $expires['month'], $expires['year']);
 
+    // Flag the creation process complete and log.
+    $donation->data['fundraiser_sustainers_series_status'] = FUNDRAISER_SUSTAINERS_SERIES_STATUS_COMPLETE;
     watchdog('fundraiser_sustainers', 'The recurring series for master donation @did has been created.', array('@did' => $donation->did));
+    fundraiser_donation_update($donation);
   }
 }
 
