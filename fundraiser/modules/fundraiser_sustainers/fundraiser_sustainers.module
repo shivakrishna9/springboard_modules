@@ -2217,7 +2217,7 @@ function fundraiser_sustainers_fundraiser_donation_decline($donation) {
       // Final attempt, add debug alert.
 
     // update sf queue.
-    if (module_exists('salesforce_genmap')) {
+    if (module_exists('salesforce_genmap') && module_exists('salesforce_donation')) {
       $stages = variable_get('salesforce_donation_mapped_stages', salesforce_donation_default_stage_map());
       foreach ($stages as $salesforce_name => $commerce_name) {
         if ($commerce_name == 'failed') {
