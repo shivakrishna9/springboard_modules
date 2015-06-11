@@ -1202,28 +1202,30 @@ function sba_message_action_update_7008() {
  */
 function sba_message_action_update_7009() {
 
-  $nodes = node_load_multiple(array(), array('type' => 'sba_message_action'));
+  $nodes = db_query('select n.nid from {node} n
+    WHERE n.type = :type',
+    array(':type' => 'sba_message_action')
+  );
 
   foreach ($nodes as $node) {
-    $form_keys = array();
+    $nid = db_query('select nid from {webform_component}
+      WHERE nid = :nid AND form_key = :key',
+      array(':nid' => $node->nid, ':key' => 'sba_user_edit_flag')
+    )->fetchField();
 
-    $field = array(
-      'nid' => $node->nid,
-      'form_key' => 'sba_deliverable_count',
-      'pid' => 0,
-      'name' => t('Deliverable message count'),
-      'type' => 'hidden',
-      'value' => 0,
-      'weight' => 13,
-      'email' => 1,
-    );
+    if(!$nid) {
 
-    foreach ($node->webform['components'] as $cid => $component) {
-      $form_keys[] = $component['form_key'];
-    }
+      $field = array(
+        'nid' => $node->nid,
+        'form_key' => 'sba_deliverable_count',
+        'pid' => 0,
+        'name' => t('Deliverable message count'),
+        'type' => 'hidden',
+        'value' => 0,
+        'weight' => 13,
+        'email' => 1,
+      );
 
-    // Add the component to the Webform.
-    if (!in_array($field['form_key'], $form_keys)) {
       webform_component_insert($field);
     }
 
