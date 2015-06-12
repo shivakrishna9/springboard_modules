@@ -9,8 +9,6 @@ dependencies[] = shorten
 dependencies[] = fundraiser
 dependencies[] = fundraiser_webform
 dependencies[] = market_source
-dependencies[] = salesforce_queue
-dependencies[] = salesforce_genmap
 
 files[] = tests/sb_social.test
 
