@@ -4376,7 +4376,8 @@ function springboard_views_views_default_views() {
   $handler->display->display_options['title'] = 'Contacts';
   $handler->display->display_options['css_class'] = 'donor-table-view sbadmin-table-min sbadmin-table-min-x sb-admin-page';
   $handler->display->display_options['use_more_always'] = FALSE;
-  $handler->display->display_options['access']['type'] = 'none';
+  $handler->display->display_options['access']['type'] = 'perm';
+  $handler->display->display_options['access']['perm'] = 'administer springboard';
   $handler->display->display_options['cache']['type'] = 'none';
   $handler->display->display_options['query']['type'] = 'views_query';
   $handler->display->display_options['exposed_form']['type'] = 'basic';
@@ -4728,7 +4729,8 @@ function springboard_views_views_default_views() {
   $handler->display->display_options['css_class'] = 'sbv-notes-view';
   $handler->display->display_options['use_ajax'] = TRUE;
   $handler->display->display_options['use_more_always'] = FALSE;
-  $handler->display->display_options['access']['type'] = 'none';
+  $handler->display->display_options['access']['type'] = 'perm';
+  $handler->display->display_options['access']['perm'] = 'access springboard dashboard';
   $handler->display->display_options['cache']['type'] = 'none';
   $handler->display->display_options['query']['type'] = 'views_query';
   $handler->display->display_options['exposed_form']['type'] = 'basic';

@@ -186,7 +186,9 @@ function _fundraiser_donation_token_info($fields = NULL, $tokens = array()) {
  */
 function fundraiser_tokens($type, $tokens, $data = array(), $options = array()) {
   $replacements = array();
-  if ($type = 'donation' && !empty($data['donation'])) {
+  $sanitize = !empty($options['sanitize']);
+
+  if ($type == 'donation' && !empty($data['donation'])) {
     $donation = $data['donation'];
     // All set fields.
     $data = is_array($donation->donation) ? $donation->donation : array();
@@ -208,35 +210,36 @@ function fundraiser_tokens($type, $tokens, $data = array(), $options = array()) 
       $data['card_type'] = isset($donation->donation['payment_fields']['credit']['card_type']) ?
         $donation->donation['payment_fields']['credit']['card_type'] : '';
     }
-  }
 
-  // Replace the given tokens.
-  $replacements = array();
-  foreach ($tokens as $key => $token) {
-    if (isset($data[$key])) {
-      $replacements[$token] = $data[$key];
-    }
-  }
-
-  // If we have a donation object add the node and user tokens as well
-  if (!empty($donation)) {
-    if ($node_tokens = token_find_with_prefix($tokens, 'node')) {
-      $replacements += token_generate('node', $node_tokens, array('node' => $donation->node), $options);
-    }
-    if ($user_tokens = token_find_with_prefix($tokens, 'user')) {
-      $replacements += token_generate('user', $user_tokens, array('user' => $donation->user), $options);
-    }
-  }
-
-  // Make more user-friendly label for payment method token.
-  if (isset($data['payment_method']) && isset($donation->node)) {
-    // Get node gateways and loop through them.
-    foreach ($donation->node->gateways as $gateway) {
-      // If donation's payment method matches gateway, use label for gateway token.
-      if (array_key_exists('method', $gateway) && array_key_exists('label', $gateway) && $data['payment_method'] == $gateway['method'] && $gateway['label']) {
-        $replacements['[donation:payment_method]'] = $gateway['label'];
+    // Replace the given tokens.
+    foreach ($tokens as $key => $token) {
+      if (isset($data[$key])) {
+        $replacements[$token] = $sanitize ? check_plain($data[$key]) : $data[$key];
       }
     }
+
+    // If we have a donation object add the node and user tokens as well.
+    if (!empty($donation)) {
+      if ($node_tokens = token_find_with_prefix($tokens, 'node')) {
+        $replacements += token_generate('node', $node_tokens, array('node' => $donation->node), $options);
+      }
+      if ($user_tokens = token_find_with_prefix($tokens, 'user')) {
+        $replacements += token_generate('user', $user_tokens, array('user' => $donation->user), $options);
+      }
+    }
+
+    // Make more user-friendly label for payment method token.
+    if (isset($data['payment_method']) && isset($donation->node)) {
+      // Get node gateways and loop through them.
+      foreach ($donation->node->gateways as $gateway) {
+        // If donation's payment method matches gateway, use label for
+        // gateway token.
+        if (array_key_exists('method', $gateway) && array_key_exists('label', $gateway) && $data['payment_method'] == $gateway['method'] && $gateway['label']) {
+          $replacements['[donation:payment_method]'] = $gateway['label'];
+        }
+      }
+    }
+
   }
 
   return $replacements;
@@ -3193,7 +3196,7 @@ function fundraiser_gateway_status_check() {
     $fundraiser->gateways = unserialize($fundraiser->gateways);
     foreach($fundraiser->gateways as $type => $gateway) {
       $global_status = FALSE;
-      if (!empty($gateway['id']) && $gateway['status'] == 1) { 
+      if (!empty($gateway['id']) && $gateway['status'] == 1) {
         //grab the rules_config settings
         $fundraiser->gateways[$type]['gateway_details'] = isset($gateways[$gateway['id']]['gateway_details']) ? $gateways[$gateway['id']]['gateway_details'] : FALSE;
         //detect disabled or unconfigured gateways
@@ -3219,7 +3222,7 @@ function fundraiser_gateway_status_check() {
       }
     }
   }
-  //build the info 
+  //build the info
   foreach ($bad_gateways as $id => $gateway) {
     //prepare the node urls for tokens
     $nodes = implode("\n\r", $gateway['urls']);

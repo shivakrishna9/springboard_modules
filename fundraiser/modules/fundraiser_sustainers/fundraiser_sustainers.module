@@ -14,6 +14,29 @@ require_once 'includes/fundraiser_sustainers.goals.inc';
  * Implements hook_cron().
  */
 function fundraiser_sustainers_cron() {
+
+  $checks = new FundraiserSustainersHealthChecks();
+  $results = $checks->runChecks();
+
+  $message = '';
+  foreach ($results as $item) {
+    $link = NULL;
+    $full_url = NULL;
+    if (isset($item['link_url'])) {
+      $link = l($item['link_text'], $item['link_url']);
+      $full_url = url($item['link_url'], array('absolute' => TRUE));
+    }
+    watchdog($item['type'], $item['message'], $item['variables'], $item['severity'], $link);
+    $message .= t($item['message'], $item['variables']) . "\r\n" . $item['link_text'] . "\r\n";
+    if (!empty($full_url)) {
+      $message .= $full_url . "\r\n";
+    }
+  }
+
+  if (!empty($message)) {
+    rules_invoke_event('fundraiser_sustainer_health_check_failure', $message);
+  }
+
   if (variable_get('fundraiser_standalone_cron_enabled', 0)) {
     return 0;
   }
@@ -21,6 +44,7 @@ function fundraiser_sustainers_cron() {
     watchdog('fundraiser_cron', 'Standard cron run.', NULL, WATCHDOG_INFO);
     fundraiser_sustainers_standalone_cron();
   }
+
 }
 
 /**
@@ -499,19 +523,6 @@ function fundraiser_sustainers_salesforce_genmap_map_fields_alter(&$fields, $con
         }
       }
       // Corrects the StageName to whatever value is appropriate based on mapped stages.
-      if (isset($donation->donation_cancelled) && $donation->donation_cancelled) {
-        if (isset($fields['StageName'])) {
-          $stagename = 'Withdrawn';
-          if (module_exists('salesforce_donation')) {
-            $mapped_stages = array_flip(variable_get('salesforce_donation_mapped_stages', salesforce_donation_default_stage_map()));
-            if (isset($mapped_stages['cancelled'])) {
-              $stagename = $mapped_stages['cancelled'];
-            }
-          }
-
-          $fields['StageName'] = $stagename;
-        }
-      }
       if (isset($donation->donation_skipped) && $donation->donation_skipped) {
         if (isset($fields['StageName'])) {
           $stagename = 'Skipped';
@@ -1949,12 +1960,8 @@ function _fundraiser_sustainers_create_future_orders($donation, $month, $year, $
     // Cancel the donation with an informative message.
     watchdog('fundraiser', 'Donation @id was deleted by @user while updating the card expiration date.',
       array('@id' => $donation->did, '@user' => $user->name), WATCHDOG_DEBUG, NULL);
-     // Requeue with cancelled flag, the fields alter hook should then update
-     // the StageName to the appropriate value based on current stage mapping.
-    $this_donation->donation_cancelled = TRUE;
-    if (module_exists('salesforce_genmap')) {
-      salesforce_genmap_send_object_to_queue('salesforce_donation', 'insert', $this_donation->node, $this_donation->did, $this_donation, 'donation');
-    }
+
+    // Delete these donations so do won't appear in the list of recurring donations.
     fundraiser_donation_delete($this_donation);
   }
 }
@@ -2066,11 +2073,19 @@ function fundraiser_sustainers_cancel_form_submit($form, &$form_state) {
   $sustainer_donations = _fundraiser_sustainers_get_donations_recurr_remaining($master_did);
   foreach ($sustainer_donations as $sustainer_donation) {
     $donation = fundraiser_donation_get_donation($sustainer_donation->did);
+
+    // Add the cancel reason to the donation's recurring object.
+    $donation->recurring->cancellation_reason = $reason;
+
+    // Cancel the donation.
+    // @see fundraiser_sustainers_fundraiser_donation_cancel().
     fundraiser_donation_cancel($donation);
+
+    // Add a watchdog entry with the did and reason.
     watchdog('fundraiser_sustainers', 'Donation cancelled for #@did. Reason: @reason',
       array('@did' => $donation->did, '@reason' => $reason));
   }
-  _fundraiser_sustainers_cancel_recurring_by_master($master_did, $reason);
+
   drupal_set_message(t('All future payments cancelled.'));
 }
 
@@ -2246,6 +2261,23 @@ function fundraiser_sustainers_fundraiser_donation_decline($donation) {
         array('@id' => $donation->did, '@attempts' => $attempt_count, '@message' => $donation->result['message']), WATCHDOG_DEBUG);
     }
   }
+}
+
+/**
+ * Implements hook_fundraiser_donation_cancel().
+ */
+function fundraiser_sustainers_fundraiser_donation_cancel($donation) {
+  // Set the reason value if one has been set on the donation's recurring object.
+  $reason = '';
+  if (!empty($donation->recurring->cancellation_reason)) {
+    $reason = $donation->recurring->cancellation_reason;
+  }
+
+  // Set the gateway resp field to canceled.
+  db_update('fundraiser_sustainers')
+    ->fields(array('gateway_resp' => 'canceled', 'cancellation_reason' => $reason))
+    ->condition('did', $donation->did)
+    ->execute();
 }
 
 /**
@@ -2434,16 +2466,6 @@ function _fundraiser_sustainers_delete_recurring($did) {
 }
 
 /**
- * DB function, cancel recurring given a master did. (Do not delete!)
- */
-function _fundraiser_sustainers_cancel_recurring_by_master($master_did, $reason) {
-  db_query('UPDATE {fundraiser_sustainers} ' .
-    'SET gateway_resp = \'canceled\', cancellation_reason = :reason ' .
-    'WHERE master_did = :master_did AND (gateway_resp IS NULL OR gateway_resp = \'failed\')',
-    array(':reason' => $reason, ':master_did' => $master_did));
-}
-
-/**
  * DB funct, get user donation set information that are recurring.
  */
 function _fundraiser_sustainers_get_donation_sets_recurr_by_uid($uid) {
@@ -2558,7 +2580,7 @@ function _fundraiser_sustainers_get_donations_recurr_remaining($master_did) {
   $donations = db_query('SELECT * FROM {fundraiser_sustainers} r ' .
     'LEFT JOIN {fundraiser_donation} d on r.did = d.did ' .
     'WHERE r.master_did = :master_did ' .
-    'AND (r.gateway_resp IS NULL OR r.gateway_resp = \'failed\') ' .
+    'AND (r.gateway_resp IS NULL OR (r.gateway_resp = \'failed\' && r.attempts != 3)) ' .
     'ORDER BY r.next_charge ASC', array(':master_did' => $master_did))->fetchAll();
   return $donations;
 }
@@ -2772,4 +2794,91 @@ function fundraiser_sustainers_component_value_is_recurring($value) {
   }
 
   return FALSE;
+}
+
+/**
+ * Implements hook_entity_info().
+ */
+function fundraiser_sustainers_entity_info() {
+  $return = array(
+    'fundraiser_sustainer_record' => array(
+      'label' => t('Fundraiser sustainer record'),
+      'plural label' => t('Fundraiser sustainer records'),
+      'entity class' => 'Entity',
+      'controller class' => 'EntityAPIController',
+      'base table' => 'fundraiser_sustainers',
+      'entity keys' => array(
+        'id' => 'did',
+        'label' => 'did',
+      ),
+      'fieldable' => FALSE,
+      'exportable' => FALSE,
+      'module' => 'fundraiser_sustainers',
+      'views controller class' => 'FundraiserSustainerRecordViewsController',
+    ),
+  );
+
+  return $return;
+}
+
+/**
+ * Implements hook_entity_property_info().
+ */
+function fundraiser_sustainers_entity_property_info() {
+  $return = array(
+    'fundraiser_sustainer_record' => array(
+      'properties' => array(
+        'master_did' => array(
+          'label' => t('Master donation ID'),
+          'description' => t('The donation ID of the master donation in the series.'),
+          'type' => 'integer',
+          'schema field' => 'master_did',
+        ),
+        'did' => array(
+          'label' => t('Donation ID'),
+          'description' => t('The ID of the donation.'),
+          'type' => 'integer',
+          'schema field' => 'did',
+        ),
+        'next_charge' => array(
+          'label' => t('Next charge'),
+          'description' => t('The date and time of when the donation should be charged.'),
+          'type' => 'date',
+          'schema field' => 'next_charge',
+        ),
+        'gateway_resp' => array(
+          'label' => t('Gateway response'),
+          'description' => t('The response from the payment gateway.'),
+          'type' => 'text',
+          'schema field' => 'gateway_resp',
+        ),
+        'attempts' => array(
+          'label' => t('Attempts'),
+          'description' => t('Number of charge attempts.'),
+          'type' => 'integer',
+          'schema field' => 'attempts',
+        ),
+        'cancellation_reason' => array(
+          'label' => t('Cancellation reason'),
+          'description' => t('The reason why the series was canceled.'),
+          'type' => 'text',
+          'schema field' => 'cancellation_reason',
+        ),
+        'sustainer_key' => array(
+          'label' => t('Sustainer key'),
+          'description' => t('The sustainer key.'),
+          'type' => 'text',
+          'schema field' => 'sustainer_key',
+        ),
+        'lock_id' => array(
+          'label' => t('Lock ID'),
+          'description' => t('The lock ID.'),
+          'type' => 'text',
+          'schema field' => 'lock_id',
+        ),
+      ),
+    ),
+  );
+
+  return $return;
 }

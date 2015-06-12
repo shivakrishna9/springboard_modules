@@ -51,6 +51,9 @@ define('SALESFORCE_SYNC_MAX_RETRIEVE_SIZE_DEFAULT', 2000);
 // The maximum quantity of records that can ever be retrieved.
 define('SALESFORCE_SYNC_QUERY_LIMIT_DEFAULT', 4000);
 
+// The default setting for truncating long strings.
+define('SALESFORCE_SYNC_TRUNCATE_LONG_STRINGS_DEFAULT', FALSE);
+
 /**
  * @}
  */
