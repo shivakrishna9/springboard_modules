@@ -130,3 +130,12 @@ function springboard_taxonomy_field_delete_instance($instance) {
     }
   }
 }
+
+function springboard_taxonomy_theme() {
+  return array(
+    'springboard_taxonomy_confirm_message' => array(
+      'variables' => array('changes' => NULL),
+      'file' => 'springboard_taxonomy.admin.inc',
+    ),
+  );
+}
