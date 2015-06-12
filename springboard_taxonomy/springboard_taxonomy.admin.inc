@@ -164,7 +164,7 @@ function theme_springboard_taxonomy_confirm_message($vars) {
       if (empty($change)) {
         $messages[] = '<span class = "warning">'
           . t(
-            "You are permanently removing all taxonomy data from the @type content type!",
+            "You are permanently removing all Organization Issues data from the @type content type!",
             array('@type' => $key)
           )
           . '</span>';
