@@ -342,14 +342,14 @@ function _sba_message_action_create_node_fields($update = false) {
       'description' => '',
       'display' => array(
         'default' => array(
-          'label' => 'none',
+          'label' => 'hidden',
           'module' => 'text',
           'settings' => array(),
           'type' => 'text_default',
           'weight' => 4,
         ),
         'teaser' => array(
-          'label' => 'none',
+          'label' => 'hidden',
           'settings' => array(),
           'type' => 'hidden',
           'weight' => 4,
