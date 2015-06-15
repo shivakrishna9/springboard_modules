@@ -224,7 +224,7 @@ function sba_message_node_delete($node) {
        ->fetchAllAssoc('entity_id');
 
     sba_message_delete_multiple(array_keys($sba_message_ids));
-  } 
+  }
 }
 
 
@@ -305,6 +305,7 @@ function sba_message_entity_info() {
     'bundle keys' => array(
       'bundle' => 'type',
     ),
+    'redirect' => FALSE,
     'label callback' => 'entity_class_label',
     'uri callback' => 'entity_class_uri',
     'creation callback' => 'sba_message_create',
@@ -318,7 +319,7 @@ function sba_message_entity_info() {
       'menu wildcard' => '%sba_message',
     ),
   );
-  // The entity that holds information about the entity types	  
+  // The entity that holds information about the entity types
   $return['sba_message_type'] = array(
     'label' => t('SBA Message Type'),
     'entity class' => 'SbaMessageType',
@@ -366,9 +367,9 @@ function sba_message_permission() {
     'administer sba messages' => array(
       'title' => t('Administer sba_messages'),
       'description' => t('Edit and delete all sba_messages'),
-    ),  
+    ),
   );
-  return $permissions;  
+  return $permissions;
 }
 
 /**
@@ -555,7 +556,7 @@ function sba_message_preprocess_views_exposed_form(&$vars, $hook) {
  * The class used for sba_message entities
  */
 class SbaMessage extends Entity {
-  
+
   public function __construct($values = array()) {
     parent::__construct($values, 'sba_message');
   }
@@ -570,10 +571,10 @@ class SbaMessage extends Entity {
  * The class used for sba_message type entities
  */
 class SbaMessageType extends Entity {
-  
+
   public $type;
   public $label;
-  
+
   public function __construct($values = array()) {
     parent::__construct($values, 'sba_message_type');
   }
@@ -592,7 +593,7 @@ class SbaMessageController extends EntityAPIController {
    * Create a sba_message - we first set up the values that are specific
    * to our sba_message schema but then also go through the EntityAPIController
    * function.
-   * 
+   *
    * @param $type
    *   The machine-readable type of the sba_message.
    *
@@ -601,7 +602,7 @@ class SbaMessageController extends EntityAPIController {
    */
   public function create(array $values = array()) {
     // Add values that are specific to our SBA Message
-    $values += array( 
+    $values += array(
       'sba_message_id' => '',
       'is_new' => TRUE,
       'title' => '',
@@ -609,7 +610,7 @@ class SbaMessageController extends EntityAPIController {
       'changed' => '',
       'data' => '',
     );
-    
+
     $sba_message = parent::create($values);
     return $sba_message;
   }
@@ -623,12 +624,12 @@ class SbaMessageTypeController extends EntityAPIControllerExportable {
   public function __construct($entityType) {
     parent::__construct($entityType);
   }
-  
+
    /**
    * Create a sba_message type - we first set up the values that are specific
    * to our sba_message type schema but then also go through the EntityAPIController
    * function.
-   * 
+   *
    * @param $type
    *   The machine-readable type of the sba_message.
    *
@@ -637,7 +638,7 @@ class SbaMessageTypeController extends EntityAPIControllerExportable {
    */
   public function create(array $values = array()) {
     // Add values that are specific to our SBA Message
-    $values += array( 
+    $values += array(
       'id' => '',
       'is_new' => TRUE,
       'data' => '',
