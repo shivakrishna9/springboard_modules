@@ -318,6 +318,7 @@ function sba_message_entity_info() {
       'controller class' => 'SbaMessageUIController',
       'menu wildcard' => '%sba_message',
     ),
+    'redirect' => FALSE,
   );
   // The entity that holds information about the entity types
   $return['sba_message_type'] = array(
