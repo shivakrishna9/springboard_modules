@@ -13,7 +13,7 @@ class springboard_advocacy_views_plugin_query extends views_plugin_query {
   /**
    * AdvocacyApiCall object.
    *
-   * @var apiCall
+   * @var AdvocacyApiCall $apiCall
    */
   protected $apiCall;
 

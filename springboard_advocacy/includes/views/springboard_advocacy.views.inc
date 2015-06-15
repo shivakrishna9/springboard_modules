@@ -332,7 +332,7 @@ function springboard_advocacy_views_plugins() {
     'cache' => array(
       'springboard_advocacy_views_plugin_cache_time' => array(
         'title' => t('Springboard Advocacy Timed Cache'),
-        'help' => t('dgfdg'),
+        'help' => t('Cache'),
         'handler' => 'springboard_advocacy_views_plugin_cache_time',
         'path' => drupal_get_path('module', 'springboard_advocacy') . '/includes/views/plugins',
         'uses options' => TRUE,
