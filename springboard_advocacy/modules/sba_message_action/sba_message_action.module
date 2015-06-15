@@ -48,7 +48,7 @@ function sba_message_action_menu() {
  */
 function sba_message_action_report_access($nid) {
   $node = node_load($nid);
-  if ($node->type == 'sba_message_action' && user_access('view message action reports')) {
+  if ($node->type == 'sba_message_action' && user_access('view springboard advocacy reports')) {
     return TRUE;
   }
   return FALSE;
