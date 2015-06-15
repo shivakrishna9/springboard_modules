@@ -25,8 +25,9 @@ function springboard_advocacy_send_message(array $user_message, array $form_stat
   }
 
   // Get the zip+4 from smarty streets.
-  module_load_include('inc', 'springboard_advocacy', 'includes/springboard_advocacy.smarty_streets');
-  $geo = springboard_advocacy_smarty_lookup($webform_values);
+//  module_load_include('inc', 'springboard_advocacy', 'includes/springboard_advocacy.smarty_streets');
+//  $geo = springboard_advocacy_smarty_lookup($webform_values);
+  $geo = isset($form_state['values']['smarty_geo']) ? $form_state['values']['smarty_geo'] : NULL;
   if (!empty($geo) && !empty($geo['zip']) && !empty($geo['plus4'])) {
     $zip = $geo['zip'] . '-' . $geo['plus4'];
   }
@@ -199,7 +200,7 @@ function _springboard_advocacy_legislative_terms_descendents($ancestor_tid, $tre
  * @return array
  *   Contact's profile data plus smarty data.
  */
-function springboard_advocacy_build_contact($values, $zip, $geo) {
+function springboard_advocacy_build_contact(array $values, $zip, array $geo) {
 
   $contact = array(
     'first_name' => $values['sbp_first_name'],
