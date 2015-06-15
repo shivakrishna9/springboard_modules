@@ -137,8 +137,6 @@ function sba_quicksign_form_submit($form, &$form_state) {
   $node = $form_state['node'];
   $profile = isset($form_state['sba_quicksign']['profile']) ? $form_state['sba_quicksign']['profile'] : FALSE;
   if ($profile) {
-    // Build submission
-    // Execute form submission
     _sba_quicksign_build_submission($form, $form_state, $node, $profile);
   }
 }
@@ -197,7 +195,6 @@ function sba_quicksign_form_node_form_alter(&$form, &$form_state, $form_id) {
  * Implements hook_form_alter().
  */
 function sba_quicksign_form_alter(&$form, $form_state, $form_id) {
-  // Webform
   if (strpos($form_id, 'webform_client') !== FALSE && arg(2) != 'submission' && arg(4) != 'edit') {
     // Quicksign content type.
     if (isset($form['#node']) && sba_quicksign_is_quicksign_type($form['#node']->type)) {
@@ -222,13 +219,10 @@ function sba_quicksign_form_alter(&$form, $form_state, $form_id) {
  *
  * @param mixed $form
  *   Webform FAPI array.
- *  drupal_form_submit($form_id, $form_state, $node, $webform_submission);
- *
  * @param object $node
  *   Webform Node object.
- *
  * @param array|bool $user_data
- *   User profile data to use during substitution
+ *   User profile data to use during substitution.
  */
 function sba_quicksign_form_defaults(&$form, $node, $user_data) {
   $components = $node->webform['components'];
@@ -305,7 +299,9 @@ function sba_quicksign_node_view($node, $view_mode, $langcode) {
 
 /**
  * Save quick sign settings per-node.
- * @param $node
+ *
+ * @param object $node
+ *   The node object.
  */
 function sba_quicksign_save($node) {
   sba_quicksign_delete($node->nid);
@@ -372,8 +368,10 @@ function sba_quicksign_settings($nid) {
 
 
 /**
- * @param $node
+ * @param object $node
+ *
  * @return array
+ *   $required_fields
  */
 function sba_quicksign_get_required_fields($node) {
   $required_fields = array();
@@ -460,7 +458,7 @@ function _sba_quicksign_build_submission($form, &$original_form_state, $node, $s
  * @return mixed
  *   Returns the submitted values in a tree structure that Webform can parse.
  */
-function sba_quicksign_submission_tree_build($submission, $src, &$tree, $parent) {
+function sba_quicksign_submission_tree_build(array $submission, array $src, array &$tree, $parent) {
 
   foreach ($src as $cid => $component) {
     if ($component['pid']) {
@@ -495,7 +493,9 @@ function sba_quicksign_webform_submission_insert($node, $submission) {
 
 /**
  * @param $type
+ *
  * @return bool
+ *   $type
  */
 function sba_quicksign_is_quicksign_type($type) {
   $types = array('springboard_petition', 'sba_message_action');
