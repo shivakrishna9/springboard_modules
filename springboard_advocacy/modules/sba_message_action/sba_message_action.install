@@ -110,6 +110,7 @@ function _sba_message_action_set_vars() {
       'sbp_city' => 'sbp_city',
       'sbp_state' => 'sbp_state',
       'sbp_zip' => 'sbp_zip',
+      'sbp_zip_plus_four' => 'sbp_zip_plus_four',
       'sbp_phone' => 'sbp_phone',
       'sbp_cid' => 'sbp_cid',
       'sbp_market_source' => 'sbp_market_source',
@@ -621,7 +622,7 @@ function _sbp_message_action_create_user_profile_fields () {
         'module' => 'list',
         'settings' => array(),
         'type' => 'list_default',
-        'weight' => 0,
+        'weight' => -1,
       ),
     ),
     'entity_type' => 'user',
@@ -645,6 +646,44 @@ function _sbp_message_action_create_user_profile_fields () {
     field_create_instance($sbp_salutation);
   }
 
+  _sba_message_action_create_zip_plus_four();
+}
+
+function _sba_message_action_create_zip_plus_four() {
+
+  $profile_zip_plus_four = array(
+    'label' => t('Zip+4'),
+    'field_name' => 'sbp_zip_plus_four',
+    'type' => 'text',
+    'widget' => array(
+      'type' => 'hidden',
+    ),
+  );
+
+  $zip_exists = field_info_field('sbp_zip_plus_four');
+
+  if (empty($zip_exists)) {
+    field_create_field($profile_zip_plus_four);
+  }
+
+  $instance_exists = field_info_instance('user', 'sbp_zip_plus_four', 'user');
+  if (empty($instance_exists)) {
+    $instance = array(
+      'entity_type' => 'user',
+      'bundle' => 'user',
+    );
+    $instance = array_merge($profile_zip_plus_four, $instance);
+    field_create_instance($instance);
+  }
+
+  $field_group = field_group_load_field_group('group_profile_admin', 'user', 'user', 'form');
+  $table = 'field_group';
+
+  // If the group exists make sure its not disabled.
+  if ($field_group) {
+    $field_group->children[] = 'sbp_zip_plus_four';
+    $field_group = ctools_export_crud_save($table, $field_group);
+  }
 }
 
 function _sba_message_action_create_example_message_action() {
@@ -851,15 +890,15 @@ function _sba_message_action_install_taxonomy_fields() {
         field_create_field($base[$field_name]['field_config']);
       }
 
-      //create the instance
+      // Create the instance.
       if (!field_info_instance('node', $field['field_instance']['field_name'], 'sba_message_action')) {
         field_create_instance($field['field_instance']);
       }
     }
   }
 
-  // Install Legislatve issues
-  if(function_exists('_sba_message_action_install_taxonomy_field_definitions')) {
+  // Install Legislatve issues.
+  if (function_exists('_sba_message_action_install_taxonomy_field_definitions')) {
     foreach (_sba_message_action_install_taxonomy_field_definitions() as $field_name => $field) {
       $exists = field_info_field('field_' . $field_name);
       if (empty($exists)) {
@@ -890,7 +929,7 @@ function sba_message_action_uninstall() {
 
 
 /**
- * Delete springboard message action fields
+ * Delete springboard message action fields.
  */
 function _sba_message_action_delete_fields() {
   $fields = array(
@@ -920,7 +959,7 @@ function _sba_message_action_delete_nodes() {
   $nids = $result->fetchCol();
 
   if (!empty($nids)) {
-    if(module_exists('sba_message')) {
+    if (module_exists('sba_message')) {
 
       $message_ids = db_query(
         'SELECT entity_id FROM {field_data_field_sba_action_id} WHERE field_sba_action_id_target_id IN (:nids)',
@@ -940,6 +979,7 @@ function _sba_message_action_delete_nodes() {
 
 /**
  * Install legislative issues vocabulary.
+ *
  * Presently used by message actions but may be by other modules.
  */
 function _sba_message_action_install_vocab_sba_legislative_issues() {
@@ -988,6 +1028,7 @@ function _sba_message_action_install_vocab_sba_legislative_issues() {
 
 /**
  * Define legislative issues terms.
+ *
  * @return array
  */
 function _sba_message_action_standard_legislative_issues() {
@@ -1214,7 +1255,6 @@ function sba_message_action_update_7009() {
     )->fetchField();
 
     if(!$nid) {
-
       $field = array(
         'nid' => $node->nid,
         'form_key' => 'sba_deliverable_count',
@@ -1225,10 +1265,40 @@ function sba_message_action_update_7009() {
         'weight' => 13,
         'email' => 1,
       );
-
       webform_component_insert($field);
     }
-
   }
 }
 
+/**
+ * Install zip+4 profile field and component if missing.
+ */
+function sba_message_action_update_7010() {
+
+  _sba_message_action_create_zip_plus_four();
+
+  $nodes = db_query('select n.nid from {node} n
+    WHERE n.type = :type',
+    array(':type' => 'sba_message_action')
+  );
+
+  foreach ($nodes as $node) {
+    $nid = db_query('select nid from {webform_component}
+      WHERE nid = :nid AND form_key = :key',
+      array(':nid' => $node->nid, ':key' => 'sbp_zip_plus_four')
+    )->fetchField();
+    if(!$nid) {
+      $field = array(
+        'nid' => $node->nid,
+        'form_key' => 'sbp_zip_plus_four',
+        'pid' => 0,
+        'name' => t('Zip+4'),
+        'type' => 'hidden',
+        'value' => '',
+        'weight' => 13,
+        'email' => 1,
+      );
+      webform_component_insert($field);
+    }
+  }
+}

@@ -57,13 +57,24 @@ function sba_message_action_insert_components($node) {
     'email' => 1,
   );
 
+  $fields[] = array(
+    'nid' => $node->nid,
+    'form_key' => 'sbp_zip_plus_four',
+    'pid' => 0,
+    'name' => t('Zip+4'),
+    'type' => 'hidden',
+    'value' => '',
+    'weight' => 13,
+    'email' => 1,
+  );
+
   // Add the component to the Webform.
   foreach ($fields as $field) {
     // Don't insert fields if cloning.
     if (!isset($node->map) || (isset($node->map) &&  !in_array($field['form_key'], $node->map))) {
       $cid = webform_component_insert($field);
       // User map the state field.
-      if ($field['form_key'] == 'sbp_state' || $field['form_key'] == 'sbp_zip') {
+      if ($field['form_key'] == 'sbp_zip_plus_four' || $field['form_key'] == 'sbp_state' || $field['form_key'] == 'sbp_zip') {
         $map = array(
           'nid' => $node->nid,
           'cid' => $cid,
@@ -76,20 +87,8 @@ function sba_message_action_insert_components($node) {
 }
 
 function sba_message_action_prevent_component_delete(&$form, &$form_state) {
-  $required_fields = array(
-    'sbp_salutation' => 'sbp_salutation',
-    'sbp_first_name' => 'sbp_first_name',
-    'sbp_last_name' => 'sbp_last_name',
-    'mail' => 'mail',
-    'sbp_address' => 'sbp_address',
-    'sbp_city' => 'sbp_city',
-    'sbp_state' => 'sbp_state',
-    'sbp_zip' => 'sbp_zip',
-    'sbp_phone' => 'sbp_phone',
-    'sba_deliverable_count' => 'sba_deliverable_count',
-    'sba_user_edit_flag' => 'sba_user_edit_flag',
-  );
 
+  $required_fields = sba_message_locked_fields();
   $cid = $form['component']['#value']['cid'];
   $component = $form['node']['#value']->webform['components'][$cid];
 
@@ -102,27 +101,25 @@ function sba_message_action_prevent_component_delete(&$form, &$form_state) {
 }
 
 function sba_message_action_component_edit_lock(&$form) {
-  $locked_fields = array(
-    'sbp_salutation',
-    'sbp_first_name',
-    'sbp_last_name',
-    'mail',
-    'sbp_address',
-    'sbp_city',
-    'sbp_state',
-    'sbp_zip',
-    'sbp_phone',
-    'sba_deliverable_count',
-    'sba_user_edit_flag',
+  $locked_fields = sba_message_locked_fields();
 
-  );
   if (in_array($form['form_key']['#default_value'], $locked_fields)) {
     // Check the node type.
     $form['form_key']['#disabled'] = TRUE;
     $form['validation']['mandatory']['#disabled'] = TRUE;
   }
 }
+
 function sba_message_action_component_overview_lock(&$form) {
+  $locked_fields = sba_message_locked_fields();
+  foreach ($form['#node']->webform['components'] as $cid => $component) {
+    if (in_array($component['form_key'], $locked_fields)) {
+      $form['components'][$cid]['mandatory']['#disabled'] = TRUE;
+    }
+  }
+}
+
+function sba_message_locked_fields() {
   $locked_fields = array(
     'sbp_salutation',
     'sbp_first_name',
@@ -135,10 +132,7 @@ function sba_message_action_component_overview_lock(&$form) {
     'sbp_phone',
     'sba_deliverable_count',
     'sba_user_edit_flag',
+    'sbp_zip_plus_four',
   );
-  foreach ($form['#node']->webform['components'] as $cid => $component) {
-    if (in_array($component['form_key'], $locked_fields)) {
-      $form['components'][$cid]['mandatory']['#disabled'] = TRUE;
-    }
-  }
+  return $locked_fields;
 }
