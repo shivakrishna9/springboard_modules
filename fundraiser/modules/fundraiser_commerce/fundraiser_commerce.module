@@ -386,6 +386,7 @@ function _fundraiser_commerce_commerce_order_statuses_used() {
     'partially_refunded',
     'payment_received',
     'skipped',
+    'void',
   );
 }
 
