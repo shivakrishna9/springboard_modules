@@ -328,6 +328,11 @@ function fundraiser_commerce_commerce_order_status_info() {
       'title' => 'Failed refund',
       'state' => 'canceled',
     ),
+    'void' => array(
+      'name' => 'void',
+      'title' => 'Void',
+      'state' => 'canceled',
+    ),
     'skipped' => array(
       'name' => 'skipped',
       'title' => 'Skipped',
@@ -381,6 +386,7 @@ function _fundraiser_commerce_commerce_order_statuses_used() {
     'partially_refunded',
     'payment_received',
     'skipped',
+    'void',
   );
 }
 
