@@ -2,6 +2,27 @@
 
 function sba_message_action_form_layouts() {
   $templates = array();
+
+  $templates['two_column_message_right'] = array(
+    'name' => t('Call to action top, message right, horizontal user form left'),
+    'types' => array('sba_message_action'),
+    'theme' => 'two_column_message_right',
+    'pattern' => 'two_column_message_right\'0-9\'+',
+    'template' => 'two-column-message-right',
+    'path' => drupal_get_path('module', 'sba_message_action') . '/templates/form_layouts',
+    'hide title' => FALSE,
+  );
+
+  $templates['two_column_message_left'] = array(
+    'name' => t('Call to action top, message left, horizontal user form right'),
+    'types' => array('sba_message_action'),
+    'theme' => 'two_column_message_left',
+    'pattern' => 'two_column_message_left\'0-9\'+',
+    'template' => 'two-column-message-left',
+    'path' => drupal_get_path('module', 'sba_message_action') . '/templates/form_layouts',
+    'hide title' => FALSE,
+  );
+
   $templates['two_column_message_left_vertical'] = array(
     'name' => t('Call to action top, message left, vertical user form right'),
     'types' => array('sba_message_action'),
@@ -18,26 +39,6 @@ function sba_message_action_form_layouts() {
     'theme' => 'two_column_message_right_vert',
     'pattern' => 'two_column_message_right_vert\'0-9\'+',
     'template' => 'two-column-message-right-vertical',
-    'path' => drupal_get_path('module', 'sba_message_action') . '/templates/form_layouts',
-    'hide title' => FALSE,
-  );
-
-  $templates['two_column_message_left'] = array(
-    'name' => t('Call to action top, message left, horizontal user form right'),
-    'types' => array('sba_message_action'),
-    'theme' => 'two_column_message_left',
-    'pattern' => 'two_column_message_left\'0-9\'+',
-    'template' => 'two-column-message-left',
-    'path' => drupal_get_path('module', 'sba_message_action') . '/templates/form_layouts',
-    'hide title' => FALSE,
-  );
-
-  $templates['two_column_message_right'] = array(
-    'name' => t('Call to action top, message right, horizontal user form left'),
-    'types' => array('sba_message_action'),
-    'theme' => 'two_column_message_right',
-    'pattern' => 'two_column_message_right\'0-9\'+',
-    'template' => 'two-column-message-right',
     'path' => drupal_get_path('module', 'sba_message_action') . '/templates/form_layouts',
     'hide title' => FALSE,
   );
@@ -257,7 +258,7 @@ function theme_message_action_messages_wrapper($vars) {
  * @return string
  */
 function theme_message_action_webform_wrapper($vars) {
-  $legend = t('Take action now');
+  $legend = t('Take Action Now!');
   return ' <div class="row-fluid"><fieldset id="take-action-wrapper" class = "form-wrapper"><legend>' . $legend . '</legend>' . $vars['element']['#children']  . '</fieldset></div>';
 }
 

@@ -97,12 +97,12 @@
 
   <div class="content"<?php print $content_attributes; ?>>
     <?php
-      hide($content['comments']);
-      hide($content['links']);
-      hide($content['body']);
-      hide($content['field_message_action_img']);
-      hide($content['field_message_call_to_action']);
-      hide($content['sba_quicksign']);
+    hide($content['comments']);
+    hide($content['links']);
+    hide($content['body']);
+    hide($content['field_message_action_img']);
+    hide($content['field_message_call_to_action']);
+    hide($content['sba_quicksign']);
     ?>
 
     <?php if(!$use_layouts): ?>
@@ -111,7 +111,9 @@
           <?php print $goal; ?>
         </div>
       <?php endif; ?>
-
+      <?php if(!$use_layouts): ?>
+        <div class="container-fluid">
+      <?php endif; ?>
       <div class="row-fluid">
         <?php if(!empty($content['field_message_action_img'][0]))  : ?>
           <div id="call-to-action" class="span8">
@@ -128,8 +130,18 @@
           </div>
         <?php endif; ?>
       </div>
+      <?php if(!$use_layouts): ?>
+        </div>
+      <?php endif; ?>
+  <?php endif; ?>
+    <?php if(!$use_layouts): ?>
+      <div class="container-fluid">
     <?php endif; ?>
     <?php print render($content);?>
+    <?php if(!$use_layouts): ?>
+       </div>
+    <?php endif; ?>
+
     <?php if(!$use_layouts): ?>
       <?php print render($content['sba_quicksign']); ?>
     <?php endif; ?>
