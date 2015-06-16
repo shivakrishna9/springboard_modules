@@ -35,46 +35,6 @@ function springboard_petition_get_petition_types() {
 }
 
 /**
- * Implements hook_node_insert().
- */
-function springboard_petition_node_insert($node) {
-  // If node is a petition type.
-  if (springboard_petition_is_petition_type($node->type)) {
-    // And if we have a default map.
-    $nid = -1;
-    if (!empty($node->clone_from_original_nid)) {
-      $nid = $node->clone_from_original_nid;
-    }
-    $webform_user_reference_fields = variable_get('webform_user_reference_fields', array());
-    $webform_user_reference_fields[$node->nid] = 'Contact__c';
-    variable_set('webform_user_reference_fields', $webform_user_reference_fields);
-    if (module_exists('salesforce_genmap')) {
-      $map = salesforce_genmap_load_map($nid, 'webform');
-      if (!empty($map)) {
-        // Copy the map to the node.
-        unset($map->mid);
-        $map->nid = $node->nid;
-        salesforce_genmap_save_map($map, 'webform');
-      }
-    }
-  }
-}
-
-
-
-/**
- * Implements hook_node_delete().
- *
- * Insert a copy of the default map when a Fundraiser node is created.
- */
-function springboard_petition_node_delete($node) {
-  // If node is a donation type.
-  if (springboard_petition_is_petition_type($node->type) && module_exists('salesforce_genmap')) {
-    salesforce_genmap_delete_map($node->nid, 'webform');
-  }
-}
-
-/**
  * Implements hook_form_FORM_ID_alter().
  *
  * Prevents required webform components from being deleted.
@@ -99,7 +59,7 @@ function springboard_petition_form_webform_component_delete_form_alter(&$form, &
 }
 
 /**
- * Implements hook_form_FORM_ID_alter(). 
+ * Implements hook_form_FORM_ID_alter().
  */
 function springboard_petition_form_node_type_form_alter(&$form, $form_state) {
   $form_type = isset($form['type']['#default_value']) ? $form['type']['#default_value'] : FALSE;
