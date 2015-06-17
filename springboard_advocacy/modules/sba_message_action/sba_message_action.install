@@ -7,11 +7,11 @@
 /**
  * Implements hook_schema().
  *
- * Table to save unique action IDs
+ * Table to save confirmations.
  */
 function sba_message_action_schema() {
 
-  // Store a unique ID for use with advocacy server
+  // Store a unique ID for use with advocacy server.
   $schema['sba_message_action_confirm'] = array(
     'description' => 'Store message action confirmation state.',
     'fields' => array(
@@ -57,12 +57,12 @@ function sba_message_action_install() {
  */
 function sba_message_action_uninstall() {
   // Delete email_wrapper nodes.
-   module_load_include('inc', 'sba_message_action', 'includes/install/sba_message_action.install');
-   module_load_include('inc', 'sba_message_action', 'includes/install/sba_message_action.install_fields');
+  module_load_include('inc', 'sba_message_action', 'includes/install/sba_message_action.install');
+  module_load_include('inc', 'sba_message_action', 'includes/install/sba_message_action.install_fields');
 
   _sba_message_action_delete_nodes();
   // Remove fields implemented by this module.
-  _sba_message_action_delete_fields();
+  // _sba_message_action_delete_fields();
   // Delete the message action content type.
   node_type_delete('sba_message_action');
   field_purge_batch(1000);
@@ -70,7 +70,7 @@ function sba_message_action_uninstall() {
 
 
 /**
- * rename alert var to action
+ * Rename alert var to action.
  */
 function sba_message_action_update_7001() {
   $types = variable_get('springboard_advocacy_alert_types', array(''));
@@ -79,29 +79,29 @@ function sba_message_action_update_7001() {
 }
 
 /**
- *  Add message action confirmation table
+ * Add message action confirmation table.
  */
 function sba_message_action_update_7002() {
   $schema = module_invoke('sba_message_action', 'schema');
-  if(db_table_exists('sba_message_action_confirm') == FALSE) {
+  if (db_table_exists('sba_message_action_confirm') == FALSE) {
     db_create_table('sba_message_action_confirm', $schema['sba_message_action_confirm']);
   }
 }
 /**
- *  Add message action confirmation table fail message field
+ * Add message action confirmation table fail message field.
  */
 function sba_message_action_update_7003() {
   $schema = module_invoke('sba_message_action', 'schema');
-  if(db_field_exists('sba_message_action_confirm', 'fail_message') == FALSE) {
+  if (db_field_exists('sba_message_action_confirm', 'fail_message') == FALSE) {
     db_add_field('sba_message_action_confirm', 'fail_message', $schema['sba_message_action_confirm']['fields']['fail_message']);
   }
 }
 
 /**
- *  Create call to action field, make body field required.
+ * Create call to action field, make body field required.
  */
 function sba_message_action_update_7004() {
-   module_load_include('inc', 'sba_message_action', 'includes/install/sba_message_action.install_fields');
+  module_load_include('inc', 'sba_message_action', 'includes/install/sba_message_action.install_fields');
   _sba_message_action_create_node_fields(TRUE);
   $instance_info = field_read_instance('node', 'body', 'sba_message_action');
   $instance_info['required'] = 1;
@@ -109,7 +109,7 @@ function sba_message_action_update_7004() {
 }
 
 /**
- *  Add user edit flag to existing actions
+ * Add user edit flag to existing actions.
  */
 function sba_message_action_update_7005() {
 
@@ -125,7 +125,7 @@ function sba_message_action_update_7005() {
       array(':nid' => $node->nid, ':key' => 'sba_user_edit_flag')
     )->fetchField();
 
-    if(!$nid) {
+    if (!$nid) {
       $field = array(
         'nid' => $node->nid,
         'form_key' => 'sba_user_edit_flag',
@@ -143,16 +143,16 @@ function sba_message_action_update_7005() {
 
 
 /**
- * Enable springboard_taxonomy dependency
+ * Enable springboard_taxonomy dependency.
  */
 function sba_message_action_update_7006() {
-  if(!module_exists('springboard_taxonomy')) {
+  if (!module_exists('springboard_taxonomy')) {
     module_enable(array('springboard_taxonomy'));
   }
 }
 
 /**
- * add message action to taxonomy node types.
+ * Add message action to taxonomy node types.
  */
 function sba_message_action_update_7007() {
   $taxonomy_types = variable_get('springboard_taxonomy_node_types', array());
@@ -161,7 +161,7 @@ function sba_message_action_update_7007() {
 }
 
 /**
- * Install legislative issues vocabularly if missing.
+ * Install legislative issues vocabulary if missing.
  */
 function sba_message_action_update_7008() {
   module_load_include('inc', 'sba_message_action', 'includes/install/sba_message_action.install_taxonomy');
@@ -170,7 +170,7 @@ function sba_message_action_update_7008() {
 }
 
 /**
- * Install deliverable_message_count if missing
+ * Install deliverable_message_count if missing.
  */
 function sba_message_action_update_7009() {
 
@@ -185,7 +185,7 @@ function sba_message_action_update_7009() {
       array(':nid' => $node->nid, ':key' => 'sba_user_edit_flag')
     )->fetchField();
 
-    if(!$nid) {
+    if (!$nid) {
       $field = array(
         'nid' => $node->nid,
         'form_key' => 'sba_deliverable_count',
@@ -219,7 +219,7 @@ function sba_message_action_update_7010() {
       WHERE nid = :nid AND form_key = :key',
       array(':nid' => $node->nid, ':key' => 'sbp_zip_plus_four')
     )->fetchField();
-    if(!$nid) {
+    if (!$nid) {
       $field = array(
         'nid' => $node->nid,
         'form_key' => 'sbp_zip_plus_four',
@@ -232,5 +232,18 @@ function sba_message_action_update_7010() {
       );
       webform_component_insert($field);
     }
+  }
+}
+
+/**
+ * Update description of the test mode field.
+ */
+function sba_message_action_update_7011() {
+  $field = field_info_instance('node', 'field_test_mode_email', 'sba_message_action');
+  if ($field) {
+    $field['description'] = t(
+      'Enter an email address for test mode. Test messages will be sent to this address instead of to the configured targets.'
+    );
+    field_update_instance($field);
   }
 }

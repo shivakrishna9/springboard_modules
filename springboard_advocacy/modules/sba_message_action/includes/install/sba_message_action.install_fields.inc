@@ -83,7 +83,6 @@ function _sba_message_action_create_node_fields($update = false) {
     ),
   );
 
-
   $fields['body'] = array(
     'active' => 1,
     'cardinality' => 1,
@@ -273,8 +272,7 @@ function _sba_message_action_create_node_fields($update = false) {
       'widget' => array(
         'active' => 1,
         'module' => 'options',
-        'settings' => array(
-        ),
+        'settings' => array(),
         'type' => 'options_buttons',
         'weight' => 31,
       ),
@@ -312,7 +310,7 @@ function _sba_message_action_create_node_fields($update = false) {
       'bundle' => 'sba_message_action',
       'default_value' => NULL,
       'deleted' => 0,
-      'description' => 'Enter an optional email address for test mode. Test messages will sent to this address instead of to the configured targets.',
+      'description' => 'Enter an email address for test mode. Test messages will be sent to this address instead of to the configured targets.',
       'display' => array(
         'default' => array(
           'label' => 'hidden',
@@ -414,7 +412,7 @@ function _sba_message_action_delete_fields() {
     $field = field_info_instance('node', $field_name, 'sba_message_action');
     field_delete_instance($field);
     $field = field_info_field($field_name);
-    field_delete_field($field_name);
+    field_delete_field($field);
   }
   drupal_set_message('Springboard message action fields deleted.');
 }

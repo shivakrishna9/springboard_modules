@@ -329,9 +329,29 @@ function sba_message_action_form_sba_message_action_node_form_alter(&$form, &$fo
       'includes/sba_message_action.taxonomy');
     sba_message_action_taxonomy_form($form, $form_state, 'sba_message_action_node_form');
   }
-  $node = $form['#node'];
-  if (empty($node->nid) && in_array($node->type, webform_variable_get('webform_node_types_primary'))) {
-    $form['actions']['submit']['#submit'][] = 'sba_message_action_form_sba_message_action_node_form_submit';
+
+  $form['field_test_mode_email']['#states']['visible'] = array(
+    ':input[name="field_test_mode[und][1]"]' => array('checked' => TRUE),
+  );
+  $form['field_test_mode_email']['#states']['required'] = array(
+    ':input[name="field_test_mode[und][1]"]' => array('checked' => TRUE),
+  );
+
+  $form['actions']['submit']['#validate'][] = 'sba_message_action_form_sba_message_action_node_form_validate';
+  $form['actions']['submit']['#submit'][] = 'sba_message_action_form_sba_message_action_node_form_submit';
+}
+
+/**
+ * Require the test_mode_email_address field
+ *
+ * @param $form
+ * @param $form_state
+ */
+function sba_message_action_form_sba_message_action_node_form_validate(&$form, &$form_state) {
+
+  if ($form_state['values']['field_test_mode'][LANGUAGE_NONE][0]['value'] == 1
+    && $form_state['values']['field_test_mode_email'][LANGUAGE_NONE][0]['value'] == '') {
+    form_set_error('field_test_mode_email', t('Email address is required'));
   }
 }
 
