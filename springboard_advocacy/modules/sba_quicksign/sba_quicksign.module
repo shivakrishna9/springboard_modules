@@ -412,6 +412,7 @@ function _sba_quicksign_build_submission($form, &$original_form_state, $node, $s
     'values' => array(),
   );
   $form_state['clicked_button']['#parents'] = NULL;
+  $tree = array();
   $form_state['values']['submitted'] = sba_quicksign_submission_tree_build($submission, $node->webform['components'], $tree, 0);
   $webform_submission = array(
     'nid' => $node->nid,
@@ -458,7 +459,7 @@ function _sba_quicksign_build_submission($form, &$original_form_state, $node, $s
  * @return mixed
  *   Returns the submitted values in a tree structure that Webform can parse.
  */
-function sba_quicksign_submission_tree_build(array $submission, array $src, array &$tree, $parent) {
+function sba_quicksign_submission_tree_build($submission, $src, &$tree, $parent) {
 
   foreach ($src as $cid => $component) {
     if ($component['pid']) {
