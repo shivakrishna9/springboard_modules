@@ -1,19 +1,27 @@
 <?php
 
+/**
+ * Add the legislator lookup failure confirmation form.
+ *
+ * Called from sba_message_action_form_webform_configure_form_alter().
+ *
+ * @param $form
+ * @param $form_state
+ */
 function sba_message_action_confirmation(&$form, &$form_state) {
   $form['submission']['confirmation']['#weight'] = -2;
-// Does this node have a custom confirmation record?
+  // Does this node have a custom confirmation record?
   $custom_status = isset($form['#node']->custom_confirmation) ? $form['#node']->custom_confirmation : 0;
 
   $form['submission']['confirmation_fail'] = array(
     '#type' => 'fieldset',
     '#weight' => -1,
-    '#tree' =>TRUE,
+    '#tree' => TRUE,
     '#prefix' => '<div id="confirmation-div">',
     '#suffix' => '</div>',
   );
 
-// Add the ajax-enabled custom confirmation checkbox with a default value.
+  // Add the ajax-enabled custom confirmation checkbox with a default value.
   $form['submission']['confirmation_fail']['custom_confirmation'] = array(
     '#type' => 'checkbox',
     '#title' => t('Use custom failure message'),
@@ -33,7 +41,8 @@ function sba_message_action_confirmation(&$form, &$form_state) {
   else {
     $default = variable_get('sba_message_action_confirm', '');
   }
-//Alter the confirmation textarea to have an ajax wrapper and drupal_process_states array.
+  // Alter the confirmation textarea to have an ajax wrapper
+  // and drupal_process_states array.
   $form['submission']['confirmation_fail']['fail_message'] = array(
     '#type' => 'textarea',
     '#title' => 'Confirmation failure message',
@@ -48,54 +57,68 @@ function sba_message_action_confirmation(&$form, &$form_state) {
     ),
   );
 
-// Intercept the Ajax reload and change the confirmation message value according to confirmation status.
+  // Intercept the Ajax reload and change the confirmation
+  // message value according to confirmation status.
   $new_custom_status = isset($form_state['values']['confirmation_fail']['custom_confirmation']) ? $form_state['values']['confirmation_fail']['custom_confirmation'] : NULL;
 
-  if ($new_custom_status === 1 ) {
-    unset($form_state['input']['confirmation_fail']['fail_message']);  // Value does not get reset without this.
-    // Use custom message is enabled so use the local node's confirmation message
+  if ($new_custom_status === 1) {
+    // Value does not get reset without this.
+    unset($form_state['input']['confirmation_fail']['fail_message']);
+    // Use custom message is enabled so use the local node's
+    // confirmation message.
     $form['submission']['confirmation_fail']['fail_message']['#default_value'] = $form['#node']->custom_fail_message;
   }
-  elseif ($new_custom_status === 0 ) {
+  elseif ($new_custom_status === 0) {
     unset($form_state['input']['confirmation_fail']['fail_message']);
-    // Use custom message is disabled so use the global confirmation message
-    $form['submission']['confirmation_fail']['fail_message']['#default_value'] =   variable_get('sba_message_action_confirm', '');
+    // Use custom message is disabled so use the global confirmation message.
+    $form['submission']['confirmation_fail']['fail_message']['#default_value'] = variable_get('sba_message_action_confirm', '');
   }
-// Add a custom submit function to save the confirmation status value.
+  // Add a custom submit function to save the confirmation status value.
   $form['#submit'][] = 'sba_message_confirmation_submit';
 
-// Need this to alter the filter format box
+  // Need this to alter the filter format box.
   $form['#after_build'][] = 'sba_message_action_configure_form_after_build';
 
 }
 
 
 /**
- * Some onerous form manipulations in order to get the webform confirmation failure
+ * Some onerous form manipulations.
+ *
+ * In order to get the webform confirmation failure
  * message form to display nicely.
+ *
  * @param $element
+ *   The form.
+ *
  * @return mixed
  */
 function sba_message_action_configure_form_after_build($element) {
   $element['submission']['confirmation']['format']['#collapsible'] = TRUE;
   $element['submission']['confirmation']['format']['#collapsed'] = TRUE;
-  $element['submission']['confirmation']['format']['#attached']['library'][] =
-    array('system', 'drupal.collapse');
+  $element['submission']['confirmation']['format']['#attached']['library'][]
+    = array('system', 'drupal.collapse');
   $element['submission']['confirmation']['format']['#title'] = 'Text Format';
   $element['submission']['confirmation']['format']['#weight'] = 20;
   $element['submission']['confirmation']['format']['#attributes']['class'][] = 'collapsible';
   $element['submission']['confirmation']['format']['#attributes']['class'][] = 'collapsed';
   $element['submission']['confirmation']['value']['#title'] = 'Confirmation success message';
-  $element['submission']['confirmation']['value']['#description'] = $element['submission']['confirmation']['#description'];
+  $element['submission']['confirmation']['value']['#description']
+    = $element['submission']['confirmation']['#description'];
   unset($element['submission']['confirmation']['#description']);
   return $element;
 }
 
+
 /**
- * Ajax callback for webform confirmation field which has been altered above
+ * Ajax callback.
+ *
+ * For webform confirmation field which has been altered above
  * to be an ajax field.
+ *
  * @param $form
  * @param $form_state
+ *
  * @return mixed
  */
 function sba_message_action_form_webform_configure_callback($form, $form_state) {
@@ -103,9 +126,11 @@ function sba_message_action_form_webform_configure_callback($form, $form_state) 
 }
 
 /**
- * Submit callback for webform settings page
- * If this form has a custom confirmation overriding the global confirmation, save
- * a record registering that status.
+ * Submit callback for webform settings page.
+ *
+ * If this form has a custom confirmation overriding the
+ * global confirmation, save a record registering that status.
+ *
  * @param $form
  * @param $form_state
  */
