@@ -57,24 +57,13 @@ function sba_message_action_insert_components($node) {
     'email' => 1,
   );
 
-  $fields[] = array(
-    'nid' => $node->nid,
-    'form_key' => 'sbp_zip_plus_four',
-    'pid' => 0,
-    'name' => t('Zip+4'),
-    'type' => 'hidden',
-    'value' => '',
-    'weight' => 13,
-    'email' => 1,
-  );
-
   // Add the component to the Webform.
   foreach ($fields as $field) {
     // Don't insert fields if cloning.
     if (!isset($node->map) || (isset($node->map) &&  !in_array($field['form_key'], $node->map))) {
       $cid = webform_component_insert($field);
       // User map the state field.
-      if ($field['form_key'] == 'sbp_zip_plus_four' || $field['form_key'] == 'sbp_state' || $field['form_key'] == 'sbp_zip') {
+      if ($field['form_key'] == 'sbp_state' || $field['form_key'] == 'sbp_zip') {
         $map = array(
           'nid' => $node->nid,
           'cid' => $cid,

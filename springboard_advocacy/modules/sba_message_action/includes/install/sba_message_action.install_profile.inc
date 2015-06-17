@@ -104,7 +104,17 @@ function _sba_message_action_create_zip_plus_four() {
     'field_name' => 'sbp_zip_plus_four',
     'type' => 'text',
     'widget' => array(
-      'type' => 'hidden',
+      'type' => 'text_textfield',
+    ),
+    'display' => array(
+      'default' => array(
+        'label' => 'hidden',
+        'type' => 'hidden',
+      ),
+      'teaser' => array(
+        'label' => 'hidden',
+        'type' => 'hidden',
+      ),
     ),
   );
 
