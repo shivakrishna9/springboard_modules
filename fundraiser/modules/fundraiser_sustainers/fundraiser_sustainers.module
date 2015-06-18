@@ -776,7 +776,14 @@ function fundraiser_sustainers_process_single_recurring_donation(&$log, $recurri
     // Then go through each one of these to charge.
     // Since we already created the donation (and saved any CC info at that time).
     // All we need to do is process it and respond afterwards as needed.
-    fundraiser_donation_process($donation);
+    try {
+      fundraiser_donation_process($donation);
+    }
+    catch (Exception $e) {
+      watchdog_exception('fundraiser_sustainers', $e);
+      $donation->result['success'] = FALSE;
+    }
+
     if (!isset($donation->result['message'])) {
       $donation->result['message'] = '';
     }
