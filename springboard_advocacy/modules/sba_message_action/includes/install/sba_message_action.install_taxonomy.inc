@@ -1,5 +1,9 @@
 <?php
 
+/**
+ * @file
+ * Install helper functions for message action legislative vocabulary.
+ */
 
 /**
  * Install legislative issues vocabulary.

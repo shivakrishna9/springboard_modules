@@ -1,7 +1,12 @@
 <?php
 
 /**
- * Defines advocacy taxonomy fields added via hook_form_alter in .module.
+ * @file
+ * Helper functions for message action taxonomy form.
+ */
+
+/**
+ * Shows the taxonomy form on the node/add/edit page.
  */
 function sba_message_action_taxonomy_form(&$form, &$form_state, $form_id) {
 

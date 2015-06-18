@@ -1,5 +1,13 @@
 <?php
 
+/**
+ * @file
+ * Install helper functions for example nodes.
+ */
+
+/**
+ * Create the example message action node.
+ */
 function _sba_message_action_create_example_message_action() {
   $node = new stdClass();
   $node->is_new = 1;
@@ -96,6 +104,9 @@ function _sba_message_action_create_example_message_action() {
   drupal_set_message(t('An example message to target form has been created.'));
 }
 
+/**
+ * Create an email wrapper for the message action.
+ */
 function sba_message_action_email_wrapper_add() {
   $node = new stdClass();
   $node->is_new = 1;

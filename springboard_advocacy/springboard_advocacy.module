@@ -1,7 +1,7 @@
 <?php
 /**
  * @file
- * Drupal needs this blank file.
+ * Base Springboard advocacy functions.
  */
 
 /**
@@ -65,6 +65,7 @@ function springboard_advocacy_menu() {
  * @param bool $override_access
  *
  * @return array
+ *   Commonly re-used menu parameters.
  */
 function springboard_advocacy_menu_common($override_type = FALSE, $override_access = FALSE) {
   $params = array(
@@ -319,8 +320,11 @@ function springboard_advocacy_form_alter(&$form, &$form_state, $form_id) {
 }
 
 /**
+ * Auxiliary settings submit function.
+ *
  * Reset the API access token and subscription level variables when
  * submitting the advocacy configuration form.
+ *
  * @param $form
  * @param $form_state
  */
@@ -329,7 +333,6 @@ function springboard_advocacy_settings_submit($form, $form_state) {
   variable_del('sba_subscription');
   cache_clear_all();
 }
-
 
 /**
  * Implements hook_theme().

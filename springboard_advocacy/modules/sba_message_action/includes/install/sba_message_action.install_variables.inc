@@ -1,6 +1,15 @@
 <?php
 
+/**
+ * @file
+ * Install helper functions for message action configuration variables.
+ */
 
+/**
+ * Variables needed for integrations with other modules.
+ *
+ * Webform user, salesforce, springboard taxonomy, advocacy.
+ */
 function _sba_message_action_set_vars() {
 
   $variables = array(
@@ -54,9 +63,9 @@ function _sba_message_action_set_vars() {
   variable_set('webform_node_types', array_unique($webform_node_types));
   variable_set('webform_node_types_primary', array_unique($webform_node_types_primary));
 
-  //enable form_layuts
+  // Enable form_layouts.
   variable_set('form_layouts_sba_message_action', 1);
-  //default confirmation message.
+  // Default confirmation message.
   variable_set('sba_message_action_confirm', '');
   // Add as an advocacy message type.
   $sba_action_types = variable_get('sba_action_types', array(''));

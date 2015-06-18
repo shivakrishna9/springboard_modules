@@ -1,6 +1,13 @@
 <?php
 
+/**
+ * @file
+ * Install helper functions for field API fields.
+ */
 
+/**
+ * Create FieldAPi fields for message actions.
+ */
 function _sba_message_action_create_node_fields($update = false) {
 
   $fields = array(

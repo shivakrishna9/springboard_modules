@@ -1,5 +1,9 @@
 <?php
 
+/**
+ * @file
+ * Helper functions for building message action client forms.
+ */
 
 /**
  * Message action webform alterations.

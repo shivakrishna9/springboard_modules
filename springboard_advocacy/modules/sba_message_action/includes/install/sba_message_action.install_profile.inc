@@ -1,6 +1,13 @@
 <?php
 
+/**
+ * @file
+ * Install helper functions for profile fields.
+ */
 
+/**
+ * Create the message action user profile fields.
+ */
 function _sbp_message_action_create_user_profile_fields() {
   $phone_exists = field_info_field('sbp_phone');
 
@@ -97,6 +104,11 @@ function _sbp_message_action_create_user_profile_fields() {
   _sba_message_action_create_zip_plus_four();
 }
 
+/**
+ * Create the zip plus four user profile field.
+ *
+ * Done separately so can be used in update hook.
+ */
 function _sba_message_action_create_zip_plus_four() {
 
   $profile_zip_plus_four = array(
@@ -140,6 +152,6 @@ function _sba_message_action_create_zip_plus_four() {
   // If the group exists make sure its not disabled.
   if ($field_group) {
     $field_group->children[] = 'sbp_zip_plus_four';
-    $field_group = ctools_export_crud_save($table, $field_group);
+    ctools_export_crud_save($table, $field_group);
   }
 }

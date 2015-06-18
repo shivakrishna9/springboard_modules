@@ -1,6 +1,11 @@
 <?php
 
 /**
+ * @file
+ * Install helper functions for message action content type CRUD.
+ */
+
+/**
  * Creates the sba_message_action content type.
  */
 function _sba_message_action_create_content_type() {

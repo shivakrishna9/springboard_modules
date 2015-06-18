@@ -1,5 +1,17 @@
 <?php
 
+/**
+ * @file
+ * Helper functions for message action form layouts.
+ */
+
+/**
+ * Layout Definitions.
+ *
+ * Called from sba_message_action_form_layouts_info().
+ *
+ * @return array
+ */
 function sba_message_action_form_layouts() {
   $templates = array();
 
@@ -66,14 +78,14 @@ function sba_message_action_form_layouts() {
 }
 
 /**
- * @param $vars.
- */
+ * Implements hook_preprocess_hook().
+  */
 function sba_message_action_preprocess_two_column_message_right(&$vars) {
   sba_message_action_build_preprocess($vars);
 }
 
 /**
- * @param $vars.
+ * Implements hook_preprocess_hook().
  */
 function sba_message_action_preprocess_two_column_message_left(&$vars) {
   sba_message_action_build_preprocess($vars);
@@ -81,10 +93,6 @@ function sba_message_action_preprocess_two_column_message_left(&$vars) {
 
 /**
  * Implements hook_preprocess_hook().
- *
- * Form layouts preprocess function.
- *
- * @param $vars
  */
 function sba_message_action_preprocess_two_column_message_left_vertical(&$vars) {
   sba_message_action_build_preprocess($vars);
@@ -92,10 +100,6 @@ function sba_message_action_preprocess_two_column_message_left_vertical(&$vars) 
 
 /**
  * Implements hook_preprocess_hook().
- *
- * Form layouts preprocess function.
- *
- * @param $vars
  */
 function sba_message_action_preprocess_two_column_message_right_vert(&$vars) {
   sba_message_action_build_preprocess($vars);
@@ -103,8 +107,6 @@ function sba_message_action_preprocess_two_column_message_right_vert(&$vars) {
 
 /**
  * Implements hook_preprocess_hook().
- *
- * Form layouts preprocess function.
  */
 function sba_message_action_preprocess_two_column_body_left(&$vars) {
   sba_message_action_build_preprocess($vars);
@@ -112,8 +114,6 @@ function sba_message_action_preprocess_two_column_body_left(&$vars) {
 
 /**
  * Implements hook_preprocess_hook().
- *
- * Form layouts preprocess function.
  */
 function sba_message_action_preprocess_two_column_body_right(&$vars) {
   sba_message_action_build_preprocess($vars);

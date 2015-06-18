@@ -342,7 +342,7 @@ function sba_message_action_form_sba_message_action_node_form_alter(&$form, &$fo
 }
 
 /**
- * Require the test_mode_email_address field
+ * Require the test_mode_email_address field.
  *
  * @param $form
  * @param $form_state

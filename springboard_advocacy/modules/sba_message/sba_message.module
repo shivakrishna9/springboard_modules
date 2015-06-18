@@ -7,17 +7,15 @@
  */
 
 /**
- * Implements hook_menu.
- * @return array
+ * Implements hook_menu().
  */
-
 function sba_message_menu() {
   $items['node/%/messages'] = array(
     'title' => 'Messages',
     'page arguments' => array(1),
     'access callback' => 'sba_message_access',
     'access arguments' => array('manage-messages'),
-    'type' => MENU_LOCAL_TASK
+    'type' => MENU_LOCAL_TASK,
   ) + springboard_advocacy_menu_common(TRUE, TRUE);
 
 
@@ -38,16 +36,17 @@ function sba_message_menu() {
  *   The operation being performed. One of 'view', 'update', 'create', 'delete'
  *   or just 'edit' (being the same as 'create' or 'update').
  * @param $sba_message
- *   Optionally a sba_message or a sba_message type to check access for. If nothing is
- *   given, access for all sba_messages is determined.
+ *   Optionally a sba_message or a sba_message type to check access for.
+ *   If nothing is given, access for all sba_messages is determined.
  * @param $account
  *   The user to check for. Leave it to NULL to check for the global user.
+ *
  * @return boolean
  *   Whether access is allowed or not.
  */
 function sba_message_access($op, $sba_message = NULL, $account = NULL) {
-  // Messages will inherit create/edit/delete permissions from their parent node permissions.
-
+  // Messages will inherit create/edit/delete permissions from
+  // their parent node permissions.
   global $user;
   if (arg(0) == 'node' && is_numeric(arg(1))) {
     $node = node_load(arg(1));
@@ -56,7 +55,8 @@ function sba_message_access($op, $sba_message = NULL, $account = NULL) {
       return FALSE;
     }
 
-    // If a message is user editable, disable creation or additional messages for that node
+    // If a message is user editable, disable creation or additional
+    // messages for that node.
     if (arg(2) == 'messages' && arg(3) == 'add') {
       if (isset($node->message_ids)) {
         $messages = entity_load('sba_message', $node->message_ids);
@@ -65,9 +65,9 @@ function sba_message_access($op, $sba_message = NULL, $account = NULL) {
           $subject_editable = field_get_items('sba_message', $message, 'field_sba_subject_editable');
           $user_editable = field_get_items('sba_message', $message, 'field_sba_user_editable');
           if ($subject_editable[0]['value'] != 'Not editable' || !empty($user_editable)) {
-            $loglink = l("Return to message admin.", 'springboard/node/' . $node->nid . '/messages');
-            drupal_set_message(t('This action\'s current message is user-editable, additional messages may not be created for this action until user editing is disabled. !link', array('!link' => $loglink)), 'error', FALSE);
-            return false;
+            $loglink = l(t("Return to message admin."), 'springboard/node/' . $node->nid . '/messages');
+            drupal_set_message(t("This action's current message is user-editable, additional messages may not be created for this action until user editing is disabled. !link", array('!link' => $loglink)), 'error', FALSE);
+            return FALSE;
           }
         }
       }

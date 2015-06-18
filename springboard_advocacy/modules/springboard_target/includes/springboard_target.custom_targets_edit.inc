@@ -4,15 +4,18 @@
  * Functions for target updates.
  */
 
-
 /**
+ * Target edit form.
+ *
  * Add edit form items to the generic form defined
- * in springboard_target.custom_targets.inc
+ * in springboard_target.custom_targets.
  *
  * @param $form
  * @param $form_state
  * @param $target_id
+ *
  * @return array
+ *   The edit form.
  */
 function springboard_target_edit_custom_targets_form($form, &$form_state, $target_id) {
 
@@ -24,16 +27,21 @@ function springboard_target_edit_custom_targets_form($form, &$form_state, $targe
     $name = array(
       $form['row_one']['salutation']['#default_value'],
       $form['row_one']['first_name']['#default_value'],
-      $form['row_one']['last_name']['#default_value']
+      $form['row_one']['last_name']['#default_value'],
     );
     $form['header'] = array(
       '#prefix' => '<h2>',
       '#suffix' => '</h2>',
-      '#markup'=> check_plain(implode(' ', $name)),
+      '#markup' => check_plain(implode(' ', $name)),
       '#weight' => '-100' ,
     );
 
-    $form['submit'] = array('#type' => 'submit', '#value' => t('Update'), '#weight' => 10, '#attributes' => array('class' => 'target-add'));
+    $form['submit'] = array(
+      '#type' => 'submit',
+      '#value' => t('Update'),
+      '#weight' => 10,
+      '#attributes' => array('class' => 'target-add'),
+    );
   }
   $form['#validate'][] = 'springboard_target_form_validate';
 
@@ -42,7 +50,8 @@ function springboard_target_edit_custom_targets_form($form, &$form_state, $targe
 }
 
 /**
- * Submit function for target edit form
+ * Submit function for target edit form.
+ *
  * @param $form
  * @param $form_state
  */

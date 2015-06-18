@@ -1,5 +1,20 @@
 <?php
 
+/**
+ * @file
+ * Helper functions for message action webform components.
+ */
+
+/**
+ * Insert new components on node/add.
+ *
+ * Also re-insert the state and zip fields that were unset
+ * in webform_user_profile_fields_alter() and re-map them.
+ *
+ * Called from sba_message_action_node_insert();
+ *
+ * @param $node
+ */
 function sba_message_action_insert_components($node) {
   module_load_include('inc', 'webform', 'includes/webform.components');
 
@@ -75,6 +90,14 @@ function sba_message_action_insert_components($node) {
   }
 }
 
+/**
+ * Like it says, prevent deletion in the webform UI of these fields.
+ *
+ * Called from sba_message_action_form_webform_component_delete_form_alter().
+ *
+ * @param $form
+ * @param $form_state
+ */
 function sba_message_action_prevent_component_delete(&$form, &$form_state) {
 
   $required_fields = sba_message_locked_fields();
@@ -89,6 +112,12 @@ function sba_message_action_prevent_component_delete(&$form, &$form_state) {
   }
 }
 
+/**
+ * Lock down edit forms.
+ *
+ * Called from sba_message_action_form_webform_component_edit_form_alter().
+ * @param $form
+ */
 function sba_message_action_component_edit_lock(&$form) {
   $locked_fields = sba_message_locked_fields();
 
@@ -99,6 +128,13 @@ function sba_message_action_component_edit_lock(&$form) {
   }
 }
 
+/**
+ * Lock down editing on the overview form.
+ *
+ * Called from sba_message_action_form_webform_components_form_alter().
+ *
+ * @param $form
+ */
 function sba_message_action_component_overview_lock(&$form) {
   $locked_fields = sba_message_locked_fields();
   foreach ($form['#node']->webform['components'] as $cid => $component) {
@@ -108,6 +144,9 @@ function sba_message_action_component_overview_lock(&$form) {
   }
 }
 
+/**
+ * @return array
+ */
 function sba_message_locked_fields() {
   $locked_fields = array(
     'sbp_salutation',
