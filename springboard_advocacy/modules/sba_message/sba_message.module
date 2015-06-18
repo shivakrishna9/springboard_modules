@@ -506,34 +506,6 @@ function sba_message_type_delete(SbaMessageType $type) {
 }
 
 /**
- * URI callback for sba_messages.
- *
- * @param SbaMessage $sba_message
- *   The message entity.
- *
- * @return string
- *    A uri path.
- */
-function sba_message_uri(SbaMessage $sba_message) {
-  return array(
-    'path' => 'sba_message/' . $sba_message->sba_message_id,
-  );
-}
-
-
-/**
- * Menu title callback for showing individual entities.
- *
- * @param SbaMessage $sba_message
- *
- * @return string
- *   The page title.
- */
-function sba_message_page_title(SbaMessage $sba_message){
-  return $sba_message->name;
-}
-
-/**
  * Implements hook_views_api().
  */
 function sba_message_views_api() {
