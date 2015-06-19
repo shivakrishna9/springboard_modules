@@ -66,6 +66,7 @@ function sba_quicksign_form() {
 
 /**
  * Validation callback for quicksign form.
+ *
  * @param $form
  * @param $form_state
  */
@@ -96,7 +97,7 @@ function sba_quicksign_form_validate(&$form, &$form_state) {
   foreach ($map as $webform_field => $profile_field) {
     $items  = field_get_items('user', $account, $profile_field);
     $profile[$webform_field] = !empty($items[0]['value']) ? $items[0]['value'] : FALSE;
-    // special handling for mail
+    // Special handling for mail.
     if ($webform_field == 'mail') {
       $profile['mail'] = $mail;
     }
@@ -130,6 +131,7 @@ function sba_quicksign_form_validate(&$form, &$form_state) {
 
 /**
  * Submit callback for quicksign form.
+ *
  * @param $form
  * @param $form_state
  */
@@ -366,8 +368,9 @@ function sba_quicksign_settings($nid) {
   return $results->fetchAssoc();
 }
 
-
 /**
+ * Helper to find required fields.
+ *
  * @param object $node
  *
  * @return array
@@ -447,13 +450,13 @@ function _sba_quicksign_build_submission($form, &$original_form_state, $node, $s
 /**
  * Build the webform submission tree.
  *
- * @param array $submission
+ * @param $submission
  *   Associative array of webform component form keys and their values.
- * @param array $src
+ * @param $src
  *   Webform components organized by component id.
- * @param array $tree
+ * @param $tree
  *   Output storage.
- * @param mixed $parent
+ * @param $parent
  *   Parent component (if any).
  *
  * @return mixed
@@ -477,8 +480,7 @@ function sba_quicksign_submission_tree_build($submission, $src, &$tree, $parent)
 }
 
 /**
- * @param $node
- * @param $submission
+ * Implements hook_webform_submission_insert().
  */
 function sba_quicksign_webform_submission_insert($node, $submission) {
   $quicksign = isset($_SESSION['sba_quicksign']) ? $_SESSION['sba_quicksign'] : FALSE;
@@ -493,7 +495,10 @@ function sba_quicksign_webform_submission_insert($node, $submission) {
 }
 
 /**
+ * Helper to determine petition type status.
+ *
  * @param $type
+ *   The node type name.
  *
  * @return bool
  *   $type

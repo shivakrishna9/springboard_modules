@@ -28,6 +28,7 @@ function springboard_petition_is_petition_type($type) {
 function springboard_petition_get_petition_types() {
   // For all types, check if they are a fundraiser type.
   $types = node_type_get_types();
+  $petition_types = array();
   foreach ($types as $type => $type_info) {
     $petition_types[$type] = variable_get('petition_' . $type, FALSE);
   }
@@ -69,9 +70,16 @@ function springboard_petition_form_node_type_form_alter(&$form, $form_state) {
 }
 
 
+/**
+ * Auxiliary petition submit function.
+ *
+ * @param $form
+ * @param $form_state
+ */
 function springboard_petition_node_type_submit($form, $form_state) {
   if (isset($form_state['values']['webform_user']) && $form_state['values']['webform_user'] == 1) {
-    // Prevent webform user from overwriting the signature opt-in field when field configuration is changed.
+    // Prevent webform user from overwriting the signature opt-in field
+    // when field configuration is changed.
     if (isset($form_state['values']['webform_user_default_fields'])) {
       $default_fields = variable_get('webform_user_default_fields_springboard_petition', '');
       $default_fields[] = 'sbp_rps_optin';
@@ -107,7 +115,7 @@ function springboard_petition_petition_submit($form, $form_state) {
 }
 
 /**
- * Implements hook_views_api(). From Views module.
+ * Implements hook_views_api().
  */
 function springboard_petition_views_api() {
   return array(
@@ -138,7 +146,7 @@ function springboard_petition_webform_user_profile_fields_alter(&$fields, $node)
       'type' => 'list_boolean',
       'mandatory' => 0,
       'weight' => 0,
-      'explanation' => t(''),
+      'explanation' => '',
       'options' => array(0, 1),
       'category_key' => NULL,
       'category_name' => NULL,
@@ -167,15 +175,15 @@ function springboard_petition_token_info() {
  * Implements hook_tokens().
  */
 function springboard_petition_tokens($type, $tokens, array $data = array(), array $options = array()) {
+  $replacements = array();
   if ($type == 'springboard_petition') {
-    $replacements = array();
     foreach ($tokens as $key => $token) {
       if ($key == 'recent_signers') {
         $replacements[$token] = views_embed_view('recent_petiton_signers');
       }
     }
-    return $replacements;
   }
+  return $replacements;
 }
 
 /**
@@ -183,15 +191,15 @@ function springboard_petition_tokens($type, $tokens, array $data = array(), arra
  *
  * @param int $nid
  *   Node ID.
- *
  * @param int $uid
  *   User ID.
- *
- * @param boolean $opt_in
- *   User opt in TRUE/FALSE
+ * @param bool $opt_in
+ *   User opt in TRUE/FALSE.
+ * @param int $sid
+ *   Submission ID.
  */
 function springboard_petition_log_opt_in($nid, $uid, $opt_in, $sid) {
-  $query = db_delete('springboard_petition_opt_in')
+  db_delete('springboard_petition_opt_in')
     ->condition('sid', $sid, '=')
     ->execute();
 
