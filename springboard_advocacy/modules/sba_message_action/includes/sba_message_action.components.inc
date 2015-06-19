@@ -119,7 +119,6 @@ function sba_message_action_prevent_component_delete(&$form, &$form_state) {
  */
 function sba_message_action_form_webform_components_form_alter(&$form, &$form_state, $form_id) {
   if ($form['#node']->type == 'sba_message_action') {
-    //form_load_include($form_state, 'inc', 'sba_message_action', 'includes/sba_message_action.components');
     sba_message_action_component_overview_lock($form);
   }
 }
@@ -211,7 +210,6 @@ function sba_message_action_preprocess_webform_confirmation(&$vars) {
  */
 function sba_message_action_form_webform_component_delete_form_alter(&$form, &$form_state, $form_id) {
   if ($form['node']['#value']->type == 'sba_message_action') {
-    form_load_include($form_state, 'inc', 'sba_message_action', 'includes/sba_message_action.components');
     sba_message_action_prevent_component_delete($form, $form_state);
   }
 }
@@ -224,7 +222,6 @@ function sba_message_action_form_webform_component_delete_form_alter(&$form, &$f
 function sba_message_action_form_webform_component_edit_form_alter(&$form, &$form_state, $form_id) {
   $node = node_load($form['nid']['#value']);
   if ($node->type == 'sba_message_action') {
-    form_load_include($form_state, 'inc', 'sba_message_action', 'includes/sba_message_action.components');
     sba_message_action_component_edit_lock($form);
   }
 }
