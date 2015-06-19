@@ -26,16 +26,15 @@ function sba_message_init() {
   // lock down action fields.
   if (arg(0) == 'node' && is_numeric(arg(1))) {
     $node = node_load(arg(1));
-    if ($node->type == 'sba_message_action') {
-      if (arg(2) == 'webform' || (arg(3) == 'webform' && arg(3) == 'edit')) {
-        module_load_include(
-          'inc',
-          'sba_message_action',
-          'includes/sba_message_action.components'
-        );
-      }
+    if ($node->type == 'sba_message_action' && arg(2) == 'webform') {
+      module_load_include(
+        'inc',
+        'sba_message_action',
+        'includes/sba_message_action.components'
+      );
     }
   }
+
 }
 
 /**
