@@ -1,0 +1,131 @@
+<?php
+/**
+ * @file
+ * Fundraiser sustainer tests for failed sustainer processing.
+ */
+
+/**
+ *
+ */
+class FundraiserSustainersProcessingExceptionHandlingTestCase extends FundraiserSetup {
+
+  protected $node;
+  protected $expiration;
+
+  /**
+   * Implements getInfo(). Declares this test class to fundraiser testing.
+   */
+  public static function getInfo() {
+    return array(
+      'name' => 'Fundraiser sustainers processing exception handling',
+      'description' => 'Tests fundraiser sustainers failed processing.',
+      'group' => 'Fundraiser Sustainers',
+    );
+  }
+
+  /**
+   * Implements setUp().
+   */
+  public function setUp() {
+    $additional_modules = array(
+      'fundraiser_commerce',
+      'fundraiser_sustainers',
+    );
+    parent::setUp($additional_modules);
+
+    $this->node = $this->createDonationForm();
+    $this->expiration = new DateTime('now +3 months');
+  }
+
+  /**
+   *
+   */
+  public function testExceptionHandling() {
+
+    $series = array();
+
+    $this->drupalGet('node/' . $this->node->nid);
+
+    for ($i = 0; $i < 3; $i++) {
+      $this->submitRecurringDonation($this->node->nid, $this->expiration);
+      $master_did = $this->getMaxMasterDid();
+      $series[$i] = array(
+        'master_did' => $master_did,
+        'advance_did' => $this->advanceCharge($master_did),
+      );
+    }
+
+    $this->runFundraiserCron();
+
+    $checks = new FundraiserSustainersHealthChecks();
+    $results = $checks->checkStuckSustainers();
+    $this->assertTrue(empty($results), 'No stuck sustainers found.');
+
+    foreach ($series as $thing) {
+      $this->assertDonationIsSuccessfullyProcessed($thing['advance_did']);
+    }
+
+    foreach ($series as $i => $thing) {
+      $series[$i]['advance_did'] = $this->advanceCharge($series[$i]['master_did']);
+    }
+
+//    db_query("DELETE FROM {commerce_order} WHERE order_id = :did", array(':did' => $series[1]['advance_did']));
+
+    $this->runFundraiserCron();
+
+    $this->assertDonationIsSuccessfullyProcessed($series[0]['advance_did']);
+    $this->assertDonationIsNotSuccessfullyProcessed($series[1]['advance_did']);
+    $this->assertDonationIsSuccessfullyProcessed($series[2]['advance_did']);
+
+    $this->assertWatchdogContains('Exception thrown while processing a sustainer');
+
+    $checks = new FundraiserSustainersHealthChecks();
+    $results = $checks->checkStuckSustainers();
+    $dids = explode(',', $results['variables']['%dids']);
+    $this->assertEqual(count($dids), 1, 'One stuck sustainer found.');
+    $this->assertEqual($dids[0], $series[1]['advance_did'], 'The correct donation ID is the stuck sustainer.');
+
+  }
+
+  protected function getMaxMasterDid() {
+    return db_query("SELECT max(master_did) FROM {fundraiser_sustainers}")->fetchField();
+  }
+
+  protected function advanceCharge($master_did) {
+    $did = db_query("SELECT MIN(did) FROM {fundraiser_sustainers} WHERE master_did = :master_did AND lock_id = 0 AND gateway_resp IS NULL", array(':master_did' => $master_did))
+      ->fetchField();
+
+    db_query("UPDATE {fundraiser_sustainers} SET next_charge = 1 WHERE did = :did", array(':did' => $did));
+
+    return $did;
+  }
+
+  protected function runFundraiserCron() {
+    $this->drupalGet('fundraiser_cron');
+  }
+
+  protected function assertDonationIsSuccessfullyProcessed($did) {
+    $donation = fundraiser_donation_get_donation($did);
+    debug($donation->did . ' ' . $donation->status . ' ' . $donation->recurring->next_charge, 'donation');
+    $this->assertEqual($donation->status, 'payment_received', 'Donation is successfully processed.');
+  }
+
+  protected function assertDonationIsNotSuccessfullyProcessed($did) {
+    $donation = fundraiser_donation_get_donation($did);
+
+    $this->assertNotEqual($donation->status, 'payment_received', 'Donation is not successfully processed.');
+  }
+
+  protected function assertWatchdogContains($message) {
+    // Login the admin user.
+    $this->drupalLogin($this->drupalCreateUser(array('access site reports')));
+    // View the database log report.
+    $this->drupalGet('admin/reports/dblog');
+    $this->assertResponse(200);
+
+    // After filter_xss(), HTML entities should be converted to their character
+    // equivalents because assertLink() uses this string in xpath() to query the
+    // Document Object Model (DOM).
+    $this->assertLink($message);
+  }
+}
