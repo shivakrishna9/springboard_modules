@@ -5,6 +5,40 @@
  */
 
 /**
+ * Implements hook_init().
+ *
+ * Load taxonomy and webform form alters
+ * that apply to non-cached administrative pages.
+ */
+function sba_message_init() {
+
+  // Include the taxonomy form alters needed to look down legislative issues.
+  if ((arg(0) == 'admin' && arg(2) == 'taxonomy')
+    || (arg(0) == 'taxonomy' && arg(1) == 'taxonomy' && arg(3) == 'edit')) {
+    module_load_include(
+      'inc',
+      'sba_message_action',
+      'includes/sba_message_action.taxonomy'
+    );
+  }
+
+  // Include the webform component form alters needed to
+  // lock down action fields.
+  if (arg(0) == 'node' && is_numeric(arg(1))) {
+    $node = node_load(arg(1));
+    if ($node->type == 'sba_message_action') {
+      if (arg(2) == 'webform' || (arg(3) == 'webform' && arg(3) == 'edit')) {
+        module_load_include(
+          'inc',
+          'sba_message_action',
+          'includes/sba_message_action.components'
+        );
+      }
+    }
+  }
+}
+
+/**
  * Implements hook_menu().
  */
 function sba_message_action_menu() {
@@ -42,6 +76,26 @@ function sba_message_action_menu() {
 
   return $items;
 }
+
+/**
+ * Implements hook_menu_alter().
+ *
+ * Limit access to the legislative issues taxonomy admin.
+ */
+function sba_message_action_menu_alter(&$items) {
+  $items['admin/structure/taxonomy/sba_legislative_issues/add']['access callback'] = 'sba_message_action_taxonomy_access';
+  $items['admin/structure/taxonomy/sba_legislative_issues/edit']['access callback'] = 'sba_message_action_taxonomy_access';
+  $items['admin/structure/taxonomy/sba_legislative_issues']['access callback'] = 'sba_message_action_taxonomy_access';
+}
+
+/**
+ * Limit access to the legislative issues taxonomy admin.
+ * @return bool
+ */
+function sba_message_action_taxonomy_access() {
+  return FALSE;
+}
+
 
 /**
  * Access callback handler for the message action performance tab.
@@ -436,68 +490,5 @@ function sba_message_action_webform_user_profile_fields_alter(&$fields, $node) {
         $fields[$index]['weight'] = -3;
       }
     }
-  }
-}
-
-/**
- * Implements hook_form_FORM_ID_alter().
- *
- * Global/per action confirmation toggle.
- */
-function sba_message_action_form_webform_configure_form_alter(&$form, &$form_state) {
-  if ($form['#node']->type == 'sba_message_action') {
-    form_load_include($form_state, 'inc', 'sba_message_action', 'includes/sba_message_action.confirmations');
-    sba_message_action_confirmation($form, $form_state);
-  }
-}
-
-/**
- * Implements hook_preprocess_hook().
- *
- * Get the fail message to show on webform confirmation page
- * if there are no valid message recipients.
- */
-function sba_message_action_preprocess_webform_confirmation(&$vars) {
-  if ($vars['node']->type == 'sba_message_action' && empty($_SESSION['message_recipients'])) {
-    if (isset($vars['node']->custom_fail_message)) {
-      $vars['confirmation_message'] = check_markup($vars['node']->custom_fail_message, 'full_html');
-    }
-  }
-}
-
-/**
- * Implements hook_form_FORMID_alter().
- *
- * Disable deletion of required advocacy webform fields.
- */
-function sba_message_action_form_webform_component_delete_form_alter(&$form, &$form_state, $form_id) {
-  if ($form['node']['#value']->type == 'sba_message_action') {
-    form_load_include($form_state, 'inc', 'sba_message_action', 'includes/sba_message_action.components');
-    sba_message_action_prevent_component_delete($form, $form_state);
-  }
-}
-
-/**
- * Implements hook_form_webform_component_edit_form_alter().
- *
- * Disable form-key editing and un-mandatory of certain profile fields.
- */
-function sba_message_action_form_webform_component_edit_form_alter(&$form, &$form_state, $form_id) {
-  $node = node_load($form['nid']['#value']);
-  if ($node->type == 'sba_message_action') {
-    form_load_include($form_state, 'inc', 'sba_message_action', 'includes/sba_message_action.components');
-    sba_message_action_component_edit_lock($form);
-  }
-}
-
-/**
- * Implements hook_form_webform_components_form_alter().
- *
- * Disable un-mandatory of certain profile fields.
- */
-function sba_message_action_form_webform_components_form_alter(&$form, &$form_state, $form_id) {
-  if ($form['#node']->type == 'sba_message_action') {
-    form_load_include($form_state, 'inc', 'sba_message_action', 'includes/sba_message_action.components');
-    sba_message_action_component_overview_lock($form);
   }
 }

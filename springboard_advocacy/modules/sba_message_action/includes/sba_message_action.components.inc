@@ -113,6 +113,18 @@ function sba_message_action_prevent_component_delete(&$form, &$form_state) {
 }
 
 /**
+ * Implements hook_form_webform_components_form_alter().
+ *
+ * Disable un-mandatory of certain profile fields.
+ */
+function sba_message_action_form_webform_components_form_alter(&$form, &$form_state, $form_id) {
+  if ($form['#node']->type == 'sba_message_action') {
+    //form_load_include($form_state, 'inc', 'sba_message_action', 'includes/sba_message_action.components');
+    sba_message_action_component_overview_lock($form);
+  }
+}
+
+/**
  * Lock down edit forms.
  *
  * Called from sba_message_action_form_webform_component_edit_form_alter().
@@ -163,4 +175,56 @@ function sba_message_locked_fields() {
     'sbp_zip_plus_four',
   );
   return $locked_fields;
+}
+
+
+/**
+ * Implements hook_form_FORM_ID_alter().
+ *
+ * Global/per action confirmation toggle.
+ */
+function sba_message_action_form_webform_configure_form_alter(&$form, &$form_state) {
+  if ($form['#node']->type == 'sba_message_action') {
+    form_load_include($form_state, 'inc', 'sba_message_action', 'includes/sba_message_action.confirmations');
+    sba_message_action_confirmation($form, $form_state);
+  }
+}
+
+/**
+ * Implements hook_preprocess_hook().
+ *
+ * Get the fail message to show on webform confirmation page
+ * if there are no valid message recipients.
+ */
+function sba_message_action_preprocess_webform_confirmation(&$vars) {
+  if ($vars['node']->type == 'sba_message_action' && empty($_SESSION['message_recipients'])) {
+    if (isset($vars['node']->custom_fail_message)) {
+      $vars['confirmation_message'] = check_markup($vars['node']->custom_fail_message, 'full_html');
+    }
+  }
+}
+
+/**
+ * Implements hook_form_FORMID_alter().
+ *
+ * Disable deletion of required advocacy webform fields.
+ */
+function sba_message_action_form_webform_component_delete_form_alter(&$form, &$form_state, $form_id) {
+  if ($form['node']['#value']->type == 'sba_message_action') {
+    form_load_include($form_state, 'inc', 'sba_message_action', 'includes/sba_message_action.components');
+    sba_message_action_prevent_component_delete($form, $form_state);
+  }
+}
+
+/**
+ * Implements hook_form_webform_component_edit_form_alter().
+ *
+ * Disable form-key editing and un-mandatory of certain profile fields.
+ */
+function sba_message_action_form_webform_component_edit_form_alter(&$form, &$form_state, $form_id) {
+  $node = node_load($form['nid']['#value']);
+  if ($node->type == 'sba_message_action') {
+    form_load_include($form_state, 'inc', 'sba_message_action', 'includes/sba_message_action.components');
+    sba_message_action_component_edit_lock($form);
+  }
 }

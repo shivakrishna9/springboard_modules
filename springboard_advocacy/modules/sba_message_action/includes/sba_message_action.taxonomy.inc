@@ -47,3 +47,61 @@ function sba_message_action_taxonomy_form(&$form, &$form_state, $form_id) {
 
   }
 }
+
+/**
+ * @param $form
+ * @param $form_state
+ */
+function sba_message_action_form_taxonomy_overview_vocabularies_alter(&$form, &$form_state) {
+  foreach (element_children($form) as $key) {
+    if (isset($form[$key]['#vocabulary']) && !empty($form[$key]['#vocabulary']->machine_name)) {
+      if ($form[$key]['#vocabulary']->machine_name == 'sba_legislative_issues') {
+        $form[$key]['edit']['#type'] = 'markup';
+        $form[$key]['edit']['#markup'] = t('This vocabulary is pre-configured for Springboard Advocacy and is not editable.');
+        $form[$key]['add']['#access'] = FALSE;
+        $form[$key]['list']['#access'] = FALSE;
+
+      }
+    }
+  }
+}
+
+/**
+ * @param $form
+ * @param $form_state
+ */
+function sba_message_action_form_taxonomy_overview_terms_alter(&$form, &$form_state) {
+  if($form['#vocabulary']->machine_name == 'sba_legislative_issues') {
+    $form['actions']['#access'] = FALSE;
+    foreach (element_children($form) as $key) {
+      $form[$key]['edit']['#access'] = FALSE;
+    }
+  }
+}
+
+/**
+ * @param $form
+ * @param $form_state
+ */
+function sba_message_action_form_taxonomy_form_vocabulary_alter(&$form, &$form_state) {
+  if($form['#vocabulary']->machine_name == 'sba_legislative_issues') {
+    foreach (element_children($form) as $key) {
+      $form[$key]['#access'] = false;
+    }
+    $form['#prefix'] = t("This vocabulary cannot be edited");
+  }
+}
+
+/**
+ * @param $form
+ * @param $form_state
+ */
+function sba_message_action_form_taxonomy_form_term_alter(&$form, &$form_state) {
+  if ($form['#bundle'] == 'sba_legislative_issues') {
+    $prefix = t('Terms cannot be added or edited in this vocabulary.');
+    foreach (element_children($form) as $key) {
+      $form[$key]['#access'] = false;
+    }
+    $form['#prefix'] = $prefix;
+  }
+}
