@@ -6,7 +6,7 @@
  */
 
 /**
- * Shows the taxonomy form on the node/add/edit page.
+ * Shows the legislative issues form on the message action node/add/edit page.
  */
 function sba_message_action_taxonomy_form(&$form, &$form_state, $form_id) {
 
@@ -49,8 +49,12 @@ function sba_message_action_taxonomy_form(&$form, &$form_state, $form_id) {
 }
 
 /**
- * @param $form
- * @param $form_state
+ * Implements hook_form_FORM_ID_alter().
+ *
+ * Alter the admin/structure/taxonomy page.
+ *
+ * Remove the operations links from the legislative issues row and display
+ * a message explaining why they are not there.
  */
 function sba_message_action_form_taxonomy_overview_vocabularies_alter(&$form, &$form_state) {
   foreach (element_children($form) as $key) {
@@ -60,15 +64,15 @@ function sba_message_action_form_taxonomy_overview_vocabularies_alter(&$form, &$
         $form[$key]['edit']['#markup'] = t('This vocabulary is pre-configured for Springboard Advocacy and is not editable.');
         $form[$key]['add']['#access'] = FALSE;
         $form[$key]['list']['#access'] = FALSE;
-
       }
     }
   }
 }
 
 /**
- * @param $form
- * @param $form_state
+ * Implements hook_form_FORM_ID_alter().
+ *
+ * Hide edit links on the terms page.
  */
 function sba_message_action_form_taxonomy_overview_terms_alter(&$form, &$form_state) {
   if($form['#vocabulary']->machine_name == 'sba_legislative_issues') {
@@ -80,8 +84,9 @@ function sba_message_action_form_taxonomy_overview_terms_alter(&$form, &$form_st
 }
 
 /**
- * @param $form
- * @param $form_state
+ * Implements hook_form_FORM_ID_alter().
+ *
+ * Hide edit fields on the vocab edit page.
  */
 function sba_message_action_form_taxonomy_form_vocabulary_alter(&$form, &$form_state) {
   if($form['#vocabulary']->machine_name == 'sba_legislative_issues') {
@@ -93,8 +98,9 @@ function sba_message_action_form_taxonomy_form_vocabulary_alter(&$form, &$form_s
 }
 
 /**
- * @param $form
- * @param $form_state
+ * Implements hook_form_FORM_ID_alter().
+ *
+ * Remove form fields from the term edit page.
  */
 function sba_message_action_form_taxonomy_form_term_alter(&$form, &$form_state) {
   if ($form['#bundle'] == 'sba_legislative_issues') {

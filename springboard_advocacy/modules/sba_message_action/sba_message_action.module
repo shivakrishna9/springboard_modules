@@ -7,7 +7,7 @@
 /**
  * Implements hook_init().
  *
- * Load taxonomy and webform form alters
+ * Load taxonomy and webform form_alters
  * that apply to non-cached administrative pages.
  */
 function sba_message_init() {
@@ -89,6 +89,7 @@ function sba_message_action_menu_alter(&$items) {
 
 /**
  * Limit access to the legislative issues taxonomy admin.
+ *
  * @return bool
  */
 function sba_message_action_taxonomy_access() {
@@ -138,6 +139,7 @@ function sba_message_action_node_view($node, $view_mode, $langcode) {
       }
     }
 
+    // Add the modal JS and data to multiple-message nodes.
     if (isset($node->messages) && count($node->messages) > 1) {
       module_load_include('inc', 'sba_message_action',
         'includes/sba_message_action.modal');
@@ -284,14 +286,16 @@ function sba_message_action_form_alter(&$form, &$form_state, $form_id) {
   if (isset($form['#node']) && $form['#node']->type == 'sba_message_action') {
     // Is this the user-facing form?
     $client_form = strpos($form_id, 'client_form');
-    // Yes it is the user-facing form.
+    // Yes it is the user-facing form. Add all our custom non-webform-component
+    // form items which insert or display message-entity data in the
+    // message-action webform.
     if ($client_form !== FALSE) {
       form_load_include($form_state, 'inc', 'sba_message_action', 'includes/sba_message_action.form');
       sba_message_action_additional_elements($form, $form_state);
     }
   }
 
-  // Override springboard admin's node delete redirect.
+  // Override springboard_admin.module's node delete redirect.
   if ($form_id == 'node_delete_confirm') {
     if ($form['#node']->type == 'sba_message_action') {
       // Redirect to the message action landing page after node deletion.
@@ -303,8 +307,22 @@ function sba_message_action_form_alter(&$form, &$form_state, $form_id) {
 }
 
 /**
+ * Redirect to the message action landing page after node deletion.
+ *
  * @param $form
  * @param $form_state
+ */
+function _sba_message_action_redirect($form, &$form_state){
+  $form_state['redirect'] = 'admin/springboard/advocacy/message-actions/all';
+  $_GET['destination'] = url('admin/springboard/advocacy/message-actions/all');
+}
+
+/**
+ * Implements hook_form_FORM_ID_alter().
+ *
+ * Disable config options for the message action node type on the
+ * springboard_taxonomy.module config page; i.e., always require the
+ * organization issues vocab on message_action nodes.
  */
 function sba_message_action_form_springboard_taxonomy_settings_form_alter(&$form, &$form_state) {
   if (isset($form['springboard_taxonomy_node_types']['#options']['sba_message_action'])) {
@@ -354,38 +372,33 @@ function sba_message_action_form_field_ui_widget_type_form_alter(&$form, &$form_
   }
 }
 
-
-/**
- * Redirect to the message action landing page after node deletion.
- *
- * @param $form
- * @param $form_state
- */
-function _sba_message_action_redirect($form, &$form_state){
-  $form_state['redirect'] = 'admin/springboard/advocacy/message-actions/all';
-  $_GET['destination'] = url('admin/springboard/advocacy/message-actions/all');
-}
-
 /**
  * Implements hook_form_FORMID_alter().
  *
- * Redirect to messages tab after creating a new message action node.
+ * Custom validation, submit and form fields to the message node add/edit
+ * form.
  */
 function sba_message_action_form_sba_message_action_node_form_alter(&$form, &$form_state) {
+
+  // Loads the springboard_taxonomy_options fieldset and form js/css if it
+  // is not already present.
   if (!isset($form['field_sba_organization_issues'])
   && !isset($form['springboard_taxonomy_options']['organization_issues']['field_sba_organization_issues'])) {
     springboard_taxonomy_taxonomy_form($form, $form_state, 'sba_message_action_node_form');
   }
 
+  // Adds the legislative issues taxonomy fields to the above.
   if (isset($form['field_sba_legislative_issues'])) {
     form_load_include($form_state, 'inc', 'sba_message_action',
       'includes/sba_message_action.taxonomy');
     sba_message_action_taxonomy_form($form, $form_state, 'sba_message_action_node_form');
   }
 
+  // Hide the test_mode_email field if test_mode is unchecked.
   $form['field_test_mode_email']['#states']['visible'] = array(
     ':input[name="field_test_mode[und][1]"]' => array('checked' => TRUE),
   );
+  // Add required css selector to test_mode_email.
   $form['field_test_mode_email']['#states']['required'] = array(
     ':input[name="field_test_mode[und][1]"]' => array('checked' => TRUE),
   );
@@ -402,6 +415,7 @@ function sba_message_action_form_sba_message_action_node_form_alter(&$form, &$fo
  */
 function sba_message_action_form_sba_message_action_node_form_validate(&$form, &$form_state) {
 
+  // Require test_mode_email if test_mode is checked.
   if ($form_state['values']['field_test_mode'][LANGUAGE_NONE][0]['value'] == 1
     && $form_state['values']['field_test_mode_email'][LANGUAGE_NONE][0]['value'] == '') {
     form_set_error('field_test_mode_email', t('Email address is required'));
