@@ -9,6 +9,7 @@ dependencies[] = entity
 dependencies[] = rules
 dependencies[] = date
 dependencies[] = views
+dependencies[] = views_bulk_operations
 dependencies[] = commerce
 
 files[] = includes/FundraiserSustainersHealthChecks.php

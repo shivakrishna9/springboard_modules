@@ -3190,3 +3190,36 @@ function fundraiser_sustainers_processing_exception(Exception $e, $sustainer) {
   $variables = array('%did' => $sustainer->did);
   watchdog_exception('fundraiser_sustainers', $e, $message, $variables);
 }
+
+/**
+ * Implements hook_action_info().
+ *
+ * Add the unlock sustainer action for VBO.
+ */
+function fundraiser_sustainers_action_info() {
+  return array(
+    'fundraiser_sustainers_unlock_sustainer_action' => array(
+      'type' => 'fundraiser_sustainer_record',
+      'label' => t('Unlock sustainer'),
+      'behavior' => array('changes_property'),
+      'configurable' => FALSE,
+      'vbo_configurable' => FALSE,
+      'triggers' => array('any'),
+      'permissions' => array('administrate recurring donations'),
+    ),
+  );
+}
+
+/**
+ * The unlock sustainer action.
+ *
+ * @param Entity $sustainer_record
+ *   The fundraiser_sustainer_record entity.
+ */
+function fundraiser_sustainers_unlock_sustainer_action(&$sustainer_record, $context) {
+  $sustainer_record->lock_id = 0;
+  $sustainer_record->save();
+
+  $log = fundraiser_sustainers_log();
+  $log->logUnlockedDonation($sustainer_record->did);
+}

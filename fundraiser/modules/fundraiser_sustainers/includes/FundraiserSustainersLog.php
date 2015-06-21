@@ -105,13 +105,40 @@ class FundraiserSustainersLog {
    */
   public function logLockedDonations(array $dids, $lock_id) {
     foreach ($dids as $did) {
+      $this->logLockedDonation($did, $lock_id);
+    }
+  }
+
+  /**
+   * Log that a donation has been locked for processing.
+   *
+   * @param int $did
+   *   The donation ID to log as locked.
+   * @param string $lock_id
+   *   The new lock ID.
+   */
+  public function logLockedDonation($did, $lock_id) {
       $locked_log_record = array(
         'did' => $did,
         'new_state' => 'locked',
         'lock_id' => $lock_id,
       );
       $this->log($locked_log_record);
-    }
+  }
+
+  /**
+   * Log that a sustainer has been unlocked.
+   *
+   * @param int $did
+   *   The donation ID to log as unlocked.
+   */
+  public function logUnlockedDonation($did) {
+    $log_record = array(
+      'did' => $did,
+      'new_state' => 'unlocked',
+      'lock_id' => 0,
+    );
+    $this->log($log_record);
   }
 
   /**
