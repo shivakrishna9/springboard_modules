@@ -228,12 +228,12 @@ function _sba_message_action_create_node_fields($update = false) {
     ),
   );
 
-  $fields['field_test_mode'] = array(
+  $fields['field_sba_test_mode'] = array(
     'active' => 1,
     'cardinality' => 2,
     'deleted' => 0,
     'entity_types' => array(),
-    'field_name' => 'field_test_mode',
+    'field_name' => 'field_sba_test_mode',
     'foreign keys' => array(),
     'indexes' => array(
       'value' => array(
@@ -270,7 +270,7 @@ function _sba_message_action_create_node_fields($update = false) {
         ),
       ),
       'entity_type' => 'node',
-      'field_name' => 'field_test_mode',
+      'field_name' => 'field_sba_test_mode',
       'label' => 'Enable Test Mode',
       'required' => 0,
       'settings' => array(
@@ -286,13 +286,13 @@ function _sba_message_action_create_node_fields($update = false) {
     ),
   );
 
-  // Exported field_base: 'field_test_mode_email'
-  $fields['field_test_mode_email'] = array(
+  // Exported field_base: 'field_sba_test_mode_email'
+  $fields['field_sba_test_mode_email'] = array(
     'active' => 1,
     'cardinality' => 1,
     'deleted' => 0,
     'entity_types' => array(),
-    'field_name' => 'field_test_mode_email',
+    'field_name' => 'field_sba_test_mode_email',
     'foreign keys' => array(
       'format' => array(
         'columns' => array(
@@ -334,7 +334,7 @@ function _sba_message_action_create_node_fields($update = false) {
         ),
       ),
       'entity_type' => 'node',
-      'field_name' => 'field_test_mode_email',
+      'field_name' => 'field_sba_test_mode_email',
       'label' => 'Test Mode Email Address',
       'required' => 0,
       'settings' => array(
@@ -373,8 +373,8 @@ function _sba_message_action_create_node_fields($update = false) {
     $field_group = new stdClass();
     $field_group->disabled = FALSE; /* Edit this to true to make a default field_group disabled initially */
     $field_group->api_version = 1;
-    $field_group->identifier = 'group_test_mode|node|sba_message_action|form';
-    $field_group->group_name = 'group_test_mode';
+    $field_group->identifier = 'group_sba_test_mode|node|sba_message_action|form';
+    $field_group->group_name = 'group_sba_test_mode';
     $field_group->entity_type = 'node';
     $field_group->bundle = 'sba_message_action';
     $field_group->mode = 'form';
@@ -382,8 +382,8 @@ function _sba_message_action_create_node_fields($update = false) {
     $field_group->label = 'Test Mode';
     $field_group->weight = '33';
     $field_group->children = array(
-      0 => 'field_test_mode',
-      1 => 'field_test_mode_email',
+      0 => 'field_sba_test_mode',
+      1 => 'field_sba_test_mode_email',
     );
     $field_group->format_type = 'fieldset';
     $field_group->format_settings = array(
@@ -396,7 +396,7 @@ function _sba_message_action_create_node_fields($update = false) {
       'formatter' => 'collapsible',
     );
 
-    $export['group_test_mode|node|sba_message_action|form'] = $field_group;
+    $export['group_sba_test_mode|node|sba_message_action|form'] = $field_group;
 
     foreach ($export as $field_group) {
       field_group_group_save($field_group);
@@ -412,8 +412,8 @@ function _sba_message_action_delete_fields() {
     'sba_message_action_call_to_action',
     'field_message_action_img',
     'field_sba_legislative_issues',
-    'field_test_mode',
-    'field_test_mode_email',
+    'field_sba_test_mode',
+    'field_sba_test_mode_email',
   );
   foreach ($fields as $field_name) {
     $field = field_info_instance('node', $field_name, 'sba_message_action');
