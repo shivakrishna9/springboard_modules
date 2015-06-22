@@ -174,6 +174,11 @@ function springboard_advocacy_dashboard($path, $arg = NULL) {
         // If there's only one message, and it's user-editable
         // prevent display of create message link.
         if (count($messages) == 1) {
+
+          // Hide the "show row weights" and weight column
+          // if there's only one message.
+          drupal_add_js('jQuery(document).ready(function () {if (jQuery(".views-row-first.views-row-last").length == 1) {jQuery(".tabledrag-toggle-weight-wrapper").hide();jQuery.cookie("Drupal.tableDrag.showWeight", 0, {path: Drupal.settings.basePath,expires: 365});}})', array('type' => 'inline'));
+
           $message = array_pop($messages);
           $subject_editable = field_get_items('sba_message', $message, 'field_sba_subject_editable');
           $user_editable = field_get_items('sba_message', $message, 'field_sba_user_editable');
@@ -183,6 +188,7 @@ function springboard_advocacy_dashboard($path, $arg = NULL) {
           }
         }
       }
+
 
       // Set the content.
       $sections = array(
