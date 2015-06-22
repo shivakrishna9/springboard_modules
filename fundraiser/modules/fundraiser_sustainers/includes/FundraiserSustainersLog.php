@@ -132,12 +132,16 @@ class FundraiserSustainersLog {
    * @param int $did
    *   The donation ID to log as unlocked.
    */
-  public function logUnlockedDonation($did) {
+  public function logUnlockedDonation($did, $new_state = NULL) {
     $log_record = array(
       'did' => $did,
-      'new_state' => 'unlocked',
       'lock_id' => 0,
     );
+
+    if (!is_null($new_state)) {
+      $log_record['new_state'] = $new_state;
+    }
+
     $this->log($log_record);
   }
 

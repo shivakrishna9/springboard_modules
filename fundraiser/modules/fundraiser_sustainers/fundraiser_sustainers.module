@@ -3189,6 +3189,14 @@ function fundraiser_sustainers_preprocess_html(&$vars) {
 
 }
 
+/**
+ * Log an exception during sustainer processing to watchdog.
+ *
+ * @param \Exception $e
+ *   The exception that was thrown.
+ * @param stdClass $sustainer
+ *   Part of the sustainer record for additional logging.
+ */
 function fundraiser_sustainers_processing_exception(Exception $e, $sustainer) {
   $message = 'Exception thrown while processing a sustainer. Sustainer ID: %did. %type: !message in %function (line %line of %file).';
   $variables = array('%did' => $sustainer->did);
@@ -3211,99 +3219,46 @@ function fundraiser_sustainers_action_info() {
       'triggers' => array('any'),
       'permissions' => array('administrate recurring donations'),
     ),
-    'fundraiser_sustainers_change_gateway_response_action' => array(
-      'type' => 'fundraiser_sustainer_record',
-      'label' => t('Change gateway response'),
-      'behavior' => array('changes_property'),
-      'configurable' => TRUE,
-      'vbo_configurable' => FALSE,
-      'triggers' => array('any'),
-      'permissions' => array('administrate recurring donations'),
-    ),
   );
 }
 
 /**
  * The unlock sustainer action.
  *
+ * Note that I'm including all gateway_resp cases in case this action gets used
+ * in other situations besides the stuck sustainer VBO.
+ *
+ * Also note that drupal saves the sustainer record entity on its own so that's
+ * why it's not happening here.
+ *
  * @param Entity $sustainer_record
  *   The fundraiser_sustainer_record entity.
  */
 function fundraiser_sustainers_unlock_sustainer_action(&$sustainer_record, $context) {
-  $sustainer_record->lock_id = 0;
+  $replacements = array('%did' => $sustainer_record->did);
 
-  $log = fundraiser_sustainers_log();
-  $log->logUnlockedDonation($sustainer_record->did);
-}
+  switch ($sustainer_record->gateway_resp) {
+    case FUNDRAISER_SUSTAINERS_PROCESSING_STATUS:
+    case FUNDRAISER_SUSTAINERS_FAILED_STATUS:
+    case FUNDRAISER_SUSTAINERS_SKIPPED_STATUS:
+    case FUNDRAISER_SUSTAINERS_CANCELED_STATUS:
+      $sustainer_record->lock_id = 0;
+      $sustainer_record->gateway_resp = FUNDRAISER_SUSTAINERS_RETRY_STATUS;
+      drupal_set_message(t('Unlocked sustainer ID: %did and changed status to Retry.', $replacements));
+      break;
 
-/**
- * Configuration form for the change gateway response action.
- *
- * @param array $context
- *   The context passed to the configure form.
- *
- * @return array
- *   Forms api array.
- */
-function fundraiser_sustainers_change_gateway_response_action_form($context) {
-  $form = array();
+    case FUNDRAISER_SUSTAINERS_SUCCESS_STATUS:
+      drupal_set_message(t('Cannot unlock a successful sustainer. ID: %did', $replacements));
+      break;
 
-  $default = FUNDRAISER_SUSTAINERS_PROCESSING_STATUS;
-  if (isset($context['new_gateway_response'])) {
-    $default = $context['new_gateway_response'];
+    case FUNDRAISER_SUSTAINERS_SCHEDULED_STATUS:
+    case FUNDRAISER_SUSTAINERS_RETRY_STATUS:
+    default:
+      $sustainer_record->lock_id = 0;
+      drupal_set_message(t('Unlocked sustainer with ID: %did', $replacements));
+      break;
   }
 
-  $form['new_gateway_response'] = array(
-    '#type' => 'select',
-    '#title' => t('New gateway response'),
-    '#description' => t('Choose a new gateway response.'),
-    '#options' => fundraiser_sustainers_status_options(),
-    '#default_value' => $default,
-  );
-
-  return $form;
-}
-
-/**
- * Submit handler for the configure form for the change gateway response action.
- *
- * @return array
- *   The array for the context.
- */
-function fundraiser_sustainers_change_gateway_response_action_submit($form, $form_state) {
-  return array('new_gateway_response' => $form_state['values']['new_gateway_response']);
-}
-
-/**
- * The change gateway response action.
- *
- * @param Entity $sustainer_record
- *   The sustainer record to modify.
- * @param array $context
- *   The context from the configure form submit.
- */
-function fundraiser_sustainers_change_gateway_response_action(&$sustainer_record, $context) {
-  $sustainer_record->gateway_resp = $context['new_gateway_response'];
-
   $log = fundraiser_sustainers_log();
-  $log->log(array('did' => $sustainer_record->did, 'gateway_resp' => $context['new_gateway_response']));
-}
-
-/**
- * Get a list of sustainer gateway response options for use in a form array.
- *
- * @return array
- *   The keyed array of sustainer status options.
- */
-function fundraiser_sustainers_status_options() {
-
-  return array(
-    FUNDRAISER_SUSTAINERS_PROCESSING_STATUS => 'Processing',
-    FUNDRAISER_SUSTAINERS_RETRY_STATUS => 'Retry',
-    FUNDRAISER_SUSTAINERS_FAILED_STATUS => 'Failed',
-    FUNDRAISER_SUSTAINERS_SUCCESS_STATUS => 'Success',
-    FUNDRAISER_SUSTAINERS_SKIPPED_STATUS => 'Skipped',
-    FUNDRAISER_SUSTAINERS_CANCELED_STATUS => 'Canceled',
-    FUNDRAISER_SUSTAINERS_SCHEDULED_STATUS => 'Scheduled',
-  );
+  $log->logUnlockedDonation($sustainer_record->did, $sustainer_record->gateway_resp);
 }
