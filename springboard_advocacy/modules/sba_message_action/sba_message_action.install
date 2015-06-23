@@ -109,9 +109,22 @@ function sba_message_action_update_7004() {
 }
 
 /**
- * Add user edit flag to existing actions.
+ * Update description of the test mode field.
  */
 function sba_message_action_update_7005() {
+  $field = field_info_instance('node', 'field_test_mode_email', 'sba_message_action');
+  if ($field) {
+    $field['description'] = t(
+      'Enter an email address for test mode. Test messages will be sent to this address instead of to the configured targets.'
+    );
+    field_update_instance($field);
+  }
+}
+
+/**
+ * Add user edit flag to existing actions.
+ */
+function sba_message_action_update_7006() {
 
   $nodes = db_query('select n.nid from {node} n
     WHERE n.type = :type',
@@ -145,7 +158,7 @@ function sba_message_action_update_7005() {
 /**
  * Enable springboard_taxonomy dependency.
  */
-function sba_message_action_update_7006() {
+function sba_message_action_update_7007() {
   if (!module_exists('springboard_taxonomy')) {
     module_enable(array('springboard_taxonomy'));
   }
@@ -154,7 +167,7 @@ function sba_message_action_update_7006() {
 /**
  * Add message action to taxonomy node types.
  */
-function sba_message_action_update_7007() {
+function sba_message_action_update_7008() {
   $taxonomy_types = variable_get('springboard_taxonomy_node_types', array());
   $taxonomy_types = array_merge($taxonomy_types, array('sba_message_action' => 'sba_message_action'));
   variable_set('springboard_taxonomy_node_types', array_unique($taxonomy_types));
@@ -163,7 +176,7 @@ function sba_message_action_update_7007() {
 /**
  * Install legislative issues vocabulary if missing.
  */
-function sba_message_action_update_7008() {
+function sba_message_action_update_7009() {
   module_load_include('inc', 'sba_message_action', 'includes/install/sba_message_action.install_taxonomy');
   _sba_message_action_install_vocab_sba_legislative_issues();
   _sba_message_action_install_taxonomy_fields();
@@ -172,7 +185,7 @@ function sba_message_action_update_7008() {
 /**
  * Install deliverable_message_count if missing.
  */
-function sba_message_action_update_7009() {
+function sba_message_action_update_7010() {
 
   $nodes = db_query('select n.nid from {node} n
     WHERE n.type = :type',
@@ -204,7 +217,7 @@ function sba_message_action_update_7009() {
 /**
  * Install zip+4 profile field and component if missing.
  */
-function sba_message_action_update_7010() {
+function sba_message_action_update_7011() {
   module_load_include('inc', 'sba_message_action', 'includes/install/sba_message_action.install_profile');
 
   _sba_message_action_create_zip_plus_four();
@@ -232,19 +245,6 @@ function sba_message_action_update_7010() {
       );
       webform_component_insert($field);
     }
-  }
-}
-
-/**
- * Update description of the test mode field.
- */
-function sba_message_action_update_7011() {
-  $field = field_info_instance('node', 'field_test_mode_email', 'sba_message_action');
-  if ($field) {
-    $field['description'] = t(
-      'Enter an email address for test mode. Test messages will be sent to this address instead of to the configured targets.'
-    );
-    field_update_instance($field);
   }
 }
 
