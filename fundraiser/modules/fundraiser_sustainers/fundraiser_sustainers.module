@@ -3235,30 +3235,40 @@ function fundraiser_sustainers_action_info() {
  *   The fundraiser_sustainer_record entity.
  */
 function fundraiser_sustainers_unlock_sustainer_action(&$sustainer_record, $context) {
-  $replacements = array('%did' => $sustainer_record->did);
+  $replacements = array(
+    '%did' => $sustainer_record->did,
+    '%status' => $sustainer_record->gateway_resp,
+    );
+
+  $log = fundraiser_sustainers_log();
 
   switch ($sustainer_record->gateway_resp) {
     case FUNDRAISER_SUSTAINERS_PROCESSING_STATUS:
-    case FUNDRAISER_SUSTAINERS_FAILED_STATUS:
-    case FUNDRAISER_SUSTAINERS_SKIPPED_STATUS:
-    case FUNDRAISER_SUSTAINERS_CANCELED_STATUS:
       $sustainer_record->lock_id = 0;
       $sustainer_record->gateway_resp = FUNDRAISER_SUSTAINERS_RETRY_STATUS;
-      drupal_set_message(t('Unlocked sustainer ID: %did and changed status to Retry.', $replacements));
-      break;
-
-    case FUNDRAISER_SUSTAINERS_SUCCESS_STATUS:
-      drupal_set_message(t('Cannot unlock a successful sustainer. ID: %did', $replacements));
+      $log->logUnlockedDonation($sustainer_record->did, $sustainer_record->gateway_resp);
+      drupal_set_message(t('Unlocked sustainer %did and changed its status from %status to Retry.', $replacements));
       break;
 
     case FUNDRAISER_SUSTAINERS_SCHEDULED_STATUS:
+      // Fall through.
     case FUNDRAISER_SUSTAINERS_RETRY_STATUS:
-    default:
       $sustainer_record->lock_id = 0;
-      drupal_set_message(t('Unlocked sustainer with ID: %did', $replacements));
+      $log->logUnlockedDonation($sustainer_record->did);
+      drupal_set_message(t('Unlocked sustainer %did and left its status at %status', $replacements));
+      break;
+
+    case FUNDRAISER_SUSTAINERS_SUCCESS_STATUS:
+      // Fall through.
+    case FUNDRAISER_SUSTAINERS_FAILED_STATUS:
+      // Fall through.
+    case FUNDRAISER_SUSTAINERS_SKIPPED_STATUS:
+      // Fall through.
+    case FUNDRAISER_SUSTAINERS_CANCELED_STATUS:
+      // Fall through.
+    default:
+      drupal_set_message(t('Cannot unlock the sustainer %did because its status is %status', $replacements));
       break;
   }
 
-  $log = fundraiser_sustainers_log();
-  $log->logUnlockedDonation($sustainer_record->did, $sustainer_record->gateway_resp);
 }
