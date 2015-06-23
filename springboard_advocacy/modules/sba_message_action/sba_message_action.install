@@ -247,3 +247,76 @@ function sba_message_action_update_7011() {
     field_update_instance($field);
   }
 }
+
+/**
+ * Namespace the test_mode fields.
+ */
+function sba_message_action_update_7012() {
+
+  $names = array(
+    'field_test_mode' => 'field_sba_test_mode',
+    'field_test_mode_email' => 'field_sba_test_mode_email',
+  );
+
+  foreach ($names as $old_name => $new_name) {
+    if (db_table_exists('field_data_' . $old_name)) {
+
+      // Get the "value" and "format" storage column names.
+      $field_info = field_info_field($old_name);
+      $storage = $field_info['storage']['details'];
+
+      // Rename the value and format fields and reset the indexes.
+      foreach ($storage['sql']['FIELD_LOAD_CURRENT'] as $field) {
+        foreach ($field as $key => $old_storage_column) {
+
+          // Drop indexes.
+          db_drop_index('field_data_' . $old_name, $old_storage_column);
+          db_drop_index('field_revision_' . $old_name, $old_storage_column);
+
+          // Rename storage columns.
+          $spec = $field_info['columns'][$key];
+          $new_storage_column = $new_name . '_' . $key;
+          db_change_field(
+            'field_data_' . $old_name,
+            $old_storage_column,
+            $new_storage_column,
+            $spec,
+            array('indexes' => array($new_storage_column => array($new_storage_column)))
+          );
+          db_change_field(
+            'field_revision_' . $old_name,
+            $old_storage_column,
+            $new_storage_column,
+            $spec,
+            array('indexes' => array($new_storage_column => array($new_storage_column)))
+          );
+        }
+      }
+
+      // Rename the tables.
+      db_rename_table('field_data_' . $old_name, 'field_data_' . $new_name);
+      db_rename_table('field_revision_' . $old_name, 'field_revision_' . $new_name);
+
+      // Update the config records with the new names.
+      db_update('field_config')->fields(array('field_name' => $new_name))
+        ->condition('field_name', $old_name)
+        ->execute();
+      db_update('field_config_instance')->fields(array('field_name' => $new_name))
+        ->condition('field_name', $old_name)
+        ->execute();
+
+    }
+  }
+
+  // Namespace the field group.
+  $field_group = field_group_load_field_group('group_test_mode', 'node', 'sba_message_action', 'form');
+  $table = 'field_group';
+
+  // If the group exists make sure its not disabled.
+  if ($field_group) {
+    $field_group->identifier = 'group_sba_test_mode|node|sba_message_action|form';
+    $field_group->group_name = 'group_sba_test_mode';
+    $field_group->children = array('field_sba_test_mode', 'field_sba_test_mode_email');
+    ctools_export_crud_save($table, $field_group);
+  }
+}
