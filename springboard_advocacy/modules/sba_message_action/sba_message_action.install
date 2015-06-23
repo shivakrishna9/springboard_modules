@@ -461,7 +461,7 @@ function _sba_message_action_create_node_fields($update = false) {
       'bundle' => 'sba_message_action',
       'default_value' => NULL,
       'deleted' => 0,
-      'description' => 'Enter an optional email address for test mode. Test messages will sent to this address instead of to the configured targets.',
+      'description' => 'Enter an email address for test mode. Test messages will be sent to this address instead of to the configured targets.',
       'display' => array(
         'default' => array(
           'label' => 'hidden',
@@ -948,8 +948,15 @@ function sba_message_action_update_7004() {
   field_update_instance($instance_info);
 }
 
-//function sba_message_action_update_7005()
-//{
-//  cache_clear_all();
-//  _springboard_message_action_install_taxonomy_fields();
-//}
+/**
+ * Update description of the test mode field.
+ */
+function sba_message_action_update_7005() {
+  $field = field_info_instance('node', 'field_test_mode_email', 'sba_message_action');
+  if ($field) {
+    $field['description'] = t(
+      'Enter an email address for test mode. Test messages will be sent to this address instead of to the configured targets.'
+    );
+    field_update_instance($field);
+  }
+}
