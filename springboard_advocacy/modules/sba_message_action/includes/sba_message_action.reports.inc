@@ -1,82 +1,113 @@
 <?php
 
 /**
+ * Get an instance of the API client to use in API calls.
+ * @return \SpringboardAdvocacyAPIClient
+ */
+function springboard_advocacy_message_action_api_client()
+{
+
+  $apiClient = &drupal_static(__FUNCTION__);
+
+  if (!isset($apiClient['client'])) {
+
+    $loader = new AdvocacyApiClientLoader();
+    $client = $loader->getClient();
+
+    $apiClient['client'] = $client;
+  }
+
+  return $apiClient['client'];
+}
+
+/**
  * Callback handler for 'node/%/performance' menu item.
  *
  * Generates and outputs deliverability reports for a particular message action.
  */
-function sba_message_action_performance_page($nid) {
+function sba_message_action_performance_page($nid)
+{
+  // CSS assets
+  drupal_add_css(drupal_get_path('module', 'sba_message_action') . '/css/message-performance.css');
+
   // Load up the message action node.
   $node = node_load($nid);
 
-  // Get an instance of the advocacy API client.
-  $loader = new AdvocacyApiClientLoader();
-  $client = $loader->getClient();
+  // API Client instance
+  $client = springboard_advocacy_message_action_api_client();
 
-  // TODO: Probably need to wrap this call in sort of error handling.
-  $report = $client->getTargetDeliverability($node->advocacy_id);
+  // Try to make the API call and if it fails return a response.
+  try {
+    $report = $client->getTargetDeliverability($node->advocacy_id);
 
-  // Use the devel module if you want to use dsm(). Calling that will output
-  // the raw API response data to the screen so you can examine it.
-  dsm($report);
+  } catch (Exception $e) {
+    watchdog('advocacy', 'An error occurred when attempting to get target deliverability metrics.', array('@message' => $e), WATCHDOG_ERROR);
 
-  // Check the status of the API call return.
-  if (isset($report->error)) {
-    // TODO: Ensure the message displayed to the user makes sense.
-    return $report->error->message;
-  }
-  else if (isset($report->data)) {
-    // TODO: Bad variable name.
-    $target_deliverablity = sba_message_action_performance_format_targets($report->data->targets);
-
-    // This will be the header row for the HTML table.
-    $header = array('Name', 'Party', 'State', 'District', 'Total Messages Sent', 'Delivered Messages', 'Failed Messages', 'Deliverablity Index');
-
-    // TODO: This is crap. Generate the output using a theme function and proper Drupal conventions. The classes are bootstap 2.x
-    // which ships with the Springboard admin theme so they're ok to use. The style attributes should be created via drupal_add_css.
-    // Could potentially move this to it's own function that accepts $report->data.
-    $output = '<h2>Overall Deliverability</h2><div class="container"><div class="row">
-  <div class="span3" style="text-align:center"><div class="well"><h2 class="text-info" style="font-size:35px;">'.$report->data->totalMessages.'</h2>Total Messages</div></div>
-  <div class="span3" style="text-align:center"><div class="well"><h2 class="text-info" style="font-size:35px;">'.$report->data->delivered.'</h2>Delivered</div></div>
-  <div class="span3" style="text-align:center"><div class="well"><h2 class="text-info" style="font-size:35px;">'.$report->data->failed.'</h2>Failed</div></div>
-  <div class="span3" style="text-align:center"><div class="well"><h2 class="text-info" style="font-size:35px;">'.$report->data->deliverabilityIndex.'</h2>Deliverablity Index</div></div>
-</div></div>';
-
-    $output .= '<h2>Individual Target Deliverability</h2>';
-
-    // This runs the data through Drupal's built-in theme_table function to create an HTML table.
-    $output .= theme('table', array('header' => $header, 'rows' => $target_deliverablity));
-    return $output;
-
-  }
-  else {
-    // TODO: Probably don't need this else if API call is wrapped in error handling.
-    return 'uh oh';
+    return 'Oops! An invalid API response was encountered.';
   }
 
+  // Check the status of the API call return and if it's an error return that to the browser.
+  if (isset($report->error)):
+    return 'Sorry, no performance metrics are available for this message.';
+  endif;
 
+  $deliverablity_targets = sba_message_action_performance_format_targets($report->data->targets, $node->advocacy_id);
 
+  return deliverability_report($report, $deliverablity_targets);
 }
 
 /**
- * Helper function to convert target deliverablity report data into
+ * Helper function to convert target deliverability report data into
  * a data structure that can be rendered in an HTML table.
  */
-function sba_message_action_performance_format_targets($targets) {
+function sba_message_action_performance_format_targets($targets, $nodeId)
+{
+
   $rows = array();
+
+  // Get an instance of the advocacy API client.
+  $client = springboard_advocacy_message_action_api_client();
+
   foreach ($targets as $target) {
+
+    // Get the target deliverability metrics for this target
+    $targetDeliverability = $client->getSingleTargetDeliverability($nodeId, $target->id)->data;
+
     $rows[] = array(
       $target->salutation . ' ' . $target->first_name . ' ' . $target->last_name,
       $target->party,
       $target->state,
       $target->district_code,
-      $target->totalMessages,
-      $target->delivered,
-      $target->failed,
-      $target->deliverabilityIndex // TODO: Format the deliverablity index as a percentage.
-      //sprintf("%.f%%", $target->deliverabilityIndex)
+      $targetDeliverability->totalMessages,
+      $targetDeliverability->delivered,
+      $targetDeliverability->failed,
+      $targetDeliverability->deliverabilityIndexPercentage
     );
   }
 
   return $rows;
+}
+
+/**
+ * Render the deliverability report to a template.
+ * @param $report
+ * @param $deliverablity_targets
+ * @return string
+ * @throws \Exception
+ */
+function deliverability_report($report, $deliverablity_targets)
+{
+
+  // Define the table header
+  $header = array('Name', 'Party', 'State', 'District', 'Total Messages Sent', 'Delivered Messages', 'Failed Messages', 'Deliverablity Index');
+
+  // Uses sba_message_action_theme()
+  $output = theme('messsage_deliverability_dashboard', array(
+    'header'  => $header,
+    'targets' => $deliverablity_targets,
+    'report'  => $report
+  ));
+
+  return $output;
+
 }
