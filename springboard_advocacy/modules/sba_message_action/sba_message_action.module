@@ -463,8 +463,13 @@ function sba_message_action_theme() {
       'render element' => 'element',
       'file' => 'includes/sba_message_action.form_layouts.inc',
     ),
+    'messsage_deliverability_dashboard' => array(
+      'path' => drupal_get_path('module', 'sba_message_action').'/templates',
+      'template' => 'sba_message_action_deliverability',
+    ),
   );
 }
+
 
 /**
  * Implements hook_webform_user_profile_fields_alter().
