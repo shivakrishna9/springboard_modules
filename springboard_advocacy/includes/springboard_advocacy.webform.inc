@@ -80,8 +80,9 @@ function springboard_advocacy_send_message(array $user_message, array $form_stat
 function theme_springboard_advocacy_webform_confirmations(array $vars) {
   $items = array();
   foreach ($vars['recipients'] as $person) {
-    $items[]['data'] = $person;
+    $items[]['data'] = check_plain($person);
   }
+
   $attributes = array(
     'class' => 'legislator-list',
   );
@@ -91,7 +92,7 @@ function theme_springboard_advocacy_webform_confirmations(array $vars) {
   return theme_item_list(
     array(
       'items' => $items,
-      'title' => $vars['subject'],
+      'title' => check_plain($vars['subject']),
       'type' => 'ul',
       'attributes' => $attributes,
     )
