@@ -42,9 +42,9 @@ function springboard_advocacy_send_message($user_message, $form_state) {
       'messages' => $message_build,
     );
     $node = $form_state['complete form']['#node'];
-    $test_mode = field_get_items('node', $node, 'field_test_mode');
+    $test_mode = field_get_items('node', $node, 'field_sba_test_mode');
     if (!empty($test_mode[0]['value']) && $test_mode[0]['value'] == 1) {
-      $test_email = field_get_items('node', $node, 'field_test_mode_email');
+      $test_email = field_get_items('node', $node, 'field_sba_test_mode_email');
       $submission['test_mode'] = TRUE;
       $submission['test_email'] = !empty($test_email[0]['safe_value']) ? $test_email[0]['safe_value'] : '';
     }

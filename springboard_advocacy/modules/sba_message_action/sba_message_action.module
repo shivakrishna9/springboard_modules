@@ -111,7 +111,7 @@ function sba_message_action_node_view($node, $view_mode, $langcode) {
     // Warn admins of config issues
     if(user_access('create sba_message_action content') || user_access('administer nodes')) {
       //Test mode warning
-      $test_mode = field_get_items('node', $node, 'field_test_mode');
+      $test_mode = field_get_items('node', $node, 'field_sba_test_mode');
       if (is_array($test_mode)) {
         $test_mode = reset($test_mode);
         if ($test_mode['value'] == 1) {
@@ -702,11 +702,11 @@ function sba_message_action_form_submit($form, &$form_state) {
  */
 function sba_message_action_form_sba_message_action_node_form_alter(&$form, &$form_state) {
 
-  $form['field_test_mode_email']['#states']['visible'] = array(
-    ':input[name="field_test_mode[und][1]"]' => array('checked' => TRUE),
+  $form['field_sba_test_mode_email']['#states']['visible'] = array(
+    ':input[name="field_sba_test_mode[und][1]"]' => array('checked' => TRUE),
   );
-  $form['field_test_mode_email']['#states']['required'] = array(
-    ':input[name="field_test_mode[und][1]"]' => array('checked' => TRUE),
+  $form['field_sba_test_mode_email']['#states']['required'] = array(
+    ':input[name="field_sba_test_mode[und][1]"]' => array('checked' => TRUE),
   );
   $form['actions']['submit']['#validate'][] = 'sba_message_action_form_sba_message_action_node_form_validate';
 
