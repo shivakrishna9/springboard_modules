@@ -269,7 +269,7 @@ function _sba_message_action_create_node_fields($update = false) {
           'module' => 'text',
           'settings' => array(),
           'type' => 'text_default',
-          'weight' => 0,
+          'weight' => 5,
         ),
         'teaser' => array(
           'label' => 'hidden',
@@ -278,7 +278,7 @@ function _sba_message_action_create_node_fields($update = false) {
             'trim_length' => 600,
           ),
           'type' => 'text_summary_or_trimmed',
-          'weight' => 0,
+          'weight' => 5,
         ),
       ),
       'entity_type' => 'node',
@@ -298,7 +298,7 @@ function _sba_message_action_create_node_fields($update = false) {
           'summary_rows' => 5,
         ),
         'type' => 'text_textarea_with_summary',
-        'weight' => 4,
+        'weight' => 5,
       ),
     )
 
@@ -342,13 +342,13 @@ function _sba_message_action_create_node_fields($update = false) {
           'module' => 'text',
           'settings' => array(),
           'type' => 'text_default',
-          'weight' => 5,
+          'weight' => 4,
         ),
         'teaser' => array(
           'label' => 'none',
           'settings' => array(),
           'type' => 'hidden',
-          'weight' => 0,
+          'weight' => 4,
         ),
       ),
       'entity_type' => 'node',
@@ -366,7 +366,7 @@ function _sba_message_action_create_node_fields($update = false) {
           'size' => 60,
         ),
         'type' => 'text_textfield',
-        'weight' => 3,
+        'weight' => 4,
       ),
     )
   );
@@ -823,8 +823,12 @@ function _sba_message_action_reorder_internal_name() {
   $instance_info['widget']['weight'] = 2;
   field_update_instance($instance_info);
 
+  $instance_info = field_read_instance('node', 'field_message_call_to_action', 'sba_message_action');
+  $instance_info['widget']['weight'] = 4;
+  field_update_instance($instance_info);
+
   $instance_info = field_read_instance('node', 'body', 'sba_message_action');
-  $instance_info['widget']['weight'] = 3;
+  $instance_info['widget']['weight'] = 5;
   field_update_instance($instance_info);
 }
 
@@ -1033,4 +1037,10 @@ function sba_message_action_update_7006() {
     $field_group->children = array('field_sba_test_mode', 'field_sba_test_mode_email');
     ctools_export_crud_save($table, $field_group);
   }
+}
+/**
+ * Reorder field weights on edit form.
+ */
+function sba_message_action_update_7007() {
+  _sba_message_action_reorder_internal_name();
 }
