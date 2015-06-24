@@ -51,17 +51,19 @@ function sba_message_action_performance_page($nid)
     return 'Sorry, no performance metrics are available for this message.';
   endif;
 
-  $deliverablity_targets = sba_message_action_performance_format_targets($report->data->targets, $node->advocacy_id);
+  $deliverablity_targets = sba_message_action_performance__targets_table($report, $node->advocacy_id);
 
-  return deliverability_report($report, $deliverablity_targets);
+  return $deliverablity_targets;
 }
 
 /**
  * Helper function to convert target deliverability report data into
  * a data structure that can be rendered in an HTML table.
  */
-function sba_message_action_performance_format_targets($targets, $nodeId)
+function sba_message_action_performance__targets_table($report, $nodeId)
 {
+
+  $targets = $report->data->targets;
 
   $rows = array();
 
@@ -85,29 +87,40 @@ function sba_message_action_performance_format_targets($targets, $nodeId)
     );
   }
 
-  return $rows;
-}
-
-/**
- * Render the deliverability report to a template.
- * @param $report
- * @param $deliverablity_targets
- * @return string
- * @throws \Exception
- */
-function deliverability_report($report, $deliverablity_targets)
-{
-
   // Define the table header
-  $header = array('Name', 'Party', 'State', 'District', 'Total Messages Sent', 'Delivered Messages', 'Failed Messages', 'Deliverablity Index');
+  $header = array('Name', 'Party', 'State', 'District', 'Total Messages Sent', 'Delivered Messages', 'Failed Messages', 'Deliverability Index');
 
   // Uses sba_message_action_theme()
   $output = theme('messsage_deliverability_dashboard', array(
-    'header'  => $header,
-    'targets' => $deliverablity_targets,
-    'report'  => $report
+    'targets_table_header' => $header,
+    'targets'              => $rows,
+    'report'               => $report
   ));
 
   return $output;
+}
 
+/**
+ * Implements hook_preprocess()
+ * @param $variables
+ * @throws \Exception
+ */
+function sba_message_action_preprocess_messsage_deliverability_dashboard(&$variables)
+{
+  // Sanitize the targets data
+  foreach ($variables['targets'] as $key => $data) {
+    foreach($data as $itemKey => $value) {
+      $variables['targets'][$key][$itemKey] = check_plain($value);
+    }
+  }
+
+  // Sanitize report data
+  $variables['report']->data->totalMessages = check_plain($variables['report']->data->totalMessages);
+  $variables['report']->data->delivered = check_plain($variables['report']->data->delivered);
+  $variables['report']->data->failed = check_plain($variables['report']->data->failed);
+  $variables['report']->data->deliverabilityIndexPercentage = check_plain($variables['report']->data->deliverabilityIndexPercentage);
+
+  // Render targets table
+  $targetsTable = theme('table', array('header' => $variables['targets_table_header'], 'rows' => $variables['targets']));
+  $variables['targets_table'] = $targetsTable;
 }
