@@ -122,136 +122,9 @@ function sba_message_action_update_7005() {
 }
 
 /**
- * Add user edit flag to existing actions.
- */
-function sba_message_action_update_7006() {
-
-  $nodes = db_query('select n.nid from {node} n
-    WHERE n.type = :type',
-    array(':type' => 'sba_message_action')
-  );
-
-  foreach ($nodes as $node) {
-
-    $nid = db_query('select nid from {webform_component}
-      WHERE nid = :nid AND form_key = :key',
-      array(':nid' => $node->nid, ':key' => 'sba_user_edit_flag')
-    )->fetchField();
-
-    if (!$nid) {
-      $field = array(
-        'nid' => $node->nid,
-        'form_key' => 'sba_user_edit_flag',
-        'pid' => 0,
-        'name' => t('User Edit Flag'),
-        'type' => 'hidden',
-        'value' => 0,
-        'weight' => 13,
-        'email' => 1,
-      );
-      webform_component_insert($field);
-    }
-  }
-}
-
-
-/**
- * Enable springboard_taxonomy dependency.
- */
-function sba_message_action_update_7007() {
-  if (!module_exists('springboard_taxonomy')) {
-    module_enable(array('springboard_taxonomy'));
-  }
-}
-
-/**
- * Add message action to taxonomy node types.
- */
-function sba_message_action_update_7008() {
-  $taxonomy_types = variable_get('springboard_taxonomy_node_types', array());
-  $taxonomy_types = array_merge($taxonomy_types, array('sba_message_action' => 'sba_message_action'));
-  variable_set('springboard_taxonomy_node_types', array_unique($taxonomy_types));
-}
-
-/**
- * Install legislative issues vocabulary if missing.
- */
-function sba_message_action_update_7009() {
-  module_load_include('inc', 'sba_message_action', 'includes/install/sba_message_action.install_taxonomy');
-  _sba_message_action_install_vocab_sba_legislative_issues();
-  _sba_message_action_install_taxonomy_fields();
-}
-
-/**
- * Install deliverable_message_count if missing.
- */
-function sba_message_action_update_7010() {
-
-  $nodes = db_query('select n.nid from {node} n
-    WHERE n.type = :type',
-    array(':type' => 'sba_message_action')
-  );
-
-  foreach ($nodes as $node) {
-    $nid = db_query('select nid from {webform_component}
-      WHERE nid = :nid AND form_key = :key',
-      array(':nid' => $node->nid, ':key' => 'sba_user_edit_flag')
-    )->fetchField();
-
-    if (!$nid) {
-      $field = array(
-        'nid' => $node->nid,
-        'form_key' => 'sba_deliverable_count',
-        'pid' => 0,
-        'name' => t('Deliverable message count'),
-        'type' => 'hidden',
-        'value' => 0,
-        'weight' => 13,
-        'email' => 1,
-      );
-      webform_component_insert($field);
-    }
-  }
-}
-
-/**
- * Install zip+4 profile field and component if missing.
- */
-function sba_message_action_update_7011() {
-  module_load_include('inc', 'sba_message_action', 'includes/install/sba_message_action.install_profile');
-
-  _sba_message_action_create_zip_plus_four();
-
-  $nodes = db_query('select n.nid from {node} n
-    WHERE n.type = :type',
-    array(':type' => 'sba_message_action')
-  );
-
-  foreach ($nodes as $node) {
-    $nid = db_query('select nid from {webform_component}
-      WHERE nid = :nid AND form_key = :key',
-      array(':nid' => $node->nid, ':key' => 'sbp_zip_plus_four')
-    )->fetchField();
-    if (!$nid) {
-      $field = array(
-        'nid' => $node->nid,
-        'form_key' => 'sbp_zip_plus_four',
-        'pid' => 0,
-        'name' => t('Zip+4'),
-        'type' => 'hidden',
-        'value' => '',
-        'weight' => 13,
-        'email' => 1,
-      );
-      webform_component_insert($field);
-    }
-  }
-}
-
-/**
  * Namespace the test_mode fields.
  */
-function sba_message_action_update_7012() {
+function sba_message_action_update_7006() {
 
   $names = array(
     'field_test_mode' => 'field_sba_test_mode',
@@ -318,5 +191,133 @@ function sba_message_action_update_7012() {
     $field_group->group_name = 'group_sba_test_mode';
     $field_group->children = array('field_sba_test_mode', 'field_sba_test_mode_email');
     ctools_export_crud_save($table, $field_group);
+  }
+}
+
+
+/**
+ * Add user edit flag to existing actions.
+ */
+function sba_message_action_update_7007() {
+
+  $nodes = db_query('select n.nid from {node} n
+    WHERE n.type = :type',
+    array(':type' => 'sba_message_action')
+  );
+
+  foreach ($nodes as $node) {
+
+    $nid = db_query('select nid from {webform_component}
+      WHERE nid = :nid AND form_key = :key',
+      array(':nid' => $node->nid, ':key' => 'sba_user_edit_flag')
+    )->fetchField();
+
+    if (!$nid) {
+      $field = array(
+        'nid' => $node->nid,
+        'form_key' => 'sba_user_edit_flag',
+        'pid' => 0,
+        'name' => t('User Edit Flag'),
+        'type' => 'hidden',
+        'value' => 0,
+        'weight' => 13,
+        'email' => 1,
+      );
+      webform_component_insert($field);
+    }
+  }
+}
+
+
+/**
+ * Enable springboard_taxonomy dependency.
+ */
+function sba_message_action_update_7008() {
+  if (!module_exists('springboard_taxonomy')) {
+    module_enable(array('springboard_taxonomy'));
+  }
+}
+
+/**
+ * Add message action to taxonomy node types.
+ */
+function sba_message_action_update_7009() {
+  $taxonomy_types = variable_get('springboard_taxonomy_node_types', array());
+  $taxonomy_types = array_merge($taxonomy_types, array('sba_message_action' => 'sba_message_action'));
+  variable_set('springboard_taxonomy_node_types', array_unique($taxonomy_types));
+}
+
+/**
+ * Install legislative issues vocabulary if missing.
+ */
+function sba_message_action_update_7010() {
+  module_load_include('inc', 'sba_message_action', 'includes/install/sba_message_action.install_taxonomy');
+  _sba_message_action_install_vocab_sba_legislative_issues();
+  _sba_message_action_install_taxonomy_fields();
+}
+
+/**
+ * Install deliverable_message_count if missing.
+ */
+function sba_message_action_update_7011() {
+
+  $nodes = db_query('select n.nid from {node} n
+    WHERE n.type = :type',
+    array(':type' => 'sba_message_action')
+  );
+
+  foreach ($nodes as $node) {
+    $nid = db_query('select nid from {webform_component}
+      WHERE nid = :nid AND form_key = :key',
+      array(':nid' => $node->nid, ':key' => 'sba_user_edit_flag')
+    )->fetchField();
+
+    if (!$nid) {
+      $field = array(
+        'nid' => $node->nid,
+        'form_key' => 'sba_deliverable_count',
+        'pid' => 0,
+        'name' => t('Deliverable message count'),
+        'type' => 'hidden',
+        'value' => 0,
+        'weight' => 13,
+        'email' => 1,
+      );
+      webform_component_insert($field);
+    }
+  }
+}
+
+/**
+ * Install zip+4 profile field and component if missing.
+ */
+function sba_message_action_update_7012() {
+  module_load_include('inc', 'sba_message_action', 'includes/install/sba_message_action.install_profile');
+
+  _sba_message_action_create_zip_plus_four();
+
+  $nodes = db_query('select n.nid from {node} n
+    WHERE n.type = :type',
+    array(':type' => 'sba_message_action')
+  );
+
+  foreach ($nodes as $node) {
+    $nid = db_query('select nid from {webform_component}
+      WHERE nid = :nid AND form_key = :key',
+      array(':nid' => $node->nid, ':key' => 'sbp_zip_plus_four')
+    )->fetchField();
+    if (!$nid) {
+      $field = array(
+        'nid' => $node->nid,
+        'form_key' => 'sbp_zip_plus_four',
+        'pid' => 0,
+        'name' => t('Zip+4'),
+        'type' => 'hidden',
+        'value' => '',
+        'weight' => 13,
+        'email' => 1,
+      );
+      webform_component_insert($field);
+    }
   }
 }
