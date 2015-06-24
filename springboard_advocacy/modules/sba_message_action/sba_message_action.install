@@ -194,11 +194,17 @@ function sba_message_action_update_7006() {
   }
 }
 
+/**
+ * Reorder field weights on edit form.
+ */
+function sba_message_action_update_7007() {
+  _sba_message_action_reorder_internal_name();
+}
 
 /**
  * Add user edit flag to existing actions.
  */
-function sba_message_action_update_7007() {
+function sba_message_action_update_7008() {
 
   $nodes = db_query('select n.nid from {node} n
     WHERE n.type = :type',
@@ -232,7 +238,7 @@ function sba_message_action_update_7007() {
 /**
  * Enable springboard_taxonomy dependency.
  */
-function sba_message_action_update_7008() {
+function sba_message_action_update_7009() {
   if (!module_exists('springboard_taxonomy')) {
     module_enable(array('springboard_taxonomy'));
   }
@@ -241,7 +247,7 @@ function sba_message_action_update_7008() {
 /**
  * Add message action to taxonomy node types.
  */
-function sba_message_action_update_7009() {
+function sba_message_action_update_7010() {
   $taxonomy_types = variable_get('springboard_taxonomy_node_types', array());
   $taxonomy_types = array_merge($taxonomy_types, array('sba_message_action' => 'sba_message_action'));
   variable_set('springboard_taxonomy_node_types', array_unique($taxonomy_types));
@@ -250,7 +256,7 @@ function sba_message_action_update_7009() {
 /**
  * Install legislative issues vocabulary if missing.
  */
-function sba_message_action_update_7010() {
+function sba_message_action_update_7011() {
   module_load_include('inc', 'sba_message_action', 'includes/install/sba_message_action.install_taxonomy');
   _sba_message_action_install_vocab_sba_legislative_issues();
   _sba_message_action_install_taxonomy_fields();
@@ -259,7 +265,7 @@ function sba_message_action_update_7010() {
 /**
  * Install deliverable_message_count if missing.
  */
-function sba_message_action_update_7011() {
+function sba_message_action_update_7012() {
 
   $nodes = db_query('select n.nid from {node} n
     WHERE n.type = :type',
@@ -291,7 +297,7 @@ function sba_message_action_update_7011() {
 /**
  * Install zip+4 profile field and component if missing.
  */
-function sba_message_action_update_7012() {
+function sba_message_action_update_7013() {
   module_load_include('inc', 'sba_message_action', 'includes/install/sba_message_action.install_profile');
 
   _sba_message_action_create_zip_plus_four();
