@@ -24,9 +24,9 @@ function sba_message_init() {
 
   // Include the webform component form alters needed to
   // lock down action fields.
-  if (arg(0) == 'node' && is_numeric(arg(1))) {
+  if (arg(0) == 'node' && is_numeric(arg(1)) && arg(2) == 'webform') {
     $node = node_load(arg(1));
-    if ($node->type == 'sba_message_action' && arg(2) == 'webform') {
+    if (!empty($node->type) && $node->type == 'sba_message_action') {
       module_load_include(
         'inc',
         'sba_message_action',
