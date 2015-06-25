@@ -1090,7 +1090,7 @@ function fundraiser_commerce_fundraiser_donation_create($donation) {
     $method_instance = _fundraiser_gateway_info($info['id']);
   }
 
-  $scrubbed_fields = $donation->donation['payment_fields'];
+  $scrubbed_fields = isset($donation->donation['payment_fields']) ? $donation->donation['payment_fields'] : array();
   if (isset($method_instance['scrub callback']) && function_exists($method_instance['scrub callback'])) {
     $callback = $method_instance['scrub callback'];
     $scrubbed_fields = $callback($scrubbed_fields, $donation->donation['payment_method']);
@@ -1714,7 +1714,7 @@ function fundraiser_commerce_fundraiser_donation_update($donation) {
     }
 
     // Allow the gateways to scrub the data before saving
-    $scrubbed_fields = $donation->donation['payment_fields'];
+    $scrubbed_fields = isset($donation->donation['payment_fields']) ? $donation->donation['payment_fields'] : array();
     if (isset($donation->gateway['scrub callback']) && function_exists($donation->gateway['scrub callback'])) {
       $scrubbed_fields = $donation->gateway['scrub callback']($scrubbed_fields, $donation->donation['payment_method']);
     }
