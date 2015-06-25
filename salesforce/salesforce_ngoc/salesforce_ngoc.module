@@ -1,0 +1,19 @@
+<?php
+
+/**
+ * Implements hook_menu().
+ */
+function salesforce_ngoc_menu() {
+  // Settings page.
+  $items['admin/config/salesforce/salesforce-npsp'] = array(
+    'title' => 'Salesforce NGO Connect',
+    'description' => 'Configuration settings for NGO Connect.',
+    'page callback' => 'drupal_get_form',
+    'page_arguments' => array('salesforce_ngoc_admin_form'),
+    'access arguments' => array('administer salesforce ngoc'),
+    'file' => 'includes/salesforce_ngoc.admin.inc',
+  );
+
+  return $items;
+}
+

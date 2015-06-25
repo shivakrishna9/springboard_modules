@@ -1,0 +1,7 @@
+name = Salesforce NGO Connect
+description =  Sync data to NGO Connect
+package = Salesforce
+core = 7.x
+version = 7.x-4.x
+
+configure = admin/config/salesforce/ngo-connect
