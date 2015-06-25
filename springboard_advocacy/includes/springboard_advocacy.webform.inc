@@ -87,7 +87,7 @@ function theme_springboard_advocacy_webform_confirmations(array $vars) {
     'class' => 'legislator-list',
   );
   if (empty($items)) {
-    $items[]['data'] = 'No Results';
+    $items[]['data'] = t('No Results.');
   }
   return theme_item_list(
     array(
