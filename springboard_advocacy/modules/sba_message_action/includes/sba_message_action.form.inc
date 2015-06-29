@@ -306,17 +306,17 @@ function sba_message_action_form_validate($form, &$form_state) {
     if ($changed && isset($form['submitted']['sba_user_edit_flag'])) {
       form_set_value($form['submitted']['sba_user_edit_flag'], 1, $form_state);
     }
-    form_load_include($form_state, 'inc', 'springboard_advocacy', 'includes/springboard_advocacy.smarty_streets');
-    $smarty_geo = springboard_advocacy_smarty_lookup($form_state['values']['submitted']);
-    if (!empty($smarty_geo) && is_array($smarty_geo)) {
-      form_set_value($form['smarty_geo'], $smarty_geo, $form_state);
-      if (isset($smarty_geo['zip']) && isset($smarty_geo['plus4'])) {
-        form_set_value($form['submitted']['sbp_zip_plus_four'], $smarty_geo['zip'] . '-' . $smarty_geo['plus4'], $form_state);
-      }
+  }
+  form_load_include($form_state, 'inc', 'springboard_advocacy', 'includes/springboard_advocacy.smarty_streets');
+  $smarty_geo = springboard_advocacy_smarty_lookup($form_state['values']['submitted']);
+  if (!empty($smarty_geo) && is_array($smarty_geo)) {
+    form_set_value($form['smarty_geo'], $smarty_geo, $form_state);
+    if (isset($smarty_geo['zip']) && isset($smarty_geo['plus4'])) {
+      form_set_value($form['submitted']['sbp_zip_plus_four'], $smarty_geo['zip'] . '-' . $smarty_geo['plus4'], $form_state);
     }
-    else {
-      form_set_error('', t('We could not verify your address. Please check that the street, city, state and zip code information is correct.'));
-    }
+  }
+  else {
+    form_set_error('', t('We could not verify your address. Please check that the street, city, state and zip code information is correct.'));
   }
 }
 

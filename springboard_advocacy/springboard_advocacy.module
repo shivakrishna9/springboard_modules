@@ -354,10 +354,12 @@ function springboard_advocacy_theme($existing, $type, $theme) {
         'file' => 'springboard_advocacy.views.inc',
       ),
     ),
-    'springboard_advocacy_webform_confirmations' => array(
+    'springboard_advocacy_webform_confirmations_delivered' => array(
       'variables' => array(
         'recipients' => array(),
         'subject' => '',
+        'body' => '',
+        'contact' => array(),
         'file' => 'springboard_advocacy.webform.inc',
       ),
     ),
@@ -458,7 +460,6 @@ function springboard_advocacy_token_info() {
  * Implements hook_tokens().
  */
 function springboard_advocacy_tokens($type, $tokens, $data = array(), $options = array()) {
-
   $recipients = '';
   $replacements = array();
   if ($type == 'action') {
@@ -473,6 +474,45 @@ function springboard_advocacy_tokens($type, $tokens, $data = array(), $options =
       }
     }
   }
+
+  if ($type == 'contact' && isset($data['sba_contact'])) {
+    foreach ($tokens as $name => $original) {
+      switch ($name) {
+        case 'first_name':
+          $replacements[$original] = check_plain($data['sba_contact']->first_name);
+          break;
+
+        case 'last_name':
+          $replacements[$original] = check_plain($data['sba_contact']->last_name);
+          break;
+
+        case 'address':
+          $replacements[$original] = check_plain($data['sba_contact']->full_address);
+          break;
+
+      }
+    }
+  }
+
+  if ($type == 'target' && isset($data['sba_target'])) {
+    foreach ($tokens as $name => $original) {
+      switch ($name) {
+        case 'first_name':
+          $replacements[$original] = isset($data['sba_target']->first_name) ? check_plain($data['sba_target']->first_name) : '';
+          break;
+
+        case 'last_name':
+          $replacements[$original] = isset($data['sba_target']->last_name) ? check_plain($data['sba_target']->last_name): '';
+          break;
+
+        case 'salutation':
+          $replacements[$original] = isset($data['sba_target']->salutation) ? check_plain($data['sba_target']->salutation) : '';
+          break;
+
+      }
+    }
+  }
+
   return $replacements;
 }
 
