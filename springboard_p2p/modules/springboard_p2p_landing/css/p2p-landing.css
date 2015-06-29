@@ -230,7 +230,7 @@ ul.campaign-landing-grid a {
   content: " ";
   padding: 0;
   width: 0;
- }
+}
 
 .p2p-panelizer-campaign-landing h4 {
   color: #5b5b5b;
@@ -259,6 +259,18 @@ ul.campaign-landing-grid a {
 .top-personal-campaigns-view .attachment ul li {
   margin: 0;
   padding: 0;
+  text-align: center;
+}
+
+.top-personal-campaigns-view .attachment ul li img {
+  padding: 20px 0 0 0;
+}
+
+@media (min-width: 769px) {
+  .top-personal-campaigns-view .attachment ul li img {
+    text-align: left;
+    padding: 0;
+  }
 }
 
 .top-personal-campaigns-view h3.highest-campaign {

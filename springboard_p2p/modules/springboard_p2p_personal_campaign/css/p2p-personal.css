@@ -224,6 +224,7 @@ ul.bjqs-controls {
 
 ul.bjqs-controls.v-centered li a {
   position: absolute;
+  text-decoration: none;
 }
 
 ul.bjqs-controls.v-centered li.bjqs-next a {
