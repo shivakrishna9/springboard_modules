@@ -73,6 +73,33 @@ function sba_message_action_menu() {
     'weight' => 10,
   );
 
+  /*
+  $items['node/%/download-failed-messages'] = array(
+    'title' => 'Download Failed Messages',
+    'page callback' => 'sba_message_action_download_page',
+    'page arguments' => array('sba_message_action_downloads_page', 1),
+    // 'page callback' => 'drupal_get_form',
+    //'page callback' => 'sba_message_action_downloads_page',
+    'type' => MENU_LOCAL_TASK,
+    'access callback' => 'sba_message_action_downloads_access',
+    'access arguments' => array(1),
+    'file' => 'includes/sba_message_action.downloads.inc',
+    'weight' => 12,
+  );
+
+  */
+
+
+  $items['node/%/download-failed-messages'] = array(
+    'title' => 'Download Failed Messages',
+    'page callback' => 'sba_message_action_download_page',
+    'page arguments' => array(1),
+    'type' => MENU_LOCAL_TASK,
+    'access arguments' => array(1),
+    'file' => 'includes/sba_message_action.downloads.inc',
+    'weight' => 12,
+  );
+
   return $items;
 }
 
@@ -103,6 +130,23 @@ function sba_message_action_taxonomy_access() {
 function sba_message_action_report_access($nid) {
   $node = node_load($nid);
   if ($node->type == 'sba_message_action' && user_access('view springboard advocacy reports')) {
+    return TRUE;
+  }
+  return FALSE;
+}
+
+/**
+ * Access callback handler for the message action downloads tab.
+ */
+function sba_message_action_downloads_access($nid) {
+
+  return TRUE;
+
+  $node = node_load($nid);
+
+  dsm($node);
+
+  if ($node->type == 'sba_message_action' && user_access('download springboard advocacy csv files')) {
     return TRUE;
   }
   return FALSE;
