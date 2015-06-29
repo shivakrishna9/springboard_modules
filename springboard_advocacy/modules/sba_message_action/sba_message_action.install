@@ -327,3 +327,13 @@ function sba_message_action_update_7013() {
     }
   }
 }
+
+/**
+ * Install zip+4 profile field and component if missing.
+ */
+function sba_message_action_update_7014() {
+
+  $webform_user_default_fields_sba_message_action = variable_get('webform_user_default_fields_sba_message_action', array());
+  $fields = array_merge($webform_user_default_fields_sba_message_action, array('sbp_zip_plus_four'));
+  variable_set('webform_user_default_fields_sba_message_action', array_unique($fields));
+}
