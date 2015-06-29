@@ -1,0 +1,6 @@
+<?php
+
+/**
+ * @file
+ * Provides Blackbaud Luminate integration for Salesforce.
+ */
