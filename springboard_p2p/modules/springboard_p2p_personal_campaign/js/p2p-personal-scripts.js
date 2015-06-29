@@ -24,7 +24,8 @@
 
       // personal campaign slideshow.
       $('#slide-show').bjqs({
-        height : 400,
+        height : 340,
+        width  : 340,
         animspeed : 5800,
         responsive  : true,
         nexttext : '',

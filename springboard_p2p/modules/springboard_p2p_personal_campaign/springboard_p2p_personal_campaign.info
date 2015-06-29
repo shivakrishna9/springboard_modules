@@ -63,6 +63,7 @@ features[field_instance][] = node-p2p_personal_campaign-field_p2p_personal_submi
 features[field_instance][] = node-p2p_personal_campaign-field_p2p_suggested_donation_amt
 features[field_instance][] = node-p2p_personal_campaign-field_p2p_video_embed
 features[image][] = p2p_pers_campaign_image_thumb
+features[image][] = p2p_personal_campaign_image_thumb_square
 features[node][] = p2p_personal_campaign
 features[panelizer_defaults][] = node:p2p_personal_campaign:default
 features[user_permission][] = create p2p_personal_campaign content
