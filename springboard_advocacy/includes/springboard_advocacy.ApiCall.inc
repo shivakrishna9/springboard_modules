@@ -7,6 +7,8 @@
 
 class AdvocacyApiCall {
 
+  private $client;
+  public $customMessage = NULL;
   /**
    * Load the API client.
    */
@@ -41,6 +43,10 @@ class AdvocacyApiCall {
       $this->buildMessage($response, $method);
     }
 
+    if (isset($this->customMessage)) {
+      $this->customMessage = NULL;
+    }
+
     return $response;
   }
 
@@ -64,6 +70,17 @@ class AdvocacyApiCall {
     drupal_set_message($message, 'error');
     watchdog('advocacy', $message, array(), WATCHDOG_ERROR);
   }
+
+  /**
+   * Log a non-debug error to watchdog and display message.
+   *
+   * @param string $message
+   *   An error message.
+   */
+  public function setCustomMessage($message) {
+    $this->customMessage = $message;
+  }
+
 
   /**
    * Get subscription details from API server and stick 'em in variables table.
@@ -153,6 +170,10 @@ class AdvocacyApiCall {
       }
       else {
         $message = t('A response was not received from the server when attempting to call @method', array('@method' => $method));
+      }
+      // Override the above with a sutom message.
+      if(isset($this->customMessage)) {
+        $message = $this->customMessage;
       }
       $this->setMessage($message);
     }
