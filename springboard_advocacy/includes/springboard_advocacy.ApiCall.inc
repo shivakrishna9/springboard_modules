@@ -66,7 +66,7 @@ class AdvocacyApiCall {
    * @param string $message
    *   An error message.
    */
-  public function setMessage($message) {
+  private function setMessage($message) {
     drupal_set_message($message, 'error');
     watchdog('advocacy', $message, array(), WATCHDOG_ERROR);
   }
