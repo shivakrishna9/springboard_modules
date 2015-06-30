@@ -795,12 +795,11 @@ function springboard_p2p_personal_campaign_panelizer_defaults() {
       'delta_reversed' => 0,
       'formatter_settings' => array(
         'image_link' => '',
-        'image_style' => 'p2p_personal_campaign_image_thumb_square',
+        'image_style' => 'p2p_pers_campaign_image_thumb',
       ),
       'context' => 'panelizer',
       'override_title' => 1,
       'override_title_text' => '',
-      'override_title_heading' => 'h2',
     );
     $pane->cache = array();
     $pane->style = array(
