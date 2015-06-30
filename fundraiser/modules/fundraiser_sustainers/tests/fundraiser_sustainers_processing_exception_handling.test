@@ -7,7 +7,7 @@
 /**
  *
  */
-class FundraiserSustainersProcessingExceptionHandlingTestCase extends FundraiserSetup {
+class FundraiserSustainersProcessingExceptionHandlingTestCase extends FundraiserSustainerSetup {
 
   /**
    * The donation form.
@@ -43,101 +43,81 @@ class FundraiserSustainersProcessingExceptionHandlingTestCase extends Fundraiser
 
     $this->node = $this->createDonationForm();
     $this->expiration = new DateTime('now +3 months');
+
+    $this->setSustainerKey();
   }
 
   /**
-   *
+   * Confirm donations process sequentially.
    */
-  public function testExceptionHandling() {
+  public function testExceptionHandlingSuccess() {
     $series = array();
 
     // For some reaosn I get a 403 when I first visit this, but a 200
     // all other times.
     $this->drupalGet('node/' . $this->node->nid);
 
-    for ($i = 0; $i < 1; $i++) {
+    // Create three series.
+    for ($i = 0; $i < 3; $i++) {
       $this->submitRecurringDonation($this->node->nid, $this->expiration);
       $master_did = $this->getMaxMasterDid();
+
+      // Advance each series.
+      $series[$i] = array(
+        'master_did' => $master_did,
+        'advance_did' => $this->advanceCharge($master_did),
+      );
+    }
+    // Add a slight pause here so that the charge date will be in the past.
+    sleep(1);
+    $this->cronRun();
+
+    // Confirm all processed.
+    foreach ($series as $thing) {
+      $this->assertDonationIsSuccessfullyProcessed($thing['advance_did']);
+    }
+  }
+
+  /**
+   * Confirm donations process sequentially even when a catchable failure occurs.
+   */
+  public function testExceptionHandlingFailure() {
+    $series = array();
+
+    // For some reaosn I get a 403 when I first visit this, but a 200
+    // all other times.
+    $this->drupalGet('node/' . $this->node->nid);
+
+    // Create three series.
+    for ($i = 0; $i < 3; $i++) {
+      $this->submitRecurringDonation($this->node->nid, $this->expiration);
+      $master_did = $this->getMaxMasterDid();
+
+      // Advance each series.
       $series[$i] = array(
         'master_did' => $master_did,
         'advance_did' => $this->advanceCharge($master_did),
       );
     }
 
-    $this->runFundraiserCron();
+    // Add a slight pause here so that the charge date will be in the past.
+    sleep(1);
 
-    $checks = new FundraiserSustainersHealthChecks();
-    $results = $checks->checkStuckSustainers();
-    $this->assertTrue(empty($results), 'No stuck sustainers found.');
+    // Delete the order on the second donation to force an exception.
+    commerce_order_delete($series[1]['advance_did']);
 
-    foreach ($series as $thing) {
-      $this->assertDonationIsSuccessfullyProcessed($thing['advance_did']);
-    }
+    $this->cronRun();
 
-    foreach ($series as $i => $thing) {
-      $series[$i]['advance_did'] = $this->advanceCharge($series[$i]['master_did']);
-    }
-
-//    debug($series);
-//    debug(_fundraiser_sustainers_cron_get_recurring());
-//    fundraiser_sustainers_process_recurring_donations();
-//    db_query("DELETE FROM {commerce_order} WHERE order_id = :did", array(':did' => $series[1]['advance_did']));
-
-//    debug(db_query("SELECT * FROM {fundraiser_sustainers}")->fetchAllAssoc('did'));
-
-
-
-    $limit = 200;
-    $now = strtotime('now');
-    $max_processing_attempts = variable_get('fundraiser_sustainers_max_processing_attempts', 3);
-    // Lock them (faster to lock, then query, than the other way around).
-    // Since large data set returns => delay.
-    $donations = db_query('SELECT r.did FROM {fundraiser_sustainers} r ' .
-      'WHERE (r.gateway_resp IS NULL OR r.gateway_resp = :status) ' .
-      'AND r.next_charge < :now ' .
-      'AND (r.attempts < :max_attempts OR r.attempts IS NULL) ' . // If already been tried X times, Stop Trying.
-      'AND r.lock_id = 0 ' . // And not locked.
-      'LIMIT 0, ' . $limit,
-      array(':status' => FUNDRAISER_SUSTAINERS_RETRY_STATUS, ':now' => $now, ':max_attempts' => $max_processing_attempts)
-    )->fetchAllKeyed(0, 0);
-    debug($donations);
-
-
-
-    $this->runFundraiserCron();
-
-
-
-    $limit = 200;
-    $now = strtotime('now');
-    $max_processing_attempts = variable_get('fundraiser_sustainers_max_processing_attempts', 3);
-    // Lock them (faster to lock, then query, than the other way around).
-    // Since large data set returns => delay.
-    $donations = db_query('SELECT r.did FROM {fundraiser_sustainers} r ' .
-      'WHERE (r.gateway_resp IS NULL OR r.gateway_resp = :status) ' .
-      'AND r.next_charge < :now ' .
-      'AND (r.attempts < :max_attempts OR r.attempts IS NULL) ' . // If already been tried X times, Stop Trying.
-      'AND r.lock_id = 0 ' . // And not locked.
-      'LIMIT 0, ' . $limit,
-      array(':status' => FUNDRAISER_SUSTAINERS_RETRY_STATUS, ':now' => $now, ':max_attempts' => $max_processing_attempts)
-    )->fetchAllKeyed(0, 0);
-    debug($donations);
-
-
-
+    // Assert the first and third processed.
     $this->assertDonationIsSuccessfullyProcessed($series[0]['advance_did']);
-//    $this->assertDonationIsNotSuccessfullyProcessed($series[1]['advance_did']);
-//    $this->assertDonationIsSuccessfullyProcessed($series[2]['advance_did']);
-//
-//    $this->assertWatchdogContains('Exception thrown while processing a sustainer');
-//
-//    $checks = new FundraiserSustainersHealthChecks();
-//    $results = $checks->checkStuckSustainers();
-//    $dids = explode(',', $results['variables']['%dids']);
-//    $this->assertEqual(count($dids), 1, 'One stuck sustainer found.');
-//    $this->assertEqual($dids[0], $series[1]['advance_did'], 'The correct donation ID is the stuck sustainer.');
+    $this->assertDonationIsSuccessfullyProcessed($series[2]['advance_did']);
 
-    debug(db_query("SELECT * FROM {fundraiser_sustainers}")->fetchAllAssoc('did'));
+    // Assert the second failed.
+    $this->assertDonationIsNotSuccessfullyProcessed($series[1]['advance_did']);
+
+    // Assert the watchdog message was entered.
+    $watchdog_message = 'Exception thrown while processing a sustainer. Sustainer ID: %did. %type: !message in %function (line %line of %file).';
+    $this->assertWatchdogMessage($watchdog_message, $series[1]['advance_did'], 'The correct watchdog message was logged.');
   }
 
   protected function getMaxMasterDid() {
@@ -145,15 +125,13 @@ class FundraiserSustainersProcessingExceptionHandlingTestCase extends Fundraiser
   }
 
   protected function advanceCharge($master_did) {
-    $did = db_query("SELECT MIN(did) FROM {fundraiser_sustainers} WHERE master_did = :master_did AND lock_id = 0 AND gateway_resp IS NULL", array(':master_did' => $master_did))
+    $did = db_query_range("SELECT did FROM {fundraiser_sustainers} WHERE master_did = :master_did AND lock_id = 0 AND gateway_resp IS NULL ORDER BY did ASC", 0 , 1, array(':master_did' => $master_did))
       ->fetchField();
-
-//    db_query("UPDATE {fundraiser_sustainers} SET next_charge = 100, attempts = 0, gateway_resp = NULL, lock_id = 0 WHERE did = :did", array(':did' => $did));
 
     $recurring = array(
       'did' => $did,
       'new_state' => 'scheduled',
-      'next_charge' => REQUEST_TIME - 10,
+      'next_charge' => time(),
     );
 
     _fundraiser_sustainers_update_recurring($recurring);
@@ -161,32 +139,53 @@ class FundraiserSustainersProcessingExceptionHandlingTestCase extends Fundraiser
     return $did;
   }
 
-  protected function runFundraiserCron() {
-    $this->drupalGet('fundraiser_cron');
-  }
-
+  /**
+   * Assert a donation has processed.
+   *
+   * @param $did numeric
+   *   The donation id to assert.
+   *
+   * @return object
+   *   The result of the assertion.
+   */
   protected function assertDonationIsSuccessfullyProcessed($did) {
     $donation = fundraiser_donation_get_donation($did);
-    debug($donation->did . ' ' . $donation->recurring->gateway_resp . ' ' . $donation->recurring->next_charge, 'donation');
     $this->assertEqual($donation->recurring->gateway_resp, 'success', 'Donation is successfully processed.');
   }
 
+  /**
+   * Assert a donation has not processed.
+   *
+   * @param $did numeric
+   *   The donation id to assert.
+   *
+   * @return object
+   *   The result of the assertion.
+   */
   protected function assertDonationIsNotSuccessfullyProcessed($did) {
-    $donation = fundraiser_donation_get_donation($did);
+    $status = db_query("SELECT gateway_resp FROM {fundraiser_sustainers} WHERE did = :did", array(':did' => $did))
+      ->fetchField();
 
-    $this->assertNotEqual($donation->recurring->gateway_resp, 'success', 'Donation is not successfully processed.');
+    $this->assertNotEqual($status, 'success', 'Donation is not successfully processed.');
   }
 
-  protected function assertWatchdogContains($message) {
-    // Login the admin user.
-    $this->drupalLogin($this->drupalCreateUser(array('access site reports')));
-    // View the database log report.
-    $this->drupalGet('admin/reports/dblog');
-    $this->assertResponse(200);
-
-    // After filter_xss(), HTML entities should be converted to their character
-    // equivalents because assertLink() uses this string in xpath() to query the
-    // Document Object Model (DOM).
-    $this->assertLink($message);
+  /**
+   * Assert the watchdog message has been created with the correct sid variable.
+   *
+   * @param $watchdog_message string
+   *   The watchdog message to search for in the database table.
+   * @param $did numeric
+   *   The donation id to assert.
+   * @param $message string
+   *   The message to return to the test.
+   *
+   * @return object
+   *   The result of the assertion.
+   */
+  private function assertWatchdogMessage($watchdog_message, $did, $message) {
+    $db_variables = db_query_range("SELECT variables FROM {watchdog} WHERE message = :message", 0, 1, array(':message' => $watchdog_message))->fetchField();
+    $variables = unserialize($db_variables);
+    $status = (!empty($variables['%did']) && $variables['%did'] == $did) ? TRUE : FALSE;
+    return $this->assert($status, format_string('@message', array('@message' => $message)));
   }
 }
