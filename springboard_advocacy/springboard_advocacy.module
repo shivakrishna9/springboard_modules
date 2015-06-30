@@ -593,3 +593,15 @@ function springboard_advocacy_form_node_form_alter(&$form, &$form_state) {
     springboard_advocacy_goals_form($form, $form_state);
   }
 }
+
+/**
+ * Static wrapper for API requests.
+ * @return \AdvocacyApiCall
+ */
+function springboard_advocacy_api_call() {
+  $apiCall = &drupal_static(__FUNCTION__);
+  if (!$apiCall instanceof AdvocacyApiCall) {
+    $apiCall = new AdvocacyApiCall();
+  }
+  return $apiCall;
+}
