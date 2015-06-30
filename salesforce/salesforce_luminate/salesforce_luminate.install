@@ -1115,8 +1115,8 @@ function salesforce_luminate_install() {
     }
   ],
   "sync_triggers" : "3",
-  "created" : "1365215734",
-  "updated" : "1365215808",
+  "created" : "1435686627",
+  "updated" : "1435686627",
   "weight" : "0",
   "push_async" : "0",
   "push_batch" : "0",
@@ -1124,8 +1124,14 @@ function salesforce_luminate_install() {
   "rdf_mapping" : []
   }';
 
-  // Create default User to Luminate Contact mapping.
+  // Create default Drupal user to Luminate Contact mapping.
   $mapping = entity_import('salesforce_mapping', $default_map_user_to_luminate_contact);
   entity_save('salesforce_mapping', $mapping);
   drupal_set_message(t('Drupal user entity has been mapped to Luminate Contact object.'));
+
+  // Remove default Drupal user to Contact mapping provided by Springboard.
+  $user_to_contact_mapping = salesforce_mapping_load('user_to_contact');
+  if ($user_to_contact_mapping != FALSE) {
+    entity_delete('salesforce_mapping', $user_to_contact_mapping->salesforce_mapping_id);
+  }
 }
