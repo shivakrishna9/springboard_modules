@@ -11,11 +11,20 @@ function salesforce_luminate_install() {
     drupal_set_message(t('Drupal user entity has been mapped to Luminate Contact object.'));
   }
 
+  // Create default Luminate Donation mapping.
+  $donation_mapping_result = salesforce_luminate_create_donation_mapping();
+  if ($donation_mapping_result !== FALSE) {
+    drupal_set_message(t('Donations have been mapped to Luminate Donation object.'));
+  }
+
   // Remove default Drupal user to Contact mapping provided by Springboard.
   $user_to_contact_mapping = salesforce_mapping_load('user_to_contact');
   if ($user_to_contact_mapping != FALSE) {
     entity_delete('salesforce_mapping', $user_to_contact_mapping->salesforce_mapping_id);
   }
+
+  // Remove default donation mapping provided by Springboard.
+  salesforce_genmap_delete_map(-1, 'salesforce_donation');
 }
 
 /**
@@ -1143,4 +1152,65 @@ function salesforce_luminate_create_contact_mapping() {
 
   $mapping = entity_import('salesforce_mapping', $default_map_user_to_luminate_contact);
   return entity_save('salesforce_mapping', $mapping);
+}
+
+/**
+ * Creates a mapping between the Drupal user entity and the Luminate
+ * Donation (Opportunity) object in Salesforce.
+ */
+function salesforce_luminate_create_donation_mapping() {
+  $map = array();
+  $map = entity_create('salesforce_genmap_map', $map);
+  $map->nid = -1;
+  $map->map_handler = 'salesforce_donation';
+  $map->salesforce_object_type = 'Opportunity';
+  $object_type = '';
+  module_load_include('inc', 'salesforce_genmap', 'includes/salesforce_genmap.map');
+  if (function_exists('salesforce_get_api')) {
+    $sfapi = salesforce_get_api();
+    if ($sfapi->isAuthorized()) {
+      if (function_exists('_sfw_salesforce_record_type_list')) {
+        $sf_records = _sfw_salesforce_record_type_list($sfapi, 'Opportunity');
+        $sf_records = array_flip($sf_records);
+        $object_type = $sf_records['Donation'];
+      }
+    }
+  }
+  $map->salesforce_record_type = $object_type;
+  $map->field_map = array(
+    'salesforce_donation_map' => array(
+      'did' => 'cv__ExternalId__c',
+      'txn_id' => 'Reference_Number_Full__c',
+      'close_date' => 'CloseDate',
+      'transaction_date' => 'Transaction_Date_Time__c',
+      'probability' => 'Probability',
+      'stage' => 'StageName',
+      'user_salesforce_account_id' => 'AccountId',
+      'user_salesforce_contact_id' => 'cv__Contact__c',
+      'full_name' => 'Name',
+      'amount' => 'Amount',
+      'address' => 'Billing_Street__c',
+      'city' => 'Billing_City__c',
+      'country' => 'Billing_Country__c',
+      'state' => 'Billing_State__c',
+      'zip' => 'Billing_Postal_Code__c',
+      'card_number' => 'CC_Last_4__c',
+    // TODO: Combine into Card_Expiration_Date__c (mm/yyyy)
+    //'card_expiration_month' => 'CC_Exp_Month__c',
+    //'card_expiration_year' => 'CC_Exp_Year__c',
+    ),
+    'salesforce_webform_map' => array(
+      'cid' => 'CampaignId',
+    ),
+    'salesforce_node_map' => array(),
+  );
+  $map->sync_options = array(
+    'insert' => 'insert',
+    'update' => 'update',
+    'delete' => 'delete',
+  );
+  $map->status = 1;
+  $map->module = 'salesforce_donation';
+
+  return salesforce_genmap_save_map($map, 'salesforce_donation');
 }
