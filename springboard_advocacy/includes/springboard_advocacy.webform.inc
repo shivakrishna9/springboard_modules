@@ -189,6 +189,18 @@ function springboard_advocacy_build_contact(array $values, $zip, array $geo) {
   return $contact;
 }
 
+
+
+
+
+
+
+
+
+
+
+
+
 /**
  * Create a confirmation message from the API server response.
  *
@@ -198,42 +210,221 @@ function springboard_advocacy_build_contact(array $values, $zip, array $geo) {
  *   The API response.
  */
 function springboard_advocacy_build_confirmation($response, $contact) {
-
   if (!empty($response->messages)) {
-    $_SESSION['message_recipients'] = '';
+    $_SESSION['all_messages'] = '';
+    $_SESSION['delivered_messages'] = '';
+    $_SESSION['undelivered_messages'] = '';
 
     $status = springboard_advocacy_message_status($response);
     unset($status['success']['target_count']);
     if (!empty($status['success'])) {
+      $messages = array();
+      $count_messages = count($status['success']);
+      $count_targets = 0;
+      $x = 0;
       foreach ($status['success'] as $id => $message) {
-        $_SESSION['message_recipients'] .= theme(
-          'springboard_advocacy_webform_confirmations_delivered',
-          array(
-            'subject' => $status['success'][$id]['subject'],
-            'recipients' => $message['people'],
-          )
-        );
+        foreach ($message['people'] as $key => $person) {
+          $count_targets++;
+          $messages[$x]['person'] = $person;
+          $messages[$x]['subject'] = $status['success'][$id]['subject'];
+          $messages[$x]['body'] = $status['success'][$id]['body'];
+          $messages[$x]['targets'] = $message['targets'][$key];
+          $x++;
+        }
       }
+      $_SESSION['delivered_messages'] = theme(
+        'springboard_advocacy_webform_confirmations_delivered',
+        array(
+          'subject' => t("delivered messages"),
+          'messages' => $messages,
+          'contact' => $contact,
+          'target_count' => $count_targets,
+          'message_count' => $count_messages,
+        )
+      );
     }
 
     unset($status['hold']['target_count']);
     if (!empty($status['hold'])) {
-      foreach ($status['hold'] as $id => $message) {
-        $_SESSION['message_recipients'] .= theme(
-          'springboard_advocacy_webform_confirmations_delivered',
+      $messages = array();
+        foreach ($status['hold'] as $id => $message) {
+          foreach ($message['people'] as $key => $person) {
+            $messages[$id]['people'][] = $person;
+            $messages[$id]['message'] = $status['hold'][$id]['body'];
+            $messages[$id]['subject'] = $status['hold'][$id]['subject'];
+            $messages[$id]['targets'] = $message['targets'];
+          };
+        }
+        $_SESSION['undelivered_messages'] = theme(
+          'springboard_advocacy_webform_confirmations_undelivered',
           array(
-            'subject' => $status['hold'][$id]['subject'],
-            'body' => $status['hold'][$id]['body'],
-            'recipients' => $message['people'],
+            'messages' => $messages,
             'contact' => $contact,
-            'targets' => $message['targets'],
-
+            'targets' => '',
           )
         );
       }
-    }
   }
 }
+
+/**
+ * Theme the message recipients in an item list for each message.
+ *
+ * @param array $vars
+ *   Array of message recipients.
+ *
+ * @return string
+ *   Rendered HTML.
+ */
+function theme_springboard_advocacy_webform_confirmations_delivered(array $vars) {
+
+  // Put the recipients in an array for the item list.
+  $items = array();
+  foreach ($vars['messages'] as $message) {
+
+    // Put the party in parens.
+    if(isset($message['person']['party'])) {
+      $message['person']['party'] = '(' . $message['person']['party'] . ')';
+    }
+
+    // Format the contact for token replacement.
+    $contact = (object) $vars['contact'];
+    // Replace the tokens
+    $message['body'] = token_replace(
+      $message['body'],
+      array(
+        'sba_contact' => $contact,
+        'sba_target' => $message['targets'],
+      )
+    );
+
+    // Prepare the body text for display in a javascript pop-up window
+    $body =  nl2br($message['body']);
+    $body = addslashes(trim(preg_replace('/\s+/', ' ', $body)));
+    $clicker = "console.log(typeof messageWrapper);if(typeof messageWrapper !=='undefined'){messageWrapper.close()};messageWrapper=window.open('','messageWrapper','toolbar=no,scrollbars=yes,status=no,menubar=no,resizable=yes,top=0,left=0,width=640,height=480');messageWrapper.document.write(\"" . $body  . "\");messageWrapper.focus();return false;";
+    $link = l($message['subject'], '#', array('attributes' => array('onclick' => $clicker)));
+
+    // Prepare the recipients for display in a bulletted list.
+    unset($message['person']['url']);
+    $items[] = implode(' ', $message['person']) . ' (' . $link . ')';
+  }
+
+  $attributes = array(
+    'class' => 'legislator-list',
+  );
+  if(empty($items)) {
+    $items[] = t('You have no deliverable messages.');
+  }
+
+  $output = '<div id="sba-deliverable-messages">';
+
+  $message_plural = format_plural($vars['message_count'], 'message was', 'messages were');
+  $target_plural = format_plural($vars['target_count'], 'target', 'targets');
+
+  $output .= t('@message_count @messages delivered to @target_count @targets.',
+    array(
+      '@message_count' => $vars['message_count'],
+      '@messages' => $message_plural,
+      '@target_count' => $vars['target_count'],
+      '@targets' => $target_plural,
+    )
+  );
+
+  $output .=  theme_item_list(
+    array(
+      'items' => $items,
+      'title' => t('Delivered Messages'),
+      'type' => 'ul',
+      'attributes' => $attributes,
+    )
+  );
+  $output .= '</div">';
+  return $output;
+}
+
+
+function theme_springboard_advocacy_webform_confirmations_undelivered(array $vars) {
+   $messages = $vars['messages'];
+   $message_count = count($messages);
+   $target_count = 0;
+    $start_output = '<div id="sba-undeliverable-messages">';
+    $start_output .= '<h3>' . t('Undelivered Messages') . '</h3>';
+    $mid_output ='';
+    foreach ($messages as $message) {
+      $items = array();
+      foreach($message['people'] as $key => $person) {
+        $target_count++;
+        if (!empty($person['url'])) {
+          $clicker = "var extWrapper=window.open(this.href,'targetWindow','toolbar=no,scrollbars=yes,status=no,menubar=no,resizable=yes,top=0,left=0,width=1024,height=800');extWrapper.focus();return false;";
+          $link = l($person['name'], check_plain($person['url']), array('attributes' => array('onclick' => $clicker)));
+          $items[] = t('!name', array('!name' => $link)).' '.$person['party'].' '.$person['district'];
+        }
+        else {
+          $items[] = $person['name'] . ' (' . $person['party'] .') '. $person['district'];
+        }
+      }
+
+      $mid_output .= '<div class="sba-undeliverable-messages-message">';
+      $mid_output .= '<h4>' . check_plain($message['subject']) . '</h4>';
+
+      $attributes = array(
+        'class' => 'legislator-list',
+      );
+     $mid_output .=  theme_item_list(
+        array(
+          'items' => $items,
+          'type' => 'ul',
+          'title' => NULL,
+          'attributes' => $attributes,
+        )
+      );
+
+      // Prepare the contact object so we can replace tokens in the message.
+      $contact = (object) $vars['contact'];
+      // Prepare the target object so we can replace tokens in the message.
+      // If there was only a single "hold" target, we can replace the target
+      // token with the target's name. Otherwise create a pseudo target object
+      // with last_name = "Multitple Recipients".
+      if (count($message['people']) === 1) {
+        $target = $message['targets'][0];
+      } else {
+        $target = new stdClass();
+        $target->last_name = '(Multiple Recipients)';
+      }
+      // Replace
+      $message['message'] = token_replace(
+        $message['message'],
+        array(
+          'sba_contact' => $contact,
+          'sba_target' => $target,
+        )
+      );
+
+      $mid_output .= '<a class="sba-message-show-message">Show Message</a>';
+      $mid_output .= '<div class="sba-message-body" style="display:none">' . check_markup($message['message'], 'filtered_html') . '</div>';
+      $mid_output .= '</div>';
+    }
+
+  $end_output = '</div">';
+
+  $message_plural = format_plural($message_count, 'message', 'messages');
+  $target_plural = format_plural($target_count, 'target', 'targets');
+
+  $count_output = t('We were unable to deliver @message_count @messages to @target_count @targets.',
+    array(
+      '@message_count' => $message_count,
+      '@messages' => $message_plural,
+      '@target_count' => $target_count,
+      '@targets' => $target_plural,
+    )
+  );
+
+  $output = $start_output . $count_output . $mid_output . $end_output;
+
+  return $output;
+}
+
+
 
 /**
  * Split up the "deliverable" response into "success" and "hold".
@@ -267,32 +458,33 @@ function springboard_advocacy_message_status($response) {
 
   foreach ($messages as $id => $message) {
     foreach ($messages[$id]['deliverable'] as $target) {
-
       // Filter the largish target object in the response down to
       // a few select properties, in an array
       $target_details = springboard_advocacy_target_details($target);
-
       // Split into success and hold arrays.
       if (empty($target->webform_status)
         || (!empty($target->webform_status) && $target->webform_status != 'Hold')) {
         $success_count++;
         $message_success['target_count'] = $success_count;
-        unset($target_details['webform_url']);
-        $message_success[$id]['people'][] = implode(' ', $target_details);
+        $message_success[$id]['people'][] = $target_details;
         $message_success[$id]['subject'] = $messages[$id]['subject'];
+        $message_success[$id]['body'] = $messages[$id]['body'];
+        $message_success[$id]['targets'][] = $target;
       }
       else {
         $hold_count++;
         $message_hold['target_count'] = $hold_count;
-        $message_hold[$id]['people'][] = implode(' ', $target_details);
+        $message_hold[$id]['people'][] = $target_details;
         $message_hold[$id]['subject'] = $messages[$id]['subject'];
         $message_hold[$id]['body'] = $messages[$id]['body'];
         $message_hold[$id]['targets'][] = $target;
       }
     }
   }
+
   return array('success' => $message_success, 'hold' => $message_hold);
 }
+
 
 
 /**
@@ -301,9 +493,6 @@ function springboard_advocacy_message_status($response) {
  * An array with name and organization details
  * that eventually gets converted to a readable string in the
  * confirmation theme function.
- *
- * If the recipient is a congressperson whose webform_status is "hold"
- * we add a popup link pointing to their webform.
  *
  * @param object $target
  *   A target object extracted from the API response.
@@ -317,120 +506,31 @@ function springboard_advocacy_target_details($target) {
   $target_details = array();
 
   if (!empty($target->salutation)) {
-    array_push($name, $target->salutation);
-    array_push($target_details, $target->salutation);
+    $name[] = $target->salutation;
   }
   if (!empty($target->first_name)) {
-    array_push($name, $target->first_name);
-    array_push($target_details, $target->first_name);
+    $name[] = $target->first_name;
   }
   if (!empty($target->last_name)) {
-    array_push($name, $target->last_name);
-    array_push($target_details, $target->last_name);
+    $name[] = $target->last_name;
   }
+
+  $target_details['name'] = implode(' ', $name);
+
   if (!empty($target->party)) {
-    array_push($target_details, '(' . $target->party . ')');
+    $target_details['party'] = check_plain($target->party);
   }
   if (!empty($target->state) && empty($target->district_name)) {
-    array_push($target_details, $target->state);
+    $target_details['state'] = check_plain($target->state);
   }
   if (!empty($target->district_name)) {
-    array_push($target_details, $target->district_name);
+    $target_details['district'] = check_plain($target->district_name);
   }
 
-  // Run the details through check_plain().
-  foreach ($target_details as $key => $detail) {
-    $target_details[$key] = check_plain($detail);
-  }
-
-  // Add the URL, if exists, for webforms that are on 'hold'.
-  // Javascript popup link.
   if (!empty($target->webform_url)) {
-    $name = implode(' ', $name);
-    $clicker = "var extWrapper=window.open(this.href,'targetWindow','toolbar=no,scrollbars=yes,status=no,menubar=no,resizable=yes,top=0,left=0,width=1024,height=800');extWrapper.focus();return false;";
-    $link = l(t('Click here'), check_plain($target->webform_url), array('attributes' => array('onclick' => $clicker)));
-    array_push($target_details, t('. !click to contact @name directly.', array('!click' => $link, '@name' => $name)));
+    $target_details['url'] = check_plain($target->webform_url);
   }
 
   return $target_details;
-}
-
-
-/**
- * Theme the message recipients in an item list for each message.
- *
- * @param array $vars
- *   Array of message recipients.
- *
- * @return string
- *   Rendered HTML.
- */
-function theme_springboard_advocacy_webform_confirmations_delivered(array $vars) {
-
-  // Put the recipients in an array for the item list.
-  $items = array();
-  foreach ($vars['recipients'] as $person) {
-    $items[]['data'] = $person;
-  }
-  if (empty($items)) {
-    $items[]['data'] = t('No Results.');
-  }
-
-  $attributes = array(
-    'class' => 'legislator-list',
-  );
-
-  // If the body was not passed to the theme function, that means this
-  // was a "success" delivery.
-  if(empty($vars['body'])) {
-    $output =  theme_item_list(
-      array(
-        'items' => $items,
-        'title' => t('Delivered').': ' . html_entity_decode($vars['subject']),
-        'type' => 'ul',
-        'attributes' => $attributes,
-      )
-    );
-  }
-  else {
-    // It was a "hold" delivery.
-    $output = theme_item_list(
-      array(
-        'items' => $items,
-        'title' => t('Not Delivered').': '. html_entity_decode($vars['subject']),
-        'type' => 'ul',
-        'attributes' => $attributes,
-      )
-    );
-
-    // For "hold" status, we output the message text so the user can copy
-    // and paste it into the congressional webform herself.
-    $output .= '<h4 class="message-subject">Message text</h4>';
-    // Prepare the contact object so we can replace tokens in the message.
-    $contact = (object) $vars['contact'];
-    // Prepare the target object so we can replace tokens in the message.
-    // If there was only a single "hold" target, we can replace the target
-    // token with the target's name. Otherwise create a pseudo target object
-    // with last_name = "Multitple Recipients".
-    if (count($vars['targets']) === 1) {
-      $target = $vars['targets'][0];
-    }
-    else {
-      $target = new stdClass();
-      $target->last_name = '(Multiple Recipients)';
-    }
-    // Replace the tokens.
-    $vars['body'] = token_replace(
-      $vars['body'],
-      array(
-        'sba_contact' => $contact,
-        'sba_target' => $target,
-      )
-    );
-    // Convert linebreaks to html.
-    $output .= check_markup($vars['body'], 'filtered_html');
-  }
-
-  return $output;
 }
 

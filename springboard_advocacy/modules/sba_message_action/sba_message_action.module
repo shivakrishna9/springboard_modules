@@ -201,7 +201,7 @@ function sba_message_action_node_presave($node) {
   if (empty($node->nid) && $node->type == 'sba_message_action') {
     $node->webform['submit_text'] = t('Send your message');
     $node->webform['confirmation'] = t('Thank you, %value[sbp_first_name] for participating in the messaging campaign.');
-    $node->webform['confirmation'] .= "\n\n" . '[action:recipients]';
+    $node->webform['confirmation'] .= "\n\n" . '[action:all_messages]';
   }
 }
 

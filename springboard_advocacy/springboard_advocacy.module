@@ -346,29 +346,39 @@ function springboard_advocacy_theme($existing, $type, $theme) {
       'variables' => array('sections' => array()),
       'template' => drupal_get_path('theme', $theme) . '/templates/springboard-advocacy-dashboard',
     ),
+
     'springboard_advocacy_views_attachment_before' => array(
       'variables' => array(
         'view' => NULL,
         'total_rows' => 0,
         'query' => array(),
-        'file' => 'springboard_advocacy.views.inc',
       ),
+      'file' => 'includes/views/springboard_advocacy.views.inc',
     ),
+
     'springboard_advocacy_webform_confirmations_delivered' => array(
       'variables' => array(
-        'recipients' => array(),
         'subject' => '',
-        'body' => '',
+        'messages' => '',
         'contact' => array(),
-        'file' => 'springboard_advocacy.webform.inc',
+        'target_count' => 0,
+        'message_count' => 0,
+
+        ),
+      'file' => '/includes/springboard_advocacy.webform.inc',
+    ),
+    'springboard_advocacy_webform_confirmations_undelivered' => array(
+      'variables' => array(
+        'messages' => array(),
+        'contact' => '',
+        'targets' => '',
       ),
+      'file' => '/includes/springboard_advocacy.webform.inc',
     ),
   );
-
   // Look for theme templates in springboard_advocacy.
   $templates += drupal_find_theme_functions($existing, array($theme));
   $templates += drupal_find_theme_templates($existing, '.tpl.php', $path);
-
   return $templates;
 }
 
@@ -442,10 +452,22 @@ function springboard_advocacy_token_info() {
     'description' => t("Tokens for Advocacy."),
   );
 
-  $tokens['recipients'] = array(
-    'name' => t("Recipients"),
+  $tokens['all_messages'] = array(
+    'name' => t("All messages"),
     'description' => '',
   );
+
+  $tokens['delivered_messages'] = array(
+    'name' => t("Delivered Messages"),
+    'description' => '',
+  );
+
+  $tokens['undelivered_messages'] = array(
+    'name' => t("Undelivered Messages"),
+    'description' => '',
+  );
+
+
 
   return array(
     'types' => $types,
@@ -465,9 +487,21 @@ function springboard_advocacy_tokens($type, $tokens, $data = array(), $options =
   if ($type == 'action') {
     foreach ($tokens as $name => $original) {
       switch ($name) {
-        case 'recipients':
-          if (isset($_SESSION['message_recipients'])) {
-            $recipients = $_SESSION['message_recipients'];
+        case 'all_messages':
+          $delivered = isset($_SESSION['delivered_messages']) ? $_SESSION['delivered_messages'] :'';
+          $undelivered = isset($_SESSION['undelivered_messages']) ? $_SESSION['undelivered_messages'] :'';
+          $recipients = $delivered . $undelivered;
+          $replacements[$original] = $recipients;
+          break;
+        case 'delivered':
+          if (isset($_SESSION['delivered_messages'])) {
+            $recipients = $_SESSION['delivered_messages'];
+          }
+          $replacements[$original] = $recipients;
+          break;
+        case 'undelivered':
+          if (isset($_SESSION['undelivered_messages'])) {
+            $recipients = $_SESSION['undelivered_messages'];
           }
           $replacements[$original] = $recipients;
           break;
@@ -604,4 +638,8 @@ function springboard_advocacy_api_call() {
     $apiCall = new AdvocacyApiCall();
   }
   return $apiCall;
+}
+
+function springboard_advocacy_preprocess_webform_confirmation(&$vars) {
+  drupal_add_js(drupal_get_path('module', 'sba_message_action') . '/js/sba_message_action.js');
 }
