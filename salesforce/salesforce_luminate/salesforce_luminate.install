@@ -1023,7 +1023,7 @@ function salesforce_luminate_create_donation_mapping() {
       'did' => 'cv__ExternalId__c',
       'txn_id' => 'cv__Reference_Number_Full__c',
       'close_date' => 'CloseDate',
-      'transaction_date' => 'cv__Transaction_Date_Time__c',
+      'transaction_date' => 'cv__Posted_Date__c',
       'probability' => 'Probability',
       'stage' => 'StageName',
       'user_salesforce_account_id' => 'AccountId',
