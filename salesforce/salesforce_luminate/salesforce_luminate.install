@@ -1021,7 +1021,6 @@ function salesforce_luminate_create_donation_mapping() {
   $map->field_map = array(
     'salesforce_donation_map' => array(
       'did' => 'cv__ExternalId__c',
-      'title' => 'cv__Campaign_Name__c',
       'txn_id' => 'cv__Reference_Number_Full__c',
       'close_date' => 'CloseDate',
       'transaction_date' => 'cv__Posted_Date__c',
