@@ -2363,6 +2363,17 @@ function fundraiser_sustainers_fundraiser_donation_success($donation) {
         // Update the recurring table and saves to the log.
         _fundraiser_sustainers_create_recurring($recurring_donation);
 
+        // Create the fundraiser sustainers donation entity.
+        $fundraiser_sustainers_donation_data = array(
+          'did' => $donation->did,
+          'uid' => $donation->uid,
+          'amount' => $donation->donation['amount'],
+          'installments' => _fundraiser_sustainers_calculate_installments($donation),
+        );
+
+        $fundraiser_sustainers_donation = entity_create('fundraiser_sustainers_donation', $fundraiser_sustainers_donation_data);
+        $fundraiser_sustainers_donation->save();
+
         // Now handle the recurring object, and the rest of the orders.
         if (!_fundraiser_sustainers_offsite_recurring($info['offsite_recurring'], $donation->donation['payment_method'])) { // Is not an offline recurring
           // Load the newly created recurring donation into salesforce.
@@ -3189,4 +3200,32 @@ function fundraiser_sustainers_preprocess_html(&$vars) {
     $vars['classes_array'][] = 'insights-this-month';
   }
 
+}
+
+/**
+ * Calculates monthly donation installments.
+ *
+ * @param object $donation
+ *   The donation to calculate installments for.
+ *
+ * @return int The number of monthly installments.
+ */
+function _fundraiser_sustainers_calculate_installments($donation) {
+  $info = _fundraiser_get_donation_gateway($donation->did);
+  $installments = 0;
+  if (isset($info['expire callback'])) {
+    $expiration_func = $info['expire callback'];
+    $expires = $expiration_func($donation->donation);
+    $month = $expires['month'];
+    $year = $expires['year'];
+    $start = strtotime("now");
+    $stop = mktime(0, 0, 0, $month, 1, $year);
+    $installments = ((idate('Y', $stop) * 12) + idate('m', $stop)) - ((idate('Y', $start) * 12) + idate('m', $start));
+    $create_limit = variable_get('fundraiser_sustainers_create_limit', 50);
+    if ($installments > $create_limit) {
+      $installments = $create_limit;
+    }
+  }
+
+  return $installments;
 }
