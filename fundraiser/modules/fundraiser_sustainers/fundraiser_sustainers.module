@@ -3076,6 +3076,19 @@ function fundraiser_sustainers_entity_info() {
       'module' => 'fundraiser_sustainers',
       'views controller class' => 'FundraiserSustainerRecordViewsController',
     ),
+    'fundraiser_sustainers_donation' => array(
+      'label' => t('Fundraiser sustainers donation'),
+      'plural label' => t('Fundraiser sustainers donation'),
+      'entity class' => 'FundraiserSustainersDonation',
+      'controller class' => 'FundraiserSustainersDonationEntityController',
+      'base table' => 'fundraiser_sustainers_donations',
+      'entity keys' => array(
+        'id' => 'did',
+      ),
+      'fieldable' => FALSE,
+      'exportable' => FALSE,
+      'module' => 'fundraiser_sustainers',
+    ),
   );
 
   return $return;
