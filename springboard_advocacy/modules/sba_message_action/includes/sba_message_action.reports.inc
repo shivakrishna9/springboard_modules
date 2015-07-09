@@ -27,8 +27,9 @@ function springboard_advocacy_message_action_api_client()
  */
 function sba_message_action_performance_page($nid)
 {
-  // CSS assets
+  // CSS and JS assets
   drupal_add_css(drupal_get_path('module', 'sba_message_action') . '/css/message-performance.css');
+  drupal_add_js(drupal_get_path('module', 'sba_message_action') . '/js/jsfile.js');
 
   // Load up the message action node.
   $node = node_load($nid);
@@ -51,7 +52,9 @@ function sba_message_action_performance_page($nid)
     return 'Sorry, no performance metrics are available for this message.';
   endif;
 
-  $deliverablity_targets = sba_message_action_performance__targets_table($report, $node->advocacy_id);
+  $deliverablity_targets = sba_message_action_performance_targets_table($report, $node);
+
+  // dsm($node->advocacy_id);
 
   return $deliverablity_targets;
 }
@@ -60,12 +63,14 @@ function sba_message_action_performance_page($nid)
  * Helper function to convert target deliverability report data into
  * a data structure that can be rendered in an HTML table.
  */
-function sba_message_action_performance__targets_table($report, $nodeId)
+function sba_message_action_performance_targets_table($report, $node)
 {
 
   $targets = $report->data->targets;
 
   $rows = array();
+
+  $nodeId = $node->advocacy_id;
 
   // Get an instance of the advocacy API client.
   $client = springboard_advocacy_message_action_api_client();
@@ -90,11 +95,23 @@ function sba_message_action_performance__targets_table($report, $nodeId)
   // Define the table header
   $header = array('Name', 'Party', 'State', 'District', 'Total Messages Sent', 'Delivered Messages', 'Failed Messages', 'Deliverability Index');
 
-  // Uses sba_message_action_theme()
+  $queueReadyItems = $client->getQueueMessagesCountByStatus($nodeId, 'ready')->data->count;
+  $queuePausedItems = $client->getQueueMessagesCountByStatus($nodeId, 'paused')->data->count;
+  $queueCanceledItems = $client->getQueueMessagesCountByStatus($nodeId, 'canceled')->data->count;
+
+  $tabs = theme('messsage_deliverability_tabs', array(
+    'nodeId' => $node->nid
+  ));
+
   $output = theme('messsage_deliverability_dashboard', array(
     'targets_table_header' => $header,
     'targets'              => $rows,
-    'report'               => $report
+    'report'               => $report,
+    'queueReadyItems'      => $queueReadyItems,
+    'queuePausedItems'     => $queuePausedItems,
+    'queueCanceledItems'   => $queueCanceledItems,
+    'nodeId'               => $node->nid,
+    'tabs'                 => $tabs
   ));
 
   return $output;
@@ -109,7 +126,7 @@ function sba_message_action_preprocess_messsage_deliverability_dashboard(&$varia
 {
   // Sanitize the targets data
   foreach ($variables['targets'] as $key => $data) {
-    foreach($data as $itemKey => $value) {
+    foreach ($data as $itemKey => $value) {
       $variables['targets'][$key][$itemKey] = check_plain($value);
     }
   }
@@ -122,5 +139,9 @@ function sba_message_action_preprocess_messsage_deliverability_dashboard(&$varia
 
   // Render targets table
   $targetsTable = theme('table', array('header' => $variables['targets_table_header'], 'rows' => $variables['targets']));
+
+  // dsm($targetsTable);
+
   $variables['targets_table'] = $targetsTable;
 }
+
