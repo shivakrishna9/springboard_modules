@@ -1,6 +1,44 @@
 <?php
 
 /**
+ * Synced status of the batch upload object.
+ */
+define('SALESFORCE_NGOC_SYNCED_STATUS', 'synced');
+
+/**
+ * Processed status of the batch upload object.
+ */
+define('SALESFORCE_NGOC_PROCESSED_STATUS', 'processed');
+
+/**
+ * Matched status of the batch upload object.
+ */
+define('SALESFORCE_NGOC_MATCHED_STATUS', 'matched');
+
+/**
+ * Implements hook_entity_info().
+ */
+function salesforce_ngoc_entity_info() {
+  return array(
+    // Maps Salesforce records to Drupal records.
+    'salesforce_ngoc_batch_upload' => array(
+      'label' => t('Salesforce NGO Connect Batch Upload Object'),
+      'entity class' => 'Entity',
+      'controller class' => 'SalesforceNgocEntityController',
+      'base table' => 'salesforce_ngoc_batch_upload',
+      'entity keys' => array(
+        'id' => 'buid',
+        'label' => 'sfid'
+      ),
+      'fieldable' => FALSE,
+      'exportable' => FALSE,
+      'module' => 'salesforce_ngoc',
+      'views controller class' => 'SalesforceNgocViewsController',
+    ),
+  );
+}
+
+/**
  * Implements hook_menu().
  */
 function salesforce_ngoc_menu() {
@@ -17,3 +55,121 @@ function salesforce_ngoc_menu() {
   return $items;
 }
 
+/**
+ * Implements hook_salesforce_queue_postprocess_batch().
+ */
+function salesforce_ngoc_salesforce_queue_postprocess_batch($batch, $results, $queue) {
+  if (!isset($batch['sobjects']) || empty($batch['sobjects'])) {
+    // Some batches do not have sobjects, such as delete.
+    return;
+  }
+
+  // Prune some information off the first item in the batch since this info is
+  // not available at the batch level.
+  $object_type = $batch['items'][0]->object_type;
+  $operation = $batch['operation'];
+
+  // Array to hold the Salesforce ids of every exported batch upload object.
+  $successes = array();
+
+  // Check that the batch contained batch upload objects.
+  if ($object_type == 'rC_Connect__Batch_Upload__c') {
+    // Loop over the results array because that will indicate successes
+    // and failures.
+    $count = count($results);
+    for ($i = 0; $i < $count; $i++) {
+      if ($results[$i]->success) {
+        $successes[$batch['items'][$i]->drupal_id] = array(
+          'sfid' => $results[$i]->id,
+          'module' => $batch['items'][$i]->module,
+          'delta' => $batch['items'][$i]->delta,
+        );
+      }
+    }
+  }
+
+  if (!empty($successes)) {
+    foreach ($successes as $drupal_id => $data) {
+      // Create the batch upload entity and save it.
+      $values = array(
+        'sfid' => $data['sfid'],
+        'status' => SALESFORCE_NGOC_SYNCED_STATUS,
+        // Add a sf object record for this type.
+        'sf_objects' => array(
+          array(
+            'drupal_id' => $drupal_id,
+            'module' => $data['module'],
+            'delta' => $data['delta'],
+          ),
+        ),
+      );
+
+      $entity = entity_create('salesforce_ngoc_batch_upload', $values);
+      entity_save('salesforce_ngoc_batch_upload', $entity);
+    }
+  }
+}
+
+/**
+ * Custom controller for the SalesforceNgoc type.
+ */
+class SalesforceNgocEntityController extends EntityAPIController {
+
+  /**
+   * Override save method.
+   *
+   * Populate created and updated dates automatically.
+   */
+  public function save($entity, DatabaseTransaction $transaction = NULL) {
+
+    if (isset($entity->is_new)) {
+      $entity->created = REQUEST_TIME;
+    }
+
+    $entity->changed = REQUEST_TIME;
+
+    parent::save($entity, $transaction);
+
+    // Store the SF Objects that are connected to the Batch Upload object.
+    if (isset($entity->sf_objects)) {
+      foreach ($entity->sf_objects as $data) {
+        db_merge('salesforce_ngoc_batch_upload_objects')
+          ->key(array(
+            'buid' => $entity->buid,
+            'drupal_id' => $data['drupal_id'],
+            'module' => $data['module'],
+          ))
+          ->fields(array(
+            'buid' => $entity->buid,
+            'drupal_id' => $data['drupal_id'],
+            'module' => $data['module'],
+            'delta' => $data['delta'],
+            'sfid' => isset($data['sfid']) ? $data['sfid'] : NULL,
+            'object_type' => isset($data['object_type']) ? $data['object_type'] : NULL,
+          ))
+          ->execute();
+      }
+    }
+
+    return $entity;
+  }
+
+  /**
+   * Override load method.
+   */
+  public function load($ids = array(), $conditions = array()) {
+    $entities = parent::load($ids, $conditions);
+
+    // Add the sf objects to the entities.
+    $results = db_select('salesforce_ngoc_batch_upload_objects', 'o')
+      ->fields('o')
+      ->condition('buid', $ids)
+      ->execute();
+
+    while($record = $results->fetchAssoc()) {
+      $entities[ $record['buid'] ]->sf_objects[] = $record;
+    }
+
+    return $entities;
+  }
+}

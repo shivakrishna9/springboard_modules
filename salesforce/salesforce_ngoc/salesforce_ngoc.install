@@ -1,0 +1,104 @@
+<?php
+
+/**
+ * @file
+ * Install hooks for the Salesforce NGO Connect module.
+ */
+
+ /**
+ * Implements hook_schema().
+ */
+function salesforce_ngoc_schema() {
+  $schema['salesforce_ngoc_batch_upload'] = array(
+    'description' => 'Store data to match the NGO Connect Batch Upload Object.',
+    'fields' => array(
+      'buid' => array(
+        'description' => 'Unique id of this item.',
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'created' => array(
+        'description' => 'Timestamp of when this item was created.',
+        'type' => 'int',
+        'not null' => TRUE,
+      ),
+      'changed' => array(
+        'description' => 'Timestamp of when this item was last changed.',
+        'type' => 'int',
+        'not null' => TRUE,
+      ),
+      'sfid' => array(
+        'description' => 'The Salesforce Id of the batch upload object.',
+        'type' => 'varchar',
+        'length' => '50',
+        'not null' => TRUE,
+      ),
+      'status' => array(
+        'description' => 'The status of the batch upload process.',
+        'type' => 'varchar',
+        'length' => '20',
+        'not null' => TRUE,
+      ),
+    ),
+    'primary key' => array('buid'),
+    'indexes' => array(
+      'sfid' => array('sfid'),
+      'sfid_status' => array(
+        'sfid',
+        'status',
+      )
+    ),
+  );
+
+  $schema['salesforce_ngoc_batch_upload_objects'] = array(
+    'description' => 'Store the SF ids of objects created by NGO Connect Batch Upload Objects.',
+    'fields' => array(
+      'buid' => array(
+        'description' => 'Id of this batch upload object from the main table.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'drupal_id' => array(
+        'description' => 'The id of the Drupal object.',
+        'type' => 'int',
+        'not null' => TRUE,
+      ),
+      'module' => array(
+        'description' => 'Name of the module that implements the Drupal type.',
+        'type' => 'varchar',
+        'length' => '255',
+        'not null' => TRUE,
+      ),
+      'delta' => array(
+        'description' => 'Name or id of the Drupal sub-type.',
+        'type' => 'varchar',
+        'length' => '255',
+        'not null' => TRUE,
+      ),
+      'sfid' => array(
+        'description' => 'The Salesforce Id of the object.',
+        'type' => 'varchar',
+        'length' => '50',
+      ),
+      'object_type' => array(
+        'description' => 'The Salesforce object type.',
+        'type' => 'varchar',
+        'length' => '255',
+      ),
+    ),
+    'primary key' => array(
+      'buid',
+      'drupal_id',
+      'module',
+    ),
+    'indexes' => array(
+      'buid' => array('buid'),
+      'sfid' => array('sfid'),
+      'object_type' => array('object_type'),
+    ),
+  );
+
+  return $schema;
+}
