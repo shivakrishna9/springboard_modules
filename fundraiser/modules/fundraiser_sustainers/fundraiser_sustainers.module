@@ -3088,10 +3088,11 @@ function fundraiser_sustainers_entity_info() {
       'views controller class' => 'FundraiserSustainerRecordViewsController',
     ),
     'fundraiser_sustainers_donation' => array(
-      'label' => t('Fundraiser sustainers donation'),
-      'plural label' => t('Fundraiser sustainers donation'),
+      'label' => t('Fundraiser Sustainers Donation'),
+      'plural label' => t('Fundraiser Sustainers Donations'),
       'entity class' => 'FundraiserSustainersDonation',
       'controller class' => 'FundraiserSustainersDonationEntityController',
+      'metadata controller class' => 'EntityDefaultMetadataController',
       'base table' => 'fundraiser_sustainers_donations',
       'entity keys' => array(
         'id' => 'did',
