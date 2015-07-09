@@ -324,6 +324,9 @@ function fundraiser_sustainers_install() {
       variable_del('fundraiser_port_recurring_done');
     }
   }
+
+  // Set up default Salesforce mappings.
+  fundraiser_sustainers_admin_config_salesforce();
 }
 
 /**
@@ -710,4 +713,7 @@ function fundraiser_sustainers_update_7012() {
   );
 
   db_create_table('fundraiser_sustainers_donations', $fundraiser_sustainers_donations_schema);
+
+  // Set up default Salesforce mappings.
+  fundraiser_sustainers_admin_config_salesforce();
 }

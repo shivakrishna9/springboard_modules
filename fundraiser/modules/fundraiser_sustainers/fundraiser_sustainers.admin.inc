@@ -109,3 +109,136 @@ function fundraiser_sustainers_admin_edit($did) {
     return fundraiser_sustainers_edit_form($sustainer_info->master_did);
   }
 }
+
+/**
+ * Configure the default Salesforce settings for fundraiser sustainers.
+ */
+function fundraiser_sustainers_admin_config_salesforce() {
+  $default_map_sustainers_donation = '{
+  "type" : "salesforce_mapping",
+  "name" : "fundraiser_sustainers_donation",
+  "label" : "Fundraiser Sustainers Donation",
+  "sync_triggers" : "3",
+  "salesforce_object_type" : "Opportunity",
+  "salesforce_record_type" : "",
+  "drupal_entity_type" : "fundraiser_sustainers_donation",
+  "drupal_bundle" : "fundraiser_sustainers_donation",
+  "field_mappings" : [
+    {
+      "drupal_field" : { "fieldmap_type" : "property", "fieldmap_value" : "amount" },
+      "salesforce_field" : {
+        "autoNumber" : false,
+        "byteLength" : 0,
+        "calculated" : false,
+        "calculatedFormula" : null,
+        "cascadeDelete" : false,
+        "caseSensitive" : false,
+        "controllerName" : null,
+        "createable" : true,
+        "custom" : false,
+        "defaultValue" : null,
+        "defaultValueFormula" : null,
+        "defaultedOnCreate" : false,
+        "dependentPicklist" : false,
+        "deprecatedAndHidden" : false,
+        "digits" : 0,
+        "displayLocationInDecimal" : false,
+        "externalId" : false,
+        "filterable" : true,
+        "groupable" : false,
+        "htmlFormatted" : false,
+        "idLookup" : false,
+        "inlineHelpText" : null,
+        "label" : "Amount",
+        "length" : 0,
+        "name" : "Amount",
+        "nameField" : false,
+        "namePointing" : false,
+        "nillable" : true,
+        "permissionable" : true,
+        "picklistValues" : [],
+        "precision" : 18,
+        "referenceTo" : [],
+        "relationshipName" : null,
+        "relationshipOrder" : null,
+        "restrictedDelete" : false,
+        "restrictedPicklist" : false,
+        "scale" : 2,
+        "soapType" : "xsd:double",
+        "sortable" : true,
+        "type" : "currency",
+        "unique" : false,
+        "updateable" : true,
+        "writeRequiresMasterRead" : false
+      },
+      "key" : false,
+      "direction" : "drupal_sf",
+      "drupal_sf" : "always",
+      "sf_drupal" : "always"
+    },
+    {
+      "drupal_field" : { "fieldmap_type" : "property", "fieldmap_value" : "amount" },
+      "salesforce_field" : {
+        "autoNumber" : false,
+        "byteLength" : 0,
+        "calculated" : false,
+        "calculatedFormula" : null,
+        "cascadeDelete" : false,
+        "caseSensitive" : false,
+        "controllerName" : null,
+        "createable" : true,
+        "custom" : false,
+        "defaultValue" : null,
+        "defaultValueFormula" : null,
+        "defaultedOnCreate" : false,
+        "dependentPicklist" : false,
+        "deprecatedAndHidden" : false,
+        "digits" : 0,
+        "displayLocationInDecimal" : false,
+        "externalId" : false,
+        "filterable" : true,
+        "groupable" : false,
+        "htmlFormatted" : false,
+        "idLookup" : false,
+        "inlineHelpText" : null,
+        "label" : "Amount",
+        "length" : 0,
+        "name" : "Amount",
+        "nameField" : false,
+        "namePointing" : false,
+        "nillable" : true,
+        "permissionable" : true,
+        "picklistValues" : [],
+        "precision" : 18,
+        "referenceTo" : [],
+        "relationshipName" : null,
+        "relationshipOrder" : null,
+        "restrictedDelete" : false,
+        "restrictedPicklist" : false,
+        "scale" : 2,
+        "soapType" : "xsd:double",
+        "sortable" : true,
+        "type" : "currency",
+        "unique" : false,
+        "updateable" : true,
+        "writeRequiresMasterRead" : false
+      },
+      "key" : false,
+      "direction" : "sf_drupal",
+      "drupal_sf" : "always",
+      "sf_drupal" : "always"
+    }
+  ],
+  "push_async" : "0",
+  "push_batch" : "0",
+  "created" : "1436462781",
+  "updated" : "1436462781",
+  "weight" : "0",
+  "locked" : "0",
+  "rdf_mapping" : []
+  }';
+
+  $mapping = entity_import('salesforce_mapping', $default_map_sustainers_donation);
+  entity_save('salesforce_mapping', $mapping);
+  drupal_set_message(t('Fundraisers Sustainers Donation entity has been mapped to Salesforce Opportunity object.'));
+}
