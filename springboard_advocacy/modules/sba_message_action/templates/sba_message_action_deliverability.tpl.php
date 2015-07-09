@@ -1,5 +1,5 @@
+<?php print $tabs; ?>
 <h2>Overall Deliverability</h2>
-
 <div class="container deliverability-performance-container">
   <div class="row">
     <div class="span3">
@@ -29,5 +29,4 @@
   </div>
 </div>
 <h2>Individual Target Deliverability</h2>
-
 <?php print $targets_table; ?>
