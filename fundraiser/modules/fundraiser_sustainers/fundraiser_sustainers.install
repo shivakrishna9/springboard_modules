@@ -326,7 +326,7 @@ function fundraiser_sustainers_install() {
   }
 
   // Set up default Salesforce mappings.
-  fundraiser_sustainers_admin_config_salesforce();
+  _fundraiser_sustainers_create_sustainers_series_mapping();
 }
 
 /**
@@ -399,6 +399,139 @@ function _fundraiser_sustainers_install_default_sf_map() {
       salesforce_genmap_save_map($map, 'fundraiser_sustainers');
     }
   }
+}
+
+/**
+ * Creates a mapping between the fundraiser sustainers series entity and the
+ * Opportunity object in Salesforce.
+ */
+function _fundraiser_sustainers_create_sustainers_series_mapping() {
+  $default_map_sustainers_series = '{
+  "type" : "salesforce_mapping",
+  "name" : "fundraiser_sustainers_series",
+  "label" : "Fundraiser Sustainers Series",
+  "sync_triggers" : "3",
+  "salesforce_object_type" : "Opportunity",
+  "salesforce_record_type" : "",
+  "drupal_entity_type" : "fundraiser_sustainers_series",
+  "drupal_bundle" : "fundraiser_sustainers_series",
+  "field_mappings" : [
+    {
+      "drupal_field" : { "fieldmap_type" : "property", "fieldmap_value" : "amount" },
+      "salesforce_field" : {
+        "autoNumber" : false,
+        "byteLength" : 0,
+        "calculated" : false,
+        "calculatedFormula" : null,
+        "cascadeDelete" : false,
+        "caseSensitive" : false,
+        "controllerName" : null,
+        "createable" : true,
+        "custom" : false,
+        "defaultValue" : null,
+        "defaultValueFormula" : null,
+        "defaultedOnCreate" : false,
+        "dependentPicklist" : false,
+        "deprecatedAndHidden" : false,
+        "digits" : 0,
+        "displayLocationInDecimal" : false,
+        "externalId" : false,
+        "filterable" : true,
+        "groupable" : false,
+        "htmlFormatted" : false,
+        "idLookup" : false,
+        "inlineHelpText" : null,
+        "label" : "Amount",
+        "length" : 0,
+        "name" : "Amount",
+        "nameField" : false,
+        "namePointing" : false,
+        "nillable" : true,
+        "permissionable" : true,
+        "picklistValues" : [],
+        "precision" : 18,
+        "referenceTo" : [],
+        "relationshipName" : null,
+        "relationshipOrder" : null,
+        "restrictedDelete" : false,
+        "restrictedPicklist" : false,
+        "scale" : 2,
+        "soapType" : "xsd:double",
+        "sortable" : true,
+        "type" : "currency",
+        "unique" : false,
+        "updateable" : true,
+        "writeRequiresMasterRead" : false
+      },
+      "key" : false,
+      "direction" : "drupal_sf",
+      "drupal_sf" : "always",
+      "sf_drupal" : "always"
+    },
+    {
+      "drupal_field" : { "fieldmap_type" : "property", "fieldmap_value" : "amount" },
+      "salesforce_field" : {
+        "autoNumber" : false,
+        "byteLength" : 0,
+        "calculated" : false,
+        "calculatedFormula" : null,
+        "cascadeDelete" : false,
+        "caseSensitive" : false,
+        "controllerName" : null,
+        "createable" : true,
+        "custom" : false,
+        "defaultValue" : null,
+        "defaultValueFormula" : null,
+        "defaultedOnCreate" : false,
+        "dependentPicklist" : false,
+        "deprecatedAndHidden" : false,
+        "digits" : 0,
+        "displayLocationInDecimal" : false,
+        "externalId" : false,
+        "filterable" : true,
+        "groupable" : false,
+        "htmlFormatted" : false,
+        "idLookup" : false,
+        "inlineHelpText" : null,
+        "label" : "Amount",
+        "length" : 0,
+        "name" : "Amount",
+        "nameField" : false,
+        "namePointing" : false,
+        "nillable" : true,
+        "permissionable" : true,
+        "picklistValues" : [],
+        "precision" : 18,
+        "referenceTo" : [],
+        "relationshipName" : null,
+        "relationshipOrder" : null,
+        "restrictedDelete" : false,
+        "restrictedPicklist" : false,
+        "scale" : 2,
+        "soapType" : "xsd:double",
+        "sortable" : true,
+        "type" : "currency",
+        "unique" : false,
+        "updateable" : true,
+        "writeRequiresMasterRead" : false
+      },
+      "key" : false,
+      "direction" : "sf_drupal",
+      "drupal_sf" : "always",
+      "sf_drupal" : "always"
+    }
+  ],
+  "push_async" : "0",
+  "push_batch" : "0",
+  "created" : "1436462781",
+  "updated" : "1436462781",
+  "weight" : "0",
+  "locked" : "0",
+  "rdf_mapping" : []
+  }';
+
+  $mapping = entity_import('salesforce_mapping', $default_map_sustainers_series);
+  entity_save('salesforce_mapping', $mapping);
 }
 
 /**
@@ -714,6 +847,5 @@ function fundraiser_sustainers_update_7012() {
 
   db_create_table('fundraiser_sustainers_series', $fundraiser_sustainers_series_schema);
 
-  // Set up default Salesforce mappings.
-  fundraiser_sustainers_admin_config_salesforce();
+  _fundraiser_sustainers_create_sustainers_series_mapping();
 }
