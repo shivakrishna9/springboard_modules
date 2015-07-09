@@ -1,30 +1,30 @@
 <?php
+
 /**
  * @file
- * The controller for the fundraiser sustainers donation entity.
+ * The controller for the fundraiser sustainers series entity.
  */
-
-class FundraiserSustainersDonationEntityController extends EntityAPIController {
+class FundraiserSustainersSeriesEntityController extends EntityAPIController {
 
   /**
-   * Saves a fundraiser sustainers donation entity.
+   * Saves a fundraiser sustainers series entity.
    *
-   * @param FundraiserSustainersDonation $fundraiser_sustainers_donation
-   *   The fundraiser sustainers donation to save.
+   * @param Entity $fundraiser_sustainers_series
+   *   The fundraiser sustainers series to save.
    *
-   * @return FundraiserSustainersDonation
-   *   The saved fundraiser sustainers donation.
+   * @return Entity
+   *   The saved fundraiser sustainers series.
    */
-  public function save($fundraiser_sustainers_donation) {
-    $fundraiser_sustainers_donation->updated = time();
+  public function save($fundraiser_sustainers_series) {
+    $fundraiser_sustainers_series->updated = time();
 
-    if (isset($fundraiser_sustainers_donation->is_new) && $fundraiser_sustainers_donation->is_new) {
-      $fundraiser_sustainers_donation->created = time();
+    if (isset($fundraiser_sustainers_series->is_new) && $fundraiser_sustainers_series->is_new) {
+      $fundraiser_sustainers_series->created = time();
     }
 
-    parent::save($fundraiser_sustainers_donation);
+    parent::save($fundraiser_sustainers_series);
 
-    return $fundraiser_sustainers_donation;
+    return $fundraiser_sustainers_series;
   }
 
 }

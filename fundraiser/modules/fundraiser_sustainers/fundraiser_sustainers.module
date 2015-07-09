@@ -2363,16 +2363,16 @@ function fundraiser_sustainers_fundraiser_donation_success($donation) {
         // Update the recurring table and saves to the log.
         _fundraiser_sustainers_create_recurring($recurring_donation);
 
-        // Create the fundraiser sustainers donation entity.
-        $fundraiser_sustainers_donation_data = array(
+        // Create the fundraiser sustainers series entity.
+        $fundraiser_sustainers_series_data = array(
           'did' => $donation->did,
           'uid' => $donation->uid,
           'amount' => $donation->donation['amount'],
           'installments' => _fundraiser_sustainers_calculate_installments($donation),
         );
 
-        $fundraiser_sustainers_donation = entity_create('fundraiser_sustainers_donation', $fundraiser_sustainers_donation_data);
-        $fundraiser_sustainers_donation->save();
+        $fundraiser_sustainers_series = entity_create('fundraiser_sustainers_series', $fundraiser_sustainers_series_data);
+        $fundraiser_sustainers_series->save();
 
         // Now handle the recurring object, and the rest of the orders.
         if (!_fundraiser_sustainers_offsite_recurring($info['offsite_recurring'], $donation->donation['payment_method'])) { // Is not an offline recurring
@@ -3087,13 +3087,12 @@ function fundraiser_sustainers_entity_info() {
       'module' => 'fundraiser_sustainers',
       'views controller class' => 'FundraiserSustainerRecordViewsController',
     ),
-    'fundraiser_sustainers_donation' => array(
-      'label' => t('Fundraiser Sustainers Donation'),
-      'plural label' => t('Fundraiser Sustainers Donations'),
-      'entity class' => 'FundraiserSustainersDonation',
-      'controller class' => 'FundraiserSustainersDonationEntityController',
+    'fundraiser_sustainers_series' => array(
+      'label' => t('Fundraiser Sustainers Series'),
+      'entity class' => 'Entity',
+      'controller class' => 'FundraiserSustainersSeriesEntityController',
       'metadata controller class' => 'EntityDefaultMetadataController',
-      'base table' => 'fundraiser_sustainers_donations',
+      'base table' => 'fundraiser_sustainers_series',
       'entity keys' => array(
         'id' => 'did',
       ),

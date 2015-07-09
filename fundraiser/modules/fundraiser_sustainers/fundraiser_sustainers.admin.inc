@@ -116,13 +116,13 @@ function fundraiser_sustainers_admin_edit($did) {
 function fundraiser_sustainers_admin_config_salesforce() {
   $default_map_sustainers_donation = '{
   "type" : "salesforce_mapping",
-  "name" : "fundraiser_sustainers_donation",
-  "label" : "Fundraiser Sustainers Donation",
+  "name" : "fundraiser_sustainers_series",
+  "label" : "Fundraiser Sustainers Series",
   "sync_triggers" : "3",
   "salesforce_object_type" : "Opportunity",
   "salesforce_record_type" : "",
-  "drupal_entity_type" : "fundraiser_sustainers_donation",
-  "drupal_bundle" : "fundraiser_sustainers_donation",
+  "drupal_entity_type" : "fundraiser_sustainers_series",
+  "drupal_bundle" : "fundraiser_sustainers_series",
   "field_mappings" : [
     {
       "drupal_field" : { "fieldmap_type" : "property", "fieldmap_value" : "amount" },
@@ -240,5 +240,5 @@ function fundraiser_sustainers_admin_config_salesforce() {
 
   $mapping = entity_import('salesforce_mapping', $default_map_sustainers_donation);
   entity_save('salesforce_mapping', $mapping);
-  drupal_set_message(t('Fundraiser Sustainers Donation entity has been mapped to Salesforce Opportunity object.'));
+  drupal_set_message(t('Fundraiser Sustainers Series entity has been mapped to Salesforce Opportunity object.'));
 }

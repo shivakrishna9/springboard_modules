@@ -251,11 +251,11 @@ function fundraiser_sustainers_schema() {
     'primary key' => array('master_did'),
   );
 
-  $schema['fundraiser_sustainers_donations'] = array(
+  $schema['fundraiser_sustainers_series'] = array(
     'description' => 'Stores the initial record in a series of recurring donations.',
     'fields' => array(
       'did' => array(
-        'description' => 'The ID of the master donation.',
+        'description' => 'The ID of the initial donation in the series.',
         'type' => 'int',
         'unsigned' => TRUE,
         'not null' => TRUE,
@@ -279,13 +279,13 @@ function fundraiser_sustainers_schema() {
         'default' => 0,
       ),
       'created' => array(
-        'description' => 'The timestamp when this donation was created.',
+        'description' => 'The timestamp when this donation series was created.',
         'type' => 'int',
         'not null' => TRUE,
         'default' => 0,
       ),
       'updated' => array(
-        'description' => 'The timestamp when this donation was last updated.',
+        'description' => 'The timestamp when this donation series was last updated.',
         'type' => 'int',
         'not null' => TRUE,
         'default' => 0,
@@ -293,9 +293,9 @@ function fundraiser_sustainers_schema() {
     ),
     'primary key' => array('did'),
     'indexes' => array(
-      'fundraiser_sustainers_donations_uid' => array('uid'),
-      'fundraiser_sustainers_donations_created' => array('created'),
-      'fundraiser_sustainers_donations_updated' => array('updated'),
+      'fundraiser_sustainers_series_uid' => array('uid'),
+      'fundraiser_sustainers_series_created' => array('created'),
+      'fundraiser_sustainers_series_updated' => array('updated'),
     ),
   );
 
@@ -661,14 +661,14 @@ function fundraiser_sustainers_update_7011() {
 }
 
 /**
- * Creates new sustainers donations table.
+ * Creates new sustainers series table.
  */
 function fundraiser_sustainers_update_7012() {
-  $fundraiser_sustainers_donations_schema = array(
+  $fundraiser_sustainers_series_schema = array(
     'description' => 'Stores the initial record in a series of recurring donations.',
     'fields' => array(
       'did' => array(
-        'description' => 'The ID of the master donation.',
+        'description' => 'The ID of the initial donation in the series.',
         'type' => 'int',
         'unsigned' => TRUE,
         'not null' => TRUE,
@@ -692,13 +692,13 @@ function fundraiser_sustainers_update_7012() {
         'default' => 0,
       ),
       'created' => array(
-        'description' => 'The timestamp when this donation was created.',
+        'description' => 'The timestamp when this donation series was created.',
         'type' => 'int',
         'not null' => TRUE,
         'default' => 0,
       ),
       'updated' => array(
-        'description' => 'The timestamp when this donation was last updated.',
+        'description' => 'The timestamp when this donation series was last updated.',
         'type' => 'int',
         'not null' => TRUE,
         'default' => 0,
@@ -706,13 +706,13 @@ function fundraiser_sustainers_update_7012() {
     ),
     'primary key' => array('did'),
     'indexes' => array(
-      'fundraiser_sustainers_donations_uid' => array('uid'),
-      'fundraiser_sustainers_donations_created' => array('created'),
-      'fundraiser_sustainers_donations_updated' => array('updated'),
+      'fundraiser_sustainers_series_uid' => array('uid'),
+      'fundraiser_sustainers_series_created' => array('created'),
+      'fundraiser_sustainers_series_updated' => array('updated'),
     ),
   );
 
-  db_create_table('fundraiser_sustainers_donations', $fundraiser_sustainers_donations_schema);
+  db_create_table('fundraiser_sustainers_series', $fundraiser_sustainers_series_schema);
 
   // Set up default Salesforce mappings.
   fundraiser_sustainers_admin_config_salesforce();
