@@ -1,0 +1,5 @@
+core = "7.x"
+description = "Custom code for this demo site."
+name = "Custom Demo"
+version = 7.x-4.x
+package = "Demo Site"
