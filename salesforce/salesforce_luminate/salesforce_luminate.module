@@ -6,24 +6,6 @@
  */
 
 /**
- * Implements hook_salesforce_genmap_map_field_info_alter()
- * 
- * Removes webform Salesforce field mapping; not currently compatible with
- * Luminate. May be restored once Springboard Salesforce package is no longer
- * dependent on NPSP and can be used with Luminate.
- */
-function salesforce_luminate_salesforce_genmap_map_field_info_alter(&$fields, $node, $module) {
-  if (isset($fields['salesforce_webform_map'])) {
-    unset($fields['salesforce_webform_map']['ms']);
-    unset($fields['salesforce_webform_map']['referrer']);
-    unset($fields['salesforce_webform_map']['initial_referrer']);
-    unset($fields['salesforce_webform_map']['search_engine']);
-    unset($fields['salesforce_webform_map']['search_string']);
-    unset($fields['salesforce_webform_map']['user_agent']);
-  }
-}
-
-/**
  * Implements hook_salesforce_queue_postprocess_batch().
  */
 function salesforce_luminate_salesforce_queue_postprocess_batch($batch, $results, $queue) {
