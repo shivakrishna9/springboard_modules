@@ -4,7 +4,14 @@
  * @file
  * Install hooks for the Salesforce Luminate module.
  */
+
+/**
+ * Implements hook_install()
+ */
 function salesforce_luminate_install() {
+  // Add Luminate fields to fundraiser sustainers series module.
+  salesforce_luminate_create_extra_fundraiser_series_fields();
+
   // Create default Drupal user to Luminate Contact mapping.
   $contact_mapping_result = salesforce_luminate_create_contact_mapping();
   if ($contact_mapping_result !== FALSE) {
@@ -25,6 +32,62 @@ function salesforce_luminate_install() {
 
   // Remove default donation mapping provided by Springboard.
   salesforce_genmap_delete_map(-1, 'salesforce_donation');
+}
+
+/**
+ * Implements hook_uninstall()
+ */
+function salesforce_luminate_uninstall() {
+  // Drop Luminate-specific fields from the fundraiser sustainers series table.
+  $fields = array(
+    'luminate_start_date',
+    'luminate_gift_status',
+    'luminate_campaign_id',
+    'luminate_donation_type',
+    'luminate_recurring_amount_rounded',
+  );
+
+  foreach ($fields as $field_name) {
+    db_drop_field('fundraiser_sustainers_series', $field_name);
+  }
+}
+
+/**
+ * Adds Luminate-specific fields to the fundraiser sustainers series table.
+ */
+function salesforce_luminate_create_extra_fundraiser_series_fields() {
+  $fields = array(
+    'luminate_start_date' => array(
+      'description' => 'The date when this donation series starts.',
+      'type' => 'date',
+      'mysql_type' => 'date',
+    ),
+    'luminate_gift_status' => array(
+      'description' => 'The Luminate gift status of this donation series.',
+      'type' => 'varchar',
+      'length' => 255,
+    ),
+    'luminate_campaign_id' => array(
+      'description' => 'The campaign ID of this donation series.',
+      'type' => 'varchar',
+      'length' => 255,
+    ),
+    'luminate_donation_type' => array(
+      'description' => 'The type of donation this series represents.',
+      'type' => 'varchar',
+      'length' => 255,
+    ),
+    'luminate_recurring_amount_rounded' => array(
+      'description' => 'The donation amount (rounded.)',
+      'type' => 'int',
+      'not null' => TRUE,
+      'default' => 0,
+    ),
+  );
+
+  foreach ($fields as $field_name => $field) {
+    db_add_field('fundraiser_sustainers_series', $field_name, $field);
+  }
 }
 
 /**

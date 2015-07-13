@@ -6,6 +6,42 @@
  */
 
 /**
+ * Implements hook_schema_alter()
+ */
+function salesforce_luminate_schema_alter(&$schema) {
+  $schema['fundraiser_sustainers_series']['fields']['luminate_start_date'] = array(
+    'description' => 'The date when this donation series starts.',
+    'type' => 'date',
+    'mysql_type' => 'date',
+  );
+
+  $schema['fundraiser_sustainers_series']['fields']['luminate_gift_status'] = array(
+    'description' => 'The gift status of this donation series.',
+    'type' => 'varchar',
+    'length' => 255,
+  );
+
+  $schema['fundraiser_sustainers_series']['fields']['luminate_campaign_id'] = array(
+    'description' => 'The campaign ID of this donation series.',
+    'type' => 'varchar',
+    'length' => 255,
+  );
+
+  $schema['fundraiser_sustainers_series']['fields']['luminate_donation_type'] = array(
+    'description' => 'The type of donation this series represents.',
+    'type' => 'varchar',
+    'length' => 255,
+  );
+
+  $schema['fundraiser_sustainers_series']['fields']['luminate_recurring_amount_rounded'] = array(
+    'description' => 'The donation amount (rounded.)',
+    'type' => 'int',
+    'not null' => TRUE,
+    'default' => 0,
+  );
+}
+
+/**
  * Implements hook_salesforce_queue_postprocess_batch().
  */
 function salesforce_luminate_salesforce_queue_postprocess_batch($batch, $results, $queue) {
@@ -43,6 +79,20 @@ function salesforce_luminate_salesforce_queue_postprocess_batch($batch, $results
 
     // Save the account ids.
     salesforce_luminate_save_account_ids($account_ids);
+  }
+}
+
+/**
+ * Implements hook_fundraiser_donation_success()
+ */
+function salesforce_luminate_fundraiser_donation_success($donation) {
+  $fundraiser_sustainers_series = entity_load_single('fundraiser_sustainers_series', $donation->did);
+
+  if (!empty($fundraiser_sustainers_series)) {
+    $fundraiser_sustainers_series->luminate_start_date = date('Y-m-d');
+    $fundraiser_sustainers_series->luminate_recurring_amount_rounded = round($donation->donation['amount']);
+
+    $fundraiser_sustainers_series->save();
   }
 }
 

@@ -4,4 +4,5 @@ package = Salesforce
 core = 7.x
 version = 7.x-4.x-dev
 
+dependencies[] = fundraiser_sustainers
 dependencies[] = salesforce
