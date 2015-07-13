@@ -498,18 +498,16 @@ function springboard_advocacy_tokens($type, $tokens, $data = array(), $options =
     foreach ($tokens as $name => $original) {
       switch ($name) {
         case 'all_messages':
-          $delivered = isset($_SESSION['delivered_messages']) ? $_SESSION['delivered_messages'] :'';
-          $undelivered = isset($_SESSION['undelivered_messages']) ? $_SESSION['undelivered_messages'] :'';
-          $recipients = $delivered . $undelivered;
-          $replacements[$original] = $recipients;
+          $all = isset($_SESSION['delivered_and_undelivered_messages']) ? $_SESSION['delivered_and_undelivered_messages'] :'';
+          $replacements[$original] = $all;
           break;
-        case 'delivered':
+        case 'delivered_messages':
           if (isset($_SESSION['delivered_messages'])) {
             $recipients = $_SESSION['delivered_messages'];
           }
           $replacements[$original] = $recipients;
           break;
-        case 'undelivered':
+        case 'undelivered_messages':
           if (isset($_SESSION['undelivered_messages'])) {
             $recipients = $_SESSION['undelivered_messages'];
           }
