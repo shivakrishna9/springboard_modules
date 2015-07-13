@@ -424,6 +424,28 @@ function fundraiser_sustainers_mail($key, &$message, $params) {
  */
 
 /**
+ * Implements hook_salesforce_queue_create_item_alter()
+ */
+function fundraiser_sustainers_salesforce_queue_create_item_alter(&$item) {
+  if ($item['delta'] == 'fundraiser_sustainers_series') {
+    $fundraiser_sustainers_series = entity_load_single('fundraiser_sustainers_series', $item['drupal_id']);
+    if (!empty($fundraiser_sustainers_series)) {
+      $user = user_load($fundraiser_sustainers_series->uid);
+      $user_wrapper = entity_metadata_wrapper('user', $user);
+      $date = strtotime('now');
+
+      // Set the Name field value.
+      $item['sobject']->fields['Name'] = t('Recurring Donation - !first !last (!date)',
+        array(
+        '!first' => $user_wrapper->sbp_first_name->value(),
+        '!last' => $user_wrapper->sbp_last_name->value(),
+        '!date' => gmdate('Y-m-d H:i:s\Z', $date),
+      ));
+    }
+  }
+}
+
+/**
  * Implements hook_salesforce_genmap_map_fields().
  */
 function fundraiser_sustainers_salesforce_genmap_map_fields(stdClass $donation, Entity $map, $node, $op) {
