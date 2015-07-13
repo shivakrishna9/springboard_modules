@@ -1,0 +1,63 @@
+<?php
+
+/**
+ * @file
+ * Install hooks for the Salesforce NPSP module.
+ */
+
+/**
+ * Implements hook_install()
+ */
+function salesforce_npsp_install() {
+  // Add NPSP fields to fundraiser sustainers series module.
+  salesforce_npsp_create_extra_fundraiser_series_fields();
+}
+
+/**
+ * Implements hook_uninstall()
+ */
+function salesforce_npsp_uninstall() {
+  // Drop NPSP-specific fields from the fundraiser sustainers series table.
+  $fields = array(
+    'npsp_last_payment_date',
+    'npsp_next_payment_date',
+    'npsp_installment_period',
+    'npsp_schedule_type',
+  );
+
+  foreach ($fields as $field_name) {
+    db_drop_field('fundraiser_sustainers_series', $field_name);
+  }
+}
+
+/**
+ * Adds NPSP-specific fields to the fundraiser sustainers series table.
+ */
+function salesforce_npsp_create_extra_fundraiser_series_fields() {
+  $fields = array(
+    'npsp_last_payment_date' => array(
+      'description' => 'The date of the last payment in this donation series.',
+      'type' => 'date',
+      'mysql_type' => 'date',
+    ),
+    'npsp_next_payment_date' => array(
+      'description' => 'The date of the next payment in this donation series.',
+      'type' => 'date',
+      'mysql_type' => 'date',
+    ),
+    'npsp_installment_period' => array(
+      'description' => 'The installment period used for this donation series.',
+      'type' => 'varchar',
+      'length' => 255,
+    ),
+    'npsp_schedule_type' => array(
+      'description' => 'The schedule type used for this donation series.',
+      'type' => 'varchar',
+      'length' => 255,
+    ),
+  );
+
+  foreach ($fields as $field_name => $field) {
+    db_add_field('fundraiser_sustainers_series', $field_name, $field);
+  }
+}
