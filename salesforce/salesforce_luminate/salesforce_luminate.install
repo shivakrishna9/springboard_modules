@@ -24,9 +24,15 @@ function salesforce_luminate_install() {
     drupal_set_message(t('Donations have been mapped to Luminate Donation object.'));
   }
 
+  // Create default sustainers series to Luminate Recurring Gift mapping.
+  $sustainers_mapping_result = salesforce_luminate_create_sustainers_series_mapping();
+  if ($sustainers_mapping_result !== FALSE) {
+    drupal_set_message(t('Fundraiser sustainers series entity has been mapped to Luminate Recurring Gift object.'));
+  }
+
   // Remove default Drupal user to Contact mapping provided by Springboard.
   $user_to_contact_mapping = salesforce_mapping_load('user_to_contact');
-  if ($user_to_contact_mapping != FALSE) {
+  if ($user_to_contact_mapping !== FALSE) {
     entity_delete('salesforce_mapping', $user_to_contact_mapping->salesforce_mapping_id);
   }
 
@@ -49,6 +55,12 @@ function salesforce_luminate_uninstall() {
 
   foreach ($fields as $field_name) {
     db_drop_field('fundraiser_sustainers_series', $field_name);
+  }
+
+  // Remove Luminate Salesforce mapping for fundraiser sustainers series.
+  $sustainers_series_mapping = salesforce_mapping_load('fundraiser_sustainers_series_luminate');
+  if (!empty($sustainers_series_mapping)) {
+    entity_delete('salesforce_mapping', $sustainers_series_mapping->salesforce_mapping_id);
   }
 }
 
@@ -1123,7 +1135,7 @@ function salesforce_luminate_create_donation_mapping() {
  * Creates a mapping between the fundraiser sustainers series entity and the
  * Luminate Recurring Gift object in Salesforce.
  */
-function _fundraiser_sustainers_create_sustainers_series_mapping() {
+function salesforce_luminate_create_sustainers_series_mapping() {
   $default_map_sustainers_series = '{
   "type" : "salesforce_mapping",
   "name" : "fundraiser_sustainers_series_luminate",
@@ -1919,5 +1931,5 @@ function _fundraiser_sustainers_create_sustainers_series_mapping() {
   }';
 
   $mapping = entity_import('salesforce_mapping', $default_map_sustainers_series);
-  entity_save('salesforce_mapping', $mapping);
+  return entity_save('salesforce_mapping', $mapping);
 }
