@@ -484,14 +484,6 @@ function fundraiser_sustainers_salesforce_genmap_map_fields_alter(&$fields, $con
           unset($fields[$sf_field]);
         }
       }
-      // Lastly, add a field iff recurring object.
-      if ($donation->donation['recurs_monthly'] == TRUE && !empty($donation->master_did) ) {
-        $fields['npe03__Recurring_Donation__c'] = '[npe03__Recurring_Donation__c:recurring_donation:' . $donation->master_did . ']';
-      }
-      // Lastly, add a field iff recurring object.
-      if ($donation->donation['recurs_monthly'] == TRUE && empty($donation->master_did) ) {
-        $fields['npe03__Recurring_Donation__c'] = '[npe03__Recurring_Donation__c:recurring_donation:' . $donation->did . ']';
-      }
 
       // If we're dealing with a sustainer charge, only send a subset of data so that other fields
       // that may have been changed in Salesforce isn't overwritten.

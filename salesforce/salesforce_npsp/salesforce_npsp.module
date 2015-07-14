@@ -92,6 +92,23 @@ function salesforce_npsp_salesforce_queue_create_item_alter(&$item) {
 }
 
 /**
+ * Implements hook_salesforce_genmap_map_fields_alter().
+ */
+function salesforce_npsp_salesforce_genmap_map_fields_alter(&$fields, $context) {
+  // Alter donations based on recurring status.
+  if ($context['module'] == 'salesforce_donation') {
+    $donation = $context['object'];
+    // Add a field if this is a recurring object.
+    if ($donation->donation['recurs_monthly'] == TRUE && !empty($donation->master_did) ) {
+      $fields['npe03__Recurring_Donation__c'] = '[npe03__Recurring_Donation__c:recurring_donation:' . $donation->master_did . ']';
+    }
+    if ($donation->donation['recurs_monthly'] == TRUE && empty($donation->master_did) ) {
+      $fields['npe03__Recurring_Donation__c'] = '[npe03__Recurring_Donation__c:recurring_donation:' . $donation->did . ']';
+    }
+  }
+}
+
+/**
  * Implements hook_salesforce_queue_postprocess_batch().
  */
 function salesforce_npsp_salesforce_queue_postprocess_batch($batch, $results, $queue) {
