@@ -68,6 +68,6 @@ function salesforce_npsp_create_extra_fundraiser_series_fields() {
 /**
  * Removes default recurring donation mapping provided by Springboard.
  */
-function fundraiser_sustainers_update_7001() {
+function salesforce_npsp_update_7001() {
   salesforce_genmap_delete_map(-1, 'npe03__Recurring_Donation__c');
 }
