@@ -175,3 +175,15 @@ textarea[id*="edit-sba-messages-message"] {
 fieldset[id*="edit-sba-messages-message"]  input[name*="subject"] {
     width: 95%;
 }
+
+form#sba-quicksign-form, #participants-container {
+    margin: 1.5em;
+}
+
+form#sba-quicksign-form {
+    margin-top: 0;
+}
+
+#participants-container table {
+    width: 100%;
+}
