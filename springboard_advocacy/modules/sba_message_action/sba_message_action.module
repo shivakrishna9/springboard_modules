@@ -10,7 +10,7 @@
  * Load taxonomy and webform form_alters
  * that apply to non-cached administrative pages.
  */
-function sba_message_init() {
+function sba_message_action_init() {
 
   // Include the taxonomy form alters needed to look down legislative issues.
   if ((arg(0) == 'admin' && arg(2) == 'taxonomy')
