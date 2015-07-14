@@ -131,6 +131,17 @@ function sba_message_action_build_preprocess(&$vars) {
     $vars['quicksign'] = drupal_render($quicksign);
   }
 
+  $vars['participants'] = '';
+  $view = views_get_view('recent_action_participants');
+  $view->set_display('block_1');
+  $view->set_arguments(array(arg(1)));
+  $view->pre_execute();
+  $view->execute();
+  if (isset($view->result) && count($view->result)) {
+    $table = $view->preview('block_1');
+    $vars['participants'] = $table;
+  }
+
   $element = $vars['element'];
 
   // Override core's theme_form in order to remove <form> tag

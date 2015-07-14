@@ -38,6 +38,16 @@ function sba_message_init() {
 }
 
 /**
+ * Implements hook_views_api().
+ */
+function sba_message_action_views_api() {
+  return array(
+    'api' => 3,
+    'path' => drupal_get_path('module', 'sba_message_action') . '/includes',
+  );
+}
+
+/**
  * Implements hook_menu().
  */
 function sba_message_action_menu() {
@@ -280,13 +290,23 @@ function sba_message_action_node_load($nodes, $types) {
 function sba_message_action_preprocess_node(&$vars) {
 
   if ($vars['node']->type == 'sba_message_action') {
-
     // Add theme wrappers for non-form-layout layouts.
     $vars['use_layouts'] = !empty($vars['form_layouts']) ? TRUE : FALSE;
     if (empty($vars['use_layouts'])) {
       $vars['content']['webform']['#theme_wrappers'][] = 'message_action_webform_wrapper';
       $vars['content']['webform']['#form']['submitted']['#theme_wrappers'][] = 'message_action_submitted_wrapper';
       $vars['content']['webform']['#form']['sba_messages']['#theme_wrappers'][] = 'message_action_messages_wrapper';
+
+      $vars['participants'] = '';
+      $view = views_get_view('recent_action_participants');
+      $view->set_display('block_1');
+      $view->set_arguments(array(arg(1)));
+      $view->pre_execute();
+      $view->execute();
+      if (isset($view->result) && count($view->result)) {
+        $table = $view->preview('block_1');
+        $vars['participants'] = $table;
+      }
 
       // Insert webform goals.
       if (module_exists('webform_goals')) {
@@ -574,5 +594,49 @@ function sba_message_action_webform_user_profile_fields_alter(&$fields, $node) {
         $fields[$index]['weight'] = -3;
       }
     }
+  }
+}
+
+/**
+ * Log opt in.
+ *
+ * @param int $nid
+ *   Node ID.
+ * @param int $uid
+ *   User ID.
+ * @param bool $opt_in
+ *   User opt in TRUE/FALSE.
+ * @param int $sid
+ *   Submission ID.
+ */
+function sba_message_action_log_opt_in($nid, $uid, $opt_in, $sid) {
+  db_delete('springboard_action_opt_in')
+    ->condition('sid', $sid, '=')
+    ->execute();
+
+  $record = array(
+    'sid' => $sid,
+    'nid' => $nid,
+    'uid' => $uid,
+    'opt_in' => $opt_in ? 1 : 0,
+    'created' => time(),
+  );
+
+  drupal_write_record('springboard_action_opt_in', $record);
+}
+
+/**
+ * Implements hook_webform_submission_insert().
+ */
+function sba_message_action_webform_submission_insert($node, $submission) {
+  $opt_in = db_query('SELECT * FROM {webform_component} ' .
+    'WHERE nid = :nid ' .
+    'AND form_key = :form_key',
+    array(':nid' => $node->nid, ':form_key' => 'sbp_sba_action_optin'))->fetchObject();
+  if (!empty($submission->data[$opt_in->cid]['value'])) {
+    $sid = $submission->sid;
+    $result = db_query('SELECT uid FROM {webform_submissions} WHERE sid = :sid', array(':sid' => $sid));
+    $uid =  $result->fetchField();
+    sba_message_action_log_opt_in($node->nid, $uid, TRUE, $sid);
   }
 }
