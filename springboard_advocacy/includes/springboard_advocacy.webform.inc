@@ -211,10 +211,9 @@ function springboard_advocacy_build_contact(array $values, $zip, array $geo) {
  */
 function springboard_advocacy_build_confirmation($response, $contact) {
   if (!empty($response->messages)) {
-    $_SESSION['all_messages'] = '';
+    $_SESSION['delivered_and_undelivered_messages'] = '';
     $_SESSION['delivered_messages'] = '';
     $_SESSION['undelivered_messages'] = '';
-
     $status = springboard_advocacy_message_status($response);
     unset($status['success']['target_count']);
     if (!empty($status['success'])) {
@@ -270,7 +269,6 @@ function springboard_advocacy_build_confirmation($response, $contact) {
     if (!empty($status['hold'])) {
       $_SESSION['delivered_and_undelivered_messages'] .= $_SESSION['undelivered_messages'];
     }
-
   }
 }
 
@@ -308,7 +306,7 @@ function theme_springboard_advocacy_webform_confirmations_delivered(array $vars)
     // Prepare the body text for display in a javascript pop-up window
     $body =  nl2br($message['body']);
     $body = addslashes(trim(preg_replace('/\s+/', ' ', $body)));
-    $clicker = "console.log(typeof messageWrapper);if(typeof messageWrapper !=='undefined'){messageWrapper.close()};messageWrapper=window.open('','messageWrapper','toolbar=no,scrollbars=yes,status=no,menubar=no,resizable=yes,top=0,left=0,width=640,height=480');messageWrapper.document.write(\"" . $body  . "\");messageWrapper.focus();return false;";
+    $clicker = "if(typeof messageWrapper !=='undefined'){messageWrapper.close()};messageWrapper=window.open('','messageWrapper','toolbar=no,scrollbars=yes,status=no,menubar=no,resizable=yes,top=0,left=0,width=640,height=480');messageWrapper.document.write(\"" . $body  . "\");messageWrapper.focus();return false;";
     $link = l($message['subject'], '#', array('attributes' => array('onclick' => $clicker)));
 
     // Prepare the recipients for display in a bulletted list.
