@@ -15,58 +15,9 @@ function springboard_petition_install() {
   $webform_node_types_primary = variable_get('webform_node_types_primary', array());
   $webform_node_types_primary[] = 'springboard_petition';
   variable_set('webform_node_types_primary', $webform_node_types_primary);
-  // Create default SF map insert into table.
-  if (module_exists('salesforce_genmap')) {
-    $map = array();
-    $map = entity_create('salesforce_genmap_map', $map);
-    $map->nid = -1;
-    $map->map_handler = 'webform';
-    $map->salesforce_object_type = 'Actions__c';
-    $object_type = '';
-    module_load_include('inc', 'salesforce_genmap', 'includes/salesforce_genmap.map');
-    if (function_exists('salesforce_get_api')) {
-      $sfapi = salesforce_get_api();
-      if ($sfapi->isAuthorized()) {
-        if (function_exists('_sfw_salesforce_record_type_list')) {
-          $sf_records = _sfw_salesforce_record_type_list($sfapi, 'Actions__c');
-          $sf_records = array_flip($sf_records);
-          $object_type = $sf_records['Petition Submission'];
-        }
-      }
-    }
-    $map->salesforce_record_type = $object_type;
-    $map->field_map = array(
-      'webform_map' => array(
-        'cid' => 'Campaign__c',
-        'ms' => 'Market_Source__c',
-        'referrer' => 'Referrer__c',
-        'initial_referrer' => 'Initial_Referrer__c',
-        'search_engine' => 'Search_Engine__c',
-        'search_string' => 'Search_String__c',
-        'user_agent' => 'User_Agent__c',
-      ),
-      'salesforce_node_map' => array(
-        'nid' => 'Drupal_Node_ID__c',
-        'title' => 'Action_Name__c',
-      ),
-      'salesforce_submission_map' => array(
-        'sid' => 'Submission_ID__c',
-        'date' => 'Action_Date__c',
-      ),
-    );
 
-    $map->sync_options = array(
-      'insert' => 'insert',
-      'update' => 'update',
-      'delete' => 'delete',
-    );
-    $map->status = 1;
-    $map->module = 'springboard_advocacy';
-    salesforce_genmap_save_map($map, 'webform');
-
-    springboard_petition_add_content_type();
-    springboard_petition_add_example_petition();
-  }
+  springboard_petition_add_content_type();
+  springboard_petition_add_example_petition();
 }
 
 /**
@@ -93,9 +44,7 @@ function springboard_petition_add_content_type() {
     ),
     'node_submitted' => 0,
     'node_preview' => 1,
-    'node_options' => array(
-      0 => 'status',
-    ),
+    'node_options' => array('status' => 'status'),
     'fundraiser' => 0,
     'webform_user' => 1,
     'webform_user_default_fields' => array(

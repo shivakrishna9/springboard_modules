@@ -115,6 +115,7 @@ function springboard_admin_admin_menu_items() {
       'weight' => 3,
     );
   }
+
   if(module_exists('webform_user')) {
     // Top Level: Forms.
     $items['admin/springboard/forms/all'] = array(
@@ -141,8 +142,19 @@ function springboard_admin_admin_menu_items() {
     // In the future, we will use an intermediate page to choose the form type.
     $types = node_type_get_types();
     foreach ($types as $type) {
-      // Only create the item if the node type uses Webform User but not Fundraiser.
-      if ($type && _webform_user_is_webform_user_node_type($type->type) && !fundraiser_is_donation_type($type->type)) {
+
+      if (module_exists('springboard_advocacy')) {
+        $action = springboard_advocacy_is_action_type($type->type);
+      }
+      if (module_exists('springboard_petition')) {
+        $petition = springboard_petition_is_petition_type($type->type);
+      }
+      // Only create the item if the node type uses Webform User but not Fundraiser or Advocacy.
+      if ($type && _webform_user_is_webform_user_node_type($type->type)
+        && !fundraiser_is_donation_type($type->type)
+        && empty($action)
+        && empty($petition)
+      ) {
         // Forms > $type->type.
         $items['admin/springboard/forms/all']['_children']['node/add/' . preg_replace('/_/', '-', $type->type)] = array(
           'link_path' => 'node/add/' . preg_replace('/_/', '-', $type->type),
@@ -377,6 +389,12 @@ function springboard_admin_create_menu_item($item, &$mlids, $plid = 0, $parent =
   if ($plid > 0) {
     $item['plid'] = $plid;
   }
+
+  // Set a default module value.
+  if (!isset($item['module'])) {
+    $item['module'] = 'menu';
+  }
+
   // Save a the item.
   $mlid = menu_link_save($item, array(), array($plid => $parent));
   $mlids[] = $mlid;

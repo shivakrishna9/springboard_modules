@@ -2101,7 +2101,8 @@ function springboard_p2p_fundraiser_donation_success($donation) {
   }
 
   $action = springboard_p2p_get_personal_campaign_action_by_sid($donation->sid);
-  if ($action) {
+  // The second condition is to prevent this code from running multiple times.
+  if ($action && $action['status'] != 1) {
     $amount = $donation->donation['amount'];
     if (!empty($donation->donation['quantity'])) {
       $amount = $amount * $donation->donation['quantity'];

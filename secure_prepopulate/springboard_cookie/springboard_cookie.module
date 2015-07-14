@@ -82,9 +82,9 @@ function springboard_cookie_user_login(&$edit, $account) {
 }
 
 /**
- * Implementation of hook_fundraiser_donation_post_submit().
+ * Implements hook_fundraiser_donation_post_submit_alter().
  */
-function springboard_cookie_fundraiser_donation_post_submit($form, $form_state, $donation) {
+function springboard_cookie_fundraiser_donation_post_submit_alter(&$form, &$form_state, &$donation) {
   // Pull user data from the new donation and tag it to the client.
   $new_data = array();
   if ($donation->uid) {

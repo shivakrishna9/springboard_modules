@@ -160,7 +160,7 @@ function commerce_cybersource_fundraiser_commerce_update($donation, $card_data =
   }
 
   // Pull the new credit card values from the donation
-  $pane_values['values'] = _fundraiser_commerce_credit_card_pane_values($donation);
+  $pane_values = array('values' => _fundraiser_commerce_credit_card_pane_values($donation));
 
   // Load the card on file values for this donation
   $cardonfile_fields = _fundraiser_commerce_credit_card_cardonfile_fields($donation);

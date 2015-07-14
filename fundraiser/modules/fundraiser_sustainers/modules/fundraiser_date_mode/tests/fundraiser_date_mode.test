@@ -5,6 +5,7 @@
  * Simpletest test class.
  */
 
+
 /**
  * Setup and tear down web class. Does nothing else.
  */
@@ -60,6 +61,9 @@ class FundraiserDateModeTest extends DrupalWebTestCase {
   /**
    * Test admin form.
    */
+
+
+
 
   /**
    * Test enabling date mode.
@@ -253,7 +257,7 @@ class FundraiserDateModeTest extends DrupalWebTestCase {
       'in, feugiat ac, molestie eget, wisi.';
     $node->body['LANGUAGE_NONE'][0]['format'] = 'filtered_html';
     $node->webform = array(
-      'confirmation' => 'Thank you [donation:first_name] [donation:last_name] for your donation of [donation:amount] USD.' . "\n" .
+      'confirmation' => 'Thank you [donation:first_name] [donation:last_name] for your donation of [donation:currency:symbol][donation:amount].' . "\n" .
       "\n" .
       'The email address we have for you is: [donation:mail]' . "\n" .
       "\n" .

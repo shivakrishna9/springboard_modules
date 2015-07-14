@@ -496,6 +496,7 @@ function fundraiser_upsell_donation_form($form, &$form_state) {
   }
 
   $node = node_load($nid);
+  $currency = fundraiser_get_currency_from_node($node);
 
   // Replace tokens in the content.
   $content = token_replace($node->fundraiser_upsell['content'], array('donation' => $donation));
@@ -508,7 +509,7 @@ function fundraiser_upsell_donation_form($form, &$form_state) {
     '#title' => t('Monthly donation'),
     '#type' => 'textfield',
     '#size' => 5,
-    '#field_prefix' => '$',
+    '#field_prefix' => $currency['symbol'],
     '#default_value' => $suggested_amount,
     '#weight' => 10,
   );
@@ -572,8 +573,9 @@ function fundraiser_upsell_donation_form_validate($form, &$form_state) {
     form_set_error('amount', t('Amount must be numeric.'));
   }
   $node = node_load($form_state['values']['nid']);
+  $currency = fundraiser_get_currency_from_node($node);
   if ($form_state['values']['amount'] < $node->minimum_donation_amount) {
-    form_set_error('amount', t('Amount must not be less than @amount.', array('@amount' => '$' . number_format($node->minimum_donation_amount, 2))));
+    form_set_error('amount', t('Amount must not be less than @amount.', array('@amount' => $currency['symbol'] . number_format($node->minimum_donation_amount, 2))));
   }
 }
 
@@ -1212,16 +1214,19 @@ function fundraiser_upsell_create_master_donation($upsold_donation, $new_amount)
 
   // If we're charging in a month, save a sustainers record and add a comment.
   if ($charge_time == 'one_month') {
-    $next_charge = fundraiser_sustainers_get_next_charge_time();
+    // Use the monthly schedule to get the next payment date.
+    $schedule = new sustainersMonthlySchedule();
+    $next = $schedule->advanceDate(1);
+
     fundraiser_donation_comment($master_donation, 'Initial Upsell donation scheduled to be charged at @next_charge',
-      array('@next_charge' => format_date($next_charge)));
+      array('@next_charge' => $next->format(variable_get('date_format_medium', 'D, m/d/Y - H:i'))));
 
     // At this point, the donation did and donation data is set.
     // Now we need to create a recurring record for it as the master donation.
     $recurring_donation_record = array(
       'master_did' => $master_donation->did,
       'did' => $master_donation->did,
-      'next_charge' => $next_charge,
+      'next_charge' => $next->format('U'),
       'sustainer_key' => fundraiser_sustainers_get_sustainer_key_value(),
     );
     // Update the recurring table.
