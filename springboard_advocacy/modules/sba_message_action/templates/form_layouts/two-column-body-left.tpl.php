@@ -28,7 +28,7 @@
           <div id="quicksign-container"><?php print $quicksign ?></div>
         <?php endif; ?>
         <?php if(!empty($participants)): ?>
-          <div id="participants-container" class = "span7">
+          <div id="participants-container">
             <h4 >Recent participants</h4>
             <?php print $participants ?>
           </div>

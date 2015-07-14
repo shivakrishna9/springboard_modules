@@ -5,7 +5,7 @@
  */
 ?>
 
-<div id="message-action-form-2col-column-wrapper" class="container-fluid action-message-left user-form-vertical">
+<div id="message-action-form-2col-column-wrapper" class="container-fluid action-message-right user-form-vertical">
   <?php if(!empty($goal)): ?>
     <div class="row-fluid">
       <?php print $goal; ?>
