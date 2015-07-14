@@ -12,6 +12,23 @@ function springboard_views_install() {
 }
 
 /**
+ * Implements hook_uninstall().
+ *
+ * Removes the Springboard Feed.
+ */
+function springboard_views_uninstall() {
+  // Find the feed ID.
+  $fid = db_query("SELECT fid FROM {aggregator_feed} WHERE title = 'Springboard Feed';")
+    ->fetchField();
+
+  // Passing in only the feed ID will delete it and related items
+  // and categories.
+  if (is_numeric($fid)) {
+    aggregator_save_feed(array('fid' => $fid));
+  }
+}
+
+/**
  * Implements hook_requirements().
  *
  * Checks Views for anonymous access.
@@ -23,7 +40,7 @@ function springboard_views_requirements($phase) {
     ctools_include('export');
     $views = array(
       'sbv_notes',
-      'sbv_administrators',
+      'sbv_administrator_users',
       'sbv_forms',
       'sbv_donations',
       'sbv_page_wrappers',
@@ -73,24 +90,34 @@ function springboard_views_requirements($phase) {
 }
 
 /**
- * Enables new module dependencies. Creates new Aggregator item for the
- * Springboard Notes view.
+ * Enables aggregator and views_data_export, and creates the Springboard Feed.
  */
- function springboard_views_update_7000() {
-   module_enable(array('aggregator', 'views_data_export'));
-   springboard_views_create_aggregator_feed();
- }
+function springboard_views_update_7000() {
+  module_enable(array('aggregator', 'views_data_export'));
+  springboard_views_create_aggregator_feed();
+}
 
- /**
-  * Helper function. Creates Aggregator feed for the Springboard Notes view.
-  */
+/**
+ * Creates Aggregator feed for the Springboard Notes view.
+ */
 function springboard_views_create_aggregator_feed() {
   // Create the Aggregator feed needed for the sbv_springboard_notes view.
-   $feed = array(
-     'title' => 'Springboard Feed',
-     'url' => 'http://www.jacksonriver.com/sb-admin-feed.xml',
-     'refresh' => 3600,
-     'block' => 5,
-   );
-   aggregator_save_feed($feed);
+  $feed = array(
+    'title' => 'Springboard Feed',
+    'url' => 'http://www.jacksonriver.com/sb-admin-feed.xml',
+    'refresh' => 3600,
+    'block' => 5,
+  );
+
+  // See if this feed already exists.
+  $fid = db_query("SELECT fid FROM {aggregator_feed} WHERE title = 'Springboard Feed';")
+    ->fetchField();
+
+  // When providing a feed ID, aggregator will edit the existing feed.
+  // So this will repair the feed instead of creating a new one.
+  if (is_numeric($fid)) {
+    $feed['fid'] = $fid;
+  }
+
+  aggregator_save_feed($feed);
 }
