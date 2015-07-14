@@ -102,6 +102,7 @@ function salesforce_luminate_fundraiser_donation_success($donation) {
 
   if (!empty($fundraiser_sustainers_series)) {
     $fundraiser_sustainers_series->luminate_start_date = date('Y-m-d');
+    $fundraiser_sustainers_series->luminate_campaign_id = $donation->donation['cid'];
     $fundraiser_sustainers_series->luminate_recurring_amount_rounded = round($donation->donation['amount']);
 
     $fundraiser_sustainers_series->save();
