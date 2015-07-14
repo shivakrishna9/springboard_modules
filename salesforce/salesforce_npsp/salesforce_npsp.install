@@ -11,6 +11,9 @@
 function salesforce_npsp_install() {
   // Add NPSP fields to fundraiser sustainers series module.
   salesforce_npsp_create_extra_fundraiser_series_fields();
+
+  // Remove default recurring donation mapping provided by Springboard.
+  salesforce_genmap_delete_map(-1, 'npe03__Recurring_Donation__c');
 }
 
 /**
@@ -60,4 +63,11 @@ function salesforce_npsp_create_extra_fundraiser_series_fields() {
   foreach ($fields as $field_name => $field) {
     db_add_field('fundraiser_sustainers_series', $field_name, $field);
   }
+}
+
+/**
+ * Removes default recurring donation mapping provided by Springboard.
+ */
+function fundraiser_sustainers_update_7001() {
+  salesforce_genmap_delete_map(-1, 'npe03__Recurring_Donation__c');
 }
