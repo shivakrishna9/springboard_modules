@@ -219,7 +219,7 @@ fieldset[id*="edit-sba-messages-message"]  input[name*="subject"] {
     width: 95%;
 }
 
-#quicksign-container {
+#quicksign-container, #participants-container {
     float: left;
 }
 
@@ -251,12 +251,21 @@ fieldset[id*="edit-sba-messages-message"]  input[name*="subject"] {
 .user-form-vertical-right #left,
 .action-message-left #left,
 .user-form-vertical-right #quicksign-container,
-.action-message-left #quicksign-container
+.user-form-vertical-right #participants-container,
+.action-message-left #quicksign-container,
+.action-message-left #participants-container
 {
     margin-left: 0;
 }
 
 .action-body-left #quicksign-container,
-.action-body-right #quicksign-container {
+.action-body-right #quicksign-container,
+.action-body-left #participants-container,
+.action-body-right #participants-container{
     float:none;
+}
+
+.action-message-right #quicksign-container,
+.action-message-right #participants-container {
+    float:right;
 }

@@ -211,10 +211,9 @@ function springboard_advocacy_build_contact(array $values, $zip, array $geo) {
  */
 function springboard_advocacy_build_confirmation($response, $contact) {
   if (!empty($response->messages)) {
-    $_SESSION['all_messages'] = '';
+    $_SESSION['delivered_and_undelivered_messages'] = '';
     $_SESSION['delivered_messages'] = '';
     $_SESSION['undelivered_messages'] = '';
-
     $status = springboard_advocacy_message_status($response);
     unset($status['success']['target_count']);
     if (!empty($status['success'])) {
@@ -245,8 +244,8 @@ function springboard_advocacy_build_confirmation($response, $contact) {
     }
 
     unset($status['hold']['target_count']);
+    $messages = array();
     if (!empty($status['hold'])) {
-      $messages = array();
         foreach ($status['hold'] as $id => $message) {
           foreach ($message['people'] as $key => $person) {
             $messages[$id]['people'][] = $person;
@@ -255,15 +254,21 @@ function springboard_advocacy_build_confirmation($response, $contact) {
             $messages[$id]['targets'] = $message['targets'];
           };
         }
-        $_SESSION['undelivered_messages'] = theme(
-          'springboard_advocacy_webform_confirmations_undelivered',
-          array(
-            'messages' => $messages,
-            'contact' => $contact,
-            'targets' => '',
-          )
-        );
+
       }
+    $_SESSION['undelivered_messages'] = theme(
+      'springboard_advocacy_webform_confirmations_undelivered',
+      array(
+        'messages' => $messages,
+        'contact' => $contact,
+        'targets' => '',
+      )
+    );
+
+    $_SESSION['delivered_and_undelivered_messages'] = $_SESSION['delivered_messages'];
+    if (!empty($status['hold'])) {
+      $_SESSION['delivered_and_undelivered_messages'] .= $_SESSION['undelivered_messages'];
+    }
   }
 }
 
@@ -301,7 +306,7 @@ function theme_springboard_advocacy_webform_confirmations_delivered(array $vars)
     // Prepare the body text for display in a javascript pop-up window
     $body =  nl2br($message['body']);
     $body = addslashes(trim(preg_replace('/\s+/', ' ', $body)));
-    $clicker = "console.log(typeof messageWrapper);if(typeof messageWrapper !=='undefined'){messageWrapper.close()};messageWrapper=window.open('','messageWrapper','toolbar=no,scrollbars=yes,status=no,menubar=no,resizable=yes,top=0,left=0,width=640,height=480');messageWrapper.document.write(\"" . $body  . "\");messageWrapper.focus();return false;";
+    $clicker = "if(typeof messageWrapper !=='undefined'){messageWrapper.close()};messageWrapper=window.open('','messageWrapper','toolbar=no,scrollbars=yes,status=no,menubar=no,resizable=yes,top=0,left=0,width=640,height=480');messageWrapper.document.write(\"" . $body  . "\");messageWrapper.focus();return false;";
     $link = l($message['subject'], '#', array('attributes' => array('onclick' => $clicker)));
 
     // Prepare the recipients for display in a bulletted list.
@@ -344,80 +349,79 @@ function theme_springboard_advocacy_webform_confirmations_delivered(array $vars)
 
 
 function theme_springboard_advocacy_webform_confirmations_undelivered(array $vars) {
-   $messages = $vars['messages'];
-   $message_count = count($messages);
-   $target_count = 0;
-    $start_output = '<div id="sba-undeliverable-messages">';
-    $start_output .= '<h3>' . t('Undelivered Messages') . '</h3>';
-    $mid_output ='';
-    foreach ($messages as $message) {
+  $messages = $vars['messages'];
+  $message_count = count($messages);
+  $target_count = 0;
+  $start_output = '<div id="sba-undeliverable-messages">';
+  $start_output .= '<h3>' . t('Undeliverable Messages') . '</h3>';
+  $mid_output = '';
+  $count_output = '';
+
+  foreach ($messages as $message) {
+    foreach ($message['people'] as $key => $person) {
       $items = array();
-      foreach($message['people'] as $key => $person) {
-        $target_count++;
-        if (!empty($person['url'])) {
-          $clicker = "var extWrapper=window.open(this.href,'targetWindow','toolbar=no,scrollbars=yes,status=no,menubar=no,resizable=yes,top=0,left=0,width=1024,height=800');extWrapper.focus();return false;";
-          $link = l($person['name'], check_plain($person['url']), array('attributes' => array('onclick' => $clicker)));
-          $items[] = t('!name', array('!name' => $link)).' '.$person['party'].' '.$person['district'];
-        }
-        else {
-          $items[] = $person['name'] . ' (' . $person['party'] .') '. $person['district'];
-        }
+
+      $target_count++;
+      if (!empty($person['url'])) {
+        $clicker = "var extWrapper=window.open(this.href,'targetWindow','toolbar=no,scrollbars=yes,status=no,menubar=no,resizable=yes,top=0,left=0,width=1024,height=800');extWrapper.focus();return false;";
+        $link = l(
+          $person['name'],
+          check_plain($person['url']),
+          array('attributes' => array('onclick' => $clicker))
+        );
+        $items[] = t(
+            '!name',
+            array('!name' => $link)
+          ).' '.$person['party'].' '.$person['district'];
+      } else {
+        $items[] = $person['name'].' ('.$person['party'].') '.$person['district'];
       }
 
       $mid_output .= '<div class="sba-undeliverable-messages-message">';
-      $mid_output .= '<h4>' . check_plain($message['subject']) . '</h4>';
-
-      $attributes = array(
-        'class' => 'legislator-list',
-      );
-     $mid_output .=  theme_item_list(
-        array(
-          'items' => $items,
-          'type' => 'ul',
-          'title' => NULL,
-          'attributes' => $attributes,
-        )
-      );
 
       // Prepare the contact object so we can replace tokens in the message.
       $contact = (object) $vars['contact'];
-      // Prepare the target object so we can replace tokens in the message.
-      // If there was only a single "hold" target, we can replace the target
-      // token with the target's name. Otherwise create a pseudo target object
-      // with last_name = "Multitple Recipients".
-      if (count($message['people']) === 1) {
-        $target = $message['targets'][0];
-      } else {
-        $target = new stdClass();
-        $target->last_name = '(Multiple Recipients)';
-      }
+
       // Replace
       $message['message'] = token_replace(
         $message['message'],
         array(
           'sba_contact' => $contact,
-          'sba_target' => $target,
+          'sba_target' => $person,
         )
       );
 
-      $mid_output .= '<a class="sba-message-show-message">Show Message</a>';
-      $mid_output .= '<div class="sba-message-body" style="display:none">' . check_markup($message['message'], 'filtered_html') . '</div>';
+      $mid_output .= implode(' ', $items);
+      $mid_output .= "<br />" . check_plain($message['subject']);
+      $mid_output .= ' (<a class="sba-message-show-message">Show Message</a>)';
+      $mid_output .= '<div class="sba-message-body" style="display:none">'.check_markup(
+          $message['message'],
+          'filtered_html'
+        ).'</div>';
       $mid_output .= '</div>';
+      $mid_output .= "<br />";
     }
+  }
 
   $end_output = '</div">';
 
   $message_plural = format_plural($message_count, 'message', 'messages');
   $target_plural = format_plural($target_count, 'target', 'targets');
 
-  $count_output = t('We were unable to deliver @message_count @messages to @target_count @targets.',
-    array(
-      '@message_count' => $message_count,
-      '@messages' => $message_plural,
-      '@target_count' => $target_count,
-      '@targets' => $target_plural,
-    )
-  );
+  if ($message_count) {
+    $count_output .= t(
+        'We were unable to deliver @message_count @messages to @target_count @targets.',
+        array(
+          '@message_count' => $message_count,
+          '@messages' => $message_plural,
+          '@target_count' => $target_count,
+          '@targets' => $target_plural,
+        )
+      ).'<br /><br />';
+  }
+  else {
+    $count_output .= t('You have no undeliverable messages.');
+  }
 
   $output = $start_output . $count_output . $mid_output . $end_output;
 

@@ -41,8 +41,14 @@
         <?php if(!empty($quicksign)): ?>
           <div id="quicksign-container"><?php print $quicksign ?></div>
         <?php endif; ?>
+        <?php if(!empty($participants)): ?>
+          <div id="participants-container">
+            <h4 >Recent participants</h4>
+            <?php print $participants ?>
+          </div>
+        <?php endif; ?>
       </div>
-        <p><?php print $social ?></p>
+      <p><?php print $social ?></p>
       </div>
     </div>
   </div>

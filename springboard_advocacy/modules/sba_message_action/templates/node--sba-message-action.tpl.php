@@ -144,7 +144,14 @@
 
     <?php if(!$use_layouts): ?>
       <?php print render($content['sba_quicksign']); ?>
+      <?php if(!empty($participants)): ?>
+        <div id="participants-container" >
+          <h4>Recent participants</h4>
+          <?php print $participants ?>
+        </div>
+      <?php endif; ?>
     <?php endif; ?>
+
   </div>
   <?php print render($content['links']); ?>
   <?php print render($content['comments']); ?>

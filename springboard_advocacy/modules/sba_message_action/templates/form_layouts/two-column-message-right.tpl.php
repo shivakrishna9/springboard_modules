@@ -40,6 +40,7 @@
           </fieldset>
           <?php print drupal_render_children($form); ?>
           <p><?php print $social ?></p>
+
         </div>
         <div id="right" class="span7 message-column">
           <?php print $message_fieldset; ?>
@@ -47,6 +48,12 @@
         <?php print $close_form_tag ?>
         <?php if(!empty($quicksign)): ?>
           <div id="quicksign-container" class="span7"><?php print $quicksign ?></div>
+        <?php endif; ?>
+        <?php if(!empty($participants)): ?>
+          <div id="participants-container" class = "span7">
+            <h4>Recent participants</h4>
+            <?php print $participants ?>
+          </div>
         <?php endif; ?>
       </div>
     </div>

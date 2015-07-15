@@ -5,7 +5,7 @@
  */
 ?>
 
-<div id="message-action-form-2col-column-wrapper" class="container-fluid action-message-left user-form-vertical">
+<div id="message-action-form-2col-column-wrapper" class="container-fluid action-message-right user-form-vertical">
   <?php if(!empty($goal)): ?>
     <div class="row-fluid">
       <?php print $goal; ?>
@@ -46,6 +46,12 @@
         <?php print $close_form_tag ?>
         <?php if(!empty($quicksign)): ?>
           <div id="quicksign-container" class = "span7"><?php print $quicksign ?></div>
+        <?php endif; ?>
+        <?php if(!empty($participants)): ?>
+          <div id="participants-container" class = "span7">
+            <h4>Recent participants</h4>
+            <?php print $participants ?>
+          </div>
         <?php endif; ?>
       </div>
     </div>

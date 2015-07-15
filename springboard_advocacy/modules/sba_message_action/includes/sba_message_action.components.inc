@@ -72,6 +72,25 @@ function sba_message_action_insert_components($node) {
     'email' => 1,
   );
 
+  $fields[] = array(
+    'nid' => $node->nid,
+    'form_key' => 'sbp_sba_action_optin',
+    'name' => t('Opt In '),
+    'type' => 'select',
+    'mandatory' => 0,
+    'pid' => 0,
+    'weight' => 40,
+    'explanation' => '',
+    'options' => array(0, 1),
+    'category_key' => NULL,
+    'category_name' => NULL,
+    'extra' => array(
+      'title_display' => 'none',
+      'multiple' => 1,
+      'items' => 'sbp_sba_action_optin|Show my name in a list of action takers.'
+    ),
+  );
+
   // Add the component to the Webform.
   foreach ($fields as $field) {
     // Don't insert fields if cloning.
@@ -172,6 +191,7 @@ function sba_message_locked_fields() {
     'sba_deliverable_count',
     'sba_user_edit_flag',
     'sbp_zip_plus_four',
+    'sbp_sba_action_optin',
   );
   return $locked_fields;
 }

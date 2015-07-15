@@ -412,13 +412,23 @@ function springboard_advocacy_springboard_admin_admin_menu_items_alter(&$items) 
 function springboard_advocacy_permission() {
   return array(
     'administer springboard advocacy' => array(
-      'title' => t('Administer Springboard advocacy'),
+      'title' => t('Administer Springboard Advocacy'),
       'description' => t('Perform administration tasks for Springboard advocacy.'),
     ),
     'view springboard advocacy reports' => array(
-      'title' => t('View Springboard advocacy reports'),
+      'title' => t('View Springboard Advocacy reports'),
       'description' => t('View reports related to Springboard advocacy activity.'),
     ),
+    'download springboard advocacy failed messages' => array(
+      'title' => t('Download Springboard Advocacy failed messages'),
+      'description' => t('Download Springboard Advocacy messages for manual delivery.'),
+    ),
+    'view and administer springboard advocacy message queues' => array(
+      'title' => t('View and administer Springboard Advocacy message queues'),
+      'description' => t('Perform administrative tasks on Springboard Advocacy message queues.'),
+    ),
+
+
   );
 }
 
@@ -738,18 +748,16 @@ function springboard_advocacy_tokens($type, $tokens, $data = array(), $options =
     foreach ($tokens as $name => $original) {
       switch ($name) {
         case 'all_messages':
-          $delivered = isset($_SESSION['delivered_messages']) ? $_SESSION['delivered_messages'] :'';
-          $undelivered = isset($_SESSION['undelivered_messages']) ? $_SESSION['undelivered_messages'] :'';
-          $recipients = $delivered . $undelivered;
-          $replacements[$original] = $recipients;
+          $all = isset($_SESSION['delivered_and_undelivered_messages']) ? $_SESSION['delivered_and_undelivered_messages'] :'';
+          $replacements[$original] = $all;
           break;
-        case 'delivered':
+        case 'delivered_messages':
           if (isset($_SESSION['delivered_messages'])) {
             $recipients = $_SESSION['delivered_messages'];
           }
           $replacements[$original] = $recipients;
           break;
-        case 'undelivered':
+        case 'undelivered_messages':
           if (isset($_SESSION['undelivered_messages'])) {
             $recipients = $_SESSION['undelivered_messages'];
           }
