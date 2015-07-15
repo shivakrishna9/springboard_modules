@@ -93,6 +93,11 @@ function commerce_paypal_wps_fundraiser_commerce_redirect($method_instance, $don
       );
     }
   }
+  // Set the cancel_return as form url.
+  $form['cancel_return'] = array(
+    '#type' => 'hidden',
+    '#value' => $donation->form_url,
+  );
 
   return $form;
 }
