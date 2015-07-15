@@ -249,6 +249,9 @@ function sba_message_action_node_load($nodes, $types) {
   foreach ($nodes as $nid => $node) {
     if ($node->type == 'sba_message_action') {
 
+      $visibility = db_query('select visibility from {springboard_action_opt_in_block} WHERE nid=:nid', array(':nid' => $node->nid))->fetchField();
+      $node->show_my_name = $visibility;
+
       // Add the custom failure confirmation to the node object.
       $confirm_fail = db_query('select custom_confirmation, fail_message FROM sba_message_action_confirm WHERE nid = :nid', array(':nid' => $node->nid))->fetchAll();
       if (isset($confirm_fail[0]) && is_numeric($confirm_fail[0]->custom_confirmation)) {
@@ -362,6 +365,10 @@ function sba_message_action_form_alter(&$form, &$form_state, $form_id) {
     }
   }
 
+  if (empty($form['#node']->show_my_name)) {
+    $form['submitted']['sbp_sba_action_optin']['#access'] = FALSE;
+  }
+
   // Override springboard_admin.module's node delete redirect.
   if ($form_id == 'node_delete_confirm') {
     if ($form['#node']->type == 'sba_message_action') {
@@ -470,11 +477,35 @@ function sba_message_action_form_sba_message_action_node_form_alter(&$form, &$fo
     ':input[name="field_sba_test_mode[und][1]"]' => array('checked' => TRUE),
   );
 
-  $form['actions']['submit']['#validate'][] = 'sba_message_action_form_sba_message_action_node_form_validate';
-
-  if (empty($form['#node']->nid)) {
-    $form['actions']['submit']['#submit'][] = 'sba_message_action_form_sba_message_action_node_form_submit';
+  if (empty($form['springboard_display'])) {
+    $form['springboard_display'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Display settings'),
+      '#collapsible' => TRUE,
+      '#collapsed' => FALSE,
+      '#group' => 'additional_settings',
+    );
   }
+
+  $form['springboard_display']['recent_participants'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Show My Name settings'),
+    '#description' => t('Choose whether to enable the "show my name" opt-in checkbox and the recent participants block on the message action page.'),
+    '#collapsible' => TRUE,
+    '#collapsed' => FALSE,
+  );
+
+  $visibility = isset($form['#node']->show_my_name) ? $form['#node']->show_my_name : 0;
+  $form['springboard_display']['recent_participants']['show_participants'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Enable the "show my name" opt-in checkbox and recent participants block'),
+    '#default_value' => $visibility,
+    '#weight' => -4,
+  );
+
+  $form['actions']['submit']['#validate'][] = 'sba_message_action_form_sba_message_action_node_form_validate';
+  $form['actions']['submit']['#submit'][] = 'sba_message_action_form_sba_message_action_node_form_submit';
+
 }
 
 /**
@@ -503,8 +534,22 @@ function sba_message_action_form_sba_message_action_node_form_validate(&$form, &
  * @param $form_state
  */
 function sba_message_action_form_sba_message_action_node_form_submit(&$form, &$form_state) {
-  $path = 'node/' . $form_state['nid'] . '/messages';
-  $form_state['redirect'] = $path;
+  $data = array(
+    'nid' => $form_state['values']['nid'],
+    'visibility' => $form_state['values']['show_participants']
+  );
+  $visibility = db_query('select visibility from {springboard_action_opt_in_block} WHERE nid=:nid', array(':nid' => $form_state['values']['nid']))->fetchCol();
+  if (empty($visibility)) {
+    drupal_write_record('springboard_action_opt_in_block', $data);
+  }
+  else {
+    drupal_write_record('springboard_action_opt_in_block', $data, 'nid');
+  }
+
+  if (empty($form['#node']->nid)) {
+    $path = 'node/'.$form_state['nid'].'/messages';
+    $form_state['redirect'] = $path;
+  }
 }
 
 /**

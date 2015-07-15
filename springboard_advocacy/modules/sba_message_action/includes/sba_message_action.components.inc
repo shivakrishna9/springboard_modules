@@ -191,6 +191,7 @@ function sba_message_locked_fields() {
     'sba_deliverable_count',
     'sba_user_edit_flag',
     'sbp_zip_plus_four',
+    'sbp_sba_action_optin',
   );
   return $locked_fields;
 }
