@@ -488,10 +488,10 @@ function sba_message_action_form_sba_message_action_node_form_validate(&$form, &
   // Require test_mode_email if test_mode is checked.
   if ($form_state['values']['field_sba_test_mode'][LANGUAGE_NONE][0]['value'] == 1) {
     if ($form_state['values']['field_sba_test_mode_email'][LANGUAGE_NONE][0]['value'] == '') {
-      form_set_error('field_sba_test_mode_email', t('Email address is required'));
+      form_set_error('field_sba_test_mode_email', t('An email address is required for Test Mode.'));
     }
     elseif (!valid_email_address($form_state['values']['field_sba_test_mode_email'][LANGUAGE_NONE][0]['value'])) {
-      form_set_error('field_sba_test_mode_email', t('Invalid email address.'));
+      form_set_error('field_sba_test_mode_email', t('Invalid Test Mode mail address.'));
     }
   }
 }
