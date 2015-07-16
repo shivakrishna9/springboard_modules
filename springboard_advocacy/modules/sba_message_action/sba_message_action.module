@@ -671,9 +671,9 @@ function sba_message_action_log_opt_in($nid, $uid, $opt_in, $sid) {
 }
 
 /**
- * Implements hook_webform_submission_insert().
+ * Implements hook_webform_submission_update().
  */
-function sba_message_action_webform_submission_insert($node, $submission) {
+function sba_message_action_webform_submission_update($node, $submission) {
   $opt_in = db_query('SELECT * FROM {webform_component} ' .
     'WHERE nid = :nid ' .
     'AND form_key = :form_key',
