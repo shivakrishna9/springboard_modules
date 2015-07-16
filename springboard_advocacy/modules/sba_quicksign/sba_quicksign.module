@@ -346,7 +346,12 @@ function sba_quicksign_is_enabled($node) {
   }
 
   $result = db_query('SELECT quicksign_enabled FROM {sba_quicksign} WHERE nid = :nid', array(':nid' => $node->nid));
-  return (bool) $result->fetchCol();
+  if((bool) $result->fetchField() === TRUE) {
+    return TRUE;
+  }
+  else {
+    return FALSE;
+  }
 }
 
 /**
