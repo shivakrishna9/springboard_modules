@@ -353,7 +353,7 @@ function sba_message_action_module_implements_alter(&$implementations, $hook) {
  * a message action node.
  */
 function sba_message_action_form_alter(&$form, &$form_state, $form_id) {
-  if (isset($form['#node']) && $form['#node']->type == 'sba_message_action') {
+  if (!empty($form['#node']->type) && $form['#node']->type == 'sba_message_action') {
     // Is this the user-facing form?
     $client_form = strpos($form_id, 'client_form');
     // Yes it is the user-facing form. Add all our custom non-webform-component
