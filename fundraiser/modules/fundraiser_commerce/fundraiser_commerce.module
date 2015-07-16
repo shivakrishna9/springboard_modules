@@ -879,7 +879,13 @@ function fundraiser_commerce_fundraiser_donation_get_donation($donation) {
   // So we have the correct decimaled value.
   // Note that commerce_currency_amount_to_decimal() does not pad the decimal
   // places, but commerce_currency_format() does. (ie. 10.5 vs $10.50).
-  $donation->donation['amount'] = number_format(commerce_currency_amount_to_decimal($order_total['amount'], $order_total['currency_code']), 2);
+  // Also note that this number_format does not include a comma.
+  // The number_format won't play nicely with other currencies that use
+  // difference separators.
+  // This should later be fixed to not use the numbeer_format, and for display
+  // tokens use amount_formatted for display and amount for math and backend
+  // things.
+  $donation->donation['amount'] = number_format(commerce_currency_amount_to_decimal($order_total['amount'], $order_total['currency_code']), 2, '.', '');
   $donation->donation['currency'] = commerce_currency_load($order_total['currency_code']);
   $donation->donation['amount_formatted'] = commerce_currency_format($order_total['amount'], $order_total['currency_code']);
 
