@@ -564,7 +564,7 @@ function sba_message_action_form_layouts_info() {
 /**
  * Implements hook_theme().
  */
-function sba_message_action_theme() {
+function sba_message_action_theme($existing, $type, $theme, $path) {
   return array(
     'message_action_submitted_wrapper' => array(
       'render element'  => 'element',
@@ -583,8 +583,8 @@ function sba_message_action_theme() {
       'file' => 'includes/sba_message_action.form_layouts.inc',
     ),
     'messsage_deliverability_dashboard' => array(
-      'path' => drupal_get_path('module', 'sba_message_action').'/templates',
-      'template' => 'sba_message_action_deliverability',
+      'template' => 'templates/sba_message_action_deliverability',
+      'file' => 'includes/sba_message_action.reports.inc',
     ),
     'messsage_deliverability_tabs' => array(
       'path' => drupal_get_path('module', 'sba_message_action').'/templates',
