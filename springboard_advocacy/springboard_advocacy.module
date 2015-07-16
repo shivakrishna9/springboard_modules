@@ -552,7 +552,7 @@ function springboard_advocacy_form_alter(&$form, &$form_state, $form_id) {
 
   // Assign each message to a hidden form field on the user-facing form.
   $types = variable_get('sba_action_types', array());
-  if (isset($form['#node']) && in_array($form['#node']->type, $types)) {
+  if (!empty($form['#node']->type) && in_array($form['#node']->type, $types)) {
     $node = $form['#node'];
     if (isset($form['form_id'])) {
       $pos = strpos($form['form_id']['#value'], 'webform_client_form');

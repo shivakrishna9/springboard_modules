@@ -29,7 +29,6 @@ function sba_message_action_performance_page($nid)
 {
   // CSS and JS assets
   drupal_add_css(drupal_get_path('module', 'sba_message_action') . '/css/message-performance.css');
-  drupal_add_js(drupal_get_path('module', 'sba_message_action') . '/js/jsfile.js');
 
   // Load up the message action node.
   $node = node_load($nid);
