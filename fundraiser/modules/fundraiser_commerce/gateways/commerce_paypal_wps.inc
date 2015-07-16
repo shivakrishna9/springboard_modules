@@ -98,6 +98,12 @@ function commerce_paypal_wps_fundraiser_commerce_redirect($method_instance, $don
     '#type' => 'hidden',
     '#value' => $donation->form_url,
   );
+  // Set the 'return' form item for successful PayPal checkout.
+  global $base_url;
+  $form['return'] = array(
+    '#type' => 'hidden',
+    '#value' => $base_url . '/node/' . $donation->nid . '/done?sid=' . $donation->sid,
+  );
 
   return $form;
 }
