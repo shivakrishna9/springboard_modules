@@ -3470,3 +3470,69 @@ function fundraiser_springboard_admin_admin_menu_items_alter(&$items) {
     'weight' => 0,
   );
 }
+
+/**
+ * Log that a donation has processed and some other details for Log Analysis.
+ *
+ * I think this should be called somewhere around fundraiser_donation_process
+ * because we'd want it to happen on both success and failure.
+ *
+ * There is some talk about logging before the processing begins and logging
+ * after in order to have a "start" and "end" and execution time.
+ *
+ * @param object $donation
+ *   The donation object.
+ */
+function fundraiser_log_donation_processing($donation) {
+  // @todo Decide on an appropriate type for watchdog.
+  $type = 'fundraiser_donation';
+
+  $pieces = array(
+    'timestamp',
+    'category',
+    'unique_transaction_id',
+    'client_identifier',
+    'payment_gateway',
+    'type',
+    'transaction_total_exec_time',
+    'donation_value',
+    'donation_currency',
+    'country',
+    'origin_ip',
+  );
+
+  $message = '|%' . implode('|%', $pieces);
+
+  $variables = array(
+    // @todo Format as needed.
+    '%timestamp' => date('c'),
+    // @todo Define categories.
+    '%category' => 'INFO',
+    // @todo Get the order payment transaction ID.
+    '%unique_transaction_id' => '12345',
+    // @todo Get the usder id.
+    '%client_identifier' => '12',
+    // @todo Get the gateway name.
+    '%payment_gateway' => 'commerce_example',
+    // @todo Decide if we need a start and end. Might just want to log the result.
+    '%type' => 'start',
+    // @todo Decide if we need this.
+    '%transaction_total_exec_time' => '1234',
+    // @todo Get the full unformatted amount.
+    '%donation_value' => '100',
+    // @todo Get the currency code.
+    '%donation_currency' => 'USD',
+    // @todo Get the country.
+    '%country' => 'US',
+    // @todo Get the donor's IP address.
+    '%origin_ip' => '123.456.789.001',
+  );
+
+  // @todo Decide on an acceptable severity.
+  $severity = WATCHDOG_INFO;
+
+  // @todo Provide a full URL to the donation that makes sense.
+  $link = 'https://www.google.com/';
+
+  watchdog($type, $message, $variables, $severity, $link);
+}
