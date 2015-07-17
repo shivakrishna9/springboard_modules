@@ -107,7 +107,6 @@ function sba_message_action_schema() {
  * Implements hook_install().
  */
 function sba_message_action_install() {
-
   module_load_include('inc', 'sba_message_action', 'includes/install/sba_message_action.install');
   module_load_include('inc', 'sba_message_action', 'includes/install/sba_message_action.install_taxonomy');
   module_load_include('inc', 'sba_message_action', 'includes/install/sba_message_action.install_examples');
