@@ -138,7 +138,7 @@ function custom_demo_node_view($node, $view_mode, $langcode) {
        $message = $node_wrapper->field_sb_form_closed_message->value(array('sanitize' => TRUE));
        if (!empty($message)) {
          $node->content['closed_message'] = array(
-            '#markup' => $message['safe_value'],
+            '#markup' => $message,
             '#weight' => 10,
           );
         }
