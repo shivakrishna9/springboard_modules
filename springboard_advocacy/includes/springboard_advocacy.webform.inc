@@ -343,7 +343,7 @@ function theme_springboard_advocacy_webform_confirmations_delivered(array $vars)
       'attributes' => $attributes,
     )
   );
-  $output .= '</div">';
+  $output .= '</div>';
   return $output;
 }
 
