@@ -59,7 +59,7 @@ function fundraiser_upsell_menu() {
 }
 
 
-/** 
+/**
  * Implements hook_springboard_admin_alias_patterns().
  */
 function fundraiser_upsell_springboard_admin_alias_patterns() {
@@ -197,7 +197,7 @@ function fundraiser_upsell_add_node_settings(&$form) {
     '#default_value' => !empty($node->fundraiser_upsell['content']) ? $node->fundraiser_upsell['content'] : '',
     '#description' => t('Content for the initial upsell page.'),
   );
-
+  /*
   $form['fundraiser_upsell']['content_tokens'] = array(
     '#type' => 'fieldset',
     '#title' => t('Available content tokens'),
@@ -210,7 +210,7 @@ function fundraiser_upsell_add_node_settings(&$form) {
     '#global_types' => TRUE,
     '#click_insert' => TRUE,
   );
-
+  */
   $form['fundraiser_upsell']['footer'] = array(
     '#title' => t('Form specific Upsell Footer'),
     '#type' => 'textfield',
@@ -226,6 +226,7 @@ function fundraiser_upsell_add_node_settings(&$form) {
     '#description' => t('The content in the modal after the sustainer is processed.'),
   );
 
+  /*
   $form['fundraiser_upsell']['thankyou_tokens'] = array(
     '#type' => 'fieldset',
     '#title' => t('Available thank you message tokens'),
@@ -239,6 +240,7 @@ function fundraiser_upsell_add_node_settings(&$form) {
     '#global_types' => TRUE,
     '#click_insert' => TRUE,
   );
+  */
 
   $form['fundraiser_upsell']['modal_theme'] = array(
     '#type' => 'fieldset',
