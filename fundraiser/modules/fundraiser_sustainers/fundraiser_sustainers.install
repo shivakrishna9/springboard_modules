@@ -788,3 +788,54 @@ function fundraiser_sustainers_update_7012() {
 
   _fundraiser_sustainers_create_sustainers_series_mapping();
 }
+
+/**
+ * Migrates recurring donations to fundraiser sustainer series entities.
+ */
+function fundraiser_sustainers_update_7013(&$sandbox) {
+  if (!isset($sandbox['progress'])) {
+    $sandbox['progress'] = 0;
+    $sandbox['current_did'] = 0;
+    $sandbox['max'] = db_query('SELECT COUNT(did) FROM {fundraiser_sustainers} WHERE `master_did` = `did`')->fetchField();
+  }
+
+  // Get fundraiser sustainers records that have matching master donation ID
+  // and donation ID fields.
+  $results = db_query('SELECT `master_did` FROM {fundraiser_sustainers} WHERE `master_did` = `did` AND `master_did` > :current_did ORDER BY `master_did` ASC LIMIT 0,10',
+      array(
+        ':current_did' => $sandbox['current_did'],
+      ))->fetchAll();
+
+  foreach ($results as $row) {
+    // Get the donation user ID and amount.
+    $donation = db_query('SELECT `did`, `uid`, `amount` FROM {fundraiser_donation} WHERE `did` = :master_did',
+        array(
+          ':master_did' => $row->master_did,
+        ))->fetchAssoc();
+
+    $installments = db_query('SELECT COUNT(did) FROM {fundraiser_sustainers} WHERE `master_did` != `did` AND `master_did` = :master_did',
+        array(
+          ':master_did' => $row->master_did,
+          ))->fetchField();
+
+    // Create a new fundraiser sustainers series entity.
+    $fundraiser_sustainers_series_data = array(
+      'did' => $donation['did'],
+      'uid' => $donation['uid'],
+      'amount' => $donation['amount'],
+      'installments' => $installments,
+      );
+
+    $fundraiser_sustainers_series = entity_create('fundraiser_sustainers_series', $fundraiser_sustainers_series_data);
+    $fundraiser_sustainers_series->save();
+
+    $sandbox['progress']++;
+    $sandbox['current_did'] = $row->master_did;
+  }
+
+  $sandbox['#finished'] = empty($sandbox['max']) ? 1 : ($sandbox['progress'] / $sandbox['max']);
+
+  if ($sandbox['#finished'] >= 1) {
+    return t('Fundraiser sustainers donations have been migrated to fundraiser sustainers series entities.');
+  }
+}
