@@ -258,7 +258,7 @@ function webform_goals_menu() {
   return $items;
 }
 
-/** 
+/**
  * Implements hook_springboard_admin_alias_patterns().
  */
 function webform_goals_springboard_admin_alias_patterns() {
@@ -282,7 +282,7 @@ function webform_goals_springboard_admin_alias_patterns() {
         'regex' => '|^springboard/goals$|',
         'replacement' => 'springboard/goals',
       ),
-    ),  
+    ),
   );
 }
 
@@ -299,7 +299,7 @@ function webform_goals_springboard_admin_admin_menu_items_alter(&$items) {
     'customized' => 1,
     'weight' => 0,
   );
-  
+
   // Settings > Settings > Goals.
   $items['admin/springboard/settings']['_children']['admin/springboard/settings/config']['_children']['admin/config/content/webform_goals'] = array(
     'link_path' => 'admin/config/content/webform_goals',
@@ -754,11 +754,23 @@ function webform_goals_tokens($type, $tokens, $data = array(), $options = array(
           break;
 
         case 'target':
-          $replacements[$token] = isset($goal_progress['target']) ? $goal_progress['target'] : $data['webform_goal']['target_value'];
+          if ($data['metric'] = 'submission_count') {
+            $replacements[$token] = isset($goal_progress['target']) ? number_format($goal_progress['target']) : number_format($data['webform_goal']['target_value']);
+          }
+          else {
+            // TODO: For fundraising goals need to address currency issues.
+            $$replacements[$token] = isset($goal_progress['target']) ? $goal_progress['target'] : $data['webform_goal']['target_value'];
+          }
           break;
 
         case 'total':
-          $replacements[$token] = $goal_progress['count'];
+          if ($data['metric'] = 'submission_count') {
+            $replacements[$token] = number_format($goal_progress['count']);
+          }
+          else {
+            // TODO: For fundraising goals need to address currency issues.
+            $replacements[$token] = $goal_progress['count'];
+          }
           break;
 
       }
