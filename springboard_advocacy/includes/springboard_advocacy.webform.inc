@@ -403,7 +403,7 @@ function theme_springboard_advocacy_webform_confirmations_undelivered(array $var
     }
   }
 
-  $end_output = '</div">';
+  $end_output = '</div>';
 
   $message_plural = format_plural($message_count, 'message', 'messages');
   $target_plural = format_plural($target_count, 'target', 'targets');
