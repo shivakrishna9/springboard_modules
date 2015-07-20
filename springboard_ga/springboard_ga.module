@@ -180,6 +180,7 @@ function springboard_ga_form_node_form_alter(&$form, &$form_state) {
       );
     }
 
+    /*
     // Add the token help
     $token_set = array('donation', 'user', 'node');
     $form['springboard_ga']['springboard_ga_tokens_message']['tokens']['token_help'] = array(
@@ -187,6 +188,7 @@ function springboard_ga_form_node_form_alter(&$form, &$form_state) {
       '#title' => t('Drupal tokens'),
       '#description' => theme('token_tree', array('token_types' => $token_set, 'recursion_limit' => 2, 'click_insert' => FALSE)),
     );
+    */
   }
 }
 
