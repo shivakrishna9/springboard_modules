@@ -89,7 +89,7 @@ function springboard_advocacy_goal_save_submit($node) {
   if (!empty($node->springboard_advocacy_goal_target)) {
     $settings = array(
       'gid' => isset($node->springboard_advocacy_goal_id) ? $node->springboard_advocacy_goal_id : '',
-      'name' => 'Springboard petition goal for node ' . $node->nid,
+      'name' => 'Springboard message action goal for node ' . $node->nid,
       'context' => 'single',
       'metric' => 'submission_count',
       'extra' => array('selected_form_id' => $node->nid),
