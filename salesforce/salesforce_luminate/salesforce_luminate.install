@@ -1113,10 +1113,9 @@ function salesforce_luminate_create_donation_mapping() {
       'country' => 'cv__Billing_Country__c',
       'state' => 'cv__Billing_State__c',
       'zip' => 'cv__Billing_Postal_Code__c',
-      'card_number' => 'cv__CC_Last_4__c',
-    // TODO: Combine into cv__Card_Expiration_Date__c (mm/yyyy)
-    //'card_expiration_month' => 'CC_Exp_Month__c',
-    //'card_expiration_year' => 'CC_Exp_Year__c',
+      'card_number' => 'CC_Last_4__c',
+      'card_expiration_month' => 'CC_Exp_Month__c',
+      'card_expiration_year' => 'CC_Exp_Year__c',
     ),
     'salesforce_webform_map' => array(
       'cid' => 'CampaignId',
