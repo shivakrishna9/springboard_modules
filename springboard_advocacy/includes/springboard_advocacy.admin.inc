@@ -99,7 +99,7 @@ function springboard_advocacy_settings_form() {
   $form['geo']['smarty']['springboard_advocacy_smarty_authtoken'] = array(
     '#type' => 'textfield',
     '#title' => t('Smarty Streets Auth Token'),
-    '#description' => t('Required for the REST AP'),
+    '#description' => t('Required for the REST API'),
     '#default_value' => variable_get('springboard_advocacy_smarty_authtoken', ''),
     '#required' => TRUE,
   );

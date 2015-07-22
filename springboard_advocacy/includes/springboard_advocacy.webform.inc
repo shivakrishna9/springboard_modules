@@ -1,6 +1,5 @@
 <?php
 
-
 /**
  * Gets Zip+4 from Smarty streets.
  *
@@ -188,18 +187,6 @@ function springboard_advocacy_build_contact(array $values, $zip, array $geo) {
 
   return $contact;
 }
-
-
-
-
-
-
-
-
-
-
-
-
 
 /**
  * Create a confirmation message from the API server response.
