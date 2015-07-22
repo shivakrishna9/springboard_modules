@@ -273,7 +273,7 @@ function springboard_advocacy_build_confirmation($response, $contact) {
 }
 
 /**
- * Theme the message recipients in an item list for each message.
+ * Theme the delivered messages.
  *
  * @param array $vars
  *   Array of message recipients.
@@ -303,13 +303,17 @@ function theme_springboard_advocacy_webform_confirmations_delivered(array $vars)
       )
     );
 
-    // Prepare the body text for display in a javascript pop-up window
-    $body =  nl2br($message['body']);
+    //In case it comes back encoded,
+    // we don't want theme_link to double encode it.
+    $subject = decode_entities($message['subject']);
+    // Prepare the body text for display in a javascript
+    // pop-up window. Make sure we're not double encoding.
+    $body =  nl2br(check_plain(decode_entities($message['body'])));
     $body = addslashes(trim(preg_replace('/\s+/', ' ', $body)));
     $clicker = "if(typeof messageWrapper !=='undefined'){messageWrapper.close()};messageWrapper=window.open('','messageWrapper','toolbar=no,scrollbars=yes,status=no,menubar=no,resizable=yes,top=0,left=0,width=640,height=480');messageWrapper.document.write(\"" . $body  . "\");messageWrapper.focus();return false;";
-    $link = l($message['subject'], '#', array('attributes' => array('onclick' => $clicker)));
+    $link = l($subject, '#', array('attributes' => array('onclick' => $clicker)));
 
-    // Prepare the recipients for display in a bulletted list.
+    // Prepare the recipients for display in a bulleted list.
     unset($message['person']['url']);
     $items[] = implode(' ', $message['person']) . ' (' . $link . ')';
   }
@@ -348,6 +352,12 @@ function theme_springboard_advocacy_webform_confirmations_delivered(array $vars)
 }
 
 
+/**
+ * Theme the undelivered messages.
+ *
+ * @param array $vars
+ * @return string
+ */
 function theme_springboard_advocacy_webform_confirmations_undelivered(array $vars) {
   $messages = $vars['messages'];
   $message_count = count($messages);
@@ -392,7 +402,9 @@ function theme_springboard_advocacy_webform_confirmations_undelivered(array $var
       );
 
       $mid_output .= implode(' ', $items);
-      $mid_output .= "<br />" . check_plain($message['subject']);
+      // Make sure we're not double encoding in case
+      // it comes back from API server encoded.
+      $mid_output .= "<br />" . check_plain(decode_entities($message['subject']));
       $mid_output .= ' (<a class="sba-message-show-message">Show Message</a>)';
       $mid_output .= '<div class="sba-message-body" style="display:none">'.check_markup(
           $message['message'],
@@ -537,4 +549,3 @@ function springboard_advocacy_target_details($target) {
 
   return $target_details;
 }
-

@@ -103,7 +103,7 @@ function sba_message_action_message_form(&$form, $message, $multiple) {
 
   // Get some message values via an entity wrapper.
   $wrapper = entity_metadata_wrapper('sba_message', $message);
-  $subject = check_plain($wrapper->field_sba_subject->value());
+  $subject = $wrapper->field_sba_subject->value();
   $message_body = check_markup($wrapper->field_sba_message->value(), 'plain_text');
   $editable_message = $wrapper->field_sba_editable_area->value();
   $body_editable = $wrapper->field_sba_user_editable[0]->value() == 'editable' ? TRUE : FALSE;
@@ -165,7 +165,7 @@ function sba_message_action_message_form(&$form, $message, $multiple) {
       $form['message'][$message->sba_message_id]['subject_show'] = array(
         '#type' => 'item',
         '#title' => t('Subject'),
-        '#markup' => $subject,
+        '#markup' => check_plain($subject),
       );
     }
 
@@ -229,7 +229,7 @@ function sba_message_action_message_form(&$form, $message, $multiple) {
       $required = FALSE;
     }
 
-    $form['message'][$message->sba_message_id]['body_editable'] = array(
+    $form['message'][$message->sba_message_id]['edited_body'] = array(
       '#type' => 'textarea',
       '#default_value' => $editable_message,
       '#description' => $description,
@@ -279,8 +279,8 @@ function sba_message_action_form_validate($form, &$form_state) {
   if (!empty($is_single)) {
     $message_id = array_keys($form_state['values']['sba_messages']['message']);
     $message = $form['sba_messages']['message'][$message_id[0]];
-    $body_default = isset($message['body_required']) ? $message['body_editable']['#default_value'] : '';
-    $body_edited = isset($message['body_required']) ? $form_state['values']['sba_messages']['message'][$message_id[0]]['body_editable'] : '';
+    $body_default = isset($message['body_required']) ? $message['edited_body']['#default_value'] : '';
+    $body_edited = isset($message['body_required']) ? $form_state['values']['sba_messages']['message'][$message_id[0]]['edited_body'] : '';
     $subject_default = isset($message['subject_required']) ? $message['subject']['#default_value'] : '';
     $subject_edited = isset($message['subject_required']) ? $form_state['values']['sba_messages']['message'][$message_id[0]]['subject'] : '';
     $changed = FALSE;
@@ -338,9 +338,9 @@ function sba_message_action_form_submit($form, &$form_state) {
     $messages = array();
 
     foreach ($form_state['values']['sba_messages']['message'] as $id => $message) {
-      $body_editable = isset($message['body_editable']) ? $message['body_editable'] : '';
-      $messages[$id]['body'] = check_plain(sba_message_action_build_message_bodies($message['sba_message_id'], $body_editable));
-      $messages[$id]['subject'] = check_plain($message['subject']);
+      $edited_body = isset($message['edited_body']) ? $message['edited_body'] : '';
+      $messages[$id]['body'] = sba_message_action_build_message_bodies($message['sba_message_id'], $edited_body);
+      $messages[$id]['subject'] = $message['subject'];
     }
     form_load_include($form_state, 'inc', 'springboard_advocacy', 'includes/springboard_advocacy.webform');
     $data = springboard_advocacy_send_message($messages, $form_state);
@@ -387,7 +387,6 @@ function sba_message_action_build_message_bodies($sba_message_id, $body_editable
   $user_message[] = $body_editable;
   $user_message[] = $wrapper->field_sba_bottom_conclusion->value();
   $user_message[] = $wrapper->field_sba_signature->value();
-
   $user_message = implode("\n\n", array_filter($user_message));
 
   return $user_message;
