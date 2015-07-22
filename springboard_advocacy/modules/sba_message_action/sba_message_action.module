@@ -692,6 +692,6 @@ function sba_message_action_webform_submission_update($node, $submission) {
  * Add js for popup links to message action confirmations.
  */
 function sba_message_action_preprocess_webform_confirmation(&$vars) {
-  if (isset($vars['#node']->type) && $vars['#node']->type == 'sba_message_action')
+  if (isset($vars['node']->type) && $vars['node']->type == 'sba_message_action')
     drupal_add_js(drupal_get_path('module', 'sba_message_action') . '/js/sba_message_action.js');
 }

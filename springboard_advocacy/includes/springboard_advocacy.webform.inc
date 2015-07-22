@@ -379,10 +379,7 @@ function theme_springboard_advocacy_webform_confirmations_undelivered(array $var
           check_plain($person['url']),
           array('attributes' => array('onclick' => $clicker))
         );
-        $items[] = t(
-            '!name',
-            array('!name' => $link)
-          ).' '.$person['party'].' '.$person['district'];
+        $items[] = t('!name', array('!name' => $link)) . ' (' . $person['party'] . ') ' . $person['district'];
       } else {
         $items[] = $person['name'].' ('.$person['party'].') '.$person['district'];
       }
