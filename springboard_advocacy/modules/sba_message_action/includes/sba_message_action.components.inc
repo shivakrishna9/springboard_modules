@@ -91,10 +91,15 @@ function sba_message_action_insert_components($node) {
     ),
   );
 
+  $exclude = array();
+  $exclude[] = 'sba_user_edit_flag';
+  $exclude[] = 'sba_deliverable_count';
+  $exclude[] = 'sbp_sba_action_optin';
+
   // Add the component to the Webform.
   foreach ($fields as $field) {
     // Don't insert fields if cloning.
-    if (!isset($node->map) || (isset($node->map) &&  !in_array($field['form_key'], $node->map))) {
+    if (!isset($node->map) || (isset($node->map) && !in_array($field['form_key'], $node->map) && !in_array($field['form_key'], $exclude))) {
       $cid = webform_component_insert($field);
       // User map the state field.
       if ($field['form_key'] == 'sbp_state' || $field['form_key'] == 'sbp_zip') {
@@ -209,19 +214,6 @@ function sba_message_action_form_webform_configure_form_alter(&$form, &$form_sta
   }
 }
 
-/**
- * Implements hook_preprocess_hook().
- *
- * Get the fail message to show on webform confirmation page
- * if there are no valid message recipients.
- */
-function sba_message_action_preprocess_webform_confirmation(&$vars) {
-  if ($vars['node']->type == 'sba_message_action' && empty($_SESSION['message_recipients'])) {
-    if (isset($vars['node']->custom_fail_message)) {
-      $vars['confirmation_message'] = check_markup($vars['node']->custom_fail_message, 'full_html');
-    }
-  }
-}
 
 /**
  * Implements hook_form_FORMID_alter().
