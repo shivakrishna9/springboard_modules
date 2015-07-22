@@ -40,7 +40,6 @@ function springboard_advocacy_settings_form() {
     '#default_value' => variable_get('springboard_advocacy_debug', ''),
   );
 
-
   $form['transaction'] = array(
     '#type' => 'fieldset',
     '#title' => t('Advocacy Server Configuration'),
@@ -48,9 +47,12 @@ function springboard_advocacy_settings_form() {
 
   $form['transaction']['springboard_advocacy_server_url'] = array(
     '#title' => t('Springboard advocacy server url'),
-    '#description' => t('The url of the Springboard advocacy server.'),
+    '#description' => t('The url of the Springboard advocacy server. Use "https" for the gospringboard.io servers.'),
     '#type' => 'textfield',
     '#default_value' => variable_get('springboard_advocacy_server_url', ''),
+    '#required' => TRUE,
+    '#element_validate' => array('springboard_advocacy_url_validate'),
+
   );
 
   $form['transaction']['springboard_advocacy_client_id'] = array(
@@ -58,6 +60,7 @@ function springboard_advocacy_settings_form() {
     '#title' => t('Transaction server Oauth Client ID.'),
     '#description' => t('Client ID for legislator lookup'),
     '#default_value' => variable_get('springboard_advocacy_client_id', ''),
+    '#required' => TRUE,
   );
 
   $form['transaction']['springboard_advocacy_client_secret'] = array(
@@ -65,6 +68,7 @@ function springboard_advocacy_settings_form() {
     '#title' => t('Transaction server Oauth Client Secret.'),
     '#description' => t('Client Secret for legislator lookup'),
     '#default_value' => variable_get('springboard_advocacy_client_secret', ''),
+    '#required' => TRUE,
   );
 
   $form['geo'] = array(
@@ -81,7 +85,7 @@ function springboard_advocacy_settings_form() {
     '#type' => 'fieldset',
     '#title' => t('Smarty Streets configuration'),
     '#collapsible' => TRUE,
-    '#collapsed' => TRUE,
+    '#collapsed' => FALSE,
   );
 
   $form['geo']['smarty']['springboard_advocacy_smarty_authid'] = array(
@@ -89,6 +93,7 @@ function springboard_advocacy_settings_form() {
     '#title' => t('Smarty Streets Auth ID'),
     '#description' => t('Required for the REST API'),
     '#default_value' => variable_get('springboard_advocacy_smarty_authid', ''),
+    '#required' => TRUE,
   );
 
   $form['geo']['smarty']['springboard_advocacy_smarty_authtoken'] = array(
@@ -96,7 +101,22 @@ function springboard_advocacy_settings_form() {
     '#title' => t('Smarty Streets Auth Token'),
     '#description' => t('Required for the REST AP'),
     '#default_value' => variable_get('springboard_advocacy_smarty_authtoken', ''),
+    '#required' => TRUE,
   );
 
   return system_settings_form($form);
+}
+
+function springboard_advocacy_url_validate($element, &$form_state) {
+
+  if (!valid_url($form_state['values']['springboard_advocacy_server_url'], TRUE)) {
+    form_error($element, t('You must enter a valid, fully-prefixed absolute url.'));
+  }
+
+  $non_local = strpos($form_state['values']['springboard_advocacy_server_url'], 'gospringboard.io');
+  $https = strpos($form_state['values']['springboard_advocacy_server_url'], 'https');
+
+  if ($non_local !== FALSE && $https === FALSE) {
+    form_error($element, t('You must use an "https" prefix when connecting to the gospringboard.io server.'));
+  }
 }
