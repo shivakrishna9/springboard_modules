@@ -91,10 +91,15 @@ function sba_message_action_insert_components($node) {
     ),
   );
 
+  $exclude = array();
+  $exclude[] = 'sba_user_edit_flag';
+  $exclude[] = 'sba_deliverable_count';
+  $exclude[] = 'sbp_sba_action_optin';
+
   // Add the component to the Webform.
   foreach ($fields as $field) {
     // Don't insert fields if cloning.
-    if (!isset($node->map) || (isset($node->map) &&  !in_array($field['form_key'], $node->map))) {
+    if (!isset($node->map) || (isset($node->map) && !in_array($field['form_key'], $node->map) && !in_array($field['form_key'], $exclude))) {
       $cid = webform_component_insert($field);
       // User map the state field.
       if ($field['form_key'] == 'sbp_state' || $field['form_key'] == 'sbp_zip') {
