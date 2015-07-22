@@ -647,7 +647,3 @@ function springboard_advocacy_api_call() {
   }
   return $apiCall;
 }
-
-function springboard_advocacy_preprocess_webform_confirmation(&$vars) {
-  drupal_add_js(drupal_get_path('module', 'sba_message_action') . '/js/sba_message_action.js');
-}
