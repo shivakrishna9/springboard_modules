@@ -13,20 +13,6 @@
                 setColumnHeight();
             }, 200);
         });
-
-        //message confiramtions javascript.
-        $('.sba-message-show-message').on('click', function() {
-            var message = $(this).siblings('.sba-message-body');
-            message.toggle('slow', function() {
-                var link = $(this).siblings('.sba-message-show-message');
-                if (message.is(":visible")) {
-                    link.text('Hide message')
-                }
-                if (!message.is(":visible")) {
-                    link.text('Show message')
-                }
-            });
-        })
     });
 
     function setColumnHeight(){

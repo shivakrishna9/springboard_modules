@@ -389,7 +389,7 @@ function theme_springboard_advocacy_webform_confirmations_undelivered(array $var
       // Make sure we're not double encoding in case
       // it comes back from API server encoded.
       $mid_output .= "<br />" . check_plain(decode_entities($message['subject']));
-      $mid_output .= ' (<a class="sba-message-show-message">Show Message</a>)';
+      $mid_output .= ' (<a href = "#" class="sba-message-show-message">Show Message</a>)';
       $mid_output .= '<div class="sba-message-body" style="display:none">'.check_markup(
           $message['message'],
           'filtered_html'
@@ -420,6 +420,7 @@ function theme_springboard_advocacy_webform_confirmations_undelivered(array $var
   }
 
   $output = $start_output . $count_output . $mid_output . $end_output;
+  $output .= "<script language = \"javascript\">jQuery('.sba-message-show-message').on('click', function() { var message = jQuery(this).siblings('.sba-message-body'); message.toggle('slow', function() { var link = jQuery(this).siblings('.sba-message-show-message'); if (message.is(':visible')) { link.text('Hide message') } if (!message.is(':visible')) { link.text('Show message') } }); return false;})";
 
   return $output;
 }
