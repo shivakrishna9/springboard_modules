@@ -365,26 +365,6 @@ function springboard_advocacy_theme($existing, $type, $theme) {
       ),
       'file' => 'includes/views/springboard_advocacy.views.inc',
     ),
-
-    'springboard_advocacy_webform_confirmations_delivered' => array(
-      'variables' => array(
-        'subject' => '',
-        'messages' => '',
-        'contact' => array(),
-        'target_count' => 0,
-        'message_count' => 0,
-
-        ),
-      'file' => '/includes/springboard_advocacy.webform.inc',
-    ),
-    'springboard_advocacy_webform_confirmations_undelivered' => array(
-      'variables' => array(
-        'messages' => array(),
-        'contact' => '',
-        'targets' => '',
-      ),
-      'file' => '/includes/springboard_advocacy.webform.inc',
-    ),
   );
   // Look for theme templates in springboard_advocacy.
   $templates += drupal_find_theme_functions($existing, array($theme));

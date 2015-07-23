@@ -342,8 +342,8 @@ function sba_message_action_form_submit($form, &$form_state) {
       $messages[$id]['body'] = sba_message_action_build_message_bodies($message['sba_message_id'], $edited_body);
       $messages[$id]['subject'] = $message['subject'];
     }
-    form_load_include($form_state, 'inc', 'springboard_advocacy', 'includes/springboard_advocacy.webform');
-    $data = springboard_advocacy_send_message($messages, $form_state);
+    form_load_include($form_state, 'inc', 'sba_message_action', 'includes/sba_message_action.webform');
+    $data = sba_message_action_send_message($messages, $form_state);
     if (!empty($data->messages)) {
       $deliverable = 0;
       foreach ($data->messages as $key => $message) {

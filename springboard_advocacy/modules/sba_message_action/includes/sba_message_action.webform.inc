@@ -13,7 +13,7 @@
  * @param array $form_state
  *   The submitted form state.
  */
-function springboard_advocacy_send_message(array $user_message, array $form_state) {
+function sba_message_action_send_message(array $user_message, array $form_state) {
   $values = $form_state['values'];
   $webform_values = $values['submitted'];
   $zip = '';
@@ -35,10 +35,10 @@ function springboard_advocacy_send_message(array $user_message, array $form_stat
   if (!empty($zip)) {
 
     // Build the contact array.
-    $contact = springboard_advocacy_build_contact($webform_values, $zip, $geo);
+    $contact = sba_message_action_build_contact($webform_values, $zip, $geo);
 
     // Build the message array.
-    $message_build = springboard_advocacy_build_messages($user_message);
+    $message_build = sba_message_action_build_messages($user_message);
     // Build the submission array.
     $submission = array(
       'contact' => $contact,
@@ -58,7 +58,7 @@ function springboard_advocacy_send_message(array $user_message, array $form_stat
     $response = $api_call->invokeClientMethod('resolveTargets', $submission);
     if (isset($response->data)) {
       // We got a valid response, build the confirmation message array.
-      springboard_advocacy_build_confirmation($response->data, $contact);
+      sba_message_action_build_confirmation($response->data, $contact);
     }
   }
   return !empty($response->data) ? $response->data : NULL;
@@ -75,7 +75,7 @@ function springboard_advocacy_send_message(array $user_message, array $form_stat
  * @return array
  *   Messages formatted for the API call.
  */
-function springboard_advocacy_build_messages(array $user_message) {
+function sba_message_action_build_messages(array $user_message) {
   $all_messages = entity_load('sba_message', array_keys($user_message));
   $messages = array();
   $x = 0;
@@ -94,7 +94,7 @@ function springboard_advocacy_build_messages(array $user_message) {
       // Field_sba_action_id is a reference to the action webform.
       $legislative_parent_terms = $message_wrapper->field_sba_action_id
         ->field_sba_legislative_issues->value();
-      $legislative_terms = springboard_advocacy_legislative_terms($legislative_parent_terms);
+      $legislative_terms = sba_message_action_legislative_terms($legislative_parent_terms);
     }
 
     $messages[$weight] = array(
@@ -118,12 +118,12 @@ function springboard_advocacy_build_messages(array $user_message) {
  * @return array
  *   Terms merged with their children.
  */
-function springboard_advocacy_legislative_terms($parent_terms) {
+function sba_message_action_legislative_terms($parent_terms) {
   $terms = array();
   if (!empty($parent_terms)) {
     $tree = taxonomy_get_tree($parent_terms[0]->vid);
     foreach ($parent_terms as $parent_term) {
-      $children = _springboard_advocacy_legislative_terms_descendents($parent_term->tid, $tree);
+      $children = _sba_message_action_legislative_terms_descendents($parent_term->tid, $tree);
       $terms = array_merge($terms, $children);
     }
   }
@@ -138,7 +138,7 @@ function springboard_advocacy_legislative_terms($parent_terms) {
  *
  * @return array
  */
-function _springboard_advocacy_legislative_terms_descendents($ancestor_tid, $tree) {
+function _sba_message_action_legislative_terms_descendents($ancestor_tid, $tree) {
   $children = array();
   foreach ($tree as $term) {
     foreach ($term->parents as $parent_tid) {
@@ -165,7 +165,7 @@ function _springboard_advocacy_legislative_terms_descendents($ancestor_tid, $tre
  * @return array
  *   Contact's profile data plus smarty data.
  */
-function springboard_advocacy_build_contact(array $values, $zip, array $geo) {
+function sba_message_action_build_contact(array $values, $zip, array $geo) {
 
   $line_2 = !empty($values['sbp_address_line_2']) ? $values['sbp_address_line_2'] . "\n " : '';
   $contact = array(
@@ -196,12 +196,12 @@ function springboard_advocacy_build_contact(array $values, $zip, array $geo) {
  * @param object $response
  *   The API response.
  */
-function springboard_advocacy_build_confirmation($response, $contact) {
+function sba_message_action_build_confirmation($response, $contact) {
   if (!empty($response->messages)) {
     $_SESSION['delivered_and_undelivered_messages'] = '';
     $_SESSION['delivered_messages'] = '';
     $_SESSION['undelivered_messages'] = '';
-    $status = springboard_advocacy_message_status($response);
+    $status = sba_message_action_message_status($response);
     unset($status['success']['target_count']);
     if (!empty($status['success'])) {
       $messages = array();
@@ -219,7 +219,7 @@ function springboard_advocacy_build_confirmation($response, $contact) {
         }
       }
       $_SESSION['delivered_messages'] = theme(
-        'springboard_advocacy_webform_confirmations_delivered',
+        'sba_message_action_webform_confirmations_delivered',
         array(
           'subject' => t("delivered messages"),
           'messages' => $messages,
@@ -233,18 +233,18 @@ function springboard_advocacy_build_confirmation($response, $contact) {
     unset($status['hold']['target_count']);
     $messages = array();
     if (!empty($status['hold'])) {
-        foreach ($status['hold'] as $id => $message) {
-          foreach ($message['people'] as $key => $person) {
-            $messages[$id]['people'][] = $person;
-            $messages[$id]['message'] = $status['hold'][$id]['body'];
-            $messages[$id]['subject'] = $status['hold'][$id]['subject'];
-            $messages[$id]['targets'] = $message['targets'];
-          };
-        }
-
+      foreach ($status['hold'] as $id => $message) {
+        foreach ($message['people'] as $key => $person) {
+          $messages[$id]['people'][] = $person;
+          $messages[$id]['message'] = $status['hold'][$id]['body'];
+          $messages[$id]['subject'] = $status['hold'][$id]['subject'];
+          $messages[$id]['targets'] = $message['targets'];
+        };
       }
+
+    }
     $_SESSION['undelivered_messages'] = theme(
-      'springboard_advocacy_webform_confirmations_undelivered',
+      'sba_message_action_webform_confirmations_undelivered',
       array(
         'messages' => $messages,
         'contact' => $contact,
@@ -268,7 +268,7 @@ function springboard_advocacy_build_confirmation($response, $contact) {
  * @return string
  *   Rendered HTML.
  */
-function theme_springboard_advocacy_webform_confirmations_delivered(array $vars) {
+function theme_sba_message_action_webform_confirmations_delivered(array $vars) {
 
   // Put the recipients in an array for the item list.
   $items = array();
@@ -338,14 +338,13 @@ function theme_springboard_advocacy_webform_confirmations_delivered(array $vars)
   return $output;
 }
 
-
 /**
  * Theme the undelivered messages.
  *
  * @param array $vars
  * @return string
  */
-function theme_springboard_advocacy_webform_confirmations_undelivered(array $vars) {
+function theme_sba_message_action_webform_confirmations_undelivered(array $vars) {
   $messages = $vars['messages'];
   $message_count = count($messages);
   $target_count = 0;
@@ -441,7 +440,7 @@ function theme_springboard_advocacy_webform_confirmations_undelivered(array $var
  * @return array
  *   An array of messages.
  */
-function springboard_advocacy_message_status($response) {
+function sba_message_action_message_status($response) {
 
   $messages = array();
   $message_success = array();
@@ -461,7 +460,7 @@ function springboard_advocacy_message_status($response) {
     foreach ($messages[$id]['deliverable'] as $target) {
       // Filter the largish target object in the response down to
       // a few select properties, in an array
-      $target_details = springboard_advocacy_target_details($target);
+      $target_details = sba_message_action_target_details($target);
       // Split into success and hold arrays.
       if (empty($target->webform_status)
         || (!empty($target->webform_status) && $target->webform_status != 'Hold')) {
@@ -501,7 +500,7 @@ function springboard_advocacy_message_status($response) {
  * @return array
  *   An array containing a subset of target properties.
  */
-function springboard_advocacy_target_details($target) {
+function sba_message_action_target_details($target) {
 
   $name = array();
   $target_details = array();
