@@ -419,7 +419,7 @@ function theme_sba_message_action_webform_confirmations_undelivered(array $vars)
   }
 
   $output = $start_output . $count_output . $mid_output . $end_output;
-  $output .= "<script language = \"javascript\">jQuery('.sba-message-show-message').on('click', function() { var message = jQuery(this).siblings('.sba-message-body'); message.toggle('slow', function() { var link = jQuery(this).siblings('.sba-message-show-message'); if (message.is(':visible')) { link.text('Hide message') } if (!message.is(':visible')) { link.text('Show message') } }); return false;})";
+  $output .= "<script language = \"javascript\">jQuery('.sba-message-show-message').on('click', function() { var message = jQuery(this).siblings('.sba-message-body'); message.toggle('slow', function() { var link = jQuery(this).siblings('.sba-message-show-message'); if (message.is(':visible')) { link.text('Hide message') } if (!message.is(':visible')) { link.text('Show message') } }); return false;})</script>";
 
   return $output;
 }
