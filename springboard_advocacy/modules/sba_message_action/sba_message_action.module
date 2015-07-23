@@ -597,24 +597,29 @@ function sba_message_action_theme($existing, $type, $theme, $path) {
       'path' => drupal_get_path('module', 'sba_message_action').'/templates',
       'template' => 'sba_message_action_queues',
     ),
-    'sba_message_action_webform_confirmations_delivered' => array(
+    'webform_confirmations_delivered' => array(
       'variables' => array(
         'subject' => '',
-        'messages' => '',
+        'targets' => '',
         'contact' => array(),
         'target_count' => 0,
         'message_count' => 0,
-
+        'deliverable_title' => '',
       ),
-      'file' => '/includes/sba_message_action.webform.inc',
+      'file' => 'includes/sba_message_action.webform.inc',
+      'template' => 'templates/webform-confirmations-delivered'
+
     ),
-    'sba_message_action_webform_confirmations_undelivered' => array(
+    'webform_confirmations_undelivered' => array(
       'variables' => array(
         'messages' => array(),
         'contact' => '',
         'targets' => '',
+        'message_count' => '',
+        'undeliverable_title' => '',
       ),
-      'file' => '/includes/sba_message_action.webform.inc',
+      'file' => 'includes/sba_message_action.webform.inc',
+      'template' => 'templates/webform-confirmations-undelivered'
     ),
   );
 }

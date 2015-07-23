@@ -218,15 +218,13 @@ function sba_message_action_build_confirmation($response, $contact) {
           $x++;
         }
       }
-      $_SESSION['delivered_messages'] = theme(
-        'sba_message_action_webform_confirmations_delivered',
+      $_SESSION['delivered_messages'] =
         array(
-          'subject' => t("delivered messages"),
           'messages' => $messages,
           'contact' => $contact,
           'target_count' => $count_targets,
           'message_count' => $count_messages,
-        )
+
       );
     }
 
@@ -243,19 +241,12 @@ function sba_message_action_build_confirmation($response, $contact) {
       }
 
     }
-    $_SESSION['undelivered_messages'] = theme(
-      'sba_message_action_webform_confirmations_undelivered',
+    $_SESSION['undelivered_messages'] =
       array(
         'messages' => $messages,
         'contact' => $contact,
         'targets' => '',
-      )
     );
-
-    $_SESSION['delivered_and_undelivered_messages'] = $_SESSION['delivered_messages'];
-    if (!empty($status['hold'])) {
-      $_SESSION['delivered_and_undelivered_messages'] .= $_SESSION['undelivered_messages'];
-    }
   }
 }
 
@@ -268,11 +259,11 @@ function sba_message_action_build_confirmation($response, $contact) {
  * @return string
  *   Rendered HTML.
  */
-function theme_sba_message_action_webform_confirmations_delivered(array $vars) {
+function sba_message_action_preprocess_webform_confirmations_delivered(&$vars) {
 
   // Put the recipients in an array for the item list.
-  $items = array();
-  foreach ($vars['messages'] as $message) {
+  $targets = array();
+  foreach ($vars['messages'] as $key => $message) {
 
     // Put the party in parens.
     if(isset($message['person']['party'])) {
@@ -282,14 +273,7 @@ function theme_sba_message_action_webform_confirmations_delivered(array $vars) {
     // Format the contact for token replacement.
     $contact = (object) $vars['contact'];
     // Replace the tokens
-    $message['body'] = token_replace(
-      $message['body'],
-      array(
-        'sba_contact' => $contact,
-        'sba_target' => $message['targets'],
-      )
-    );
-
+    $message['body'] = token_replace($message['body'], array('sba_contact' => $contact, 'sba_target' => $message['targets'],));
     //In case it comes back encoded,
     // we don't want theme_link to double encode it.
     $subject = decode_entities($message['subject']);
@@ -297,27 +281,23 @@ function theme_sba_message_action_webform_confirmations_delivered(array $vars) {
     // pop-up window. Make sure we're not double encoding.
     $body =  nl2br(check_plain(decode_entities($message['body'])));
     $body = addslashes(trim(preg_replace('/\s+/', ' ', $body)));
-    $clicker = "if(typeof messageWrapper !=='undefined'){messageWrapper.close()};messageWrapper=window.open('','messageWrapper','toolbar=no,scrollbars=yes,status=no,menubar=no,resizable=yes,top=0,left=0,width=640,height=480');messageWrapper.document.write(\"" . $body  . "\");messageWrapper.focus();return false;";
-    $link = l($subject, '#', array('attributes' => array('onclick' => $clicker)));
-
+    $on_click = "if(typeof messageWrapper !=='undefined'){messageWrapper.close()};messageWrapper=window.open('','messageWrapper','toolbar=no,scrollbars=yes,status=no,menubar=no,resizable=yes,top=0,left=0,width=640,height=480');messageWrapper.document.write(\"" . $body  . "\");messageWrapper.focus();return false;";
+    $link = l($subject, '#', array('attributes' => array('onclick' => $on_click)));
     // Prepare the recipients for display in a bulleted list.
     unset($message['person']['url']);
-    $items[] = implode(' ', $message['person']) . ' (' . $link . ')';
+
+    $targets[$key]['person'] = implode(' ', $message['person']);
+    $targets[$key]['link'] =  $link;
   }
 
-  $attributes = array(
-    'class' => 'legislator-list',
-  );
-  if(empty($items)) {
-    $items[] = t('You have no deliverable messages.');
+  if(empty($targets)) {
+    $targets[]['person'] = t('You have no deliverable messages.');
   }
-
-  $output = '<div id="sba-deliverable-messages">';
 
   $message_plural = format_plural($vars['message_count'], 'message was', 'messages were');
   $target_plural = format_plural($vars['target_count'], 'target', 'targets');
 
-  $output .= t('@message_count @messages delivered to @target_count @targets.',
+  $vars['message_count'] = t('@message_count @messages delivered to @target_count @targets.',
     array(
       '@message_count' => $vars['message_count'],
       '@messages' => $message_plural,
@@ -326,16 +306,8 @@ function theme_sba_message_action_webform_confirmations_delivered(array $vars) {
     )
   );
 
-  $output .=  theme_item_list(
-    array(
-      'items' => $items,
-      'title' => t('Delivered Messages'),
-      'type' => 'ul',
-      'attributes' => $attributes,
-    )
-  );
-  $output .= '</div>';
-  return $output;
+  $vars['delivered_title'] = t('Delivered Messages');
+  $vars['targets'] = $targets;
 }
 
 /**
@@ -344,61 +316,38 @@ function theme_sba_message_action_webform_confirmations_delivered(array $vars) {
  * @param array $vars
  * @return string
  */
-function theme_sba_message_action_webform_confirmations_undelivered(array $vars) {
+function sba_message_action_preprocess_webform_confirmations_undelivered(&$vars) {
   $messages = $vars['messages'];
   $message_count = count($messages);
   $target_count = 0;
-  $start_output = '<div id="sba-undeliverable-messages">';
-  $start_output .= '<h3>' . t('Undeliverable Messages') . '</h3>';
-  $mid_output = '';
+  $vars['undeliverable_title'] =  t('Undeliverable Messages');
+  $messages_out = array();
   $count_output = '';
 
-  foreach ($messages as $message) {
+  foreach ($messages as $key => $message) {
     foreach ($message['people'] as $key => $person) {
-      $items = array();
-
+      // Stores the segments of the target
+      $target_info = array();
       $target_count++;
       if (!empty($person['url'])) {
-        $clicker = "var extWrapper=window.open(this.href,'targetWindow','toolbar=no,scrollbars=yes,status=no,menubar=no,resizable=yes,top=0,left=0,width=1024,height=800');extWrapper.focus();return false;";
-        $link = l(
-          $person['name'],
-          check_plain($person['url']),
-          array('attributes' => array('onclick' => $clicker))
-        );
-        $items[] = t('!name', array('!name' => $link)) . ' (' . $person['party'] . ') ' . $person['district'];
+        $on_click = "var extWrapper=window.open(this.href,'targetWindow','toolbar=no,scrollbars=yes,status=no,menubar=no,resizable=yes,top=0,left=0,width=1024,height=800');extWrapper.focus();return false;";
+        $link = l($person['name'], check_plain($person['url']), array('attributes' => array('onclick' => $on_click)));
+        $target_info[] = t('!name', array('!name' => $link)) . ' (' . $person['party'] . ') ' . $person['district'];
       } else {
-        $items[] = $person['name'].' ('.$person['party'].') '.$person['district'];
+        $target_info[] = $person['name'].' ('.$person['party'].') '.$person['district'];
       }
-
-      $mid_output .= '<div class="sba-undeliverable-messages-message">';
-
       // Prepare the contact object so we can replace tokens in the message.
       $contact = (object) $vars['contact'];
-
-      // Replace
-      $message['message'] = token_replace(
-        $message['message'],
-        array(
-          'sba_contact' => $contact,
-          'sba_target' => $person,
-        )
-      );
-
-      $mid_output .= implode(' ', $items);
+      $message['message'] = token_replace($message['message'], array('sba_contact' => $contact, 'sba_target' => $person,));
+      // The recipient.
+      $messages_out[$key]['target'] = implode(' ', $target_info);
       // Make sure we're not double encoding in case
       // it comes back from API server encoded.
-      $mid_output .= "<br />" . check_plain(decode_entities($message['subject']));
-      $mid_output .= ' (<a href = "#" class="sba-message-show-message">Show Message</a>)';
-      $mid_output .= '<div class="sba-message-body" style="display:none">'.check_markup(
-          $message['message'],
-          'filtered_html'
-        ).'</div>';
-      $mid_output .= '</div>';
-      $mid_output .= "<br />";
+      $messages_out[$key]['subject'] =   check_plain(decode_entities($message['subject']));
+      $messages_out[$key]['show_link'] = ' (<a href = "#" class="sba-message-show-message">Show Message</a>)';
+      $messages_out[$key]['message'] = check_markup($message['message'], 'filtered_html');
     }
   }
-
-  $end_output = '</div>';
 
   $message_plural = format_plural($message_count, 'message', 'messages');
   $target_plural = format_plural($target_count, 'target', 'targets');
@@ -412,16 +361,14 @@ function theme_sba_message_action_webform_confirmations_undelivered(array $vars)
           '@target_count' => $target_count,
           '@targets' => $target_plural,
         )
-      ).'<br /><br />';
+      );
   }
   else {
     $count_output .= t('You have no undeliverable messages.');
   }
 
-  $output = $start_output . $count_output . $mid_output . $end_output;
-  $output .= "<script language = \"javascript\">jQuery('.sba-message-show-message').on('click', function() { var message = jQuery(this).siblings('.sba-message-body'); message.toggle('slow', function() { var link = jQuery(this).siblings('.sba-message-show-message'); if (message.is(':visible')) { link.text('Hide message') } if (!message.is(':visible')) { link.text('Show message') } }); return false;})</script>";
-
-  return $output;
+  $vars['message_count'] = $count_output;
+  $vars['messages'] = $messages_out;
 }
 
 
