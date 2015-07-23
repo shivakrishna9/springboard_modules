@@ -297,10 +297,6 @@ function springboard_advocacy_prepare_dashboard_view($name, $display, $args = ar
 
   $view->pre_execute();
 
-  if (isset($args[0]) && ($args[0] != 'sba_message_action' && isset($view->filter['tid']))) {
-    unset($view->filter['tid']);
-  }
-
   $view->execute();
 
   if ($view->access($display)) {
