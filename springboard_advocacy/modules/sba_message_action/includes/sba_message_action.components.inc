@@ -201,20 +201,6 @@ function sba_message_locked_fields() {
   return $locked_fields;
 }
 
-
-/**
- * Implements hook_form_FORM_ID_alter().
- *
- * Global/per action confirmation toggle.
- */
-function sba_message_action_form_webform_configure_form_alter(&$form, &$form_state) {
-  if ($form['#node']->type == 'sba_message_action') {
-    form_load_include($form_state, 'inc', 'sba_message_action', 'includes/sba_message_action.confirmations');
-    sba_message_action_confirmation($form, $form_state);
-  }
-}
-
-
 /**
  * Implements hook_form_FORMID_alter().
  *

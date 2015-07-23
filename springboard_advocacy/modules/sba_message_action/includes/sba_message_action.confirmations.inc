@@ -60,7 +60,6 @@ function sba_message_action_confirmation(&$form, &$form_state) {
   // Intercept the Ajax reload and change the confirmation
   // message value according to confirmation status.
   $new_custom_status = isset($form_state['values']['confirmation_fail']['custom_confirmation']) ? $form_state['values']['confirmation_fail']['custom_confirmation'] : NULL;
-
   if ($new_custom_status === 1) {
     // Value does not get reset without this.
     unset($form_state['input']['confirmation_fail']['fail_message']);
@@ -73,12 +72,12 @@ function sba_message_action_confirmation(&$form, &$form_state) {
     // Use custom message is disabled so use the global confirmation message.
     $form['submission']['confirmation_fail']['fail_message']['#default_value'] = variable_get('sba_message_action_confirm', '');
   }
+
   // Add a custom submit function to save the confirmation status value.
-  $form['#submit'][] = 'sba_message_confirmation_submit';
+  $form['#submit'][] = 'sba_message_action_confirmation_submit';
 
   // Need this to alter the filter format box.
   $form['#after_build'][] = 'sba_message_action_configure_form_after_build';
-
 }
 
 
@@ -122,6 +121,7 @@ function sba_message_action_configure_form_after_build($element) {
  * @return mixed
  */
 function sba_message_action_form_webform_configure_callback($form, $form_state) {
+  form_load_include($form_state, 'inc', 'sba_message_action', 'includes/sba_message_action.confirmations');
   return $form['submission']['confirmation_fail'];
 }
 
@@ -134,7 +134,7 @@ function sba_message_action_form_webform_configure_callback($form, $form_state) 
  * @param $form
  * @param $form_state
  */
-function sba_message_confirmation_submit($form, $form_state) {
+function sba_message_action_confirmation_submit($form, $form_state) {
 
   if (isset($form_state['values']['confirmation_fail']['custom_confirmation'])) {
     $record = array(
