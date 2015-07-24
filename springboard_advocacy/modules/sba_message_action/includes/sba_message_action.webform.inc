@@ -337,7 +337,7 @@ function sba_message_action_preprocess_webform_confirmations_undelivered(&$vars)
       }
       // Prepare the contact object so we can replace tokens in the message.
       $contact = (object) $vars['contact'];
-      $message['message'] = token_replace($message['message'], array('sba_contact' => $contact, 'sba_target' => $person,));
+      $message['message'] = token_replace($message['message'], array('sba_contact' => $contact, 'sba_target' => $message['targets'][$key],));
       // The recipient.
       $messages_out[$id][$key]['target'] = implode(' ', $target_info);
       // Make sure we're not double encoding in case
