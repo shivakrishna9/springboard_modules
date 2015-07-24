@@ -297,7 +297,7 @@ function sba_message_action_preprocess_webform_confirmations_delivered(&$vars) {
   $message_plural = format_plural($vars['message_count'], 'message was', 'messages were');
   $target_plural = format_plural($vars['target_count'], 'target', 'targets');
 
-  $vars['message_count'] = t('@message_count @messages delivered to @target_count @targets.',
+  $vars['message_count_text'] = t('@message_count @messages delivered to @target_count @targets.',
     array(
       '@message_count' => $vars['message_count'],
       '@messages' => $message_plural,
@@ -320,11 +320,10 @@ function sba_message_action_preprocess_webform_confirmations_undelivered(&$vars)
   $messages = $vars['messages'];
   $message_count = count($messages);
   $target_count = 0;
-  $vars['undeliverable_title'] =  t('Undeliverable Messages');
   $messages_out = array();
   $count_output = '';
 
-  foreach ($messages as $key => $message) {
+  foreach ($messages as $id => $message) {
     foreach ($message['people'] as $key => $person) {
       // Stores the segments of the target
       $target_info = array();
@@ -340,12 +339,11 @@ function sba_message_action_preprocess_webform_confirmations_undelivered(&$vars)
       $contact = (object) $vars['contact'];
       $message['message'] = token_replace($message['message'], array('sba_contact' => $contact, 'sba_target' => $person,));
       // The recipient.
-      $messages_out[$key]['target'] = implode(' ', $target_info);
+      $messages_out[$id][$key]['target'] = implode(' ', $target_info);
       // Make sure we're not double encoding in case
       // it comes back from API server encoded.
-      $messages_out[$key]['subject'] =   check_plain(decode_entities($message['subject']));
-      $messages_out[$key]['show_link'] = ' (<a href = "#" class="sba-message-show-message">Show Message</a>)';
-      $messages_out[$key]['message'] = check_markup($message['message'], 'filtered_html');
+      $messages_out[$id][$key]['subject'] =   check_plain(decode_entities($message['subject']));
+      $messages_out[$id][$key]['message'] = check_markup($message['message'], 'filtered_html');
     }
   }
 
@@ -367,8 +365,16 @@ function sba_message_action_preprocess_webform_confirmations_undelivered(&$vars)
     $count_output .= t('You have no undeliverable messages.');
   }
 
-  $vars['message_count'] = $count_output;
-  $vars['messages'] = $messages_out;
+  $vars['undeliverable_title'] =  t('Undeliverable Messages');
+  $vars['message_count'] = $message_count;
+  $vars['target_count'] = $target_count;
+  $vars['message_count_text'] = $count_output;
+  $vars['show_message_text'] = t('Show message');
+  foreach ($messages_out as $key => $message) {
+    foreach($message as $recipient) {
+      $vars['messages_out'][] = $recipient;
+    }
+  }
 }
 
 

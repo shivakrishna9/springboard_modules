@@ -1,25 +1,46 @@
-<div id="sba-undeliverable-messages">
+<?php
+/**
+ * @file
+ * Display an undelivered messages confirmation
+ *
+ * Available variables:
+ * - $undeliverable title.
+ * - $message_count - an integer
+ * - $target_count - an integer
+ * - $message_count_text A string in the format "We were unable to deliver X messages to X targets."
+ * - $show_message_text - a string
+ * - $messages_out - a keyed array containing the undeliverable messages
+ * -- $messages_out[]['target'] - The targets name with a link to the target's website if extant
+ * -- $messages_out[]['subject'] - the message subject
+ * -- $messages_out[]['message'] - The message
+
+ * Other variables:
+ *
+ * - $messages A message-id keyed array of all messages, their recipients, the full target objects
+ * - $contact The full user contact array
+ *
+ * @see template_preprocess()
+ * @see sba_message_action_preprocess_webform_confirmations_undelivered()
+ *
+ */
+?>
+<div id="sba-undeliverable-messages-container">
   <h3><?php print $undeliverable_title ?></h3>
-  <div id = "undeliverable-messages-container">
-
-    <p><?php print $message_count ?></p>
-
-    <?php foreach($messages as $message): ?>
-      <div class="sba-undeliverable-messages-message">
-        <div class="sba-undeliverable-messages-message-recipient">
-          <?php print $message['target'] ?>
-        </div>
-        <div class="sba-undeliverable-messages-message-subject">
-          <?php print $message['subject'] ?><?php print $message['show_link'] ?>
-        </div>
-        <div class="sba-message-body" style="display:none">'
-          <?php print $message['message'] ?>
-        </div>
+  <p><?php print $message_count_text ?></p>
+  <?php foreach($messages_out as $message): ?>
+    <div class="sba-undeliverable-messages-message">
+      <div class="sba-undeliverable-messages-message-recipient">
+        <?php print $message['target'] ?>
       </div>
-      <br /><br />
-    <?php endforeach; ?>
-
-  </div>
+      <div class="sba-undeliverable-messages-message-subject">
+        <?php print $message['subject'] ?> (<a href = "#" class="sba-message-show-message"><?php print $show_message_text ?></a>)
+      </div>
+      <div class="sba-message-body" style="display:none">
+        <?php print $message['message'] ?>
+      </div>
+    </div>
+    <p>&nbsp;</p>
+  <?php endforeach; ?>
 </div>
 <p>&nbsp;</p>
 
