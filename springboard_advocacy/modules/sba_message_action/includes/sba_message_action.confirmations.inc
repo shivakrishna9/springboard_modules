@@ -16,7 +16,7 @@ function sba_message_action_confirmation(&$form, &$form_state) {
   $form['submission']['confirmation_fail'] = array(
     '#type' => 'fieldset',
     '#weight' => -1,
-    '#tree' => TRUE,
+    '#tree' => FALSE,
     '#prefix' => '<div id="confirmation-div">',
     '#suffix' => '</div>',
   );
@@ -59,16 +59,17 @@ function sba_message_action_confirmation(&$form, &$form_state) {
 
   // Intercept the Ajax reload and change the confirmation
   // message value according to confirmation status.
-  $new_custom_status = isset($form_state['values']['confirmation_fail']['custom_confirmation']) ? $form_state['values']['confirmation_fail']['custom_confirmation'] : NULL;
+  $new_custom_status = isset($form_state['values']['custom_confirmation']) ? $form_state['values']['custom_confirmation'] : NULL;
   if ($new_custom_status === 1) {
     // Value does not get reset without this.
-    unset($form_state['input']['confirmation_fail']['fail_message']);
+    unset($form_state['input']['fail_message']);
     // Use custom message is enabled so use the local node's
     // confirmation message.
+
     $form['submission']['confirmation_fail']['fail_message']['#default_value'] = $form['#node']->custom_fail_message;
   }
   elseif ($new_custom_status === 0) {
-    unset($form_state['input']['confirmation_fail']['fail_message']);
+    unset($form_state['input']['fail_message']);
     // Use custom message is disabled so use the global confirmation message.
     $form['submission']['confirmation_fail']['fail_message']['#default_value'] = variable_get('sba_message_action_confirm', '');
   }
@@ -135,12 +136,11 @@ function sba_message_action_form_webform_configure_callback($form, $form_state) 
  * @param $form_state
  */
 function sba_message_action_confirmation_submit($form, $form_state) {
-
-  if (isset($form_state['values']['confirmation_fail']['custom_confirmation'])) {
+  if (isset($form_state['values']['custom_confirmation'])) {
     $record = array(
       'nid' => $form['#node']->nid,
-      'custom_confirmation' => $form_state['values']['confirmation_fail']['custom_confirmation'],
-      'fail_message' => $form_state['values']['confirmation_fail']['fail_message'],
+      'custom_confirmation' => $form_state['values']['custom_confirmation'],
+      'fail_message' => $form_state['values']['fail_message'],
 
     );
     if (isset($form['#node']->custom_confirmation)) {
