@@ -291,6 +291,10 @@ function sba_message_action_node_load($nodes, $types) {
  */
 function sba_message_action_preprocess_node(&$vars) {
 
+  if (isset($_GET['sid'])) {
+    drupal_add_css(drupal_get_path('module', 'sba_message_action') . '/css/message-confirmation.css', array('group' => CSS_DEFAULT));
+  }
+
   if ($vars['node']->type == 'sba_message_action') {
     // Add theme wrappers for non-form-layout layouts.
     $vars['use_layouts'] = !empty($vars['form_layouts']) ? TRUE : FALSE;

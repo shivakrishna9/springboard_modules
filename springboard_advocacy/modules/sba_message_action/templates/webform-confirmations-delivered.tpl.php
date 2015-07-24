@@ -22,12 +22,13 @@
  *
  */
 ?>
-<div id="sba-delivered-messages">
-  <h3><?php print $delivered_title ?></h3>
-  <div id = "delivered-messages-container">
+
+<div id="sba-delivered-messages-container">
+  <h3 id="sba-delivered-title"><?php print $delivered_title ?></h3>
+  <div id="delivered-messages-container">
     <p><?php print $message_count_text ?></p>
     <br />
-    <ul class = "message-recipient-list">
+    <ul class="message-recipient-list item-list">
       <?php foreach($targets as $target): ?>
         <li>
           <?php print $target['person']; ?>

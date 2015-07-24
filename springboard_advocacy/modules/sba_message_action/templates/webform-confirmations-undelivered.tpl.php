@@ -23,7 +23,15 @@
  * @see sba_message_action_preprocess_webform_confirmations_undelivered()
  *
  */
+/**
+ * Styles and javascript are included in the template so that they are
+ * available when the confirmation is displayed on a redirect as well as
+ * the default confirmation page.
+ */
 ?>
+<style>
+
+</style>
 <div id="sba-undeliverable-messages-container">
   <h3><?php print $undeliverable_title ?></h3>
   <p><?php print $message_count_text ?></p>
@@ -35,18 +43,16 @@
       <div class="sba-undeliverable-messages-message-subject">
         <?php print $message['subject'] ?> (<a href = "#" class="sba-message-show-message"><?php print $show_message_text ?></a>)
       </div>
-      <div class="sba-message-body" style="display:none">
+      <div class="sba-undeliverable-message-body" style="display:none">
         <?php print $message['message'] ?>
       </div>
     </div>
-    <p>&nbsp;</p>
   <?php endforeach; ?>
 </div>
-<p>&nbsp;</p>
 
 <script language="javascript">
   jQuery('.sba-message-show-message').on('click', function () {
-    var message = jQuery(this).parents('.sba-undeliverable-messages-message-subject').siblings('.sba-message-body');
+    var message = jQuery(this).parents('.sba-undeliverable-messages-message-subject').siblings('.sba-undeliverable-message-body');
     message.toggle('slow', function () {
       var link = jQuery(this).parents('.sba-undeliverable-messages-message-subject').siblings('.sba-message-show-message');
       if (message.is(':visible')) {
