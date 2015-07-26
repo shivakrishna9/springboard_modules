@@ -95,6 +95,20 @@ function salesforce_luminate_salesforce_queue_postprocess_batch($batch, $results
 }
 
 /**
+ * Implements hook_salesforce_genmap_map_fields_alter().
+ */
+function salesforce_luminate_salesforce_genmap_map_fields_alter(&$fields, $context) {
+  if ($context['module'] == 'salesforce_donation') {
+    $donation = $context['object'];
+    if (!empty($donation) && isset($donation->master_did)) {
+      // Add a new field to the object and stick in a token that represents the 
+      // recurring donation object.
+      $fields['cv__Recurring_Gift__c'] = sprintf('[cv__Recurring_Gift__c:fundraiser_sustainers_series:%d]', $donation->master_did);
+    }
+  }
+}
+
+/**
  * Implements hook_fundraiser_donation_success()
  */
 function salesforce_luminate_fundraiser_donation_success($donation) {
