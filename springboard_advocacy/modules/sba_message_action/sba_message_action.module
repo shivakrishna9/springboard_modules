@@ -804,17 +804,18 @@ function sba_message_action_tokens($type, $tokens, $data = array(), $options = a
     }
   }
 
+  // Called directly using token_replace();
+  // see sba_message_action_preprocess_webform_confirmations_delivered() &&
+  // sba_message_action_preprocess_webform_confirmations_undelivered()
   if ($type == 'contact' && isset($data['sba_contact'])) {
     foreach ($tokens as $name => $original) {
       switch ($name) {
         case 'first_name':
           $replacements[$original] = check_plain($data['sba_contact']->first_name);
           break;
-
         case 'last_name':
           $replacements[$original] = check_plain($data['sba_contact']->last_name);
           break;
-
         case 'address':
           $replacements[$original] = check_plain($data['sba_contact']->full_address);
           break;
@@ -822,22 +823,18 @@ function sba_message_action_tokens($type, $tokens, $data = array(), $options = a
       }
     }
   }
-
   if ($type == 'target' && isset($data['sba_target'])) {
     foreach ($tokens as $name => $original) {
       switch ($name) {
         case 'first_name':
           $replacements[$original] = isset($data['sba_target']->first_name) ? check_plain($data['sba_target']->first_name) : '';
           break;
-
         case 'last_name':
           $replacements[$original] = isset($data['sba_target']->last_name) ? check_plain($data['sba_target']->last_name): '';
           break;
-
         case 'salutation':
           $replacements[$original] = isset($data['sba_target']->salutation) ? check_plain($data['sba_target']->salutation) : '';
           break;
-
       }
     }
   }
