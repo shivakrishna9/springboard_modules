@@ -739,3 +739,109 @@ function sba_message_action_form_webform_configure_form_alter(&$form, &$form_sta
   }
 }
 
+
+
+/**
+ * Implements hook_token_info().
+ */
+function sba_message_action_token_info() {
+  $types['action'] = array(
+    'name' => t("Advocacy Actions"),
+    'description' => t("Tokens for Advocacy."),
+  );
+
+  $tokens['all_messages'] = array(
+    'name' => t("All messages"),
+    'description' => '',
+  );
+
+  $tokens['delivered_messages'] = array(
+    'name' => t("Delivered Messages"),
+    'description' => '',
+  );
+
+  $tokens['undelivered_messages'] = array(
+    'name' => t("Undelivered Messages"),
+    'description' => '',
+  );
+
+  return array(
+    'types' => $types,
+    'tokens' => array(
+      'action' => $tokens,
+    ),
+  );
+}
+
+
+/**
+ * Implements hook_tokens().
+ */
+function sba_message_action_tokens($type, $tokens, $data = array(), $options = array()) {
+  $recipients = '';
+  $replacements = array();
+  if ($type == 'action') {
+    foreach ($tokens as $name => $original) {
+      switch ($name) {
+        case 'all_messages':
+          $all = !empty($_SESSION['delivered_messages']) ? theme('webform_confirmations_delivered', $_SESSION['delivered_messages']) : '';
+          $all .= !empty($_SESSION['undelivered_messages']) ? theme('webform_confirmations_undelivered', $_SESSION['undelivered_messages']) : '';
+          $replacements[$original] = $all;
+          break;
+        case 'delivered_messages':
+          if (!empty($_SESSION['delivered_messages'])) {
+            $recipients = theme('webform_confirmations_delivered', $_SESSION['delivered_messages']);
+          }
+          $replacements[$original] = $recipients;
+          break;
+        case 'undelivered_messages':
+          if (!empty($_SESSION['undelivered_messages'])) {
+            $recipients = theme('webform_confirmations_undelivered', $_SESSION['undelivered_messages']);
+          }
+          $replacements[$original] = $recipients;
+          break;
+      }
+    }
+  }
+
+  if ($type == 'contact' && isset($data['sba_contact'])) {
+    foreach ($tokens as $name => $original) {
+      switch ($name) {
+        case 'first_name':
+          $replacements[$original] = check_plain($data['sba_contact']->first_name);
+          break;
+
+        case 'last_name':
+          $replacements[$original] = check_plain($data['sba_contact']->last_name);
+          break;
+
+        case 'address':
+          $replacements[$original] = check_plain($data['sba_contact']->full_address);
+          break;
+
+      }
+    }
+  }
+
+  if ($type == 'target' && isset($data['sba_target'])) {
+    foreach ($tokens as $name => $original) {
+      switch ($name) {
+        case 'first_name':
+          $replacements[$original] = isset($data['sba_target']->first_name) ? check_plain($data['sba_target']->first_name) : '';
+          break;
+
+        case 'last_name':
+          $replacements[$original] = isset($data['sba_target']->last_name) ? check_plain($data['sba_target']->last_name): '';
+          break;
+
+        case 'salutation':
+          $replacements[$original] = isset($data['sba_target']->salutation) ? check_plain($data['sba_target']->salutation) : '';
+          break;
+
+      }
+    }
+  }
+
+  return $replacements;
+}
+
