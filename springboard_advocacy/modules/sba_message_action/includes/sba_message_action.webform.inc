@@ -58,7 +58,7 @@ function sba_message_action_send_message(array $user_message, array $form_state)
     $response = $api_call->invokeClientMethod('resolveTargets', $submission);
     if (isset($response->data)) {
       // We got a valid response, build the confirmation message array.
-      sba_message_action_build_confirmation($response->data, $contact);
+      sba_message_action_set_confirmation_session_vars($response->data, $contact);
     }
   }
   return !empty($response->data) ? $response->data : NULL;
@@ -189,19 +189,19 @@ function sba_message_action_build_contact(array $values, $zip, array $geo) {
 }
 
 /**
- * Create a confirmation message from the API server response.
+ * Create session vars to hold data for use by confirmation theming functions.
  *
- * Then place it into Session for use by the confirmation page token.
+ * The session variables are passed through their theming functions
+ * from hook_tokens().
  *
  * @param object $response
  *   The API response.
  */
-function sba_message_action_build_confirmation($response, $contact) {
+function sba_message_action_set_confirmation_session_vars($response, $contact) {
   if (!empty($response->messages)) {
-    $_SESSION['delivered_and_undelivered_messages'] = '';
-    $_SESSION['delivered_messages'] = '';
-    $_SESSION['undelivered_messages'] = '';
-    $status = sba_message_action_message_status($response);
+    $_SESSION['delivered_messages'] = array();
+    $_SESSION['undelivered_messages'] = array();
+    $status = sba_message_action_get_message_statuses($response);
     unset($status['success']['target_count']);
     if (!empty($status['success'])) {
       $messages = array();
@@ -393,7 +393,7 @@ function sba_message_action_preprocess_webform_confirmations_undelivered(&$vars)
  * @return array
  *   An array of messages.
  */
-function sba_message_action_message_status($response) {
+function sba_message_action_get_message_statuses($response) {
 
   $messages = array();
   $message_success = array();
@@ -413,7 +413,7 @@ function sba_message_action_message_status($response) {
     foreach ($messages[$id]['deliverable'] as $target) {
       // Filter the largish target object in the response down to
       // a few select properties, in an array
-      $target_details = sba_message_action_target_details($target);
+      $target_details = sba_message_action_get_target_details($target);
       // Split into success and hold arrays.
       if (empty($target->webform_status)
         || (!empty($target->webform_status) && $target->webform_status != 'Hold')) {
@@ -453,7 +453,7 @@ function sba_message_action_message_status($response) {
  * @return array
  *   An array containing a subset of target properties.
  */
-function sba_message_action_target_details($target) {
+function sba_message_action_get_target_details($target) {
 
   $name = array();
   $target_details = array();
