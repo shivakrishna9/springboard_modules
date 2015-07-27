@@ -4,7 +4,21 @@
  * Implements hook_commerce_payment_method_info().
  */
 function commerce_paywithmybank_commerce_payment_method_info() {
-  
+  $payment_methods = array();
+  $payment_methods['commerce_paywithmybank_bank'] = array(
+    'base' => 'commerce_paywithmybank_bank',
+    'title' => t('PayWithMyBank Bank Account'),
+    'short_title' => t('PayWithMyBank'),
+    'display_title' => t('Bank Account'),
+    'description' => t('Integrates PayWithMyBank for Commerce transactions.'),
+    'cardonfile' => array(
+      'charge callback' => 'commerce_paywithmybank_bank_cardonfile_charge',
+      'update callback' => 'commerce_paywithmybank_bank_cardonfile_update',
+      'delete callback' => 'commerce_paywithmybank_bank_cardonfile_delete',
+    ),
+  );
+
+  return $payment_methods;
 }
 
 /**
@@ -32,5 +46,17 @@ function commerce_paywithmybank_credit_card_submit_form_validate($payment_method
  * Payment method callback: checkout form submission.
  */
 function commerce_paywithmybank_credit_card_submit_form_submit($payment_method, $pane_form, $pane_values, $order, $charge) {
+  
+}
+
+function commerce_paywithmybank_bank_cardonfile_charge($payment_method, $card_data, $order, $charge = NULL) {
+  
+}
+
+function commerce_paywithmybank_bank_cardonfile_update($form, &$form_state, $payment_method, $card_data) {
+  
+}
+
+function commerce_paywithmybank_bank_cardonfile_delete() {
   
 }
