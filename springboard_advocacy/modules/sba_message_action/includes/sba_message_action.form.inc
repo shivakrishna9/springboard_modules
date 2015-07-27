@@ -330,9 +330,8 @@ function sba_message_action_form_validate($form, &$form_state) {
  * @param $form_state
  */
 function sba_message_action_form_submit($form, &$form_state) {
-  $_SESSION['delivered_and_undelivered_messages'] = '';
-  $_SESSION['delivered_messages'] = '';
-  $_SESSION['undelivered_messages'] = '';
+  $_SESSION['delivered_messages'] = array();
+  $_SESSION['undelivered_messages'] = array();
   // Create array of messages to submit for target resolution.
   if (isset($form_state['values']['sba_messages'])) {
     $messages = array();
@@ -344,6 +343,7 @@ function sba_message_action_form_submit($form, &$form_state) {
     }
     form_load_include($form_state, 'inc', 'sba_message_action', 'includes/sba_message_action.webform');
     $data = sba_message_action_send_message($messages, $form_state);
+    // Calculate the deliverable count for sending to salesforce
     if (!empty($data->messages)) {
       $deliverable = 0;
       foreach ($data->messages as $key => $message) {
