@@ -1160,3 +1160,188 @@ function webform_goals_goal_delete($gid) {
   webform_goals_delete_goal($gid);
   module_invoke_all('webform_goals_goal_delete', $gid);
 }
+
+/**
+ * Implements hook_form_FORM_ID_alter()
+ *
+ * Add the quick goals tab tot he node form vertical tabs.
+ */
+function webform_goals_form_node_form_alter(&$form, &$form_state) {
+  if (webform_goals_is_goal_type($form['#node']->type)) {
+    $goal_config = variable_get('webform_goals_quick_goal_settings', array());
+    $gid = isset($form['#node']->nid) && isset($goal_config[$form['#node']->nid]) ? $goal_config[$form['#node']->nid] : FALSE;
+    $goal = !empty($gid) ? webform_goals_goal_retrieve($gid) : array();
+    $form['goal_settings'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Goal settings'),
+      '#collapsible' => TRUE,
+      '#collapsed' => TRUE,
+      '#group' => 'additional_settings',
+    );
+    $form['goal_settings']['webform_goals_quick_goal_id'] = array(
+      '#type' => 'value',
+      '#value' => $gid,
+    );
+    $form['goal_settings']['webform_goals_quick_goal_target'] = array(
+      '#type' => 'textfield',
+      '#title' => t('How many signatures are required to meet this goal?'),
+      '#default_value' => isset($goal['target_value']) ? $goal['target_value'] : '',
+    );
+    $form['goal_settings']['webform_goals_quick_goal_minimum'] = array(
+      '#type' => 'textfield',
+      '#title' => t('Minimum number of signatures required to show progress.'),
+      '#default_value' => isset($goal['display_threshold']) ? $goal['display_threshold'] : '',
+    );
+    $form['goal_settings']['webform_goals_quick_starter_message'] = array(
+      '#type' => 'textarea',
+      '#title' => t('Starter message'),
+      '#description' => t('This message is displayed when minimum goal progress has not been met.'),
+      '#default_value' => isset($goal['starter_message']) ? $goal['starter_message'] : '',
+    );
+
+    $form['#validate'][] = 'webform_goals_quick_goal_save_validate';
+    // Actual submission is handled in hook_node_insert and hook_node_update.
+    // This ensures that a node id is present whenever we act on a form
+    // submission, a condition that is not guaranteed if we rely
+    // on hook_form_alter().
+  }
+}
+
+/**
+ * Form validation callback quick goals form.
+ *
+ * @param array $form
+ *   The form.
+ * @param array $form_state
+ *   The form state.
+ */
+function webform_goals_quick_goal_save_validate(array $form, array $form_state) {
+
+  // Goal target is NaN.
+  if (!empty($form_state['values']['webform_goals_quick_goal_target']) && !is_numeric($form_state['values']['webform_goals_quick_goal_target'])) {
+    form_set_error('webform_goals_quick_goal_target', t('Target number of submissions must be a number.'));
+  }
+  // Goal minimum is NaN.
+  if (!empty($form_state['values']['webform_goals_quick_goal_minimum']) && !is_numeric($form_state['values']['webform_goals_quick_goal_minimum'])) {
+    form_set_error('webform_goals_quick_goal_minimum', t('Minimum number of submissions must be a number.'));
+  }
+  // Missing goal target but other settings are present.
+  if (empty($form_state['values']['webform_goals_quick_goal_target']) && (!empty($form_state['values']['webform_goals_quick_goal_minimum']) || !empty($form_state['values']['webform_goals_quick_starter_message']))) {
+    form_set_error('webform_goals_quick_goal_target', t('Please include number of signatures required to meet this goal.'));
+  }
+  // Display minimum is larger than the target.
+  if (!empty($form_state['values']['webform_goals_quick_goal_target']) && !empty($form_state['values']['webform_goals_quick_goal_minimum'])) {
+    if ($form_state['values']['webform_goals_quick_goal_target'] <= $form_state['values']['webform_goals_quick_goal_minimum']) {
+      form_set_error('webform_goals_quick_goal_minimum', t('The display minimum supplied would prevent goal progress from ever being displayed. Please supply a value that is less than the target number of submissions.'));
+    }
+  }
+}
+
+/**
+ * Save quick goal settings.
+ *
+ * @param object $node
+ *    The node object.
+ */
+function webform_goals_quick_goal_save_submit($node) {
+  if (!empty($node->webform_goals_quick_goal_target)) {
+    $settings = array(
+      'gid' => isset($node->webform_goals_quick_goal_id) ? $node->webform_goals_quick_goal_id : '',
+      'name' => 'Quick goal for node ' . $node->nid,
+      'context' => 'single',
+      'metric' => 'submission_count',
+      'extra' => array('selected_form_id' => $node->nid),
+      'display_threshold' => $node->webform_goals_quick_goal_minimum,
+      'seed' => 0,
+      'target_value' => $node->webform_goals_quick_goal_target,
+      'starter_message' => $node->webform_goals_quick_starter_message,
+      'starter_message_format' => 'filtered_html',
+      'start_date' => 0,
+      'end_date' => 0,
+      'template' => '[goal:progress-starter]<p>The current goal is'
+        . ' [goal:target]. We have [goal:total] thus far. That’s nearly '
+        . '[goal:progress-percent]% of our goal! Thanks for your support.</p>',
+      // We may need configurable global defaults here.
+      'template_format' => 'full_html',
+      'progress_bar' => 'flat_ui',
+    );
+    $goal = $settings['gid'] ? webform_goals_goal_update($settings) : webform_goals_goal_create($settings);
+    $goal_settings = variable_get('', array());
+    $goal_settings[$node->nid] = $goal['gid'];
+    variable_set('webform_goals_quick_goal_settings', $goal_settings);
+  }
+  elseif (!empty($node->webform_goals_quick_goal_id)) {
+    // Node updated with no goal target, delete goal if exists.
+    webform_goals_quick_goal_delete($node);
+  }
+}
+
+/**
+ * Delete goal settings.
+ *
+ * @param object $node
+ *    The node object.
+ */
+function webform_goals_quick_goal_delete($node) {
+  $goal_config = variable_get('webform_goals_quick_goal_settings', array());
+  $gid = isset($goal_config[$node->nid]) ? $goal_config[$node->nid] : FALSE;
+  if ($gid) {
+    unset($goal_config[$node->nid]);
+    variable_set('webform_goals_quick_goal_settings', $goal_config);
+    webform_goals_goal_delete($gid);
+  }
+}
+
+
+/**
+ * Determines if a content type can have goals.
+ *
+ * @param string $type
+ *   The content type name.
+ *
+ * @return bool
+ *   TRUE if the content type is a goal type.
+ */
+function webform_goals_is_goal_type($type) {
+  static $goal_types;
+  if (!isset($goal_types[$type])) {
+    $goal_types = variable_get('webform_node_types', array());
+  }
+  if (in_array($type, $goal_types)) {
+    return $type;
+  }
+  else {
+    return FALSE;
+  }
+}
+
+/**
+ * @param $node
+ */
+function webform_goals_node_insert($node) {
+  if (webform_goals_is_goal_type($node->type)) {
+    webform_goals_quick_goal_save_submit($node);
+  }
+}
+
+/**
+ * Implements hook_node_update().
+ *
+ * Update the quick goal.
+ */
+function webform_goals_node_update($node) {
+  if (webform_goals_is_goal_type($node->type)) {
+    webform_goals_quick_goal_save_submit($node);
+  }
+}
+
+/**
+ * Implements hook_node_delete().
+ *
+ * Delete a quick goal when node is deleted.
+ */
+function webform_goals_node_delete($node) {
+  if (webform_goals_is_goal_type($node->type)) {
+    webform_goals_quick_goal_delete($node);
+  }
+}

@@ -239,34 +239,9 @@ function springboard_advocacy_node_insert($node) {
     );
     drupal_write_record('sba_form_id', $uuid);
   }
-
-  if (springboard_advocacy_is_goal_type($node->type) && module_exists('webform_goals')) {
-    module_load_include('inc', 'springboard_advocacy', 'includes/springboard_advocacy.goals');
-    springboard_advocacy_goal_save_submit($node);
-  }
 }
 
-/**
- * Implements hook_node_update().
- */
-function springboard_advocacy_node_update($node) {
-  if (springboard_advocacy_is_goal_type($node->type) && module_exists('webform_goals')) {
-    module_load_include('inc', 'springboard_advocacy', 'includes/springboard_advocacy.goals');
-    springboard_advocacy_goal_save_submit($node);
-  }
-}
 
-/**
- * Implements hook_node_delete().
- *
- * Insert a copy of the default map when a Fundraiser node is created.
- */
-function springboard_advocacy_node_delete($node) {
-  if (springboard_advocacy_is_goal_type($node->type) && module_exists('webform_goals')) {
-    module_load_include('inc', 'springboard_advocacy', 'includes/springboard_advocacy.goals');
-    springboard_advocacy_goal_delete($node);
-  }
-}
 
 /**
  * Implements hook_node_load().
@@ -395,29 +370,6 @@ function springboard_advocacy_is_action_type($type) {
 }
 
 /**
- * Determines if a content type can have goals.
- *
- * @param string $type
- *   The content type name.
- *
- * @return bool
- *   TRUE if the content type is a goal type.
- */
-function springboard_advocacy_is_goal_type($type) {
-  static $goal_types;
-  if (!isset($goal_types[$type])) {
-    $goal_types = variable_get('springboard_advocacy_goal_types', array());
-  }
-  if (in_array($type, $goal_types)) {
-    return $type;
-  }
-  else {
-    return FALSE;
-  }
-}
-
-
-/**
  * Implements hook_preprocess_block_admin_display_form().
  *
  * Remove advocacy views blocks from the block admin page list.
@@ -501,15 +453,6 @@ function springboard_advocacy_api_vars() {
   );
 }
 
-/**
- * Implements hook_form_FORM_ID_alter().
- */
-function springboard_advocacy_form_node_form_alter(&$form, &$form_state) {
-  if (springboard_advocacy_is_goal_type($form['#node']->type) && module_exists('webform_goals')) {
-    form_load_include($form_state, 'inc', 'springboard_advocacy', 'includes/springboard_advocacy.goals');
-    springboard_advocacy_goals_form($form, $form_state);
-  }
-}
 
 /**
  * Static wrapper for API requests.
