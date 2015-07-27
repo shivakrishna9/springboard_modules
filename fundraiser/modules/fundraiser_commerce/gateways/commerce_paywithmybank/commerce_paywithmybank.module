@@ -1,0 +1,36 @@
+<?php
+
+/**
+ * Implements hook_commerce_payment_method_info().
+ */
+function commerce_paywithmybank_commerce_payment_method_info() {
+  
+}
+
+/**
+ * Payment method callback: settings form.
+ */
+function commerce_paywithmybank_credit_card_settings_form($settings = NULL) {
+  
+}
+
+/**
+ * Payment method callback: checkout form.
+ */
+function commerce_paywithmybank_credit_card_submit_form($payment_method, $pane_values, $checkout_pane, $order) {
+  
+}
+
+/**
+ * Payment method callback: checkout form validation.
+ */
+function commerce_paywithmybank_credit_card_submit_form_validate($payment_method, $pane_form, $pane_values, $order, $form_parents = array()) {
+  
+}
+
+/**
+ * Payment method callback: checkout form submission.
+ */
+function commerce_paywithmybank_credit_card_submit_form_submit($payment_method, $pane_form, $pane_values, $order, $charge) {
+  
+}

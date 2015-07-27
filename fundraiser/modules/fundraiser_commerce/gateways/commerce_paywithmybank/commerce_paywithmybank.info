@@ -1,0 +1,8 @@
+name = Commerce PayWithMyBank
+description = Implements Commerce PayWithMyBank payment services for use with Drupal Commerce.
+package = Commerce (contrib)
+
+dependencies[] = commerce
+dependencies[] = commerce_payment
+
+core = 7.x
