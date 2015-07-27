@@ -1,8 +1,9 @@
 <?php
 
 /**
- * Add the legislator lookup failure confirmation form.
+ * Add a "failure message" textarea to confirmation form admin page.
  *
+ * If there are no deliverable messages, this message will be used.
  * Called from sba_message_action_form_webform_configure_form_alter().
  *
  * @param $form
@@ -86,7 +87,7 @@ function sba_message_action_confirmation(&$form, &$form_state) {
  * Some onerous form manipulations.
  *
  * In order to get the webform confirmation failure
- * message form to display nicely.
+ * message form to display nicely in the admin form.
  *
  * @param $element
  *   The form.
@@ -122,7 +123,7 @@ function sba_message_action_configure_form_after_build($element) {
  * @return mixed
  */
 function sba_message_action_form_webform_configure_callback($form, $form_state) {
-  form_load_include($form_state, 'inc', 'sba_message_action', 'includes/sba_message_action.confirmations');
+ // form_load_include($form_state, 'inc', 'sba_message_action', 'includes/sba_message_action.confirmations');
   return $form['submission']['confirmation_fail'];
 }
 
