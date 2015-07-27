@@ -25,7 +25,20 @@ function commerce_paywithmybank_commerce_payment_method_info() {
  * Payment method callback: settings form.
  */
 function commerce_paywithmybank_bank_settings_form($settings = NULL) {
-  
+  $form = array();
+  $form['commerce_paywithmybank_settings_access_id'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Access ID'),
+    '#default_value' => isset($settings['commerce_paywithmybank_settings_access_id']) ? $settings['commerce_paywithmybank_settings_access_id'] : '',
+  );
+
+  $form['commerce_paywithmybank_settings_access_key'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Access Key'),
+    '#default_value' => isset($settings['commerce_paywithmybank_settings_access_key']) ? $settings['commerce_paywithmybank_settings_access_key'] : '',
+  );
+
+  return $form;
 }
 
 /**
