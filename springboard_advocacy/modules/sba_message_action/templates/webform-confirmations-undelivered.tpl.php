@@ -24,14 +24,11 @@
  *
  */
 /**
- * Styles and javascript are included in the template so that they are
+ * Javscript is included in the template so that it is
  * available when the confirmation is displayed on a redirect as well as
  * the default confirmation page.
  */
 ?>
-<style>
-
-</style>
 <div id="sba-undeliverable-messages-container">
   <h3><?php print $undeliverable_title ?></h3>
   <p><?php print $message_count_text ?></p>

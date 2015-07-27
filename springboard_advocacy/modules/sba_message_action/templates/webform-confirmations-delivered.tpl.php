@@ -18,8 +18,7 @@
  * - $contact The full user contact array
  *
  * @see template_preprocess()
- * @see sba_message_action_preprocess_webform_confirmations_undelivered()
- *
+ * @see sba_message_action_preprocess_webform_confirmations_delivered()
  */
 ?>
 
