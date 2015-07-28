@@ -30,7 +30,6 @@ function sba_message_action_additional_elements(&$form, &$form_state) {
     $form['#theme_wrappers'][] = array('message_action_form_layout_form');
   }
 
-
   // Attach the JS and CSS.
   $form['#attached']['js'][] = drupal_get_path('module', 'sba_message_action')
     . '/js/sba_message_action.js';
@@ -86,7 +85,7 @@ function sba_message_action_additional_elements(&$form, &$form_state) {
   }
 
   $form['#validate'][] = 'sba_message_action_form_validate';
-  array_unshift($form['#submit'], 'sba_message_action_form_submit');
+  $form['#submit'][] = 'sba_message_action_form_submit';
 }
 
 /**

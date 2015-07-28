@@ -281,6 +281,12 @@ function sba_message_action_node_load($nodes, $types) {
   }
 }
 
+function sba_message_action_process_page(&$vars) {
+  if (isset($_GET['sid'])) {
+    drupal_add_css(drupal_get_path('module', 'sba_message_action') . '/css/message-confirmation.css', array('group' => CSS_DEFAULT));
+  }
+}
+
 /**
  * Implements hook_preprocess_node().
  *
@@ -290,10 +296,6 @@ function sba_message_action_node_load($nodes, $types) {
  * Insert webform goals widget.
  */
 function sba_message_action_preprocess_node(&$vars) {
-
-  if (isset($_GET['sid'])) {
-    drupal_add_css(drupal_get_path('module', 'sba_message_action') . '/css/message-confirmation.css', array('group' => CSS_DEFAULT));
-  }
 
   if ($vars['node']->type == 'sba_message_action') {
     // Add theme wrappers for non-form-layout layouts.
@@ -697,18 +699,16 @@ function sba_message_action_log_opt_in($nid, $uid, $opt_in, $sid) {
   drupal_write_record('springboard_action_opt_in', $record);
 }
 
-/**
- * Implements hook_webform_submission_update().
- */
-function sba_message_action_webform_submission_update($node, $submission) {
+function sba_message_action_webform_submission_insert($node, $submission) {
   $opt_in = db_query('SELECT * FROM {webform_component} ' .
     'WHERE nid = :nid ' .
     'AND form_key = :form_key',
     array(':nid' => $node->nid, ':form_key' => 'sbp_sba_action_optin'))->fetchObject();
-  if (!empty($submission->data[$opt_in->cid]['value'])) {
+  if (!empty($submission->data[$opt_in->cid]['value'][0])) {
     $sid = $submission->sid;
     $result = db_query('SELECT uid FROM {webform_submissions} WHERE sid = :sid', array(':sid' => $sid));
     $uid =  $result->fetchField();
+
     sba_message_action_log_opt_in($node->nid, $uid, TRUE, $sid);
   }
 }

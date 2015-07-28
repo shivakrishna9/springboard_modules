@@ -15,7 +15,7 @@
  */
 function sba_message_action_send_message(array $user_message, array $form_state) {
   $values = $form_state['values'];
-  $webform_values = $values['submitted'];
+  $webform_values = $values['submitted_tree'];
   $zip = '';
   $response = '';
 
