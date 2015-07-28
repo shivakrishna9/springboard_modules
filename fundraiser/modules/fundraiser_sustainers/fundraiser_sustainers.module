@@ -16,6 +16,10 @@ define('FUNDRAISER_SUSTAINERS_RETRY_STATUS', 'retry');
 define('FUNDRAISER_SUSTAINERS_FAILED_STATUS', 'failed');
 define('FUNDRAISER_SUSTAINERS_SUCCESS_STATUS', 'success');
 
+define('FUNDRAISER_SUSTAINERS_SKIPPED_STATUS', 'skipped');
+define('FUNDRAISER_SUSTAINERS_CANCELED_STATUS', 'canceled');
+define('FUNDRAISER_SUSTAINERS_SCHEDULED_STATUS', 'scheduled');
+
 /**
  * Implements hook_cron().
  */
@@ -728,7 +732,13 @@ function fundraiser_sustainers_process_recurring_donations() {
 
   // Loop over the found orders
   foreach ($donations as $recurring) {
-    fundraiser_sustainers_process_single_recurring_donation($log, $recurring, $sustainer_key);
+    try {
+
+      fundraiser_sustainers_process_single_recurring_donation($log, $recurring, $sustainer_key);
+    }
+    catch (Exception $e) {
+      fundraiser_sustainers_processing_exception($e, $recurring);
+    }
 
   }
   if ($log['successes'] > 0 || $log['fails'] > 0) {
@@ -777,6 +787,7 @@ function fundraiser_sustainers_process_single_recurring_donation(&$log, $recurri
     // Since we already created the donation (and saved any CC info at that time).
     // All we need to do is process it and respond afterwards as needed.
     fundraiser_donation_process($donation);
+
     if (!isset($donation->result['message'])) {
       $donation->result['message'] = '';
     }
@@ -3174,6 +3185,90 @@ function fundraiser_sustainers_preprocess_html(&$vars) {
 
   if (arg(2) == 'reports' && arg(4) == 'insights' && arg(5) == 'this-month') {
     $vars['classes_array'][] = 'insights-this-month';
+  }
+
+}
+
+/**
+ * Log an exception during sustainer processing to watchdog.
+ *
+ * @param \Exception $e
+ *   The exception that was thrown.
+ * @param stdClass $sustainer
+ *   Part of the sustainer record for additional logging.
+ */
+function fundraiser_sustainers_processing_exception(Exception $e, $sustainer) {
+  $message = 'Exception thrown while processing a sustainer. Sustainer ID: %did. %type: !message in %function (line %line of %file).';
+  $variables = array('%did' => $sustainer->did);
+  watchdog_exception('fundraiser_sustainers', $e, $message, $variables);
+}
+
+/**
+ * Implements hook_action_info().
+ *
+ * Add the unlock sustainer action for VBO.
+ */
+function fundraiser_sustainers_action_info() {
+  return array(
+    'fundraiser_sustainers_unlock_sustainer_action' => array(
+      'type' => 'fundraiser_sustainer_record',
+      'label' => t('Unlock sustainer'),
+      'behavior' => array('changes_property'),
+      'configurable' => FALSE,
+      'vbo_configurable' => FALSE,
+      'triggers' => array('any'),
+      'permissions' => array('administrate recurring donations'),
+    ),
+  );
+}
+
+/**
+ * The unlock sustainer action.
+ *
+ * Note that I'm including all gateway_resp cases in case this action gets used
+ * in other situations besides the stuck sustainer VBO.
+ *
+ * Also note that drupal saves the sustainer record entity on its own so that's
+ * why it's not happening here.
+ *
+ * @param Entity $sustainer_record
+ *   The fundraiser_sustainer_record entity.
+ */
+function fundraiser_sustainers_unlock_sustainer_action(&$sustainer_record, $context) {
+  $replacements = array(
+    '%did' => $sustainer_record->did,
+    '%status' => $sustainer_record->gateway_resp,
+    );
+
+  $log = fundraiser_sustainers_log();
+
+  switch ($sustainer_record->gateway_resp) {
+    case FUNDRAISER_SUSTAINERS_PROCESSING_STATUS:
+      $sustainer_record->lock_id = 0;
+      $sustainer_record->gateway_resp = FUNDRAISER_SUSTAINERS_RETRY_STATUS;
+      $log->logUnlockedDonation($sustainer_record->did, $sustainer_record->gateway_resp);
+      drupal_set_message(t('Unlocked sustainer %did and changed its status from %status to Retry.', $replacements));
+      break;
+
+    case FUNDRAISER_SUSTAINERS_SCHEDULED_STATUS:
+      // Fall through.
+    case FUNDRAISER_SUSTAINERS_RETRY_STATUS:
+      $sustainer_record->lock_id = 0;
+      $log->logUnlockedDonation($sustainer_record->did);
+      drupal_set_message(t('Unlocked sustainer %did and left its status at %status', $replacements));
+      break;
+
+    case FUNDRAISER_SUSTAINERS_SUCCESS_STATUS:
+      // Fall through.
+    case FUNDRAISER_SUSTAINERS_FAILED_STATUS:
+      // Fall through.
+    case FUNDRAISER_SUSTAINERS_SKIPPED_STATUS:
+      // Fall through.
+    case FUNDRAISER_SUSTAINERS_CANCELED_STATUS:
+      // Fall through.
+    default:
+      drupal_set_message(t('Cannot unlock the sustainer %did because its status is %status', $replacements));
+      break;
   }
 
 }
