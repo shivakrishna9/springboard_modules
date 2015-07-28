@@ -49,7 +49,7 @@ class PayWithMyBank {
    * @see https://www.paywithmybank.com/beta/docs/api-ref.html#transactions
    */
   public function getTransaction($transactionId) {
-    return $this->call('transactions', array($transactionId));
+    return $this->call('transactions/{transactionId}', array('transactionId' => $transactionId));
   }
 
   /**
@@ -63,14 +63,14 @@ class PayWithMyBank {
     return $this->call('transactions');
   }
 
-  private function call($method, $arguments, $parameters = NULL) {
-    $url = $this->endpoint . '/' . $method;
-
-    if (!empty($arguments)) {
-      foreach ($arguments as $argument) {
-        $url .= '/' . $argument;
+  private function call($path, $tokens, $parameters = NULL) {
+    if (!empty($tokens)) {
+      foreach ($tokens as $key => $value) {
+        $path = str_replace('{' . $key . '}', $value, $url);
       }
     }
+
+    $url = $this->endpoint . '/' . $path;
   }
 
 }
