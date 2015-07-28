@@ -900,7 +900,7 @@ function fundraiser_commerce_fundraiser_donation_get_donation($donation) {
       $donation->donation['amount'] = number_format(commerce_currency_amount_to_decimal(
         $line_item_wrapper->commerce_unit_price->amount->value() * $line_item_wrapper->quantity->value(),
         $line_item_wrapper->commerce_unit_price->currency_code->value()
-      ), 2);
+      ), 2, '.', '');
       $donation->donation['currency'] = commerce_currency_load($line_item_wrapper->commerce_unit_price->currency_code->value());
     }
   }
