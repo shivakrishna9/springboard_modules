@@ -156,6 +156,7 @@ function sba_message_action_views_default_views() {
   $handler->display->display_options['cache']['output_lifespan'] = '60';
   $handler->display->display_options['cache']['output_lifespan_custom'] = '0';
   $handler->display->display_options['query']['type'] = 'views_query';
+  $handler->display->display_options['query']['options']['distinct'] = TRUE;
   $handler->display->display_options['exposed_form']['type'] = 'basic';
   $handler->display->display_options['pager']['type'] = 'some';
   $handler->display->display_options['pager']['options']['items_per_page'] = '5';
@@ -189,7 +190,7 @@ function sba_message_action_views_default_views() {
       'empty_column' => 0,
     ),
   );
-  /* Relationship: Springboard Message Actions: Signature opt-in user */
+  /* Relationship: Springboard Advocacy: Action opt-in user */
   $handler->display->display_options['relationships']['uid']['id'] = 'uid';
   $handler->display->display_options['relationships']['uid']['table'] = 'springboard_action_opt_in';
   $handler->display->display_options['relationships']['uid']['field'] = 'uid';
@@ -208,19 +209,26 @@ function sba_message_action_views_default_views() {
   $handler->display->display_options['fields']['sbp_last_name']['alter']['alter_text'] = TRUE;
   $handler->display->display_options['fields']['sbp_last_name']['alter']['text'] = '[sbp_first_name] [sbp_last_name]';
   $handler->display->display_options['fields']['sbp_last_name']['element_label_colon'] = FALSE;
-  /* Field: Springboard Message Actions: Signature opt-in submission creation time */
+  /* Field: User: State/Province */
+  $handler->display->display_options['fields']['sbp_state']['id'] = 'sbp_state';
+  $handler->display->display_options['fields']['sbp_state']['table'] = 'field_data_sbp_state';
+  $handler->display->display_options['fields']['sbp_state']['field'] = 'sbp_state';
+  $handler->display->display_options['fields']['sbp_state']['relationship'] = 'uid';
+  $handler->display->display_options['fields']['sbp_state']['label'] = '';
+  $handler->display->display_options['fields']['sbp_state']['element_label_colon'] = FALSE;
+  /* Field: Springboard Advocacy: Action opt-in submission creation time */
   $handler->display->display_options['fields']['created']['id'] = 'created';
   $handler->display->display_options['fields']['created']['table'] = 'springboard_action_opt_in';
   $handler->display->display_options['fields']['created']['field'] = 'created';
   $handler->display->display_options['fields']['created']['label'] = '';
   $handler->display->display_options['fields']['created']['element_label_colon'] = FALSE;
   $handler->display->display_options['fields']['created']['date_format'] = 'time ago';
-  /* Sort criterion: Springboard Message Actions: Signature opt-in submission creation time */
+  /* Sort criterion: Springboard Advocacy: Action opt-in submission creation time */
   $handler->display->display_options['sorts']['created']['id'] = 'created';
   $handler->display->display_options['sorts']['created']['table'] = 'springboard_action_opt_in';
   $handler->display->display_options['sorts']['created']['field'] = 'created';
   $handler->display->display_options['sorts']['created']['order'] = 'DESC';
-  /* Contextual filter: Springboard Message Actions: Message Action node */
+  /* Contextual filter: Springboard Advocacy: Message Action node */
   $handler->display->display_options['arguments']['nid']['id'] = 'nid';
   $handler->display->display_options['arguments']['nid']['table'] = 'springboard_action_opt_in';
   $handler->display->display_options['arguments']['nid']['field'] = 'nid';
@@ -230,14 +238,16 @@ function sba_message_action_views_default_views() {
   $handler->display->display_options['arguments']['nid']['summary']['number_of_records'] = '0';
   $handler->display->display_options['arguments']['nid']['summary']['format'] = 'default_summary';
   $handler->display->display_options['arguments']['nid']['summary_options']['items_per_page'] = '25';
-  /* Filter criterion: Springboard Message Actions: Message Action signature opt-in */
+  /* Filter criterion: Springboard Advocacy: Message Action signature opt-in */
   $handler->display->display_options['filters']['opt_in']['id'] = 'opt_in';
   $handler->display->display_options['filters']['opt_in']['table'] = 'springboard_action_opt_in';
   $handler->display->display_options['filters']['opt_in']['field'] = 'opt_in';
+  $handler->display->display_options['filters']['opt_in']['relationship'] = 'uid';
   $handler->display->display_options['filters']['opt_in']['value'] = '1';
 
   /* Display: Block */
   $handler = $view->new_display('block', 'Block', 'block');
+
 
   $views[$view->name] = $view;
 
