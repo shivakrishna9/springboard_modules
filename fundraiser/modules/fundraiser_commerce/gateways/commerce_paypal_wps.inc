@@ -12,6 +12,7 @@ function commerce_paypal_wps_fundraiser_commerce_fundraiser_gateway_info() {
   return array(
     'payment_method' => array('paypal'),
     'offsite_processing' => array('paypal'),
+    'allow_refund' => array('paypal'),
     'form callback' => 'commerce_paypal_wps_fundraiser_commerce_form',
     'redirect callback' => 'commerce_paypal_wps_fundraiser_commerce_redirect',
     'scrub callback' => 'commerce_paypal_wps_fundraiser_commerce_scrub',
@@ -142,5 +143,69 @@ function commerce_paypal_wps_fundraiser_commerce_redirect_submit($method_instanc
  * needed to enable completion of  _fundraiser_commerce_ipn_refund()
  */
 function commerce_paypal_wps_fundraiser_commerce_refund($payment_method, $refund) {
-  return TRUE;
+  $order = commerce_order_load($refund->did);
+  $amount =  $refund->amount;
+  $default_amount = $refund->donation->amount;
+
+  // Because the IPN request sent in synchronous to this form needs to load the
+  // order at the same time we are obliged to release the lock to avoid a
+  // timeout error.
+  entity_get_controller('commerce_order')->resetCache(array($order->order_id));
+
+  $nvp = array(
+    'METHOD' => 'RefundTransaction',
+    'TRANSACTIONID' => $refund->donation->data['remote_id'],
+    'AMT' => $amount,
+    'REFUNDTYPE' => $default_amount - $amount ? 'Partial' : 'Full',
+  );
+
+  // Submit the capture request request to PayPal.
+  $response = commerce_paypal_api_request($payment_method, $nvp, $order);
+  if ($response['ACK'] == "Success") {
+    return TRUE;
+  }
+}
+
+/*
+ *  Implements hook_form_alter().
+ *
+ */
+function commerce_paypal_wps_form_rules_ui_edit_element_alter(&$form, &$form_state) {
+  // Adds needed refund field elements to PayPal settings form.
+  if (isset($form['parameter']['payment_method']['settings']['payment_method']['method_id']['#value'])) {
+    $id = $form['parameter']['payment_method']['settings']['payment_method']['method_id']['#value'];
+    $is_com = isset($form['parameter']['commerce_order']) ? 1 : 0;
+    if ($id == 'paypal_wps' && $is_com) {
+      $rule = rules_config_load(arg(5));  //@TODO: is there a better way to get the rule name?
+      $actions = $rule->actions();
+      if (!empty($actions)) {
+        // Find the settings for the Authorize.net gateway action.
+        foreach ($actions as $action) {
+          if($action->settings['payment_method']['method_id'] == 'paypal_wps' && $action->elementId() == arg(7)) {  //@TODO: is there a better way to get the action ID?
+            $settings[] = $action->settings;
+          }
+        }
+        $config = isset($settings[0]['payment_method']['settings']) ? $settings[0]['payment_method']['settings'] : '';
+
+        $form['parameter']['payment_method']['settings']['payment_method']['settings']['api_username'] = array(
+          '#type' => 'textfield',
+          '#title' => t('API username'),
+          '#description' => t('These credentials are only needed for initiating PayPal WPS refunds through Springboard.'),
+          '#default_value' => !empty($config['api_username']) ? $config['api_username'] : '',
+        );
+        $form['parameter']['payment_method']['settings']['payment_method']['settings']['api_password'] = array(
+          '#type' => 'textfield',
+          '#title' => t('API password'),
+          '#description' => t('These credentials are only needed for initiating PayPal WPS refunds through Springboard.'),
+          '#default_value' => !empty($config['api_password']) ? $config['api_password'] : '',
+        );
+        $form['parameter']['payment_method']['settings']['payment_method']['settings']['api_signature'] = array(
+          '#type' => 'textfield',
+          '#title' => t('Signature'),
+          '#description' => t('These credentials are only needed for initiating PayPal WPS refunds through Springboard.'),
+          '#default_value' => !empty($config['api_signature']) ? $config['api_signature'] : '',
+        );
+      }
+    }
+  }
 }
