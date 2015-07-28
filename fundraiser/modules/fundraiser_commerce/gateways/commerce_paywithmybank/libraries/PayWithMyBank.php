@@ -3,6 +3,9 @@
 /**
  * Library for the PayWithMyBank REST API.
  */
+
+namespace PayWithMyBank;
+
 class PayWithMyBank {
 
   /**
