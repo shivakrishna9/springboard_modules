@@ -63,6 +63,31 @@ class PayWithMyBank {
     return $this->call('transactions');
   }
 
+  /**
+   * Collects money from the bank account of a previously authorized deferred
+   * or recurring payment.
+   *
+   * @param string $transactionId
+   *   The ID of the authorizing transaction.
+   * @param string $merchantReference
+   *   The initial merchant reference value sent to establish the payment.
+   * @param string $amount
+   *   The amount of money to collect.
+   *
+   * @return object
+   *   The transaction object.
+   * @see https://www.paywithmybank.com/beta/docs/api-ref.html#transactions
+   */
+  public function captureTransaction($transactionId, $merchantReference, $amount) {
+    $tokens = array('transactionId' => $transactionId);
+    $parameters = array(
+      'merchantReference' => $merchantReference,
+      'amount' => $amount,
+    );
+
+    return $this->call('transactions/{transactionId}/capture', $tokens, $parameters);
+  }
+
   private function call($path, $tokens, $parameters = NULL) {
     if (!empty($tokens)) {
       foreach ($tokens as $key => $value) {
