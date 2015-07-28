@@ -15,12 +15,26 @@ class PayWithMyBank {
   );
 
   /**
-   * @var array $endpoints
-   *   API endpoints indexed by environment type.
+   * @var string $endpoint
+   *   The API endpoint to call.
    */
   private $endpoint = '';
 
-  public function __construct($sandbox = FALSE) {
+  /**
+   * @var string $accessId
+   *   The API access ID to authenticate with.
+   */
+  private $accessId = '';
+
+  /**
+   * @var string $accessKey
+   *   The API access key to authenticate with.
+   */
+  private $accessKey = '';
+
+  public function __construct($accessId, $accessKey, $sandbox = FALSE) {
+    $this->accessId = $accessId;
+    $this->accessKey = $accessKey;
     $this->endpoint = ($sandbox) ? $this->endpoints['sandbox'] : $this->endpoints['production'];
   }
 
