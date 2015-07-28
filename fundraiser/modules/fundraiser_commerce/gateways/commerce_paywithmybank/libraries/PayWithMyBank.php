@@ -71,6 +71,23 @@ class PayWithMyBank {
     }
 
     $url = $this->endpoint . '/' . $path;
+
+    $ch = curl_init($url);
+    curl_setopt($ch, CURLOPT_POST, 1);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
+
+    if (!empty($parameters)) {
+      $post_fields = '';
+      foreach ($parameters as $key => $value) {
+        $post_fields .= $key . '=' . $value . '&';
+      }
+      curl_setopt($ch, CURLOPT_POSTFIELDS, $post_fields);
+    }
+
+    $response = curl_exec($ch);
+    curl_close($ch);
+
+    return $response;
   }
 
 }
