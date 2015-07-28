@@ -1352,7 +1352,7 @@ function fundraiser_webform_form_webform_configure_form_alter(&$form, &$form_sta
     }
     $form['advanced']['sitewide_submit'] = array(
       '#type' => 'checkbox',
-      '#title' => t('Use sitewide submit button deafult.'),
+      '#title' => t('Use sitewide submit button default.'),
       '#description' => t('If checked, the sitewide default submit button language will be used, rather than the payment method configured submit button language
        (if any). Either can be overridden below.'),
       '#default_value' => isset($sitewide_submit) ? $sitewide_submit : FALSE,

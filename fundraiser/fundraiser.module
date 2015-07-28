@@ -1578,6 +1578,8 @@ function _fundraiser_donation_form_js_validation_config($node) {
  */
 function fundraiser_donation_form(&$form, &$form_state) {
   $node = $form['#node'];
+  // Load any custom configuration options.
+  $config = db_query('SELECT * FROM {fundraiser_webform_messages} f WHERE f.nid = :nid', array(':nid' => $form['#node']->nid))->fetchAssoc();
 
   // Attach the js files.
   $form['#attached']['js'] = array(
@@ -1668,6 +1670,33 @@ function fundraiser_donation_form(&$form, &$form_state) {
       }
     }
     $form = _fundraiser_update_form_field($form, 'amount', $amount);
+
+    // Change submit button text based on webform configuration and payment method
+    // submit button setting (if any).
+    if (empty($config['sitewide_submit']) && empty($form['#node']->webform['submit_text'])) {
+      // Change submit button text to payment gateway default, when only one gateway available.
+      // @todo: Change this dynamically using js when more than one gateway?
+      $enabled = 0;
+      foreach ($node->gateways as $gateway) {
+        if (!empty($gateway['status']) && $gateway['status'] == 1) {
+          $enabled++;
+          $active_gateway = $gateway;
+        }
+      }
+      if ($enabled == 1) {
+        $gateway_rule_name = substr($active_gateway['id'], strpos($active_gateway['id'], "|") + 1); //@TODO: is there a better way to get the rule name?
+        $rule = rules_config_load($gateway_rule_name);
+        $actions = $rule->actions();
+        foreach ($actions as $action) {
+          $settings[] = $action->settings;
+        }
+        $gateway_config = isset($settings[0]['payment_method']['settings']) ? $settings[0]['payment_method']['settings'] : '';
+        if (!empty($gateway_config['submit_text'])) {
+          $form['actions']['submit']['#value'] = $gateway_config['submit_text'];
+        }
+      }
+    }
+
 
     // Call hook to allow sub modules to add / manipulate the form.
     // NOTE: we are not using module_invoke_all on purpose here.
