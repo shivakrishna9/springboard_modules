@@ -2181,6 +2181,13 @@ class FundraiserCommerceUIPaymentSettings extends RulesDataUI implements RulesDa
           '#default_value' => isset($settings['payment_method']['settings']['offsite_recurring']) ? $settings['payment_method']['settings']['offsite_recurring'] : FALSE,
         );
       }
+      //Make sitewide submit button text customizable for each payment method.
+      $form[$name]['settings']['submit_text'] = array(
+        '#type' => 'textfield',
+        '#title' => t('Submit button text'),
+        '#description' => t('Overrides sitewide submit button text. Must be enabled under \'Confirmation page & settings\' tab on individual webforms.'),
+        '#default_value' => !empty($settings['payment_method']['settings']['submit_text']) ? $settings['payment_method']['settings']['submit_text'] : '',
+      );
     }
     else {
       $form[$name]['invalid']['#markup'] = t('Invalid or missing payment method.');
@@ -2547,15 +2554,6 @@ function fundraiser_commerce_form_rules_ui_edit_element_alter(&$form, &$form_sta
       : '';
     $method = commerce_payment_method_instance_load($method_id . '|commerce_payment_' . $method_id);
     $form_state['storage']['old_settings_assoc'] = isset($method['settings']) ? $method['settings'] : FALSE;
-
-    //Make sitewide submit button text customizable for each payment method.
-    $form['parameter']['payment_method']['settings']['payment_method']['settings']['submit_text'] = array(
-      '#type' => 'textfield',
-      '#title' => t('Submit button text'),
-      '#description' => t('Overrides sitewide submit button text. Must be enabled under \'Confirmation page & settings\' tab on individual webforms.'),
-      '#default_value' => !empty($method['settings']['submit_text']) ? $method['settings']['submit_text'] : '',
-    );
-
 
     $form['#submit'][] = 'fundraiser_commerce_gateway_log_gateway_settings_changes';
     $form['#attached']['js'][]= drupal_get_path('module', 'fundraiser_commerce') . '/js//gateway.js';
