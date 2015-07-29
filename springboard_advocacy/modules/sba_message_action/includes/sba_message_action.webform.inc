@@ -368,6 +368,7 @@ function sba_message_action_preprocess_webform_confirmations_undelivered(&$vars)
   $vars['target_count'] = $target_count;
   $vars['message_count_text'] = $count_output;
   $vars['show_message_text'] = t('Show message');
+  $vars['messages_out'] = array();
   foreach ($messages_out as $key => $message) {
     foreach($message as $recipient) {
       $vars['messages_out'][] = $recipient;
