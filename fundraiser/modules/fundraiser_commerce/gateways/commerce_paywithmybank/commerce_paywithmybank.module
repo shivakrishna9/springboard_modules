@@ -47,12 +47,14 @@ function commerce_paywithmybank_bank_settings_form($settings = NULL) {
   $form['commerce_paywithmybank_settings_access_id'] = array(
     '#type' => 'textfield',
     '#title' => t('Access ID'),
+    '#required' => TRUE,
     '#default_value' => isset($settings['commerce_paywithmybank_settings_access_id']) ? $settings['commerce_paywithmybank_settings_access_id'] : '',
   );
 
   $form['commerce_paywithmybank_settings_access_key'] = array(
     '#type' => 'textfield',
     '#title' => t('Access Key'),
+    '#required' => TRUE,
     '#default_value' => isset($settings['commerce_paywithmybank_settings_access_key']) ? $settings['commerce_paywithmybank_settings_access_key'] : '',
   );
 
