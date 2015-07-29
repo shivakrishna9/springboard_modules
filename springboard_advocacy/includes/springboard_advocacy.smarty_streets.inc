@@ -17,7 +17,6 @@
  *   An array of smarty streets data derived from the address.
  */
 function springboard_advocacy_smarty_lookup(array $values) {
-
   $query = array(
     'street' => $values['sbp_address'],
     'city' => $values['sbp_city'],

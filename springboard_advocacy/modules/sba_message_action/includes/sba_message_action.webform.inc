@@ -13,8 +13,9 @@
  * @param array $form_state
  *   The submitted form state.
  */
-function sba_message_action_send_message(array $user_message, array $form_state, $webform_values) {
+function sba_message_action_send_message(array $user_message, array $form_state) {
   $values = $form_state['values'];
+  $webform_values = $values['webform_flat'];
   $zip = '';
   $response = '';
   // Unset the recipients from any prior submissions.

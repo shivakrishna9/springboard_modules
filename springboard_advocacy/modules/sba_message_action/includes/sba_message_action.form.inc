@@ -51,6 +51,11 @@ function sba_message_action_additional_elements(&$form, &$form_state) {
     '#value' => '',
   );
 
+  $form['webform_flat'] = array(
+    '#type' => 'value',
+    '#value' => array(),
+  );
+
   // Create a container on the form for all messages.
   $form['sba_messages'] = array(
     '#type' => 'container',
@@ -258,7 +263,6 @@ function sba_message_action_message_form(&$form, $message, $multiple) {
       '#markup' => check_markup($sig, 'plain_text'),
     );
   }
-
 }
 
 
@@ -306,7 +310,9 @@ function sba_message_action_form_validate($form, &$form_state) {
     }
   }
   form_load_include($form_state, 'inc', 'springboard_advocacy', 'includes/springboard_advocacy.smarty_streets');
-  $smarty_geo = springboard_advocacy_smarty_lookup($form_state['values']['submitted']);
+  $webform_values_flat = _springboard_advocacy_webform_submission_flatten($form['#node']->nid, $form_state['values']['submitted']);
+  form_set_value($form['webform_flat'], $webform_values_flat, $form_state);
+  $smarty_geo = springboard_advocacy_smarty_lookup($webform_values_flat);
   if (!empty($smarty_geo) && is_array($smarty_geo)) {
     form_set_value($form['smarty_geo'], $smarty_geo, $form_state);
     if (isset($smarty_geo['zip']) && isset($smarty_geo['plus4'])) {
@@ -333,7 +339,6 @@ function sba_message_action_form_submit($form, &$form_state) {
   $_SESSION['undelivered_messages'] = array();
   // Create array of messages to submit for target resolution.
   if (isset($form_state['values']['sba_messages'])) {
-    $webform_values = _springboard_advocacy_webform_submission_flatten($form['#node']->nid, $form_state['values']['submitted']);
     $messages = array();
     foreach ($form_state['values']['sba_messages']['message'] as $id => $message) {
       $edited_body = isset($message['edited_body']) ? $message['edited_body'] : '';
@@ -341,7 +346,7 @@ function sba_message_action_form_submit($form, &$form_state) {
       $messages[$id]['subject'] = $message['subject'];
     }
     form_load_include($form_state, 'inc', 'sba_message_action', 'includes/sba_message_action.webform');
-    $data = sba_message_action_send_message($messages, $form_state, $webform_values);
+    $data = sba_message_action_send_message($messages, $form_state);
     // Calculate the deliverable count for sending to salesforce
     if (!empty($data->messages)) {
       $deliverable = 0;
