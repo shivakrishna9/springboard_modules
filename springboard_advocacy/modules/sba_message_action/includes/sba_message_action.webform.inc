@@ -13,12 +13,10 @@
  * @param array $form_state
  *   The submitted form state.
  */
-function sba_message_action_send_message(array $user_message, array $form_state) {
+function sba_message_action_send_message(array $user_message, array $form_state, $webform_values) {
   $values = $form_state['values'];
-  $webform_values = $values['submitted_tree'];
   $zip = '';
   $response = '';
-
   // Unset the recipients from any prior submissions.
   if (isset($_SESSION['message_recipients'])) {
     unset($_SESSION['message_recipients']);
@@ -437,8 +435,6 @@ function sba_message_action_get_message_statuses($response) {
 
   return array('success' => $message_success, 'hold' => $message_hold);
 }
-
-
 
 /**
  * Creates an array of recipients for each message.

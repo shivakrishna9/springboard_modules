@@ -465,3 +465,30 @@ function springboard_advocacy_api_call() {
   }
   return $apiCall;
 }
+
+function _springboard_advocacy_webform_get_components_by_nid($nid) {
+  return db_query('SELECT * FROM {webform_component} ' .
+    'WHERE nid = :nid',
+    array(':nid' => $nid))->fetchAll();
+}
+
+function _springboard_advocacy_webform_submission_flatten($nid, $submit_tree, $submission_keys = NULL, $fieldset_keys = NULL) {
+  if ($submission_keys == NULL) {
+    $components = _springboard_advocacy_webform_get_components_by_nid($nid);
+    foreach ($components as $component) {
+      if ($component->type != 'fieldset') {
+        $submission_keys[] = $component->form_key;
+      }
+    }
+  }
+  $flat_array = array();
+  foreach ($submit_tree as $key => $value) {
+    $flat_array[$key] = $value;
+    if (is_array($value)) {
+      $flat_array = array_merge($flat_array, _springboard_advocacy_webform_submission_flatten($nid, $value, $submission_keys, $fieldset_keys));
+    }
+  }
+  // Filter to only submission key results.
+  $flat_array = array_intersect_key($flat_array, array_combine($submission_keys, $submission_keys));
+  return $flat_array;
+}

@@ -105,7 +105,7 @@ function springboard_petition_form_alter(&$form, $form_state, $form_id) {
  * Submit callback for petition webforms, tracks user opt-in.
  */
 function springboard_petition_petition_submit($form, $form_state) {
-  $submission_fields = _fundraiser_webform_submission_flatten($form['#node']->nid, $form_state['values']['submitted_tree']);
+  $submission_fields = _springboard_advocacy_webform_submission_flatten($form['#node']->nid, $form_state['values']['submitted_tree']);
   $opt_in = count($submission_fields['sbp_rps_optin']) ? TRUE : FALSE;
   $uid = _springboard_petition_get_uid_from_sid($form_state['values']['details']['sid']);
   if ($opt_in) {

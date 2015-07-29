@@ -85,7 +85,7 @@ function sba_message_action_additional_elements(&$form, &$form_state) {
   }
 
   $form['#validate'][] = 'sba_message_action_form_validate';
-  $form['#submit'][] = 'sba_message_action_form_submit';
+  array_unshift($form['#submit'], 'sba_message_action_form_submit');
 }
 
 /**
@@ -300,7 +300,6 @@ function sba_message_action_form_validate($form, &$form_state) {
     else {
       $changed = TRUE;
     }
-
     // Set user_edited_flag
     if ($changed && isset($form['submitted']['sba_user_edit_flag'])) {
       form_set_value($form['submitted']['sba_user_edit_flag'], 1, $form_state);
@@ -329,19 +328,20 @@ function sba_message_action_form_validate($form, &$form_state) {
  * @param $form_state
  */
 function sba_message_action_form_submit($form, &$form_state) {
+
   $_SESSION['delivered_messages'] = array();
   $_SESSION['undelivered_messages'] = array();
   // Create array of messages to submit for target resolution.
   if (isset($form_state['values']['sba_messages'])) {
+    $webform_values = _springboard_advocacy_webform_submission_flatten($form['#node']->nid, $form_state['values']['submitted']);
     $messages = array();
-
     foreach ($form_state['values']['sba_messages']['message'] as $id => $message) {
       $edited_body = isset($message['edited_body']) ? $message['edited_body'] : '';
       $messages[$id]['body'] = sba_message_action_build_message_bodies($message['sba_message_id'], $edited_body);
       $messages[$id]['subject'] = $message['subject'];
     }
     form_load_include($form_state, 'inc', 'sba_message_action', 'includes/sba_message_action.webform');
-    $data = sba_message_action_send_message($messages, $form_state);
+    $data = sba_message_action_send_message($messages, $form_state, $webform_values);
     // Calculate the deliverable count for sending to salesforce
     if (!empty($data->messages)) {
       $deliverable = 0;
@@ -349,6 +349,7 @@ function sba_message_action_form_submit($form, &$form_state) {
         $deliverable += count($message->deliverable);
       }
       if (isset($form_state['values']['submitted']['sba_deliverable_count'])) {
+        //separte usbmit for this
         $form_state['values']['submitted']['sba_deliverable_count'] = $deliverable;
       }
     }
