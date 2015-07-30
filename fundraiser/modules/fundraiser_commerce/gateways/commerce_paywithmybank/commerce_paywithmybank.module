@@ -93,7 +93,9 @@ function commerce_paywithmybank_bank_submit_form($payment_method, $pane_values, 
   $merchantId = (isset($settings['commerce_paywithmybank_settings_merchant_id'])) ? $settings['commerce_paywithmybank_settings_merchant_id'] : NULL;
   $accessId = (isset($settings['commerce_paywithmybank_settings_access_id'])) ? $settings['commerce_paywithmybank_settings_access_id'] : NULL;
   $accessKey = (isset($settings['commerce_paywithmybank_settings_access_key'])) ? $settings['commerce_paywithmybank_settings_access_key'] : NULL;
-  $sandbox = !empty($settings['commerce_paywithmybank_settings_sandbox']);
+
+  $api = commerce_paywithmybank_get_api($payment_method);
+  $api_endpoint = $api->getEndpoint();
 
   $order_total = $order->commerce_order_total[LANGUAGE_NONE][0];
   $order_amount = substr(commerce_currency_format($order_total['amount'], $order_total['currency_code']), 1);
@@ -124,7 +126,7 @@ function commerce_paywithmybank_bank_submit_form($payment_method, $pane_values, 
   $form['#attached'] = array(
     'js' => array(
       array(
-        'data' => 'https://uat.paywithmybank.com/start/scripts/paywithmybank.js?accessId=' . $accessId,
+        'data' => $api_endpoint . '/start/scripts/paywithmybank.js?accessId=' . $accessId,
         'type' => 'external',
       ),
       array(
@@ -138,7 +140,7 @@ function commerce_paywithmybank_bank_submit_form($payment_method, $pane_values, 
     ),
     'css' => array(
       array(
-        'data' => 'https://uat.paywithmybank.com/start/styles/paywithmybank.css?accessId=' . $accessId,
+        'data' => $api_endpoint . '/start/styles/paywithmybank.css?accessId=' . $accessId,
         'type' => 'external',
       ),
     ),

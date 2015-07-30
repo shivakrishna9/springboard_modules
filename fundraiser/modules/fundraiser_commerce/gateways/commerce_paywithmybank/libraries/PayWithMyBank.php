@@ -42,6 +42,16 @@ class PayWithMyBank {
   }
 
   /**
+   * Gets the API endpoint for a given environment.
+   *
+   * @param string $environment
+   *   The environment (sandbox / production)
+   */
+  public function getEndpoint($environment) {
+    return $this->endpoint;
+  }
+
+  /**
    * Gets the details of an existing transaction.
    * 
    * @param string $transactionId
