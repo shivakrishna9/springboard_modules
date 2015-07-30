@@ -40,20 +40,35 @@ function commerce_paywithmybank_commerce_payment_method_info() {
 }
 
 /**
+ * Implements hook_form_FORM_ID_alter()
+ */
+function commerce_paywithmybank_form_commerce_checkout_form_review_alter(&$form, &$form_state, $form_id) {
+  // Remove any payment form fields; payment is handled by PayWithMyBank modal.
+  // unset($form['commerce_payment']['payment_details']);
+}
+
+/**
  * Payment method callback: settings form.
  */
 function commerce_paywithmybank_bank_settings_form($settings = NULL) {
   $form = array();
+  $form['commerce_paywithmybank_settings_merchant_id'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Merchant ID'),
+    '#required' => TRUE,
+    '#default_value' => isset($settings['commerce_paywithmybank_settings_merchant_id']) ? $settings['commerce_paywithmybank_settings_merchant_id'] : '',
+  );
+
   $form['commerce_paywithmybank_settings_access_id'] = array(
     '#type' => 'textfield',
-    '#title' => t('Access ID'),
+    '#title' => t('Merchant Access ID'),
     '#required' => TRUE,
     '#default_value' => isset($settings['commerce_paywithmybank_settings_access_id']) ? $settings['commerce_paywithmybank_settings_access_id'] : '',
   );
 
   $form['commerce_paywithmybank_settings_access_key'] = array(
     '#type' => 'textfield',
-    '#title' => t('Access Key'),
+    '#title' => t('Merchant Access Key'),
     '#required' => TRUE,
     '#default_value' => isset($settings['commerce_paywithmybank_settings_access_key']) ? $settings['commerce_paywithmybank_settings_access_key'] : '',
   );
@@ -71,7 +86,81 @@ function commerce_paywithmybank_bank_settings_form($settings = NULL) {
  * Payment method callback: checkout form.
  */
 function commerce_paywithmybank_bank_submit_form($payment_method, $pane_values, $checkout_pane, $order) {
-  
+  global $base_url;
+
+  $settings = $payment_method['settings'];
+
+  $merchantId = (isset($settings['commerce_paywithmybank_settings_merchant_id'])) ? $settings['commerce_paywithmybank_settings_merchant_id'] : NULL;
+  $accessId = (isset($settings['commerce_paywithmybank_settings_access_id'])) ? $settings['commerce_paywithmybank_settings_access_id'] : NULL;
+  $accessKey = (isset($settings['commerce_paywithmybank_settings_access_key'])) ? $settings['commerce_paywithmybank_settings_access_key'] : NULL;
+  $sandbox = !empty($settings['commerce_paywithmybank_settings_sandbox']);
+
+  $order_total = $order->commerce_order_total[LANGUAGE_NONE][0];
+  $order_amount = substr(commerce_currency_format($order_total['amount'], $order_total['currency_code']), 1);
+
+  $payment_parameters = array(
+    'accessId' => $accessId,
+    'merchantId' => $merchantId,
+    'description' => 'Order from' . variable_get('site_name'),
+    'currency' => $order_total['currency_code'],
+    'amount' => $order_amount,
+    'merchantReference' => $order->order_id,
+  );
+
+  $request_signature = commerce_paywithmybank_get_request_signature($accessKey, $payment_parameters);
+
+  $establish_data = '{';
+
+  foreach ($payment_parameters as $key => $value) {
+    $establish_data .= "'{$key}' : '{$value}',";
+  }
+
+  $establish_data .= "'returnUrl' : '{$base_url}/checkout/{$order->order_id}/review',"
+      . "'cancelUrl' : '{$base_url}/checkout/{$order->order_id}/review',"
+      . "'requestSignature' : '{$request_signature}'"
+      . '}';
+
+  $form = array();
+  $form['#attached'] = array(
+    'js' => array(
+      array(
+        'data' => 'https://uat.paywithmybank.com/start/scripts/paywithmybank.js?accessId=' . $accessId,
+        'type' => 'external',
+      ),
+      array(
+        'data' => 'try { PayWithMyBank.widget( "paywithmybank-widget" ,{\'showBenefits\' : true, \'showInstructions\' : false, \'actionButtonLabel\' : \'Continue\' , \'eventType\' : \'click\'}); } catch(e){}',
+        'type' => 'inline',
+      ),
+      array(
+        'data' => 'PayWithMyBank.establish(' . $establish_data . ');',
+        'type' => 'inline',
+      )
+    ),
+    'css' => array(
+      array(
+        'data' => 'https://uat.paywithmybank.com/start/styles/paywithmybank.css?accessId=' . $accessId,
+        'type' => 'external',
+      ),
+    ),
+  );
+
+  $form['widget'] = array(
+    '#type' => 'container',
+    '#id' => 'paywithmybank-widget',
+    '#markup' => 'lol',
+    '#attributes' => array(
+      'class' => array(
+        'paywithmybank-compact',
+      ),
+    ),
+  );
+
+  $form['widget']['image'] = array(
+    '#type' => 'markup',
+    '#markup' => '<img src="https://paywithmybank.com/start/images/paywithmybanklogo.jpg" />',
+  );
+
+  return $form;
 }
 
 /**
@@ -116,4 +205,33 @@ function commerce_paywithmybank_get_api($payment_method) {
   $sandbox = !empty($settings['commerce_paywithmybank_settings_sandbox']);
 
   return new \PayWithMyBank\PayWithMyBank($accessId, $accessKey, $sandbox);
+}
+
+/**
+ * Generates a request signature for use with the PayWithMyBank JavaScript API.
+ *
+ * @see https://paywithmybank.com/docs/fe-ref.html#calculate-a-signature
+ *
+ * @param string $accessKey
+ *   The PayWithMyBank API access key.
+ *
+ * @param array $parameters
+ *   Associative array of parameter names to values.
+ *
+ * @return string
+ *   The generated request signature.
+ */
+function commerce_paywithmybank_get_request_signature($accessKey, $parameters) {
+  $data = '';
+  foreach ($parameters as $key => $value) {
+    $data .= "{$key}=$value&";
+  }
+
+  $data = substr($data, 0, -1);
+
+  $hash = hash_hmac('sha1', $data, $accessKey);
+
+  $signature = base64_encode($hash);
+
+  return $signature;
 }
