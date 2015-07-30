@@ -1,24 +1,6 @@
 <?php
 
 /**
- * Implements hook_libraries_info().
- */
-function commerce_paywithmybank_libraries_info() {
-  $libraries = array();
-  $libraries['paywithmybank'] = array(
-    'name' => 'PayWithMyBank REST API library',
-    'path' => 'libraries',
-    'files' => array(
-      'php' => array(
-        'PayWithMyBank.php',
-      ),
-    ),
-  );
-
-  return $libraries;
-}
-
-/**
  * Implements hook_commerce_payment_method_info().
  */
 function commerce_paywithmybank_commerce_payment_method_info() {
@@ -197,7 +179,7 @@ function commerce_paywithmybank_bank_cardonfile_delete() {
  * @param array @payment_method
  *   The payment method, used to populate library settings.
  *
- * @return \PayWithMyBank\PayWithMyBank
+ * @return PayWithMyBank
  */
 function commerce_paywithmybank_get_api($payment_method) {
   $settings = $payment_method['settings'];
@@ -206,7 +188,7 @@ function commerce_paywithmybank_get_api($payment_method) {
   $accessKey = (isset($settings['commerce_paywithmybank_settings_access_key'])) ? $settings['commerce_paywithmybank_settings_access_key'] : NULL;
   $sandbox = !empty($settings['commerce_paywithmybank_settings_sandbox']);
 
-  return new \PayWithMyBank\PayWithMyBank($accessId, $accessKey, $sandbox);
+  return new PayWithMyBank($accessId, $accessKey, $sandbox);
 }
 
 /**

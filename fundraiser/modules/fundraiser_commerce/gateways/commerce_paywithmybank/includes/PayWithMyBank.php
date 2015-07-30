@@ -4,8 +4,6 @@
  * Library for the PayWithMyBank REST API.
  */
 
-namespace PayWithMyBank;
-
 class PayWithMyBank {
 
   /**
@@ -43,11 +41,8 @@ class PayWithMyBank {
 
   /**
    * Gets the API endpoint for a given environment.
-   *
-   * @param string $environment
-   *   The environment (sandbox / production)
    */
-  public function getEndpoint($environment) {
+  public function getEndpoint() {
     return $this->endpoint;
   }
 
