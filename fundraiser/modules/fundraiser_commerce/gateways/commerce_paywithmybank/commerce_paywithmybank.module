@@ -229,7 +229,7 @@ function commerce_paywithmybank_get_request_signature($accessKey, $parameters) {
 
   $data = substr($data, 0, -1);
 
-  $hash = hash_hmac('sha1', $data, $accessKey);
+  $hash = hash_hmac('sha1', $data, $accessKey, TRUE);
 
   $signature = base64_encode($hash);
 
