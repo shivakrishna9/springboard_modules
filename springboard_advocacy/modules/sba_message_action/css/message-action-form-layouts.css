@@ -64,7 +64,7 @@
 }
 
  #webform-component-sbp-salutation.control-group {
-    width: 20%;
+    width: 20.75%;
     float: left;
     clear:none;
     -webkit-box-sizing: border-box;
@@ -268,4 +268,31 @@ fieldset[id*="edit-sba-messages-message"]  input[name*="subject"] {
 .action-message-right #quicksign-container,
 .action-message-right #participants-container {
     float:right;
+}
+
+
+@media (min-width: 768px) and (max-width: 979px) {
+
+    #webform-component-sbp-salutation.control-group {
+        width: 100%;
+        float: none;
+        clear:both;
+        margin-top: 0;
+        -webkit-box-sizing: border-box;
+        -moz-box-sizing: border-box;
+        box-sizing: border-box;
+    }
+
+
+    #webform-component-sbp-first-name.control-group,
+    #webform-component-sbp-last-name.control-group {
+        float: none;
+        clear:both;
+        width: 100%;
+        -webkit-box-sizing: border-box;
+        -moz-box-sizing: border-box;
+        box-sizing: border-box;
+        padding-left: 0;
+    }
+
 }
