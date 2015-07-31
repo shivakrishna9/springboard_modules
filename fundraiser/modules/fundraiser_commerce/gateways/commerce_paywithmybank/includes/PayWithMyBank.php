@@ -3,7 +3,6 @@
 /**
  * Library for the PayWithMyBank REST API.
  */
-
 class PayWithMyBank {
 
   /**
@@ -99,14 +98,20 @@ class PayWithMyBank {
   private function call($path, $tokens, $parameters = NULL) {
     if (!empty($tokens)) {
       foreach ($tokens as $key => $value) {
-        $path = str_replace('{' . $key . '}', $value, $url);
+        $path = str_replace('{' . $key . '}', $value, $path);
       }
     }
 
     $url = $this->endpoint . '/' . $path;
+    $auth_string = base64_encode($this->accessId . ':' . $this->accessKey);
+
+    $headers = array(
+      'Authorization: Basic ' . $auth_string,
+    );
 
     $ch = curl_init($url);
     curl_setopt($ch, CURLOPT_POST, 1);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
 
     if (!empty($parameters)) {
