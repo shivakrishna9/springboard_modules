@@ -1327,12 +1327,18 @@ function fundraiser_sustainers_edit_form($did) {
     return t('You do not have access to this recurring donation.');
   }
 
+  // Text used for various sections of the form if no more charges remain.
+  $no_remaining_message = t('There are no further charges for this recurring donation.');
+
   // If the series creation is pending let the user know.
   if (
     !empty($donation->data['fundraiser_sustainers_series_status'])
     && $donation->data['fundraiser_sustainers_series_status'] == FUNDRAISER_SUSTAINERS_SERIES_STATUS_PENDING
   ) {
     drupal_set_message(t('The recurring donation schedule for this series will be created soon.'), 'warning');
+
+    // Update the no remaining message to reflect that the series hasn't been created.
+    $no_remaining_message = t('You can manage this recurring donation when the complete schedule has been created. Please check back soon.');
   }
 
   // Grab the next to be charged for misc info.
@@ -1477,7 +1483,7 @@ function fundraiser_sustainers_edit_form($did) {
     }
   }
   elseif ($remaining_donation_count == 0) {
-    $donation_amount_form = t('There are no further charges for this recurring donation.');
+    $donation_amount_form = $no_remaining_message;
     $donation_date_form = '';
   }
   else {
@@ -1490,7 +1496,7 @@ function fundraiser_sustainers_edit_form($did) {
     $billing_update_form = drupal_render($billing_update_form_array);
   }
   elseif ($remaining_donation_count == 0) {
-    $billing_update_form = t('There are no further charges for this recurring donation.');
+    $billing_update_form = $no_remaining_message;
   }
   else {
     $billing_update_form = t('This recurring donation has been cancelled.');
@@ -1502,7 +1508,7 @@ function fundraiser_sustainers_edit_form($did) {
     $cancel_form = drupal_render($cancel_form_array);
   }
   elseif ($remaining_donation_count == 0) {
-    $cancel_form = t('There are no further charges for this recurring donation.');
+    $cancel_form = $no_remaining_message;
   }
   else {
     $cancel_form = t('This recurring donation has been cancelled. Your reason given was: %reason', array('%reason' => $cancelled));
