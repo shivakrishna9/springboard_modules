@@ -95,10 +95,12 @@ function sba_quicksign_form_validate(&$form, &$form_state) {
   $missing_fields = FALSE;
   $profile = array();
   foreach ($map as $webform_field => $profile_field) {
-    $items  = field_get_items('user', $account, $profile_field);
-    $profile[$webform_field] = !empty($items[0]['value']) ? $items[0]['value'] : FALSE;
-    // Special handling for mail.
-    if ($webform_field == 'mail') {
+    if ($webform_field != 'mail') {
+      $items = field_get_items('user', $account, $profile_field);
+      $profile[$webform_field] = !empty($items[0]['value']) ? $items[0]['value'] : FALSE;
+    }
+    else {
+    // Special handling for mail
       $profile['mail'] = $mail;
     }
     if (in_array($webform_field, $required_fields) && empty($profile[$webform_field])) {
