@@ -700,16 +700,23 @@ function sba_message_action_log_opt_in($nid, $uid, $opt_in, $sid) {
 }
 
 function sba_message_action_webform_submission_insert($node, $submission) {
-  $opt_in = db_query('SELECT * FROM {webform_component} ' .
-    'WHERE nid = :nid ' .
-    'AND form_key = :form_key',
-    array(':nid' => $node->nid, ':form_key' => 'sbp_sba_action_optin'))->fetchObject();
-  if (!empty($submission->data[$opt_in->cid]['value'][0])) {
-    $sid = $submission->sid;
-    $result = db_query('SELECT uid FROM {webform_submissions} WHERE sid = :sid', array(':sid' => $sid));
-    $uid =  $result->fetchField();
+  if ($node->type == 'sba_message_action') {
 
-    sba_message_action_log_opt_in($node->nid, $uid, TRUE, $sid);
+    $opt_in = db_query('SELECT * FROM {webform_component} ' .
+      'WHERE nid = :nid ' .
+      'AND form_key = :form_key',
+      array(
+        ':nid' => $node->nid,
+        ':form_key' => 'sbp_sba_action_optin'
+      ))->fetchObject();
+
+    if (!empty($opt_in->cid) && !empty($submission->data[$opt_in->cid]['value'][0])) {
+      $sid = $submission->sid;
+      $result = db_query('SELECT uid FROM {webform_submissions} WHERE sid = :sid', array(':sid' => $sid));
+      $uid = $result->fetchField();
+
+      sba_message_action_log_opt_in($node->nid, $uid, TRUE, $sid);
+    }
   }
 }
 
