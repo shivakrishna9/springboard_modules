@@ -32,6 +32,13 @@ class PayWithMyBank {
    */
   private $accessKey = '';
 
+  /**
+   * @var array $lastErrors
+   *   The last error objects received from the API.
+   * @see https://paywithmybank.com/docs/api-ref.html#errors
+   */
+  private $lastErrors = NULL;
+
   public function __construct($accessId, $accessKey, $sandbox = FALSE) {
     $this->accessId = $accessId;
     $this->accessKey = $accessKey;
@@ -46,6 +53,13 @@ class PayWithMyBank {
   }
 
   /**
+   * Gets the last error objects received from the API.
+   */
+  public function getLastErrors() {
+    return $this->lastErrors;
+  }
+
+  /**
    * Gets the details of an existing transaction.
    * 
    * @param string $transactionId
@@ -56,7 +70,8 @@ class PayWithMyBank {
    * @see https://www.paywithmybank.com/beta/docs/api-ref.html#transactions
    */
   public function getTransaction($transactionId) {
-    return $this->call('transactions/{transactionId}', array('transactionId' => $transactionId));
+    $data = $this->call('transactions/{transactionId}', array('transactionId' => $transactionId));
+    return (isset($data->transaction)) ? $data->transaction : NULL;
   }
 
   /**
@@ -96,6 +111,10 @@ class PayWithMyBank {
   }
 
   private function call($path, $tokens, $parameters = NULL) {
+    // Reset error messages.
+    $this->lastErrors = NULL;
+
+    // Add tokens to the API call path.
     if (!empty($tokens)) {
       foreach ($tokens as $key => $value) {
         $path = str_replace('{' . $key . '}', $value, $path);
@@ -103,6 +122,8 @@ class PayWithMyBank {
     }
 
     $url = $this->endpoint . '/' . $path;
+
+    // Calculate basic auth string from the API credentials.
     $auth_string = base64_encode($this->accessId . ':' . $this->accessKey);
 
     $headers = array(
@@ -113,6 +134,7 @@ class PayWithMyBank {
     curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
 
+    // If sending parameters, add them here and set request type to POST.
     if (!empty($parameters)) {
       $post_fields = '';
       foreach ($parameters as $key => $value) {
@@ -125,7 +147,13 @@ class PayWithMyBank {
     $response = curl_exec($ch);
     curl_close($ch);
 
-    return $response;
+    $data = json_decode($response);
+
+    if (isset($data->errors)) {
+      $this->lastErrors = $data->errors;
+    }
+
+    return $data;
   }
 
 }
