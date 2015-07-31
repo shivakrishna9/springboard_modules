@@ -10,8 +10,8 @@ class PayWithMyBank {
    *   API endpoints indexed by environment type.
    */
   private $endpoints = array(
-    'sandbox' => 'https://uat.paywithmybank.com',
-    'production' => 'https://paywithmybank.com',
+    'sandbox' => 'https://uat.paywithmybank.com/api/v1',
+    'production' => 'https://paywithmybank.com/api/v1',
   );
 
   /**
@@ -110,7 +110,6 @@ class PayWithMyBank {
     );
 
     $ch = curl_init($url);
-    curl_setopt($ch, CURLOPT_POST, 1);
     curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
 
@@ -119,6 +118,7 @@ class PayWithMyBank {
       foreach ($parameters as $key => $value) {
         $post_fields .= $key . '=' . $value . '&';
       }
+      curl_setopt($ch, CURLOPT_POST, 1);
       curl_setopt($ch, CURLOPT_POSTFIELDS, $post_fields);
     }
 
