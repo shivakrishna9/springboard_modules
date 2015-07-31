@@ -19,6 +19,7 @@ define('FUNDRAISER_SUSTAINERS_SUCCESS_STATUS', 'success');
 define('FUNDRAISER_SUSTAINERS_SKIPPED_STATUS', 'skipped');
 define('FUNDRAISER_SUSTAINERS_CANCELED_STATUS', 'canceled');
 define('FUNDRAISER_SUSTAINERS_SCHEDULED_STATUS', 'scheduled');
+define('FUNDRAISER_SUSTAINERS_LOCKED_STATUS', 'locked');
 
 /**
  * Status for a master donation where sustainer series is pending creation.
@@ -2986,27 +2987,30 @@ function _fundraiser_sustainers_cron_get_recurring($limit = 200) {
   $now = strtotime('now');
   $uni_batch_id = uniqid();
   $max_processing_attempts = variable_get('fundraiser_sustainers_max_processing_attempts', 3);
-  // Lock them (faster to lock, then query, than the other way around).
-  // Since large data set returns => delay.
-  $donations = db_query('SELECT r.did FROM {fundraiser_sustainers} r ' .
+
+  // Load donations needing to be processed into an array of dids => status.
+  $donations = db_query('SELECT r.did, r.gateway_resp FROM {fundraiser_sustainers} r ' .
     'WHERE (r.gateway_resp IS NULL OR r.gateway_resp = :status) ' .
     'AND r.next_charge < :now ' .
     'AND (r.attempts < :max_attempts OR r.attempts IS NULL) ' . // If already been tried X times, Stop Trying.
     'AND r.lock_id = 0 ' . // And not locked.
     'LIMIT 0, ' . $limit,
     array(':status' => FUNDRAISER_SUSTAINERS_RETRY_STATUS, ':now' => $now, ':max_attempts' => $max_processing_attempts)
-  )->fetchAllKeyed(0, 0);
+  )->fetchAllKeyed(0, 1);
+
+  // Lock the donations and log the action.
   if (!empty($donations)) {
     db_query('UPDATE {fundraiser_sustainers} r1 ' .
-      'SET r1.lock_id = :uni_batch_id ' .
+      'SET r1.lock_id = :uni_batch_id, ' .
+      'r1.gateway_resp = :locked ' .
       'WHERE r1.did IN (:donations)',
-      array(':uni_batch_id' => $uni_batch_id, ':donations' => $donations)
+      array(':uni_batch_id' => $uni_batch_id, ':locked' => FUNDRAISER_SUSTAINERS_LOCKED_STATUS, ':donations' => array_keys($donations))
     );
 
     $log = fundraiser_sustainers_log();
     $log->logLockedDonations($donations, $uni_batch_id);
-
   }
+
   // Grab the locked donations for this batch.
   $donations = db_query('SELECT * FROM {fundraiser_sustainers} r ' .
     'LEFT JOIN {fundraiser_donation} d on r.did = d.did ' .
