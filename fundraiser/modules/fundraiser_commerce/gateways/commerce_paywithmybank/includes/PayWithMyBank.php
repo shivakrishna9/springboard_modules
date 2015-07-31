@@ -67,7 +67,7 @@ class PayWithMyBank {
    * 
    * @return object
    *   The transaction object.
-   * @see https://www.paywithmybank.com/beta/docs/api-ref.html#transactions
+   * @see https://paywithmybank.com/docs/api-ref.html#transactions
    */
   public function getTransaction($transactionId) {
     $data = $this->call('transactions/{transactionId}', array('transactionId' => $transactionId));
@@ -79,7 +79,7 @@ class PayWithMyBank {
    * 
    * @return array
    *   Array of transaction objects.
-   * @see https://www.paywithmybank.com/beta/docs/api-ref.html#transactions
+   * @see https://paywithmybank.com/docs/api-ref.html#transactions
    */
   public function listTransactions() {
     return $this->call('transactions');
@@ -98,7 +98,7 @@ class PayWithMyBank {
    *
    * @return object
    *   The transaction object.
-   * @see https://www.paywithmybank.com/beta/docs/api-ref.html#transactions
+   * @see https://paywithmybank.com/docs/api-ref.html#transactions
    */
   public function captureTransaction($transactionId, $merchantReference, $amount) {
     $tokens = array('transactionId' => $transactionId);
