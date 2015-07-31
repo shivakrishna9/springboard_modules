@@ -84,7 +84,7 @@ function sba_quicksign_form_validate(&$form, &$form_state) {
   // No profile available.
   if (!$account) {
     $_SESSION['sba_quicksign']['profile']['mail'] = $mail;
-    drupal_set_message(t('No account with the email address !mail was found. Please fill out the full form.', array('!mail' => $mail)));
+    drupal_set_message(t("We're sorry, we did not find an account with the email address !mail. Please fill out the full form to send this message. Next time you will be able to sign using just your email address.", array('!mail' => $mail)));
     drupal_redirect_form($form_state);
   }
 
@@ -117,7 +117,12 @@ function sba_quicksign_form_validate(&$form, &$form_state) {
 
   if ($missing_fields) {
     $_SESSION['sba_quicksign']['profile'] = $profile;
-    drupal_set_message(t("Unfortunately, we don't have enough information to complete your participation via the short form. Please fill out the full form."));
+    if ($node->type == 'sba_message_action') {
+      drupal_set_message(t("Unfortunately, we don't have enough information to submit your message. Please complete the additional forms below. Next time you will be able to sign using just your email address."));
+    }
+    else {
+      drupal_set_message(t("Unfortunately, we don't have enough information to submit your petition. Please complete the additional forms below. Next time you will be able to sign using just your email address."));
+    }
     drupal_redirect_form($form_state);
   }
 
@@ -173,17 +178,19 @@ function sba_quicksign_form_node_form_alter(&$form, &$form_state, $form_id) {
       '#type' => 'textfield',
       '#title' => t('Form Label'),
       '#description' => t('Label text to display above the quick sign form.'),
-      '#default_value' => isset($settings['quicksign_label']) ? $settings['quicksign_label'] : 'Quick Sign',
+      '#default_value' => isset($settings['quicksign_label']) ? $settings['quicksign_label'] : 'Already a supporter?',
     );
+
+    $default_desc = $node->type == 'sba_message_action' ? t('If we already have your information, just enter your email address and click to send this message now.') : t('If we already have your information, just enter your email address and click to sign this petition now.');
     $form['sba_quicksign']['quicksign_description'] = array(
       '#type' => 'text_format',
       '#title' => t('Form description'),
       '#description' => t('Additional descriptive text displayed above the quick sign form.'),
-      '#default_value' => isset($settings['quicksign_description']) ? $settings['quicksign_description'] : t('If your information is already on file with us, enter your email address and we can pre-fill the form for you!'),
+      '#default_value' => isset($settings['quicksign_description']) ? $settings['quicksign_description'] : $default_desc,
       '#format' => isset($settings['quicksign_description_format']) ? $settings['quicksign_description_format'] : NULL,
     );
 
-    $default = $node->type == 'sba_message_action' ? t('Quick sign this message') : t('Quick sign our petiton');
+    $default = $node->type == 'sba_message_action' ? t('Sign now') : t('Sign now');
     $form['sba_quicksign']['quicksign_button_text'] = array(
       '#type' => 'textfield',
       '#title' => t('Submit button text'),
