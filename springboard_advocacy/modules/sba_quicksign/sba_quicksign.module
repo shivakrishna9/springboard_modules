@@ -218,11 +218,17 @@ function sba_quicksign_form_alter(&$form, $form_state, $form_id) {
         $profile = !empty($_SESSION['sba_quicksign']['profile']) ? $_SESSION['sba_quicksign']['profile'] : FALSE;
         if ($profile) {
           sba_quicksign_form_defaults($form, $node, $profile);
+          $form['#after_build'][] = 'sba_quicksign_after_build';
           unset($_SESSION['sba_quicksign']);
         }
       }
     }
   }
+}
+
+function sba_quicksign_after_build($form, $form_state) {
+  $form['#attached']['js'][] = drupal_get_path('module', 'sba_quicksign') . '/js/sba_quicksign.js';
+  return $form;
 }
 
 /**
@@ -261,7 +267,8 @@ function sba_quicksign_form_defaults(&$form, $node, $user_data) {
             $form_field['#default_value'] = check_plain($profile_value);
             break;
         }
-      } // End if webform empty with a profile field value.
+      }
+      // End if webform empty with a profile field value.
     } // End if field is in component hierarchy.
   }
 }
