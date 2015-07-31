@@ -238,15 +238,14 @@ function sba_message_action_set_confirmation_session_vars($response, $contact) {
           $messages[$id]['targets'] = $message['targets'];
         };
       }
-
+      $_SESSION['undelivered_messages'] =
+        array(
+          'messages' => $messages,
+          'contact' => $contact,
+          'targets' => '',
+        );
+      }
     }
-    $_SESSION['undelivered_messages'] =
-      array(
-        'messages' => $messages,
-        'contact' => $contact,
-        'targets' => '',
-    );
-  }
 }
 
 /**
