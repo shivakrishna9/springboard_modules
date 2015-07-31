@@ -1,6 +1,21 @@
 <?php
 
 /**
+ * Implements hook_menu()
+ */
+function commerce_paywithmybank_menu_info() {
+  $items = array();
+  $items['paywithmybank/return'] = array(
+    'title' => 'PayWithMyBank Payment Callback',
+    'page callback' => 'commerce_paywithmybank_return',
+    'access callback' => 'commerce_paywithmybank_return_access',
+    'type' => MENU_CALLBACK,
+  );
+
+  return $items;
+}
+
+/**
  * Implements hook_commerce_payment_method_info().
  */
 function commerce_paywithmybank_commerce_payment_method_info() {
@@ -26,7 +41,12 @@ function commerce_paywithmybank_commerce_payment_method_info() {
  */
 function commerce_paywithmybank_form_commerce_checkout_form_review_alter(&$form, &$form_state, $form_id) {
   // Remove any payment form fields; payment is handled by PayWithMyBank modal.
-  // unset($form['commerce_payment']['payment_details']);
+  unset($form['commerce_payment']['payment_details']['credit_card']);
+  unset($form['commerce_payment']['payment_details']['cardonfile_instance_default']);
+
+  // Remove continue button; payment is handled outside of the Commerce flow.
+  unset($form['buttons']['continue']);
+  unset($form['buttons']['back']['#prefix']);
 }
 
 /**
@@ -105,6 +125,21 @@ function commerce_paywithmybank_bank_submit_form($payment_method, $pane_values, 
       . '}';
 
   $form = array();
+  $form['widget'] = array(
+    '#type' => 'container',
+    '#id' => 'paywithmybank-widget',
+    '#attributes' => array(
+      'class' => array(
+        'paywithmybank-compact',
+      ),
+    ),
+  );
+
+  $form['widget']['image'] = array(
+    '#type' => 'markup',
+    '#markup' => '<img src="https://paywithmybank.com/start/images/paywithmybanklogo.jpg" />',
+  );
+
   $form['#attached'] = array(
     'js' => array(
       array(
@@ -128,21 +163,7 @@ function commerce_paywithmybank_bank_submit_form($payment_method, $pane_values, 
     ),
   );
 
-  $form['widget'] = array(
-    '#type' => 'container',
-    '#id' => 'paywithmybank-widget',
-    '#markup' => 'lol',
-    '#attributes' => array(
-      'class' => array(
-        'paywithmybank-compact',
-      ),
-    ),
-  );
-
-  $form['widget']['image'] = array(
-    '#type' => 'markup',
-    '#markup' => '<img src="https://paywithmybank.com/start/images/paywithmybanklogo.jpg" />',
-  );
+  echo '.';
 
   return $form;
 }
@@ -171,6 +192,21 @@ function commerce_paywithmybank_bank_cardonfile_update($form, &$form_state, $pay
 
 function commerce_paywithmybank_bank_cardonfile_delete() {
   
+}
+
+/**
+ * Callback for processing payment information sent by PayWithMyBank.
+ */
+function commerce_paywithmybank_return() {
+  // TODO: Process transaction and complete order.
+}
+
+/**
+ * Access callback for processing payment information sent by PayWithMyBank.
+ */
+function commerce_paywithmybank_return_access() {
+  // TODO: Validate request from PayWithMyBank.
+  return TRUE;
 }
 
 /**
