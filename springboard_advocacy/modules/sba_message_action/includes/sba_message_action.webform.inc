@@ -350,7 +350,7 @@ function sba_message_action_preprocess_webform_confirmations_undelivered(&$vars)
 
   if ($message_count) {
     $count_output .= t(
-        'We were unable to deliver @message_count @messages to @target_count @targets.',
+        "We were unable to deliver @message_count @messages to @target_count @targets. Please visit the decision-maker's website to submit your message directly.",
         array(
           '@message_count' => $message_count,
           '@messages' => $message_plural,
