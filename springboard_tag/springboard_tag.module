@@ -136,7 +136,7 @@ function springboard_tag_html_head_alter(&$head_content) {
   }
 }
 
-  /**
+/**
  * Add the after body tags to the page HTML.
  */
 function _springboard_tag_post_render(&$children, $elements) {
