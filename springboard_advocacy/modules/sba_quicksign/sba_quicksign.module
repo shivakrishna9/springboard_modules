@@ -215,7 +215,6 @@ function sba_quicksign_form_alter(&$form, $form_state, $form_id) {
         // Check for errors in quicksign form submission
         // If present attempt to set Webform fields with
         // profile values from prior submission.
-        dpm($_SESSION['sba_quicksign']['profile']);
         $profile = !empty($_SESSION['sba_quicksign']['profile']) ? $_SESSION['sba_quicksign']['profile'] : FALSE;
         if ($profile) {
           sba_quicksign_form_defaults($form, $node, $profile);
