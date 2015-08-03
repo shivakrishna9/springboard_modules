@@ -1977,7 +1977,7 @@ function _fundraiser_donation_copy($donation) {
 function fundraiser_donation_process($donation) {
   // Create an array of values for the log.
   $log = array(
-    'start' => microtime(),
+    'start' => microtime(TRUE),
     'transaction_type' => 'charge',
   );
 
@@ -1985,7 +1985,7 @@ function fundraiser_donation_process($donation) {
   module_invoke_all('fundraiser_donation_process', $donation);
 
   // Mark the end time of the processing.
-  $log['end'] = microtime();
+  $log['end'] = microtime(TRUE);
 
   // Log the processing details.
   fundraiser_log_donation_processing($donation, $log);
@@ -3496,36 +3496,46 @@ function fundraiser_log_donation_processing($donation, $log = array()) {
   // @todo Decide on an appropriate type for watchdog.
   $type = 'fundraiser_donation';
 
+  // Calculate the execution time.
+  $exec_time = round($log['end'] - $log['start'], 4);
+
+  // Setup the gateway details, the gateway name and config (rule name) are contained in the id.
+  list($gateway, $gateway_config) = explode('|', $donation->gateway['id']);
+
   $pieces = array(
     'datetime',
     'category',
     'unique_transaction_id',
     'client_identifier',
     'payment_gateway',
+    'payment_gateway_config',
     'transaction_type',
     'transaction_total_exec_time',
     'donation_value',
     'donation_currency',
     'country',
     'origin_ip',
+    'success',
+    'reference_charge',
   );
 
   $message = '|%' . implode('|%', $pieces);
 
-  $exec_time = $log['start'] - $log['end'];
-
   $variables = array(
-    '%datetime' => date('c'),
+    '%datetime' => date('c', $log['start']),
     '%category' => 'INFO',
     '%unique_transaction_id' => $donation->did,
     '%client_identifier' => $donation->uid,
-    '%payment_gateway' => $donation->gateway['id'],
+    '%payment_gateway' => $gateway,
+    '%payment_gateway_config' => $gateway_config,
     '%transaction_type' => $log['transaction_type'],
     '%transaction_total_exec_time' => $exec_time,
     '%donation_value' => $donation->amount,
     '%donation_currency' => $donation->donation['currency']['code'],
     '%country' => $donation->donation['country'],
     '%origin_ip' => ip_address(),
+    '%success' => isset($donation->result['success']) ? $donation->result['success'] : 0,
+    '%reference_charge' => $donation->reference_charge,
   );
 
   watchdog($type, $message, $variables, WATCHDOG_INFO);
