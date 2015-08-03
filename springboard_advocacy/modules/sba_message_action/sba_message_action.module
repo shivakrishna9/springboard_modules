@@ -494,8 +494,8 @@ function sba_message_action_form_sba_message_action_node_form_alter(&$form, &$fo
 
   $form['springboard_display']['recent_participants'] = array(
     '#type' => 'fieldset',
-    '#title' => t('Show My Name settings'),
-    '#description' => t('Choose whether to enable the "show my name" opt-in checkbox and the recent participants block on the message action page.'),
+    '#title' => t('Recent Participants List'),
+    '#description' => t('Choose whether action-takers can opt-in to having their name display on the message action page.'),
     '#collapsible' => TRUE,
     '#collapsed' => FALSE,
   );
@@ -503,7 +503,7 @@ function sba_message_action_form_sba_message_action_node_form_alter(&$form, &$fo
   $visibility = isset($form['#node']->show_my_name) ? $form['#node']->show_my_name : 0;
   $form['springboard_display']['recent_participants']['show_participants'] = array(
     '#type' => 'checkbox',
-    '#title' => t('Enable the "show my name" opt-in checkbox and recent participants block'),
+    '#title' => t('Allow users to opt-in and show recent participants list'),
     '#default_value' => $visibility,
     '#weight' => -4,
   );
