@@ -340,7 +340,7 @@ function sba_message_action_update_7012() {
   foreach ($nodes as $node) {
     $nid = db_query('select nid from {webform_component}
       WHERE nid = :nid AND form_key = :key',
-      array(':nid' => $node->nid, ':key' => 'sba_user_edit_flag')
+      array(':nid' => $node->nid, ':key' => 'sba_deliverable_count')
     )->fetchField();
 
     if (!$nid) {
