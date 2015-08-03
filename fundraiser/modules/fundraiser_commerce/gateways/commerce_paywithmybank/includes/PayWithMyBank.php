@@ -51,8 +51,8 @@ class PayWithMyBank {
    *   API endpoints indexed by environment type.
    */
   private $endpoints = array(
-    'sandbox' => 'https://uat.paywithmybank.com/api/v1',
-    'production' => 'https://paywithmybank.com/api/v1',
+    'sandbox' => 'https://uat.paywithmybank.com',
+    'production' => 'https://paywithmybank.com',
   );
 
   /**
@@ -111,7 +111,7 @@ class PayWithMyBank {
    * @see https://paywithmybank.com/docs/api-ref.html#transactions
    */
   public function getTransaction($transactionId) {
-    $data = $this->call('transactions/{transactionId}', array('transactionId' => $transactionId));
+    $data = $this->call('/api/v1/transactions/{transactionId}', array('transactionId' => $transactionId));
     return (isset($data->transaction)) ? $data->transaction : NULL;
   }
 
@@ -148,7 +148,7 @@ class PayWithMyBank {
       'amount' => $amount,
     );
 
-    return $this->call('transactions/{transactionId}/capture', $tokens, $parameters);
+    return $this->call('/api/v1/transactions/{transactionId}/capture', $tokens, $parameters);
   }
 
   private function call($path, $tokens, $parameters = NULL) {
