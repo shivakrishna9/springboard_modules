@@ -1,4 +1,4 @@
-<?php
+  <?php
 
 /**
  * Implements hook_permission()
@@ -53,6 +53,7 @@ function springboard_tag_springboard_admin_admin_menu_items_alter(&$items) {
  */
 function _springboard_tag_placement_options() {
   return array(
+    'head' => 'In the head tag',
     'after body tag' => 'Directly after the opening body tag',
     'content' => 'Main content',
   );
@@ -91,23 +92,51 @@ function springboard_tag_page_alter(&$page) {
         $content[] = _springboard_tag_generate_tag($tag->tag);
         break;
     }
+
+    if (!empty($after_body)) {
+      // Add a post render function, and the tags.
+      $page['#post_render'][] = '_springboard_tag_post_render';
+      $page['#springboard_tag_after_body'] = implode("\n", $after_body);
+    }
+
+    if (!empty($content)) {
+      // Add the content tags.
+      $page['content']['springboard_tag'] = array(
+        '#markup' => implode("\n", $content),
+      );
+    }
+  }
+}
+
+
+  /**
+   * Implements hook_html_head_alter
+   *
+   * Add springboard tags to the head tag.
+   */
+  function springboard_tag_html_head_alter(&$head_content) {
+  // Load the tags for this page.
+  $tags = _springboard_tag_load_tags();
+  if (empty($tags)) {
+    return;
   }
 
-  if (!empty($after_body)) {
-    // Add a post render function, and the tags.
-    $page['#post_render'][] = '_springboard_tag_post_render';
-    $page['#springboard_tag_after_body'] = implode("\n", $after_body);
+  foreach ($tags as $tag) {
+    switch ($tag->settings['placement']) {
+      case 'head' :
+        $head[] = _springboard_tag_generate_tag($tag->tag);
+        break;
+    }
   }
-
-  if (!empty($content)) {
+  if (!empty($head)) {
     // Add the content tags.
-    $page['content']['springboard_tag'] = array(
-      '#markup' => implode("\n", $content),
+    $head_content['springboard_tag'] = array(
+      '#markup' => "\n" . implode("\n", $head) . "\n",
     );
   }
 }
 
-/**
+  /**
  * Add the after body tags to the page HTML.
  */
 function _springboard_tag_post_render(&$children, $elements) {
