@@ -3340,6 +3340,9 @@ function fundraiser_sustainers_unlock_sustainer_action(&$sustainer_record, $cont
       drupal_set_message(t('Unlocked sustainer %did and changed its status from %status to Retry.', $replacements));
       break;
 
+    // Include support for the NULL value, default value of gateway_resp.
+    case NULL:
+      $replacements['%status'] = FUNDRAISER_SUSTAINERS_SCHEDULED_STATUS;
     case FUNDRAISER_SUSTAINERS_SCHEDULED_STATUS:
       // Fall through.
     case FUNDRAISER_SUSTAINERS_RETRY_STATUS:
