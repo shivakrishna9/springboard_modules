@@ -262,6 +262,7 @@ function sba_message_action_update_7006() {
  * Reorder field weights on edit form.
  */
 function sba_message_action_update_7007() {
+  module_load_include('inc', 'sba_message_action', 'includes/install/sba_message_action.install');
   _sba_message_action_reorder_internal_name();
 }
 
