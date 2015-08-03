@@ -1,4 +1,4 @@
-  <?php
+<?php
 
 /**
  * Implements hook_permission()
@@ -82,6 +82,7 @@ function springboard_tag_page_alter(&$page) {
   if (empty($tags)) {
     return;
   }
+
   foreach ($tags as $tag) {
     switch ($tag->settings['placement']) {
       case 'after body tag' :
@@ -91,21 +92,22 @@ function springboard_tag_page_alter(&$page) {
         $content[] = _springboard_tag_generate_tag($tag->tag);
         break;
     }
+  }
 
-    if (!empty($after_body)) {
-      // Add a post render function, and the tags.
-      $page['#post_render'][] = '_springboard_tag_post_render';
-      $page['#springboard_tag_after_body'] = implode("\n", $after_body);
-    }
+  if (!empty($after_body)) {
+    // Add a post render function, and the tags.
+    $page['#post_render'][] = '_springboard_tag_post_render';
+    $page['#springboard_tag_after_body'] = implode("\n", $after_body);
+  }
 
-    if (!empty($content)) {
-      // Add the content tags.
-      $page['content']['springboard_tag'] = array(
-        '#markup' => implode("\n", $content),
-      );
-    }
+  if (!empty($content)) {
+    // Add the content tags.
+    $page['content']['springboard_tag'] = array(
+      '#markup' => implode("\n", $content),
+    );
   }
 }
+
 
 /**
  * Implements hook_html_head_alter
