@@ -367,6 +367,7 @@ function fundraiser_sustainers_charge_now($did) {
   $recurring = array(
     'did' => $did,
     'new_state' => 'scheduled',
+    'old_state' => 'advance_charge',
     'next_charge' => $new_charge,
   );
 
