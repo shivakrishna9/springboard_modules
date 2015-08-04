@@ -183,14 +183,18 @@ function _springboard_tag_generate_tag($snippet) {
  * Load the tags for a page request.
  */
 function _springboard_tag_load_tags() {
-  // Load all the configured tags.
-  ctools_include('export');
-  $tags = ctools_export_crud_load_all('springboard_tag');
+  $tags = &drupal_static(__FUNCTION__);
 
-  usort($tags, '_springboard_tag_load_tags_sort');
+  if (!isset($tags)) {
+    // Load all the configured tags.
+    ctools_include('export');
+    $tags = ctools_export_crud_load_all('springboard_tag');
 
-  // Allow modules to modify the tag list.
-  drupal_alter('springboard_tag_list', $tags);
+    usort($tags, '_springboard_tag_load_tags_sort');
+
+    // Allow modules to modify the tag list.
+    drupal_alter('springboard_tag_list', $tags);
+  }
 
   return $tags;
 }
