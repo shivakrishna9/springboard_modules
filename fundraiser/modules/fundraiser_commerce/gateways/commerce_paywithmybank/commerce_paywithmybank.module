@@ -43,10 +43,6 @@ function commerce_paywithmybank_form_commerce_checkout_form_review_alter(&$form,
   // Remove any payment form fields; payment is handled by PayWithMyBank modal.
   unset($form['commerce_payment']['payment_details']['credit_card']);
   unset($form['commerce_payment']['payment_details']['cardonfile_instance_default']);
-
-  // Remove continue button; payment is handled outside of the Commerce flow.
-  unset($form['buttons']['continue']);
-  unset($form['buttons']['back']['#prefix']);
 }
 
 /**
@@ -113,16 +109,10 @@ function commerce_paywithmybank_bank_submit_form($payment_method, $pane_values, 
 
   $request_signature = commerce_paywithmybank_get_request_signature($access_key, $payment_parameters);
 
-  $establish_data = '{';
-
-  foreach ($payment_parameters as $key => $value) {
-    $establish_data .= "'{$key}' : '{$value}',";
-  }
-
-  $establish_data .= "'returnUrl' : '{$base_url}/paywithmybank/return',"
-      . "'cancelUrl' : '{$base_url}/checkout/{$order->order_id}/review',"
-      . "'requestSignature' : '{$request_signature}'"
-      . '}';
+  $establish_data = $payment_parameters;
+  $establish_data['returnUrl'] = $base_url . '/paywithmybank/return';
+  $establish_data['cancelUrl'] = $base_url . '/checkout/' . $order->order_id . '/review';
+  $establish_data['requestSignature'] = $request_signature;
 
   $form = array();
   $form['widget'] = array(
@@ -147,12 +137,18 @@ function commerce_paywithmybank_bank_submit_form($payment_method, $pane_values, 
         'type' => 'external',
       ),
       array(
-        'data' => 'try { PayWithMyBank.widget( "paywithmybank-widget" ,{\'showBenefits\' : true, \'showInstructions\' : false, \'actionButtonLabel\' : \'Continue\' , \'eventType\' : \'click\'}); } catch(e){}',
+        'data' => drupal_get_path('module', 'commerce_paywithmybank') . '/js/checkout.js',
+        'type' => 'file',
+      ),
+      array(
+        'data' => 'try { PayWithMyBank.widget( "paywithmybank-widget" ,{\'showBenefits\' : true, \'showInstructions\' : true, \'actionButtonLabel\' : \'Continue\' , \'eventType\' : \'click\'}); } catch(e){}',
         'type' => 'inline',
       ),
       array(
-        'data' => 'PayWithMyBank.establish(' . $establish_data . ');',
-        'type' => 'inline',
+        'data' => array(
+          'paywithmybank_establish_data' => $establish_data,
+        ),
+        'type' => 'setting',
       )
     ),
     'css' => array(
