@@ -64,6 +64,13 @@ function springboard_taxonomy_settings_form($form, &$form_state) {
       $new_settings = $form_state['values']['springboard_taxonomy_node_types'];
       $changes = array_diff_assoc($new_settings, $current_settings);
 
+      foreach ($changes as $key => $value) {
+        // This is a new content type so don't create a warning message about deleting data.
+        if (!isset($current_settings[$key]) && $value === 0) {
+          unset($changes[$key]);
+        }
+      }
+
      $messages = theme('springboard_taxonomy_confirm_message', array('changes' => $changes));
 
       $form['#submit'][] = 'system_settings_form_submit';
