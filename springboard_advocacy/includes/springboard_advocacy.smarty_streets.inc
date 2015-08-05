@@ -31,10 +31,11 @@ function springboard_advocacy_smarty_lookup(array $values) {
   $geo = array();
 
   if (isset($response->error)) {
+    $message = isset($response->status_message) ? $response->status_message : t('Smarty Streets API åServer not responding');
     if (user_access('administer springboard advocacy')) {
-      drupal_set_message(t('An error occurred when attempting to retrieve zip code information: @message', array('@message' => $response->status_message)), 'error');
+      drupal_set_message(t('An error occurred when attempting to retrieve zip code information: @message', array('@message' => $message)), 'error');
     }
-    watchdog('advocacy', 'An error occurred when attempting to retrieve zip code information: @message', array('@message' => $response->status_message), WATCHDOG_ERROR);
+    watchdog('advocacy', 'An error occurred when attempting to retrieve zip code information: @message', array('@message' => $message), WATCHDOG_ERROR);
     return $geo;
   }
 
