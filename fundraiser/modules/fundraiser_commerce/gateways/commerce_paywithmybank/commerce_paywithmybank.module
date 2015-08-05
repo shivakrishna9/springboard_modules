@@ -175,24 +175,7 @@ function commerce_paywithmybank_return_access() {
   $transaction_id = filter_input(INPUT_GET, 'transactionId');
   $request_signature = filter_input(INPUT_GET, 'requestSignature');
 
-  if (empty($transaction_id) || empty($request_signature)) {
-    return FALSE;
-  }
-
-  $payment_method = commerce_payment_method_instance_load('commerce_paywithmybank_bank|commerce_payment_commerce_paywithmybank_bank');
-
-  if (empty($payment_method) || empty($payment_method['settings'])) {
-    return FALSE;
-  }
-
-  $settings = $payment_method['settings'];
-  $access_key = (isset($settings['commerce_paywithmybank_settings_access_key'])) ? $settings['commerce_paywithmybank_settings_access_key'] : NULL;
-
-  if (!commerce_paywithmybank_validate_request_signature($access_key, $transaction_id, $request_signature)) {
-    return FALSE;
-  }
-
-  return TRUE;
+  return commerce_paywithmybank_validate_request($transaction_id, $request_signature);
 }
 
 /**
@@ -240,6 +223,40 @@ function commerce_paywithmybank_get_request_signature($access_key, $parameters) 
   $signature = base64_encode($hash);
 
   return $signature;
+}
+
+/**
+ * Validates a request from PayWithMyBank using the provided transaction ID
+ * and request signature.
+ *
+ * @param string $transaction_id
+ *   The request transaction ID to validate.
+ *
+ * @param string $request_signature
+ *   The request signature to validate.
+ *
+ * @return boolean
+ *   True if request is valid.
+ */
+function commerce_paywithmybank_validate_request($transaction_id, $request_signature) {
+  if (empty($transaction_id) || empty($request_signature)) {
+    return FALSE;
+  }
+
+  $payment_method = commerce_payment_method_instance_load('commerce_paywithmybank_bank|commerce_payment_commerce_paywithmybank_bank');
+
+  if (empty($payment_method) || empty($payment_method['settings'])) {
+    return FALSE;
+  }
+
+  $settings = $payment_method['settings'];
+  $access_key = (isset($settings['commerce_paywithmybank_settings_access_key'])) ? $settings['commerce_paywithmybank_settings_access_key'] : NULL;
+
+  if (!commerce_paywithmybank_validate_request_signature($access_key, $transaction_id, $request_signature)) {
+    return FALSE;
+  }
+
+  return TRUE;
 }
 
 /**
