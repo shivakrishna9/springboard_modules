@@ -270,6 +270,10 @@ function sba_message_action_message_form(&$form, $message, $multiple) {
  * Validation handler for message action forms.
  *
  * Checks whether editing of subject or body is required.
+ * Calls Smarty Streets API and injects response values into form state.
+ * Flattens the webform submission tree and injects flattened values into
+ * form state for use by the message sending functions
+ * in sba_message_action.webform.inc
  *
  * @param $form
  * @param $form_state
@@ -354,7 +358,6 @@ function sba_message_action_form_submit($form, &$form_state) {
         $deliverable += count($message->deliverable);
       }
       if (isset($form_state['values']['submitted']['sba_deliverable_count'])) {
-        //separte usbmit for this
         $form_state['values']['submitted']['sba_deliverable_count'] = $deliverable;
       }
     }
