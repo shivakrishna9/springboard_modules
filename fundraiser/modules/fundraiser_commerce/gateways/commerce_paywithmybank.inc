@@ -128,11 +128,11 @@ function commerce_paywithmybank_fundraiser_commerce_redirect_submit($method_inst
   $transaction_id = filter_input(INPUT_GET, 'transactionId');
   $request_signature = filter_input(INPUT_GET, 'requestSignature');
 
-  if (commerce_paywithmybank_validate_request($transaction_id, $request_signature)) {
-    // TODO: Process donation transaction.
+  $success = commerce_paywithmybank_validate_request($transaction_id, $request_signature);
 
-    return TRUE;
-  }
+  $pane_values = NULL;
 
-  return FALSE;
+  _fundraiser_commerce_charge_submit_form_process($success, $method_instance, $pane_values, $donation);
+
+  return $success;
 }
