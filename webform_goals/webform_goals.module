@@ -1178,6 +1178,8 @@ function webform_goals_form_node_form_alter(&$form, &$form_state) {
     $goal = !empty($gid) ? webform_goals_goal_retrieve($gid) : array();
     $donation_total = t('Total donation amount required to meet this goal.');
     $donation_minimum = t('Minimum total donations required to show progress.');
+    $petition_total = t('How many signatures are required to meet this goal?');
+    $petition_minimum = t('Minimum total signatures required to show progress.');
     $submission_total = t('How many submissions are required to meet this goal?');
     $submission_minimum = t('Minimum total submissions required to show progress.');
 
@@ -1186,9 +1188,13 @@ function webform_goals_form_node_form_alter(&$form, &$form_state) {
         $how_much = $donation_total;
         $minimum = $donation_minimum;
       }
+      else if(module_exists('springboard_petition') &&  springboard_petition_is_petition_type($form['#node']->type)) {
+        $how_much = $petition_total;
+        $minimum = $petition_minimum;
+      }
       else {
-        $how_much = t('How many signatures are required to meet this goal?');
-        $minimum = t('Minimum total signatures required to show progress.');
+        $how_much = $submission_total;
+        $minimum = $submission_minimum;
       }
     }
     else {
@@ -1202,13 +1208,17 @@ function webform_goals_form_node_form_alter(&$form, &$form_state) {
           $how_much = t('What is the total field value required to meet this goal?');
           $minimum = t('Minimum total values required to show progress.');
           $form_text = t('the value of the field @field', array('@field' => $goal['extra']['custom_field_selection']));
-
           break;
         case 'submission_count':
-          $how_much = $submission_total;
-          $minimum = $submission_minimum;
           $form_text = t('Submission Count');
-
+          if(module_exists('springboard_petition') &&  springboard_petition_is_petition_type($form['#node']->type)) {
+            $how_much = $petition_total;
+            $minimum = $petition_minimum;
+          }
+          else {
+            $how_much = $submission_total;
+            $minimum = $submission_minimum;
+          }
           break;
         case 'fundraiser_sustainer_count':
           $how_much = t('Total sustainers conversions required to meet this goal.');
