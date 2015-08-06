@@ -10,7 +10,9 @@
  */
 function commerce_paywithmybank_fundraiser_commerce_fundraiser_gateway_info() {
   return array(
-    'payment_method' => array('paywithmybank'),
+    'payment_method' => array('commerce_paywithmybank_bank' => 'bank account'),
+    'allow_recurring' => array('bank account'),
+    'offsite_recurring' => array('bank account'),
     'offsite_processing' => array('paywithmybank'),
     'form callback' => 'commerce_paywithmybank_fundraiser_commerce_form',
     'redirect callback' => 'commerce_paywithmybank_fundraiser_commerce_redirect',
