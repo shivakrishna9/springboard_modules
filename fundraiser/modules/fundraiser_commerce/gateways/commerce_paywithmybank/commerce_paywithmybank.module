@@ -41,8 +41,17 @@ function commerce_paywithmybank_commerce_payment_method_info() {
  */
 function commerce_paywithmybank_form_commerce_checkout_form_review_alter(&$form, &$form_state, $form_id) {
   // Remove any payment form fields; payment is handled by PayWithMyBank modal.
-  unset($form['commerce_payment']['payment_details']['credit_card']);
-  unset($form['commerce_payment']['payment_details']['cardonfile_instance_default']);
+  if (isset($form_state['values']['commerce_payment']['payment_method'])) {
+    $payment_method_id = $form_state['values']['commerce_payment']['payment_method'];
+  }
+  elseif (isset($form['commerce_payment']['payment_method'])) {
+    $payment_method_id = $form['commerce_payment']['payment_method']['#default_value'];
+  }
+
+  if (substr($payment_method_id, 0, 27) == 'commerce_paywithmybank_bank') {
+    unset($form['commerce_payment']['payment_details']['credit_card']);
+    unset($form['commerce_payment']['payment_details']['cardonfile_instance_default']);
+  }
 }
 
 /**
