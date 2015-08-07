@@ -1145,7 +1145,7 @@ function fundraiser_commerce_fundraiser_donation_process($donation) {
   $info = _fundraiser_get_donation_gateway($donation->did);
   $method_instance = commerce_payment_method_instance_load($info['id']); // From commerce_payment.module.
   // Choose which of two ways to process this.
-  if (in_array($donation->donation['payment_method'], $info['offsite_processing'])) {
+  if (in_array($donation->donation['payment_method'], $info['offsite_processing']) && empty($donation->reference_charge)) {
     // If external processing, we cannot execute a recurring charge against it. So we're ok.
     // Load up additional data as needed for this donation, from Fundraiser and Commerce.
     // If the function to build the redirect form exists.
@@ -1801,7 +1801,7 @@ function fundraiser_commerce_fundraiser_refund_process($refund) {
   $method_instance = commerce_payment_method_instance_load($info['id']); // From commerce_payment.module.
   // This gets us: The payment method instance object with the addition of the settings array. Settings are per Rule.
   // Choose which of two ways to process this.
-  if (in_array($donation->donation['payment_method'], $info['offsite_processing'])) {
+  if (in_array($donation->donation['payment_method'], $info['offsite_processing']) && empty($donation->reference_charge)) {
     // If external processing, we cannot execute a refund charge against it.
     drupal_set_message(t('The %title payment method indicates it is offsite processing, and cannot be refunded through this interface.',
       array('%title' => $method_instance['title'])), 'error');
