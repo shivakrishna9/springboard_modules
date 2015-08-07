@@ -222,7 +222,17 @@ function commerce_paywithmybank_get_api($payment_method) {
 function commerce_paywithmybank_get_request_signature($access_key, $parameters) {
   $data = '';
   foreach ($parameters as $key => $value) {
-    $data .= "{$key}={$value}&";
+    if (is_object($value)) {
+      // Objects in request parameters should be formatted as
+      // $key.$object_property=$object_property_value.
+      // Example: recurrence.recurringAmount=10.00
+      foreach ($value as $obj_key => $obj_value) {
+        $data .= "{$key}.{$obj_key}={$obj_value}&";
+      }
+    }
+    else {
+      $data .= "{$key}={$value}&";
+    }
   }
 
   $data = substr($data, 0, -1);
