@@ -95,11 +95,11 @@ function commerce_paywithmybank_fundraiser_commerce_redirect($method_instance, $
   // Set up payment parameters for recurring payments.
   if (isset($donation->submission_data['recurs_monthly']) && !empty($donation->submission_data['recurs_monthly'])) {
     $recurrence = new stdClass();
-    $recurrence->automaticCapture = 'false';
     $recurrence->frequency = 1;
     $recurrence->frequencyUnit = 1;
     $recurrence->frequencyUnitType = 'Month';
     $recurrence->recurringAmount = $order_amount;
+    $recurrence->automaticCapture = 'false';
 
     $payment_parameters['paymentType'] = 'Recurring';
     $payment_parameters['recurrence'] = $recurrence;
