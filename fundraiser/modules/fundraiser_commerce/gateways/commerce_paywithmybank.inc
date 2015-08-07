@@ -82,6 +82,7 @@ function commerce_paywithmybank_fundraiser_commerce_redirect($method_instance, $
   $order_total = $order->commerce_order_total[LANGUAGE_NONE][0];
   $order_amount = substr(commerce_currency_format($order_total['amount'], $order_total['currency_code']), 1);
 
+  // Set up standard payment parameters.
   $payment_parameters = array(
     'accessId' => $access_id,
     'merchantId' => $merchant_id,
@@ -90,6 +91,19 @@ function commerce_paywithmybank_fundraiser_commerce_redirect($method_instance, $
     'amount' => $order_amount,
     'merchantReference' => $order->order_id,
   );
+
+  // Set up payment parameters for recurring payments.
+  if (isset($donation->submission_data['recurs_monthly']) && !empty($donation->submission_data['recurs_monthly'])) {
+    $recurrence = new stdClass();
+    $recurrence->automaticCapture = 'false';
+    $recurrence->frequency = 1;
+    $recurrence->frequencyUnit = 1;
+    $recurrence->frequencyUnitType = 'Month';
+    $recurrence->recurringAmount = $order_amount;
+
+    $payment_parameters['paymentType'] = 'Recurring';
+    $payment_parameters['recurrence'] = $recurrence;
+  }
 
   $request_signature = commerce_paywithmybank_get_request_signature($access_key, $payment_parameters);
 
