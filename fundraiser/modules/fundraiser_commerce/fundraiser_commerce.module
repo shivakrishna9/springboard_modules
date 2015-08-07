@@ -448,8 +448,6 @@ function fundraiser_commerce_fundraiser_gateway_info() {
       if (empty($this_gateway['allow_refund'])) {
         $this_gateway['allow_refund'] = array();
       }
-      // Error check, disallow members of recurring that are offsite processing.
-      $this_gateway['allow_recurring'] = array_diff($this_gateway['allow_recurring'], $this_gateway['offsite_processing']);
       // Save the original data declared.
       $this_gateway['gateway_details'] = $method_instance;
       $fundraiser_gateways[$this_gateway['id']] = $this_gateway;
