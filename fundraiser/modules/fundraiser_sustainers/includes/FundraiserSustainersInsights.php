@@ -67,25 +67,32 @@ class FundraiserSustainersInsights {
    * if the string is not valid.
    *
    * @param string $string
-   *   A relative string for DateTime that gets prepended with '-' to always
-   *   use past dates.
+   *   A string for DateTime to convert to a date object.
    *
    * @return FundraiserSustainersSnapshotReport
    *   A historical report instance for the time range.
    */
-  public function getHistoricalReportPreset($string) {
-    $string = '-' . $string;
-    $end = new DateTime('+1 day');
+  public function getHistoricalReportPreset($string, $range) {
 
     try {
-      $begin = new DateTime($string);
+      $date1 = new DateTime($string);
     }
     catch (Exception $e) {
       // Default to past 7 days if we can't figure out what the string is.
-      $begin = new DateTime('-7 days');
+      $date1 = new DateTime();
     }
 
-    return $this->getHistoricalReport($begin, $end);
+    // Clone the date2 datetime and then attempt to modify it by the range.
+    $date2 = clone $date1;
+    try {
+      $date2->modify($range);
+    }
+    catch (Exception $e) {
+      // Default to past 7 days if we can't figure out what the string is.
+      $date2->modify('-7 days');
+    }
+
+    return $this->getHistoricalReport($date2, $date1);
   }
 
   /**

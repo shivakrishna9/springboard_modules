@@ -7,52 +7,45 @@
 /**
  * Page callback for the Sustainer Insights dashboard page.
  *
- * @param string $path_range
+ * @param string $date
+ *   A string that can be translated into a date.
+ *  @param string $path_range
  *   An optional path argument to specify a date range.
  *
  * @return string
  *   Themed HTML.
  */
-function fundraiser_sustainers_insights_dashboard($path_range = 'last-7-days') {
+function fundraiser_sustainers_insights_dashboard($date = '', $path_range = 'last-7-days') {
 
   $insights = new FundraiserSustainersInsights();
   $today = $insights->getTodaysSnapshot();
   $date_format = 'n/j/Y';
+  $url_date_format = 'Y-m-d';
+  $today_date = new DateTime();
+
+  // When no date is supplied use today.
+  if (empty($date)) {
+    $date = date($url_date_format);
+  }
 
   switch ($path_range) {
     case 'last-7-days':
-      $range = '7 days';
-      $historical_report = $insights->getHistoricalReportPreset($range);
+      $range = '-7 days';
+      $historical_report = $insights->getHistoricalReportPreset($date, $range);
       $historical_report_heading = 'Last 7 days';
       $future_range = '7 days';
       break;
 
-    case 'last-30-days':
-      $range = '30 days';
-      $historical_report = $insights->getHistoricalReportPreset($range);
-      $historical_report_heading = 'Last 30 days';
-      $future_range = '30 days';
-      break;
-
-    case 'last-month':
-      $begin = new DateTime('first day of last month midnight');
-      $end = new DateTime('first day of this month midnight');
-      $historical_report = $insights->getHistoricalReport($begin, $end);
-      $historical_report_heading = 'Last month';
-
-      $future_range = '30 days';
-      break;
-
-    case 'this-month':
-      $begin = new DateTime('first day of this month midnight');
-      $end = new DateTime('first day of next month midnight');
-      $historical_report = $insights->getHistoricalReport($begin, $end);
-      $historical_report_heading = 'This month';
-      $future_range = '30 days';
-      break;
-
     default:
       return MENU_NOT_FOUND;
+  }
+
+  $start_date = $historical_report->getBegin();
+  $end_date = $historical_report->getEnd();
+
+  // If the end day is not today change the heading.
+  if ($today_date->format($date_format) != $end_date->format($date_format)) {
+    $historical_report_heading = '7 days from ' . $start_date->format($date_format);
   }
 
   $report_snapshots = $historical_report->getSnapshots();
@@ -96,19 +89,21 @@ function fundraiser_sustainers_insights_dashboard($path_range = 'last-7-days') {
   foreach ($report_snapshots as $date => $snapshot) {
     $friendly_date = $snapshot->getDate()->format($date_format);
 
+    $currency_sign = '$';
+
     $row = array(
       'data' => array(
         l($friendly_date, $date_report_path . $date),
         $snapshot->getScheduledCharges(),
-        number_format($snapshot->getScheduledValue() / 100, 2),
+        $currency_sign . number_format($snapshot->getScheduledValue() / 100, 2),
         $snapshot->getRetriedCharges(),
-        number_format($snapshot->getRetriedValue() / 100, 2),
+        $currency_sign . number_format($snapshot->getRetriedValue() / 100, 2),
         $snapshot->getSuccessfulCharges(),
-        number_format($snapshot->getSuccessfulValue() / 100, 2),
+        $currency_sign . number_format($snapshot->getSuccessfulValue() / 100, 2),
         $snapshot->getFailedRescheduledCharges(),
-        number_format($snapshot->getFailedRescheduledValue() / 100, 2),
+        $currency_sign . number_format($snapshot->getFailedRescheduledValue() / 100, 2),
         $snapshot->getFailedAbandonedCharges(),
-        number_format($snapshot->getFailedAbandonedValue() / 100, 2),
+        $currency_sign . number_format($snapshot->getFailedAbandonedValue() / 100, 2),
       ),
     );
 
@@ -141,10 +136,19 @@ function fundraiser_sustainers_insights_dashboard($path_range = 'last-7-days') {
     $forecast_data[] = $snapshot->getScheduledCharges();
   }
 
-  $url_date = $today->getDate()->format('Y-m-d');
+  $url_date = $today->getDate()->format($url_date_format);
+
+  // The previous link should be linked to the day before this report starts.
+  $previous_date = clone $start_date;
+  $previous_date->modify('-1 day');
+  $previous_link = l('<< previous', 'admin/springboard/reports/sustainers/insights/' . $previous_date->format($url_date_format));
+
+  // The next link should be linked to seven days after this report ends.
+  $next_date = clone $end_date;
+  $next_date->modify('+7 days');
+  $next_link = l('next >>', 'admin/springboard/reports/sustainers/insights/' . $next_date->format($url_date_format));
 
   $variables = array(
-    'time_range_links' => theme('links', fundraiser_sustainers_insights_dashboard_links()),
     'today' => $today->getDate()->format('d M Y'),
     'scheduled_charges' => $today->getScheduledCharges(),
     'today_scheduled_path' => 'springboard/reports/sustainers/scheduled/' . $url_date,
@@ -161,6 +165,8 @@ function fundraiser_sustainers_insights_dashboard($path_range = 'last-7-days') {
     'chart_labels' => json_encode(array_reverse($label_data)),
     'successes_data' => json_encode(array_reverse($successes_data)),
     'failure_data' => json_encode(array_reverse($failures_data)),
+    'previous_link' => $previous_link,
+    'next_link' => $next_link,
   );
 
   $path = drupal_get_path('module', 'fundraiser_sustainers');
@@ -170,32 +176,4 @@ function fundraiser_sustainers_insights_dashboard($path_range = 'last-7-days') {
   drupal_add_js($path . '/js/fundraiser_sustainers.insights.js');
 
   return theme('fundraiser_sustainers_insights_dashboard', $variables);
-}
-
-/**
- * Creates the links for time range.
- *
- * @return array
- *   The links render array for theming.
- */
-function fundraiser_sustainers_insights_dashboard_links() {
-  $base = 'springboard/reports/sustainers/insights';
-
-  return array(
-    'links' => array(
-      'week' => array(
-        'title' => 'Last week',
-        'href' => $base,
-      ),
-      'last-month' => array(
-        'title' => 'Last month',
-        'href' => $base . '/last-month',
-      ),
-      'this-month' => array(
-        'title' => 'This month',
-        'href' => $base . '/this-month',
-      ),
-    ),
-    'heading' => 'Time Range',
-  );
 }

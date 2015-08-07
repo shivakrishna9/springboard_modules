@@ -72,16 +72,12 @@
 
 }
 
-.insights-today-box.icharges {
-  background-color: #d2c26a;
-}
-
 .insights-today-box.isuccesses {
-  background-color: #b4c6af;
+  background: transparent linear-gradient(to bottom, #65D34A 20%, #59C143 100%) repeat scroll 0% 0%;
 }
 
 .insights-today-box.itotal-value {
-  background-color: #58a8a9;
+  background-color: #0086D6;
 }
 
 .insights-today-box.ifailures {
