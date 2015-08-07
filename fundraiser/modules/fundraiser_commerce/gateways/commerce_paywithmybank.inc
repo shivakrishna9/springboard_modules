@@ -104,6 +104,9 @@ function commerce_paywithmybank_fundraiser_commerce_redirect($method_instance, $
 
     $payment_parameters['paymentType'] = 'Recurring';
     $payment_parameters['recurrence'] = $recurrence;
+
+    // Do not make an initial charge on a recurring donation/.
+    $payment_parameters['amount'] = '0.00';
   }
 
   $request_signature = commerce_paywithmybank_get_request_signature($access_key, $payment_parameters);
