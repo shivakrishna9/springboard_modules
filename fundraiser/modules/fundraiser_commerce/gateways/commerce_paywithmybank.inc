@@ -221,16 +221,14 @@ function commerce_paywithmybank_pane_values($donation) {
   $method_instance = commerce_payment_method_instance_load($donation->gateway['id']);
 
   // Only one valid payment method.
-  if ($donation->submission_data['payment_method'] == 'bank account') {
-    if (!empty($donation->txn_id)) {
-      $api = commerce_paywithmybank_get_api($method_instance);
-      $api_transaction = $api->getTransaction($donation->txn_id);
+  if (!empty($donation->txn_id)) {
+    $api = commerce_paywithmybank_get_api($method_instance);
+    $api_transaction = $api->getTransaction($donation->txn_id);
 
-      $pane_values['bank_account'] = array(
-        'account_number' => $api_transaction->payment->account->accountNumber,
-        'account_name' => $api_transaction->payment->account->name,
-      );
-    }
+    $pane_values['bank_account'] = array(
+      'account_number' => $api_transaction->payment->account->accountNumber,
+      'account_name' => $api_transaction->payment->account->name,
+    );
   }
 
   return $pane_values;
@@ -246,15 +244,11 @@ function commerce_paywithmybank_pane_values($donation) {
  *   Values ready to be passed into a card on file profile query.
  */
 function commerce_paywithmybank_cardonfile_fields($donation) {
-  $data = array();
-
   $pane_values = commerce_paywithmybank_pane_values($donation);
 
-  if ($donation->donation['payment_method'] == 'bank account') {
-    $data = array(
-      'card_number' => substr($pane_values['bank_account']['account_number']),
-    );
-  }
+  $data = array(
+    'card_number' => substr($pane_values['bank_account']['account_number']),
+  );
 
   return $data + array('instance_id' => $donation->gateway['id'], 'uid' => $donation->uid);
 }
