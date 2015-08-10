@@ -203,7 +203,9 @@ function commerce_paywithmybank_fundraiser_commerce_update($donation, $card_data
  * Card on file callback.
  */
 function commerce_paywithmybank_fundraiser_commerce_cardonfile($donation) {
-  // TODO: Process card on file information.
+  $cardonfile_fields = commerce_paywithmybank_cardonfile_fields($donation);
+
+  return $cardonfile_fields;
 }
 
 /**
@@ -247,7 +249,7 @@ function commerce_paywithmybank_cardonfile_fields($donation) {
   $pane_values = commerce_paywithmybank_pane_values($donation);
 
   $data = array(
-    'card_number' => substr($pane_values['bank_account']['account_number']),
+    'card_number' => $pane_values['bank_account']['account_number'],
   );
 
   return $data + array('instance_id' => $donation->gateway['id'], 'uid' => $donation->uid);
