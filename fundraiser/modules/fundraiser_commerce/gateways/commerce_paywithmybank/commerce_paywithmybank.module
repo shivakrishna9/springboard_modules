@@ -134,33 +134,13 @@ function commerce_paywithmybank_return() {
   $payment_method = commerce_payment_method_instance_load('commerce_paywithmybank_bank|commerce_payment_commerce_paywithmybank_bank');
 
   $api = commerce_paywithmybank_get_api($payment_method);
-
   $api_transaction = $api->getTransaction($transaction_id);
 
   $order = commerce_order_load($api_transaction->merchantReference);
-  $amount = commerce_currency_decimal_to_amount($api_transaction->amount, $api_transaction->currency);
-  $success = FALSE;
 
-  // Create a Commerce transaction for this PayWithMyBank transaction.
-  $transaction = commerce_payment_transaction_new($payment_method['method_id'], $order->order_id);
-  $transaction->uid = $order->uid;
-  $transaction->instance_id = $payment_method['instance_id'];
-  $transaction->remote_id = $api_transaction->transactionId;
-  $transaction->amount = $amount;
-  $transaction->currency_code = $api_transaction->currency;
-  $transaction->message = $api_transaction->statusMessage;
+  commerce_paywithmybank_create_payment_transaction($api_transaction, $payment_method);
 
-  // Set the transaction success / failure status.
-  if ($api_transaction->status == PayWithMyBank::TRANSACTION_STATUS_AUTHORIZED) {
-    $transaction->status = COMMERCE_PAYMENT_STATUS_SUCCESS;
-    $success = TRUE;
-  }
-  else {
-    $transaction->status = COMMERCE_PAYMENT_STATUS_FAILURE;
-  }
-
-  // Save the transaction.
-  commerce_payment_transaction_save($transaction);
+  $success = ($api_transaction->status == PayWithMyBank::TRANSACTION_STATUS_AUTHORIZED);
 
   if ($success) {
     commerce_checkout_complete($order);
@@ -304,4 +284,43 @@ function commerce_paywithmybank_validate_request_signature($access_key, $transac
   $calculated_signature = base64_encode($hash);
 
   return ($request_signature == $calculated_signature);
+}
+
+/**
+ * Creates a Commerce payment transaction for a PayWithMyBank transaction.
+ *
+ * @param object $transaction
+ *   The PayWithMyBank transaction.
+ * @param array $payment_method
+ *   The payment method information.
+ * @param object $order
+ *   The Commerce order object.
+ *
+ * @return object
+ *   The Commerce payment transaction object.
+ */
+function commerce_paywithmybank_create_payment_transaction($api_transaction, $payment_method, $order) {
+  $amount = commerce_currency_decimal_to_amount($api_transaction->amount, $api_transaction->currency);
+
+  // Create a Commerce transaction for this PayWithMyBank transaction.
+  $transaction = commerce_payment_transaction_new($payment_method['method_id'], $order->order_id);
+  $transaction->uid = $order->uid;
+  $transaction->instance_id = $payment_method['instance_id'];
+  $transaction->remote_id = $api_transaction->transactionId;
+  $transaction->amount = $amount;
+  $transaction->currency_code = $api_transaction->currency;
+  $transaction->message = $api_transaction->statusMessage;
+
+  // Set the transaction success / failure status.
+  if ($api_transaction->status == PayWithMyBank::TRANSACTION_STATUS_AUTHORIZED) {
+    $transaction->status = COMMERCE_PAYMENT_STATUS_SUCCESS;
+  }
+  else {
+    $transaction->status = COMMERCE_PAYMENT_STATUS_FAILURE;
+  }
+
+  // Save the transaction.
+  commerce_payment_transaction_save($transaction);
+
+  return $transaction;
 }

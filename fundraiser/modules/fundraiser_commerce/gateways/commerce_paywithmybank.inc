@@ -17,6 +17,8 @@ function commerce_paywithmybank_fundraiser_commerce_fundraiser_gateway_info() {
     'form callback' => 'commerce_paywithmybank_fundraiser_commerce_form',
     'redirect callback' => 'commerce_paywithmybank_fundraiser_commerce_redirect',
     'refund callback' => '',
+    'update callback' => 'commerce_paywithmybank_fundraiser_commerce_update',
+    'cardonfile callback' => 'commerce_paywithmybank_fundraiser_commerce_cardonfile',
   );
 }
 
@@ -147,11 +149,99 @@ function commerce_paywithmybank_fundraiser_commerce_redirect_submit($method_inst
   $transaction_id = filter_input(INPUT_GET, 'transactionId');
   $request_signature = filter_input(INPUT_GET, 'requestSignature');
 
-  $success = commerce_paywithmybank_validate_request($transaction_id, $request_signature);
+  $valid_request = commerce_paywithmybank_validate_request($transaction_id, $request_signature);
 
-  $pane_values = NULL;
+  if ($valid_request) {
+    $api = commerce_paywithmybank_get_api($method_instance);
+    $api_transaction = $api->getTransaction($transaction_id);
 
-  _fundraiser_commerce_charge_submit_form_process($success, $method_instance, $pane_values, $donation);
+    // Create a Commerce payment transaction for this PayWithMyBank transaction.
+    commerce_paywithmybank_create_payment_transaction($api_transaction, $method_instance, $order);
 
-  return $success;
+    $success = ($api_transaction->status == PayWithMyBank::TRANSACTION_STATUS_AUTHORIZED);
+
+    $pane_values = array();
+
+    if ($success) {
+      $pane_values = commerce_paywithmybank_pane_values($donation);
+
+      if (!empty($donation->submission_data['recurs_monthly'])) {
+        $pane_values['bank_account']['cardonfile_store'] = TRUE;
+      }
+    }
+
+    _fundraiser_commerce_charge_submit_form_process($success, $method_instance, $pane_values, $donation, 'bank_account');
+
+    return $success;
+  }
+
+  return FALSE;
+}
+
+/**
+ * Callback function, update card data stored at the gateway and locally.
+ *
+ * @param object $donation
+ *   Fundraiser commerce donation object which should include the
+ *   new/updated card data.
+ * @param object $card_data
+ *   Card on file entity, this should be the current entity for the donation,
+ *   new data should be passed in the donation object.
+ *
+ * @return object|NULL
+ *   Card on file entity for the new/updated card data.
+ *   NULL if no card data was found.
+ */
+function commerce_paywithmybank_fundraiser_commerce_update($donation, $card_data = NULL) {
+  // TODO: Update card on file information.
+}
+
+/**
+ * Card on file callback.
+ */
+function commerce_paywithmybank_fundraiser_commerce_cardonfile($donation) {
+  // TODO: Process card on file information.
+}
+
+/**
+ * Get PayWithyMyBank pane values from a donation.
+ *
+ * @param object $donation
+ *   The donation to grab the pane values from.
+ *
+ * @return array
+ *   The pane values.
+ */
+function commerce_paywithmybank_pane_values($donation) {
+  $pane_values = array();
+
+  // Only one valid payment method.
+  if ($donation->donation['payment_method'] == 'bank account') {
+    $pane_values['bank_account'] = $donation->donation['payment_fields']['bank_account'];
+  }
+
+  return $pane_values;
+}
+
+/**
+ * Returns the values need to load a card on file profile for PayWithMyBank.
+ *
+ * @param object $donation
+ *   Fundraiser donation object.
+ *
+ * @return array
+ *   Values ready to be passed into a card on file profile query.
+ */
+function commerce_paywithmybank_cardonfile_fields($donation) {
+  $data = array();
+
+  $pane_values = commerce_paywithmybank_pane_values($donation);
+
+  if ($donation->donation['payment_method'] == 'bank account') {
+    $data = array(
+      'card_number' => substr($pane_values['bank_account']['account_number'], -3),
+    );
+  }
+
+  return $data + array('instance_id' => $donation->gateway['id'], 'uid' => $donation->uid);
 }
