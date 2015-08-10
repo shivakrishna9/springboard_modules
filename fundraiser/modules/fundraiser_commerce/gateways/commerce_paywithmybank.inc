@@ -218,9 +218,19 @@ function commerce_paywithmybank_fundraiser_commerce_cardonfile($donation) {
 function commerce_paywithmybank_pane_values($donation) {
   $pane_values = array();
 
+  $method_instance = commerce_payment_method_instance_load($donation->gateway['id']);
+
   // Only one valid payment method.
-  if ($donation->donation['payment_method'] == 'bank account') {
-    $pane_values['bank_account'] = $donation->donation['payment_fields']['bank_account'];
+  if ($donation->submission_data['payment_method'] == 'bank account') {
+    if (!empty($donation->txn_id)) {
+      $api = commerce_paywithmybank_get_api($method_instance);
+      $api_transaction = $api->getTransaction($donation->txn_id);
+
+      $pane_values['bank_account'] = array(
+        'account_number' => $api_transaction->payment->account->accountNumber,
+        'account_name' => $api_transaction->payment->account->name,
+      );
+    }
   }
 
   return $pane_values;
@@ -242,7 +252,7 @@ function commerce_paywithmybank_cardonfile_fields($donation) {
 
   if ($donation->donation['payment_method'] == 'bank account') {
     $data = array(
-      'card_number' => substr($pane_values['bank_account']['account_number'], -3),
+      'card_number' => substr($pane_values['bank_account']['account_number']),
     );
   }
 
