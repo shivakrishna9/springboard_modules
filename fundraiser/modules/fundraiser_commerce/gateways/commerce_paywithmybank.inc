@@ -152,6 +152,9 @@ function commerce_paywithmybank_fundraiser_commerce_redirect_submit($method_inst
   $valid_request = commerce_paywithmybank_validate_request($transaction_id, $request_signature);
 
   if ($valid_request) {
+    $donation->txn_id = $transaction_id;
+    fundraiser_donation_update($donation);
+
     $api = commerce_paywithmybank_get_api($method_instance);
     $api_transaction = $api->getTransaction($transaction_id);
 
