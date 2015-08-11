@@ -196,15 +196,83 @@ function commerce_paywithmybank_fundraiser_commerce_redirect_submit($method_inst
  *   NULL if no card data was found.
  */
 function commerce_paywithmybank_fundraiser_commerce_update($donation, $card_data = NULL) {
-  // TODO: Update card on file information.
+  $payment_method = $donation->gateway['gateway_details'];
+
+  // If no card data was passed load the profile from the donation if it's set.
+  if (empty($card_data) && !empty($donation->data['cardonfile'])) {
+    $card_data = commerce_cardonfile_load($donation->data['cardonfile']);
+  }
+
+  // Load the card on file values for this donation.
+  $cardonfile_fields = commerce_paywithmybank_cardonfile_fields($donation);
+
+  // Check the account number to see if it matches the current account number.
+  $action = 'update';
+  if (empty($card_data)) {
+    $action = 'new';
+  }
+  elseif ($cardonfile_fields['card_number'] != $card_data->card_number) {
+    // This is a new card for this donation,
+    // Check for an existing card on file profile.
+    $existing = _fundraiser_commerce_cardonfile_match($cardonfile_fields);
+    if (!empty($existing)) {
+      // Set the existing card on the donation and return it.
+      $donation->data['cardonfile'] = $existing->card_id;
+      $card_data = $existing;
+    }
+    // Nothing stored locally so create a new profile.
+    else {
+      $action = 'new';
+    }
+  }
+
+  if ($action == 'update') {
+    $card_data->card_number = $cardonfile_fields['card_number'];
+    commerce_cardonfile_save($card_data);
+    return $card_data;
+  }
+  // Create a new card on file record.
+  elseif ($action == 'new') {
+    $card_name = '';
+    $order = commerce_order_load($donation->did);
+    $order_wrapper = entity_metadata_wrapper('commerce_order', $order);
+
+    if ($order_wrapper->commerce_customer_billing->value()) {
+      $billing_address = $order_wrapper->commerce_customer_billing->commerce_customer_address->value();
+      $card_name = $billing_address['name_line'];
+    }
+
+    if (!empty($donation->txn_id)) {
+      $card_data = commerce_cardonfile_new();
+      $card_data->uid = $order->uid;
+      $card_data->payment_method = $payment_method['method_id'];
+      $card_data->instance_id = $payment_method['instance_id'];
+      $card_data->remote_id = $donation->txn_id;
+      $card_data->card_type = '';
+      $card_data->card_name = $card_name;
+      $card_data->card_number = $cardonfile_fields['card_number'];
+      $card_data->card_exp_month = '';
+      $card_data->card_exp_year = '';
+      $card_data->status = 1;
+
+      // Save and log the creation of the new card on file.
+      commerce_cardonfile_save($card_data);
+      watchdog('commerce_paywithmybank', 'Card on file registered and saved to user @uid.', array('@uid' => $order->uid));
+
+      // Set the value on the donation.
+      $donation->data['cardonfile'] = $card_data->card_id;
+      return $card_data;
+    }
+  }
 }
 
 /**
  * Card on file callback.
  */
 function commerce_paywithmybank_fundraiser_commerce_cardonfile($donation) {
-  $cardonfile_fields = commerce_paywithmybank_cardonfile_fields($donation);
+  commerce_paywithmybank_fundraiser_commerce_update($donation);
 
+  $cardonfile_fields = commerce_paywithmybank_cardonfile_fields($donation);
   return $cardonfile_fields;
 }
 
