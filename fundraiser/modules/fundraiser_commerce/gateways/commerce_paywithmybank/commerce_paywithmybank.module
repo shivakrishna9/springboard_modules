@@ -12,6 +12,13 @@ function commerce_paywithmybank_menu() {
     'type' => MENU_CALLBACK,
   );
 
+  $items['paywithmybank/notify'] = array(
+    'title' => 'PayWithMyBank Notify Callback',
+    'page callback' => 'commerce_paywithmybank_notify',
+    'access callback' => 'commerce_paywithmybank_notify_access',
+    'type' => MENU_CALLBACK,
+  );
+
   return $items;
 }
 
@@ -168,6 +175,45 @@ function commerce_paywithmybank_return_access() {
 }
 
 /**
+ * Callback for processing notification information sent by PayWithMyBank.
+ */
+function commerce_paywithmybank_notify() {
+  // TODO: Process notification and add a new transaction to the donation order.
+
+  $merchant_reference = filter_input(INPUT_POST, 'merchantReference');
+
+  $order = commerce_order_load($merchant_reference);
+}
+
+/**
+ * Access callback for processing notification information sent by PayWithMyBank.
+ */
+function commerce_paywithmybank_notify_access() {
+  $parameters = array(
+    'merchantId' => filter_input(INPUT_POST, 'merchantId'),
+    'merchantReference' => filter_input(INPUT_POST, 'merchantReference'),
+    'eventId' => filter_input(INPUT_POST, 'eventId'),
+    'eventType' => filter_input(INPUT_POST, 'eventType'),
+    'objectType' => filter_input(INPUT_POST, 'objectType'),
+    'objectId' => filter_input(INPUT_POST, 'objectId'),
+    'message' => filter_input(INPUT_POST, 'message'),
+    'createdAt' => filter_input(INPUT_POST, 'createdAt'),
+  );
+
+  $auth_header = drupal_get_http_header('Authorization');
+  $auth_header_parts = explode(' ', $auth_header);
+
+  if ($auth_header_parts[0] != 'Basic') {
+    return FALSE;
+  }
+
+  $payment_method = commerce_payment_method_instance_load('commerce_paywithmybank_bank|commerce_payment_commerce_paywithmybank_bank');
+  $access_key = isset($payment_method['settings']['commerce_paywithmybank_settings_access_key']) ? $payment_method['settings']['commerce_paywithmybank_settings_access_key'] : NULL;
+
+  return commerce_paywithmybank_validate_notification($access_key, $auth_header_parts[1], $parameters);
+}
+
+/**
  * Gets a new instance of the PayWithMyBank REST API library.
  *
  * @param array @payment_method
@@ -273,8 +319,8 @@ function commerce_paywithmybank_validate_request($transaction_id, $request_signa
  * @param string $request_signature
  *   The request signature to validate.
  *
- * @return string
- *   The generated request signature.
+ * @return bool
+ *   TRUE if the request signature is valid.
  */
 function commerce_paywithmybank_validate_request_signature($access_key, $transaction_id, $request_signature) {
   $data = 'transactionId=' . $transaction_id;
@@ -284,6 +330,37 @@ function commerce_paywithmybank_validate_request_signature($access_key, $transac
   $calculated_signature = base64_encode($hash);
 
   return ($request_signature == $calculated_signature);
+}
+
+/**
+ * Validates a notification sent by PayWithMyBank.
+ *
+ * @see https://paywithmybank.com/docs/api-ref.html#notification
+ *
+ * @param string $access_key
+ *   The PayWithMyBank API access key.
+ *
+ * @param string $auth_string
+ *   The authorization string received in the headers of the POST request.
+ *
+ * @param array $parameters
+ *   The notification parameters.
+ *
+ * @return bool
+ *   TRUE if the notification is valid.
+ */
+function commerce_paywithmybank_validate_notification($access_key, $auth_string, $parameters) {
+  $data = '';
+
+  foreach ($parameters as $key => $value) {
+    $data .= "{$key}={$value}&";
+  }
+
+  $hash = hash_hmac('sha1', $data, $access_key, TRUE);
+
+  $calculated_auth_string = base64_encode($hash);
+
+  return ($auth_string == $calculated_auth_string);
 }
 
 /**
