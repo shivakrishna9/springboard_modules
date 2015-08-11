@@ -75,6 +75,8 @@ function commerce_paywithmybank_fundraiser_commerce_form($payment_method, $confi
  * Callback function, handle the redirect form.
  */
 function commerce_paywithmybank_fundraiser_commerce_redirect($method_instance, $donation, $order, $settings) {
+  global $base_url;
+
   $merchant_id = (isset($method_instance['settings']['commerce_paywithmybank_settings_merchant_id'])) ? $method_instance['settings']['commerce_paywithmybank_settings_merchant_id'] : NULL;
   $access_id = (isset($method_instance['settings']['commerce_paywithmybank_settings_access_id'])) ? $method_instance['settings']['commerce_paywithmybank_settings_access_id'] : NULL;
   $access_key = (isset($method_instance['settings']['commerce_paywithmybank_settings_access_key'])) ? $method_instance['settings']['commerce_paywithmybank_settings_access_key'] : NULL;
@@ -115,7 +117,7 @@ function commerce_paywithmybank_fundraiser_commerce_redirect($method_instance, $
 
   $establish_data = $payment_parameters;
   $establish_data['returnUrl'] = $settings['return'];
-  $establish_data['cancelUrl'] = $settings['cancel_return'];
+  $establish_data['cancelUrl'] = $base_url . '/springboard/node/' . $donation->nid . '/';
   $establish_data['requestSignature'] = $request_signature;
 
   $form = array();
