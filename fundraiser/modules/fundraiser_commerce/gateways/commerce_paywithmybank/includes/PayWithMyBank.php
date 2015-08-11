@@ -45,6 +45,22 @@ class PayWithMyBank {
   const AUTHORIZATION_STATUS_FAILED = 5;
   const AUTHORIZATION_STATUS_CANCELED = 6;
   const AUTHORIZATION_STATUS_VOIDED = 7;
+  // Event type constants.
+  const EVENT_TYPE_UPDATE = 'Update';
+  const EVENT_TYPE_ESTABLISH = 'Establish';
+  const EVENT_TYPE_AUTHORIZE = 'Authorize';
+  const EVENT_TYPE_PROCESS = 'Process';
+  const EVENT_TYPE_COMPLETE = 'Complete';
+  const EVENT_TYPE_CANCEL = 'Cancel';
+  const EVENT_TYPE_FAIL = 'Fail';
+  const EVENT_TYPE_EXPIRE = 'Expire';
+  const EVENT_TYPE_DENY = 'Deny';
+  const EVENT_TYPE_REFUND = 'Refund';
+  const EVENT_TYPE_DISPUTE = 'Dispute';
+  const EVENT_TYPE_RECONCILE = 'Reconcile';
+  const EVENT_TYPE_REVERSE = 'Reverse';
+  const EVENT_TYPE_HOLD = 'Hold';
+  const EVENT_TYPE_FEEDBACK = 'Feedback';
 
   /**
    * @var array $endpoints
