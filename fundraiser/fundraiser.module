@@ -3530,12 +3530,12 @@ function fundraiser_log_donation_processing($donation, $log = array()) {
     '%payment_gateway_config' => $gateway_config,
     '%transaction_type' => $log['transaction_type'],
     '%transaction_total_exec_time' => $exec_time,
-    '%donation_value' => $donation->donation['amount'],
-    '%donation_currency' => $donation->donation['currency']['code'],
-    '%country' => $donation->donation['country'],
+    '%donation_value' => !empty($donation->donation['amount']) ? $donation->donation['amount'] : '0.00',
+    '%donation_currency' => !empty($donation->donation['currency']['code']) ? $donation->donation['currency']['code'] : 'N/A',
+    '%country' => !empty($donation->donation['country']) ? $donation->donation['country'] : 'N/A',
     '%origin_ip' => ip_address(),
-    '%success' => isset($donation->result['success']) ? $donation->result['success'] : 0,
-    '%reference_charge' => $donation->reference_charge,
+    '%success' => isset($donation->result['success']) ? (int) $donation->result['success'] : 0,
+    '%reference_charge' => isset($donation->reference_charge) ? (int) $donation->reference_charge : 0,
   );
 
   watchdog($type, $message, $variables, WATCHDOG_INFO);
