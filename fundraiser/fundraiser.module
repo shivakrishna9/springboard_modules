@@ -1975,8 +1975,21 @@ function _fundraiser_donation_copy($donation) {
  * Donation processing, a given donation needs to be processed.
  */
 function fundraiser_donation_process($donation) {
+  // Create an array of values for the log.
+  $log = array(
+    'start' => microtime(TRUE),
+    'transaction_type' => 'charge',
+  );
+
   // Pass this down to the processing module.
   module_invoke_all('fundraiser_donation_process', $donation);
+
+  // Mark the end time of the processing.
+  $log['end'] = microtime(TRUE);
+
+  // Log the processing details.
+  fundraiser_log_donation_processing($donation, $log);
+
   // And save the donation as it is at this stage since it was created.
   // This makes sure that any changes made stay in place.
   fundraiser_donation_update($donation, FALSE);
@@ -3469,4 +3482,58 @@ function fundraiser_springboard_admin_admin_menu_items_alter(&$items) {
     'customized' => 1,
     'weight' => 0,
   );
+}
+
+/**
+ * Log that a donation has processed and some other details for Log Analysis.
+ *
+ * @param object $donation
+ *   The donation object.
+ * @param array $log
+ *   Additional log details, should include start/end times, and the type of transaction: charge, refund.
+ */
+function fundraiser_log_donation_processing($donation, $log = array()) {
+  // Calculate the execution time.
+  $exec_time = round($log['end'] - $log['start'], 4);
+
+  // Setup the gateway details, the gateway name and config (rule name) are contained in the id.
+  list($gateway, $gateway_config) = explode('|', $donation->gateway['id']);
+
+  $pieces = array(
+    'datetime',
+    'category',
+    'unique_transaction_id',
+    'client_identifier',
+    'payment_gateway',
+    'payment_gateway_config',
+    'transaction_type',
+    'transaction_total_exec_time',
+    'donation_value',
+    'donation_currency',
+    'country',
+    'origin_ip',
+    'success',
+    'reference_charge',
+  );
+
+  $message = '|%' . implode('|%', $pieces);
+
+  $variables = array(
+    '%datetime' => date('c', $log['start']),
+    '%category' => 'INFO',
+    '%unique_transaction_id' => $donation->did,
+    '%client_identifier' => $donation->uid,
+    '%payment_gateway' => $gateway,
+    '%payment_gateway_config' => $gateway_config,
+    '%transaction_type' => $log['transaction_type'],
+    '%transaction_total_exec_time' => $exec_time,
+    '%donation_value' => !empty($donation->donation['amount']) ? $donation->donation['amount'] : '0.00',
+    '%donation_currency' => !empty($donation->donation['currency']['code']) ? $donation->donation['currency']['code'] : 'N/A',
+    '%country' => !empty($donation->donation['country']) ? $donation->donation['country'] : 'N/A',
+    '%origin_ip' => ip_address(),
+    '%success' => isset($donation->result['success']) ? (int) $donation->result['success'] : 0,
+    '%reference_charge' => isset($donation->reference_charge) ? (int) $donation->reference_charge : 0,
+  );
+
+  watchdog('fundraiser_donation_tracker', $message, $variables, WATCHDOG_INFO);
 }
