@@ -3493,9 +3493,6 @@ function fundraiser_springboard_admin_admin_menu_items_alter(&$items) {
  *   Additional log details, should include start/end times, and the type of transaction: charge, refund.
  */
 function fundraiser_log_donation_processing($donation, $log = array()) {
-  // @todo Decide on an appropriate type for watchdog.
-  $type = 'fundraiser_donation';
-
   // Calculate the execution time.
   $exec_time = round($log['end'] - $log['start'], 4);
 
@@ -3538,5 +3535,5 @@ function fundraiser_log_donation_processing($donation, $log = array()) {
     '%reference_charge' => isset($donation->reference_charge) ? (int) $donation->reference_charge : 0,
   );
 
-  watchdog($type, $message, $variables, WATCHDOG_INFO);
+  watchdog('fundraiser_donation_tracker', $message, $variables, WATCHDOG_INFO);
 }
