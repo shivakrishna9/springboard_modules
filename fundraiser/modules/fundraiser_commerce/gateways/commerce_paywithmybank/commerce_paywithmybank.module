@@ -189,6 +189,9 @@ function commerce_paywithmybank_notify() {
  * Access callback for processing notification information sent by PayWithMyBank.
  */
 function commerce_paywithmybank_notify_access() {
+  // Log the entire request for debug purposes.
+  watchdog('Commerce PayWithMyBank', serialize($_POST), WATCHDOG_DEBUG);
+
   $parameters = array(
     'merchantId' => filter_input(INPUT_POST, 'merchantId'),
     'merchantReference' => filter_input(INPUT_POST, 'merchantReference'),
