@@ -245,6 +245,13 @@ function sba_message_action_views_default_views() {
   $handler->display->display_options['filters']['opt_in']['field'] = 'opt_in';
   $handler->display->display_options['filters']['opt_in']['relationship'] = 'uid';
   $handler->display->display_options['filters']['opt_in']['value'] = '1';
+  /* Filter criterion: User: The user ID */
+  $handler->display->display_options['filters']['uid_raw']['id'] = 'uid_raw';
+  $handler->display->display_options['filters']['uid_raw']['table'] = 'users';
+  $handler->display->display_options['filters']['uid_raw']['field'] = 'uid_raw';
+  $handler->display->display_options['filters']['uid_raw']['relationship'] = 'uid';
+  $handler->display->display_options['filters']['uid_raw']['operator'] = '>';
+  $handler->display->display_options['filters']['uid_raw']['value']['value'] = '0';
 
   /* Display: Block */
   $handler = $view->new_display('block', 'Block', 'block');
