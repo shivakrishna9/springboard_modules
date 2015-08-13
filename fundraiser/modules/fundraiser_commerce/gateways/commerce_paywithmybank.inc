@@ -300,9 +300,13 @@ function commerce_paywithmybank_fundraiser_commerce_cardonfile($donation) {
  * Expiration date callback.
  */
 function commerce_paywithmybank_fundraiser_commerce_expire($submission_fields) {
+  // One future recurring payment should be created, so set expiration time
+  // to one month ahead of current time.
+  $expire_time = time() + 2592000;
+
   $expires = array(
-    'month' => 0,
-    'year' => 0,
+    'month' => date('m', $expire_time),
+    'year' => date('Y', $expire_time),
   );
 
   return $expires;
