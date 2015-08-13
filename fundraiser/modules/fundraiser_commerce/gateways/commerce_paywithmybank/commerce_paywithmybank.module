@@ -176,13 +176,28 @@ function commerce_paywithmybank_return_access() {
 
 /**
  * Callback for processing notification information sent by PayWithMyBank.
+ *
+ * @see https://paywithmybank.com/docs/api-ref.html#notification
  */
 function commerce_paywithmybank_notify() {
-  // TODO: Process notification and add a new transaction to the donation order.
-
+  // Process notification and add a new transaction to the donation order.
   $merchant_reference = filter_input(INPUT_POST, 'merchantReference');
 
-  $order = commerce_order_load($merchant_reference);
+  $object_type = filter_input(INPUT_POST, 'objectType');
+  $object_id = filter_input(INPUT_POST, 'objectId');
+
+  if ($object_type == 'Transaction') {
+    $payment_method = commerce_payment_method_instance_load('commerce_paywithmybank_bank|commerce_payment_commerce_paywithmybank_bank');
+
+    $api = commerce_paywithmybank_get_api($payment_method);
+    $api_transaction = $api->getTransaction($object_id);
+
+    $order = commerce_order_load($merchant_reference);
+
+    if (!empty($order)) {
+      commerce_paywithmybank_create_payment_transaction($api_transaction, $payment_method, $order);
+    }
+  }
 }
 
 /**
