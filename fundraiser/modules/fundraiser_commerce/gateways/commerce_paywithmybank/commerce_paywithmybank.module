@@ -190,7 +190,7 @@ function commerce_paywithmybank_notify() {
  */
 function commerce_paywithmybank_notify_access() {
   // Log the entire request for debug purposes.
-  watchdog('Commerce PayWithMyBank', serialize($_POST), array(), WATCHDOG_DEBUG);
+  watchdog('commerce_paywithmybank', serialize($_POST), array(), WATCHDOG_DEBUG);
 
   $parameters = array(
     'merchantId' => filter_input(INPUT_POST, 'merchantId'),
