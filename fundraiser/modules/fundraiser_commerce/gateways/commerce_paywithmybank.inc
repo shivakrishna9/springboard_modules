@@ -19,6 +19,8 @@ function commerce_paywithmybank_fundraiser_commerce_fundraiser_gateway_info() {
     'refund callback' => '',
     'update callback' => 'commerce_paywithmybank_fundraiser_commerce_update',
     'cardonfile callback' => 'commerce_paywithmybank_fundraiser_commerce_cardonfile',
+    'expire callback' => 'commerce_paywithmybank_fundraiser_commerce_expire',
+    'charge_callback' => 'commerce_paywithmybank_fundraiser_commerce_charge',
   );
 }
 
@@ -99,7 +101,13 @@ function commerce_paywithmybank_fundraiser_commerce_redirect($method_instance, $
 
   // Set up payment parameters for recurring payments.
   if (isset($donation->submission_data['recurs_monthly']) && !empty($donation->submission_data['recurs_monthly'])) {
+    // Start / end dates must be UNIX timestamps in milliseconds.
+    $start_time = round(microtime(true) * 1000);
+
     $recurrence = new stdClass();
+    $recurrence->startDate = $start_time;
+    // End date is three month from now.
+    $recurrence->endDate = ($start_time + (2592000000 * 3));
     $recurrence->frequency = 1;
     $recurrence->frequencyUnit = 1;
     $recurrence->frequencyUnitType = 'Month';
@@ -160,7 +168,7 @@ function commerce_paywithmybank_fundraiser_commerce_redirect_submit($method_inst
     $api = commerce_paywithmybank_get_api($method_instance);
     $api_transaction = $api->getTransaction($transaction_id);
 
-    // Create a Commerce payment transaction for this PayWithMyBank transaction.
+    // Create a Commerce payment transaction for the authorization.
     commerce_paywithmybank_create_payment_transaction($api_transaction, $method_instance, $order);
 
     $success = ($api_transaction->status == PayWithMyBank::TRANSACTION_STATUS_AUTHORIZED);
@@ -171,7 +179,11 @@ function commerce_paywithmybank_fundraiser_commerce_redirect_submit($method_inst
       $pane_values = commerce_paywithmybank_pane_values($donation);
 
       if (!empty($donation->submission_data['recurs_monthly'])) {
+        // Donation is recurring, so create a card on file record.
         $pane_values['bank_account']['cardonfile_store'] = TRUE;
+
+        // The recurring donation has been authorized, so make the first charge.
+        commerce_paywithmybank_fundraiser_commerce_charge($method_instance, $donation);
       }
     }
 
@@ -276,6 +288,50 @@ function commerce_paywithmybank_fundraiser_commerce_cardonfile($donation) {
 
   $cardonfile_fields = commerce_paywithmybank_cardonfile_fields($donation);
   return $cardonfile_fields;
+}
+
+/**
+ * Expiration date callback.
+ */
+function commerce_paywithmybank_fundraiser_commerce_expire($submission_fields) {
+  $expires = array(
+    'month' => 0,
+    'year' => 0,
+  );
+
+  return $expires;
+}
+
+/**
+ * Callback function, charge the gateway.
+ */
+function commerce_paywithmybank_fundraiser_commerce_charge($method_instance, $donation) {
+  // Translate donation settings to the correct values for the commerce gateway.
+  $order = commerce_order_load($donation->did);
+  $order_wrapper = entity_metadata_wrapper('commerce_order', $order);
+  $charge = $order_wrapper->commerce_order_total->value();
+  $amount = substr(commerce_currency_format($charge['amount'], $charge['currency_code']), 1);
+  $pane_values = commerce_paywithmybank_pane_values($donation);
+
+  // Add fundraiser commerce data to the pane values array.
+  _fundraiser_commerce_submit_handler_pane_values($pane_values, $donation);
+
+  // Process the transaction.
+  $api = commerce_paywithmybank_get_api($method_instance);
+  $api_transaction = $api->captureTransaction($donation->txn_id, $order->order_id, $amount);
+
+  $errors = $api->getLastErrors();
+  $success = (empty($errors));
+
+  if ($success) {
+    // Create a Commerce payment transaction for the first charge.
+    commerce_paywithmybank_create_payment_transaction($api_transaction, $method_instance, $order);
+  }
+  else {
+    commerce_paywithmybank_log_errors($donation->txn_id, $errors);
+  }
+
+  return $success;
 }
 
 /**
