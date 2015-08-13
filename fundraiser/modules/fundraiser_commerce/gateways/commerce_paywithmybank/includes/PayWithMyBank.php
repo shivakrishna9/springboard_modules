@@ -164,7 +164,8 @@ class PayWithMyBank {
       'amount' => $amount,
     );
 
-    return $this->call('/api/v1/transactions/{transactionId}/capture', $tokens, $parameters);
+    $data = $this->call('/api/v1/transactions/{transactionId}/capture', $tokens, $parameters);
+    return (isset($data->transaction)) ? $data->transaction : NULL;
   }
 
   private function call($path, $tokens, $parameters = NULL) {
