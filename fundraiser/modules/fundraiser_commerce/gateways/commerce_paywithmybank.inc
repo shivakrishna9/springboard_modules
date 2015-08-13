@@ -12,7 +12,6 @@ function commerce_paywithmybank_fundraiser_commerce_fundraiser_gateway_info() {
   return array(
     'payment_method' => array('commerce_paywithmybank_bank' => 'bank account'),
     'allow_recurring' => array('bank account'),
-    'offsite_recurring' => array('bank account'),
     'offsite_processing' => array('bank account'),
     'form callback' => 'commerce_paywithmybank_fundraiser_commerce_form',
     'redirect callback' => 'commerce_paywithmybank_fundraiser_commerce_redirect',
@@ -163,7 +162,6 @@ function commerce_paywithmybank_fundraiser_commerce_redirect_submit($method_inst
 
   if ($valid_request) {
     $donation->txn_id = $transaction_id;
-    fundraiser_donation_update($donation);
 
     $api = commerce_paywithmybank_get_api($method_instance);
     $api_transaction = $api->getTransaction($transaction_id);
@@ -179,6 +177,8 @@ function commerce_paywithmybank_fundraiser_commerce_redirect_submit($method_inst
       $pane_values = commerce_paywithmybank_pane_values($donation);
 
       if (!empty($donation->submission_data['recurs_monthly'])) {
+        $donation->donation['recurs_monthly'] = TRUE;
+
         // Donation is recurring, so create a card on file record.
         $pane_values['bank_account']['cardonfile_store'] = TRUE;
 
@@ -186,6 +186,12 @@ function commerce_paywithmybank_fundraiser_commerce_redirect_submit($method_inst
         commerce_paywithmybank_fundraiser_commerce_charge($method_instance, $donation);
       }
     }
+
+    // Save updated donation.
+    fundraiser_donation_update($donation);
+
+    // TODO: Review this - may be a work-around that should be fixed.
+    $donation->donation['payment_method'] = 'bank account';
 
     _fundraiser_commerce_charge_submit_form_process($success, $method_instance, $pane_values, $donation, 'bank_account');
 
