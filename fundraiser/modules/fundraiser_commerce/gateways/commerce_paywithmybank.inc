@@ -321,10 +321,6 @@ function commerce_paywithmybank_fundraiser_commerce_charge($method_instance, $do
   $order_wrapper = entity_metadata_wrapper('commerce_order', $order);
   $charge = $order_wrapper->commerce_order_total->value();
   $amount = substr(commerce_currency_format($charge['amount'], $charge['currency_code']), 1);
-  $pane_values = commerce_paywithmybank_pane_values($donation);
-
-  // Add fundraiser commerce data to the pane values array.
-  _fundraiser_commerce_submit_handler_pane_values($pane_values, $donation);
 
   // Process the transaction.
   $api = commerce_paywithmybank_get_api($method_instance);
