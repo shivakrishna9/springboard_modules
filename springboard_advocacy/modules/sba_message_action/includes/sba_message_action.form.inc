@@ -284,12 +284,14 @@ function sba_message_action_form_validate($form, &$form_state) {
     $is_single = count($form_state['values']['sba_messages']['message']) == 1 ? TRUE : FALSE;
   }
   if (!empty($is_single)) {
-    $message_id = array_keys($form_state['values']['sba_messages']['message']);
-    $message = $form['sba_messages']['message'][$message_id[0]];
-    $body_default = isset($message['body_required']) ? $message['edited_body']['#default_value'] : '';
-    $body_edited = isset($message['body_required']) ? $form_state['values']['sba_messages']['message'][$message_id[0]]['edited_body'] : '';
-    $subject_default = isset($message['subject_required']) ? $message['subject']['#default_value'] : '';
-    $subject_edited = isset($message['subject_required']) ? $form_state['values']['sba_messages']['message'][$message_id[0]]['subject'] : '';
+    $child_messages = element_children($form['sba_messages']['message']);
+    $message_id = reset($child_messages);
+    $message = $form['sba_messages']['message'][$message_id];
+    $body_default = isset($message['edited_body']['#default_value']) ? $message['edited_body']['#default_value'] : '';
+    $body_edited = isset($form_state['values']['sba_messages']['message'][$message_id]['edited_body']) ? $form_state['values']['sba_messages']['message'][$message_id]['edited_body'] : '';
+    $subject_default = isset($message['subject']['#default_value']) ? $message['subject']['#default_value'] : '';
+    $subject_edited = isset($form_state['values']['sba_messages']['message'][$message_id]['subject']) ? $form_state['values']['sba_messages']['message'][$message_id]['subject'] : '';
+
     $changed = FALSE;
     // Enforce mandatory editing.
     if ($body_edited == $body_default) {
@@ -338,7 +340,6 @@ function sba_message_action_form_validate($form, &$form_state) {
  * @param $form_state
  */
 function sba_message_action_form_submit($form, &$form_state) {
-
   $_SESSION['delivered_messages'] = array();
   $_SESSION['undelivered_messages'] = array();
   // Create array of messages to submit for target resolution.
