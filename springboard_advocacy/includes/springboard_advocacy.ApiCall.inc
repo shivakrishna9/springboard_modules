@@ -37,9 +37,8 @@ class AdvocacyApiCall {
       $info = $this->client->getDebugInfo();
       $this->setDebug($info);
     }
-
     // Log to watchdog and DSM if response does not have a data attribute.
-    if (!isset($response->data)) {
+    if (!isset($response->data) || isset($response->data->maintenanceMode)) {
       $this->buildMessage($response, $method);
     }
 
@@ -67,7 +66,7 @@ class AdvocacyApiCall {
    *   An error message.
    */
   private function setMessage($message) {
-    drupal_set_message($message, 'error');
+    drupal_set_message($message, 'error', FALSE);
     watchdog('advocacy', $message, array(), WATCHDOG_ERROR);
   }
 
@@ -163,19 +162,31 @@ class AdvocacyApiCall {
    * @param string $method
    */
   private function buildMessage($response, $method) {
+    if (isset($response->data->maintenanceMode)) {
+      if(user_access('create sba_message_action content') || user_access('administer springboard advocacy')) {
+        $message = t("Springboard’s message delivery system is currently undergoing maintenance. Please refrain from creating, editing or deleting messages and message targets during this time. We should be back in a few minutes.");
+      }
+      else {
+        $message = t("Message delivery system is currently under maintenance. Messages cannot be sent at this time. Please try later.");
+      }
+      $this->setMessage($message);
+      return;
+    }
+
     if (user_access('administer springboard advocacy')) {
       if (isset($response->error)) {
         $error = isset($response->error->message) ? $response->error->message : $response->error;
         $message = t('An error occurred when attempting to call @method: @message', array('@method' => $method, '@message' => $error));
       }
-      else {
+      elseif ($method != 'maintenanceMode' && !isset($response->data->maintenanceMode)) {
         $message = t('A response was not received from the server when attempting to call @method', array('@method' => $method));
       }
-      // Override the above with a sutom message.
+      // Override the above with a custom message.
       if(isset($this->customMessage)) {
         $message = $this->customMessage;
       }
       $this->setMessage($message);
     }
+
   }
 }

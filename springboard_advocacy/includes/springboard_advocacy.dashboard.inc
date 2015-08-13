@@ -21,6 +21,9 @@
  */
 function springboard_advocacy_dashboard($path, $arg = NULL) {
 
+  $apiCall = springboard_advocacy_api_Call();
+  $apiCall->invokeClientMethod('getMaintenanceMode');
+
   // If the API is not configured, intercept some displays and
   // show an error message.
   if ($path != 'actions' && $path != 'petitions/all' && $path != 'message-actions/all') {

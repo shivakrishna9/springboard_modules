@@ -146,6 +146,8 @@ function sba_message_delete_form_wrapper($sba_message) {
  * @return mixed
  */
 function sba_message_edit_form($form, &$form_state, $sba_message) {
+  $apiCall = springboard_advocacy_api_Call();
+  $apiCall->invokeClientMethod('getMaintenanceMode');
 
   // This form should only appear at node/%/messages.
   // Grab the node so we can get the action form UUID and node ID.
