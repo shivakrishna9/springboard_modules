@@ -100,6 +100,12 @@ function sba_message_action_schema() {
     ),
     'primary key' => array('nid'),
   );
+
+  $schema['cache_deliverability_report'] = drupal_get_schema_unprocessed('system', 'cache');
+  $schema['cache_deliverability_report']['description'] = 'Cache table for deliverability information about specific message action nodes.';
+  $schema['cache_deliverability_target'] = drupal_get_schema_unprocessed('system', 'cache');
+  $schema['cache_deliverability_target']['description'] = 'Cache table for deliverability information about specific message action targets.';
+
   return $schema;
 }
 
@@ -459,5 +465,20 @@ function sba_message_action_update_7017() {
   $schema = module_invoke('sba_message_action', 'schema');
   if(db_table_exists('springboard_action_opt_in_block') == FALSE) {
     db_create_table('springboard_action_opt_in_block', $schema['springboard_action_opt_in_block']);
+  }
+}
+
+function sba_message_action_update_7018() {
+  $schema = module_invoke('sba_message_action', 'schema');
+  if(db_table_exists('cache_deliverability_report') == FALSE) {
+    db_create_table('cache_deliverability_report', $schema['cache_deliverability_report']);
+  }
+}
+
+
+function sba_message_action_update_7019() {
+  $schema = module_invoke('sba_message_action', 'schema');
+  if(db_table_exists('cache_deliverability_target') == FALSE) {
+    db_create_table('cache_deliverability_target', $schema['cache_deliverability_target']);
   }
 }

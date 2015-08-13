@@ -166,7 +166,7 @@ class AdvocacyApiCall {
     if (user_access('administer springboard advocacy')) {
       if (isset($response->error)) {
         $error = isset($response->error->message) ? $response->error->message : $response->error;
-        $message = t('An error occurred when attempting to call @method: @message:', array('@method' => $method, '@message' => $error));
+        $message = t('An error occurred when attempting to call @method: @message', array('@method' => $method, '@message' => $error));
       }
       else {
         $message = t('A response was not received from the server when attempting to call @method', array('@method' => $method));
