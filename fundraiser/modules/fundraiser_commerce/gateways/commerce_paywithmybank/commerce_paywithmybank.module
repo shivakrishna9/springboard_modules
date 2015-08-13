@@ -406,12 +406,28 @@ function commerce_paywithmybank_create_payment_transaction($api_transaction, $pa
   $transaction->currency_code = $api_transaction->currency;
   $transaction->message = $api_transaction->statusMessage;
 
-  // Set the transaction success / failure status.
-  if ($api_transaction->status == PayWithMyBank::TRANSACTION_STATUS_AUTHORIZED) {
-    $transaction->status = COMMERCE_PAYMENT_STATUS_SUCCESS;
-  }
-  else {
-    $transaction->status = COMMERCE_PAYMENT_STATUS_FAILURE;
+  // Set the transaction status.
+  switch ($api_transaction->status) {
+    case PayWithMyBank::TRANSACTION_STATUS_NEW:
+    case PayWithMyBank::TRANSACTION_STATUS_PENDING:
+    case PayWithMyBank::TRANSACTION_STATUS_AUTHORIZED:
+    case PayWithMyBank::TRANSACTION_STATUS_PROCESSED:
+    case PayWithMyBank::TRANSACTION_STATUS_ON_HOLD:
+      $transaction->status = COMMERCE_PAYMENT_STATUS_PENDING;
+      break;
+
+    case PayWithMyBank::TRANSACTION_STATUS_REVERSED:
+    case PayWithMyBank::TRANSACTION_STATUS_PARTIALLY_REFUNDED:
+    case PayWithMyBank::TRANSACTION_STATUS_REFUNDED:
+      $transaction->status = COMMERCE_PAYMENT_STATUS_SUCCESS;
+      break;
+
+    case PayWithMyBank::TRANSACTION_STATUS_FAILED:
+    case PayWithMyBank::TRANSACTION_STATUS_EXPIRED:
+    case PayWithMyBank::TRANSACTION_STATUS_CANCELED:
+    case PayWithMyBank::TRANSACTION_STATUS_DENIED:
+      $transaction->status = COMMERCE_PAYMENT_STATUS_FAILURE;
+      break;
   }
 
   // Save the transaction.
