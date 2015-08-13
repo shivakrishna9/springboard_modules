@@ -280,6 +280,11 @@ function sba_message_action_node_load($nodes, $types) {
   }
 }
 
+/**
+ * Implements hook_preprocess_page().
+ *
+ * @param $vars
+ */
 function sba_message_action_process_page(&$vars) {
   if (isset($_GET['sid'])) {
     drupal_add_css(drupal_get_path('module', 'sba_message_action') . '/css/message-confirmation.css', array('group' => CSS_DEFAULT));
@@ -683,6 +688,7 @@ function sba_message_action_webform_user_profile_fields_alter(&$fields, $node) {
  *   Submission ID.
  */
 function sba_message_action_log_opt_in($nid, $uid, $opt_in, $sid) {
+
   db_delete('springboard_action_opt_in')
     ->condition('sid', $sid, '=')
     ->execute();
@@ -698,24 +704,48 @@ function sba_message_action_log_opt_in($nid, $uid, $opt_in, $sid) {
   drupal_write_record('springboard_action_opt_in', $record);
 }
 
+/**
+ * Implements hook_webform_submission_insert().
+ *
+ * Update opt-in block when submitted by a logged in user.
+ */
 function sba_message_action_webform_submission_insert($node, $submission) {
   if ($node->type == 'sba_message_action') {
+    sba_message_action_get_opt_in_uid($node, $submission);
+  }
+}
 
-    $opt_in = db_query('SELECT * FROM {webform_component} ' .
-      'WHERE nid = :nid ' .
-      'AND form_key = :form_key',
-      array(
-        ':nid' => $node->nid,
-        ':form_key' => 'sbp_sba_action_optin'
-      ))->fetchObject();
+/**
+ * Implements hook_webform_submission_insert().
+ *
+ * Update opt-in block when submitted by a logged out user.
+ */
+function sba_message_action_webform_submission_update($node, $submission) {
+  if ($node->type == 'sba_message_action') {
+    sba_message_action_get_opt_in_uid($node, $submission);
+  }
+}
 
-    if (!empty($opt_in->cid) && !empty($submission->data[$opt_in->cid]['value'][0])) {
-      $sid = $submission->sid;
-      $result = db_query('SELECT uid FROM {webform_submissions} WHERE sid = :sid', array(':sid' => $sid));
-      $uid = $result->fetchField();
+/**
+ * Save the Opt-in record.
+ *
+ * @param $node
+ * @param $submission
+ */
+function sba_message_action_get_opt_in_uid($node, $submission) {
+  $opt_in = db_query('SELECT * FROM {webform_component} ' .
+    'WHERE nid = :nid ' .
+    'AND form_key = :form_key',
+    array(
+      ':nid' => $node->nid,
+      ':form_key' => 'sbp_sba_action_optin'
+    ))->fetchObject();
 
-      sba_message_action_log_opt_in($node->nid, $uid, TRUE, $sid);
-    }
+  if (!empty($opt_in->cid) && !empty($submission->data[$opt_in->cid]['value'][0])) {
+    $sid = $submission->sid;
+    $result = db_query('SELECT uid FROM {webform_submissions} WHERE sid = :sid', array(':sid' => $sid));
+    $uid = $result->fetchField();
+    sba_message_action_log_opt_in($node->nid, $uid, TRUE, $sid);
   }
 }
 
@@ -850,6 +880,9 @@ function sba_message_action_tokens($type, $tokens, $data = array(), $options = a
 }
 
 
+/**
+ * @return array
+ */
 function sba_message_actions_flush_caches() {
   return array('cache_deliverability_report');
 }
