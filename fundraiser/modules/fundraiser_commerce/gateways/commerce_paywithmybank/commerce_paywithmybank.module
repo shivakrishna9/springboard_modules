@@ -404,3 +404,21 @@ function commerce_paywithmybank_create_payment_transaction($api_transaction, $pa
 
   return $transaction;
 }
+
+/**
+ * Logs errors from the PayWithMyBank API.
+ *
+ * @param string $transaction_id
+ *   The ID of the PayWithMyBank transaction that failed.
+ * @param array $errors
+ *   Array of error objects.
+ *   @see https://paywithmybank.com/docs/api-ref.html#errors
+ */
+function commerce_paywithmybank_log_errors($transaction_id, array $errors) {
+  foreach ($errors as $error) {
+    watchdog('Commerce PayWithMyBank', 'Transaction ID %transaction_id failed with message: %message', array(
+      '%transaction_id' => $transaction_id,
+      '%message' => $error->message,
+        ), WATCHDOG_ERROR);
+  }
+}
