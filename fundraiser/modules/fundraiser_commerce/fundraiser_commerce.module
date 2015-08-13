@@ -2049,8 +2049,9 @@ function _fundraiser_commerce_order_data_prepare($data) {
   $encrypted = _fundraiser_commerce_encrypt(serialize($data));
 
   // Check to ensure the correct encryption was used
+  // @todo: Fix underlying issue with encrypting PayPal data, so that we don't need the workaround below.
   $encryption_array = unserialize($encrypted);
-  if (!isset($encryption_array['method']) || $encryption_array['method'] != 'mcrypt_rij_256' || !isset($encryption_array['key_name']) || $encryption_array['key_name'] != 'secure_file_key') {
+  if (!isset($encryption_array['method']) || ($data['payment_method'] != 'paypal' && $encryption_array['method'] != 'mcrypt_rij_256') || !isset($encryption_array['key_name']) || $encryption_array['key_name'] != 'secure_file_key') {
     watchdog('fundraiser_commerce', 'The encryption module has not been configured correctly. You may need to patch or update your version.', array(), WATCHDOG_EMERGENCY, l('Fix', 'admin/config/system/encrypt'));
     return FALSE;
   }
@@ -2073,12 +2074,18 @@ function _fundraiser_commerce_order_data_retrieve($data) {
  * Helper function, wrapper for encrypt function.
  */
 function _fundraiser_commerce_encrypt($input) {
+  $unserialized = unserialize($input);
   if (module_exists('encrypt')) {
     module_load_install('encrypt');
     $requirements = encrypt_requirements('runtime');
     if (isset($requirements['encrypt_keys']) && $requirements['encrypt_keys']['severity'] == REQUIREMENT_ERROR) {
       drupal_set_message(t('A problem was found with your secure key.') . ' ' .
         $requirements['encrypt_keys']['value'], 'warning');
+    }
+    // Implicitly set 'none' encryption method for PayPal to avoid decryption errors.
+    // @todo: Debug underlying issue preventng PayPal data from decrypting properly when using Mcrypt AES 256 method.
+    elseif ($unserialized['payment_method'] == 'paypal') {
+      return encrypt($input, array(), 'none');
     }
     else {
       return encrypt($input);
