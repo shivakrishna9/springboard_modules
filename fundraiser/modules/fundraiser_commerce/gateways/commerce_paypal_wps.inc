@@ -205,6 +205,15 @@ function commerce_paypal_wps_form_rules_ui_edit_element_alter(&$form, &$form_sta
           '#description' => t('These credentials are only needed for initiating PayPal WPS refunds through Springboard.'),
           '#default_value' => !empty($config['api_signature']) ? $config['api_signature'] : '',
         );
+        $form['parameter']['payment_method']['settings']['payment_method']['settings']['log'] = array(
+          '#type' => 'checkboxes',
+          '#title' => t('Log the following messages for debugging'),
+          '#options' => array(
+            'request' => t('API request messages'),
+            'response' => t('API response messages'),
+          ),
+          '#default_value' => isset($config['log']) ? $config['log'] : array('request' => '0', 'response' => '0'),
+        );
       }
     }
   }
