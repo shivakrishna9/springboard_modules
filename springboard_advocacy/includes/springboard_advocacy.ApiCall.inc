@@ -38,7 +38,7 @@ class AdvocacyApiCall {
       $this->setDebug($info);
     }
     // Log to watchdog and DSM if response does not have a data attribute.
-    if (!isset($response->data) || isset($response->data->maintenanceMode)) {
+    if (!isset($response->data) || !empty($response->data->maintenanceMode)) {
       $this->buildMessage($response, $method);
     }
 
@@ -162,7 +162,7 @@ class AdvocacyApiCall {
    * @param string $method
    */
   private function buildMessage($response, $method) {
-    if (isset($response->data->maintenanceMode)) {
+    if (!empty($response->data->maintenanceMode)) {
       if(user_access('create sba_message_action content') || user_access('administer springboard advocacy')) {
         $message = t("Springboard’s message delivery system is currently undergoing maintenance. Please refrain from creating, editing or deleting messages and message targets during this time. We should be back in a few minutes.");
       }
