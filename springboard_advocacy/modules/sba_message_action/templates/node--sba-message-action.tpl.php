@@ -106,11 +106,6 @@
     ?>
 
     <?php if(!$use_layouts): ?>
-      <?php if(!empty($goal)): ?>
-        <div class="row-fluid">
-          <?php print $goal; ?>
-        </div>
-      <?php endif; ?>
       <?php if(!$use_layouts): ?>
         <div class="container-fluid">
       <?php endif; ?>
