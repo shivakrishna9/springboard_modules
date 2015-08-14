@@ -16,7 +16,6 @@ function sba_message_action_performance_page($nid) {
   $client = springboard_advocacy_api_call();
   // Try to make the API call and if it fails return a response.
   $responses =  sba_message_action_report_cache($client, $node->advocacy_id);
-
   // Check the status of the API call return and if it's an error return that to the browser.
   if (isset($responses['report']->error)):
     return 'Sorry, no performance metrics are available for this message.';
@@ -37,24 +36,19 @@ function sba_message_action_performance_targets_table($responses, $node) {
   $targets = sba_message_action_pager_default_initialize($targets, 10);
 
   $rows = array();
-
   $advocacyId = $node->advocacy_id;
-
-  // Get an instance of the advocacy API client.
-  $client = springboard_advocacy_api_call();
 
   foreach ($targets as $target) {
       // Get the target deliverability metrics for this target
-    $targetDeliverability = sba_message_action_target_cache($client, $target->id, $advocacyId);
     $rows[] = array(
       $target->salutation . ' ' . $target->first_name . ' ' . $target->last_name,
       $target->party,
       $target->state,
       $target->district_code,
-      $targetDeliverability->data->totalMessages,
-      $targetDeliverability->data->delivered,
-      $targetDeliverability->data->failed,
-      $targetDeliverability->data->deliverabilityIndexPercentage
+      $target->deliverability->totalMessages,
+      $target->deliverability->delivered,
+      $target->deliverability->failed,
+      $target->deliverability->deliverabilityIndexPercentage
     );
   }
 
@@ -134,7 +128,8 @@ function sba_message_action_preprocess_messsage_deliverability_dashboard(&$vars)
 
 function sba_message_action_report_cache($client, $advocacy_id) {
   $responses = &drupal_static(__FUNCTION__);
-
+  $report = $client->invokeClientMethod('getTargetDeliverability', $advocacy_id);
+  dpm($report);
   if (empty($responses)) {
     if ($cache = cache_get($advocacy_id, 'cache_deliverability_report')) {
       $responses = $cache->data;
@@ -144,6 +139,7 @@ function sba_message_action_report_cache($client, $advocacy_id) {
     }
     else {
       $report = $client->invokeClientMethod('getTargetDeliverability', $advocacy_id);
+        dpm($report);
       $responses['report'] = $report;
       $queueReady = $client->invokeClientMethod('getQueueMessagesCountByStatus', $advocacy_id, 'ready');
       $queuePaused = $client->invokeClientMethod('getQueueMessagesCountByStatus', $advocacy_id, 'paused');
