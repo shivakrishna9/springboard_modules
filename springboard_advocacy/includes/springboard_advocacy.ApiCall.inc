@@ -164,10 +164,10 @@ class AdvocacyApiCall {
   private function buildMessage($response, $method) {
     if (!empty($response->data->maintenanceMode)) {
       if(user_access('create sba_message_action content') || user_access('administer springboard advocacy')) {
-        $message = t("Springboard’s message delivery system is currently undergoing maintenance. Please refrain from creating, editing or deleting messages and message targets during this time. We should be back in a few minutes.");
+        $message = t("Springboard’s message delivery system is currently undergoing routine maintenance. Please refrain from creating, editing or deleting messages and targets during this time. We should be back in a few minutes.");
       }
       else {
-        $message = t("Message delivery system is currently under maintenance. Messages cannot be sent at this time. Please try later.");
+        $message = t("Our message delivery system is currently undergoing routine maintenance. Please try again in a few minutes.");
       }
       $this->setMessage($message);
       return;
