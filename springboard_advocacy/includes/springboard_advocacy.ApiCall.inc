@@ -178,14 +178,16 @@ class AdvocacyApiCall {
         $error = isset($response->error->message) ? $response->error->message : $response->error;
         $message = t('An error occurred when attempting to call @method: @message', array('@method' => $method, '@message' => $error));
       }
-      elseif ($method != 'maintenanceMode' && !isset($response->data->maintenanceMode)) {
+      elseif ($method != 'maintenanceMode' && empty($response->data->maintenanceMode)) {
         $message = t('A response was not received from the server when attempting to call @method', array('@method' => $method));
       }
       // Override the above with a custom message.
       if(isset($this->customMessage)) {
         $message = $this->customMessage;
       }
-      $this->setMessage($message);
+      if (!empty($message)) {
+        $this->setMessage($message);
+      }
     }
 
   }
