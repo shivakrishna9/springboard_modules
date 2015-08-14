@@ -990,6 +990,9 @@ function fundraiser_commerce_fundraiser_donation_create($donation) {
     $donation->donation['amount'] = preg_replace('/[^\d\.]/i', '', $donation->donation['other_amount']);
   }
 
+  // If not set, set the donation amount on the main donation object.
+  $donation->amount = isset($donation->amount) ? $donation->amount : preg_replace('/[^\d\.]/i', '', $donation->donation['amount']);
+
   // Set or convert the $donation->donation currency value to an array of currency values.
   if (!isset($donation->donation['currency'])) {
     $currency_code = !empty($donation->currency) ? $donation->currency : commerce_default_currency();
@@ -1035,7 +1038,7 @@ function fundraiser_commerce_fundraiser_donation_create($donation) {
     $line_item = commerce_line_item_new('donation', $order->order_id);
     $line_item_wrapper = entity_metadata_wrapper('commerce_line_item', $line_item);
     $line_item_wrapper->quantity = $quantity;
-    $line_item_wrapper->commerce_unit_price->amount = commerce_currency_decimal_to_amount($donation->donation['amount'], $donation->donation['currency']['code']);
+    $line_item_wrapper->commerce_unit_price->amount = commerce_currency_decimal_to_amount($donation->amount, $donation->donation['currency']['code']);
     $line_item_wrapper->commerce_unit_price->currency_code = $donation->donation['currency']['code'];
 
     $line_item_wrapper->commerce_unit_price->data = commerce_price_component_add(
