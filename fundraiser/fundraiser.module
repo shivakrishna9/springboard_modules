@@ -3163,8 +3163,8 @@ function fundraiser_webform_token_selector_blacklist_alter(&$tokens) {
  */
 function fundraiser_get_total_donations_by_nids($nids, $start = FALSE, $end = FALSE) {
   $total_donations = module_invoke_all('fundraiser_get_total_donations_by_nids', $nids, $start, $end);
-  // Use the first implementation called.  There should only be one anyway.
-  return $total_donations[0];
+  $total = isset($total_donations[0]) ? $total_donations[0] : FALSE;
+  return $total;
 }
 
 /**
