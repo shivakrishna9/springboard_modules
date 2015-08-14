@@ -164,6 +164,9 @@ function commerce_paypal_wps_fundraiser_commerce_refund($payment_method, $refund
   if ($response['ACK'] == "Success") {
     return TRUE;
   }
+  else {
+    return FALSE;
+  }
 }
 
 /*
