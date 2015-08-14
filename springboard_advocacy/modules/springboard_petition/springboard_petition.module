@@ -178,8 +178,8 @@ function springboard_petition_tokens($type, $tokens, array $data = array(), arra
   $replacements = array();
   if ($type == 'springboard_petition') {
     foreach ($tokens as $key => $token) {
-      if ($key == 'recent_signers') {
-        $replacements[$token] = views_embed_view('recent_petiton_signers');
+      if ($key == 'recent_signers' && !empty($data['node']->nid)) {
+        $replacements[$token] = views_embed_view('recent_petition_signatures', 'default', $data['node']->nid);
       }
     }
   }
