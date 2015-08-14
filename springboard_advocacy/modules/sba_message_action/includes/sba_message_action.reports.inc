@@ -37,7 +37,6 @@ function sba_message_action_performance_targets_table($responses, $node) {
 
   $rows = array();
   $advocacyId = $node->advocacy_id;
-
   foreach ($targets as $target) {
       // Get the target deliverability metrics for this target
     $rows[] = array(
@@ -48,7 +47,7 @@ function sba_message_action_performance_targets_table($responses, $node) {
       $target->deliverability->totalMessages,
       $target->deliverability->delivered,
       $target->deliverability->failed,
-      $target->deliverability->deliverabilityIndexPercentage
+      $target->deliverability->deliverabilityIndexPercent
     );
   }
 
