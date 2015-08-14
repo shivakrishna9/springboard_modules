@@ -1868,13 +1868,14 @@ function fundraiser_donation_create($donation) {
   else {
     $form_url = $base_url . '/node/' . $donation->nid;
   }
+
   $donation_record = array(
     'did' => $donation->did, // Donation id.
     'nid' => $donation->nid, // Fundraiser node id.
     'uid' => $donation->uid, // Submission user id.
     'sid' => $donation->sid, // Submission id.
     'status' => $donation->status,
-    'amount' => $donation->donation['amount'],
+    'amount' => $donation->amount,
     'currency' => $donation->currency,
     'txn_id' => '',
     'form_url' => $form_url,
