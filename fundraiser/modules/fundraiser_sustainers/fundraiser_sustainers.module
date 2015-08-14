@@ -1367,8 +1367,10 @@ function fundraiser_sustainers_edit_form($did) {
   // Use next donation in case it has differnt info than the master donation.
   if (isset($next_donation->data['cardonfile']) && module_exists('commerce_cardonfile')) {
     $cardonfile = commerce_cardonfile_load($next_donation->data['cardonfile']);
-    $number = '**** **** **** '  . $cardonfile->card_number;
-    $type = t('Card');
+    if (!empty($cardonfile)) {
+      $number = '**** **** **** '  . $cardonfile->card_number;
+      $type = t('Card');
+    }
   }
 
   // Gather further donation data.
