@@ -205,7 +205,7 @@ function commerce_paywithmybank_notify() {
  */
 function commerce_paywithmybank_notify_access() {
   // Log the entire request for debug purposes.
-  watchdog('commerce_paywithmybank', 'Authorization header: ' . drupal_get_http_header('Authorization'), array(), WATCHDOG_DEBUG);
+  watchdog('commerce_paywithmybank', 'Authorization header: ' . filter_input(INPUT_SERVER, 'HTTP_AUTHORIZATION'), array(), WATCHDOG_DEBUG);
   watchdog('commerce_paywithmybank', serialize($_POST), array(), WATCHDOG_DEBUG);
 
   $parameters = array(
@@ -219,7 +219,7 @@ function commerce_paywithmybank_notify_access() {
     'createdAt' => filter_input(INPUT_POST, 'createdAt'),
   );
 
-  $auth_header = drupal_get_http_header('Authorization');
+  $auth_header = filter_input(INPUT_SERVER, 'HTTP_AUTHORIZATION');
   $auth_header_parts = explode(' ', $auth_header);
 
   if ($auth_header_parts[0] != 'Basic') {
