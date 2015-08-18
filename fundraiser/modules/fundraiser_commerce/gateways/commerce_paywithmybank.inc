@@ -166,9 +166,6 @@ function commerce_paywithmybank_fundraiser_commerce_redirect_submit($method_inst
     $api = commerce_paywithmybank_get_api($method_instance);
     $api_transaction = $api->getTransaction($transaction_id);
 
-    // Create a Commerce payment transaction for the authorization.
-    commerce_paywithmybank_create_payment_transaction($api_transaction, $method_instance, $order);
-
     $success = ($api_transaction->status == PayWithMyBank::TRANSACTION_STATUS_AUTHORIZED);
 
     $pane_values = array();
@@ -329,11 +326,7 @@ function commerce_paywithmybank_fundraiser_commerce_charge($method_instance, $do
   $errors = $api->getLastErrors();
   $success = (empty($errors));
 
-  if ($success) {
-    // Create a Commerce payment transaction for the first charge.
-    commerce_paywithmybank_create_payment_transaction($api_transaction, $method_instance, $order);
-  }
-  else {
+  if (!$success) {
     commerce_paywithmybank_log_errors($donation->txn_id, $errors);
   }
 
