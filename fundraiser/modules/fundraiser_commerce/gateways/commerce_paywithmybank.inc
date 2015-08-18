@@ -19,7 +19,7 @@ function commerce_paywithmybank_fundraiser_commerce_fundraiser_gateway_info() {
     'update callback' => 'commerce_paywithmybank_fundraiser_commerce_update',
     'cardonfile callback' => 'commerce_paywithmybank_fundraiser_commerce_cardonfile',
     'expire callback' => 'commerce_paywithmybank_fundraiser_commerce_expire',
-    'charge_callback' => 'commerce_paywithmybank_fundraiser_commerce_charge',
+    'charge callback' => 'commerce_paywithmybank_fundraiser_commerce_charge',
   );
 }
 
