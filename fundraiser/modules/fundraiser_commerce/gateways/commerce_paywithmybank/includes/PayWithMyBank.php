@@ -143,6 +143,21 @@ class PayWithMyBank {
   }
 
   /**
+   * Gets an array of event objects associated with a transaction.
+   * 
+   * @param string $transactionId
+   *   The ID of the transaction.
+   * 
+   * @return array
+   *   Array of event objects.
+   * @see https://paywithmybank.com/docs/api-ref.html#events
+   */
+  public function getTransactionEvents($transactionId) {
+    $data = $this->call('/api/v1/transactions/{transactionId}/events', array('transactionId' => $transactionId));
+    return (isset($data->events)) ? $data->events : NULL;
+  }
+
+  /**
    * Collects money from the bank account of a previously authorized deferred
    * or recurring payment.
    *
