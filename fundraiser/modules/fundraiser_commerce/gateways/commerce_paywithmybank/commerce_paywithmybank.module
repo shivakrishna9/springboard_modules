@@ -15,6 +15,7 @@ function commerce_paywithmybank_menu() {
   $items['paywithmybank/notify'] = array(
     'title' => 'PayWithMyBank Notify Callback',
     'page callback' => 'commerce_paywithmybank_notify',
+    'access callback' => TRUE,
     'access callback' => 'commerce_paywithmybank_notify_access',
     'type' => MENU_CALLBACK,
   );
