@@ -400,9 +400,13 @@ function commerce_paywithmybank_validate_notification($access_id, $access_key, $
 
   $data = substr($data, 0, -1);
 
+  watchdog('commerce_paywithmybank', 'Notification data: ' . serialize($data), array(), WATCHDOG_DEBUG);
+
   $hash = base64_encode(hash_hmac('sha1', $data, $access_key, TRUE));
 
   $calculated_auth_string = base64_encode($access_id . ':' . $hash);
+
+  watchdog('commerce_paywithmybank', 'Notification auth strings: ' . $auth_string . ' / ' . $calculated_auth_string, array(), WATCHDOG_DEBUG);
 
   return ($auth_string == $calculated_auth_string);
 }
