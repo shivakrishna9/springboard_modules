@@ -321,7 +321,7 @@ function commerce_paywithmybank_fundraiser_commerce_charge($method_instance, $do
 
   // Process the transaction.
   $api = commerce_paywithmybank_get_api($method_instance);
-  $api_transaction = $api->captureTransaction($donation->txn_id, $order->order_id, $amount);
+  $api->captureTransaction($donation->txn_id, $order->order_id, $amount);
 
   $errors = $api->getLastErrors();
   $success = (empty($errors));
