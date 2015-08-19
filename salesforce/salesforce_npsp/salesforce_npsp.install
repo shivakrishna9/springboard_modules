@@ -6,6 +6,18 @@
  */
 
 /**
+ * Implements hook_update_dependencies()
+ */
+function salesforce_npsp_update_dependencies() {
+  // Fundraiser Sustainers Series entity must exist before adding properties.
+  $dependencies['salesforce_npsp'][7001] = array(
+    'fundraiser_sustainers' => 7012,
+  );
+
+  return $dependencies;
+}
+
+/**
  * Implements hook_install()
  */
 function salesforce_npsp_install() {
