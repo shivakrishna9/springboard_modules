@@ -2252,7 +2252,7 @@ function _fundraiser_refund_form($form, &$form_state, $did) {
       $refunded_total += abs($refund->amount);
       $refund_summary[] = t('Refund #%id for $%amount on %date.',
         array(
-        '%id' => $refund->did,
+        '%id' => $refund->rid,
         '%amount' => abs($refund->amount),
         '%date' => date('m/d/y', isset($refund->created) ? $refund->created : 0),
       )
@@ -2538,7 +2538,7 @@ function fundraiser_refund_update($refund) {
  */
 function fundraiser_refund_process($refund) {
   // Pass this down to the processing module.
-  module_invoke_all('fundraiser_refund_process', $refund);
+    module_invoke_all('fundraiser_refund_process', $refund);
   // And save the refund as it is at this stage since it was created.
   // This makes sure that any changes made stay in place.
   fundraiser_refund_update($refund, FALSE);
@@ -3041,10 +3041,10 @@ function _fundraiser_get_refunds_by_did($did) {
 /**
  * DB function for fundraiser_refund.
  */
-function _fundraiser_get_refund_by_receipt_id($receipt_id) {
+function _fundraiser_get_refund_by_txn_id($txn_id) {
   return db_query('SELECT * FROM {fundraiser_refund} ' .
-    'WHERE receipt_id = :receipt_id',
-    array(':receipt_id' => $receipt_id))->fetchAll();
+    'WHERE txn_id = :txn_id',
+    array(':txn_id' => $txn_id))->fetchAll();
 }
 
 /**

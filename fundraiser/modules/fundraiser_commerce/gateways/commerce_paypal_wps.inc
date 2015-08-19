@@ -140,9 +140,12 @@ function commerce_paypal_wps_fundraiser_commerce_redirect_submit($method_instanc
 
 /**
  * Callback function, refund the gateway.
- * needed to enable completion of  _fundraiser_commerce_ipn_refund()
  */
 function commerce_paypal_wps_fundraiser_commerce_refund($payment_method, $refund) {
+  // Bypass capture request to PayPal if this is triggered by fundraiser_commerce_commerce_paypal_ipn_process().
+  if (!empty($refund->ipn) && $refund->ipn == TRUE) {
+    return TRUE;
+  }
   $order = commerce_order_load($refund->did);
   $amount =  $refund->amount;
   $default_amount = $refund->donation->amount;
@@ -157,11 +160,14 @@ function commerce_paypal_wps_fundraiser_commerce_refund($payment_method, $refund
     'TRANSACTIONID' => $refund->donation->data['remote_id'],
     'AMT' => $amount,
     'REFUNDTYPE' => $default_amount - $amount ? 'Partial' : 'Full',
+    'MSGSUBID' => $refund->rid,
   );
 
   // Submit the capture request request to PayPal.
   $response = commerce_paypal_api_request($payment_method, $nvp, $order);
   if ($response['ACK'] == "Success") {
+    $refund->txn_id = $response['REFUNDTRANSACTIONID'];
+    fundraiser_refund_update($refund, FALSE);
     return TRUE;
   }
   else {

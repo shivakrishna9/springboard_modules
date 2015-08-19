@@ -1830,6 +1830,7 @@ function fundraiser_commerce_fundraiser_refund_process($refund) {
     $refund->donation = $donation;
     $refund_function = $info['refund callback'];
     $success = $refund_function($method_instance, $refund);
+//    $refund = fundraiser_refund_get_refund($refund->rid, $refresh = TRUE);
   }
   // Update the donation and order data and result values based on the success.
   _fundraiser_commerce_update_donation_result_data($donation, $success);
@@ -1846,7 +1847,8 @@ function fundraiser_commerce_fundraiser_refund_process($refund) {
     }
     $refund->donation = $donation;
     $refund->receipt_id = $donation->result['data']['remote_id'];
-    $refund->txn_id = $donation->result['data']['txn_id'];
+    // If txn_id has been set by out refund function above, use that.
+    $refund->txn_id = !empty($refund->txn_id) ? $refund->txn_id :$donation->result['data']['txn_id'];
   }
 }
 
@@ -2249,42 +2251,59 @@ function fundraiser_commerce_commerce_paypal_ipn_process($order, $payment_method
   if ($ipn['payment_status'] == 'Pending') {
     return;
   }
-  // Anything else, except Completed counts as a fail.
-  $success = FALSE;
-  if ($ipn['payment_status'] == 'Completed' || $ipn['payment_status'] == 'Refunded') {
-    $success = TRUE;
+  if ($ipn['payment_status'] == 'Completed') {
+    // Grab the donation object from the order.
+    $donation = fundraiser_donation_get_donation($order->order_id);
+    // Update the donation and order data and result values based on the success.
+    _fundraiser_commerce_update_donation_result_data($donation, TRUE);
+    // Finish up any last cleanup for this transaction.
+    fundraiser_commerce_fundraiser_donation_after_process($donation);
+    // Save the donation
+    fundraiser_donation_update($donation);
+    // Finish up the submission to kick off success / decline triggers.
+    _fundraiser_donation_submit_after_process($donation);
   }
-  // Grab the donation object from the order.
-  $donation = fundraiser_donation_get_donation($order->order_id);
-  // Update the donation and order data and result values based on the success.
-  _fundraiser_commerce_update_donation_result_data($donation, $success);
-  // Finish up any last cleanup for this transaction.
-  fundraiser_commerce_fundraiser_donation_after_process($donation);
-  // Save the donation
-  fundraiser_donation_update($donation);
-  // Finish up the submission to kick off success / decline triggers.
-  _fundraiser_donation_submit_after_process($donation);
   if ($ipn['payment_status'] == 'Refunded') {
-    _fundraiser_commerce_ipn_refund($donation, $ipn);
+    // commerce_paypal_wps handles the Commerce refund transactions. This is here to record the fundrasier_refund item
+    // when the refund is initiated from the PayPal dashboard.
+    $donation = fundraiser_donation_get_donation($order->order_id);
+    _fundraiser_commerce_ipn_refund($donation, $payment_method, $ipn);
+
+  }
+  if ($ipn['payment_status'] == 'Reversed') {
+    $donation = fundraiser_donation_get_donation($order->order_id);
+    _fundraiser_commerce_ipn_reverse($donation, $ipn);
+
   }
 }
 
-function _fundraiser_commerce_ipn_refund($donation, $ipn) {
+/**
+ * Callback function to record fundrasier_refund items when refund initiated
+ * from PayPal dashboard (instead of through Springboard).
+ */
+function _fundraiser_commerce_ipn_refund($donation, $payment_method, $ipn) {
+  // If the fundraiser_refund record has already been saved, we don't need to continue.
+  $results = _fundraiser_get_refund_by_txn_id($ipn['txn_id']);
+  if ($results) {
+    return;
+  }
   // Set up the refund.
   $already_refunded = fundraiser_refund_get_refunds_by_did($donation->did, TRUE);
   $refunded_total = 0;
   if(!empty($already_refunded)) {
     foreach ($already_refunded as $prior) {
-     $refunded_total += ($prior->amount * -1);
+      // Omit the same refund transaction, if submitted through Springboard.
+      if ($prior->txn_id != $ipn['parent_txn_id']) {
+        $refunded_total += ($prior->amount * -1);
+      }
     }
   }
-  $able_to_refund = ($donation->donation['amount'] - $refunded_total);
+  $able_to_refund = ($donation->donation['amount'] + $refunded_total);
   $new_status = 'partially_refunded';
   // Partial refund
-  $amount = $ipn['payment_gross'];
-  if (($amount * -1) >= $able_to_refund) {
-    $amount = $able_to_refund * -1;
-    $new_status = 'refunded';
+  $amount = $ipn['mc_gross'];
+  if ($amount >= $able_to_refund) {
+    $new_status = COMMERCE_PAYMENT_STATUS_FAILURE;
   }
 
   $refund = new stdClass();
@@ -2293,6 +2312,7 @@ function _fundraiser_commerce_ipn_refund($donation, $ipn) {
   $refund->currency = $donation->currency;
   $refund = fundraiser_refund_create($refund);
   $refund->new_status = $new_status;
+  $refund->ipn = TRUE;
   fundraiser_refund_process($refund);
   // At this point $donation->result is set and responses can be handled.
   if (!isset($refund->result['message'])) {
@@ -2304,7 +2324,66 @@ function _fundraiser_commerce_ipn_refund($donation, $ipn) {
   }
   else {
     $donation->result['success'] = FALSE;
-    watchdog('ipn_refund_fail', '%ipn: Your refund failed to be processed.', array('%ipn', $ipn['item_name1']));
+    watchdog('ipn_refund_fail', '%ipn: A reversal failed to be processed.', array('%ipn', $ipn['item_name1']));
+  }
+}
+
+/**
+ * Callback function to handle chargebacks sent by PayPal.
+ */
+function _fundraiser_commerce_ipn_reverse($donation, $ipn) {
+  // Create a new payment transaction for the order.
+  $transaction = commerce_payment_transaction_new('paypal_wps', $donation->did);
+  $transaction->instance_id = $ipn['parent_txn_id'];
+  $transaction->remote_id = $ipn['txn_id'];
+  $transaction->amount = commerce_currency_decimal_to_amount($ipn['mc_gross'], $ipn['mc_currency']);
+  $transaction->currency_code = $ipn['mc_currency'];
+  $transaction->payload[REQUEST_TIME . '-ipn'] = $ipn;
+
+  // Set the transaction's statuses based on the IPN's payment_status.
+  $transaction->remote_status = $ipn['payment_status'];
+  $transaction->status = COMMERCE_PAYMENT_STATUS_FAILURE;
+  $transaction->message = t('Reversal by PayPal.');
+  commerce_payment_transaction_save($transaction);
+
+  // Set up the refund.
+  $already_refunded = fundraiser_refund_get_refunds_by_did($donation->did, TRUE);
+  $refunded_total = 0;
+  if(!empty($already_refunded)) {
+    foreach ($already_refunded as $prior) {
+      // Omit the same refund transaction, if submitted through Springboard.
+      if ($prior->txn_id != $ipn['parent_txn_id']) {
+        $refunded_total += ($prior->amount * -1);
+      }
+    }
+  }
+  $able_to_refund = ($donation->donation['amount'] + $refunded_total);
+  $new_status = 'partially_refunded';
+  // Partial refund
+  $amount = $ipn['mc_gross'];
+  if ($amount >= $able_to_refund) {
+    $new_status = COMMERCE_PAYMENT_STATUS_FAILURE;
+  }
+
+  $refund = new stdClass();
+  $refund->did = $donation->did;
+  $refund->amount =  $amount;
+  $refund->currency = $donation->currency;
+  $refund = fundraiser_refund_create($refund);
+  $refund->new_status = $new_status;
+  $refund->ipn = TRUE;
+  fundraiser_refund_process($refund);
+  // At this point $donation->result is set and responses can be handled.
+  if (!isset($refund->result['message'])) {
+    $refund->result['message'] = '';
+  }
+  // The results should be at $donation->result, ready to respond to the aftermath.
+  if (isset($refund->result['success']) && $refund->result['success'] == TRUE) {
+    fundraiser_refund_success($refund);
+  }
+  else {
+    $donation->result['success'] = FALSE;
+    watchdog('ipn_refund_fail', '%ipn: A reversal failed to be processed.', array('%ipn', $ipn['item_name1']));
   }
 }
 
