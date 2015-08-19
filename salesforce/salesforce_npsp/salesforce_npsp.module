@@ -153,29 +153,31 @@ function salesforce_npsp_salesforce_queue_postprocess_batch($batch, $results, $q
  * Implements hook_schema_alter()
  */
 function salesforce_npsp_schema_alter(&$schema) {
-  $schema['fundraiser_sustainers_series']['fields']['npsp_last_payment_date'] = array(
-    'description' => 'The date of the last payment in this donation series.',
-    'type' => 'date',
-    'mysql_type' => 'date',
-  );
+  if (isset($schema['fundraiser_sustainers_series'])) {
+    $schema['fundraiser_sustainers_series']['fields']['npsp_last_payment_date'] = array(
+      'description' => 'The date of the last payment in this donation series.',
+      'type' => 'date',
+      'mysql_type' => 'date',
+    );
 
-  $schema['fundraiser_sustainers_series']['fields']['npsp_next_payment_date'] = array(
-    'description' => 'The date of the next payment in this donation series.',
-    'type' => 'date',
-    'mysql_type' => 'date',
-  );
+    $schema['fundraiser_sustainers_series']['fields']['npsp_next_payment_date'] = array(
+      'description' => 'The date of the next payment in this donation series.',
+      'type' => 'date',
+      'mysql_type' => 'date',
+    );
 
-  $schema['fundraiser_sustainers_series']['fields']['npsp_installment_period'] = array(
-    'description' => 'The installment period used for this donation series.',
-    'type' => 'varchar',
-    'length' => 255,
-  );
+    $schema['fundraiser_sustainers_series']['fields']['npsp_installment_period'] = array(
+      'description' => 'The installment period used for this donation series.',
+      'type' => 'varchar',
+      'length' => 255,
+    );
 
-  $schema['fundraiser_sustainers_series']['fields']['npsp_schedule_type'] = array(
-    'description' => 'The schedule type used for this donation series.',
-    'type' => 'varchar',
-    'length' => 255,
-  );
+    $schema['fundraiser_sustainers_series']['fields']['npsp_schedule_type'] = array(
+      'description' => 'The schedule type used for this donation series.',
+      'type' => 'varchar',
+      'length' => 255,
+    );
+  }
 }
 
 /**
