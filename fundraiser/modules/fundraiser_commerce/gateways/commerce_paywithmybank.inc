@@ -330,6 +330,12 @@ function commerce_paywithmybank_fundraiser_commerce_charge($method_instance, $do
     commerce_paywithmybank_log_errors($donation->txn_id, $errors);
   }
 
+  // Update expiration date and generate the next donation.
+  $recurring_donation = _fundraiser_sustainers_get_recurring_by_did($donation->did);
+  $master_donation = fundraiser_donation_get_donation($recurring_donation->master_did);
+
+  fundraiser_sustainers_update_billing_info_create_new_donations($master_donation, $donation, array());
+
   return $success;
 }
 
