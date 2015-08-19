@@ -9,36 +9,38 @@
  * Implements hook_schema_alter()
  */
 function salesforce_luminate_schema_alter(&$schema) {
-  $schema['fundraiser_sustainers_series']['fields']['luminate_start_date'] = array(
-    'description' => 'The date when this donation series starts.',
-    'type' => 'date',
-    'mysql_type' => 'date',
-  );
+  if (isset($schema['fundraiser_sustainers_series'])) {
+    $schema['fundraiser_sustainers_series']['fields']['luminate_start_date'] = array(
+      'description' => 'The date when this donation series starts.',
+      'type' => 'date',
+      'mysql_type' => 'date',
+    );
 
-  $schema['fundraiser_sustainers_series']['fields']['luminate_gift_status'] = array(
-    'description' => 'The gift status of this donation series.',
-    'type' => 'varchar',
-    'length' => 255,
-  );
+    $schema['fundraiser_sustainers_series']['fields']['luminate_gift_status'] = array(
+      'description' => 'The gift status of this donation series.',
+      'type' => 'varchar',
+      'length' => 255,
+    );
 
-  $schema['fundraiser_sustainers_series']['fields']['luminate_campaign_id'] = array(
-    'description' => 'The campaign ID of this donation series.',
-    'type' => 'varchar',
-    'length' => 255,
-  );
+    $schema['fundraiser_sustainers_series']['fields']['luminate_campaign_id'] = array(
+      'description' => 'The campaign ID of this donation series.',
+      'type' => 'varchar',
+      'length' => 255,
+    );
 
-  $schema['fundraiser_sustainers_series']['fields']['luminate_donation_type'] = array(
-    'description' => 'The type of donation this series represents.',
-    'type' => 'varchar',
-    'length' => 255,
-  );
+    $schema['fundraiser_sustainers_series']['fields']['luminate_donation_type'] = array(
+      'description' => 'The type of donation this series represents.',
+      'type' => 'varchar',
+      'length' => 255,
+    );
 
-  $schema['fundraiser_sustainers_series']['fields']['luminate_recurring_amount_rounded'] = array(
-    'description' => 'The donation amount (rounded.)',
-    'type' => 'int',
-    'not null' => TRUE,
-    'default' => 0,
-  );
+    $schema['fundraiser_sustainers_series']['fields']['luminate_recurring_amount_rounded'] = array(
+      'description' => 'The donation amount (rounded.)',
+      'type' => 'int',
+      'not null' => TRUE,
+      'default' => 0,
+    );
+  }
 }
 
 /**
