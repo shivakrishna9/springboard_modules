@@ -280,7 +280,7 @@ function fundraiser_sustainers_schema() {
       ),
       'amount' => array(
         'description' => 'The donation amount.',
-        'type' => 'int',
+        'type' => 'float',
         'not null' => TRUE,
         'default' => 0,
       ),
@@ -765,7 +765,7 @@ function fundraiser_sustainers_update_7012() {
       ),
       'amount' => array(
         'description' => 'The donation amount.',
-        'type' => 'int',
+        'type' => 'float',
         'not null' => TRUE,
         'default' => 0,
       ),
