@@ -183,6 +183,31 @@ class PayWithMyBank {
     return (isset($data->transaction)) ? $data->transaction : NULL;
   }
 
+  /**
+   * Refunds a given amount of a processed transaction.
+   *
+   * @param type $transactionId
+   *   The ID of the authorizing transaction.
+   * @param type $merchantReference
+   *   The initial merchant reference value sent to establish the payment.
+   * @param type $amount
+   *   The amount of money to refund.
+   *
+   * @return object
+   *   The transaction object.
+   * @see https://paywithmybank.com/docs/api-ref.html#transactions
+   */
+  public function refundTransaction($transactionId, $merchantReference, $amount) {
+    $tokens = array('transactionId' => $transactionId);
+    $parameters = array(
+      'merchantReference' => $merchantReference,
+      'amount' => $amount,
+    );
+
+    $data = $this->call('/api/v1/transactions/{transactionId}/refund', $tokens, $parameters);
+    return (isset($data->transaction)) ? $data->transaction : NULL;
+  }
+
   private function call($path, $tokens, $parameters = NULL) {
     // Reset error messages.
     $this->lastErrors = NULL;
