@@ -243,6 +243,9 @@ function commerce_paywithmybank_fundraiser_commerce_update($donation, $card_data
     }
   }
 
+  // Get card expiration date.
+  $expires = commerce_paywithmybank_fundraiser_commerce_expire(array());
+
   if ($action == 'update') {
     $card_data->card_number = $cardonfile_fields['card_number'];
     commerce_cardonfile_save($card_data);
@@ -268,8 +271,8 @@ function commerce_paywithmybank_fundraiser_commerce_update($donation, $card_data
       $card_data->card_type = '';
       $card_data->card_name = $card_name;
       $card_data->card_number = $cardonfile_fields['card_number'];
-      $card_data->card_exp_month = '';
-      $card_data->card_exp_year = '';
+      $card_data->card_exp_month = $expires['month'];
+      $card_data->card_exp_year = $expires['year'];
       $card_data->status = 1;
 
       // Save and log the creation of the new card on file.
