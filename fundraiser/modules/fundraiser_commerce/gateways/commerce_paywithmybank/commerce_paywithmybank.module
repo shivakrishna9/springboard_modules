@@ -193,10 +193,16 @@ function commerce_paywithmybank_notify() {
 
     $order = commerce_order_load($merchant_reference);
 
-    if (!empty($order)) {
+    if (empty($order)) {
+      echo 'Fail';
+      return;
+    }
+    else {
       commerce_paywithmybank_create_payment_transaction($api_transaction, $payment_method, $order);
     }
   }
+
+  echo 'OK';
 }
 
 /**
