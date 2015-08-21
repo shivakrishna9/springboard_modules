@@ -212,7 +212,7 @@ function commerce_paywithmybank_notify_access() {
   $auth_header = filter_input(INPUT_SERVER, 'HTTP_AUTHORIZATION');
 
   // Read the entire POST body.
-  $post_body = file_get_contents(STDIN);
+  $post_body = file_get_contents('php://input');
 
   watchdog('commerce_paywithmybank', 'Authorization header: ' . $auth_header . ' Body: ' . $post_body, array(), WATCHDOG_DEBUG);
   watchdog('commerce_paywithmybank', serialize($_POST), array(), WATCHDOG_DEBUG);
