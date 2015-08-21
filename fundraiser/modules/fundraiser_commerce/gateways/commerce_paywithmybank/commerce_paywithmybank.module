@@ -208,56 +208,23 @@ function commerce_paywithmybank_notify() {
  * Access callback for processing notification information sent by PayWithMyBank.
  */
 function commerce_paywithmybank_notify_access() {
-  // Log the entire request for debug purposes.
-  $auth_header = filter_input(INPUT_SERVER, 'HTTP_AUTHORIZATION');
-
-  // Read the entire POST body.
-  $post_body = file_get_contents('php://input');
-
-  watchdog('commerce_paywithmybank', 'Authorization header: ' . $auth_header . ' Body: ' . $post_body, array(), WATCHDOG_DEBUG);
-  watchdog('commerce_paywithmybank', serialize($_POST), array(), WATCHDOG_DEBUG);
-
-  $parameters = array(
-    'merchantId' => filter_input(INPUT_POST, 'merchantId'),
-    'merchantReference' => filter_input(INPUT_POST, 'merchantReference'),
-    'eventId' => filter_input(INPUT_POST, 'eventId'),
-    'eventType' => filter_input(INPUT_POST, 'eventType'),
-    'objectType' => filter_input(INPUT_POST, 'objectType'),
-    'objectId' => filter_input(INPUT_POST, 'objectId'),
-    'message' => filter_input(INPUT_POST, 'message'),
-    'createdAt' => filter_input(INPUT_POST, 'createdAt'),
-  );
-
-  if ($parameters['objectType'] == 'Transaction') {
-    $payment_method = commerce_payment_method_instance_load('commerce_paywithmybank_bank|commerce_payment_commerce_paywithmybank_bank');
-
-    $api = commerce_paywithmybank_get_api($payment_method);
-
-    // Add transaction event properties for transaction notifications.
-    $transaction_events = $api->getTransactionEvents($parameters['objectId']);
-
-    foreach ($transaction_events as $event) {
-      if (($event->eventId == $parameters['eventId']) && !empty($event->attributes)) {
-        foreach ($event->attributes as $attribute) {
-          $parameters[$attribute->name] = $attribute->value;
-        }
-        continue;
-      }
-    }
-  }
-
+  // Get the authorization header.
   $auth_header = filter_input(INPUT_SERVER, 'HTTP_AUTHORIZATION');
   $auth_header_parts = explode(' ', $auth_header);
 
+  // Stop here if the authorization header is obviously not valid.
   if ($auth_header_parts[0] != 'Basic') {
     return FALSE;
   }
+
+  // Get the entire POST body.
+  $post_body = urldecode(file_get_contents('php://input'));
 
   $payment_method = commerce_payment_method_instance_load('commerce_paywithmybank_bank|commerce_payment_commerce_paywithmybank_bank');
   $access_id = (isset($payment_method['settings']['commerce_paywithmybank_settings_access_id'])) ? $payment_method['settings']['commerce_paywithmybank_settings_access_id'] : NULL;
   $access_key = isset($payment_method['settings']['commerce_paywithmybank_settings_access_key']) ? $payment_method['settings']['commerce_paywithmybank_settings_access_key'] : NULL;
 
-  return commerce_paywithmybank_validate_notification($access_id, $access_key, $auth_header_parts[1], $parameters);
+  return commerce_paywithmybank_validate_notification($access_id, $access_key, $auth_header_parts[1], $post_body);
 }
 
 /**
@@ -393,31 +360,23 @@ function commerce_paywithmybank_validate_request_signature($access_key, $transac
  * @param string $auth_string
  *   The authorization string received in the headers of the POST request.
  *
- * @param array $parameters
- *   The notification parameters.
+ * @param string $request_string
+ *   The full body of the POST request received from PayWithMyBank.
  *
  * @return bool
  *   TRUE if the notification is valid.
  */
-function commerce_paywithmybank_validate_notification($access_id, $access_key, $auth_string, $parameters) {
-  $data = '';
-
-  // Create hash string from notification parameters.
-  foreach ($parameters as $key => $value) {
-    $data .= "{$key}={$value}&";
-  }
-
-  $data = substr($data, 0, -1);
-
-  watchdog('commerce_paywithmybank', 'Notification data: ' . serialize($data), array(), WATCHDOG_DEBUG);
-
-  $hash = base64_encode(hash_hmac('sha1', $data, $access_key, TRUE));
+function commerce_paywithmybank_validate_notification($access_id, $access_key, $auth_string, $request_string) {
+  $hash = base64_encode(hash_hmac('sha1', $request_string, $access_key, TRUE));
 
   $calculated_auth_string = base64_encode($access_id . ':' . $hash);
 
-  watchdog('commerce_paywithmybank', 'Notification auth strings: ' . $auth_string . ' / ' . $calculated_auth_string, array(), WATCHDOG_DEBUG);
+  if ($auth_string != $calculated_auth_string) {
+    watchdog('commerce_paywithmybank', 'Notification auth string mismatch. Original: ' . $auth_string . ' Calculated: ' . $calculated_auth_string, array(), WATCHDOG_DEBUG);
+    return FALSE;
+  }
 
-  return ($auth_string == $calculated_auth_string);
+  return TRUE;
 }
 
 /**
