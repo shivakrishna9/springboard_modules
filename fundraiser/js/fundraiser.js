@@ -19,15 +19,49 @@ Drupal.behaviors.fundraiserBehavior = {
     }
   });
 
-  // Automatically change submit button text when payment gateway selected.
-  var submitText = function() {
+  // Payment selection triggered changes.
+  var paymentImages = function() {
       var gateway = $(this).val();
-      var text = Drupal.settings.fundraiser[gateway];
+      var paymentId = this.id;
+      var text = Drupal.settings.fundraiser[gateway].text;
+      var labelImg = Drupal.settings.fundraiser[gateway].selected_image;
+      // Automatically change submit button text when payment gateway selected.
       $("#edit-submit").val(text);
+      $('label[for='+paymentId+'] img').attr('src', labelImg);
+      $("input[name='submitted[payment_information][payment_method]']").each(function(gateway) {
+          if (!$(this).is(":checked")) {
+              var gateway = $(this).val();
+              var paymentId = this.id;
+              var labelImg = Drupal.settings.fundraiser[gateway].unselected_image;
+              $('label[for='+paymentId+'] img').attr('src', labelImg);
+          }
+      })
   }
-  $('input[class*="fundraiser-payment-methods"]').change(submitText);
-  // Set button text when page first loaded
-  $('input[class*="fundraiser-payment-methods"]').trigger('change');
+  var hoverInImage = function() {
+      var gateway = $(this).attr('data-gateway');
+      var paymentId = this.id;
+      var labelImg = Drupal.settings.fundraiser[gateway].selected_image;
+      $(this).attr('src', labelImg);
+  }
+  var hoverOutImage = function() {
+      var gateway = $(this).attr('data-gateway');
+      var parentLabel = $(this).parent();
+      //if (!$(this).attr('for').is(":checked")) {
+          var paymentId = this.id;
+          var labelImg = Drupal.settings.fundraiser[gateway].unselected_image;
+          $(this).attr('src', labelImg);
+      //}
+  }
+      //
+  var enabledGateways = Drupal.settings.fundraiser.enabled_count;
+  if (enabledGateways > 1) {
+      // Change payment option image based on payment selection and hover.
+      $('input[class*="fundraiser-payment-methods"]').change(paymentImages);
+      // Show payment option "selected" images when rolling over.
+      $('img[id*="payment-option-img"]').hover(hoverInImage, hoverOutImage);
+      // Set button text when page first loaded
+      $('input[class*="fundraiser-payment-methods"]').trigger('change');
+  }
 
   })(jQuery); }
 }

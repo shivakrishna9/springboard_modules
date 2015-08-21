@@ -1671,35 +1671,6 @@ function fundraiser_donation_form(&$form, &$form_state) {
     }
     $form = _fundraiser_update_form_field($form, 'amount', $amount);
 
-    // Change submit button text based on webform configuration and payment method
-    // submit button setting (if any).
-    if (empty($config['sitewide_submit']) && empty($form['#node']->webform['submit_text'])) {
-      // Change submit button text to payment gateway default, when only one gateway available.
-      $enabled = 0;
-      $button_info = array();
-      foreach ($node->gateways as $gateway) {
-        if (!empty($gateway['status']) && $gateway['status'] == 1) {
-          $enabled++;
-          $active_gateway = $gateway;
-          $gateway_rule_name = substr($active_gateway['id'], strpos($active_gateway['id'], "|") + 1); //@TODO: is there a better way to get the rule name?
-          $rule = rules_config_load($gateway_rule_name);
-          $actions = $rule->actions();
-          foreach ($actions as $action) {
-            $settings = $action->settings;
-          }
-          $gateway_config = isset($settings['payment_method']['settings']) ? $settings['payment_method']['settings'] : '';
-          if (!empty($gateway_config['submit_text'])) {
-            $button_info[$active_gateway['method']] = $gateway_config['submit_text'];
-          }
-          else {
-            $button_info[$active_gateway['method']] = $form['actions']['submit']['#value'];
-          }
-        }
-      }
-      drupal_add_js(drupal_get_path('module', 'fundraiser') . '/js/fundraiser.js');
-      drupal_add_js(array('fundraiser' => $button_info), 'setting');
-    }
-
 
     // Call hook to allow sub modules to add / manipulate the form.
     // NOTE: we are not using module_invoke_all on purpose here.
