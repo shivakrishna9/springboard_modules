@@ -81,9 +81,13 @@ function sba_message_action_download_form_submit($form, &$form_state)
     $messageNodeId = $form['node_id']['#value'];
     $emailAddress = $form_state['input']['csv_messages_download_email'];
 
+    $form = node_load($messageNodeId);
+
+    $messageAdvocacyId = $form->advocacy_id;
+
     // Make the API request to queue up the CSV download
     $apiClient = springboard_advocacy_api_call();
-    $apiRequest = $apiClient->invokeClientMethod('getFailedMessagesDownload', $messageNodeId, $emailAddress);
+    $apiRequest = $apiClient->invokeClientMethod('getFailedMessagesDownload', $messageAdvocacyId, $emailAddress);
 
     if (isset($apiRequest->data) && $apiRequest->data == 'Download queued.') {
       drupal_set_message('Thanks! Your request has been submitted. You will receive an email shortly with a link to download the failed messages.');
