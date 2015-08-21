@@ -12,10 +12,11 @@ function commerce_paywithmybank_fundraiser_commerce_fundraiser_gateway_info() {
   return array(
     'payment_method' => array('commerce_paywithmybank_bank' => 'bank account'),
     'allow_recurring' => array('bank account'),
+    'allow_refund' => array('bank account'),
     'offsite_processing' => array('bank account'),
     'form callback' => 'commerce_paywithmybank_fundraiser_commerce_form',
     'redirect callback' => 'commerce_paywithmybank_fundraiser_commerce_redirect',
-    'refund callback' => '',
+    'refund callback' => 'commerce_paywithmybank_fundraiser_commerce_refund',
     'update callback' => 'commerce_paywithmybank_fundraiser_commerce_update',
     'cardonfile callback' => 'commerce_paywithmybank_fundraiser_commerce_cardonfile',
     'expire callback' => 'commerce_paywithmybank_fundraiser_commerce_expire',
@@ -342,6 +343,24 @@ function commerce_paywithmybank_fundraiser_commerce_charge($method_instance, $do
   }
 
   return $success;
+}
+
+/**
+ * Callback function, refund the gateway.
+ */
+function commerce_paywithmybank_fundraiser_commerce_refund($payment_method, $refund) {
+  $amount = substr(commerce_currency_format($refund->amount, $refund->currency), 1);
+
+  // Process the refund.
+  $api = commerce_paywithmybank_get_api($payment_method);
+  $transaction = $api->refundTransaction($refund->donation->txn_id, $refund->did, $amount);
+
+  if ($transaction == NULL) {
+    commerce_paywithmybank_log_errors($refund->donation->txn_id, $api->getLastErrors());
+    return FALSE;
+  }
+
+  return TRUE;
 }
 
 /**
