@@ -394,7 +394,6 @@ function fundraiser_sustainers_skip_submit($form, &$form_state) {
   // Given a did, update the charge date to now.
   $donation = fundraiser_donation_get_donation($form_state['values']['did']);
   fundraiser_donation_cancel($donation);
-  $donation->donation_skipped = TRUE;
 
   _fundraiser_commerce_update_order_status('skipped', $donation->did);
   $donation->status = 'skipped';
@@ -411,8 +410,12 @@ function fundraiser_sustainers_skip_submit($form, &$form_state) {
   _fundraiser_sustainers_update_recurring($recurring);
 
   if (module_exists('salesforce_genmap')) {
+    // Add this flag to ensure the skipped SF status gets set.
+    $donation->donation_skipped = TRUE;
+
     salesforce_genmap_send_object_to_queue('salesforce_donation', 'update', $donation->node, $donation->did, $donation, 'donation');
   }
+
   drupal_set_message(t('The recurring donation has been cancelled.'));
   // Afterwards return where we came from.
   drupal_goto(drupal_get_destination());
@@ -597,6 +600,9 @@ function fundraiser_sustainers_salesforce_genmap_map_fields_alter(&$fields, $con
       }
       // Corrects the StageName to whatever value is appropriate based on mapped stages.
       if (isset($donation->donation_skipped) && $donation->donation_skipped) {
+        // Remove the transaction date field for skipped sustainers.
+        unset($fields['Transaction_Date_Time__c']);
+
         if (isset($fields['StageName'])) {
           $stagename = 'Skipped';
           if (module_exists('salesforce_donation')) {
