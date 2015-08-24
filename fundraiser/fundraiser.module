@@ -2221,31 +2221,46 @@ function fundraiser_show_refund_form($did) {
  */
 function _fundraiser_refund_form($form, &$form_state, $did) {
   $form = array();
+
   // Given a donation ID, grab all relevant information to create the form.
   $donation = fundraiser_donation_get_donation($did);
-  $form['#donation'] = $form_state['#donation'] = $donation;
+  $form_state['donation_id'] = $donation->did;
+
   $form['payment_summary'] = array(
     '#type' => 'fieldset',
     '#title' => t('Payment Summary'),
     '#collapsible' => FALSE,
     '#collapsed' => FALSE,
   );
+
+  // Since we'll be doing math on these numbers we'll use the whole number values.
+  $order_wrapper = entity_metadata_wrapper('commerce_order', commerce_order_load($donation->did));
+  $order_total = $order_wrapper->commerce_order_total->value();
+
+  $donation_amount = $order_total['amount'];
   $refund_summary = array();
   $refunded_total = 0;
+
   if (is_array($donation->refunds)) {
     foreach ($donation->refunds as $refund) {
-      $refunded_total += abs($refund->amount);
-      $refund_summary[] = t('Refund #%id for $%amount on %date.',
+      // Convert the refunded amount to a whole number.
+      $refund_amount = commerce_currency_decimal_to_amount($refund->amount, $donation->currency);
+      $refunded_total += $refund_amount;
+      $refund_summary[] = t('Refund #%id for %amount on %date.',
         array(
-        '%id' => $refund->did,
-        '%amount' => abs($refund->amount),
-        '%date' => date('m/d/y', isset($refund->created) ? $refund->created : 0),
-      )
-      ); //TODO fix up value display for international.
+          '%id' => $refund->did,
+          '%amount' => commerce_currency_format($refund_amount, $donation->currency),
+          '%date' => date('m/d/y', isset($refund->created) ? $refund->created : 0),
+        )
+      );
     }
+
     $refund_summary = !empty($refund_summary) ? theme('item_list', array('items' => $refund_summary)) : t('No refunds have been made.');
-    $refunded_total = $refunded_total;
   }
+
+  // Set the able to refund value from the donation amount.
+  $able_to_refund = $donation_amount - $refunded_total;
+
   // Display form.
   if ($donation->refunds == FALSE) {
     $form['payment_summary']['no_payments'] = array(
@@ -2258,12 +2273,12 @@ function _fundraiser_refund_form($form, &$form_state, $did) {
   $form['payment_summary']['payment_total'] = array(
     '#type' => 'item',
     '#title' => t('Payment Total'),
-    '#markup' => $donation->donation['amount'],
+    '#markup' => $donation->donation['amount_formatted'],
   );
   $form['payment_summary']['refunded_total'] = array(
     '#type' => 'item',
     '#title' => t('Refunded Total'),
-    '#markup' => $refunded_total,
+    '#markup' => commerce_currency_format($refunded_total, $donation->currency),
   );
   if (!empty($refund_summary)) {
     $form['payment_summary']['refunded_summary'] = array(
@@ -2272,6 +2287,7 @@ function _fundraiser_refund_form($form, &$form_state, $did) {
       '#markup' => $refund_summary,
     );
   }
+
   // Form for submitting a refund.
   $form['refund_options'] = array(
     '#type' => 'fieldset',
@@ -2282,13 +2298,14 @@ function _fundraiser_refund_form($form, &$form_state, $did) {
     '#collapsible' => FALSE,
     '#collapsed' => FALSE,
   );
+
   // Only show the refund form if the payment was made through a payment gateway that can handle refunds
   if (isset($donation->gateway)) { // Set during fundraiser_donation_get_donation().
     $can_refund = FALSE;
     if (!empty($donation->gateway['allow_refund']) && in_array($donation->donation['payment_method'], $donation->gateway['allow_refund'])) {
       $can_refund = TRUE;
     }
-    $able_to_refund = $donation->donation['amount'] - $refunded_total;
+
     if (!$can_refund || $able_to_refund <= 0) {
       // They've made a payment, but it cannot be refunded
       if ($able_to_refund <= 0) {
@@ -2316,14 +2333,22 @@ function _fundraiser_refund_form($form, &$form_state, $did) {
     }
     // Provide refund options
     else {
+      $form['able_to_refund'] = array(
+        '#type' => 'value',
+        '#value' => $able_to_refund,
+      );
+      $form['refunded_total'] = array(
+        '#type' => 'value',
+        '#value' => $refunded_total,
+      );
       $form['refund_options']['refund_type'] = array(
         '#title' => t('Refund options'),
         '#type' => 'radios',
         '#options' => array(
-          'full' => t('Full Refund ( %amount )', array('%amount' => $able_to_refund . ' ' . $donation->currency)),
+          'full' => t('Full Refund ( %amount )', array('%amount' => commerce_currency_format($able_to_refund, $donation->currency))),
           'partial' => t('Partial Refund'),
         ),
-        '#default_value' => isset($form_state['input']['refund_type']) ? $form_state['input']['refund_type'] : 'full',
+        '#default_value' => 'full',
       );
       $form['refund_options']['amount'] = array(
         '#type' => 'textfield',
@@ -2335,7 +2360,6 @@ function _fundraiser_refund_form($form, &$form_state, $did) {
             ':input[name="refund_type"]' => array('value' => 'partial'),
           ),
         ),
-        '#required' => TRUE,
       );
       $form['refund_options']['refund_notes'] = array(
         '#type' => 'textarea',
@@ -2350,14 +2374,6 @@ function _fundraiser_refund_form($form, &$form_state, $did) {
         '#value' => t('Issue Refund'),
         '#required' => TRUE,
       );
-      $form['able_to_refund'] = array(
-        '#type' => 'hidden',
-        '#value' => number_format($able_to_refund, 2),
-      );
-      $form['refunded_total'] = array(
-        '#type' => 'hidden',
-        '#value' => number_format($refunded_total, 2),
-      );
     }
   }
   else {
@@ -2367,6 +2383,7 @@ function _fundraiser_refund_form($form, &$form_state, $did) {
       '#suffix' => '</strong>',
     );
   }
+
   return $form;
 }
 
@@ -2374,34 +2391,46 @@ function _fundraiser_refund_form($form, &$form_state, $did) {
  * Validate the form
  */
 function _fundraiser_refund_form_validate($form, &$form_state) {
-  // Dunno why, but values isn't picking it up.
-  $form_state['values'] = isset($form_state['input']) ? $form_state['input'] : $form_state['values'];
   // Get the donation.
-  $donation = $form['#donation'];
+  $donation = fundraiser_donation_get_donation($form_state['donation_id']);
+
   // If it isn't a full refund, make sure they entered a valid value
   $refund_type = $form_state['values']['refund_type'];
+  $able_to_refund = $form_state['values']['able_to_refund'];
+
   if (empty($refund_type)) {
     form_set_error('refund_type', t('Select a type for the refund.'));
   }
   if ($refund_type != 'full') {
-    $amount = (float) $form_state['values']['amount'];
+    // Convert the entered amount to a whole number.
+    $amount = commerce_currency_decimal_to_amount(preg_replace('/[^\d\.]/i', '', $form_state['values']['amount']), $donation->currency);
+
     if ($amount <= 0) {
       form_set_error('amount', t('Enter a positive numerical refund amount.'));
     }
     else {
-      $refunded_total = (float) $form_state['values']['refunded_total'];
-      // Determine how much has been paid, less previous refunds
-      $able_to_refund = $donation->donation['amount'] - $refunded_total;
+      // Check if the amount set to refund is less than the amount left to refund.
       if ($amount > $able_to_refund) {
         $context = array(
           'revision' => 'formatted-original',
           'type' => 'amount',
         );
         form_set_error('amount', t('The refund amount entered is too high. Only @paid in payments have been made, and no ' .
-          'more than that can be refunded.', array('@paid' => $able_to_refund)));
+          'more than that can be refunded.', array('@paid' => commerce_currency_format($able_to_refund, $donation->currency))));
+      }
+      else {
+        // Add the amount to refund to the form_state values.
+        $refund_amount = $amount;
       }
     }
   }
+  else {
+    // Add the full amount to the form_state values.
+    $refund_amount = $able_to_refund;
+  }
+
+  $form_state['values']['refund_amount'] = commerce_currency_amount_to_decimal($refund_amount, $donation->currency);
+
   $refund_notes = $form_state['values']['refund_notes'];
   if (empty($refund_notes)) {
     form_set_error('refund_notes', t('Please enter a reason for the refund.'));
@@ -2413,31 +2442,14 @@ function _fundraiser_refund_form_validate($form, &$form_state) {
  */
 function _fundraiser_refund_form_submit($form, &$form_state) {
   // Get the donation.
-  $donation = $form['#donation'];
-  // Determine how much has been paid, less previous refunds
-  $refunded_total = (float) $form_state['values']['refunded_total'];
-  $able_to_refund = $donation->donation['amount'] - $refunded_total;
-  // Partial refund
-  if ($form_state['values']['refund_type'] != 'full') {
-    $amount = (float) $form_state['values']['amount'];
-    $new_status = 'partially_refunded';
-    // Can't refund more than they've paid
-    // Use >= so that the status is set properly if they choose Partial Refund.
-    if ($amount >= $able_to_refund) {
-      $amount = $able_to_refund;
-      $new_status = 'refunded';
-    }
-  }
-  // Full refund
-  else {
-    $amount = $able_to_refund;
-    $new_status = 'refunded';
-  }
+  $donation = fundraiser_donation_get_donation($form_state['donation_id']);
+
+  $new_status = 'refunded';
 
   // Set up the refund.
   $refund = new stdClass();
   $refund->did = $donation->did;
-  $refund->amount = $amount;
+  $refund->amount = $form_state['values']['refund_amount'];
   $refund->currency = $donation->currency;
   $refund->reason = $form_state['values']['refund_notes'];
   $refund = fundraiser_refund_create($refund);
