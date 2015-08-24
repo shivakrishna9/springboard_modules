@@ -136,6 +136,9 @@ function sba_message_action_uninstall() {
   // Delete the message action content type.
   node_type_delete('sba_message_action');
   field_purge_batch(1000);
+  module_load_include('inc', 'sba_message_action', 'includes/install/sba_message_action.install_taxonomy');
+  _sba_message_action_delete_legislative_vocab();
+
 }
 
 

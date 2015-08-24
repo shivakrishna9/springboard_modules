@@ -204,3 +204,13 @@ function _sba_message_action_install_taxonomy_field_definitions() {
   return $fields;
 }
 
+/**
+ * Delete taxonomy fields.
+ */
+function _sba_message_action_delete_legislative_vocab() {
+  foreach (taxonomy_get_vocabularies() as $vocab) {
+    if ($vocab->machine_name == 'sba_legislative_issues') {
+      taxonomy_vocabulary_delete($vocab->vid);
+    }
+  }
+}
