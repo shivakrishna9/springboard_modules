@@ -32,7 +32,7 @@
                 labelWidthsTotal += $(this).find('label').outerWidth();
                 labelCount++;
             });
-            if (labelCount > 10) {
+            if (labelCount > 0) {
                 // When a top-level item is changed, update all of its descendants to match.
                 var onChange = function(e) {
                     var isChecked = $(this).parent().find('input:not(.sba-term-indent)').get(0).checked;
