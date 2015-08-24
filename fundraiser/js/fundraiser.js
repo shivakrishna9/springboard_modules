@@ -46,19 +46,18 @@ Drupal.behaviors.fundraiserBehavior = {
   var hoverOutImage = function() {
       var gateway = $(this).attr('data-gateway');
       var parentLabel = $(this).parent();
-      //if (!$(this).attr('for').is(":checked")) {
-          var paymentId = this.id;
+      var labelParent = parentLabel.attr('for');
+      var checked = $('#' + labelParent).is(':checked');
+      if (!checked) {
           var labelImg = Drupal.settings.fundraiser[gateway].unselected_image;
           $(this).attr('src', labelImg);
-      //}
+      }
   }
       //
   var enabledGateways = Drupal.settings.fundraiser.enabled_count;
-  if (enabledGateways > 1) {
+  if (enabledGateways >= 1) {
       // Change payment option image based on payment selection and hover.
       $('input[class*="fundraiser-payment-methods"]').change(paymentImages);
-      // Show payment option "selected" images when rolling over.
-      $('img[id*="payment-option-img"]').hover(hoverInImage, hoverOutImage);
       // Set button text when page first loaded
       $('input[class*="fundraiser-payment-methods"]').trigger('change');
   }
