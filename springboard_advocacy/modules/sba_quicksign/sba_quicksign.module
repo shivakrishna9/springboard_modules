@@ -84,7 +84,7 @@ function sba_quicksign_form_validate(&$form, &$form_state) {
   // No profile available.
   if (!$account) {
     $_SESSION['sba_quicksign']['profile']['mail'] = $mail;
-    drupal_set_message(t("We're sorry, we did not find an account with the email address !mail. Please fill out the full form to send this message. Next time you will be able to sign using just your email address.", array('!mail' => $mail)));
+    drupal_set_message(t("We're sorry, we did not find an account with the email address !mail. Please fill out the full form. Next time you will be able to submit using just your email address.", array('!mail' => $mail)));
     drupal_redirect_form($form_state);
   }
 
