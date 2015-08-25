@@ -2406,7 +2406,7 @@ function _fundraiser_refund_form_validate($form, &$form_state) {
   // A full refund uses the $able_to_refund amount, a partial refund needs to validate the entered amount.
   if ($refund_type != 'full') {
     // Convert the entered amount to a whole number.
-    $amount = commerce_currency_decimal_to_amount(preg_replace('/[^\d\.]/i', '', $form_state['values']['amount']), $donation->currency);
+    $amount = commerce_currency_decimal_to_amount(_fundraiser_amount_value_sanitize($form_state['values']['amount']), $donation->currency);
 
     if ($amount <= 0) {
       form_set_error('amount', t('Enter a positive numerical refund amount.'));
@@ -3552,4 +3552,17 @@ function fundraiser_log_donation_processing($donation, $log = array()) {
   );
 
   watchdog('fundraiser_donation_tracker', $message, $variables, WATCHDOG_INFO);
+}
+
+/**
+ * Clean up the input for an amount field.
+ *
+ * @param string $amount
+ *   The amount entered from the submission.
+ *
+ * @return string
+ *   The input amount stripped of any values other than a decimal point.
+ */
+function _fundraiser_amount_value_sanitize($amount) {
+  return preg_replace('/[^\d\.]/i', '', $amount);
 }

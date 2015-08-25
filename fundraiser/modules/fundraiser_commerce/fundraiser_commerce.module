@@ -987,11 +987,11 @@ function fundraiser_commerce_fundraiser_donation_create($donation) {
   $node = $donation->node;
   // Pick out the values we need to generate an order.
   if ($donation->donation['amount'] == 'other') {
-    $donation->donation['amount'] = preg_replace('/[^\d\.]/i', '', $donation->donation['other_amount']);
+    $donation->donation['amount'] = _fundraiser_amount_value_sanitize($donation->donation['other_amount']);
   }
 
   // If not set, set the donation amount on the main donation object.
-  $donation->amount = isset($donation->amount) ? $donation->amount : preg_replace('/[^\d\.]/i', '', $donation->donation['amount']);
+  $donation->amount = isset($donation->amount) ? $donation->amount : _fundraiser_amount_value_sanitize($donation->donation['amount']);
 
   // Set or convert the $donation->donation currency value to an array of currency values.
   if (!isset($donation->donation['currency'])) {
