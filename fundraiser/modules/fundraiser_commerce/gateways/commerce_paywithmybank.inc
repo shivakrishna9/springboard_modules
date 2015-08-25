@@ -27,7 +27,7 @@ function commerce_paywithmybank_fundraiser_commerce_fundraiser_gateway_info() {
 /**
  * Callback function, use this form for the given gateway.
  */
-function commerce_paywithmybank_fundraiser_commerce_form($payment_method, $config) {
+function commerce_paywithmybank_fundraiser_commerce_form($payment_method) {
   $form = array();
 
   $method_instance = commerce_payment_method_instance_load('commerce_paywithmybank_bank|commerce_payment_commerce_paywithmybank_bank');
