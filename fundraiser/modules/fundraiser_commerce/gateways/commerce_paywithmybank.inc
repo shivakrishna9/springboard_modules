@@ -339,6 +339,20 @@ function commerce_paywithmybank_fundraiser_commerce_charge($method_instance, $do
     $recurring_donation = _fundraiser_sustainers_get_recurring_by_did($donation->did);
     $master_donation = fundraiser_donation_get_donation($recurring_donation->master_did);
 
+    $cards_on_file = commerce_cardonfile_load_multiple_by_remote_id($master_donation->txn_id);
+
+    if (!empty($cards_on_file)) {
+      $card_data = current($cards_on_file);
+
+      $expires = commerce_paywithmybank_fundraiser_commerce_expire(array());
+
+      $card_data->card_exp_month = $expires['month'];
+      $card_data->card_exp_year = $expires['year'];
+
+      // Update card using master donation so transaction ID is available.
+      commerce_paywithmybank_fundraiser_commerce_update($master_donation, $card_data);
+    }
+
     fundraiser_sustainers_update_billing_info_create_new_donations($master_donation, $donation, array());
   }
 
@@ -377,11 +391,16 @@ function commerce_paywithmybank_pane_values($donation) {
 
   $method_instance = commerce_payment_method_instance_load($donation->gateway['id']);
 
-  // Only one valid payment method.
   if (!empty($donation->txn_id)) {
     $api = commerce_paywithmybank_get_api($method_instance);
     $api_transaction = $api->getTransaction($donation->txn_id);
 
+    $errors = $api->getLastErrors();
+    if (!empty($errors)) {
+      commerce_paywithmybank_log_errors($donation->txn_id, $errors);
+    }
+
+    // Only one valid payment method.
     $pane_values['bank_account'] = array(
       'account_number' => $api_transaction->payment->account->accountNumber,
       'account_name' => $api_transaction->payment->account->name,
