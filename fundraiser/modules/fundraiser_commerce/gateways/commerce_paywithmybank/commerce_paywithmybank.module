@@ -198,6 +198,23 @@ function commerce_paywithmybank_notify() {
     }
     else {
       commerce_paywithmybank_create_payment_transaction($api_transaction, $payment_method, $order);
+
+      // Check for an "authorized" notification from the sandbox API.
+      // The sandbox API does not send the remaining "processed" and
+      // "completed" notifications, so we need to generate them here.
+      if (($api_transaction->status == PayWithMyBank::TRANSACTION_STATUS_AUTHORIZED) && commerce_paywithmybank_transaction_is_sandbox($api_transaction)) {
+        // Create the "processed" transaction.
+        $api_transaction_processed = clone $api_transaction;
+        $api_transaction_processed->status = PayWithMyBank::TRANSACTION_STATUS_PROCESSED;
+        $api_transaction_processed->statusMessage = 'Processed';
+        commerce_paywithmybank_create_payment_transaction($api_transaction_processed, $payment_method, $order);
+
+        // Create the "completed" transaction.
+        $api_transaction_completed = clone $api_transaction;
+        $api_transaction_completed->status = PayWithMyBank::TRANSACTION_STATUS_COMPLETED;
+        $api_transaction_completed->statusMessage = 'Completed';
+        commerce_paywithmybank_create_payment_transaction($api_transaction_completed, $payment_method, $order);
+      }
     }
   }
 
@@ -433,6 +450,19 @@ function commerce_paywithmybank_create_payment_transaction($api_transaction, $pa
   commerce_payment_transaction_save($transaction);
 
   return $transaction;
+}
+
+/**
+ * Determines if a transaction originated from the PayWithMyBank sandbox API.
+ *
+ * @param object $transaction
+ *   The PayWithMyBank transaction.
+ *
+ * @return bool
+ *   True if the transaction is a sandbox transaction.
+ */
+function commerce_paywithmybank_transaction_is_sandbox($transaction) {
+  return ($transaction->payment->paymentProvider->name == 'Demo Bank');
 }
 
 /**
