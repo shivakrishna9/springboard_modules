@@ -527,7 +527,7 @@ function sba_quicksign_webform_submission_insert($node, $submission) {
  *   $type
  */
 function sba_quicksign_is_quicksign_type($type) {
-  $types = array('springboard_petition', 'sba_message_action');
+  $types = array('springboard_petition');
   $quicksign = FALSE;
   if (in_array($type, $types)) {
     $quicksign = TRUE;
