@@ -417,6 +417,7 @@ function commerce_paywithmybank_create_payment_transaction($api_transaction, $pa
     case PayWithMyBank::TRANSACTION_STATUS_REVERSED:
     case PayWithMyBank::TRANSACTION_STATUS_PARTIALLY_REFUNDED:
     case PayWithMyBank::TRANSACTION_STATUS_REFUNDED:
+    case PayWithMyBank::TRANSACTION_STATUS_COMPLETED:
       $transaction->status = COMMERCE_PAYMENT_STATUS_SUCCESS;
       break;
 
