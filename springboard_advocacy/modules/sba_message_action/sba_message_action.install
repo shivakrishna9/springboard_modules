@@ -142,6 +142,16 @@ function sba_message_action_uninstall() {
 }
 
 
+function sba_message_action_enable() {
+  // This is for sites upgraded from 4.7
+  // in case actions was experimentally enabled then disabled
+  // without completely uninstalling
+  // we need to recreate the taxonomy that
+  // springboard_advocacy_update_7007() deletes.
+  module_load_include('inc', 'sba_message_action', 'includes/install/sba_message_action.install_taxonomy');
+  _sba_message_action_install_vocab_sba_legislative_issues();
+}
+
 /**
  * Rename alert var to action.
  */

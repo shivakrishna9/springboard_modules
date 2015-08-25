@@ -109,3 +109,16 @@ function springboard_advocacy_update_7006() {
   $types = array('springboard_petition', 'sba_message_action');
   variable_set('springboard_advocacy_goal_types', $types);
 }
+
+/**
+ * Delete the legislative issues vocab if actions is not enabled.
+ */
+function springboard_advocacy_update_7007() {
+  if (module_exists('taxonomy') && !module_exists('sba_message_action')) {
+    foreach (taxonomy_get_vocabularies() as $vocab) {
+      if ($vocab->machine_name == 'sba_legislative_issues') {
+        taxonomy_vocabulary_delete($vocab->vid);
+      }
+    }
+  }
+}
