@@ -2394,13 +2394,16 @@ function _fundraiser_refund_form_validate($form, &$form_state) {
   // Get the donation.
   $donation = fundraiser_donation_get_donation($form_state['donation_id']);
 
-  // If it isn't a full refund, make sure they entered a valid value
+  // Variables for tracking the refund type and amounts.
   $refund_type = $form_state['values']['refund_type'];
   $able_to_refund = $form_state['values']['able_to_refund'];
+  $refund_amount = 0;
 
   if (empty($refund_type)) {
     form_set_error('refund_type', t('Select a type for the refund.'));
   }
+
+  // A full refund uses the $able_to_refund amount, a partial refund needs to validate the entered amount.
   if ($refund_type != 'full') {
     // Convert the entered amount to a whole number.
     $amount = commerce_currency_decimal_to_amount(preg_replace('/[^\d\.]/i', '', $form_state['values']['amount']), $donation->currency);
