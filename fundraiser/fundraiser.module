@@ -2223,12 +2223,15 @@ function _fundraiser_refund_form($form, &$form_state, $did) {
   $refunded_total = 0;
   if (is_array($donation->refunds)) {
     foreach ($donation->refunds as $refund) {
-      $refunded_total += abs($refund->amount);
-      $refund_summary[] = t('Refund #%id for $%amount on %date.',
+      if ($refund->status == 'refunded' || $refund->status == 'partially_refunded') {
+        $refunded_total += abs($refund->amount);
+      }
+      $refund_summary[] = t('%status #%id for $%amount on %date.',
         array(
         '%id' => $refund->rid,
         '%amount' => abs($refund->amount),
         '%date' => date('m/d/y', isset($refund->created) ? $refund->created : 0),
+        '%status' => $refund->status,
       )
       ); //TODO fix up value display for international.
     }
