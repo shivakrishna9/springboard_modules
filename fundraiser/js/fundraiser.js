@@ -53,7 +53,6 @@ Drupal.behaviors.fundraiserBehavior = {
           $(this).attr('src', labelImg);
       }
   }
-      //
   var enabledGateways = Drupal.settings.fundraiser.enabled_count;
   if (enabledGateways >= 1) {
       // Change payment option image based on payment selection and hover.
@@ -61,6 +60,8 @@ Drupal.behaviors.fundraiserBehavior = {
       // Set button text when page first loaded
       $('input[class*="fundraiser-payment-methods"]').trigger('change');
   }
+  // Show payment option "selected" images when rolling over.
+  $('img[id*="payment-option-img"]').hover(hoverInImage, hoverOutImage);
 
   })(jQuery); }
 }
