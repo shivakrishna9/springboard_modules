@@ -310,8 +310,7 @@ function fundraiser_sustainers_standalone_cron() {
   $processor_key_match = fundraiser_sustainers_processor_key_match();
   drupal_alter('fundraiser_sustainers_process_recurring', $process_recurring);
 
-  if (TRUE) {
-  //if ($process_recurring && $processor_key_match) {
+  if ($process_recurring && $processor_key_match) {
     fundraiser_sustainers_process_recurring_donations();
   }
   if (!$process_recurring) {
