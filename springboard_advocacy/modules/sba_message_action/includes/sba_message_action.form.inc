@@ -291,13 +291,12 @@ function sba_message_action_form_validate($form, &$form_state) {
     $body_edited = isset($form_state['values']['sba_messages']['message'][$message_id]['edited_body']) ? $form_state['values']['sba_messages']['message'][$message_id]['edited_body'] : '';
     $subject_default = isset($message['subject']['#default_value']) ? $message['subject']['#default_value'] : '';
     $subject_edited = isset($form_state['values']['sba_messages']['message'][$message_id]['subject']) ? $form_state['values']['sba_messages']['message'][$message_id]['subject'] : '';
-
     $changed = FALSE;
     // Enforce mandatory editing.
     if ($body_edited == $body_default && isset($message['body_required']) && $message['body_required']['#value'] == 1) {
         form_set_error('body_editable', t('Please personalize your message before sending.'));
     }
-    elseif (!isset($message['body_show']) && $body_edited != $body_default) {
+    elseif ($body_edited != $body_default) {
       $changed = TRUE;
     }
     if ($subject_edited == $subject_default && isset($message['subject_required']) && $message['subject_required']['#value'] == 1) {
