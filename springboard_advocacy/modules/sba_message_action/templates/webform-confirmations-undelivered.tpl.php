@@ -51,7 +51,7 @@
   jQuery('.sba-message-show-message').on('click', function () {
     var message = jQuery(this).parents('.sba-undeliverable-messages-message-subject').siblings('.sba-undeliverable-message-body');
     message.toggle('slow', function () {
-      var link = jQuery(this).parents('.sba-undeliverable-messages-message-subject').siblings('.sba-message-show-message');
+      var link = jQuery(this).siblings('.sba-undeliverable-messages-message-subject').children('.sba-message-show-message');
       if (message.is(':visible')) {
         link.text('Hide message')
       }

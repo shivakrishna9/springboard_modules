@@ -15,13 +15,15 @@
 function sba_message_action_form_layouts() {
   $templates = array();
 
+  // This faux-template is unset in sba_message_action_node_load()
+  // So that it uses the identical non-form-layout default template
   $templates['two_column_message_right'] = array(
     'name' => t('Call to action top, message right, horizontal user form left'),
     'types' => array('sba_message_action'),
     'theme' => 'two_column_message_right',
-    'pattern' => 'two_column_message_right\'0-9\'+',
-    'template' => 'two-column-message-right',
-    'path' => drupal_get_path('module', 'sba_message_action') . '/templates/form_layouts',
+    'pattern' => '',
+    'template' => '',
+    'path' => '',
     'hide title' => FALSE,
   );
 
@@ -80,9 +82,9 @@ function sba_message_action_form_layouts() {
 /**
  * Implements hook_preprocess_hook().
   */
-function sba_message_action_preprocess_two_column_message_right(&$vars) {
-  sba_message_action_build_preprocess($vars);
-}
+//function sba_message_action_preprocess_two_column_message_right(&$vars) {
+//  sba_message_action_build_preprocess($vars);
+//}
 
 /**
  * Implements hook_preprocess_hook().

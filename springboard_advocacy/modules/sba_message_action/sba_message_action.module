@@ -264,8 +264,8 @@ function sba_message_action_node_load($nodes, $types) {
       $precedence = db_query("SELECT precedence FROM {sba_form_id} WHERE nid = :nid", array(':nid' => arg(1)))->fetchField();
       $node->precedence = !empty($precedence) ? $precedence : 0;
 
-      // Unset form layout if single column.
-      if (isset($node->form_layouts) &&  $node->form_layouts == 'one_column') {
+      // Unset form layout if default.
+      if (isset($node->form_layouts) &&  $node->form_layouts == 'two_column_message_right') {
         unset($node->form_layouts);
       }
 
@@ -884,6 +884,6 @@ function sba_message_action_tokens($type, $tokens, $data = array(), $options = a
 /**
  * @return array
  */
-function sba_message_actions_flush_caches() {
+function sba_message_action_flush_caches() {
   return array('cache_deliverability_report');
 }

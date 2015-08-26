@@ -65,7 +65,7 @@ function sba_message_action_insert_components($node) {
     'nid' => $node->nid,
     'form_key' => 'sba_deliverable_count',
     'pid' => 0,
-    'name' => t('Deliverable message count'),
+    'name' => t('Messages Generated'),
     'type' => 'hidden',
     'value' => 0,
     'weight' => 13,

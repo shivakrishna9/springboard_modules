@@ -136,8 +136,21 @@ function sba_message_action_uninstall() {
   // Delete the message action content type.
   node_type_delete('sba_message_action');
   field_purge_batch(1000);
+  module_load_include('inc', 'sba_message_action', 'includes/install/sba_message_action.install_taxonomy');
+  _sba_message_action_delete_legislative_vocab();
+
 }
 
+
+function sba_message_action_enable() {
+  // This is for sites upgraded from 4.7
+  // in case actions was experimentally enabled then disabled
+  // without completely uninstalling
+  // we need to recreate the taxonomy that
+  // springboard_advocacy_update_7007() deletes.
+  module_load_include('inc', 'sba_message_action', 'includes/install/sba_message_action.install_taxonomy');
+  _sba_message_action_install_vocab_sba_legislative_issues();
+}
 
 /**
  * Rename alert var to action.
@@ -354,7 +367,7 @@ function sba_message_action_update_7012() {
         'nid' => $node->nid,
         'form_key' => 'sba_deliverable_count',
         'pid' => 0,
-        'name' => t('Deliverable message count'),
+        'name' => t('Messages Generated'),
         'type' => 'hidden',
         'value' => 0,
         'weight' => 13,
@@ -480,5 +493,38 @@ function sba_message_action_update_7019() {
   $schema = module_invoke('sba_message_action', 'schema');
   if(db_table_exists('cache_deliverability_target') == FALSE) {
     db_create_table('cache_deliverability_target', $schema['cache_deliverability_target']);
+  }
+}
+
+/**
+ * Install deliverable_message_count if missing.
+ */
+function sba_message_action_update_7020() {
+
+  $nodes = db_query('select n.nid from {node} n
+    WHERE n.type = :type',
+    array(':type' => 'sba_message_action')
+  );
+
+  foreach ($nodes as $node) {
+    $cid = db_query('select cid from {webform_component}
+      WHERE nid = :nid AND form_key = :key',
+      array(':nid' => $node->nid, ':key' => 'sba_deliverable_count')
+    )->fetchField();
+
+    if ($cid) {
+      $field = array(
+        'cid' => $cid,
+        'nid' => $node->nid,
+        'form_key' => 'sba_deliverable_count',
+        'pid' => 0,
+        'name' => t('Messages Generated'),
+        'type' => 'hidden',
+        'value' => 0,
+        'weight' => 13,
+        'email' => 1,
+      );
+      webform_component_update($field);
+    }
   }
 }
