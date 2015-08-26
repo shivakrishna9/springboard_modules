@@ -354,7 +354,16 @@ function commerce_paywithmybank_fundraiser_commerce_charge($method_instance, $do
       commerce_paywithmybank_fundraiser_commerce_update($master_donation, $card_data);
     }
 
-    fundraiser_sustainers_update_billing_info_create_new_donations($master_donation, $donation, array());
+    $submission_fields = array(
+      'payment_fields' => array(
+        'bank account' => array(
+          'card_expiration_month' => $card_data->card_exp_month,
+          'card_expiration_year' => $card_data->card_exp_year,
+        ),
+      ),
+    );
+
+    fundraiser_sustainers_update_billing_info_create_new_donations($master_donation, $donation, $submission_fields);
   }
 
   return $success;
