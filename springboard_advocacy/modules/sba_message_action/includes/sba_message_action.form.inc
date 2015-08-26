@@ -294,20 +294,16 @@ function sba_message_action_form_validate($form, &$form_state) {
 
     $changed = FALSE;
     // Enforce mandatory editing.
-    if ($body_edited == $body_default) {
-      if (isset($message['body_required']) && $message['body_required']['#value'] == 1) {
+    if ($body_edited == $body_default && isset($message['body_required']) && $message['body_required']['#value'] == 1) {
         form_set_error('body_editable', t('Please personalize your message before sending.'));
-      }
     }
-    else {
+    elseif (!isset($message['body_show']) && $body_edited != $body_default) {
       $changed = TRUE;
     }
-    if ($subject_edited == $subject_default) {
-      if (isset($message['subject_required']) && $message['subject_required']['#value'] == 1) {
+    if ($subject_edited == $subject_default && isset($message['subject_required']) && $message['subject_required']['#value'] == 1) {
         form_set_error('subject', t('Please personalize the subject line before sending your message.'));
-      }
     }
-    else {
+    elseif (!isset($message['subject_show']) && $subject_edited != $subject_default) {
       $changed = TRUE;
     }
     // Set user_edited_flag
