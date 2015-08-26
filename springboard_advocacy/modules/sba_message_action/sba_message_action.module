@@ -370,14 +370,17 @@ function sba_message_action_form_alter(&$form, &$form_state, $form_id) {
     // form items which insert or display message-entity data in the
     // message-action webform.
     if ($client_form !== FALSE) {
+
+      if (empty($form['#node']->show_my_name)) {
+        $form['submitted']['sbp_sba_action_optin']['#access'] = FALSE;
+      }
+
       form_load_include($form_state, 'inc', 'sba_message_action', 'includes/sba_message_action.form');
       sba_message_action_additional_elements($form, $form_state);
     }
   }
 
-  if (empty($form['#node']->show_my_name)) {
-    $form['submitted']['sbp_sba_action_optin']['#access'] = FALSE;
-  }
+
 
   // Override springboard_admin.module's node delete redirect.
   if ($form_id == 'node_delete_confirm') {
