@@ -213,6 +213,11 @@ function commerce_paywithmybank_notify() {
         $api_transaction_completed = clone $api_transaction;
         $api_transaction_completed->status = PayWithMyBank::TRANSACTION_STATUS_COMPLETED;
         $api_transaction_completed->statusMessage = 'Completed';
+
+        if (isset($api_transaction_completed->payment->recurrence)) {
+          $api_transaction_completed->amount = $api_transaction_completed->payment->recurrence->recurringAmount;
+        }
+
         commerce_paywithmybank_create_payment_transaction($api_transaction_completed, $payment_method, $order);
       }
     }
