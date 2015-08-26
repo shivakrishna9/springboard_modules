@@ -884,6 +884,6 @@ function sba_message_action_tokens($type, $tokens, $data = array(), $options = a
 /**
  * @return array
  */
-function sba_message_actions_flush_caches() {
+function sba_message_action_flush_caches() {
   return array('cache_deliverability_report');
 }
