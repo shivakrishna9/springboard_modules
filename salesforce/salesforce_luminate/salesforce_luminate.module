@@ -40,6 +40,19 @@ function salesforce_luminate_schema_alter(&$schema) {
       'not null' => TRUE,
       'default' => 0,
     );
+
+    $schema['fundraiser_sustainers_series']['fields']['luminate_installment_period'] = array(
+      'description' => 'The period of time per each donation.',
+      'type' => 'varchar',
+      'length' => 255,
+    );
+
+    $schema['fundraiser_sustainers_series']['fields']['luminate_day_of_month'] = array(
+      'description' => 'The month day when donations occur.',
+      'type' => 'int',
+      'not null' => TRUE,
+      'default' => 0,
+    );
   }
 }
 
