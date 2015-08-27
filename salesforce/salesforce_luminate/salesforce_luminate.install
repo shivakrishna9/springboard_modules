@@ -98,6 +98,17 @@ function salesforce_luminate_create_extra_fundraiser_series_fields() {
       'not null' => TRUE,
       'default' => 0,
     ),
+    'luminate_installment_period' => array(
+      'description' => 'The period of time per each donation.',
+      'type' => 'varchar',
+      'length' => 255,
+    ),
+    'luminate_day_of_month' => array(
+      'description' => 'The month day when donations occur.',
+      'type' => 'int',
+      'not null' => TRUE,
+      'default' => 0,
+    ),
   );
 
   foreach ($fields as $field_name => $field) {
