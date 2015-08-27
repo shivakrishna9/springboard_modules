@@ -215,6 +215,13 @@ function sba_message_action_node_presave($node) {
     $node->webform['confirmation'] = t('Thank you, %value[sbp_first_name] for participating in the messaging campaign.');
     $node->webform['confirmation'] .= "\n\n" . '[action:all_messages]';
   }
+  if($node->type == 'sba_message_action' && $node->status == 0) {
+    $email = variable_get('springboard_advocacy_test_email', '');
+    $field_language = field_language('node', $node, 'field_sba_test_mode');
+    $node->field_sba_test_mode[$field_language][0]['value'] = 1;
+    $field_language = field_language('node', $node, 'field_sba_test_mode_email');
+    $node->field_sba_test_mode_email[$field_language][0]['value'] = $email;
+  }
 }
 
 /**
