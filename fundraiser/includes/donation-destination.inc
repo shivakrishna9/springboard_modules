@@ -196,7 +196,7 @@ class FundraiserDonationDestination extends MigrateDestination {
       return array($donation->did);
     }
     else {
-      return FASLE;
+      return FALSE;
     }
   }
 
@@ -317,7 +317,7 @@ class FundraiserDonationDestination extends MigrateDestination {
     }
 
     // Handle any custom reccuring
-    if (!empty($row->custom_recurring_frequency)) {
+    if (!empty($row->create_sustainer_series)) {
       $this->createRecurringSeries($donation, $row);
     }
 
@@ -375,6 +375,9 @@ class FundraiserDonationDestination extends MigrateDestination {
               $migration->saveMessage('No expiration date found for this donation.', MigrationBase::MESSAGE_ERROR);
               return;
             }
+
+            // Create the series
+            $this->createFutureMonthlyOrders($donation, $expires['month'], $expires['year'], $row->recurring_start_date);
           }
         }
       }

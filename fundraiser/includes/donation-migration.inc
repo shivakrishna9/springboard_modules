@@ -61,12 +61,10 @@ abstract class FundraiserMigration extends Migration {
       'PRIMARY_ADDRESS_LINE_2',
       'PRIMARY_ADDRESS_CITY',
       'PRIMARY_ADDRESS_STATE',
-      'PRIMARY_ADDRESS_PROVINCE',
       'PRIMARY_ADDRESS_ZIP_CODE',
       'PRIMARY_ADDRESS_COUNTRY',
       'PAYMENT_DATE',
       'PAYMENT_STATUS',
-      'PAYMENT_DATE',
       'PAYMENT_AMOUNT',
       'FREQUENCY',
       'CREDIT_CARD_TYPE',
@@ -93,8 +91,8 @@ abstract class FundraiserMigration extends Migration {
 /**
  * An example migration class.
  *
- * You probably won't want to extend this class as it make many assumptions
- * on the data and donation options.
+ * You probably want to copy this instead of extending this class as it
+ * makes assumptions on the data and mapping options.
  */
 class FundraiserDonationMigration extends FundraiserMigration {
   public function __construct($arguments) {
@@ -122,7 +120,7 @@ class FundraiserDonationMigration extends FundraiserMigration {
 
     // Add mappings.
     $this->addFieldMapping('mail', 'EMAIL_ADDRESS');
-    $this->addFieldMapping('created', 'PLEDGE_DATE');
+    $this->addFieldMapping('created')->defaultValue(date('c'));
     $this->addFieldMapping('amount', 'PAYMENT_AMOUNT');
     $this->addFieldMapping('payment_method', 'payment_method');
     $this->addFieldMapping('payment_fields', 'payment_fields');
@@ -138,7 +136,14 @@ class FundraiserDonationMigration extends FundraiserMigration {
     $this->addFieldMapping('data', 'data');
     $this->addFieldMapping('currency')->defaultValue('USD');
     $this->addFieldMapping('status')->defaultValue(1);
-    $this->addFieldMapping('gateway')->defaultValue('commerce_litle_cc|commerce_payment_commerce_litle_cc');
+
+    $this->addFieldMapping('nid')
+      ->description(t('Enter the NID of the target donation form.'))
+      ->issuePriority(MigrateFieldMapping::ISSUE_PRIORITY_BLOCKER);
+
+    $this->addFieldMapping('gateway') 
+      ->description(t('Enter the ID of the commerce gateway to process these donations.'))
+      ->issuePriority(MigrateFieldMapping::ISSUE_PRIORITY_BLOCKER);
   }
 
   public function fields() {
@@ -171,23 +176,6 @@ class FundraiserDonationMigration extends FundraiserMigration {
 
     // Prepare data for card on file.
     $row->cardonfile = $this->cardOnFile($row);
-
-    // Add one month to last payment date.
-    $start = strtotime($row->{'PAYMENT_DATE'});
-
-    // If the next payment is in the past greater than a month update to the current month.
-    if ($start < strtotime('-1 month')) {
-      $day = date('d', $start);
-      $start = strtotime(date("06/$day/2015"));
-    }
-
-    $row->recurring_start_date = $start;
-
-    // We don't want to fire the success hook.
-    $row->donation_success = FALSE;
-
-    // We do want to sync this donation.
-    $row->send_to_queue = TRUE;
 
     /**
      * Add an array of submission values.
@@ -339,6 +327,8 @@ class FundraiserUserMigration extends FundraiserMigration {
  * Extend the base classes for the test import.
  */
 class FundraiserExampleDonation extends FundraiserDonationMigration {
+  protected $dependencies = array('FundraiserExampleDonor');
+
   public function __construct($arguments) {
     // Always call the parent constructor first for basic setup.
     parent::__construct($arguments);
@@ -352,10 +342,60 @@ class FundraiserExampleDonation extends FundraiserDonationMigration {
      * $file = $folder . '/sustainer-import.csv';
      */
 
-    $file = drupal_get_path('module', 'fundraiser') . '/sustainer-import-example.csv';
+    $file = DRUPAL_ROOT . '/' . drupal_get_path('module', 'fundraiser') . '/includes/sustainer-import-example.csv';
     // Create a MigrateSource object, which manages retrieving the input data.
     // Notice we pass in the additional fields for the donation migration.
     $this->source = new MigrateSourceCSV($file, $this->csvColumnNames(), array('enclosure' => '"', 'header_rows' => 1), $this->fields());
+  }
+
+  /**
+   * Give the calling migration a shot at manipulating, and possibly rejecting,
+   * the source row.
+   *
+   * @return bool
+   *  FALSE if the row is to be skipped.
+   */
+  public function prepareRow($row) {
+    // Slow down migration.
+    sleep(1);
+
+    if (parent::prepareRow($row) === FALSE) {
+      return FALSE;
+    }
+
+    // These are all credit transactions.
+    $row->payment_method = 'credit';
+
+    /**
+     * You'll almost always need to play around with the payment date to
+     * correct it.
+     *
+     * Since our example date will always be in the past we only use the
+     * day value and reset to this month.
+     */
+
+    $start = strtotime($row->{'PAYMENT_DATE'});
+
+    $day = date('d', $start);
+    $month = date('m');
+    $year = date('Y');
+
+    $start = strtotime(date("$month/$day/$year"));
+
+    /**
+     * Below are important and unique variables for the import process.
+     *
+     * These are used in the donation destination class to control
+     * some of the standard donation processing.
+     */
+    $row->recurring_start_date = $start;
+    $row->create_sustainer_series = TRUE;
+
+    // We don't want to fire the success hook.
+    $row->donation_success = FALSE;
+
+    // We do want to sync this donation.
+    $row->send_to_queue = TRUE;
   }
 }
 
@@ -373,7 +413,8 @@ class FundraiserExampleDonor extends FundraiserUserMigration {
      * $file = $folder . '/sustainer-import.csv';
      */
 
-    $file = drupal_get_path('module', 'fundraiser') . '/sustainer-import-example.csv';
+    $file = DRUPAL_ROOT . '/' . drupal_get_path('module', 'fundraiser') . '/includes/sustainer-import-example.csv';
+
     // Create a MigrateSource object, which manages retrieving the input data.
     $this->source = new MigrateSourceCSV($file, $this->csvColumnNames(), array('enclosure' => '"', 'header_rows' => 1));
   }
