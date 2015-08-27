@@ -364,13 +364,13 @@ function springboard_advocacy_target_branch() {
   $value_options = array(
     'SR|SS' => t('Both Chambers, State'),
     'FR|FS' => t('Both Chambers, Federal'),
-    'FS' => t('Federal Senate'),
+    'PRES01|PRES03' => t('Federal Executives'),
     'FR' => t('Federal House'),
+    'FS' => t('Federal Senate'),
+    'GOVNR' => t('State Executives'),
     'SR' => t('State House'),
     'SS' => t('State Senate'),
     'PRES01|PRES03|GOVNR' => t('State and Federal Executives'),
-    'PRES01|PRES03' => t('Federal Executives'),
-    'GOVNR' => t('State Executives'),
   );
   return $value_options;
 }
