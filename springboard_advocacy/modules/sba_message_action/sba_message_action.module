@@ -215,12 +215,23 @@ function sba_message_action_node_presave($node) {
     $node->webform['confirmation'] = t('Thank you, %value[sbp_first_name] for participating in the messaging campaign.');
     $node->webform['confirmation'] .= "\n\n" . '[action:all_messages]';
   }
+
+  // Set test mode on unpublished actions if not alreeady set.
   if($node->type == 'sba_message_action' && $node->status == 0) {
-    $email = variable_get('springboard_advocacy_test_email', '');
+
     $field_language = field_language('node', $node, 'field_sba_test_mode');
-    $node->field_sba_test_mode[$field_language][0]['value'] = 1;
+    $test_mode = field_get_items('node', $node,'field_sba_test_mode', $field_language);
+    if (empty($test_mode[0]['value'])) {
+      $node->field_sba_test_mode[$field_language][0]['value'] = 1;
+      drupal_set_message("Unpublished message actions are required to be in test mode.", 'warning');
+    }
+
     $field_language = field_language('node', $node, 'field_sba_test_mode_email');
-    $node->field_sba_test_mode_email[$field_language][0]['value'] = $email;
+    $test_email = field_get_items('node', $node,'field_sba_test_mode_email', $field_language);
+    if (empty($test_email[0]['value'])) {
+      $site_email = variable_get('site_mail', 'admin@example.com');
+      $email = variable_get('springboard_advocacy_test_email', $site_email);
+      $node->field_sba_test_mode_email[$field_language][0]['value'] = $email;}
   }
 }
 
@@ -495,6 +506,14 @@ function sba_message_action_form_sba_message_action_node_form_alter(&$form, &$fo
   // Add required css selector to test_mode_email.
   $form['field_sba_test_mode_email']['#states']['required'] = array(
     ':input[name="field_sba_test_mode[und][1]"]' => array('checked' => TRUE),
+  );
+
+  $form['field_sba_test_mode']['#states']['disabled'] = array(
+    ':input[name="status"]' => array('checked' => FALSE),
+  );
+
+  $form['field_sba_test_mode']['#states']['enabled'] = array(
+    ':input[name="status"]' => array('checked' => TRUE),
   );
 
   if (empty($form['springboard_display'])) {
