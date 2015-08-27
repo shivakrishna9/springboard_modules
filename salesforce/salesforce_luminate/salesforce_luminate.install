@@ -1947,3 +1947,26 @@ function salesforce_luminate_create_sustainers_series_mapping() {
   $mapping = entity_import('salesforce_mapping', $default_map_sustainers_series);
   return entity_save('salesforce_mapping', $mapping);
 }
+
+/**
+ * Adds luminate_installment_period to fundraiser_sustainers_series.
+ * Adds luminate_day_of_month fields to fundraiser_sustainers_series.
+ */
+function salesforce_luminate_update_7001() {
+  $fields = array(
+    'luminate_installment_period' => array(
+      'description' => 'The period of time per each donation.',
+      'type' => 'varchar',
+      'length' => 255,
+    ),
+    'luminate_day_of_month' => array(
+      'description' => 'The month day when donations occur.',
+      'type' => 'int',
+      'not null' => TRUE,
+      'default' => 0,
+    ),
+  );
+
+  db_add_field('fundraiser_sustainers_series', 'luminate_installment_period', $fields['luminate_installment_period']);
+  db_add_field('fundraiser_sustainers_series', 'luminate_day_of_month', $fields['luminate_day_of_month']);
+}
