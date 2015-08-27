@@ -290,6 +290,18 @@ function fundraiser_sustainers_schema() {
         'not null' => TRUE,
         'default' => 0,
       ),
+      'installment_period' => array(
+        'description' => 'The period of time per each donation.',
+        'type' => 'varchar',
+        'length' => '255',
+        'not null' => FALSE,
+      ),
+      'day_of_month' => array(
+        'description' => 'The month day when donations occur.',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
       'created' => array(
         'description' => 'The timestamp when this donation series was created.',
         'type' => 'int',
