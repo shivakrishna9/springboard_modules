@@ -53,7 +53,7 @@ function sba_message_action_confirmation(&$form, &$form_state) {
     '#cols' => 60,
     '#states' => array(
       'disabled' => array(
-        ':input[name="confirmation_fail[custom_confirmation]"]' => array('checked' => FALSE),
+        ':input[name="custom_confirmation"]' => array('checked' => FALSE),
       ),
     ),
   );
