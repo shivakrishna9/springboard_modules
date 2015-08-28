@@ -4,6 +4,7 @@
  * @file
  * Provides Blackbaud Luminate integration for Salesforce.
  */
+define('LUMINATE_INSTALLMENT_PERIOD', 'recursMonthly');
 
 /**
  * Implements hook_schema_alter()
@@ -36,6 +37,19 @@ function salesforce_luminate_schema_alter(&$schema) {
 
     $schema['fundraiser_sustainers_series']['fields']['luminate_recurring_amount_rounded'] = array(
       'description' => 'The donation amount (rounded.)',
+      'type' => 'int',
+      'not null' => TRUE,
+      'default' => 0,
+    );
+
+    $schema['fundraiser_sustainers_series']['fields']['luminate_installment_period'] = array(
+      'description' => 'The period of time per each donation.',
+      'type' => 'varchar',
+      'length' => 255,
+    );
+
+    $schema['fundraiser_sustainers_series']['fields']['luminate_day_of_month'] = array(
+      'description' => 'The month day when donations occur.',
       'type' => 'int',
       'not null' => TRUE,
       'default' => 0,
@@ -122,6 +136,8 @@ function salesforce_luminate_fundraiser_donation_success($donation) {
     $fundraiser_sustainers_series->luminate_start_date = date('Y-m-d');
     $fundraiser_sustainers_series->luminate_campaign_id = $donation->donation['cid'];
     $fundraiser_sustainers_series->luminate_recurring_amount_rounded = round($donation->donation['amount']);
+    $fundraiser_sustainers_series->luminate_installment_period = LUMINATE_INSTALLMENT_PERIOD;
+    $fundraiser_sustainers_series->luminate_day_of_month = date('d');
 
     $fundraiser_sustainers_series->save();
   }
