@@ -54,6 +54,8 @@ function salesforce_luminate_uninstall() {
     'luminate_campaign_id',
     'luminate_donation_type',
     'luminate_recurring_amount_rounded',
+    'luminate_installment_period',
+    'luminate_day_of_month',
   );
 
   foreach ($fields as $field_name) {
