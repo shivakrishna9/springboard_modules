@@ -1951,22 +1951,49 @@ function salesforce_luminate_create_sustainers_series_mapping() {
 /**
  * Adds luminate_installment_period to fundraiser_sustainers_series.
  * Adds luminate_day_of_month fields to fundraiser_sustainers_series.
+ * Updates new fields from existing sustainer data.
  */
-function salesforce_luminate_update_7001() {
-  $fields = array(
-    'luminate_installment_period' => array(
-      'description' => 'The period of time per each donation.',
-      'type' => 'varchar',
-      'length' => 255,
-    ),
-    'luminate_day_of_month' => array(
-      'description' => 'The month day when donations occur.',
-      'type' => 'int',
-      'not null' => TRUE,
-      'default' => 0,
-    ),
-  );
+function salesforce_luminate_update_7001(&$sandbox) {
+  if (!isset($sandbox['progress'])) {
+    $sandbox['progress'] = 0;
+    $sandbox['max'] = db_query('SELECT COUNT(did) FROM {fundraiser_sustainers_series}')->fetchField();
 
-  db_add_field('fundraiser_sustainers_series', 'luminate_installment_period', $fields['luminate_installment_period']);
-  db_add_field('fundraiser_sustainers_series', 'luminate_day_of_month', $fields['luminate_day_of_month']);
+    $fields = array(
+      'luminate_installment_period' => array(
+        'description' => 'The period of time per each donation.',
+        'type' => 'varchar',
+        'length' => 255,
+      ),
+      'luminate_day_of_month' => array(
+        'description' => 'The month day when donations occur.',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+    );
+
+    db_add_field('fundraiser_sustainers_series', 'luminate_installment_period', $fields['luminate_installment_period']);
+    db_add_field('fundraiser_sustainers_series', 'luminate_day_of_month', $fields['luminate_day_of_month']);
+  }
+
+  // Get all existing fundraiser sustainers series records.
+  $results = db_query('SELECT `did`, `luminate_start_date` FROM {fundraiser_sustainers_series} ORDER BY `did` ASC LIMIT 0,10')
+      ->fetchAll();
+
+  foreach ($results as $row) {
+    $donation_start_time = strtotime($row->luminate_start_date);
+
+    $fundraiser_sustainers_series = entity_load_single('fundraiser_sustainers_series', $row->did);
+    $fundraiser_sustainers_series->luminate_installment_period = LUMINATE_INSTALLMENT_PERIOD;
+    $fundraiser_sustainers_series->luminate_day_of_month = date('d', $donation_start_time);
+    $fundraiser_sustainers_series->save();
+
+    $sandbox['progress'] ++;
+  }
+
+  $sandbox['#finished'] = empty($sandbox['max']) ? 1 : ($sandbox['progress'] / $sandbox['max']);
+
+  if ($sandbox['#finished'] >= 1) {
+    return t('Luminate fundraiser sustainers have been updated with luminate_installment_period and luminate_day_of_month values.');
+  }
 }
