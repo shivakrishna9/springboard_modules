@@ -496,6 +496,13 @@ function sba_message_action_form_sba_message_action_node_form_alter(&$form, &$fo
     ':input[name="field_sba_test_mode[und][1]"]' => array('checked' => TRUE),
   );
 
+  $default_email = $form['field_sba_test_mode_email'][LANGUAGE_NONE][0]['value']['#default_value'];
+  if (empty($default_email))  {
+    $site_email = variable_get('site_mail', 'admin@example.com');
+    $test_email = variable_get('springboard_advocacy_test_email', $site_email);
+    $form['field_sba_test_mode_email'][LANGUAGE_NONE][0]['value']['#default_value'] = $test_email;
+  }
+
   if (empty($form['springboard_display'])) {
     $form['springboard_display'] = array(
       '#type' => 'fieldset',
