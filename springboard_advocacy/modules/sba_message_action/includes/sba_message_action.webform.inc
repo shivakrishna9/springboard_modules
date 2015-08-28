@@ -55,7 +55,7 @@ function sba_message_action_send_message(array $user_message, array $form_state)
     }
 
     // Send submission to API Client.
-    $api_call = new AdvocacyApiCall();
+    $api_call = springboard_advocacy_api_call();
     $response = $api_call->invokeClientMethod('resolveTargets', $submission);
     if (isset($response->data)) {
       // We got a valid response, build the confirmation message array.

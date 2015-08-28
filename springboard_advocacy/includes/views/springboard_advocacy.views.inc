@@ -760,7 +760,7 @@ function _springboard_advocacy_ajaxify_state_field(&$form, &$form_state, $form_i
  * @param $form_id
  */
 function  _springboard_advocacy_remove_unsubscribed_elements(&$form, &$form_state, $form_id) {
-  $api_call = new AdvocacyApiCall();
+  $api_call = springboard_advocacy_api_call();
   $subscription = $api_call->getSubscription();
   if ($subscription) {
 
@@ -833,7 +833,7 @@ function springboard_advocacy_update_districts_field_callback($form, $form_state
  */
 function springboard_advocacy_update_districts_field_options($form, $form_state)
 {
-  $api_call = new AdvocacyApiCall();
+  $api_call = springboard_advocacy_api_call();
   $subscription = $api_call->getSubscription();
   $options = $form['search_district_name']['#options'];
 

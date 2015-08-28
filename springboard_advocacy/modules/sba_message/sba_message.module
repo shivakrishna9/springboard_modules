@@ -236,7 +236,7 @@ function _sba_message_committee_autocomplete($name, $state, $chamber) {
   $matches = array();
 
   // Retrieve committee list from cache or via API call if not cached.
-  $api_call = new AdvocacyApiCall();
+  $api_call = springboard_advocacy_api_call();
   $committee_list = $api_call->getCommittees();
 
   // Grep the results using patterns based on form input.
