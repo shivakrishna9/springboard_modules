@@ -544,6 +544,12 @@ function sba_message_action_form_sba_message_action_node_form_validate(&$form, &
       form_set_error('field_sba_test_mode_email', t('Invalid Test Mode mail address.'));
     }
   }
+
+  if ($form_state['values']['field_sba_test_mode'][LANGUAGE_NONE][0]['value'] == 0) {
+    if ($form_state['values']['status'] == 0) {
+      form_set_error("field_sba_test_mode", t('Test mode must be enabled for unpublished actions.'));
+    }
+  }
 }
 
 /**
