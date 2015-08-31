@@ -273,8 +273,9 @@ function sba_message_action_node_load($nodes, $types) {
       $node->custom_fail_message = variable_get('sba_message_action_confirm', '');
       $confirm_fail = db_query('select custom_confirmation, fail_message FROM sba_message_action_confirm WHERE nid = :nid', array(':nid' => $node->nid))->fetchAll();
       if (isset($confirm_fail[0]) && is_numeric($confirm_fail[0]->custom_confirmation)) {
-        // add this value to the node object for the form builder.
+        // add this on/off value to the node object for the form builder.
         $node->custom_confirmation = $confirm_fail[0]->custom_confirmation;
+        // Add the non-default fail message if it exists and is active.
         if (!empty($confirm_fail[0]->custom_confirmation) && isset($confirm_fail[0]->fail_message)) {
           $node->custom_fail_message = $confirm_fail[0]->fail_message;
         }
