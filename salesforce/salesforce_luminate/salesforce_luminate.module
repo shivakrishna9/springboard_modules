@@ -65,6 +65,9 @@ function salesforce_luminate_salesforce_queue_create_item_alter(&$item) {
     $fundraiser_sustainers_series = entity_load_single('fundraiser_sustainers_series', $item['drupal_id']);
     if (!empty($fundraiser_sustainers_series)) {
       $item['sobject']->fields['cv__Contact__c'] = '[Contact:user:' . $fundraiser_sustainers_series->uid . ']';
+      // Add internal fields required by luminate.
+      // The cv__RecurrenceInterval__c seems to be required to set the recurrence schedule correctly.
+      $item['sobject']->fields['cv__RecurrenceInterval__c'] => 1;
     }
   }
 }
