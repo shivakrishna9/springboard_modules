@@ -201,6 +201,8 @@ function sba_message_action_set_confirmation_session_vars($response, $contact) {
     $_SESSION['delivered_messages'] = array();
     $_SESSION['undelivered_messages'] = array();
     $status = sba_message_action_get_message_statuses($response);
+    dpm($response);
+    dpm($status);
     unset($status['success']['target_count']);
     if (!empty($status['success'])) {
       $messages = array();
@@ -210,38 +212,46 @@ function sba_message_action_set_confirmation_session_vars($response, $contact) {
       foreach ($status['success'] as $id => $message) {
         foreach ($message['people'] as $key => $person) {
           $count_targets++;
+          $messages[$x]['message_id'] = $id;
           $messages[$x]['person'] = $person;
           $messages[$x]['subject'] = $status['success'][$id]['subject'];
           $messages[$x]['body'] = $status['success'][$id]['body'];
           $messages[$x]['targets'] = $message['targets'][$key];
+          $messages[$x]['precedence'] = $status['success'][$id]['precedence'];
           $x++;
         }
       }
+      $_SESSION['form_details'] = array(
+        'action_id' => $response->alert_id,
+        'account_id' => $response->account_id,
+        'test_mode' => $response->test_mode,
+        'test_email' => $response->test_email,
+      );
+      $_SESSION['contact'] = $contact;
       $_SESSION['delivered_messages'] =
         array(
           'messages' => $messages,
-          'contact' => $contact,
           'target_count' => $count_targets,
           'message_count' => $count_messages,
-
       );
     }
 
     unset($status['hold']['target_count']);
     $messages = array();
+    $y = 0;
     if (!empty($status['hold'])) {
       foreach ($status['hold'] as $id => $message) {
         foreach ($message['people'] as $key => $person) {
-          $messages[$id]['people'][] = $person;
-          $messages[$id]['message'] = $status['hold'][$id]['body'];
-          $messages[$id]['subject'] = $status['hold'][$id]['subject'];
-          $messages[$id]['targets'] = $message['targets'];
+          $messages[$y]['people'][] = $person;
+          $messages[$y]['message'] = $status['hold'][$id]['body'];
+          $messages[$y]['subject'] = $status['hold'][$id]['subject'];
+          $messages[$y]['targets'] = $message['targets'];
+          $y++;
         };
       }
       $_SESSION['undelivered_messages'] =
         array(
           'messages' => $messages,
-          'contact' => $contact,
           'targets' => '',
         );
       }
@@ -269,7 +279,7 @@ function sba_message_action_preprocess_webform_confirmations_delivered(&$vars) {
     }
 
     // Format the contact for token replacement.
-    $contact = (object) $vars['contact'];
+    $contact = (object) $_SESSION['contact'];
     // Replace the tokens
     $message['body'] = token_replace($message['body'], array('sba_contact' => $contact, 'sba_target' => $message['targets'],));
     //In case it comes back encoded,
@@ -334,7 +344,8 @@ function sba_message_action_preprocess_webform_confirmations_undelivered(&$vars)
         $target_info[] = $person['name'].' ('.$person['party'].') '.$person['district'];
       }
       // Prepare the contact object so we can replace tokens in the message.
-      $contact = (object) $vars['contact'];
+      $contact = (object) $_SESSION['contact'];
+
       $message['message'] = token_replace($message['message'], array('sba_contact' => $contact, 'sba_target' => $message['targets'][$key],));
       // The recipient.
       $messages_out[$id][$key]['target'] = implode(' ', $target_info);
@@ -405,15 +416,18 @@ function sba_message_action_get_message_statuses($response) {
       $messages[$id]['deliverable'] = $message->deliverable;
       $messages[$id]['subject'] = $message->message->subject;
       $messages[$id]['body'] = $message->message->body;
+      $messages[$id]['precedence'] = $message->message->precedence;
     }
   }
 
   foreach ($messages as $id => $message) {
     foreach ($messages[$id]['deliverable'] as $target) {
+
       // Filter the largish target object in the response down to
       // a few select properties, in an array
       $target_details = sba_message_action_get_target_details($target);
       // Split into success and hold arrays.
+      $tokens = array('id' => $target->id, 'salutation' => $target->salutation, 'first_name' => $target->first_name, 'last_name' => $target->last_name);
       if (empty($target->webform_status)
         || (!empty($target->webform_status) && $target->webform_status != 'Hold')) {
         $success_count++;
@@ -421,7 +435,9 @@ function sba_message_action_get_message_statuses($response) {
         $message_success[$id]['people'][] = $target_details;
         $message_success[$id]['subject'] = $messages[$id]['subject'];
         $message_success[$id]['body'] = $messages[$id]['body'];
-        $message_success[$id]['targets'][] = $target;
+        $message_success[$id]['targets'][] = (Object) $tokens;
+        $message_success[$id]['precedence'] = $messages[$id]['precedence'];
+
       }
       else {
         $hold_count++;
@@ -429,7 +445,8 @@ function sba_message_action_get_message_statuses($response) {
         $message_hold[$id]['people'][] = $target_details;
         $message_hold[$id]['subject'] = $messages[$id]['subject'];
         $message_hold[$id]['body'] = $messages[$id]['body'];
-        $message_hold[$id]['targets'][] = $target;
+        $message_hold[$id]['targets'][] = (Object) $tokens;
+        $message_hold[$id]['precedence'] = $messages[$id]['precedence'];
       }
     }
   }

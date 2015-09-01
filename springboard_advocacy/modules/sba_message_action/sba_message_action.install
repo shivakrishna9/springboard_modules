@@ -528,3 +528,29 @@ function sba_message_action_update_7020() {
     }
   }
 }
+
+/**
+ * Create the multi-step field.
+ */
+function sba_message_action_update_7021() {
+  module_load_include('inc', 'sba_message_action', 'includes/install/sba_message_action.install_fields');
+  _sba_message_action_create_node_fields(TRUE);
+}
+
+/**
+ * Sort default value for the multi-step field..
+ */
+function sba_message_action_update_7022() {
+
+  $result = db_query('select n.nid from {node} n
+    WHERE n.type = :type',
+    array(':type' => 'sba_message_action')
+  )->fetchCol();;
+
+  foreach ($result as $nid) {
+    $node = node_load($nid);
+    $wrapper = entity_metadata_wrapper('node', $node);
+    $wrapper->field_sba_action_flow->set('one');
+    $wrapper->save();
+  }
+}

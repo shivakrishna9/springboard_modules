@@ -262,6 +262,13 @@ function sba_message_action_message_form(&$form, $message, $multiple) {
     $form['message'][$message->sba_message_id]['signature'] = array(
       '#markup' => check_markup($sig, 'plain_text'),
     );
+    $form['message'][$message->sba_message_id]['signature'] = array(
+      '#markup' => check_markup($sig, 'plain_text'),
+    );
+    $form['message'][$message->sba_message_id]['signature_tokenized'] = array(
+      '#type' => 'value',
+      '#value' => $wrapper->field_sba_signature->value(),
+    );
   }
 }
 

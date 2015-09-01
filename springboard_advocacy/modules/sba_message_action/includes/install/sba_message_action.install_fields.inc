@@ -353,6 +353,71 @@ function _sba_message_action_create_node_fields($update = false) {
     ),
   );
 
+
+  $fields['field_sba_action_flow'] = array(
+    'active' => 1,
+    'cardinality' => 1,
+    'deleted' => 0,
+    'entity_types' => array(),
+    'field_name' => 'field_sba_action_flow',
+    'foreign keys' => array(),
+    'indexes' => array(
+      'value' => array(
+        0 => 'value',
+      ),
+    ),
+    'locked' => 0,
+    'module' => 'list',
+    'settings' => array(
+      'allowed_values' => array(
+        'one' => 'One-step take action flow',
+        'multi' => 'Multi-step take action flow',
+      ),
+      'allowed_values_function' => '',
+    ),
+    'translatable' => 0,
+    'type' => 'list_text',
+    '_instance' => array(
+      'bundle' => 'sba_message_action',
+      'default_value' => array(
+        0 => array(
+          'value' => 'one',
+        ),
+      ),
+      'deleted' => 0,
+      'description' => '<strong>One-step action flow</strong> allows supporters to take action without entering their address as a separate step; however, if your action will have multiple messages (ie, thank/spank) they cannot be edited by supporters.
+<strong>Multi-step action flow</strong> allows supporters to edit multiple messages under the same action; supporters will be required to enter their address prior to editing messages or taking action.',
+      'display' => array(
+        'default' => array(
+          'label' => 'hidden',
+          'settings' => array(),
+          'type' => 'hidden',
+          'weight' => 6,
+        ),
+        'teaser' => array(
+          'label' => 'hidden',
+          'settings' => array(),
+          'type' => 'hidden',
+          'weight' => 0,
+        ),
+      ),
+      'entity_type' => 'node',
+      'field_name' => 'field_sba_action_flow',
+      'label' => 'Supporter submission workflow',
+      'required' => 1,
+      'settings' => array(
+        'user_register_form' => FALSE,
+      ),
+      'widget' => array(
+        'active' => 1,
+        'module' => 'options',
+        'settings' => array(),
+        'type' => 'options_buttons',
+        'weight' => 33,
+      ),
+    ),
+  );
+
   foreach ($fields as $key => $values) {
     $instance = $values['_instance'];
     unset($values['_instance']);

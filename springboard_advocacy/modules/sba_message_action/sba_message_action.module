@@ -61,6 +61,18 @@ function sba_message_action_menu() {
     'file path' => drupal_get_path('module', 'sba_message_action') . '/includes',
   );
 
+  $items['message-preview/%'] = array(
+    'title' => 'Preview Messages',
+    'page arguments' => array(1),
+    'page callback' => 'sba_message_action_message_preview_page',
+    'page arguments' => array(1),
+    'access callback' => 'sba_message_action_preview_access',
+    'access arguments' => array(1),
+    'type' => MENU_CALLBACK,
+    'file' => 'sba_message_action.preview.inc',
+    'file path' => drupal_get_path('module', 'sba_message_action') . '/includes',
+  );
+
   // Path to settings for delivery failure webform confirmation.
   $items['admin/config/content/sba_message_action'] = array(
     'title' => 'Message Action Default Confirmation',
@@ -158,6 +170,14 @@ function sba_message_action_queues_access($nid) {
   $node = node_load($nid);
 
   if ($node->type == 'sba_message_action' && user_access('view and administer springboard advocacy message queues')) {
+    return TRUE;
+  }
+  return FALSE;
+}
+
+function sba_message_action_preview_access($nid) {
+  $node = node_load($nid);
+  if (isset($node->type) &&  $node->type == 'sba_message_action') {
     return TRUE;
   }
   return FALSE;
@@ -274,7 +294,11 @@ function sba_message_action_node_load($nodes, $types) {
       // Add messages to the node object.
       if (!empty($node->message_ids)) {
         $messages = sba_message_load_multiple($node->message_ids);
-        $node->messages = $messages;
+        $messages_by_id = array();
+        foreach ($messages as $message) {
+          $messages_by_id[$message->data['message_id']] = $message;
+        }
+        $node->messages = $messages_by_id;
       }
       else {
         $node->messages = array();
@@ -482,7 +506,19 @@ function sba_message_action_form_sba_message_action_node_form_alter(&$form, &$fo
       'includes/sba_message_action.taxonomy');
     sba_message_action_taxonomy_form($form, $form_state, 'sba_message_action_node_form');
   }
-
+  // Add action flow field to vertical nav.
+  if (!empty($form['springboard_taxonomy_options']) && isset($form['field_sba_action_flow'])) {
+    $form['springboard_taxonomy_options']['action_flow'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Choose Action Flow'),
+      '#collapsible' => TRUE,
+      '#collapsed' => FALSE,
+      '#weight' => '-10'
+    );
+    $form['springboard_taxonomy_options']['action_flow']['field_sba_action_flow']
+      = $form['field_sba_action_flow'];
+    unset($form['field_sba_action_flow']);
+  }
   // Hide the test_mode_email field if test_mode is unchecked.
   $form['field_sba_test_mode_email']['#states']['visible'] = array(
     ':input[name="field_sba_test_mode[und][1]"]' => array('checked' => TRUE),
