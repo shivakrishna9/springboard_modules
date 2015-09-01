@@ -201,8 +201,7 @@ function sba_message_action_set_confirmation_session_vars($response, $contact) {
     $_SESSION['delivered_messages'] = array();
     $_SESSION['undelivered_messages'] = array();
     $status = sba_message_action_get_message_statuses($response);
-    dpm($response);
-    dpm($status);
+
     unset($status['success']['target_count']);
     if (!empty($status['success'])) {
       $messages = array();
@@ -496,6 +495,13 @@ function sba_message_action_get_target_details($target) {
 
   if (!empty($target->webform_url)) {
     $target_details['url'] = check_plain($target->webform_url);
+  }
+
+  if (!empty($target->organization)) {
+    $target_details['organization'] = check_plain($target->organization);
+  }
+  if (!empty($target->title)) {
+    $target_details['title'] = check_plain($target->title);
   }
 
   return $target_details;
