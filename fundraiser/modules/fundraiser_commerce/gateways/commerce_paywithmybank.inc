@@ -36,30 +36,11 @@ function commerce_paywithmybank_fundraiser_commerce_form($payment_method) {
   $api = commerce_paywithmybank_get_api($method_instance);
   $api_endpoint = $api->getEndpoint();
 
-  $form['widget'] = array(
-    '#type' => 'container',
-    '#id' => 'paywithmybank-widget',
-    '#attributes' => array(
-      'class' => array(
-        'paywithmybank-compact',
-      ),
-    ),
-  );
-
-  $form['widget']['image'] = array(
-    '#type' => 'markup',
-    '#markup' => '<img src="https://paywithmybank.com/start/images/paywithmybanklogo.jpg" />',
-  );
-
   $form['#attached'] = array(
     'js' => array(
       array(
         'data' => $api_endpoint . '/start/scripts/paywithmybank.js?accessId=' . $access_id,
         'type' => 'external',
-      ),
-      array(
-        'data' => 'try { PayWithMyBank.widget( "paywithmybank-widget" ,{\'showBenefits\' : true, \'showInstructions\' : true, \'actionButtonLabel\' : \'Continue\' , \'eventType\' : \'click\'}); } catch(e){}',
-        'type' => 'inline',
       ),
     ),
     'css' => array(
