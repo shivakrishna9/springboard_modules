@@ -104,7 +104,6 @@ function sba_message_action_additional_elements(&$form, &$form_state) {
  *    Whether this webform has multiple messages.
  */
 function sba_message_action_message_form(&$form, $message, $multiple) {
-
   // Get some message values via an entity wrapper.
   $wrapper = entity_metadata_wrapper('sba_message', $message);
   $subject = $wrapper->field_sba_subject->value();
@@ -116,6 +115,13 @@ function sba_message_action_message_form(&$form, $message, $multiple) {
   $greeting = check_plain($wrapper->field_sba_greeting->value());
   $conclusion = check_markup($wrapper->field_sba_bottom_conclusion->value(), 'plain_text');
   $subject_editable =  $wrapper->field_sba_subject_editable->value();
+  $node = $wrapper->field_sba_action_id->value();
+  $multi_flow = $node->field_sba_action_flow[$node->language][0]['value'] == 'multi' ? TRUE : FALSE;
+  $preview_form = empty($form) ? TRUE : FALSE;
+  $access = TRUE;
+  if (!$preview_form && $multi_flow) {
+    $access = FALSE;
+  }
 
   // If it's a multiple message form, use a container instead of a fieldset.
   if (!$multiple) {
@@ -155,12 +161,15 @@ function sba_message_action_message_form(&$form, $message, $multiple) {
       );
     }
 
-    $form['message'][$message->sba_message_id]['subject'] = array(
-      '#type' => 'textfield',
-      '#title' => t('Subject'),
-      '#default_value' => $subject,
-      '#description' => !empty($description) ? $description : '',
-    );
+
+      $form['message'][$message->sba_message_id]['subject'] = array(
+        '#type' => 'textfield',
+        '#title' => t('Subject'),
+        '#default_value' => $subject,
+        '#description' => !empty($description) ? $description : '',
+        '#access' => $access,
+      );
+
   }
   // The subject is not editable.
   else {
@@ -170,6 +179,7 @@ function sba_message_action_message_form(&$form, $message, $multiple) {
         '#type' => 'item',
         '#title' => t('Subject'),
         '#markup' => check_plain($subject),
+        '#access' => $access,
       );
     }
 
@@ -187,6 +197,7 @@ function sba_message_action_message_form(&$form, $message, $multiple) {
       '#type' => 'item',
       '#title' => '',
       '#markup' => $placeholder_greeting,
+      '#access' => $access,
     );
   }
 
@@ -219,6 +230,7 @@ function sba_message_action_message_form(&$form, $message, $multiple) {
       '#type' => 'item',
       '#title' => $title,
       '#markup' => $message_body,
+      '#access' => $access,
     );
   }
 
@@ -237,7 +249,8 @@ function sba_message_action_message_form(&$form, $message, $multiple) {
       '#type' => 'textarea',
       '#default_value' => $editable_message,
       '#description' => $description,
-      '#required' => $required,
+      '#access' => $access,
+      //'#required' => $required,
     );
 
     $form['message'][$message->sba_message_id]['body_required'] = array(
@@ -249,6 +262,7 @@ function sba_message_action_message_form(&$form, $message, $multiple) {
       $form['message'][$message->sba_message_id]['body_bottom'] = array(
         '#type' => 'item',
         '#markup' => $conclusion,
+        '#access' => $access,
       );
     }
   }
@@ -261,9 +275,7 @@ function sba_message_action_message_form(&$form, $message, $multiple) {
     $sig = str_replace('[contact:address]', '[Your Addess]', $sig);
     $form['message'][$message->sba_message_id]['signature'] = array(
       '#markup' => check_markup($sig, 'plain_text'),
-    );
-    $form['message'][$message->sba_message_id]['signature'] = array(
-      '#markup' => check_markup($sig, 'plain_text'),
+      '#access' => $access,
     );
     $form['message'][$message->sba_message_id]['signature_tokenized'] = array(
       '#type' => 'value',
@@ -286,11 +298,12 @@ function sba_message_action_message_form(&$form, $message, $multiple) {
  * @param $form_state
  */
 function sba_message_action_form_validate($form, &$form_state) {
-
+  $node = $form['#node'];
+  $multi_flow = $node->field_sba_action_flow[$node->language][0]['value'] == 'multi' ? TRUE : FALSE;
   if (isset($form_state['values']['sba_messages'])) {
     $is_single = count($form_state['values']['sba_messages']['message']) == 1 ? TRUE : FALSE;
   }
-  if (!empty($is_single)) {
+  if (!empty($is_single) && $multi_flow == FALSE) {
     $child_messages = element_children($form['sba_messages']['message']);
     $message_id = reset($child_messages);
     $message = $form['sba_messages']['message'][$message_id];
