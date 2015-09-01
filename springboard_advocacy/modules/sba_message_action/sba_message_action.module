@@ -673,6 +673,11 @@ function sba_message_action_theme($existing, $type, $theme, $path) {
       'file' => 'includes/sba_message_action.webform.inc',
       'template' => 'templates/webform-confirmations-undelivered'
     ),
+
+    'sba_message_action_preview_message_header' => array(
+      'render element' => 'message',
+      'file' => 'includes/sba_message_action.preview.inc',
+    ),
   );
 }
 

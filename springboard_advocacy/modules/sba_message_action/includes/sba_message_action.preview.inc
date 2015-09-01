@@ -6,6 +6,8 @@
  * @return array
  */
 function sba_message_action_message_preview_page($nid) {
+  $node = node_load($nid);
+  //@TODO if node multi flow is false, deny access.
 
   $build = array();
   $build['content'] = array(
@@ -16,15 +18,16 @@ function sba_message_action_message_preview_page($nid) {
       '#prefix' => '<div class="message-action-preview-page">',
       '#suffix' => '</div>',
     ),
-    'sba_message_action_preview_form' => drupal_get_form('sba_message_action_preview_form', $nid),
+    'sba_message_action_preview_form' => drupal_get_form('sba_message_action_preview_form', $node),
   );
   return $build;
 }
 
-function sba_message_action_preview_form($form, $form_state, $nid) {
+function sba_message_action_preview_form($form, $form_state, $node) {
 
-  $node = node_load($nid);
+  //@TODO user edit flag update submission
 
+  $form['#attached']['css'][] = drupal_get_path('module', 'sba_message_action') . '/css/message-preview.css';
   if(!empty($_SESSION['delivered_messages']['messages'])) {
     $messages = $_SESSION['delivered_messages']['messages'];
     $contact = $_SESSION['contact'];
@@ -55,15 +58,15 @@ function sba_message_action_preview_form($form, $form_state, $nid) {
 
     $form['messages'] = array (
       '#type' => 'container',
+      '#attributes' => array(
+        'class' => array('message-preview-container'),
+      ),
     );
 
     module_load_include('inc', 'sba_message_action', 'includes/sba_message_action.form');
     foreach ($messages as $message) {
       $form['messages'][]['sent_to'] = array(
-        '#markup' => t('The message below will be sent to:'),
-      );
-      $form['messages'][]['recipient'] = array(
-        '#markup' => '<p>' . $message['person']['name'],
+        '#markup' => theme('sba_message_action_preview_message_header', array('message' => $message)),
       );
 
       $message_entity = $node->messages[$message['message_id']];
@@ -75,8 +78,8 @@ function sba_message_action_preview_form($form, $form_state, $nid) {
       $build['message'][1]['greeting_show']['#markup'] = $greeting;
       $signature = token_replace($build['message'][1]['signature_tokenized']['#value'], array('sba_contact' => (Object) $contact));
       $build['message'][1]['signature']['#markup'] = $signature;
+      $build['message'][1]['#attributes']['class'][] = 'message-preview-message-fieldset';
       $form['messages'][]['fields'] = $build['message'][1];
-
       $form['messages'][]['precedence'] = array(
         '#type' => 'value',
         '#value' => $message['precedence'],
@@ -87,7 +90,6 @@ function sba_message_action_preview_form($form, $form_state, $nid) {
         '#value' => $message['targets']->id,
       );
     }
-
   }
 
   return $form;
@@ -95,4 +97,20 @@ function sba_message_action_preview_form($form, $form_state, $nid) {
 
 function sba_message_action_settings_form_submit($form, $form_state) {
 
+}
+
+function theme_sba_message_action_preview_message_header($vars) {
+
+  $intro = t('The message below will be sent to:');
+  $person = $vars['message']['person']['name'];
+  $title = isset($vars['message']['person']['title']) ? $vars['message']['person']['title'] . ', ' : '' ;
+  $organization = isset($vars['message']['person']['organization'])  ? $title . $vars['message']['person']['organization'] : '';
+  $affiliation = isset($vars['message']['person']['district'])  ? $vars['message']['person']['district'] . ' (' . $vars['message']['person']['party'] . ')' : $organization;
+
+  $output = '<div class="message-preview-header"><div class="message-preview-intro">';
+  $output .= $intro;
+  $output .= '</div><div class="message-preview-person">';
+  $output .= $person . ' ' . $affiliation;
+  $output .= '</div></div>';
+  return $output;
 }

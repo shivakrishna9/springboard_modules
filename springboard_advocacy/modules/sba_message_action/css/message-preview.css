@@ -1,0 +1,17 @@
+.message-preview-header {
+    margin: 1em 0;
+}
+
+.message-preview-person {
+    margin: 0 0 1em 0;
+    font-weight: bold;
+}
+
+.message-preview-container fieldset {
+    margin-bottom: 2em;
+}
+
+.message-preview-container fieldset input,
+.message-preview-container fieldset textarea{
+    min-width: 70%;
+}
