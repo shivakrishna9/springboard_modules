@@ -58,6 +58,7 @@ function sba_message_action_preview_form($form, $form_state, $node) {
 
     $form['messages'] = array (
       '#type' => 'container',
+      '#tree' => TRUE,
       '#attributes' => array(
         'class' => array('message-preview-container'),
       ),
@@ -79,7 +80,7 @@ function sba_message_action_preview_form($form, $form_state, $node) {
       $signature = token_replace($build['message'][1]['signature_tokenized']['#value'], array('sba_contact' => (Object) $contact));
       $build['message'][1]['signature']['#markup'] = $signature;
       $build['message'][1]['#attributes']['class'][] = 'message-preview-message-fieldset';
-      $form['messages'][]['fields'] = $build['message'][1];
+      $form['messages'][] = $build['message'][1];
       $form['messages'][]['precedence'] = array(
         '#type' => 'value',
         '#value' => $message['precedence'],
@@ -92,10 +93,49 @@ function sba_message_action_preview_form($form, $form_state, $node) {
     }
   }
 
+  $form['#validate'][] = 'sba_message_action_preview_form_validate';
+
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Send Message'),
+    '#weight' => 10,
+    '#attributes' => array('class' => 'message-action-preview-submit'),
+  );
   return $form;
 }
 
-function sba_message_action_settings_form_submit($form, $form_state) {
+
+function sba_message_action_preview_form_validate($form, &$form_state) {
+  $messages = element_children($form['messages']);
+  foreach ($messages as $id) {
+      $message = $form['messages'][$id];
+      $body_default = isset($message['edited_body']['#default_value']) ? $message['edited_body']['#default_value'] : '';
+      $body_edited = isset($form_state['values']['messages'][$id]['edited_body']) ? $form_state['values']['messages'][$id]['edited_body'] : '';
+      $subject_default = isset($message['subject']['#default_value']) ? $message['subject']['#default_value'] : '';
+      $subject_edited = isset($form_state['values']['messages'][$id]['subject']) ? $form_state['values']['messages'][$id]['subject'] : '';
+      $changed = FALSE;
+      // Enforce mandatory editing.
+      if ($body_edited == $body_default && isset($message['body_required']) && $message['body_required']['#value'] == 1) {
+        form_set_error("messages][$id][edited_body", t('Please personalize your message before sending.'));
+      }
+      elseif ($body_edited != $body_default) {
+        $changed = TRUE;
+      }
+      if ($subject_edited == $subject_default && isset($message['subject_required']) && $message['subject_required']['#value'] == 1) {
+        form_set_error("messages][$id][subject", t('Please personalize the subject line before sending your message.'));
+      }
+      elseif (!isset($message['subject_show']) && $subject_edited != $subject_default) {
+        $changed = TRUE;
+      }
+      // Set user_edited_flag
+//    if ($changed && isset($form['submitted']['sba_user_edit_flag'])) {
+//      form_set_value($form['submitted']['sba_user_edit_flag'], 1, $form_state);
+//    }
+    }
+}
+
+
+function sba_message_action_preview_form_submit($form, $form_state) {
 
 }
 
