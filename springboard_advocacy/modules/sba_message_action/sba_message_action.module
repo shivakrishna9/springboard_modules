@@ -406,11 +406,20 @@ function sba_message_action_form_alter(&$form, &$form_state, $form_id) {
       }
       form_load_include($form_state, 'inc', 'sba_message_action', 'includes/sba_message_action.form');
       sba_message_action_additional_elements($form, $form_state);
+
+      $node = $form['#node'];
+      $multi_flow = $node->field_sba_action_flow[$node->language][0]['value'] == 'multi' ? TRUE : FALSE;
+      if ($multi_flow) {
+        $form['#submit'][] = 'sba_message_action_multifow_submit';
+      }
     }
   }
+  // Override springboard_admin.module's node delete redirect.s
+}
 
-  // Override springboard_admin.module's node delete redirect.
-
+function sba_message_action_multifow_submit($form, &$form_state) {
+  $node = $form['#node'];
+  $form_state['redirect'] = 'message-preview/' . $node->nid;
 }
 
 function sba_message_action_form_node_delete_confirm_alter(&$form, &$form_state, $form_id) {

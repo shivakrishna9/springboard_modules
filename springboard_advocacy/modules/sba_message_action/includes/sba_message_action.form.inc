@@ -355,6 +355,10 @@ function sba_message_action_form_validate($form, &$form_state) {
  * @param $form_state
  */
 function sba_message_action_form_submit($form, &$form_state) {
+  $node = $form['#node'];
+  $multi_flow = $node->field_sba_action_flow[$node->language][0]['value'] == 'multi' ? TRUE : FALSE;
+
+  //@todo need to add flag to api request to prevent message queuing
   $_SESSION['delivered_messages'] = array();
   $_SESSION['undelivered_messages'] = array();
   // Create array of messages to submit for target resolution.
