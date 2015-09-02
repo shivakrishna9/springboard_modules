@@ -529,10 +529,20 @@ function sba_message_action_update_7020() {
   }
 }
 
+function sba_message_action_update_7021() {
+  $field = field_info_instance('node', 'field_sba_test_mode', 'sba_message_action');
+  if ($field) {
+    $field['description'] = t(
+      'Check this box to enable test mode. Messages will not be sent to any configured targets when test mode is enabled. Unpublished actions are always in test mode.'
+    );
+    field_update_instance($field);
+  }
+}
+
 /**
  * Create the multi-step field.
  */
-function sba_message_action_update_7021() {
+function sba_message_action_update_7022() {
   module_load_include('inc', 'sba_message_action', 'includes/install/sba_message_action.install_fields');
   _sba_message_action_create_node_fields(TRUE);
 }
@@ -540,7 +550,7 @@ function sba_message_action_update_7021() {
 /**
  * Sort default value for the multi-step field..
  */
-function sba_message_action_update_7022() {
+function sba_message_action_update_7023() {
 
   $result = db_query('select n.nid from {node} n
     WHERE n.type = :type',
