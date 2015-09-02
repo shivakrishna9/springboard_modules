@@ -8,7 +8,7 @@
 /**
  * Commerce PayWithMyBank checkout form.
  */
-function commerce_paywithmybank_checkout_form($payment_method, $order) {
+function commerce_paywithmybank_checkout_form($payment_method, $order, $show_widget = FALSE) {
   global $base_url;
 
   $settings = $payment_method['settings'];
@@ -40,20 +40,23 @@ function commerce_paywithmybank_checkout_form($payment_method, $order) {
   $establish_data['requestSignature'] = $request_signature;
 
   $form = array();
-  $form['widget'] = array(
-    '#type' => 'container',
-    '#id' => 'paywithmybank-widget',
-    '#attributes' => array(
-      'class' => array(
-        'paywithmybank-compact',
-      ),
-    ),
-  );
 
-  $form['widget']['image'] = array(
-    '#type' => 'markup',
-    '#markup' => '<img src="https://paywithmybank.com/start/images/paywithmybanklogo.jpg" />',
-  );
+  if ($show_widget) {
+    $form['widget'] = array(
+      '#type' => 'container',
+      '#id' => 'paywithmybank-widget',
+      '#attributes' => array(
+        'class' => array(
+          'paywithmybank-compact',
+        ),
+      ),
+    );
+
+    $form['widget']['image'] = array(
+      '#type' => 'markup',
+      '#markup' => '<img src="https://paywithmybank.com/start/images/paywithmybanklogo.jpg" />',
+    );
+  }
 
   $form['#attached'] = array(
     'js' => array(
@@ -64,10 +67,6 @@ function commerce_paywithmybank_checkout_form($payment_method, $order) {
       array(
         'data' => drupal_get_path('module', 'commerce_paywithmybank') . '/js/checkout.js',
         'type' => 'file',
-      ),
-      array(
-        'data' => 'try { PayWithMyBank.widget( "paywithmybank-widget" ,{\'showBenefits\' : true, \'showInstructions\' : true, \'actionButtonLabel\' : \'Continue\' , \'eventType\' : \'click\'}); } catch(e){}',
-        'type' => 'inline',
       ),
       array(
         'data' => array(
@@ -83,6 +82,13 @@ function commerce_paywithmybank_checkout_form($payment_method, $order) {
       ),
     ),
   );
+
+  if ($show_widget) {
+    $form['#attached']['js'][] = array(
+      'data' => 'try { PayWithMyBank.widget( "paywithmybank-widget" ,{\'showBenefits\' : true, \'showInstructions\' : true, \'actionButtonLabel\' : \'Continue\' , \'eventType\' : \'click\'}); } catch(e){}',
+      'type' => 'inline',
+    );
+  }
 
   return $form;
 }
