@@ -1,0 +1,7 @@
+name = Springboard Webform
+description = Springboard additions and customizations for webform.
+package = Jackson River Springboard - extras
+core = 7.x
+version = 7.x-4.x
+
+dependencies[] = webform

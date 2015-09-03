@@ -1,0 +1,24 @@
+<?php
+
+/**
+ * Implements hook_tokens().
+ */
+function springboard_webform_tokens($type, $tokens, $data = array(), $options = array()) {
+  $replacements = array();
+  // 
+  if (
+    $type == 'node'
+    && !empty($data['node'])
+    && in_array($data['node']->type, webform_variable_get('webform_node_types'))
+  ) {
+    // Look for the [node:webform] token.
+    if (isset($tokens['webform'])) {
+      // This will build the webform's content with the token display settings, which includes the form array.
+      webform_node_view($data['node'], 'token');
+
+      $replacements[ $tokens['webform'] ] = drupal_render($data['node']->content['webform']['#form']);
+    }
+  }
+
+  return $replacements;
+}
