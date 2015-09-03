@@ -62,6 +62,31 @@ function commerce_paywithmybank_form_commerce_checkout_form_review_alter(&$form,
 }
 
 /**
+ * Implements hook_fundraiser_gateway_info_alter()
+ */
+function commerce_paywithmybank_fundraiser_gateway_info_alter(&$gateways) {
+  foreach ($gateways as $id => $info) {
+    $id_parts = explode('|', $id);
+
+    if ($id_parts[0] == 'commerce_paywithmybank_bank') {
+      // Allow off-site processing for PayWithMyBank gateway only when the
+      // gateway is loaded during the initial donation form submission.
+      // Disable off-site processing in all other instances.
+      // This is because PayWithMyBank is technically an on-site gateway that
+      // requires an initial off-site setup.
+      $backtrace = debug_backtrace();
+      foreach ($backtrace as $trace) {
+        if ($trace['function'] == 'fundraiser_webform_fundraiser_donation_validate') {
+          return;
+        }
+      }
+
+      $gateways[$id]['offsite_processing'] = array();
+    }
+  }
+}
+
+/**
  * Payment method callback: settings form.
  */
 function commerce_paywithmybank_bank_settings_form($settings = NULL) {
