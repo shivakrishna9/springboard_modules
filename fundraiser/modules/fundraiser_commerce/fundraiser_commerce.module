@@ -353,6 +353,11 @@ function fundraiser_commerce_commerce_order_status_info() {
       'title' => 'Partially Refunded',
       'state' => 'completed',
     ),
+    'auto_canceled' => array(
+      'name' => 'auto_canceled',
+      'title' => 'Auto canceled',
+      'state' => 'canceled',
+    ),
   );
   return $fundraiser_statuses;
 }
@@ -382,6 +387,7 @@ function _fundraiser_commerce_commerce_order_statuses_used() {
     'failed',
     'canceled',
     'pending_future_payment',
+    'auto_canceled',
     'refunded',
     'partially_refunded',
     'payment_received',
