@@ -32,8 +32,6 @@ function sba_message_action_preview_form($form, $form_state, $node) {
     $messages = $_SESSION['delivered_messages']['messages'];
     $contact = $_SESSION['contact'];
     $action = $_SESSION['form_details'];
-    $target_count = $_SESSION['delivered_messages']['target_count'];
-    $message_count = $_SESSION['delivered_messages']['message_count'];
 
     $form['action_id'] = array(
       '#type' => 'value',
@@ -69,7 +67,6 @@ function sba_message_action_preview_form($form, $form_state, $node) {
       $form['messages'][]['sent_to'] = array(
         '#markup' => theme('sba_message_action_preview_message_header', array('message' => $message)),
       );
-
       $message_entity = $node->messages[$message['message_id']];
       $build = array();
       sba_message_action_message_form($build, $message_entity, FALSE);
@@ -77,22 +74,23 @@ function sba_message_action_preview_form($form, $form_state, $node) {
       unset($build['message'][1]['subject_show']['#title']);
       $greeting = token_replace($build['message'][1]['greeting']['#value'], array('sba_target' => (Object) $message['targets']));
       $build['message'][1]['greeting_show']['#markup'] = $greeting;
+      unset($build['message'][1]['greeting']);
       $signature = token_replace($build['message'][1]['signature_tokenized']['#value'], array('sba_contact' => (Object) $contact));
       $build['message'][1]['signature']['#markup'] = $signature;
+      unset($build['message'][1]['signature_tokenized']);
       $build['message'][1]['#attributes']['class'][] = 'message-preview-message-fieldset';
-      $form['messages'][] = $build['message'][1];
-      $form['messages'][]['precedence'] = array(
+      $build['message'][1]['precedence'] = array(
         '#type' => 'value',
         '#value' => $message['precedence'],
       );
-
-      $form['messages'][]['target_id'] = array(
+      $build['message'][1]['target'] = array(
         '#type' => 'value',
-        '#value' => $message['targets']->id,
+        '#value' => array('target_id' => $message['targets']->id, 'primary_delivery_method' => $message['targets']->primary_delivery_method),
       );
+      $form['messages'][] = $build['message'][1];
     }
   }
-
+  $form['#action_node'] = $node;
   $form['#validate'][] = 'sba_message_action_preview_form_validate';
 
   $form['submit'] = array(
@@ -136,7 +134,32 @@ function sba_message_action_preview_form_validate($form, &$form_state) {
 
 
 function sba_message_action_preview_form_submit($form, $form_state) {
-
+  module_load_include('inc', 'sba_message_action', 'includes/sba_message_action.form');
+  $messages = $form_state['values']['messages'];
+  $formatted_messages = array();
+  foreach ($messages as $key => $message) {
+    $edited_body = isset($message['edited_body']) ? $message['edited_body'] : '';
+    $form_state['values']['messages'][$key]['body'] = sba_message_action_build_message_bodies($message['sba_message_id'], $edited_body);
+    unset($form_state['values']['messages'][$key]['sba_message_id']);
+    unset($form_state['values']['messages'][$key]['edited_body']);
+    unset($form_state['values']['messages'][$key]['body_required']);
+    $formatted_messages[$key]['message']['body'] =  $message['body'];
+    $formatted_messages[$key]['message']['subject'] =  $message['subject'];
+    $formatted_messages[$key]['message']['precedence'] =  $message['precedence'];
+    $formatted_messages[$key]['message']['id'] =  $message['message_id'];
+    $formatted_messages[$key]['deliverable'] = $message['target'];
+  }
+  $payload = array(
+    'multiflow' => 'step_two',
+    'alert_id' => $form_state['values']['action_id'],
+    'test_mode' => $form_state['values']['test_mode'],
+    'test_email' => $form_state['values']['test_mode_email'],
+    'account_id' => $form_state['values']['account_id'],
+    'contact' => $form_state['values']['contact'],
+    'messages' => $formatted_messages,
+  );
+  $api_call = springboard_advocacy_api_call();
+  $response = $api_call->invokeClientMethod('resolveTargets', $payload);
 }
 
 function theme_sba_message_action_preview_message_header($vars) {
