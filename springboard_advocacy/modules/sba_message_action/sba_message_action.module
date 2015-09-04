@@ -419,7 +419,9 @@ function sba_message_action_form_alter(&$form, &$form_state, $form_id) {
 
 function sba_message_action_multifow_submit($form, &$form_state) {
   $node = $form['#node'];
-  $form_state['redirect'] = 'message-preview/' . $node->nid;
+  $sid = $form_state['values']['details']['sid'];
+  $form_state['redirect'] = array('message-preview/' . $node->nid, array('query' => array('sid' => $sid)));
+
 }
 
 function sba_message_action_form_node_delete_confirm_alter(&$form, &$form_state, $form_id) {
