@@ -103,7 +103,6 @@ function sba_message_action_preview_form($form, $form_state, $node) {
   return $form;
 }
 
-
 function sba_message_action_preview_form_validate($form, &$form_state) {
   $messages = element_children($form['messages']);
   $changed = FALSE;
@@ -162,35 +161,41 @@ function sba_message_action_preview_form_submit($form, &$form_state) {
   $api_call = springboard_advocacy_api_call();
   $response = $api_call->invokeClientMethod('resolveTargets', $payload);
 
-  $node = $form['#action_node'];
-  $_SESSION['action_' . $node->nid . '_completed'] = TRUE;
+  if (isset($response->status_code) && $response->status_code == 2000) {
 
-  $sid = !empty($_SESSION['action_' . $node->nid . '_sid']) ?   $_SESSION['action_' . $node->nid . '_sid'] : FALSE;
-  unset($_SESSION['action_' . $node->nid . '_sid']);
+    $node = $form['#action_node'];
+    $_SESSION['action_' . $node->nid . '_completed'] = TRUE;
 
-  if ($sid) {
-    $form_state['redirect'] = array(
-      'node/' . $node->nid . '/done',
-      array('query' => array('sid' => $sid))
-    );
-  }
+    $sid = !empty($_SESSION['action_' . $node->nid . '_sid']) ? $_SESSION['action_' . $node->nid . '_sid'] : FALSE;
+    unset($_SESSION['action_' . $node->nid . '_sid']);
 
-  if ($form_state['storage']['changed'] ==  TRUE) {
     if ($sid) {
-      $user_edit = db_query('SELECT * FROM {webform_component} WHERE nid = :nid AND form_key = :form_key',
-        array(
-          ':nid' => $node->nid,
-          ':form_key' => 'sba_user_edit_flag'
-        ))->fetchObject();
-      if (!empty($user_edit->cid)) {
-        db_update('webform_submitted_data')->fields(array('data' => 1))
-          ->condition('nid', $node->nid, '=')
-          ->condition('sid', $sid, '=')
-          ->condition('cid', $user_edit->cid, '=')
-          ->condition('no', 0, '=')
-          ->execute();
+      $form_state['redirect'] = array(
+        'node/' . $node->nid . '/done',
+        array('query' => array('sid' => $sid))
+      );
+    }
+
+    if ($form_state['storage']['changed'] == TRUE) {
+      if ($sid) {
+        $user_edit = db_query('SELECT * FROM {webform_component} WHERE nid = :nid AND form_key = :form_key',
+          array(
+            ':nid' => $node->nid,
+            ':form_key' => 'sba_user_edit_flag'
+          ))->fetchObject();
+        if (!empty($user_edit->cid)) {
+          db_update('webform_submitted_data')->fields(array('data' => 1))
+            ->condition('nid', $node->nid, '=')
+            ->condition('sid', $sid, '=')
+            ->condition('cid', $user_edit->cid, '=')
+            ->condition('no', 0, '=')
+            ->execute();
+        }
       }
     }
+  }
+  else {
+    drupal_set_message(t("A problem occurred and your message was not submitted. Please try again. If the problem persists, we should have it fixed shortly. Try back in a few minutes."), 'error');
   }
 }
 
