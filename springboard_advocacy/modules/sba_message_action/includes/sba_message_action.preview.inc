@@ -7,10 +7,9 @@
  */
 function sba_message_action_message_preview_page($nid) {
   $node = node_load($nid);
-  //@TODO if node multi flow is false, deny access.
-
-  if($_SESSION['action_' . $node->nid . '_completed'] == TRUE) {
-    drupal_set_message("This form has already been submitted.");
+  $completed = isset($_SESSION['action_' . $node->nid . '_completed']) ? $_SESSION['action_' . $node->nid . '_completed'] : TRUE;
+  if($completed == TRUE) {
+    drupal_set_message(t("This form has already been submitted. !return to the form.", array('!return' => l('Return', 'node/' . $node->nid))));
     return array();
   }
   $build = array();
@@ -166,7 +165,12 @@ function sba_message_action_preview_form_submit($form, &$form_state) {
   $api_call = springboard_advocacy_api_call();
   $response = $api_call->invokeClientMethod('resolveTargets', $payload);
   $node = $form['#action_node'];
-    $form_state['redirect'] = array('node/' . $node->nid . '/done' , array('query' => array('sid' => $_GET['sid'])));
+  if (!empty($_GET['sid'])) {
+    $form_state['redirect'] = array(
+      'node/' . $node->nid . '/done',
+      array('query' => array('sid' => $_GET['sid']))
+    );
+  }
   $_SESSION['action_' . $node->nid . '_completed'] = TRUE;
 }
 

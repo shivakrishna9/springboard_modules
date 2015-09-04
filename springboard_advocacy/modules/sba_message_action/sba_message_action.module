@@ -178,7 +178,10 @@ function sba_message_action_queues_access($nid) {
 function sba_message_action_preview_access($nid) {
   $node = node_load($nid);
   if (isset($node->type) &&  $node->type == 'sba_message_action') {
-    return TRUE;
+    $multi_flow = $node->field_sba_action_flow[$node->language][0]['value'] == 'multi' ? TRUE : FALSE;
+    if ($multi_flow) {
+      return TRUE;
+    }
   }
   return FALSE;
 }
