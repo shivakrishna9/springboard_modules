@@ -53,7 +53,10 @@ function sba_message_action_send_message(array $user_message, array $form_state)
       $submission['test_mode'] = TRUE;
       $submission['test_email'] = !empty($test_email[0]['safe_value']) ? $test_email[0]['safe_value'] : '';
     }
-
+    $multi_flow = field_get_items('node', $node, 'field_sba_action_flow');
+    if (!empty($multi_flow[0]['value']) && $multi_flow[0]['value'] == 'multi') {
+      $submission['multiflow'] = 'step_one';
+    }
     // Send submission to API Client.
     $api_call = springboard_advocacy_api_call();
     $response = $api_call->invokeClientMethod('resolveTargets', $submission);
@@ -428,7 +431,8 @@ function sba_message_action_get_message_statuses($response) {
       // a few select properties, in an array
       $target_details = sba_message_action_get_target_details($target);
       // Split into success and hold arrays.
-      $tokens = array('id' => $target->id, 'salutation' => $target->salutation, 'first_name' => $target->first_name, 'last_name' => $target->last_name);
+      unset($target->addresses);
+      $tokens = array('primary_delivery_method' => $target->primary_delivery_method, 'id' => $target->id, 'salutation' => $target->salutation, 'first_name' => $target->first_name, 'last_name' => $target->last_name);
       if (empty($target->webform_status)
         || (!empty($target->webform_status) && $target->webform_status != 'Hold')) {
         $success_count++;
