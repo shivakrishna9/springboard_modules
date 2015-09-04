@@ -161,7 +161,7 @@ function sba_message_action_preview_form_submit($form, &$form_state) {
   $api_call = springboard_advocacy_api_call();
   $response = $api_call->invokeClientMethod('resolveTargets', $payload);
 
-  if (isset($response->status_code) && $response->status_code == 2000) {
+  if (isset($response->status_code) && $response->status_code == 200) {
 
     $node = $form['#action_node'];
     $_SESSION['action_' . $node->nid . '_completed'] = TRUE;
