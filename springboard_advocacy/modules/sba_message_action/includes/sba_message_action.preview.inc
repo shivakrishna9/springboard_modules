@@ -9,6 +9,10 @@ function sba_message_action_message_preview_page($nid) {
   $node = node_load($nid);
   //@TODO if node multi flow is false, deny access.
 
+  if($_SESSION['action_' . $node->nid . '_completed'] == TRUE) {
+    drupal_set_message("This form has already been submitted.");
+    return array();
+  }
   $build = array();
   $build['content'] = array(
     'page_description' => array(
@@ -26,6 +30,7 @@ function sba_message_action_message_preview_page($nid) {
 function sba_message_action_preview_form($form, $form_state, $node) {
 
   //@TODO user edit flag update submission
+
 
   $form['#attached']['css'][] = drupal_get_path('module', 'sba_message_action') . '/css/message-preview.css';
   if(!empty($_SESSION['delivered_messages']['messages'])) {
@@ -133,7 +138,7 @@ function sba_message_action_preview_form_validate($form, &$form_state) {
 }
 
 
-function sba_message_action_preview_form_submit($form, $form_state) {
+function sba_message_action_preview_form_submit($form, &$form_state) {
   module_load_include('inc', 'sba_message_action', 'includes/sba_message_action.form');
   $messages = $form_state['values']['messages'];
   $formatted_messages = array();
@@ -160,6 +165,9 @@ function sba_message_action_preview_form_submit($form, $form_state) {
   );
   $api_call = springboard_advocacy_api_call();
   $response = $api_call->invokeClientMethod('resolveTargets', $payload);
+  $node = $form['#action_node'];
+    $form_state['redirect'] = array('node/' . $node->nid . '/done' , array('query' => array('sid' => $_GET['sid'])));
+  $_SESSION['action_' . $node->nid . '_completed'] = TRUE;
 }
 
 function theme_sba_message_action_preview_message_header($vars) {
