@@ -127,7 +127,6 @@ function sba_message_action_preprocess_messsage_deliverability_dashboard(&$vars)
 
 function sba_message_action_report_cache($client, $advocacy_id) {
   $responses = &drupal_static(__FUNCTION__);
-  $report = $client->invokeClientMethod('getTargetDeliverability', $advocacy_id);
   if (empty($responses)) {
     if ($cache = cache_get($advocacy_id, 'cache_deliverability_report')) {
       $responses = $cache->data;
