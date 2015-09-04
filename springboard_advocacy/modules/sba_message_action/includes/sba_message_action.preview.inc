@@ -28,9 +28,6 @@ function sba_message_action_message_preview_page($nid) {
 
 function sba_message_action_preview_form($form, $form_state, $node) {
 
-  //@TODO user edit flag update submission
-
-
   $form['#attached']['css'][] = drupal_get_path('module', 'sba_message_action') . '/css/message-preview.css';
   if(!empty($_SESSION['delivered_messages']['messages'])) {
     $messages = $_SESSION['delivered_messages']['messages'];
@@ -109,13 +106,13 @@ function sba_message_action_preview_form($form, $form_state, $node) {
 
 function sba_message_action_preview_form_validate($form, &$form_state) {
   $messages = element_children($form['messages']);
+  $changed = FALSE;
   foreach ($messages as $id) {
       $message = $form['messages'][$id];
       $body_default = isset($message['edited_body']['#default_value']) ? $message['edited_body']['#default_value'] : '';
       $body_edited = isset($form_state['values']['messages'][$id]['edited_body']) ? $form_state['values']['messages'][$id]['edited_body'] : '';
       $subject_default = isset($message['subject']['#default_value']) ? $message['subject']['#default_value'] : '';
       $subject_edited = isset($form_state['values']['messages'][$id]['subject']) ? $form_state['values']['messages'][$id]['subject'] : '';
-      $changed = FALSE;
       // Enforce mandatory editing.
       if ($body_edited == $body_default && isset($message['body_required']) && $message['body_required']['#value'] == 1) {
         form_set_error("messages][$id][edited_body", t('Please personalize your message before sending.'));
@@ -129,11 +126,10 @@ function sba_message_action_preview_form_validate($form, &$form_state) {
       elseif (!isset($message['subject_show']) && $subject_edited != $subject_default) {
         $changed = TRUE;
       }
-      // Set user_edited_flag
-//    if ($changed && isset($form['submitted']['sba_user_edit_flag'])) {
-//      form_set_value($form['submitted']['sba_user_edit_flag'], 1, $form_state);
-//    }
-    }
+  }
+  // Set user_edited_flag
+  $form_state['storage']['changed'] = $changed;
+
 }
 
 
@@ -162,16 +158,40 @@ function sba_message_action_preview_form_submit($form, &$form_state) {
     'contact' => $form_state['values']['contact'],
     'messages' => $formatted_messages,
   );
+
   $api_call = springboard_advocacy_api_call();
   $response = $api_call->invokeClientMethod('resolveTargets', $payload);
+
   $node = $form['#action_node'];
-  if (!empty($_GET['sid'])) {
+  $_SESSION['action_' . $node->nid . '_completed'] = TRUE;
+
+  $sid = !empty($_SESSION['action_' . $node->nid . '_sid']) ?   $_SESSION['action_' . $node->nid . '_sid'] : FALSE;
+  unset($_SESSION['action_' . $node->nid . '_sid']);
+
+  if ($sid) {
     $form_state['redirect'] = array(
       'node/' . $node->nid . '/done',
-      array('query' => array('sid' => $_GET['sid']))
+      array('query' => array('sid' => $sid))
     );
   }
-  $_SESSION['action_' . $node->nid . '_completed'] = TRUE;
+
+  if ($form_state['storage']['changed'] ==  TRUE) {
+    if ($sid) {
+      $user_edit = db_query('SELECT * FROM {webform_component} WHERE nid = :nid AND form_key = :form_key',
+        array(
+          ':nid' => $node->nid,
+          ':form_key' => 'sba_user_edit_flag'
+        ))->fetchObject();
+      if (!empty($user_edit->cid)) {
+        db_update('webform_submitted_data')->fields(array('data' => 1))
+          ->condition('nid', $node->nid, '=')
+          ->condition('sid', $sid, '=')
+          ->condition('cid', $user_edit->cid, '=')
+          ->condition('no', 0, '=')
+          ->execute();
+      }
+    }
+  }
 }
 
 function theme_sba_message_action_preview_message_header($vars) {
