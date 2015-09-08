@@ -654,7 +654,7 @@ function sba_message_action_webform_user_profile_fields_alter(&$fields, $node) {
 
     foreach ($fields as $index => $profile_field) {
       // Make all fields except address2 mandatory.
-      if ($profile_field['name'] != 'sbp_address_line_2') {
+      if ($profile_field['name'] != 'sbp_address_line_2' && $profile_field['name'] != 'sbp_phone') {
         $fields[$index]['mandatory'] = 1;
       }
       // Setup removal of non-US provinces.
