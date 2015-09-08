@@ -66,9 +66,12 @@ function sba_message_action_additional_elements(&$form, &$form_state) {
   );
 
   // Multiple messages for this form?
-  $multiple = count($form['#node']->messages) > 1 ? TRUE : FALSE;
+  $node = $form['#node'];
+  $multiple = count($node->messages) > 1 ? TRUE : FALSE;
+  $multi_flow = $node->field_sba_action_flow[$node->language][0]['value'] == 'multi' ? TRUE : FALSE;
+  $multi_flow_prompt = $node->field_sba_multistep_prompt[$node->language][0]['safe_value'];
 
-  if ($multiple) {
+  if ($multiple && !$multi_flow) {
     ctools_include('ajax');
     ctools_include('modal');
     $href = 'messages/nojs/' . arg(1);
@@ -81,6 +84,16 @@ function sba_message_action_additional_elements(&$form, &$form_state) {
       '#type' => 'item',
       '#markup' => '<p>' . t('We have crafted multiple messages for this action. We will select the right message or messages for your legislators, or others we are targeting, based on their position on this issue, and on the address you enter.')
         . '</p><p></p>' . ctools_modal_text_button('View all possible messages.', $href, t('View messages'), 'ctools-modal-message-window-style') . '</p>',
+    );
+  }
+  elseif ($multi_flow) {
+    $form['sba_messages']['multiflow'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Your Message'),
+      '#attributes' => array('class' => array('sba-message')),
+    );
+    $form['sba_messages']['multiflow']['prompt'] =  array(
+      '#markup' => $multi_flow_prompt,
     );
   }
 
@@ -117,6 +130,8 @@ function sba_message_action_message_form(&$form, $message, $multiple) {
   $subject_editable =  $wrapper->field_sba_subject_editable->value();
   $node = $wrapper->field_sba_action_id->value();
   $multi_flow = $node->field_sba_action_flow[$node->language][0]['value'] == 'multi' ? TRUE : FALSE;
+  $multi_flow_prompt = $node->field_sba_multistep_prompt[$node->language][0]['safe_value'];
+
   $preview_form = empty($form) ? TRUE : FALSE;
   $access = TRUE;
   if (!$preview_form && $multi_flow) {
@@ -124,7 +139,7 @@ function sba_message_action_message_form(&$form, $message, $multiple) {
   }
 
   // If it's a multiple message form, use a container instead of a fieldset.
-  if (!$multiple) {
+  if (!$multiple && !$multi_flow) {
     $form['message'][$message->sba_message_id] = array(
       '#type' => 'fieldset',
       '#title' => t('Your Message'),
@@ -147,8 +162,9 @@ function sba_message_action_message_form(&$form, $message, $multiple) {
     '#type' => 'value',
     '#value' => $message->sba_message_id,
   );
+
   // The subject is editable.
-  if ($subject_editable != 'Not editable') {
+  if ($subject_editable != 'Not editable'  && (!$multiple || $multi_flow)) {
 
     // Is it required to edit the subject?
     if ($subject_editable == 'Editing is required') {
@@ -161,20 +177,19 @@ function sba_message_action_message_form(&$form, $message, $multiple) {
       );
     }
 
-
-      $form['message'][$message->sba_message_id]['subject'] = array(
-        '#type' => 'textfield',
-        '#title' => t('Subject'),
-        '#default_value' => $subject,
-        '#description' => !empty($description) ? $description : '',
-        '#access' => $access,
-      );
+    $form['message'][$message->sba_message_id]['subject'] = array(
+      '#type' => 'textfield',
+      '#title' => t('Subject'),
+      '#default_value' => $subject,
+      '#description' => !empty($description) ? $description : '',
+      '#access' => $access,
+    );
 
   }
   // The subject is not editable.
   else {
     // Show the non-editable subject if there aren't multiple messages.
-    if (!$multiple) {
+    if (!$multiple && !$multi_flow) {
       $form['message'][$message->sba_message_id]['subject_show'] = array(
         '#type' => 'item',
         '#title' => t('Subject'),
@@ -234,7 +249,7 @@ function sba_message_action_message_form(&$form, $message, $multiple) {
     );
   }
 
-  if ($body_editable == 'editable' && !$multiple) {
+  if ($body_editable == 'editable' && (!$multiple || $multi_flow)) {
 
     if ($required_body) {
       $description = t('You must edit the body of this message before sending.');

@@ -71,24 +71,24 @@ function sba_message_action_preview_form($form, $form_state, $node) {
       $message_entity = $node->messages[$message['message_id']];
       $build = array();
       sba_message_action_message_form($build, $message_entity, FALSE);
-      unset($build['message'][1]['#title']);
-      unset($build['message'][1]['subject_show']['#title']);
-      $greeting = token_replace($build['message'][1]['greeting']['#value'], array('sba_target' => (Object) $message['targets']));
-      $build['message'][1]['greeting_show']['#markup'] = $greeting;
-      unset($build['message'][1]['greeting']);
-      $signature = token_replace($build['message'][1]['signature_tokenized']['#value'], array('sba_contact' => (Object) $contact));
-      $build['message'][1]['signature']['#markup'] = $signature;
-      unset($build['message'][1]['signature_tokenized']);
-      $build['message'][1]['#attributes']['class'][] = 'message-preview-message-fieldset';
-      $build['message'][1]['precedence'] = array(
+      unset($build['message'][$message_entity->sba_message_id]['#title']);
+      unset($build['message'][$message_entity->sba_message_id]['subject_show']['#title']);
+      $greeting = token_replace($build['message'][$message_entity->sba_message_id]['greeting']['#value'], array('sba_target' => (Object) $message['targets']));
+      $build['message'][$message_entity->sba_message_id]['greeting_show']['#markup'] = $greeting;
+      unset($build['message'][$message_entity->sba_message_id]['greeting']);
+      $signature = token_replace($build['message'][$message_entity->sba_message_id]['signature_tokenized']['#value'], array('sba_contact' => (Object) $contact));
+      $build['message'][$message_entity->sba_message_id]['signature']['#markup'] = $signature;
+      unset($build['message'][$message_entity->sba_message_id]['signature_tokenized']);
+      $build['message'][$message_entity->sba_message_id]['#attributes']['class'][] = 'message-preview-message-fieldset';
+      $build['message'][$message_entity->sba_message_id]['precedence'] = array(
         '#type' => 'value',
         '#value' => $message['precedence'],
       );
-      $build['message'][1]['target'] = array(
+      $build['message'][$message_entity->sba_message_id]['target'] = array(
         '#type' => 'value',
         '#value' => array('target_id' => $message['targets']->id, 'primary_delivery_method' => $message['targets']->primary_delivery_method),
       );
-      $form['messages'][] = $build['message'][1];
+      $form['messages'][] = $build['message'][$message_entity->sba_message_id];
     }
   }
   $form['#action_node'] = $node;
