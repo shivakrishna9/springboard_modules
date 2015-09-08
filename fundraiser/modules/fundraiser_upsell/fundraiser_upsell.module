@@ -1218,18 +1218,26 @@ function fundraiser_upsell_create_master_donation($upsold_donation, $new_amount)
     // Use the monthly schedule to get the next payment date.
     $schedule = new sustainersMonthlySchedule();
     $next = $schedule->advanceDate(1);
-
-    fundraiser_donation_comment($master_donation, 'Initial Upsell donation scheduled to be charged at @next_charge',
-      array('@next_charge' => $next->format(variable_get('date_format_medium', 'D, m/d/Y - H:i'))));
+    $next_charge = $next->format('U');
 
     // At this point, the donation did and donation data is set.
     // Now we need to create a recurring record for it as the master donation.
     $recurring_donation_record = array(
       'master_did' => $master_donation->did,
       'did' => $master_donation->did,
-      'next_charge' => $next->format('U'),
+      'next_charge' => $next_charge,
       'sustainer_key' => fundraiser_sustainers_get_sustainer_key_value(),
     );
+
+    // Pass next charge timestamp through alter hook in case it needs to be
+    // adjusted by other modules, such as fundraiser_date_mode.
+    drupal_alter('fundraiser_sustainers_recurring_next_charge', $next_charge, $recurring_donation_record);
+
+    $recurring_donation_record['next_charge'] = $next_charge;
+
+    fundraiser_donation_comment($master_donation, 'Initial Upsell donation scheduled to be charged at @next_charge',
+      array('@next_charge' => $next->format(variable_get('date_format_medium', 'D, m/d/Y - H:i'))));
+
     // Update the recurring table.
     _fundraiser_sustainers_create_recurring($recurring_donation_record);
   }
