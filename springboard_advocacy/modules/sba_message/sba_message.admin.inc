@@ -214,12 +214,14 @@ function sba_message_edit_form($form, &$form_state, $sba_message) {
   // Add the field related form elements.
   $form_state['sba_message'] = $sba_message;
   field_attach_form('sba_message', $sba_message, $form, $form_state);
-
+  $multi_flow = $node->field_sba_action_flow[$node->language][0]['value'] == 'multi' ? TRUE : FALSE;
   if ((isset($node->message_ids) && empty($sba_message->sba_message_id)) || (isset($node->message_ids) && count($node->message_ids) > 1)) {
-    $form['field_sba_subject_editable']['#disabled'] = TRUE;
-    $form['field_sba_subject_editable']['#attributes']['class'][] = 'disabled';
-    $form['field_sba_user_editable']['#disabled'] = TRUE;
-    $form['field_sba_user_editable']['#attributes']['class'][] = 'disabled';
+    if (!$multi_flow) {
+      $form['field_sba_subject_editable']['#disabled'] = TRUE;
+      $form['field_sba_subject_editable']['#attributes']['class'][] = 'disabled';
+      $form['field_sba_user_editable']['#disabled'] = TRUE;
+      $form['field_sba_user_editable']['#attributes']['class'][] = 'disabled';
+    }
   }
 
   $form['actions'] = array(
