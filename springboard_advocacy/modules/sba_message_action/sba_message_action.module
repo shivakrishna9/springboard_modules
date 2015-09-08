@@ -540,6 +540,7 @@ function sba_message_action_form_sba_message_action_node_form_alter(&$form, &$fo
       'includes/sba_message_action.taxonomy');
     sba_message_action_taxonomy_form($form, $form_state, 'sba_message_action_node_form');
   }
+
   // Add action flow field to vertical nav.
   if (!empty($form['springboard_taxonomy_options']) && isset($form['field_sba_action_flow'])) {
     $form['springboard_taxonomy_options']['action_flow'] = array(
@@ -549,15 +550,19 @@ function sba_message_action_form_sba_message_action_node_form_alter(&$form, &$fo
       '#collapsed' => FALSE,
       '#weight' => '-10'
     );
+
     $form['springboard_taxonomy_options']['action_flow']['field_sba_action_flow']
       = $form['field_sba_action_flow'];
     unset($form['field_sba_action_flow']);
     $form['springboard_taxonomy_options']['action_flow']['field_sba_multistep_prompt']
       = $form['field_sba_multistep_prompt'];
     $form['springboard_taxonomy_options']['action_flow']['field_sba_multistep_prompt']['#prefix'] = '<p><br />';
-
     $form['springboard_taxonomy_options']['action_flow']['field_sba_multistep_prompt']['#weight'] = 100;
     unset($form['field_sba_multistep_prompt']);
+    // Hide the test_mode_email field if test_mode is unchecked.
+    $form['springboard_taxonomy_options']['action_flow']['field_sba_multistep_prompt']['#states']['visible'] = array(
+      ':input[name="field_sba_action_flow[und]"]' => array('value' => 'multi'),
+    );
   }
   // Hide the test_mode_email field if test_mode is unchecked.
   $form['field_sba_test_mode_email']['#states']['visible'] = array(
