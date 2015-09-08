@@ -537,7 +537,14 @@ function sba_message_action_form_sba_message_action_node_form_alter(&$form, &$fo
     $form['springboard_taxonomy_options']['action_flow']['field_sba_action_flow']
       = $form['field_sba_action_flow'];
     unset($form['field_sba_action_flow']);
+    $form['springboard_taxonomy_options']['action_flow']['field_sba_multistep_prompt']
+      = $form['field_sba_multistep_prompt'];
+    $form['springboard_taxonomy_options']['action_flow']['field_sba_multistep_prompt']['#prefix'] = '<p><br />';
+
+    $form['springboard_taxonomy_options']['action_flow']['field_sba_multistep_prompt']['#weight'] = 100;
+    unset($form['field_sba_multistep_prompt']);
   }
+  dpm($form['springboard_taxonomy_options']['action_flow']);
   // Hide the test_mode_email field if test_mode is unchecked.
   $form['field_sba_test_mode_email']['#states']['visible'] = array(
     ':input[name="field_sba_test_mode[und][1]"]' => array('checked' => TRUE),

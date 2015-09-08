@@ -418,6 +418,73 @@ function _sba_message_action_create_node_fields($update = false) {
     ),
   );
 
+  $fields['field_sba_multistep_prompt'] = array(
+    'active' => 1,
+    'cardinality' => 1,
+    'deleted' => 0,
+    'entity_types' => array(
+      0 => 'node',
+    ),
+    'field_name' => 'field_sba_multistep_prompt',
+    'foreign keys' => array(
+      'format' => array(
+        'columns' => array(
+          'format' => 'format',
+        ),
+        'table' => 'filter_format',
+      ),
+    ),
+    'indexes' => array(
+      'format' => array(
+        0 => 'format',
+      ),
+    ),
+    'locked' => 0,
+    'module' => 'text',
+    'settings' => array(),
+    'translatable' => 0,
+    'type' => 'text_long',
+    '_instance' => array(
+      'bundle' => 'sba_message_action',
+      'default_value' => get_t(' This text will appear in the landing page message layout as a replacement for the "Your Message" form used in single step layouts.'),
+      'deleted' => 0,
+      'description' => get_t('This text will appear in the landing page message layout as a replacement for the "Your Message" form used in single step layouts.'),
+      'display' => array(
+        'default' => array(
+          'label' => 'hidden',
+          'settings' => array(),
+          'type' => 'hidden',
+          'weight' => 6,
+        ),
+        'teaser' => array(
+          'label' => 'hidden',
+          'settings' => array(),
+          'type' => 'hidden',
+          'weight' => 0,
+        ),
+      ),
+      'entity_type' => 'node',
+      'field_name' => 'field_sba_multistep_prompt',
+      'label' => 'Multi-step prompt text',
+      'required' => 0,
+      'settings' => array(
+        'text_processing' => 1,
+        'user_register_form' => FALSE,
+      ),
+      'widget' => array(
+        'active' => 1,
+        'module' => 'text',
+        'settings' => array(
+          'rows' => 20,
+          'summary_rows' => 5,
+        ),
+        'type' => 'text_textarea',
+        'weight' => 5,
+      ),
+    ),
+  );
+
+
   foreach ($fields as $key => $values) {
     $instance = $values['_instance'];
     unset($values['_instance']);
