@@ -175,6 +175,12 @@ function sba_message_action_queues_access($nid) {
   return FALSE;
 }
 
+/**
+ * Control access to multi-step page two\.
+ *
+ * @param $nid
+ * @return bool
+ */
 function sba_message_action_preview_access($nid) {
   $node = node_load($nid);
   if (isset($node->type) &&  $node->type == 'sba_message_action') {
@@ -420,6 +426,12 @@ function sba_message_action_form_alter(&$form, &$form_state, $form_id) {
   // Override springboard_admin.module's node delete redirect.s
 }
 
+/**
+ * Build redirect for multi-step form.
+ *
+ * @param $form
+ * @param $form_state
+ */
 function sba_message_action_multifow_submit($form, &$form_state) {
   $node = $form['#node'];
   $sid = $form_state['values']['details']['sid'];
@@ -427,6 +439,9 @@ function sba_message_action_multifow_submit($form, &$form_state) {
   $form_state['redirect'] = array('message-preview/' . $node->nid, array('query' => array('sid' => $sid)));
 }
 
+/**
+ * Implements hook_form_FORM_ID_alter().
+ */
 function sba_message_action_form_node_delete_confirm_alter(&$form, &$form_state, $form_id) {
   if ($form_id == 'node_delete_confirm') {
     if ($form['#node']->type == 'sba_message_action') {
@@ -544,7 +559,6 @@ function sba_message_action_form_sba_message_action_node_form_alter(&$form, &$fo
     $form['springboard_taxonomy_options']['action_flow']['field_sba_multistep_prompt']['#weight'] = 100;
     unset($form['field_sba_multistep_prompt']);
   }
-  dpm($form['springboard_taxonomy_options']['action_flow']);
   // Hide the test_mode_email field if test_mode is unchecked.
   $form['field_sba_test_mode_email']['#states']['visible'] = array(
     ':input[name="field_sba_test_mode[und][1]"]' => array('checked' => TRUE),
@@ -971,4 +985,18 @@ function sba_message_action_tokens($type, $tokens, $data = array(), $options = a
  */
 function sba_message_action_flush_caches() {
   return array('cache_deliverability_report');
+}
+
+/**
+ * Implements hook_page_wrappers_page_node_alter()
+ *
+ * Put the page wrapper around the multi-step form.
+ */
+function sba_message_action_page_wrappers_page_node_alter(&$node) {
+  if (arg(0) == 'message-preview' && is_numeric(arg(1))) {
+    $is_wrapped = node_load(arg(1));
+    if (isset($is_wrapped->type) && $is_wrapped->type ='sba_message_action') {
+      $node = $is_wrapped;
+    }
+  }
 }
