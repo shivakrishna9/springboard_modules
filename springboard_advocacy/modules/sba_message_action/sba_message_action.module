@@ -543,6 +543,25 @@ function sba_message_action_form_sba_message_action_node_form_alter(&$form, &$fo
 
   // Add action flow field to vertical nav.
   if (!empty($form['springboard_taxonomy_options']) && isset($form['field_sba_action_flow'])) {
+    $node = $form['#node'];
+
+    $messages = isset($node->messages) ? count($node->messages) : FALSE;
+    $disable_single_step = FALSE;
+    if ($messages) {
+      foreach ($node->messages as $message) {
+        $wrapper = entity_metadata_wrapper('sba_message', $message);
+        $body_editable = $wrapper->field_sba_user_editable[0]->value() == 'editable' ? TRUE : FALSE;
+        $subject_editable =  $wrapper->field_sba_subject_editable->value() == 'Not editable' ? FALSE : TRUE;
+
+        if (($body_editable || $subject_editable) && $messages > 1) {
+          $disable_single_step = TRUE;
+        }
+      }
+    }
+    $form['field_sba_action_flow'][LANGUAGE_NONE]['one']['#disabled'] = $disable_single_step;
+    if ($disable_single_step) {
+      $form['field_sba_action_flow'][LANGUAGE_NONE]['one']['#description'] = t('This option is disabled because you have multiple messages configured for this action, and at least one of them is user-editable. Make them non-editable to enable this option.');
+    }
     $form['springboard_taxonomy_options']['action_flow'] = array(
       '#type' => 'fieldset',
       '#title' => t('Choose Action Flow'),
