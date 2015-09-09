@@ -70,7 +70,7 @@ function sba_message_action_preview_form($form, $form_state, $node) {
       );
       $message_entity = $node->messages[$message['message_id']];
       $build = array();
-      sba_message_action_message_form($build, $message_entity, FALSE);
+      sba_message_action_message_form($build, $message_entity, 'multi_flow');
       unset($build['message'][$message_entity->sba_message_id]['#title']);
       unset($build['message'][$message_entity->sba_message_id]['subject_show']['#title']);
       $greeting = token_replace($build['message'][$message_entity->sba_message_id]['greeting']['#value'], array('sba_target' => (Object) $message['targets']));

@@ -71,22 +71,30 @@ function sba_message_action_additional_elements(&$form, &$form_state) {
   $multi_flow = $node->field_sba_action_flow[$node->language][0]['value'] == 'multi' ? TRUE : FALSE;
   $multi_flow_prompt = $node->field_sba_multistep_prompt[$node->language][0]['safe_value'];
 
+  $action_type = 'single_not_multi_flow';
   if ($multiple && !$multi_flow) {
+    $action_type = 'multiple_not_multi_flow';
+  }
+  elseif ($multi_flow) {
+    $action_type = 'multi_flow';
+  }
+
+  if ($action_type == 'multiple_not_multi_flow') {
     ctools_include('ajax');
     ctools_include('modal');
     $href = 'messages/nojs/' . arg(1);
-    $form['sba_messages']['multiple'] = array(
+    $form['sba_messages']['multiple_not_multi_flow'] = array(
       '#type' => 'fieldset',
       '#title' => t('Your Message'),
       '#attributes' => array('class' => array('sba-message')),
     );
-    $form['sba_messages']['multiple']['message'] = array(
+    $form['sba_messages']['multiple_not_multi_flow']['message'] = array(
       '#type' => 'item',
       '#markup' => '<p>' . t('We have crafted multiple messages for this action. We will select the right message or messages for your legislators, or others we are targeting, based on their position on this issue, and on the address you enter.')
         . '</p><p></p>' . ctools_modal_text_button('View all possible messages.', $href, t('View messages'), 'ctools-modal-message-window-style') . '</p>',
     );
   }
-  elseif ($multi_flow) {
+  elseif ($action_type == 'multi_flow') {
     $form['sba_messages']['multiflow'] = array(
       '#type' => 'fieldset',
       '#title' => t('Your Message'),
@@ -99,7 +107,7 @@ function sba_message_action_additional_elements(&$form, &$form_state) {
 
   // Create a set of fields for each message assigned to the form.
   foreach ($form['#node']->messages as $message) {
-    sba_message_action_message_form($form['sba_messages'], $message, $multiple);
+    sba_message_action_message_form($form['sba_messages'], $message, $action_type);
   }
 
   $form['#validate'][] = 'sba_message_action_form_validate';
@@ -116,7 +124,7 @@ function sba_message_action_additional_elements(&$form, &$form_state) {
  * @param bool $multiple
  *    Whether this webform has multiple messages.
  */
-function sba_message_action_message_form(&$form, $message, $multiple) {
+function sba_message_action_message_form(&$form, $message, $action_type) {
   // Get some message values via an entity wrapper.
   $wrapper = entity_metadata_wrapper('sba_message', $message);
   $subject = $wrapper->field_sba_subject->value();
@@ -130,7 +138,6 @@ function sba_message_action_message_form(&$form, $message, $multiple) {
   $subject_editable =  $wrapper->field_sba_subject_editable->value();
   $node = $wrapper->field_sba_action_id->value();
   $multi_flow = $node->field_sba_action_flow[$node->language][0]['value'] == 'multi' ? TRUE : FALSE;
-  $multi_flow_prompt = $node->field_sba_multistep_prompt[$node->language][0]['safe_value'];
 
   $preview_form = empty($form) ? TRUE : FALSE;
   $access = TRUE;
@@ -139,7 +146,7 @@ function sba_message_action_message_form(&$form, $message, $multiple) {
   }
 
   // If it's a multiple message form, use a container instead of a fieldset.
-  if (!$multiple && !$multi_flow) {
+  if ($action_type == 'single_not_multi_flow') {
     $form['message'][$message->sba_message_id] = array(
       '#type' => 'fieldset',
       '#title' => t('Your Message'),
@@ -164,7 +171,7 @@ function sba_message_action_message_form(&$form, $message, $multiple) {
   );
 
   // The subject is editable.
-  if ($subject_editable != 'Not editable'  && (!$multiple || $multi_flow)) {
+  if ($subject_editable != 'Not editable'  && $action_type != 'multiple_not_multi_flow') {
 
     // Is it required to edit the subject?
     if ($subject_editable == 'Editing is required') {
@@ -189,8 +196,10 @@ function sba_message_action_message_form(&$form, $message, $multiple) {
   // The subject is not editable.
   else {
     // Show the non-editable subject if there aren't multiple messages.
-    if (!$multiple && !$multi_flow) {
-      $form['message'][$message->sba_message_id]['subject_show'] = array(
+   // if (!$multiple && !$multi_flow) {
+      if ($action_type != 'multiple_not_multi_flow') {
+
+        $form['message'][$message->sba_message_id]['subject_show'] = array(
         '#type' => 'item',
         '#title' => t('Subject'),
         '#markup' => check_plain($subject),
@@ -207,7 +216,7 @@ function sba_message_action_message_form(&$form, $message, $multiple) {
   }
 
   // Show the greeting field is there aren't multiple messages.
-  if (!$multiple) {
+  if ($action_type != 'multiple_not_multi_flow') {
     $form['message'][$message->sba_message_id]['greeting_show'] = array(
       '#type' => 'item',
       '#title' => '',
@@ -231,7 +240,7 @@ function sba_message_action_message_form(&$form, $message, $multiple) {
   );
 
   // If not multiple we show the message body.
-  if (!empty($message_body) && !$multiple) {
+  if (!empty($message_body) && $action_type != 'multiple_not_multi_flow') {
 
     // If the message body is editable, suppress the field title.
     if ($body_editable) {
@@ -249,7 +258,7 @@ function sba_message_action_message_form(&$form, $message, $multiple) {
     );
   }
 
-  if ($body_editable == 'editable' && (!$multiple || $multi_flow)) {
+  if ($body_editable == 'editable' && $action_type != 'multiple_not_multi_flow') {
 
     if ($required_body) {
       $description = t('You must edit the body of this message before sending.');
@@ -283,7 +292,7 @@ function sba_message_action_message_form(&$form, $message, $multiple) {
   }
 
   // Format the signature display.
-  if (!$multiple) {
+  if ($action_type != 'multiple_not_multi_flow') {
     $sig = strip_tags($wrapper->field_sba_signature->value());
     $sig = str_replace('[contact:first_name]', '[First Name]', $sig);
     $sig = str_replace('[contact:last_name]', '[Last Name]', $sig);
