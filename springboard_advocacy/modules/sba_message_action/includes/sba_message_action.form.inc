@@ -68,8 +68,10 @@ function sba_message_action_additional_elements(&$form, &$form_state) {
   // Multiple messages for this form?
   $node = $form['#node'];
   $multiple = count($node->messages) > 1 ? TRUE : FALSE;
-  $multi_flow = $node->field_sba_action_flow[$node->language][0]['value'] == 'multi' ? TRUE : FALSE;
-  $multi_flow_prompt = $node->field_sba_multistep_prompt[$node->language][0]['safe_value'];
+  $field_language = field_language('node', $node, 'field_sba_action_flow');
+  $multi_flow = $node->field_sba_action_flow[$field_language][0]['value'] == 'multi' ? TRUE : FALSE;
+  $field_language = field_language('node', $node, 'field_sba_multistep_prompt');
+  $multi_flow_prompt = $node->field_sba_multistep_prompt[$field_language][0]['safe_value'];
 
   $action_type = 'single_not_multi_flow';
   if ($multiple && !$multi_flow) {
@@ -137,7 +139,8 @@ function sba_message_action_message_form(&$form, $message, $action_type) {
   $conclusion = check_markup($wrapper->field_sba_bottom_conclusion->value(), 'plain_text');
   $subject_editable =  $wrapper->field_sba_subject_editable->value();
   $node = $wrapper->field_sba_action_id->value();
-  $multi_flow = $node->field_sba_action_flow[$node->language][0]['value'] == 'multi' ? TRUE : FALSE;
+  $field_language = field_language('node', $node, 'field_sba_action_flow');
+  $multi_flow = $node->field_sba_action_flow[$field_language][0]['value'] == 'multi' ? TRUE : FALSE;
 
   $preview_form = empty($form) ? TRUE : FALSE;
   $access = TRUE;
@@ -323,7 +326,8 @@ function sba_message_action_message_form(&$form, $message, $action_type) {
  */
 function sba_message_action_form_validate($form, &$form_state) {
   $node = $form['#node'];
-  $multi_flow = $node->field_sba_action_flow[$node->language][0]['value'] == 'multi' ? TRUE : FALSE;
+  $field_language = field_language('node', $node, 'field_sba_action_flow');
+  $multi_flow = $node->field_sba_action_flow[$field_language][0]['value'] == 'multi' ? TRUE : FALSE;
   if (isset($form_state['values']['sba_messages'])) {
     $is_single = count($form_state['values']['sba_messages']['message']) == 1 ? TRUE : FALSE;
   }
@@ -380,7 +384,8 @@ function sba_message_action_form_validate($form, &$form_state) {
  */
 function sba_message_action_form_submit($form, &$form_state) {
   $node = $form['#node'];
-  $multi_flow = $node->field_sba_action_flow[$node->language][0]['value'] == 'multi' ? TRUE : FALSE;
+  $field_language = field_language('node', $node, 'field_sba_action_flow');
+  $multi_flow = $node->field_sba_action_flow[$field_language][0]['value'] == 'multi' ? TRUE : FALSE;
 
   $_SESSION['delivered_messages'] = array();
   $_SESSION['undelivered_messages'] = array();

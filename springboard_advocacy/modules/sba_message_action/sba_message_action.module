@@ -184,7 +184,8 @@ function sba_message_action_queues_access($nid) {
 function sba_message_action_preview_access($nid) {
   $node = node_load($nid);
   if (isset($node->type) &&  $node->type == 'sba_message_action') {
-    $multi_flow = $node->field_sba_action_flow[$node->language][0]['value'] == 'multi' ? TRUE : FALSE;
+    $field_language = field_language('node', $node, 'field_sba_action_flow');
+    $multi_flow = $node->field_sba_action_flow[$field_language][0]['value'] == 'multi' ? TRUE : FALSE;
     if ($multi_flow) {
       return TRUE;
     }
@@ -417,13 +418,13 @@ function sba_message_action_form_alter(&$form, &$form_state, $form_id) {
       sba_message_action_additional_elements($form, $form_state);
 
       $node = $form['#node'];
-      $multi_flow = $node->field_sba_action_flow[$node->language][0]['value'] == 'multi' ? TRUE : FALSE;
+      $field_language = field_language('node', $node, 'field_sba_action_flow');
+      $multi_flow = $node->field_sba_action_flow[$field_language][0]['value'] == 'multi' ? TRUE : FALSE;
       if ($multi_flow) {
         $form['#submit'][] = 'sba_message_action_multifow_submit';
       }
     }
   }
-  // Override springboard_admin.module's node delete redirect.s
 }
 
 /**
