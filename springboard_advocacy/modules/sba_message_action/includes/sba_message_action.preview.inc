@@ -26,6 +26,13 @@ function sba_message_action_message_preview_page($nid) {
   return $build;
 }
 
+/**
+ * @param $form
+ * @param $form_state
+ * @param $node
+ * @return mixed
+ * @throws \Exception
+ */
 function sba_message_action_preview_form($form, $form_state, $node) {
 
   $form['#attached']['css'][] = drupal_get_path('module', 'sba_message_action') . '/css/message-preview.css';
@@ -66,14 +73,18 @@ function sba_message_action_preview_form($form, $form_state, $node) {
     );
 
     module_load_include('inc', 'sba_message_action', 'includes/sba_message_action.form');
-    foreach ($messages as $message) {
-      $form['messages'][]['sent_to'] = array(
+    foreach ($messages as $key => $message) {
+
+      $form['messages'][$key]['sent_to'] = array(
         '#markup' => theme('sba_message_action_preview_message_header', array('message' => $message)),
       );
+
+      // Create the message form elements from the entity. Passed by reference
       $message_entity = $node->messages[$message['message_id']];
       $build = array();
       sba_message_action_message_form($build, $message_entity, 'multi_flow');
-      //unset($build['message'][$message_entity->sba_message_id]['#title']);
+
+      // Customize the resulting form to multi_flow format.
       unset($build['message'][$message_entity->sba_message_id]['subject_show']['#title']);
       $greeting = token_replace($build['message'][$message_entity->sba_message_id]['greeting']['#value'], array('sba_target' => (Object) $message['targets']));
       $build['message'][$message_entity->sba_message_id]['greeting_show']['#markup'] = $greeting;
@@ -91,7 +102,8 @@ function sba_message_action_preview_form($form, $form_state, $node) {
         '#type' => 'value',
         '#value' => array('target_id' => $message['targets']->id, 'primary_delivery_method' => $message['targets']->primary_delivery_method),
       );
-      $form['messages'][] = $build['message'][$message_entity->sba_message_id];
+
+      $form['messages'][$key]['message'] = $build['message'][$message_entity->sba_message_id];
     }
   }
   $form['#action_node'] = $node;
@@ -110,24 +122,31 @@ function sba_message_action_preview_form($form, $form_state, $node) {
   return $form;
 }
 
+/**
+ * Validate the  messages.
+ *
+ * @param $form
+ * @param $form_state
+ */
 function sba_message_action_preview_form_validate($form, &$form_state) {
   $messages = element_children($form['messages']);
   $changed = FALSE;
   foreach ($messages as $id) {
-      $message = $form['messages'][$id];
+
+    $message = $form['messages'][$id]['message'];
       $body_default = isset($message['edited_body']['#default_value']) ? $message['edited_body']['#default_value'] : '';
-      $body_edited = isset($form_state['values']['messages'][$id]['edited_body']) ? $form_state['values']['messages'][$id]['edited_body'] : '';
+      $body_edited = isset($form_state['values']['messages'][$id]['message']['edited_body']) ? $form_state['values']['messages'][$id]['message']['edited_body'] : '';
       $subject_default = isset($message['subject']['#default_value']) ? $message['subject']['#default_value'] : '';
-      $subject_edited = isset($form_state['values']['messages'][$id]['subject']) ? $form_state['values']['messages'][$id]['subject'] : '';
+      $subject_edited = isset($form_state['values']['messages'][$id]['message']['subject']) ? $form_state['values']['messages'][$id]['message']['subject'] : '';
       // Enforce mandatory editing.
       if ($body_edited == $body_default && isset($message['body_required']) && $message['body_required']['#value'] == 1) {
-        form_set_error("messages][$id][edited_body", t('Please personalize your message before sending.'));
+        form_set_error("messages][$id]['message'][edited_body", t('Please personalize your message before sending.'));
       }
       elseif ($body_edited != $body_default) {
         $changed = TRUE;
       }
       if ($subject_edited == $subject_default && isset($message['subject_required']) && $message['subject_required']['#value'] == 1) {
-        form_set_error("messages][$id][subject", t('Please personalize the subject line before sending your message.'));
+        form_set_error("messages][$id]['message'][subject", t('Please personalize the subject line before sending your message.'));
       }
       elseif (!isset($message['subject_show']) && $subject_edited != $subject_default) {
         $changed = TRUE;
@@ -139,21 +158,27 @@ function sba_message_action_preview_form_validate($form, &$form_state) {
 }
 
 
+/**
+ * Submit the messages to the API endpoint.
+ *
+ * @param $form
+ * @param $form_state
+ */
 function sba_message_action_preview_form_submit($form, &$form_state) {
   module_load_include('inc', 'sba_message_action', 'includes/sba_message_action.form');
   $messages = $form_state['values']['messages'];
+  // Make it like how the resolver likes it.
   $formatted_messages = array();
   foreach ($messages as $key => $message) {
-    $edited_body = isset($message['edited_body']) ? $message['edited_body'] : '';
-    $form_state['values']['messages'][$key]['body'] = sba_message_action_build_message_bodies($message['sba_message_id'], $edited_body);
-    unset($form_state['values']['messages'][$key]['sba_message_id']);
-    unset($form_state['values']['messages'][$key]['edited_body']);
-    unset($form_state['values']['messages'][$key]['body_required']);
-    $formatted_messages[$key]['message']['body'] =  $message['body'];
-    $formatted_messages[$key]['message']['subject'] =  $message['subject'];
-    $formatted_messages[$key]['message']['precedence'] =  $message['precedence'];
-    $formatted_messages[$key]['message']['id'] =  $message['message_id'];
-    $formatted_messages[$key]['deliverable'] = $message['target'];
+    $edited_body = isset($message['message']['edited_body']) ? $message['message']['edited_body'] : '';
+//    unset($form_state['values']['messages'][$key]['sba_message_id']);
+//    unset($form_state['values']['messages'][$key]['edited_body']);
+//    unset($form_state['values']['messages'][$key]['body_required']);
+    $formatted_messages[$key]['message']['body'] = sba_message_action_build_message_bodies($message['message']['sba_message_id'], $edited_body);
+    $formatted_messages[$key]['message']['subject'] =  $message['message']['subject'];
+    $formatted_messages[$key]['message']['precedence'] =  $message['message']['precedence'];
+    $formatted_messages[$key]['message']['id'] =  $message['message']['message_id'];
+    $formatted_messages[$key]['deliverable'] = $message['message']['target'];
   }
   $payload = array(
     'multiflow' => 'step_two',
@@ -171,18 +196,20 @@ function sba_message_action_preview_form_submit($form, &$form_state) {
   if (isset($response->status_code) && $response->status_code == 200) {
 
     $node = $form['#action_node'];
+    // Add session flag to prevent resubmission of the form
     $_SESSION['action_' . $node->nid . '_completed'] = TRUE;
 
+    // Redirect to the original confirmation page.
     $sid = !empty($_SESSION['action_' . $node->nid . '_sid']) ? $_SESSION['action_' . $node->nid . '_sid'] : FALSE;
-    unset($_SESSION['action_' . $node->nid . '_sid']);
-
     if ($sid) {
+      unset($_SESSION['action_' . $node->nid . '_sid']);
       $form_state['redirect'] = array(
         'node/' . $node->nid . '/done',
         array('query' => array('sid' => $sid))
       );
     }
 
+    // Update the user edit flag.
     if ($form_state['storage']['changed'] == TRUE) {
       if ($sid) {
         $user_edit = db_query('SELECT * FROM {webform_component} WHERE nid = :nid AND form_key = :form_key',
@@ -206,6 +233,12 @@ function sba_message_action_preview_form_submit($form, &$form_state) {
   }
 }
 
+/**
+ * Theme the message preview header, i.e., recipient name
+ *
+ * @param $vars
+ * @return string
+ */
 function theme_sba_message_action_preview_message_header($vars) {
 
   $intro = t('The message below will be sent to:');
