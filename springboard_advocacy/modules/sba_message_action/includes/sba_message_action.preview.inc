@@ -79,6 +79,7 @@ function sba_message_action_preview_form($form, $form_state, $node) {
       $build['message'][$message_entity->sba_message_id]['greeting_show']['#markup'] = $greeting;
       unset($build['message'][$message_entity->sba_message_id]['greeting']);
       $signature = token_replace($build['message'][$message_entity->sba_message_id]['signature_tokenized']['#value'], array('sba_contact' => (Object) $contact));
+      $build['message'][$message_entity->sba_message_id]['signature']['#type'] = 'item';
       $build['message'][$message_entity->sba_message_id]['signature']['#markup'] = check_markup($signature, 'plain_text');
       unset($build['message'][$message_entity->sba_message_id]['signature_tokenized']);
       $build['message'][$message_entity->sba_message_id]['#attributes']['class'][] = 'message-preview-message-fieldset';

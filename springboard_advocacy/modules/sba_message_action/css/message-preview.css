@@ -1,5 +1,6 @@
 .message-preview-header {
     margin: 1em 0;
+    width: 100%;
 }
 .message-preview-intro {
     margin: 0 0 0.3em 0;
@@ -11,22 +12,27 @@
     font-weight: bold;
 }
 
-.message-preview-container .sba-message {
+.message-preview-container div.sba-message {
     margin-bottom: 2em;
     border-bottom: 1px solid #ccc;
+    display: block;
+}
+
+.message-preview-container div.sba-message:after{
+    clear: both;
+    content: "";
+    display: table;
 }
 
 .message-preview-container .sba-message input,
-.message-preview-container .sba-message textarea {
-    min-width: 70%;
-}
-
-.message-preview-container .sba-message textarea {
-    height: auto;
+.message-preview-container .sba-message textarea,
+div.form-type-item {
+    width: 100%;
+    max-width: 770px;
 }
 
 #edit-actions {
-    clear:both;
+    clear:left;
     padding: 0;
     margin: 0;
 }
