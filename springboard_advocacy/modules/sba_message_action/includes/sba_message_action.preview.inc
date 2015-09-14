@@ -7,11 +7,12 @@
  */
 function sba_message_action_message_preview_page($nid) {
   $node = node_load($nid);
-  $completed = isset($_SESSION['action_' . $node->nid . '_completed']) ? $_SESSION['action_' . $node->nid . '_completed'] : TRUE;
+  $completed = isset($_SESSION['action_completed']) ? $_SESSION['action_completed'] : TRUE;
   if($completed == TRUE) {
     drupal_set_message(t("This form has already been submitted. !return to the form.", array('!return' => l('Return', 'node/' . $node->nid))));
     return array();
   }
+
   $build = array();
   $build['content'] = array(
     'page_description' => array(
@@ -105,11 +106,9 @@ function sba_message_action_preview_form($form, $form_state, $node) {
 
       $form['messages'][$key]['message'] = $build['message'][$message_entity->sba_message_id];
     }
-  }
   $form['#action_node'] = $node;
   $form['#validate'][] = 'sba_message_action_preview_form_validate';
-
-  $num = count(element_children($form['messages']));
+  $num = !empty($form['messages']) ? count(element_children($form['messages'])) : 0;
   $send = format_plural($num, 'Send message', 'Send messages');
   $form['submit'] = array(
     '#prefix' => '<div id="edit-actions">',
@@ -119,6 +118,10 @@ function sba_message_action_preview_form($form, $form_state, $node) {
     '#weight' => 10,
     '#attributes' => array('class' => 'message-action-preview-submit'),
   );
+  }
+  else {
+    // We should never get here.
+  }
   return $form;
 }
 
@@ -129,7 +132,7 @@ function sba_message_action_preview_form($form, $form_state, $node) {
  * @param $form_state
  */
 function sba_message_action_preview_form_validate($form, &$form_state) {
-  $messages = element_children($form['messages']);
+  $messages = !empty($form['messages']) ? element_children($form['messages']) : array();
   $changed = FALSE;
   foreach ($messages as $id) {
 
@@ -197,12 +200,13 @@ function sba_message_action_preview_form_submit($form, &$form_state) {
 
     $node = $form['#action_node'];
     // Add session flag to prevent resubmission of the form
-    $_SESSION['action_' . $node->nid . '_completed'] = TRUE;
+    $_SESSION['action_completed'] = TRUE;
 
     // Redirect to the original confirmation page.
-    $sid = !empty($_SESSION['action_' . $node->nid . '_sid']) ? $_SESSION['action_' . $node->nid . '_sid'] : FALSE;
+    // $sid is set in sba_message_action_multifow_submit()
+    $sid = !empty($_SESSION['action_sid']['sid']) ? $_SESSION['action_sid']['sid'] : FALSE;
     if ($sid) {
-      unset($_SESSION['action_' . $node->nid . '_sid']);
+      unset($_SESSION['action_sid']);
       $form_state['redirect'] = array(
         'node/' . $node->nid . '/done',
         array('query' => array('sid' => $sid))

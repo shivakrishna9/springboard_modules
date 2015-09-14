@@ -226,11 +226,14 @@ function sba_message_action_set_confirmation_session_vars($response, $contact) {
         }
       }
       $_SESSION['form_details'] = array(
-        'action_id' => $response->alert_id,
-        'account_id' => $response->account_id,
-        'test_mode' => $response->test_mode,
-        'test_email' => $response->test_email,
+        'action_id' => isset($response->alert_id) ? $response->alert_id: '',
+        'account_id' => isset($response->account_id) ? $response->account_id : '',
       );
+      if(isset($response->test_mode)) {
+        $_SESSION['form_details']['test_mode'] = $response->test_mode;
+        $_SESSION['form_details']['test_email'] = $response->test_email;
+      }
+
       $_SESSION['contact'] = $contact;
       $_SESSION['delivered_messages'] =
         array(

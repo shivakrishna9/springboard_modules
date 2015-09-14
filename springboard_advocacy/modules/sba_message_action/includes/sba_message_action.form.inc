@@ -391,8 +391,8 @@ function sba_message_action_form_submit($form, &$form_state) {
   $_SESSION['undelivered_messages'] = array();
   $_SESSION['contact'] = array();
   $_SESSION['form_details'] = array();
-  $_SESSION['action_' . $node->nid . '_sid'] = FALSE;
-  $_SESSION['action_' . $node->nid . '_completed'] = FALSE;
+  $_SESSION['action_sid'] = FALSE;
+  $_SESSION['action_completed'] = FALSE;
   // Create array of messages to submit for target resolution.
   if (isset($form_state['values']['sba_messages'])) {
     $messages = array();

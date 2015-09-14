@@ -186,7 +186,8 @@ function sba_message_action_preview_access($nid) {
   if (isset($node->type) &&  $node->type == 'sba_message_action') {
     $field_language = field_language('node', $node, 'field_sba_action_flow');
     $multi_flow = $node->field_sba_action_flow[$field_language][0]['value'] == 'multi' ? TRUE : FALSE;
-    if ($multi_flow) {
+    $session_nid = isset($_SESSION['action_sid']['nid']) ? $_SESSION['action_sid']['nid'] : 0;
+    if ($multi_flow && $session_nid == $nid) {
       return TRUE;
     }
   }
@@ -434,10 +435,15 @@ function sba_message_action_form_alter(&$form, &$form_state, $form_id) {
  * @param $form_state
  */
 function sba_message_action_multifow_submit($form, &$form_state) {
-  $node = $form['#node'];
-  $sid = $form_state['values']['details']['sid'];
-  $_SESSION['action_' . $node->nid . '_sid'] = $sid;
-  $form_state['redirect'] = array('message-preview/' . $node->nid, array('query' => array('sid' => $sid)));
+  if (!empty($_SESSION['delivered_messages'])) {
+    $node = $form['#node'];
+    $sid = $form_state['values']['details']['sid'];
+    $_SESSION['action_sid'] = array('sid' => $sid, 'nid' => $node->nid);
+    $form_state['redirect'] = array(
+      'message-preview/' . $node->nid,
+      array('query' => array('sid' => $sid))
+    );
+  }
 }
 
 /**
