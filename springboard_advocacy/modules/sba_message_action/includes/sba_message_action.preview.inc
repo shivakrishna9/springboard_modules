@@ -48,14 +48,16 @@ function sba_message_action_preview_form($form, $form_state, $node) {
       '#type' => 'value',
       '#value' => $action['action_id'],
     );
-    $form['test_mode'] = array(
-      '#type' => 'value',
-      '#value' => $action['test_mode'],
-    );
-    $form['test_mode_email'] = array(
-      '#type' => 'value',
-      '#value' => $action['test_email'],
-    );
+    if (isset($action['test_mode'])) {
+      $form['test_mode'] = array(
+        '#type' => 'value',
+        '#value' => $action['test_mode'],
+      );
+      $form['test_mode_email'] = array(
+        '#type' => 'value',
+        '#value' => $action['test_email'],
+      );
+    }
     $form['account_id'] = array(
       '#type' => 'value',
       '#value' => $action['account_id'],
