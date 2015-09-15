@@ -16,6 +16,9 @@ function fundraiser_migrate_api() {
       'fundraiser_example' => array(
         'title' => t('Fundraiser Example'),
       ),
+      'fundraiser_luminate' => array(
+        'title' => t('Fundraiser Luminate'),
+      ),
     ),
     'migrations' => array(
       'FundraiserExampleDonation' => array(
@@ -25,6 +28,14 @@ function fundraiser_migrate_api() {
       'FundraiserExampleDonor' => array(
         'class_name' => 'FundraiserExampleDonor',
         'group_name' => 'fundraiser_example',
+      ),
+      'FundraiserLuminateDonation' => array(
+        'class_name' => 'FundraiserLuminateDonation',
+        'group_name' => 'fundraiser_luminate',
+      ),
+      'FundraiserLuminateDonor' => array(
+        'class_name' => 'FundraiserLuminateDonor',
+        'group_name' => 'fundraiser_luminate',
       ),
     ),
   );

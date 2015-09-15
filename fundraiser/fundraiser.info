@@ -19,4 +19,5 @@ files[] = tests/fundraiser.email.test
 
 ; Migrate classes
 files[] = includes/donation-migration.inc
+files[] = includes/donation-migration-luminate.inc
 files[] = includes/donation-destination.inc
