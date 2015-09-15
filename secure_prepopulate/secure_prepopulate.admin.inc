@@ -9,6 +9,9 @@
  */
 function secure_prepopulate_admin_settings($form, &$form_state) {
   $form = array();
+  $form['#attached']['js'] = array(
+    drupal_get_path('module', 'secure_prepopulate') . '/js/secure_prepopulate.js',
+  );
   $form['secure_prepopulate_key'] = array(
     '#type' => 'textfield',
     '#title' => t('Encryption key'),
@@ -32,12 +35,23 @@ function secure_prepopulate_admin_settings($form, &$form_state) {
     ),
     '#default_value' => variable_get('secure_prepopulate_precedence', 'url'),
   );
-  $form['secure_prepopulate_expired_date_limit'] = array(
+  $form['secure_prepopulate_expiration_settings'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Pre-populated token expiration settings'),
+  );
+  $form['secure_prepopulate_expiration_settings']['secure_prepopulate_toggle_expiration']= array(
+    '#type' => 'checkbox',
+    '#title' => t('Pre-populated tokens never expire'),
+    '#description' => t('Check this setting to allow the pre-population token to be used on multiple site visits.'),
+    '#default_value' => variable_get('secure_prepopulate_toggle_expiration', 0),
+  );
+  $form['secure_prepopulate_expiration_settings']['secure_prepopulate_expired_date_limit'] = array(
     '#type' => 'textfield',
     '#size' => 6,
     '#title' => t('Number of days before entries are cleared from the expired table'),
-    '#description' => t('Clean out entries from the expired table that are older than the given amount of days.  Enter 0 for no expiration.'),
+    '#description' => t('Clean out entries from the expired table that are older than the given amount of days.'),
     '#default_value' => variable_get('secure_prepopulate_expired_date_limit', 30),
+    '#disabled' => variable_get('secure_prepopulate_toggle_expiration', 0) ? TRUE : FALSE,
   );
   return system_settings_form($form);
 }
