@@ -6,7 +6,7 @@ class FundraiserLuminateDonation extends FundraiserDonationMigration {
   public function __construct($arguments) {
     parent::__construct($arguments);
 
-    $file = DRUPAL_ROOT . '/' . drupal_get_path('module', 'fundraiser') . '/includes/sustainer-import-example.csv';
+    $file = DRUPAL_ROOT . '/' . drupal_get_path('module', 'fundraiser') . '/includes/csv/luminate-import-sample.csv';
 
     $this->source = new MigrateSourceCSV($file, $this->csvColumnNames(), array('enclosure' => '"', 'header_rows' => 1), $this->fields());
   }
@@ -59,7 +59,7 @@ class FundraiserLuminateDonor extends FundraiserUserMigration {
   public function __construct($arguments) {
      parent::__construct($arguments);
  
-    $file = DRUPAL_ROOT . '/' . drupal_get_path('module', 'fundraiser') . '/includes/sustainer-import-example.csv';
+    $file = DRUPAL_ROOT . '/' . drupal_get_path('module', 'fundraiser') . '/includes/csv/luminate-import-sample.csv';
 
     $this->source = new MigrateSourceCSV($file, $this->csvColumnNames(), array('enclosure' => '"', 'header_rows' => 1));
   }
