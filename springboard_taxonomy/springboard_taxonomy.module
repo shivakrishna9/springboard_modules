@@ -5,18 +5,70 @@
  */
 function springboard_taxonomy_menu() {
   $items = array();
-  $items['admin/config/content/springboard-taxonomy'] = array(
-    'title' => 'Springboard Taxonomy',
+
+  $items['admin/springboard/taxonomy/%springboard_taxonomy_vocab_name'] = array(
+    'title callback' => 'entity_label',
+    'title arguments' => array('taxonomy_vocabulary', 3),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('taxonomy_overview_terms', 3),
+    'access arguments' => array('administer organization issues'),
+    'file path' => drupal_get_path('module', 'taxonomy'),
+    'file' => 'taxonomy.admin.inc',
+  );
+
+  $items['admin/springboard/taxonomy/%springboard_taxonomy_vocab_name/list'] = array(
+    'title' => 'List',
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+    'weight' => -20,
+  );
+
+  $items['admin/springboard/taxonomy/%springboard_taxonomy_vocab_name/add'] = array(
+    'title' => 'Add term',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('taxonomy_form_term', array(), 3),
+    'access arguments' => array('administer organization issues'),
+    'file path' => drupal_get_path('module', 'taxonomy'),
+    'file' => 'taxonomy.admin.inc',
+    'type' => MENU_LOCAL_TASK,
+  );
+
+  $items['admin/springboard/taxonomy/%springboard_taxonomy_vocab_name/settings'] = array(
+    'title' => 'Settings',
     'description' => 'Configuration settings for Springboard Taxonomy.',
     'page callback' => 'springboard_taxonomy_settings_page',
-    'access arguments' => array('administer taxonomy'),
-    'type' => MENU_NORMAL_ITEM,
+    'access arguments' => array('administer springboard taxonomy settings'),
+    'type' => MENU_LOCAL_TASK,
     'file' => 'springboard_taxonomy.admin.inc',
   );
 
   return $items;
 }
 
+/**
+ * Load the vocab object from the wildcard argument
+ * @param $name
+ * @return mixed
+ */
+function springboard_taxonomy_vocab_name_load($name) {
+  $vocabularies = taxonomy_vocabulary_load_multiple(NULL, array('machine_name' => 'sba_organization_issues'));
+  return reset($vocabularies);
+}
+
+/**
+ * Implements hook_permission().
+ */
+function springboard_taxonomy_permission() {
+  return array(
+    'administer organization issues' => array(
+      'title' => t('Administer organization issues'),
+      'description' => t('Access the organization issues listing and add terms.'),
+    ),
+    'administer springboard_taxonomy settings' => array(
+      'title' => t('Administer springboard taxonomy settings'),
+      'description' => t('Assign or remove the organization issues vocabulary to/from a content type.'),
+    ),
+  );
+}
 
 /**
  * Implements hook_form_alter().
@@ -131,11 +183,50 @@ function springboard_taxonomy_field_delete_instance($instance) {
   }
 }
 
+/**
+ * IMplements hook_theme().
+ */
 function springboard_taxonomy_theme() {
   return array(
     'springboard_taxonomy_confirm_message' => array(
       'variables' => array('changes' => NULL),
       'file' => 'springboard_taxonomy.admin.inc',
     ),
+  );
+}
+
+/**
+ * implements hook__springboard_admin_alias_patterns().
+ *
+ * Put term edit screens under springboard backend paths.
+ */
+function springboard_taxonomy_springboard_admin_alias_patterns() {
+  return array(
+    'taxonomy/term/%/edit' => array(
+      'path' => array(
+        'regex' => '|^/taxonomy/term/([0-9]+)/edit$|',
+        'replacement' => 'taxonomy/term/$1/edit',
+      ),
+      'alias' => array(
+        'regex' => '|^springboard/taxonomy/([0-9]+)/edit$|',
+        'replacement' => 'springboard/taxonomy/$1/edit',
+      ),
+    ),
+  );
+}
+
+/**
+ * Implements hook_springboard_admin_admin_menu_items_alter().
+ *
+ * Put the link to the admin page under the springboard/settings/config.
+ */
+function springboard_taxonomy_springboard_admin_admin_menu_items_alter(&$items) {
+  $items['admin/springboard/settings']['_children']['admin/springboard/settings/config']['_children']['admin/springboard/taxonomy/sba_organization_issues'] = array(
+    'link_path' => 'admin/springboard/taxonomy/sba_organization_issues',
+    'link_title' => t('Organization Issues'),
+    'menu_name' => 'springboard_admin_menu',
+    'expanded' => 1,
+    'customized' => 1,
+    'weight' => 1,
   );
 }
