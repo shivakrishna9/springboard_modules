@@ -36,7 +36,7 @@ function secure_prepopulate_admin_settings($form, &$form_state) {
     '#type' => 'textfield',
     '#size' => 6,
     '#title' => t('Number of days before entries are cleared from the expired table'),
-    '#description' => t('Clean out entries from the expired table that are older than the given amount of days.'),
+    '#description' => t('Clean out entries from the expired table that are older than the given amount of days.  Enter 0 for no expiration.'),
     '#default_value' => variable_get('secure_prepopulate_expired_date_limit', 30),
   );
   return system_settings_form($form);

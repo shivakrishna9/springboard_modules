@@ -403,6 +403,13 @@ function secure_prepopulate_is_expired($qs) {
  *   The query string to expire.
  */
 function secure_prepopulate_expire($qs) {
+  // If the lifetime for this expiration data is set to 0, indicating no expiration,
+  // then do not set an expiration timestamp.
+  $max_days = variable_get('secure_prepopulate_expired_date_limit', 30);
+  if ($max_days == 0) {
+    return;
+  }
+
   $qs_hashed = md5($qs);
   $record = new stdClass();
   $record->hash = $qs_hashed;
