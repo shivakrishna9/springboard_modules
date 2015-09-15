@@ -283,6 +283,12 @@ class FundraiserDonationDestination extends MigrateDestination {
 
     $donation->gateway = _fundraiser_gateway_info($values->gateway);
 
+    if (empty($donation->gateway)) {
+      // Can't create a donation without a Fundraiser gateway.
+      throw new MigrateException(t("Donation is missing a valid gateway. Mapped gateway value is: !gateway.",
+          array('!gateway' => $values->gateway)));
+    }
+
     $donation->donation = array();
 
     // Populate the necessary donation values
