@@ -5,8 +5,7 @@
  *
  * Generates and outputs deliverability reports for a particular message action.
  */
-function sba_message_action_performance_page($nid)
-{
+function sba_message_action_performance_page($nid) {
   // CSS and JS assets
   drupal_add_css(drupal_get_path('module', 'sba_message_action') . '/css/message-performance.css');
 
@@ -31,13 +30,12 @@ function sba_message_action_performance_page($nid)
  * Helper function to convert target deliverability report data into
  * a data structure that can be rendered in an HTML table.
  */
-function sba_message_action_performance_targets_table($responses, $node)
-{
+function sba_message_action_performance_targets_table($responses, $node) {
   $targets = !empty($responses['report']->data->targets) ? $responses['report']->data->targets : array();
   $targets = sba_message_action_pager_default_initialize($targets, 10);
 
   $rows = array();
-  $advocacyId = $node->advocacy_id;
+  $advocacy_id = $node->advocacy_id;
   foreach ($targets as $target) {
     // Get the target deliverability metrics for this target
     $rows[] = array(
@@ -79,8 +77,7 @@ function sba_message_action_performance_targets_table($responses, $node)
  * @param int $element
  * @return array
  */
-function sba_message_action_pager_default_initialize($rows, $limit = 9, $element = 0)
-{
+function sba_message_action_pager_default_initialize($rows, $limit = 9, $element = 0) {
   global $pager_page_array, $pager_total, $pager_total_items, $pager_limits;
   $page = pager_find_page($element);
   // We calculate the total of pages as ceil(items / limit).
@@ -89,7 +86,7 @@ function sba_message_action_pager_default_initialize($rows, $limit = 9, $element
   $pager_page_array[$element] = max(0, min($page, ((int)$pager_total[$element]) - 1));
   $pager_limits[$element] = $limit;
 
-  return array_slice($rows, $pager_page_array[$element] * $limit, $limit, true);
+  return array_slice($rows, $pager_page_array[$element] * $limit, $limit, TRUE);
 }
 
 /**
@@ -97,43 +94,41 @@ function sba_message_action_pager_default_initialize($rows, $limit = 9, $element
  * @param $variables
  * @throws \Exception
  */
-function sba_message_action_preprocess_messsage_deliverability_dashboard(&$vars)
-{
+function sba_message_action_preprocess_messsage_deliverability_dashboard(&$vars) {
   // Sanitize the targets data
   foreach ($vars['targets'] as $key => $data) {
-    foreach ($data as $itemKey => $value) {
-      $vars['targets'][$key][$itemKey] = check_plain($value);
+    foreach ($data as $item_key => $value) {
+      $vars['targets'][$key][$item_key] = check_plain($value);
     }
   }
 
   // Sanitize report data
-  $vars['totalMessagesProcessed'] = isset($vars['report']->data->totalMessagesProcessed) ? check_plain($vars['report']->data->totalMessagesProcessed) : 0;
-  $vars['totalMessagesGenerated'] = isset($vars['report']->data->totalMessagesGenerated) ? check_plain($vars['report']->data->totalMessagesGenerated) : 0;
+  $vars['total_messages_processed'] = isset($vars['report']->data->totalMessagesProcessed) ? check_plain($vars['report']->data->totalMessagesProcessed) : 0;
+  $vars['total_messages_generated'] = isset($vars['report']->data->totalMessagesGenerated) ? check_plain($vars['report']->data->totalMessagesGenerated) : 0;
   $vars['delivered'] = isset($vars['report']->data->delivered) ? check_plain($vars['report']->data->delivered) : 0;
 
   $vars['failed'] = isset($vars['report']->data->failed) ? check_plain($vars['report']->data->failed) : 0;
   $vars['hold'] = isset($vars['report']->data->hold) ? check_plain($vars['report']->data->hold) : 0;
   $vars['undeliverable'] = isset($vars['report']->data->undeliverable) ? check_plain($vars['report']->data->undeliverable) : 0;
 
-  $vars['totalMessagesProcessed'] = number_format($vars['totalMessagesProcessed']);
-  $vars['totalMessagesGenerated'] = number_format($vars['totalMessagesGenerated']);
+  $vars['total_messages_processed'] = number_format($vars['total_messages_processed']);
+  $vars['total_messages_generated'] = number_format($vars['total_messages_generated']);
   $vars['delivered'] = number_format($vars['delivered']);
   $vars['failed'] = number_format($vars['failed']);
   $vars['hold'] = number_format($vars['hold']);
   $vars['undeliverable'] = number_format($vars['undeliverable']);
 
   $vars['percentage'] = isset($vars['report']->data->deliverabilityIndexPercentage) ? check_plain($vars['report']->data->deliverabilityIndexPercentage) : 0;
-  $vars['deliverabilityCacheTimestamp'] = isset($vars['deliverability_cache_timestamp']) ? check_plain($vars['deliverability_cache_timestamp']) : date('U');
+  $vars['deliverability_cache_timestamp'] = isset($vars['deliverability_cache_timestamp']) ? check_plain($vars['deliverability_cache_timestamp']) : date('U');
 
   // Render targets table
-  $targetsTable = theme('table', array('header' => $vars['targets_table_header'], 'rows' => $vars['targets']));
-  $targetsTable .= theme('pager', array('quantity' => 1));
+  $targets_table = theme('table', array('header' => $vars['targets_table_header'], 'rows' => $vars['targets']));
+  $targets_table .= theme('pager', array('quantity' => 1));
 
-  $vars['targets_table'] = $targetsTable;
+  $vars['targets_table'] = $targets_table;
 }
 
-function sba_message_action_report_cache($client, $advocacy_id)
-{
+function sba_message_action_report_cache($client, $advocacy_id) {
   $responses = &drupal_static(__FUNCTION__);
   $report = $client->invokeClientMethod('getTargetDeliverability', $advocacy_id);
   if (empty($responses)) {
@@ -143,7 +138,8 @@ function sba_message_action_report_cache($client, $advocacy_id)
       if (REQUEST_TIME > $cache->expire) {
         cache_clear_all($advocacy_id, 'cache_deliverability_report');
       }
-    } else {
+    }
+    else {
       $report = $client->invokeClientMethod('getTargetDeliverability', $advocacy_id);
       $responses['report'] = $report;
       $responses['deliverability_cache_timestamp'] = REQUEST_TIME;
@@ -156,8 +152,7 @@ function sba_message_action_report_cache($client, $advocacy_id)
   return $responses;
 }
 
-function sba_message_action_target_cache($client, $target_id, $advocacy_id)
-{
+function sba_message_action_target_cache($client, $target_id, $advocacy_id) {
   $responses = &drupal_static(__FUNCTION__);
 
   if (empty($responses)) {
@@ -166,7 +161,8 @@ function sba_message_action_target_cache($client, $target_id, $advocacy_id)
       if (REQUEST_TIME > $cache->expire) {
         cache_clear_all($advocacy_id . ':' . $target_id, 'cache_deliverability_target');
       }
-    } else {
+    }
+    else {
       $responses = $client->invokeClientMethod('getSingleTargetDeliverability', $advocacy_id, $target_id);
       cache_set($advocacy_id . ':' . $target_id, $responses, 'cache_deliverability_target', REQUEST_TIME + 600);
     }

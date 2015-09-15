@@ -4,7 +4,7 @@
   <div class="row">
     <div class="span3">
       <div class="well">
-        <h2 class="text-info"><?php print $totalMessagesProcessed; ?></h2>
+        <h2 class="text-info"><?php print $total_messages_processed; ?></h2>
         Processed Messages
       </div>
     </div>
@@ -29,8 +29,7 @@
   </div>
   <div class="row">
     <div class="span12 messages-generated">
-
-      <?php print $totalMessagesGenerated;?> messages generated as of <?php print date('m/d/y g:ma T',$deliverabilityCacheTimestamp); ?>
+      <?php print $total_messages_generated; ?> messages generated as of <?php print date('m/d/y g:ia T',$deliverability_cache_timestamp); ?>
     </div>
   </div>
 </div>
