@@ -9,6 +9,9 @@ class FundraiserLuminateDonation extends FundraiserDonationMigration {
     $file = DRUPAL_ROOT . '/' . drupal_get_path('module', 'fundraiser') . '/includes/csv/luminate-import-sample.csv';
 
     $this->source = new MigrateSourceCSV($file, $this->csvColumnNames(), array('enclosure' => '"', 'header_rows' => 1), $this->fields());
+
+    // Add extra field mappings.
+    $this->addFieldMapping('payment_method', 'PAYMENT_METHOD');
   }
 
   /**
@@ -25,9 +28,6 @@ class FundraiserLuminateDonation extends FundraiserDonationMigration {
     if (parent::prepareRow($row) === FALSE) {
       return FALSE;
     }
-
-    // TODO: Account for both credit card and ACH transactions.
-    $row->payment_method = 'credit';
 
     // TODO: Validate payment date.
     $start = strtotime($row->{'PAYMENT_DATE'});
