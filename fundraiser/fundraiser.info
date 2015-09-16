@@ -21,3 +21,4 @@ files[] = tests/fundraiser.email.test
 files[] = includes/donation-migration.inc
 files[] = includes/donation-migration-luminate.inc
 files[] = includes/donation-destination.inc
+files[] = includes/donation-destination-luminate.inc

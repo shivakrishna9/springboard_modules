@@ -10,6 +10,8 @@ class FundraiserLuminateDonation extends FundraiserDonationMigration {
 
     $this->source = new MigrateSourceCSV($file, $this->csvColumnNames(), array('enclosure' => '"', 'header_rows' => 1), $this->fields());
 
+    $this->destination = new FundraiserLuminateDonationDestination();
+
     // Add extra field mappings.
     $this->removeFieldMapping('payment_method');
     $this->addFieldMapping('payment_method', 'PAYMENT_METHOD');
