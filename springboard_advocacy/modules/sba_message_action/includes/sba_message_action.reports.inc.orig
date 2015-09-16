@@ -72,7 +72,7 @@ function sba_message_action_performance_targets_table($responses, $node) {
  *
  * Slices the array of targets into pageable segments.
  *
- * @param $rows
+ * @param     $rows
  * @param int $limit
  * @param int $element
  * @return array
@@ -141,10 +141,21 @@ function sba_message_action_report_cache($client, $advocacy_id) {
     else {
       $report = $client->invokeClientMethod('getTargetDeliverability', $advocacy_id);
       $responses['report'] = $report;
+<<<<<<< HEAD
       $responses['deliverability_cache_timestamp'] = REQUEST_TIME;
 
       cache_set($advocacy_id, $responses, 'cache_deliverability_report', REQUEST_TIME + 600);
 
+=======
+      $queueReady = $client->invokeClientMethod('getQueueMessagesCountByStatus', $advocacy_id, 'ready');
+      $queuePaused = $client->invokeClientMethod('getQueueMessagesCountByStatus', $advocacy_id, 'paused');
+      $queueCanceled = $client->invokeClientMethod('getQueueMessagesCountByStatus', $advocacy_id, 'canceled');
+      $queueReadyItems = !empty($queueReady->data->count) ? $queueReady->data->count : 0;
+      $queuePausedItems = !empty($queuePaused->data->count) ? $queuePaused->data->count : 0;
+      $queueCanceledItems = !empty($queueCanceled->data->count) ? $queueCanceled->data->count : 0;
+      $responses['queue'] = array('ready' => $queueReadyItems, 'paused' => $queuePausedItems, 'cancelled' => $queueCanceledItems);
+      cache_set($advocacy_id, $responses, 'cache_deliverability_report', REQUEST_TIME + 3600);
+>>>>>>> 7.x-4.8.1-beta
     }
   }
 
@@ -163,7 +174,11 @@ function sba_message_action_target_cache($client, $target_id, $advocacy_id) {
     }
     else {
       $responses = $client->invokeClientMethod('getSingleTargetDeliverability', $advocacy_id, $target_id);
+<<<<<<< HEAD
       cache_set($advocacy_id . ':' . $target_id, $responses, 'cache_deliverability_target', REQUEST_TIME + 600);
+=======
+      cache_set($advocacy_id.':' . $target_id, $responses, 'cache_deliverability_target', REQUEST_TIME + 3600);
+>>>>>>> 7.x-4.8.1-beta
     }
   }
 
