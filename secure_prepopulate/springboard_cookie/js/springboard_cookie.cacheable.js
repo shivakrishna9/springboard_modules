@@ -1,3 +1,9 @@
+/**
+ * @file
+ * Handles Springboard cookies
+ * 
+ * If the Springboard cookie is not set, it is fetched via AJAX.
+ */
 (function($) {
   Drupal.behaviors.springboard_cookie = {
     attach: function(context, settings) {

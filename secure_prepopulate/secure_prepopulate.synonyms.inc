@@ -194,7 +194,7 @@ function secure_prepopulate_delete_synonym_form($form, $form_state, $synonym = N
  */
 function secure_prepopulate_delete_synonym_form_submit($form, &$form_state) {
   secure_prepopulate_delete_synonym($form_state['values']['token_key']);
-  drupal_set_message('Synonym group has been deleted.');
+  drupal_set_message(t('Synonym group has been deleted.'));
   $form_state['redirect'] = array('admin/config/system/secure-prepopulate/synonyms');
 }
 

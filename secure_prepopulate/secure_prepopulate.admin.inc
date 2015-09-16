@@ -190,13 +190,13 @@ function secure_prepopulate_token_generator($form, $form_state) {
 function secure_prepopulate_token_generator_submit($form, $form_state) {
 
   if ($af = secure_prepopulate_generate_af_string($form_state['values'])) {
-    drupal_set_message('af token generated:');
-    drupal_set_message($af);
+    drupal_set_message(t('@af token generated:', array('@af' => 'af')));
+    drupal_set_message(filter_xss($af));
   }
   if (module_exists('dynamic_gift_strings')) {
     if ($gs = secure_prepopulate_generate_gs_string($form_state['values'])) {
-      drupal_set_message('gs token generated:');
-      drupal_set_message($gs);
+      drupal_set_message(t('gs token generated:'));
+      drupal_set_message(filter_xss($gs));
     }
   }
 }
