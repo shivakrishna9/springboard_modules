@@ -2,22 +2,28 @@
 <h2>Current Message Queue Activity</h2>
 <div class="container queue-overview-container">
   <div class="row">
-    <div class="span4">
+    <div class="span3">
       <div class="well">
         <h2 class="text-info"><?php print $queue_ready_items; ?></h2>
         Ready
       </div>
     </div>
-    <div class="span4">
+    <div class="span3">
       <div class="well">
         <h2 class="text-info"><?php print $queue_paused_items; ?></h2>
         Paused
       </div>
     </div>
-    <div class="span4">
+    <div class="span3">
       <div class="well">
         <h2 class="text-info"><?php print $queue_canceled_items; ?></h2>
         Canceled
+      </div>
+    </div>
+    <div class="span3">
+      <div class="well">
+        <h2 class="text-info"><?php print $queue_hold_items; ?></h2>
+        On-Hold
       </div>
     </div>
   </div>

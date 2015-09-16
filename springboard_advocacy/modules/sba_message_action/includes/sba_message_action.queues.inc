@@ -32,10 +32,17 @@ function sba_message_action_queue_page($nid) {
       $advocacy_id,
       'canceled'
     );
+
+    $queue_hold = $client->invokeClientMethod(
+      'getQueueMessagesCountByStatus',
+      $advocacy_id,
+      'hold'
+    );
   }
   $queue_ready_items = !empty($queue_ready->data->count) ? $queue_ready->data->count : 0;
   $queue_pausedItems = !empty($queue_paused->data->count) ? $queue_paused->data->count : 0;
   $queue_canceled_items = !empty($queue_canceled->data->count) ? $queue_canceled->data->count : 0;
+  $queue_hold_items = !empty($queue_hold->data->count) ? $queue_hold->data->count : 0;
 
   // Create the tabs
   $tabs = theme('messsage_deliverability_tabs', array(
@@ -57,6 +64,7 @@ function sba_message_action_queue_page($nid) {
     'queue_ready_items'    => $queue_ready_items,
     'queue_paused_items'   => $queue_pausedItems,
     'queue_canceled_items' => $queue_canceled_items,
+    'queue_hold_items' => $queue_hold_items,
     'queue_actions_form'   => $queue_actions_form
   ));
 
