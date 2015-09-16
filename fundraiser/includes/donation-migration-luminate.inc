@@ -38,6 +38,10 @@ class FundraiserLuminateDonation extends FundraiserDonationMigration {
       return FALSE;
     }
 
+    // TODO: Set Salesforce campaign ID.
+
+    // TODO: Set market source for donation.
+
     // TODO: Validate payment date.
     $start = strtotime($row->{'PAYMENT_DATE'});
 
@@ -71,5 +75,16 @@ class FundraiserLuminateDonor extends FundraiserUserMigration {
     $file = DRUPAL_ROOT . '/' . drupal_get_path('module', 'fundraiser') . '/includes/csv/luminate-import-sample.csv';
 
     $this->source = new MigrateSourceCSV($file, $this->csvColumnNames(), array('enclosure' => '"', 'header_rows' => 1));
+
+    // Add extra field mappings.
+    $this->addFieldMapping('sbp_phone', 'PHONE_NUMBER');
+  }
+
+  public function csvColumnNames() {
+    $csv_cols = parent::csvColumnNames();
+
+    $csv_cols[] = array('PHONE_NUMBER', 'PHONE_NUMBER');
+
+    return $csv_cols;
   }
 }
