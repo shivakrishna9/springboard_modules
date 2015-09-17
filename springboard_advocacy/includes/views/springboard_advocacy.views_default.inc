@@ -49,6 +49,8 @@ function springboard_advocacy_views_default_views() {
     'clone_node' => 'edit_node',
     'edit_node' => 'edit_node',
     'view_node' => 'edit_node',
+    'nid' => 'edit_node',
+    'field_sba_action_id' => 'edit_node',
   );
   $handler->display->display_options['style_options']['default'] = '-1';
   $handler->display->display_options['style_options']['info'] = array(
@@ -107,7 +109,26 @@ function springboard_advocacy_views_default_views() {
       'separator' => '',
       'empty_column' => 0,
     ),
+    'nid' => array(
+      'sortable' => 0,
+      'default_sort_order' => 'asc',
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
+    'field_sba_action_id' => array(
+      'sortable' => 0,
+      'default_sort_order' => 'asc',
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
   );
+  /* Relationship: Entity Reference: Referencing entity */
+  $handler->display->display_options['relationships']['reverse_field_sba_action_id_sba_message']['id'] = 'reverse_field_sba_action_id_sba_message';
+  $handler->display->display_options['relationships']['reverse_field_sba_action_id_sba_message']['table'] = 'node';
+  $handler->display->display_options['relationships']['reverse_field_sba_action_id_sba_message']['field'] = 'reverse_field_sba_action_id_sba_message';
+  $handler->display->display_options['relationships']['reverse_field_sba_action_id_sba_message']['label'] = 'SBA Message';
   /* Field: Content: Title */
   $handler->display->display_options['fields']['title']['id'] = 'title';
   $handler->display->display_options['fields']['title']['table'] = 'node';
@@ -163,6 +184,29 @@ function springboard_advocacy_views_default_views() {
   $handler->display->display_options['fields']['view_node']['label'] = '';
   $handler->display->display_options['fields']['view_node']['element_label_colon'] = FALSE;
   $handler->display->display_options['fields']['view_node']['text'] = 'View';
+  /* Field: Content: Nid */
+  $handler->display->display_options['fields']['nid']['id'] = 'nid';
+  $handler->display->display_options['fields']['nid']['table'] = 'node';
+  $handler->display->display_options['fields']['nid']['field'] = 'nid';
+  $handler->display->display_options['fields']['nid']['label'] = '';
+  $handler->display->display_options['fields']['nid']['exclude'] = TRUE;
+  $handler->display->display_options['fields']['nid']['alter']['text'] = 'Messages';
+  $handler->display->display_options['fields']['nid']['alter']['path'] = 'node/[nid]/messages';
+  $handler->display->display_options['fields']['nid']['element_label_colon'] = FALSE;
+  /* Field: SBA Message: Action ID */
+  $handler->display->display_options['fields']['field_sba_action_id']['id'] = 'field_sba_action_id';
+  $handler->display->display_options['fields']['field_sba_action_id']['table'] = 'field_data_field_sba_action_id';
+  $handler->display->display_options['fields']['field_sba_action_id']['field'] = 'field_sba_action_id';
+  $handler->display->display_options['fields']['field_sba_action_id']['relationship'] = 'reverse_field_sba_action_id_sba_message';
+  $handler->display->display_options['fields']['field_sba_action_id']['label'] = '';
+  $handler->display->display_options['fields']['field_sba_action_id']['alter']['alter_text'] = TRUE;
+  $handler->display->display_options['fields']['field_sba_action_id']['alter']['text'] = 'Messages';
+  $handler->display->display_options['fields']['field_sba_action_id']['alter']['make_link'] = TRUE;
+  $handler->display->display_options['fields']['field_sba_action_id']['alter']['path'] = 'node/[nid]/messages';
+  $handler->display->display_options['fields']['field_sba_action_id']['element_label_colon'] = FALSE;
+  $handler->display->display_options['fields']['field_sba_action_id']['settings'] = array(
+    'link' => 0,
+  );
   /* Sort criterion: Content: Post date */
   $handler->display->display_options['sorts']['created']['id'] = 'created';
   $handler->display->display_options['sorts']['created']['table'] = 'node';
@@ -300,6 +344,27 @@ function springboard_advocacy_views_default_views() {
   $handler->display->display_options['fields']['changed']['date_format'] = 'custom';
   $handler->display->display_options['fields']['changed']['custom_date_format'] = 'm/d/Y';
   $handler->display->display_options['fields']['changed']['second_date_format'] = 'long';
+  /* Field: Content: Nid */
+  $handler->display->display_options['fields']['nid']['id'] = 'nid';
+  $handler->display->display_options['fields']['nid']['table'] = 'node';
+  $handler->display->display_options['fields']['nid']['field'] = 'nid';
+  $handler->display->display_options['fields']['nid']['label'] = '';
+  $handler->display->display_options['fields']['nid']['exclude'] = TRUE;
+  $handler->display->display_options['fields']['nid']['element_label_colon'] = FALSE;
+  /* Field: SBA Message: Action ID */
+  $handler->display->display_options['fields']['field_sba_action_id']['id'] = 'field_sba_action_id';
+  $handler->display->display_options['fields']['field_sba_action_id']['table'] = 'field_data_field_sba_action_id';
+  $handler->display->display_options['fields']['field_sba_action_id']['field'] = 'field_sba_action_id';
+  $handler->display->display_options['fields']['field_sba_action_id']['relationship'] = 'reverse_field_sba_action_id_sba_message';
+  $handler->display->display_options['fields']['field_sba_action_id']['label'] = '';
+  $handler->display->display_options['fields']['field_sba_action_id']['alter']['alter_text'] = TRUE;
+  $handler->display->display_options['fields']['field_sba_action_id']['alter']['text'] = 'Messages';
+  $handler->display->display_options['fields']['field_sba_action_id']['alter']['make_link'] = TRUE;
+  $handler->display->display_options['fields']['field_sba_action_id']['alter']['path'] = 'node/[nid]/messages';
+  $handler->display->display_options['fields']['field_sba_action_id']['element_label_colon'] = FALSE;
+  $handler->display->display_options['fields']['field_sba_action_id']['settings'] = array(
+    'link' => 0,
+  );
   $handler->display->display_options['defaults']['filter_groups'] = FALSE;
   $handler->display->display_options['defaults']['filters'] = FALSE;
   /* Filter criterion: Content: Type */
