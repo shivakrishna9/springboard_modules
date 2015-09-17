@@ -503,8 +503,8 @@ function springboard_advocacy_target_district() {
  */
 function springboard_advocacy_target_gender() {
   $value_options = array(
-    'M' => 'Male',
     'F' => 'Female',
+    'M' => 'Male',
     'O' => 'Other',
   );
   return $value_options;
