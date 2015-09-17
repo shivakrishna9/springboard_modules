@@ -669,9 +669,8 @@ function springboard_advocacy_preprocess_pager(&$variables, $hook) {
  *
  * Add ajax to views exposed form to enable district lookups by state.
  */
-function springboard_advocacy_form_views_exposed_form_alter(&$form, &$form_state, $form_id)
-{
-  if ($form_id == 'views_exposed_form' && $form_state['view']->name == 'targets') {
+function springboard_advocacy_form_views_exposed_form_alter(&$form, &$form_state, $form_id) {
+  if ($form_id == 'views_exposed_form' && $form_state['view']->name == 'targets' && $form_state['view']->base_table ='advocacy') {
 
     // Committee autocomplete.
     $form['search_committee']['#autocomplete_path'] = 'message-action/committee/autocomplete';
