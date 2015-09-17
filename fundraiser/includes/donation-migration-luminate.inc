@@ -45,8 +45,8 @@ class FundraiserLuminateDonation extends FundraiserDonationMigration {
     $start = strtotime($row->{'PAYMENT_DATE'});
 
     $day = date('d', $start);
-    $month = date('m');
-    $year = date('Y');
+    $month = date('m', $start);
+    $year = date('Y', $start);
 
     $start = strtotime(date("$month/$day/$year"));
 
