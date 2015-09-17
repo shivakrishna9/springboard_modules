@@ -42,7 +42,6 @@ class FundraiserLuminateDonation extends FundraiserDonationMigration {
       return FALSE;
     }
 
-    // TODO: Validate payment date.
     $start = strtotime($row->{'PAYMENT_DATE'});
 
     $day = date('d', $start);
