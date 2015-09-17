@@ -39,21 +39,13 @@ class FundraiserLuminateDonation extends FundraiserDonationMigration {
       return FALSE;
     }
 
-    $start = strtotime($row->{'PAYMENT_DATE'});
-
-    $day = date('d', $start);
-    $month = date('m', $start);
-    $year = date('Y', $start);
-
-    $start = strtotime(date("$month/$day/$year"));
-
     /**
      * Below are important and unique variables for the import process.
      *
      * These are used in the donation destination class to control
      * some of the standard donation processing.
      */
-    $row->recurring_start_date = $start;
+    $row->recurring_start_date = strtotime($row->{'PAYMENT_DATE'});
     $row->create_sustainer_series = TRUE;
 
     // We don't want to fire the success hook.
