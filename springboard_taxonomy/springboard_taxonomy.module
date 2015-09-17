@@ -2,10 +2,17 @@
 
 /**
  * Implements hook_menu().
+ *
+ * We use custom paths to access pages normally provided
+ * by the taxonomy and user modules in order to:
+ * provide a stripped-down taxonomy admin interface and finer-grained
+ * permissions; and to provide a stripped-down permissions interface that
+ * only shows taxonomy permissions.
  */
 function springboard_taxonomy_menu() {
   $items = array();
 
+  // Our custom path/version of the taxonomy overview page
   $items['admin/springboard/taxonomy/%springboard_taxonomy_vocab_name'] = array(
     'title callback' => 'entity_label',
     'title arguments' => array('taxonomy_vocabulary', 3),
@@ -15,13 +22,13 @@ function springboard_taxonomy_menu() {
     'file path' => drupal_get_path('module', 'taxonomy'),
     'file' => 'taxonomy.admin.inc',
   );
-
   $items['admin/springboard/taxonomy/%springboard_taxonomy_vocab_name/list'] = array(
     'title' => 'List',
     'type' => MENU_DEFAULT_LOCAL_TASK,
     'weight' => -20,
   );
 
+  // Our custom path for the add terms page
   $items['admin/springboard/taxonomy/%springboard_taxonomy_vocab_name/add'] = array(
     'title' => 'Add term',
     'page callback' => 'drupal_get_form',
@@ -32,6 +39,7 @@ function springboard_taxonomy_menu() {
     'type' => MENU_LOCAL_TASK,
   );
 
+  // Settings page. Assign vocabulary to content types.
   $items['admin/springboard/taxonomy/%springboard_taxonomy_vocab_name/settings'] = array(
     'title' => 'Settings',
     'description' => 'Configuration settings for Springboard Taxonomy.',
@@ -60,12 +68,10 @@ function springboard_taxonomy_vocab_name_load($name) {
 function springboard_taxonomy_permission() {
   return array(
     'administer organization issues' => array(
-      'title' => t('Administer organization issues'),
-      'description' => t('Access the organization issues listing and add terms.'),
+      'title' => t('View term listing and add new organization issues'),
     ),
     'administer springboard_taxonomy settings' => array(
-      'title' => t('Administer springboard taxonomy settings'),
-      'description' => t('Assign or remove the organization issues vocabulary to/from a content type.'),
+      'title' => t('Assign or remove the organization issues taxonomy to/from content types.'),
     ),
   );
 }
@@ -130,8 +136,8 @@ function springboard_taxonomy_taxonomy_form(&$form, &$form_state, $form_id) {
       '#collapsed' => FALSE,
     );
 
-    if (empty($options) && user_access('edit terms in ' . $vocabulary->vid)) {
-      $here = t('You can add terms !here.', array('!here' => l(t('here'), 'admin/structure/taxonomy/sba_organization_issues/add')));
+    if (empty($options) && user_access('administer organization issues')) {
+      $here = t('You can add terms !here.', array('!here' => l(t('here'), 'admin/springboard/taxonomy/sba_organization_issues/add')));
       $form['springboard_taxonomy_options']['organization_issues']['#description'] = $description . ' ' . $here;
     }
 
