@@ -15,6 +15,8 @@ class FundraiserLuminateDonation extends FundraiserDonationMigration {
     // Add extra field mappings.
     $this->removeFieldMapping('payment_method');
     $this->addFieldMapping('payment_method', 'PAYMENT_METHOD');
+    $this->addFieldMapping('campaign_id');
+    $this->addFieldMapping('market_source');
   }
 
   public function csvColumnNames() {
@@ -39,10 +41,6 @@ class FundraiserLuminateDonation extends FundraiserDonationMigration {
     if (parent::prepareRow($row) === FALSE) {
       return FALSE;
     }
-
-    // TODO: Set Salesforce campaign ID.
-
-    // TODO: Set market source for donation.
 
     // TODO: Validate payment date.
     $start = strtotime($row->{'PAYMENT_DATE'});

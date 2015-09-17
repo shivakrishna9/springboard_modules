@@ -132,6 +132,16 @@ class FundraiserDonationDestination extends MigrateDestination {
     if (!empty($row->submission)) {
       module_load_include('inc', 'webform', 'includes/webform.submissions');
 
+      // Add campaign ID.
+      if (!empty($entity->campaign_id)) {
+        $row->submission['cid'] = $entity->campaign_id;
+      }
+
+      // Add market source.
+      if (!empty($entity->market_source)) {
+        $row->submission['ms'] = $entity->market_source;
+      }
+
       $node = node_load($donation->nid);
       $submission = new stdClass();
       $submission->data = array();
