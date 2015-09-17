@@ -35,9 +35,6 @@ class FundraiserLuminateDonation extends FundraiserDonationMigration {
    *   FALSE if the row is to be skipped.
    */
   public function prepareRow($row) {
-    // Slow down migration.
-    sleep(1);
-
     if (parent::prepareRow($row) === FALSE) {
       return FALSE;
     }
