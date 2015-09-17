@@ -861,6 +861,57 @@ function webform_ab_webform_ab_valid_webforms($webform_types) {
 }
 
 /**
+ * Implements hook_form_FORM_ID_alter().
+ *
+ * Require further confirmation if a user reaches the "delete confirmation" page
+ * for a webform or donation_form node that is part of a webform_ab node.
+ *
+ * This is to prevent A/B testing data from being unintentionally lost.
+ */
+function webform_ab_form_node_delete_confirm_alter(&$form, $form_state) {
+  if (!isset($form['#node']->nid) || !isset($form['#node']->type) ||
+      !in_array($form['#node']->type, webform_variable_get('webform_node_types'))) { 
+    return; 
+  }
+
+  // Add a checkbox for further confirmation if this is part of a webform_ab node:
+  $parent_webform_ab_data = db_query(
+    "SELECT n.nid, n.title FROM webform_ab_forms w, node n " .
+    "WHERE w.test_nid = n.nid AND w.webform_nid = :nid_pending_deletion",
+    array(
+      ':nid_pending_deletion' => $form['#node']->nid
+    )
+  );
+  foreach ($parent_webform_ab_data as $webform_ab_data) {
+    $webform_ab_link = l($webform_ab_data->title,
+      'springboard/node/' . $webform_ab_data->nid . '/included-forms',
+      array('attributes' => array('target' => '_blank')));
+    $form['confirm_ab_test_form_deletion'] = array(
+      '#type' => 'fieldset',
+      '#weight' => -1000, // Ensure this warning appears at the top of the form.
+      '#description' => t('WARNING: ') .
+        t('The form you are attempting to delete is part of an ' .
+        'A/B test, ') . $webform_ab_link . t(', and deleting it will result in a loss of ' .
+        'the data associated with its use within this test!'),
+    );
+    $form['confirm_ab_test_form_deletion']['ab_confirmation'] = array(
+      '#type' => 'checkbox',
+      '#title' => t('I understand this node\'s A/B test data will be lost upon deletion.'),
+    );
+    // drupal_set_message('<pre>' . print_r($form, 1) . '</pre>');
+    // Hide the submit button until the user clicks the checkbox to confirm deletion:
+    $form['actions']['submit']['#states'] = array(
+      'disabled' => array(
+        ':input[name="ab_confirmation"]' => array('checked' => FALSE),
+      ),
+      'enabled' => array(
+        ':input[name="ab_confirmation"]' => array('checked' => TRUE),
+      ),
+    );
+  }
+}
+
+/**
  * Implements hook_form_alter().
  * Log a hit to the webform
  */
