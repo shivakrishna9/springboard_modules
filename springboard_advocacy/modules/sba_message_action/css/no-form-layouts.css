@@ -187,3 +187,12 @@ form#sba-quicksign-form {
 #participants-container table {
     width: 100%;
 }
+
+@media (max-width: 767px) {
+    #edit-actions {
+        width: auto;
+    }
+    #edit-actions input {
+        width: 100%;
+    }
+}
