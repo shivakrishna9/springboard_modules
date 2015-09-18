@@ -90,6 +90,11 @@ function springboard_taxonomy_form_alter(&$form, &$form_state, $form_id) {
       springboard_taxonomy_taxonomy_form($form, $form_state, $form_id);
     }
   }
+  if($form_id == 'taxonomy_overview_terms' && arg(1) == 'springboard' && arg(3) == 'sba_organization_issues') {
+    if (isset($form['actions']['reset_alphabetical'])) {
+      $form['actions']['reset_alphabetical']['#access'] = FALSE;
+    }
+  }
 }
 
 /**
