@@ -860,6 +860,146 @@ function webform_ab_webform_ab_valid_webforms($webform_types) {
   }
 }
 
+
+/**
+ * Handles A/B test form delete confirmation on the admin content page
+ * when bulk deletion is attempted:
+ */
+function webform_ab_form_node_admin_content_alter(&$form, &$form_state, $form_id) {
+  if (!isset($form['#submit'][0]) || $form['#submit'][0] != 'node_multiple_delete_confirm_submit') {
+    return;
+  }
+
+  // Gather a list of any A/B form actively being tested:
+  $webform_types = webform_variable_get('webform_node_types');
+  $webform_types_sql_list = '\'' . implode('\' , \'', array_filter($webform_types)) . '\'';
+  $forms_being_ab_tested = array();
+  $distinct_webform_nids = array();
+  $distinct_webform_ab_nids = array();
+  $deletion_nodes_nid_title_map = array();
+  foreach ($form['nodes'] as $nid => $webform_data) {
+    if (!is_numeric($nid)) {
+      continue;
+    }
+    $deletion_nodes_nid_title_map[$nid] = $webform_data['#suffix'];
+    $parent_webform_ab_query = db_query(
+      "SELECT w.test_nid webform_ab_nid, n.title webform_ab_title, w.webform_nid " .
+      "FROM {webform_ab_forms} w, {node} n " .
+      "WHERE w.test_nid = n.nid AND w.webform_nid = :nid_pending_deletion",
+      array(
+        ':nid_pending_deletion' => $nid,
+      )
+    );
+    foreach ($parent_webform_ab_query as $webform_ab_data) {
+      if (!in_array($webform_ab_data->webform_nid, $distinct_webform_nids)) {
+        $distinct_webform_nids[] = $webform_ab_data->webform_nid;
+      }
+      if (!in_array($webform_ab_data->webform_ab_nid, $distinct_webform_ab_nids)) {
+        $distinct_webform_ab_nids[] = $webform_ab_data->webform_ab_nid;
+      }
+      $webform_ab_link = l($webform_ab_data->webform_ab_title,
+        'springboard/node/' . $webform_ab_data->webform_ab_nid . '/included-forms',
+        array('attributes' => array('target' => '_blank')));
+      $webforms_testing_data[] = $webform_ab_data;
+    }
+  }
+
+  // If no webforms are being deleted then do nothing:
+  if (empty($distinct_webform_nids)) {
+    return;
+  }
+
+  // Display a message detailing the issue:
+  $description = t('WARNING:') . '<br />' .
+    t('The') . ' ' . format_plural(count($distinct_webform_nids), 'node', 'following nodes') . ' ' .
+    t('you are attempting to delete') . ' ' .
+    format_plural(count($distinct_webform_nids), 'belongs', 'belong') . ' ' . t('to') . ' ' .
+    format_plural(count($distinct_webform_ab_nids), 'an active A/B test', '@count active A/B tests') . ' ' .
+    t('and deletion will result in a loss of data:') . '<br /><br />';
+  foreach ($webforms_testing_data as $this_webform_data) {
+    $webform_ab_link = l($this_webform_data->webform_ab_title,
+      'springboard/node/' . $this_webform_data->webform_ab_nid . '/included-forms',
+      array('attributes' => array('target' => '_blank'))
+    );
+    $webform_link = l(strip_tags($deletion_nodes_nid_title_map[$this_webform_data->webform_nid]),
+      'node/' . $this_webform_data->webform_nid, array('attributes' => array('target' => '_blank')));
+    $description .= $webform_link . ' ' . t('is part of') . ' ' . t('Webform A/B Test') . ' ' .
+      $webform_ab_link . '.<br />';
+  }
+  $description .= '<br />';
+  $form['confirm_ab_test_form_deletion'] = array(
+    '#type' => 'fieldset',
+    '#weight' => -9999, // Ensure this warning appears at the top of the form.
+    '#description' => $description,
+  );
+
+  // Add a checkbox which toggles the visibility of the submit button on use:
+  $form['confirm_ab_test_form_deletion']['ab_confirmation'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('I understand') . ' ' .
+      format_plural(count($distinct_webform_nids), 'this node\'s', 'these nodes\'') . ' ' .
+      t('A/B test data will be lost upon deletion.'),
+  );
+  $form['actions']['submit']['#states'] = array(
+    'invisible' => array(
+      ':input[name="ab_confirmation"]' => array('checked' => FALSE),
+    ),
+    'visible' => array(
+      ':input[name="ab_confirmation"]' => array('checked' => TRUE),
+    ),
+  );
+}
+
+/**
+ * Implements hook_form_FORM_ID_alter().
+ *
+ * Require further confirmation if a user reaches the "delete confirmation" page
+ * for a webform or donation_form node that is part of a webform_ab node.
+ *
+ * This is to prevent A/B testing data from being unintentionally lost.
+ */
+function webform_ab_form_node_delete_confirm_alter(&$form, $form_state) {
+  if (!isset($form['#node']->nid) || !isset($form['#node']->type) ||
+      !in_array($form['#node']->type, webform_variable_get('webform_node_types'))) {
+    return;
+  }
+
+  // Add a checkbox for further confirmation if this is part of a webform_ab node:
+  $parent_webform_ab_query = db_query(
+    "SELECT n.nid, n.title FROM {webform_ab_forms} w, {node} n " .
+    "WHERE w.test_nid = n.nid AND w.webform_nid = :nid_pending_deletion",
+    array(
+      ':nid_pending_deletion' => $form['#node']->nid
+    )
+  );
+  foreach ($parent_webform_ab_query as $webform_ab_data) {
+    $webform_ab_link = l($webform_ab_data->title,
+      'springboard/node/' . $webform_ab_data->nid . '/included-forms',
+      array('attributes' => array('target' => '_blank')));
+    $form['confirm_ab_test_form_deletion'] = array(
+      '#type' => 'fieldset',
+      '#weight' => -9999, // Ensure this warning appears at the top of the form.
+      '#description' => t('WARNING:') . '<br />' .
+        t('The form you are attempting to delete is part of an ' .
+        'A/B test, ') . $webform_ab_link . t(', and deleting it will result in a loss of ' .
+        'the data associated with its use within this test!'),
+    );
+    $form['confirm_ab_test_form_deletion']['ab_confirmation'] = array(
+      '#type' => 'checkbox',
+      '#title' => t('I understand this node\'s A/B test data will be lost upon deletion.'),
+    );
+    // Hide the submit button until the user clicks the checkbox to confirm deletion:
+    $form['actions']['submit']['#states'] = array(
+      'disabled' => array(
+        ':input[name="ab_confirmation"]' => array('checked' => FALSE),
+      ),
+      'enabled' => array(
+        ':input[name="ab_confirmation"]' => array('checked' => TRUE),
+      ),
+    );
+  }
+}
+
 /**
  * Implements hook_form_alter().
  * Log a hit to the webform
