@@ -420,8 +420,8 @@ function _sba_message_action_redirect($form, &$form_state) {
  */
 function sba_message_action_form_springboard_taxonomy_settings_form_alter(&$form, &$form_state) {
   if (isset($form['springboard_taxonomy_node_types']['#options']['sba_message_action'])) {
-    $form['springboard_taxonomy_node_types']['sba_message_action']['#disabled'] = TRUE;
-    $form['springboard_taxonomy_node_types']['sba_message_action']['#default_value'] = 'sba_message_action';
+    //$form['springboard_taxonomy_node_types']['sba_message_action']['#disabled'] = TRUE;
+   // $form['springboard_taxonomy_node_types']['sba_message_action']['#default_value'] = 'sba_message_action';
   }
 }
 
