@@ -104,7 +104,7 @@ function sb_social_salesforce_genmap_map_fields_alter(&$fields, $context) {
       switch ($drupal_name) {
         case 'social_referer_transaction':
           // Give Social_Share__c SFID replacement token if there's a share_id, null otherwise.
-          if ($fields[$sf_name] && $share = sb_social_share_event_load($fields[$sf_name])) {
+          if (!empty($fields[$sf_name]) && $share = sb_social_share_event_load($fields[$sf_name])) {
             if ($context['object']->nid == $share['nid'] && $context['object']->sid == $share['sid']) {
               // Extreme edge case: if the refering share is somehow itself a share of this submission,
               // then remove the field and log an error.
