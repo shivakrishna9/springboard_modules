@@ -901,7 +901,7 @@ function springboard_advocacy_views_exposed_form_ajax_enable(&$form, &$form_stat
     );
     // Anonymous users don't get a token.
     if (!empty($form['#token'])) {
-      $form_info['form_token'] = $form['#token'];
+      $form_info['form_token'] = drupal_get_token($form['#token']);
     }
     foreach ($ajax_elements as $element_name) {
       $ajax_info[$element_name] = $form_info;
