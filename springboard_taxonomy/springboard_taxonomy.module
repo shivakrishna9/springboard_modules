@@ -95,6 +95,26 @@ function springboard_taxonomy_form_alter(&$form, &$form_state, $form_id) {
       $form['actions']['reset_alphabetical']['#access'] = FALSE;
     }
   }
+  if($form_id == 'taxonomy_form_term' && arg(1) == 'springboard' && arg(3) == 'sba_organization_issues') {
+    $description = $form['description'];
+    unset($form['description']);
+    $form['description_wrapper'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Description'),
+      '#collapsible' => TRUE,
+      '#collapsed' => TRUE,
+    );
+    $form['description_wrapper']['description'] = $description;
+    $path = $form['path'];
+    unset($form['path']);
+    $form['path_wrapper'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Url Alias'),
+      '#collapsible' => TRUE,
+      '#collapsed' => TRUE,
+    );
+    $form['path_wrapper']['path'] = $path;
+  }
 }
 
 /**
