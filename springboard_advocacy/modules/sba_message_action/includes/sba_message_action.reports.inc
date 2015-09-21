@@ -127,7 +127,6 @@ function sba_message_action_preprocess_messsage_deliverability_dashboard(&$vars)
 
 function sba_message_action_report_cache($client, $advocacy_id) {
   $responses = &drupal_static(__FUNCTION__);
-  $report = $client->invokeClientMethod('getTargetDeliverability', $advocacy_id);
   if (empty($responses)) {
     if ($cache = cache_get($advocacy_id, 'cache_deliverability_report')) {
       $responses = $cache->data;
@@ -145,7 +144,7 @@ function sba_message_action_report_cache($client, $advocacy_id) {
       $queuePausedItems = !empty($queuePaused->data->count) ? $queuePaused->data->count : 0;
       $queueCanceledItems = !empty($queueCanceled->data->count) ? $queueCanceled->data->count : 0;
       $responses['queue'] = array('ready' => $queueReadyItems, 'paused' => $queuePausedItems, 'cancelled' => $queueCanceledItems);
-      cache_set($advocacy_id, $responses, 'cache_deliverability_report', REQUEST_TIME + 600);
+      cache_set($advocacy_id, $responses, 'cache_deliverability_report', REQUEST_TIME + 3600);
     }
   }
   return $responses;
@@ -163,7 +162,7 @@ function sba_message_action_target_cache($client, $target_id, $advocacy_id) {
     }
     else {
       $responses = $client->invokeClientMethod('getSingleTargetDeliverability', $advocacy_id, $target_id);
-      cache_set($advocacy_id.':' . $target_id, $responses, 'cache_deliverability_target', REQUEST_TIME + 600);
+      cache_set($advocacy_id.':' . $target_id, $responses, 'cache_deliverability_target', REQUEST_TIME + 3600);
     }
   }
   return $responses;
