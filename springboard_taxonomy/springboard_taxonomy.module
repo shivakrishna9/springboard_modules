@@ -105,15 +105,17 @@ function springboard_taxonomy_form_alter(&$form, &$form_state, $form_id) {
       '#collapsed' => TRUE,
     );
     $form['description_wrapper']['description'] = $description;
-    $path = $form['path'];
-    unset($form['path']);
-    $form['path_wrapper'] = array(
-      '#type' => 'fieldset',
-      '#title' => t('Url Alias'),
-      '#collapsible' => TRUE,
-      '#collapsed' => TRUE,
-    );
-    $form['path_wrapper']['path'] = $path;
+    if (isset($form['path'])) {
+      $path = $form['path'];
+      unset($form['path']);
+      $form['path_wrapper'] = array(
+        '#type' => 'fieldset',
+        '#title' => t('Url Alias'),
+        '#collapsible' => TRUE,
+        '#collapsed' => TRUE,
+      );
+      $form['path_wrapper']['path'] = $path;
+    }
   }
 }
 
