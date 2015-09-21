@@ -110,8 +110,10 @@ function springboard_taxonomy_taxonomy_form(&$form, &$form_state, $form_id) {
     '#collapsible' => TRUE,
     '#collapsed' => FALSE,
     '#group' => 'additional_settings',
-    '#weight' => -10,
   );
+  if ($form['#node']->type == 'sba_message_action') {
+    $form['springboard_taxonomy_options']['#weight'] = -10;
+  }
   // Include JS to layout long lists of checkboxes in columns.
   drupal_add_js(drupal_get_path('module', 'springboard_taxonomy') . '/js/jquery.columnizer.min.js');
   drupal_add_js(drupal_get_path('module', 'springboard_taxonomy') . '/js/springboard-taxonomy-edit-form.js');
