@@ -71,6 +71,11 @@ class FundraiserDonationDestination extends MigrateDestination {
         commerce_cardonfile_delete($donation->data['cardonfile']);
       }
 
+      // Delete the sustainer series record.
+      db_delete('fundraiser_sustainers_series')
+        ->condition('did', $did)
+        ->execute();
+
       // Delete the main record
       db_delete('fundraiser_donation')
         ->condition('did', $did)
