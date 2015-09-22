@@ -95,7 +95,8 @@ function springboard_taxonomy_form_alter(&$form, &$form_state, $form_id) {
       $form['actions']['reset_alphabetical']['#access'] = FALSE;
     }
   }
-  if($form_id == 'taxonomy_form_term' && arg(1) == 'springboard' && arg(3) == 'sba_organization_issues') {
+
+  if($form_id == 'taxonomy_form_term' && (arg(1) == 'springboard' && arg(3) == 'sba_organization_issues') || (arg(0) =='taxonomy' && arg(1) == 'term' && arg(3) == 'edit')) {
     $description = $form['description'];
     unset($form['description']);
     $form['description_wrapper'] = array(
