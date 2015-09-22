@@ -503,8 +503,8 @@ function springboard_advocacy_target_district() {
  */
 function springboard_advocacy_target_gender() {
   $value_options = array(
-    'M' => 'Male',
     'F' => 'Female',
+    'M' => 'Male',
     'O' => 'Other',
   );
   return $value_options;
@@ -669,9 +669,8 @@ function springboard_advocacy_preprocess_pager(&$variables, $hook) {
  *
  * Add ajax to views exposed form to enable district lookups by state.
  */
-function springboard_advocacy_form_views_exposed_form_alter(&$form, &$form_state, $form_id)
-{
-  if ($form_id == 'views_exposed_form' && $form_state['view']->name == 'targets') {
+function springboard_advocacy_form_views_exposed_form_alter(&$form, &$form_state, $form_id) {
+  if ($form_id == 'views_exposed_form' && $form_state['view']->name == 'targets' && $form_state['view']->base_table ='advocacy') {
 
     // Committee autocomplete.
     $form['search_committee']['#autocomplete_path'] = 'message-action/committee/autocomplete';
@@ -902,7 +901,7 @@ function springboard_advocacy_views_exposed_form_ajax_enable(&$form, &$form_stat
     );
     // Anonymous users don't get a token.
     if (!empty($form['#token'])) {
-      $form_info['form_token'] = $form['#token'];
+      $form_info['form_token'] = drupal_get_token($form['#token']);
     }
     foreach ($ajax_elements as $element_name) {
       $ajax_info[$element_name] = $form_info;

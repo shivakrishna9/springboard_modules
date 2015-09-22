@@ -480,8 +480,8 @@ function _sba_message_action_redirect($form, &$form_state) {
  */
 function sba_message_action_form_springboard_taxonomy_settings_form_alter(&$form, &$form_state) {
   if (isset($form['springboard_taxonomy_node_types']['#options']['sba_message_action'])) {
-    $form['springboard_taxonomy_node_types']['sba_message_action']['#disabled'] = TRUE;
-    $form['springboard_taxonomy_node_types']['sba_message_action']['#default_value'] = 'sba_message_action';
+    //$form['springboard_taxonomy_node_types']['sba_message_action']['#disabled'] = TRUE;
+   // $form['springboard_taxonomy_node_types']['sba_message_action']['#default_value'] = 'sba_message_action';
   }
 }
 
@@ -779,7 +779,7 @@ function sba_message_action_webform_user_profile_fields_alter(&$fields, $node) {
 
     foreach ($fields as $index => $profile_field) {
       // Make all fields except address2 mandatory.
-      if ($profile_field['name'] != 'sbp_address_line_2') {
+      if ($profile_field['name'] != 'sbp_address_line_2' && $profile_field['name'] != 'sbp_phone') {
         $fields[$index]['mandatory'] = 1;
       }
       // Setup removal of non-US provinces.

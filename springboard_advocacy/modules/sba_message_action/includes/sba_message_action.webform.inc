@@ -173,6 +173,7 @@ function sba_message_action_build_contact(array $values, $zip, array $geo) {
 
   $line_2 = !empty($values['sbp_address_line_2']) ? $values['sbp_address_line_2'] . "\n " : '';
   $contact = array(
+    'salutation' => $values['sbp_salutation'],
     'first_name' => $values['sbp_first_name'],
     'last_name' => $values['sbp_last_name'],
     'address' => $values['sbp_address'],
@@ -188,7 +189,6 @@ function sba_message_action_build_contact(array $values, $zip, array $geo) {
     'latitude' => isset($geo['latitude']) ? $geo['latitude'] : '',
     'longitude' => isset($geo['longitude']) ? $geo['longitude'] : '',
   );
-
   return $contact;
 }
 

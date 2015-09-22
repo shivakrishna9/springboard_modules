@@ -8,21 +8,7 @@
 
 <div id="message-action-form-2col-column-wrapper" class="container-fluid action-body-right">
   <div class="row-fluid">
-    <div id="left" class="span7 message-column">
 
-      <fieldset id="take-action-wrapper" class = "form-wrapper"><legend><?php print $form_legend ?></legend>
-        <div class = "fieldset-wrapper">
-          <?php print $open_form_tag ?>
-          <?php print $message_fieldset; ?>
-          <fieldset id="user-information-wrapper" class = "form-wrapper"><legend><?php print $user_legend ?></legend>
-            <div class = "fieldset-wrapper">
-              <p><?php print $webform ?></p>
-            </div>
-          </fieldset>
-          <?php print drupal_render_children($form); ?>
-          <?php print $close_form_tag ?>
-      </fieldset>
-    </div>
 
     <div id="right" class="span5 message-column">
       <?php if(!empty($image)): ?>
@@ -45,6 +31,22 @@
       </div>
       <p><?php print $social ?></p>
       </div>
+
+    <div id="left" class="span7 message-column">
+
+      <fieldset id="take-action-wrapper" class = "form-wrapper"><legend><?php print $form_legend ?></legend>
+        <div class = "fieldset-wrapper">
+          <?php print $open_form_tag ?>
+          <?php print $message_fieldset; ?>
+          <fieldset id="user-information-wrapper" class = "form-wrapper"><legend><?php print $user_legend ?></legend>
+            <div class = "fieldset-wrapper">
+              <p><?php print $webform ?></p>
+            </div>
+          </fieldset>
+          <?php print drupal_render_children($form); ?>
+          <?php print $close_form_tag ?>
+      </fieldset>
+    </div>
     </div>
   </div>
 </div>
