@@ -214,7 +214,8 @@ function sba_message_edit_form($form, &$form_state, $sba_message) {
   // Add the field related form elements.
   $form_state['sba_message'] = $sba_message;
   field_attach_form('sba_message', $sba_message, $form, $form_state);
-  $multi_flow = $node->field_sba_action_flow[$node->language][0]['value'] == 'multi' ? TRUE : FALSE;
+  $field_language = field_language('node', $node, 'field_sba_action_flow');
+  $multi_flow = $node->field_sba_action_flow[$field_language][0]['value'] == 'multi' ? TRUE : FALSE;
   $form['field_sba_subject_editable'][LANGUAGE_NONE]['#title'] = t('Subject editable by action taker?');
 
   if ((isset($node->message_ids) && empty($sba_message->sba_message_id)) || (isset($node->message_ids) && count($node->message_ids) > 1)) {

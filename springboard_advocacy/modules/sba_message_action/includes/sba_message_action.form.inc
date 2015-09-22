@@ -71,7 +71,7 @@ function sba_message_action_additional_elements(&$form, &$form_state) {
   $field_language = field_language('node', $node, 'field_sba_action_flow');
   $multi_flow = $node->field_sba_action_flow[$field_language][0]['value'] == 'multi' ? TRUE : FALSE;
   $field_language = field_language('node', $node, 'field_sba_multistep_prompt');
-  $multi_flow_prompt = $node->field_sba_multistep_prompt[$field_language][0]['safe_value'];
+  $multi_flow_prompt = !empty($node->field_sba_multistep_prompt[$field_language][0]['safe_value']) ? $node->field_sba_multistep_prompt[$field_language][0]['safe_value'] : '';
 
   $action_type = 'single_not_multi_flow';
   if ($multiple && !$multi_flow) {
