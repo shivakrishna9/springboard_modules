@@ -73,7 +73,7 @@ function springboard_advocacy_dashboard($path, $arg = NULL) {
     case 'actions':
 
       // Actions.
-      $actions_view = springboard_advocacy_prepare_dashboard_view('sba_actions', 'block_1', array('sba_message_action'));
+      $actions_view = springboard_advocacy_prepare_dashboard_view('sba_actions', 'block_3', array('sba_message_action'));
       if ($actions_view && !empty($actions_view->result)) {
         $sections = array(
           'sba_actions' => array(
@@ -103,7 +103,7 @@ function springboard_advocacy_dashboard($path, $arg = NULL) {
 
     // All message actions view page.
     case 'message-actions/all':
-      $actions_all_view = springboard_advocacy_prepare_dashboard_view('sba_actions', 'block_2', array('sba_message_action'));
+      $actions_all_view = springboard_advocacy_prepare_dashboard_view('sba_actions', 'block_4', array('sba_message_action'));
       if (!$actions_all_view) {
         $sections = springboard_advocacy_dashboard_error('sba_actions', t('All Message Actions'), t('Message Actions view or view display "block_2" not found.'));
         break;
