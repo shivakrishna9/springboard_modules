@@ -370,8 +370,8 @@ function _sba_message_action_create_node_fields($update = false) {
     'module' => 'list',
     'settings' => array(
       'allowed_values' => array(
-        'one' => 'One-step take action flow',
-        'multi' => 'Multi-step take action flow',
+        'one' => 'One-step',
+        'multi' => 'Multi-step',
       ),
       'allowed_values_function' => '',
     ),
@@ -386,7 +386,7 @@ function _sba_message_action_create_node_fields($update = false) {
       ),
       'deleted' => 0,
       'description' => '<strong>One-step action flow</strong> allows supporters to take action without entering their address as a separate step; however, if your action will have multiple messages (ie, thank/spank) they cannot be edited by supporters.
-<strong>Multi-step action flow</strong> allows supporters to edit multiple messages under the same action; supporters will be required to enter their address prior to editing messages or taking action.',
+<strong>Multi-step action flow</strong> allows supporters to edit multiple messages under the same action; supporters will be required to enter their address prior to viewing, editing, and sending the messages.',
       'display' => array(
         'default' => array(
           'label' => 'hidden',
@@ -403,7 +403,7 @@ function _sba_message_action_create_node_fields($update = false) {
       ),
       'entity_type' => 'node',
       'field_name' => 'field_sba_action_flow',
-      'label' => 'Supporter submission workflow',
+      'label' => 'Take Action User Flow',
       'required' => 1,
       'settings' => array(
         'user_register_form' => FALSE,

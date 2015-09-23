@@ -111,12 +111,11 @@ function sba_message_action_preview_form($form, $form_state, $node) {
   $form['#action_node'] = $node;
   $form['#validate'][] = 'sba_message_action_preview_form_validate';
   $num = !empty($form['messages']) ? count(element_children($form['messages'])) : 0;
-  $send = format_plural($num, 'Send message', 'Send messages');
   $form['submit'] = array(
     '#prefix' => '<div id="edit-actions">',
     '#suffix' => '</div>',
     '#type' => 'submit',
-    '#value' => $send,
+    '#value' => t('Send Now'),
     '#weight' => 10,
     '#attributes' => array('class' => 'message-action-preview-submit'),
   );
