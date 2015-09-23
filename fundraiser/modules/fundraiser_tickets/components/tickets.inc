@@ -140,11 +140,11 @@ function _fundraiser_tickets_validate_webform_field($element, &$form_state) {
   if (!empty($ticket_values['fundraiser-tickets-extra-donation'])) {
     $additional_amount = $ticket_values['fundraiser-tickets-extra-donation'];
 
-    // Remove any commas or dollar signs the user entered:
-    $additional_amount = str_replace(array(',', '$'), '', $additional_amount);
+    // Remove any non-decimal, non-numeric characters before validation:
+    $additional_amount = preg_replace('/[^0-9.]/', '', $additional_amount);
 
     if (!preg_match('/^\d*(\.\d*)?$/', $additional_amount)) {
-      form_set_error('fundraiser-tickets-extra-donation', t('Donation amount must be in a valid number format such as 100.00'));
+      form_set_error('fundraiser-tickets-extra-donation', t('Donation amount must be in a valid number format with only one decimal point.'));
     }
     if (!empty($form_state['complete form']['#node']->fr_tickets_donation_addon_form[LANGUAGE_NONE][0]['target_id'])) {
       $add_on = node_load($form_state['complete form']['#node']->fr_tickets_donation_addon_form[LANGUAGE_NONE][0]['target_id']);
