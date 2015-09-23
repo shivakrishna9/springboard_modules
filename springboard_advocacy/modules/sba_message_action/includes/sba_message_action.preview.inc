@@ -189,7 +189,6 @@ function sba_message_action_preview_form_submit($form, &$form_state) {
     'alert_id' => $form_state['values']['action_id'],
     'test_mode' => $form_state['values']['test_mode'],
     'test_email' => $form_state['values']['test_mode_email'],
-    'account_id' => $form_state['values']['account_id'],
     'contact' => $form_state['values']['contact'],
     'messages' => $formatted_messages,
   );
