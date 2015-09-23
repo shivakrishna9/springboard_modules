@@ -139,13 +139,17 @@ function _fundraiser_tickets_validate_webform_field($element, &$form_state) {
   // If the additional amount is set pull that from the ticket values and validate
   if (!empty($ticket_values['fundraiser-tickets-extra-donation'])) {
     $additional_amount = $ticket_values['fundraiser-tickets-extra-donation'];
+
+    // Remove any commas or dollar signs the user entered:
+    $additional_amount = str_replace(array(',', '$'), '', $additional_amount);
+
     if (!preg_match('/^\d*(\.\d*)?$/', $additional_amount)) {
-      form_set_error('fundraiser-tickets-extra-donation', t('Donation amount must be in a valid number format. No commas and only one decimal point.'));
+      form_set_error('fundraiser-tickets-extra-donation', t('Donation amount must be in a valid number format such as 100.00'));
     }
     if (!empty($form_state['complete form']['#node']->fr_tickets_donation_addon_form[LANGUAGE_NONE][0]['target_id'])) {
       $add_on = node_load($form_state['complete form']['#node']->fr_tickets_donation_addon_form[LANGUAGE_NONE][0]['target_id']);
       $min = intval($add_on->minimum_donation_amount);
-      if(intval($ticket_values['fundraiser-tickets-extra-donation']) < $min) {
+      if (intval($additional_amount) < $min) {
         form_set_error('fundraiser-tickets-extra-donation', t('Additional donation is a minimum of $@amount', array('@amount' => $min)));
       }
     }
