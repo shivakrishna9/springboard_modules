@@ -103,7 +103,7 @@ function sba_message_action_preview_form($form, $form_state, $node) {
       );
       $build['message'][$message_entity->sba_message_id]['target'] = array(
         '#type' => 'value',
-        '#value' => array('target_id' => $message['targets']->id, 'primary_delivery_method' => $message['targets']->primary_delivery_method),
+        '#value' => array('target_id' => $message['targets']->id, 'primary_delivery_method' => $message['targets']->primary_delivery_method, 'salutation' => $message['targets']->salutation, 'first_name' => $message['targets']->first_name, 'last_name' => $message['targets']->last_name),
       );
 
       $form['messages'][$key]['message'] = $build['message'][$message_entity->sba_message_id];
@@ -203,7 +203,28 @@ function sba_message_action_preview_form_submit($form, &$form_state) {
     $node = $form['#action_node'];
     // Add session flag to prevent resubmission of the form
     $_SESSION['action_completed'] = TRUE;
+    $people = array();
 
+    if(!empty($_SESSION['delivered_messages']['messages'])) {
+      foreach ($_SESSION['delivered_messages']['messages'] as $message) {
+        $people[$message['targets']->id] = $message['person'];
+      }
+
+      // Rebuild the the delivered messages session variable with custom text if any.
+      $messages_for_confirmation = array();
+      foreach ($formatted_messages as $key => $f_message) {
+        $messages_for_confirmation[$key] = $formatted_messages[$key]['message'];
+        $messages_for_confirmation[$key]['targets'] = (Object) $formatted_messages[$key]['deliverable'];
+        $messages_for_confirmation[$key]['person'] = $people[$formatted_messages[$key]['deliverable']['target_id']];
+      }
+
+      $_SESSION['delivered_messages'] =
+        array(
+          'messages' => $messages_for_confirmation,
+          'target_count' => count($messages_for_confirmation),
+          'message_count' => count($messages_for_confirmation),
+        );
+    }
     // Redirect to the original confirmation page.
     // $sid is set in sba_message_action_multifow_submit()
     $sid = !empty($_SESSION['action_sid']['sid']) ? $_SESSION['action_sid']['sid'] : FALSE;
