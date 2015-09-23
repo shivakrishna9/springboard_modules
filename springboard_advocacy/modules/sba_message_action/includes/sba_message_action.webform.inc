@@ -205,6 +205,8 @@ function sba_message_action_set_confirmation_session_vars($response, $contact) {
   if (!empty($response->messages)) {
     $_SESSION['delivered_messages'] = array();
     $_SESSION['undelivered_messages'] = array();
+    $_SESSION['contact'] = $contact;
+
     $status = sba_message_action_get_message_statuses($response);
 
     unset($status['success']['target_count']);
@@ -234,7 +236,6 @@ function sba_message_action_set_confirmation_session_vars($response, $contact) {
         $_SESSION['form_details']['test_email'] = $response->test_email;
       }
 
-      $_SESSION['contact'] = $contact;
       $_SESSION['delivered_messages'] =
         array(
           'messages' => $messages,
