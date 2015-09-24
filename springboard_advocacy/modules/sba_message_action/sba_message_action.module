@@ -369,7 +369,7 @@ function sba_message_action_preprocess_node(&$vars) {
   if ($vars['node']->type == 'sba_message_action') {
     // Add theme wrappers for non-form-layout layouts.
     $vars['use_layouts'] = !empty($vars['form_layouts']) ? TRUE : FALSE;
-    if (empty($vars['use_layouts']) || $vars['use_layouts'] == 'one_column') {
+    if (empty($vars['use_layouts']) || $vars['form_layouts'] == 'one_column') {
       $vars['content']['webform']['#theme_wrappers'][] = 'message_action_webform_wrapper';
       $vars['content']['webform']['#form']['submitted']['#theme_wrappers'][] = 'message_action_submitted_wrapper';
       $vars['content']['webform']['#form']['sba_messages']['#theme_wrappers'][] = 'message_action_messages_wrapper';
