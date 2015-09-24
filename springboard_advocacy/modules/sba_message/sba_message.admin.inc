@@ -146,8 +146,16 @@ function sba_message_delete_form_wrapper($sba_message) {
  * @return mixed
  */
 function sba_message_edit_form($form, &$form_state, $sba_message) {
-  $apiCall = springboard_advocacy_api_Call();
-  $apiCall->invokeClientMethod('getMaintenanceMode');
+  $unconfigured = springboard_advocacy_api_unconfigured('springboard');
+  if (!$unconfigured) {
+    $apiCall = springboard_advocacy_api_call();
+    $apiCall->invokeClientMethod('getMaintenanceMode');
+  }
+  elseif(user_access('administer springboard advocacy')) {
+    $items = implode(', ', $unconfigured);
+    $message = t('Please <a href="!url">configure</a> the Springboard Advocacy API settings. There are empty values in :items. This feature will not function without required configuration.', array('!url' => url('admin/config/services/advocacy'), ':items' => $items));
+    drupal_set_message($message, 'error');
+  }
 
   // This form should only appear at node/%/messages.
   // Grab the node so we can get the action form UUID and node ID.
