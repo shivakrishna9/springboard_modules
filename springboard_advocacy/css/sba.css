@@ -15,7 +15,9 @@
 }
 
 .view-sba-actions.view-display-id-block_1 .views-field-edit-node,
-.view-sba-actions.view-display-id-block_2 .views-field-edit-node{
+.view-sba-actions.view-display-id-block_2 .views-field-edit-node,
+.view-sba-actions.view-display-id-block_3 .views-field-edit-node,
+.view-sba-actions.view-display-id-block_4 .views-field-edit-node {
     white-space: nowrap;
 }
 #views-form-sba-messages-node-block-1 .tabledrag-toggle-weight-wrapper {
