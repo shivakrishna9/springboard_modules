@@ -69,7 +69,7 @@ function _sba_message_action_create_example_message_action() {
   $node->is_webform_user = 1;
   $node->field_webform_user_internal_name[LANGUAGE_NONE][0]['value'] = "Example Message Action Form";
   if (module_exists('form_layouts')) {
-    $node->form_layouts = 'two_column_message_left_vertical';
+    //$node->form_layouts = 'two_column_message_left_vertical';
   }
   $node->send_new_user_email = 0;
   node_save($node);

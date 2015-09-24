@@ -446,7 +446,12 @@ function _sba_message_action_create_node_fields($update = false) {
     'type' => 'text_long',
     '_instance' => array(
       'bundle' => 'sba_message_action',
-      'default_value' => 'You will have the opportunity to view and/or edit your message after you submit this form.',
+      'default_value' => array(
+        0 => array(
+          'value' => "We've crafted multiple messages for this action based on your legislator's position. Please enter your address in order to view and edit those messages."   ,
+          'format' => 'filtered_html',
+        ),
+      ),
       'deleted' => 0,
       'description' => 'This text will appear in the landing page message layout as a replacement for the "Your Message" form used in single step layouts.',
       'display' => array(
