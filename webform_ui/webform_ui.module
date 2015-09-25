@@ -1,0 +1,52 @@
+<?php
+/**
+ * @file
+ * Stops duplicate Webform data submissions.
+ */
+
+/**
+ * Implements hook_menu().
+ */
+function webform_ui_menu() {
+  $items['admin/config/content/webform-ui'] = array(
+    'title' => 'Webform UI',
+    'description' => 'Settings for the Webform UI user interface enhancements',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('webform_ui_settings_form'),
+    'access arguments' => array('configure webform ui'),
+    'type' => MENU_NORMAL_ITEM,
+    'file' => 'webform_ui.admin.inc',
+  );
+  return $items;
+}
+
+/**
+ * Implements hook_permission().
+ */
+function webform_ui_permission() {
+  return array(
+    'configure webform ui' => array(
+      'title' => t('Configure  Webform UI user interface enhancements.'),
+      'description' => t('Manage Webform UI settings.'),
+    ),
+  );
+}
+
+function webform_ui_form_webform_components_form_alter(&$form, &$form_state, $form_id) {
+  if (variable_get('webform_ui_hide_hidden', 'FALSE')) {
+    $form['#attached']['js'][] = array(
+      'weight' => 100,
+      'data' => drupal_get_path('module', 'webform_ui') . '/js/remove-tabledrag.js',
+    );
+
+    foreach ($form['components'] as $cid => $component) {
+      if ($form['#node']->webform['components'][$cid]['type'] == 'hidden') {
+//        $form['#node']->webform['components'][$cid]['weight'] = 998;
+//        $form['components'][$cid]['weight']['#default_value'] = 998;
+//        $form['components'][$cid]['weight']['#disabled'] = TRUE;
+      }
+    }
+    $form['add']['weight']['#default_value'] = 999;
+    $form['add']['weight']['#disabled'] = TRUE;
+  }
+}

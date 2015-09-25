@@ -1,0 +1,5 @@
+name = Webform User Interface
+description = User Interface Enhancements for Webform
+package = Webform Extra
+core = 7.x
+dependencies[] = webform
