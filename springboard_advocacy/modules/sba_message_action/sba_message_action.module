@@ -573,9 +573,10 @@ function sba_message_action_form_sba_message_action_node_form_alter(&$form, &$fo
         }
       }
     }
-    $form['field_sba_action_flow'][LANGUAGE_NONE]['one']['#disabled'] = $disable_single_step;
+    dpm($form);
+    $form['field_sba_action_flow'][$form['field_sba_action_flow']['#language']]['one']['#disabled'] = $disable_single_step;
     if ($disable_single_step) {
-      $form['field_sba_action_flow'][LANGUAGE_NONE]['one']['#description'] = t('This option is disabled because you have multiple messages configured for this action, and at least one of them is user-editable. Make them non-editable to enable this option.');
+      $form['field_sba_action_flow'][$form['field_sba_action_flow']['#language']]['one']['#description'] = t('This option is disabled because you have multiple messages configured for this action, and at least one of them is user-editable. Make them non-editable to enable this option.');
     }
     $form['springboard_taxonomy_options']['action_flow'] = array(
       '#type' => 'fieldset',
@@ -607,11 +608,11 @@ function sba_message_action_form_sba_message_action_node_form_alter(&$form, &$fo
     ':input[name="field_sba_test_mode[und][1]"]' => array('checked' => TRUE),
   );
 
-  $default_email = $form['field_sba_test_mode_email'][LANGUAGE_NONE][0]['value']['#default_value'];
+  $default_email = $form['field_sba_test_mode_email'][$form['field_sba_test_mode_email']['#language']][0]['value']['#default_value'];
   if (empty($default_email))  {
     $site_email = variable_get('site_mail', 'admin@example.com');
     $test_email = variable_get('springboard_advocacy_test_email', $site_email);
-    $form['field_sba_test_mode_email'][LANGUAGE_NONE][0]['value']['#default_value'] = $test_email;
+    $form['field_sba_test_mode_email'][$form['field_sba_test_mode_email']['#language']][0]['value']['#default_value'] = $test_email;
   }
 
   if (empty($form['springboard_display'])) {
@@ -654,16 +655,17 @@ function sba_message_action_form_sba_message_action_node_form_alter(&$form, &$fo
 function sba_message_action_form_sba_message_action_node_form_validate(&$form, &$form_state) {
 
   // Require test_mode_email if test_mode is checked.
-  if ($form_state['values']['field_sba_test_mode'][LANGUAGE_NONE][0]['value'] == 1) {
-    if ($form_state['values']['field_sba_test_mode_email'][LANGUAGE_NONE][0]['value'] == '') {
+  $lang = $form['field_sba_test_mode']['#language'];
+  if ($form_state['values']['field_sba_test_mode'][$lang][0]['value'] == 1) {
+    if ($form_state['values']['field_sba_test_mode_email'][$lang][0]['value'] == '') {
       form_set_error('field_sba_test_mode_email', t('An email address is required for Test Mode.'));
     }
-    elseif (!valid_email_address($form_state['values']['field_sba_test_mode_email'][LANGUAGE_NONE][0]['value'])) {
+    elseif (!valid_email_address($form_state['values']['field_sba_test_mode_email'][$lang][0]['value'])) {
       form_set_error('field_sba_test_mode_email', t('Invalid Test Mode mail address.'));
     }
   }
 
-  if ($form_state['values']['field_sba_test_mode'][LANGUAGE_NONE][0]['value'] == 0) {
+  if ($form_state['values']['field_sba_test_mode'][$lang][0]['value'] == 0) {
     if ($form_state['values']['status'] == 0) {
       form_set_error("field_sba_test_mode", t('Test mode must be enabled for unpublished actions.'));
     }

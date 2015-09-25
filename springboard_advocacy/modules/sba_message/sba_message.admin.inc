@@ -230,7 +230,6 @@ function sba_message_edit_form($form, &$form_state, $sba_message) {
   if ((isset($node->message_ids) && empty($sba_message->sba_message_id)) || (isset($node->message_ids) && count($node->message_ids) > 1)) {
     if (!$multi_flow) {
       $form['field_sba_subject_editable'][$form['field_sba_subject_editable']['#language']]['#description'] = t('This option is only available for multi-step messages, or single-step messages without multiple messages.');
-      //$form['field_sba_user_editable'][LANGUAGE_NONE]['#description'] = t('This option is only available for multi-step messages, or single-step messages without multiple messages.');
       $form['field_sba_subject_editable']['#disabled'] = TRUE;
       $form['field_sba_subject_editable']['#attributes']['class'][] = 'disabled';
       $form['field_sba_user_editable']['#disabled'] = TRUE;
