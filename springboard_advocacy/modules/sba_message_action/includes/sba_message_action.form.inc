@@ -68,11 +68,9 @@ function sba_message_action_additional_elements(&$form, &$form_state) {
   // Multiple messages for this form?
   $node = $form['#node'];
   $multiple = count($node->messages) > 1 ? TRUE : FALSE;
-  $field_language = field_language('node', $node, 'field_sba_action_flow');
-  $multi_flow = $node->field_sba_action_flow[$field_language][0]['value'] == 'multi' ? TRUE : FALSE;
-  $field_language = field_language('node', $node, 'field_sba_multistep_prompt');
-  $multi_flow_prompt = !empty($node->field_sba_multistep_prompt[$field_language][0]['safe_value']) ? $node->field_sba_multistep_prompt[$field_language][0]['safe_value'] : '';
-
+  $node_wrapper = entity_metadata_wrapper('node', $node);
+  $multi_flow = $node_wrapper->field_sba_action_flow->value() == 'multi' ? TRUE : FALSE;
+  $multi_flow_prompt = !empty($node_wrapper->field_sba_multistep_prompt->value->value()) ? $node_wrapper->field_sba_multistep_prompt->value->value() : '';
   $action_type = 'single_not_multi_flow';
   if ($multiple && !$multi_flow) {
     $action_type = 'multiple_not_multi_flow';
@@ -128,19 +126,19 @@ function sba_message_action_additional_elements(&$form, &$form_state) {
  */
 function sba_message_action_message_form(&$form, $message, $action_type) {
   // Get some message values via an entity wrapper.
-  $wrapper = entity_metadata_wrapper('sba_message', $message);
-  $subject = $wrapper->field_sba_subject->value();
-  $message_body = check_markup($wrapper->field_sba_message->value(), 'plain_text');
-  $editable_message = $wrapper->field_sba_editable_area->value();
-  $body_editable = $wrapper->field_sba_user_editable[0]->value() == 'editable' ? TRUE : FALSE;
-  $required_body = $wrapper->field_sba_editable_area_optional[0]->value() == 'required' ? TRUE : FALSE;
-  $placeholder_greeting = check_plain($wrapper->field_sba_placeholder_greeting->value());
-  $greeting = check_plain($wrapper->field_sba_greeting->value());
-  $conclusion = check_markup($wrapper->field_sba_bottom_conclusion->value(), 'plain_text');
-  $subject_editable =  $wrapper->field_sba_subject_editable->value();
-  $node = $wrapper->field_sba_action_id->value();
-  $field_language = field_language('node', $node, 'field_sba_action_flow');
-  $multi_flow = $node->field_sba_action_flow[$field_language][0]['value'] == 'multi' ? TRUE : FALSE;
+  $message_wrapper = entity_metadata_wrapper('sba_message', $message);
+  $subject = $message_wrapper->field_sba_subject->value();
+  $message_body = check_markup($message_wrapper->field_sba_message->value(), 'plain_text');
+  $editable_message = $message_wrapper->field_sba_editable_area->value();
+  $body_editable = $message_wrapper->field_sba_user_editable[0]->value() == 'editable' ? TRUE : FALSE;
+  $required_body = $message_wrapper->field_sba_editable_area_optional[0]->value() == 'required' ? TRUE : FALSE;
+  $placeholder_greeting = check_plain($message_wrapper->field_sba_placeholder_greeting->value());
+  $greeting = check_plain($message_wrapper->field_sba_greeting->value());
+  $conclusion = check_markup($message_wrapper->field_sba_bottom_conclusion->value(), 'plain_text');
+  $subject_editable =  $message_wrapper->field_sba_subject_editable->value();
+  $node = $message_wrapper->field_sba_action_id->value();
+  $node_wrapper = entity_metadata_wrapper('node', $node);
+  $multi_flow = $node_wrapper->field_sba_action_flow->value() == 'multi' ? TRUE : FALSE;
 
   $preview_form = empty($form) ? TRUE : FALSE;
   $access = TRUE;
@@ -296,7 +294,7 @@ function sba_message_action_message_form(&$form, $message, $action_type) {
 
   // Format the signature display.
   if ($action_type != 'multiple_not_multi_flow') {
-    $sig = strip_tags($wrapper->field_sba_signature->value());
+    $sig = strip_tags($message_wrapper->field_sba_signature->value());
     $sig = str_replace('[contact:first_name]', '[First Name]', $sig);
     $sig = str_replace('[contact:last_name]', '[Last Name]', $sig);
     $sig = str_replace('[contact:address]', '[Your Addess]', $sig);
@@ -306,7 +304,7 @@ function sba_message_action_message_form(&$form, $message, $action_type) {
     );
     $form['message'][$message->sba_message_id]['signature_tokenized'] = array(
       '#type' => 'value',
-      '#value' => $wrapper->field_sba_signature->value(),
+      '#value' => $message_wrapper->field_sba_signature->value(),
     );
   }
 }
@@ -326,8 +324,8 @@ function sba_message_action_message_form(&$form, $message, $action_type) {
  */
 function sba_message_action_form_validate($form, &$form_state) {
   $node = $form['#node'];
-  $field_language = field_language('node', $node, 'field_sba_action_flow');
-  $multi_flow = $node->field_sba_action_flow[$field_language][0]['value'] == 'multi' ? TRUE : FALSE;
+  $node_wrapper = entity_metadata_wrapper('node', $node);
+  $multi_flow = $node_wrapper->field_sba_action_flow->value() == 'multi' ? TRUE : FALSE;
   if (isset($form_state['values']['sba_messages'])) {
     $is_single = count($form_state['values']['sba_messages']['message']) == 1 ? TRUE : FALSE;
   }
@@ -384,8 +382,8 @@ function sba_message_action_form_validate($form, &$form_state) {
  */
 function sba_message_action_form_submit($form, &$form_state) {
   $node = $form['#node'];
-  $field_language = field_language('node', $node, 'field_sba_action_flow');
-  $multi_flow = $node->field_sba_action_flow[$field_language][0]['value'] == 'multi' ? TRUE : FALSE;
+  $node_wrapper = entity_metadata_wrapper('node', $node);
+  $multi_flow = $node_wrapper->field_sba_action_flow->value() == 'multi' ? TRUE : FALSE;
 
   $_SESSION['delivered_messages'] = array();
   $_SESSION['undelivered_messages'] = array();

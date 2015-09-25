@@ -184,8 +184,8 @@ function sba_message_action_queues_access($nid) {
 function sba_message_action_preview_access($nid) {
   $node = node_load($nid);
   if (isset($node->type) &&  $node->type == 'sba_message_action') {
-    $field_language = field_language('node', $node, 'field_sba_action_flow');
-    $multi_flow = $node->field_sba_action_flow[$field_language][0]['value'] == 'multi' ? TRUE : FALSE;
+    $node_wrapper = entity_metadata_wrapper('node', $node);
+    $multi_flow = $node_wrapper->field_sba_action_flow->value() == 'multi' ? TRUE : FALSE;
     $session_nid = isset($_SESSION['action_sid']['nid']) ? $_SESSION['action_sid']['nid'] : 0;
     if ($multi_flow && $session_nid == $nid) {
       return TRUE;
@@ -325,7 +325,7 @@ function sba_message_action_node_load($nodes, $types) {
       $node->precedence = !empty($precedence) ? $precedence : 0;
 
       // Unset form layout if default.
-      if (isset($node->form_layouts) &&  $node->form_layouts == 'two_column_message_right') {
+      if (isset($node->form_layouts) &&  ($node->form_layouts == 'two_column_message_right' || $node->form_layouts == 'one_column ')) {
         unset($node->form_layouts);
       }
 
@@ -427,8 +427,8 @@ function sba_message_action_form_alter(&$form, &$form_state, $form_id) {
       sba_message_action_additional_elements($form, $form_state);
 
       $node = $form['#node'];
-      $field_language = field_language('node', $node, 'field_sba_action_flow');
-      $multi_flow = $node->field_sba_action_flow[$field_language][0]['value'] == 'multi' ? TRUE : FALSE;
+      $node_wrapper = entity_metadata_wrapper('node', $node);
+      $multi_flow = $node_wrapper->field_sba_action_flow->value() == 'multi' ? TRUE : FALSE;
       if ($multi_flow) {
         $form['#submit'][] = 'sba_message_action_multifow_submit';
       }

@@ -60,8 +60,8 @@ function sba_message_access($op, $sba_message = NULL, $account = NULL) {
         $messages = entity_load('sba_message', $node->message_ids);
         if (count($messages) == 1) {
           $message = array_pop($messages);
-          $field_language = field_language('node', $node, 'field_sba_action_flow');
-          $multi_flow = $node->field_sba_action_flow[$field_language][0]['value'] == 'multi' ? TRUE : FALSE;
+          $node_wrapper = entity_metadata_wrapper('node', $node);
+          $multi_flow = $node_wrapper->field_sba_action_flow->value() == 'multi' ? TRUE : FALSE;
           $subject_editable = field_get_items('sba_message', $message, 'field_sba_subject_editable');
           $user_editable = field_get_items('sba_message', $message, 'field_sba_user_editable');
           if (!$multi_flow && ($subject_editable[0]['value'] != 'Not editable' || !empty($user_editable))) {

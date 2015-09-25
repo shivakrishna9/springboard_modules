@@ -46,6 +46,7 @@ function sba_message_action_send_message(array $user_message, array $form_state)
       'message_edited' => $webform_values['sba_user_edit_flag'],
     );
 
+    // Check the test mode and multiflow parameters.
     $node = $form_state['complete form']['#node'];
     $test_mode = field_get_items('node', $node, 'field_sba_test_mode');
     if (!empty($test_mode[0]['value']) && $test_mode[0]['value'] == 1) {
@@ -218,15 +219,17 @@ function sba_message_action_set_confirmation_session_vars($response, $contact) {
       foreach ($status['success'] as $id => $message) {
         foreach ($message['people'] as $key => $person) {
           $count_targets++;
-          $messages[$x]['message_id'] = $id;
           $messages[$x]['person'] = $person;
           $messages[$x]['subject'] = $status['success'][$id]['subject'];
           $messages[$x]['body'] = $status['success'][$id]['body'];
           $messages[$x]['targets'] = $message['targets'][$key];
+          // Needed for step-two forms.
+          $messages[$x]['message_id'] = $id;
           $messages[$x]['precedence'] = $status['success'][$id]['precedence'];
           $x++;
         }
       }
+      // Needed for step-two forms.
       $_SESSION['form_details'] = array(
         'action_id' => isset($response->alert_id) ? $response->alert_id: '',
         'account_id' => isset($response->account_id) ? $response->account_id : '',
