@@ -6,13 +6,18 @@
  * @return array
  */
 function sba_message_action_message_preview_page($nid) {
+
   $node = node_load($nid);
+
+  // Check if the step two form has already been submitted.
+  // @todo think about this.
   $completed = isset($_SESSION['action_completed']) ? $_SESSION['action_completed'] : TRUE;
   if($completed == TRUE) {
     drupal_set_message(t("This form has already been submitted. !return to the form.", array('!return' => l('Return', 'node/' . $node->nid))));
     return array();
   }
 
+  // Build page header and multi-step form.
   $build = array();
   $build['content'] = array(
     'page_description' => array(
@@ -28,11 +33,13 @@ function sba_message_action_message_preview_page($nid) {
 }
 
 /**
+ * Multi-step form definition.
+ *
  * @param $form
  * @param $form_state
  * @param $node
+ *
  * @return mixed
- * @throws \Exception
  */
 function sba_message_action_preview_form($form, $form_state, $node) {
 
@@ -40,7 +47,10 @@ function sba_message_action_preview_form($form, $form_state, $node) {
   $form['#attached']['js'][] = drupal_get_path('module', 'sba_message_action') . '/js/sba_message_preview.js';
 
   if(!empty($_SESSION['delivered_messages']['messages'])) {
+
+    // Build the form content out of the API response stored in session.
     $messages = $_SESSION['delivered_messages']['messages'];
+    // @todo explore other ways of retrieving these two.
     $contact = $_SESSION['contact'];
     $action = $_SESSION['form_details'];
 
@@ -58,10 +68,10 @@ function sba_message_action_preview_form($form, $form_state, $node) {
         '#value' => $action['test_email'],
       );
     }
-    $form['account_id'] = array(
-      '#type' => 'value',
-      '#value' => $action['account_id'],
-    );
+//    $form['account_id'] = array(
+//      '#type' => 'value',
+//      '#value' => $action['account_id'],
+//    );
     $form['contact'] = array(
       '#type' => 'value',
       '#value' => $contact,
@@ -75,14 +85,17 @@ function sba_message_action_preview_form($form, $form_state, $node) {
       ),
     );
 
+    // Send our second step form through the same helper functions as the first step form.
     module_load_include('inc', 'sba_message_action', 'includes/sba_message_action.form');
     foreach ($messages as $key => $message) {
 
+      // Theme the message header.
       $form['messages'][$key]['sent_to'] = array(
         '#markup' => theme('sba_message_action_preview_message_header', array('message' => $message)),
       );
 
       // Create the message form elements from the entity. Passed by reference
+      // to the same helper function as the first step form.
       $message_entity = $node->messages[$message['message_id']];
       $build = array();
       sba_message_action_message_form($build, $message_entity, 'multi_flow');
@@ -106,19 +119,20 @@ function sba_message_action_preview_form($form, $form_state, $node) {
         '#value' => array('target_id' => $message['targets']->id, 'primary_delivery_method' => $message['targets']->primary_delivery_method, 'salutation' => $message['targets']->salutation, 'first_name' => $message['targets']->first_name, 'last_name' => $message['targets']->last_name),
       );
 
+      // Assign the rebuilt messages to the form
       $form['messages'][$key]['message'] = $build['message'][$message_entity->sba_message_id];
     }
-  $form['#action_node'] = $node;
-  $form['#validate'][] = 'sba_message_action_preview_form_validate';
-  $num = !empty($form['messages']) ? count(element_children($form['messages'])) : 0;
-  $form['submit'] = array(
-    '#prefix' => '<div id="edit-actions">',
-    '#suffix' => '</div>',
-    '#type' => 'submit',
-    '#value' => t('Send Now'),
-    '#weight' => 10,
-    '#attributes' => array('class' => 'message-action-preview-submit'),
-  );
+    $form['#action_node'] = $node;
+    $form['#validate'][] = 'sba_message_action_preview_form_validate';
+    $num = !empty($form['messages']) ? count(element_children($form['messages'])) : 0;
+    $form['submit'] = array(
+      '#prefix' => '<div id="edit-actions">',
+      '#suffix' => '</div>',
+      '#type' => 'submit',
+      '#value' => t('Send Now'),
+      '#weight' => 10,
+      '#attributes' => array('class' => 'message-action-preview-submit'),
+    );
   }
   else {
     // We should never get here.
@@ -138,23 +152,23 @@ function sba_message_action_preview_form_validate($form, &$form_state) {
   foreach ($messages as $id) {
 
     $message = $form['messages'][$id]['message'];
-      $body_default = isset($message['edited_body']['#default_value']) ? $message['edited_body']['#default_value'] : '';
-      $body_edited = isset($form_state['values']['messages'][$id]['message']['edited_body']) ? $form_state['values']['messages'][$id]['message']['edited_body'] : '';
-      $subject_default = isset($message['subject']['#default_value']) ? $message['subject']['#default_value'] : '';
-      $subject_edited = isset($form_state['values']['messages'][$id]['message']['subject']) ? $form_state['values']['messages'][$id]['message']['subject'] : '';
-      // Enforce mandatory editing.
-      if ($body_edited == $body_default && isset($message['body_required']) && $message['body_required']['#value'] == 1) {
-        form_set_error("messages][$id]['message'][edited_body", t('Please personalize your message before sending.'));
-      }
-      elseif ($body_edited != $body_default) {
-        $changed = TRUE;
-      }
-      if ($subject_edited == $subject_default && isset($message['subject_required']) && $message['subject_required']['#value'] == 1) {
-        form_set_error("messages][$id]['message'][subject", t('Please personalize the subject line before sending your message.'));
-      }
-      elseif (!isset($message['subject_show']) && $subject_edited != $subject_default) {
-        $changed = TRUE;
-      }
+    $body_default = isset($message['edited_body']['#default_value']) ? $message['edited_body']['#default_value'] : '';
+    $body_edited = isset($form_state['values']['messages'][$id]['message']['edited_body']) ? $form_state['values']['messages'][$id]['message']['edited_body'] : '';
+    $subject_default = isset($message['subject']['#default_value']) ? $message['subject']['#default_value'] : '';
+    $subject_edited = isset($form_state['values']['messages'][$id]['message']['subject']) ? $form_state['values']['messages'][$id]['message']['subject'] : '';
+    // Enforce mandatory editing.
+    if ($body_edited == $body_default && isset($message['body_required']) && $message['body_required']['#value'] == 1) {
+      form_set_error("messages][$id]['message'][edited_body", t('Please personalize your message before sending.'));
+    }
+    elseif ($body_edited != $body_default) {
+      $changed = TRUE;
+    }
+    if ($subject_edited == $subject_default && isset($message['subject_required']) && $message['subject_required']['#value'] == 1) {
+      form_set_error("messages][$id]['message'][subject", t('Please personalize the subject line before sending your message.'));
+    }
+    elseif (!isset($message['subject_show']) && $subject_edited != $subject_default) {
+      $changed = TRUE;
+    }
   }
   // Set user_edited_flag
   $form_state['storage']['changed'] = $changed;
@@ -175,9 +189,6 @@ function sba_message_action_preview_form_submit($form, &$form_state) {
   $formatted_messages = array();
   foreach ($messages as $key => $message) {
     $edited_body = isset($message['message']['edited_body']) ? $message['message']['edited_body'] : '';
-//    unset($form_state['values']['messages'][$key]['sba_message_id']);
-//    unset($form_state['values']['messages'][$key]['edited_body']);
-//    unset($form_state['values']['messages'][$key]['body_required']);
     $formatted_messages[$key]['message']['body'] = sba_message_action_build_message_bodies($message['message']['sba_message_id'], $edited_body);
     $formatted_messages[$key]['message']['subject'] =  $message['message']['subject'];
     $formatted_messages[$key]['message']['precedence'] =  $message['message']['precedence'];
