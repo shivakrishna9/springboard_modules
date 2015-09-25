@@ -60,7 +60,8 @@ function fundraiser_tickets_order_ticket_types_form($form, &$form_state, $node){
           array('query' => array('destination' => 'node/' . $node->nid . '/tickets/tickets')))
       );
       $form['tickets'][$key]['delete_link'] = array(
-        '#markup' =>  l(t('delete'), 'springboard/node/' . $node->nid . '/tickets/' . $product_wrapper->product_id->value() . '/delete',
+        '#markup' =>  l(t('delete'),
+          'springboard/node/' . $node->nid . '/tickets/' . $product_wrapper->product_id->value() . '/delete',
           array('query' => array('destination' => 'node/' . $node->nid . '/tickets/tickets')))
       );
 
