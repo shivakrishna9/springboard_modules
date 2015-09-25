@@ -21,6 +21,18 @@ function fundraiser_tickets_menu() {
     'type' => MENU_LOCAL_TASK,
     'context' => MENU_CONTEXT_PAGE | MENU_CONTEXT_INLINE,
   );
+
+  $items['node/%/tickets/%/delete'] = array(
+    'title' => 'Ticket Deletion',
+    'description' => 'Ticket deletion',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('fundraiser_tickets_delete_ticket_form', 1, 3),
+    'access arguments' => array('allow node-specific ticket deletion'),
+    'type' => MENU_CALLBACK,
+    'file' => 'fundraiser_tickets.forms.inc',
+    'weight' => 1,
+  );
+ 
   $items['node/%node/tickets/settings'] = array(
     'title' => 'Settings',
     'description' => 'Ticket settings',
@@ -37,14 +49,25 @@ function fundraiser_tickets_menu() {
     'description' => 'Tickets',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('fundraiser_tickets_order_ticket_types_form',1),
-    'access callback' => 'fundraiser_tickets_manage_access',
-    'access arguments' => array(1),
+    'access arguments' => array('allow node-specific ticket deletion'),
     'type' => MENU_LOCAL_TASK,
     'file' => 'fundraiser_tickets.forms.inc',
     'weight' => 4,
   );
 
   return $items;
+}
+
+/**
+ * Implements hook_permission().
+ */
+function fundraiser_tickets_permission() {
+  return array(
+    'allow node-specific ticket deletion' => array(
+      'title' => t('allow ticketed event-specific ticket deletion'),
+      'description' => t('Allow deletion of tickets from the ticket list of Ticketed Events.'),
+    ),
+  );
 }
 
 /**
