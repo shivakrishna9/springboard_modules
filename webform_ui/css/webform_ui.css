@@ -1,0 +1,16 @@
+.views-exposed-form .views-exposed-widget {
+    vertical-align: top;
+    margin-right: 1em;
+}
+
+.views-exposed-form .views-exposed-widget .form-type-textfield .description,
+ .views-widget-filter-submitted .description{
+    width: 150px;
+    font-size: 0.9em;
+    margin-left: 8px;
+}
+
+.views-exposed-form .views-exposed-widget.views-submit-button,
+.views-exposed-form .views-exposed-widget.views-reset-button {
+    margin-top: 15px;
+}

@@ -16,7 +16,18 @@ function webform_ui_settings_form($form, &$form_state) {
     '#description' => t('Hide rarely edited hidden fields by default. A "show" link will allow you to toggle field visiblity.'),
   );
 
+  $form['webform_ui_use_alternate_submission'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Use an alternate submission results page with pager and search functionality'),
+    '#default_value' => variable_get('webform_ui_use_alternate_submission', 'FALSE'),
+    '#description' => '',
+  );
+
+  $form['#submit'][] = 'webform_ui_settings_form_submit';
   return system_settings_form($form);
 }
 
+function webform_ui_settings_form_submit($form, $form_state) {
+  variable_set('menu_rebuild_needed', TRUE);
+}
 

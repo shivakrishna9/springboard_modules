@@ -1,7 +1,9 @@
 <?php
 /**
  * @file
- * Stops duplicate Webform data submissions.
+ *
+ * @todo Ability to lock editing of specific fields.
+ * @todo Pager on submission results table
  */
 
 /**
@@ -18,6 +20,16 @@ function webform_ui_menu() {
     'file' => 'webform_ui.admin.inc',
   );
   return $items;
+}
+
+/**
+ * Implements hook_views_api().
+ */
+function webform_ui_views_api() {
+  return array(
+    'api' => 3.0,
+    'path' => drupal_get_path('module', 'webform_ui'),
+  );
 }
 
 /**
@@ -38,7 +50,6 @@ function webform_ui_form_webform_components_form_alter(&$form, &$form_state, $fo
       'weight' => 100,
       'data' => drupal_get_path('module', 'webform_ui') . '/js/remove-tabledrag.js',
     );
-
     foreach ($form['components'] as $cid => $component) {
       if ($form['#node']->webform['components'][$cid]['type'] == 'hidden') {
 //        $form['#node']->webform['components'][$cid]['weight'] = 998;
@@ -50,3 +61,20 @@ function webform_ui_form_webform_components_form_alter(&$form, &$form_state, $fo
     $form['add']['weight']['#disabled'] = TRUE;
   }
 }
+
+function webform_ui_menu_alter(&$items) {
+  if (variable_get('webform_ui_use_alternate_submission', FALSE)) {
+    $items['node/%webform_menu/webform-results']['page callback'] = 'webform_ui_submission_results';
+    $items['node/%webform_menu/webform-results']['page arguments'] = array(1);
+  }
+}
+
+function webform_ui_submission_results($node) {
+  return views_embed_view('webform_submissions', 'block_1', $node->nid);
+}
+
+function webform_ui_form_views_exposed_form_alter(&$form, &$form_state, $form_id) {
+  if (arg(2) == 'webform-results') {
+    $form['#attached']['css'][] = drupal_get_path('module', 'webform_ui') . '/css/webform_ui.css';
+  }
+ }
