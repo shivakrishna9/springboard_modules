@@ -136,8 +136,22 @@ function webform_goals_jsonp_fail($callback) {
  *   The data array to send. Should typically have a 'success' key.
  */
 function webform_goals_jsonp_send($callback, $data) {
-  print $callback . '(' . json_encode($data) . ');';
-  exit;
+  foreach ($data as $gid => $children) {
+    if(is_numeric($gid) && isset($children['markup'])) {
+      $goal = webform_goal_load($gid);
+      $metrics = webform_goals_track_metric($goal);
+      if ($metrics['count'] >= $goal['display_threshold']) {
+        print $callback . '(' . json_encode($data) . ');';
+        exit;
+      }
+      else {
+        $data[$gid]['markup'] = check_markup($goal['starter_message'], $goal['starter_message_format']);
+        print $callback . '(' . json_encode($data) . ');';
+        exit;
+      }
+    }
+  }
+
 }
 
 /**
@@ -603,10 +617,6 @@ function webform_goals_token_info() {
     'name' => t('Goal name'),
     'description' => t('The goal name.'),
   );
-  $info['tokens']['webform_goal']['starter_message'] = array(
-    'name' => t('Goal starter message'),
-    'description' => t('The started message to display for this goal if the display threshold has not been met.'),
-  );
   $info['tokens']['webform_goal']['display_threshold'] = array(
     'name' => t('Goal display threshold'),
     'description' => t('The minimum progress towards goal required to display a progress bar.'),
@@ -646,15 +656,6 @@ function webform_goals_token_info() {
   $info['tokens']['webform_goal']['progress-bar'] = array(
     'name' => t('CSS driven progress bar'),
     'description' => t('Themed progress bar showing goal progress percentage'),
-  );
-  $info['tokens']['webform_goal']['progress-starter'] = array(
-    'name' => t('Progress bar/starter message'),
-    'description' => t('Displayes themed progress bar or starter message if display threshold has not been met.'),
-  );
-
-  $info['tokens']['webform_goal']['progress-count-or-starter'] = array(
-    'name' => t('Progress count/starter message'),
-    'description' => t('Displays the progress count or the starter message if display threshold has not been met.'),
   );
 
   $info['tokens']['webform_goal']['target'] = array(
@@ -731,11 +732,7 @@ function webform_goals_tokens($type, $tokens, $data = array(), $options = array(
           $output = '';
           if ($goal_progress['count'] >= $data['webform_goal']['display_threshold']) {
             $percent_capped = ($goal_progress['percent'] > 100) ? 100 : $goal_progress['percent'];
-            //$output = theme('webform_goals_progress_bar', array('goal_id' => $goal['gid'], 'goal_progress' => $percent_capped));
             $output = webform_goals_render_progress_bar($goal['progress_bar'], $percent_capped);
-          }
-          elseif (!empty($goal['starter_message'])) {
-            $output = check_markup($goal['starter_message'], $goal['starter_message_format']);
           }
           $replacements[$token] = $output;
           break;
@@ -746,9 +743,6 @@ function webform_goals_tokens($type, $tokens, $data = array(), $options = array(
           $clean_count = str_replace(',', '', $goal_progress['count']);
           if ($clean_count >= $data['webform_goal']['display_threshold']) {
             $output = $goal_progress['count'];
-          }
-          elseif (!empty($goal['starter_message'])) {
-            $output = check_markup($goal['starter_message'], $goal['starter_message_format']);
           }
           $replacements[$token] = $output;
           break;
@@ -1339,7 +1333,7 @@ function webform_goals_quick_goal_save_submit($node) {
       'starter_message_format' => 'filtered_html',
       'start_date' => 0,
       'end_date' => 0,
-      'template' => '[goal:progress-starter]<p>The current goal is'
+      'template' => '[goal:progress-bar]<p>The current goal is'
         . ' [goal:target]. We have [goal:total] thus far. That’s nearly '
         . '[goal:progress-percent]% of our goal! Thanks for your support.</p>',
       // We may need configurable global defaults here.
