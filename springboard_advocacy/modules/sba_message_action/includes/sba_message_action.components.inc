@@ -155,11 +155,12 @@ function sba_message_action_form_webform_components_form_alter(&$form, &$form_st
  */
 function sba_message_action_component_edit_lock(&$form) {
   $locked_fields = sba_message_locked_fields();
-
   if (in_array($form['form_key']['#default_value'], $locked_fields)) {
     // Check the node type.
     $form['form_key']['#disabled'] = TRUE;
-    $form['validation']['mandatory']['#disabled'] = TRUE;
+    if($form['form_key']['#default_value'] != 'sbp_phone') {
+      $form['validation']['mandatory']['#disabled'] = TRUE;
+    }
   }
 }
 
@@ -173,7 +174,7 @@ function sba_message_action_component_edit_lock(&$form) {
 function sba_message_action_component_overview_lock(&$form) {
   $locked_fields = sba_message_locked_fields();
   foreach ($form['#node']->webform['components'] as $cid => $component) {
-    if (in_array($component['form_key'], $locked_fields)) {
+    if (in_array($component['form_key'], $locked_fields) && $component['form_key'] != 'sbp_phone') {
       $form['components'][$cid]['mandatory']['#disabled'] = TRUE;
     }
   }
