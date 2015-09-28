@@ -3,7 +3,7 @@ function webform_ui_views_default_views() {
   $view = new view();
   $view->name = 'webform_submissions';
   $view->description = 'Alternate webform submissions page';
-  $view->tag = 'default';
+  $view->tag = 'Webform UI';
   $view->base_table = 'webform_submissions';
   $view->human_name = 'webform submissions';
   $view->core = 7;
@@ -79,6 +79,13 @@ function webform_ui_views_default_views() {
       'empty_column' => 0,
     ),
   );
+  /* No results behavior: Global: Text area */
+  $handler->display->display_options['empty']['area']['id'] = 'area';
+  $handler->display->display_options['empty']['area']['table'] = 'views';
+  $handler->display->display_options['empty']['area']['field'] = 'area';
+  $handler->display->display_options['empty']['area']['empty'] = TRUE;
+  $handler->display->display_options['empty']['area']['content'] = 'There are no results.';
+  $handler->display->display_options['empty']['area']['format'] = 'filtered_html';
   /* Relationship: Webform submissions: Node */
   $handler->display->display_options['relationships']['nid']['id'] = 'nid';
   $handler->display->display_options['relationships']['nid']['table'] = 'webform_submissions';
@@ -213,9 +220,7 @@ function webform_ui_views_default_views() {
   /* Display: Block */
   $handler = $view->new_display('block', 'Block', 'block_1');
 
-
   $views[$view->name] = $view;
-
   // Return all the views.
   return $views;
 }

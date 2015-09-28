@@ -70,7 +70,34 @@ function webform_ui_menu_alter(&$items) {
 }
 
 function webform_ui_submission_results($node) {
-  return views_embed_view('webform_submissions', 'block_1', $node->nid);
+
+  $view = views_get_view('webform_submissions');
+
+  if (empty($view)) {
+    return t('The webform submissions view could not be found.');
+  }
+
+  if (isset($view->display['block_1'])) {
+    $view->set_display('block_1');
+  }
+  else {
+    return t('The webform submissions display block could not be found. You may need to revert the view to restore the deleted block.');
+  }
+
+  if (!empty($node->nid)) {
+    $view->set_arguments(array($node->nid));
+  }
+
+  $view->pre_execute();
+
+  $view->execute();
+
+  if ($view->access('block_1')) {
+    return $view->preview();
+  }
+  else {
+    return t("access denied");
+  }
 }
 
 function webform_ui_form_views_exposed_form_alter(&$form, &$form_state, $form_id) {
