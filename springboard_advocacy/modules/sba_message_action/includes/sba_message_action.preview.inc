@@ -127,7 +127,6 @@ function sba_message_action_preview_form($form, $form_state, $node) {
       if ($build['message'][$message_entity->sba_message_id]['subject_required']['#value']) {
         $build['message'][$message_entity->sba_message_id]['subject']['#required'] = TRUE;
       }
-      dpm($build['message'][$message_entity->sba_message_id]);
 
       // Assign the rebuilt messages to the form
       $form['messages'][$key]['message'] = $build['message'][$message_entity->sba_message_id];
