@@ -118,6 +118,16 @@ function sba_message_action_preview_form($form, $form_state, $node) {
         '#type' => 'value',
         '#value' => array('target_id' => $message['targets']->id, 'primary_delivery_method' => $message['targets']->primary_delivery_method, 'salutation' => $message['targets']->salutation, 'first_name' => $message['targets']->first_name, 'last_name' => $message['targets']->last_name),
       );
+      if ($build['message'][$message_entity->sba_message_id]['body_required']['#value']) {
+        $build['message'][$message_entity->sba_message_id]['edited_body']['#required'] = TRUE;
+        $build['message'][$message_entity->sba_message_id]['edited_body']['#title'] =  t('Your custom message')
+        ;
+
+      }
+      if ($build['message'][$message_entity->sba_message_id]['subject_required']['#value']) {
+        $build['message'][$message_entity->sba_message_id]['subject']['#required'] = TRUE;
+      }
+      dpm($build['message'][$message_entity->sba_message_id]);
 
       // Assign the rebuilt messages to the form
       $form['messages'][$key]['message'] = $build['message'][$message_entity->sba_message_id];
@@ -158,13 +168,13 @@ function sba_message_action_preview_form_validate($form, &$form_state) {
     $subject_edited = isset($form_state['values']['messages'][$id]['message']['subject']) ? $form_state['values']['messages'][$id]['message']['subject'] : '';
     // Enforce mandatory editing.
     if ($body_edited == $body_default && isset($message['body_required']) && $message['body_required']['#value'] == 1) {
-      form_set_error("messages][$id]['message'][edited_body", t('Please personalize your message before sending.'));
+      form_set_error("messages][$id][message][edited_body", t('Please personalize your message before sending.'));
     }
     elseif ($body_edited != $body_default) {
       $changed = TRUE;
     }
     if ($subject_edited == $subject_default && isset($message['subject_required']) && $message['subject_required']['#value'] == 1) {
-      form_set_error("messages][$id]['message'][subject", t('Please personalize the subject line before sending your message.'));
+      form_set_error("messages][$id][message][subject", t('Please personalize the subject line before sending your message.'));
     }
     elseif (!isset($message['subject_show']) && $subject_edited != $subject_default) {
       $changed = TRUE;
