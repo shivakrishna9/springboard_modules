@@ -276,17 +276,11 @@ function sba_message_action_preview_form_submit($form, &$form_state) {
  * @return string
  */
 function theme_sba_message_action_preview_message_header($vars) {
-
   $intro = t('The message below will be sent to:');
-  $person = $vars['message']['person']['name'];
-  $title = isset($vars['message']['person']['title']) ? $vars['message']['person']['title'] . ', ' : '' ;
-  $organization = isset($vars['message']['person']['organization'])  ? $title . $vars['message']['person']['organization'] : '';
-  $affiliation = isset($vars['message']['person']['district'])  ? $vars['message']['person']['district'] . ' (' . $vars['message']['person']['party'] . ')' : $organization;
-
   $output = '<div class="message-preview-header"><div class="message-preview-intro">';
   $output .= $intro;
   $output .= '</div><div class="message-preview-person">';
-  $output .= $person . ' ' . $affiliation;
+  $output .= theme('sba_message_action_person_details', $vars['message']['person']);
   $output .= '</div></div>';
   return $output;
 }

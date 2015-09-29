@@ -771,6 +771,10 @@ function sba_message_action_theme($existing, $type, $theme, $path) {
       'render element' => 'message',
       'file' => 'includes/sba_message_action.preview.inc',
     ),
+    'sba_message_action_person_details' => array(
+      'render element' => 'person',
+      'file' => 'includes/sba_message_action.webform.inc',
+    ),
   );
 }
 

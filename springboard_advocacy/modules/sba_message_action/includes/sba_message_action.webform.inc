@@ -284,11 +284,6 @@ function sba_message_action_preprocess_webform_confirmations_delivered(&$vars) {
   $targets = array();
   foreach ($vars['messages'] as $key => $message) {
 
-    // Put the party in parens.
-    if(isset($message['person']['party'])) {
-      $message['person']['party'] = '(' . $message['person']['party'] . ')';
-    }
-
     // Format the contact for token replacement.
     $contact = (object) $_SESSION['contact'];
     // Replace the tokens
@@ -304,8 +299,7 @@ function sba_message_action_preprocess_webform_confirmations_delivered(&$vars) {
     $link = l($subject, '#', array('attributes' => array('onclick' => $on_click)));
     // Prepare the recipients for display in a bulleted list.
     unset($message['person']['url']);
-
-    $targets[$key]['person'] = implode(' ', $message['person']);
+    $targets[$key]['person'] = theme('sba_message_action_person_details', $message['person']);
     $targets[$key]['link'] =  $link;
   }
 
@@ -349,11 +343,12 @@ function sba_message_action_preprocess_webform_confirmations_undelivered(&$vars)
       $target_count++;
       if (!empty($person['url'])) {
         $on_click = "var extWrapper=window.open(this.href,'targetWindow','toolbar=no,scrollbars=yes,status=no,menubar=no,resizable=yes,top=0,left=0,width=1024,height=800');extWrapper.focus();return false;";
-        $link = l($person['name'], check_plain($person['url']), array('attributes' => array('onclick' => $on_click)));
-        $target_info[] = t('!name', array('!name' => $link)) . ' (' . $person['party'] . ') ' . $person['district'];
-      } else {
-        $target_info[] = $person['name'].' ('.$person['party'].') '.$person['district'];
+        $name_with_webform_url = l($person['name'], check_plain($person['url']), array('attributes' => array('onclick' => $on_click)));
+        $person['name_with_webform_url'] = $name_with_webform_url;
       }
+
+      $target_info[] = theme('sba_message_action_person_details', $person);
+
       // Prepare the contact object so we can replace tokens in the message.
       $contact = (object) $_SESSION['contact'];
 
@@ -480,7 +475,6 @@ function sba_message_action_get_message_statuses($response) {
  *   An array containing a subset of target properties.
  */
 function sba_message_action_get_target_details($target) {
-
   $name = array();
   $target_details = array();
 
@@ -518,4 +512,17 @@ function sba_message_action_get_target_details($target) {
   }
 
   return $target_details;
+}
+
+function theme_sba_message_action_person_details(&$vars) {
+  $output = '';
+  $person = isset($vars['name_with_webform_url']) ? $vars['name_with_webform_url'] : $vars['name'];
+  $title = isset($vars['title']) ? $vars['title'] . ', ' : '' ;
+  $non_legislative_organization = isset($vars['organization'])  ? $title . $vars['organization'] : '';
+  $affiliation = isset($vars['district'])  ? $vars['organization'] . ' (' . $vars['party'] . ')' : $non_legislative_organization;
+  $output .= $person;
+  if(!empty($affiliation)) {
+    $output .= ', ' . $affiliation;
+  }
+  return $output;
 }
