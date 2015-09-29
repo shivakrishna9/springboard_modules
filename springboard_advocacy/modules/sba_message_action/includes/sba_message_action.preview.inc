@@ -158,6 +158,8 @@ function sba_message_action_preview_form($form, $form_state, $node) {
 function sba_message_action_preview_form_validate($form, &$form_state) {
   $messages = !empty($form['messages']) ? element_children($form['messages']) : array();
   $changed = FALSE;
+  $body_error_once = NULL;
+  $subject_error_once = NULL;
   foreach ($messages as $id) {
 
     $message = $form['messages'][$id]['message'];
@@ -166,14 +168,19 @@ function sba_message_action_preview_form_validate($form, &$form_state) {
     $subject_default = isset($message['subject']['#default_value']) ? $message['subject']['#default_value'] : '';
     $subject_edited = isset($form_state['values']['messages'][$id]['message']['subject']) ? $form_state['values']['messages'][$id]['message']['subject'] : '';
     // Enforce mandatory editing.
+
+    $body_error = !isset($body_error_once) ? t('Please personalize your message before sending.') : '';
     if ($body_edited == $body_default && isset($message['body_required']) && $message['body_required']['#value'] == 1) {
-      form_set_error("messages][$id][message][edited_body", t('Please personalize your message before sending.'));
+      $body_error_once = TRUE;
+      form_set_error("messages][$id][message][edited_body", $body_error);
     }
     elseif ($body_edited != $body_default) {
       $changed = TRUE;
     }
+    $subject_error = !isset($subject_error_once) ? t('Please personalize the subject line before sending your message.') : '';
     if ($subject_edited == $subject_default && isset($message['subject_required']) && $message['subject_required']['#value'] == 1) {
-      form_set_error("messages][$id][message][subject", t('Please personalize the subject line before sending your message.'));
+      $subject_error_once = TRUE;
+      form_set_error("messages][$id][message][subject", $subject_error);
     }
     elseif (!isset($message['subject_show']) && $subject_edited != $subject_default) {
       $changed = TRUE;
