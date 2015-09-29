@@ -1578,6 +1578,8 @@ function _fundraiser_donation_form_js_validation_config($node) {
  */
 function fundraiser_donation_form(&$form, &$form_state) {
   $node = $form['#node'];
+  // Load any custom configuration options.
+  $config = db_query('SELECT * FROM {fundraiser_webform_messages} f WHERE f.nid = :nid', array(':nid' => $form['#node']->nid))->fetchAssoc();
 
   // Attach the js files.
   $form['#attached']['js'] = array(
@@ -1668,6 +1670,7 @@ function fundraiser_donation_form(&$form, &$form_state) {
       }
     }
     $form = _fundraiser_update_form_field($form, 'amount', $amount);
+
 
     // Call hook to allow sub modules to add / manipulate the form.
     // NOTE: we are not using module_invoke_all on purpose here.
@@ -2243,24 +2246,22 @@ function _fundraiser_refund_form($form, &$form_state, $did) {
 
   if (is_array($donation->refunds)) {
     foreach ($donation->refunds as $refund) {
-      // Convert the refunded amount to a whole number.
-      $refund_amount = commerce_currency_decimal_to_amount($refund->amount, $donation->currency);
-      $refunded_total += $refund_amount;
-      $refund_summary[] = t('Refund #%id for %amount on %date.',
+      if ($refund->status == 'refunded' || $refund->status == 'partially_refunded') {
+        $refunded_total += abs($refund->amount);
+      }
+      $refund_summary[] = t('%status #%id for $%amount on %date.',
         array(
-          '%id' => $refund->did,
-          '%amount' => commerce_currency_format($refund_amount, $donation->currency),
-          '%date' => date('m/d/y', isset($refund->created) ? $refund->created : 0),
-        )
-      );
+        '%id' => $refund->rid,
+        '%amount' => abs($refund->amount),
+        '%date' => date('m/d/y', isset($refund->created) ? $refund->created : 0),
+        '%status' => $refund->status,
+      )
+      ); //TODO fix up value display for international.
     }
 
     $refund_summary = !empty($refund_summary) ? theme('item_list', array('items' => $refund_summary)) : t('No refunds have been made.');
+    $refunded_total = $refunded_total;
   }
-
-  // Set the able to refund value from the donation amount.
-  $able_to_refund = $donation_amount - $refunded_total;
-
   // Display form.
   if ($donation->refunds == FALSE) {
     $form['payment_summary']['no_payments'] = array(
@@ -2305,7 +2306,7 @@ function _fundraiser_refund_form($form, &$form_state, $did) {
     if (!empty($donation->gateway['allow_refund']) && in_array($donation->donation['payment_method'], $donation->gateway['allow_refund'])) {
       $can_refund = TRUE;
     }
-
+    $able_to_refund = $donation->donation['amount'] - $refunded_total;
     if (!$can_refund || $able_to_refund <= 0) {
       // They've made a payment, but it cannot be refunded
       if ($able_to_refund <= 0) {
@@ -2348,7 +2349,7 @@ function _fundraiser_refund_form($form, &$form_state, $did) {
           'full' => t('Full Refund ( %amount )', array('%amount' => commerce_currency_format($able_to_refund, $donation->currency))),
           'partial' => t('Partial Refund'),
         ),
-        '#default_value' => 'full',
+        '#default_value' => isset($form_state['input']['refund_type']) ? $form_state['input']['refund_type'] : 'full',
       );
       $form['refund_options']['amount'] = array(
         '#type' => 'textfield',
@@ -2360,6 +2361,7 @@ function _fundraiser_refund_form($form, &$form_state, $did) {
             ':input[name="refund_type"]' => array('value' => 'partial'),
           ),
         ),
+        '#required' => TRUE,
       );
       $form['refund_options']['refund_notes'] = array(
         '#type' => 'textarea',
@@ -2373,6 +2375,14 @@ function _fundraiser_refund_form($form, &$form_state, $did) {
         '#type' => 'submit',
         '#value' => t('Issue Refund'),
         '#required' => TRUE,
+      );
+      $form['able_to_refund'] = array(
+        '#type' => 'hidden',
+        '#value' => number_format($able_to_refund, 2),
+      );
+      $form['refunded_total'] = array(
+        '#type' => 'hidden',
+        '#value' => number_format($refunded_total, 2),
       );
     }
   }
@@ -2538,7 +2548,7 @@ function fundraiser_refund_update($refund) {
  */
 function fundraiser_refund_process($refund) {
   // Pass this down to the processing module.
-  module_invoke_all('fundraiser_refund_process', $refund);
+    module_invoke_all('fundraiser_refund_process', $refund);
   // And save the refund as it is at this stage since it was created.
   // This makes sure that any changes made stay in place.
   fundraiser_refund_update($refund, FALSE);
@@ -3041,10 +3051,10 @@ function _fundraiser_get_refunds_by_did($did) {
 /**
  * DB function for fundraiser_refund.
  */
-function _fundraiser_get_refund_by_receipt_id($receipt_id) {
+function _fundraiser_get_refund_by_txn_id($txn_id) {
   return db_query('SELECT * FROM {fundraiser_refund} ' .
-    'WHERE receipt_id = :receipt_id',
-    array(':receipt_id' => $receipt_id))->fetchAll();
+    'WHERE txn_id = :txn_id',
+    array(':txn_id' => $txn_id))->fetchAll();
 }
 
 /**
