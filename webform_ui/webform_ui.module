@@ -67,6 +67,13 @@ function webform_ui_menu_alter(&$items) {
     $items['node/%webform_menu/webform-results']['page callback'] = 'webform_ui_submission_results';
     $items['node/%webform_menu/webform-results']['page arguments'] = array(1);
   }
+  if (variable_get('webform_ui_hide_clear_all', FALSE)) {
+    $items['node/%webform_menu/webform-results/clear']['access callback'] = 'webform_ui_submission_access';
+  }
+  if (variable_get('webform_ui_use_alternate_submission', FALSE)) {
+    $items['node/%webform_menu/webform-results/table']['access callback'] = 'webform_ui_submission_access';
+  }
+
 }
 
 function webform_ui_submission_results($node) {
@@ -105,3 +112,7 @@ function webform_ui_form_views_exposed_form_alter(&$form, &$form_state, $form_id
     $form['#attached']['css'][] = drupal_get_path('module', 'webform_ui') . '/css/webform_ui.css';
   }
  }
+
+function webform_ui_submission_access($node) {
+  return FALSE;
+}
