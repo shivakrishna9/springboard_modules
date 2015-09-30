@@ -547,6 +547,8 @@ function sba_message_action_form_field_ui_widget_type_form_alter(&$form, &$form_
  */
 function sba_message_action_form_sba_message_action_node_form_alter(&$form, &$form_state) {
 
+  $form['#attached']['css'][] = drupal_get_path('module', 'sba_message_action') . '/css/message-action-node-form.css';
+
   // Loads the springboard_taxonomy_options fieldset and form js/css if it
   // is not already present.
   if (!isset($form['field_sba_organization_issues'])
@@ -564,7 +566,6 @@ function sba_message_action_form_sba_message_action_node_form_alter(&$form, &$fo
   // Add action flow field to vertical nav.
   if (!empty($form['springboard_taxonomy_options']) && isset($form['field_sba_action_flow'])) {
     $node = $form['#node'];
-
     $messages = isset($node->messages) ? count($node->messages) : FALSE;
     $disable_single_step = FALSE;
     if ($messages) {
@@ -578,10 +579,12 @@ function sba_message_action_form_sba_message_action_node_form_alter(&$form, &$fo
         }
       }
     }
+
     $form['field_sba_action_flow'][$form['field_sba_action_flow']['#language']]['one']['#disabled'] = $disable_single_step;
     if ($disable_single_step) {
       $form['field_sba_action_flow'][$form['field_sba_action_flow']['#language']]['one']['#description'] = t('This option is disabled because you have multiple messages configured for this action, and at least one of them is user-editable. Make them non-editable to enable this option.');
     }
+
     $form['springboard_taxonomy_options']['action_flow'] = array(
       '#type' => 'fieldset',
       '#title' => t('Choose Action Flow'),
