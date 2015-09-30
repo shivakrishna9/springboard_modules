@@ -260,25 +260,20 @@ function sba_message_action_node_presave($node) {
         $node->webform['submit_text'] = t('Preview Message');
       }
       $node->webform['confirmation'] = t('Thank you, %value[sbp_first_name] for participating in the messaging campaign.');
-      $node->webform['confirmation'] .= "\n\n" . '[action:all_messages]';
+      $node->webform['confirmation']   .= "\n\n" . '[action:all_messages]';
     }
-
-    // Set test mode on unpublished actions if not already set.
     if ($node->status == 0) {
-
-      $field_language = field_language('node', $node, 'field_sba_test_mode');
-      $test_mode = field_get_items('node', $node, 'field_sba_test_mode', $field_language);
-      if (empty($test_mode[0]['value'])) {
-        $node->field_sba_test_mode[$field_language][0]['value'] = 1;
+      $test_mode = $node_wrapper->field_sba_test_mode[0]->value();
+      if (empty($test_mode)) {
+        $node_wrapper->field_sba_test_mode[0]->set(1);
         drupal_set_message("Unpublished message actions are required to be in test mode.", 'warning');
       }
 
-      $field_language = field_language('node', $node, 'field_sba_test_mode_email');
-      $test_email = field_get_items('node', $node, 'field_sba_test_mode_email', $field_language);
-      if (empty($test_email[0]['value'])) {
+      $test_email = $node_wrapper->field_sba_test_mode_email->value();
+      if (empty($test_email)) {
         $site_email = variable_get('site_mail', 'admin@example.com');
         $email = variable_get('springboard_advocacy_test_email', $site_email);
-        $node->field_sba_test_mode_email[$field_language][0]['value'] = $email;
+        $node_wrapper->field_sba_test_mode_email->set($email);
       }
     }
   }
