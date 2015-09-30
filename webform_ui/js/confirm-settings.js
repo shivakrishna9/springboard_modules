@@ -13,6 +13,11 @@
         var sub_fieldset = $('.submission-fieldset');
         sub_fieldset.prepend('<a href="#" class="fieldset-title webform-ui-fieldset-title"></span>Submission limits</a></legend>');
 
+        var redirection_wrapper = $('#edit-redirection');
+        redirection_wrapper.wrap('<fieldset class="webform-ui-fieldset redirection-fieldset collapsible collapsed"><div class="fieldset-wrapper"></div></fieldset>');
+        var redir_fieldset = $('.redirection-fieldset');
+        redir_fieldset.prepend('<a href="#" class="fieldset-title webform-ui-fieldset-title"></span>Redirection settings</a></legend>');
+
         $(".webform-ui-fieldset-title").click(function () {
             fieldset = $(this).parent();
             wrapper = $(this).siblings('.fieldset-wrapper');

@@ -69,10 +69,11 @@ function webform_ui_form_webform_configure_form_alter(&$form, &$form_state) {
     'weight' => 100,
     'data' => drupal_get_path('module', 'webform_ui') . '/js/confirm-settings.js',
   );
+  $form['#attached']['css'][] = drupal_get_path('module', 'webform_ui') . '/css/webform_ui.css';
+
 }
 
 function webform_ui_form_webform_configure_afterbuild($form, $form_state) {
-
   $form['submission']['help']['#weight'] = 0;
   return $form;
 }

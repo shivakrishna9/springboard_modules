@@ -27,14 +27,14 @@ function webform_ui_settings_form($form, &$form_state) {
     '#type' => 'checkbox',
     '#title' => t('Hide the "Clear" tab.'),
     '#default_value' => variable_get('webform_ui_hide_clear_all', 'FALSE'),
-    '#description' => t("Prevent access to the mass delete feture onthe submission results page."),
+    '#description' => t("Prevent access to the mass delete feature on the submission results page."),
   );
 
   $form['webform_ui_hide_table'] = array(
     '#type' => 'checkbox',
-    '#title' => t('Hide the "Table" tab only on the submissions results page'),
+    '#title' => t('Hide the "Table" tab on the submissions results page'),
     '#default_value' => variable_get('webform_ui_hide_clear_all', 'FALSE'),
-    '#description' => t("If you have many submissions, the table page will require extensive resources to load. If you don't need this feature, disable the link."),
+    '#description' => t("If you have many submissions, the table page will require extensive resources to load. If you don't need this feature, hide the tab."),
   );
 
   $form['webform_ui_use_alternate_submission'] = array(

@@ -14,3 +14,23 @@
 .views-exposed-form .views-exposed-widget.views-reset-button {
     margin-top: 15px;
 }
+
+.webform-ui-fieldset .fieldset-wrapper{
+    padding: 20px 26px;
+}
+#webform-configure-form fieldset.webform-ui-fieldset {
+    padding: 10px;
+
+}
+#webform-configure-form fieldset.webform-ui-fieldset.collapsed,
+#edit-confirmation-format.collapsed {
+    height: 30px;
+}
+
+#edit-confirmation-format.collapsed {
+    padding-bottom: 0;
+}
+
+#webform-configure-form fieldset.submission-fieldset.collapsed {
+    padding-bottom: 30px;
+}
