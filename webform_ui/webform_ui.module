@@ -62,6 +62,21 @@ function webform_ui_form_webform_components_form_alter(&$form, &$form_state, $fo
   }
 }
 
+function webform_ui_form_webform_configure_form_alter(&$form, &$form_state) {
+  $form['role_control']['#collapsed'] = TRUE;
+  $form['#after_build'][] = 'webform_ui_form_webform_configure_afterbuild';
+  $form['#attached']['js'][] = array(
+    'weight' => 100,
+    'data' => drupal_get_path('module', 'webform_ui') . '/js/confirm-settings.js',
+  );
+}
+
+function webform_ui_form_webform_configure_afterbuild($form, $form_state) {
+
+  $form['submission']['help']['#weight'] = 0;
+  return $form;
+}
+
 function webform_ui_menu_alter(&$items) {
   if (variable_get('webform_ui_use_alternate_submission', FALSE)) {
     $items['node/%webform_menu/webform-results']['page callback'] = 'webform_ui_submission_results';
