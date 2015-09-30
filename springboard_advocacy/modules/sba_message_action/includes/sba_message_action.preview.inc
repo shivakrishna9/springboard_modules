@@ -118,11 +118,11 @@ function sba_message_action_preview_form($form, $form_state, $node) {
         '#type' => 'value',
         '#value' => array('target_id' => $message['targets']->id, 'primary_delivery_method' => $message['targets']->primary_delivery_method, 'salutation' => $message['targets']->salutation, 'first_name' => $message['targets']->first_name, 'last_name' => $message['targets']->last_name),
       );
-      if (isset($build['message'][$message_entity->sba_message_id]['body_required']['#value']) && $build['message'][$message_entity->sba_message_id]['body_required']['#value']) {
+      if (isset($build['message'][$message_entity->sba_message_id]['body_required']) && $build['message'][$message_entity->sba_message_id]['body_required']['#value']) {
         $build['message'][$message_entity->sba_message_id]['edited_body']['#required'] = TRUE;
         $build['message'][$message_entity->sba_message_id]['edited_body']['#title'] =  t('Your custom message');
       }
-      if (isset($build['message'][$message_entity->sba_message_id]['subject_required']['#value']) && $build['message'][$message_entity->sba_message_id]['subject_required']['#value']) {
+      if (isset($build['message'][$message_entity->sba_message_id]['subject_required']) && $build['message'][$message_entity->sba_message_id]['subject_required']['#value']) {
         $build['message'][$message_entity->sba_message_id]['subject']['#required'] = TRUE;
       }
 
