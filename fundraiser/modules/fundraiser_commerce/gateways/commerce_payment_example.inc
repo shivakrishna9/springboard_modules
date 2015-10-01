@@ -92,10 +92,10 @@ function commerce_payment_example_fundraiser_commerce_charge($method_instance, $
 
   // Process the transaction. First look for special values that force a failure.
   if (
-    // Use 4222222222222 to test a failed payment, anything else for a good one.
-    $donation->donation['payment_fields']['credit']['card_number'] == '4222222222222'
     // Use zipcode 55555 to simulate failed sustainer payments.
-    || ($donation->reference_charge && $donation->donation['zip'] == '55555')
+    ($donation->reference_charge && $donation->donation['zip'] == '55555')
+    // Use 4222222222222 to test a failed payment, anything else for a good one.
+    || $donation->donation['payment_fields']['credit']['card_number'] == '4222222222222'
   ) {
     $success = FALSE;
     // Add a payment transaction record for failed payments.
