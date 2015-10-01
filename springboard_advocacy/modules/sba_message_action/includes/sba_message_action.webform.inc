@@ -493,7 +493,7 @@ function sba_message_action_get_target_details($target) {
   if (!empty($target->party)) {
     $target_details['party'] = check_plain($target->party);
   }
-  if (!empty($target->state) && empty($target->district_name)) {
+  if (!empty($target->state)) {
     $target_details['state'] = check_plain($target->state);
   }
   if (!empty($target->district_name)) {
@@ -516,10 +516,20 @@ function sba_message_action_get_target_details($target) {
 
 function theme_sba_message_action_person_details(&$vars) {
   $output = '';
+
   $person = isset($vars['name_with_webform_url']) ? $vars['name_with_webform_url'] : $vars['name'];
-  $title = isset($vars['title']) ? $vars['title'] . ', ' : '' ;
-  $non_legislative_organization = isset($vars['organization'])  ? $title . $vars['organization'] : '';
-  $affiliation = isset($vars['district'])  ? $vars['organization'] . ' (' . $vars['party'] . ')' : $non_legislative_organization;
+  $title = isset($vars['title']) ? $vars['title']  : '' ;
+  $party = isset($vars['party']) ? '(' . $vars['party'] . ')' : '';
+  $organization = !empty($vars['organization']) ? $vars['organization'] : '';
+  $separator = !empty($title) && !empty($organization) ? ', ' : ' ';
+
+  // Custom targets and executive branch.
+  $non_legislative_organization = !empty($organization)  ? $title . $separator . $organization : '';
+
+  // Legislators. Backward compatible with Target db structure pre-fall 2015 release;
+  $legislative_organization = isset($vars['district']) && !empty($title) ? $title . ', ' .  $vars['state'] . ' ' .  $party  : $organization . ' ' . $party ;
+
+  $affiliation = isset($vars['district'])  ? $legislative_organization : $non_legislative_organization;
   $output .= $person;
   if(!empty($affiliation)) {
     $output .= ', ' . $affiliation;
