@@ -15,12 +15,24 @@
     margin-top: 15px;
 }
 
+#edit-select  input[type="submit"] {
+    vertical-align:top;
+    margin-top: 4px;
+    margin-left: 1em;
+}
+#webform-ui-exposed-search  .views-exposed-widget {
+    display: inline-block!important;
+}
+
+.views-exposed-widgets {
+    display:block;
+}
+
 .webform-ui-fieldset .fieldset-wrapper{
     padding: 20px 26px;
 }
 #webform-configure-form fieldset.webform-ui-fieldset {
     padding: 10px;
-
 }
 #webform-configure-form fieldset.webform-ui-fieldset.collapsed,
 #edit-confirmation-format.collapsed {
@@ -34,3 +46,4 @@
 #webform-configure-form fieldset.submission-fieldset.collapsed {
     padding-bottom: 30px;
 }
+
