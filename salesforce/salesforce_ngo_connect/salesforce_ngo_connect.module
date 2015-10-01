@@ -1,0 +1,6 @@
+<?php
+
+/**
+ * @file
+ * Provides Springboard integration with the NGO Connect Salesforce platform.
+ */

@@ -1,0 +1,13 @@
+<?php
+
+/**
+ * @file
+ * Install hooks for the Salesforce NGO Connect module.
+ */
+
+/**
+ * Implements hook_install()
+ */
+function salesforce_luminate_install() {
+  
+}
