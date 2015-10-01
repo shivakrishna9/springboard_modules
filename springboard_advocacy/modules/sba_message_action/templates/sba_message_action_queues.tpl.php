@@ -4,25 +4,25 @@
   <div class="row">
     <div class="span3">
       <div class="well">
-        <h2 class="text-info"><?php print $queueReadyItems; ?></h2>
+        <h2 class="text-info"><?php print $queue_ready_items; ?></h2>
         Ready
       </div>
     </div>
     <div class="span3">
       <div class="well">
-        <h2 class="text-info"><?php print $queuePausedItems; ?></h2>
+        <h2 class="text-info"><?php print $queue_paused_items; ?></h2>
         Paused
       </div>
     </div>
     <div class="span3">
       <div class="well">
-        <h2 class="text-info"><?php print $queueCanceledItems; ?></h2>
+        <h2 class="text-info"><?php print $queue_canceled_items; ?></h2>
         Canceled
       </div>
     </div>
     <div class="span3">
       <div class="well">
-        <h2 class="text-info"><?php print $queueHoldItems; ?></h2>
+        <h2 class="text-info"><?php print $queue_hold_items; ?></h2>
         On-Hold
       </div>
     </div>
@@ -31,7 +31,7 @@
   <div class="row">
     <div class="span12">
       <div class="well">
-            <?php print $queueActionsForm; ?>
+            <?php print $queue_actions_form; ?>
         </div>
       </div>
     </div>

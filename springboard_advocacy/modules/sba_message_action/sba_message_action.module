@@ -174,7 +174,7 @@ function sba_message_action_queues_access($nid) {
  */
 function sba_message_action_node_view($node, $view_mode, $langcode) {
   if ($node->type == 'sba_message_action') {
-    $apiCall = springboard_advocacy_api_Call();
+    $apiCall = springboard_advocacy_api_call();
     $apiCall->invokeClientMethod('getMaintenanceMode');
     // Warn admins of config issues.
     if (user_access('create sba_message_action content') || user_access('administer nodes')) {
@@ -214,6 +214,24 @@ function sba_message_action_node_presave($node) {
     $node->webform['submit_text'] = t('Send your message');
     $node->webform['confirmation'] = t('Thank you, %value[sbp_first_name] for participating in the messaging campaign.');
     $node->webform['confirmation'] .= "\n\n" . '[action:all_messages]';
+  }
+
+  // Set test mode on unpublished actions if not alreeady set.
+  if($node->type == 'sba_message_action' && $node->status == 0) {
+
+    $field_language = field_language('node', $node, 'field_sba_test_mode');
+    $test_mode = field_get_items('node', $node,'field_sba_test_mode', $field_language);
+    if (empty($test_mode[0]['value'])) {
+      $node->field_sba_test_mode[$field_language][0]['value'] = 1;
+      drupal_set_message("Unpublished message actions are required to be in test mode.", 'warning');
+    }
+
+    $field_language = field_language('node', $node, 'field_sba_test_mode_email');
+    $test_email = field_get_items('node', $node,'field_sba_test_mode_email', $field_language);
+    if (empty($test_email[0]['value'])) {
+      $site_email = variable_get('site_mail', 'admin@example.com');
+      $email = variable_get('springboard_advocacy_test_email', $site_email);
+      $node->field_sba_test_mode_email[$field_language][0]['value'] = $email;}
   }
 }
 
@@ -255,8 +273,9 @@ function sba_message_action_node_load($nodes, $types) {
       $node->custom_fail_message = variable_get('sba_message_action_confirm', '');
       $confirm_fail = db_query('select custom_confirmation, fail_message FROM sba_message_action_confirm WHERE nid = :nid', array(':nid' => $node->nid))->fetchAll();
       if (isset($confirm_fail[0]) && is_numeric($confirm_fail[0]->custom_confirmation)) {
-        // add this value to the node object for the form builder.
+        // add this on/off value to the node object for the form builder.
         $node->custom_confirmation = $confirm_fail[0]->custom_confirmation;
+        // Add the non-default fail message if it exists and is active.
         if (!empty($confirm_fail[0]->custom_confirmation) && isset($confirm_fail[0]->fail_message)) {
           $node->custom_fail_message = $confirm_fail[0]->fail_message;
         }
@@ -337,21 +356,6 @@ function sba_message_action_preprocess_node(&$vars) {
 }
 
 /**
- * Implements hook_module_implements_alter().
- *
- * Needed to intercept springboard_admin_form_alter and its custom
- * submit function: springboard_admin_node_delete
- * in order to redirect to the message action landing page after deletion.
- */
-function sba_message_action_module_implements_alter(&$implementations, $hook) {
-  if ($hook == 'form_alter') {
-    $group = $implementations['sba_message_action'];
-    unset($implementations['sba_message_action']);
-    $implementations['sba_message_action'] = $group;
-  }
-}
-
-/**
  * Implements hook_form_alter().
  *
  * Message action webform alterations.
@@ -376,15 +380,16 @@ function sba_message_action_form_alter(&$form, &$form_state, $form_id) {
       if (empty($form['#node']->show_my_name)) {
         $form['submitted']['sbp_sba_action_optin']['#access'] = FALSE;
       }
-
       form_load_include($form_state, 'inc', 'sba_message_action', 'includes/sba_message_action.form');
       sba_message_action_additional_elements($form, $form_state);
     }
   }
 
-
-
   // Override springboard_admin.module's node delete redirect.
+
+}
+
+function sba_message_action_form_node_delete_confirm_alter(&$form, &$form_state, $form_id) {
   if ($form_id == 'node_delete_confirm') {
     if ($form['#node']->type == 'sba_message_action') {
       // Redirect to the message action landing page after node deletion.
@@ -401,7 +406,7 @@ function sba_message_action_form_alter(&$form, &$form_state, $form_id) {
  * @param $form
  * @param $form_state
  */
-function _sba_message_action_redirect($form, &$form_state){
+function _sba_message_action_redirect($form, &$form_state) {
   $form_state['redirect'] = 'admin/springboard/advocacy/message-actions/all';
   $_GET['destination'] = url('admin/springboard/advocacy/message-actions/all');
 }
@@ -415,8 +420,8 @@ function _sba_message_action_redirect($form, &$form_state){
  */
 function sba_message_action_form_springboard_taxonomy_settings_form_alter(&$form, &$form_state) {
   if (isset($form['springboard_taxonomy_node_types']['#options']['sba_message_action'])) {
-    $form['springboard_taxonomy_node_types']['sba_message_action']['#disabled'] = TRUE;
-    $form['springboard_taxonomy_node_types']['sba_message_action']['#default_value'] = 'sba_message_action';
+    //$form['springboard_taxonomy_node_types']['sba_message_action']['#disabled'] = TRUE;
+   // $form['springboard_taxonomy_node_types']['sba_message_action']['#default_value'] = 'sba_message_action';
   }
 }
 
@@ -492,6 +497,13 @@ function sba_message_action_form_sba_message_action_node_form_alter(&$form, &$fo
     ':input[name="field_sba_test_mode[und][1]"]' => array('checked' => TRUE),
   );
 
+  $default_email = $form['field_sba_test_mode_email'][LANGUAGE_NONE][0]['value']['#default_value'];
+  if (empty($default_email))  {
+    $site_email = variable_get('site_mail', 'admin@example.com');
+    $test_email = variable_get('springboard_advocacy_test_email', $site_email);
+    $form['field_sba_test_mode_email'][LANGUAGE_NONE][0]['value']['#default_value'] = $test_email;
+  }
+
   if (empty($form['springboard_display'])) {
     $form['springboard_display'] = array(
       '#type' => 'fieldset',
@@ -538,6 +550,12 @@ function sba_message_action_form_sba_message_action_node_form_validate(&$form, &
     }
     elseif (!valid_email_address($form_state['values']['field_sba_test_mode_email'][LANGUAGE_NONE][0]['value'])) {
       form_set_error('field_sba_test_mode_email', t('Invalid Test Mode mail address.'));
+    }
+  }
+
+  if ($form_state['values']['field_sba_test_mode'][LANGUAGE_NONE][0]['value'] == 0) {
+    if ($form_state['values']['status'] == 0) {
+      form_set_error("field_sba_test_mode", t('Test mode must be enabled for unpublished actions.'));
     }
   }
 }

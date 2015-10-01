@@ -43,7 +43,9 @@ function sba_message_action_send_message(array $user_message, array $form_state)
       'contact' => $contact,
       'form_id' => $values['advocacy_id'],
       'messages' => $message_build,
+      'message_edited' => $webform_values['sba_user_edit_flag'],
     );
+
     $node = $form_state['complete form']['#node'];
     $test_mode = field_get_items('node', $node, 'field_sba_test_mode');
     if (!empty($test_mode[0]['value']) && $test_mode[0]['value'] == 1) {
@@ -53,7 +55,7 @@ function sba_message_action_send_message(array $user_message, array $form_state)
     }
 
     // Send submission to API Client.
-    $api_call = new AdvocacyApiCall();
+    $api_call = springboard_advocacy_api_call();
     $response = $api_call->invokeClientMethod('resolveTargets', $submission);
     if (isset($response->data)) {
       // We got a valid response, build the confirmation message array.

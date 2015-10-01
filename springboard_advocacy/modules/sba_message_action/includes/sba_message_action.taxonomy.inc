@@ -75,7 +75,7 @@ function sba_message_action_form_taxonomy_overview_vocabularies_alter(&$form, &$
  * Hide edit links on the terms page.
  */
 function sba_message_action_form_taxonomy_overview_terms_alter(&$form, &$form_state) {
-  if($form['#vocabulary']->machine_name == 'sba_legislative_issues') {
+  if(isset($form['#vocabulary']) && $form['#vocabulary']->machine_name == 'sba_legislative_issues') {
     $form['actions']['#access'] = FALSE;
     foreach (element_children($form) as $key) {
       $form[$key]['edit']['#access'] = FALSE;
