@@ -23,12 +23,36 @@ function sba_message_action_message_preview_page($nid) {
     'page_description' => array(
       '#id' => 'message-action-preview-page',
       '#type' => 'markup',
-      '#markup' => '<p>' . t('Please edit the messages for your legislators below. Remember to review your legislators and your contact information to ensure both are correct, before sending your messages.'),
+      '#markup' => '<p>' . t('Please review and edit the messages below; or if you prefer, simply send now.'),
       '#prefix' => '<div class="message-action-preview-page">',
       '#suffix' => '</div>',
     ),
+    'contact_description' => array(
+      '#id' => 'message-action-preview-contact',
+      '#type' => 'markup',
+      '#markup' => t('These message(s) were generated based on the address you entered: ') . check_plain($_SESSION['contact']['full_address']),
+      '#prefix' => '<div class="message-action-preview-contact"><p><br />',
+      '#suffix' => '</p></div>',
+    ),
     'sba_message_action_preview_form' => drupal_get_form('sba_message_action_preview_form', $node),
   );
+
+  $messages = $build['content']['sba_message_action_preview_form']['messages'];
+  $children = array_flip(element_children($messages));
+  $subject = FALSE;
+  $body = FALSE;
+  foreach ($messages as $key => $message) {
+    if(isset($children[$key]) && (!$subject && !$body)) {
+      $subject = $message['message']['subject']['#required'];
+      if (isset($message['message']['editable_body'])) {
+        $body = $message['message']['editable_body']['#required'];
+      }
+    }
+  }
+  if ($subject || $body) {
+    $build['content']['page_description']['#markup'] = t('One or more of the messages below requires editing. Please make your edits and then click "Send Now" at the bottom of the page.');
+  }
+
   return $build;
 }
 
