@@ -50,6 +50,9 @@ function sba_message_action_preview_form($form, $form_state, $node) {
 
     // Build the form content out of the API response stored in session.
     $messages = $_SESSION['delivered_messages']['messages'];
+    foreach($_SESSION['undelivered_messages']['messages'] as $message) {
+      $messages[] = $message;
+    }
     // @todo explore other ways of retrieving these two.
     $contact = $_SESSION['contact'];
     $action = $_SESSION['form_details'];
@@ -58,20 +61,25 @@ function sba_message_action_preview_form($form, $form_state, $node) {
       '#type' => 'value',
       '#value' => $action['action_id'],
     );
+
     if (isset($action['test_mode'])) {
       $form['test_mode'] = array(
         '#type' => 'value',
         '#value' => $action['test_mode'],
       );
+
       $form['test_mode_email'] = array(
         '#type' => 'value',
         '#value' => $action['test_email'],
       );
     }
-//    $form['account_id'] = array(
-//      '#type' => 'value',
-//      '#value' => $action['account_id'],
-//    );
+
+    // Maybe use this for cross-check validation on api server.
+    $form['account_id'] = array(
+      '#type' => 'value',
+      '#value' => $action['account_id'],
+    );
+
     $form['contact'] = array(
       '#type' => 'value',
       '#value' => $contact,
@@ -85,8 +93,9 @@ function sba_message_action_preview_form($form, $form_state, $node) {
       ),
     );
 
-    // Send our second step form through the same helper functions as the first step form.
+    // Used to send our second step form through the same helper functions as the first step form.
     module_load_include('inc', 'sba_message_action', 'includes/sba_message_action.form');
+
     foreach ($messages as $key => $message) {
 
       // Theme the message header.
@@ -101,23 +110,35 @@ function sba_message_action_preview_form($form, $form_state, $node) {
       sba_message_action_message_form($build, $message_entity, 'multi_flow');
 
       // Customize the resulting form to multi_flow format.
+      // Remove title.
       unset($build['message'][$message_entity->sba_message_id]['subject_show']['#title']);
+      // Format greeting
       $greeting = token_replace($build['message'][$message_entity->sba_message_id]['greeting']['#value'], array('sba_target' => (Object) $message['targets']));
       $build['message'][$message_entity->sba_message_id]['greeting_show']['#markup'] = $greeting;
       unset($build['message'][$message_entity->sba_message_id]['greeting']);
+      // Format signature.
       $signature = token_replace($build['message'][$message_entity->sba_message_id]['signature_tokenized']['#value'], array('sba_contact' => (Object) $contact));
       $build['message'][$message_entity->sba_message_id]['signature']['#type'] = 'item';
       $build['message'][$message_entity->sba_message_id]['signature']['#markup'] = check_markup($signature, 'plain_text');
       unset($build['message'][$message_entity->sba_message_id]['signature_tokenized']);
+      // Add a custom class.
       $build['message'][$message_entity->sba_message_id]['#attributes']['class'][] = 'message-preview-message-fieldset';
+      // Add precedence value.
       $build['message'][$message_entity->sba_message_id]['precedence'] = array(
         '#type' => 'value',
         '#value' => $message['precedence'],
       );
+      // Add hold value.
+      $build['message'][$message_entity->sba_message_id]['hold'] = array(
+        '#type' => 'value',
+        '#value' => isset($message['hold']) ? TRUE : FALSE,
+      );
+      // Build an array of target properties
       $build['message'][$message_entity->sba_message_id]['target'] = array(
         '#type' => 'value',
         '#value' => array('target_id' => $message['targets']->id, 'primary_delivery_method' => $message['targets']->primary_delivery_method, 'salutation' => $message['targets']->salutation, 'first_name' => $message['targets']->first_name, 'last_name' => $message['targets']->last_name),
       );
+      // Check for required fields
       if (isset($build['message'][$message_entity->sba_message_id]['body_required']) && $build['message'][$message_entity->sba_message_id]['body_required']['#value']) {
         $build['message'][$message_entity->sba_message_id]['edited_body']['#required'] = TRUE;
         $build['message'][$message_entity->sba_message_id]['edited_body']['#title'] =  t('Your custom message');
@@ -125,13 +146,14 @@ function sba_message_action_preview_form($form, $form_state, $node) {
       if (isset($build['message'][$message_entity->sba_message_id]['subject_required']) && $build['message'][$message_entity->sba_message_id]['subject_required']['#value']) {
         $build['message'][$message_entity->sba_message_id]['subject']['#required'] = TRUE;
       }
-
       // Assign the rebuilt messages to the form
       $form['messages'][$key]['message'] = $build['message'][$message_entity->sba_message_id];
     }
+    // Add the node object to use in validation and submit.
     $form['#action_node'] = $node;
+    // Define the validation function.
     $form['#validate'][] = 'sba_message_action_preview_form_validate';
-    $num = !empty($form['messages']) ? count(element_children($form['messages'])) : 0;
+    // Add submit button
     $form['submit'] = array(
       '#prefix' => '<div id="edit-actions">',
       '#suffix' => '</div>',
@@ -154,37 +176,53 @@ function sba_message_action_preview_form($form, $form_state, $node) {
  * @param $form_state
  */
 function sba_message_action_preview_form_validate($form, &$form_state) {
+
   $messages = !empty($form['messages']) ? element_children($form['messages']) : array();
   $changed = FALSE;
+  // To prevent duplicate error messages.
   $body_error_once = NULL;
   $subject_error_once = NULL;
+
+  // Loop through the messages and validate whether user is required to edit subject or body.
+  // Also set a value for future use by the "user_edit_flag" component.
   foreach ($messages as $id) {
 
+    // The message
     $message = $form['messages'][$id]['message'];
-    $body_default = isset($message['edited_body']['#default_value']) ? $message['edited_body']['#default_value'] : '';
-    $body_edited = isset($form_state['values']['messages'][$id]['message']['edited_body']) ? $form_state['values']['messages'][$id]['message']['edited_body'] : '';
-    $subject_default = isset($message['subject']['#default_value']) ? $message['subject']['#default_value'] : '';
-    $subject_edited = isset($form_state['values']['messages'][$id]['message']['subject']) ? $form_state['values']['messages'][$id]['message']['subject'] : '';
-    // Enforce mandatory editing.
 
+    // The default value for the user-editable body if any.
+    $body_default = isset($message['edited_body']['#default_value']) ? $message['edited_body']['#default_value'] : '';
+    // The edited value in the user-editable body if any.
+    $body_edited = isset($form_state['values']['messages'][$id]['message']['edited_body']) ? $form_state['values']['messages'][$id]['message']['edited_body'] : '';
+
+    // The default value for the user-editable subject if any.
+    $subject_default = isset($message['subject']['#default_value']) ? $message['subject']['#default_value'] : '';
+    // The edited value in the user-editable subject if any.
+    $subject_edited = isset($form_state['values']['messages'][$id]['message']['subject']) ? $form_state['values']['messages'][$id]['message']['subject'] : '';
+
+    // Enforce mandatory editing of the body if set.
     $body_error = !isset($body_error_once) ? t('Please personalize your message before sending.') : '';
     if ($body_edited == $body_default && isset($message['body_required']) && $message['body_required']['#value'] == 1) {
       $body_error_once = TRUE;
       form_set_error("messages][$id][message][edited_body", $body_error);
     }
     elseif ($body_edited != $body_default) {
+      // Set change value for use by the "user_edit_flag" component.
       $changed = TRUE;
     }
+
+    // Enforce mandatory editing of the subject if set.
     $subject_error = !isset($subject_error_once) ? t('Please personalize the subject line before sending your message.') : '';
     if ($subject_edited == $subject_default && isset($message['subject_required']) && $message['subject_required']['#value'] == 1) {
       $subject_error_once = TRUE;
       form_set_error("messages][$id][message][subject", $subject_error);
     }
     elseif (!isset($message['subject_show']) && $subject_edited != $subject_default) {
+      // Set change value for use by the "user_edit_flag" component.
       $changed = TRUE;
     }
   }
-  // Set user_edited_flag
+  // Set value for the user_edited_flag
   $form_state['storage']['changed'] = $changed;
 
 }
@@ -197,90 +235,156 @@ function sba_message_action_preview_form_validate($form, &$form_state) {
  * @param $form_state
  */
 function sba_message_action_preview_form_submit($form, &$form_state) {
+
+  // Get sba_message_action_build_message_bodies().
   module_load_include('inc', 'sba_message_action', 'includes/sba_message_action.form');
+
   $messages = $form_state['values']['messages'];
-  // Make it like how the resolver likes it.
+  $node = $form['#action_node'];
+
+  // Re-format the messages into the array structure originally returned
+  // by the target resolver and expected by the message queue on the API server.
   $formatted_messages = array();
   foreach ($messages as $key => $message) {
     $edited_body = isset($message['message']['edited_body']) ? $message['message']['edited_body'] : '';
     $formatted_messages[$key]['message']['body'] = sba_message_action_build_message_bodies($message['message']['sba_message_id'], $edited_body);
-    $formatted_messages[$key]['message']['subject'] =  $message['message']['subject'];
-    $formatted_messages[$key]['message']['precedence'] =  $message['message']['precedence'];
-    $formatted_messages[$key]['message']['id'] =  $message['message']['message_id'];
+    $formatted_messages[$key]['message']['subject'] = $message['message']['subject'];
+    $formatted_messages[$key]['message']['precedence'] = $message['message']['precedence'];
+    $formatted_messages[$key]['message']['id'] = $message['message']['message_id'];
     $formatted_messages[$key]['deliverable'] = $message['message']['target'];
+    $formatted_messages[$key]['message']['hold'] = $message['message']['hold'];
   }
+
+  // We don't actually want to send the "hold" value to the API server,
+  // but we do need it later to update the confirmation messages.
+  $remove_hold_index = $formatted_messages;
+  foreach($remove_hold_index as $key => $formatted) {
+    unset($remove_hold_index[$key]['message']['hold']);
+  }
+
+  // Reconstruct the full array the API server originally sent. New values for
+  // multiflow and message subjects and bodies.
   $payload = array(
     'multiflow' => 'step_two',
     'alert_id' => $form_state['values']['action_id'],
     'test_mode' => $form_state['values']['test_mode'],
     'test_email' => $form_state['values']['test_mode_email'],
     'contact' => $form_state['values']['contact'],
-    'messages' => $formatted_messages,
+    'messages' => $remove_hold_index,
   );
 
   $api_call = springboard_advocacy_api_call();
   $response = $api_call->invokeClientMethod('resolveTargets', $payload);
 
-  if (isset($response->status_code) && $response->status_code == 200) {
-
-    $node = $form['#action_node'];
-    // Add session flag to prevent resubmission of the form
-    $_SESSION['action_completed'] = TRUE;
-    $people = array();
-
-    if(!empty($_SESSION['delivered_messages']['messages'])) {
-      foreach ($_SESSION['delivered_messages']['messages'] as $message) {
-        $people[$message['targets']->id] = $message['person'];
-      }
-
-      // Rebuild the the delivered messages session variable with custom text if any.
-      $messages_for_confirmation = array();
-      foreach ($formatted_messages as $key => $f_message) {
-        $messages_for_confirmation[$key] = $formatted_messages[$key]['message'];
-        $messages_for_confirmation[$key]['targets'] = (Object) $formatted_messages[$key]['deliverable'];
-        $messages_for_confirmation[$key]['person'] = $people[$formatted_messages[$key]['deliverable']['target_id']];
-      }
-
-      $_SESSION['delivered_messages'] =
-        array(
-          'messages' => $messages_for_confirmation,
-          'target_count' => count($messages_for_confirmation),
-          'message_count' => count($messages_for_confirmation),
-        );
-    }
-    // Redirect to the original confirmation page.
-    // $sid is set in sba_message_action_multifow_submit()
-    $sid = !empty($_SESSION['action_sid']['sid']) ? $_SESSION['action_sid']['sid'] : FALSE;
-    if ($sid) {
-      unset($_SESSION['action_sid']);
-      $form_state['redirect'] = array(
-        'node/' . $node->nid . '/done',
-        array('query' => array('sid' => $sid))
-      );
-    }
-
-    // Update the user edit flag.
-    if ($form_state['storage']['changed'] == TRUE) {
-      if ($sid) {
-        $user_edit = db_query('SELECT * FROM {webform_component} WHERE nid = :nid AND form_key = :form_key',
-          array(
-            ':nid' => $node->nid,
-            ':form_key' => 'sba_user_edit_flag'
-          ))->fetchObject();
-        if (!empty($user_edit->cid)) {
-          db_update('webform_submitted_data')->fields(array('data' => 1))
-            ->condition('nid', $node->nid, '=')
-            ->condition('sid', $sid, '=')
-            ->condition('cid', $user_edit->cid, '=')
-            ->condition('no', 0, '=')
-            ->execute();
-        }
-      }
-    }
+  if (isset($_SESSION['retries'])) {
+    $_SESSION['retries']++;
   }
   else {
-    drupal_set_message(t("A problem occurred and your message was not submitted. Please try again. If the problem persists, we should have it fixed shortly. Try back in a few minutes."), 'error');
+    $_SESSION['retries'] = 1;
   }
+
+  // If there's a hiccup with the server, let the user retry sending a couple more times.
+  if (!isset($response->status_code) || (isset($response->status_code) && $response->status_code != 200)) {
+    if($_SESSION['retries'] < 4) {
+      drupal_set_message(t("A problem occurred and your message was not submitted. Please try again. If the problem persists, we should have it fixed shortly. Try back in a few minutes."), 'error');
+      return;
+    }
+    else {
+      drupal_set_message(t("A problem occurred. Please try again later."), 'error');
+      $form_state['redirect'] = array('node/' . $node->nid);
+      $_SESSION['action_completed'] = TRUE;
+      unset($_SESSION['retries']);
+      return;
+    }
+  }
+
+  // Add session flag to prevent resubmission of the form
+  $_SESSION['action_completed'] = TRUE;
+  unset($_SESSION['retries']);
+
+  // If we succeeded, update the confirmation messages stored in the session
+  // with the new subject and body values if any.
+  // First we need to get the targets into an array keyed by target ID.
+  $people = array();
+  if(!empty($_SESSION['delivered_messages']['messages'])) {
+    foreach ($_SESSION['delivered_messages']['messages'] as $message) {
+      $people[$message['targets']->id] = $message['person'];
+    }
+  }
+  if(!empty($_SESSION['undelivered_messages']['messages'])) {
+    foreach ($_SESSION['undelivered_messages']['messages'] as $message) {
+      $people[$message['targets']->id] = $message['person'];
+    }
+  }
+
+  // Rebuild the the message session variables.
+  $deliverable_messages_for_confirmation = array();
+  $undeliverable_messages_for_confirmation = array();
+  // Filter the deliverable from the undeliverable
+  foreach ($formatted_messages as $key => $f_message) {
+    if (empty($f_message['message']['hold'])) {
+      $deliverable_messages_for_confirmation[$key] = $formatted_messages[$key]['message'];
+      $deliverable_messages_for_confirmation[$key]['targets'] = (Object) $formatted_messages[$key]['deliverable'];
+      $deliverable_messages_for_confirmation[$key]['person'] = $people[$formatted_messages[$key]['deliverable']['target_id']];
+    }
+    else {
+      $undeliverable_messages_for_confirmation[$key] = $formatted_messages[$key]['message'];
+      $undeliverable_messages_for_confirmation[$key]['targets'] = (Object) $formatted_messages[$key]['deliverable'];
+      $undeliverable_messages_for_confirmation[$key]['person'] = $people[$formatted_messages[$key]['deliverable']['target_id']];
+    }
+  }
+  // Update deliverable session.
+  if(!empty($_SESSION['delivered_messages']['messages'])) {
+    $_SESSION['delivered_messages'] =
+      array(
+        'messages' => $deliverable_messages_for_confirmation,
+        'target_count' => count($deliverable_messages_for_confirmation),
+        'message_count' => count($deliverable_messages_for_confirmation),
+      );
+  }
+  // Update undeliverable session.
+  if(!empty($_SESSION['undelivered_messages']['messages'])) {
+    $_SESSION['undelivered_messages'] =
+      array(
+        'messages' => $undeliverable_messages_for_confirmation,
+        'targets' => '',
+      );
+  }
+
+  // Redirect to the original confirmation page.
+  // $sid is set in sba_message_action_multifow_submit()
+  $sid = !empty($_SESSION['action_sid']['sid']) ? $_SESSION['action_sid']['sid'] : FALSE;
+  if ($sid) {
+    unset($_SESSION['action_sid']);
+    $form_state['redirect'] = array(
+      'node/' . $node->nid . '/done',
+      array('query' => array('sid' => $sid))
+    );
+  }
+  else {
+    // Gotta go somewhere.
+    $form_state['redirect'] = array('node/' . $node->nid);
+  }
+
+  // Update the user edit flag.
+  if ($form_state['storage']['changed'] == TRUE) {
+    if ($sid) {
+      $user_edit = db_query('SELECT * FROM {webform_component} WHERE nid = :nid AND form_key = :form_key',
+        array(
+          ':nid' => $node->nid,
+          ':form_key' => 'sba_user_edit_flag'
+        ))->fetchObject();
+      if (!empty($user_edit->cid)) {
+        db_update('webform_submitted_data')->fields(array('data' => 1))
+          ->condition('nid', $node->nid, '=')
+          ->condition('sid', $sid, '=')
+          ->condition('cid', $user_edit->cid, '=')
+          ->condition('no', 0, '=')
+          ->execute();
+      }
+    }
+  }
+
 }
 
 /**

@@ -244,7 +244,7 @@ function sba_message_action_set_confirmation_session_vars($response, $contact) {
           'messages' => $messages,
           'target_count' => $count_targets,
           'message_count' => $count_messages,
-      );
+        );
     }
 
     unset($status['hold']['target_count']);
@@ -253,10 +253,13 @@ function sba_message_action_set_confirmation_session_vars($response, $contact) {
     if (!empty($status['hold'])) {
       foreach ($status['hold'] as $id => $message) {
         foreach ($message['people'] as $key => $person) {
-          $messages[$y]['people'][] = $person;
-          $messages[$y]['message'] = $status['hold'][$id]['body'];
+          $messages[$y]['person'] = $person;
+          $messages[$y]['body'] = $status['hold'][$id]['body'];
           $messages[$y]['subject'] = $status['hold'][$id]['subject'];
-          $messages[$y]['targets'] = $message['targets'];
+          $messages[$y]['targets'] = $message['targets'][$key];
+          $messages[$y]['message_id'] = $id;
+          $messages[$y]['precedence'] = $status['hold'][$id]['precedence'];
+          $messages[$y]['hold'] = TRUE;
           $y++;
         };
       }
@@ -265,8 +268,8 @@ function sba_message_action_set_confirmation_session_vars($response, $contact) {
           'messages' => $messages,
           'targets' => '',
         );
-      }
     }
+  }
 }
 
 /**
@@ -337,29 +340,28 @@ function sba_message_action_preprocess_webform_confirmations_undelivered(&$vars)
   $count_output = '';
 
   foreach ($messages as $id => $message) {
-    foreach ($message['people'] as $key => $person) {
-      // Stores the segments of the target
-      $target_info = array();
-      $target_count++;
-      if (!empty($person['url'])) {
-        $on_click = "var extWrapper=window.open(this.href,'targetWindow','toolbar=no,scrollbars=yes,status=no,menubar=no,resizable=yes,top=0,left=0,width=1024,height=800');extWrapper.focus();return false;";
-        $name_with_webform_url = l($person['name'], check_plain($person['url']), array('attributes' => array('onclick' => $on_click)));
-        $person['name_with_webform_url'] = $name_with_webform_url;
-      }
-
-      $target_info[] = theme('sba_message_action_person_details', $person);
-
-      // Prepare the contact object so we can replace tokens in the message.
-      $contact = (object) $_SESSION['contact'];
-
-      $message['message'] = token_replace($message['message'], array('sba_contact' => $contact, 'sba_target' => $message['targets'][$key],));
-      // The recipient.
-      $messages_out[$id][$key]['target'] = implode(' ', $target_info);
-      // Make sure we're not double encoding in case
-      // it comes back from API server encoded.
-      $messages_out[$id][$key]['subject'] =   check_plain(decode_entities($message['subject']));
-      $messages_out[$id][$key]['message'] = check_markup($message['message'], 'filtered_html');
+    // Stores the segments of the target
+    $person = $message['person'];
+    $target_info = array();
+    $target_count++;
+    if (!empty($person['url'])) {
+      $on_click = "var extWrapper=window.open(this.href,'targetWindow','toolbar=no,scrollbars=yes,status=no,menubar=no,resizable=yes,top=0,left=0,width=1024,height=800');extWrapper.focus();return false;";
+      $name_with_webform_url = l($person['name'], check_plain($person['url']), array('attributes' => array('onclick' => $on_click)));
+      $person['name_with_webform_url'] = $name_with_webform_url;
     }
+
+    $target_info[] = theme('sba_message_action_person_details', $person);
+
+    // Prepare the contact object so we can replace tokens in the message.
+    $contact = (object) $_SESSION['contact'];
+
+    $message['message'] = token_replace($message['body'], array('sba_contact' => $contact, 'sba_target' => $message['targets'],));
+    // The recipient.
+    $messages_out[$id]['target'] = implode(' ', $target_info);
+    // Make sure we're not double encoding in case
+    // it comes back from API server encoded.
+    $messages_out[$id]['subject'] =   check_plain(decode_entities($message['subject']));
+    $messages_out[$id]['message'] = check_markup($message['message'], 'filtered_html');
   }
 
   $message_plural = format_plural($message_count, 'message', 'messages');
@@ -367,14 +369,14 @@ function sba_message_action_preprocess_webform_confirmations_undelivered(&$vars)
 
   if ($message_count) {
     $count_output .= t(
-        "We were unable to deliver @message_count @messages to @target_count @targets. Please visit the decision-maker's website to submit your message directly.",
-        array(
-          '@message_count' => $message_count,
-          '@messages' => $message_plural,
-          '@target_count' => $target_count,
-          '@targets' => $target_plural,
-        )
-      );
+      "We were unable to deliver @message_count @messages to @target_count @targets. Please visit the decision-maker's website to submit your message directly.",
+      array(
+        '@message_count' => $message_count,
+        '@messages' => $message_plural,
+        '@target_count' => $target_count,
+        '@targets' => $target_plural,
+      )
+    );
   }
   else {
     $count_output .= t('You have no undeliverable messages.');
@@ -387,9 +389,7 @@ function sba_message_action_preprocess_webform_confirmations_undelivered(&$vars)
   $vars['show_message_text'] = t('Show message');
   $vars['messages_out'] = array();
   foreach ($messages_out as $key => $message) {
-    foreach($message as $recipient) {
-      $vars['messages_out'][] = $recipient;
-    }
+    $vars['messages_out'][] = $message;
   }
 }
 
