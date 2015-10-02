@@ -91,8 +91,9 @@ function commerce_payment_example_fundraiser_commerce_charge($method_instance, $
   _fundraiser_commerce_submit_handler_pane_values($pane_values, $donation);
 
   // Process the transaction. First look for special values that force a failure.
-  $success = !commerce_payment_example_simulate_failure($donation);
-  if (!$success) {
+  $success = TRUE;
+  if (!commerce_payment_example_simulate_failure($donation)) {
+    $success = FALSE;
     // Add a payment transaction record for failed payments.
     $transaction = commerce_payment_transaction_new('commerce_payment_example', $order->order_id);
     $transaction->instance_id = $method_instance['instance_id'];
