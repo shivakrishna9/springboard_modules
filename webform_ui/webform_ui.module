@@ -221,7 +221,20 @@ function webform_ui_views_bulk_operations_form_alter(&$form, &$form_state, $vbo)
     if ($form_state['step'] == 'views_bulk_operations_confirm_form') {
       $variables = array(
         'items' => array(),
-        'title' => t('Are you sure you want to delete the following submissions')
+      );
+      $form['warning']['#markup'] = t('Are you sure you want to delete the following submissions?');
+      $form['warning']['#prefix'] = '<h3>';
+      $form['warning']['#suffix'] = '</h3>';
+      $form['warning']['#weight'] = -10;
+
+      $form['warning_desc']['#markup'] = t('Deleting webform submissions will prevent resyncing any fundraiser transactions and salesforce records. Only delete the oldest submissions you do not need anymore.');
+      $form['warning_desc']['#weight'] = -9;
+      $form['warning_desc']['#prefix'] = '<p><strong>';
+      $form['warning_desc']['#suffix'] = '</strong></p>';
+      $form['toggle_me'] = array(
+        '#type' => 'checkbox',
+        '#title' => t('You must check this box to acknowledge you understand this. Then the confrm button will appear'),
+        '#weight' => -8,
       );
       module_load_include('inc', 'webform', 'includes/webform.submissions');
       foreach ($form_state['values']['views_bulk_operations'] as $key => $status) {
@@ -233,7 +246,20 @@ function webform_ui_views_bulk_operations_form_alter(&$form, &$form_state, $vbo)
           $variables['items'][] = "{$submission->sid} : {$submission->data[$field]['value'][0]}";
         }
       }
+
+      $form['actions']['submit']['#states'] = array(
+        'visible' => array(
+          ':input[name="toggle_me"]' => array('checked' => TRUE),
+        ),
+      );
+
+      $form['description']['#type'] = 'item';
       $form['description']['#markup'] = theme('item_list', $variables);
+      $form['description']['#states'] = array(
+        'visible' => array(
+          ':input[name="toggle_me"]' => array('checked' => TRUE),
+        ),
+      );
     }
   }
 }
