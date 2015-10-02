@@ -91,13 +91,8 @@ function commerce_payment_example_fundraiser_commerce_charge($method_instance, $
   _fundraiser_commerce_submit_handler_pane_values($pane_values, $donation);
 
   // Process the transaction. First look for special values that force a failure.
-  if (
-    // Use zipcode 55555 to simulate failed sustainer payments.
-    ($donation->reference_charge && $donation->donation['zip'] == '55555')
-    // Use 4222222222222 to test a failed payment, anything else for a good one.
-    || $donation->donation['payment_fields']['credit']['card_number'] == '4222222222222'
-  ) {
-    $success = FALSE;
+  $success = !commerce_payment_example_simulate_failure($donation);
+  if (!$success) {
     // Add a payment transaction record for failed payments.
     $transaction = commerce_payment_transaction_new('commerce_payment_example', $order->order_id);
     $transaction->instance_id = $method_instance['instance_id'];
@@ -109,7 +104,6 @@ function commerce_payment_example_fundraiser_commerce_charge($method_instance, $
   }
   // Pass the values through to the submit function.
   else {
-    $success = TRUE;
     // During a reference charge the example gateway expects a credit card of a certain length for the transaction message.
     if (!empty($donation->reference_charge)) {
       $pane_values['credit_card']['number']  = str_pad($pane_values['credit_card']['number'], 8, 'x', STR_PAD_LEFT);
@@ -120,6 +114,27 @@ function commerce_payment_example_fundraiser_commerce_charge($method_instance, $
 
   return $success;
 }
+
+
+/**
+ * Determines whether the gateway should simulate a payment failure.
+ *
+ * Failure is simulated by either a designed card number or postal code.
+ *
+ * @param $donation
+ *   The donation being processed.
+ */
+function commerce_payment_example_simulate_failure($donation) {
+  if (!$donation->reference_charge && $donation->donation['payment_fields']['credit']['card_number'] == '4222222222222') {
+    return TRUE;
+  }
+  
+  if ($donation->reference_charge && $donation->donation['zip'] == '55555') {
+    return TRUE;
+  }
+  
+  return FALSE;  
+} 
 
 
 /**
