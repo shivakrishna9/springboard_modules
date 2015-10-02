@@ -25,7 +25,7 @@ function salesforce_ngo_connect_create_contact_mapping() {
   "type" : "salesforce_mapping",
   "name" : "user_to_batch_upload",
   "label" : "User to Batch Upload",
-  "sync_triggers" : "3",
+  "sync_triggers" : "1",
   "salesforce_object_type" : "rC_Connect__Batch_Upload__c",
   "salesforce_record_type" : "default",
   "drupal_entity_type" : "user",
