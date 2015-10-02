@@ -14,6 +14,13 @@
 .views-exposed-form .views-exposed-widget.views-reset-button {
     margin-top: 15px;
 }
+fieldset#edit-select {
+    margin-bottom: 20px;
+    margin-top: -30px;
+}
+fieldset#webform-ui-exposed-search {
+    margin-bottom: 20px;
+}
 
 #edit-select  input[type="submit"] {
     vertical-align:top;

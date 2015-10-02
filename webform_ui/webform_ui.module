@@ -3,7 +3,6 @@
  * @file
  *
  * @todo Ability to lock editing of specific fields.
- * @todo Pager on submission results table
  */
 
 /**
@@ -85,7 +84,7 @@ function webform_ui_menu_alter(&$items) {
 
 function webform_ui_submission_results($node) {
 
-  $view = views_get_view('webform_submissions');
+  $view = views_get_view('sbv_webform_submissions');
 
   if (empty($view)) {
     return t('The webform submissions view could not be found.');
@@ -123,11 +122,12 @@ function webform_ui_form_views_exposed_form_alter(&$form, &$form_state, $form_id
 }
 function webform_ui_exposed_after($form, $form_state) {
   $form['#attached']['css'][] = drupal_get_path('module', 'webform_ui') . '/css/webform_ui.css';
+  $form['#attached']['library'][]
+    = array('system', 'drupal.collapse');
   return $form;
 }
 
 function theme_webform_ui_exposed_form_wrapper($vars) {
-  $legend = t('Take Action Now!');
   return '<fieldset class="container-inline collapsible collapsed form-wrapper" id="webform-ui-exposed-search"><legend><span class="fieldset-legend">Search</span></legend><div class="fieldset-wrapper">' . $vars['element']['#children']  . '</div></fieldset>';
 }
 
@@ -150,12 +150,20 @@ function webform_ui_action_info() {
   return array(
     'webform_ui_submission_delete' => array(
       'type' => 'node',
-      'label' => t('Delete Webform submission'),
-      'description' => t('Delete Webform submission'),
+      'label' => t('Bulk Delete Webform submission'),
+      'description' => t('Bulk Delete Webform submission'),
       'configurable' => FALSE,
+     // 'behavior' => array('deletes_property'),
       'triggers' => array(
         'any' => TRUE,
       ),
+      // VBO specific settings
+      // Set to TRUE if you want to operate on an array of identifiers
+      // Set to FALSE if you want to operate on each separately as an object
+      'aggregate' => FALSE,
+      // Set this to true to receive $context['rows']  in your callback.
+      'pass rows' => TRUE,
+      'permissions' => array('delete all webform submissions'),
     ),
   );
 }
@@ -167,7 +175,8 @@ function webform_ui_action_info() {
  * @param array $context
  */
 function webform_ui_submission_delete(&$node, $context = array()) {
-  $sid = current($context['rows'])->sid;
+  //$sid = current($context['rows'])->sid;
+  $sid = $context['rows']->sid;
   $submission = webform_menu_submission_load($sid, $node->nid);
   if ($submission) {
     webform_submission_delete($node, $submission);
@@ -206,8 +215,8 @@ function webform_ui_submission_delete_views_bulk_operations_form($options) {
 function webform_ui_views_bulk_operations_form_alter(&$form, &$form_state, $vbo) {
  if($vbo->definition['handler'] = 'webform_ui_bulk_operations_handler_field_operations') {
    $form['select']['#collapsed'] = TRUE;
-   if (!user_access('delete all webform submissions') && $vbo->view->name == 'webform_submissions') {
-     $form['select']['#access'] = FALSE;;
+   if (!user_access('delete all webform submissions') && $vbo->view->name == 'sbv_webform_submissions') {
+    // $form['select']['#access'] = FALSE;;
    }
     if ($form_state['step'] == 'views_bulk_operations_confirm_form') {
       $variables = array(
@@ -220,6 +229,7 @@ function webform_ui_views_bulk_operations_form_alter(&$form, &$form_state, $vbo)
           $field = $vbo->options['vbo_operations'][$form_state['values']['operation']]['settings']['field'];
           $field = $field ? $field : 'remote_addr';
           $submission = current(webform_get_submissions(array('sid' => $vbo->view->result[$key]->sid)));
+          //dpm($submission);
           $variables['items'][] = "{$submission->sid} : {$submission->data[$field]['value'][0]}";
         }
       }
@@ -237,9 +247,11 @@ function webform_ui_views_api() {
     'path' => drupal_get_path('module', 'webform_ui') . '/views',
   );
 }
-
+/**
+ * Implements hook_views_pre_render().
+ */
 function webform_ui_views_pre_render(&$view) {
-  if ($view->name == 'webform_submissions' && !user_access('delete all webform submissions') and isset($view->field['views_bulk_operations'])) {
+  if ($view->name == 'sbv_webform_submissions' && !user_access('delete all webform submissions') and isset($view->field['views_bulk_operations'])) {
     unset($view->field['views_bulk_operations']);
   }
 }
