@@ -17,6 +17,68 @@ function salesforce_ngo_connect_install() {
 }
 
 /**
+ * Implements hook_schema()
+ */
+function salesforce_ngo_connect_schema() {
+  $schema['salesforce_ngo_connect_batch_upload'] = array(
+    'description' => 'Salesforce NGO Connect Batch Upload objects',
+    'fields' => array(
+      'batch_upload_id' => array(
+        'description' => 'Salesforce ID of the Batch Upload object.',
+        'type' => 'varchar',
+        'length' => '32',
+        'not null' => TRUE,
+      ),
+      'drupal_id' => array(
+        'description' => 'The ID of the Drupal object.',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'module' => array(
+        'description' => 'The Drupal module used to create the Batch Upload object.',
+        'type' => 'varchar',
+        'length' => '255',
+        'not null' => TRUE,
+      ),
+      'delta' => array(
+        'description' => 'The Drupal entity type this Batch Upload object represents.',
+        'type' => 'varchar',
+        'length' => '255',
+        'not null' => TRUE,
+      ),
+      'contact_id' => array(
+        'description' => 'Salesforce ID of the Contact created via the Batch Upload object.',
+        'type' => 'varchar',
+        'length' => '32',
+        'not null' => TRUE,
+      ),
+      'account_id' => array(
+        'description' => 'Salesforce ID of the Account created via the Batch Upload object.',
+        'type' => 'varchar',
+        'length' => '32',
+        'not null' => TRUE,
+      ),
+      'opportunity_id' => array(
+        'description' => 'Salesforce ID of the Opportunity created via the Batch Upload object.',
+        'type' => 'varchar',
+        'length' => '32',
+        'not null' => TRUE,
+      ),
+      'transaction_id' => array(
+        'description' => 'Salesforce ID of the Transaction created via the Batch Upload object.',
+        'type' => 'varchar',
+        'length' => '32',
+        'not null' => TRUE,
+      ),
+      'primary key' => array('batch_upload_id'),
+    ),
+  );
+
+  return $schema;
+}
+
+/**
  * Creates a mapping between the Drupal user entity and the NGO Connect
  * Batch Upload object in Salesforce.
  */

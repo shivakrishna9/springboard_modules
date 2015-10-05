@@ -4,3 +4,23 @@
  * @file
  * Provides Springboard integration with the NGO Connect Salesforce platform.
  */
+
+/**
+ * Implements hook_entity_info().
+ */
+function salesforce_ngo_connect_entity_info() {
+  return array(
+    'salesforce_ngo_connect_batch_upload' => array(
+      'label' => t('Salesforce NGO Connect Batch Upload'),
+      'entity class' => 'Entity',
+      'controller class' => 'EntityAPIController',
+      'base table' => 'salesforce_ngo_connect_batch_upload',
+      'entity keys' => array(
+        'id' => 'batch_upload_id',
+      ),
+      'fieldable' => FALSE,
+      'exportable' => FALSE,
+      'module' => 'salesforce_ngo_connect',
+    ),
+  );
+}
