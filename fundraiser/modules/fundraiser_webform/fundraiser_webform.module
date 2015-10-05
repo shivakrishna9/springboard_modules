@@ -1435,12 +1435,29 @@ function fundraiser_webform_node_delete($node) {
  * Implements hook_webform_submission_render_alter().
  *
  * Updates the currency symbols on the ask amount and other amount webform
- * submission display page.
+ * submission display page.  Also break down donations consisting of multiple amounts.
  */
 function fundraiser_webform_webform_submission_render_alter(&$renderable) {
   $donation = _fundraiser_webform_get_donation_by_sid($renderable['#submission']->sid);
   if (!empty($donation)) {
-    $renderable['donation']['amount']['#value'][0] = $donation->donation['amount_formatted'];
-    $renderable['donation']['other_amount']['#field_prefix'] = $donation->donation['currency']['symbol'];
+    if (isset($donation->amount)) {
+      $total_amount = floatval($donation->amount);
+
+      $total = commerce_currency_format($total_amount, $donation->currency, NULL, FALSE);
+      $markup = $total;
+
+      // Display an additional donation amount if one is available:
+      if (isset($donation->donation['amount'])) {
+        $original_amount = floatval($donation->donation['amount']);
+        $additional_amount = floatval($donation->amount - $donation->donation['amount']);
+        if ($total_amount != $original_amount + $additional_amount) {
+          $original = commerce_currency_format($original_amount, $donation->currency, NULL, FALSE);
+          $additional = commerce_currency_format($additional_amount, $donation->currency, NULL, FALSE);
+          $markup .= ' (' . $original . ' + an additional donation of ' . $additional . ')';
+        }
+      }
+    }      
+
+    $renderable['amount']['#markup'] = $markup;
   }
 }
