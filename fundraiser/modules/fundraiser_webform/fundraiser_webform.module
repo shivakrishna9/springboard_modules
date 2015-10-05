@@ -510,6 +510,8 @@ function fundraiser_webform_form_alter(&$form, &$form_state, $form_id) {
 
 /**
  * Alters the display of webform submissions to prevent edits/display of confusing info.
+ *
+ * Also populates the tickets table field with its associated data.
  */
 function fundraiser_webform_submission_display(&$form, &$form_state) {
 
@@ -529,8 +531,21 @@ function fundraiser_webform_submission_display(&$form, &$form_state) {
     '#title' => t('Donation Information'),
   );
 
+
+  // Break up donation amount into original amount + an additional amount if one is available:
+  $total_amount = $donation->amount;
+  $additional_amount = $donation->amount - (isset($donation->donation['amount']) ? $donation->donation['amount'] : 0);
+  $original_amount = $total_amount - $additional_amount;
+  if ($original_amount != $total_amount) {
+    $amount_field_value = commerce_currency_format($total_amount, $donation->currency, NULL, FALSE) . ' (' .
+      commerce_currency_format($original_amount, $donation->currency, NULL, FALSE) . ' + an additional ' .
+      commerce_currency_format($additional_amount, $donation->currency, NULL, FALSE) . ')';
+  }
+  else {
+    $amount_field_value = commerce_currency_format($total_amount, $donation->currency, NULL, FALSE);
+  }
   $form['submitted']['donation_info']['display_amount'] = array(
-    '#markup' => '<div class="form-item"><label>' . t('Donation Amount') . ':</label>' . $donation->donation['amount_formatted'] . '</div>',
+    '#markup' => '<div class="form-item"><label>' . t('Donation Amount') . ':</label>' . $amount_field_value . '</div>',
   );
 
   // Show whether or not it's a recurring donation.
@@ -579,6 +594,38 @@ function fundraiser_webform_submission_display(&$form, &$form_state) {
   $form = _fundraiser_update_form_field($form, 'payment_information', $payment_information_field);
   $form = _fundraiser_update_form_field($form, 'payment_method', $payment_method_field);
   $form = _fundraiser_update_form_field($form, 'payment_fields', $payment_fields_field);
+
+  // Populate the ticket field if available:
+  if (isset($form_state['build_info']['args'][1]->data)
+    && isset($form['submitted']['tickets']['ticket_box'])) {
+    _fundraiser_webform_populate_ticket_field($form, $form_state);
+  }
+}
+
+/**
+ * Populates ticket values on the submission edit form.
+ */
+function _fundraiser_webform_populate_ticket_field(&$form, &$form_state) {
+  // Location and obtain the ticket values if they are available:
+  foreach ($form_state['build_info']['args'][1]->data as $ticket_data) {
+    if (is_array($ticket_data['value'])
+      && (strpos(serialize($ticket_data['value']), 'ticket-quant') !== FALSE
+      || strpos(serialize($ticket_data['value']), 'tickets-extra-donation') !== FALSE)) {
+      $ticket_values = $ticket_data['value'];
+    }
+  }
+  if (!isset($ticket_values)) {
+    return;
+  }
+  // Populate ticket values accordingly:
+  foreach ($ticket_values as $ticket_row) {
+    $row_data = unserialize($ticket_row);
+    $row_data_keys = array_keys($row_data);
+    $row_key = array_shift($row_data_keys);
+    if (!empty($row_data[$row_key])) {
+      $form['submitted']['tickets']['ticket_box'][$row_key]['#default_value'] = $row_data[$row_key];
+    }
+  }
 }
 
 /**
