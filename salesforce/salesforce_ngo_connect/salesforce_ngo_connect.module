@@ -24,3 +24,33 @@ function salesforce_ngo_connect_entity_info() {
     ),
   );
 }
+
+/**
+ * Implements hook_salesforce_sync_pass_item()
+ */
+function salesforce_ngo_connect_salesforce_sync_pass_item($item, $result) {
+  if (!empty($result->success)) {
+    // Create the NGO Connect Batch Upload entity.
+    $batch_upload_data = array(
+      'batch_upload_id' => $result->id,
+      'drupal_id' => $item->drupal_id,
+      'module' => $item->module,
+      'delta' => $item->delta,
+    );
+
+    $batch_upload = entity_create('salesforce_ngo_connect_batch_upload', $batch_upload_data);
+    $batch_upload->save();
+
+    // Remove Drupal entity to Batch Upload Salesforce mapping.
+    $sf_object = new stdClass();
+    $sf_object->Id = $result->id;
+    salesforce_sync_delete_map(array(
+      'sobject' => $sf_object,
+    ));
+  }
+  else {
+    watchdog('salesforce_ngo_connect', t('Unable to create Batch Upload entity. Salesforce sync failed for item ID: @item_id', array(
+      '@item_id' => $item->item_id,
+        )), WATCHDOG_ERROR);
+  }
+}
