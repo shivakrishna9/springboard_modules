@@ -7,7 +7,8 @@
  */
 function sba_message_action_message_preview_page($nid) {
 
-  $node = node_load($nid);
+    // $nid already sanitized in the access hook.
+    $node = node_load($nid);
 
   // Check if the step two form has already been submitted.
   // @todo think about this.
@@ -20,37 +21,55 @@ function sba_message_action_message_preview_page($nid) {
   // Build page header and multi-step form.
   $build = array();
   $build['content'] = array(
-    'page_description' => array(
+    'page_description_content' => array(
       '#id' => 'message-action-preview-page',
       '#type' => 'markup',
-      '#markup' => '<p>' . t('Please review and edit the messages below; or if you prefer, simply send now.'),
-      '#prefix' => '<div class="message-action-preview-page">',
-      '#suffix' => '</div>',
+      '#markup' => t('Please review the messages below; or if you prefer, simply <span id="multiflow-send-now-wrapper" style="display:inline-block"><a href="#" id="multiflow-send-now">send now</a></span>.'),
+      '#prefix' => '<div class="message-action-preview-page"><p>',
+      '#suffix' => '</p></div>',
+      '#weight' => -8,
     ),
     'contact_description' => array(
       '#id' => 'message-action-preview-contact',
       '#type' => 'markup',
-      '#markup' => t('These message(s) were generated based on the address you entered: ') . check_plain($_SESSION['contact']['full_address']),
-      '#prefix' => '<div class="message-action-preview-contact"><p><br />',
+      '#markup' => t('These message(s) were generated based on the address you entered: ') . check_markup($_SESSION['contact']['full_address'], 'filtered_html')
+        . t('If this is incorrect please !click_here to enter a different address.', array('!click_here' => l('click here', 'node/' . $node->nid))),
+      '#prefix' => '<div class="message-action-preview-contact"><p>',
       '#suffix' => '</p></div>',
+      '#weight' => -7,
     ),
     'sba_message_action_preview_form' => drupal_get_form('sba_message_action_preview_form', $node),
   );
 
   $messages = $build['content']['sba_message_action_preview_form']['messages'];
   $children = array_flip(element_children($messages));
-  $subject = FALSE;
-  $body = FALSE;
+  $subject_required = FALSE;
+  $body_required = FALSE;
+  $editable_but_not_required = FALSE;
   foreach ($messages as $key => $message) {
-    if(isset($children[$key]) && (!$subject && !$body)) {
-      $subject = $message['message']['subject']['#required'];
+    if(isset($children[$key]) && (!$subject_required && !$body_required)) {
+      $subject_required = $message['message']['subject']['#required'];
+      if ($subject_required) {
+        $editable_but_not_required = TRUE;
+      }
       if (isset($message['message']['editable_body'])) {
-        $body = $message['message']['editable_body']['#required'];
+        $body_required = $message['message']['editable_body']['#required'];
+        $editable_but_not_required = TRUE;
       }
     }
   }
-  if ($subject || $body) {
+
+  $build['content']['page_description_label']['#prefix'] = '<h4>';
+  $build['content']['page_description_label']['#suffix'] = '</h4>';
+  $build['content']['page_description_label']['#weight'] = -10;
+  $build['content']['page_description_label']['#markup'] = t('Step 2 of 2');
+
+
+  if ($subject_required || $body_required) {
     $build['content']['page_description']['#markup'] = t('One or more of the messages below requires editing. Please make your edits and then click "Send Now" at the bottom of the page.');
+  }
+  elseif ($editable_but_not_required) {
+    $build['content']['page_description']['#markup'] = t('Please review and edit the messages below; or if you prefer, simply <span id="multiflow-send-now-wrapper"></span><a href="#" id="multiflow-send-now">send now</a>.');
   }
 
   return $build;
