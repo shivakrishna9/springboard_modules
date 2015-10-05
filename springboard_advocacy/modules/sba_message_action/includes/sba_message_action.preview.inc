@@ -93,8 +93,10 @@ function sba_message_action_preview_form($form, $form_state, $node) {
 
     // Build the form content out of the API response stored in session.
     $messages = $_SESSION['delivered_messages']['messages'];
-    foreach($_SESSION['undelivered_messages']['messages'] as $message) {
-      $messages[] = $message;
+    if (!empty($_SESSION['undelivered_messages']['messages'])) {
+      foreach ($_SESSION['undelivered_messages']['messages'] as $message) {
+        $messages[] = $message;
+      }
     }
     // @todo explore other ways of retrieving these two.
     $contact = $_SESSION['contact'];
