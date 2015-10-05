@@ -184,10 +184,11 @@ function sba_message_action_preview_form($form, $form_state, $node) {
       // Check for required fields
       if (isset($build['message'][$message_entity->sba_message_id]['body_required']) && $build['message'][$message_entity->sba_message_id]['body_required']['#value']) {
         $build['message'][$message_entity->sba_message_id]['edited_body']['#required'] = TRUE;
-        $build['message'][$message_entity->sba_message_id]['edited_body']['#title'] =  t('Your custom message');
+        $build['message'][$message_entity->sba_message_id]['edited_body']['#title'] =  '<span class="message-subject-required">' . t('You must edit the body of this message before sending.') . '</span>';
       }
       if (isset($build['message'][$message_entity->sba_message_id]['subject_required']) && $build['message'][$message_entity->sba_message_id]['subject_required']['#value']) {
         $build['message'][$message_entity->sba_message_id]['subject']['#required'] = TRUE;
+        $build['message'][$message_entity->sba_message_id]['subject']['#title'] = t('Subject -') .  '<span class="message-subject-required">' . t('You must edit this subject line before sending.') .'</span>';
       }
       // Assign the rebuilt messages to the form
       $form['messages'][$key]['message'] = $build['message'][$message_entity->sba_message_id];
