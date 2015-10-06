@@ -283,8 +283,7 @@ function webform_confirmations_form_webform_configure_form_alter(&$form, &$form_
   $form['submission']['total_submit_limit'] = $total_submit_limit;
   $form['submission']['submit_limit'] = $submit_limit;
   $form['submission']['status'] = $status;
-
-  // Add submission and validation functions:
+  // Add submit.
   $form['#submit'][] = '_webform_confirmations_submit';
 }
 
