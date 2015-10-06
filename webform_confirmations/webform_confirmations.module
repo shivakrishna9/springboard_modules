@@ -263,6 +263,16 @@ function webform_confirmations_form_webform_configure_form_alter(&$form, &$form_
     '(See tokens below).');
   $form['submission']['redirection']['#description'] = t('Choose where to redirect the user upon successful submission. The Custom URL ' .
     'option supports Webform token replacements. (See tokens below).');
+
+  // Remove the "no redirect (reload current page)" option if webform_user is enabled, as this prevents user creation:
+  if (module_exists('webform_user')) {
+    unset($form['submission']['redirection']['redirect']['#options']['none']);
+    // If the current value of this field is set to "none" then reset it to "Confirmation page";
+    if ($form['submission']['redirection']['redirect']['#default_value'] == 'none') {
+      $form['submission']['redirection']['redirect']['#default_value'] = 'confirmation';
+    }
+  }
+
   // Shuffle things to display later in the form, there may be a better way to reorg the array. Check later.
   $total_submit_limit = $form['submission']['total_submit_limit'];
   $submit_limit = $form['submission']['submit_limit'];
@@ -273,7 +283,8 @@ function webform_confirmations_form_webform_configure_form_alter(&$form, &$form_
   $form['submission']['total_submit_limit'] = $total_submit_limit;
   $form['submission']['submit_limit'] = $submit_limit;
   $form['submission']['status'] = $status;
-  // Add submit.
+
+  // Add submission and validation functions:
   $form['#submit'][] = '_webform_confirmations_submit';
 }
 
