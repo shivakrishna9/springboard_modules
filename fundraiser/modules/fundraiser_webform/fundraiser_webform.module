@@ -595,11 +595,13 @@ function fundraiser_webform_submission_display(&$form, &$form_state) {
   $form = _fundraiser_update_form_field($form, 'payment_method', $payment_method_field);
   $form = _fundraiser_update_form_field($form, 'payment_fields', $payment_fields_field);
 
-  // Populate the ticket field if available:
+  // Populate the ticket fields if available:
   if (isset($form_state['build_info']['args'][1]->data)
     && isset($form['submitted']['tickets']['ticket_box'])) {
     _fundraiser_webform_populate_ticket_field($form, $form_state);
   }
+  // Disabled the ticket fields as the donation has already been created:
+  $form['submitted']['tickets']['ticket_box']['#disabled'] = TRUE;
 }
 
 /**
@@ -623,7 +625,8 @@ function _fundraiser_webform_populate_ticket_field(&$form, &$form_state) {
     $row_data_keys = array_keys($row_data);
     $row_key = array_shift($row_data_keys);
     if (!empty($row_data[$row_key])) {
-      $form['submitted']['tickets']['ticket_box'][$row_key]['#default_value'] = $row_data[$row_key];
+      $quantity = $row_data[$row_key];
+      $form['submitted']['tickets']['ticket_box'][$row_key]['#default_value'] = $quantity;
     }
   }
 }
