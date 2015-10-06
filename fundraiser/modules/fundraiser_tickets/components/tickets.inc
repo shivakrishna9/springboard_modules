@@ -141,7 +141,7 @@ function _fundraiser_tickets_validate_webform_field($element, &$form_state) {
     $additional_amount = $ticket_values['fundraiser-tickets-extra-donation'];
 
     // Remove any non-decimal, non-numeric characters before validation:
-    $additional_amount = preg_replace('/[^0-9.]/', '', $additional_amount);
+    $additional_amount =  _fundraiser_amount_value_sanitize($additional_amount);
 
     if (!preg_match('/^\d*(\.\d*)?$/', $additional_amount)) {
       form_set_error('fundraiser-tickets-extra-donation', t('Donation amount must be in a valid number format with only one decimal point.'));
