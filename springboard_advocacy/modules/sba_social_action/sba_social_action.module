@@ -1,0 +1,28 @@
+<?php
+
+/**
+ * @file
+ * Module file for Social Actions module.
+ */
+
+/**
+ * Implements hook_node_info().
+ */
+function sba_social_action_node_info() {
+  return array(
+    'sba_social_action' => array(
+      'name' => t('Springboard Social Action'),
+      'base' => 'sba_social_action',
+      'description' => t('Social Action conten type'),
+      'title_label' => t('Social Action'),
+      'locked' => TRUE,
+    ),
+  );
+}
+
+/**
+ * Implements hook_form().
+ */
+function sba_social_action_form($node, $form_state) {
+  return node_content_form($node, $form_state);
+}
