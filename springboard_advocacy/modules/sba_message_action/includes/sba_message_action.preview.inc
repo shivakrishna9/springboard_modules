@@ -48,13 +48,13 @@ function sba_message_action_message_preview_page($nid) {
   $editable_but_not_required = FALSE;
   foreach ($messages as $key => $message) {
     if(isset($children[$key]) && (!$subject_required && !$body_required)) {
-      $subject_required = $message['message']['subject']['#required'];
-      if ($subject_required) {
+      if(!isset($message['subject_show'])) {
         $editable_but_not_required = TRUE;
+        $subject_required = $message['message']['subject']['#required'];
       }
-      if (isset($message['message']['editable_body'])) {
-        $body_required = $message['message']['editable_body']['#required'];
+      if (isset($message['message']['edited_body'])) {
         $editable_but_not_required = TRUE;
+        $body_required = $message['message']['edited_body']['#required'];
       }
     }
   }
@@ -66,10 +66,12 @@ function sba_message_action_message_preview_page($nid) {
 
 
   if ($subject_required || $body_required) {
-    $build['content']['page_description']['#markup'] = t('One or more of the messages below requires editing. Please make your edits and then click "Send Now" at the bottom of the page.');
+    $editable_but_not_required = FALSE;
+    $build['content']['page_description_content']['#markup'] = t('One or more of the messages below requires editing. Please make your edits and then click "Send Now" at the bottom of the page.');
   }
-  elseif ($editable_but_not_required) {
-    $build['content']['page_description']['#markup'] = t('Please review and edit the messages below; or if you prefer, simply <span id="multiflow-send-now-wrapper"></span><a href="#" id="multiflow-send-now">send now</a>.');
+
+  if (!empty($editable_but_not_required)) {
+    $build['content']['page_description_content']['#markup'] = t('Please review and edit the messages below; or if you prefer, simply <span id="multiflow-send-now-wrapper"></span><a href="#" id="multiflow-send-now">send now</a>.');
   }
 
   return $build;
