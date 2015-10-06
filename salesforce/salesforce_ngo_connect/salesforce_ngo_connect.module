@@ -54,3 +54,78 @@ function salesforce_ngo_connect_salesforce_sync_pass_item($item, $result) {
         )), WATCHDOG_ERROR);
   }
 }
+
+/**
+ * Implements hook_cron_queue_info()
+ */
+function salesforce_ngo_connect_cron_queue_info() {
+  $queues['update_batch_upload_ids'] = array(
+    'worker callback' => 'salesforce_ngo_connect_process_batch_upload_ids',
+    'time' => 120,
+  );
+
+  return $queues;
+}
+
+/**
+ * Implements hook_cron()
+ */
+function salesforce_ngo_connect_cron() {
+  $queue = DrupalQueue::get('update_batch_upload_ids');
+
+  // Get the IDs of all NGO Connect Batch Upload entities.
+  $query = new EntityFieldQuery();
+  $query->entityCondition('entity_type', 'salesforce_ngo_connect_batch_upload');
+  $result = $query->execute();
+
+  if (!empty($result['salesforce_ngo_connect_batch_upload'])) {
+    // Get the Batch Upload objects from Salesforce for the entity IDs found.
+    $sfids = array_keys($result['salesforce_ngo_connect_batch_upload']);
+
+    // Define Batch Upload object fields to request.
+    $field_names = array(
+      'status' => 'rC_Connect__Batch_Upload_Status__c',
+      'account_id' => 'rC_Connect__Batch_Upload_Account_Matched__c',
+      'contact_id' => 'rC_Connect__Batch_Upload_Contact_1_Matched__c',
+      'opportunity_id' => 'rC_Connect__Batch_Upload_Giving_Matched__c',
+    );
+
+    // Get Batch Upload object field data from Salesforce.
+    $sync = new SalesforceSync();
+    $response = $sync->fetchByIds('rC_Connect__Batch_Upload__c', array_values($field_names), $sfids);
+
+    // Create a cron queue item for each Batch Upload object.
+    foreach ($response as $record) {
+      if (!empty($record->fields)) {
+        // Only process Batch Upload objects with a Committed status.
+        if ($record->fields->$field_names['status'] == 'Committed') {
+          $batch_data = array(
+            'id' => $record->fields->Id,
+          );
+
+          foreach ($field_names as $key => $name) {
+            $batch_data[$key] = (isset($record->fields->$name)) ? $record->fields->$name : NULL;
+          }
+
+          $queue->createItem($batch_data);
+        }
+      }
+    }
+  }
+}
+
+/**
+ * Updates NGO Connect Batch Upload entities with Account, Contact and
+ * Opportunity IDs.
+ *
+ * TODO: Create Salesforce mappings for related Drupal entities.
+ */
+function salesforce_ngo_connect_process_batch_upload_ids($data) {
+  $batch_upload = entity_load_single('salesforce_ngo_connect_batch_upload', $data['id']);
+  if (!empty($batch_upload)) {
+    $batch_upload->account_id = $data['account_id'];
+    $batch_upload->contact_id = $data['contact_id'];
+    $batch_upload->opportunity_id = $data['opportunity_id'];
+    $batch_upload->save();
+  }
+}
