@@ -74,6 +74,28 @@ function sba_message_action_insert_components($node) {
 
   $fields[] = array(
     'nid' => $node->nid,
+    'form_key' => 'sba_action_is_multistep',
+    'pid' => 0,
+    'name' => t('Completed second step'),
+    'type' => 'hidden',
+    'value' => 0,
+    'weight' => 30,
+    'email' => 1,
+  );
+
+  $fields[] = array(
+    'nid' => $node->nid,
+    'form_key' => 'sba_multistep_complete',
+    'pid' => 0,
+    'name' => t('Completed second step'),
+    'type' => 'hidden',
+    'value' => 0,
+    'weight' => 31,
+    'email' => 1,
+  );
+
+  $fields[] = array(
+    'nid' => $node->nid,
     'form_key' => 'sbp_sba_action_optin',
     'name' => t('Opt In '),
     'type' => 'select',

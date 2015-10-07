@@ -568,3 +568,46 @@ function sba_message_action_update_7023() {
     $wrapper->save();
   }
 }
+
+function sba_message_action_update_7024() {
+
+  $nodes = db_query('select n.nid, f.field_sba_action_flow_value from {node} n
+    LEFT JOIN {field_data_field_sba_action_flow} f on f.entity_id = n.nid
+    WHERE n.type = :type',
+    array(':type' => 'sba_message_action')
+  );
+
+  foreach ($nodes as $node) {
+    $cid = db_query('select wc.cid from {webform_component} wc
+      WHERE wc.nid = :nid AND wc.form_key = :key',
+      array(':nid' => $node->nid, ':key' => 'sba_action_is_multistep')
+    )->fetchAssoc();
+
+    if (!$cid) {
+      $field = array(
+        'nid' => $node->nid,
+        'form_key' => 'sba_action_is_multistep',
+        'pid' => 0,
+        'name' => t('Multi-step or one step?'),
+        'type' => 'hidden',
+        'value' => $node->field_sba_action_flow_value,
+        'weight' => 30,
+        'email' => 1,
+      );
+      webform_component_insert($field);
+
+      $field = array(
+        'nid' => $node->nid,
+        'form_key' => 'sba_multistep_complete',
+        'pid' => 0,
+        'name' => t('Multi-step Complete?'),
+        'type' => 'hidden',
+        'value' => '',
+        'weight' => 31,
+        'email' => 1,
+      );
+
+      webform_component_insert($field);
+    }
+  }
+}

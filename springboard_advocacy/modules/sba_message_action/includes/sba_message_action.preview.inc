@@ -96,15 +96,18 @@ function sba_message_action_preview_form($form, $form_state, $node) {
     // Build the form content out of the API response stored in session.
     $messages = $_SESSION['delivered_messages']['messages'];
 
+    foreach ($_SESSION['delivered_messages']['messages'] as $id => $message) {
+      $messages[$node->messages[$message['message_id']]->data['weight'] . $message['person']['organization'] . $message['targets']->last_name] = $message;
+      unset($messages[$id]);
+    }
+
     if (!empty($_SESSION['undelivered_messages']['messages'])) {
       foreach ($_SESSION['undelivered_messages']['messages'] as $message) {
-        $messages[] = $message;
+        $messages[$node->messages[$message['message_id']]->data['weight'] . $message['person']['organization'] . $message['targets']->last_name] = $message;
       }
     }
 
-    usort($messages, function ($a, $b) use ($node) {
-      return $node->messages[$a['message_id']]->data['weight'] > $node->messages[$b['message_id']]->data['weight'];
-    });
+    asort($messages);
 
     // @todo explore other ways of retrieving these two.
     $contact = $_SESSION['contact'];
@@ -326,7 +329,7 @@ function sba_message_action_preview_form_submit($form, &$form_state) {
     'contact' => $form_state['values']['contact'],
     'messages' => $remove_hold_index,
   );
-
+dpm($payload);
   $api_call = springboard_advocacy_api_call();
   $response = $api_call->invokeClientMethod('resolveTargets', $payload);
 
@@ -428,6 +431,7 @@ function sba_message_action_preview_form_submit($form, &$form_state) {
           ':nid' => $node->nid,
           ':form_key' => 'sba_user_edit_flag'
         ))->fetchObject();
+
       if (!empty($user_edit->cid)) {
         db_update('webform_submitted_data')->fields(array('data' => 1))
           ->condition('nid', $node->nid, '=')
@@ -438,7 +442,21 @@ function sba_message_action_preview_form_submit($form, &$form_state) {
       }
     }
   }
-
+  if ($sid) {
+    $complete = db_query('SELECT * FROM {webform_component} WHERE nid = :nid AND form_key = :form_key',
+      array(
+        ':nid' => $node->nid,
+        ':form_key' => 'sba_multistep_complete'
+      ))->fetchObject();
+    if (!empty($complete->cid)) {
+      db_update('webform_submitted_data')->fields(array('data' => 1))
+        ->condition('nid', $node->nid, '=')
+        ->condition('sid', $sid, '=')
+        ->condition('cid', $complete->cid, '=')
+        ->condition('no', 0, '=')
+        ->execute();
+    }
+  }
 }
 
 /**
