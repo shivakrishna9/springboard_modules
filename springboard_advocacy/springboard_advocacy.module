@@ -492,3 +492,18 @@ function _springboard_advocacy_webform_submission_flatten($nid, $submit_tree, $s
   $flat_array = array_intersect_key($flat_array, array_combine($submission_keys, $submission_keys));
   return $flat_array;
 }
+
+function springboard_advocacy_springboard_admin_alias_patterns() {
+  return array(
+    'node/%/message-preview' => array(
+      'path' => array(
+        'regex' => '|^/node/([0-9]+)/message-preview$|',
+        'replacement' => 'node/$1/message-preview',
+      ),
+      'alias' => array(
+        'regex' => '|^springboard/node/([0-9]+)/message-preview$|',
+        'replacement' => FALSE,  // don't redirect confirmation pages to springboard/...
+      ),
+    ),
+  );
+}

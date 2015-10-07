@@ -61,7 +61,7 @@ function sba_message_action_menu() {
     'file path' => drupal_get_path('module', 'sba_message_action') . '/includes',
   );
 
-  $items['message-preview/%'] = array(
+  $items['node/%/message-preview'] = array(
     'title' => 'Preview Messages',
     'page arguments' => array(1),
     'page callback' => 'sba_message_action_message_preview_page',
@@ -453,7 +453,7 @@ function sba_message_action_multifow_submit($form, &$form_state) {
     $sid = $form_state['values']['details']['sid'];
     $_SESSION['action_sid'] = array('sid' => $sid, 'nid' => $node->nid);
     $form_state['redirect'] = array(
-      'message-preview/' . $node->nid,
+      'node/' . $node->nid . '/message-preview',
       array('query' => array('sid' => $sid))
     );
   }
@@ -1045,7 +1045,7 @@ function sba_message_action_flush_caches() {
  * Put the page wrapper around the multi-step form.
  */
 function sba_message_action_page_wrappers_page_node_alter(&$node) {
-  if (arg(0) == 'message-preview' && is_numeric(arg(1))) {
+  if (arg(2) == 'message-preview' && is_numeric(arg(1))) {
     $is_wrapped = node_load(arg(1));
     if (isset($is_wrapped->type) && $is_wrapped->type ='sba_message_action') {
       $node = $is_wrapped;
