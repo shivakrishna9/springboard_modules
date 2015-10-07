@@ -329,7 +329,6 @@ function sba_message_action_preview_form_submit($form, &$form_state) {
     'contact' => $form_state['values']['contact'],
     'messages' => $remove_hold_index,
   );
-dpm($payload);
   $api_call = springboard_advocacy_api_call();
   $response = $api_call->invokeClientMethod('resolveTargets', $payload);
 
