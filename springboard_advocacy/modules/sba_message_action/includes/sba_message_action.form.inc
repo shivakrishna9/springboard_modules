@@ -97,7 +97,7 @@ function sba_message_action_additional_elements(&$form, &$form_state) {
   elseif ($action_type == 'multi_flow') {
     $form['sba_messages']['multiflow'] = array(
       '#type' => 'fieldset',
-      '#title' => t('Your Message'),
+      '#title' => t('Step 1 of 1'),
       '#attributes' => array('class' => array('sba-message')),
     );
     $form['sba_messages']['multiflow']['prompt'] =  array(
@@ -176,8 +176,9 @@ function sba_message_action_message_form(&$form, $message, $action_type) {
 
     // Is it required to edit the subject?
     if ($subject_editable == 'Editing is required') {
-      $description = t('You must edit the subject line of this message before sending.');
-
+      if (!$multi_flow) {
+        $description = t('You must edit the subject line of this message before sending.');
+      }
       // Validator needs this value?
       $form['message'][$message->sba_message_id]['subject_required'] = array(
         '#type' => 'value',
@@ -262,7 +263,7 @@ function sba_message_action_message_form(&$form, $message, $action_type) {
   if ($body_editable == 'editable' && $action_type != 'multiple_not_multi_flow') {
 
     if ($required_body) {
-      $description = t('You must edit the body of this message before sending.');
+      $description = !$multi_flow ? t('You must edit the body of this message before sending.') : '';
       $required = TRUE;
     }
     else {

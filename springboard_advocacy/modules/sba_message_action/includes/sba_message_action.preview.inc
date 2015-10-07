@@ -192,7 +192,7 @@ function sba_message_action_preview_form($form, $form_state, $node) {
       }
       if (isset($build['message'][$message_entity->sba_message_id]['subject_required']) && $build['message'][$message_entity->sba_message_id]['subject_required']['#value']) {
         $build['message'][$message_entity->sba_message_id]['subject']['#required'] = TRUE;
-        $build['message'][$message_entity->sba_message_id]['subject']['#title'] = t('Subject -') .  '<span class="message-subject-required">' . t('You must edit this subject line before sending.') .'</span>';
+        $build['message'][$message_entity->sba_message_id]['subject']['#title'] = '<span class="message-subject-required">' . t('Subject - You must edit this subject line before sending.') .'</span>';
       }
       // Assign the rebuilt messages to the form
       $form['messages'][$key]['message'] = $build['message'][$message_entity->sba_message_id];

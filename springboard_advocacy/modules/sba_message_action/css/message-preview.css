@@ -54,3 +54,7 @@ div.form-type-item {
 #edit-actions input:hover {
     background: #1E72A3;
 }
+
+.message-subject-required {
+    color: #c00
+}
