@@ -91,9 +91,7 @@ function commerce_payment_example_fundraiser_commerce_charge($method_instance, $
   _fundraiser_commerce_submit_handler_pane_values($pane_values, $donation);
 
   // Process the transaction. First look for special values that force a failure.
-  $success = TRUE;
-  if (!commerce_payment_example_simulate_failure($donation)) {
-    $success = FALSE;
+  if (commerce_payment_example_is_simulated_failure($donation)) {
     // Add a payment transaction record for failed payments.
     $transaction = commerce_payment_transaction_new('commerce_payment_example', $order->order_id);
     $transaction->instance_id = $method_instance['instance_id'];
@@ -102,6 +100,7 @@ function commerce_payment_example_fundraiser_commerce_charge($method_instance, $
     $transaction->remote_status = 'remote_failed';
     $transaction->message = t('Failed due to sustainer failure simulation mode.');
     commerce_payment_transaction_save($transaction);
+    return FALSE;
   }
   // Pass the values through to the submit function.
   else {
@@ -111,9 +110,8 @@ function commerce_payment_example_fundraiser_commerce_charge($method_instance, $
     }
 
     commerce_payment_example_submit_form_submit($method_instance, array(), $pane_values, $order, $charge);
+    return TRUE;
   }
-
-  return $success;
 }
 
 
@@ -125,7 +123,7 @@ function commerce_payment_example_fundraiser_commerce_charge($method_instance, $
  * @param $donation
  *   The donation being processed.
  */
-function commerce_payment_example_simulate_failure($donation) {
+function commerce_payment_example_is_simulated_failure($donation) {
   if (!$donation->reference_charge && $donation->donation['payment_fields']['credit']['card_number'] == '4222222222222') {
     return TRUE;
   }
@@ -133,7 +131,7 @@ function commerce_payment_example_simulate_failure($donation) {
   if ($donation->reference_charge && $donation->donation['zip'] == '55555') {
     return TRUE;
   }
-  
+   
   return FALSE;  
 } 
 
