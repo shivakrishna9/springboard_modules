@@ -1169,7 +1169,7 @@ function fundraiser_tickets_fundraiser_donation_process($donation) {
             // set the 'other_amount' to the value of the extra donation.
             $extra_donation = unserialize($ticket_amounts);
             if(!empty($extra_donation['fundraiser-tickets-extra-donation'])) {
-              $donation->donation['other_amount'] = number_format($extra_donation['fundraiser-tickets-extra-donation'], 2);
+              $donation->donation['other_amount'] = _fundraiser_amount_value_sanitize($extra_donation['fundraiser-tickets-extra-donation']);
               $donation->donation['amount'] = 'other';
             }
             break;

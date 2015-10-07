@@ -528,3 +528,16 @@ function sba_message_action_update_7020() {
     }
   }
 }
+
+/**
+ * Update description of the test mode field.
+ */
+function sba_message_action_update_7021() {
+  $field = field_info_instance('node', 'field_sba_test_mode', 'sba_message_action');
+  if ($field) {
+    $field['description'] = t(
+      'Check this box to enable test mode. Messages will not be sent to any configured targets when test mode is enabled. Unpublished actions are always in test mode.'
+    );
+    field_update_instance($field);
+  }
+}
