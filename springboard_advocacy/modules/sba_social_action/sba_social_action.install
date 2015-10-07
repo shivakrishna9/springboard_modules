@@ -1,30 +1,13 @@
 <?php
 
 function sba_social_action_install() {
-// Use get_t() to get the name of our localization function for translation
-// during install, when t() is not available.
-$t = get_t();
 
- $action = array(
-    'sba_social_action' => array(
-      'name' => t('Springboard Social Action'),
-      'base' => 'sba_social_action',
-      'description' => t('Social Action content type'),
-      'title_label' => t('Social Action'),
-      'locked' => TRUE,
-      'status' => 0,
-    ),
-  );
-
-  // Set additional defaults and save the content type.
-  $content_type = node_type_set_defaults($action);
-  node_type_save($action);
-
-  $sba_action_types = variable_get('sba_action_types', array(''));
-  $sba_action_types = array_merge($sba_action_types, array('sba_social_action'));
-  variable_set('sba_action_types', array_unique($sba_action_types));
-
+  module_load_include('inc', 'sba_social_action', 'includes/install/sba_social_action.install');
+  module_load_include('inc', 'sba_social_action', 'includes/install/sba_social_action.install_examples');
   module_load_include('inc', 'sba_social_action', 'includes/install/sba_social_action.twitter_message_install');
+
+  _sba_social_action_create_content_type();
+  _sba_social_action_create_example_social_action();
   sba_social_action_create_twitter_message_entity();
 
 }
