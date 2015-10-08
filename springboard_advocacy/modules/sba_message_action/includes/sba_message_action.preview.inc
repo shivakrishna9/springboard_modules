@@ -466,6 +466,12 @@ function sba_message_action_preview_form_submit($form, &$form_state) {
         ->execute();
     }
   }
+  if ($sid) {
+    // Update to trigger salesforce resync.
+    module_load_include('inc', 'webform', 'includes/webform.submissions');
+    $submission = webform_get_submission($node->nid, $sid);
+    webform_submission_update($node, $submission);
+  }
 }
 
 /**
