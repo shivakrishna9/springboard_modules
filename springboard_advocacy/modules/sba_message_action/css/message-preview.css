@@ -55,6 +55,9 @@ div.form-type-item {
     background: #1E72A3;
 }
 
-.message-subject-required {
+.required {
     color: #c00
+}
+#multiflow-send-now-wrapper {
+    display: inline-block;
 }

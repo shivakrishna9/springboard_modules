@@ -71,7 +71,7 @@ function sba_message_action_message_preview_page($nid) {
   }
 
   if (!empty($editable_but_not_required)) {
-    $build['content']['page_description_content']['#markup'] = t('Please review and edit the messages below; or if you prefer, simply <span id="multiflow-send-now-wrapper"></span><a href="#" id="multiflow-send-now">send now</a>.');
+    $build['content']['page_description_content']['#markup'] = t('Please review and edit the messages below; or if you prefer, simply <span id="multiflow-send-now-wrapper"><a href="#" id="multiflow-send-now">send now</a></span>.');
   }
 
   return $build;
@@ -197,11 +197,11 @@ function sba_message_action_preview_form($form, $form_state, $node) {
     // Check for required fields
     if (isset($build['message'][$message_entity->sba_message_id]['body_required']) && $build['message'][$message_entity->sba_message_id]['body_required']['#value']) {
       $build['message'][$message_entity->sba_message_id]['edited_body']['#required'] = TRUE;
-      $build['message'][$message_entity->sba_message_id]['edited_body']['#title'] =  '<span class="message-subject-required">' . t('You must edit the body of this message before sending.') . '</span>';
+      $build['message'][$message_entity->sba_message_id]['edited_body']['#title'] =  t('You must edit the body of this message before sending');
     }
     if (isset($build['message'][$message_entity->sba_message_id]['subject_required']) && $build['message'][$message_entity->sba_message_id]['subject_required']['#value']) {
       $build['message'][$message_entity->sba_message_id]['subject']['#required'] = TRUE;
-      $build['message'][$message_entity->sba_message_id]['subject']['#title'] = '<span class="message-subject-required">' . t('Subject - You must edit this subject line before sending.') .'</span>';
+      $build['message'][$message_entity->sba_message_id]['subject']['#title'] =  t('Subject - You must edit this subject line before sending');
     }
     // Assign the rebuilt messages to the form
     $form['messages'][$key]['message'] = $build['message'][$message_entity->sba_message_id];
@@ -278,6 +278,19 @@ function sba_message_action_preview_form_validate($form, &$form_state) {
   }
   // Set value for the user_edited_flag
   $form_state['storage']['changed'] = $changed;
+
+  if (!empty($_SESSION['messages']['error'])) {
+    foreach ($_SESSION['messages']['error'] as $key => $message) {
+      if (strpos($message, 'You must edit the body of this message before sending') !== FALSE) {
+        unset($_SESSION['messages']['error'][$key]);
+        drupal_set_message('Please personalize your message before sending', 'error', FALSE);
+      }
+      if (strpos($message, 'You must edit the subject of this message before sending') !== FALSE) {
+        unset($_SESSION['messages']['error'][$key]);
+        drupal_set_message('Please personalize the subject line before sending', 'error', FALSE);
+      }
+    }
+  }
 
 }
 

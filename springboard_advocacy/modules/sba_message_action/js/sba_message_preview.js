@@ -25,6 +25,7 @@
         $('textarea').each(function (e) {
             $(this).height(this.scrollHeight)
         });
+        $('label').has('.form-required').addClass('required');
     });
 
     function submitOnce(editSubmit, send, clicked) {
@@ -55,6 +56,7 @@
         }
     }
     function rotate(num) {
+        console.log('d')
         num = typeof num !== 'undefined' ? num : 10;
         $('#multiflow-send-now-wrapper').css({ 'transform': 'rotate(' + num + 'deg)'});
         var spinner = setTimeout(function() { rotate(num+10); }, 10);
