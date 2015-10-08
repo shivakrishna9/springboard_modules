@@ -26,6 +26,9 @@
     <div class = "fieldset-wrapper">
       <div class="row-fluid">
         <?php print $open_form_tag ?>
+        <div id="right" class="span7 message-column">
+          <?php print $message_fieldset; ?>
+        </div>
         <div id="left" class="span5 message-column">
           <fieldset id="user-information-wrapper" class = "form-wrapper"><legend><?php print $user_legend ?></legend>
             <div class = "fieldset-wrapper">
@@ -34,9 +37,6 @@
           </fieldset>
           <?php print drupal_render_children($form); ?>
           <p><?php print $social ?></p>
-        </div>
-        <div id="right" class="span7 message-column">
-          <?php print $message_fieldset; ?>
         </div>
         <?php print $close_form_tag ?>
         <?php if(!empty($quicksign)): ?>
