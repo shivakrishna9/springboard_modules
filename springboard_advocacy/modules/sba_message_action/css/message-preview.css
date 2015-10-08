@@ -56,8 +56,13 @@ div.form-type-item {
 }
 
 .required {
-    color: #c00
+    color: #c00;
 }
+
+.form-item label {
+    font-size: 12px;
+}
+
 #multiflow-send-now-wrapper {
     display: inline-block;
 }
