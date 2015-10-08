@@ -32,7 +32,7 @@ function fundraiser_tickets_menu() {
     'file' => 'fundraiser_tickets.forms.inc',
     'weight' => 1,
   );
- 
+
   $items['node/%node/tickets/settings'] = array(
     'title' => 'Settings',
     'description' => 'Ticket settings',
@@ -65,8 +65,8 @@ function fundraiser_tickets_menu() {
 function fundraiser_tickets_permission() {
   return array(
     'allow node-specific ticket deletion' => array(
-      'title' => t('allow ticketed event-specific ticket deletion'),
-      'description' => t('Allow deletion of tickets from the ticket list of Ticketed Events.'),
+      'title' => t('Delete any ticket'),
+      'description' => t('Delete tickets from any fundraiser ticket form.'),
     ),
   );
 }
