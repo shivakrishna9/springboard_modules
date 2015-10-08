@@ -33,7 +33,7 @@ function sba_message_action_message_preview_page($nid) {
       '#id' => 'message-action-preview-contact',
       '#type' => 'markup',
       '#markup' => t('These message(s) were generated based on the address you entered: ') . check_markup($_SESSION['contact']['full_address'], 'filtered_html')
-        . t('If this is incorrect please !click_here to enter a different address.', array('!click_here' => l('click here', 'node/' . $node->nid))),
+        . t('If this is incorrect please !click_here to enter a different address.', array('!click_here' => '<a href="#" onclick="history.go(-1);return false;">click here</a>')),
       '#prefix' => '<div class="message-action-preview-contact"><p>',
       '#suffix' => '</p></div>',
       '#weight' => -7,
