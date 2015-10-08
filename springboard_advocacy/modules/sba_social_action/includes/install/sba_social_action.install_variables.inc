@@ -70,6 +70,10 @@ function _sba_social_action_set_vars() {
   $sba_action_types = variable_get('sba_action_types', array(''));
   $sba_action_types = array_merge($sba_action_types, array('sba_social_action'));
   variable_set('sba_action_types', array_unique($sba_action_types));
+  //@todo put this in message action install too.
+  $sba_message_types = variable_get('sba_message_node_types', array(''));
+  $sba_message_types = array_merge($sba_message_types, array('sba_social_action' => 'sba_social_action_twitter_message'));
+  variable_set('sba_message_node_types', $sba_message_types);
   // Let springboard taxonomy know this type has organization issues field.
   $taxonomy_types = variable_get('springboard_taxonomy_node_types', array());
   $taxonomy_types = array_merge($taxonomy_types, array('sba_social_action' => 'sba_social_action'));

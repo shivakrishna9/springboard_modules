@@ -13,13 +13,13 @@ function sba_social_action_create_twitter_message_entity() {
 
   $field_bases = array();
 
-// Exported field_base: 'field_sba_twitter_message_editable'
-  $field_bases['field_sba_twitter_message_editable'] = array(
+// Exported field_base: 'field_sba_twitter_message'
+  $field_bases['field_sba_twitter_editable'] = array(
     'active' => 1,
     'cardinality' => 1,
     'deleted' => 0,
     'entity_types' => array(),
-    'field_name' => 'field_sba_twitter_message_editable',
+    'field_name' => 'field_sba_twitter_editable',
     'foreign keys' => array(),
     'indexes' => array(
       'value' => array(
@@ -142,8 +142,8 @@ function sba_social_action_create_twitter_message_entity() {
   );
 
 
-// Exported field_instance: 'sba_message-sba_message_action_message-field_sba_twitter_message_editable'
-  $field_instances['field_sba_twitter_message_editable'] = array(
+// Exported field_instance: 'sba_message-sba_message_action_message-field_sba_twitter_message'
+  $field_instances['field_sba_twitter_editable'] = array(
     'bundle' => 'sba_social_action_twitter_message',
     'default_value' => array(
       0 => array(
@@ -162,7 +162,7 @@ function sba_social_action_create_twitter_message_entity() {
       ),
     ),
     'entity_type' => 'sba_message',
-    'field_name' => 'field_sba_twitter_message_editable',
+    'field_name' => 'field_sba_twitter_editable',
     'label' => 'Editable by action taker?',
     'required' => 1,
     'settings' => array(
@@ -236,5 +236,30 @@ function sba_social_action_create_twitter_message_entity() {
     if (empty($message)) {
       field_create_instance($instance);
     }
+  }
+}
+
+
+
+
+/**
+ * Delete springboard message fields
+ */
+function _sba_social_action_delete_twitter_fields() {
+  $fields = array(
+    'field_sba_twitter_message',
+    'field_sba_twitter_editable',
+  );
+  foreach ($fields as $field_name) {
+    if($field = field_info_field($field_name)){
+      if (isset($field['bundles']['sba_message']))
+        field_delete_field($field_name);
+    }
+  }
+  drupal_set_message('Sba Social Action twitter fields deleted.');
+  field_group_field_attach_delete_bundle('sba_message','sba_social_action_twitter_message');
+  $twit = sba_message_type_load('sba_social_action_twitter_message');
+  if($twit) {
+    sba_message_type_delete($twit);
   }
 }

@@ -6,8 +6,17 @@ function sba_social_action_install() {
   module_load_include('inc', 'sba_social_action', 'includes/install/sba_social_action.install_examples');
   module_load_include('inc', 'sba_social_action', 'includes/install/sba_social_action.twitter_message_install');
 
+  sba_social_action_create_twitter_message_entity();
   _sba_social_action_create_content_type();
   _sba_social_action_create_example_social_action();
-  sba_social_action_create_twitter_message_entity();
 
+}
+
+function sba_social_action_uninstall() {
+  module_load_include('inc', 'sba_social_action', 'includes/install/sba_social_action.install');
+  //_sba_social_action_delete_nodes();
+  // Remove fields implemented by this module.
+  module_load_include('inc', 'sba_social_action', 'includes/install/sba_social_action.twitter_message_install');
+  _sba_social_action_delete_twitter_fields();
+  //field_purge_batch(1000);
 }

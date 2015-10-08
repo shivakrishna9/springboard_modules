@@ -8,7 +8,7 @@
 /**
  * Create the example message action node.
  */
-function _sba_social_action_create_example_message_action() {
+function _sba_social_action_create_example_social_action() {
   $node = new stdClass();
   $node->is_new = 1;
   $node->type = 'sba_social_action';

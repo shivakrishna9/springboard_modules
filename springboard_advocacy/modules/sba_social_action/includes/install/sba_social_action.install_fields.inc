@@ -248,7 +248,7 @@ function _sba_social_action_create_node_fields($update = false) {
  */
 function _sba_social_action_delete_fields() {
   $fields = array(
-    'sba_social_action_call_to_action',
+    'sba_social_call_to_action',
     'field_social_action_img',
   );
   foreach ($fields as $field_name) {
