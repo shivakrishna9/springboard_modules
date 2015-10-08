@@ -480,7 +480,7 @@ function sba_message_action_form_alter(&$form, &$form_state, $form_id) {
  * @param $form_state
  */
 function sba_message_action_multifow_submit($form, &$form_state) {
-  if (!empty($_SESSION['delivered_messages'])) {
+  if (!empty($_SESSION['delivered_messages']) || !empty($_SESSION['undelivered_messages'])) {
     $node = $form['#node'];
     $sid = $form_state['values']['details']['sid'];
     $_SESSION['action_sid'] = array('sid' => $sid, 'nid' => $node->nid);

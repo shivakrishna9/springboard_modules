@@ -204,12 +204,21 @@ function sba_message_action_build_contact(array $values, $zip, array $geo) {
  */
 function sba_message_action_set_confirmation_session_vars($response, $contact) {
   if (!empty($response->messages)) {
+
     $_SESSION['delivered_messages'] = array();
     $_SESSION['undelivered_messages'] = array();
     $_SESSION['contact'] = $contact;
+    // Needed for step-two forms.
+    $_SESSION['form_details'] = array(
+      'action_id' => isset($response->alert_id) ? $response->alert_id: '',
+      'account_id' => isset($response->account_id) ? $response->account_id : '',
+    );
+    if(isset($response->test_mode)) {
+      $_SESSION['form_details']['test_mode'] = $response->test_mode;
+      $_SESSION['form_details']['test_email'] = $response->test_email;
+    }
 
     $status = sba_message_action_get_message_statuses($response);
-
     unset($status['success']['target_count']);
     if (!empty($status['success'])) {
       $messages = array();
@@ -228,15 +237,6 @@ function sba_message_action_set_confirmation_session_vars($response, $contact) {
           $messages[$x]['precedence'] = $status['success'][$id]['precedence'];
           $x++;
         }
-      }
-      // Needed for step-two forms.
-      $_SESSION['form_details'] = array(
-        'action_id' => isset($response->alert_id) ? $response->alert_id: '',
-        'account_id' => isset($response->account_id) ? $response->account_id : '',
-      );
-      if(isset($response->test_mode)) {
-        $_SESSION['form_details']['test_mode'] = $response->test_mode;
-        $_SESSION['form_details']['test_email'] = $response->test_email;
       }
 
       $_SESSION['delivered_messages'] =

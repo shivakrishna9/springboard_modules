@@ -7,8 +7,8 @@
  */
 function sba_message_action_message_preview_page($nid) {
 
-    // $nid already sanitized in the access hook.
-    $node = node_load($nid);
+  // $nid already sanitized in the access hook.
+  $node = node_load($nid);
 
   // Check if the step two form has already been submitted.
   // @todo think about this.
@@ -91,138 +91,135 @@ function sba_message_action_preview_form($form, $form_state, $node) {
   $form['#attached']['css'][] = drupal_get_path('module', 'sba_message_action') . '/css/message-preview.css';
   $form['#attached']['js'][] = drupal_get_path('module', 'sba_message_action') . '/js/sba_message_preview.js';
 
-  if(!empty($_SESSION['delivered_messages']['messages'])) {
-
-    // Build the form content out of the API response stored in session.
-    $messages = $_SESSION['delivered_messages']['messages'];
+  // Build the form content out of the API response stored in session.
+  $messages = array();
+  if (!empty($_SESSION['delivered_messages']['messages'])) {
 
     foreach ($_SESSION['delivered_messages']['messages'] as $id => $message) {
       $messages[$node->messages[$message['message_id']]->data['weight'] . $message['person']['organization'] . $message['targets']->last_name] = $message;
       unset($messages[$id]);
     }
+  }
 
-    if (!empty($_SESSION['undelivered_messages']['messages'])) {
-      foreach ($_SESSION['undelivered_messages']['messages'] as $message) {
-        $messages[$node->messages[$message['message_id']]->data['weight'] . $message['person']['organization'] . $message['targets']->last_name] = $message;
-      }
+  if (!empty($_SESSION['undelivered_messages']['messages'])) {
+    foreach ($_SESSION['undelivered_messages']['messages'] as $message) {
+      $messages[$node->messages[$message['message_id']]->data['weight'] . $message['person']['organization'] . $message['targets']->last_name] = $message;
     }
+  }
 
-    asort($messages);
+  asort($messages);
 
-    // @todo explore other ways of retrieving these two.
-    $contact = $_SESSION['contact'];
-    $action = $_SESSION['form_details'];
+  // @todo explore other ways of retrieving these two.
+  $contact = $_SESSION['contact'];
+  $action = $_SESSION['form_details'];
 
-    $form['action_id'] = array(
+  $form['action_id'] = array(
+    '#type' => 'value',
+    '#value' => $action['action_id'],
+  );
+
+  if (isset($action['test_mode'])) {
+    $form['test_mode'] = array(
       '#type' => 'value',
-      '#value' => $action['action_id'],
+      '#value' => $action['test_mode'],
     );
 
-    if (isset($action['test_mode'])) {
-      $form['test_mode'] = array(
-        '#type' => 'value',
-        '#value' => $action['test_mode'],
-      );
-
-      $form['test_mode_email'] = array(
-        '#type' => 'value',
-        '#value' => $action['test_email'],
-      );
-    }
-
-    // Maybe use this for cross-check validation on api server.
-    $form['account_id'] = array(
+    $form['test_mode_email'] = array(
       '#type' => 'value',
-      '#value' => $action['account_id'],
-    );
-
-    $form['contact'] = array(
-      '#type' => 'value',
-      '#value' => $contact,
-    );
-
-    $form['messages'] = array (
-      '#type' => 'container',
-      '#tree' => TRUE,
-      '#attributes' => array(
-        'class' => array('message-preview-container'),
-      ),
-    );
-
-    // Used to send our second step form through the same helper functions as the first step form.
-    module_load_include('inc', 'sba_message_action', 'includes/sba_message_action.form');
-
-    foreach ($messages as $key => $message) {
-
-      // Theme the message header.
-      $form['messages'][$key]['sent_to'] = array(
-        '#markup' => theme('sba_message_action_preview_message_header', array('message' => $message)),
-      );
-
-      // Create the message form elements from the entity. Passed by reference
-      // to the same helper function as the first step form.
-      $message_entity = $node->messages[$message['message_id']];
-      $build = array();
-      sba_message_action_message_form($build, $message_entity, 'multi_flow');
-
-      // Customize the resulting form to multi_flow format.
-      // Remove title.
-      unset($build['message'][$message_entity->sba_message_id]['subject_show']['#title']);
-      // Format greeting
-      $greeting = token_replace($build['message'][$message_entity->sba_message_id]['greeting']['#value'], array('sba_target' => (Object) $message['targets']));
-      $build['message'][$message_entity->sba_message_id]['greeting_show']['#markup'] = $greeting;
-      unset($build['message'][$message_entity->sba_message_id]['greeting']);
-      // Format signature.
-      $signature = token_replace($build['message'][$message_entity->sba_message_id]['signature_tokenized']['#value'], array('sba_contact' => (Object) $contact));
-      $build['message'][$message_entity->sba_message_id]['signature']['#type'] = 'item';
-      $build['message'][$message_entity->sba_message_id]['signature']['#markup'] = check_markup($signature, 'plain_text');
-      unset($build['message'][$message_entity->sba_message_id]['signature_tokenized']);
-      // Add a custom class.
-      $build['message'][$message_entity->sba_message_id]['#attributes']['class'][] = 'message-preview-message-fieldset';
-      // Add precedence value.
-      $build['message'][$message_entity->sba_message_id]['precedence'] = array(
-        '#type' => 'value',
-        '#value' => $message['precedence'],
-      );
-      // Add hold value.
-      $build['message'][$message_entity->sba_message_id]['hold'] = array(
-        '#type' => 'value',
-        '#value' => isset($message['hold']) ? TRUE : FALSE,
-      );
-      // Build an array of target properties
-      $build['message'][$message_entity->sba_message_id]['target'] = array(
-        '#type' => 'value',
-        '#value' => array('target_id' => $message['targets']->id, 'primary_delivery_method' => $message['targets']->primary_delivery_method, 'salutation' => $message['targets']->salutation, 'first_name' => $message['targets']->first_name, 'last_name' => $message['targets']->last_name),
-      );
-      // Check for required fields
-      if (isset($build['message'][$message_entity->sba_message_id]['body_required']) && $build['message'][$message_entity->sba_message_id]['body_required']['#value']) {
-        $build['message'][$message_entity->sba_message_id]['edited_body']['#required'] = TRUE;
-        $build['message'][$message_entity->sba_message_id]['edited_body']['#title'] =  '<span class="message-subject-required">' . t('You must edit the body of this message before sending.') . '</span>';
-      }
-      if (isset($build['message'][$message_entity->sba_message_id]['subject_required']) && $build['message'][$message_entity->sba_message_id]['subject_required']['#value']) {
-        $build['message'][$message_entity->sba_message_id]['subject']['#required'] = TRUE;
-        $build['message'][$message_entity->sba_message_id]['subject']['#title'] = '<span class="message-subject-required">' . t('Subject - You must edit this subject line before sending.') .'</span>';
-      }
-      // Assign the rebuilt messages to the form
-      $form['messages'][$key]['message'] = $build['message'][$message_entity->sba_message_id];
-    }
-    // Add the node object to use in validation and submit.
-    $form['#action_node'] = $node;
-    // Define the validation function.
-    $form['#validate'][] = 'sba_message_action_preview_form_validate';
-    // Add submit button
-    $form['submit'] = array(
-      '#prefix' => '<div id="edit-actions">',
-      '#suffix' => '</div>',
-      '#type' => 'submit',
-      '#value' => t('Send Now'),
-      '#weight' => 10,
-      '#attributes' => array('class' => 'message-action-preview-submit'),
+      '#value' => $action['test_email'],
     );
   }
-  else {
-    // We should never get here.
+
+  // Maybe use this for cross-check validation on api server.
+  $form['account_id'] = array(
+    '#type' => 'value',
+    '#value' => $action['account_id'],
+  );
+
+  $form['contact'] = array(
+    '#type' => 'value',
+    '#value' => $contact,
+  );
+
+  $form['messages'] = array (
+    '#type' => 'container',
+    '#tree' => TRUE,
+    '#attributes' => array(
+      'class' => array('message-preview-container'),
+    ),
+  );
+
+  // Used to send our second step form through the same helper functions as the first step form.
+  module_load_include('inc', 'sba_message_action', 'includes/sba_message_action.form');
+
+  foreach ($messages as $key => $message) {
+
+    // Theme the message header.
+    $form['messages'][$key]['sent_to'] = array(
+      '#markup' => theme('sba_message_action_preview_message_header', array('message' => $message)),
+    );
+
+    // Create the message form elements from the entity. Passed by reference
+    // to the same helper function as the first step form.
+    $message_entity = $node->messages[$message['message_id']];
+    $build = array();
+    sba_message_action_message_form($build, $message_entity, 'multi_flow');
+
+    // Customize the resulting form to multi_flow format.
+    // Remove title.
+    unset($build['message'][$message_entity->sba_message_id]['subject_show']['#title']);
+    // Format greeting
+    $greeting = token_replace($build['message'][$message_entity->sba_message_id]['greeting']['#value'], array('sba_target' => (Object) $message['targets']));
+    $build['message'][$message_entity->sba_message_id]['greeting_show']['#markup'] = $greeting;
+    unset($build['message'][$message_entity->sba_message_id]['greeting']);
+    // Format signature.
+    $signature = token_replace($build['message'][$message_entity->sba_message_id]['signature_tokenized']['#value'], array('sba_contact' => (Object) $contact));
+    $build['message'][$message_entity->sba_message_id]['signature']['#type'] = 'item';
+    $build['message'][$message_entity->sba_message_id]['signature']['#markup'] = check_markup($signature, 'plain_text');
+    unset($build['message'][$message_entity->sba_message_id]['signature_tokenized']);
+    // Add a custom class.
+    $build['message'][$message_entity->sba_message_id]['#attributes']['class'][] = 'message-preview-message-fieldset';
+    // Add precedence value.
+    $build['message'][$message_entity->sba_message_id]['precedence'] = array(
+      '#type' => 'value',
+      '#value' => $message['precedence'],
+    );
+    // Add hold value.
+    $build['message'][$message_entity->sba_message_id]['hold'] = array(
+      '#type' => 'value',
+      '#value' => isset($message['hold']) ? TRUE : FALSE,
+    );
+    // Build an array of target properties
+    $build['message'][$message_entity->sba_message_id]['target'] = array(
+      '#type' => 'value',
+      '#value' => array('target_id' => $message['targets']->id, 'primary_delivery_method' => $message['targets']->primary_delivery_method, 'salutation' => $message['targets']->salutation, 'first_name' => $message['targets']->first_name, 'last_name' => $message['targets']->last_name),
+    );
+    // Check for required fields
+    if (isset($build['message'][$message_entity->sba_message_id]['body_required']) && $build['message'][$message_entity->sba_message_id]['body_required']['#value']) {
+      $build['message'][$message_entity->sba_message_id]['edited_body']['#required'] = TRUE;
+      $build['message'][$message_entity->sba_message_id]['edited_body']['#title'] =  '<span class="message-subject-required">' . t('You must edit the body of this message before sending.') . '</span>';
+    }
+    if (isset($build['message'][$message_entity->sba_message_id]['subject_required']) && $build['message'][$message_entity->sba_message_id]['subject_required']['#value']) {
+      $build['message'][$message_entity->sba_message_id]['subject']['#required'] = TRUE;
+      $build['message'][$message_entity->sba_message_id]['subject']['#title'] = '<span class="message-subject-required">' . t('Subject - You must edit this subject line before sending.') .'</span>';
+    }
+    // Assign the rebuilt messages to the form
+    $form['messages'][$key]['message'] = $build['message'][$message_entity->sba_message_id];
   }
+  // Add the node object to use in validation and submit.
+  $form['#action_node'] = $node;
+  // Define the validation function.
+  $form['#validate'][] = 'sba_message_action_preview_form_validate';
+  // Add submit button
+  $form['submit'] = array(
+    '#prefix' => '<div id="edit-actions">',
+    '#suffix' => '</div>',
+    '#type' => 'submit',
+    '#value' => t('Send Now'),
+    '#weight' => 10,
+    '#attributes' => array('class' => 'message-action-preview-submit'),
+  );
+
   return $form;
 }
 
