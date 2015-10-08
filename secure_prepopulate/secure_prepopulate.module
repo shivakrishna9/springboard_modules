@@ -403,6 +403,11 @@ function secure_prepopulate_is_expired($qs) {
  *   The query string to expire.
  */
 function secure_prepopulate_expire($qs) {
+  // If the "Pre-populated tokens never expire" setting is enabled then do not set an expiration timestamp:
+  if (variable_get('secure_prepopulate_toggle_expiration', 0)) {
+    return;
+  }
+
   $qs_hashed = md5($qs);
   $record = new stdClass();
   $record->hash = $qs_hashed;
