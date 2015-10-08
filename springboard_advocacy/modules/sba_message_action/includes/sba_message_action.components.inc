@@ -220,6 +220,8 @@ function sba_message_locked_fields() {
     'sba_user_edit_flag',
     'sbp_zip_plus_four',
     'sbp_sba_action_optin',
+    'sba_action_is_multistep',
+    'sba_multistep_complete'
   );
   return $locked_fields;
 }

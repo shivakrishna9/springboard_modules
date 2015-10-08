@@ -288,6 +288,38 @@ function sba_message_action_node_insert($node) {
   if ($node->type == 'sba_message_action') {
     module_load_include('inc', 'sba_message_action', 'includes/sba_message_action.components');
     sba_message_action_insert_components($node);
+    sba_message_action_update_multiflow_component($node);
+  }
+}
+
+function sba_message_action_node_update($node) {
+  if ($node->type == 'sba_message_action') {
+    sba_message_action_update_multiflow_component($node);
+  }
+}
+
+function sba_message_action_update_multiflow_component($node) {
+  $node_wrapper = entity_metadata_wrapper('node', $node);
+  $multi_flow = $node_wrapper->field_sba_action_flow->value();
+
+  $cid = db_query('select wc.cid from {webform_component} wc
+      WHERE wc.nid = :nid AND wc.form_key = :key',
+    array(':nid' => $node->nid, ':key' => 'sba_action_is_multistep')
+  )->fetchAssoc();
+
+  if ($cid) {
+    $field = array(
+      'cid' => $cid,
+      'nid' => $node->nid,
+      'form_key' => 'sba_action_is_multistep',
+      'pid' => 0,
+      'name' => t('Multi-step or one step?'),
+      'type' => 'hidden',
+      'value' => $multi_flow,
+      'weight' => 30,
+      'email' => 1,
+    );
+    webform_component_update($field);
   }
 }
 
