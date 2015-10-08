@@ -125,32 +125,18 @@ function secure_prepopulate_token_generator($form, $form_state) {
     '#title' => t('City'),
   );
 
-  if (module_exists('fundraiser_ubercart')) {
-    $countries = fundraiser_ubercart_get_countries();
-    foreach ($countries->countries as $country) {
-      if ($country->country_iso_code_2 == $default_country) {
-        $country_options[$country->country_iso_code_2] = $country->country_name;
-        $zones = $country->zones;
-        foreach ($zones as $zone) {
-          $state_options[$zone->zone_code] = $zone->zone_name;
-        }
-      }
-    }
+  // country
+  $form['secure_prepopulate']['country'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Country'),
+  );
 
-    $form['secure_prepopulate']['country'] = array(
-      '#type' => 'select',
-      '#title' => t('Country'),
-      '#options' => $country_options,
-      '#default_value' => $default_country,
-    );
-    $form['secure_prepopulate']['state'] = array(
-      '#type' => 'select',
-      '#title' => t('State or province'),
-      '#options' => $state_options,
-      '#prefix' => '<div class="secure-prepopulate-state-wrapper">',
-      '#suffix' => '</div>',
-    );
-  }
+  // state
+  $form['secure_prepopulate']['state'] = array(
+    '#type' => 'textfield',
+    '#title' => t('State or province'),
+  );
+
   // zip
   $form['secure_prepopulate']['zip'] = array(
     '#type' => 'textfield',
