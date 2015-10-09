@@ -100,7 +100,7 @@
     hide($content['comments']);
     hide($content['links']);
     hide($content['body']);
-    hide($content['field_message_action_img']);
+    hide($content['field_social_action_img']);
     hide($content['field_message_call_to_action']);
     hide($content['sba_quicksign']);
     ?>
@@ -110,13 +110,13 @@
         <div class="container-fluid">
       <?php endif; ?>
       <div class="row-fluid">
-        <?php if(!empty($content['field_message_action_img'][0]))  : ?>
+        <?php if(!empty($content['field_social_action_img'][0]))  : ?>
           <div id="call-to-action" class="span8">
             <div id="call-to-action-call"><h2><?php print render($content['field_message_call_to_action']); ?></h2></div>
             <div id="call-to-action-call-body"><?php print render($content['body']); ?></div>
           </div>
           <div id="image" class="span4">
-            <?php  print render($content['field_message_action_img']) ?>
+            <?php  print render($content['field_social_action_img']) ?>
           </div>
         <?php else: ?>
           <div id="call-to-action" class="span12">

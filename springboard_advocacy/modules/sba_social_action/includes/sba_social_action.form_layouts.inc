@@ -15,47 +15,6 @@
 function sba_social_action_form_layouts() {
   $templates = array();
 
-  // This faux-template is unset in sba_social_action_node_load()
-  // So that it uses the identical non-form-layout default template
-  $templates['two_column_message_right'] = array(
-    'name' => t('Call to action top, message right, horizontal user form left'),
-    'types' => array('sba_social_action'),
-    'theme' => 'two_column_message_right',
-    'pattern' => '',
-    'template' => '',
-    'path' => '',
-    'hide title' => FALSE,
-  );
-
-  $templates['two_column_message_left'] = array(
-    'name' => t('Call to action top, message left, horizontal user form right'),
-    'types' => array('sba_social_action'),
-    'theme' => 'two_column_message_left',
-    'pattern' => 'two_column_message_left\'0-9\'+',
-    'template' => 'two-column-message-left',
-    'path' => drupal_get_path('module', 'sba_social_action') . '/templates/form_layouts',
-    'hide title' => FALSE,
-  );
-
-  $templates['two_column_message_left_vertical'] = array(
-    'name' => t('Call to action top, message left, vertical user form right'),
-    'types' => array('sba_social_action'),
-    'theme' => 'two_column_message_left_vertical',
-    'pattern' => 'two_column_message_left_vertical\'0-9\'+',
-    'template' => 'two-column-message-left-vertical',
-    'path' => drupal_get_path('module', 'sba_social_action') . '/templates/form_layouts',
-    'hide title' => FALSE,
-  );
-
-  $templates['two_column_message_right_vert'] = array(
-    'name' => t('Call to action top, message right, vertical user form left'),
-    'types' => array('sba_social_action'),
-    'theme' => 'two_column_message_right_vert',
-    'pattern' => 'two_column_message_right_vert\'0-9\'+',
-    'template' => 'two-column-message-right-vertical',
-    'path' => drupal_get_path('module', 'sba_social_action') . '/templates/form_layouts',
-    'hide title' => FALSE,
-  );
 
   $templates['two_column_body_left'] = array(
     'name' => t('Call to action left, message and user form right.'),
@@ -79,33 +38,6 @@ function sba_social_action_form_layouts() {
   return $templates;
 }
 
-/**
- * Implements hook_preprocess_hook().
-  */
-//function sba_social_action_preprocess_two_column_message_right(&$vars) {
-//  sba_social_action_build_preprocess($vars);
-//}
-
-/**
- * Implements hook_preprocess_hook().
- */
-function sba_social_action_preprocess_two_column_message_left(&$vars) {
-  sba_social_action_build_preprocess($vars);
-}
-
-/**
- * Implements hook_preprocess_hook().
- */
-function sba_social_action_preprocess_two_column_message_left_vertical(&$vars) {
-  sba_social_action_build_preprocess($vars);
-}
-
-/**
- * Implements hook_preprocess_hook().
- */
-function sba_social_action_preprocess_two_column_message_right_vert(&$vars) {
-  sba_social_action_build_preprocess($vars);
-}
 
 /**
  * Implements hook_preprocess_hook().
@@ -248,19 +180,7 @@ function theme_social_action_form_layout_form(array $vars) {
  * @return string
  */
 function theme_social_action_submitted_wrapper($vars) {
-  $legend = t('Your Information');
-  return '<div id = "left" class = "span5"><fieldset id="your-information-wrapper" class = "form-wrapper"><legend>' . $legend . '</legend>' . $vars['element']['#children']  . '</fieldset></div>';
-}
-
-/**
- * Theme wrapper to create fluid bootstrap divs around "Your Message" fieldset
- * on non-form-layout nodes.
- *
- * @param $vars
- * @return string
- */
-function theme_social_action_messages_wrapper($vars) {
-  return '<div id = "right" class = "span7">' . $vars['element']['#children']  . '</div>';
+  return '<div class="row-fluid"><fieldset id="your-information-wrapper" class = "form-wrapper">' . $vars['element']['#children']  . '</fieldset></div>';
 }
 
 /**
@@ -271,7 +191,7 @@ function theme_social_action_messages_wrapper($vars) {
  * @return string
  */
 function theme_social_action_webform_wrapper($vars) {
-  $legend = t('Take Action Now!');
+  $legend = t('Find Social Target');
   return ' <div class="row-fluid"><fieldset id="take-action-wrapper" class = "form-wrapper"><legend>' . $legend . '</legend>' . $vars['element']['#children']  . '</fieldset></div>';
 }
 

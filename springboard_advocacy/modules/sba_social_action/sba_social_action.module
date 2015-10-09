@@ -20,11 +20,126 @@ function sba_social_action_node_info() {
   );
 }
 
+function sba_social_action_menu() {
+  $items['node/%/social-message-preview'] = array(
+    'title' => 'Preview Messages',
+    'page arguments' => array(1),
+    'page callback' => 'sba_social_action_message_preview_page',
+    'page arguments' => array(1),
+    'access callback' => 'sba_social_action_preview_access',
+    'access arguments' => array(1),
+    'type' => MENU_CALLBACK,
+    'file' => 'sba_social_action.preview.inc',
+    'file path' => drupal_get_path('module', 'sba_social_action') . '/includes',
+  );
+  return $items;
+}
+
+/**
+ * Control access to multi-step page two\.
+ *
+ * @param $nid
+ * @return bool
+ */
+function sba_social_action_preview_access($nid) {
+  $node = node_load($nid);
+  if (isset($node->type) &&  $node->type == 'sba_social_action') {
+    $session_nid = isset($_SESSION['action_sid']['nid']) ? $_SESSION['action_sid']['nid'] : 0;
+    if ($session_nid == $nid) {
+      return TRUE;
+    }
+  }
+  return FALSE;
+}
+
 /**
  * Implements hook_form().
  */
 function sba_social_action_form($node, $form_state) {
   return node_content_form($node, $form_state);
+}
+
+/**
+ * Implements hook_node_load().
+ *
+ * Add the custom confirmation fail message to the node object.
+ * Add the "use message precedence" value to the node object.
+ * Remove form layouts from the node object if it's single column.
+ * Add message entities array to the node object.
+ */
+function sba_social_action_node_load($nodes, $types) {
+
+  // If no message_action nodes are loaded no need to continue.
+  if (!in_array('sba_social_action', $types)) {
+    return;
+  }
+
+  // Add full messages to each node so we can use them later.
+  foreach ($nodes as $nid => $node) {
+    if ($node->type == 'sba_social_action') {
+
+      $visibility = db_query('select visibility from {springboard_action_opt_in_block} WHERE nid=:nid', array(':nid' => $node->nid))->fetchField();
+      $node->show_my_name = $visibility;
+
+      if (!empty($node->message_ids)) {
+        $messages = sba_message_load_multiple($node->message_ids);
+        $messages_by_id = array();
+        foreach ($messages as $message) {
+          $messages_by_id[$message->data['message_id']] = $message;
+        }
+        $node->messages = $messages_by_id;
+      }
+      else {
+        $node->messages = array();
+      }
+    }
+  }
+}
+
+/**
+ * Implements hook_theme().
+ */
+function sba_social_action_theme($existing, $type, $theme, $path) {
+  return array(
+    'sba_social_action_preview_message_header' => array(
+      'render element' => 'message',
+      'file' => 'includes/sba_social_action.preview.inc',
+    ),
+    'sba_social_action_person_details' => array(
+      'render element' => 'message',
+      'file' => 'includes/sba_social_action.webform.inc',
+    ),
+    'social_action_submitted_wrapper' => array(
+      'render element'  => 'element',
+      'file' => 'includes/sba_social_action.form_layouts.inc',
+    ),
+    'social_action_messages_wrapper' => array(
+      'render element'  => 'element',
+      'file' => 'includes/sba_social_action.form_layouts.inc',
+    ),
+    'social_action_webform_wrapper' => array(
+      'render element'  => 'element',
+      'file' => 'includes/sba_social_action.form_layouts.inc',
+    ),
+    'social_action_form_layout_form' => array(
+      'render element' => 'element',
+      'file' => 'includes/sba_social_action.form_layouts.inc',
+    ),
+  );
+}
+
+
+
+/**
+ * Implements hook_node_insert().
+ *
+ * Adds some custom fields to new webforms.
+ */
+function sba_social_action_node_insert($node) {
+  if ($node->type == 'sba_social_action') {
+    module_load_include('inc', 'sba_social_action', 'includes/sba_social_action.components');
+    sba_social_action_insert_components($node);
+  }
 }
 
 /**
@@ -41,9 +156,8 @@ function sba_social_action_preprocess_node(&$vars) {
     // Add theme wrappers for non-form-layout layouts.
     $vars['use_layouts'] = !empty($vars['form_layouts']) ? TRUE : FALSE;
     if (empty($vars['use_layouts'])) {
-//      $vars['content']['webform']['#theme_wrappers'][] = 'message_action_webform_wrapper';
-//      $vars['content']['webform']['#form']['submitted']['#theme_wrappers'][] = 'message_action_submitted_wrapper';
-//      $vars['content']['webform']['#form']['sba_messages']['#theme_wrappers'][] = 'message_action_messages_wrapper';
+      $vars['content']['webform']['#theme_wrappers'][] = 'social_action_webform_wrapper';
+      $vars['content']['webform']['#form']['submitted']['#theme_wrappers'][] = 'social_action_submitted_wrapper';
 
       $vars['participants'] = '';
       $view = views_get_view('recent_action_participants');
@@ -69,3 +183,39 @@ function sba_social_action_preprocess_node(&$vars) {
   }
 }
 
+function sba_social_action_form_alter(&$form, &$form_state, $form_id) {
+  if (!empty($form['#node']->type) && $form['#node']->type == 'sba_social_action') {
+    // Is this the user-facing form?
+    $client_form = strpos($form_id, 'client_form');
+    // Yes it is the user-facing form. Add all our custom non-webform-component
+    // form items which insert or display message-entity data in the
+    // message-action webform.
+    if ($client_form !== FALSE) {
+
+      if (empty($form['#node']->show_my_name)) {
+        $form['submitted']['sbp_sba_action_optin']['#access'] = FALSE;
+      }
+      form_load_include($form_state, 'inc', 'sba_social_action', 'includes/sba_social_action.form');
+      sba_social_action_additional_elements($form, $form_state);
+      $form['#submit'][] = 'sba_social_action_multiflow_submit';
+    }
+  }
+}
+
+/**
+ * Build redirect for multi-step form.
+ *
+ * @param $form
+ * @param $form_state
+ */
+function sba_social_action_multiflow_submit($form, &$form_state) {
+  if (!empty($_SESSION['deliverable_social_messages']) || !empty($_SESSION['undeliverable_social_messages'])) {
+    $node = $form['#node'];
+    $sid = $form_state['values']['details']['sid'];
+    $_SESSION['action_sid'] = array('sid' => $sid, 'nid' => $node->nid);
+    $form_state['redirect'] = array(
+      'node/' . $node->nid . '/social-message-preview',
+      array('query' => array('sid' => $sid))
+    );
+  }
+}

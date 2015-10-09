@@ -108,7 +108,7 @@ function sba_social_action_create_twitter_message_entity() {
   $field_instances = array();
 
 // Exported field_instance: 'sba_message-sba_message_action_message-field_sba_twitter_message'
-  $field_instances['sba_message_action_message'] = array(
+  $field_instances['field_sba_twitter_message'] = array(
     'bundle' => 'sba_social_action_twitter_message',
     'default_value' => NULL,
     'deleted' => 0,

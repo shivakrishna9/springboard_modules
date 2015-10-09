@@ -8,8 +8,8 @@
 /**
  * Create the message action user profile fields.
  */
-function _sbp_message_action_create_user_profile_fields() {
-  _sba_message_action_create_zip_plus_four();
+function _sbp_social_action_create_user_profile_fields() {
+  _sba_social_action_create_zip_plus_four();
 }
 
 /**
@@ -17,7 +17,7 @@ function _sbp_message_action_create_user_profile_fields() {
  *
  * Done separately so can be used in update hook.
  */
-function _sba_message_action_create_zip_plus_four() {
+function _sba_social_action_create_zip_plus_four() {
 
   $profile_zip_plus_four = array(
     'label' => t('Zip+4'),

@@ -31,7 +31,7 @@ function _sba_social_action_create_content_type() {
   node_type_save($type);
   node_types_rebuild();
   _sba_social_action_create_node_fields();
-  _sbp_message_action_create_user_profile_fields();
+  _sbp_social_action_create_user_profile_fields();
   _webform_user_add_default_fields('sba_social_action');
   _sba_social_action_reorder_internal_name();
 
