@@ -79,6 +79,12 @@ function salesforce_ngo_connect_schema() {
         'length' => '32',
         'not null' => FALSE,
       ),
+      'synced' => array(
+        'description' => 'The Unix timestamp when the Batch Upload Object was synced from Salesforce.',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
     ),
     'primary key' => array('batch_upload_id'),
   );
