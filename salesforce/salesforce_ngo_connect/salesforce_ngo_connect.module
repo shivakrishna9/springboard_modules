@@ -117,8 +117,6 @@ function salesforce_ngo_connect_cron() {
 /**
  * Updates NGO Connect Batch Upload entities with Account, Contact and
  * Opportunity IDs.
- *
- * TODO: Create Salesforce mappings for related Drupal entities.
  */
 function salesforce_ngo_connect_process_batch_upload_ids($data) {
   $batch_upload = entity_load_single('salesforce_ngo_connect_batch_upload', $data['id']);
@@ -127,5 +125,41 @@ function salesforce_ngo_connect_process_batch_upload_ids($data) {
     $batch_upload->contact_id = $data['contact_id'];
     $batch_upload->opportunity_id = $data['opportunity_id'];
     $batch_upload->save();
+
+    // Create User to Account Salesforce Sync map.
+    if (!empty($batch_upload->account_id)) {
+      salesforce_ngo_connect_create_sync_map($batch_upload->account_id, $batch_upload->drupal_id, $batch_upload->module, $batch_upload->delta, 'Account');
+    }
+
+    // Create User to Contact Salesforce Sync map.
+    if (!empty($batch_upload->contact_id)) {
+      salesforce_ngo_connect_create_sync_map($batch_upload->contact_id, $batch_upload->drupal_id, $batch_upload->module, $batch_upload->delta, 'Contact');
+    }
   }
+}
+
+/**
+ * Creates a Salesforce Sync Map record.
+ *
+ * @param string $sfid
+ *   The Salesforce ID of the object to map.
+ * @param int $drupal_id
+ *   The Drupal ID of the object to map.
+ * @param string $module
+ *   The Drupal module representing the object.
+ * @param string $delta
+ *   The Drupal entity type of the object.
+ * @param string $object_type
+ *   The Salesforce object type.
+ */
+function salesforce_ngo_connect_create_sync_map($sfid, $drupal_id, $module, $delta, $object_type) {
+  $record = array(
+    'sfid' => $sfid,
+    'drupal_id' => $drupal_id,
+    'module' => $module,
+    'delta' => $delta,
+    'object_type' => $object_type,
+  );
+
+  salesforce_sync_save_map($record);
 }
