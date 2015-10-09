@@ -297,7 +297,12 @@ function sba_social_action_get_target_details($target) {
   }
 
   if (!empty($target->twitter)) {
-    $target_details['twitter'] = check_plain($target->twitter);
+    $url = parse_url($target->twitter);
+    $target_details['twitter'] = check_plain(substr($url['path'], 1));
+  }
+  if (!empty($target->facebook)) {
+    $url = parse_url($target->twitter);
+    $target_details['facebook'] = check_plain(substr($url['path'], 1));
   }
 
   if (!empty($target->organization)) {
