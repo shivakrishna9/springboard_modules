@@ -75,7 +75,8 @@ function salesforce_ngo_connect_cron() {
 
   // Get the IDs of all NGO Connect Batch Upload entities.
   $query = new EntityFieldQuery();
-  $query->entityCondition('entity_type', 'salesforce_ngo_connect_batch_upload');
+  $query->entityCondition('entity_type', 'salesforce_ngo_connect_batch_upload')
+      ->propertyCondition('synced', 0, '=');
   $result = $query->execute();
 
   if (!empty($result['salesforce_ngo_connect_batch_upload'])) {
@@ -124,6 +125,7 @@ function salesforce_ngo_connect_process_batch_upload_ids($data) {
     $batch_upload->account_id = $data['account_id'];
     $batch_upload->contact_id = $data['contact_id'];
     $batch_upload->opportunity_id = $data['opportunity_id'];
+    $batch_upload->synced = time();
     $batch_upload->save();
 
     // Create User to Account Salesforce Sync map.
