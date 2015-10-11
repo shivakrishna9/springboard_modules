@@ -1963,7 +1963,9 @@ function fundraiser_commerce_get_countries() {
           // For each zone load up, zone_id, zone country_id, zone, code, zone_name.
           // Store in the country and zone arrays.
           $countries[$found_country->country_id]->zones[$found_zone->zone_id] = $found_zone;
-          $zones[$found_zone->zone_id] = $found_zone;
+          // Zone IDs are not unique between countries, so can't be used as
+          // indexes in the same way country IDs are.
+          $zones[] = $found_zone;
         }
       }
       $return_data->countries = $countries;
