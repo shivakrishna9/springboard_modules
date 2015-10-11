@@ -163,10 +163,12 @@ class FundraiserDateModeTest extends DrupalWebTestCase {
    * Test delta calculation code.
    */
   public function testFundraiserDateModeDelta() {
+    date_default_timezone_set('UTC');
+
     $dates = array(
       '1' => array(
         'date' => '01/01/2014 01:01:01',
-        'timestamp' => 1388556061,
+        'timestamp' => 1388538061,
         'expected deltas' => array(
           '1' => 0,
           '15' => 1209600, // + 14 days
@@ -175,7 +177,7 @@ class FundraiserDateModeTest extends DrupalWebTestCase {
       ),
       '15' => array(
         'date' =>'01/15/2014 01:01:01',
-        'timestamp' => 1389765661,
+        'timestamp' => 1389747661,
         'expected deltas' => array(
           '1' => -1209600, // - 14 days
           '15' => 0,
@@ -184,7 +186,7 @@ class FundraiserDateModeTest extends DrupalWebTestCase {
       ),
       '30' => array(
         'date' => '01/30/2014 01:01:01',
-        'timestamp' => 1391061661,
+        'timestamp' => 1391043661,
         'expected deltas' => array(
           '1' => -2505600, // - 29 days
           '15' => -1296000, // - 15 days
