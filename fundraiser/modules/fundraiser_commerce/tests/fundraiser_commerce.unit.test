@@ -31,9 +31,14 @@ class FundraiserCommerceUnitTestCase extends DrupalWebTestCase {
    * Unit test DB functions for fundraiser_donation.
    */
   public function testCommerceDbFunctions() {
+    // Total countries according to country_get_list()
     $countries_count = 250;
-    $us_zones_count = 64;
-    $zones_count = 194;
+    // Total zones (states) for the US according to
+    // addressfield_get_administrative_areas()
+    $us_zones_count = 63;
+    // Total zones for countries with a valid address format according to
+    // addressfield_get_address_format()
+    $zones_count = 955;
 
     // Check countries created.
     $countries = _fundraiser_commerce_get_countries();
@@ -53,7 +58,13 @@ class FundraiserCommerceUnitTestCase extends DrupalWebTestCase {
     $this->assertEqual($countries_to_zones->countries['US']->zones['AK']->zone_name, 'Alaska', '_fundraiser_commerce_get_countries() got correct name for Alaska.');
 
     $this->assertEqual(count($countries_to_zones->zones), $zones_count, 'fundraiser_commerce_get_countries() got correct default number of zones for countries.');
-    $this->assertEqual($countries_to_zones->zones['AK']->zone_name, 'Alaska', '_fundraiser_commerce_get_countries() got correct name for Alaska.');
+
+    foreach ($countries_to_zones->zones as $zone) {
+      if ($zone->zone_id == 'AK') {
+        $this->assertEqual($zone->zone_name, 'Alaska', '_fundraiser_commerce_get_countries() got correct name for Alaska.');
+        break;
+      }
+    }
 
     // Test updating default order status.
     $order = commerce_order_new(1, 'created');
