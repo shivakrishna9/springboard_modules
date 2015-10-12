@@ -26,6 +26,16 @@ function salesforce_ngo_connect_entity_info() {
 }
 
 /**
+ * Implements hook_salesforce_queue_create_item_alter()
+ */
+function salesforce_ngo_connect_salesforce_queue_create_item_alter(&$item) {
+  if ($item['delta'] == 'user') {
+    // Default Address Type to Home.
+    $item['sobject']->fields['rC_Connect__Address_2_Type__c'] = 'Home';
+  }
+}
+
+/**
  * Implements hook_salesforce_sync_pass_item()
  */
 function salesforce_ngo_connect_salesforce_sync_pass_item($item, $result) {
