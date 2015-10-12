@@ -31,7 +31,9 @@ function salesforce_ngo_connect_entity_info() {
 function salesforce_ngo_connect_salesforce_queue_create_item_alter(&$item) {
   if ($item['delta'] == 'user') {
     // Default Address Type to Home.
-    $item['sobject']->fields['rC_Connect__Address_2_Type__c'] = 'Home';
+    $item['sobject']->fields['rC_Connect__Address_Type__c'] = 'Home';
+    // Default Email Type to Home.
+    $item['sobject']->fields['rC_Connect__Contact_1_Email_Type__c'] = 'Home';
   }
 }
 
