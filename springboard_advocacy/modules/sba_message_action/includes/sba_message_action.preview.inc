@@ -325,7 +325,7 @@ function sba_message_action_preview_form_submit($form, &$form_state) {
   // We don't actually want to send the "hold" value to the API server,
   // but we do need it later to update the confirmation messages.
   $remove_hold_index = $formatted_messages;
-  foreach($remove_hold_index as $key => $formatted) {
+  foreach ($remove_hold_index as $key => $formatted) {
     unset($remove_hold_index[$key]['message']['hold']);
   }
 
@@ -334,11 +334,13 @@ function sba_message_action_preview_form_submit($form, &$form_state) {
   $payload = array(
     'multiflow' => 'step_two',
     'alert_id' => $form_state['values']['action_id'],
-    'test_mode' => $form_state['values']['test_mode'],
-    'test_email' => $form_state['values']['test_mode_email'],
     'contact' => $form_state['values']['contact'],
     'messages' => $remove_hold_index,
   );
+  if (!empty($form_state['values']['test_mode'])) {
+    $payload['test_mode'] = TRUE;
+    $payload['test_email'] =  $form_state['values']['test_mode_email'];
+  }
   $api_call = springboard_advocacy_api_call();
   $response = $api_call->invokeClientMethod('resolveTargets', $payload);
 
