@@ -1442,25 +1442,61 @@ function fundraiser_webform_node_delete($node) {
  */
 function fundraiser_webform_webform_submission_render_alter(&$renderable) {
   $donation = _fundraiser_webform_get_donation_by_sid($renderable['#submission']->sid);
-  if (!empty($donation)) {
-    if (isset($donation->amount)) {
-      $total_amount = floatval($donation->amount);
-
-      $total = commerce_currency_format($total_amount, $donation->currency, NULL, FALSE);
-      $markup = $total;
-
-      // Display an additional donation amount if one is available:
-      if (isset($donation->donation['amount'])) {
-        $original_amount = floatval($donation->donation['amount']);
-        $additional_amount = floatval($donation->amount - $donation->donation['amount']);
-        if ($total_amount != $original_amount + $additional_amount) {
-          $original = commerce_currency_format($original_amount, $donation->currency, NULL, FALSE);
-          $additional = commerce_currency_format($additional_amount, $donation->currency, NULL, FALSE);
-          $markup .= ' (' . $original . ' + an additional donation of ' . $additional . ')';
-        }
-      }
-    }      
-
-    $renderable['amount']['#markup'] = $markup;
+  if (empty($donation)) {
+    return;
   }
+
+  // Gather purchase amount information:
+  $total_amount = floatval($donation->amount);
+  $total_formatted = commerce_currency_format($total_amount, $donation->currency, NULL, FALSE);
+  $original_amount = floatval($donation->donation['amount']);
+  $original_formatted = commerce_currency_format($original_amount, $donation->currency, NULL, FALSE);
+  $additional_amount = floatval($donation->amount - $donation->donation['amount']);
+  $additional_formatted = commerce_currency_format($additional_amount, $donation->currency, NULL, FALSE);
+
+  // Render a table detailing ticket data via a commerce order view:
+  $commerce_view = views_get_view('commerce_line_item_table');
+  if ($commerce_view) {
+    $order = commerce_order_load($donation->did);
+    $commerce_view->set_display('default');
+    $commerce_view->pre_execute();
+
+    // Gather line item IDs:
+    $line_item_ids = array();
+    foreach ($order->commerce_line_items[LANGUAGE_NONE] as $order_data) {
+      $line_item_ids[] = intval($order_data['line_item_id']);
+    }
+    $commerce_view->set_arguments(array(implode(',', $line_item_ids)));
+    $commerce_view->execute();
+
+    $view_html = $commerce_view->render();
+    $doc = new DOMDocument();
+    $doc->loadHTML($view_html);
+    $rows = $doc->getElementsByTagName('tr');
+    $total_row = $doc->createDocumentFragment();
+
+    // Populate the additional amount if available:
+    if ($total_amount != $original_amount) {
+      $additional_row = $doc->createDocumentFragment();
+      $additional_row->appendXML('<tr class="additional-row"><td>Additional amount</td><td>' .
+        $additional_formatted . '</td>' . '<td>1</td><td>' . $additional_formatted . '</td></tr>');
+      $rows->item($rows->length - 1)->appendChild($additional_row);
+    }
+    // Populate the total amount:
+    $total_row->appendXML('<tr><td class="total-row" colspan="3">Total</td><td class="amount">' .
+      $total_formatted . '</td></tr>');
+    $rows->item($rows->length - 1)->appendChild($total_row);
+    // Remove the doctype and html element wrapper DOMDocument adds:
+    $doc->doctype->parentNode->removeChild($doc->doctype);
+    $renderable['tickets']['#description'] = $doc->saveHTML($doc->getElementsByTagName("div")->item(0));
+  }
+
+  // Display an additional donation amount if one is available:
+  $markup = $total_formatted;
+  if (isset($donation->donation['amount'])) {
+    if ($total_amount != $original_amount) {
+      $markup .= ' (' . $original_formatted . ' + an additional donation of ' . $additional_formatted . ')';
+    }
+  }
+  $renderable['amount']['#markup'] = $markup;
 }
