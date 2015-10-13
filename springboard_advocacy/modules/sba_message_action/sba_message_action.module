@@ -1033,8 +1033,8 @@ function sba_message_action_form_webform_configure_form_alter(&$form, &$form_sta
  */
 function sba_message_action_token_info() {
   $types['action'] = array(
-    'name' => t("Advocacy Actions"),
-    'description' => t("Tokens for Advocacy."),
+    'name' => t("Message Actions"),
+    'description' => t("Tokens for Message Actions."),
   );
 
   $tokens['all_messages'] = array(
@@ -1067,7 +1067,8 @@ function sba_message_action_token_info() {
 function sba_message_action_tokens($type, $tokens, $data = array(), $options = array()) {
   $recipients = '';
   $replacements = array();
-  if ($type == 'action') {
+  if ($type == 'action' && (!empty($data['node']->type) && $data['node']->type == 'sba_message_action')) {
+
     foreach ($tokens as $name => $original) {
       switch ($name) {
         case 'all_messages':
