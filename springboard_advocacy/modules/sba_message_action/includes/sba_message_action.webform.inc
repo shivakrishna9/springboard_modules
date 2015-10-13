@@ -504,9 +504,8 @@ function sba_message_action_get_target_details($target) {
     $target_details['url'] = check_plain($target->webform_url);
   }
 
-  if (!empty($target->organization)) {
-    $target_details['organization'] = check_plain($target->organization);
-  }
+  $target_details['organization'] = !empty($target->organization) ? check_plain($target->organization) : '';
+
   if (!empty($target->title)) {
     $target_details['title'] = check_plain($target->title);
   }
