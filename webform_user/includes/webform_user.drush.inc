@@ -96,6 +96,8 @@ function _webform_user_create_missing_users($node_id) {
 
       $account = user_save('', $user_fields);
 
+      _webform_user_save_profile_map($account->uid, $submission);
+
       $submission = webform_get_submission($node_id, $sid);
       $submission->uid = $account->uid;
       // Skip the current user check; this is an offline user creation.
