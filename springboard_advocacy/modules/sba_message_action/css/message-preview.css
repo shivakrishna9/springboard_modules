@@ -55,7 +55,7 @@ div.form-type-item {
     background: #1E72A3;
 }
 
-.required {
+label.required {
     color: #f00;
     cursor: default;
 }
