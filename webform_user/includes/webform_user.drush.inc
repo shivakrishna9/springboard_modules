@@ -85,7 +85,7 @@ function _webform_user_create_missing_users($node_id) {
   foreach ($submissions as $sid => $submission) {
     $account = user_load_by_mail($submission['mail']);
 
-    if ($account == NULL) {
+    if (empty($account)) {
       $user_fields = array(
         'name' => $submission['mail'],
         'mail' => $submission['mail'],
@@ -95,25 +95,25 @@ function _webform_user_create_missing_users($node_id) {
       );
 
       $account = user_save('', $user_fields);
-
-      _webform_user_save_profile_map($account->uid, $submission);
-
-      $submission = webform_get_submission($node_id, $sid);
-      $submission->uid = $account->uid;
-      // Skip the current user check; this is an offline user creation.
-      $submission->webform_user_skip_user_check = TRUE;
-
-      $node = node_load($node_id);
-
-      // Update the webform submission with the new user ID.
-      webform_submission_update($node, $submission);
-
-      // Log the new user creation.
-      db_insert('webform_user_create_missing_users_log')->fields(array(
-        'nid' => $node_id,
-        'uid' => $account->uid,
-        'timestamp' => time(),
-      ))->execute();
     }
+
+    _webform_user_save_profile_map($account->uid, $submission);
+
+    $submission = webform_get_submission($node_id, $sid);
+    $submission->uid = $account->uid;
+    // Skip the current user check; this is an offline user creation.
+    $submission->webform_user_skip_user_check = TRUE;
+
+    $node = node_load($node_id);
+
+    // Update the webform submission with the new user ID.
+    webform_submission_update($node, $submission);
+
+    // Log the new user creation.
+    db_insert('webform_user_create_missing_users_log')->fields(array(
+      'nid' => $node_id,
+      'uid' => $account->uid,
+      'timestamp' => time(),
+    ))->execute();
   }
 }
