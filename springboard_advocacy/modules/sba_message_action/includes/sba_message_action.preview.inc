@@ -194,6 +194,7 @@ function sba_message_action_preview_form($form, $form_state, $node) {
       '#type' => 'value',
       '#value' => array('target_id' => $message['targets']->id, 'primary_delivery_method' => $message['targets']->primary_delivery_method, 'salutation' => $message['targets']->salutation, 'first_name' => $message['targets']->first_name, 'last_name' => $message['targets']->last_name),
     );
+    $build['message'][$message_entity->sba_message_id]['subject']['#title'] = '';
     // Check for required fields
     if (isset($build['message'][$message_entity->sba_message_id]['body_required']) && $build['message'][$message_entity->sba_message_id]['body_required']['#value']) {
       $build['message'][$message_entity->sba_message_id]['edited_body']['#required'] = TRUE;
@@ -201,7 +202,7 @@ function sba_message_action_preview_form($form, $form_state, $node) {
     }
     if (isset($build['message'][$message_entity->sba_message_id]['subject_required']) && $build['message'][$message_entity->sba_message_id]['subject_required']['#value']) {
       $build['message'][$message_entity->sba_message_id]['subject']['#required'] = TRUE;
-      $build['message'][$message_entity->sba_message_id]['subject']['#title'] =  t('Subject - You must edit this subject line before sending');
+      $build['message'][$message_entity->sba_message_id]['subject']['#title'] =  t('You must edit this subject line before sending');
     }
     // Assign the rebuilt messages to the form
     $form['messages'][$key]['message'] = $build['message'][$message_entity->sba_message_id];
