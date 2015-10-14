@@ -97,7 +97,7 @@ function sba_message_action_additional_elements(&$form, &$form_state) {
   elseif ($action_type == 'multi_flow') {
     $form['sba_messages']['multiflow'] = array(
       '#type' => 'fieldset',
-      '#title' => t('Step 1 of 1'),
+      '#title' => t('Step 1 of 2'),
       '#attributes' => array('class' => array('sba-message')),
     );
     $form['sba_messages']['multiflow']['prompt'] =  array(
