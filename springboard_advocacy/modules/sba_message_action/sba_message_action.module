@@ -409,7 +409,6 @@ function sba_message_action_process_page(&$vars) {
  * Insert webform goals widget.
  */
 function sba_message_action_preprocess_node(&$vars) {
-
   if ($vars['node']->type == 'sba_message_action') {
     // Add theme wrappers for non-form-layout layouts.
     $vars['use_layouts'] = !empty($vars['form_layouts']) ? TRUE : FALSE;
@@ -428,6 +427,9 @@ function sba_message_action_preprocess_node(&$vars) {
         $table = $view->preview('block_1');
         $vars['participants'] = $table;
       }
+
+      $vars['show_participants_block'] = isset($vars['node']->show_my_name) ? $vars['node']->show_my_name : FALSE;
+
 
       // Insert webform goals.
       if (module_exists('webform_goals')) {
