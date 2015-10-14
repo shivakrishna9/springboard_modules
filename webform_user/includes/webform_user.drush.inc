@@ -11,7 +11,7 @@
 function webform_user_drush_command() {
   $items = array();
 
-  $items['create-missing-users'] = array(
+  $items['webform-create-missing-users'] = array(
     'callback' => '_webform_user_create_missing_users',
     'description' => 'Create missing users from webform submissions.',
   );
