@@ -107,7 +107,7 @@ function sba_message_action_preview_form($form, $form_state, $node) {
     }
   }
 
-  asort($messages);
+  ksort($messages);
 
   // @todo explore other ways of retrieving these two.
   $contact = $_SESSION['contact'];
