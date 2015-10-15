@@ -252,13 +252,13 @@ function sba_message_action_node_presave($node) {
   if($node->type == 'sba_message_action') {
     $node_wrapper = entity_metadata_wrapper('node', $node);
     $multi_flow = $node_wrapper->field_sba_action_flow->value() == 'multi' ? TRUE : FALSE;
+    if (!$multi_flow) {
+      $node->webform['submit_text'] = t('Send your message');
+    }
+    else {
+      $node->webform['submit_text'] = t('Preview Message');
+    }
     if (empty($node->nid)) {
-      if (!$multi_flow) {
-        $node->webform['submit_text'] = t('Send your message');
-      }
-      else {
-        $node->webform['submit_text'] = t('Preview Message');
-      }
       $node->webform['confirmation'] = t('Thank you, %value[sbp_first_name] for participating in the messaging campaign.');
       $node->webform['confirmation']   .= "\n\n" . '[action:all_messages]';
     }
