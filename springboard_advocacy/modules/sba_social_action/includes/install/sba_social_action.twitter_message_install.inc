@@ -97,6 +97,7 @@ function sba_social_action_create_twitter_message_entity() {
         ),
         'target_bundles' => array(
           'sba_social_action' => 'sba_social_action',
+          'sba_message_action' => 'sba_message_action',
         ),
       ),
       'target_type' => 'node',

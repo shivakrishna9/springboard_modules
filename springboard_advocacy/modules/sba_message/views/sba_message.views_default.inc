@@ -981,6 +981,7 @@ function sba_message_views_default_views() {
   $handler->display->display_options['filters']['type']['field'] = 'type';
   $handler->display->display_options['filters']['type']['value'] = array(
     'sba_message_action_message' => 'sba_message_action_message',
+    'sba_social_action_twitter_message' => 'sba_social_action_twitter_message',
   );
 
   /* Display: Node Messages Tab */
@@ -1117,9 +1118,7 @@ function sba_message_views_default_views() {
   $handler->display->display_options['sorts']['weight']['draggableviews_setting_view'] = 'sba_messages_node:block_1';
   $handler->display->display_options['sorts']['weight']['draggableviews_setting_new_items_bottom_list'] = 1;
 
-
   $views[$view->name] = $view;
-
   return $views;
 
 }

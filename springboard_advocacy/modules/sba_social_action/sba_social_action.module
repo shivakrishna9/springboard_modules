@@ -159,16 +159,16 @@ function sba_social_action_preprocess_node(&$vars) {
       $vars['content']['webform']['#theme_wrappers'][] = 'social_action_webform_wrapper';
       $vars['content']['webform']['#form']['submitted']['#theme_wrappers'][] = 'social_action_submitted_wrapper';
 
-      $vars['participants'] = '';
-      $view = views_get_view('recent_action_participants');
-      $view->set_display('block_1');
-      $view->set_arguments(array(arg(1)));
-      $view->pre_execute();
-      $view->execute();
-      if (isset($view->result) && count($view->result)) {
-        $table = $view->preview('block_1');
-        $vars['participants'] = $table;
-      }
+//      $vars['participants'] = '';
+//      $view = views_get_view('recent_action_participants');
+//      $view->set_display('block_1');
+//      $view->set_arguments(array(arg(1)));
+//      $view->pre_execute();
+//      $view->execute();
+//      if (isset($view->result) && count($view->result)) {
+//        $table = $view->preview('block_1');
+//        $vars['participants'] = $table;
+//      }
 
       // Insert webform goals.
       if (module_exists('webform_goals')) {
