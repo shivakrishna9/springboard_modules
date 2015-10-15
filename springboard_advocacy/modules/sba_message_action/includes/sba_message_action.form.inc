@@ -21,7 +21,7 @@ function sba_message_action_additional_elements(&$form, &$form_state) {
   // and use it in a template variable defined in
   // sba_message_action_build_preprocess and
   // theme_message_action_form_layout_form
-  if (!empty($form['#theme_wrappers']) && !empty($form['#node']->form_layouts)) {
+  if (!empty($form['#theme_wrappers']) && !empty($form['#node']->form_layouts) && $form['#node']->form_layouts != 'one_column') {
     foreach ($form['#theme_wrappers'] as $key => $wrapper) {
       if ($wrapper == 'form') {
         unset($form['#theme_wrappers'][$key]);
@@ -37,7 +37,7 @@ function sba_message_action_additional_elements(&$form, &$form_state) {
     . '/css/message-modal.css';
 
   // Is form layouts enabled?
-  if (!empty($form['#node']->form_layouts)) {
+  if (!empty($form['#node']->form_layouts) && $form['#node']->form_layouts != 'one_column') {
     $form['#attached']['css'][] = drupal_get_path('module', 'sba_message_action')
       . '/css/message-action-form-layouts.css';
   }
@@ -97,7 +97,7 @@ function sba_message_action_additional_elements(&$form, &$form_state) {
   elseif ($action_type == 'multi_flow') {
     $form['sba_messages']['multiflow'] = array(
       '#type' => 'fieldset',
-      '#title' => t('Step 1 of 1'),
+      '#title' => t('Step 1 of 2'),
       '#attributes' => array('class' => array('sba-message')),
     );
     $form['sba_messages']['multiflow']['prompt'] =  array(

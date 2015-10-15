@@ -409,10 +409,9 @@ function sba_message_action_process_page(&$vars) {
  * Insert webform goals widget.
  */
 function sba_message_action_preprocess_node(&$vars) {
-
   if ($vars['node']->type == 'sba_message_action') {
     // Add theme wrappers for non-form-layout layouts.
-    $vars['use_layouts'] = !empty($vars['form_layouts']) ? TRUE : FALSE;
+    $vars['use_layouts'] = !empty($vars['form_layouts']) && $vars['form_layouts'] != 'one_column' ? TRUE : FALSE;
     if (empty($vars['use_layouts']) || $vars['form_layouts'] == 'one_column') {
       $vars['content']['webform']['#theme_wrappers'][] = 'message_action_webform_wrapper';
       $vars['content']['webform']['#form']['submitted']['#theme_wrappers'][] = 'message_action_submitted_wrapper';
@@ -428,6 +427,9 @@ function sba_message_action_preprocess_node(&$vars) {
         $table = $view->preview('block_1');
         $vars['participants'] = $table;
       }
+
+      $vars['show_participants_block'] = isset($vars['node']->show_my_name) ? $vars['node']->show_my_name : FALSE;
+
 
       // Insert webform goals.
       if (module_exists('webform_goals')) {
@@ -896,35 +898,6 @@ function sba_message_action_webform_user_profile_fields_alter(&$fields, $node) {
 }
 
 /**
- * Log opt in.
- *
- * @param int $nid
- *   Node ID.
- * @param int $uid
- *   User ID.
- * @param bool $opt_in
- *   User opt in TRUE/FALSE.
- * @param int $sid
- *   Submission ID.
- */
-function sba_message_action_log_opt_in($nid, $uid, $opt_in, $sid) {
-
-  db_delete('springboard_action_opt_in')
-    ->condition('sid', $sid, '=')
-    ->execute();
-
-  $record = array(
-    'sid' => $sid,
-    'nid' => $nid,
-    'uid' => $uid,
-    'opt_in' => $opt_in ? 1 : 0,
-    'created' => time(),
-  );
-
-  drupal_write_record('springboard_action_opt_in', $record);
-}
-
-/**
  * Implements hook_webform_submission_insert().
  *
  * Update opt-in block when submitted by a logged in user.
@@ -934,7 +907,7 @@ function sba_message_action_webform_submission_insert($node, $submission) {
     $node_wrapper = entity_metadata_wrapper('node', $node);
     $multi_flow = $node_wrapper->field_sba_action_flow->value() == 'multi' ? TRUE : FALSE;
     if (!$multi_flow) {
-      sba_message_action_get_opt_in_uid($node, $submission);
+      springboard_advocacy_get_opt_in_uid($node, $submission);
     }
   }
 }
@@ -950,7 +923,7 @@ function sba_message_action_webform_submission_update($node, $submission) {
     $node_wrapper = entity_metadata_wrapper('node', $node);
     $multi_flow = $node_wrapper->field_sba_action_flow->value() == 'multi' ? TRUE : FALSE;
     if (!$multi_flow) {
-      sba_message_action_get_opt_in_uid($node, $submission);
+      springboard_advocacy_get_opt_in_uid($node, $submission);
     }
     else {
       $complete = db_query('SELECT * FROM {webform_component} ' .
@@ -961,43 +934,10 @@ function sba_message_action_webform_submission_update($node, $submission) {
           ':form_key' => 'sba_multistep_complete'
         ))->fetchObject();
       if (!empty($complete->cid) && !empty($submission->data[$complete->cid]['value'][0])) {
-        sba_message_action_get_opt_in_uid($node, $submission);
+        springboard_advocacy_get_opt_in_uid($node, $submission);
       }
     }
   }
-}
-
-/**
- * Save the Opt-in record.
- *
- * @param $node
- * @param $submission
- */
-function sba_message_action_get_opt_in_uid($node, $submission) {
-  $opt_in = db_query('SELECT * FROM {webform_component} ' .
-    'WHERE nid = :nid ' .
-    'AND form_key = :form_key',
-    array(
-      ':nid' => $node->nid,
-      ':form_key' => 'sbp_sba_action_optin'
-    ))->fetchObject();
-  if (!empty($opt_in->cid) && !empty($submission->data[$opt_in->cid]['value'][0])) {
-    $sid = $submission->sid;
-    $result = db_query('SELECT uid FROM {webform_submissions} WHERE sid = :sid', array(':sid' => $sid));
-    $uid = $result->fetchField();
-    sba_message_action_log_opt_in($node->nid, $uid, TRUE, $sid);
-  }
-}
-
-/**
- * Implements hook_webform_submission_delete().
- *
- * Delete recent signers record if the submission is deleted.
- */
-function sba_message_action_webform_submission_delete($node, $submission) {
-  db_delete('springboard_action_opt_in')
-    ->condition('sid', $submission->sid, '=')
-    ->execute();
 }
 
 /**
@@ -1033,8 +973,8 @@ function sba_message_action_form_webform_configure_form_alter(&$form, &$form_sta
  */
 function sba_message_action_token_info() {
   $types['action'] = array(
-    'name' => t("Advocacy Actions"),
-    'description' => t("Tokens for Advocacy."),
+    'name' => t("Message Actions"),
+    'description' => t("Tokens for Message Actions."),
   );
 
   $tokens['all_messages'] = array(
@@ -1067,7 +1007,8 @@ function sba_message_action_token_info() {
 function sba_message_action_tokens($type, $tokens, $data = array(), $options = array()) {
   $recipients = '';
   $replacements = array();
-  if ($type == 'action') {
+  if ($type == 'action' && (!empty($data['node']->type) && $data['node']->type == 'sba_message_action')) {
+
     foreach ($tokens as $name => $original) {
       switch ($name) {
         case 'all_messages':
