@@ -360,11 +360,9 @@ function commerce_paywithmybank_fundraiser_commerce_charge($method_instance, $do
  * Callback function, refund the gateway.
  */
 function commerce_paywithmybank_fundraiser_commerce_refund($payment_method, $refund) {
-  $amount = substr(commerce_currency_format($refund->amount, $refund->currency), 1);
-
   // Process the refund.
   $api = commerce_paywithmybank_get_api($payment_method);
-  $transaction = $api->refundTransaction($refund->donation->txn_id, $refund->did, $amount);
+  $transaction = $api->refundTransaction($refund->donation->txn_id, $refund->did, $refund->amount);
 
   if ($transaction == NULL) {
     commerce_paywithmybank_log_errors($refund->donation->txn_id, $api->getLastErrors());
