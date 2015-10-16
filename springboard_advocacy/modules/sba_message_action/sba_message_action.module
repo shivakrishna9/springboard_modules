@@ -722,6 +722,13 @@ function sba_message_action_form_sba_message_action_node_form_validate(&$form, &
       form_set_error("field_sba_test_mode", t('Test mode must be enabled for unpublished actions.'));
     }
   }
+  if (!empty($_SESSION['messages']['error'])) {
+    foreach ($_SESSION['messages']['error'] as $key => $message) {
+      if (strpos($message, 'You must select at least one legislative issue field is required') !== FALSE) {
+        $_SESSION['messages']['error'][$key] = t('You must select at least one legislative issue');
+      }
+    }
+  }
 }
 
 /**
