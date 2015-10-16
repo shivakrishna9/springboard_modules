@@ -522,3 +522,49 @@ function commerce_paywithmybank_log_errors($transaction_id, array $errors) {
         ), WATCHDOG_ERROR);
   }
 }
+
+/**
+ * Logs a request to the PayWithMyBank API.
+ *
+ * @param string $action
+ *   The API action being logged.
+ * @param string $transaction_id
+ *   The ID of the existing PayWithMyBank transaction, if it exists.
+ * @param int $merchant_reference
+ *   The PayWithMyBank merchant reference (Drupal order ID.)
+ * @param string $amount
+ *   The formatted currency amount used in this request.
+ */
+function commerce_paywithmybank_log_request($action, $transaction_id, $merchant_reference, $amount) {
+  $log = array(
+    'action' => $action,
+    'transactionId' => $transaction_id,
+    'merchantReference' => $merchant_reference,
+    'amount' => $amount,
+  );
+
+  watchdog('commerce_paywithmybank', 'PayWithMyBank request: !param', array('!param' => '<pre>' . check_plain(print_r($log, TRUE)) . '</pre>'), WATCHDOG_DEBUG);
+}
+
+/**
+ * Logs a notification from the PayWithMyBank API.
+ *
+ * @param string $action
+ *   The API action being logged.
+ * @param string $transaction_id
+ *   The ID of the existing PayWithMyBank transaction, if it exists.
+ * @param int $merchant_reference
+ *   The PayWithMyBank merchant reference (Drupal order ID.)
+ * @param string $amount
+ *   The formatted currency amount used in this request.
+ */
+function commerce_paywithmybank_log_notification($action, $transaction_id, $merchant_reference, $amount) {
+  $log = array(
+    'action' => $action,
+    'transactionId' => $transaction_id,
+    'merchantReference' => $merchant_reference,
+    'amount' => $amount,
+  );
+
+  watchdog('commerce_paywithmybank', 'PayWithMyBank notification: !param', array('!param' => '<pre>' . check_plain(print_r($log, TRUE)) . '</pre>'), WATCHDOG_DEBUG);
+}
