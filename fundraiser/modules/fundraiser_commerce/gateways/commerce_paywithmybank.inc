@@ -315,7 +315,7 @@ function commerce_paywithmybank_fundraiser_commerce_charge($method_instance, $do
   $api->captureTransaction($donation->txn_id, $order->order_id, $amount);
 
   // Log the transaction.
-  if ($method_instance['settings']['commerce_paywithmybank_settings_log']['request']) {
+  if (!empty($method_instance['settings']['commerce_paywithmybank_settings_log']['request'])) {
     commerce_paywithmybank_log_request('capture', $donation->txn_id, $order->order_id, $amount);
   }
 

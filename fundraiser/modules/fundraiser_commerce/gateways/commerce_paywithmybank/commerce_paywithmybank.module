@@ -226,7 +226,9 @@ function commerce_paywithmybank_notify() {
     $api_transaction = $api->getTransaction($object_id);
 
     // Log the notification and transaction.
-    commerce_paywithmybank_log_notification($object_type, $object_id, $api_transaction);
+    if (!empty($payment_method['settings']['commerce_paywithmybank_settings_log']['response'])) {
+      commerce_paywithmybank_log_notification($object_type, $object_id, $api_transaction);
+    }
 
     $order = commerce_order_load($merchant_reference);
 
@@ -240,7 +242,9 @@ function commerce_paywithmybank_notify() {
   }
   else {
     // Log the notification.
-    commerce_paywithmybank_log_notification($object_type, $object_id, NULL);
+    if (!empty($payment_method['settings']['commerce_paywithmybank_settings_log']['response'])) {
+      commerce_paywithmybank_log_notification($object_type, $object_id, NULL);
+    }
   }
 
   echo 'OK';
