@@ -314,6 +314,11 @@ function commerce_paywithmybank_fundraiser_commerce_charge($method_instance, $do
   $api = commerce_paywithmybank_get_api($method_instance);
   $api->captureTransaction($donation->txn_id, $order->order_id, $amount);
 
+  // Log the transaction.
+  if ($method_instance['settings']['commerce_paywithmybank_settings_log']['request']) {
+    commerce_paywithmybank_log_request('capture', $donation->txn_id, $order->order_id, $amount);
+  }
+
   $errors = $api->getLastErrors();
   $success = (empty($errors));
 
@@ -422,4 +427,27 @@ function commerce_paywithmybank_cardonfile_fields($donation) {
   );
 
   return $data + array('instance_id' => $donation->gateway['id'], 'uid' => $donation->uid);
+}
+
+/**
+ * Logs a request to the PayWithMyBank API.
+ *
+ * @param string $action
+ *   The API action being logged.
+ * @param string $transaction_id
+ *   The ID of the existing PayWithMyBank transaction, if it exists.
+ * @param int $merchant_reference
+ *   The PayWithMyBank merchant reference (Drupal order ID.)
+ * @param string $amount
+ *   The formatted currency amount used in this request.
+ */
+function commerce_paywithmybank_log_request($action, $transaction_id, $merchant_reference, $amount) {
+  $log = array(
+    'action' => $action,
+    'transactionId' => $transaction_id,
+    'merchantReference' => $merchant_reference,
+    'amount' => $amount,
+  );
+
+  watchdog('commerce_paywithmybank', 'PayWithMyBank request: !param', array('!param' => '<pre>' . check_plain(print_r($log, TRUE)) . '</pre>'), WATCHDOG_DEBUG);
 }
