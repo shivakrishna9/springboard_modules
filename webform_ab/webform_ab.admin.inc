@@ -199,8 +199,8 @@ function webform_ab_test_webforms($node) {
   }
   $return .= theme('table', array('header' => $headers, 'rows' => $rows));
   // Show a form to add more
-  $form = drupal_render(drupal_get_form('webform_ab_webform_list_add', $node));
-  $return .= $form;
+  $form = drupal_get_form('webform_ab_webform_list_add', $node);
+  $return .= drupal_render($form);
   return $return;
 }
 
