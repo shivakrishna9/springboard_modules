@@ -13,6 +13,58 @@ function sba_social_action_create_twitter_message_entity() {
 
   $field_bases = array();
 
+  $field_bases['field_sba_show_additional'] = array(
+    'active' => 1,
+    'cardinality' => 3,
+    'deleted' => 0,
+    'entity_types' => array(),
+    'field_name' => 'field_sba_show_additional',
+    'foreign keys' => array(),
+    'indexes' => array(
+      'value' => array(
+        0 => 'value',
+      ),
+    ),
+    'locked' => 0,
+    'module' => 'list',
+    'settings' => array(
+      'allowed_values' => array(
+        'Website' => 'Website',
+        'Facebook' => 'Facebook',
+        'Youtube' => 'Youtube',
+      ),
+      'allowed_values_function' => '',
+    ),
+    'translatable' => 0,
+    'type' => 'list_text',
+  );
+
+  // Exported field_base: 'field_sba_target_options'
+  $field_bases['field_sba_target_options'] = array(
+    'active' => 1,
+    'cardinality' => 1,
+    'deleted' => 0,
+    'entity_types' => array(),
+    'field_name' => 'field_sba_target_options',
+    'foreign keys' => array(),
+    'indexes' => array(
+      'value' => array(
+        0 => 'value',
+      ),
+    ),
+    'locked' => 0,
+    'module' => 'list',
+    'settings' => array(
+      'allowed_values' => array(
+        1 => 'Districting On',
+        0 => 'Districting Off',
+      ),
+      'allowed_values_function' => '',
+    ),
+    'translatable' => 0,
+    'type' => 'list_text',
+  );
+
 // Exported field_base: 'field_sba_twitter_message'
   $field_bases['field_sba_twitter_editable'] = array(
     'active' => 1,
@@ -108,12 +160,89 @@ function sba_social_action_create_twitter_message_entity() {
 
   $field_instances = array();
 
+  $field_instances['field_sba_show_additional'] = array(
+    'bundle' => 'sba_social_action_twitter_message',
+    'default_value' => NULL,
+    'deleted' => 0,
+    'description' => 'Check to display additional contact options for targets, if available.',
+    'display' => array(
+      'default' => array(
+        'label' => 'above',
+        'module' => 'list',
+        'settings' => array(),
+        'type' => 'list_default',
+        'weight' => 13,
+      ),
+      'teaser' => array(
+        'label' => 'above',
+        'settings' => array(),
+        'type' => 'hidden',
+        'weight' => 0,
+      ),
+    ),
+    'entity_type' => 'sba_message',
+    'field_name' => 'field_sba_show_additional',
+    'label' => 'Show Additional Contact Options',
+    'required' => 0,
+    'settings' => array(
+      'user_register_form' => FALSE,
+    ),
+    'widget' => array(
+      'active' => 1,
+      'module' => 'options',
+      'settings' => array(),
+      'type' => 'options_buttons',
+      'weight' => 2,
+    ),
+  );
+
+
+  $field_instances['field_sba_target_options'] = array(
+    'bundle' => 'sba_social_action_twitter_message',
+    'default_value' => array(
+      0 => array(
+        'value' => 1,
+      ),
+    ),
+    'deleted' => 0,
+    'description' => 'If you want legislators to receive tweets from their constituents only, turn districting on; this will enable address fields on the user form.',
+    'display' => array(
+      'default' => array(
+        'label' => 'above',
+        'module' => 'list',
+        'settings' => array(),
+        'type' => 'list_default',
+        'weight' => 12,
+      ),
+      'teaser' => array(
+        'label' => 'above',
+        'settings' => array(),
+        'type' => 'hidden',
+        'weight' => 0,
+      ),
+    ),
+    'entity_type' => 'sba_message',
+    'field_name' => 'field_sba_target_options',
+    'label' => 'Districting Options',
+    'required' => 1,
+    'settings' => array(
+      'user_register_form' => FALSE,
+    ),
+    'widget' => array(
+      'active' => 1,
+      'module' => 'options',
+      'settings' => array(),
+      'type' => 'options_buttons',
+      'weight' => 1,
+    ),
+  );
+
 // Exported field_instance: 'sba_message-sba_message_action_message-field_sba_twitter_message'
   $field_instances['field_sba_twitter_message'] = array(
     'bundle' => 'sba_social_action_twitter_message',
     'default_value' => NULL,
     'deleted' => 0,
-    'description' => '',
+    'description' => 'Do not include target nicknames unless they are not your primary targets.',
     'display' => array(
       'default' => array(
         'label' => 'above',
@@ -125,7 +254,7 @@ function sba_social_action_create_twitter_message_entity() {
     ),
     'entity_type' => 'sba_message',
     'field_name' => 'field_sba_twitter_message',
-    'label' => 'Default text',
+    'label' => 'Tweet text',
     'required' => 0,
     'settings' => array(
       'text_processing' => 0,
@@ -174,7 +303,7 @@ function sba_social_action_create_twitter_message_entity() {
       'module' => 'options',
       'settings' => array(),
       'type' => 'options_buttons',
-      'weight' => 1,
+      'weight' => 10,
     ),
   );
 
@@ -238,10 +367,66 @@ function sba_social_action_create_twitter_message_entity() {
       field_create_instance($instance);
     }
   }
+
+  $export = array();
+
+  $field_group = new stdClass();
+  $field_group->disabled = FALSE; /* Edit this to true to make a default field_group disabled initially */
+  $field_group->api_version = 1;
+  $field_group->identifier = 'group_sba_target_options|sba_message|sba_social_action_twitter_message|form';
+  $field_group->group_name = 'group_sba_target_options';
+  $field_group->entity_type = 'sba_message';
+  $field_group->bundle = 'sba_social_action_twitter_message';
+  $field_group->mode = 'form';
+  $field_group->parent_name = '';
+  $field_group->label = 'Target Options';
+  $field_group->weight = '2';
+  $field_group->children = array(
+    0 => 'field_sba_target_options',
+    1 => 'field_sba_show_additional',
+    $field_group->format_type = 'fieldset',
+    $field_group->format_settings = array(
+      'formatter' => 'open',
+      'instance_settings' => array(
+        'description' => '',
+        'classes' => 'group-sba-target-options field-group-fieldset',
+        'required_fields' => 1,
+      ),
+    ),
+  );
+  $export['group_sba_target_options|sba_message|sba_social_action_twitter_message|form'] = $field_group;
+
+  $field_group = new stdClass();
+  $field_group->disabled = FALSE; /* Edit this to true to make a default field_group disabled initially */
+  $field_group->api_version = 1;
+  $field_group->identifier = 'group_sba_sample_tweet|sba_message|sba_social_action_twitter_message|form';
+  $field_group->group_name = 'group_sba_sample_tweet';
+  $field_group->entity_type = 'sba_message';
+  $field_group->bundle = 'sba_social_action_twitter_message';
+  $field_group->mode = 'form';
+  $field_group->parent_name = '';
+  $field_group->label = 'Sample Tweet';
+  $field_group->weight = '1';
+  $field_group->children = array(
+    0 => 'field_sba_twitter_editable',
+    1 => 'field_sba_twitter_message',
+  );
+  $field_group->format_type = 'fieldset';
+  $field_group->format_settings = array(
+    'label' => 'Greeting',
+    'instance_settings' => array(
+      'required_fields' => 1,
+      'classes' => 'group-sba-greeting field-group-fieldset',
+      'description' => '',
+    ),
+    'formatter' => 'open',
+  );
+  $export['group_sba_sample_tweet|sba_message|sba_social_action_twitter_message|form'] = $field_group;
+
+  foreach($export as $field_group) {
+    field_group_group_save($field_group);
+  }
 }
-
-
-
 
 /**
  * Delete springboard message fields
@@ -250,13 +435,16 @@ function _sba_social_action_delete_twitter_fields() {
   $fields = array(
     'field_sba_twitter_message',
     'field_sba_twitter_editable',
+    'field_sba_show_additional',
+    'field_sba_target_options'
   );
   foreach ($fields as $field_name) {
-    if($field = field_info_field($field_name)){
-      if (isset($field['bundles']['sba_message']))
-        field_delete_field($field_name);
-    }
+    $field = field_info_instance('node', $field_name, 'sba_social_action_twitter_message');
+    field_delete_instance($field);
+//    $field = field_info_field($field_name);
+//    field_delete_field($field);
   }
+
   drupal_set_message('Sba Social Action twitter fields deleted.');
   field_group_field_attach_delete_bundle('sba_message','sba_social_action_twitter_message');
   $twit = sba_message_type_load('sba_social_action_twitter_message');

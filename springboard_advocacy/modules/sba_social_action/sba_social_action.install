@@ -16,6 +16,8 @@ function sba_social_action_uninstall() {
   module_load_include('inc', 'sba_social_action', 'includes/install/sba_social_action.install');
   _sba_social_action_delete_nodes();
   // Remove fields implemented by this module.
+  node_type_delete('sba_social_action');
+
   module_load_include('inc', 'sba_social_action', 'includes/install/sba_social_action.twitter_message_install');
   _sba_social_action_delete_twitter_fields();
   field_purge_batch(1000);

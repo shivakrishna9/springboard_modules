@@ -180,12 +180,14 @@ function springboard_advocacy_dashboard($path, $arg = NULL) {
           drupal_add_js('jQuery(document).ready(function () {if (jQuery(".views-row-first.views-row-last").length == 1) {jQuery(".tabledrag-toggle-weight-wrapper").hide();jQuery.cookie("Drupal.tableDrag.showWeight", 0, {path: Drupal.settings.basePath,expires: 365});}})', array('type' => 'inline'));
 
           $message = array_pop($messages);
-          $subject_editable = field_get_items('sba_message', $message, 'field_sba_subject_editable');
-          $user_editable = field_get_items('sba_message', $message, 'field_sba_user_editable');
-          $multi_flow = field_get_items('node', $node, 'field_sba_action_flow');
-          if ($multi_flow[0]['value'] != 'multi' && ($subject_editable[0]['value'] != 'Not editable' || !empty($user_editable))) {
-            $no_create = TRUE;
-            drupal_set_message(t("This single-step action's current message is user-editable, please disable user editing or use the multi-step action flow to create additional messages."), 'error', FALSE);
+          if ($node->type == 'sba_message_action') {
+            $subject_editable = field_get_items('sba_message', $message, 'field_sba_subject_editable');
+            $user_editable = field_get_items('sba_message', $message, 'field_sba_user_editable');
+            $multi_flow = field_get_items('node', $node, 'field_sba_action_flow');
+            if ($multi_flow[0]['value'] != 'multi' && ($subject_editable[0]['value'] != 'Not editable' || !empty($user_editable))) {
+              $no_create = TRUE;
+              drupal_set_message(t("This single-step action's current message is user-editable, please disable user editing or use the multi-step action flow to create additional messages."), 'error', FALSE);
+            }
           }
         }
       }

@@ -28,15 +28,7 @@ function sba_social_action_message_preview_page($nid) {
       '#suffix' => '</p></div>',
       '#weight' => -8,
     ),
-    'contact_description' => array(
-      '#id' => 'message-action-preview-contact',
-      '#type' => 'markup',
-      '#markup' => t('These message(s) were generated based on the address you entered: ') . check_markup($_SESSION['contact']['full_address'], 'filtered_html')
-        . t('If this is incorrect please !click_here to enter a different address.', array('!click_here' => '<a href="#" onclick="history.go(-1);return false;">click here</a>')),
-      '#prefix' => '<div class="message-action-preview-contact"><p>',
-      '#suffix' => '</p></div>',
-      '#weight' => -7,
-    ),
+
     'sba_social_action_preview_form' => drupal_get_form('sba_social_action_preview_form', $node),
   );
 
@@ -107,7 +99,7 @@ function sba_social_action_preview_form($form, $form_state, $node) {
     }
   }
 
-  asort($messages);
+  ksort($messages);
 
   // @todo explore other ways of retrieving these two.
   $contact = $_SESSION['contact'];
@@ -204,7 +196,6 @@ function sba_social_action_preview_form_submit($form, &$form_state) {
 
   $messages = $form_state['values']['messages'];
   $node = $form['#action_node'];
-
 
   if (isset($_SESSION['retries'])) {
     $_SESSION['retries']++;
