@@ -384,14 +384,14 @@ function sba_social_action_create_twitter_message_entity() {
   $field_group->children = array(
     0 => 'field_sba_target_options',
     1 => 'field_sba_show_additional',
-    $field_group->format_type = 'fieldset',
-    $field_group->format_settings = array(
-      'formatter' => 'open',
-      'instance_settings' => array(
-        'description' => '',
-        'classes' => 'group-sba-target-options field-group-fieldset',
-        'required_fields' => 1,
-      ),
+  );
+  $field_group->format_type = 'fieldset';
+  $field_group->format_settings = array(
+    'formatter' => 'open',
+    'instance_settings' => array(
+      'description' => '',
+      'classes' => 'group-sba-target-options field-group-fieldset',
+      'required_fields' => 1,
     ),
   );
   $export['group_sba_target_options|sba_message|sba_social_action_twitter_message|form'] = $field_group;
