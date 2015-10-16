@@ -481,6 +481,16 @@ function commerce_paywithmybank_create_payment_transaction($api_transaction, $pa
   // Update the order status.
   _fundraiser_commerce_update_order_status($transaction->status, $order->order_id);
 
+  if ($api_transaction->status == PayWithMyBank::TRANSACTION_STATUS_AUTHORIZED) {
+    $donation = fundraiser_donation_get_donation($order->order_id);
+
+    $donation->status = 'authorized';
+    $donation->status_label = _fundraiser_commerce_get_label_by_status('authorized');
+    $donation->status_charged = _fundraiser_commerce_get_charged_by_status('authorized');
+
+    fundraiser_donation_update($donation);
+  }
+
   return $transaction;
 }
 
