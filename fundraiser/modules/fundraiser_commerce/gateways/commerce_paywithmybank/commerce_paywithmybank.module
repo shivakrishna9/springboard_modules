@@ -225,6 +225,9 @@ function commerce_paywithmybank_notify() {
     $api = commerce_paywithmybank_get_api($payment_method);
     $api_transaction = $api->getTransaction($object_id);
 
+    // Log the notification and transaction.
+    commerce_paywithmybank_log_notification($object_type, $object_id, $api_transaction);
+
     $order = commerce_order_load($merchant_reference);
 
     if (empty($order)) {
@@ -256,6 +259,10 @@ function commerce_paywithmybank_notify() {
         commerce_paywithmybank_create_payment_transaction($api_transaction_completed, $payment_method, $order);
       }
     }
+  }
+  else {
+    // Log the notification.
+    commerce_paywithmybank_log_notification($object_type, $object_id, NULL);
   }
 
   echo 'OK';
@@ -549,21 +556,18 @@ function commerce_paywithmybank_log_request($action, $transaction_id, $merchant_
 /**
  * Logs a notification from the PayWithMyBank API.
  *
- * @param string $action
- *   The API action being logged.
- * @param string $transaction_id
- *   The ID of the existing PayWithMyBank transaction, if it exists.
- * @param int $merchant_reference
- *   The PayWithMyBank merchant reference (Drupal order ID.)
- * @param string $amount
- *   The formatted currency amount used in this request.
+ * @param string $object_type
+ *   The PayWithMyBank notification object type.
+ * @param string $object_id
+ *   The PayWithMyBank ID of the notification object.
+ * @param int $transaction
+ *   The PayWithMyBank transaction if the object is a transaction object.
  */
-function commerce_paywithmybank_log_notification($action, $transaction_id, $merchant_reference, $amount) {
+function commerce_paywithmybank_log_notification($object_type, $object_id, $transaction) {
   $log = array(
-    'action' => $action,
-    'transactionId' => $transaction_id,
-    'merchantReference' => $merchant_reference,
-    'amount' => $amount,
+    'objectType' => $object_type,
+    'objectId' => $object_id,
+    'transaction' => $transaction,
   );
 
   watchdog('commerce_paywithmybank', 'PayWithMyBank notification: !param', array('!param' => '<pre>' . check_plain(print_r($log, TRUE)) . '</pre>'), WATCHDOG_DEBUG);
