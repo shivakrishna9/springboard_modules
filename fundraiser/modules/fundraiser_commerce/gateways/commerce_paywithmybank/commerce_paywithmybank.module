@@ -118,6 +118,16 @@ function commerce_paywithmybank_bank_settings_form($settings = NULL) {
     '#default_value' => isset($settings['commerce_paywithmybank_settings_sandbox']) ? $settings['commerce_paywithmybank_settings_sandbox'] : FALSE,
   );
 
+  $form['commerce_paywithmybank_settings_log'] = array(
+    '#type' => 'checkboxes',
+    '#title' => t('Log the following messages for debugging'),
+    '#options' => array(
+      'request' => t('API request messages'),
+      'response' => t('API response messages'),
+    ),
+    '#default_value' => isset($settings['commerce_paywithmybank_settings_log']) ? $settings['commerce_paywithmybank_settings_log'] : array('request' => '0', 'response' => '0'),
+  );
+
   return $form;
 }
 
