@@ -474,6 +474,9 @@ function commerce_paywithmybank_create_payment_transaction($api_transaction, $pa
   // Save the transaction.
   commerce_payment_transaction_save($transaction);
 
+  // Update the order status.
+  _fundraiser_commerce_update_order_status($transaction->status, $order->order_id);
+
   return $transaction;
 }
 
