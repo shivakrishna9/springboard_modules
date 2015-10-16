@@ -210,8 +210,8 @@ function theme_fundraiser_tickets_webform_table($variables) {
       $last_row = array(
         'data' => array(
           t('Additional Donation'),
-          '',
           drupal_render($element[$id]),
+          '',
           '',
           array(
             'data' => $addon_currency_symbol . ' ' . '0.00',
@@ -284,6 +284,9 @@ function theme_fundraiser_tickets_webform_table($variables) {
   // Add the JS for the settings too
   drupal_add_js(array('fundraiserTickets' => array('ticketPrices' => $ticket_prices)), 'setting');
 
+  // Add CSS
+  drupal_add_css(drupal_get_path('module', 'fundraiser_tickets') . '/css/ticketing_form.css');
+
   $table = array(
     '#theme' => 'table',
     '#header' => $header,
@@ -294,6 +297,12 @@ function theme_fundraiser_tickets_webform_table($variables) {
   );
 
   $output = drupal_render($table);
+
+  // Insert the additional donation currency symbol:
+  $addon_currency_symbol = '<span class="currency-symbol">' . $addon_currency_symbol . '</span>';
+  $extra_donation_html = '<input type="text" id="fundraiser-tickets-extra-donation"';
+  $output = str_replace($extra_donation_html, $addon_currency_symbol . $extra_donation_html, $output);
+
   return $output;
 }
 
