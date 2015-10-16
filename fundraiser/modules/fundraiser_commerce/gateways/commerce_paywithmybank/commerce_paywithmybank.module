@@ -454,13 +454,10 @@ function commerce_paywithmybank_create_payment_transaction($api_transaction, $pa
   switch ($api_transaction->status) {
     case PayWithMyBank::TRANSACTION_STATUS_NEW:
     case PayWithMyBank::TRANSACTION_STATUS_PENDING:
+    case PayWithMyBank::TRANSACTION_STATUS_AUTHORIZED:
     case PayWithMyBank::TRANSACTION_STATUS_PROCESSED:
     case PayWithMyBank::TRANSACTION_STATUS_ON_HOLD:
       $transaction->status = COMMERCE_PAYMENT_STATUS_PENDING;
-      break;
-
-    case PayWithMyBank::TRANSACTION_STATUS_AUTHORIZED:
-      $transaction->status = 'authorized';
       break;
 
     case PayWithMyBank::TRANSACTION_STATUS_REVERSED:
