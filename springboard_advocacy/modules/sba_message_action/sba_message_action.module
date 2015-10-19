@@ -252,13 +252,17 @@ function sba_message_action_node_presave($node) {
   if($node->type == 'sba_message_action') {
     $node_wrapper = entity_metadata_wrapper('node', $node);
     $multi_flow = $node_wrapper->field_sba_action_flow->value() == 'multi' ? TRUE : FALSE;
-    if (empty($node->nid)) {
-      if (!$multi_flow) {
+    if (!$multi_flow) {
+      if ($node->webform['submit_text']  == 'Preview Messages') {
         $node->webform['submit_text'] = t('Send your message');
       }
-      else {
-        $node->webform['submit_text'] = t('Preview Message');
+    }
+    else {
+      if ($node->webform['submit_text']  == 'Send Your Message') {
+        $node->webform['submit_text'] = t('Preview Messages');
       }
+    }
+    if (empty($node->nid)) {
       $node->webform['confirmation'] = t('Thank you, %value[sbp_first_name] for participating in the messaging campaign.');
       $node->webform['confirmation']   .= "\n\n" . '[action:all_messages]';
     }
@@ -716,6 +720,13 @@ function sba_message_action_form_sba_message_action_node_form_validate(&$form, &
   if ($form_state['values']['field_sba_test_mode'][$lang][0]['value'] == 0) {
     if ($form_state['values']['status'] == 0) {
       form_set_error("field_sba_test_mode", t('Test mode must be enabled for unpublished actions.'));
+    }
+  }
+  if (!empty($_SESSION['messages']['error'])) {
+    foreach ($_SESSION['messages']['error'] as $key => $message) {
+      if (strpos($message, 'You must select at least one legislative issue field is required') !== FALSE) {
+        $_SESSION['messages']['error'][$key] = t('You must select at least one legislative issue');
+      }
     }
   }
 }
