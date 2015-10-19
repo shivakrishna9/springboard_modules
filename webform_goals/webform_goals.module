@@ -1166,7 +1166,7 @@ function webform_goals_form_node_form_alter(&$form, &$form_state) {
     }
     $goal = !empty($gid) ? webform_goals_goal_retrieve($gid) : array();
     $donation_total = t('Total donation amount required to meet this goal.');
-    $donation_minimum = t('Minimum total donations required to show progress.');
+    $donation_minimum = t('Minimum number of donations required to show progress.');
     $petition_total = t('How many signatures are required to meet this goal?');
     $petition_minimum = t('Minimum total signatures required to show progress.');
     $submission_total = t('How many submissions are required to meet this goal?');
@@ -1259,7 +1259,7 @@ function webform_goals_form_node_form_alter(&$form, &$form_state) {
     $form['goal_settings']['webform_goals_quick_starter_message'] = array(
       '#type' => 'textarea',
       '#title' => t('Starter message'),
-      '#description' => t('This message is displayed when minimum goal progress has not been met.'),
+      '#description' => t('This message is displayed when minimum numbers have not been met.'),
       '#default_value' => isset($goal['starter_message']) ? $goal['starter_message'] : '',
     );
 

@@ -33,8 +33,8 @@ function fundraiser_webform_webform_goals_list_metrics($selected_context, $form_
             'description' => t('Add this number to the current total donations when calculating goal progress.'),
           ),
           'display_threshold' => array(
-            'title' => t('Minimum total donations required to show progress'),
-            'description' => t('The goal progress bar will be hidden until total donations reach this number.'),
+            'title' => t('Minimum number of donations required to show progress.'),
+            'description' => t('The goal progress bar will be hidden until this number of donations are received.'),
           ),
         ),
       );
