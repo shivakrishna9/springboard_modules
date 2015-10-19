@@ -1166,7 +1166,7 @@ function webform_goals_form_node_form_alter(&$form, &$form_state) {
     }
     $goal = !empty($gid) ? webform_goals_goal_retrieve($gid) : array();
     $donation_total = t('Total donation amount required to meet this goal.');
-    $donation_minimum = t('Minimum number of donations required to show progress.');
+    $donation_minimum = t('Minimum total donation amount required to show progress.');
     $petition_total = t('How many signatures are required to meet this goal?');
     $petition_minimum = t('Minimum total signatures required to show progress.');
     $submission_total = t('How many submissions are required to meet this goal?');
