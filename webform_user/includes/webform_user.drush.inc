@@ -43,7 +43,7 @@ function webform_user_create_missing_users($node_id) {
   }
 
   if (!empty($submission_ids)) {
-    $chunks = array_chunk($submission_ids, 5);
+    $chunks = array_chunk($submission_ids, 10);
     $operations = array();
     $chunk_count = count($chunks);
 
