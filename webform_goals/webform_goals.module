@@ -140,7 +140,8 @@ function webform_goals_jsonp_send($callback, $data) {
     if(is_numeric($gid) && isset($children['markup'])) {
       $goal = webform_goal_load($gid);
       $metrics = webform_goals_track_metric($goal);
-      if ($metrics['count'] < $goal['display_threshold']) {
+      $count =  (int) str_replace(',', "", $metrics['count']);
+      if ($count < $goal['display_threshold']) {
         $data[$gid]['markup'] = check_markup($goal['starter_message'], $goal['starter_message_format']);
       }
     }
