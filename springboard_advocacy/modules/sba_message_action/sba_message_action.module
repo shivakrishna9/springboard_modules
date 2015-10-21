@@ -253,12 +253,12 @@ function sba_message_action_node_presave($node) {
     $node_wrapper = entity_metadata_wrapper('node', $node);
     $multi_flow = $node_wrapper->field_sba_action_flow->value() == 'multi' ? TRUE : FALSE;
     if (!$multi_flow) {
-      if ($node->webform['submit_text']  == 'Preview Messages') {
+      if (empty($node->webform['submit_text']) || $node->webform['submit_text']  == 'Preview Messages') {
         $node->webform['submit_text'] = t('Send your message');
       }
     }
     else {
-      if ($node->webform['submit_text']  == 'Send Your Message') {
+      if (empty($node->webform['submit_text'])  || $node->webform['submit_text']  == 'Send Your Message') {
         $node->webform['submit_text'] = t('Preview Messages');
       }
     }
