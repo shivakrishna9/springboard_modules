@@ -30,7 +30,8 @@ function webform_user_create_missing_users($node_id) {
   $query = 'SELECT `sid`
     FROM `webform_submissions`
     WHERE `nid` = :nid
-    AND `uid` = :uid';
+    AND `uid` = :uid
+    ORDER BY `submitted` ASC';
 
   $result = db_query($query, array(
     ':nid' => $node_id,
@@ -46,7 +47,6 @@ function webform_user_create_missing_users($node_id) {
     $chunks = array_chunk($submission_ids, 10);
     $operations = array();
     $chunk_count = count($chunks);
-
     $i = 0;
     foreach ($chunks as $chunk) {
       $i++;
@@ -84,7 +84,7 @@ function webform_user_create_missing_users_batch_process($chunk, $node_id, $oper
     FROM `webform_submissions` `s`
     RIGHT JOIN `webform_submitted_data` `sd` ON `sd`.`sid` = `s`.`sid`
     RIGHT JOIN `webform_user_component_map` `cm` ON `cm`.`nid` = `sd`.`nid` AND `cm`.`cid` = `sd`.`cid`
-    WHERE `s`.`sid` IN (:submission_ids);';
+    WHERE `s`.`sid` IN (:submission_ids) ORDER BY `s`.`sid` ASC;';
 
   $result = db_query($query, array(
     ':submission_ids' => implode(',', $chunk),
@@ -103,7 +103,9 @@ function webform_user_create_missing_users_batch_process($chunk, $node_id, $oper
   // Create users from the webform submissions.
   foreach ($submissions as $sid => $submission) {
     $account = user_load_by_mail($submission['mail']);
-
+    
+    // Remove empty string values from submission to avoid datatype exceptions
+    $submission = array_filter($submission, 'strlen');
     if (empty($account)) {
       $user_fields = array(
         'name' => $submission['mail'],
@@ -129,11 +131,15 @@ function webform_user_create_missing_users_batch_process($chunk, $node_id, $oper
     webform_submission_update($node, $submission);
 
     // Log the new user creation.
-    db_insert('webform_user_create_missing_users_log')->fields(array(
-      'nid' => $node_id,
-      'uid' => $account->uid,
-      'timestamp' => time(),
-    ))->execute();
+    try {
+      db_insert('webform_user_create_missing_users_log')->fields(array(
+        'nid' => $node_id,
+        'uid' => $account->uid,
+        'timestamp' => time(),
+      ))->execute();
+    } catch (PDOException $e) {
+      print $e->getMessage() . "\n";
+    }
   }
 }
 
