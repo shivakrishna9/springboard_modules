@@ -5,6 +5,37 @@
  */
 
 /**
+ * Implements hook_menu()
+ */
+function fundraiser_data_warehousing_menu() {
+  $items = array();
+
+  $items['admin/springboard/options/fundraiser/data_warehousing'] = array(
+    'title' => 'Data warehousing settings',
+    'description' => 'Administer data warehousing settings.',
+    'access arguments' => array('administer fundraiser data warehousing'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('fundraiser_data_warehousing_admin_settings_form'),
+    'type' => MENU_NORMAL_ITEM,
+    'file' => 'includes/fundraiser_data_warehousing.admin.inc',
+  );
+
+  return $items;
+}
+
+/**
+ * Implements hook_permission()
+ */
+function fundraiser_data_warehousing_permission() {
+  return array(
+    'administer fundraiser data warehousing' => array(
+      'title' => t('Administer fundraiser data warehousing'),
+      'description' => t('Perform administration tasks for fundraiser data warehousing.'),
+    ),
+  );
+}
+
+/**
  * Implements hook_fundraiser_donation_success()
  */
 function fundraiser_data_warehousing_fundraiser_donation_success($donation) {
@@ -49,9 +80,24 @@ function fundraiser_data_warehousing_fundraiser_sustainers_update_recurring($rec
 function fundraiser_data_warehousing_send_data($donation_data) {
   $donation_json = json_encode($donation_data);
 
-  // TODO: Send donation data to data warehouse.
+  watchdog('fundraiser_data_warehousing', 'Sending data: ' . $donation_json);
 
-  watchdog('fundraiser_data_warehousing', $donation_json);
+  $post_fields = array(
+    'donation' => $donation,
+  );
+
+  // TODO: Put data warehouse URL into admin page.
+  $url = '';
+
+  $ch = curl_init($url);
+  curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
+  curl_setopt($ch, CURLOPT_POST, 1);
+  curl_setopt($ch, CURLOPT_POST, $post_fields);
+
+  $response = curl_exec($ch);
+  curl_close($ch);
+
+  watchdog('fundraiser_data_warehousing', 'Data warehouse response: ' . $response);
 }
 
 function fundraiser_data_warehousing_get_formatted_donation_data($donation) {
