@@ -24,6 +24,10 @@ function fundraiser_data_warehousing_fundraiser_sustainers_create_recurring($rec
 
     $donation_data = fundraiser_data_warehousing_get_formatted_donation_data($master_donation);
 
+    // Overwrite donation ID of original donation with ID of recurring donation.
+    $donation_data['did'] = $recurring_donation['did'];
+
+    // Add sustainer-specific data.
     $donation_data['master_did'] = $original_recurring->master_did;
     $donation_data['next_charge'] = $recurring_donation['next_charge'];
     $donation_data['sustainer_key'] = isset($recurring_donation['sustainer_key']) ? $recurring_donation['sustainer_key'] : NULL;
