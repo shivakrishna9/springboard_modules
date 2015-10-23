@@ -41,7 +41,7 @@ function fundraiser_data_warehousing_permission() {
 function fundraiser_data_warehousing_fundraiser_donation_success($donation) {
   $donation_data = fundraiser_data_warehousing_get_formatted_donation_data($donation);
 
-  fundraiser_data_warehousing_send_data($donation_data);
+  fundraiser_data_warehousing_send_data($donation_data, '/one-time');
 }
 
 /**
@@ -65,7 +65,7 @@ function fundraiser_data_warehousing_fundraiser_sustainers_create_recurring($rec
     $donation_data['next_charge'] = $recurring_data['next_charge'];
     $donation_data['sustainer_key'] = isset($recurring_data['sustainer_key']) ? $recurring_data['sustainer_key'] : NULL;
 
-    fundraiser_data_warehousing_send_data($donation_data);
+    fundraiser_data_warehousing_send_data($donation_data, '/sustainer');
   }
 }
 
@@ -78,13 +78,17 @@ function fundraiser_data_warehousing_fundraiser_sustainers_update_recurring($rec
   fundraiser_data_warehousing_fundraiser_sustainers_create_recurring($recurring_donation);
 }
 
-function fundraiser_data_warehousing_send_data($donation_data) {
+function fundraiser_data_warehousing_send_data($donation_data, $endpoint = NULL) {
   $donation_data['authentication_token'] = 'mzY4CxErnjoDprYv7bHfkpE';
 
   $url = variable_get('fundraiser_data_warehousing_url');
 
   if (!empty($url)) {
-    watchdog('fundraiser_data_warehousing', 'Sending data: ' . serialize($donation_data));
+    if (!empty($endpoint)) {
+      $url .= $endpoint;
+    }
+
+    watchdog('fundraiser_data_warehousing', 'Sending data to url ' . $url . ': ' . serialize($donation_data));
 
     $ch = curl_init($url);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
