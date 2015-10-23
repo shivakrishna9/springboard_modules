@@ -81,24 +81,28 @@ function fundraiser_data_warehousing_fundraiser_sustainers_update_recurring($rec
 function fundraiser_data_warehousing_send_data($donation_data) {
   $donation_json = json_encode($donation_data);
 
-  watchdog('fundraiser_data_warehousing', 'Sending data: ' . $donation_json);
-
   $post_fields = array(
     'donation' => $donation,
   );
 
-  // TODO: Put data warehouse URL into admin page.
-  $url = '';
+  $url = variable_get('fundraiser_data_warehousing_url');
 
-  $ch = curl_init($url);
-  curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
-  curl_setopt($ch, CURLOPT_POST, 1);
-  curl_setopt($ch, CURLOPT_POST, $post_fields);
+  if (!empty($url)) {
+    watchdog('fundraiser_data_warehousing', 'Sending data: ' . $donation_json);
 
-  $response = curl_exec($ch);
-  curl_close($ch);
+    $ch = curl_init($url);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
+    curl_setopt($ch, CURLOPT_POST, 1);
+    curl_setopt($ch, CURLOPT_POST, $post_fields);
 
-  watchdog('fundraiser_data_warehousing', 'Data warehouse response: ' . $response);
+    $response = curl_exec($ch);
+    curl_close($ch);
+
+    watchdog('fundraiser_data_warehousing', 'Data warehouse response: ' . $response);
+  }
+  else {
+    watchdog('fundraiser_data_warehousing', 'No URL is configured for data warehousing.');
+  }
 }
 
 function fundraiser_data_warehousing_get_formatted_donation_data($donation) {
