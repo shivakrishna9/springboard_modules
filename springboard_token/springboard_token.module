@@ -20,7 +20,6 @@ function springboard_token_theme() {
     ),
   );
 
-
   return $info;
 }
 
@@ -100,7 +99,7 @@ function theme_springboard_token_token_tree($variables) {
         $token_info['parent'] = $type;
       }
 
-      if(strpos($token, 'sbp_') === FALSE) {
+      if(strpos($token, 'sbp_') === FALSE && strpos($token, 'donation:node') === FALSE) {
         if (!empty($allowed_tokens) && in_array($token, array_keys($allowed_tokens))) {
           $token_info['description'] = $allowed_tokens[$token_info['raw token']];
           $row = _token_token_tree_format_row($token, $token_info);
