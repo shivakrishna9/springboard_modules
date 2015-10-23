@@ -136,6 +136,8 @@ function fundraiser_data_warehousing_get_formatted_donation_data($donation) {
     'status' => $donation->status,
   );
 
+  drupal_alter('fundraiser_data_housing_donation_data_alter', $donation_data);
+
   return $donation_data;
 }
 
