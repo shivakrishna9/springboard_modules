@@ -24,8 +24,9 @@ function fundraiser_data_warehousing_fundraiser_sustainers_create_recurring($rec
 
     $donation_data = fundraiser_data_warehousing_get_formatted_donation_data($master_donation);
 
-    // Overwrite donation ID of original donation with ID of recurring donation.
+    // Overwrite original donation data with of recurring donation data.
     $donation_data['did'] = $recurring_donation['did'];
+    $donation_data['status'] = $recurring_donation['status'];
 
     // Add sustainer-specific data.
     $donation_data['master_did'] = $original_recurring->master_did;
