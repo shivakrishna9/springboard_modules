@@ -105,6 +105,15 @@ function fundraiser_data_warehousing_send_data($donation_data, $endpoint = NULL)
   }
 }
 
+/**
+ * Creates an array of donation data to send to the data warehouse.
+ *
+ * @param object $donation
+ *   The donation object to use as a data source.
+ *
+ * @return array
+ *   Array of donation data.
+ */
 function fundraiser_data_warehousing_get_formatted_donation_data($donation) {
   $donation_data = array(
     'nid' => $donation->nid,
