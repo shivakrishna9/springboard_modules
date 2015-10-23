@@ -13,7 +13,7 @@ function fundraiser_data_warehousing_menu() {
   $items['admin/springboard/options/fundraiser/data_warehousing'] = array(
     'title' => 'Data warehousing settings',
     'description' => 'Administer data warehousing settings.',
-    'access arguments' => array('administer fundraiser data warehousing'),
+    'access callback' => TRUE, //=> array('administer fundraiser data warehousing'),
     'page callback' => 'drupal_get_form',
     'page arguments' => array('fundraiser_data_warehousing_admin_settings_form'),
     'type' => MENU_NORMAL_ITEM,
@@ -79,21 +79,17 @@ function fundraiser_data_warehousing_fundraiser_sustainers_update_recurring($rec
 }
 
 function fundraiser_data_warehousing_send_data($donation_data) {
-  $donation_json = json_encode($donation_data);
-
-  $post_fields = array(
-    'donation' => $donation,
-  );
+  $donation_data['authentication_token'] = 'mzY4CxErnjoDprYv7bHfkpE';
 
   $url = variable_get('fundraiser_data_warehousing_url');
 
   if (!empty($url)) {
-    watchdog('fundraiser_data_warehousing', 'Sending data: ' . $donation_json);
+    watchdog('fundraiser_data_warehousing', 'Sending data: ' . serialize($donation_data));
 
     $ch = curl_init($url);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
     curl_setopt($ch, CURLOPT_POST, 1);
-    curl_setopt($ch, CURLOPT_POST, $post_fields);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, $donation_data);
 
     $response = curl_exec($ch);
     curl_close($ch);
