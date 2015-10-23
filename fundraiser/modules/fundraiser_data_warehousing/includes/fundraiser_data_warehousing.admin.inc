@@ -11,9 +11,14 @@ function fundraiser_data_warehousing_admin_settings_form($form, &$form_state) {
     '#default_value' => variable_get('fundraiser_data_warehousing_url', ''),
   );
 
-  return system_settings_form($form);
+  $form['actions']['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Save'),
+  );
+
+  return $form;
 }
 
 function fundraiser_data_warehousing_admin_settings_form_submit($form, &$form_state) {
-
+  variable_set('fundraiser_data_warehousing_url', $form_state['values']['fundraiser_data_warehousing_url']);
 }
