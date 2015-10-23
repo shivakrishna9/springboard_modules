@@ -13,3 +13,7 @@ function fundraiser_data_warehousing_admin_settings_form($form, &$form_state) {
 
   return system_settings_form($form);
 }
+
+function fundraiser_data_warehousing_admin_settings_form_submit($form, &$form_state) {
+
+}
