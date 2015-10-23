@@ -65,7 +65,7 @@ function fundraiser_data_warehousing_fundraiser_sustainers_create_recurring($rec
     $donation_data['next_charge'] = $recurring_data['next_charge'];
     $donation_data['sustainer_key'] = isset($recurring_data['sustainer_key']) ? $recurring_data['sustainer_key'] : NULL;
 
-    fundraiser_data_warehousing_send_data($donation_data, '/sustainer');
+    fundraiser_data_warehousing_send_data($donation_data, '/one-time');
   }
 }
 
