@@ -124,7 +124,6 @@ function fundraiser_data_warehousing_get_formatted_donation_data($donation) {
     'zip' => $donation->donation['zip'],
     'gateway' => $donation->gateway['id'],
     'txn_id' => $donation->data['txn_id'],
-    'remote_id' => $donation->data['remote_id'],
     'status' => $donation->status,
   );
 
