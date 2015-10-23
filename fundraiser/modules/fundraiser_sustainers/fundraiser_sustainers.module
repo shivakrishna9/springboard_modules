@@ -2812,6 +2812,9 @@ function _fundraiser_sustainers_update_recurring($donation) {
 
     $log = fundraiser_sustainers_log();
     $log->log($donation, $original);
+
+    // Allow other modules to access the updated recurring donation.
+    module_invoke_all('fundraiser_sustainers_update_recurring', $donation);
   }
 }
 

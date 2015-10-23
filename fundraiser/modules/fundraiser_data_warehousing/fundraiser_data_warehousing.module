@@ -31,6 +31,15 @@ function fundraiser_data_warehousing_fundraiser_sustainers_create_recurring($rec
   }
 }
 
+/**
+ * Implements hook_fundraiser_sustainers_update_recurring()
+ */
+function fundraiser_data_warehousing_fundraiser_sustainers_update_recurring($recurring_donation) {
+  // TODO: Remove original record from data warehouse?
+
+  fundraiser_data_warehousing_fundraiser_sustainers_create_recurring($recurring_donation);
+}
+
 function fundraiser_data_warehousing_send_data($donation_data) {
   $donation_json = json_encode($donation_data);
 
