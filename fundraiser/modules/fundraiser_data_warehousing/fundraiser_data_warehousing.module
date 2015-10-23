@@ -4,3 +4,38 @@
  * Data warehousing functionality for Fundraiser.
  */
 
+/**
+ * Implements hook_fundraiser_donation_success()
+ */
+function fundraiser_data_warehousing_fundraiser_donation_success($donation) {
+  $donation_data = fundraiser_data_warehousing_get_formatted_donation_data($donation);
+
+  $donation_json = json_encode($donation_data);
+}
+
+function fundraiser_data_warehousing_get_formatted_donation_data($donation) {
+  $donation_data = array(
+    'nid' => $donation->nid,
+    'sid' => $donation->sid,
+    'uid' => $donation->uid,
+    'did' => $donation->did,
+    'amount' => $donation->amount,
+    'currency' => $donation->currency,
+    'first_name' => $donation->donation['first_name'],
+    'last_name' => $donation->donation['last_name'],
+    'mail' => $donation->donation['mail'],
+    'address' => $donation->donation['address'],
+    'address_line_2' => $donation->donation['address_line_2'],
+    'city' => $donation->donation['city'],
+    'country' => $donation->donation['country'],
+    'state' => $donation->donation['state'],
+    'zip' => $donation->donation['zip'],
+    'gateway' => $donation->gateway['id'],
+    'txn_id' => $donation->data['txn_id'],
+    'remote_id' => $donation->data['remote_id'],
+    'status' => $donation->status,
+  );
+
+  return $donation_data;
+}
+
