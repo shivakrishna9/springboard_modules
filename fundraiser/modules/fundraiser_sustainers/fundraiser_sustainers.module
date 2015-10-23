@@ -2773,6 +2773,8 @@ function _fundraiser_sustainers_create_recurring($donation) {
     $log = fundraiser_sustainers_log();
     $log->log($record);
 
+    // Allow other modules to access the new recurring donation.
+    module_invoke_all('fundraiser_sustainers_create_recurring', $donation);
   }
   else {
     _fundraiser_sustainers_update_recurring($donation);

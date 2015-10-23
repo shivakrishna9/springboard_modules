@@ -10,7 +10,33 @@
 function fundraiser_data_warehousing_fundraiser_donation_success($donation) {
   $donation_data = fundraiser_data_warehousing_get_formatted_donation_data($donation);
 
+  fundraiser_data_warehousing_send_data($donation_data);
+}
+
+/**
+ * Implements hook_fundraiser_sustainers_create_recurring()
+ */
+function fundraiser_data_warehousing_fundraiser_sustainers_create_recurring($recurring_donation) {
+  $original_recurring = _fundraiser_sustainers_get_recurring_by_did($recurring_donation['did']);
+
+  if (!empty($original_recurring->master_did)) {
+    $master_donation = fundraiser_donation_get_donation($original_recurring->master_did);
+
+    $donation_data = fundraiser_data_warehousing_get_formatted_donation_data($master_donation);
+
+    $donation_data['next_charge'] = $recurring_donation['next_charge'];
+    $donation_data['sustainer_key'] = isset($recurring_donation['sustainer_key']) ? $recurring_donation['sustainer_key'] : NULL;
+
+    fundraiser_data_warehousing_send_data($donation_data);
+  }
+}
+
+function fundraiser_data_warehousing_send_data($donation_data) {
   $donation_json = json_encode($donation_data);
+
+  // TODO: Send donation data to data warehouse.
+
+  watchdog('fundraiser_data_warehousing', $donation_json);
 }
 
 function fundraiser_data_warehousing_get_formatted_donation_data($donation) {
