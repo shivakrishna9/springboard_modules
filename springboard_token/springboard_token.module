@@ -31,7 +31,6 @@ function theme_springboard_token_token_tree($variables) {
 
   $token_types = $variables['token_types'];
   $info = token_get_info();
-
   if ($token_types == 'all') {
     $token_types = array_keys($info['types']);
   }
@@ -99,7 +98,11 @@ function theme_springboard_token_token_tree($variables) {
         $token_info['parent'] = $type;
       }
 
-      if(strpos($token, 'sbp_') === FALSE && strpos($token, 'donation:node') === FALSE) {
+      if(strpos($token, 'sbp_') === FALSE
+        && strpos($token, 'donation:node') === FALSE
+        && strpos($token, 'donation:user:') === FALSE
+        && strpos($token, 'site:current-user') === FALSE
+      ) {
         if (!empty($allowed_tokens) && in_array($token, array_keys($allowed_tokens))) {
           $token_info['description'] = $allowed_tokens[$token_info['raw token']];
           $row = _token_token_tree_format_row($token, $token_info);
@@ -238,4 +241,14 @@ function springboard_token_get_allowed_tokens($type) {
       break;
   }
   return $allowed_tokens;
+}
+
+function springboard_token_get_unallowed_tokens($type) {
+  $unallowed_tokens = array(
+    '[site:current-user]',
+    '[donation:node]',
+    '[donation:user:]',
+    'sbp_'
+  );
+  return $unallowed_tokens;
 }
