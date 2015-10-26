@@ -254,7 +254,7 @@ function sba_message_action_node_presave($node) {
     $multi_flow = $node_wrapper->field_sba_action_flow->value() == 'multi' ? TRUE : FALSE;
     if (!$multi_flow) {
       if (empty($node->webform['submit_text']) || $node->webform['submit_text']  == 'Preview Messages') {
-        $node->webform['submit_text'] = t('Send your message');
+        $node->webform['submit_text'] = t('Send Your Mgit essage');
       }
     }
     else {
