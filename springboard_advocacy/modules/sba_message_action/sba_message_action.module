@@ -253,12 +253,12 @@ function sba_message_action_node_presave($node) {
     $node_wrapper = entity_metadata_wrapper('node', $node);
     $multi_flow = $node_wrapper->field_sba_action_flow->value() == 'multi' ? TRUE : FALSE;
     if (!$multi_flow) {
-      if ($node->webform['submit_text']  == 'Preview Messages') {
-        $node->webform['submit_text'] = t('Send your message');
+      if (empty($node->webform['submit_text']) || $node->webform['submit_text']  == 'Preview Messages') {
+        $node->webform['submit_text'] = t('Send Your Message');
       }
     }
     else {
-      if ($node->webform['submit_text']  == 'Send Your Message') {
+      if (empty($node->webform['submit_text'])  || $node->webform['submit_text']  == 'Send Your Message') {
         $node->webform['submit_text'] = t('Preview Messages');
       }
     }
@@ -1101,5 +1101,23 @@ function sba_message_action_page_wrappers_page_node_alter(&$node) {
     if (isset($is_wrapped->type) && $is_wrapped->type ='sba_message_action') {
       $node = $is_wrapped;
     }
+  }
+}
+
+/**
+ * Implements hook_webform_ab_valid_webforms().
+ *
+ * Inform webform ab that message actions can participate in A/B tests.
+ */
+function sba_message_action_webform_ab_valid_webforms($webform_types) {
+  if ($webform_types == 'webform') {
+    $result = db_query('SELECT n.nid, n.title FROM {node} n ' .
+      'WHERE n.status > :status AND n.type = :type ORDER BY n.title',
+      array(':status' => 0, ':type' => array('sba_message_action')));
+    $forms = array();
+    foreach ($result as $row) {
+      $forms[] = $row;
+    }
+    return $forms;
   }
 }
