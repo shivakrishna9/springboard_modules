@@ -33,7 +33,6 @@ function springboard_token_theme() {
  * Modified version of Token module's theme_token_tree().
  */
 function theme_springboard_token_token_tree($variables) {
-
   module_load_include('inc','token', 'token.pages');
   if (!empty($variables['dialog'])) {
     return theme_token_tree_link($variables);
@@ -101,6 +100,7 @@ function theme_springboard_token_token_tree($variables) {
       $rows[] = $row;
     }
     $tree = token_build_tree($type, $options);
+
     foreach ($tree as $token => $token_info) {
       if (!empty($token_info['restricted']) && empty($variables['show_restricted'])) {
         continue;
@@ -255,10 +255,10 @@ function springboard_token_get_allowed_tokens($type) {
         '[site:slogan]' => '	Website slogan',
         '[site:url]' => '	Full website URL',
         '[site:url-brief]' => '	Website URL, no "http://"',
-        '[action:all_messages]' => '	All messages',
-        '[action:delivered_messages]' => '	Delivered messages',
-        '[action:undelivered_messages]' => '	Undelivered messages',
-        '[springboard_petition:recent_signers]' => '	List of people who recently signed petitions'
+//        '[action:all_messages]' => '	All messages',
+//        '[action:delivered_messages]' => '	Delivered messages',
+//        '[action:undelivered_messages]' => '	Undelivered messages',
+//        '[springboard_petition:recent_signers]' => '	List of people who recently signed petitions'
       );
       break;
   }
