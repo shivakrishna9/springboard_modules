@@ -1,5 +1,8 @@
 <?php
 
+/**
+ * Implements hook_theme_registry_alter().
+ */
 function springboard_token_theme_registry_alter(&$theme_registry) {
   if (isset($theme_registry['token_tree'])) {
     $theme_registry['token_tree']['function'] = 'theme_springboard_token_token_tree';
@@ -7,6 +10,9 @@ function springboard_token_theme_registry_alter(&$theme_registry) {
   }
 }
 
+/**
+ * Implements hook_theme().
+ */
 function springboard_token_theme() {
 
   $info['springboard_token_token_tree'] = array(
@@ -23,7 +29,11 @@ function springboard_token_theme() {
   return $info;
 }
 
+/**
+ * Modified version of Token module's theme_token_tree().
+ */
 function theme_springboard_token_token_tree($variables) {
+
   module_load_include('inc','token', 'token.pages');
   if (!empty($variables['dialog'])) {
     return theme_token_tree_link($variables);
@@ -53,6 +63,7 @@ function theme_springboard_token_token_tree($variables) {
   $allowed_categories = springboard_token_get_allowed_categories($type);
   $allowed_tokens = springboard_token_get_allowed_tokens($type);
 
+  // Remove unwanted categories.
   if (!empty($allowed_categories)) {
     foreach ($info['types'] as $key => $token_set) {
       if (!in_array($key, $allowed_categories)) {
@@ -98,6 +109,9 @@ function theme_springboard_token_token_tree($variables) {
         $token_info['parent'] = $type;
       }
 
+      // Remove unwanted tokens.
+      // We never use the tokens in the if statement.
+      // "sbp_" prevents duplicate sb profile entries.
       if(strpos($token, 'sbp_') === FALSE
         && strpos($token, 'donation:node') === FALSE
         && strpos($token, 'donation:user:') === FALSE
@@ -145,6 +159,10 @@ function theme_springboard_token_token_tree($variables) {
   return $output;
 }
 
+/**
+ * @param $type
+ * @return array
+ */
 function springboard_token_get_allowed_categories($type) {
   $allowed_categories = array();
   if ($type == 'fundraiser') {
@@ -169,6 +187,10 @@ function springboard_token_get_allowed_categories($type) {
   return $allowed_categories;
 }
 
+/**
+ * @param $type
+ * @return array
+ */
 function springboard_token_get_allowed_tokens($type) {
   $allowed_tokens = array();
 
@@ -243,12 +265,16 @@ function springboard_token_get_allowed_tokens($type) {
   return $allowed_tokens;
 }
 
-function springboard_token_get_unallowed_tokens($type) {
-  $unallowed_tokens = array(
-    '[site:current-user]',
-    '[donation:node]',
-    '[donation:user:]',
-    'sbp_'
-  );
-  return $unallowed_tokens;
-}
+/**
+ * @param $type
+ * @return array
+ */
+//function springboard_token_get_unallowed_tokens($type) {
+//  $unallowed_tokens = array(
+//    '[site:current-user]',
+//    '[donation:node]',
+//    '[donation:user:]',
+//    'sbp_'
+//  );
+//  return $unallowed_tokens;
+//}

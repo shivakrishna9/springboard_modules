@@ -1,4 +1,5 @@
 name = Springboard Token
 description = Improve token UI performance
 package = Jackson River Springboard - extras
+dependencies[] = token
 core = 7.x
