@@ -199,8 +199,8 @@ function webform_ab_test_webforms($node) {
   }
   $return .= theme('table', array('header' => $headers, 'rows' => $rows));
   // Show a form to add more
-  $form = drupal_render(drupal_get_form('webform_ab_webform_list_add', $node));
-  $return .= $form;
+  $form = drupal_get_form('webform_ab_webform_list_add', $node);
+  $return .= drupal_render($form);
   return $return;
 }
 
@@ -292,7 +292,8 @@ function webform_ab_test_remove_webform($node, $webform_nid) {
   if ($form_is_included) {
     // Show a confirmation form
     drupal_set_message(t('The form has been removed from the A/B test.'));
-    return drupal_render(drupal_get_form('webform_ab_test_remove_webform_confirm', $node->nid, $webform_nid));
+    $form = drupal_get_form('webform_ab_test_remove_webform_confirm', $node->nid, $webform_nid);
+    return drupal_render($form);
   }
   else {
     // Somehow tried to remove a webform that isn't in the test
