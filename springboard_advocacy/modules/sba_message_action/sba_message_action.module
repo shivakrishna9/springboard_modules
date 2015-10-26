@@ -1103,3 +1103,21 @@ function sba_message_action_page_wrappers_page_node_alter(&$node) {
     }
   }
 }
+
+/**
+ * Implements hook_webform_ab_valid_webforms().
+ *
+ * Inform webform ab that message actions can participate in A/B tests.
+ */
+function sba_message_action_webform_ab_valid_webforms($webform_types) {
+  if ($webform_types == 'webform') {
+    $result = db_query('SELECT n.nid, n.title FROM {node} n ' .
+      'WHERE n.status > :status AND n.type = :type ORDER BY n.title',
+      array(':status' => 0, ':type' => array('sba_message_action')));
+    $forms = array();
+    foreach ($result as $row) {
+      $forms[] = $row;
+    }
+    return $forms;
+  }
+}
