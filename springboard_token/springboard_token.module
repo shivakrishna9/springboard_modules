@@ -55,8 +55,11 @@ function theme_springboard_token_token_tree($variables) {
   if (isset($node->field_fundraiser_internal_name)) {
     $type = 'fundraiser';
   }
-  else {
+  elseif(isset($node->type)) {
     $type = $node->type;
+  }
+  else {
+    $type = '';
   }
 
   $allowed_categories = springboard_token_get_allowed_categories($type);
