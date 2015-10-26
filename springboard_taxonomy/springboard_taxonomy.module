@@ -83,7 +83,7 @@ function springboard_taxonomy_permission() {
     'administer organization issues' => array(
       'title' => t('View term listing and add new organization issues'),
     ),
-    'administer springboard_taxonomy settings' => array(
+    'administer springboard taxonomy settings' => array(
       'title' => t('Assign or remove the organization issues taxonomy to/from content types.'),
     ),
   );
