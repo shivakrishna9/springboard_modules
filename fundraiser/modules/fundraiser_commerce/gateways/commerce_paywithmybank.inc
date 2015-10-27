@@ -21,7 +21,7 @@ function commerce_paywithmybank_fundraiser_commerce_fundraiser_gateway_info() {
     'cardonfile callback' => 'commerce_paywithmybank_fundraiser_commerce_cardonfile',
     'expire callback' => 'commerce_paywithmybank_fundraiser_commerce_expire',
     'charge callback' => 'commerce_paywithmybank_fundraiser_commerce_charge',
-    'response save callback' => 'commerce_authnet_fundraiser_commerce_response_save',
+    'response save callback' => 'commerce_paywithmybank_fundraiser_commerce_response_save',
   );
 }
 
