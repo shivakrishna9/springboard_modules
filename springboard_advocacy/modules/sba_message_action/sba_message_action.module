@@ -270,7 +270,7 @@ function sba_message_action_node_presave($node) {
         $node->webform['submit_text'] = t('Preview Messages');
       }
       elseif(!empty($node->webform['submit_text']) && $old_multi_flow != $multi_flow) {
-        $node->webform['submit_text'] = t('Preview Message');
+        $node->webform['submit_text'] = t('Preview Messages');
       }
     }
 
