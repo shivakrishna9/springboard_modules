@@ -1259,6 +1259,12 @@ function webform_ab_should_log_hits() {
   global $user;
   $ips = variable_get('webform_ab_ignore_hits_from_ips', '');
   $roles = variable_get('webform_ab_ignore_hits_from_roles', '');
+  $ignore_bots = variable_get('webform_ab_ignore_search_bot_hits', '1');
+
+  // Check for search engine bots.
+  if ($ignore_bots && webform_ab_detect_search_bot(filter_input(INPUT_SERVER, 'HTTP_USER_AGENT'))) {
+    return FALSE;
+  }
 
   // Check the user roles
   if ($roles != '') {
@@ -1386,4 +1392,35 @@ function webform_ab_ctools_plugin_win_conditions() {
     'use hooks' => TRUE,
     'cache' => TRUE,
   );
+}
+
+/**
+ * Determines if the current request originated from a search engine bot.
+ *
+ * @return bool
+ *   TRUE if a search engine bot is detected.
+ */
+function webform_ab_detect_search_bot($user_agent) {
+  $bot_user_agents_cache = cache_get('webform_ab_search_bot_user_agents');
+
+  if (!empty($bot_user_agents_cache)) {
+    $bot_user_agents = $bot_user_agents_cache->data;
+  }
+  else {
+    $file_path = drupal_get_path('module', 'webform_ab') . '/includes/search_bot_user_agent_fragments.txt';
+    $bot_user_agents = file($file_path);
+    cache_set('webform_ab_search_bot_user_agents', $bot_user_agents);
+  }
+
+  reset($bot_user_agents);
+
+  if (!empty($user_agent)) {
+    foreach ($bot_user_agents as $user_agent_string) {
+      if (stripos($user_agent, trim($user_agent_string)) !== FALSE) {
+        return TRUE;
+      }
+    }
+  }
+
+  return FALSE;
 }

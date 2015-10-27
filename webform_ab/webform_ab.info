@@ -17,6 +17,9 @@ files[] = win_thresholds/minimum_hits.inc
 ; Views handlers
 files[] = views/handlers/webform_ab_handler_field_operations.inc
 
+; Tests
+files[] = tests/webform_ab.test
+
 ; Information added by Drupal.org packaging script on 2015-02-06
 version = "7.x-2.3"
 core = "7.x"
