@@ -21,6 +21,7 @@ function commerce_paywithmybank_fundraiser_commerce_fundraiser_gateway_info() {
     'cardonfile callback' => 'commerce_paywithmybank_fundraiser_commerce_cardonfile',
     'expire callback' => 'commerce_paywithmybank_fundraiser_commerce_expire',
     'charge callback' => 'commerce_paywithmybank_fundraiser_commerce_charge',
+    'response save callback' => 'commerce_authnet_fundraiser_commerce_response_save',
   );
 }
 
@@ -380,6 +381,36 @@ function commerce_paywithmybank_fundraiser_commerce_refund($payment_method, $ref
   }
 
   return TRUE;
+}
+
+/**
+ * Callback function, process donation post-save.
+ */
+function commerce_paywithmybank_fundraiser_commerce_response_save($donation) {
+  /**
+   * Fundraiser automatically applies a "payment received" status to successful
+   * donations. PayWithMyBank donations sit in an "authorized" status before
+   * the donor is charged, so the status must be overridden here.
+   */
+  // Get the most recent transaction attached to the donation.
+  $result = db_select('commerce_payment_transaction')
+      ->fields('commerce_payment_transaction', array('message'))
+      ->condition('order_id', $donation->did, '=')
+      ->orderBy('transaction_id', 'DESC')
+      ->range(0, 1)
+      ->execute()
+      ->fetchAssoc();
+
+  // If the transaction status is authorized, set the order status to the same.
+  if (!empty($result) && ($result['message'] == 'Authorized')) {
+    _fundraiser_commerce_update_order_status('authorized', $donation->did);
+
+    $donation->status = 'authorized';
+    $donation->status_label = _fundraiser_commerce_get_label_by_status('authorized');
+    $donation->status_charged = _fundraiser_commerce_get_charged_by_status('authorized');
+
+    fundraiser_donation_update($donation);
+  }
 }
 
 /**
