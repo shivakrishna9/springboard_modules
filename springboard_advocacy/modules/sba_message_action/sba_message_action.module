@@ -250,18 +250,30 @@ function sba_message_action_node_view($node, $view_mode, $langcode) {
  */
 function sba_message_action_node_presave($node) {
   if($node->type == 'sba_message_action') {
+    $old_multi_flow = '';
+    if (isset($node->original)) {
+      $old_node_wrapper = entity_metadata_wrapper('node', $node->original);
+      $old_multi_flow = $old_node_wrapper->field_sba_action_flow->value() == 'multi' ? 'multi' : 'single';
+    }
     $node_wrapper = entity_metadata_wrapper('node', $node);
-    $multi_flow = $node_wrapper->field_sba_action_flow->value() == 'multi' ? TRUE : FALSE;
-    if (!$multi_flow) {
-      if ($node->webform['submit_text']  == 'Preview Messages') {
+    $multi_flow = $node_wrapper->field_sba_action_flow->value() == 'multi' ? 'multi' : 'single';
+    if ($multi_flow == 'single') {
+      if (empty($node->webform['submit_text']) || strtolower($node->webform['submit_text'])  == 'preview messages') {
+        $node->webform['submit_text'] = t('Send your message');
+      }
+      elseif(!empty($node->webform['submit_text']) && $old_multi_flow != $multi_flow) {
         $node->webform['submit_text'] = t('Send your message');
       }
     }
     else {
-      if ($node->webform['submit_text']  == 'Send Your Message') {
-        $node->webform['submit_text'] = t('Preview Messages');
+      if (empty($node->webform['submit_text'])  || strtolower($node->webform['submit_text'])  == 'send your message') {
+        $node->webform['submit_text'] = t('Preview messages');
+      }
+      elseif(!empty($node->webform['submit_text']) && $old_multi_flow != $multi_flow) {
+        $node->webform['submit_text'] = t('Preview messages');
       }
     }
+
     if (empty($node->nid)) {
       $node->webform['confirmation'] = t('Thank you, %value[sbp_first_name] for participating in the messaging campaign.');
       $node->webform['confirmation']   .= "\n\n" . '[action:all_messages]';
@@ -1101,5 +1113,30 @@ function sba_message_action_page_wrappers_page_node_alter(&$node) {
     if (isset($is_wrapped->type) && $is_wrapped->type ='sba_message_action') {
       $node = $is_wrapped;
     }
+  }
+}
+
+/**
+ * Implements hook_webform_ab_get_webform_types().
+ */
+function sba_message_action_webform_ab_get_webform_types() {
+  return array('sba_message_action' => 'Message Action');
+}
+
+/**
+ * Implements hook_webform_ab_valid_webforms().
+ *
+ * Inform webform ab that message actions can participate in A/B tests.
+ */
+function sba_message_action_webform_ab_valid_webforms($webform_types) {
+  if ($webform_types == 'sba_message_action') {
+    $result = db_query('SELECT n.nid, n.title FROM {node} n ' .
+      'WHERE n.status > :status AND n.type = :type ORDER BY n.title',
+      array(':status' => 0, ':type' => array('sba_message_action')));
+    $forms = array();
+    foreach ($result as $row) {
+      $forms[] = $row;
+    }
+    return $forms;
   }
 }
