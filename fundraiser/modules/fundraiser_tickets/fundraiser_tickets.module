@@ -1039,7 +1039,7 @@ function fundraiser_tickets_update_inventory($node_wrapper) {
   }
 
   // Ensure the node-specific, admin ticket table updates if a new type of ticket is added:
-  if ($new_ticket_added) {
+  if (isset($new_ticket_added)) {
     db_delete('cache_field')
       ->condition('cid', 'field:node:' . $node_wrapper->getIdentifier())
       ->execute();
