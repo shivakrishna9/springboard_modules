@@ -1395,7 +1395,10 @@ function webform_ab_ctools_plugin_win_conditions() {
 }
 
 /**
- * Determines if the current request originated from a search engine bot.
+ * Determines if a given user agent belongs to a search engine bot.
+ *
+ * @param string $user_agent
+ *   The user agent string to test.
  *
  * @return bool
  *   TRUE if a search engine bot is detected.
