@@ -51,7 +51,10 @@ function _webform_render_tickets($component, $value = NULL, $filter = TRUE) {
     '#webform_component' => $component,
     '#theme' => 'fundraiser_tickets_webform_table',
     '#attached' => array('js' => array(drupal_get_path('module', 'fundraiser_tickets') . '/js/fundraiser_tickets.js')),
-    '#element_validate' => array('_fundraiser_tickets_validate_webform_field'),
+    '#element_validate' => array(
+      '_fundraiser_tickets_sanitize_webform_field',
+      '_fundraiser_tickets_validate_webform_field',
+    ),
   );
 
   $node = isset($component['nid']) ? node_load($component['nid']) : NULL;
@@ -138,6 +141,7 @@ function _fundraiser_tickets_validate_webform_field($element, &$form_state) {
 
   // If the additional amount is set pull that from the ticket values and validate
   if (!empty($ticket_values['fundraiser-tickets-extra-donation'])) {
+
     $additional_amount = $ticket_values['fundraiser-tickets-extra-donation'];
     if (!preg_match('/^\d*(\.\d*)?$/', $additional_amount)) {
       form_set_error('fundraiser-tickets-extra-donation', t('Donation amount must be in a valid number format. No commas and only one decimal point.'));
@@ -172,6 +176,27 @@ function _fundraiser_tickets_validate_webform_field($element, &$form_state) {
       }
     }
   }
+}
+
+/**
+ * Sanitize the extra donation field's value to remove any non-decimal, non-numeric characters:
+ */
+function _fundraiser_tickets_sanitize_webform_field($element, &$form_state) {
+  // Find the value to be sanitized within the form array:
+  $ticket_values = drupal_array_get_nested_value($form_state['values'], $element['#parents']);
+  $extra_donation_key = 'fundraiser-tickets-extra-donation';
+
+  if (!array_key_exists($extra_donation_key, $ticket_values)) {
+    return;
+  }
+
+  // Sanitize the value:
+  $extra_donation_value = $ticket_values[$extra_donation_key];
+  $extra_donation_value = _fundraiser_amount_value_sanitize($extra_donation_value);
+
+  // Update the form array:
+  $element['#parents'][] = $extra_donation_key;
+  drupal_array_set_nested_value($form_state['values'], $element['#parents'], $extra_donation_value);
 }
 
 /**
