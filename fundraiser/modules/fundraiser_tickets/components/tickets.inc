@@ -241,11 +241,16 @@ function theme_fundraiser_tickets_webform_table($variables) {
         'currency' => $ticket_currency,
       );
       $description = array(
-        'data' => $tickets_available ? check_plain($product_wrapper->fr_tickets_description->value()) : check_plain($product_wrapper->fr_tickets_sold_out_message->value()),
+        'data' => $tickets_available ? check_plain($product_wrapper->fr_tickets_description->value()) :
+          check_plain($product_wrapper->fr_tickets_sold_out_message->value()),
         'class' => 'ticket_description',
       );
       $warning_message = array(
-        'data' => $tickets_available > 0 && $tickets_available <= $product_wrapper->fr_tickets_threshold->value() ? theme('fundraiser_tickets_warning_indicator', array('warning_message' =>t("Only @tickets remaining!", array('@tickets' => format_plural($tickets_available, '1 ticket', '@count tickets'))))) : NULL,
+        'data' => $tickets_available > 0 &&
+          $tickets_available <= $product_wrapper->fr_tickets_threshold->value()
+            ? theme('fundraiser_tickets_warning_indicator', array('warning_message' =>t("Only @tickets remaining!",
+                array('@tickets' => format_plural($tickets_available, '1 ticket', '@count tickets')))))
+            : NULL,
         'class' => 'ticket_warning',
       );
       // Add a div to contain the ticket total
@@ -255,7 +260,13 @@ function theme_fundraiser_tickets_webform_table($variables) {
         'id' => 'product-' . $element[$id]['#extra']['product_id'] . '-tickets-total',
         'align' => 'right',
       );
-      $row['data'] = array($title, $description, array('data'=> drupal_render($element[$id]), 'align' => 'right'), $warning_message, $ticket_total);
+      $row['data'] = array(
+        $title,
+        array('data'=> drupal_render($element[$id]), 'align' => 'right'),
+        $description,
+        $warning_message,
+        $ticket_total
+      );
       $rows[] = $row;
     }
   }
@@ -266,16 +277,16 @@ function theme_fundraiser_tickets_webform_table($variables) {
   $rows[] = array(
     'data' => array(
       array('data' => t('Totals'), 'class' => 'ticket_type'),
-      array('data' => '', 'class' => 'ticket_description'),
       array('data' => 0, 'id' => 'fundraiser-tickets-total-quant', 'class' => 'quantity', 'align' => 'right'),
+      array('data' => '', 'class' => 'ticket_description'),
       array('data' => '', 'class' => 'ticket_warning'),
       array('data' => $node_currency_symbol . ' ' . '0.00', 'id' => 'fundraiser-tickets-total-cost', 'class' => 'fundraiser-ticket-type-total', 'align' => 'right')
     )
   );
   $header = array(
     array('data' => t('Type'), 'class' => 'ticket_type'),
-    array('data' => '', 'class' => 'ticket_description', 'id' => 'description'),
     array('data' => t('Quantity'), 'class' => 'quantity', 'align' => 'right'),
+    array('data' => '', 'class' => 'ticket_description', 'id' => 'description'),
     array('data' => '', 'class' => 'ticket_warning'),
     array('data' => t('Amount'), 'class' => 'fundraiser-ticket-type-total', 'align' => 'right')
   );
@@ -283,6 +294,9 @@ function theme_fundraiser_tickets_webform_table($variables) {
 
   // Add the JS for the settings too
   drupal_add_js(array('fundraiserTickets' => array('ticketPrices' => $ticket_prices)), 'setting');
+
+  // Add CSS
+  drupal_add_css(drupal_get_path('module', 'fundraiser_tickets') . '/css/ticketing_form.css');
 
   $table = array(
     '#theme' => 'table',
@@ -294,6 +308,12 @@ function theme_fundraiser_tickets_webform_table($variables) {
   );
 
   $output = drupal_render($table);
+
+  // Insert the additional donation currency symbol:
+  $addon_currency_symbol = '<span class="currency-symbol">' . $addon_currency_symbol . '</span>';
+  $extra_donation_html = '<input type="text" id="fundraiser-tickets-extra-donation"';
+  $output = str_replace($extra_donation_html, $addon_currency_symbol . $extra_donation_html, $output);
+
   return $output;
 }
 
