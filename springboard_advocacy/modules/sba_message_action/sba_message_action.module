@@ -259,18 +259,18 @@ function sba_message_action_node_presave($node) {
     $multi_flow = $node_wrapper->field_sba_action_flow->value() == 'multi' ? 'multi' : 'single';
     if ($multi_flow == 'single') {
       if (empty($node->webform['submit_text']) || strtolower($node->webform['submit_text'])  == 'preview messages') {
-        $node->webform['submit_text'] = t('Send Your Message');
+        $node->webform['submit_text'] = t('Send your message');
       }
       elseif(!empty($node->webform['submit_text']) && $old_multi_flow != $multi_flow) {
-        $node->webform['submit_text'] = t('Send Your Message');
+        $node->webform['submit_text'] = t('Send your message');
       }
     }
     else {
       if (empty($node->webform['submit_text'])  || strtolower($node->webform['submit_text'])  == 'send your message') {
-        $node->webform['submit_text'] = t('Preview Messages');
+        $node->webform['submit_text'] = t('Preview messages');
       }
       elseif(!empty($node->webform['submit_text']) && $old_multi_flow != $multi_flow) {
-        $node->webform['submit_text'] = t('Preview Message');
+        $node->webform['submit_text'] = t('Preview messages');
       }
     }
 
