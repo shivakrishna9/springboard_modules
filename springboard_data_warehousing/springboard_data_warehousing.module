@@ -1,0 +1,73 @@
+<?php
+
+/**
+ * @file
+ * Data warehousing framework for Springboard.
+ */
+
+/**
+ * Implements hook_menu()
+ */
+function springboard_data_warehousing_menu() {
+  $items = array();
+
+  $items['admin/springboard/options/data_warehousing'] = array(
+    'title' => 'Data warehousing settings',
+    'description' => 'Administer data warehousing settings.',
+    'access callback' => array('administer springboard data warehousing'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('springboard_data_warehousing_admin_settings_form'),
+    'type' => MENU_NORMAL_ITEM,
+    'file' => 'includes/springboard_data_warehousing.admin.inc',
+  );
+
+  return $items;
+}
+
+/**
+ * Implements hook_permission()
+ */
+function springboard_data_warehousing_permission() {
+  return array(
+    'administer springboard data warehousing' => array(
+      'title' => t('Administer springboard data warehousing'),
+      'description' => t('Perform administration tasks for springboard data warehousing.'),
+    ),
+  );
+}
+
+/**
+ * Sends a set of data to the data warehouse URL via a POST request.
+ *
+ * @param type $donation_data
+ * @param type $endpoint
+ */
+function springboard_data_warehousing_send_data($data, $endpoint = NULL) {
+  // Append the Springboard client identifier to the data.
+  $data['springboard_client_id'] = variable_get('springboard_client_id');
+  // Append the data warehouse authentication token to the data.
+  $data['authentication_token'] = 'mzY4CxErnjoDprYv7bHfkpE';
+
+  $url = variable_get('springboard_data_warehousing_url');
+
+  if (!empty($url)) {
+    if (!empty($endpoint)) {
+      $url .= $endpoint;
+    }
+
+    watchdog('springboard_data_warehousing', 'Sending data to url ' . $url . ': ' . serialize($data));
+
+    $ch = curl_init($url);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
+    curl_setopt($ch, CURLOPT_POST, 1);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
+
+    $response = curl_exec($ch);
+    curl_close($ch);
+
+    watchdog('springboard_data_warehousing', 'Data warehouse response: ' . $response);
+  }
+  else {
+    watchdog('springboard_data_warehousing', 'No URL is configured for data warehousing.');
+  }
+}

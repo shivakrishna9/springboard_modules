@@ -1,39 +1,9 @@
 <?php
+
 /**
  * @file
  * Data warehousing functionality for Fundraiser.
  */
-
-/**
- * Implements hook_menu()
- */
-function fundraiser_data_warehousing_menu() {
-  $items = array();
-
-  $items['admin/springboard/options/fundraiser/data_warehousing'] = array(
-    'title' => 'Data warehousing settings',
-    'description' => 'Administer data warehousing settings.',
-    'access callback' => TRUE, //=> array('administer fundraiser data warehousing'),
-    'page callback' => 'drupal_get_form',
-    'page arguments' => array('fundraiser_data_warehousing_admin_settings_form'),
-    'type' => MENU_NORMAL_ITEM,
-    'file' => 'includes/fundraiser_data_warehousing.admin.inc',
-  );
-
-  return $items;
-}
-
-/**
- * Implements hook_permission()
- */
-function fundraiser_data_warehousing_permission() {
-  return array(
-    'administer fundraiser data warehousing' => array(
-      'title' => t('Administer fundraiser data warehousing'),
-      'description' => t('Perform administration tasks for fundraiser data warehousing.'),
-    ),
-  );
-}
 
 /**
  * Implements hook_fundraiser_donation_success()
@@ -41,7 +11,7 @@ function fundraiser_data_warehousing_permission() {
 function fundraiser_data_warehousing_fundraiser_donation_success($donation) {
   $donation_data = fundraiser_data_warehousing_get_formatted_donation_data($donation);
 
-  fundraiser_data_warehousing_send_data($donation_data, '/one-time');
+  springboard_data_warehousing_send_data($donation_data, '/one-time');
 }
 
 /**
@@ -65,7 +35,7 @@ function fundraiser_data_warehousing_fundraiser_sustainers_create_recurring($rec
     $donation_data['next_charge'] = $recurring_data['next_charge'];
     $donation_data['sustainer_key'] = isset($recurring_data['sustainer_key']) ? $recurring_data['sustainer_key'] : NULL;
 
-    fundraiser_data_warehousing_send_data($donation_data, '/one-time');
+    springboard_data_warehousing_send_data($donation_data, '/one-time');
   }
 }
 
@@ -76,34 +46,6 @@ function fundraiser_data_warehousing_fundraiser_sustainers_update_recurring($rec
   // TODO: Remove original record from data warehouse?
 
   fundraiser_data_warehousing_fundraiser_sustainers_create_recurring($recurring_donation);
-}
-
-function fundraiser_data_warehousing_send_data($donation_data, $endpoint = NULL) {
-  $donation_data['springboard_client_id'] = variable_get('springboard_client_id');
-  $donation_data['authentication_token'] = 'mzY4CxErnjoDprYv7bHfkpE';
-
-  $url = variable_get('fundraiser_data_warehousing_url');
-
-  if (!empty($url)) {
-    if (!empty($endpoint)) {
-      $url .= $endpoint;
-    }
-
-    watchdog('fundraiser_data_warehousing', 'Sending data to url ' . $url . ': ' . serialize($donation_data));
-
-    $ch = curl_init($url);
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
-    curl_setopt($ch, CURLOPT_POST, 1);
-    curl_setopt($ch, CURLOPT_POSTFIELDS, $donation_data);
-
-    $response = curl_exec($ch);
-    curl_close($ch);
-
-    watchdog('fundraiser_data_warehousing', 'Data warehouse response: ' . $response);
-  }
-  else {
-    watchdog('fundraiser_data_warehousing', 'No URL is configured for data warehousing.');
-  }
 }
 
 /**
@@ -141,4 +83,3 @@ function fundraiser_data_warehousing_get_formatted_donation_data($donation) {
 
   return $donation_data;
 }
-
