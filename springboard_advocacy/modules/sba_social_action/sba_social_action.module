@@ -32,8 +32,59 @@ function sba_social_action_menu() {
     'file' => 'sba_social_action.preview.inc',
     'file path' => drupal_get_path('module', 'sba_social_action') . '/includes',
   );
+
+  $items['step-one/twitter/redirect'] = array(
+    'title' => 'Twitter Redirect',
+    'page callback' => 'sba_social_action_twitter_redirect',
+    'access callback' => TRUE,
+    'type' => MENU_CALLBACK,
+  );
+
   return $items;
 }
+
+function sba_social_action_twitter_redirect() {
+  module_load_include('inc', 'twitter');
+
+  $key = variable_get('twitter_consumer_key', '');
+  $secret = variable_get('twitter_consumer_secret', '');
+  $twitter = new Twitter($key, $secret);
+
+  // Specify a callback_url when generating our token that will match the
+  // current domain.
+  $oauth_callback = variable_get('twitter_oauth_callback_url', TWITTER_OAUTH_CALLBACK_URL);
+  $callback_url = url($oauth_callback, array('absolute' => TRUE));
+  $params = array('oauth_callback' => $callback_url);
+  $token = $twitter->get_request_token($params);
+//dpm($_GET['q']);
+  $_SESSION['twitter_oauth']['token'] = $token;
+  $_SESSION['twitter_oauth']['destination'] = 'https://springboard.dev';
+  $_SESSION['twitter_oauth']['signin'] = TRUE;
+
+  drupal_goto($twitter->get_authenticate_url($token));
+}
+
+
+/**
+ * Form submit for the OAuth callback. Here we add in sign-in specific handling.
+ */
+function sba_social_action_oauth_callback_submit(&$form, &$form_state) {
+  global $user;
+  $form_state['programmed'] = FALSE;
+
+
+  $form_state['redirect'] = array(
+    'node/' . $_SESSION['action_sid']['nid'] . '/social-message-preview',
+    array('query' => array('sid' => $_SESSION['action_sid']['sid']))
+  );
+
+
+  $key = variable_get('twitter_consumer_key', '');
+  $secret = variable_get('twitter_consumer_secret', '');
+  $response = $form_state['twitter_oauth']['response'];
+  $_SESSION['twitter']['values'] = $response;
+}
+
 
 /**
  * Control access to multi-step page two\.
@@ -184,6 +235,26 @@ function sba_social_action_preprocess_node(&$vars) {
 }
 
 function sba_social_action_form_alter(&$form, &$form_state, $form_id) {
+
+  // By default don't do anything when the site is in maintenance mode, but
+  // allow this to be changed so that admins can still login.
+  if (defined('MAINTENANCE_MODE') && !variable_get('twitter_signin_maintenance_mode', FALSE)) {
+    return;
+  }
+
+
+  if ($form_id == 'twitter_oauth_callback_form') {
+    $form['#submit'] = array('sba_social_action_oauth_callback_submit');
+  }
+
+  // Don't do anything else if the credentials haven't been set up yet.
+  $key = variable_get('twitter_consumer_key', '');
+  $secret = variable_get('twitter_consumer_secret', '');
+  if (empty($key) || empty($secret)) {
+    return;
+  }
+
+
   if (!empty($form['#node']->type) && $form['#node']->type == 'sba_social_action') {
     // Is this the user-facing form?
     $client_form = strpos($form_id, 'client_form');
@@ -209,13 +280,20 @@ function sba_social_action_form_alter(&$form, &$form_state, $form_id) {
  * @param $form_state
  */
 function sba_social_action_multiflow_submit($form, &$form_state) {
-  if (!empty($_SESSION['deliverable_social_messages']) || !empty($_SESSION['undeliverable_social_messages'])) {
+//  if (!empty($_SESSION['deliverable_social_messages']) || !empty($_SESSION['undeliverable_social_messages'])) {
     $node = $form['#node'];
     $sid = $form_state['values']['details']['sid'];
     $_SESSION['action_sid'] = array('sid' => $sid, 'nid' => $node->nid);
-    $form_state['redirect'] = array(
-      'node/' . $node->nid . '/social-message-preview',
-      array('query' => array('sid' => $sid))
-    );
-  }
+    sba_social_action_twitter_redirect();
+
+    if (!isset($_SESSION['twitter'])) {
+      sba_social_action_twitter_redirect();
+    }
+    else {
+      $form_state['redirect'] = array(
+        'node/' . $_SESSION['action_sid']['nid'] . '/social-message-preview',
+        array('query' => array('sid' => $_SESSION['action_sid']['sid']))
+      );
+    }
+ // }
 }

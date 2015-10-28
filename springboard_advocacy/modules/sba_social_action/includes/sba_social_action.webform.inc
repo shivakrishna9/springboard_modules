@@ -188,11 +188,6 @@ function sba_social_action_set_confirmation_session_vars($response, $contact) {
           $y++;
         };
       }
-      $_SESSION['undeliverable_social_messages'] =
-        array(
-          'messages' => $messages,
-          'targets' => '',
-        );
     }
   }
 }
@@ -305,9 +300,8 @@ function sba_social_action_get_target_details($target) {
     $target_details['facebook'] = check_plain(substr($url['path'], 1));
   }
 
-  if (!empty($target->organization)) {
-    $target_details['organization'] = check_plain($target->organization);
-  }
+  $target_details['organization'] = !empty($target->organization) ? check_plain($target->organization) : '';
+
   if (!empty($target->title)) {
     $target_details['title'] = check_plain($target->title);
   }
@@ -322,10 +316,13 @@ function theme_sba_social_action_person_details(&$vars) {
   $party = isset($vars['party']) ? '(' . $vars['party'] . ')' : '';
   $organization = !empty($vars['organization']) ? $vars['organization'] : '';
   $separator = !empty($title) && !empty($organization) ? ', ' : ' ';
+
   // Custom targets and executive branch.
   $non_legislative_organization = !empty($organization)  ? $title . $separator . $organization : '';
+
   // Legislators. Backward compatible with Target db structure pre-fall 2015 release;
   $legislative_organization = isset($vars['district']) && !empty($title) ? $title . ', ' .  $vars['state'] . ' ' .  $party  : $organization . ' ' . $party ;
+
   $affiliation = isset($vars['district'])  ? $legislative_organization : $non_legislative_organization;
   $output .= $person;
   if(!empty($affiliation)) {

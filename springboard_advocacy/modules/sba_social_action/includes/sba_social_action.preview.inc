@@ -127,7 +127,6 @@ function sba_social_action_preview_form($form, $form_state, $node) {
   module_load_include('inc', 'sba_social_action', 'includes/sba_social_action.form');
 
   foreach ($messages as $key => $message) {
-
     $message_entity_type = $node->messages[$message['message_id']]->type;
 
     // Theme the message header.
@@ -151,8 +150,9 @@ function sba_social_action_preview_form($form, $form_state, $node) {
     // Build an array of target properties
     $build['message'][$message_entity->sba_message_id]['target'] = array(
       '#type' => 'value',
-      '#value' => array('target_id' => $message['targets']->id, 'primary_delivery_method' => $message['targets']->primary_delivery_method, 'salutation' => $message['targets']->salutation, 'first_name' => $message['targets']->first_name, 'last_name' => $message['targets']->last_name),
+      '#value' => array('target_id' => $message['targets']->id, 'twitter' => $message['targets']->twitter, 'salutation' => $message['targets']->salutation, 'first_name' => $message['targets']->first_name, 'last_name' => $message['targets']->last_name),
     );
+
     // Check for required fields
     if (isset($build['message'][$message_entity->sba_message_id]['body_required']) && $build['message'][$message_entity->sba_message_id]['body_required']['#value']) {
       $build['message'][$message_entity->sba_message_id]['edited_body']['#required'] = TRUE;
@@ -165,7 +165,6 @@ function sba_social_action_preview_form($form, $form_state, $node) {
     // Assign the rebuilt messages to the form
     $form['messages'][$key]['message'] = $build['message'][$message_entity->sba_message_id];
   }
-
   // Add the node object to use in validation and submit.
   $form['#action_node'] = $node;
   // Define the validation function.
@@ -178,7 +177,6 @@ function sba_social_action_preview_form($form, $form_state, $node) {
     '#weight' => 10,
     '#attributes' => array('class' => 'message-action-preview-submit'),
   );
-
   return $form;
 }
 
@@ -191,38 +189,36 @@ function sba_social_action_preview_form($form, $form_state, $node) {
  */
 function sba_social_action_preview_form_submit($form, &$form_state) {
 
+  module_load_include('inc', 'twitter');
+
+  foreach ($form_state['values']['messages'] as $message) {
+
+    $target = parse_url($message['message']['target']['twitter']);
+    $body = '.@' . substr($target['path'], 1) . ' ' . $message['message']['edited_body'];
+
+    try {
+      $twitter = new Twitter(
+        variable_get('twitter_consumer_key', ''),
+        variable_get('twitter_consumer_secret', ''),
+        $_SESSION['twitter']['values']['oauth_token'],
+        $_SESSION['twitter']['values']['oauth_token_secret']
+      );
+
+      $twitter->statuses_update($body);
+
+    } catch (TwitterException $e) {
+      drupal_set_message(t('An error occurred when posting to Twitter. Check the system log for details.'), 'error');
+    }
+  }
+
   // Get sba_social_action_build_message_bodies().
   module_load_include('inc', 'sba_social_action', 'includes/sba_social_action.form');
 
   $messages = $form_state['values']['messages'];
   $node = $form['#action_node'];
 
-  if (isset($_SESSION['retries'])) {
-    $_SESSION['retries']++;
-  }
-  else {
-    $_SESSION['retries'] = 1;
-  }
-
-  $response =  new StdClass;
-  // If there's a hiccup with the server, let the user retry sending a couple more times.
-  if (!isset($response->status_code) || (isset($response->status_code) && $response->status_code != 200)) {
-    if($_SESSION['retries'] < 4) {
-      drupal_set_message(t("A problem occurred and your message was not submitted. Please try again. If the problem persists, we should have it fixed shortly. Try back in a few minutes."), 'error');
-      return;
-    }
-    else {
-      drupal_set_message(t("A problem occurred. Please try again later."), 'error');
-      $form_state['redirect'] = array('node/' . $node->nid);
-      $_SESSION['action_completed'] = TRUE;
-      unset($_SESSION['retries']);
-      return;
-    }
-  }
-
   // Add session flag to prevent resubmission of the form
   $_SESSION['action_completed'] = TRUE;
-  unset($_SESSION['retries']);
 
   // Redirect to the original confirmation page.
   // $sid is set in sba_social_action_multifow_submit()
