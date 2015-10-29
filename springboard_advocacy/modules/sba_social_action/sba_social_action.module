@@ -252,7 +252,11 @@ function sba_social_action_preprocess_node(&$vars) {
 function sba_social_action_form_alter(&$form, &$form_state, $form_id) {
 
   if ($form_id == 'twitter_oauth_callback_form') {
-    $form['#submit'] = array('sba_social_action_oauth_callback_submit');
+    $index = array_search('twitter_oauth_callback_form_submit', $form['#submit']);
+    if ($index !== FALSE) {
+      unset($form['#submit'][$index]);
+    }
+    $form['#submit'][] = 'sba_social_action_oauth_callback_submit';
   }
 
   if (!empty($form['#node']->type) && $form['#node']->type == 'sba_social_action') {
@@ -314,9 +318,8 @@ function sba_social_action_twitter_redirect() {
   $params = array('oauth_callback' => $callback_url);
   $token = $twitter->get_request_token($params);
   $_SESSION['twitter_oauth']['token'] = $token;
-  //$_SESSION['twitter_oauth']['destination'] = 'https://springboard.dev';
 
-  // So we use authenticate rather than the authorize endpoint.
+  // Let twitter.module know we are using authenticate rather than the authorize endpoint.
   $_SESSION['twitter_oauth']['signin'] = TRUE;
 
   drupal_goto($twitter->get_authenticate_url($token));
@@ -326,7 +329,9 @@ function sba_social_action_twitter_redirect() {
 /**
  * Form submit for the OAuth callback.
  *
- * The submit hook in twitter.module does the heavy lifting.
+ * twitter_oauth_callback_form_validate() in twitter.pages.inc does the heavy lifting.
+ * The submit hook in twitter.pages.inc was unset in the form alter above,
+ * because it assumes that there is twitter account integration with drupal.
  */
 function sba_social_action_oauth_callback_submit(&$form, &$form_state) {
 
@@ -339,6 +344,8 @@ function sba_social_action_oauth_callback_submit(&$form, &$form_state) {
   );
 
   $response = $form_state['twitter_oauth']['response'];
+  // $_SESSION['twitter']['values'] is what you'd have if using
+  // twitter_signin.module, but we are doing "session only" mock sign-ins.
   $_SESSION['twitter']['values'] = $response;
 }
 
