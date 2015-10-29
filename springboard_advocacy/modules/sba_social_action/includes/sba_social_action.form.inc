@@ -79,8 +79,16 @@ function sba_social_action_additional_elements(&$form, &$form_state) {
   }
 
   // Create a set of fields for each message assigned to the form.
+  $districted = false;
   foreach ($form['#node']->messages as $message) {
-    sba_social_action_message_form($form['sba_messages'], $message, $multiple, $message->type);
+    sba_social_action_message_form($form['sba_messages'], $message, $multiple, $message->type, $districted);
+  }
+  if ($districted == FALSE) {
+    $form['submitted']['sbp_address']['#access'] = FALSE;
+    $form['submitted']['sbp_address_line_2']['#access'] = FALSE;
+    $form['submitted']['sbp_city']['#access'] = FALSE;
+    $form['submitted']['sbp_state']['#access'] = FALSE;
+    $form['submitted']['sbp_zip']['#access'] = FALSE;
   }
 
   $form['#validate'][] = 'sba_social_action_form_validate';
@@ -97,7 +105,7 @@ function sba_social_action_additional_elements(&$form, &$form_state) {
  * @param bool $multiple
  *    Whether this webform has multiple messages.
  */
-function sba_social_action_message_form(&$form, $message, $multiple, $message_entity_type) {
+function sba_social_action_message_form(&$form, $message, $multiple, $message_entity_type, &$districted = NULL) {
   // Get some message values via an entity wrapper.
   $wrapper = entity_metadata_wrapper('sba_message', $message);
   $message_body = check_plain($wrapper->field_sba_twitter_message->value());
@@ -110,10 +118,26 @@ function sba_social_action_message_form(&$form, $message, $multiple, $message_en
     $access = FALSE;
   }
 
+  if($districted == FALSE) {
+    $districted = empty($wrapper->field_sba_target_options->value()) ? FALSE : TRUE;
+  }
+
   $form['message'][$message->sba_message_id] = array(
     '#type' => 'container',
     '#attributes' => array('class' => array('sba-message')),
   );
+
+  if(isset($_SESSION['twitter']['values']['screen_name'])) {
+    $form['message']['page_description_login']['#prefix'] = '<p>';
+    $form['message']['page_description_login']['#markup'] = t('After you submit this form you will be redirected to a page which will allow you to send tweets to the targets we have selected. You will be able to post to Twitter as @%name. If that is not the correct account, !clickhere.', array(
+      '%name' => $_SESSION['twitter']['values']['screen_name'],
+      '!clickhere' => l('click here', 'clear/session', array('query' => array('nid' => arg(1) )))
+    ));
+  }
+  else {
+    $form['message']['page_description_login']['#prefix'] = '<p>';
+    $form['message']['page_description_login']['#markup'] = t('After you submit this form you will be asked to sign into Twitter, and then redirected to a page which will allow you to send tweets to the targets we have selected.');
+  }
 
   $form['message'][$message->sba_message_id]['message_id'] = array(
     '#type' => 'value',
