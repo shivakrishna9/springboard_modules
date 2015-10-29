@@ -46,7 +46,7 @@ function springboard_data_warehousing_send_data($data, $endpoint = NULL) {
   // Append the Springboard client identifier to the data.
   $data['springboard_client_id'] = variable_get('springboard_client_id');
   // Append the data warehouse authentication token to the data.
-  $data['authentication_token'] = 'mzY4CxErnjoDprYv7bHfkpE';
+  $data['authentication_token'] = variable_get('springboard_data_warehousing_auth_token');
 
   $url = variable_get('springboard_data_warehousing_url');
 

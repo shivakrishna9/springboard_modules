@@ -15,6 +15,12 @@ function springboard_data_warehousing_admin_settings_form($form, &$form_state) {
     '#default_value' => variable_get('springboard_data_warehousing_url', ''),
   );
 
+  $form['springboard_data_warehousing_auth_token'] = array(
+    '#type' => 'textfield',
+    '#title' => 'Authentication Token',
+    '#default_value' => variable_get('springboard_data_warehousing_auth_token', ''),
+  );
+
   $form['actions']['submit'] = array(
     '#type' => 'submit',
     '#value' => t('Save'),
@@ -28,4 +34,5 @@ function springboard_data_warehousing_admin_settings_form($form, &$form_state) {
  */
 function springboard_data_warehousing_admin_settings_form_submit($form, &$form_state) {
   variable_set('springboard_data_warehousing_url', $form_state['values']['springboard_data_warehousing_url']);
+  variable_set('springboard_data_warehousing_auth_token', $form_state['values']['springboard_data_warehousing_auth_token']);
 }
