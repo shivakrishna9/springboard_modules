@@ -418,7 +418,10 @@ function commerce_paywithmybank_validate_notification($access_id, $access_key, $
   $calculated_auth_string = base64_encode($access_id . ':' . $hash);
 
   if ($auth_string != $calculated_auth_string) {
-    watchdog('commerce_paywithmybank', 'Notification auth string mismatch. Original: ' . $auth_string . ' Calculated: ' . $calculated_auth_string, array(), WATCHDOG_DEBUG);
+    $log_message = 'Notification auth string mismatch. Original: ' . $auth_string
+        . ' Calculated: ' . $calculated_auth_string
+        . ' Body: ' . $request_string;
+    watchdog('commerce_paywithmybank', $log_message, array(), WATCHDOG_DEBUG);
     return FALSE;
   }
 
