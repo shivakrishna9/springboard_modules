@@ -33,6 +33,12 @@ function sba_social_action_menu() {
     'file path' => drupal_get_path('module', 'sba_social_action') . '/includes',
   );
 
+  $items['clear/session'] = array(
+    'page callback' => 'sba_social_action_clear_twitter_session',
+    'access callback' => TRUE,
+    'type' => MENU_CALLBACK,
+  );
+
   return $items;
 }
 
@@ -49,7 +55,6 @@ function sba_social_action_twitter_redirect() {
   $callback_url = url($oauth_callback, array('absolute' => TRUE));
   $params = array('oauth_callback' => $callback_url);
   $token = $twitter->get_request_token($params);
-//dpm($_GET['q']);
   $_SESSION['twitter_oauth']['token'] = $token;
   $_SESSION['twitter_oauth']['destination'] = 'https://springboard.dev';
   $_SESSION['twitter_oauth']['signin'] = TRUE;
@@ -341,4 +346,12 @@ function sba_social_action_form_layouts_info() {
   module_load_include('inc', 'sba_social_action', 'includes/sba_social_action.form_layouts');
   $templates = sba_social_action_form_layouts();
   return $templates;
+}
+
+function sba_social_action_clear_twitter_session() {
+  if (isset($_SESSION['twitter'])) {
+    unset($_SESSION['twitter']);
+  }
+  $nid = isset($_GET['nid']) ? $_GET['nid'] : '' ;
+  drupal_goto('node/' . $nid);
 }
