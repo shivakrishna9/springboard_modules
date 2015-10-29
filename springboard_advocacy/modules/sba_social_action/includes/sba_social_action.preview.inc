@@ -21,10 +21,10 @@ function sba_social_action_message_preview_page($nid) {
   $build = array();
   $build['content'] = array(
     'page_description_content' => array(
-      '#id' => 'message-action-preview-page',
+      '#id' => 'social-action-preview-page',
       '#type' => 'markup',
       '#markup' => t('Please review the messages below; or if you prefer, simply <span id="multiflow-send-now-wrapper" style="display:inline-block"><a href="#" id="multiflow-send-now">send now</a></span>.'),
-      '#prefix' => '<div class="message-action-preview-page"><p>',
+      '#prefix' => '<div class="social-action-preview-page"><p>',
       '#suffix' => '</p></div>',
       '#weight' => -8,
     ),
@@ -32,39 +32,42 @@ function sba_social_action_message_preview_page($nid) {
     'sba_social_action_preview_form' => drupal_get_form('sba_social_action_preview_form', $node),
   );
 
-//  $messages = $build['content']['sba_social_action_preview_form']['messages'];
-//  $children = array_flip(element_children($messages));
-//  $subject_required = FALSE;
-//  $body_required = FALSE;
-//  $editable_but_not_required = FALSE;
-//  foreach ($messages as $key => $message) {
-//    if(isset($children[$key]) && (!$subject_required && !$body_required)) {
-//      if(!isset($message['subject_show'])) {
-//        $editable_but_not_required = TRUE;
-//        $subject_required = $message['message']['subject']['#required'];
-//      }
-//      if (isset($message['message']['edited_body'])) {
-//        $editable_but_not_required = TRUE;
-//        $body_required = $message['message']['edited_body']['#required'];
-//      }
-//    }
-//  }
-
+  $messages = $build['content']['sba_social_action_preview_form']['messages'];
+  $children = array_flip(element_children($messages));
+  $subject_required = FALSE;
+  $body_required = FALSE;
+  $editable_but_not_required = FALSE;
+  foreach ($messages as $key => $message) {
+    if(isset($children[$key]) && (!$subject_required && !$body_required)) {
+      if(isset( $message['subject']) && !isset($message['subject_show'])) {
+        $editable_but_not_required = TRUE;
+        $subject_required = isset($message['message']['subject']['#required']) ? $message['message']['subject']['#required'] : FALSE;
+      }
+      if (isset($message['message']['edited_body'])) {
+        $editable_but_not_required = TRUE;
+        $body_required = $message['message']['edited_body']['#required'];
+      }
+    }
+  }
 
   $build['content']['page_description_label']['#prefix'] = '<h4>';
   $build['content']['page_description_label']['#suffix'] = '</h4>';
   $build['content']['page_description_label']['#weight'] = -10;
   $build['content']['page_description_label']['#markup'] = t('Step 2 of 2');
+  if (isset($_SESSION['twitter']['values']['screen_name'])) {
+    $build['content']['page_description_login']['#prefix'] = '<div><p>';
+    $build['content']['page_description_llogin']['#suffix'] = '</p></div>';
+    $build['content']['page_description_login']['#weight'] = -9;
+    $build['content']['page_description_login']['#markup'] = t('You will be posting to Twitter as @%name. If that is not the correct account, !clickhere to log out and start over. You will need to submit the first form again to re-sign into Twitter.', array('%name' => $_SESSION['twitter']['values']['screen_name'], '!clickhere' => l('click here', 'clear/session', array('query' => array('nid' => $node->nid)))));
+  }
 
-
-//  if ($subject_required || $body_required) {
-//    $editable_but_not_required = FALSE;
-//    $build['content']['page_description_content']['#markup'] = t('One or more of the messages below requires editing. Please make your edits and then click "Send Now" at the bottom of the page.');
-//  }
-//
-//  if (!empty($editable_but_not_required)) {
-//    $build['content']['page_description_content']['#markup'] = t('Please review and edit the messages below; or if you prefer, simply <span id="multiflow-send-now-wrapper"><a href="#" id="multiflow-send-now">send now</a></span>.');
-//  }
+  if ($subject_required || $body_required) {
+    $editable_but_not_required = FALSE;
+    $build['content']['page_description_content']['#markup'] = t('One or more of the messages below requires editing. Please make your edits and then click "Send Now" at the bottom of the page.');
+  }
+  if (!empty($editable_but_not_required)) {
+    $build['content']['page_description_content']['#markup'] = t('Please review and edit the messages below; or if you prefer, simply <span id="multiflow-send-now-wrapper"><a href="#" id="multiflow-send-now">send now</a></span>.');
+  }
 
   return $build;
 }
@@ -81,7 +84,8 @@ function sba_social_action_message_preview_page($nid) {
 function sba_social_action_preview_form($form, $form_state, $node) {
 
   $form['#attached']['css'][] = drupal_get_path('module', 'sba_social_action') . '/css/message-preview.css';
-  $form['#attached']['js'][] = drupal_get_path('module', 'sba_social_action') . '/js/sba_message_preview.js';
+  $form['#attached']['js'][] = drupal_get_path('module', 'sba_social_action') . '/js/social_message_preview.js';
+  $form['#attached']['js'][] = drupal_get_path('module', 'sba_social_action') . '/js/jQuery.simplyCountable.js';
 
   // Build the form content out of the API response stored in session.
   $messages = array();
@@ -131,7 +135,7 @@ function sba_social_action_preview_form($form, $form_state, $node) {
 
     // Theme the message header.
     $form['messages'][$key]['sent_to'] = array(
-      '#markup' => theme('sba_social_action_preview_message_header', array('message' => $message)),
+      '#markup' => theme('sba_social_action_preview_message_header', array('message' => $message, 'type' => $message_entity_type)),
     );
 
     // Create the message form elements from the entity. Passed by reference
@@ -139,7 +143,6 @@ function sba_social_action_preview_form($form, $form_state, $node) {
     $message_entity = $node->messages[$message['message_id']];
     $build = array();
     sba_social_action_message_form($build, $message_entity, 'multi_flow', $message_entity_type);
-
     $build['message'][$message_entity->sba_message_id]['#attributes']['class'][] = 'message-preview-message-fieldset';
 
     // Add hold value.
@@ -152,7 +155,6 @@ function sba_social_action_preview_form($form, $form_state, $node) {
       '#type' => 'value',
       '#value' => array('target_id' => $message['targets']->id, 'twitter' => $message['targets']->twitter, 'salutation' => $message['targets']->salutation, 'first_name' => $message['targets']->first_name, 'last_name' => $message['targets']->last_name),
     );
-
     // Check for required fields
     if (isset($build['message'][$message_entity->sba_message_id]['body_required']) && $build['message'][$message_entity->sba_message_id]['body_required']['#value']) {
       $build['message'][$message_entity->sba_message_id]['edited_body']['#required'] = TRUE;
@@ -162,12 +164,13 @@ function sba_social_action_preview_form($form, $form_state, $node) {
       $build['message'][$message_entity->sba_message_id]['subject']['#required'] = TRUE;
       $build['message'][$message_entity->sba_message_id]['subject']['#title'] =  t('Subject - You must edit this subject line before sending');
     }
-    // Assign the rebuilt messages to the form
     $form['messages'][$key]['message'] = $build['message'][$message_entity->sba_message_id];
   }
   // Add the node object to use in validation and submit.
   $form['#action_node'] = $node;
   // Define the validation function.
+  $form['#validate'][] = 'sba_social_action_preview_form_validate';
+
   // Add submit button
   $form['submit'] = array(
     '#prefix' => '<div id="edit-actions">',
@@ -175,11 +178,81 @@ function sba_social_action_preview_form($form, $form_state, $node) {
     '#type' => 'submit',
     '#value' => t('Send Now'),
     '#weight' => 10,
-    '#attributes' => array('class' => 'message-action-preview-submit'),
+    '#attributes' => array('class' => 'social-action-preview-submit'),
   );
   return $form;
 }
 
+/**
+ * Validate the  messages.
+ *
+ * @param $form
+ * @param $form_state
+ */
+function sba_social_action_preview_form_validate($form, &$form_state) {
+
+  $messages = !empty($form['messages']) ? element_children($form['messages']) : array();
+  $changed = FALSE;
+  // To prevent duplicate error messages.
+  $body_error_once = NULL;
+  $subject_error_once = NULL;
+
+  // Loop through the messages and validate whether user is required to edit subject or body.
+  // Also set a value for future use by the "user_edit_flag" component.
+  foreach ($messages as $id) {
+
+    // The message
+    $message = $form['messages'][$id]['message'];
+
+    // The default value for the user-editable body if any.
+    $body_default = isset($message['edited_body']['#default_value']) ? $message['edited_body']['#default_value'] : '';
+    // The edited value in the user-editable body if any.
+    $body_edited = isset($form_state['values']['messages'][$id]['message']['edited_body']) ? $form_state['values']['messages'][$id]['message']['edited_body'] : '';
+
+    // The default value for the user-editable subject if any.
+    $subject_default = isset($message['subject']['#default_value']) ? $message['subject']['#default_value'] : '';
+    // The edited value in the user-editable subject if any.
+    $subject_edited = isset($form_state['values']['messages'][$id]['message']['subject']) ? $form_state['values']['messages'][$id]['message']['subject'] : '';
+
+    // Enforce mandatory editing of the body if set.
+    $body_error = !isset($body_error_once) ? t('Please personalize your message before sending.') : '';
+    if ($body_edited == $body_default && isset($message['body_required']) && $message['body_required']['#value'] == 1) {
+      $body_error_once = TRUE;
+      form_set_error("messages][$id][message][edited_body", $body_error);
+    }
+    elseif ($body_edited != $body_default) {
+      // Set change value for use by the "user_edit_flag" component.
+      $changed = TRUE;
+    }
+
+    // Enforce mandatory editing of the subject if set.
+    $subject_error = !isset($subject_error_once) ? t('Please personalize the subject line before sending your message.') : '';
+    if ($subject_edited == $subject_default && isset($message['subject_required']) && $message['subject_required']['#value'] == 1) {
+      $subject_error_once = TRUE;
+      form_set_error("messages][$id][message][subject", $subject_error);
+    }
+    elseif (!isset($message['subject_show']) && $subject_edited != $subject_default) {
+      // Set change value for use by the "user_edit_flag" component.
+      $changed = TRUE;
+    }
+  }
+  // Set value for the user_edited_flag
+  $form_state['storage']['changed'] = $changed;
+
+  if (!empty($_SESSION['messages']['error'])) {
+    foreach ($_SESSION['messages']['error'] as $key => $message) {
+      if (strpos($message, 'You must edit the body of this message before sending') !== FALSE) {
+        unset($_SESSION['messages']['error'][$key]);
+        drupal_set_message('Please personalize your message before sending', 'error', FALSE);
+      }
+      if (strpos($message, 'You must edit the subject of this message before sending') !== FALSE) {
+        unset($_SESSION['messages']['error'][$key]);
+        drupal_set_message('Please personalize the subject line before sending', 'error', FALSE);
+      }
+    }
+  }
+
+}
 
 /**
  * Submit the messages to the API endpoint.
@@ -193,8 +266,9 @@ function sba_social_action_preview_form_submit($form, &$form_state) {
 
   foreach ($form_state['values']['messages'] as $message) {
 
+    $message_text = isset($message['message']['edited_body']) ? $message['message']['edited_body'] : $message['message']['body'];
     $target = parse_url($message['message']['target']['twitter']);
-    $body = '.@' . substr($target['path'], 1) . ' ' . $message['message']['edited_body'];
+    $body = '.@' . substr($target['path'], 1) . ' ' . $message_text;
 
     try {
       $twitter = new Twitter(
@@ -204,7 +278,7 @@ function sba_social_action_preview_form_submit($form, &$form_state) {
         $_SESSION['twitter']['values']['oauth_token_secret']
       );
 
-      $twitter->statuses_update($body);
+      //$twitter->statuses_update($body);
 
     } catch (TwitterException $e) {
       drupal_set_message(t('An error occurred when posting to Twitter. Check the system log for details.'), 'error');
@@ -285,12 +359,11 @@ function sba_social_action_preview_form_submit($form, &$form_state) {
  * @return string
  */
 function theme_sba_social_action_preview_message_header($vars) {
-
-  $intro = t('The message below will be sent to:');
+  $intro = t('We will automatically prefix the tweet below with ".@@name".', array('@name' => $vars['message']['person']['twitter']));
   $output = '<div class="message-preview-header"><div class="message-preview-intro">';
   $output .= $intro;
   $output .= '</div><div class="message-preview-person">';
-  $output .= theme('sba_social_action_person_details', $vars['message']['person']);
+  $output .= theme('sba_social_action_person_details', $vars);
   $output .= '</div></div>';
   return $output;
 }

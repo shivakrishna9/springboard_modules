@@ -35,11 +35,11 @@ function sba_social_action_additional_elements(&$form, &$form_state) {
   // Is form layouts enabled?
   if (!empty($form['#node']->form_layouts)) {
     $form['#attached']['css'][] = drupal_get_path('module', 'sba_social_action')
-      . '/css/message-action-form-layouts.css';
+      . '/css/social-action-form-layouts.css';
   }
   else {
     $form['#attached']['css'][] = drupal_get_path('module', 'sba_social_action')
-      . '/css/no-form-layouts.css';
+      . '/css/social-no-form-layouts.css';
   }
 
   $form['smarty_geo'] = array(
@@ -101,9 +101,8 @@ function sba_social_action_message_form(&$form, $message, $multiple, $message_en
   // Get some message values via an entity wrapper.
   $wrapper = entity_metadata_wrapper('sba_message', $message);
   $message_body = check_plain($wrapper->field_sba_twitter_message->value());
-//  $editable_message = $wrapper->field_sba_editable_area->value();
-  $body_editable = $wrapper->field_sba_twitter_editable->value() == 'editable' ? TRUE : FALSE;
-  $required_body = $wrapper->field_sba_twitter_editable->value() == 'required' ? TRUE : FALSE;
+  $message_editable = $wrapper->field_sba_twitter_editable->value() == 'Not editable' ? FALSE : TRUE;
+  $required_message = $wrapper->field_sba_twitter_editable->value() == 'Editing is required' ? TRUE : FALSE;
   $multi_flow = TRUE;
   $preview_form = empty($form) ? TRUE : FALSE;
   $access = TRUE;
@@ -111,12 +110,10 @@ function sba_social_action_message_form(&$form, $message, $multiple, $message_en
     $access = FALSE;
   }
 
-
   $form['message'][$message->sba_message_id] = array(
     '#type' => 'container',
     '#attributes' => array('class' => array('sba-message')),
   );
-
 
   $form['message'][$message->sba_message_id]['message_id'] = array(
     '#type' => 'value',
@@ -128,7 +125,6 @@ function sba_social_action_message_form(&$form, $message, $multiple, $message_en
     '#value' => $message->sba_message_id,
   );
 
-
   // The body value field is present in either case.
   // The value here is eventually passed to the API server.
   $form['message'][$message->sba_message_id]['body'] = array(
@@ -137,27 +133,37 @@ function sba_social_action_message_form(&$form, $message, $multiple, $message_en
   );
 
   if ($preview_form) {
-
-    if ($required_body) {
-      $description = t('You must edit the body of this message before sending.');
+    if ($required_message) {
+      $description = '';
       $required = TRUE;
     }
     else {
       $description = '';
       $required = FALSE;
     }
+    if(!$message_editable) {
+      $form['message'][$message->sba_message_id]['body_show'] = array(
+        '#type' => 'item',
+        '#title' => '',
+        '#markup' => $message_body,
+        '#access' => $access,
+      );
 
-    $form['message'][$message->sba_message_id]['edited_body'] = array(
-      '#type' => 'textarea',
-      '#default_value' => $message_body,
-      '#description' => $description,
-      '#required' => $required,
-    );
+    }
+    else {
+      $form['message'][$message->sba_message_id]['edited_body'] = array(
+        '#type' => 'textarea',
+        '#default_value' => $message_body,
+        '#description' => '<p>You have <span class="counter"></span> characters left.</p>',
+        '#required' => $required,
+        '#access' => $access,
+      );
+    }
   }
 
   $form['message'][$message->sba_message_id]['body_required'] = array(
     '#type' => 'value',
-    '#value' => $required_body,
+    '#value' => $required_message,
   );
 
 }
@@ -246,13 +252,13 @@ function sba_social_action_form_submit($form, &$form_state) {
  *
  * @param int $sba_message_id
  *   The message ID.
- * @param string $body_editable
+ * @param string $message_editable
  *    The user-editable body.
  *
  * @return string
  *   The message in string format.
  */
-function sba_social_action_build_message_bodies($sba_message_id, $body_editable) {
+function sba_social_action_build_message_bodies($sba_message_id, $message_editable) {
   // Load the message entity using the message entity id. We'll use the entity
   // to construct the full message.
   $message = entity_load('sba_message', array($sba_message_id));
@@ -260,8 +266,12 @@ function sba_social_action_build_message_bodies($sba_message_id, $body_editable)
   $wrapper = entity_metadata_wrapper('sba_message', $message);
 
   $user_message = array();
-  $user_message[] = $wrapper->field_sba_twitter_message->value();
-  $user_message[] = $body_editable;
+  if(empty($message_editable)) {
+    $user_message[] = $wrapper->field_sba_twitter_message->value();
+  }
+  else {
+    $user_message[] = $message_editable;
+  }
   $user_message = implode("\n\n", array_filter($user_message));
 
   return $user_message;
