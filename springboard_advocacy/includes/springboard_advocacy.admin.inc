@@ -33,28 +33,28 @@ function springboard_advocacy_settings_page() {
 function springboard_advocacy_settings_form() {
   $form = array();
 
-  $form['springboard_advocacy_debug'] = array(
-    '#title' => t('Debug mode'),
-    '#description' => t('Log extensive debug info to watchdog. Not recommended for production sites.'),
-    '#type' => 'checkbox',
-    '#default_value' => variable_get('springboard_advocacy_debug', ''),
-  );
-
-  $form['springboard_advocacy_test_email'] = array(
-    '#title' => t('Default test mode email address'),
-    '#description' => t('When a Message Action node is in test mode, messages are sent to a test mode email address instead of the designated targets. Please enter a default email to use for test mode. This can be overridden on a per node basis.'),
-    '#type' => 'textfield',
-    '#default_value' => variable_get('springboard_advocacy_test_email', ''),
-    '#required' => TRUE,
-    '#element_validate' => array('springboard_advocacy_email_validate'),
-  );
-
 
   $form['transaction'] = array(
     '#type' => 'fieldset',
     '#title' => t('Advocacy Server Configuration'),
     '#collapsible' => TRUE,
     '#collapsed' => TRUE,
+  );
+
+  $form['transaction']['springboard_advocacy_debug'] = array(
+    '#title' => t('Debug mode'),
+    '#description' => t('Log extensive debug info to watchdog. Not recommended for production sites.'),
+    '#type' => 'checkbox',
+    '#default_value' => variable_get('springboard_advocacy_debug', ''),
+  );
+
+  $form['transaction']['springboard_advocacy_test_email'] = array(
+    '#title' => t('Default test mode email address'),
+    '#description' => t('When a Message Action node is in test mode, messages are sent to a test mode email address instead of the designated targets. Please enter a default email to use for test mode. This can be overridden on a per node basis.'),
+    '#type' => 'textfield',
+    '#default_value' => variable_get('springboard_advocacy_test_email', ''),
+    '#required' => TRUE,
+    '#element_validate' => array('springboard_advocacy_email_validate'),
   );
 
   $form['transaction']['springboard_advocacy_server_url'] = array(
@@ -84,8 +84,7 @@ function springboard_advocacy_settings_form() {
   );
 
   $form['geo'] = array(
-    '#type' => 'fieldset',
-    '#title' => t('Geocoding configuration'),
+    '#type' => 'container',
   );
 
   $form['geo']['springboard_advocacy_geocoder'] = array(
