@@ -853,7 +853,9 @@ function _sba_message_action_install_message_entity() {
     field_group_group_save($field_group);
   }
 
-  variable_set('sba_message_node_types', array('sba_message_action' => 'sba_message_action_message'));
+  $sba_message_types = variable_get('sba_message_node_types', array(''));
+  $sba_message_types = array_merge($sba_message_types, array('sba_message_action' => 'sba_message_action_message'));
+  variable_set('sba_message_node_types', $sba_message_types);
 }
 
 /**

@@ -159,7 +159,12 @@ function springboard_advocacy_dashboard($path, $arg = NULL) {
       }
 
       // Get the view.
-      $messages_view = springboard_advocacy_prepare_dashboard_view('sba_messages_node', 'block_1', array($path));
+      if ($node->type == 'sba_message_action') {
+        $messages_view = springboard_advocacy_prepare_dashboard_view('sba_messages_node', 'block_1', array($path));
+      }
+      else {
+        $messages_view = springboard_advocacy_prepare_dashboard_view('sba_messages_node', 'social_messages_tab', array($path));
+      }
 
       // Couldn't load the correct view?
       if (!$messages_view) {

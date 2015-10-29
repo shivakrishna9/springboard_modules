@@ -984,8 +984,8 @@ function sba_message_views_default_views() {
     'sba_social_action_twitter_message' => 'sba_social_action_twitter_message',
   );
 
-  /* Display: Node Messages Tab */
-  $handler = $view->new_display('block', 'Node Messages Tab', 'block_1');
+  /* Display: Message Action Messages Tab */
+  $handler = $view->new_display('block', 'Message Action Messages Tab', 'block_1');
   $handler->display->display_options['display_description'] = 'Embedded block for edit page';
   $handler->display->display_options['defaults']['use_ajax'] = FALSE;
   $handler->display->display_options['defaults']['style_plugin'] = FALSE;
@@ -1074,6 +1074,15 @@ function sba_message_views_default_views() {
   $handler->display->display_options['sorts']['weight']['order'] = 'DESC';
   $handler->display->display_options['sorts']['weight']['draggableviews_setting_view'] = 'self';
   $handler->display->display_options['sorts']['weight']['draggableviews_setting_new_items_bottom_list'] = 0;
+  $handler->display->display_options['defaults']['filter_groups'] = FALSE;
+  $handler->display->display_options['defaults']['filters'] = FALSE;
+  /* Filter criterion: SBA Message: Type */
+  $handler->display->display_options['filters']['type']['id'] = 'type';
+  $handler->display->display_options['filters']['type']['table'] = 'sba_message';
+  $handler->display->display_options['filters']['type']['field'] = 'type';
+  $handler->display->display_options['filters']['type']['value'] = array(
+    'sba_message_action_message' => 'sba_message_action_message',
+  );
 
   /* Display: Multi-Message Modal */
   $handler = $view->new_display('block', 'Multi-Message Modal', 'block_2');
@@ -1117,6 +1126,110 @@ function sba_message_views_default_views() {
   $handler->display->display_options['sorts']['weight']['field'] = 'weight';
   $handler->display->display_options['sorts']['weight']['draggableviews_setting_view'] = 'sba_messages_node:block_1';
   $handler->display->display_options['sorts']['weight']['draggableviews_setting_new_items_bottom_list'] = 1;
+
+  /* Display: Social Messages Tab */
+  $handler = $view->new_display('block', 'Social Messages Tab', 'social_messages_tab');
+  $handler->display->display_options['display_description'] = 'Embedded block for edit page';
+  $handler->display->display_options['defaults']['use_ajax'] = FALSE;
+  $handler->display->display_options['defaults']['style_plugin'] = FALSE;
+  $handler->display->display_options['style_plugin'] = 'table';
+  $handler->display->display_options['style_options']['columns'] = array(
+    'name' => 'name',
+    'field_sba_subject' => 'field_sba_subject',
+    'edit_sba_message' => 'edit_sba_message',
+    'delete_sba_message' => 'edit_sba_message',
+    'draggableviews' => 'draggableviews',
+  );
+  $handler->display->display_options['style_options']['default'] = '-1';
+  $handler->display->display_options['style_options']['info'] = array(
+    'name' => array(
+      'sortable' => 0,
+      'default_sort_order' => 'asc',
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
+    'field_sba_subject' => array(
+      'sortable' => 0,
+      'default_sort_order' => 'asc',
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
+    'edit_sba_message' => array(
+      'align' => '',
+      'separator' => ' | ',
+      'empty_column' => 0,
+    ),
+    'delete_sba_message' => array(
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
+    'draggableviews' => array(
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
+  );
+  $handler->display->display_options['defaults']['style_options'] = FALSE;
+  $handler->display->display_options['defaults']['row_plugin'] = FALSE;
+  $handler->display->display_options['defaults']['row_options'] = FALSE;
+  $handler->display->display_options['defaults']['empty'] = FALSE;
+  /* No results behavior: Global: Unfiltered text */
+  $handler->display->display_options['empty']['area_text_custom']['id'] = 'area_text_custom';
+  $handler->display->display_options['empty']['area_text_custom']['table'] = 'views';
+  $handler->display->display_options['empty']['area_text_custom']['field'] = 'area_text_custom';
+  $handler->display->display_options['empty']['area_text_custom']['empty'] = TRUE;
+  $handler->display->display_options['empty']['area_text_custom']['content'] = 'No messages have been added yet.';
+  $handler->display->display_options['defaults']['fields'] = FALSE;
+  /* Field: SBA Message: Name */
+  $handler->display->display_options['fields']['name']['id'] = 'name';
+  $handler->display->display_options['fields']['name']['table'] = 'sba_message';
+  $handler->display->display_options['fields']['name']['field'] = 'name';
+  /* Field: SBA Message: Subject text */
+  $handler->display->display_options['fields']['field_sba_subject']['id'] = 'field_sba_subject';
+  $handler->display->display_options['fields']['field_sba_subject']['table'] = 'field_data_field_sba_subject';
+  $handler->display->display_options['fields']['field_sba_subject']['field'] = 'field_sba_subject';
+  $handler->display->display_options['fields']['field_sba_subject']['delta_offset'] = '0';
+  /* Field: SBA Message: Tweet text */
+  $handler->display->display_options['fields']['field_sba_twitter_message']['id'] = 'field_sba_twitter_message';
+  $handler->display->display_options['fields']['field_sba_twitter_message']['table'] = 'field_data_field_sba_twitter_message';
+  $handler->display->display_options['fields']['field_sba_twitter_message']['field'] = 'field_sba_twitter_message';
+  /* Field: SBA Message: Edit Link */
+  $handler->display->display_options['fields']['edit_sba_message']['id'] = 'edit_sba_message';
+  $handler->display->display_options['fields']['edit_sba_message']['table'] = 'sba_message';
+  $handler->display->display_options['fields']['edit_sba_message']['field'] = 'edit_sba_message';
+  $handler->display->display_options['fields']['edit_sba_message']['label'] = 'Actions';
+  /* Field: SBA Message: Delete Link */
+  $handler->display->display_options['fields']['delete_sba_message']['id'] = 'delete_sba_message';
+  $handler->display->display_options['fields']['delete_sba_message']['table'] = 'sba_message';
+  $handler->display->display_options['fields']['delete_sba_message']['field'] = 'delete_sba_message';
+  /* Field: Draggableviews: SBA Message */
+  $handler->display->display_options['fields']['draggableviews']['id'] = 'draggableviews';
+  $handler->display->display_options['fields']['draggableviews']['table'] = 'sba_message';
+  $handler->display->display_options['fields']['draggableviews']['field'] = 'draggableviews';
+  $handler->display->display_options['fields']['draggableviews']['element_default_classes'] = FALSE;
+  $handler->display->display_options['fields']['draggableviews']['hide_alter_empty'] = FALSE;
+  $handler->display->display_options['fields']['draggableviews']['draggableviews']['save_button_label'] = 'Save message order';
+  $handler->display->display_options['fields']['draggableviews']['draggableviews']['ajax'] = 0;
+  $handler->display->display_options['defaults']['sorts'] = FALSE;
+  /* Sort criterion: Draggableviews: Weight */
+  $handler->display->display_options['sorts']['weight']['id'] = 'weight';
+  $handler->display->display_options['sorts']['weight']['table'] = 'draggableviews_structure';
+  $handler->display->display_options['sorts']['weight']['field'] = 'weight';
+  $handler->display->display_options['sorts']['weight']['order'] = 'DESC';
+  $handler->display->display_options['sorts']['weight']['draggableviews_setting_view'] = 'self';
+  $handler->display->display_options['sorts']['weight']['draggableviews_setting_new_items_bottom_list'] = 0;
+  $handler->display->display_options['defaults']['filter_groups'] = FALSE;
+  $handler->display->display_options['defaults']['filters'] = FALSE;
+  /* Filter criterion: SBA Message: Type */
+  $handler->display->display_options['filters']['type']['id'] = 'type';
+  $handler->display->display_options['filters']['type']['table'] = 'sba_message';
+  $handler->display->display_options['filters']['type']['field'] = 'type';
+  $handler->display->display_options['filters']['type']['value'] = array(
+    'sba_social_action_twitter_message' => 'sba_social_action_twitter_message',
+  );
 
   $views[$view->name] = $view;
   return $views;
