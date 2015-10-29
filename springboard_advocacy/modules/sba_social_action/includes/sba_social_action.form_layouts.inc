@@ -15,22 +15,21 @@
 function sba_social_action_form_layouts() {
   $templates = array();
 
-
-  $templates['two_column_body_left'] = array(
+  $templates['social_two_column_body_left'] = array(
     'name' => t('Call to action left, message and user form right.'),
     'types' => array('sba_social_action'),
-    'theme' => 'two_column_body_left',
-    'pattern' => 'two_column_body_left\'0-9\'+',
+    'theme' => 'social_two_column_body_left',
+    'pattern' => 'social_two_column_body_left\'0-9\'+',
     'template' => 'two-column-body-left',
     'path' => drupal_get_path('module', 'sba_social_action') . '/templates/form_layouts',
     'hide title' => FALSE,
   );
 
-  $templates['two_column_body_right'] = array(
+  $templates['social_two_column_body_right'] = array(
     'name' => t('Call to action right, message and user form left'),
     'types' => array('sba_social_action'),
-    'theme' => 'two_column_body_right',
-    'pattern' => 'two_column_body_right\'0-9\'+',
+    'theme' => 'social_two_column_body_right',
+    'pattern' => 'social_two_column_body_right\'0-9\'+',
     'template' => 'two-column-body-right',
     'path' => drupal_get_path('module', 'sba_social_action') . '/templates/form_layouts',
     'hide title' => FALSE,
@@ -42,14 +41,14 @@ function sba_social_action_form_layouts() {
 /**
  * Implements hook_preprocess_hook().
  */
-function sba_social_action_preprocess_two_column_body_left(&$vars) {
+function sba_social_action_preprocess_social_two_column_body_left(&$vars) {
   sba_social_action_build_preprocess($vars);
 }
 
 /**
  * Implements hook_preprocess_hook().
  */
-function sba_social_action_preprocess_two_column_body_right(&$vars) {
+function sba_social_action_preprocess_social_two_column_body_right(&$vars) {
   sba_social_action_build_preprocess($vars);
 }
 
@@ -58,23 +57,22 @@ function sba_social_action_preprocess_two_column_body_right(&$vars) {
  * Helper function for form layouts preprocessors.
  */
 function sba_social_action_build_preprocess(&$vars) {
-
   $vars['quicksign'] = '';
   if (module_exists('sba_quicksign') && sba_quicksign_is_enabled($vars['element']['#node'])) {
     $quicksign = drupal_get_form('sba_quicksign_form');
     $vars['quicksign'] = drupal_render($quicksign);
   }
 
-  $vars['participants'] = '';
-  $view = views_get_view('recent_action_participants');
-  $view->set_display('block_1');
-  $view->set_arguments(array(arg(1)));
-  $view->pre_execute();
-  $view->execute();
-  if (isset($view->result) && count($view->result)) {
-    $table = $view->preview('block_1');
-    $vars['participants'] = $table;
-  }
+//  $vars['participants'] = '';
+//  $view = views_get_view('recent_action_participants');
+//  $view->set_display('block_1');
+//  $view->set_arguments(array(arg(1)));
+//  $view->pre_execute();
+//  $view->execute();
+//  if (isset($view->result) && count($view->result)) {
+//    $table = $view->preview('block_1');
+//    $vars['participants'] = $table;
+//  }
 
   $element = $vars['element'];
 
@@ -183,6 +181,9 @@ function theme_social_action_submitted_wrapper($vars) {
   return '<div class="row-fluid"><fieldset id="your-information-wrapper" class = "form-wrapper">' . $vars['element']['#children']  . '</fieldset></div>';
 }
 
+function theme_social_action_messages_wrapper($vars) {
+  return '<div id = "right" class = "span7">' . $vars['element']['#children']  . '</div>';
+}
 /**
  * Theme wrapper to create "Take Action Now" fieldset
  * and fluid bootstrap divs on non-form-layout nodes.

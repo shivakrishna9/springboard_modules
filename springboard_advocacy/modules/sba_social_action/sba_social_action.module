@@ -33,13 +33,6 @@ function sba_social_action_menu() {
     'file path' => drupal_get_path('module', 'sba_social_action') . '/includes',
   );
 
-  $items['step-one/twitter/redirect'] = array(
-    'title' => 'Twitter Redirect',
-    'page callback' => 'sba_social_action_twitter_redirect',
-    'access callback' => TRUE,
-    'type' => MENU_CALLBACK,
-  );
-
   return $items;
 }
 
@@ -131,7 +124,10 @@ function sba_social_action_node_load($nodes, $types) {
 
       $visibility = db_query('select visibility from {springboard_action_opt_in_block} WHERE nid=:nid', array(':nid' => $node->nid))->fetchField();
       $node->show_my_name = $visibility;
-
+      // Unset form layout if default.
+      if (isset($node->form_layouts) &&  $node->form_layouts == 'one_column ') {
+        unset($node->form_layouts);
+      }
       if (!empty($node->message_ids)) {
         $messages = sba_message_load_multiple($node->message_ids);
         $messages_by_id = array();
@@ -205,8 +201,9 @@ function sba_social_action_preprocess_node(&$vars) {
 
   if ($vars['node']->type == 'sba_social_action') {
     // Add theme wrappers for non-form-layout layouts.
-    $vars['use_layouts'] = !empty($vars['form_layouts']) ? TRUE : FALSE;
-    if (empty($vars['use_layouts'])) {
+    $vars['use_layouts'] = !empty($vars['form_layouts']) && $vars['form_layouts'] != 'one_column' ? TRUE : FALSE;
+
+    if (empty($vars['use_layouts']) || $vars['form_layouts'] == 'one_column') {
       $vars['content']['webform']['#theme_wrappers'][] = 'social_action_webform_wrapper';
       $vars['content']['webform']['#form']['submitted']['#theme_wrappers'][] = 'social_action_submitted_wrapper';
 
@@ -284,7 +281,6 @@ function sba_social_action_multiflow_submit($form, &$form_state) {
     $node = $form['#node'];
     $sid = $form_state['values']['details']['sid'];
     $_SESSION['action_sid'] = array('sid' => $sid, 'nid' => $node->nid);
-    sba_social_action_twitter_redirect();
 
     if (!isset($_SESSION['twitter'])) {
       sba_social_action_twitter_redirect();
@@ -296,4 +292,53 @@ function sba_social_action_multiflow_submit($form, &$form_state) {
       );
     }
  // }
+}
+
+/**
+ * Implements hook_webform_user_profile_fields_alter().
+ *
+ * Set mandatory fields.
+ * Remove zip and state field temporarily so they can be altered elsewhere.
+ * Set up advocacy-specific profile field salutation
+ * Alter field weights.
+ */
+function sba_social_action_webform_user_profile_fields_alter(&$fields, $node) {
+  if ($node->type == 'sba_social_action') {
+
+    foreach ($fields as $index => $profile_field) {
+      // Make all fields except address2 mandatory.
+      if ($profile_field['name'] != 'sbp_address_line_2' && $profile_field['name'] != 'sbp_phone') {
+        $fields[$index]['mandatory'] = 1;
+      }
+      // Setup removal of non-US provinces.
+      if ($profile_field['name'] == 'sbp_state') {
+        unset($fields[$index]);
+      }
+      // Remove zip.
+      if ($profile_field['name'] == 'sbp_zip') {
+        unset($fields[$index]);
+      }
+      if ($profile_field['name'] == 'sbp_salutation') {
+        $fields[$index]['weight'] = -6;
+      }
+      if ($profile_field['name'] == 'sbp_first_name') {
+        $fields[$index]['weight'] = -5;
+      }
+      if ($profile_field['name'] == 'sbp_last_name') {
+        $fields[$index]['weight'] = -4;
+      }
+      if ($profile_field['name'] == 'mail') {
+        $fields[$index]['weight'] = -3;
+      }
+    }
+  }
+}
+
+/**
+ * Implements hook_form_layouts_info().
+ */
+function sba_social_action_form_layouts_info() {
+  module_load_include('inc', 'sba_social_action', 'includes/sba_social_action.form_layouts');
+  $templates = sba_social_action_form_layouts();
+  return $templates;
 }

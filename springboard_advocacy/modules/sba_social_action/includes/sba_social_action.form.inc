@@ -21,7 +21,7 @@ function sba_social_action_additional_elements(&$form, &$form_state) {
   // and use it in a template variable defined in
   // sba_social_action_build_preprocess and
   // theme_social_action_form_layout_form
-  if (!empty($form['#theme_wrappers']) && !empty($form['#node']->form_layouts)) {
+  if (!empty($form['#theme_wrappers']) && !empty($form['#node']->form_layouts) && $form['#node']->form_layouts != 'one_column') {
     foreach ($form['#theme_wrappers'] as $key => $wrapper) {
       if ($wrapper == 'form') {
         unset($form['#theme_wrappers'][$key]);
