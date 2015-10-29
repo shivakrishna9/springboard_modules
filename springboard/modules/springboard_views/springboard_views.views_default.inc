@@ -1686,6 +1686,7 @@ function springboard_views_views_default_views() {
   $handler->display->display_options['fields']['sbp_first_name']['table'] = 'field_data_sbp_first_name';
   $handler->display->display_options['fields']['sbp_first_name']['field'] = 'sbp_first_name';
   $handler->display->display_options['fields']['sbp_first_name']['relationship'] = 'uid';
+  $handler->display->display_options['fields']['sbp_first_name']['label'] = 'Name';
   /* Field: User: Last name */
   $handler->display->display_options['fields']['sbp_last_name']['id'] = 'sbp_last_name';
   $handler->display->display_options['fields']['sbp_last_name']['table'] = 'field_data_sbp_last_name';
@@ -1874,7 +1875,7 @@ function springboard_views_views_default_views() {
   $handler->display->display_options['fields']['sbp_first_name']['table'] = 'field_data_sbp_first_name';
   $handler->display->display_options['fields']['sbp_first_name']['field'] = 'sbp_first_name';
   $handler->display->display_options['fields']['sbp_first_name']['relationship'] = 'uid';
-  $handler->display->display_options['fields']['sbp_first_name']['label'] = 'Name';
+  $handler->display->display_options['fields']['sbp_first_name']['label'] = 'First Name';
   /* Field: User: Last name */
   $handler->display->display_options['fields']['sbp_last_name']['id'] = 'sbp_last_name';
   $handler->display->display_options['fields']['sbp_last_name']['table'] = 'field_data_sbp_last_name';
