@@ -129,7 +129,7 @@ function springboard_advocacy_settings_form() {
     $form['twitter'] = array(
       '#type' => 'fieldset',
       '#title' => t('Twitter'),
-      '#description' => t('The full settings for twitter are found !link. Despite what it says on the "twitter" tab there, an authenticated account is not necessary. The oauth credentials below are sufficient.' , array('!link' => l('here', 'admin/config/services/twitter/settings'))),
+      '#description' => t('The full settings for twitter are found !link, but can be ignored. Despite what it says on the "twitter" tab there, a global authenticated account is not necessary (for social actions). The oauth credentials below are sufficient.' , array('!link' => l('here', 'admin/config/services/twitter/settings'))),
       '#collapsible' => TRUE,
       '#collapsed' => TRUE,
     );
