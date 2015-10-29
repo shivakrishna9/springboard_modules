@@ -53,6 +53,8 @@ function springboard_advocacy_settings_form() {
   $form['transaction'] = array(
     '#type' => 'fieldset',
     '#title' => t('Advocacy Server Configuration'),
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
   );
 
   $form['transaction']['springboard_advocacy_server_url'] = array(
@@ -95,7 +97,7 @@ function springboard_advocacy_settings_form() {
     '#type' => 'fieldset',
     '#title' => t('Smarty Streets configuration'),
     '#collapsible' => TRUE,
-    '#collapsed' => FALSE,
+    '#collapsed' => TRUE,
   );
 
   $form['geo']['smarty']['springboard_advocacy_smarty_authid'] = array(
@@ -114,6 +116,26 @@ function springboard_advocacy_settings_form() {
     '#required' => TRUE,
   );
 
+  if(module_exists('sba_social_action')) {
+    module_load_include('inc', 'twitter', 'twitter.pages');
+    $state = array();
+    $twitter = twitter_admin_form(array(), $state);
+    $twitter['actions']['#access'] = FALSE;
+    $twitter['#submit']['#access'] = FALSE;
+    $twitter['misc']['#access'] = FALSE;
+    $twitter['twitter']['#access'] = FALSE;
+    $twitter['embed']['#access'] = FALSE;
+
+    $form['twitter'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Twitter'),
+      '#description' => t('The full settings for twitter are found !link. Despite what it says on the "twitter" tab there, an authenticated account is not necessary. The oauth credentials below are sufficient.' , array('!link' => l('here', 'admin/config/services/twitter/settings'))),
+      '#collapsible' => TRUE,
+      '#collapsed' => TRUE,
+    );
+
+    $form['twitter']['form'] = $twitter;
+  }
   return system_settings_form($form);
 }
 
