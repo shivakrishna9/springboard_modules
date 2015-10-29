@@ -6,12 +6,53 @@
  */
 
 /**
- * Implements hook_fundraiser_donation_success()
+ * Implements hook_cron_queue_info()
  */
-function fundraiser_data_warehousing_fundraiser_donation_success($donation) {
-  $donation_data = fundraiser_data_warehousing_get_formatted_donation_data($donation);
+function fundraiser_data_warehousing_cron_queue_info() {
+  $queues['data_warehouse_donation_ids'] = array(
+    'worker callback' => 'fundraiser_data_warehousing_send_donation_data',
+    'time' => 120,
+  );
 
-  springboard_data_warehousing_send_data($donation_data, '/one-time');
+  return $queues;
+}
+
+/**
+ * Implements hook_cron()
+ */
+function fundraiser_data_warehousing_cron() {
+  $queue = DrupalQueue::get('data_warehouse_donation_ids');
+
+  $last_update_time = variable_get('fundraiser_data_warehousing_last_update', 0);
+
+  $result = db_select('fundraiser_donation')
+      ->fields('fundraiser_donation', array('did'))
+      ->condition('created', $last_update_time, '>')
+      ->orderBy('did', 'ASC')
+      ->execute();
+
+  while ($record = $result->fetchAssoc()) {
+    $queue->createItem($record['did']);
+  }
+
+  variable_set('fundraiser_data_warehousing_last_update', time());
+}
+
+/**
+ * Sends an array of formatted donation data to the data warehouse.
+ *
+ * @param int $donation_id
+ *   The ID of the donation to send.
+ */
+function fundraiser_data_warehousing_send_donation_data($donation_id) {
+  $donation = fundraiser_donation_get_donation($donation_id);
+
+  // TODO: Handle extra data for sustainers.
+
+  if (!empty($donation)) {
+    $donation_data = fundraiser_data_warehousing_get_formatted_donation_data($donation);
+    springboard_data_warehousing_send_data($donation_data, '/one-time');
+  }
 }
 
 /**
@@ -37,15 +78,6 @@ function fundraiser_data_warehousing_fundraiser_sustainers_create_recurring($rec
 
     springboard_data_warehousing_send_data($donation_data, '/one-time');
   }
-}
-
-/**
- * Implements hook_fundraiser_sustainers_update_recurring()
- */
-function fundraiser_data_warehousing_fundraiser_sustainers_update_recurring($recurring_donation) {
-  // TODO: Remove original record from data warehouse?
-
-  fundraiser_data_warehousing_fundraiser_sustainers_create_recurring($recurring_donation);
 }
 
 /**

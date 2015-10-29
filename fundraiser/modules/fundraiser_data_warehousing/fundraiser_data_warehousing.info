@@ -3,3 +3,4 @@ description = Adds data warehousing functionality to Fundraiser
 core = 7.x
 package = Jackson River Springboard
 dependencies[] = fundraiser
+dependencies[] = springboard_data_warehousing
