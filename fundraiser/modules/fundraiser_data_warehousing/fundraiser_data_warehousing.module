@@ -14,6 +14,11 @@ function fundraiser_data_warehousing_cron_queue_info() {
     'time' => 120,
   );
 
+  $queues['data_warehouse_sustainer_donation_ids'] = array(
+    'worker callback' => 'fundraiser_data_warehousing_send_sustainer_donation_data',
+    'time' => 120,
+  );
+
   return $queues;
 }
 
@@ -21,18 +26,36 @@ function fundraiser_data_warehousing_cron_queue_info() {
  * Implements hook_cron()
  */
 function fundraiser_data_warehousing_cron() {
-  $queue = DrupalQueue::get('data_warehouse_donation_ids');
-
   $last_update_time = variable_get('fundraiser_data_warehousing_last_update', 0);
+
+  $query = db_select('fundraiser_sustainers', 's');
+  $query->fields('s', array('did'));
+  $query->join('fundraiser_donation', 'd', 's.did = d.did');
+  $query->condition('d.created', $last_update_time, '>');
+  $query->orderBy('s.did', 'ASC');
+
+  $result = $query->execute();
+
+  $sustainer_queue = DrupalQueue::get('data_warehouse_sustainer_donation_ids');
+
+  $sustainer_ids = array();
+
+  while ($record = $result->fetchAssoc()) {
+    $sustainer_ids[] = $record['did'];
+    $sustainer_queue->createItem($record['did']);
+  }
+
+  $donation_queue = DrupalQueue::get('data_warehouse_donation_ids');
 
   $result = db_select('fundraiser_donation')
       ->fields('fundraiser_donation', array('did'))
       ->condition('created', $last_update_time, '>')
+      ->condition('did', $sustainer_ids, 'NOT IN')
       ->orderBy('did', 'ASC')
       ->execute();
 
   while ($record = $result->fetchAssoc()) {
-    $queue->createItem($record['did']);
+    $donation_queue->createItem($record['did']);
   }
 
   variable_set('fundraiser_data_warehousing_last_update', time());
@@ -47,8 +70,6 @@ function fundraiser_data_warehousing_cron() {
 function fundraiser_data_warehousing_send_donation_data($donation_id) {
   $donation = fundraiser_donation_get_donation($donation_id);
 
-  // TODO: Handle extra data for sustainers.
-
   if (!empty($donation)) {
     $donation_data = fundraiser_data_warehousing_get_formatted_donation_data($donation);
     springboard_data_warehousing_send_data($donation_data, '/one-time');
@@ -56,25 +77,22 @@ function fundraiser_data_warehousing_send_donation_data($donation_id) {
 }
 
 /**
- * Implements hook_fundraiser_sustainers_create_recurring()
+ * Sends an array of formatted sustainer donation data to the data warehouse.
+ *
+ * @param int $donation_id
+ *   The ID of the donation to send.
  */
-function fundraiser_data_warehousing_fundraiser_sustainers_create_recurring($recurring_data) {
-  $original_recurring = _fundraiser_sustainers_get_recurring_by_did($recurring_data['did']);
-  $recurring_donation = fundraiser_donation_get_donation($recurring_data['did']);
+function fundraiser_data_warehousing_send_sustainer_donation_data($donation_id) {
+  $donation = fundraiser_donation_get_donation($donation_id);
 
-  if (!empty($original_recurring->master_did)) {
-    $master_donation = fundraiser_donation_get_donation($original_recurring->master_did);
+  if (!empty($donation)) {
+    $sustainer_donation = _fundraiser_sustainers_get_recurring_by_did($donation_id);
 
-    $donation_data = fundraiser_data_warehousing_get_formatted_donation_data($master_donation);
+    $donation_data = fundraiser_data_warehousing_get_formatted_donation_data($donation);
 
-    // Overwrite original donation data with of recurring donation data.
-    $donation_data['did'] = $recurring_donation->did;
-    $donation_data['status'] = $recurring_donation->status;
-
-    // Add sustainer-specific data.
-    $donation_data['master_did'] = $original_recurring->master_did;
-    $donation_data['next_charge'] = $recurring_data['next_charge'];
-    $donation_data['sustainer_key'] = isset($recurring_data['sustainer_key']) ? $recurring_data['sustainer_key'] : NULL;
+    $donation_data['master_did'] = $sustainer_donation->master_did;
+    $donation_data['next_charge'] = $sustainer_donation->next_charge;
+    $donation_data['sustainer_key'] = $sustainer_donation->sustainer_key;
 
     springboard_data_warehousing_send_data($donation_data, '/one-time');
   }
@@ -107,7 +125,7 @@ function fundraiser_data_warehousing_get_formatted_donation_data($donation) {
     'state' => $donation->donation['state'],
     'zip' => $donation->donation['zip'],
     'gateway' => $donation->gateway['id'],
-    'txn_id' => $donation->data['txn_id'],
+    'txn_id' => isset($donation->data['txn_id']) ? $donation->data['txn_id'] : NULL,
     'status' => $donation->status,
   );
 
