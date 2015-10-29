@@ -20,6 +20,9 @@ function sba_social_action_node_info() {
   );
 }
 
+/**
+ * Implements hook_menu()
+ */
 function sba_social_action_menu() {
   $items['node/%/social-message-preview'] = array(
     'title' => 'Preview Messages',
@@ -41,48 +44,6 @@ function sba_social_action_menu() {
 
   return $items;
 }
-
-function sba_social_action_twitter_redirect() {
-  module_load_include('inc', 'twitter');
-
-  $key = variable_get('twitter_consumer_key', '');
-  $secret = variable_get('twitter_consumer_secret', '');
-  $twitter = new Twitter($key, $secret);
-
-  // Specify a callback_url when generating our token that will match the
-  // current domain.
-  $oauth_callback = variable_get('twitter_oauth_callback_url', TWITTER_OAUTH_CALLBACK_URL);
-  $callback_url = url($oauth_callback, array('absolute' => TRUE));
-  $params = array('oauth_callback' => $callback_url);
-  $token = $twitter->get_request_token($params);
-  $_SESSION['twitter_oauth']['token'] = $token;
-  $_SESSION['twitter_oauth']['destination'] = 'https://springboard.dev';
-  $_SESSION['twitter_oauth']['signin'] = TRUE;
-
-  drupal_goto($twitter->get_authenticate_url($token));
-}
-
-
-/**
- * Form submit for the OAuth callback. Here we add in sign-in specific handling.
- */
-function sba_social_action_oauth_callback_submit(&$form, &$form_state) {
-  global $user;
-  $form_state['programmed'] = FALSE;
-
-
-  $form_state['redirect'] = array(
-    'node/' . $_SESSION['action_sid']['nid'] . '/social-message-preview',
-    array('query' => array('sid' => $_SESSION['action_sid']['sid']))
-  );
-
-
-  $key = variable_get('twitter_consumer_key', '');
-  $secret = variable_get('twitter_consumer_secret', '');
-  $response = $form_state['twitter_oauth']['response'];
-  $_SESSION['twitter']['values'] = $response;
-}
-
 
 /**
  * Control access to multi-step page two\.
@@ -106,6 +67,55 @@ function sba_social_action_preview_access($nid) {
  */
 function sba_social_action_form($node, $form_state) {
   return node_content_form($node, $form_state);
+}
+
+/**
+ * Implements hook_webform_user_profile_fields_alter().
+ *
+ * Set mandatory fields.
+ * Remove zip and state field temporarily so they can be altered elsewhere.
+ * Set up advocacy-specific profile field salutation
+ * Alter field weights.
+ */
+function sba_social_action_webform_user_profile_fields_alter(&$fields, $node) {
+  if ($node->type == 'sba_social_action') {
+
+    foreach ($fields as $index => $profile_field) {
+      // Make all fields except address2 mandatory.
+      if ($profile_field['name'] != 'sbp_address_line_2' && $profile_field['name'] != 'sbp_phone') {
+        $fields[$index]['mandatory'] = 1;
+      }
+      // Setup removal of non-US provinces.
+      if ($profile_field['name'] == 'sbp_state') {
+        unset($fields[$index]);
+      }
+      // Remove zip.
+      if ($profile_field['name'] == 'sbp_zip') {
+        unset($fields[$index]);
+      }
+      if ($profile_field['name'] == 'sbp_salutation') {
+        $fields[$index]['weight'] = -6;
+      }
+      if ($profile_field['name'] == 'sbp_first_name') {
+        $fields[$index]['weight'] = -5;
+      }
+      if ($profile_field['name'] == 'sbp_last_name') {
+        $fields[$index]['weight'] = -4;
+      }
+      if ($profile_field['name'] == 'mail') {
+        $fields[$index]['weight'] = -3;
+      }
+    }
+  }
+}
+
+/**
+ * Implements hook_form_layouts_info().
+ */
+function sba_social_action_form_layouts_info() {
+  module_load_include('inc', 'sba_social_action', 'includes/sba_social_action.form_layouts');
+  $templates = sba_social_action_form_layouts();
+  return $templates;
 }
 
 /**
@@ -180,8 +190,6 @@ function sba_social_action_theme($existing, $type, $theme, $path) {
   );
 }
 
-
-
 /**
  * Implements hook_node_insert().
  *
@@ -236,26 +244,16 @@ function sba_social_action_preprocess_node(&$vars) {
   }
 }
 
+/**
+ * @param $form
+ * @param $form_state
+ * @param $form_id
+ */
 function sba_social_action_form_alter(&$form, &$form_state, $form_id) {
-
-  // By default don't do anything when the site is in maintenance mode, but
-  // allow this to be changed so that admins can still login.
-  if (defined('MAINTENANCE_MODE') && !variable_get('twitter_signin_maintenance_mode', FALSE)) {
-    return;
-  }
-
 
   if ($form_id == 'twitter_oauth_callback_form') {
     $form['#submit'] = array('sba_social_action_oauth_callback_submit');
   }
-
-  // Don't do anything else if the credentials haven't been set up yet.
-  $key = variable_get('twitter_consumer_key', '');
-  $secret = variable_get('twitter_consumer_secret', '');
-  if (empty($key) || empty($secret)) {
-    return;
-  }
-
 
   if (!empty($form['#node']->type) && $form['#node']->type == 'sba_social_action') {
     // Is this the user-facing form?
@@ -300,54 +298,53 @@ function sba_social_action_multiflow_submit($form, &$form_state) {
 }
 
 /**
- * Implements hook_webform_user_profile_fields_alter().
- *
- * Set mandatory fields.
- * Remove zip and state field temporarily so they can be altered elsewhere.
- * Set up advocacy-specific profile field salutation
- * Alter field weights.
+ * Redirect to twitter authentication after a webform submission.
  */
-function sba_social_action_webform_user_profile_fields_alter(&$fields, $node) {
-  if ($node->type == 'sba_social_action') {
-
-    foreach ($fields as $index => $profile_field) {
-      // Make all fields except address2 mandatory.
-      if ($profile_field['name'] != 'sbp_address_line_2' && $profile_field['name'] != 'sbp_phone') {
-        $fields[$index]['mandatory'] = 1;
-      }
-      // Setup removal of non-US provinces.
-      if ($profile_field['name'] == 'sbp_state') {
-        unset($fields[$index]);
-      }
-      // Remove zip.
-      if ($profile_field['name'] == 'sbp_zip') {
-        unset($fields[$index]);
-      }
-      if ($profile_field['name'] == 'sbp_salutation') {
-        $fields[$index]['weight'] = -6;
-      }
-      if ($profile_field['name'] == 'sbp_first_name') {
-        $fields[$index]['weight'] = -5;
-      }
-      if ($profile_field['name'] == 'sbp_last_name') {
-        $fields[$index]['weight'] = -4;
-      }
-      if ($profile_field['name'] == 'mail') {
-        $fields[$index]['weight'] = -3;
-      }
-    }
+function sba_social_action_twitter_redirect() {
+  // Don't do anything else if the credentials haven't been set up yet.
+  $key = variable_get('twitter_consumer_key', '');
+  $secret = variable_get('twitter_consumer_secret', '');
+  if (empty($key) || empty($secret)) {
+    return;
   }
+  module_load_include('inc', 'twitter');
+  $twitter = new Twitter($key, $secret);
+  $oauth_callback = variable_get('twitter_oauth_callback_url', TWITTER_OAUTH_CALLBACK_URL);
+  $callback_url = url($oauth_callback, array('absolute' => TRUE));
+  $params = array('oauth_callback' => $callback_url);
+  $token = $twitter->get_request_token($params);
+  $_SESSION['twitter_oauth']['token'] = $token;
+  //$_SESSION['twitter_oauth']['destination'] = 'https://springboard.dev';
+
+  // So we use authenticate rather than the authorize endpoint.
+  $_SESSION['twitter_oauth']['signin'] = TRUE;
+
+  drupal_goto($twitter->get_authenticate_url($token));
+}
+
+
+/**
+ * Form submit for the OAuth callback.
+ *
+ * The submit hook in twitter.module does the heavy lifting.
+ */
+function sba_social_action_oauth_callback_submit(&$form, &$form_state) {
+
+  // Programmed = FALSE because this form is submitted in code and otherwise
+  // the redirection would not work.
+  $form_state['programmed'] = FALSE;
+  $form_state['redirect'] = array(
+    'node/' . $_SESSION['action_sid']['nid'] . '/social-message-preview',
+    array('query' => array('sid' => $_SESSION['action_sid']['sid']))
+  );
+
+  $response = $form_state['twitter_oauth']['response'];
+  $_SESSION['twitter']['values'] = $response;
 }
 
 /**
- * Implements hook_form_layouts_info().
+ * Clear twitter session data.
  */
-function sba_social_action_form_layouts_info() {
-  module_load_include('inc', 'sba_social_action', 'includes/sba_social_action.form_layouts');
-  $templates = sba_social_action_form_layouts();
-  return $templates;
-}
-
 function sba_social_action_clear_twitter_session() {
   if (isset($_SESSION['twitter'])) {
     unset($_SESSION['twitter']);
