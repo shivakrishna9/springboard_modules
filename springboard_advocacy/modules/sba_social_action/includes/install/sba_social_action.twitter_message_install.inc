@@ -405,7 +405,7 @@ function sba_social_action_create_twitter_message_entity() {
   $field_group->bundle = 'sba_social_action_twitter_message';
   $field_group->mode = 'form';
   $field_group->parent_name = '';
-  $field_group->label = 'Sample Tweet';
+  $field_group->label = 'Tweet Options';
   $field_group->weight = '1';
   $field_group->children = array(
     0 => 'field_sba_twitter_editable',

@@ -278,7 +278,7 @@ function sba_social_action_preview_form_submit($form, &$form_state) {
         $_SESSION['twitter']['values']['oauth_token_secret']
       );
 
-      //$twitter->statuses_update($body);
+      $twitter->statuses_update($body);
 
     } catch (TwitterException $e) {
       drupal_set_message(t('An error occurred when posting to Twitter. Check the system log for details.'), 'error');

@@ -63,34 +63,17 @@
     clear: both;
 }
 
- #webform-component-sbp-salutation.control-group {
-    width: 20.75%;
-    float: left;
-    clear:none;
-    -webkit-box-sizing: border-box;
-    -moz-box-sizing: border-box;
-    box-sizing: border-box;
-}
 
-.user-form-vertical #webform-component-sbp-salutation.control-group {
-    width: 100%;
-    float: none;
-    clear:both;
-    margin-top: 0;
-    -webkit-box-sizing: border-box;
-    -moz-box-sizing: border-box;
-    box-sizing: border-box;
-}
 
  #webform-component-sbp-first-name.control-group,
  #webform-component-sbp-last-name.control-group {
     float: left;
     clear:none;
-    width:39.5%;
+    width:50%;
     -webkit-box-sizing: border-box;
     -moz-box-sizing: border-box;
     box-sizing: border-box;
-    padding-left: 10px;
+    padding-left: 0;
 }
 
 .user-form-vertical #webform-component-sbp-first-name.control-group,
@@ -104,10 +87,6 @@
     padding-left: 0;
 }
 
-
- #webform-component-sbp-salutation.control-group select {
-    width: 98.5%;
-}
 
  #webform-component-sbp-first-name.control-group input,
  #webform-component-sbp-last-name.control-group input {

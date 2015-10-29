@@ -189,6 +189,15 @@
     #springboard-advocacy-message-form-container div[id*=edit-field-sba-editable-area-optional] {
         margin: 15px 0;
     }
+    #edit-field-sba-twitter-editable .form-item,
+    #sba_message_sba_social_action_twitter_message_form_group_sba_target_options .form-item{
+        display: inline-block;
+        margin-right: 20px;
+    }
+#edit-field-sba-twitter-editable label.option,
+#sba_message_sba_social_action_twitter_message_form_group_sba_target_options label.option {
+    top: 4px;
+}
 
 /********** Floating Recipients "block"  **************/
 
