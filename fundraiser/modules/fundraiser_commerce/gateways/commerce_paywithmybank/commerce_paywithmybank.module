@@ -264,13 +264,16 @@ function commerce_paywithmybank_notify_access() {
   }
 
   // Get the entire POST body.
-  $post_body = urldecode(file_get_contents('php://input'));
+  $post_body = file_get_contents('php://input');
+  $decoded_post_body = urldecode($post_body);
+
+  watchdog('commerce_paywithmybank', 'Notification body: ' . $post_body, array(), WATCHDOG_DEBUG);
 
   $payment_method = commerce_payment_method_instance_load('commerce_paywithmybank_bank|commerce_payment_commerce_paywithmybank_bank');
   $access_id = (isset($payment_method['settings']['commerce_paywithmybank_settings_access_id'])) ? $payment_method['settings']['commerce_paywithmybank_settings_access_id'] : NULL;
   $access_key = isset($payment_method['settings']['commerce_paywithmybank_settings_access_key']) ? $payment_method['settings']['commerce_paywithmybank_settings_access_key'] : NULL;
 
-  return commerce_paywithmybank_validate_notification($access_id, $access_key, $auth_header_parts[1], $post_body);
+  return commerce_paywithmybank_validate_notification($access_id, $access_key, $auth_header_parts[1], $decoded_post_body);
 }
 
 /**
