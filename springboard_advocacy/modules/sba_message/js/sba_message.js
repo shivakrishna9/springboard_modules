@@ -10,7 +10,6 @@
     // Functions which need to fire on initial page load AND ajax reloads.
     Drupal.behaviors.AdvocacyMessageRecipients = {
         attach: function(context, settings) {
-            Sba.ajaxSearch();
             //manipulate form elements based on subscription level
             Sba.buildSubscriptions();
 
@@ -302,7 +301,7 @@
             $('input#quick-target').click(function() {
                 //$('.views-targets-button-wrapper').hide();
                 var query = Sba.getQuickQuery();
-                Sba.addTarget('quick', query);
+                var arr = Sba.addTarget('quick', query);
                 return false;
 
             });
@@ -867,7 +866,7 @@
                     if (missing != true) {
                         var newQueryValuesArr = values.split('|');
                         $.each(newQueryValuesArr, function(i, value){
-                            console.log(oldQueryObj[key]);
+                            //console.log(oldQueryObj[key]);
                             if(oldQueryObj[key].toString().indexOf(value) == -1) {
                                 missing = true;
                             }
@@ -997,7 +996,8 @@
         });
         recipients = JSON.stringify(obj).replace(/"/g, '&quot;');
         $('input[name="data[recipients]"]').val(recipients);
-    }
+        Sba.ajaxSearch(obj);
+    };
 
     // Unsaved changes message in recipients box
     Sba.setUpdateMessage = function (message) {
@@ -1048,7 +1048,8 @@
     // or the quick target parameters
     // and builds readable text for the recipients list.
     Sba.buildReadableQuery = function (query) {
-        var queryObj = {};
+
+      var queryObj = {};
         $(query).each(function(index, value) {
             var segments = value.split('=');
             if (segments[0] == 'ids') {
@@ -1113,7 +1114,8 @@
         });
 
         if (typeof(queryObj.Id) !== 'undefined') {
-            return  '<div class="individual">' + queryObj.Sal + " " +  queryObj.First + " " + queryObj.Last + '</div>';
+
+          return  '<div class="individual">' + queryObj.Sal + " " +  queryObj.First + " " + queryObj.Last + '</div>';
         }
         var cleanUp = JSON.stringify(queryObj).SbaJsonToReadable();
         if (typeof(queryObj.Fields) !== 'undefined' || typeof(queryObj.Genderxxxx) !== 'undefined'
@@ -1180,16 +1182,15 @@
         return false;
     };
 
-    Sba.ajaxSearch = function() {
+    Sba.ajaxSearch = function(arr) {
+      console.log(arr);
         $.ajax({
             type: "POST",
-            url: 'https://springboard.dev/advocacy/ajax/search',
-            data: {},
+            url: Drupal.settings.sbaSiteUrl,
+            data: {query: arr},
             dataType: 'json',
             success: function(data) {
-                console.log(Drupal.settings)
-
-               // console.log(data);
+                console.log(data);
             },
             error: function(xhr, textStatus, error){
                 console.log(error);

@@ -67,7 +67,6 @@ class springboard_advocacy_views_handler_field_target_actions extends views_hand
    * @return string
    */
   function render_links($values) {
-
     $legislator = TRUE;
 
     if (isset($values->class_name) && $values->class_name == "Legislator") {
@@ -89,7 +88,9 @@ class springboard_advocacy_views_handler_field_target_actions extends views_hand
           'id' => $values->id,
           'first' => $values->first_name,
           'last' => $values->last_name,
-          'sal' => $values->salutation
+          'sal' => $values->salutation,
+          'twitter' => $values->twitter,
+          'facebook' => $values->facebook
         )
       ));
     }

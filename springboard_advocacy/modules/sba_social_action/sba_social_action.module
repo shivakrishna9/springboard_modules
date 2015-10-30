@@ -257,15 +257,8 @@ function sba_social_action_form_alter(&$form, &$form_state, $form_id) {
     $description =& $form['field_sba_twitter_message'][$form['field_sba_twitter_message']['#language']][0]['value']['#description'];
     $description = 'You have used <span class="counter"></span> characters. ' . $description;
     global $base_url;
-    dpm($base_url);
-//    $settings = array('sbaSiteUrl' => );
-//    $form['#attached']['js'][] = array('data' => $settings, 'type' => 'setting');
-
-
-
-
-
-
+    $settings = array('sbaSiteUrl' => $base_url .'/advocacy/ajax/search');
+    $form['#attached']['js'][] = array('data' => $settings, 'type' => 'setting');
   }
 
   if ($form_id == 'twitter_oauth_callback_form') {
