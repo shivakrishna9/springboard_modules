@@ -251,6 +251,23 @@ function sba_social_action_preprocess_node(&$vars) {
  */
 function sba_social_action_form_alter(&$form, &$form_state, $form_id) {
 
+  if ($form_id == 'sba_message_edit_form' && isset($form['field_sba_twitter_editable'])) {
+    $form['#attached']['js'][] = drupal_get_path('module', 'sba_social_action') . '/js/jQuery.simplyCountable.js';
+    $form['#attached']['js'][] = drupal_get_path('module', 'sba_social_action') . '/js/social_counter.js';
+    $description =& $form['field_sba_twitter_message'][$form['field_sba_twitter_message']['#language']][0]['value']['#description'];
+    $description = 'You have used <span class="counter"></span> characters. ' . $description;
+    global $base_url;
+    dpm($base_url);
+//    $settings = array('sbaSiteUrl' => );
+//    $form['#attached']['js'][] = array('data' => $settings, 'type' => 'setting');
+
+
+
+
+
+
+  }
+
   if ($form_id == 'twitter_oauth_callback_form') {
     $index = array_search('twitter_oauth_callback_form_submit', $form['#submit']);
     if ($index !== FALSE) {

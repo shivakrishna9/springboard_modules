@@ -940,3 +940,17 @@ function springboard_advocacy_views_exposed_form_ajax_lookup_recursive($elements
   }
   return $ajax_elements;
 }
+
+function springboard_advocacy_ajax_search() {
+
+  $view = views_get_view('targets');
+  $view->query = new springboard_advocacy_views_plugin_query();
+  $view->query->search_terms = array('role' => array('FR'));
+  $view->query->apiCall = springboard_advocacy_api_call();
+  $view->build();
+  unset($view->query->search_terms['class_name']);
+  $view->set_display('block_3');
+  $view->pre_execute();
+  $view->execute();
+  drupal_json_output($view->result);
+}

@@ -10,7 +10,7 @@
     // Functions which need to fire on initial page load AND ajax reloads.
     Drupal.behaviors.AdvocacyMessageRecipients = {
         attach: function(context, settings) {
-
+            Sba.ajaxSearch();
             //manipulate form elements based on subscription level
             Sba.buildSubscriptions();
 
@@ -1178,6 +1178,23 @@
         }
 
         return false;
+    };
+
+    Sba.ajaxSearch = function() {
+        $.ajax({
+            type: "POST",
+            url: 'https://springboard.dev/advocacy/ajax/search',
+            data: {},
+            dataType: 'json',
+            success: function(data) {
+                console.log(Drupal.settings)
+
+               // console.log(data);
+            },
+            error: function(xhr, textStatus, error){
+                console.log(error);
+            }
+        });
     };
 
     //Uc first helper

@@ -242,7 +242,7 @@ function sba_social_action_create_twitter_message_entity() {
     'bundle' => 'sba_social_action_twitter_message',
     'default_value' => NULL,
     'deleted' => 0,
-    'description' => 'Do not include target nicknames unless they are not your primary targets.',
+    'description' => 'The @name of each target you select below will be prepended to this message. Do not include target @names unless they are not your primary targets',
     'display' => array(
       'default' => array(
         'label' => 'above',
@@ -413,11 +413,11 @@ function sba_social_action_create_twitter_message_entity() {
   );
   $field_group->format_type = 'fieldset';
   $field_group->format_settings = array(
-    'label' => 'Greeting',
+    'label' => 'Tweet Options',
     'instance_settings' => array(
       'required_fields' => 1,
-      'classes' => 'group-sba-greeting field-group-fieldset',
-      'description' => '',
+      'classes' => 'group-sba-tweet field-group-fieldset',
+        'description' => 'The @name of each target you select will be prepended automatically to this message. If there are multiple targets, multiple copies of the message will be shown to the site visitor, one per target. The target @names affect your message character limit. Your current longest target @name is <span class="char-limit">X</span> characters. Do not include target @names in the message text unless they are not your primary targets.',
     ),
     'formatter' => 'open',
   );

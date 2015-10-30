@@ -75,7 +75,10 @@
           count = options.maxCount - $.trim(countable.val()).split(/\s+/).length;
           if (countable.val() === ''){ count += 1; }
         }
-        else { count = options.maxCount - countable.val().length; }
+        else {
+          // Jackson River patch: remove linebreaks from count.
+          count = options.maxCount - countable.val().replace(/(\r\n|\n|\r)/gm,"").length;
+        }
         revCount = reverseCount(count);
 
         /* If strictMax set restrict further characters */
