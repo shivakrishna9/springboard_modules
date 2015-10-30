@@ -1140,3 +1140,16 @@ function sba_message_action_webform_ab_valid_webforms($webform_types) {
     return $forms;
   }
 }
+
+/**
+ * Implements hook_webform_ab_validate_conversion().
+ *
+ * Just return TRUE here. If you want to get fancy with checking what actually
+ * happened with the messages before determining if it was an actual conversion,
+ * this is where you would do it.
+ */
+function sba_message_action_webform_ab_validate_conversion($webform_types, $test_node, $form_state) {
+  if ($webform_types == 'sba_message_action') {
+    return TRUE;
+  }
+}
