@@ -71,7 +71,7 @@ function sba_message_action_additional_elements(&$form, &$form_state) {
   $node_wrapper = entity_metadata_wrapper('node', $node);
   $multi_flow = $node_wrapper->field_sba_action_flow->value() == 'multi' ? TRUE : FALSE;
   $prompt = field_get_items('node', $node, 'field_sba_multistep_prompt');
-  $multi_flow_prompt = !empty($prompt) ? $prompt[0]['safe_value'] : '';
+  $multi_flow_prompt = !empty($prompt) ? check_markup($prompt[0]['value'], $prompt[0]['format']) : '';
   $action_type = 'single_not_multi_flow';
   if ($multiple && !$multi_flow) {
     $action_type = 'multiple_not_multi_flow';
