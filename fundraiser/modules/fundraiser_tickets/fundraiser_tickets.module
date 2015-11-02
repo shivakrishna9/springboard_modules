@@ -1021,11 +1021,11 @@ function fundraiser_tickets_update_inventory($node_wrapper) {
     if (isset($ticket_data->is_new) && $ticket_data->is_new == TRUE) {
       $new_ticket_data = array(
         'entity_type' => 'node',
-        'bundle' => 'ticketed_events',
+        'bundle' => $node_wrapper->getBundle(),
         'entity_id' => $node_wrapper->getIdentifier(),
         'revision_id' => $node_wrapper->vid->value(),
         'language' => $ticket_data->language,
-        'delta' => $delta,
+        'delta' => $delta + 1,
         'fr_tickets_ticket_types_product_id' => $ticket_data->product_id,
       );
       $new_ticket_added = TRUE;
