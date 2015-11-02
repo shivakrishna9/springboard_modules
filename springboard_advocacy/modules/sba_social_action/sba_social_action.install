@@ -22,3 +22,8 @@ function sba_social_action_uninstall() {
   _sba_social_action_delete_twitter_fields();
   field_purge_batch(1000);
 }
+
+function sba_social_action_update_7001() {
+  module_load_include('inc', 'sba_social_action', 'includes/install/sba_social_action.install_fields');
+  _sba_social_action_create_node_fields(TRUE);
+}

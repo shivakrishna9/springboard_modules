@@ -287,6 +287,25 @@ function sba_social_action_form_alter(&$form, &$form_state, $form_id) {
   }
 }
 
+
+function sba_social_action_form_sba_social_action_node_form_alter(&$form, &$form_state) {
+  $form['actions']['submit']['#validate'][] = 'sba_social_action_form_sba_social_action_node_form_validate';
+}
+
+function sba_social_action_form_sba_social_action_node_form_validate(&$form, &$form_state) {
+
+  // Require test_mode_email if test_mode is checked.
+  $lang = $form['field_sba_test_mode']['#language'];
+
+  if ($form_state['values']['field_sba_test_mode'][$lang][0]['value'] == 0) {
+    if ($form_state['values']['status'] == 0) {
+      form_set_error("field_sba_test_mode", t('Test mode must be enabled for unpublished actions.'));
+    }
+  }
+
+}
+
+
 /**
  * Build redirect for multi-step form.
  *

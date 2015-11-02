@@ -228,6 +228,64 @@ function _sba_social_action_create_node_fields($update = false) {
     ),
   );
 
+  $fields['field_sba_test_mode'] = array(
+    'active' => 1,
+    'cardinality' => 2,
+    'deleted' => 0,
+    'entity_types' => array(),
+    'field_name' => 'field_sba_test_mode',
+    'foreign keys' => array(),
+    'indexes' => array(
+      'value' => array(
+        0 => 'value',
+      ),
+    ),
+    'locked' => 0,
+    'module' => 'list',
+    'settings' => array(
+      'allowed_values' => array(
+        1 => 'Enabled',
+      ),
+      'allowed_values_function' => '',
+    ),
+    'translatable' => 0,
+    'type' => 'list_text',
+    '_instance' => array(
+      'bundle' => 'sba_social_action',
+      'deleted' => 0,
+      'description' => 'Check this box to enable test mode. Messages will not be sent to any configured targets when test mode is enabled. Unpublished actions are always in test mode.',
+      'display' => array(
+        'default' => array(
+          'label' => 'Above',
+          'module' => 'list',
+          'settings' => array(),
+          'type' => 'hidden',
+          'weight' => 3,
+        ),
+        'teaser' => array(
+          'label' => 'hidden',
+          'settings' => array(),
+          'type' => 'hidden',
+          'weight' => 0,
+        ),
+      ),
+      'entity_type' => 'node',
+      'field_name' => 'field_sba_test_mode',
+      'label' => 'Enable Test Mode',
+      'required' => 0,
+      'settings' => array(
+        'user_register_form' => FALSE,
+      ),
+      'widget' => array(
+        'active' => 1,
+        'module' => 'options',
+        'settings' => array(),
+        'type' => 'options_buttons',
+        'weight' => 31,
+      ),
+    ),
+  );
+
   foreach ($fields as $key => $values) {
     $instance = $values['_instance'];
     unset($values['_instance']);

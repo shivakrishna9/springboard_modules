@@ -264,25 +264,27 @@ function sba_social_action_preview_form_validate($form, &$form_state) {
 function sba_social_action_preview_form_submit($form, &$form_state) {
 
   module_load_include('inc', 'twitter');
-
+  $node = $form['#action_node'];
   foreach ($form_state['values']['messages'] as $message) {
 
     $message_text = isset($message['message']['edited_body']) ? $message['message']['edited_body'] : $message['message']['body'];
     $target = parse_url($message['message']['target']['twitter']);
     $body = '.@' . substr($target['path'], 1) . ' ' . $message_text;
 
-    try {
-      $twitter = new Twitter(
-        variable_get('twitter_consumer_key', ''),
-        variable_get('twitter_consumer_secret', ''),
-        $_SESSION['twitter']['values']['oauth_token'],
-        $_SESSION['twitter']['values']['oauth_token_secret']
-      );
+    if(empty($node->field_sba_test_mode)) {
+      try {
+        $twitter = new Twitter(
+          variable_get('twitter_consumer_key', ''),
+          variable_get('twitter_consumer_secret', ''),
+          $_SESSION['twitter']['values']['oauth_token'],
+          $_SESSION['twitter']['values']['oauth_token_secret']
+        );
 
-      $twitter->statuses_update($body);
+         $twitter->statuses_update($body);
 
-    } catch (TwitterException $e) {
-      drupal_set_message(t('An error occurred when posting to Twitter. Check the system log for details.'), 'error');
+      } catch (TwitterException $e) {
+        drupal_set_message(t('An error occurred when posting to Twitter. Check the system log for details.'), 'error');
+      }
     }
   }
 
@@ -290,7 +292,6 @@ function sba_social_action_preview_form_submit($form, &$form_state) {
   module_load_include('inc', 'sba_social_action', 'includes/sba_social_action.form');
 
   $messages = $form_state['values']['messages'];
-  $node = $form['#action_node'];
 
   // Add session flag to prevent resubmission of the form
   $_SESSION['action_completed'] = TRUE;
