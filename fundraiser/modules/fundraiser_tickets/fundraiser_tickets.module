@@ -1025,7 +1025,7 @@ function fundraiser_tickets_update_inventory($node_wrapper) {
         'entity_id' => $node_wrapper->getIdentifier(),
         'revision_id' => $node_wrapper->vid->value(),
         'language' => $ticket_data->language,
-        'delta' => $delta + 1,
+        'delta' => $delta,
         'fr_tickets_ticket_types_product_id' => $ticket_data->product_id,
       );
       $new_ticket_added = TRUE;
