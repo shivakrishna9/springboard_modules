@@ -84,9 +84,9 @@ function sba_social_action_message_preview_page($nid) {
 function sba_social_action_preview_form($form, $form_state, $node) {
 
   $form['#attached']['css'][] = drupal_get_path('module', 'sba_social_action') . '/css/message-preview.css';
-  $form['#attached']['js'][] = drupal_get_path('module', 'sba_social_action') . '/js/social_message_preview.js';
   $form['#attached']['js'][] = drupal_get_path('module', 'sba_social_action') . '/js/jQuery.simplyCountable.js';
   $form['#attached']['js'][] = drupal_get_path('module', 'sba_social_action') . '/js/social_counter.js';
+  $form['#attached']['js'][] = drupal_get_path('module', 'sba_social_action') . '/js/social_message_preview.js';
 
   // Build the form content out of the API response stored in session.
   $messages = array();

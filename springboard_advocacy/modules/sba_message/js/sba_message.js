@@ -73,6 +73,8 @@
         // rearrange/append recipients container, error message div, submit button
         Sba.prepareMessageForm();
 
+        Sba.setFormValue();
+
         Sba.scroller();
     });
 
@@ -398,9 +400,19 @@
             //}
             $('input.required').each(function() {
                 if ($(this).val() == '') {
-                    messages.push($("label[for='" + this.id + "']").text().replace('*', ''));
+                    messages.push({type: 'required', message: $("label[for='" + this.id + "']").text().replace('*', '')});
                 }
             });
+
+
+          if(typeof(Drupal.settings.charCount) !== 'undefined') {
+            var handleCount = Drupal.settings.charCount.size;
+            var currLen = $('#edit-field-sba-twitter-message-und-0-value').val().replace(/(\r\n|\n|\r)/gm, "").length;
+            if (currLen > 140 - handleCount) {
+              messages.push({type: 'error', message: 'Message is too long for all potential targets.'});
+            }
+          }
+
             if(messages.length === 0) {
                 $("#sba-message-edit-form").submit();
             }
@@ -929,9 +941,14 @@
     Sba.setError =function (messages) {
         var err = $('#advo-error-wrapper');
         err.text('').hide().css('margin-bottom', 0);
-        err.prepend('<div class = "advo-warning"><strong>Oops!</strong> it looks like you missed the following required fields:</div>');
+        err.prepend('<div class = "advo-warning"><strong>Oops!</strong> it looks like you missed the following:</div>');
         $.each(messages, function(i, message) {
-            err.append('<div>' + message + ' field is required </div>');
+          if (message.type == 'required') {
+            err.append('<div>' + message.message + ' field is required </div>');
+          }
+          else {
+            err.append('<div>' + message.message + '</div>');
+          }
         });
         err.fadeIn(500);//.delay(7000).fadeOut(1000);
     };
@@ -996,7 +1013,10 @@
         });
         recipients = JSON.stringify(obj).replace(/"/g, '&quot;');
         $('input[name="data[recipients]"]').val(recipients);
-        Sba.ajaxSearch(obj);
+
+        if(typeof(Drupal.settings.charCount) !== 'undefined') {
+          Sba.ajaxSearch(obj);
+        }
     };
 
     // Unsaved changes message in recipients box
@@ -1183,17 +1203,18 @@
     };
 
     Sba.ajaxSearch = function(arr) {
-      console.log(arr);
         $.ajax({
             type: "POST",
             url: Drupal.settings.sbaSiteUrl,
             data: {query: arr},
             dataType: 'json',
             success: function(data) {
-                console.log(data);
+                Drupal.settings.charCount = data;
+                sbaCountable.charCount();
             },
             error: function(xhr, textStatus, error){
                 console.log(error);
+                Drupal.settings.charCount = 0;
             }
         });
     };

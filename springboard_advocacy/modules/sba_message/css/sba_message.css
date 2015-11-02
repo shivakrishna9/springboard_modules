@@ -194,9 +194,14 @@
         display: inline-block;
         margin-right: 20px;
     }
+
 #edit-field-sba-twitter-editable label.option,
 #sba_message_sba_social_action_twitter_message_form_group_sba_target_options label.option {
     top: 4px;
+}
+
+.twit-too-long {
+    color: red;
 }
 
 /********** Floating Recipients "block"  **************/

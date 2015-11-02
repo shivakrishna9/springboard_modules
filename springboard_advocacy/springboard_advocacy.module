@@ -59,8 +59,8 @@ function springboard_advocacy_menu() {
       'type' => MENU_CALLBACK,
       'file' => 'springboard_advocacy.views.inc',
       'file path' => drupal_get_path('module', 'springboard_advocacy') . '/includes/views',
-       'access callback' => TRUE,
-
+       'access callback' => 'user_access',
+       'access arguments' => array('create sba_social_action content')
     );
 
   return $items;

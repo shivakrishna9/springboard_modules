@@ -944,11 +944,11 @@ function springboard_advocacy_views_exposed_form_ajax_lookup_recursive($elements
 function springboard_advocacy_ajax_search() {
 
   $values = $_POST['query'];
-  $already_has = array();
   $search_groups = array();
   $search_groups_formatted = array();
   $size = 0;
   $count = 0;
+  $person = '';
 
   if (!empty($values)) {
 
@@ -999,9 +999,9 @@ function springboard_advocacy_ajax_search() {
       $new_size = strlen($handle);
       if( $new_size > $size) {
         $size = $new_size;
+        $person = $target->first_name . ' ' . $target->last_name;
       }
     }
   }
-
-   drupal_json_output(array('size' => $size, 'count' => $count));
+   drupal_json_output(array('size' => $size, 'count' => $count, 'person' => $person));
 }
