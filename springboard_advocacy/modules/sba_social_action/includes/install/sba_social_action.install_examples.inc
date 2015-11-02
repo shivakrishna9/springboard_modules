@@ -31,7 +31,7 @@ function _sba_social_action_create_example_social_action() {
     'in, feugiat ac, molestie eget, wisi.';
   $node->body[LANGUAGE_NONE][0]['format'] = 'filtered_html';
   $node->webform = array(
-    'confirmation' => 'Thank you, %value[sbp_first_name] for participating in the messaging campaign. [action:all_messages]',
+    'confirmation' => '',
     'confirmation_format' => 'filtered_html',
     'redirect_url' => '<confirmation>',
     'teaser' => 0,
@@ -39,7 +39,7 @@ function _sba_social_action_create_example_social_action() {
     'allow_draft' => 0,
     'auto_save' => 0,
     'submit_notice' => 1,
-    'submit_text' => t('Sign'),
+    'submit_text' => t('Send your message'),
     'submit_limit' => -1,
     'submit_interval' => -1,
     'total_submit_limit' => -1,

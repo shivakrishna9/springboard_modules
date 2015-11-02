@@ -152,24 +152,26 @@ function sba_message_prepopulate_get_values_from_node_url($field, $instance) {
  *
  * Add an options checkbox to the message landing page draggable form.
  */
-function sba_message_form_views_form_sba_messages_node_block_1_alter(&$form, &$form_state, $form_id) {
+function sba_message_form_alter(&$form, &$form_state, $form_id) {
+  $forms = array('views_form_sba_messages_node_block_1', 'views_form_sba_messages_node_social_messages_tab');
+  if (in_array($form_id, $forms)) {
+    $messages = $form_state['build_info']['args'][0]->result;
+    if (isset($messages) && count($messages) > 1) {
+      $precedence = db_query("SELECT precedence FROM {sba_form_id} WHERE nid = :nid", array(':nid' => arg(1)))->fetchField();
+      $val = !empty($precedence) ? $precedence : 0;
 
-  $messages = $form_state['build_info']['args'][0]->result;
-  if (isset($messages) && count($messages) > 1) {
-    $precedence = db_query("SELECT precedence FROM {sba_form_id} WHERE nid = :nid", array(':nid' => arg(1)))->fetchField();
-    $val = !empty($precedence) ? $precedence : 0;
-
-    $form['precedence'] = array(
-      '#type' => 'checkbox',
-      '#weight' => 99,
-      '#title' => t('Use message order.'),
-      '#default_value' => $val,
-      '#description' => t("Check this box if you wish to enforce message precedence by sort order. If you check this box, only the first message that is eligible  for delivery to elected officials - via the user's zip code/congressional district verification - will be sent. The subsequent messages will be ignored."),
-    );
-    $form['actions']['submit']['#submit'][] = 'sba_message_drag_submit';
-  }
-  else {
-    unset($form['actions']);
+      $form['precedence'] = array(
+        '#type' => 'checkbox',
+        '#weight' => 99,
+        '#title' => t('Use message order.'),
+        '#default_value' => $val,
+        '#description' => t("Check this box if you wish to enforce message precedence by sort order. If you check this box, only the first message that is eligible  for delivery to elected officials - via the user's zip code/congressional district verification - will be sent. The subsequent messages will be ignored."),
+      );
+      $form['actions']['submit']['#submit'][] = 'sba_message_drag_submit';
+    }
+    else {
+      unset($form['actions']);
+    }
   }
 }
 
