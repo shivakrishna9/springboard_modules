@@ -987,8 +987,10 @@ function springboard_advocacy_ajax_search() {
     $view->build();
     unset($view->query->search_terms['class_name']);
     $view->set_display('block_3');
+    $view->query->pager->options['items_per_page'] = 10000;
     $view->pre_execute();
     $view->execute();
+
     $target_groups[] = $view->result;
   }
   foreach ($target_groups as $tgroup) {
