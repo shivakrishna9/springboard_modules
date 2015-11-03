@@ -437,8 +437,12 @@ function sba_message_action_preview_form_submit($form, &$form_state) {
     }
   }
   else {
-    // Gotta go somewhere.
-    $form_state['redirect'] = array('node/' . $node->nid);
+    if ($node->webform['redirect_url'] == '<confirmation>') {
+      $form_state['redirect'] = array('node/' . $node->nid);
+    }
+    else {
+      $form_state['redirect'] = array($node->webform['redirect_url']);
+    }
   }
 
   // Update the user edit flag.
