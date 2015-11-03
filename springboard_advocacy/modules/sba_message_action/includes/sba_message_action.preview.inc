@@ -421,16 +421,20 @@ function sba_message_action_preview_form_submit($form, &$form_state) {
         'targets' => '',
       );
   }
-
   // Redirect to the original confirmation page.
   // $sid is set in sba_message_action_multifow_submit()
   $sid = !empty($_SESSION['action_sid']['sid']) ? $_SESSION['action_sid']['sid'] : FALSE;
   if ($sid) {
     unset($_SESSION['action_sid']);
-    $form_state['redirect'] = array(
-      'node/' . $node->nid . '/done',
-      array('query' => array('sid' => $sid))
-    );
+    if ($node->webform['redirect_url'] == '<confirmation>') {
+      $form_state['redirect'] = array(
+        'node/' . $node->nid . '/done',
+        array('query' => array('sid' => $sid))
+      );
+    }
+    else {
+      $form_state['redirect'] = array($node->webform['redirect_url']);
+    }
   }
   else {
     // Gotta go somewhere.
