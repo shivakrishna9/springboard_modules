@@ -3,6 +3,12 @@
     Drupal.settings.charCount = {size: 0, count: 0, person: ''};
     sbaCountable.charCount = function () {
       var currentCount = Drupal.settings.charCount.size;
+      var message = 'This option has the potential to cause hundreds of targets to be presented to the user. Check back here when updating your target sets to get a count of all possible targets.';
+      if (Drupal.settings.charCount.count > 0) {
+        message = 'This message currently has ' + Drupal.settings.charCount.count + ' eligible targets which will be displayed to all visitors.';
+      }
+      $('.undistricted-update').text(message);
+
       $text = $('#edit-messages').find('textarea');
       var direction = 'down';
       var strict = true;
@@ -26,7 +32,6 @@
         else {
           handleCount = $(this).closest('.message-preview-message-fieldset').prev('.message-preview-header').find('.twitter-handle').text().length + 1;
         }
-        console.log(handleCount)
         var target = $(this).siblings('.description').find('.counter');
 
         $('#' + this.id).simplyCountable({

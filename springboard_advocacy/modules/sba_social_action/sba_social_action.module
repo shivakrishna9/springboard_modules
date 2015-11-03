@@ -259,6 +259,19 @@ function sba_social_action_form_alter(&$form, &$form_state, $form_id) {
     global $base_url;
     $settings = array('sbaSiteUrl' => $base_url .'/advocacy/ajax/search');
     $form['#attached']['js'][] = array('data' => $settings, 'type' => 'setting');
+    $form['sba_target_options_warning'] = array(
+      '#type' => 'container',
+      '#suffix' => '<br />',
+      '#children' => '<span class="undistricted-update"></span>',
+      '#states' => array(
+        'visible' => array(
+        ':input[name*="field_sba_target_options"]' => array('value' => 0),
+        ),
+      ),
+      '#weight' => 1
+    );
+    $form['#groups']['group_sba_target_options']->children[] = $form['sba_target_options_warning'];
+    $form['#group_children']['sba_target_options_warning'] = 'group_sba_target_options';
   }
 
   if ($form_id == 'twitter_oauth_callback_form') {

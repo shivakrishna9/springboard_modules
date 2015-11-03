@@ -77,13 +77,14 @@ function sba_social_action_build_messages(array $user_message) {
 
     $message_unique_id = $message->data['message_id'];
     $weight = !empty($message->data['precedence']) ? $message->data['weight'] : $x++;
-
+    $undistricted = !$message_wrapper->field_sba_target_options->value();
     $messages[$weight] = array(
       'message_id' => $message_unique_id,
       'subject' => isset($user_message[$message->sba_message_id]['subject']) ? $user_message[$message->sba_message_id]['subject'] : '',
       'body' => $user_message[$message->sba_message_id]['body'],
       'topic' => '',
       'precedence' => !empty($message->data['precedence']) ? 1 : 0,
+      'undistricted' => $undistricted,
     );
   }
   ksort($messages);
