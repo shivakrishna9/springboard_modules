@@ -1110,6 +1110,9 @@ function fundraiser_fundraiser_field_info() {
     '#title' => t('E-mail address'),
     '#type' => 'email',
     '#required' => 1,
+    '#extra' => array(
+      'maxlength' => 60,
+    ),
     '#validate_callback' => '_fundraiser_email_field_validate',
   );
   $fields['billing_information'] = array(

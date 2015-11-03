@@ -1397,3 +1397,39 @@ function fundraiser_webform_webform_submission_render_alter(&$renderable) {
     $renderable['donation']['other_amount']['#field_prefix'] = $donation->donation['currency']['symbol'];
   }
 }
+
+/**
+ * Implements hook_form_FORM_ID_alter()
+ */
+function fundraiser_webform_form_webform_component_edit_form_alter(&$form, &$form_state, $form_id) {
+  if ($form['form_key']['#value'] == 'mail') {
+    $max_length = 0;
+    foreach ($form_state['build_info']['args'] as $arg) {
+      if (is_array($arg) && isset($arg['form_key']) && $arg['form_key'] == 'mail') {
+        $max_length = (isset($arg['extra']['maxlength'])) ? $arg['extra']['maxlength'] : 0;
+      }
+    }
+
+    $form['validation']['maxlength'] = array(
+      '#type' => 'textfield',
+      '#title' => t('Maxlength'),
+      '#default_value' => $max_length,
+      '#description' => t('Maximum length of the email value.'),
+      '#size' => 5,
+      '#maxlength' => 10,
+      '#weight' => 2,
+      '#parents' => array('extra', 'maxlength'),
+      );
+  }
+}
+
+/**
+ * Implements hook_webform_component_render_alter()
+ */
+function fundraiser_webform_webform_component_render_alter(&$element, &$component) {
+  if ($element['#type'] == 'webform_email') {
+    if (isset($component['extra']['maxlength']) && ($component['extra']['maxlength'] > 0)) {
+      $element['#attributes']['maxlength'] = $component['extra']['maxlength'];
+    }
+  }
+}
