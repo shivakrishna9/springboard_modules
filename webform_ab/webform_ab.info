@@ -14,8 +14,10 @@ files[] = win_conditions/percent_conversions.inc
 files[] = win_conditions/total_conversions.inc
 files[] = win_thresholds/minimum_hits.inc
 
-; Views handlers
+; Views:
 files[] = views/handlers/webform_ab_handler_field_operations.inc
+files[] = views/webform_ab.views_default.inc
+files[] = views/webform_ab.views.inc
 
 ; Information added by Drupal.org packaging script on 2015-02-06
 version = "7.x-2.3"

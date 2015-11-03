@@ -117,6 +117,9 @@ function sba_message_action_insert_components($node) {
   $exclude[] = 'sba_user_edit_flag';
   $exclude[] = 'sba_deliverable_count';
   $exclude[] = 'sbp_sba_action_optin';
+  $exclude[] = 'sba_action_is_multistep';
+  $exclude[] = 'sba_multistep_complete';
+
 
   // Add the component to the Webform.
   foreach ($fields as $field) {
