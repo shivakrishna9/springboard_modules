@@ -297,7 +297,41 @@ function _sba_social_action_create_node_fields($update = false) {
     if (empty($node)) {
       field_create_instance($instance);
     }
+  }
+  if ($update == FALSE) {
 
+    $export = array();
+
+    $field_group = new stdClass();
+    $field_group->disabled = FALSE; /* Edit this to true to make a default field_group disabled initially */
+    $field_group->api_version = 1;
+    $field_group->identifier = 'group_sba_test_mode|node|sba_social_action|form';
+    $field_group->group_name = 'group_sba_test_mode';
+    $field_group->entity_type = 'node';
+    $field_group->bundle = 'sba_social_action';
+    $field_group->mode = 'form';
+    $field_group->parent_name = '';
+    $field_group->label = 'Test Mode';
+    $field_group->weight = '33';
+    $field_group->children = array(
+      0 => 'field_sba_test_mode',
+    );
+    $field_group->format_type = 'fieldset';
+    $field_group->format_settings = array(
+      'label' => 'Test Mode',
+      'instance_settings' => array(
+        'required_fields' => 1,
+        'classes' => 'group-test-mode field-group-fieldset',
+        'description' => '',
+      ),
+      'formatter' => 'collapsible',
+    );
+
+    $export['group_sba_test_mode|node|sba_social_action|form'] = $field_group;
+
+    foreach ($export as $field_group) {
+      field_group_group_save($field_group);
+    }
   }
 }
 
