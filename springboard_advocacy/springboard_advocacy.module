@@ -39,6 +39,14 @@ function springboard_advocacy_menu() {
     ),
   ) + springboard_advocacy_menu_common(FALSE, TRUE);
 
+  $items['admin/springboard/advocacy/social-actions/all'] = array(
+      'title' => 'Advocacy: All Social Actions',
+      'page arguments' => array('social-actions/all'),
+      'access arguments' => array(
+        'create sba_social_action content',
+      ),
+    ) + springboard_advocacy_menu_common(FALSE, TRUE);
+
   $items['admin/springboard/advocacy/petitions/all'] = array(
     'title' => 'Advocacy: All Petitions',
     'page arguments' => array('petitions/all'),
