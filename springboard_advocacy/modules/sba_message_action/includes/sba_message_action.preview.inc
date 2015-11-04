@@ -6,10 +6,14 @@
  * @return array
  */
 function sba_message_action_message_preview_page($nid) {
-
   // $nid already sanitized in the access hook.
   $node = node_load($nid);
-
+  if (isset($_SESSION['messages']['status'])) {
+    // Prevent the confirmation message from appearing prematurely.
+    $_SESSION['saved_messages']['status'] = $_SESSION['messages']['status'];
+    // clear all
+    drupal_get_messages('status');
+  }
   // Check if the step two form has already been submitted.
   // @todo think about this.
   $completed = isset($_SESSION['action_completed']) ? $_SESSION['action_completed'] : TRUE;
@@ -434,6 +438,9 @@ function sba_message_action_preview_form_submit($form, &$form_state) {
     }
     else {
       $form_state['redirect'] = array($node->webform['redirect_url']);
+      if (!empty($_SESSION['saved_messages']['status'])) {
+        $_SESSION['messages']['status'] =  $_SESSION['saved_messages']['status'];
+      }
     }
   }
   else {
@@ -442,9 +449,14 @@ function sba_message_action_preview_form_submit($form, &$form_state) {
     }
     else {
       $form_state['redirect'] = array($node->webform['redirect_url']);
+      if (!empty($_SESSION['saved_messages']['status'])) {
+        $_SESSION['messages']['status'] =  $_SESSION['saved_messages']['status'];
+      }
     }
   }
-
+  if (!empty($_SESSION['saved_messages']['status'])) {
+    unset($_SESSION['saved_messages']['status']);
+  }
   // Update the user edit flag.
   if ($form_state['storage']['changed'] == TRUE) {
     if ($sid) {
