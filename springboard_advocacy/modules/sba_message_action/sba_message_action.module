@@ -514,6 +514,12 @@ function sba_message_action_multifow_submit($form, &$form_state) {
       array('query' => array('sid' => $sid))
     );
   }
+  else {
+    if(!empty($form['#node']->custom_fail_message)) {
+      drupal_get_messages('status');
+      drupal_set_message($form['#node']->custom_fail_message);
+    }
+  }
 }
 
 /**
