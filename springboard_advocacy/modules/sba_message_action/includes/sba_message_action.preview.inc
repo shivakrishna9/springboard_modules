@@ -10,14 +10,9 @@ function sba_message_action_message_preview_page($nid) {
   $node = node_load($nid);
   if (isset($_SESSION['messages']['status'])) {
     // Prevent the confirmation message from appearing prematurely.
-    $confirmation = strlen(trim(strip_tags($node->webform['confirmation']))) ? $node->webform['confirmation'] : '';
-    $message = check_markup($confirmation, $node->webform['confirmation_format'], '', TRUE);
-    foreach ($_SESSION['messages']['status'] as $key => $confirm) {
-      if($message == $confirm) {
-        $_SESSION['saved_messages']['status'] = $_SESSION['messages']['status'][$key];
-        drupal_get_messages('status');
-      }
-    }
+    $_SESSION['saved_messages']['status'] = $_SESSION['messages']['status'];
+    // clear all
+    drupal_get_messages('status');
   }
   // Check if the step two form has already been submitted.
   // @todo think about this.
@@ -444,7 +439,7 @@ function sba_message_action_preview_form_submit($form, &$form_state) {
     else {
       $form_state['redirect'] = array($node->webform['redirect_url']);
       if (!empty($_SESSION['saved_messages']['status'])) {
-        drupal_set_message($_SESSION['saved_messages']['status']);
+        $_SESSION['messages']['status'] =  $_SESSION['saved_messages']['status'];
       }
     }
   }
@@ -455,7 +450,7 @@ function sba_message_action_preview_form_submit($form, &$form_state) {
     else {
       $form_state['redirect'] = array($node->webform['redirect_url']);
       if (!empty($_SESSION['saved_messages']['status'])) {
-        drupal_set_message($_SESSION['saved_messages']['status']);
+        $_SESSION['messages']['status'] =  $_SESSION['saved_messages']['status'];
       }
     }
   }
