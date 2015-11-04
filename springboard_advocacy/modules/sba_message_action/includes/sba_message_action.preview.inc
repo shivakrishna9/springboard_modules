@@ -7,9 +7,25 @@
  */
 function sba_message_action_message_preview_page($nid) {
 
+
   // $nid already sanitized in the access hook.
   $node = node_load($nid);
-
+  if (isset($_SESSION['messages']['status'])) {
+    $confirmation = strlen(trim(strip_tags($node->webform['confirmation']))) ? $node->webform['confirmation'] : '';
+    $message = check_markup($confirmation, $node->webform['confirmation_format'], '', TRUE);
+    $count = count($_SESSION['messages']['status']);
+    foreach ($_SESSION['messages']['status'] as $key => $confirm) {
+      if($message == $confirm) {
+        $_SESSION['saved_messages']['status'] = $_SESSION['messages']['status'][$key];
+        if ($count == 1) {
+          unset($_SESSION['messages']['status']);
+        }
+        else{
+          unset($_SESSION['messages']['status'][$key]);
+        }
+      }
+    }
+  }
   // Check if the step two form has already been submitted.
   // @todo think about this.
   $completed = isset($_SESSION['action_completed']) ? $_SESSION['action_completed'] : TRUE;
@@ -434,6 +450,9 @@ function sba_message_action_preview_form_submit($form, &$form_state) {
     }
     else {
       $form_state['redirect'] = array($node->webform['redirect_url']);
+      if (!empty($_SESSION['saved_messages']['status'])) {
+        drupal_set_message($_SESSION['saved_messages']['status']);
+      }
     }
   }
   else {
@@ -442,9 +461,14 @@ function sba_message_action_preview_form_submit($form, &$form_state) {
     }
     else {
       $form_state['redirect'] = array($node->webform['redirect_url']);
+      if (!empty($_SESSION['saved_messages']['status'])) {
+        drupal_set_message($_SESSION['saved_messages']['status']);
+      }
     }
   }
-
+  if (!empty($_SESSION['saved_messages']['status'])) {
+    unset($_SESSION['saved_messages']['status']);
+  }
   // Update the user edit flag.
   if ($form_state['storage']['changed'] == TRUE) {
     if ($sid) {
