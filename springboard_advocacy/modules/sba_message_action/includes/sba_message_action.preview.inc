@@ -429,6 +429,8 @@ function sba_message_action_preview_form_submit($form, &$form_state) {
   // $sid is set in sba_message_action_multifow_submit()
   $sid = !empty($_SESSION['action_sid']['sid']) ? $_SESSION['action_sid']['sid'] : FALSE;
   if ($sid) {
+    module_load_include('inc', 'webform', 'includes/webform.submissions');
+    $submission = webform_get_submission($node->nid, $sid);
     unset($_SESSION['action_sid']);
     if ($node->webform['redirect_url'] == '<confirmation>') {
       $form_state['redirect'] = array(
@@ -437,21 +439,18 @@ function sba_message_action_preview_form_submit($form, &$form_state) {
       );
     }
     else {
-      $form_state['redirect'] = array($node->webform['redirect_url']);
+      $redirect = sba_message_action_parse_redirect($node, $submission, $form_state);
+      $form_state['redirect'] = $redirect;
       if (!empty($_SESSION['saved_messages']['status'])) {
         $_SESSION['messages']['status'] =  $_SESSION['saved_messages']['status'];
       }
     }
   }
   else {
-    if ($node->webform['redirect_url'] == '<confirmation>') {
-      $form_state['redirect'] = array('node/' . $node->nid);
-    }
-    else {
-      $form_state['redirect'] = array($node->webform['redirect_url']);
-      if (!empty($_SESSION['saved_messages']['status'])) {
-        $_SESSION['messages']['status'] =  $_SESSION['saved_messages']['status'];
-      }
+    // we don't have a submission identifier, this is not a legit request, redirect to the node
+    $form_state['redirect'] = array('node/' . $node->nid);
+    if (!empty($_SESSION['saved_messages']['status'])) {
+      $_SESSION['messages']['status'] =  $_SESSION['saved_messages']['status'];
     }
   }
   if (!empty($_SESSION['saved_messages']['status'])) {
@@ -492,9 +491,11 @@ function sba_message_action_preview_form_submit($form, &$form_state) {
     }
   }
   if ($sid) {
+    if (empty($submission)) {
+      module_load_include('inc', 'webform', 'includes/webform.submissions');
+      $submission = webform_get_submission($node->nid, $sid);
+    }
     // Update to trigger salesforce resync.
-    module_load_include('inc', 'webform', 'includes/webform.submissions');
-    $submission = webform_get_submission($node->nid, $sid);
     webform_submission_update($node, $submission);
   }
 }
@@ -513,4 +514,25 @@ function theme_sba_message_action_preview_message_header($vars) {
   $output .= theme('sba_message_action_person_details', $vars['message']['person']);
   $output .= '</div></div>';
   return $output;
+}
+
+function sba_message_action_parse_redirect($node, $submission, $form_state) {
+  // Clean up the redirect URL and filter it for webform tokens.
+  $redirect = $node->webform['redirect_url'];
+  $redirect_url = trim($redirect);
+  $redirect_url = _webform_filter_values($redirect_url, $node, $submission, NULL, FALSE, TRUE);
+
+  // Remove the domain name from the redirect.
+  $redirect_url = preg_replace('/^' . preg_quote($GLOBALS['base_url'], '/') . '\//', '', $redirect_url);
+
+  if (valid_url($redirect_url, TRUE)) {
+    $redirect = $redirect_url;
+  }
+  elseif ($redirect_url && strpos($redirect_url, 'http') !== 0) {
+    $parts = drupal_parse_url($redirect_url);
+    $parts['query'] ? ($parts['query']['sid'] = $submission->sid) : ($parts['query'] = array('sid' => $submission->sid));
+    $query = $parts['query'];
+    $redirect = array($parts['path'], array('query' => $query, 'fragment' => $parts['fragment']));
+  }
+  return $redirect;
 }
