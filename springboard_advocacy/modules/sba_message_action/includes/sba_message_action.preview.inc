@@ -6,23 +6,16 @@
  * @return array
  */
 function sba_message_action_message_preview_page($nid) {
-
-
   // $nid already sanitized in the access hook.
   $node = node_load($nid);
   if (isset($_SESSION['messages']['status'])) {
+    // Prevent the confirmation message from appearing prematurely.
     $confirmation = strlen(trim(strip_tags($node->webform['confirmation']))) ? $node->webform['confirmation'] : '';
     $message = check_markup($confirmation, $node->webform['confirmation_format'], '', TRUE);
-    $count = count($_SESSION['messages']['status']);
     foreach ($_SESSION['messages']['status'] as $key => $confirm) {
       if($message == $confirm) {
         $_SESSION['saved_messages']['status'] = $_SESSION['messages']['status'][$key];
-        if ($count == 1) {
-          unset($_SESSION['messages']['status']);
-        }
-        else{
-          unset($_SESSION['messages']['status'][$key]);
-        }
+        drupal_get_messages('status');
       }
     }
   }
