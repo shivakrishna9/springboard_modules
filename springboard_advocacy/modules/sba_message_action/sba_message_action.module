@@ -521,7 +521,7 @@ function sba_message_action_multifow_submit($form, &$form_state) {
   else {
     if(!empty($form['#node']->custom_fail_message)) {
       drupal_get_messages('status');
-      drupal_set_message($form['#node']->custom_fail_message);
+      drupal_set_message(check_markup($form['#node']->custom_fail_message, 'full_html', '', TRUE));
     }
   }
 }
@@ -530,7 +530,7 @@ function sba_message_action_single_submit($form, &$form_state) {
   if (empty($_SESSION['delivered_messages']) && empty($_SESSION['undelivered_messages'])) {
     if(!empty($form['#node']->custom_fail_message)) {
       drupal_get_messages('status');
-      drupal_set_message($form['#node']->custom_fail_message);
+      drupal_set_message(check_markup($form['#node']->custom_fail_message, 'full_html', '', TRUE));
     }
   }
 }
