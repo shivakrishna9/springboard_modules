@@ -1054,8 +1054,6 @@ function sba_message_action_token_info() {
  * Implements hook_tokens().
  */
 function sba_message_action_tokens($type, $tokens, $data = array(), $options = array()) {
-  dpm($_SESSION);
-
   $replacements = array();
   if ($type == 'action') {
     foreach ($tokens as $name => $original) {
