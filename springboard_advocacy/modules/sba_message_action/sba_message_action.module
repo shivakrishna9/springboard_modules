@@ -1054,10 +1054,12 @@ function sba_message_action_token_info() {
  * Implements hook_tokens().
  */
 function sba_message_action_tokens($type, $tokens, $data = array(), $options = array()) {
-  $recipients = '';
+  dpm($_SESSION);
+
   $replacements = array();
   if ($type == 'action') {
     foreach ($tokens as $name => $original) {
+      $recipients = '';
       switch ($name) {
         case 'all_messages':
         case 'recipients': // token used in 4.7.2
