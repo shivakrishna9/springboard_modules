@@ -526,7 +526,7 @@ function theme_sba_message_action_preview_message_header($vars) {
 function sba_message_action_parse_redirect($node, $submission) {
   $redirect = NULL;
   if (isset($node->webform['redirect_url'])) {
-    $redirect_url = trim($redirect);
+    $redirect_url = trim($node->webform['redirect_url']);
     $redirect_url = _webform_filter_values($redirect_url, $node, $submission, NULL, FALSE, TRUE);
 
     // Remove the site domain name from the redirect if present.
