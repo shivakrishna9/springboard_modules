@@ -1,0 +1,9 @@
+name = Springboard Advocacy Social Pull
+description = Provides hashtag-based aggregation of social content via OAuth.
+core = 7.x
+
+dependencies[] = springboard_advocacy
+//dependencies[] = oauth_common
+
+files[] = sba_social_pull.admin.inc 
+package = Springboard Advocacy

@@ -1,0 +1,70 @@
+<?php
+
+/**
+ * Implements hook_schema().
+ */
+function sba_social_pull_schema() {
+  $schema['springboard_social_messages'] = array(
+    'description' => 'Stores recent messages fetched from social services such as Twitter.',
+    'fields' => array(
+      'message_id' => array(
+        'type' => 'serial',
+        'not null' => TRUE,
+        'description' => 'Primary Key: Unique person ID.',
+      ),
+      'source' => array(
+        'type' => 'varchar',
+        'length' => '64',
+        'default' => '',
+        'description' => 'The name of the service from which messages are fetched.',
+      ),
+      'author' => array(
+        'type' => 'varchar',
+        'length' => '255',
+        'default' => '',
+        'description' => 'The public-facing handle of the user who posted a message.',
+      ),
+      'created' => array(
+        'type' => 'int',
+        'not null' => TRUE,
+        'size' => 'normal',
+        'default' => 0,
+        'description' => 'A timestamp for when a message was posted.',
+      )
+      'title' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+        'description' => 'The title of a message, if available.',
+      ),
+      'created' => array(
+        'type' => 'int',
+        'not null' => TRUE,
+        'size' => 'small',
+        'default' => 0,
+        'description' => 'A status flag, where 0=unpublished and 1=published.',
+      ),
+      'message_url' => array(
+        'type' => 'varchar',
+        'not null' => TRUE,
+        'default' => '',
+        'length' => '2083',
+        'description' => 'The external URL associated with a message.',
+      ),
+      'message' => array(
+        'type' => 'blob',
+        'not null' => TRUE,
+        'default' => '',
+        'size' => 'normal',
+        'description' => 'The text of the message.',
+      ),
+    ),
+    'primary key' => array('message_id'),
+    'indexes' => array(
+      'author' => array('author'),
+      'source' => array('source'),
+      'created' => array('created'),
+      'message' => array('message'),
+    )
+}
