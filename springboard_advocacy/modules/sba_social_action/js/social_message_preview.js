@@ -54,9 +54,10 @@
         $('.twitter-sign').click(function(){
             $.oauthpopup({
                 path: '/sba/twitter/login',
-                callback: function(){
-                    //window.location.reload();
-                    $('#edit-ajaxify').trigger('mousedown');
+                callback: function(oauthWindow){
+                    if(typeof oauthWindow != 'undefined') {
+                        $('#edit-ajaxify').trigger('mousedown');
+                    }
                 }
             });
             return false;
@@ -73,9 +74,9 @@
                     rotate();
                 }
                 editSubmit.after('<div class="webform-user-wrapper">' +
-                    '<p class="webform-user-thank-you">Thank you, your submission is processing.</p>' +
-                    '<div class="webform-user-spinner"></div>' +
-                    '</div>');
+                  '<p class="webform-user-thank-you">Thank you, your submission is processing.</p>' +
+                  '<div class="webform-user-spinner"></div>' +
+                  '</div>');
             }
         }
         else {
@@ -85,9 +86,9 @@
                 rotate();
             }
             editSubmit.after('<div class="webform-user-wrapper">' +
-                '<p class="webform-user-thank-you">Thank you, your submission is processing.</p>' +
-                '<div class="webform-user-spinner"></div>' +
-                '</div>');
+              '<p class="webform-user-thank-you">Thank you, your submission is processing.</p>' +
+              '<div class="webform-user-spinner"></div>' +
+              '</div>');
         }
     }
     function rotate(num) {

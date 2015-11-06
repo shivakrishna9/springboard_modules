@@ -9,7 +9,6 @@
  */
 (function($){
 
-  //  inspired by DISQUS
   $.oauthpopup = function(options)
   {
     if (!options || !options.path) {
@@ -22,13 +21,26 @@
     }, options);
 
     var oauthWindow   = window.open(options.path, options.windowName, options.windowOptions);
+    // Jackson River modifications begin
+    oauthWindow.focus();
+    var whereis;
     var oauthInterval = window.setInterval(function(){
+      try {
+        whereis = oauthWindow.location.href;
+      }
+      catch(e) {
+      }
+      if (whereis.indexOf('close-window') !== -1) {
+        window.clearInterval(oauthInterval);
+        options.callback(whereis);
+      }
       if (oauthWindow.closed) {
         window.clearInterval(oauthInterval);
-        options.callback();
+        options.callback(whereis);
       }
     }, 1000);
   };
+  // Jackson River modifications end
 
   //bind to element and pop oauth when clicked
   $.fn.oauthpopup = function(options) {
