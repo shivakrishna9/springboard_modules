@@ -386,7 +386,7 @@ function sba_social_action_twitter_redirect() {
 }
 
 function sba_social_action_twitter_close_window() {
-  drupal_add_js('window.close()', 'inline');
+  drupal_add_js('window.truepath = true; window.close()', 'inline');
   return 'thank you';
 }
 /**

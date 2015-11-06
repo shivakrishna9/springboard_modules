@@ -21,22 +21,13 @@
     }, options);
 
     var oauthWindow   = window.open(options.path, options.windowName, options.windowOptions);
+    oauthWindow.truepath;
     // Jackson River modifications begin
     oauthWindow.focus();
-    var whereis;
     var oauthInterval = window.setInterval(function(){
-      try {
-        whereis = oauthWindow.location.href;
-      }
-      catch(e) {
-      }
-      if (whereis.indexOf('close-window') !== -1) {
-        window.clearInterval(oauthInterval);
-        options.callback(whereis);
-      }
       if (oauthWindow.closed) {
         window.clearInterval(oauthInterval);
-        options.callback(whereis);
+        options.callback(oauthWindow.truepath);
       }
     }, 1000);
   };

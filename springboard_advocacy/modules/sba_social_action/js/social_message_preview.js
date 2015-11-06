@@ -55,6 +55,7 @@
             $.oauthpopup({
                 path: '/sba/twitter/login',
                 callback: function(oauthWindow){
+                    console.log(oauthWindow);
                     if(typeof oauthWindow != 'undefined') {
                         $('#edit-ajaxify').trigger('mousedown');
                     }
@@ -92,7 +93,6 @@
         }
     }
     function rotate(num) {
-        console.log('d')
         num = typeof num !== 'undefined' ? num : 10;
         $('#multiflow-send-now-wrapper').css({ 'transform': 'rotate(' + num + 'deg)'});
         var spinner = setTimeout(function() { rotate(num+10); }, 10);
