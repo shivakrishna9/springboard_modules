@@ -48,6 +48,18 @@ function market_source_initial_default_ms_fields() {
     'user_agent' => array(
       'persistence' => 'on',
     ),
+    'device_type' => array(
+      'persistence' => 'direct',
+    ),
+    'device_name' => array(
+      'persistence' => 'direct',
+    ),
+    'device_os' => array(
+      'persistence' => 'direct',
+    ),
+    'device_browser' => array(
+      'persistence' => 'direct',
+    ),
   );
 }
 
@@ -70,4 +82,19 @@ function market_source_uninstall() {
  */
 function market_source_update_last_removed() {
   return 6001;
+}
+
+/**
+ * Adds mobile device fields to market source default fields.
+ */
+function market_source_update_7001() {
+  $initial_default_fields = market_source_initial_default_ms_fields();
+  $default_fields = variable_get('market_source_default_fields');
+
+  $default_fields['device_type'] = $initial_default_fields['device_type'];
+  $default_fields['device_name'] = $initial_default_fields['device_name'];
+  $default_fields['device_os'] = $initial_default_fields['device_os'];
+  $default_fields['device_browser'] = $initial_default_fields['device_browser'];
+
+  variable_set('market_source_default_fields', $default_fields);
 }
