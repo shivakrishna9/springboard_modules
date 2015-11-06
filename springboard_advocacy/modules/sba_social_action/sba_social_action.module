@@ -42,6 +42,17 @@ function sba_social_action_menu() {
     'type' => MENU_CALLBACK,
   );
 
+  $items['sba/twitter/login'] = array(
+    'page callback' => 'sba_social_action_twitter_redirect',
+    'access callback' => TRUE,
+    'type' => MENU_CALLBACK,
+  );
+
+  $items['sba/twitter/close-window'] = array(
+    'page callback' => 'sba_social_action_twitter_close_window',
+    'access callback' => TRUE,
+    'type' => MENU_CALLBACK,
+  );
   return $items;
 }
 
@@ -330,18 +341,19 @@ function sba_social_action_multiflow_submit($form, &$form_state) {
     $node = $form['#node'];
     $sid = $form_state['values']['details']['sid'];
     $_SESSION['action_sid'] = array('sid' => $sid, 'nid' => $node->nid);
-
-    if (!isset($_SESSION['twitter'])) {
-      sba_social_action_twitter_redirect();
-    }
-    else {
+//
+//    if (!isset($_SESSION['twitter'])) {
+//     // sba_social_action_twitter_redirect();
+//    }
+//    else {
       $form_state['redirect'] = array(
         'node/' . $_SESSION['action_sid']['nid'] . '/social-message-preview',
         array('query' => array('sid' => $_SESSION['action_sid']['sid']))
       );
-    }
+ //   }
  // }
 }
+
 
 /**
  * Redirect to twitter authentication after a webform submission.
@@ -367,7 +379,10 @@ function sba_social_action_twitter_redirect() {
   drupal_goto($twitter->get_authenticate_url($token));
 }
 
-
+function sba_social_action_twitter_close_window() {
+  drupal_add_js('window.close()', 'inline');
+  return 'thank you';
+}
 /**
  * Form submit for the OAuth callback.
  *
@@ -380,10 +395,11 @@ function sba_social_action_oauth_callback_submit(&$form, &$form_state) {
   // Programmed = FALSE because this form is submitted in code and otherwise
   // the redirection would not work.
   $form_state['programmed'] = FALSE;
-  $form_state['redirect'] = array(
-    'node/' . $_SESSION['action_sid']['nid'] . '/social-message-preview',
-    array('query' => array('sid' => $_SESSION['action_sid']['sid']))
-  );
+//  $form_state['redirect'] = array(
+//    'node/' . $_SESSION['action_sid']['nid'] . '/social-message-preview',
+//    array('query' => array('sid' => $_SESSION['action_sid']['sid']))
+//  );
+  $form_state['redirect'] = array('sba/twitter/close-window');
 
   $response = $form_state['twitter_oauth']['response'];
   // $_SESSION['twitter']['values'] is what you'd have if using
@@ -400,4 +416,13 @@ function sba_social_action_clear_twitter_session() {
   }
   $nid = isset($_GET['nid']) ? $_GET['nid'] : '' ;
   drupal_goto('node/' . $nid);
+}
+
+function sba_social_action_preprocess_webform_confirmation(&$vars) {
+  drupal_add_css(drupal_get_path('module', 'sba_social_action') . '/css/social-message-confirmation.css');
+  if (!empty($_SESSION['twitter']['values']['screen_name'])) {
+    $vars['confirmation_message'] .= '<a class="twitter-timeline"  href="https://twitter.com/' . $_SESSION['twitter']['values']['screen_name'] .'" data-chrome="nofooter hoheader" data-widget-id="661981842917171200">Tweets by @' . $_SESSION['twitter']['values']['screen_name'] . '</a><script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?\'http\':\'https\';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+"://platform.twitter.com/widgets.js";fjs.parentNode.insertBefore(js,fjs);}}(document,"script","twitter-wjs");</script>';
+  }
+ // $vars['confirmation_message'] .= ' <a class="twitter-timeline" data-dnt="true" href="https://twitter.com/whytheiser" data-widget-id="662363929490927616">Tweets by @whytheiser</a><script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?\'http\':\'https\';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+"://platform.twitter.com/widgets.js";fjs.parentNode.insertBefore(js,fjs);}}(document,"script","twitter-wjs");</script>';
+
 }

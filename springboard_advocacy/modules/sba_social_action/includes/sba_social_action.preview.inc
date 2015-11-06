@@ -6,9 +6,19 @@
  * @return array
  */
 function sba_social_action_message_preview_page($nid) {
+  $access = TRUE;
+  if (!isset($_SESSION['twitter'])) {
+    $access = FALSE;
+  }
 
   // $nid already sanitized in the access hook.
   $node = node_load($nid);
+  if (isset($_SESSION['messages']['status'])) {
+    // Prevent the confirmation message from appearing prematurely.
+    $_SESSION['saved_messages']['status'] = $_SESSION['messages']['status'];
+    // clear all
+    drupal_get_messages('status');
+  }
   // Check if the step two form has already been submitted.
   // @todo think about this.
   $completed = isset($_SESSION['action_completed']) ? $_SESSION['action_completed'] : TRUE;
@@ -20,54 +30,8 @@ function sba_social_action_message_preview_page($nid) {
   // Build page header and multi-step form.
   $build = array();
   $build['content'] = array(
-    'page_description_content' => array(
-      '#id' => 'social-action-preview-page',
-      '#type' => 'markup',
-      '#markup' => t('Please review the messages below; or if you prefer, simply <span id="multiflow-send-now-wrapper" style="display:inline-block"><a href="#" id="multiflow-send-now">send now</a></span>.'),
-      '#prefix' => '<div class="social-action-preview-page"><p>',
-      '#suffix' => '</p></div>',
-      '#weight' => -8,
-    ),
-
     'sba_social_action_preview_form' => drupal_get_form('sba_social_action_preview_form', $node),
   );
-
-  $messages = $build['content']['sba_social_action_preview_form']['messages'];
-  $children = array_flip(element_children($messages));
-  $subject_required = FALSE;
-  $body_required = FALSE;
-  $editable_but_not_required = FALSE;
-  foreach ($messages as $key => $message) {
-    if(isset($children[$key]) && (!$subject_required && !$body_required)) {
-      if(isset( $message['subject']) && !isset($message['subject_show'])) {
-        $editable_but_not_required = TRUE;
-        $subject_required = isset($message['message']['subject']['#required']) ? $message['message']['subject']['#required'] : FALSE;
-      }
-      if (isset($message['message']['edited_body'])) {
-        $editable_but_not_required = TRUE;
-        $body_required = $message['message']['edited_body']['#required'];
-      }
-    }
-  }
-
-  $build['content']['page_description_label']['#prefix'] = '<h4>';
-  $build['content']['page_description_label']['#suffix'] = '</h4>';
-  $build['content']['page_description_label']['#weight'] = -10;
-  $build['content']['page_description_label']['#markup'] = t('Step 2 of 2');
-  if (isset($_SESSION['twitter']['values']['screen_name'])) {
-    $build['content']['page_description_login']['#prefix'] = '<div><p>';
-    $build['content']['page_description_llogin']['#suffix'] = '</p></div>';
-    $build['content']['page_description_login']['#weight'] = -9;
-    $build['content']['page_description_login']['#markup'] = t('You will be posting to Twitter as @%name. If that is not the correct account, !clickhere to log out and start over. You will need to submit the first form again to re-sign into Twitter.', array('%name' => $_SESSION['twitter']['values']['screen_name'], '!clickhere' => l('click here', 'clear/session', array('query' => array('nid' => $node->nid)))));
-  }
-
-  if ($subject_required || $body_required) {
-    $editable_but_not_required = FALSE;
-    $build['content']['page_description_content']['#markup'] = t('One or more of the messages below requires editing. Please make your edits and then click "Send Now" at the bottom of the page.');
-  }
-  if (!empty($editable_but_not_required)) {
-    $build['content']['page_description_content']['#markup'] = t('Please review and edit the messages below; or if you prefer, simply <span id="multiflow-send-now-wrapper"><a href="#" id="multiflow-send-now">send now</a></span>.');
-  }
 
   return $build;
 }
@@ -82,11 +46,43 @@ function sba_social_action_message_preview_page($nid) {
  * @return mixed
  */
 function sba_social_action_preview_form($form, $form_state, $node) {
+  $access = TRUE;
+  if (!isset($_SESSION['twitter'])) {
+    $access = FALSE;
+  }
 
   $form['#attached']['css'][] = drupal_get_path('module', 'sba_social_action') . '/css/message-preview.css';
   $form['#attached']['js'][] = drupal_get_path('module', 'sba_social_action') . '/js/jQuery.simplyCountable.js';
   $form['#attached']['js'][] = drupal_get_path('module', 'sba_social_action') . '/js/social_counter.js';
   $form['#attached']['js'][] = drupal_get_path('module', 'sba_social_action') . '/js/social_message_preview.js';
+  $form['#attached']['js'][] = drupal_get_path('module', 'sba_social_action') . '/js/jquery.oauthpopup.js';
+
+  $form['ajaxify'] = array(
+    '#type' =>  'button',
+    '#attributes' => array('style' => array('display:none')),
+    '#value' => 'off',
+    '#ajax' => array(
+    'callback' => 'sba_social_actions_reload_form',
+    'wrapper' => 'form-container',
+      'effect' => 'fade',
+      'speed' => 1000,
+      'progress' => 'none'
+  ),
+  );
+
+  $form['form_container'] = array(
+    '#type' => 'container',
+    '#prefix' => '<div id="form-container">',
+    '#suffix' => '</div>',
+  );
+
+  if (!isset($_SESSION['twitter'])) {
+    $form['form_container']['twitter_sign_in'] = array(
+      '#type' => 'button',
+      '#value' => 'Sign in to Twitter',
+      '#attributes' => array('class' => array('twitter-sign'))
+    );
+  }
 
   // Build the form content out of the API response stored in session.
   $messages = array();
@@ -120,7 +116,7 @@ function sba_social_action_preview_form($form, $form_state, $node) {
     '#value' => $contact,
   );
 
-  $form['messages'] = array (
+  $form['form_container']['messages'] = array (
     '#type' => 'container',
     '#tree' => TRUE,
     '#attributes' => array(
@@ -135,7 +131,7 @@ function sba_social_action_preview_form($form, $form_state, $node) {
     $message_entity_type = $node->messages[$message['message_id']]->type;
 
     // Theme the message header.
-    $form['messages'][$key]['sent_to'] = array(
+    $form['form_container']['messages'][$key]['sent_to'] = array(
       '#markup' => theme('sba_social_action_preview_message_header', array('message' => $message, 'type' => $message_entity_type)),
     );
 
@@ -146,11 +142,6 @@ function sba_social_action_preview_form($form, $form_state, $node) {
     sba_social_action_message_form($build, $message_entity, 'multi_flow', $message_entity_type);
     $build['message'][$message_entity->sba_message_id]['#attributes']['class'][] = 'message-preview-message-fieldset';
 
-    // Add hold value.
-    $build['message'][$message_entity->sba_message_id]['hold'] = array(
-      '#type' => 'value',
-      '#value' => isset($message['hold']) ? TRUE : FALSE,
-    );
     // Build an array of target properties
     $build['message'][$message_entity->sba_message_id]['target'] = array(
       '#type' => 'value',
@@ -161,27 +152,90 @@ function sba_social_action_preview_form($form, $form_state, $node) {
       $build['message'][$message_entity->sba_message_id]['edited_body']['#required'] = TRUE;
       $build['message'][$message_entity->sba_message_id]['edited_body']['#title'] =  t('You must edit the body of this message before sending');
     }
+    if(isset($build['message'][$message_entity->sba_message_id]['edited_body'])) {
+      $build['message'][$message_entity->sba_message_id]['edited_body']['#disabled'] = !$access;
+    }
     if (isset($build['message'][$message_entity->sba_message_id]['subject_required']) && $build['message'][$message_entity->sba_message_id]['subject_required']['#value']) {
       $build['message'][$message_entity->sba_message_id]['subject']['#required'] = TRUE;
       $build['message'][$message_entity->sba_message_id]['subject']['#title'] =  t('Subject - You must edit this subject line before sending');
     }
-    $form['messages'][$key]['message'] = $build['message'][$message_entity->sba_message_id];
+    $form['form_container']['messages'][$key]['message'] = $build['message'][$message_entity->sba_message_id];
   }
+
+
+  if($access == TRUE) {
+    $markup = ('Please review the messages below; or if you prefer, simply <span id="multiflow-send-now-wrapper" style="display:inline-block"><a href="#" id="multiflow-send-now">send now</a></span>.');
+  }
+  else {
+    $markup = t('You must sign in with Twitter and authorize this app before posting.');
+  }
+  $messages = $form['form_container']['messages'];
+  $children = array_flip(element_children($messages));
+  $subject_required = FALSE;
+  $body_required = FALSE;
+  $editable_but_not_required = FALSE;
+  foreach ($messages as $key => $message) {
+    if(isset($children[$key]) && (!$subject_required && !$body_required)) {
+      if(isset( $message['subject']) && !isset($message['subject_show'])) {
+        $editable_but_not_required = TRUE;
+        $subject_required = isset($message['message']['subject']['#required']) ? $message['message']['subject']['#required'] : FALSE;
+      }
+      if (isset($message['message']['edited_body'])) {
+        $editable_but_not_required = TRUE;
+        $body_required = $message['message']['edited_body']['#required'];
+      }
+    }
+  }
+
+  $form['form_container']['page_description_label']['#prefix'] = '<h4>';
+  $form['form_container']['page_description_label']['#suffix'] = '</h4>';
+  $form['form_container']['page_description_label']['#weight'] = -10;
+  $form['form_container']['page_description_label']['#markup'] = t('Step 2 of 2');
+  if (isset($_SESSION['twitter']['values']['screen_name'])) {
+    $form['form_container']['page_description_login']['#prefix'] = '<div><p>';
+    $form['form_container']['page_description_llogin']['#suffix'] = '</p></div>';
+    $form['form_container']['page_description_login']['#weight'] = -9;
+    $form['form_container']['page_description_login']['#markup'] = t('You will be posting to Twitter as @%name. If that is not the correct account, !clickhere to log out and start over. You will need to submit the first form again to re-sign into Twitter.', array('%name' => $_SESSION['twitter']['values']['screen_name'], '!clickhere' => l('click here', 'clear/session', array('query' => array('nid' => $node->nid)))));
+  }
+
+  if ($subject_required || $body_required) {
+    $editable_but_not_required = FALSE;
+    $form['form_container']['page_description_content']['#markup'] = t('One or more of the messages below requires editing. Please make your edits and then click "Send Now" at the bottom of the page.');
+  }
+  if (!empty($editable_but_not_required) && $access == TRUE) {
+    $markup = t('Please review and edit the messages below; or if you prefer, simply <span id="multiflow-send-now-wrapper"><a href="#" id="multiflow-send-now">send now</a></span>.');
+  }
+
+
+  $form['form_container']['page_description_content'] = array(
+    '#id' => 'social-action-preview-page',
+    '#type' => 'markup',
+    '#markup' => $markup,
+    '#prefix' => '<div class="social-action-preview-page"><p>',
+    '#suffix' => '</p></div>',
+    '#weight' => -8,
+  );
+
   // Add the node object to use in validation and submit.
   $form['#action_node'] = $node;
   // Define the validation function.
   $form['#validate'][] = 'sba_social_action_preview_form_validate';
 
   // Add submit button
-  $form['submit'] = array(
+  $form['form_container']['submit'] = array(
     '#prefix' => '<div id="edit-actions">',
     '#suffix' => '</div>',
     '#type' => 'submit',
     '#value' => t('Send Now'),
     '#weight' => 10,
     '#attributes' => array('class' => 'social-action-preview-submit'),
+    '#disabled' => !$access,
   );
   return $form;
+}
+
+function sba_social_actions_reload_form($form, $form_state) {
+  return $form['form_container'];
 }
 
 /**
@@ -280,8 +334,7 @@ function sba_social_action_preview_form_submit($form, &$form_state) {
           $_SESSION['twitter']['values']['oauth_token_secret']
         );
 
-         $twitter->statuses_update($body);
-
+        $d = $twitter->statuses_update($body);
       } catch (TwitterException $e) {
         drupal_set_message(t('An error occurred when posting to Twitter. Check the system log for details.'), 'error');
       }
@@ -300,15 +353,32 @@ function sba_social_action_preview_form_submit($form, &$form_state) {
   // $sid is set in sba_social_action_multifow_submit()
   $sid = !empty($_SESSION['action_sid']['sid']) ? $_SESSION['action_sid']['sid'] : FALSE;
   if ($sid) {
+    module_load_include('inc', 'webform', 'includes/webform.submissions');
+    $submission = webform_get_submission($node->nid, $sid);
     unset($_SESSION['action_sid']);
-    $form_state['redirect'] = array(
-      'node/' . $node->nid . '/done',
-      array('query' => array('sid' => $sid))
-    );
+    if ($node->webform['redirect_url'] == '<confirmation>') {
+      $form_state['redirect'] = array(
+        'node/' . $node->nid . '/done',
+        array('query' => array('sid' => $sid))
+      );
+    }
+    else {
+      $redirect = sba_social_action_parse_redirect($node, $submission);
+      $form_state['redirect'] = $redirect;
+      if (!empty($_SESSION['saved_messages']['status'])) {
+        $_SESSION['messages']['status'] =  $_SESSION['saved_messages']['status'];
+      }
+    }
   }
   else {
-    // Gotta go somewhere.
+    // we don't have a submission identifier, this is not a legit request, redirect to the node
     $form_state['redirect'] = array('node/' . $node->nid);
+    if (!empty($_SESSION['saved_messages']['status'])) {
+      $_SESSION['messages']['status'] =  $_SESSION['saved_messages']['status'];
+    }
+  }
+  if (!empty($_SESSION['saved_messages']['status'])) {
+    unset($_SESSION['saved_messages']['status']);
   }
 
   //@todo everything below here can go in advocacy module along with corresponding code in message actions
@@ -368,4 +438,29 @@ function theme_sba_social_action_preview_message_header($vars) {
   $output .= theme('sba_social_action_person_details', $vars);
   $output .= '</div></div>';
   return $output;
+}
+
+function sba_social_action_parse_redirect($node, $submission) {
+  $redirect = NULL;
+  if (isset($node->webform['redirect_url'])) {
+    $redirect_url = trim($node->webform['redirect_url']);
+    $redirect_url = _webform_filter_values($redirect_url, $node, $submission, NULL, FALSE, TRUE);
+
+    // Remove the site domain name from the redirect if present.
+    $redirect_url = preg_replace('/^' . preg_quote($GLOBALS['base_url'], '/') . '\//', '', $redirect_url);
+
+    if (valid_url($redirect_url, TRUE)) {
+      $redirect = $redirect_url;
+    }
+    elseif ($redirect_url && strpos($redirect_url, 'http') !== 0) {
+      $parts = drupal_parse_url($redirect_url);
+      $parts['query'] ? ($parts['query']['sid'] = $submission->sid) : ($parts['query'] = array('sid' => $submission->sid));
+      $query = $parts['query'];
+      $redirect = array(
+        $parts['path'],
+        array('query' => $query, 'fragment' => $parts['fragment'])
+      );
+    }
+  }
+  return $redirect;
 }

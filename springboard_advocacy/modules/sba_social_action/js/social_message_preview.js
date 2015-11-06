@@ -18,14 +18,49 @@
                 });
             });
 
+            $(document).ready(function(){
+                $text = $('div[id*="edit-messages"]').find('textarea');
+
+                $text.each(function(){
+                    var handleCount = $(this).closest('.message-preview-message-fieldset').prev('.message-preview-header').find('.twitter-handle').text().length + 1;
+
+                    $('#' + this.id).simplyCountable({
+                        counter:            $(this).siblings('.description').find('.counter'),
+                        countType:          'characters',
+                        maxCount:           140 - handleCount,
+                        strictMax:          true,
+                        countDirection:     'down',
+                        safeClass:          'safe',
+                        overClass:          'over',
+                        thousandSeparator:  ',',
+                        onOverCount:        function(count, countable, counter){},
+                        onSafeCount:        function(count, countable, counter){            console.log(this)
+                        },
+                        onMaxCount:         function(count, countable, counter){}
+                    });
+                })
+            });
+
         } // attach.function
     } // drupal.behaviors
 
     $(document).ready(function () {
+
         $('textarea').each(function (e) {
             $(this).height(this.scrollHeight)
         });
         $('label').has('.form-required').addClass('required');
+
+        $('.twitter-sign').click(function(){
+            $.oauthpopup({
+                path: '/sba/twitter/login',
+                callback: function(){
+                    //window.location.reload();
+                    $('#edit-ajaxify').trigger('mousedown');
+                }
+            });
+            return false;
+        });
     });
 
     function submitOnce(editSubmit, send, clicked) {
@@ -64,32 +99,5 @@
             clearTimeout(spinner);
         }
     }
-
-
-
-    $(document).ready(function(){
-        $text = $('#edit-messages').find('textarea');
-
-        $text.each(function(){
-            var handleCount = $(this).closest('.message-preview-message-fieldset').prev('.message-preview-header').find('.twitter-handle').text().length + 1;
-
-            $('#' + this.id).simplyCountable({
-                counter:            $(this).siblings('.description').find('.counter'),
-                countType:          'characters',
-                maxCount:           140 - handleCount,
-                strictMax:          true,
-                countDirection:     'down',
-                safeClass:          'safe',
-                overClass:          'over',
-                thousandSeparator:  ',',
-                onOverCount:        function(count, countable, counter){},
-                onSafeCount:        function(count, countable, counter){            console.log(this)
-                },
-                onMaxCount:         function(count, countable, counter){}
-            });
-        })
-
-    });
-
 
 })(jQuery);
