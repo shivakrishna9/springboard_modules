@@ -1526,6 +1526,10 @@ function springboard_admin_config_profile($form, $form_state) {
     'sbp_search_engine' => 'search_engine',
     'sbp_search_string' => 'search_string',
     'sbp_user_agent' => 'user_agent',
+    'sbp_device_type' => 'device_type',
+    'sbp_device_name' => 'device_name',
+    'sbp_device_os' => 'device_os',
+    'sbp_device_browser' => 'device_browser',
     )
   );
   drupal_set_message(t('Profile mapping has been configured'));
@@ -1793,6 +1797,62 @@ function _springboard_default_user_profile($mode = 'commerce') {
   $profile_fields[] = array(
     'label' => t('Salesforce Contact Id'),
     'field_name' => 'sbp_salesforce_contact_id',
+    'type' => 'text',
+    'widget' => array(
+      'type' => 'text_textfield',
+    ),
+    'display' => array(
+      'default' => array(
+        'label' => 'hidden',
+        'type' => 'hidden',
+      ),
+    ),
+  );
+  $profile_fields[] = array(
+    'label' => t('Device Type'),
+    'field_name' => 'sbp_device_type',
+    'type' => 'text',
+    'widget' => array(
+      'type' => 'text_textfield',
+    ),
+    'display' => array(
+      'default' => array(
+        'label' => 'hidden',
+        'type' => 'hidden',
+      ),
+    ),
+  );
+  $profile_fields[] = array(
+    'label' => t('Device Name'),
+    'field_name' => 'sbp_device_name',
+    'type' => 'text',
+    'widget' => array(
+      'type' => 'text_textfield',
+    ),
+    'display' => array(
+      'default' => array(
+        'label' => 'hidden',
+        'type' => 'hidden',
+      ),
+    ),
+  );
+  $profile_fields[] = array(
+    'label' => t('Device OS'),
+    'field_name' => 'sbp_device_os',
+    'type' => 'text',
+    'widget' => array(
+      'type' => 'text_textfield',
+    ),
+    'display' => array(
+      'default' => array(
+        'label' => 'hidden',
+        'type' => 'hidden',
+      ),
+    ),
+  );
+  $profile_fields[] = array(
+    'label' => t('Device Browser'),
+    'field_name' => 'sbp_device_browser',
     'type' => 'text',
     'widget' => array(
       'type' => 'text_textfield',
@@ -2171,6 +2231,10 @@ function springboard_add_admin_field_group_to_user_entity() {
       'sbp_search_engine',
       'sbp_search_string',
       'sbp_user_agent',
+      'sbp_device_type',
+      'sbp_device_name',
+      'sbp_device_os',
+      'sbp_device_browser',
       'sbp_salesforce_account_id',
       'sbp_salesforce_contact_id',
     );
