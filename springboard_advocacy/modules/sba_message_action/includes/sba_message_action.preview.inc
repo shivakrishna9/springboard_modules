@@ -439,7 +439,7 @@ function sba_message_action_preview_form_submit($form, &$form_state) {
       );
     }
     else {
-      $redirect = sba_message_action_parse_redirect($node, $submission);
+      $redirect = springboard_advocacy_parse_redirect($node, $submission);
       $form_state['redirect'] = $redirect;
       if (!empty($_SESSION['saved_messages']['status'])) {
         $_SESSION['messages']['status'] =  $_SESSION['saved_messages']['status'];
@@ -514,36 +514,4 @@ function theme_sba_message_action_preview_message_header($vars) {
   $output .= theme('sba_message_action_person_details', $vars['message']['person']);
   $output .= '</div></div>';
   return $output;
-}
-
-/**
- * Parse redirect url and filter webform tokens in redirect urls.
- *
- * @param $node
- * @param $submission
- * @return array|mixed
- */
-function sba_message_action_parse_redirect($node, $submission) {
-  $redirect = NULL;
-  if (isset($node->webform['redirect_url'])) {
-    $redirect_url = trim($node->webform['redirect_url']);
-    $redirect_url = _webform_filter_values($redirect_url, $node, $submission, NULL, FALSE, TRUE);
-
-    // Remove the site domain name from the redirect if present.
-    $redirect_url = preg_replace('/^' . preg_quote($GLOBALS['base_url'], '/') . '\//', '', $redirect_url);
-
-    if (valid_url($redirect_url, TRUE)) {
-      $redirect = $redirect_url;
-    }
-    elseif ($redirect_url && strpos($redirect_url, 'http') !== 0) {
-      $parts = drupal_parse_url($redirect_url);
-      $parts['query'] ? ($parts['query']['sid'] = $submission->sid) : ($parts['query'] = array('sid' => $submission->sid));
-      $query = $parts['query'];
-      $redirect = array(
-        $parts['path'],
-        array('query' => $query, 'fragment' => $parts['fragment'])
-      );
-    }
-  }
-  return $redirect;
 }
