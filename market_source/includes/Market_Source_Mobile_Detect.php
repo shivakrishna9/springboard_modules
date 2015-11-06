@@ -12,7 +12,12 @@ class Market_Source_Mobile_Detect extends Mobile_Detect {
    * @return array
    */
   public function getDeviceProperties() {
-    $properties = array();
+    $properties = array(
+      'type' => NULL,
+      'name' => NULL,
+      'os' => NULL,
+      'browser' => NULL,
+    );
 
     $phone = $this->matchDeviceProperty($this->getPhoneDevices());
     $tablet = $this->matchDeviceProperty($this->getTabletDevices());
