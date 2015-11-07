@@ -973,10 +973,10 @@ function fundraiser_tickets_commerce_product_delete($product) {
 /**
  * Update the ticket level numbers that are saved in fields on the node.
  */
-function fundraiser_tickets_update_inventory($node_wrapper){
+function fundraiser_tickets_update_inventory($node_wrapper) {
   $ticket_types = $node_wrapper->fr_tickets_ticket_types->value();
 
-  if (!is_array($ticket_types)){
+  if (!is_array($ticket_types)) {
     return;
   }
 
@@ -984,7 +984,7 @@ function fundraiser_tickets_update_inventory($node_wrapper){
   $inventory_purchased = 0;
 
   // Loop through the ticket products and calculate the numbers
-  foreach ($ticket_types as $offset => $ticket_level){
+  foreach ($ticket_types as $offset => $ticket_level) {
     $ticket_level_wrapper = entity_metadata_wrapper('commerce_product', $ticket_level);
 
     // Only include active tickets
@@ -1015,6 +1015,33 @@ function fundraiser_tickets_update_inventory($node_wrapper){
     ->condition('entity_id', $node_wrapper->getIdentifier())
     ->condition('revision_id', $node_wrapper->vid->value())
     ->execute();
+
+  // If a new type of ticket exists, such as when an admin adds it, then apply the associated update:
+  foreach ($ticket_types as $delta => $ticket_data) {
+    if (isset($ticket_data->is_new) && $ticket_data->is_new == TRUE) {
+      $new_ticket_data = array(
+        'entity_type' => 'node',
+        'bundle' => 'ticketed_events',
+        'entity_id' => $node_wrapper->getIdentifier(),
+        'revision_id' => $node_wrapper->vid->value(),
+        'language' => $ticket_data->language,
+        'delta' => $delta,
+        'fr_tickets_ticket_types_product_id' => $ticket_data->product_id,
+      );
+      $new_ticket_added = TRUE;
+      db_insert('field_data_fr_tickets_ticket_types')
+        ->fields($new_ticket_data)
+        ->execute();
+      db_insert('field_revision_fr_tickets_ticket_types')
+        ->fields($new_ticket_data)
+        ->execute();
+    }
+  }
+
+  // Ensure the node-specific, admin ticket table updates if a new type of ticket is added:
+  if (isset($new_ticket_added)) {
+    cache_clear_all('field:node:' . $node_wrapper->getIdentifier(), 'cache_field');
+  }
 }
 
 /**
