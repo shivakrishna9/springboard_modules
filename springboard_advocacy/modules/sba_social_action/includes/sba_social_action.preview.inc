@@ -7,7 +7,7 @@
  */
 function sba_social_action_message_preview_page($nid) {
   $access = TRUE;
-  if (!isset($_SESSION['twitter'])) {
+  if (!isset($_SESSION['sba_twitter'])) {
     $access = FALSE;
   }
 
@@ -47,7 +47,7 @@ function sba_social_action_message_preview_page($nid) {
  */
 function sba_social_action_preview_form($form, $form_state, $node) {
   $access = TRUE;
-  if (!isset($_SESSION['twitter'])) {
+  if (!isset($_SESSION['sba_twitter'])) {
     $access = FALSE;
   }
 
@@ -76,7 +76,7 @@ function sba_social_action_preview_form($form, $form_state, $node) {
     '#suffix' => '</div>',
   );
 
-  if (!isset($_SESSION['twitter'])) {
+  if (!isset($_SESSION['sba_twitter'])) {
     $form['form_container']['twitter_sign_in'] = array(
       '#type' => 'button',
       '#value' => 'Sign in to Twitter',
@@ -191,11 +191,11 @@ function sba_social_action_preview_form($form, $form_state, $node) {
   $form['form_container']['page_description_label']['#suffix'] = '</h4>';
   $form['form_container']['page_description_label']['#weight'] = -10;
   $form['form_container']['page_description_label']['#markup'] = t('Step 2 of 2');
-  if (isset($_SESSION['twitter']['values']['screen_name'])) {
+  if (isset($_SESSION['sba_twitter']['values']['screen_name'])) {
     $form['form_container']['page_description_login']['#prefix'] = '<div><p>';
     $form['form_container']['page_description_llogin']['#suffix'] = '</p></div>';
     $form['form_container']['page_description_login']['#weight'] = -9;
-    $form['form_container']['page_description_login']['#markup'] = t('You will be posting to Twitter as @%name. If that is not the correct account, !clickhere to log out and start over. You will need to submit the first form again to re-sign into Twitter.', array('%name' => $_SESSION['twitter']['values']['screen_name'], '!clickhere' => l('click here', 'clear/session', array('query' => array('nid' => $node->nid)))));
+    $form['form_container']['page_description_login']['#markup'] = t('You will be posting to Twitter as @%name. If that is not the correct account, !clickhere to log out and start over. You will need to submit the first form again to re-sign into Twitter.', array('%name' => $_SESSION['sba_twitter']['values']['screen_name'], '!clickhere' => l('click here', 'clear/session', array('query' => array('nid' => $node->nid)))));
   }
 
   if ($subject_required || $body_required) {
@@ -333,8 +333,8 @@ function sba_social_action_preview_form_submit($form, &$form_state) {
         $twitter = new socialTwitter(
           variable_get('social_action_twitter_consumer_key', ''),
           variable_get('social_action_twitter_consumer_secret', ''),
-          $_SESSION['twitter']['values']['oauth_token'],
-          $_SESSION['twitter']['values']['oauth_token_secret']
+          $_SESSION['sba_twitter']['values']['oauth_token'],
+          $_SESSION['sba_twitter']['values']['oauth_token_secret']
         );
 
         $twitter->statuses_update($body);

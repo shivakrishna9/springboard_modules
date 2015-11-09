@@ -498,17 +498,17 @@ function sba_social_action_twitter_oauth_callback_submit(&$form, &$form_state) {
   $form_state['redirect'] = array('sba/twitter/close-window');
 
   $response = $form_state['twitter_oauth']['response'];
-  // $_SESSION['twitter']['values'] is what you'd have if using
+  // $_SESSION['sba_twitter']['values'] is what you'd have if using
   // twitter_signin.module, but we are doing "session only" mock sign-ins.
-  $_SESSION['twitter']['values'] = $response;
+  $_SESSION['sba_twitter']['values'] = $response;
 }
 
 /**
  * Clear twitter session data.
  */
 function sba_social_action_clear_twitter_session() {
-  if (isset($_SESSION['twitter'])) {
-    unset($_SESSION['twitter']);
+  if (isset($_SESSION['sba_twitter'])) {
+    unset($_SESSION['sba_twitter']);
   }
   $nid = isset($_GET['nid']) ? $_GET['nid'] : '' ;
   drupal_goto('node/' . $nid);
@@ -519,8 +519,8 @@ function sba_social_action_clear_twitter_session() {
  */
 function sba_social_action_preprocess_webform_confirmation(&$vars) {
   drupal_add_css(drupal_get_path('module', 'sba_social_action') . '/css/social-message-confirmation.css');
-  if (!empty($_SESSION['twitter']['values']['screen_name'])) {
-    $vars['confirmation_message'] .= '<a class="twitter-timeline"  href="https://twitter.com/' . $_SESSION['twitter']['values']['screen_name'] .'" data-chrome="nofooter hoheader" data-widget-id="661981842917171200" data-screen-name="' . $_SESSION['twitter']['values']['screen_name'] . '">Tweets by @' . $_SESSION['twitter']['values']['screen_name'] . '</a><script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?\'http\':\'https\';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+"://platform.twitter.com/widgets.js";fjs.parentNode.insertBefore(js,fjs);}}(document,"script","twitter-wjs");</script>';
+  if (!empty($_SESSION['sba_twitter']['values']['screen_name'])) {
+    $vars['confirmation_message'] .= '<a class="twitter-timeline"  href="https://twitter.com/' . $_SESSION['sba_twitter']['values']['screen_name'] .'" data-chrome="nofooter hoheader" data-widget-id="661981842917171200" data-screen-name="' . $_SESSION['sba_twitter']['values']['screen_name'] . '">Tweets by @' . $_SESSION['sba_twitter']['values']['screen_name'] . '</a><script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?\'http\':\'https\';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+"://platform.twitter.com/widgets.js";fjs.parentNode.insertBefore(js,fjs);}}(document,"script","twitter-wjs");</script>';
   }
 
 }

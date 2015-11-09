@@ -523,6 +523,16 @@ function springboard_advocacy_springboard_admin_alias_patterns() {
         'replacement' => FALSE,  // don't redirect confirmation pages to springboard/...
       ),
     ),
+    'node/%/social-message-preview' => array(
+      'path' => array(
+        'regex' => '|^/node/([0-9]+)/social-message-preview$|',
+        'replacement' => 'node/$1/social-message-preview',
+      ),
+      'alias' => array(
+        'regex' => '|^springboard/node/([0-9]+)/social-message-preview$|',
+        'replacement' => FALSE,  // don't redirect confirmation pages to springboard/...
+      ),
+    ),
   );
 }
 

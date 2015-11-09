@@ -127,10 +127,10 @@ function sba_social_action_message_form(&$form, $message, $multiple, $message_en
     '#attributes' => array('class' => array('sba-message')),
   );
 
-//  if(isset($_SESSION['twitter']['values']['screen_name'])) {
+//  if(isset($_SESSION['sba_twitter']['values']['screen_name'])) {
 //    $form['message']['page_description_login']['#prefix'] = '<p>';
 //    $form['message']['page_description_login']['#markup'] = t('After you submit this form you will be redirected to a page which will allow you to send tweets to the targets we have selected. You will be able to post to Twitter as @%name. If that is not the correct account, !clickhere.', array(
-//      '%name' => $_SESSION['twitter']['values']['screen_name'],
+//      '%name' => $_SESSION['sba_twitter']['values']['screen_name'],
 //      '!clickhere' => l('click here', 'clear/session', array('query' => array('nid' => arg(1) )))
 //    ));
 //  }
