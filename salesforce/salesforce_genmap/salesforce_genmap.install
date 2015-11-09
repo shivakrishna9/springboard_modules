@@ -108,10 +108,31 @@ function salesforce_genmap_schema() {
 }
 
 /**
+ * Implements hook_update_dependencies()
+ */
+function salesforce_genmap_update_dependencies() {
+  $dependencies = array();
+
+  // This update depends on Market Source device info fields existing.
+  $dependencies['salesforce_genmap'][7002] = array(
+    'market_source' => 7001,
+  );
+
+  return $dependencies;
+}
+
+/**
  * Add indexes to tables.
  */
 function salesforce_genmap_update_7001() {
   db_add_index('salesforce_genmap_map', 'nid_map_handler', array('nid', 'map_handler'));
 
   return t('Added index to {salesforce_genmap_map} table.');
+}
+
+/**
+ * Create Salesforce mappings for Market Source device info fields.
+ */
+function salesforce_genmap_update_7002() {
+
 }
