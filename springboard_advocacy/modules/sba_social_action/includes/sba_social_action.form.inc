@@ -111,6 +111,7 @@ function sba_social_action_message_form(&$form, $message, $multiple, $message_en
   $message_body = check_plain($wrapper->field_sba_twitter_message->value());
   $message_editable = $wrapper->field_sba_twitter_editable->value() == 'Not editable' ? FALSE : TRUE;
   $required_message = $wrapper->field_sba_twitter_editable->value() == 'Editing is required' ? TRUE : FALSE;
+  $alternate_options = $wrapper->field_sba_show_additional->value();
   $multi_flow = TRUE;
   $preview_form = empty($form) ? TRUE : FALSE;
   $access = TRUE;
@@ -126,18 +127,6 @@ function sba_social_action_message_form(&$form, $message, $multiple, $message_en
     '#type' => 'container',
     '#attributes' => array('class' => array('sba-message')),
   );
-
-//  if(isset($_SESSION['sba_twitter']['values']['screen_name'])) {
-//    $form['message']['page_description_login']['#prefix'] = '<p>';
-//    $form['message']['page_description_login']['#markup'] = t('After you submit this form you will be redirected to a page which will allow you to send tweets to the targets we have selected. You will be able to post to Twitter as @%name. If that is not the correct account, !clickhere.', array(
-//      '%name' => $_SESSION['sba_twitter']['values']['screen_name'],
-//      '!clickhere' => l('click here', 'clear/session', array('query' => array('nid' => arg(1) )))
-//    ));
-//  }
-//  else {
-//    $form['message']['page_description_login']['#prefix'] = '<p>';
-//    $form['message']['page_description_login']['#markup'] = t('After you submit this form you will be asked to sign into Twitter, and then redirected to a page which will allow you to send tweets to the targets we have selected.');
-//  }
 
   $form['message'][$message->sba_message_id]['message_id'] = array(
     '#type' => 'value',
@@ -157,6 +146,11 @@ function sba_social_action_message_form(&$form, $message, $multiple, $message_en
   );
 
   if ($preview_form) {
+    $form['message'][$message->sba_message_id]['alternate_options'] = array(
+      '#type' => 'value',
+      '#value' => $alternate_options,
+    );
+
     if ($required_message) {
       $description = '';
       $required = TRUE;
