@@ -5,4 +5,4 @@ package = Springboard Advocacy
 dependencies[] = webform_user
 dependencies[] = sba_message
 dependencies[] = springboard_target
-dependencies[] = twitter
+dependencies[] = oauth_common

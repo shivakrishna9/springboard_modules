@@ -116,25 +116,39 @@ function springboard_advocacy_settings_form() {
   );
 
   if(module_exists('sba_social_action')) {
-    module_load_include('inc', 'twitter', 'twitter.pages');
-    $state = array();
-    $twitter = twitter_admin_form(array(), $state);
-    $twitter['actions']['#access'] = FALSE;
-    $twitter['#submit']['#access'] = FALSE;
-    $twitter['misc']['#access'] = FALSE;
-    $twitter['twitter']['#access'] = FALSE;
-    $twitter['embed']['#access'] = FALSE;
 
+    // Twitter Oauth credentials. These are different than the credentials in the
+    // settings of the Drupal Twitter module, the difference allowing us to run
+    // multiple apps for the same website, while continuing to use the helper functions
+    // that twitter.module provides.
     $form['twitter'] = array(
       '#type' => 'fieldset',
       '#title' => t('Twitter Configuration'),
-      '#description' => t('The full settings for twitter are found !link, but can be ignored. Despite what it says on the "twitter" tab there, a global authenticated account is not necessary (for social actions). The oauth credentials below are sufficient.' , array('!link' => l('here', 'admin/config/services/twitter/settings'))),
+      '#description' => t('The full settings for the Drupal Twitter module are found !link, but can be ignored. Despite what it says on the "twitter" tab there, a global authenticated account is not necessary (for social actions). The oauth credentials below, which can be different than the Twitter module credentials, and specific to the Social Action Twitter App, are sufficient.' , array('!link' => l('here', 'admin/config/services/twitter/settings'))),
       '#collapsible' => TRUE,
       '#collapsed' => TRUE,
     );
 
-    $form['twitter']['form'] = $twitter;
+    $form['twitter']['social_actions_twitter_callback_url'] = array(
+      '#type' => 'textfield',
+      '#title' => t('Social Action Callback URL'),
+      '#default_value' => variable_get('social_actions_twitter_callback_url', 'social-action/oauth'),
+      '#description' => t('This path is set in the Twitter app on twitter.com. Please set that to "%path", or whatever custom value you enter here.', array('%path' => 'social-action/oauth')),
+    );
+
+    $form['twitter']['social_action_twitter_consumer_key'] = array(
+      '#type' => 'textfield',
+      '#title' => t('Social Action OAuth Consumer key'),
+      '#default_value' => variable_get('social_action_twitter_consumer_key', NULL),
+    );
+
+    $form['twitter']['social_action_twitter_consumer_secret'] = array(
+      '#type' => 'textfield',
+      '#title' => t('Social Action OAuth Consumer secret'),
+      '#default_value' => variable_get('social_action_twitter_consumer_secret', NULL),
+    );
   }
+
   return system_settings_form($form);
 }
 

@@ -327,15 +327,19 @@ function sba_social_action_preview_form_submit($form, &$form_state) {
 
     if(empty($node->field_sba_test_mode)) {
       try {
-        $twitter = new Twitter(
-          variable_get('twitter_consumer_key', ''),
-          variable_get('twitter_consumer_secret', ''),
+        module_load_include('php', 'oauth_common', 'lib/OAuth');
+        module_load_include('php', 'sba_social_action', 'includes/socialTwitter.lib');
+
+        $twitter = new socialTwitter(
+          variable_get('social_action_twitter_consumer_key', ''),
+          variable_get('social_action_twitter_consumer_secret', ''),
           $_SESSION['twitter']['values']['oauth_token'],
           $_SESSION['twitter']['values']['oauth_token_secret']
         );
 
-        $d = $twitter->statuses_update($body);
-      } catch (TwitterException $e) {
+        $twitter->statuses_update($body);
+
+      } catch (socialTwitterException $e) {
         drupal_set_message(t('An error occurred when posting to Twitter. Check the system log for details.'), 'error');
       }
     }
