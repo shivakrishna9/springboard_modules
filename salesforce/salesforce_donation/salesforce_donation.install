@@ -59,6 +59,10 @@ function salesforce_donation_install() {
       'search_engine' => 'Search_Engine__c',
       'search_string' => 'Search_String__c',
       'user_agent' => 'User_Agent__c',
+      'device_type' => 'Device_Browser__c',
+      'device_name' => 'Device_Name__c',
+      'device_os' => 'Device_OS__c',
+      'device_browser' => 'Device_Type__c',
     ),
     'salesforce_node_map' => array(
       'title' => 'Donation_Form_Name__c',
