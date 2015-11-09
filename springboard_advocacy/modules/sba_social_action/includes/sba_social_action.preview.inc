@@ -124,9 +124,9 @@ function sba_social_action_preview_form($form, $form_state, $node) {
     ),
   );
 
+
   // Used to send our second step form through the same helper functions as the first step form.
   module_load_include('inc', 'sba_social_action', 'includes/sba_social_action.form');
-
   foreach ($messages as $key => $message) {
     $message_entity_type = $node->messages[$message['message_id']]->type;
 
@@ -147,18 +147,33 @@ function sba_social_action_preview_form($form, $form_state, $node) {
       '#type' => 'value',
       '#value' => array('target_id' => $message['targets']->id, 'twitter' => $message['targets']->twitter, 'salutation' => $message['targets']->salutation, 'first_name' => $message['targets']->first_name, 'last_name' => $message['targets']->last_name),
     );
+
     // Check for required fields
     if (isset($build['message'][$message_entity->sba_message_id]['body_required']) && $build['message'][$message_entity->sba_message_id]['body_required']['#value']) {
       $build['message'][$message_entity->sba_message_id]['edited_body']['#required'] = TRUE;
       $build['message'][$message_entity->sba_message_id]['edited_body']['#title'] =  t('You must edit the body of this message before sending');
     }
+
     if(isset($build['message'][$message_entity->sba_message_id]['edited_body'])) {
       $build['message'][$message_entity->sba_message_id]['edited_body']['#disabled'] = !$access;
     }
+
     if (isset($build['message'][$message_entity->sba_message_id]['subject_required']) && $build['message'][$message_entity->sba_message_id]['subject_required']['#value']) {
       $build['message'][$message_entity->sba_message_id]['subject']['#required'] = TRUE;
       $build['message'][$message_entity->sba_message_id]['subject']['#title'] =  t('Subject - You must edit this subject line before sending');
     }
+
+    $alternates = $build['message'][$message_entity->sba_message_id]['alternate_options']['#value'];
+    if (!empty($alternates)) {
+      $altlinks = array();
+      foreach ($alternates as $alternate) {
+        if (isset($message['targets']->{strtolower($alternate)})) {
+          $altlinks[] =  l($alternate, $message['targets']->{strtolower($alternate)});
+        }
+      }
+    }
+
+    $build['message'][$message_entity->sba_message_id]['alternate'] = array('#markup' => 'Other contact options: '.  implode(' | ', $altlinks));
     $form['form_container']['messages'][$key]['message'] = $build['message'][$message_entity->sba_message_id];
   }
 

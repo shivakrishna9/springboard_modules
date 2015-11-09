@@ -229,6 +229,7 @@ function sba_social_action_get_message_statuses($response) {
       // Filter the largish target object in the response down to
       // a few select properties, in an array
       $target_details = sba_social_action_get_target_details($target);
+
       // Split into success and hold arrays.
       if (!empty($target->twitter)) {
         $success_count++;
@@ -297,8 +298,11 @@ function sba_social_action_get_target_details($target) {
     $target_details['twitter'] = check_plain(substr($url['path'], 1));
   }
   if (!empty($target->facebook)) {
-    $url = parse_url($target->twitter);
+    $url = parse_url($target->facebook);
     $target_details['facebook'] = check_plain(substr($url['path'], 1));
+  }
+  if (!empty($target->website)) {
+    $target_details['website'] = $target->website;
   }
 
   $target_details['organization'] = !empty($target->organization) ? check_plain($target->organization) : '';
