@@ -146,7 +146,7 @@ function salesforce_donation_update_dependencies() {
 
   // This update depends on Market Source device info fields existing.
   $dependencies['salesforce_donation'][7001] = array(
-    'market_source' => 7001,
+    'market_source' => 7002,
   );
 
   return $dependencies;
