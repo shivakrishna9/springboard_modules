@@ -159,13 +159,13 @@ function salesforce_donation_update_7001(&$sandbox) {
   if (!isset($sandbox['progress'])) {
     $sandbox['progress'] = 0;
     $sandbox['current_mid'] = 0;
-    $sandbox['max'] = db_query('SELECT COUNT(`mid`) FROM {salesforce_genmap_map} WHERE `map_handler` = :map_handler',
-        array(':map_handler' => 'salesforce_donation'))->fetchField();
+    $sandbox['max'] = db_query('SELECT COUNT(`mid`) FROM {salesforce_genmap_map} WHERE `module` = :module',
+        array(':module' => 'salesforce_donation'))->fetchField();
   }
 
   $result = db_select('salesforce_genmap_map', 'map')
       ->fields('map', array('mid', 'nid'))
-      ->condition('map.map_handler', 'salesforce_donation', '=')
+      ->condition('map.module', 'salesforce_donation', '=')
       ->condition('map.mid', $sandbox['current_mid'], '>')
       ->range(0, 3)
       ->orderBy('mid', 'ASC')
