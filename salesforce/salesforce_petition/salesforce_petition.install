@@ -469,7 +469,7 @@ function salesforce_petition_update_7002(&$sandbox) {
   }
 
   $result = db_select('salesforce_genmap_map', 'map')
-      ->fields('map', array('mid', 'nid'))
+      ->fields('map', array('mid', 'nid', 'map_handler'))
       ->condition('map.module', 'salesforce_petition', '=')
       ->condition('map.mid', $sandbox['current_mid'], '>')
       ->range(0, 3)
@@ -477,14 +477,14 @@ function salesforce_petition_update_7002(&$sandbox) {
       ->execute();
 
   while ($record = $result->fetchAssoc()) {
-    $map = salesforce_genmap_load_map($record['nid'], 'salesforce_petition');
+    $map = salesforce_genmap_load_map($record['nid'], $record['map_handler']);
 
     $map->field_map['salesforce_webform_map']['device_type'] = 'Device_Type__c';
     $map->field_map['salesforce_webform_map']['device_name'] = 'Device_Name__c';
     $map->field_map['salesforce_webform_map']['device_os'] = 'Device_OS__c';
     $map->field_map['salesforce_webform_map']['device_browser'] = 'Device_Browser__c';
 
-    salesforce_genmap_save_map($map, 'salesforce_petition');
+    salesforce_genmap_save_map($map, $record['map_handler']);
 
     $sandbox['progress']++;
     $sandbox['current_mid'] = $record['mid'];
