@@ -67,3 +67,7 @@ label.required {
 #multiflow-send-now-wrapper {
     display: inline-block;
 }
+
+.message-preview-container .sba-alternate-contact {
+    clear: left;
+}

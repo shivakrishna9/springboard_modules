@@ -18,19 +18,20 @@ function sba_social_action_send_message(array $user_message, array $form_state) 
   $webform_values = $values['webform_flat'];
   $zip = '';
   $response = '';
+  $districted = $values['districted'];
 
   // Get the zip+4 from smarty streets.
-  $geo = isset($form_state['values']['smarty_geo']) ? $form_state['values']['smarty_geo'] : array();
+  $geo = !empty($form_state['values']['smarty_geo']) ? $form_state['values']['smarty_geo'] : array();
+
   if (!empty($geo) && !empty($geo['zip']) && !empty($geo['plus4'])) {
     $zip = $geo['zip'] . '-' . $geo['plus4'];
   }
 
   // We've got a full zip, so we can prepare the submission to send
   // to the resolver.
-  if (!empty($zip)) {
-
+  if (($districted && !empty($zip)) || !$districted) {
     // Build the contact array.
-    $contact = sba_social_action_build_contact($webform_values, $zip, $geo);
+    $contact = sba_social_action_build_contact($webform_values, $zip, $geo, $districted);
 
     // Build the message array.
     $message_build = sba_social_action_build_messages($user_message);
@@ -106,24 +107,46 @@ function sba_social_action_build_messages(array $user_message) {
  * @return array
  *   Contact's profile data plus smarty data.
  */
-function sba_social_action_build_contact(array $values, $zip, array $geo) {
+function sba_social_action_build_contact(array $values, $zip, array $geo = array(), $districted) {
 
   $line_2 = !empty($values['sbp_address_line_2']) ? $values['sbp_address_line_2'] . "\n " : '';
+
   $contact = array(
     'first_name' => $values['sbp_first_name'],
     'last_name' => $values['sbp_last_name'],
-    'address' => $values['sbp_address'],
-    'address_line_2' => $values['sbp_address_line_2'],
-    'city' => $values['sbp_city'],
-    'state' => $values['sbp_state'],
-    'zip' => $zip,
-    'full_address' => $values['sbp_address'] . "\n"  . $line_2   . $values['sbp_city'] . ", "  . $values['sbp_state'] . " " . $zip,
     'email' => $values['mail'],
-    'county' => isset($geo['county']) ? $geo['county'] : '',
-    'fips' => isset($geo['fips']) ? $geo['fips'] : '',
-    'latitude' => isset($geo['latitude']) ? $geo['latitude'] : '',
-    'longitude' => isset($geo['longitude']) ? $geo['longitude'] : '',
-  );
+   );
+
+  if ($districted) {
+    $contact += array(
+      'address' => $values['sbp_address'],
+      'address_line_2' => $values['sbp_address_line_2'],
+      'city' => $values['sbp_city'],
+      'state' => $values['sbp_state'],
+      'zip' => $zip,
+      'full_address' => $values['sbp_address'] . "\n" . $line_2 . $values['sbp_city'] . ", " . $values['sbp_state'] . " " . $zip,
+      'county' => isset($geo['county']) ? $geo['county'] : '',
+      'fips' => isset($geo['fips']) ? $geo['fips'] : '',
+      'latitude' => isset($geo['latitude']) ? $geo['latitude'] : '',
+      'longitude' => isset($geo['longitude']) ? $geo['longitude'] : '',
+    );
+  }
+  else {
+    // To make it past the TargetResolverController validator function
+    // send dummy values.
+    $contact += array(
+      'address' => 'Any Street',
+      'address_line_2' => '',
+      'city' => 'Any City',
+      'state' => 'NY',
+      'zip' => '12345-1234',
+      'full_address' => '',
+      'county' => isset($geo['county']) ? $geo['county'] : '',
+      'fips' => isset($geo['fips']) ? $geo['fips'] : '',
+      'latitude' => isset($geo['latitude']) ? $geo['latitude'] : '',
+      'longitude' => isset($geo['longitude']) ? $geo['longitude'] : '',
+    );
+  }
   return $contact;
 }
 

@@ -79,10 +79,11 @@ function sba_social_action_additional_elements(&$form, &$form_state) {
   }
 
   // Create a set of fields for each message assigned to the form.
-  $districted = false;
+  $districted = FALSE;
   foreach ($form['#node']->messages as $message) {
     sba_social_action_message_form($form['sba_messages'], $message, $multiple, $message->type, $districted);
   }
+  // value of districted can change after being passed by reference above.
   if ($districted == FALSE) {
     $form['submitted']['sbp_address']['#access'] = FALSE;
     $form['submitted']['sbp_address_line_2']['#access'] = FALSE;
@@ -90,6 +91,11 @@ function sba_social_action_additional_elements(&$form, &$form_state) {
     $form['submitted']['sbp_state']['#access'] = FALSE;
     $form['submitted']['sbp_zip']['#access'] = FALSE;
   }
+
+  $form['districted'] = array(
+    '#type' => 'value',
+    '#value' => $districted,
+  );
 
   $form['#validate'][] = 'sba_social_action_form_validate';
   array_unshift($form['#submit'], 'sba_social_action_form_submit');
@@ -128,25 +134,27 @@ function sba_social_action_message_form(&$form, $message, $multiple, $message_en
     '#attributes' => array('class' => array('sba-message')),
   );
 
-  $form['message'][$message->sba_message_id]['message_id'] = array(
+  $this_message =& $form['message'][$message->sba_message_id];
+
+  $this_message['message_id'] = array(
     '#type' => 'value',
     '#value' => $message->data['message_id'],
   );
 
-  $form['message'][$message->sba_message_id]['sba_message_id'] = array(
+  $this_message['sba_message_id'] = array(
     '#type' => 'value',
     '#value' => $message->sba_message_id,
   );
 
   // The body value field is present in either case.
   // The value here is eventually passed to the API server.
-  $form['message'][$message->sba_message_id]['body'] = array(
+  $this_message['body'] = array(
     '#type' => 'value',
     '#value' => $message_body,
   );
 
   if ($preview_form) {
-    $form['message'][$message->sba_message_id]['alternate_options'] = array(
+    $this_message['alternate_options'] = array(
       '#type' => 'value',
       '#value' => $alternate_options,
     );
@@ -160,7 +168,7 @@ function sba_social_action_message_form(&$form, $message, $multiple, $message_en
       $required = FALSE;
     }
     if(!$message_editable) {
-      $form['message'][$message->sba_message_id]['body_show'] = array(
+      $this_message['body_show'] = array(
         '#type' => 'item',
         '#title' => '',
         '#markup' => $message_body,
@@ -169,7 +177,7 @@ function sba_social_action_message_form(&$form, $message, $multiple, $message_en
 
     }
     else {
-      $form['message'][$message->sba_message_id]['edited_body'] = array(
+      $this_message['edited_body'] = array(
         '#type' => 'textarea',
         '#default_value' => $message_body,
         '#description' => '<p>You have <span class="counter"></span> characters left.</p>',
@@ -179,7 +187,7 @@ function sba_social_action_message_form(&$form, $message, $multiple, $message_en
     }
   }
 
-  $form['message'][$message->sba_message_id]['body_required'] = array(
+  $this_message['body_required'] = array(
     '#type' => 'value',
     '#value' => $required_message,
   );
@@ -203,15 +211,17 @@ function sba_social_action_form_validate($form, &$form_state) {
   form_load_include($form_state, 'inc', 'springboard_advocacy', 'includes/springboard_advocacy.smarty_streets');
   $webform_values_flat = _springboard_advocacy_webform_submission_flatten($form['#node']->nid, $form_state['values']['submitted']);
   form_set_value($form['webform_flat'], $webform_values_flat, $form_state);
-  $smarty_geo = springboard_advocacy_smarty_lookup($webform_values_flat);
-  if (!empty($smarty_geo) && is_array($smarty_geo)) {
-    form_set_value($form['smarty_geo'], $smarty_geo, $form_state);
-    if (isset($smarty_geo['zip']) && isset($smarty_geo['plus4'])) {
-      form_set_value($form['submitted']['sbp_zip_plus_four'], $smarty_geo['zip'] . '-' . $smarty_geo['plus4'], $form_state);
+  if (!empty($form_state['values']['districted'])) {
+    $smarty_geo = springboard_advocacy_smarty_lookup($webform_values_flat);
+    if (!empty($smarty_geo) && is_array($smarty_geo)) {
+      form_set_value($form['smarty_geo'], $smarty_geo, $form_state);
+      if (isset($smarty_geo['zip']) && isset($smarty_geo['plus4'])) {
+        form_set_value($form['submitted']['sbp_zip_plus_four'], $smarty_geo['zip'] . '-' . $smarty_geo['plus4'], $form_state);
+      }
     }
-  }
-  else {
-    form_set_error('', t('We could not verify your address. Please check that the street, city, state and zip code information is correct.'));
+    else {
+      form_set_error('', t('We could not verify your address. Please check that the street, city, state and zip code information is correct.'));
+    }
   }
 }
 
@@ -225,8 +235,7 @@ function sba_social_action_form_validate($form, &$form_state) {
  * @param $form_state
  */
 function sba_social_action_form_submit($form, &$form_state) {
-  $_SESSION['delivered_messages'] = array();
-  $_SESSION['undelivered_messages'] = array();
+
   $_SESSION['deliverable_social_messages'] = array();
   $_SESSION['undeliverable_social_messages'] = array();
   $_SESSION['contact'] = array();

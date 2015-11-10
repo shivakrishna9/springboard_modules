@@ -186,7 +186,15 @@ function sba_social_action_preview_form($form, $form_state, $node) {
         }
       }
     }
-    $this_message['alternate'] = array('#markup' => 'Other contact options: '.  implode(' | ', $alt_links));
+    if (!empty($alt_links)) {
+      $count = count($alt_links);
+      $methods = format_plural($count, 'this other method', 'one of these other methods');
+      $this_message['alternate'] = array(
+        '#markup' => t('Or, if you prefer, please reach out to @target using @method: ', array('@method' => $methods, '@target' => $message['person']['name'])) . implode(' | ', $alt_links),
+        '#prefix' => '<div class="sba-alternate-contact"><p>',
+        '#suffix' => '</p></div>',
+      );
+    }
     // Assign the message to the messages container.
     $form['form_container']['messages'][$key]['message'] = $this_message;
   }
