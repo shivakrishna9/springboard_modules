@@ -115,7 +115,7 @@ function market_source_update_7002(&$sandbox) {
 
   $fields = market_source_market_source_field_info();
 
-  $result = db_select('webform', 'w')
+  $result = db_select('webform_component', 'w')
       ->distinct(TRUE)
       ->fields('w', array('nid'))
       ->range(0, 3)
