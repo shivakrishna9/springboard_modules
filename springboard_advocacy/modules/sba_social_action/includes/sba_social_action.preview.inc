@@ -39,6 +39,10 @@ function sba_social_action_message_preview_page($nid) {
 /**
  * Multi-step form definition.
  *
+ * This form is mostly within a container that gets ajax replaced when the Oauth
+ * login window popup is closed, which causes the form elements to
+ * become non-disabled.
+ *
  * @param $form
  * @param $form_state
  * @param $node
@@ -46,6 +50,7 @@ function sba_social_action_message_preview_page($nid) {
  * @return mixed
  */
 function sba_social_action_preview_form($form, $form_state, $node) {
+  // Access variable to determine form element accessibility.
   $access = TRUE;
   if (!isset($_SESSION['sba_twitter'])) {
     $access = FALSE;
@@ -57,19 +62,21 @@ function sba_social_action_preview_form($form, $form_state, $node) {
   $form['#attached']['js'][] = drupal_get_path('module', 'sba_social_action') . '/js/social_message_preview.js';
   $form['#attached']['js'][] = drupal_get_path('module', 'sba_social_action') . '/js/jquery.oauthpopup.js';
 
+  // Invisible form element used to trigger ajax update when popup widow closes.
   $form['ajaxify'] = array(
     '#type' =>  'button',
     '#attributes' => array('style' => array('display:none')),
     '#value' => 'off',
     '#ajax' => array(
-    'callback' => 'sba_social_actions_reload_form',
-    'wrapper' => 'form-container',
+      'callback' => 'sba_social_actions_reload_form',
+      'wrapper' => 'form-container',
       'effect' => 'fade',
       'speed' => 1000,
       'progress' => 'none'
-  ),
+    ),
   );
 
+  // Ajax container
   $form['form_container'] = array(
     '#type' => 'container',
     '#prefix' => '<div id="form-container">',
@@ -85,37 +92,35 @@ function sba_social_action_preview_form($form, $form_state, $node) {
   }
 
   // Build the form content out of the API response stored in session.
+  // First sort the messages.
   $messages = array();
   if (!empty($_SESSION['deliverable_social_messages']['messages'])) {
-
     foreach ($_SESSION['deliverable_social_messages']['messages'] as $id => $message) {
       $messages[$node->messages[$message['message_id']]->data['weight'] . $message['person']['organization'] . $message['targets']->last_name] = $message;
       unset($messages[$id]);
     }
   }
-
   if (!empty($_SESSION['undeliverable_social_messages']['messages'])) {
     foreach ($_SESSION['undeliverable_social_messages']['messages'] as $message) {
       $messages[$node->messages[$message['message_id']]->data['weight'] . $message['person']['organization'] . $message['targets']->last_name] = $message;
     }
   }
-
   ksort($messages);
 
   // @todo explore other ways of retrieving these two.
   $contact = $_SESSION['contact'];
   $action = $_SESSION['form_details'];
-
+  // A couple values we'll need later
   $form['action_id'] = array(
     '#type' => 'value',
     '#value' => $action['action_id'],
   );
-
   $form['contact'] = array(
     '#type' => 'value',
     '#value' => $contact,
   );
 
+  // Rebuild the messages for display
   $form['form_container']['messages'] = array (
     '#type' => 'container',
     '#tree' => TRUE,
@@ -123,11 +128,13 @@ function sba_social_action_preview_form($form, $form_state, $node) {
       'class' => array('message-preview-container'),
     ),
   );
-
-
   // Used to send our second step form through the same helper functions as the first step form.
   module_load_include('inc', 'sba_social_action', 'includes/sba_social_action.form');
+
   foreach ($messages as $key => $message) {
+
+    // What type of message is this.
+    $message_entity = $node->messages[$message['message_id']];
     $message_entity_type = $node->messages[$message['message_id']]->type;
 
     // Theme the message header.
@@ -137,47 +144,55 @@ function sba_social_action_preview_form($form, $form_state, $node) {
 
     // Create the message form elements from the entity. Passed by reference
     // to the same helper function as the first step form.
-    $message_entity = $node->messages[$message['message_id']];
     $build = array();
     sba_social_action_message_form($build, $message_entity, 'multi_flow', $message_entity_type);
-    $build['message'][$message_entity->sba_message_id]['#attributes']['class'][] = 'message-preview-message-fieldset';
+
+    $this_message =& $build['message'][$message_entity->sba_message_id];
+    $this_message['#attributes']['class'][] = 'message-preview-message-fieldset';
 
     // Build an array of target properties
-    $build['message'][$message_entity->sba_message_id]['target'] = array(
+    $this_message['target'] = array(
       '#type' => 'value',
-      '#value' => array('target_id' => $message['targets']->id, 'twitter' => $message['targets']->twitter, 'salutation' => $message['targets']->salutation, 'first_name' => $message['targets']->first_name, 'last_name' => $message['targets']->last_name),
+      '#value' => array(
+        'target_id' => $message['targets']->id,
+        'twitter' => $message['targets']->twitter,
+        'salutation' => $message['targets']->salutation,
+        'first_name' => $message['targets']->first_name,
+        'last_name' => $message['targets']->last_name
+      ),
     );
 
     // Check for required fields
-    if (isset($build['message'][$message_entity->sba_message_id]['body_required']) && $build['message'][$message_entity->sba_message_id]['body_required']['#value']) {
-      $build['message'][$message_entity->sba_message_id]['edited_body']['#required'] = TRUE;
-      $build['message'][$message_entity->sba_message_id]['edited_body']['#title'] =  t('You must edit the body of this message before sending');
+    if (isset($this_message['body_required']) && $this_message['body_required']['#value']) {
+      $this_message['edited_body']['#required'] = TRUE;
+      $this_message['edited_body']['#title'] =  t('You must edit the body of this message before sending');
+    }
+    if(isset($this_message['edited_body'])) {
+      $this_message['edited_body']['#disabled'] = !$access;
     }
 
-    if(isset($build['message'][$message_entity->sba_message_id]['edited_body'])) {
-      $build['message'][$message_entity->sba_message_id]['edited_body']['#disabled'] = !$access;
+    if (isset($this_message['subject_required']) && $this_message['subject_required']['#value']) {
+      $this_message['subject']['#required'] = TRUE;
+      $this_message['subject']['#title'] =  t('Subject - You must edit this subject line before sending');
     }
 
-    if (isset($build['message'][$message_entity->sba_message_id]['subject_required']) && $build['message'][$message_entity->sba_message_id]['subject_required']['#value']) {
-      $build['message'][$message_entity->sba_message_id]['subject']['#required'] = TRUE;
-      $build['message'][$message_entity->sba_message_id]['subject']['#title'] =  t('Subject - You must edit this subject line before sending');
-    }
-
-    $alternates = $build['message'][$message_entity->sba_message_id]['alternate_options']['#value'];
+    // Build the alternative social media links
+    $alternates = $this_message['alternate_options']['#value'];
+    $alt_links = array();
     if (!empty($alternates)) {
-      $altlinks = array();
       foreach ($alternates as $alternate) {
         if (isset($message['targets']->{strtolower($alternate)})) {
-          $altlinks[] =  l($alternate, $message['targets']->{strtolower($alternate)});
+          $alt_links[] =  l($alternate, $message['targets']->{strtolower($alternate)});
         }
       }
     }
-
-    $build['message'][$message_entity->sba_message_id]['alternate'] = array('#markup' => 'Other contact options: '.  implode(' | ', $altlinks));
-    $form['form_container']['messages'][$key]['message'] = $build['message'][$message_entity->sba_message_id];
+    $this_message['alternate'] = array('#markup' => 'Other contact options: '.  implode(' | ', $alt_links));
+    // Assign the message to the messages container.
+    $form['form_container']['messages'][$key]['message'] = $this_message;
   }
 
-
+  // Following are some header area content which need to be here in the code
+  //  to get ajax updated values.
   if($access == TRUE) {
     $markup = ('Please review the messages below; or if you prefer, simply <span id="multiflow-send-now-wrapper" style="display:inline-block"><a href="#" id="multiflow-send-now">send now</a></span>.');
   }
@@ -201,18 +216,23 @@ function sba_social_action_preview_form($form, $form_state, $node) {
       }
     }
   }
-
-  $form['form_container']['page_description_label']['#prefix'] = '<h4>';
-  $form['form_container']['page_description_label']['#suffix'] = '</h4>';
-  $form['form_container']['page_description_label']['#weight'] = -10;
-  $form['form_container']['page_description_label']['#markup'] = t('Step 2 of 2');
+  $form['form_container']['page_description_label'] = array(
+    '#prefix' => '<h4>',
+    '#suffix' => '</h4>',
+    '#weight' => -10,
+    '#markup' => t('Step 2 of 2'),
+  );
   if (isset($_SESSION['sba_twitter']['values']['screen_name'])) {
-    $form['form_container']['page_description_login']['#prefix'] = '<div><p>';
-    $form['form_container']['page_description_llogin']['#suffix'] = '</p></div>';
-    $form['form_container']['page_description_login']['#weight'] = -9;
-    $form['form_container']['page_description_login']['#markup'] = t('You will be posting to Twitter as @%name. If that is not the correct account, !clickhere to log out and start over. You will need to submit the first form again to re-sign into Twitter.', array('%name' => $_SESSION['sba_twitter']['values']['screen_name'], '!clickhere' => l('click here', 'clear/session', array('query' => array('nid' => $node->nid)))));
+    $form['form_container']['page_description_login'] = array(
+      '#prefix' => '<div><p>',
+      '#suffix' => '</p></div>',
+      '#weight' => -9,
+      '#markup' => t('You will be posting to Twitter as @%name. If that is not the correct account, !clickhere to log out and start over. You will need to submit the first form again to re-sign into Twitter.', array(
+        '%name' => $_SESSION['sba_twitter']['values']['screen_name'],
+        '!clickhere' => l('click here', 'clear/session', array('query' => array('nid' => $node->nid)))
+      )),
+    );
   }
-
   if ($subject_required || $body_required) {
     $editable_but_not_required = FALSE;
     $form['form_container']['page_description_content']['#markup'] = t('One or more of the messages below requires editing. Please make your edits and then click "Send Now" at the bottom of the page.');
@@ -220,8 +240,6 @@ function sba_social_action_preview_form($form, $form_state, $node) {
   if (!empty($editable_but_not_required) && $access == TRUE) {
     $markup = t('Please review and edit the messages below; or if you prefer, simply <span id="multiflow-send-now-wrapper"><a href="#" id="multiflow-send-now">send now</a></span>.');
   }
-
-
   $form['form_container']['page_description_content'] = array(
     '#id' => 'social-action-preview-page',
     '#type' => 'markup',
@@ -230,6 +248,7 @@ function sba_social_action_preview_form($form, $form_state, $node) {
     '#suffix' => '</p></div>',
     '#weight' => -8,
   );
+  // End header area content
 
   // Add the node object to use in validation and submit.
   $form['#action_node'] = $node;
@@ -249,6 +268,13 @@ function sba_social_action_preview_form($form, $form_state, $node) {
   return $form;
 }
 
+/**
+ * Ajax callback.
+ *
+ * @param $form
+ * @param $form_state
+ * @return mixed
+ */
 function sba_social_actions_reload_form($form, $form_state) {
   return $form['form_container'];
 }
@@ -332,7 +358,9 @@ function sba_social_action_preview_form_validate($form, &$form_state) {
  */
 function sba_social_action_preview_form_submit($form, &$form_state) {
 
-  module_load_include('inc', 'twitter');
+  module_load_include('php', 'oauth_common', 'lib/OAuth');
+  module_load_include('php', 'sba_social_action', 'includes/socialTwitter.lib');
+
   $node = $form['#action_node'];
   foreach ($form_state['values']['messages'] as $message) {
 
@@ -342,9 +370,6 @@ function sba_social_action_preview_form_submit($form, &$form_state) {
 
     if(empty($node->field_sba_test_mode)) {
       try {
-        module_load_include('php', 'oauth_common', 'lib/OAuth');
-        module_load_include('php', 'sba_social_action', 'includes/socialTwitter.lib');
-
         $twitter = new socialTwitter(
           variable_get('social_action_twitter_consumer_key', ''),
           variable_get('social_action_twitter_consumer_secret', ''),
@@ -358,12 +383,15 @@ function sba_social_action_preview_form_submit($form, &$form_state) {
         drupal_set_message(t('An error occurred when posting to Twitter. Check the system log for details.'), 'error');
       }
     }
+    else {
+      drupal_set_message('This action was in test mode. Messages were not sent.');
+    }
   }
 
   // Get sba_social_action_build_message_bodies().
-  module_load_include('inc', 'sba_social_action', 'includes/sba_social_action.form');
-
-  $messages = $form_state['values']['messages'];
+//  module_load_include('inc', 'sba_social_action', 'includes/sba_social_action.form');
+//
+//  $messages = $form_state['values']['messages'];
 
   // Add session flag to prevent resubmission of the form
   $_SESSION['action_completed'] = TRUE;
