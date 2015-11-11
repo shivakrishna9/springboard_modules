@@ -86,7 +86,7 @@ function sba_social_action_preview_form($form, $form_state, $node) {
   if (!isset($_SESSION['sba_twitter'])) {
     $form['form_container']['twitter_sign_in'] = array(
       '#type' => 'button',
-      '#value' => 'Sign in to Twitter',
+      '#value' => 'Authorize with Twitter',
       '#attributes' => array('class' => array('twitter-sign'))
     );
   }
@@ -205,7 +205,7 @@ function sba_social_action_preview_form($form, $form_state, $node) {
     $markup = ('Please review the messages below; or if you prefer, simply <span id="multiflow-send-now-wrapper" style="display:inline-block"><a href="#" id="multiflow-send-now">send now</a></span>.');
   }
   else {
-    $markup = t('You must sign in with Twitter and authorize this app before posting.');
+    $markup = t('In order to post, you must authorize our web app to access your Twitter account.');
   }
   $messages = $form['form_container']['messages'];
   $children = array_flip(element_children($messages));
@@ -235,9 +235,9 @@ function sba_social_action_preview_form($form, $form_state, $node) {
       '#prefix' => '<div><p>',
       '#suffix' => '</p></div>',
       '#weight' => -9,
-      '#markup' => t('You will be posting to Twitter as @%name. If that is not the correct account, !clickhere to log out and start over. You will need to submit the first form again to re-sign into Twitter.', array(
+      '#markup' => t('You will be posting to Twitter as @%name. If that is not the correct account, !clickhere.', array(
         '%name' => $_SESSION['sba_twitter']['values']['screen_name'],
-        '!clickhere' => l('click here', 'clear/session', array('query' => array('nid' => $node->nid)))
+        '!clickhere' => l('click here', 'clear/session', array('query' => array('destination' => 'node/' . $node->nid . '/social-message-preview')))
       )),
     );
   }
