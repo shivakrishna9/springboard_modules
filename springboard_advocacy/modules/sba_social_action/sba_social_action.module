@@ -649,18 +649,23 @@ function sba_social_action_tokens($type, $tokens, $data = array(), $options = ar
       $redirect = request_uri();
     }
 
-    if ($type == 'social_action' && !empty($_SESSION['sba_twitter'])) {
+    if ($type == 'social_action') {
       foreach ($tokens as $name => $original) {
-        $recipients = '';
+
         switch ($name) {
           case 'twitter_timeline':
-            $widget = theme('sba_social_action_twitter_timeline', array(
-              'sba_twitter' => $_SESSION['sba_twitter'],
-              'node' => $node
-            ));;
+            $widget = '';
+            if (!empty($_SESSION['sba_twitter'])) {
+              $widget = theme('sba_social_action_twitter_timeline', array(
+                'sba_twitter' => $_SESSION['sba_twitter'],
+                'node' => $node
+              ));;
+            }
             $replacements[$original] = $widget;
             break;
+
           case 'twitter_signout':
+            $link = '';
             if (!empty($_SESSION['sba_twitter'])) {
               $link = theme('sba_social_action_twitter_signout_link', array('destination' => $redirect));
             }
