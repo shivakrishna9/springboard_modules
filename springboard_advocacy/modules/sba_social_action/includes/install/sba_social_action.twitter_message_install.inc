@@ -1,15 +1,17 @@
 <?php
 
-function sba_social_action_create_twitter_message_entity() {
+function sba_social_action_create_twitter_message_entity($update = FALSE) {
 
-  entity_save('sba_message',
-    entity_create('sba_message_type',
-      array(
-        'label'=> 'SBA Social Action Twitter Message',
-        'type' => 'sba_social_action_twitter_message'
+  if ($update ==FALSE) {
+    entity_save('sba_message',
+      entity_create('sba_message_type',
+        array(
+          'label' => 'SBA Social Action Twitter Message',
+          'type' => 'sba_social_action_twitter_message'
+        )
       )
-    )
-  );
+    );
+  }
 
   $field_bases = array();
 
@@ -156,6 +158,31 @@ function sba_social_action_create_twitter_message_entity() {
     ),
     'translatable' => 0,
     'type' => 'entityreference',
+  );
+
+  $field_bases['field_sba_prepend_target_name'] = array(
+    'active' => 1,
+    'cardinality' => 1,
+    'deleted' => 0,
+    'entity_types' => array(),
+    'field_name' => 'field_sba_prepend_target_name',
+    'foreign keys' => array(),
+    'indexes' => array(
+      'value' => array(
+        0 => 'value',
+      ),
+    ),
+    'locked' => 0,
+    'module' => 'list',
+    'settings' => array(
+      'allowed_values' => array(
+        0 => '',
+        1 => '',
+      ),
+      'allowed_values_function' => '',
+    ),
+    'translatable' => 0,
+    'type' => 'list_boolean',
   );
 
   $field_instances = array();
@@ -355,6 +382,42 @@ function sba_social_action_create_twitter_message_entity() {
     ),
   );
 
+  // Exported field_instance: 'node-article-field_prepend_target_name_with_'
+  $field_instances['field_sba_prepend_target_name'] = array(
+    'bundle' => 'sba_social_action_twitter_message',
+    'default_value' => array(
+      0 => array(
+        'value' => 1,
+      ),
+    ),
+    'deleted' => 0,
+    'description' => 'If you prefix the @name of your targets with a period, the Tweet will appear on the user\'s main timeline and the timelines of his followers. If this message will have many targets (and tweets), you should consider turning the prefix off, so that the user does not flood his follower\'s timelines with identical tweets.',
+    'display' => array(
+      'default' => array(
+        'label' => 'hidden',
+        'settings' => array(),
+        'type' => 'hidden',
+        'weight' => 6,
+      ),
+    ),
+    'entity_type' => 'sba_message',
+    'field_name' => 'field_sba_prepend_target_name',
+    'label' => 'Prepend target @name with "."',
+    'required' => 0,
+    'settings' => array(
+      'user_register_form' => FALSE,
+    ),
+    'widget' => array(
+      'active' => 1,
+      'module' => 'options',
+      'settings' => array(
+        'display_label' => 1,
+      ),
+      'type' => 'options_onoff',
+      'weight' => 0,
+    ),
+  );
+
   foreach ($field_bases as $key => $values) {
     $base = field_info_field($key);
     if (empty($base)) {
@@ -368,63 +431,65 @@ function sba_social_action_create_twitter_message_entity() {
     }
   }
 
-  $export = array();
+  if ($update == FALSE) {
+    $export = array();
 
-  $field_group = new stdClass();
-  $field_group->disabled = FALSE; /* Edit this to true to make a default field_group disabled initially */
-  $field_group->api_version = 1;
-  $field_group->identifier = 'group_sba_target_options|sba_message|sba_social_action_twitter_message|form';
-  $field_group->group_name = 'group_sba_target_options';
-  $field_group->entity_type = 'sba_message';
-  $field_group->bundle = 'sba_social_action_twitter_message';
-  $field_group->mode = 'form';
-  $field_group->parent_name = '';
-  $field_group->label = 'Target Options';
-  $field_group->weight = '2';
-  $field_group->children = array(
-    0 => 'field_sba_target_options',
-    1 => 'field_sba_show_additional',
-  );
-  $field_group->format_type = 'fieldset';
-  $field_group->format_settings = array(
-    'formatter' => 'open',
-    'instance_settings' => array(
-      'description' => '',
-      'classes' => 'group-sba-target-options field-group-fieldset',
-      'required_fields' => 1,
-    ),
-  );
-  $export['group_sba_target_options|sba_message|sba_social_action_twitter_message|form'] = $field_group;
+    $field_group = new stdClass();
+    $field_group->disabled = FALSE; /* Edit this to true to make a default field_group disabled initially */
+    $field_group->api_version = 1;
+    $field_group->identifier = 'group_sba_target_options|sba_message|sba_social_action_twitter_message|form';
+    $field_group->group_name = 'group_sba_target_options';
+    $field_group->entity_type = 'sba_message';
+    $field_group->bundle = 'sba_social_action_twitter_message';
+    $field_group->mode = 'form';
+    $field_group->parent_name = '';
+    $field_group->label = 'Target Options';
+    $field_group->weight = '2';
+    $field_group->children = array(
+      0 => 'field_sba_target_options',
+      1 => 'field_sba_show_additional',
+    );
+    $field_group->format_type = 'fieldset';
+    $field_group->format_settings = array(
+      'formatter' => 'open',
+      'instance_settings' => array(
+        'description' => '',
+        'classes' => 'group-sba-target-options field-group-fieldset',
+        'required_fields' => 1,
+      ),
+    );
+    $export['group_sba_target_options|sba_message|sba_social_action_twitter_message|form'] = $field_group;
 
-  $field_group = new stdClass();
-  $field_group->disabled = FALSE; /* Edit this to true to make a default field_group disabled initially */
-  $field_group->api_version = 1;
-  $field_group->identifier = 'group_sba_sample_tweet|sba_message|sba_social_action_twitter_message|form';
-  $field_group->group_name = 'group_sba_sample_tweet';
-  $field_group->entity_type = 'sba_message';
-  $field_group->bundle = 'sba_social_action_twitter_message';
-  $field_group->mode = 'form';
-  $field_group->parent_name = '';
-  $field_group->label = 'Tweet Options';
-  $field_group->weight = '1';
-  $field_group->children = array(
-    0 => 'field_sba_twitter_editable',
-    1 => 'field_sba_twitter_message',
-  );
-  $field_group->format_type = 'fieldset';
-  $field_group->format_settings = array(
-    'label' => 'Tweet Options',
-    'instance_settings' => array(
-      'required_fields' => 1,
-      'classes' => 'group-sba-tweet field-group-fieldset',
+    $field_group = new stdClass();
+    $field_group->disabled = FALSE; /* Edit this to true to make a default field_group disabled initially */
+    $field_group->api_version = 1;
+    $field_group->identifier = 'group_sba_sample_tweet|sba_message|sba_social_action_twitter_message|form';
+    $field_group->group_name = 'group_sba_sample_tweet';
+    $field_group->entity_type = 'sba_message';
+    $field_group->bundle = 'sba_social_action_twitter_message';
+    $field_group->mode = 'form';
+    $field_group->parent_name = '';
+    $field_group->label = 'Tweet Options';
+    $field_group->weight = '1';
+    $field_group->children = array(
+      0 => 'field_sba_twitter_editable',
+      1 => 'field_sba_twitter_message',
+    );
+    $field_group->format_type = 'fieldset';
+    $field_group->format_settings = array(
+      'label' => 'Tweet Options',
+      'instance_settings' => array(
+        'required_fields' => 1,
+        'classes' => 'group-sba-tweet field-group-fieldset',
         'description' => 'The @name of each target you select will be prepended automatically to this message. If there are multiple targets, multiple copies of the message will be shown to the site visitor, one per target. The target @names affect your message character limit. Do not include target @names in the message text unless they are not your primary targets.',
-    ),
-    'formatter' => 'open',
-  );
-  $export['group_sba_sample_tweet|sba_message|sba_social_action_twitter_message|form'] = $field_group;
+      ),
+      'formatter' => 'open',
+    );
+    $export['group_sba_sample_tweet|sba_message|sba_social_action_twitter_message|form'] = $field_group;
 
-  foreach($export as $field_group) {
-    field_group_group_save($field_group);
+    foreach ($export as $field_group) {
+      field_group_group_save($field_group);
+    }
   }
 }
 
@@ -436,7 +501,8 @@ function _sba_social_action_delete_twitter_fields() {
     'field_sba_twitter_message',
     'field_sba_twitter_editable',
     'field_sba_show_additional',
-    'field_sba_target_options'
+    'field_sba_target_options',
+    'field_sba_prepend_target_name'
   );
   foreach ($fields as $field_name) {
     $field = field_info_instance('node', $field_name, 'sba_social_action_twitter_message');

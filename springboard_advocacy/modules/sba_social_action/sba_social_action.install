@@ -27,3 +27,19 @@ function sba_social_action_update_7001() {
   module_load_include('inc', 'sba_social_action', 'includes/install/sba_social_action.install_fields');
   _sba_social_action_create_node_fields(TRUE);
 }
+
+function sba_social_action_update_7003() {
+  module_load_include('inc', 'sba_social_action', 'includes/install/sba_social_action.twitter_message_install');
+  sba_social_action_create_twitter_message_entity(TRUE);
+
+  $groups = field_group_read_groups(array(
+    'entity_type' => 'sba_message',
+    'bundle'      => 'sba_social_action_twitter_message',
+    'view_mode'   => 'full'
+  ));
+
+  $group = $groups['sba_message']['sba_social_action_twitter_message']['form']['group_sba_sample_tweet'];
+  $group->children[] = 'field_sba_prepend_target_name';
+  field_group_group_save($group);
+
+}
