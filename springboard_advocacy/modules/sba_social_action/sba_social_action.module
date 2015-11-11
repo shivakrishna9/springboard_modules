@@ -216,6 +216,12 @@ function sba_social_action_theme($existing, $type, $theme, $path) {
       'render element' => 'element',
       'file' => 'includes/sba_social_action.form_layouts.inc',
     ),
+    'sba_social_action_twitter_timeline' => array(
+      'render element'  => 'timeline',
+    ),
+    'sba_social_action_twitter_signout_link' => array(
+      'render element'  => 'destination',
+    ),
   );
 }
 
@@ -369,6 +375,25 @@ function sba_social_action_multiflow_submit($form, &$form_state) {
   );
 }
 
+//@todo districted tweet fail?
+//function sba_message_action_multifow_submit($form, &$form_state) {
+//  $node = $form['#node'];
+//  if (!empty($_SESSION['delivered_messages']) || !empty($_SESSION['undelivered_messages'])) {
+//    $sid = $form_state['values']['details']['sid'];
+//    $_SESSION['action_sid'] = array('sid' => $sid, 'nid' => $node->nid);
+//    $form_state['redirect'] = array(
+//      'node/' . $node->nid . '/message-preview',
+//      array('query' => array('sid' => $sid))
+//    );
+//  }
+//  else {
+//    if(!empty($form['#node']->custom_fail_message) && $node->webform['redirect_url'] != '<confirmation>') {
+//      drupal_get_messages('status');
+//      drupal_set_message(check_markup($form['#node']->custom_fail_message, 'full_html', '', TRUE));
+//    }
+//  }
+//}
+
 
 /**
  * Redirect to twitter authentication after a webform submission.
@@ -518,9 +543,137 @@ function sba_social_action_clear_twitter_session() {
  * @param $vars
  */
 function sba_social_action_preprocess_webform_confirmation(&$vars) {
+
+  if (isset($vars['node']) && $vars['node']->type == 'sba_social_action') {
+    $node = $vars['node'];
+
+  }
+}
+
+function theme_sba_social_action_twitter_timeline(&$vars) {
+  $name = $vars['sba_twitter']['values']['screen_name'];
+  $node = $vars['node'];
   drupal_add_css(drupal_get_path('module', 'sba_social_action') . '/css/social-message-confirmation.css');
-  if (!empty($_SESSION['sba_twitter']['values']['screen_name'])) {
-    $vars['confirmation_message'] .= '<a class="twitter-timeline"  href="https://twitter.com/' . $_SESSION['sba_twitter']['values']['screen_name'] .'" data-chrome="nofooter hoheader" data-widget-id="661981842917171200" data-screen-name="' . $_SESSION['sba_twitter']['values']['screen_name'] . '">Tweets by @' . $_SESSION['sba_twitter']['values']['screen_name'] . '</a><script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?\'http\':\'https\';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+"://platform.twitter.com/widgets.js";fjs.parentNode.insertBefore(js,fjs);}}(document,"script","twitter-wjs");</script>';
+//  drupal_add_js("!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'twitter-wjs')", 'inline');
+//  drupal_add_js('!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?\'http\':\'https\';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+"://platform.twitter.com/widgets.js";fjs.parentNode.insertBefore(js,fjs);}}(document,"script","twitter-wjs");', 'inline');
+
+  // header
+  $output = '<div class="twitter-widget-header">';
+  $output .= '<div class="twitter-widget-title">Your Tweets</div>';
+  $output .= '<div class="twitter-widget-top"><span class="twitter-widget-share-text">Share the action you just took: </span>';
+  $output .= '<span class="twitter-widget-share-button"> <a href="https://twitter.com/share" class="twitter-share-button"';
+
+  $output .=  ' data-url="' . $GLOBALS['base_url'] . '/node/' . $node->nid . '"';
+  $output .=  ' data-text="' . check_plain($node->title) . '"';
+  $output .= ' data-size="large" data-count="none" data-dnt="true">Tweet</a></span></div>';
+  $output .= "<script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'twitter-wjs');</script>";
+  $output .='</div>';
+
+
+  $output .= '<a class="twitter-timeline"  href="https://twitter.com/';
+  $output .= $name;
+  $output .= '" data-chrome="nofooter noheader" data-widget-id="661981842917171200" data-screen-name="' . $name . '">';
+  $output .= 'Tweets by @' . $name . '</a><br /><br />';
+  $output .= '<script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?\'http\':\'https\';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+"://platform.twitter.com/widgets.js";fjs.parentNode.insertBefore(js,fjs);}}(document,"script","twitter-wjs");</script>';
+  return $output;
+
+}
+
+/**
+ *
+ */
+function theme_sba_social_action_twitter_signout_link(&$vars) {
+  $destination = $vars['destination'];
+  if (is_array($destination)) {
+    $destination = call_user_func_array('url', $destination);
+  }
+  $link = l('sign out of our Twitter app.', 'clear/session', array(
+    'attributes' => array(
+      'class' => array(
+        'twitter-sign-out'
+      )
+    ),
+    'query' => array('destination' => $destination)
+    )
+  );
+
+  return '<div><p>' . t("If you're done Tweeting, please !signout", array('!signout' => $link)) . '</p></div>';
+}
+
+
+/**
+ * Implements hook_token_info().
+ */
+function sba_social_action_token_info() {
+  $types['social_action'] = array(
+    'name' => t("Social Actions"),
+    'description' => t("Tokens for Social Actions."),
+  );
+
+  $tokens['twitter_timeline'] = array(
+    'name' => t("Twitter timeline widget"),
+    'description' => '',
+  );
+
+  $tokens['twitter_signout'] = array(
+    'name' => t("Twitter signout link"),
+    'description' => '',
+  );
+
+  return array(
+    'types' => $types,
+    'tokens' => array(
+      'social_action' => $tokens,
+    ),
+  );
+}
+
+
+/**
+ * Implements hook_tokens().
+ */
+function sba_social_action_tokens($type, $tokens, $data = array(), $options = array()) {
+  $replacements = array();
+
+  if (isset($data['node'])) {
+    $node = $data['node'];
+  }
+  elseif(arg(0) == 'node' && is_numeric(arg(1))) {
+    $node = node_load(arg(1));
   }
 
+    if (isset($node->webform['redirect_url']) && $node->webform['redirect_url'] != '<confirmation>') {
+      $redirect = $node->webform['redirect_url'];
+    }
+    else {
+      $redirect = request_uri();
+    }
+
+    if ($type == 'social_action' && !empty($_SESSION['sba_twitter'])) {
+      foreach ($tokens as $name => $original) {
+        $recipients = '';
+        switch ($name) {
+          case 'twitter_timeline':
+            $widget = theme('sba_social_action_twitter_timeline', array(
+              'sba_twitter' => $_SESSION['sba_twitter'],
+              'node' => $node
+            ));;
+            $replacements[$original] = $widget;
+            break;
+          case 'twitter_signout':
+            if (!empty($_SESSION['sba_twitter'])) {
+              $link = theme('sba_social_action_twitter_signout_link', array('destination' => $redirect));
+            }
+            $replacements[$original] = $link;
+            break;
+        }
+      }
+    }
+
+  return $replacements;
+
+}
+
+function sba_social_action_preprocess_status_messages($vars) {
+  drupal_add_css(drupal_get_path('module', 'sba_social_action') . '/css/social-message-confirmation.css');
 }

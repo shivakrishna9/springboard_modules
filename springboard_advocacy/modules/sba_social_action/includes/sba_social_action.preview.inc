@@ -388,12 +388,13 @@ function sba_social_action_preview_form_submit($form, &$form_state) {
         $twitter->statuses_update($body);
 
       } catch (socialTwitterException $e) {
-        drupal_set_message(t('An error occurred when posting to Twitter. Check the system log for details.'), 'error');
+        drupal_set_message(t('An error occurred when posting to Twitter. Check the system log for details.'), 'error', TRUE);
       }
     }
     else {
-      drupal_set_message('This action was in test mode. Messages were not sent.');
+      drupal_set_message('This action was in test mode. Messages were not sent.', 'warning', TRUE);
     }
+
   }
 
   // Get sba_social_action_build_message_bodies().
@@ -419,6 +420,7 @@ function sba_social_action_preview_form_submit($form, &$form_state) {
     }
     else {
       $redirect = springboard_advocacy_parse_redirect($node, $submission);
+
       $form_state['redirect'] = $redirect;
       if (!empty($_SESSION['saved_messages']['status'])) {
         $_SESSION['messages']['status'] =  $_SESSION['saved_messages']['status'];
