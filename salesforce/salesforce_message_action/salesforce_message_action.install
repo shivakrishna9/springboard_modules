@@ -489,20 +489,6 @@ function salesforce_message_action_message_action_fieldmap() {
 }
 
 /**
- * Implements hook_update_dependencies()
- */
-function salesforce_message_action_update_dependencies() {
-  $dependencies = array();
-
-  // This update depends on Market Source device info fields existing.
-  $dependencies['salesforce_message_action'][7003] = array(
-    'market_source' => 7002,
-  );
-
-  return $dependencies;
-}
-
-/**
  * Revert manual changes that were required to work around a fieldmap bug in 4.7.
  * Changes the value of the module field from sba_message_action to salesforce_message_action.
  *
@@ -546,45 +532,5 @@ function salesforce_message_action_update_7002() {
         ->condition('mid', $record->mid)
         ->execute();
     }
-  }
-}
-
-/**
- * Add Salesforce mappings for Market Source device fields to existing forms.
- */
-function salesforce_message_action_update_7003(&$sandbox) {
-  if (!isset($sandbox['progress'])) {
-    $sandbox['progress'] = 0;
-    $sandbox['current_mid'] = 0;
-    $sandbox['max'] = db_query('SELECT COUNT(`mid`) FROM {salesforce_genmap_map} WHERE `module` = :module',
-        array(':module' => 'salesforce_message_action'))->fetchField();
-  }
-
-  $result = db_select('salesforce_genmap_map', 'map')
-      ->fields('map', array('mid', 'nid', 'map_handler'))
-      ->condition('map.module', 'salesforce_message_action', '=')
-      ->condition('map.mid', $sandbox['current_mid'], '>')
-      ->range(0, 3)
-      ->orderBy('mid', 'ASC')
-      ->execute();
-
-  while ($record = $result->fetchAssoc()) {
-    $map = salesforce_genmap_load_map($record['nid'], $record['map_handler']);
-
-    $map->field_map['salesforce_webform_map']['device_type'] = 'Device_Type__c';
-    $map->field_map['salesforce_webform_map']['device_name'] = 'Device_Name__c';
-    $map->field_map['salesforce_webform_map']['device_os'] = 'Device_OS__c';
-    $map->field_map['salesforce_webform_map']['device_browser'] = 'Device_Browser__c';
-
-    salesforce_genmap_save_map($map, $record['map_handler']);
-
-    $sandbox['progress']++;
-    $sandbox['current_mid'] = $record['mid'];
-  }
-
-  $sandbox['#finished'] = empty($sandbox['max']) ? 1 : ($sandbox['progress'] / $sandbox['max']);
-
-  if ($sandbox['#finished'] >= 1) {
-    return t('Device info field mappings have been added to salesforce_message_action maps.');
   }
 }

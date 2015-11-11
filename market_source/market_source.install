@@ -100,7 +100,7 @@ function market_source_update_7001() {
 }
 
 /**
- * Adds mobile device fields to existing webforms.
+ * Add mobile device fields to existing webforms.
  */
 function market_source_update_7002(&$sandbox) {
   module_load_include('inc', 'webform', 'includes/webform.components');
