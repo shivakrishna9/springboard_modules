@@ -391,7 +391,7 @@ function sba_social_action_create_twitter_message_entity($update = FALSE) {
       ),
     ),
     'deleted' => 0,
-    'description' => 'If you prefix the @name of your targets with a period, the Tweet will appear on the user\'s main timeline and the timelines of his followers. If this message will have many targets (and tweets), you should consider turning the prefix off, so that the user does not flood his follower\'s timelines with identical tweets.',
+    'description' => 'This option will prefix the @name of your targets with a period, allowing the Tweet to appear on the user\'s main timeline and the timelines of his followers. If this message will have many targets (and tweets), you should not use the "." prefix, so that the user does not flood his follower\'s timelines with identical tweets.',
     'display' => array(
       'default' => array(
         'label' => 'hidden',
@@ -402,7 +402,7 @@ function sba_social_action_create_twitter_message_entity($update = FALSE) {
     ),
     'entity_type' => 'sba_message',
     'field_name' => 'field_sba_prepend_target_name',
-    'label' => 'Prepend target @name with "."',
+    'label' => 'Allow Tweets to appear on participant\'s main timeline and followers\' timelines?',
     'required' => 0,
     'settings' => array(
       'user_register_form' => FALSE,
@@ -414,7 +414,7 @@ function sba_social_action_create_twitter_message_entity($update = FALSE) {
         'display_label' => 1,
       ),
       'type' => 'options_onoff',
-      'weight' => 0,
+      'weight' => 11,
     ),
   );
 

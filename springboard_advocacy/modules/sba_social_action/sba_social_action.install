@@ -1,5 +1,8 @@
 <?php
 
+/**
+ * Implements hook_install().
+ */
 function sba_social_action_install() {
 
   module_load_include('inc', 'sba_social_action', 'includes/install/sba_social_action.install');
@@ -12,6 +15,9 @@ function sba_social_action_install() {
 
 }
 
+/**
+ * Implements hook_uninstall().
+ */
 function sba_social_action_uninstall() {
   module_load_include('inc', 'sba_social_action', 'includes/install/sba_social_action.install');
   _sba_social_action_delete_nodes();
@@ -23,14 +29,25 @@ function sba_social_action_uninstall() {
   field_purge_batch(1000);
 }
 
+/*
+ * Update social action node fields.
+ */
 function sba_social_action_update_7001() {
   module_load_include('inc', 'sba_social_action', 'includes/install/sba_social_action.install_fields');
   _sba_social_action_create_node_fields(TRUE);
 }
-
-function sba_social_action_update_7003() {
+/*
+ * Update Social action message entity fields.
+ */
+function sba_social_action_update_7002() {
   module_load_include('inc', 'sba_social_action', 'includes/install/sba_social_action.twitter_message_install');
   sba_social_action_create_twitter_message_entity(TRUE);
+}
+
+/*
+ * Add field_sba_prepend_target_name to group_sba_sample_tweet
+ */
+function sba_social_action_update_7003() {
 
   $groups = field_group_read_groups(array(
     'entity_type' => 'sba_message',
