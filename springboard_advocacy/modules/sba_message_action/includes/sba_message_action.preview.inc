@@ -6,10 +6,14 @@
  * @return array
  */
 function sba_message_action_message_preview_page($nid) {
-
   // $nid already sanitized in the access hook.
   $node = node_load($nid);
-
+  if (isset($_SESSION['messages']['status'])) {
+    // Prevent the confirmation message from appearing prematurely.
+    $_SESSION['saved_messages']['status'] = $_SESSION['messages']['status'];
+    // clear all
+    drupal_get_messages('status');
+  }
   // Check if the step two form has already been submitted.
   // @todo think about this.
   $completed = isset($_SESSION['action_completed']) ? $_SESSION['action_completed'] : TRUE;
@@ -421,22 +425,37 @@ function sba_message_action_preview_form_submit($form, &$form_state) {
         'targets' => '',
       );
   }
-
   // Redirect to the original confirmation page.
   // $sid is set in sba_message_action_multifow_submit()
   $sid = !empty($_SESSION['action_sid']['sid']) ? $_SESSION['action_sid']['sid'] : FALSE;
   if ($sid) {
+    module_load_include('inc', 'webform', 'includes/webform.submissions');
+    $submission = webform_get_submission($node->nid, $sid);
     unset($_SESSION['action_sid']);
-    $form_state['redirect'] = array(
-      'node/' . $node->nid . '/done',
-      array('query' => array('sid' => $sid))
-    );
+    if ($node->webform['redirect_url'] == '<confirmation>') {
+      $form_state['redirect'] = array(
+        'node/' . $node->nid . '/done',
+        array('query' => array('sid' => $sid))
+      );
+    }
+    else {
+      $redirect = sba_message_action_parse_redirect($node, $submission);
+      $form_state['redirect'] = $redirect;
+      if (!empty($_SESSION['saved_messages']['status'])) {
+        $_SESSION['messages']['status'] =  $_SESSION['saved_messages']['status'];
+      }
+    }
   }
   else {
-    // Gotta go somewhere.
+    // we don't have a submission identifier, this is not a legit request, redirect to the node
     $form_state['redirect'] = array('node/' . $node->nid);
+    if (!empty($_SESSION['saved_messages']['status'])) {
+      $_SESSION['messages']['status'] =  $_SESSION['saved_messages']['status'];
+    }
   }
-
+  if (!empty($_SESSION['saved_messages']['status'])) {
+    unset($_SESSION['saved_messages']['status']);
+  }
   // Update the user edit flag.
   if ($form_state['storage']['changed'] == TRUE) {
     if ($sid) {
@@ -472,9 +491,11 @@ function sba_message_action_preview_form_submit($form, &$form_state) {
     }
   }
   if ($sid) {
+    if (empty($submission)) {
+      module_load_include('inc', 'webform', 'includes/webform.submissions');
+      $submission = webform_get_submission($node->nid, $sid);
+    }
     // Update to trigger salesforce resync.
-    module_load_include('inc', 'webform', 'includes/webform.submissions');
-    $submission = webform_get_submission($node->nid, $sid);
     webform_submission_update($node, $submission);
   }
 }
@@ -493,4 +514,36 @@ function theme_sba_message_action_preview_message_header($vars) {
   $output .= theme('sba_message_action_person_details', $vars['message']['person']);
   $output .= '</div></div>';
   return $output;
+}
+
+/**
+ * Parse redirect url and filter webform tokens in redirect urls.
+ *
+ * @param $node
+ * @param $submission
+ * @return array|mixed
+ */
+function sba_message_action_parse_redirect($node, $submission) {
+  $redirect = NULL;
+  if (isset($node->webform['redirect_url'])) {
+    $redirect_url = trim($node->webform['redirect_url']);
+    $redirect_url = _webform_filter_values($redirect_url, $node, $submission, NULL, FALSE, TRUE);
+
+    // Remove the site domain name from the redirect if present.
+    $redirect_url = preg_replace('/^' . preg_quote($GLOBALS['base_url'], '/') . '\//', '', $redirect_url);
+
+    if (valid_url($redirect_url, TRUE)) {
+      $redirect = $redirect_url;
+    }
+    elseif ($redirect_url && strpos($redirect_url, 'http') !== 0) {
+      $parts = drupal_parse_url($redirect_url);
+      $parts['query'] ? ($parts['query']['sid'] = $submission->sid) : ($parts['query'] = array('sid' => $submission->sid));
+      $query = $parts['query'];
+      $redirect = array(
+        $parts['path'],
+        array('query' => $query, 'fragment' => $parts['fragment'])
+      );
+    }
+  }
+  return $redirect;
 }
