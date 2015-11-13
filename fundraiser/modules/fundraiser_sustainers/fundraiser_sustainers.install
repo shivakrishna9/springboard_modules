@@ -799,6 +799,8 @@ function fundraiser_sustainers_update_7012() {
   db_create_table('fundraiser_sustainers_series', $fundraiser_sustainers_series_schema);
 
   _fundraiser_sustainers_create_sustainers_series_mapping();
+
+  cache_clear_all('schema', 'cache', TRUE);
 }
 
 /**
