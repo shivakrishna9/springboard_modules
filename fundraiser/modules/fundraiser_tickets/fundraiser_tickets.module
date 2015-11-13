@@ -1227,7 +1227,7 @@ function fundraiser_tickets_fundraiser_donation_process($donation) {
           }
         }
         $min = intval($add_on_node->minimum_donation_amount);
-        if(!empty($extra_donation['fundraiser-tickets-extra-donation']) && $extra_donation['fundraiser-tickets-extra-donation'] >= $min) {
+        if (!empty($extra_donation['fundraiser-tickets-extra-donation']) && $extra_donation['fundraiser-tickets-extra-donation'] >= $min) {
           $result = fundraiser_tickets_form_action_submit($nid,  NULL, $donation->donation);
         }
 
