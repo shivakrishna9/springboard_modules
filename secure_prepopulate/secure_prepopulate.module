@@ -287,6 +287,8 @@ function secure_prepopulate_form_webform_client_form_alter(&$form, $form_state) 
             case 'hidden':
               // If it's a hidden field, leave the values intact.
               continue;
+            case 'radios':
+              continue;
             case 'date':
               if (drupal_strlen($field['#webform_component']['value']) > 0) {
                 $timezone = $field['#webform_component']['extra']['timezone'] != 'user' ? NULL : 'user';
