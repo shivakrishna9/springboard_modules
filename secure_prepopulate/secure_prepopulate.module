@@ -288,6 +288,8 @@ function secure_prepopulate_form_webform_client_form_alter(&$form, $form_state) 
               // If it's a hidden field, leave the values intact.
               continue;
             case 'radios':
+              // Ignore radios to ensure the default value for payment method is set if multiple payment methods are enabled.
+              // This is a quick fix and can probably be improved.
               continue;
             case 'date':
               if (drupal_strlen($field['#webform_component']['value']) > 0) {
