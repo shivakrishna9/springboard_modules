@@ -238,12 +238,9 @@ function sba_social_action_node_insert($node) {
 }
 
 /**
- * Implements hook_preprocess_node().
+ * Implements hook_preprocess_page().
  *
- * Define theme wrappers for non-form-layouts nodes.
- * So they can have a "layout".
- *
- * Insert webform goals widget.
+ * Insert a noscript warning on social actions.
  */
 function sba_social_action_preprocess_page(&$vars) {
   if (isset($vars['node']) && $vars['node']->type == 'sba_social_action') {
