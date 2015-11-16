@@ -604,6 +604,7 @@ function springboard_advocacy_webform_submission_delete($node, $submission) {
 function springboard_advocacy_node_view($node, $view_mode, $langcode) {
   $types = variable_get('sba_action_types', array());
   if (in_array($node->type, $types)) {
+    drupal_add_js(drupal_get_path('module', 'springboard_advocacy') . '/js/sba-cookies-enabled.js');
     $unconfigured = springboard_advocacy_api_unconfigured('springboard');
     if (!$unconfigured) {
       $apiCall = springboard_advocacy_api_call();

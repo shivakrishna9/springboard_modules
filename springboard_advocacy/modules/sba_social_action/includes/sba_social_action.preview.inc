@@ -26,6 +26,7 @@ function sba_social_action_message_preview_page($nid) {
   // Build page header and multi-step form.
   $build = array();
   $build['content'] = array(
+    'noscript' => array('#markup' => '<noscript><div class="alert error">Javascript is required. Please enable javascript in your browser.</div></noscript>'),
     'sba_social_action_preview_form' => drupal_get_form('sba_social_action_preview_form', $node),
   );
 
