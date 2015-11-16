@@ -163,12 +163,12 @@ function sba_social_action_set_confirmation_session_vars($response, $contact) {
   if (!empty($response->messages)) {
     $_SESSION['deliverable_social_messages'] = array();
     $_SESSION['undeliverable_social_messages'] = array();
-    $_SESSION['form_details'] = array(
+    $_SESSION['social_form_details'] = array(
       'action_id' => isset($response->alert_id) ? $response->alert_id: '',
       'account_id' => isset($response->account_id) ? $response->account_id : '',
     );
 
-    $_SESSION['contact'] = $contact;
+    $_SESSION['social_contact'] = $contact;
     $status = sba_social_action_get_message_statuses($response);
     unset($status['success']['target_count']);
     if (!empty($status['success'])) {

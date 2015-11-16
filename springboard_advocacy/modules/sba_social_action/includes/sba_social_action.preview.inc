@@ -17,7 +17,7 @@ function sba_social_action_message_preview_page($nid) {
   }
   // Check if the step two form has already been submitted.
   // @todo think about this.
-  $completed = isset($_SESSION['action_completed']) ? $_SESSION['action_completed'] : TRUE;
+  $completed = isset($_SESSION['social_action_completed']) ? $_SESSION['social_action_completed'] : TRUE;
   if($completed == TRUE) {
     drupal_set_message(t("This form has already been submitted. !return to the form.", array('!return' => l('Return', 'node/' . $node->nid))));
     return array();
@@ -109,8 +109,8 @@ function sba_social_action_preview_form($form, $form_state, $node) {
   ksort($messages);
 
   // @todo explore other ways of retrieving these two.
-  $contact = $_SESSION['contact'];
-  $action = $_SESSION['form_details'];
+  $contact = $_SESSION['social_contact'];
+  $action = $_SESSION['social_form_details'];
   // A couple values we'll need later
   $form['action_id'] = array(
     '#type' => 'value',
@@ -410,15 +410,15 @@ function sba_social_action_preview_form_submit($form, &$form_state) {
 //  $messages = $form_state['values']['messages'];
 
   // Add session flag to prevent resubmission of the form
-  $_SESSION['action_completed'] = TRUE;
+  $_SESSION['social_action_completed'] = TRUE;
 
   // Redirect to the original confirmation page.
   // $sid is set in sba_social_action_multifow_submit()
-  $sid = !empty($_SESSION['action_sid']['sid']) ? $_SESSION['action_sid']['sid'] : FALSE;
+  $sid = !empty($_SESSION['social_action_sid']['sid']) ? $_SESSION['social_action_sid']['sid'] : FALSE;
   if ($sid) {
     module_load_include('inc', 'webform', 'includes/webform.submissions');
     $submission = webform_get_submission($node->nid, $sid);
-    unset($_SESSION['action_sid']);
+    unset($_SESSION['social_action_sid']);
     if ($node->webform['redirect_url'] == '<confirmation>') {
       $form_state['redirect'] = array(
         'node/' . $node->nid . '/done',

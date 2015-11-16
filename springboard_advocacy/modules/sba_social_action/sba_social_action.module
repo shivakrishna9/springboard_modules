@@ -83,7 +83,7 @@ function sba_social_action_menu() {
 function sba_social_action_preview_access($nid) {
   $node = node_load($nid);
   if (isset($node->type) &&  $node->type == 'sba_social_action') {
-    $session_nid = isset($_SESSION['action_sid']['nid']) ? $_SESSION['action_sid']['nid'] : 0;
+    $session_nid = isset($_SESSION['social_action_sid']['nid']) ? $_SESSION['social_action_sid']['nid'] : 0;
     if ($session_nid == $nid) {
       return TRUE;
     }
@@ -368,10 +368,10 @@ function sba_social_action_form_sba_social_action_node_form_validate(&$form, &$f
 function sba_social_action_multiflow_submit($form, &$form_state) {
   $node = $form['#node'];
   $sid = $form_state['values']['details']['sid'];
-  $_SESSION['action_sid'] = array('sid' => $sid, 'nid' => $node->nid);
+  $_SESSION['social_action_sid'] = array('sid' => $sid, 'nid' => $node->nid);
   $form_state['redirect'] = array(
-    'node/' . $_SESSION['action_sid']['nid'] . '/social-message-preview',
-    array('query' => array('sid' => $_SESSION['action_sid']['sid']))
+    'node/' . $_SESSION['social_action_sid']['nid'] . '/social-message-preview',
+    array('query' => array('sid' => $_SESSION['social_action_sid']['sid']))
   );
 }
 
