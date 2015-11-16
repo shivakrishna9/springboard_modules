@@ -73,15 +73,7 @@ function sba_message_action_menu() {
     'file path' => drupal_get_path('module', 'sba_message_action') . '/includes',
   );
 
-  // Path to settings for delivery failure webform confirmation.
-  $items['admin/config/content/sba_message_action'] = array(
-    'title' => 'Message Action Default Confirmation',
-    'page callback' => 'sba_message_action_settings_page',
-    'access arguments' => array('administer springboard advocacy'),
-    'file' => 'sba_message_action.admin.inc',
-    'file path' => drupal_get_path('module', 'sba_message_action') . '/includes',
-    'type' => MENU_NORMAL_ITEM,
-  );
+
 
   $items['node/%/performance'] = array(
     'title' => 'Message Delivery',
@@ -981,8 +973,8 @@ function sba_message_action_preprocess_webform_confirmation(&$vars) {
  */
 function sba_message_action_form_webform_configure_form_alter(&$form, &$form_state) {
   if ($form['#node']->type == 'sba_message_action') {
-    form_load_include($form_state, 'inc', 'sba_message_action', 'includes/sba_message_action.confirmations');
-    sba_message_action_confirmation($form, $form_state);
+    form_load_include($form_state, 'inc', 'springboard_advocacy', 'includes/springboard_advocacy.confirmations');
+    springboard_advocacy_confirmation($form, $form_state);
   }
 }
 

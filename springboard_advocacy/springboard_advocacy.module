@@ -19,10 +19,21 @@ function springboard_advocacy_menu() {
     'file' => 'includes/springboard_advocacy.admin.inc',
   );
 
-  $items['admin/config/springboard/advocacy/index'] = array(
+  $items['admin/config/services/advocacy/index'] = array(
     'title' => 'Springboard Advocacy',
     'type' => MENU_DEFAULT_LOCAL_TASK,
     'access callback' => 'springboard_advocacy_user_can_create_advocacy_type',
+  );
+
+  // Path to settings for delivery failure webform confirmation.
+  $items['admin/config/services/advocacy/action-confirmation'] = array(
+    'title' => 'Node Settings',
+    'page callback' => 'springboard_advocacy_confirmation_settings_page',
+    'access arguments' => array('administer springboard advocacy'),
+    'file' => 'springboard_advocacy.admin.inc',
+    'file path' => drupal_get_path('module', 'springboard_advocacy') . '/includes',
+    'type' => MENU_LOCAL_TASK,
+    'weight' => 999,
   );
 
   $items['admin/springboard/advocacy/actions'] = array(

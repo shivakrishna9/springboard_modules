@@ -9,7 +9,7 @@
  * @param $form
  * @param $form_state
  */
-function sba_message_action_confirmation(&$form, &$form_state) {
+function springboard_advocacy_confirmation(&$form, &$form_state) {
 
   $form['submission']['redirection']['format_message'] = array(
     '#type' => 'container',
@@ -44,7 +44,7 @@ function sba_message_action_confirmation(&$form, &$form_state) {
     '#weight' => 6,
     '#default_value' => $custom_status,
     '#ajax' => array(
-      'callback' => 'sba_message_action_form_webform_configure_callback',
+      'callback' => 'springboard_advocacy_form_webform_configure_callback',
       'wrapper' => 'confirmation-div',
       'method' => 'replace',
       'effect' => 'fade',
@@ -55,7 +55,7 @@ function sba_message_action_confirmation(&$form, &$form_state) {
     $default = $form['#node']->custom_fail_message;
   }
   else {
-    $default = variable_get('sba_message_action_confirm', '');
+    $default = variable_get($form['#node']->type . '_confirm', '');
   }
   // Alter the confirmation textarea to have an ajax wrapper
   // and drupal_process_states array.
@@ -87,14 +87,14 @@ function sba_message_action_confirmation(&$form, &$form_state) {
   elseif ($new_custom_status === 0) {
     unset($form_state['input']['fail_message']);
     // Use custom message is disabled so use the global confirmation message.
-    $form['submission']['confirmation_fail']['fail_message']['#default_value'] = variable_get('sba_message_action_confirm', '');
+    $form['submission']['confirmation_fail']['fail_message']['#default_value'] = variable_get($form['#node']->type . '_confirm', '');
   }
 
   // Add a custom submit function to save the confirmation status value.
-  $form['#submit'][] = 'sba_message_action_confirmation_submit';
+  $form['#submit'][] = 'springboard_advocacy_confirmation_submit';
 
   // Need this to alter the filter format box.
-  $form['#after_build'][] = 'sba_message_action_configure_form_after_build';
+  $form['#after_build'][] = 'springboard_advocacy_configure_form_after_build';
 }
 
 
@@ -109,7 +109,7 @@ function sba_message_action_confirmation(&$form, &$form_state) {
  *
  * @return mixed
  */
-function sba_message_action_configure_form_after_build($element) {
+function springboard_advocacy_configure_form_after_build($element) {
   $element['submission']['confirmation']['format']['#collapsible'] = TRUE;
   $element['submission']['confirmation']['format']['#collapsed'] = TRUE;
   $element['submission']['confirmation']['format']['#attached']['library'][]
@@ -137,7 +137,7 @@ function sba_message_action_configure_form_after_build($element) {
  *
  * @return mixed
  */
-function sba_message_action_form_webform_configure_callback($form, $form_state) {
+function springboard_advocacy_form_webform_configure_callback($form, $form_state) {
  // form_load_include($form_state, 'inc', 'sba_message_action', 'includes/sba_message_action.confirmations');
   return $form['submission']['confirmation_fail'];
 }
@@ -151,7 +151,7 @@ function sba_message_action_form_webform_configure_callback($form, $form_state) 
  * @param $form
  * @param $form_state
  */
-function sba_message_action_confirmation_submit($form, $form_state) {
+function springboard_advocacy_confirmation_submit($form, $form_state) {
   if (isset($form_state['values']['custom_confirmation'])) {
     $record = array(
       'nid' => $form['#node']->nid,

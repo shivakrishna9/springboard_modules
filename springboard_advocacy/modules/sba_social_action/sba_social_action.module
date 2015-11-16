@@ -166,6 +166,19 @@ function sba_social_action_node_load($nodes, $types) {
   foreach ($nodes as $nid => $node) {
     if ($node->type == 'sba_social_action') {
 
+      // Add the custom failure confirmation to the node object.
+      $node->custom_fail_message = variable_get('sba_social_action_confirm', '');
+      $confirm_fail = db_query('select custom_confirmation, fail_message FROM sba_message_action_confirm WHERE nid = :nid', array(':nid' => $node->nid))->fetchAll();
+      if (isset($confirm_fail[0]) && is_numeric($confirm_fail[0]->custom_confirmation)) {
+        // add this on/off value to the node object for the form builder.
+        $node->custom_confirmation = $confirm_fail[0]->custom_confirmation;
+        // Add the non-default fail message if it exists and is active.
+        if (!empty($confirm_fail[0]->custom_confirmation) && isset($confirm_fail[0]->fail_message)) {
+          $node->custom_fail_message = $confirm_fail[0]->fail_message;
+        }
+      }
+
+
       $visibility = db_query('select visibility from {springboard_action_opt_in_block} WHERE nid=:nid', array(':nid' => $node->nid))->fetchField();
       $node->show_my_name = $visibility;
       // Unset form layout if default.
@@ -322,7 +335,7 @@ function sba_social_action_form_alter(&$form, &$form_state, $form_id) {
       '#children' => '<span class="undistricted-update"></span>',
       '#states' => array(
         'visible' => array(
-        ':input[name*="field_sba_target_options"]' => array('value' => 0),
+          ':input[name*="field_sba_target_options"]' => array('value' => 0),
         ),
       ),
       '#weight' => 1
@@ -572,17 +585,6 @@ function sba_social_action_clear_twitter_session() {
   drupal_goto('node/' . $nid);
 }
 
-/**
- * @param $vars
- */
-function sba_social_action_preprocess_webform_confirmation(&$vars) {
-
-  if (isset($vars['node']) && $vars['node']->type == 'sba_social_action') {
-    $node = $vars['node'];
-
-  }
-}
-
 function theme_sba_social_action_twitter_timeline(&$vars) {
   $name = $vars['sba_twitter']['values']['screen_name'];
   $node = $vars['node'];
@@ -621,12 +623,12 @@ function theme_sba_social_action_twitter_signout_link(&$vars) {
     $destination = call_user_func_array('url', $destination);
   }
   $link = l('sign out of our Twitter app.', 'clear/session', array(
-    'attributes' => array(
-      'class' => array(
-        'twitter-sign-out'
-      )
-    ),
-    'query' => array('destination' => $destination)
+      'attributes' => array(
+        'class' => array(
+          'twitter-sign-out'
+        )
+      ),
+      'query' => array('destination' => $destination)
     )
   );
 
@@ -675,39 +677,39 @@ function sba_social_action_tokens($type, $tokens, $data = array(), $options = ar
     $node = node_load(arg(1));
   }
 
-    if (isset($node->webform['redirect_url']) && $node->webform['redirect_url'] != '<confirmation>') {
-      $redirect = $node->webform['redirect_url'];
-    }
-    else {
-      $redirect = request_uri();
-    }
-   $twitter_user_cache = session_cache_get('sba_twitter');
+  if (isset($node->webform['redirect_url']) && $node->webform['redirect_url'] != '<confirmation>') {
+    $redirect = $node->webform['redirect_url'];
+  }
+  else {
+    $redirect = request_uri();
+  }
+  $twitter_user_cache = session_cache_get('sba_twitter');
 
-    if ($type == 'social_action') {
-      foreach ($tokens as $name => $original) {
+  if ($type == 'social_action') {
+    foreach ($tokens as $name => $original) {
 
-        switch ($name) {
-          case 'twitter_timeline':
-            $widget = '';
-            if (!empty($twitter_user_cache)) {
-              $widget = theme('sba_social_action_twitter_timeline', array(
-                'sba_twitter' => $twitter_user_cache,
-                'node' => $node
-              ));;
-            }
-            $replacements[$original] = $widget;
-            break;
+      switch ($name) {
+        case 'twitter_timeline':
+          $widget = '';
+          if (!empty($twitter_user_cache)) {
+            $widget = theme('sba_social_action_twitter_timeline', array(
+              'sba_twitter' => $twitter_user_cache,
+              'node' => $node
+            ));;
+          }
+          $replacements[$original] = $widget;
+          break;
 
-          case 'twitter_signout':
-            $link = '';
-            if (!empty($twitter_user_cache)) {
-              $link = theme('sba_social_action_twitter_signout_link', array('destination' => $redirect));
-            }
-            $replacements[$original] = $link;
-            break;
-        }
+        case 'twitter_signout':
+          $link = '';
+          if (!empty($twitter_user_cache)) {
+            $link = theme('sba_social_action_twitter_signout_link', array('destination' => $redirect));
+          }
+          $replacements[$original] = $link;
+          break;
       }
     }
+  }
 
   return $replacements;
 
@@ -715,4 +717,30 @@ function sba_social_action_tokens($type, $tokens, $data = array(), $options = ar
 
 function sba_social_action_preprocess_status_messages($vars) {
   drupal_add_css(drupal_get_path('module', 'sba_social_action') . '/css/social-message-confirmation.css');
+}
+
+/**
+ * Implements hook_form_FORM_ID_alter().
+ *
+ * Global/per action confirmation toggle.
+ */
+function sba_social_action_form_webform_configure_form_alter(&$form, &$form_state) {
+  if ($form['#node']->type == 'sba_social_action') {
+    form_load_include($form_state, 'inc', 'springboard_advocacy', 'includes/springboard_advocacy.confirmations');
+    springboard_advocacy_confirmation($form, $form_state);
+  }
+}
+
+/**
+ * Implements hook_preprocess_hook().
+ *
+ * Get the fail message to show on webform confirmation page
+ * if there are no valid message recipients.
+ */
+function sba_social_action_preprocess_webform_confirmation(&$vars) {
+  if ($vars['node']->type == 'sba_social_action' && (empty($_SESSION['deliverable_social_messages']))) {
+    if (isset($vars['node']->custom_fail_message)) {
+      $vars['confirmation_message'] = check_markup($vars['node']->custom_fail_message, 'full_html');
+    }
+  }
 }
