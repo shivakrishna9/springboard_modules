@@ -70,8 +70,7 @@ function sba_message_action_additional_elements(&$form, &$form_state) {
   $multiple = count($node->messages) > 1 ? TRUE : FALSE;
   $node_wrapper = entity_metadata_wrapper('node', $node);
   $multi_flow = $node_wrapper->field_sba_action_flow->value() == 'multi' ? TRUE : FALSE;
-  $prompt = field_get_items('node', $node, 'field_sba_multistep_prompt');
-  $multi_flow_prompt = !empty($prompt) ? check_markup($prompt[0]['value'], $prompt[0]['format']) : '';
+
   $action_type = 'single_not_multi_flow';
   if ($multiple && !$multi_flow) {
     $action_type = 'multiple_not_multi_flow';
@@ -81,6 +80,9 @@ function sba_message_action_additional_elements(&$form, &$form_state) {
   }
 
   if ($action_type == 'multiple_not_multi_flow') {
+    $prompt = field_get_items('node', $node, 'field_sba_one_step_prompt');
+    $one_step_prompt = !empty($prompt) ? check_markup($prompt[0]['value'], $prompt[0]['format']) : '';
+
     ctools_include('ajax');
     ctools_include('modal');
     $href = 'messages/nojs/' . arg(1);
@@ -91,11 +93,14 @@ function sba_message_action_additional_elements(&$form, &$form_state) {
     );
     $form['sba_messages']['multiple_not_multi_flow']['message'] = array(
       '#type' => 'item',
-      '#markup' => '<p>' . t('We have crafted multiple messages for this action. We will select the right message or messages for your legislators, or others we are targeting, based on their position on this issue, and on the address you enter.')
-        . '</p><p></p>' . ctools_modal_text_button('View all possible messages.', $href, t('View messages'), 'ctools-modal-message-window-style') . '</p>',
+      '#markup' => '<p>' . $one_step_prompt . '</p>' .
+        '<p>' . ctools_modal_text_button('View all possible messages.', $href, t('View messages'), 'ctools-modal-message-window-style') . '</p>',
     );
   }
   elseif ($action_type == 'multi_flow') {
+    $prompt = field_get_items('node', $node, 'field_sba_multistep_prompt');
+    $multi_flow_prompt = !empty($prompt) ? check_markup($prompt[0]['value'], $prompt[0]['format']) : '';
+
     $form['sba_messages']['multiflow'] = array(
       '#type' => 'fieldset',
       '#title' => t('Step 1 of 2'),

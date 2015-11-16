@@ -681,12 +681,19 @@ function sba_message_action_form_sba_message_action_node_form_alter(&$form, &$fo
     unset($form['field_sba_action_flow']);
     $form['springboard_taxonomy_options']['action_flow']['field_sba_multistep_prompt']
       = $form['field_sba_multistep_prompt'];
+    $form['springboard_taxonomy_options']['action_flow']['field_sba_one_step_prompt']
+      = $form['field_sba_one_step_prompt'];
+    unset($form['field_sba_one_step_prompt']);
     $form['springboard_taxonomy_options']['action_flow']['field_sba_multistep_prompt']['#prefix'] = '<p><br />';
     $form['springboard_taxonomy_options']['action_flow']['field_sba_multistep_prompt']['#weight'] = 100;
     unset($form['field_sba_multistep_prompt']);
-    // Hide the test_mode_email field if test_mode is unchecked.
     $form['springboard_taxonomy_options']['action_flow']['field_sba_multistep_prompt']['#states']['visible'] = array(
       ':input[name="field_sba_action_flow[und]"]' => array('value' => 'multi'),
+    );
+    $form['springboard_taxonomy_options']['action_flow']['field_sba_one_step_prompt']['#prefix'] = '<p><br />';
+    $form['springboard_taxonomy_options']['action_flow']['field_sba_one_step_prompt']['#weight'] = 100;
+    $form['springboard_taxonomy_options']['action_flow']['field_sba_one_step_prompt']['#states']['visible'] = array(
+      ':input[name="field_sba_action_flow[und]"]' => array('value' => 'one'),
     );
   }
   // Hide the test_mode_email field if test_mode is unchecked.
