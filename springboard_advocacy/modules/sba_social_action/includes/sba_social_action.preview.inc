@@ -6,10 +6,6 @@
  * @return array
  */
 function sba_social_action_message_preview_page($nid) {
-  $access = TRUE;
-  if (!isset($_SESSION['sba_twitter'])) {
-    $access = FALSE;
-  }
 
   // $nid already sanitized in the access hook.
   $node = node_load($nid);
@@ -52,8 +48,13 @@ function sba_social_action_message_preview_page($nid) {
 function sba_social_action_preview_form($form, $form_state, $node) {
   // Access variable to determine form element accessibility.
   $access = TRUE;
-  if (!isset($_SESSION['sba_twitter'])) {
+  $twitter_user_cache = session_cache_get('sba_twitter');
+  if (empty($twitter_user_cache)) {
     $access = FALSE;
+  }
+  else {
+    $twitter_user_cache['values']['oauth_token'] = decrypt($twitter_user_cache['values']['oauth_token']);
+    $twitter_user_cache['values']['oauth_token_secret'] = decrypt($twitter_user_cache['values']['oauth_token_secret']);
   }
 
   $form['#attached']['css'][] = drupal_get_path('module', 'sba_social_action') . '/css/message-preview.css';
@@ -83,7 +84,7 @@ function sba_social_action_preview_form($form, $form_state, $node) {
     '#suffix' => '</div>',
   );
 
-  if (!isset($_SESSION['sba_twitter'])) {
+  if (empty($twitter_user_cache)) {
     $form['form_container']['twitter_sign_in'] = array(
       '#type' => 'button',
       '#value' => 'Authorize with Twitter',
@@ -230,13 +231,13 @@ function sba_social_action_preview_form($form, $form_state, $node) {
     '#weight' => -10,
     '#markup' => t('Step 2 of 2'),
   );
-  if (isset($_SESSION['sba_twitter']['values']['screen_name'])) {
+  if (isset($twitter_user_cache['values']['screen_name'])) {
     $form['form_container']['page_description_login'] = array(
       '#prefix' => '<div><p>',
       '#suffix' => '</p></div>',
       '#weight' => -9,
       '#markup' => t('You will be posting to Twitter as @%name. If that is not the correct account, !clickhere.', array(
-        '%name' => $_SESSION['sba_twitter']['values']['screen_name'],
+        '%name' => $twitter_user_cache['values']['screen_name'],
         '!clickhere' => l('click here', 'clear/session', array('query' => array('destination' => 'node/' . $node->nid . '/social-message-preview')))
       )),
     );
@@ -378,14 +379,20 @@ function sba_social_action_preview_form_submit($form, &$form_state) {
 
     if(empty($node->field_sba_test_mode)) {
       try {
-        $twitter = new socialTwitter(
-          variable_get('social_action_twitter_consumer_key', ''),
-          variable_get('social_action_twitter_consumer_secret', ''),
-          $_SESSION['sba_twitter']['values']['oauth_token'],
-          $_SESSION['sba_twitter']['values']['oauth_token_secret']
-        );
+        $twitter_user_cache = session_cache_get('sba_twitter');
+        if(!empty($twitter_user_cache)) {
+          $twitter_user_cache['values']['oauth_token'] = decrypt($twitter_user_cache['values']['oauth_token']);
+          $twitter_user_cache['values']['oauth_token_secret'] = decrypt($twitter_user_cache['values']['oauth_token_secret']);
 
-        $twitter->statuses_update($body);
+          $twitter = new socialTwitter(
+            variable_get('social_action_twitter_consumer_key', ''),
+            variable_get('social_action_twitter_consumer_secret', ''),
+            $twitter_user_cache['values']['oauth_token'],
+            $twitter_user_cache['values']['oauth_token_secret']
+          );
+
+          $twitter->statuses_update($body);
+        }
 
       } catch (socialTwitterException $e) {
         drupal_set_message(t('An error occurred when posting to Twitter. Check the system log for details.'), 'error', TRUE);

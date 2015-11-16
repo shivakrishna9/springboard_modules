@@ -60,3 +60,11 @@ function sba_social_action_update_7003() {
   field_group_group_save($group);
 
 }
+/*
+ * Set default session cache values.
+ */
+function sba_social_action_update_7004() {
+  variable_set('session_cache_expire_period', 0.041);
+  variable_set('session_cache_sid_source', 0);
+  variable_set('session_cache_storage_method', 2);
+}

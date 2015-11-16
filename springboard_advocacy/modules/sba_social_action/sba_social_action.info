@@ -6,3 +6,5 @@ dependencies[] = webform_user
 dependencies[] = sba_message
 dependencies[] = springboard_target
 dependencies[] = oauth_common
+dependencies[] = encrypt
+dependencies[] = session_cache
