@@ -281,15 +281,15 @@ function secure_prepopulate_form_webform_client_form_alter(&$form, $form_state) 
     if (!in_array($form_key, $dynamic_gift_string_field_ids)
       && !array_key_exists($form_key, $prepopulate_data)) { // the key is not in the prepopuldate data, so lets clear it out
       if ($field = & _secure_prepopulate_find_field($form, $component_hierarchy[$form_key])) {
+        // Don't unset the payment method field which appears when multiple payment methods are enabled:
+        if ($field['#webform_component']['form_key'] == 'payment_method') {
+          continue;
+        }
         // set back to original default value by using the webform component definition
         if (isset($field['#type'])) {
           switch ($field['#type']) {
             case 'hidden':
               // If it's a hidden field, leave the values intact.
-              continue;
-            case 'radios':
-              // Ignore radios to ensure the default value for payment method is set if multiple payment methods are enabled.
-              // This is a quick fix and can probably be improved.
               continue;
             case 'date':
               if (drupal_strlen($field['#webform_component']['value']) > 0) {
