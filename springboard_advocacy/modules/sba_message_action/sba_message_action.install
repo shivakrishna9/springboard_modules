@@ -11,31 +11,6 @@
  */
 function sba_message_action_schema() {
 
-  // Store a unique ID for use with advocacy server.
-  $schema['sba_message_action_confirm'] = array(
-    'description' => 'Store message action confirmation state.',
-    'fields' => array(
-      'nid' => array(
-        'description' => 'messages node id',
-        'type' => 'int',
-        'unsigned' => TRUE,
-        'not null' => TRUE,
-      ),
-      'custom_confirmation' => array(
-        'description' => 'confirmation toggle state',
-        'type' => 'int',
-        'unsigned' => TRUE,
-        'not null' => TRUE,
-      ),
-      'fail_message' => array(
-        'description' => 'confirmation fail message',
-        'type' => 'text',
-        'not null' => FALSE,
-      ),
-    ),
-    'primary key' => array('nid'),
-  );
-
   $schema['cache_deliverability_report'] = drupal_get_schema_unprocessed('system', 'cache');
   $schema['cache_deliverability_report']['description'] = 'Cache table for deliverability information about specific message action nodes.';
   $schema['cache_deliverability_target'] = drupal_get_schema_unprocessed('system', 'cache');
@@ -105,19 +80,19 @@ function sba_message_action_update_7001() {
  * Add message action confirmation table.
  */
 function sba_message_action_update_7002() {
-  $schema = module_invoke('sba_message_action', 'schema');
-  if (db_table_exists('sba_message_action_confirm') == FALSE) {
-    db_create_table('sba_message_action_confirm', $schema['sba_message_action_confirm']);
-  }
+//  $schema = module_invoke('sba_message_action', 'schema');
+//  if (db_table_exists('sba_message_action_confirm') == FALSE) {
+//    db_create_table('sba_message_action_confirm', $schema['sba_message_action_confirm']);
+//  }
 }
 /**
  * Add message action confirmation table fail message field.
  */
 function sba_message_action_update_7003() {
-  $schema = module_invoke('sba_message_action', 'schema');
-  if (db_field_exists('sba_message_action_confirm', 'fail_message') == FALSE) {
-    db_add_field('sba_message_action_confirm', 'fail_message', $schema['sba_message_action_confirm']['fields']['fail_message']);
-  }
+//  $schema = module_invoke('sba_message_action', 'schema');
+//  if (db_field_exists('sba_message_action_confirm', 'fail_message') == FALSE) {
+//    db_add_field('sba_message_action_confirm', 'fail_message', $schema['sba_message_action_confirm']['fields']['fail_message']);
+//  }
 }
 
 /**

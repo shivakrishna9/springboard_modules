@@ -132,6 +132,31 @@ function springboard_advocacy_schema() {
     'primary key' => array('nid'),
   );
 
+  // Store a unique ID for use with advocacy server.
+  $schema['sba_message_action_confirm'] = array(
+    'description' => 'Store message action confirmation state.',
+    'fields' => array(
+      'nid' => array(
+        'description' => 'messages node id',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'custom_confirmation' => array(
+        'description' => 'confirmation toggle state',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'fail_message' => array(
+        'description' => 'confirmation fail message',
+        'type' => 'text',
+        'not null' => FALSE,
+      ),
+    ),
+    'primary key' => array('nid'),
+  );
+
   return $schema;
 }
 
@@ -185,5 +210,15 @@ function springboard_advocacy_update_7007() {
         taxonomy_vocabulary_delete($vocab->vid);
       }
     }
+  }
+}
+
+/**
+ * Add precedence field the sba_form_id table
+ */
+function springboard_advocacy_update_7008() {
+  $schema = module_invoke('springboard_advocacy', 'schema');
+  if (db_table_exists('sba_message_action_confirm') == FALSE) {
+    db_create_table('sba_message_action_confirm', $schema['sba_message_action_confirm']);
   }
 }
