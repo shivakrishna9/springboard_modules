@@ -808,6 +808,9 @@ function fundraiser_sustainers_update_7012() {
  */
 function fundraiser_sustainers_update_7013(&$sandbox) {
   if (!isset($sandbox['progress'])) {
+    // Force schema cache refresh for fundraiser_sustainers_series table.
+    drupal_get_schema('fundraiser_sustainers_series', TRUE);
+
     $sandbox['progress'] = 0;
     $sandbox['current_did'] = 0;
     $sandbox['max'] = db_query('SELECT COUNT(did) FROM {fundraiser_sustainers} WHERE `master_did` = `did`')->fetchField();
