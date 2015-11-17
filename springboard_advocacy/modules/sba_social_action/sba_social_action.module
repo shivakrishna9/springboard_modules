@@ -399,31 +399,19 @@ function sba_social_action_multiflow_submit($form, &$form_state) {
   $node = $form['#node'];
   $sid = $form_state['values']['details']['sid'];
   $_SESSION['social_action_sid'] = array('sid' => $sid, 'nid' => $node->nid);
-  $form_state['redirect'] = array(
-    'node/' . $_SESSION['social_action_sid']['nid'] . '/social-message-preview',
-    array('query' => array('sid' => $_SESSION['social_action_sid']['sid']))
-  );
+  if(!empty($_SESSION['deliverable_social_messages'])) {
+    $form_state['redirect'] = array(
+      'node/' . $_SESSION['social_action_sid']['nid'] . '/social-message-preview',
+      array('query' => array('sid' => $_SESSION['social_action_sid']['sid']))
+    );
+  }
+  else {
+    if (!empty($form['#node']->custom_fail_message) && $node->webform['redirect_url'] != '<confirmation>') {
+      drupal_get_messages('status');
+      drupal_set_message(check_markup($form['#node']->custom_fail_message, 'full_html', '', TRUE));
+    }
+  }
 }
-
-//@todo districted tweet fail?
-//function sba_message_action_multifow_submit($form, &$form_state) {
-//  $node = $form['#node'];
-//  if (!empty($_SESSION['delivered_messages']) || !empty($_SESSION['undelivered_messages'])) {
-//    $sid = $form_state['values']['details']['sid'];
-//    $_SESSION['action_sid'] = array('sid' => $sid, 'nid' => $node->nid);
-//    $form_state['redirect'] = array(
-//      'node/' . $node->nid . '/message-preview',
-//      array('query' => array('sid' => $sid))
-//    );
-//  }
-//  else {
-//    if(!empty($form['#node']->custom_fail_message) && $node->webform['redirect_url'] != '<confirmation>') {
-//      drupal_get_messages('status');
-//      drupal_set_message(check_markup($form['#node']->custom_fail_message, 'full_html', '', TRUE));
-//    }
-//  }
-//}
-
 
 /**
  * Redirect to twitter authentication after a webform submission.
