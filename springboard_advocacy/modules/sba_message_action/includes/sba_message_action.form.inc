@@ -93,8 +93,9 @@ function sba_message_action_additional_elements(&$form, &$form_state) {
     );
     $form['sba_messages']['multiple_not_multi_flow']['message'] = array(
       '#type' => 'item',
-      '#markup' => '<p>' . $one_step_prompt . '</p>' .
-        '<p>' . ctools_modal_text_button('View all possible messages.', $href, t('View messages'), 'ctools-modal-message-window-style') . '</p>',
+      '#markup' => $one_step_prompt,
+      '#suffix' => ctools_modal_text_button('View all possible messages.', $href, t('View messages'),
+        'ctools-modal-message-window-style'),
     );
   }
   elseif ($action_type == 'multi_flow') {
