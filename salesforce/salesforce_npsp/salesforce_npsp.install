@@ -32,6 +32,11 @@ function salesforce_npsp_install() {
 
   // Remove default recurring donation mapping provided by Springboard.
   salesforce_genmap_delete_map(-1, 'npe03__Recurring_Donation__c');
+
+  $mapping = salesforce_mapping_load('fundraiser_sustainers_series');
+  if (!empty($mapping)) {
+    entity_delete('salesforce_mapping', $mapping->salesforce_mapping_id);
+  }
 }
 
 /**
@@ -652,5 +657,11 @@ function salesforce_npsp_update_7001() {
     drupal_set_message(t('Fundraiser sustainers series entity has been mapped to NPSP Recurring Donation object.'));
   }
 
+  // Remove default recurring donation mapping provided by Springboard.
   salesforce_genmap_delete_map(-1, 'npe03__Recurring_Donation__c');
+
+  $mapping = salesforce_mapping_load('fundraiser_sustainers_series');
+  if (!empty($mapping)) {
+    entity_delete('salesforce_mapping', $mapping->salesforce_mapping_id);
+  }
 }
