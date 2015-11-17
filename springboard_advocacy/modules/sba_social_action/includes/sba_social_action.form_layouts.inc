@@ -15,6 +15,16 @@
 function sba_social_action_form_layouts() {
   $templates = array();
 
+  $templates['social_one_column'] = array(
+    'name' => t('One Column'),
+    'types' => array('sba_social_action'),
+    'theme' => '',
+    'pattern' => '',
+    'template' => '',
+    'path' => '',
+    'hide title' => FALSE,
+  );
+
   $templates['social_two_column_body_left'] = array(
     'name' => t('Call to action left, message and user form right.'),
     'types' => array('sba_social_action'),
@@ -104,7 +114,7 @@ function sba_social_action_build_preprocess(&$vars) {
   }
 
   // Fieldset legends.
-  $vars['form_legend'] = t('Take Action Now!');
+  $vars['form_legend'] = t('Find Social Target');
   $vars['user_legend'] = t('Your Information');
   // We remove image field in the default node--sba-message-action.tpl.php
   // and put it into form layouts here.
@@ -117,8 +127,8 @@ function sba_social_action_build_preprocess(&$vars) {
   // We remove call to action field in the default
   // node--sba-message-action.tpl.php
   // and put it into form layouts here.
-  $call_to_action = field_get_items('node', $node, 'field_message_call_to_action');
-  $call = field_view_value('node', $node, 'field_message_call_to_action', $call_to_action[0]);
+  $call_to_action = field_get_items('node', $node, 'field_social_call_to_action');
+  $call = field_view_value('node', $node, 'field_social_call_to_action', $call_to_action[0]);
   $vars['call'] = drupal_render($call);
 
   // We remove call to action field in the

@@ -33,7 +33,7 @@ function sba_social_action_additional_elements(&$form, &$form_state) {
   // Attach the JS and CSS.
 
   // Is form layouts enabled?
-  if (!empty($form['#node']->form_layouts)) {
+  if (!empty($form['#node']->form_layouts) && $form['#node']->form_layouts != 'one_column') {
     $form['#attached']['css'][] = drupal_get_path('module', 'sba_social_action')
       . '/css/social-action-form-layouts.css';
   }
