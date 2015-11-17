@@ -687,3 +687,24 @@ function springboard_advocacy_parse_redirect($node, $submission) {
   }
   return $redirect;
 }
+
+/**
+ * Implements hook_node_delete().
+ */
+function springboard_advocacy_node_delete($node) {
+  db_delete('sba_message_action_confirm')
+    ->condition('nid', $node->nid)
+    ->execute();
+
+  db_delete('springboard_action_opt_in')
+    ->condition('nid', $node->nid)
+    ->execute();
+
+  db_delete('springboard_action_opt_in_block')
+    ->condition('nid', $node->nid)
+    ->execute();
+
+  db_delete('sba_form_id')
+    ->condition('nid', $node->nid)
+    ->execute();
+}

@@ -214,11 +214,21 @@ function springboard_advocacy_update_7007() {
 }
 
 /**
- * Add precedence field the sba_form_id table
+ * Add message action confirmation table
  */
 function springboard_advocacy_update_7008() {
   $schema = module_invoke('springboard_advocacy', 'schema');
   if (db_table_exists('sba_message_action_confirm') == FALSE) {
     db_create_table('sba_message_action_confirm', $schema['sba_message_action_confirm']);
+  }
+}
+
+/**
+ * Add message action confirmation table fail message field.
+ */
+function springboard_advocacy_update_7009() {
+  $schema = module_invoke('springboard_advocacy', 'schema');
+  if (db_field_exists('sba_message_action_confirm', 'fail_message') == FALSE) {
+    db_add_field('sba_message_action_confirm', 'fail_message', $schema['sba_message_action_confirm']['fields']['fail_message']);
   }
 }
