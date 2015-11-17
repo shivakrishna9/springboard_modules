@@ -15,7 +15,6 @@
         <?php print $image; ?>
       </div>
       <?php endif; ?>
-
       <div id="call-to-action">
         <div id="call-to-action-call"><h2><?php print $call; ?></h2></div>
         <div id="call-to-action-body"> <?php print $body; ?></div>
@@ -29,8 +28,6 @@
           </div>
         <?php endif; ?>
         <p><?php print $social ?></p>
-
-
       </div>
     </div>
 
