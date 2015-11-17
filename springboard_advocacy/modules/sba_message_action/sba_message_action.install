@@ -379,22 +379,22 @@ function sba_message_action_update_7015() {
 /**
  *  Add message action optin id table
  */
-function sba_message_action_update_7016() {
-  $schema = module_invoke('sba_message_action', 'schema');
-  if(db_table_exists('springboard_action_opt_in') == FALSE) {
-    db_create_table('springboard_action_opt_in', $schema['springboard_action_opt_in']);
-  }
-}
-
-/**
- *  Add message action optin id table
- */
-function sba_message_action_update_7017() {
-  $schema = module_invoke('sba_message_action', 'schema');
-  if(db_table_exists('springboard_action_opt_in_block') == FALSE) {
-    db_create_table('springboard_action_opt_in_block', $schema['springboard_action_opt_in_block']);
-  }
-}
+//function sba_message_action_update_7016() {
+//  $schema = module_invoke('sba_message_action', 'schema');
+//  if(db_table_exists('springboard_action_opt_in') == FALSE) {
+//    db_create_table('springboard_action_opt_in', $schema['springboard_action_opt_in']);
+//  }
+//}
+//
+///**
+// *  Add message action optin id table
+// */
+//function sba_message_action_update_7017() {
+//  $schema = module_invoke('sba_message_action', 'schema');
+//  if(db_table_exists('springboard_action_opt_in_block') == FALSE) {
+//    db_create_table('springboard_action_opt_in_block', $schema['springboard_action_opt_in_block']);
+//  }
+//}
 
 function sba_message_action_update_7018() {
   $schema = module_invoke('sba_message_action', 'schema');

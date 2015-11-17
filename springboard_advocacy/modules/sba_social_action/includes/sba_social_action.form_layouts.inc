@@ -73,16 +73,18 @@ function sba_social_action_build_preprocess(&$vars) {
     $vars['quicksign'] = drupal_render($quicksign);
   }
 
-//  $vars['participants'] = '';
-//  $view = views_get_view('recent_action_participants');
-//  $view->set_display('block_1');
-//  $view->set_arguments(array(arg(1)));
-//  $view->pre_execute();
-//  $view->execute();
-//  if (isset($view->result) && count($view->result)) {
-//    $table = $view->preview('block_1');
-//    $vars['participants'] = $table;
-//  }
+  $vars['participants'] = '';
+  $view = views_get_view('recent_action_participants');
+  $view->set_display('block_1');
+  $view->set_arguments(array(arg(1)));
+  $view->pre_execute();
+  $view->execute();
+  if (isset($view->result) && count($view->result)) {
+    $table = $view->preview('block_1');
+    $vars['participants'] = $table;
+  }
+  $vars['show_participants_block'] = isset($vars['element']['#node']->show_my_name) ? $vars['element']['#node']->show_my_name : FALSE;
+
 
   $element = $vars['element'];
 

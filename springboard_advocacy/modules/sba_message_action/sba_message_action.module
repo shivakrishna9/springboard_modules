@@ -910,49 +910,6 @@ function sba_message_action_webform_user_profile_fields_alter(&$fields, $node) {
 }
 
 /**
- * Implements hook_webform_submission_insert().
- *
- * Update opt-in block when submitted by a logged in user.
- */
-function sba_message_action_webform_submission_insert($node, $submission) {
-  if ($node->type == 'sba_message_action') {
-    $node_wrapper = entity_metadata_wrapper('node', $node);
-    $multi_flow = $node_wrapper->field_sba_action_flow->value() == 'multi' ? TRUE : FALSE;
-    if (!$multi_flow) {
-      springboard_advocacy_get_opt_in_uid($node, $submission);
-    }
-  }
-}
-
-/**
- * Implements hook_webform_submission_insert().
- *
- * Update opt-in block when submitted by a logged out user.
- * Webform user triggers this.
- */
-function sba_message_action_webform_submission_update($node, $submission) {
-  if ($node->type == 'sba_message_action') {
-    $node_wrapper = entity_metadata_wrapper('node', $node);
-    $multi_flow = $node_wrapper->field_sba_action_flow->value() == 'multi' ? TRUE : FALSE;
-    if (!$multi_flow) {
-      springboard_advocacy_get_opt_in_uid($node, $submission);
-    }
-    else {
-      $complete = db_query('SELECT * FROM {webform_component} ' .
-        'WHERE nid = :nid ' .
-        'AND form_key = :form_key',
-        array(
-          ':nid' => $node->nid,
-          ':form_key' => 'sba_multistep_complete'
-        ))->fetchObject();
-      if (!empty($complete->cid) && !empty($submission->data[$complete->cid]['value'][0])) {
-        springboard_advocacy_get_opt_in_uid($node, $submission);
-      }
-    }
-  }
-}
-
-/**
  * Implements hook_preprocess_hook().
  *
  * Get the fail message to show on webform confirmation page

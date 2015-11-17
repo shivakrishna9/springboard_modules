@@ -91,10 +91,34 @@ function sba_social_action_insert_components($node) {
     ),
   );
 
+  $fields[] = array(
+    'nid' => $node->nid,
+    'form_key' => 'sba_action_is_multistep',
+    'pid' => 0,
+    'name' => t('Completed second step'),
+    'type' => 'hidden',
+    'value' => 0,
+    'weight' => 30,
+    'email' => 1,
+  );
+
+  $fields[] = array(
+    'nid' => $node->nid,
+    'form_key' => 'sba_multistep_complete',
+    'pid' => 0,
+    'name' => t('Completed second step'),
+    'type' => 'hidden',
+    'value' => 0,
+    'weight' => 31,
+    'email' => 1,
+  );
+
   $exclude = array();
   $exclude[] = 'sba_user_edit_flag';
   $exclude[] = 'sba_deliverable_count';
   $exclude[] = 'sbp_sba_action_optin';
+  $exclude[] = 'sba_action_is_multistep';
+  $exclude[] = 'sba_multistep_complete';
 
   // Add the component to the Webform.
   foreach ($fields as $field) {

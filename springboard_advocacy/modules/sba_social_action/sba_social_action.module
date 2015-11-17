@@ -178,7 +178,6 @@ function sba_social_action_node_load($nodes, $types) {
         }
       }
 
-
       $visibility = db_query('select visibility from {springboard_action_opt_in_block} WHERE nid=:nid', array(':nid' => $node->nid))->fetchField();
       $node->show_my_name = $visibility;
       // Unset form layout if default.
@@ -285,16 +284,18 @@ function sba_social_action_preprocess_node(&$vars) {
       $vars['content']['webform']['#theme_wrappers'][] = 'social_action_webform_wrapper';
       $vars['content']['webform']['#form']['submitted']['#theme_wrappers'][] = 'social_action_submitted_wrapper';
 
-//      $vars['participants'] = '';
-//      $view = views_get_view('recent_action_participants');
-//      $view->set_display('block_1');
-//      $view->set_arguments(array(arg(1)));
-//      $view->pre_execute();
-//      $view->execute();
-//      if (isset($view->result) && count($view->result)) {
-//        $table = $view->preview('block_1');
-//        $vars['participants'] = $table;
-//      }
+      $vars['participants'] = '';
+      $view = views_get_view('recent_action_participants');
+      $view->set_display('block_1');
+      $view->set_arguments(array(arg(1)));
+      $view->pre_execute();
+      $view->execute();
+      if (isset($view->result) && count($view->result)) {
+        $table = $view->preview('block_1');
+        $vars['participants'] = $table;
+      }
+
+      $vars['show_participants_block'] = isset($vars['node']->show_my_name) ? $vars['node']->show_my_name : FALSE;
 
       // Insert webform goals.
       if (module_exists('webform_goals')) {
@@ -367,7 +368,34 @@ function sba_social_action_form_alter(&$form, &$form_state, $form_id) {
  * Implements hook_form_FORMID_alter().
  */
 function sba_social_action_form_sba_social_action_node_form_alter(&$form, &$form_state) {
+  if (empty($form['springboard_display'])) {
+    $form['springboard_display'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Display settings'),
+      '#collapsible' => TRUE,
+      '#collapsed' => FALSE,
+      '#group' => 'additional_settings',
+    );
+  }
+
+  $form['springboard_display']['recent_participants'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Recent Participants List'),
+    '#description' => t('Choose whether action-takers can opt-in to having their name display on the message action page.'),
+    '#collapsible' => TRUE,
+    '#collapsed' => FALSE,
+  );
+
+  $visibility = isset($form['#node']->show_my_name) ? $form['#node']->show_my_name : 0;
+  $form['springboard_display']['recent_participants']['show_participants'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Allow users to opt-in and show recent participants list'),
+    '#default_value' => $visibility,
+    '#weight' => -4,
+  );
   $form['actions']['submit']['#validate'][] = 'sba_social_action_form_sba_social_action_node_form_validate';
+  $form['actions']['submit']['#submit'][] = 'sba_message_action_form_sba_message_action_node_form_submit';
+
 }
 
 /**
@@ -385,6 +413,31 @@ function sba_social_action_form_sba_social_action_node_form_validate(&$form, &$f
     if ($form_state['values']['status'] == 0) {
       form_set_error("field_sba_test_mode", t('Test mode must be enabled for unpublished actions.'));
     }
+  }
+}
+
+/**
+ * Redirect to the messages tab instead of webform tab.
+ *
+ * @param $form
+ * @param $form_state
+ */
+function sba_social_action_form_sba_message_action_node_form_submit(&$form, &$form_state) {
+  $data = array(
+    'nid' => $form_state['values']['nid'],
+    'visibility' => $form_state['values']['show_participants']
+  );
+  $visibility = db_query('select visibility from {springboard_action_opt_in_block} WHERE nid=:nid', array(':nid' => $form_state['values']['nid']))->fetchCol();
+  if (empty($visibility)) {
+    drupal_write_record('springboard_action_opt_in_block', $data);
+  }
+  else {
+    drupal_write_record('springboard_action_opt_in_block', $data, 'nid');
+  }
+
+  if (empty($form['#node']->nid)) {
+    $path = 'node/'.$form_state['nid'].'/messages';
+    $form_state['redirect'] = $path;
   }
 }
 

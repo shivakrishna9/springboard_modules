@@ -402,13 +402,7 @@ function sba_social_action_preview_form_submit($form, &$form_state) {
     else {
       drupal_set_message('This action was in test mode. Messages were not sent.', 'warning', TRUE);
     }
-
   }
-
-  // Get sba_social_action_build_message_bodies().
-//  module_load_include('inc', 'sba_social_action', 'includes/sba_social_action.form');
-//
-//  $messages = $form_state['values']['messages'];
 
   // Add session flag to prevent resubmission of the form
   $_SESSION['social_action_completed'] = TRUE;
@@ -416,76 +410,10 @@ function sba_social_action_preview_form_submit($form, &$form_state) {
   // Redirect to the original confirmation page.
   // $sid is set in sba_social_action_multifow_submit()
   $sid = !empty($_SESSION['social_action_sid']['sid']) ? $_SESSION['social_action_sid']['sid'] : FALSE;
+  unset($_SESSION['social_action_sid']);
+  springboard_advocacy_negotiate_redirect($node, $sid, $form_state);
   if ($sid) {
-    module_load_include('inc', 'webform', 'includes/webform.submissions');
-    $submission = webform_get_submission($node->nid, $sid);
-    unset($_SESSION['social_action_sid']);
-    if ($node->webform['redirect_url'] == '<confirmation>') {
-      $form_state['redirect'] = array(
-        'node/' . $node->nid . '/done',
-        array('query' => array('sid' => $sid))
-      );
-    }
-    else {
-      $redirect = springboard_advocacy_parse_redirect($node, $submission);
-
-      $form_state['redirect'] = $redirect;
-      if (!empty($_SESSION['saved_messages']['status'])) {
-        $_SESSION['messages']['status'] =  $_SESSION['saved_messages']['status'];
-      }
-    }
-  }
-  else {
-    // we don't have a submission identifier, this is not a legit request, redirect to the node
-    $form_state['redirect'] = array('node/' . $node->nid);
-    if (!empty($_SESSION['saved_messages']['status'])) {
-      $_SESSION['messages']['status'] =  $_SESSION['saved_messages']['status'];
-    }
-  }
-  if (!empty($_SESSION['saved_messages']['status'])) {
-    unset($_SESSION['saved_messages']['status']);
-  }
-
-  //@todo everything below here can go in advocacy module along with corresponding code in message actions
-  // Update the user edit flag.
-  if ($form_state['storage']['changed'] == TRUE) {
-    if ($sid) {
-      $user_edit = db_query('SELECT * FROM {webform_component} WHERE nid = :nid AND form_key = :form_key',
-        array(
-          ':nid' => $node->nid,
-          ':form_key' => 'sba_user_edit_flag'
-        ))->fetchObject();
-
-      if (!empty($user_edit->cid)) {
-        db_update('webform_submitted_data')->fields(array('data' => 1))
-          ->condition('nid', $node->nid, '=')
-          ->condition('sid', $sid, '=')
-          ->condition('cid', $user_edit->cid, '=')
-          ->condition('no', 0, '=')
-          ->execute();
-      }
-    }
-  }
-  if ($sid) {
-    $complete = db_query('SELECT * FROM {webform_component} WHERE nid = :nid AND form_key = :form_key',
-      array(
-        ':nid' => $node->nid,
-        ':form_key' => 'sba_multistep_complete'
-      ))->fetchObject();
-    if (!empty($complete->cid)) {
-      db_update('webform_submitted_data')->fields(array('data' => 1))
-        ->condition('nid', $node->nid, '=')
-        ->condition('sid', $sid, '=')
-        ->condition('cid', $complete->cid, '=')
-        ->condition('no', 0, '=')
-        ->execute();
-    }
-  }
-  if ($sid) {
-    // Update to trigger salesforce resync.
-    module_load_include('inc', 'webform', 'includes/webform.submissions');
-    $submission = webform_get_submission($node->nid, $sid);
-    webform_submission_update($node, $submission);
+    springboard_advocacy_update_multistep_components($sid, $node, $form_state['storage']['changed']);
   }
 }
 

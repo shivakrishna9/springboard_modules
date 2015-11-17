@@ -298,6 +298,126 @@ function springboard_advocacy_views_data() {
     ),
   );
 
+
+  $data['springboard_action_opt_in']['table'] = array(
+    'group' => t('Springboard Advocacy'),
+    'base' => array(
+      'title' => t('Springboard Action Opt In'),
+      'help' => t('Tracks Actions opted in for display.'),
+    ),
+    'join' => array(
+      'node' => array(
+        'left_field' => 'nid',
+        'field' => 'nid',
+      ),
+      'users' => array(
+        'left_field' => 'uid',
+        'field' => 'uid',
+      ),
+      'webform_submissions' => array(
+        'left_field' => 'sid',
+        'field' => 'sid',
+      ),
+    ),
+  );
+  $data['springboard_action_opt_in']['nid'] = array(
+    'title' => t('Action node'),
+    'help' => t('Action form node id.'),
+    'relationship' => array(
+      'base' => 'node',
+      'base field' => 'nid',
+      'handler' => 'views_handler_relationship',
+      'label' => t('Action node'),
+    ),
+    'field' => array(
+      'handler' => 'views_handler_field',
+      'click sortable' => TRUE,
+    ),
+    'filter' => array(
+      'handler' => 'views_handler_filter_string',
+    ),
+    'sort' => array(
+      'handler' => 'views_handler_sort',
+    ),
+    'argument' => array(
+      'handler' => 'views_handler_argument_numeric',
+    ),
+  );
+  $data['springboard_action_opt_in']['uid'] = array(
+    'title' => t('Action opt-in user'),
+    'help' => t('User associated with opt-in record.'),
+    'relationship' => array(
+      'base' => 'users',
+      'base field' => 'uid',
+      'handler' => 'views_handler_relationship',
+      'label' => t('Opt in user'),
+    ),
+    'field' => array(
+      'handler' => 'views_handler_field',
+      'click sortable' => TRUE,
+    ),
+    'filter' => array(
+      'handler' => 'views_handler_filter_string',
+    ),
+    'sort' => array(
+      'handler' => 'views_handler_sort',
+    ),
+    'argument' => array(
+      'handler' => 'views_handler_argument_numeric',
+    ),
+  );
+  $data['springboard_action_opt_in']['sid'] = array(
+    'title' => t('Action opt-in submission'),
+    'help' => t('Webform submission associated with opt-in record.'),
+    'relationship' => array(
+      'base' => 'webform_submissions',
+      'base field' => 'sid',
+      'handler' => 'views_handler_relationship',
+      'label' => t('Opt in submission'),
+    ),
+    'field' => array(
+      'handler' => 'views_handler_field',
+      'click sortable' => TRUE,
+    ),
+    'filter' => array(
+      'handler' => 'views_handler_filter_string',
+    ),
+    'sort' => array(
+      'handler' => 'views_handler_sort',
+    ),
+    'argument' => array(
+      'handler' => 'views_handler_argument_numeric',
+    ),
+  );
+  $data['springboard_action_opt_in']['opt_in'] = array(
+    'title' => 'Action signature opt-in',
+    'help' => t('Tracks user opt-in to display message action participation.'),
+    'field' => array(
+      'handler' => 'views_handler_field',
+      'click sortable' => TRUE,
+    ),
+    'filter' => array(
+      'handler' => 'views_handler_filter_string',
+    ),
+    'sort' => array(
+      'handler' => 'views_handler_sort',
+    ),
+  );
+  $data['springboard_action_opt_in']['created'] = array(
+    'title' => t('Action opt-in submission creation time'),
+    'help' => t('Webform Submission timestamp.'),
+    'field' => array(
+      'handler' => 'views_handler_field_date',
+      'click sortable' => TRUE,
+    ),
+    'filter' => array(
+      'handler' => 'views_handler_filter_date',
+    ),
+    'sort' => array(
+      'handler' => 'views_handler_sort_date',
+    ),
+  );
+
   return $data;
 }
 
@@ -1005,5 +1125,5 @@ function springboard_advocacy_ajax_search() {
       }
     }
   }
-   drupal_json_output(array('size' => $size, 'count' => $count, 'person' => $person));
+  drupal_json_output(array('size' => $size, 'count' => $count, 'person' => $person));
 }

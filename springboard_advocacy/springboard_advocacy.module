@@ -653,6 +653,36 @@ function springboard_advocacy_node_view($node, $view_mode, $langcode) {
   }
 }
 
+function springboard_advocacy_negotiate_redirect($node, $sid, &$form_state) {
+  if($sid) {
+    module_load_include('inc', 'webform', 'includes/webform.submissions');
+    $submission = webform_get_submission($node->nid, $sid);
+    if ($node->webform['redirect_url'] == '<confirmation>') {
+      $form_state['redirect'] = array(
+        'node/' . $node->nid . '/done',
+        array('query' => array('sid' => $sid))
+      );
+    }
+    else {
+      $redirect = springboard_advocacy_parse_redirect($node, $submission);
+      $form_state['redirect'] = $redirect;
+      if (!empty($_SESSION['saved_messages']['status'])) {
+        $_SESSION['messages']['status'] =  $_SESSION['saved_messages']['status'];
+      }
+    }
+  }
+  else {
+    // we don't have a submission identifier, this is not a legit request, redirect to the node
+    $form_state['redirect'] = array('node/' . $node->nid);
+    if (!empty($_SESSION['saved_messages']['status'])) {
+      $_SESSION['messages']['status'] =  $_SESSION['saved_messages']['status'];
+    }
+  }
+  if (!empty($_SESSION['saved_messages']['status'])) {
+    unset($_SESSION['saved_messages']['status']);
+  }
+}
+
 /**
  * Parse redirect url and filter webform tokens in redirect urls.
  *
@@ -707,4 +737,95 @@ function springboard_advocacy_node_delete($node) {
   db_delete('sba_form_id')
     ->condition('nid', $node->nid)
     ->execute();
+}
+
+/**
+ * Implements hook_webform_submission_insert().
+ *
+ * Update opt-in block when submitted by a logged in user.
+ */
+function springboard_advocacy_webform_submission_insert($node, $submission) {
+  $types = variable_get('sba_action_types', array());
+  if (in_array($node->type, $types)) {
+    $node_wrapper = entity_metadata_wrapper('node', $node);
+    $multi_flow = (isset($node_wrapper->field_sba_action_flow) && $node_wrapper->field_sba_action_flow->value() == 'multi') || ($node->type == 'sba_social_action') ? TRUE : FALSE;
+    if (!$multi_flow) {
+      springboard_advocacy_get_opt_in_uid($node, $submission);
+    }
+  }
+}
+
+/**
+ * Implements hook_webform_submission_update().
+ *
+ * Update opt-in block when submitted by a logged out user.
+ * Webform user triggers this.
+ */
+function springboard_advocacy_webform_submission_update($node, $submission) {
+  $types = variable_get('sba_action_types', array());
+
+  if (in_array($node->type, $types)) {
+    $node_wrapper = entity_metadata_wrapper('node', $node);
+    $multi_flow = (isset($node_wrapper->field_sba_action_flow) && $node_wrapper->field_sba_action_flow->value() == 'multi') || ($node->type == 'sba_social_action') ? TRUE : FALSE;
+    if (!$multi_flow) {
+      springboard_advocacy_get_opt_in_uid($node, $submission);
+    }
+    else {
+      $complete = db_query('SELECT * FROM {webform_component} ' .
+        'WHERE nid = :nid ' .
+        'AND form_key = :form_key',
+        array(
+          ':nid' => $node->nid,
+          ':form_key' => 'sba_multistep_complete'
+        ))->fetchObject();
+      if (!empty($complete->cid) && !empty($submission->data[$complete->cid]['value'][0])) {
+        springboard_advocacy_get_opt_in_uid($node, $submission);
+      }
+    }
+  }
+}
+
+/**
+ * Update the various components on multistep forms.
+ *
+ * Called from preview.inc in message and social actions.
+ */
+function springboard_advocacy_update_multistep_components($sid, $node, $changed) {
+  // Update the user edit flag.
+  if ($changed == TRUE) {
+    $user_edit = db_query('SELECT * FROM {webform_component} WHERE nid = :nid AND form_key = :form_key',
+      array(
+        ':nid' => $node->nid,
+        ':form_key' => 'sba_user_edit_flag'
+      ))->fetchObject();
+
+    if (!empty($user_edit->cid)) {
+      db_update('webform_submitted_data')->fields(array('data' => 1))
+        ->condition('nid', $node->nid, '=')
+        ->condition('sid', $sid, '=')
+        ->condition('cid', $user_edit->cid, '=')
+        ->condition('no', 0, '=')
+        ->execute();
+    }
+  }
+
+  $complete = db_query('SELECT * FROM {webform_component} WHERE nid = :nid AND form_key = :form_key',
+    array(
+      ':nid' => $node->nid,
+      ':form_key' => 'sba_multistep_complete'
+    ))->fetchObject();
+
+  if (!empty($complete->cid)) {
+    db_update('webform_submitted_data')->fields(array('data' => 1))
+      ->condition('nid', $node->nid, '=')
+      ->condition('sid', $sid, '=')
+      ->condition('cid', $complete->cid, '=')
+      ->condition('no', 0, '=')
+      ->execute();
+  }
+
+  module_load_include('inc', 'webform', 'includes/webform.submissions');
+  $submission = webform_get_submission($node->nid, $sid, TRUE);
+  // Update to trigger salesforce resync.
+  webform_submission_update($node, $submission);
 }
