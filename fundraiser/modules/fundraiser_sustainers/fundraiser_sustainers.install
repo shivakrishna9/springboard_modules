@@ -818,7 +818,7 @@ function fundraiser_sustainers_update_7013(&$sandbox) {
 
   // Get fundraiser sustainers records that have matching master donation ID
   // and donation ID fields.
-  $results = db_query('SELECT `master_did` FROM {fundraiser_sustainers} WHERE `master_did` = `did` AND `master_did` > :current_did ORDER BY `master_did` ASC LIMIT 0,10',
+  $results = db_query('SELECT `master_did` FROM {fundraiser_sustainers} WHERE `master_did` = `did` AND `master_did` > :current_did ORDER BY `master_did` ASC LIMIT 0, 40',
       array(
         ':current_did' => $sandbox['current_did'],
       ))->fetchAll();
@@ -836,15 +836,19 @@ function fundraiser_sustainers_update_7013(&$sandbox) {
           ))->fetchField();
 
     // Create a new fundraiser sustainers series entity.
+    $time = time();
     $fundraiser_sustainers_series_data = array(
       'did' => $donation['did'],
       'uid' => $donation['uid'],
       'amount' => $donation['amount'],
       'installments' => $installments,
+      'created' => $time,
+      'updated' => $time,
       );
 
-    $fundraiser_sustainers_series = entity_create('fundraiser_sustainers_series', $fundraiser_sustainers_series_data);
-    $fundraiser_sustainers_series->save();
+   db_insert('fundraiser_sustainers_series')
+       ->fields($fundraiser_sustainers_series_data)
+       ->execute();
 
     $sandbox['progress']++;
     $sandbox['current_did'] = $row->master_did;
