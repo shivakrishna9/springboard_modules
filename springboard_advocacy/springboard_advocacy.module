@@ -537,12 +537,27 @@ function springboard_advocacy_api_call() {
   return $apiCall;
 }
 
+/**
+ * Helper for _springboard_advocacy_webform_submission_flatten().
+ *
+ * @param $nid
+ * @return mixed
+ */
 function _springboard_advocacy_webform_get_components_by_nid($nid) {
   return db_query('SELECT * FROM {webform_component} ' .
     'WHERE nid = :nid',
     array(':nid' => $nid))->fetchAll();
 }
 
+/**
+ * Helper for message action and social action submissions.
+ *
+ * @param $nid
+ * @param $submit_tree
+ * @param null $submission_keys
+ * @param null $fieldset_keys
+ * @return array
+ */
 function _springboard_advocacy_webform_submission_flatten($nid, $submit_tree, $submission_keys = NULL, $fieldset_keys = NULL) {
   if ($submission_keys == NULL) {
     $components = _springboard_advocacy_webform_get_components_by_nid($nid);
@@ -564,6 +579,12 @@ function _springboard_advocacy_webform_submission_flatten($nid, $submit_tree, $s
   return $flat_array;
 }
 
+/**
+ * Implements hook_springboard_admin_alias_patterns().
+ *
+ * Prevents Springboard Backend theme from appearing on message
+ * preview pages.
+ */
 function springboard_advocacy_springboard_admin_alias_patterns() {
   return array(
     'node/%/message-preview' => array(
@@ -695,6 +716,13 @@ function springboard_advocacy_node_view($node, $view_mode, $langcode) {
   }
 }
 
+/**
+ * Used by social and message action preview.inc
+ *
+ * @param $node
+ * @param $sid
+ * @param $form_state
+ */
 function springboard_advocacy_negotiate_redirect($node, $sid, &$form_state) {
   if($sid) {
     module_load_include('inc', 'webform', 'includes/webform.submissions');
@@ -762,6 +790,8 @@ function springboard_advocacy_parse_redirect($node, $submission) {
 
 /**
  * Implements hook_node_delete().
+ *
+ * Garbage removal for some of our custom tables.
  */
 function springboard_advocacy_node_delete($node) {
   $types = variable_get('sba_action_types', array());

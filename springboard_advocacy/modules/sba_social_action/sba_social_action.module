@@ -645,6 +645,12 @@ function sba_social_action_clear_twitter_session() {
   drupal_goto('node/' . $nid);
 }
 
+/**
+ * Theme a twitter timeline widget.
+ *
+ * @param $vars
+ * @return string
+ */
 function theme_sba_social_action_twitter_timeline(&$vars) {
   $name = $vars['sba_twitter']['values']['screen_name'];
   $node = $vars['node'];
@@ -775,6 +781,11 @@ function sba_social_action_tokens($type, $tokens, $data = array(), $options = ar
 
 }
 
+/**
+ * Add social action css to status messages.
+ *
+ * @param $vars
+ */
 function sba_social_action_preprocess_status_messages($vars) {
   drupal_add_css(drupal_get_path('module', 'sba_social_action') . '/css/social-message-confirmation.css');
 }

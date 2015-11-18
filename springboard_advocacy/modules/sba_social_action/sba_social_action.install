@@ -32,14 +32,15 @@ function sba_social_action_uninstall() {
   field_purge_batch(1000);
 }
 
-/*
+/**
  * Update social action node fields.
  */
 function sba_social_action_update_7001() {
   module_load_include('inc', 'sba_social_action', 'includes/install/sba_social_action.install_fields');
   _sba_social_action_create_node_fields(TRUE);
 }
-/*
+
+/**
  * Update Social action message entity fields.
  */
 function sba_social_action_update_7002() {
@@ -47,7 +48,7 @@ function sba_social_action_update_7002() {
   sba_social_action_create_twitter_message_entity(TRUE);
 }
 
-/*
+/**
  * Add field_sba_prepend_target_name to group_sba_sample_tweet
  */
 function sba_social_action_update_7003() {
@@ -63,7 +64,7 @@ function sba_social_action_update_7003() {
   field_group_group_save($group);
 
 }
-/*
+/**
  * Set default session cache values.
  */
 function sba_social_action_update_7004() {
@@ -73,6 +74,9 @@ function sba_social_action_update_7004() {
 }
 
 
+/**
+ * Add the multistep tracking fields to social actions.
+ */
 function sba_social_action_update_7005() {
 
   $nodes = db_query('select n.nid from {node} n

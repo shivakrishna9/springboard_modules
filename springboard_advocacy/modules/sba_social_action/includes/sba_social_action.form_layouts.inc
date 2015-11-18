@@ -193,6 +193,10 @@ function theme_social_action_submitted_wrapper($vars) {
   return '<div class="row-fluid"><fieldset id="your-information-wrapper" class = "form-wrapper">' . $vars['element']['#children']  . '</fieldset></div>';
 }
 
+/**
+ * @param $vars
+ * @return string
+ */
 function theme_social_action_messages_wrapper($vars) {
   return '<div id = "right" class = "span7">' . $vars['element']['#children']  . '</div>';
 }

@@ -337,6 +337,12 @@ function sba_social_action_get_target_details($target) {
   return $target_details;
 }
 
+/**
+ * Theme a target for the preview page.
+ *
+ * @param $vars
+ * @return string
+ */
 function theme_sba_social_action_person_details(&$vars) {
   $output = '';
   $target = $vars['message']['person'];

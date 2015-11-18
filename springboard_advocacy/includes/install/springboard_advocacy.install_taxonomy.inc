@@ -95,6 +95,13 @@ function _springboard_advocacy_standard_legislative_issues() {
   );
 }
 
+/**
+ * Install the legislative issue and org issue taxonomy fields on a node type.
+ *
+ * @param $node_type
+ * @throws \Exception
+ * @throws \FieldException
+ */
 function _springboard_advocacy_install_taxonomy_fields($node_type) {
   module_load_include('inc', 'field', 'field.crud');
   module_load_include('inc', 'field', 'field.info');
@@ -133,6 +140,8 @@ function _springboard_advocacy_install_taxonomy_fields($node_type) {
 }
 
 /**
+ * Taxonomy field definitions.
+ *
  * @return mixed
  */
 function _springboard_advocacy_install_taxonomy_field_definitions($node_type) {
