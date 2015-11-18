@@ -722,21 +722,24 @@ function springboard_advocacy_parse_redirect($node, $submission) {
  * Implements hook_node_delete().
  */
 function springboard_advocacy_node_delete($node) {
-  db_delete('sba_message_action_confirm')
-    ->condition('nid', $node->nid)
-    ->execute();
+  $types = variable_get('sba_action_types', array());
+  if (in_array($node->type, $types)) {
+    db_delete('sba_message_action_confirm')
+      ->condition('nid', $node->nid)
+      ->execute();
 
-  db_delete('springboard_action_opt_in')
-    ->condition('nid', $node->nid)
-    ->execute();
+    db_delete('springboard_action_opt_in')
+      ->condition('nid', $node->nid)
+      ->execute();
 
-  db_delete('springboard_action_opt_in_block')
-    ->condition('nid', $node->nid)
-    ->execute();
+    db_delete('springboard_action_opt_in_block')
+      ->condition('nid', $node->nid)
+      ->execute();
 
-  db_delete('sba_form_id')
-    ->condition('nid', $node->nid)
-    ->execute();
+    db_delete('sba_form_id')
+      ->condition('nid', $node->nid)
+      ->execute();
+  }
 }
 
 /**
@@ -763,7 +766,6 @@ function springboard_advocacy_webform_submission_insert($node, $submission) {
  */
 function springboard_advocacy_webform_submission_update($node, $submission) {
   $types = variable_get('sba_action_types', array());
-
   if (in_array($node->type, $types)) {
     $node_wrapper = entity_metadata_wrapper('node', $node);
     $multi_flow = (isset($node_wrapper->field_sba_action_flow) && $node_wrapper->field_sba_action_flow->value() == 'multi') || ($node->type == 'sba_social_action') ? TRUE : FALSE;
