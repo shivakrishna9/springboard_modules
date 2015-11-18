@@ -121,7 +121,7 @@ function webform_goals_webform_goals_list_context() {
  * Add "# of submissions" and "custom field" metrics.
  */
 function webform_goals_webform_goals_list_metrics($selected_context, $form_state, $goal = array()) {
-
+  drupal_set_message('<pre>' . print_r($selected_context['id'], 1) . '</pre>');
   switch ($selected_context['id']) {
     case 'single':
       $options = array(0 => '- You must select a form for this context to be valid -');
@@ -155,7 +155,7 @@ function webform_goals_webform_goals_list_metrics($selected_context, $form_state
           ),
           'display_threshold' => array(
             'title' => t('Minimum total values required to show progress'),
-            'description' => t('The goal progress bar will be hidden until the total values in the selected field reach this number.'),
+            'description' => t('The goal progress bar will be hidden until the total values in the selected field reach this number. If a starter message exists, it will be shown in the template\'s place.'),
           ),
         ),
       );
@@ -165,6 +165,24 @@ function webform_goals_webform_goals_list_metrics($selected_context, $form_state
     case 'form_group':
       // fall through
     default:
+      $metrics['fundraiser_sustainer_count'] = array(
+        'id' => 'sustainer_count',
+        'name' => t('Number of sustainer conversions'),
+        'form_text' => array(
+          'target_value' => array(
+            'title' => t('Total number of sustainer conversions required to meet this goal?'),
+            'description' => t('Goal progress represents the total number of sustainer conversions as a percentage of this number.'),
+          ),
+          'seed' => array(
+            'title' => t('Seed goal progress with submissions'),
+            'description' => t('Add this number to the current total sustainer conversions when calculating goal progress.'),
+          ),
+          'display_threshold' => array(
+            'title' => t('Minimum submissions required to show progress.'),
+            'description' => t("The goal progress bar will be hidden until the total sustainer conversions reach this number. If a starter message exists, it will be shown in the template's place."),
+          ),
+        ),
+      );
       $metrics['submission_count'] = array(
         'id' => 'submission_count',
         'name' => t('Number of form submissions'),
