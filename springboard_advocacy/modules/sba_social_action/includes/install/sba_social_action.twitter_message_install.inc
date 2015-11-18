@@ -474,6 +474,7 @@ function sba_social_action_create_twitter_message_entity($update = FALSE) {
     $field_group->children = array(
       0 => 'field_sba_twitter_editable',
       1 => 'field_sba_twitter_message',
+      2 => 'field_sba_prepend_target_name',
     );
     $field_group->format_type = 'fieldset';
     $field_group->format_settings = array(
