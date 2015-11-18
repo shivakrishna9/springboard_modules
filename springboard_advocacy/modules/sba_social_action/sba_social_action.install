@@ -8,9 +8,12 @@ function sba_social_action_install() {
   module_load_include('inc', 'sba_social_action', 'includes/install/sba_social_action.install');
   module_load_include('inc', 'sba_social_action', 'includes/install/sba_social_action.install_examples');
   module_load_include('inc', 'sba_social_action', 'includes/install/sba_social_action.twitter_message_install');
+  module_load_include('inc', 'springboard_advocacy', 'includes/install/springboard_advocacy.install_taxonomy');
+
 
   sba_social_action_create_twitter_message_entity();
   _sba_social_action_create_content_type();
+  _springboard_advocacy_install_vocab_sba_legislative_issues('sba_social_action');
   _sba_social_action_create_example_social_action();
 
 }

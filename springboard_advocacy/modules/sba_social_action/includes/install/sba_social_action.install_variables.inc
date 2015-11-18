@@ -84,4 +84,5 @@ function _sba_social_action_set_vars() {
   variable_set('session_cache_expire_period', 0.041);
   variable_set('session_cache_sid_source', 0);
   variable_set('session_cache_storage_method', 2);
+
 }

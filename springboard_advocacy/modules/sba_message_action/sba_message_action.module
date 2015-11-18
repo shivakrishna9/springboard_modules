@@ -559,9 +559,10 @@ function sba_message_action_form_sba_message_action_node_form_alter(&$form, &$fo
 
   // Adds the legislative issues taxonomy fields to the above.
   if (isset($form['field_sba_legislative_issues'])) {
+    $description = t("Many members of Congress require an issue/topic to be selected for each message they receive. If your action is targeting members of Congress, please select the issue that best matches the topic of your message. Based on your choice, Springboard will choose the best available match on each legislator's web form.");
     form_load_include($form_state, 'inc', 'springboard_advocacy',
       'includes/springboard_advocacy.taxonomy');
-    springboard_advocacy_taxonomy_form($form, $form_state, 'sba_message_action_node_form');
+    springboard_advocacy_taxonomy_form($form, $form_state, $description, TRUE);
   }
   if ($form['#node']->type == 'sba_message_action') {
     $form['springboard_taxonomy_options']['#weight'] = -10;

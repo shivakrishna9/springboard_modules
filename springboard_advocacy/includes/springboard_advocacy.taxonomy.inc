@@ -8,7 +8,7 @@
 /**
  * Shows the legislative issues form on the message action node/add/edit page.
  */
-function springboard_advocacy_taxonomy_form(&$form, &$form_state, $form_id) {
+function springboard_advocacy_taxonomy_form(&$form, &$form_state, $description, $required = FALSE) {
 
   $form['springboard_taxonomy_options']['#title'] = t('Action options');
 //  form_load_include($form_state, 'inc', 'sba_message_action',
@@ -35,13 +35,15 @@ function springboard_advocacy_taxonomy_form(&$form, &$form_state, $form_id) {
     $form['springboard_taxonomy_options']['legislative_issues'] = array(
       '#type' => 'fieldset',
       '#title' => t('Choose Legislative Issue(s)'),
-      '#description' => t("Many members of Congress require an issue/topic to be selected for each message they receive. If your action is targeting members of Congress, please select the issue that best matches the topic of your message. Based on your choice, Springboard will choose the best available match on each legislator's web form."),
+      '#description' => $description,
       '#collapsible' => TRUE,
       '#collapsed' => FALSE,
       '#weight' => -1,
     );
-    $form['field_sba_legislative_issues'][$language]['#title'] = 'You must select at least one legislative issue';
-    $form['field_sba_legislative_issues'][$form['language']['#value']]['#required'] = TRUE;
+    if ($required == TRUE) {
+      $form['field_sba_legislative_issues'][$language]['#title'] = 'You must select at least one legislative issue';
+      $form['field_sba_legislative_issues'][$form['language']['#value']]['#required'] = TRUE;
+    }
     $form['springboard_taxonomy_options']['legislative_issues']['field_sba_legislative_issues']
       = $form['field_sba_legislative_issues'];
     unset($form['field_sba_legislative_issues']);

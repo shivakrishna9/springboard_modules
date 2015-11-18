@@ -368,6 +368,25 @@ function sba_social_action_form_alter(&$form, &$form_state, $form_id) {
  * Implements hook_form_FORMID_alter().
  */
 function sba_social_action_form_sba_social_action_node_form_alter(&$form, &$form_state) {
+
+  // Loads the springboard_taxonomy_options fieldset and form js/css if it
+  // is not already present.
+  if (!isset($form['field_sba_organization_issues'])
+    && !isset($form['springboard_taxonomy_options']['organization_issues']['field_sba_organization_issues'])) {
+    springboard_taxonomy_taxonomy_form($form, $form_state, 'sba_social_action_node_form');
+  }
+
+  // Adds the legislative issues taxonomy fields to the above.
+  if (isset($form['field_sba_legislative_issues'])) {
+    form_load_include($form_state, 'inc', 'springboard_advocacy',
+      'includes/springboard_advocacy.taxonomy');
+    $description = '';
+    springboard_advocacy_taxonomy_form($form, $form_state, $description);
+  }
+
+  $form['springboard_taxonomy_options']['#weight'] = -10;
+
+
   if (empty($form['springboard_display'])) {
     $form['springboard_display'] = array(
       '#type' => 'fieldset',
