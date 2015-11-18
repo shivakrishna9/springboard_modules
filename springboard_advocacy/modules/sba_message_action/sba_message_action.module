@@ -12,16 +12,6 @@
  */
 function sba_message_action_init() {
 
-  // Include the taxonomy form alters needed to look down legislative issues.
-  if ((arg(0) == 'admin' && arg(2) == 'taxonomy')
-    || (arg(0) == 'taxonomy' && arg(1) == 'taxonomy' && arg(3) == 'edit')) {
-    module_load_include(
-      'inc',
-      'sba_message_action',
-      'includes/sba_message_action.taxonomy'
-    );
-  }
-
   // Include the webform component form alters needed to
   // lock down action fields.
   if (arg(0) == 'node' && is_numeric(arg(1)) && arg(2) == 'webform') {
@@ -110,27 +100,6 @@ function sba_message_action_menu() {
 
   return $items;
 }
-
-/**
- * Implements hook_menu_alter().
- *
- * Limit access to the legislative issues taxonomy admin.
- */
-function sba_message_action_menu_alter(&$items) {
-  $items['admin/structure/taxonomy/sba_legislative_issues/add']['access callback'] = 'sba_message_action_taxonomy_access';
-  $items['admin/structure/taxonomy/sba_legislative_issues/edit']['access callback'] = 'sba_message_action_taxonomy_access';
-  $items['admin/structure/taxonomy/sba_legislative_issues']['access callback'] = 'sba_message_action_taxonomy_access';
-}
-
-/**
- * Limit access to the legislative issues taxonomy admin.
- *
- * @return bool
- */
-function sba_message_action_taxonomy_access() {
-  return FALSE;
-}
-
 
 /**
  * Access callback handler for the message action performance tab.
@@ -533,20 +502,6 @@ function _sba_message_action_redirect($form, &$form_state) {
 /**
  * Implements hook_form_FORM_ID_alter().
  *
- * Disable config options for the message action node type on the
- * springboard_taxonomy.module config page; i.e., always require the
- * organization issues vocab on message_action nodes.
- */
-function sba_message_action_form_springboard_taxonomy_settings_form_alter(&$form, &$form_state) {
-  if (isset($form['springboard_taxonomy_node_types']['#options']['sba_message_action'])) {
-    //$form['springboard_taxonomy_node_types']['sba_message_action']['#disabled'] = TRUE;
-   // $form['springboard_taxonomy_node_types']['sba_message_action']['#default_value'] = 'sba_message_action';
-  }
-}
-
-/**
- * Implements hook_form_FORM_ID_alter().
- *
  * Prevent field UI deletion of legislative issues field.
  */
 function sba_message_action_form_field_ui_field_delete_form_alter(&$form, &$form_state) {
@@ -604,11 +559,13 @@ function sba_message_action_form_sba_message_action_node_form_alter(&$form, &$fo
 
   // Adds the legislative issues taxonomy fields to the above.
   if (isset($form['field_sba_legislative_issues'])) {
-    form_load_include($form_state, 'inc', 'sba_message_action',
-      'includes/sba_message_action.taxonomy');
-    sba_message_action_taxonomy_form($form, $form_state, 'sba_message_action_node_form');
+    form_load_include($form_state, 'inc', 'springboard_advocacy',
+      'includes/springboard_advocacy.taxonomy');
+    springboard_advocacy_taxonomy_form($form, $form_state, 'sba_message_action_node_form');
   }
-
+  if ($form['#node']->type == 'sba_message_action') {
+    $form['springboard_taxonomy_options']['#weight'] = -10;
+  }
   // Add action flow field to vertical nav.
   if (!empty($form['springboard_taxonomy_options']) && isset($form['field_sba_action_flow'])) {
     $node = $form['#node'];

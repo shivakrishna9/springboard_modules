@@ -8,11 +8,11 @@
 /**
  * Shows the legislative issues form on the message action node/add/edit page.
  */
-function sba_message_action_taxonomy_form(&$form, &$form_state, $form_id) {
+function springboard_advocacy_taxonomy_form(&$form, &$form_state, $form_id) {
 
   $form['springboard_taxonomy_options']['#title'] = t('Action options');
-  form_load_include($form_state, 'inc', 'sba_message_action',
-    'includes/sba_message_action.webform');
+//  form_load_include($form_state, 'inc', 'sba_message_action',
+//    'includes/sba_message_action.webform');
   $language = $form['language']['#value'];
   // Legislative Issues selection.
   if (isset($form['field_sba_legislative_issues']) && !empty($form['field_sba_legislative_issues'][$language])) {
@@ -57,7 +57,7 @@ function sba_message_action_taxonomy_form(&$form, &$form_state, $form_id) {
  * Remove the operations links from the legislative issues row and display
  * a message explaining why they are not there.
  */
-function sba_message_action_form_taxonomy_overview_vocabularies_alter(&$form, &$form_state) {
+function springboard_advocacy_form_taxonomy_overview_vocabularies_alter(&$form, &$form_state) {
   foreach (element_children($form) as $key) {
     if (isset($form[$key]['#vocabulary']) && !empty($form[$key]['#vocabulary']->machine_name)) {
       if ($form[$key]['#vocabulary']->machine_name == 'sba_legislative_issues') {
@@ -75,7 +75,7 @@ function sba_message_action_form_taxonomy_overview_vocabularies_alter(&$form, &$
  *
  * Hide edit links on the terms page.
  */
-function sba_message_action_form_taxonomy_overview_terms_alter(&$form, &$form_state) {
+function springboard_advocacy_form_taxonomy_overview_terms_alter(&$form, &$form_state) {
   if(isset($form['#vocabulary']) && $form['#vocabulary']->machine_name == 'sba_legislative_issues') {
     $form['actions']['#access'] = FALSE;
     foreach (element_children($form) as $key) {
@@ -89,7 +89,7 @@ function sba_message_action_form_taxonomy_overview_terms_alter(&$form, &$form_st
  *
  * Hide edit fields on the vocab edit page.
  */
-function sba_message_action_form_taxonomy_form_vocabulary_alter(&$form, &$form_state) {
+function springboard_advocacy_form_taxonomy_form_vocabulary_alter(&$form, &$form_state) {
   if($form['#vocabulary']->machine_name == 'sba_legislative_issues') {
     foreach (element_children($form) as $key) {
       $form[$key]['#access'] = false;
@@ -103,7 +103,7 @@ function sba_message_action_form_taxonomy_form_vocabulary_alter(&$form, &$form_s
  *
  * Remove form fields from the term edit page.
  */
-function sba_message_action_form_taxonomy_form_term_alter(&$form, &$form_state) {
+function springboard_advocacy_form_taxonomy_form_term_alter(&$form, &$form_state) {
   if ($form['#bundle'] == 'sba_legislative_issues') {
     $prefix = t('Terms cannot be added or edited in this vocabulary.');
     foreach (element_children($form) as $key) {

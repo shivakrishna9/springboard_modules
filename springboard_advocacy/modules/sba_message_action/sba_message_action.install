@@ -26,12 +26,12 @@ function sba_message_action_install() {
 
   module_load_include('inc', 'sba_message_action', 'includes/install/sba_message_action.install_message');
   module_load_include('inc', 'sba_message_action', 'includes/install/sba_message_action.install');
-  module_load_include('inc', 'sba_message_action', 'includes/install/sba_message_action.install_taxonomy');
+  module_load_include('inc', 'springboard_advocacy', 'includes/install/springboard_advocacy.install_taxonomy');
   module_load_include('inc', 'sba_message_action', 'includes/install/sba_message_action.install_examples');
 
   _sba_message_action_install_message_entity();
   _sba_message_action_create_content_type();
-  _sba_message_action_install_vocab_sba_legislative_issues();
+  _springboard_advocacy_install_vocab_sba_legislative_issues('sba_message_action');
   _sba_message_action_create_example_message_action();
 }
 
@@ -51,9 +51,6 @@ function sba_message_action_uninstall() {
   // Delete the message action content type.
   node_type_delete('sba_message_action');
   field_purge_batch(1000);
-  module_load_include('inc', 'sba_message_action', 'includes/install/sba_message_action.install_taxonomy');
-  _sba_message_action_delete_legislative_vocab();
-
 }
 
 
@@ -63,8 +60,8 @@ function sba_message_action_enable() {
   // without completely uninstalling
   // we need to recreate the taxonomy that
   // springboard_advocacy_update_7007() deletes.
-  module_load_include('inc', 'sba_message_action', 'includes/install/sba_message_action.install_taxonomy');
-  _sba_message_action_install_vocab_sba_legislative_issues();
+  module_load_include('inc', 'springboard_advocacy', 'includes/install/springboard_advocacy.install_taxonomy');
+  _springboard_advocacy_install_vocab_sba_legislative_issues('sba_message_action');
 }
 
 /**
@@ -256,9 +253,9 @@ function sba_message_action_update_7010() {
  * Install legislative issues vocabulary if missing.
  */
 function sba_message_action_update_7011() {
-  module_load_include('inc', 'sba_message_action', 'includes/install/sba_message_action.install_taxonomy');
-  _sba_message_action_install_vocab_sba_legislative_issues();
-  _sba_message_action_install_taxonomy_fields();
+  module_load_include('inc', 'springboard_advocacy', 'includes/install/springboard_advocacy.install_taxonomy');
+  _springboard_advocacy_install_vocab_sba_legislative_issues('sba_message_action');
+  //_springboard_advocacy_install_taxonomy_fields();
 }
 
 /**

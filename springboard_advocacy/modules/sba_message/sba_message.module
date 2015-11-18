@@ -219,11 +219,13 @@ function sba_message_node_delete($node) {
       array(':nid' => $node->nid))
       ->fetchAllAssoc('entity_id');
 
-    sba_message_delete_multiple(array_keys($sba_message_ids));
+    if(!empty($sba_message_ids)) {
+      sba_message_delete_multiple(array_keys($sba_message_ids));
 
-    db_delete('draggableviews_structure')
-      ->condition('entity_id', array_keys($sba_message_ids), 'IN')
-      ->execute();
+      db_delete('draggableviews_structure')
+        ->condition('entity_id', array_keys($sba_message_ids), 'IN')
+        ->execute();
+    }
   }
 }
 

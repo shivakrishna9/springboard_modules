@@ -5,6 +5,25 @@
  */
 
 /**
+ * Implements hook_init().
+ *
+ * Load taxonomy and webform form_alters
+ * that apply to non-cached administrative pages.
+ */
+function springboard_advocacy_init() {
+
+  // Include the taxonomy form alters needed to lock down legislative issues.
+  if ((arg(0) == 'admin' && arg(2) == 'taxonomy')
+    || (arg(0) == 'taxonomy' && arg(1) == 'taxonomy' && arg(3) == 'edit')) {
+    module_load_include(
+      'inc',
+      'springboard_advocacy',
+      'includes/springboard_advocacy.taxonomy'
+    );
+  }
+}
+
+/**
  * Implements hook_menu().
  *
  * Configuration paths and Advocacy Dashboard paths.
@@ -121,6 +140,29 @@ function springboard_advocacy_user_can_create_advocacy_type() {
   // Any new advocacy types will have to be added here in the future.
   return (user_access('create sba_message_action content') || user_access('create springboard_petition content'));
 }
+
+/**
+ * Implements hook_menu_alter().
+ *
+ * Limit access to the legislative issues taxonomy admin.
+ */
+function springboard_advocacy_menu_alter(&$items) {
+  if (isset($items['admin/structure/taxonomy/sba_legislative_issues'])) {
+    $items['admin/structure/taxonomy/sba_legislative_issues/add']['access callback'] = 'springboard_advocacy_taxonomy_access';
+    $items['admin/structure/taxonomy/sba_legislative_issues/edit']['access callback'] = 'springboard_advocacy_taxonomy_access';
+    $items['admin/structure/taxonomy/sba_legislative_issues']['access callback'] = 'springboard_advocacy_taxonomy_access';
+  }
+}
+
+/**
+ * Limit access to the legislative issues taxonomy admin.
+ *
+ * @return bool
+ */
+function springboard_advocacy_taxonomy_access() {
+  return FALSE;
+}
+
 
 /**
  * Implements hook_springboard_admin_admin_menu_items_alter().
