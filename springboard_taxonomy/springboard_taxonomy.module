@@ -144,7 +144,6 @@ function springboard_taxonomy_form_alter(&$form, &$form_state, $form_id) {
  * Adds a fieldset and issues terms to node add/edit forms' vertical tabs.
  */
 function springboard_taxonomy_taxonomy_form(&$form, &$form_state, $form_id) {
-
   $language = $form['language']['#value'];
   // Add a vertical-tab fieldset for "Action options."
   $form['springboard_taxonomy_options'] = array(
