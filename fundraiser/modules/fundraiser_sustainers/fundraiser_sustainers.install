@@ -846,7 +846,7 @@ function fundraiser_sustainers_update_7013(&$sandbox) {
       'updated' => $time,
       );
 
-   db_insert('fundraiser_sustainers_series')
+    db_insert('fundraiser_sustainers_series')
        ->fields($fundraiser_sustainers_series_data)
        ->execute();
 
