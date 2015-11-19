@@ -711,7 +711,7 @@ function salesforce_npsp_update_7002(&$sandbox) {
         ->execute();
 
     $sandbox['progress'] ++;
-    $sandbox['current_did'] = $row->master_did;
+    $sandbox['current_did'] = $row->did;
   }
 
   $sandbox['#finished'] = empty($sandbox['max']) ? 1 : ($sandbox['progress'] / $sandbox['max']);
