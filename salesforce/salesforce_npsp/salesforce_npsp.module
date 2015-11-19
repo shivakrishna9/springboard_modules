@@ -100,10 +100,10 @@ function salesforce_npsp_salesforce_genmap_map_fields_alter(&$fields, $context) 
     $donation = $context['object'];
     // Add a field if this is a recurring object.
     if ($donation->donation['recurs_monthly'] == TRUE && !empty($donation->master_did) ) {
-      $fields['npe03__Recurring_Donation__c'] = '[npe03__Recurring_Donation__c:recurring_donation:' . $donation->master_did . ']';
+      $fields['npe03__Recurring_Donation__c'] = '[npe03__Recurring_Donation__c:fundraiser_sustainers_series:' . $donation->master_did . ']';
     }
     if ($donation->donation['recurs_monthly'] == TRUE && empty($donation->master_did) ) {
-      $fields['npe03__Recurring_Donation__c'] = '[npe03__Recurring_Donation__c:recurring_donation:' . $donation->did . ']';
+      $fields['npe03__Recurring_Donation__c'] = '[npe03__Recurring_Donation__c:fundraiser_sustainers_series:' . $donation->did . ']';
     }
   }
 }
