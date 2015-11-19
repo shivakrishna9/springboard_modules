@@ -2,7 +2,7 @@
 
 /**
  * @file
- * Install helper functions for message action configuration variables.
+ * Install helper functions for social action configuration variables.
  */
 
 /**

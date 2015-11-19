@@ -2,7 +2,7 @@
 
 /**
  * @file
- * Install helper functions for message action content type CRUD.
+ * Install helper functions for social action content type CRUD.
  */
 
 /**
@@ -63,7 +63,7 @@ function _sba_social_action_reorder_internal_name() {
 }
 
 /**
- * Delete springboard message action nodes and their messages.
+ * Delete springboard social action nodes and their messages.
  */
 function _sba_social_action_delete_nodes() {
 
@@ -87,6 +87,6 @@ function _sba_social_action_delete_nodes() {
       }
     }
     node_delete_multiple($nids);
-    drupal_set_message('Springboard message actions have been deleted.');
+    drupal_set_message('Springboard social actions have been deleted.');
   }
 }

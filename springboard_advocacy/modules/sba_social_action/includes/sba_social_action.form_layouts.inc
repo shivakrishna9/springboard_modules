@@ -2,7 +2,7 @@
 
 /**
  * @file
- * Helper functions for message action form layouts.
+ * Helper functions for social action form layouts.
  */
 
 /**

@@ -2,7 +2,7 @@
 
 /**
  * @file
- * Helper functions for message action webform components.
+ * Helper functions for social action webform components.
  */
 
 /**

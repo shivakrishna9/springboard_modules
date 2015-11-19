@@ -6,7 +6,7 @@
  */
 
 /**
- * Create the example message action node.
+ * Create the example social action node.
  */
 function _sba_social_action_create_example_social_action() {
   $node = new stdClass();
@@ -67,9 +67,9 @@ function _sba_social_action_create_example_social_action() {
     );
   }
   $node->is_webform_user = 1;
-  $node->field_webform_user_internal_name[LANGUAGE_NONE][0]['value'] = "Example Message Action Form";
+  $node->field_webform_user_internal_name[LANGUAGE_NONE][0]['value'] = "Example Social Action Form";
   if (module_exists('form_layouts')) {
-    $node->form_layouts = 'two_column_message_left_vertical';
+    $node->form_layouts = 'social_one_column';
   }
   $node->send_new_user_email = 0;
   node_save($node);
@@ -105,7 +105,7 @@ function _sba_social_action_create_example_social_action() {
 }
 
 /**
- * Create an email wrapper for the message action.
+ * Create an email wrapper for the social action.
  */
 function sba_social_action_email_wrapper_add() {
   $node = new stdClass();
@@ -113,7 +113,7 @@ function sba_social_action_email_wrapper_add() {
   $node->type = 'email_wrapper';
   $node->language = LANGUAGE_NONE;
   $node->uid = 1;
-  $node->title = 'Example Message Action Email Wrapper';
+  $node->title = 'Example Social Action Email Wrapper';
   $node->status = 0;
   $node->promote = 0;
   $node->email_wrapper_from_name[LANGUAGE_NONE][0] = array(

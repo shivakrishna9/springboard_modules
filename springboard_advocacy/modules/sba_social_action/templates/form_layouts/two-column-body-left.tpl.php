@@ -1,7 +1,7 @@
 <?php
 /**
  * @file
- * This renders a message action form in 2 columns.
+ * This renders a social action form in 2 columns.
  */
 ?>
 

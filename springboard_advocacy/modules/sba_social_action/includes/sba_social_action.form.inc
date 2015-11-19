@@ -2,15 +2,15 @@
 
 /**
  * @file
- * Helper functions for building message action client forms.
+ * Helper functions for building social action client forms.
  */
 
 /**
- * Message action webform alterations.
+ * Social action webform alterations.
  *
  * Add the message entities to the action webform node view.
  * Attach CSS and JS to Action nodes.
- * If it's a multiple message action, attach the ctools modal view of them.
+ * If it's a multiple social action, attach the ctools modal view of them.
  * Define custom submit and validate hooks.
  *
  * @param $form
@@ -196,7 +196,7 @@ function sba_social_action_message_form(&$form, $message, $multiple, $message_en
 
 
 /**
- * Validation handler for message action forms.
+ * Validation handler for social action forms.
  *
  * Checks whether editing of subject or body is required.
  * Calls Smarty Streets API and injects response values into form state.
@@ -226,7 +226,7 @@ function sba_social_action_form_validate($form, &$form_state) {
 }
 
 /**
- * Submit handler for message action forms.
+ * Submit handler for social action forms.
  *
  * Capture all messages, combine with contact information and
  * submit to API.

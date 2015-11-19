@@ -6,7 +6,7 @@
  */
 
 /**
- * Create the message action user profile fields.
+ * Create the social action user profile fields.
  */
 function _sbp_social_action_create_user_profile_fields() {
   _sba_social_action_create_zip_plus_four();

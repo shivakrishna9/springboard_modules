@@ -6,7 +6,7 @@
  */
 
 /**
- * Create FieldAPi fields for message actions.
+ * Create FieldAPi fields for social actions.
  */
 function _sba_social_action_create_node_fields($update = false) {
 
@@ -336,7 +336,7 @@ function _sba_social_action_create_node_fields($update = false) {
 }
 
 /**
- * Delete springboard message action fields.
+ * Delete springboard social action fields.
  */
 function _sba_social_action_delete_fields() {
   $fields = array(
@@ -349,5 +349,5 @@ function _sba_social_action_delete_fields() {
     $field = field_info_field($field_name);
     field_delete_field($field);
   }
-  drupal_set_message('Springboard message action fields deleted.');
+  drupal_set_message('Springboard social action fields deleted.');
 }

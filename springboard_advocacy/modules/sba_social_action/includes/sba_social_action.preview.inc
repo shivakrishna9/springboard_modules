@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Message action settings page, menu callback.
+ * Social action preview page, menu callback.
  *
  * @return array
  */
