@@ -252,6 +252,11 @@ function _sba_message_action_create_node_fields($update = false) {
     'type' => 'list_text',
     '_instance' => array(
       'bundle' => 'sba_message_action',
+      'default_value' => array(
+        0 => array(
+          'value' => 1,
+        ),
+      ),
       'deleted' => 0,
       'description' => 'Check this box to enable test mode. Messages will not be sent to any configured targets when test mode is enabled. Unpublished actions are always in test mode.',
       'display' => array(
