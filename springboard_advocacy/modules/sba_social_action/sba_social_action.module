@@ -413,7 +413,7 @@ function sba_social_action_form_sba_social_action_node_form_alter(&$form, &$form
     '#weight' => -4,
   );
   $form['actions']['submit']['#validate'][] = 'sba_social_action_form_sba_social_action_node_form_validate';
-  $form['actions']['submit']['#submit'][] = 'sba_message_action_form_sba_message_action_node_form_submit';
+  $form['actions']['submit']['#submit'][] = 'sba_social_action_form_sba_social_action_node_form_submit';
 
 }
 
