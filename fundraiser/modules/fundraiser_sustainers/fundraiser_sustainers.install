@@ -818,7 +818,7 @@ function fundraiser_sustainers_update_7013(&$sandbox) {
 
   // Get fundraiser sustainers records that have matching master donation ID
   // and donation ID fields.
-  $results = db_query('SELECT `master_did` FROM {fundraiser_sustainers} WHERE `master_did` = `did` AND `master_did` > :current_did ORDER BY `master_did` ASC LIMIT 0, 40',
+  $results = db_query('SELECT `master_did` FROM {fundraiser_sustainers} WHERE `master_did` = `did` AND `master_did` > :current_did ORDER BY `master_did` ASC LIMIT 0, 100',
       array(
         ':current_did' => $sandbox['current_did'],
       ))->fetchAll();
