@@ -125,6 +125,28 @@ function webform_confirmations_webform_submission_insert($node, $submission) {
 }
 
 /**
+ * Implements hook_webform_submission_delete().
+ */
+function webform_confirmations_webform_submission_delete($node, $submission) {
+  db_delete('webform_confirmations_submissions')
+    ->condition('sid', $submission->sid)
+    ->execute();
+}
+
+/**
+ * Implements hook_node_delete().
+ *
+ * Also remove submission data when a webform node is deleted.
+ */
+function webform_confirmations_node_delete($node) {
+/*  drupal_set_message($node->nid);
+  $sql = "DELETE FROM {webform_confirmations_submissions} " .
+    "WHERE sid IN (SELECT sid FROM {webform_submissions} WHERE nid = $node->nid)";
+  drupal_set_message($sql);
+  db_query($sql); */
+}
+
+/**
  * Log submission ID and current session id.
  */
 function webform_confirmations_save_submission_session($sid) {
