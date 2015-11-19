@@ -441,7 +441,7 @@ function sba_social_action_form_sba_social_action_node_form_validate(&$form, &$f
  * @param $form
  * @param $form_state
  */
-function sba_social_action_form_sba_message_action_node_form_submit(&$form, &$form_state) {
+function sba_social_action_form_sba_social_action_node_form_submit(&$form, &$form_state) {
   $data = array(
     'nid' => $form_state['values']['nid'],
     'visibility' => $form_state['values']['show_participants']
