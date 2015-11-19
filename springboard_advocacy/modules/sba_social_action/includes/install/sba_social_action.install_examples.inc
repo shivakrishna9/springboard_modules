@@ -25,11 +25,8 @@ function _sba_social_action_create_example_social_action() {
     'eget, pulvinar sed, posuere vitae, nulla. Sed varius nibh ut lacus. Curabitur fringilla. Nunc est ipsum, ' .
     'pretium quis, dapibus sed, varius non, lectus. Proin a quam. Praesent lacinia, eros quis aliquam porttitor, ' .
     'urna lacus volutpat urna, ut fermentum neque mi egestas dolor.';
-  $node->body[LANGUAGE_NONE][0]['summary'] = 'Donec placerat. Nullam nibh dolor, blandit sed, fermentum id, imperdiet ' .
-    'sit amet, neque. Nam mollis ultrices justo. Sed tempor. Sed vitae tellus. Etiam sem arcu, eleifend sit amet, ' .
-    'gravida eget, porta at, wisi. Nam non lacus vitae ipsum viverra pretium. Phasellus massa. Fusce magna sem, gravida ' .
-    'in, feugiat ac, molestie eget, wisi.';
   $node->body[LANGUAGE_NONE][0]['format'] = 'filtered_html';
+  $node->field_sba_social_fieldset_title[LANGUAGE_NONE][0]['value'] = 'Send a Social Message';
   $node->webform = array(
     'confirmation' => '',
     'confirmation_format' => 'filtered_html',
@@ -39,7 +36,7 @@ function _sba_social_action_create_example_social_action() {
     'allow_draft' => 0,
     'auto_save' => 0,
     'submit_notice' => 1,
-    'submit_text' => t('Send your message'),
+    'submit_text' => t('Find Your Legislator'),
     'submit_limit' => -1,
     'submit_interval' => -1,
     'total_submit_limit' => -1,
@@ -101,7 +98,7 @@ function _sba_social_action_create_example_social_action() {
   // One last save.
   node_save($node);
   email_wrappers_save_settings($node->nid, 1, $settings);
-  drupal_set_message(t('An example message to target form has been created.'));
+  drupal_set_message(t('An example social action form has been created.'));
 }
 
 /**

@@ -25,7 +25,25 @@ function sba_social_action_message_preview_page($nid) {
 
   // Build page header and multi-step form.
   $build = array();
+  $header_field = field_get_items('node', $node, 'field_sba_step_two_header');
+  $header_value = field_view_value('node', $node, 'field_sba_step_two_header', $header_field[0]);
   $build['content'] = array(
+    'title'  => array(
+      '#prefix' => '<h2>',
+      '#suffix' => '</h2>',
+      '#weight' => -11,
+      '#markup' => check_plain($node->title),
+    ),
+    'step' => array(
+        '#prefix' => '<h4>',
+        '#suffix' => '</h4>',
+        '#weight' => -10,
+        '#markup' => t('Step 2 of 2'),
+      ),
+    'header' => array(
+    '#weight' => -9,
+    '#markup' => $header_value['#markup'],
+  ),
     'noscript' => array('#markup' => '<noscript><div class="alert error">Javascript is required. Please enable javascript in your browser.</div></noscript>'),
     'sba_social_action_preview_form' => drupal_get_form('sba_social_action_preview_form', $node),
   );
@@ -226,12 +244,7 @@ function sba_social_action_preview_form($form, $form_state, $node) {
       }
     }
   }
-  $form['form_container']['page_description_label'] = array(
-    '#prefix' => '<h4>',
-    '#suffix' => '</h4>',
-    '#weight' => -10,
-    '#markup' => t('Step 2 of 2'),
-  );
+
   if (isset($twitter_user_cache['values']['screen_name'])) {
     $form['form_container']['page_description_login'] = array(
       '#prefix' => '<div><p>',

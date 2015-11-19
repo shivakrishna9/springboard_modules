@@ -58,7 +58,7 @@ function _sba_social_action_reorder_internal_name() {
   field_update_instance($instance_info);
 
   $instance_info = field_read_instance('node', 'body', 'sba_social_action');
-  $instance_info['widget']['weight'] = 5;
+  $instance_info['widget']['weight'] = 6;
   field_update_instance($instance_info);
 }
 

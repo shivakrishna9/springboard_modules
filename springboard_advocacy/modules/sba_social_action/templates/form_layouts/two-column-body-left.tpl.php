@@ -36,11 +36,7 @@
         <div class = "fieldset-wrapper">
           <?php print $open_form_tag ?>
           <?php print $message_fieldset; ?>
-          <fieldset id="user-information-wrapper" class = "form-wrapper"><legend><?php print $user_legend ?></legend>
-            <div class = "fieldset-wrapper">
               <p><?php print $webform ?></p>
-            </div>
-          </fieldset>
           <?php print drupal_render_children($form); ?>
           <?php print $close_form_tag ?>
         </div>

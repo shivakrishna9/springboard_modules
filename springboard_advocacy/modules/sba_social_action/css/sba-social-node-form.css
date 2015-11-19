@@ -1,0 +1,7 @@
+.filter-wrapper {
+    padding: 0;
+}
+
+#sba-social-action-node-form fieldset.filter-wrapper.collapsed {
+    height: 20px;
+}

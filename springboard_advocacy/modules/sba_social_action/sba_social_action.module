@@ -29,7 +29,7 @@ function sba_social_action_node_info() {
  */
 function sba_social_action_menu() {
   $items['node/%/social-message-preview'] = array(
-    'title' => 'Preview Messages',
+    'title' => '',
     'page arguments' => array(1),
     'page callback' => 'sba_social_action_message_preview_page',
     'access callback' => 'sba_social_action_preview_access',
@@ -228,6 +228,9 @@ function sba_social_action_theme($existing, $type, $theme, $path) {
       'render element' => 'element',
       'file' => 'includes/sba_social_action.form_layouts.inc',
     ),
+    'sba_social_action_text_format_wrapper' => array(
+      'render element' => 'element',
+    ),
     'sba_social_action_twitter_timeline' => array(
       'render element'  => 'timeline',
     ),
@@ -384,8 +387,9 @@ function sba_social_action_form_sba_social_action_node_form_alter(&$form, &$form
     springboard_advocacy_taxonomy_form($form, $form_state, $description);
   }
 
-  $form['springboard_taxonomy_options']['#weight'] = -10;
 
+  $form['springboard_taxonomy_options']['#weight'] = 0;
+  $form['springboard_taxonomy_options']['#title'] = t('Issue Categories');
 
   if (empty($form['springboard_display'])) {
     $form['springboard_display'] = array(
@@ -396,6 +400,8 @@ function sba_social_action_form_sba_social_action_node_form_alter(&$form, &$form
       '#group' => 'additional_settings',
     );
   }
+  $form['springboard_display']['#weight'] = -10;
+
 
   $form['springboard_display']['recent_participants'] = array(
     '#type' => 'fieldset',
@@ -412,6 +418,7 @@ function sba_social_action_form_sba_social_action_node_form_alter(&$form, &$form
     '#default_value' => $visibility,
     '#weight' => -4,
   );
+  $form['#attached']['css'][] = drupal_get_path('module', 'sba_social_action') . '/css/sba-social-node-form.css';
   $form['actions']['submit']['#validate'][] = 'sba_social_action_form_sba_social_action_node_form_validate';
   $form['actions']['submit']['#submit'][] = 'sba_social_action_form_sba_social_action_node_form_submit';
 
@@ -483,6 +490,32 @@ function sba_social_action_multiflow_submit($form, &$form_state) {
       drupal_set_message(check_markup($form['#node']->custom_fail_message, 'full_html', '', TRUE));
     }
   }
+}
+
+/**
+ * Implements hook_element_info_alter().
+ */
+function sba_social_action_element_info_alter(&$type) {
+  $type['text_format']['#process'][] = 'sba_social_action_element_process_text_format';
+}
+
+/**
+ * Process function for text_format element.
+ *
+ * @see sba_social_action_element_info_alter().
+ * @see https://drupal.org/node/2104275
+ */
+function sba_social_action_element_process_text_format($element) {
+  if (isset($element['#bundle']) && $element['#bundle'] == 'sba_social_action') {
+    $prefix = isset($element['format']['#prefix']) ? $element['format']['#prefix'] : '';
+    $element['format']['#prefix'] = $element['#description'] . $prefix;
+    unset($element['#description']);
+    $element['format']['#collapsible'] = TRUE;
+    $element['format']['#collapsed'] = TRUE;
+    //$element['format']['#suffix'] = '<div class="text-format-spacer">&nbsp;</div>';
+    $element['format']['#title'] = t('Text format');
+  }
+  return $element;
 }
 
 /**
