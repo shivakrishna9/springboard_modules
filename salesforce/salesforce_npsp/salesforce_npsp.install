@@ -681,7 +681,7 @@ function salesforce_npsp_update_7002(&$sandbox) {
     $sandbox['max'] = db_query('SELECT COUNT(did) FROM {fundraiser_sustainers_series}')->fetchField();
   }
 
-  $results = db_query('SELECT `did` FROM {fundraiser_sustainers_series} WHERE `did` > :current_did ORDER BY `did` ASC LIMIT 0, 40', array(
+  $results = db_query('SELECT `did` FROM {fundraiser_sustainers_series} WHERE `did` > :current_did ORDER BY `did` ASC LIMIT 0, 100', array(
     ':current_did' => $sandbox['current_did'],
       ))->fetchAll();
 
