@@ -720,3 +720,19 @@ function salesforce_npsp_update_7002(&$sandbox) {
     return t('Fundraiser sustainers series entities have been updated with NPSP-specific data.');
   }
 }
+
+/**
+ * Updates npe03__Recurring_Donation__c Salesforce sync map records.
+ */
+function salesforce_npsp_update_7003() {
+  $salesforce_sync_map_data = array(
+    'delta' => 'fundraiser_sustainers_series',
+  );
+
+  db_update('salesforce_sync_map')
+      ->fields($salesforce_sync_map_data)
+      ->condition('object_type', 'npe03__Recurring_Donation__c', '=')
+      ->execute();
+
+  return t('Fundraiser sustainers series entities have been updated with NPSP-specific data.');
+}
