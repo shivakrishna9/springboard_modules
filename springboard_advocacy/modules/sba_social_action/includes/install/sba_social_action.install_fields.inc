@@ -212,7 +212,7 @@ function _sba_social_action_create_node_fields($update = false) {
       ),
       'entity_type' => 'node',
       'field_name' => 'field_sba_social_fieldset_title',
-      'label' => 'Step  One Fieldset Title',
+      'label' => 'Fieldset Title',
       'required' => 1,
       'settings' => array(
         'text_processing' => 0,
@@ -481,7 +481,7 @@ function _sba_social_action_create_node_fields($update = false) {
       ),
       'entity_type' => 'node',
       'field_name' => 'field_sba_test_mode',
-      'label' => 'Enable Test Mode',
+      'label' => 'Test Mode',
       'required' => 0,
       'settings' => array(
         'user_register_form' => FALSE,
@@ -640,6 +640,7 @@ function _sba_social_action_delete_fields() {
     'field_social_action_img',
     'field_sba_social_fieldset_title',
     'field_sba_step_two_header',
+    'field_sba_step_two_submit',
   );
   foreach ($fields as $field_name) {
     $field = field_info_instance('node', $field_name, 'sba_social_action');

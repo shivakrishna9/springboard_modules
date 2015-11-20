@@ -373,11 +373,11 @@ function sba_social_action_form_alter(&$form, &$form_state, $form_id) {
 function sba_social_action_form_sba_social_action_node_form_alter(&$form, &$form_state) {
 
   $submit_text = '';
-  if (isset($form['#node'])) {
+  if (isset($form['#node']->nid)) {
     $submit_text = db_query("SELECT submit_text FROM {webform} WHERE nid = :nid", array(':nid' => $form['#node']->nid))->fetchField();
   }
   if($submit_text == '') {
-    $submit_text = t('Find your legislator');
+    $submit_text = t('Find your Legislator');
   }
 
   $form['social_submit_button_text'] = array(
