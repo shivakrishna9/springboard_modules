@@ -23,24 +23,25 @@
                 $text = $('div[id*="edit-messages"]').find('textarea');
                 var navKeys = [33,34,35,36,37,38,39,40];
                 $text.each(function(){
-                    var handleCount = $(this).closest('.control-group').siblings('.editable-message-preview').find('.preview-target-text').text().length + 1;
-
-                    $('#' + this.id).simplyCountable({
-                        counter:            $(this).siblings('.description').find('.counter'),
-                        countType:          'characters',
-                        maxCount:           140 - handleCount,
-                        strictMax:          true,
-                        countDirection:     'down',
-                        safeClass:          'safe',
-                        overClass:          'over',
-                        thousandSeparator:  ',',
-                        onOverCount:        function(count, countable, counter){},
-                        onSafeCount:        function(count, countable, counter){
-                        },
-                        onMaxCount:         function(count, countable, counter){}
-                    });
-
                     $(this).once(function() {
+
+                        var handleCount = $(this).closest('.control-group').siblings('.editable-message-preview').find('.preview-target-text').text().length + 1;
+
+                        $('#' + this.id).simplyCountable({
+                            counter:            $(this).siblings('.description').find('.counter'),
+                            countType:          'characters',
+                            maxCount:           140 - handleCount,
+                            strictMax:          true,
+                            countDirection:     'down',
+                            safeClass:          'safe',
+                            overClass:          'over',
+                            thousandSeparator:  ',',
+                            onOverCount:        function(count, countable, counter){},
+                            onSafeCount:        function(count, countable, counter){
+                            },
+                            onMaxCount:         function(count, countable, counter){}
+                        });
+
                         var screenName = $(this).closest('.control-group').siblings('.editable-message-preview').find('.preview-target-text').text();
 
                         var newText;
