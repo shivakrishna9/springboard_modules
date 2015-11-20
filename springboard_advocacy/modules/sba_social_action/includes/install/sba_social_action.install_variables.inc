@@ -65,7 +65,7 @@ function _sba_social_action_set_vars() {
   // Enable form_layouts.
   variable_set('form_layouts_sba_social_action', 1);
   // Default confirmation message.
-  variable_set('sba_social_action_confirm', '');
+  variable_set('sba_social_action_confirm', "We're sorry, the address you entered does not match with any of our legislative targets for this action. Please try taking a different action.");
   // Add as an advocacy message type.
   $sba_action_types = variable_get('sba_action_types', array(''));
   $sba_action_types = array_merge($sba_action_types, array('sba_social_action'));

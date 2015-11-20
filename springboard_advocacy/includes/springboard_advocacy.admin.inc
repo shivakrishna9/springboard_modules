@@ -219,6 +219,7 @@ function springboard_advocacy_confirmation_settings_form() {
         '#type' => 'textarea',
         '#title' => t('Default @type Confirmation Failure Message', array('@type' => node_type_get_name($type))),
         '#default_value' => variable_get($type . '_confirm', ''),
+        '#required' => TRUE,
       );
     }
 
