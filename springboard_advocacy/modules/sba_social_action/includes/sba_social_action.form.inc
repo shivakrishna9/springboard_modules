@@ -173,6 +173,8 @@ function sba_social_action_message_form(&$form, $message, $multiple, $message_en
         '#title' => '',
         '#markup' => $message_body,
         '#access' => $access,
+        '#prefix' => '<div class="uneditable-message-preview">',
+        '#suffix' => '</div>'
       );
 
     }

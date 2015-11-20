@@ -104,10 +104,15 @@ function sba_social_action_preview_form($form, $form_state, $node) {
   );
 
   if (empty($twitter_user_cache)) {
+    $url = variable_get('sba_social_privacy', '');
+    if (!empty($url)) {
+      $url = l('Privacy Policy', $url, array('attributes' => array('target' => '_new', 'class' => 'sba-privacy')));
+    }
     $form['form_container']['twitter_sign_in'] = array(
       '#type' => 'button',
       '#value' => 'Authorize with Twitter',
-      '#attributes' => array('class' => array('twitter-sign'))
+      '#attributes' => array('class' => array('twitter-sign')),
+      '#suffix' => $url,
     );
   }
 
@@ -156,10 +161,11 @@ function sba_social_action_preview_form($form, $form_state, $node) {
     // What type of message is this.
     $message_entity = $node->messages[$message['message_id']];
     $message_entity_type = $node->messages[$message['message_id']]->type;
-
+    $editable = field_get_items('sba_message', $node->messages[$message['message_id']], 'field_sba_twitter_editable');
+    $editable = $editable[0]['value'] != 'Not editable' ? TRUE : FALSE;
     // Theme the message header.
     $form['form_container']['messages'][$key]['sent_to'] = array(
-      '#markup' => theme('sba_social_action_preview_message_header', array('message' => $message, 'type' => $message_entity_type)),
+      '#markup' => theme('sba_social_action_preview_message_header', array('message' => $message, 'type' => $message_entity_type, 'editable' => $editable)),
     );
 
     // Create the message form elements from the entity. Passed by reference
@@ -169,6 +175,14 @@ function sba_social_action_preview_form($form, $form_state, $node) {
 
     $this_message =& $build['message'][$message_entity->sba_message_id];
     $this_message['#attributes']['class'][] = 'message-preview-message-fieldset';
+
+    if (isset($this_message['body_show'])) {
+      $this_message['body_show']['#markup'] = '@' . $message['person']['twitter'] . ' ' . $this_message['body_show']['#markup'];
+    }
+
+    if (isset($this_message['edited_body'])) {
+      $this_message['body_show']['#suffix'] = '<div class="editable-message-preview"><span class="preview-target-text">@' . $message['person']['twitter'] . '</span><span class="preview-replace-text"></span></div>';
+    }
 
     // Build an array of target properties
     $this_message['target'] = array(
@@ -247,11 +261,11 @@ function sba_social_action_preview_form($form, $form_state, $node) {
 
   if (isset($twitter_user_cache['values']['screen_name'])) {
     $form['form_container']['page_description_login'] = array(
-      '#prefix' => '<div><p>',
+      '#prefix' => '<div class="preview-twitter-user"><p>',
       '#suffix' => '</p></div>',
       '#weight' => -9,
-      '#markup' => t('You will be posting to Twitter as @%name. If that is not the correct account, !clickhere.', array(
-        '%name' => $twitter_user_cache['values']['screen_name'],
+      '#markup' => t('You will be posting to Twitter as !name. If that is not the correct account, !clickhere.', array(
+        '!name' => '<span class="preview-name">@' . $twitter_user_cache['values']['screen_name'] . '</span>',
         '!clickhere' => l('click here', 'clear/session', array('query' => array('destination' => 'node/' . $node->nid . '/social-message-preview')))
       )),
     );
@@ -440,11 +454,13 @@ function sba_social_action_preview_form_submit($form, &$form_state) {
  * @return string
  */
 function theme_sba_social_action_preview_message_header($vars) {
-  $intro = t('We will automatically prefix the tweet below with ".@@name".', array('@name' => $vars['message']['person']['twitter']));
+  $intro = t('We will automatically prefix your tweet with ".@@name".', array('@name' => $vars['message']['person']['twitter']));
   $output = '<div class="message-preview-header"><div class="message-preview-intro">';
-  $output .= $intro;
+  if ($vars['editable']) {
+    $output .= $intro;
+  }
   $output .= '</div><div class="message-preview-person">';
-  $output .= theme('sba_social_action_person_details', $vars);
+  $output .= t('To') . ' ' . theme('sba_social_action_person_details', $vars);
   $output .= '</div></div>';
   return $output;
 }

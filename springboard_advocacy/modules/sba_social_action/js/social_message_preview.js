@@ -19,8 +19,9 @@
             });
 
             $(document).ready(function(){
-                $text = $('div[id*="edit-messages"]').find('textarea');
 
+                $text = $('div[id*="edit-messages"]').find('textarea');
+                var navKeys = [33,34,35,36,37,38,39,40];
                 $text.each(function(){
                     var handleCount = $(this).closest('.message-preview-message-fieldset').prev('.message-preview-header').find('.twitter-handle').text().length + 1;
 
@@ -34,15 +35,42 @@
                         overClass:          'over',
                         thousandSeparator:  ',',
                         onOverCount:        function(count, countable, counter){},
-                        onSafeCount:        function(count, countable, counter){            console.log(this)
+                        onSafeCount:        function(count, countable, counter){
                         },
                         onMaxCount:         function(count, countable, counter){}
+                    });
+
+                    var screenName = $(this).closest('.control-group').siblings('.editable-message-preview').find('.preview-target-text').text();
+                    var newText;
+                    var defaultText = screenName + ' ' +  $(this).val();
+                    $(this).closest('.control-group').siblings('.editable-message-preview').text(defaultText);
+
+                    $(this).on('keyup blur paste', function(e) {
+                        switch(e.type) {
+                            case 'keyup':
+                                if ($.inArray(e.which, navKeys) < 0) {
+                                    replacer(screenName, $(this));
+                                }
+                                break;
+                            case 'paste':
+                                setTimeout(replacer(screenName, $(this)), (e.type === 'paste' ? 5 : 0));
+                                break;
+                            default:
+                                replacer(screenName, $(this));
+                                break;
+                        }
                     });
                 })
             });
 
         } // attach.function
     } // drupal.behaviors
+
+
+    var replacer = function(screenName, element) {
+        newText = screenName + ' ' + element.val().replace(/\r?\n/g, '<br>');
+        element.closest('.control-group').siblings('.editable-message-preview').html(newText);
+    };
 
     $(document).ready(function () {
 

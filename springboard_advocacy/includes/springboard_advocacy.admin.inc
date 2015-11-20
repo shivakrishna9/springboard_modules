@@ -147,6 +147,14 @@ function springboard_advocacy_settings_form() {
       '#title' => t('Social Action Twitter OAuth Consumer secret'),
       '#default_value' => variable_get('social_action_twitter_consumer_secret', NULL),
     );
+
+    $form['sba_social_privacy'] = array(
+      '#type' => 'textfield',
+      '#title' => t('Privacy policy url'),
+      '#default_value' => variable_get('sba_social_privacy', NULL),
+      '#element_validate' => array('springboard_advocacy_url_validate'),
+      '#description' => t('Twitter and other social platforms require that you display a privacy policy link to users before they sign into your app. A link to this url will appear below any social platform login buttons.')
+      );
   }
 
   return system_settings_form($form);
@@ -155,6 +163,10 @@ function springboard_advocacy_settings_form() {
 function springboard_advocacy_url_validate($element, &$form_state) {
 
   if (!valid_url($form_state['values']['springboard_advocacy_server_url'], TRUE)) {
+    form_error($element, t('You must enter a valid, fully-prefixed absolute url.'));
+  }
+
+  if (!valid_url($form_state['values']['sba_social_privacy'], TRUE)) {
     form_error($element, t('You must enter a valid, fully-prefixed absolute url.'));
   }
 
