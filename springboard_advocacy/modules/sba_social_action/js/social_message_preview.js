@@ -18,7 +18,7 @@
                 });
             });
 
-            $(document).ready(function(){
+            $(document).ready(function() {
 
                 $text = $('div[id*="edit-messages"]').find('textarea');
                 var navKeys = [33,34,35,36,37,38,39,40];
@@ -40,26 +40,29 @@
                         onMaxCount:         function(count, countable, counter){}
                     });
 
-                    var screenName = $(this).closest('.control-group').siblings('.editable-message-preview').find('.preview-target-text').text();
-                    var newText;
-                    var defaultText = screenName + ' ' +  $(this).val();
-                    $(this).closest('.control-group').siblings('.editable-message-preview').text(defaultText);
+                    $(this).once(function() {
+                        var screenName = $(this).closest('.control-group').siblings('.editable-message-preview').find('.preview-target-text').text();
 
-                    $(this).on('keyup blur paste', function(e) {
-                        switch(e.type) {
-                            case 'keyup':
-                                if ($.inArray(e.which, navKeys) < 0) {
+                        var newText;
+                        var defaultText = screenName + ' ' +  $(this).val();
+                        $(this).closest('.control-group').siblings('.editable-message-preview').text(screenName + ' ' +  $(this).val());
+
+                        $(this).on('keyup blur paste', function(e) {
+                            switch(e.type) {
+                                case 'keyup':
+                                    if ($.inArray(e.which, navKeys) < 0) {
+                                        replacer(screenName, $(this));
+                                    }
+                                    break;
+                                case 'paste':
+                                    setTimeout(replacer(screenName, $(this)), (e.type === 'paste' ? 5 : 0));
+                                    break;
+                                default:
                                     replacer(screenName, $(this));
-                                }
-                                break;
-                            case 'paste':
-                                setTimeout(replacer(screenName, $(this)), (e.type === 'paste' ? 5 : 0));
-                                break;
-                            default:
-                                replacer(screenName, $(this));
-                                break;
-                        }
-                    });
+                                    break;
+                            }
+                        });
+                    })
                 })
             });
 
@@ -83,7 +86,6 @@
             $.oauthpopup({
                 path: '/sba/twitter/login',
                 callback: function(oauthWindow){
-                    console.log(oauthWindow);
                     if(typeof oauthWindow != 'undefined') {
                         $('#edit-ajaxify').trigger('mousedown');
                     }
