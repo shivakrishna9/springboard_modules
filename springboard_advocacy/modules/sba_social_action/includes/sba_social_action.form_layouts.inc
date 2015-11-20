@@ -26,7 +26,7 @@ function sba_social_action_form_layouts() {
   );
 
   $templates['social_two_column_body_left'] = array(
-    'name' => t('Call to action left, message and user form right.'),
+    'name' => t('Body left, user form right.'),
     'types' => array('sba_social_action'),
     'theme' => 'social_two_column_body_left',
     'pattern' => 'social_two_column_body_left\'0-9\'+',
@@ -36,7 +36,7 @@ function sba_social_action_form_layouts() {
   );
 
   $templates['social_two_column_body_right'] = array(
-    'name' => t('Call to action right, message and user form left'),
+    'name' => t('Body right, user form left'),
     'types' => array('sba_social_action'),
     'theme' => 'social_two_column_body_right',
     'pattern' => 'social_two_column_body_right\'0-9\'+',

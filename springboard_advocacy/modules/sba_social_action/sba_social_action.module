@@ -383,7 +383,7 @@ function sba_social_action_form_sba_social_action_node_form_alter(&$form, &$form
   if (isset($form['field_sba_legislative_issues'])) {
     form_load_include($form_state, 'inc', 'springboard_advocacy',
       'includes/springboard_advocacy.taxonomy');
-    $description = '';
+    $description = t('Select the issues related to this action. These are legislative issues, which can be used for reporting and segmenting users across all action types.');
     springboard_advocacy_taxonomy_form($form, $form_state, $description);
   }
 

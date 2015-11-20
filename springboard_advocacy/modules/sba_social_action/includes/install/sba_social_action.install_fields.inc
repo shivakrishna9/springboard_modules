@@ -189,7 +189,10 @@ function _sba_social_action_create_node_fields($update = false) {
     'type' => 'text',
     '_instance' => array(
       'bundle' => 'sba_social_action',
-      'default_value' => t('Send a Social Message'),
+      'default_value' => array(0 => array(
+      'value' => t('Send a Social Message'),
+    ),
+      ),
       'deleted' => 0,
       'description' => t('The title above the webform fields on the first-step page.'),
       'display' => array(
