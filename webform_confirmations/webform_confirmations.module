@@ -139,11 +139,8 @@ function webform_confirmations_webform_submission_delete($node, $submission) {
  * Also remove submission data when a webform node is deleted.
  */
 function webform_confirmations_node_delete($node) {
-/*  drupal_set_message($node->nid);
-  $sql = "DELETE FROM {webform_confirmations_submissions} " .
-    "WHERE sid IN (SELECT sid FROM {webform_submissions} WHERE nid = $node->nid)";
-  drupal_set_message($sql);
-  db_query($sql); */
+  db_query("DELETE FROM {webform_confirmations_submissions} " .
+    "WHERE sid NOT IN (SELECT w.sid FROM {webform_submissions} w)");
 }
 
 /**
