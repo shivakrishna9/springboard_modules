@@ -185,6 +185,7 @@ function sba_social_action_message_form(&$form, $message, $multiple, $message_en
         '#description' => '<p>You have <span class="counter"></span> characters left.</p>',
         '#required' => $required,
         '#access' => $access,
+        '#rows' => 2
       );
     }
   }
