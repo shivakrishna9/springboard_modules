@@ -1406,7 +1406,7 @@ function fundraiser_webform_form_webform_component_edit_form_alter(&$form, &$for
     $max_length = 0;
     foreach ($form_state['build_info']['args'] as $arg) {
       if (is_array($arg) && isset($arg['form_key']) && $arg['form_key'] == 'mail') {
-        $max_length = (isset($arg['extra']['maxlength'])) ? $arg['extra']['maxlength'] : 0;
+        $max_length = (isset($arg['extra']['maxlength'])) ? $arg['extra']['maxlength'] : 60;
       }
     }
 
@@ -1430,6 +1430,9 @@ function fundraiser_webform_webform_component_render_alter(&$element, &$componen
   if ($element['#type'] == 'webform_email') {
     if (isset($component['extra']['maxlength']) && ($component['extra']['maxlength'] > 0)) {
       $element['#attributes']['maxlength'] = $component['extra']['maxlength'];
+    }
+    else {
+      $element['#attributes']['maxlength'] = 60;
     }
   }
 }
