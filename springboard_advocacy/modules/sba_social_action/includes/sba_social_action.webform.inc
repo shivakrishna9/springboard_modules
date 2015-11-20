@@ -348,7 +348,7 @@ function theme_sba_social_action_person_details(&$vars) {
   $target = $vars['message']['person'];
   $person = isset($target['name_with_webform_url']) ? $target['name_with_webform_url'] : $target['name'];
   if ($vars['type'] == 'sba_social_action_twitter_message' && isset($target['twitter'])) {
-    $person .= ' (<span class="twitter-handle">@' . $target['twitter'] . '</span>)';
+    //$person .= ' (<span class="twitter-handle">@' . $target['twitter'] . '</span>)';
   }
   $title = isset($target['title']) ? $target['title']  : '' ;
   $party = isset($target['party']) ? '(' . $target['party'] . ')' : '';

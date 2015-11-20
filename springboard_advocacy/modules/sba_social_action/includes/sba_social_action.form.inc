@@ -176,7 +176,6 @@ function sba_social_action_message_form(&$form, $message, $multiple, $message_en
         '#prefix' => '<div class="uneditable-message-preview">',
         '#suffix' => '</div>'
       );
-
     }
     else {
       $this_message['edited_body'] = array(
