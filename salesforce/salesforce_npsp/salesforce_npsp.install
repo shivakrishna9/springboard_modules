@@ -687,7 +687,7 @@ function salesforce_npsp_update_7002(&$sandbox) {
 
   foreach ($results as $row) {
     // Get the next charge date.
-    $next_charge = db_query('SELECT `next_charge` from {fundraiser_sustainers} WHERE `master_did` = :master_did AND `attempts` = 0 AND `gateway_resp` = NULL ORDER BY `did` ASC LIMIT 1', array(
+    $next_charge = db_query('SELECT `next_charge` from {fundraiser_sustainers} WHERE `master_did` = :master_did AND `attempts` = 0 AND `gateway_resp` IS NULL ORDER BY `did` ASC LIMIT 1', array(
       ':master_did' => $row->did,
       ))->fetchField();
 
