@@ -683,24 +683,31 @@ function salesforce_npsp_update_7002(&$sandbox) {
 
   $results = db_query('SELECT `did` FROM {fundraiser_sustainers_series} WHERE `did` > :current_did ORDER BY `did` ASC LIMIT 0, 100', array(
     ':current_did' => $sandbox['current_did'],
-      ))->fetchAll();
+    ))->fetchAll();
 
   foreach ($results as $row) {
-    // Get the last and next donation dates.
-    $dates = db_query('SELECT `d`.`created`, `s`.`next_charge` FROM {fundraiser_donation} `d` JOIN {fundraiser_sustainers} `s` ON `d`.`did` = `s`.`did` WHERE `d`.`did` = :did', array(
-      ':did' => $row->did,
-        ))->fetchAssoc();
+    // Get the next charge date.
+    $next_charge = db_query('SELECT `next_charge` from {fundraiser_sustainers} WHERE `master_did` = :master_did AND `attempts` = 0 ORDER BY `did` ASC LIMIT 1', array(
+      ':master_did' => $row->did,
+      ))->fetchField();
 
-    // Get the last sustainer log timestamp, if available.
-    $log_timestamp = db_query('SELECT `timestamp` FROM {fundraiser_sustainers_log} WHERE `did` = :did ORDER BY `timestamp` DESC LIMIT 1', array(
-      ':did' => $row->did,
+    // Get the last charge date.
+    $last_charge = db_query('SELECT `next_charge` from {fundraiser_sustainers} WHERE `master_did` = :master_did AND `attempts` > 0 ORDER BY `did` DESC LIMIT 1', array(
+      ':master_did' => $row->did,
+      ))->fetchField();
+
+    // If no sustainer charges, default to the master donation creation date.
+    if (empty($last_charge)) {
+      $last_charge = db_query('SELECT `created` from {fundraiser_donation} WHERE `did` = :did', array(
+        ':did' => $row->did,
         ))->fetchField();
+    }
 
     // Update existing fundraiser sustainers series entity.
     $fundraiser_sustainers_series_data = array(
       // Last payment date is the last logged date or sustainer creation date.
-      'npsp_last_payment_date' => date('Y-m-d H:i:s', !empty($log_timestamp) ? $log_timestamp : $dates['created']),
-      'npsp_next_payment_date' => date('Y-m-d H:i:s', $dates['next_charge']),
+      'npsp_last_payment_date' => date('Y-m-d H:i:s', $last_charge),
+      'npsp_next_payment_date' => date('Y-m-d H:i:s', $next_charge),
       'npsp_installment_period' => 'Monthly',
       'npsp_schedule_type' => 'Multiply By',
     );
