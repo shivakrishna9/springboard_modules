@@ -734,5 +734,5 @@ function salesforce_npsp_update_7003() {
       ->condition('object_type', 'npe03__Recurring_Donation__c', '=')
       ->execute();
 
-  return t('Fundraiser sustainers series entities have been updated with NPSP-specific data.');
+  return t('Salesforce sync map records for npe03__Recurring_Donation__c objects have been updated.');
 }
