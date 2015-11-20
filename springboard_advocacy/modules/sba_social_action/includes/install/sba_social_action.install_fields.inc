@@ -230,6 +230,76 @@ function _sba_social_action_create_node_fields($update = false) {
     ),
   );
 
+  $fields['field_sba_step_two_submit'] = array(
+    'active' => 1,
+    'cardinality' => 1,
+    'deleted' => 0,
+    'entity_types' => array(
+      0 => 'node',
+    ),
+    'field_name' => 'field_sba_step_two_submit',
+    'foreign keys' => array(
+      'format' => array(
+        'columns' => array(
+          'format' => 'format',
+        ),
+        'table' => 'filter_format',
+      ),
+    ),
+    'indexes' => array(
+      'format' => array(
+        0 => 'format',
+      ),
+    ),
+    'locked' => 0,
+    'module' => 'text',
+    'settings' => array(),
+    'translatable' => 0,
+    'type' => 'text',
+    '_instance' => array(
+      'bundle' => 'sba_social_action',
+      'default_value' => array(0 => array(
+        'value' => t('Send Now'),
+      ),
+      ),
+      'deleted' => 0,
+      'description' => '',
+      'display' => array(
+        'default' => array(
+          'label' => 'hidden',
+          'module' => 'list',
+          'settings' => array(),
+          'type' => 'hidden',
+          'weight' => 3,
+        ),
+        'teaser' => array(
+          'label' => 'hidden',
+          'settings' => array(),
+          'type' => 'hidden',
+          'weight' => 0,
+        ),
+      ),
+      'entity_type' => 'node',
+      'field_name' => 'field_sba_step_two_submit',
+      'label' => 'Step Two Submit Button Text',
+      'required' => 1,
+      'settings' => array(
+        'text_processing' => 0,
+        'user_register_form' => FALSE,
+      ),
+      'widget' => array(
+        'active' => 1,
+        'module' => 'text',
+        'settings' => array(
+          'size' => 60,
+        ),
+        'type' => 'text_textfield',
+        'weight' => 15,
+      ),
+    ),
+  );
+
+
   // Exported field_base: 'field_social_call_to_action'
   $fields['field_social_call_to_action'] = array(
     'active' => 1,
@@ -344,7 +414,7 @@ function _sba_social_action_create_node_fields($update = false) {
       ),
       'entity_type' => 'node',
       'field_name' => 'field_sba_step_two_header',
-      'label' => '',
+      'label' => 'Step Two Header Text',
       'required' => 0,
       'settings' => array(
         'display_summary' => 1,
@@ -478,10 +548,11 @@ function _sba_social_action_create_node_fields($update = false) {
     $field_group->bundle = 'sba_social_action';
     $field_group->mode = 'form';
     $field_group->parent_name = '';
-    $field_group->label = 'Step Two Header Text';
+    $field_group->label = 'Step Two Options';
     $field_group->weight = '32';
     $field_group->children = array(
       0 => 'field_sba_step_two_header',
+      1 => 'field_sba_step_two_submit',
     );
     $field_group->format_type = 'fieldset';
     $field_group->format_settings = array(

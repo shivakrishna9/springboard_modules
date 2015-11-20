@@ -278,12 +278,15 @@ function sba_social_action_preview_form($form, $form_state, $node) {
   // Define the validation function.
   $form['#validate'][] = 'sba_social_action_preview_form_validate';
 
+  $submit_field = field_get_items('node', $node, 'field_sba_step_two_submit');
+  $submit_value = field_view_value('node', $node, 'field_sba_step_two_submit', $submit_field[0]);
+
   // Add submit button
   $form['form_container']['submit'] = array(
     '#prefix' => '<div id="edit-actions">',
     '#suffix' => '</div>',
     '#type' => 'submit',
-    '#value' => t('Send Now'),
+    '#value' => $submit_value['#markup'],
     '#weight' => 10,
     '#attributes' => array('class' => 'social-action-preview-submit'),
     '#disabled' => !$access,
