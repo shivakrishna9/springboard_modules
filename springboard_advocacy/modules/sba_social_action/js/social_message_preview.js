@@ -23,7 +23,7 @@
                 $text = $('div[id*="edit-messages"]').find('textarea');
                 var navKeys = [33,34,35,36,37,38,39,40];
                 $text.each(function(){
-                    var handleCount = $(this).closest('.message-preview-message-fieldset').prev('.message-preview-header').find('.twitter-handle').text().length + 1;
+                    var handleCount = $(this).closest('.control-group').siblings('.editable-message-preview').find('.preview-target-text').text().length + 1;
 
                     $('#' + this.id).simplyCountable({
                         counter:            $(this).siblings('.description').find('.counter'),
