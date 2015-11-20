@@ -1671,11 +1671,22 @@ function springboard_views_views_default_views() {
   $handler->display->display_options['fields']['created']['date_format'] = 'custom';
   $handler->display->display_options['fields']['created']['custom_date_format'] = 'n/j/Y';
   $handler->display->display_options['fields']['created']['second_date_format'] = 'long';
+  /* Field: Commerce Order: Order total */
+  $handler->display->display_options['fields']['commerce_order_total']['id'] = 'commerce_order_total';
+  $handler->display->display_options['fields']['commerce_order_total']['table'] = 'field_data_commerce_order_total';
+  $handler->display->display_options['fields']['commerce_order_total']['field'] = 'commerce_order_total';
+  $handler->display->display_options['fields']['commerce_order_total']['relationship'] = 'did';
+  $handler->display->display_options['fields']['commerce_order_total']['label'] = 'Amount';
+  $handler->display->display_options['fields']['commerce_order_total']['click_sort_column'] = 'amount';
+  $handler->display->display_options['fields']['commerce_order_total']['settings'] = array(
+    'calculation' => FALSE,
+  );
   /* Field: User: First name */
   $handler->display->display_options['fields']['sbp_first_name']['id'] = 'sbp_first_name';
   $handler->display->display_options['fields']['sbp_first_name']['table'] = 'field_data_sbp_first_name';
   $handler->display->display_options['fields']['sbp_first_name']['field'] = 'sbp_first_name';
   $handler->display->display_options['fields']['sbp_first_name']['relationship'] = 'uid';
+  $handler->display->display_options['fields']['sbp_first_name']['label'] = 'Name';
   /* Field: User: Last name */
   $handler->display->display_options['fields']['sbp_last_name']['id'] = 'sbp_last_name';
   $handler->display->display_options['fields']['sbp_last_name']['table'] = 'field_data_sbp_last_name';
@@ -1707,25 +1718,12 @@ function springboard_views_views_default_views() {
   $handler->display->display_options['fields']['status']['table'] = 'commerce_order';
   $handler->display->display_options['fields']['status']['field'] = 'status';
   $handler->display->display_options['fields']['status']['relationship'] = 'did';
-  /* Field: Commerce Order: Link */
-  $handler->display->display_options['fields']['view_order']['id'] = 'view_order';
-  $handler->display->display_options['fields']['view_order']['table'] = 'commerce_order';
-  $handler->display->display_options['fields']['view_order']['field'] = 'view_order';
-  $handler->display->display_options['fields']['view_order']['relationship'] = 'did';
-  $handler->display->display_options['fields']['view_order']['label'] = 'Actions';
-  $handler->display->display_options['fields']['view_order']['text'] = 'View order';
-  /* Field: Webform submissions: View link */
-  $handler->display->display_options['fields']['view_submission']['id'] = 'view_submission';
-  $handler->display->display_options['fields']['view_submission']['table'] = 'webform_submissions';
-  $handler->display->display_options['fields']['view_submission']['field'] = 'view_submission';
-  $handler->display->display_options['fields']['view_submission']['relationship'] = 'sid_2';
-  $handler->display->display_options['fields']['view_submission']['element_label_colon'] = FALSE;
-  $handler->display->display_options['fields']['view_submission']['text'] = 'View submission';
   /* Field: Global: Custom text */
   $handler->display->display_options['fields']['nothing']['id'] = 'nothing';
   $handler->display->display_options['fields']['nothing']['table'] = 'views';
   $handler->display->display_options['fields']['nothing']['field'] = 'nothing';
-  $handler->display->display_options['fields']['nothing']['alter']['text'] = '<a href="/admin/commerce/orders/[order_id]/payment/[transaction_id]/refund">Refund</a>';
+  $handler->display->display_options['fields']['nothing']['label'] = 'Actions';
+  $handler->display->display_options['fields']['nothing']['alter']['text'] = '<a href="/springboard/donations/[order_id]">View Order</a> | <a href="/springboard/donations/[order_id]/payment">Payments</a>';
   /* Filter criterion: Global: Combine fields filter */
   $handler->display->display_options['filters']['combine']['id'] = 'combine';
   $handler->display->display_options['filters']['combine']['table'] = 'views';
@@ -1877,7 +1875,7 @@ function springboard_views_views_default_views() {
   $handler->display->display_options['fields']['sbp_first_name']['table'] = 'field_data_sbp_first_name';
   $handler->display->display_options['fields']['sbp_first_name']['field'] = 'sbp_first_name';
   $handler->display->display_options['fields']['sbp_first_name']['relationship'] = 'uid';
-  $handler->display->display_options['fields']['sbp_first_name']['label'] = 'Name';
+  $handler->display->display_options['fields']['sbp_first_name']['label'] = 'First Name';
   /* Field: User: Last name */
   $handler->display->display_options['fields']['sbp_last_name']['id'] = 'sbp_last_name';
   $handler->display->display_options['fields']['sbp_last_name']['table'] = 'field_data_sbp_last_name';
@@ -1910,20 +1908,6 @@ function springboard_views_views_default_views() {
   $handler->display->display_options['fields']['status']['table'] = 'commerce_order';
   $handler->display->display_options['fields']['status']['field'] = 'status';
   $handler->display->display_options['fields']['status']['relationship'] = 'did';
-  /* Field: Commerce Order: Link */
-  $handler->display->display_options['fields']['view_order']['id'] = 'view_order';
-  $handler->display->display_options['fields']['view_order']['table'] = 'commerce_order';
-  $handler->display->display_options['fields']['view_order']['field'] = 'view_order';
-  $handler->display->display_options['fields']['view_order']['relationship'] = 'did';
-  $handler->display->display_options['fields']['view_order']['label'] = 'Actions';
-  $handler->display->display_options['fields']['view_order']['text'] = 'View order';
-  /* Field: Global: Custom text */
-  $handler->display->display_options['fields']['nothing']['id'] = 'nothing';
-  $handler->display->display_options['fields']['nothing']['table'] = 'views';
-  $handler->display->display_options['fields']['nothing']['field'] = 'nothing';
-  $handler->display->display_options['fields']['nothing']['alter']['text'] = 'Payments';
-  $handler->display->display_options['fields']['nothing']['alter']['make_link'] = TRUE;
-  $handler->display->display_options['fields']['nothing']['alter']['path'] = 'admin/commerce/orders/[order_id]/payment';
   /* Field: Content: Nid */
   $handler->display->display_options['fields']['nid']['id'] = 'nid';
   $handler->display->display_options['fields']['nid']['table'] = 'node';
@@ -2018,26 +2002,14 @@ function springboard_views_views_default_views() {
   $handler->display->display_options['fields']['status']['table'] = 'commerce_order';
   $handler->display->display_options['fields']['status']['field'] = 'status';
   $handler->display->display_options['fields']['status']['relationship'] = 'did';
-  /* Field: Commerce Order: Link */
-  $handler->display->display_options['fields']['view_order']['id'] = 'view_order';
-  $handler->display->display_options['fields']['view_order']['table'] = 'commerce_order';
-  $handler->display->display_options['fields']['view_order']['field'] = 'view_order';
-  $handler->display->display_options['fields']['view_order']['relationship'] = 'did';
-  $handler->display->display_options['fields']['view_order']['label'] = 'Actions';
-  $handler->display->display_options['fields']['view_order']['text'] = 'View order';
   /* Field: Global: Custom text */
   $handler->display->display_options['fields']['nothing']['id'] = 'nothing';
   $handler->display->display_options['fields']['nothing']['table'] = 'views';
   $handler->display->display_options['fields']['nothing']['field'] = 'nothing';
-  $handler->display->display_options['fields']['nothing']['alter']['text'] = 'Payments';
+  $handler->display->display_options['fields']['nothing']['label'] = 'Actions';
+  $handler->display->display_options['fields']['nothing']['alter']['text'] = '<a href="/springboard/donations/[order_id]">View Order</a> | <a href="/springboard/donations/[order_id]/payment">Payments</a>';
   $handler->display->display_options['fields']['nothing']['alter']['make_link'] = TRUE;
   $handler->display->display_options['fields']['nothing']['alter']['path'] = 'admin/commerce/orders/[order_id]/payment';
-  /* Field: Content: Nid */
-  $handler->display->display_options['fields']['nid']['id'] = 'nid';
-  $handler->display->display_options['fields']['nid']['table'] = 'node';
-  $handler->display->display_options['fields']['nid']['field'] = 'nid';
-  $handler->display->display_options['fields']['nid']['relationship'] = 'sid_2';
-  $handler->display->display_options['fields']['nid']['exclude'] = TRUE;
   $handler->display->display_options['defaults']['arguments'] = FALSE;
   /* Contextual filter: Content: Nid */
   $handler->display->display_options['arguments']['nid']['id'] = 'nid';
