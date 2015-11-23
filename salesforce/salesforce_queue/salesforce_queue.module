@@ -89,6 +89,7 @@ function salesforce_queue_entity_info() {
   return array(
     'salesforce_queue_item' => array(
       'label' => t('Salesforce queue item'),
+      'label callback' => '_salesforce_queue_item_label',
       'entity class' => 'Entity',
       'base table' => 'salesforce_queue',
       'entity keys' => array(
@@ -443,4 +444,8 @@ function salesforce_queue_get_queue_names() {
 
   ksort($queue_names);
   return $queue_names;
+}
+
+function _salesforce_queue_item_label($entity, $entity_type) {
+  return t('Salesforce Queue Item #@id', array('@id' => $entity->item_id));
 }
