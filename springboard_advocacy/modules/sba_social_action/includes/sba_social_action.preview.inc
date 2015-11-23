@@ -84,15 +84,16 @@ function sba_social_action_preview_form($form, $form_state, $node) {
 
   // Invisible form element used to trigger ajax update when popup widow closes.
   $form['ajaxify'] = array(
-    '#type' =>  'button',
+    '#type' => 'checkbox',
     '#attributes' => array('style' => array('display:none')),
-    '#value' => 'off',
+    '#title' => '',
     '#ajax' => array(
       'callback' => 'sba_social_actions_reload_form',
       'wrapper' => 'form-container',
       'effect' => 'fade',
       'speed' => 1000,
-      'progress' => 'none'
+      'progress' => 'none',
+      'event' => 'mousedown'
     ),
   );
 
@@ -292,6 +293,7 @@ function sba_social_action_preview_form($form, $form_state, $node) {
   $form['#action_node'] = $node;
   // Define the validation function.
   $form['#validate'][] = 'sba_social_action_preview_form_validate';
+  $form['#submit'][] = 'sba_social_action_preview_form_submit';
 
   $submit_field = field_get_items('node', $node, 'field_sba_step_two_submit');
   $submit_value = field_view_value('node', $node, 'field_sba_step_two_submit', $submit_field[0]);
@@ -327,7 +329,6 @@ function sba_social_actions_reload_form($form, $form_state) {
  * @param $form_state
  */
 function sba_social_action_preview_form_validate($form, &$form_state) {
-
   $messages = !empty($form['messages']) ? element_children($form['messages']) : array();
   $changed = FALSE;
   // To prevent duplicate error messages.
@@ -388,7 +389,6 @@ function sba_social_action_preview_form_validate($form, &$form_state) {
       }
     }
   }
-
 }
 
 /**
@@ -398,10 +398,8 @@ function sba_social_action_preview_form_validate($form, &$form_state) {
  * @param $form_state
  */
 function sba_social_action_preview_form_submit($form, &$form_state) {
-
   module_load_include('php', 'oauth_common', 'lib/OAuth');
   module_load_include('php', 'sba_social_action', 'includes/socialTwitter.lib');
-
   $node = $form['#action_node'];
   foreach ($form_state['values']['messages'] as $message) {
 

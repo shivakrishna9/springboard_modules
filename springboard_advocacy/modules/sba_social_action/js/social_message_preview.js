@@ -1,7 +1,7 @@
 (function ($) {
-    Drupal.behaviors.multstepForm = {
+    Drupal.behaviors.multstepFormSocial = {
         attach: function (context, settings) {
-            var editSubmit = $('#sba-social-action-preview-form').find('#edit-submit');
+            var editSubmit = $('#sba-social-action-preview-form').find('input[id*="edit-submit"]');
             var send = $('#multiflow-send-now');
 
             editSubmit.once(function() {
