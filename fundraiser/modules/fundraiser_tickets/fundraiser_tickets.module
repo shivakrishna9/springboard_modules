@@ -277,7 +277,7 @@ function fundraiser_tickets_form_node_form_alter(&$form, &$form_state) {
         }
       }
       $form['#after_build'][] = '_fundraiser_tickets_ticket_settings_form_organize';
-      $form['#validate'] = array('_fundraiser_tickets_ticket_settings_form_validate');
+      $form['#validate'][] = '_fundraiser_tickets_ticket_settings_form_validate';
       $form['#submit'] = array();
       unset($form['actions']['preview']);
       unset($form['actions']['delete']);
