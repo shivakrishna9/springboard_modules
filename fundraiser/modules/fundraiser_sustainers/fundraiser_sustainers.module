@@ -683,6 +683,13 @@ function fundraiser_sustainers_salesforce_sync_complete_item($item, $result) {
         $donation = fundraiser_donation_get_donation($item->drupal_id, TRUE);
         salesforce_genmap_send_object_to_queue('fundraiser_sustainers', 'update',
           $donation->node, $donation->did, $donation, 'recurring_donation');
+
+        // Re-queue the fundraiser sustainers series entity for this donation
+        // to send the correct installments value to Salesforce.
+        $fundraiser_sustainers_series = entity_load_single('fundraiser_sustainers_series', $item->drupal_id);
+        if (!empty($fundraiser_sustainers_series)) {
+          salesforce_mapping_send_entity_to_queue($fundraiser_sustainers_series, 'fundraiser_sustainers_series', 'UPDATE');
+        }
       }
     }
   }
