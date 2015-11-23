@@ -118,6 +118,7 @@ function sba_social_action_message_form(&$form, $message, $multiple, $message_en
   $message_editable = $wrapper->field_sba_twitter_editable->value() == 'Not editable' ? FALSE : TRUE;
   $required_message = $wrapper->field_sba_twitter_editable->value() == 'Editing is required' ? TRUE : FALSE;
   $alternate_options = $wrapper->field_sba_show_additional->value();
+  $prepend = $wrapper->field_sba_prepend_target_name->value();
   $multi_flow = TRUE;
   $preview_form = empty($form) ? TRUE : FALSE;
   $access = TRUE;
@@ -157,6 +158,11 @@ function sba_social_action_message_form(&$form, $message, $multiple, $message_en
     $this_message['alternate_options'] = array(
       '#type' => 'value',
       '#value' => $alternate_options,
+    );
+
+    $this_message['prepend'] = array(
+      '#type' => 'value',
+      '#value' => $prepend,
     );
 
     if ($required_message) {

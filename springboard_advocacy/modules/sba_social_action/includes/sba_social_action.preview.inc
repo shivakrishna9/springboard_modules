@@ -181,7 +181,8 @@ function sba_social_action_preview_form($form, $form_state, $node) {
     }
 
     if (isset($this_message['edited_body'])) {
-      $this_message['body_show']['#suffix'] = '<div class="editable-message-preview"><span class="preview-target-text">@' . $message['person']['twitter'] . '</span><span class="preview-replace-text"></span></div>';
+      $prepend = !empty($this_message['prepend']['#value']) ? '.' : '';
+      $this_message['body_show']['#suffix'] = '<div class="editable-message-preview"><span class="preview-target-text">' . $prepend . '@' . $message['person']['twitter'] . '</span><span class="preview-replace-text"></span></div>';
     }
 
     // Build an array of target properties
