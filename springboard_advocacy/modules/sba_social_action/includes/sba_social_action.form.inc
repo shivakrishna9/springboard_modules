@@ -8,9 +8,9 @@
 /**
  * Social action webform alterations.
  *
- * Add the message entities to the action webform node view.
+ * Add the message entities to the action webform node view
+ * and message preview page.
  * Attach CSS and JS to Action nodes.
- * If it's a multiple social action, attach the ctools modal view of them.
  * Define custom submit and validate hooks.
  *
  * @param $form
@@ -59,29 +59,26 @@ function sba_social_action_additional_elements(&$form, &$form_state) {
     '#attributes' => array(
       'id' => array('sba-messages-form'),
     ),
+    '#weight' => -10
+
   );
 
-  // Multiple messages for this form?
-  $multiple = count($form['#node']->messages) > 1 ? TRUE : FALSE;
+  //$multi_flow_prompt = '';
 
-  $multi_flow = TRUE;
-  $multi_flow_prompt = '';
-  $action_type = 'single_not_multi_flow';
-  if ($action_type == 'multi_flow') {
     $form['sba_messages']['multiflow'] = array(
       '#type' => 'fieldset',
-      '#title' => t('Step 1 of 1'),
+      '#title' => t('Step 1 of 2'),
       '#attributes' => array('class' => array('sba-message')),
     );
-    $form['sba_messages']['multiflow']['prompt'] =  array(
-      '#markup' => $multi_flow_prompt,
-    );
-  }
+//    $form['sba_messages']['multiflow']['prompt'] =  array(
+//      '#markup' => $multi_flow_prompt,
+//    );
+
 
   // Create a set of fields for each message assigned to the form.
   $districted = FALSE;
   foreach ($form['#node']->messages as $message) {
-    sba_social_action_message_form($form['sba_messages'], $message, $multiple, $message->type, $districted);
+    sba_social_action_message_form($form['sba_messages'], $message, $message->type, $districted);
   }
   // value of districted can change after being passed by reference above.
   if ($districted == FALSE) {
@@ -108,10 +105,10 @@ function sba_social_action_additional_elements(&$form, &$form_state) {
  *   The webform client form.
  * @param object $message
  *   The message entity.
- * @param bool $multiple
+ * @param boo
  *    Whether this webform has multiple messages.
  */
-function sba_social_action_message_form(&$form, $message, $multiple, $message_entity_type, &$districted = NULL) {
+function sba_social_action_message_form(&$form, $message, $message_entity_type, &$districted = NULL) {
   // Get some message values via an entity wrapper.
   $wrapper = entity_metadata_wrapper('sba_message', $message);
   $message_body = check_plain($wrapper->field_sba_twitter_message->value());
@@ -119,10 +116,9 @@ function sba_social_action_message_form(&$form, $message, $multiple, $message_en
   $required_message = $wrapper->field_sba_twitter_editable->value() == 'Editing is required' ? TRUE : FALSE;
   $alternate_options = $wrapper->field_sba_show_additional->value();
   $prepend = $wrapper->field_sba_prepend_target_name->value();
-  $multi_flow = TRUE;
   $preview_form = empty($form) ? TRUE : FALSE;
   $access = TRUE;
-  if (!$preview_form && $multi_flow) {
+  if (!$preview_form) {
     $access = FALSE;
   }
 
