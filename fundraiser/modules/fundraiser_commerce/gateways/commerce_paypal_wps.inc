@@ -36,7 +36,7 @@ function commerce_paypal_wps_fundraiser_donation_form_config_check($node) {
         }
         // Check for recurring only donation form.
         if ($node->recurring_setting == 'always') {
-          $messages[] = t('The PayPal WPS payment gateway is not supported on donation forms that offer only recurring payments.');
+          $messages[] = t('Edit your enabled payment gateways. The PayPal WPS payment gateway is not supported on donation forms that offer only recurring payments.');
         }
       }
     }
