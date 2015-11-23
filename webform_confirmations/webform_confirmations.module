@@ -144,7 +144,6 @@ function webform_confirmations_node_delete($node) {
     ->condition('nid', $node->nid)
     ->execute();
   foreach ($sid_results as $result) {
-    drupal_set_message('sid to delte from confirmation submissions table: <pre>' . print_r($result, 1) . '</pre>');
     db_delete('webform_confirmations_submissions')
       ->condition('sid', $result->sid)
       ->execute();
