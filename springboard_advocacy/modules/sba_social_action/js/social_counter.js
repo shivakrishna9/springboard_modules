@@ -1,6 +1,6 @@
 (function ($) {
-  //Drupal.behaviors.socialCounter = {
-  //  attach: function (context, settings) {
+  Drupal.behaviors.socialCounter = {
+    attach: function (context, settings) {
       window.sbaCountable = {};
       Drupal.settings.charCount = {size: 0, count: 0, person: ''};
       sbaCountable.charCount = function () {
@@ -22,17 +22,11 @@
 
         $text.each(function () {
           if (this.id = 'edit-field-sba-twitter-message-und-0-value') {
-            var handleCount = Drupal.settings.charCount.size;
-            $(this).siblings('.description').find('.counter-max').text(140 - handleCount);
-            var currLen = $(this).val().replace(/(\r\n|\n|\r)/gm, "").length;
-            if (currLen > 140 - handleCount) {
-              $(this).addClass('error');
-            }
-            else {
-              $(this).removeClass('error');
-            }
+            //message edit page
+            var handleCount = sbaCheckMax(this);
           }
           else {
+            // message preview page
             handleCount = $(this).closest('.message-preview-message-fieldset').prev('.message-preview-header').find('.twitter-handle').text().length + 1;
           }
           var target = $(this).siblings('.description').find('.counter');
@@ -56,7 +50,34 @@
           });
         })
       };
-  //  }
-  //}
+    }
+  };
+
+  $(document).ready(function(){
+    $('input[name*="field_sba_prepend_target_name"]').on('click', function() {
+      sbaCheckMax($('#edit-field-sba-twitter-message-und-0-value'));
+    });
+  });
+
+  var sbaCheckMax = function (editText) {
+    var prepend = $('input[name*="field_sba_prepend_target_name"]').attr('checked');
+    var period = 0;
+    if(typeof prepend != 'undefined') {
+      period = 1;
+    }
+    var handleCount = Drupal.settings.charCount.size;
+    if (handleCount != 0) {
+      handleCount = handleCount + 1 + period
+    }
+    $(editText).siblings('.description').find('.counter-max').text(140 - handleCount);
+    var currLen = $(editText).val().replace(/(\r\n|\n|\r)/gm, "").length;
+    if (currLen > 140 - handleCount) {
+      $(editText).addClass('error');
+    }
+    else {
+      $(editText).removeClass('error');
+    }
+    return handleCount;
+  }
 
 })(jQuery);

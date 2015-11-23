@@ -387,11 +387,11 @@ function sba_social_action_create_twitter_message_entity($update = FALSE) {
     'bundle' => 'sba_social_action_twitter_message',
     'default_value' => array(
       0 => array(
-        'value' => 1,
+        'value' => 0,
       ),
     ),
     'deleted' => 0,
-    'description' => 'This option will prefix the @name of your targets with a period, allowing the Tweet to appear on the user\'s main timeline and the timelines of his followers. If this message will have many targets (and tweets), you should not use the "." prefix, so that the user does not flood his follower\'s timelines with identical tweets.',
+    'description' => 'This option will prefix the @name of your targets with a period, forcing the Tweet to appear on the user\'s main timeline, and on the timelines of his followers. If this message will have many targets (and tweets), you should leave this unchecked, so that the user does not flood his follower\'s timelines with identical tweets.',
     'display' => array(
       'default' => array(
         'label' => 'hidden',
@@ -402,7 +402,7 @@ function sba_social_action_create_twitter_message_entity($update = FALSE) {
     ),
     'entity_type' => 'sba_message',
     'field_name' => 'field_sba_prepend_target_name',
-    'label' => 'Allow Tweets to appear on participant\'s main timeline and followers\' timelines?',
+    'label' => 'Force Tweets to appear on participant\'s main timeline and followers\' timelines?',
     'required' => 0,
     'settings' => array(
       'user_register_form' => FALSE,
