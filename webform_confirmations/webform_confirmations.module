@@ -139,8 +139,28 @@ function webform_confirmations_webform_submission_delete($node, $submission) {
  * Also remove submission data when a webform node is deleted.
  */
 function webform_confirmations_node_delete($node) {
-  db_query("DELETE FROM {webform_confirmations_submissions} " .
-    "WHERE sid NOT IN (SELECT w.sid FROM {webform_submissions} w)");
+  $sid_results = db_select('webform_submissions', 'w')
+    ->fields('w', array('sid'))
+    ->condition('nid', $node->nid)
+    ->execute();
+  foreach ($sid_results as $result) {
+    drupal_set_message('sid to delte from confirmation submissions table: <pre>' . print_r($result, 1) . '</pre>');
+    db_delete('webform_confirmations_submissions')
+      ->condition('sid', $result->sid)
+      ->execute();
+  }
+}
+
+/**
+ * Implements hook_module_implements_alter().
+ *
+ * This ensures hook_node_delete() is called before webform node deletion causes deletion of webform_submissions records.
+ */
+function webform_confirmations_module_implements_alter(&$implementations, $hook) {
+  if ($hook == 'node_delete') {
+    unset($implementations['webform_confirmations']);
+    $implementations = array_merge(array('webform_confirmations' => ''), $implementations);
+  }
 }
 
 /**
