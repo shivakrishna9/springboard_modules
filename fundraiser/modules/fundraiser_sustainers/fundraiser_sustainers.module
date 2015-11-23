@@ -473,6 +473,12 @@ function fundraiser_sustainers_salesforce_queue_create_item_alter(&$item) {
         '!last' => $user_wrapper->sbp_last_name->value(),
         '!date' => gmdate('Y-m-d H:i:s\Z', $date),
       ));
+
+      if ($item['operation'] == 'CREATE') {
+        // Set installments to zero for new objects to prevent NPSP creating
+        // two sets of related opportunities.
+        $item['sobject']->fields['npe03__Installments__c'] = 0;
+      }
     }
   }
 }
