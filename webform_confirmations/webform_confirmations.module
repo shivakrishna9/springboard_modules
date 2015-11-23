@@ -139,6 +139,11 @@ function webform_confirmations_webform_submission_delete($node, $submission) {
  * Also remove submission data when a webform node is deleted.
  */
 function webform_confirmations_node_delete($node) {
+  $webform_types = variable_get('webform_node_types', 'webform');
+  if (!in_array($node->type, $webform_types)) {
+    return;
+  }
+
   $sid_results = db_select('webform_submissions', 'w')
     ->fields('w', array('sid'))
     ->condition('nid', $node->nid)
