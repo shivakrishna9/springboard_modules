@@ -308,7 +308,7 @@ function sba_social_action_create_twitter_message_entity($update = FALSE) {
       ),
     ),
     'deleted' => 0,
-    'description' => '',
+    'description' => t("Action takers will not be able to edit targets, even on editable messages."),
     'display' => array(
       'default' => array(
         'label' => 'above',
