@@ -460,11 +460,7 @@ function sba_social_action_preview_form_submit($form, &$form_state) {
  * @return string
  */
 function theme_sba_social_action_preview_message_header($vars) {
-  //$intro = t('We will automatically prefix your tweet with ".@@name".', array('@name' => $vars['message']['person']['twitter']));
   $output = '<div class="message-preview-header"><div class="message-preview-intro">';
-  if ($vars['editable']) {
-  //  $output .= $intro;
-  }
   $output .= '</div><div class="message-preview-person">';
   $output .= t('To') . ' ' . theme('sba_social_action_person_details', $vars);
   $output .= '</div></div>';
