@@ -143,8 +143,6 @@ function sba_social_action_message_form(&$form, $message, $message_entity_type, 
     '#value' => $message->sba_message_id,
   );
 
-  // The body value field is present in either case.
-  // The value here is eventually passed to the API server.
   $this_message['body'] = array(
     '#type' => 'value',
     '#value' => $message_body,
@@ -195,7 +193,6 @@ function sba_social_action_message_form(&$form, $message, $message_entity_type, 
     '#type' => 'value',
     '#value' => $required_message,
   );
-
 }
 
 

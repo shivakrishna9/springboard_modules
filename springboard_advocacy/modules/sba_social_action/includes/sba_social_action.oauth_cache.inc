@@ -2,7 +2,11 @@
 
 /**
  * @file
- * Helper functions for cache expiration
+ * Helper functions for cache expiration.
+ *
+ * Save encrypted oauth tokens and secrets to db cache instead of in
+ * session, so that they may be easily expired.
+ *
  * Modeled on http://www.drupal.org/projects/session_cache
  */
 

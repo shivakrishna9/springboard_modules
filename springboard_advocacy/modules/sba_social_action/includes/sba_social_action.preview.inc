@@ -9,6 +9,9 @@ function sba_social_action_message_preview_page($nid) {
 
   // $nid already sanitized in the access hook.
   $node = node_load($nid);
+  if(!empty($node->field_sba_test_mode)) {
+    drupal_set_message('This action is in test mode. Messages will not be not sent.', 'warning', TRUE);
+  }
   if (isset($_SESSION['messages']['status'])) {
     // Prevent the confirmation message from appearing prematurely.
     $_SESSION['saved_messages']['status'] = $_SESSION['messages']['status'];
