@@ -86,9 +86,12 @@
         $('.twitter-sign').click(function(){
             $.oauthpopup({
                 path: '/sba/twitter/login',
-                callback: function(oauthWindow){
-                    if(typeof oauthWindow != 'undefined') {
+                callback: function(success){
+                    if(typeof success != 'undefined' && success) {
                         $('#edit-ajaxify').trigger('mousedown');
+                    }
+                    else {
+                       $('#sba-social-action-preview-form').prepend('<div class="alert error"><button type="button" class="close" data-dismiss="alert">×</button>Twitter authorization failed. Web site access token is missing.</div>');
                     }
                 }
             });

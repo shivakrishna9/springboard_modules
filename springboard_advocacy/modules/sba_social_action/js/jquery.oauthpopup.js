@@ -17,7 +17,8 @@
     options = $.extend({
       windowName: 'ConnectWithOAuth' // should not include space for IE
       , windowOptions: 'location=0,status=0,width=800,height=400'
-      , callback: function(){ window.location.reload(); }
+      , callback: function(){window.location.reload();
+      }
     }, options);
 
     var oauthWindow   = window.open(options.path, options.windowName, options.windowOptions);

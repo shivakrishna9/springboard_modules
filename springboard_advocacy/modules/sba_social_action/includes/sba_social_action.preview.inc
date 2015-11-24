@@ -66,17 +66,15 @@ function sba_social_action_message_preview_page($nid) {
  */
 function sba_social_action_preview_form($form, $form_state, $node) {
   // Access variable to determine form element accessibility.
-  $access = TRUE;
+  $access = FALSE;
   module_load_include('inc', 'sba_social_action', 'includes/sba_social_action.oauth_cache');
   $twitter_user_cache = sba_social_action_cache_get('sba_twitter');
   $form['twitter_user_cache'] = array (
     '#type' => 'value',
     '#value' => $twitter_user_cache,
   );
-  if (empty($twitter_user_cache)) {
-    $access = FALSE;
-  }
-  else {
+  if (!empty($twitter_user_cache)) {
+    $access = TRUE;
     $twitter_user_cache['values']['oauth_token'] = decrypt($twitter_user_cache['values']['oauth_token']);
     $twitter_user_cache['values']['oauth_token_secret'] = decrypt($twitter_user_cache['values']['oauth_token_secret']);
   }
