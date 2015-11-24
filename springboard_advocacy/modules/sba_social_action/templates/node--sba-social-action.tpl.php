@@ -24,9 +24,9 @@
   <?php print render($title_suffix); ?>
 
   <div class="content"<?php print $content_attributes; ?>>
+
     <?php if(!$use_layouts): ?>
     <div class="container-fluid">
-    <?php endif; ?>
       <div class="row-fluid">
       <?php if(!empty($content['field_social_action_img'][0]))  : ?>
         <div id="call-to-action" class="span8">
@@ -41,11 +41,12 @@
         </div>
       <?php endif; ?>
       </div>
-    <?php if(!$use_layouts): ?>
     </div>
     <div class="container-fluid">
     <?php endif; ?>
+
     <?php print render($content);?>
+
     <?php if(!$use_layouts): ?>
     </div>
     <?php print render($content['sba_quicksign']); ?>
@@ -53,6 +54,7 @@
     <div id="participants-container" ><h4>Recent participants</h4><?php print $participants ?></div>
     <?php endif; ?>
   <?php endif; ?>
+
   </div>
   <?php print render($content['links']); ?>
   <?php print render($content['comments']); ?>
