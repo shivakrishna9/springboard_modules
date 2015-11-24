@@ -1213,7 +1213,6 @@
                 sbaCountable.charCount();
             },
             error: function(xhr, textStatus, error){
-                console.log(error);
                 Drupal.settings.charCount = 0;
             }
         });

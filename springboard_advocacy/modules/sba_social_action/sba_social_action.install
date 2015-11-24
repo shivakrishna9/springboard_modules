@@ -1,8 +1,16 @@
 <?php
 
+
+function sba_social_action_schema() {
+  $schema['cache_sba_social_action'] = drupal_get_schema_unprocessed('system', 'cache');
+  $schema['cache_sba_social_action']['description'] = 'Table for Social Action "cache"';
+  return $schema;
+}
+
 /**
  * Implements hook_install().
  */
+
 function sba_social_action_install() {
 
   module_load_include('inc', 'sba_social_action', 'includes/install/sba_social_action.install');
@@ -68,9 +76,6 @@ function sba_social_action_update_7003() {
  * Set default session cache values.
  */
 function sba_social_action_update_7004() {
-  variable_set('session_cache_expire_period', 0.041);
-  variable_set('session_cache_sid_source', 0);
-  variable_set('session_cache_storage_method', 2);
 }
 
 
@@ -117,4 +122,12 @@ function sba_social_action_update_7005() {
       webform_component_insert($field);
     }
   }
+}
+
+function sba_social_action_update_7006() {
+  $schema = module_invoke('sba_social_action', 'schema');
+  if(db_table_exists('cache_sba_social_action') == FALSE) {
+    db_create_table('cache_sba_social_action', $schema['cache_sba_social_action']);
+  }
+  variable_set('sba_social_action_cache_expire_period', 1);
 }

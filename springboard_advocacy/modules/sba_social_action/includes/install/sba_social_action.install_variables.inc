@@ -81,8 +81,6 @@ function _sba_social_action_set_vars() {
   variable_set('twitter_import', 0);
   variable_set('twitter_use_default_views', 0);
 
-  variable_set('session_cache_expire_period', 0.041);
-  variable_set('session_cache_sid_source', 0);
-  variable_set('session_cache_storage_method', 2);
+  variable_set('sba_social_action_cache_expire_period', 1);
 
 }

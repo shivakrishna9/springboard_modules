@@ -554,6 +554,7 @@ function sba_social_action_twitter_redirect() {
 
   module_load_include('php', 'oauth_common', 'lib/OAuth');
   module_load_include('php', 'sba_social_action', 'includes/socialTwitter.lib');
+  module_load_include('inc', 'sba_social_action', 'includes/sba_social_action.oauth_cache');
 
   $twitter = new socialTwitter($key, $secret);
   $oauth_callback = variable_get('social_actions_twitter_callback_url', 'social-action/oauth');
@@ -566,7 +567,7 @@ function sba_social_action_twitter_redirect() {
     $encrypted_token = $token;
     $encrypted_token['oauth_token'] = encrypt($encrypted_token['oauth_token']);
     $encrypted_token['oauth_token_secret'] = encrypt($encrypted_token['oauth_token_secret']);
-    session_cache_set('twitter_oauth_token', $encrypted_token);
+    sba_social_action_cache_set('twitter_oauth_token', $encrypted_token);
   }
   drupal_goto($twitter->get_authenticate_url($token));
 }
@@ -620,14 +621,15 @@ function sba_social_action_twitter_oauth_callback_form_validate($form, &$form_st
 
   $key = variable_get('social_action_twitter_consumer_key', '');
   $secret = variable_get('social_action_twitter_consumer_secret', '');
+  module_load_include('inc', 'sba_social_action', 'includes/sba_social_action.oauth_cache');
 
-  $twitter_oauth_token_cache = session_cache_get('twitter_oauth_token');
+  $twitter_oauth_token_cache = sba_social_action_cache_get('twitter_oauth_token');
 
   if (!empty($twitter_oauth_token_cache)) {
     $twitter_oauth_token_cache['oauth_token'] = decrypt($twitter_oauth_token_cache['oauth_token']);
     $twitter_oauth_token_cache['oauth_token_secret'] = decrypt($twitter_oauth_token_cache['oauth_token_secret']);
     $form_state['twitter_oauth'] = $twitter_oauth_token_cache;
-    session_cache_set('twitter_oauth_token', NULL);
+    sba_social_action_cache_set('twitter_oauth_token', NULL);
   }
   else {
     form_set_error('oauth_token', 'Invalid Twitter OAuth request');
@@ -685,17 +687,18 @@ function sba_social_action_twitter_oauth_callback_submit(&$form, &$form_state) {
     $response['oauth_token'] = encrypt($response['oauth_token']);
     $response['oauth_token_secret'] = encrypt($response['oauth_token_secret']);
   }
-  session_cache_set('sba_twitter', array('values' => $response));
+  module_load_include('inc', 'sba_social_action', 'includes/sba_social_action.oauth_cache');
+  sba_social_action_cache_set('sba_twitter', array('values' => $response));
 }
 
 /**
  * Clear twitter session data.
  */
 function sba_social_action_clear_twitter_session() {
-  $twitter_user_cache = session_cache_get('sba_twitter');
-
+  module_load_include('inc', 'sba_social_action', 'includes/sba_social_action.oauth_cache');
+  $twitter_user_cache = sba_social_action_cache_get('sba_twitter');
   if (!empty($twitter_user_cache)) {
-    session_cache_set('sba_twitter', NULL);
+    sba_social_action_cache_set('sba_twitter', NULL);
   }
   $nid = isset($_GET['nid']) ? $_GET['nid'] : '' ;
   drupal_goto('node/' . $nid);
@@ -805,7 +808,8 @@ function sba_social_action_tokens($type, $tokens, $data = array(), $options = ar
   else {
     $redirect = request_uri();
   }
-  $twitter_user_cache = session_cache_get('sba_twitter');
+  module_load_include('inc', 'sba_social_action', 'includes/sba_social_action.oauth_cache');
+  $twitter_user_cache = sba_social_action_cache_get('sba_twitter');
 
   if ($type == 'social_action') {
     foreach ($tokens as $name => $original) {
@@ -870,4 +874,9 @@ function sba_social_action_preprocess_webform_confirmation(&$vars) {
       $vars['confirmation_message'] = check_markup($vars['node']->custom_fail_message, 'full_html');
     }
   }
+}
+
+function sba_social_action_cron() {
+  module_load_include('inc', 'sba_social_action', 'includes/sba_social_action.oauth_cache');
+  sba_social_action_cron_expire_sessions();
 }

@@ -67,7 +67,12 @@ function sba_social_action_message_preview_page($nid) {
 function sba_social_action_preview_form($form, $form_state, $node) {
   // Access variable to determine form element accessibility.
   $access = TRUE;
-  $twitter_user_cache = session_cache_get('sba_twitter');
+  module_load_include('inc', 'sba_social_action', 'includes/sba_social_action.oauth_cache');
+  $twitter_user_cache = sba_social_action_cache_get('sba_twitter');
+  $form['twitter_user_cache'] = array (
+    '#type' => 'value',
+    '#value' => $twitter_user_cache,
+  );
   if (empty($twitter_user_cache)) {
     $access = FALSE;
   }
@@ -400,6 +405,7 @@ function sba_social_action_preview_form_validate($form, &$form_state) {
 function sba_social_action_preview_form_submit($form, &$form_state) {
   module_load_include('php', 'oauth_common', 'lib/OAuth');
   module_load_include('php', 'sba_social_action', 'includes/socialTwitter.lib');
+
   $node = $form['#action_node'];
   foreach ($form_state['values']['messages'] as $message) {
 
@@ -409,7 +415,7 @@ function sba_social_action_preview_form_submit($form, &$form_state) {
 
     if(empty($node->field_sba_test_mode)) {
       try {
-        $twitter_user_cache = session_cache_get('sba_twitter');
+        $twitter_user_cache = $form_state['values']['twitter_user_cache'];
         if(!empty($twitter_user_cache)) {
           $twitter_user_cache['values']['oauth_token'] = decrypt($twitter_user_cache['values']['oauth_token']);
           $twitter_user_cache['values']['oauth_token_secret'] = decrypt($twitter_user_cache['values']['oauth_token_secret']);

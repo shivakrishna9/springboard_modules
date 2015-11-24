@@ -148,6 +148,13 @@ function springboard_advocacy_settings_form() {
       '#default_value' => variable_get('social_action_twitter_consumer_secret', NULL),
     );
 
+    $form['sba_social_action_cache_expire_period'] = array(
+      '#type' => 'textfield',
+      '#title' => t('Oauth Session Expiration Period'),
+      '#default_value' => variable_get('sba_social_action_cache_expire_period', 1),
+      '#description' => t('The time, in hours, in which an Oauth session should expire. 0.5 = 30 minutes.')
+    );
+
     $form['sba_social_privacy'] = array(
       '#type' => 'textfield',
       '#title' => t('Privacy policy url'),
