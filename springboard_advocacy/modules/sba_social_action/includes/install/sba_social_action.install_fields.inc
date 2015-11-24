@@ -590,7 +590,7 @@ function _sba_social_action_create_node_fields($update = false) {
         'classes' => 'group-body-text field-group-fieldset',
         'description' => '',
       ),
-      'formatter' => 'collapsed',
+      'formatter' => 'collapsible',
     );
 
     $export['group_sba_social_body|node|sba_social_action|form'] = $field_group;
