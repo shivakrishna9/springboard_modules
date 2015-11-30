@@ -93,7 +93,7 @@
 #webform-component-sbp-last-name.control-group input,
 #webform-component-sbp-address-line-2.control-group input,
 #webform-component-sbp-zip.control-group input{
-    padding-left: 7%;
+    margin-left: 7%;
 }
 #webform-component-mail.control-group,
  #webform-component-sbp-city.control-group {
