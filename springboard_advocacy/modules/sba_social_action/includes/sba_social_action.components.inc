@@ -95,7 +95,7 @@ function sba_social_action_insert_components($node) {
     'nid' => $node->nid,
     'form_key' => 'sba_action_is_multistep',
     'pid' => 0,
-    'name' => t('Completed second step'),
+    'name' => t('Multi-step or one step?'),
     'type' => 'hidden',
     'value' => 0,
     'weight' => 30,
