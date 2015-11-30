@@ -100,10 +100,10 @@ function salesforce_npsp_salesforce_genmap_map_fields_alter(&$fields, $context) 
     $donation = $context['object'];
     // Add a field if this is a recurring object.
     if ($donation->donation['recurs_monthly'] == TRUE && !empty($donation->master_did) ) {
-      $fields['npe03__Recurring_Donation__c'] = '[npe03__Recurring_Donation__c:recurring_donation:' . $donation->master_did . ']';
+      $fields['npe03__Recurring_Donation__c'] = '[npe03__Recurring_Donation__c:fundraiser_sustainers_series:' . $donation->master_did . ']';
     }
     if ($donation->donation['recurs_monthly'] == TRUE && empty($donation->master_did) ) {
-      $fields['npe03__Recurring_Donation__c'] = '[npe03__Recurring_Donation__c:recurring_donation:' . $donation->did . ']';
+      $fields['npe03__Recurring_Donation__c'] = '[npe03__Recurring_Donation__c:fundraiser_sustainers_series:' . $donation->did . ']';
     }
   }
 }
@@ -188,8 +188,12 @@ function salesforce_npsp_fundraiser_donation_success($donation) {
   $fundraiser_sustainers_series = entity_load_single('fundraiser_sustainers_series', $donation->did);
 
   if (!empty($fundraiser_sustainers_series)) {
+    $next_charge = db_query('SELECT `next_charge` FROM {fundraiser_sustainers} WHERE `master_did` = :did AND `attempts` = 0 ORDER BY `did` ASC LIMIT 1', array(
+      ':did' => $donation->did,
+        ))->fetchField();
+
     $fundraiser_sustainers_series->npsp_last_payment_date = date('Y-m-d H:i:s');
-    $fundraiser_sustainers_series->npsp_next_payment_date = date('Y-m-d H:i:s', $donation->recurring->next_charge);
+    $fundraiser_sustainers_series->npsp_next_payment_date = date('Y-m-d H:i:s', $next_charge);
     $fundraiser_sustainers_series->npsp_installment_period = 'Monthly';
     $fundraiser_sustainers_series->npsp_schedule_type = 'Multiply By';
 
