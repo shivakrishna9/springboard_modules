@@ -244,6 +244,12 @@ function sba_social_action_form_submit($form, &$form_state) {
   $_SESSION['social_action_sid'] = FALSE;
   $_SESSION['social_action_completed'] = FALSE;
 
+
+  $account =  new stdClass();
+  if (empty($form_state['values']['districted'])) {
+    $account = user_load_by_mail($form_state['values']['submitted']['mail']);
+  }
+
   // Create array of messages to submit for target resolution.
   if (isset($form_state['values']['sba_messages'])) {
     $messages = array();
@@ -253,7 +259,7 @@ function sba_social_action_form_submit($form, &$form_state) {
       //$messages[$id]['subject'] = $message['subject'];
     }
     form_load_include($form_state, 'inc', 'sba_social_action', 'includes/sba_social_action.webform');
-    $data = sba_social_action_send_message($messages, $form_state);
+    $data = sba_social_action_send_message($messages, $form_state, $account);
     // Calculate the deliverable count for sending to salesforce
     //@todo refactr for social url count
     if (!empty($data->messages)) {

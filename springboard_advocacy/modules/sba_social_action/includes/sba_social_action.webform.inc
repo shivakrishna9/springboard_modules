@@ -13,7 +13,7 @@
  * @param array $form_state
  *   The submitted form state.
  */
-function sba_social_action_send_message(array $user_message, array $form_state) {
+function sba_social_action_send_message(array $user_message, array $form_state, $account) {
   $values = $form_state['values'];
   $webform_values = $values['webform_flat'];
   $zip = '';
@@ -31,7 +31,7 @@ function sba_social_action_send_message(array $user_message, array $form_state) 
   // to the resolver.
   if (($districted && !empty($zip)) || !$districted) {
     // Build the contact array.
-    $contact = sba_social_action_build_contact($webform_values, $zip, $geo, $districted);
+    $contact = sba_social_action_build_contact($webform_values, $zip, $geo, $districted, $account);
 
     // Build the message array.
     $message_build = sba_social_action_build_messages($user_message);
@@ -107,7 +107,7 @@ function sba_social_action_build_messages(array $user_message) {
  * @return array
  *   Contact's profile data plus smarty data.
  */
-function sba_social_action_build_contact(array $values, $zip, array $geo = array(), $districted) {
+function sba_social_action_build_contact(array $values, $zip, array $geo = array(), $districted, $account) {
 
   $line_2 = !empty($values['sbp_address_line_2']) ? $values['sbp_address_line_2'] . "\n " : '';
 
@@ -133,13 +133,25 @@ function sba_social_action_build_contact(array $values, $zip, array $geo = array
   }
   else {
     // To make it past the TargetResolverController validator function
-    // send dummy values.
+    // send profile or dummy values.
+    if (!empty($account)) {
+      $zip_field = field_get_items('user', $account, 'sbp_zip_plus_four');
+      $address_field = field_get_items('user', $account, 'sbp_address');
+      $city_field = field_get_items('user', $account, 'sbp_city');
+      $state_field = field_get_items('user', $account, 'sbp_state');
+    }
+
+    $zip = !empty($zip_field[0]['value']) ? $zip_field[0]['value'] : '12345-1234';
+    $address = !empty($address_field[0]['value']) ? $address_field[0]['value'] : 'Any Street';
+    $city = !empty($city_field[0]['value']) ? $city_field[0]['value'] : 'Any Town';
+    $state = !empty($state_field[0]['value']) ? $state_field[0]['value'] : 'NY';
+
     $contact += array(
-      'address' => 'Any Street',
+      'address' => $address,
       'address_line_2' => '',
-      'city' => 'Any City',
-      'state' => 'NY',
-      'zip' => '12345-1234',
+      'city' => $city,
+      'state' => $state,
+      'zip' => $zip,
       'full_address' => '',
       'county' => isset($geo['county']) ? $geo['county'] : '',
       'fips' => isset($geo['fips']) ? $geo['fips'] : '',
