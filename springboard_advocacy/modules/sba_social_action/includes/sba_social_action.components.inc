@@ -87,7 +87,7 @@ function sba_social_action_insert_components($node) {
     'extra' => array(
       'title_display' => 'none',
       'multiple' => 1,
-      'items' => 'sbp_sba_action_optin|Show my name in a list of action takers.'
+      'items' => 'sbp_sba_action_optin|Show my name in a list of activists.'
     ),
   );
 

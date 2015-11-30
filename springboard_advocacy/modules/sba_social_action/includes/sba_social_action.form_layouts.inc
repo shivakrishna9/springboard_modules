@@ -26,7 +26,7 @@ function sba_social_action_form_layouts() {
   );
 
   $templates['social_two_column_body_left'] = array(
-    'name' => t('Body left, user form right.'),
+    'name' => t('Body left, user form right'),
     'types' => array('sba_social_action'),
     'theme' => 'social_two_column_body_left',
     'pattern' => 'social_two_column_body_left\'0-9\'+',

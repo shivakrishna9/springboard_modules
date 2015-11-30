@@ -212,7 +212,7 @@ function _sba_social_action_create_node_fields($update = false) {
       ),
       'entity_type' => 'node',
       'field_name' => 'field_sba_social_fieldset_title',
-      'label' => 'Fieldset Title',
+      'label' => 'User Form Label',
       'required' => 1,
       'settings' => array(
         'text_processing' => 0,
@@ -281,7 +281,7 @@ function _sba_social_action_create_node_fields($update = false) {
       ),
       'entity_type' => 'node',
       'field_name' => 'field_sba_step_two_submit',
-      'label' => 'Step Two Submit Button Text',
+      'label' => 'Submit Button Text',
       'required' => 1,
       'settings' => array(
         'text_processing' => 0,
@@ -414,7 +414,7 @@ function _sba_social_action_create_node_fields($update = false) {
       ),
       'entity_type' => 'node',
       'field_name' => 'field_sba_step_two_header',
-      'label' => 'Step Two Header Text',
+      'label' => 'Intro Text',
       'required' => 0,
       'settings' => array(
         'display_summary' => 1,
@@ -463,7 +463,7 @@ function _sba_social_action_create_node_fields($update = false) {
         ),
       ),
       'deleted' => 0,
-      'description' => 'Check this box to enable test mode. Messages will not be sent to any configured targets when test mode is enabled. Unpublished actions are always in test mode.',
+      'description' => 'Check this box to enable test mode. No tweets will be posted when test mode is enabled. Unpublished actions are always in test mode.',
       'display' => array(
         'default' => array(
           'label' => 'hidden',
@@ -534,7 +534,7 @@ function _sba_social_action_create_node_fields($update = false) {
         'classes' => 'group-test-mode field-group-fieldset',
         'description' => '',
       ),
-      'formatter' => 'collapsed',
+      'formatter' => 'collapsible',
     );
 
     $export['group_sba_test_mode|node|sba_social_action|form'] = $field_group;
@@ -556,13 +556,13 @@ function _sba_social_action_create_node_fields($update = false) {
     );
     $field_group->format_type = 'fieldset';
     $field_group->format_settings = array(
-      'label' => 'Step Two Header Text',
+      'label' => 'Intro Text',
       'instance_settings' => array(
         'required_fields' => 1,
         'classes' => 'group-header-text field-group-fieldset',
         'description' => '',
       ),
-      'formatter' => 'collapsed',
+      'formatter' => 'collapsible',
     );
 
     $export['group_sba_header_text|node|sba_social_action|form'] = $field_group;
@@ -596,34 +596,34 @@ function _sba_social_action_create_node_fields($update = false) {
     $export['group_sba_social_body|node|sba_social_action|form'] = $field_group;
 
 
-    $field_group = new stdClass();
-    $field_group->disabled = FALSE; /* Edit this to true to make a default field_group disabled initially */
-    $field_group->api_version = 1;
-    $field_group->identifier = 'group_sba_social_page_elements|node|sba_social_action|form';
-    $field_group->group_name = 'group_sba_social_page_elements';
-    $field_group->entity_type = 'node';
-    $field_group->bundle = 'sba_social_action';
-    $field_group->mode = 'form';
-    $field_group->parent_name = '';
-    $field_group->label = 'Step One Options';
-    $field_group->weight = '30';
-    $field_group->children = array(
-      0 => 'field_social_call_to_action',
-      1 => 'field_social_action_img',
-      2 => 'field_sba_social_fieldset_title',
-    );
-    $field_group->format_type = 'fieldset';
-    $field_group->format_settings = array(
-      'label' => 'Body',
-      'instance_settings' => array(
-        'required_fields' => 1,
-        'classes' => 'group-page-elements field-group-fieldset',
-        'description' => '',
-      ),
-      'formatter' => 'collapsed',
-    );
+//    $field_group = new stdClass();
+//    $field_group->disabled = FALSE; /* Edit this to true to make a default field_group disabled initially */
+//    $field_group->api_version = 1;
+//    $field_group->identifier = 'group_sba_social_page_elements|node|sba_social_action|form';
+//    $field_group->group_name = 'group_sba_social_page_elements';
+//    $field_group->entity_type = 'node';
+//    $field_group->bundle = 'sba_social_action';
+//    $field_group->mode = 'form';
+//    $field_group->parent_name = '';
+//    $field_group->label = 'Step One Options';
+//    $field_group->weight = '30';
+//    $field_group->children = array(
+//      0 => 'field_social_call_to_action',
+//      1 => 'field_social_action_img',
+//      2 => 'field_sba_social_fieldset_title',
+//    );
+//    $field_group->format_type = 'fieldset';
+//    $field_group->format_settings = array(
+//      'label' => 'Body',
+//      'instance_settings' => array(
+//        'required_fields' => 1,
+//        'classes' => 'group-page-elements field-group-fieldset',
+//        'description' => '',
+//      ),
+//      'formatter' => 'collapsed',
+//    );
 
-    $export['group_sba_social_page_elements|node|sba_social_action|form'] = $field_group;
+ //   $export['group_sba_social_page_elements|node|sba_social_action|form'] = $field_group;
 
     foreach ($export as $field_group) {
       field_group_group_save($field_group);

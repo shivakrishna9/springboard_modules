@@ -281,7 +281,7 @@ function sba_social_action_create_twitter_message_entity($update = FALSE) {
     ),
     'entity_type' => 'sba_message',
     'field_name' => 'field_sba_twitter_message',
-    'label' => 'Tweet text',
+    'label' => 'Tweet',
     'required' => 0,
     'settings' => array(
       'text_processing' => 0,
@@ -308,7 +308,7 @@ function sba_social_action_create_twitter_message_entity($update = FALSE) {
       ),
     ),
     'deleted' => 0,
-    'description' => t("Action takers will not be able to edit targets, even on editable messages."),
+    'description' => t("Activists will not be able to edit targets, even on editable messages."),
     'display' => array(
       'default' => array(
         'label' => 'above',
@@ -320,7 +320,7 @@ function sba_social_action_create_twitter_message_entity($update = FALSE) {
     ),
     'entity_type' => 'sba_message',
     'field_name' => 'field_sba_twitter_editable',
-    'label' => 'Editable by action taker?',
+    'label' => 'Editable by activist?',
     'required' => 1,
     'settings' => array(
       'user_register_form' => FALSE,
@@ -330,7 +330,7 @@ function sba_social_action_create_twitter_message_entity($update = FALSE) {
       'module' => 'options',
       'settings' => array(),
       'type' => 'options_buttons',
-      'weight' => 10,
+      'weight' => 8,
     ),
   );
 
@@ -391,7 +391,7 @@ function sba_social_action_create_twitter_message_entity($update = FALSE) {
       ),
     ),
     'deleted' => 0,
-    'description' => 'This option will prefix the @name of your targets with a period, forcing the Tweet to appear on the user\'s main timeline, and on the timelines of his followers. If this message will have many targets (and tweets), you should leave this unchecked, so that the user does not flood his follower\'s timelines with identical tweets.',
+    'description' => 'This option will prefix each target\'s Twitter handle with a period, forcing the tweet to appear on the activist\'s main feed, and to their followers. If this message has many targets (and tweets), you should leave this unchecked, so that the activist does not flood these feeds with nearly-identical tweets.',
     'display' => array(
       'default' => array(
         'label' => 'hidden',
@@ -402,7 +402,7 @@ function sba_social_action_create_twitter_message_entity($update = FALSE) {
     ),
     'entity_type' => 'sba_message',
     'field_name' => 'field_sba_prepend_target_name',
-    'label' => 'Force Tweets to appear on participant\'s main timeline and followers\' timelines?',
+    'label' => 'Force tweets to appear on activist\'s main feed and to their followers?',
     'required' => 0,
     'settings' => array(
       'user_register_form' => FALSE,
@@ -469,7 +469,7 @@ function sba_social_action_create_twitter_message_entity($update = FALSE) {
     $field_group->bundle = 'sba_social_action_twitter_message';
     $field_group->mode = 'form';
     $field_group->parent_name = '';
-    $field_group->label = 'Tweet Options';
+    $field_group->label = 'Message';
     $field_group->weight = '1';
     $field_group->children = array(
       0 => 'field_sba_twitter_editable',
@@ -482,7 +482,7 @@ function sba_social_action_create_twitter_message_entity($update = FALSE) {
       'instance_settings' => array(
         'required_fields' => 1,
         'classes' => 'group-sba-tweet field-group-fieldset',
-        'description' => 'The @name of each target you select will be prepended automatically to this message. If there are multiple targets, multiple copies of the message will be shown to the site visitor, one per target. The target @names affect your message character limit. Do not include target @names in the message text unless they are not your primary targets.',
+        'description' => 'Your activists will be presented with one copy of the tweet for each target. Do not include Twitter handles in the message text unless they are not your primary targets, the Twitter handle for each target will be prepended automatically to this tweet. The message character limit is determined by target’s actual Twitter handle.',
       ),
       'formatter' => 'open',
     );

@@ -380,15 +380,15 @@ function sba_social_action_form_sba_social_action_node_form_alter(&$form, &$form
     $submit_text = t('Find your Legislator');
   }
 
-  $form['social_submit_button_text'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Submit Button Text'),
-    '#default_value' => $submit_text,
-    '#weight' => 10,
-    '#required' => TRUE,
-  );
-
-  $form['#group_children']['social_submit_button_text'] = 'group_sba_social_page_elements';
+//  $form['social_submit_button_text'] = array(
+//    '#type' => 'textfield',
+//    '#title' => t('Submit Button Text'),
+//    '#default_value' => $submit_text,
+//    '#weight' => 10,
+//    '#required' => TRUE,
+//  );
+//
+//  $form['#group_children']['social_submit_button_text'] = 'group_sba_social_page_elements';
   // Loads the springboard_taxonomy_options fieldset and form js/css if it
   // is not already present.
   if (!isset($form['field_sba_organization_issues'])
@@ -477,12 +477,12 @@ function sba_social_action_form_sba_social_action_node_form_submit(&$form, &$for
   else {
     drupal_write_record('springboard_action_opt_in_block', $data, 'nid');
   }
-  $submit = array(
-    'nid' => $form_state['values']['nid'],
-    'submit_text' => $form_state['values']['social_submit_button_text']
-  );
-
-  drupal_write_record('webform', $submit, 'nid');
+//  $submit = array(
+//    'nid' => $form_state['values']['nid'],
+//    'submit_text' => $form_state['values']['social_submit_button_text']
+//  );
+//
+//  drupal_write_record('webform', $submit, 'nid');
 
   if (empty($form['#node']->nid)) {
     $path = 'node/'.$form_state['nid'].'/messages';
@@ -743,7 +743,7 @@ function theme_sba_social_action_twitter_timeline(&$vars) {
 
   // header
   $output = '<div class="twitter-widget-header">';
-  $output .= '<div class="twitter-widget-title">Your Tweets</div>';
+  $output .= '<div class="twitter-widget-title">Your tweets</div>';
   $output .= '<div class="twitter-widget-top"><span class="twitter-widget-share-text">Share the action you just took: </span>';
   $output .= '<span class="twitter-widget-share-button"> <a href="https://twitter.com/share" class="twitter-share-button"';
 
@@ -781,7 +781,7 @@ function theme_sba_social_action_twitter_signout_link(&$vars) {
     )
   );
 
-  return '<div><p>' . t("If you're done Tweeting, please !signout", array('!signout' => $link)) . '</p></div>';
+  return '<div><p>' . t("If you're done tweeting, please !signout", array('!signout' => $link)) . '</p></div>';
 }
 
 

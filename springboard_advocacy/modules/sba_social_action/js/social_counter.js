@@ -7,7 +7,7 @@
         var currentCount = Drupal.settings.charCount.size;
         var message = 'This option has the potential to cause hundreds of targets to be presented to the user. Check back here when updating your target sets to get a count of all possible targets.';
         if (Drupal.settings.charCount.count > 0) {
-          message = 'This message currently has ' + Drupal.settings.charCount.count + ' eligible targets which will be displayed to all visitors.';
+          message = 'This message currently has ' + Drupal.settings.charCount.count + ' eligible targets.  Individual tweets for each of these will be displayed to all activists.';
         }
         $('.undistricted-update').text(message);
 
