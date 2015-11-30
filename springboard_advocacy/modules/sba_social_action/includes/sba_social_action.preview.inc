@@ -224,15 +224,14 @@ function sba_social_action_preview_form($form, $form_state, $node) {
     if (!empty($alternates)) {
       foreach ($alternates as $alternate) {
         if (isset($message['targets']->{strtolower($alternate)})) {
-          $alt_links[] =  l($alternate, $message['targets']->{strtolower($alternate)});
+          $web = $alternate == 'Website' ? t('Official website') : $alternate;
+          $alt_links[] =  l($web, $message['targets']->{strtolower($alternate)});
         }
       }
     }
     if (!empty($alt_links)) {
-      $count = count($alt_links);
-      $methods = format_plural($count, 'this other method', 'one of these other methods');
       $this_message['alternate'] = array(
-        '#markup' => t('Or, if you prefer, please reach out to @target using @method: ', array('@method' => $methods, '@target' => $message['person']['name'])) . implode(' | ', $alt_links),
+        '#markup' => t('If you prefer, please contact @target via: !methods', array('@target' => $message['person']['name'], '!methods' => '<br />' . implode(' <br /> ', $alt_links))),
         '#prefix' => '<div class="sba-alternate-contact"><p>',
         '#suffix' => '</p></div>',
       );

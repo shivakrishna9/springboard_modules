@@ -321,7 +321,6 @@ function sba_social_action_preprocess_node(&$vars) {
 function sba_social_action_form_alter(&$form, &$form_state, $form_id) {
 
   if ($form_id == 'sba_message_edit_form' && isset($form['field_sba_twitter_editable'])) {
-
     $form['#attached']['js'][] = drupal_get_path('module', 'sba_social_action') . '/js/jQuery.simplyCountable.js';
     $form['#attached']['js'][] = drupal_get_path('module', 'sba_social_action') . '/js/social_counter.js';
     $description =& $form['field_sba_twitter_message'][$form['field_sba_twitter_message']['#language']][0]['value']['#description'];

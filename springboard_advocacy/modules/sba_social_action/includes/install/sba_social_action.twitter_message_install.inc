@@ -31,7 +31,7 @@ function sba_social_action_create_twitter_message_entity($update = FALSE) {
     'module' => 'list',
     'settings' => array(
       'allowed_values' => array(
-        'Website' => 'Website',
+        'Website' => 'Official Website',
         'Facebook' => 'Facebook',
         'Youtube' => 'Youtube',
       ),
