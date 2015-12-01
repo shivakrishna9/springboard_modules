@@ -44,6 +44,13 @@ function webform_ui_settings_form($form, &$form_state) {
     '#description' => '',
   );
 
+  $form['webform_ui_submit_on_edit'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Add a field to set the submit button text to the node add/edit form.'),
+    '#default_value' => variable_get('webform_ui_submit_on_edit', 'FALSE'),
+    '#description' => t('The submit button text field is normally hidden deep in the form components settings page. This option allows it to appear on the node edit form.'),
+  );
+
   $form['#submit'][] = 'webform_ui_settings_form_submit';
   return system_settings_form($form);
 }
