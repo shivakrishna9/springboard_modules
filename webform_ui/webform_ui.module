@@ -179,6 +179,7 @@ function webform_ui_submission_access($node) {
  * Implements hook_action_info
  */
 function webform_ui_action_info() {
+  drupal_set_message('f');
   return array(
     'webform_ui_submission_delete' => array(
       'type' => 'node',
@@ -207,8 +208,14 @@ function webform_ui_action_info() {
  * @param array $context
  */
 function webform_ui_submission_delete(&$node, $context = array()) {
-  //$sid = current($context['rows'])->sid;
-  $sid = $context['rows']->sid;
+
+  if (is_array($context['rows'])) {
+    $sid = current($context['rows'])->sid;
+  }
+  else {
+    $sid = $context['rows']->sid;
+  }
+
   $submission = webform_menu_submission_load($sid, $node->nid);
   if ($submission) {
     webform_submission_delete($node, $submission);
@@ -246,9 +253,10 @@ function webform_ui_submission_delete_views_bulk_operations_form($options) {
  */
 function webform_ui_views_bulk_operations_form_alter(&$form, &$form_state, $vbo) {
  if($vbo->definition['handler'] = 'webform_ui_bulk_operations_handler_field_operations') {
+   $form['select']['#collapsible'] = TRUE;
    $form['select']['#collapsed'] = TRUE;
    if (!user_access('delete all webform submissions') && $vbo->view->name == 'sbv_webform_submissions') {
-    // $form['select']['#access'] = FALSE;;
+     //$form['select']['#access'] = FALSE;;
    }
     if ($form_state['step'] == 'views_bulk_operations_confirm_form') {
       $variables = array(
