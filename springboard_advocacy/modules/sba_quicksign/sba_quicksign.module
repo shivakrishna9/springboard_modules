@@ -13,27 +13,31 @@ function sba_quicksign_views_api() {
  * Implements hook_form_alter().
  */
 function sba_quicksign_form_alter(&$form, $form_state, $form_id) {
-  if (strpos($form_id, 'webform_client') !== FALSE && arg(2) != 'submission' && arg(4) != 'edit') {
-    // Quicksign content type.
-    if (isset($form['#node']) && sba_quicksign_is_quicksign_type($form['#node']->type)) {
-      $node = $form['#node'];
-      // Quicksign enabled.
-      if (sba_quicksign_is_enabled($node)) {
-        // Check for errors in quicksign form submission
-        // If present attempt to set Webform fields with
-        // profile values from prior submission.
-        $profile = !empty($_SESSION['sba_quicksign']['profile']) ? $_SESSION['sba_quicksign']['profile'] : FALSE;
-        if ($profile) {
-          sba_quicksign_form_defaults($form, $node, $profile);
-          if(count($_SESSION['sba_quicksign']['profile']) > 1 ) {
-            $form['#after_build'][] = 'sba_quicksign_after_build';
+  global $user;
+  if (empty($user->uid)) {
+    if (strpos($form_id, 'webform_client') !== FALSE && arg(2) != 'submission' && arg(4) != 'edit') {
+      // Quicksign content type.
+      if (isset($form['#node']) && sba_quicksign_is_quicksign_type($form['#node']->type)) {
+        $node = $form['#node'];
+        // Quicksign enabled.
+        if (sba_quicksign_is_enabled($node)) {
+          // Check for errors in quicksign form submission
+          // If present attempt to set Webform fields with
+          // profile values from prior submission.
+          $profile = !empty($_SESSION['sba_quicksign']['profile']) ? $_SESSION['sba_quicksign']['profile'] : FALSE;
+          if ($profile) {
+            sba_quicksign_form_defaults($form, $form_state, $node, $profile);
+            if (count($_SESSION['sba_quicksign']['profile']) > 1) {
+              $form['#after_build'][] = 'sba_quicksign_after_build';
+            }
+            unset($_SESSION['sba_quicksign']);
           }
-          unset($_SESSION['sba_quicksign']);
+          else {
+            $form['quicksign'] = sba_quicksign_form();
+            $form['quicksign']['#weight'] = 1001;
+            array_unshift($form['#validate'], 'sba_quicksign_form_validate');
+          }
         }
-
-        $form['quicksign'] = sba_quicksign_form();
-        $form['quicksign']['#weight'] = 1001;
-        array_unshift($form['#validate'], 'sba_quicksign_form_validate');
       }
     }
   }
@@ -145,12 +149,7 @@ function sba_quicksign_form_validate(&$form, &$form_state) {
 
   if ($missing_fields) {
     $_SESSION['sba_quicksign']['profile'] = $profile;
-    if ($node->type == 'sba_message_action') {
-      drupal_set_message(t("Unfortunately, we don't have enough information to submit your message. Please complete the additional forms below. Next time you will be able to sign using just your email address."));
-    }
-    else {
-      drupal_set_message(t("Unfortunately, we don't have enough information to submit your petition. Please complete the additional forms below. Next time you will be able to sign using just your email address."));
-    }
+    drupal_set_message(t("Unfortunately, we don't have enough information. Please complete the additional forms below. Next time you will be able to sign using just your email address."));
     drupal_redirect_form($form_state);
   }
 
@@ -275,7 +274,7 @@ function sba_quicksign_after_build($form, $form_state) {
  * @param array|bool $user_data
  *   User profile data to use during substitution.
  */
-function sba_quicksign_form_defaults(&$form, $node, $user_data) {
+function sba_quicksign_form_defaults(&$form, &$form_state, $node, $user_data) {
   $components = $node->webform['components'];
   $component_hierarchy = __webform_user_parse_components($node->nid, $components);
   $map = webform_user_user_map($node->nid);
