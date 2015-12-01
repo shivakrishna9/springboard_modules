@@ -385,8 +385,8 @@ function _sba_message_action_create_node_fields($update = false) {
         ),
       ),
       'deleted' => 0,
-      'description' => '<strong>One-step action flow</strong> allows supporters to take action without entering their address as a separate step; however, if your action will have multiple messages (ie, thank/spank) they cannot be edited by supporters.
-<strong>Multi-step action flow</strong> allows supporters to edit multiple messages under the same action; supporters will be required to enter their address prior to viewing, editing, and sending the messages.',
+      'description' => '<strong>One-step action flow</strong> allows advocates to take action without entering their address as a separate step; however, if your action will have multiple messages (ie, thank/spank) they cannot be edited by advocates.
+<strong>Multi-step action flow</strong> allows advocates to edit multiple messages under the same action; advocates will be required to enter their address prior to viewing, editing, and sending the messages.',
       'display' => array(
         'default' => array(
           'label' => 'hidden',
