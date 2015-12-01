@@ -54,10 +54,22 @@ function sba_quicksign_form() {
 
   $form = array();
 
-  $form['qsign'] = array(
-    '#type' => 'fieldset',
-    '#title' => isset($settings['quicksign_label']) ? $settings['quicksign_label'] : '',
-  );
+  if ($node->type != 'springboard_petition') {
+    $form['qsign'] = array(
+      '#type' => 'fieldset',
+      '#title' => isset($settings['quicksign_label']) ? $settings['quicksign_label'] : '',
+    );
+  }
+  else {
+    $form['qsign'] = array(
+      '#type' => 'container',
+    );
+    $form['qsign']['quicksign_label'] = array(
+      '#markup' => isset($settings['quicksign_label']) ? $settings['quicksign_label'] : '',
+      '#prefix' => '<h2 class="quicksign-label">',
+      '#suffix' => '</h2>',
+    );
+  }
 
   $form['qsign']['quicksign_description'] = array(
     '#markup' => isset($settings['quicksign_description']) ? check_markup($settings['quicksign_description'], $description_format) : '',
