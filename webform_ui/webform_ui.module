@@ -179,7 +179,6 @@ function webform_ui_submission_access($node) {
  * Implements hook_action_info
  */
 function webform_ui_action_info() {
-  drupal_set_message('f');
   return array(
     'webform_ui_submission_delete' => array(
       'type' => 'node',
