@@ -660,7 +660,7 @@ function webform_ab_view(&$node, $view_mode) {
   if (node_access('update', $node) && (empty($_GET['view_webform']) || $_GET['view_webform'] != 1)) {
     $type = node_type_get_type($node);
     $node->content['description'] = array(
-      '#markup' => 'This is the admin overview of the A/B Test. If an unpriveleged or anonymous user visits this same URL, ' .
+      '#markup' => 'This is the admin overview of the A/B Test. If an unprivileged or anonymous user visits this same URL, ' .
         'they will be redirected to one of the webforms within the test.',
       '#weight' => -10,
       '#prefix' => '<p>',
