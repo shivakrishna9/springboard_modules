@@ -160,7 +160,19 @@ function webform_ui_exposed_after($form, $form_state) {
 }
 
 function theme_webform_ui_exposed_form_wrapper($vars) {
-  return '<fieldset class="container-inline collapsible collapsed form-wrapper" id="webform-ui-exposed-search"><legend><span class="fieldset-legend">Search</span></legend><div class="fieldset-wrapper">' . $vars['element']['#children']  . '</div></fieldset>';
+  $has_value = FALSE;
+  foreach (element_children($vars['element']) as $child) {
+    if (isset($vars['element'][$child]['#type']) && $vars['element'][$child]['#type'] == 'textfield' && !empty($vars['element'][$child]['#value'])) {
+     $has_value = TRUE;
+    }
+    if (isset($vars['element'][$child]['min']) && (!empty($vars['element'][$child]['min']['#value'] || !empty($vars['element'][$child]['mmax']['#value'])))) {
+      $has_value = TRUE;
+    }
+  }
+
+  $collapse = $has_value ? '' : 'collapsed';
+
+  return '<fieldset class="container-inline collapsible ' . $collapse .' form-wrapper" id="webform-ui-exposed-search"><legend><span class="fieldset-legend">Search</span></legend><div class="fieldset-wrapper">' . $vars['element']['#children']  . '</div></fieldset>';
 }
 
 function webform_ui_theme($existing, $type, $theme, $path) {
