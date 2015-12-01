@@ -494,6 +494,10 @@ function sba_message_action_form_alter(&$form, &$form_state, $form_id) {
       if ($multi_flow) {
         $form['#submit'][] = 'sba_message_action_multifow_submit';
       }
+      else {
+        $form['#submit'][] = 'sba_message_action_single_submit';
+      }
+
     }
   }
 }
@@ -505,14 +509,36 @@ function sba_message_action_form_alter(&$form, &$form_state, $form_id) {
  * @param $form_state
  */
 function sba_message_action_multifow_submit($form, &$form_state) {
+  $node = $form['#node'];
   if (!empty($_SESSION['delivered_messages']) || !empty($_SESSION['undelivered_messages'])) {
-    $node = $form['#node'];
     $sid = $form_state['values']['details']['sid'];
     $_SESSION['action_sid'] = array('sid' => $sid, 'nid' => $node->nid);
     $form_state['redirect'] = array(
       'node/' . $node->nid . '/message-preview',
       array('query' => array('sid' => $sid))
     );
+  }
+  else {
+    if(!empty($form['#node']->custom_fail_message) && $node->webform['redirect_url'] != '<confirmation>') {
+      drupal_get_messages('status');
+      drupal_set_message(check_markup($form['#node']->custom_fail_message, 'full_html', '', TRUE));
+    }
+  }
+}
+
+/**
+ *  Make sure our custom fail message is present when there is a url redirect.
+ *
+ * @param $form
+ * @param $form_state
+ */
+function sba_message_action_single_submit($form, &$form_state) {
+  if (empty($_SESSION['delivered_messages']) && empty($_SESSION['undelivered_messages'])) {
+    $node = $form['#node'];
+    if (!empty($form['#node']->custom_fail_message) && $node->webform['redirect_url'] != '<confirmation>') {
+      drupal_get_messages('status');
+      drupal_set_message(check_markup($form['#node']->custom_fail_message, 'full_html', '', TRUE));
+    }
   }
 }
 
@@ -1030,8 +1056,7 @@ function sba_message_action_token_info() {
 function sba_message_action_tokens($type, $tokens, $data = array(), $options = array()) {
   $recipients = '';
   $replacements = array();
-  if ($type == 'action' && (!empty($data['node']->type) && $data['node']->type == 'sba_message_action')) {
-
+  if ($type == 'action') {
     foreach ($tokens as $name => $original) {
       switch ($name) {
         case 'all_messages':
