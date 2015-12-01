@@ -589,9 +589,9 @@ function fundraiser_sustainers_form_node_form_alter(&$form, &$form_state, $form_
       '#type' => 'select',
       '#title' => t('Display setting'),
       '#options' => array(
-        'user_choice' => t('Recurring is an option on this form, but users may opt out.'),
-        'always' => t('Recurring is an option on this form, and users cannot opt out.'),
-        'never' => t('Recurring is not an option on this form.'),
+        'user_choice' => t('Donor chooses one-time or recurring'),
+        'always' => t('Recurring only'),
+        'never' => t('One-time only'),
       ),
       '#default_value' => isset($form['#node']->recurring_setting) ? $form['#node']->recurring_setting : 'user_choice',
     );
