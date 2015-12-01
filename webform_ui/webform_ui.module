@@ -133,10 +133,10 @@ function webform_ui_submission_results($node) {
     $view->set_arguments(array($node->nid));
   }
 
+  $view->override_path = current_path();
   $view->pre_execute();
 
   $view->execute();
-
   if ($view->access('block_1')) {
     return $view->preview();
   }
@@ -316,7 +316,11 @@ function webform_ui_views_api() {
  * Implements hook_views_pre_render().
  */
 function webform_ui_views_pre_render(&$view) {
+
   if ($view->name == 'sbv_webform_submissions' && !user_access('delete all webform submissions') and isset($view->field['views_bulk_operations'])) {
+    unset($view->field['views_bulk_operations']);
+  }
+  if ($view->name == 'sbv_webform_submissions' && variable_get('webform_ui_use_bulk_delete', FALSE) == FALSE) {
     unset($view->field['views_bulk_operations']);
   }
 }

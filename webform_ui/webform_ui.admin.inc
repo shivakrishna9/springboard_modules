@@ -16,11 +16,25 @@ function webform_ui_settings_form($form, &$form_state) {
     '#description' => t('Hide rarely edited hidden fields by default. A "show" link will allow you to toggle field visiblity.'),
   );
 
+
   $form['webform_ui_use_alternate_submission'] = array(
     '#type' => 'checkbox',
     '#title' => t('Use an alternate submission results page with pager and search functionality'),
     '#default_value' => variable_get('webform_ui_use_alternate_submission', 'FALSE'),
     '#description' => '',
+  );
+
+  $form['alternate']['webform_ui_use_bulk_delete'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Show the bulk delete option on the results page.'),
+    '#default_value' => variable_get('webform_ui_use_bulk_delete', 'FALSE'),
+    '#description' => '',
+    '#states' => array(
+      'visible' => array(
+        ':input[name="webform_ui_use_alternate_submission"]' => array('checked' => TRUE),
+      ),
+    ),
+    '#attributes' => array('style' => 'margin-left: 15px')
   );
 
   $form['webform_ui_hide_clear_all'] = array(
