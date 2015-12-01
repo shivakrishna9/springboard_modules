@@ -19,16 +19,21 @@ class Market_Source_Mobile_Detect extends Mobile_Detect {
       'browser' => NULL,
     );
 
-    $phone = $this->matchDeviceProperty($this->getPhoneDevices());
-    $tablet = $this->matchDeviceProperty($this->getTabletDevices());
+    if ($this->isMobile()) {
+      $phone = $this->matchDeviceProperty($this->getPhoneDevices());
+      $tablet = $this->matchDeviceProperty($this->getTabletDevices());
 
-    if (!empty($phone)) {
-      $properties['type'] = 'Phone';
-      $properties['name'] = $phone;
+      if (!empty($phone)) {
+        $properties['type'] = 'Phone';
+        $properties['name'] = $phone;
+      }
+      else if (!empty($tablet)) {
+        $properties['type'] = 'Tablet';
+        $properties['name'] = $tablet;
+      }
     }
-    else if (!empty($tablet)) {
-      $properties['type'] = 'Tablet';
-      $properties['name'] = $tablet;
+    else {
+      $properties['type'] = 'Desktop';
     }
 
     $properties['os'] = $this->matchDeviceProperty($this->getOperatingSystems());
