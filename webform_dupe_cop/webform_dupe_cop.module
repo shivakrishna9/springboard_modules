@@ -137,10 +137,26 @@ function webform_dupe_cop_client_form_submit($form, &$form_state) {
  * @param Array $values
  */
 function webform_dupe_cop_submission_hash($values) {
+  $values = _webform_dupe_cop_truncate_payment_values($values);
   $string = serialize($values);
   $hash = md5($string);
   return $hash;
 }
+
+/**
+ * Helper function to sanitize certain submission values so whole account numbers are
+ * not being encrypted.
+ */
+function _webform_dupe_cop_truncate_payment_values($values) {
+  if ($value = &$values['payment_information']['payment_fields']['credit']['card_number']) {
+    $value = substr($value, -4);
+  } 
+  if ($value = &$values['payment_information']['payment_fields']['bank account']['accNum']) {
+    $value = substr($value, -4);
+  }
+  return $values;
+}
+
 
 /**
  * Helper function, returns an array of request and response headers for the
