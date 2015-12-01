@@ -429,7 +429,7 @@ function webform_ab_node_presave($node) {
     }
     foreach ($node->win_thresholds as $plugin_key => $config) {
       // For enabled plugins, check if they have a save prep function
-      if ($config['enable'] > 0) {
+      if (isset($config['enable']) && ($config['enable'] > 0)) {
         // The options for each plugin come in as a sub-array ('options'),
         // which we actually want a level up
         if (is_array($node->win_thresholds[$plugin_key]['options'])) {
@@ -602,7 +602,9 @@ function webform_ab_load($nodes) {
       'GROUP BY webform_nid', array(':test_nid' => $node->nid));
     foreach ($result as $row) {
       $row = (array) $row;
-      $included_webforms[$row['webform_nid']]['hits'] = $row['hits'];
+      if (isset($included_webforms[$row['webform_nid']])) {
+        $included_webforms[$row['webform_nid']]['hits'] = $row['hits'];
+      }
     }
 
     $result = db_query('SELECT webform_nid, COUNT(*) as conversions ' .
@@ -611,7 +613,9 @@ function webform_ab_load($nodes) {
       'GROUP BY webform_nid', array(':test_nid' => $node->nid));
     foreach ($result as $row) {
       $row = (array) $row;
-      $included_webforms[$row['webform_nid']]['conversions'] = $row['conversions'];
+      if (isset($included_webforms[$row['webform_nid']])) {
+        $included_webforms[$row['webform_nid']]['conversions'] = $row['conversions'];
+      }
     }
 
     $load->included_webforms = $included_webforms;
