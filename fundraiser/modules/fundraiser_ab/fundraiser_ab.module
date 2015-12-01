@@ -32,7 +32,7 @@ function fundraiser_ab_node_load($nodes, $types) {
   if (!empty($result)) {
     foreach ($result as $record) {
       // Add the stats to the node object
-      if (isset($node->included_webforms[$row['webform_nid']])) {
+      if (isset($node->included_webforms[$record['webform_nid']])) {
         $node->included_webforms[$record['webform_nid']]['fundraiser'] = $record;
       }
     }
