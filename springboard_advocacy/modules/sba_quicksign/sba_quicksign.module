@@ -259,6 +259,23 @@ function sba_quicksign_form_node_form_alter(&$form, &$form_state, $form_id) {
       '#default_value' => isset($settings['quicksign_label']) ? $settings['quicksign_label'] : 'Already a supporter?',
     );
 
+    $form['sba_quicksign']['show_submit_button'] = array(
+      '#type' => 'checkbox',
+      '#title' => t('Use a separate submit button'),
+      '#description' => t('Useful if the quicksign field is placed at the top of the form.'),
+      '#default_value' => isset($settings['show_submit_button']) ? $settings['show_submit_button'] : 1,
+    );
+
+    $form['sba_quicksign']['quicksign_button_text'] = array(
+      '#type' => 'textfield',
+      '#title' => t('Submit button text'),
+      '#description' => t('Change the text on the quick sign form submit button.'),
+      '#default_value' => isset($settings['quicksign_button_text']) ? $settings['quicksign_button_text'] : t('Sign now'),
+      '#states' => array(
+        'visible' => array(':input[name="show_submit_button"]' => array('checked' => TRUE)),
+        ),
+    );
+
     $default_desc = $node->type == 'sba_message_action' ? t('If we already have your information, just enter your email address and click to send this message now.') : t('If we already have your information, just enter your email address and click to sign this petition now.');
     $form['sba_quicksign']['quicksign_description'] = array(
       '#type' => 'text_format',
@@ -268,13 +285,7 @@ function sba_quicksign_form_node_form_alter(&$form, &$form_state, $form_id) {
       '#format' => isset($settings['quicksign_description_format']) ? $settings['quicksign_description_format'] : NULL,
     );
 
-    $default = $node->type == 'sba_message_action' ? t('Sign now') : t('Sign now');
-    $form['sba_quicksign']['quicksign_button_text'] = array(
-      '#type' => 'textfield',
-      '#title' => t('Submit button text'),
-      '#description' => t('Change the text on the quick sign form submit button.'),
-      '#default_value' => isset($settings['quicksign_button_text']) ? $settings['quicksign_button_text'] : $default,
-    );
+
     // No validation or submit handlers, we'll handle this during
     // hook_node_insert() and hook_node_update().
   }
@@ -347,6 +358,7 @@ function sba_quicksign_save($node) {
     'form_label' => $node->quicksign_label,
     'form_description' => $node->quicksign_description['value'],
     'form_description_format' => $node->quicksign_description['format'],
+    'show_submit_button' => $node->show_submit_button,
     'submit_button_text' => $node->quicksign_button_text,
   );
   drupal_write_record('sba_quicksign', $record);
@@ -400,6 +412,7 @@ function sba_quicksign_settings($nid) {
       form_label AS quicksign_label,
       form_description AS quicksign_description,
       form_description_format AS quicksign_description_format,
+      show_submit_button AS show_submit_button,
       submit_button_text AS quicksign_button_text
      FROM {sba_quicksign}
      WHERE nid = :nid;', array(':nid' => $nid));
@@ -475,7 +488,6 @@ function sba_quicksign_insert_components($node, $op) {
     'weight' => -100,
     'email' => 0,
     'extra' => array(
-      'description' => '',
       'attributes' => array(),
       'private' => FALSE,
     ),
@@ -501,4 +513,42 @@ function sba_quicksign_insert_components($node, $op) {
 
 function sba_quicksign_delete_components($node, $cid) {
   webform_component_delete($node, $node->webform['components'][$cid]);
+}
+
+function sba_quicksign_form_webform_component_edit_form_alter(&$form, &$form_state, $form_id) {
+  if ($form['form_key']['#default_value'] == 'sba_quicksign') {
+    $form['form_key']['#disabled'] = TRUE;
+    $form['form_key']['#description'] = '';
+    $form['name']['#access'] = FALSE;
+    $form['extra']['description']['#access'] = FALSE;
+    $form['display']['#access'] = FALSE;
+    $form['actions']['#access'] = FALSE;
+  }
+}
+function sba_quicksign_form_webform_components_form_alter(&$form, &$form_state, $form_id) {
+  foreach ($form['#node']->webform['components'] as $key => $component) {
+    if ($component['form_key'] == 'sba_quicksign') {
+      unset($form['add']['type']['#options']['quicksign']);
+    }
+  }
+}
+
+/**
+ * Implements hook_element_info_alter().
+ */
+function sba_quicksign_element_info_alter(&$type) {
+  $type['text_format']['#process'][] = 'sba_quicksign_element_process_text_format';
+}
+
+function sba_quicksign_element_process_text_format($element) {
+  if (in_array('quicksign_description', $element['#parents'])) {
+    $prefix = isset($element['format']['#prefix']) ? $element['format']['#prefix'] : '';
+    $element['format']['#prefix'] = $element['#description'] . $prefix;
+    unset($element['#description']);
+    $element['format']['#collapsible'] = TRUE;
+    $element['format']['#collapsed'] = TRUE;
+    //$element['format']['#suffix'] = '<div class="text-format-spacer">&nbsp;</div>';
+    $element['format']['#title'] = t('Text format');
+  }
+  return $element;
 }
