@@ -40,33 +40,30 @@ function _webform_edit_quicksign($component) {
 /**
  * Implements _webform_render_component().
  */
-function _webform_render_quicksign($component, $value = NULL, $filter = TRUE) {
-  global $user;
-
-  $node = isset($component['nid']) ? node_load($component['nid']) : NULL;
-
-  $form = sba_quicksign_form();
-
-  $settings = isset($node->nid) ? sba_quicksign_settings($node->nid) : array();
-
-  $element = array(
-    '#type' => 'fieldset',
-    '#title' => isset($settings['quicksign_label']) ? $settings['quicksign_label'] : '',
-    '#title_display' => $component['extra']['title_display'] ? $component['extra']['title_display'] : NULL,
-    '#weight' => $component['weight'],
-    '#description' => $filter ? _webform_filter_descriptions($component['extra']['description'], $node) : $component['extra']['description'],
-    '#collapsible' => FALSE,
-    '#attributes' => array('class' => array('webform-component-fieldset')),
-    '#pre_render' => array('webform_fieldset_prerender', 'webform_element_title_display'),
-    '#translatable' => array('title', 'description'),
-  );
-
-
-  // Add an e-mail class for identifying the difference from normal textfields.
-  $element['#attributes']['class'][] = 'quicksign';
-
-  return $element;
-}
+//function _webform_render_quicksign($component, $value = NULL, $filter = TRUE) {
+//  global $user;
+//
+//  $node = isset($component['nid']) ? node_load($component['nid']) : NULL;
+//  $settings = isset($node->nid) ? sba_quicksign_settings($node->nid) : array();
+//
+//  $element = array(
+//    '#type' => 'markup',
+//    '#title' => isset($settings['quicksign_label']) ? $settings['quicksign_label'] : '',
+//    '#title_display' => FALSE,
+//    '#weight' => $component['weight'],
+//    '#description' => '',
+//    '#collapsible' => FALSE,
+//    '#attributes' => array('class' => array('webform-component-quicksign')),
+//    '#pre_render' => array(),
+//    '#translatable' => array('title', 'description'),
+//  );
+//
+//
+//  // Add an e-mail class for identifying the difference from normal textfields.
+//  $element['#attributes']['class'][] = 'quicksign';
+//
+//  return $element;
+//}
 
 
 /**
