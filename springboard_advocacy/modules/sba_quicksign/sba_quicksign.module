@@ -350,6 +350,12 @@ function sba_quicksign_node_delete($node) {
   }
 }
 
+function sba_quicksign_webform_component_delete($component) {
+  if ($component['form_key'] == 'sba_quicksign') {
+    sba_quicksign_delete($component['nid']);
+  }
+}
+
 /**
  * Save quick sign settings per-node.
  *
