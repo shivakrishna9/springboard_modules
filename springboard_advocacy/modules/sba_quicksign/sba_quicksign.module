@@ -1,5 +1,29 @@
 <?php
 
+
+function sba_quicksign_webform_component_info() {
+  $components = array();
+  $components['quicksign'] = array(
+    'label' => t('Quicksign'),
+    'description' => FALSE,
+    'features' => array(
+      'csv' => FALSE,
+      'email' => FALSE,
+      'email_address' => FALSE,
+      'email_name' => FALSE,
+      'required' => FALSE,
+      'title_display' => TRUE,
+      'title_inline' => FALSE,
+      'conditional' => FALSE,
+      'group' => FALSE,
+      'spam_analysis' => FALSE,
+      'attachment' => FALSE,
+    ),
+    'file' => 'components/quicksign.inc',
+  );
+  return $components;
+}
+
 /**
  * Implements hook_views_api().
  */
@@ -33,13 +57,16 @@ function sba_quicksign_form_alter(&$form, $form_state, $form_id) {
             unset($_SESSION['sba_quicksign']);
           }
           else {
-            $form['quicksign'] = sba_quicksign_form();
-            $form['quicksign']['#weight'] = 1001;
+            $form['submitted']['sba_quicksign']['quicksign'] = sba_quicksign_form();
+            $form['submitted']['sba_quicksign']['quicksign']['#weight'] = 1001;
             array_unshift($form['#validate'], 'sba_quicksign_form_validate');
           }
         }
       }
     }
+  }
+  else {
+    $form['submitted']['sba_quicksign']['#access'] = FALSE;
   }
 }
 
@@ -53,24 +80,6 @@ function sba_quicksign_form() {
   $description_format = isset($settings['quicksign_description_format']) ? $settings['quicksign_description_format'] : NULL;
 
   $form = array();
-
-  if ($node->type != 'springboard_petition') {
-    $form['qsign'] = array(
-      '#type' => 'fieldset',
-      '#title' => isset($settings['quicksign_label']) ? $settings['quicksign_label'] : '',
-    );
-  }
-  else {
-    $form['qsign'] = array(
-      '#type' => 'container',
-    );
-    $form['qsign']['quicksign_label'] = array(
-      '#markup' => isset($settings['quicksign_label']) ? $settings['quicksign_label'] : '',
-      '#prefix' => '<h2 class="quicksign-label">',
-      '#suffix' => '</h2>',
-    );
-  }
-
   $form['qsign']['quicksign_description'] = array(
     '#markup' => isset($settings['quicksign_description']) ? check_markup($settings['quicksign_description'], $description_format) : '',
     '#prefix' => '<div class="quicksign-description">',
@@ -324,6 +333,7 @@ function sba_quicksign_form_defaults(&$form, &$form_state, $node, $user_data) {
 function sba_quicksign_node_insert($node) {
   if (sba_quicksign_is_quicksign_type($node->type) && isset($node->quicksign_enabled)) {
     sba_quicksign_save($node);
+    sba_quicksign_insert_components($node, 'insert');
   }
 }
 
@@ -331,8 +341,29 @@ function sba_quicksign_node_insert($node) {
  * Implements hook_node_update().
  */
 function sba_quicksign_node_update($node) {
-  if (sba_quicksign_is_quicksign_type($node->type) && isset($node->quicksign_enabled)) {
-    sba_quicksign_save($node);
+  if (sba_quicksign_is_quicksign_type($node->type)) {
+    $has_component = FALSE;
+    $cid = NULL;
+    foreach ($node->webform['components'] as $key => $component) {
+      if ($component['form_key'] == 'sba_quicksign') {
+        $has_component = TRUE;
+        $cid = $key;
+      }
+    }
+
+    if (isset($node->quicksign_enabled)) {
+
+      sba_quicksign_save($node);
+
+      if (!empty($node->quicksign_enabled) && !$has_component) {
+        sba_quicksign_insert_components($node, 'update');
+      }
+
+      if (empty($node->quicksign_enabled) && $has_component) {
+        sba_quicksign_delete_components($node, $cid);
+      }
+    }
+
   }
 
 }
@@ -474,4 +505,44 @@ function sba_quicksign_is_quicksign_type($type) {
     $quicksign = TRUE;
   }
   return $quicksign;
+}
+
+function sba_quicksign_insert_components($node, $op) {
+  module_load_include('inc', 'webform', 'includes/webform.components');
+
+  $fields[] = array(
+    'nid' => $node->nid,
+    'form_key' => 'sba_quicksign',
+    'pid' => 0,
+    'name' => t('Quicksign'),
+    'type' => 'fieldset',
+    'weight' => -100,
+    'email' => 0,
+    'extra' => array(
+      'description' => '',
+      'attributes' => array(),
+      'private' => FALSE,
+    ),
+  );
+
+
+  $exclude = array();
+  $exclude[] = 'sba_quicksign';
+
+  // Add the component to the Webform.
+  foreach ($fields as $field) {
+    // Don't insert fields if cloning.
+    if ($op == 'insert') {
+      if (!isset($node->map) || (isset($node->map) && !in_array($field['form_key'], $node->map) && !in_array($field['form_key'], $exclude))) {
+        webform_component_insert($field);
+      }
+    }
+    else {
+      webform_component_insert($field);
+    }
+  }
+}
+
+function sba_quicksign_delete_components($node, $cid) {
+  webform_component_delete($node, $node->webform['components'][$cid]);
 }
