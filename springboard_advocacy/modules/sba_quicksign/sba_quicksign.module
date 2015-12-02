@@ -50,7 +50,7 @@ function sba_quicksign_form_alter(&$form, $form_state, $form_id) {
           // profile values from prior submission.
           $profile = !empty($_SESSION['sba_quicksign']['profile']) ? $_SESSION['sba_quicksign']['profile'] : FALSE;
           if ($profile) {
-            sba_quicksign_form_defaults($form, $form_state, $node, $profile);
+            //sba_quicksign_form_defaults($form, $form_state, $node, $profile);
             if (count($_SESSION['sba_quicksign']['profile']) > 1) {
               $form['#after_build'][] = 'sba_quicksign_after_build';
             }
@@ -286,48 +286,6 @@ function sba_quicksign_after_build($form, $form_state) {
 }
 
 /**
- * Populate a webform with defaults from the user profile.
- *
- * @param mixed $form
- *   Webform FAPI array.
- * @param object $node
- *   Webform Node object.
- * @param array|bool $user_data
- *   User profile data to use during substitution.
- */
-function sba_quicksign_form_defaults(&$form, &$form_state, $node, $user_data) {
-  $components = $node->webform['components'];
-  $component_hierarchy = __webform_user_parse_components($node->nid, $components);
-  $map = webform_user_user_map($node->nid);
-  // Map each profile field if there's a matching component field.
-  foreach ($map as $webform_field => $profile_field) {
-    if (array_key_exists($webform_field, $component_hierarchy)) {
-      $form_field = &_webform_user_find_field($form, $component_hierarchy[$webform_field]);
-      if (isset($user_data[$webform_field])) {
-        $profile_value = $user_data[$webform_field];
-        // Set the value.
-        switch ($form_field['#type']) {
-          case 'date':
-            $form_field['#default_value'] = $profile_value;
-            break;
-
-          case 'checkboxes':
-            if ($profile_value) {
-              $form_field['#default_value'] = array($profile_field);
-            }
-            break;
-
-          default:
-            $form_field['#default_value'] = check_plain($profile_value);
-            break;
-        }
-      }
-      // End if webform empty with a profile field value.
-    } // End if field is in component hierarchy.
-  }
-}
-
-/**
  * Implements hook_node_insert().
  */
 function sba_quicksign_node_insert($node) {
@@ -363,9 +321,7 @@ function sba_quicksign_node_update($node) {
         sba_quicksign_delete_components($node, $cid);
       }
     }
-
   }
-
 }
 
 /**
