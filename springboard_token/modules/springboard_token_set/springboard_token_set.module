@@ -44,6 +44,37 @@ function springboard_token_set_save_field($form, &$form_state) {
 }
 
 /**
+ * Implements hook_element_info_alter()
+ */
+function springboard_token_set_element_info_alter(&$types) {
+  // TODO: Check user access.
+  $types['textarea']['#post_render'][] = 'springboard_token_set_post_render';
+  $types['textfield']['#post_render'][] = 'springboard_token_set_post_render';
+}
+
+function springboard_token_set_post_render($content, $element) {
+  if (isset($element['#entity_type']) && isset($element['#bundle'])) {
+    $entity = $element['#entity_type'];
+    $bundle = $element['#bundle'];
+    $field = $element['#field_name'];
+
+    $tsid = variable_get('token_insert_' . $entity . '_' . $bundle . '_' . $field, 0);
+
+    if ($tsid != 0) {
+      $tokens = springboard_token_set_get_tokens($tsid);
+
+      $content .= '<ul>';
+      foreach ($tokens as $token) {
+        $content .= '<li>[' . $token->token_type . ':' . $token->token_name . ']</li>';
+      }
+      $content .= '</ul>';
+    }
+  }
+
+  return $content;
+}
+
+/**
  * Adds a new token set.
  *
  * @param string $name
@@ -81,22 +112,6 @@ function springboard_token_set_add_token($tsid, $token_type, $token_name) {
 }
 
 /**
- * Gets the ID of a token set by name.
- *
- * @param type $name
- *   The name of the token set.
- */
-function springboard_token_set_get_set_id($name) {
-  $tsid = db_select('token_sets', 'ts')
-    ->fields('ts', array('tsid'))
-    ->condition('name' . $name, '=')
-    ->execute()
-    ->fetchField();
-
-  return $tsid;
-}
-
-/**
  * Gets all token sets.
  *
  * @return array
@@ -109,4 +124,42 @@ function springboard_token_set_get_sets() {
     ->fetchAll();
 
   return $token_sets;
+}
+
+/**
+ * Gets a token set by ID.
+ *
+ * @param int $tsid
+ *   The ID of the token set.
+ *
+ * @return object
+ *   The token set.
+ */
+function springboard_token_set_get_set($tsid) {
+  $token_set = db_select('token_sets', 'ts')
+    ->fields('ts', array('tsid', 'name'))
+    ->condition('tsid', $tsid, '=')
+    ->execute()
+    ->fetchObject();
+
+  return $token_set;
+}
+
+/**
+ * Gets all tokens for a given token set ID.
+ *
+ * @param int $tsid
+ *   The ID of the token set.
+ *
+ * @return array
+ *   Array of tokens.
+ */
+function springboard_token_set_get_tokens($tsid) {
+  $tokens = db_select('token_set_tokens', 'tst')
+    ->fields('tst', array('token_type', 'token_name'))
+    ->condition('tsid', $tsid, '=')
+    ->execute()
+    ->fetchAll();
+
+  return $tokens;
 }
