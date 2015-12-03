@@ -16,7 +16,6 @@ function webform_ui_settings_form($form, &$form_state) {
     '#description' => t('Hide rarely edited hidden fields by default. A "show" link will allow you to toggle field visiblity.'),
   );
 
-
   $form['webform_ui_use_alternate_submission'] = array(
     '#type' => 'checkbox',
     '#title' => t('Use an alternate submission results page with pager and search functionality'),

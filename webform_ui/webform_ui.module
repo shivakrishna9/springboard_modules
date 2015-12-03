@@ -2,7 +2,6 @@
 /**
  * @file
  *
- * @todo Ability to lock editing of specific fields.
  */
 
 /**
@@ -36,6 +35,8 @@ function webform_ui_permission() {
 
 /**
  * Implements hook_form_alter().
+ *
+ * Add a field to allow custom submit text on the node add/edit page.
  */
 function webform_ui_form_alter(&$form, &$form_state, $form_id) {
   if (!empty($form['#node_edit_form']) && !empty($form['webform']) && $form['#node']->type != 'sba_message_action') {
@@ -58,6 +59,12 @@ function webform_ui_form_alter(&$form, &$form_state, $form_id) {
   }
 }
 
+/**
+ * Saves webform submit text defined on the node add/edit page.
+ *
+ * @param $form
+ * @param $form_state
+ */
 function webform_ui_node_form_submit(&$form, &$form_state) {
   $submit = array(
     'nid' => $form_state['values']['nid'],
@@ -66,6 +73,16 @@ function webform_ui_node_form_submit(&$form, &$form_state) {
   drupal_write_record('webform', $submit, 'nid');
 }
 
+/**
+ * Implements hook_form_FORM_ID_alter().
+ *
+ * Include the javascript that shows/hides webform fields of the type "hidden"
+ * on the components overview page.
+ *
+ * Fix a bug in webform that causes the "add new field" row to appear in the middle
+ * of the table after creating a new field.
+ *
+ */
 function webform_ui_form_webform_components_form_alter(&$form, &$form_state, $form_id) {
   if (variable_get('webform_ui_hide_hidden', 'FALSE')) {
     $form['#attached']['js'][] = array(
@@ -84,9 +101,17 @@ function webform_ui_form_webform_components_form_alter(&$form, &$form_state, $fo
   }
 }
 
+/**
+ * Implements hook_form_FORM_ID_alter();
+ *
+ * Include the javascript that creates fieldsets on the webform config page.
+ * They're made with javascript instead of a form alter
+ * so the submission tree does not break.
+ * Also move some stuff around.
+ */
 function webform_ui_form_webform_configure_form_alter(&$form, &$form_state) {
   $form['role_control']['#collapsed'] = TRUE;
-  $form['#after_build'][] = 'webform_ui_form_webform_configure_afterbuild';
+  $form['#after_build'][] = 'webform_ui_form_webform_configure_after_build';
   $form['#attached']['js'][] = array(
     'weight' => 100,
     'data' => drupal_get_path('module', 'webform_ui') . '/js/confirm-settings.js',
@@ -95,11 +120,22 @@ function webform_ui_form_webform_configure_form_alter(&$form, &$form_state) {
 
 }
 
-function webform_ui_form_webform_configure_afterbuild($form, $form_state) {
+/**
+ * @param $form
+ * @param $form_state
+ * @return mixed
+ */
+function webform_ui_form_webform_configure_after_build($form, $form_state) {
   $form['submission']['help']['#weight'] = 0;
   return $form;
 }
 
+/**
+ * Implements hook_menu_alter().
+ *
+ * Substitute our alternate submission results view if enabled.
+ * Deny access to a couple paths if settings are enabled.
+ */
 function webform_ui_menu_alter(&$items) {
   if (variable_get('webform_ui_use_alternate_submission', FALSE)) {
     $items['node/%webform_menu/webform-results']['page callback'] = 'webform_ui_submission_results';
@@ -108,12 +144,19 @@ function webform_ui_menu_alter(&$items) {
   if (variable_get('webform_ui_hide_clear_all', FALSE)) {
     $items['node/%webform_menu/webform-results/clear']['access callback'] = 'webform_ui_submission_access';
   }
-  if (variable_get('webform_ui_use_alternate_submission', FALSE)) {
+  if (variable_get('webform_ui_hide_table', FALSE)) {
     $items['node/%webform_menu/webform-results/table']['access callback'] = 'webform_ui_submission_access';
   }
-
 }
 
+/**
+ * This is a "constructor" to build out the submission results page view.
+ *
+ * Most importantly, it sets the argument and path for the view.
+ *
+ * @param $node
+ * @return bool|null|string
+ */
 function webform_ui_submission_results($node) {
 
   $view = views_get_view('sbv_webform_submissions');
@@ -134,9 +177,10 @@ function webform_ui_submission_results($node) {
   }
 
   $view->override_path = current_path();
-  $view->pre_execute();
 
+  $view->pre_execute();
   $view->execute();
+
   if ($view->access('block_1')) {
     return $view->preview();
   }
@@ -145,13 +189,26 @@ function webform_ui_submission_results($node) {
   }
 }
 
+/**
+ * Implements hook_form_FORM_ID_alter().
+ *
+ * Add theme wrapper and after build to results page.
+ */
 function webform_ui_form_views_exposed_form_alter(&$form, &$form_state, $form_id) {
   if (arg(2) == 'webform-results') {
     $form['#theme_wrappers'][] = 'webform_ui_exposed_form_wrapper';
     $form['#after_build'][] = 'webform_ui_exposed_after';
   }
-
 }
+
+/**
+ * Adds css and js for the collapsible fieldset we are wrapping the views
+ * exposed form with.
+ *
+ * @param $form
+ * @param $form_state
+ * @return mixed
+ */
 function webform_ui_exposed_after($form, $form_state) {
   $form['#attached']['css'][] = drupal_get_path('module', 'webform_ui') . '/css/webform_ui.css';
   $form['#attached']['library'][]
@@ -159,6 +216,12 @@ function webform_ui_exposed_after($form, $form_state) {
   return $form;
 }
 
+/**
+ * Wraps views exposed form with a collapsed fieldset.
+ *
+ * @param $vars
+ * @return string
+ */
 function theme_webform_ui_exposed_form_wrapper($vars) {
   $has_value = FALSE;
   foreach (element_children($vars['element']) as $child) {
@@ -175,6 +238,9 @@ function theme_webform_ui_exposed_form_wrapper($vars) {
   return '<fieldset class="container-inline collapsible ' . $collapse .' form-wrapper" id="webform-ui-exposed-search"><legend><span class="fieldset-legend">Search</span></legend><div class="fieldset-wrapper">' . $vars['element']['#children']  . '</div></fieldset>';
 }
 
+/**
+ * Implements hook_theme();
+ */
 function webform_ui_theme($existing, $type, $theme, $path) {
   return array(
     'webform_ui_exposed_form_wrapper' => array(
@@ -183,6 +249,12 @@ function webform_ui_theme($existing, $type, $theme, $path) {
   );
 }
 
+/**
+ * Used by hook_menu_alter to deny access to various paths.
+ *
+ * @param $node
+ * @return bool
+ */
 function webform_ui_submission_access($node) {
   return FALSE;
 }
