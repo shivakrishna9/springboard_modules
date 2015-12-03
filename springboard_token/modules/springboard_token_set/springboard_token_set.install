@@ -1,0 +1,103 @@
+<?php
+
+/**
+ * @file
+ * Install hooks for the springboard_token module.
+ */
+
+/**
+ * Implements hook_schema().
+ */
+function springboard_token_set_schema() {
+  $schema = array();
+
+  $schema['token_sets'] = array(
+    'description' => 'Defines token sets.',
+    'fields' => array(
+      'tsid' => array(
+        'description' => 'Unique ID of the token set.',
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'name' => array(
+        'description' => 'Name of the token set.',
+        'type' => 'varchar',
+        'length' => '255',
+        'not null' => FALSE,
+      ),
+    ),
+    'primary key' => array('tsid'),
+    'unique keys' => array(
+      'name' => array('name'),
+    ),
+  );
+
+  $schema['token_set_tokens'] = array(
+    'description' => 'Maps tokens to token sets.',
+    'fields' => array(
+      'tsid' => array(
+        'description' => 'Unique ID of the token set.',
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'token_type' => array(
+        'description' => 'Type of token (node, user, etc.)',
+        'type' => 'varchar',
+        'length' => '255',
+        'not null' => FALSE,
+      ),
+      'token_name' => array(
+        'description' => 'Name of the token (title, mail, etc.)',
+        'type' => 'varchar',
+        'length' => '255',
+        'not null' => FALSE,
+      ),
+    ),
+    'primary key' => array('tsid', 'token_type', 'token_name'),
+    'indexes' => array(
+      'tsid' => array('tsid'),
+    ),
+  );
+
+  return $schema;
+}
+
+/**
+ * Implements hook_install().
+ */
+function springboard_token_set_install() {
+  // Create example token sets.
+  $tokens = array();
+
+  $tokens['node'] = array(
+    'author',
+    'title',
+  );
+
+  $tokens['donation'] = array(
+    'address',
+    'city',
+    'country',
+    'state',
+    'zip',
+    'amount',
+  );
+
+  $tsid = springboard_token_set_add_set('Page Body');
+
+  if (!empty($tsid)) {
+    foreach ($tokens['node'] as $token) {
+      springboard_token_set_add_token($tsid, 'node', $token);
+    }
+  }
+
+  $tsid = springboard_token_set_add_set('Donation Confirmation');
+
+  if (!empty($tsid)) {
+    foreach ($tokens['donation'] as $token) {
+      springboard_token_set_add_token($tsid, 'donation', $token);
+    }
+  }
+}

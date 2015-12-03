@@ -1,0 +1,54 @@
+<?php
+
+/**
+ * Adds a new token set.
+ *
+ * @param string $name
+ *   The name of the token set.
+ *
+ * @return int
+ *   The ID of the new token set.
+ */
+function springboard_token_set_add_set($name) {
+  $tsid = db_insert('token_sets')
+    ->fields(array('name' => $name))
+    ->execute();
+
+  return $tsid;
+}
+
+/**
+ * Adds a token to an existing token set.
+ *
+ * @param int $tsid
+ *   The ID of the token set.
+ * @param string $token_type
+ *   The token type.
+ * @param string $token_name
+ *   The name of the token.
+ */
+function springboard_token_set_add_token($tsid, $token_type, $token_name) {
+  db_insert('token_set_tokens')
+    ->fields(array(
+      'tsid' => $tsid,
+      'token_type' => $token_type,
+      'token_name' => $token_name,
+    ))
+    ->execute();
+}
+
+/**
+ * Gets the ID of a token set by name.
+ *
+ * @param type $name
+ *   The name of the token set.
+ */
+function springboard_token_set_get_set_id($name) {
+  $tsid = db_select('token_sets', 'ts')
+    ->fields('ts', array('tsid'))
+    ->condition('name' . $name, '=')
+    ->execute()
+    ->fetchField();
+
+  return $tsid;
+}
