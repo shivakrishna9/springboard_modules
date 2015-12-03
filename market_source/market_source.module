@@ -29,6 +29,19 @@ function market_source_libraries_info() {
     ),
   );
 
+  $libraries['phpuseragent'] = array(
+    'name' => 'PHP User Agent',
+    'vendor url' => 'https://github.com/donatj/PhpUserAgent',
+    'download url' => 'https://github.com/donatj/PhpUserAgent/archive/v0.5.0.tar.gz',
+    'path' => 'Source',
+    'version' => '0.5.0',
+    'files' => array(
+      'php' => array(
+        'UserAgentParser.php',
+      ),
+    ),
+  );
+
   return $libraries;
 }
 
@@ -349,8 +362,17 @@ function market_source_webform_after_build($form, &$form_state) {
 
   // Populate device info fields.
   if (libraries_load('mobiledetect')) {
-    $detect = new Market_Source_Mobile_Detect();
-    $device_properties = $detect->getDeviceProperties();
+    $mobile_detect = new Market_Source_Mobile_Detect();
+    $device_properties = $mobile_detect->getDeviceProperties();
+
+    if (!$mobile_detect->isMobile()) {
+      if (libraries_load('phpuseragent')) {
+        $ua_parse = parse_user_agent($mobile_detect->getUserAgent());
+
+        $device_properties['os'] = $ua_parse['platform'];
+        $device_properties['browser'] = $ua_parse['browser'] . ' ' . $ua_parse['version'];
+      }
+    }
 
     $device_type = &_market_source_form_find_element($form, 'device_type');
     $device_type['#value'] = $device_properties['type'];
