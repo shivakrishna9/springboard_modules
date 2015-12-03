@@ -1,7 +1,21 @@
 <?php
 
-
 /**
+ * Implements hook_webform_component_info().
+ *
+ * The quicksign form component is just a markup field, with
+ * child elements as if it were a fieldset. The child elements are
+ * form altered into it, rather than being actual webform components.
+ * This allows the quicksign field to be positioned on the form using
+ * the webform component UI.
+ *
+ * The original quicksign module implemented a separate form on the same page,
+ * which did a drupal_form_submit() of the original webform if validation
+ * succeeded. The problem with that is it could not recognize the existence of
+ * non-webform-user form components, or of non-webform-components which may
+ * have been form altered into the webform, and would lose those
+ * values on submit.
+ *
  * @return array
  */
 function sba_quicksign_webform_component_info() {
@@ -42,36 +56,57 @@ function sba_quicksign_views_api() {
 function sba_quicksign_form_alter(&$form, $form_state, $form_id) {
   global $user;
   if (strpos($form_id, 'webform_client') !== FALSE && arg(2) != 'submission' && arg(4) != 'edit') {
-    // Quicksign content type.
     if (isset($form['#node']) && sba_quicksign_is_quicksign_type($form['#node']->type)) {
       $node = $form['#node'];
       if (empty($user->uid) || user_access('create ' . $node->type . ' content')) {
-        // Quicksign enabled.
         if (sba_quicksign_is_enabled($node)) {
-          // Check for errors in quicksign form submission
-          // If present attempt to set Webform fields with
-          // profile values from prior submission.
+
+          $components = $node->webform['components'];
+          $component_hierarchy = __webform_user_parse_components($node->nid, $components);
+
           $profile = !empty($_SESSION['sba_quicksign']['profile']) ? $_SESSION['sba_quicksign']['profile'] : FALSE;
+
           if ($profile) {
-            //sba_quicksign_form_defaults($form, $form_state, $node, $profile);
-            if (count($_SESSION['sba_quicksign']['profile']) > 1) {
-              $form['#after_build'][] = 'sba_quicksign_after_build';
+            $form['#after_build'][] = 'sba_quicksign_after_build';
+            // The original quicksign module pre-populated webforms if partial profile info
+            // was found after a validation failure.
+            // That has been removed due to potential for abuse.
+            // sba_quicksign_form_defaults($form, $form_state, $node, $profile);
+
+            $reload_mail = '';
+            if (!empty($_SESSION['sba_quicksign']['profile']['mail'])) {
+              $reload_mail = $_SESSION['sba_quicksign']['profile']['mail'];
             }
+            else if(!empty($_SESSION['sba_quicksign']['quickmail'])) {
+              $reload_mail = $_SESSION['sba_quicksign']['quickmail'];
+            }
+            $email_field = &_webform_user_find_field($form, $component_hierarchy['mail']);
+            $email_field['#default_value'] = $reload_mail;
+
             unset($_SESSION['sba_quicksign']);
           }
           else {
-            $form['submitted']['sba_quicksign']['children'] = sba_quicksign_form();
-            $form['submitted']['sba_quicksign']['children']['#weight'] = 1001;
-            $form['#attached']['css'][] = drupal_get_path('module', 'sba_quicksign') . '/css/sba-quicksign.css';
-            array_unshift($form['#validate'], 'sba_quicksign_form_validate');
+            if (!isset($_SESSION['quicksign_show']) || $_SESSION['quicksign_show'] == TRUE) {
+              $quicksign_field = &_webform_user_find_field($form, $component_hierarchy['sba_quicksign']);
+              $quicksign_field['children'] = sba_quicksign_form();
+              $quicksign_field['children']['#weight'] = 1001;
+              $form['#attached']['css'][] = drupal_get_path('module', 'sba_quicksign') . '/css/sba-quicksign.css';
+            }
           }
+          array_unshift($form['#validate'], 'sba_quicksign_form_validate');
         }
+      }
+      else {
+        // Don't display the quicksign form to logged in users.
+        $form['submitted']['sba_quicksign']['#access'] = FALSE;
       }
     }
   }
-  else {
-    $form['submitted']['sba_quicksign']['#access'] = FALSE;
-  }
+}
+
+function sba_quicksign_after_build($form, $form_state) {
+  $form['#attached']['js'][] = drupal_get_path('module', 'sba_quicksign') . '/js/sba_quicksign.js';
+  return $form;
 }
 
 /**
@@ -115,7 +150,6 @@ function sba_quicksign_form() {
   return $form;
 }
 
-
 /**
  * Validation callback for quicksign form.
  *
@@ -123,87 +157,98 @@ function sba_quicksign_form() {
  * @param $form_state
  */
 function sba_quicksign_form_validate(&$form, &$form_state) {
+
   if (in_array('sba_quicksign', $form_state['clicked_button']['#parents'])) {
+    $_SESSION['quicksign_show'] = TRUE;
+    // Make webform believe that we clicked the webform submit button.
+    $form_state['values']['op'] = $form['actions']['submit']['#value'];
 
-
-  // Make webform believe that we clicked the webform submit button.
-  $form_state['values']['op'] = $form['actions']['submit']['#value'];
-
-  // Validate mail field.
-  $mail = isset($form_state['values']['submitted']['sba_quicksign']['children']['qsign']['quicksign_mail']) ? $form_state['values']['submitted']['sba_quicksign']['children']['qsign']  ['quicksign_mail'] : FALSE;
-  if (!$mail) {
-    return;
-  }
-
-  if (!valid_email_address($mail)) {
-    form_set_error('quicksign_mail', t('The quicksign email address entered is not valid.'));
-    return;
-  }
-
-  $node = node_load($form_state['values']['details']['nid']);
-  // Load user profile from email.
-  $account = user_load_by_mail($mail);
-  // No profile available.
-  if (!$account) {
-    $_SESSION['sba_quicksign']['profile']['mail'] = $mail;
-    drupal_set_message(t("We're sorry, we did not find an account with the email address !mail. Please fill out the full form. Next time you will be able to submit using just your email address.", array('!mail' => $mail)));
-    drupal_redirect_form($form_state);
-  }
-
-  // Compile list of webform required fields.
-  $required_fields = sba_quicksign_get_required_fields($node);
-  // Compare profile to required fields via the Webform User field map.
-  $map = webform_user_user_map($node->nid);
-  $required_non_profile_fields = array_diff($required_fields, $map);
-  $missing_non_profile_fields = FALSE;
-  foreach ($required_non_profile_fields as $form_key) {
-    if (empty($form_state['values']['submitted'][$form_key])) {
-      $missing_non_profile_fields = TRUE;
-    }
-  }
-
-  $missing_fields = FALSE;
-  $profile = array();
-  $count_profile_required = 0;
-  foreach ($map as $webform_field => $profile_field) {
-
-    if (in_array($webform_field, $required_fields)) {
-      $count_profile_required++;
+    // Validate mail field.
+    $mail = isset($form_state['values']['submitted']['sba_quicksign']['children']['qsign']['quicksign_mail']) ? $form_state['values']['submitted']['sba_quicksign']['children']['qsign']  ['quicksign_mail'] : FALSE;
+    if (!$mail) {
+      return;
     }
 
-    if (!empty($form_state['values']['submitted'][$profile_field])) {
-      $profile[$webform_field] = $form_state['values']['submitted'][$profile_field];
+    if (!valid_email_address($mail)) {
+      form_set_error('quicksign_mail', t('The quicksign email address entered is not valid.'));
+      return;
     }
     else {
-      if ($webform_field != 'mail') {
-        $items = field_get_items('user', $account, $profile_field);
-        $profile[$webform_field] = !empty($items[0]['value']) ? $items[0]['value'] : FALSE;
+      $_SESSION['sba_quicksign']['quickmail'] = $mail;
+    }
+
+    $node = node_load($form_state['values']['details']['nid']);
+    // Load user profile from email.
+    $account = user_load_by_mail($mail);
+    // No profile available.
+    if (!$account) {
+      $_SESSION['sba_quicksign']['profile']['mail'] = $mail;
+      $_SESSION['quicksign_show'] = FALSE;
+      drupal_set_message(t("We're sorry, we did not find an account with the email address !mail. Please fill out the full form. Next time you will be able to submit using just your email address.", array('!mail' => $mail)));
+      drupal_redirect_form($form_state);
+    }
+
+    // Compile list of webform required fields.
+    $required_fields = sba_quicksign_get_required_fields($node);
+    // Compare profile to required fields via the Webform User field map.
+    $map = webform_user_user_map($node->nid);
+    $required_non_profile_fields = array_diff($required_fields, $map);
+    $missing_non_profile_fields = FALSE;
+    foreach ($required_non_profile_fields as $form_key) {
+      if (empty($form_state['values']['submitted'][$form_key])) {
+        $missing_non_profile_fields = TRUE;
       }
-      else {
-        // Special handling for mail
-        $profile['mail'] = $mail;
-      }
+    }
+
+    $missing_fields = FALSE;
+    $profile = array();
+    $count_profile_required = 0;
+    foreach ($map as $webform_field => $profile_field) {
 
       if (in_array($webform_field, $required_fields)) {
-        if (empty($profile[$webform_field])) {
-          // One or more required fields are missing.
-          $profile[$webform_field] = '';
-          $missing_fields = TRUE;
+        $count_profile_required++;
+      }
+
+      if (!empty($form_state['values']['submitted'][$profile_field])) {
+        $profile[$webform_field] = $form_state['values']['submitted'][$profile_field];
+      }
+      else {
+        if ($webform_field != 'mail') {
+          $items = field_get_items('user', $account, $profile_field);
+          $profile[$webform_field] = !empty($items[0]['value']) ? $items[0]['value'] : FALSE;
+        }
+        else {
+          // Special handling for mail
+          $profile['mail'] = $mail;
+        }
+
+        if (in_array($webform_field, $required_fields)) {
+          if (empty($profile[$webform_field])) {
+            // One or more required fields are missing.
+            $profile[$webform_field] = '';
+            $missing_fields = TRUE;
+          }
         }
       }
     }
-  }
-  if ($missing_fields || $missing_non_profile_fields) {
-    $_SESSION['sba_quicksign']['profile'] = $profile;
-    drupal_set_message(t("Unfortunately, we don't have enough information. Please complete the form below."));
-    drupal_redirect_form($form_state);
-  }
+    if ($missing_fields || $missing_non_profile_fields) {
+      $_SESSION['sba_quicksign']['profile'] = $profile;
 
-  // If everything has gone smoothly to this point package up the
-  // loaded profile and pass it off for use during the submit callback.
-  $form_state['node'] = $node;
-  $_SESSION['sba_quicksign'] = TRUE;
-  _sba_quicksign_build_values($form, $form_state, $node, $profile);
+      drupal_set_message(t("Unfortunately, we don't have enough information. Please complete the form below."));
+      $_SESSION['quicksign_show'] = FALSE;
+      drupal_redirect_form($form_state);
+    }
+
+    $_SESSION['quicksign_show'] = TRUE;
+
+    // If everything has gone smoothly to this point package up the
+    // loaded profile and pass it off for use during the submit callback.
+    $form_state['node'] = $node;
+    $_SESSION['sba_quicksign'] = TRUE;
+    _sba_quicksign_build_values($form, $form_state, $node, $profile);
+  }
+  else {
+    unset($_SESSION['sba_quicksign']);
   }
 }
 
@@ -220,6 +265,8 @@ function _sba_quicksign_build_values(&$form, &$form_state, $node, $profile) {
     $form_state['complete form']['submitted'][$key]['#value'] = $value;
   }
   unset($_SESSION['sba_quicksign']);
+  unset($_SESSION['quicksign_show']);
+
 }
 
 /**
@@ -284,21 +331,11 @@ function sba_quicksign_form_node_form_alter(&$form, &$form_state, $form_id) {
       '#default_value' => isset($settings['quicksign_label']) ? $settings['quicksign_label'] : 'Already a supporter?',
     );
 
-    $form['sba_quicksign']['show_submit_button'] = array(
-      '#type' => 'checkbox',
-      '#title' => t('Use a separate submit button'),
-      '#description' => t('Useful if the quicksign field is placed at the top of the form.'),
-      '#default_value' => isset($settings['show_submit_button']) ? $settings['show_submit_button'] : 1,
-    );
-
     $form['sba_quicksign']['quicksign_button_text'] = array(
       '#type' => 'textfield',
       '#title' => t('Submit button text'),
       '#description' => t('Change the text on the quick sign form submit button.'),
       '#default_value' => isset($settings['quicksign_button_text']) ? $settings['quicksign_button_text'] : t('Sign now'),
-      '#states' => array(
-        'visible' => array(':input[name="show_submit_button"]' => array('checked' => TRUE)),
-      ),
     );
 
     $default_desc = $node->type == 'sba_message_action' ? t('If we already have your information, just enter your email address and click to send this message now.') : t('If we already have your information, just enter your email address and click to sign this petition now.');
@@ -309,19 +346,9 @@ function sba_quicksign_form_node_form_alter(&$form, &$form_state, $form_id) {
       '#default_value' => isset($settings['quicksign_description']) ? $settings['quicksign_description'] : $default_desc,
       '#format' => isset($settings['quicksign_description_format']) ? $settings['quicksign_description_format'] : NULL,
     );
-
   }
 }
 
-/**
- * @param $form
- * @param $form_state
- * @return mixed
- */
-function sba_quicksign_after_build($form, $form_state) {
-  $form['#attached']['js'][] = drupal_get_path('module', 'sba_quicksign') . '/js/sba_quicksign.js';
-  return $form;
-}
 
 /**
  * Implements hook_node_insert().
@@ -391,7 +418,6 @@ function sba_quicksign_save($node) {
     'form_label' => $node->quicksign_label,
     'form_description' => $node->quicksign_description['value'],
     'form_description_format' => $node->quicksign_description['format'],
-    'show_submit_button' => $node->show_submit_button,
     'submit_button_text' => $node->quicksign_button_text,
   );
   drupal_write_record('sba_quicksign', $record);
@@ -447,7 +473,6 @@ function sba_quicksign_settings($nid) {
       form_label AS quicksign_label,
       form_description AS quicksign_description,
       form_description_format AS quicksign_description_format,
-      show_submit_button AS show_submit_button,
       submit_button_text AS quicksign_button_text
      FROM {sba_quicksign}
      WHERE nid = :nid;', array(':nid' => $nid));
@@ -604,7 +629,6 @@ function sba_quicksign_element_process_text_format($element) {
     unset($element['#description']);
     $element['format']['#collapsible'] = TRUE;
     $element['format']['#collapsed'] = TRUE;
-    //$element['format']['#suffix'] = '<div class="text-format-spacer">&nbsp;</div>';
     $element['format']['#title'] = t('Text format');
   }
   return $element;

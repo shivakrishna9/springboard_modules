@@ -39,14 +39,6 @@ function sba_quicksign_schema() {
         'type' => 'varchar',
         'length' => 255,
       ),
-      'show_submit_button' => array(
-        'description' => 'Boolean, submit button is enabled',
-        'type' => 'int',
-        'unsigned' => TRUE,
-        'size' => 'tiny',
-        'not null' => TRUE,
-        'default' => 0,
-      ),
       'submit_button_text' => array(
         'description' => 'Submit button text.',
         'type' => 'varchar',
@@ -123,15 +115,5 @@ function sba_quicksign_update_7001() {
 
   if (module_exists('springboard_petition_quicksign')) {
     module_disable(array('springboard_petition_quicksign'));
-  }
-}
-
-/**
- * Add show submit button checkbox field.
- */
-function sba_quicksign_update_7002() {
-  $schema = module_invoke('sba_quicksign', 'schema');
-  if (db_field_exists('sba_quicksign', 'show_submit_button') == FALSE) {
-    db_add_field('sba_quicksign', 'show_submit_button', $schema['sba_quicksign']['fields']['show_submit_button']);
   }
 }
