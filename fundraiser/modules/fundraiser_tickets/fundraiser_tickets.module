@@ -273,15 +273,15 @@ function fundraiser_tickets_form_node_form_alter(&$form, &$form_state) {
       $required_fields = array('actions','nid','vid','uid','type','option','form_build_id','form_token','form_id','webform');
       foreach (element_children($form) as $child) { 
         if (!fundraiser_tickets_is_ticket_field($child) && !in_array($child, $required_fields)) {
-          if (in_array($child, array('additional_settings', 'fundraiser_settings'))) {
+          if ($child == 'additional_settings') {
             $form[$child]['#prefix'] = '<div style="display:none;">';
             $form[$child]['#suffix'] = '</div>';
-          } else {
+          }
+          elseif ($child != 'fundraiser_settings') {
             $form[$child]['#access'] = FALSE;
           }
         }
       }
-
       $form['#after_build'][] = '_fundraiser_tickets_ticket_settings_form_organize';
       $form['#validate'][] = '_fundraiser_tickets_ticket_settings_form_validate';
       $form['#submit'] = array();
