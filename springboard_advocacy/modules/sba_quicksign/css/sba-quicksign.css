@@ -10,6 +10,10 @@
     border-radius: 4px;
 }
 
+#your-information-wrapper #webform-component-sba-quicksign,
+#user-information-wrapper #webform-component-sba-quicksign{
+    width: 99.25%;
+}
 .quicksign-label {
     font-size: 16px;
 }
