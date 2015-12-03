@@ -1,6 +1,49 @@
 <?php
 
 /**
+ * Implements hook_form_FORM_ID_alter()
+ */
+function springboard_token_set_form_field_ui_field_edit_form_alter(&$form, &$form_state, $form_id) {
+  $entity = $form['#instance']['entity_type'];
+  $bundle = $form['#instance']['bundle'];
+  $field = $form['#instance']['field_name'];
+
+  $token_sets = springboard_token_set_get_sets();
+
+  $token_set_options = array(
+    0 => 'None',
+  );
+  foreach ($token_sets as $token_set) {
+    $token_set_options[$token_set->tsid] = $token_set->name;
+  }
+
+  $form['token_set'] = array(
+    '#title' => t('Token Set'),
+    '#type' => 'fieldset',
+    '#collapsible' => FALSE,
+  );
+
+  $form['token_set']['token_set_id'] = array(
+    '#type' => 'select',
+    '#title' => t('Use token set'),
+    '#options' => $token_set_options,
+    '#default_value' => variable_get('token_set_' . $entity . '_' . $bundle . '_' . $field, 0),
+  );
+
+  $form['#submit'][] = 'springboard_token_set_save_field';
+}
+
+/**
+ * Submit handler for field token set ID.
+ */
+function springboard_token_set_save_field($form, &$form_state) {
+  $entity = $form['#instance']['entity_type'];
+  $bundle = $form['#instance']['bundle'];
+  $field = $form['#instance']['field_name'];
+  variable_set('token_set_' . $entity . '_' . $bundle . '_' . $field, $form_state['values']['token_set_id']);
+}
+
+/**
  * Adds a new token set.
  *
  * @param string $name
@@ -51,4 +94,19 @@ function springboard_token_set_get_set_id($name) {
     ->fetchField();
 
   return $tsid;
+}
+
+/**
+ * Gets all token sets.
+ *
+ * @return array
+ *   Array of token sets.
+ */
+function springboard_token_set_get_sets() {
+  $token_sets = db_select('token_sets', 'ts')
+    ->fields('ts', array('tsid', 'name'))
+    ->execute()
+    ->fetchAll();
+
+  return $token_sets;
 }
