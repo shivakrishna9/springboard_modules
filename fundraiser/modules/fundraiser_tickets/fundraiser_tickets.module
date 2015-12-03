@@ -273,9 +273,12 @@ function fundraiser_tickets_form_node_form_alter(&$form, &$form_state) {
       $required_fields = array('actions','nid','vid','uid','type','option','form_build_id','form_token','form_id','webform');
       foreach (element_children($form) as $child) { 
         if (!fundraiser_tickets_is_ticket_field($child) && !in_array($child, $required_fields)) {
-          //$form[$child]['#access'] = FALSE;
-          $form[$child]['#prefix'] = '<div style="display:none;">';
-          $form[$child]['#suffix'] = '</div>';
+          if (in_array($child, array('additional_settings', 'fundraiser_settings'))) {
+            $form[$child]['#prefix'] = '<div style="display:none;">';
+            $form[$child]['#suffix'] = '</div>';
+          } else {
+            $form[$child]['#access'] = FALSE;
+          }
         }
       }
 
@@ -287,7 +290,6 @@ function fundraiser_tickets_form_node_form_alter(&$form, &$form_state) {
     }
   }
 }
-
 
 /**
  * Validate callback for node form.
