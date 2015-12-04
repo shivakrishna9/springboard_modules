@@ -83,12 +83,15 @@ function sba_social_action_menu() {
 function sba_social_action_preview_access($nid) {
   $node = node_load($nid);
   if (isset($node->type) &&  $node->type == 'sba_social_action') {
-    $session_nid = isset($_SESSION['social_action_sid']['nid']) ? $_SESSION['social_action_sid']['nid'] : 0;
-    if ($session_nid == $nid) {
-      return TRUE;
+    $session_nid = isset($_SESSION['social_action_sid']['nid']) ? $_SESSION['social_action_sid']['nid'] : FALSE;
+    if ($session_nid && $session_nid != $nid) {
+      return FALSE;
+    }
+    if (!$session_nid) {
+      return FALSE;
     }
   }
-  return FALSE;
+  return TRUE;
 }
 
 /**
@@ -501,12 +504,14 @@ function sba_social_action_multiflow_submit($form, &$form_state) {
   $sid = $form_state['values']['details']['sid'];
   $_SESSION['social_action_sid'] = array('sid' => $sid, 'nid' => $node->nid);
   if(!empty($_SESSION['deliverable_social_messages'])) {
+    $_SESSION['social_action_sid']['completed'] =  FALSE;
     $form_state['redirect'] = array(
       'node/' . $_SESSION['social_action_sid']['nid'] . '/social-message-preview',
       array('query' => array('sid' => $_SESSION['social_action_sid']['sid']))
     );
   }
   else {
+    $_SESSION['social_action_sid']['completed'] =  TRUE;
     if (!empty($form['#node']->custom_fail_message) && $node->webform['redirect_url'] != '<confirmation>') {
       drupal_get_messages('status');
       drupal_set_message(check_markup($form['#node']->custom_fail_message, 'full_html', '', TRUE));
