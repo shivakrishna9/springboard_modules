@@ -78,7 +78,6 @@ class springboard_advocacy_views_handler_field_target_actions extends views_hand
     }
 
     $links  = array();
-
     // Add Target to Action Link used in message entity's target search form results.
     if (user_access('add target to action') && !empty($this->options['which_links']['add'])) {
       $links[] = l(t('add'), 'add-target', array(
@@ -90,7 +89,13 @@ class springboard_advocacy_views_handler_field_target_actions extends views_hand
           'last' => $values->last_name,
           'sal' => $values->salutation,
           'twitter' => $values->twitter,
-          'facebook' => $values->facebook
+          'facebook' => $values->facebook,
+          'org' => $values->organization,
+          'title' => $values->title,
+          // Need to send an empty string if the last query segment is empty
+          // so that the query string
+          // contains "party=", otherwise, without "=" javascript chokes.
+          'party' => !empty($values->party) ? $values->party: '',
         )
       ));
     }

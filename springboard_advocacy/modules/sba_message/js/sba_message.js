@@ -878,7 +878,6 @@
                     if (missing != true) {
                         var newQueryValuesArr = values.split('|');
                         $.each(newQueryValuesArr, function(i, value){
-                            //console.log(oldQueryObj[key]);
                             if(oldQueryObj[key].toString().indexOf(value) == -1) {
                                 missing = true;
                             }
@@ -1075,6 +1074,9 @@
             if (segments[0] == 'ids') {
                 return false;
             }
+            if(typeof(segments[1]) == "undefined") {
+                return true;
+            }
             segments[0] = segments[0].SbaUcfirst();
             if(segments[0] != 'Search_committee') {
                 segments[1] = segments[1].replace(/%7C/g, '|');
@@ -1134,8 +1136,27 @@
         });
 
         if (typeof(queryObj.Id) !== 'undefined') {
+            var party = '';
+            var org = '';
+            var title = '';
+            if (typeof(queryObj.Title) !== 'undefined') {
+                title = queryObj.Title.toString().SbaStrCln();
+                if (title.length > 0) {
+                    title = title + ',';
+                }
+            }
+            if (typeof(queryObj.Org) !== 'undefined') {
+                org = queryObj.Org.toString().SbaStrCln();
+            }
 
-          return  '<div class="individual">' + queryObj.Sal + " " +  queryObj.First + " " + queryObj.Last + '</div>';
+            if (typeof(queryObj.Party) !== 'undefined') {
+                party = queryObj.Party.toString().SbaStrCln();
+                if (party.length > 0) {
+                    party = '(' + party + ')';
+                }
+            }
+
+            return  '<div class="individual">' + queryObj.Sal.toString().SbaStrCln() + " " +  queryObj.First.toString().SbaStrCln() + " " + queryObj.Last.toString().SbaStrCln() + " " + party + "<br />" + title + " "  + org +'</div>';
         }
         var cleanUp = JSON.stringify(queryObj).SbaJsonToReadable();
         if (typeof(queryObj.Fields) !== 'undefined' || typeof(queryObj.Genderxxxx) !== 'undefined'
@@ -1240,6 +1261,19 @@
             .replace(/%29/g, ')')
             .replace(/%3A/g, ':')
             .replace(/\}/g, '');
+    };
+
+    String.prototype.SbaStrCln = function()
+    {
+        var word = this;
+        return word.replace(/"/g, '')
+          .replace(/%20/g, ' ')
+          .replace(/%2C/g, ', ')
+          .replace(/%28/g, '(')
+          .replace(/%29/g, ')')
+          .replace(/%3A/g, ':')
+          .replace('Republicans', 'R')
+          .replace('Democrats', 'D')
     };
 
 })(jQuery);
