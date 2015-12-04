@@ -145,14 +145,15 @@ function sba_message_action_queues_access($nid) {
 function sba_message_action_preview_access($nid) {
   $node = node_load($nid);
   if (isset($node->type) &&  $node->type == 'sba_message_action') {
-    $node_wrapper = entity_metadata_wrapper('node', $node);
-    $multi_flow = $node_wrapper->field_sba_action_flow->value() == 'multi' ? TRUE : FALSE;
     $session_nid = isset($_SESSION['action_sid']['nid']) ? $_SESSION['action_sid']['nid'] : 0;
-    if ($multi_flow && $session_nid == $nid) {
-      return TRUE;
+    if (($session_nid && $session_nid != $nid)) {
+      return FALSE;
+    }
+    if (!$session_nid) {
+      return FALSE;
     }
   }
-  return FALSE;
+  return TRUE;
 }
 
 /**
@@ -444,7 +445,7 @@ function sba_message_action_multifow_submit($form, &$form_state) {
   $node = $form['#node'];
   if (!empty($_SESSION['delivered_messages']) || !empty($_SESSION['undelivered_messages'])) {
     $sid = $form_state['values']['details']['sid'];
-    $_SESSION['action_sid'] = array('sid' => $sid, 'nid' => $node->nid);
+    $_SESSION['action_sid'] = array('sid' => $sid, 'nid' => $node->nid, 'completed' => FALSE);
     $form_state['redirect'] = array(
       'node/' . $node->nid . '/message-preview',
       array('query' => array('sid' => $sid))

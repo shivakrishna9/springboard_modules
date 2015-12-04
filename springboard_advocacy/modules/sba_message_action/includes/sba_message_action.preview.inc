@@ -16,7 +16,7 @@ function sba_message_action_message_preview_page($nid) {
   }
   // Check if the step two form has already been submitted.
   // @todo think about this.
-  $completed = isset($_SESSION['action_completed']) ? $_SESSION['action_completed'] : TRUE;
+  $completed = isset($_SESSION['action_sid']['completed']) ? $_SESSION['action_sid']['completed'] : TRUE;
   if($completed == TRUE) {
     drupal_set_message(t("This form has already been submitted. !return to the form.", array('!return' => l('Return', 'node/' . $node->nid))));
     return array();
@@ -367,14 +367,14 @@ function sba_message_action_preview_form_submit($form, &$form_state) {
     else {
       drupal_set_message(t("A problem occurred. Please try again later."), 'error');
       $form_state['redirect'] = array('node/' . $node->nid);
-      $_SESSION['action_completed'] = TRUE;
+      $_SESSION['action_sid']['completed'] = TRUE;
       unset($_SESSION['retries']);
       return;
     }
   }
 
   // Add session flag to prevent resubmission of the form
-  $_SESSION['action_completed'] = TRUE;
+  $_SESSION['action_sid']['completed'] = TRUE;
   unset($_SESSION['retries']);
 
   // If we succeeded, update the confirmation messages stored in the session
@@ -428,7 +428,7 @@ function sba_message_action_preview_form_submit($form, &$form_state) {
   // Redirect to the original confirmation page.
   // $sid is set in sba_message_action_multifow_submit()
   $sid = !empty($_SESSION['action_sid']['sid']) ? $_SESSION['action_sid']['sid'] : FALSE;
-  unset($_SESSION['action_sid']);
+  $_SESSION['action_sid']['completed'] = TRUE;
   springboard_advocacy_negotiate_redirect($node, $sid, $form_state);
   if ($sid) {
     springboard_advocacy_update_multistep_components($sid, $node, $form_state['storage']['changed']);
