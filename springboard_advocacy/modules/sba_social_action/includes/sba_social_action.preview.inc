@@ -119,7 +119,8 @@ function sba_social_action_preview_form($form, $form_state, $node) {
       '#type' => 'button',
       '#value' => 'Authorize with Twitter',
       '#attributes' => array('class' => array('twitter-sign')),
-      '#suffix' => $url,
+      '#prefix' => '<div class="twit-auth">',
+      '#suffix' => $url . '</div>',
     );
   }
 
@@ -163,6 +164,8 @@ function sba_social_action_preview_form($form, $form_state, $node) {
   // Used to send our second step form through the same helper functions as the first step form.
   module_load_include('inc', 'sba_social_action', 'includes/sba_social_action.form');
 
+  $num_mess = count($messages);
+  $count = 1;
   foreach ($messages as $key => $message) {
 
     // What type of message is this.
@@ -182,14 +185,20 @@ function sba_social_action_preview_form($form, $form_state, $node) {
 
     $this_message =& $build['message'][$message_entity->sba_message_id];
     $this_message['#attributes']['class'][] = 'message-preview-message-fieldset';
-
+    if ($count == 1) {
+      $this_message['#attributes']['class'][] = 'first';
+    }
+    if ($count == $num_mess) {
+      $this_message['#attributes']['class'][] = 'last';
+    }
+    $count++;
     if (isset($this_message['body_show'])) {
       $this_message['body_show']['#markup'] = '@' . $message['person']['twitter'] . ' ' . $this_message['body_show']['#markup'];
     }
 
     if (isset($this_message['edited_body'])) {
       $prepend = !empty($this_message['prepend']['#value']) ? '.' : '';
-      $this_message['body_show']['#suffix'] = '<div class="editable-message-preview"><span class="preview-target-text">' . $prepend . '@' . $message['person']['twitter'] . '</span><span class="preview-replace-text"></span></div>';
+      $this_message['body_show']['#suffix'] = '<div class="sba-display-hint">This will be your complete tweet:</div><div class="editable-message-preview"><span class="preview-target-text">' . $prepend . '@' . $message['person']['twitter'] . '</span><span class="preview-replace-text"></span></div>';
     }
 
     // Build an array of target properties
@@ -232,8 +241,8 @@ function sba_social_action_preview_form($form, $form_state, $node) {
     if (!empty($alt_links)) {
       $this_message['alternate'] = array(
         '#markup' => t('If you prefer, please contact @target via: !methods', array('@target' => $message['person']['name'], '!methods' => '<br />' . implode(' <br /> ', $alt_links))),
-        '#prefix' => '<div class="sba-alternate-contact"><p>',
-        '#suffix' => '</p></div>',
+        '#prefix' => '<div class="sba-alternate-contact">',
+        '#suffix' => '</div>',
       );
     }
     // Assign the message to the messages container.
@@ -288,8 +297,8 @@ function sba_social_action_preview_form($form, $form_state, $node) {
     '#id' => 'social-action-preview-page',
     '#type' => 'markup',
     '#markup' => $markup,
-    '#prefix' => '<div class="social-action-preview-page"><p>',
-    '#suffix' => '</p></div>',
+    '#prefix' => '<div class="social-action-preview-page">',
+    '#suffix' => '</div>',
     '#weight' => -8,
   );
   // End header area content
@@ -411,7 +420,8 @@ function sba_social_action_preview_form_submit($form, &$form_state) {
 
     $message_text = isset($message['message']['edited_body']) ? $message['message']['edited_body'] : $message['message']['body'];
     $target = parse_url($message['message']['target']['twitter']);
-    $body = '.@' . substr($target['path'], 1) . ' ' . $message_text;
+    $prepend = !empty($message['message']['prepend']) ? '.' : '';
+    $body = $prepend . '@' . substr($target['path'], 1) . ' ' . $message_text;
 
     if(empty($node->field_sba_test_mode)) {
       try {

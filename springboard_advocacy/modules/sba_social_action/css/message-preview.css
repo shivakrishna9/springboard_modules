@@ -13,11 +13,21 @@
 }
 
 .message-preview-container {
-    padding: 1.2em 0 0;
+    padding: 0 0 1em 0;
+    -moz-box-sizing: border-box;
+    -webkit-box-sizing: border-box;
+    box-sizing: border-box;
 }
 .message-preview-container div.sba-message {
     margin-bottom: 2em;
+    padding-bottom: 2em;
     display: block;
+    border-bottom: 1px solid #ccc;
+    max-width: 770px;
+
+}
+.message-preview-container div.sba-message.last {
+    border-bottom: none;
 }
 
 .message-preview-container div.sba-message:after{
@@ -30,7 +40,14 @@
 .message-preview-container .sba-message textarea,
 div.form-type-item {
     width: 100%;
-    max-width: 770px;
+}
+
+.message-preview-container .sba-message textarea {
+    margin-bottom: 0;
+    max-width:770px;
+    -moz-box-sizing: border-box;
+    -webkit-box-sizing: border-box;
+    box-sizing: border-box;
 }
 
 #edit-actions {
@@ -77,6 +94,11 @@ label.required {
 a.sba-privacy {
     margin-left: 1em;
     font-size: 0.9em;
+    display:inline-block;
+}
+
+div.twit-auth {
+    margin-top: 1em;
 }
 
 input#edit-twitter-sign-in {
@@ -103,16 +125,24 @@ input#edit-twitter-sign-in:hover {
     moz-border-radius: 4px;
     webkit-border-radius: 4px;
     border-radius: 4px;
-    max-width: 760px;
+    max-width: 770px;
+    -moz-box-sizing: border-box;
+    -webkit-box-sizing: border-box;
+    box-sizing: border-box;
+
 }
 
 .editable-message-preview {
     padding: 10px;
-    border: 1px solid rgba(46, 107, 184, 0.48);
+    border: 1px solid #999966;
     moz-border-radius: 4px;
     webkit-border-radius: 4px;
     border-radius: 4px;
-    max-width: 760px;
+    max-width: 770px;
+    margin-bottom : 8px;
+    -moz-box-sizing: border-box;
+    -webkit-box-sizing: border-box;
+    box-sizing: border-box;
 }
 
 .uneditable-message-preview .form-item.control-group,
@@ -121,5 +151,10 @@ input#edit-twitter-sign-in:hover {
 }
 
 .preview-twitter-user {
-    margin: 20px 0;
+    margin: 1em 0;
+}
+
+.sba-display-hint {
+    margin-top: 8px;
+    font-weight: 600;
 }

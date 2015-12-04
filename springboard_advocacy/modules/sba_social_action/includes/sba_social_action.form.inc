@@ -181,7 +181,7 @@ function sba_social_action_message_form(&$form, $message, $message_entity_type, 
       $this_message['edited_body'] = array(
         '#type' => 'textarea',
         '#default_value' => $message_body,
-        '#description' => '<p>You may customize this tweet. You have <span class="counter"></span> characters left.</p>',
+        '#description' => 'You may customize this tweet. You have <span class="counter"></span> characters left.',
         '#required' => $required,
         '#access' => $access,
         '#rows' => 2
