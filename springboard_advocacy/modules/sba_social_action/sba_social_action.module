@@ -422,7 +422,7 @@ function sba_social_action_form_sba_social_action_node_form_alter(&$form, &$form
   $form['springboard_display']['recent_participants'] = array(
     '#type' => 'fieldset',
     '#title' => t('Recent Participants List'),
-    '#description' => t('Choose whether action-takers can opt-in to having their name display on the social action page.'),
+    '#description' => t('Choose whether advocates can opt-in to having their name display on the social action page.'),
     '#collapsible' => TRUE,
     '#collapsed' => FALSE,
   );

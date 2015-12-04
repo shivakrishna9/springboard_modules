@@ -165,7 +165,7 @@ function sba_message_form_alter(&$form, &$form_state, $form_id) {
         '#weight' => 99,
         '#title' => t('Use message order.'),
         '#default_value' => $val,
-        '#description' => t("Check this box if you wish to enforce message precedence by sort order. If you check this box, only the first message that is eligible  for delivery to elected officials - via the user's zip code/congressional district verification - will be sent. The subsequent messages will be ignored."),
+        '#description' => t("Check this box if you wish to enforce message precedence by sort order. If you check this box, only the first message that is eligible for delivery to legislators - via the user's zip code/congressional district verification - will be sent. The subsequent messages will be ignored."),
       );
       $form['actions']['submit']['#submit'][] = 'sba_message_drag_submit';
     }

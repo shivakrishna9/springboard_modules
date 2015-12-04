@@ -1,0 +1,59 @@
+diff --git a/springboard_advocacy/modules/sba_message/sba_message.install b/springboard_advocacy/modules/sba_message/sba_message.install
+index 155b7fd..1a6fa50 100644
+--- a/springboard_advocacy/modules/sba_message/sba_message.install
++++ b/springboard_advocacy/modules/sba_message/sba_message.install
+@@ -1035,4 +1035,17 @@ function sba_message_update_7001() {
+       ->condition('field_name', 'field_sba_alert_id', '=')
+       ->execute();
+   }
+-}
+\ No newline at end of file
++}
++
++**
++ * Update label for field_sba_subject_editable field.
++ */
++function sba_message_update_7002() {
++  $field = field_info_instance('node', 'field_sba_subject_editable', 'sba_message');
++  if ($field) {
++    $field['label'] = t(
++      'Subject editable by advocate? (for single message actions only).'
++    );
++    field_update_instance($field);
++  }
++}
+diff --git a/springboard_advocacy/modules/sba_message_action/sba_message_action.install b/springboard_advocacy/modules/sba_message_action/sba_message_action.install
+index 936237e..731136d 100644
+--- a/springboard_advocacy/modules/sba_message_action/sba_message_action.install
++++ b/springboard_advocacy/modules/sba_message_action/sba_message_action.install
+@@ -546,3 +546,30 @@ function sba_message_action_update_7024() {
+     }
+   }
+ }
++
++**
++ * Update label for sbp_sba_action_optin field.
++ */
++function sba_message_action_update_7025() {
++  $field = field_info_instance('node', 'sbp_sba_action_optin', 'sba_message_action');
++  if ($field) {
++    $field['extra']['items'] = t(
++      'sbp_sba_action_optin|Show my name in a list of advocates.'
++    );
++    field_update_instance($field);
++  }
++}
++
++**
++ * Update label for field_sba_action_flow field.
++ */
++function sba_message_action_update_7026() {
++  $field = field_info_instance('node', 'field_sba_action_flow', 'sba_message_action');
++  if ($field) {
++    $field['description'] = t(
++      '<strong>One-step action flow</strong> allows advocates to take action without entering their address as a separate step; however, if your action will have multiple messages (ie, thank/spank) they cannot be edited by advocates.
++<strong>Multi-step action flow</strong> allows advocates to edit multiple messages under the same action; advocates will be required to enter their address prior to viewing, editing, and sending the messages.'
++    );
++    field_update_instance($field);
++  }
++}

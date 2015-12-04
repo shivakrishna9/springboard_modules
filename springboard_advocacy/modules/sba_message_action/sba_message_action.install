@@ -365,7 +365,7 @@ function sba_message_action_update_7015() {
         'extra' => array(
           'title_display' => 'none',
           'multiple' => 1,
-          'items' => 'sbp_sba_action_optin|Show my name in a list of action takers.'
+          'items' => 'sbp_sba_action_optin|Show my name in a list of advocates.'
         ),
       );
       webform_component_insert($field);
@@ -521,5 +521,32 @@ function sba_message_action_update_7024() {
 
       webform_component_insert($field);
     }
+  }
+}
+
+**
+ * Update label for sbp_sba_action_optin field.
+ */
+function sba_message_action_update_7025() {
+  $field = field_info_instance('node', 'sbp_sba_action_optin', 'sba_message_action');
+  if ($field) {
+    $field['extra']['items'] = t(
+      'sbp_sba_action_optin|Show my name in a list of advocates.'
+    );
+    field_update_instance($field);
+  }
+}
+
+**
+ * Update label for field_sba_action_flow field.
+ */
+function sba_message_action_update_7026() {
+  $field = field_info_instance('node', 'field_sba_action_flow', 'sba_message_action');
+  if ($field) {
+    $field['description'] = t(
+      '<strong>One-step action flow</strong> allows advocates to take action without entering their address as a separate step; however, if your action will have multiple messages (ie, thank/spank) they cannot be edited by advocates.
+<strong>Multi-step action flow</strong> allows advocates to edit multiple messages under the same action; advocates will be required to enter their address prior to viewing, editing, and sending the messages.'
+    );
+    field_update_instance($field);
   }
 }
