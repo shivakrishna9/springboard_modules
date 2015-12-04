@@ -5,23 +5,35 @@
  * @param $nid
  * @return array|mixed
  */
-function sba_message_action_download_page($nodeId) {
+function sba_message_action_download_page($node_id) {
 
   // CSS assets
   drupal_add_css(drupal_get_path('module', 'sba_message_action') . '/css/message-downloads.css');
 
-  $form = drupal_get_form('sba_message_action_download_form', $nodeId);
+  $form = drupal_get_form('sba_message_action_download_form', $node_id);
 
   $tabs = theme('messsage_deliverability_tabs', array(
-    'nodeId' => $nodeId
+    'nodeId' => $node_id
   ));
 
-  $renderForm = drupal_get_form('sba_message_action_download_form', $nodeId);
-  $downloadReportForm = drupal_render($renderForm);
+  $render_form = drupal_get_form('sba_message_action_download_form', $node_id);
+  $download_report_form = drupal_render($render_form);
+
+  $render_fail_messages_form = drupal_get_form('sba_message_action_fail_messages_form', $node_id);
+  $fail_messages_form = drupal_render($render_fail_messages_form);
+
+  // Load up the message action node.
+  $node = node_load($node_id);
+
+  // API Client instance
+  $client = springboard_advocacy_api_call();
+  $message_action_metrics = $client->invokeClientMethod('getMessageActionMetrics', $node->advocacy_id)->data;
 
   $page = theme('messsage_action_downloads', array(
-    'form' => $downloadReportForm,
-    'tabs' => $tabs
+    'form'                   => $download_report_form,
+    'tabs'                   => $tabs,
+    'fail_messages_form'     => $fail_messages_form,
+    'message_action_metrics' => $message_action_metrics
   ));
 
   return $page;
@@ -31,11 +43,10 @@ function sba_message_action_download_page($nodeId) {
  * Generating the form rendering with form builder.
  * @param $form
  * @param $form_state
- * @param $nodeId
+ * @param $node_id
  * @return mixed
  */
-function sba_message_action_download_form($form, &$form_state, $nodeId)
-{
+function sba_message_action_download_form($form, &$form_state, $node_id) {
 
   global $user;
 
@@ -49,15 +60,15 @@ function sba_message_action_download_form($form, &$form_state, $nodeId)
     '#name'          => 'csv_messages_download_email',
     '#title'         => t('Email'),
     '#default_value' => $user->mail,
-    '#required'      => true,
+    '#required'      => TRUE,
   );
 
   $form['node_id'] = array(
     '#type'          => 'value',
     '#name'          => 'node_id',
     '#title'         => t('Node Id'),
-    '#default_value' => $nodeId,
-    '#required'      => true,
+    '#default_value' => $node_id,
+    '#required'      => TRUE,
   );
 
   $form['submit'] = array(
@@ -74,24 +85,24 @@ function sba_message_action_download_form($form, &$form_state, $nodeId)
  * @param $form
  * @param $form_state
  */
-function sba_message_action_download_form_submit($form, &$form_state)
-{
+function sba_message_action_download_form_submit($form, &$form_state) {
   if (!form_get_errors()) {
 
-    $messageNodeId = $form['node_id']['#value'];
-    $emailAddress = $form_state['input']['csv_messages_download_email'];
+    $message_nodeId = $form['node_id']['#value'];
+    $email_address = $form_state['input']['csv_messages_download_email'];
 
-    $form = node_load($messageNodeId);
+    $form = node_load($message_nodeId);
 
-    $messageAdvocacyId = $form->advocacy_id;
+    $message_advocacy_id = $form->advocacy_id;
 
     // Make the API request to queue up the CSV download
-    $apiClient = springboard_advocacy_api_call();
-    $apiRequest = $apiClient->invokeClientMethod('getFailedMessagesDownload', $messageAdvocacyId, $emailAddress);
+    $api_client = springboard_advocacy_api_call();
+    $api_request = $api_client->invokeClientMethod('getFailedMessagesDownload', $message_advocacy_id, $email_address);
 
-    if (isset($apiRequest->data) && $apiRequest->data == 'Download queued.') {
+    if (isset($api_request->data) && $api_request->data == 'Download queued.') {
       drupal_set_message('Thanks! Your request has been submitted. You will receive an email shortly with a link to download the failed messages.');
-    } else {
+    }
+    else {
       drupal_set_message('Sorry, your request did not go through. Please try again later.', 'error');
     }
   }
@@ -103,10 +114,101 @@ function sba_message_action_download_form_submit($form, &$form_state)
  * @param $form
  * @param $form_state
  */
-function sba_message_action_download_form_validate($form, &$form_state)
-{
+function sba_message_action_download_form_validate($form, &$form_state) {
 
   if (!valid_email_address($form_state['input']['csv_messages_download_email'])) {
     form_set_error('csv_messages_download_email', t('Please enter a valid email address.'));
+  }
+}
+
+/**
+ * Generating the form rendering with form builder.
+ * @param $form
+ * @param $form_state
+ * @param $node_id
+ * @return mixed
+ */
+function sba_message_action_fail_messages_form($form, &$form_state, $node_id) {
+
+  $form['node_id'] = array(
+    '#type'          => 'value',
+    '#name'          => 'node_id',
+    '#title'         => t('Node Id'),
+    '#default_value' => $node_id,
+    '#required'      => TRUE,
+  );
+
+  $form['description'] = array(
+    '#type'  => 'item',
+    '#title' => t('Messages in "Hold" status can be updated to "Failed" status to allow for downloading in the "Download Failed Messages Report" section above. *'),
+  );
+
+  $form['caution'] = array(
+    '#type'  => 'item',
+    '#title' => t('Update to Failed Status (use with caution - this is not reversible)'),
+  );
+
+  $form['select'] = array(
+    '#type'          => 'select',
+    '#name'          => 'confirmed',
+    '#options'       => array(
+      0 => t('No'),
+      1 => t('Yes'),
+    ),
+    '#default_value' => 0,
+  );
+
+  $form['submit'] = array(
+    '#type'  => 'submit',
+    '#value' => t('Update Messages'),
+  );
+
+  $form['footnote'] = array(
+    '#type'  => 'item',
+    '#title' => t('* We recommend you use this only in time-sensitive campaigns where you need message delivery completed within a certain timeframe and want to push "Hold" status messages to "Failed" status to manually deliver via mail.'),
+  );
+
+  return $form;
+}
+
+/**
+ * Method to validate the form submission of the sba message action fail hold messages form.
+ * Implements hook_validate()
+ * @param $form
+ * @param $form_state
+ */
+function sba_message_action_fail_messages_form_validate($form, &$form_state) {
+
+  if ($form_state['input']['confirmed'] == 0) {
+    form_set_error('confirmation_is_required', t('Please confirm you want to set all "Hold" status messages to "Failed" status.'));
+  }
+}
+
+/**
+ * Form submission handler for the sba message action fail hold messages form.
+ * Implements hook_submit()
+ * @param $form
+ * @param $form_state
+ */
+function sba_message_action_fail_messages_form_submit($form, &$form_state) {
+
+  if (!form_get_errors()) {
+
+    $message_node_id = $form['node_id']['#value'];
+    $form = node_load($message_node_id);
+
+    $message_advocacy_id = $form->advocacy_id;
+
+    // Make the API request to fail all messages in hold status
+    $api_client = springboard_advocacy_api_call();
+    $api_request = $api_client->invokeClientMethod('failHeldMessages', $message_advocacy_id);
+
+    if (isset($api_request->data->message) && preg_match('/queue items are being failed./', $api_request->data->message)) {
+      drupal_set_message('Success! ' . $api_request->data->items_updated . ' "Hold" status message/s have been to set to "Failed" status.');
+    }
+    else {
+      drupal_set_message('Sorry, your request did not go through. Please try again later.', 'error');
+    }
+
   }
 }
