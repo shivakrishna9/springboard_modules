@@ -37,6 +37,7 @@ class FundraiserDateModeTest extends DrupalWebTestCase {
       'commerce_cardonfile',
       'encrypt',
       'fundraiser_date_mode',
+      'salesforce_mapping',
     );
     $enable_modules = array_merge($enable_modules, $additional_modules);
 
