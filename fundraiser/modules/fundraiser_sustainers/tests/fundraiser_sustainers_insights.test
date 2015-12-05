@@ -22,6 +22,7 @@ class FundraiserSustainersInsightsTestCase extends DrupalWebTestCase {
       'fundraiser_sustainers',
       'fundraiser_commerce',
       'encrypt',
+      'salesforce_mapping',
     );
     parent::setUp($modules);
   }

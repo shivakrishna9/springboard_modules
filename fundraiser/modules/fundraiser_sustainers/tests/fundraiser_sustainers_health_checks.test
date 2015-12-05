@@ -35,6 +35,7 @@ class FundraiserSustainersHealthChecksTestCase extends DrupalWebTestCase {
     $additional_modules = array(
       'fundraiser_commerce',
       'fundraiser_sustainers',
+      'salesforce_mapping',
     );
     parent::setUp($additional_modules);
   }

@@ -41,6 +41,7 @@ class FundraiserSustainersDelayedCreationTestCase extends FundraiserSetup {
       'fundraiser_sustainers',
       'fundraiser_commerce',
       'encrypt',
+      'salesforce_mapping',
     );
     parent::setUp(array_merge($modules, $additional_modules));
     $this->node = $this->createDonationForm();

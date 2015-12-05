@@ -39,6 +39,7 @@ class FundraiserSustainersProcessingExceptionHandlingTestCase extends Fundraiser
    */
   public function setUp($additional_modules = array()) {
     $additional_modules[] = 'fundraiser_sustainers';
+    $additional_modules[] = 'salesforce_mapping';
     parent::setUp($additional_modules);
 
     $this->node = $this->createDonationForm();
