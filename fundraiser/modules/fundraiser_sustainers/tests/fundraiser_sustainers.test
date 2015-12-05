@@ -27,6 +27,7 @@ class FundraiserSustainerTest extends FundraiserSustainerSetup {
     // Call the parent to set all of the base modules up.
     $additional_modules = array(
       'fundraiser_sustainers', // For token testing.
+      'salesforce_mapping',
     );
     parent::setUp($additional_modules);
     // Setup the sustainer key file.
