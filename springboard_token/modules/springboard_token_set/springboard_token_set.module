@@ -52,7 +52,6 @@ function springboard_token_set_form_alter(&$form, &$form_state, $form_id) {
 
   // Store token set and field data for JS settings.
   $token_sets = array();
-  $token_set_fields = array();
 
   foreach ($fields as $field) {
     $entity = $field['entity_type'];
@@ -69,8 +68,8 @@ function springboard_token_set_form_alter(&$form, &$form_state, $form_id) {
         $token_sets[$tsid] = $tokens;
       }
 
-      // Store a reference between the current field and its token set ID.
-      $token_set_fields[$field_name] = $tsid;
+      // Store a reference to token set ID in the field attributes.
+      $form[$field_name]['#attributes']['data-token-set-id'] = $tsid;
     }
   }
 
@@ -85,11 +84,6 @@ function springboard_token_set_form_alter(&$form, &$form_state, $form_id) {
 
   $form['#attached']['js'][] = array(
     'data' => array('token_sets' => $token_sets),
-    'type' => 'setting',
-  );
-
-  $form['#attached']['js'][] = array(
-    'data' => array('token_set_fields' => $token_set_fields),
     'type' => 'setting',
   );
 }
