@@ -58,7 +58,7 @@ function springboard_token_set_post_render($content, $element) {
     $bundle = $element['#bundle'];
     $field = $element['#field_name'];
 
-    $tsid = variable_get('token_insert_' . $entity . '_' . $bundle . '_' . $field, 0);
+    $tsid = variable_get('token_set_' . $entity . '_' . $bundle . '_' . $field, 0);
 
     if ($tsid != 0) {
       $tokens = springboard_token_set_get_tokens($tsid);
