@@ -78,6 +78,11 @@ function springboard_token_set_form_alter(&$form, &$form_state, $form_id) {
     $form['#attached']['js'] = array();
   }
 
+  $form['#attached']['js'] = array(
+    'data' => drupal_get_path('module', 'springboard_token_set') . '/js/springboard_token_set.js',
+    'type' => 'file',
+  );
+
   $form['#attached']['js'][] = array(
     'data' => array('token_sets' => $token_sets),
     'type' => 'setting',
