@@ -44,34 +44,62 @@ function springboard_token_set_save_field($form, &$form_state) {
 }
 
 /**
- * Implements hook_element_info_alter()
+ * Implements hook_form_alter()
  */
-function springboard_token_set_element_info_alter(&$types) {
-  // TODO: Check user access.
-  $types['textarea']['#post_render'][] = 'springboard_token_set_post_render';
-  $types['textfield']['#post_render'][] = 'springboard_token_set_post_render';
-}
+function springboard_token_set_form_alter(&$form, &$form_state, $form_id) {
+  // TODO: Check user access for ability to use tokens.
+  $fields = field_info_instances($form['#entity_type'], $form['#bundle']);
 
-function springboard_token_set_post_render($content, $element) {
-  if (isset($element['#entity_type']) && isset($element['#bundle'])) {
-    $entity = $element['#entity_type'];
-    $bundle = $element['#bundle'];
-    $field = $element['#field_name'];
+  // Store token set and field data for JS settings.
+  $token_sets = array();
+  $token_set_fields = array();
 
-    $tsid = variable_get('token_set_' . $entity . '_' . $bundle . '_' . $field, 0);
+  foreach ($fields as $field) {
+    $entity = $field['entity_type'];
+    $bundle = $field['bundle'];
+    $field_name = $field['field_name'];
+
+    // Check for a token set ID associated with the current field.
+    $tsid = variable_get('token_set_' . $entity . '_' . $bundle . '_' . $field_name, 0);
 
     if ($tsid != 0) {
-      $tokens = springboard_token_set_get_tokens($tsid);
-
-      $content .= '<ul>';
-      foreach ($tokens as $token) {
-        $content .= '<li>[' . $token->token_type . ':' . $token->token_name . ']</li>';
+      // If this token set hasn't been loaded yet, load and store tokens.
+      if (!isset($token_sets[$tsid])) {
+        $tokens = springboard_token_set_get_tokens($tsid);
+        $token_sets[$tsid] = $tokens;
       }
-      $content .= '</ul>';
+
+      // Store a reference between the current field and its token set ID.
+      $token_set_fields[$field_name] = $tsid;
     }
   }
 
-  return $content;
+  if (empty($form['#attached']['js'])) {
+    $form['#attached']['js'] = array();
+  }
+
+  $form['#attached']['js'][] = array(
+    'data' => array('token_sets' => $token_sets),
+    'type' => 'setting',
+  );
+
+  $form['#attached']['js'][] = array(
+    'data' => array('token_set_fields' => $token_set_fields),
+    'type' => 'setting',
+  );
+}
+
+/**
+ * Gets an array of field types that can be used with tokens.
+ *
+ * @return array
+ *   Array of tokenable field types.
+ */
+function springboard_token_get_field_types() {
+  return array(
+    'textarea',
+    'textfield',
+  );
 }
 
 /**
