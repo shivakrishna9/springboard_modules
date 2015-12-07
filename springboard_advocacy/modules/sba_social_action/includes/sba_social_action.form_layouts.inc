@@ -118,7 +118,7 @@ function sba_social_action_build_preprocess(&$vars) {
   // Fieldset legends.
   $fieldset_title_field = field_get_items('node', $vars['element']['#node'], 'field_sba_social_fieldset_title');
   $fieldset_title = field_view_value('node', $vars['element']['#node'], 'field_sba_social_fieldset_title', $fieldset_title_field[0]);
-  $fieldset_title = drupal_render($fieldset_title);
+  $fieldset_title = drupal_render($fieldset_title) ? drupal_render($fieldset_title) : t('Send a Social Message');
   $vars['form_legend'] = $fieldset_title;
   // We remove image field in the default node--sba-message-action.tpl.php
   // and put it into form layouts here.
@@ -212,7 +212,7 @@ function theme_social_action_messages_wrapper($vars) {
 function theme_social_action_webform_wrapper($vars) {
   $fieldset_title_field = field_get_items('node', $vars['element']['#node'], 'field_sba_social_fieldset_title');
   $fieldset_title = field_view_value('node', $vars['element']['#node'], 'field_sba_social_fieldset_title', $fieldset_title_field[0]);
-  $fieldset_title = drupal_render($fieldset_title);
+  $fieldset_title = drupal_render($fieldset_title) ? drupal_render($fieldset_title) : t('Send a Social Message');
   return ' <div class="row-fluid"><fieldset id="take-action-wrapper" class = "form-wrapper"><legend>' . $fieldset_title . '</legend>' . $vars['element']['#children']  . '</fieldset></div>';
 }
 

@@ -30,6 +30,7 @@ function sba_social_action_message_preview_page($nid) {
   $build = array();
   $header_field = field_get_items('node', $node, 'field_sba_step_two_header');
   $header_value = field_view_value('node', $node, 'field_sba_step_two_header', $header_field[0]);
+  $markup = isset($header_value['#markup']) ? $header_value['#markup'] : '';
   $build['content'] = array(
     'title'  => array(
       '#prefix' => '<h2>',
@@ -45,7 +46,7 @@ function sba_social_action_message_preview_page($nid) {
       ),
     'header' => array(
     '#weight' => -9,
-    '#markup' => $header_value['#markup'],
+    '#markup' => $markup,
   ),
     'noscript' => array('#markup' => '<noscript><div class="alert error">Javascript is required. Please enable javascript in your browser.</div></noscript>'),
     'sba_social_action_preview_form' => drupal_get_form('sba_social_action_preview_form', $node),
@@ -311,13 +312,13 @@ function sba_social_action_preview_form($form, $form_state, $node) {
 
   $submit_field = field_get_items('node', $node, 'field_sba_step_two_submit');
   $submit_value = field_view_value('node', $node, 'field_sba_step_two_submit', $submit_field[0]);
-
+  $markup = isset($submit_value['#markup']) ? $submit_value['#markup'] : t('Send Now');
   // Add submit button
   $form['form_container']['submit'] = array(
     '#prefix' => '<div id="edit-actions">',
     '#suffix' => '</div>',
     '#type' => 'submit',
-    '#value' => $submit_value['#markup'],
+    '#value' => $markup,
     '#weight' => 10,
     '#attributes' => array('class' => 'social-action-preview-submit'),
     '#disabled' => !$access,

@@ -407,8 +407,8 @@ function sba_social_action_form_sba_social_action_node_form_alter(&$form, &$form
   }
 
 
-  $form['springboard_taxonomy_options']['#weight'] = 0;
-  $form['springboard_taxonomy_options']['#title'] = t('Issue Categories');
+  $form['springboard_taxonomy_options']['#weight'] = -10;
+  $form['springboard_taxonomy_options']['#title'] = t('Action Options');
 
   if (empty($form['springboard_display'])) {
     $form['springboard_display'] = array(
@@ -523,7 +523,7 @@ function sba_social_action_multiflow_submit($form, &$form_state) {
  * Implements hook_element_info_alter().
  */
 function sba_social_action_element_info_alter(&$type) {
-  $type['text_format']['#process'][] = 'sba_social_action_element_process_text_format';
+  //$type['text_format']['#process'][] = 'sba_social_action_element_process_text_format';
 }
 
 /**

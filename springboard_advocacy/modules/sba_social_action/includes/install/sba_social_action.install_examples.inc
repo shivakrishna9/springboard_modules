@@ -26,7 +26,7 @@ function _sba_social_action_create_example_social_action() {
     'pretium quis, dapibus sed, varius non, lectus. Proin a quam. Praesent lacinia, eros quis aliquam porttitor, ' .
     'urna lacus volutpat urna, ut fermentum neque mi egestas dolor.';
   $node->body[LANGUAGE_NONE][0]['format'] = 'filtered_html';
-  $node->field_sba_social_fieldset_title[LANGUAGE_NONE][0]['value'] = 'Send a Social Message';
+ // $node->field_sba_social_fieldset_title[LANGUAGE_NONE][0]['value'] = 'Send a Social Message';
   $node->webform = array(
     'confirmation' => '',
     'confirmation_format' => 'filtered_html',
