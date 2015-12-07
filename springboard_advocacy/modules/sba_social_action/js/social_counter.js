@@ -15,7 +15,7 @@
         var direction = 'down';
         var strict = true;
         if ($text.length == 0) {
-          var direction = 'up';
+          direction = 'up';
           $text = $('#edit-field-sba-twitter-message-und-0-value');
           strict = false;
         }
