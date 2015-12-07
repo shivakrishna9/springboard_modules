@@ -23,9 +23,12 @@
                 $text = $('div[id*="edit-messages"]').find('textarea');
                 var navKeys = [33,34,35,36,37,38,39,40];
                 $text.each(function(){
-                    $(this).once(function() {
+                    var desc = $(this).siblings('.description');
+                    $(this).closest('.control-group').prepend(desc);
 
-                        var handleCount = $(this).closest('.control-group').siblings('.editable-message-preview').find('.preview-target-text').text().length + 1;
+                      $(this).once(function() {
+
+                        var handleCount = $(this).closest('.control-group').siblings('.sba-full-tweet').find('.preview-target-text').text().length + 1;
 
                         $('#' + this.id).simplyCountable({
                             counter:            $(this).siblings('.description').find('.counter'),
@@ -42,11 +45,11 @@
                             onMaxCount:         function(count, countable, counter){}
                         });
 
-                        var screenName = $(this).closest('.control-group').siblings('.editable-message-preview').find('.preview-target-text').text();
+                        var screenName = $(this).closest('.control-group').siblings('.sba-full-tweet').find('.preview-target-text').text();
 
                         var newText;
                         var defaultText = screenName + ' ' +  $(this).val();
-                        $(this).closest('.control-group').siblings('.editable-message-preview').text(screenName + ' ' +  $(this).val());
+                        $(this).closest('.control-group').siblings('.sba-full-tweet').find('.editable-message-preview').text(screenName + ' ' +  $(this).val());
 
                         $(this).on('keyup blur paste', function(e) {
                             switch(e.type) {
@@ -73,7 +76,7 @@
 
     var replacer = function(screenName, element) {
         newText = screenName + ' ' + element.val().replace(/\r?\n/g, '<br>');
-        element.closest('.control-group').siblings('.editable-message-preview').html(newText);
+        element.closest('.control-group').siblings('.sba-full-tweet').find('.editable-message-preview').html(newText);
     };
 
     $(document).ready(function () {

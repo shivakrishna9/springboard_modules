@@ -404,14 +404,32 @@
                 }
             });
 
+            if(typeof(Drupal.settings.charCount) !== 'undefined') {
 
-          if(typeof(Drupal.settings.charCount) !== 'undefined') {
-            var handleCount = Drupal.settings.charCount.size;
-            var currLen = $('#edit-field-sba-twitter-message-und-0-value').val().replace(/(\r\n|\n|\r)/gm, "").length;
-            if (currLen > 140 - handleCount) {
-              messages.push({type: 'error', message: 'Message is too long for all potential targets.'});
+                var handleCount = Drupal.settings.charCount.size;
+                var currLen = $('#edit-field-sba-twitter-message-und-0-value').val().replace(/(\r\n|\n|\r)/gm, "").length;
+                if (currLen > 140 - handleCount) {
+                    messages.push({type: 'error', message: 'Message is too long for all potential targets.'});
+                }
+
+                var hasDistrict = $('input[name*=field_sba_target_options]:checked').val();
+                if (hasDistrict == 0) {
+                    var limit = true;
+                    var targetCount = Drupal.settings.charCount.count;
+                    if (targetCount > 10 && targetCount < 26) {
+                        limit = confirm("Are you sure? Current settings will result in " + targetCount + ' tweets for this message.');
+                    }
+                    if (!limit) {
+                        return false;
+                    }
+                    if (targetCount > 25) {
+                        messages.push({
+                            type: 'error',
+                            message: 'This message will generate more than 25 tweets per user, please revisit your target options and try again.'
+                        });
+                    }
+                }
             }
-          }
 
             if(messages.length === 0) {
                 $("#sba-message-edit-form").submit();

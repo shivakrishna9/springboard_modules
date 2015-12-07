@@ -228,7 +228,7 @@ function sba_social_action_create_twitter_message_entity($update = FALSE) {
     'bundle' => 'sba_social_action_twitter_message',
     'default_value' => array(
       0 => array(
-        'value' => 1,
+        'value' => 0,
       ),
     ),
     'deleted' => 0,
