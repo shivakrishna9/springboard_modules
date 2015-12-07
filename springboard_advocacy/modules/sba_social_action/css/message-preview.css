@@ -1,5 +1,5 @@
 .message-preview-header {
-    margin: 1em 0;
+    margin: 1em 0 0 0;
     width: 100%;
 }
 .message-preview-intro {
@@ -8,7 +8,7 @@
 }
 
 .message-preview-person {
-    margin: 0 0 1em 0;
+    margin: 0;
     font-weight: bold;
 }
 
@@ -121,10 +121,10 @@ input#edit-twitter-sign-in:hover {
 
 .uneditable-message-preview {
     padding: 10px;
-    border: 1px solid rgba(46, 107, 184, 0.48);
-    moz-border-radius: 4px;
-    webkit-border-radius: 4px;
-    border-radius: 4px;
+    /*border: 1px solid rgba(46, 107, 184, 0.48);*/
+    /*moz-border-radius: 4px;*/
+    /*webkit-border-radius: 4px;*/
+    /*border-radius: 4px;*/
     max-width: 770px;
     -moz-box-sizing: border-box;
     -webkit-box-sizing: border-box;
@@ -134,10 +134,6 @@ input#edit-twitter-sign-in:hover {
 
 .editable-message-preview {
     padding: 10px;
-    border: 1px solid #999966;
-    moz-border-radius: 4px;
-    webkit-border-radius: 4px;
-    border-radius: 4px;
     max-width: 770px;
     margin-bottom : 8px;
     -moz-box-sizing: border-box;
@@ -156,5 +152,5 @@ input#edit-twitter-sign-in:hover {
 
 .sba-display-hint {
     margin-top: 8px;
-    font-weight: 600;
+    font-weight: 500;
 }
