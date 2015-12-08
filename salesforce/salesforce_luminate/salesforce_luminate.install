@@ -40,7 +40,7 @@ function salesforce_luminate_install() {
   salesforce_genmap_delete_map(-1, 'salesforce_donation');
 
   // Remove default recurring donation mapping provided by Springboard.
-  salesforce_genmap_delete_map(-1, 'npe03__Recurring_Donation__c');
+  salesforce_genmap_delete_map(-1, 'fundraiser_sustainers');
 }
 
 /**
