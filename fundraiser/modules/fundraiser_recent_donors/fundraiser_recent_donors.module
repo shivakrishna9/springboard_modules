@@ -57,6 +57,7 @@ function fundraiser_recent_donors_form_alter(&$form, &$form_state, $form_id) {
         ),
       ),
     ); 
+    $form['#validate'][] = '_fundraiser_recent_donors_node_edit_validate';
     $form['#submit'][] = '_fundraiser_recent_donors_node_edit_submit';
     return;
   } // End node edit form changes.
@@ -104,6 +105,19 @@ function _fundraiser_recent_donors_donation_form_submit($form, &$form_state) {
         )
       );
       return;
+    }
+  }
+}
+
+/**
+ * Form validation for the "Recent Donors List" node edit form fields:
+ */
+function _fundraiser_recent_donors_node_edit_validate($form, &$form_state) {
+  if (isset($form_state['values']['show_recent_donation_greater_than'])) {
+    $min_amount = $form_state['values']['show_recent_donation_greater_than'];
+    if (!is_numeric($min_amount)) {
+      form_set_error('show_recent_donation_greater_than',
+        t('Please enter a numeric value within the "Only show donations greater than" field.'));
     }
   }
 }
@@ -235,7 +249,7 @@ function fundraiser_recent_donors_views_query_alter(&$view, &$query) {
   $join->left_field = 'did';
   $join->type = 'left';
   $query->add_relationship('field_data_commerce_order_total', $join, 'fundraiser_donor_opt_in');
-  $query->add_where(1, 'field_data_commerce_order_total.commerce_order_total_amount', $minimum_value, '>=');
+  $query->add_where(1, 'field_data_commerce_order_total.commerce_order_total_amount', $minimum_value, '>');
 }
 
 
