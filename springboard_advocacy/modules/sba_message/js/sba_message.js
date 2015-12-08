@@ -1153,20 +1153,38 @@
             });
         });
 
+        // Individual targets
         if (typeof(queryObj.Id) !== 'undefined') {
+            var sal = '';
+            var first = '';
+            var last = '';
             var party = '';
             var org = '';
             var title = '';
+            var state = '';
+            var district = '';
+
+            if (typeof(queryObj.Sal) !== 'undefined') {
+                sal = queryObj.Sal.toString().SbaStrCln();
+            }
+            if (typeof(queryObj.First) !== 'undefined') {
+                first = queryObj.First.toString().SbaStrCln();
+            }
+            if (typeof(queryObj.Last) !== 'undefined') {
+                last = queryObj.Last.toString().SbaStrCln();
+            }
             if (typeof(queryObj.Title) !== 'undefined') {
                 title = queryObj.Title.toString().SbaStrCln();
-                if (title.length > 0) {
-                    title = title + ',';
-                }
             }
             if (typeof(queryObj.Org) !== 'undefined') {
                 org = queryObj.Org.toString().SbaStrCln();
             }
-
+            if (typeof(queryObj.District) !== 'undefined') {
+                district = queryObj.District.toString().SbaStrCln();
+            }
+            if (typeof(queryObj.State) !== 'undefined') {
+                state = queryObj.State.toString().SbaStrCln();
+            }
             if (typeof(queryObj.Party) !== 'undefined') {
                 party = queryObj.Party.toString().SbaStrCln();
                 if (party.length > 0) {
@@ -1174,7 +1192,14 @@
                 }
             }
 
-            return  '<div class="individual">' + queryObj.Sal.toString().SbaStrCln() + " " +  queryObj.First.toString().SbaStrCln() + " " + queryObj.Last.toString().SbaStrCln() + " " + party + "<br />" + title + " "  + org +'</div>';
+            var separator = title !='' && org != '' ? ', ' : ' ';
+            // Custom targets and executive branch.
+            var non_legislative_organization = org != ''  ? title + separator + org : '';
+
+            var legislative_organization = district != '' && title != '' ? title + ', ' +  district + ' ' +  party  :  org + ' ' + party ;
+            var affiliation = district != ''  ? legislative_organization : non_legislative_organization;
+
+            return  '<div class="individual">' + sal + " " +  first + " " + last + "<br />" + affiliation +'</div>';
         }
         var cleanUp = JSON.stringify(queryObj).SbaJsonToReadable();
         if (typeof(queryObj.Fields) !== 'undefined' || typeof(queryObj.Genderxxxx) !== 'undefined'
