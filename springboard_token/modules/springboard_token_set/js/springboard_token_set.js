@@ -6,7 +6,13 @@
         var token_set_id = $(this).data("token-set-id");
 
         if (typeof token_set_id !== typeof undefined) {
-          $(this).click(function() {
+          $(this).addClass("has-token-data");
+
+          $(this).find("input").click(function() {
+            Drupal.settings.token_set_last_selected_field = this;
+            showTokens($(this));
+          });
+          $(this).find("textarea").click(function() {
             Drupal.settings.token_set_last_selected_field = this;
             showTokens($(this));
           });
@@ -17,7 +23,7 @@
         // Remove existing tokens div.
         $("#token-set-tokens").remove();
 
-        var token_set_id = element.data("token-set-id");
+        var token_set_id = element.closest(".has-token-data").data("token-set-id");
         var tokens = Drupal.settings.token_sets[token_set_id];
 
         // Generate tokens div.
@@ -27,7 +33,7 @@
         }
         html += '</ul>';
 
-        element.append(html);
+        element.parent().append(html);
 
         $(".token-set-token-link").each(function() {
           $(this).click(function(event) {
@@ -49,8 +55,6 @@
 
       var insertToken = function (element, token_type, token_name) {
         var token_string = '[' + token_type + ':' + token_name + ']';
-
-        console.log(token_string);
 
         // IE support.
         if (document.selection) {
