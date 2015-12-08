@@ -283,7 +283,6 @@ function _fundraiser_recent_donors_render_donation_block() {
     return '';
   }
 
-  $vars['recent_opt_in_donations'] = '';
   $block = block_load('views', 'recent_opt_in_donations-block');
   $block_data = _block_get_renderable_array(_block_render_blocks(array($block)));
   $block_html = drupal_render($block_data);
