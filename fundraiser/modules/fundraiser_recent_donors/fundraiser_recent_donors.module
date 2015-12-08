@@ -1,4 +1,15 @@
 <?php
+/**
+ * @file
+ * Allows users to check an opt-in checkbox during donation submission to allow
+ * their donation to be displayed publicly in a recent donations view block that
+ * is automatically appended to the donation form.
+ *
+ * This also adds a setting to the node->edit->display settings vertical tab
+ * which enables or disables this module on a node-specific basis and allows a
+ * a minimum donation amount to be set before a donation will be displayed within
+ * the recent donations block.
+ */
 
 /**
  * Implements hook_form_alter().
@@ -59,15 +70,15 @@ function fundraiser_recent_donors_form_alter(&$form, &$form_state, $form_id) {
     $form['#submit'][] = '_fundraiser_recent_donors_donation_form_submit';
   }
 
-  // Embed the recent opt-in donations block view:
-  $block = block_load('views', 'recent_opt_in_donations-block');
-  $block_data = _block_get_renderable_array(_block_render_blocks(array($block)));
-  $block_html = drupal_render($block_data);
-  $form['recent_opt_in_donations'] = array(
-    '#type' => 'fieldset',
-    '#weight' => 9999,
-    '#description' => $block_html,
-  );
+  // Insert the recent donations block directly into the form if a one-column layout is in use,
+  // as the one-column layout does not use a template:
+  if ($form['#node']->form_layouts == 'one_column') {
+    $form['recent_donations_block'] = array(
+      '#type' => 'fieldset',
+      '#description' => _fundraiser_recent_donors_render_donation_block(),
+      '#weight' => 99999,
+    );
+  }
 }
 
 /**
@@ -107,10 +118,10 @@ function _fundraiser_recent_donors_node_edit_submit($form, &$form_state) {
       $min_donation_amount = $form_state['values']['show_recent_donation_greater_than'];
     }
     
-    $exists_query = db_query("SELECT * FROM fundraiser_donation_opt_in_block WHERE nid = :nid",
-      array(':nid' => $form['#node']->nid,));
+    $exists_query = db_query("SELECT * FROM {fundraiser_donation_opt_in_block} WHERE nid = :nid",
+      array(':nid' => $form['#node']->nid));
     foreach ($exists_query as $exists) {
-      db_query("UPDATE fundraiser_donation_opt_in_block ".
+      db_query("UPDATE fundraiser_donation_opt_in_block " .
         "SET visibility = :visibility, min_donation_amount = :min_donation_amount " .
         "WHERE nid = :nid",
         array(
@@ -121,7 +132,7 @@ function _fundraiser_recent_donors_node_edit_submit($form, &$form_state) {
       );      
       return;
     }
-    db_query("INSERT INTO fundraiser_donation_opt_in_block (nid, min_donation_amount, visibility) " .
+    db_query("INSERT INTO {fundraiser_donation_opt_in_block} (nid, min_donation_amount, visibility) " .
       "VALUES (:nid, :min_donation_amount, :visibility)",
       array(
         ':nid' => $form['#node']->nid,
@@ -168,9 +179,18 @@ function fundraiser_recent_donors_node_delete($node) {
 }
 
 /**
- * Implements hook_proprocess_HOOK() for two-column-hybrid-donation.tpl.php.
+ * These functions implement hook_proprocess_HOOK() to include the
+ * recent donors block's HTML as a variable within these templates:
  */
-
+function fundraiser_recent_donors_preprocess_two_column_donation(&$vars) {
+  $vars['recent_opt_in_donations'] = _fundraiser_recent_donors_render_donation_block();
+}
+function fundraiser_recent_donors_preprocess_two_column_hybrid_donation(&$vars) {
+  $vars['recent_opt_in_donations'] = _fundraiser_recent_donors_render_donation_block();
+}
+function fundraiser_recent_donors_preprocess_two_column_left_right(&$vars) {
+  $vars['recent_opt_in_donations'] = _fundraiser_recent_donors_render_donation_block();
+}
 
 // Views integration:
 
@@ -252,3 +272,15 @@ function _fundraiser_recent_donors_get_min_opt_in_donation_amount($nid) {
   }
   return $min_donation_amount;
 }
+
+/**
+ * Helper function to display the rendered HTML of the recent op-in donations block.
+ */
+function _fundraiser_recent_donors_render_donation_block() {
+  $vars['recent_opt_in_donations'] = '';
+  $block = block_load('views', 'recent_opt_in_donations-block');
+  $block_data = _block_get_renderable_array(_block_render_blocks(array($block)));
+  $block_html = drupal_render($block_data);
+  return $block_html;
+}
+

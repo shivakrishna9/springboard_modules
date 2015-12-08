@@ -1,7 +1,8 @@
 <?php
 
 /**
- * @file Defines "Springboard Donations Opt In" Views.
+ * @file
+ * Defines "Springboard Donations Opt In" Views.
  */
 
 /**

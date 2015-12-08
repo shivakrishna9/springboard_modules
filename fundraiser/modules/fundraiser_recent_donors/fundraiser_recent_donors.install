@@ -1,5 +1,8 @@
 <?php
-
+/**
+ * @file
+ * Table creation and module weight adjustment for recent opt-in donations.
+ */
 
 /**
  * Implements hook_schema().
