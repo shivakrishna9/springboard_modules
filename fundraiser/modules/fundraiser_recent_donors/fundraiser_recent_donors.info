@@ -1,0 +1,7 @@
+name = Fundraiser Recent Donors 
+description = "Provides support for a view-based, opt-in block of recent donations."
+core = 7.x
+version = 7.x-4.x
+dependencies[] = fundraiser
+dependencies[] = views
+package = Jackson River Springboard

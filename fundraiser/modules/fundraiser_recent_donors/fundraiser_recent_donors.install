@@ -1,0 +1,3 @@
+<?php
+
+// update system set weight = 1000 where name='fundraiser_recent_donors';

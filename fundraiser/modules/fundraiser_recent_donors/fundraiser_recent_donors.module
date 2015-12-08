@@ -1,0 +1,223 @@
+<?php
+
+/**
+ * Implements hook_form_alter().
+ *
+ * Insert setting to toggle whether donors can opt-in to having their
+ * donation displayed in the block of recent donors.
+ *
+ * Also adds the opt-in checkbox to donation forms where it has been enabled.
+ */
+function fundraiser_recent_donors_form_alter(&$form, &$form_state, $form_id) {
+  if (!isset($form['#node']->type) || !fundraiser_is_donation_type($form['#node']->type)) {
+    return;
+  }
+
+  $opt_in_enabled = FALSE;
+  if (isset($form['#node']->nid)) {
+    $opt_in_enabled = _fundraiser_recent_donors_opt_in_enabled($form['#node']->nid);
+  }
+
+  if (strpos($form_id, '_node_form') !== FALSE) {
+    $form['springboard_display']['recent_donors_list'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Recent Donors List'),
+      '#description' => t('Choose whether donors can opt-in to having their name display on this donation form.'),
+      '#collapsible' => TRUE,
+      '#collapsed' => FALSE,
+    );
+    $form['springboard_display']['recent_donors_list']['allow_recent_donations_opt_in'] = array(
+      '#type' => 'checkbox',
+      '#title' => t('Allow donors to opt-in and how recent donors list.'),
+      '#default_value' => $opt_in_enabled,
+      '#weight' => -4,
+    );
+    $form['springboard_display']['recent_donors_list']['show_recent_donation_greater_than'] = array(
+      '#type' => 'textfield',
+      '#title' => t('Only show donations greater than'),
+      '#default_value' => 0,
+      '#weight' => -3,
+    ); 
+    $form['#submit'][] = '_fundraiser_recent_donors_node_edit_submit';
+    return;
+  } // End node edit form changes.
+
+  // Add the user-facing op-in checkbox, if enabled:
+  if ($opt_in_enabled && strpos($form_id, 'webform_client_form_') !== FALSE) {
+    $form['recent_donors_list_opt_in'] = array(
+      '#title' => 'Show my name and donation amount in a list of recent donors.',
+      '#type' => 'checkbox',
+    );
+    $form['#submit'][] = '_fundraiser_recent_donors_donation_form_submit';
+  }
+
+  // Embed the recent opt-in donations block view:
+  $block = block_load('views', 'recent_opt_in_donations-block');
+  $block_data = _block_get_renderable_array(_block_render_blocks(array($block)));
+  $block_html = drupal_render($block_data);
+  $form['recent_opt_in_donations'] = array(
+    '#type' => 'fieldset',
+    '#weight' => 9999,
+    '#description' => $block_html,
+  );
+}
+
+/**
+ * Form submission for the donation form's op-in checkbox:
+ */
+function _fundraiser_recent_donors_donation_form_submit($form, &$form_state) {
+  if (isset($form['#node']->nid) && isset($form_state['values']['recent_donors_list_opt_in'])) {
+    // Get the order ID:
+    $order_id_query = db_query("SELECT did FROM {fundraiser_donation} WHERE sid = :sid AND nid = :nid AND uid = :uid",
+      array(
+        ':sid' => $form_state['values']['details']['sid'],
+        ':nid' => $form_state['values']['details']['nid'],
+        ':uid' => $form_state['values']['details']['uid'],
+      )
+    );
+    foreach ($order_id_query as $order_data) {
+      db_query("INSERT INTO {fundraiser_donor_opt_in} VALUES (:sid, :nid, :uid, :order_id, :opt_in)",
+        array(
+          ':sid' => $form_state['values']['details']['sid'],
+          ':nid' => $form_state['values']['details']['nid'],
+          ':uid' => $form_state['values']['details']['uid'],
+          ':order_id' => $order_data->did,
+          ':opt_in' => $form_state['values']['recent_donors_list_opt_in'],
+        )
+      );
+      return;
+    }
+  }
+}
+
+/**
+ * Form submission for the "Recent Donors List" node edit form fields:
+ */
+function _fundraiser_recent_donors_node_edit_submit($form, &$form_state) {
+  if (isset($form['#node']->nid) && isset($form_state['values']['allow_recent_donations_opt_in'])) {
+    $exists_query = db_query("SELECT * FROM fundraiser_donation_opt_in_block WHERE nid = :nid",
+      array(':nid' => $form['#node']->nid,));
+    foreach ($exists_query as $exists) {
+      db_query("UPDATE fundraiser_donation_opt_in_block SET visibility = :visibility " .
+        "WHERE nid = :nid",
+        array(
+          ':nid' => $form['#node']->nid,
+          ':visibility' => $form_state['values']['allow_recent_donations_opt_in'],
+        )
+      );      
+      return;
+    }
+    db_query("INSERT INTO fundraiser_donation_opt_in_block (nid, min_donation_amount, visibility) " .
+      "VALUES (:nid, :min_donation_amount, :visibility)",
+      array(
+        ':nid' => $form['#node']->nid,
+        ':min_donation_amount' => 0,
+        ':visibility' => $form_state['values']['allow_recent_donations_opt_in'],
+      )
+    );
+/*    $record = array(
+      'nid' => $form['#node']->nid,
+      'visibility' => intval($form_state['values']['allow_recent_donations_opt_in']),
+    );
+    if (!drupal_write_record('fundraiser_donation_opt_in_block', $record)) {
+      drupal_set_message('fail');
+    } */
+  }
+}
+
+/**
+ * Implements hook_fundraiser_donation_delete().
+ *
+ * Removes a fundraiser_donor_opt_in record on donation deletion.
+ */
+function fundraiser_recent_donors_fundraiser_donation_delete($donation) {
+  /* dpm($donation);
+  db_query("DELETE FROM {fundraiser_donor_opt_in} WHERE sid = :sid AND nid = :nid AND uid = :uid",
+    array(
+      ':sid' => $donation->sid,
+      ':nid' => $donation->nid,
+      ':uid' => $donation->uid,
+    )
+  ); */
+}
+
+/**
+ * Implements hook_views_api().
+ *
+ * This allows views listing opt-in donations.
+ */
+function fundraiser_recent_donors_views_api() {
+  return array(
+    'api' => 3,
+    'path' => drupal_get_path('module', 'fundraiser_recent_donors') . '/includes',
+  );
+}
+
+/**
+ * Implements hook_views_query_alter().
+ *
+ * Enforce the minimum donation amount specific to the current node
+ * on which the recent opt-in donations view is displayed.
+ */
+function fundraiser_recent_donors_views_query_alter(&$view, &$query) {
+  if ($view->name == 'recent_opt_in_donations') {
+    dpm($query);
+    $arg0 = arg(0); $arg1 = arg(1);
+
+    $minimum_value = '999999999';
+
+    if ($arg0 == 'node' && is_numeric($arg1)) {
+      $node = node_load($arg1);
+      $currency = fundraiser_get_currency_from_node($node);
+      $minimum_value = commerce_currency_decimal_to_amount('100', $currency['code']);
+    } 
+    //drupal_set_message($minimum_value);
+    $join = new views_join();
+    $join->table = 'field_data_commerce_order_total';
+    $join->field = 'entity_id';
+    $join->left_table = 'fundraiser_donor_opt_in';
+    $join->left_field = 'order_id';
+    $join->type = 'left';
+    $query->add_relationship('field_data_commerce_order_total', $join, 'fundraiser_donor_opt_in');
+    $query->add_where(1, 'field_data_commerce_order_total.commerce_order_total_amount', $minimum_value, '>=');
+
+/*    $query->table_queue[] = array(
+      'field_data_commerce_order_total' = array(
+        'table' => 'field_data_commerce_order_total',
+        'alias' => 'field_data_commerce_order_total_minimum',
+        'relationship' => 'fundraiser_donor_opt_in',
+        'join' => (object) array(
+          'table' => 'field_data_commerce_order_total',
+          'left_table' => 'fundraiser_donor_opt_in',
+          'left_field' => 'order_id',
+          'field' => 'entity_id',
+          'extra' => NULL,
+          'type' => 'LEFT',
+          'definition'
+        ),
+      ),
+    );
+    $total_field = 'commerce_order_total_amount';
+    $query->where[1]['conditions'][] = array(
+      'field' => $total_field,
+      //'value' => commerce_currency_decimal_to_amount(1000, 'USD'),
+      'value' => 1,
+      'operator' => '>=',
+    ); */
+  }
+}
+
+/**
+ * Helper function to check whether a given form has recent donation opt-in enabled:
+ *
+ * @param $nid
+ *   Node ID of the donation form in question.
+ */
+function _fundraiser_recent_donors_opt_in_enabled($nid) {
+  $opt_in_query = db_query("SELECT visibility FROM {fundraiser_donation_opt_in_block} WHERE nid = :nid",
+    array(':nid' => $nid));
+  foreach ($opt_in_query as $result) {
+    return (!$result->visibility ? FALSE : TRUE);
+  }
+  return FALSE;
+}
