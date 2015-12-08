@@ -47,6 +47,11 @@ function springboard_token_set_save_field($form, &$form_state) {
  * Implements hook_form_alter()
  */
 function springboard_token_set_form_alter(&$form, &$form_state, $form_id) {
+  // Only alter the form if we're editing content.
+  if (!isset($form['#entity_type'])) {
+    return;
+  }
+
   // TODO: Check user access for ability to use tokens.
   $fields = field_info_instances($form['#entity_type'], $form['#bundle']);
 
