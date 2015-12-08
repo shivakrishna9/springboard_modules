@@ -121,7 +121,7 @@ function theme_fundraiser_ask_amounts($element) {
     );
 
   }
-  $table_id = 'fundraiser-ask-amounts-table';
+  $table_id = empty($element['#table_id']) ? 'fundraiser-ask-amounts-table' : $element['#table_id'];
   drupal_add_tabledrag($table_id, 'order', 'sibling', 'ask-amount-weight');
   return theme('table', array('header' => $header, 'rows' => $rows,'attributes' => array('id' => $table_id)));
 }
