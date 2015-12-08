@@ -20,17 +20,13 @@ function fundraiser_recent_donors_views_data() {
         'left_field' => 'nid',
         'field' => 'nid',
       ),
-      'users' => array(
-        'left_field' => 'uid',
-        'field' => 'uid',
-      ),
       'webform_submissions' => array(
         'left_field' => 'sid',
         'field' => 'sid',
       ),
       'commerce_order' => array(
-        'left_field' => 'order_id',
-        'field' => 'order_id',
+        'left_field' => 'did',
+        'field' => 'did',
       ),
     ),
   );
@@ -57,7 +53,7 @@ function fundraiser_recent_donors_views_data() {
       'handler' => 'views_handler_argument_numeric',
     ),
   );
-  $data['fundraiser_donor_opt_in']['uid'] = array(
+/*  $data['fundraiser_donor_opt_in']['uid'] = array(
     'title' => t('Donation opt-in: user'),
     'help' => t('User associated with donation opt-in record.'),
     'relationship' => array(
@@ -79,7 +75,7 @@ function fundraiser_recent_donors_views_data() {
     'argument' => array(
       'handler' => 'views_handler_argument_numeric',
     ),
-  );
+  ); */
   $data['fundraiser_donor_opt_in']['sid'] = array(
     'title' => t('Donation opt-in: submission'),
     'help' => t('Webform submission associated with donation opt-in record.'),
@@ -103,7 +99,7 @@ function fundraiser_recent_donors_views_data() {
       'handler' => 'views_handler_argument_numeric',
     ),
   );
-  $data['fundraiser_donor_opt_in']['order_id'] = array(
+  $data['fundraiser_donor_opt_in']['did'] = array(
     'title' => t('Donation opt-in: Commerce order ID'),
     'help' => t('Commerce order associated with donation opt-in record.'),
     'relationship' => array(
@@ -126,9 +122,9 @@ function fundraiser_recent_donors_views_data() {
       'handler' => 'views_handler_argument_numeric',
     ),
   );
-  $data['fundraiser_donor_opt_in']['opt_in'] = array(
-    'title' => 'Donation opt-in: opt-in',
-    'help' => t('Whether or not a donor checked the opt-in box.'),
+  $data['fundraiser_donor_opt_in']['created'] = array(
+    'title' => t('Donation opt-in: Timestamp'),
+    'help' => t('Timestamp when a donor opted in to having their donation displayed.'),
     'field' => array(
       'handler' => 'views_handler_field',
       'click sortable' => TRUE,
@@ -139,7 +135,9 @@ function fundraiser_recent_donors_views_data() {
     'sort' => array(
       'handler' => 'views_handler_sort',
     ),
+    'argument' => array(
+      'handler' => 'views_handler_argument_numeric',
+    ),
   );
-
   return $data;
 }

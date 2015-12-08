@@ -75,22 +75,21 @@ function fundraiser_recent_donors_form_alter(&$form, &$form_state, $form_id) {
  */
 function _fundraiser_recent_donors_donation_form_submit($form, &$form_state) {
   if (isset($form['#node']->nid) && isset($form_state['values']['recent_donors_list_opt_in'])) {
-    // Get the order ID:
-    $order_id_query = db_query("SELECT did FROM {fundraiser_donation} WHERE sid = :sid AND nid = :nid AND uid = :uid",
+    // Get the donation ID:
+    $did_query = db_query("SELECT did FROM {fundraiser_donation} WHERE sid = :sid AND nid = :nid AND uid = :uid",
       array(
         ':sid' => $form_state['values']['details']['sid'],
         ':nid' => $form_state['values']['details']['nid'],
         ':uid' => $form_state['values']['details']['uid'],
       )
     );
-    foreach ($order_id_query as $order_data) {
-      db_query("INSERT INTO {fundraiser_donor_opt_in} VALUES (:sid, :nid, :uid, :order_id, :opt_in)",
+    foreach ($did_query as $did_data) {
+      db_query("INSERT INTO {fundraiser_donor_opt_in} VALUES (:sid, :nid, :did, :created)",
         array(
           ':sid' => $form_state['values']['details']['sid'],
           ':nid' => $form_state['values']['details']['nid'],
-          ':uid' => $form_state['values']['details']['uid'],
-          ':order_id' => $order_data->did,
-          ':opt_in' => $form_state['values']['recent_donors_list_opt_in'],
+          ':did' => $did_data->did,
+          ':created' => time(),
         )
       );
       return;
@@ -130,13 +129,6 @@ function _fundraiser_recent_donors_node_edit_submit($form, &$form_state) {
         ':visibility' => $form_state['values']['allow_recent_donations_opt_in'],
       )
     );
-/*    $record = array(
-      'nid' => $form['#node']->nid,
-      'visibility' => intval($form_state['values']['allow_recent_donations_opt_in']),
-    );
-    if (!drupal_write_record('fundraiser_donation_opt_in_block', $record)) {
-      drupal_set_message('fail');
-    } */
   }
 }
 
@@ -176,6 +168,13 @@ function fundraiser_recent_donors_node_delete($node) {
 }
 
 /**
+ * Implements hook_proprocess_HOOK() for two-column-hybrid-donation.tpl.php.
+ */
+
+
+// Views integration:
+
+/**
  * Implements hook_views_api().
  *
  * This allows views listing opt-in donations.
@@ -194,35 +193,33 @@ function fundraiser_recent_donors_views_api() {
  * on which the recent opt-in donations view is displayed.
  */
 function fundraiser_recent_donors_views_query_alter(&$view, &$query) {
-  if ($view->name != 'recent_opt_in_donations') {
+  if ($view->name != 'recent_opt_in_donations' || !isset($view->args[0])) {
+    return;
+  }
+  
+  $minimum_value = 0;
+  $min_amount = 0;
+  $node = node_load($view->args[0]);
+  if (!$node) {
     return;
   }
 
-  $arg0 = arg(0); $arg1 = arg(1);
-  $minimum_value = 0;
-  $min_amount = 0;
-  if ($arg0 == 'node' && is_numeric($arg1)) {
-    $node = node_load($arg1);
-    $currency = fundraiser_get_currency_from_node($node);
-    $min_amount = _fundraiser_recent_donors_get_min_opt_in_donation_amount($node->nid);
-    $minimum_value = commerce_currency_decimal_to_amount($min_amount, $currency['code']);
+  $currency = fundraiser_get_currency_from_node($node);
+  $min_amount = _fundraiser_recent_donors_get_min_opt_in_donation_amount($node->nid);
+  $minimum_value = commerce_currency_decimal_to_amount($min_amount, $currency['code']);
 
-    // Use a high minimum amount if this feature is disabled for the current node:
-    if (!_fundraiser_recent_donors_opt_in_enabled($node->nid)) {
-      $minimum_value = 9999999999;
-    }
-
-  } 
-  //drupal_set_message($minimum_value);
   $join = new views_join();
   $join->table = 'field_data_commerce_order_total';
   $join->field = 'entity_id';
   $join->left_table = 'fundraiser_donor_opt_in';
-  $join->left_field = 'order_id';
+  $join->left_field = 'did';
   $join->type = 'left';
   $query->add_relationship('field_data_commerce_order_total', $join, 'fundraiser_donor_opt_in');
   $query->add_where(1, 'field_data_commerce_order_total.commerce_order_total_amount', $minimum_value, '>=');
 }
+
+
+// Helper functions:
 
 /**
  * Helper function to check whether a given form has recent donation opt-in enabled:
