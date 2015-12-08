@@ -54,29 +54,6 @@ function fundraiser_recent_donors_views_data() {
       'handler' => 'views_handler_argument_numeric',
     ),
   );
-/*  $data['fundraiser_donor_opt_in']['uid'] = array(
-    'title' => t('Donation opt-in: user'),
-    'help' => t('User associated with donation opt-in record.'),
-    'relationship' => array(
-      'base' => 'users',
-      'base field' => 'uid',
-      'handler' => 'views_handler_relationship',
-      'label' => t('Donation opt-in user'),
-    ),
-    'field' => array(
-      'handler' => 'views_handler_field',
-      'click sortable' => TRUE,
-    ),
-    'filter' => array(
-      'handler' => 'views_handler_filter_string',
-    ),
-    'sort' => array(
-      'handler' => 'views_handler_sort',
-    ),
-    'argument' => array(
-      'handler' => 'views_handler_argument_numeric',
-    ),
-  ); */
   $data['fundraiser_donor_opt_in']['sid'] = array(
     'title' => t('Donation opt-in: submission'),
     'help' => t('Webform submission associated with donation opt-in record.'),
