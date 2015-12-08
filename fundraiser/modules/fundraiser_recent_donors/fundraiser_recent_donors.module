@@ -277,6 +277,12 @@ function _fundraiser_recent_donors_get_min_opt_in_donation_amount($nid) {
  * Helper function to display the rendered HTML of the recent op-in donations block.
  */
 function _fundraiser_recent_donors_render_donation_block() {
+  // Display nothing if the opt-in feature is not enabled for the current node:
+  $arg1 = arg(1);
+  if (!is_numeric($arg1) || !_fundraiser_recent_donors_opt_in_enabled($arg1)) {
+    return '';
+  }
+
   $vars['recent_opt_in_donations'] = '';
   $block = block_load('views', 'recent_opt_in_donations-block');
   $block_data = _block_get_renderable_array(_block_render_blocks(array($block)));
