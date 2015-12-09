@@ -458,7 +458,7 @@ function _sba_message_action_create_node_fields($update = false) {
         ),
       ),
       'deleted' => 0,
-      'description' => 'This text will appear in the landing page message layout as a replacement for the "Your Message" form used in single step layouts.',
+      'description' => 'This text will appear below the "Your Message" label in one-step layouts. It will appear above the “View all possible messages” link if your one-step action has multiple messages.',
       'display' => array(
         'default' => array(
           'label' => 'hidden',
@@ -528,7 +528,7 @@ function _sba_message_action_create_node_fields($update = false) {
         ),
       ),
       'deleted' => 0,
-      'description' => 'This text will appear in the landing page message layout as a replacement for the "Your Message" form used in single step layouts.',
+      'description' => 'This text will appear in the landing page message layout as a replacement for the "Your Message" form used in one-step layouts.',
       'display' => array(
         'default' => array(
           'label' => 'hidden',
@@ -545,7 +545,7 @@ function _sba_message_action_create_node_fields($update = false) {
       ),
       'entity_type' => 'node',
       'field_name' => 'field_sba_multistep_prompt',
-      'label' => 'Multi-step prompt text',
+      'label' => 'Multi-Step Prompt Text',
       'required' => 0,
       'settings' => array(
         'text_processing' => 1,
@@ -749,7 +749,7 @@ function _sba_message_action_create_node_fields($update = false) {
       ),
       'entity_type' => 'node',
       'field_name' => 'field_sba_action_step_two_header',
-      'label' => 'Step Two Intro Text',
+      'label' => 'Step-Two Intro Text',
       'required' => 0,
       'settings' => array(
         'display_summary' => 1,
