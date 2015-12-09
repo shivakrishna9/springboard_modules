@@ -527,7 +527,7 @@ function sba_message_action_update_7024() {
 /**
  * Create the multi-step field.
  */
-function sba_message_action_update_7025() {
+function sba_message_action_update_7026() {
   module_load_include('inc', 'sba_message_action', 'includes/install/sba_message_action.install_fields');
   _sba_message_action_create_node_fields(FALSE);
 }
