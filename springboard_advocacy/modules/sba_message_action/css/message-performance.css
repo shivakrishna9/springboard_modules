@@ -1,0 +1,17 @@
+.deliverability-performance-container .span3 {
+     text-align:center;
+ }
+
+.deliverability-performance-container .span4 {
+    text-align:center;
+}
+
+.deliverability-performance-container .text-info {
+    font-size:35px;
+}
+
+.messages-generated {
+    margin-top: -5px;
+    margin-bottom: 20px;
+    font-size: 12px;
+}

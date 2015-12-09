@@ -282,7 +282,7 @@ function webform_confirmations_form_webform_configure_form_alter(&$form, &$form_
  */
 function _webform_confirmations_submit($form, &$form_state) {
   $confirmation['nid'] = $form_state['values']['nid'];
-  $confirmation['confirmation_page_title'] = check_plain($form_state['values']['confirmation']['confirmation_page_title']);
+  $confirmation['confirmation_page_title'] = $form_state['values']['confirmation']['confirmation_page_title'];
   _webform_confirmations_update($confirmation);
 }
 
@@ -297,15 +297,15 @@ function webform_confirmations_fundraiser_donation_success($donation) {
 
     if ($settings) {
       foreach ($settings as $mail_config) {
-
         if (isset($mail_config['extra']['send_on_donation_success']) && $mail_config['extra']['send_on_donation_success'] === TRUE) {
+          // Reload the donation to be sure it has the latest information.
+          $donation = fundraiser_donation_get_donation($donation->did);
           _webform_confirmation_send_confirmation_mail($mail_config, $donation);
         }
       }
     }
   }
 }
-
 
 /**
  * Implements hook_fundraiser_donation_decline().
@@ -318,6 +318,8 @@ function webform_confirmations_fundraiser_donation_decline($donation) {
     if ($settings) {
       foreach ($settings as $mail_config) {
         if (isset($mail_config['extra']['send_on_donation_decline']) && $mail_config['extra']['send_on_donation_decline'] === TRUE) {
+          // Reload the donation to be sure it has the latest information.
+          $donation = fundraiser_donation_get_donation($donation->did);
           _webform_confirmation_send_confirmation_mail($mail_config, $donation);
         }
       }
