@@ -130,7 +130,7 @@ function sba_message_action_build_preprocess(&$vars) {
   $fieldset_title_field = field_get_items('node', $vars['element']['#node'], 'field_sba_message_action_label');
   $fieldset_title = field_view_value('node', $vars['element']['#node'], 'field_sba_message_action_label', $fieldset_title_field[0]);
   $title = drupal_render($fieldset_title);
-  $title = !empty($title) ? $title : t('Send a Social Message');
+  $title = !empty($title) ? $title : t('Take Action Now!');
   $vars['form_legend'] = $title;
 
   $vars['quicksign'] = '';
