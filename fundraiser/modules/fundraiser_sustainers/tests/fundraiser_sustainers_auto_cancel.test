@@ -27,6 +27,7 @@ class FundraiserSustainersAutoCancelTestCase extends FundraiserSetup {
     // Call the parent to set all of the base modules up.
     $additional_modules = array(
       'fundraiser_sustainers',
+      'salesforce_mapping',
     );
     parent::setUp($additional_modules);
 
