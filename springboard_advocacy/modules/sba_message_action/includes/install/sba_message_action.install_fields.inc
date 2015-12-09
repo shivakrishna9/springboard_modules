@@ -453,7 +453,7 @@ function _sba_message_action_create_node_fields($update = false) {
       'bundle' => 'sba_message_action',
       'default_value' => array(
         0 => array(
-          'value' => "We've crafted multiple messages for this action based on your legislator's position. Please enter your address in order to view and edit those messages."   ,
+          'value' => ""   ,
           'format' => 'filtered_html',
         ),
       ),
