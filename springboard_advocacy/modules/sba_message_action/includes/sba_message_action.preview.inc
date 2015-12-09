@@ -22,9 +22,16 @@ function sba_message_action_message_preview_page($nid) {
     return array();
   }
 
+  $header_field = field_get_items('node', $node, 'field_sba_action_step_two_header');
+  $header_value = field_view_value('node', $node, 'field_sba_action_step_two_header', $header_field[0]);
+  $markup = isset($header_value['#markup']) ? $header_value['#markup'] : '';
   // Build page header and multi-step form.
   $build = array();
   $build['content'] = array(
+    'header' => array(
+      '#weight' => -9,
+      '#markup' => $markup,
+    ),
     'page_description_content' => array(
       '#id' => 'message-action-preview-page',
       '#type' => 'markup',
@@ -218,11 +225,14 @@ function sba_message_action_preview_form($form, $form_state, $node) {
   // Define the validation function.
   $form['#validate'][] = 'sba_message_action_preview_form_validate';
   // Add submit button
+  $submit_field = field_get_items('node', $node, 'field_sba_action_step_two_submit');
+  $submit_value = field_view_value('node', $node, 'field_sba_action_step_two_submit', $submit_field[0]);
+  $markup = isset($submit_value['#markup']) ? $submit_value['#markup'] : t('Send Now');
   $form['submit'] = array(
     '#prefix' => '<div id="edit-actions">',
     '#suffix' => '</div>',
     '#type' => 'submit',
-    '#value' => t('Send Now'),
+    '#value' => $markup,
     '#weight' => 10,
     '#attributes' => array('class' => 'message-action-preview-submit'),
   );

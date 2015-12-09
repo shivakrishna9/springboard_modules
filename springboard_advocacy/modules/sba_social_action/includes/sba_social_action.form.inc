@@ -65,10 +65,12 @@ function sba_social_action_additional_elements(&$form, &$form_state) {
 
   //$multi_flow_prompt = '';
 
-    $form['sba_messages']['multiflow'] = array(
+    $form['submitted']['multiflow'] = array(
       '#type' => 'fieldset',
       '#title' => t('Step 1 of 2'),
       '#attributes' => array('class' => array('sba-message')),
+      '#weight' => -100
+
     );
 //    $form['sba_messages']['multiflow']['prompt'] =  array(
 //      '#markup' => $multi_flow_prompt,
@@ -82,11 +84,19 @@ function sba_social_action_additional_elements(&$form, &$form_state) {
   }
   // value of districted can change after being passed by reference above.
   if ($districted == FALSE) {
-    $form['submitted']['sbp_address']['#access'] = FALSE;
-    $form['submitted']['sbp_address_line_2']['#access'] = FALSE;
-    $form['submitted']['sbp_city']['#access'] = FALSE;
-    $form['submitted']['sbp_state']['#access'] = FALSE;
-    $form['submitted']['sbp_zip']['#access'] = FALSE;
+    $node = $form['#node'];
+    $components = $node->webform['components'];
+    $component_hierarchy = __webform_user_parse_components($node->nid, $components);
+    $sbp_address = &_webform_user_find_field($form, $component_hierarchy['sbp_address']);
+    $sbp_address_line_2 = &_webform_user_find_field($form, $component_hierarchy['sbp_address_line_2']);
+    $sbp_city = &_webform_user_find_field($form, $component_hierarchy['sbp_city']);
+    $sbp_state = &_webform_user_find_field($form, $component_hierarchy['sbp_state']);
+    $sbp_zip = &_webform_user_find_field($form, $component_hierarchy['sbp_zip']);
+    $sbp_address['#access'] = FALSE;
+    $sbp_address_line_2['#access'] = FALSE;
+    $sbp_city['#access'] = FALSE;
+    $sbp_state['#access'] = FALSE;
+    $sbp_zip['#access'] = FALSE;
   }
 
   $form['districted'] = array(

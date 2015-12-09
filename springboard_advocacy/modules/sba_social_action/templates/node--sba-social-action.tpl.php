@@ -10,8 +10,8 @@
   hide($content['comments']);
   hide($content['links']);
   hide($content['body']);
-  hide($content['field_social_action_img']);
-  hide($content['field_social_call_to_action']);
+  hide($content['field_sba_social_action_img']);
+  hide($content['field_sba_social_call_to_action']);
   hide($content['sba_quicksign']);
 
 ?>
@@ -28,15 +28,15 @@
     <?php if(!$use_layouts): ?>
     <div class="container-fluid">
       <div class="row-fluid">
-      <?php if(!empty($content['field_social_action_img'][0]))  : ?>
+      <?php if(!empty($content['field_sba_social_action_img'][0]))  : ?>
         <div id="call-to-action" class="span8">
-          <div id="call-to-action-call"><h2><?php print render($content['field_social_call_to_action']); ?></h2></div>
+          <div id="call-to-action-call"><h2><?php print render($content['field_sba_social_call_to_action']); ?></h2></div>
           <div id="call-to-action-call-body"><?php print render($content['body']); ?></div>
         </div>
-        <div id="image" class="span4"><?php  print render($content['field_social_action_img']) ?></div>
+        <div id="image" class="span4"><?php  print render($content['field_sba_social_action_img']) ?></div>
       <?php else: ?>
         <div id="call-to-action" class="span12">
-          <div id="call-to-action-call"><h2><?php print render($content['field_social_call_to_action']); ?></h2></div>
+          <div id="call-to-action-call"><h2><?php print render($content['field_sba_social_call_to_action']); ?></h2></div>
           <div id="call-to-action-call-body"><?php print render($content['body']); ?></div>
         </div>
       <?php endif; ?>

@@ -49,11 +49,11 @@ function _sba_social_action_reorder_internal_name() {
   $instance_info['widget']['weight'] = 1;
   field_update_instance($instance_info);
 
-  $instance_info = field_read_instance('node', 'field_social_action_img', 'sba_social_action');
+  $instance_info = field_read_instance('node', 'field_sba_social_action_img', 'sba_social_action');
   $instance_info['widget']['weight'] = 2;
   field_update_instance($instance_info);
 
-  $instance_info = field_read_instance('node', 'field_social_call_to_action', 'sba_social_action');
+  $instance_info = field_read_instance('node', 'field_sba_social_call_to_action', 'sba_social_action');
   $instance_info['widget']['weight'] = 4;
   field_update_instance($instance_info);
 

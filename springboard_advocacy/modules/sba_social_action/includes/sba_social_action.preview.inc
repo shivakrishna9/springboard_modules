@@ -28,8 +28,8 @@ function sba_social_action_message_preview_page($nid) {
 
   // Build page header and multi-step form.
   $build = array();
-  $header_field = field_get_items('node', $node, 'field_sba_step_two_header');
-  $header_value = field_view_value('node', $node, 'field_sba_step_two_header', $header_field[0]);
+  $header_field = field_get_items('node', $node, 'field_sba_social_step_two_header');
+  $header_value = field_view_value('node', $node, 'field_sba_social_step_two_header', $header_field[0]);
   $markup = isset($header_value['#markup']) ? $header_value['#markup'] : '';
   $build['content'] = array(
     'title'  => array(
@@ -310,8 +310,8 @@ function sba_social_action_preview_form($form, $form_state, $node) {
   $form['#validate'][] = 'sba_social_action_preview_form_validate';
   $form['#submit'][] = 'sba_social_action_preview_form_submit';
 
-  $submit_field = field_get_items('node', $node, 'field_sba_step_two_submit');
-  $submit_value = field_view_value('node', $node, 'field_sba_step_two_submit', $submit_field[0]);
+  $submit_field = field_get_items('node', $node, 'field_sba_social_step_two_submit');
+  $submit_value = field_view_value('node', $node, 'field_sba_social_step_two_submit', $submit_field[0]);
   $markup = isset($submit_value['#markup']) ? $submit_value['#markup'] : t('Send Now');
   // Add submit button
   $form['form_container']['submit'] = array(

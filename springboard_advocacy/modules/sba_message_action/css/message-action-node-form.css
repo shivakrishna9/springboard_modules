@@ -1,3 +1,24 @@
 #edit-action-flow .fieldset-wrapper {
     padding: 20px 26px;
 }
+
+.filter-wrapper {
+    padding-top: 0;
+}
+
+.filter-wrapper legend{
+    top: -10px;
+    margin-bottom:10px;
+}
+
+#sba-social-action-node-form fieldset.filter-wrapper.collapsed {
+    height: 20px;
+}
+
+#node_sba_social_action_form_group_sba_test_mode {
+    margin-top: 20px;
+}
+
+#node_sba_social_action_form_group_sba_test_mode.collapsible {
+    margin-top: -8px;
+}
