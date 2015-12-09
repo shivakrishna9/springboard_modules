@@ -70,8 +70,7 @@ function sba_message_action_additional_elements(&$form, &$form_state) {
   $multiple = count($node->messages) > 1 ? TRUE : FALSE;
   $node_wrapper = entity_metadata_wrapper('node', $node);
   $multi_flow = $node_wrapper->field_sba_action_flow->value() == 'multi' ? TRUE : FALSE;
-  $prompt = field_get_items('node', $node, 'field_sba_multistep_prompt');
-  $multi_flow_prompt = !empty($prompt) ? check_markup($prompt[0]['value'], $prompt[0]['format']) : '';
+
   $action_type = 'single_not_multi_flow';
   if ($multiple && !$multi_flow) {
     $action_type = 'multiple_not_multi_flow';
@@ -80,7 +79,23 @@ function sba_message_action_additional_elements(&$form, &$form_state) {
     $action_type = 'multi_flow';
   }
 
+  if ($action_type == 'single_not_multi_flow') {
+
+    $form['sba_messages']['single_not_multi_flow'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Your Message'),
+      '#attributes' => array('class' => array('sba-message')),
+    );
+
+    $prompt = field_get_items('node', $node, 'field_sba_one_step_prompt');
+    $one_step_prompt = !empty($prompt) ? check_markup($prompt[0]['value'], $prompt[0]['format']) : '';
+    $form['sba_messages']['single_not_multi_flow']['prompt'] =  array(
+      '#markup' => $one_step_prompt,
+    );
+  }
+
   if ($action_type == 'multiple_not_multi_flow') {
+
     ctools_include('ajax');
     ctools_include('modal');
     $href = 'messages/nojs/' . arg(1);
@@ -96,6 +111,9 @@ function sba_message_action_additional_elements(&$form, &$form_state) {
     );
   }
   elseif ($action_type == 'multi_flow') {
+    $prompt = field_get_items('node', $node, 'field_sba_multistep_prompt');
+    $multi_flow_prompt = !empty($prompt) ? check_markup($prompt[0]['value'], $prompt[0]['format']) : '';
+
     $form['sba_messages']['multiflow'] = array(
       '#type' => 'fieldset',
       '#title' => t('Step 1 of 2'),
@@ -148,19 +166,10 @@ function sba_message_action_message_form(&$form, $message, $action_type) {
   }
 
   // If it's a multiple message form, use a container instead of a fieldset.
-  if ($action_type == 'single_not_multi_flow') {
-    $form['message'][$message->sba_message_id] = array(
-      '#type' => 'fieldset',
-      '#title' => t('Your Message'),
-      '#attributes' => array('class' => array('sba-message')),
-    );
-  }
-  else {
-    $form['message'][$message->sba_message_id] = array(
-      '#type' => 'container',
-      '#attributes' => array('class' => array('sba-message')),
-    );
-  }
+  $form['message'][$message->sba_message_id] = array(
+    '#type' => 'container',
+    '#attributes' => array('class' => array('sba-message')),
+  );
 
   $form['message'][$message->sba_message_id]['message_id'] = array(
     '#type' => 'value',
