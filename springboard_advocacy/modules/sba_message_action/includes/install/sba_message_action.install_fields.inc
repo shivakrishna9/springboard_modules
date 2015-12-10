@@ -423,76 +423,6 @@ function _sba_message_action_create_node_fields($update = false) {
     ),
   );
 
-  $fields['field_sba_one_step_prompt'] = array(
-    'active' => 1,
-    'cardinality' => 1,
-    'deleted' => 0,
-    'entity_types' => array(
-      0 => 'node',
-    ),
-    'field_name' => 'field_sba_one_step_prompt',
-    'foreign keys' => array(
-      'format' => array(
-        'columns' => array(
-          'format' => 'format',
-        ),
-        'table' => 'filter_format',
-      ),
-    ),
-    'indexes' => array(
-      'format' => array(
-        0 => 'format',
-      ),
-    ),
-    'locked' => 0,
-    'module' => 'text',
-    'settings' => array(),
-    'translatable' => 0,
-    'type' => 'text_long',
-    '_instance' => array(
-      'bundle' => 'sba_message_action',
-      'default_value' => array(
-        0 => array(
-          'value' => ""   ,
-          'format' => 'filtered_html',
-        ),
-      ),
-      'deleted' => 0,
-      'description' => 'This text will appear below the "Your Message" label in one-step layouts. It will appear above the “View all possible messages” link if your one-step action has multiple messages.',
-      'display' => array(
-        'default' => array(
-          'label' => 'hidden',
-          'settings' => array(),
-          'type' => 'hidden',
-          'weight' => 6,
-        ),
-        'teaser' => array(
-          'label' => 'hidden',
-          'settings' => array(),
-          'type' => 'hidden',
-          'weight' => 0,
-        ),
-      ),
-      'entity_type' => 'node',
-      'field_name' => 'field_sba_one_step_prompt',
-      'label' => 'One-step prompt text',
-      'required' => 0,
-      'settings' => array(
-        'text_processing' => 1,
-        'user_register_form' => FALSE,
-      ),
-      'widget' => array(
-        'active' => 1,
-        'module' => 'text',
-        'settings' => array(
-          'rows' => 5,
-        ),
-        'type' => 'text_textarea',
-        'weight' => 5,
-      ),
-    ),
-  );
-
   $fields['field_sba_multistep_prompt'] = array(
     'active' => 1,
     'cardinality' => 1,
@@ -523,12 +453,12 @@ function _sba_message_action_create_node_fields($update = false) {
       'bundle' => 'sba_message_action',
       'default_value' => array(
         0 => array(
-          'value' => "We've crafted multiple messages for this action based on your legislator's position. Please enter your address in order to view and edit those messages."   ,
+          'value' => ""   ,
           'format' => 'filtered_html',
         ),
       ),
       'deleted' => 0,
-      'description' => 'This text will appear in the landing page message layout as a replacement for the "Your Message" form used in one-step layouts.',
+      'description' => 'This text will appear below the "Your Message" label in one-step forms, or below the "Step 1 of 2" label in multi-step forms. On one-step forms with multiple messages, it will appear above the "View all possible messages link."',
       'display' => array(
         'default' => array(
           'label' => 'hidden',
@@ -545,7 +475,7 @@ function _sba_message_action_create_node_fields($update = false) {
       ),
       'entity_type' => 'node',
       'field_name' => 'field_sba_multistep_prompt',
-      'label' => 'Multi-Step Prompt Text',
+      'label' => '"Your Message" Intro Text',
       'required' => 0,
       'settings' => array(
         'text_processing' => 1,
@@ -685,7 +615,7 @@ function _sba_message_action_create_node_fields($update = false) {
       'entity_type' => 'node',
       'field_name' => 'field_sba_action_step_two_submit',
       'label' => 'Step-Two Submit Button Text',
-      'required' => 1,
+      'required' => 0,
       'settings' => array(
         'text_processing' => 0,
         'user_register_form' => FALSE,
@@ -827,9 +757,8 @@ function _sba_message_action_create_node_fields($update = false) {
     $field_group->children = array(
       0 => 'field_sba_action_flow',
       1 => 'field_sba_multistep_prompt',
-      2 => 'field_sba_one_step_prompt',
-      3 => 'field_sba_action_step_two_header',
-      4 => 'field_sba_action_step_two_submit',
+      2 => 'field_sba_action_step_two_header',
+      3 => 'field_sba_action_step_two_submit',
     );
     $field_group->format_type = 'fieldset';
     $field_group->format_settings = array(

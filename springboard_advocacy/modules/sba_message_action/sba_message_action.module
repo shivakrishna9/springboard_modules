@@ -609,13 +609,6 @@ function sba_message_action_form_sba_message_action_node_form_alter(&$form, &$fo
       $form['field_sba_action_flow'][$form['field_sba_action_flow']['#language']]['one']['#description'] = t('This option is disabled because you have multiple messages configured for this action, and at least one of them is user-editable. Make them non-editable to enable this option.');
     }
 
-    $form['field_sba_one_step_prompt']['#states']['visible'] = array(
-      ':input[name="field_sba_action_flow[und]"]' => array('value' => 'one'),
-    );
-
-    $form['field_sba_multistep_prompt']['#states']['visible'] = array(
-      ':input[name="field_sba_action_flow[und]"]' => array('value' => 'multi'),
-    );
 
     $form['field_sba_action_step_two_submit']['#states']['visible'] = array(
       ':input[name="field_sba_action_flow[und]"]' => array('value' => 'multi'),
@@ -624,29 +617,6 @@ function sba_message_action_form_sba_message_action_node_form_alter(&$form, &$fo
     $form['field_sba_action_step_two_header']['#states']['visible'] = array(
       ':input[name="field_sba_action_flow[und]"]' => array('value' => 'multi'),
     );
-
-
-
-//    $form['springboard_taxonomy_options']['action_flow'] = array(
-//      '#type' => 'fieldset',
-//      '#title' => t('Choose Action Flow'),
-//      '#collapsible' => TRUE,
-//      '#collapsed' => FALSE,
-//      '#weight' => '-10'
-//    );
-//
-//    $form['springboard_taxonomy_options']['action_flow']['field_sba_action_flow']
-//      = $form['field_sba_action_flow'];
-//    unset($form['field_sba_action_flow']);
-//    $form['springboard_taxonomy_options']['action_flow']['field_sba_multistep_prompt']
-//      = $form['field_sba_multistep_prompt'];
-//    $form['springboard_taxonomy_options']['action_flow']['field_sba_multistep_prompt']['#prefix'] = '<p><br />';
-//    $form['springboard_taxonomy_options']['action_flow']['field_sba_multistep_prompt']['#weight'] = 100;
-//    unset($form['field_sba_multistep_prompt']);
-//    // Hide the test_mode_email field if test_mode is unchecked.
-//    $form['springboard_taxonomy_options']['action_flow']['field_sba_multistep_prompt']['#states']['visible'] = array(
-//      ':input[name="field_sba_action_flow[und]"]' => array('value' => 'multi'),
-//    );
 
   }
   // Hide the test_mode_email field if test_mode is unchecked.

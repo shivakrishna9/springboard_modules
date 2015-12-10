@@ -71,6 +71,9 @@ function sba_message_action_additional_elements(&$form, &$form_state) {
   $node_wrapper = entity_metadata_wrapper('node', $node);
   $multi_flow = $node_wrapper->field_sba_action_flow->value() == 'multi' ? TRUE : FALSE;
 
+  $prompt = field_get_items('node', $node, 'field_sba_multistep_prompt');
+  $prompt_text = !empty($prompt) ? check_markup($prompt[0]['value'], $prompt[0]['format']) : '';
+
   $action_type = 'single_not_multi_flow';
   if ($multiple && !$multi_flow) {
     $action_type = 'multiple_not_multi_flow';
@@ -87,10 +90,8 @@ function sba_message_action_additional_elements(&$form, &$form_state) {
       '#attributes' => array('class' => array('sba-message')),
     );
 
-    $prompt = field_get_items('node', $node, 'field_sba_one_step_prompt');
-    $one_step_prompt = !empty($prompt) ? check_markup($prompt[0]['value'], $prompt[0]['format']) : '';
     $form['sba_messages']['single_not_multi_flow']['prompt'] =  array(
-      '#markup' => $one_step_prompt,
+      '#markup' => $prompt_text,
     );
   }
 
@@ -106,13 +107,10 @@ function sba_message_action_additional_elements(&$form, &$form_state) {
     );
     $form['sba_messages']['multiple_not_multi_flow']['message'] = array(
       '#type' => 'item',
-      '#markup' => '<p>' . t('We have crafted multiple messages for this action. We will select the right message or messages for your legislators, or others we are targeting, based on their position on this issue, and on the address you enter.')
-        . '</p><p></p>' . ctools_modal_text_button('View all possible messages.', $href, t('View messages'), 'ctools-modal-message-window-style') . '</p>',
+      '#markup' => '<p>' . $prompt_text . '</p><p></p>' . ctools_modal_text_button('View all possible messages.', $href, t('View messages'), 'ctools-modal-message-window-style') . '</p>',
     );
   }
   elseif ($action_type == 'multi_flow') {
-    $prompt = field_get_items('node', $node, 'field_sba_multistep_prompt');
-    $multi_flow_prompt = !empty($prompt) ? check_markup($prompt[0]['value'], $prompt[0]['format']) : '';
 
     $form['sba_messages']['multiflow'] = array(
       '#type' => 'fieldset',
@@ -120,7 +118,7 @@ function sba_message_action_additional_elements(&$form, &$form_state) {
       '#attributes' => array('class' => array('sba-message')),
     );
     $form['sba_messages']['multiflow']['prompt'] =  array(
-      '#markup' => $multi_flow_prompt,
+      '#markup' => $prompt_text,
     );
   }
 
