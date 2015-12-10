@@ -436,7 +436,7 @@ function sba_message_action_get_message_statuses($response) {
       unset($target->addresses);
       $tokens = array('primary_delivery_method' => $target->primary_delivery_method, 'id' => $target->id, 'salutation' => $target->salutation, 'first_name' => $target->first_name, 'last_name' => $target->last_name);
       if (empty($target->webform_status)
-        || (!empty($target->webform_status) && $target->webform_status != 'Hold')) {
+        || (!empty($target->webform_status) && ($target->webform_status != 'Hold' && $target->webform_status != 'CAPTCHA'))) {
         $success_count++;
         $message_success['target_count'] = $success_count;
         $message_success[$id]['people'][] = $target_details;
