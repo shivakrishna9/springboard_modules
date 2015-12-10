@@ -233,9 +233,9 @@ function sba_social_action_preview_form($form, $form_state, $node) {
     $alt_links = array();
     if (!empty($alternates)) {
       foreach ($alternates as $alternate) {
-        if (isset($message['targets']->{strtolower($alternate)})) {
+        if (!empty($message['targets']->{strtolower($alternate)})) {
           $web = $alternate == 'Website' ? t('Official website') : $alternate;
-          $alt_links[] =  l($web, $message['targets']->{strtolower($alternate)});
+          $alt_links[] =  l($web, $message['targets']->{strtolower($alternate)}, array('attributes' => array('target' => '_new')));
         }
       }
     }
