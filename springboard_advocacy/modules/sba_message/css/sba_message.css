@@ -244,7 +244,10 @@
             display: none;
             color: #ff0000;
         }
-
+#springboard-advocacy-message-recipients .sba-target-status {
+    margin-left: 1.5em;
+    color: #000;
+}
         #springboard-advocacy-message-recipients .target-recipient {
             margin: 1em 1.75em;
             border: 1px solid #d5d5d5;
