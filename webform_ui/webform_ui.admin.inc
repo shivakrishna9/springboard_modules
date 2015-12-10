@@ -64,6 +64,13 @@ function webform_ui_settings_form($form, &$form_state) {
     '#description' => t('The submit button text field is normally hidden deep in the form components settings page. This option allows it to appear on the node edit form.'),
   );
 
+  $form['webform_ui_collapse_filter'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Wrap the body field in a fieldset and collapse the filter format fieldset'),
+    '#default_value' => variable_get('webform_ui_collapse_filter', 'FALSE'),
+    '#description' => t('Collapse filter format fieldsets on the node add/edit page in order to save space.'),
+  );
+
   $form['#submit'][] = 'webform_ui_settings_form_submit';
   return system_settings_form($form);
 }

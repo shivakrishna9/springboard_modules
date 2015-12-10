@@ -39,7 +39,9 @@ function webform_ui_permission() {
  * Add a field to allow custom submit text on the node add/edit page.
  */
 function webform_ui_form_alter(&$form, &$form_state, $form_id) {
-  if (!empty($form['#node_edit_form']) && !empty($form['webform']) && $form['#node']->type != 'sba_message_action') {
+  $exclude = array('sba_message_action', 'sba_social_action');
+  if (!empty($form['#node_edit_form']) && !empty($form['webform']) && !in_array($form['#node']->type, $exclude)) {
+    $weight = isset($form['body']['#weight']) ? $form['body']['#weight'] : 0;
     if(variable_get('webform_ui_submit_on_edit', 'FALSE')) {
       $submit_text = '';
       if (isset($form['#node']->nid)) {
@@ -48,15 +50,32 @@ function webform_ui_form_alter(&$form, &$form_state, $form_id) {
       if ($submit_text == '') {
         $submit_text = t('Submit');
       }
+
       $form['submit_button_text'] = array(
         '#type' => 'textfield',
         '#title' => t('Submit Button Text'),
         '#default_value' => $submit_text,
-        '#weight' => 5,
+        '#weight' => $weight -1 ,
       );
       $form['#submit'][] = 'webform_ui_node_form_submit';
     }
+    if (variable_get('webform_ui_collapse_filter', 'FALSE') && isset($form['body'])) {
+      $body =& $form['body'];
+      $form['body_container'] = array(
+        '#type' => 'fieldset',
+        '#title' => t('Body text'),
+        '#collapsible' => TRUE,
+        '#collapsed' => FALSE,
+        '#weight' => $weight,
+        '#attributes' => array('class' => array('webform-ui-body-container'))
+      );
+      $form['body_container']['body'] = $body;
+      unset($form['body']);
+      $form['#attached']['css'][] = drupal_get_path('module', 'webform_ui') . '/css/webform_ui.css';
+    }
   }
+
+
 }
 
 /**
@@ -407,4 +426,33 @@ function webform_ui_views_pre_render(&$view) {
   if ($view->name == 'sbv_webform_submissions' && variable_get('webform_ui_use_bulk_delete', FALSE) == FALSE) {
     unset($view->field['views_bulk_operations']);
   }
+}
+
+/**
+ * Implements hook_element_info_alter().
+ */
+function webform_ui_element_info_alter(&$type) {
+  if(isset($type['text_format']) && variable_get('webform_ui_collapse_filter', 'FALSE')) {
+    $type['text_format']['#process'][] = 'webform_ui_element_process_text_format';
+  }
+}
+
+/**
+ * Process function for text_format element.
+ *
+ * @see webform_ui_element_info_alter().
+ * @see https://drupal.org/node/2104275
+ */
+function webform_ui_element_process_text_format($element) {
+  if ((isset($element['#entity_type']) && $element['#entity_type'] == 'node') && isset($element['#entity']->webform)) {
+    if (in_array('body', $element['#parents'])) {
+      $prefix = isset($element['format']['#prefix']) ? $element['format']['#prefix'] : '';
+      $element['format']['#prefix'] = $element['#description'] . $prefix;
+      unset($element['#description']);
+      $element['format']['#collapsible'] = TRUE;
+      $element['format']['#collapsed'] = TRUE;
+      $element['format']['#title'] = t('Text format');
+    }
+  }
+  return $element;
 }

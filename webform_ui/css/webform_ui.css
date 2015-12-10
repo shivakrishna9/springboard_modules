@@ -54,3 +54,16 @@ fieldset#webform-ui-exposed-search {
     padding-bottom: 30px;
 }
 
+
+.webform-ui-body-container .filter-wrapper {
+     padding-top: 0;
+ }
+
+.webform-ui-body-container .filter-wrapper legend{
+     top: -10px;
+     margin-bottom:10px;
+ }
+
+.webform-ui-body-container fieldset.filter-wrapper.collapsed {
+     height: 20px;
+ }
