@@ -7,9 +7,22 @@
         var currentCount = Drupal.settings.charCount.size;
         var message = 'This option has the potential to cause hundreds of targets to be presented to the user. Check back here when updating your target sets to get a count of all possible targets.';
         if (Drupal.settings.charCount.count > 0) {
-          message = 'This message currently has ' + Drupal.settings.charCount.count + ' eligible targets.  Individual tweets for each of these will be displayed to all activists.';
+          message = 'This message currently has ' + Drupal.settings.charCount.count + ' eligible targets.  The allowed maximum is 25.';
         }
         $('.undistricted-update').text(message);
+        if(Drupal.settings.charCount.count > 1) {
+          var alreadyshow = $('.sba-target-status').text().length;
+          message += '<br /><br />You have used <span class="counter"></span> characters in your default message. You currently have a maximum of <span class="counter-max"></span> characters for this message.<br /><br />';
+          if (alreadyshow > 0) {
+            $('.sba-target-status').html(message).show('slow');
+          }
+          else {
+            $('.sba-target-status').hide().html(message).show('slow');
+          }
+        }
+        else {
+          $('.sba-target-status').text('');
+        }
 
         $text = $('div[id*="edit-messages"]').find('textarea');
         var direction = 'down';
@@ -24,13 +37,16 @@
           if (this.id = 'edit-field-sba-twitter-message-und-0-value') {
             //message edit page
             var handleCount = sbaCheckMax(this);
+            var target = $('body').find('.counter');
+            console.log(target);
           }
           else {
             // message preview page
             handleCount = $(this).closest('.message-preview-message-fieldset').prev('.message-preview-header').find('.twitter-handle').text().length + 1;
+            var target = $(this).siblings('.description').find('.counter');
+
           }
-          var target = $(this).siblings('.description').find('.counter');
-          $('#' + this.id).simplyCountable({
+           $('#' + this.id).simplyCountable({
             counter: target,
             countType: 'characters',
             maxCount: 140 - handleCount,
@@ -70,6 +86,7 @@
       handleCount = handleCount + 1 + period
     }
     $(editText).siblings('.description').find('.counter-max').text(140 - handleCount);
+    $('.sba-target-status').find('.counter-max').text(140 - handleCount);
     var currLen = $(editText).val().replace(/(\r\n|\n|\r)/gm, "").length;
     if (currLen > 140 - handleCount) {
       $(editText).addClass('error');
