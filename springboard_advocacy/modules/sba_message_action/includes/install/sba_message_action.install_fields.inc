@@ -485,7 +485,7 @@ function _sba_message_action_create_node_fields($update = false) {
         'active' => 1,
         'module' => 'text',
         'settings' => array(
-          'rows' => 5,
+          'rows' => 3,
         ),
         'type' => 'text_textarea',
         'weight' => 5,
@@ -690,7 +690,7 @@ function _sba_message_action_create_node_fields($update = false) {
         'active' => 1,
         'module' => 'text',
         'settings' => array(
-          'rows' => 5,
+          'rows' => 3,
         ),
         'type' => 'text_textarea',
         'weight' => 11,

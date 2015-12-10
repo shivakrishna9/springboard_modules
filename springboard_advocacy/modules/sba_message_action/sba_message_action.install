@@ -545,6 +545,7 @@ function sba_message_action_update_7026() {
     );
     $field['label'] = t(' "Your Message" Intro Text');
     $field['default_value'][0]['value'] = '';
+    $field['widget']['settings']['rows'] = 3;
     field_update_instance($field);
   }
 

@@ -425,7 +425,7 @@ function _sba_social_action_create_node_fields($update = false) {
         'active' => 1,
         'module' => 'text',
         'settings' => array(
-          'rows' => 5,
+          'rows' => 3,
         ),
         'type' => 'text_textarea',
         'weight' => 7,
