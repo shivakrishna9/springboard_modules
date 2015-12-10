@@ -289,6 +289,7 @@ function salesforce_donation_fundraiser_refund_success($refund) {
  * Recurring donations that have been canceled should be added to the queue.
  */
 function salesforce_donation_fundraiser_donation_cancel($donation) {
+  $donation = fundraiser_donation_get_donation($donation->did);
   $donation->status = 'canceled';
   salesforce_genmap_send_object_to_queue('salesforce_donation', 'update', $donation->node, $donation->did, $donation, 'donation');
 }
