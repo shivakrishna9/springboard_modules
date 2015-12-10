@@ -2375,6 +2375,16 @@ function fundraiser_sustainers_fundraiser_donation_get_donation($donation) {
       $donation->close_date = date('Y-m-d', $donation->recurring->next_charge);
     }
     $donation->donation['recurs_monthly'] = TRUE;
+
+    // This is a bit of a workaround because of a problem with how $donation->status_charged is
+    // implemented. That property can currently mean 2 different things. First it is used as an
+    // indicator of whether the tranaction has been charged (aka, payment received). It is also
+    // used as an indicator of whether an order can be charged based on status. This causes
+    // canceled donations to follow the same processing as a charged sustainer payment.
+    if ($donation->status == 'canceled' && $donation->status_charged) {
+      $donation->status_charged = 0;
+    }
+
   }
   else {
     $donation->donation['recurs_monthly'] = FALSE;
