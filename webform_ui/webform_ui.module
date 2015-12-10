@@ -445,13 +445,16 @@ function webform_ui_element_info_alter(&$type) {
  */
 function webform_ui_element_process_text_format($element) {
   if ((isset($element['#entity_type']) && $element['#entity_type'] == 'node') && isset($element['#entity']->webform)) {
-    if (in_array('body', $element['#parents'])) {
-      $prefix = isset($element['format']['#prefix']) ? $element['format']['#prefix'] : '';
-      $element['format']['#prefix'] = $element['#description'] . $prefix;
-      unset($element['#description']);
-      $element['format']['#collapsible'] = TRUE;
-      $element['format']['#collapsed'] = TRUE;
-      $element['format']['#title'] = t('Text format');
+    $exclude = array('sba_message_action', 'sba_social_action');
+    if (!empty($element['#entity']) && !in_array($element['#entity']->type, $exclude)) {
+      if (in_array('body', $element['#parents'])) {
+        $prefix = isset($element['format']['#prefix']) ? $element['format']['#prefix'] : '';
+        $element['format']['#prefix'] = $element['#description'] . $prefix;
+        unset($element['#description']);
+        $element['format']['#collapsible'] = TRUE;
+        $element['format']['#collapsed'] = TRUE;
+        $element['format']['#title'] = t('Text format');
+      }
     }
   }
   return $element;
