@@ -41,7 +41,8 @@ function webform_ui_permission() {
 function webform_ui_form_alter(&$form, &$form_state, $form_id) {
   $exclude = array('sba_message_action', 'sba_social_action');
   if (!empty($form['#node_edit_form']) && !empty($form['webform']) && !in_array($form['#node']->type, $exclude)) {
-    $weight = isset($form['body']['#weight']) ? $form['body']['#weight'] : 0;
+    $body_weight = isset($form['body']['#weight']) ? $form['body']['#weight'] : 0;
+
     if(variable_get('webform_ui_submit_on_edit', 'FALSE')) {
       $submit_text = '';
       if (isset($form['#node']->nid)) {
@@ -55,7 +56,7 @@ function webform_ui_form_alter(&$form, &$form_state, $form_id) {
         '#type' => 'textfield',
         '#title' => t('Submit Button Text'),
         '#default_value' => $submit_text,
-        '#weight' => $weight -1 ,
+        '#weight' => $body_weight - .5 ,
       );
       $form['#submit'][] = 'webform_ui_node_form_submit';
     }
@@ -66,7 +67,7 @@ function webform_ui_form_alter(&$form, &$form_state, $form_id) {
         '#title' => t('Body text'),
         '#collapsible' => TRUE,
         '#collapsed' => FALSE,
-        '#weight' => $weight,
+        '#weight' => $body_weight,
         '#attributes' => array('class' => array('webform-ui-body-container'))
       );
       $form['body_container']['body'] = $body;
