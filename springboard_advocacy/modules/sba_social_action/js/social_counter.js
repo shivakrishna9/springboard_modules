@@ -12,9 +12,17 @@
         $('.undistricted-update').text(message);
         if(Drupal.settings.charCount.count > 1) {
           var alreadyshow = $('.sba-target-status').text().length;
-          message += '<br /><br />You have used <span class="counter"></span> characters in your default message. You currently have a maximum of <span class="counter-max"></span> characters for this message.<br /><br />';
+          var districted = $("input[name*=field_sba_target_option]:checked").val();
+          if (districted == 1) {
+            message = '';
+          }
+          else {
+            message += '<br /><br />';
+          }
+          message += 'You have used <span class="counter"></span> characters in your default message. You currently have a maximum of <span class="counter-max"></span> characters for this message.<br /><br />';
           if (alreadyshow > 0) {
             $('.sba-target-status').html(message).show('slow');
+
           }
           else {
             $('.sba-target-status').hide().html(message).show('slow');
@@ -72,6 +80,9 @@
   $(document).ready(function(){
     $('input[name*="field_sba_prepend_target_name"]').on('click', function() {
       sbaCheckMax($('#edit-field-sba-twitter-message-und-0-value'));
+    });
+    $('input[name*="field_sba_target_option"]').on('change', function() {
+      sbaCountable.charCount();
     });
   });
 
