@@ -623,13 +623,16 @@ function sba_quicksign_element_info_alter(&$type) {
  * @return mixed
  */
 function sba_quicksign_element_process_text_format($element) {
-  if (in_array('quicksign_description', $element['#parents'])) {
-    $prefix = isset($element['format']['#prefix']) ? $element['format']['#prefix'] : '';
-    $element['format']['#prefix'] = $element['#description'] . $prefix;
-    unset($element['#description']);
-    $element['format']['#collapsible'] = TRUE;
-    $element['format']['#collapsed'] = TRUE;
-    $element['format']['#title'] = t('Text format');
+  if (isset($element['#array_parents'])) {
+    $parents = array_flip($element['#array_parents']);
+    if (isset($parents['sba_quicksign'])) {
+      $prefix = isset($element['format']['#prefix']) ? $element['format']['#prefix'] : '';
+      $element['format']['#prefix'] = $element['#description'] . $prefix;
+      unset($element['#description']);
+      $element['format']['#collapsible'] = TRUE;
+      $element['format']['#collapsed'] = TRUE;
+      $element['format']['#title'] = t('Text format');
+    }
   }
   return $element;
 }
