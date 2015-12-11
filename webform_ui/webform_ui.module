@@ -130,13 +130,15 @@ function webform_ui_form_webform_components_form_alter(&$form, &$form_state, $fo
  * Also move some stuff around.
  */
 function webform_ui_form_webform_configure_form_alter(&$form, &$form_state) {
-  $form['role_control']['#collapsed'] = TRUE;
-  $form['#after_build'][] = 'webform_ui_form_webform_configure_after_build';
-  $form['#attached']['js'][] = array(
-    'weight' => 100,
-    'data' => drupal_get_path('module', 'webform_ui') . '/js/confirm-settings.js',
-  );
-  $form['#attached']['css'][] = drupal_get_path('module', 'webform_ui') . '/css/webform_ui.css';
+  if (variable_get('webform_ui_confirmation_page', FALSE)) {
+    $form['role_control']['#collapsed'] = TRUE;
+    $form['#after_build'][] = 'webform_ui_form_webform_configure_after_build';
+    $form['#attached']['js'][] = array(
+      'weight' => 100,
+      'data' => drupal_get_path('module', 'webform_ui') . '/js/confirm-settings.js',
+    );
+    $form['#attached']['css'][] = drupal_get_path('module', 'webform_ui') . '/css/webform_ui.css';
+  }
 
 }
 

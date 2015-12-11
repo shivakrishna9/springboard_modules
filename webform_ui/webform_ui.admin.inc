@@ -11,7 +11,7 @@ function webform_ui_settings_form($form, &$form_state) {
 
   $form['webform_ui_hide_hidden'] = array(
     '#type' => 'checkbox',
-    '#title' => t('Hide fields of the type "hidden" on the webform components page.'),
+    '#title' => t('Hide fields of the type "hidden" on the webform components administration page.'),
     '#default_value' => variable_get('webform_ui_hide_hidden', 'FALSE'),
     '#description' => t('Hide rarely edited hidden fields by default. A "show" link will allow you to toggle field visiblity.'),
   );
@@ -35,6 +35,14 @@ function webform_ui_settings_form($form, &$form_state) {
     ),
     '#attributes' => array('style' => 'margin-left: 15px')
   );
+
+  $form['webform_ui_confirmation_page'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Clean up "Confirmation page & settings" UI'),
+    '#default_value' => variable_get('webform_ui_confirmation_page', 'FALSE'),
+    '#description' => 'Wrap "Confirmation page & settings" page options in fieldsets, and collapse them by default.',
+  );
+
 
   $form['webform_ui_hide_clear_all'] = array(
     '#type' => 'checkbox',
@@ -66,7 +74,7 @@ function webform_ui_settings_form($form, &$form_state) {
 
   $form['webform_ui_collapse_filter'] = array(
     '#type' => 'checkbox',
-    '#title' => t('Wrap the body field in a fieldset and collapse the filter format fieldset'),
+    '#title' => t('Wrap the body field on node add/edit forms in a fieldset and collapse the filter format fieldset'),
     '#default_value' => variable_get('webform_ui_collapse_filter', 'FALSE'),
     '#description' => t('Collapse filter format fieldsets on the node add/edit page in order to save space.'),
   );
