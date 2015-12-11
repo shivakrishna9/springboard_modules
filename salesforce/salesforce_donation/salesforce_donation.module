@@ -622,6 +622,18 @@ function salesforce_donation_salesforce_genmap_map_fields(stdClass $donation, En
 }
 
 /**
+ * Implements hook_salesforce_genmap_map_fields_alter()
+ */
+function salesforce_donation_salesforce_genmap_map_fields_alter(&$fields, $context) {
+  if ($context['module'] == 'salesforce_donation') {
+    $donation = $context['object'];
+    if ($donation->status == 'canceled' && !empty($donation->recurring)) {
+      $fields['Cancellation_Reason__c'] = $donation->recurring->cancellation_reason;
+    }
+  }
+}
+
+/**
  * Implements hook_salesforce_genmap_map_field_info().
  *
  * @param object $node
