@@ -52,7 +52,7 @@ function sba_message_action_download_form($form, &$form_state, $node_id) {
 
   $form['description'] = array(
     '#type'  => 'item',
-    '#title' => t('Please provide the email that you want the CSV download link to be sent to.'),
+    '#title' => t('Each failed message can only be downloaded only once. Please provide an email address to receive an export of all messages that failed to send since the previous download.'),
   );
 
   $form['name'] = array(
@@ -100,7 +100,7 @@ function sba_message_action_download_form_submit($form, &$form_state) {
     $api_request = $api_client->invokeClientMethod('getFailedMessagesDownload', $message_advocacy_id, $email_address);
 
     if (isset($api_request->data) && $api_request->data == 'Download queued.') {
-      drupal_set_message('Thanks! Your request has been submitted. You will receive an email shortly with a link to download the failed messages.');
+      drupal_set_message('Thanks! Your request has been submitted. You will receive an email shortly with a link to download any new failed messages.');
     }
     else {
       drupal_set_message('Sorry, your request did not go through. Please try again later.', 'error');
@@ -140,7 +140,7 @@ function sba_message_action_fail_messages_form($form, &$form_state, $node_id) {
 
   $form['description'] = array(
     '#type'  => 'item',
-    '#title' => t('Messages in "Hold" status can be updated to "Failed" status to allow for downloading in the "Download Failed Messages Report" section above. *'),
+    '#title' => t('Messages in "Hold" status can be updated to "Failed" status and downloaded above. We are still working to deliver "Hold" status messages, so we recommend you use this option only in time-sensitive campaigns where you wish to complete message delivery manually within a specific timeframe.'),
   );
 
   $form['caution'] = array(
@@ -161,11 +161,6 @@ function sba_message_action_fail_messages_form($form, &$form_state, $node_id) {
   $form['submit'] = array(
     '#type'  => 'submit',
     '#value' => t('Update Messages'),
-  );
-
-  $form['footnote'] = array(
-    '#type'  => 'item',
-    '#title' => t('* We recommend you use this only in time-sensitive campaigns where you need message delivery completed within a certain timeframe and want to push "Hold" status messages to "Failed" status to manually deliver via mail.'),
   );
 
   return $form;
