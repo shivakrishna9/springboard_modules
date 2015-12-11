@@ -2090,11 +2090,12 @@ function fundraiser_donation_cancel($donation) {
   $username = isset($user->name) ? $user->name : 'Anonymous';
   fundraiser_donation_comment($donation, 'This donation was cancelled on @date by @username.',
     array('@date' => format_date(strtotime('now')), '@username' => $username));
-  // Allow other modules to respond to the cancel. Including Ubercart, etc.
-  module_invoke_all('fundraiser_donation_cancel', $donation);
   // And save the donation as it is at this stage since it was created.
   // This makes sure that any changes made stay in place.
   fundraiser_donation_update($donation, FALSE);
+
+  // Allow other modules to respond to the cancel. Including Ubercart, etc.
+  module_invoke_all('fundraiser_donation_cancel', $donation);
 }
 
 /**
