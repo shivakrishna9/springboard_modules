@@ -99,7 +99,7 @@ function sba_message_form_wrapper($sba_message) {
     'message_recipients' => array(
       '#id' => 'springboard-advocacy-message-recipients',
       '#type' => 'markup',
-      '#markup' => '<div id="springboard-advocacy-message-recipients"><h3>Message Targets</h3><div class = "sba-target-status"></div><div class = "sba-message-status"></div><div id="springboard-advocacy-message-recipients-content"></div></div>',
+      '#markup' => '<div id="springboard-advocacy-message-recipients"><h3>Message Targets</h3><div class = "sba-charcount-status"></div><div class = "sba-target-status"></div><div class = "sba-message-status"></div><div id="springboard-advocacy-message-recipients-content"></div></div>',
       '#prefix' => '<div id="springboard-advocacy-message-recipients-container">',
       '#suffix' => '</div>',
       '#weight' => 2,

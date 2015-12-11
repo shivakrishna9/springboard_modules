@@ -9,23 +9,26 @@
         if (Drupal.settings.charCount.count > 0) {
           message = 'This message currently has ' + Drupal.settings.charCount.count + ' eligible targets.  The allowed maximum is 25.';
         }
-        $('.undistricted-update').text(message);
-        if(Drupal.settings.charCount.count > 1) {
+        var charMess = 'You have used <span class="counter"></span> characters in your default message. You currently have a maximum of <span class="counter-max"></span> characters for this message.<br /><br />';
+        var districted = $("input[name*=field_sba_target_option]:checked").val();
+        if (districted == 1) {
+          $('.sba-target-status').hide('slow');
+        }
+        $('.undistricted-update').hide().text(message).show('slow');
+        if(Drupal.settings.charCount.count > 0) {
+          message += '<br /><br />'
           var alreadyshow = $('.sba-target-status').text().length;
-          var districted = $("input[name*=field_sba_target_option]:checked").val();
-          if (districted == 1) {
-            message = '';
-          }
-          else {
-            message += '<br /><br />';
-          }
-          message += 'You have used <span class="counter"></span> characters in your default message. You currently have a maximum of <span class="counter-max"></span> characters for this message.<br /><br />';
           if (alreadyshow > 0) {
-            $('.sba-target-status').html(message).show('slow');
-
+            if (districted != 1) {
+              $('.sba-target-status').html(message).show('slow');
+            }
+            $('.sba-charcount-status').html(charMess).show('slow');
           }
           else {
-            $('.sba-target-status').hide().html(message).show('slow');
+            $('.sba-charcount-status').hide().html(charMess).show('slow');
+            if (districted != 1) {
+              $('.sba-target-status').hide().html(message).show('slow');
+            }
           }
         }
         else {
@@ -46,7 +49,6 @@
             //message edit page
             var handleCount = sbaCheckMax(this);
             var target = $('body').find('.counter');
-            console.log(target);
           }
           else {
             // message preview page
@@ -98,6 +100,8 @@
     }
     $(editText).siblings('.description').find('.counter-max').text(140 - handleCount);
     $('.sba-target-status').find('.counter-max').text(140 - handleCount);
+    $('.sba-charcount-status').find('.counter-max').text(140 - handleCount);
+
     var currLen = $(editText).val().replace(/(\r\n|\n|\r)/gm, "").length;
     if (currLen > 140 - handleCount) {
       $(editText).addClass('error');

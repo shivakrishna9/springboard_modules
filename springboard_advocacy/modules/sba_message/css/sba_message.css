@@ -105,9 +105,9 @@
             #springboard-advocacy-message-form-container fieldset fieldset {
                 border: none;
             }
-#springboard-advocacy-message-form-container fieldset fieldset .form-wrapper {
-    padding:   0;
-}
+            #springboard-advocacy-message-form-container fieldset fieldset .form-wrapper {
+                padding:   0;
+            }
             #springboard-advocacy-message-form-container fieldset fieldset#sba_message_sba_message_action_message_form_group_sba_editable,
             #edit-field-sba-bottom-conclusion {
                 display: none;
@@ -189,20 +189,6 @@
     #springboard-advocacy-message-form-container div[id*=edit-field-sba-editable-area-optional] {
         margin: 15px 0;
     }
-    #edit-field-sba-twitter-editable .form-item,
-    #sba_message_sba_social_action_twitter_message_form_group_sba_target_options .form-item{
-        display: inline-block;
-        margin-right: 20px;
-    }
-
-#edit-field-sba-twitter-editable label.option,
-#sba_message_sba_social_action_twitter_message_form_group_sba_target_options label.option {
-    top: 4px;
-}
-
-.twit-too-long {
-    color: red;
-}
 
 /********** Floating Recipients "block"  **************/
 
@@ -244,10 +230,7 @@
             display: none;
             color: #ff0000;
         }
-#springboard-advocacy-message-recipients .sba-target-status {
-    margin-left: 1.5em;
-    color: #000;
-}
+
         #springboard-advocacy-message-recipients .target-recipient {
             margin: 1em 1.75em;
             border: 1px solid #d5d5d5;

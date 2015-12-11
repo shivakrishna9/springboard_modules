@@ -334,17 +334,17 @@ function sba_social_action_form_alter(&$form, &$form_state, $form_id) {
     global $base_url;
     $settings = array('sbaSiteUrl' => $base_url .'/advocacy/ajax/search');
     $form['#attached']['js'][] = array('data' => $settings, 'type' => 'setting');
-
+    $form['#attached']['css'] = array(drupal_get_path('module', 'sba_social_action') . '/css/sba-social-message.css');
     $form['sba_target_options_warning'] = array(
       '#type' => 'container',
-      '#suffix' => '<br />',
       '#children' => '<span class="undistricted-update"></span>',
       '#states' => array(
         'visible' => array(
           ':input[name*="field_sba_target_options"]' => array('value' => 0),
         ),
       ),
-      '#weight' => 1
+      '#weight' => 1,
+      '#attributes' => array('class' => array('description'))
     );
     $form['#groups']['group_sba_target_options']->children[] = $form['sba_target_options_warning'];
     $form['#group_children']['sba_target_options_warning'] = 'group_sba_target_options';
