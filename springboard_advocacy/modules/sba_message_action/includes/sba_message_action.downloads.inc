@@ -199,7 +199,7 @@ function sba_message_action_fail_messages_form_submit($form, &$form_state) {
     $api_request = $api_client->invokeClientMethod('failHeldMessages', $message_advocacy_id);
 
     if (isset($api_request->data->message) && preg_match('/queue items are being failed./', $api_request->data->message)) {
-      drupal_set_message('Success! ' . $api_request->data->items_updated . ' "Hold" status message/s have been to set to "Failed" status.');
+      drupal_set_message('Success! ' . $api_request->data->items_updated . ' "Hold" status message(s) have been to set to "Failed" status.');
     }
     else {
       drupal_set_message('Sorry, your request did not go through. Please try again later.', 'error');
