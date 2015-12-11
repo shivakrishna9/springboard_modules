@@ -5,7 +5,7 @@
       Drupal.settings.charCount = {size: 0, count: 0, person: ''};
       sbaCountable.charCount = function () {
         var currentCount = Drupal.settings.charCount.size;
-        var message = 'This option has the potential to cause hundreds of targets to be presented to the user. Check back here when updating your target sets to get a count of all possible targets.';
+        var message = '';
         if (Drupal.settings.charCount.count > 0) {
           message = 'This message currently has ' + Drupal.settings.charCount.count + ' eligible targets.  The allowed maximum is 25.';
         }
@@ -13,6 +13,9 @@
         var districted = $("input[name*=field_sba_target_option]:checked").val();
         if (districted == 1) {
           $('.sba-target-status').hide('slow');
+        }
+        if(Drupal.settings.charCount.size === 0 && $('.target-recipient').length > 0) {
+          charMess += ' None of your current targets have Twitter accounts.<br /><br />';
         }
         $('.undistricted-update').hide().text(message).show('slow');
         if(Drupal.settings.charCount.count > 0) {
@@ -32,6 +35,7 @@
           }
         }
         else {
+          $('.sba-charcount-status').hide().html(charMess).show('slow');
           $('.sba-target-status').text('');
         }
 
