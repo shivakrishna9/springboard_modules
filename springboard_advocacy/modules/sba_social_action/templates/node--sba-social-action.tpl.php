@@ -12,7 +12,7 @@
   hide($content['body']);
   hide($content['field_sba_social_action_img']);
   hide($content['field_sba_social_call_to_action']);
-  hide($content['sba_quicksign']);
+  //hide($content['sba_quicksign']);
 
 ?>
 
@@ -49,7 +49,7 @@
 
     <?php if(!$use_layouts): ?>
     </div>
-    <?php print render($content['sba_quicksign']); ?>
+    <?php //print render($content['sba_quicksign']); ?>
     <?php if(!empty($participants)): ?>
     <div id="participants-container" ><h4>Recent participants</h4><?php print $participants ?></div>
     <?php endif; ?>

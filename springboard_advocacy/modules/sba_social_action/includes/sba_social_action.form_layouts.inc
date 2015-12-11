@@ -67,11 +67,11 @@ function sba_social_action_preprocess_social_two_column_body_right(&$vars) {
  * Helper function for form layouts preprocessors.
  */
 function sba_social_action_build_preprocess(&$vars) {
-  $vars['quicksign'] = '';
-  if (module_exists('sba_quicksign') && sba_quicksign_is_enabled($vars['element']['#node'])) {
-    $quicksign = drupal_get_form('sba_quicksign_form');
-    $vars['quicksign'] = drupal_render($quicksign);
-  }
+//  $vars['quicksign'] = '';
+//  if (module_exists('sba_quicksign') && sba_quicksign_is_enabled($vars['element']['#node'])) {
+//    $quicksign = drupal_get_form('sba_quicksign_form');
+//    $vars['quicksign'] = drupal_render($quicksign);
+//  }
 
   $vars['participants'] = '';
   $view = views_get_view('recent_action_participants');

@@ -18,9 +18,6 @@
       <div id="call-to-action">
         <div id="call-to-action-call"><h2><?php print $call; ?></h2></div>
         <div id="call-to-action-body"> <?php print $body; ?></div>
-        <?php if(!empty($quicksign)): ?>
-          <div id="quicksign-container"><?php print $quicksign ?></div>
-        <?php endif; ?>
         <?php if(!empty($participants)): ?>
           <div id="participants-container">
             <h4 >Recent participants</h4>
