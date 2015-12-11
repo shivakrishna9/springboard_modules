@@ -627,11 +627,13 @@ function sba_quicksign_element_process_text_format($element) {
     $parents = array_flip($element['#array_parents']);
     if (isset($parents['sba_quicksign'])) {
       $prefix = isset($element['format']['#prefix']) ? $element['format']['#prefix'] : '';
-      $element['format']['#prefix'] = $element['#description'] . $prefix;
+      $element['format']['#prefix'] = '<div class="quicksign-description">' . $element['#description'] . '</div>' . $prefix;
       unset($element['#description']);
       $element['format']['#collapsible'] = TRUE;
       $element['format']['#collapsed'] = TRUE;
       $element['format']['#title'] = t('Text format');
+      $element['#attached']['css'][] = drupal_get_path('module', 'sba_quicksign') . '/css/sba-quicksign.css';
+
     }
   }
   return $element;
