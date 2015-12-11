@@ -614,7 +614,7 @@ function salesforce_donation_salesforce_genmap_map_fields(stdClass $donation, En
 
   // If the donation was canceled append the reason because it's not
   // currently mappable.
-  if ($donation->status == 'canceled' && !empty($donation->recurring)) {
+  if (($donation->status == 'canceled' || $donation->status == 'auto_canceled') && !empty($donation->recurring)) {
     $fields['Cancellation_Reason__c'] = $donation->recurring->cancellation_reason;
   }
 
@@ -627,7 +627,7 @@ function salesforce_donation_salesforce_genmap_map_fields(stdClass $donation, En
 function salesforce_donation_salesforce_genmap_map_fields_alter(&$fields, $context) {
   if ($context['module'] == 'salesforce_donation') {
     $donation = $context['object'];
-    if ($donation->status == 'canceled' && !empty($donation->recurring)) {
+    if (($donation->status == 'canceled' || $donation->status == 'auto_canceled') && !empty($donation->recurring)) {
       $fields['Cancellation_Reason__c'] = $donation->recurring->cancellation_reason;
     }
   }
