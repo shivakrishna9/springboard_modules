@@ -366,7 +366,7 @@ function theme_sba_social_action_person_details(&$vars) {
   $party = isset($target['party']) ? '(' . $target['party'] . ')' : '';
   $organization = !empty($target['organization']) ? ', ' . $target['organization'] : '';
   $separator = !empty($title) && !empty($organization) ? ', ' : ' ';
-  $state = isset($vars['message']['targets']->state) ? $vars['message']['targets']->state : '';
+  $state = isset($vars['message']['targets']->state) && $vars['message']['targets']->class_name == 'Legislator' ? $vars['message']['targets']->state : '';
   $state = $state == 'Al' ? '' : $state;
   // Custom targets and executive branch.
   $non_legislative_organization = !empty($organization)  ? $title . $separator . $organization : $state . ' ' .  $party ;

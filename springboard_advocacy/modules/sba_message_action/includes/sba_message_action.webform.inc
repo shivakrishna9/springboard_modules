@@ -515,22 +515,22 @@ function sba_message_action_get_target_details($target) {
 
 function theme_sba_message_action_person_details(&$vars) {
   $output = '';
-
-  $person = isset($vars['name_with_webform_url']) ? $vars['name_with_webform_url'] : $vars['name'];
-  $title = isset($vars['title']) ? ', ' . $vars['title']  : '' ;
-  $party = isset($vars['party']) ? '(' . $vars['party'] . ')' : '';
-  $organization = !empty($vars['organization']) ? ', ' . $vars['organization'] : '';
+  $target = $vars['person'];
+  $person = isset($target['name_with_webform_url']) ? $target['name_with_webform_url'] : $target['name'];
+  $title = isset($target['title']) ? ', ' . $target['title']  : '' ;
+  $party = isset($target['party']) ? '(' . $target['party'] . ')' : '';
+  $organization = !empty($target['organization']) ? ', ' . $target['organization'] : '';
   $separator = !empty($title) && !empty($organization) ? ', ' : ' ';
-  $state = $vars['state'] == 'Al' ? '' : $vars['state'];
-
+  $state = isset($vars['message']['targets']->state) && $vars['message']['targets']->class_name == 'Legislator' ? $vars['message']['targets']->state : '';
+  $state = $target['state'] == 'Al' ? '' : $target['state'];
 
   // Custom targets and executive branch.
   $non_legislative_organization = !empty($organization)  ? $title . $separator . $organization : $state . ' ' .  $party ;
 
   // Legislators. Backward compatible with Target db structure pre-fall 2015 release;
-  $legislative_organization = isset($vars['district']) && !empty($title) ? $title . ', ' .  $state . ' ' .  $party  : $organization . ' ' . $party ;
+  $legislative_organization = isset($target['district']) && !empty($title) ? $title . ', ' .  $state . ' ' .  $party  : $organization . ' ' . $party ;
 
-  $affiliation = isset($vars['district'])  ? $legislative_organization : $non_legislative_organization;
+  $affiliation = isset($target['district'])  ? $legislative_organization : $non_legislative_organization;
   $output .= $person;
   if(!empty($affiliation)) {
     $output .=  $affiliation;

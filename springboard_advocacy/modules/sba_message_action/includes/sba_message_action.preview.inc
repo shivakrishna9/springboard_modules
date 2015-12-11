@@ -456,7 +456,7 @@ function theme_sba_message_action_preview_message_header($vars) {
   $output = '<div class="message-preview-header"><div class="message-preview-intro">';
   $output .= $intro;
   $output .= '</div><div class="message-preview-person">';
-  $output .= theme('sba_message_action_person_details', $vars['message']['person']);
+  $output .= theme('sba_message_action_person_details', $vars['message']);
   $output .= '</div></div>';
   return $output;
 }
