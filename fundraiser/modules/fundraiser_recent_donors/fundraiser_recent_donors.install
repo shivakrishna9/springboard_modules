@@ -48,8 +48,8 @@ function fundraiser_recent_donors_schema() {
         'not null' => TRUE),
       'min_donation_amount' => array(
         'description' => t('The minimum donation amount needed for an opt-in donation to be displayed.'),
-        'type' => 'int',
-        'unsigned' => TRUE,
+        'type' => 'float',
+        'size' => 'medium', 
         'not null' => TRUE),
       'visibility' => array(
         'description' => t('Toggles whether opt-in donation tracking and display of recent donations are enabled.'),

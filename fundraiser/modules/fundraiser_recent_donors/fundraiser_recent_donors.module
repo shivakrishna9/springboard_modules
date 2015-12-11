@@ -11,6 +11,8 @@
  * the recent donations block.
  */
 
+define('FUNDRAISER_RECENT_DONORS_OPT_IN_FORM_KEY', 'recent_donors_list_optin');
+
 /**
  * Implements hook_form_alter().
  *
@@ -43,10 +45,14 @@ function fundraiser_recent_donors_form_alter(&$form, &$form_state, $form_id) {
       '#default_value' => $opt_in_enabled,
       '#weight' => -4,
     );
+    $show_greater_than = 0;
+    if (isset($form['#node']->nid)) {
+      $show_greater_than = _fundraiser_recent_donors_get_min_opt_in_donation_amount($form['#node']->nid);
+    }
     $form['springboard_display']['recent_donors_list']['show_recent_donation_greater_than'] = array(
       '#type' => 'textfield',
       '#title' => t('Only show donations greater than'),
-      '#default_value' => _fundraiser_recent_donors_get_min_opt_in_donation_amount($form['#node']->nid),
+      '#default_value' => $show_greater_than,
       '#weight' => -3,
       '#states' => array(
         'disabled' => array(
@@ -62,12 +68,8 @@ function fundraiser_recent_donors_form_alter(&$form, &$form_state, $form_id) {
     return;
   } // End node edit form changes.
 
-  // Add the user-facing op-in checkbox, if enabled:
+  // Add the submit function for the opt-in checkbox if the opt-in feature is enabled for this node:
   if ($opt_in_enabled && strpos($form_id, 'webform_client_form_') !== FALSE) {
-    $form['recent_donors_list_opt_in'] = array(
-      '#title' => 'Show my name and donation amount in a list of recent donors.',
-      '#type' => 'checkbox',
-    );
     $form['#submit'][] = '_fundraiser_recent_donors_donation_form_submit';
   }
 
@@ -87,7 +89,7 @@ function fundraiser_recent_donors_form_alter(&$form, &$form_state, $form_id) {
  * Form submission for the donation form's op-in checkbox:
  */
 function _fundraiser_recent_donors_donation_form_submit($form, &$form_state) {
-  if (isset($form['#node']->nid) && isset($form_state['values']['recent_donors_list_opt_in'])) {
+  if (isset($form['#node']->nid) && isset($form_state['values'][FUNDRAISER_RECENT_DONORS_OPT_IN_FORM_KEY])) {
     // Get the donation ID:
     $did_query = db_query("SELECT did FROM {fundraiser_donation} WHERE sid = :sid AND nid = :nid AND uid = :uid",
       array(
@@ -116,15 +118,18 @@ function _fundraiser_recent_donors_donation_form_submit($form, &$form_state) {
 function _fundraiser_recent_donors_node_edit_validate($form, &$form_state) {
   if (isset($form_state['values']['show_recent_donation_greater_than'])) {
     $min_amount = $form_state['values']['show_recent_donation_greater_than'];
-    if (!is_numeric($min_amount)) {
+    if (!is_numeric($min_amount) || $min_amount < 0) {
       form_set_error('show_recent_donation_greater_than',
-        t('Please enter a numeric value within the "Only show donations greater than" field.'));
+        t('Please enter a number greater than 0 within the "Only show donations greater than" field.'));
     }
   }
 }
 
 /**
  * Form submission for the "Recent Donors List" node edit form fields:
+ *
+ * This both toggles whether the opt-in feature is enabled and, the first time
+ * it is enabled, automatically adds the "opt-in" checkbox as a form component.
  */
 function _fundraiser_recent_donors_node_edit_submit($form, &$form_state) {
   if (isset($form['#node']->nid) && isset($form_state['values']['allow_recent_donations_opt_in'])) {
@@ -132,7 +137,7 @@ function _fundraiser_recent_donors_node_edit_submit($form, &$form_state) {
     if (isset($form_state['values']['show_recent_donation_greater_than'])) {
       $min_donation_amount = $form_state['values']['show_recent_donation_greater_than'];
     }
-    
+
     $exists_query = db_query("SELECT * FROM {fundraiser_donation_opt_in_block} WHERE nid = :nid",
       array(':nid' => $form['#node']->nid));
     foreach ($exists_query as $exists) {
@@ -156,6 +161,22 @@ function _fundraiser_recent_donors_node_edit_submit($form, &$form_state) {
       )
     );
   }
+}
+
+/**
+ * Implements hook_node_insert().
+ */
+function fundraiser_recent_donors_node_insert($node) {
+  // Add the opt-in checkbox if opt-in is enabled for this node:
+  _fundraiser_recent_donors_add_opt_in_webform_component($node);
+}
+
+/**
+ * Implements hook_node_update().
+ */
+function fundraiser_recent_donors_node_update($node) {
+  // Add the opt-in checkbox if it does not already exist and opt-in is enabled for this node:
+  _fundraiser_recent_donors_add_opt_in_webform_component($node);
 }
 
 /**
@@ -304,3 +325,43 @@ function _fundraiser_recent_donors_render_donation_block() {
   return $block_html;
 }
 
+/**
+ * Helper function to insert the opt-in checkbox onto the donation webform if it
+ * does not already exist:
+ *
+ * @params $node
+ *   The node object for the webform on which the opt-in checkbox will be added.
+ */
+function _fundraiser_recent_donors_add_opt_in_webform_component($node) {
+  // Do nothing if recent opt-in donations support is disabled:
+  if (!isset($node->allow_recent_donations_opt_in) || !$node->allow_recent_donations_opt_in) {
+    return;
+  }
+
+  // Do nothing if the opt-in checkbox's form_key already exists on the form:
+  $max_weight = 0;
+  foreach ($node->webform['components'] as $component) {
+    if ($component['weight'] > $max_weight) {
+      $max_weight = $component['weight'];
+    }
+    if ($component['form_key'] == FUNDRAISER_RECENT_DONORS_OPT_IN_FORM_KEY) {
+      return;
+    }
+  }
+
+  $component = array(
+    'nid' => $node->nid,
+    'pid' => 0,
+    'form_key' => FUNDRAISER_RECENT_DONORS_OPT_IN_FORM_KEY,
+    'name' => t('Opt in '),
+    'type' => 'select',
+    'extra' => array(
+      'items' => FUNDRAISER_RECENT_DONORS_OPT_IN_FORM_KEY . '|' .
+        t('You may show my name and donation amount in a list of recent donors.'),
+      'multiple' => 1,
+      'title_display' => 'none',
+    ),
+    'weight' => 9999,
+  ); 
+  webform_component_insert($component);
+}
