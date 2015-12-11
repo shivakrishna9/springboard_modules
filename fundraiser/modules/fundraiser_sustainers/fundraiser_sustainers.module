@@ -3243,23 +3243,6 @@ function _fundraiser_sustainers_get_total_sustainers_by_nid($nid, $start = FALSE
 /**
  * CRUD style DB function for fundraiser_sustainers_sustainers_node.
  */
-function _fundraiser_sustainers_create_sustainers_node($sustainers_node) {
-  $sustainers_node = (array) $sustainers_node;
-  $sustainers_node_data = FALSE;
-  if (isset($sustainers_node['nid'])) {
-    $sustainers_node_data = _fundraiser_sustainers_get_sustainers_node_by_nid($sustainers_node['nid']);
-  }
-  if (!$sustainers_node_data) {
-    drupal_write_record('fundraiser_sustainers_nodes', $sustainers_node);
-  }
-  else {
-    _fundraiser_sustainers_update_sustainers_node($sustainers_node);
-  }
-}
-
-/**
- * CRUD style DB function for fundraiser_sustainers_sustainers_node.
- */
 function _fundraiser_sustainers_get_sustainers_node_by_nid($nid) {
   return db_query('SELECT * FROM {fundraiser_sustainers_nodes} WHERE nid = :nid', array(':nid' => $nid))->fetchObject();
 }
@@ -3274,9 +3257,11 @@ function _fundraiser_sustainers_update_sustainers_node($sustainers_node) {
     $sustainers_node_data = _fundraiser_sustainers_get_sustainers_node_by_nid($sustainers_node['nid']);
   }
   if (!$sustainers_node_data) {
-    _fundraiser_sustainers_create_sustainers_node($sustainers_node);
+    // Create new record.
+    drupal_write_record('fundraiser_sustainers_nodes', $sustainers_node);
   }
   else {
+    // Update existing record.
     $sustainers_node = array_merge((array) $sustainers_node_data, $sustainers_node);
     drupal_write_record('fundraiser_sustainers_nodes', $sustainers_node, 'nid');
   }
