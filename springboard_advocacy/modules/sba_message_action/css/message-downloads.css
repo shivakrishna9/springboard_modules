@@ -17,6 +17,7 @@
 #sba-message-action-download-form--2 .control-group label, #sba-message-action-fail-messages-form .control-group label {
     font-size:14px;
     font-weight: normal;
+    cursor:default;
 }
 
 #sba-message-action-fail-messages-form .form-item-caution label {
