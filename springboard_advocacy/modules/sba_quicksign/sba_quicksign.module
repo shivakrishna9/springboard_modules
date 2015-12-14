@@ -91,9 +91,9 @@ function sba_quicksign_form_alter(&$form, $form_state, $form_id) {
               $quicksign_field['children'] = sba_quicksign_form();
               $quicksign_field['children']['#weight'] = 1001;
               $form['#attached']['css'][] = drupal_get_path('module', 'sba_quicksign') . '/css/sba-quicksign.css';
+              array_unshift($form['#validate'], 'sba_quicksign_form_validate');
             }
           }
-          array_unshift($form['#validate'], 'sba_quicksign_form_validate');
         }
       }
       else {
@@ -158,7 +158,8 @@ function sba_quicksign_form() {
  */
 function sba_quicksign_form_validate(&$form, &$form_state) {
 
-  if (in_array('sba_quicksign', $form_state['clicked_button']['#parents'])) {
+  $parents = array_flip($form_state['clicked_button']['#parents']);
+  if (isset($parents['sba_quicksign'])) {
     $_SESSION['quicksign_show'] = TRUE;
     // Make webform believe that we clicked the webform submit button.
     $form_state['values']['op'] = $form['actions']['submit']['#value'];
@@ -248,7 +249,9 @@ function sba_quicksign_form_validate(&$form, &$form_state) {
     _sba_quicksign_build_values($form, $form_state, $node, $profile);
   }
   else {
+    // Quicksign button was not clicked.
     unset($_SESSION['sba_quicksign']);
+    unset($form_state['values']['submitted']['sba_quicksign']);
   }
 }
 
