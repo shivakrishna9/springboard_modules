@@ -302,7 +302,7 @@ function sba_message_action_preprocess_webform_confirmations_delivered(&$vars) {
     $link = l($subject, '#', array('attributes' => array('onclick' => $on_click)));
     // Prepare the recipients for display in a bulleted list.
     unset($message['person']['url']);
-    $targets[$key]['person'] = theme('sba_message_action_person_details', $message['person']);
+    $targets[$key]['person'] = theme('sba_message_action_person_details', $message);
     $targets[$key]['link'] =  $link;
   }
 
@@ -350,7 +350,7 @@ function sba_message_action_preprocess_webform_confirmations_undelivered(&$vars)
       $person['name_with_webform_url'] = $name_with_webform_url;
     }
 
-    $target_info[] = theme('sba_message_action_person_details', $person);
+    $target_info[] = theme('sba_message_action_person_details', $message);
 
     // Prepare the contact object so we can replace tokens in the message.
     $contact = (object) $_SESSION['contact'];
