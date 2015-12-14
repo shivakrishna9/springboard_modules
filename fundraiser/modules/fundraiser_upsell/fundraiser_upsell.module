@@ -792,6 +792,7 @@ function fundraiser_upsell_create_recurring_series($donation) {
             $fundraiser_sustainers_series->save();
 
             if (fundraiser_upsell_check_recurring($donation->did)) {
+              module_invoke_all('fundraiser_upsell_create_recurring_success', $donation);
               return TRUE;
             }
           }
