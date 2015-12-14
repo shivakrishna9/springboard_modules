@@ -52,7 +52,7 @@ function sba_message_action_download_form($form, &$form_state, $node_id) {
 
   $form['description'] = array(
     '#type'  => 'item',
-    '#title' => t('Each failed message can only be downloaded only once. Please provide an email address to receive an export of all messages that failed to send since the previous download.'),
+    '#title' => t('Each failed message can be downloaded only once. Please provide an email address to receive an export of all messages that failed to send since the previous download.'),
   );
 
   $form['name'] = array(
