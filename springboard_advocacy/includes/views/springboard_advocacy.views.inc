@@ -659,8 +659,13 @@ function springboard_advocacy_views_pre_render(&$view) {
 
     // Put custom target titles in the role column.
     foreach ($view->result as $key => $result) {
-      if (isset($result->role) &&  isset($result->class_name) && $result->class_name != 'Legislator') {
+      if (isset($result->class_name) && $result->class_name != 'Legislator') {
         $result->role = isset($result->title) ? $result->title : $result->role;
+      }
+    }
+    foreach ($view->result as $key => $result) {
+      if (isset($result->organization) &&  isset($result->class_name) && $result->class_name != 'Legislator') {
+        $result->party = $result->organization;
       }
     }
   }
