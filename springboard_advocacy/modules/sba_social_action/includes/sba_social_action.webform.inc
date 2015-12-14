@@ -362,21 +362,26 @@ function theme_sba_social_action_person_details(&$vars) {
   if ($vars['type'] == 'sba_social_action_twitter_message' && isset($target['twitter'])) {
     //$person .= ' (<span class="twitter-handle">@' . $target['twitter'] . '</span>)';
   }
-  $title = isset($target['title']) ? ', ' . $target['title']  : '' ;
-  $party = isset($target['party']) ? '(' . $target['party'] . ')' : '';
-  $organization = !empty($target['organization']) ? ', ' . $target['organization'] : '';
+  $title = isset($target['title']) ? ' ' . $target['title']  : '' ;
+  $party = isset($target['party']) ? ' (' . $target['party'] . ')' : '';
+  $organization = !empty($target['organization']) ? $target['organization'] : '';
   $separator = !empty($title) && !empty($organization) ? ', ' : ' ';
-  $state = isset($vars['message']['targets']->state) && $vars['message']['targets']->class_name == 'Legislator' ? $vars['message']['targets']->state : '';
+  $state = isset($target['district']) && $vars['message']['targets']->class_name == 'Legislator' ? $vars['message']['targets']->state : '';
+  if (empty($state) && $target['title'] == 'Governor') {
+    $state = ' ' . $target['state'];
+    $separator = ', ';
+  }
   $state = $state == 'Al' ? '' : $state;
   // Custom targets and executive branch.
-  $non_legislative_organization = !empty($organization)  ? $title . $separator . $organization : $state . ' ' .  $party ;
+  $non_legislative_organization = !empty($organization)  ? $title . $separator . $organization :  $title . $separator . $state;
   // Legislators. Backward compatible with Target db structure pre-fall 2015 release;
-  $legislative_organization = isset($target['district']) && !empty($title) ? $title . ', ' .  $state . ' ' .  $party  : $organization . ' ' . $party ;
+  $legislative_organization = isset($target['district']) && !empty($title) ? $title . ', ' .  $state  : $organization;
 
   $affiliation = isset($target['district'])  ? $legislative_organization : $non_legislative_organization;
   $output .= $person;
   if(!empty($affiliation)) {
-    $output .= $affiliation;
+    $output .= $party;
+    $output .= '<br />' . $affiliation;
   }
   return $output;
 }
