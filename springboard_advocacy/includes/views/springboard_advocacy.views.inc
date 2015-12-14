@@ -656,6 +656,13 @@ function springboard_advocacy_views_pre_render(&$view) {
     }
     $view->attachment_before = theme('springboard_advocacy_views_attachment_before',
       array('view' => $view, 'total_rows' => $total_rows, 'query' => $query));
+
+    // Put custom target titles in the role column.
+    foreach ($view->result as $key => $result) {
+      if (isset($result->role) &&  isset($result->class_name) && $result->class_name != 'Legislator') {
+        $result->role = isset($result->title) ? $result->title : $result->role;
+      }
+    }
   }
 }
 
@@ -764,11 +771,11 @@ function springboard_advocacy_preprocess_views_view_table(&$vars)
         $vars['header'][$field] = l($label, $_GET['q'], $link_options);
       }
     }
-
     if (isset($vars['rows'][0]['committee_memberships']) && $field == 'committee_memberships' && $label == '') {
       $vars['header'][$field] = t('Committees');
     }
   }
+
 }
 
 /**
