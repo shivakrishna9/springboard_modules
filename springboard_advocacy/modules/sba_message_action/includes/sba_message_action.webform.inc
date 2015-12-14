@@ -525,7 +525,7 @@ function theme_sba_message_action_person_details(&$vars) {
   $state = $target['state'] == 'Al' ? '' : $target['state'];
 
   // Custom targets and executive branch.
-  $non_legislative_organization = !empty($organization)  ? $title . $separator . $organization : $state . ' ' .  $party ;
+  $non_legislative_organization = !empty($organization)  ? $title . $separator . $organization :  ', ' . $state . ' ' .  $party ;
 
   // Legislators. Backward compatible with Target db structure pre-fall 2015 release;
   $legislative_organization = isset($target['district']) && !empty($title) ? $title . ', ' .  $state . ' ' .  $party  : $organization . ' ' . $party ;
