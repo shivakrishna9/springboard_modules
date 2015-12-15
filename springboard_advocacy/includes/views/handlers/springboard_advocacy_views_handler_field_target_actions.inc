@@ -85,6 +85,7 @@ class springboard_advocacy_views_handler_field_target_actions extends views_hand
         'attributes' => array('class' => array('advocacy-add-target')),
         'query' => array(
           'id' => $values->id,
+          'type' => !empty($values->class_name) ? $values->class_name : '',
           'first' => !empty($values->first_name) ? $values->first_name : '',
           'last' => !empty($values->last_name) ? $values->last_name : '',
           'sal' => !empty($values->salutation) ? $values->salutation : '',

@@ -1155,6 +1155,7 @@
 
         // Individual targets
         if (typeof(queryObj.Id) !== 'undefined') {
+            var type = '';
             var sal = '';
             var first = '';
             var last = '';
@@ -1163,7 +1164,9 @@
             var title = '';
             var state = '';
             var district = '';
-
+            if (typeof(queryObj.Type) !== 'undefined') {
+                type = queryObj.Type.toString().SbaStrCln();
+            }
             if (typeof(queryObj.Sal) !== 'undefined') {
                 sal = queryObj.Sal.toString().SbaStrCln();
             }
@@ -1186,9 +1189,11 @@
                 state = queryObj.State.toString().SbaStrCln();
             }
             if (typeof(queryObj.Party) !== 'undefined') {
-                party = queryObj.Party.toString().SbaStrCln();
-                if (party.length > 0) {
-                    party = '(' + party + ')';
+                if (type == 'Legislator') {
+                    party = queryObj.Party.toString().SbaStrCln();
+                    if (party.length > 0) {
+                        party = '(' + party + ')';
+                    }
                 }
             }
 
@@ -1196,10 +1201,10 @@
             // Custom targets and executive branch.
             var non_legislative_organization = org != ''  ? title + separator + org : '';
 
-            var legislative_organization = district != '' && title != '' ? title + ', ' +  district + ' ' +  party  :  org + ' ' + party ;
+            var legislative_organization = district != '' && title != '' ? title + ', ' +  district  :  org;
             var affiliation = district != ''  ? legislative_organization : non_legislative_organization;
 
-            return  '<div class="individual">' + sal + " " +  first + " " + last + "<br />" + affiliation +'</div>';
+            return  '<div class="individual">' + sal + " " +  first + " " + last + ' ' + party  + "<br />" + affiliation +'</div>';
         }
         var cleanUp = JSON.stringify(queryObj).SbaJsonToReadable();
         if (typeof(queryObj.Fields) !== 'undefined' || typeof(queryObj.Genderxxxx) !== 'undefined'
