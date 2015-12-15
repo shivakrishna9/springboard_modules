@@ -87,6 +87,12 @@ function salesforce_npsp_salesforce_queue_create_item_alter(&$item) {
     $fundraiser_sustainers_series = entity_load_single('fundraiser_sustainers_series', $item['drupal_id']);
     if (!empty($fundraiser_sustainers_series)) {
       $item['sobject']->fields['npe03__Contact__c'] = '[Contact:user:' . $fundraiser_sustainers_series->uid . ']';
+
+      if (empty(_salesforce_sync_get_rmid($item))) {
+        // Set installments to zero for unsynced objects to prevent NPSP
+        // creating two sets of related opportunities.
+        $item['sobject']->fields['npe03__Installments__c'] = 0;
+      }
     }
   }
 }
