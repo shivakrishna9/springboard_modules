@@ -936,7 +936,6 @@ function sba_social_action_save_twitter_profile($data, $uid) {
     $account = user_load($uid); // Loading account
     $edit = array();
     foreach ($save_data as $field_name => $value) {
-      $account = user_load($uid); // Loading account
       $edit[$field_name] = array(
         LANGUAGE_NONE => array(
           0 => array(
