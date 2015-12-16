@@ -2809,7 +2809,7 @@ function _fundraiser_get_fundraiser_by_nid($nid) {
   $fundraiser = db_query('SELECT * FROM {fundraiser} WHERE nid = :nid', array(':nid' => $nid))->fetchObject();
   if ($fundraiser) {
     // Explode the donation amounts that were imploded during save.
-    $donation_amounts = explode(',', $fundraiser->donation_amounts);
+    $donation_amounts = explode('|||', $fundraiser->donation_amounts);
     $donation_amounts = array_unique($donation_amounts);
     $exploded_amounts = array();
     foreach ($donation_amounts as $donation_amount) {
