@@ -908,3 +908,35 @@ function sba_social_action_cron() {
   module_load_include('inc', 'sba_social_action', 'includes/sba_social_action.oauth_cache');
   sba_social_action_cron_expire_sessions();
 }
+
+/**
+ * Implements hook_entity_info().
+ */
+function sba_social_action_entity_info() {
+  return array(
+    'sba_twitter_status' => array(
+      'label' => t('Twitter Post'),
+      'module' => 'sba_social_action',
+      'entity class' => 'SbaTwitterStatus',
+      'controller class' => 'EntityAPIController',
+      'base table' => 'sba_social_action_tweets',
+      'entity keys' => array(
+        'id' => 'status_id',
+      ),
+      'label callback' => 'entity_class_label',
+      'uri callback' => 'entity_class_uri',
+    ),
+  );
+}
+
+class SbaTwitterStatus extends Entity {
+
+  public $id;
+
+  /**
+   * Constructor for TwitterStatus
+   */
+  public function __construct($values = array()) {
+    parent::__construct($values, 'sba_twitter_status');
+  }
+}

@@ -415,8 +415,13 @@ function sba_social_action_preview_form_validate($form, &$form_state) {
 function sba_social_action_preview_form_submit($form, &$form_state) {
   module_load_include('php', 'oauth_common', 'lib/OAuth');
   module_load_include('php', 'sba_social_action', 'includes/socialTwitter.lib');
-
   $node = $form['#action_node'];
+  $sid = !empty($_SESSION['social_action_sid']['sid']) ? $_SESSION['social_action_sid']['sid'] : FALSE;
+  if ($sid) {
+    module_load_include('inc', 'webform', 'includes/webform.submissions');
+    $submission = webform_get_submission($node->nid, $sid);
+  }
+
   foreach ($form_state['values']['messages'] as $message) {
 
     $message_text = isset($message['message']['edited_body']) ? $message['message']['edited_body'] : $message['message']['body'];
@@ -438,7 +443,24 @@ function sba_social_action_preview_form_submit($form, &$form_state) {
             $twitter_user_cache['values']['oauth_token_secret']
           );
 
-          $twitter->statuses_update($body);
+          $response = $twitter->statuses_update($body);
+
+          if (!empty($response['id'] && !empty($submission))) {
+            $twitter_status = new SbaTwitterStatus();
+            $twitter_status->twitter_status_id = $response['id'];
+            $twitter_status->screen_name = $response['user']['screen_name'];
+            $twitter_status->created = strtotime($response['created_at']);
+            $twitter_status->retweet_count = $response['retweet_count'];
+            $twitter_status->favorite_count = $response['favorite_count'];
+            $twitter_status->uid = $submission->uid;
+            $twitter_status->nid = $node->nid;
+            $twitter_status->sid = $sid;
+            $twitter_status->message_entity_id = $message['message']['sba_message_id'];
+            $twitter_status->target_id = $message['message']['target']['target_id'];
+            $twitter_status->entities = '';//$response['entities'];
+            $twitter_status->is_new = TRUE;
+            entity_save('sba_twitter_status', $twitter_status);
+          }
         }
 
       } catch (socialTwitterException $e) {
@@ -446,7 +468,7 @@ function sba_social_action_preview_form_submit($form, &$form_state) {
       }
     }
     else {
-      drupal_set_message('This action was in test mode. Messages were not sent.', 'warning', TRUE);
+      //drupal_set_message('This action was in test mode. Messages were not sent.', 'warning', TRUE);
     }
   }
 
@@ -455,7 +477,6 @@ function sba_social_action_preview_form_submit($form, &$form_state) {
 
   // Redirect to the original confirmation page.
   // $sid is set in sba_social_action_multifow_submit()
-  $sid = !empty($_SESSION['social_action_sid']['sid']) ? $_SESSION['social_action_sid']['sid'] : FALSE;
   $_SESSION['social_action_sid']['completed'] = TRUE;
   springboard_advocacy_negotiate_redirect($node, $sid, $form_state);
   if ($sid) {
