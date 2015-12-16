@@ -237,3 +237,13 @@ function sba_social_action_update_7007() {
     db_create_table('sba_social_action_tweets', $schema['sba_social_action_tweets']);
   }
 }
+
+function sba_social_action_update_7008() {
+  module_load_include('inc', 'sba_social_action', 'includes/install/sba_social_action.install_profile');
+  _sba_social_action_create_twitter_screen_name();
+  _sba_social_action_create_twitter_id_str();
+  _sba_social_action_create_twitter_status_count();
+  _sba_social_action_create_twitter_following_count();
+  _sba_social_action_create_twitter_followers_count();
+  _sba_social_action_create_twitter_created_at();
+}

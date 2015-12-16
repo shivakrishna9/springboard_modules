@@ -909,7 +909,47 @@ function sba_social_action_cron() {
   sba_social_action_cron_expire_sessions();
 }
 
-/**
+function sba_social_action_save_twitter_profile($data, $uid) {
+
+  module_load_include('php', 'oauth_common', 'lib/OAuth');
+  module_load_include('php', 'sba_social_action', 'includes/socialTwitter.lib');
+  $oauth_token = decrypt($data['values']['oauth_token']);
+  $oauth_token_secret = decrypt($data['values']['oauth_token_secret']);
+
+  $twitter = new socialTwitter(
+    variable_get('social_action_twitter_consumer_key', ''),
+    variable_get('social_action_twitter_consumer_secret', ''),
+    $oauth_token,
+    $oauth_token_secret
+  );
+
+  $response = $twitter->users_show($data['values']['screen_name']);
+  if (!empty($response)) {
+    $save_data = array(
+      'sbp_twitter_screen_name' => $response['screen_name'],
+      'sbp_twitter_id_str' => $response['id_str'],
+      'sbp_twitter_following_count' => $response['followers_count'],
+      'sbp_twitter_followers_count' => $response['friends_count'],
+      'sbp_twitter_status_count' => $response['statuses_count'],
+      'sbp_twitter_created_at' => strtotime($response['created_at']),
+    );
+    $account = user_load($uid); // Loading account
+    $edit = array();
+    foreach ($save_data as $field_name => $value) {
+      $account = user_load($uid); // Loading account
+      $edit[$field_name] = array(
+        LANGUAGE_NONE => array(
+          0 => array(
+            'value' => $value,
+          ),
+        ),
+      );
+    }
+    user_save($account, $edit);
+  }
+}
+
+/*
  * Implements hook_entity_info().
  */
 function sba_social_action_entity_info() {
