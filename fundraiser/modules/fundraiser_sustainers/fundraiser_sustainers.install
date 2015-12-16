@@ -72,6 +72,33 @@ function fundraiser_sustainers_schema() {
         'not null' => TRUE,
         'default' => 'user_choice', // user_choice, always, never
       ),
+      'recurring_donation_amounts' => array(
+        'description' => 'A comma delimited string of ask amounts to be displayed on the donation form.',
+        'type' => 'varchar',
+        'length' => '1024',
+        'not null' => FALSE,
+      ),
+      'show_other_amount' => array(
+        'description' => 'Flag to toggle the other amount field on and off.',
+        'type' => 'int',
+        'size' => 'tiny',
+        'not null' => FALSE,
+        'default' => 0,
+      ),
+      'minimum_donation_amount' => array(
+        'description' => 'The minimum donation amount the donation form will accept.',
+        'type' => 'numeric',
+        'not null' => FALSE,
+        'precision' => '15',
+        'scale' => '3',
+      ),
+      'default_amount' => array(
+        'description' => 'Ask amount for the donation form to default to.',
+        'type' => 'numeric',
+        'not null' => FALSE,
+        'precision' => '15',
+        'scale' => '3',
+      ),
     ),
     'primary key' => array('nid'),
   );
@@ -607,4 +634,58 @@ function fundraiser_sustainers_update_7011() {
   db_add_index('fundraiser_sustainers_log', 'fundraiser_sustainers_log_next_charge', array('next_charge'));
   db_add_index('fundraiser_sustainers_log', 'fundraiser_sustainers_log_old_state', array('old_state'));
   db_add_index('fundraiser_sustainers_log', 'fundraiser_sustainers_log_new_state', array('new_state'));
+}
+
+/**
+ * Adds {fundraiser_sustainers_nodes} fields for recurring ask amounts.
+ */
+function fundraiser_sustainers_update_7012(&$sandbox) {
+  $fields = array(
+    'recurring_donation_amounts' => array(
+      'description' => 'A comma delimited string of ask amounts to be displayed on the donation form.',
+      'type' => 'varchar',
+      'length' => '1024',
+      'not null' => FALSE,
+    ),
+    'show_other_amount' => array(
+      'description' => 'Flag to toggle the other amount field on and off.',
+      'type' => 'int',
+      'size' => 'tiny',
+      'not null' => FALSE,
+      'default' => 0,
+    ),
+    'minimum_donation_amount' => array(
+      'description' => 'The minimum donation amount the donation form will accept.',
+      'type' => 'numeric',
+      'not null' => FALSE,
+      'precision' => '15',
+      'scale' => '3',
+    ),
+    'default_amount' => array(
+      'description' => 'Ask amount for the donation form to default to.',
+      'type' => 'numeric',
+      'not null' => FALSE,
+      'precision' => '15',
+      'scale' => '3',
+    ),
+  );
+  db_add_field('fundraiser_sustainers_nodes', 'recurring_donation_amounts', $fields['recurring_donation_amounts']);
+  db_add_field('fundraiser_sustainers_nodes', 'show_other_amount', $fields['show_other_amount']);
+  db_add_field('fundraiser_sustainers_nodes', 'minimum_donation_amount', $fields['minimum_donation_amount']);
+  db_add_field('fundraiser_sustainers_nodes', 'default_amount', $fields['default_amount']);
+}
+
+/**
+ * Copies {fundraiser} values to corresponding {fundraiser_sustainers_nodes} records
+ * for recurring ask amounts.
+ */
+function fundraiser_sustainers_update_7013(&$sandbox) {
+  db_query(
+    "UPDATE {fundraiser_sustainers_nodes} fsn, {fundraiser} f
+      SET fsn.recurring_donation_amounts=f.donation_amounts,
+        fsn.show_other_amount=f.show_other_amount,
+        fsn.minimum_donation_amount=f.minimum_donation_amount,
+        fsn.default_amount=f.default_amount
+      WHERE fsn.nid=f.nid;"
+  );
 }
