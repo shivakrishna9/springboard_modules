@@ -1,0 +1,30 @@
+{
+  "tokens": [
+    [
+      "donation",
+      "[donation:address]",
+      "Donor address"
+    ],
+    [
+      "donation",
+      "[donation:address_line_2]",
+      "Donor address line 2"
+    ]
+  ],
+  "token_sets": [
+    {
+      "name": "Form specific upsell content",
+      "tokens": [
+        "[donation:address]",
+        "[donation:address_line_2]"
+      ]
+    },
+    {
+      "name": "Upsell thank you content",
+      "tokens": [
+        "[donation:address]",
+        "[donation:address_line_2]"
+      ]
+    }
+  ]
+}

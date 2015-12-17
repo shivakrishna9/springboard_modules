@@ -74,36 +74,20 @@ function springboard_token_set_schema() {
  * Implements hook_install().
  */
 function springboard_token_set_install() {
-  // Create example token sets.
-  $tokens = array();
+  $token_data = json_decode(file_get_contents(drupal_get_path('module', 'springboard_token_set') . '/data/token_sets.json'));
 
-  $tokens['node'] = array(
-    '[node:author]',
-    '[node:title]',
-  );
+  foreach ($token_data->token_sets as $token_set) {
+    $tsid = springboard_token_set_add_set($token_set->name);
 
-  $tokens['donation'] = array(
-    '[donation:address]',
-    '[donation:city]',
-    '[donation:country]',
-    '[donation:state]',
-    '[donation:zip]',
-    '[donation:amount}',
-  );
-
-  $tsid = springboard_token_set_add_set('Page Body');
-
-  if (!empty($tsid)) {
-    foreach ($tokens['node'] as $token) {
-      springboard_token_set_add_token($tsid, 'node', $token);
-    }
-  }
-
-  $tsid = springboard_token_set_add_set('Donation Confirmation');
-
-  if (!empty($tsid)) {
-    foreach ($tokens['donation'] as $token) {
-      springboard_token_set_add_token($tsid, 'donation', $token);
+    if (!empty($tsid)) {
+      foreach ($token_set->tokens as $token_string) {
+        foreach ($token_data->tokens as $token) {
+          if ($token[1] == $token_string) {
+            springboard_token_set_add_token($tsid, $token[0], $token[1], $token[2]);
+            continue;
+          }
+        }
+      }
     }
   }
 }

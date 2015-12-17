@@ -132,13 +132,16 @@ function springboard_token_set_add_set($name) {
  *   The token type.
  * @param string $token
  *   The token.
+ * @param string $token_description
+ *   The token description.
  */
-function springboard_token_set_add_token($tsid, $token_type, $token) {
+function springboard_token_set_add_token($tsid, $token_type, $token, $token_description) {
   db_insert('token_set_tokens')
     ->fields(array(
       'tsid' => $tsid,
       'token_type' => $token_type,
       'token' => $token,
+      'token_description' => $token_description,
     ))
     ->execute();
 }
