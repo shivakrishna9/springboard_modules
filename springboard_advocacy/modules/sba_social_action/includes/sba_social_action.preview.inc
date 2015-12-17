@@ -9,14 +9,15 @@ function sba_social_action_message_preview_page($nid) {
 
   // $nid already sanitized in the access hook.
   $node = node_load($nid);
-  if(!empty($node->field_sba_test_mode)) {
+  $test_mode = field_get_items('node', $node, 'field_sba_test_mode');
+  if(!empty($node->field_sba_test_mode[0]['value'])) {
     drupal_set_message('This action is in test mode. Messages will not be not sent.', 'warning', TRUE);
   }
   if (isset($_SESSION['messages']['status'])) {
     // Prevent the confirmation message from appearing prematurely.
     $_SESSION['saved_messages']['status'] = $_SESSION['messages']['status'];
     // clear all
-    drupal_get_messages('status');
+    //drupal_get_messages('status');
   }
   // Check if the step two form has already been submitted.
   // @todo think about this.

@@ -243,6 +243,15 @@ function sba_social_action_theme($existing, $type, $theme, $path) {
   );
 }
 
+function sba_social_action_node_presave($node) {
+  if ($node->type == 'sba_social_action') {
+    if (empty($node->nid)) {
+      $node->webform['confirmation'] = t('Thank you for participating in the messaging campaign.');
+      $node->webform['confirmation']   .= "\n\n" . '[social_action:twitter_signout]';
+    }
+  }
+}
+
 /**
  * Implements hook_node_insert().
  *

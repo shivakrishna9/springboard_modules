@@ -22,7 +22,6 @@
     margin-bottom: 2em;
     padding-bottom: 1em;
     display: block;
-    border-bottom: 1px solid #ccc;
     max-width: 770px;
 }
 .message-preview-container div.sba-message.last {
