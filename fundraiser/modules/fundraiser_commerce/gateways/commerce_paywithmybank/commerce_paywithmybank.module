@@ -488,17 +488,17 @@ function commerce_paywithmybank_create_payment_transaction($api_transaction, $pa
   // Set the transaction amount.
   switch ($api_transaction->status) {
     case PayWithMyBank::TRANSACTION_STATUS_COMPLETED:
-      $amount = commerce_currency_decimal_to_amount($transaction->paid, $transaction->currency);
+      $amount = commerce_currency_decimal_to_amount($api_transaction->paid, $api_transaction->currency);
       break;
     case PayWithMyBank::TRANSACTION_STATUS_REVERSED:
-      $amount = commerce_currency_decimal_to_amount($transaction->reversed, $transaction->currency);
+      $amount = commerce_currency_decimal_to_amount($api_transaction->reversed, $api_transaction->currency);
       break;
     case PayWithMyBank::TRANSACTION_STATUS_PARTIALLY_REFUNDED:
     case PayWithMyBank::TRANSACTION_STATUS_REFUNDED:
-      $amount = (commerce_currency_decimal_to_amount($transaction->refunded, $transaction->currency) * -1);
+      $amount = (commerce_currency_decimal_to_amount($api_transaction->refunded, $api_transaction->currency) * -1);
       break;
     default:
-      $amount = commerce_currency_decimal_to_amount($transaction->amount, $transaction->currency);
+      $amount = commerce_currency_decimal_to_amount($api_transaction->amount, $api_transaction->currency);
       break;
   }
 
