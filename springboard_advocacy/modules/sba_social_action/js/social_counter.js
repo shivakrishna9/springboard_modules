@@ -3,16 +3,28 @@
     attach: function (context, settings) {
       window.sbaCountable = {};
       Drupal.settings.charCount = {size: 0, count: 0, person: ''};
+      var districted = $("input[name*=field_sba_target_option]:checked").val();
+      var quick = $('.views-targets-button-wrapper');
+      if (districted != 1) {
+        quick.detach();
+      }
+      else {
+        $('.button-container').append(quick);
+      }
       sbaCountable.charCount = function () {
         var currentCount = Drupal.settings.charCount.size;
         var message = '';
         if (Drupal.settings.charCount.count > 0) {
-          message = 'This message currently has ' + Drupal.settings.charCount.count + ' eligible targets.  The allowed maximum is 25.';
+          message = 'This message currently has ' + Drupal.settings.charCount.count + ' eligible targets.  The allowed maximum is 5.';
         }
         var charMess = 'You have used <span class="counter"></span> characters in your default message. You currently have a maximum of <span class="counter-max"></span> characters for this message.<br /><br />';
-        var districted = $("input[name*=field_sba_target_option]:checked").val();
+        districted = $("input[name*=field_sba_target_option]:checked").val();
         if (districted == 1) {
           $('.sba-target-status').hide('slow');
+          $('.button-container').append(quick);
+        }
+        else {
+          quick.detach();
         }
         if(Drupal.settings.charCount.size === 0 && $('.target-recipient').length > 0) {
           charMess += ' None of your current targets have Twitter accounts.<br /><br />';

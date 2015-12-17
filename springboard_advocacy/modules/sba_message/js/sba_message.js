@@ -416,16 +416,16 @@
                 if (hasDistrict == 0) {
                     var limit = true;
                     var targetCount = Drupal.settings.charCount.count;
-                    if (targetCount > 10 && targetCount < 26) {
-                        limit = confirm("Are you sure? Current settings will result in " + targetCount + ' tweets for this message.');
-                    }
-                    if (!limit) {
-                        return false;
-                    }
-                    if (targetCount > 25) {
+                    //if (targetCount > 4 && targetCount < 26) {
+                    //    limit = confirm("Are you sure? Current settings will result in " + targetCount + ' tweets for this message.');
+                    //}
+                    //if (!limit) {
+                    //    return false;
+                    //}
+                    if (targetCount > 5) {
                         messages.push({
                             type: 'error',
-                            message: 'This message will generate more than 25 tweets per user, please revisit your target options and try again.'
+                            message: 'This message will generate more than 5 tweets per user, please revisit your target options and try again.'
                         });
                     }
                 }

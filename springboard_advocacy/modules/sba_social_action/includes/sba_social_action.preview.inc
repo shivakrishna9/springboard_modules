@@ -194,14 +194,23 @@ function sba_social_action_preview_form($form, $form_state, $node) {
     }
     $count++;
     if (isset($this_message['body_show'])) {
-      $this_message['body_show']['#markup'] = '@' . $message['person']['twitter'] . ' ' . $this_message['body_show']['#markup'];
+      $display_tweet = check_markup('@' . $message['person']['twitter'] . ' ' . $this_message['body_show']['#markup'], 'plain_text');
+      $send_tweet = '@' . $message['person']['twitter'] . ' ' . $this_message['body_show']['#markup'];
+      $this_message['body_show']['#markup'] = $display_tweet;
     }
 
     if (isset($this_message['edited_body'])) {
       $prepend = !empty($this_message['prepend']['#value']) ? '.' : '';
       $this_message['body_show']['#suffix'] = '<div class="sba-full-tweet"><div class="sba-display-hint">This will be your full tweet:</div><div class="editable-message-preview"><span class="preview-target-text">' . $prepend . '@' . $message['person']['twitter'] . '</span><span class="preview-replace-text"></span></div></div>';
     }
-
+    if (!isset($this_message['edited_body']) && $access == TRUE) {
+      $prepend = !empty($this_message['prepend']['#value']) ? '.' : '';
+      $text = $send_tweet;
+      $link = l('Customize and send this tweet', 'https://twitter.com/intent/tweet', array('query' => array('text' => $text)));
+      $prepend = !empty($this_message['prepend']['#value']) ? '.' : '';
+      $img = drupal_get_path('module', 'sba_social_action') . '/images/Twitter_logo_blue_32.png';
+      $this_message['body_show']['#suffix'] = '<div class="twitter-asset"><img src="/' . $img . '"><div class="sba-web-intent-link">' . $link . '</div></div>';
+    }
     // Build an array of target properties
     $this_message['target'] = array(
       '#type' => 'value',
@@ -253,7 +262,8 @@ function sba_social_action_preview_form($form, $form_state, $node) {
   // Following are some header area content which need to be here in the code
   //  to get ajax updated values.
   if($access == TRUE) {
-    $markup = ('Please review the messages below; or if you prefer, simply <span id="multiflow-send-now-wrapper" style="display:inline-block"><a href="#" id="multiflow-send-now">send now</a></span>.');
+    $markup = '';
+    //$markup = ('Please review the messages below; or if you prefer, simply <span id="multiflow-send-now-wrapper" style="display:inline-block"><a href="#" id="multiflow-send-now">send now</a></span>.');
   }
   else {
     $markup = t('In order to post, you must authorize our web app to access your Twitter account.');
@@ -312,16 +322,16 @@ function sba_social_action_preview_form($form, $form_state, $node) {
 
   $submit_field = field_get_items('node', $node, 'field_sba_social_step_two_submit');
   $submit_value = field_view_value('node', $node, 'field_sba_social_step_two_submit', $submit_field[0]);
-  $markup = isset($submit_value['#markup']) ? $submit_value['#markup'] : t('Send Now');
+  $markup = isset($submit_value['#markup']) ? $submit_value['#markup'] : t("I'm done");
   // Add submit button
   $form['form_container']['submit'] = array(
     '#prefix' => '<div id="edit-actions">',
     '#suffix' => '</div>',
     '#type' => 'submit',
-    '#value' => $markup,
+    '#value' => "I'm done tweeting",
     '#weight' => 10,
     '#attributes' => array('class' => 'social-action-preview-submit'),
-    '#disabled' => !$access,
+   // '#disabled' => !$access,
   );
   return $form;
 }

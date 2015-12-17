@@ -259,7 +259,7 @@ function _sba_social_action_create_node_fields($update = false) {
     '_instance' => array(
       'bundle' => 'sba_social_action',
       'default_value' => array(0 => array(
-        'value' => t('Send Now'),
+        'value' => t("I'm done"),
       ),
       ),
       'deleted' => 0,
