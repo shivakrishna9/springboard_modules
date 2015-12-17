@@ -494,7 +494,7 @@ function commerce_paywithmybank_create_payment_transaction($api_transaction, $pa
         $amount = $tmp_amount;
       }
       else {
-        // This is a regular autthorization.
+        // This is a regular authorization.
         $amount = commerce_currency_decimal_to_amount($api_transaction->amount, $api_transaction->currency);
       }
       break;
