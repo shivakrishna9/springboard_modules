@@ -498,7 +498,7 @@ function commerce_paywithmybank_create_payment_transaction($api_transaction, $pa
       $amount = (commerce_currency_decimal_to_amount($transaction->refunded, $transaction->currency) * -1);
       break;
     default:
-      $amount = 0;
+      $amount = commerce_currency_decimal_to_amount($transaction->amount, $transaction->currency);
       break;
   }
 
