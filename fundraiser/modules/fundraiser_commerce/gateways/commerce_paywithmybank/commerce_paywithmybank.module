@@ -487,6 +487,17 @@ function commerce_paywithmybank_create_payment_transaction($api_transaction, $pa
 
   // Set the transaction amount.
   switch ($api_transaction->status) {
+    case PayWithMyBank::TRANSACTION_STATUS_AUTHORIZED:
+      $tmp_amount = commerce_currency_decimal_to_amount($api_transaction->paid, $api_transaction->currency);
+      if ($tmp_amount < 0) {
+        // This is an authorization for a refund.
+        $amount = $tmp_amount;
+      }
+      else {
+        // This is a regular autthorization.
+        $amount = commerce_currency_decimal_to_amount($api_transaction->amount, $api_transaction->currency);
+      }
+      break;
     case PayWithMyBank::TRANSACTION_STATUS_COMPLETED:
       $amount = commerce_currency_decimal_to_amount($api_transaction->paid, $api_transaction->currency);
       break;
