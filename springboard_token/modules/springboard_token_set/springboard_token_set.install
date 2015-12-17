@@ -54,6 +54,12 @@ function springboard_token_set_schema() {
         'length' => '255',
         'not null' => FALSE,
       ),
+      'token_description' => array(
+        'description' => 'The human-readable description of the token.',
+        'type' => 'varchar',
+        'length' => '255',
+        'not null' => FALSE,
+      ),
     ),
     'primary key' => array('tsid', 'token_type', 'token'),
     'indexes' => array(
