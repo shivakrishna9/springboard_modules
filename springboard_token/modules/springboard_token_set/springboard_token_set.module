@@ -130,15 +130,15 @@ function springboard_token_set_add_set($name) {
  *   The ID of the token set.
  * @param string $token_type
  *   The token type.
- * @param string $token_name
- *   The name of the token.
+ * @param string $token
+ *   The token.
  */
-function springboard_token_set_add_token($tsid, $token_type, $token_name) {
+function springboard_token_set_add_token($tsid, $token_type, $token) {
   db_insert('token_set_tokens')
     ->fields(array(
       'tsid' => $tsid,
       'token_type' => $token_type,
-      'token_name' => $token_name,
+      'token' => $token,
     ))
     ->execute();
 }
@@ -188,7 +188,7 @@ function springboard_token_set_get_set($tsid) {
  */
 function springboard_token_set_get_tokens($tsid) {
   $tokens = db_select('token_set_tokens', 'tst')
-    ->fields('tst', array('token_type', 'token_name'))
+    ->fields('tst', array('token_type', 'token'))
     ->condition('tsid', $tsid, '=')
     ->execute()
     ->fetchAll();

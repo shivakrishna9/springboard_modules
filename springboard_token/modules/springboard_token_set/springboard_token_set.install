@@ -48,14 +48,14 @@ function springboard_token_set_schema() {
         'length' => '255',
         'not null' => FALSE,
       ),
-      'token_name' => array(
-        'description' => 'Name of the token (title, mail, etc.)',
+      'token' => array(
+        'description' => 'The token ([node:title], [user:mail], etc.)',
         'type' => 'varchar',
         'length' => '255',
         'not null' => FALSE,
       ),
     ),
-    'primary key' => array('tsid', 'token_type', 'token_name'),
+    'primary key' => array('tsid', 'token_type', 'token'),
     'indexes' => array(
       'tsid' => array('tsid'),
     ),
@@ -72,17 +72,17 @@ function springboard_token_set_install() {
   $tokens = array();
 
   $tokens['node'] = array(
-    'author',
-    'title',
+    '[node:author]',
+    '[node:title]',
   );
 
   $tokens['donation'] = array(
-    'address',
-    'city',
-    'country',
-    'state',
-    'zip',
-    'amount',
+    '[donation:address]',
+    '[donation:city]',
+    '[donation:country]',
+    '[donation:state]',
+    '[donation:zip]',
+    '[donation:amount}',
   );
 
   $tsid = springboard_token_set_add_set('Page Body');
