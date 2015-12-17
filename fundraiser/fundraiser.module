@@ -2090,11 +2090,11 @@ function fundraiser_donation_cancel($donation) {
   $username = isset($user->name) ? $user->name : 'Anonymous';
   fundraiser_donation_comment($donation, 'This donation was cancelled on @date by @username.',
     array('@date' => format_date(strtotime('now')), '@username' => $username));
+  // Allow other modules to respond to the cancel. Including Ubercart, etc.
+  module_invoke_all('fundraiser_donation_cancel', $donation);
   // And save the donation as it is at this stage since it was created.
   // This makes sure that any changes made stay in place.
   fundraiser_donation_update($donation, FALSE);
-  // Allow other modules to respond to the cancel. Including Ubercart, etc.
-  module_invoke_all('fundraiser_donation_cancel', $donation);
 }
 
 /**
@@ -2447,12 +2447,31 @@ function _fundraiser_refund_form_submit($form, &$form_state) {
   // Get the donation.
   $donation = fundraiser_donation_get_donation($form_state['donation_id']);
 
-  $new_status = 'refunded';
+  // Determine how much has been paid, less previous refunds
+  $refunded_total = (float) $form_state['values']['refunded_total'];
+  $able_to_refund = (commerce_currency_decimal_to_amount($donation->donation['amount'], $donation->currency) - $refunded_total);
+
+  // Partial refund.
+  if ($form_state['values']['refund_type'] != 'full') {
+    $amount = commerce_currency_decimal_to_amount($form_state['values']['refund_amount'], $donation->currency);
+
+    $new_status = 'partially_refunded';
+    // Prevent a refund of more than the amount paid.
+    if ($amount >= $able_to_refund) {
+      $amount = $able_to_refund;
+      $new_status = 'refunded';
+    }
+  }
+  // Full refund.
+  else {
+    $amount = $able_to_refund;
+    $new_status = 'refunded';
+  }
 
   // Set up the refund.
   $refund = new stdClass();
   $refund->did = $donation->did;
-  $refund->amount = $form_state['values']['refund_amount'];
+  $refund->amount = commerce_currency_amount_to_decimal($amount, $donation->currency);
   $refund->currency = $donation->currency;
   $refund->reason = $form_state['values']['refund_notes'];
   $refund = fundraiser_refund_create($refund);
