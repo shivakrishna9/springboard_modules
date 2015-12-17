@@ -2661,10 +2661,17 @@ function fundraiser_sustainers_auto_cancel($donation) {
     // @see fundraiser_sustainers_fundraiser_donation_cancel().
     fundraiser_donation_cancel($donation);
 
+    // Update the order's status:
+    _fundraiser_commerce_update_order_status('auto_canceled', $donation->did);
+
     // Add a watchdog entry with the did and reason.
     watchdog('fundraiser_sustainers', 'Donation cancelled for #@did. Reason: @reason',
       array('@did' => $donation->did, '@reason' => $reason));
   }
+
+  // Update the main order's status:
+  _fundraiser_commerce_update_order_status('auto_canceled', $donation->master_did);
+
   // Invoke a rules event on auto cancellations.
   if (module_exists("rules")) {
     rules_invoke_event("fundraiser_sustainers_auto_cancel", $donation);
