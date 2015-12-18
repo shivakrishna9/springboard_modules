@@ -1,4 +1,12 @@
 div.token-set-wrapper {
-  height: 200px;
+  max-height: 200px;
   overflow: auto;
+}
+
+a.token-set-expand {
+  margin-left: -25px;
+}
+
+tr.token-set-token-row {
+  display: none;
 }

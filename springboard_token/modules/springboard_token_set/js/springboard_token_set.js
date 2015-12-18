@@ -34,7 +34,7 @@
         html += '<table>';
         for (var i = 0; i < tokens.length; i++) {
           if (tokens[i].token_type !== last_token_type) {
-            html += '<tr><td colspan="3">' + tokens[i].token_type + '</td></tr>';
+            html += '<tr><td colspan="3"><a class="token-set-expand" data-type="' + tokens[i].token_type + '" data-expanded="0" href="#">[+]</a>' + tokens[i].token_type + '</td></tr>';
             last_token_type = tokens[i].token_type;
           }
 
@@ -45,6 +45,24 @@
         html += '</fieldset>';
 
         element.parent().append(html);
+
+        $(".token-set-expand").each(function() {
+          $(this).click(function(event) {
+            event.preventDefault();
+
+            var token_type = $(this).data("type");
+
+            if ($(this).hasClass("token-set-expanded")) {
+              $(".token-set-token-type-" + token_type).hide();
+              $(this).removeClass("token-set-expanded");
+              $(this).html("[+]");
+            } else {
+              $(".token-set-token-type-" + token_type).show();
+              $(this).addClass("token-set-expanded");
+              $(this).html("[-]");
+            }
+          });
+        });
 
         $(".token-set-token-link").each(function() {
           $(this).click(function(event) {
@@ -58,7 +76,7 @@
       };
 
       var renderToken = function (token) {
-        var html = '<tr>';
+        var html = '<tr class="token-set-token-row token-set-token-type-' + token.token_type + '">';
         html += '<td>' + token.token_type + '</td>';
         html += '<td><a class="token-set-token-link" data-token="' + token.token + '" href="#">' + token.token + '</a></td>';
         html += '<td>' + token.token_description + '</td>';
