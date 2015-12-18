@@ -91,6 +91,11 @@ function springboard_token_set_form_alter(&$form, &$form_state, $form_id) {
     'data' => array('token_sets' => $token_sets),
     'type' => 'setting',
   );
+
+  $form['#attached']['css'] = array(
+    'data' => drupal_get_path('module', 'springboard_token_set') . '/css/springboard_token_set.css',
+    'type' => 'file',
+  );
 }
 
 /**

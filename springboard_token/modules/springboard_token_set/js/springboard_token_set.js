@@ -28,13 +28,13 @@
 
         // Generate tokens markup.
         var last_token_type = '';
-        var html = '<fieldset class="form-wrapper">';
-        html += '<legend><span class="fieldset-legend">Tokens</span></legend>'
-        html += '<div class="fieldset-wrapper token-set-wrapper">'
-        html += '<table id="token-set-tokens">';
+        var html = '<fieldset id="token-set-tokens" class="form-wrapper">';
+        html += '<legend><span class="fieldset-legend">Tokens</span></legend>';
+        html += '<div class="fieldset-wrapper token-set-wrapper">';
+        html += '<table>';
         for (var i = 0; i < tokens.length; i++) {
           if (tokens[i].token_type !== last_token_type) {
-            html += '<tr><th colspan="3">' + tokens[i].token_type + '</th></tr>';
+            html += '<tr><td colspan="3">' + tokens[i].token_type + '</td></tr>';
             last_token_type = tokens[i].token_type;
           }
 
