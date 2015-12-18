@@ -159,22 +159,27 @@ function sba_message_edit_form($form, &$form_state, $sba_message) {
 
   // This form should only appear at node/%/messages.
   // Grab the node so we can get the action form UUID and node ID.
-  $node = menu_get_object();
+  $node = node_load(arg(1));
+  if(!empty($node)) {
+    $form_state['storage']['node'] = $node;
+  }
 
   $form = array(
     '#prefix' => '<div id="springboard-advocacy-message-form-container">',
     '#suffix' => '</div>',
   );
 
+  // Add the field related form elements.
+  $form_state['sba_message'] = $sba_message;
+  field_attach_form('sba_message', $sba_message, $form, $form_state);
   $form['parent_node']['nid'] = array(
     '#type' => 'hidden',
-    '#value' => $node->nid,
+    '#value' => $form_state['storage']['node']->nid,
   );
   $form['advocacy_id'] = array(
     '#type' => 'hidden',
-    '#value' => $node->advocacy_id,
+    '#value' => $form_state['storage']['node']->advocacy_id,
   );
-
   // Add the default field elements.
   $form['name'] = array(
     '#type' => 'textfield',
@@ -219,9 +224,7 @@ function sba_message_edit_form($form, &$form_state, $sba_message) {
     watchdog('advocacy', 'A remote group ID could not be found. Local ID: @message', array('@message' => $sba_message->data['group_id']), WATCHDOG_ERROR);
   }
 
-  // Add the field related form elements.
-  $form_state['sba_message'] = $sba_message;
-  field_attach_form('sba_message', $sba_message, $form, $form_state);
+
 
   $form['actions'] = array(
     '#type' => 'container',
@@ -289,7 +292,7 @@ function sba_message_edit_form_validate(&$form, &$form_state) {
  *    The form meta-data and values.
  */
 function sba_message_edit_form_submit(&$form, &$form_state) {
-
+  dpm($form_state['values']);
   $form_state['values']['data']['recipients'] = str_replace('&quot;', '"', $form_state['values']['data']['recipients']);
 
   $sba_message = entity_ui_controller('sba_message')->entityFormSubmitBuildEntity($form, $form_state);
