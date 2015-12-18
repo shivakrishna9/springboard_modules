@@ -191,8 +191,9 @@ function springboard_token_set_get_set($tsid) {
  */
 function springboard_token_set_get_tokens($tsid) {
   $tokens = db_select('token_set_tokens', 'tst')
-    ->fields('tst', array('token_type', 'token'))
+    ->fields('tst', array('token_type', 'token', 'token_description'))
     ->condition('tsid', $tsid, '=')
+    ->orderBy('token_type', 'ASC')
     ->execute()
     ->fetchAll();
 

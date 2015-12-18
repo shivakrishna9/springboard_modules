@@ -26,12 +26,23 @@
         var token_set_id = element.closest(".has-token-data").data("token-set-id");
         var tokens = Drupal.settings.token_sets[token_set_id];
 
-        // Generate tokens div.
-        var html = '<ul id="token-set-tokens">';
+        // Generate tokens markup.
+        var last_token_type = '';
+        var html = '<fieldset class="form-wrapper">';
+        html += '<legend><span class="fieldset-legend">Tokens</span></legend>'
+        html += '<div class="fieldset-wrapper token-set-wrapper">'
+        html += '<table id="token-set-tokens">';
         for (var i = 0; i < tokens.length; i++) {
-          html += renderToken(tokens[i].token);
+          if (tokens[i].token_type !== last_token_type) {
+            html += '<tr><th colspan="3">' + tokens[i].token_type + '</th></tr>';
+            last_token_type = tokens[i].token_type;
+          }
+
+          html += renderToken(tokens[i]);
         }
-        html += '</ul>';
+        html += '</div>';
+        html += '</table>';
+        html += '</fieldset>';
 
         element.parent().append(html);
 
@@ -47,8 +58,11 @@
       };
 
       var renderToken = function (token) {
-        var html = '<li><a class="token-set-token-link" data-token="' + token + '" href="#">' + token + '</a></li>';
-
+        var html = '<tr>';
+        html += '<td>' + token.token_type + '</td>';
+        html += '<td><a class="token-set-token-link" data-token="' + token.token + '" href="#">' + token.token + '</a></td>';
+        html += '<td>' + token.token_description + '</td>';
+        html += '</tr>';
         return html;
       };
 
