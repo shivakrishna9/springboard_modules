@@ -496,6 +496,69 @@ function _sba_social_action_create_node_fields($update = false) {
     ),
   );
 
+  $fields['field_sba_social_require_auth'] = array(
+    'active' => 1,
+    'cardinality' => 2,
+    'deleted' => 0,
+    'entity_types' => array(),
+    'field_name' => 'field_sba_social_require_auth',
+    'foreign keys' => array(),
+    'indexes' => array(
+      'value' => array(
+        0 => 'value',
+      ),
+    ),
+    'locked' => 0,
+    'module' => 'list',
+    'settings' => array(
+      'allowed_values' => array(
+        1 => 'Enabled',
+      ),
+      'allowed_values_function' => '',
+    ),
+    'translatable' => 0,
+    'type' => 'list_text',
+    '_instance' => array(
+      'bundle' => 'sba_social_action',
+      'default_value' => array(
+        0 => array(
+          'value' => 1,
+        ),
+      ),
+      'deleted' => 0,
+      'description' => 'Requiring authentication will allow the collection of your activists social media user data.',
+      'display' => array(
+        'default' => array(
+          'label' => 'hidden',
+          'module' => 'list',
+          'settings' => array(),
+          'type' => 'hidden',
+          'weight' => 3,
+        ),
+        'teaser' => array(
+          'label' => 'hidden',
+          'settings' => array(),
+          'type' => 'hidden',
+          'weight' => 0,
+        ),
+      ),
+      'entity_type' => 'node',
+      'field_name' => 'field_sba_social_require_auth',
+      'label' => 'Require Twitter Authentication?',
+      'required' => 0,
+      'settings' => array(
+        'user_register_form' => FALSE,
+      ),
+      'widget' => array(
+        'active' => 1,
+        'module' => 'options',
+        'settings' => array(),
+        'type' => 'options_buttons',
+        'weight' => 31,
+      ),
+    ),
+  );
+
   foreach ($fields as $key => $values) {
     $instance = $values['_instance'];
     unset($values['_instance']);
@@ -553,6 +616,7 @@ function _sba_social_action_create_node_fields($update = false) {
     $field_group->children = array(
       0 => 'field_sba_social_step_two_header',
       1 => 'field_sba_social_step_two_submit',
+      2 => 'field_sba_social_require_auth'
     );
     $field_group->format_type = 'fieldset';
     $field_group->format_settings = array(
@@ -641,6 +705,7 @@ function _sba_social_action_delete_fields() {
     'field_sba_social_fieldset_title',
     'field_sba_social_step_two_header',
     'field_sba_social_step_two_submit',
+    'field_sba_social_require_auth'
   );
   foreach ($fields as $field_name) {
     $field = field_info_instance('node', $field_name, 'sba_social_action');

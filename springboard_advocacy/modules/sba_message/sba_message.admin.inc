@@ -240,7 +240,16 @@ function sba_message_edit_form($form, &$form_state, $sba_message) {
     '#prefix' => '<div id = "advo-error-wrapper">',
     '#suffix' => '</div>',
     '#weight' => 10,
+  );
 
+  // The introduction of the multiple twitter message ajax form
+  // made this necessary. It is triggered by javascript
+  // click on $form['actions']['submit']
+  $form['submit_hidden'] = array(
+    '#type' => 'submit',
+    '#value' => t('Save message'),
+    '#submit' => $submit + array('sba_message_edit_form_submit'),
+    '#attributes' => array('style' => 'display:none'),
   );
 
   $form['actions']['submit'] = array(
