@@ -31,7 +31,12 @@ function fundraiser_recent_donors_form_alter(&$form, &$form_state, $form_id) {
     $opt_in_enabled = _fundraiser_recent_donors_opt_in_enabled($form['#node']->nid);
   }
 
-  if (strpos($form_id, '_node_form') !== FALSE) {
+  // Add the recent donors settings if this is a node edit form and not a ticketed event:
+  $is_ticket_type = FALSE;
+  if (function_exists('fundraiser_tickets_is_ticket_type') && fundraiser_tickets_is_ticket_type($form['#node']->type)) {
+    $is_ticket_type = TRUE; 
+  }
+  if (strpos($form_id, '_node_form') !== FALSE && !$is_ticket_type) { 
     $form['springboard_display']['recent_donors_list'] = array(
       '#type' => 'fieldset',
       '#title' => t('Recent Donors List'),
