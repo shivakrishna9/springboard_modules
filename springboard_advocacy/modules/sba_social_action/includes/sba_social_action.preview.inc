@@ -83,6 +83,9 @@ function sba_social_action_preview_form($form, $form_state, $node) {
     $twitter_user_cache['values']['oauth_token'] = decrypt($twitter_user_cache['values']['oauth_token']);
     $twitter_user_cache['values']['oauth_token_secret'] = decrypt($twitter_user_cache['values']['oauth_token_secret']);
   }
+  if (empty($node->field_sba_social_require_auth)) {
+    $access = TRUE;
+  }
 
   $form['#attached']['css'][] = drupal_get_path('module', 'sba_social_action') . '/css/message-preview.css';
   $form['#attached']['js'][] = drupal_get_path('module', 'sba_social_action') . '/js/jQuery.simplyCountable.js';
@@ -112,7 +115,7 @@ function sba_social_action_preview_form($form, $form_state, $node) {
     '#suffix' => '</div>',
   );
 
-  if (empty($twitter_user_cache)) {
+  if (empty($twitter_user_cache)  && $access == FALSE) {
     $url = variable_get('sba_social_privacy', '');
     if (!empty($url)) {
       $url = l('Privacy Policy', $url, array('attributes' => array('target' => '_new', 'class' => 'sba-privacy')));
@@ -194,21 +197,29 @@ function sba_social_action_preview_form($form, $form_state, $node) {
       $this_message['#attributes']['class'][] = 'last';
     }
     $count++;
+
+    $prepend = !empty($this_message['prepend']['#value']) ? '.' : '';
     if (isset($this_message['body_show'])) {
-      $display_tweet = check_markup('@' . $message['person']['twitter'] . ' ' . $this_message['body_show']['#markup'], 'plain_text');
-      $send_tweet = '@' . $message['person']['twitter'] . ' ' . $this_message['body_show']['#markup'];
+      $message_alt = field_get_items('sba_message', $message_entity, 'field_sba_twitter_message');
+      $alternatives =  array();
+      if (is_array($message_alt)) {
+        foreach ($message_alt as $alt) {
+          $alt_tweet = $prepend . '@' . $message['person']['twitter'] . ' ' . $alt['value'];
+          $alternatives[] = $alt_tweet;
+        }
+      }
+      $tweet = array_rand(array_flip($alternatives));
+      $display_tweet = check_markup($tweet, 'plain_text');
+      $send_tweet = $tweet;
       $this_message['body_show']['#markup'] = $display_tweet;
     }
-
     if (isset($this_message['edited_body'])) {
       $prepend = !empty($this_message['prepend']['#value']) ? '.' : '';
       $this_message['body_show']['#suffix'] = '<div class="sba-full-tweet"><div class="sba-display-hint">This will be your full tweet:</div><div class="editable-message-preview"><span class="preview-target-text">' . $prepend . '@' . $message['person']['twitter'] . '</span><span class="preview-replace-text"></span></div></div>';
     }
     if (!isset($this_message['edited_body']) && $access == TRUE) {
-      $prepend = !empty($this_message['prepend']['#value']) ? '.' : '';
       $text = $send_tweet;
       $link = l('Customize and send this tweet', 'https://twitter.com/intent/tweet', array('query' => array('text' => $text)));
-      $prepend = !empty($this_message['prepend']['#value']) ? '.' : '';
       $img = drupal_get_path('module', 'sba_social_action') . '/images/Twitter_logo_blue_32.png';
       $this_message['body_show']['#suffix'] = '<div class="twitter-asset"><img src="/' . $img . '"><div class="sba-web-intent-link">' . $link . '</div></div>';
     }
@@ -287,7 +298,7 @@ function sba_social_action_preview_form($form, $form_state, $node) {
     }
   }
 
-  if (isset($twitter_user_cache['values']['screen_name'])) {
+  if (isset($twitter_user_cache['values']['screen_name']) && !empty($node->field_sba_social_require_auth)) {
     $form['form_container']['page_description_login'] = array(
       '#prefix' => '<div class="preview-twitter-user"><p>',
       '#suffix' => '</p></div>',
@@ -303,7 +314,7 @@ function sba_social_action_preview_form($form, $form_state, $node) {
     $form['form_container']['page_description_content']['#markup'] = t('One or more of the messages below requires editing. Please make your edits and then click "Send Now" at the bottom of the page.');
   }
   if (!empty($editable_but_not_required) && $access == TRUE) {
-    $markup = t('Please review and edit the messages below; or if you prefer, simply <span id="multiflow-send-now-wrapper"><a href="#" id="multiflow-send-now">send now</a></span>.');
+    $markup = t('Please review and edit the messages below.');
   }
   $form['form_container']['page_description_content'] = array(
     '#id' => 'social-action-preview-page',

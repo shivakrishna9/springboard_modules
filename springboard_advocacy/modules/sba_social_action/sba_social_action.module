@@ -336,11 +336,11 @@ function sba_social_action_form_alter(&$form, &$form_state, $form_id) {
     $form['#attached']['js'][] = drupal_get_path('module', 'sba_social_action') . '/js/jQuery.simplyCountable.js';
     $form['#attached']['js'][] = drupal_get_path('module', 'sba_social_action') . '/js/social_counter.js';
     $description =& $form['field_sba_twitter_message'][$form['field_sba_twitter_message']['#language']][0]['value']['#description'];
-    $description = 'You have used <span class="counter"></span> characters. You currently have a maximum of <span class="counter-max"></span> characters for this message. Adding or removing targets will affect this count. ' . $description;
+    //$description = 'You have used <span class="counter"></span> characters. You currently have a maximum of <span class="counter-max"></span> characters for this message. Adding or removing targets will affect this count. ' . $description;
 
     $form['field_sba_twitter_editable']['#access'] =  FALSE;
-    $form['field_sba_twitter_editable']['LANGUAGE_NONE']['#default_value'] = 'Not editable';
-
+    $lang = $form['field_sba_twitter_editable']['#language'];
+    $form['field_sba_twitter_editable'][$lang]['#default_value'] = 'Not editable';
     // Path for ajax callback in Drupal.settings to get target counts in
     // undistricted social actions.
     global $base_url;
@@ -386,7 +386,8 @@ function sba_social_action_form_alter(&$form, &$form_state, $form_id) {
  */
 function sba_social_action_form_sba_social_action_node_form_alter(&$form, &$form_state) {
 
-  $form['field_sba_test_mode'][LANGUAGE_NONE]['#default_value'][0] = 0;
+  $lang = $form['field_sba_test_mode']['#language'];
+  $form['field_sba_test_mode'][$lang]['#default_value'][0] = 0;
   $form['field_sba_test_mode']['#access'] = FALSE;
 
   $submit_text = '';

@@ -20,7 +20,6 @@
 
             $(document).ready(function() {
 
-
                 if (window.__twitterIntentHandler) return;
                 var intentRegex = /twitter\.com\/intent\/(\w+)/,
                   windowOptions = 'scrollbars=yes,resizable=yes,toolbar=no,location=yes',

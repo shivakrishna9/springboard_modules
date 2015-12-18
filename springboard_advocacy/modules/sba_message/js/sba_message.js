@@ -407,11 +407,16 @@
             if(typeof(Drupal.settings.charCount) !== 'undefined') {
 
                 var handleCount = Drupal.settings.charCount.size;
-                var currLen = $('#edit-field-sba-twitter-message-und-0-value').val().replace(/(\r\n|\n|\r)/gm, "").length;
-                if (currLen > 140 - handleCount) {
-                    messages.push({type: 'error', message: 'Message is too long for all potential targets.'});
-                }
+                var $text = $('div[id*="edit-field-sba-twitter-message"]').find('textarea');
+                $text.each(function () {
+                    if (this.id.indexOf('edit-field-sba-twitter-message-und') != -1) {
 
+                        var currLen = $(this).val().replace(/(\r\n|\n|\r)/gm, "").length;
+                        if (currLen > 140 - handleCount) {
+                            messages.push({type: 'error', message: 'Message is too long for all potential targets.'});
+                        }
+                    }
+                });
                 var hasDistrict = $('input[name*=field_sba_target_options]:checked').val();
                 if (hasDistrict == 0) {
                     var limit = true;
@@ -432,7 +437,7 @@
             }
 
             if(messages.length === 0) {
-                $("#sba-message-edit-form").submit();
+                $("#edit-submit-hidden").trigger('click');
             }
             else {
                 Sba.setError(messages);
@@ -644,6 +649,11 @@
                 }
             }
         });
+
+        var districted_tweet = $("input[name*=field_sba_target_option]:checked").val();
+        if (districted_tweet != 1) {
+            notGroupable = true;
+        }
 
         //update form element states based on meta-variables
         if(hasDistrict == true){

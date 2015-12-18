@@ -121,7 +121,8 @@ function sba_social_action_additional_elements(&$form, &$form_state) {
 function sba_social_action_message_form(&$form, $message, $message_entity_type, &$districted = NULL) {
   // Get some message values via an entity wrapper.
   $wrapper = entity_metadata_wrapper('sba_message', $message);
-  $message_body = check_plain($wrapper->field_sba_twitter_message->value());
+  $first_tweet = $wrapper->field_sba_twitter_message->value()[0];
+  $message_body = check_plain($first_tweet);
   $message_editable = $wrapper->field_sba_twitter_editable->value() == 'Not editable' ? FALSE : TRUE;
   $required_message = $wrapper->field_sba_twitter_editable->value() == 'Editing is required' ? TRUE : FALSE;
   $alternate_options = $wrapper->field_sba_show_additional->value();
@@ -308,10 +309,10 @@ function sba_social_action_build_message_bodies($sba_message_id, $message_editab
   $message = entity_load('sba_message', array($sba_message_id));
   $message = array_shift($message);
   $wrapper = entity_metadata_wrapper('sba_message', $message);
-
   $user_message = array();
+  $first_tweet = $wrapper->field_sba_twitter_message->value()[0];
   if(empty($message_editable)) {
-    $user_message[] = $wrapper->field_sba_twitter_message->value();
+    $user_message[] = $first_tweet;
   }
   else {
     $user_message[] = $message_editable;

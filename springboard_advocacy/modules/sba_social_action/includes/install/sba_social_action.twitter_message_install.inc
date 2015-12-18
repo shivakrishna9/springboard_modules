@@ -98,7 +98,7 @@ function sba_social_action_create_twitter_message_entity($update = FALSE) {
 // Exported field_base: 'field_sba_twitter_message'
   $field_bases['field_sba_twitter_message'] = array(
     'active' => 1,
-    'cardinality' => 1,
+    'cardinality' => -1,
     'deleted' => 0,
     'entity_types' => array(),
     'field_name' => 'field_sba_twitter_message',
@@ -281,7 +281,7 @@ function sba_social_action_create_twitter_message_entity($update = FALSE) {
     ),
     'entity_type' => 'sba_message',
     'field_name' => 'field_sba_twitter_message',
-    'label' => 'Tweet',
+    'label' => 'Sample Tweets',
     'required' => 0,
     'settings' => array(
       'text_processing' => 0,
@@ -482,7 +482,7 @@ function sba_social_action_create_twitter_message_entity($update = FALSE) {
       'instance_settings' => array(
         'required_fields' => 1,
         'classes' => 'group-sba-tweet field-group-fieldset',
-        'description' => 'Your activists will be presented with one copy of the tweet for each target. Do not include Twitter handles in the message text unless they are not your primary targets, the Twitter handle for each target will be prepended automatically to this tweet. The message character limit is determined by target’s actual Twitter handle.',
+        'description' => 'Your activists will be presented with one sample tweet for each target. If you create multiple sample tweets, one will be chosen randomly for each target. Do not include Twitter handles in the message text unless they are not your primary targets, the Twitter handle for each target will be prepended automatically to this tweet. The message character limit is determined by target’s actual Twitter handle.',
       ),
       'formatter' => 'open',
     );
