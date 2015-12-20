@@ -1247,6 +1247,12 @@ function _fundraiser_amount_field_create($fundraiser, $field) {
       }
     }
 
+    // Extra settings may get clobbered in fundraiser_webform. if we don't flag them.
+    // See "extra config" comment under _fundraiser_webform_update_component().
+    if (!empty($field['#extra'])) {
+      $field['#node_extra_settings'] = $field['#extra'];
+    }
+
     $field['#value'] = $default;
 
   }
@@ -1267,7 +1273,8 @@ function _fundraiser_other_amount_field_create($fundraiser, $field) {
     return FALSE; // FALSE as opposed to empty, means we delete this field if it exists.
   }
   // Update the min with fundraiser's min.
-  $field['#extra']['description'] = 'Minimum payment [currency-symbol]' . number_format($fundraiser->minimum_donation_amount, 2) . '.';
+  $field['#extra']['description'] = $field['#node_extra_settings']['description'] =
+    'Minimum payment [currency-symbol]' . number_format($fundraiser->minimum_donation_amount, 2) . '.';
 
   // Return the field to be created.
   return $field;
