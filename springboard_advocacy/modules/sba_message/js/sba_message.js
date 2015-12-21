@@ -473,12 +473,11 @@
 
     //recipients container scroll calculations
     Sba.scroller = function (context) {
-        console.log(context);
         var id = '';
-        if (typeof(context[0]) != 'undefined') {
+        if (typeof(context[0]) !== 'undefined') {
             id = context[0].id;
         }
-        if (typeof(context[0]) == 'undefined' || id.indexOf('add-more-wrapper') != -1 || id.indexOf('message-edit-form') != -1) {
+        if (typeof(context[0]) === 'undefined' || id.indexOf('add-more-wrapper') != -1 || id.indexOf('message-edit-form') != -1) {
             setTimeout(function () {
                 var recips = $('#springboard-advocacy-message-recipients');
                 var offset = recips.offset();
