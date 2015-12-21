@@ -8,12 +8,56 @@ function springboard_token_set_webform_form_webform_configure_form_alter(&$form,
   $action_parts = explode('/', $form['#action']);
   $action = $action_parts[count($action_parts) - 1];
 
-  $token_sets = springboard_token_set_get_sets();
+  // Get the saved token set ID for this form.
+  $tsid = variable_get('token_set_webform_' . $nid . '_' . $action, 0);
+
+  // Create array of used token sets for JS setting.
+  $token_sets = array(
+    $tsid => springboard_token_set_get_tokens($tsid),
+  );
+
+  if ($tsid != 0) {
+    // Add token set ID attribute to text fields elements.
+    foreach ($form as $element_index => $element) {
+      if (is_array($element)) {
+        if (isset($element['#type']) && ($element['#type'] == 'fieldset')) {
+          foreach ($element as $fieldset_element_index => $fieldset_element) {
+            if (is_array($fieldset_element) && isset($fieldset_element['#type']) && ($fieldset_element['#type'] == 'text_format')) {
+              // Attribute needs to be added to the field wrapper element.
+              $form[$element_index]['#attributes']['data-token-set-id'] = $tsid;
+            }
+          }
+        }
+      }
+    }
+
+    if (empty($form['#attached']['js'])) {
+      $form['#attached']['js'] = array();
+    }
+
+    $form['#attached']['js'] = array(
+      'data' => drupal_get_path('module', 'springboard_token_set') . '/js/springboard_token_set.js',
+      'type' => 'file',
+    );
+
+    $form['#attached']['js'][] = array(
+      'data' => array('token_sets' => $token_sets),
+      'type' => 'setting',
+    );
+
+    $form['#attached']['css'] = array(
+      'data' => drupal_get_path('module', 'springboard_token_set') . '/css/springboard_token_set.css',
+      'type' => 'file',
+    );
+  }
+
+  // Get all possible token sets to build form select element.
+  $all_token_sets = springboard_token_set_get_sets();
 
   $token_set_options = array(
     0 => 'None',
   );
-  foreach ($token_sets as $token_set) {
+  foreach ($all_token_sets as $token_set) {
     $token_set_options[$token_set->tsid] = $token_set->name;
   }
 
@@ -28,7 +72,7 @@ function springboard_token_set_webform_form_webform_configure_form_alter(&$form,
     '#type' => 'select',
     '#title' => t('Use token set'),
     '#options' => $token_set_options,
-    '#default_value' => variable_get('token_set_webform_' . $nid . '_' . $action, 0),
+    '#default_value' => $tsid,
   );
 
   $form['#submit'][] = 'springboard_token_set_webform_configure_save';
