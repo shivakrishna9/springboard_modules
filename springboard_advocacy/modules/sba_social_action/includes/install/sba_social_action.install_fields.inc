@@ -526,7 +526,7 @@ function _sba_social_action_create_node_fields($update = false) {
         ),
       ),
       'deleted' => 0,
-      'description' => 'Requiring authentication will allow the collection of your activists social media user data.',
+      'description' => 'If you require authentication, users will have to log into the Springboard Twitter app before tweeting, and you will then gain access to some of their Twitter profile information.',
       'display' => array(
         'default' => array(
           'label' => 'hidden',

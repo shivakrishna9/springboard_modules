@@ -48,7 +48,7 @@
             subButton.ajaxComplete(function()  {
                 subButton.prop('disabled', false).css({'cursor': 'pointer'});
             });
-
+            Sba.scroller(context);
         }
     };
 
@@ -75,7 +75,7 @@
 
         Sba.setFormValue();
 
-        Sba.scroller();
+        //Sba.scroller();
     });
 
 
@@ -472,30 +472,37 @@
     };
 
     //recipients container scroll calculations
-    Sba.scroller = function () {
-        setTimeout(function() {
-            var recips = $('#springboard-advocacy-message-recipients');
-            var offset = recips.offset();
-            var newTop;
-            if(recips.hasClass('recipients-fixed')) {
-                newTop = $(window).scrollTop() - offset.top;
-                recips.css('top', newTop).removeClass('recipients-fixed');
-            }
-            $(window).scroll(function() {
-                var footerOffset = $('#footer-wrapper').offset();
-                if(offset.top <= $(window).scrollTop() && recips.css('position') == 'absolute') {
-                    var recipHeight = recips.height();
-                    var newTop = $(window).scrollTop() - offset.top;
-                   if((offset.top +  newTop + recipHeight + 20) < footerOffset.top) {
-                        recips.css('top', newTop).addClass('recipients-fixed');
-                   }
+    Sba.scroller = function (context) {
+        console.log(context);
+        var id = '';
+        if (typeof(context[0]) != 'undefined') {
+            id = context[0].id;
+        }
+        if (typeof(context[0]) == 'undefined' || id.indexOf('add-more-wrapper') != -1 || id.indexOf('message-edit-form') != -1) {
+            setTimeout(function () {
+                var recips = $('#springboard-advocacy-message-recipients');
+                var offset = recips.offset();
+                var newTop;
+                if (recips.hasClass('recipients-fixed')) {
+                    newTop = $(window).scrollTop() - offset.top;
+                    recips.css('top', newTop).removeClass('recipients-fixed');
                 }
-                else {
-                    recips.css('top', 0).removeClass('recipients-fixed');
-                }
-            });
+                $(window).scroll(function () {
+                    var footerOffset = $('#footer-wrapper').offset();
+                    if (offset.top <= $(window).scrollTop() && recips.css('position') == 'absolute') {
+                        var recipHeight = recips.height();
+                        var newTop = $(window).scrollTop() - offset.top;
+                        if ((offset.top + newTop + recipHeight + 20) < footerOffset.top) {
+                            recips.css('top', newTop).addClass('recipients-fixed');
+                        }
+                    }
+                    else {
+                        recips.css('top', 0).removeClass('recipients-fixed');
+                    }
+                });
 
-        }, 500);
+            }, 50);
+        }
     };
 
     // Update committee search form elements

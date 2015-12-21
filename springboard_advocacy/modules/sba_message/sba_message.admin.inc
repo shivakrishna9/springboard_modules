@@ -292,7 +292,6 @@ function sba_message_edit_form_validate(&$form, &$form_state) {
  *    The form meta-data and values.
  */
 function sba_message_edit_form_submit(&$form, &$form_state) {
-  dpm($form_state['values']);
   $form_state['values']['data']['recipients'] = str_replace('&quot;', '"', $form_state['values']['data']['recipients']);
 
   $sba_message = entity_ui_controller('sba_message')->entityFormSubmitBuildEntity($form, $form_state);
