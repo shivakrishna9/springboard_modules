@@ -9,7 +9,8 @@ function sba_social_action_message_preview_page($nid) {
 
   // $nid already sanitized in the access hook.
   $node = node_load($nid);
-  $test_mode = field_get_items('node', $node, 'field_sba_test_mode');
+  //$test_mode = field_get_items('node', $node, 'field_sba_test_mode');
+
   if(!empty($node->field_sba_test_mode[0]['value'])) {
     drupal_set_message('This action is in test mode. Messages will not be not sent.', 'warning', TRUE);
   }
@@ -17,7 +18,7 @@ function sba_social_action_message_preview_page($nid) {
     // Prevent the confirmation message from appearing prematurely.
     $_SESSION['saved_messages']['status'] = $_SESSION['messages']['status'];
     // clear all
-    //drupal_get_messages('status');
+    drupal_get_messages('status');
   }
   // Check if the step two form has already been submitted.
   // @todo think about this.
@@ -275,6 +276,7 @@ function sba_social_action_preview_form($form, $form_state, $node) {
   //  to get ajax updated values.
   if($access == TRUE) {
     $markup = '';
+    // Commented out for web intents version.
     //$markup = ('Please review the messages below; or if you prefer, simply <span id="multiflow-send-now-wrapper" style="display:inline-block"><a href="#" id="multiflow-send-now">send now</a></span>.');
   }
   else {
@@ -288,6 +290,7 @@ function sba_social_action_preview_form($form, $form_state, $node) {
   foreach ($messages as $key => $message) {
     if(isset($children[$key]) && (!$subject_required && !$body_required)) {
       if(isset( $message['subject']) && !isset($message['subject_show'])) {
+        // Not used for Twitter but will be used for Facebook?
         $editable_but_not_required = TRUE;
         $subject_required = isset($message['message']['subject']['#required']) ? $message['message']['subject']['#required'] : FALSE;
       }
@@ -309,6 +312,8 @@ function sba_social_action_preview_form($form, $form_state, $node) {
       )),
     );
   }
+
+  // Not needed for twitter web intents for perhaps for facebook?
   if ($subject_required || $body_required) {
     $editable_but_not_required = FALSE;
     $form['form_container']['page_description_content']['#markup'] = t('One or more of the messages below requires editing. Please make your edits and then click "Send Now" at the bottom of the page.');
@@ -329,7 +334,7 @@ function sba_social_action_preview_form($form, $form_state, $node) {
   // Add the node object to use in validation and submit.
   $form['#action_node'] = $node;
   // Define the validation function.
-  $form['#validate'][] = 'sba_social_action_preview_form_validate';
+  //$form['#validate'][] = 'sba_social_action_preview_form_validate';
   $form['#submit'][] = 'sba_social_action_preview_form_submit';
 
   $submit_field = field_get_items('node', $node, 'field_sba_social_step_two_submit');
@@ -355,6 +360,8 @@ function sba_social_action_preview_form($form, $form_state, $node) {
  * @return mixed
  */
 function sba_social_actions_reload_form($form, $form_state) {
+
+  // Save the Twitter user object after authorization.
   $sid = !empty($_SESSION['social_action_sid']['sid']) ? $_SESSION['social_action_sid']['sid'] : FALSE;
   if ($sid) {
     module_load_include('inc', 'webform', 'includes/webform.submissions');
@@ -364,6 +371,7 @@ function sba_social_actions_reload_form($form, $form_state) {
     sba_social_action_save_twitter_profile($twitter_user_cache, $submission->uid);
   }
 
+  // Ajax reload form with auth username data.
   return $form['form_container'];
 }
 
@@ -422,6 +430,7 @@ function sba_social_action_preview_form_validate($form, &$form_state) {
   // Set value for the user_edited_flag
   $form_state['storage']['changed'] = $changed;
 
+  // Update error messages.
   if (!empty($_SESSION['messages']['error'])) {
     foreach ($_SESSION['messages']['error'] as $key => $message) {
       if (strpos($message, 'You must edit the body of this message before sending') !== FALSE) {
@@ -452,55 +461,55 @@ function sba_social_action_preview_form_submit($form, &$form_state) {
     $submission = webform_get_submission($node->nid, $sid);
   }
 
-  foreach ($form_state['values']['messages'] as $message) {
+//  foreach ($form_state['values']['messages'] as $message) {
 
-    $message_text = isset($message['message']['edited_body']) ? $message['message']['edited_body'] : $message['message']['body'];
-    $target = parse_url($message['message']['target']['twitter']);
-    $prepend = !empty($message['message']['prepend']) ? '.' : '';
-    $body = $prepend . '@' . substr($target['path'], 1) . ' ' . $message_text;
-
-    if(empty($node->field_sba_test_mode)) {
-      try {
-        $twitter_user_cache = $form_state['values']['twitter_user_cache'];
-        if(!empty($twitter_user_cache)) {
-          $twitter_user_cache['values']['oauth_token'] = decrypt($twitter_user_cache['values']['oauth_token']);
-          $twitter_user_cache['values']['oauth_token_secret'] = decrypt($twitter_user_cache['values']['oauth_token_secret']);
-
-          $twitter = new socialTwitter(
-            variable_get('social_action_twitter_consumer_key', ''),
-            variable_get('social_action_twitter_consumer_secret', ''),
-            $twitter_user_cache['values']['oauth_token'],
-            $twitter_user_cache['values']['oauth_token_secret']
-          );
-
-          $response = $twitter->statuses_update($body);
-
-          if (!empty($response['id'] && !empty($submission))) {
-            $twitter_status = new SbaTwitterStatus();
-            $twitter_status->twitter_status_id = $response['id'];
-            $twitter_status->screen_name = $response['user']['screen_name'];
-            $twitter_status->created = strtotime($response['created_at']);
-            $twitter_status->retweet_count = $response['retweet_count'];
-            $twitter_status->favorite_count = $response['favorite_count'];
-            $twitter_status->uid = $submission->uid;
-            $twitter_status->nid = $node->nid;
-            $twitter_status->sid = $sid;
-            $twitter_status->message_entity_id = $message['message']['sba_message_id'];
-            $twitter_status->target_id = $message['message']['target']['target_id'];
-            $twitter_status->entities = '';//$response['entities'];
-            $twitter_status->is_new = TRUE;
-            entity_save('sba_twitter_status', $twitter_status);
-          }
-        }
-
-      } catch (socialTwitterException $e) {
-        drupal_set_message(t('An error occurred when posting to Twitter. Check the system log for details.'), 'error', TRUE);
-      }
-    }
-    else {
-      //drupal_set_message('This action was in test mode. Messages were not sent.', 'warning', TRUE);
-    }
-  }
+//    $message_text = isset($message['message']['edited_body']) ? $message['message']['edited_body'] : $message['message']['body'];
+//    $target = parse_url($message['message']['target']['twitter']);
+//    $prepend = !empty($message['message']['prepend']) ? '.' : '';
+//    $body = $prepend . '@' . substr($target['path'], 1) . ' ' . $message_text;
+//
+//    if(empty($node->field_sba_test_mode)) {
+//      try {
+//        $twitter_user_cache = $form_state['values']['twitter_user_cache'];
+//        if(!empty($twitter_user_cache)) {
+//          $twitter_user_cache['values']['oauth_token'] = decrypt($twitter_user_cache['values']['oauth_token']);
+//          $twitter_user_cache['values']['oauth_token_secret'] = decrypt($twitter_user_cache['values']['oauth_token_secret']);
+//
+//          $twitter = new socialTwitter(
+//            variable_get('social_action_twitter_consumer_key', ''),
+//            variable_get('social_action_twitter_consumer_secret', ''),
+//            $twitter_user_cache['values']['oauth_token'],
+//            $twitter_user_cache['values']['oauth_token_secret']
+//          );
+//
+//          $response = $twitter->statuses_update($body);
+//
+//          if (!empty($response['id'] && !empty($submission))) {
+//            $twitter_status = new SbaTwitterStatus();
+//            $twitter_status->twitter_status_id = $response['id'];
+//            $twitter_status->screen_name = $response['user']['screen_name'];
+//            $twitter_status->created = strtotime($response['created_at']);
+//            $twitter_status->retweet_count = $response['retweet_count'];
+//            $twitter_status->favorite_count = $response['favorite_count'];
+//            $twitter_status->uid = $submission->uid;
+//            $twitter_status->nid = $node->nid;
+//            $twitter_status->sid = $sid;
+//            $twitter_status->message_entity_id = $message['message']['sba_message_id'];
+//            $twitter_status->target_id = $message['message']['target']['target_id'];
+//            $twitter_status->entities = '';//$response['entities'];
+//            $twitter_status->is_new = TRUE;
+//            entity_save('sba_twitter_status', $twitter_status);
+//          }
+//        }
+//
+//      } catch (socialTwitterException $e) {
+//        drupal_set_message(t('An error occurred when posting to Twitter. Check the system log for details.'), 'error', TRUE);
+//      }
+//    }
+//    else {
+//      //drupal_set_message('This action was in test mode. Messages were not sent.', 'warning', TRUE);
+//    }
+//  }
 
   // Add session flag to prevent resubmission of the form
   //$_SESSION['social_action_completed'] = TRUE;
