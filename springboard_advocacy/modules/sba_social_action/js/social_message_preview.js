@@ -47,8 +47,16 @@
                                 top = Math.round((winHeight / 2) - (height / 2));
                             }
 
-                            window.open(target.href, 'intent', windowOptions + ',width=' + width +
+                            var twitWin = window.open(target.href, 'intent', windowOptions + ',width=' + width +
                               ',height=' + height + ',left=' + left + ',top=' + top);
+                            twitWin.focus();
+                            //var twitInterval = window.setInterval(function(){
+                            //    if (twitWin.closed) {
+                            //        window.clearInterval(twitInterval);
+                            //        ///ajax callback
+                            //        console.log('f');
+                            //    }
+                            //}, 500);
                             e.returnValue = false;
                             e.preventDefault && e.preventDefault();
                         }
