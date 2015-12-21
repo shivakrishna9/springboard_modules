@@ -8,10 +8,6 @@
         if (typeof token_set_id !== typeof undefined) {
           $(this).addClass("has-token-data");
 
-          $(this).find("input").click(function() {
-            Drupal.settings.token_set_last_selected_field = this;
-            showTokens($(this));
-          });
           $(this).find("textarea").click(function() {
             Drupal.settings.token_set_last_selected_field = this;
             showTokens($(this));
