@@ -120,10 +120,14 @@
     if(typeof prepend != 'undefined') {
       period = 1;
     }
-    var handleCount = Drupal.settings.charCount.size;
-    if (handleCount != 0) {
-      handleCount = handleCount + 1 + period
+
+    var space = 0;
+    if (Drupal.settings.charCount.count > 0) {
+      space = 1;
     }
+
+    var handleCount = Drupal.settings.charCount.size;
+    handleCount = handleCount + space + period
 
     $(editText).closest('.control-group').find('.counter-max').text(140 - handleCount);
     $('.sba-target-status').find('.counter-max').text(140 - handleCount);
