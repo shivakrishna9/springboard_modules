@@ -243,6 +243,9 @@ function sba_social_action_theme($existing, $type, $theme, $path) {
   );
 }
 
+/**
+ * @param $node
+ */
 function sba_social_action_node_presave($node) {
   if ($node->type == 'sba_social_action') {
     if (empty($node->nid)) {
@@ -422,7 +425,6 @@ function sba_social_action_form_sba_social_action_node_form_alter(&$form, &$form
     springboard_advocacy_taxonomy_form($form, $form_state, $description);
   }
 
-
   $form['springboard_taxonomy_options']['#weight'] = -10;
   $form['springboard_taxonomy_options']['#title'] = t('Issue categories');
 
@@ -436,7 +438,6 @@ function sba_social_action_form_sba_social_action_node_form_alter(&$form, &$form
     );
   }
   $form['springboard_display']['#weight'] = -10;
-
 
   $form['springboard_display']['recent_participants'] = array(
     '#type' => 'fieldset',
@@ -717,7 +718,6 @@ function sba_social_action_twitter_oauth_callback_form_validate($form, &$form_st
  * Overrides twitter_oauth_callback_submit() because that function assumes
  * Drupal user integration exists.
  *
- * twitter_oauth_callback_form_validate() in twitter.pages.inc does the heavy lifting.
  */
 function sba_social_action_twitter_oauth_callback_submit(&$form, &$form_state) {
 
@@ -737,6 +737,8 @@ function sba_social_action_twitter_oauth_callback_submit(&$form, &$form_state) {
 
 /**
  * Clear twitter session data.
+ *
+ * Menu callback.
  */
 function sba_social_action_clear_twitter_session() {
   module_load_include('inc', 'sba_social_action', 'includes/sba_social_action.oauth_cache');
@@ -773,7 +775,6 @@ function theme_sba_social_action_twitter_timeline(&$vars) {
   $output .= "<script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'twitter-wjs');</script>";
   $output .='</div>';
 
-
   $output .= '<a class="twitter-timeline"  href="https://twitter.com/';
   $output .= $name;
   $output .= '" data-chrome="nofooter noheader" data-widget-id="661981842917171200" data-screen-name="' . $name . '">';
@@ -784,7 +785,7 @@ function theme_sba_social_action_twitter_timeline(&$vars) {
 }
 
 /**
- *
+ * Theme the token output for the twitter signout token.
  */
 function theme_sba_social_action_twitter_signout_link(&$vars) {
   $destination = $vars['destination'];
@@ -814,10 +815,10 @@ function sba_social_action_token_info() {
     'description' => t("Tokens for Social Actions."),
   );
 
-  $tokens['twitter_timeline'] = array(
-    'name' => t("Twitter timeline widget"),
-    'description' => '',
-  );
+//  $tokens['twitter_timeline'] = array(
+//    'name' => t("Twitter timeline widget"),
+//    'description' => '',
+//  );
 
   $tokens['twitter_signout'] = array(
     'name' => t("Twitter signout link"),
@@ -920,11 +921,22 @@ function sba_social_action_preprocess_webform_confirmation(&$vars) {
   }
 }
 
+/**
+ * Implements hook_cron().
+ *
+ * Expire old twitter sessions.
+ */
 function sba_social_action_cron() {
   module_load_include('inc', 'sba_social_action', 'includes/sba_social_action.oauth_cache');
   sba_social_action_cron_expire_sessions();
 }
 
+/**
+ * Saves twitter user profile data from a user request.
+ * @param $data
+ * @param $uid
+ * @throws \Exception
+ */
 function sba_social_action_save_twitter_profile($data, $uid) {
 
   module_load_include('php', 'oauth_common', 'lib/OAuth');

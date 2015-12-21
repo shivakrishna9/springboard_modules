@@ -1,6 +1,12 @@
 <?php
 
 
+/**
+ * Implements hook_schema().
+ *
+ * Create the social action twitter sessin cache table.
+ * Create the tweet data table.
+ */
 function sba_social_action_schema() {
 
   $schema['cache_sba_social_action'] = drupal_get_schema_unprocessed('system', 'cache');
@@ -223,6 +229,9 @@ function sba_social_action_update_7005() {
   }
 }
 
+/**
+ * Create the social action cache table
+ */
 function sba_social_action_update_7006() {
   $schema = module_invoke('sba_social_action', 'schema');
   if(db_table_exists('cache_sba_social_action') == FALSE) {
@@ -231,6 +240,9 @@ function sba_social_action_update_7006() {
   variable_set('sba_social_action_cache_expire_period', 1);
 }
 
+/**
+ * Create twitter tweet table
+ */
 function sba_social_action_update_7007() {
   $schema = module_invoke('sba_social_action', 'schema');
   if(db_table_exists('sba_social_action_tweets') == FALSE) {
@@ -238,6 +250,9 @@ function sba_social_action_update_7007() {
   }
 }
 
+/**
+ * Create twitter profile fields.
+ */
 function sba_social_action_update_7008() {
   module_load_include('inc', 'sba_social_action', 'includes/install/sba_social_action.install_profile');
   _sba_social_action_create_twitter_screen_name();
