@@ -1,0 +1,5 @@
+name = Springboard Token Set Webform
+description = Springboard Token Set functionality for Webforms.
+package = Jackson River Springboard - extras
+dependencies[] = springboard_token_set
+core = 7.x

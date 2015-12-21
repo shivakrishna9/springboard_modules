@@ -1,0 +1,43 @@
+<?php
+
+/**
+ * Implements hook_form_FORM_ID_alter()
+ */
+function springboard_token_set_webform_form_webform_component_edit_form_alter(&$form, &$form_state, $form_id) {
+  $nid = $form['nid']['#value'];
+  $form_key = $form['form_key']['#default_value'];
+
+  $token_sets = springboard_token_set_get_sets();
+
+  $token_set_options = array(
+    0 => 'None',
+  );
+  foreach ($token_sets as $token_set) {
+    $token_set_options[$token_set->tsid] = $token_set->name;
+  }
+
+  $form['token_set'] = array(
+    '#title' => t('Token Set'),
+    '#type' => 'fieldset',
+    '#collapsible' => TRUE,
+    '#weight' => 99,
+  );
+
+  $form['token_set']['token_set_id'] = array(
+    '#type' => 'select',
+    '#title' => t('Use token set'),
+    '#options' => $token_set_options,
+    '#default_value' => variable_get('token_set_webform_' . $nid . '_' . $form_key, 0),
+  );
+
+  $form['#submit'][] = 'springboard_token_set_webform_save_field';
+}
+
+/**
+ * Submit handler for field token set ID.
+ */
+function springboard_token_set_webform_save_field($form, &$form_state) {
+  $nid = $form['nid']['#value'];
+  $form_key = $form['form_key']['#default_value'];
+  variable_set('token_set_webform_' . $nid . '_' . $form_key, $form_state['values']['token_set']['token_set_id']);
+}
