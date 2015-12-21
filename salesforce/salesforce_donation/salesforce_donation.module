@@ -74,6 +74,7 @@ function salesforce_donation_settings($form, &$form_state) {
     $form['sf_donation_stages']['sf_donation_' . $stage] = array(
       '#title' => t('@stage Stage:', array('@stage' => $stage)),
       '#type' => 'select',
+      '#multiple' => TRUE,
       '#options' => $available_statuses,
       '#default_value' => isset($mapped_stages[$stage]) ? $mapped_stages[$stage] : '',
     );
@@ -613,11 +614,23 @@ function salesforce_donation_salesforce_genmap_map_fields(stdClass $donation, En
 
   // If the donation was canceled append the reason because it's not
   // currently mappable.
-  if ($donation->status == 'canceled' && !empty($donation->recurring)) {
+  if (($donation->status == 'canceled' || $donation->status == 'auto_canceled') && !empty($donation->recurring)) {
     $fields['Cancellation_Reason__c'] = $donation->recurring->cancellation_reason;
   }
 
   return $fields;
+}
+
+/**
+ * Implements hook_salesforce_genmap_map_fields_alter()
+ */
+function salesforce_donation_salesforce_genmap_map_fields_alter(&$fields, $context) {
+  if ($context['module'] == 'salesforce_donation') {
+    $donation = $context['object'];
+    if (($donation->status == 'canceled' || $donation->status == 'auto_canceled') && !empty($donation->recurring)) {
+      $fields['Cancellation_Reason__c'] = $donation->recurring->cancellation_reason;
+    }
+  }
 }
 
 /**
