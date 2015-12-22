@@ -11,6 +11,29 @@ function sba_social_action_message_preview_page($nid) {
   $node = node_load($nid);
   //$test_mode = field_get_items('node', $node, 'field_sba_test_mode');
 
+  // Build the form content out of the API response stored in session.
+  // First sort the messages.
+  $messages = array();
+  $random_array = [];
+  if (!empty($_SESSION['deliverable_social_messages']['messages'])) {
+    foreach ($_SESSION['deliverable_social_messages']['messages'] as $id => $message) {
+
+      $mess = count($node->messages[$message['message_id']]->field_sba_twitter_message[LANGUAGE_NONE]);
+      $random_array = array();
+      for ($x=0; $x<$mess; $x++) {
+        $random_array[$node->messages[$message['message_id']]->sba_message_id][] = mt_rand(0, $mess - 1);
+      }
+      $messages[$node->messages[$message['message_id']]->data['weight'] . $message['person']['organization'] . $message['targets']->last_name] = $message;
+      unset($messages[$id]);
+    }
+  }
+  if (!empty($_SESSION['undeliverable_social_messages']['messages'])) {
+    foreach ($_SESSION['undeliverable_social_messages']['messages'] as $message) {
+      $messages[$node->messages[$message['message_id']]->data['weight'] . $message['person']['organization'] . $message['targets']->last_name] = $message;
+    }
+  }
+  ksort($messages);
+
   if(!empty($node->field_sba_test_mode[0]['value'])) {
     drupal_set_message('This action is in test mode. Messages will not be not sent.', 'warning', TRUE);
   }
@@ -51,7 +74,7 @@ function sba_social_action_message_preview_page($nid) {
     '#markup' => $markup,
   ),
     'noscript' => array('#markup' => '<noscript><div class="alert error">Javascript is required. Please enable javascript in your browser.</div></noscript>'),
-    'sba_social_action_preview_form' => drupal_get_form('sba_social_action_preview_form', $node),
+    'sba_social_action_preview_form' => drupal_get_form('sba_social_action_preview_form', $node, $messages, $random_array),
   );
 
   return $build;
@@ -70,7 +93,7 @@ function sba_social_action_message_preview_page($nid) {
  *
  * @return mixed
  */
-function sba_social_action_preview_form($form, $form_state, $node) {
+function sba_social_action_preview_form($form, $form_state, $node, $messages, $random_array) {
   // Access variable to determine form element accessibility.
   $access = FALSE;
   module_load_include('inc', 'sba_social_action', 'includes/sba_social_action.oauth_cache');
@@ -109,6 +132,9 @@ function sba_social_action_preview_form($form, $form_state, $node) {
     ),
   );
 
+  $num_mess = count($messages);
+  $count = 0;
+
   // Ajax container
   $form['form_container'] = array(
     '#type' => 'container',
@@ -129,22 +155,6 @@ function sba_social_action_preview_form($form, $form_state, $node) {
       '#suffix' => $url . '</div>',
     );
   }
-
-  // Build the form content out of the API response stored in session.
-  // First sort the messages.
-  $messages = array();
-  if (!empty($_SESSION['deliverable_social_messages']['messages'])) {
-    foreach ($_SESSION['deliverable_social_messages']['messages'] as $id => $message) {
-      $messages[$node->messages[$message['message_id']]->data['weight'] . $message['person']['organization'] . $message['targets']->last_name] = $message;
-      unset($messages[$id]);
-    }
-  }
-  if (!empty($_SESSION['undeliverable_social_messages']['messages'])) {
-    foreach ($_SESSION['undeliverable_social_messages']['messages'] as $message) {
-      $messages[$node->messages[$message['message_id']]->data['weight'] . $message['person']['organization'] . $message['targets']->last_name] = $message;
-    }
-  }
-  ksort($messages);
 
   // @todo explore other ways of retrieving these two.
   $contact = $_SESSION['social_contact'];
@@ -170,8 +180,6 @@ function sba_social_action_preview_form($form, $form_state, $node) {
   // Used to send our second step form through the same helper functions as the first step form.
   module_load_include('inc', 'sba_social_action', 'includes/sba_social_action.form');
 
-  $num_mess = count($messages);
-  $count = 1;
   foreach ($messages as $key => $message) {
 
     // What type of message is this.
@@ -187,38 +195,43 @@ function sba_social_action_preview_form($form, $form_state, $node) {
     // Create the message form elements from the entity. Passed by reference
     // to the same helper function as the first step form.
     $build = array();
-    sba_social_action_message_form($build, $message_entity, 'multi_flow', $message_entity_type);
+    sba_social_action_message_form($build, $message_entity, $message_entity_type, $message_entity_type);
 
     $this_message =& $build['message'][$message_entity->sba_message_id];
     $this_message['#attributes']['class'][] = 'message-preview-message-fieldset';
-    if ($count == 1) {
+    if ($count == 0) {
       $this_message['#attributes']['class'][] = 'first';
     }
-    if ($count == $num_mess) {
+    if ($count == $num_mess - 1) {
       $this_message['#attributes']['class'][] = 'last';
     }
-    $count++;
 
     $prepend = !empty($this_message['prepend']['#value']) ? '.' : '';
     if (isset($this_message['body_show'])) {
       $message_alt = field_get_items('sba_message', $message_entity, 'field_sba_twitter_message');
-      $alternatives =  array();
+      $alternatives = array();
       if (is_array($message_alt)) {
         foreach ($message_alt as $alt) {
           $alt_tweet = $prepend . '@' . $message['person']['twitter'] . ' ' . $alt['value'];
           $alternatives[] = $alt_tweet;
         }
       }
-      $tweet = array_rand(array_flip($alternatives));
-      $display_tweet = check_markup($tweet, 'plain_text');
+      // $random_array is defined in the build function so that it does not
+      // change after the form ajax reload.
+      $rand_mess = $random_array[$node->messages[$message['message_id']]->sba_message_id];
+      $tweet = $alternatives[$rand_mess[$count]];
+      $display_tweet = nl2br(check_plain($tweet));
       $send_tweet = $tweet;
       $this_message['body_show']['#markup'] = $display_tweet;
     }
-    if (isset($this_message['edited_body'])) {
+    $count++;
+
+    if (isset($this_message['edited_body']) && $message_entity_type == 'sba_social_action_twitter_message') {
       $prepend = !empty($this_message['prepend']['#value']) ? '.' : '';
       $this_message['body_show']['#suffix'] = '<div class="sba-full-tweet"><div class="sba-display-hint">This will be your full tweet:</div><div class="editable-message-preview"><span class="preview-target-text">' . $prepend . '@' . $message['person']['twitter'] . '</span><span class="preview-replace-text"></span></div></div>';
     }
-    if (!isset($this_message['edited_body']) && $access == TRUE) {
+
+    if (!isset($this_message['edited_body']) && $access == TRUE && $message_entity_type == 'sba_social_action_twitter_message') {
       $text = $send_tweet;
       $link = l('Customize and send this tweet', 'https://twitter.com/intent/tweet', array('query' => array('text' => $text)));
       $img = drupal_get_path('module', 'sba_social_action') . '/images/Twitter_logo_blue_32.png';
@@ -301,6 +314,7 @@ function sba_social_action_preview_form($form, $form_state, $node) {
     }
   }
 
+  // Shown after the ajax reload from authentication.
   if (isset($twitter_user_cache['values']['screen_name']) && !empty($node->field_sba_social_require_auth)) {
     $form['form_container']['page_description_login'] = array(
       '#prefix' => '<div class="preview-twitter-user"><p>',
@@ -368,7 +382,9 @@ function sba_social_actions_reload_form($form, $form_state) {
     $submission = webform_get_submission($form['#node']->nid, $sid, TRUE);
     module_load_include('inc', 'sba_social_action', 'includes/sba_social_action.oauth_cache');
     $twitter_user_cache = sba_social_action_cache_get('sba_twitter');
-    sba_social_action_save_twitter_profile($twitter_user_cache, $submission->uid);
+    if (!empty($twitter_user_cache)) {
+      sba_social_action_save_twitter_profile($twitter_user_cache, $submission->uid);
+    }
   }
 
   // Ajax reload form with auth username data.
