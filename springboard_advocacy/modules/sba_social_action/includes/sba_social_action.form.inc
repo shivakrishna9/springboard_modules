@@ -63,19 +63,14 @@ function sba_social_action_additional_elements(&$form, &$form_state) {
 
   );
 
-  //$multi_flow_prompt = '';
 
-    $form['submitted']['multiflow'] = array(
-      '#type' => 'fieldset',
-      '#title' => t('Step 1 of 2'),
-      '#attributes' => array('class' => array('sba-message')),
-      '#weight' => -100
+  $form['submitted']['multiflow'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Step 1 of 2'),
+    '#attributes' => array('class' => array('sba-message')),
+    '#weight' => -100
 
-    );
-//    $form['sba_messages']['multiflow']['prompt'] =  array(
-//      '#markup' => $multi_flow_prompt,
-//    );
-
+  );
 
   // Create a set of fields for each message assigned to the form.
   $districted = FALSE;
@@ -84,6 +79,7 @@ function sba_social_action_additional_elements(&$form, &$form_state) {
   }
   // value of districted can change after being passed by reference above.
   if ($districted == FALSE) {
+    // Hide the address fields. Use webform user to find them.
     $node = $form['#node'];
     $components = $node->webform['components'];
     $component_hierarchy = __webform_user_parse_components($node->nid, $components);
@@ -121,12 +117,19 @@ function sba_social_action_additional_elements(&$form, &$form_state) {
 function sba_social_action_message_form(&$form, $message, $message_entity_type, &$districted = NULL) {
   // Get some message values via an entity wrapper.
   $wrapper = entity_metadata_wrapper('sba_message', $message);
-  $first_tweet = $wrapper->field_sba_twitter_message->value()[0];
-  $message_body = check_plain($first_tweet);
-  $message_editable = $wrapper->field_sba_twitter_editable->value() == 'Not editable' ? FALSE : TRUE;
-  $required_message = $wrapper->field_sba_twitter_editable->value() == 'Editing is required' ? TRUE : FALSE;
-  $alternate_options = $wrapper->field_sba_show_additional->value();
-  $prepend = $wrapper->field_sba_prepend_target_name->value();
+  $message_body = $alternate_options = $description = '';
+  $message_editable = $required_message = $prepend = FALSE;
+
+  if ($message_entity_type == 'sba_social_action_twitter_message') {
+    $first_tweet = $wrapper->field_sba_twitter_message->value()[0];
+    $message_body = check_plain($first_tweet);
+    $message_editable = $wrapper->field_sba_twitter_editable->value() == 'Not editable' ? FALSE : TRUE;
+    $required_message = $wrapper->field_sba_twitter_editable->value() == 'Editing is required' ? TRUE : FALSE;
+    $alternate_options = $wrapper->field_sba_show_additional->value();
+    $prepend = $wrapper->field_sba_prepend_target_name->value();
+    $description = 'You may customize this tweet. You have <span class="counter"></span> characters left.';
+  }
+
   $preview_form = empty($form) ? TRUE : FALSE;
   $access = TRUE;
   if (!$preview_form) {
@@ -154,6 +157,11 @@ function sba_social_action_message_form(&$form, $message, $message_entity_type, 
     '#value' => $message->sba_message_id,
   );
 
+  $this_message['sba_message_type'] = array(
+    '#type' => 'value',
+    '#value' => $message_entity_type,
+  );
+
   $this_message['body'] = array(
     '#type' => 'value',
     '#value' => $message_body,
@@ -171,13 +179,12 @@ function sba_social_action_message_form(&$form, $message, $message_entity_type, 
     );
 
     if ($required_message) {
-      $description = '';
       $required = TRUE;
     }
     else {
-      $description = '';
       $required = FALSE;
     }
+
     if(!$message_editable) {
       $this_message['body_show'] = array(
         '#type' => 'item',
@@ -192,7 +199,7 @@ function sba_social_action_message_form(&$form, $message, $message_entity_type, 
       $this_message['edited_body'] = array(
         '#type' => 'textarea',
         '#default_value' => $message_body,
-        '#description' => 'You may customize this tweet. You have <span class="counter"></span> characters left.',
+        '#description' => $description,
         '#required' => $required,
         '#access' => $access,
         '#rows' => 2
@@ -223,6 +230,9 @@ function sba_social_action_form_validate($form, &$form_state) {
   form_load_include($form_state, 'inc', 'springboard_advocacy', 'includes/springboard_advocacy.smarty_streets');
   $webform_values_flat = _springboard_advocacy_webform_submission_flatten($form['#node']->nid, $form_state['values']['submitted']);
   form_set_value($form['webform_flat'], $webform_values_flat, $form_state);
+
+  // If the message is not districted, we'll skip the smarty lookup and substitute bogus values
+  // in sba_social_action_build_contact().
   if (!empty($form_state['values']['districted'])) {
     $smarty_geo = springboard_advocacy_smarty_lookup($webform_values_flat);
     if (!empty($smarty_geo) && is_array($smarty_geo)) {
@@ -255,18 +265,18 @@ function sba_social_action_form_submit($form, &$form_state) {
   $_SESSION['social_action_sid'] = FALSE;
   $_SESSION['social_action_completed'] = FALSE;
 
-
   $account =  new stdClass();
   if (empty($form_state['values']['districted'])) {
     $account = user_load_by_mail($form_state['values']['submitted']['mail']);
   }
 
   // Create array of messages to submit for target resolution.
+  // Retrieve target social URLs from the response.
   if (isset($form_state['values']['sba_messages'])) {
     $messages = array();
     foreach ($form_state['values']['sba_messages']['message'] as $id => $message) {
       $edited_body = isset($message['edited_body']) ? $message['edited_body'] : '';
-      $messages[$id]['body'] = sba_social_action_build_message_bodies($message['sba_message_id'], $edited_body);
+      $messages[$id]['body'] = sba_social_action_build_message_bodies($message['sba_message_id'], $message['sba_message_type'], $edited_body);
       //$messages[$id]['subject'] = $message['subject'];
     }
     form_load_include($form_state, 'inc', 'sba_social_action', 'includes/sba_social_action.webform');
@@ -303,19 +313,21 @@ function sba_social_action_form_submit($form, &$form_state) {
  * @return string
  *   The message in string format.
  */
-function sba_social_action_build_message_bodies($sba_message_id, $message_editable) {
+function sba_social_action_build_message_bodies($sba_message_id, $type, $message_editable) {
   // Load the message entity using the message entity id. We'll use the entity
   // to construct the full message.
   $message = entity_load('sba_message', array($sba_message_id));
   $message = array_shift($message);
   $wrapper = entity_metadata_wrapper('sba_message', $message);
   $user_message = array();
-  $first_tweet = $wrapper->field_sba_twitter_message->value()[0];
-  if(empty($message_editable)) {
-    $user_message[] = $first_tweet;
-  }
-  else {
-    $user_message[] = $message_editable;
+  if ($type == 'sba_social_action_twitter_message') {
+    $first_tweet = $wrapper->field_sba_twitter_message->value()[0];
+    if (empty($message_editable)) {
+      $user_message[] = $first_tweet;
+    }
+    else {
+      $user_message[] = $message_editable;
+    }
   }
   $user_message = implode("\n\n", array_filter($user_message));
 
