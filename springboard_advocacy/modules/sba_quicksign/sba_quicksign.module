@@ -63,6 +63,7 @@ function sba_quicksign_form_alter(&$form, $form_state, $form_id) {
           $components = $node->webform['components'];
           $component_hierarchy = __webform_user_parse_components($node->nid, $components);
           $profile = !empty($_SESSION['sba_quicksign']['profile']) ? $_SESSION['sba_quicksign']['profile'] : FALSE;
+          $form['#submit'][] = 'sba_quicksign_form_submit';
 
           if ($profile) {
             $form['#after_build'][] = 'sba_quicksign_after_build';
@@ -321,6 +322,9 @@ function sba_quicksign_values_tree_build($profile, $src, &$tree, $parent) {
   return $tree;
 }
 
+function sba_quicksign_form_submit($for, $form_state) {
+  $_SESSION['quicksign_show'] = TRUE;
+}
 
 /**
  * Implements hook_form_BASE_FORM_ID_alter().
