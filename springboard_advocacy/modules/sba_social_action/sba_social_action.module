@@ -529,7 +529,7 @@ function sba_social_action_multiflow_submit($form, &$form_state) {
   }
   else {
     $_SESSION['social_action_sid']['completed'] =  TRUE;
-    if (!empty($form['#node']->custom_fail_message) && $node->webform['redirect_url'] != '<confirmation>') {
+    if (!empty($form['#node']->custom_fail_message) && $node->webform['redirect_url'] != '<confirmation>' && !empty($form_state['values']['messages'])) {
       drupal_get_messages('status');
       drupal_set_message(check_markup($form['#node']->custom_fail_message, 'full_html', '', TRUE));
     }
@@ -915,7 +915,7 @@ function sba_social_action_form_webform_configure_form_alter(&$form, &$form_stat
  */
 function sba_social_action_preprocess_webform_confirmation(&$vars) {
   if ($vars['node']->type == 'sba_social_action' && (empty($_SESSION['deliverable_social_messages']))) {
-    if (isset($vars['node']->custom_fail_message)) {
+    if (isset($vars['node']->custom_fail_message) && !empty($vars['node']->messages)) {
       $vars['confirmation_message'] = check_markup($vars['node']->custom_fail_message, 'full_html');
     }
   }
