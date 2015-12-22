@@ -2799,6 +2799,7 @@ function _fundraiser_create_fundraiser($fundraiser) {
       'redirect_url' => '<confirmation>',
     );
     $record = array_merge($record, $fundraiser);
+    if (isset($record['default_amount']) && empty($record['default_amount'])) unset($record['default_amount']); // NULL > empty
     drupal_write_record('fundraiser', $record);
     // And invoke the hooks for all the other modules to respond.
     module_invoke_all('fundraiser_create_fundraiser_alter', (object) $fundraiser);
@@ -2875,6 +2876,7 @@ function _fundraiser_update_fundraiser($fundraiser) {
     // Serialize for storage, our configured gateway values for storage in components.
     $fundraiser['gateways'] = serialize($fundraiser['gateways']);
     $record = $fundraiser;
+    if (isset($record['default_amount']) && empty($record['default_amount'])) unset($record['default_amount']); // NULL > empty
     drupal_write_record('fundraiser', $record, 'nid');
     // And invoke the hooks for all the other modules to respond.
     module_invoke_all('fundraiser_update_fundraiser_alter', (object) $fundraiser);
