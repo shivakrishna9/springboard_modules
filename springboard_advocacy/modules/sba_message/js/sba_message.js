@@ -659,6 +659,10 @@
         var districted_tweet = $("input[name*=field_sba_target_option]:checked").val();
         if (districted_tweet != 1) {
             notGroupable = true;
+            $('#advo-add-all').hide();
+        }
+        else {
+            $('#advo-add-all').show();
         }
 
         //update form element states based on meta-variables
