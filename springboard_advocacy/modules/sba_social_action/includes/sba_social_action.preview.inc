@@ -18,17 +18,22 @@ function sba_social_action_message_preview_page($nid) {
   if (!empty($_SESSION['deliverable_social_messages']['messages'])) {
     foreach ($_SESSION['deliverable_social_messages']['messages'] as $id => $message) {
 
+      // Create a randomized array of message ids for random display of alternate tweet texts in the form
+      // Placed here to avoid complications from ajax reload after twitter authentication.
       $mess = count($node->messages[$message['message_id']]->field_sba_twitter_message[LANGUAGE_NONE]);
       $random_array = array();
       for ($x=0; $x<$mess; $x++) {
         $random_array[$node->messages[$message['message_id']]->sba_message_id][] = mt_rand(0, $mess - 1);
       }
+
+      // Sort criteria for message targets.
       $messages[$node->messages[$message['message_id']]->data['weight'] . $message['person']['organization'] . $message['targets']->last_name] = $message;
       unset($messages[$id]);
     }
   }
   if (!empty($_SESSION['undeliverable_social_messages']['messages'])) {
     foreach ($_SESSION['undeliverable_social_messages']['messages'] as $message) {
+      // Sort criteria for message targets.
       $messages[$node->messages[$message['message_id']]->data['weight'] . $message['person']['organization'] . $message['targets']->last_name] = $message;
     }
   }
@@ -37,14 +42,15 @@ function sba_social_action_message_preview_page($nid) {
   if(!empty($node->field_sba_test_mode[0]['value'])) {
     drupal_set_message('This action is in test mode. Messages will not be not sent.', 'warning', TRUE);
   }
+
   if (isset($_SESSION['messages']['status'])) {
     // Prevent the confirmation message from appearing prematurely.
     $_SESSION['saved_messages']['status'] = $_SESSION['messages']['status'];
     // clear all
     drupal_get_messages('status');
   }
+
   // Check if the step two form has already been submitted.
-  // @todo think about this.
   $completed = isset($_SESSION['social_action_sid']['completed']) ? $_SESSION['social_action_sid']['completed'] : TRUE;
   if($completed == TRUE) {
     drupal_set_message(t("This form has already been submitted. !return to the form.", array('!return' => l('Return', 'node/' . $node->nid))));
@@ -107,15 +113,18 @@ function sba_social_action_preview_form($form, $form_state, $node, $messages, $r
     $twitter_user_cache['values']['oauth_token'] = decrypt($twitter_user_cache['values']['oauth_token']);
     $twitter_user_cache['values']['oauth_token_secret'] = decrypt($twitter_user_cache['values']['oauth_token_secret']);
   }
+
+  // Bypass authentication and use Twitter web intents if that node option is set.
   if (empty($node->field_sba_social_require_auth)) {
     $access = TRUE;
   }
 
-  $form['#attached']['css'][] = drupal_get_path('module', 'sba_social_action') . '/css/message-preview.css';
-  $form['#attached']['js'][] = drupal_get_path('module', 'sba_social_action') . '/js/jQuery.simplyCountable.js';
-  $form['#attached']['js'][] = drupal_get_path('module', 'sba_social_action') . '/js/social_counter.js';
-  $form['#attached']['js'][] = drupal_get_path('module', 'sba_social_action') . '/js/social_message_preview.js';
-  $form['#attached']['js'][] = drupal_get_path('module', 'sba_social_action') . '/js/jquery.oauthpopup.js';
+  $path = drupal_get_path('module', 'sba_social_action');
+  $form['#attached']['css'][] = $path . '/css/message-preview.css';
+  $form['#attached']['js'][] = $path . '/js/jQuery.simplyCountable.js';
+  $form['#attached']['js'][] = $path . '/js/social_counter.js';
+  $form['#attached']['js'][] = $path . '/js/social_message_preview.js';
+  $form['#attached']['js'][] = $path . '/js/jquery.oauthpopup.js';
 
   // Invisible form element used to trigger ajax update when popup widow closes.
   $form['ajaxify'] = array(
@@ -142,6 +151,7 @@ function sba_social_action_preview_form($form, $form_state, $node, $messages, $r
     '#suffix' => '</div>',
   );
 
+  // Sign in with Twitter.
   if (empty($twitter_user_cache)  && $access == FALSE) {
     $url = variable_get('sba_social_privacy', '');
     if (!empty($url)) {
@@ -237,6 +247,7 @@ function sba_social_action_preview_form($form, $form_state, $node, $messages, $r
       $img = drupal_get_path('module', 'sba_social_action') . '/images/Twitter_logo_blue_32.png';
       $this_message['body_show']['#suffix'] = '<div class="twitter-asset"><img src="/' . $img . '"><div class="sba-web-intent-link">' . $link . '</div></div>';
     }
+
     // Build an array of target properties
     $this_message['target'] = array(
       '#type' => 'value',
@@ -394,72 +405,75 @@ function sba_social_actions_reload_form($form, $form_state) {
 /**
  * Validate the  messages.
  *
+ * The web intents version does not need this function. Keeping for future use.
+ * if Twitter posting API passes muster.
+ *
  * @param $form
  * @param $form_state
  */
-function sba_social_action_preview_form_validate($form, &$form_state) {
-  $messages = !empty($form['messages']) ? element_children($form['messages']) : array();
-  $changed = FALSE;
-  // To prevent duplicate error messages.
-  $body_error_once = NULL;
-  $subject_error_once = NULL;
-
-  // Loop through the messages and validate whether user is required to edit subject or body.
-  // Also set a value for future use by the "user_edit_flag" component.
-  foreach ($messages as $id) {
-
-    // The message
-    $message = $form['messages'][$id]['message'];
-
-    // The default value for the user-editable body if any.
-    $body_default = isset($message['edited_body']['#default_value']) ? $message['edited_body']['#default_value'] : '';
-    // The edited value in the user-editable body if any.
-    $body_edited = isset($form_state['values']['messages'][$id]['message']['edited_body']) ? $form_state['values']['messages'][$id]['message']['edited_body'] : '';
-
-    // The default value for the user-editable subject if any.
-    $subject_default = isset($message['subject']['#default_value']) ? $message['subject']['#default_value'] : '';
-    // The edited value in the user-editable subject if any.
-    $subject_edited = isset($form_state['values']['messages'][$id]['message']['subject']) ? $form_state['values']['messages'][$id]['message']['subject'] : '';
-
-    // Enforce mandatory editing of the body if set.
-    $body_error = !isset($body_error_once) ? t('Please personalize your message before sending.') : '';
-    if ($body_edited == $body_default && isset($message['body_required']) && $message['body_required']['#value'] == 1) {
-      $body_error_once = TRUE;
-      form_set_error("messages][$id][message][edited_body", $body_error);
-    }
-    elseif ($body_edited != $body_default) {
-      // Set change value for use by the "user_edit_flag" component.
-      $changed = TRUE;
-    }
-
-    // Enforce mandatory editing of the subject if set.
-    $subject_error = !isset($subject_error_once) ? t('Please personalize the subject line before sending your message.') : '';
-    if ($subject_edited == $subject_default && isset($message['subject_required']) && $message['subject_required']['#value'] == 1) {
-      $subject_error_once = TRUE;
-      form_set_error("messages][$id][message][subject", $subject_error);
-    }
-    elseif (!isset($message['subject_show']) && $subject_edited != $subject_default) {
-      // Set change value for use by the "user_edit_flag" component.
-      $changed = TRUE;
-    }
-  }
-  // Set value for the user_edited_flag
-  $form_state['storage']['changed'] = $changed;
-
-  // Update error messages.
-  if (!empty($_SESSION['messages']['error'])) {
-    foreach ($_SESSION['messages']['error'] as $key => $message) {
-      if (strpos($message, 'You must edit the body of this message before sending') !== FALSE) {
-        unset($_SESSION['messages']['error'][$key]);
-        drupal_set_message('Please personalize your message before sending', 'error', FALSE);
-      }
-      if (strpos($message, 'You must edit the subject of this message before sending') !== FALSE) {
-        unset($_SESSION['messages']['error'][$key]);
-        drupal_set_message('Please personalize the subject line before sending', 'error', FALSE);
-      }
-    }
-  }
-}
+//function sba_social_action_preview_form_validate($form, &$form_state) {
+//  $messages = !empty($form['messages']) ? element_children($form['messages']) : array();
+//  $changed = FALSE;
+//  // To prevent duplicate error messages.
+//  $body_error_once = NULL;
+//  $subject_error_once = NULL;
+//
+//  // Loop through the messages and validate whether user is required to edit subject or body.
+//  // Also set a value for future use by the "user_edit_flag" component.
+//  foreach ($messages as $id) {
+//
+//    // The message
+//    $message = $form['messages'][$id]['message'];
+//
+//    // The default value for the user-editable body if any.
+//    $body_default = isset($message['edited_body']['#default_value']) ? $message['edited_body']['#default_value'] : '';
+//    // The edited value in the user-editable body if any.
+//    $body_edited = isset($form_state['values']['messages'][$id]['message']['edited_body']) ? $form_state['values']['messages'][$id]['message']['edited_body'] : '';
+//
+//    // The default value for the user-editable subject if any.
+//    $subject_default = isset($message['subject']['#default_value']) ? $message['subject']['#default_value'] : '';
+//    // The edited value in the user-editable subject if any.
+//    $subject_edited = isset($form_state['values']['messages'][$id]['message']['subject']) ? $form_state['values']['messages'][$id]['message']['subject'] : '';
+//
+//    // Enforce mandatory editing of the body if set.
+//    $body_error = !isset($body_error_once) ? t('Please personalize your message before sending.') : '';
+//    if ($body_edited == $body_default && isset($message['body_required']) && $message['body_required']['#value'] == 1) {
+//      $body_error_once = TRUE;
+//      form_set_error("messages][$id][message][edited_body", $body_error);
+//    }
+//    elseif ($body_edited != $body_default) {
+//      // Set change value for use by the "user_edit_flag" component.
+//      $changed = TRUE;
+//    }
+//
+//    // Enforce mandatory editing of the subject if set.
+//    $subject_error = !isset($subject_error_once) ? t('Please personalize the subject line before sending your message.') : '';
+//    if ($subject_edited == $subject_default && isset($message['subject_required']) && $message['subject_required']['#value'] == 1) {
+//      $subject_error_once = TRUE;
+//      form_set_error("messages][$id][message][subject", $subject_error);
+//    }
+//    elseif (!isset($message['subject_show']) && $subject_edited != $subject_default) {
+//      // Set change value for use by the "user_edit_flag" component.
+//      $changed = TRUE;
+//    }
+//  }
+//  // Set value for the user_edited_flag
+//  $form_state['storage']['changed'] = $changed;
+//
+//  // Update error messages.
+//  if (!empty($_SESSION['messages']['error'])) {
+//    foreach ($_SESSION['messages']['error'] as $key => $message) {
+//      if (strpos($message, 'You must edit the body of this message before sending') !== FALSE) {
+//        unset($_SESSION['messages']['error'][$key]);
+//        drupal_set_message('Please personalize your message before sending', 'error', FALSE);
+//      }
+//      if (strpos($message, 'You must edit the subject of this message before sending') !== FALSE) {
+//        unset($_SESSION['messages']['error'][$key]);
+//        drupal_set_message('Please personalize the subject line before sending', 'error', FALSE);
+//      }
+//    }
+//  }
+//}
 
 /**
  * Submit the messages to the API endpoint.
@@ -477,6 +491,7 @@ function sba_social_action_preview_form_submit($form, &$form_state) {
     $submission = webform_get_submission($node->nid, $sid);
   }
 
+  // Web intents version does not use this. Keeping for future use.
 //  foreach ($form_state['values']['messages'] as $message) {
 
 //    $message_text = isset($message['message']['edited_body']) ? $message['message']['edited_body'] : $message['message']['body'];
@@ -527,15 +542,14 @@ function sba_social_action_preview_form_submit($form, &$form_state) {
 //    }
 //  }
 
-  // Add session flag to prevent resubmission of the form
-  //$_SESSION['social_action_completed'] = TRUE;
 
   // Redirect to the original confirmation page.
   // $sid is set in sba_social_action_multifow_submit()
   $_SESSION['social_action_sid']['completed'] = TRUE;
   springboard_advocacy_negotiate_redirect($node, $sid, $form_state);
+  $changed = !empty($form_state['storage']['changed']) ? $form_state['storage']['changed'] : FALSE;
   if ($sid) {
-    springboard_advocacy_update_multistep_components($sid, $node, $form_state['storage']['changed']);
+    springboard_advocacy_update_multistep_components($sid, $node, $changed);
   }
 }
 
