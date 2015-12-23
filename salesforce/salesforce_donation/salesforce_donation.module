@@ -74,7 +74,7 @@ function salesforce_donation_settings($form, &$form_state) {
     $form['sf_donation_stages']['sf_donation_' . $stage] = array(
       '#title' => t('@stage Stage:', array('@stage' => $stage)),
       '#type' => 'select',
-      '#multiple' => TRUE,
+      '#multiple' => FALSE,
       '#options' => $available_statuses,
       '#default_value' => isset($mapped_stages[$stage]) ? $mapped_stages[$stage] : '',
     );
