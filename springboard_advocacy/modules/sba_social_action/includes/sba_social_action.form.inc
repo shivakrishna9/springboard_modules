@@ -121,7 +121,7 @@ function sba_social_action_message_form(&$form, $message, $message_entity_type, 
   $message_editable = $required_message = $prepend = FALSE;
 
   if ($message_entity_type == 'sba_social_action_twitter_message') {
-    $first_tweet = $wrapper->field_sba_twitter_message->value()[0];
+    $first_tweet = !empty($wrapper->field_sba_twitter_message->value()[0]) ? $wrapper->field_sba_twitter_message->value()[0] : '';
     $message_body = check_plain($first_tweet);
     $message_editable = $wrapper->field_sba_twitter_editable->value() == 'Not editable' ? FALSE : TRUE;
     $required_message = $wrapper->field_sba_twitter_editable->value() == 'Editing is required' ? TRUE : FALSE;
@@ -321,7 +321,7 @@ function sba_social_action_build_message_bodies($sba_message_id, $type, $message
   $wrapper = entity_metadata_wrapper('sba_message', $message);
   $user_message = array();
   if ($type == 'sba_social_action_twitter_message') {
-    $first_tweet = $wrapper->field_sba_twitter_message->value()[0];
+    $first_tweet = !empty($wrapper->field_sba_twitter_message->value()[0]) ? $wrapper->field_sba_twitter_message->value()[0] : '';
     if (empty($message_editable)) {
       $user_message[] = $first_tweet;
     }
