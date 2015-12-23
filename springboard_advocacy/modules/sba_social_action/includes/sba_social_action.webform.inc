@@ -44,8 +44,6 @@ function sba_social_action_send_message(array $user_message, array $form_state, 
       'multiflow' => 'step_one'
     );
 
-    $node = $form_state['complete form']['#node'];
-
     // Send submission to API Client.
     $api_call = springboard_advocacy_api_call();
     $response = $api_call->invokeClientMethod('resolveTargets', $submission);
@@ -75,7 +73,6 @@ function sba_social_action_build_messages(array $user_message) {
 
   foreach ($all_messages as $message) {
     $message_wrapper = entity_metadata_wrapper('sba_message', $message);
-
     $message_unique_id = $message->data['message_id'];
     $weight = !empty($message->data['precedence']) ? $message->data['weight'] : $x++;
     $undistricted = !$message_wrapper->field_sba_target_options->value();
