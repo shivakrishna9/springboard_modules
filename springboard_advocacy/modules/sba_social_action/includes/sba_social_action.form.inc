@@ -281,8 +281,8 @@ function sba_social_action_form_submit($form, &$form_state) {
     }
     form_load_include($form_state, 'inc', 'sba_social_action', 'includes/sba_social_action.webform');
     $data = sba_social_action_send_message($messages, $form_state, $account);
+
     // Calculate the deliverable count for sending to salesforce
-    //@todo refactr for social url count
     if (!empty($data->messages)) {
       $deliverable = 0;
       foreach ($data->messages as $key => $message) {
