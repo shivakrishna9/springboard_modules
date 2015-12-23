@@ -14,14 +14,15 @@ function sba_social_action_message_preview_page($nid) {
   // Build the form content out of the API response stored in session.
   // First sort the messages.
   $messages = array();
-  $random_array = [];
+  $random_array = array();
+
   if (!empty($_SESSION['deliverable_social_messages']['messages'])) {
     foreach ($_SESSION['deliverable_social_messages']['messages'] as $id => $message) {
 
       // Create a randomized array of message ids for random display of alternate tweet texts in the form
       // Placed here to avoid complications from ajax reload after twitter authentication.
       $mess = count($node->messages[$message['message_id']]->field_sba_twitter_message[LANGUAGE_NONE]);
-      $random_array = array();
+
       for ($x=0; $x<$mess; $x++) {
         $random_array[$node->messages[$message['message_id']]->sba_message_id][] = mt_rand(0, $mess - 1);
       }
@@ -31,13 +32,13 @@ function sba_social_action_message_preview_page($nid) {
       unset($messages[$id]);
     }
   }
+
   if (!empty($_SESSION['undeliverable_social_messages']['messages'])) {
     foreach ($_SESSION['undeliverable_social_messages']['messages'] as $message) {
       // Sort criteria for message targets.
       $messages[$node->messages[$message['message_id']]->data['weight'] . $message['person']['organization'] . $message['targets']->last_name] = $message;
     }
   }
-  ksort($messages);
 
   if(!empty($node->field_sba_test_mode[0]['value'])) {
     drupal_set_message('This action is in test mode. Messages will not be not sent.', 'warning', TRUE);
@@ -215,6 +216,7 @@ function sba_social_action_preview_form($form, $form_state, $node, $messages, $r
     if ($count == $num_mess - 1) {
       $this_message['#attributes']['class'][] = 'last';
     }
+    $count++;
 
     $prepend = !empty($this_message['prepend']['#value']) ? '.' : '';
     if (isset($this_message['body_show'])) {
@@ -226,15 +228,24 @@ function sba_social_action_preview_form($form, $form_state, $node, $messages, $r
           $alternatives[] = $alt_tweet;
         }
       }
+
       // $random_array is defined in the build function so that it does not
       // change after the form ajax reload.
-      $rand_mess = $random_array[$node->messages[$message['message_id']]->sba_message_id];
-      $tweet = $alternatives[$rand_mess[$count]];
+      $rand_count = count($random_array[$message_entity->sba_message_id]);
+      static $n = 0;
+      $rand_mess = $random_array[$message_entity->sba_message_id];
+      $tweet = $alternatives[$rand_mess[$n]];
       $display_tweet = nl2br(check_plain($tweet));
       $send_tweet = $tweet;
       $this_message['body_show']['#markup'] = $display_tweet;
+      if ($n < ($rand_count - 1)) {
+        $n++;
+      }
+      else {
+        $n = 0;
+      }
     }
-    $count++;
+
 
     if (isset($this_message['edited_body']) && $message_entity_type == 'sba_social_action_twitter_message') {
       $prepend = !empty($this_message['prepend']['#value']) ? '.' : '';
