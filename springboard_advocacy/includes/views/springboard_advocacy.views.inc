@@ -661,11 +661,7 @@ function springboard_advocacy_views_pre_render(&$view) {
     foreach ($view->result as $key => $result) {
       if (isset($result->class_name) && $result->class_name != 'Legislator') {
         $result->role = isset($result->title) ? $result->title : $result->role;
-      }
-    }
-    foreach ($view->result as $key => $result) {
-      if (isset($result->organization) &&  isset($result->class_name) && $result->class_name != 'Legislator') {
-        $result->party = $result->organization;
+        $result->party = isset($result->organization) ? $result->organization : $result->party;
       }
     }
   }
