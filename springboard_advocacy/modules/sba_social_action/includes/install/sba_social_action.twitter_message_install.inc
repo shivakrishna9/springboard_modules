@@ -497,7 +497,7 @@ function sba_social_action_create_twitter_message_entity($update = FALSE) {
 /**
  * Delete springboard message fields
  */
-function _sba_social_action_delete_twitter_fields() {
+function _sba_social_action_delete_twitter_message_entity() {
   $fields = array(
     'field_sba_twitter_message',
     'field_sba_twitter_editable',
