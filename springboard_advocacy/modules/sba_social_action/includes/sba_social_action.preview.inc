@@ -198,6 +198,10 @@ function sba_social_action_preview_form($form, $form_state, $node, $messages, $r
     $message_entity_type = $node->messages[$message['message_id']]->type;
     $editable = field_get_items('sba_message', $node->messages[$message['message_id']], 'field_sba_twitter_editable');
     $editable = $editable[0]['value'] != 'Not editable' ? TRUE : FALSE;
+    $form['form_container']['messages'][$key] = array(
+    '#prefix' => '<div class="message-preview-message-container">',
+      '#suffix' => '</div>',
+    );
     // Theme the message header.
     $form['form_container']['messages'][$key]['sent_to'] = array(
       '#markup' => theme('sba_social_action_preview_message_header', array('message' => $message, 'type' => $message_entity_type, 'editable' => $editable)),
