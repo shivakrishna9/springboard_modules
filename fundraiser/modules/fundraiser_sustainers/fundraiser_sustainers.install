@@ -99,6 +99,13 @@ function fundraiser_sustainers_schema() {
         'precision' => '15',
         'scale' => '3',
       ),
+      'dual_ask_amounts' => array(
+        'description' => 'Flag to toggle dual ask amounts on and off.',
+        'type' => 'int',
+        'size' => 'tiny',
+        'not null' => FALSE,
+        'default' => 0,
+      ),
     ),
     'primary key' => array('nid'),
   );
@@ -688,4 +695,20 @@ function fundraiser_sustainers_update_7013(&$sandbox) {
         fsn.default_amount=f.default_amount
       WHERE fsn.nid=f.nid;"
   );
+}
+
+/**
+ * Adds {fundraiser_sustainers_nodes} column to toggle dual ask amounts.
+ */
+function fundraiser_sustainers_update_7014(&$sandbox) {
+  $fields = array(
+    'dual_ask_amounts' => array(
+      'description' => 'Flag to toggle dual ask amounts on and off.',
+      'type' => 'int',
+      'size' => 'tiny',
+      'not null' => FALSE,
+      'default' => 0,
+    ),
+  );
+  db_add_field('fundraiser_sustainers_nodes', 'dual_ask_amounts', $fields['dual_ask_amounts']);
 }
