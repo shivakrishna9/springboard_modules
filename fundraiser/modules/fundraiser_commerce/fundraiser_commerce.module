@@ -1797,10 +1797,12 @@ function fundraiser_commerce_fundraiser_donation_exception($donation) {
  */
 function fundraiser_commerce_fundraiser_donation_cancel($donation) {
   // Mark the sale in commerce as canceled.
-  _fundraiser_commerce_update_order_status('canceled', $donation->did);
-  $donation->status = 'canceled';
-  $donation->status_label = _fundraiser_commerce_get_label_by_status('canceled');
-  $donation->status_charged = _fundraiser_commerce_get_charged_by_status('canceled');
+  $canceled = (isset($donation->recurring) && isset($donation->recurring->auto_canceled)) ? 'auto_canceled' : 'canceled';
+
+  _fundraiser_commerce_update_order_status($canceled, $donation->did);
+  $donation->status = $canceled;
+  $donation->status_label = _fundraiser_commerce_get_label_by_status($canceled);
+  $donation->status_charged = _fundraiser_commerce_get_charged_by_status($canceled);
 }
 
 /**
