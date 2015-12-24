@@ -2661,6 +2661,14 @@ function fundraiser_sustainers_auto_cancel($donation) {
     // @see fundraiser_sustainers_fundraiser_donation_cancel().
     fundraiser_donation_cancel($donation);
 
+    // Set order status to auto_canceled.
+    // Do this after hook_fundraiser_donation_cancel() has been invoked
+    // to avoid order status being set to canceled.
+    _fundraiser_commerce_update_order_status('auto_canceled', $donation->did);
+    $donation->status = 'auto_canceled';
+    $donation->status_label = _fundraiser_commerce_get_label_by_status('auto_canceled');
+    $donation->status_charged = _fundraiser_commerce_get_charged_by_status('auto_canceled');
+
     // Add a watchdog entry with the did and reason.
     watchdog('fundraiser_sustainers', 'Donation cancelled for #@did. Reason: @reason',
       array('@did' => $donation->did, '@reason' => $reason));
