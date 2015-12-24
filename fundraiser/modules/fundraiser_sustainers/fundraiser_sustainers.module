@@ -1400,6 +1400,7 @@ function fundraiser_sustainers_fundraiser_donation_form($form, $form_state) {
 
   // Add second validation handler that prevents sending a recurring donation
   // to a non-recurring-enabled payment gateway.
+  array_unshift($form['#submit'], 'fundraiser_sustainers_donation_form_submit');
   $form['#validate'][] = 'fundraiser_sustainers_recurring_conflict_validate';
   return $form;
 }
@@ -1443,6 +1444,58 @@ function fundraiser_sustainers_recurring_conflict_validate(&$form, &$form_state)
     $error_message .= t(' However, @payment_method does not support recurring monthly payments.', array('@payment_method' => $label));
     $error_message .= t(' Please choose a different method and submit the donation form again.');
     form_set_error('recurs_monthly', $error_message);
+  }
+}
+
+/**
+ * Our donation form submit handler runs before all other fundraiser- and webform-related handlers.
+ */
+function fundraiser_sustainers_donation_form_submit(&$form, &$form_state) {
+  // Is it a recurring donation being submitted?
+  if (_fundraiser_sustainers_get_form_state_value($form_state, 'recurs_monthly') == 'recurs') {
+    // Replace the standard donation amount with the donor's recurring amount.
+    $recurring_amount = _fundraiser_sustainers_get_form_state_value($form_state, 'recurring_amount');
+    if (empty($recurring_amount) || !_fundraiser_sustainers_update_form_state_value(
+        $form_state, 'amount',
+        _fundraiser_sustainers_get_form_state_value($form_state, 'recurring_amount')
+      )) {
+      // Problem! We couldn't find a recurring amount for this recurring donation.
+      _fundraiser_sustainers_update_form_state_value($form_state, 'amount', NULL);
+      form_set_error('recurs_monthly', "Thank you for choosing a monthly donation! However, no monthly donation amount was set, so your donation could not be processed.");
+    }
+  }
+}
+
+function _fundraiser_sustainers_update_form_state_value(&$form_state, $key, $value) {
+  return _fundraiser_sustainers_update_form_state_value_recursion($form_state['values'], $key, $value);
+}
+function _fundraiser_sustainers_update_form_state_value_recursion(&$array, $key, $value) {
+  foreach ($array as $candidate_key => $candidate_value) {
+    if ($candidate_key == $key) {
+      $array[$key] = $value;
+      return TRUE;
+    }
+    if (is_array($candidate_value)) {
+      if (_fundraiser_sustainers_update_form_state_value_recursion($array[$candidate_key], $key, $value)) {
+        return TRUE;
+      }
+    }
+  }
+  return FALSE;
+}
+
+function _fundraiser_sustainers_get_form_state_value($form_state, $key) {
+  return _fundraiser_sustainers_get_form_state_value_recursion($form_state['values'], $key);
+}
+function _fundraiser_sustainers_get_form_state_value_recursion($array, $key) {
+  foreach ($array as $candidate_key => $candidate_value) {
+    if ($candidate_key == $key) {
+      return $candidate_value;
+    }
+    if (is_array($candidate_value)) {
+      $value = _fundraiser_sustainers_get_form_state_value_recursion($candidate_value, $key);
+      if (!empty($value)) return $value;
+    }
   }
 }
 
