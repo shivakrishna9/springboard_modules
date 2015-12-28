@@ -117,5 +117,3 @@ function sba_quicksign_update_7001() {
     module_disable(array('springboard_petition_quicksign'));
   }
 }
-
-
