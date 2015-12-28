@@ -208,6 +208,32 @@ class PayWithMyBank {
     return (isset($data->transaction)) ? $data->transaction : NULL;
   }
 
+  /**
+   * Updates a recurring payment schedule.
+   *
+   * @param type $transactionId
+   *   The ID of the authorizing transaction.
+   * @param type $merchantReference
+   *   The initial merchant reference value sent to establish the payment.
+   * @param type $recurrence
+   *   The Recurrence object.
+   *   @see https://www.paywithmybank.com/beta/docs/api-ref.html#recurrence
+   *
+   * @return object
+   *   The transaction object.
+   * @see https://paywithmybank.com/docs/api-ref.html#transactions
+   */
+  public function updateRecurrence($transactionId, $merchantReference, $recurrence) {
+    $tokens = array('transactionId' => $transactionId);
+    $parameters = array(
+      'merchantReference' => $merchantReference,
+      'recurrence' => $recurrence,
+    );
+
+    $data = $this->call('/api/v1/transactions/{transactionId}/updateRecurrence', $tokens, $parameters);
+    return (isset($data->transaction)) ? $data->transaction : NULL;
+  }
+
   private function call($path, $tokens, $parameters = NULL) {
     // Reset error messages.
     $this->lastErrors = NULL;
