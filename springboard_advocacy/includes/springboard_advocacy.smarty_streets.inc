@@ -31,7 +31,7 @@ function springboard_advocacy_smarty_lookup(array $values) {
   $geo = array();
 
   if (isset($response->error)) {
-    $message = isset($response->status_message) ? $response->status_message : t('Smarty Streets API åServer not responding');
+    $message = isset($response->status_message) ? $response->status_message : t('Smarty Streets API Server not responding.');
     if (user_access('administer springboard advocacy')) {
       drupal_set_message(t('An error occurred when attempting to retrieve zip code information: @message', array('@message' => $message)), 'error');
     }

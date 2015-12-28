@@ -144,19 +144,16 @@ function springboard_taxonomy_form_alter(&$form, &$form_state, $form_id) {
  * Adds a fieldset and issues terms to node add/edit forms' vertical tabs.
  */
 function springboard_taxonomy_taxonomy_form(&$form, &$form_state, $form_id) {
-
   $language = $form['language']['#value'];
   // Add a vertical-tab fieldset for "Action options."
   $form['springboard_taxonomy_options'] = array(
     '#type' => 'fieldset',
-    '#title' => t('Organization issues'),
+    '#title' => t('Issue Categories'),
     '#collapsible' => TRUE,
     '#collapsed' => FALSE,
     '#group' => 'additional_settings',
   );
-  if ($form['#node']->type == 'sba_message_action') {
-    $form['springboard_taxonomy_options']['#weight'] = -10;
-  }
+
   // Include JS to layout long lists of checkboxes in columns.
   $form['#attached']['js'][] = drupal_get_path('module', 'springboard_taxonomy') . '/js/jquery.columnizer.min.js';
   $form['#attached']['js'][] = drupal_get_path('module', 'springboard_taxonomy') . '/js/springboard-taxonomy-edit-form.js';
