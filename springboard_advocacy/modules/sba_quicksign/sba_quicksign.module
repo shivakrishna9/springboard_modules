@@ -53,7 +53,7 @@ function sba_quicksign_views_api() {
 /**
  * Implements hook_form_alter().
  */
-function sba_quicksign_form_alter(&$form, $form_state, $form_id) {
+function sba_quicksign_form_alter(&$form, &$form_state, $form_id) {
   global $user;
   if (strpos($form_id, 'webform_client') !== FALSE && arg(2) != 'submission' && arg(4) != 'edit') {
     if (isset($form['#node']) && sba_quicksign_is_quicksign_type($form['#node']->type)) {
@@ -200,7 +200,7 @@ function sba_quicksign_form_validate(&$form, &$form_state) {
       $_SESSION['sba_quicksign']['profile']['mail'] = $mail;
       $_SESSION['quicksign_show'] = FALSE;
       drupal_set_message(t("We're sorry, we did not find an account with the email address !mail. Please fill out the full form.", array('!mail' => $mail)));
-      drupal_redirect_form($form_state);
+      //drupal_redirect_form($form_state);
     }
 
     // Compile list of webform required fields.
@@ -248,16 +248,18 @@ function sba_quicksign_form_validate(&$form, &$form_state) {
 
       drupal_set_message(t("Unfortunately, we don't have enough information. Please complete the form below."));
       $_SESSION['quicksign_show'] = FALSE;
-      drupal_redirect_form($form_state);
+      //drupal_redirect_form($form_state);
     }
 
-    $_SESSION['quicksign_show'] = TRUE;
+    if ($account && (!$missing_fields && !$missing_non_profile_fields)) {
+      $_SESSION['quicksign_show'] = TRUE;
 
-    // If everything has gone smoothly to this point package up the
-    // loaded profile and pass it off for use during the submit callback.
-    $form_state['node'] = $node;
-    $_SESSION['sba_quicksign'] = TRUE;
-    _sba_quicksign_build_values($form, $form_state, $node, $profile);
+      // If everything has gone smoothly to this point package up the
+      // loaded profile and pass it off for use during the submit callback.
+      $form_state['node'] = $node;
+      $_SESSION['sba_quicksign'] = TRUE;
+      _sba_quicksign_build_values($form, $form_state, $node, $profile);
+    }
   }
 }
 
