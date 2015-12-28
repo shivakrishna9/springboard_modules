@@ -474,10 +474,10 @@
     //recipients container scroll calculations
     Sba.scroller = function (context) {
         var id = '';
-        if (typeof(context[0]) !== 'undefined') {
+        if (typeof(context) !== 'undefined' && typeof(context[0]) !== 'undefined') {
             id = context[0].id;
         }
-        if (typeof(context[0]) === 'undefined' || id.indexOf('add-more-wrapper') != -1 || id.indexOf('message-edit-form') != -1) {
+        if ((typeof(context) !== 'undefined' && typeof(context[0]) === 'undefined') || id.indexOf('add-more-wrapper') != -1 || id.indexOf('message-edit-form') != -1) {
             setTimeout(function () {
                 var recips = $('#springboard-advocacy-message-recipients');
                 var offset = recips.offset();
@@ -656,13 +656,15 @@
             }
         });
 
-        var districted_tweet = $("input[name*=field_sba_target_option]:checked").val();
-        if (districted_tweet != 1) {
-            notGroupable = true;
-            $('#advo-add-all').hide();
-        }
-        else {
-            $('#advo-add-all').show();
+        if ($("input[name*=field_sba_target_option]").length != 0) {
+            var districted_tweet = $("input[name*=field_sba_target_option]:checked").val();
+            if (districted_tweet != 1) {
+                notGroupable = true;
+                $('#advo-add-all').hide();
+            }
+            else {
+                $('#advo-add-all').show();
+            }
         }
 
         //update form element states based on meta-variables
