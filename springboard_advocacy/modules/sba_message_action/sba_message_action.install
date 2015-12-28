@@ -590,3 +590,16 @@ function sba_message_action_update_7028() {
     field_update_instance($field);
   }
 }
+
+/**
+ * Update label for field_sba_subject_editable field.
+ */
+function sba_message_action_update_7029() {
+  $field = field_info_instance('sba_message', 'field_sba_subject_editable', 'sba_message_action_message');
+  if ($field) {
+    $field['label'] = t(
+      'Subject editable by advocate? (for single message actions only).'
+    );
+    field_update_instance($field);
+  }
+}

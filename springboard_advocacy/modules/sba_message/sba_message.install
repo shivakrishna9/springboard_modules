@@ -152,16 +152,3 @@ function sba_message_update_7001() {
       ->execute();
   }
 }
-
-**
- * Update label for field_sba_subject_editable field.
- */
-function sba_message_update_7002() {
-  $field = field_info_instance('node', 'field_sba_subject_editable', 'sba_message');
-  if ($field) {
-    $field['label'] = t(
-      'Subject editable by advocate? (for single message actions only).'
-    );
-    field_update_instance($field);
-  }
-}
