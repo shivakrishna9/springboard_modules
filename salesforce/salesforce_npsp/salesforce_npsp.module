@@ -87,6 +87,12 @@ function salesforce_npsp_salesforce_queue_create_item_alter(&$item) {
     $fundraiser_sustainers_series = entity_load_single('fundraiser_sustainers_series', $item['drupal_id']);
     if (!empty($fundraiser_sustainers_series)) {
       $item['sobject']->fields['npe03__Contact__c'] = '[Contact:user:' . $fundraiser_sustainers_series->uid . ']';
+
+      if (empty(_salesforce_sync_get_rmid($item))) {
+        // Set installments to zero for unsynced objects to prevent NPSP
+        // creating two sets of related opportunities.
+        $item['sobject']->fields['npe03__Installments__c'] = 0;
+      }
     }
   }
 }
@@ -184,21 +190,7 @@ function salesforce_npsp_schema_alter(&$schema) {
  * Implements hook_fundraiser_donation_success()
  */
 function salesforce_npsp_fundraiser_donation_success($donation) {
-  $donation = fundraiser_donation_get_donation($donation->did);
-  $fundraiser_sustainers_series = entity_load_single('fundraiser_sustainers_series', $donation->did);
-
-  if (!empty($fundraiser_sustainers_series)) {
-    $next_charge = db_query('SELECT `next_charge` FROM {fundraiser_sustainers} WHERE `master_did` = :did AND `attempts` = 0 ORDER BY `did` ASC LIMIT 1', array(
-      ':did' => $donation->did,
-        ))->fetchField();
-
-    $fundraiser_sustainers_series->npsp_last_payment_date = date('Y-m-d H:i:s');
-    $fundraiser_sustainers_series->npsp_next_payment_date = date('Y-m-d H:i:s', $next_charge);
-    $fundraiser_sustainers_series->npsp_installment_period = 'Monthly';
-    $fundraiser_sustainers_series->npsp_schedule_type = 'Multiply By';
-
-    $fundraiser_sustainers_series->save();
-  }
+  salesforce_npsp_update_fundraiser_sustainers_series($donation);
 }
 
 /**
@@ -265,4 +257,35 @@ function salesforce_npsp_salesforce_sync_fail_item($item, $message, $result) {
     $item->sobject->fields['LastName'] = $lastname;
   }
 
+}
+
+/**
+ * Implements hook_fundraiser_upsell_create_recurring_success()
+ */
+function salesforce_npsp_fundraiser_upsell_create_recurring_success($donation) {
+  salesforce_npsp_update_fundraiser_sustainers_series($donation);
+}
+
+/**
+ * Updates the NPSP-specific fields of an existing fundraiser sustainers series.
+ *
+ * @param object $donation
+ *   The master donation in the donation series.
+ */
+function salesforce_npsp_update_fundraiser_sustainers_series($donation) {
+  $donation = fundraiser_donation_get_donation($donation->did);
+  $fundraiser_sustainers_series = entity_load_single('fundraiser_sustainers_series', $donation->did);
+
+  if (!empty($fundraiser_sustainers_series)) {
+    $next_charge = db_query('SELECT `next_charge` FROM {fundraiser_sustainers} WHERE `master_did` = :did AND `attempts` = 0 ORDER BY `did` ASC LIMIT 1', array(
+      ':did' => $donation->did,
+        ))->fetchField();
+
+    $fundraiser_sustainers_series->npsp_last_payment_date = date('Y-m-d H:i:s');
+    $fundraiser_sustainers_series->npsp_next_payment_date = date('Y-m-d H:i:s', $next_charge);
+    $fundraiser_sustainers_series->npsp_installment_period = 'Monthly';
+    $fundraiser_sustainers_series->npsp_schedule_type = 'Multiply By';
+
+    $fundraiser_sustainers_series->save();
+  }
 }

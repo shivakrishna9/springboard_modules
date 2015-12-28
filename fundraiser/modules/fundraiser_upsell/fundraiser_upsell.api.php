@@ -89,3 +89,13 @@ function hook_upsold_donation_alter(&$upsold_donation) {
 function hook_upsell_master_donation_alter(&$master_donation) {
 
 }
+
+/**
+ * Access donation information after a recurring donation series is created.
+ *
+ * @param object $donation
+ *   The master donation in the donation series.
+ */
+function hook_fundraiser_upsell_create_recurring_success($donation) {
+
+}
