@@ -108,10 +108,71 @@ function salesforce_genmap_schema() {
 }
 
 /**
+ * Implements hook_update_dependencies()
+ */
+function salesforce_genmap_update_dependencies() {
+  $dependencies = array();
+
+  // This update depends on Market Source device info fields existing.
+  $dependencies['salesforce_genmap'][7002] = array(
+    'market_source' => 7001,
+  );
+
+  return $dependencies;
+}
+
+/**
  * Add indexes to tables.
  */
 function salesforce_genmap_update_7001() {
   db_add_index('salesforce_genmap_map', 'nid_map_handler', array('nid', 'map_handler'));
 
   return t('Added index to {salesforce_genmap_map} table.');
+}
+
+/**
+ * Create Salesforce mappings for Market Source device info fields.
+ */
+function salesforce_genmap_update_7002(&$sandbox) {
+  // Update Salesforce mappings for webforms provided by these modules:
+  $update_module_mappings = array(
+    'salesforce_donation',
+    'salesforce_message_action',
+    'salesforce_petition',
+  );
+
+  if (!isset($sandbox['progress'])) {
+    $sandbox['progress'] = 0;
+    $sandbox['current_mid'] = 0;
+    $sandbox['max'] = db_query('SELECT COUNT(`mid`) FROM {salesforce_genmap_map} WHERE `module` IN(:module)',
+        array(':module' => implode(',', $update_module_mappings)))->fetchField();
+  }
+
+  $result = db_select('salesforce_genmap_map', 'map')
+      ->fields('map', array('mid', 'nid', 'map_handler'))
+      ->condition('map.module', $update_module_mappings, 'IN')
+      ->condition('map.mid', $sandbox['current_mid'], '>')
+      ->range(0, 5)
+      ->orderBy('mid', 'ASC')
+      ->execute();
+
+  while ($record = $result->fetchAssoc()) {
+    $map = salesforce_genmap_load_map($record['nid'], $record['map_handler']);
+
+    $map->field_map['salesforce_webform_map']['device_type'] = 'Device_Type__c';
+    $map->field_map['salesforce_webform_map']['device_name'] = 'Device_Name__c';
+    $map->field_map['salesforce_webform_map']['device_os'] = 'Device_OS__c';
+    $map->field_map['salesforce_webform_map']['device_browser'] = 'Device_Browser__c';
+
+    salesforce_genmap_save_map($map, $record['map_handler']);
+
+    $sandbox['progress']++;
+    $sandbox['current_mid'] = $record['mid'];
+  }
+
+  $sandbox['#finished'] = empty($sandbox['max']) ? 1 : ($sandbox['progress'] / $sandbox['max']);
+
+  if ($sandbox['#finished'] >= 1) {
+    return t('Device info field mappings have been added to salesforce_genmap records.');
+  }
 }

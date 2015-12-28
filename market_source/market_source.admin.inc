@@ -70,9 +70,13 @@ function market_source_admin_settings_form($form, &$form_state) {
   // Shortcut.
   $default_fields_values = &$form_state['values']['market_source_default_fields']['default_fields_wrapper'];
 
+  $force_persistent_fields = array(
+    'referrer', 'initial_referrer', 'device_type', 'device_name', 'device_os', 'device_browser',
+  );
+
   foreach ($default_fields_list as $key => $field_name) {
-    if ($key == 'referrer' || $key == 'initial_referrer') {
-      // Hidden field to force persistence for referrer fields.
+    if (in_array($key, $force_persistent_fields)) {
+      // Hidden field to force persistence for referrer and device fields.
       $persistence_field = array(
         '#type' => 'hidden',
         '#value' => 'direct',
@@ -410,6 +414,10 @@ function market_source_list_default_fields() {
     'search_engine' => t('Search Engine'),
     'search_string' => t('Search String'),
     'user_agent' => t('User Agent'),
+    'device_type' => t('Device Type'),
+    'device_name' => t('Device Name'),
+    'device_os' => t('Device OS'),
+    'device_browser' => t('Device Browser'),
   );
   return $default_fields_list;
 }

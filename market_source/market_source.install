@@ -48,6 +48,18 @@ function market_source_initial_default_ms_fields() {
     'user_agent' => array(
       'persistence' => 'on',
     ),
+    'device_type' => array(
+      'persistence' => 'direct',
+    ),
+    'device_name' => array(
+      'persistence' => 'direct',
+    ),
+    'device_os' => array(
+      'persistence' => 'direct',
+    ),
+    'device_browser' => array(
+      'persistence' => 'direct',
+    ),
   );
 }
 
@@ -70,4 +82,79 @@ function market_source_uninstall() {
  */
 function market_source_update_last_removed() {
   return 6001;
+}
+
+/**
+ * Adds mobile device fields to market source default fields.
+ */
+function market_source_update_7001() {
+  $initial_default_fields = market_source_initial_default_ms_fields();
+  $default_fields = variable_get('market_source_default_fields');
+
+  $default_fields['device_type'] = $initial_default_fields['device_type'];
+  $default_fields['device_name'] = $initial_default_fields['device_name'];
+  $default_fields['device_os'] = $initial_default_fields['device_os'];
+  $default_fields['device_browser'] = $initial_default_fields['device_browser'];
+
+  variable_set('market_source_default_fields', $default_fields);
+}
+
+/**
+ * Add mobile device fields to existing webforms.
+ */
+function market_source_update_7002(&$sandbox) {
+  module_load_include('inc', 'webform', 'includes/webform.components');
+
+  if (!isset($sandbox['progress'])) {
+    $sandbox['progress'] = 0;
+    $sandbox['current_nid'] = 0;
+    $sandbox['max'] = db_query('SELECT COUNT(DISTINCT `nid`) FROM {webform_component}')->fetchField();
+  }
+
+  $device_info_fields = array('device_type', 'device_name', 'device_os', 'device_browser');
+
+  $fields = market_source_market_source_field_info();
+
+  $result = db_select('webform_component', 'w')
+      ->distinct(TRUE)
+      ->fields('w', array('nid'))
+      ->range(0, 3)
+      ->orderBy('nid', 'ASC')
+      ->execute();
+
+  while ($record = $result->fetchAssoc()) {
+    $weight = db_query('SELECT MAX(`weight`) FROM {webform_component} WHERE `nid` = :nid',
+        array(':nid' => $record['nid']))->fetchField();
+
+    foreach ($fields as $form_key => $field) {
+      if (!in_array($form_key, $device_info_fields)) {
+        continue;
+      }
+
+      $weight++;
+
+      $component = array(
+        'nid' => $record['nid'],
+        'pid' => 0,
+        'form_key' => $form_key,
+        'name' => $field['#title'],
+        'value' => NULL,
+        'mandatory' => $field['#required'],
+        'extra' => $field['#extra'],
+        'type' => $field['#type'],
+        'weight' => $weight,
+      );
+
+      webform_component_insert($component);
+
+      $sandbox['progress']++;
+      $sandbox['current_nid'] = $record['nid'];
+    }
+  }
+
+  $sandbox['#finished'] = empty($sandbox['max']) ? 1 : ($sandbox['progress'] / $sandbox['max']);
+
+  if ($sandbox['#finished'] >= 1) {
+    return t('Device info fields have been added to existing webforms.');
+  }
 }
