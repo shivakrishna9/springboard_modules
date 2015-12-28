@@ -246,7 +246,7 @@ function sba_quicksign_form_validate(&$form, &$form_state) {
     if ($missing_fields || $missing_non_profile_fields) {
       $_SESSION['sba_quicksign']['profile'] = $profile;
 
-      drupal_set_message(t("Unfortunately, we don't have enough information. Please complete the form below."));
+      drupal_set_message(t("Unfortunately, we don't have enough information on file to submit this form. Please complete the form below."));
       $_SESSION['quicksign_show'] = FALSE;
       //drupal_redirect_form($form_state);
     }
