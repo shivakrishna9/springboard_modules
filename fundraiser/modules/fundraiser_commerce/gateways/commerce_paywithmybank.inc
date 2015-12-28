@@ -69,7 +69,7 @@ function commerce_paywithmybank_fundraiser_commerce_redirect($method_instance, $
   $api_endpoint = $api->getEndpoint();
 
   $order_total = $order->commerce_order_total[LANGUAGE_NONE][0];
-  $order_amount = substr(commerce_currency_format($order_total['amount'], $order_total['currency_code']), 1);
+  $order_amount = commerce_currency_amount_to_decimal($order_total['amount'], $order_total['currency_code']);
 
   // Set up standard payment parameters.
   $payment_parameters = array(
@@ -99,7 +99,7 @@ function commerce_paywithmybank_fundraiser_commerce_redirect($method_instance, $
     $payment_parameters['paymentType'] = 'Recurring';
     $payment_parameters['recurrence'] = $recurrence;
 
-    // Do not make an initial charge on a recurring donation/.
+    // Do not make an initial charge on a recurring donation.
     $payment_parameters['amount'] = '0.00';
   }
 
@@ -309,7 +309,7 @@ function commerce_paywithmybank_fundraiser_commerce_charge($method_instance, $do
   $order = commerce_order_load($donation->did);
   $order_wrapper = entity_metadata_wrapper('commerce_order', $order);
   $charge = $order_wrapper->commerce_order_total->value();
-  $amount = substr(commerce_currency_format($charge['amount'], $charge['currency_code']), 1);
+  $amount = commerce_currency_amount_to_decimal($charge['amount'], $charge['currency_code']);
 
   // Process the transaction.
   $api = commerce_paywithmybank_get_api($method_instance);
@@ -368,7 +368,9 @@ function commerce_paywithmybank_fundraiser_commerce_charge($method_instance, $do
 function commerce_paywithmybank_fundraiser_commerce_refund($payment_method, $refund) {
   // Process the refund.
   $api = commerce_paywithmybank_get_api($payment_method);
-  $transaction = $api->refundTransaction($refund->donation->txn_id, $refund->did, $refund->amount);
+  $transaction = $api->refundTransaction($refund->donation->txn_id,
+    $refund->did,
+    commerce_currency_amount_to_decimal($refund->amount, $refund->currency));
 
   // Log the refund.
   if ($payment_method['settings']['commerce_paywithmybank_settings_log']['request']) {
