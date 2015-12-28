@@ -527,7 +527,7 @@ function sba_message_action_update_7024() {
 **
  * Update label for sbp_sba_action_optin field.
  */
-function sba_message_action_update_7025() {
+function sba_message_action_update_7027() {
   $field = field_info_instance('node', 'sbp_sba_action_optin', 'sba_message_action');
   if ($field) {
     $field['extra']['items'] = t(
@@ -540,7 +540,7 @@ function sba_message_action_update_7025() {
 **
  * Update label for field_sba_action_flow field.
  */
-function sba_message_action_update_7026() {
+function sba_message_action_update_7028() {
   $field = field_info_instance('node', 'field_sba_action_flow', 'sba_message_action');
   if ($field) {
     $field['description'] = t(
