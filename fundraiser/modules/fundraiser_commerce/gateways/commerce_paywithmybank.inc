@@ -90,9 +90,9 @@ function commerce_paywithmybank_fundraiser_commerce_redirect($method_instance, $
     $recurrence->startDate = $start_time;
     // End date is three month from now.
     $recurrence->endDate = ($start_time + (2592000000 * 3));
-    //$recurrence->frequency = 1;
-    //$recurrence->frequencyUnit = 1;
-    //$recurrence->frequencyUnitType = 'Month';
+    $recurrence->frequency = 1;
+    $recurrence->frequencyUnit = 1;
+    $recurrence->frequencyUnitType = 'Month';
     $recurrence->recurringAmount = $order_amount;
     $recurrence->automaticCapture = 'false';
 
