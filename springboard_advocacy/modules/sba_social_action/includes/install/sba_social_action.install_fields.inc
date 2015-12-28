@@ -11,12 +11,12 @@
 function _sba_social_action_create_node_fields($update = false) {
 
   $fields = array(
-    'field_social_action_img' => array(
+    'field_sba_social_action_img' => array(
       'active' => 1,
       'cardinality' => 1,
       'deleted' => 0,
       'entity_types' => array('node'),
-      'field_name' => 'field_social_action_img',
+      'field_name' => 'field_sba_social_action_img',
       'foreign keys' => array(
         'fid' => array(
           'columns' => array(
@@ -62,7 +62,7 @@ function _sba_social_action_create_node_fields($update = false) {
           ),
         ),
         'entity_type' => 'node',
-        'field_name' => 'field_social_action_img',
+        'field_name' => 'field_sba_social_action_img',
         'label' => 'Image',
         'required' => 0,
         'settings' => array(
@@ -230,14 +230,14 @@ function _sba_social_action_create_node_fields($update = false) {
     ),
   );
 
-  $fields['field_sba_step_two_submit'] = array(
+  $fields['field_sba_social_step_two_submit'] = array(
     'active' => 1,
     'cardinality' => 1,
     'deleted' => 0,
     'entity_types' => array(
       0 => 'node',
     ),
-    'field_name' => 'field_sba_step_two_submit',
+    'field_name' => 'field_sba_social_step_two_submit',
     'foreign keys' => array(
       'format' => array(
         'columns' => array(
@@ -259,7 +259,7 @@ function _sba_social_action_create_node_fields($update = false) {
     '_instance' => array(
       'bundle' => 'sba_social_action',
       'default_value' => array(0 => array(
-        'value' => t('Send Now'),
+        'value' => t("I'm done"),
       ),
       ),
       'deleted' => 0,
@@ -280,8 +280,8 @@ function _sba_social_action_create_node_fields($update = false) {
         ),
       ),
       'entity_type' => 'node',
-      'field_name' => 'field_sba_step_two_submit',
-      'label' => 'Submit Button Text',
+      'field_name' => 'field_sba_social_step_two_submit',
+      'label' => 'Step Two Submit Button Text',
       'required' => 1,
       'settings' => array(
         'text_processing' => 0,
@@ -300,13 +300,13 @@ function _sba_social_action_create_node_fields($update = false) {
   );
 
 
-  // Exported field_base: 'field_social_call_to_action'
-  $fields['field_social_call_to_action'] = array(
+  // Exported field_base: 'field_sba_social_call_to_action'
+  $fields['field_sba_social_call_to_action'] = array(
     'active' => 1,
     'cardinality' => 1,
     'deleted' => 0,
     'entity_types' => array(),
-    'field_name' => 'field_social_call_to_action',
+    'field_name' => 'field_sba_social_call_to_action',
     'foreign keys' => array(
       'format' => array(
         'columns' => array(
@@ -348,7 +348,7 @@ function _sba_social_action_create_node_fields($update = false) {
         ),
       ),
       'entity_type' => 'node',
-      'field_name' => 'field_social_call_to_action',
+      'field_name' => 'field_sba_social_call_to_action',
       'label' => 'Call to Action',
       'required' => 0,
       'settings' => array(
@@ -367,13 +367,13 @@ function _sba_social_action_create_node_fields($update = false) {
     ),
   );
 
-  // Exported field_base: 'field_social_call_to_action'
-  $fields['field_sba_step_two_header'] = array(
+  // Exported field_base: 'field_sba_social_call_to_action'
+  $fields['field_sba_social_step_two_header'] = array(
     'active' => 1,
     'cardinality' => 1,
     'deleted' => 0,
     'entity_types' => array(),
-    'field_name' => 'field_sba_step_two_header',
+    'field_name' => 'field_sba_social_step_two_header',
     'foreign keys' => array(
       'format' => array(
         'columns' => array(
@@ -413,8 +413,8 @@ function _sba_social_action_create_node_fields($update = false) {
         ),
       ),
       'entity_type' => 'node',
-      'field_name' => 'field_sba_step_two_header',
-      'label' => 'Intro Text',
+      'field_name' => 'field_sba_social_step_two_header',
+      'label' => 'Step Two Intro Text',
       'required' => 0,
       'settings' => array(
         'display_summary' => 1,
@@ -425,7 +425,7 @@ function _sba_social_action_create_node_fields($update = false) {
         'active' => 1,
         'module' => 'text',
         'settings' => array(
-          'rows' => 5,
+          'rows' => 3,
         ),
         'type' => 'text_textarea',
         'weight' => 7,
@@ -481,7 +481,70 @@ function _sba_social_action_create_node_fields($update = false) {
       ),
       'entity_type' => 'node',
       'field_name' => 'field_sba_test_mode',
-      'label' => 'Test Mode',
+      'label' => 'Test mode',
+      'required' => 0,
+      'settings' => array(
+        'user_register_form' => FALSE,
+      ),
+      'widget' => array(
+        'active' => 1,
+        'module' => 'options',
+        'settings' => array(),
+        'type' => 'options_buttons',
+        'weight' => 31,
+      ),
+    ),
+  );
+
+  $fields['field_sba_social_require_auth'] = array(
+    'active' => 1,
+    'cardinality' => 2,
+    'deleted' => 0,
+    'entity_types' => array(),
+    'field_name' => 'field_sba_social_require_auth',
+    'foreign keys' => array(),
+    'indexes' => array(
+      'value' => array(
+        0 => 'value',
+      ),
+    ),
+    'locked' => 0,
+    'module' => 'list',
+    'settings' => array(
+      'allowed_values' => array(
+        1 => 'Enabled',
+      ),
+      'allowed_values_function' => '',
+    ),
+    'translatable' => 0,
+    'type' => 'list_text',
+    '_instance' => array(
+      'bundle' => 'sba_social_action',
+      'default_value' => array(
+        0 => array(
+          'value' => 1,
+        ),
+      ),
+      'deleted' => 0,
+      'description' => 'If you require authentication, users will have to log into the Springboard Twitter app before tweeting, and you will then gain access to some of their Twitter profile information.',
+      'display' => array(
+        'default' => array(
+          'label' => 'hidden',
+          'module' => 'list',
+          'settings' => array(),
+          'type' => 'hidden',
+          'weight' => 3,
+        ),
+        'teaser' => array(
+          'label' => 'hidden',
+          'settings' => array(),
+          'type' => 'hidden',
+          'weight' => 0,
+        ),
+      ),
+      'entity_type' => 'node',
+      'field_name' => 'field_sba_social_require_auth',
+      'label' => 'Require Twitter Authentication?',
       'required' => 0,
       'settings' => array(
         'user_register_form' => FALSE,
@@ -521,14 +584,14 @@ function _sba_social_action_create_node_fields($update = false) {
     $field_group->bundle = 'sba_social_action';
     $field_group->mode = 'form';
     $field_group->parent_name = '';
-    $field_group->label = 'Test Mode';
+    $field_group->label = 'Test mode';
     $field_group->weight = '33';
     $field_group->children = array(
       0 => 'field_sba_test_mode',
     );
     $field_group->format_type = 'fieldset';
     $field_group->format_settings = array(
-      'label' => 'Test Mode',
+      'label' => 'Test mode',
       'instance_settings' => array(
         'required_fields' => 1,
         'classes' => 'group-test-mode field-group-fieldset',
@@ -548,11 +611,12 @@ function _sba_social_action_create_node_fields($update = false) {
     $field_group->bundle = 'sba_social_action';
     $field_group->mode = 'form';
     $field_group->parent_name = '';
-    $field_group->label = 'Step Two Options';
+    $field_group->label = 'Multi-step options';
     $field_group->weight = '32';
     $field_group->children = array(
-      0 => 'field_sba_step_two_header',
-      1 => 'field_sba_step_two_submit',
+      0 => 'field_sba_social_step_two_header',
+      1 => 'field_sba_social_step_two_submit',
+      2 => 'field_sba_social_require_auth'
     );
     $field_group->format_type = 'fieldset';
     $field_group->format_settings = array(
@@ -571,13 +635,13 @@ function _sba_social_action_create_node_fields($update = false) {
     $field_group = new stdClass();
     $field_group->disabled = FALSE; /* Edit this to true to make a default field_group disabled initially */
     $field_group->api_version = 1;
-    $field_group->identifier = 'group_sba_social_body|node|sba_social_action|form';
-    $field_group->group_name = 'group_sba_social_body';
+    $field_group->identifier = 'group_sba_action_body|node|sba_social_action|form';
+    $field_group->group_name = 'group_sba_action_body';
     $field_group->entity_type = 'node';
     $field_group->bundle = 'sba_social_action';
     $field_group->mode = 'form';
     $field_group->parent_name = '';
-    $field_group->label = 'Step One Body Text';
+    $field_group->label = 'Body text';
     $field_group->weight = '31';
     $field_group->children = array(
       0 => 'body',
@@ -593,37 +657,37 @@ function _sba_social_action_create_node_fields($update = false) {
       'formatter' => 'collapsible',
     );
 
-    $export['group_sba_social_body|node|sba_social_action|form'] = $field_group;
+    $export['group_sba_action_body|node|sba_social_action|form'] = $field_group;
 
 
-//    $field_group = new stdClass();
-//    $field_group->disabled = FALSE; /* Edit this to true to make a default field_group disabled initially */
-//    $field_group->api_version = 1;
-//    $field_group->identifier = 'group_sba_social_page_elements|node|sba_social_action|form';
-//    $field_group->group_name = 'group_sba_social_page_elements';
-//    $field_group->entity_type = 'node';
-//    $field_group->bundle = 'sba_social_action';
-//    $field_group->mode = 'form';
-//    $field_group->parent_name = '';
-//    $field_group->label = 'Step One Options';
-//    $field_group->weight = '30';
-//    $field_group->children = array(
-//      0 => 'field_social_call_to_action',
-//      1 => 'field_social_action_img',
-//      2 => 'field_sba_social_fieldset_title',
-//    );
-//    $field_group->format_type = 'fieldset';
-//    $field_group->format_settings = array(
-//      'label' => 'Body',
-//      'instance_settings' => array(
-//        'required_fields' => 1,
-//        'classes' => 'group-page-elements field-group-fieldset',
-//        'description' => '',
-//      ),
-//      'formatter' => 'collapsed',
-//    );
+    $field_group = new stdClass();
+    $field_group->disabled = FALSE; /* Edit this to true to make a default field_group disabled initially */
+    $field_group->api_version = 1;
+    $field_group->identifier = 'group_sba_social_page_elements|node|sba_social_action|form';
+    $field_group->group_name = 'group_sba_social_page_elements';
+    $field_group->entity_type = 'node';
+    $field_group->bundle = 'sba_social_action';
+    $field_group->mode = 'form';
+    $field_group->parent_name = '';
+    $field_group->label = 'Action options';
+    $field_group->weight = '30';
+    $field_group->children = array(
+      0 => 'field_sba_social_call_to_action',
+      1 => 'field_sba_social_action_img',
+      2 => 'field_sba_social_fieldset_title',
+    );
+    $field_group->format_type = 'fieldset';
+    $field_group->format_settings = array(
+      'label' => 'Body',
+      'instance_settings' => array(
+        'required_fields' => 1,
+        'classes' => 'group-page-elements field-group-fieldset',
+        'description' => '',
+      ),
+      'formatter' => 'collapsible',
+    );
 
- //   $export['group_sba_social_page_elements|node|sba_social_action|form'] = $field_group;
+    $export['group_sba_social_page_elements|node|sba_social_action|form'] = $field_group;
 
     foreach ($export as $field_group) {
       field_group_group_save($field_group);
@@ -636,11 +700,12 @@ function _sba_social_action_create_node_fields($update = false) {
  */
 function _sba_social_action_delete_fields() {
   $fields = array(
-    'sba_social_call_to_action',
-    'field_social_action_img',
+    'field_sba_social_call_to_action',
+    'field_sba_social_action_img',
     'field_sba_social_fieldset_title',
-    'field_sba_step_two_header',
-    'field_sba_step_two_submit',
+    'field_sba_social_step_two_header',
+    'field_sba_social_step_two_submit',
+    'field_sba_social_require_auth'
   );
   foreach ($fields as $field_name) {
     $field = field_info_instance('node', $field_name, 'sba_social_action');

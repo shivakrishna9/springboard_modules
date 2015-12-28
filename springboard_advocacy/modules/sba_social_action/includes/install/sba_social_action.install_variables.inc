@@ -77,10 +77,6 @@ function _sba_social_action_set_vars() {
   $taxonomy_types = variable_get('springboard_taxonomy_node_types', array());
   $taxonomy_types = array_merge($taxonomy_types, array('sba_social_action' => 'sba_social_action'));
   variable_set('springboard_taxonomy_node_types', array_unique($taxonomy_types));
-
-  variable_set('twitter_import', 0);
-  variable_set('twitter_use_default_views', 0);
-
   variable_set('sba_social_action_cache_expire_period', 1);
 
 }

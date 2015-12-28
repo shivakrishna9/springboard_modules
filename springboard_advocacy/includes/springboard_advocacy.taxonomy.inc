@@ -10,7 +10,7 @@
  */
 function springboard_advocacy_taxonomy_form(&$form, &$form_state, $description, $required = FALSE) {
 
-  $form['springboard_taxonomy_options']['#title'] = t('Action options');
+  $form['springboard_taxonomy_options']['#title'] = t('Issue categories');
 //  form_load_include($form_state, 'inc', 'sba_message_action',
 //    'includes/sba_message_action.webform');
   $language = $form['language']['#value'];

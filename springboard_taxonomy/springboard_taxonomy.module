@@ -148,7 +148,7 @@ function springboard_taxonomy_taxonomy_form(&$form, &$form_state, $form_id) {
   // Add a vertical-tab fieldset for "Action options."
   $form['springboard_taxonomy_options'] = array(
     '#type' => 'fieldset',
-    '#title' => t('Organization issues'),
+    '#title' => t('Issue Categories'),
     '#collapsible' => TRUE,
     '#collapsed' => FALSE,
     '#group' => 'additional_settings',

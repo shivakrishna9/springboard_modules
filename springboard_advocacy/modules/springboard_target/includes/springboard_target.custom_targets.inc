@@ -258,6 +258,8 @@ function springboard_target_form($target_id = NULL) {
     '#maxlength' => 128,
     '#attributes' => array('class' => array('target-add', 'target-email')),
     '#required' => TRUE,
+    '#description' => '&nbsp;',
+
 
   );
 
@@ -268,6 +270,8 @@ function springboard_target_form($target_id = NULL) {
     '#size' => 60,
     '#maxlength' => 128,
     '#attributes' => array('class' => array('target-add', 'target-facebook')),
+    '#description' => t('The full URL of the Facebook page, including the "http://" prefix'),
+
   );
 
   $form['row_four']['twitter'] = array(
@@ -277,6 +281,16 @@ function springboard_target_form($target_id = NULL) {
     '#size' => 60,
     '#maxlength' => 128,
     '#attributes' => array('class' => array('target-add', 'target-twitter')),
+    '#description' => t('The full URL of the Twitter profile, including the "http://" prefix'),
+  );
+  $form['row_four']['youtube'] = array(
+    '#type' => 'textfield',
+    '#title' => t('YouTube'),
+    '#default_value' => isset($target->youtube) ? $target->youtube : '',
+    '#size' => 60,
+    '#maxlength' => 128,
+    '#attributes' => array('class' => array('target-add', 'target-youtube')),
+    '#description' => t('The full URL for YouTube, including the "http://" prefix'),
   );
 
   $form['row_four']['website'] = array(
@@ -286,6 +300,7 @@ function springboard_target_form($target_id = NULL) {
     '#size' => 60,
     '#maxlength' => 128,
     '#attributes' => array('class' => array('target-add', 'target-website')),
+    '#description' => t('The full URL of the website, including the "http://" prefix'),
   );
 
   $form['row_four']['class_name'] = array(
@@ -419,6 +434,13 @@ function springboard_target_form_validate($form, &$form_state) {
     $valid = valid_url($form_state['values']['twitter'], TRUE);
     if (!$valid) {
       form_set_error('twitter', t('Invalid Twitter url. Please check for "http://" and/or path formatting.'));
+    }
+  }
+
+  if (!empty($form_state['values']['youtube'])) {
+    $valid = valid_url($form_state['values']['youtube'], TRUE);
+    if (!$valid) {
+      form_set_error('youtube', t('Invalid Youtube url. Please check for "http://" and/or path formatting.'));
     }
   }
 

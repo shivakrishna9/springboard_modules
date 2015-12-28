@@ -48,7 +48,7 @@
             subButton.ajaxComplete(function()  {
                 subButton.prop('disabled', false).css({'cursor': 'pointer'});
             });
-
+            Sba.scroller(context);
         }
     };
 
@@ -75,7 +75,7 @@
 
         Sba.setFormValue();
 
-        Sba.scroller();
+        //Sba.scroller();
     });
 
 
@@ -404,17 +404,40 @@
                 }
             });
 
+            if(typeof(Drupal.settings.charCount) !== 'undefined') {
 
-          if(typeof(Drupal.settings.charCount) !== 'undefined') {
-            var handleCount = Drupal.settings.charCount.size;
-            var currLen = $('#edit-field-sba-twitter-message-und-0-value').val().replace(/(\r\n|\n|\r)/gm, "").length;
-            if (currLen > 140 - handleCount) {
-              messages.push({type: 'error', message: 'Message is too long for all potential targets.'});
+                var handleCount = Drupal.settings.charCount.size;
+                var $text = $('div[id*="edit-field-sba-twitter-message"]').find('textarea');
+                $text.each(function () {
+                    if (this.id.indexOf('edit-field-sba-twitter-message-und') != -1) {
+
+                        var currLen = $(this).val().replace(/(\r\n|\n|\r)/gm, "").length;
+                        if (currLen > 140 - handleCount) {
+                            messages.push({type: 'error', message: 'Message is too long for all potential targets.'});
+                        }
+                    }
+                });
+                var hasDistrict = $('input[name*=field_sba_target_options]:checked').val();
+                if (hasDistrict == 0) {
+                    var limit = true;
+                    var targetCount = Drupal.settings.charCount.count;
+                    //if (targetCount > 4 && targetCount < 26) {
+                    //    limit = confirm("Are you sure? Current settings will result in " + targetCount + ' tweets for this message.');
+                    //}
+                    //if (!limit) {
+                    //    return false;
+                    //}
+                    if (targetCount > 5) {
+                        messages.push({
+                            type: 'error',
+                            message: 'This message will generate more than 5 tweets per user, please revisit your target options and try again.'
+                        });
+                    }
+                }
             }
-          }
 
             if(messages.length === 0) {
-                $("#sba-message-edit-form").submit();
+                $("#edit-submit-hidden").trigger('click');
             }
             else {
                 Sba.setError(messages);
@@ -449,30 +472,36 @@
     };
 
     //recipients container scroll calculations
-    Sba.scroller = function () {
-        setTimeout(function() {
-            var recips = $('#springboard-advocacy-message-recipients');
-            var offset = recips.offset();
-            var newTop;
-            if(recips.hasClass('recipients-fixed')) {
-                newTop = $(window).scrollTop() - offset.top;
-                recips.css('top', newTop).removeClass('recipients-fixed');
-            }
-            $(window).scroll(function() {
-                var footerOffset = $('#footer-wrapper').offset();
-                if(offset.top <= $(window).scrollTop() && recips.css('position') == 'absolute') {
-                    var recipHeight = recips.height();
-                    var newTop = $(window).scrollTop() - offset.top;
-                   if((offset.top +  newTop + recipHeight + 20) < footerOffset.top) {
-                        recips.css('top', newTop).addClass('recipients-fixed');
-                   }
+    Sba.scroller = function (context) {
+        var id = '';
+        if (typeof(context) !== 'undefined' && typeof(context[0]) !== 'undefined') {
+            id = context[0].id;
+        }
+        if ((typeof(context) !== 'undefined' && typeof(context[0]) === 'undefined') || id.indexOf('add-more-wrapper') != -1 || id.indexOf('message-edit-form') != -1) {
+            setTimeout(function () {
+                var recips = $('#springboard-advocacy-message-recipients');
+                var offset = recips.offset();
+                var newTop;
+                if (recips.hasClass('recipients-fixed')) {
+                    newTop = $(window).scrollTop() - offset.top;
+                    recips.css('top', newTop).removeClass('recipients-fixed');
                 }
-                else {
-                    recips.css('top', 0).removeClass('recipients-fixed');
-                }
-            });
+                $(window).scroll(function () {
+                    var footerOffset = $('#footer-wrapper').offset();
+                    if (offset.top <= $(window).scrollTop() && recips.css('position') == 'absolute') {
+                        var recipHeight = recips.height();
+                        var newTop = $(window).scrollTop() - offset.top;
+                        if ((offset.top + newTop + recipHeight + 20) < footerOffset.top) {
+                            recips.css('top', newTop).addClass('recipients-fixed');
+                        }
+                    }
+                    else {
+                        recips.css('top', 0).removeClass('recipients-fixed');
+                    }
+                });
 
-        }, 500);
+            }, 50);
+        }
     };
 
     // Update committee search form elements
@@ -626,6 +655,17 @@
                 }
             }
         });
+
+        if ($("input[name*=field_sba_target_option]").length != 0) {
+            var districted_tweet = $("input[name*=field_sba_target_option]:checked").val();
+            if (districted_tweet != 1) {
+                notGroupable = true;
+                $('#advo-add-all').hide();
+            }
+            else {
+                $('#advo-add-all').show();
+            }
+        }
 
         //update form element states based on meta-variables
         if(hasDistrict == true){
@@ -878,7 +918,6 @@
                     if (missing != true) {
                         var newQueryValuesArr = values.split('|');
                         $.each(newQueryValuesArr, function(i, value){
-                            //console.log(oldQueryObj[key]);
                             if(oldQueryObj[key].toString().indexOf(value) == -1) {
                                 missing = true;
                             }
@@ -1075,6 +1114,9 @@
             if (segments[0] == 'ids') {
                 return false;
             }
+            if(typeof(segments[1]) == "undefined") {
+                return true;
+            }
             segments[0] = segments[0].SbaUcfirst();
             if(segments[0] != 'Search_committee') {
                 segments[1] = segments[1].replace(/%7C/g, '|');
@@ -1133,9 +1175,58 @@
             });
         });
 
+        // Individual targets
         if (typeof(queryObj.Id) !== 'undefined') {
+            var type = '';
+            var sal = '';
+            var first = '';
+            var last = '';
+            var party = '';
+            var org = '';
+            var title = '';
+            var state = '';
+            var district = '';
+            if (typeof(queryObj.Type) !== 'undefined') {
+                type = queryObj.Type.toString().SbaStrCln();
+            }
+            if (typeof(queryObj.Sal) !== 'undefined') {
+                sal = queryObj.Sal.toString().SbaStrCln();
+            }
+            if (typeof(queryObj.First) !== 'undefined') {
+                first = queryObj.First.toString().SbaStrCln();
+            }
+            if (typeof(queryObj.Last) !== 'undefined') {
+                last = queryObj.Last.toString().SbaStrCln();
+            }
+            if (typeof(queryObj.Title) !== 'undefined') {
+                title = queryObj.Title.toString().SbaStrCln();
+            }
+            if (typeof(queryObj.Org) !== 'undefined') {
+                org = queryObj.Org.toString().SbaStrCln();
+            }
+            if (typeof(queryObj.District) !== 'undefined') {
+                district = queryObj.District.toString().SbaStrCln();
+            }
+            if (typeof(queryObj.State) !== 'undefined') {
+                state = queryObj.State.toString().SbaStrCln();
+            }
+            if (typeof(queryObj.Party) !== 'undefined') {
+                if (type == 'Legislator') {
+                    party = queryObj.Party.toString().SbaStrCln();
+                    if (party.length > 0) {
+                        party = '(' + party + ')';
+                    }
+                }
+            }
 
-          return  '<div class="individual">' + queryObj.Sal + " " +  queryObj.First + " " + queryObj.Last + '</div>';
+            var separator = title !='' && org != '' ? ', ' : ' ';
+            // Custom targets and executive branch.
+            var non_legislative_organization = org != ''  ? title + separator + org : '';
+
+            var legislative_organization = district != '' && title != '' ? title + ', ' +  district  :  org;
+            var affiliation = district != ''  ? legislative_organization : non_legislative_organization;
+
+            return  '<div class="individual">' + sal + " " +  first + " " + last + ' ' + party  + "<br />" + affiliation +'</div>';
         }
         var cleanUp = JSON.stringify(queryObj).SbaJsonToReadable();
         if (typeof(queryObj.Fields) !== 'undefined' || typeof(queryObj.Genderxxxx) !== 'undefined'
@@ -1240,6 +1331,19 @@
             .replace(/%29/g, ')')
             .replace(/%3A/g, ':')
             .replace(/\}/g, '');
+    };
+
+    String.prototype.SbaStrCln = function()
+    {
+        var word = this;
+        return word.replace(/"/g, '')
+          .replace(/%20/g, ' ')
+          .replace(/%2C/g, ', ')
+          .replace(/%28/g, '(')
+          .replace(/%29/g, ')')
+          .replace(/%3A/g, ':')
+          .replace('Republicans', 'R')
+          .replace('Democrats', 'D')
     };
 
 })(jQuery);

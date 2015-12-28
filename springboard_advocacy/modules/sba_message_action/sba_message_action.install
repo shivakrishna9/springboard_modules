@@ -524,6 +524,7 @@ function sba_message_action_update_7024() {
   }
 }
 
+<<<<<<< HEAD
 **
  * Update label for sbp_sba_action_optin field.
  */
@@ -550,3 +551,45 @@ function sba_message_action_update_7028() {
     field_update_instance($field);
   }
 }
+=======
+/**
+ * Create the message action label field.
+ */
+function sba_message_action_update_7025() {
+  module_load_include('inc', 'sba_message_action', 'includes/install/sba_message_action.install_fields');
+  _sba_message_action_create_node_fields(FALSE);
+}
+
+
+/**
+ * Update description of the multistep prompt field.
+ * And set a null value on single step actions.
+ */
+function sba_message_action_update_7026() {
+  $field = field_info_instance('node', 'field_sba_multistep_prompt', 'sba_message_action');
+  if ($field) {
+    $field['description'] = t(
+      'This text will appear below the "Your Message" label in one-step forms, or below the "Step 1 of 2" label in multi-step forms. On one-step forms with multiple messages, it will appear above the "View all possible messages link."'
+    );
+    $field['label'] = t(' "Your Message" Intro Text');
+    $field['default_value'][0]['value'] = '';
+    $field['widget']['settings']['rows'] = 3;
+    field_update_instance($field);
+  }
+
+  $nodes = db_query('select n.nid, f.field_sba_action_flow_value from {node} n
+    INNER JOIN {field_data_field_sba_action_flow} f on f.entity_id = n.nid
+    WHERE f.field_sba_action_flow_value = :value AND n.type = :type',
+    array(':value' => 'one', ':type' => 'sba_message_action')
+  );
+
+  foreach ($nodes as $node) {
+    db_update('field_data_field_sba_multistep_prompt')
+      ->condition('entity_id', $node->nid)
+      ->fields(array('field_sba_multistep_prompt_value' => ''))
+      ->execute();
+  }
+
+}
+
+>>>>>>> JacksonRiver/7.x-4.x_social_advocacy

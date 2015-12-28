@@ -25,10 +25,6 @@ function _sba_message_action_create_example_message_action() {
     'eget, pulvinar sed, posuere vitae, nulla. Sed varius nibh ut lacus. Curabitur fringilla. Nunc est ipsum, ' .
     'pretium quis, dapibus sed, varius non, lectus. Proin a quam. Praesent lacinia, eros quis aliquam porttitor, ' .
     'urna lacus volutpat urna, ut fermentum neque mi egestas dolor.';
-  $node->body[LANGUAGE_NONE][0]['summary'] = 'Donec placerat. Nullam nibh dolor, blandit sed, fermentum id, imperdiet ' .
-    'sit amet, neque. Nam mollis ultrices justo. Sed tempor. Sed vitae tellus. Etiam sem arcu, eleifend sit amet, ' .
-    'gravida eget, porta at, wisi. Nam non lacus vitae ipsum viverra pretium. Phasellus massa. Fusce magna sem, gravida ' .
-    'in, feugiat ac, molestie eget, wisi.';
   $node->body[LANGUAGE_NONE][0]['format'] = 'filtered_html';
   $node->webform = array(
     'confirmation' => 'Thank you, %value[sbp_first_name] for participating in the messaging campaign. [action:all_messages]',
@@ -39,7 +35,7 @@ function _sba_message_action_create_example_message_action() {
     'allow_draft' => 0,
     'auto_save' => 0,
     'submit_notice' => 1,
-    'submit_text' => t('Sign'),
+    'submit_text' => t('Take Action Now!'),
     'submit_limit' => -1,
     'submit_interval' => -1,
     'total_submit_limit' => -1,

@@ -44,8 +44,6 @@ function sba_social_action_send_message(array $user_message, array $form_state, 
       'multiflow' => 'step_one'
     );
 
-    $node = $form_state['complete form']['#node'];
-
     // Send submission to API Client.
     $api_call = springboard_advocacy_api_call();
     $response = $api_call->invokeClientMethod('resolveTargets', $submission);
@@ -75,7 +73,6 @@ function sba_social_action_build_messages(array $user_message) {
 
   foreach ($all_messages as $message) {
     $message_wrapper = entity_metadata_wrapper('sba_message', $message);
-
     $message_unique_id = $message->data['message_id'];
     $weight = !empty($message->data['precedence']) ? $message->data['weight'] : $x++;
     $undistricted = !$message_wrapper->field_sba_target_options->value();
@@ -362,21 +359,26 @@ function theme_sba_social_action_person_details(&$vars) {
   if ($vars['type'] == 'sba_social_action_twitter_message' && isset($target['twitter'])) {
     //$person .= ' (<span class="twitter-handle">@' . $target['twitter'] . '</span>)';
   }
-  $title = isset($target['title']) ? $target['title']  : '' ;
-  $party = isset($target['party']) ? '(' . $target['party'] . ')' : '';
+  $title = isset($target['title']) ? ' ' . $target['title']  : '' ;
+  $party = isset($target['party']) ? ' (' . $target['party'] . ')' : '';
   $organization = !empty($target['organization']) ? $target['organization'] : '';
   $separator = !empty($title) && !empty($organization) ? ', ' : ' ';
-
+  $state = isset($target['district']) && $vars['message']['targets']->class_name == 'Legislator' ? $vars['message']['targets']->state : '';
+  if (empty($state) && $target['title'] == 'Governor') {
+    $state = ' ' . $target['state'];
+    $separator = ', ';
+  }
+  $state = $state == 'Al' ? '' : $state;
   // Custom targets and executive branch.
-  $non_legislative_organization = !empty($organization)  ? $title . $separator . $organization : '';
-
+  $non_legislative_organization = !empty($organization)  ? $title . $separator . $organization :  $title . $separator . $state;
   // Legislators. Backward compatible with Target db structure pre-fall 2015 release;
-  $legislative_organization = isset($target['district']) && !empty($title) ? $title . ', ' .  $target['state'] . ' ' .  $party  : $organization . ' ' . $party ;
+  $legislative_organization = isset($target['district']) && !empty($title) ? $title . ', ' .  $state  : $organization;
 
   $affiliation = isset($target['district'])  ? $legislative_organization : $non_legislative_organization;
   $output .= $person;
   if(!empty($affiliation)) {
-    $output .= ', ' . $affiliation;
+    $output .= $party;
+    $output .= '<br />' . $affiliation;
   }
   return $output;
 }

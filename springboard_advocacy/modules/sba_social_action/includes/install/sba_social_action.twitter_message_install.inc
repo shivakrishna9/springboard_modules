@@ -98,7 +98,7 @@ function sba_social_action_create_twitter_message_entity($update = FALSE) {
 // Exported field_base: 'field_sba_twitter_message'
   $field_bases['field_sba_twitter_message'] = array(
     'active' => 1,
-    'cardinality' => 1,
+    'cardinality' => -1,
     'deleted' => 0,
     'entity_types' => array(),
     'field_name' => 'field_sba_twitter_message',
@@ -228,7 +228,7 @@ function sba_social_action_create_twitter_message_entity($update = FALSE) {
     'bundle' => 'sba_social_action_twitter_message',
     'default_value' => array(
       0 => array(
-        'value' => 1,
+        'value' => 0,
       ),
     ),
     'deleted' => 0,
@@ -275,13 +275,13 @@ function sba_social_action_create_twitter_message_entity($update = FALSE) {
         'label' => 'above',
         'module' => 'text',
         'settings' => array(),
-        'type' => 'text_plain',
+        'type' => 'text_default',
         'weight' => 9,
       ),
     ),
     'entity_type' => 'sba_message',
     'field_name' => 'field_sba_twitter_message',
-    'label' => 'Tweet',
+    'label' => 'Sample Tweets',
     'required' => 0,
     'settings' => array(
       'text_processing' => 0,
@@ -391,7 +391,7 @@ function sba_social_action_create_twitter_message_entity($update = FALSE) {
       ),
     ),
     'deleted' => 0,
-    'description' => 'This option will prefix each target\'s Twitter handle with a period, forcing the tweet to appear on the activist\'s main feed, and to their followers. If this message has many targets (and tweets), you should leave this unchecked, so that the activist does not flood these feeds with nearly-identical tweets.',
+    'description' => 'This option will prefix each target\'s Twitter handle with a period, making the tweet to appear on the activist\'s main feed, and to their followers. If this message has many targets (and tweets), you should leave this unchecked, so that the activist does not flood these feeds with nearly-identical tweets.',
     'display' => array(
       'default' => array(
         'label' => 'hidden',
@@ -402,7 +402,7 @@ function sba_social_action_create_twitter_message_entity($update = FALSE) {
     ),
     'entity_type' => 'sba_message',
     'field_name' => 'field_sba_prepend_target_name',
-    'label' => 'Force tweets to appear on activist\'s main feed and to their followers?',
+    'label' => 'Prepend target names with "."?',
     'required' => 0,
     'settings' => array(
       'user_register_form' => FALSE,
@@ -482,7 +482,7 @@ function sba_social_action_create_twitter_message_entity($update = FALSE) {
       'instance_settings' => array(
         'required_fields' => 1,
         'classes' => 'group-sba-tweet field-group-fieldset',
-        'description' => 'Your activists will be presented with one copy of the tweet for each target. Do not include Twitter handles in the message text unless they are not your primary targets, the Twitter handle for each target will be prepended automatically to this tweet. The message character limit is determined by target’s actual Twitter handle.',
+        'description' => 'Your activists will be presented with one sample tweet for each target. If you create multiple sample tweets, one will be chosen randomly for each target. Do not include Twitter handles in the message text unless they are not your primary targets, the Twitter handle for each target will be prepended automatically to this tweet. The message character limit is determined by target’s actual Twitter handle.',
       ),
       'formatter' => 'open',
     );
@@ -497,7 +497,7 @@ function sba_social_action_create_twitter_message_entity($update = FALSE) {
 /**
  * Delete springboard message fields
  */
-function _sba_social_action_delete_twitter_fields() {
+function _sba_social_action_delete_twitter_message_entity() {
   $fields = array(
     'field_sba_twitter_message',
     'field_sba_twitter_editable',
@@ -508,9 +508,10 @@ function _sba_social_action_delete_twitter_fields() {
   foreach ($fields as $field_name) {
     $field = field_info_instance('node', $field_name, 'sba_social_action_twitter_message');
     field_delete_instance($field);
-//    $field = field_info_field($field_name);
-//    field_delete_field($field);
+    $field_base = field_info_field($field_name);
+    field_delete_field($field_name);
   }
+  field_purge_batch('50') ;
 
   drupal_set_message('Sba Social Action twitter fields deleted.');
   field_group_field_attach_delete_bundle('sba_message','sba_social_action_twitter_message');

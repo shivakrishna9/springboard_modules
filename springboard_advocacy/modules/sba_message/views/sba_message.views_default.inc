@@ -394,7 +394,21 @@ function sba_message_views_default_views() {
   $handler->display->display_options['fields']['party']['id'] = 'party';
   $handler->display->display_options['fields']['party']['table'] = 'advocacy';
   $handler->display->display_options['fields']['party']['field'] = 'party';
-  $handler->display->display_options['fields']['party']['label'] = 'Party';
+  $handler->display->display_options['fields']['party']['label'] = 'Party/Organization';
+  /* Field: Advocacy: Organization title */
+  $handler->display->display_options['fields']['title']['id'] = 'title';
+  $handler->display->display_options['fields']['title']['table'] = 'advocacy';
+  $handler->display->display_options['fields']['title']['field'] = 'title';
+  $handler->display->display_options['fields']['title']['label'] = '';
+  $handler->display->display_options['fields']['title']['exclude'] = TRUE;
+  $handler->display->display_options['fields']['title']['element_label_colon'] = FALSE;
+  /* Field: Advocacy: Organization */
+  $handler->display->display_options['fields']['organization']['id'] = 'organization';
+  $handler->display->display_options['fields']['organization']['table'] = 'advocacy';
+  $handler->display->display_options['fields']['organization']['field'] = 'organization';
+  $handler->display->display_options['fields']['organization']['label'] = '';
+  $handler->display->display_options['fields']['organization']['exclude'] = TRUE;
+  $handler->display->display_options['fields']['organization']['element_label_colon'] = FALSE;
   /* Field: Advocacy: Role */
   $handler->display->display_options['fields']['role']['id'] = 'role';
   $handler->display->display_options['fields']['role']['table'] = 'advocacy';

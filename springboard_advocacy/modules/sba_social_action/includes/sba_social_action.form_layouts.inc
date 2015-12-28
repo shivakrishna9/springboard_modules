@@ -67,11 +67,11 @@ function sba_social_action_preprocess_social_two_column_body_right(&$vars) {
  * Helper function for form layouts preprocessors.
  */
 function sba_social_action_build_preprocess(&$vars) {
-  $vars['quicksign'] = '';
-  if (module_exists('sba_quicksign') && sba_quicksign_is_enabled($vars['element']['#node'])) {
-    $quicksign = drupal_get_form('sba_quicksign_form');
-    $vars['quicksign'] = drupal_render($quicksign);
-  }
+//  $vars['quicksign'] = '';
+//  if (module_exists('sba_quicksign') && sba_quicksign_is_enabled($vars['element']['#node'])) {
+//    $quicksign = drupal_get_form('sba_quicksign_form');
+//    $vars['quicksign'] = drupal_render($quicksign);
+//  }
 
   $vars['participants'] = '';
   $view = views_get_view('recent_action_participants');
@@ -118,12 +118,13 @@ function sba_social_action_build_preprocess(&$vars) {
   // Fieldset legends.
   $fieldset_title_field = field_get_items('node', $vars['element']['#node'], 'field_sba_social_fieldset_title');
   $fieldset_title = field_view_value('node', $vars['element']['#node'], 'field_sba_social_fieldset_title', $fieldset_title_field[0]);
-  $fieldset_title = drupal_render($fieldset_title);
-  $vars['form_legend'] = $fieldset_title;
+  $title = drupal_render($fieldset_title);
+  $title = !empty($title) ? $title : t('Send a Social Message');
+  $vars['form_legend'] = $title;
   // We remove image field in the default node--sba-message-action.tpl.php
   // and put it into form layouts here.
-  $image_field = field_get_items('node', $node, 'field_social_action_img');
-  $image = field_view_value('node', $node, 'field_social_action_img', $image_field[0]);
+  $image_field = field_get_items('node', $node, 'field_sba_social_action_img');
+  $image = field_view_value('node', $node, 'field_sba_social_action_img', $image_field[0]);
   if (!empty($image['#item'])) {
     $vars['image'] = drupal_render($image);
   }
@@ -212,7 +213,9 @@ function theme_social_action_messages_wrapper($vars) {
 function theme_social_action_webform_wrapper($vars) {
   $fieldset_title_field = field_get_items('node', $vars['element']['#node'], 'field_sba_social_fieldset_title');
   $fieldset_title = field_view_value('node', $vars['element']['#node'], 'field_sba_social_fieldset_title', $fieldset_title_field[0]);
-  $fieldset_title = drupal_render($fieldset_title);
-  return ' <div class="row-fluid"><fieldset id="take-action-wrapper" class = "form-wrapper"><legend>' . $fieldset_title . '</legend>' . $vars['element']['#children']  . '</fieldset></div>';
+  $title = drupal_render($fieldset_title);
+  $title = !empty($title) ? $title : t('Send a Social Message');
+
+  return ' <div class="row-fluid"><fieldset id="take-action-wrapper" class = "form-wrapper"><legend>' . $title . '</legend>' . $vars['element']['#children']  . '</fieldset></div>';
 }
 
