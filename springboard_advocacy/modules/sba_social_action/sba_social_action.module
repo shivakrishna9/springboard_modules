@@ -930,8 +930,6 @@ function sba_social_action_cron() {
   module_load_include('inc', 'sba_social_action', 'includes/sba_social_action.oauth_cache');
   sba_social_action_cron_expire_sessions();
 }
-<<<<<<< HEAD
-=======
 
 /**
  * Saves twitter user profile data from a user request.
@@ -1009,4 +1007,3 @@ class SbaTwitterStatus extends Entity {
     parent::__construct($values, 'sba_twitter_status');
   }
 }
->>>>>>> JacksonRiver/7.x-4.x_social_advocacy
