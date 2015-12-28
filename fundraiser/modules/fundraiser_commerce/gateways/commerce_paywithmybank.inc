@@ -345,6 +345,14 @@ function commerce_paywithmybank_fundraiser_commerce_charge($method_instance, $do
 
       // Update card using master donation so transaction ID is available.
       commerce_paywithmybank_fundraiser_commerce_update($master_donation, $card_data);
+
+      $recurrence = new stdClass();
+      // Recurring schedule end date needs to be in milliseconds.
+      $recurrence->endDate = ($new_expire_time * 1000);
+
+      $method_instance = commerce_payment_method_instance_load($donation->gateway['id']);
+      $api = commerce_paywithmybank_get_api($method_instance);
+      $api->updateRecurrence($master_donation->txn_id, $master_donation->did, $recurrence);
     }
 
     $submission_fields = array(
