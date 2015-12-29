@@ -4,7 +4,7 @@
     <div class="span3">
       <div class="well">
         <h2 class="text-info"><?php print $message_action_metrics->failed; ?></h2>
-        Failed Messages
+        Failed Messages<br />Available to Download
       </div>
     </div>
     <div class="span3">
@@ -15,7 +15,7 @@
     </div>
   </div>
 </div>
-<h2>Download Failed Messages</h2>
+<h2>ZZZ Download Failed Messages</h2>
 <div class="well">
   <?php print $form; ?>
 </div>
