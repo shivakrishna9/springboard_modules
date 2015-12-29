@@ -1947,6 +1947,9 @@ function fundraiser_donation_update($donation, $vocal_mode = TRUE) {
   if (isset($donation->txn_id) && !empty($donation->txn_id)) {
     $donation_record['txn_id'] = $donation->txn_id;
   }
+  if (isset($donation->auth_txn_id) && !empty($donation->auth_txn_id)) {
+    $donation_record['auth_txn_id'] = $donation->auth_txn_id;
+  }
   if (isset($donation->form_url) && !empty($donation->form_url)) {
     $donation_record['form_url'] = $donation->form_url;
   }
@@ -2168,6 +2171,7 @@ function fundraiser_donation_get_donation($did, $refresh = FALSE) {
   }
   // Grab the transaction id if it exists, add it here.
   $donation->txn_id = isset($donation_record->txn_id) ? $donation_record->txn_id : '';
+  $donation->auth_txn_id = isset($donation_record->auth_txn_id) ? $donation_record->auth_txn_id : '';
   $donation->form_url = $donation_record->form_url;
   // And has refund grab them too
   $donation->refunds = FALSE;
