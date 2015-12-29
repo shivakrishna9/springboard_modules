@@ -57,11 +57,12 @@ function sba_message_action_performance_targets_table($responses, $node) {
   ));
 
   $output = theme('messsage_deliverability_dashboard', array(
-    'targets_table_header'         => $header,
-    'targets'                      => $rows,
-    'report'                       => $responses['report'],
-    'nodeId'                       => $node->nid,
-    'tabs'                         => $tabs
+    'targets_table_header'           => $header,
+    'targets'                        => $rows,
+    'report'                         => $responses['report'],
+    'nodeId'                         => $node->nid,
+    'tabs'                           => $tabs,
+    'deliverability_cache_timestamp' => $responses['deliverability_cache_timestamp'],
   ));
 
   return $output;
