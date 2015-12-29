@@ -144,7 +144,8 @@ function commerce_paywithmybank_fundraiser_commerce_redirect_submit($method_inst
   $valid_request = commerce_paywithmybank_validate_request($transaction_id, $request_signature);
 
   if ($valid_request) {
-    $donation->txn_id = $transaction_id;
+    // This is an authorization, so set auth_txn_id.
+    $donation->auth_txn_id = $transaction_id;
 
     $api = commerce_paywithmybank_get_api($method_instance);
     $api_transaction = $api->getTransaction($transaction_id);
@@ -245,12 +246,14 @@ function commerce_paywithmybank_fundraiser_commerce_update($donation, $card_data
       $card_name = $billing_address['name_line'];
     }
 
-    if (!empty($donation->txn_id)) {
+    // The remote ID should always be the authorization transaction ID,
+    // as this is the transaction that represents the recurring payment.
+    if (!empty($donation->auth_txn_id)) {
       $card_data = commerce_cardonfile_new();
       $card_data->uid = $order->uid;
       $card_data->payment_method = $payment_method['method_id'];
       $card_data->instance_id = $payment_method['instance_id'];
-      $card_data->remote_id = $donation->txn_id;
+      $card_data->remote_id = $donation->auth_txn_id;
       $card_data->card_type = '';
       $card_data->card_name = $card_name;
       $card_data->card_number = $cardonfile_fields['card_number'];
@@ -303,69 +306,85 @@ function commerce_paywithmybank_fundraiser_commerce_expire($submission_fields) {
 
 /**
  * Callback function, charge the gateway.
+ *
+ * This function should only ever be used to charge recurring payments.
+ * Single payments are handled entirely in:
+ * commerce_paywithmybank_fundraiser_commerce_redirect_submit()
  */
 function commerce_paywithmybank_fundraiser_commerce_charge($method_instance, $donation) {
+  if (empty($donation->reference_charge)) {
+    watchdog('commerce_paywithmybank', 'Donation ID %did is not a recurring donation.', array(
+      '%did' => $donation->did,
+      ), WATCHDOG_ERROR);
+    return FALSE;
+  }
+
   // Translate donation settings to the correct values for the commerce gateway.
   $order = commerce_order_load($donation->did);
   $order_wrapper = entity_metadata_wrapper('commerce_order', $order);
   $charge = $order_wrapper->commerce_order_total->value();
   $amount = commerce_currency_amount_to_decimal($charge['amount'], $charge['currency_code']);
 
+  $recurring_donation = _fundraiser_sustainers_get_recurring_by_did($donation->did);
+  $master_donation = fundraiser_donation_get_donation($recurring_donation->master_did);
+
   // Process the transaction.
   $api = commerce_paywithmybank_get_api($method_instance);
-  $api->captureTransaction($donation->txn_id, $order->order_id, $amount);
+  // Recurring donations are captured using the master donation's authorization
+  // transaction ID.
+  $api_transaction = $api->captureTransaction($master_donation->auth_txn_id, $order->order_id, $amount);
 
   // Log the transaction.
   if (!empty($method_instance['settings']['commerce_paywithmybank_settings_log']['request'])) {
-    commerce_paywithmybank_log_request('capture', $donation->txn_id, $order->order_id, $amount);
+    commerce_paywithmybank_log_request('capture', $master_donation->auth_txn_id, $order->order_id, $amount);
   }
 
   $errors = $api->getLastErrors();
   $success = (empty($errors));
 
-  if (!$success) {
-    commerce_paywithmybank_log_errors($donation->txn_id, $errors);
+  if ($success) {
+    // Save updated donation.
+    $donation->txn_id = $api_transaction->transactionId;
+    fundraiser_donation_update($donation);
+  }
+  else {
+    commerce_paywithmybank_log_errors($master_donation->auth_txn_id, $errors);
   }
 
-  if (!empty($donation->reference_charge)) {
-    // Update expiration date and generate the next donation.
-    $recurring_donation = _fundraiser_sustainers_get_recurring_by_did($donation->did);
-    $master_donation = fundraiser_donation_get_donation($recurring_donation->master_did);
+  // Update expiration date and generate the next donation.
+  $cards_on_file = commerce_cardonfile_load_multiple_by_remote_id($master_donation->auth_txn_id);
 
-    $cards_on_file = commerce_cardonfile_load_multiple_by_remote_id($master_donation->txn_id);
+  if (!empty($cards_on_file)) {
+    $card_data = current($cards_on_file);
 
-    if (!empty($cards_on_file)) {
-      $card_data = current($cards_on_file);
+    // Move card expiration date ahead one month.
+    $new_expire_time = mktime(0, 0, 0, ($card_data->card_exp_month + 1), 1, $card_data->card_exp_year);
 
-      // Move card expiration date ahead one month.
-      $new_expire_time = mktime(0, 0, 0, ($card_data->card_exp_month + 1), 1, $card_data->card_exp_year);
+    $card_data->card_exp_month = date('m', $new_expire_time);
+    $card_data->card_exp_year = date('Y', $new_expire_time);
 
-      $card_data->card_exp_month = date('m', $new_expire_time);
-      $card_data->card_exp_year = date('Y', $new_expire_time);
+    // Update card using master donation so transaction ID is available.
+    commerce_paywithmybank_fundraiser_commerce_update($master_donation, $card_data);
 
-      // Update card using master donation so transaction ID is available.
-      commerce_paywithmybank_fundraiser_commerce_update($master_donation, $card_data);
+    $recurrence = new stdClass();
+    // Recurring schedule end date needs to be in milliseconds.
+    $recurrence->endDate = ($new_expire_time * 1000);
 
-      $recurrence = new stdClass();
-      // Recurring schedule end date needs to be in milliseconds.
-      $recurrence->endDate = ($new_expire_time * 1000);
+    $method_instance = commerce_payment_method_instance_load($donation->gateway['id']);
+    $api = commerce_paywithmybank_get_api($method_instance);
+    $api->updateRecurrence($master_donation->auth_txn_id, $master_donation->did, $recurrence);
+  }
 
-      $method_instance = commerce_payment_method_instance_load($donation->gateway['id']);
-      $api = commerce_paywithmybank_get_api($method_instance);
-      $api->updateRecurrence($master_donation->txn_id, $master_donation->did, $recurrence);
-    }
-
-    $submission_fields = array(
-      'payment_fields' => array(
-        'bank account' => array(
-          'card_expiration_month' => $card_data->card_exp_month,
-          'card_expiration_year' => $card_data->card_exp_year,
-        ),
+  $submission_fields = array(
+    'payment_fields' => array(
+      'bank account' => array(
+        'card_expiration_month' => $card_data->card_exp_month,
+        'card_expiration_year' => $card_data->card_exp_year,
       ),
-    );
+    ),
+  );
 
-    fundraiser_sustainers_update_billing_info_create_new_donations($master_donation, $donation, $submission_fields);
-  }
+  fundraiser_sustainers_update_billing_info_create_new_donations($master_donation, $donation, $submission_fields);
 
   return $success;
 }
@@ -376,9 +395,7 @@ function commerce_paywithmybank_fundraiser_commerce_charge($method_instance, $do
 function commerce_paywithmybank_fundraiser_commerce_refund($payment_method, $refund) {
   // Process the refund.
   $api = commerce_paywithmybank_get_api($payment_method);
-  $transaction = $api->refundTransaction($refund->donation->txn_id,
-    $refund->did,
-    commerce_currency_amount_to_decimal($refund->amount, $refund->currency));
+  $transaction = $api->refundTransaction($refund->donation->txn_id, $refund->did, commerce_currency_amount_to_decimal($refund->amount, $refund->currency));
 
   // Log the refund.
   if ($payment_method['settings']['commerce_paywithmybank_settings_log']['request']) {
@@ -404,12 +421,12 @@ function commerce_paywithmybank_fundraiser_commerce_response_save($donation) {
    */
   // Get the most recent transaction attached to the donation.
   $result = db_select('commerce_payment_transaction')
-      ->fields('commerce_payment_transaction', array('message'))
-      ->condition('order_id', $donation->did, '=')
-      ->orderBy('transaction_id', 'DESC')
-      ->range(0, 1)
-      ->execute()
-      ->fetchAssoc();
+    ->fields('commerce_payment_transaction', array('message'))
+    ->condition('order_id', $donation->did, '=')
+    ->orderBy('transaction_id', 'DESC')
+    ->range(0, 1)
+    ->execute()
+    ->fetchAssoc();
 
   // If the transaction status is authorized, set the order status to the same.
   if (!empty($result) && ($result['message'] == 'Authorized')) {
