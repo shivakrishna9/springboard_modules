@@ -9,7 +9,7 @@
  * Implements hook_install()
  */
 function salesforce_npsp_install() {
-  // Add NPSP fields to fundraiser sustainers series module.
+  // Add NPSP fields to fundraiser sustainers series table.
   salesforce_npsp_create_extra_fundraiser_series_fields();
 
   // Create default sustainers series to NPSP Recurring Donation mapping.
@@ -627,10 +627,14 @@ function salesforce_npsp_create_sustainers_series_mapping() {
 }
 
 /**
+ * Adds NPSP fields to fundraiser sustainers series table.
  * Creates new fundraiser sustainers series mapping.
  * Removes default recurring donation mapping provided by Springboard.
  */
 function salesforce_npsp_update_7001() {
+  // Add NPSP fields to fundraiser sustainers series table.
+  salesforce_npsp_create_extra_fundraiser_series_fields();
+
   // Create default sustainers series to NPSP Recurring Donation mapping.
   $sustainers_mapping_result = salesforce_npsp_create_sustainers_series_mapping();
   if ($sustainers_mapping_result !== FALSE) {
