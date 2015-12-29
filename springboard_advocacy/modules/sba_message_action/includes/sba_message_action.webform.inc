@@ -302,7 +302,7 @@ function sba_message_action_preprocess_webform_confirmations_delivered(&$vars) {
     $link = l($subject, '#', array('attributes' => array('onclick' => $on_click)));
     // Prepare the recipients for display in a bulleted list.
     unset($message['person']['url']);
-    $targets[$key]['person'] = theme('sba_message_action_person_details', $message['person']);
+    $targets[$key]['person'] = theme('sba_message_action_person_details', $message);
     $targets[$key]['link'] =  $link;
   }
 
@@ -347,10 +347,10 @@ function sba_message_action_preprocess_webform_confirmations_undelivered(&$vars)
     if (!empty($person['url'])) {
       $on_click = "var extWrapper=window.open(this.href,'targetWindow','toolbar=no,scrollbars=yes,status=no,menubar=no,resizable=yes,top=0,left=0,width=1024,height=800');extWrapper.focus();return false;";
       $name_with_webform_url = l($person['name'], check_plain($person['url']), array('attributes' => array('onclick' => $on_click)));
-      $person['name_with_webform_url'] = $name_with_webform_url;
+      $message['person']['name_with_webform_url'] = $name_with_webform_url;
     }
 
-    $target_info[] = theme('sba_message_action_person_details', $person);
+    $target_info[] = theme('sba_message_action_person_details', $message);
 
     // Prepare the contact object so we can replace tokens in the message.
     $contact = (object) $_SESSION['contact'];
@@ -428,15 +428,15 @@ function sba_message_action_get_message_statuses($response) {
 
   foreach ($messages as $id => $message) {
     foreach ($messages[$id]['deliverable'] as $target) {
-
       // Filter the largish target object in the response down to
       // a few select properties, in an array
       $target_details = sba_message_action_get_target_details($target);
+
       // Split into success and hold arrays.
       unset($target->addresses);
-      $tokens = array('primary_delivery_method' => $target->primary_delivery_method, 'id' => $target->id, 'salutation' => $target->salutation, 'first_name' => $target->first_name, 'last_name' => $target->last_name);
+      $tokens = array('primary_delivery_method' => $target->primary_delivery_method, 'id' => $target->id, 'salutation' => $target->salutation, 'first_name' => $target->first_name, 'last_name' => $target->last_name, 'type' => $target_details['class_name']);
       if (empty($target->webform_status)
-        || (!empty($target->webform_status) && $target->webform_status != 'Hold')) {
+        || (!empty($target->webform_status) && ($target->webform_status != 'Hold' && $target->webform_status != 'CAPTCHA'))) {
         $success_count++;
         $message_success['target_count'] = $success_count;
         $message_success[$id]['people'][] = $target_details;
@@ -478,6 +478,8 @@ function sba_message_action_get_target_details($target) {
   $name = array();
   $target_details = array();
 
+  $target_details['class_name'] = check_plain($target->class_name);
+
   if (!empty($target->salutation)) {
     $name[] = $target->salutation;
   }
@@ -515,23 +517,29 @@ function sba_message_action_get_target_details($target) {
 
 function theme_sba_message_action_person_details(&$vars) {
   $output = '';
-
-  $person = isset($vars['name_with_webform_url']) ? $vars['name_with_webform_url'] : $vars['name'];
-  $title = isset($vars['title']) ? $vars['title']  : '' ;
-  $party = isset($vars['party']) ? '(' . $vars['party'] . ')' : '';
-  $organization = !empty($vars['organization']) ? $vars['organization'] : '';
+  $target = $vars['person'];
+  $person = isset($target['name_with_webform_url']) ? $target['name_with_webform_url'] : $target['name'];
+  $title = isset($target['title']) ? ' ' . $target['title']  : '' ;
+  $party = isset($target['party']) ? ' (' . $target['party'] . ')' : '';
+  $organization = !empty($target['organization']) ?  $target['organization'] : '';
   $separator = !empty($title) && !empty($organization) ? ', ' : ' ';
+  $state = isset($target['district']) && $vars['person']['class_name'] == 'Legislator' ? ', ' .  $target['state'] : '';
+  if (empty($state) && $target['title'] == 'Governor') {
+    $state = ' ' . $target['state'];
+    $separator = ', ';
+  }
+  $state = $state == 'Al' ? '' : $state;
 
   // Custom targets and executive branch.
-  $non_legislative_organization = !empty($organization)  ? $title . $separator . $organization : '';
-
+  $non_legislative_organization = !empty($organization)  ? $title . $separator . $organization :  $title . $separator . $state;
   // Legislators. Backward compatible with Target db structure pre-fall 2015 release;
-  $legislative_organization = isset($vars['district']) && !empty($title) ? $title . ', ' .  $vars['state'] . ' ' .  $party  : $organization . ' ' . $party ;
+  $legislative_organization = isset($target['district']) && !empty($title) ? $title  .  $state  : $organization;
 
-  $affiliation = isset($vars['district'])  ? $legislative_organization : $non_legislative_organization;
+  $affiliation = isset($target['district'])  ? $legislative_organization : $non_legislative_organization;
   $output .= $person;
   if(!empty($affiliation)) {
-    $output .= ', ' . $affiliation;
+    $output .= $party;
+    $output .= '<br />' . $affiliation;
   }
   return $output;
 }

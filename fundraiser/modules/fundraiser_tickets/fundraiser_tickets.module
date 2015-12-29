@@ -592,6 +592,20 @@ function _fundraiser_tickets_ticket_settings_form_organize($form, $form_state){
  * Verify that redirect URLS are valid. Cribbed from menu module.
  */
 function _fundraiser_tickets_ticket_settings_form_validate(&$form, &$form_state) {
+  // Restore default gateway settings lost due to gateway fields being hidden.
+  $gateways = $form['fundraiser_settings']['gateways'];
+  foreach (array_keys($gateways) as $gateway_value) {
+    if (is_array($gateways[$gateway_value])) {
+      $gateway = $gateways[$gateway_value];
+      if (isset($gateway['_default']) && !empty($gateway['_default']['#default_value'])) {
+        $form_state['values']['gateways'][$gateway_value]['default'] = 1;
+      }
+    }
+  }
+
+  // Remove _default index from gateways.
+  unset($form_state['values']['gateways']['_default']);
+
   if ($form_state['values']['fr_tickets_closed_options'][LANGUAGE_NONE][0]['value'] == 'redirect'){
     $closed_redirect = $form_state['values']['fr_tickets_closed_redirect'][LANGUAGE_NONE][0]['value'];
     if (!trim($closed_redirect) || !drupal_valid_path($closed_redirect, TRUE)) {

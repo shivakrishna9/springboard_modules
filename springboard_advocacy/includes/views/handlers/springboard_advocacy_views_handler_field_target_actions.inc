@@ -67,7 +67,6 @@ class springboard_advocacy_views_handler_field_target_actions extends views_hand
    * @return string
    */
   function render_links($values) {
-
     $legislator = TRUE;
 
     if (isset($values->class_name) && $values->class_name == "Legislator") {
@@ -79,7 +78,6 @@ class springboard_advocacy_views_handler_field_target_actions extends views_hand
     }
 
     $links  = array();
-
     // Add Target to Action Link used in message entity's target search form results.
     if (user_access('add target to action') && !empty($this->options['which_links']['add'])) {
       $links[] = l(t('add'), 'add-target', array(
@@ -87,9 +85,21 @@ class springboard_advocacy_views_handler_field_target_actions extends views_hand
         'attributes' => array('class' => array('advocacy-add-target')),
         'query' => array(
           'id' => $values->id,
-          'first' => $values->first_name,
-          'last' => $values->last_name,
-          'sal' => $values->salutation
+          'type' => !empty($values->class_name) ? $values->class_name : '',
+          'first' => !empty($values->first_name) ? $values->first_name : '',
+          'last' => !empty($values->last_name) ? $values->last_name : '',
+          'sal' => !empty($values->salutation) ? $values->salutation : '',
+          'twitter' => !empty($values->twitter) ? $values->twitter : '',
+          'facebook' => !empty($values->facebook) ? $values->facebook : '',
+          'org' => !empty($values->organization) ? $values->organization : '',
+          'title' => !empty($values->title) ? $values->title : '',
+          'state' => !empty($values->state) ? $values->state : '',
+          'district' => !empty($values->district_name) ? $values->district_name : '',
+
+          // Need to send an empty string if the last query segment is empty
+          // so that the query string
+          // contains "party=", otherwise, without "=" javascript chokes.
+          'party' => !empty($values->party) ? $values->party: '',
         )
       ));
     }

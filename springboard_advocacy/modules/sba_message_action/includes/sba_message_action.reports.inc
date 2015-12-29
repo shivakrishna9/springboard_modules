@@ -43,15 +43,15 @@ function sba_message_action_performance_targets_table($responses, $node) {
       $target->party,
       $target->state,
       $target->district_code,
-      $target->deliverability->totalMessages,
       $target->deliverability->delivered,
       $target->deliverability->failed,
-      $target->deliverability->deliverabilityIndexPercent
+      $target->deliverability->hold,
+      $target->deliverability->totalMessages
     );
   }
 
   // Define the table header
-  $header = array('Name', 'Party', 'State', 'District', 'Total Messages Sent', 'Delivered Messages', 'Failed Messages', 'Deliverability Index');
+  $header = array('Name', 'Party', 'State', 'District', 'Delivered Messages', 'Failed Messages', 'On Hold Messages','Total Messages Processed');
   $tabs = theme('messsage_deliverability_tabs', array(
     'nodeId' => $node->nid
   ));
