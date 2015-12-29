@@ -319,7 +319,7 @@ function springboard_target_form($target_id = NULL) {
  * @return array
  */
 function springboard_target_types() {
-  $types = array('legislator' => 'Elected Official', 'target' => 'Custom');
+  $types = array('legislator' => 'Legislators', 'target' => 'Custom');
   return $types;
 }
 
