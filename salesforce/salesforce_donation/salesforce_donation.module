@@ -297,7 +297,7 @@ function salesforce_donation_fundraiser_donation_cancel($donation) {
   $donation = fundraiser_donation_get_donation($donation->did);
   $donation->recurring = $recurring;
 
-  $donation->status = 'canceled';
+  $donation->status = isset($donation->recurring->auto_canceled) ? 'auto_canceled' : 'canceled';
   salesforce_genmap_send_object_to_queue('salesforce_donation', 'update', $donation->node, $donation->did, $donation, 'donation');
 }
 
