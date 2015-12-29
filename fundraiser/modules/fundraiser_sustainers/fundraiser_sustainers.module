@@ -2381,7 +2381,7 @@ function fundraiser_sustainers_fundraiser_donation_get_donation($donation) {
     // indicator of whether the tranaction has been charged (aka, payment received). It is also
     // used as an indicator of whether an order can be charged based on status. This causes
     // canceled donations to follow the same processing as a charged sustainer payment.
-    if ($donation->status == 'canceled' && $donation->status_charged) {
+    if (($donation->status == 'canceled' || $donation->status == 'auto_canceled') && $donation->status_charged) {
       $donation->status_charged = 0;
     }
 
@@ -2614,9 +2614,9 @@ function fundraiser_sustainers_fundraiser_sustainers_donation_fail($donation) {
   // This hook function is called when we have a current donation which failed, so we can subtract 1.
   --$threshold;
   $records = db_query_range('
-    SELECT * FROM 
+    SELECT * FROM
       {fundraiser_sustainers}
-    WHERE 
+    WHERE
       master_did = :master_did
     AND
       did < :did
