@@ -15,7 +15,7 @@
     </div>
   </div>
 </div>
-<h2>ZZZ Download Failed Messages</h2>
+<h2>Download Failed Messages</h2>
 <div class="well">
   <?php print $form; ?>
 </div>
