@@ -47,7 +47,6 @@ function sba_social_action_send_message(array $user_message, array $form_state, 
     // Send submission to API Client.
     $api_call = springboard_advocacy_api_call();
     $response = $api_call->invokeClientMethod('resolveTargets', $submission);
-    dpm($response);
     if (isset($response->data)) {
       // We got a valid response, build the confirmation message array.
       sba_social_action_set_confirmation_session_vars($response->data, $contact);
