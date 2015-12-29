@@ -284,8 +284,8 @@ function webform_ui_action_info() {
   return array(
     'webform_ui_submission_delete' => array(
       'type' => 'node',
-      'label' => t('Bulk Delete Webform submission'),
-      'description' => t('Bulk Delete Webform submission'),
+      'label' => t('Bulk Delete Webform submissions'),
+      'description' => t('Bulk Delete Webform submissions'),
       'configurable' => FALSE,
      // 'behavior' => array('deletes_property'),
       'triggers' => array(
@@ -356,14 +356,16 @@ function webform_ui_views_bulk_operations_form_alter(&$form, &$form_state, $vbo)
  if($vbo->definition['handler'] = 'webform_ui_bulk_operations_handler_field_operations') {
    $form['select']['#collapsible'] = TRUE;
    $form['select']['#collapsed'] = TRUE;
+
    if (!user_access('delete all webform submissions') && $vbo->view->name == 'sbv_webform_submissions') {
      //$form['select']['#access'] = FALSE;;
    }
     if ($form_state['step'] == 'views_bulk_operations_confirm_form') {
+      $form['#attached']['css'][] = drupal_get_path('module', 'webform_ui') . '/css/webform-ui-fix-span.css';
       $variables = array(
         'items' => array(),
       );
-      $form['warning']['#markup'] = t('Are you sure you want to delete the following submissions?');
+      $form['warning']['#markup'] = t('Are you sure?');
       $form['warning']['#prefix'] = '<h3>';
       $form['warning']['#suffix'] = '</h3>';
       $form['warning']['#weight'] = -10;
@@ -374,7 +376,7 @@ function webform_ui_views_bulk_operations_form_alter(&$form, &$form_state, $vbo)
       $form['warning_desc']['#suffix'] = '</strong></p>';
       $form['toggle_me'] = array(
         '#type' => 'checkbox',
-        '#title' => t('You must check this box to acknowledge you understand this. Then the confrm button will appear'),
+        '#title' => t('You must check this box to acknowledge you understand this. Then the confirm button and a list of the records you are deleting will appear.'),
         '#weight' => -8,
       );
       module_load_include('inc', 'webform', 'includes/webform.submissions');
