@@ -1,6 +1,6 @@
 Springboard Advocacy is a suite of modules which facilitate online activism.
 
-Submodules include Springboard Petition and Springboard Message Action.
+Submodules include Springboard Petition, Springboard Social Action and Springboard Message Action.
 
 Springboard Advocacy communicates with the Springboard Advocacy Server via
 a PHP SDK which lives in the Drupal libraries folder. The remote advocacy server stores the targets

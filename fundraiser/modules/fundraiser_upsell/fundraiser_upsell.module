@@ -780,7 +780,19 @@ function fundraiser_upsell_create_recurring_series($donation) {
             // Set the old type back.
             $donation->fundraiser_upsell->type = $old_type;
 
+            // Create the fundraiser sustainers series entity.
+            $fundraiser_sustainers_series_data = array(
+              'did' => $donation->did,
+              'uid' => $donation->uid,
+              'amount' => $donation->donation['amount'],
+              'installments' => _fundraiser_sustainers_calculate_installments($donation),
+            );
+
+            $fundraiser_sustainers_series = entity_create('fundraiser_sustainers_series', $fundraiser_sustainers_series_data);
+            $fundraiser_sustainers_series->save();
+
             if (fundraiser_upsell_check_recurring($donation->did)) {
+              module_invoke_all('fundraiser_upsell_create_recurring_success', $donation);
               return TRUE;
             }
           }
