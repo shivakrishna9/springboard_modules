@@ -10,7 +10,7 @@
     <div class="span3">
       <div class="well">
         <h2 class="text-info"><?php print $message_action_metrics->hold; ?></h2>
-        Hold Messages<br />
+        Hold Messages<br />&nbsp;
       </div>
     </div>
   </div>
