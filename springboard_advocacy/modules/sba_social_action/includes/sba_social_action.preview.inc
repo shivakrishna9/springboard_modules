@@ -44,6 +44,7 @@ function sba_social_action_message_preview_page($nid) {
       $messages[$node->messages[$message['message_id']]->data['weight'] . $message['person']['organization'] . $message['targets']->last_name] = $message;
     }
   }
+  ksort($messages);
 
   if(!empty($node->field_sba_test_mode[0]['value'])) {
     drupal_set_message('This action is in test mode. Messages will not be not sent.', 'warning', TRUE);
