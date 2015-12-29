@@ -54,7 +54,7 @@ function webform_ui_settings_form($form, &$form_state) {
   $form['webform_ui_hide_table'] = array(
     '#type' => 'checkbox',
     '#title' => t('Hide the "Table" tab on the submissions results page'),
-    '#default_value' => variable_get('webform_ui_hide_clear_all', 'FALSE'),
+    '#default_value' => variable_get('webform_ui_hide_table', 'FALSE'),
     '#description' => t("If you have many submissions, the table page will require extensive resources to load. If you don't need this feature, hide the tab."),
   );
 
