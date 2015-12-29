@@ -3585,3 +3585,14 @@ function fundraiser_log_donation_processing($donation, $log = array()) {
 function _fundraiser_amount_value_sanitize($amount) {
   return preg_replace('/[^\d\.]/i', '', $amount);
 }
+
+/**
+ * Implements hook_schema_alter()
+ */
+function fundraiser_schema_alter(&$schema) {
+  $schema['fundraiser_donation']['fields']['auth_txn_id'] = array(
+    'description' => 'The transaction ID used to authorize this donation.',
+    'type' => 'varchar',
+    'length' => 55,
+  );
+}

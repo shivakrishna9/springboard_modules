@@ -509,3 +509,14 @@ function fundraiser_update_7008() {
     db_drop_table('fundraiser_currencies');
   }
 }
+
+/**
+ * Adds auth_txn_id field to the fundraiser_donation table.
+ */
+function fundraiser_update_7009() {
+  db_add_field('fundraiser_donation', 'auth_txn_id', array(
+    'description' => 'The transaction ID used to authorize this donation.',
+    'type' => 'varchar',
+    'length' => 55,
+  ));
+}
