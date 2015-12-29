@@ -58,7 +58,7 @@ function webform_ui_form_alter(&$form, &$form_state, $form_id) {
         '#default_value' => $submit_text,
         '#weight' => $body_weight - .5 ,
       );
-      $form['#submit'][] = 'webform_ui_node_form_submit';
+      $form['#validate'][] = 'webform_ui_node_form_validate';
     }
     if (variable_get('webform_ui_collapse_filter', 'FALSE') && isset($form['body'])) {
       $body =& $form['body'];
@@ -85,12 +85,8 @@ function webform_ui_form_alter(&$form, &$form_state, $form_id) {
  * @param $form
  * @param $form_state
  */
-function webform_ui_node_form_submit(&$form, &$form_state) {
-  $submit = array(
-    'nid' => $form_state['values']['nid'],
-    'submit_text' => $form_state['values']['submit_button_text']
-  );
-  drupal_write_record('webform', $submit, 'nid');
+function webform_ui_node_form_validate(&$form, &$form_state) {
+  drupal_array_set_nested_value($form_state['values'], array('webform', 'submit_text'), $form_state['values']['submit_button_text']);
 }
 
 /**
