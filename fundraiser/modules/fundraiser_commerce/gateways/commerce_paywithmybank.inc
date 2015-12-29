@@ -69,7 +69,7 @@ function commerce_paywithmybank_fundraiser_commerce_redirect($method_instance, $
   $api_endpoint = $api->getEndpoint();
 
   $order_total = $order->commerce_order_total[LANGUAGE_NONE][0];
-  $order_amount = commerce_currency_amount_to_decimal($order_total['amount'], $order_total['currency_code']);
+  $order_amount = substr(commerce_currency_format($order_total['amount'], $order_total['currency_code']), 1);
 
   // Set up standard payment parameters.
   $payment_parameters = array(
@@ -323,7 +323,7 @@ function commerce_paywithmybank_fundraiser_commerce_charge($method_instance, $do
   $order = commerce_order_load($donation->did);
   $order_wrapper = entity_metadata_wrapper('commerce_order', $order);
   $charge = $order_wrapper->commerce_order_total->value();
-  $amount = commerce_currency_amount_to_decimal($charge['amount'], $charge['currency_code']);
+  $amount = substr(commerce_currency_format($charge['amount'], $charge['currency_code']), 1);
 
   $recurring_donation = _fundraiser_sustainers_get_recurring_by_did($donation->did);
   $master_donation = fundraiser_donation_get_donation($recurring_donation->master_did);
@@ -395,7 +395,8 @@ function commerce_paywithmybank_fundraiser_commerce_charge($method_instance, $do
 function commerce_paywithmybank_fundraiser_commerce_refund($payment_method, $refund) {
   // Process the refund.
   $api = commerce_paywithmybank_get_api($payment_method);
-  $transaction = $api->refundTransaction($refund->donation->txn_id, $refund->did, commerce_currency_amount_to_decimal($refund->amount, $refund->currency));
+  $amount = substr(commerce_currency_format($refund->amount, $refund->currency), 1);
+  $transaction = $api->refundTransaction($refund->donation->txn_id, $refund->did, $amount);
 
   // Log the refund.
   if ($payment_method['settings']['commerce_paywithmybank_settings_log']['request']) {
