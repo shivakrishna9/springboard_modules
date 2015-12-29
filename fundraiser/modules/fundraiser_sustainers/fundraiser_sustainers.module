@@ -2671,10 +2671,18 @@ function fundraiser_sustainers_auto_cancel($donation) {
     // Add a watchdog entry with the did and reason.
     watchdog('fundraiser_sustainers', 'Donation cancelled for #@did. Reason: @reason',
       array('@did' => $donation->did, '@reason' => $reason));
+
+    // Add a log message into the subsequent revision caused when the main order's status is updated:
+    db_query("UPDATE {commerce_order_revision} SET log = :reason, revision_uid = 1 " .
+      "WHERE order_id=:order_id AND status='auto_canceled'", array(
+        ':reason' => $reason,
+        ':order_id' => $donation->did,
+     )
+    );
   }
 
   // Update the main order's status:
-  _fundraiser_commerce_update_order_status('auto_canceled', $master_did);
+  // _fundraiser_commerce_update_order_status('auto_canceled', $master_did);
 
   // Invoke a rules event on auto cancellations.
   if (module_exists("rules")) {
@@ -2683,14 +2691,6 @@ function fundraiser_sustainers_auto_cancel($donation) {
   else {
     module_invoke_all('fundraiser_sustainers_auto_cancel', $donation);
   }
-
-  // Add a log message into the subsequent revision caused when the main order's status is updated:
-  db_query("UPDATE {commerce_order_revision} SET log = :reason, revision_uid = 1 " .
-    "WHERE order_id=:order_id AND status='auto_canceled'", array(
-      ':reason' => $reason,
-      ':order_id' => $master_did,
-    )
-  );
 }
 
 /**
