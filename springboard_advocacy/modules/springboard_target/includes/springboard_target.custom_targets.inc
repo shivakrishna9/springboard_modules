@@ -6,9 +6,7 @@
  */
 
 /**
- * Implements hook_form
- *
- * Serves a dual function as target add and edit form
+ * Serves a dual function as target add and edit form.
  *
  * @param null $target_id
  * @return array
@@ -17,8 +15,8 @@ function springboard_target_form($target_id = NULL) {
   $form = array();
 
   // Attach our target form js and css.
-  $form['#attached']['css'][] =  drupal_get_path('module', 'springboard_target') . '/css/sba_target.css';
-  $form['#attached']['js'][] =  drupal_get_path('module', 'springboard_target') . '/js/sba_target.js';
+  $form['#attached']['css'][] = drupal_get_path('module', 'springboard_target') . '/css/sba_target.css';
+  $form['#attached']['js'][] = drupal_get_path('module', 'springboard_target') . '/js/sba_target.js';
 
   // Display a warning if the API is unconfigured and reurn an empty form.
   $unconfigured = springboard_advocacy_api_unconfigured('springboard');
@@ -30,16 +28,14 @@ function springboard_target_form($target_id = NULL) {
     return $form;
   }
 
-  $form['#attributes']['class'][] =  'target-edit-form';
+  $form['#attributes']['class'][] = 'target-edit-form';
 
   // Load the target if Target ID is present.
   if (isset($target_id) && is_numeric($target_id)) {
-    $loader = new AdvocacyApiClientLoader();
-    $client = $loader->getClient();
-    $target = $client->getCustomTarget($target_id);
-    if($client->isDebugMode()) {
-      watchdog('advocacy', 'Advocacy API Call details: !message', array('!message' => '<pre>' . check_plain(print_r($client->getDebugInfo(), TRUE)) . '</pre>'), WATCHDOG_DEBUG);
-    }
+    $api_call = springboard_advocacy_api_call();
+
+    $target = $api_call->invokeClientMethod('getCustomTarget', $target_id);
+
     if (isset($target->error)) {
       $form = array();
       $form['not_found']['#markup'] = $target->error->message;
@@ -54,7 +50,7 @@ function springboard_target_form($target_id = NULL) {
     '#attributes' => array(
       'class' => array(
         'target-row-one',
-        'target-row'
+        'target-row',
       ),
     ),
     '#weight' => -5,
@@ -64,7 +60,21 @@ function springboard_target_form($target_id = NULL) {
     '#type' => 'select',
     '#title' => t('Salutation'),
     '#default_value' => isset($target->salutation) ? $target->salutation : '',
-    '#options' => array('' => 'None', 'Mr.' => 'Mr.', 'Ms.' => 'Ms.', 'Mrs.' => 'Mrs.', 'Miss' => 'Miss', 'Dr.' => 'Dr.', 'Prof.' => 'Prof.', 'Hon.' => 'Hon.', 'Rev.' => 'Rev.', 'Rabbi' => 'Rabbi', 'Imam' => 'Imam', 'Pres.' => 'Pres.', 'Dean' => 'Dean'),
+    '#options' => array(
+      '' => 'None',
+      'Mr.' => 'Mr.',
+      'Ms.' => 'Ms.',
+      'Mrs.' => 'Mrs.',
+      'Miss' => 'Miss',
+      'Dr.' => 'Dr.',
+      'Prof.' => 'Prof.',
+      'Hon.' => 'Hon.',
+      'Rev.' => 'Rev.',
+      'Rabbi' => 'Rabbi',
+      'Imam' => 'Imam',
+      'Pres.' => 'Pres.',
+      'Dean' => 'Dean',
+    ),
     '#attributes' => array('class' => array('target-add', 'target-salutation')),
   );
 
@@ -119,7 +129,7 @@ function springboard_target_form($target_id = NULL) {
     '#attributes' => array(
       'class' => array(
         'target-row-two',
-        'target-row'
+        'target-row',
       ),
     ),
     '#weight' => -3,
@@ -175,7 +185,7 @@ function springboard_target_form($target_id = NULL) {
     '#attributes' => array(
       'class' => array(
         'target-row-three',
-        'target-row'
+        'target-row',
       ),
     ),
     '#weight' => -1,
@@ -234,7 +244,7 @@ function springboard_target_form($target_id = NULL) {
     '#attributes' => array(
       'class' => array(
         'target-row-four',
-        'target-row'
+        'target-row',
       ),
     ),
     '#weight' => 1,
@@ -248,6 +258,8 @@ function springboard_target_form($target_id = NULL) {
     '#maxlength' => 128,
     '#attributes' => array('class' => array('target-add', 'target-email')),
     '#required' => TRUE,
+    '#description' => '&nbsp;',
+
 
   );
 
@@ -258,6 +270,8 @@ function springboard_target_form($target_id = NULL) {
     '#size' => 60,
     '#maxlength' => 128,
     '#attributes' => array('class' => array('target-add', 'target-facebook')),
+    '#description' => t('The full URL of the Facebook page, including the "http://" prefix'),
+
   );
 
   $form['row_four']['twitter'] = array(
@@ -267,6 +281,16 @@ function springboard_target_form($target_id = NULL) {
     '#size' => 60,
     '#maxlength' => 128,
     '#attributes' => array('class' => array('target-add', 'target-twitter')),
+    '#description' => t('The full URL of the Twitter profile, including the "http://" prefix'),
+  );
+  $form['row_four']['youtube'] = array(
+    '#type' => 'textfield',
+    '#title' => t('YouTube'),
+    '#default_value' => isset($target->youtube) ? $target->youtube : '',
+    '#size' => 60,
+    '#maxlength' => 128,
+    '#attributes' => array('class' => array('target-add', 'target-youtube')),
+    '#description' => t('The full URL for YouTube, including the "http://" prefix'),
   );
 
   $form['row_four']['website'] = array(
@@ -276,11 +300,12 @@ function springboard_target_form($target_id = NULL) {
     '#size' => 60,
     '#maxlength' => 128,
     '#attributes' => array('class' => array('target-add', 'target-website')),
+    '#description' => t('The full URL of the website, including the "http://" prefix'),
   );
 
   $form['row_four']['class_name'] = array(
     '#type' => 'hidden',
-    '#value' => 'Target'
+    '#value' => 'Target',
   );
 
   return $form;
@@ -298,20 +323,26 @@ function springboard_target_types() {
   return $types;
 }
 
-/*
- * Return an array of target parties.
- */
 /**
+ * Return an array of target parties.
+ *
  * @return array
  */
 function springboard_target_parties() {
-  $parties = array('D' => 'Democrat', 'R' => 'Republican', 'I' => 'Independent', 'O' => 'Other');
+  $parties = array(
+    'D' => 'Democrat',
+    'R' => 'Republican',
+    'I' => 'Independent',
+    'O' => 'Other',
+  );
   return $parties;
 }
 
 /**
  * List states from target edit form.
+ *
  * @return array
+ *   An array of states.
  */
 function springboard_target_states() {
   $states = array(
@@ -386,7 +417,7 @@ function springboard_target_form_validate($form, &$form_state) {
     }
   }
 
-  //URLs
+  // URLs.
   if (!empty($form_state['values']['facebook'])) {
     $valid = valid_url($form_state['values']['facebook'], TRUE);
     if (!$valid) {
@@ -403,6 +434,13 @@ function springboard_target_form_validate($form, &$form_state) {
     $valid = valid_url($form_state['values']['twitter'], TRUE);
     if (!$valid) {
       form_set_error('twitter', t('Invalid Twitter url. Please check for "http://" and/or path formatting.'));
+    }
+  }
+
+  if (!empty($form_state['values']['youtube'])) {
+    $valid = valid_url($form_state['values']['youtube'], TRUE);
+    if (!$valid) {
+      form_set_error('youtube', t('Invalid Youtube url. Please check for "http://" and/or path formatting.'));
     }
   }
 
@@ -425,7 +463,7 @@ function springboard_target_form_validate($form, &$form_state) {
 function springboard_target_delete($form, $form_state, $target_id) {
   $form['target_id'] = array(
     '#type' => 'value',
-   '#value' => $target_id,
+    '#value' => $target_id,
   );
 
   $confirmation_question = t('Delete This Target?');
@@ -439,32 +477,17 @@ function springboard_target_delete($form, $form_state, $target_id) {
 
 /**
  * Submit function for target deletion.
+ *
  * @param $form
  * @param $form_state
  */
 function springboard_target_delete_submit(&$form, &$form_state) {
   $form_state['redirect'] = 'springboard/advocacy/targets/custom-targets';
 
-  $loader = new AdvocacyApiClientLoader();
-  $client = $loader->getClient();
-  $response = $client->deleteCustomTarget($form_state['values']['target_id']);
-  if($client->isDebugMode()) {
-    watchdog('advocacy', 'Advocacy API Call details: !message', array('!message' => '<pre>' . check_plain(print_r($client->getDebugInfo(), TRUE)) . '</pre>'), WATCHDOG_DEBUG);
-  }
+  $api_call = springboard_advocacy_api_call();
+  $response = $api_call->invokeClientMethod('deleteCustomTarget', $form_state['values']['target_id']);
 
   if (isset($response->data)) {
     drupal_set_message('Target deleted.');
-  }
-  else {
-    if(isset($response->error)) {
-      drupal_set_message(t('An error occurred when attempting to delete a custom target: @message', array('@message' => $response->error->message)), 'error');
-      watchdog('advocacy', 'An error occurred when attempting to delete a custom target @message', array('@message' => $response->error->message), WATCHDOG_ERROR);
-    }
-    else {
-      drupal_set_message(t('A response was not received from the server when attempting to retrieve
-      district information'), 'error');
-      watchdog('advocacy', 'A response was not received from the server when attempting to retrieve
-      district information', array(), WATCHDOG_ERROR);
-    }
   }
 }

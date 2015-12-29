@@ -4,41 +4,57 @@
  * @file
  * Provides Blackbaud Luminate integration for Salesforce.
  */
+define('LUMINATE_INSTALLMENT_PERIOD', 'recursMonthly');
 
 /**
  * Implements hook_schema_alter()
  */
 function salesforce_luminate_schema_alter(&$schema) {
-  $schema['fundraiser_sustainers_series']['fields']['luminate_start_date'] = array(
-    'description' => 'The date when this donation series starts.',
-    'type' => 'date',
-    'mysql_type' => 'date',
-  );
+  if (isset($schema['fundraiser_sustainers_series'])) {
+    $schema['fundraiser_sustainers_series']['fields']['luminate_start_date'] = array(
+      'description' => 'The date when this donation series starts.',
+      'type' => 'date',
+      'mysql_type' => 'date',
+    );
 
-  $schema['fundraiser_sustainers_series']['fields']['luminate_gift_status'] = array(
-    'description' => 'The gift status of this donation series.',
-    'type' => 'varchar',
-    'length' => 255,
-  );
+    $schema['fundraiser_sustainers_series']['fields']['luminate_gift_status'] = array(
+      'description' => 'The gift status of this donation series.',
+      'type' => 'varchar',
+      'length' => 255,
+    );
 
-  $schema['fundraiser_sustainers_series']['fields']['luminate_campaign_id'] = array(
-    'description' => 'The campaign ID of this donation series.',
-    'type' => 'varchar',
-    'length' => 255,
-  );
+    $schema['fundraiser_sustainers_series']['fields']['luminate_campaign_id'] = array(
+      'description' => 'The campaign ID of this donation series.',
+      'type' => 'varchar',
+      'length' => 255,
+    );
 
-  $schema['fundraiser_sustainers_series']['fields']['luminate_donation_type'] = array(
-    'description' => 'The type of donation this series represents.',
-    'type' => 'varchar',
-    'length' => 255,
-  );
+    $schema['fundraiser_sustainers_series']['fields']['luminate_donation_type'] = array(
+      'description' => 'The type of donation this series represents.',
+      'type' => 'varchar',
+      'length' => 255,
+    );
 
-  $schema['fundraiser_sustainers_series']['fields']['luminate_recurring_amount_rounded'] = array(
-    'description' => 'The donation amount (rounded.)',
-    'type' => 'int',
-    'not null' => TRUE,
-    'default' => 0,
-  );
+    $schema['fundraiser_sustainers_series']['fields']['luminate_recurring_amount_rounded'] = array(
+      'description' => 'The donation amount (rounded.)',
+      'type' => 'int',
+      'not null' => TRUE,
+      'default' => 0,
+    );
+
+    $schema['fundraiser_sustainers_series']['fields']['luminate_installment_period'] = array(
+      'description' => 'The period of time per each donation.',
+      'type' => 'varchar',
+      'length' => 255,
+    );
+
+    $schema['fundraiser_sustainers_series']['fields']['luminate_day_of_month'] = array(
+      'description' => 'The month day when donations occur.',
+      'type' => 'int',
+      'not null' => TRUE,
+      'default' => 0,
+    );
+  }
 }
 
 /**
@@ -49,6 +65,9 @@ function salesforce_luminate_salesforce_queue_create_item_alter(&$item) {
     $fundraiser_sustainers_series = entity_load_single('fundraiser_sustainers_series', $item['drupal_id']);
     if (!empty($fundraiser_sustainers_series)) {
       $item['sobject']->fields['cv__Contact__c'] = '[Contact:user:' . $fundraiser_sustainers_series->uid . ']';
+      // Add internal fields required by luminate.
+      // The cv__RecurrenceInterval__c seems to be required to set the recurrence schedule correctly.
+      $item['sobject']->fields['cv__RecurrenceInterval__c'] = 1;
     }
   }
 }
@@ -114,15 +133,7 @@ function salesforce_luminate_salesforce_genmap_map_fields_alter(&$fields, $conte
  * Implements hook_fundraiser_donation_success()
  */
 function salesforce_luminate_fundraiser_donation_success($donation) {
-  $fundraiser_sustainers_series = entity_load_single('fundraiser_sustainers_series', $donation->did);
-
-  if (!empty($fundraiser_sustainers_series)) {
-    $fundraiser_sustainers_series->luminate_start_date = date('Y-m-d');
-    $fundraiser_sustainers_series->luminate_campaign_id = $donation->donation['cid'];
-    $fundraiser_sustainers_series->luminate_recurring_amount_rounded = round($donation->donation['amount']);
-
-    $fundraiser_sustainers_series->save();
-  }
+  salesforce_luminate_update_fundraiser_sustainers_series($donation);
 }
 
 /**
@@ -169,5 +180,33 @@ function salesforce_luminate_save_account_ids($account_ids) {
     );
 
     salesforce_sync_save_map($record);
+  }
+}
+
+/**
+ * Implements hook_fundraiser_upsell_create_recurring_success()
+ */
+function salesforce_luminate_fundraiser_upsell_create_recurring_success($donation) {
+  salesforce_luminate_update_fundraiser_sustainers_series($donation);
+}
+
+/**
+ * Updates the Luminate-specific fields of an existing fundraiser sustainers
+ * series.
+ *
+ * @param object $donation
+ *   The master donation in the donation series.
+ */
+function salesforce_luminate_update_fundraiser_sustainers_series($donation) {
+  $fundraiser_sustainers_series = entity_load_single('fundraiser_sustainers_series', $donation->did);
+
+  if (!empty($fundraiser_sustainers_series)) {
+    $fundraiser_sustainers_series->luminate_start_date = date('Y-m-d');
+    $fundraiser_sustainers_series->luminate_campaign_id = $donation->donation['cid'];
+    $fundraiser_sustainers_series->luminate_recurring_amount_rounded = round($donation->donation['amount']);
+    $fundraiser_sustainers_series->luminate_installment_period = LUMINATE_INSTALLMENT_PERIOD;
+    $fundraiser_sustainers_series->luminate_day_of_month = date('d');
+
+    $fundraiser_sustainers_series->save();
   }
 }

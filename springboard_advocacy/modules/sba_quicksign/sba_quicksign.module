@@ -1,0 +1,666 @@
+<?php
+
+/**
+ * Implements hook_webform_component_info().
+ *
+ * The quicksign form component is just a markup field, with
+ * child elements as if it were a fieldset. The child elements are
+ * form altered into it, rather than being actual webform components.
+ * This allows the quicksign field to be positioned on the form using
+ * the webform component UI.
+ *
+ * The original quicksign module implemented a separate form on the same page,
+ * which did a drupal_form_submit() of the original webform if validation
+ * succeeded. The problem with that is it could not recognize the existence of
+ * non-webform-user form components, or of non-webform-components which may
+ * have been form altered into the webform, and would lose those
+ * values on submit.
+ *
+ * @return array
+ */
+function sba_quicksign_webform_component_info() {
+  $components = array();
+  $components['sba_quicksign'] = array(
+    'label' => t('Quicksign'),
+    'description' => FALSE,
+    'features' => array(
+      'csv' => FALSE,
+      'email' => FALSE,
+      'email_address' => FALSE,
+      'email_name' => FALSE,
+      'required' => FALSE,
+      'title_display' => TRUE,
+      'title_inline' => FALSE,
+      'conditional' => FALSE,
+      'group' => FALSE,
+      'spam_analysis' => FALSE,
+      'attachment' => FALSE,
+    ),
+    'file' => 'components/quicksign.inc',
+  );
+  return $components;
+}
+
+/**
+ * Implements hook_views_api().
+ */
+function sba_quicksign_views_api() {
+  return array(
+    'api' => 3,
+  );
+}
+
+/**
+ * Implements hook_form_alter().
+ */
+function sba_quicksign_form_alter(&$form, &$form_state, $form_id) {
+  global $user;
+  if (strpos($form_id, 'webform_client') !== FALSE && arg(2) != 'submission' && arg(4) != 'edit') {
+    if (isset($form['#node']) && sba_quicksign_is_quicksign_type($form['#node']->type)) {
+      $node = $form['#node'];
+      if (empty($user->uid) || user_access('create ' . $node->type . ' content')) {
+        if (sba_quicksign_is_enabled($node)) {
+          $components = $node->webform['components'];
+          $component_hierarchy = __webform_user_parse_components($node->nid, $components);
+          $profile = !empty($_SESSION['sba_quicksign']['profile']) ? $_SESSION['sba_quicksign']['profile'] : FALSE;
+          $form['#submit'][] = 'sba_quicksign_form_submit';
+
+          if ($profile) {
+            $form['#after_build'][] = 'sba_quicksign_after_build';
+            // The original quicksign module pre-populated webforms if partial profile info
+            // was found after a validation failure.
+            // That has been removed due to potential for abuse.
+            // sba_quicksign_form_defaults($form, $form_state, $node, $profile);
+
+            $reload_mail = '';
+            if (!empty($_SESSION['sba_quicksign']['profile']['mail'])) {
+              $reload_mail = $_SESSION['sba_quicksign']['profile']['mail'];
+            }
+            else if(!empty($_SESSION['sba_quicksign']['quickmail'])) {
+              $reload_mail = $_SESSION['sba_quicksign']['quickmail'];
+            }
+            $email_field = &_webform_user_find_field($form, $component_hierarchy['mail']);
+            $email_field['#default_value'] = $reload_mail;
+
+            unset($_SESSION['sba_quicksign']);
+          }
+          else {
+            if (!isset($_SESSION['quicksign_show']) || $_SESSION['quicksign_show'] == TRUE) {
+              $quicksign_field = &_webform_user_find_field($form, $component_hierarchy['sba_quicksign']);
+              $quicksign_field['children'] = sba_quicksign_form();
+              $quicksign_field['children']['#weight'] = 1001;
+              $form['#attached']['css'][] = drupal_get_path('module', 'sba_quicksign') . '/css/sba-quicksign.css';
+              array_unshift($form['#validate'], 'sba_quicksign_form_validate');
+            }
+          }
+        }
+      }
+      else {
+        // Don't display the quicksign form to logged in users.
+        if (sba_quicksign_is_enabled($node)) {
+          $components = $node->webform['components'];
+          $component_hierarchy = __webform_user_parse_components($node->nid, $components);
+          $quicksign_field = &_webform_user_find_field($form, $component_hierarchy['sba_quicksign']);
+          $quicksign_field['#access'] = FALSE;
+        }
+      }
+    }
+  }
+}
+
+function sba_quicksign_after_build($form, $form_state) {
+  $form['#attached']['js'][] = drupal_get_path('module', 'sba_quicksign') . '/js/sba_quicksign.js';
+  return $form;
+}
+
+/**
+ * Quick sign form.
+ */
+function sba_quicksign_form() {
+  global $user;
+  $node = node_load(arg(1));
+  $settings = isset($node->nid) ? sba_quicksign_settings($node->nid) : array();
+  $description_format = isset($settings['quicksign_description_format']) ? $settings['quicksign_description_format'] : NULL;
+
+  $form = array();
+
+  $form['qsign']['label'] = array(
+    '#markup' => isset($settings['quicksign_label']) ? check_plain($settings['quicksign_label']) : '',
+    '#prefix' => '<div class="quicksign-label-container"><label class="quicksign-label">',
+    '#suffix' => '</label></div>',
+  );
+  $form['qsign']['quicksign_description'] = array(
+    '#markup' => isset($settings['quicksign_description']) ? check_markup($settings['quicksign_description'], $description_format) : '',
+    '#prefix' => '<div class="quicksign-description">',
+    '#suffix' => '</div>',
+  );
+
+  $form['qsign']['quicksign_mail'] = array(
+    '#type' => 'textfield',
+    '#title' => '',
+    '#default_value' => $user->uid ? $user->mail : '',
+  );
+
+  $form['nid'] = array(
+    '#type' => 'value',
+    '#value' => $node->nid,
+  );
+
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => isset($settings['quicksign_button_text']) ? check_plain($settings['quicksign_button_text']) : '',
+  );
+
+  return $form;
+}
+
+/**
+ * Validation callback for quicksign form.
+ *
+ * @param $form
+ * @param $form_state
+ */
+function sba_quicksign_form_validate(&$form, &$form_state) {
+  $parents = array_flip($form_state['triggering_element']['#parents']);
+  $node = node_load($form_state['values']['details']['nid']);
+  $components = $node->webform['components'];
+  $component_hierarchy = __webform_user_parse_components($node->nid, $components);
+  $qsign_value =_sba_quicksign_find_field_form_state($form_state['values'], $component_hierarchy['sba_quicksign']);
+  $quicksign_field = &_webform_user_find_field($form, $component_hierarchy['sba_quicksign']);
+
+  if (!isset($parents['sba_quicksign'])) {
+      // Quicksign button was not clicked.
+      if (isset($_SESSION['sba_quicksign'])) {
+        unset($_SESSION['sba_quicksign']);
+      }
+      form_set_value($quicksign_field, '', $form_state);
+  }
+  else {
+    $_SESSION['quicksign_show'] = TRUE;
+    // Make webform believe that we clicked the webform submit button.
+    $form_state['values']['op'] = $form['actions']['submit']['#value'];
+    // Validate mail field.
+    $mail = isset($qsign_value['children']['qsign']['quicksign_mail']) ? $qsign_value['children']['qsign']['quicksign_mail'] : FALSE;
+    if (!$mail) {
+      return;
+    }
+
+    if (!valid_email_address($mail)) {
+      form_set_error('quicksign_mail', t('The quicksign email address entered is not valid.'));
+      return;
+    }
+    else {
+      $_SESSION['sba_quicksign']['quickmail'] = $mail;
+    }
+    ;
+    // Load user profile from email.
+    $account = user_load_by_mail($mail);
+    // No profile available.
+    if (!$account) {
+      $_SESSION['sba_quicksign']['profile']['mail'] = $mail;
+      $_SESSION['quicksign_show'] = FALSE;
+      drupal_set_message(t("We're sorry, we did not find an account with the email address !mail. Please fill out the full form.", array('!mail' => $mail)));
+      //drupal_redirect_form($form_state);
+    }
+
+    // Compile list of webform required fields.
+    $required_fields = sba_quicksign_get_required_fields($node);
+    // Compare profile to required fields via the Webform User field map.
+    $map = webform_user_user_map($node->nid);
+    $required_non_profile_fields = array_diff($required_fields, $map);
+    $missing_non_profile_fields = FALSE;
+
+    foreach ($required_non_profile_fields as $form_key) {
+     $field = _sba_quicksign_find_field_form_state($form_state['values'], $component_hierarchy[$form_key]);
+      if (empty($field)) {
+        $missing_non_profile_fields = TRUE;
+      }
+    }
+
+    $missing_fields = FALSE;
+    $profile = array();
+    foreach ($map as $webform_field => $profile_field) {
+      $field_value =_sba_quicksign_find_field_form_state($form_state['values'], $component_hierarchy[$webform_field]);
+      if (!empty($field_value)) {
+        $profile[$webform_field] = $field_value;
+      }
+      else {
+        if ($webform_field != 'mail') {
+          $items = field_get_items('user', $account, $profile_field);
+          $profile[$webform_field] = !empty($items[0]['value']) ? $items[0]['value'] : FALSE;
+        }
+        else {
+          // Special handling for mail
+          $profile['mail'] = $mail;
+        }
+
+        if (in_array($webform_field, $required_fields)) {
+          if (empty($profile[$webform_field])) {
+            // One or more required fields are missing.
+            $profile[$webform_field] = '';
+            $missing_fields = TRUE;
+          }
+        }
+      }
+    }
+    if ($missing_fields || $missing_non_profile_fields) {
+      $_SESSION['sba_quicksign']['profile'] = $profile;
+
+      drupal_set_message(t("Unfortunately, we don't have enough information on file to submit this form. Please complete the form below."));
+      $_SESSION['quicksign_show'] = FALSE;
+      //drupal_redirect_form($form_state);
+    }
+
+    if ($account && (!$missing_fields && !$missing_non_profile_fields)) {
+      $_SESSION['quicksign_show'] = TRUE;
+
+      // If everything has gone smoothly to this point package up the
+      // loaded profile and pass it off for use during the submit callback.
+      $form_state['node'] = $node;
+      $_SESSION['sba_quicksign'] = TRUE;
+      _sba_quicksign_build_values($form, $form_state, $node, $profile);
+    }
+  }
+}
+
+/**
+ * @param $form
+ * @param $original_form_state
+ * @param $node
+ * @param $submission
+ */
+function _sba_quicksign_build_values(&$form, &$form_state, $node, $profile) {
+  $quick_values = sba_quicksign_values_tree_build($profile, $node->webform['components'], $tree, 0);
+  foreach ($quick_values as $key => $value) {
+    form_set_value($form['submitted'][$key],  $value, $form_state);
+    $form_state['complete form']['submitted'][$key]['#value'] = $value;
+  }
+  unset($_SESSION['sba_quicksign']);
+  unset($_SESSION['quicksign_show']);
+}
+
+function _sba_quicksign_find_field_form_state($form_state_values, $path) {
+  foreach (array_keys($path) as $v) {
+    if (is_array($path[$v]) && count($path[$v])) {
+      // Recurse if there are more keys.
+      return _sba_quicksign_find_field_form_state($form_state_values[$v], $path[$v]);
+    }
+    else {
+      return $form_state_values[$v];
+    }
+  }
+}
+
+
+/**
+ * Build the webform submission tree.
+ *
+ * @param $profile
+ *   Associative array of webform component form keys and their values.
+ * @param $src
+ *   Webform components organized by component id.
+ * @param $tree
+ *   Output storage.
+ * @param $parent
+ *   Parent component (if any).
+ *
+ * @return mixed
+ *   Returns the submitted values in a tree structure that Webform can parse.
+ */
+function sba_quicksign_values_tree_build($profile, $src, &$tree, $parent) {
+
+  foreach ($src as $cid => $component) {
+    if ($component['pid']) {
+      $parent_key = $src[$component['pid']]['form_key'];
+      if (!isset($tree[$parent_key])) {
+        $tree[$parent_key] = array();
+      }
+      $tree[$parent_key][$component['form_key']] = isset($profile[$component['form_key']]) ? $profile[$component['form_key']] : NULL;
+    }
+    else {
+      $tree[$component['form_key']] = isset($profile[$component['form_key']]) ? $profile[$component['form_key']] : NULL;
+    }
+  }
+  return $tree;
+}
+
+function sba_quicksign_form_submit($for, $form_state) {
+  $_SESSION['quicksign_show'] = TRUE;
+}
+
+/**
+ * Implements hook_form_BASE_FORM_ID_alter().
+ */
+function sba_quicksign_form_node_form_alter(&$form, &$form_state, $form_id) {
+  // Modify the options on a specific instance of this node type.
+  $node = isset($form['#node']) ? $form['#node'] : FALSE;
+  if (isset($node->type) && sba_quicksign_is_quicksign_type($node->type)) {
+    $node->quicksign_enabled = sba_quicksign_is_enabled($node);
+    $settings = isset($node->nid) ? sba_quicksign_settings($node->nid) : array();
+    $form['sba_quicksign'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Quick Sign settings'),
+      '#collapsible' => TRUE,
+      '#collapsed' => TRUE,
+      '#group' => 'additional_settings',
+    );
+    $form['sba_quicksign']['quicksign_enabled'] = array(
+      '#type' => 'checkbox',
+      '#title' => t('Enable Quick Sign'),
+      '#description' => t('Turning on Quick Sign will allow users with existing profiles to submit a petition or action using only their email address.'),
+      '#default_value' => isset($node->quicksign_enabled) ? $node->quicksign_enabled : '',
+    );
+    $form['sba_quicksign']['quicksign_label'] = array(
+      '#type' => 'textfield',
+      '#title' => t('Form Label'),
+      '#description' => t('Label text to display above the quick sign form.'),
+      '#default_value' => isset($settings['quicksign_label']) ? $settings['quicksign_label'] : 'Already a supporter?',
+    );
+
+    $form['sba_quicksign']['quicksign_button_text'] = array(
+      '#type' => 'textfield',
+      '#title' => t('Submit button text'),
+      '#description' => t('Change the text on the quick sign form submit button.'),
+      '#default_value' => isset($settings['quicksign_button_text']) ? $settings['quicksign_button_text'] : t('Sign now'),
+    );
+
+    $default_desc = $node->type == 'sba_message_action' ? t('If we already have your information, just enter your email address and click to send this message now.') : t('If we already have your information, just enter your email address and click to sign this petition now.');
+    $form['sba_quicksign']['quicksign_description'] = array(
+      '#type' => 'text_format',
+      '#title' => t('Form description'),
+      '#description' => t('Additional descriptive text displayed above the quick sign form.'),
+      '#default_value' => isset($settings['quicksign_description']) ? $settings['quicksign_description'] : $default_desc,
+      '#format' => isset($settings['quicksign_description_format']) ? $settings['quicksign_description_format'] : NULL,
+    );
+  }
+}
+
+
+/**
+ * Implements hook_node_insert().
+ */
+function sba_quicksign_node_insert($node) {
+  if (sba_quicksign_is_quicksign_type($node->type) && isset($node->quicksign_enabled)) {
+    sba_quicksign_save($node);
+    sba_quicksign_insert_components($node, 'insert');
+  }
+}
+
+/**
+ * Implements hook_node_update().
+ */
+function sba_quicksign_node_update($node) {
+  if (sba_quicksign_is_quicksign_type($node->type)) {
+    $has_component = FALSE;
+    $cid = NULL;
+    foreach ($node->webform['components'] as $key => $component) {
+      if ($component['form_key'] == 'sba_quicksign') {
+        $has_component = TRUE;
+        $cid = $key;
+      }
+    }
+
+    if (isset($node->quicksign_enabled)) {
+      sba_quicksign_save($node);
+      if (!empty($node->quicksign_enabled) && !$has_component) {
+        sba_quicksign_insert_components($node, 'update');
+      }
+      if (empty($node->quicksign_enabled) && $has_component) {
+        sba_quicksign_delete_components($node, $cid);
+      }
+    }
+  }
+}
+
+/**
+ * Implements hook_node_delete().
+ */
+function sba_quicksign_node_delete($node) {
+  if (sba_quicksign_is_quicksign_type($node->type)) {
+    sba_quicksign_delete($node->nid);
+  }
+}
+
+/**
+ * @param $component
+ */
+function sba_quicksign_webform_component_delete($component) {
+  if ($component['form_key'] == 'sba_quicksign') {
+    sba_quicksign_delete($component['nid']);
+  }
+}
+
+/**
+ * Save quick sign settings per-node.
+ *
+ * @param object $node
+ *   The node object.
+ */
+function sba_quicksign_save($node) {
+  sba_quicksign_delete($node->nid);
+  $record = array(
+    'nid' => $node->nid,
+    'quicksign_enabled' => $node->quicksign_enabled,
+    'form_label' => $node->quicksign_label,
+    'form_description' => $node->quicksign_description['value'],
+    'form_description_format' => $node->quicksign_description['format'],
+    'submit_button_text' => $node->quicksign_button_text,
+  );
+  drupal_write_record('sba_quicksign', $record);
+}
+
+/**
+ * Remove a quicksign record for a given node id.
+ *
+ * @param int $nid
+ *   Node ID.
+ */
+function sba_quicksign_delete($nid) {
+  db_delete('sba_quicksign')
+    ->condition('nid', $nid, '=')
+    ->execute();
+}
+
+/**
+ * Indicates if a given node has quicksign enabled.
+ *
+ * @param object|bool $node
+ *   Node object or FALSE.
+ *
+ * @return boolean
+ *   returns TRUE if node is a quicksign node type and
+ *   quicksign is enabled, otherwise FALSE.
+ */
+function sba_quicksign_is_enabled($node) {
+  if (!isset($node->nid) || !sba_quicksign_is_quicksign_type($node->type)) {
+    return FALSE;
+  }
+
+  $result = db_query('SELECT quicksign_enabled FROM {sba_quicksign} WHERE nid = :nid', array(':nid' => $node->nid));
+  if((bool) $result->fetchField() === TRUE) {
+    return TRUE;
+  }
+  else {
+    return FALSE;
+  }
+}
+
+/**
+ * Grab the node's quicksign settings.
+ *
+ * @param $nid
+ * @return mixed
+ */
+function sba_quicksign_settings($nid) {
+  $results = db_query('
+    SELECT
+      nid,
+      quicksign_enabled,
+      form_label AS quicksign_label,
+      form_description AS quicksign_description,
+      form_description_format AS quicksign_description_format,
+      submit_button_text AS quicksign_button_text
+     FROM {sba_quicksign}
+     WHERE nid = :nid;', array(':nid' => $nid));
+
+  return $results->fetchAssoc();
+}
+
+/**
+ * Helper to find required fields.
+ *
+ * @param object $node
+ *
+ * @return array
+ *   $required_fields
+ */
+function sba_quicksign_get_required_fields($node) {
+  $required_fields = array();
+  if (is_object($node) && isset($node->webform['components'])) {
+    foreach ($node->webform['components'] as $cid => $component) {
+      if ($component['type'] != 'hidden' && $component['mandatory'] == 1) {
+        $required_fields[] = $component['form_key'];
+      }
+    }
+  }
+  return $required_fields;
+}
+
+/**
+ * Implements hook_webform_submission_insert().
+ */
+function sba_quicksign_webform_submission_insert($node, $submission) {
+  $quicksign = isset($_SESSION['sba_quicksign']) ? $_SESSION['sba_quicksign'] : FALSE;
+  if ($quicksign) {
+    $record = array(
+      'sid' => $submission->sid,
+      'nid' => $submission->nid,
+      'created' => time(),
+    );
+    drupal_write_record('sba_quicksign_submissions', $record);
+  }
+}
+
+/**
+ * Helper to determine petition type status.
+ *
+ * @param $type
+ *   The node type name.
+ *
+ * @return bool
+ *   $type
+ */
+function sba_quicksign_is_quicksign_type($type) {
+  $types = array('springboard_petition', 'sba_social_action', 'sba_message_action');
+  $quicksign = FALSE;
+  if (in_array($type, $types)) {
+    $quicksign = TRUE;
+  }
+  return $quicksign;
+}
+
+/**
+ * Insert a quicksign component.
+ *
+ * @param $node
+ * @param $op
+ */
+function sba_quicksign_insert_components($node, $op) {
+  module_load_include('inc', 'webform', 'includes/webform.components');
+
+  $fields[] = array(
+    'nid' => $node->nid,
+    'form_key' => 'sba_quicksign',
+    'pid' => 0,
+    'name' => 'Quicksign Form',
+    'type' => 'markup',
+    'weight' => -100,
+    'email' => 0,
+    'extra' => array(
+      'attributes' => array(),
+      'private' => FALSE,
+    ),
+  );
+
+  $exclude = array();
+  $exclude[] = 'sba_quicksign';
+
+  // Add the component to the Webform.
+  foreach ($fields as $field) {
+    // Don't insert fields if cloning.
+    if ($op == 'insert') {
+      if (!isset($node->map) || (isset($node->map) && !in_array($field['form_key'], $node->map) && !in_array($field['form_key'], $exclude))) {
+        webform_component_insert($field);
+      }
+    }
+    else {
+      webform_component_insert($field);
+    }
+  }
+}
+
+/**
+ * Delete the quicksign component when the quicksign option
+ * is unchecked on the node add/edit form.
+ *
+ * @param $node
+ * @param $cid
+ */
+function sba_quicksign_delete_components($node, $cid) {
+  webform_component_delete($node, $node->webform['components'][$cid]);
+}
+
+/**
+ * Implements hook_form_FORM_ID_alter().
+ *
+ * Disable editing of our faux-component.
+ */
+function sba_quicksign_form_webform_component_edit_form_alter(&$form, &$form_state, $form_id) {
+  if ($form['form_key']['#default_value'] == 'sba_quicksign') {
+    $form['form_key']['#disabled'] = TRUE;
+    $form['form_key']['#description'] = t('This field can only be edited on the quicksign tab on the node edit form.');
+    $form['name']['#access'] = FALSE;
+    $form['value']['#access'] = FALSE;
+    $form['display']['#access'] = FALSE;
+    $form['actions']['#access'] = FALSE;
+  }
+}
+
+/**
+ * Implements hook_form_FORM_ID_alter().
+ *
+ * Make sure that quicksign can only be added from the node add/edit form.
+ */
+function sba_quicksign_form_webform_components_form_alter(&$form, &$form_state, $form_id) {
+  unset($form['add']['type']['#options']['sba_quicksign']);
+}
+
+/**
+ * Implements hook_element_info_alter().
+ */
+function sba_quicksign_element_info_alter(&$type) {
+  $type['text_format']['#process'][] = 'sba_quicksign_element_process_text_format';
+}
+
+/**
+ * Collapse the quicksign description formatter fieldset.
+ *
+ * @param $element
+ * @return mixed
+ */
+function sba_quicksign_element_process_text_format($element) {
+  if (isset($element['#array_parents'])) {
+    $parents = array_flip($element['#array_parents']);
+    if (isset($parents['sba_quicksign'])) {
+      $prefix = isset($element['format']['#prefix']) ? $element['format']['#prefix'] : '';
+      $element['format']['#prefix'] = '<div class="node-form-quicksign-description">' . $element['#description'] . '</div>' . $prefix;
+      unset($element['#description']);
+      $element['format']['#collapsible'] = TRUE;
+      $element['format']['#collapsed'] = TRUE;
+      $element['format']['#title'] = t('Text format');
+      $element['#attached']['css'][] = drupal_get_path('module', 'sba_quicksign') . '/css/sba-quicksign.css';
+
+    }
+  }
+  return $element;
+}

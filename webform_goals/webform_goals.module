@@ -136,6 +136,16 @@ function webform_goals_jsonp_fail($callback) {
  *   The data array to send. Should typically have a 'success' key.
  */
 function webform_goals_jsonp_send($callback, $data) {
+  foreach ($data as $gid => $children) {
+    if(is_numeric($gid) && isset($children['markup'])) {
+      $goal = webform_goal_load($gid);
+      $metrics = webform_goals_track_metric($goal);
+      $count =  (int) str_replace(',', "", $metrics['count']);
+      if ($count < $goal['display_threshold']) {
+        $data[$gid]['markup'] = check_markup($goal['starter_message'], $goal['starter_message_format']);
+      }
+    }
+  }
   print $callback . '(' . json_encode($data) . ');';
   exit;
 }
@@ -159,11 +169,11 @@ function webform_goals_permission() {
   $perms['administer webform goals'] = array(
     'title' => t("Administer Webform Goals"),
     'restrict access' => TRUE
-    );
+  );
   $perms['manage webform goals'] = array(
     'title' => t('Manage Webform Goals'),
     'description' => t('Create, edit, and delete goals. Assign goals to webforms.')
-    );
+  );
   return $perms;
 }
 
@@ -258,11 +268,11 @@ function webform_goals_menu() {
   return $items;
 }
 
-/** 
+/**
  * Implements hook_springboard_admin_alias_patterns().
  */
 function webform_goals_springboard_admin_alias_patterns() {
-    return array(
+  return array(
     'admin/config/content/webform_goals/%extra' => array(
       'path' => array(
         'regex' => '|^/admin/config/content/webform_goals(/.*)?$|',
@@ -282,7 +292,7 @@ function webform_goals_springboard_admin_alias_patterns() {
         'regex' => '|^springboard/goals$|',
         'replacement' => 'springboard/goals',
       ),
-    ),  
+    ),
   );
 }
 
@@ -299,7 +309,7 @@ function webform_goals_springboard_admin_admin_menu_items_alter(&$items) {
     'customized' => 1,
     'weight' => 0,
   );
-  
+
   // Settings > Settings > Goals.
   $items['admin/springboard/settings']['_children']['admin/springboard/settings/config']['_children']['admin/config/content/webform_goals'] = array(
     'link_path' => 'admin/config/content/webform_goals',
@@ -490,7 +500,7 @@ function webform_goals_delete_goal($gid) {
   $uri = $path . '/template-' . $gid . '.txt';
 
   file_unmanaged_delete($uri);
-
+  webform_goals_quick_goal_delete(NULL, $gid);
 }
 
 function webform_goals_widget_load($gid) {
@@ -603,10 +613,6 @@ function webform_goals_token_info() {
     'name' => t('Goal name'),
     'description' => t('The goal name.'),
   );
-  $info['tokens']['webform_goal']['starter_message'] = array(
-    'name' => t('Goal starter message'),
-    'description' => t('The started message to display for this goal if the display threshold has not been met.'),
-  );
   $info['tokens']['webform_goal']['display_threshold'] = array(
     'name' => t('Goal display threshold'),
     'description' => t('The minimum progress towards goal required to display a progress bar.'),
@@ -646,15 +652,6 @@ function webform_goals_token_info() {
   $info['tokens']['webform_goal']['progress-bar'] = array(
     'name' => t('CSS driven progress bar'),
     'description' => t('Themed progress bar showing goal progress percentage'),
-  );
-  $info['tokens']['webform_goal']['progress-starter'] = array(
-    'name' => t('Progress bar/starter message'),
-    'description' => t('Displayes themed progress bar or starter message if display threshold has not been met.'),
-  );
-
-  $info['tokens']['webform_goal']['progress-count-or-starter'] = array(
-    'name' => t('Progress count/starter message'),
-    'description' => t('Displays the progress count or the starter message if display threshold has not been met.'),
   );
 
   $info['tokens']['webform_goal']['target'] = array(
@@ -731,11 +728,7 @@ function webform_goals_tokens($type, $tokens, $data = array(), $options = array(
           $output = '';
           if ($goal_progress['count'] >= $data['webform_goal']['display_threshold']) {
             $percent_capped = ($goal_progress['percent'] > 100) ? 100 : $goal_progress['percent'];
-            //$output = theme('webform_goals_progress_bar', array('goal_id' => $goal['gid'], 'goal_progress' => $percent_capped));
             $output = webform_goals_render_progress_bar($goal['progress_bar'], $percent_capped);
-          }
-          elseif (!empty($goal['starter_message'])) {
-            $output = check_markup($goal['starter_message'], $goal['starter_message_format']);
           }
           $replacements[$token] = $output;
           break;
@@ -746,9 +739,6 @@ function webform_goals_tokens($type, $tokens, $data = array(), $options = array(
           $clean_count = str_replace(',', '', $goal_progress['count']);
           if ($clean_count >= $data['webform_goal']['display_threshold']) {
             $output = $goal_progress['count'];
-          }
-          elseif (!empty($goal['starter_message'])) {
-            $output = check_markup($goal['starter_message'], $goal['starter_message_format']);
           }
           $replacements[$token] = $output;
           break;
@@ -1108,9 +1098,9 @@ function webform_goals_calculate_progress(&$data, $goal) {
   if (!empty($goal['seed'])) {
     $data['count'] += $goal['seed'];
   }
-  $data['percent'] = round(($data['count'] / $goal['target_value']) * 100, 1);
+  $data['percent'] = ceil(($data['count'] / $goal['target_value']) * 100);
   $data['remaining'] = $goal['target_value'] - $data['count'];
-  $data['percent_remaining'] = round(($data['remaining'] / $goal['target_value']) * 100, 1);
+  $data['percent_remaining'] = floor(($data['remaining'] / $goal['target_value']) * 100);
 }
 
 
@@ -1159,4 +1149,307 @@ function webform_goals_goal_update($goal) {
 function webform_goals_goal_delete($gid) {
   webform_goals_delete_goal($gid);
   module_invoke_all('webform_goals_goal_delete', $gid);
+}
+
+/**
+ * Implements hook_form_FORM_ID_alter()
+ *
+ * Add the quick goals tab tot he node form vertical tabs.
+ */
+function webform_goals_form_node_form_alter(&$form, &$form_state) {
+  if (webform_goals_is_goal_type($form['#node']->type)) {
+    $nid = isset($form['#node']->nid) ? $form['#node']->nid : FALSE;
+    if($nid) {
+      $gid = db_query("SELECT gid FROM {webform_goals_quick} WHERE nid = :nid", array(':nid' => $nid))->fetchField();
+    }
+    else {
+      $gid = NULL;
+    }
+    $goal = !empty($gid) ? webform_goals_goal_retrieve($gid) : array();
+    $donation_total = t('Total donation amount required to meet this goal.');
+    $donation_minimum = t('Minimum total donation amount required to show progress.');
+    $petition_total = t('How many signatures are required to meet this goal?');
+    $petition_minimum = t('Minimum total signatures required to show progress.');
+    $submission_total = t('How many submissions are required to meet this goal?');
+    $submission_minimum = t('Minimum total submissions required to show progress.');
+
+    if(empty($goal)) {
+      if (module_exists('fundraiser') && fundraiser_is_donation_type($form['#node']->type)) {
+        $how_much = $donation_total;
+        $minimum = $donation_minimum;
+      }
+      else if(module_exists('springboard_petition') &&  springboard_petition_is_petition_type($form['#node']->type)) {
+        $how_much = $petition_total;
+        $minimum = $petition_minimum;
+      }
+      else {
+        $how_much = $submission_total;
+        $minimum = $submission_minimum;
+      }
+    }
+    else {
+      switch ($goal['metric']) {
+        case 'fundraiser_donation_amount':
+          $how_much = $donation_total;
+          $minimum = $donation_minimum;
+          $form_text = t('Donation Amount');
+          break;
+        case 'custom_field':
+          $how_much = t('What is the total field value required to meet this goal?');
+          $minimum = t('Minimum total values required to show progress.');
+          $form_text = t('the value of the field @field', array('@field' => $goal['extra']['custom_field_selection']));
+          break;
+        case 'submission_count':
+          $form_text = t('Submission Count');
+          if(module_exists('springboard_petition') &&  springboard_petition_is_petition_type($form['#node']->type)) {
+            $how_much = $petition_total;
+            $minimum = $petition_minimum;
+          }
+          else {
+            $how_much = $submission_total;
+            $minimum = $submission_minimum;
+          }
+          break;
+        case 'fundraiser_sustainer_count':
+          $how_much = t('Total sustainers conversions required to meet this goal.');
+          $minimum = t('Minimum total sustainers conversions required to show progress.');
+          $form_text = t('Sustainers conversions');
+
+          break;
+      }
+    }
+
+    $form['goal_settings'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Goal settings'),
+      '#collapsible' => TRUE,
+      '#collapsed' => TRUE,
+      '#group' => 'additional_settings',
+    );
+
+    if (!empty($goal)) {
+      $form['goal_settings']['webform_goals_type'] = array(
+        '#markup' => t('The current metric for this goal is @metric. To change the metric, go to goals !configuration', array('@metric' => $form_text, '!configuration' => l('configuration', 'springboard/goals/' .  $gid . '/edit'))),
+        '#prefix' => '<p>',
+        '#suffix' => '</p>',
+      );
+    }
+
+    $form['goal_settings']['webform_goals_quick_goal_id'] = array(
+      '#type' => 'value',
+      '#value' => $gid,
+    );
+
+    $form['goal_settings']['webform_goals_quick_goal_goal'] = array(
+      '#type' => 'value',
+      '#value' => $goal,
+    );
+
+    $form['goal_settings']['webform_goals_quick_goal_target'] = array(
+      '#type' => 'textfield',
+      '#title' => $how_much,
+      '#default_value' => isset($goal['target_value']) ? $goal['target_value'] : '',
+    );
+
+    $form['goal_settings']['webform_goals_quick_goal_minimum'] = array(
+      '#type' => 'textfield',
+      '#title' => $minimum,
+      '#default_value' => isset($goal['display_threshold']) ? $goal['display_threshold'] : '',
+    );
+
+    $form['goal_settings']['webform_goals_quick_starter_message'] = array(
+      '#type' => 'textarea',
+      '#title' => t('Starter message'),
+      '#description' => t('This message is displayed when minimum numbers have not been met.'),
+      '#default_value' => isset($goal['starter_message']) ? $goal['starter_message'] : '',
+    );
+
+    $form['#validate'][] = 'webform_goals_quick_goal_save_validate';
+    // Actual submission is handled in hook_node_insert and hook_node_update.
+    // This ensures that a node id is present whenever we act on a form
+    // submission, a condition that is not guaranteed if we rely
+    // on hook_form_alter().
+  }
+}
+
+/**
+ * Form validation callback quick goals form.
+ *
+ * @param array $form
+ *   The form.
+ * @param array $form_state
+ *   The form state.
+ */
+function webform_goals_quick_goal_save_validate(array $form, array $form_state) {
+
+  // Goal target is NaN.
+  if (!empty($form_state['values']['webform_goals_quick_goal_target']) && !is_numeric($form_state['values']['webform_goals_quick_goal_target'])) {
+    form_set_error('webform_goals_quick_goal_target', t('Target number of submissions must be a number.'));
+  }
+  // Goal minimum is NaN.
+  if (!empty($form_state['values']['webform_goals_quick_goal_minimum']) && !is_numeric($form_state['values']['webform_goals_quick_goal_minimum'])) {
+    form_set_error('webform_goals_quick_goal_minimum', t('Minimum number of submissions must be a number.'));
+  }
+  // Missing goal target but other settings are present.
+  if (empty($form_state['values']['webform_goals_quick_goal_target']) && (!empty($form_state['values']['webform_goals_quick_goal_minimum']) || !empty($form_state['values']['webform_goals_quick_starter_message']))) {
+    form_set_error('webform_goals_quick_goal_target', t('Please include number of signatures required to meet this goal.'));
+  }
+  // Display minimum is larger than the target.
+  if (!empty($form_state['values']['webform_goals_quick_goal_target']) && !empty($form_state['values']['webform_goals_quick_goal_minimum'])) {
+    if ($form_state['values']['webform_goals_quick_goal_target'] <= $form_state['values']['webform_goals_quick_goal_minimum']) {
+      form_set_error('webform_goals_quick_goal_minimum', t('The display minimum supplied would prevent goal progress from ever being displayed. Please supply a value that is less than the target number of submissions.'));
+    }
+  }
+}
+
+/**
+ * Save quick goal settings.
+ *
+ * @param object $node
+ *    The node object.
+ */
+function webform_goals_quick_goal_save_submit($node) {
+  if (!empty($node->webform_goals_quick_goal_target)) {
+
+    if (module_exists('fundraiser') && fundraiser_is_donation_type($node->type)){
+      $metric = 'fundraiser_donation_amount';
+    }
+    else {
+      $metric = 'submission_count';
+    }
+
+    $gid = isset($node->webform_goals_quick_goal_id) ? $node->webform_goals_quick_goal_id : '';
+
+    $template = '[goal:progress-bar]<p>The current goal is'
+      . ' [goal:target]. We have [goal:total] thus far. That’s nearly '
+      . '[goal:progress-percent]% of our goal! Thanks for your support.</p>';
+    $seed = 0;
+    $starter_message_format = 'filtered_html';
+    $start_date = 0;
+    $end_date = 0;
+    $template_format = 'full_html';
+    $progress_bar = 'flat_ui';
+    $name = 'Quick goal for node ' . $node->nid;
+    $context = 'single';
+
+
+    if (!empty($gid)) {
+      $goal = webform_goal_load($gid);
+      $template = $goal['template'];
+      $seed = $goal['seed'];
+      $starter_message_format = $goal['starter_message_format'];
+      $start_date = $goal['start_date'];
+      $end_date = $goal['end_date'];
+      $template_format = $goal['template_format'];
+      $progress_bar = $goal['progress_bar'];
+      $name = $goal['name'];
+      $context = $goal['context'];
+    }
+
+    $settings = array(
+      'gid' => $gid,
+      'name' => $name,
+      'context' => $context,
+      'metric' => !empty($node->webform_goals_quick_goal_goal) ? $node->webform_goals_quick_goal_goal['metric'] : $metric,
+      'extra' => array('selected_form_id' => $node->nid),
+      'display_threshold' => $node->webform_goals_quick_goal_minimum,
+      'seed' => $seed,
+      'target_value' => $node->webform_goals_quick_goal_target,
+      'starter_message' => $node->webform_goals_quick_starter_message,
+      'starter_message_format' => $starter_message_format,
+      'start_date' => $start_date,
+      'end_date' => $end_date,
+      'template' => $template,
+      'template_format' => $template_format,
+      'progress_bar' => $progress_bar,
+    );
+
+    $goal = $settings['gid'] ? webform_goals_goal_update($settings) : webform_goals_goal_create($settings);
+    $data = array('gid' => $goal['gid'], 'nid' => $node->nid);
+    if (!empty($node->webform_goals_quick_goal_goal)) {
+      drupal_write_record('webform_goals_quick', $data, array('gid', 'nid'));
+    }
+    else {
+      drupal_write_record('webform_goals_quick', $data);
+    }
+
+
+  }
+  elseif (!empty($node->webform_goals_quick_goal_id)) {
+    // Node updated with no goal target, delete goal if exists.
+    webform_goals_quick_goal_delete($node->nid);
+  }
+}
+
+/**
+ * Delete goal settings.
+ *
+ * @param object $node
+ *    The node object.
+ */
+function webform_goals_quick_goal_delete($nid = NULL, $gid = NULL) {
+  if (!empty($nid))  {
+    db_delete('webform_goals_quick')
+      ->condition('nid', $nid)
+      ->execute();
+  }
+  elseif(!empty($gid)) {
+    db_delete('webform_goals_quick')
+      ->condition('gid', $gid)
+      ->execute();
+  }
+}
+
+
+/**
+ * Determines if a content type can have goals.
+ *
+ * @param string $type
+ *   The content type name.
+ *
+ * @return bool
+ *   TRUE if the content type is a goal type.
+ */
+function webform_goals_is_goal_type($type) {
+  static $goal_types;
+  if (!isset($goal_types[$type])) {
+    $goal_types = variable_get('webform_node_types', array());
+  }
+  if (in_array($type, $goal_types)) {
+    return $type;
+  }
+  else {
+    return FALSE;
+  }
+}
+
+/**
+ * @param $node
+ */
+function webform_goals_node_insert($node) {
+  if (webform_goals_is_goal_type($node->type)) {
+    webform_goals_quick_goal_save_submit($node);
+  }
+}
+
+/**
+ * Implements hook_node_update().
+ *
+ * Update the quick goal.
+ */
+function webform_goals_node_update($node) {
+  if (webform_goals_is_goal_type($node->type)) {
+    webform_goals_quick_goal_save_submit($node);
+  }
+}
+
+/**
+ * Implements hook_node_delete().
+ *
+ * Delete a quick goal when node is deleted.
+ */
+function webform_goals_node_delete($node) {
+  if (webform_goals_is_goal_type($node->type)) {
+    webform_goals_quick_goal_delete($node->nid);
+  }
 }

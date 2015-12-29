@@ -16,9 +16,9 @@ function springboard_advocacy_settings_page() {
       '#id' => 'springboard-advocacy-settings-page',
       '#type' => 'markup',
       '#markup' => '<p>' . t('Configure settings for Springboard advocacy.') .
-      '</p><p>' .
-      t('Saving this form will also force a rebuild of the advocacy subscription settings and renew the Oauth Access Token.') .
-      '</p>',
+        '</p><p>' .
+        t('Saving this form will also force a rebuild of the advocacy subscription settings and renew the Oauth Access Token.') .
+        '</p>',
       '#prefix' => '<div class="springboard-advocacy-settings-page">',
       '#suffix' => '</div>',
     ),
@@ -33,24 +33,38 @@ function springboard_advocacy_settings_page() {
 function springboard_advocacy_settings_form() {
   $form = array();
 
-  $form['springboard_advocacy_debug'] = array(
+
+  $form['transaction'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Advocacy Server Configuration'),
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
+  );
+
+  $form['transaction']['springboard_advocacy_debug'] = array(
     '#title' => t('Debug mode'),
     '#description' => t('Log extensive debug info to watchdog. Not recommended for production sites.'),
     '#type' => 'checkbox',
     '#default_value' => variable_get('springboard_advocacy_debug', ''),
   );
 
-
-  $form['transaction'] = array(
-    '#type' => 'fieldset',
-    '#title' => t('Advocacy Server Configuration'),
+  $form['transaction']['springboard_advocacy_test_email'] = array(
+    '#title' => t('Default test mode email address'),
+    '#description' => t('When a Message Action node is in test mode, messages are sent to a test mode email address instead of the designated targets. Please enter a default email to use for test mode. This can be overridden on a per node basis.'),
+    '#type' => 'textfield',
+    '#default_value' => variable_get('springboard_advocacy_test_email', ''),
+    '#required' => TRUE,
+    '#element_validate' => array('springboard_advocacy_email_validate'),
   );
 
   $form['transaction']['springboard_advocacy_server_url'] = array(
     '#title' => t('Springboard advocacy server url'),
-    '#description' => t('The url of the Springboard advocacy server.'),
+    '#description' => t('The url of the Springboard advocacy server. Use "https" for the gospringboard.io servers.'),
     '#type' => 'textfield',
     '#default_value' => variable_get('springboard_advocacy_server_url', ''),
+    '#required' => TRUE,
+    '#element_validate' => array('springboard_advocacy_url_validate'),
+
   );
 
   $form['transaction']['springboard_advocacy_client_id'] = array(
@@ -58,6 +72,7 @@ function springboard_advocacy_settings_form() {
     '#title' => t('Transaction server Oauth Client ID.'),
     '#description' => t('Client ID for legislator lookup'),
     '#default_value' => variable_get('springboard_advocacy_client_id', ''),
+    '#required' => TRUE,
   );
 
   $form['transaction']['springboard_advocacy_client_secret'] = array(
@@ -65,26 +80,16 @@ function springboard_advocacy_settings_form() {
     '#title' => t('Transaction server Oauth Client Secret.'),
     '#description' => t('Client Secret for legislator lookup'),
     '#default_value' => variable_get('springboard_advocacy_client_secret', ''),
+    '#required' => TRUE,
   );
 
-   $form['geo'] = array(
-    '#type' => 'fieldset',
-    '#title' => t('Geocoding configuration'),
+  $form['geo'] = array(
+    '#type' => 'container',
   );
-
-  //we may need this commented section if we offer a melissa option
-
-  // $form['geo']['springboard_advocacy_geocoder'] = array(
-  //   '#type' => 'radios',
-  //   '#title' => t('Active Geocoding service'),
-  //   '#options' => $options,
-  //   '#description' => t('Choose the geocoding service to use. All but Google Javascript API require an API Key'),
-  //   '#default_value' => variable_get('springboard_advocacy_geocoder', ''),
-  // );
 
   $form['geo']['springboard_advocacy_geocoder'] = array(
-  '#type' => 'hidden',
-  '#value' => 'smartystreets_rest',
+    '#type' => 'hidden',
+    '#value' => 'smartystreets_rest',
   );
 
   $form['geo']['smarty'] = array(
@@ -99,248 +104,205 @@ function springboard_advocacy_settings_form() {
     '#title' => t('Smarty Streets Auth ID'),
     '#description' => t('Required for the REST API'),
     '#default_value' => variable_get('springboard_advocacy_smarty_authid', ''),
+    '#required' => TRUE,
   );
 
   $form['geo']['smarty']['springboard_advocacy_smarty_authtoken'] = array(
     '#type' => 'textfield',
     '#title' => t('Smarty Streets Auth Token'),
-    '#description' => t('Required for the REST AP'),
+    '#description' => t('Required for the REST API'),
     '#default_value' => variable_get('springboard_advocacy_smarty_authtoken', ''),
+    '#required' => TRUE,
   );
 
-  return system_settings_form($form);
+  if(module_exists('sba_social_action')) {
 
+    // Twitter Oauth credentials. These are different than the credentials in the
+    // settings of the Drupal Twitter module, the difference allowing us to run
+    // multiple apps for the same website, while continuing to use the helper functions
+    // that twitter.module provides.
+    $form['twitter'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Twitter Configuration'),
+      '#description' => '',
+      '#collapsible' => TRUE,
+      '#collapsed' => TRUE,
+    );
+
+    $form['twitter']['social_actions_twitter_callback_url'] = array(
+      '#type' => 'textfield',
+      '#title' => t('Social Action Twitter Callback URL'),
+      '#default_value' => variable_get('social_actions_twitter_callback_url', 'social-action/oauth'),
+      '#description' => t('This path is set in the Twitter app on twitter.com. Please set that to "%path", or whatever custom value you enter here.', array('%path' => 'social-action/oauth')),
+    );
+
+    $form['twitter']['social_action_twitter_consumer_key'] = array(
+      '#type' => 'textfield',
+      '#title' => t('Social Action Twitter OAuth Consumer key'),
+      '#default_value' => variable_get('social_action_twitter_consumer_key', NULL),
+    );
+
+    $form['twitter']['social_action_twitter_consumer_secret'] = array(
+      '#type' => 'textfield',
+      '#title' => t('Social Action Twitter OAuth Consumer secret'),
+      '#default_value' => variable_get('social_action_twitter_consumer_secret', NULL),
+    );
+
+    $form['sba_social_action_cache_expire_period'] = array(
+      '#type' => 'textfield',
+      '#title' => t('Oauth Session Expiration Period'),
+      '#default_value' => variable_get('sba_social_action_cache_expire_period', 1),
+      '#description' => t('The time, in hours, in which an Oauth session should expire. 0.5 = 30 minutes.')
+    );
+
+    $form['sba_social_privacy'] = array(
+      '#type' => 'textfield',
+      '#title' => t('Privacy policy url'),
+      '#default_value' => variable_get('sba_social_privacy', NULL),
+      '#element_validate' => array('springboard_advocacy_url_validate'),
+      '#description' => t('Twitter and other social platforms require that you display a privacy policy link to users before they sign into your app. A link to this url will appear below any social platform login buttons.')
+      );
+  }
+
+  return system_settings_form($form);
+}
+
+function springboard_advocacy_url_validate($element, &$form_state) {
+
+  if (!valid_url($form_state['values']['springboard_advocacy_server_url'], TRUE)) {
+    form_error($element, t('You must enter a valid, fully-prefixed absolute url.'));
+  }
+
+  if (!valid_url($form_state['values']['sba_social_privacy'], TRUE)) {
+    form_error($element, t('You must enter a valid, fully-prefixed absolute url.'));
+  }
+
+  $non_local = strpos($form_state['values']['springboard_advocacy_server_url'], 'gospringboard.io');
+  $https = strpos($form_state['values']['springboard_advocacy_server_url'], 'https');
+
+  if ($non_local !== FALSE && $https === FALSE) {
+    form_error($element, t('You must use an "https" prefix when connecting to the gospringboard.io server.'));
+  }
+}
+
+function springboard_advocacy_email_validate($element, &$form_state) {
+
+  if (!valid_email_address($form_state['values']['springboard_advocacy_test_email'], TRUE)) {
+    form_error($element, t('You must enter a valid email address'));
+  }
+
+}
+
+
+/**
+ * Message action settings page, menu callback.
+ *
+ * @return array
+ */
+function springboard_advocacy_confirmation_settings_page() {
+  $build = array();
+  $build['content'] = array(
+    'page_description' => array(
+      '#id' => 'message-action-settings-page',
+      '#type' => 'markup',
+      '#markup' => '<p>' . t('Node type settings for Springboard Advocacy.'),
+      '#prefix' => '<div class="message-action-settings-page">',
+      '#suffix' => '</div>',
+    ),
+    'springboard_advocacy_settings_form' => drupal_get_form('springboard_advocacy_confirmation_settings_form'),
+  );
+  return $build;
 }
 
 /**
- * Page callback for the advocacy dashboard.
- *
- * Embeds and themes various views landing pages.
+ * Message action settings form
+ * Provides a textarea for a global confirmation message
+ * and available tokens.
+ * @return mixed
  */
-function springboard_advocacy_dashboard($path, $arg = NULL) {
-  global $user;
+function springboard_advocacy_confirmation_settings_form() {
 
-  switch($path) {
+  $action_types = array_filter(variable_get('sba_action_types' , array()));
+  if(!empty($action_types)) {
+    $form['confirmation'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Confirmation failure message defaults'),
+      '#collapsible' => TRUE,
+      '#collapsed' => FALSE,
+      '#weight' => -10,
+    );
 
-    case 'add-custom-targets':
-        module_load_include('inc', 'springboard_target', 'includes/springboard_target.custom_targets_create');
-        drupal_add_css(drupal_get_path('module', 'springboard_target') . '/css/sba_target.css');
-        $form = drupal_get_form('springboard_target_create_custom_targets_form');
-        $views = array(
-          'add-targets' => array(
-            'header' => t('Create Target'),
-            'content' => drupal_render($form),
-            'manage_link' => array('title' => t('Return to targets list'), 'href' => 'admin/springboard/advocacy/targets/custom-targets'),
-            'css' => drupal_get_path('module', 'springboard_advocacy') . '/css/sba.css',
-          ),
-        );
-      break;
-
-    case 'edit-custom-targets':
-      module_load_include('inc', 'springboard_target', 'includes/springboard_target.custom_targets_edit');
-      drupal_add_css(drupal_get_path('module', 'springboard_target') . '/css/sba_target.css');
-      $form = drupal_get_form('springboard_target_edit_custom_targets_form', $arg);
-      $views = array(
-        'add-targets' => array(
-          'header' => t('Edit Target'),
-          'content' => drupal_render($form),
-          'manage_link' => array('title' => t('Return to targets list'), 'href' => 'admin/springboard/advocacy/targets/custom-targets'),
-          'css' => drupal_get_path('module', 'springboard_advocacy') . '/css/sba.css',
-        ),
+    foreach ($action_types as $type) {
+      //Create the confirmation form textarea
+      $form['confirmation'][$type . '_confirm'] = array(
+        '#type' => 'textarea',
+        '#title' => t('Default @type Confirmation Failure Message', array('@type' => node_type_get_name($type))),
+        '#default_value' => variable_get($type . '_confirm', ''),
+        '#required' => TRUE,
       );
-      if (user_access('create targets')) {
-        $views['add-targets']['create_link'] = array('title' => t('Create a new target'), 'href' => 'admin/springboard/advocacy/targets/custom-targets/add');
-      };
-      break;
+    }
 
-    case 'actions':
-      $view = views_get_view('sba_actions');
-      $view -> set_display('block_1');
-      $view -> set_arguments(array('sba_message_action'));
-      $view -> pre_execute();
-      $view -> execute();
-      if ($view && $view -> access('block_1') && !empty($view -> result)) {
-        $views = array(
-          'sba_actions' => array(
-            'header' => t('Message Actions'),
-            'content' => $view->preview(), //views_embed_view('sba_actions', 'block_1', 'sba_message_action'),
-            'create_link' => array('title' => t('Create a new message action'), 'href' => 'node/add/sba-message-action'),
-            'viewmore_link' => array('title' => t('View All Message Actions'), 'href' => 'admin/springboard/advocacy/message-actions/all'),
-            'css' => drupal_get_path('module', 'springboard_advocacy') . '/css/sba.css',
-          ),
-        );
-        if (module_exists('springboard_target') && springboard_target_user_can_access_targets()) {
-          $views['sba_actions']['manage_link'] = array('title' => t('Manage Custom Targets'), 'href' => 'admin/springboard/advocacy/targets/custom-targets');
-        }
-      }
 
-      $view = views_get_view('sba_actions');
-      $view -> set_display('block_1');
-      $view -> set_arguments(array('springboard_petition'));
-      $view -> pre_execute();
-      $view -> execute();
-
-      if ($view && $view -> access('block_1') && !empty($view -> result)) {
-        $views['sba_petitions'] = array(
-            'header' => t('Petitions'),
-            'content' => $view->preview(), //views_embed_view('sbv_forms', 'block_1', 'springboard_petition'),
-            'create_link' => array('title' => t('Create a new petition'), 'href' => 'node/add/springboard-petition'),
-            'viewmore_link' => array('title' => t('View All Petitions'), 'href' => 'admin/springboard/advocacy/petitions/all'),
-            'css' => drupal_get_path('module', 'springboard_advocacy') . '/css/sba.css',
-        );
-      }
-      break;
-
-    case 'message-actions/all':
-      $view = views_get_view('sba_actions');
-      if($view && isset($view->display['block_2'])) {
-        $views = array(
-          'sba_actions' => array(
-            'header' => t('All Message Actions'),
-            'content' => views_embed_view('sba_actions', 'block_2', 'sba_message_action'),
-            'css' => drupal_get_path('module', 'springboard_advocacy') . '/css/sba.css',
-          ),
-        );
-        if (user_access('create sba_message_action content')) {
-          $views['sba_actions']['create_link'] = array('title' => t('Create a new message action'), 'href' => 'node/add/sba-message-action');
-        }
-        if (springboard_target_user_can_access_targets()) {
-          $views['sba_actions']['manage_link'] = array('title' => t('Manage Custom Targets'), 'href' => 'admin/springboard/advocacy/targets/custom-targets');
-        }
-      }
-      else {
-        $views = springboard_advocacy_dashboard_error('sba_actions', 'Custom Targets', 'Message Actions view or view display "block_2" not found.');
-      }
-      break;
-
-    case 'petitions/all':
-      $view = views_get_view('sba_actions');
-      if($view && isset($view->display['block_2'])) {
-        $views = array(
-          'sba_actions' => array(
-            'header' => t('All Petitions'),
-            'content' => views_embed_view('sba_actions', 'block_2', 'springboard_petition'),
-            'css' => drupal_get_path('module', 'springboard_advocacy') . '/css/sba.css',
-          ),
-        );
-        if (user_access('create springboard_petition content')) {
-          $views['sba_actions']['create_link'] = array('title' => t('Create a new petition'), 'href' => 'node/add/springboard-petition');
-        }
-      }
-      else {
-        $views = springboard_advocacy_dashboard_error('sba_actions', 'Custom Targets', 'Petitions view or view display "block_2" not found.');
-      }
-      break;
-
-    case 'custom-targets':
-      $unconfigured = springboard_advocacy_api_unconfigured('springboard');
-      if(!empty($unconfigured)) {
-        $items = implode(', ', $unconfigured);
-        $view = FALSE;
-      }
-      else {
-        $view = views_get_view('sba_custom_targets');
-      }
-      if($view && isset($view->display['block_1'])) {
-        $view -> set_display('block_1');
-        $view -> pre_execute();
-        $view -> execute();
-
-        $views = array(
-          'sba_targets' => array(
-            'header' => t('Custom Targets'),
-            'content' => $view->preview(),
-            'css' => drupal_get_path('module', 'springboard_advocacy') . '/css/sba.css',
-            //'js' => drupal_get_path('module', 'springboard_target') . '/js/sba_target.js',
-
-          ),
-        );
-        if (user_access('create targets')) {
-          $views['sba_targets']['create_link'] = array('title' => t('Create a new target'), 'href' => 'admin/springboard/advocacy/targets/custom-targets/add');
-        };
-      }
-      else {
-        if(!empty($unconfigured)) {
-          $message = t('Please <a href="!url">configure</a> the Springboard API settings. There are empty values in :items. Configuration is required prior to target creation.', array('!url' => url('admin/config/services/advocacy'), ':items' => $items));
-        }
-        else {
-          $message = t('Target view or view display "block_1" not found.');
-        }
-        $views = springboard_advocacy_dashboard_error('sba_targets', 'Custom Targets', $message);
-      }
-
-      break;
-
-    case ($path == arg(1)):
-      $message_types = variable_get('sba_message_node_types', array());
-      $node = node_load($path);
-      if(isset($message_types[$node->type])) {
-        if(isset($node->message_ids)) {
-          $messages = entity_load('sba_message', $node->message_ids);
-          if(count($messages == 1)) {
-            $message = array_pop($messages);
-            $subject_editable = field_get_items('sba_message', $message, 'field_sba_subject_editable');
-            $user_editable = field_get_items('sba_message', $message, 'field_sba_user_editable');
-            if($subject_editable[0]['value'] != 'Not editable' || !empty($user_editable)) {
-              $no_create = TRUE;
-              drupal_set_message(t('This action\'s current message is user-editable, additional messages may not be created for this action until user editing is disabled.'), 'warning', FALSE);
-
-            }
-          }
-        }
-
-        $unconfigured = springboard_advocacy_api_unconfigured('springboard');
-        if(!empty($unconfigured)) {
-          $items = implode(', ', $unconfigured);
-          drupal_set_message(t('Advocacy API is not properly <a href="!url">configured</a>. There are empty values in :items. Configuration is required prior to message creation.', array('!url' => url('admin/config/services/advocacy'), ':items' => $items)));
-          $view = FALSE;
-        }
-        else {
-          $view = views_get_view('sba_messages_node');
-        }
-
-        if ($view && isset($view->display['block_1'])) {
-          $views = array(
-            'sba_messages_node' => array(
-              'header' => t('Messages'),
-              'content' => views_embed_view('sba_messages_node', 'block_1', $path),
-              'css' => drupal_get_path('module', 'springboard_advocacy') . '/css/sba.css',
-            ),
-          );
-          if((user_access('edit own sba_message_action content') && $user->uid == $node->uid) || user_access('edit any sba_message_action content')) {
-            $views['sba_messages_node']['create_link'] = array('title' => t('Create a new message'), 'href' => 'node/' . arg(1) . '/messages/add/' . $message_types[$node->type]);
-          }
-          if (!empty($no_create)) {
-            unset($views['sba_messages_node']['create_link']);
-          }
-        } else {
-          if(!empty($unconfigured)) {
-            $message = t('Please <a href="!url">configure</a> the Springboard API settings. There are empty values in :items. Configuration is required prior to message creation.', array('!url' => url('admin/config/services/advocacy'), ':items' => $items));
-          }
-          else {
-            $message = t('Message view or view display "block_1" not found');
-          }
-          $views = springboard_advocacy_dashboard_error('sba_messages_node', 'Messages', $message);
-        }
-      }
-      else {
-        $views = springboard_advocacy_dashboard_error('sba_messages_node', 'Messages', 'There was a problem locating the message type for this node type.');
-      }
-      break;
-
-    default:
-  }
-  return theme('springboard_advocacy_dashboard', array('views' => $views));
-
-}
-
-function springboard_advocacy_dashboard_error($view, $title, $message) {
-  $views = array(
-    '{$view}' => array(
-      'header' => t($title),
-      'content' => '<div>' . t($message) . '</div>',
-    ),
+  //Create the token fieldset
+  $form['template']['tokens'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Available tokens'),
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
+    '#weight' => 9,
   );
-  return $views;
+
+  //Get the node tokens.
+  $token_set = array('node');
+  $form['template']['tokens']['tokens'] = array(
+    '#type' => 'item',
+    '#title' => t('Drupal tokens'),
+    '#description' => theme('token_tree', array(
+      'token_types' => $token_set,
+      'recursion_limit' => 2,
+      'click_insert' => FALSE
+    )),
+  );
+  // Get the webform tokens.
+  $webform_token_help = theme('webform_token_help', array());
+  $webform_token_help = str_replace('%post', '%value', $webform_token_help);
+  $webform_token_help = str_replace('POST ', '', $webform_token_help);
+  $form['template']['tokens']['webform_tokens'] = array(
+    '#type' => 'item',
+    '#title' => t('Webform tokens'),
+    '#description' => $webform_token_help,
+  );
+
+  }
+  else {
+    $form['message']['#markup'] = t('No action modules are enabled to configure');
+  }
+  //$form['#submit'][] = 'springboard_advocacy_settings_form_submit';
+  return system_settings_form($form);
 }
 
+
+/**
+ * Submit function for message action settings.
+ *
+ * Updates all message action nodes which do not use a custom confirmation
+ * with the global confirmation.
+ * @param $form
+ * @param $form_state
+ */
+//function springboard_advocacy_confirmation_settings_form_submit($form, $form_state) {
+//  // Get all action node nids that do not have a custom confirmation record.
+//  $result = db_query('SELECT n.nid, s.custom_confirmation FROM {node} n
+//    LEFT JOIN {sba_message_action_confirm} s
+//    ON s.nid = n.nid WHERE n.type = :type && (s.custom_confirmation = 0
+//    OR s.nid IS NULL)', array(':type' => 'sba_message_action'));
+//
+//  // Update the results with the global confirmation.
+//  foreach ($result as $node) {
+//    $record = array(
+//      'nid' => $node->nid,
+//      'fail_message' => variable_get('sba_message_action_confirm', ''),
+//    );
+//    drupal_write_record('sba_message_action_confirm', $record, 'nid');
+//  }
+//}

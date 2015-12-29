@@ -237,7 +237,7 @@ function page_wrappers_node_update($node) {
       ->execute();
 
     // Nuke caches so page wrapper is applied to itself by the theme layer.
-    drupal_flush_all_caches();
+    _page_wrappers_flush_caches();
   }
   elseif (_page_wrappers_enabled_type($node)) {
     db_delete('node_page_wrappers')
@@ -273,7 +273,7 @@ function page_wrappers_node_insert($node) {
       ->execute();
 
     // Nuke caches so page wrapper is applied to itself by the theme layer.
-    drupal_flush_all_caches();
+    _page_wrappers_flush_caches();
   }
 }
 
@@ -920,7 +920,7 @@ function _page_wrappers_create_template($node) {
 
   if (empty($filename)) {
     // create a template file name based on title
-    $filename = 'page--' . strtolower(str_replace(' ', '-', $node->title)) . '-' . time() . '.tpl.php'; // TODO: Better filename creator
+    $filename = page_wrappers_format_filename($node->title);
   }
 
   $full_path = $base_path . '/tpl';
@@ -960,6 +960,30 @@ function _page_wrappers_create_template($node) {
 
   return FALSE;
 
+}
+
+/**
+ * Formats the node title for a page wrapper template filename.
+ *
+ * Uses transliteration cleaning when available.
+ *
+ * @param string $title
+ *   The page wrapper node title.
+ *
+ * @return string
+ *   The clean filename for the page wrapper template file.
+ */
+function page_wrappers_format_filename($title) {
+  $name = str_replace(' ', '-', $title) . '-' . REQUEST_TIME . '.tpl.php';
+
+  if (module_exists('transliteration')) {
+    $name = transliteration_clean_filename($name, language_default('language'));
+  }
+  else {
+    $name = drupal_strtolower(preg_replace('![^0-9A-Za-z_.-]!', '', $name));
+  }
+
+  return 'page--' . $name;
 }
 
 /**
@@ -1030,7 +1054,7 @@ function page_wrappers_clone_node_alter(&$node, $context) {
     }
 
     //need to clear caches for theme updates
-    drupal_flush_all_caches();
+    _page_wrappers_flush_caches();
   }
 }
 
@@ -1285,4 +1309,50 @@ function page_wrappers_check() {
   }
 
   return array('node' => $node, 'wrapper' => $wrapper);
+}
+
+/**
+ * Flush caches on page wrapper node operations.
+ */
+function _page_wrappers_flush_caches() {
+  $skip_full_cache_clear = variable_get('page_wrappers_skip_full_cache_clear', FALSE);
+  // @see https://api.drupal.org/api/drupal/includes%21common.inc/function/drupal_flush_all_caches/7
+  // Below we skip rebuilding menu and module data, etc.
+  if ($skip_full_cache_clear) {
+    // Change query-strings on css/js files to enforce reload for all users.
+    _drupal_flush_css_js();
+    
+    drupal_clear_css_cache();
+    drupal_clear_js_cache();
+    
+    // Rebuild the theme data. 
+    system_rebuild_theme_data();
+    drupal_theme_rebuild();
+    
+    // Don't clear cache_form - in-progress form submissions may break.
+    // Ordered so clearing the page cache will always be the last action.
+    $core = array('cache_filter', 'cache_page');
+    $cache = cache_get('page_wrappers_cache_tables');
+    
+    // cache the module_invoke_all() which can be expensive on sites with lots of enabled modules.
+    if (empty($cache)) {
+      $hook_tables = module_invoke_all('flush_caches');
+      // Cache until next full cache clear.
+      cache_set('page_wrappers_cache_tables', $hook_tables);
+    }
+    else {
+      $hook_tables = $cache->data;
+    }
+    $cache_tables = array_merge($hook_tables, $core);
+    
+    // Retrieve any additional cache tables that should be excluded from flushing.
+    $exclude_tables = variable_get('page_wrapper_cache_tables_exclude', array());
+    $cache_tables = array_diff($cache_tables, $exclude_tables);
+    foreach ($cache_tables as $table) {
+      cache_clear_all('*', $table, TRUE);
+    }
+  }
+  else {
+    drupal_flush_all_caches();
+  }
 }

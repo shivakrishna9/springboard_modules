@@ -40,7 +40,7 @@ function salesforce_luminate_install() {
   salesforce_genmap_delete_map(-1, 'salesforce_donation');
 
   // Remove default recurring donation mapping provided by Springboard.
-  salesforce_genmap_delete_map(-1, 'npe03__Recurring_Donation__c');
+  salesforce_genmap_delete_map(-1, 'fundraiser_sustainers');
 }
 
 /**
@@ -54,6 +54,8 @@ function salesforce_luminate_uninstall() {
     'luminate_campaign_id',
     'luminate_donation_type',
     'luminate_recurring_amount_rounded',
+    'luminate_installment_period',
+    'luminate_day_of_month',
   );
 
   foreach ($fields as $field_name) {
@@ -94,6 +96,17 @@ function salesforce_luminate_create_extra_fundraiser_series_fields() {
     ),
     'luminate_recurring_amount_rounded' => array(
       'description' => 'The donation amount (rounded.)',
+      'type' => 'int',
+      'not null' => TRUE,
+      'default' => 0,
+    ),
+    'luminate_installment_period' => array(
+      'description' => 'The period of time per each donation.',
+      'type' => 'varchar',
+      'length' => 255,
+    ),
+    'luminate_day_of_month' => array(
+      'description' => 'The month day when donations occur.',
       'type' => 'int',
       'not null' => TRUE,
       'default' => 0,
@@ -1922,6 +1935,226 @@ function salesforce_luminate_create_sustainers_series_mapping() {
       "direction" : "sf_drupal",
       "drupal_sf" : "always",
       "sf_drupal" : "always"
+    },
+    {
+      "drupal_field" : {
+        "fieldmap_type" : "property",
+        "fieldmap_value" : "luminate_installment_period"
+      },
+      "salesforce_field" : {
+        "autoNumber" : false,
+        "byteLength" : 0,
+        "calculated" : false,
+        "calculatedFormula" : null,
+        "cascadeDelete" : false,
+        "caseSensitive" : false,
+        "controllerName" : null,
+        "createable" : true,
+        "custom" : true,
+        "defaultValue" : null,
+        "defaultValueFormula" : null,
+        "defaultedOnCreate" : false,
+        "dependentPicklist" : false,
+        "deprecatedAndHidden" : false,
+        "digits" : 0,
+        "displayLocationInDecimal" : false,
+        "externalId" : false,
+        "filterable" : true,
+        "groupable" : false,
+        "htmlFormatted" : false,
+        "idLookup" : false,
+        "inlineHelpText" : null,
+        "label" : "RecurrenceInterval",
+        "length" : 0,
+        "name" : "cv__RecurrenceInterval__c",
+        "nameField" : false,
+        "namePointing" : false,
+        "nillable" : true,
+        "permissionable" : true,
+        "picklistValues" : [],
+        "precision" : 3,
+        "referenceTo" : [],
+        "relationshipName" : null,
+        "relationshipOrder" : null,
+        "restrictedDelete" : false,
+        "restrictedPicklist" : false,
+        "scale" : 0,
+        "soapType" : "xsd:double",
+        "sortable" : true,
+        "type" : "double",
+        "unique" : false,
+        "updateable" : true,
+        "writeRequiresMasterRead" : false
+      },
+      "key" : false,
+      "direction" : "drupal_sf",
+      "drupal_sf" : "always",
+      "sf_drupal" : "always"
+    },
+    {
+      "drupal_field" : {
+        "fieldmap_type" : "property",
+        "fieldmap_value" : "luminate_installment_period"
+      },
+      "salesforce_field" : {
+        "autoNumber" : false,
+        "byteLength" : 0,
+        "calculated" : false,
+        "calculatedFormula" : null,
+        "cascadeDelete" : false,
+        "caseSensitive" : false,
+        "controllerName" : null,
+        "createable" : true,
+        "custom" : true,
+        "defaultValue" : null,
+        "defaultValueFormula" : null,
+        "defaultedOnCreate" : false,
+        "dependentPicklist" : false,
+        "deprecatedAndHidden" : false,
+        "digits" : 0,
+        "displayLocationInDecimal" : false,
+        "externalId" : false,
+        "filterable" : true,
+        "groupable" : false,
+        "htmlFormatted" : false,
+        "idLookup" : false,
+        "inlineHelpText" : null,
+        "label" : "RecurrenceInterval",
+        "length" : 0,
+        "name" : "cv__RecurrenceInterval__c",
+        "nameField" : false,
+        "namePointing" : false,
+        "nillable" : true,
+        "permissionable" : true,
+        "picklistValues" : [],
+        "precision" : 3,
+        "referenceTo" : [],
+        "relationshipName" : null,
+        "relationshipOrder" : null,
+        "restrictedDelete" : false,
+        "restrictedPicklist" : false,
+        "scale" : 0,
+        "soapType" : "xsd:double",
+        "sortable" : true,
+        "type" : "double",
+        "unique" : false,
+        "updateable" : true,
+        "writeRequiresMasterRead" : false
+      },
+      "key" : false,
+      "direction" : "sf_drupal",
+      "drupal_sf" : "always",
+      "sf_drupal" : "always"
+    },
+    {
+      "drupal_field" : {
+        "fieldmap_type" : "property",
+        "fieldmap_value" : "luminate_day_of_month"
+      },
+      "salesforce_field" : {
+        "autoNumber" : false,
+        "byteLength" : 0,
+        "calculated" : false,
+        "calculatedFormula" : null,
+        "cascadeDelete" : false,
+        "caseSensitive" : false,
+        "controllerName" : null,
+        "createable" : true,
+        "custom" : true,
+        "defaultValue" : null,
+        "defaultValueFormula" : null,
+        "defaultedOnCreate" : false,
+        "dependentPicklist" : false,
+        "deprecatedAndHidden" : false,
+        "digits" : 0,
+        "displayLocationInDecimal" : false,
+        "externalId" : false,
+        "filterable" : true,
+        "groupable" : false,
+        "htmlFormatted" : false,
+        "idLookup" : false,
+        "inlineHelpText" : null,
+        "label" : "RecurrenceDayOfMonth",
+        "length" : 0,
+        "name" : "cv__RecurrenceDayOfMonth__c",
+        "nameField" : false,
+        "namePointing" : false,
+        "nillable" : true,
+        "permissionable" : true,
+        "picklistValues" : [],
+        "precision" : 2,
+        "referenceTo" : [],
+        "relationshipName" : null,
+        "relationshipOrder" : null,
+        "restrictedDelete" : false,
+        "restrictedPicklist" : false,
+        "scale" : 0,
+        "soapType" : "xsd:double",
+        "sortable" : true,
+        "type" : "double",
+        "unique" : false,
+        "updateable" : true,
+        "writeRequiresMasterRead" : false
+      },
+      "key" : false,
+      "direction" : "drupal_sf",
+      "drupal_sf" : "always",
+      "sf_drupal" : "always"
+    },
+    {
+      "drupal_field" : {
+        "fieldmap_type" : "property",
+        "fieldmap_value" : "luminate_day_of_month"
+      },
+      "salesforce_field" : {
+        "autoNumber" : false,
+        "byteLength" : 0,
+        "calculated" : false,
+        "calculatedFormula" : null,
+        "cascadeDelete" : false,
+        "caseSensitive" : false,
+        "controllerName" : null,
+        "createable" : true,
+        "custom" : true,
+        "defaultValue" : null,
+        "defaultValueFormula" : null,
+        "defaultedOnCreate" : false,
+        "dependentPicklist" : false,
+        "deprecatedAndHidden" : false,
+        "digits" : 0,
+        "displayLocationInDecimal" : false,
+        "externalId" : false,
+        "filterable" : true,
+        "groupable" : false,
+        "htmlFormatted" : false,
+        "idLookup" : false,
+        "inlineHelpText" : null,
+        "label" : "RecurrenceDayOfMonth",
+        "length" : 0,
+        "name" : "cv__RecurrenceDayOfMonth__c",
+        "nameField" : false,
+        "namePointing" : false,
+        "nillable" : true,
+        "permissionable" : true,
+        "picklistValues" : [],
+        "precision" : 2,
+        "referenceTo" : [],
+        "relationshipName" : null,
+        "relationshipOrder" : null,
+        "restrictedDelete" : false,
+        "restrictedPicklist" : false,
+        "scale" : 0,
+        "soapType" : "xsd:double",
+        "sortable" : true,
+        "type" : "double",
+        "unique" : false,
+        "updateable" : true,
+        "writeRequiresMasterRead" : false
+      },
+      "key" : false,
+      "direction" : "sf_drupal",
+      "drupal_sf" : "always",
+      "sf_drupal" : "always"
     }
   ],
   "push_async" : "0",
@@ -1935,4 +2168,54 @@ function salesforce_luminate_create_sustainers_series_mapping() {
 
   $mapping = entity_import('salesforce_mapping', $default_map_sustainers_series);
   return entity_save('salesforce_mapping', $mapping);
+}
+
+/**
+ * Adds luminate_installment_period to fundraiser_sustainers_series.
+ * Adds luminate_day_of_month fields to fundraiser_sustainers_series.
+ * Updates new fields from existing sustainer data.
+ */
+function salesforce_luminate_update_7001(&$sandbox) {
+  if (!isset($sandbox['progress'])) {
+    $sandbox['progress'] = 0;
+    $sandbox['max'] = db_query('SELECT COUNT(did) FROM {fundraiser_sustainers_series}')->fetchField();
+
+    $fields = array(
+      'luminate_installment_period' => array(
+        'description' => 'The period of time per each donation.',
+        'type' => 'varchar',
+        'length' => 255,
+      ),
+      'luminate_day_of_month' => array(
+        'description' => 'The month day when donations occur.',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+    );
+
+    db_add_field('fundraiser_sustainers_series', 'luminate_installment_period', $fields['luminate_installment_period']);
+    db_add_field('fundraiser_sustainers_series', 'luminate_day_of_month', $fields['luminate_day_of_month']);
+  }
+
+  // Get all existing fundraiser sustainers series records.
+  $results = db_query('SELECT `did`, `luminate_start_date` FROM {fundraiser_sustainers_series} ORDER BY `did` ASC LIMIT 0,10')
+      ->fetchAll();
+
+  foreach ($results as $row) {
+    $donation_start_time = strtotime($row->luminate_start_date);
+
+    $fundraiser_sustainers_series = entity_load_single('fundraiser_sustainers_series', $row->did);
+    $fundraiser_sustainers_series->luminate_installment_period = LUMINATE_INSTALLMENT_PERIOD;
+    $fundraiser_sustainers_series->luminate_day_of_month = date('d', $donation_start_time);
+    $fundraiser_sustainers_series->save();
+
+    $sandbox['progress'] ++;
+  }
+
+  $sandbox['#finished'] = empty($sandbox['max']) ? 1 : ($sandbox['progress'] / $sandbox['max']);
+
+  if ($sandbox['#finished'] >= 1) {
+    return t('Luminate fundraiser sustainers have been updated with luminate_installment_period and luminate_day_of_month values.');
+  }
 }

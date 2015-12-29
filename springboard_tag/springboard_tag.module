@@ -53,6 +53,7 @@ function springboard_tag_springboard_admin_admin_menu_items_alter(&$items) {
  */
 function _springboard_tag_placement_options() {
   return array(
+    'head' => 'In the head tag',
     'after body tag' => 'Directly after the opening body tag',
     'content' => 'Main content',
   );
@@ -107,6 +108,34 @@ function springboard_tag_page_alter(&$page) {
   }
 }
 
+
+/**
+ * Implements hook_html_head_alter
+ *
+ * Add springboard tags to the head tag.
+ */
+function springboard_tag_html_head_alter(&$head_content) {
+  // Load the tags for this page.
+  $tags = _springboard_tag_load_tags();
+  if (empty($tags)) {
+    return;
+  }
+
+  foreach ($tags as $tag) {
+    switch ($tag->settings['placement']) {
+      case 'head' :
+        $head[] = _springboard_tag_generate_tag($tag->tag);
+        break;
+    }
+  }
+  if (!empty($head)) {
+    // Add the content tags.
+    $head_content['springboard_tag'] = array(
+      '#markup' => "\n" . implode("\n", $head) . "\n",
+    );
+  }
+}
+
 /**
  * Add the after body tags to the page HTML.
  */
@@ -154,14 +183,18 @@ function _springboard_tag_generate_tag($snippet) {
  * Load the tags for a page request.
  */
 function _springboard_tag_load_tags() {
-  // Load all the configured tags.
-  ctools_include('export');
-  $tags = ctools_export_crud_load_all('springboard_tag');
+  $tags = &drupal_static(__FUNCTION__);
 
-  usort($tags, '_springboard_tag_load_tags_sort');
+  if (!isset($tags)) {
+    // Load all the configured tags.
+    ctools_include('export');
+    $tags = ctools_export_crud_load_all('springboard_tag');
 
-  // Allow modules to modify the tag list.
-  drupal_alter('springboard_tag_list', $tags);
+    usort($tags, '_springboard_tag_load_tags_sort');
+
+    // Allow modules to modify the tag list.
+    drupal_alter('springboard_tag_list', $tags);
+  }
 
   return $tags;
 }
@@ -213,13 +246,19 @@ function springboard_tag_springboard_tag_list_alter(&$tags) {
       }
     }
 
-    // If a tag has no roles associated, it is displayed for every role.
-    // For tags with roles associated, if none of the user's roles matches
-    // the settings from this tag, remove it from the block list.
-    if (array_filter($user['roles']) && !array_intersect($user['roles'], array_keys($account->roles))) {
-      // No match.
-      unset($tags[$key]);
-      continue;
+    // Check if the current user should not see this tag by role.
+    // For tags with roles associated, if any of the user's roles matches
+    // the settings from this tag, remove it from the tag list.
+    if (array_filter($user['roles'])) {
+      // One or more roles are selected.
+      foreach (array_keys($account->roles) as $rid) {
+        // Is the current user a member of one of these roles?
+        if (isset($user['roles'][$rid]) && $rid == $user['roles'][$rid]) {
+          // Current user is a member of a role that should be excluded from seeing this tag.
+          unset($tags[$key]);
+          continue;
+        }
+      }
     }
 
     // Limited visibility blocks must list at least one page.
