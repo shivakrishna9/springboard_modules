@@ -634,6 +634,7 @@ function fundraiser_sustainers_form_node_form_alter(&$form, &$form_state, $form_
       '#desciption' => t('Modify the way the recurring option is displayed on this form, or if it is even available.'),
       '#collapsible' => TRUE,
       '#collapsed' => FALSE,
+      '#weight' => 1,
     );
     $form['fundraiser_settings']['fundraiser_sustainers']['recurring_setting'] = array(
       '#type' => 'select',
@@ -645,11 +646,34 @@ function fundraiser_sustainers_form_node_form_alter(&$form, &$form_state, $form_
       ),
       '#default_value' => isset($form['#node']->recurring_setting) ? $form['#node']->recurring_setting : 'user_choice',
     );
-    // Copy the ask amounts fieldset to create a recurring amounts form.
-    $form['fundraiser_settings']['recurring_amount_wrapper']['donation_amounts'] =
-      $form['fundraiser_settings']['amount_wrapper']['donation_amounts'];
-    $form['fundraiser_settings']['recurring_amount_wrapper']['donation_amounts']['#prefix'] =
-      '<div id="recurring-ask-amounts">';
+    $form['fundraiser_settings']['fundraiser_sustainers']['recurring_dual_ask_amounts'] = array(
+      '#type' => 'checkbox',
+      '#title' => t("Set different ask amounts for recurring donations?"),
+      '#default_value' => isset($form['#node']->recurring_dual_ask_amounts) ? $form['#node']->recurring_dual_ask_amounts : FALSE,
+      '#states' => array(
+        'visible' => array(
+          'select[name*=recurring_setting]' => array('value' => 'user_choice'),
+        ),
+      ),
+    );
+    // Hack to simulate an OR condition in the #states for recurring_amount_wrapper.
+    $form['fundraiser_settings']['fundraiser_sustainers']['show_recurring_amounts'] = array(
+      '#type' => 'checkbox',
+      '#prefix' => '<div style="display: none;">',
+      '#suffix' => '</div>',
+      '#states' => array(
+        'checked' => array(
+          ':input[name*=recurring_dual_ask_amounts]' => array('checked' => TRUE),
+          'select[name*=recurring_setting]' => array('value' => 'user_choice'),
+        ),
+      ),
+    );
+
+    // Scoot down the one-time ask amounts.
+    $form['fundraiser_settings']['amount_wrapper']['#weight'] = 2;
+    $form['fundraiser_settings']['amount_wrapper']['#states']['invisible'] = array(
+      'select[name*=recurring_setting]' => array('value' => 'always'),
+    );
 
     // Recurring ask amounts.
     $node = $form['#node'];
@@ -661,8 +685,16 @@ function fundraiser_sustainers_form_node_form_alter(&$form, &$form_state, $form_
       '#prefix' => '<div class="clear-block" id="recurring-ask-wrapper">',
       '#suffix' => '</div>',
       '#tree' => TRUE, // This is important, this allows the deltas below to function as part of the array.
+      '#weight' => 3,
+      '#states' => array(
+        'invisible' => array(
+          ':input[name*=show_recurring_amounts]' => array('checked' => FALSE),
+          'select[name*=recurring_setting]' => array('!value' => 'always'),
+        ),
+      ),
     );
     $form['fundraiser_settings']['recurring_amount_wrapper']['recurring_donation_amounts'] = array(
+      '#type' => 'container',
       '#prefix' => '<div id="recurring-ask-amounts">',
       '#suffix' => '</div>',
       '#theme' => 'fundraiser_ask_amounts',
@@ -740,7 +772,7 @@ function fundraiser_sustainers_form_node_form_alter(&$form, &$form_state, $form_
       '#description' => t('Click here to add more choices.'),
       '#ajax' => array(
         'callback' => '_fundraiser_sustainers_donation_settings_form_amounts',
-        'wrapper' => 'ask-amounts',
+        'wrapper' => 'recurring-ask-amounts',
         'method' => 'replace',
         'effect' => 'fade',
       ),
@@ -748,7 +780,7 @@ function fundraiser_sustainers_form_node_form_alter(&$form, &$form_state, $form_
 
     $form['fundraiser_settings']['recurring_amount_wrapper']['recurring_no_default_amount'] = array(
       '#type' => 'radio',
-      '#default_value' => isset($node->default_amount) ? $node->default_amount : '',
+      '#default_value' => isset($node->recurring_default_amount) ? $node->recurring_default_amount : '',
       '#return_value' => '',
       '#parents' => array('recurring_default_amount'),
       '#title' => t('No default ask amount'),
@@ -761,14 +793,14 @@ function fundraiser_sustainers_form_node_form_alter(&$form, &$form_state, $form_
       '#title' => t('Show other amount option'),
       '#description' => t('Use this option if you want to provide an "Other Amount" field in conjunction with the list ' .
         'of Donation Amounts.'),
-      '#default_value' => isset($node->show_other_amount) ? $node->show_other_amount : variable_get('fundraiser_default_other', TRUE),
+      '#default_value' => isset($node->recurring_show_other_amount) ? $node->recurring_show_other_amount : variable_get('fundraiser_default_other', TRUE),
     );
     $form['fundraiser_settings']['recurring_amount_wrapper']['recurring_minimum_donation_amount'] = array(
       '#type' => 'textfield',
       '#title' => t('Minimum donation amount'),
       '#description' => t('The minimum acceptable donation amount.'),
-      '#default_value' => isset($node->minimum_donation_amount) ?
-        number_format($node->minimum_donation_amount, 2) : variable_get('fundraiser_default_minimum', 10.00),
+      '#default_value' => isset($node->recurring_minimum_donation_amount) ?
+        number_format($node->recurring_minimum_donation_amount, 2) : variable_get('fundraiser_default_minimum', 10.00),
     );
     $form['#validate'][] = '_fundraiser_form_amounts_validate'; //@TODO: replace or wrap?
   }
@@ -859,7 +891,7 @@ function fundraiser_sustainers_fundraiser_get_fundraiser_alter($fundraiser) {
     }
     $fundraiser->recurring_donation_amounts = $exploded_amounts;
   }
-  foreach (['show_other_amount', 'minimum_donation_amount', 'default_amount'] as $name) {
+  foreach (['show_other_amount', 'minimum_donation_amount', 'default_amount', 'dual_ask_amounts'] as $name) {
     if (isset($fundraiser_sustainers->{$name})) {
       $fundraiser->{"recurring_$name"} = $fundraiser_sustainers->{$name};
     }
@@ -1209,11 +1241,14 @@ function _fundraiser_sustainers_amount_field_create($fundraiser, $field) {
   // Spoof the recurring amount as one-time. Then we can re-use the field_create logic in fundraiser.module.
   $onetime_donation_amounts = $fundraiser->donation_amounts;
   $onetime_default_amount = $fundraiser->default_amount;
+  $onetime_show_other_amount = $fundraiser->show_other_amount;
   $fundraiser->donation_amounts = $fundraiser->recurring_donation_amounts;
   $fundraiser->default_amount = $fundraiser->recurring_default_amount;
+  $fundraiser->show_other_amount = $fundraiser->recurring_show_other_amount;
   $field = _fundraiser_amount_field_create($fundraiser, $field);
   $fundraiser->donation_amounts = $onetime_donation_amounts;
   $fundraiser->default_amount = $onetime_default_amount;
+  $fundraiser->show_other_amount = $onetime_show_other_amount;
   return $field;
 }
 
@@ -1229,15 +1264,23 @@ function _fundraiser_sustainers_other_amount_field_create($fundraiser, $field) {
 }
 
 function _fundraiser_sustainers_other_amount_field_validate($form, $form_state, $submission_fields, $value) {
-  // This validation isn't relevant if making a recurring donation.
-  if ($submission_fields['recurs_monthly'] == 'recurs') return;
+  // This validation isn't relevant if making a recurring donation and dual ask amounts are present.
+  if (
+    $form['#node']->recurring_setting == 'always' || (
+      $form['#node']->recurring_setting == 'user_choice' && $form['#node']->recurring_dual_ask_amounts
+        && $submission_fields['recurs_monthly'] == 'recurs'
+    )
+  ) return;
   // Pass through.
   return _fundraiser_other_amount_field_validate($form, $form_state, $submission_fields, $value);
 }
 
 function _fundraiser_sustainers_recurring_other_amount_field_validate($form, $form_state, $submission_fields, $value) {
-  // This validation is only relevant if making a recurring donation.
-  if ($submission_fields['recurs_monthly'] != 'recurs') return;
+  // This validation is only relevant if making a recurring donation and dual ask amounts are active.
+  if (
+    $form['#node']->recurring_setting != 'always' || !$form['#node']->recurring_dual_ask_amounts
+    || $submission_fields['recurs_monthly'] != 'recurs'
+  ) return;
   // Check for confusing selection.
   if (!empty($submission_fields['recurring_amount']) && $submission_fields['recurring_amount'] != "other" && !empty($submission_fields['recurring_other_amount'])) {
     return array(
@@ -1268,10 +1311,10 @@ function _fundraiser_sustainers_recurring_other_amount_field_validate($form, $fo
 }
 
 /**
- * Field create callback, adjsut the type of the recurring page shown, based on fundraiser settings.
+ * Field create callback, adjust the type of the recurring page shown, based on fundraiser settings.
  */
 function _fundraiser_sustainers_recurs_monthly_field_create($fundraiser, $field) {
-  // If recurring_settingdon't exist, drop the recurring field.
+  // If recurring_setting doesn't exist, drop the recurring field.
   if (empty($fundraiser->recurring_setting)) {
     return FALSE;
   }
@@ -1306,18 +1349,25 @@ function _fundraiser_sustainers_recurs_monthly_field_create($fundraiser, $field)
  */
 function fundraiser_sustainers_fundraiser_donation_form($form, $form_state) {
   // Find out whether the form has a checkbox/radio field called 'recurs_monthly'.
-  $has_recurring_field = _fundraiser_sustainers_form_has_exposed_recurring_field($form['#node']->nid);
+
+  // Get the fields we'll be needing to work with.
+  $payment_method_field = fundraiser_get_form_field('fundraiser_sustainers', $form, 'payment_method');
+  $recurs_monthly_field = fundraiser_get_form_field('fundraiser_sustainers', $form, 'recurs_monthly');
+  $onetime_amounts_field = fundraiser_get_form_field('fundraiser_sustainers', $form, 'amount');
+  $onetime_other_amount_field = fundraiser_get_form_field('fundraiser_sustainers', $form, 'other_amount');
+  $recurring_amounts_field = fundraiser_get_form_field('fundraiser_sustainers', $form, 'recurring_amount');
+  $recurring_other_amount_field = fundraiser_get_form_field('fundraiser_sustainers', $form, 'recurring_other_amount');
 
   // Nothing to do if the recurring field is not shown.
-  if (empty($has_recurring_field['visible'])) {
+  if (empty($recurs_monthly_field)) {
     return;
   }
 
   // Set up the values that we're going to require in the States array. If it's a select list or
   // radio buttons, check for 'value'. Otherwise, it's a checkbox, so check for 'checked' == FALSE.
-  if ($has_recurring_field['settings']['type'] == 'select' || $has_recurring_field['settings']['type'] == 'radios') {
-    $onetime_values = array('!value' => 'recurs');
-    $recurring_values = array('!value' => 'onetime');
+  if ($recurs_monthly_field['#type'] == 'select' || $recurs_monthly_field['#type'] == 'radios') {
+    $onetime_values = array('value' => 'onetime');
+    $recurring_values = array('value' => 'recurs');
   }
   else {
     $onetime_values = array('checked' => FALSE);
@@ -1326,15 +1376,34 @@ function fundraiser_sustainers_fundraiser_donation_form($form, $form_state) {
 
   $count_enabled_gateways = 0;
   $supporting_gateways = array();
-  $selector = ':input[name*=recurs_monthly]';
+  $selector = ($recurs_monthly_field['#type'] == 'select') ? 'select[name*=recurs_monthly]' : ':input[name*=recurs_monthly]';
 
-  // Get the fields we'll be needing to work with.
-  $payment_method_field = fundraiser_get_form_field('fundraiser_sustainers', $form, 'payment_method');
-  $onetime_amounts_field = fundraiser_get_form_field('fundraiser_sustainers', $form, 'amount');
-  $onetime_other_amount_field = fundraiser_get_form_field('fundraiser_sustainers', $form, 'other_amount');
-  $recurs_monthly_field = fundraiser_get_form_field('fundraiser_sustainers', $form, 'recurs_monthly');
-  $recurring_amounts_field = fundraiser_get_form_field('fundraiser_sustainers', $form, 'recurring_amount');
-  $recurring_other_amount_field = fundraiser_get_form_field('fundraiser_sustainers', $form, 'recurring_other_amount');
+  // If the user doesn't have a choice between one-time and recurring, don't show irrelevant fields.
+  if ($form['#node']->recurring_setting == 'user_choice') {
+    if (!$form['#node']->recurring_dual_ask_amounts) {
+      $recurring_amounts_field['#prefix'] = '<div style="display:none;">';
+      $recurring_amounts_field['#suffix'] = '</div>';
+      $recurring_other_amount_field['#prefix'] = '<div style="display:none;">';
+      $recurring_other_amount_field['#suffix'] = '</div>';
+      $recurring_amounts_field['#required'] = FALSE;
+    }
+  } else {
+    $recurs_monthly_field['#prefix'] = '<div style="display:none;">';
+    $recurs_monthly_field['#suffix'] = '</div>';
+    if ($form['#node']->recurring_setting == 'always') {
+      $onetime_amounts_field['#prefix'] = '<div style="display:none;">';
+      $onetime_amounts_field['#suffix'] = '</div>';
+      $onetime_amounts_field['#required'] = FALSE;
+      $onetime_other_amount_field['#prefix'] = '<div style="display:none;">';
+      $onetime_other_amount_field['#suffix'] = '</div>';
+    } else {
+      $recurring_amounts_field['#prefix'] = '<div style="display:none;">';
+      $recurring_amounts_field['#suffix'] = '</div>';
+      $recurring_amounts_field['#required'] = FALSE;
+      $recurring_other_amount_field['#prefix'] = '<div style="display:none;">';
+      $recurring_other_amount_field['#suffix'] = '</div>';
+    }
+  }
 
   // Check if each gateway allows recurring payments, and use the States API if it doesn't.
   // Else, if it does, add its name to the 'supporting_gateways' array for showing/hiding the 'recurring' field.
@@ -1349,7 +1418,7 @@ function fundraiser_sustainers_fundraiser_donation_form($form, $form_state) {
         (!isset($this_gateway['allow_recurring'])
           || !_fundraiser_sustainers_supports_recurring($this_gateway['allow_recurring'], $payment_method['method'])
         )
-        && $has_recurring_field['visible'] == TRUE
+        && $recurs_monthly_field['#type'] != 'hidden'
       ) {
         $payment_method_name = $payment_method['method'];
         $payment_method_field[$payment_method_name] = array(
@@ -1378,14 +1447,16 @@ function fundraiser_sustainers_fundraiser_donation_form($form, $form_state) {
     $form = fundraiser_update_form_field('fundraiser_sustainers', $form, 'payment_method', $payment_method_field);
 
     // Toggle one-time and recurring ask amounts.
-    $onetime_amounts_field['#states']['visible'][$selector] = $onetime_values;
-    $onetime_amounts_field['#states']['required'][$selector] = $onetime_values;
-    $onetime_amounts_field['#required'] = FALSE;
-    $onetime_other_amount_field['#states']['visible'][$selector] = $onetime_values;
-    $recurring_amounts_field['#states']['visible'][$selector] = $recurring_values;
-    $recurring_amounts_field['#states']['required'][$selector] = $recurring_values;
-    $recurring_amounts_field['#required'] = FALSE;
-    $recurring_other_amount_field['#states']['visible'][$selector] = $recurring_values;
+    if ($form['#node']->recurring_dual_ask_amounts) {
+      $onetime_amounts_field['#states']['visible'][$selector] = $onetime_values;
+      $onetime_amounts_field['#states']['required'][$selector] = $onetime_values;
+      $onetime_amounts_field['#required'] = FALSE;
+      $onetime_other_amount_field['#states']['visible'][$selector] = $onetime_values;
+      $recurring_amounts_field['#states']['visible'][$selector] = $recurring_values;
+      $recurring_amounts_field['#states']['required'][$selector] = $recurring_values;
+      $recurring_amounts_field['#required'] = FALSE;
+      $recurring_other_amount_field['#states']['visible'][$selector] = $recurring_values;
+    }
   }
 
   // Put the onetime/recurring selection input at the top.
@@ -1452,13 +1523,15 @@ function fundraiser_sustainers_recurring_conflict_validate(&$form, &$form_state)
  */
 function fundraiser_sustainers_donation_form_submit(&$form, &$form_state) {
   // Is it a recurring donation being submitted?
-  if (_fundraiser_sustainers_get_form_state_value($form_state, 'recurs_monthly') == 'recurs') {
+  if (_fundraiser_sustainers_get_form_state_value($form_state, 'recurs_monthly') == 'recurs'
+    && !empty($form['#node']->recurring_dual_ask_amounts)
+  ) {
     // Replace the standard donation amount with the donor's recurring amount.
     $recurring_amount = _fundraiser_sustainers_get_form_state_value($form_state, 'recurring_amount');
-    if (empty($recurring_amount) || !_fundraiser_sustainers_update_form_state_value(
-        $form_state, 'amount',
-        _fundraiser_sustainers_get_form_state_value($form_state, 'recurring_amount')
-      )) {
+    if ($recurring_amount == 'other') {
+      $recurring_amount = _fundraiser_sustainers_get_form_state_value($form_state, 'recurring_other_amount');
+    }
+    if (empty($recurring_amount) || !_fundraiser_sustainers_update_form_state_value($form_state, 'amount', $recurring_amount)) {
       // Problem! We couldn't find a recurring amount for this recurring donation.
       _fundraiser_sustainers_update_form_state_value($form_state, 'amount', NULL);
       form_set_error('recurs_monthly', "Thank you for choosing a monthly donation! However, no monthly donation amount was set, so your donation could not be processed.");
@@ -1495,44 +1568,6 @@ function _fundraiser_sustainers_get_form_state_value_recursion($array, $key) {
     if (is_array($candidate_value)) {
       $value = _fundraiser_sustainers_get_form_state_value_recursion($candidate_value, $key);
       if (!empty($value)) return $value;
-    }
-  }
-}
-
-/**
- * Helper function, find out if a node has recurring payments as an option.
- * It also gets the field's settings.
- */
-function _fundraiser_sustainers_form_has_exposed_recurring_field($nid) {
-  $webform_node = node_load($nid);
-
-  // If the 'recurring_setting' is something other than 'user_choice',
-  // that means the 'recurring' value on the webform are not exposed
-  // to the visitor and thus we can go ahead and return FALSE values.
-  if ($webform_node->recurring_setting != 'user_choice') {
-    return array(
-      'visible' => FALSE
-    );
-  } else {
-
-    // Loop through webform components. When we find the one we want, get its settings.
-    foreach ($webform_node->webform['components'] as $key => $component_contents) {
-      if ($component_contents['form_key'] == 'recurs_monthly' && $component_contents['type'] == 'select') {
-        // What type of selection component is it?
-        if ($component_contents['extra']['aslist'] == 1) {
-          $type = 'select';
-        } else {
-          $type = !empty($component_contents['extra']['multiple']) ? 'checkbox' : 'radios';
-        }
-
-        return array(
-          'visible' => TRUE,
-          'settings' => array(
-            'type' => $type,
-            'multiple' => !empty($component_contents['extra']['multiple'])
-          ),
-        );
-      }
     }
   }
 }
@@ -3472,6 +3507,7 @@ function _fundraiser_sustainers_update_sustainers_node($node) {
     'show_other_amount' => $node->recurring_show_other_amount,
     'minimum_donation_amount' => $node->recurring_minimum_donation_amount,
     'default_amount' => $node->recurring_default_amount,
+    'dual_ask_amounts' => ($node->recurring_dual_ask_amounts && $node->recurring_setting == 'user_choice'),
   );
 
   if (isset($new_data['nid'])) {
