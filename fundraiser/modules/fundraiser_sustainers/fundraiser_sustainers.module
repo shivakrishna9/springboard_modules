@@ -774,21 +774,32 @@ function fundraiser_sustainers_fundraiser_update_fundraiser_alter($node) {
 /**
  * For the benefit of _fundraiser_webform_update_components(), which will fire subsequently
  * if fundraiser_webform.module is active, we flatten ask amounts to a simple array.
+ * This also standardizes the "recurring_donation_amounts" array's format, which can
+ * take many forms depending on what action triggers _fundraiser_create_fundraiser().
  */
 function _fundraiser_sustainers_flatten_amounts($node) {
-  $donation_amounts = [];
   if (isset($node->recurring_donation_amounts) && is_array($node->recurring_donation_amounts)) {
+    // Make certain they aren't flattened already.
     $first_amount = reset($node->recurring_donation_amounts);
-    if (is_array($first_amount)) {  // Make certain they aren't flattened already.
-      usort($node->recurring_donation_amounts, function ($a, $b) {
-        return $a['weight'] < $b['weight'] ? -1 : 1;
-      });
-      foreach ($node->recurring_donation_amounts as $donation_amount) {
-        $donation_amounts[$donation_amount['amount']] = $donation_amount['label'];
+    if (is_array($first_amount)) {
+      $donation_amounts = [];
+      // Do we have weights to sort by?
+      if (isset($first_amount['weight'])) {
+        usort($node->recurring_donation_amounts, function ($a, $b) {
+          return $a['weight'] < $b['weight'] ? -1 : 1;
+        });
       }
+      foreach ($node->recurring_donation_amounts as $donation_amount) {
+        if (isset($donation_amount['amount']) && isset($donation_amount['label'])) {
+          $donation_amounts[$donation_amount['amount']] = $donation_amount['label'];
+        } else if (isset($donation_amount[0]) && isset($donation_amount[1])) {
+          // Assume the first item gives the amount and the second gives the label.
+          $donation_amounts[$donation_amount[0]] = $donation_amount[1];
+        }
+      }
+      $node->recurring_donation_amounts = $donation_amounts;
     }
   }
-  $node->recurring_donation_amounts = $donation_amounts;
 }
 
 /**
@@ -836,9 +847,7 @@ function fundraiser_sustainers_fundraiser_get_fundraiser_alter($fundraiser) {
     $fundraiser->recurring_donation_amounts = $exploded_amounts;
   }
   foreach (['show_other_amount', 'minimum_donation_amount', 'default_amount', 'dual_ask_amounts'] as $name) {
-    if (isset($fundraiser_sustainers->{$name})) {
-      $fundraiser->{"recurring_$name"} = $fundraiser_sustainers->{$name};
-    }
+    $fundraiser->{"recurring_$name"} = isset($fundraiser_sustainers->{$name}) ? $fundraiser_sustainers->{$name} : NULL;
   }
 
   // If fundraiser_webform.module is enabled, webform component values can override
