@@ -61,6 +61,11 @@ function fundraiser_sustainers_update_dependencies() {
     'salesforce_npsp' => 7001,
   );
 
+  // We need the fundraiser module to have a "default_amount" column.
+  $dependencies['fundraiser_sustainers'][7015] = array(
+    'fundraiser' => 7009,
+  );
+
   return $dependencies;
 }
 
