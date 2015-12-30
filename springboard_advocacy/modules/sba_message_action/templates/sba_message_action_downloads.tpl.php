@@ -4,13 +4,13 @@
     <div class="span3">
       <div class="well">
         <h2 class="text-info"><?php print $message_action_metrics->failed; ?></h2>
-        Failed Messages
+        Failed Messages<br />Available to Download
       </div>
     </div>
     <div class="span3">
       <div class="well">
         <h2 class="text-info"><?php print $message_action_metrics->hold; ?></h2>
-        Hold Messages
+        Hold Messages<br />&nbsp;
       </div>
     </div>
   </div>
