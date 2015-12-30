@@ -321,10 +321,12 @@ function commerce_paywithmybank_get_request_signature($access_key, $parameters) 
       // $key.$object_property=$object_property_value.
       // Example: recurrence.recurringAmount=10.00
       foreach ($value as $obj_key => $obj_value) {
-        $data .= "{$key}.{$obj_key}={$obj_value}&";
+        if ($obj_value !== NULL) {
+          $data .= "{$key}.{$obj_key}={$obj_value}&";
+        }
       }
     }
-    else {
+    else if ($value !== NULL) {
       $data .= "{$key}={$value}&";
     }
   }
