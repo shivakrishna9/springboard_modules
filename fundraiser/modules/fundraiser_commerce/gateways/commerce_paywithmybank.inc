@@ -79,6 +79,7 @@ function commerce_paywithmybank_fundraiser_commerce_redirect($method_instance, $
     'currency' => $order_total['currency_code'],
     'amount' => $order_amount,
     'merchantReference' => $order->order_id,
+    'paymentType' => NULL,
   );
 
   // Set up payment parameters for recurring payments.
@@ -88,12 +89,12 @@ function commerce_paywithmybank_fundraiser_commerce_redirect($method_instance, $
 
     $recurrence = new stdClass();
     $recurrence->startDate = $start_time;
-    // End date is three month from now.
-    $recurrence->endDate = ($start_time + (2592000000 * 3));
-    $recurrence->frequency = 1;
-    $recurrence->frequencyUnit = 1;
-    $recurrence->frequencyUnitType = 'Month';
-    $recurrence->recurringAmount = $order_amount;
+    $recurrence->endDate = NULL;
+    $recurrence->frequency = NULL;
+    $recurrence->frequencyUnit = NULL;
+    //$recurrence->frequencyUnitType = PayWithMyBank::NULL_RECURRENCE_FREQUENCY_UNIT_TYPE;
+    $recurrence->frequencyUnitType = NULL;
+    $recurrence->recurringAmount = NULL;
     $recurrence->automaticCapture = 'false';
 
     $payment_parameters['paymentType'] = 'Recurring';
@@ -365,14 +366,6 @@ function commerce_paywithmybank_fundraiser_commerce_charge($method_instance, $do
 
     // Update card using master donation so transaction ID is available.
     commerce_paywithmybank_fundraiser_commerce_update($master_donation, $card_data);
-
-    $recurrence = new stdClass();
-    // Recurring schedule end date needs to be in milliseconds.
-    $recurrence->endDate = ($new_expire_time * 1000);
-
-    $method_instance = commerce_payment_method_instance_load($donation->gateway['id']);
-    $api = commerce_paywithmybank_get_api($method_instance);
-    $api->updateRecurrence($master_donation->auth_txn_id, $master_donation->did, $recurrence);
   }
 
   $submission_fields = array(

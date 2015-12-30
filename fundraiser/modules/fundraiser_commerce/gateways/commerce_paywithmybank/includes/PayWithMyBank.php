@@ -61,6 +61,8 @@ class PayWithMyBank {
   const EVENT_TYPE_REVERSE = 'Reverse';
   const EVENT_TYPE_HOLD = 'Hold';
   const EVENT_TYPE_FEEDBACK = 'Feedback';
+  // Recurrence frequency unit types.
+  const NULL_RECURRENCE_FREQUENCY_UNIT_TYPE = '_NULL_RECURRENCE_FREQUENCYUNITTYPE';
 
   /**
    * @var array $endpoints
