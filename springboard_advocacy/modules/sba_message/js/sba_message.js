@@ -1294,19 +1294,25 @@
     };
 
     Sba.ajaxSearch = function(arr) {
-        $.ajax({
-            type: "POST",
-            url: Drupal.settings.sbaSiteUrl,
-            data: {query: arr},
-            dataType: 'json',
-            success: function(data) {
-                Drupal.settings.charCount = data;
-                sbaCountable.charCount();
-            },
-            error: function(xhr, textStatus, error){
-                Drupal.settings.charCount = 0;
-            }
-        });
+        if(!$.isEmptyObject(arr)) {
+            $.ajax({
+                type: "POST",
+                url: Drupal.settings.sbaSiteUrl,
+                data: {query: arr},
+                dataType: 'json',
+                success: function (data) {
+                    Drupal.settings.charCount = data;
+                    sbaCountable.charCount();
+                },
+                error: function (xhr, textStatus, error) {
+                    Drupal.settings.charCount = 0;
+                }
+            });
+        }
+        else {
+            Drupal.settings.charCount = {size: 0, count: 0, person: ""}
+            sbaCountable.charCount();
+        }
     };
 
     //Uc first helper
