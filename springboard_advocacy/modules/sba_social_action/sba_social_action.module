@@ -181,6 +181,9 @@ function sba_social_action_node_load($nodes, $types) {
         }
       }
 
+      $precedence = db_query("SELECT precedence FROM {sba_form_id} WHERE nid = :nid", array(':nid' => arg(1)))->fetchField();
+      $node->precedence = !empty($precedence) ? $precedence : 0;
+
       $visibility = db_query('select visibility from {springboard_action_opt_in_block} WHERE nid=:nid', array(':nid' => $node->nid))->fetchField();
       $node->show_my_name = $visibility;
       // Unset form layout if default.
@@ -442,7 +445,7 @@ function sba_social_action_form_sba_social_action_node_form_alter(&$form, &$form
   $form['springboard_display']['recent_participants'] = array(
     '#type' => 'fieldset',
     '#title' => t('Recent Participants List'),
-    '#description' => t('Choose whether action-takers can opt-in to having their name display on the social action page.'),
+    '#description' => t('Choose whether advocates can opt-in to having their name display on the social action page.'),
     '#collapsible' => TRUE,
     '#collapsed' => FALSE,
   );
@@ -944,35 +947,41 @@ function sba_social_action_save_twitter_profile($data, $uid) {
   $oauth_token = decrypt($data['values']['oauth_token']);
   $oauth_token_secret = decrypt($data['values']['oauth_token_secret']);
 
-  $twitter = new socialTwitter(
-    variable_get('social_action_twitter_consumer_key', ''),
-    variable_get('social_action_twitter_consumer_secret', ''),
-    $oauth_token,
-    $oauth_token_secret
-  );
-
-  $response = $twitter->users_show($data['values']['screen_name']);
-  if (!empty($response)) {
-    $save_data = array(
-      'sbp_twitter_screen_name' => $response['screen_name'],
-      'sbp_twitter_id_str' => $response['id_str'],
-      'sbp_twitter_following_count' => $response['followers_count'],
-      'sbp_twitter_followers_count' => $response['friends_count'],
-      'sbp_twitter_status_count' => $response['statuses_count'],
-      'sbp_twitter_created_at' => strtotime($response['created_at']),
+  try {
+    $twitter = new socialTwitter(
+      variable_get('social_action_twitter_consumer_key', ''),
+      variable_get('social_action_twitter_consumer_secret', ''),
+      $oauth_token,
+      $oauth_token_secret
     );
-    $account = user_load($uid); // Loading account
-    $edit = array();
-    foreach ($save_data as $field_name => $value) {
-      $edit[$field_name] = array(
-        LANGUAGE_NONE => array(
-          0 => array(
-            'value' => $value,
-          ),
-        ),
+  }
+  catch (socialTwitterException $e) {
+  }
+
+  if (!empty($twitter)) {
+    $response = $twitter->users_show($data['values']['screen_name']);
+    if (!empty($response)) {
+      $save_data = array(
+        'sbp_twitter_screen_name' => $response['screen_name'],
+        'sbp_twitter_id_str' => $response['id_str'],
+        'sbp_twitter_following_count' => $response['followers_count'],
+        'sbp_twitter_followers_count' => $response['friends_count'],
+        'sbp_twitter_status_count' => $response['statuses_count'],
+        'sbp_twitter_created_at' => strtotime($response['created_at']),
       );
+      $account = user_load($uid); // Loading account
+      $edit = array();
+      foreach ($save_data as $field_name => $value) {
+        $edit[$field_name] = array(
+          LANGUAGE_NONE => array(
+            0 => array(
+              'value' => $value,
+            ),
+          ),
+        );
+      }
+      user_save($account, $edit);
     }
-    user_save($account, $edit);
   }
 }
 

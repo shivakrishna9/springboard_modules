@@ -173,7 +173,7 @@ function springboard_advocacy_url_validate($element, &$form_state) {
     form_error($element, t('You must enter a valid, fully-prefixed absolute url.'));
   }
 
-  if (!valid_url($form_state['values']['sba_social_privacy'], TRUE)) {
+  if (!empty($form_state['values']['sba_social_privacy']) && !valid_url($form_state['values']['sba_social_privacy'], TRUE)) {
     form_error($element, t('You must enter a valid, fully-prefixed absolute url.'));
   }
 

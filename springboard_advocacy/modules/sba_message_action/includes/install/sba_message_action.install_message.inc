@@ -674,7 +674,7 @@ function _sba_message_action_install_message_entity() {
     ),
     'entity_type' => 'sba_message',
     'field_name' => 'field_sba_subject_editable',
-    'label' => 'Subject editable by action taker? (for single message actions only)',
+    'label' => 'Subject editable by advocate? (for single message actions only)',
     'required' => 1,
     'settings' => array(
       'user_register_form' => FALSE,
@@ -729,7 +729,7 @@ function _sba_message_action_install_message_entity() {
   t('Message');
   t('Placeholder Greeting (for display on the action)');
   t('Signature');
-  t('Subject editable by action taker? (for single message actions only)');
+  t('Subject editable by advocate? (for single message actions only)');
   t('Subject text');
   t('User editable');
 
@@ -864,7 +864,6 @@ function _sba_message_action_install_message_entity() {
 function _sba_message_action_delete_message_entity_fields() {
   $fields = array(
     'field_sba_signature',
-    'field_sba_action_id',
     'field_sba_placeholder_greeting',
     'field_sba_greeting',
     'field_sba_message',
