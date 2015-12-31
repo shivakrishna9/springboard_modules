@@ -864,7 +864,6 @@ function _sba_message_action_install_message_entity() {
 function _sba_message_action_delete_message_entity_fields() {
   $fields = array(
     'field_sba_signature',
-    'field_sba_action_id',
     'field_sba_placeholder_greeting',
     'field_sba_greeting',
     'field_sba_message',

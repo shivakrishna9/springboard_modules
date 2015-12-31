@@ -262,3 +262,15 @@ function sba_social_action_update_7008() {
   _sba_social_action_create_twitter_followers_count();
   _sba_social_action_create_twitter_created_at();
 }
+
+/**
+ * Update action id field.
+ */
+function sba_social_action_update_7009() {
+  $field = field_info_field('field_sba_action_id');
+  $field['settings']['handler_settings']['target_bundles'] = array(
+    'sba_social_action' => 'sba_social_action',
+    'sba_message_action' => 'sba_message_action',
+  );
+  field_update_field($field);
+}
