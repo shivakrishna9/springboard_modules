@@ -1071,22 +1071,21 @@ function springboard_advocacy_views_exposed_form_ajax_lookup_recursive($elements
 
 function springboard_advocacy_ajax_search() {
 
-  $values = $_POST['query'];
-  $search_groups = array();
-  $search_groups_formatted = array();
-  $size = 0;
-  $count = 0;
-  $person = '';
+  if (isset($_POST['query'])) {
+    $values = $_POST['query'];
+    $search_groups = array();
+    $search_groups_formatted = array();
+    $size = 0;
+    $count = 0;
+    $person = '';
 
-  if (!empty($values)) {
-
-    foreach ($values as  $key => $search_terms) {
+    foreach ($values as $key => $search_terms) {
       if (isset($search_terms['id'])) {
         $count++;
         $target_handle = parse_url(urldecode($search_terms['twitter']));
         $handle = '.@' . substr($target_handle['path'], 1);
         $new_size = strlen($handle);
-        if( $new_size > $size) {
+        if ($new_size > $size) {
           $size = $new_size;
         }
       }
@@ -1098,40 +1097,45 @@ function springboard_advocacy_ajax_search() {
         $search_groups[$key] = $search_terms;
       }
     }
-  }
-  foreach ($search_groups as $key => $group) {
-    foreach ($group as $index => $value) {
-      $search_groups_formatted[$key][$index] =  array($value);
-    }
-  }
 
-
-  $target_groups = array();
-  foreach ($search_groups_formatted as $search) {
-    $view = views_get_view('targets');
-    $view->query = new springboard_advocacy_views_plugin_query();
-    $view->query->search_terms = $search;
-    $view->query->apiCall = springboard_advocacy_api_call();
-    $view->build();
-    unset($view->query->search_terms['class_name']);
-    $view->set_display('block_3');
-    $view->query->pager->options['items_per_page'] = 10000;
-    $view->pre_execute();
-    $view->execute();
-
-    $target_groups[] = $view->result;
-  }
-  foreach ($target_groups as $tgroup) {
-    foreach ($tgroup as $target) {
-      $count++;
-      $target_handle = parse_url($target->twitter);
-      $handle = '.@' . substr($target_handle['path'], 1);
-      $new_size = strlen($handle);
-      if( $new_size > $size) {
-        $size = $new_size;
-        $person = $target->first_name . ' ' . $target->last_name;
+    foreach ($search_groups as $key => $group) {
+      foreach ($group as $index => $value) {
+        $search_groups_formatted[$key][$index] = array($value);
       }
     }
+
+
+    $target_groups = array();
+    foreach ($search_groups_formatted as $search) {
+      $view = views_get_view('targets');
+      $view->query = new springboard_advocacy_views_plugin_query();
+      $view->query->search_terms = $search;
+      $view->query->apiCall = springboard_advocacy_api_call();
+      $view->build();
+      unset($view->query->search_terms['class_name']);
+      $view->set_display('block_3');
+      $view->query->pager->options['items_per_page'] = 10000;
+      $view->pre_execute();
+      $view->execute();
+
+      $target_groups[] = $view->result;
+    }
+    foreach ($target_groups as $tgroup) {
+      foreach ($tgroup as $target) {
+        $count++;
+        $target_handle = parse_url($target->twitter);
+        $handle = '.@' . substr($target_handle['path'], 1);
+        $new_size = strlen($handle);
+        if ($new_size > $size) {
+          $size = $new_size;
+          $person = $target->first_name . ' ' . $target->last_name;
+        }
+      }
+    }
+    drupal_json_output(array(
+      'size' => $size,
+      'count' => $count,
+      'person' => $person
+    ));
   }
-  drupal_json_output(array('size' => $size, 'count' => $count, 'person' => $person));
 }
