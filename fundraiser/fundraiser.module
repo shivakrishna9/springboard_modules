@@ -438,7 +438,6 @@ function fundraiser_node_presave($node) {
     // These are buried under amount_wrapper because we set 'TREE' on that in the form.
     $node->donation_amounts = $node->amount_wrapper['donation_amounts'];
     $node->show_other_amount = $node->amount_wrapper['show_other_amount'];
-    $node->ask_for_quantity = $node->amount_wrapper['ask_for_quantity'];
     $node->minimum_donation_amount = is_numeric($node->amount_wrapper['minimum_donation_amount']) ?
       $node->amount_wrapper['minimum_donation_amount'] : variable_get('fundraiser_default_minimum', 10.00);
     unset($node->amount_wrapper);
@@ -539,7 +538,7 @@ function fundraiser_form_node_form_alter(&$form, &$form_state, $form_id) {
  *
  * It ultimately populates the fundraiser table from which donation forms are created :
  * nid, gateway, receipt_email_from, receipt_email_address, receipt_email_subject, receipt_email_message,
- * donation_amounts, show_other_amount, ask_for_quantity, minimum_donation_amount, confirmation_page_title,
+ * donation_amounts, show_other_amount, minimum_donation_amount, confirmation_page_title,
  * confirmation_page_body, confirmation_page_format, redirect_url.
  */
 function _fundraiser_donation_settings_form(&$form, &$form_state) {
@@ -719,13 +718,6 @@ function _fundraiser_donation_settings_form(&$form, &$form_state) {
     '#description' => t('Use this option if you want to provide an "Other Amount" field in conjunction with the list ' .
       'of Donation Amounts.'),
     '#default_value' => isset($node->show_other_amount) ? $node->show_other_amount : variable_get('fundraiser_default_other', TRUE),
-  );
-  $form['fundraiser_settings']['amount_wrapper']['ask_for_quantity'] = array(
-    '#type' => 'checkbox',
-    '#title' => t('Ask for quantity'),
-    '#description' => t('Use this option if you want to provide a "Quantity" field in conjunction with the list ' .
-      'of Donation Amounts.'),
-    '#default_value' => isset($node->ask_for_quantity) ? $node->ask_for_quantity : FALSE,
   );
   $form['fundraiser_settings']['amount_wrapper']['minimum_donation_amount'] = array(
     '#type' => 'textfield',
@@ -1070,27 +1062,6 @@ function fundraiser_fundraiser_field_info() {
     '#display_callback' => '_fundraiser_currency_field_display',
   );
 
-  $quantity_max = variable_get('fundraiser_default_quantity', '10');
-  $quantitys = range(1, $quantity_max);
-  $formatted_quantitys = '';
-  foreach ($quantitys as $quantity) {
-    $formatted_quantitys .= $quantity . '|' . $quantity . "\n";
-  }
-  $fields['donation']['quantity'] = array(
-    '#title' => t('Quantity'),
-    '#type' => 'select',
-    '#allow_update' => 1,
-    '#extra' => array(
-      'description' => t('The number of these donations to make.'),
-      'items' => $formatted_quantitys,
-      'aslist' => TRUE,
-      'width' => 10,
-    ),
-    '#value' => 1,
-    '#required' => TRUE,
-    '#create_callback' => '_fundraiser_quantity_field_create',
-    '#validate_callback' => '_fundraiser_quantity_field_validate',
-  );
   $fields['donor_information'] = array(
     '#title' => t('Your Information'),
     '#type' => 'fieldset',
@@ -1369,31 +1340,6 @@ function _fundraiser_email_field_validate($form, $form_state, $submission_fields
 }
 
 /**
- * Validation callback for field other_amount. Called during form validation.
- */
-function _fundraiser_quantity_field_validate($form, $form_state, $submission_fields, $value) {
-  // Check for confusing selection.
-  if (empty($submission_fields['quantity'])) {
-    return array('quantity' => t('You did not enter a quantity.'));
-  }
-  // Not numeric.
-  if (!is_numeric($submission_fields['quantity'])) {
-    return array('quantity' => t('You did not enter a valid number.'));
-  }
-}
-
-/**
- * Field callback, called at runtime to update the field with fundraiser specific settings during creation.
- */
-function _fundraiser_quantity_field_create($fundraiser, $field) {
-  if (empty($fundraiser->ask_for_quantity) || !($fundraiser->ask_for_quantity)) {
-    // If empty or false, don't create the field - return empty.
-    return FALSE;
-  }
-  return $field;
-}
-
-/**
  * Field callback, called at runtime to update the field with fundraiser specific settings during creation.
  */
 function _fundraiser_payment_method_field_create($fundraiser, $field) {
@@ -1643,7 +1589,7 @@ function fundraiser_donation_form(&$form, &$form_state) {
       'type' => 'setting',
     );
 
-    // Add class to quantity field
+    // Add class to quantity field (for legacy forms)
     $quantity = _fundraiser_get_form_field($form, 'quantity');
     if (!empty($quantity)) {
       $quantity['#attributes']['class'][] = 'input-medium';
@@ -1927,7 +1873,7 @@ function fundraiser_donation_update($donation, $vocal_mode = TRUE) {
     $donation_record['amount'] = $donation->amount;
   } else if (!empty($donation->donation['amount'])) {
     $donation_record['amount'] = $donation->donation['amount'];
-    // was a quantity (of > 1) specified?
+    // was a quantity (of > 1) specified? (legacy forms)
     if (isset($donation->donation['quantity']) && $donation->donation['quantity'] > 1) {
       // multiply base donation amount by quantity to get the donation total
       $donation_record['amount'] = number_format($donation->donation['amount'] * $donation->donation['quantity'], 2);
