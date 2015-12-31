@@ -1305,7 +1305,6 @@
                     sbaCountable.charCount();
                 },
                 error: function (xhr, textStatus, error) {
-                    Drupal.settings.charCount = 0;
                 }
             });
         }
