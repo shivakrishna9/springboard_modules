@@ -754,6 +754,18 @@ function _fundraiser_donation_settings_form(&$form, &$form_state) {
     '#type' => 'value',
     '#value' => isset($node->receipt_email_message) ? $node->receipt_email_message : '',
   );
+
+  // Share the "Display" fieldset with related modules (e.g., Form Layouts).
+  if (empty($form['springboard_display'])) {
+    $form['springboard_display'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Display settings'),
+      '#collapsible' => TRUE,
+      '#collapsed' => FALSE,
+      '#group' => 'additional_settings',
+    );
+  }
+
   // Add CSS and JS on after build.
   $form['#after_build'][] = '_fundraiser_node_form_after_build';
 }
