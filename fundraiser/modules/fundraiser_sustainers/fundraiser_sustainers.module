@@ -564,6 +564,11 @@ function fundraiser_sustainers_salesforce_genmap_map_fields_alter(&$fields, $con
           $fields['StageName'] = $stagename;
         }
       }
+
+      if ($donation->status == 'auto_canceled') {
+        // Remove the transaction date field for auto canceled sustainers.
+        unset($fields['Transaction_Date_Time__c']);
+      }
     }
   }
 }
