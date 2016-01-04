@@ -459,7 +459,7 @@ function _sba_social_action_create_node_fields($update = false) {
       'bundle' => 'sba_social_action',
       'default_value' => array(
         0 => array(
-          'value' => 1,
+          'value' => 0,
         ),
       ),
       'deleted' => 0,

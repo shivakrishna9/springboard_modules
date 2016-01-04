@@ -411,15 +411,14 @@ function sba_social_action_preview_form($form, $form_state, $node, $messages, $r
  * @return mixed
  */
 function sba_social_actions_reload_form($form, $form_state) {
-
   // Save the Twitter user object after authorization.
   $sid = !empty($_SESSION['social_action_sid']['sid']) ? $_SESSION['social_action_sid']['sid'] : FALSE;
   if ($sid) {
     module_load_include('inc', 'webform', 'includes/webform.submissions');
-    $submission = webform_get_submission($form['#node']->nid, $sid, TRUE);
+    $submission = webform_get_submission($form['#action_node']->nid, $sid, TRUE);
     module_load_include('inc', 'sba_social_action', 'includes/sba_social_action.oauth_cache');
     $twitter_user_cache = sba_social_action_cache_get('sba_twitter');
-    if (!empty($twitter_user_cache)) {
+    if (!empty($twitter_user_cache) && !empty($submission->uid)) {
       sba_social_action_save_twitter_profile($twitter_user_cache, $submission->uid);
     }
   }
