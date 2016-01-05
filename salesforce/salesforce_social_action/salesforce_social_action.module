@@ -35,7 +35,7 @@ function salesforce_social_action_salesforce_genmap_map_fields_alter(&$fields, $
 function salesforce_social_action_node_insert($node) {
   // If node is a message action type.
   if ($node->type == 'sba_social_action') {
-    // And if we have a default map. Salesforce message action default is -20.
+    // And if we have a default map. Salesforce social action default is -30.
     // Only copy the map for fresh inserts. Webform user will handle clones.
     $nid = salesforce_social_action_DEFAULT_MAP_ID;
     if (empty($node->clone_from_original_nid)) {
