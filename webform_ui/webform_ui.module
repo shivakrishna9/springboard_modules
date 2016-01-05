@@ -207,13 +207,19 @@ function webform_ui_submission_results($node) {
   }
 }
 
+function webform_ui_views_pre_build(&$view) {
+  if ($view->name == 'sbv_webform_submissions') {
+    $view->override_path = $_GET['q'];
+  }
+}
+
 /**
  * Implements hook_form_FORM_ID_alter().
  *
  * Add theme wrapper and after build to results page.
  */
 function webform_ui_form_views_exposed_form_alter(&$form, &$form_state, $form_id) {
-  if (arg(2) == 'webform-results') {
+  if (arg(2) == 'webform-results' && variable_get('webform_ui_use_alternate_submission', FALSE)) {
     $form['#theme_wrappers'][] = 'webform_ui_exposed_form_wrapper';
     $form['#after_build'][] = 'webform_ui_exposed_after';
   }
