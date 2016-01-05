@@ -283,10 +283,11 @@ function fundraiser_recent_donors_views_query_alter(&$view, &$query) {
 /**
  * Implements hook_views_post_execute().
  *
- * Replace the raw, currency-agnostic value initial displayed
- * with currency-formatted output.  This is because an adjusted
- * total with any particularlly refunded amount subtracted is
- * a derived value.
+ * Alter the value displayed for partially refunded donations as the
+ * updated value is derived by subtracting the balance from the order total.
+ *
+ * Also exclude any rows whose partially refunded values are below the minimum
+ * opt-in donation amount as defined within this donation's node.
  */
 function fundraiser_recent_donors_views_post_execute(&$view) {
   if ($view->name != 'recent_opt_in_donations' || !isset($view->args[0])) {
@@ -403,7 +404,7 @@ function _fundraiser_recent_donors_add_opt_in_webform_component($node) {
     'nid' => $node->nid,
     'pid' => 0,
     'form_key' => FUNDRAISER_RECENT_DONORS_OPT_IN_FORM_KEY,
-    'name' => t('Opt in '),
+    'name' => t('Opt in') . ' ',
     'type' => 'select',
     'extra' => array(
       'items' => FUNDRAISER_RECENT_DONORS_OPT_IN_FORM_KEY . '|' .
