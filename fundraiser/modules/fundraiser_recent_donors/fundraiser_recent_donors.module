@@ -280,6 +280,50 @@ function fundraiser_recent_donors_views_query_alter(&$view, &$query) {
   $query->add_where(1, 'field_data_commerce_order_total.commerce_order_total_amount', $minimum_value, '>');
 }
 
+/**
+ * Implements hook_views_post_execute().
+ *
+ * Replace the raw, currency-agnostic value initial displayed
+ * with currency-formatted output.  This is because an adjusted
+ * total with any particularlly refunded amount subtracted is
+ * a derived value.
+ */
+function fundraiser_recent_donors_views_post_execute(&$view) {
+  if ($view->name != 'recent_opt_in_donations' || !isset($view->args[0])) {
+    return;
+  }
+  foreach ($view->result as $key => $result) {
+    // Is this a partially refunded order; if so, alter the output to display the correct amount:
+    if ($view->result[$key]->_field_data['commerce_order_fundraiser_donor_opt_in_order_id']['entity']
+      ->status == 'partially_refunded') {
+      $pre_refund_amount = $view->result[$key]->field_commerce_order_total[0]['raw']['amount'];
+      $currency_code = $view->result[$key]->field_commerce_order_total[0]['raw']['currency_code'];
+
+      // Fetch the balance returned to the user so it can be subtracted from the original total:
+      $order_id = $view->result[$key]->commerce_order_fundraiser_donor_opt_in_order_id;
+      $order = commerce_order_load($order_id);
+      $balance = commerce_payment_order_balance($order);
+      $post_refund_balance = $pre_refund_amount - $balance['amount'];
+
+      // If this row's amount is less than or equal to the refund amount then remove this row from output:
+      $min_amount = _fundraiser_recent_donors_get_min_opt_in_donation_amount($view->args[0]);
+      $min_amount = commerce_currency_decimal_to_amount($min_amount, $currency_code, TRUE);
+      if ($post_refund_balance <= $min_amount) {
+        unset($view->result[$key]);
+        continue;
+      }
+
+      // Format the new output:
+      $partial_refund_markup = commerce_currency_format(
+        $post_refund_balance,
+        $view->result[$key]->field_commerce_order_total[0]['raw']['currency_code']
+      );
+      $view->result[$key]->field_commerce_order_total[0]['rendered']['#markup'] = $partial_refund_markup;
+    }
+  }
+  //dpm($view);
+}
+
 
 // Helper functions:
 
