@@ -337,25 +337,6 @@ function webform_ui_submission_delete(&$node, $context = array()) {
 }
 
 /**
- * Action config form(inside the view).
- */
-function webform_ui_submission_delete_views_bulk_operations_form($options) {
-  $options = db_select('webform_component', 'webform_component')
-    ->fields('webform_component', array('cid', 'name'))
-    ->execute()
-    ->fetchAllKeyed(0, 1);
-
-  $form['field'] = array(
-    '#title' => t('Confirmation field'),
-    '#type' => 'select',
-    '#options' => $options,
-    '#description' => t('The field to display on the confirmation field.'),
-    '#default_value' => isset($options['field']) ? $options['field'] : '',
-  );
-  return $form;
-}
-
-/**
  * Perform alterations on the VBO form before it is rendered.
  *
  * @param $form
@@ -395,11 +376,8 @@ function webform_ui_views_bulk_operations_form_alter(&$form, &$form_state, $vbo)
       module_load_include('inc', 'webform', 'includes/webform.submissions');
       foreach ($form_state['values']['views_bulk_operations'] as $key => $status) {
         if ($status) {
-          $field = $vbo->options['vbo_operations'][$form_state['values']['operation']]['settings']['field'];
-          $field = $field ? $field : 'remote_addr';
           $submission = current(webform_get_submissions(array('sid' => $vbo->view->result[$key]->sid)));
-          //dpm($submission);
-          $variables['items'][] = "{$submission->sid} : {$submission->data[$field]['value'][0]}";
+          $variables['items'][] = "{$submission->sid} : {$submission->name}";
         }
       }
 
