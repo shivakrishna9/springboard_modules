@@ -1296,6 +1296,16 @@ function _fundraiser_sustainers_recurs_monthly_field_create($fundraiser, $field)
     );
     $field['#value'] = 'NO_RECURR';
   }
+  // If the donor can choose one-time or recurring, be sure this is radios.
+  // Legacy forms may have a checkbox, in which case we must delete and recreate.
+  if ($fundraiser->recurring_setting == 'user_choice' && module_exists('fundraiser_webform')) {
+    foreach ($fundraiser->webform['components'] as $component) {
+      if ($component['form_key'] == 'recurs_monthly' && !empty($component['extra']['multiple'])) {
+        // Looks like a checkbox. Delete!
+        _fundraiser_webform_delete_component($fundraiser->nid, 'recurs_monthly');
+      }
+    }
+  }
   // Return the field to be created. Aka: user_choice
   return $field;
 }
