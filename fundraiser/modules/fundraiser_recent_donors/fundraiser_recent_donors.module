@@ -54,6 +54,8 @@ function fundraiser_recent_donors_form_alter(&$form, &$form_state, $form_id) {
     if (isset($form['#node']->nid)) {
       $show_greater_than = _fundraiser_recent_donors_get_min_opt_in_donation_amount($form['#node']->nid);
     }
+
+    // The currency for the "Only show donations greater than" is whatever the node's default currency setting is:
     $form['springboard_display']['recent_donors_list']['show_recent_donation_greater_than'] = array(
       '#type' => 'textfield',
       '#title' => t('Only show donations greater than'),
@@ -67,7 +69,20 @@ function fundraiser_recent_donors_form_alter(&$form, &$form_state, $form_id) {
           ':input[name="allow_recent_donations_opt_in"]' => array('checked' => TRUE),
         ),
       ),
-    ); 
+    );
+
+    // Adjust this field's HTML so prefic/suffix symbols are inline; add the symbols:
+    $form['#attached']['js'][] =  drupal_get_path('module', 'fundraiser_recent_donors') . '/js/fundraiser_recent_donors.js';
+    $form['#attached']['css'][] =  drupal_get_path('module', 'fundraiser_recent_donors') . '/css/fundraiser_recent_donors.css';
+    $currency = fundraiser_get_currency_from_node($form['#node']);
+    if ($currency['symbol_placement'] == 'before') { 
+      $currency_symbol = '<span class="recent-donors-currency-symbol-before">' . $currency['symbol'] . '</span>';
+      $form['springboard_display']['recent_donors_list']['show_recent_donation_greater_than']['#prefix'] = $currency_symbol;
+    } else {
+      $currency_symbol = '<span class="recent-donors-currency-symbol-after">' . $currency['symbol'] . '</span>';
+      $form['springboard_display']['recent_donors_list']['show_recent_donation_greater_than']['#suffix'] = $currency_symbol;
+    }
+ 
     $form['#validate'][] = '_fundraiser_recent_donors_node_edit_validate';
     $form['#submit'][] = '_fundraiser_recent_donors_node_edit_submit';
     return;
