@@ -2575,6 +2575,43 @@ function fundraiser_commerce_form_rules_ui_edit_element_alter(&$form, &$form_sta
 }
 
 /**
+ * Implements hook_form_FORM_ID_alter().
+ *
+ * Prevent disabling of a gateway if it is in use on a donation form by
+ * disabling the submit button on the confirmation form.
+ */
+function fundraiser_commerce_form_rules_ui_form_rules_config_confirm_op_alter(&$form, &$form_state) {
+  // Seems like there should be a better way to find the rule id than arg()
+  $rule = rules_config_load(arg(5));
+  // Take action only on rules provided by commerce_payment.
+  if ($rule->module == 'commerce_payment') {
+    // Select all records so we can search inside the serizalied gateways field.
+    $donation_forms = db_query("SELECT nid, gateways FROM {fundraiser}");
+    if ($donation_forms) {
+      while ($donation_form = $donation_forms->fetchAssoc()) {
+        $gateways = unserialize($donation_form['gateways']);
+        foreach ($gateways as $gateway) {
+          if (!empty($gateway['id'])) {
+            if (strpos($gateway['id'], $rule->name) && $gateway['status'] == 1) {
+              // Disable the submit button and create user message.
+              $form['actions']['submit']['#disabled'] = TRUE;
+              $node_title = db_query('SELECT title FROM {node} WHERE nid = :nid', array(':nid' => $donation_form['nid']))->fetchField();
+              $message = t('The payment gateway <em>@rule_label</em> cannot be disabled because it is in use by the donation form called <a href="@donation_form">@node_title</a>. Please disable it there and try again.',
+                array(
+                  '@rule_label' => $rule->label,
+                  '@donation_form' => url('node/' . $donation_form['nid']),
+                  '@node_title' => $node_title,
+                ));
+              drupal_set_message($message, 'warning');
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+/**
  * Log the payment method form settings
  */
 function fundraiser_commerce_gateway_log_gateway_settings_changes($form, $form_state) {
