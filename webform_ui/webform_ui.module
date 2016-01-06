@@ -222,6 +222,13 @@ function webform_ui_form_views_exposed_form_alter(&$form, &$form_state, $form_id
   if (arg(2) == 'webform-results' && variable_get('webform_ui_use_alternate_submission', FALSE)) {
     $form['#theme_wrappers'][] = 'webform_ui_exposed_form_wrapper';
     $form['#after_build'][] = 'webform_ui_exposed_after';
+    if ($form['#id'] == 'views-exposed-form-sbv-webform-submissions-block-1') {
+      $format = 'n/j/Y';
+      $form['date_filter']['min']['#title'] = t('Submitted between');
+      $form['date_filter']['max']['#title'] = t('and');
+      $form['date_filter']['min']['#date_format'] = $format;
+      $form['date_filter']['max']['#date_format'] = $format;
+    }
   }
 }
 
@@ -465,4 +472,10 @@ function webform_ui_element_process_text_format($element) {
     }
   }
   return $element;
+}
+
+function webform_ui_date_views_extra_tables() {
+  return array(
+    'webform_submissions' => 'webform',
+  );
 }
