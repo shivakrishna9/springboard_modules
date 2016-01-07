@@ -78,7 +78,8 @@ function fundraiser_recent_donors_form_alter(&$form, &$form_state, $form_id) {
     if ($currency['symbol_placement'] == 'before') { 
       $currency_symbol = '<span class="recent-donors-currency-symbol-before">' . $currency['symbol'] . '</span>';
       $form['springboard_display']['recent_donors_list']['show_recent_donation_greater_than']['#prefix'] = $currency_symbol;
-    } else {
+    }
+    else {
       $currency_symbol = '<span class="recent-donors-currency-symbol-after">' . $currency['symbol'] . '</span>';
       $form['springboard_display']['recent_donors_list']['show_recent_donation_greater_than']['#suffix'] = $currency_symbol;
     }
@@ -102,11 +103,6 @@ function fundraiser_recent_donors_form_alter(&$form, &$form_state, $form_id) {
       '#description' => _fundraiser_recent_donors_render_donation_block(),
       '#weight' => 99999,
     );
-  }
-
-  // Handle the "Pre-popualte the node form fields" method for cloning a node:
-  if ($arg2 == 'clone') {
-    _fundraiser_recent_donors_clone_opt_in_data_on_clone_form_submit($form, $form['#node']->nid);
   }
 }
 
@@ -191,10 +187,27 @@ function _fundraiser_recent_donors_node_edit_submit($form, &$form_state) {
 
 /**
  * Implements hook_node_insert().
+
+ * 1. Add the opt-in checkbox if opt-in is enabled for this node.
+ * 
+ * 2. When a donation form node is cloned by the node_clone module, also copy its opt-in settings.
+ *
+ * Those settings are:
+ * - Is opt-in enabled for this node
+ * - What is the opt-in minimum value for a donation to be displayed.
  */
 function fundraiser_recent_donors_node_insert($node) {
-  // Add the opt-in checkbox if opt-in is enabled for this node:
+  if (!fundraiser_is_donation_type($node->type)) {
+    return;
+  }
+
+  // Add the opt-in checkbox if needed:
   _fundraiser_recent_donors_add_opt_in_webform_component($node);
+
+  // Duplicate opt-in data if this node is being created via the node_clone module:
+  if (isset($node->clone_from_original_nid)) {
+    _fundraiser_recent_donors_clone_node_optin_data($node->clone_from_original_nid, $node->nid);
+  }
 }
 
 /**
@@ -345,40 +358,6 @@ function fundraiser_recent_donors_views_post_execute(&$view) {
 }
 
 
-// Node clone support:
-
-/**
- * Implements hook_clone_node_alter() from Node clone module.
- *
- * From: http://drupal.org/node/1256478
- * 
- * When the cloning method is "save-edit", this copies node-specific, opt-in settings.
- *
- * Those settings are:
- * 1. Is opt-in enabled for this node
- * 2. What is the opt-in minimum value for a donation to be displayed.
- */
-function fundraiser_recent_donors_clone_node_alter(&$node, $context) {
-  drupal_set_message('<pre>' . print_r($node, 1) . '</pre>');
-  drupal_set_message('<pre>' . print_r($context, 1) . '</pre>');
-  if ($context['method'] == 'save-edit') {
-
-    // Get the ID of the next node to be created:
-    $new_nid = db_query("SELECT LAST_INSERT_ID() FROM {node}")->fetchAssoc();
-    drupal_set_message('nid: "' . print_r($new_nid, 1) . '"');
-    
-    //_fundraiser_reent_donors_clone_node_optin_data($context['original_node']->nid, $new_nid);
-  }
-}
-
-/**
- * Copies opt-in data when a node is being cloned using the "Pre-populate the node form fields" method.
- */
-function _fundraiser_recent_donors_clone_opt_in_data_on_clone_form_submit(&$form, $original_nid) {
-  dpm($form);
-}
-
-
 // Helper functions:
 
 /**
@@ -390,14 +369,13 @@ function _fundraiser_recent_donors_clone_opt_in_data_on_clone_form_submit(&$form
  * @param $new_nid
  *   The node ID of the newly cloned donation form.
  */
-function _fundraiser_reent_donors_clone_node_optin_data($original_nid, $new_nid) {
+function _fundraiser_recent_donors_clone_node_optin_data($original_nid, $new_nid) {
   // Fetch the original node's opt-in data:
   $opt_in_query = db_query("SELECT min_donation_amount, visibility " .
     "FROM {fundraiser_donation_opt_in_block} " .
     "WHERE nid = :nid",
     array(':nid' => $original_nid));
   foreach ($opt_in_query as $data) {
-    dpm($data);
     // Duplicate the original node's opt-in data for the newly cloned node:
     db_query("INSERT INTO {fundraiser_donation_opt_in_block} " .
       "(nid, min_donation_amount, visibility) VALUES (:nid, :min_donation_amount, :visibility)",
