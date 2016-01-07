@@ -229,6 +229,7 @@ function sba_social_action_preview_form($form, $form_state, $node, $messages, $r
     $count++;
 
     $prepend = !empty($this_message['prepend']['#value']) ? '.' : '';
+    $send_tweet ='';
     if (isset($this_message['body_show'])) {
       $message_alt = field_get_items('sba_message', $message_entity, 'field_sba_twitter_message');
       $alternatives = array();
@@ -238,12 +239,11 @@ function sba_social_action_preview_form($form, $form_state, $node, $messages, $r
           $alternatives[] = $alt_tweet;
         }
       }
-
+      static $n = 0;
       // $random_array is defined in the build function so that it does not
       // change after the form ajax reload.
       if (isset($random_array[$message_entity->sba_message_id])) {
         $rand_count = count($random_array[$message_entity->sba_message_id]);
-        static $n = 0;
         $rand_mess = $random_array[$message_entity->sba_message_id];
         $tweet = $alternatives[$rand_mess[$n]];
       }
