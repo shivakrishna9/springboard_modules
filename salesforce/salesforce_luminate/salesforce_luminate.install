@@ -2213,9 +2213,9 @@ function salesforce_luminate_update_7001(&$sandbox) {
     $sandbox['progress'] ++;
   }
 
-  $sandbox['#finished'] = empty($sandbox['max']) ? 1 : ($sandbox['progress'] / $sandbox['max']);
+  $return = array(
+    '#finished' => empty($sandbox['max']) ? 1 : ($sandbox['progress'] / $sandbox['max']),
+  );
 
-  if ($sandbox['#finished'] >= 1) {
-    return t('Luminate fundraiser sustainers have been updated with luminate_installment_period and luminate_day_of_month values.');
-  }
+  return $return;
 }
