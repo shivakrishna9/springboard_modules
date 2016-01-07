@@ -142,7 +142,7 @@ function _fundraiser_recent_donors_node_edit_validate($form, &$form_state) {
     $min_amount = $form_state['values']['show_recent_donation_greater_than'];
     if (!is_numeric($min_amount) || $min_amount < 0) {
       form_set_error('show_recent_donation_greater_than',
-        t('Please enter a number greater than 0 within the "Only show donations greater than" field.'));
+        t('Please enter a valid number in the "Only show donations greater than" field.'));
     }
   }
 }
