@@ -1492,19 +1492,24 @@ function fundraiser_sustainers_recurring_conflict_validate(&$form, &$form_state)
  * Our donation form submit handler runs before all other fundraiser- and webform-related handlers.
  */
 function fundraiser_sustainers_donation_form_submit(&$form, &$form_state) {
-  // Is it a recurring donation being submitted?
-  if (_fundraiser_sustainers_get_form_state_value($form_state, 'recurs_monthly') == 'recurs'
-    && !empty($form['#node']->recurring_dual_ask_amounts)
-  ) {
-    // Replace the standard donation amount with the donor's recurring amount.
-    $recurring_amount = _fundraiser_sustainers_get_form_state_value($form_state, 'recurring_amount');
-    if ($recurring_amount == 'other') {
-      $recurring_amount = _fundraiser_sustainers_get_form_state_value($form_state, 'recurring_other_amount');
-    }
-    if (empty($recurring_amount) || !_fundraiser_sustainers_update_form_state_value($form_state, 'amount', $recurring_amount)) {
-      // Problem! We couldn't find a recurring amount for this recurring donation.
-      _fundraiser_sustainers_update_form_state_value($form_state, 'amount', NULL);
-      form_set_error('recurs_monthly', "Thank you for choosing a monthly donation! However, no monthly donation amount was set, so your donation could not be processed.");
+  // Are there recurring ask amounts?
+  if (!empty($form['#node']->recurring_dual_ask_amounts)) {
+    // Is it a recurring donation being submitted?
+    if (_fundraiser_sustainers_get_form_state_value($form_state, 'recurs_monthly') == 'recurs') {
+      // Replace the standard donation amount with the donor's recurring amount.
+      $recurring_amount = _fundraiser_sustainers_get_form_state_value($form_state, 'recurring_amount');
+      if ($recurring_amount == 'other') {
+        $recurring_amount = _fundraiser_sustainers_get_form_state_value($form_state, 'recurring_other_amount');
+      }
+      if (empty($recurring_amount) || !_fundraiser_sustainers_update_form_state_value($form_state, 'amount', $recurring_amount)) {
+        // Problem! We couldn't find a recurring amount for this recurring donation.
+        _fundraiser_sustainers_update_form_state_value($form_state, 'amount', NULL);
+        form_set_error('recurs_monthly', "Thank you for choosing a monthly donation! However, no monthly donation amount was set, so your donation could not be processed.");
+      }
+    } else {
+      // For a one-time donation, we don't want a recurring amount saved to the webform.
+      _fundraiser_sustainers_update_form_state_value($form_state, 'recurring_amount', NULL);
+      _fundraiser_sustainers_update_form_state_value($form_state, 'recurring_other_amount', NULL);
     }
   }
 }
