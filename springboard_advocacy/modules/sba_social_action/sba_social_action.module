@@ -843,29 +843,27 @@ function sba_social_action_token_info() {
 function sba_social_action_tokens($type, $tokens, $data = array(), $options = array()) {
   $replacements = array();
 
-  if (isset($data['node'])) {
-    $node = $data['node'];
-  }
-  elseif(arg(0) == 'node' && is_numeric(arg(1))) {
-    $node = node_load(arg(1));
-  }
-
-  if (isset($node->webform['redirect_url']) && $node->webform['redirect_url'] != '<confirmation>') {
-    $redirect = $node->webform['redirect_url'];
-  }
-  else {
-    $redirect = request_uri();
-  }
-  module_load_include('inc', 'sba_social_action', 'includes/sba_social_action.oauth_cache');
-  $twitter_user_cache = sba_social_action_cache_get('sba_twitter');
-
   if ($type == 'social_action') {
+
+    if (isset($data['node'])) {
+      $node = $data['node'];
+    }
+    elseif(arg(0) == 'node' && is_numeric(arg(1))) {
+      $node = node_load(arg(1));
+    }
+    $redirect = request_uri();
+    if (!empty($node) && isset($node->webform['redirect_url']) && $node->webform['redirect_url'] != '<confirmation>') {
+      $redirect = $node->webform['redirect_url'];
+    }
+
+    module_load_include('inc', 'sba_social_action', 'includes/sba_social_action.oauth_cache');
+    $twitter_user_cache = sba_social_action_cache_get('sba_twitter');
     foreach ($tokens as $name => $original) {
 
       switch ($name) {
         case 'twitter_timeline':
           $widget = '';
-          if (!empty($twitter_user_cache)) {
+          if (!empty($twitter_user_cache) && !empty($node)) {
             $widget = theme('sba_social_action_twitter_timeline', array(
               'sba_twitter' => $twitter_user_cache,
               'node' => $node
