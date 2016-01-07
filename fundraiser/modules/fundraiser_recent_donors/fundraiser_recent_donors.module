@@ -103,6 +103,11 @@ function fundraiser_recent_donors_form_alter(&$form, &$form_state, $form_id) {
       '#weight' => 99999,
     );
   }
+
+  // Handle the "Pre-popualte the node form fields" method for cloning a node:
+  if ($arg2 == 'clone') {
+    _fundraiser_recent_donors_clone_opt_in_data_on_clone_form_submit($form, $form['#node']->nid);
+  }
 }
 
 /**
@@ -337,14 +342,76 @@ function fundraiser_recent_donors_views_post_execute(&$view) {
       $view->result[$key]->field_commerce_order_total[0]['rendered']['#markup'] = $partial_refund_markup;
     }
   }
-  //dpm($view);
+}
+
+
+// Node clone support:
+
+/**
+ * Implements hook_clone_node_alter() from Node clone module.
+ *
+ * From: http://drupal.org/node/1256478
+ * 
+ * When the cloning method is "save-edit", this copies node-specific, opt-in settings.
+ *
+ * Those settings are:
+ * 1. Is opt-in enabled for this node
+ * 2. What is the opt-in minimum value for a donation to be displayed.
+ */
+function fundraiser_recent_donors_clone_node_alter(&$node, $context) {
+  drupal_set_message('<pre>' . print_r($node, 1) . '</pre>');
+  drupal_set_message('<pre>' . print_r($context, 1) . '</pre>');
+  if ($context['method'] == 'save-edit') {
+
+    // Get the ID of the next node to be created:
+    $new_nid = db_query("SELECT LAST_INSERT_ID() FROM {node}")->fetchAssoc();
+    drupal_set_message('nid: "' . print_r($new_nid, 1) . '"');
+    
+    //_fundraiser_reent_donors_clone_node_optin_data($context['original_node']->nid, $new_nid);
+  }
+}
+
+/**
+ * Copies opt-in data when a node is being cloned using the "Pre-populate the node form fields" method.
+ */
+function _fundraiser_recent_donors_clone_opt_in_data_on_clone_form_submit(&$form, $original_nid) {
+  dpm($form);
 }
 
 
 // Helper functions:
 
 /**
- * Helper function to check whether a given form has recent donation opt-in enabled:
+ * Duplicates the node-specific, opt-in settings for a given node.
+ * This is used during node cloning.
+ *
+ * @param $original_nid
+ *   The node ID of the original donation form.
+ * @param $new_nid
+ *   The node ID of the newly cloned donation form.
+ */
+function _fundraiser_reent_donors_clone_node_optin_data($original_nid, $new_nid) {
+  // Fetch the original node's opt-in data:
+  $opt_in_query = db_query("SELECT min_donation_amount, visibility " .
+    "FROM {fundraiser_donation_opt_in_block} " .
+    "WHERE nid = :nid",
+    array(':nid' => $original_nid));
+  foreach ($opt_in_query as $data) {
+    dpm($data);
+    // Duplicate the original node's opt-in data for the newly cloned node:
+    db_query("INSERT INTO {fundraiser_donation_opt_in_block} " .
+      "(nid, min_donation_amount, visibility) VALUES (:nid, :min_donation_amount, :visibility)",
+      array(
+        ':nid' => $new_nid,
+        ':min_donation_amount' => $data->min_donation_amount,
+        ':visibility' => $data->visibility,
+      ));
+    break; // There shouldn't be more than one record per node, but just in case.
+  }
+}
+
+/**
+ * Checks whether a given form has recent donation opt-in enabled:
  *
  * @param $nid
  *   Node ID of the donation form in question.
@@ -359,7 +426,7 @@ function _fundraiser_recent_donors_opt_in_enabled($nid) {
 }
 
 /**
- * Helper function to return the minimum opt-in donation amount for results to be displayed
+ * Returns the minimum opt-in donation amount for results to be displayed
  * in the associated view.
  *
  * @param $nid
@@ -376,7 +443,7 @@ function _fundraiser_recent_donors_get_min_opt_in_donation_amount($nid) {
 }
 
 /**
- * Helper function to display the rendered HTML of the recent op-in donations block.
+ * Displays the rendered HTML of the recent op-in donations block.
  */
 function _fundraiser_recent_donors_render_donation_block() {
   // Display nothing if the opt-in feature is not enabled for the current node:
@@ -392,7 +459,7 @@ function _fundraiser_recent_donors_render_donation_block() {
 }
 
 /**
- * Helper function to insert the opt-in checkbox onto the donation webform if it
+ * Inserts the opt-in checkbox onto the donation webform if it
  * does not already exist:
  *
  * @params $node
