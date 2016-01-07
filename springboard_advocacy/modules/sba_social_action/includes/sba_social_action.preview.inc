@@ -21,7 +21,12 @@ function sba_social_action_message_preview_page($nid) {
 
       // Create a randomized array of message ids for random display of alternate tweet texts in the form
       // Placed here to avoid complications from ajax reload after twitter authentication.
-      $mess = count($node->messages[$message['message_id']]->field_sba_twitter_message[LANGUAGE_NONE]);
+      if(!empty($node->messages[$message['message_id']]->field_sba_twitter_message[LANGUAGE_NONE])) {
+        $mess = count($node->messages[$message['message_id']]->field_sba_twitter_message[LANGUAGE_NONE]);
+      }
+      else {
+        $mess = 0;
+      }
 
       for ($x=0; $x<$mess; $x++) {
         $random_array[$node->messages[$message['message_id']]->sba_message_id][] = mt_rand(0, $mess - 1);
@@ -39,6 +44,7 @@ function sba_social_action_message_preview_page($nid) {
       $messages[$node->messages[$message['message_id']]->data['weight'] . $message['person']['organization'] . $message['targets']->last_name] = $message;
     }
   }
+  ksort($messages);
 
   if(!empty($node->field_sba_test_mode[0]['value'])) {
     drupal_set_message('This action is in test mode. Messages will not be not sent.', 'warning', TRUE);
@@ -235,14 +241,19 @@ function sba_social_action_preview_form($form, $form_state, $node, $messages, $r
 
       // $random_array is defined in the build function so that it does not
       // change after the form ajax reload.
-      $rand_count = count($random_array[$message_entity->sba_message_id]);
-      static $n = 0;
-      $rand_mess = $random_array[$message_entity->sba_message_id];
-      $tweet = $alternatives[$rand_mess[$n]];
+      if (isset($random_array[$message_entity->sba_message_id])) {
+        $rand_count = count($random_array[$message_entity->sba_message_id]);
+        static $n = 0;
+        $rand_mess = $random_array[$message_entity->sba_message_id];
+        $tweet = $alternatives[$rand_mess[$n]];
+      }
+      else {
+        $tweet = current($alternatives);
+      }
       $display_tweet = nl2br(check_plain($tweet));
       $send_tweet = $tweet;
       $this_message['body_show']['#markup'] = $display_tweet;
-      if ($n < ($rand_count - 1)) {
+      if (isset($rand_count) && $n < ($rand_count - 1)) {
         $n++;
       }
       else {
@@ -400,15 +411,14 @@ function sba_social_action_preview_form($form, $form_state, $node, $messages, $r
  * @return mixed
  */
 function sba_social_actions_reload_form($form, $form_state) {
-
   // Save the Twitter user object after authorization.
   $sid = !empty($_SESSION['social_action_sid']['sid']) ? $_SESSION['social_action_sid']['sid'] : FALSE;
   if ($sid) {
     module_load_include('inc', 'webform', 'includes/webform.submissions');
-    $submission = webform_get_submission($form['#node']->nid, $sid, TRUE);
+    $submission = webform_get_submission($form['#action_node']->nid, $sid, TRUE);
     module_load_include('inc', 'sba_social_action', 'includes/sba_social_action.oauth_cache');
     $twitter_user_cache = sba_social_action_cache_get('sba_twitter');
-    if (!empty($twitter_user_cache)) {
+    if (!empty($twitter_user_cache) && !empty($submission->uid)) {
       sba_social_action_save_twitter_profile($twitter_user_cache, $submission->uid);
     }
   }

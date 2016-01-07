@@ -1071,6 +1071,10 @@ function springboard_advocacy_views_exposed_form_ajax_lookup_recursive($elements
 
 function springboard_advocacy_ajax_search() {
 
+  if (!isset($_POST['query'])) {
+   return;
+  }
+
   $values = $_POST['query'];
   $search_groups = array();
   $search_groups_formatted = array();
@@ -1078,30 +1082,28 @@ function springboard_advocacy_ajax_search() {
   $count = 0;
   $person = '';
 
-  if (!empty($values)) {
-
-    foreach ($values as  $key => $search_terms) {
-      if (isset($search_terms['id'])) {
-        $count++;
-        $target_handle = parse_url(urldecode($search_terms['twitter']));
-        $handle = '.@' . substr($target_handle['path'], 1);
-        $new_size = strlen($handle);
-        if( $new_size > $size) {
-          $size = $new_size;
-        }
-      }
-      elseif (isset($search_terms['ids'])) {
-        unset($search_terms['ids']);
-        $search_groups[$key] = $search_terms;
-      }
-      else {
-        $search_groups[$key] = $search_terms;
+  foreach ($values as $key => $search_terms) {
+    if (isset($search_terms['id'])) {
+      $count++;
+      $target_handle = parse_url(urldecode($search_terms['twitter']));
+      $handle = '.@' . substr($target_handle['path'], 1);
+      $new_size = strlen($handle);
+      if ($new_size > $size) {
+        $size = $new_size;
       }
     }
+    elseif (isset($search_terms['ids'])) {
+      unset($search_terms['ids']);
+      $search_groups[$key] = $search_terms;
+    }
+    else {
+      $search_groups[$key] = $search_terms;
+    }
   }
+
   foreach ($search_groups as $key => $group) {
     foreach ($group as $index => $value) {
-      $search_groups_formatted[$key][$index] =  array($value);
+      $search_groups_formatted[$key][$index] = array($value);
     }
   }
 
@@ -1127,11 +1129,16 @@ function springboard_advocacy_ajax_search() {
       $target_handle = parse_url($target->twitter);
       $handle = '.@' . substr($target_handle['path'], 1);
       $new_size = strlen($handle);
-      if( $new_size > $size) {
+      if ($new_size > $size) {
         $size = $new_size;
         $person = $target->first_name . ' ' . $target->last_name;
       }
     }
   }
-  drupal_json_output(array('size' => $size, 'count' => $count, 'person' => $person));
+  drupal_json_output(array(
+    'size' => $size,
+    'count' => $count,
+    'person' => $person
+  ));
+
 }
