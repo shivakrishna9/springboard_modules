@@ -453,7 +453,6 @@ function _fundraiser_recent_donors_add_opt_in_webform_component($node) {
 
   // Do nothing if the opt-in checkbox's form_key already exists on the form:
   $highest_component_weight = 0;
-  dpm($node->webform['components']);
   foreach ($node->webform['components'] as $component) {
     // Find the Payment Information pid if it exists so the opt-in checkbox can be placed within it:
     if ($component['form_key'] == 'payment_method' && !empty($component['pid'])) {
