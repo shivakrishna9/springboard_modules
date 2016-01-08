@@ -53,18 +53,6 @@ function fundraiser_sustainers_requirements($phase) {
 }
 
 /**
- * Implements hook_update_dependencies().
- */
-function fundraiser_sustainers_update_dependencies() {
-  // We need the NPSP module to create the series table.
-  $dependencies['fundraiser_sustainers'][7013] = array(
-    'salesforce_npsp' => 7001,
-  );
-
-  return $dependencies;
-}
-
-/**
  * Implements hook_schema().
  */
 function fundraiser_sustainers_schema() {
@@ -854,9 +842,9 @@ function fundraiser_sustainers_update_7013(&$sandbox) {
     $sandbox['current_did'] = $row->master_did;
   }
 
-  $sandbox['#finished'] = empty($sandbox['max']) ? 1 : ($sandbox['progress'] / $sandbox['max']);
+  $return = array(
+    '#finished' => empty($sandbox['max']) ? 1 : ($sandbox['progress'] / $sandbox['max']),
+  );
 
-  if ($sandbox['#finished'] >= 1) {
-    return t('Fundraiser sustainers donations have been migrated to fundraiser sustainers series entities.');
-  }
+  return $return;
 }
