@@ -97,7 +97,6 @@ function fundraiser_recent_donors_views_default_views() {
   $handler->display->display_options['filters']['status']['relationship'] = 'did';
   $handler->display->display_options['filters']['status']['value'] = array(
     'payment_received' => 'payment_received',
-    'partially_refunded' => 'partially_refunded',
   );
 
   /* Display: Block */
