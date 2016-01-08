@@ -1,0 +1,41 @@
+<?php
+
+/**
+ * @file
+ *
+ * @TODO remove variables at uninstall.
+ */
+
+function silverpop_transact_install() {
+  $directory = "private://failed-silverpop-data";
+  file_prepare_directory($directory, FILE_CREATE_DIRECTORY);
+}
+
+/**
+ * Implements hook_requirements().
+ * @TODO file_prepare_directory() does not seem to work.
+ */
+function silverpop_transact_requirements($phase) {
+  $requirements = array();
+  if ($phase == 'runtime') {
+    $directory = "private://failed-silverpop-data";
+    $directory_exists = file_prepare_directory($directory);
+    if($directory_exists) {
+      $requirements['silverpop'] = array(
+        'title' => t('Silverpop Transact directory'),
+        'description' => t('The directory for storing failed Silverpop Transact transmission exists and is writable.'),
+        'value' => t('Exists'),
+        'severity' => REQUIREMENT_OK,
+      );
+    }
+    else {
+      $requirements['silverpop'] = array(
+        'title' => t('Silverpop Transact directory'),
+        'description' => t('The directory for storing failed Silverpop Transact transmission does not exist or is not writable.'),
+        'value' => t('Does not exist'),
+        'severity' => REQUIREMENT_WARNING,
+      );
+    }
+  }
+  return $requirements;
+}
