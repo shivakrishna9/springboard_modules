@@ -1,18 +1,15 @@
 <?php
-
 /**
  * @file
- *
- * @TODO review documentation.
+ * Provides integration with Silverpop Transact.
  */
 
-define('SILVERPOP_FTP_ADDRESS', 'transfer%.silverpop.com');
-define('SILVERPOP_DEFAULT_CAMPAIGN', variable_get('silverpop_transact_mailing_id'));
+define('SILVERPOP_TRANSACT_FTP_ADDRESS', 'transfer%.silverpop.com');
+define('SILVERPOP_TRANSACT_DEFAULT_CAMPAIGN', variable_get('silverpop_transact_mailing_id'));
 
 /**
  * Implements hook_menu().
  */
-
 function silverpop_transact_menu() {
   $items['admin/config/services/silverpop/transact'] = array(
     'page callback' => 'drupal_get_form',
@@ -21,7 +18,7 @@ function silverpop_transact_menu() {
     'title' => 'Silverpop Transact',
     'type' => MENU_NORMAL_ITEM,
     'file' => 'silverpop_transact.forms.admin.inc',
-    'description' => 'Manage Silverpop Transact settings.'
+    'description' => 'Manage Silverpop Transact settings.',
   );
 
   return $items;
@@ -29,7 +26,6 @@ function silverpop_transact_menu() {
 
 /**
  * Implements hook_theme().
- *
  */
 function silverpop_transact_theme($existing, $type, $theme, $path) {
   return array(
@@ -87,21 +83,22 @@ function silverpop_transact_rules_action_info() {
 }
 
 /**
- * silverpop_transact_create_mailing()
+ * Silverpop_transact_create_mailing().
  *
  * Creates an XML object compliant with the Silverpop Transact API and
  * submits the object to Silverpop utilizing the Silverpop API module.
  *
- * @param $mailing_id
- *
- * @param $recipient_email
- *
- * @param $personalization_string
- *
+ * @param string $mailing_id
+ *   Defaults to SILVERPOP_TRANSACT_DEFAULT_CAMPAIGN if NULL is passed in.
+ * @param string $recipient_email
+ *   Email of the recipient.
+ * @param string $personalization_string
+ *    List of key|value pairs for values to be replaced in the Silverpop
+ *    Transact template.
  */
-function silverpop_transact_create_mailing($mailing_id = NULL, $recipient_email, $personalization_string = '', $save_columns = FALSE, $html_body = '') {
-  if(!is_array($personalization_string)) {
-    // Interperet the personalization string into a keyed array
+function silverpop_transact_create_mailing($mailing_id, $recipient_email, $personalization_string = '', $save_columns = FALSE, $html_body = '') {
+  if (!is_array($personalization_string)) {
+    // Interperet the personalization string into a keyed array.
     $personalization_items = explode("\n", $personalization_string);
     $personalization = array();
     foreach ($personalization_items as $item) {
@@ -113,23 +110,28 @@ function silverpop_transact_create_mailing($mailing_id = NULL, $recipient_email,
     $personalization = $personalization_string;
   }
 
-  // If $html_body is populated, add it as a value to the $personalization array
-  if($html_body != '') {
+  // If $html_body is populated, add it to the $personalization array.
+  if ($html_body != '') {
     $personalization['INBOUND_HTML'] = "<![CDATA[" . $html_body . "]]>";
   }
 
   // If mailing ID is not provided, use the default.
-  if($mailing_id == NULL) {
-    $mailing_id = SILVERPOP_DEFAULT_CAMPAIGN;
+  if ($mailing_id == NULL) {
+    $mailing_id = SILVERPOP_TRANSACT_DEFAULT_CAMPAIGN;
   }
 
   // Render and save the XML data to be sent to Silverpop.
-  $data = theme('silverpop_transact_mail', array('mailing_id' => $mailing_id, 'save_columns' => $save_columns, 'recipient_email' => $recipient_email, 'personalization' => $personalization));
+  $data = theme('silverpop_transact_mail', array(
+    'mailing_id' => $mailing_id,
+    'save_columns' => $save_columns,
+    'recipient_email' => $recipient_email,
+    'personalization' => $personalization,
+  ));
   // Connect to Silverpop Transact.
   $connection = silverpop_transact_connect();
-  if($connection) {
+  if ($connection) {
     $file = file_unmanaged_save_data($data, "public://", FILE_EXISTS_RENAME);
-    // Get the url of the file to be sent to Silverpop
+    // Get the url of the file to be sent to Silverpop.
     $file_url = file_create_url($file);
 
     // Attempt to send the XML file to Silverpop.
@@ -150,7 +152,12 @@ function silverpop_transact_create_mailing($mailing_id = NULL, $recipient_email,
 
 /**
  * Saves the Silverpop Transact data permanently in the file system.
- * @param $data
+ *
+ * @param string $data
+ *   Data to be saved.
+ *
+ * @return string
+ *   A string with the path of the resulting file, or FALSE on error.
  */
 function silverpop_transact_save_transact_data($data) {
   $file = file_unmanaged_save_data($data, "private://failed-silverpop-data/" . date('d-m-Y-GHisu'), FILE_EXISTS_RENAME);
@@ -158,15 +165,18 @@ function silverpop_transact_save_transact_data($data) {
 }
 
 /**
+ * Opens an FTP connection to Silverpop.
  *
+ * @return ojbect
+ *   FTP stream on success or FALSE on error.
  */
 function silverpop_transact_connect() {
-  $connection_address = str_replace('%', variable_get('silverpop_transact_apihost'), SILVERPOP_FTP_ADDRESS);
+  $connection_address = str_replace('%', variable_get('silverpop_transact_apihost'), SILVERPOP_TRANSACT_FTP_ADDRESS);
   $username = variable_get('silverpop_transact_username');
   $password = silverpop_transact_get_password();
   // Connect to Silverpop Transact.
   $connection = ftp_connect($connection_address);
-  if($connection) {
+  if ($connection) {
     $login = ftp_login($connection, $username, $password);
     if ($login) {
       return $connection;
@@ -175,7 +185,8 @@ function silverpop_transact_connect() {
       watchdog('silverpop_transact', 'There was an error logging in to the Silverpop Transact server. Please check your configuration settings.', array(), WATCHDOG_ERROR);
       return FALSE;
     }
-  } else {
+  }
+  else {
     watchdog('silverpop_transact', 'There was an error connecting to the Silverpop Transact server. Please check your configuration settings.', array(), WATCHDOG_ERROR);
     return FALSE;
   }
@@ -183,12 +194,14 @@ function silverpop_transact_connect() {
 
 /**
  * Silverpop get password.
- * Function borrowed from http://drupal.org/project/silverpop
  *
- * @param boolean $decrypt
+ * Function borrowed from http://drupal.org/project/silverpop.
+ *
+ * @param bool $decrypt
  *   Decrypt password returned if TRUE.
  *
  * @return string
+ *   The unecrypted Silverpop Transact password.
  */
 function silverpop_transact_get_password($decrypt = TRUE) {
   $password = variable_get('silverpop_transact_password', '');
@@ -213,11 +226,13 @@ function silverpop_transact_get_password($decrypt = TRUE) {
 
 /**
  * Silverpop Set Password.
- * Function borrowed from http://drupal.org/project/silverpop
+ *
+ * Function borrowed from http://drupal.org/project/silverpop.
  *
  * @param string $password
+ *   Silverpop Transact password.
  */
-function silverpop_transact_set_password($password='') {
+function silverpop_transact_set_password($password = '') {
   // If mcrypt is available we will encrypt the password in the database.
   if ($password AND function_exists('mcrypt_encrypt')) {
     $key = drupal_substr(drupal_get_hash_salt(), 0, 32);
@@ -227,9 +242,9 @@ function silverpop_transact_set_password($password='') {
     $ciphertext_base64 = base64_encode($ciphertext);
     $password = $ciphertext_base64;
     // Store encrypted password.
-    watchdog('silverpop_transact', 'Silverpop Transact password ' . $password . 'was successfully encrypted.' . $ciphertext_base64);
+    watchdog('silverpop_transact', 'Silverpop Transact password %password was successfully encrypted. %ciphertext_base64', array('password' => $password, 'ciphertext_base64' => $ciphertext_base64));
   }
-  // Otherwise it will be in plain text
+  // Otherwise it will be in plain text.
   elseif ($password) {
     watchdog('silverpop_transact', 'Silverpop Transact password could not be encrypted and is stored as plaintext. Please check the availability of the Mcrypt PHP extension on your server.', array(), WATCHDOG_CRITICAL);
   }

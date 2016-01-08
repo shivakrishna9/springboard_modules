@@ -1,6 +1,7 @@
 <?php
 /**
- * @TODO documntation here.
+ * @file
+ * Template for Silverpop XML transaction record.
  */
 ?>
 
