@@ -1586,6 +1586,19 @@ function fundraiser_sustainers_fundraiser_donation_information_table_alter(&$var
 }
 
 /**
+ * Implements hook_webform_submission_render_alter().
+ */
+function fundraiser_sustainers_webform_submission_render_alter(&$renderable) {
+  // Don't display the recurring amount fields on regular webform submission view.
+  if (isset($renderable['donation']['recurring_amount'])) {
+    unset($renderable['donation']['recurring_amount']);
+  }
+  if (isset($renderable['donation']['recurring_other_amount'])) {
+    unset($renderable['donation']['recurring_other_amount']);
+  }
+}
+
+/**
  * Implements hook_form_FORM_ID_alter().
  * Adds the admin form for crons to the fundraiser settings form.
  */
