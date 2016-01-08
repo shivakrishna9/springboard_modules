@@ -438,7 +438,9 @@ function _fundraiser_recent_donors_render_donation_block() {
 
 /**
  * Inserts the opt-in checkbox onto the donation webform if it
- * does not already exist:
+ * does not already exist.  It will be placed at the bottom of the
+ * Payment Information fieldset if available; otherwise, it will be placed
+ * after the final webform component.
  *
  * @params $node
  *   The node object for the webform on which the opt-in checkbox will be added.
@@ -450,19 +452,25 @@ function _fundraiser_recent_donors_add_opt_in_webform_component($node) {
   }
 
   // Do nothing if the opt-in checkbox's form_key already exists on the form:
-  $max_weight = 0;
+  $highest_component_weight = 0;
+  dpm($node->webform['components']);
   foreach ($node->webform['components'] as $component) {
-    if ($component['weight'] > $max_weight) {
-      $max_weight = $component['weight'];
+    // Find the Payment Information pid if it exists so the opt-in checkbox can be placed within it:
+    if ($component['form_key'] == 'payment_method' && !empty($component['pid'])) {
+      $target_fieldset_parent_id = $component['pid'];
+    }
+    // Ensure this component sits below any others by find the highest component
+    if ($component['weight'] > $highest_component_weight) {
+      $highest_component_weight = $component['weight'];
     }
     if ($component['form_key'] == FUNDRAISER_RECENT_DONORS_OPT_IN_FORM_KEY) {
       return;
     }
   }
-
+  
   $component = array(
     'nid' => $node->nid,
-    'pid' => 0,
+    'pid' => $target_fieldset_parent_id,
     'form_key' => FUNDRAISER_RECENT_DONORS_OPT_IN_FORM_KEY,
     'name' => t('Opt in') . ' ',
     'type' => 'select',
@@ -472,7 +480,7 @@ function _fundraiser_recent_donors_add_opt_in_webform_component($node) {
       'multiple' => 1,
       'title_display' => 'none',
     ),
-    'weight' => 9999,
+    'weight' => $highest_component_weight + 1, 
   ); 
   webform_component_insert($component);
 }
