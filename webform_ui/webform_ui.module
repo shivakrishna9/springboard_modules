@@ -347,7 +347,7 @@ function webform_ui_submission_delete(&$node, $context = array()) {
  *   The VBO views field. Contains a reference to the view in $vbo->view.
  */
 function webform_ui_views_bulk_operations_form_alter(&$form, &$form_state, $vbo) {
- if($vbo->definition['handler'] = 'webform_ui_bulk_operations_handler_field_operations') {
+ if ($vbo->definition['handler'] == 'webform_ui_bulk_operations_handler_field_operations') {
    $form['select']['#collapsible'] = TRUE;
    $form['select']['#collapsed'] = TRUE;
 
