@@ -110,27 +110,34 @@ function fundraiser_recent_donors_form_alter(&$form, &$form_state, $form_id) {
  * Form submission for the donation form's op-in checkbox:
  */
 function _fundraiser_recent_donors_donation_form_submit($form, &$form_state) {
-  $form_key = FUNDRAISER_RECENT_DONORS_OPT_IN_FORM_KEY;
-  if (isset($form['#node']->nid) &&
-    isset($form_state['input']['submitted'][$form_key][$form_key])) {
-    // Get the donation ID:
-    $did_query = db_query("SELECT did FROM {fundraiser_donation} WHERE sid = :sid AND nid = :nid",
+  if (!isset($form['#node']->nid) || !isset($form_state['input']['submitted'])) {
+    return;
+  }
+
+  // Determine if the donor checked the opt-in box by flattening the webform component values to account
+  // for placement in or outside of fieldset:
+  $flattened_values = _fundraiser_webform_submission_flatten($form['#node']->nid, $form_state['input']['submitted']);
+  if (!isset($flattened_values[FUNDRAISER_RECENT_DONORS_OPT_IN_FORM_KEY])) { 
+    return;
+  }
+
+  // Get the donation ID:
+  $did_query = db_query("SELECT did FROM {fundraiser_donation} WHERE sid = :sid AND nid = :nid",
+    array(
+      ':sid' => $form_state['values']['details']['sid'],
+      ':nid' => $form_state['values']['details']['nid'],
+    )
+  );
+  foreach ($did_query as $did_data) {
+    db_query("INSERT INTO {fundraiser_donor_opt_in} VALUES (:sid, :nid, :did, :created)",
       array(
         ':sid' => $form_state['values']['details']['sid'],
         ':nid' => $form_state['values']['details']['nid'],
+        ':did' => $did_data->did,
+        ':created' => time(),
       )
     );
-    foreach ($did_query as $did_data) {
-      db_query("INSERT INTO {fundraiser_donor_opt_in} VALUES (:sid, :nid, :did, :created)",
-        array(
-          ':sid' => $form_state['values']['details']['sid'],
-          ':nid' => $form_state['values']['details']['nid'],
-          ':did' => $did_data->did,
-          ':created' => time(),
-        )
-      );
-      return;
-    }
+    return;
   }
 }
 
