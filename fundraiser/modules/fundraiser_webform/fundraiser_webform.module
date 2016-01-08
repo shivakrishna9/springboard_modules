@@ -1396,4 +1396,8 @@ function fundraiser_webform_webform_submission_render_alter(&$renderable) {
     $renderable['donation']['amount']['#value'][0] = $donation->donation['amount_formatted'];
     $renderable['donation']['other_amount']['#field_prefix'] = $donation->donation['currency']['symbol'];
   }
+  // Don't clutter regular submission report with empty "Payment Information" fieldset.
+  if (isset($renderable['payment_information'])) {
+    unset($renderable['payment_information']);
+  }
 }
