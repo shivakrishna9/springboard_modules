@@ -153,4 +153,8 @@ function market_source_update_7002(&$sandbox) {
   }
 
   $sandbox['#finished'] = empty($sandbox['max']) ? 1 : ($sandbox['progress'] / $sandbox['max']);
+
+  if ($sandbox['#finished'] >= 1) {
+    return t('Device info fields have been added to existing webforms.');
+  }
 }
