@@ -49,57 +49,116 @@ function silverpop_transact_requirements($phase) {
  */
 function silverpop_transact_schema() {
   // @TODO add appropriate indexes.
-  $schema['silverpop_transact_log_orig'] = array(
-  'description' => 'Silver pop Transact log entries.',
-  'fields' => array(
-    'id' => array(
-      'description' => 'The primary identifier of a silverpop transaction log entry.',
-      'type' => 'serial',
-      'unsigned' => TRUE,
-      'not null' => TRUE,
+  $schema['silverpop_transact_log'] = array(
+    'description' => 'Silver pop Transact log entries.',
+    'fields' => array(
+      'id' => array(
+        'description' => 'The primary identifier of a silverpop transaction log entry.',
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'model' => array(
+        'description' => 'XML or SMTP',
+        'type' => 'varchar',
+        'length' => '255',
+        'not null' => FALSE,
+      ),
+      'origin' => array(
+        'description' => 'Module or Rule',
+        'type' => 'varchar',
+        'length' => '255',
+        'not null' => FALSE,
+      ),
+      'created' => array(
+        'description' => 'The Unix timestamp when the email record was created.',
+        'type' => 'int',
+        'not null' => FALSE,
+      ),
+      'status' => array(
+        'description' => 'Boolean indicating success/failure. Only applicable with XML mode messages.',
+        'type' => 'int',
+        'not null' => FALSE,
+        'default' => 1,
+      ),
+      'silverpop_message' => array(
+        'description' => 'Success/Failure message as sent by Silverpop (only applicable for XML)',
+        'type' => 'varchar',
+        'length' => '1024',
+        'not null' => FALSE,
+      ),
+      'filename' => array(
+        'description' => 'Filename of saved XML document (only applicable for XML model)',
+        'type' => 'varchar',
+        'length' => '2014',
+        'not null' => FALSE,
+      ),
+      'last_retry' => array(
+        'description' => 'Unix timestamp of when record why last tried. (only applicable for XML model)',
+        'type' => 'int',
+        'not null' => FALSE,
+      ),
     ),
-    'model' => array(
-      'description' => 'XML or SMTP',
-      'type' => 'varchar',
-      'length' => '255',
-      'not null' => FALSE,
-    ),
-    'origin' => array(
-      'description' => 'Module or Rule',
-      'type' => 'varchar',
-      'length' => '255',
-      'not null' => FALSE,
-    ),
-    'created' => array(
-      'description' => 'The Unix timestamp when the email record was created.',
-      'type' => 'int',
-      'not null' => FALSE,
-    ),
-    'status' => array(
-      'description' => 'Boolean indicating success/failure. Only applicable with XML mode messages.',
-      'type' => 'int',
-      'not null' => FALSE,
-      'default' => 1,
-    ),
-    'silverpop_message' => array(
-      'description' => 'Success/Failure message as sent by Silverpop (only applicable for XML)',
-      'type' => 'varchar',
-      'length' => '1024',
-      'not null' => FALSE,
-    ),
-    'filename' => array(
-      'description' => 'Filename of saved XML document (only applicable for XML model)',
-      'type' => 'varchar',
-      'length' => '2014',
-      'not null' => FALSE,
-    ),
-    'last_retry' => array(
-      'description' => 'Unix timestamp of when record why last tried. (only applicable for XML model)',
-      'type' => 'int',
-      'not null' => FALSE,
-    ),
-  ),
-  'primary key' => array('id'),
+    'primary key' => array('id'),
   );
   return $schema;
+}
+
+/**
+ * Adds silverpop_transact_log table.
+ */
+function silverpop_transact_update_7001() {
+  $schema['silverpop_transact_log'] = array(
+    'description' => 'Silver pop Transact log entries.',
+    'fields' => array(
+      'id' => array(
+        'description' => 'The primary identifier of a silverpop transaction log entry.',
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'model' => array(
+        'description' => 'XML or SMTP',
+        'type' => 'varchar',
+        'length' => '255',
+        'not null' => FALSE,
+      ),
+      'origin' => array(
+        'description' => 'Module or Rule',
+        'type' => 'varchar',
+        'length' => '255',
+        'not null' => FALSE,
+      ),
+      'created' => array(
+        'description' => 'The Unix timestamp when the email record was created.',
+        'type' => 'int',
+        'not null' => FALSE,
+      ),
+      'status' => array(
+        'description' => 'Boolean indicating success/failure. Only applicable with XML mode messages.',
+        'type' => 'int',
+        'not null' => FALSE,
+        'default' => 1,
+      ),
+      'silverpop_message' => array(
+        'description' => 'Success/Failure message as sent by Silverpop (only applicable for XML)',
+        'type' => 'varchar',
+        'length' => '1024',
+        'not null' => FALSE,
+      ),
+      'filename' => array(
+        'description' => 'Filename of saved XML document (only applicable for XML model)',
+        'type' => 'varchar',
+        'length' => '2014',
+        'not null' => FALSE,
+      ),
+      'last_retry' => array(
+        'description' => 'Unix timestamp of when record why last tried. (only applicable for XML model)',
+        'type' => 'int',
+        'not null' => FALSE,
+      ),
+    ),
+    'primary key' => array('id'),
+  );
+  db_create_table('silverpop_transact_log', $schema['silverpop_transact_log']);
 }
