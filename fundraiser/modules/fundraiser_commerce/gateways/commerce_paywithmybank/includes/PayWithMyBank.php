@@ -236,6 +236,31 @@ class PayWithMyBank {
     return (isset($data->transaction)) ? $data->transaction : NULL;
   }
 
+  /**
+   * Sets the verification status of a transaction.
+   *
+   * @param string $transactionId
+   *   The ID of the authorizing transaction.
+   * @param string $merchantReference
+   *   The initial merchant reference value sent to establish the payment.
+   * @param bool $approve
+   *   The transaction approval status.
+   *
+   * @return object
+   *   The transaction object.
+   * @see https://paywithmybank.com/docs/api-ref.html#transactions
+   */
+  public function setVerificationStatus($transactionId, $merchantReference, $approve) {
+    $tokens = array('transactionId' => $transactionId);
+    $parameters = array(
+      'merchantReference' => $merchantReference,
+      'approve' => $approve,
+    );
+
+    $data = $this->call('/api/v1/transactions/{transactionId}/setVerificationStatus', $tokens, $parameters);
+    return (isset($data->transaction)) ? $data->transaction : NULL;
+  }
+
   private function call($path, $tokens, $parameters = NULL) {
     // Reset error messages.
     $this->lastErrors = NULL;
