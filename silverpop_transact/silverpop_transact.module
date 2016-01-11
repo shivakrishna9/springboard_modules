@@ -250,3 +250,30 @@ function silverpop_transact_set_password($password = '') {
   }
   return $password;
 }
+
+/**
+ * Logs record of a mailing sent to Silverpop.
+ *
+ * @param string $model
+ *   Silverpop Transact API model (XML or SMTP).
+ * @param string $origin
+ *   Origin of the mailing (module or Rule identification).
+ * @param int $status
+ *   (Optional) Success/Failure (only applicable for XML mode).
+ * @param string $silverpop_message
+ *   (Optional) Message returned by Silverpop (only applicable for XML mode).
+ * @param string $filename
+ *   (Optional) Filename of the generated XML (only applicable for XML mode).
+ */
+function silverpop_transact_log_mailing($model, $origin, $status, $silverpop_message, $filename) {
+  Database::getConnection('default', 'default')->insert('silverpop_transact_log')
+    ->fields(array(
+      'model' => $model,
+      'origin' => $origin,
+      'status' => $status,
+      'silverpop_message' => $silverpop_message,
+      'filename' => $filename,
+      'created' => REQUEST_TIME,
+    ))
+    ->execute();
+}
