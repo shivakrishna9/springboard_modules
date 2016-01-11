@@ -153,7 +153,7 @@ function commerce_paywithmybank_fundraiser_commerce_redirect_submit($method_inst
 
     $success = (($api_transaction->status == PayWithMyBank::TRANSACTION_STATUS_ON_HOLD) || ($api_transaction->status == PayWithMyBank::TRANSACTION_STATUS_AUTHORIZED));
 
-    // Transactions may be placed an on "on hold" state until verified.
+    // Transactions may be placed in an "on hold" state until verified.
     if ($api_transaction->status == PayWithMyBank::TRANSACTION_STATUS_ON_HOLD) {
       // Verify the transaction.
       $api->setVerificationStatus($transaction_id, $donation->did, TRUE);
