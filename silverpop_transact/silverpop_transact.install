@@ -75,6 +75,7 @@ function silverpop_transact_schema() {
         'type' => 'int',
         'not null' => FALSE,
       ),
+      // @TODO Is int the best type for status?
       'status' => array(
         'description' => 'Boolean indicating success/failure. Only applicable with XML mode messages.',
         'type' => 'int',

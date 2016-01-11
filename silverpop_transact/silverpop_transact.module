@@ -83,6 +83,16 @@ function silverpop_transact_theme($existing, $type, $theme, $path) {
 }
 
 /**
+ * Implements hook_views_api().
+ */
+function silverpop_transact_views_api() {
+  return array(
+    'api' => 3,
+    'path' => drupal_get_path('module', 'silverpop_transact') . '/views',
+  );
+}
+
+/**
  * Silverpop_transact_create_mailing().
  *
  * Creates an XML object compliant with the Silverpop Transact API and
