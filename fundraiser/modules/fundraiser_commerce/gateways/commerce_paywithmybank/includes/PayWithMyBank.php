@@ -188,11 +188,11 @@ class PayWithMyBank {
   /**
    * Refunds a given amount of a processed transaction.
    *
-   * @param type $transactionId
+   * @param string $transactionId
    *   The ID of the authorizing transaction.
-   * @param type $merchantReference
+   * @param string $merchantReference
    *   The initial merchant reference value sent to establish the payment.
-   * @param type $amount
+   * @param string $amount
    *   The amount of money to refund.
    *
    * @return object
@@ -213,11 +213,11 @@ class PayWithMyBank {
   /**
    * Updates a recurring payment schedule.
    *
-   * @param type $transactionId
+   * @param string $transactionId
    *   The ID of the authorizing transaction.
-   * @param type $merchantReference
+   * @param string $merchantReference
    *   The initial merchant reference value sent to establish the payment.
-   * @param type $recurrence
+   * @param object $recurrence
    *   The Recurrence object.
    *   @see https://www.paywithmybank.com/beta/docs/api-ref.html#recurrence
    *
