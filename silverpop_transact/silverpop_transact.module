@@ -25,24 +25,6 @@ function silverpop_transact_menu() {
 }
 
 /**
- * Implements hook_theme().
- */
-function silverpop_transact_theme($existing, $type, $theme, $path) {
-  return array(
-    'silverpop_transact_mail' => array(
-      'path' => drupal_get_path('module', 'silverpop_transact') . '/templates',
-      'template' => 'silverpop-transact-mail',
-      'variables' => array(
-        'mailing_id' => '',
-        'save_columns' => '',
-        'recipient_email' => '',
-        'personalization' => array(),
-      ),
-    ),
-  );
-}
-
-/**
  * Implements hook_rules_action_info().
  */
 function silverpop_transact_rules_action_info() {
@@ -77,6 +59,24 @@ function silverpop_transact_rules_action_info() {
           'description' => t('Include HTML for the body of the email. This will be accessed in Silverpop via the token %%INBOUND_HTML%%'),
           'optional' => TRUE,
         ),
+      ),
+    ),
+  );
+}
+
+/**
+ * Implements hook_theme().
+ */
+function silverpop_transact_theme($existing, $type, $theme, $path) {
+  return array(
+    'silverpop_transact_mail' => array(
+      'path' => drupal_get_path('module', 'silverpop_transact') . '/templates',
+      'template' => 'silverpop-transact-mail',
+      'variables' => array(
+        'mailing_id' => '',
+        'save_columns' => '',
+        'recipient_email' => '',
+        'personalization' => array(),
       ),
     ),
   );
