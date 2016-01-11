@@ -728,11 +728,11 @@ function salesforce_npsp_update_7002(&$sandbox) {
     $sandbox['current_did'] = $row->did;
   }
 
-  $return = array(
-    '#finished' => empty($sandbox['max']) ? 1 : ($sandbox['progress'] / $sandbox['max']),
-  );
+  $sandbox['#finished'] = empty($sandbox['max']) ? 1 : ($sandbox['progress'] / $sandbox['max']);
 
-  return $return;
+  if ($sandbox['#finished'] >= 1) {
+    return t('Fundraiser sustainers series entities have been updated with NPSP-specific data.');
+  }
 }
 
 /**
