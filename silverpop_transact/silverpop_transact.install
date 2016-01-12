@@ -163,3 +163,12 @@ function silverpop_transact_update_7001() {
   );
   db_create_table('silverpop_transact_log', $schema['silverpop_transact_log']);
 }
+
+/**
+ * Set Silverpop Transact API model to XML if module was previously configured.
+ */
+function silverpop_transact_update_7002() {
+  if (!empty(variable_get('silverpop_transact_mailing_id')){
+    variable_set('silverpop_transact_model', 'XML');
+  }
+}
