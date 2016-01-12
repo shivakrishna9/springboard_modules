@@ -196,7 +196,8 @@ function sba_social_action_preview_form($form, $form_state, $node, $messages, $r
   );
   // Used to send our second step form through the same helper functions as the first step form.
   module_load_include('inc', 'sba_social_action', 'includes/sba_social_action.form');
-
+  static $id = 0;
+  static $n = 0;
   foreach ($messages as $key => $message) {
 
     // What type of message is this.
@@ -239,7 +240,11 @@ function sba_social_action_preview_form($form, $form_state, $node, $messages, $r
           $alternatives[] = $alt_tweet;
         }
       }
-      static $n = 0;
+
+      // Reset $n if there are multiple messages.
+      if ($id != $message_entity->sba_message_id) {
+        $n = 0;
+      }
       // $random_array is defined in the build function so that it does not
       // change after the form ajax reload.
       if (isset($random_array[$message_entity->sba_message_id])) {
@@ -259,6 +264,7 @@ function sba_social_action_preview_form($form, $form_state, $node, $messages, $r
       else {
         $n = 0;
       }
+      $id = $message_entity->sba_message_id;
     }
 
 
