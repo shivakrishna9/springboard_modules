@@ -13,16 +13,37 @@
 function silverpop_transact_admin() {
   $form = array();
 
-  $form['silverpop_transact_mailing_id'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Default Silverpop Mailing ID'),
+  $form['silverpop_transact_model'] = array(
+    '#type' => 'radios',
+    '#title' => t('Silverpop Transact API mode'),
+    '#options' => array(
+      'SMTP' => t('SMTP'),
+      'XML' => t('XML'),
+    ),
+    '#default_value' => variable_get('silverpop_transact_model', 'SMTP'),
+    '#description' => 'See module documentation for more information about these two options.',
     '#required' => TRUE,
-    '#default_value' => variable_get('silverpop_transact_mailing_id'),
   );
 
   $form['silverpop_transact_api'] = array(
     '#type' => 'fieldset',
     '#title' => t('Silverpop API Credentials'),
+    '#states' => array(
+      'visible' => array(
+        ':input[name="silverpop_transact_model"]' => array('value' => 'XML'),
+      ),
+    ),
+  );
+
+  $form['silverpop_transact_api']['silverpop_transact_mailing_id'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Default Silverpop Mailing ID'),
+    '#default_value' => variable_get('silverpop_transact_mailing_id'),
+    '#states' => array(
+      'required' => array(
+        ':input[name="silverpop_transact_model"]' => array('value' => 'XML'),
+      ),
+    ),
   );
 
   $form['silverpop_transact_api']['silverpop_transact_username'] = array(
@@ -33,7 +54,11 @@ function silverpop_transact_admin() {
     '#maxlength' => 255,
     '#description' => 'The username you use to log into the Silverpop
         administrative portal.',
-    '#required' => TRUE,
+    '#states' => array(
+      'required' => array(
+        ':input[name="silverpop_transact_model"]' => array('value' => 'XML'),
+      ),
+    ),
   );
 
   $form['silverpop_transact_api']['silverpop_transact_password'] = array(
@@ -43,10 +68,14 @@ function silverpop_transact_admin() {
     '#maxlength' => 255,
     '#description' => 'The password you use to log into the Silverpop
         administrative portal.',
-    '#required' => TRUE,
+    '#states' => array(
+      'required' => array(
+        ':input[name="silverpop_transact_model"]' => array('value' => 'XML'),
+      ),
+    ),
   );
 
-  $form['silverpop_transact_api']['silverpop_transact_apihost'] = array(
+  $form['silverpop_transact_apihost'] = array(
     '#type' => 'select',
     '#title' => t('Silverpop API host'),
     '#options' => array(
