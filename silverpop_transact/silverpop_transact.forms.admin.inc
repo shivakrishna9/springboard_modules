@@ -3,7 +3,6 @@
 /**
  * @file
  * Admin form.
- * @TODO check login credentials on configuration form submit.
  */
 
 /**
@@ -83,7 +82,10 @@ function silverpop_transact_admin() {
       ),
     ),
   );
-  $form['#submit'] = array('silverpop_transact_encrypt_password', 'system_settings_form_submit');
+  $form['#submit'] = array(
+    'silverpop_transact_encrypt_password',
+    'sliverpop_transact_admin_form_submit',
+  );
   $form = system_settings_form($form);
   return $form;
 }
@@ -102,4 +104,21 @@ function silverpop_transact_encrypt_password($form, &$form_state) {
   else {
     $form_state['values']['silverpop_transact_password'] = silverpop_transact_get_password(FALSE);
   }
+}
+
+/**
+ * Implements hook_form_submit().
+ *
+ * Checks Silverpop login credentials when using XML model.
+ */
+function sliverpop_transact_admin_form_submit($form_id, &$form_state) {
+  if ($form_state['input']['silverpop_transact_model'] == 'XML') {
+    if (!silverpop_transact_connect($form_state['input']['silverpop_transact_apihost'], $form_state['input']['silverpop_transact_username'], $form_state['input']['silverpop_transact_password'])) {
+      drupal_set_message(t('Unable to connect to the Silverpop Transact API. Please check the credientials and API Host and try again.'), 'error');
+    }
+    else {
+      drupal_set_message(t('Successfully connected to the Silverpop Transact API.'), 'status');
+    }
+  }
+
 }

@@ -177,14 +177,24 @@ function silverpop_transact_save_transact_data($data) {
 /**
  * Opens an FTP connection to Silverpop.
  *
- * @return ojbect
+ * If no arguments are supplied, the values stored in the database are used.
+ *
+ * @param string $api_host
+ *   (Optional) The engage pod number (e.g. Pod 5 would use api5.silverpop.com).
+ * @param string $username
+ *   (Optional) Username used to log into the Silverpop admin portal.
+ * @param string $password
+ *   (Optional) Unencrypted password used to log into Silverpop admin portal.
+ *
+ * @return object
  *   FTP stream on success or FALSE on error.
  */
-function silverpop_transact_connect() {
-  $connection_address = str_replace('%', variable_get('silverpop_transact_apihost'), SILVERPOP_TRANSACT_FTP_ADDRESS);
-  $username = variable_get('silverpop_transact_username');
-  $password = silverpop_transact_get_password();
+function silverpop_transact_connect($api_host = NULL, $username = NULL, $password = NULL) {
+  $api_host = empty($api_host) ? variable_get('silverpop_transact_apihost') : $api_host;
+  $username = empty($username) ? variable_get('silverpop_transact_username') : $username;
+  $password = empty($password) ? silverpop_transact_get_password() : $password;
   // Connect to Silverpop Transact.
+  $connection_address = str_replace('%', $api_host, SILVERPOP_TRANSACT_FTP_ADDRESS);
   $connection = ftp_connect($connection_address);
   if ($connection) {
     $login = ftp_login($connection, $username, $password);
