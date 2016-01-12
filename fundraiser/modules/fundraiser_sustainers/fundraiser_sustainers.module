@@ -600,18 +600,6 @@ function fundraiser_sustainers_form_node_form_alter(&$form, &$form_state, $form_
         ),
       ),
     );
-    // Hack to simulate an OR condition in the #states for recurring_amount_wrapper.
-    $form['fundraiser_settings']['fundraiser_sustainers']['show_recurring_amounts'] = array(
-      '#type' => 'checkbox',
-      '#prefix' => '<div style="display: none;">',
-      '#suffix' => '</div>',
-      '#states' => array(
-        'checked' => array(
-          ':input[name*=recurring_dual_ask_amounts]' => array('checked' => TRUE),
-          'select[name*=recurring_setting]' => array('value' => 'user_choice'),
-        ),
-      ),
-    );
 
     // Scoot down the one-time ask amounts.
     $form['fundraiser_settings']['amount_wrapper']['#weight'] = 2;
@@ -619,7 +607,38 @@ function fundraiser_sustainers_form_node_form_alter(&$form, &$form_state, $form_
       'select[name*=recurring_setting]' => array('value' => 'always'),
     );
 
-    // Recurring ask amounts.
+    // These two invisible checkboxes are a hack, covering two limitations of #states in core.
+    // 1) Simulate an OR condition in the #states for recurring_amount_wrapper.
+    // 2) Fix an initial-state rendering bug.
+    $form['fundraiser_settings']['recurring_amount_display'] = array(
+      '#prefix' => '<div style="display: none;">',
+      '#suffix' => '</div>',
+      // To ensure consistent correct rendering on initial display, Drupal wants the
+      // recurring amounts fieldset's display conditions to be based on elements that
+      // appear after it in the markup. Who knows why.
+      '#weight' => 3.1,
+    );
+    $form['fundraiser_settings']['recurring_amount_display']['show_recurring_amounts'] = array(
+      '#type' => 'checkbox',
+      '#prefix' => '<div style="display: none;">',
+      '#suffix' => '</div>',
+      '#states' => array(
+        'checked' => array(
+          'select[name*=recurring_setting]' => array('value' => 'user_choice'),
+          ':input[name*=recurring_dual_ask_amounts]' => array('checked' => TRUE),
+        ),
+      ),
+    );
+    $form['fundraiser_settings']['recurring_amount_display']['recurring_always'] = array(
+      '#type' => 'checkbox',
+      '#states' => array(
+        'checked' => array(
+          'select[name*=recurring_setting]' => array('value' => 'always'),
+        ),
+      ),
+    );
+
+    // Recurring ask amounts configuration fieldset.
     $node = $form['#node'];
     $form['fundraiser_settings']['recurring_amount_wrapper'] = array(
       '#type' => 'fieldset',
@@ -633,10 +652,12 @@ function fundraiser_sustainers_form_node_form_alter(&$form, &$form_state, $form_
       '#states' => array(
         'invisible' => array(
           ':input[name*=show_recurring_amounts]' => array('checked' => FALSE),
-          'select[name*=recurring_setting]' => array('!value' => 'always'),
+          ':input[name*=recurring_always]' => array('checked' => FALSE),
         ),
       ),
     );
+
+    // Recurring ask amounts table.
     $form['fundraiser_settings']['recurring_amount_wrapper']['recurring_donation_amounts'] = array(
       '#type' => 'container',
       '#prefix' => '<div id="recurring-ask-amounts">',
