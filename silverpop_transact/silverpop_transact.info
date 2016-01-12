@@ -4,3 +4,5 @@ package = Silverpop
 core = 7.x
 
 configure = admin/config/services/silverpop/transact
+
+dependencies[] = views
