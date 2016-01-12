@@ -168,7 +168,7 @@ function silverpop_transact_update_7001() {
  * Set Silverpop Transact API model to XML if module was previously configured.
  */
 function silverpop_transact_update_7002() {
-  if (!empty(variable_get('silverpop_transact_mailing_id')){
+  if (!empty(variable_get('silverpop_transact_mailing_id'))) {
     variable_set('silverpop_transact_model', 'XML');
   }
 }
