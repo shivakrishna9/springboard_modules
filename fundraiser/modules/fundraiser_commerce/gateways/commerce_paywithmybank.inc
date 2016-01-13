@@ -153,18 +153,20 @@ function commerce_paywithmybank_fundraiser_commerce_redirect_submit($method_inst
 
     $success = ($api_transaction->status == PayWithMyBank::TRANSACTION_STATUS_AUTHORIZED);
 
-    $pane_values = commerce_paywithmybank_pane_values($donation);
-
-    if (!empty($donation->submission_data['recurs_monthly'])) {
-      $donation->donation['recurs_monthly'] = TRUE;
-
-      // Donation is recurring, so create a card on file record.
-      $pane_values['bank_account']['cardonfile_store'] = TRUE;
-    }
+    $pane_values = array();
 
     if ($success) {
-      // The recurring donation has been authorized, so make the first charge.
-      commerce_paywithmybank_fundraiser_commerce_charge($method_instance, $donation);
+      $pane_values = commerce_paywithmybank_pane_values($donation);
+
+      if (!empty($donation->submission_data['recurs_monthly'])) {
+        $donation->donation['recurs_monthly'] = TRUE;
+
+        // Donation is recurring, so create a card on file record.
+        $pane_values['bank_account']['cardonfile_store'] = TRUE;
+
+        // The recurring donation has been authorized, so make the first charge.
+        commerce_paywithmybank_fundraiser_commerce_charge($method_instance, $donation);
+      }
     }
 
     // Save updated donation.
