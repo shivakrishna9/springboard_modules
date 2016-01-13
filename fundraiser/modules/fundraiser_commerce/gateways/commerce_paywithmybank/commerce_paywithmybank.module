@@ -237,10 +237,14 @@ function commerce_paywithmybank_notify() {
       return;
     }
     else {
+      // Transactions may be placed in an "on hold" state until verified.
+      if ($api_transaction->status == PayWithMyBank::TRANSACTION_STATUS_ON_HOLD) {
+        $api->setVerificationStatus($api_transaction->transactionId, $order->order_id, TRUE);
+      }
       // PayWithMyBank sends two notifications when a payment is completed.
       // The data we use to create a transaction is the same in both
       // notifications, so we skip creating a transaction for the second.
-      if (($api_transaction->status != PayWithMyBank::TRANSACTION_STATUS_COMPLETED) || ($order->status != 'payment_received')) {
+      else if (($api_transaction->status != PayWithMyBank::TRANSACTION_STATUS_COMPLETED) || ($order->status != 'payment_received')) {
         commerce_paywithmybank_create_payment_transaction($api_transaction, $payment_method, $order);
       }
     }

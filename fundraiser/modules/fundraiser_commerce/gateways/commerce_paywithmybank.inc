@@ -151,13 +151,7 @@ function commerce_paywithmybank_fundraiser_commerce_redirect_submit($method_inst
     $api = commerce_paywithmybank_get_api($method_instance);
     $api_transaction = $api->getTransaction($transaction_id);
 
-    $success = (($api_transaction->status == PayWithMyBank::TRANSACTION_STATUS_ON_HOLD) || ($api_transaction->status == PayWithMyBank::TRANSACTION_STATUS_AUTHORIZED));
-
-    // Transactions may be placed in an "on hold" state until verified.
-    if ($api_transaction->status == PayWithMyBank::TRANSACTION_STATUS_ON_HOLD) {
-      // Verify the transaction.
-      $api->setVerificationStatus($transaction_id, $donation->did, TRUE);
-    }
+    $success = ($api_transaction->status == PayWithMyBank::TRANSACTION_STATUS_AUTHORIZED);
 
     $pane_values = array();
 
