@@ -93,4 +93,3 @@ features[views_view][] = p2p_top_personal_campaigns_by_category
 features[views_view][] = personal_campaign_donor_dashboard
 mtime = 1421423212
 project path = sites/all/modules/springboard/springboard_p2p/modules
-
