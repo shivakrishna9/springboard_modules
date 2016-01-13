@@ -313,13 +313,6 @@ function commerce_paywithmybank_fundraiser_commerce_expire($submission_fields) {
  * commerce_paywithmybank_fundraiser_commerce_redirect_submit()
  */
 function commerce_paywithmybank_fundraiser_commerce_charge($method_instance, $donation) {
-  if (empty($donation->reference_charge)) {
-    watchdog('commerce_paywithmybank', 'Donation ID %did is not a recurring donation.', array(
-      '%did' => $donation->did,
-      ), WATCHDOG_ERROR);
-    return FALSE;
-  }
-
   // Translate donation settings to the correct values for the commerce gateway.
   $order = commerce_order_load($donation->did);
   $order_wrapper = entity_metadata_wrapper('commerce_order', $order);
