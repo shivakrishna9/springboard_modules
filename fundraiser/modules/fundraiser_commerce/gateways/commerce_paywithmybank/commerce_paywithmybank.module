@@ -531,6 +531,12 @@ function commerce_paywithmybank_create_payment_transaction($api_transaction, $pa
     case PayWithMyBank::TRANSACTION_STATUS_REFUNDED:
       $updated_donation_status = 'refunded';
       break;
+    case PayWithMyBank::TRANSACTION_STATUS_FAILED:
+    case PayWithMyBank::TRANSACTION_STATUS_EXPIRED:
+    case PayWithMyBank::TRANSACTION_STATUS_CANCELED:
+    case PayWithMyBank::TRANSACTION_STATUS_DENIED:
+      $updated_donation_status = 'failed';
+      break;
     default:
       $updated_donation_status = 'pending_future_payment';
   }
