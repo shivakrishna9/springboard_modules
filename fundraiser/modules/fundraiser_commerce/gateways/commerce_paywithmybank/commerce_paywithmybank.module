@@ -545,18 +545,16 @@ function commerce_paywithmybank_create_payment_transaction($api_transaction, $pa
       $updated_donation_status = 'pending_future_payment';
   }
 
-  if ($updated_donation_status != NULL) {
-    // Update the order status.
-    _fundraiser_commerce_update_order_status($updated_donation_status, $order->order_id);
+  // Update the order status.
+  _fundraiser_commerce_update_order_status($updated_donation_status, $order->order_id);
 
-    $donation = fundraiser_donation_get_donation($order->order_id);
+  $donation = fundraiser_donation_get_donation($order->order_id);
 
-    $donation->status = $updated_donation_status;
-    $donation->status_label = _fundraiser_commerce_get_label_by_status($updated_donation_status);
-    $donation->status_charged = _fundraiser_commerce_get_charged_by_status($updated_donation_status);
+  $donation->status = $updated_donation_status;
+  $donation->status_label = _fundraiser_commerce_get_label_by_status($updated_donation_status);
+  $donation->status_charged = _fundraiser_commerce_get_charged_by_status($updated_donation_status);
 
-    fundraiser_donation_update($donation);
-  }
+  fundraiser_donation_update($donation);
 
   return $transaction;
 }
