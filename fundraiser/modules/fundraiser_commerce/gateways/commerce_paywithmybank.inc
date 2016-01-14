@@ -164,10 +164,10 @@ function commerce_paywithmybank_fundraiser_commerce_redirect_submit($method_inst
         // Donation is recurring, so create a card on file record.
         $pane_values['bank_account']['cardonfile_store'] = TRUE;
 
-        if ($api_transaction->status == PayWithMyBank::TRANSACTION_STATUS_AUTHORIZED) {
+        //if ($api_transaction->status == PayWithMyBank::TRANSACTION_STATUS_AUTHORIZED) {
           // The recurring donation has been authorized, so make the first charge.
-          commerce_paywithmybank_fundraiser_commerce_charge($method_instance, $donation);
-        }
+          //commerce_paywithmybank_fundraiser_commerce_charge($method_instance, $donation);
+        //}
       }
     }
 
