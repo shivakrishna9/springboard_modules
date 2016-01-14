@@ -607,37 +607,6 @@ function fundraiser_sustainers_form_node_form_alter(&$form, &$form_state, $form_
       'select[name*=recurring_setting]' => array('value' => 'always'),
     );
 
-    // These two invisible checkboxes are a hack, covering two limitations of #states in core.
-    // 1) Simulate an OR condition in the #states for recurring_amount_wrapper.
-    // 2) Fix an initial-state rendering bug.
-    $form['fundraiser_settings']['recurring_amount_display'] = array(
-      '#prefix' => '<div style="display: none;">',
-      '#suffix' => '</div>',
-      // To ensure consistent correct rendering on initial display, Drupal wants the
-      // recurring amounts fieldset's display conditions to be based on elements that
-      // appear after it in the markup. Who knows why.
-      '#weight' => 3.1,
-    );
-    $form['fundraiser_settings']['recurring_amount_display']['show_recurring_amounts'] = array(
-      '#type' => 'checkbox',
-      '#prefix' => '<div style="display: none;">',
-      '#suffix' => '</div>',
-      '#states' => array(
-        'checked' => array(
-          'select[name*=recurring_setting]' => array('value' => 'user_choice'),
-          ':input[name*=recurring_dual_ask_amounts]' => array('checked' => TRUE),
-        ),
-      ),
-    );
-    $form['fundraiser_settings']['recurring_amount_display']['recurring_always'] = array(
-      '#type' => 'checkbox',
-      '#states' => array(
-        'checked' => array(
-          'select[name*=recurring_setting]' => array('value' => 'always'),
-        ),
-      ),
-    );
-
     // Recurring ask amounts configuration fieldset.
     $node = $form['#node'];
     $form['fundraiser_settings']['recurring_amount_wrapper'] = array(
@@ -650,9 +619,17 @@ function fundraiser_sustainers_form_node_form_alter(&$form, &$form_state, $form_
       '#tree' => TRUE, // This is important, this allows the deltas below to function as part of the array.
       '#weight' => 3,
       '#states' => array(
-        'invisible' => array(
-          ':input[name*=show_recurring_amounts]' => array('checked' => FALSE),
-          ':input[name*=recurring_always]' => array('checked' => FALSE),
+        'visible' => array(
+          array(
+            array(
+              'select[name*=recurring_setting]' => array('value' => 'always'),
+            ),
+            'or',
+            array(
+              'select[name*=recurring_setting]' => array('value' => 'user_choice'),
+              ':input[name*=recurring_dual_ask_amounts]' => array('checked' => TRUE),
+            )
+          ),
         ),
       ),
     );
