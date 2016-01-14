@@ -180,7 +180,7 @@ function commerce_paywithmybank_return() {
 
   $order = commerce_order_load($api_transaction->merchantReference);
 
-  $success = ($api_transaction->status == PayWithMyBank::TRANSACTION_STATUS_AUTHORIZED);
+  $success = (($api_transaction->status == PayWithMyBank::TRANSACTION_STATUS_ON_HOLD) || ($api_transaction->status == PayWithMyBank::TRANSACTION_STATUS_AUTHORIZED));
 
   if ($success) {
     commerce_checkout_complete($order);
