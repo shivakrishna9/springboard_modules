@@ -417,13 +417,27 @@ function commerce_paywithmybank_fundraiser_commerce_response_save($donation) {
     ->execute()
     ->fetchAssoc();
 
-  // If the transaction status is authorized, set the order status to the same.
-  if (!empty($result) && ($result['message'] == 'Authorized')) {
-    _fundraiser_commerce_update_order_status('authorized', $donation->did);
+  $new_status = NULL;
 
-    $donation->status = 'authorized';
-    $donation->status_label = _fundraiser_commerce_get_label_by_status('authorized');
-    $donation->status_charged = _fundraiser_commerce_get_charged_by_status('authorized');
+  if (!empty($result)) {
+    switch ($result['message']) {
+      case 'New':
+      case 'Pending':
+      case 'OnHold':
+        $new_status = 'pending_future_payment';
+        break;
+      case 'Authorized':
+        $new_status = 'authorized';
+        break;
+    }
+  }
+
+  if ($new_status != NULL) {
+    _fundraiser_commerce_update_order_status($new_status, $donation->did);
+
+    $donation->status = $new_status;
+    $donation->status_label = _fundraiser_commerce_get_label_by_status($new_status);
+    $donation->status_charged = _fundraiser_commerce_get_charged_by_status($new_status);
 
     fundraiser_donation_update($donation);
   }
