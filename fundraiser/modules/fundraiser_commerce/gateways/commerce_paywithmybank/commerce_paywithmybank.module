@@ -239,8 +239,16 @@ function commerce_paywithmybank_notify() {
     else {
       // Transactions may be placed in an "on hold" state until verified.
       if ($api_transaction->status == PayWithMyBank::TRANSACTION_STATUS_ON_HOLD) {
-        $verified_transaction = $api->setVerificationStatus($api_transaction->transactionId, $order->order_id, TRUE);
-        watchdog('commerce_paywithmybank', 'PayWithMyBank verified transaction: !param', array('!param' => '<pre>' . check_plain(print_r($verified_transaction, TRUE)) . '</pre>'), WATCHDOG_DEBUG);
+        $verified_api_transaction = $api->setVerificationStatus($api_transaction->transactionId, $order->order_id, TRUE);
+        watchdog('commerce_paywithmybank', 'PayWithMyBank verified transaction: !param', array('!param' => '<pre>' . check_plain(print_r($verified_api_transaction, TRUE)) . '</pre>'), WATCHDOG_DEBUG);
+
+        if ($verified_api_transaction->status == PayWithMyBank::TRANSACTION_STATUS_AUTHORIZED) {
+          // Transaction has been authorized, so an initial payment can be made.
+          commerce_paywithmybank_create_payment_transaction($verified_api_transaction, $payment_method, $order);
+
+          $donation = fundraiser_donation_get_donation($merchant_reference);
+          commerce_paywithmybank_fundraiser_commerce_charge($payment_method, $donation);
+        }
       }
       // PayWithMyBank sends two notifications when a payment is completed.
       // The data we use to create a transaction is the same in both
