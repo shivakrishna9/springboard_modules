@@ -457,13 +457,15 @@ function commerce_paywithmybank_pane_values($donation) {
 
   $method_instance = commerce_payment_method_instance_load($donation->gateway['id']);
 
-  if (!empty($donation->txn_id)) {
+  $transaction_id = (!empty($donation->auth_txn_id)) ? $donation->auth_txn_id : $donation->txn_id;
+
+  if (!empty($transaction_id)) {
     $api = commerce_paywithmybank_get_api($method_instance);
-    $api_transaction = $api->getTransaction($donation->txn_id);
+    $api_transaction = $api->getTransaction($transaction_id);
 
     $errors = $api->getLastErrors();
     if (!empty($errors)) {
-      commerce_paywithmybank_log_errors($donation->txn_id, $errors);
+      commerce_paywithmybank_log_errors($transaction_id, $errors);
     }
 
     // Only one valid payment method.
