@@ -254,7 +254,7 @@ class PayWithMyBank {
     $tokens = array('transactionId' => $transactionId);
     $parameters = array(
       'merchantReference' => $merchantReference,
-      'approve' => $approve,
+      'approve' => ($approve) ? 'true' : 'false',
     );
 
     $data = $this->call('/api/v1/transactions/{transactionId}/setVerificationStatus', $tokens, $parameters);
