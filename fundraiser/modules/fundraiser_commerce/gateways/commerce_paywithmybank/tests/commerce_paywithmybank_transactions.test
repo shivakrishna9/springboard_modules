@@ -1,0 +1,111 @@
+<?php
+
+/**
+ * @file
+ * Test cases for processing PayWithMyBank transactions.
+ */
+
+/**
+ * Tests creating Drupal Commerce transactions from PWMB transactions.
+ */
+class ProcessTransactionTestCase extends DrupalWebTestCase {
+
+  /**
+   * Gets test information for the test UI.
+   * 
+   * @return array
+   *   Array of test information.
+   */
+  public static function getInfo() {
+    return array(
+      'name' => 'PayWithMyBank Transactions',
+      'description' => 'Tests creating Drupal Commerce transactions from PWMB transactions.',
+      'group' => 'Fundraiser Commerce',
+    );
+  }
+
+  /**
+   * Performs pre-test setup.
+   */
+  public function setUp() {
+    $enabled_modules = array(
+      'fundraiser_commerce',
+      'commerce_paywithmybank',
+    );
+
+    parent::setUp($enabled_modules);
+  }
+
+  /**
+   * Tests importing a new launch.
+   */
+  public function testNewTransaction() {
+    $this->assertTrue(TRUE);
+
+    $order = commerce_order_new(1, 'created');
+    commerce_order_save($order);
+
+    $donation_data = $this->getDonationData($order->order_id);
+
+    drupal_write_record('fundraiser_donation', $donation_data);
+
+    $api_transaction = $this->getNewTransaction($order->order_id);
+
+    $saved_transaction = commerce_paywithmybank_create_payment_transaction($api_transaction, $this->getPaymentMethod(), $order);
+    $transaction = commerce_payment_transaction_load($saved_transaction->transaction_id);
+
+    $this->assertNotNull($transaction);
+
+    $this->assertEqual($transaction->remote_id, $api_transaction->transactionId);
+    $this->assertEqual($transaction->message, $api_transaction->statusMessage);
+    $this->assertEqual($transaction->status, COMMERCE_PAYMENT_STATUS_PENDING);
+    $this->assertEqual($transaction->amount, 0);
+
+    $donation = fundraiser_donation_get_donation($order->order_id);
+
+    $this->assertEqual($donation->status, 'pending_future_payment');
+  }
+
+  private function getPaymentMethod() {
+    return commerce_payment_method_instance_load('commerce_paywithmybank_bank|commerce_payment_commerce_paywithmybank_bank');
+  }
+
+  private function getDonationData($order_id) {
+    $donation_data = array(
+      'did' => $order_id,
+      'nid' => 1,
+      'uid' => 1,
+      'sid' => 1,
+      'status' => NULL,
+      'amount' => 0,
+      'currency' => 'USD',
+      'gateway' => 'commerce_paywithmybank_bank|commerce_payment_commerce_paywithmybank_bank',
+    );
+
+    return $donation_data;
+  }
+
+  private function getNewTransaction($order_id) {
+    $transaction = new stdClass();
+
+    $transaction->transactionId = 1000000001;
+    $transaction->transactionType = 1;
+    $transaction->currency = 'USD';
+    $transaction->amount = '0.00';
+    $transaction->pending = '0.00';
+    $transaction->paid = '0.00';
+    $transaction->refunded = '0.00';
+    $transaction->reversed = '0.00';
+    $transaction->balance = '0.00';
+    $transaction->status = 0;
+    $transaction->statusMessage = 'New';
+    $transaction->ip = '127.0.0.1';
+    $transaction->createdAt = time();
+    $transaction->updatedAt = time();
+    $transaction->merchantReference = $order_id;
+    $transaction->recordVersion = 1;
+
+    return $transaction;
+  }
+
+}

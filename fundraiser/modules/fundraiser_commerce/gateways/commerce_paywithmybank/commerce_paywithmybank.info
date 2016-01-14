@@ -10,3 +10,4 @@ dependencies[] = libraries
 core = 7.x
 
 files[] = includes/PayWithMyBank.php
+files[] = tests/commerce_paywithmybank_transactions.test
