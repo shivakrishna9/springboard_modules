@@ -82,16 +82,14 @@ function sba_social_action_menu() {
  */
 function sba_social_action_preview_access($nid) {
   $node = node_load($nid);
+  $access = FALSE;
   if (isset($node->type) &&  $node->type == 'sba_social_action') {
     $session_nid = isset($_SESSION['social_action_sid']['nid']) ? $_SESSION['social_action_sid']['nid'] : FALSE;
-    if ($session_nid && $session_nid != $nid) {
-      return FALSE;
-    }
-    if (!$session_nid) {
-      return FALSE;
+    if ($session_nid && $session_nid == $nid) {
+      $access = TRUE;
     }
   }
-  return TRUE;
+  return $access;
 }
 
 /**
