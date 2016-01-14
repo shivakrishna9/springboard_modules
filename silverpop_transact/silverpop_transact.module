@@ -8,6 +8,19 @@ define('SILVERPOP_TRANSACT_FTP_ADDRESS', 'transfer%.silverpop.com');
 define('SILVERPOP_TRANSACT_DEFAULT_CAMPAIGN', variable_get('silverpop_transact_mailing_id'));
 
 /**
+ * Implements hook_mail_alter().
+ *
+ * Adds Silverpop's X-SP-Transact-Id header to emails when using the SMTP model.
+ */
+function silverpop_transact_mail_alter(&$message) {
+  if (variable_get('silverpop_transact_model') == 'SMTP') {
+    // @TODO allow for value of x-header to be specified in config form.
+    $message['headers']['X-SP-Transact-Id'] = '1234';
+    silverpop_transact_log_mailing('SMTP', 'silverpop_transact');
+  }
+}
+
+/**
  * Implements hook_menu().
  */
 function silverpop_transact_menu() {
