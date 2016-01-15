@@ -165,8 +165,8 @@ function commerce_paywithmybank_fundraiser_commerce_redirect_submit($method_inst
         $pane_values['bank_account']['cardonfile_store'] = TRUE;
 
         //if ($api_transaction->status == PayWithMyBank::TRANSACTION_STATUS_AUTHORIZED) {
-          // The recurring donation has been authorized, so make the first charge.
-          //commerce_paywithmybank_fundraiser_commerce_charge($method_instance, $donation);
+        // The recurring donation has been authorized, so make the first charge.
+        //commerce_paywithmybank_fundraiser_commerce_charge($method_instance, $donation);
         //}
       }
     }
@@ -323,6 +323,13 @@ function commerce_paywithmybank_fundraiser_commerce_charge($method_instance, $do
 
   $recurring_donation = _fundraiser_sustainers_get_recurring_by_did($donation->did);
   $master_donation = fundraiser_donation_get_donation($recurring_donation->master_did);
+
+  watchdog('commerce_paywithmybank', 'Capturing transaction for did @did, master_did @master_did, auth_txn_id @auth_txn_id.', array(
+    '@did' => $donation->did,
+    '@master_did' => $recurring_donation->master_did,
+    '@auth_txn_id' => $master_donation->auth_txn_id,
+    )
+  );
 
   // Process the transaction.
   $api = commerce_paywithmybank_get_api($method_instance);
