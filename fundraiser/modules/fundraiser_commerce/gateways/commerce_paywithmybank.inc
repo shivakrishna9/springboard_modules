@@ -164,10 +164,21 @@ function commerce_paywithmybank_fundraiser_commerce_redirect_submit($method_inst
         // Donation is recurring, so create a card on file record.
         $pane_values['bank_account']['cardonfile_store'] = TRUE;
 
-        //if ($api_transaction->status == PayWithMyBank::TRANSACTION_STATUS_AUTHORIZED) {
-        // The recurring donation has been authorized, so make the first charge.
-        //commerce_paywithmybank_fundraiser_commerce_charge($method_instance, $donation);
-        //}
+        if ($api_transaction->status == PayWithMyBank::TRANSACTION_STATUS_ON_HOLD) {
+          // The transaction has been put into an "on hold" status and must
+          // be verified before we can continue.
+          $verified_api_transaction = $api->setVerificationStatus($api_transaction->transactionId, $donation->did, TRUE);
+          watchdog('commerce_paywithmybank', 'PayWithMyBank verified transaction: !param', array('!param' => '<pre>' . check_plain(print_r($verified_api_transaction, TRUE)) . '</pre>'), WATCHDOG_DEBUG);
+
+          if ($verified_api_transaction->status == PayWithMyBank::TRANSACTION_STATUS_AUTHORIZED) {
+            // Transaction has been authorized, so an initial payment can be made.
+            commerce_paywithmybank_fundraiser_commerce_charge($method_instance, $donation);
+          }
+        }
+        else if ($api_transaction->status == PayWithMyBank::TRANSACTION_STATUS_AUTHORIZED) {
+          // Transaction has been authorized, so an initial payment can be made.
+          commerce_paywithmybank_fundraiser_commerce_charge($method_instance, $donation);
+        }
       }
     }
 
