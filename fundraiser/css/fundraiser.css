@@ -1,13 +1,16 @@
-#ask-amounts .form-item {
+#ask-amounts .form-item,
+#recurring-ask-amounts .form-item {
   float: left;
   padding-right: 20px;
 }
 
-#ask-amounts label {
+#ask-amounts label,
+#recurring-ask-amounts label {
   width: 100px;
 }
 
-#ask-amounts .form-submit {
+#ask-amounts .form-submit,
+#recurring-ask-amounts .form-submit {
   float:left;
   display: inline;
   margin-top: 35px;	
