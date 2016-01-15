@@ -1,6 +1,25 @@
 <?php
 
 /**
+ * Implements hook_menu().
+ */
+function springboard_token_set_menu() {
+  $items = array();
+
+  $items['admin/config/content/token-sets'] = array(
+    'title' => 'Springboard Token Sets',
+    'description' => 'Manage tokens within token sets.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('springboard_token_set_admin_form'),
+    'access arguments' => array('administer springboard'),
+    'type' => MENU_NORMAL_ITEM,
+    'weight' => 0,
+  );
+
+  return $items;
+}
+
+/**
  * Implements hook_form_FORM_ID_alter()
  */
 function springboard_token_set_form_field_ui_field_edit_form_alter(&$form, &$form_state, $form_id) {
@@ -96,6 +115,55 @@ function springboard_token_set_form_alter(&$form, &$form_state, $form_id) {
     'data' => drupal_get_path('module', 'springboard_token_set') . '/css/springboard_token_set.css',
     'type' => 'file',
   );
+}
+
+/**
+ * Page callback for token set admin form.
+ */
+function springboard_token_set_admin_form($form, &$form_state) {
+  $token_sets = springboard_token_set_get_sets();
+
+  $form = array();
+
+  foreach ($token_sets as $token_set) {
+    $form['token-set-' . $token_set->tsid] = array(
+      '#type' => 'fieldset',
+      '#title' => $token_set->name,
+      '#collapsible' => TRUE,
+      '#collapsed' => TRUE,
+    );
+
+    $tokens = springboard_token_set_get_tokens($token_set->tsid);
+
+    $header = array(
+      'token' => t('Token'),
+      'description' => t('Description'),
+    );
+    $options = array();
+
+    foreach ($tokens as $token) {
+      $options[$token->token] = array(
+        'token' => $token->token,
+        'description' => $token->token_description,
+      );
+    }
+
+    $form['token-set-' . $token_set->tsid]['tokens'] = array(
+      '#type' => 'tableselect',
+      '#header' => $header,
+      '#options' => $options,
+      '#empty' => t('Set contains no tokens.'),
+    );
+  }
+
+  return $form;
+}
+
+/**
+ * Submit handler for token set admin form.
+ */
+function springboard_token_set_admin_form_submit($form, $form_state) {
+
 }
 
 /**
