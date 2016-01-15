@@ -2018,6 +2018,13 @@ function fundraiser_sustainers_update_billing_info_create_new_donations($master_
   // donation, update the next charge date to reflect that.
   $master_date = new DateTime();
   $master_date->setTimestamp($master_donation->recurring->next_charge);
+
+  // If the source donation is missing a next charge date, use the master
+  // donation next charge date.
+  if (!isset($source_donation->recurring->next_charge) || empty($source_donation->recurring->next_charge)) {
+    $source_donation->recurring->next_charge = $master_donation->recurring->next_charge;
+  }
+
   $source_day = date('d', $source_donation->recurring->next_charge);
 
   if ($master_date->format('d') != $source_day) {
