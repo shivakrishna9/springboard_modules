@@ -258,7 +258,7 @@ function silverpop_transact_set_password($password = '') {
  * @param string $filename
  *   (Optional) Filename of the generated XML (only applicable for XML mode).
  */
-function silverpop_transact_log_mailing($model, $origin, $status, $silverpop_message, $filename) {
+function silverpop_transact_log_mailing($model, $origin, $status = NULL, $silverpop_message = NULL, $filename = NULL) {
   Database::getConnection('default', 'default')->insert('silverpop_transact_log')
     ->fields(array(
       'model' => $model,
