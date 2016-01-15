@@ -62,6 +62,21 @@ function commerce_paywithmybank_form_commerce_checkout_form_review_alter(&$form,
 }
 
 /**
+ * Implements hook_fundraiser_donation_get_donation().
+ */
+function commerce_paywithmybank_fundraiser_donation_get_donation($donation) {
+  // Create recurring object and set next_charge timestamp to a month from
+  // the current date if it isn't already set. This occurs during a PWMB
+  // transaction authorization before the recurring donation has been created.
+  if (!isset($donation->recurring))  {
+    $donation->recurring = new stdClass();
+  }
+  if (!isset($donation->recurring->next_charge) || empty($donation->recurring->next_charge)) {
+    $donation->recurring->next_charge = (time() + 2592000);
+  }
+}
+
+/**
  * Implements hook_fundraiser_gateway_info_alter()
  */
 function commerce_paywithmybank_fundraiser_gateway_info_alter(&$gateways) {
