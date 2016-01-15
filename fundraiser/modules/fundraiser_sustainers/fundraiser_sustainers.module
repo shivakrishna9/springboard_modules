@@ -2423,6 +2423,12 @@ function fundraiser_sustainers_fundraiser_donation_success($donation) {
     if ($donation->donation['recurs_monthly'] == TRUE) {
       $info = _fundraiser_get_donation_gateway($donation->did);
       if (_fundraiser_sustainers_supports_recurring($info['allow_recurring'], $donation->donation['payment_method'])) { // Allows recurring
+
+        watchdog('fundraiser_sustainers', 'Creating recurring donation for master did @master_did.', array(
+          '@master_did' => $donation->did,
+          )
+        );
+
         // Then we do all the creating of offline values, table, SF object, and extra orders.
         $donation->recurring = new stdClass();
         $donation->recurring->master_did = $donation->did;
