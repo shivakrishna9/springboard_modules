@@ -379,7 +379,7 @@ function commerce_paywithmybank_fundraiser_commerce_charge($method_instance, $do
     $card_data = current($cards_on_file);
 
     // Move card expiration date ahead one month.
-    $new_expire_time = mktime(0, 0, 0, ($card_data->card_exp_month + 1), 1, $card_data->card_exp_year);
+    $new_expire_time = mktime(0, 0, 0, (date('m') + 1), 1, $card_data->card_exp_year);
 
     $card_data->card_exp_month = date('m', $new_expire_time);
     $card_data->card_exp_year = date('Y', $new_expire_time);
