@@ -164,6 +164,9 @@ function commerce_paywithmybank_fundraiser_commerce_redirect_submit($method_inst
         // Donation is recurring, so create a card on file record.
         $pane_values['bank_account']['cardonfile_store'] = TRUE;
 
+        // Need to manually create card on file data for this donation here.
+        commerce_paywithmybank_fundraiser_commerce_update($donation);
+
         // Need to manually process this donation as successful here so the
         // recurring donation set exists prior to processing the first payment.
         fundraiser_donation_success($donation);
