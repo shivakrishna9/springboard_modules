@@ -164,6 +164,10 @@ function commerce_paywithmybank_fundraiser_commerce_redirect_submit($method_inst
         // Donation is recurring, so create a card on file record.
         $pane_values['bank_account']['cardonfile_store'] = TRUE;
 
+        // Need to manually process this donation as successful here so the
+        // recurring donation set exists prior to processing the first payment.
+        fundraiser_donation_success($donation);
+
         if ($api_transaction->status == PayWithMyBank::TRANSACTION_STATUS_ON_HOLD) {
           // The transaction has been put into an "on hold" status and must
           // be verified before we can continue.
