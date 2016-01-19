@@ -711,6 +711,7 @@ function fundraiser_sustainers_form_node_form_alter(&$form, &$form_state, $form_
       '#type' => 'button',
       '#submit' => array(),
       '#value' => t('Add another'),
+      '#name' => 'recurring-amount-add',
       '#description' => t('Click here to add more choices.'),
       '#ajax' => array(
         'callback' => '_fundraiser_sustainers_donation_settings_form_amounts',
