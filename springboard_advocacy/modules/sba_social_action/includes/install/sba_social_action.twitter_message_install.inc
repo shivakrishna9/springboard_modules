@@ -423,6 +423,16 @@ function sba_social_action_create_twitter_message_entity($update = FALSE) {
     if (empty($base)) {
       field_create_field($values);
     }
+    else {
+      if ($key == 'field_sba_action_id') {
+        $field = field_info_field('field_sba_action_id');
+        $field['settings']['handler_settings']['target_bundles'] = array(
+          'sba_social_action' => 'sba_social_action',
+          'sba_message_action' => 'sba_message_action',
+        );
+        field_update_field($field);
+      }
+    }
   }
   foreach ($field_instances as $key => $instance) {
     $message = field_info_instance('sba_message', $key, 'sba_social_action_twitter_message');

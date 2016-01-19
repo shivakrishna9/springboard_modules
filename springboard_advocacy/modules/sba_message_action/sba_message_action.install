@@ -44,8 +44,8 @@ function sba_message_action_uninstall() {
   module_load_include('inc', 'sba_message_action', 'includes/install/sba_message_action.install');
   module_load_include('inc', 'sba_message_action', 'includes/install/sba_message_action.install_fields');
 
-  _sba_message_action_delete_message_entity_fields();
   _sba_message_action_delete_nodes();
+  _sba_message_action_delete_message_entity_fields();
   // Remove fields implemented by this module.
   // _sba_message_action_delete_fields();
   // Delete the message action content type.
