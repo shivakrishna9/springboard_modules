@@ -421,7 +421,8 @@ function fundraiser_node_load($nodes, $types) {
 function fundraiser_node_presave($node) {
   // If this isn't a fundraiser type, ignore it.
   if (fundraiser_is_donation_type($node->type) && isset($node->amount_wrapper)) {
-    // Check the submission to remove the donation amounts marked.
+    // Check the submission to remove the donation amounts marked and (optionally) set the default.
+    $node->default_amount = NULL;
     foreach ($node->amount_wrapper['donation_amounts'] as $index => $donation_amount) {
       // If the remove marker is set.
       if (isset($donation_amount['remove']) && $donation_amount['remove'] == 1) {
@@ -433,6 +434,10 @@ function fundraiser_node_presave($node) {
         unset($node->amount_wrapper['donation_amounts'][$index]);
       }
       unset($node->amount_wrapper['donation_amounts'][$index]['remove']);
+      // If the default amount box is checked.
+      if (!empty($donation_amount['default_amount'])) {
+        $node->default_amount = $donation_amount['amount'];
+      }
     }
     // Set the donation amounts where we expect them to be for processing.
     // These are buried under amount_wrapper because we set 'TREE' on that in the form.
@@ -663,13 +668,12 @@ function _fundraiser_donation_settings_form(&$form, &$form_state) {
   $donation_amounts[] = array('', '');
   // Generate a form set for each existing amount. (To be themed into table format.)
   $index = 0;
-
   foreach ($donation_amounts as $weight => $donation_amount) {
     // Filter out other|Other combinations. We don't want to display those in this form.
     // And if we did, the value would fail validation (not a number).
     // There is probably a better way to track this, but for now this'll do.
     if (count($donation_amount) == 2 && $donation_amount[0] != 'other') {
-      $form['fundraiser_settings']['amount_wrapper']['donation_amounts'][] = _fundraiser_ask_form($donation_amount, $index, $node, $weight);
+      $form['fundraiser_settings']['amount_wrapper']['donation_amounts'][$index] = _fundraiser_ask_form($donation_amount, $index, $node, $weight);
     }
     ++$index;
   }
@@ -700,15 +704,6 @@ function _fundraiser_donation_settings_form(&$form, &$form_state) {
       'method' => 'replace',
       'effect' => 'fade',
     ),
-  );
-
-  $form['fundraiser_settings']['amount_wrapper']['no_default_amount'] = array(
-    '#type' => 'radio',
-    '#default_value' => isset($node->default_amount) ? $node->default_amount : '',
-    '#return_value' => '',
-    '#parents' => array('default_amount'),
-    '#title' => t('No default ask amount'),
-    '#description' => t('Do not use a preselected ask amount.'),
   );
 
   // Additional fundraiser settings.
@@ -954,6 +949,10 @@ function _fundraiser_payment_method_weight_compare($a, $b) {
  * Generate donation ask amount fields, used by donation form
  */
 function _fundraiser_ask_form($amount_values = array(), $index, $node, $weight) {
+  $form['default_amount'] = array(
+    '#type' => 'checkbox',
+    '#default_value' => isset($node->default_amount) ? ($node->default_amount == $amount_values[0]) : FALSE,
+  );
   $form['amount'] = array(
     '#type' => 'textfield',
     '#default_value' => isset($amount_values[0]) ? $amount_values[0] : '',
@@ -963,12 +962,6 @@ function _fundraiser_ask_form($amount_values = array(), $index, $node, $weight) 
     '#type' => 'textfield',
     '#default_value' => isset($amount_values[1]) ? $amount_values[1] : '',
     '#size' => 30,
-  );
-  $form['default_amount'] = array(
-    '#type' => 'radio',
-    '#default_value' => isset($node->default_amount) ? $node->default_amount : '',
-    '#return_value' => $amount_values[0],
-    '#parents' => array('default_amount'),
   );
   $form['remove'] = array(
     '#type' => 'checkbox',
@@ -1207,15 +1200,12 @@ function _fundraiser_amount_field_create($fundraiser, $field) {
       'multiple' => 0,
     );
     $default = $keys[0];
-    if (isset($fundraiser->default_amount)) {
-      if (in_array($fundraiser->default_amount, $keys)) {
-        // Default is one of the defined ask amounts.
-        $default = $fundraiser->default_amount;
-      }
-      elseif ($fundraiser->default_amount == '') {
-        // Don't pick a default value.
-        $default = '';
-      }
+    if (empty($fundraiser->default_amount)) {
+      $default = '';
+    }
+    else if (in_array($fundraiser->default_amount, $keys)) {
+      // Default is one of the defined ask amounts.
+      $default = $fundraiser->default_amount;
     }
 
     // Extra settings may get clobbered in fundraiser_webform. if we don't flag them.
