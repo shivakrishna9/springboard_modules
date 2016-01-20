@@ -108,10 +108,32 @@ function silverpop_transact_encrypt_password($form, &$form_state) {
 
 /**
  * Implements hook_form_submit().
- *
- * Checks Silverpop login credentials when using XML model.
  */
 function sliverpop_transact_admin_form_submit($form_id, &$form_state) {
+  // Check if XML/SMTP model has been changed. When SMTP is enabled, switch
+  // email_wrapper to use the mailsystem provided by the smtp module.
+  if ($form_state['input']['silverpop_transact_model'] != variable_get('silverpop_transact_model')) {
+    $mail_modes = variable_get('mail_system');
+    // SMTP on.
+    if ($form_state['input']['silverpop_transact_model'] == 'SMTP') {
+      $mail_modes['email_wrappers'] = 'SmtpMailSystem';
+      variable_set('mail_system', $mail_modes);
+    }
+    // SMTP off.
+    else {
+      $mail_modes['email_wrappers'] = 'EmailWrappersMailSystemInterface';
+      variable_set('mail_system', $mail_modes);
+    }
+  }
+
+  // Check if API host has changed. If so, change the smtp host to match
+  // e.g. transact5.silverpop.com.
+  if ($form_state['input']['silverpop_transact_apihost'] != variable_get('silverpop_transact_apihost')) {
+    $smtp_host = str_replace('%', $form_state['input']['silverpop_transact_apihost'], SILVERPOP_TRANSACT_SMTP_ADDRESS);
+    variable_set('smtp_host', $smtp_host);
+  }
+
+  // Test XML credentials.
   if ($form_state['input']['silverpop_transact_model'] == 'XML') {
     if (!silverpop_transact_connect($form_state['input']['silverpop_transact_apihost'], $form_state['input']['silverpop_transact_username'], $form_state['input']['silverpop_transact_password'])) {
       drupal_set_message(t('Unable to connect to the Silverpop Transact API. Please check the credientials and API Host and try again.'), 'error');

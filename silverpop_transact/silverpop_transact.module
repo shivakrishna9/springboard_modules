@@ -6,6 +6,7 @@
 
 define('SILVERPOP_TRANSACT_FTP_ADDRESS', 'transfer%.silverpop.com');
 define('SILVERPOP_TRANSACT_DEFAULT_CAMPAIGN', variable_get('silverpop_transact_mailing_id'));
+define('SILVERPOP_TRANSACT_SMTP_ADDRESS', 'transact%.silverpop.com');
 
 /**
  * Implements hook_mail_alter().

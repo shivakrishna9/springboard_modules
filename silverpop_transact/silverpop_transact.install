@@ -12,6 +12,30 @@
 function silverpop_transact_install() {
   $directory = "private://failed-silverpop-data";
   file_prepare_directory($directory, FILE_CREATE_DIRECTORY);
+
+  // We default to Silverpop's SMTP model, so enable the smtp module setting.
+  variable_set('smtp_on', TRUE);
+
+  // We default to Silverpop's SMTP model, so switch email_wrapper to use the
+  // mailsystem provided by the smtp module.
+  $mail_modes = variable_get('mail_system');
+  if (isset($mail_modes['email_wrappers'])) {
+    $mail_modes['email_wrappers'] = 'SmtpMailSystem';
+    variable_set('mail_system', $mail_modes);
+  }
+}
+
+/**
+ * Implements hook_disable().
+ */
+function silverpop_transact_disable() {
+  // Switch email_wrapper back to the mail system provided by the email_wrappers
+  // module.
+  $mail_modes = variable_get('mail_system');
+  if (isset($mail_modes['email_wrappers'])) {
+    $mail_modes['email_wrappers'] = 'EmailWrappersMailSystemInterface';
+    variable_set('mail_system', $mail_modes);
+  }
 }
 
 /**
