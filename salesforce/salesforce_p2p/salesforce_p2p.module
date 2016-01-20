@@ -88,7 +88,7 @@ function salesforce_p2p_salesforce_genmap_map_item_alter(&$item, $drupal_object)
     if ($p2p_cid_component_id) {
       // We have the component id for the p2p personal campaign id. We can use that to get the
       // value out of the webform submission array.
-      if (array_key_exists($p2p_cid_component_id, $drupal_object->data)) {
+      if (array_key_exists($p2p_cid_component_id, $drupal_object->data) && !empty($drupal_object->data[$p2p_cid_component_id]['value'][0])) {
         $p2p_pcid = $drupal_object->data[$p2p_cid_component_id]['value'][0];
         $item['sobject']->fields['P2P_Personal_Campaign__c'] = sprintf('[P2P_Personal_Campaign__c:p2p_personal_campaign:%d]', $p2p_pcid);
       }
