@@ -282,7 +282,8 @@ function salesforce_npsp_update_fundraiser_sustainers_series($donation) {
         ))->fetchField();
 
     $fundraiser_sustainers_series->npsp_last_payment_date = date('Y-m-d H:i:s');
-    $fundraiser_sustainers_series->npsp_next_payment_date = date('Y-m-d H:i:s', $next_charge);
+    // Set next payment date to last date if at end of series.
+    $fundraiser_sustainers_series->npsp_next_payment_date = (!empty($next_charge)) ? date('Y-m-d H:i:s', $next_charge) : $fundraiser_sustainers_series->npsp_last_payment_date;
     $fundraiser_sustainers_series->npsp_installment_period = 'Monthly';
     $fundraiser_sustainers_series->npsp_schedule_type = 'Multiply By';
 
