@@ -123,6 +123,18 @@ function fundraiser_sustainers_schema() {
         'not null' => FALSE,
         'default' => 0,
       ),
+      'donation_type_options' => array(
+        'description' => 'The onetime/recurring option names, labels, and order.',
+        'type' => 'varchar',
+        'length' => '1024',
+        'not null' => FALSE,
+      ),
+      'default_donation_type' => array(
+        'description' => 'The type of donation and ask amounts to default to.',
+        'type' => 'varchar',
+        'length' => 16,
+        'not null' => FALSE,
+      )
     ),
     'primary key' => array('nid'),
   );
@@ -968,4 +980,26 @@ function fundraiser_sustainers_update_7016(&$sandbox) {
     ),
   );
   db_add_field('fundraiser_sustainers_nodes', 'dual_ask_amounts', $fields['dual_ask_amounts']);
+}
+
+/**
+ * Adds {fundraiser_sustainers_nodes} columns to make one-time/recurring donation type options configurable.
+ */
+function fundraiser_sustainers_update_7017(&$sandbox) {
+  $fields = array(
+    'donation_type_options' => array(
+      'description' => 'The onetime/recurring option names, labels, and order.',
+      'type' => 'varchar',
+      'length' => '1024',
+      'not null' => FALSE,
+    ),
+    'default_donation_type' => array(
+      'description' => 'The type of donation and ask amounts to default to.',
+      'type' => 'varchar',
+      'length' => 16,
+      'not null' => FALSE,
+    )
+  );
+  db_add_field('fundraiser_sustainers_nodes', 'donation_type_options', $fields['donation_type_options']);
+  db_add_field('fundraiser_sustainers_nodes', 'default_donation_type', $fields['default_donation_type']);
 }
