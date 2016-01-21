@@ -365,8 +365,20 @@ function commerce_paywithmybank_fundraiser_commerce_charge($method_instance, $do
 
   if ($success) {
     // Save updated donation.
-    $donation->txn_id = $api_transaction->transactionId;
-    fundraiser_donation_update($donation);
+    watchdog('commerce_paywithmybank', 'Updating transaction ID for did @did to @txn_id.', array(
+      '@did' => $donation->did,
+      '@txn_id' => $api_transaction->transactionId,
+      )
+    );
+
+    if ($master_donation->did == $donation->did) {
+      $master_donation->txn_id = $api_transaction->transactionId;
+      fundraiser_donation_update($master_donation);
+    }
+    else {
+      $donation->txn_id = $api_transaction->transactionId;
+      fundraiser_donation_update($donation);
+    }
   }
   else {
     commerce_paywithmybank_log_errors($master_donation->auth_txn_id, $errors);
