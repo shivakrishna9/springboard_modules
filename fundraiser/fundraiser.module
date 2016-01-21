@@ -555,10 +555,12 @@ function _fundraiser_donation_settings_form(&$form, &$form_state) {
   if (!fundraiser_is_donation_type($node->type)) {
     return;
   }
-  $form['fundraiser_settings'] = array(
+
+  // Payment methods.
+  $form['payment_methods'] = array(
     '#type' => 'fieldset',
-    '#title' => t('Fundraiser settings'),
-    '#weight' => -4.96,
+    '#title' => t("Payment methods"),
+    '#weight' => -4.97,
     '#collapsible' => TRUE,
     '#collapsed' => TRUE,
     '#group' => 'additional_settings',
@@ -567,7 +569,7 @@ function _fundraiser_donation_settings_form(&$form, &$form_state) {
   $gateway_options = array();
   $gateways = _fundraiser_gateway_info();
   if (empty($gateways)) {
-    $form['fundraiser_settings']['gateways'] = array(
+    $form['payment_methods']['gateways'] = array(
       '#markup' => '<div>' . t('There are no gateways configured. Please create some gateways in the store configuration.') . '</div>',
     );
   }
@@ -582,10 +584,20 @@ function _fundraiser_donation_settings_form(&$form, &$form_state) {
       '#theme' => 'fundraiser_form_payment_methods',
     );
     $configuration = !empty($node->gateways) ? $node->gateways : variable_get('fundraiser_payment_method_config_defaults', array());
-    $form['fundraiser_settings']['gateways'] = _fundraiser_form_payment_method_config_fieldset($gateways, $configuration, $fieldset, 'gateways');
+    $form['payment_methods']['gateways'] = _fundraiser_form_payment_method_config_fieldset($gateways, $configuration, $fieldset, 'gateways');
     // add a validate callback.
     $form['#validate'][] = '_fundraiser_form_payment_method_validate';
   }
+
+  // Fundraiser Settings (i.e., ask amounts).
+  $form['fundraiser_settings'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Fundraiser settings'),
+    '#weight' => -4.96,
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
+    '#group' => 'additional_settings',
+  );
 
   // Make changes to the currency settings field.
   if (!empty($form['field_fundraiser_currency'])) {
