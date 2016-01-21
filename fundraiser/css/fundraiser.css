@@ -16,6 +16,11 @@
   margin-top: 35px;	
 }
 
+#fundraiser-ask-amounts-table .form-type-textfield input,
+#fundraiser-recurring-ask-amounts-table .form-type-textfield input {
+  margin-bottom: 0;
+}
+
 /* Layout sustainer mgmt pages */
 
 #payment-info,
