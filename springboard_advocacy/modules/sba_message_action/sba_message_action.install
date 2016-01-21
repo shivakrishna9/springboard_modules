@@ -603,3 +603,14 @@ function sba_message_action_update_7029() {
     field_update_instance($field);
   }
 }
+
+/**
+ * Update action_flow field widget weight.
+ */
+function sba_message_action_update_7030() {
+  $field = field_info_instance('node', 'field_sba_action_flow', 'sba_message_action');
+  if ($field) {
+    $field['widget']['weight'] = 4;
+    field_update_instance($field);
+  }
+}
