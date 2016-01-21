@@ -960,8 +960,8 @@ function sba_social_action_save_twitter_profile($data, $uid) {
       $save_data = array(
         'sbp_twitter_screen_name' => $response['screen_name'],
         'sbp_twitter_id_str' => $response['id_str'],
-        'sbp_twitter_following_count' => $response['followers_count'],
-        'sbp_twitter_followers_count' => $response['friends_count'],
+        'sbp_twitter_following_count' => $response['friends_count'],
+        'sbp_twitter_followers_count' => $response['followers_count'],
         'sbp_twitter_status_count' => $response['statuses_count'],
         'sbp_twitter_created_at' => strtotime($response['created_at']),
       );
