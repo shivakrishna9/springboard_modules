@@ -815,6 +815,24 @@ function fundraiser_sustainers_process_single_recurring_donation(&$log, $recurri
 }
 
 /**
+ * Determine if a series of recurring donations has been auto-cancelled.
+ *
+ * @param $master_did
+ *   The master donation ID of a series of recurring donations.
+ */
+function _fundraiser_sustainers_was_recurring_donation_auto_cancelled($master_did) {
+  $cancelled_query = db_query("SELECT did FROM fundraiser_sustainers WHERE master_did = :master_did " .
+    "AND gateway_resp = 'auto_canceled' LIMIT 1",
+    array(
+      ':master_did' => $master_did,
+    ));
+  foreach ($cancelled_query as $result) {
+    return TRUE;
+  }
+  return FALSE;
+}
+
+/**
  * Implements hook_fundraiser_donation_process().
  *
  * Increments attempts and sets gateway_resp to processing.
@@ -866,13 +884,21 @@ function fundraiser_sustainers_user_overview($user, $did = NULL) {
         }
         $edit_link = l($this_next_donation->donation['amount_formatted'],
           'user/' . $this_next_donation->user->uid . '/recurring_overview/' . $master_donation->master_did);
+
+        // Detect whether this series of donations was auto-cancelled and, if so, display that in the output:
+        if (_fundraiser_sustainers_was_recurring_donation_auto_cancelled($master_donation->master_did)) {
+          $master_donation_status = 'Auto-Cancelled';
+        } else {
+          $master_donation_status = $master_donation->status;
+        }
+
         $donations_rows[] = array(
           'data' => array(
             'amount' => $edit_link,
             'start_date' => date('m/d/y', $master_donation->start_date),
             'next_charge' => !empty($master_donation->next_charge) ? date('m/d/y', $master_donation->next_charge) : '--/--/--',
             'expire_date' => date('m/d/y', $master_donation->expire_date),
-            'status' => $master_donation->status,
+            'status' => $master_donation_status,
           ),
           'class' => array('recurring-order'),
         );
