@@ -20,7 +20,6 @@ function form_layouts_theme($existing, $type, $theme, $path) {
       'pattern' => $template['pattern'],
     );
   }
-
   return $theme;
 }
 
@@ -458,7 +457,9 @@ function form_layouts_type_is_layouts_enabled($type) {
  *   TRUE if the template is meant to theme the webform and not the whole node.
  */
 function form_layouts_template_themes_webform($template) {
-  if (isset($template['types']) && (in_array('fundraiser', $template['types']) || in_array('sba_message_action', $template['types']))) {
+  if (isset($template['types']) && (in_array('fundraiser', $template['types'])
+      || in_array('sba_message_action', $template['types'])
+      || in_array('sba_social_action', $template['types']))) {
     return TRUE;
   }
 

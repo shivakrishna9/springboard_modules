@@ -23,7 +23,7 @@
     <div class="span3">
       <div class="well">
         <h2 class="text-info"><?php print $percentage; ?></h2>
-        Deliverablity
+        Deliverability
       </div>
     </div>
   </div>
@@ -33,5 +33,5 @@
     </div>
   </div>
 </div>
-<h2>Individual Target Deliverability</h2>
+<h2>Legislative Target Results</h2>
 <?php print $targets_table; ?>

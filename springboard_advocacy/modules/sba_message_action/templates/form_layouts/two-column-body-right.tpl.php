@@ -8,8 +8,6 @@
 
 <div id="message-action-form-2col-column-wrapper" class="container-fluid action-body-right">
   <div class="row-fluid">
-
-
     <div id="right" class="span5 message-column">
       <?php if(!empty($image)): ?>
         <div id="image">
@@ -22,7 +20,7 @@
         <?php if(!empty($quicksign)): ?>
           <div id="quicksign-container"><?php print $quicksign ?></div>
         <?php endif; ?>
-        <?php if(!empty($participants)): ?>
+        <?php if(!empty($participants) && $show_participants_block): ?>
           <div id="participants-container">
             <h4 >Recent participants</h4>
             <?php print $participants ?>
@@ -30,7 +28,7 @@
         <?php endif; ?>
       </div>
       <p><?php print $social ?></p>
-      </div>
+    </div>
 
     <div id="left" class="span7 message-column">
 
@@ -46,7 +44,6 @@
           <?php print drupal_render_children($form); ?>
           <?php print $close_form_tag ?>
       </fieldset>
-    </div>
     </div>
   </div>
 </div>

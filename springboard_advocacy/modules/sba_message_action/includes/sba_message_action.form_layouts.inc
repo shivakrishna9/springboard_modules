@@ -127,11 +127,17 @@ function sba_message_action_preprocess_two_column_body_right(&$vars) {
  */
 function sba_message_action_build_preprocess(&$vars) {
 
+  $fieldset_title_field = field_get_items('node', $vars['element']['#node'], 'field_sba_message_action_label');
+  $fieldset_title = field_view_value('node', $vars['element']['#node'], 'field_sba_message_action_label', $fieldset_title_field[0]);
+  $title = drupal_render($fieldset_title);
+  $title = !empty($title) ? $title : t('Take Action Now!');
+  $vars['form_legend'] = $title;
+
   $vars['quicksign'] = '';
-  if (module_exists('sba_quicksign') && sba_quicksign_is_enabled($vars['element']['#node'])) {
-    $quicksign = drupal_get_form('sba_quicksign_form');
-    $vars['quicksign'] = drupal_render($quicksign);
-  }
+//  if (module_exists('sba_quicksign') && sba_quicksign_is_enabled($vars['element']['#node'])) {
+//    $quicksign = drupal_get_form('sba_quicksign_form');
+//    $vars['quicksign'] = drupal_render($quicksign);
+//  }
 
   $vars['participants'] = '';
   $view = views_get_view('recent_action_participants');
@@ -143,6 +149,7 @@ function sba_message_action_build_preprocess(&$vars) {
     $table = $view->preview('block_1');
     $vars['participants'] = $table;
   }
+  $vars['show_participants_block'] = isset($vars['element']['#node']->show_my_name) ? $vars['element']['#node']->show_my_name : FALSE;
 
   $element = $vars['element'];
 
@@ -174,7 +181,6 @@ function sba_message_action_build_preprocess(&$vars) {
   }
 
   // Fieldset legends.
-  $vars['form_legend'] = t('Take Action Now!');
   $vars['user_legend'] = t('Your Information');
   // We remove image field in the default node--sba-message-action.tpl.php
   // and put it into form layouts here.
@@ -271,7 +277,12 @@ function theme_message_action_messages_wrapper($vars) {
  * @return string
  */
 function theme_message_action_webform_wrapper($vars) {
-  $legend = t('Take Action Now!');
-  return ' <div class="row-fluid"><fieldset id="take-action-wrapper" class = "form-wrapper"><legend>' . $legend . '</legend>' . $vars['element']['#children']  . '</fieldset></div>';
+  if(!empty($vars['element']['#node'])) {
+    $fieldset_title_field = field_get_items('node', $vars['element']['#node'], 'field_sba_message_action_label');
+    $fieldset_title = field_view_value('node', $vars['element']['#node'], 'field_sba_message_action_label', $fieldset_title_field[0]);
+    $title = drupal_render($fieldset_title);
+    $title = !empty($title) ? $title : t('Take Acton Now!');
+    return ' <div class="row-fluid"><fieldset id="take-action-wrapper" class = "form-wrapper"><legend>' . $title . '</legend>' . $vars['element']['#children'] . '</fieldset></div>';
+  }
 }
 

@@ -60,6 +60,10 @@ function salesforce_message_action_create_actions_taken_fieldmap() {
       'user_agent' => 'User_Agent__c',
       'sba_deliverable_count' => 'Generated_Message_Count__c',
       'sba_user_edit_flag' => 'Message_Edited__c',
+      'device_type' => 'Device_Type__c',
+      'device_name' => 'Device_Name__c',
+      'device_os' => 'Device_OS__c',
+      'device_browser' => 'Device_Browser__c',
     ),
     'salesforce_node_map' => array(
       'title' => 'Name',

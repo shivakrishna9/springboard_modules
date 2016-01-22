@@ -74,6 +74,28 @@ function sba_message_action_insert_components($node) {
 
   $fields[] = array(
     'nid' => $node->nid,
+    'form_key' => 'sba_action_is_multistep',
+    'pid' => 0,
+    'name' => t('Completed second step'),
+    'type' => 'hidden',
+    'value' => 0,
+    'weight' => 30,
+    'email' => 1,
+  );
+
+  $fields[] = array(
+    'nid' => $node->nid,
+    'form_key' => 'sba_multistep_complete',
+    'pid' => 0,
+    'name' => t('Completed second step'),
+    'type' => 'hidden',
+    'value' => 0,
+    'weight' => 31,
+    'email' => 1,
+  );
+
+  $fields[] = array(
+    'nid' => $node->nid,
     'form_key' => 'sbp_sba_action_optin',
     'name' => t('Opt In '),
     'type' => 'select',
@@ -87,7 +109,7 @@ function sba_message_action_insert_components($node) {
     'extra' => array(
       'title_display' => 'none',
       'multiple' => 1,
-      'items' => 'sbp_sba_action_optin|Show my name in a list of action takers.'
+      'items' => 'sbp_sba_action_optin|Show my name in a list of advocates.'
     ),
   );
 
@@ -95,6 +117,9 @@ function sba_message_action_insert_components($node) {
   $exclude[] = 'sba_user_edit_flag';
   $exclude[] = 'sba_deliverable_count';
   $exclude[] = 'sbp_sba_action_optin';
+  $exclude[] = 'sba_action_is_multistep';
+  $exclude[] = 'sba_multistep_complete';
+
 
   // Add the component to the Webform.
   foreach ($fields as $field) {
@@ -124,7 +149,7 @@ function sba_message_action_insert_components($node) {
  */
 function sba_message_action_prevent_component_delete(&$form, &$form_state) {
 
-  $required_fields = sba_message_locked_fields();
+  $required_fields = sba_message_action_locked_fields();
   $cid = $form['component']['#value']['cid'];
   $component = $form['node']['#value']->webform['components'][$cid];
 
@@ -154,7 +179,7 @@ function sba_message_action_form_webform_components_form_alter(&$form, &$form_st
  * @param $form
  */
 function sba_message_action_component_edit_lock(&$form) {
-  $locked_fields = sba_message_locked_fields();
+  $locked_fields = sba_message_action_locked_fields();
   if (in_array($form['form_key']['#default_value'], $locked_fields)) {
     // Check the node type.
     $form['form_key']['#disabled'] = TRUE;
@@ -172,7 +197,7 @@ function sba_message_action_component_edit_lock(&$form) {
  * @param $form
  */
 function sba_message_action_component_overview_lock(&$form) {
-  $locked_fields = sba_message_locked_fields();
+  $locked_fields = sba_message_action_locked_fields();
   foreach ($form['#node']->webform['components'] as $cid => $component) {
     if (in_array($component['form_key'], $locked_fields) && $component['form_key'] != 'sbp_phone') {
       $form['components'][$cid]['mandatory']['#disabled'] = TRUE;
@@ -183,7 +208,7 @@ function sba_message_action_component_overview_lock(&$form) {
 /**
  * @return array
  */
-function sba_message_locked_fields() {
+function sba_message_action_locked_fields() {
   $locked_fields = array(
     'sbp_salutation',
     'sbp_first_name',
@@ -198,6 +223,8 @@ function sba_message_locked_fields() {
     'sba_user_edit_flag',
     'sbp_zip_plus_four',
     'sbp_sba_action_optin',
+    'sba_action_is_multistep',
+    'sba_multistep_complete'
   );
   return $locked_fields;
 }

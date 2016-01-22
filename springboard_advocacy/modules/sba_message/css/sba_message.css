@@ -105,9 +105,9 @@
             #springboard-advocacy-message-form-container fieldset fieldset {
                 border: none;
             }
-#springboard-advocacy-message-form-container fieldset fieldset .form-wrapper {
-    padding:   0;
-}
+            #springboard-advocacy-message-form-container fieldset fieldset .form-wrapper {
+                padding:   0;
+            }
             #springboard-advocacy-message-form-container fieldset fieldset#sba_message_sba_message_action_message_form_group_sba_editable,
             #edit-field-sba-bottom-conclusion {
                 display: none;

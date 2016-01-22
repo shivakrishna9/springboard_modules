@@ -10,7 +10,7 @@
  *
  * Presently used by message actions but may be by other modules.
  */
-function _sba_message_action_install_vocab_sba_legislative_issues() {
+function _springboard_advocacy_install_vocab_sba_legislative_issues($node_type) {
   $already_exists = FALSE;
   foreach (taxonomy_get_vocabularies() as $vocab) {
     if ($vocab->machine_name == 'sba_legislative_issues') {
@@ -29,7 +29,7 @@ function _sba_message_action_install_vocab_sba_legislative_issues() {
       $vocab = taxonomy_vocabulary_machine_name_load('sba_legislative_issues');
       // Populate with Springboard standard terms.
       $weight = 0;
-      foreach (_sba_message_action_standard_legislative_issues() as $parent => $children) {
+      foreach (_springboard_advocacy_standard_legislative_issues() as $parent => $children) {
         taxonomy_term_save((object) array(
           'vid' => $vocab->vid,
           'name' => $t($parent),
@@ -52,7 +52,7 @@ function _sba_message_action_install_vocab_sba_legislative_issues() {
       }
     }
   }
-  _sba_message_action_install_taxonomy_fields();
+  _springboard_advocacy_install_taxonomy_fields($node_type);
 }
 
 /**
@@ -60,7 +60,7 @@ function _sba_message_action_install_vocab_sba_legislative_issues() {
  *
  * @return array
  */
-function _sba_message_action_standard_legislative_issues() {
+function _springboard_advocacy_standard_legislative_issues() {
   $t = get_t();
   return array(
     "Agriculture and Food" => array("Agriculture", "FDA/USDA", "Food", "Nutrition"),
@@ -95,14 +95,21 @@ function _sba_message_action_standard_legislative_issues() {
   );
 }
 
-function _sba_message_action_install_taxonomy_fields() {
+/**
+ * Install the legislative issue and org issue taxonomy fields on a node type.
+ *
+ * @param $node_type
+ * @throws \Exception
+ * @throws \FieldException
+ */
+function _springboard_advocacy_install_taxonomy_fields($node_type) {
   module_load_include('inc', 'field', 'field.crud');
   module_load_include('inc', 'field', 'field.info');
 
   // Install Organization Issues
   module_load_include('install', 'springboard_taxonomy');
   if(function_exists('_springboard_taxonomy_field_instance')) {
-    foreach (_springboard_taxonomy_field_instance('sba_message_action') as $field_name => $field) {
+    foreach (_springboard_taxonomy_field_instance($node_type) as $field_name => $field) {
 
       // If somehow the base organization field was deleted, recreate it.
       if (!field_info_field($field['field_instance']['field_name'])) {
@@ -111,21 +118,21 @@ function _sba_message_action_install_taxonomy_fields() {
       }
 
       // Create the instance.
-      if (!field_info_instance('node', $field['field_instance']['field_name'], 'sba_message_action')) {
+      if (!field_info_instance('node', $field['field_instance']['field_name'], $node_type)) {
         field_create_instance($field['field_instance']);
       }
     }
   }
 
   // Install Legislatve issues.
-  if (function_exists('_sba_message_action_install_taxonomy_field_definitions')) {
-    foreach (_sba_message_action_install_taxonomy_field_definitions() as $field_name => $field) {
+  if (function_exists('_springboard_advocacy_install_taxonomy_field_definitions')) {
+    foreach (_springboard_advocacy_install_taxonomy_field_definitions($node_type) as $field_name => $field) {
       $exists = field_info_field('field_' . $field_name);
       if (empty($exists)) {
         field_create_field($field['field_config']);
       }
       // Before adding the field, check that it doesn't exist on the node type.
-      if (!field_info_instance('node', 'field_' . $field_name, 'sba_message_action')) {
+      if (!field_info_instance('node', 'field_' . $field_name, $node_type)) {
         field_create_instance($field['field_instance']);
       }
     }
@@ -133,9 +140,11 @@ function _sba_message_action_install_taxonomy_fields() {
 }
 
 /**
+ * Taxonomy field definitions.
+ *
  * @return mixed
  */
-function _sba_message_action_install_taxonomy_field_definitions() {
+function _springboard_advocacy_install_taxonomy_field_definitions($node_type) {
   $t = get_t();
 
   // Legislative issues.
@@ -172,7 +181,7 @@ function _sba_message_action_install_taxonomy_field_definitions() {
     'field_instance' => array(
       'field_name' => 'field_sba_legislative_issues',
       'entity_type' => 'node',
-      'bundle' => 'sba_message_action',
+      'bundle' => $node_type,
       'label' => $t("Legislative Issues"),
       'default_value' => NULL,
       'required' => 0,
@@ -207,7 +216,7 @@ function _sba_message_action_install_taxonomy_field_definitions() {
 /**
  * Delete taxonomy fields.
  */
-function _sba_message_action_delete_legislative_vocab() {
+function _springboard_advocacy_delete_legislative_vocab() {
   foreach (taxonomy_get_vocabularies() as $vocab) {
     if ($vocab->machine_name == 'sba_legislative_issues') {
       taxonomy_vocabulary_delete($vocab->vid);
