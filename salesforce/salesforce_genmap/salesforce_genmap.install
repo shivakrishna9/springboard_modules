@@ -150,7 +150,7 @@ function salesforce_genmap_update_7002(&$sandbox) {
       ->fields('map', array('mid', 'nid', 'map_handler'))
       ->condition('map.module', array('salesforce_donation', 'salesforce_message_action', 'salesforce_petition'), 'IN')
       ->condition('map.mid', $sandbox['current_mid'], '>')
-      ->range($sandbox['progress'], 5)
+      ->range(0, 5)
       ->orderBy('mid', 'ASC')
       ->execute();
 
