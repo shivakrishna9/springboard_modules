@@ -135,22 +135,20 @@ function salesforce_genmap_update_7001() {
  */
 function salesforce_genmap_update_7002(&$sandbox) {
   // Update Salesforce mappings for webforms provided by these modules:
-  $update_module_mappings = array(
-    'salesforce_donation',
-    'salesforce_message_action',
-    'salesforce_petition',
-  );
-
   if (!isset($sandbox['progress'])) {
     $sandbox['progress'] = 0;
     $sandbox['current_mid'] = 0;
-    $sandbox['max'] = db_query('SELECT COUNT(`mid`) FROM {salesforce_genmap_map} WHERE `module` IN(:module)',
-        array(':module' => implode(',', $update_module_mappings)))->fetchField();
+    $sandbox['max'] = db_query('SELECT COUNT(`mid`) FROM {salesforce_genmap_map} WHERE `module` IN(:module1, :module2, :module3)',
+      array(
+        ':module1' => 'salesforce_donation',
+        ':module2' => 'salesforce_message_action',
+        ':module3' => 'salesforce_petition',
+        ))->fetchField();
   }
 
   $result = db_select('salesforce_genmap_map', 'map')
       ->fields('map', array('mid', 'nid', 'map_handler'))
-      ->condition('map.module', $update_module_mappings, 'IN')
+      ->condition('map.module', array('salesforce_donation', 'salesforce_message_action', 'salesforce_petition'), 'IN')
       ->condition('map.mid', $sandbox['current_mid'], '>')
       ->range(0, 5)
       ->orderBy('mid', 'ASC')
