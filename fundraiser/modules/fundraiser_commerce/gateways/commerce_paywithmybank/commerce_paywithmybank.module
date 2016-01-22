@@ -550,6 +550,9 @@ function commerce_paywithmybank_create_payment_transaction($api_transaction, $pa
   $donation->status_label = _fundraiser_commerce_get_label_by_status($updated_donation_status);
   $donation->status_charged = _fundraiser_commerce_get_charged_by_status($updated_donation_status);
 
+  // Update donation transaction ID.
+  $donation->txn_id = $api_transaction->transactionId;
+
   fundraiser_donation_update($donation);
 
   return $transaction;
