@@ -292,15 +292,16 @@ function _sba_quicksign_find_field_form_state($form_state_values, $path) {
 function sba_quicksign_values_tree_build($profile, $src, &$tree, $parent) {
 
   foreach ($src as $cid => $component) {
+    $value = isset($component['value']) ? $component['value'] : NULL;
     if ($component['pid']) {
       $parent_key = $src[$component['pid']]['form_key'];
       if (!isset($tree[$parent_key])) {
         $tree[$parent_key] = array();
       }
-      $tree[$parent_key][$component['form_key']] = isset($profile[$component['form_key']]) ? $profile[$component['form_key']] : NULL;
+      $tree[$parent_key][$component['form_key']] = isset($profile[$component['form_key']]) ? $profile[$component['form_key']] : $value;
     }
     else {
-      $tree[$component['form_key']] = isset($profile[$component['form_key']]) ? $profile[$component['form_key']] : NULL;
+      $tree[$component['form_key']] = isset($profile[$component['form_key']]) ? $profile[$component['form_key']] : $value;
     }
   }
   return $tree;
