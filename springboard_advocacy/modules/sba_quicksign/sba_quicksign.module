@@ -189,6 +189,7 @@ function sba_quicksign_form_validate(&$form, &$form_state) {
     $map = webform_user_user_map($node->nid);
     $required_non_profile_fields = array_diff($required_fields, $map);
     $missing_non_profile_fields = FALSE;
+    $missing_message_fields = sba_quicksign_check_message_fields($form, $form_state);
 
     foreach ($required_non_profile_fields as $form_key) {
       $field = _sba_quicksign_find_field_form_state($form_state['values'], $component_hierarchy[$form_key]);
@@ -231,12 +232,12 @@ function sba_quicksign_form_validate(&$form, &$form_state) {
       form_set_value($quicksign_field, '', $form_state);
     }
 
-    if ($account && ($missing_fields || $missing_non_profile_fields)) {
+    if ($account && ($missing_fields || $missing_non_profile_fields || $missing_message_fields)) {
       drupal_set_message(t("Unfortunately, we don't have enough information on file to submit this form. Please complete the form below."));
       form_set_value($quicksign_field, '', $form_state);
     }
 
-    if ($account && (!$missing_fields && !$missing_non_profile_fields)) {
+    if ($account && (!$missing_fields && !$missing_non_profile_fields && !$missing_message_fields)) {
       // If everything has gone smoothly to this point package up the
       // loaded profile and pass it off for use during the submit callback.
       $form_state['node'] = $node;
@@ -640,4 +641,33 @@ function sba_quicksign_element_process_text_format($element) {
     }
   }
   return $element;
+}
+
+function sba_quicksign_check_message_fields($form, $form_state) {
+  $node = $form['#node'];
+  $error = FALSE;
+  if ($node->type == 'sba_message_action') {
+    $node_wrapper = entity_metadata_wrapper('node', $node);
+    $multi_flow = $node_wrapper->field_sba_action_flow->value() == 'multi' ? TRUE : FALSE;
+    if (isset($form_state['values']['sba_messages'])) {
+      $is_single = count($form_state['values']['sba_messages']['message']) == 1 ? TRUE : FALSE;
+    }
+    if (!empty($is_single) && $multi_flow == FALSE) {
+      $child_messages = element_children($form['sba_messages']['message']);
+      $message_id = reset($child_messages);
+      $message = $form['sba_messages']['message'][$message_id];
+      $body_default = isset($message['edited_body']['#default_value']) ? $message['edited_body']['#default_value'] : '';
+      $body_edited = isset($form_state['values']['sba_messages']['message'][$message_id]['edited_body']) ? $form_state['values']['sba_messages']['message'][$message_id]['edited_body'] : '';
+      $subject_default = isset($message['subject']['#default_value']) ? $message['subject']['#default_value'] : '';
+      $subject_edited = isset($form_state['values']['sba_messages']['message'][$message_id]['subject']) ? $form_state['values']['sba_messages']['message'][$message_id]['subject'] : '';
+      // Enforce mandatory editing.
+      if ($body_edited == $body_default && isset($message['body_required']) && $message['body_required']['#value'] == 1) {
+        $error = TRUE;
+      }
+      if ($subject_edited == $subject_default && isset($message['subject_required']) && $message['subject_required']['#value'] == 1) {
+        $error = TRUE;
+      }
+    }
+  }
+  return $error;
 }
