@@ -115,7 +115,7 @@ function salesforce_genmap_update_dependencies() {
 
   // This update depends on Market Source device info fields existing.
   $dependencies['salesforce_genmap'][7002] = array(
-    'market_source' => 7001,
+    'market_source' => 7002,
   );
 
   return $dependencies;
@@ -147,7 +147,7 @@ function salesforce_genmap_update_7002(&$sandbox) {
   }
 
   $result = db_select('salesforce_genmap_map', 'map')
-      ->fields('map', array('mid', 'nid', 'map_handler'))
+      ->fields('map', array('mid', 'nid', 'map_handler', 'module'))
       ->condition('map.module', array('salesforce_donation', 'salesforce_message_action', 'salesforce_petition'), 'IN')
       ->condition('map.mid', $sandbox['current_mid'], '>')
       ->range(0, 5)
@@ -157,10 +157,13 @@ function salesforce_genmap_update_7002(&$sandbox) {
   while ($record = $result->fetchAssoc()) {
     $map = salesforce_genmap_load_map($record['nid'], $record['map_handler']);
 
-    $map->field_map['salesforce_webform_map']['device_type'] = 'Device_Type__c';
-    $map->field_map['salesforce_webform_map']['device_name'] = 'Device_Name__c';
-    $map->field_map['salesforce_webform_map']['device_os'] = 'Device_OS__c';
-    $map->field_map['salesforce_webform_map']['device_browser'] = 'Device_Browser__c';
+    // Set the map key based on the module name.
+    $map_key = ($record['module'] == 'salesforce_donation') ? 'salesforce_webform_map' : 'webform_map';
+
+    $map->field_map[$map_key]['device_type'] = 'Device_Type__c';
+    $map->field_map[$map_key]['device_name'] = 'Device_Name__c';
+    $map->field_map[$map_key]['device_os'] = 'Device_OS__c';
+    $map->field_map[$map_key]['device_browser'] = 'Device_Browser__c';
 
     salesforce_genmap_save_map($map, $record['map_handler']);
 
