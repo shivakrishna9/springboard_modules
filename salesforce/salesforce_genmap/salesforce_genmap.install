@@ -115,7 +115,7 @@ function salesforce_genmap_update_dependencies() {
 
   // This update depends on Market Source device info fields existing.
   $dependencies['salesforce_genmap'][7002] = array(
-    'market_source' => 7001,
+    'market_source' => 7002,
   );
 
   return $dependencies;
