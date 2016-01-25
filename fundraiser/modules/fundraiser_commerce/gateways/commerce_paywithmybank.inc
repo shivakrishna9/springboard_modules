@@ -420,12 +420,13 @@ function commerce_paywithmybank_fundraiser_commerce_charge($method_instance, $do
 function commerce_paywithmybank_fundraiser_commerce_refund($payment_method, $refund) {
   // Process the refund.
   $api = commerce_paywithmybank_get_api($payment_method);
-  $amount = substr(commerce_currency_format($refund->amount, $refund->currency), 1);
-  $transaction = $api->refundTransaction($refund->donation->txn_id, $refund->did, $amount);
+  $amount = commerce_currency_decimal_to_amount($refund->amount, $refund->currency);
+  $formatted_amount = substr(commerce_currency_format($amount, $refund->currency), 1);
+  $transaction = $api->refundTransaction($refund->donation->txn_id, $refund->did, $formatted_amount);
 
   // Log the refund.
   if ($payment_method['settings']['commerce_paywithmybank_settings_log']['request']) {
-    commerce_paywithmybank_log_request('refund', $refund->donation->txn_id, $refund->did, $refund->amount);
+    commerce_paywithmybank_log_request('refund', $refund->donation->txn_id, $refund->did, $formatted_amount);
   }
 
   if ($transaction == NULL) {
