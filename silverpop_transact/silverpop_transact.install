@@ -126,11 +126,46 @@ function silverpop_transact_schema() {
     ),
     'primary key' => array('id'),
   );
+  $schema['silverpop_transact_webform'] = array(
+    'description' => 'Stores Silverpop data related to donation_form node emails.',
+    'fields' => array(
+      'nid' => array(
+        'description' => 'node id.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'eid' => array(
+        'description' => 'email id',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'group_id' => array(
+        'description' => 'Silverpop Group ID.',
+        'type' => 'text',
+      ),
+      'save_tokens' => array(
+        'description' => 'Boolean indicating whether the tokens should be saved to Silverpop database.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'additional_tokens' => array(
+        'description' => 'key|value list of additional tokens to be sent to Silverpop.',
+        'type' => 'text',
+      ),
+    ),
+    'primary key' => array('nid', 'eid'),
+    'indexes' => array(
+      'nid' => array('nid'),
+    ),
+  );
   return $schema;
 }
 
 /**
- * Adds silverpop_transact_log table.
+ * Adds tables silverpop_transact_log and silverpop_transact_webform.
  */
 function silverpop_transact_update_7001() {
   $schema['silverpop_transact_log'] = array(
@@ -185,7 +220,44 @@ function silverpop_transact_update_7001() {
     ),
     'primary key' => array('id'),
   );
+  $schema['silverpop_transact_webform'] = array(
+    'description' => 'Stores Silverpop data related to donation_form node emails.',
+    'fields' => array(
+      'nid' => array(
+        'description' => 'node id.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'eid' => array(
+        'description' => 'email id',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'group_id' => array(
+        'description' => 'Silverpop Group ID.',
+        'type' => 'text',
+      ),
+      'save_tokens' => array(
+        'description' => 'Boolean indicating whether the tokens should be saved to Silverpop database.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'additional_tokens' => array(
+        'description' => 'key|value list of additional tokens to be sent to Silverpop.',
+        'type' => 'text',
+      ),
+    ),
+    'primary key' => array('nid', 'eid'),
+    'indexes' => array(
+      'nid' => array('nid'),
+    ),
+  );
   db_create_table('silverpop_transact_log', $schema['silverpop_transact_log']);
+  db_create_table('silverpop_transact_webform', $schema['silverpop_transact_webform']);
+
 }
 
 /**

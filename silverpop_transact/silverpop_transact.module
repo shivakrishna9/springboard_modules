@@ -9,6 +9,58 @@ define('SILVERPOP_TRANSACT_DEFAULT_CAMPAIGN', variable_get('silverpop_transact_m
 define('SILVERPOP_TRANSACT_SMTP_ADDRESS', 'transact%.silverpop.com');
 
 /**
+ * Implements hook_form_FORM_ID_alter().
+ */
+function silverpop_transact_form_webform_email_edit_form_alter(&$form, &$form_state, $form_id) {
+  if (variable_get('silverpop_transact_model') == 'XML') {
+    // Hide N/A form elements by setting their type to 'value'. This way, they
+    // still exist and doesn't cause errors when other modules go looking for
+    // them.
+    $form['email_wrappers_email_template']['#type'] = 'value';
+    $form['email_wrappers_bcc']['#type'] = 'value';
+    // @TODO Probably a better way to set all '#type' under 'template'.
+    $form['template']['#type'] = 'value';
+    $form['template']['email_wrappers_html_message']['#type'] = 'value';
+    $form['template']['email_wrappers_text_message']['#type'] = 'value';
+    $form['template']['template_option']['#type'] = 'value';
+    $form['template']['template']['#type'] = 'value';
+    $form['template']['components']['#type'] = 'value';
+    $form['template']['preview-container']['preview']['#type'] = 'value';
+    // Add Silverpop transact fields.
+    $defaults = silverpop_transact_load_email_settings($form['node']['#value']->nid, $form['eid']['#value']);
+    $form['silverpop_transact_group_id'] = array(
+      '#type' => 'textfield',
+      '#title' => t('Silverpop Group ID'),
+      '#description' => t('Description to go here.'),
+      '#default_value' => $defaults['group_id'],
+      '#weight' => '-51',
+    );
+    $form['silverpop_transact_save_tokens'] = array(
+      '#type' => 'checkbox',
+      '#title' => t('Save Token Data'),
+      '#description' => t('Saving token data is necessary for proper functioning of the "view in browser" functionality. Additional configuration in Silverpop is required.'),
+      '#default_value' => $defaults['save_tokens'],
+      '#weight' => '-50',
+    );
+    $form['silverpop_transact_additional_tokens'] = array(
+      '#type' => 'textarea',
+      '#title' => t('Additional Silverpop Tokens'),
+      '#description' => t('Enter a list of key|value pairs for additional tokens to be used in Silverpop templates.'),
+      '#default_value' => $defaults['additional_tokens'],
+      '#weight' => '-50',
+    );
+    $form['#submit'][] = 'silverpop_transact_email_submit_callback';
+  }
+}
+
+/**
+ * Implements hook_form_FORM_ID_alter().
+ */
+function silverpop_transact_form_webform_email_delete_form_alter(&$form, &$form_state, $form_id) {
+  $form['#submit'][] = 'silverpop_transact_delete_callback';
+}
+
+/**
  * Implements hook_mail_alter().
  *
  * Adds Silverpop's X-SP-Transact-Id header to emails when using the SMTP model.
@@ -18,6 +70,12 @@ function silverpop_transact_mail_alter(&$message) {
     // @TODO allow for value of x-header to be specified in config form.
     $message['headers']['X-SP-Transact-Id'] = '1234';
     silverpop_transact_log_mailing('SMTP', 'silverpop_transact');
+  }
+  elseif (variable_get('silverpop_transact_model') == 'XML') {
+    $eid = $message['params']['email']['eid'];
+    $nid = $message['params']['email']['nid'];
+    $settings = silverpop_transact_load_email_settings($nid, $eid);
+    silverpop_transact_create_mailing($settings['group_id'], $message['to']);
   }
 }
 
@@ -127,11 +185,86 @@ function silverpop_transact_create_mailing($mailing_id, $recipient_email, $perso
       $file = silverpop_transact_save_transact_data($data);
       watchdog('silverpop_transact', 'Error when attempting to submit to Silverpop Trasact. Data saved at %file', array('%file' => $file), WATCHDOG_ERROR);
     }
+    ftp_close($connection);
   }
   else {
     $file = silverpop_transact_save_transact_data($data);
     watchdog('silverpop_transact', 'Could not connect to Silverpop. Transact data saved at %file', array('%file' => $file));
   }
+}
+
+/**
+ * Delete settings for a given webform email.
+ *
+ * @param int $nid
+ *   Webform node id.
+ * @param int $eid
+ *   Email id.
+ */
+function silverpop_transact_delete_email_settings($nid, $eid) {
+  db_delete('silverpop_transact_webform')
+    ->condition('nid', $nid)
+    ->condition('eid', $eid)
+    ->execute();
+}
+
+/**
+ * Submit callback for webform email edit form.
+ */
+function silverpop_transact_email_submit_callback($form, $form_state) {
+  $values = $form_state['values'];
+  // Delete any existing settings for this email.
+  silverpop_transact_delete_email_settings($values['node']->nid, $values['eid']);
+  // Save settings for this email.
+  $settings = array(
+    'nid' => $values['node']->nid,
+    'eid' => $values['eid'],
+    'group_id' => $values['silverpop_transact_group_id'],
+    'save_tokens' => $values['silverpop_transact_save_tokens'],
+    'additional_tokens' => $values['silverpop_transact_additional_tokens'],
+  );
+  drupal_write_record('silverpop_transact_webform', $settings);
+}
+
+/**
+ * Submit callback for the Webform email delete form.
+ *
+ * Remove any settings for an email that is being deleted.
+ */
+function silverpop_transact_delete_callback($form, $form_state) {
+  $nid = $form_state['values']['email']['nid'];
+  $eid = $form_state['values']['email']['eid'];
+  silverpop_transact_delete_email_settings($nid, $eid);
+}
+
+/**
+ * Load Silverpop settings for a specific webform & email.
+ *
+ * @param int $nid
+ *   Webform node id.
+ * @param int $eid
+ *   Webform email id.
+ *
+ * @return array
+ *   Keyed array of settings. Array keys:
+ *     nid - Webform node id
+ *     eid - Webform email id
+ *     group_id - Silverpop Group ID
+ *     save_tokens
+ *     additional_tokens
+ */
+function silverpop_transact_load_email_settings($nid, $eid = FALSE) {
+  $query = db_select('silverpop_transact_webform', 'e')
+    ->fields('e', array(
+      'nid',
+      'eid',
+      'group_id',
+      'save_tokens',
+      'additional_tokens',
+    ))
+    ->condition('e.nid', $nid)
+    ->condition('eid', $eid);
+  return $query->execute()->fetchAssoc();
 }
 
 /**
@@ -173,6 +306,7 @@ function silverpop_transact_connect($api_host = NULL, $username = NULL, $passwor
   if ($connection) {
     $login = ftp_login($connection, $username, $password);
     if ($login) {
+      ftp_pasv($connection, TRUE);
       return $connection;
     }
     else {
