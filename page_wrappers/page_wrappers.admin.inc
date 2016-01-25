@@ -109,6 +109,35 @@ function page_wrappers_settings_form($form, $form_state) {
       '#default_value' => variable_get('page_wrappers_filter_by_og', FALSE),
     );
   }
+  
+  // Settings for caching on page wrapper node operations.
+  $form['page_wrappers_cache_settings'] = array(
+    '#type' => 'fieldset',
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
+    '#title' => t('Cache settings'),
+    '#tree' => FALSE,
+  );
+  $form['page_wrappers_cache_settings']['page_wrappers_skip_full_cache_clear'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Bypass drupal_flush_all_caches().'),
+    '#description' => t('Enabling this option will use a subset of drupal_flush_all_caches() routines during page wrapper node operations.'),
+    '#default_value' => variable_get('page_wrappers_skip_full_cache_clear', FALSE),
+  );
+  // Get a list of all potential contrib cache tables.
+  $hook_cache_tables = module_invoke_all('flush_caches');
+  $form['page_wrappers_cache_settings']['page_wrapper_cache_tables_exclude'] = array(
+    '#type' => 'checkboxes',
+    '#states' => array(
+      'visible' => array(
+        ':input[name="page_wrappers_skip_full_cache_clear"]' => array('checked' => TRUE),
+      ),
+    ),
+    '#title' => t('Exclude cache tables.'),
+    '#options' => drupal_map_assoc($hook_cache_tables),
+    '#default_value' => variable_get('page_wrapper_cache_tables_exclude', array()),
+    '#description' => t('Cache tables selected above <b>will not be flushed</b> during page wrapper node operations.'),
+  );
 
   $form['#validate'][] = 'page_wrappers_settings_form_validate';
 

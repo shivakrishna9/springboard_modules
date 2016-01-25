@@ -23,5 +23,6 @@
     <div id="donation-form-footer">
       <?php print drupal_render_children($form); ?>
     </div>
+    <?php print isset($recent_opt_in_donations) ? $recent_opt_in_donations : ''; ?>
   </div>
 </div>

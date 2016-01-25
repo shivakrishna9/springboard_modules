@@ -32,7 +32,9 @@ function fundraiser_ab_node_load($nodes, $types) {
   if (!empty($result)) {
     foreach ($result as $record) {
       // Add the stats to the node object
-      $node->included_webforms[$record['webform_nid']]['fundraiser'] = $record;
+      if (isset($node->included_webforms[$record['webform_nid']])) {
+        $node->included_webforms[$record['webform_nid']]['fundraiser'] = $record;
+      }
     }
   }
 }
@@ -187,4 +189,21 @@ function fundraiser_ab_webform_ab_conversion($test_node, $form_state_values) {
       }
     }
   }
+}
+
+/**
+ * Implements hook_webform_ab_remove_form().
+ * Removes donation counts when a donation form is removed from an A/B test.
+ */
+function fundraiser_ab_webform_ab_remove_form($test_nid, $webform_nid) {
+  // Stop if this isn't a donation form:
+  $webform_node = node_load($webform_nid);
+  if (!fundraiser_is_donation_type($webform_node->type)) {
+    return;
+  }
+
+  db_delete('fundraiser_ab_stats')
+    ->condition('webform_nid', $webform_nid)
+    ->condition('test_nid', $test_nid)
+    ->execute();
 }

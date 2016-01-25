@@ -754,14 +754,41 @@ function _fundraiser_donation_settings_form(&$form, &$form_state) {
     '#type' => 'value',
     '#value' => isset($node->receipt_email_message) ? $node->receipt_email_message : '',
   );
-  // Add CSS and JS on after build.
+
+  // Share the "Display" fieldset with related modules (e.g., Form Layouts).
+  if (empty($form['springboard_display'])) {
+    $form['springboard_display'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Display settings'),
+      '#collapsible' => TRUE,
+      '#collapsed' => FALSE,
+      '#group' => 'additional_settings',
+    );
+  }
+
+  // Add CSS and JS + hide "Display settings" if it is empty during after build:
   $form['#after_build'][] = '_fundraiser_node_form_after_build';
 }
 
 /**
  * Afterbuild for node type form, to avoid AJAX losing js, css.
+ *
+ * Also, this hides the "Display settings" fieldset Fundraiser provides
+ * if another module has not altered the form to insert something into it.
  */
 function _fundraiser_node_form_after_build($form, &$form_state) {
+  // Hide "Display settings" fieldset if empty:
+  $display_settings_is_empty = TRUE;
+  foreach ($form['springboard_display'] as $form_key => $value) {
+    if (substr($form_key, 0, 1) != '#') {
+      $display_settings_is_empty = FALSE;
+      break;
+    }
+  }
+  if ($display_settings_is_empty) {
+    $form['springboard_display']['#description'] = t('No display settings are enabled at this time.');
+  }
+
   // Add additional js and css for this form.
   drupal_add_css(drupal_get_path('module', 'fundraiser') . '/css/fundraiser.css');
   drupal_add_js(drupal_get_path('module', 'fundraiser') . '/js/fundraiser.js');
@@ -2093,6 +2120,7 @@ function fundraiser_donation_cancel($donation) {
   // And save the donation as it is at this stage since it was created.
   // This makes sure that any changes made stay in place.
   fundraiser_donation_update($donation, FALSE);
+
   // Allow other modules to respond to the cancel. Including Ubercart, etc.
   module_invoke_all('fundraiser_donation_cancel', $donation);
 }
@@ -2447,12 +2475,31 @@ function _fundraiser_refund_form_submit($form, &$form_state) {
   // Get the donation.
   $donation = fundraiser_donation_get_donation($form_state['donation_id']);
 
-  $new_status = 'refunded';
+  // Determine how much has been paid, less previous refunds
+  $refunded_total = (float) $form_state['values']['refunded_total'];
+  $able_to_refund = (commerce_currency_decimal_to_amount($donation->donation['amount'], $donation->currency) - $refunded_total);
+
+  // Partial refund.
+  if ($form_state['values']['refund_type'] != 'full') {
+    $amount = commerce_currency_decimal_to_amount($form_state['values']['refund_amount'], $donation->currency);
+
+    $new_status = 'partially_refunded';
+    // Prevent a refund of more than the amount paid.
+    if ($amount >= $able_to_refund) {
+      $amount = $able_to_refund;
+      $new_status = 'refunded';
+    }
+  }
+  // Full refund.
+  else {
+    $amount = $able_to_refund;
+    $new_status = 'refunded';
+  }
 
   // Set up the refund.
   $refund = new stdClass();
   $refund->did = $donation->did;
-  $refund->amount = $form_state['values']['refund_amount'];
+  $refund->amount = commerce_currency_amount_to_decimal($amount, $donation->currency);
   $refund->currency = $donation->currency;
   $refund->reason = $form_state['values']['refund_notes'];
   $refund = fundraiser_refund_create($refund);

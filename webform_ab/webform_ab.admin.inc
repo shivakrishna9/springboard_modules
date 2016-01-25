@@ -30,6 +30,12 @@ function webform_ab_admin_settings($form, &$form_state) {
     '#description' => t('If checked, hits on a webform will only be logged once per user.'),
     '#default_value' => variable_get('webform_ab_ignore_repeat_hits', '1'),
   );
+  $form['webform_ab_ignore_search_bot_hits'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Ignore hits from search engine bots'),
+    '#description' => t('If checked, hits from search engines like Google will be ignored.'),
+    '#default_value' => variable_get('webform_ab_ignore_search_bot_hits', '1'),
+  );
   return system_settings_form($form);
 }
 
@@ -291,7 +297,6 @@ function webform_ab_test_remove_webform($node, $webform_nid) {
     array(':test_nid' => $node->nid, ':webform_nid' => $webform_nid))->fetchField() > 0;
   if ($form_is_included) {
     // Show a confirmation form
-    drupal_set_message(t('The form has been removed from the A/B test.'));
     $form = drupal_get_form('webform_ab_test_remove_webform_confirm', $node->nid, $webform_nid);
     return drupal_render($form);
   }
@@ -325,13 +330,22 @@ function webform_ab_test_remove_webform_confirm($form, &$form_state, $test_nid, 
  * Remove a webform from a test
  */
 function webform_ab_test_remove_webform_confirm_submit($form, &$form_state) {
-  db_delete('webform_ab_forms')
-    ->condition('test_nid', $form['#test_nid'])
-    ->condition('webform_nid', $form['#webform_nid'])
-    ->execute();
+  // Remove data specific to the form that is being removed from this A/B test:
+  $tables_to_update = array(
+    'webform_ab_forms',
+    'webform_ab_conversion',
+    'webform_ab_hits',
+  );
+  foreach ($tables_to_update as $table_name) {
+    db_delete($table_name)
+      ->condition('test_nid', $form['#test_nid'])
+      ->condition('webform_nid', $form['#webform_nid'])
+      ->execute();
+  }
+
   // Notify other modules that the webform is being removed
   module_invoke_all('webform_ab_remove_form', $form['#test_nid'], $form['#webform_nid']);
-  drupal_set_message(t('The webform has been removed.'));
+  drupal_set_message(t('The form has been removed from the A/B test.'));
   $form_state['redirect'] = 'node/' . $form['#test_nid'] . '/webforms';
 }
 

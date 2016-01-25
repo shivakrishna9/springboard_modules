@@ -456,73 +456,25 @@ function fundraiser_sustainers_mail($key, &$message, $params) {
  */
 
 /**
- * Implements hook_salesforce_genmap_map_fields().
+ * Implements hook_salesforce_queue_create_item_alter()
  */
-function fundraiser_sustainers_salesforce_genmap_map_fields(stdClass $donation, Entity $map, $node, $op) {
-  // Donation properties map.
-  if (isset($map->field_map['fundraiser_sustainers_map'])) {
-    if (isset($map->field_map['fundraiser_sustainers_map']['full_name'])) {
-      $sf_field = $map->field_map['fundraiser_sustainers_map']['full_name'];
+function fundraiser_sustainers_salesforce_queue_create_item_alter(&$item) {
+  if ($item['delta'] == 'fundraiser_sustainers_series') {
+    $fundraiser_sustainers_series = entity_load_single('fundraiser_sustainers_series', $item['drupal_id']);
+    if (!empty($fundraiser_sustainers_series)) {
+      $user = user_load($fundraiser_sustainers_series->uid);
+      $user_wrapper = entity_metadata_wrapper('user', $user);
       $date = strtotime('now');
-      if (!empty($donation->transaction_date)) {
-        $date = strtotime($donation->transaction_date);
-      }
-      $fields[$sf_field] =  t('Recurring Donation - !first !last (!date)',
+
+      // Set the Name field value.
+      $item['sobject']->fields['Name'] = t('Recurring Donation - !first !last (!date)',
         array(
-        '!first' => $donation->donation['first_name'],
-        '!last' => $donation->donation['last_name'],
+        '!first' => $user_wrapper->sbp_first_name->value(),
+        '!last' => $user_wrapper->sbp_last_name->value(),
         '!date' => gmdate('Y-m-d H:i:s\Z', $date),
       ));
     }
-    if (isset($map->field_map['fundraiser_sustainers_map']['amount'])) {
-      $sf_field = $map->field_map['fundraiser_sustainers_map']['amount'];
-      $fields[$sf_field] = $donation->donation['amount'];
-    }
-    if (isset($map->field_map['fundraiser_sustainers_map']['contact'])) {
-      $sf_field = $map->field_map['fundraiser_sustainers_map']['contact'];
-      $fields[$sf_field] = '[Contact:user:' . $donation->uid . ']';
-    }
-    if (isset($map->field_map['fundraiser_sustainers_map']['installment_period'])) {
-      $sf_field = $map->field_map['fundraiser_sustainers_map']['installment_period'];
-      $fields[$sf_field] = 'Monthly';
-    }
-    if (isset($map->field_map['fundraiser_sustainers_map']['schedule_type'])) {
-      $sf_field = $map->field_map['fundraiser_sustainers_map']['schedule_type'];
-      $fields[$sf_field] = 'Multiply By';
-    }
-    if (isset($map->field_map['fundraiser_sustainers_map']['installments'])) {
-      $info = _fundraiser_get_donation_gateway($donation->did);
-      $months = 0;
-      if ($op == 'update') {
-        // This created donation is the master, so passing it in to create the set.
-        // We can't predict the form key for these values, so ask the gateway to provide.
-        if (isset($info['expire callback'])) {
-          $expiration_func = $info['expire callback'];
-          $expires = $expiration_func($donation->donation);
-          $month = $expires['month'];
-          $year = $expires['year'];
-          $start = strtotime("now");
-          $stop = mktime(0, 0, 0, $month, 1, $year);
-          $months = ((idate('Y', $stop) * 12) + idate('m', $stop)) - ((idate('Y', $start) * 12) + idate('m', $start));
-          $create_limit = variable_get('fundraiser_sustainers_create_limit', 50);
-          if ($months > $create_limit) {
-            $months = $create_limit;
-          }
-        }
-      }
-      $sf_field = $map->field_map['fundraiser_sustainers_map']['installments'];
-      $fields[$sf_field] = $months;
-    }
-    if (isset($map->field_map['fundraiser_sustainers_map']['last_payment_date'])) {
-      $sf_field = $map->field_map['fundraiser_sustainers_map']['last_payment_date'];
-      $fields[$sf_field] = date('Y-m-d H:i:s');
-    }
-    if (isset($map->field_map['fundraiser_sustainers_map']['next_payment_date'])) {
-      $sf_field = $map->field_map['fundraiser_sustainers_map']['next_payment_date'];
-      $fields[$sf_field] = date('Y-m-d H:i:s', $donation->recurring->next_charge);
-    }
   }
-  return $fields;
 }
 
 /**
@@ -563,14 +515,6 @@ function fundraiser_sustainers_salesforce_genmap_map_fields_alter(&$fields, $con
           $sf_field = $map->field_map['salesforce_donation_map']['transaction_date'];
           unset($fields[$sf_field]);
         }
-      }
-      // Lastly, add a field iff recurring object.
-      if ($donation->donation['recurs_monthly'] == TRUE && !empty($donation->master_did) ) {
-        $fields['npe03__Recurring_Donation__c'] = '[npe03__Recurring_Donation__c:recurring_donation:' . $donation->master_did . ']';
-      }
-      // Lastly, add a field iff recurring object.
-      if ($donation->donation['recurs_monthly'] == TRUE && empty($donation->master_did) ) {
-        $fields['npe03__Recurring_Donation__c'] = '[npe03__Recurring_Donation__c:recurring_donation:' . $donation->did . ']';
       }
 
       // If we're dealing with a sustainer charge, only send a subset of data so that other fields
@@ -639,9 +583,9 @@ function fundraiser_sustainers_form_node_form_alter(&$form, &$form_state, $form_
       '#type' => 'select',
       '#title' => t('Display setting'),
       '#options' => array(
-        'user_choice' => t('Recurring is an option on this form, but users may opt out.'),
-        'always' => t('Recurring is an option on this form, and users cannot opt out.'),
-        'never' => t('Recurring is not an option on this form.'),
+        'user_choice' => t('Donor chooses one-time or recurring'),
+        'always' => t('Recurring only'),
+        'never' => t('One-time only'),
       ),
       '#default_value' => isset($form['#node']->recurring_setting) ? $form['#node']->recurring_setting : 'user_choice',
     );
@@ -733,6 +677,13 @@ function fundraiser_sustainers_salesforce_sync_complete_item($item, $result) {
         $donation = fundraiser_donation_get_donation($item->drupal_id, TRUE);
         salesforce_genmap_send_object_to_queue('fundraiser_sustainers', 'update',
           $donation->node, $donation->did, $donation, 'recurring_donation');
+
+        // Re-queue the fundraiser sustainers series entity for this donation
+        // to send the correct installments value to Salesforce.
+        $fundraiser_sustainers_series = entity_load_single('fundraiser_sustainers_series', $item->drupal_id);
+        if (!empty($fundraiser_sustainers_series)) {
+          salesforce_mapping_send_entity_to_queue($fundraiser_sustainers_series, 'fundraiser_sustainers_series', 'UPDATE');
+        }
       }
     }
   }
@@ -1292,6 +1243,25 @@ function fundraiser_sustainers_form_fundraiser_admin_settings_alter(&$form, &$fo
     '#collapsible' => TRUE,
     '#collapsed' => TRUE,
   );
+  // Auto-cancel options for sustainers whose payment are consistently declined.
+  $form['fundraiser_sustainers']['fundraiser_recurring_auto_cancel'] = array (
+    '#type' => 'fieldset',
+    '#title' => t('Recurring Series Auto-Cancellation'),
+    '#collapsible' => TRUE,
+    '#collapsed' => FALSE,
+  );
+  $form['fundraiser_sustainers']['fundraiser_recurring_auto_cancel']['fundraiser_recurring_autocancel_enabled'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Cancel recurring donation series after multiple consecutive permanent failures?'),
+    '#description' => t('If this option is enabled, recurring donation series which consistently fail will be permanently cancelled.'),
+    '#default_value' => variable_get('fundraiser_recurring_autocancel_enabled', 0),
+  );
+  $form['fundraiser_sustainers']['fundraiser_recurring_auto_cancel']['fundraiser_recurring_autocancel_threshold'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Minimum consecutive failures'),
+    '#description' => t('How many consecutive donation failures after which a permanent cancellation should occur. Please enter a value greater than 3.'),
+    '#default_value' => variable_get('fundraiser_recurring_autocancel_threshold', 3),
+  );
   $token_set = array('donation', 'user', 'node');
   $form['fundraiser_sustainers']['fundraiser_cc_expiration_message']['tokens']['token_help'] = array(
     '#type' => 'item',
@@ -1307,12 +1277,19 @@ function fundraiser_sustainers_form_fundraiser_admin_settings_alter(&$form, &$fo
  */
 function fundraiser_sustainers_settings_form_validate($form, &$form_state) {
   $max_processing_attempts = $form_state['values']['fundraiser_sustainers_max_processing_attempts'];
+  $min_autocancel_threshold = $form_state['values']['fundraiser_recurring_autocancel_threshold'];
 
-  // Ensure we get a number between 3 and 10.
+  // Ensure we get a number between 3 and 10 for charge attempts.
   if (!is_numeric($max_processing_attempts)
     || $max_processing_attempts < 3
     || $max_processing_attempts > 10) {
     form_set_error('fundraiser_sustainers_max_processing_attempts', t('Maximum charge attempts should be a valid number between 3 and 10.'));
+  }
+
+  // Ensure we get a number above 3 for autocancel threshold.
+  if (!is_numeric($min_autocancel_threshold)
+    || $min_autocancel_threshold < 3) {
+    form_set_error('fundraiser_recurring_autocancel_consecutive_failures', t('Minimum consecutive failures should be a valid number greater than 3.'));
   }
 }
 
@@ -1453,7 +1430,7 @@ function fundraiser_sustainers_edit_form($did) {
       }
 
       if (user_access('fastforward recurring donations')) {
-        if (isset($this_donation->status_charged) && !$this_donation->status_charged) {
+        if (isset($this_donation->status_charged) && !$this_donation->status_charged && ($this_donation->status != 'auto_canceled')) {
           // Add a button to fastforward this particular donation
           $donations_row['ffwd'] = l(t('advance charge'), 'fundraiser_sustainers/ffwd/' . $this_donation->did,
             array('query' => drupal_get_destination()) );
@@ -1463,7 +1440,7 @@ function fundraiser_sustainers_edit_form($did) {
         }
       }
       if (user_access('skip recurring donations')) {
-        if (isset($this_donation->status_charged) && !$this_donation->status_charged) {
+        if (isset($this_donation->status_charged) && !$this_donation->status_charged && ($this_donation->status != 'auto_canceled')) {
           // Add a button to fastforward this particular donation
           $donations_row['skip'] = l(t('skip charge'), 'fundraiser_sustainers/' . $did . '/skip/' . $this_donation->did,
             array('query' => drupal_get_destination()));
@@ -2392,6 +2369,16 @@ function fundraiser_sustainers_fundraiser_donation_get_donation($donation) {
       $donation->close_date = date('Y-m-d', $donation->recurring->next_charge);
     }
     $donation->donation['recurs_monthly'] = TRUE;
+
+    // This is a bit of a workaround because of a problem with how $donation->status_charged is
+    // implemented. That property can currently mean 2 different things. First it is used as an
+    // indicator of whether the tranaction has been charged (aka, payment received). It is also
+    // used as an indicator of whether an order can be charged based on status. This causes
+    // canceled donations to follow the same processing as a charged sustainer payment.
+    if (($donation->status == 'canceled' || $donation->status == 'auto_canceled') && $donation->status_charged) {
+      $donation->status_charged = 0;
+    }
+
   }
   else {
     $donation->donation['recurs_monthly'] = FALSE;
@@ -2444,14 +2431,19 @@ function fundraiser_sustainers_fundraiser_donation_success($donation) {
         // Update the recurring table and saves to the log.
         _fundraiser_sustainers_create_recurring($recurring_donation);
 
+        // Create the fundraiser sustainers series entity.
+        $fundraiser_sustainers_series_data = array(
+          'did' => $donation->did,
+          'uid' => $donation->uid,
+          'amount' => $donation->donation['amount'],
+          'installments' => _fundraiser_sustainers_calculate_installments($donation),
+        );
+
+        $fundraiser_sustainers_series = entity_create('fundraiser_sustainers_series', $fundraiser_sustainers_series_data);
+        $fundraiser_sustainers_series->save();
+
         // Now handle the recurring object, and the rest of the orders.
         if (!_fundraiser_sustainers_offsite_recurring($info['offsite_recurring'], $donation->donation['payment_method'])) { // Is not an offline recurring
-          // Load the newly created recurring donation into salesforce.
-          if (module_exists('salesforce_genmap')) {
-            $sf_donation = fundraiser_donation_get_donation($donation->did, TRUE);
-            salesforce_genmap_send_object_to_queue('fundraiser_sustainers', 'insert',
-              $sf_donation->node, $sf_donation->did, $sf_donation, 'recurring_donation');
-          }
           $info = _fundraiser_get_donation_gateway($donation->did);
           // This created donation is the master, so passing it in to create the set.
           // We can't predict the form key for these values, so ask the gateway to provide.
@@ -2592,15 +2584,107 @@ function fundraiser_sustainers_fundraiser_donation_cancel($donation) {
   if (!empty($donation->recurring->cancellation_reason)) {
     $reason = $donation->recurring->cancellation_reason;
   }
+  $canceled = isset($donation->recurring->auto_canceled) ? 'auto_canceled' : 'canceled';
 
   $recurring = array(
     'did' => $donation->did,
-    'gateway_resp' => 'canceled',
+    'gateway_resp' => $canceled,
     'lock_id' => 0,
     'cancellation_reason' => $reason,
   );
   _fundraiser_sustainers_update_recurring($recurring);
+}
 
+/**
+ * Implements hook_fundraiser_sustainers_donation_fail().
+ */
+function fundraiser_sustainers_fundraiser_sustainers_donation_fail($donation) {
+  // Do not procede if admin setting for auto-cancel is not enabled.
+  if (!variable_get('fundraiser_recurring_autocancel_enabled', NULL)) {
+    return;
+  }
+  // Query the sustainer log to see how many consecutive failures we have.
+  $threshold = variable_get('fundraiser_recurring_autocancel_threshold', 3);
+  // This hook function is called when we have a current donation which failed, so we can subtract 1.
+  --$threshold;
+  $records = db_query_range('
+    SELECT * FROM
+      {fundraiser_sustainers}
+    WHERE
+      master_did = :master_did
+    AND
+      did < :did
+    ORDER BY
+      did DESC', 0, $threshold,
+    array(':did' => $donation->did, ':master_did' => $donation->master_did)
+  );
+
+  // Confirm that all our most recent consecutive sustainers failed.
+  foreach ($records as $result) {
+    $response[] = $result->gateway_resp;
+  }
+  // If all gateways responses were failed, then proceed with auto cancel of donation.
+  if (array_unique($response) === array(FUNDRAISER_SUSTAINERS_FAILED_STATUS)) {
+    fundraiser_sustainers_auto_cancel($donation);
+  }
+}
+
+/**
+ * Cancel a recurring donation series.
+ *
+ * @param $donation
+ *   The donation object.
+ */
+function fundraiser_sustainers_auto_cancel($donation) {
+  $master_did = $donation->master_did;
+  $now = time();
+  $threshold = variable_get('fundraiser_recurring_autocancel_threshold', 3);
+  $reason = t('Automatically canceled on @date because of @num successive failures.', array('@date' => format_date($now), '@num' => $threshold));
+  // Cancel the donations.
+  $sustainer_donations = _fundraiser_sustainers_get_donations_recurr_remaining($master_did);
+  foreach ($sustainer_donations as $sustainer_donation) {
+    $donation = fundraiser_donation_get_donation($sustainer_donation->did);
+
+    // Add the cancel reason to the donation's recurring object.
+    $donation->recurring->cancellation_reason = $reason;
+
+    // Flag the donation as auto_canceled.
+    $donation->recurring->auto_canceled = 'auto_canceled';
+
+    // Cancel the donation.
+    // @see fundraiser_sustainers_fundraiser_donation_cancel().
+    fundraiser_donation_cancel($donation);
+
+    // Update the order's status to reflect auto-cancellation:
+    _fundraiser_commerce_update_order_status('auto_canceled', $donation->did);
+
+    // Update the number of attempts listed in the sustainers log:
+    db_query("UPDATE {fundraiser_sustainers_log} SET attempts = :attempts WHERE did = :did",
+      array(':attempts' => $threshold, ':did' => $donation->did));
+
+    // Add a watchdog entry with the did and reason.
+    watchdog('fundraiser_sustainers', 'Donation cancelled for #@did. Reason: @reason',
+      array('@did' => $donation->did, '@reason' => $reason));
+
+    // Add a log message into the subsequent revision caused when the main order's status is updated:
+    db_query("UPDATE {commerce_order_revision} SET log = :reason, revision_uid = 1 " .
+      "WHERE order_id=:order_id AND status='auto_canceled'", array(
+        ':reason' => $reason,
+        ':order_id' => $donation->did,
+     )
+    );
+  }
+
+  // Update the main order's status:
+  // _fundraiser_commerce_update_order_status('auto_canceled', $master_did);
+
+  // Invoke a rules event on auto cancellations.
+  if (module_exists("rules")) {
+    rules_invoke_event("fundraiser_sustainers_auto_cancel", $donation);
+  }
+  else {
+    module_invoke_all('fundraiser_sustainers_auto_cancel', $donation);
+  }
 }
 
 /**
@@ -3203,6 +3287,19 @@ function fundraiser_sustainers_entity_info() {
       'module' => 'fundraiser_sustainers',
       'views controller class' => 'FundraiserSustainerRecordViewsController',
     ),
+    'fundraiser_sustainers_series' => array(
+      'label' => t('Fundraiser Sustainers Series'),
+      'entity class' => 'Entity',
+      'controller class' => 'FundraiserSustainersSeriesEntityController',
+      'metadata controller class' => 'EntityDefaultMetadataController',
+      'base table' => 'fundraiser_sustainers_series',
+      'entity keys' => array(
+        'id' => 'did',
+      ),
+      'fieldable' => FALSE,
+      'exportable' => FALSE,
+      'module' => 'fundraiser_sustainers',
+    ),
   );
 
   return $return;
@@ -3390,4 +3487,32 @@ function fundraiser_sustainers_unlock_sustainer_action(&$sustainer_record, $cont
       break;
   }
 
+}
+
+/**
+ * Calculates monthly donation installments.
+ *
+ * @param object $donation
+ *   The donation to calculate installments for.
+ *
+ * @return int The number of monthly installments.
+ */
+function _fundraiser_sustainers_calculate_installments($donation) {
+  $info = _fundraiser_get_donation_gateway($donation->did);
+  $installments = 0;
+  if (isset($info['expire callback'])) {
+    $expiration_func = $info['expire callback'];
+    $expires = $expiration_func($donation->donation);
+    $month = $expires['month'];
+    $year = $expires['year'];
+    $start = strtotime("now");
+    $stop = mktime(0, 0, 0, $month, 1, $year);
+    $installments = ((idate('Y', $stop) * 12) + idate('m', $stop)) - ((idate('Y', $start) * 12) + idate('m', $start));
+    $create_limit = variable_get('fundraiser_sustainers_create_limit', 50);
+    if ($installments > $create_limit) {
+      $installments = $create_limit;
+    }
+  }
+
+  return $installments;
 }
