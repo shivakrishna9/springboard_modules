@@ -1,0 +1,14 @@
+#edit-donation-type-options .donation-type-option {
+    overflow: hidden; /* contain floats */
+}
+#edit-donation-type-options .donation-type-option .form-item {
+    float: left;
+    margin-right: 1em;
+}
+#edit-donation-type-options .donation-type-option input[type=text] {
+    width: 15em;
+    margin-bottom: 0;
+}
+#edit-donation-type-options .donation-type-option input:not(:checked) ~ label {
+    visibility: hidden;
+}
