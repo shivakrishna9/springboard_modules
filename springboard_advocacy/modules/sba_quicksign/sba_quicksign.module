@@ -358,7 +358,7 @@ function sba_quicksign_form_node_form_alter(&$form, &$form_state, $form_id) {
  * Implements hook_node_insert().
  */
 function sba_quicksign_node_insert($node) {
-  if (sba_quicksign_is_quicksign_type($node->type) && isset($node->quicksign_enabled)) {
+  if (sba_quicksign_is_quicksign_type($node->type) && !empty($node->quicksign_enabled)) {
     sba_quicksign_save($node);
     sba_quicksign_insert_components($node, 'insert');
   }
