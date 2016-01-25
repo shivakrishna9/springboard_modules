@@ -395,7 +395,7 @@ function sba_social_action_preview_form($form, $form_state, $node, $messages, $r
   $form['#submit'][] = 'sba_social_action_preview_form_submit';
 
   $submit_field = field_get_items('node', $node, 'field_sba_social_step_two_submit');
-  $markup = isset($submit_field[0]['value']) ? $submit_field[0]['value'] : t("I'm done");
+  $markup = !empty($submit_field[0]['value']) ? $submit_field[0]['value'] : t("I'm done");
   // Add submit button
   $form['form_container']['submit'] = array(
     '#prefix' => '<div id="edit-actions">',
