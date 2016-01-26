@@ -149,7 +149,6 @@ function silverpop_transact_schema() {
         'description' => 'Boolean indicating whether the tokens should be saved to Silverpop database.',
         'type' => 'int',
         'unsigned' => TRUE,
-        'not null' => TRUE,
       ),
       'additional_tokens' => array(
         'description' => 'key|value list of additional tokens to be sent to Silverpop.',

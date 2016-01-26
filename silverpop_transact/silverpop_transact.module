@@ -21,6 +21,8 @@ function silverpop_transact_form_webform_email_edit_form_alter(&$form, &$form_st
       '#default_value' => $defaults['smtp_xheader_value'],
       '#weight' => '-51',
     );
+    $form['#submit'][] = 'silverpop_transact_email_submit_callback';
+
   }
   elseif (variable_get('silverpop_transact_model') == 'XML') {
     // Hide N/A form elements by setting their type to 'value'. This way, they
@@ -247,11 +249,20 @@ function silverpop_transact_email_submit_callback($form, $form_state) {
   // Save settings for this email.
   $settings = array(
     'nid' => $values['node']->nid,
-    'eid' => $values['eid'],
-    'group_id' => $values['silverpop_transact_group_id'],
-    'save_tokens' => $values['silverpop_transact_save_tokens'],
-    'additional_tokens' => $values['silverpop_transact_additional_tokens'],
+    'eid' => $values['eid']
   );
+  if (isset($values['silverpop_transact_group_id'])){
+    $settings['group_id'] = $values['silverpop_transact_group_id'];
+  }
+  if (isset($values['silverpop_transact_save_tokens'])){
+    $settings['save_tokens'] = $values['silverpop_transact_save_tokens'];
+  }
+  if (isset($values['silverpop_transact_additional_tokens'])){
+    $settings['additional_tokens'] = $values['silverpop_transact_additional_tokens'];
+  }
+  if (isset($values['silverpop_transact_smtp_xheader_value'])){
+    $settings['smtp_xheader_value'] = $values['silverpop_transact_smtp_xheader_value'];
+  }
   drupal_write_record('silverpop_transact_webform', $settings);
 }
 
