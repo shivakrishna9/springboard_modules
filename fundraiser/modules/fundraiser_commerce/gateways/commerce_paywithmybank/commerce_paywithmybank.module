@@ -214,8 +214,6 @@ function commerce_paywithmybank_return_access() {
  */
 function commerce_paywithmybank_notify() {
   // Process notification and add a new transaction to the donation order.
-  $merchant_reference = filter_input(INPUT_POST, 'merchantReference');
-
   $object_type = filter_input(INPUT_POST, 'objectType');
   $object_id = filter_input(INPUT_POST, 'objectId');
 
@@ -230,7 +228,7 @@ function commerce_paywithmybank_notify() {
       commerce_paywithmybank_log_notification($object_type, $object_id, $api_transaction);
     }
 
-    $order = commerce_order_load($merchant_reference);
+    $order = commerce_order_load($api_transaction->merchantReference);
 
     if (empty($order)) {
       echo 'Fail';
