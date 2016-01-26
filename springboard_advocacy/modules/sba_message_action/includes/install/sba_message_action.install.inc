@@ -59,7 +59,7 @@ function _sba_message_action_reorder_internal_name() {
   field_update_instance($instance_info);
 
   $instance_info = field_read_instance('node', 'body', 'sba_message_action');
-  $instance_info['widget']['weight'] = 5;
+  $instance_info['widget']['weight'] = 7;
   field_update_instance($instance_info);
 }
 

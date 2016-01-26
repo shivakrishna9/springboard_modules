@@ -10,7 +10,6 @@
             // Is the action options or org issues tab not visible? Then we have to engage in some gymnastics
             // for a visibility limitation of jQuery Columnizer.
             if (optionContainer.css('display') == 'none') {
-                optionContainer.css({'visibility': 'hidden', 'display': 'block'})
                 var hiddenOnLoad = true;
             }
             else {
@@ -19,6 +18,9 @@
 
             // Columnize the Legislative Issues list based on the average label width.
             if(optionContainer.has('.field-name-field-sba-legislative-issues').length === 1) {
+                if (hiddenOnLoad == true) {
+                    optionContainer.css({'visibility': 'hidden', 'display': 'block'})
+                }
                 var legLabelWidthsTotal = 0;
                 var legLabelCount = 0;
                 var checkboxes = optionContainer.find('.field-name-field-sba-legislative-issues .form-type-checkbox');
@@ -26,6 +28,7 @@
                     legLabelWidthsTotal += $(this).find('label').outerWidth();
                     legLabelCount++;
                 });
+
                 var legCheckboxWidth =
                   optionContainer.find(' .field-name-field-sba-legislative-issues .form-type-checkbox input').outerWidth();
                 if (legLabelCount > 0) {
@@ -40,14 +43,20 @@
             // Columnize the Organization Issues list
             if(optionContainer.has('.field-name-field-sba-organization-issues').length === 1) {
                 labelWidthsTotal = labelCount = 0;
+
                 if (hiddenOnLoad == true) {
                     optionContainer.css({'visibility': 'hidden', 'display': 'block'})
                 }
+
                 optionContainer.find('.field-name-field-sba-organization-issues .form-type-checkbox').each(function () {
                     labelWidthsTotal += $(this).find('label').width();
-                    console.log($(this).find('label').css('*'))
                     labelCount++;
                 });
+
+                if (hiddenOnLoad == true && labelCount == 0) {
+                    optionContainer.css({'visibility': 'visible', 'display': 'none'})
+                }
+
                 var checkboxWidth =
                   optionContainer.find('.field-name-field-sba-organization-issues .form-type-checkbox input')
                     .outerWidth();
@@ -59,7 +68,6 @@
                     };
                     // Wrap groups and attach click behavior.
                     var orgContainer = optionContainer.find('.field-name-field-sba-organization-issues .form-type-checkbox').parent();
-
                     optionContainer.find('.field-name-field-sba-organization-issues .form-type-checkbox').each(function () {
                         if (!$(this).find('input').hasClass('sba-term-indent')) {
                             $(this).find('input').change(onChange);

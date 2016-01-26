@@ -16,15 +16,22 @@ function sba_message_action_message_preview_page($nid) {
   }
   // Check if the step two form has already been submitted.
   // @todo think about this.
-  $completed = isset($_SESSION['action_completed']) ? $_SESSION['action_completed'] : TRUE;
+  $completed = isset($_SESSION['action_sid']['completed']) ? $_SESSION['action_sid']['completed'] : TRUE;
   if($completed == TRUE) {
     drupal_set_message(t("This form has already been submitted. !return to the form.", array('!return' => l('Return', 'node/' . $node->nid))));
     return array();
   }
 
+  $header_field = field_get_items('node', $node, 'field_sba_action_step_two_header');
+  $header_value = field_view_value('node', $node, 'field_sba_action_step_two_header', $header_field[0]);
+  $markup = isset($header_value['#markup']) ? $header_value['#markup'] : '';
   // Build page header and multi-step form.
   $build = array();
   $build['content'] = array(
+    'header' => array(
+      '#weight' => -9,
+      '#markup' => $markup,
+    ),
     'page_description_content' => array(
       '#id' => 'message-action-preview-page',
       '#type' => 'markup',
@@ -218,11 +225,14 @@ function sba_message_action_preview_form($form, $form_state, $node) {
   // Define the validation function.
   $form['#validate'][] = 'sba_message_action_preview_form_validate';
   // Add submit button
+  $submit_field = field_get_items('node', $node, 'field_sba_action_step_two_submit');
+  $submit_value = field_view_value('node', $node, 'field_sba_action_step_two_submit', $submit_field[0]);
+  $markup = !empty($submit_value['#markup']) ? $submit_value['#markup'] : t('Send Now');
   $form['submit'] = array(
     '#prefix' => '<div id="edit-actions">',
     '#suffix' => '</div>',
     '#type' => 'submit',
-    '#value' => t('Send Now'),
+    '#value' => $markup,
     '#weight' => 10,
     '#attributes' => array('class' => 'message-action-preview-submit'),
   );
@@ -367,14 +377,14 @@ function sba_message_action_preview_form_submit($form, &$form_state) {
     else {
       drupal_set_message(t("A problem occurred. Please try again later."), 'error');
       $form_state['redirect'] = array('node/' . $node->nid);
-      $_SESSION['action_completed'] = TRUE;
+      $_SESSION['action_sid']['completed'] = TRUE;
       unset($_SESSION['retries']);
       return;
     }
   }
 
   // Add session flag to prevent resubmission of the form
-  $_SESSION['action_completed'] = TRUE;
+  $_SESSION['action_sid']['completed'] = TRUE;
   unset($_SESSION['retries']);
 
   // If we succeeded, update the confirmation messages stored in the session
@@ -428,75 +438,10 @@ function sba_message_action_preview_form_submit($form, &$form_state) {
   // Redirect to the original confirmation page.
   // $sid is set in sba_message_action_multifow_submit()
   $sid = !empty($_SESSION['action_sid']['sid']) ? $_SESSION['action_sid']['sid'] : FALSE;
+  $_SESSION['action_sid']['completed'] = TRUE;
+  springboard_advocacy_negotiate_redirect($node, $sid, $form_state);
   if ($sid) {
-    module_load_include('inc', 'webform', 'includes/webform.submissions');
-    $submission = webform_get_submission($node->nid, $sid);
-    unset($_SESSION['action_sid']);
-    if ($node->webform['redirect_url'] == '<confirmation>') {
-      $form_state['redirect'] = array(
-        'node/' . $node->nid . '/done',
-        array('query' => array('sid' => $sid))
-      );
-    }
-    else {
-      $redirect = sba_message_action_parse_redirect($node, $submission);
-      $form_state['redirect'] = $redirect;
-      if (!empty($_SESSION['saved_messages']['status'])) {
-        $_SESSION['messages']['status'] =  $_SESSION['saved_messages']['status'];
-      }
-    }
-  }
-  else {
-    // we don't have a submission identifier, this is not a legit request, redirect to the node
-    $form_state['redirect'] = array('node/' . $node->nid);
-    if (!empty($_SESSION['saved_messages']['status'])) {
-      $_SESSION['messages']['status'] =  $_SESSION['saved_messages']['status'];
-    }
-  }
-  if (!empty($_SESSION['saved_messages']['status'])) {
-    unset($_SESSION['saved_messages']['status']);
-  }
-  // Update the user edit flag.
-  if ($form_state['storage']['changed'] == TRUE) {
-    if ($sid) {
-      $user_edit = db_query('SELECT * FROM {webform_component} WHERE nid = :nid AND form_key = :form_key',
-        array(
-          ':nid' => $node->nid,
-          ':form_key' => 'sba_user_edit_flag'
-        ))->fetchObject();
-
-      if (!empty($user_edit->cid)) {
-        db_update('webform_submitted_data')->fields(array('data' => 1))
-          ->condition('nid', $node->nid, '=')
-          ->condition('sid', $sid, '=')
-          ->condition('cid', $user_edit->cid, '=')
-          ->condition('no', 0, '=')
-          ->execute();
-      }
-    }
-  }
-  if ($sid) {
-    $complete = db_query('SELECT * FROM {webform_component} WHERE nid = :nid AND form_key = :form_key',
-      array(
-        ':nid' => $node->nid,
-        ':form_key' => 'sba_multistep_complete'
-      ))->fetchObject();
-    if (!empty($complete->cid)) {
-      db_update('webform_submitted_data')->fields(array('data' => 1))
-        ->condition('nid', $node->nid, '=')
-        ->condition('sid', $sid, '=')
-        ->condition('cid', $complete->cid, '=')
-        ->condition('no', 0, '=')
-        ->execute();
-    }
-  }
-  if ($sid) {
-    if (empty($submission)) {
-      module_load_include('inc', 'webform', 'includes/webform.submissions');
-      $submission = webform_get_submission($node->nid, $sid);
-    }
-    // Update to trigger salesforce resync.
-    webform_submission_update($node, $submission);
+    springboard_advocacy_update_multistep_components($sid, $node, $form_state['storage']['changed']);
   }
 }
 
@@ -511,39 +456,7 @@ function theme_sba_message_action_preview_message_header($vars) {
   $output = '<div class="message-preview-header"><div class="message-preview-intro">';
   $output .= $intro;
   $output .= '</div><div class="message-preview-person">';
-  $output .= theme('sba_message_action_person_details', $vars['message']['person']);
+  $output .= theme('sba_message_action_person_details', $vars['message']);
   $output .= '</div></div>';
   return $output;
-}
-
-/**
- * Parse redirect url and filter webform tokens in redirect urls.
- *
- * @param $node
- * @param $submission
- * @return array|mixed
- */
-function sba_message_action_parse_redirect($node, $submission) {
-  $redirect = NULL;
-  if (isset($node->webform['redirect_url'])) {
-    $redirect_url = trim($node->webform['redirect_url']);
-    $redirect_url = _webform_filter_values($redirect_url, $node, $submission, NULL, FALSE, TRUE);
-
-    // Remove the site domain name from the redirect if present.
-    $redirect_url = preg_replace('/^' . preg_quote($GLOBALS['base_url'], '/') . '\//', '', $redirect_url);
-
-    if (valid_url($redirect_url, TRUE)) {
-      $redirect = $redirect_url;
-    }
-    elseif ($redirect_url && strpos($redirect_url, 'http') !== 0) {
-      $parts = drupal_parse_url($redirect_url);
-      $parts['query'] ? ($parts['query']['sid'] = $submission->sid) : ($parts['query'] = array('sid' => $submission->sid));
-      $query = $parts['query'];
-      $redirect = array(
-        $parts['path'],
-        array('query' => $query, 'fragment' => $parts['fragment'])
-      );
-    }
-  }
-  return $redirect;
 }
