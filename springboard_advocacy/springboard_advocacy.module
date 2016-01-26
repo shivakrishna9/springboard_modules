@@ -1,8 +1,27 @@
-<?php
+ <?php
 /**
  * @file
  * Base Springboard advocacy functions.
  */
+
+/**
+ * Implements hook_init().
+ *
+ * Load taxonomy and webform form_alters
+ * that apply to non-cached administrative pages.
+ */
+function springboard_advocacy_init() {
+
+  // Include the taxonomy form alters needed to lock down legislative issues.
+  if ((arg(0) == 'admin' && arg(2) == 'taxonomy')
+    || (arg(0) == 'taxonomy' && arg(1) == 'taxonomy' && arg(3) == 'edit')) {
+    module_load_include(
+      'inc',
+      'springboard_advocacy',
+      'includes/springboard_advocacy.taxonomy'
+    );
+  }
+}
 
 /**
  * Implements hook_menu().
@@ -19,10 +38,21 @@ function springboard_advocacy_menu() {
     'file' => 'includes/springboard_advocacy.admin.inc',
   );
 
-  $items['admin/config/springboard/advocacy/index'] = array(
+  $items['admin/config/services/advocacy/index'] = array(
     'title' => 'Springboard Advocacy',
     'type' => MENU_DEFAULT_LOCAL_TASK,
     'access callback' => 'springboard_advocacy_user_can_create_advocacy_type',
+  );
+
+  // Path to settings for delivery failure webform confirmation.
+  $items['admin/config/services/advocacy/action-confirmation'] = array(
+    'title' => 'Node Settings',
+    'page callback' => 'springboard_advocacy_confirmation_settings_page',
+    'access arguments' => array('administer springboard advocacy'),
+    'file' => 'springboard_advocacy.admin.inc',
+    'file path' => drupal_get_path('module', 'springboard_advocacy') . '/includes',
+    'type' => MENU_LOCAL_TASK,
+    'weight' => 999,
   );
 
   $items['admin/springboard/advocacy/actions'] = array(
@@ -39,6 +69,14 @@ function springboard_advocacy_menu() {
     ),
   ) + springboard_advocacy_menu_common(FALSE, TRUE);
 
+  $items['admin/springboard/advocacy/social-actions/all'] = array(
+      'title' => 'Advocacy: All Social Actions',
+      'page arguments' => array('social-actions/all'),
+      'access arguments' => array(
+        'create sba_social_action content',
+      ),
+    ) + springboard_advocacy_menu_common(FALSE, TRUE);
+
   $items['admin/springboard/advocacy/petitions/all'] = array(
     'title' => 'Advocacy: All Petitions',
     'page arguments' => array('petitions/all'),
@@ -52,6 +90,16 @@ function springboard_advocacy_menu() {
     'page arguments' => array('reports'),
     'page callback' => 'springboard_advocacy_settings_page',
   ) + springboard_advocacy_menu_common();
+
+  $items['advocacy/ajax/search'] = array(
+      'title' => 'Data',
+      'page callback' => 'springboard_advocacy_ajax_search',
+      'type' => MENU_CALLBACK,
+      'file' => 'springboard_advocacy.views.inc',
+      'file path' => drupal_get_path('module', 'springboard_advocacy') . '/includes/views',
+       'access callback' => 'user_access',
+       'access arguments' => array('create sba_social_action content')
+    );
 
   return $items;
 }
@@ -92,6 +140,27 @@ function springboard_advocacy_user_can_create_advocacy_type() {
   // Any new advocacy types will have to be added here in the future.
   return (user_access('create sba_message_action content') || user_access('create springboard_petition content'));
 }
+
+/**
+ * Implements hook_menu_alter().
+ *
+ * Limit access to the legislative issues taxonomy admin.
+ */
+function springboard_advocacy_menu_alter(&$items) {
+  $items['admin/structure/taxonomy/sba_legislative_issues/add']['access callback'] = 'springboard_advocacy_taxonomy_access';
+  $items['admin/structure/taxonomy/sba_legislative_issues/edit']['access callback'] = 'springboard_advocacy_taxonomy_access';
+  $items['admin/structure/taxonomy/sba_legislative_issues']['access callback'] = 'springboard_advocacy_taxonomy_access';
+}
+
+/**
+ * Limit access to the legislative issues taxonomy admin.
+ *
+ * @return bool
+ */
+function springboard_advocacy_taxonomy_access() {
+  return FALSE;
+}
+
 
 /**
  * Implements hook_springboard_admin_admin_menu_items_alter().
@@ -466,12 +535,27 @@ function springboard_advocacy_api_call() {
   return $apiCall;
 }
 
+/**
+ * Helper for _springboard_advocacy_webform_submission_flatten().
+ *
+ * @param $nid
+ * @return mixed
+ */
 function _springboard_advocacy_webform_get_components_by_nid($nid) {
   return db_query('SELECT * FROM {webform_component} ' .
     'WHERE nid = :nid',
     array(':nid' => $nid))->fetchAll();
 }
 
+/**
+ * Helper for message action and social action submissions.
+ *
+ * @param $nid
+ * @param $submit_tree
+ * @param null $submission_keys
+ * @param null $fieldset_keys
+ * @return array
+ */
 function _springboard_advocacy_webform_submission_flatten($nid, $submit_tree, $submission_keys = NULL, $fieldset_keys = NULL) {
   if ($submission_keys == NULL) {
     $components = _springboard_advocacy_webform_get_components_by_nid($nid);
@@ -493,6 +577,12 @@ function _springboard_advocacy_webform_submission_flatten($nid, $submit_tree, $s
   return $flat_array;
 }
 
+/**
+ * Implements hook_springboard_admin_alias_patterns().
+ *
+ * Prevents Springboard Backend theme from appearing on message
+ * preview pages.
+ */
 function springboard_advocacy_springboard_admin_alias_patterns() {
   return array(
     'node/%/message-preview' => array(
@@ -502,6 +592,16 @@ function springboard_advocacy_springboard_admin_alias_patterns() {
       ),
       'alias' => array(
         'regex' => '|^springboard/node/([0-9]+)/message-preview$|',
+        'replacement' => FALSE,  // don't redirect confirmation pages to springboard/...
+      ),
+    ),
+    'node/%/social-message-preview' => array(
+      'path' => array(
+        'regex' => '|^/node/([0-9]+)/social-message-preview$|',
+        'replacement' => 'node/$1/social-message-preview',
+      ),
+      'alias' => array(
+        'regex' => '|^springboard/node/([0-9]+)/social-message-preview$|',
         'replacement' => FALSE,  // don't redirect confirmation pages to springboard/...
       ),
     ),
@@ -570,3 +670,234 @@ function springboard_advocacy_webform_submission_delete($node, $submission) {
     ->execute();
 }
 
+/**
+ * Implements hook_node_view().
+ */
+function springboard_advocacy_node_view($node, $view_mode, $langcode) {
+  $types = variable_get('sba_action_types', array());
+  if (in_array($node->type, $types)) {
+    drupal_add_js(drupal_get_path('module', 'springboard_advocacy') . '/js/sba-cookies-enabled.js');
+    $unconfigured = springboard_advocacy_api_unconfigured('springboard');
+    if (!$unconfigured) {
+      $apiCall = springboard_advocacy_api_call();
+      $apiCall->invokeClientMethod('getMaintenanceMode');
+    }
+    elseif (user_access('administer springboard advocacy')) {
+      $items = implode(', ', $unconfigured);
+      $message = t('Please <a href="!url">configure</a> the Springboard Advocacy API settings. There are empty values in :items. This feature will not function without required configuration.', array(
+        '!url' => url('admin/config/services/advocacy'),
+        ':items' => $items
+      ));
+      drupal_set_message($message, 'error');
+    }
+    // Warn admins of config issues.
+    if (user_access('create ' . $node->type .' content') || user_access('administer nodes')) {
+      // Test mode warning.
+      $test_mode = field_get_items('node', $node, 'field_sba_test_mode');
+      if (is_array($test_mode)) {
+        $test_mode = reset($test_mode);
+        if ($test_mode['value'] == 1) {
+          drupal_set_message("This action is in test mode. Messages will not be delivered.", 'warning');
+        }
+      }
+
+      // Smarty streets warning.
+      $unconfigured = springboard_advocacy_api_unconfigured('smarty');
+      if (!empty($unconfigured)) {
+        $items = implode(', ', $unconfigured);
+        drupal_set_message(t('Smarty Streets API is not <a href="!url">configured</a>. Addresses will not be verified.  There are empty values in :items.', array(
+          '!url' => url('admin/config/services/advocacy'),
+          ':items' => $items
+        )), 'warning');
+      }
+    }
+  }
+}
+
+/**
+ * Used by social and message action preview.inc
+ *
+ * @param $node
+ * @param $sid
+ * @param $form_state
+ */
+function springboard_advocacy_negotiate_redirect($node, $sid, &$form_state) {
+  if($sid) {
+    module_load_include('inc', 'webform', 'includes/webform.submissions');
+    $submission = webform_get_submission($node->nid, $sid);
+    if ($node->webform['redirect_url'] == '<confirmation>') {
+      $form_state['redirect'] = array(
+        'node/' . $node->nid . '/done',
+        array('query' => array('sid' => $sid))
+      );
+    }
+    else {
+      $redirect = springboard_advocacy_parse_redirect($node, $submission);
+      $form_state['redirect'] = $redirect;
+      if (!empty($_SESSION['saved_messages']['status'])) {
+        $_SESSION['messages']['status'] =  $_SESSION['saved_messages']['status'];
+      }
+    }
+  }
+  else {
+    // we don't have a submission identifier, this is not a legit request, redirect to the node
+    $form_state['redirect'] = array('node/' . $node->nid);
+    if (!empty($_SESSION['saved_messages']['status'])) {
+      $_SESSION['messages']['status'] =  $_SESSION['saved_messages']['status'];
+    }
+  }
+  if (!empty($_SESSION['saved_messages']['status'])) {
+    unset($_SESSION['saved_messages']['status']);
+  }
+}
+
+/**
+ * Parse redirect url and filter webform tokens in redirect urls.
+ *
+ * Used in sba_message_action.preview.inc & sba_social_action.preview.inc
+ *
+ * @param $node
+ * @param $submission
+ * @return array|mixed
+ */
+
+function springboard_advocacy_parse_redirect($node, $submission) {
+  $redirect = NULL;
+  if (isset($node->webform['redirect_url'])) {
+    $redirect_url = trim($node->webform['redirect_url']);
+    $redirect_url = _webform_filter_values($redirect_url, $node, $submission, NULL, FALSE, TRUE);
+
+    // Remove the site domain name from the redirect if present.
+    $redirect_url = preg_replace('/^' . preg_quote($GLOBALS['base_url'], '/') . '\//', '', $redirect_url);
+
+    if (valid_url($redirect_url, TRUE)) {
+      $redirect = $redirect_url;
+    }
+    elseif ($redirect_url && strpos($redirect_url, 'http') !== 0) {
+      $parts = drupal_parse_url($redirect_url);
+      $parts['query'] ? ($parts['query']['sid'] = $submission->sid) : ($parts['query'] = array('sid' => $submission->sid));
+      $query = $parts['query'];
+      $redirect = array(
+        $parts['path'],
+        array('query' => $query, 'fragment' => $parts['fragment'])
+      );
+    }
+  }
+  return $redirect;
+}
+
+/**
+ * Implements hook_node_delete().
+ *
+ * Garbage removal for some of our custom tables.
+ */
+function springboard_advocacy_node_delete($node) {
+  $types = variable_get('sba_action_types', array());
+  if (in_array($node->type, $types)) {
+    db_delete('sba_message_action_confirm')
+      ->condition('nid', $node->nid)
+      ->execute();
+
+    db_delete('springboard_action_opt_in')
+      ->condition('nid', $node->nid)
+      ->execute();
+
+    db_delete('springboard_action_opt_in_block')
+      ->condition('nid', $node->nid)
+      ->execute();
+
+    db_delete('sba_form_id')
+      ->condition('nid', $node->nid)
+      ->execute();
+  }
+}
+
+/**
+ * Implements hook_webform_submission_insert().
+ *
+ * Update opt-in block when submitted by a logged in user.
+ */
+function springboard_advocacy_webform_submission_insert($node, $submission) {
+  $types = variable_get('sba_action_types', array());
+  if (in_array($node->type, $types)) {
+    $node_wrapper = entity_metadata_wrapper('node', $node);
+    $multi_flow = (isset($node_wrapper->field_sba_action_flow) && $node_wrapper->field_sba_action_flow->value() == 'multi') || ($node->type == 'sba_social_action') ? TRUE : FALSE;
+    if (!$multi_flow) {
+      springboard_advocacy_get_opt_in_uid($node, $submission);
+    }
+  }
+}
+
+/**
+ * Implements hook_webform_submission_update().
+ *
+ * Update opt-in block when submitted by a logged out user.
+ * Webform user triggers this.
+ */
+function springboard_advocacy_webform_submission_update($node, $submission) {
+  $types = variable_get('sba_action_types', array());
+  if (in_array($node->type, $types)) {
+    $node_wrapper = entity_metadata_wrapper('node', $node);
+    $multi_flow = (isset($node_wrapper->field_sba_action_flow) && $node_wrapper->field_sba_action_flow->value() == 'multi') || ($node->type == 'sba_social_action') ? TRUE : FALSE;
+    if (!$multi_flow) {
+      springboard_advocacy_get_opt_in_uid($node, $submission);
+    }
+    else {
+      $complete = db_query('SELECT * FROM {webform_component} ' .
+        'WHERE nid = :nid ' .
+        'AND form_key = :form_key',
+        array(
+          ':nid' => $node->nid,
+          ':form_key' => 'sba_multistep_complete'
+        ))->fetchObject();
+      if (!empty($complete->cid) && !empty($submission->data[$complete->cid]['value'][0])) {
+        springboard_advocacy_get_opt_in_uid($node, $submission);
+      }
+    }
+  }
+}
+
+/**
+ * Update the various components on multistep forms.
+ *
+ * Called from preview.inc in message and social actions.
+ */
+function springboard_advocacy_update_multistep_components($sid, $node, $changed) {
+  // Update the user edit flag.
+  if ($changed == TRUE) {
+    $user_edit = db_query('SELECT * FROM {webform_component} WHERE nid = :nid AND form_key = :form_key',
+      array(
+        ':nid' => $node->nid,
+        ':form_key' => 'sba_user_edit_flag'
+      ))->fetchObject();
+
+    if (!empty($user_edit->cid)) {
+      db_update('webform_submitted_data')->fields(array('data' => 1))
+        ->condition('nid', $node->nid, '=')
+        ->condition('sid', $sid, '=')
+        ->condition('cid', $user_edit->cid, '=')
+        ->condition('no', 0, '=')
+        ->execute();
+    }
+  }
+
+  $complete = db_query('SELECT * FROM {webform_component} WHERE nid = :nid AND form_key = :form_key',
+    array(
+      ':nid' => $node->nid,
+      ':form_key' => 'sba_multistep_complete'
+    ))->fetchObject();
+
+  if (!empty($complete->cid)) {
+    db_update('webform_submitted_data')->fields(array('data' => 1))
+      ->condition('nid', $node->nid, '=')
+      ->condition('sid', $sid, '=')
+      ->condition('cid', $complete->cid, '=')
+      ->condition('no', 0, '=')
+      ->execute();
+  }
+
+  module_load_include('inc', 'webform', 'includes/webform.submissions');
+  $submission = webform_get_submission($node->nid, $sid, TRUE);
+  // Update to trigger salesforce resync.
+  webform_submission_update($node, $submission);
+}

@@ -12,16 +12,6 @@
  */
 function sba_message_action_init() {
 
-  // Include the taxonomy form alters needed to look down legislative issues.
-  if ((arg(0) == 'admin' && arg(2) == 'taxonomy')
-    || (arg(0) == 'taxonomy' && arg(1) == 'taxonomy' && arg(3) == 'edit')) {
-    module_load_include(
-      'inc',
-      'sba_message_action',
-      'includes/sba_message_action.taxonomy'
-    );
-  }
-
   // Include the webform component form alters needed to
   // lock down action fields.
   if (arg(0) == 'node' && is_numeric(arg(1)) && arg(2) == 'webform') {
@@ -73,15 +63,7 @@ function sba_message_action_menu() {
     'file path' => drupal_get_path('module', 'sba_message_action') . '/includes',
   );
 
-  // Path to settings for delivery failure webform confirmation.
-  $items['admin/config/content/sba_message_action'] = array(
-    'title' => 'Message Action Default Confirmation',
-    'page callback' => 'sba_message_action_settings_page',
-    'access arguments' => array('administer springboard advocacy'),
-    'file' => 'sba_message_action.admin.inc',
-    'file path' => drupal_get_path('module', 'sba_message_action') . '/includes',
-    'type' => MENU_NORMAL_ITEM,
-  );
+
 
   $items['node/%/performance'] = array(
     'title' => 'Message Delivery',
@@ -118,27 +100,6 @@ function sba_message_action_menu() {
 
   return $items;
 }
-
-/**
- * Implements hook_menu_alter().
- *
- * Limit access to the legislative issues taxonomy admin.
- */
-function sba_message_action_menu_alter(&$items) {
-  $items['admin/structure/taxonomy/sba_legislative_issues/add']['access callback'] = 'sba_message_action_taxonomy_access';
-  $items['admin/structure/taxonomy/sba_legislative_issues/edit']['access callback'] = 'sba_message_action_taxonomy_access';
-  $items['admin/structure/taxonomy/sba_legislative_issues']['access callback'] = 'sba_message_action_taxonomy_access';
-}
-
-/**
- * Limit access to the legislative issues taxonomy admin.
- *
- * @return bool
- */
-function sba_message_action_taxonomy_access() {
-  return FALSE;
-}
-
 
 /**
  * Access callback handler for the message action performance tab.
@@ -183,15 +144,14 @@ function sba_message_action_queues_access($nid) {
  */
 function sba_message_action_preview_access($nid) {
   $node = node_load($nid);
+  $access = FALSE;
   if (isset($node->type) &&  $node->type == 'sba_message_action') {
-    $node_wrapper = entity_metadata_wrapper('node', $node);
-    $multi_flow = $node_wrapper->field_sba_action_flow->value() == 'multi' ? TRUE : FALSE;
-    $session_nid = isset($_SESSION['action_sid']['nid']) ? $_SESSION['action_sid']['nid'] : 0;
-    if ($multi_flow && $session_nid == $nid) {
-      return TRUE;
+    $session_nid = isset($_SESSION['action_sid']['nid']) ? $_SESSION['action_sid']['nid'] : FALSE;
+    if ($session_nid && $session_nid == $nid) {
+      $access = TRUE;
     }
   }
-  return FALSE;
+  return $access;
 }
 
 /**
@@ -205,35 +165,6 @@ function sba_message_action_preview_access($nid) {
  */
 function sba_message_action_node_view($node, $view_mode, $langcode) {
   if ($node->type == 'sba_message_action') {
-    $unconfigured = springboard_advocacy_api_unconfigured('springboard');
-    if (!$unconfigured) {
-      $apiCall = springboard_advocacy_api_call();
-      $apiCall->invokeClientMethod('getMaintenanceMode');
-    }
-    elseif(user_access('administer springboard advocacy')) {
-      $items = implode(', ', $unconfigured);
-      $message = t('Please <a href="!url">configure</a> the Springboard Advocacy API settings. There are empty values in :items. This feature will not function without required configuration.', array('!url' => url('admin/config/services/advocacy'), ':items' => $items));
-      drupal_set_message($message, 'error');
-    }
-    // Warn admins of config issues.
-    if (user_access('create sba_message_action content') || user_access('administer nodes')) {
-      // Test mode warning.
-      $test_mode = field_get_items('node', $node, 'field_sba_test_mode');
-      if (is_array($test_mode)) {
-        $test_mode = reset($test_mode);
-        if ($test_mode['value'] == 1) {
-          drupal_set_message("This message action is in test mode. Messages will not be delivered.", 'warning');
-        }
-      }
-
-      // Smarty streets warning.
-      $unconfigured = springboard_advocacy_api_unconfigured('smarty');
-      if (!empty($unconfigured)) {
-        $items = implode(', ', $unconfigured);
-        drupal_set_message(t('Smarty Streets API is not <a href="!url">configured</a>. Addresses will not be verified.  There are empty values in :items.', array('!url' => url('admin/config/services/advocacy'), ':items' => $items)), 'warning');
-      }
-    }
-
     // Add the modal JS and data to multiple-message nodes.
     if (isset($node->messages) && count($node->messages) > 1) {
       module_load_include('inc', 'sba_message_action',
@@ -255,24 +186,25 @@ function sba_message_action_node_presave($node) {
       $old_node_wrapper = entity_metadata_wrapper('node', $node->original);
       $old_multi_flow = $old_node_wrapper->field_sba_action_flow->value() == 'multi' ? 'multi' : 'single';
     }
-    $node_wrapper = entity_metadata_wrapper('node', $node);
-    $multi_flow = $node_wrapper->field_sba_action_flow->value() == 'multi' ? 'multi' : 'single';
-    if ($multi_flow == 'single') {
-      if (empty($node->webform['submit_text']) || strtolower($node->webform['submit_text'])  == 'preview messages') {
-        $node->webform['submit_text'] = t('Send your message');
-      }
-      elseif(!empty($node->webform['submit_text']) && $old_multi_flow != $multi_flow) {
-        $node->webform['submit_text'] = t('Send your message');
-      }
-    }
-    else {
-      if (empty($node->webform['submit_text'])  || strtolower($node->webform['submit_text'])  == 'send your message') {
-        $node->webform['submit_text'] = t('Preview messages');
-      }
-      elseif(!empty($node->webform['submit_text']) && $old_multi_flow != $multi_flow) {
-        $node->webform['submit_text'] = t('Preview messages');
-      }
-    }
+
+      $node_wrapper = entity_metadata_wrapper('node', $node);
+//    $multi_flow = $node_wrapper->field_sba_action_flow->value() == 'multi' ? 'multi' : 'single';
+//    if ($multi_flow == 'single') {
+//      if (empty($node->webform['submit_text']) || strtolower($node->webform['submit_text'])  == 'preview messages') {
+//        $node->webform['submit_text'] = t('Send your message');
+//      }
+//      elseif(!empty($node->webform['submit_text']) && $old_multi_flow != $multi_flow) {
+//        $node->webform['submit_text'] = t('Send your message');
+//      }
+//    }
+//    else {
+//      if (empty($node->webform['submit_text'])  || strtolower($node->webform['submit_text'])  == 'send your message') {
+//        $node->webform['submit_text'] = t('Preview messages');
+//      }
+//      elseif(!empty($node->webform['submit_text']) && $old_multi_flow != $multi_flow) {
+//        $node->webform['submit_text'] = t('Preview messages');
+//      }
+//    }
 
     if (empty($node->nid)) {
       $node->webform['confirmation'] = t('Thank you, %value[sbp_first_name] for participating in the messaging campaign.');
@@ -512,7 +444,7 @@ function sba_message_action_multifow_submit($form, &$form_state) {
   $node = $form['#node'];
   if (!empty($_SESSION['delivered_messages']) || !empty($_SESSION['undelivered_messages'])) {
     $sid = $form_state['values']['details']['sid'];
-    $_SESSION['action_sid'] = array('sid' => $sid, 'nid' => $node->nid);
+    $_SESSION['action_sid'] = array('sid' => $sid, 'nid' => $node->nid, 'completed' => FALSE);
     $form_state['redirect'] = array(
       'node/' . $node->nid . '/message-preview',
       array('query' => array('sid' => $sid))
@@ -565,20 +497,6 @@ function sba_message_action_form_node_delete_confirm_alter(&$form, &$form_state,
 function _sba_message_action_redirect($form, &$form_state) {
   $form_state['redirect'] = 'admin/springboard/advocacy/message-actions/all';
   $_GET['destination'] = url('admin/springboard/advocacy/message-actions/all');
-}
-
-/**
- * Implements hook_form_FORM_ID_alter().
- *
- * Disable config options for the message action node type on the
- * springboard_taxonomy.module config page; i.e., always require the
- * organization issues vocab on message_action nodes.
- */
-function sba_message_action_form_springboard_taxonomy_settings_form_alter(&$form, &$form_state) {
-  if (isset($form['springboard_taxonomy_node_types']['#options']['sba_message_action'])) {
-    //$form['springboard_taxonomy_node_types']['sba_message_action']['#disabled'] = TRUE;
-   // $form['springboard_taxonomy_node_types']['sba_message_action']['#default_value'] = 'sba_message_action';
-  }
 }
 
 /**
@@ -641,13 +559,34 @@ function sba_message_action_form_sba_message_action_node_form_alter(&$form, &$fo
 
   // Adds the legislative issues taxonomy fields to the above.
   if (isset($form['field_sba_legislative_issues'])) {
-    form_load_include($form_state, 'inc', 'sba_message_action',
-      'includes/sba_message_action.taxonomy');
-    sba_message_action_taxonomy_form($form, $form_state, 'sba_message_action_node_form');
+    $description = t("Many members of Congress require an issue/topic to be selected for each message they receive. If your action is targeting members of Congress, please select the issue that best matches the topic of your message. Based on your choice, Springboard will choose the best available match on each legislator's web form.");
+    form_load_include($form_state, 'inc', 'springboard_advocacy',
+      'includes/springboard_advocacy.taxonomy');
+    springboard_advocacy_taxonomy_form($form, $form_state, $description, TRUE);
+  }
+  if ($form['#node']->type == 'sba_message_action') {
+    $form['springboard_taxonomy_options']['#weight'] = -10;
   }
 
+  $submit_text = '';
+  if (isset($form['#node']->nid)) {
+    $submit_text = db_query("SELECT submit_text FROM {webform} WHERE nid = :nid", array(':nid' => $form['#node']->nid))->fetchField();
+  }
+  if($submit_text == '') {
+    $submit_text = t('Send your message');
+  }
+
+  $form['action_submit_button_text'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Submit Button Text'),
+    '#default_value' => $submit_text,
+    '#weight' => 6,
+    '#required' => TRUE,
+  );
+  $form['#group_children']['action_submit_button_text'] = 'group_sba_action_page_elements';
+
   // Add action flow field to vertical nav.
-  if (!empty($form['springboard_taxonomy_options']) && isset($form['field_sba_action_flow'])) {
+  if (isset($form['field_sba_action_flow'])) {
     $node = $form['#node'];
     $messages = isset($node->messages) ? count($node->messages) : FALSE;
     $disable_single_step = FALSE;
@@ -668,26 +607,15 @@ function sba_message_action_form_sba_message_action_node_form_alter(&$form, &$fo
       $form['field_sba_action_flow'][$form['field_sba_action_flow']['#language']]['one']['#description'] = t('This option is disabled because you have multiple messages configured for this action, and at least one of them is user-editable. Make them non-editable to enable this option.');
     }
 
-    $form['springboard_taxonomy_options']['action_flow'] = array(
-      '#type' => 'fieldset',
-      '#title' => t('Choose Action Flow'),
-      '#collapsible' => TRUE,
-      '#collapsed' => FALSE,
-      '#weight' => '-10'
-    );
 
-    $form['springboard_taxonomy_options']['action_flow']['field_sba_action_flow']
-      = $form['field_sba_action_flow'];
-    unset($form['field_sba_action_flow']);
-    $form['springboard_taxonomy_options']['action_flow']['field_sba_multistep_prompt']
-      = $form['field_sba_multistep_prompt'];
-    $form['springboard_taxonomy_options']['action_flow']['field_sba_multistep_prompt']['#prefix'] = '<p><br />';
-    $form['springboard_taxonomy_options']['action_flow']['field_sba_multistep_prompt']['#weight'] = 100;
-    unset($form['field_sba_multistep_prompt']);
-    // Hide the test_mode_email field if test_mode is unchecked.
-    $form['springboard_taxonomy_options']['action_flow']['field_sba_multistep_prompt']['#states']['visible'] = array(
+    $form['field_sba_action_step_two_submit']['#states']['visible'] = array(
       ':input[name="field_sba_action_flow[und]"]' => array('value' => 'multi'),
     );
+
+    $form['field_sba_action_step_two_header']['#states']['visible'] = array(
+      ':input[name="field_sba_action_flow[und]"]' => array('value' => 'multi'),
+    );
+
   }
   // Hide the test_mode_email field if test_mode is unchecked.
   $form['field_sba_test_mode_email']['#states']['visible'] = array(
@@ -748,10 +676,10 @@ function sba_message_action_form_sba_message_action_node_form_validate(&$form, &
   $lang = $form['field_sba_test_mode']['#language'];
   if ($form_state['values']['field_sba_test_mode'][$lang][0]['value'] == 1) {
     if ($form_state['values']['field_sba_test_mode_email'][$lang][0]['value'] == '') {
-      form_set_error('field_sba_test_mode_email', t('An email address is required for Test Mode.'));
+      form_set_error('field_sba_test_mode_email', t('An email address is required for test mode.'));
     }
     elseif (!valid_email_address($form_state['values']['field_sba_test_mode_email'][$lang][0]['value'])) {
-      form_set_error('field_sba_test_mode_email', t('Invalid Test Mode mail address.'));
+      form_set_error('field_sba_test_mode_email', t('Invalid test mode mail address.'));
     }
   }
 
@@ -788,6 +716,13 @@ function sba_message_action_form_sba_message_action_node_form_submit(&$form, &$f
     drupal_write_record('springboard_action_opt_in_block', $data, 'nid');
   }
 
+  $submit = array(
+    'nid' => $form_state['values']['nid'],
+    'submit_text' => $form_state['values']['action_submit_button_text']
+  );
+
+  drupal_write_record('webform', $submit, 'nid');
+
   if (empty($form['#node']->nid)) {
     $path = 'node/'.$form_state['nid'].'/messages';
     $form_state['redirect'] = $path;
@@ -808,7 +743,7 @@ function sba_message_action_form_sba_message_edit_form_alter(&$form, &$form_stat
     $sba_message = $form_state['sba_message'];
     $node_wrapper = entity_metadata_wrapper('node', $node);
     $multi_flow = $node_wrapper->field_sba_action_flow->value() == 'multi' ? TRUE : FALSE;
-    $form['field_sba_subject_editable'][$form['field_sba_subject_editable']['#language']]['#title'] = t('Subject editable by action taker?');
+    $form['field_sba_subject_editable'][$form['field_sba_subject_editable']['#language']]['#title'] = t('Subject editable by advocate?');
 
     // Disable the subject and body editable fields if this is a singe step action, and other messages already exist.
     if ((isset($node->message_ids) && empty($sba_message->sba_message_id)) || (isset($node->message_ids) && count($node->message_ids) > 1)) {
@@ -947,49 +882,6 @@ function sba_message_action_webform_user_profile_fields_alter(&$fields, $node) {
 }
 
 /**
- * Implements hook_webform_submission_insert().
- *
- * Update opt-in block when submitted by a logged in user.
- */
-function sba_message_action_webform_submission_insert($node, $submission) {
-  if ($node->type == 'sba_message_action') {
-    $node_wrapper = entity_metadata_wrapper('node', $node);
-    $multi_flow = $node_wrapper->field_sba_action_flow->value() == 'multi' ? TRUE : FALSE;
-    if (!$multi_flow) {
-      springboard_advocacy_get_opt_in_uid($node, $submission);
-    }
-  }
-}
-
-/**
- * Implements hook_webform_submission_insert().
- *
- * Update opt-in block when submitted by a logged out user.
- * Webform user triggers this.
- */
-function sba_message_action_webform_submission_update($node, $submission) {
-  if ($node->type == 'sba_message_action') {
-    $node_wrapper = entity_metadata_wrapper('node', $node);
-    $multi_flow = $node_wrapper->field_sba_action_flow->value() == 'multi' ? TRUE : FALSE;
-    if (!$multi_flow) {
-      springboard_advocacy_get_opt_in_uid($node, $submission);
-    }
-    else {
-      $complete = db_query('SELECT * FROM {webform_component} ' .
-        'WHERE nid = :nid ' .
-        'AND form_key = :form_key',
-        array(
-          ':nid' => $node->nid,
-          ':form_key' => 'sba_multistep_complete'
-        ))->fetchObject();
-      if (!empty($complete->cid) && !empty($submission->data[$complete->cid]['value'][0])) {
-        springboard_advocacy_get_opt_in_uid($node, $submission);
-      }
-    }
-  }
-}
-
-/**
  * Implements hook_preprocess_hook().
  *
  * Get the fail message to show on webform confirmation page
@@ -1010,8 +902,8 @@ function sba_message_action_preprocess_webform_confirmation(&$vars) {
  */
 function sba_message_action_form_webform_configure_form_alter(&$form, &$form_state) {
   if ($form['#node']->type == 'sba_message_action') {
-    form_load_include($form_state, 'inc', 'sba_message_action', 'includes/sba_message_action.confirmations');
-    sba_message_action_confirmation($form, $form_state);
+    form_load_include($form_state, 'inc', 'springboard_advocacy', 'includes/springboard_advocacy.confirmations');
+    springboard_advocacy_confirmation($form, $form_state);
   }
 }
 
@@ -1054,10 +946,10 @@ function sba_message_action_token_info() {
  * Implements hook_tokens().
  */
 function sba_message_action_tokens($type, $tokens, $data = array(), $options = array()) {
-  $recipients = '';
   $replacements = array();
   if ($type == 'action') {
     foreach ($tokens as $name => $original) {
+      $recipients = '';
       switch ($name) {
         case 'all_messages':
         case 'recipients': // token used in 4.7.2
@@ -1177,4 +1069,30 @@ function sba_message_action_webform_ab_validate_conversion($webform_types, $test
   if ($webform_types == 'sba_message_action') {
     return TRUE;
   }
+}
+
+/**
+ * Implements hook_element_info_alter().
+ */
+function sba_message_action_element_info_alter(&$type) {
+  $type['text_format']['#process'][] = 'sba_message_action_element_process_text_format';
+}
+
+/**
+ * Process function for text_format element.
+ *
+ * @see sba_message_action_element_info_alter().
+ * @see https://drupal.org/node/2104275
+ */
+function sba_message_action_element_process_text_format($element) {
+  if (isset($element['#bundle']) && $element['#bundle'] == 'sba_message_action') {
+    $prefix = isset($element['format']['#prefix']) ? $element['format']['#prefix'] : '';
+    $element['format']['#prefix'] = $element['#description'] . $prefix;
+    unset($element['#description']);
+    $element['format']['#collapsible'] = TRUE;
+    $element['format']['#collapsed'] = TRUE;
+    //$element['format']['#suffix'] = '<div class="text-format-spacer">&nbsp;</div>';
+    $element['format']['#title'] = t('Text format');
+  }
+  return $element;
 }
