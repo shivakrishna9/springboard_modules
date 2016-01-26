@@ -249,18 +249,18 @@ function silverpop_transact_email_submit_callback($form, $form_state) {
   // Save settings for this email.
   $settings = array(
     'nid' => $values['node']->nid,
-    'eid' => $values['eid']
+    'eid' => $values['eid'],
   );
-  if (isset($values['silverpop_transact_group_id'])){
+  if (isset($values['silverpop_transact_group_id'])) {
     $settings['group_id'] = $values['silverpop_transact_group_id'];
   }
-  if (isset($values['silverpop_transact_save_tokens'])){
+  if (isset($values['silverpop_transact_save_tokens'])) {
     $settings['save_tokens'] = $values['silverpop_transact_save_tokens'];
   }
-  if (isset($values['silverpop_transact_additional_tokens'])){
+  if (isset($values['silverpop_transact_additional_tokens'])) {
     $settings['additional_tokens'] = $values['silverpop_transact_additional_tokens'];
   }
-  if (isset($values['silverpop_transact_smtp_xheader_value'])){
+  if (isset($values['silverpop_transact_smtp_xheader_value'])) {
     $settings['smtp_xheader_value'] = $values['silverpop_transact_smtp_xheader_value'];
   }
   drupal_write_record('silverpop_transact_webform', $settings);
