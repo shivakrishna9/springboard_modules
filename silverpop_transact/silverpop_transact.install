@@ -155,6 +155,10 @@ function silverpop_transact_schema() {
         'description' => 'key|value list of additional tokens to be sent to Silverpop.',
         'type' => 'text',
       ),
+      'smtp_xheader_value' => array(
+        'description' => 'Only used in SMTP model. The value of the X-SP-Transact-Id Header.',
+        'type' => 'text',
+      ),
     ),
     'primary key' => array('nid', 'eid'),
     'indexes' => array(
@@ -247,6 +251,10 @@ function silverpop_transact_update_7001() {
       ),
       'additional_tokens' => array(
         'description' => 'key|value list of additional tokens to be sent to Silverpop.',
+        'type' => 'text',
+      ),
+      'smtp_xheader_value' => array(
+        'description' => 'Only used in SMTP model. The value of the X-SP-Transact-Id Header.',
         'type' => 'text',
       ),
     ),
