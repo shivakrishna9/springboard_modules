@@ -356,6 +356,8 @@ function commerce_paywithmybank_fundraiser_commerce_charge($method_instance, $do
   $api_transaction = $api->captureTransaction($master_donation->auth_txn_id, $order->order_id, $amount);
 
   // Log the transaction.
+  watchdog('commerce_paywithmybank', 'PayWithMyBank capture transaction: !param', array('!param' => '<pre>' . check_plain(print_r($api_transaction, TRUE)) . '</pre>'), WATCHDOG_DEBUG);
+
   if (!empty($method_instance['settings']['commerce_paywithmybank_settings_log']['request'])) {
     commerce_paywithmybank_log_request('capture', $master_donation->auth_txn_id, $order->order_id, $amount);
   }
