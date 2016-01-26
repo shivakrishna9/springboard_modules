@@ -471,6 +471,11 @@ function commerce_paywithmybank_fundraiser_commerce_response_save($donation) {
         break;
     }
   }
+  else {
+    // If a charge occurs and there are no transactions then a notification
+    // is pending. The donation should remain pending.
+    $new_status = 'pending_future_payment';
+  }
 
   if ($new_status != NULL) {
     _fundraiser_commerce_update_order_status($new_status, $donation->did);
