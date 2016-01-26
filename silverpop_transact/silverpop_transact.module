@@ -75,7 +75,9 @@ function silverpop_transact_mail_alter(&$message) {
     $eid = $message['params']['email']['eid'];
     $nid = $message['params']['email']['nid'];
     $settings = silverpop_transact_load_email_settings($nid, $eid);
-    silverpop_transact_create_mailing($settings['group_id'], $message['to']);
+    $personalization_tokens = silverpop_transact_load_webform_components($message['params']['submission']->data, $message['params']['node']->webform['components']);
+    silverpop_transact_create_mailing($settings['group_id'], $message['to'], $personalization_tokens);
+    silverpop_transact_log_mailing('XML', 'silverpop_transact');
   }
 }
 
@@ -134,24 +136,12 @@ function silverpop_transact_views_api() {
  *   Defaults to SILVERPOP_TRANSACT_DEFAULT_CAMPAIGN if NULL is passed in.
  * @param string $recipient_email
  *   Email of the recipient.
- * @param string $personalization_string
- *    List of key|value pairs for values to be replaced in the Silverpop
- *    Transact template.
+ * @param array $personalization
+ *    Associative array of key|value pairs for use in Silverpop templates, eg:
+ *   - Personalization key (eg 'first_name').
+ *   - Personaliaation value (eg 'Scott').
  */
-function silverpop_transact_create_mailing($mailing_id, $recipient_email, $personalization_string = '', $save_columns = FALSE, $html_body = '') {
-  if (!is_array($personalization_string)) {
-    // Interperet the personalization string into a keyed array.
-    $personalization_items = explode("\n", $personalization_string);
-    $personalization = array();
-    foreach ($personalization_items as $item) {
-      $pos = strpos($item, '|');
-      $personalization[substr($item, 0, $pos)] = htmlspecialchars(substr($item, $pos + 1));
-    }
-  }
-  else {
-    $personalization = $personalization_string;
-  }
-
+function silverpop_transact_create_mailing($mailing_id, $recipient_email, $personalization = NULL, $save_columns = FALSE, $html_body = '') {
   // If $html_body is populated, add it to the $personalization array.
   if ($html_body != '') {
     $personalization['INBOUND_HTML'] = "<![CDATA[" . $html_body . "]]>";
@@ -191,6 +181,33 @@ function silverpop_transact_create_mailing($mailing_id, $recipient_email, $perso
     $file = silverpop_transact_save_transact_data($data);
     watchdog('silverpop_transact', 'Could not connect to Silverpop. Transact data saved at %file', array('%file' => $file));
   }
+}
+
+/**
+ * Transforms pipe delimited key|value textarea into associative array.
+ *
+ * @param string $personalization_string
+ *   Pipe delimited and newline separated string of key|value pars.
+ *
+ * @return array
+ *   An associative array containing:
+ *   - Personalization key (eg 'first_name')
+ *   - Personaliaation value (eg 'Scott')
+ */
+function silverpop_transact_parse_personalization($personalization_string) {
+  if (!is_array($personalization_string)) {
+    // Interperet the personalization string into a keyed array.
+    $personalization_items = explode("\n", $personalization_string);
+    $personalization = array();
+    foreach ($personalization_items as $item) {
+      $pos = strpos($item, '|');
+      $personalization[substr($item, 0, $pos)] = htmlspecialchars(substr($item, $pos + 1));
+    }
+  }
+  else {
+    $personalization = $personalization_string;
+  }
+  return $personalization;
 }
 
 /**
@@ -404,4 +421,28 @@ function silverpop_transact_log_mailing($model, $origin, $status = NULL, $silver
       'created' => REQUEST_TIME,
     ))
     ->execute();
+}
+
+/**
+ * Adds form_key labels to submitted form values.
+ *
+ * @param array $submission_data
+ *   Submitted component data found in $message['params']['submission']->data.
+ * @param array $components_definition
+ *   Component info found in $message['params']['node']->webform['components'].
+ *
+ * @return array
+ *   An associative array containing:
+ *   - form_key: The component_key label of the component (eg 'first_name').
+ *   - value: The value of the component as submitted by the user (eg 'scott').
+ */
+function silverpop_transact_load_webform_components($submission_data, $components_definition) {
+  $component_key_values = array();
+  foreach ($submission_data as $key => $value) {
+    $component_label = $components_definition[$key]['form_key'];
+    // @TODO $value['value'][0] won't be right on multi-value form components.
+    // How would we pass them so they are usable in silverpop?
+    $component_key_values[$component_label] = $value['value'][0];
+  }
+  return $component_key_values;
 }
