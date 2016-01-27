@@ -253,6 +253,8 @@ function commerce_paywithmybank_fundraiser_commerce_update($donation, $card_data
 
   if ($action == 'update') {
     $card_data->card_number = $cardonfile_fields['card_number'];
+    $card_data->card_exp_month = $expires['month'];
+    $card_data->card_exp_year = $expires['year'];
     commerce_cardonfile_save($card_data);
     return $card_data;
   }
