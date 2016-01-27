@@ -134,6 +134,9 @@ function salesforce_genmap_update_7001() {
  * Create Salesforce mappings for Market Source device info fields.
  */
 function salesforce_genmap_update_7002(&$sandbox) {
+  $path = libraries_get_path('salesforce');
+  require_once $path . '/soapclient/SforcePartnerClient.php';
+
   // Update Salesforce mappings for webforms provided by these modules:
   if (!isset($sandbox['progress'])) {
     $sandbox['progress'] = 0;
