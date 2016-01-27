@@ -85,8 +85,7 @@ function fundraiser_recent_donors_form_alter(&$form, &$form_state, $form_id) {
     }
  
     $form['#validate'][] = '_fundraiser_recent_donors_node_edit_validate';
-    $form['actions']['submit']['#submit'][] = '_fundraiser_recent_donors_node_edit_submit';
-    // $form['#submit'][] = '_fundraiser_recent_donors_node_edit_submit';
+    $form['#submit'][] = '_fundraiser_recent_donors_node_edit_submit';
     return;
   } // End node edit form changes.
 
