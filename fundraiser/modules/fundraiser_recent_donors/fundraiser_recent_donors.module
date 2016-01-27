@@ -184,33 +184,7 @@ function _fundraiser_recent_donors_node_edit_submit($form, &$form_state) {
     }
     // Update the opt-in settings for this node:
     _fundraiser_recent_donors_set_node_opt_in_data($node->nid, $is_enabled, $min_optin_amount);
-  }
-}
-
-/**
- * Implements hook_node_load().
- *
- * - Add the Opt-In checkbox when a new donation form node is created if opt-in is enabled for this node.
- * - Since a placeholder value of 0 is used during donation form submission for its nid, set that nid now.
- */
-function fundraiser_recent_donors_node_load($nodes, $types) {
-  $node = array_shift($nodes);
-  if (!fundraiser_is_donation_type($node->type)) {
-    return;
-  }
-
-  // Add the Opt-in checkbox webform component if it is not already present:
-  $placeholder_query = db_query("SELECT nid FROM {fundraiser_donation_opt_in_block} " .
-    "WHERE visibility = 1 AND nid = :nid",
-    array(':nid' => $node->nid));
-  foreach ($placeholder_query as $result) {
-    $cid = _fundraiser_recent_donors_add_opt_in_webform_component($node);
-    // Re-load the page if the checkbox was added:
-    if ($cid != FALSE) {
-      drupal_goto(current_path());
-    }
-    return;
-  }
+  } 
 }
 
 /**
@@ -233,6 +207,12 @@ function fundraiser_recent_donors_node_insert($node) {
       $node->nid,
       $node->allow_recent_donations_opt_in,
       $node->show_recent_donation_greater_than);
+
+    if ($node->allow_recent_donations_opt_in) {
+      // Get this node's webform components for the opt-in checkbox component's insertion:
+      $node = node_load($node->nid, $node->vid, TRUE);
+      _fundraiser_recent_donors_add_opt_in_webform_component($node);
+    }
   }
 
   // Support for node cloning:
@@ -471,10 +451,8 @@ function _fundraiser_recent_donors_set_node_opt_in_data($nid, $is_enabled, $min_
  *
  * @params $node
  *   The node object for the webform on which the opt-in checkbox will be added.
- * @param $target_fieldset_parent_id  
- *   If specified, the ID of the parent fieldset in which this will be placed.
  */
-function _fundraiser_recent_donors_add_opt_in_webform_component($node, $target_fieldset_parent_id = NULL) {
+function _fundraiser_recent_donors_add_opt_in_webform_component($node) {
   // Do nothing if the opt-in checkbox's form_key already exists on the form:
   $highest_component_weight = 0;
   if (isset($node->webform['components']) && !empty($node->webform['components'])) {
@@ -496,6 +474,8 @@ function _fundraiser_recent_donors_add_opt_in_webform_component($node, $target_f
 
   if (!isset($target_fieldset_parent_id)) {
     $target_fieldset_parent_id = 0;
+  }
+  if (!isset($highest_component_weight)) {
     $highest_component_weight = 9998;
   }
 
