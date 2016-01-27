@@ -97,7 +97,7 @@ function fundraiser_recent_donors_form_alter(&$form, &$form_state, $form_id) {
   // Insert the recent donations block directly into the form if a one-column layout is in use,
   // as the one-column layout does not use a template:
   $arg2 = arg(2);
-  if (empty($arg2) && $form['#node']->form_layouts == 'one_column') {
+  if (empty($arg2) && (!isset($form['#node']->form_layouts) || $form['#node']->form_layouts == 'one_column')) {
     $form['recent_donations_block'] = array(
       '#type' => 'fieldset',
       '#description' => _fundraiser_recent_donors_render_donation_block(),
