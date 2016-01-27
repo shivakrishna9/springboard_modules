@@ -253,8 +253,8 @@ function commerce_paywithmybank_fundraiser_commerce_update($donation, $card_data
 
   if ($action == 'update') {
     $card_data->card_number = $cardonfile_fields['card_number'];
-    $card_data->card_exp_month = $expires['month'];
-    $card_data->card_exp_year = $expires['year'];
+    //$card_data->card_exp_month = $expires['month'];
+    //$card_data->card_exp_year = $expires['year'];
     commerce_cardonfile_save($card_data);
     return $card_data;
   }
@@ -395,7 +395,7 @@ function commerce_paywithmybank_fundraiser_commerce_charge($method_instance, $do
     $card_data = current($cards_on_file);
 
     // Move card expiration date ahead one month.
-    $new_expire_time = mktime(0, 0, 0, (date('m') + 1), 1, $card_data->card_exp_year);
+    $new_expire_time = mktime(0, 0, 0, ($card_data->card_exp_month + 1), 1, $card_data->card_exp_year);
 
     $card_data->card_exp_month = date('m', $new_expire_time);
     $card_data->card_exp_year = date('Y', $new_expire_time);
