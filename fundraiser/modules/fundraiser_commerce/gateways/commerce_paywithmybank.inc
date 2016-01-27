@@ -318,7 +318,8 @@ function commerce_paywithmybank_fundraiser_commerce_expire($submission_fields) {
   else {
     // One future recurring payment should be created, so set expiration time
     // to one month ahead of current time.
-    $expire_time = time() + 2592000;
+    //$expire_time = time() + 2592000;
+    $expire_time = time();
 
     $expires['month'] = date('m', $expire_time);
     $expires['year'] = date('Y', $expire_time);
