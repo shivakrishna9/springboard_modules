@@ -166,7 +166,6 @@ function _fundraiser_recent_donors_node_edit_validate($form, &$form_state) {
  */
 function _fundraiser_recent_donors_node_edit_submit($form, &$form_state) {
   $node = $form['#node'];
-  $tmp_settings = array();
   if (!isset($form_state['values']['allow_recent_donations_opt_in'])) {
     return;
   }
@@ -178,10 +177,6 @@ function _fundraiser_recent_donors_node_edit_submit($form, &$form_state) {
   }
 
   if (isset($node->nid)) {
-    // Add the opt-in checkbox if it is not already present:
-    if ($is_enabled) {
-      _fundraiser_recent_donors_add_opt_in_webform_component($node);
-    }
     // Update the opt-in settings for this node:
     _fundraiser_recent_donors_set_node_opt_in_data($node->nid, $is_enabled, $min_optin_amount);
   } 
