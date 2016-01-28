@@ -791,7 +791,7 @@ function fundraiser_sustainers_form_node_form_alter(&$form, &$form_state, $form_
       '#default_value' => isset($node->recurring_minimum_donation_amount) ?
         number_format($node->recurring_minimum_donation_amount, 2) : variable_get('fundraiser_default_minimum', 10.00),
     );
-    $form['#validate'][] = '_fundraiser_form_amounts_validate'; //@TODO: replace or wrap?
+    $form['#validate'][] = '_fundraiser_sustainers_form_amounts_validate';
     $form['#after_build'][] = '_fundraiser_sustainers_node_form_after_build';
   }
 }
@@ -805,12 +805,52 @@ function _fundraiser_sustainers_node_form_after_build($form, &$form_state) {
   return $form;
 }
 
-
 /**
  * Callback handler for the donation ask amount form #ajax.
  */
 function _fundraiser_sustainers_donation_settings_form_amounts(&$form, &$form_state) {
   return $form['fundraiser_settings']['recurring_amount_wrapper']['recurring_donation_amounts'];
+}
+
+/**
+ * Validate handler for amounts configuration.
+ */
+function _fundraiser_sustainers_form_amounts_validate($form, &$form_state) {
+  // Check the ask amounts, if we have a label and we dong have an amount, throw a fit.
+  // If we have neither, assume it's meant to be empty and leave it be (it will be removed).
+  $amounts = $form_state['values']['recurring_amount_wrapper']['recurring_donation_amounts'];
+  foreach ($amounts as $index => $amount_set) {
+    if (!empty($amount_set['amount']) && empty($amount_set['label'])) {
+      form_set_error('recurring_amount_wrapper][recurring_donation_amounts][' . $index . '][label',
+        t('The label cannot be empty when an amount is set.'));
+    }
+    if (empty($amount_set['amount']) && !empty($amount_set['label'])) {
+      form_set_error('recurring_amount_wrapper][recurring_donation_amounts][' . $index . '][amount',
+        t('The amount cannot be empty when a label is set.'));
+    }
+    if (!is_numeric($amount_set['amount']) && !empty($amount_set['amount'])) {
+      form_set_error('recurring_amount_wrapper][recurring_donation_amounts][' . $index . '][amount',
+        t('The amount must be a number.'));
+    }
+  }
+
+  // Checking the minimum amount.
+  $minimum_donation_amount = $form_state['values']['recurring_amount_wrapper']['recurring_minimum_donation_amount'];
+  foreach ($amounts as $amount) {
+    if (empty($amount['remove']) && $amount['amount'] !='') {
+      $min = (isset($min) && $amount['amount'] > $min) ? $min : $amount['amount'];
+    }
+  }
+  // If no min ask amount is found (no ask amounts set) default to
+  // the minimum donation amount. This prevents errors when all ask amounts
+  // are removed from a donation form.
+  $min = isset($min) ? $min : $minimum_donation_amount;
+  if ($min < $minimum_donation_amount) {
+    form_set_error('recurring_amount_wrapper][recurring_minimum_donation_amount', t('The minimum donation amount must not be higher than the minimum ask amount.'));
+  }
+  if (!empty($minimum_donation_amount) && !is_numeric($minimum_donation_amount)) {
+    form_set_error('recurring_amount_wrapper][recurring_minimum_donation_amount', t('The minimum donation amount must be a numerical value.'));
+  }
 }
 
 /**
