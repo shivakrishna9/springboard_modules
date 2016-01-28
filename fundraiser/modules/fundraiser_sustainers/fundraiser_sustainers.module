@@ -638,7 +638,7 @@ function fundraiser_sustainers_form_node_form_alter(&$form, &$form_state, $form_
       '#title' => t("Default"),
       '#parents' => array('recurring_default_donation_type'),
       '#return_value' => 'onetime',
-      '#default_value' => $form['#node']->recurring_default_donation_type,
+      '#default_value' => !empty($form['#node']->recurring_default_donation_type) ? $form['#node']->recurring_default_donation_type : 'onetime',
     );
     $form['fundraiser_settings']['fundraiser_sustainers']['donation_type_options']['recurs'] = array(
       '#prefix' => '<div class="donation-type-option">',
@@ -946,6 +946,10 @@ function fundraiser_sustainers_fundraiser_get_fundraiser_alter($fundraiser) {
     'donation_type_options', 'default_donation_type'] as $name)
   {
     $fundraiser->{"recurring_$name"} = isset($fundraiser_sustainers->{$name}) ? $fundraiser_sustainers->{$name} : NULL;
+  }
+  if (empty($fundraiser->recurring_default_donation_type)) {
+    // Set a default of "onetime" for brand new or legacy forms that lack a default donation type.
+    $fundraiser->recurring_default_donation_type = 'onetime';
   }
 
   // If fundraiser_webform.module is enabled, webform component values can override
@@ -3748,7 +3752,9 @@ function _fundraiser_sustainers_update_sustainers_node($node) {
     'default_amount' => $node->recurring_default_amount,
     'dual_ask_amounts' => ($node->recurring_dual_ask_amounts && $node->recurring_setting == 'user_choice'),
     'donation_type_options' => !empty($node->recurring_donation_type_options) ? implode('|||', $node->recurring_donation_type_options) : NULL,
-    'default_donation_type' => !empty($node->recurring_default_donation_type) ? $node->recurring_default_donation_type : NULL,
+    'default_donation_type' => !empty($node->recurring_default_donation_type) ? $node->recurring_default_donation_type : (
+      ($node->recurring_setting == 'always') ? 'recurs' : 'onetime'
+    ),
   );
 
   if (isset($new_data['nid'])) {
