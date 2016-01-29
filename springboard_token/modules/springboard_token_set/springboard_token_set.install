@@ -6,7 +6,7 @@
  */
 
 /**
- * Implements hook_schema().
+ * Implements hook_schema()
  */
 function springboard_token_set_schema() {
   $schema = array();
@@ -33,11 +33,11 @@ function springboard_token_set_schema() {
     ),
   );
 
-  $schema['token_set_tokens'] = array(
-    'description' => 'Maps tokens to token sets.',
+  $schema['tokens'] = array(
+    'description' => 'Tokens that may be used in token sets.',
     'fields' => array(
-      'tsid' => array(
-        'description' => 'Unique ID of the token set.',
+      'tid' => array(
+        'description' => 'Unique ID of the token.',
         'type' => 'serial',
         'unsigned' => TRUE,
         'not null' => TRUE,
@@ -61,32 +61,51 @@ function springboard_token_set_schema() {
         'not null' => FALSE,
       ),
     ),
-    'primary key' => array('tsid', 'token_type', 'token'),
-    'indexes' => array(
-      'tsid' => array('tsid'),
+    'primary key' => array('tid'),
+  );
+
+  $schema['token_set_tokens'] = array(
+    'description' => 'Maps tokens to token sets.',
+    'fields' => array(
+      'tsid' => array(
+        'description' => 'Unique ID of the token set.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'tid' => array(
+        'description' => 'Unique ID of the token.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
     ),
+    'primary key' => array('tsid', 'tid'),
   );
 
   return $schema;
 }
 
 /**
- * Implements hook_install().
+ * Implements hook_install()
  */
 function springboard_token_set_install() {
   $token_data = json_decode(file_get_contents(drupal_get_path('module', 'springboard_token_set') . '/data/token_sets.json'));
 
+  // Add default tokens.
+  foreach ($token_data->tokens as $token) {
+    springboard_token_set_add_token($token[0], $token[1], $token[2]);
+  }
+
+  // Add default tokens to token sets.
   foreach ($token_data->token_sets as $token_set) {
     $tsid = springboard_token_set_add_set($token_set->name);
 
-    if (!empty($tsid)) {
-      foreach ($token_set->tokens as $token_string) {
-        foreach ($token_data->tokens as $token) {
-          if ($token[1] == $token_string) {
-            springboard_token_set_add_token($tsid, $token[0], $token[1], $token[2]);
-            continue;
-          }
-        }
+    foreach ($token_set->tokens as $token_string) {
+      $tid = db_query('SELECT tid FROM {tokens} WHERE `token` = :token', array(':token' => $token_string))->fetchField();
+
+      if (!empty($tid)) {
+        springboard_token_set_add_token_to_set($tsid, $tid);
       }
     }
   }

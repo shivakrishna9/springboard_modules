@@ -205,10 +205,8 @@ function springboard_token_set_add_set($name) {
 }
 
 /**
- * Adds a token to an existing token set.
+ * Adds a new token.
  *
- * @param int $tsid
- *   The ID of the token set.
  * @param string $token_type
  *   The token type.
  * @param string $token
@@ -216,13 +214,31 @@ function springboard_token_set_add_set($name) {
  * @param string $token_description
  *   The token description.
  */
-function springboard_token_set_add_token($tsid, $token_type, $token, $token_description) {
-  db_insert('token_set_tokens')
+function springboard_token_set_add_token($token_type, $token, $token_description) {
+  $tid = db_insert('tokens')
     ->fields(array(
-      'tsid' => $tsid,
       'token_type' => $token_type,
       'token' => $token,
       'token_description' => $token_description,
+    ))
+    ->execute();
+
+  return $tid;
+}
+
+/**
+ * Adds a token to an existing token set.
+ *
+ * @param int $tsid
+ *   The ID of the token set.
+ * @param int $tid
+ *   The ID of the token.
+ */
+function springboard_token_set_add_token_to_set($tsid, $tid) {
+  db_insert('token_set_tokens')
+    ->fields(array(
+      'tsid' => $tsid,
+      'tid' => $tid,
     ))
     ->execute();
 }
@@ -271,12 +287,13 @@ function springboard_token_set_get_set($tsid) {
  *   Array of tokens.
  */
 function springboard_token_set_get_tokens($tsid) {
-  $tokens = db_select('token_set_tokens', 'tst')
-    ->fields('tst', array('token_type', 'token', 'token_description'))
-    ->condition('tsid', $tsid, '=')
-    ->orderBy('token_type', 'ASC')
-    ->execute()
-    ->fetchAll();
+  $query = db_select('tokens', 't');
+  $query->join('token_set_tokens', 'tst', 't.tid = tst.tid');
+  $query->fields('t', array('token_type', 'token', 'token_description'))
+    ->condition('tst.tsid', $tsid, '=')
+    ->orderBy('t.token_type', 'ASC');
 
-  return $tokens;
+  $result = $query->execute();
+
+  return $result->fetchAll();
 }
