@@ -17,7 +17,7 @@ function silverpop_transact_form_webform_email_edit_form_alter(&$form, &$form_st
     $form['silverpop_transact_smtp_xheader_value'] = array(
       '#type' => 'textfield',
       '#title' => t('Silverpop SMTP X-Header value'),
-      '#description' => t('The value of the X-SP-Transact-Id X Header that is used to match a message to a Transaction Group.'),
+      '#description' => t('The value of the X-SP-Transact-Id X Header that is used to match a message to a Transaction Group. If ommitted, the site-wide default will be used.'),
       '#default_value' => $defaults['smtp_xheader_value'],
       '#weight' => '-51',
     );
@@ -84,6 +84,10 @@ function silverpop_transact_mail_alter(&$message) {
   $settings = silverpop_transact_load_email_settings($nid, $eid);
 
   if (variable_get('silverpop_transact_model') == 'SMTP') {
+    // If no xheader value specified for this email, use the site-wide default.
+    if ($settings['smtp_xheader_value'] == NULL) {
+      $settings['smtp_xheader_value'] = variable_get('silverpop_transact_xheader_value');
+    }
     $message['headers']['X-SP-Transact-Id'] = $settings['smtp_xheader_value'];
     silverpop_transact_log_mailing('SMTP', 'silverpop_transact');
   }

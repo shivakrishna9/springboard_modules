@@ -36,6 +36,17 @@ function silverpop_transact_admin() {
         Pod 5 would use api5.silverpop.com).',
     '#required' => TRUE,
   );
+  $form['silverpop_transact_xheader_value'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Default X Header value'),
+    '#default_value' => variable_get('silverpop_transact_xheader_value'),
+    '#description' => 'The site-wide default value of the X-SP-Transact-Id X Header that is used to match a message to a Transaction Group.',
+    '#states' => array(
+      'visible' => array(
+        ':input[name="silverpop_transact_model"]' => array('value' => 'SMTP'),
+      ),
+    ),
+  );
   $form['silverpop_transact_api'] = array(
     '#type' => 'fieldset',
     '#title' => t('Silverpop API Credentials'),
