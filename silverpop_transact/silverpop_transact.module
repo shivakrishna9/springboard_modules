@@ -78,18 +78,33 @@ function silverpop_transact_form_webform_email_delete_form_alter(&$form, &$form_
  * Adds Silverpop's X-SP-Transact-Id header to emails when using the SMTP model.
  */
 function silverpop_transact_mail_alter(&$message) {
+
   $eid = $message['params']['email']['eid'];
   $nid = $message['params']['email']['nid'];
   $settings = silverpop_transact_load_email_settings($nid, $eid);
+
   if (variable_get('silverpop_transact_model') == 'SMTP') {
     $message['headers']['X-SP-Transact-Id'] = $settings['smtp_xheader_value'];
     silverpop_transact_log_mailing('SMTP', 'silverpop_transact');
   }
   elseif (variable_get('silverpop_transact_model') == 'XML') {
-    $eid = $message['params']['email']['eid'];
-    $nid = $message['params']['email']['nid'];
-    $settings = silverpop_transact_load_email_settings($nid, $eid);
-    $personalization_tokens = silverpop_transact_load_webform_components($message['params']['submission']->data, $message['params']['node']->webform['components']);
+    // Seems like there should be a better way to do this. We take a string
+    // containing Drupal tokens, process the tokens, and then turn around and
+    // convert that into an assoc array. Then merge that with another array
+    // containing webform submitted values.
+    // We need the submission id, so we can load the donation object, so we can
+    // pass that to token_replace().
+    if (module_exists('fundraiser_webform')) {
+      // @TODO We only really need to do this if donation tokens are present.
+      $donation = _fundraiser_webform_get_donation_by_sid($message['params']['submission']->sid);
+    }
+    $token_set = array(
+      'node' => $message['params']['node'],
+      'donation' => $donation,
+    );
+    $drupal_tokens = silverpop_transact_parse_personalization(token_replace($settings['additional_tokens'], $token_set));
+    $webform_components = silverpop_transact_load_webform_components($message['params']['submission']->data, $message['params']['node']->webform['components']);
+    $personalization_tokens = array_merge($drupal_tokens, $webform_components);
     silverpop_transact_create_mailing($settings['group_id'], $message['to'], $personalization_tokens);
     silverpop_transact_log_mailing('XML', 'silverpop_transact');
   }
@@ -153,7 +168,7 @@ function silverpop_transact_views_api() {
  * @param array $personalization
  *    Associative array of key|value pairs for use in Silverpop templates, eg:
  *   - Personalization key (eg 'first_name').
- *   - Personaliaation value (eg 'Scott').
+ *   - Personalization value (eg 'Scott').
  */
 function silverpop_transact_create_mailing($mailing_id, $recipient_email, $personalization = NULL, $save_columns = FALSE, $html_body = '') {
   // If $html_body is populated, add it to the $personalization array.
@@ -206,7 +221,7 @@ function silverpop_transact_create_mailing($mailing_id, $recipient_email, $perso
  * @return array
  *   An associative array containing:
  *   - Personalization key (eg 'first_name')
- *   - Personaliaation value (eg 'Scott')
+ *   - Personalization value (eg 'Scott')
  */
 function silverpop_transact_parse_personalization($personalization_string) {
   if (!is_array($personalization_string)) {
