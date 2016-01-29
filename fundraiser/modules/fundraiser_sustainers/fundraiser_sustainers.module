@@ -273,6 +273,9 @@ function fundraiser_sustainers_theme($existing, $type, $theme, $path) {
       'path' => $path . '/templates',
       'template' => 'fundraiser_sustainers_insights_dashboard',
     ),
+    'fundraiser_sustainers_donation_type_options' => array(
+      'render element' => 'element',
+    ),
   );
 }
 
@@ -602,17 +605,12 @@ function fundraiser_sustainers_form_node_form_alter(&$form, &$form_state, $form_
     );
 
     // Configuration for donation type labels and default.
-    $donation_types_string = !empty($form['#node']->recurring_donation_type_options) ?
-      $form['#node']->recurring_donation_type_options :
-      variable_get('fundraiser_sustainers_default_donation_type_options', 'onetime|One-time|||recurs|Monthly')
-    ;
-    $donation_types = array();
-    foreach (explode('|||', $donation_types_string) as $donation_type_string) {
-      $donation_type = explode('|', $donation_type_string);
-      $donation_types[ $donation_type[0] ] = $donation_type[1];
-    }
     $form['fundraiser_settings']['fundraiser_sustainers']['donation_type_options'] = array(
       '#type' => 'container',
+      '#prefix' => '<div id="recurring-donation-type-options">',
+      '#suffix' => '</div>',
+      '#theme' => 'fundraiser_sustainers_donation_type_options',
+      '#table_id' => 'fundraiser-recurring-donation-types-table',
       '#tree' => TRUE,
       '#states' => array(
         'visible' => array(
@@ -621,41 +619,35 @@ function fundraiser_sustainers_form_node_form_alter(&$form, &$form_state, $form_
         ),
       ),
     );
-    $form['fundraiser_settings']['fundraiser_sustainers']['donation_type_options']['title'] = array(
-      '#markup' => '<hr /><h4>' . t("Multiple ask amounts settings") . '</h4>',
-    );
-    $form['fundraiser_settings']['fundraiser_sustainers']['donation_type_options']['onetime'] = array(
-      '#prefix' => '<div class="donation-type-option">',
-      '#suffix' => '</div>',
-    );
-    $form['fundraiser_settings']['fundraiser_sustainers']['donation_type_options']['onetime']['label'] = array(
-      '#type' => 'textfield',
-      '#description' => t("One-time donation."),
-      '#default_value' => $donation_types['onetime'],
-    );
-    $form['fundraiser_settings']['fundraiser_sustainers']['donation_type_options']['onetime']['default'] = array(
-      '#type' => 'radio',
-      '#title' => t("Default"),
-      '#parents' => array('recurring_default_donation_type'),
-      '#return_value' => 'onetime',
-      '#default_value' => !empty($form['#node']->recurring_default_donation_type) ? $form['#node']->recurring_default_donation_type : 'onetime',
-    );
-    $form['fundraiser_settings']['fundraiser_sustainers']['donation_type_options']['recurs'] = array(
-      '#prefix' => '<div class="donation-type-option">',
-      '#suffix' => '</div>',
-    );
-    $form['fundraiser_settings']['fundraiser_sustainers']['donation_type_options']['recurs']['label'] = array(
-      '#type' => 'textfield',
-      '#description' => t("Recurring monthly donation."),
-      '#default_value' => $donation_types['recurs'],
-    );
-    $form['fundraiser_settings']['fundraiser_sustainers']['donation_type_options']['recurs']['default'] = array(
-      '#type' => 'radio',
-      '#title' => t("Default"),
-      '#parents' => array('recurring_default_donation_type'),
-      '#return_value' => 'recurs',
-      '#default_value' => $form['#node']->recurring_default_donation_type,
-    );
+    $donation_types_string = !empty($form['#node']->recurring_donation_type_options) ?
+      $form['#node']->recurring_donation_type_options :
+      variable_get('fundraiser_sustainers_default_donation_type_options', 'onetime|One-time|||recurs|Monthly')
+    ;
+    $weight = 0;
+    foreach (explode('|||', $donation_types_string) as $donation_type_string) {
+      list($type, $label) = explode('|', $donation_type_string);
+      $form['fundraiser_settings']['fundraiser_sustainers']['donation_type_options'][$type]['type'] = array(
+        '#markup' => ($type == 'onetime') ? t("One-time") : t("Recurring monthly"),
+      );
+      $form['fundraiser_settings']['fundraiser_sustainers']['donation_type_options'][$type]['label'] = array(
+        '#type' => 'textfield',
+        '#default_value' => $label,
+        '#size' => 20,
+      );
+      $form['fundraiser_settings']['fundraiser_sustainers']['donation_type_options'][$type]['default'] = array(
+        '#type' => 'radio',
+        '#parents' => array('recurring_default_donation_type'),
+        '#return_value' => $type,
+        '#default_value' => !empty($form['#node']->recurring_default_donation_type) ? $form['#node']->recurring_default_donation_type : 'onetime',
+      );
+      $form['fundraiser_settings']['fundraiser_sustainers']['donation_type_options'][$type]['weight'] = array(
+        '#type' => 'weight',
+        '#title' => t('Weight'),
+        '#default_value' => $weight++,
+        '#delta' => 1,
+        '#title_display' => 'invisible',
+      );
+    }
 
     // Scoot down the one-time ask amounts.
     $form['fundraiser_settings']['amount_wrapper']['#weight'] = 2;
@@ -792,17 +784,7 @@ function fundraiser_sustainers_form_node_form_alter(&$form, &$form_state, $form_
         number_format($node->recurring_minimum_donation_amount, 2) : variable_get('fundraiser_default_minimum', 10.00),
     );
     $form['#validate'][] = '_fundraiser_sustainers_form_amounts_validate';
-    $form['#after_build'][] = '_fundraiser_sustainers_node_form_after_build';
   }
-}
-
-/**
- * Afterbuild for node type form, to avoid AJAX losing js, css.
- */
-function _fundraiser_sustainers_node_form_after_build($form, &$form_state) {
-  // Add additional css for this form.
-  drupal_add_css(drupal_get_path('module', 'fundraiser_sustainers') . '/css/fundraiser_sustainers.css');
-  return $form;
 }
 
 /**
@@ -851,6 +833,32 @@ function _fundraiser_sustainers_form_amounts_validate($form, &$form_state) {
   if (!empty($minimum_donation_amount) && !is_numeric($minimum_donation_amount)) {
     form_set_error('recurring_amount_wrapper][recurring_minimum_donation_amount', t('The minimum donation amount must be a numerical value.'));
   }
+}
+
+/**
+ * Theme the donation type options table.
+ */
+function theme_fundraiser_sustainers_donation_type_options($element) {
+  $element = $element['element'];
+  $header = array('', t('Type'), t('Donation form label'), t('Default'), t('Weight'));
+  $rows = array();
+  foreach (element_children($element) as $index) {
+    $element[$index]['weight']['#attributes']['class'] = array('donation-type-option-weight');
+    $rows[] = array(
+      'data' => array(
+        '',
+        drupal_render($element[$index]['type']),
+        drupal_render($element[$index]['label']),
+        drupal_render($element[$index]['default']),
+        drupal_render($element[$index]['weight']),
+      ),
+      'class' => array('draggable'),
+    );
+
+  }
+  drupal_add_tabledrag('fundraiser-recurring-donation-types-table', 'order', 'sibling', 'donation-type-option-weight');
+  $title = '<hr /><h4>' . t("Multiple ask amounts settings") . '</h4>';
+  return $title . theme('table', array('header' => $header, 'rows' => $rows,'attributes' => array('id' => 'fundraiser-recurring-donation-types-table')));
 }
 
 /**
@@ -999,18 +1007,20 @@ function fundraiser_sustainers_node_presave($node) {
         $node->recurring_default_amount = $donation_amount['amount'];
       }
     }
+    // Sort and serialize the donation type options and labels.
+    uasort($node->donation_type_options, function($a, $b) {return ($a['weight'] < $b['weight']) ? -1 : 1;});
+    $donation_type_options = array();
+    foreach ($node->donation_type_options as $type => $settings) {
+      $donation_type_options[] = "$type|" . $settings['label'];
+    }
+    $node->recurring_donation_type_options = $donation_type_options;
+    unset($node->donation_type_options);
     // Set the donation amounts where we expect them to be for processing.
     // These are buried under amount_wrapper because we set 'TREE' on that in the form.
     $node->recurring_donation_amounts = $node->recurring_amount_wrapper['recurring_donation_amounts'];
     $node->recurring_show_other_amount = $node->recurring_amount_wrapper['recurring_show_other_amount'];
     $node->recurring_minimum_donation_amount = is_numeric($node->recurring_amount_wrapper['recurring_minimum_donation_amount']) ?
       $node->recurring_amount_wrapper['recurring_minimum_donation_amount'] : variable_get('fundraiser_default_minimum', 10.00);
-    $donation_type_options = array();
-    if (!empty($node->donation_type_options)) foreach ($node->donation_type_options as $key => $options) {
-      $donation_type_options[] = "$key|" . $options['label'];
-    }
-    $node->recurring_donation_type_options = $donation_type_options;
-    unset($node->donation_type_options);
     unset($node->recurring_amount_wrapper);
   }
 }
