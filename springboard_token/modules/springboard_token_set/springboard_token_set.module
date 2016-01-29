@@ -6,11 +6,21 @@
 function springboard_token_set_menu() {
   $items = array();
 
+  $items['admin/config/content/tokens'] = array(
+    'title' => 'Springboard Tokens',
+    'description' => 'Manage tokens.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('springboard_token_set_tokens_admin_form'),
+    'access arguments' => array('administer springboard'),
+    'type' => MENU_NORMAL_ITEM,
+    'weight' => 0,
+  );
+
   $items['admin/config/content/token-sets'] = array(
     'title' => 'Springboard Token Sets',
     'description' => 'Manage tokens within token sets.',
     'page callback' => 'drupal_get_form',
-    'page arguments' => array('springboard_token_set_admin_form'),
+    'page arguments' => array('springboard_token_set_sets_admin_form'),
     'access arguments' => array('administer springboard'),
     'type' => MENU_NORMAL_ITEM,
     'weight' => 0,
@@ -118,9 +128,74 @@ function springboard_token_set_form_alter(&$form, &$form_state, $form_id) {
 }
 
 /**
- * Page callback for token set admin form.
+ * Page callback for tokens admin form.
  */
-function springboard_token_set_admin_form($form, &$form_state) {
+function springboard_token_set_tokens_admin_form($form, &$form_state) {
+  $tokens = springboard_token_set_get_tokens();
+
+  $form = array();
+
+  $form['tokens'] = array(
+    '#type' => 'container',
+    '#tree' => TRUE,
+  );
+
+  foreach ($tokens as $token) {
+    $form['tokens']['token-' . $token->tid] = array(
+      '#type' => 'container',
+    );
+
+    $form['tokens']['token-' . $token->tid]['tid'] = array(
+      '#type' => 'hidden',
+      '#default_value' => $token->tid,
+    );
+
+    $form['tokens']['token-' . $token->tid]['token'] = array(
+      '#type' => 'textfield',
+      '#default_value' => $token->token,
+    );
+
+    $form['tokens']['token-' . $token->tid]['token_description'] = array(
+      '#type' => 'textfield',
+      '#default_value' => $token->token_description,
+    );
+
+    $form['tokens']['token-' . $token->tid]['delete'] = array(
+      '#type' => 'checkbox',
+      '#title' => 'Remove token',
+    );
+  }
+
+  $form['submit-button'] = array(
+    '#type' => 'submit',
+    '#value' => 'Submit',
+  );
+
+  $form['#submit'] = array('springboard_token_set_tokens_admin_form_submit');
+
+  return $form;
+}
+
+/**
+ * Submit handler for tokens admin form.
+ */
+function springboard_token_set_tokens_admin_form_submit($form, $form_state) {
+  dpm($form_state);
+
+  foreach ($form_state['values']['tokens'] as $submitted_token) {
+    if ($submitted_token['delete'] == 1) {
+      springboard_token_set_delete_token($submitted_token['tid']);
+    }
+    else {
+      springboard_token_set_update_token($submitted_token['tid'], $submitted_token['token'], $submitted_token['token_description']);
+    }
+  }
+}
+
+/**
+ * Page callback for token sets admin form.
+ */
+function springboard_token_set_sets_admin_form($form, &$form_state) {
   $token_sets = springboard_token_set_get_sets();
 
   $form = array();
@@ -162,15 +237,15 @@ function springboard_token_set_admin_form($form, &$form_state) {
     '#value' => 'Submit',
   );
 
-  $form['#submit'] = array('springboard_token_set_admin_form_submit');
+  $form['#submit'] = array('springboard_token_set_sets_admin_form_submit');
 
   return $form;
 }
 
 /**
- * Submit handler for token set admin form.
+ * Submit handler for token sets admin form.
  */
-function springboard_token_set_admin_form_submit($form, $form_state) {
+function springboard_token_set_sets_admin_form_submit($form, $form_state) {
 
 }
 
@@ -227,6 +302,33 @@ function springboard_token_set_add_token($token_type, $token, $token_description
 }
 
 /**
+ * Updates an existing token.
+ *
+ * @param int $tid
+ *   The token ID.
+ * @param string $token
+ *   The token.
+ * @param string $token_description
+ *   The token description.
+ */
+function springboard_token_set_update_token($tid, $token, $token_description) {
+  if (empty($token)) {
+    return;
+  }
+
+  $token_parts = explode(':', str_replace('[', '', str_replace(']', '', $token)));
+
+  db_update('tokens')
+    ->fields(array(
+      'token_type' => $token_parts[0],
+      'token' => $token,
+      'token_description' => $token_description,
+    ))
+    ->condition('tid', $tid)
+    ->execute();
+}
+
+/**
  * Adds a token to an existing token set.
  *
  * @param int $tsid
@@ -240,6 +342,21 @@ function springboard_token_set_add_token_to_set($tsid, $tid) {
       'tsid' => $tsid,
       'tid' => $tid,
     ))
+    ->execute();
+}
+
+/**
+ * Removes a token from a token set.
+ *
+ * @param int $tsid
+ *   The ID of the token set.
+ * @param int $tid
+ *   The ID of the token.
+ */
+function springboard_token_set_remove_token_from_set($tsid, $tid) {
+  db_delete('token_set_tokens')
+    ->condition('tsid', $tsid)
+    ->condition('tid', $tid)
     ->execute();
 }
 
@@ -278,22 +395,44 @@ function springboard_token_set_get_set($tsid) {
 }
 
 /**
- * Gets all tokens for a given token set ID.
+ * Gets tokens for a given token set ID, or all tokens if $tsid is empty.
  *
  * @param int $tsid
- *   The ID of the token set.
+ *   The ID of the token set. Optional.
  *
  * @return array
  *   Array of tokens.
  */
-function springboard_token_set_get_tokens($tsid) {
+function springboard_token_set_get_tokens($tsid = NULL) {
   $query = db_select('tokens', 't');
   $query->join('token_set_tokens', 'tst', 't.tid = tst.tid');
-  $query->fields('t', array('token_type', 'token', 'token_description'))
-    ->condition('tst.tsid', $tsid, '=')
-    ->orderBy('t.token_type', 'ASC');
+  $query->fields('t', array('tid', 'token_type', 'token', 'token_description'));
+
+  if (!empty($tsid)) {
+    $query->condition('tst.tsid', $tsid, '=');
+  }
+
+  $query->orderBy('t.token_type', 'ASC');
 
   $result = $query->execute();
 
   return $result->fetchAll();
+}
+
+/**
+ * Deletes a token and any references from token sets.
+ *
+ * @param string $tid
+ *   The ID of the token.
+ */
+function springboard_token_set_delete_token($tid) {
+  // Delete the token.
+  db_delete('tokens')
+    ->condition('tid', $tid)
+    ->execute();
+
+  // Delete references from token sets.
+  db_delete('token_set_tokens')
+    ->condition('tid', $tid)
+    ->execute();
 }
