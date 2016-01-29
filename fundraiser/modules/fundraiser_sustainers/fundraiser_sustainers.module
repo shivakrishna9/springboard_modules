@@ -615,7 +615,6 @@ function fundraiser_sustainers_form_node_form_alter(&$form, &$form_state, $form_
       '#states' => array(
         'visible' => array(
           'select[name*=recurring_setting]' => array('value' => 'user_choice'),
-          ':input[name*=recurring_dual_ask_amounts]' => array('checked' => TRUE),
         ),
       ),
     );
@@ -648,6 +647,20 @@ function fundraiser_sustainers_form_node_form_alter(&$form, &$form_state, $form_
         '#title_display' => 'invisible',
       );
     }
+    $form['fundraiser_settings']['fundraiser_sustainers']['recurring_donation_type_help_text'] = array(
+      '#type' => 'textfield',
+      '#description' => t("This help text will appear below the one-time/recurring tabs or buttons on the donation form."),
+      '#default_value' => isset($form['#node']->recurring_donation_type_help_text) ?
+        $form['#node']->recurring_donation_type_help_text :
+        t('Selecting "Monthly" will cause your credit card to be charged once per month until its expiration date.')
+      ,
+      '#size' => 80,
+      '#states' => array(
+        'visible' => array(
+          'select[name*=recurring_setting]' => array('value' => 'user_choice'),
+        ),
+      ),
+    );
 
     // Scoot down the one-time ask amounts.
     $form['fundraiser_settings']['amount_wrapper']['#weight'] = 2;
@@ -857,7 +870,7 @@ function theme_fundraiser_sustainers_donation_type_options($element) {
 
   }
   drupal_add_tabledrag('fundraiser-recurring-donation-types-table', 'order', 'sibling', 'donation-type-option-weight');
-  $title = '<hr /><h4>' . t("Multiple ask amounts settings") . '</h4>';
+  $title = '<hr /><h4>' . t("One-time/recurring selection") . '</h4>';
   return $title . theme('table', array('header' => $header, 'rows' => $rows,'attributes' => array('id' => 'fundraiser-recurring-donation-types-table')));
 }
 
@@ -958,6 +971,10 @@ function fundraiser_sustainers_fundraiser_get_fundraiser_alter($fundraiser) {
   if (empty($fundraiser->recurring_default_donation_type)) {
     // Set a default of "onetime" for brand new or legacy forms that lack a default donation type.
     $fundraiser->recurring_default_donation_type = 'onetime';
+  }
+  if (isset($fundraiser_sustainers->donation_type_help_text)) {
+    // Could be blank. That's okay.
+    $fundraiser->recurring_donation_type_help_text = $fundraiser_sustainers->donation_type_help_text;
   }
 
   // If fundraiser_webform.module is enabled, webform component values can override
@@ -1426,6 +1443,9 @@ function _fundraiser_sustainers_recurs_monthly_field_create($fundraiser, $field)
     }
     if (!empty($fundraiser->recurring_default_donation_type)) {
       $field['#value'] = $fundraiser->recurring_default_donation_type;
+    }
+    if (isset($fundraiser->recurring_donation_type_help_text)) {
+      $field['#extra']['description'] = t($fundraiser->recurring_donation_type_help_text);
     }
 
     // If the donor can choose one-time or recurring, delete and recreate pre-existing component.
@@ -3765,6 +3785,7 @@ function _fundraiser_sustainers_update_sustainers_node($node) {
     'default_donation_type' => !empty($node->recurring_default_donation_type) ? $node->recurring_default_donation_type : (
       ($node->recurring_setting == 'always') ? 'recurs' : 'onetime'
     ),
+    'donation_type_help_text' => isset($node->recurring_donation_type_help_text) ? $node->recurring_donation_type_help_text : NULL,
   );
 
   if (isset($new_data['nid'])) {

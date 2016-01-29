@@ -134,7 +134,12 @@ function fundraiser_sustainers_schema() {
         'type' => 'varchar',
         'length' => 16,
         'not null' => FALSE,
-      )
+      ),
+      'donation_type_help_text' => array(
+        'description' => 'Help text to show under the onetime/recurring buttons on dual-ask forms.',
+        'type' => 'text',
+        'not null' => FALSE,
+      ),
     ),
     'primary key' => array('nid'),
   );
@@ -1002,4 +1007,18 @@ function fundraiser_sustainers_update_7017(&$sandbox) {
   );
   db_add_field('fundraiser_sustainers_nodes', 'donation_type_options', $fields['donation_type_options']);
   db_add_field('fundraiser_sustainers_nodes', 'default_donation_type', $fields['default_donation_type']);
+}
+
+/**
+ * Adds {fundraiser_sustainers_nodes} column to make onetime/recurring help text configurable.
+ */
+function fundraiser_sustainers_update_7018(&$sandbox) {
+  $fields = array(
+    'donation_type_help_text' => array(
+      'description' => 'Help text to show under the onetime/recurring buttons on dual-ask forms.',
+      'type' => 'text',
+      'not null' => FALSE,
+    ),
+  );
+  db_add_field('fundraiser_sustainers_nodes', 'donation_type_help_text', $fields['donation_type_help_text']);
 }
