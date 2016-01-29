@@ -152,6 +152,7 @@ function springboard_token_set_tokens_admin_form($form, &$form_state) {
 
     $form['tokens']['token-' . $token->tid]['token'] = array(
       '#type' => 'textfield',
+      '#size' => 40,
       '#default_value' => $token->token,
     );
 
@@ -172,6 +173,11 @@ function springboard_token_set_tokens_admin_form($form, &$form_state) {
   );
 
   $form['#submit'] = array('springboard_token_set_tokens_admin_form_submit');
+
+  $form['#attached']['css'] = array(
+    'data' => drupal_get_path('module', 'springboard_token_set') . '/css/springboard_token_set_admin.css',
+    'type' => 'file',
+  );
 
   return $form;
 }
@@ -200,8 +206,13 @@ function springboard_token_set_sets_admin_form($form, &$form_state) {
 
   $form = array();
 
+  $form['token-sets'] = array(
+    '#type' => 'container',
+    '#tree' => TRUE,
+  );
+
   foreach ($token_sets as $token_set) {
-    $form['token-set-' . $token_set->tsid] = array(
+    $form['token-sets']['token-set-' . $token_set->tsid] = array(
       '#type' => 'fieldset',
       '#title' => $token_set->name,
       '#collapsible' => TRUE,
@@ -211,21 +222,21 @@ function springboard_token_set_sets_admin_form($form, &$form_state) {
     $tokens = springboard_token_set_get_tokens($token_set->tsid);
 
     foreach ($tokens as $token) {
-      $form['token-set-' . $token_set->tsid][$token->token] = array(
+      $form['token-sets']['token-set-' . $token_set->tsid][$token->token] = array(
         '#type' => 'container',
       );
 
-      $form['token-set-' . $token_set->tsid][$token->token]['token'] = array(
+      $form['token-sets']['token-set-' . $token_set->tsid][$token->token]['token'] = array(
         '#type' => 'textfield',
         '#default_value' => $token->token,
       );
 
-      $form['token-set-' . $token_set->tsid][$token->token]['token_description'] = array(
+      $form['token-sets']['token-set-' . $token_set->tsid][$token->token]['token_description'] = array(
         '#type' => 'textfield',
         '#default_value' => $token->token_description,
       );
 
-      $form['token-set-' . $token_set->tsid][$token->token]['delete'] = array(
+      $form['token-sets']['token-set-' . $token_set->tsid][$token->token]['delete'] = array(
         '#type' => 'checkbox',
         '#title' => 'Remove token from token set',
       );
@@ -238,6 +249,11 @@ function springboard_token_set_sets_admin_form($form, &$form_state) {
   );
 
   $form['#submit'] = array('springboard_token_set_sets_admin_form_submit');
+
+  $form['#attached']['css'] = array(
+    'data' => drupal_get_path('module', 'springboard_token_set') . '/css/springboard_token_set_admin.css',
+    'type' => 'file',
+  );
 
   return $form;
 }

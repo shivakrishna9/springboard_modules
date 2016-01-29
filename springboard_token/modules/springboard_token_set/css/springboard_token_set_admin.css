@@ -1,0 +1,3 @@
+div#edit-tokens div.form-item, div#edit-token-sets div.form-item {
+  display: inline-block;
+}
