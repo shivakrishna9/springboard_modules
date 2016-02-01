@@ -206,7 +206,7 @@ function commerce_paywithmybank_fundraiser_commerce_redirect_submit($method_inst
   }
 
   $log_message = ($success) ? 'Redirect form submit was successful.' : 'Redirect form submit failed.';
-  watchdog('commerce_paywithmybank', $log_message, array(), WATCHDOG_ERROR);
+  watchdog('commerce_paywithmybank', $log_message, array(), WATCHDOG_DEBUG);
 
   return $success;
 }
