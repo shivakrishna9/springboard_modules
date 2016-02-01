@@ -205,6 +205,10 @@ function commerce_paywithmybank_fundraiser_commerce_redirect_submit($method_inst
     watchdog('commerce_paywithmybank', 'Redirect form submit failed due to validation error.', array(), WATCHDOG_ERROR);
   }
 
+  if (!$success) {
+    watchdog('commerce_paywithmybank', 'Redirect form submit failed.', array(), WATCHDOG_ERROR);
+  }
+
   return $success;
 }
 
