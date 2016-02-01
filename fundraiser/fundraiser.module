@@ -560,7 +560,7 @@ function _fundraiser_donation_settings_form(&$form, &$form_state) {
   $form['payment_methods'] = array(
     '#type' => 'fieldset',
     '#title' => t("Payment methods"),
-    '#weight' => -4.97,
+    '#weight' => -4.95,
     '#collapsible' => TRUE,
     '#collapsed' => TRUE,
     '#group' => 'additional_settings',
