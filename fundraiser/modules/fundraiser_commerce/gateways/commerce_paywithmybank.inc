@@ -173,6 +173,12 @@ function commerce_paywithmybank_fundraiser_commerce_redirect_submit($method_inst
 
         // Need to manually process this donation as successful here so the
         // recurring donation set exists prior to processing the first payment.
+        //
+        // Manually unset the donation result message because
+        // fundraiser_commerce sets an error message by default whenever a
+        // payment is processed and this code is called before that message
+        // is overwritten.
+        unset($donation->result['message']);
         fundraiser_donation_success($donation);
 
         if ($api_transaction->status == PayWithMyBank::TRANSACTION_STATUS_ON_HOLD) {
