@@ -142,6 +142,8 @@ function commerce_paywithmybank_fundraiser_commerce_redirect_submit($method_inst
   $transaction_id = filter_input(INPUT_GET, 'transactionId');
   $request_signature = filter_input(INPUT_GET, 'requestSignature');
 
+  $success = FALSE;
+
   $valid_request = commerce_paywithmybank_validate_request($transaction_id, $request_signature);
 
   if ($valid_request) {
@@ -198,14 +200,12 @@ function commerce_paywithmybank_fundraiser_commerce_redirect_submit($method_inst
     $donation->donation['payment_method'] = 'bank account';
 
     _fundraiser_commerce_charge_submit_form_process($success, $method_instance, $pane_values, $donation, 'bank_account');
-
-    return $success;
   }
   else {
     watchdog('commerce_paywithmybank', 'Redirect form submit failed due to validation error.', array(), WATCHDOG_ERROR);
   }
 
-  return FALSE;
+  return $success;
 }
 
 /**
