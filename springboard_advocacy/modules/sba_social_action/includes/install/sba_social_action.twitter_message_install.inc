@@ -508,7 +508,6 @@ function _sba_social_action_delete_twitter_message_entity() {
   foreach ($fields as $field_name) {
     $field = field_info_instance('node', $field_name, 'sba_social_action_twitter_message');
     field_delete_instance($field);
-    $field_base = field_info_field($field_name);
     field_delete_field($field_name);
   }
   field_purge_batch('50') ;
