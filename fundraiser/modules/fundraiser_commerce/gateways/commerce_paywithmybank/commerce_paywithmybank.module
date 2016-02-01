@@ -87,6 +87,47 @@ function commerce_paywithmybank_fundraiser_gateway_info_alter(&$gateways) {
 }
 
 /**
+ * Implements hook_fundraiser_donation_cancel()
+ */
+function commerce_paywithmybank_fundraiser_donation_cancel($donation) {
+  if ($donation->gateway['id'] == 'commerce_paywithmybank_bank|commerce_payment_commerce_paywithmybank_bank') {
+    // If a recurring donation is skipped, create the next series donation.
+    if (isset($donation->recurring) || !empty($donation->recurring)) {
+      $master_donation = fundraiser_donation_get_donation($donation->recurring->master_did);
+
+      if (!empty($master_donation)) {
+        // Update expiration date and generate the next donation.
+        $cards_on_file = commerce_cardonfile_load_multiple_by_remote_id($master_donation->auth_txn_id);
+
+        if (!empty($cards_on_file)) {
+          $card_data = current($cards_on_file);
+
+          // Move card expiration date ahead one month.
+          $new_expire_time = mktime(0, 0, 0, ($card_data->card_exp_month + 1), 1, $card_data->card_exp_year);
+
+          $card_data->card_exp_month = date('m', $new_expire_time);
+          $card_data->card_exp_year = date('Y', $new_expire_time);
+
+          // Update card using master donation so transaction ID is available.
+          commerce_paywithmybank_fundraiser_commerce_update($master_donation, $card_data);
+
+          $submission_fields = array(
+            'payment_fields' => array(
+              'bank account' => array(
+                'card_expiration_month' => $card_data->card_exp_month,
+                'card_expiration_year' => $card_data->card_exp_year,
+              ),
+            ),
+          );
+
+          fundraiser_sustainers_update_billing_info_create_new_donations($master_donation, $donation, $submission_fields);
+        }
+      }
+    }
+  }
+}
+
+/**
  * Payment method callback: settings form.
  */
 function commerce_paywithmybank_bank_settings_form($settings = NULL) {
