@@ -577,7 +577,7 @@ function fundraiser_sustainers_form_node_form_alter(&$form, &$form_state, $form_
   if (fundraiser_is_donation_type($form['#node']->type)) {
     $form['fundraiser_settings']['fundraiser_sustainers'] = array(
       '#type' => 'fieldset',
-      '#title' => t('Fundraiser Recurring Display Settings'),
+      '#title' => t('Fundraiser recurring display settings'),
       '#desciption' => t('Modify the way the recurring option is displayed on this form, or if it is even available.'),
       '#collapsible' => TRUE,
       '#collapsed' => FALSE,
