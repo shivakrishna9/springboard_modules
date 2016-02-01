@@ -433,6 +433,7 @@ function fundraiser_webform_form_node_form_alter(&$form, &$form_state, $form_id)
       // Merge the webform user form into fundraiser iff webform user exists and is set for this node type.
       if (isset($form['webform_user'])) {
         $form['fundraiser_settings']['send_new_user_email'] = $form['webform_user']['send_new_user_email'];
+        $form['fundraiser_settings']['send_new_user_email']['#weight'] = 5;
         $form['fundraiser_settings']['is_webform_user'] = $form['webform_user']['is_webform_user'];
         $form['fundraiser_settings']['is_webform_user']['#type'] = 'hidden';
         $form['fundraiser_settings']['is_webform_user']['#value'] = TRUE;
