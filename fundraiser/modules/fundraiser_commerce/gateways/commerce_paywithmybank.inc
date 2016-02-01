@@ -151,6 +151,8 @@ function commerce_paywithmybank_fundraiser_commerce_redirect_submit($method_inst
     $api = commerce_paywithmybank_get_api($method_instance);
     $api_transaction = $api->getTransaction($transaction_id);
 
+    watchdog('commerce_paywithmybank', 'PayWithMyBank redirect submit with transaction: !param', array('!param' => '<pre>' . check_plain(print_r($api_transaction, TRUE)) . '</pre>'), WATCHDOG_DEBUG);
+
     $success = (($api_transaction->status == PayWithMyBank::TRANSACTION_STATUS_ON_HOLD) || ($api_transaction->status == PayWithMyBank::TRANSACTION_STATUS_AUTHORIZED));
 
     $pane_values = array();
@@ -198,6 +200,9 @@ function commerce_paywithmybank_fundraiser_commerce_redirect_submit($method_inst
     _fundraiser_commerce_charge_submit_form_process($success, $method_instance, $pane_values, $donation, 'bank_account');
 
     return $success;
+  }
+  else {
+    watchdog('commerce_paywithmybank', 'Redirect form submit failed due to validation error.', array(), WATCHDOG_ERROR);
   }
 
   return FALSE;
