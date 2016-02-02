@@ -70,8 +70,10 @@ function sba_message_action_additional_elements(&$form, &$form_state) {
   $multiple = count($node->messages) > 1 ? TRUE : FALSE;
   $node_wrapper = entity_metadata_wrapper('node', $node);
   $multi_flow = $node_wrapper->field_sba_action_flow->value() == 'multi' ? TRUE : FALSE;
+
   $prompt = field_get_items('node', $node, 'field_sba_multistep_prompt');
-  $multi_flow_prompt = !empty($prompt) ? check_markup($prompt[0]['value'], $prompt[0]['format']) : '';
+  $prompt_text = !empty($prompt) ? check_markup($prompt[0]['value'], $prompt[0]['format']) : '';
+
   $action_type = 'single_not_multi_flow';
   if ($multiple && !$multi_flow) {
     $action_type = 'multiple_not_multi_flow';
@@ -80,7 +82,21 @@ function sba_message_action_additional_elements(&$form, &$form_state) {
     $action_type = 'multi_flow';
   }
 
+  if ($action_type == 'single_not_multi_flow') {
+
+    $form['sba_messages']['single_not_multi_flow'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Your Message'),
+      '#attributes' => array('class' => array('sba-message')),
+    );
+
+    $form['sba_messages']['single_not_multi_flow']['prompt'] =  array(
+      '#markup' => $prompt_text,
+    );
+  }
+
   if ($action_type == 'multiple_not_multi_flow') {
+
     ctools_include('ajax');
     ctools_include('modal');
     $href = 'messages/nojs/' . arg(1);
@@ -91,18 +107,18 @@ function sba_message_action_additional_elements(&$form, &$form_state) {
     );
     $form['sba_messages']['multiple_not_multi_flow']['message'] = array(
       '#type' => 'item',
-      '#markup' => '<p>' . t('We have crafted multiple messages for this action. We will select the right message or messages for your legislators, or others we are targeting, based on their position on this issue, and on the address you enter.')
-        . '</p><p></p>' . ctools_modal_text_button('View all possible messages.', $href, t('View messages'), 'ctools-modal-message-window-style') . '</p>',
+      '#markup' => '<p>' . $prompt_text . '</p><p></p>' . ctools_modal_text_button('View all possible messages.', $href, t('View messages'), 'ctools-modal-message-window-style') . '</p>',
     );
   }
   elseif ($action_type == 'multi_flow') {
+
     $form['sba_messages']['multiflow'] = array(
       '#type' => 'fieldset',
       '#title' => t('Step 1 of 2'),
       '#attributes' => array('class' => array('sba-message')),
     );
     $form['sba_messages']['multiflow']['prompt'] =  array(
-      '#markup' => $multi_flow_prompt,
+      '#markup' => $prompt_text,
     );
   }
 
@@ -148,19 +164,10 @@ function sba_message_action_message_form(&$form, $message, $action_type) {
   }
 
   // If it's a multiple message form, use a container instead of a fieldset.
-  if ($action_type == 'single_not_multi_flow') {
-    $form['message'][$message->sba_message_id] = array(
-      '#type' => 'fieldset',
-      '#title' => t('Your Message'),
-      '#attributes' => array('class' => array('sba-message')),
-    );
-  }
-  else {
-    $form['message'][$message->sba_message_id] = array(
-      '#type' => 'container',
-      '#attributes' => array('class' => array('sba-message')),
-    );
-  }
+  $form['message'][$message->sba_message_id] = array(
+    '#type' => 'container',
+    '#attributes' => array('class' => array('sba-message')),
+  );
 
   $form['message'][$message->sba_message_id]['message_id'] = array(
     '#type' => 'value',
@@ -392,7 +399,7 @@ function sba_message_action_form_submit($form, &$form_state) {
   $_SESSION['contact'] = array();
   $_SESSION['form_details'] = array();
   $_SESSION['action_sid'] = FALSE;
-  $_SESSION['action_completed'] = FALSE;
+  //$_SESSION['action_completed'] = FALSE;
   // Create array of messages to submit for target resolution.
   if (isset($form_state['values']['sba_messages'])) {
     $messages = array();

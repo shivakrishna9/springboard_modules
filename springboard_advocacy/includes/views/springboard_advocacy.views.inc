@@ -298,6 +298,126 @@ function springboard_advocacy_views_data() {
     ),
   );
 
+
+  $data['springboard_action_opt_in']['table'] = array(
+    'group' => t('Springboard Advocacy'),
+    'base' => array(
+      'title' => t('Springboard Action Opt In'),
+      'help' => t('Tracks Actions opted in for display.'),
+    ),
+    'join' => array(
+      'node' => array(
+        'left_field' => 'nid',
+        'field' => 'nid',
+      ),
+      'users' => array(
+        'left_field' => 'uid',
+        'field' => 'uid',
+      ),
+      'webform_submissions' => array(
+        'left_field' => 'sid',
+        'field' => 'sid',
+      ),
+    ),
+  );
+  $data['springboard_action_opt_in']['nid'] = array(
+    'title' => t('Action node'),
+    'help' => t('Action form node id.'),
+    'relationship' => array(
+      'base' => 'node',
+      'base field' => 'nid',
+      'handler' => 'views_handler_relationship',
+      'label' => t('Action node'),
+    ),
+    'field' => array(
+      'handler' => 'views_handler_field',
+      'click sortable' => TRUE,
+    ),
+    'filter' => array(
+      'handler' => 'views_handler_filter_string',
+    ),
+    'sort' => array(
+      'handler' => 'views_handler_sort',
+    ),
+    'argument' => array(
+      'handler' => 'views_handler_argument_numeric',
+    ),
+  );
+  $data['springboard_action_opt_in']['uid'] = array(
+    'title' => t('Action opt-in user'),
+    'help' => t('User associated with opt-in record.'),
+    'relationship' => array(
+      'base' => 'users',
+      'base field' => 'uid',
+      'handler' => 'views_handler_relationship',
+      'label' => t('Opt in user'),
+    ),
+    'field' => array(
+      'handler' => 'views_handler_field',
+      'click sortable' => TRUE,
+    ),
+    'filter' => array(
+      'handler' => 'views_handler_filter_string',
+    ),
+    'sort' => array(
+      'handler' => 'views_handler_sort',
+    ),
+    'argument' => array(
+      'handler' => 'views_handler_argument_numeric',
+    ),
+  );
+  $data['springboard_action_opt_in']['sid'] = array(
+    'title' => t('Action opt-in submission'),
+    'help' => t('Webform submission associated with opt-in record.'),
+    'relationship' => array(
+      'base' => 'webform_submissions',
+      'base field' => 'sid',
+      'handler' => 'views_handler_relationship',
+      'label' => t('Opt in submission'),
+    ),
+    'field' => array(
+      'handler' => 'views_handler_field',
+      'click sortable' => TRUE,
+    ),
+    'filter' => array(
+      'handler' => 'views_handler_filter_string',
+    ),
+    'sort' => array(
+      'handler' => 'views_handler_sort',
+    ),
+    'argument' => array(
+      'handler' => 'views_handler_argument_numeric',
+    ),
+  );
+  $data['springboard_action_opt_in']['opt_in'] = array(
+    'title' => 'Action signature opt-in',
+    'help' => t('Tracks user opt-in to display message action participation.'),
+    'field' => array(
+      'handler' => 'views_handler_field',
+      'click sortable' => TRUE,
+    ),
+    'filter' => array(
+      'handler' => 'views_handler_filter_string',
+    ),
+    'sort' => array(
+      'handler' => 'views_handler_sort',
+    ),
+  );
+  $data['springboard_action_opt_in']['created'] = array(
+    'title' => t('Action opt-in submission creation time'),
+    'help' => t('Webform Submission timestamp.'),
+    'field' => array(
+      'handler' => 'views_handler_field_date',
+      'click sortable' => TRUE,
+    ),
+    'filter' => array(
+      'handler' => 'views_handler_filter_date',
+    ),
+    'sort' => array(
+      'handler' => 'views_handler_sort_date',
+    ),
+  );
+
   return $data;
 }
 
@@ -536,6 +656,14 @@ function springboard_advocacy_views_pre_render(&$view) {
     }
     $view->attachment_before = theme('springboard_advocacy_views_attachment_before',
       array('view' => $view, 'total_rows' => $total_rows, 'query' => $query));
+
+    // Put custom target titles in the role column.
+    foreach ($view->result as $key => $result) {
+      if (isset($result->class_name) && $result->class_name != 'Legislator') {
+        $result->role = isset($result->title) ? $result->title : $result->role;
+        $result->party = isset($result->organization) ? $result->organization : $result->party;
+      }
+    }
   }
 }
 
@@ -644,11 +772,11 @@ function springboard_advocacy_preprocess_views_view_table(&$vars)
         $vars['header'][$field] = l($label, $_GET['q'], $link_options);
       }
     }
-
     if (isset($vars['rows'][0]['committee_memberships']) && $field == 'committee_memberships' && $label == '') {
       $vars['header'][$field] = t('Committees');
     }
   }
+
 }
 
 /**
@@ -939,4 +1067,78 @@ function springboard_advocacy_views_exposed_form_ajax_lookup_recursive($elements
     $ajax_elements += springboard_advocacy_views_exposed_form_ajax_lookup_recursive($elements[$key]);
   }
   return $ajax_elements;
+}
+
+function springboard_advocacy_ajax_search() {
+
+  if (!isset($_POST['query'])) {
+   return;
+  }
+
+  $values = $_POST['query'];
+  $search_groups = array();
+  $search_groups_formatted = array();
+  $size = 0;
+  $count = 0;
+  $person = '';
+
+  foreach ($values as $key => $search_terms) {
+    if (isset($search_terms['id'])) {
+      $count++;
+      $target_handle = parse_url(urldecode($search_terms['twitter']));
+      $handle = '.@' . substr($target_handle['path'], 1);
+      $new_size = strlen($handle);
+      if ($new_size > $size) {
+        $size = $new_size;
+      }
+    }
+    elseif (isset($search_terms['ids'])) {
+      unset($search_terms['ids']);
+      $search_groups[$key] = $search_terms;
+    }
+    else {
+      $search_groups[$key] = $search_terms;
+    }
+  }
+
+  foreach ($search_groups as $key => $group) {
+    foreach ($group as $index => $value) {
+      $search_groups_formatted[$key][$index] = array($value);
+    }
+  }
+
+
+  $target_groups = array();
+  foreach ($search_groups_formatted as $search) {
+    $view = views_get_view('targets');
+    $view->query = new springboard_advocacy_views_plugin_query();
+    $view->query->search_terms = $search;
+    $view->query->apiCall = springboard_advocacy_api_call();
+    $view->build();
+    unset($view->query->search_terms['class_name']);
+    $view->set_display('block_3');
+    $view->query->pager->options['items_per_page'] = 10000;
+    $view->pre_execute();
+    $view->execute();
+
+    $target_groups[] = $view->result;
+  }
+  foreach ($target_groups as $tgroup) {
+    foreach ($tgroup as $target) {
+      $count++;
+      $target_handle = parse_url($target->twitter);
+      $handle = '.@' . substr($target_handle['path'], 1);
+      $new_size = strlen($handle);
+      if ($new_size > $size) {
+        $size = $new_size;
+        $person = $target->first_name . ' ' . $target->last_name;
+      }
+    }
+  }
+  drupal_json_output(array(
+    'size' => $size,
+    'count' => $count,
+    'person' => $person
+  ));
+
 }

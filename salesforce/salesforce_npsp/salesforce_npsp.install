@@ -36,7 +36,7 @@ function salesforce_npsp_install() {
   }
 
   // Remove default recurring donation mapping provided by Springboard.
-  salesforce_genmap_delete_map(-1, 'npe03__Recurring_Donation__c');
+  salesforce_genmap_delete_map(-1, 'fundraiser_sustainers');
 
   $mapping = salesforce_mapping_load('fundraiser_sustainers_series');
   if (!empty($mapping)) {
@@ -663,7 +663,7 @@ function salesforce_npsp_update_7001() {
   }
 
   // Remove default recurring donation mapping provided by Springboard.
-  salesforce_genmap_delete_map(-1, 'npe03__Recurring_Donation__c');
+  salesforce_genmap_delete_map(-1, 'fundraiser_sustainers');
 
   $mapping = salesforce_mapping_load('fundraiser_sustainers_series');
   if (!empty($mapping)) {

@@ -133,17 +133,7 @@ function salesforce_luminate_salesforce_genmap_map_fields_alter(&$fields, $conte
  * Implements hook_fundraiser_donation_success()
  */
 function salesforce_luminate_fundraiser_donation_success($donation) {
-  $fundraiser_sustainers_series = entity_load_single('fundraiser_sustainers_series', $donation->did);
-
-  if (!empty($fundraiser_sustainers_series)) {
-    $fundraiser_sustainers_series->luminate_start_date = date('Y-m-d');
-    $fundraiser_sustainers_series->luminate_campaign_id = $donation->donation['cid'];
-    $fundraiser_sustainers_series->luminate_recurring_amount_rounded = round($donation->donation['amount']);
-    $fundraiser_sustainers_series->luminate_installment_period = LUMINATE_INSTALLMENT_PERIOD;
-    $fundraiser_sustainers_series->luminate_day_of_month = date('d');
-
-    $fundraiser_sustainers_series->save();
-  }
+  salesforce_luminate_update_fundraiser_sustainers_series($donation);
 }
 
 /**
@@ -190,5 +180,33 @@ function salesforce_luminate_save_account_ids($account_ids) {
     );
 
     salesforce_sync_save_map($record);
+  }
+}
+
+/**
+ * Implements hook_fundraiser_upsell_create_recurring_success()
+ */
+function salesforce_luminate_fundraiser_upsell_create_recurring_success($donation) {
+  salesforce_luminate_update_fundraiser_sustainers_series($donation);
+}
+
+/**
+ * Updates the Luminate-specific fields of an existing fundraiser sustainers
+ * series.
+ *
+ * @param object $donation
+ *   The master donation in the donation series.
+ */
+function salesforce_luminate_update_fundraiser_sustainers_series($donation) {
+  $fundraiser_sustainers_series = entity_load_single('fundraiser_sustainers_series', $donation->did);
+
+  if (!empty($fundraiser_sustainers_series)) {
+    $fundraiser_sustainers_series->luminate_start_date = date('Y-m-d');
+    $fundraiser_sustainers_series->luminate_campaign_id = $donation->donation['cid'];
+    $fundraiser_sustainers_series->luminate_recurring_amount_rounded = round($donation->donation['amount']);
+    $fundraiser_sustainers_series->luminate_installment_period = LUMINATE_INSTALLMENT_PERIOD;
+    $fundraiser_sustainers_series->luminate_day_of_month = date('d');
+
+    $fundraiser_sustainers_series->save();
   }
 }
