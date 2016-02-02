@@ -1411,16 +1411,13 @@ function _fundraiser_commerce_fundraiser_donation_process_external_form_return($
       $valid = $validation_function($method_instance, $donation, $order);
     }
     if ($valid) {
-      watchdog('fundraiser_commerce', 'Valid external form return.', array(), WATCHDOG_DEBUG);
       if (isset($info['redirect callback']) && function_exists($info['redirect callback'] . '_submit')) {
         $submit_function = $info['redirect callback'] . '_submit';
-        watchdog('fundraiser_commerce', 'Calling submit function: @submit.', array('@submit' => $submit_function), WATCHDOG_DEBUG);
         // Perform any submit functions if necessary.
         $success = $submit_function($method_instance, $donation, $order);
         // After a callback, we need to get transaction data into order->data, donation->data for storage.
         _fundraiser_commerce_update_donation_result_data($donation, $success);
         if ($success) {
-          watchdog('fundraiser_commerce', 'Submit function successful.', array(), WATCHDOG_DEBUG);
           $log = t('Payment successfully processed at the gateway.');
         }
       }
