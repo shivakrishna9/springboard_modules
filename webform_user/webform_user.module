@@ -447,7 +447,7 @@ function webform_user_form_alter(&$form, &$form_state, $form_id) {
             $profile_value = is_array($user_data->$profile_field) ? '1' : 0;
             if (is_array($user_data->$profile_field)) {
               $current_field = $user_data->$profile_field;
-              $profile_value = isset($current_field['und'][0]['value']) ? $current_field['und'][0]['value'] : NULL;
+              $profile_value = isset($current_field[LANGUAGE_NONE][0]['value']) ? $current_field[LANGUAGE_NONE][0]['value'] : NULL;
             }
             else {
               $profile_value = $user_data->$profile_field;
@@ -1302,13 +1302,18 @@ function _webform_user_save_profile_map($uid, &$map) {
             // Length is a concern for text fields. Select values set will fail validation.
             // Text areas are stored in blob form, so not an issue.
             $max_length = isset($field_info['settings']['max_length']) ? $field_info['settings']['max_length'] : '';
-            if (!empty($max_length) && strlen($field_value) > $max_length) {
+            if (!empty($max_length) && is_string($field_value) && strlen($field_value) > $max_length) {
               $original_field = $field_value;
               $field_value = substr($field_value, 0, $max_length);
               watchdog('webform_user', 'Truncated field @field_name at length @length for user #@uid. Original data: @original_field',
                 array('@field_name' => $field_name, '@length' => $max_length, '@uid' => $uid, '@original_field' => $original_field));
+            } 
+            // Implode array values:
+            else if (is_array($field_value)) {
+              $field_value = implode(';', $field_value);
             }
-            $account->{$field_name}['und'][0]['value'] = $field_value;
+
+            $account->{$field_name}[LANGUAGE_NONE][0]['value'] = $field_value;
           }
         }
       }
