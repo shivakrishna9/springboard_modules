@@ -1604,6 +1604,13 @@ function fundraiser_sustainers_donation_amount_form_submit($form, &$form_state) 
   _fundraiser_sustainers_donation_amount_form_update_donations($master_did, $amount, $formatted_amount);
 }
 
+/**
+ * Helper function for fundraiser_sustainers_donation_amount_form_submit().
+ *
+ * @param $master_did
+ * @param $amount
+ * @param $formatted_amount
+ */
 function _fundraiser_sustainers_donation_amount_form_update_donations($master_did, $amount, $formatted_amount) {
   $donations = _fundraiser_sustainers_get_donations_recurr_remaining($master_did);
   foreach ($donations as $donation) {
