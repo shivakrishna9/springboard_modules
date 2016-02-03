@@ -44,14 +44,14 @@ function fundraiser_sustainers_upgrade_springboard_views_springboard_dashboard_p
  * Implements hook_views_prerender().
  *
  * Springboard admin module expects there to be a webform_user_internal_name
- * field on your node. Sustainer upgrade does have that, so we populate the view
- * result with a different field's value.
+ * field on your node. Sustainer upgrade does not have that, so we populate
+ * the view result with a different field's value.
  */
 function fundraiser_sustainers_upgrade_views_pre_render(&$view) {
   if ($view->name =='sbv_forms') {
     foreach ($view->result as $key => $result) {
       if ($result->node_type == 'sustainers_upgrade_form') {
-        $node = node_load($result->nid);
+        $node = $result->_field_data['nid']['entity'];
         $field = field_get_items('node', $node, 'field_sustainers_upgrade_name');
         if (!empty($field[0]) && isset($view->result[$key]->field_field_webform_user_internal_name)) {
           $value = field_view_value('node', $node, 'field_sustainers_upgrade_name', $field[0]);
