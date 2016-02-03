@@ -1600,8 +1600,11 @@ function fundraiser_sustainers_donation_amount_form_validate($form, &$form_state
 function fundraiser_sustainers_donation_amount_form_submit($form, &$form_state) {
   $amount = $form_state['values']['fee_amount'];
   $formatted_amount = commerce_currency_format($amount, $form_state['values']['fee_currency_code'], NULL, FALSE);
-
   $master_did = $form_state['values']['master_did'];
+  _fundraiser_sustainers_donation_amount_form_update_donations($master_did, $amount, $formatted_amount);
+}
+
+function _fundraiser_sustainers_donation_amount_form_update_donations($master_did, $amount, $formatted_amount) {
   $donations = _fundraiser_sustainers_get_donations_recurr_remaining($master_did);
   foreach ($donations as $donation) {
     $donation = fundraiser_donation_get_donation($donation->did);
@@ -1620,11 +1623,11 @@ function fundraiser_sustainers_donation_amount_form_submit($form, &$form_state) 
     $username = isset($user->name) ? $user->name : 'Anonymous';
     fundraiser_donation_comment($donation, 'The amount of this gift was changed from $@old_amount to $@new_amount on @date by @username.',
       array(
-      '@old_amount' => $donation->donation['old_amount'],
-      '@new_amount' => $donation->donation['amount'],
-      '@date' => format_date(strtotime('now')),
-      '@username' => $username,
-    ));
+        '@old_amount' => $donation->donation['old_amount'],
+        '@new_amount' => $donation->donation['amount'],
+        '@date' => format_date(strtotime('now')),
+        '@username' => $username,
+      ));
 
     // update sf queue.
     if (module_exists('salesforce_genmap')) {
