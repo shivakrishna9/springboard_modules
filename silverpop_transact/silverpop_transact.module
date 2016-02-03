@@ -114,7 +114,6 @@ function silverpop_transact_mail_alter(&$message) {
       $webform_components = silverpop_transact_load_webform_components($message['params']['submission']->data, $message['params']['node']->webform['components']);
       $personalization_tokens = array_merge($drupal_tokens, $webform_components);
       silverpop_transact_create_mailing($settings['group_id'], $message['to'], $personalization_tokens);
-      silverpop_transact_log_mailing('XML', 'silverpop_transact');
     }
   }
 }
@@ -180,6 +179,8 @@ function silverpop_transact_views_api() {
  *   - Personalization value (eg 'Scott').
  */
 function silverpop_transact_create_mailing($mailing_id, $recipient_email, $personalization = NULL, $save_columns = FALSE, $html_body = '') {
+  // Start timer for logging purposes.
+  $time_pre = microtime(TRUE);
   // If $html_body is populated, add it to the $personalization array.
   if ($html_body != '') {
     $personalization['INBOUND_HTML'] = "<![CDATA[" . $html_body . "]]>";
@@ -201,24 +202,19 @@ function silverpop_transact_create_mailing($mailing_id, $recipient_email, $perso
   $connection = silverpop_transact_connect();
   if ($connection) {
     $file = file_unmanaged_save_data($data, "public://", FILE_EXISTS_RENAME);
-    // Get the url of the file to be sent to Silverpop.
-    $file_url = file_create_url($file);
-
-    // Attempt to send the XML file to Silverpop.
-    if (ftp_put($connection, 'transact/inbound/' . str_replace('public://', '', $file), $file_url, FTP_ASCII)) {
-      watchdog('silverpop_transact', 'successfully uploaded file %file', array('%file' => $file));
-      file_unmanaged_delete($file);
-    }
-    else {
-      $file = silverpop_transact_save_transact_data($data);
-      watchdog('silverpop_transact', 'Error when attempting to submit to Silverpop Trasact. Data saved at %file', array('%file' => $file), WATCHDOG_ERROR);
-    }
+    silverpop_transact_submit_xml($connection, $file);
+    $status = 1;
     ftp_close($connection);
   }
   else {
     $file = silverpop_transact_save_transact_data($data);
     watchdog('silverpop_transact', 'Could not connect to Silverpop. Transact data saved at %file', array('%file' => $file));
+    $status = 0;
   }
+  // Stop timer for logging purposes.
+  $time_post = microtime(TRUE);
+  $exec_time = $time_post - $time_pre;
+  silverpop_transact_log_mailing('XML', 'silverpop_transact', $status, '', $file, $exec_time);
 }
 
 /**
@@ -386,6 +382,33 @@ function silverpop_transact_connect($api_host = NULL, $username = NULL, $passwor
 }
 
 /**
+ * Submits XML Silverpop via FTP.
+ *
+ * @param object $connection
+ *   FTP stream.
+ * @param string $file
+ *   The path of the xml file.
+ *
+ * @return bool
+ *   Returns TRUE if xml has been successfully uploaded, otherwise FALSE.
+ */
+function silverpop_transact_submit_xml($connection, $file) {
+  // Get the url of the file to be sent to Silverpop.
+  $file_url = file_create_url($file);
+  // Attempt to send the XML file to Silverpop.
+  if (ftp_put($connection, 'transact/inbound/' . str_replace('public://', '', $file), $file_url, FTP_ASCII)) {
+    watchdog('silverpop_transact', 'successfully uploaded file %file', array('%file' => $file));
+    file_unmanaged_delete($file);
+    return TRUE;
+  }
+  else {
+    $file = silverpop_transact_save_transact_data($data);
+    watchdog('silverpop_transact', 'Error when attempting to submit to Silverpop Trasact. Data saved at %file', array('%file' => $file), WATCHDOG_ERROR);
+    return FALSE;
+  }
+}
+
+/**
  * Silverpop get password.
  *
  * Function borrowed from http://drupal.org/project/silverpop.
@@ -457,8 +480,10 @@ function silverpop_transact_set_password($password = '') {
  *   (Optional) Message returned by Silverpop (only applicable for XML mode).
  * @param string $filename
  *   (Optional) Filename of the generated XML (only applicable for XML mode).
+ * @param float $submission_duration
+ *   (Optional) Time taken to submit XML via FTP (only applicable for XML mode).
  */
-function silverpop_transact_log_mailing($model, $origin, $status = NULL, $silverpop_message = NULL, $filename = NULL) {
+function silverpop_transact_log_mailing($model, $origin, $status = NULL, $silverpop_message = NULL, $filename = NULL, $submission_duration = NULL) {
   Database::getConnection('default', 'default')->insert('silverpop_transact_log')
     ->fields(array(
       'model' => $model,
@@ -467,6 +492,7 @@ function silverpop_transact_log_mailing($model, $origin, $status = NULL, $silver
       'silverpop_message' => $silverpop_message,
       'filename' => $filename,
       'created' => REQUEST_TIME,
+      'submission_duration' => $submission_duration,
     ))
     ->execute();
 }
