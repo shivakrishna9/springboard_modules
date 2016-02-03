@@ -594,6 +594,11 @@ function commerce_paywithmybank_create_payment_transaction($api_transaction, $pa
 
   fundraiser_donation_update($donation);
 
+  // Update donation in the SF queue.
+  if (module_exists('salesforce_genmap')) {
+    salesforce_genmap_send_object_to_queue('salesforce_donation', 'update', $donation->node, $donation->did, $donation, 'donation');
+  }
+
   return $transaction;
 }
 
