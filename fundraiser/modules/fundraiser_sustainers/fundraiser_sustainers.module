@@ -1607,6 +1607,10 @@ function fundraiser_sustainers_donation_amount_form_submit($form, &$form_state) 
 /**
  * Helper function for fundraiser_sustainers_donation_amount_form_submit().
  *
+ * This function is also called from fundraiser_sustainers_upgrade_form_submit()
+ * as well as from the above submit function. Bear that in mind if altering
+ * any code here.
+ *
  * @param $master_did
  * @param $amount
  * @param $formatted_amount
