@@ -92,7 +92,6 @@ function commerce_paywithmybank_fundraiser_commerce_redirect($method_instance, $
     $recurrence->endDate = NULL;
     $recurrence->frequency = NULL;
     $recurrence->frequencyUnit = NULL;
-    //$recurrence->frequencyUnitType = PayWithMyBank::NULL_RECURRENCE_FREQUENCY_UNIT_TYPE;
     $recurrence->frequencyUnitType = NULL;
     $recurrence->recurringAmount = NULL;
     $recurrence->automaticCapture = 'false';
@@ -267,8 +266,6 @@ function commerce_paywithmybank_fundraiser_commerce_update($donation, $card_data
 
   if ($action == 'update') {
     $card_data->card_number = $cardonfile_fields['card_number'];
-    //$card_data->card_exp_month = $expires['month'];
-    //$card_data->card_exp_year = $expires['year'];
     commerce_cardonfile_save($card_data);
     return $card_data;
   }
@@ -330,9 +327,7 @@ function commerce_paywithmybank_fundraiser_commerce_expire($submission_fields) {
     $expires['year'] = $submission_fields['payment_fields']['bank account']['card_expiration_year'];
   }
   else {
-    // One future recurring payment should be created, so set expiration time
-    // to one month ahead of current time.
-    //$expire_time = time() + 2592000;
+    // If no expiration date given, use current date.
     $expire_time = time();
 
     $expires['month'] = date('m', $expire_time);
