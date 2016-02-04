@@ -136,6 +136,12 @@ function fundraiser_schema() {
         'length' => '255',
         'not null' => TRUE,
       ),
+      'auth_txn_id' => array(
+        'description' => 'The transaction ID used to authorize this donation.',
+        'type' => 'varchar',
+        'length' => '55',
+        'not null' => FALSE,
+      ),
       'txn_id' => array(
         'description' => 'The transaction id of the donation.',
         'type' => 'varchar',
