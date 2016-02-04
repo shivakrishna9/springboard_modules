@@ -101,16 +101,16 @@ function silverpop_transact_schema() {
       ),
       // @TODO Is int the best type for status?
       'status' => array(
-        'description' => 'Boolean indicating success/failure. Only applicable with XML mode messages.',
+        'description' => 'Boolean indicating upload success/failure. Only applicable with XML mode messages.',
         'type' => 'int',
         'not null' => FALSE,
         'default' => 1,
       ),
       'silverpop_message' => array(
-        'description' => 'Success/Failure message as sent by Silverpop (only applicable for XML)',
-        'type' => 'varchar',
-        'length' => '1024',
+        'description' => 'Integer representing Silverpop status message (only applicable for XML)',
+        'type' => 'int',
         'not null' => FALSE,
+        'default' => NULL,
       ),
       'filename' => array(
         'description' => 'Filename of saved XML document (only applicable for XML model)',
@@ -203,16 +203,16 @@ function silverpop_transact_update_7001() {
         'not null' => FALSE,
       ),
       'status' => array(
-        'description' => 'Boolean indicating success/failure. Only applicable with XML mode messages.',
+        'description' => 'Boolean indicating upload success/failure. Only applicable with XML mode messages.',
         'type' => 'int',
         'not null' => FALSE,
         'default' => 1,
       ),
       'silverpop_message' => array(
-        'description' => 'Success/Failure message as sent by Silverpop (only applicable for XML)',
-        'type' => 'varchar',
-        'length' => '1024',
+        'description' => 'Integer representing Silverpop status message (only applicable for XML)',
+        'type' => 'int',
         'not null' => FALSE,
+        'default' => NULL,
       ),
       'filename' => array(
         'description' => 'Filename of saved XML document (only applicable for XML model)',

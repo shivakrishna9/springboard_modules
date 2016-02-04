@@ -8,6 +8,7 @@
  * Implements hook_rules_action_info().
  */
 function silverpop_transact_rules_action_info() {
+
   return array(
     'silverpop_transact_create_mailing' => array(
       'label' => t('Create Silverpop Transact mailing'),

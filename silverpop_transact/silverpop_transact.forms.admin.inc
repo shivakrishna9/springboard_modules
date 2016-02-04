@@ -9,6 +9,7 @@
  * Silverpop Sendmail admin form.
  */
 function silverpop_transact_admin() {
+
   $form = array();
   $form['silverpop_transact_model'] = array(
     '#type' => 'radios',
@@ -107,6 +108,7 @@ function silverpop_transact_admin() {
  * Function borrowed from http://drupal.org/project/silverpop.
  */
 function silverpop_transact_encrypt_password($form, &$form_state) {
+
   // Encrypt the API password.
   if (!empty($form_state['values']['silverpop_transact_password'])) {
     $password = $form_state['values']['silverpop_transact_password'];
@@ -121,6 +123,7 @@ function silverpop_transact_encrypt_password($form, &$form_state) {
  * Implements hook_form_submit().
  */
 function sliverpop_transact_admin_form_submit($form_id, &$form_state) {
+
   // Check if XML/SMTP model has been changed. When SMTP is enabled, switch
   // email_wrapper to use the mailsystem provided by the smtp module.
   if ($form_state['input']['silverpop_transact_model'] != variable_get('silverpop_transact_model')) {

@@ -17,11 +17,11 @@
     </PERSONALIZATION>
     <?php endforeach; ?>
   </RECIPIENT>
-  <?php if($save_columns): ?>
+    <?php if($save_columns) : ?>
   <SAVE_COLUMNS>
     <?php foreach($personalization as $key => $value):?>
       <COLUMN_NAME><?php print $key; ?></COLUMN_NAME>
     <?php endforeach; ?>
   </SAVE_COLUMNS>
-  <?php endif; ?>
+    <?php endif; ?>
 </XTMAILING>

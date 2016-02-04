@@ -8,6 +8,7 @@
  * Implements hook_views_data().
  */
 function silverpop_transact_views_data() {
+
   $data = array();
   $data['silverpop_transact_log']['table']['group'] = t('Silverpop Transact');
   $data['silverpop_transact_log']['table']['base'] = array(
@@ -95,13 +96,15 @@ function silverpop_transact_views_data() {
     'title' => t('Silverpop Message'),
     'help' => t('Message returned from Silverpop on XML submission. XML model only.'),
     'field' => array(
-      'handler' => 'views_handler_field',
+      'handler' => 'views_handler_field_numeric',
+      'click sortable' => TRUE,
+
     ),
     'sort' => array(
       'handler' => 'views_handler_sort',
     ),
     'filter' => array(
-      'handler' => 'views_handler_filter_string',
+      'handler' => 'views_handler_filter_numeric',
     ),
   );
   // Expose the Silverpop Message field.

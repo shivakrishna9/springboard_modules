@@ -8,6 +8,7 @@
  * Implements hook_views_default_views().
  */
 function silverpop_transact_views_default_views() {
+
   $view = new view();
   $view->name = 'springboard_transact_log';
   $view->description = '';
@@ -38,6 +39,7 @@ function silverpop_transact_views_default_views() {
     'origin' => 'origin',
     'silverpop_message' => 'silverpop_message',
     'status' => 'status',
+    'submission_duration' => 'submission_duration',
   );
   $handler->display->display_options['style_options']['default'] = 'id';
   $handler->display->display_options['style_options']['info'] = array(
@@ -77,6 +79,8 @@ function silverpop_transact_views_default_views() {
       'empty_column' => 0,
     ),
     'silverpop_message' => array(
+      'sortable' => 1,
+      'default_sort_order' => 'asc',
       'align' => '',
       'separator' => '',
       'empty_column' => 0,
@@ -88,7 +92,24 @@ function silverpop_transact_views_default_views() {
       'separator' => '',
       'empty_column' => 0,
     ),
+    'submission_duration' => array(
+      'sortable' => 0,
+      'default_sort_order' => 'asc',
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
   );
+  /* Footer: Global: Text area */
+  $handler->display->display_options['footer']['area']['id'] = 'area';
+  $handler->display->display_options['footer']['area']['table'] = 'views';
+  $handler->display->display_options['footer']['area']['field'] = 'area';
+  $handler->display->display_options['footer']['area']['content'] = 'Silverpop Messages:
+    None- Message has not yet been retrieved from Silverpop during cron run.
+    0 – Did not encounter any errors during the send; all recipients sent.
+    1 – Encountered errors during the send; some or all recipients were not sent
+    2 – Encountered errors with the XML submission; no recipients were sent; no recipient error details provided, only the request-level error.';
+  $handler->display->display_options['footer']['area']['format'] = 'filtered_html';
   /* Field: Silverpop Transact: ID */
   $handler->display->display_options['fields']['id']['id'] = 'id';
   $handler->display->display_options['fields']['id']['table'] = 'silverpop_transact_log';
@@ -115,10 +136,16 @@ function silverpop_transact_views_default_views() {
   $handler->display->display_options['fields']['silverpop_message']['id'] = 'silverpop_message';
   $handler->display->display_options['fields']['silverpop_message']['table'] = 'silverpop_transact_log';
   $handler->display->display_options['fields']['silverpop_message']['field'] = 'silverpop_message';
+  $handler->display->display_options['fields']['silverpop_message']['empty'] = 'None';
   /* Field: Silverpop Transact: Status */
   $handler->display->display_options['fields']['status']['id'] = 'status';
   $handler->display->display_options['fields']['status']['table'] = 'silverpop_transact_log';
   $handler->display->display_options['fields']['status']['field'] = 'status';
+  /* Field: Silverpop Transact: Submitted Duration */
+  $handler->display->display_options['fields']['submission_duration']['id'] = 'submission_duration';
+  $handler->display->display_options['fields']['submission_duration']['table'] = 'silverpop_transact_log';
+  $handler->display->display_options['fields']['submission_duration']['field'] = 'submission_duration';
+  $handler->display->display_options['fields']['submission_duration']['label'] = 'Submitted Duration (Seconds)';
   /* Filter criterion: Silverpop Transact: Filename */
   $handler->display->display_options['filters']['filename']['id'] = 'filename';
   $handler->display->display_options['filters']['filename']['table'] = 'silverpop_transact_log';
@@ -200,10 +227,32 @@ function silverpop_transact_views_default_views() {
     4 => 0,
     5 => 0,
   );
+  /* Filter criterion: Silverpop Transact: Silverpop Message */
+  $handler->display->display_options['filters']['silverpop_message']['id'] = 'silverpop_message';
+  $handler->display->display_options['filters']['silverpop_message']['table'] = 'silverpop_transact_log';
+  $handler->display->display_options['filters']['silverpop_message']['field'] = 'silverpop_message';
+  $handler->display->display_options['filters']['silverpop_message']['exposed'] = TRUE;
+  $handler->display->display_options['filters']['silverpop_message']['expose']['operator_id'] = 'silverpop_message_op';
+  $handler->display->display_options['filters']['silverpop_message']['expose']['label'] = 'Silverpop Message';
+  $handler->display->display_options['filters']['silverpop_message']['expose']['operator'] = 'silverpop_message_op';
+  $handler->display->display_options['filters']['silverpop_message']['expose']['identifier'] = 'silverpop_message';
+  $handler->display->display_options['filters']['silverpop_message']['expose']['remember_roles'] = array(
+    2 => '2',
+    1 => 0,
+    3 => 0,
+    4 => 0,
+    5 => 0,
+    6 => 0,
+  );
 
   /* Display: Page */
   $handler = $view->new_display('page', 'Page', 'page');
-  $handler->display->display_options['path'] = 'admin/springboard/reports/springboard-transact-log';
+  $handler->display->display_options['path'] = 'admin/springboard/reports/silverpop-transact-log';
+  $handler->display->display_options['menu']['title'] = 'Silverpop Transact Log';
+  $handler->display->display_options['menu']['weight'] = '0';
+  $handler->display->display_options['menu']['name'] = 'management';
+  $handler->display->display_options['menu']['context'] = 0;
+  $handler->display->display_options['menu']['context_only_inline'] = 0;
 
   $views[$view->name] = $view;
   return $views;

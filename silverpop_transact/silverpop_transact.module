@@ -164,6 +164,57 @@ function silverpop_transact_views_api() {
 }
 
 /**
+ * Implements hook_cron().
+ */
+function silverpop_transact_cron() {
+  // Wrap in variable check for easy disabling without code push.
+  if (variable_get('silverpop_transact_process_logs_during_cron', TRUE)) {
+    silverpop_transact_cron_log_status_update();
+  }
+}
+
+/**
+ * Retrieves status files via FTP and updates silverpop_transact_log records.
+ */
+function silverpop_transact_cron_log_status_update() {
+  // Connect to FTP server.
+  $connection = silverpop_transact_connect();
+  if ($connection) {
+    // Get list of XML files on the FTP host.
+    ftp_chdir($connection, 'transact/status');
+    $status_files = ftp_nlist($connection, '.');
+    // Get rid of file extension for easier matching with log records.
+    $status_files = str_replace('.status', '', $status_files);
+    // Get list of log records where status is null.
+    $result = db_query("SELECT filename, silverpop_message, model FROM {silverpop_transact_log} WHERE silverpop_message IS NULL AND model = 'XML'");
+    if ($result) {
+      // Foreach null status record that has an existing status file, get the
+      // status file, check the status message, and update the corresponding
+      // silverpop_transact_log record.
+      while ($log_record = $result->fetchAssoc()) {
+        // Get rid of "public://" for easier matching with xml status filenames.
+        $bare_log_filename = str_replace('public://', '', $log_record['filename']);
+        if (in_array($bare_log_filename, $status_files)) {
+          // Get XML.
+          $file = $bare_log_filename . '.status';
+          if (ftp_get($connection, 'private://failed-silverpop-data/' . $file, $file, FTP_ASCII)) {
+            watchdog('silverpop_transact', 'Status file downloaded: %file', array('%file' => $file));
+          }
+          else {
+            watchdog('silverpop_transact', 'Could not download status file: %file', array('%file' => $file));
+          }
+          // Look for status value.
+          $silverpop_status = silverpop_transact_get_xml_status('private://failed-silverpop-data/' . $file);
+          // Update log record.
+          silverpop_transact_update_log_record($log_record['filename'], $silverpop_status);
+        }
+      }
+    }
+    ftp_close($connection);
+  }
+}
+
+/**
  * Silverpop_transact_create_mailing().
  *
  * Creates an XML object compliant with the Silverpop Transact API and
@@ -214,7 +265,7 @@ function silverpop_transact_create_mailing($mailing_id, $recipient_email, $perso
   // Stop timer for logging purposes.
   $time_post = microtime(TRUE);
   $exec_time = $time_post - $time_pre;
-  silverpop_transact_log_mailing('XML', 'silverpop_transact', $status, '', $file, $exec_time);
+  silverpop_transact_log_mailing('XML', 'silverpop_transact', $status, NULL, $file, $exec_time);
 }
 
 /**
@@ -475,9 +526,9 @@ function silverpop_transact_set_password($password = '') {
  * @param string $origin
  *   Origin of the mailing (module or Rule identification).
  * @param int $status
- *   (Optional) Success/Failure (only applicable for XML mode).
- * @param string $silverpop_message
- *   (Optional) Message returned by Silverpop (only applicable for XML mode).
+ *   (Optional) Message upload success/Failure (only applicable for XML mode).
+ * @param int $silverpop_message
+ *   (Optional) Status returned by Silverpop (only applicable for XML mode).
  * @param string $filename
  *   (Optional) Filename of the generated XML (only applicable for XML mode).
  * @param float $submission_duration
@@ -519,4 +570,30 @@ function silverpop_transact_load_webform_components($submission_data, $component
     $component_key_values[$component_label] = $value['value'][0];
   }
   return $component_key_values;
+}
+
+/**
+ * When given an local xml silverpop.satus file, returns <status> value.
+ *
+ * @param string $file
+ *   Path and filename of local xml file. eg 'public://example.status'.
+ *
+ * @return int
+ *   Returns value of <status> xml node, eg 1, 2, 3.
+ */
+function silverpop_transact_get_xml_status($file) {
+  $xml = simplexml_load_string(file_get_contents($file));
+  return $xml->STATUS;
+}
+
+/**
+ * Updates silverpop_transact_log table records with silverpop_message.
+ */
+function silverpop_transact_update_log_record($file, $silverpop_message) {
+  $num_updated = db_update('silverpop_transact_log')
+    ->fields(array(
+      'silverpop_message' => $silverpop_message,
+    ))
+    ->condition('filename', $file)
+    ->execute();
 }
