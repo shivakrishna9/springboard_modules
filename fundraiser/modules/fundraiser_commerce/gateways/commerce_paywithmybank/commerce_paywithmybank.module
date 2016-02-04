@@ -66,8 +66,10 @@ function commerce_paywithmybank_form_commerce_checkout_form_review_alter(&$form,
  */
 function commerce_paywithmybank_form_fundraiser_sustainers_billing_update_form_alter(&$form, &$form_state, $form_id) {
   // Pay With My Bank does not support updating the user's bank account.
-  if ($form['#donation']->gateway['id'] == 'commerce_paywithmybank_bank|commerce_payment_commerce_paywithmybank_bank') {
-    unset($form['payment_fields']);
+  if (isset($form['#donation'])) {
+    if ($form['#donation']->gateway['id'] == 'commerce_paywithmybank_bank|commerce_payment_commerce_paywithmybank_bank') {
+      unset($form['payment_fields']);
+    }
   }
 }
 
@@ -97,12 +99,12 @@ function commerce_paywithmybank_fundraiser_gateway_info_alter(&$gateways) {
 }
 
 /**
- * Implements hook_fundraiser_donation_cancel()
+ * Implements hook_fundraiser_donation_update()
  */
-function commerce_paywithmybank_fundraiser_donation_cancel($donation) {
+function commerce_paywithmybank_fundraiser_donation_update($donation) {
   if ($donation->gateway['id'] == 'commerce_paywithmybank_bank|commerce_payment_commerce_paywithmybank_bank') {
     // If a recurring donation is skipped, create the next series donation.
-    if (isset($donation->recurring) || !empty($donation->recurring)) {
+    if (($donation->status == 'skipped') && isset($donation->recurring) && !empty($donation->recurring)) {
       $master_donation = fundraiser_donation_get_donation($donation->recurring->master_did);
 
       if (!empty($master_donation)) {
