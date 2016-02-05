@@ -4,7 +4,6 @@
  * Code for Fundraiser Sustainers Upgrade.
  */
 
-
 /**
  * Implements hook_init().
  *
@@ -310,6 +309,14 @@ function fundraiser_sustainers_upgrade_get_status_message($recurring, $donation,
 }
 
 
+/**
+ * Webform client form validation.
+ *
+ * Update the hidden component values prior to submission.
+ *
+ * @param $form
+ * @param $form_state
+ */
 function fundraiser_sustainers_upgrade_form_validate(&$form, &$form_state) {
   $payload = fundraiser_sustainers_upgrade_get_session_payload();
   $node = $form['#node'];
@@ -509,6 +516,9 @@ function fundraiser_sustainers_upgrade_tokens($type, $tokens, $data = array(), $
 }
 
 
+/**
+ * Implements hook_form_node_type_form_alter().
+ */
 function fundraiser_sustainers_upgrade_form_node_type_form_alter(&$form, &$form_state) {
   if (isset($form['#node_type']) && $form['#node_type'] == 'sustainers_upgrade_form') {
     $form['fundraiser_type']['#disabled'] = TRUE;
@@ -518,6 +528,9 @@ function fundraiser_sustainers_upgrade_form_node_type_form_alter(&$form, &$form_
   }
 }
 
+/**
+ * Implements hook_preprocess_hook().
+ */
 function fundraiser_sustainers_upgrade_preprocess_webform_confirmation(&$vars) {
   if ($vars['node']->type == 'sustainers_upgrade_form') {
 
@@ -550,6 +563,8 @@ function fundraiser_sustainers_process_webform_confirmation(&$vars) {
 
 /**
  * Implements hook_node_insert().
+ *
+ * Insert Webform components.
  */
 function fundraiser_sustainers_upgrade_node_insert($node) {
   if ($node->type == 'sustainers_upgrade_form') {
@@ -559,6 +574,11 @@ function fundraiser_sustainers_upgrade_node_insert($node) {
 }
 
 
+/**
+ * @param $form
+ * @param $path
+ * @return mixed
+ */
 function &_fundraiser_sustainers_upgrade_find_field(&$form, $path) {
   if (is_array($path)) {
     foreach (array_keys($path) as $v) {
@@ -572,6 +592,13 @@ function &_fundraiser_sustainers_upgrade_find_field(&$form, $path) {
   }
 }
 
+/**
+ *  * Helper function to get component parents.
+ *
+ * @param $nid
+ * @param $components
+ * @return array
+ */
 function _fundraiser_sustainers_upgrade_parse_form($nid, $components) {
   $component_hierarchy = array();
   foreach ($components as $cid => $component) {
@@ -582,6 +609,14 @@ function _fundraiser_sustainers_upgrade_parse_form($nid, $components) {
   return $component_hierarchy;
 }
 
+/**
+ * Helper function to get component parents.
+ *
+ * @param $nid
+ * @param $cid
+ * @param array $path
+ * @return array
+ */
 function fundraiser_sustainers_upgrade_walk_component_hierarchy($nid, $cid, &$path = array()) {
   $result = db_query("SELECT cid, pid, form_key FROM {webform_component} WHERE nid = :nid and cid = :cid", array(':nid' => $nid, ':cid' => $cid));
   foreach ($result as $data) {
