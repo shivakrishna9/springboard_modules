@@ -186,7 +186,7 @@ function fundraiser_sustainers_form_webform_client_form_alter(&$form, &$form_sta
           'Donation ID does not match User ID'
         );
         if (!in_array($status['status'], $stop_in_tracks)) {
-          $form['#submit'][] = 'fundraiser_sustainers_upgrade_form_submit';
+          $form['#submit'][]=  'fundraiser_sustainers_upgrade_form_submit';
           $form['#validate'][] = 'fundraiser_sustainers_upgrade_form_validate';
 
           $field = field_get_items('node', $form['#node'], 'field_sustainers_auto_upgrade');
@@ -368,6 +368,28 @@ function fundraiser_sustainers_upgrade_form_submit($form, $form_state) {
     $fee_currency_code = $next_donation->donation['currency']['code'];
     $formatted_amount = commerce_currency_format($payload['amount'], $fee_currency_code, NULL, FALSE);
     _fundraiser_sustainers_donation_amount_form_update_donations($donation->recurring->master_did, $payload['amount'], $formatted_amount);
+
+    // Replace confirmation tokens if there is a redirect.
+    $node = $form['#node'];
+    if ($node->webform['redirect_url'] != '<confirmation>') {
+      fundraiser_sustainers_upgrade_clear_session_payload();
+      $confirmation = $form['#node']->webform['confirmation'];
+      $dsm_statuses = drupal_get_messages('status');
+      $token_set = array(
+        'donation' => $donation,
+      );
+      $confirmation_replaced = token_replace($confirmation, $token_set);
+      $message = check_markup($confirmation_replaced, $node->webform['confirmation_format'], '', TRUE);
+      drupal_set_message($message);
+      if (!empty($dsm_statuses['status'])) {
+        $match = check_markup($confirmation, $node->webform['confirmation_format'], '', TRUE);
+        foreach ($dsm_statuses['status'] as $dsm_status) {
+          if (strcmp($dsm_status, $match) !== 0) {
+            drupal_set_message(check_markup($dsm_status, 'full_html', '', TRUE));
+          }
+        }
+      }
+    }
   }
 }
 
@@ -456,6 +478,7 @@ function fundraiser_sustainers_upgrade_token_info() {
  */
 function fundraiser_sustainers_upgrade_tokens($type, $tokens, $data = array(), $options = array()) {
   $replacements = array();
+
   if ($type == 'sustainer_upgrade') {
     foreach ($tokens as $name => $original) {
       switch ($name) {
@@ -489,10 +512,33 @@ function fundraiser_sustainers_upgrade_form_node_type_form_alter(&$form, &$form_
   }
 }
 
+function fundraiser_sustainers_upgrade_preprocess_webform_confirmation(&$vars) {
+  if ($vars['node']->type == 'sustainers_upgrade_form') {
+
+    $payload = fundraiser_sustainers_upgrade_get_session_payload();
+    if (!empty($payload)) {
+      $status = fundraiser_sustainers_upgrade_check_donation_status($payload);
+      if ($status['status'] == 'valid') {
+        $donation = fundraiser_donation_get_donation($payload['did']);
+        // Do token replacement.
+        $token_set = array(
+          'donation' => $donation,
+        );
+        // This is weird that the node object needs to be altered.
+        $nwc = token_replace($vars['node']->webform['confirmation'], $token_set);
+        $vars['node']->webform['confirmation'] = $nwc;
+        $cm = token_replace($vars['confirmation_message'], $token_set);
+        $vars['confirmation_message'] = $cm;
+      }
+    }
+  }
+
+}
+
 /**
  * Implements hook_process_webform_confirmation().
  */
-function fundraiser_sustainers_process_webform_confirmation(&$page) {
+function fundraiser_sustainers_process_webform_confirmation(&$vars) {
   fundraiser_sustainers_upgrade_clear_session_payload();
 }
 
