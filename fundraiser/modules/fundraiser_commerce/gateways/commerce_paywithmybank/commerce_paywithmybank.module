@@ -586,6 +586,7 @@ function commerce_paywithmybank_create_payment_transaction($api_transaction, $pa
       $updated_donation_status = 'partially_refunded';
       break;
     case PayWithMyBank::TRANSACTION_STATUS_REFUNDED:
+    case PayWithMyBank::TRANSACTION_STATUS_REVERSED:
       $updated_donation_status = 'refunded';
       break;
     case PayWithMyBank::TRANSACTION_STATUS_FAILED:
