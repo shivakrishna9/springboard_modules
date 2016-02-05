@@ -85,6 +85,17 @@ function fundraiser_sustainers_upgrade_insert_components($node) {
     'email' => 1,
   );
 
+  $fields[] = array(
+    'nid' => $node->nid,
+    'form_key' => 'fsu_fail_flag',
+    'pid' => 0,
+    'name' => t('Fundraiser Sustainers Upgrade Fail Flag'),
+    'type' => 'hidden',
+    'value' => '',
+    'weight' => 13,
+    'email' => 1,
+  );
+
   $exclude = array();
   $exclude[] = 'fsu_did';
   $exclude[] = 'fsu_uid';
@@ -92,6 +103,7 @@ function fundraiser_sustainers_upgrade_insert_components($node) {
   $exclude[] = 'fsu_nid';
   $exclude[] = 'fsu_timestamp';
   $exclude[] = 'fsu_url';
+  $exclude[] = 'fsu_fail_flag';
 
   // Add the component to the Webform.
   foreach ($fields as $field) {
@@ -177,6 +189,8 @@ function fundraiser_sustainers_upgrade_locked_fields() {
     'fsu_url',
     'fsu_nid',
     'fsu_timestamp',
+    'fsu_fail_flag',
+
   );
   return $locked_fields;
 }

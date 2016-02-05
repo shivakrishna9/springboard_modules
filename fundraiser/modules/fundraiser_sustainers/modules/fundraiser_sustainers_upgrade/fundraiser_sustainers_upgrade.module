@@ -343,6 +343,12 @@ function fundraiser_sustainers_upgrade_form_validate(&$form, &$form_state) {
           $value = time();
           form_set_value($field, $value, $form_state);
           break;
+        case 'fsu_fail_flag':
+          if ($form_state['values']['status']['status'] != 'valid') {
+            $value = $form_state['values']['status']['status'];
+            form_set_value($field, $value, $form_state);
+          }
+          break;
       }
     }
   }
