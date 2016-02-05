@@ -15,7 +15,7 @@ function _fundraiser_sustainers_upgrade_add_example() {
   $node->field_sustainers_upgrade_name[LANGUAGE_NONE][0]['value'] = "Default Sustainers Upgrade Form";
   $node->field_sustainers_upgrade_fail[LANGUAGE_NONE][0]['value'] = "Donation upgrade can not be completed.";
   $node->webform = array(
-    'confirmation' => '',
+    'confirmation' => 'Hi [sustainer_upgrade:name_or_signout]',
     'confirmation_format' => 'filtered_html',
     'redirect_url' => '<confirmation>',
     'teaser' => 0,

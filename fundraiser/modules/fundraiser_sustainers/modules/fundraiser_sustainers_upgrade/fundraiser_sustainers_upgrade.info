@@ -3,3 +3,4 @@ description = Allows users to quickly upgrade their recurring donation amount.
 core = 7.x
 package = Springboard
 dependencies[] = fundraiser_sustainers
+files[] = includes/fundraiser_sustainers_upgrade.tokens.inc
