@@ -288,10 +288,28 @@ function commerce_paywithmybank_notify() {
       return;
     }
     else {
-      // PayWithMyBank sends two notifications when a payment is completed.
-      // The data we use to create a transaction is the same in both
-      // notifications, so we skip creating a transaction for the second.
-      if (($api_transaction->status != PayWithMyBank::TRANSACTION_STATUS_COMPLETED) || ($order->status != 'payment_received')) {
+      $ignore_notification = FALSE;
+
+      // PayWithMyBank may send multiple notifications for a transaction without
+      // requiring a donation status update in Springboard. These notifications
+      // are ignored here.
+
+      // Completed transactions.
+      if (($api_transaction->status == PayWithMyBank::TRANSACTION_STATUS_COMPLETED) && ($order->status == 'payment_received')) {
+        $ignore_notification = TRUE;
+      }
+
+      // Reversed transactions.
+      if (($api_transaction->status == PayWithMyBank::TRANSACTION_STATUS_REVERSED) && ($order->status == 'refunded')) {
+        $ignore_notification = TRUE;
+      }
+
+      // Refunded transactions.
+      if (($api_transaction->status == PayWithMyBank::TRANSACTION_STATUS_REFUNDED) && ($order->status == 'refunded')) {
+        $ignore_notification = TRUE;
+      }
+
+      if (!$ignore_notification) {
         commerce_paywithmybank_create_payment_transaction($api_transaction, $payment_method, $order);
       }
     }
