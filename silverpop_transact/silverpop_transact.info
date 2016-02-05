@@ -7,3 +7,5 @@ configure = admin/config/services/silverpop/transact
 
 dependencies[] = smtp
 dependencies[] = views
+
+files[] = views/silverpop_transact_handler_silverpop_message_field.inc

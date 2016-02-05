@@ -96,7 +96,7 @@ function silverpop_transact_views_data() {
     'title' => t('Silverpop Message'),
     'help' => t('Message returned from Silverpop on XML submission. XML model only.'),
     'field' => array(
-      'handler' => 'views_handler_field_numeric',
+      'handler' => 'silverpop_transact_handler_silverpop_message_field',
       'click sortable' => TRUE,
 
     ),
