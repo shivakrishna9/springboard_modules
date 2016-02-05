@@ -545,7 +545,7 @@ function commerce_paywithmybank_create_payment_transaction($api_transaction, $pa
     case PayWithMyBank::TRANSACTION_STATUS_REVERSED:
       $transaction->status = COMMERCE_PAYMENT_STATUS_SUCCESS;
 
-      $transaction->amount = commerce_currency_decimal_to_amount($api_transaction->reversed, $api_transaction->currency);
+      $transaction->amount = (commerce_currency_decimal_to_amount($api_transaction->reversed, $api_transaction->currency) * -1);
       break;
 
     case PayWithMyBank::TRANSACTION_STATUS_PARTIALLY_REFUNDED:
