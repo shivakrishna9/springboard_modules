@@ -70,6 +70,9 @@ Drupal.behaviors.fundraiserBehavior = {
                   paymentMethodSelected = paymentMethods[i];
               }
           }
+          if (paymentMethodSelected == undefined) {
+            paymentMethodSelected = paymentMethods[0];
+          }
           // Call our button/image change function with checked payment method on load.
           paymentImages.call(paymentMethodSelected);
 
