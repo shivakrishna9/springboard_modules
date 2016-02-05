@@ -401,7 +401,7 @@ class SalesforceSync {
       return;
     }
     foreach ($batch['sobjects'] as $index => $sobject) {
-      if (isset($sobject->tokens_replaced) && $sobject->tokens_replaced == FALSE) {
+      if (isset($batch['items'][$index]) && isset($sobject->tokens_replaced) && $sobject->tokens_replaced == FALSE) {
         // Fail the item.
         $this->failItem($batch['items'][$index], SALESFORCE_SYNC_ITEM_FAIL_TOKEN);
         // Unset the object, and the item. Reset array indicies in each array
