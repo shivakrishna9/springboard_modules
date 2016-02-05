@@ -9,6 +9,52 @@ define('SILVERPOP_TRANSACT_DEFAULT_CAMPAIGN', variable_get('silverpop_transact_m
 define('SILVERPOP_TRANSACT_SMTP_ADDRESS', 'transact%.silverpop.com');
 
 /**
+ * Implements hook_action_info().
+ */
+function silverpop_transact_action_info() {
+  return array(
+    'silverpop_transact_resubmit_xml' => array(
+      'type' => 'silverpop_transact',
+      'label' => t('Resubmit XML to Silverpop'),
+      'configurable' => FALSE,
+      'pass rows' => TRUE,
+    ),
+  );
+}
+
+/**
+ * Implements hook_entity_info().
+ */
+function silverpop_transact_entity_info() {
+  return array(
+    'silverpop_transact' => array(
+      'label' => t('Silverpop Transact'),
+      'base table' => 'silverpop_transact_log',
+      'entity keys' => array(
+        'id' => 'id',
+      ),
+      'label callback' => 'silverpop_transact_operations_label',
+    ),
+  );
+}
+
+/**
+ * Implements hook_views_bulk_operations_object_info().
+ */
+function silverpop_transact_views_bulk_operations_object_info() {
+  return array(
+    'silverpop_transact' => array(
+  // Should be same as type in action_info hook.
+      'type' => 'silverpop_transact',
+  // Table in the database, database name is handled by type selection in view.
+      'base_table' => 'silverpop_transact_log',
+      'title' => 'id',
+    // 'load' => '',.
+    ),
+  );
+}
+
+/**
  * Implements hook_form_FORM_ID_alter().
  */
 function silverpop_transact_form_webform_email_edit_form_alter(&$form, &$form_state, $form_id) {
@@ -596,4 +642,24 @@ function silverpop_transact_update_log_record($file, $silverpop_message) {
     ))
     ->condition('filename', $file)
     ->execute();
+}
+
+/**
+ * VBO action callback. Re-uploads failed xml files.
+ */
+function silverpop_transact_resubmit_xml($cmt, $context = array()) {
+  // @TODO Stinks to open and close the connection for each upload.
+  $connection = silverpop_transact_connect();
+  if ($connection) {
+    silverpop_transact_submit_xml($connection, $context['silverpop_transact']->filename);
+  }
+  ftp_close($connection);
+}
+
+
+/**
+ * Label callback for "silverpop_transact" entity.
+ */
+function silverpop_transact_operations_label($item) {
+  return $item->filename;
 }
