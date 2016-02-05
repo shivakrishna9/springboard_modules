@@ -81,7 +81,7 @@ function silverpop_transact_views_data() {
     'title' => t('Status'),
     'help' => t('Success/Failure.'),
     'field' => array(
-      'handler' => 'views_handler_field_numeric',
+      'handler' => 'silverpop_transact_handler_status_field',
       'click sortable' => TRUE,
     ),
     'sort' => array(
