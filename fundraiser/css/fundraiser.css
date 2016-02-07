@@ -17,7 +17,8 @@
 }
 
 #fundraiser-ask-amounts-table .form-type-textfield input,
-#fundraiser-recurring-ask-amounts-table .form-type-textfield input {
+#fundraiser-recurring-ask-amounts-table .form-type-textfield input,
+#fundraiser-recurring-donation-types-table .form-type-textfield input {
   margin-bottom: 0;
 }
 
