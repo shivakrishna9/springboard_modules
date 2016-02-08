@@ -159,7 +159,7 @@ function silverpop_transact_mail_alter(&$message) {
       $drupal_tokens = silverpop_transact_parse_personalization(token_replace($settings['additional_tokens'], $token_set));
       $webform_components = silverpop_transact_load_webform_components($message['params']['submission']->data, $message['params']['node']->webform['components']);
       $personalization_tokens = array_merge($drupal_tokens, $webform_components);
-      silverpop_transact_create_mailing($settings['group_id'], $message['to'], $personalization_tokens);
+      silverpop_transact_create_mailing($message['to'], $settings['group_id'], $personalization_tokens);
     }
   }
 }
@@ -266,16 +266,16 @@ function silverpop_transact_cron_log_status_update() {
  * Creates an XML object compliant with the Silverpop Transact API and
  * submits the object to Silverpop utilizing the Silverpop API module.
  *
- * @param string $mailing_id
- *   Defaults to SILVERPOP_TRANSACT_DEFAULT_CAMPAIGN if NULL is passed in.
  * @param string $recipient_email
  *   Email of the recipient.
+ * @param string $mailing_id
+ *   Defaults to SILVERPOP_TRANSACT_DEFAULT_CAMPAIGN if NULL is passed in.
  * @param array $personalization
  *    Associative array of key|value pairs for use in Silverpop templates, eg:
  *   - Personalization key (eg 'first_name').
  *   - Personalization value (eg 'Scott').
  */
-function silverpop_transact_create_mailing($mailing_id, $recipient_email, $personalization = NULL, $save_columns = FALSE, $html_body = '') {
+function silverpop_transact_create_mailing($recipient_email, $mailing_id = NULL, $personalization = NULL, $save_columns = FALSE, $html_body = '') {
   // Start timer for logging purposes.
   $time_pre = microtime(TRUE);
   // If $html_body is populated, add it to the $personalization array.
