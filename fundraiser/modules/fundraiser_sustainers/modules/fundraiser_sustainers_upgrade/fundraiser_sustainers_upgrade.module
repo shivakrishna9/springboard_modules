@@ -477,6 +477,11 @@ function fundraiser_sustainers_upgrade_token_info() {
     'description' => 'Displays the sustainers first name and a cancel link',
   );
 
+  $tokens['upgrade_amount'] = array(
+    'name' => t("Sustainer name and cancel link"),
+    'description' => 'Displays the sustainers first name and a cancel link',
+  );
+
   return array(
     'types' => $types,
     'tokens' => array(
@@ -507,6 +512,11 @@ function fundraiser_sustainers_upgrade_tokens($type, $tokens, $data = array(), $
               $value = check_plain($account->mail);
             }
             $replacements[$original] = $value . " (I'm Not " . l($value, 'sustainer-upgrade/cancel') .  ")";
+          }
+          break;
+        case 'upgrade_amount':
+          if (!empty($_SESSION['springboard_hmac']['upgrade_amount'])) {
+            $replacements[$original] = $_SESSION['springboard_hmac']['upgrade_amount'];
           }
           break;
       }
