@@ -21,7 +21,7 @@ function fundraiser_sustainers_upgrade_insert_components($node) {
 
   $fields[] = array(
     'nid' => $node->nid,
-    'form_key' => 'fsu_did',
+    'form_key' => 'fsu_uid',
     'pid' => 0,
     'name' => t('Fundraiser Sustainers Upgrade UID'),
     'type' => 'hidden',
