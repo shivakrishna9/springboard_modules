@@ -72,7 +72,7 @@ function silverpop_transact_form_webform_email_edit_form_alter(&$form, &$form_st
   }
   elseif (variable_get('silverpop_transact_model') == 'XML') {
     // Hide N/A form elements by setting their type to 'value'. This way, they
-    // still exist and doesn't cause errors when other modules go looking for
+    // still exist and won't cause errors when other modules go looking for
     // them.
     $form['email_wrappers_email_template']['#type'] = 'value';
     $form['email_wrappers_bcc']['#type'] = 'value';
@@ -89,7 +89,7 @@ function silverpop_transact_form_webform_email_edit_form_alter(&$form, &$form_st
     $form['silverpop_transact_group_id'] = array(
       '#type' => 'textfield',
       '#title' => t('Silverpop Group ID'),
-      '#description' => t('Description to go here.'),
+      '#description' => t('Matches the outgoing message with a Silverpop Transactional message group. If left blank, the site-wide default will be used.'),
       '#default_value' => $defaults['group_id'],
       '#weight' => '-51',
     );
@@ -108,6 +108,37 @@ function silverpop_transact_form_webform_email_edit_form_alter(&$form, &$form_st
       '#weight' => '-50',
     );
     $form['#submit'][] = 'silverpop_transact_email_submit_callback';
+  }
+}
+
+
+/**
+ * Implements hook_form_FORM_ID_alter().
+ */
+function silverpop_transact_form_fundraiser_admin_settings_alter(&$form, &$form_state) {
+  // dpm($form);
+  // dpm($form_state);
+  if (variable_get('silverpop_transact_model') == 'XML') {
+    // Hide N/A form elements by setting their type to 'value'. This way, they
+    // still exist and won't cause errors when other modules go looking for
+    // them.
+    $form['fundraiser_sustainers']['fundraiser_cc_expiration_message']['fundraiser_cc_exp_body']['#type'] = 'value';
+    $form['fundraiser_sustainers']['fundraiser_cc_expiration_message']['fundraiser_cc_exp_subject']['#type'] = 'value';
+    //Adds fields
+    $form['fundraiser_sustainers']['fundraiser_cc_expiration_message']['silverpop_transact_cc_expiration_message_group_id'] = array(
+      '#type' => 'textfield',
+      '#title' => t('Silverpop Group ID'),
+      '#description' => t('Matches the outgoing message with a Silverpop Transactional message group. If left blank, the site-wide default will be used.'),
+      '#default_value' => variable_get('silverpop_transact_cc_expiration_message_group_id'),
+    );
+    $form['fundraiser_sustainers']['fundraiser_cc_expiration_message']['silverpop_transact_cc_expiration_message_tokens'] = array(
+      '#type' => 'textarea',
+      '#title' => t(' Silverpop Tokens'),
+      '#description' => t('Enter a list of key|value pairs for additional tokens to be used in Silverpop templates.'),
+      '#default_value' => variable_get('silverpop_transact_cc_expiration_message_tokens'),
+      '#weight' => '49',
+    );
+    $form['fundraiser_sustainers']['fundraiser_cc_expiration_message']['tokens']['#weight'] = '50';
   }
 }
 

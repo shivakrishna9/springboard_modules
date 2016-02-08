@@ -2809,8 +2809,21 @@ function _fundraiser_sustainers_send_cc_notification($master_did, $uid) {
   // Pass tokens as param so hook_mail has access.
   $params['fundraiser_sustainers_token_set'] = $token_set;
   $params['fundraiser_sustainers_body'] = $body;
-  watchdog('fundraiser_sustainers', 'Credit card expiration email sent to @mail', array('@mail' => $user->mail), WATCHDOG_INFO);
-  drupal_mail('fundraiser_sustainers', 'fundraiser_cc_notification', $user->mail, user_preferred_language($user), $params);
+
+  // Use Silverpop Transact if it is configured. Otherwise, proceed with usual
+  // drupal_mail().
+  if (module_exists('silverpop_transact') && variable_get('silverpop_transact_model') == 'XML') {
+    $token_string = variable_get('silverpop_transact_cc_expiration_message_tokens');
+    $personalization_tokens = silverpop_transact_parse_personalization(token_replace($token_string, $token_set));
+    $group_id = variable_get('silverpop_transact_cc_expiration_message_group_id');
+    watchdog('fundraiser_sustainers', 'Group id is @group', array('@group' => $group_id), WATCHDOG_INFO);
+    silverpop_transact_create_mailing($user->mail, $group_id, $personalization_tokens);
+    watchdog('fundraiser_sustainers', 'Credit card expiration email sent to @mail via Silverpop Transact', array('@mail' => $user->mail), WATCHDOG_INFO);
+  }
+  else {
+    watchdog('fundraiser_sustainers', 'Credit card expiration email sent to @mail', array('@mail' => $user->mail), WATCHDOG_INFO);
+    drupal_mail('fundraiser_sustainers', 'fundraiser_cc_notification', $user->mail, user_preferred_language($user), $params);
+  }
 }
 
 /**
