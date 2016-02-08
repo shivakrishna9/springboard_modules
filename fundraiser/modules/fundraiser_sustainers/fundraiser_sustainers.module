@@ -1485,6 +1485,10 @@ function fundraiser_sustainers_fundraiser_donation_form($form, $form_state) {
     return;
   }
 
+  // Does the form have dual ask amounts? This would be the only case for using the
+  // recurring_amount fields.
+  $dual_ask_amounts = !empty($form['#node']->recurring_dual_ask_amounts);
+
   // Set up the values that we're going to require in the States array. If it's a select list or
   // radio buttons, check for 'value'. Otherwise, it's a checkbox, so check for 'checked' == FALSE.
   if ($recurs_monthly_field['#type'] == 'select' || $recurs_monthly_field['#type'] == 'radios') {
@@ -1500,31 +1504,20 @@ function fundraiser_sustainers_fundraiser_donation_form($form, $form_state) {
   $supporting_gateways = array();
   $selector = ($recurs_monthly_field['#type'] == 'select') ? 'select[name*=recurs_monthly]' : ':input[name*=recurs_monthly]';
 
-  // If the user doesn't have a choice between one-time and recurring, don't show irrelevant fields.
-  if ($form['#node']->recurring_setting == 'user_choice') {
-    if (!$form['#node']->recurring_dual_ask_amounts) {
-      $recurring_amounts_field['#prefix'] = '<div style="display:none;">';
-      $recurring_amounts_field['#suffix'] = '</div>';
-      $recurring_other_amount_field['#prefix'] = '<div style="display:none;">';
-      $recurring_other_amount_field['#suffix'] = '</div>';
-      $recurring_amounts_field['#required'] = FALSE;
-    }
-  } else {
+  // Don't show irrelevant fields.
+  if (!$dual_ask_amounts && !empty($recurring_amounts_field)) {
+    // If there is only one set of ask amounts, use the main donation fields, even
+    // for a recurring-only form. (This accommodates legacy sustainer forms.)
+    $recurring_amounts_field['#prefix'] = '<div style="display:none;">';
+    $recurring_amounts_field['#suffix'] = '</div>';
+    $recurring_amounts_field['#required'] = FALSE;
+    $recurring_other_amount_field['#prefix'] = '<div style="display:none;">';
+    $recurring_other_amount_field['#suffix'] = '</div>';
+  }
+  if ($form['#node']->recurring_setting != 'user_choice' && !empty($recurs_monthly_field)) {
+    // One-time-only and recurring-only forms don't need a visible donation-type selection.
     $recurs_monthly_field['#prefix'] = '<div style="display:none;">';
     $recurs_monthly_field['#suffix'] = '</div>';
-    if ($form['#node']->recurring_setting == 'always') {
-      $onetime_amounts_field['#prefix'] = '<div style="display:none;">';
-      $onetime_amounts_field['#suffix'] = '</div>';
-      $onetime_amounts_field['#required'] = FALSE;
-      $onetime_other_amount_field['#prefix'] = '<div style="display:none;">';
-      $onetime_other_amount_field['#suffix'] = '</div>';
-    } else {
-      $recurring_amounts_field['#prefix'] = '<div style="display:none;">';
-      $recurring_amounts_field['#suffix'] = '</div>';
-      $recurring_amounts_field['#required'] = FALSE;
-      $recurring_other_amount_field['#prefix'] = '<div style="display:none;">';
-      $recurring_other_amount_field['#suffix'] = '</div>';
-    }
   }
 
   // Check if each gateway allows recurring payments, and use the States API if it doesn't.
@@ -1569,7 +1562,7 @@ function fundraiser_sustainers_fundraiser_donation_form($form, $form_state) {
     $form = fundraiser_update_form_field('fundraiser_sustainers', $form, 'payment_method', $payment_method_field);
 
     // Toggle one-time and recurring ask amounts.
-    if ($form['#node']->recurring_dual_ask_amounts) {
+    if ($dual_ask_amounts) {
       $onetime_amounts_field['#states']['visible'][$selector] = $onetime_values;
       $onetime_amounts_field['#states']['required'][$selector] = $onetime_values;
       $onetime_amounts_field['#required'] = FALSE;
