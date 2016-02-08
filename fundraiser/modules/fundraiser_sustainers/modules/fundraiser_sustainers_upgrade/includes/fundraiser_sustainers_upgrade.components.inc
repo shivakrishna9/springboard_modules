@@ -96,6 +96,18 @@ function fundraiser_sustainers_upgrade_insert_components($node) {
     'email' => 1,
   );
 
+  $fields[] = array(
+    'nid' => $node->nid,
+    'form_key' => 'fsu_confirmation_email',
+    'pid' => 0,
+    'name' => t('Fundraiser Sustainers Confirmatin Email Address'),
+    'type' => 'hidden',
+    'value' => '',
+    'weight' => 13,
+    'email' => 1,
+  );
+
+
   $exclude = array();
   $exclude[] = 'fsu_did';
   $exclude[] = 'fsu_uid';
@@ -104,13 +116,47 @@ function fundraiser_sustainers_upgrade_insert_components($node) {
   $exclude[] = 'fsu_timestamp';
   $exclude[] = 'fsu_url';
   $exclude[] = 'fsu_fail_flag';
+  $exclude[] = 'fsu_confirmation_email';
+
 
   // Add the component to the Webform.
   foreach ($fields as $field) {
     // Don't insert fields if cloning.
     if (!isset($node->map) || (isset($node->map) && !in_array($field['form_key'], $node->map) && !in_array($field['form_key'], $exclude))) {
       $cid = webform_component_insert($field);
+      if ($field['form_key'] == 'fsu_confirmation_email') {
+        $exists = db_query("SELECT nid FROM {webform_emails} WHERE nid = :nid AND eid = 1", array(':nid' => $node->nid))->fetchField();
+        if (empty($exists)) {
+          $record = array(
+            'nid' => $node->nid,
+            'eid' => 1,
+            'email' => (string) $cid,
+            'subject' => 'default',
+            'from_name' => 'default',
+            'from_address' => 'default',
+            'excluded_components' => '',
+            'template' => 'default',
+          );
+          drupal_write_record('webform_emails', $record);
+        }
+      }
     }
+  }
+
+  $email_nid = variable_get('fundraiser_sustainers_upgrade_default_email_wrapper', NULL);
+
+  if ($email_nid != NULL) {
+    $settings = array(
+      'nid' => $node->nid,
+      'eid' => 1,
+      'tid' => $email_nid,
+      'bcc_email' => '',
+      'html_message' => 'xxx',
+      'html_message_format' => 'filtered_html',
+      'text_message' => 'xxx',
+      'extra' => serialize(array()),
+    );
+    email_wrappers_save_settings($node->nid, 1, $settings);
   }
 }
 

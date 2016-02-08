@@ -38,6 +38,8 @@ function _fundraiser_sustainers_upgrade_add_example() {
     'components' => array(),
   );
   $email_nid = fundraiser_sustainers_upgrade_email_wrapper_add();
+  variable_set('fundraiser_sustainers_upgrade_default_email_wrapper', $email_nid);
+
   if ($email_nid != NULL) {
     $node->webform['emails'][1] = array(
       'email' => '',
@@ -61,7 +63,7 @@ function _fundraiser_sustainers_upgrade_add_example() {
   _webform_confirmations_update($confirmation);
   // Save email wrapper details.
   foreach ($node->webform['components'] as $component) {
-    if ($component['form_key'] == 'mail') {
+    if ($component['form_key'] == 'fsu_confirmation_email') {
       $cid = $component['cid'];
       $node->webform['emails'][1]['email'] = $cid;
     }
@@ -69,19 +71,6 @@ function _fundraiser_sustainers_upgrade_add_example() {
   // One last save.
   node_save($node);
 
-  if ($email_nid != NULL) {
-    $settings = array(
-      'nid' => $node->nid,
-      'eid' => 1,
-      'tid' => $email_nid,
-      'bcc_email' => '',
-      'html_message' => 'xxx',
-      'html_message_format' => 'filtered_html',
-      'text_message' => 'xxx',
-      'extra' => serialize(array()),
-    );
-    email_wrappers_save_settings($node->nid, 1, $settings);
-  }
   drupal_set_message(t('A default sustainers upgrade form has been created.'));
 }
 

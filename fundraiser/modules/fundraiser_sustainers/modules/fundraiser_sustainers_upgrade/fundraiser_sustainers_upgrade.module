@@ -356,6 +356,13 @@ function fundraiser_sustainers_upgrade_form_validate(&$form, &$form_state) {
             form_set_value($field, $value, $form_state);
           }
           break;
+        case 'fsu_confirmation_email':
+          $uid = !empty($payload['uid']) ? $payload['uid'] : '';
+          if (!empty($uid)) {
+            $account = user_load($uid);
+            form_set_value($field, $account->mail, $form_state);
+          }
+          break;
       }
     }
   }
@@ -570,6 +577,8 @@ function fundraiser_sustainers_upgrade_preprocess_webform_confirmation(&$vars) {
 function fundraiser_sustainers_process_webform_confirmation(&$vars) {
   fundraiser_sustainers_upgrade_clear_session_payload();
 }
+
+
 
 /**
  * Implements hook_node_insert().
