@@ -8,9 +8,6 @@
 /**
  * Insert new components on node/add.
  *
- * Also re-insert the state and zip fields that were unset
- * in webform_user_profile_fields_alter() and re-map them.
- *
  * Called from fundraiser_sustainers_upgrade_node_insert();
  *
  * @param $node
@@ -18,7 +15,7 @@
 function fundraiser_sustainers_upgrade_insert_components($node) {
   module_load_include('inc', 'webform', 'includes/webform.components');
 
-
+  // Most of these fields are required for sending data to Salesforce.
   $fields[] = array(
     'nid' => $node->nid,
     'form_key' => 'fsu_uid',
@@ -96,6 +93,7 @@ function fundraiser_sustainers_upgrade_insert_components($node) {
     'email' => 1,
   );
 
+  // The email field is required so that confirmaiton emails have a target.
   $fields[] = array(
     'nid' => $node->nid,
     'form_key' => 'fsu_confirmation_email',
@@ -107,23 +105,14 @@ function fundraiser_sustainers_upgrade_insert_components($node) {
     'email' => 1,
   );
 
-
-  $exclude = array();
-  $exclude[] = 'fsu_did';
-  $exclude[] = 'fsu_uid';
-  $exclude[] = 'fsu_amount';
-  $exclude[] = 'fsu_nid';
-  $exclude[] = 'fsu_timestamp';
-  $exclude[] = 'fsu_url';
-  $exclude[] = 'fsu_fail_flag';
-  $exclude[] = 'fsu_confirmation_email';
-
-
-  // Add the component to the Webform.
+  // Add the components to the Webform.
   foreach ($fields as $field) {
+
     // Don't insert fields if cloning.
-    if (!isset($node->map) || (isset($node->map) && !in_array($field['form_key'], $node->map) && !in_array($field['form_key'], $exclude))) {
+    if (!isset($node->clone_from_original_nid)) {
       $cid = webform_component_insert($field);
+
+      // Set the email field as the webform_emails default.
       if ($field['form_key'] == 'fsu_confirmation_email') {
         $exists = db_query("SELECT nid FROM {webform_emails} WHERE nid = :nid AND eid = 1", array(':nid' => $node->nid))->fetchField();
         if (empty($exists)) {
@@ -143,20 +132,22 @@ function fundraiser_sustainers_upgrade_insert_components($node) {
     }
   }
 
-  $email_nid = variable_get('fundraiser_sustainers_upgrade_default_email_wrapper', NULL);
-
-  if ($email_nid != NULL) {
-    $settings = array(
-      'nid' => $node->nid,
-      'eid' => 1,
-      'tid' => $email_nid,
-      'bcc_email' => '',
-      'html_message' => 'Hi [sustainer_upgrade:name_or_signout]. Thank you for upgrading your sustaining donation by [sustainer_upgrade:upgrade_amount].',
-      'html_message_format' => 'filtered_html',
-      'text_message' => 'Hi [sustainer_upgrade:name_or_signout]. Thank you for upgrading your sustaining donation by [sustainer_upgrade:upgrade_amount].',
-      'extra' => serialize(array()),
-    );
-    email_wrappers_save_settings($node->nid, 1, $settings);
+  if(!isset($node->clone_from_original_nid)) {
+    // Set up the default Email Wrapper for this node.
+    $email_nid = variable_get('fundraiser_sustainers_upgrade_default_email_wrapper', NULL);
+    if ($email_nid != NULL) {
+      $settings = array(
+        'nid' => $node->nid,
+        'eid' => 1,
+        'tid' => $email_nid,
+        'bcc_email' => '',
+        'html_message' => 'Hi [sustainer_upgrade:name_or_signout]. Thank you for upgrading your sustaining donation by [sustainer_upgrade:upgrade_amount].',
+        'html_message_format' => 'filtered_html',
+        'text_message' => 'Hi [sustainer_upgrade:name_or_signout]. Thank you for upgrading your sustaining donation by [sustainer_upgrade:upgrade_amount].',
+        'extra' => serialize(array()),
+      );
+      email_wrappers_save_settings($node->nid, 1, $settings);
+    }
   }
 }
 
@@ -225,6 +216,8 @@ function fundraiser_sustainers_upgrade_component_overview_lock(&$form) {
 }
 
 /**
+ * Locked fields helper.
+ *
  * @return array
  */
 function fundraiser_sustainers_upgrade_locked_fields() {
@@ -236,7 +229,8 @@ function fundraiser_sustainers_upgrade_locked_fields() {
     'fsu_nid',
     'fsu_timestamp',
     'fsu_fail_flag',
-
+    'fsu_fail_flag',
+    'fsu_confirmation_email',
   );
   return $locked_fields;
 }
