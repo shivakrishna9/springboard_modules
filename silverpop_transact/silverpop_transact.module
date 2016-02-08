@@ -103,7 +103,7 @@ function silverpop_transact_form_webform_email_edit_form_alter(&$form, &$form_st
     $form['silverpop_transact_additional_tokens'] = array(
       '#type' => 'textarea',
       '#title' => t('Additional Silverpop Tokens'),
-      '#description' => t('Enter a list of key|value pairs for additional tokens to be used in Silverpop templates.'),
+      '#description' => t('All webform values are included automatically. Enter a list of key|value pairs for additional tokens to be used in Silverpop templates.'),
       '#default_value' => $defaults['additional_tokens'],
       '#weight' => '-50',
     );

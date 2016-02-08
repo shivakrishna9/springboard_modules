@@ -21,6 +21,7 @@ class silverpop_transact_handler_status_field extends views_handler_field {
    *
    */
   function render($values) {
+    $status_text = '';
     $value = $this->get_value($values);
     // $value = an int at the moment.
     switch ($value) {
