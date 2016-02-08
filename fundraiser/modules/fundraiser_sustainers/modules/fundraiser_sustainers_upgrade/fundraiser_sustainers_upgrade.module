@@ -317,7 +317,7 @@ function fundraiser_sustainers_upgrade_form_submit($form, $form_state) {
     $next_donation = fundraiser_donation_get_donation($form_state['values']['recurring'][0]->did);
     $fee_currency_code = $next_donation->donation['currency']['code'];
     $formatted_amount = commerce_currency_format($payload['amount'], $fee_currency_code, NULL, FALSE);
-    _fundraiser_sustainers_donation_amount_form_update_donations($donation->recurring->master_did, $payload['amount'], $formatted_amount);
+    _fundraiser_sustainers_donation_amount_form_update_donations($donation->recurring->master_did, $payload['amount'], $formatted_amount, 'Sustainer Upgrade Module');
   }
 }
 
