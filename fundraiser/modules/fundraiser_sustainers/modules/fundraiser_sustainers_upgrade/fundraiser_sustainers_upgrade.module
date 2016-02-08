@@ -518,7 +518,7 @@ function fundraiser_sustainers_upgrade_tokens($type, $tokens, $data = array(), $
             else {
               $value = check_plain($account->mail);
             }
-            $replacements[$original] = $value . " (I'm Not " . l($value, 'sustainer-upgrade/cancel') .  ")";
+            $replacements[$original] = $value . " (I'm Not " . l($value, 'sustainer-upgrade/cancel', array('absolute' => TRUE)) .  ")";
           }
           break;
         case 'upgrade_amount':

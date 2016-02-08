@@ -100,7 +100,7 @@ function fundraiser_sustainers_upgrade_insert_components($node) {
     'nid' => $node->nid,
     'form_key' => 'fsu_confirmation_email',
     'pid' => 0,
-    'name' => t('Fundraiser Sustainers Confirmatin Email Address'),
+    'name' => t('Fundraiser Sustainers Confirmation Email Address'),
     'type' => 'hidden',
     'value' => '',
     'weight' => 13,
@@ -151,9 +151,9 @@ function fundraiser_sustainers_upgrade_insert_components($node) {
       'eid' => 1,
       'tid' => $email_nid,
       'bcc_email' => '',
-      'html_message' => 'xxx',
+      'html_message' => 'Hi [sustainer_upgrade:name_or_signout]. Thank you for upgrading your sustaining donation by [sustainer_upgrade:upgrade_amount].',
       'html_message_format' => 'filtered_html',
-      'text_message' => 'xxx',
+      'text_message' => 'Hi [sustainer_upgrade:name_or_signout]. Thank you for upgrading your sustaining donation by [sustainer_upgrade:upgrade_amount].',
       'extra' => serialize(array()),
     );
     email_wrappers_save_settings($node->nid, 1, $settings);

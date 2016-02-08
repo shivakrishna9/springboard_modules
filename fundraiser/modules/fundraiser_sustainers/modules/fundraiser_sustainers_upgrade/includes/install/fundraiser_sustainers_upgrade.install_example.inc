@@ -99,9 +99,9 @@ function fundraiser_sustainers_upgrade_email_wrapper_add() {
     'safe_value' => 'example-to@example.com',
   );
   $node->email_wrapper_subject[LANGUAGE_NONE][0] = array(
-    'value' => 'xxx',
+    'value' => 'Your sustaining donation upgrade',
     'format' => '',
-    'safe_value' => 'xxx',
+    'safe_value' => 'Your sustaining donation upgrade',
   );
   $node->email_wrapper_html_template[LANGUAGE_NONE][0] = array(
     'value' => 'Thank you' . "\n" .
