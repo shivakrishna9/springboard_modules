@@ -283,7 +283,7 @@ function silverpop_transact_cron_log_status_update() {
           // Look for status value.
           $silverpop_status = silverpop_transact_get_xml_status('private://failed-silverpop-data/' . $file);
           // Update log record.
-          silverpop_transact_update_log_record($log_record['filename'], $silverpop_status);
+          silverpop_transact_update_log_record($log_record['filename'], array('silverpop_message' => $silverpop_status));
         }
       }
     }
@@ -326,16 +326,15 @@ function silverpop_transact_create_mailing($recipient_email, $mailing_id = NULL,
     'recipient_email' => $recipient_email,
     'personalization' => $personalization,
   ));
+  $file = file_unmanaged_save_data($data, "public://", FILE_EXISTS_RENAME);
   // Connect to Silverpop Transact.
   $connection = silverpop_transact_connect();
   if ($connection) {
-    $file = file_unmanaged_save_data($data, "public://", FILE_EXISTS_RENAME);
     silverpop_transact_submit_xml($connection, $file);
     $status = 1;
     ftp_close($connection);
   }
   else {
-    $file = silverpop_transact_save_transact_data($data);
     watchdog('silverpop_transact', 'Could not connect to Silverpop. Transact data saved at %file', array('%file' => $file));
     $status = 0;
   }
@@ -457,20 +456,6 @@ function silverpop_transact_load_email_settings($nid, $eid = FALSE) {
 }
 
 /**
- * Saves the Silverpop Transact data permanently in the file system.
- *
- * @param string $data
- *   Data to be saved.
- *
- * @return string
- *   A string with the path of the resulting file, or FALSE on error.
- */
-function silverpop_transact_save_transact_data($data) {
-  $file = file_unmanaged_save_data($data, "private://failed-silverpop-data/" . date('d-m-Y-GHisu'), FILE_EXISTS_RENAME);
-  return $file;
-}
-
-/**
  * Opens an FTP connection to Silverpop.
  *
  * If no arguments are supplied, the values stored in the database are used.
@@ -530,7 +515,7 @@ function silverpop_transact_submit_xml($connection, $file) {
     return TRUE;
   }
   else {
-    $file = silverpop_transact_save_transact_data($data);
+
     watchdog('silverpop_transact', 'Error when attempting to submit to Silverpop Trasact. Data saved at %file', array('%file' => $file), WATCHDOG_ERROR);
     return FALSE;
   }
@@ -665,12 +650,15 @@ function silverpop_transact_get_xml_status($file) {
 
 /**
  * Updates silverpop_transact_log table records with silverpop_message.
+ *
+ * @param string $file
+ *   Filename of the log record to update.
+ * @param array $fields
+ *   Associative array of fields to update.
  */
-function silverpop_transact_update_log_record($file, $silverpop_message) {
+function silverpop_transact_update_log_record($file, $fields) {
   $num_updated = db_update('silverpop_transact_log')
-    ->fields(array(
-      'silverpop_message' => $silverpop_message,
-    ))
+    ->fields($fields)
     ->condition('filename', $file)
     ->execute();
 }
@@ -679,14 +667,18 @@ function silverpop_transact_update_log_record($file, $silverpop_message) {
  * VBO action callback. Re-uploads failed xml files.
  */
 function silverpop_transact_resubmit_xml($cmt, $context = array()) {
+  $file = $context['silverpop_transact']->filename;
   // @TODO Stinks to open and close the connection for each upload.
   $connection = silverpop_transact_connect();
   if ($connection) {
-    silverpop_transact_submit_xml($connection, $context['silverpop_transact']->filename);
+    if(silverpop_transact_submit_xml($connection, $file)) {
+      silverpop_transact_update_log_record($file, array('status' => 1, 'last_retry' => REQUEST_TIME));
+      ftp_close($connection);
+      return TRUE;
+    }
   }
   ftp_close($connection);
 }
-
 
 /**
  * Label callback for "silverpop_transact" entity.
