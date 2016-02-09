@@ -27,6 +27,26 @@ function fundraiser_sustainers_upgrade_init() {
 }
 
 /**
+ * Implements hook_upgrade_hmac_action_valid();
+ */
+function fundraiser_sustainers_upgrade_hmac_action_valid($action) {
+  if ($action['action'] == 'su') {
+    if (isset($action[2]) && is_numeric($action[2])) {
+      $node = node_load($action[2]);
+      if (!empty($node->type) && $node->type == 'sustainers_upgrade_form') {
+        drupal_goto('node/' . $node->nid);
+      }
+      else {
+        $nid = variable_get('fundraiser_sustainers_upgrade_default_form', '');
+        if (!empty($nid)) {
+          drupal_goto('node/' . $nid);
+        }
+      }
+    }
+  }
+}
+
+/**
  * Implements hook_module_implements_alter().
  *
  * By default, Springboard Admin only allows webform user forms to be
@@ -515,37 +535,6 @@ function fundraiser_sustainers_upgrade_clear_session_payload() {
   unset($_SESSION['springboard_hmac']['upgrade_amount']);
   unset($_SESSION['springboard_hmac']['timestamp']);
 }
-
-/**
- * Implements hook_page_delivery_callback_alter().
- *
- * Redirect to a default upgrade form if node ID is missing.
- */
-function fundraiser_sustainers_upgrade_page_delivery_callback_alter(&$callback) {
-  if ($callback == 'drupal_deliver_html_page') {
-    $callback = 'fundraiser_sustainers_upgrade_deliver_html_page';
-  }
-}
-
-/**
- * Page delivery callback for upgrade form 404's.
- *
- * @param $page_callback_result
- */
-function fundraiser_sustainers_upgrade_deliver_html_page($page_callback_result) {
-  $upgrade = FALSE;
-  if (!empty($_GET['upgrade_redirect'])) {
-    $upgrade = TRUE;
-  }
-  if ($page_callback_result == MENU_NOT_FOUND && $upgrade) {
-    $nid = variable_get('fundraiser_sustainers_upgrade_default_form', '');
-    drupal_goto('node/' . $nid);
-  }
-  else {
-    drupal_deliver_html_page($page_callback_result);
-  }
-}
-
 
 /**
  * Implements hook_token_info().
