@@ -128,6 +128,12 @@ function silverpop_transact_schema() {
         'type' => 'float',
         'not null' => FALSE,
       ),
+      'data' => array(
+        'description' => 'Serialized personalization data. (only applicable for XML model)',
+        'type' => 'text',
+        'not null' => FALSE,
+        'serialize' => TRUE,
+      ),
     ),
     'primary key' => array('id'),
   );
@@ -229,6 +235,12 @@ function silverpop_transact_update_7001() {
         'description' => 'Time in seconds it took to create and submit XML. (only applicable for XML model)',
         'type' => 'float',
         'not null' => FALSE,
+      ),
+      'data' => array(
+        'description' => 'Serialized personalization data. (only applicable for XML model)',
+        'type' => 'text',
+        'not null' => FALSE,
+        'serialize' => TRUE,
       ),
     ),
     'primary key' => array('id'),

@@ -124,7 +124,7 @@ function silverpop_transact_form_fundraiser_admin_settings_alter(&$form, &$form_
     // them.
     $form['fundraiser_sustainers']['fundraiser_cc_expiration_message']['fundraiser_cc_exp_body']['#type'] = 'value';
     $form['fundraiser_sustainers']['fundraiser_cc_expiration_message']['fundraiser_cc_exp_subject']['#type'] = 'value';
-    //Adds fields
+    // Adds fields.
     $form['fundraiser_sustainers']['fundraiser_cc_expiration_message']['silverpop_transact_cc_expiration_message_group_id'] = array(
       '#type' => 'textfield',
       '#title' => t('Silverpop Group ID'),
@@ -133,7 +133,7 @@ function silverpop_transact_form_fundraiser_admin_settings_alter(&$form, &$form_
     );
     $form['fundraiser_sustainers']['fundraiser_cc_expiration_message']['silverpop_transact_cc_expiration_message_tokens'] = array(
       '#type' => 'textarea',
-      '#title' => t(' Silverpop Tokens'),
+      '#title' => t('Silverpop Tokens'),
       '#description' => t('Enter a list of key|value pairs for additional tokens to be used in Silverpop templates.'),
       '#default_value' => variable_get('silverpop_transact_cc_expiration_message_tokens'),
       '#weight' => '49',
@@ -170,7 +170,12 @@ function silverpop_transact_mail_alter(&$message) {
         $settings['smtp_xheader_value'] = variable_get('silverpop_transact_xheader_value');
       }
       $message['headers']['X-SP-Transact-Id'] = $settings['smtp_xheader_value'];
-      silverpop_transact_log_mailing('SMTP', 'silverpop_transact');
+      $log_record = array(
+        'model' => 'SMTP',
+        'origin' => 'silverpop_transact',
+        'created' => REQUEST_TIME,
+      );
+      drupal_write_record('silverpop_transact_log', $log_record);
     }
     elseif (variable_get('silverpop_transact_model') == 'XML' && $message['id'] == 'webform_submission') {
       // Seems like there should be a better way to do this. We take a string
@@ -263,7 +268,7 @@ function silverpop_transact_cron_log_status_update() {
     // Get rid of file extension for easier matching with log records.
     $status_files = str_replace('.status', '', $status_files);
     // Get list of log records where status is null.
-    $result = db_query("SELECT filename, silverpop_message, model FROM {silverpop_transact_log} WHERE silverpop_message IS NULL AND model = 'XML'");
+    $result = db_query("SELECT id, filename, silverpop_message, model FROM {silverpop_transact_log} WHERE silverpop_message IS NULL AND model = 'XML'");
     if ($result) {
       // Foreach null status record that has an existing status file, get the
       // status file, check the status message, and update the corresponding
@@ -283,7 +288,8 @@ function silverpop_transact_cron_log_status_update() {
           // Look for status value.
           $silverpop_status = silverpop_transact_get_xml_status('private://failed-silverpop-data/' . $file);
           // Update log record.
-          silverpop_transact_update_log_record($log_record['filename'], array('silverpop_message' => $silverpop_status));
+          $data = array('silverpop_message' => $silverpop_status, 'id' => $log_record['id']);
+          drupal_write_record('silverpop_transact_log', $data, 'id');
         }
       }
     }
@@ -320,13 +326,14 @@ function silverpop_transact_create_mailing($recipient_email, $mailing_id = NULL,
   }
 
   // Render and save the XML data to be sent to Silverpop.
-  $data = theme('silverpop_transact_mail', array(
+  $data = array(
     'mailing_id' => $mailing_id,
     'save_columns' => $save_columns,
     'recipient_email' => $recipient_email,
     'personalization' => $personalization,
-  ));
-  $file = file_unmanaged_save_data($data, "public://", FILE_EXISTS_RENAME);
+  );
+  $xml = theme('silverpop_transact_mail', $data);
+  $file = file_unmanaged_save_data($xml, "public://", FILE_EXISTS_RENAME);
   // Connect to Silverpop Transact.
   $connection = silverpop_transact_connect();
   if ($connection) {
@@ -341,7 +348,16 @@ function silverpop_transact_create_mailing($recipient_email, $mailing_id = NULL,
   // Stop timer for logging purposes.
   $time_post = microtime(TRUE);
   $exec_time = $time_post - $time_pre;
-  silverpop_transact_log_mailing('XML', 'silverpop_transact', $status, NULL, $file, $exec_time);
+  // Log record.
+  $log_record = array(
+    'filename' => $file,
+    'model' => 'XML',
+    'origin' => 'silverpop_transact',
+    'created' => REQUEST_TIME,
+    'submission_duration' => $exec_time,
+    'data' => $data,
+  );
+  drupal_write_record('silverpop_transact_log', $log_record);
 }
 
 /**
@@ -581,36 +597,6 @@ function silverpop_transact_set_password($password = '') {
 }
 
 /**
- * Logs record of a mailing sent to Silverpop.
- *
- * @param string $model
- *   Silverpop Transact API model (XML or SMTP).
- * @param string $origin
- *   Origin of the mailing (module or Rule identification).
- * @param int $status
- *   (Optional) Message upload success/Failure (only applicable for XML mode).
- * @param int $silverpop_message
- *   (Optional) Status returned by Silverpop (only applicable for XML mode).
- * @param string $filename
- *   (Optional) Filename of the generated XML (only applicable for XML mode).
- * @param float $submission_duration
- *   (Optional) Time taken to submit XML via FTP (only applicable for XML mode).
- */
-function silverpop_transact_log_mailing($model, $origin, $status = NULL, $silverpop_message = NULL, $filename = NULL, $submission_duration = NULL) {
-  Database::getConnection('default', 'default')->insert('silverpop_transact_log')
-    ->fields(array(
-      'model' => $model,
-      'origin' => $origin,
-      'status' => $status,
-      'silverpop_message' => $silverpop_message,
-      'filename' => $filename,
-      'created' => REQUEST_TIME,
-      'submission_duration' => $submission_duration,
-    ))
-    ->execute();
-}
-
-/**
  * Adds form_key labels to submitted form values.
  *
  * @param array $submission_data
@@ -649,30 +635,18 @@ function silverpop_transact_get_xml_status($file) {
 }
 
 /**
- * Updates silverpop_transact_log table records with silverpop_message.
- *
- * @param string $file
- *   Filename of the log record to update.
- * @param array $fields
- *   Associative array of fields to update.
- */
-function silverpop_transact_update_log_record($file, $fields) {
-  $num_updated = db_update('silverpop_transact_log')
-    ->fields($fields)
-    ->condition('filename', $file)
-    ->execute();
-}
-
-/**
  * VBO action callback. Re-uploads failed xml files.
  */
 function silverpop_transact_resubmit_xml($cmt, $context = array()) {
   $file = $context['silverpop_transact']->filename;
+  $id = $context['silverpop_transact']->id;
+
   // @TODO Stinks to open and close the connection for each upload.
   $connection = silverpop_transact_connect();
   if ($connection) {
-    if(silverpop_transact_submit_xml($connection, $file)) {
-      silverpop_transact_update_log_record($file, array('status' => 1, 'last_retry' => REQUEST_TIME));
+    if (silverpop_transact_submit_xml($connection, $file)) {
+      $data = array('status' => 1, 'last_retry' => REQUEST_TIME, 'id' => $id);
+      drupal_write_record('silverpop_transact_log', $data, 'id');
       ftp_close($connection);
       return TRUE;
     }
@@ -684,5 +658,5 @@ function silverpop_transact_resubmit_xml($cmt, $context = array()) {
  * Label callback for "silverpop_transact" entity.
  */
 function silverpop_transact_operations_label($item) {
-  return $item->filename;
+  return 'Record #' . $item->id;
 }
