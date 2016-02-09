@@ -2374,7 +2374,7 @@ function _fundraiser_refund_form($form, &$form_state, $did) {
         '#title' => t('Refund options'),
         '#type' => 'radios',
         '#options' => array(
-          'full' => t('Full Refund ( %amount )', array('%amount' => commerce_currency_format($able_to_refund, $donation->currency))),
+          'full' => t('Full Refund ( %amount )', array('%amount' => commerce_currency_format(commerce_currency_decimal_to_amount($able_to_refund, $donation->currency), $donation->currency))),
           'partial' => t('Partial Refund'),
         ),
         '#default_value' => isset($form_state['input']['refund_type']) ? $form_state['input']['refund_type'] : 'full',
@@ -2385,11 +2385,13 @@ function _fundraiser_refund_form($form, &$form_state, $did) {
         '#size' => 40,
         '#maxlength' => 255,
         '#states' => array(
+          'required' => array(
+            ':input[name="refund_type"]' => array('value' => 'partial'),
+          ),
           'visible' => array(
             ':input[name="refund_type"]' => array('value' => 'partial'),
           ),
         ),
-        '#required' => TRUE,
       );
       $form['refund_options']['refund_notes'] = array(
         '#type' => 'textarea',
@@ -2443,9 +2445,9 @@ function _fundraiser_refund_form_validate($form, &$form_state) {
 
   // A full refund uses the $able_to_refund amount, a partial refund needs to validate the entered amount.
   if ($refund_type != 'full') {
-    // Convert the entered amount to a whole number.
+    // Convert the entered amount and refund amount to whole numbers.
     $amount = commerce_currency_decimal_to_amount(_fundraiser_amount_value_sanitize($form_state['values']['amount']), $donation->currency);
-
+    $able_to_refund = commerce_currency_decimal_to_amount(_fundraiser_amount_value_sanitize($able_to_refund), $donation->currency);
     if ($amount <= 0) {
       form_set_error('amount', t('Enter a positive numerical refund amount.'));
     }
