@@ -27,12 +27,12 @@ function fundraiser_sustainers_upgrade_init() {
 }
 
 /**
- * Implements hook_upgrade_hmac_action_valid();
+ * Implements hook_springboard_hmac_success();
  */
-function fundraiser_sustainers_upgrade_hmac_action_valid($action) {
-  if ($action['action'] == 'su') {
-    if (isset($action[2]) && is_numeric($action[2])) {
-      $node = node_load($action[2]);
+function fundraiser_sustainers_upgrade_springboard_hmac_success($payload) {
+  if ($payload['action'] == 'su') {
+    if (isset($payload[2]) && is_numeric($payload[2])) {
+      $node = node_load($payload[2]);
       if (!empty($node->type) && $node->type == 'sustainers_upgrade_form') {
         drupal_goto('node/' . $node->nid);
       }
@@ -519,10 +519,11 @@ function fundraiser_sustainers_upgrade_get_status_message($recurring, $donation,
  */
 function fundraiser_sustainers_upgrade_get_session_payload() {
   $payload = array();
-  $payload['uid'] =  $_SESSION['springboard_hmac']['uid'] = 1;
-  $payload['did'] = $_SESSION['springboard_hmac']['did'] = 1;
-  $payload['amount'] = $_SESSION['springboard_hmac']['upgrade_amount'] = 570;
   $payload['timestamp'] = $_SESSION['springboard_hmac']['timestamp'] = time();
+  $payload['uid'] =  $_SESSION['springboard_hmac']['uid'] = 1;
+  $payload['did'] = $_SESSION['springboard_hmac']['0'] = 1;
+  $payload['amount'] = $_SESSION['springboard_hmac']['1'] = 570;
+  $payload['nid'] = $_SESSION['springboard_hmac']['2'] = 2;
   return $payload;
 }
 
@@ -530,10 +531,7 @@ function fundraiser_sustainers_upgrade_get_session_payload() {
  * Clear the session.
  */
 function fundraiser_sustainers_upgrade_clear_session_payload() {
-  unset($_SESSION['springboard_hmac']['uid']);
-  unset($_SESSION['springboard_hmac']['did']);
-  unset($_SESSION['springboard_hmac']['upgrade_amount']);
-  unset($_SESSION['springboard_hmac']['timestamp']);
+  unset($_SESSION['springboard_hmac']);
 }
 
 /**
