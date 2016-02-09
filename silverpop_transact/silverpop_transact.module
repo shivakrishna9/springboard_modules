@@ -116,8 +116,6 @@ function silverpop_transact_form_webform_email_edit_form_alter(&$form, &$form_st
  * Implements hook_form_FORM_ID_alter().
  */
 function silverpop_transact_form_fundraiser_admin_settings_alter(&$form, &$form_state) {
-  // dpm($form);
-  // dpm($form_state);
   if (variable_get('silverpop_transact_model') == 'XML') {
     // Hide N/A form elements by setting their type to 'value'. This way, they
     // still exist and won't cause errors when other modules go looking for
@@ -312,19 +310,13 @@ function silverpop_transact_cron_log_status_update() {
  *   - Personalization key (eg 'first_name').
  *   - Personalization value (eg 'Scott').
  */
-function silverpop_transact_create_mailing($recipient_email, $mailing_id = NULL, $personalization = NULL, $save_columns = FALSE, $html_body = '') {
+function silverpop_transact_create_mailing($recipient_email, $mailing_id = NULL, $personalization = NULL, $save_columns = FALSE) {
   // Start timer for logging purposes.
   $time_pre = microtime(TRUE);
-  // If $html_body is populated, add it to the $personalization array.
-  if ($html_body != '') {
-    $personalization['INBOUND_HTML'] = "<![CDATA[" . $html_body . "]]>";
-  }
-
   // If mailing ID is not provided, use the default.
   if ($mailing_id == NULL) {
     $mailing_id = SILVERPOP_TRANSACT_DEFAULT_CAMPAIGN;
   }
-
   // Render and save the XML data to be sent to Silverpop.
   $data = array(
     'mailing_id' => $mailing_id,
