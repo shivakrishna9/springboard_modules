@@ -10,9 +10,9 @@
  */
 function springboard_hmac_menu() {
   $items['hmac/%/%'] = array(
-    'title' => 'HMAC verify',
+    'title' => 'Authorize',
     'description' => 'Endpoint to verify hmac encoded payloads',
-    'page callback' => 'springboard_hmac_verify',
+    'page callback' => 'springboard_hmac_verify_page',
     'page arguments' => array(1,2),
     'access callback' => TRUE,
     'type' => MENU_CALLBACK,
@@ -22,8 +22,29 @@ function springboard_hmac_menu() {
 }
 
 /**
+ * Page callback.
+ *
+ * If there is a problem, show an error message to the user.
+ * If not, it is expected that another module has implemented
+ * hook_springboard_hmac_success(), and calls drupal_goto
+ * or some other redirect method, and this page will not be seen.
+ *
+ * @param $payload
+ * @param $hmac
+ * @return null|string
+ */
+function springboard_hmac_verify_page($payload, $hmac) {
+  $verify = springboard_hmac_verify($payload, $hmac);
+  $output = '';
+  if (!empty($verify)) {
+    $output = t('There was a problem with this authorization: ');
+    $output .= $verify;
+  }
+  return $output;
+}
+
+/**
  * Verify that a given payload has not been tampered with in route.
- * TODO: Detach from menu page callback.
  *
  * @param $payload
  *   A payload string, base64 encoded.
@@ -31,31 +52,142 @@ function springboard_hmac_menu() {
  *   A hased message authentication token.
  */
 function springboard_hmac_verify($payload, $hmac) {
-  // TODO: Has this hmac been used before?
+
+  // Unset a previous session if it exists.
+  if (isset($_SESSION['springboard_hmac'])) {
+    unset($_SESSION['springboard_hmac']);
+  }
+
+  // Check to see if the token has been used previously.
+  $hmac_used = db_query('SELECT hmac from {springboard_hmac} WHERE hmac = :hmac', array(':hmac' => $hmac))->fetchField();
+  if (!empty($hmac_used)) {
+    $reason = t('Authentication token has already been used.');
+    return springboard_hmac_failure($reason);
+  }
+
+  // Decode the payload and stick it in an array.
+  $parsed_payload = springboard_hmac_parse_payload($payload);
+
+  // Check the payload for errors.
+  $failure_reason = springboard_hmac_verify_payload($parsed_payload);
+  if (!empty($failure_reason)) {
+    return springboard_hmac_failure($failure_reason, $parsed_payload);
+  }
 
   // Get our key
   $key = springboard_hmac_get_key();
-  
-  $payload = springboard_hmac_parse_payload($payload);
-
-  // TODO: Check the timestamp first since that's easiest. If it's
-  // expired no need to continue with the other checks.
 
   // Regenerate the hmac token given the payload data. If it matches the payload
-  // has not been tampered with in route. TODO: Move to a function.
-  $verification_hmac = base64_encode(hash_hmac('sha256', (string) implode('', $payload), (string) $key, TRUE));
+  // has not been tampered with in route.
+  $verification_hmac = springboard_hmac_get_verification_hmac($parsed_payload, $key);
 
   // If the orginal token matches the one we just generated the data is unaltered and we can continue.
-  if ($hmac == $verification_hmac) {
-    // TODO: Store the hmac to use in check for repeated use.
-    // TODO: Stick payload into some sort of session data structure for future use.
-    module_invoke_all('springboard_hmac_validated', $payload);
-  } else {
-    // TODO: Payload cannot be verified. Crash and burn.
+  if ($hmac != $verification_hmac) {
+    $reason = t('Authentication failed. Tokens do not match.');
+    return springboard_hmac_failure($reason, $parsed_payload);
+  }
+  else {
+    return springboard_hmac_success($parsed_payload, $hmac);
   }
 }
 
+/**
+ * Check the payload for errors.
+ *
+ * @param $parsed_payload
+ * @return null|string
+ */
+function springboard_hmac_verify_payload($parsed_payload) {
 
+  if (empty($parsed_payload)) {
+    return t('Could not locate usable data.');
+  }
+
+  // Check the action to see if the action is valid.
+  $allowed_actions = variable_get('springboard_hmac_allowed_actions', array('su'));
+  if (empty($parsed_payload['action']) || (!in_array($parsed_payload['action'], $allowed_actions))) {
+    return t('Unknown action.');
+  }
+
+  // Check the timestamp to see if the token is expired.
+  if (empty($parsed_payload['timestamp']) || ($parsed_payload['timestamp'] + 60 * 60 * 24 * 30) < time()) {
+    return t('Authentication token is missing or expired.');
+  }
+
+  // Verify the user ID.
+  if (empty($parsed_payload['uid'])) {
+    return t('User ID is missing.');
+  }
+  else {
+    $account = user_load($parsed_payload['uid']);
+    if (empty($account->uid)) {
+      return t('Invalid User ID.');
+    }
+  }
+
+  return NULL;
+}
+
+/**
+ * HMAC authentication was successful.
+ *
+ * Save the token, create the session vars and allow other modules to respond.
+ * Return an error message if no modules implement the hook.
+ *
+ * @param $parsed_payload
+ * @param $hmac
+ * @return null|string
+ */
+function springboard_hmac_success($parsed_payload, $hmac) {
+
+  springboard_hmac_save($hmac);
+  springboard_hmac_create_payload_session($parsed_payload);
+
+  // Is it expected that modules using this hook will always implement drupal_goto()?
+  $invoke = module_invoke_all('springboard_hmac_success', $parsed_payload);
+
+  if (empty($invoke)) {
+    $reason = t('No dependencies are enabled.');
+    return springboard_hmac_failure($reason, $parsed_payload);
+  }
+
+  return NULL;
+}
+
+/**
+ * HMAC authentication failure.
+ *
+ * Log watchdog errors, allow other modules to act on failure,
+ * and return error message.
+ *
+ * @param $reason
+ * @return mixed
+ */
+function springboard_hmac_failure($reason, $parsed_payload = array()) {
+  $variables = array();
+  $message = $reason;
+  if (!empty($parsed_payload)) {
+    foreach ($parsed_payload as $key => $payload) {
+      $message .= ' | ' . $key . ': @' . $key;
+      $variables['@' . $key] = $payload;
+    }
+  }
+
+  watchdog('springboard_hmac', $message, $variables, WATCHDOG_ERROR);
+  module_invoke_all('springboard_hmac_failure', $reason, $parsed_payload);
+
+  return $reason;
+}
+
+/**
+ * Create a token.
+ *
+ * Can be called from other modules to create a rollback token.
+ *
+ * @param $message
+ * @param $key
+ * @return string
+ */
 function springboard_hmac_create_hmac($message, $key) {
   $joined_message = implode('', $message);
   return base64_encode(hash_hmac('sha256', (string) implode('', $joined_message), (string) $key, TRUE));
@@ -63,30 +195,75 @@ function springboard_hmac_create_hmac($message, $key) {
 
 /**
  * Parses a message payload string into an array.
+ *
+ * @param $payload
+ * @return array
  */
 function springboard_hmac_parse_payload($payload) {
   // Return the message with delimiter removed.
+  $parsed_payload = array();
   $message = explode('.',  base64_decode($payload));
-  $parsed_payload = array(
-    'uid' => $message[0],
-    'timestamp' => $message[1],
-    'action' => $message[2]
-  );
+  if (count($message) > 3) {
+    $parsed_payload = array(
+      'uid' => $message[0],
+      'timestamp' => $message[1],
+      'action' => $message[2]
+    );
 
-  $parsed_payload += array_splice($message, 3);
+    $parsed_payload += array_splice($message, 3);
+  }
   return $parsed_payload;
 }
 
+/**
+ * @param $payload
+ */
 function springboard_hmac_format_payload($payload) {
 
 }
 
+/**
+ * @return string
+ */
 function springboard_hmac_get_key() {
-  // TODO: This is very bad. Either refactor secure pp to include a function to deliver this information
+  // @TODO: This is very bad. Either refactor secure pp to include a function to deliver this information
   // or use the encrypt module's encrypt key instead. The encrypt key is not currently stored in Salesforce
   // so that would have to happen in order to be able to use it;
   $key = variable_get('secure_prepopulate_key', NULL);
   $iv = variable_get('secure_prepopulate_iv', NULL);
 
   return $key . $iv;
+}
+
+/**
+ * Returns a URL-compatible base64-encoded hmac token.
+ *
+ * @param $payload
+ * @param $key
+ * @return string
+ */
+function springboard_hmac_get_verification_hmac($payload, $key) {
+  $hmac = base64_encode(hash_hmac('sha256', (string) implode('', $payload), (string) $key, TRUE));
+  return strtr($hmac, array('+' => '-', '/' => '_', '=' => ''));
+}
+
+/**
+ * Save a used hmac token to the db.
+ *
+ * @param $hmac
+ */
+function springboard_hmac_save($hmac)  {
+  $data = array(
+    'hmac' => $hmac,
+  );
+  drupal_write_record('springboard_hmac', $data);
+}
+
+/**
+ * Create a session entry with the payload values.
+ *
+ * @param $payload
+ */
+function springboard_hmac_create_payload_session($payload) {
+  $_SESSION['springboard_hmac'] = $payload;
 }
