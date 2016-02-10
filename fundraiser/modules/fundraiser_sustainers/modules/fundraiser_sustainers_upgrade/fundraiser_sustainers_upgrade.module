@@ -27,6 +27,16 @@ function fundraiser_sustainers_upgrade_init() {
 }
 
 /**
+ * Implements hook_springboard_hmac_allowed_actions().
+ *
+ * @return string
+ */
+function fundraiser_sustainers_upgrade_springboard_hmac_allowed_actions() {
+  return 'su';
+}
+
+
+/**
  * Implements hook_springboard_hmac_success();
  */
 function fundraiser_sustainers_upgrade_springboard_hmac_success($payload) {
