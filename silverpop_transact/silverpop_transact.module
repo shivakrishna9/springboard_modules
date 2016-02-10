@@ -44,12 +44,9 @@ function silverpop_transact_entity_info() {
 function silverpop_transact_views_bulk_operations_object_info() {
   return array(
     'silverpop_transact' => array(
-  // Should be same as type in action_info hook.
       'type' => 'silverpop_transact',
-  // Table in the database, database name is handled by type selection in view.
       'base_table' => 'silverpop_transact_log',
       'title' => 'id',
-    // 'load' => '',.
     ),
   );
 }
@@ -307,8 +304,8 @@ function silverpop_transact_cron_log_status_update() {
 /**
  * Silverpop_transact_create_mailing().
  *
- * Creates an XML object compliant with the Silverpop Transact API and
- * submits the object to Silverpop utilizing the Silverpop API module.
+ * Creates an XML object compliant with the Silverpop Transact API. Submits the
+ * object to Silverpop or optionally queues it to be submitted on cron.
  *
  * @param string $recipient_email
  *   Email of the recipient.
@@ -448,6 +445,7 @@ function silverpop_transact_delete_callback($form, $form_state) {
  *     group_id - Silverpop Group ID
  *     save_tokens
  *     additional_tokens
+ *     smtp_xheader_value
  */
 function silverpop_transact_load_email_settings($nid, $eid = FALSE) {
   $query = db_select('silverpop_transact_webform', 'e')
