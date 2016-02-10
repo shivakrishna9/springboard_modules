@@ -43,6 +43,16 @@ function springboard_hmac_permission() {
 }
 
 /**
+ * Allow other modules to add allowed action types.
+ *
+ * @return array
+ */
+function springboard_hmac_allowed_actions() {
+  $actions = module_invoke_all('springboard_hmac_allowed_actions');
+  return $actions;
+}
+
+/**
  * Page callback.
  *
  * If there is a problem, show an error message to the user.
@@ -127,7 +137,7 @@ function springboard_hmac_verify_payload($parsed_payload) {
   }
 
   // Check the action to see if the action is valid.
-  $allowed_actions = variable_get('springboard_hmac_allowed_actions', array('su'));
+  $allowed_actions =   springboard_hmac_allowed_actions();
   if (empty($parsed_payload['action']) || (!in_array($parsed_payload['action'], $allowed_actions))) {
     return t('Unknown action.');
   }
