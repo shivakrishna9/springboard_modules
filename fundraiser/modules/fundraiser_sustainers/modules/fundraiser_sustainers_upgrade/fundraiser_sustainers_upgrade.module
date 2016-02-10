@@ -226,7 +226,7 @@ function fundraiser_sustainers_form_webform_client_form_alter(&$form, &$form_sta
         $field = field_get_items('node', $form['#node'], 'field_sustainers_auto_upgrade');
         if (empty($field[0]) && !user_access('access springboard dashboard')) {
           $js = drupal_get_path('module', 'fundraiser_sustainers_upgrade') . '/js/sustainers-upgrade-autosubmit.js';
-          drupal_add_js($js);
+          $form['#attached']['js'][] = $js;
         }
         elseif (!empty($field[0]) && user_access('access springboard dashboard')) {
           // Show a message about auto-submit for admins.
@@ -328,7 +328,7 @@ function fundraiser_sustainers_upgrade_form_submit($form, $form_state) {
       '@timestamp' => $flat['fsu_timestamp'],
     );
     $message = 'Sustainer upgrade failed: @status | Amount: @amount | Donation ID: @did | Timestamp: @timestamp | URL: @url';
-    watchdog('Sustainers Upgrade', $message, $variables);
+    watchdog('Sustainers Upgrade', $message, $variables, WATCHDOG_ERROR);
   }
   else {
     // We've got an update.
@@ -564,7 +564,6 @@ function fundraiser_sustainers_upgrade_token_info() {
   );
 }
 
-
 /**
  * Implements hook_tokens().
  */
@@ -602,6 +601,8 @@ function fundraiser_sustainers_upgrade_tokens($type, $tokens, $data = array(), $
 
 /**
  * Implements hook_form_node_type_form_alter().
+ *
+ * Disable fundraiser and webform user options on content type form.
  */
 function fundraiser_sustainers_upgrade_form_node_type_form_alter(&$form, &$form_state) {
   if (isset($form['#node_type']) && $form['#node_type'] == 'sustainers_upgrade_form') {
