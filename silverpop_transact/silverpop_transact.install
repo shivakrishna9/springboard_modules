@@ -130,7 +130,7 @@ function silverpop_transact_schema() {
         'serialize' => TRUE,
       ),
     ),
-    'primary key' => array('id', 'filename'),
+    'primary key' => array('id'),
   );
   $schema['silverpop_transact_webform'] = array(
     'description' => 'Stores Silverpop data related to donation_form node emails.',
@@ -233,7 +233,7 @@ function silverpop_transact_update_7001() {
         'serialize' => TRUE,
       ),
     ),
-    'primary key' => array('id', 'filename'),
+    'primary key' => array('id'),
   );
   $schema['silverpop_transact_webform'] = array(
     'description' => 'Stores Silverpop data related to donation_form node emails.',
