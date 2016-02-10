@@ -55,6 +55,15 @@ function silverpop_transact_views_bulk_operations_object_info() {
 }
 
 /**
+ * Implements hook_cron_queue_info().
+ */
+function silverpop_transact_cron_queue_info() {
+  $queues['silverpop_transact_queue_xml'] = array(
+    'worker callback' => 'silverpop_transact_process_cron_queue',
+  );
+  return $queues;
+}
+/**
  * Implements hook_form_FORM_ID_alter().
  */
 function silverpop_transact_form_webform_email_edit_form_alter(&$form, &$form_state, $form_id) {
@@ -326,7 +335,14 @@ function silverpop_transact_create_mailing($recipient_email, $mailing_id = NULL,
   );
   $xml = theme('silverpop_transact_mail', $data);
   $file = file_unmanaged_save_data($xml, "public://", FILE_EXISTS_RENAME);
-  $submit_status = silverpop_transact_submit_xml($file);
+  if (variable_get('silverpop_transact_submit_on_cron')) {
+    $queue = DrupalQueue::get("silverpop_transact_queue_xml");
+    $queue->createItem($file);
+    $submit_status = 2;
+  }
+  else {
+    $submit_status = silverpop_transact_submit_xml($file);
+  }
   // Stop timer for logging purposes.
   $time_post = microtime(TRUE);
   // Log record.
@@ -499,11 +515,12 @@ function silverpop_transact_connect($api_host = NULL, $username = NULL, $passwor
  *   The path of the xml file.
  *
  * @return int
- *   Returns status code: 0 failure, 1 success, 2 queued for cron run.
+ *   Returns status code: 0 failure, 1 success
  */
 function silverpop_transact_submit_xml($file) {
-  if (!silverpop_transact_connect()) {
-    watchdog('silverpop_transact', 'Could not connect to Silverpop. Transact data saved at %file', array('%file' => $file));
+  $connection = silverpop_transact_connect();
+  // Bail early if we can't connect to Silverpop.
+  if (!$connection) {
     return 0;
   }
   // Get the url of the file to be sent to Silverpop.
@@ -619,7 +636,7 @@ function silverpop_transact_get_xml_status($file) {
 }
 
 /**
- * VBO action callback. Re-uploads failed xml files.
+ * VBO action callback. Re-uploads failed xml files and updates log record.
  */
 function silverpop_transact_resubmit_xml($cmt, $context = array()) {
   $file = $context['silverpop_transact']->filename;
@@ -634,8 +651,23 @@ function silverpop_transact_resubmit_xml($cmt, $context = array()) {
 }
 
 /**
+ * Cron queue callback. Uploads xml file and updates log record.
+ *
+ * @param string $file
+ *   Path and filename of local xml file. eg 'public://fileTjVTQB'.
+ */
+function silverpop_transact_process_cron_queue($file) {
+  $submit_status = silverpop_transact_submit_xml($file);
+  $data = array(
+    'status' => $submit_status,
+    'filename' => $file,
+    'last_retry' => REQUEST_TIME,
+  );
+  drupal_write_record('silverpop_transact_log', $data, 'filename');
+}
+/**
  * Label callback for "silverpop_transact" entity.
  */
 function silverpop_transact_operations_label($item) {
-  return 'Record #' . $item->id;
+  return 'Silverpop message record #' . $item->id;
 }

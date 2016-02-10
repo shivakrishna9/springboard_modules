@@ -94,6 +94,12 @@ function silverpop_transact_admin() {
       ),
     ),
   );
+  $form['silverpop_transact_api']['silverpop_transact_submit_on_cron'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Send messages on cron'),
+    '#default_value' => variable_get('silverpop_transact_submit_on_cron', ''),
+    '#description' => 'Queue messages for cron run rather than sending immediately.',
+  );
   $form['#submit'] = array(
     'silverpop_transact_encrypt_password',
     'sliverpop_transact_admin_form_submit',
