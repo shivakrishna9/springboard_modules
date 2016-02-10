@@ -105,6 +105,17 @@ function fundraiser_sustainers_upgrade_insert_components($node) {
     'email' => 1,
   );
 
+  $email_nid = variable_get('fundraiser_sustainers_upgrade_default_email_wrapper', NULL);
+  if ($email_nid != NULL) {
+    $email_node = node_load($email_nid);
+  }
+
+  $subject = !empty($email_node->email_wrapper_subject[LANGUAGE_NONE][0]['value']) ? $email_node->email_wrapper_subject[LANGUAGE_NONE][0]['value'] : 'default';
+  $from = !empty($email_node->email_wrapper_from_name[LANGUAGE_NONE][0]['value']) ? $email_node->email_wrapper_from_name[LANGUAGE_NONE][0]['value'] : 'default';
+  $address = !empty($email_node->email_wrapper_from_email[LANGUAGE_NONE][0]['value']) ? $email_node->email_wrapper_from_email[LANGUAGE_NONE][0]['value'] : 'default';
+  $html = !empty($email_node->email_wrapper_html_message[LANGUAGE_NONE][0]['value']) ? $email_node->email_wrapper_html_message[LANGUAGE_NONE][0]['value'] : '';
+  $text = !empty($email_node->email_wrapper_text_message[LANGUAGE_NONE][0]['value']) ? $email_node->email_wrapper_text_message[LANGUAGE_NONE][0]['value'] : '';
+
   // Add the components to the Webform.
   foreach ($fields as $field) {
 
@@ -120,9 +131,9 @@ function fundraiser_sustainers_upgrade_insert_components($node) {
             'nid' => $node->nid,
             'eid' => 1,
             'email' => (string) $cid,
-            'subject' => 'default',
-            'from_name' => 'default',
-            'from_address' => 'default',
+            'subject' => $subject,
+            'from_name' => $from,
+            'from_address' => $address,
             'excluded_components' => '',
             'template' => 'default',
           );
@@ -134,16 +145,15 @@ function fundraiser_sustainers_upgrade_insert_components($node) {
 
   if(!isset($node->clone_from_original_nid)) {
     // Set up the default Email Wrapper for this node.
-    $email_nid = variable_get('fundraiser_sustainers_upgrade_default_email_wrapper', NULL);
     if ($email_nid != NULL) {
       $settings = array(
         'nid' => $node->nid,
         'eid' => 1,
         'tid' => $email_nid,
         'bcc_email' => '',
-        'html_message' => 'Hi [sustainer_upgrade:name_or_signout]. Thank you for upgrading your sustaining donation by [sustainer_upgrade:upgrade_amount].',
+        'html_message' => $html,
         'html_message_format' => 'filtered_html',
-        'text_message' => 'Hi [sustainer_upgrade:name_or_signout]. Thank you for upgrading your sustaining donation by [sustainer_upgrade:upgrade_amount].',
+        'text_message' => $text,
         'extra' => serialize(array()),
       );
       email_wrappers_save_settings($node->nid, 1, $settings);

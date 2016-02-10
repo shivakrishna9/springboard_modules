@@ -9,8 +9,7 @@ function _fundraiser_sustainers_upgrade_add_example() {
   $node->title = 'Default Sustainers Upgrade Form';
   $node->status = 1;
   $node->promote = 0;
-  $node->body[LANGUAGE_NONE][0]['value'] = 'Donec placerat. Nullam nibh dolor, blandit sed, fermentum id, ' .
-    'imperdiet sit amet, neque. Nam mollis ultrices justo. Sed tempor.';
+    $node->body[LANGUAGE_NONE][0]['value'] = '';
   $node->body[LANGUAGE_NONE][0]['format'] = 'filtered_html';
   $node->field_sustainers_upgrade_name[LANGUAGE_NONE][0]['value'] = "Default Sustainers Upgrade Form";
   $node->field_sustainers_upgrade_fail[LANGUAGE_NONE][0]['value'] = "Donation upgrade can not be completed.";
@@ -37,21 +36,20 @@ function _fundraiser_sustainers_upgrade_add_example() {
     'emails' => array(),
     'components' => array(),
   );
-  $email_nid = fundraiser_sustainers_upgrade_email_wrapper_add();
-  variable_set('fundraiser_sustainers_upgrade_default_email_wrapper', $email_nid);
+  $email_node = fundraiser_sustainers_upgrade_email_wrapper_add();
+  variable_set('fundraiser_sustainers_upgrade_default_email_wrapper', $email_node->nid);
 
-  if ($email_nid != NULL) {
-    $node->webform['emails'][1] = array(
-      'email' => '',
-      'template' => 'default',
-      'subject' => '',
-      'from_name' => 'Springboard',
-      'from_address' => 'example-from@example.com',
-      'html' => 0,
-      'attachments' => 0,
-      'excluded_components' => array(),
-    );
-  }
+  $node->webform['emails'][1] = array(
+    'email' => 'default',
+    'template' => 'default',
+    'subject' => $email_node->email_wrapper_subject[LANGUAGE_NONE][0]['value'],
+    'from_name' => $email_node->email_wrapper_from_name[LANGUAGE_NONE][0]['value'],
+    'from_address' => $email_node->email_wrapper_from_email[LANGUAGE_NONE][0]['value'],
+    'html' => 0,
+    'attachments' => 0,
+    'excluded_components' => array(),
+  );
+
   $node->is_webform_user = 0;
   $node->send_new_user_email = 0;
   node_save($node);
@@ -118,10 +116,10 @@ function fundraiser_sustainers_upgrade_email_wrapper_add() {
       'Springboard Example</p>',
   );
   $node->email_wrapper_html_message[LANGUAGE_NONE][0] = array(
-    'value' => 'Please visit us again soon.',
+    'value' => 'Hi [sustainer_upgrade:name_or_signout]. Thank you for upgrading your sustaining donation by [sustainer_upgrade:upgrade_amount]',
     'summary' => '',
     'format' => 'filtered_html',
-    'safe_value' => '<p>Please visit us again soon.</p>',
+    'safe_value' => '<p>Hi [sustainer_upgrade:name_or_signout]. Thank you for upgrading your sustaining donation by [sustainer_upgrade:upgrade_amount]</p>',
   );
   $node->email_wrapper_text_template[LANGUAGE_NONE][0] = array(
     'value' => 'Thank You' . "\n" .
@@ -139,12 +137,12 @@ function fundraiser_sustainers_upgrade_email_wrapper_add() {
       'Springboard Example',
   );
   $node->email_wrapper_text_message[LANGUAGE_NONE][0] = array(
-    'value' => 'Please visit us again soon.',
+    'value' => 'Hi [sustainer_upgrade:name_or_signout]. Thank you for upgrading your sustaining donation by [sustainer_upgrade:upgrade_amount]',
     'format' => 'filtered_html',
-    'safe_value' => '<p>Please visit us again soon.</p>',
+    'safe_value' => '<p>Hi [sustainer_upgrade:name_or_signout]. Thank you for upgrading your sustaining donation by [sustainer_upgrade:upgrade_amount]</p>',
   );
   node_save($node);
   // Save extras.
   drupal_set_message(t('A sustainers upgrade email wrapper has been created.'));
-  return $node->nid;
+  return $node;
 }
