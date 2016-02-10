@@ -326,27 +326,17 @@ function silverpop_transact_create_mailing($recipient_email, $mailing_id = NULL,
   );
   $xml = theme('silverpop_transact_mail', $data);
   $file = file_unmanaged_save_data($xml, "public://", FILE_EXISTS_RENAME);
-  // Connect to Silverpop Transact.
-  $connection = silverpop_transact_connect();
-  if ($connection) {
-    silverpop_transact_submit_xml($connection, $file);
-    $status = 1;
-    ftp_close($connection);
-  }
-  else {
-    watchdog('silverpop_transact', 'Could not connect to Silverpop. Transact data saved at %file', array('%file' => $file));
-    $status = 0;
-  }
+  $submit_status = silverpop_transact_submit_xml($file);
   // Stop timer for logging purposes.
   $time_post = microtime(TRUE);
-  $exec_time = $time_post - $time_pre;
   // Log record.
   $log_record = array(
     'filename' => $file,
     'model' => 'XML',
+    'status' => $submit_status,
     'origin' => 'silverpop_transact',
     'created' => REQUEST_TIME,
-    'submission_duration' => $exec_time,
+    'submission_duration' => $time_post - $time_pre,
     'data' => $data,
   );
   drupal_write_record('silverpop_transact_log', $log_record);
@@ -505,28 +495,30 @@ function silverpop_transact_connect($api_host = NULL, $username = NULL, $passwor
 /**
  * Submits XML Silverpop via FTP.
  *
- * @param object $connection
- *   FTP stream.
  * @param string $file
  *   The path of the xml file.
  *
- * @return bool
- *   Returns TRUE if xml has been successfully uploaded, otherwise FALSE.
+ * @return int
+ *   Returns status code: 0 failure, 1 success, 2 queued for cron run.
  */
-function silverpop_transact_submit_xml($connection, $file) {
+function silverpop_transact_submit_xml($file) {
+  if (!silverpop_transact_connect()) {
+    watchdog('silverpop_transact', 'Could not connect to Silverpop. Transact data saved at %file', array('%file' => $file));
+    return 0;
+  }
   // Get the url of the file to be sent to Silverpop.
   $file_url = file_create_url($file);
   // Attempt to send the XML file to Silverpop.
   if (ftp_put($connection, 'transact/inbound/' . str_replace('public://', '', $file), $file_url, FTP_ASCII)) {
     watchdog('silverpop_transact', 'successfully uploaded file %file', array('%file' => $file));
     file_unmanaged_delete($file);
-    return TRUE;
+    return 1;
   }
   else {
-
     watchdog('silverpop_transact', 'Error when attempting to submit to Silverpop Trasact. Data saved at %file', array('%file' => $file), WATCHDOG_ERROR);
-    return FALSE;
+    return 0;
   }
+  ftp_close($connection);
 }
 
 /**
@@ -632,18 +624,13 @@ function silverpop_transact_get_xml_status($file) {
 function silverpop_transact_resubmit_xml($cmt, $context = array()) {
   $file = $context['silverpop_transact']->filename;
   $id = $context['silverpop_transact']->id;
-
-  // @TODO Stinks to open and close the connection for each upload.
-  $connection = silverpop_transact_connect();
-  if ($connection) {
-    if (silverpop_transact_submit_xml($connection, $file)) {
-      $data = array('status' => 1, 'last_retry' => REQUEST_TIME, 'id' => $id);
-      drupal_write_record('silverpop_transact_log', $data, 'id');
-      ftp_close($connection);
-      return TRUE;
-    }
-  }
-  ftp_close($connection);
+  $submit_status = silverpop_transact_submit_xml($file);
+  $data = array(
+    'status' => $submit_status,
+    'last_retry' => REQUEST_TIME,
+    'id' => $id,
+  );
+  drupal_write_record('silverpop_transact_log', $data, 'id');
 }
 
 /**

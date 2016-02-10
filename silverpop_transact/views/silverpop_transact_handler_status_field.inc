@@ -33,6 +33,10 @@ class silverpop_transact_handler_status_field extends views_handler_field {
         $status_text = 'Success';
         break;
 
+      case "2":
+        $status_text = 'Queued for cron';
+        break;
+
     }
     return $status_text;
   }
