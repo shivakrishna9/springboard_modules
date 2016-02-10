@@ -35,3 +35,7 @@ function springboard_hmac_schema() {
 
   return $schema;
 }
+
+function springboard_hmac_install() {
+  variable_set('springboard_hmac_error_message', t('An error occurred and we could not complete the operation.'));
+}

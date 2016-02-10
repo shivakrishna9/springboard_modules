@@ -10,7 +10,7 @@
  */
 function springboard_hmac_menu() {
   $items['hmac/%/%'] = array(
-    'title' => 'Authorize',
+    'title' => 'Authorization Request',
     'description' => 'Endpoint to verify hmac encoded payloads',
     'page callback' => 'springboard_hmac_verify_page',
     'page arguments' => array(1,2),
@@ -18,7 +18,28 @@ function springboard_hmac_menu() {
     'type' => MENU_CALLBACK,
   );
 
+  $items['admin/config/hmac'] = array(
+    'title' => 'Springboard HMAC Settings',
+    'description' => 'Settings for Springboard HMAC',
+    'page callback' => 'springboard_hmac_settings_page',
+    'access callback' => user_access('admminister_modules'),
+    'file' => 'springboard_hmac.admin.inc',
+    'file path' => drupal_get_path('module', 'springboard_hmac'),
+    'type' => MENU_CALLBACK,
+  );
   return $items;
+}
+
+/**
+ * Implements hook_permission().
+ */
+function springboard_hmac_permission() {
+  return array(
+    'administer springboard hmac' => array(
+      'title' => t('Administer Springboard HMAC'),
+      'description' => t('Perform administration tasks for Springboard HMAC.'),
+    ),
+  );
 }
 
 /**
@@ -37,8 +58,10 @@ function springboard_hmac_verify_page($payload, $hmac) {
   $verify = springboard_hmac_verify($payload, $hmac);
   $output = '';
   if (!empty($verify)) {
-    $output = t('There was a problem with this authorization: ');
-    $output .= $verify;
+    $output = variable_get('springboard_hmac_error_message', t('An error occurred and we could not complete the operation.'));
+    if (user_access('administer springboard hmac')) {
+      drupal_set_message($verify, 'error');
+    }
   }
   return $output;
 }
@@ -244,7 +267,7 @@ function springboard_hmac_get_key() {
  */
 function springboard_hmac_get_verification_hmac($payload, $key) {
   $hmac = base64_encode(hash_hmac('sha256', (string) implode('', $payload), (string) $key, TRUE));
-  return strtr($hmac, array('+' => '-', '/' => '_', '=' => ''));
+  return $hmac;
 }
 
 /**
