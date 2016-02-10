@@ -37,3 +37,17 @@ function fundraiser_sustainers_upgrade_uninstall() {
   node_type_delete('sustainers_upgrade_form');
   field_purge_batch(1000);
 }
+
+function fundraiser_sustainers_upgrade_enable() {
+  $actions = variable_get('springboard_hmac_allowed_actions', array());
+  $actions = array_merge($actions, array('su'));
+  variable_set('springboard_hmac_allowed_actions', array_unique($actions));
+}
+
+function fundraiser_sustainers_upgrade_disable() {
+  $actions = variable_get('springboard_hmac_allowed_actions', array());
+  if (($key = array_search('su', $actions)) !== false) {
+    unset($actions[$key]);
+  }
+  variable_set('springboard_hmac_allowed_actions', array_unique($actions));
+}
