@@ -123,11 +123,6 @@ function silverpop_transact_schema() {
         'type' => 'int',
         'not null' => FALSE,
       ),
-      'submission_duration' => array(
-        'description' => 'Time in seconds it took to create and submit XML. (only applicable for XML model)',
-        'type' => 'float',
-        'not null' => FALSE,
-      ),
       'data' => array(
         'description' => 'Serialized personalization data. (only applicable for XML model)',
         'type' => 'text',
@@ -229,11 +224,6 @@ function silverpop_transact_update_7001() {
       'last_retry' => array(
         'description' => 'Unix timestamp of when record why last tried. (only applicable for XML model)',
         'type' => 'int',
-        'not null' => FALSE,
-      ),
-      'submission_duration' => array(
-        'description' => 'Time in seconds it took to create and submit XML. (only applicable for XML model)',
-        'type' => 'float',
         'not null' => FALSE,
       ),
       'data' => array(

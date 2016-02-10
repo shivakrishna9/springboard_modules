@@ -148,15 +148,6 @@ function silverpop_transact_views_default_views() {
   $handler->display->display_options['fields']['silverpop_message']['id'] = 'silverpop_message';
   $handler->display->display_options['fields']['silverpop_message']['table'] = 'silverpop_transact_log';
   $handler->display->display_options['fields']['silverpop_message']['field'] = 'silverpop_message';
-  /* Field: Silverpop Transact: Submitted Duration */
-  $handler->display->display_options['fields']['submission_duration']['id'] = 'submission_duration';
-  $handler->display->display_options['fields']['submission_duration']['table'] = 'silverpop_transact_log';
-  $handler->display->display_options['fields']['submission_duration']['field'] = 'submission_duration';
-  $handler->display->display_options['fields']['submission_duration']['label'] = 'Submitted Duration (Seconds)';
-  $handler->display->display_options['fields']['submission_duration']['alter']['max_length'] = '4';
-  $handler->display->display_options['fields']['submission_duration']['alter']['word_boundary'] = FALSE;
-  $handler->display->display_options['fields']['submission_duration']['alter']['ellipsis'] = FALSE;
-  $handler->display->display_options['fields']['submission_duration']['alter']['trim'] = TRUE;
   /* Filter criterion: Silverpop Transact: Filename */
   $handler->display->display_options['filters']['filename']['id'] = 'filename';
   $handler->display->display_options['filters']['filename']['table'] = 'silverpop_transact_log';

@@ -137,20 +137,5 @@ function silverpop_transact_views_data() {
       'handler' => 'views_handler_filter_date',
     ),
   );
-  // Expose the Submitted Duration field.
-  $data['silverpop_transact_log']['submission_duration'] = array(
-    'title' => t('Submitted Duration'),
-    'help' => t('Time in seconds it took to create and submit XML.'),
-    'field' => array(
-      'handler' => 'views_handler_field_numeric',
-      'click sortable' => TRUE,
-    ),
-    'sort' => array(
-      'handler' => 'views_handler_sort',
-    ),
-    'filter' => array(
-      'handler' => 'views_handler_filter_numeric',
-    ),
-  );
   return $data;
 }

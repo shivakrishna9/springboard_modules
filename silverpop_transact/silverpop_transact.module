@@ -320,8 +320,6 @@ function silverpop_transact_cron_log_status_update() {
  *   - Personalization value (eg 'Scott').
  */
 function silverpop_transact_create_mailing($recipient_email, $mailing_id = NULL, $personalization = NULL, $save_columns = FALSE) {
-  // Start timer for logging purposes.
-  $time_pre = microtime(TRUE);
   // If mailing ID is not provided, use the default.
   if ($mailing_id == NULL) {
     $mailing_id = SILVERPOP_TRANSACT_DEFAULT_CAMPAIGN;
@@ -343,8 +341,6 @@ function silverpop_transact_create_mailing($recipient_email, $mailing_id = NULL,
   else {
     $submit_status = silverpop_transact_submit_xml($file);
   }
-  // Stop timer for logging purposes.
-  $time_post = microtime(TRUE);
   // Log record.
   $log_record = array(
     'filename' => $file,
@@ -352,7 +348,6 @@ function silverpop_transact_create_mailing($recipient_email, $mailing_id = NULL,
     'status' => $submit_status,
     'origin' => 'silverpop_transact',
     'created' => REQUEST_TIME,
-    'submission_duration' => $time_post - $time_pre,
     'data' => $data,
   );
   drupal_write_record('silverpop_transact_log', $log_record);
