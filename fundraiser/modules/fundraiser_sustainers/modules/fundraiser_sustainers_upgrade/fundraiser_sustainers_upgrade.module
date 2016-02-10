@@ -167,8 +167,19 @@ function fundraiser_sustainers_upgrade_node_view($node) {
   if ($node->type == 'sustainers_upgrade_form') {
     $node->content['field_sustainers_upgrade_fail'][0]['#access'] = FALSE;
     $payload = fundraiser_sustainers_upgrade_get_session_payload();
+
     if (empty($payload)) {
       $node->content['field_sustainers_upgrade_fail'][0]['#access'] = TRUE;
+    }
+    else {
+      $status = fundraiser_sustainers_upgrade_check_donation_status($payload);
+      if (!empty($status['donation']) && !empty($status['recurring'])) {
+        $token_set = array(
+          'donation' => $status['donation'],
+          'recurring' => $status['recurring'],
+        );
+        $node->content['body'][0]['#markup'] = token_replace($node->content['body'][0]['#markup'], $token_set);
+      }
     }
   }
 }
@@ -188,6 +199,7 @@ function fundraiser_sustainers_form_webform_client_form_alter(&$form, &$form_sta
     // If there are no session values, stop everything and
     //  display a failure message, even on auto-submit forms.
     if (empty($payload)) {
+
       $status['status'] = t('No Session values found.');
       fundraiser_sustainer_upgrade_stop_at_form($form, $status);
     }
@@ -531,8 +543,8 @@ function fundraiser_sustainers_upgrade_get_session_payload() {
   $payload = array();
   $payload['timestamp'] = $_SESSION['springboard_hmac']['timestamp'] = time();
   $payload['uid'] =  $_SESSION['springboard_hmac']['uid'] = 1;
-  $payload['did'] = $_SESSION['springboard_hmac']['0'] = 1;
-  $payload['amount'] = $_SESSION['springboard_hmac']['1'] = 570;
+  $payload['did'] = $_SESSION['springboard_hmac']['0'] = 16;
+  $payload['amount'] = $_SESSION['springboard_hmac']['1'] = 20;
   $payload['nid'] = $_SESSION['springboard_hmac']['2'] = 2;
   return $payload;
 }
@@ -566,6 +578,16 @@ function fundraiser_sustainers_upgrade_token_info() {
     'description' => 'Displays the sustainers first name and a cancel link',
   );
 
+  $tokens['next_charge_amount_formatted'] = array(
+    'name' => t("Sustainer name and cancel link"),
+    'description' => 'Displays the sustainers first name and a cancel link',
+  );
+
+  $tokens['charges_remaining'] = array(
+    'name' => t("Sustainer name and cancel link"),
+    'description' => 'Displays the sustainers first name and a cancel link',
+  );
+
   return array(
     'types' => $types,
     'tokens' => array(
@@ -581,11 +603,12 @@ function fundraiser_sustainers_upgrade_tokens($type, $tokens, $data = array(), $
   $replacements = array();
 
   if ($type == 'sustainer_upgrade') {
+    $payload = fundraiser_sustainers_upgrade_get_session_payload();
     foreach ($tokens as $name => $original) {
       switch ($name) {
         case 'name_or_signout':
-          if (!empty($_SESSION['springboard_hmac']['uid'])) {
-            $account = user_load($_SESSION['springboard_hmac']['uid']);
+          if (!empty($payload['uid'])) {
+            $account = user_load($payload['uid']);
             $first_name = field_get_items('user', $account, 'sbp_first_name');
             if (!empty($first_name[0])) {
               $value = field_view_value('user', $account, 'sbp_first_name', $first_name[0]);
@@ -598,8 +621,24 @@ function fundraiser_sustainers_upgrade_tokens($type, $tokens, $data = array(), $
           }
           break;
         case 'upgrade_amount':
-          if (!empty($_SESSION['springboard_hmac']['upgrade_amount'])) {
-            $replacements[$original] = $_SESSION['springboard_hmac']['upgrade_amount'];
+          if (!empty($payload['amount'])) {
+            // @todo what kind of formatting will this need?
+            $replacements[$original] = $payload['amount'];
+          }
+          break;
+        case 'next_charge_amount_formatted':
+          $status = fundraiser_sustainers_upgrade_check_donation_status($payload);
+          if ($status['status'] == 'valid') {
+            $order = commerce_order_load($status['recurring'][0]->did);
+            $order_wrapper = entity_metadata_wrapper('commerce_order', $order);
+            $order_total = $order_wrapper->commerce_order_total->value();
+            $replacements[$original] = commerce_currency_format($order_total['amount'], $order_total['currency_code']);
+          }
+          break;
+        case 'charges_remaining':
+          $status = fundraiser_sustainers_upgrade_check_donation_status($payload);
+          if ($status['status'] == 'valid') {
+            $replacements[$original] = count($status['recurring']);
           }
           break;
       }
