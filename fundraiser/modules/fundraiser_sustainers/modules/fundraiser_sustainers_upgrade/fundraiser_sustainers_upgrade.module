@@ -193,6 +193,10 @@ function fundraiser_sustainers_upgrade_node_view($node) {
 function fundraiser_sustainers_form_webform_client_form_alter(&$form, &$form_state) {
   if (!empty($form['#node']) && $form['#node']->type == 'sustainers_upgrade_form') {
 
+    if (isset($_SESSION['next_donation'])) {
+      unset($_SESSION['next_donation']);
+    }
+
     // Get the session values created by springboard_hmac.module.
     $payload = fundraiser_sustainers_upgrade_get_session_payload();
 
@@ -358,8 +362,13 @@ function fundraiser_sustainers_upgrade_form_submit($form, $form_state) {
     $donation = $form_state['values']['donation'];
     $next_donation = fundraiser_donation_get_donation($form_state['values']['recurring'][0]->did);
     $fee_currency_code = $next_donation->donation['currency']['code'];
+
+    // @todo Check this.
     $formatted_amount = commerce_currency_format($payload['amount'], $fee_currency_code, NULL, FALSE);
+
     _fundraiser_sustainers_donation_amount_form_update_donations($donation->recurring->master_did, $payload['amount'], $formatted_amount, 'Sustainer Upgrade Module');
+    $_SESSION['next_donation'] = array('master_did' => $next_donation['master_did'], 'amount' => $next_donation['amount']);
+
   }
 }
 
@@ -505,6 +514,7 @@ function fundraiser_sustainers_upgrade_get_status_message($recurring, $donation,
     }
 
     // Payload amount must be greater than min amount.
+    // @todo determine how these numbers will be formatted.
     if ($payload['amount'] < $min_amount) {
       $messages[] = t('Donation amount must be greater than @minimum.', array('@minimum' => $formatted_minimum));
     }
@@ -520,7 +530,7 @@ function fundraiser_sustainers_upgrade_get_status_message($recurring, $donation,
     }
 
     // Payload amount must be greater than current recurring amount.
-    if ($payload['amount'] <= $recurring[0]->amount) {
+    if (($payload['amount'] <= $recurring[0]->amount) && empty($payload['rollback'])) {
       $messages[] = t('The upgrade amount is lower than or equal to the current donation.');
     }
   }
@@ -546,6 +556,7 @@ function fundraiser_sustainers_upgrade_get_session_payload() {
   $payload['did'] = $_SESSION['springboard_hmac']['0'] = 16;
   $payload['amount'] = $_SESSION['springboard_hmac']['1'] = 20;
   $payload['nid'] = $_SESSION['springboard_hmac']['2'] = 2;
+  $payload['rollback'] = $_SESSION['springboard_hmac']['3'] = 'rollback';
   return $payload;
 }
 
@@ -571,6 +582,11 @@ function fundraiser_sustainers_upgrade_token_info() {
   $tokens['name_or_signout'] = array(
     'name' => t("Sustainer name and cancel link"),
     'description' => 'Displays the sustainers first name and a cancel link',
+  );
+
+  $tokens['rollback'] = array(
+    'name' => t("Rollback link to undo a sustainer upgrade."),
+    'description' => '',
   );
 
   $tokens['upgrade_amount'] = array(
@@ -601,7 +617,6 @@ function fundraiser_sustainers_upgrade_token_info() {
  */
 function fundraiser_sustainers_upgrade_tokens($type, $tokens, $data = array(), $options = array()) {
   $replacements = array();
-
   if ($type == 'sustainer_upgrade') {
     $payload = fundraiser_sustainers_upgrade_get_session_payload();
     foreach ($tokens as $name => $original) {
@@ -641,12 +656,44 @@ function fundraiser_sustainers_upgrade_tokens($type, $tokens, $data = array(), $
             $replacements[$original] = count($status['recurring']);
           }
           break;
+        case 'rollback':
+          $status = fundraiser_sustainers_upgrade_check_donation_status($payload);
+          if ($status['status'] == 'valid') {
+            $link = fundraiser_sustainers_upgrade_create_rollback_link($payload);
+            $replacements[$original] = $link;
+          }
+          break;
       }
     }
   }
   return $replacements;
 }
 
+function fundraiser_sustainers_upgrade_create_rollback_link($payload) {
+  $link = '';
+  $master_did = !empty($_SESSION['next_donation']['master_did']) ? $_SESSION['next_donation']['master_did'] : FALSE;
+  $original_amount = !empty($_SESSION['next_donation']['amount']) ? $_SESSION['next_donation']['amount'] : FALSE;
+
+  if ($master_did && $original_amount) {
+    $key = springboard_hmac_get_key();
+    $values = array(
+      $payload['uid'],
+      time(),
+      'su',
+      $original_amount,
+      $payload['did'],
+      $payload['nid'],
+      'rollback',
+    );
+
+    $payload_string = "{$payload['uid']}.{$values['time']}.su.{$payload['amount']}.{$payload['did']}.{$payload['nid']}.rollback";
+    $payload_string = urlencode(base64_encode($payload_string));
+    $hmac = urlencode(springboard_hmac_create_hmac($values, $key));
+    $link = l('hmac/' . $payload_string . '/' . $hmac, array('absolute' => TRUE));
+  }
+
+  return $link;
+}
 
 /**
  * Implements hook_form_node_type_form_alter().
