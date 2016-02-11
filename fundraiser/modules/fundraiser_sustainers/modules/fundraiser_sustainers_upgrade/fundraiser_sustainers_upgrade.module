@@ -567,12 +567,12 @@ function fundraiser_sustainers_upgrade_get_status_message($recurring, $donation,
  */
 function fundraiser_sustainers_upgrade_get_session_payload() {
   $payload = array();
-  $payload['timestamp'] = $_SESSION['springboard_hmac']['timestamp'] = time();
-  $payload['uid'] =  $_SESSION['springboard_hmac']['uid'] = 1;
-  $payload['did'] = $_SESSION['springboard_hmac']['0'] = 16;
-  $payload['amount'] = $_SESSION['springboard_hmac']['1'] = 20;
-  $payload['nid'] = $_SESSION['springboard_hmac']['2'] = 2;
-  $payload['rollback'] = $_SESSION['springboard_hmac']['3'] = 'rollback';
+  $payload['timestamp'] = $_SESSION['springboard_hmac']['timestamp'];
+  $payload['uid'] =  $_SESSION['springboard_hmac']['uid'];
+  $payload['did'] = $_SESSION['springboard_hmac']['0'];
+  $payload['amount'] = $_SESSION['springboard_hmac']['1'];
+  $payload['nid'] = $_SESSION['springboard_hmac']['2'];
+  $payload['rollback'] = !empty($_SESSION['springboard_hmac']['3']) ? $_SESSION['springboard_hmac']['3'] : NULL;
   return $payload;
 }
 
@@ -716,10 +716,11 @@ function fundraiser_sustainers_upgrade_create_link($payload, $rollback = FALSE) 
     $payload_string = "{$payload['uid']}.{$time}.su.{$amount}.{$payload['did']}.{$payload['nid']}";
   }
 
-  $payload_string = urlencode(base64_encode($payload_string));
+  $payload_string = base64_encode($payload_string);
   $key = springboard_hmac_get_key();
-  $hmac = urlencode(springboard_hmac_create_hmac($values, $key));
-  $link = l('hmac/' . $payload_string . '/' . $hmac, array('absolute' => TRUE));
+  $hmac = springboard_hmac_create_hmac($values, $key);
+
+  $link = url('hmac/' . $payload_string . '/' . $hmac, array('absolute' => TRUE));
 
   return $link;
 }

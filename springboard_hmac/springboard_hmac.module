@@ -222,8 +222,10 @@ function springboard_hmac_failure($reason, $parsed_payload = array()) {
  * @return string
  */
 function springboard_hmac_create_hmac($message, $key) {
-  $joined_message = implode('', $message);
-  return base64_encode(hash_hmac('sha256', (string) implode('', $joined_message), (string) $key, TRUE));
+  //$joined_message = implode('', $message);
+  $hmac = base64_encode(hash_hmac('sha256', (string) implode('', $message), (string) $key, TRUE));
+  $hmac = strtr($hmac, array('+' => '-', '/' => '_', '=' => ''));
+  return $hmac;
 }
 
 /**
@@ -277,6 +279,7 @@ function springboard_hmac_get_key() {
  */
 function springboard_hmac_get_verification_hmac($payload, $key) {
   $hmac = base64_encode(hash_hmac('sha256', (string) implode('', $payload), (string) $key, TRUE));
+  $hmac = strtr($hmac, array('+' => '-', '/' => '_', '=' => ''));
   return $hmac;
 }
 
