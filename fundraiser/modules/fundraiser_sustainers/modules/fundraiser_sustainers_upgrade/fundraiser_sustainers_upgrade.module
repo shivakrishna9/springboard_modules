@@ -189,13 +189,14 @@ function fundraiser_sustainers_upgrade_node_view($node) {
     }
     else {
       $status = fundraiser_sustainers_upgrade_check_donation_status($payload);
-      if (!empty($status['donation']) && !empty($status['recurring'])) {
-        $token_set = array(
-          'donation' => $status['donation'],
-          'recurring' => $status['recurring'],
-        );
-        $node->content['body'][0]['#markup'] = token_replace($node->content['body'][0]['#markup'], $token_set);
+      $token_set = array();
+      if (!empty($status['donation'])) {
+        $token_set['donation'] = $status['donation'];
       }
+      if(!empty($status['recurring'])) {
+        $token_set['recurring'] = $status['recurring'];
+      }
+      $node->content['body'][0]['#markup'] = token_replace($node->content['body'][0]['#markup'], $token_set);
     }
   }
 }
@@ -215,7 +216,6 @@ function fundraiser_sustainers_form_webform_client_form_alter(&$form, &$form_sta
 
     // Get the session values created by springboard_hmac.module.
     $payload = fundraiser_sustainers_upgrade_get_session_payload();
-
     // If there are no session values, stop everything and
     //  display a failure message, even on auto-submit forms.
     if (empty($payload)) {
@@ -258,6 +258,7 @@ function fundraiser_sustainers_form_webform_client_form_alter(&$form, &$form_sta
       $stop_in_tracks = array(
         'Donation ID not found in database.',
         'Donation ID not found in session.',
+        'Donation ID is not a master ID'
       );
       if (in_array($status['status'], $stop_in_tracks)) {
         fundraiser_sustainer_upgrade_stop_at_form($form, $status);
@@ -461,7 +462,7 @@ function fundraiser_sustainers_upgrade_check_donation_status($payload) {
   if (!isset($status)) {
     if (!empty($payload['did'])) {
       $donation = fundraiser_donation_get_donation($payload['did']);
-      if (!empty($donation)) {
+      if (!empty($donation->master_did) && $donation->master_did == $payload['did']) {
         $min_amount = isset($donation->node->minimum_donation_amount) ? $donation->node->minimum_donation_amount : 0;
         $recurring = _fundraiser_sustainers_get_donations_recurr_remaining($payload['did']);
         $message = fundraiser_sustainers_upgrade_get_status_message($recurring, $donation, $payload, $min_amount);
@@ -469,6 +470,20 @@ function fundraiser_sustainers_upgrade_check_donation_status($payload) {
           'status' => $message,
           'donation' => $donation,
           'recurring' => $recurring
+        );
+      }
+      elseif (!empty($donation->master_did) && $donation->master_did != $donation->did) {
+        $status = array(
+          'status' => t('Donation ID is not a master ID'),
+          'donation' => $donation,
+          'recurring' => FALSE
+        );
+      }
+      elseif (empty($donation->master->did)) {
+        $status = array(
+          'status' => t('Not a recurring donation.'),
+          'donation' => $donation,
+          'recurring' => FALSE
         );
       }
       else {
@@ -569,8 +584,8 @@ function fundraiser_sustainers_upgrade_get_session_payload() {
   $payload = array();
   $payload['timestamp'] = $_SESSION['springboard_hmac']['timestamp'];
   $payload['uid'] =  $_SESSION['springboard_hmac']['uid'];
-  $payload['did'] = $_SESSION['springboard_hmac']['0'];
-  $payload['amount'] = $_SESSION['springboard_hmac']['1'];
+  $payload['amount'] = $_SESSION['springboard_hmac']['0'];
+  $payload['did'] = $_SESSION['springboard_hmac']['1'];
   $payload['nid'] = $_SESSION['springboard_hmac']['2'];
   $payload['rollback'] = !empty($_SESSION['springboard_hmac']['3']) ? $_SESSION['springboard_hmac']['3'] : NULL;
   return $payload;
