@@ -1,10 +1,1 @@
 <?php
-
-/**
- * Implements hook_springboard_hmac_validated().
- */
-function fundraiser_sustainers_upgrade_springboard_hmac_validated($payload) {
-	if ($payload['action'] == 'su') {
-		// TODO: upgrade the user's donation, duh.
-	}
-}
