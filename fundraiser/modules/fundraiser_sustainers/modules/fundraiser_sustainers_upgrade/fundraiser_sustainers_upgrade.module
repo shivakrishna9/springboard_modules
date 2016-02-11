@@ -25,7 +25,23 @@ function fundraiser_sustainers_upgrade_init() {
     }
   }
 }
+/**
+ * Implmentation of hook_menu().
+ */
+function fundraiser_sustainers_upgrade_menu() {
 
+  $items['admin/config/system/fundraiser/token_generator'] = array(
+    'title' => 'Sustainer Token Generator',
+    'description' => 'Generate query string tokens for testing or use',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('fundraiser_sustainers_upgrade_token_generator'),
+    'access arguments' => array('administer fundraiser sustainers'),
+    'file' => 'includes/fundraiser_sustainers_upgrade.admin.inc',
+    'type' => MENU_LOCAL_TASK,
+  );
+
+  return $items;
+}
 /**
  * Implements hook_springboard_hmac_allowed_actions().
  *
@@ -659,7 +675,7 @@ function fundraiser_sustainers_upgrade_tokens($type, $tokens, $data = array(), $
         case 'rollback':
           $status = fundraiser_sustainers_upgrade_check_donation_status($payload);
           if ($status['status'] == 'valid') {
-            $link = fundraiser_sustainers_upgrade_create_rollback_link($payload);
+            $link = fundraiser_sustainers_upgrade_create_link($payload, TRUE);
             $replacements[$original] = $link;
           }
           break;
@@ -669,28 +685,41 @@ function fundraiser_sustainers_upgrade_tokens($type, $tokens, $data = array(), $
   return $replacements;
 }
 
-function fundraiser_sustainers_upgrade_create_rollback_link($payload) {
+function fundraiser_sustainers_upgrade_create_link($payload, $rollback = FALSE) {
   $link = '';
-  $master_did = !empty($_SESSION['next_donation']['master_did']) ? $_SESSION['next_donation']['master_did'] : FALSE;
-  $original_amount = !empty($_SESSION['next_donation']['amount']) ? $_SESSION['next_donation']['amount'] : FALSE;
-
-  if ($master_did && $original_amount) {
-    $key = springboard_hmac_get_key();
-    $values = array(
-      $payload['uid'],
-      time(),
-      'su',
-      $original_amount,
-      $payload['did'],
-      $payload['nid'],
-      'rollback',
-    );
-
-    $payload_string = "{$payload['uid']}.{$values['time']}.su.{$payload['amount']}.{$payload['did']}.{$payload['nid']}.rollback";
-    $payload_string = urlencode(base64_encode($payload_string));
-    $hmac = urlencode(springboard_hmac_create_hmac($values, $key));
-    $link = l('hmac/' . $payload_string . '/' . $hmac, array('absolute' => TRUE));
+  if ($rollback) {
+    $master_did = !empty($_SESSION['next_donation']['master_did']) ? $_SESSION['next_donation']['master_did'] : FALSE;
+    $amount = !empty($_SESSION['next_donation']['amount']) ? $_SESSION['next_donation']['amount'] : FALSE;
+    if ($master_did != $payload['did']) {
+      return $link;
+    }
   }
+  else {
+    $amount = $payload['amount'];
+  }
+
+  $time = time();
+  $values = array(
+    $payload['uid'],
+    $time,
+    'su',
+    $amount,
+    $payload['did'],
+    $payload['nid'],
+  );
+
+  if ($rollback == TRUE) {
+    $values[] = 'rollback';
+    $payload_string = "{$payload['uid']}.{$time}.su.{$amount}.{$payload['did']}.{$payload['nid']}.rollback";
+  }
+  else {
+    $payload_string = "{$payload['uid']}.{$time}.su.{$amount}.{$payload['did']}.{$payload['nid']}";
+  }
+
+  $payload_string = urlencode(base64_encode($payload_string));
+  $key = springboard_hmac_get_key();
+  $hmac = urlencode(springboard_hmac_create_hmac($values, $key));
+  $link = l('hmac/' . $payload_string . '/' . $hmac, array('absolute' => TRUE));
 
   return $link;
 }
