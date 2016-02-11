@@ -8,21 +8,20 @@
  * Implements hook_rules_action_info().
  */
 function silverpop_transact_rules_action_info() {
-
   return array(
-    'silverpop_transact_create_mailing' => array(
+    'silverpop_transact_rules_action' => array(
       'label' => t('Create Silverpop Transact mailing'),
       'group' => t('Silverpop Transact'),
       'parameter' => array(
-        'campaign_id' => array(
-          'type' => 'text',
-          'label' => t('The Silverpop Campaign ID'),
-          'description' => t('Enter the numeric ID for the Silverpop Automated Messages group.'),
-        ),
         'recipient_email' => array(
           'type' => 'text',
           'label' => t('Recipient Email'),
           'description' => t('The recipient email.'),
+        ),
+        'campaign_id' => array(
+          'type' => 'text',
+          'label' => t('The Silverpop Campaign ID'),
+          'description' => t('Enter the numeric ID for the Silverpop Automated Messages group.'),
         ),
         'personalization' => array(
           'type' => 'text',
@@ -34,13 +33,18 @@ function silverpop_transact_rules_action_info() {
           'label' => t('Save Columns'),
           'description' => t('Save personalization tokens to the Engage database.'),
         ),
-        'html_body' => array(
-          'type' => 'text',
-          'label' => t('HTML Body'),
-          'description' => t('Include HTML for the body of the email. This will be accessed in Silverpop via the token %%INBOUND_HTML%%'),
-          'optional' => TRUE,
-        ),
       ),
     ),
   );
+}
+
+/**
+ * Rules action callback.
+ *
+ * Runs $personalization string through
+ * silverpop_transact_parse_personalization() in order to turn it into an assoc
+ * array before calling silverpop_transact_create_mailing().
+ */
+function silverpop_transact_rules_action($recipient_email, $campaign_id, $personalization, $save_columns) {
+  silverpop_transact_create_mailing($recipient_email, $campaign_id, silverpop_transact_parse_personalization($personalization), $save_columns);
 }
