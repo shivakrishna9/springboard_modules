@@ -261,8 +261,12 @@ function silverpop_transact_cron() {
 
 /**
  * Retrieves status files via FTP and updates silverpop_transact_log records.
+ *
+ * @return int
+ *   Returns the number of records updated with a silverpop message
  */
 function silverpop_transact_cron_log_status_update() {
+  $updated_count = 0;
   // Connect to FTP server.
   $connection = silverpop_transact_connect();
   if ($connection) {
@@ -294,11 +298,13 @@ function silverpop_transact_cron_log_status_update() {
           // Update log record.
           $data = array('silverpop_message' => $silverpop_status, 'id' => $log_record['id']);
           drupal_write_record('silverpop_transact_log', $data, 'id');
+          $updated_count++;
         }
       }
     }
     ftp_close($connection);
   }
+  return $updated_count;
 }
 
 /**

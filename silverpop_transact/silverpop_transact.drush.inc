@@ -28,7 +28,7 @@ function drush_silverpop_transact_silpop_send_queued_messages() {
   $queue = DrupalQueue::get('silverpop_transact_queue_xml');
 
   while ($item = $queue->claimItem()) {
-    drush_log(dt("Processing silverpop_transact_queue_xml queue, item id: !item-id.",
+    drush_log(dt("Submitting silverpop message xml, item id: !item-id.",
         array('!item-id' => $item->item_id)), 'ok');
     try {
       silverpop_transact_process_cron_queue($item->data);
@@ -41,4 +41,13 @@ function drush_silverpop_transact_silpop_send_queued_messages() {
     }
   }
   return TRUE;
+}
+
+/**
+ * Drush command callback for silpop-update-status-message.
+ */
+function drush_silverpop_transact_silpop_update_status_messages() {
+  drush_log(dt("Updated the Silverpop Message field on !count log records.",
+        array('!count' => silverpop_transact_cron_log_status_update())), 'ok');
+
 }
