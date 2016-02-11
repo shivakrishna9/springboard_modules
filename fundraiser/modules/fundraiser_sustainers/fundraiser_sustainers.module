@@ -1600,8 +1600,23 @@ function fundraiser_sustainers_donation_amount_form_validate($form, &$form_state
 function fundraiser_sustainers_donation_amount_form_submit($form, &$form_state) {
   $amount = $form_state['values']['fee_amount'];
   $formatted_amount = commerce_currency_format($amount, $form_state['values']['fee_currency_code'], NULL, FALSE);
-
   $master_did = $form_state['values']['master_did'];
+  _fundraiser_sustainers_donation_amount_form_update_donations($master_did, $amount, $formatted_amount);
+}
+
+/**
+ * Helper function for fundraiser_sustainers_donation_amount_form_submit().
+ *
+ * This function is also called from fundraiser_sustainers_upgrade_form_submit()
+ * as well as from the above submit function. Bear that in mind if altering
+ * any code here.
+ *
+ * @param $master_did
+ * @param $amount
+ * @param $formatted_amount
+ * @param $upgrade
+ */
+function _fundraiser_sustainers_donation_amount_form_update_donations($master_did, $amount, $formatted_amount, $origin = NULL) {
   $donations = _fundraiser_sustainers_get_donations_recurr_remaining($master_did);
   foreach ($donations as $donation) {
     $donation = fundraiser_donation_get_donation($donation->did);
@@ -1616,15 +1631,20 @@ function fundraiser_sustainers_donation_amount_form_submit($form, &$form_state) 
     fundraiser_donation_update($donation);
 
     // Add a comment.
-    global $user;
-    $username = isset($user->name) ? $user->name : 'Anonymous';
-    fundraiser_donation_comment($donation, 'The amount of this gift was changed from $@old_amount to $@new_amount on @date by @username.',
+    if (!isset($origin)) {
+      global $user;
+      $source = isset($user->name) ? $user->name : 'Anonymous';
+    }
+    else {
+      $source = $origin;
+    }
+    fundraiser_donation_comment($donation, 'The amount of this gift was changed from $@old_amount to $@new_amount on @date by @source.',
       array(
-      '@old_amount' => $donation->donation['old_amount'],
-      '@new_amount' => $donation->donation['amount'],
-      '@date' => format_date(strtotime('now')),
-      '@username' => $username,
-    ));
+        '@old_amount' => $donation->donation['old_amount'],
+        '@new_amount' => $donation->donation['amount'],
+        '@date' => format_date(strtotime('now')),
+        '@source' => $source,
+      ));
 
     // update sf queue.
     if (module_exists('salesforce_genmap')) {

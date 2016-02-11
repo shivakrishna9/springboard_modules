@@ -1,1 +1,849 @@
 <?php
+/**
+ * @file
+ * Code for Fundraiser Sustainers Upgrade.
+ */
+
+/**
+ * Implements hook_init().
+ *
+ * Load webform form_alters
+ * that apply to non-cached administrative pages.
+ */
+function fundraiser_sustainers_upgrade_init() {
+
+  // Include the webform component form alters needed to
+  // lock down hidden fields.
+  if (arg(0) == 'node' && is_numeric(arg(1)) && arg(2) == 'webform') {
+    $node = node_load(arg(1));
+    if (!empty($node->type) && $node->type == 'sustainers_upgrade_form') {
+      module_load_include(
+        'inc',
+        'fundraiser_sustainers_upgrade',
+        'includes/fundraiser_sustainers_upgrade.components'
+      );
+    }
+  }
+}
+/**
+ * Implmentation of hook_menu().
+ */
+function fundraiser_sustainers_upgrade_menu() {
+
+  $items['admin/config/system/fundraiser/token_generator'] = array(
+    'title' => 'Sustainer Token Generator',
+    'description' => 'Generate query string tokens for testing or use',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('fundraiser_sustainers_upgrade_token_generator'),
+    'access arguments' => array('administer fundraiser sustainers'),
+    'file' => 'includes/fundraiser_sustainers_upgrade.admin.inc',
+    'type' => MENU_LOCAL_TASK,
+  );
+
+  return $items;
+}
+/**
+ * Implements hook_springboard_hmac_allowed_actions().
+ *
+ * @return string
+ */
+function fundraiser_sustainers_upgrade_springboard_hmac_allowed_actions() {
+  return 'su';
+}
+
+
+/**
+ * Implements hook_springboard_hmac_success();
+ */
+function fundraiser_sustainers_upgrade_springboard_hmac_success($payload) {
+  if ($payload['action'] == 'su') {
+    if (isset($payload[2]) && is_numeric($payload[2])) {
+      $node = node_load($payload[2]);
+      if (!empty($node->type) && $node->type == 'sustainers_upgrade_form') {
+        drupal_goto('node/' . $node->nid);
+      }
+      else {
+        $nid = variable_get('fundraiser_sustainers_upgrade_default_form', '');
+        if (!empty($nid)) {
+          drupal_goto('node/' . $nid);
+        }
+      }
+    }
+  }
+}
+
+/**
+ * Implements hook_module_implements_alter().
+ *
+ * By default, Springboard Admin only allows webform user forms to be
+ * displayed in admin pages, and the alter hook that should allow additional
+ * form types to be added is used by springboard_admin.module to overwrite
+ * any attempts to do so! Unless you modify the execution order here.
+ *
+ * Also make webform_client_form_alter fire last.
+ */
+function fundraiser_sustainers_upgrade_module_implements_alter(&$implementations, $hook) {
+  $hooks = array(
+    'form_alter',
+    'form_webform_client_form_alter',
+  );
+
+  if ($hook == 'springboard_admin_form_page_types_alter' || (in_array($hook, $hooks) && isset($implementations['fundraiser_sustainers_upgrade']))) {
+    $group = $implementations['fundraiser_sustainers_upgrade'];
+    unset($implementations['fundraiser_sustainers_upgrade']);
+    $implementations['fundraiser_sustainers_upgrade'] = $group;
+  }
+}
+
+/**
+ * Implements hook_form_alter().
+ */
+function fundraiser_sustainers_upgrade_form_alter(&$form, &$form_state, $form_id) {
+  // Empty function needed for hook_implements_alter to work with hook_form_id_alter.
+}
+
+
+/**
+ * Implements hook_springboard_admin_form_page_types_alter().
+ *
+ * See comment in fundraiser_sustainers_upgrade_module_implements_alter().
+ */
+function fundraiser_sustainers_upgrade_springboard_admin_form_page_types_alter(&$display_types, $springboard_type) {
+  $types = node_type_get_types();
+  $display_types['sustainers_upgrade_form'] = $types['sustainers_upgrade_form'];
+}
+/**
+ * Implements hook_springboard_views_springboard_dashboard_panes_alter().
+ *
+ * Springboard admin excludes non-webform user forms from display.
+ * Add our form here, too.
+ */
+function fundraiser_sustainers_upgrade_springboard_views_springboard_dashboard_panes_alter(&$webform_types) {
+  $webform_types[] = 'sustainers_upgrade_form';
+}
+
+/**
+ * Implements hook_views_prerender().
+ *
+ * Springboard admin module expects there to be a webform_user_internal_name
+ * field on your node. Sustainer upgrade does not have that, so we populate
+ * the view result with a different field's value.
+ */
+function fundraiser_sustainers_upgrade_views_pre_render(&$view) {
+  if ($view->name =='sbv_forms') {
+    foreach ($view->result as $key => $result) {
+      if ($result->node_type == 'sustainers_upgrade_form') {
+        if(isset($result->_field_data)) {
+          $node = $result->_field_data['nid']['entity'];
+        }
+        elseif(isset($result->nid)) {
+          $node = node_load($result->nid);
+        }
+        if (!empty($node)) {
+          $field = field_get_items('node', $node, 'field_sustainers_upgrade_name');
+          if (!empty($field[0]) && isset($view->result[$key]->field_field_webform_user_internal_name)) {
+            $value = field_view_value('node', $node, 'field_sustainers_upgrade_name', $field[0]);
+            $view->result[$key]->field_field_webform_user_internal_name[0]['rendered']['#markup'] = $value['#markup'];
+            $view->result[$key]->field_field_webform_user_internal_name[0]['rendered']['#access'] = TRUE;
+          }
+        }
+      }
+    }
+  }
+}
+
+/**
+ * Implements hook_form_FORM_ID_alter().
+ *
+ * Add our settings to fundraiser sustainer settings form.
+ */
+function fundraiser_sustainers_upgrade_form_fundraiser_admin_settings_alter(&$form, &$form_state) {
+  $form['fundraiser_sustainers']['upgrade'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Fundraiser Sustainers Upgrade'),
+    '#collapsible' => TRUE,
+    '#collapsed' => FALSE,
+  );
+
+  $form['fundraiser_sustainers']['upgrade']['fundraiser_sustainers_upgrade_default_form'] = array(
+    '#title' => t('Default sustainers upgrade form'),
+    '#description' => t('Enter the node ID of the default form. If a request is missing a node ID, this form will be selected.'),
+    '#type' => 'textfield',
+    '#default_value' => variable_get('fundraiser_sustainers_upgrade_default_form', ''),
+  );
+}
+
+/**
+ * Implements hook_node_view().
+ *
+ * Show/Hide the default failure message and failure reason based on
+ * donation status result.
+ */
+function fundraiser_sustainers_upgrade_node_view($node) {
+  if ($node->type == 'sustainers_upgrade_form') {
+    $node->content['field_sustainers_upgrade_fail'][0]['#access'] = FALSE;
+    $payload = fundraiser_sustainers_upgrade_get_session_payload();
+
+    if (empty($payload)) {
+      $node->content['field_sustainers_upgrade_fail'][0]['#access'] = TRUE;
+    }
+    else {
+      $status = fundraiser_sustainers_upgrade_check_donation_status($payload);
+      if (!empty($status['donation']) && !empty($status['recurring'])) {
+        $token_set = array(
+          'donation' => $status['donation'],
+          'recurring' => $status['recurring'],
+        );
+        $node->content['body'][0]['#markup'] = token_replace($node->content['body'][0]['#markup'], $token_set);
+      }
+    }
+  }
+}
+
+/**
+ * Implements hook_webform_client_form_alter().
+ *
+ * Load the donation object and recurring array into the form if valid session
+ * info is found. Hide the submit button if it isn't.
+ */
+function fundraiser_sustainers_form_webform_client_form_alter(&$form, &$form_state) {
+  if (!empty($form['#node']) && $form['#node']->type == 'sustainers_upgrade_form') {
+
+    if (isset($_SESSION['next_donation'])) {
+      unset($_SESSION['next_donation']);
+    }
+
+    // Get the session values created by springboard_hmac.module.
+    $payload = fundraiser_sustainers_upgrade_get_session_payload();
+
+    // If there are no session values, stop everything and
+    //  display a failure message, even on auto-submit forms.
+    if (empty($payload)) {
+
+      $status['status'] = t('No Session values found.');
+      fundraiser_sustainer_upgrade_stop_at_form($form, $status);
+    }
+    else {
+
+      // Get the appropriate status messages and donation objects
+      // based on payload values.
+      $status = fundraiser_sustainers_upgrade_check_donation_status($payload);
+
+      $form['payload'] = array(
+        '#type' => 'value',
+        '#value' => $payload,
+      );
+      $form['donation'] = array(
+        '#type' => 'value',
+        '#value' => !empty($status['donation']) ? $status['donation'] : FALSE,
+      );
+      $form['recurring'] = array(
+        '#type' => 'value',
+        '#value' => !empty($status['recurring']) ? $status['recurring'] : FALSE,
+      );
+      $form['status'] = array(
+        '#type' => 'value',
+        '#value' => $status,
+      );
+
+      // Add the submit and validate hooks.
+      $form['#validate'][] = 'fundraiser_sustainers_upgrade_form_validate';
+      // Submit hook for donation updates or errors.
+      array_unshift($form['#submit'], 'fundraiser_sustainers_upgrade_form_submit');
+      // Submit hook for confirmation token replacement.
+      $form['#submit'][] = 'fundraiser_sustainers_upgrade_form_confirm_redirect_submit';
+
+
+      // For these two statuses, prevent submissions.
+      $stop_in_tracks = array(
+        'Donation ID not found in database.',
+        'Donation ID not found in session.',
+      );
+      if (in_array($status['status'], $stop_in_tracks)) {
+        fundraiser_sustainer_upgrade_stop_at_form($form, $status);
+      }
+      else {
+        // Add the javascript for an auto-submit if that option is selected.
+        // and exempt admin users from auto-submit/
+        $field = field_get_items('node', $form['#node'], 'field_sustainers_auto_upgrade');
+        if (empty($field[0]) && !user_access('access springboard dashboard')) {
+          $js = drupal_get_path('module', 'fundraiser_sustainers_upgrade') . '/js/sustainers-upgrade-autosubmit.js';
+          $form['#attached']['js'][] = $js;
+        }
+        elseif (!empty($field[0]) && user_access('access springboard dashboard')) {
+          // Show a message about auto-submit for admins.
+          drupal_set_message('You are logged in as an adminstrative user. The upgrade form will not auto-submit.', 'notice');
+        }
+      }
+    }
+  }
+}
+
+/**
+ * Webform client form validation.
+ *
+ * Update the hidden component values prior to submission.
+ * These values mostly get synced to saleforce.
+ *
+ * @param $form
+ * @param $form_state
+ */
+function fundraiser_sustainers_upgrade_form_validate(&$form, &$form_state) {
+  $payload = $form_state['values']['payload'];
+  $node = $form['#node'];
+  $components = $node->webform['components'];
+  foreach ($components as $key => $component) {
+    if (strpos($component['form_key'], 'fsu_') !== FALSE) {
+      $component_hierarchy = _fundraiser_sustainers_upgrade_parse_form($node->nid, $components);
+      $field = &_fundraiser_sustainers_upgrade_find_field($form, $component_hierarchy[$component['form_key']]);
+      switch ($component['form_key']) {
+        case 'fsu_did':
+          $value = !empty($payload['did']) ? $payload['did'] : '';
+          form_set_value($field, $value, $form_state);
+          break;
+        case 'fsu_uid':
+          $value = !empty($payload['uid']) ? $payload['uid'] : '';
+          form_set_value($field, $value, $form_state);
+          break;
+        case 'fsu_amount':
+          $value = !empty($payload['amount']) ? $payload['amount'] : '';
+          form_set_value($field, $value, $form_state);
+          break;
+        case 'fsu_url':
+          $value = url(current_path(), array('absolute' => TRUE, 'query' => drupal_get_query_parameters()));
+          form_set_value($field, $value, $form_state);
+          break;
+        case 'fsu_nid':
+          $value = $node->nid;
+          form_set_value($field, $value, $form_state);
+          break;
+        case 'fsu_timestamp':
+          $value = time();
+          form_set_value($field, $value, $form_state);
+          break;
+        case 'fsu_fail_flag':
+          if ($form_state['values']['status']['status'] != 'valid') {
+            $value = $form_state['values']['status']['status'];
+            form_set_value($field, $value, $form_state);
+          }
+          break;
+        case 'fsu_confirmation_email':
+          $uid = !empty($payload['uid']) ? $payload['uid'] : '';
+          if (!empty($uid)) {
+            $account = user_load($uid);
+            form_set_value($field, $account->mail, $form_state);
+          }
+          break;
+      }
+    }
+  }
+}
+
+/**
+ * Submit the new donation amount and clear the session.
+ *
+ * @param $form
+ * @param $form_state
+ */
+function fundraiser_sustainers_upgrade_form_submit($form, $form_state) {
+
+  $payload = $form_state['values']['payload'];
+  $status = $form_state['values']['status'];
+
+  // Check for errors or update the Fundraiser sustainers record.
+  // We've got errors
+  if (empty($payload) || (empty($status['status']) || $status['status'] != 'valid')) {
+
+    $submitted = $form_state['values']['submitted'];
+    $flat = _fundraiser_webform_submission_flatten($form['#node']->nid, $submitted);
+    //$node->content['field_sustainers_upgrade_fail'][0]['#access'] = TRUE;
+
+    // Display the error.
+    drupal_set_message($status['status'], 'error');
+    // Log the error.
+    $variables = array(
+      '@status' => $status['status'],
+      '@url'    => $flat['fsu_url'],
+      '@uid'    => $flat['fsu_uid'],
+      '@did'    => $flat['fsu_did'],
+      '@amount' => $flat['fsu_amount'],
+      '@timestamp' => $flat['fsu_timestamp'],
+    );
+    $message = 'Sustainer upgrade failed: @status | Amount: @amount | Donation ID: @did | Timestamp: @timestamp | URL: @url';
+    watchdog('Sustainers Upgrade', $message, $variables, WATCHDOG_ERROR);
+  }
+  else {
+    // We've got an update.
+    // Update the sustainers record.
+    $donation = $form_state['values']['donation'];
+    $next_donation = fundraiser_donation_get_donation($form_state['values']['recurring'][0]->did);
+    $fee_currency_code = $next_donation->donation['currency']['code'];
+
+    // @todo Check this.
+    $formatted_amount = commerce_currency_format($payload['amount'], $fee_currency_code, NULL, FALSE);
+
+    _fundraiser_sustainers_donation_amount_form_update_donations($donation->recurring->master_did, $payload['amount'], $formatted_amount, 'Sustainer Upgrade Module');
+    $_SESSION['next_donation'] = array('master_did' => $next_donation['master_did'], 'amount' => $next_donation['amount']);
+
+  }
+}
+
+
+/**
+ * Submit helper for upgrade form.
+ *
+ * Replaces tokens when there is a confirmation redirect.
+ *
+ * @param $form
+ * @param $form_state
+ */
+function fundraiser_sustainers_upgrade_form_confirm_redirect_submit($form, $form_state) {
+
+  $payload = $form_state['values']['payload'];
+  $status = $form_state['values']['status'];
+
+  if (empty($payload) || (empty($status['status']) || $status['status'] != 'valid')) {
+
+    $donation = $form_state['values']['donation'];
+
+    // Replace confirmation tokens if there is a redirect.
+    $node = $form['#node'];
+    if ($node->webform['redirect_url'] != '<confirmation>') {
+      fundraiser_sustainers_upgrade_clear_session_payload();
+      $confirmation = $form['#node']->webform['confirmation'];
+      $dsm_statuses = drupal_get_messages('status');
+      $token_set = array(
+        'donation' => $donation,
+      );
+      $confirmation_replaced = token_replace($confirmation, $token_set);
+      $message = check_markup($confirmation_replaced, $node->webform['confirmation_format'], '', TRUE);
+      drupal_set_message($message);
+      if (!empty($dsm_statuses['status'])) {
+        $match = check_markup($confirmation, $node->webform['confirmation_format'], '', TRUE);
+        foreach ($dsm_statuses['status'] as $dsm_status) {
+          if (strcmp($dsm_status, $match) !== 0) {
+            drupal_set_message(check_markup($dsm_status, 'full_html', '', TRUE));
+          }
+        }
+      }
+    }
+  }
+}
+
+/**
+ * Log status and hide actions array if there are no payload session values.
+ *
+ * @param $form
+ * @param $status
+ */
+function fundraiser_sustainer_upgrade_stop_at_form(&$form, $status) {
+  drupal_set_message($status['status'], 'error');
+  $variables = array(
+    '@status' => $status['status'],
+    '@url'    => url(current_path(), array('absolute' => TRUE, 'query' => drupal_get_query_parameters())),
+  );
+  watchdog('Sustainers Upgrade', '@status URL: @url', $variables);
+
+  $form['actions']['#access'] = FALSE;
+}
+
+/**
+ * A validation helper.
+ *
+ * Get the donation object and recurring array, and validate its eligibility
+ * for an upgrade.
+ *
+ * @param $payload
+ * @return array
+ */
+function fundraiser_sustainers_upgrade_check_donation_status($payload) {
+  $status = &drupal_static(__FUNCTION__);
+  if (!isset($status)) {
+    if (!empty($payload['did'])) {
+      $donation = fundraiser_donation_get_donation($payload['did']);
+      if (!empty($donation)) {
+        $min_amount = isset($donation->node->minimum_donation_amount) ? $donation->node->minimum_donation_amount : 0;
+        $recurring = _fundraiser_sustainers_get_donations_recurr_remaining($payload['did']);
+        $message = fundraiser_sustainers_upgrade_get_status_message($recurring, $donation, $payload, $min_amount);
+        $status = array(
+          'status' => $message,
+          'donation' => $donation,
+          'recurring' => $recurring
+        );
+      }
+      else {
+        $status = array(
+          'status' => t('Donation ID not found in database.'),
+          'donation' => FALSE,
+          'recurring' => FALSE
+        );
+      }
+    }
+    else {
+      $status = array(
+        'status' => t('Donation ID not found in session.'),
+        'donation' => FALSE,
+        'recurring' => FALSE
+      );
+    }
+  }
+  return $status;
+}
+
+
+/**
+ * Get the appropriate status messages. Validation helper helper.
+ *
+ * @param $recurring
+ * @param $donation
+ * @param $payload
+ * @param $min_amount
+ * @return string
+ */
+function fundraiser_sustainers_upgrade_get_status_message($recurring, $donation, $payload, $min_amount) {
+
+  $messages = array();
+
+  // Make sure the gateway supports recurring. This should never happen.
+  $info = _fundraiser_get_donation_gateway($donation->did);
+  $method = $info['gateway_details']['method_id'];
+  if ($method != 'commerce_payment_example' && !_fundraiser_sustainers_supports_recurring($info['allow_recurring'], $donation->donation['payment_method'])) {
+    $messages[] = t('The gateway does not support recurring donations.');
+  }
+  // Must be a recurring donation.
+  elseif (empty($donation->recurring)) {
+    $messages[] = t('Not a recurring donation.');
+  }
+  // Must not be finished.
+  elseif (empty($recurring)) {
+    $messages[] = t('No recurring donations remaining.');
+  }
+  else {
+    // The statuses above are mutually exclusive.
+    // The statuses below could allow occur at the same time.
+    $node_currency = fundraiser_get_currency_from_node($donation->node);
+    $formatted_minimum = commerce_currency_format($min_amount, $node_currency['code'], NULL, FALSE);
+
+    // Donation UID must match the session payload UID.
+    if ($donation->uid != $payload['uid']) {
+      $messages[] = t('Donation ID does not match User ID.');
+    }
+
+    // Payload amount must be greater than min amount.
+    // @todo determine how these numbers will be formatted.
+    if ($payload['amount'] < $min_amount) {
+      $messages[] = t('Donation amount must be greater than @minimum.', array('@minimum' => $formatted_minimum));
+    }
+
+    // Payload Donation ID must be a master donation ID.
+    if ($recurring[0]->master_did != $payload['did']) {
+      $messages[] = t('Incorrect donation ID.');
+    }
+
+    // Payload amount must be numeric.
+    if (!is_numeric($payload['amount'])) {
+      $messages[] = t('Donation amount must be a valid number.');
+    }
+
+    // Payload amount must be greater than current recurring amount.
+    if (($payload['amount'] <= $recurring[0]->amount) && empty($payload['rollback'])) {
+      $messages[] = t('The upgrade amount is lower than or equal to the current donation.');
+    }
+  }
+
+  if(empty($messages)) {
+    $messages[] = 'valid';
+  }
+
+  $message = implode(' ', $messages);
+
+  return $message;
+}
+
+/**
+ * Temporary bogus session loader.
+ *
+ * @return array
+ */
+function fundraiser_sustainers_upgrade_get_session_payload() {
+  $payload = array();
+  $payload['timestamp'] = $_SESSION['springboard_hmac']['timestamp'] = time();
+  $payload['uid'] =  $_SESSION['springboard_hmac']['uid'] = 1;
+  $payload['did'] = $_SESSION['springboard_hmac']['0'] = 16;
+  $payload['amount'] = $_SESSION['springboard_hmac']['1'] = 20;
+  $payload['nid'] = $_SESSION['springboard_hmac']['2'] = 2;
+  $payload['rollback'] = $_SESSION['springboard_hmac']['3'] = 'rollback';
+  return $payload;
+}
+
+/**
+ * Clear the session.
+ */
+function fundraiser_sustainers_upgrade_clear_session_payload() {
+  unset($_SESSION['springboard_hmac']);
+}
+
+/**
+ * Implements hook_token_info().
+ *
+ * Define the sustainer upgrade name/cancel token.
+ */
+function fundraiser_sustainers_upgrade_token_info() {
+
+  $types['sustainer_upgrade'] = array(
+    'name' => t("Sustainer Upgrades"),
+    'description' => t("Tokens for sustainer upgrades."),
+  );
+
+  $tokens['name_or_signout'] = array(
+    'name' => t("Sustainer name and cancel link"),
+    'description' => 'Displays the sustainers first name and a cancel link',
+  );
+
+  $tokens['rollback'] = array(
+    'name' => t("Rollback link to undo a sustainer upgrade."),
+    'description' => '',
+  );
+
+  $tokens['upgrade_amount'] = array(
+    'name' => t("Sustainer name and cancel link"),
+    'description' => 'Displays the sustainers first name and a cancel link',
+  );
+
+  $tokens['next_charge_amount_formatted'] = array(
+    'name' => t("Sustainer name and cancel link"),
+    'description' => 'Displays the sustainers first name and a cancel link',
+  );
+
+  $tokens['charges_remaining'] = array(
+    'name' => t("Sustainer name and cancel link"),
+    'description' => 'Displays the sustainers first name and a cancel link',
+  );
+
+  return array(
+    'types' => $types,
+    'tokens' => array(
+      'sustainer_upgrade' => $tokens,
+    ),
+  );
+}
+
+/**
+ * Implements hook_tokens().
+ */
+function fundraiser_sustainers_upgrade_tokens($type, $tokens, $data = array(), $options = array()) {
+  $replacements = array();
+  if ($type == 'sustainer_upgrade') {
+    $payload = fundraiser_sustainers_upgrade_get_session_payload();
+    foreach ($tokens as $name => $original) {
+      switch ($name) {
+        case 'name_or_signout':
+          if (!empty($payload['uid'])) {
+            $account = user_load($payload['uid']);
+            $first_name = field_get_items('user', $account, 'sbp_first_name');
+            if (!empty($first_name[0])) {
+              $value = field_view_value('user', $account, 'sbp_first_name', $first_name[0]);
+              $value = $value['#markup'];
+            }
+            else {
+              $value = check_plain($account->mail);
+            }
+            $replacements[$original] = $value . " (I'm Not " . l($value, 'sustainer-upgrade/cancel', array('absolute' => TRUE)) .  ")";
+          }
+          break;
+        case 'upgrade_amount':
+          if (!empty($payload['amount'])) {
+            // @todo what kind of formatting will this need?
+            $replacements[$original] = $payload['amount'];
+          }
+          break;
+        case 'next_charge_amount_formatted':
+          $status = fundraiser_sustainers_upgrade_check_donation_status($payload);
+          if ($status['status'] == 'valid') {
+            $order = commerce_order_load($status['recurring'][0]->did);
+            $order_wrapper = entity_metadata_wrapper('commerce_order', $order);
+            $order_total = $order_wrapper->commerce_order_total->value();
+            $replacements[$original] = commerce_currency_format($order_total['amount'], $order_total['currency_code']);
+          }
+          break;
+        case 'charges_remaining':
+          $status = fundraiser_sustainers_upgrade_check_donation_status($payload);
+          if ($status['status'] == 'valid') {
+            $replacements[$original] = count($status['recurring']);
+          }
+          break;
+        case 'rollback':
+          $status = fundraiser_sustainers_upgrade_check_donation_status($payload);
+          if ($status['status'] == 'valid') {
+            $link = fundraiser_sustainers_upgrade_create_link($payload, TRUE);
+            $replacements[$original] = $link;
+          }
+          break;
+      }
+    }
+  }
+  return $replacements;
+}
+
+function fundraiser_sustainers_upgrade_create_link($payload, $rollback = FALSE) {
+  $link = '';
+  if ($rollback) {
+    $master_did = !empty($_SESSION['next_donation']['master_did']) ? $_SESSION['next_donation']['master_did'] : FALSE;
+    $amount = !empty($_SESSION['next_donation']['amount']) ? $_SESSION['next_donation']['amount'] : FALSE;
+    if ($master_did != $payload['did']) {
+      return $link;
+    }
+  }
+  else {
+    $amount = $payload['amount'];
+  }
+
+  $time = time();
+  $values = array(
+    $payload['uid'],
+    $time,
+    'su',
+    $amount,
+    $payload['did'],
+    $payload['nid'],
+  );
+
+  if ($rollback == TRUE) {
+    $values[] = 'rollback';
+    $payload_string = "{$payload['uid']}.{$time}.su.{$amount}.{$payload['did']}.{$payload['nid']}.rollback";
+  }
+  else {
+    $payload_string = "{$payload['uid']}.{$time}.su.{$amount}.{$payload['did']}.{$payload['nid']}";
+  }
+
+  $payload_string = urlencode(base64_encode($payload_string));
+  $key = springboard_hmac_get_key();
+  $hmac = urlencode(springboard_hmac_create_hmac($values, $key));
+  $link = l('hmac/' . $payload_string . '/' . $hmac, array('absolute' => TRUE));
+
+  return $link;
+}
+
+/**
+ * Implements hook_form_node_type_form_alter().
+ *
+ * Disable fundraiser and webform user options on content type form.
+ */
+function fundraiser_sustainers_upgrade_form_node_type_form_alter(&$form, &$form_state) {
+  if (isset($form['#node_type']) && $form['#node_type'] == 'sustainers_upgrade_form') {
+    $form['fundraiser_type']['#disabled'] = TRUE;
+    $form['fundraiser_type']['fundraiser']['#description'] =  t('This option is not available for sustainers upgrade forms.');
+    $form['webform_user']['#disabled'] = TRUE;
+    $form['webform_user']['webform_user']['#description'] =  t('This option is not available for sustainers upgrade forms.');
+  }
+}
+
+/**
+ * Implements hook_preprocess_hook().
+ *
+ * Replace the donation tokens if present.
+ */
+function fundraiser_sustainers_upgrade_preprocess_webform_confirmation(&$vars) {
+  if ($vars['node']->type == 'sustainers_upgrade_form') {
+
+    $payload = fundraiser_sustainers_upgrade_get_session_payload();
+    if (!empty($payload)) {
+      $status = fundraiser_sustainers_upgrade_check_donation_status($payload);
+      if ($status['status'] == 'valid') {
+        $donation = fundraiser_donation_get_donation($payload['did']);
+        // Do token replacement.
+        $token_set = array(
+          'donation' => $donation,
+        );
+        // This is weird that the node object needs to be altered.
+        $nwc = token_replace($vars['node']->webform['confirmation'], $token_set);
+        $vars['node']->webform['confirmation'] = $nwc;
+        $cm = token_replace($vars['confirmation_message'], $token_set);
+        $vars['confirmation_message'] = $cm;
+      }
+    }
+  }
+
+}
+
+/**
+ * Implements hook_process_webform_confirmation().
+ *
+ * Clear the session payload after the confirmation has been built.
+ */
+function fundraiser_sustainers_process_webform_confirmation(&$vars) {
+  fundraiser_sustainers_upgrade_clear_session_payload();
+}
+
+
+
+/**
+ * Implements hook_node_insert().
+ *
+ * Insert Webform components.
+ */
+function fundraiser_sustainers_upgrade_node_insert($node) {
+  if ($node->type == 'sustainers_upgrade_form') {
+    module_load_include('inc', 'fundraiser_sustainers_upgrade', 'includes/fundraiser_sustainers_upgrade.components');
+    fundraiser_sustainers_upgrade_insert_components($node);
+  }
+}
+
+
+/**
+ * Find fields if nested.
+ *
+ * Used by the validation hook to help set component field values.
+ *
+ * @param $form
+ * @param $path
+ * @return mixed
+ */
+function &_fundraiser_sustainers_upgrade_find_field(&$form, $path) {
+  if (is_array($path)) {
+    foreach (array_keys($path) as $v) {
+      if (is_array($path[$v]) && count($path[$v])) { // if there are more keys
+        return _fundraiser_sustainers_upgrade_find_field($form[$v], $path[$v]);
+      }
+      else {
+        return $form[$v];
+      }
+    }
+  }
+}
+
+/**
+ *  * Helper function to get component parents.
+ *
+ * @param $nid
+ * @param $components
+ * @return array
+ */
+function _fundraiser_sustainers_upgrade_parse_form($nid, $components) {
+  $component_hierarchy = array();
+  foreach ($components as $cid => $component) {
+    $component_path = 'submitted[' . implode('][', fundraiser_sustainers_upgrade_walk_component_hierarchy($nid, $cid)) . ']';
+    parse_str($component_path, $output); // convert string to a nested array
+    $component_hierarchy[$component['form_key']] = $output;
+  }
+  return $component_hierarchy;
+}
+
+/**
+ * Helper function to get component parents.
+ *
+ * @param $nid
+ * @param $cid
+ * @param array $path
+ * @return array
+ */
+function fundraiser_sustainers_upgrade_walk_component_hierarchy($nid, $cid, &$path = array()) {
+  $result = db_query("SELECT cid, pid, form_key FROM {webform_component} WHERE nid = :nid and cid = :cid", array(':nid' => $nid, ':cid' => $cid));
+  foreach ($result as $data) {
+    array_unshift($path, $data->form_key);
+    if ($data->pid > 0) {
+      fundraiser_sustainers_upgrade_walk_component_hierarchy($nid, $data->pid, $path);
+    }
+  }
+  return $path;
+}
