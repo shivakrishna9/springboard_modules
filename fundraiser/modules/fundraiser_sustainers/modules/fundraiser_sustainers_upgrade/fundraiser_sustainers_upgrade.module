@@ -361,6 +361,7 @@ function fundraiser_sustainers_upgrade_form_submit($form, $form_state) {
 
     // Display the error.
     drupal_set_message($status['status'], 'error');
+    $_SESSION[$form['#node']->nid]['stop_mail'] = TRUE;
     // Log the error.
     $variables = array(
       '@status' => $status['status'],
@@ -388,7 +389,6 @@ function fundraiser_sustainers_upgrade_form_submit($form, $form_state) {
 
   }
 }
-
 
 /**
  * Submit helper for upgrade form.
@@ -854,4 +854,18 @@ function fundraiser_sustainers_upgrade_walk_component_hierarchy($nid, $cid, &$pa
     }
   }
   return $path;
+}
+
+/**
+ * Implements hook_mail_alter().
+ *
+ * Stop email wrappers email from sending if upgrade failed.
+ */
+function fundraiser_sustainers_upgrade_mail_alter(&$message) {
+  if (!empty($message['params']['node']) && $message['params']['node']->type == 'sustainers_upgrade_form') {
+    if (!empty($_SESSION[$message['params']['node']->nid]['stop_mail']) && $message['module'] == 'email_wrappers') {
+      $message['send'] = FALSE;
+      unset($_SESSION[$message['params']['node']->nid]['stop_mail']);
+    }
+  }
 }
