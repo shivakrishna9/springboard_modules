@@ -35,13 +35,23 @@ function fundraiser_sustainers_upgrade_menu() {
     'description' => 'Generate query string tokens for testing or use',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('fundraiser_sustainers_upgrade_token_generator'),
-    'access arguments' => array('administer fundraiser sustainers'),
+    'access arguments' => array('administer fundraiser sustainers upgrade'),
     'file' => 'includes/fundraiser_sustainers_upgrade.admin.inc',
     'type' => MENU_LOCAL_TASK,
   );
 
   return $items;
 }
+
+function fundraiser_sustainers_upgrade_permission() {
+  return array(
+    'administer fundraiser sustainers upgrade' => array(
+      'title' => t('Administer fundraiser sustainers upgrade'),
+      'description' => '',
+    ),
+  );
+}
+
 /**
  * Implements hook_springboard_hmac_allowed_actions().
  *
@@ -271,11 +281,11 @@ function fundraiser_sustainers_form_webform_client_form_alter(&$form, &$form_sta
         // Add the javascript for an auto-submit if that option is selected.
         // and exempt admin users from auto-submit/
         $field = field_get_items('node', $form['#node'], 'field_sustainers_auto_upgrade');
-        if (empty($field[0]) && !user_access('access springboard dashboard')) {
+        if (empty($field[0]) && !user_access('administer fundraiser sustainers upgrade')) {
           $js = drupal_get_path('module', 'fundraiser_sustainers_upgrade') . '/js/sustainers-upgrade-autosubmit.js';
           $form['#attached']['js'][] = $js;
         }
-        elseif (!empty($field[0]) && user_access('access springboard dashboard')) {
+        elseif (!empty($field[0]) && user_access('administer fundraiser sustainers upgrade')) {
           // Show a message about auto-submit for admins.
           drupal_set_message('You are logged in as an adminstrative user. The upgrade form will not auto-submit.', 'notice');
         }
@@ -456,7 +466,10 @@ function fundraiser_sustainers_upgrade_form_confirm_redirect_submit($form, $form
  * @param $status
  */
 function fundraiser_sustainer_upgrade_stop_at_form(&$form, $status) {
-  drupal_set_message($status['status'], 'error');
+  if (user_access('administer fundraiser sustainers upgrade')) {
+    drupal_set_message($status['status'], 'error');
+  }
+
   $variables = array(
     '@status' => $status['status'],
     '@url'    => url(current_path(), array('absolute' => TRUE, 'query' => drupal_get_query_parameters())),
