@@ -61,7 +61,6 @@ function fundraiser_sustainers_upgrade_springboard_hmac_allowed_actions() {
   return 'su';
 }
 
-
 /**
  * Implements hook_springboard_hmac_success();
  */
@@ -111,7 +110,6 @@ function fundraiser_sustainers_upgrade_module_implements_alter(&$implementations
 function fundraiser_sustainers_upgrade_form_alter(&$form, &$form_state, $form_id) {
   // Empty function needed for hook_implements_alter to work with hook_form_id_alter.
 }
-
 
 /**
  * Implements hook_springboard_admin_form_page_types_alter().
@@ -382,7 +380,6 @@ function fundraiser_sustainers_upgrade_form_submit($form, $form_state) {
   // Check for errors or update the Fundraiser sustainers record.
   // We've got errors
   if (empty($payload) || (empty($status['status']) || $status['status'] != 'valid')) {
-
     $submitted = $form_state['values']['submitted'];
     $flat = _fundraiser_webform_submission_flatten($form['#node']->nid, $submitted);
     //$node->content['field_sustainers_upgrade_fail'][0]['#access'] = TRUE;
@@ -430,13 +427,14 @@ function fundraiser_sustainers_upgrade_form_confirm_redirect_submit($form, $form
 
   $payload = $form_state['values']['payload'];
   $status = $form_state['values']['status'];
-
+  $node = $form['#node'];
+  $_SESSION['sustainer_upgrade_submit_status_' . $form_state['values']['details']['sid']] = $status;
+  //@todo does not look right
   if (empty($payload) || (empty($status['status']) || $status['status'] != 'valid')) {
 
     $donation = $form_state['values']['donation'];
 
     // Replace confirmation tokens if there is a redirect.
-    $node = $form['#node'];
     if ($node->webform['redirect_url'] != '<confirmation>') {
       fundraiser_sustainers_upgrade_clear_session_payload();
       $confirmation = $form['#node']->webform['confirmation'];
@@ -505,7 +503,8 @@ function fundraiser_sustainers_upgrade_check_donation_status($payload) {
         $message = fundraiser_sustainers_upgrade_get_status_message($recurring, $donation, $payload, $min_amount);
         $status['status'] = $message;
 
-        if ($message == 'valid') {
+        $stop_in_tracks = fundraiser_sustainers_upgrade_stop_in_tracks();
+        if (!in_array($status['status'], $stop_in_tracks)) {
           $status['donation'] = $donation;
           $status['recurring'] = $recurring;
         }
@@ -567,7 +566,6 @@ function fundraiser_sustainers_upgrade_get_status_message($recurring, $donation,
   }
 
   $message = implode(' ', $messages);
-
   return $message;
 }
 
@@ -577,6 +575,7 @@ function fundraiser_sustainers_upgrade_get_status_message($recurring, $donation,
 function fundraiser_sustainers_upgrade_check_recurring_amount($recurring, $donation, $payload, $min_amount) {
   $messages = array();
   // Payload amount must be greater than current recurring amount.
+
   if (($payload['amount'] <= $recurring[0]->amount) && empty($payload['rollback'])) {
     $messages[] = t('The upgrade amount is lower than or equal to the current donation.');
   }
@@ -696,7 +695,8 @@ function fundraiser_sustainers_upgrade_tokens($type, $tokens, $data = array(), $
           break;
         case 'next_charge_amount_formatted':
           $status = fundraiser_sustainers_upgrade_check_donation_status($payload);
-          if ($status['status'] == 'valid') {
+          $stop_in_tracks = fundraiser_sustainers_upgrade_stop_in_tracks();
+          if (!in_array($status['status'], $stop_in_tracks)) {
             $order = commerce_order_load($status['recurring'][0]->did);
             $order_wrapper = entity_metadata_wrapper('commerce_order', $order);
             $order_total = $order_wrapper->commerce_order_total->value();
@@ -705,7 +705,8 @@ function fundraiser_sustainers_upgrade_tokens($type, $tokens, $data = array(), $
           break;
         case 'charges_remaining':
           $status = fundraiser_sustainers_upgrade_check_donation_status($payload);
-          if ($status['status'] == 'valid') {
+          $stop_in_tracks = fundraiser_sustainers_upgrade_stop_in_tracks();
+          if (!in_array($status['status'], $stop_in_tracks)) {
             $replacements[$original] = count($status['recurring']);
           }
           break;
@@ -789,26 +790,35 @@ function fundraiser_sustainers_upgrade_form_node_type_form_alter(&$form, &$form_
  * Replace the donation tokens if present.
  */
 function fundraiser_sustainers_upgrade_preprocess_webform_confirmation(&$vars) {
-  if ($vars['node']->type == 'sustainers_upgrade_form') {
 
-    $payload = fundraiser_sustainers_upgrade_get_session_payload();
-    if (!empty($payload)) {
-      $status = fundraiser_sustainers_upgrade_check_donation_status($payload);
-      if ($status['status'] == 'valid') {
-        $donation = fundraiser_donation_get_donation($payload['did']);
-        // Do token replacement.
-        $token_set = array(
-          'donation' => $donation,
-        );
-        // This is weird that the node object needs to be altered.
-        $nwc = token_replace($vars['node']->webform['confirmation'], $token_set);
-        $vars['node']->webform['confirmation'] = $nwc;
-        $cm = token_replace($vars['confirmation_message'], $token_set);
-        $vars['confirmation_message'] = $cm;
+  if ($vars['node']->type == 'sustainers_upgrade_form' && !empty($vars['sid'])) {
+    $status = isset($_SESSION['sustainer_upgrade_submit_status_' . $vars['sid']]) ? $_SESSION['sustainer_upgrade_submit_status_' .  $vars['sid']] : FALSE;
+    if ($status && $status['status'] == 'valid') {
+
+      $donation = $status['donation'];
+      // Do token replacement.
+      $token_set = array(
+        'donation' => $donation,
+      );
+      // This is weird that the node object needs to be altered.
+      $nwc = token_replace($vars['node']->webform['confirmation'], $token_set);
+      $vars['node']->webform['confirmation'] = $nwc;
+      $cm = token_replace($vars['confirmation_message'], $token_set);
+      $vars['confirmation_message'] = $cm;
+    }
+    else if($status && $status['status'] != 'valid') {
+
+      if (user_access('administer fundraiser sustainers upgrade') && $status) {
+        drupal_set_message($status['status'], 'error', FALSE);
       }
+      $node = $vars['node'];
+      $field = field_get_items('node', $node, 'field_sustainers_upgrade_fail');
+      $value = field_view_value('node', $node, 'field_sustainers_upgrade_fail', $field[0]);
+
+      $vars['node']->webform['confirmation'] = $value['#markup'];
+      $vars['confirmation_message'] = $value['#markup'];
     }
   }
-
 }
 
 /**
@@ -819,8 +829,6 @@ function fundraiser_sustainers_upgrade_preprocess_webform_confirmation(&$vars) {
 function fundraiser_sustainers_process_webform_confirmation(&$vars) {
   fundraiser_sustainers_upgrade_clear_session_payload();
 }
-
-
 
 /**
  * Implements hook_node_insert().
