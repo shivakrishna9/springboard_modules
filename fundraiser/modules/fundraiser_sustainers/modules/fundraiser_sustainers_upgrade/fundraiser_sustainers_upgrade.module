@@ -213,6 +213,9 @@ function fundraiser_sustainers_form_webform_client_form_alter(&$form, &$form_sta
     if (isset($_SESSION['next_donation'])) {
       unset($_SESSION['next_donation']);
     }
+    if (!empty($_SESSION[$form['#node']->nid]['stop_mail'])) {
+      unset($_SESSION[$form['#node']->nid]['stop_mail']);
+    }
 
     // Get the session values created by springboard_hmac.module.
     $payload = fundraiser_sustainers_upgrade_get_session_payload();
@@ -253,11 +256,14 @@ function fundraiser_sustainers_form_webform_client_form_alter(&$form, &$form_sta
       // Submit hook for confirmation token replacement.
       $form['#submit'][] = 'fundraiser_sustainers_upgrade_form_confirm_redirect_submit';
 
-
       // For these two statuses, prevent submissions.
       $stop_in_tracks = array(
         'Donation ID not found in database.',
         'Donation ID not found in session.',
+        'Donation ID is not a master ID.',
+        'Donation User ID does not match User ID.',
+        'Not a recurring donation.',
+        'Non-numeric values in payload.',
         'Donation ID is not a master ID.'
       );
       if (in_array($status['status'], $stop_in_tracks)) {
@@ -385,7 +391,7 @@ function fundraiser_sustainers_upgrade_form_submit($form, $form_state) {
     $formatted_amount = commerce_currency_format($payload['amount'], $fee_currency_code, NULL, FALSE);
 
     _fundraiser_sustainers_donation_amount_form_update_donations($donation->recurring->master_did, $payload['amount'], $formatted_amount, 'Sustainer Upgrade Module');
-    $_SESSION['next_donation'] = array('master_did' => $next_donation['master_did'], 'amount' => $next_donation['amount']);
+    $_SESSION['next_donation'] = array('master_did' => $next_donation->master_did, 'amount' => $next_donation->amount);
 
   }
 }
@@ -438,6 +444,7 @@ function fundraiser_sustainers_upgrade_form_confirm_redirect_submit($form, $form
  * @param $status
  */
 function fundraiser_sustainer_upgrade_stop_at_form(&$form, $status) {
+  dpm("you");
   drupal_set_message($status['status'], 'error');
   $variables = array(
     '@status' => $status['status'],
@@ -501,56 +508,34 @@ function fundraiser_sustainers_upgrade_check_donation_status($payload) {
  * @return string
  */
 function fundraiser_sustainers_upgrade_get_status_message($recurring, $donation, $payload, $min_amount) {
-
   $messages = array();
 
   // Donation UID must match the session payload UID.
   if ($donation->uid != $payload['uid']) {
-    $messages[] = t('Donation User ID does not match User ID.');
-  }
-
-  if (!empty($donation->master_did) && $donation->master_did != $donation->did) {
-    $messages[] = t('Donation ID is not a master ID.');
+    return t('Donation User ID does not match User ID.');
   }
 
   // Must be a recurring donation.
-  if (empty($donation->master_did)) {
-    $messages[] = t('Not a recurring donation.');
+  if (empty($donation->donation['recurs_monthly'])) {
+    return t('Not a recurring donation.');
   }
 
-  // Must not be finished.
-  if (empty($recurring)) {
-    $messages[] = t('No recurring donations remaining.');
+  // Payload must be numeric.
+  if (!is_numeric($payload['amount']) || !is_numeric($payload['did']) || !is_numeric($payload['uid'])) {
+    return t('Non-numeric values in payload.');
+  }
+
+  if (property_exists($donation, 'master_did')) {
+    return t('Donation ID is not a master ID.');
   }
   else {
-    // Payload Donation ID must be a master donation ID.
-    if ($recurring[0]->master_did != $payload['did']) {
-      $messages[] = t('Incorrect donation ID.');
+    // Must not be finished.
+    if (empty($recurring)) {
+      $messages[] = t('No recurring donations remaining.');
     }
-    // Payload amount must be greater than current recurring amount.
-    if (($payload['amount'] <= $recurring[0]->amount) && empty($payload['rollback'])) {
-      $messages[] = t('The upgrade amount is lower than or equal to the current donation.');
+    else {
+      $messages = fundraiser_sustainers_upgrade_check_recurring_amount($recurring, $donation, $payload, $min_amount);
     }
-  }
-
-  $node_currency = fundraiser_get_currency_from_node($donation->node);
-  $formatted_minimum = commerce_currency_format($min_amount, $node_currency['code'], NULL, FALSE);
-  // Payload amount must be greater than min amount.
-  // @todo determine how these numbers will be formatted.
-  if ($payload['amount'] < $min_amount) {
-    $messages[] = t('Donation amount must be greater than @minimum.', array('@minimum' => $formatted_minimum));
-  }
-
-  // Payload amount must be numeric.
-  if (!is_numeric($payload['amount'])) {
-    $messages[] = t('Donation amount must be a valid number.');
-  }
-
-  // Make sure the gateway supports recurring. This should never happen.
-  $info = _fundraiser_get_donation_gateway($donation->did);
-  $method = $info['gateway_details']['method_id'];
-  if ($method != 'commerce_payment_example' && !_fundraiser_sustainers_supports_recurring($info['allow_recurring'], $donation->donation['payment_method'])) {
-    $messages[] = t('The gateway does not support recurring donations.');
   }
 
   if(empty($messages)) {
@@ -561,6 +546,27 @@ function fundraiser_sustainers_upgrade_get_status_message($recurring, $donation,
 
   return $message;
 }
+
+/**
+ * Implements hook_taxonomy_term_delete().
+ */
+function fundraiser_sustainers_upgrade_check_recurring_amount($recurring, $donation, $payload, $min_amount) {
+  $messages = array();
+  // Payload amount must be greater than current recurring amount.
+  if (($payload['amount'] <= $recurring[0]->amount) && empty($payload['rollback'])) {
+    $messages[] = t('The upgrade amount is lower than or equal to the current donation.');
+  }
+  $node_currency = fundraiser_get_currency_from_node($donation->node);
+  $formatted_minimum = commerce_currency_format($min_amount, $node_currency['code'], NULL, FALSE);
+  // Payload amount must be greater than min amount.
+  // @todo determine how these numbers will be formatted.
+  if ($payload['amount'] < $min_amount) {
+    $messages[] = t('Donation amount must be greater than @minimum.', array('@minimum' => $formatted_minimum));
+  }
+  return $messages;
+}
+
+
 
 /**
  * Temporary bogus session loader.
