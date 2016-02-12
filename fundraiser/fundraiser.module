@@ -2307,7 +2307,7 @@ function _fundraiser_refund_form($form, &$form_state, $did) {
   $form['payment_summary']['refunded_total'] = array(
     '#type' => 'item',
     '#title' => t('Refunded Total'),
-    '#markup' => commerce_currency_format($refunded_total, $donation->currency),
+    '#markup' => commerce_currency_format($refunded_total, $donation->currency, NULL, FALSE),
   );
   if (!empty($refund_summary)) {
     $form['payment_summary']['refunded_summary'] = array(
