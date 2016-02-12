@@ -568,14 +568,17 @@ function fundraiser_sustainers_upgrade_get_status_message($recurring, $donation,
  * @return array
  */
 function fundraiser_sustainers_upgrade_get_session_payload() {
-  $payload = array();
-  if (isset($_SESSION['springboard_hmac'])) {
-    $payload['timestamp'] = $_SESSION['springboard_hmac']['timestamp'];
-    $payload['uid'] = $_SESSION['springboard_hmac']['uid'];
-    $payload['amount'] = $_SESSION['springboard_hmac']['0'];
-    $payload['did'] = $_SESSION['springboard_hmac']['1'];
-    $payload['nid'] = $_SESSION['springboard_hmac']['2'];
-    $payload['rollback'] = !empty($_SESSION['springboard_hmac']['3']) ? $_SESSION['springboard_hmac']['3'] : NULL;
+  $payload = &drupal_static(__FUNCTION__);
+  if (!isset($payload)) {
+    $payload = array();
+    if (isset($_SESSION['springboard_hmac'])) {
+      $payload['timestamp'] = $_SESSION['springboard_hmac']['timestamp'];
+      $payload['uid'] = $_SESSION['springboard_hmac']['uid'];
+      $payload['amount'] = $_SESSION['springboard_hmac']['0'];
+      $payload['did'] = $_SESSION['springboard_hmac']['1'];
+      $payload['nid'] = $_SESSION['springboard_hmac']['2'];
+      $payload['rollback'] = !empty($_SESSION['springboard_hmac']['3']) ? $_SESSION['springboard_hmac']['3'] : NULL;
+    }
   }
   return $payload;
 }
