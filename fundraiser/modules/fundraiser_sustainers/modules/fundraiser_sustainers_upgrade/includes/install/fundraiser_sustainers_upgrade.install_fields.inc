@@ -277,7 +277,7 @@ function _fundraiser_sustainers_upgrade_fail_field(&$fields) {
         'default' => array(
           'label' => 'hidden',
           'settings' => array(),
-          'type' => 'hidden',
+          'type' => 'text_long',
           'weight' => 6,
         ),
         'teaser' => array(

@@ -183,20 +183,26 @@ function fundraiser_sustainers_upgrade_node_view($node) {
   if ($node->type == 'sustainers_upgrade_form') {
     $node->content['field_sustainers_upgrade_fail'][0]['#access'] = FALSE;
     $payload = fundraiser_sustainers_upgrade_get_session_payload();
-
     if (empty($payload)) {
       $node->content['field_sustainers_upgrade_fail'][0]['#access'] = TRUE;
     }
     else {
       $status = fundraiser_sustainers_upgrade_check_donation_status($payload);
-      $token_set = array();
-      if (!empty($status['donation'])) {
-        $token_set['donation'] = $status['donation'];
+      $stop_in_tracks = fundraiser_sustainers_upgrade_stop_in_tracks();
+      if (in_array($status['status'], $stop_in_tracks)) {
+        $node->content['field_sustainers_upgrade_fail'][0]['#access'] = TRUE;
+        $node->content['body'][0]['#access'] =  FALSE;
       }
-      if(!empty($status['recurring'])) {
-        $token_set['recurring'] = $status['recurring'];
+      else {
+        $token_set = array();
+        if (!empty($status['donation'])) {
+          $token_set['donation'] = $status['donation'];
+        }
+        if(!empty($status['recurring'])) {
+          $token_set['recurring'] = $status['recurring'];
+        }
+        $node->content['body'][0]['#markup'] = token_replace($node->content['body'][0]['#markup'], $token_set);
       }
-      $node->content['body'][0]['#markup'] = token_replace($node->content['body'][0]['#markup'], $token_set);
     }
   }
 }
@@ -256,17 +262,8 @@ function fundraiser_sustainers_form_webform_client_form_alter(&$form, &$form_sta
       // Submit hook for confirmation token replacement.
       $form['#submit'][] = 'fundraiser_sustainers_upgrade_form_confirm_redirect_submit';
 
+      $stop_in_tracks = fundraiser_sustainers_upgrade_stop_in_tracks();
 
-      // For these two statuses, prevent submissions.
-      $stop_in_tracks = array(
-        'Donation ID not found in database.',
-        'Donation ID not found in session.',
-        'Donation ID is not a master ID.',
-        'Donation User ID does not match User ID.',
-        'Not a recurring donation.',
-        'Non-numeric values in payload.',
-        'Donation ID is not a master ID.'
-      );
       if (in_array($status['status'], $stop_in_tracks)) {
         fundraiser_sustainer_upgrade_stop_at_form($form, $status);
       }
@@ -285,6 +282,20 @@ function fundraiser_sustainers_form_webform_client_form_alter(&$form, &$form_sta
       }
     }
   }
+}
+
+function fundraiser_sustainers_upgrade_stop_in_tracks() {
+  // For these two statuses, prevent submissions.
+  $stop_in_tracks = array(
+    'Donation ID not found in database.',
+    'Donation ID not found in session.',
+    'Donation ID is not a master ID.',
+    'Donation User ID does not match User ID.',
+    'Not a recurring donation.',
+    'Non-numeric values in payload.',
+    'Donation ID is not a master ID.'
+  );
+  return $stop_in_tracks;
 }
 
 /**
