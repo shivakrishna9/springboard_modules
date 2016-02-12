@@ -256,6 +256,7 @@ function fundraiser_sustainers_form_webform_client_form_alter(&$form, &$form_sta
       // Submit hook for confirmation token replacement.
       $form['#submit'][] = 'fundraiser_sustainers_upgrade_form_confirm_redirect_submit';
 
+
       // For these two statuses, prevent submissions.
       $stop_in_tracks = array(
         'Donation ID not found in database.',
@@ -444,7 +445,6 @@ function fundraiser_sustainers_upgrade_form_confirm_redirect_submit($form, $form
  * @param $status
  */
 function fundraiser_sustainer_upgrade_stop_at_form(&$form, $status) {
-  dpm("you");
   drupal_set_message($status['status'], 'error');
   $variables = array(
     '@status' => $status['status'],
