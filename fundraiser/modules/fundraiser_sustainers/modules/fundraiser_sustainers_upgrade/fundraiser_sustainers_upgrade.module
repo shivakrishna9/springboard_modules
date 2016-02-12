@@ -43,6 +43,9 @@ function fundraiser_sustainers_upgrade_menu() {
   return $items;
 }
 
+/**
+ * Implements hook_permission().
+ */
 function fundraiser_sustainers_upgrade_permission() {
   return array(
     'administer fundraiser sustainers upgrade' => array(
@@ -292,6 +295,11 @@ function fundraiser_sustainers_form_webform_client_form_alter(&$form, &$form_sta
   }
 }
 
+/**
+ * Helper for invalid status values.
+ *
+ * @return array
+ */
 function fundraiser_sustainers_upgrade_stop_in_tracks() {
   // For these two statuses, prevent submissions.
   $stop_in_tracks = array(
