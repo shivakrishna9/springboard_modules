@@ -9,7 +9,13 @@ function _fundraiser_sustainers_upgrade_add_example() {
   $node->title = 'Default Sustainers Upgrade Form';
   $node->status = 1;
   $node->promote = 0;
-    $node->body[LANGUAGE_NONE][0]['value'] = '';
+  $node->body[LANGUAGE_NONE][0]['value'] = 'Thank you [donation:first_name] [donation:last_name]  [sustainer_upgrade:name_or_signout] for upgrading your previous donation of  [donation:currency:symbol][donation:amount].
+
+Your original [donation:frequency] donation was made on [donation:payment-transaction:created] with your card ending in [donation:card_number].
+
+You have [sustainer_upgrade:charges_remaining]  charges remaining in the amount of [sustainer_upgrade:next_charge_amount_formatted].
+
+To upgrade your remaining recurring donations by  [donation:currency:symbol][sustainer_upgrade:upgrade_amount], click confirm below.';
   $node->body[LANGUAGE_NONE][0]['format'] = 'filtered_html';
   $node->field_sustainers_upgrade_name[LANGUAGE_NONE][0]['value'] = "Default Sustainers Upgrade Form";
   $node->field_sustainers_upgrade_fail[LANGUAGE_NONE][0]['value'] = "Donation upgrade can not be completed.";
