@@ -692,6 +692,13 @@ function fundraiser_sustainers_upgrade_tokens($type, $tokens, $data = array(), $
   return $replacements;
 }
 
+/**
+ * Create a rollback token link or test upgrade link.
+ *
+ * @param $payload
+ * @param bool $rollback
+ * @return string
+ */
 function fundraiser_sustainers_upgrade_create_link($payload, $rollback = FALSE) {
   $link = '';
   if ($rollback) {
