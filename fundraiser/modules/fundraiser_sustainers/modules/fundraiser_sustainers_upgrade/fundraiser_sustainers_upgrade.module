@@ -194,26 +194,21 @@ function fundraiser_sustainers_upgrade_node_view($node) {
   if ($node->type == 'sustainers_upgrade_form') {
     $node->content['field_sustainers_upgrade_fail'][0]['#access'] = FALSE;
     $payload = fundraiser_sustainers_upgrade_get_session_payload();
-    if (empty($payload)) {
+    $status = fundraiser_sustainers_upgrade_check_donation_status($payload);
+    $stop_in_tracks = fundraiser_sustainers_upgrade_stop_in_tracks();
+    if (in_array($status['status'], $stop_in_tracks)) {
       $node->content['field_sustainers_upgrade_fail'][0]['#access'] = TRUE;
+      $node->content['body'][0]['#access'] =  FALSE;
     }
     else {
-      $status = fundraiser_sustainers_upgrade_check_donation_status($payload);
-      $stop_in_tracks = fundraiser_sustainers_upgrade_stop_in_tracks();
-      if (in_array($status['status'], $stop_in_tracks)) {
-        $node->content['field_sustainers_upgrade_fail'][0]['#access'] = TRUE;
-        $node->content['body'][0]['#access'] =  FALSE;
+      $token_set = array();
+      if (!empty($status['donation'])) {
+        $token_set['donation'] = $status['donation'];
       }
-      else {
-        $token_set = array();
-        if (!empty($status['donation'])) {
-          $token_set['donation'] = $status['donation'];
-        }
-        if(!empty($status['recurring'])) {
-          $token_set['recurring'] = $status['recurring'];
-        }
-        $node->content['body'][0]['#markup'] = token_replace($node->content['body'][0]['#markup'], $token_set);
+      if(!empty($status['recurring'])) {
+        $token_set['recurring'] = $status['recurring'];
       }
+      $node->content['body'][0]['#markup'] = token_replace($node->content['body'][0]['#markup'], $token_set);
     }
   }
 }
@@ -238,58 +233,50 @@ function fundraiser_sustainers_form_webform_client_form_alter(&$form, &$form_sta
     $payload = fundraiser_sustainers_upgrade_get_session_payload();
     // If there are no session values, stop everything and
     //  display a failure message, even on auto-submit forms.
-    if (empty($payload)) {
+    // Get the appropriate status messages and donation objects
+    // based on payload values.
+    $status = fundraiser_sustainers_upgrade_check_donation_status($payload);
 
-      $status['status'] = t('No Session values found.');
-      fundraiser_sustainer_upgrade_stop_at_form($form, $status);
+    $form['payload'] = array(
+      '#type' => 'value',
+      '#value' => $payload,
+    );
+    $form['donation'] = array(
+      '#type' => 'value',
+      '#value' => !empty($status['donation']) ? $status['donation'] : FALSE,
+    );
+    $form['recurring'] = array(
+      '#type' => 'value',
+      '#value' => !empty($status['recurring']) ? $status['recurring'] : FALSE,
+    );
+    $form['status'] = array(
+      '#type' => 'value',
+      '#value' => $status,
+    );
+
+    // Add the submit and validate hooks.
+    $form['#validate'][] = 'fundraiser_sustainers_upgrade_form_validate';
+    // Submit hook for donation updates or errors.
+    array_unshift($form['#submit'], 'fundraiser_sustainers_upgrade_before_webform_submit');
+    // Submit hook for confirmation token replacement.
+    $form['#submit'][] = 'fundraiser_sustainers_upgrade_after_webform_submit';
+
+    $stop_in_tracks = fundraiser_sustainers_upgrade_stop_in_tracks();
+
+    if (in_array($status['status'], $stop_in_tracks)) {
+      fundraiser_sustainer_upgrade_stop_at_form($form, $status, $payload);
     }
     else {
-
-      // Get the appropriate status messages and donation objects
-      // based on payload values.
-      $status = fundraiser_sustainers_upgrade_check_donation_status($payload);
-
-      $form['payload'] = array(
-        '#type' => 'value',
-        '#value' => $payload,
-      );
-      $form['donation'] = array(
-        '#type' => 'value',
-        '#value' => !empty($status['donation']) ? $status['donation'] : FALSE,
-      );
-      $form['recurring'] = array(
-        '#type' => 'value',
-        '#value' => !empty($status['recurring']) ? $status['recurring'] : FALSE,
-      );
-      $form['status'] = array(
-        '#type' => 'value',
-        '#value' => $status,
-      );
-
-      // Add the submit and validate hooks.
-      $form['#validate'][] = 'fundraiser_sustainers_upgrade_form_validate';
-      // Submit hook for donation updates or errors.
-      array_unshift($form['#submit'], 'fundraiser_sustainers_upgrade_before_webform_submit');
-      // Submit hook for confirmation token replacement.
-      $form['#submit'][] = 'fundraiser_sustainers_upgrade_after_webform_submit';
-
-      $stop_in_tracks = fundraiser_sustainers_upgrade_stop_in_tracks();
-
-      if (in_array($status['status'], $stop_in_tracks)) {
-        fundraiser_sustainer_upgrade_stop_at_form($form, $status);
+      // Add the javascript for an auto-submit if that option is selected.
+      // and exempt admin users from auto-submit/
+      $field = field_get_items('node', $form['#node'], 'field_sustainers_auto_upgrade');
+      if (empty($field[0]) && !user_access('administer fundraiser sustainers upgrade')) {
+        $js = drupal_get_path('module', 'fundraiser_sustainers_upgrade') . '/js/sustainers-upgrade-autosubmit.js';
+        $form['#attached']['js'][] = $js;
       }
-      else {
-        // Add the javascript for an auto-submit if that option is selected.
-        // and exempt admin users from auto-submit/
-        $field = field_get_items('node', $form['#node'], 'field_sustainers_auto_upgrade');
-        if (empty($field[0]) && !user_access('administer fundraiser sustainers upgrade')) {
-          $js = drupal_get_path('module', 'fundraiser_sustainers_upgrade') . '/js/sustainers-upgrade-autosubmit.js';
-          $form['#attached']['js'][] = $js;
-        }
-        elseif (!empty($field[0]) && user_access('administer fundraiser sustainers upgrade')) {
-          // Show a message about auto-submit for admins.
-          drupal_set_message('You are logged in as an adminstrative user. The upgrade form will not auto-submit.', 'notice');
-        }
+      elseif (!empty($field[0]) && user_access('administer fundraiser sustainers upgrade')) {
+        // Show a message about auto-submit for admins.
+        drupal_set_message('You are logged in as an adminstrative user. The upgrade form will not auto-submit.', 'notice');
       }
     }
   }
@@ -309,7 +296,8 @@ function fundraiser_sustainers_upgrade_stop_in_tracks() {
     'Donation User ID does not match User ID.',
     'Not a recurring donation.',
     'Non-numeric values in payload.',
-    'Donation ID is not a master ID.'
+    'Donation ID is not a master ID.',
+    'No session values found.'
   );
   return $stop_in_tracks;
 }
@@ -474,16 +462,20 @@ function fundraiser_sustainers_upgrade_after_webform_submit($form, $form_state) 
  * @param $form
  * @param $status
  */
-function fundraiser_sustainer_upgrade_stop_at_form(&$form, $status) {
+function fundraiser_sustainer_upgrade_stop_at_form(&$form, $status, $payload) {
   if (user_access('administer fundraiser sustainers upgrade')) {
     drupal_set_message($status['status'], 'error');
   }
-
   $variables = array(
     '@status' => $status['status'],
     '@url'    => url(current_path(), array('absolute' => TRUE, 'query' => drupal_get_query_parameters())),
+    '@uid'    => isset($payload['uid']) ? $payload['uid'] : '',
+    '@did'    => isset($payload['did']) ? $payload['did'] : '',
+    '@amount' => isset($payload['amount']) ? $payload['amount'] : '',
+    '@timestamp' => isset($payload['timestamp']) ? $payload['timestamp'] : '',
   );
-  watchdog('Sustainers Upgrade', '@status URL: @url', $variables);
+  $message = 'Sustainer upgrade failed: @status | Amount: @amount | Donation ID: @did | Timestamp: @timestamp | URL: @url';
+  watchdog('Sustainers Upgrade', $message, $variables, WATCHDOG_ERROR);
 
   $form['actions']['#access'] = FALSE;
 }
@@ -503,7 +495,6 @@ function fundraiser_sustainers_upgrade_check_donation_status($payload) {
   if (!isset($status)) {
 
     $status = array('status' => '', 'donation' => FALSE, 'recurring' => FALSE);
-
     if (!empty($payload['did'])) {
 
       $donation = fundraiser_donation_get_donation($payload['did']);
