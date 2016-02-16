@@ -25,6 +25,7 @@ function fundraiser_sustainers_upgrade_token_generator($form, $form_state) {
   $form['fundraiser_sustainers_upgrade']['amount'] = array(
     '#type' => 'textfield',
     '#title' => t('Upgrade Amount'),
+    '#description' => t('In cents. $20 = 2000')
   );
   $form['fundraiser_sustainers_upgrade']['did'] = array(
     '#type' => 'textfield',
@@ -36,7 +37,6 @@ function fundraiser_sustainers_upgrade_token_generator($form, $form_state) {
   );
   $form['fundraiser_sustainers_upgrade']['rollback'] = array(
     '#type' => 'checkbox',
-    '#options' => array('Rollback'),
     '#title' => 'Rollback'
   );
 

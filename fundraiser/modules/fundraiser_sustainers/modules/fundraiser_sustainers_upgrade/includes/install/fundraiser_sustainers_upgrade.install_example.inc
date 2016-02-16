@@ -15,7 +15,7 @@ Your original [donation:frequency] donation was made on [donation:payment-transa
 
 You have [sustainer_upgrade:charges_remaining]  charges remaining in the amount of [sustainer_upgrade:next_charge_amount_formatted].
 
-To upgrade your remaining recurring donations by  [donation:currency:symbol][sustainer_upgrade:upgrade_amount], click confirm below.';
+To upgrade your remaining recurring donations to [sustainer_upgrade:upgrade_amount_formatted], click confirm below.';
   $node->body[LANGUAGE_NONE][0]['format'] = 'filtered_html';
   $node->field_sustainers_upgrade_name[LANGUAGE_NONE][0]['value'] = "Default Sustainers Upgrade Form";
   $node->field_sustainers_upgrade_fail[LANGUAGE_NONE][0]['value'] = "Donation upgrade can not be completed.";
@@ -122,10 +122,10 @@ function fundraiser_sustainers_upgrade_email_wrapper_add() {
       'Springboard Example</p>',
   );
   $node->email_wrapper_html_message[LANGUAGE_NONE][0] = array(
-    'value' => 'Hi [sustainer_upgrade:name_or_signout]. Thank you for upgrading your sustaining donation by [sustainer_upgrade:upgrade_amount]',
+    'value' => 'Hi [sustainer_upgrade:name_or_signout]. Thank you for upgrading your sustaining donation by [sustainer_upgrade:upgrade_amount_formatted]',
     'summary' => '',
     'format' => 'filtered_html',
-    'safe_value' => '<p>Hi [sustainer_upgrade:name_or_signout]. Thank you for upgrading your sustaining donation by [sustainer_upgrade:upgrade_amount]</p>',
+    'safe_value' => '<p>Hi [sustainer_upgrade:name_or_signout]. Thank you for upgrading your sustaining donation by [sustainer_upgrade:upgrade_amount_formatted]</p>',
   );
   $node->email_wrapper_text_template[LANGUAGE_NONE][0] = array(
     'value' => 'Thank You' . "\n" .
@@ -143,9 +143,9 @@ function fundraiser_sustainers_upgrade_email_wrapper_add() {
       'Springboard Example',
   );
   $node->email_wrapper_text_message[LANGUAGE_NONE][0] = array(
-    'value' => 'Hi [sustainer_upgrade:name_or_signout]. Thank you for upgrading your sustaining donation by [sustainer_upgrade:upgrade_amount]',
+    'value' => 'Hi [sustainer_upgrade:name_or_signout]. Thank you for upgrading your sustaining donation to [sustainer_upgrade:upgrade_amount_formatted]',
     'format' => 'filtered_html',
-    'safe_value' => '<p>Hi [sustainer_upgrade:name_or_signout]. Thank you for upgrading your sustaining donation by [sustainer_upgrade:upgrade_amount]</p>',
+    'safe_value' => '<p>Hi [sustainer_upgrade:name_or_signout]. Thank you for upgrading your sustaining donation to [sustainer_upgrade:upgrade_amount_formatted]</p>',
   );
   node_save($node);
   // Save extras.
