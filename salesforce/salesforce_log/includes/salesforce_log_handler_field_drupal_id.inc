@@ -32,14 +32,9 @@ class SalesforceLogHandlerFieldDrupalId extends views_handler_field_numeric {
         case 'user':
           $output = l($value, 'user/' . $value);
           break;
-
-        case 'salesforce_donation':
-        case 'fundraiser_sustainers_series':
-          $output = l($value, 'springboard/donations/' . $value);
-          break;
       }
     }
+
     return $output;
   }
-
 }
