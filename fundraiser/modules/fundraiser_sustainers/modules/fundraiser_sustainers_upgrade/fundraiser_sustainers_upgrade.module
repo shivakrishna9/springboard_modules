@@ -878,6 +878,17 @@ function fundraiser_sustainers_upgrade_node_insert($node) {
   }
 }
 
+/**
+ * Implements hook_node_delete().
+ *
+ * Delete a fieldmap when an upgrade node is deelted.
+ */
+function fundraiser_sustainers_upgrade_node_delete($node) {
+  // If node is a message action type.
+  if ($node->type == 'fundraiser_sustainers_upgrade') {
+    salesforce_genmap_delete_map($node->nid, 'webform');
+  }
+}
 
 /**
  * Find fields if nested.
@@ -948,5 +959,16 @@ function fundraiser_sustainers_upgrade_mail_alter(&$message) {
       $message['send'] = FALSE;
       unset($_SESSION[$message['params']['node']->nid]['stop_mail']);
     }
+  }
+}
+
+/**
+ * Implements hook_salesforce_queue_create_item_alter()
+ */
+function fundraiser_sustainers_upgrade_salesforce_queue_create_item_alter(&$item) {
+  if ($item['object_type'] == 'Sustainers_Upgrade__c') {
+    $did = $item['sobject']->fields['Donation_ID__c'];
+    $item['sobject']->fields['Recurring_Donations__c'] = sprintf('[npe03__Recurring_Donation__c:fundraiser_sustainers_series:%d]', $did);
+    $item['sync_rules']['Recurring_Donations__c'] = 'always';
   }
 }
