@@ -4,6 +4,8 @@
  * Code for Fundraiser Sustainers Upgrade.
  */
 
+define('FUNDRAISER_SUSTAINERS_UPGRADE_DEFAULT_MAP_ID', -40);
+
 /**
  * Implements hook_init().
  *
@@ -861,6 +863,18 @@ function fundraiser_sustainers_upgrade_node_insert($node) {
   if ($node->type == 'sustainers_upgrade_form') {
     module_load_include('inc', 'fundraiser_sustainers_upgrade', 'includes/fundraiser_sustainers_upgrade.components');
     fundraiser_sustainers_upgrade_insert_components($node);
+    // And if we have a default map. Salesforce message action default is -20.
+    // Only copy the map for fresh inserts. Webform user will handle clones.
+    $nid = FUNDRAISER_SUSTAINERS_UPGRADE_DEFAULT_MAP_ID;
+    if (empty($node->clone_from_original_nid)) {
+      $map = salesforce_genmap_load_map($nid, 'webform');
+      if (!empty($map)) {
+        // Copy the map to the node.
+        unset($map->mid);
+        $map->nid = $node->nid;
+        salesforce_genmap_save_map($map, 'webform');
+      }
+    }
   }
 }
 

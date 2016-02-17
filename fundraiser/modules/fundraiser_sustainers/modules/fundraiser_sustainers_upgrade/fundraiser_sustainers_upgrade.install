@@ -18,9 +18,12 @@ function fundraiser_sustainers_upgrade_install() {
   module_load_include('inc', 'fundraiser_sustainers_upgrade', 'includes/install/fundraiser_sustainers_upgrade.install');
   module_load_include('inc', 'fundraiser_sustainers_upgrade', 'includes/install/fundraiser_sustainers_upgrade.install_fields');
   module_load_include('inc', 'fundraiser_sustainers_upgrade', 'includes/install/fundraiser_sustainers_upgrade.install_example');
+  module_load_include('inc', 'fundraiser_sustainers_upgrade', 'includes/install/fundraiser_sustainers_upgrade.install_salesforce');
+
 
   _fundraiser_sustainers_upgrade_add_content_type();
   _fundraiser_sustainers_upgrade_add_fields();
+  _fundraiser_sustainers_upgrade_salesforce_install();
   _fundraiser_sustainers_upgrade_add_example();
 }
 
@@ -31,9 +34,11 @@ function fundraiser_sustainers_upgrade_install() {
 function fundraiser_sustainers_upgrade_uninstall() {
   module_load_include('inc', 'fundraiser_sustainers_upgrade', 'includes/install/fundraiser_sustainers_upgrade.install');
   module_load_include('inc', 'fundraiser_sustainers_upgrade', 'includes/install/fundraiser_sustainers_upgrade.install_fields');
+  module_load_include('inc', 'fundraiser_sustainers_upgrade', 'includes/install/fundraiser_sustainers_upgrade.install_salesforce');
 
   _fundraiser_sustainers_upgrade_delete_nodes();
   _fundraiser_sustainers_upgrade_delete_fields();
   node_type_delete('sustainers_upgrade_form');
   field_purge_batch(1000);
+  fundraiser_sustainers_upgrade_salesforce_uninstall();
 }
