@@ -20,7 +20,7 @@ To upgrade your remaining recurring donations to [sustainer_upgrade:upgrade_amou
   $node->field_sustainers_upgrade_name[LANGUAGE_NONE][0]['value'] = "Default Sustainers Upgrade Form";
   $node->field_sustainers_upgrade_fail[LANGUAGE_NONE][0]['value'] = "Donation upgrade can not be completed.";
   $node->webform = array(
-    'confirmation' => 'Hi [sustainer_upgrade:name_or_signout]',
+    'confirmation' => 'Hi [sustainer_upgrade:name_or_signout]. Thank you for upgrading your sustaining donation to [sustainer_upgrade:upgrade_amount_formatted].',
     'confirmation_format' => 'filtered_html',
     'redirect_url' => '<confirmation>',
     'teaser' => 0,
