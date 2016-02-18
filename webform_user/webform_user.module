@@ -1,5 +1,4 @@
 <?php
-
 /**
  * @file
  * Allows administrators to create petition webforms.
@@ -28,7 +27,7 @@ function webform_user_permission() {
     ),
     'administer webform user settings' => array(
       'title' => t('Administer webform user settings'),
-      'description' => t('Configure the Webform User module.')
+      'description' => t('Configure the Webform User module.'),
     ),
   );
 }
@@ -52,8 +51,6 @@ function webform_user_menu() {
     'access arguments' => array('administer webform user settings'),
     'file' => 'webform_user.admin.inc',
   );
-  // For webform user settings page.
-  // 'access arguments' => array('Map webform submissions to Salesforce objects'),
   return $items;
 }
 
@@ -61,7 +58,7 @@ function webform_user_menu() {
  * Implements hook_springboard_admin_alias_patterns().
  */
 function webform_user_springboard_admin_alias_patterns() {
-    return array(
+  return array(
     // Market Source config page.
     'admin/config/content/webform_user' => array(
       'path' => array(
@@ -80,7 +77,7 @@ function webform_user_springboard_admin_alias_patterns() {
 /**
  * Implements hook_springboard_admin_admin_menu_items_alter().
  */
-function webform_user_springboard_admin_admin_menu_items_alter(&$items) {
+function webform_user_springboard_admin_admin_menu_items_alter(array &$items) {
   // Marketing & Analytics > Source Codes.
   $items['admin/springboard/settings']['_children']['admin/springboard/settings/config']['_children']['admin/config/content/webform_user'] = array(
     'link_path' => 'admin/config/content/webform_user',
@@ -90,17 +87,6 @@ function webform_user_springboard_admin_admin_menu_items_alter(&$items) {
     'customized' => 1,
     'weight' => 3,
   );
-  /*
-  // Settings > Settings > Source Codes.
-  $items['admin/springboard/settings']['_children']['admin/springboard/settings/config']['_children']['admin/config/search/market-source'] = array(
-    'link_path' => 'admin/config/search/market-source',
-    'link_title' => 'Source Codes',
-    'menu_name' => 'springboard_admin_menu',
-    'expanded' => 1,
-    'customized' => 1,
-    'weight' => 7,
-  );
-  */
 }
 
 /**
@@ -110,15 +96,15 @@ function webform_user_springboard_admin_admin_menu_items_alter(&$items) {
  * items so more granular access permissions can be added as needed.
  */
 function webform_user_menu_alter(&$items) {
-  // configuration
+  // Configuration.
   $items['node/%webform_menu/webform/configure']['access callback'] = '_webform_user_configure_access';
 
-  //emails
+  // Emails.
   $items['node/%webform_menu/webform/emails']['access callback'] = '_webform_user_email_access';
   $items['node/%webform_menu/webform/emails/%webform_menu_email']['access callback'] = '_webform_user_email_access';
   $items['node/%webform_menu/webform/emails/%webform_menu_email/delete']['access callback'] = '_webform_user_email_access';
 
-  // components
+  // Components.
   $items['node/%webform_menu/webform/components/%webform_menu_component']['access callback'] = '_webform_user_component_access';
   $items['node/%webform_menu/webform/components/%webform_menu_component/clone']['access callback'] = '_webform_user_component_access';
   $items['node/%webform_menu/webform/components/%webform_menu_component/delete']['access callback'] = '_webform_user_component_access';
@@ -139,10 +125,9 @@ function _webform_user_mapping_access($node) {
  * Access callback for webform settings tab.
  *
  * @param string $op
- * Node access op, passed automatically by webform, defaults to 'update'.
- *
+ *   Node access op, passed automatically by webform, defaults to 'update'.
  * @param object $node
- * Node object
+ *   Node object.
  */
 function _webform_user_configure_access($op, $node) {
   if (_webform_user_is_webform_user_node($node)) {
@@ -154,7 +139,7 @@ function _webform_user_configure_access($op, $node) {
     }
   }
   else {
-    // default to standard behavior.
+    // Default to standard behavior.
     return node_access($op, $node);
   }
 }
@@ -163,10 +148,9 @@ function _webform_user_configure_access($op, $node) {
  * Access callback for email settings tab, edit, and delete.
  *
  * @param string $op
- * Node access op, passed automatically by webform, defaults to 'update'.
- *
+ *   Node access op, passed automatically by webform, defaults to 'update'.
  * @param object $node
- * Node object
+ *   Node object.
  */
 function _webform_user_email_access($op, $node) {
   if (_webform_user_is_webform_user_node($node)) {
@@ -178,7 +162,7 @@ function _webform_user_email_access($op, $node) {
     }
   }
   else {
-    // default to standard behavior.
+    // Default to standard behavior.
     return node_access($op, $node);
   }
 }
@@ -187,10 +171,9 @@ function _webform_user_email_access($op, $node) {
  * Access callback for component edit, delete, and clone.
  *
  * @param string $op
- * Node access op, passed automatically by webform, defaults to 'update'.
- *
+ *   Node access op, passed automatically by webform, defaults to 'update'.
  * @param object $node
- * Node object
+ *   Node object.
  */
 function _webform_user_component_access($op, $node) {
   if (_webform_user_is_webform_user_node($node)) {
@@ -202,18 +185,21 @@ function _webform_user_component_access($op, $node) {
     }
   }
   else {
-    // default to standard behavior.
+    // Default to standard behavior.
     return node_access($op, $node);
   }
 }
 
 /**
  * Implements hook_webform_submission_presave().
- * We're using this to prevent webform from changing the owner of a submission when a webform_user submission is edited.
+ *
+ * Prevent webform from changing the owner of a submission when a webform_user
+ * submission is edited.
  */
 function webform_user_webform_submission_presave($node, &$submission) {
   if (_webform_user_is_webform_user_node($node) && isset($submission->sid)) {
-    // Offline or similar processing is taking place, so we skip all checks on user id.
+    // Offline or similar processing is taking place, so we skip all checks on
+    // user id.
     if (isset($submission->webform_user_skip_user_check) && $submission->webform_user_skip_user_check) {
       return;
     }
@@ -225,7 +211,8 @@ function webform_user_webform_submission_presave($node, &$submission) {
   }
 }
 
-// TODO: examine this closely and remove or refactor salesforce-specific code. This should be in a SF-specific module.
+// TODO: examine this closely and remove or refactor salesforce-specific code.
+// This should be in a SF-specific module.
 /**
  * Implements hook_queue_batch_item_alter().
  */
@@ -248,22 +235,10 @@ function webform_user_queue_batch_item_alter(&$object, $type, $action, $oid) {
 }
 
 /**
- * Only show the related object field tab if the form is webform_user and it has been mapped to a salesforce object
- */ // TODO - called from where?
-function _webform_user_check_settings($op) {
-  if ($op == 'Map webform submissions to Salesforce objects') {
-    $node = node_load(arg(1));
-    if (_webform_user_is_webform_user_node($node) && !empty($node->sf_webform_object)) {
-      return TRUE;
-    }
-  }
-  return FALSE;
-}
-
-/**
  * Implements hook_form_alter().
  *
- * Alter content type settings to add 'Enable fundraiser?' checkbox on node content types.
+ * Alter content type settings to add 'Enable fundraiser?' checkbox on node
+ * content types.
  */
 function webform_user_form_node_type_form_alter(&$form, &$form_state) {
   if (isset($form['type'])) {
@@ -278,8 +253,7 @@ function webform_user_form_node_type_form_alter(&$form, &$form_state) {
       '#type' => 'checkbox',
       '#title' => t('Enable webform user?'),
       '#default_value' => variable_get('webform_user_' . $form['#node_type']->type, FALSE),
-      '#description' => t('Enable this checkbox if this content type should allow webform submissions to set user profile information. ' .
-        'Enabling this will also enable webform if not already active.'),
+      '#description' => t('Enable this checkbox if this content type should allow webform submissions to set user profile information. Enabling this will also enable webform if not already active.'),
     );
     $form['webform_user']['settings'] = array(
       '#title' => t('Additional settings'),
@@ -307,10 +281,12 @@ function webform_user_form_node_type_form_alter(&$form, &$form_state) {
  * Submit handler for fundraiser_form_node_type_form_alter.
  */
 function webform_user_form_node_type_form_alter_submit(&$form, &$form_state) {
-  // NOTE: we need to make sure if there are other things toggling this value not to untoggle it.
+  // NOTE: we need to make sure if there are other things toggling this value
+  // not to untoggle it.
   _webform_user_toggle_webform($form_state['values']['type'], $form_state['values']['webform_user']);
   if ($form_state['values']['webform_user'] == 1 && $form_state['values']['fundraiser'] != 1) {
-    //  node type uses webform user but not fundraiser, add "internal name" field
+    // Node type uses webform user but not fundraiser, add "internal name"
+    // field.
     module_load_include('inc', 'webform_user', 'includes/webform_user.fields');
     _webform_user_add_default_fields($form_state['values']['type']);
   }
@@ -323,24 +299,22 @@ function _webform_user_toggle_webform($type, $is_enabled = TRUE) {
   $webform_node_types = variable_get('webform_node_types', array('webform'));
   $webform_node_types_primary = variable_get('webform_node_types_primary', array('webform'));
   // Make sure this content type is enabled for webform if not already.
-  // Add the selected node types to the webform_node_types_primary so a webform is added by default.
+  // Add the selected node types to the webform_node_types_primary so a webform
+  // is added by default.
   if ($is_enabled) {
     $webform_node_types = array_merge($webform_node_types, array($type));
     $webform_node_types_primary = array_merge($webform_node_types_primary, array($type));
   }
-// If disabled, we leave it as a webform for other modules to use.
-//  else {
-//    $webform_node_types = array_diff($webform_node_types, array($type));
-//    $webform_node_types_primary = array_diff($webform_node_types_primary, array($type));
-//  }
   // Re-save the variables.
   variable_set('webform_node_types', array_unique($webform_node_types));
   variable_set('webform_node_types_primary', array_unique($webform_node_types_primary));
 }
 
 /**
- * Implements hook_form_FORM_ID_alter() to remove the "no redirect (reload current page)" option
- * if webform_user is enabled to prevent user creation.
+ * Implements hook_form_FORM_ID_alter().
+ *
+ * Removes the "no redirect (reload current page)" option if webform_user is
+ * enabled to prevent user creation.
  */
 function webform_user_form_webform_configure_form_alter(&$form, &$form_state, $form_id) {
   $node = node_load($form['nid']['#value']);
@@ -351,7 +325,7 @@ function webform_user_form_webform_configure_form_alter(&$form, &$form_state, $f
 
 
 /**
- * Implements hook_form_BASE_FORM_ID_alter() for node forms.
+ * Implements hook_form_BASE_FORM_ID_alter().
  */
 function webform_user_form_node_form_alter(&$form, &$form_state, $form_id) {
   // Modify the options on a specific instance of this node type.
@@ -364,13 +338,13 @@ function webform_user_form_node_form_alter(&$form, &$form_state, $form_id) {
       '#collapsed' => TRUE,
       '#group' => 'additional_settings',
     );
-    // Allow for the option that a user may not *want* this *specific* node to interact with user profiles.
+    // Allow for the option that a user may not *want* this *specific* node to
+    // interact with user profiles.
     $form['webform_user']['is_webform_user'] = array(
       '#title' => t('Create or update users when this webform is submitted.'),
       '#type' => 'checkbox',
       '#default_value' => isset($node->is_webform_user) ? $node->is_webform_user : TRUE,
-      '#description' => t('When checked, user profile fields will automatically be added to the webform. ' .
-        'When the form is submitted, new users will be created using those form values.'),
+      '#description' => t('When checked, user profile fields will automatically be added to the webform. When the form is submitted, new users will be created using those form values.'),
     );
     $form['webform_user']['send_new_user_email'] = array(
       '#title' => t('Send new users an email with their account details.'),
@@ -385,9 +359,9 @@ function webform_user_form_node_form_alter(&$form, &$form_state, $form_id) {
  * Implements hook_form_alter().
  */
 function webform_user_form_alter(&$form, &$form_state, $form_id) {
-
   // Disallow users from changing the mail keyform after it's been created.
-  // It is critical that we have a matching key id for this value, and it shouldn't change.
+  // It is critical that we have a matching key id for this value, and it should
+  // not change.
   if ($form_id == 'webform_component_edit_form') {
     $node = node_load($form['nid']['#value']);
     // For new components ONLY prevent key conflicts by name.
@@ -436,7 +410,7 @@ function webform_user_form_alter(&$form, &$form_state, $form_id) {
     $user_data = user_load($user->uid);
     // If the user is logged in.
     if (user_is_logged_in() && _webform_user_is_webform_user_node($node)) {
-      $component_hierarchy = __webform_user_parse_components($node->nid, $components);
+      $component_hierarchy = webform_user_parse_components($node->nid, $components);
       $map = webform_user_user_map($node->nid);
       // Map each profile field if there's a matching component field.
       foreach ($map as $webform_field => $profile_field) {
@@ -457,11 +431,15 @@ function webform_user_form_alter(&$form, &$form_state, $form_id) {
               case 'date':
                 $form_field['#default_value'] = $profile_value;
                 break;
+
               case 'checkboxes':
-                if ($profile_value) { // Will be a 0 if unchecked.
+                // Will be a 0 if unchecked.
+                if ($profile_value) {
+
                   $form_field['#default_value'] = array($profile_field);
                 }
                 break;
+
               default:
                 $form_field['#default_value'] = check_plain($profile_value);
                 break;
@@ -471,15 +449,16 @@ function webform_user_form_alter(&$form, &$form_state, $form_id) {
       } // End foreach
     } // End if the user is logged in.
 
-    // If not logged in, check to see if the user has profile values in the current session from a previous submission.
-    // This will only be the case if the global option for saving webform_user submissions is enabled.
+    // If not logged in, check to see if the user has profile values in the
+    // current session from a previous submission. This will only be the case if
+    // the global option for saving webform_user submissions is enabled.
     $webform_user_session_store = user_is_anonymous()
       && isset($_SESSION['webform_user_submission_field_values'])
       && is_array($_SESSION['webform_user_submission_field_values']);
     if ($webform_user_session_store && _webform_user_is_webform_user_node($node)) {
-      $component_hierarchy = __webform_user_parse_components($node->nid, $components);
+      $component_hierarchy = webform_user_parse_components($node->nid, $components);
       $map = webform_user_user_map($node->nid);
-       // Map each profile field if there's a matching component field.
+      // Map each profile field if there's a matching component field.
       foreach ($map as $webform_field => $profile_field) {
         if (array_key_exists($webform_field, $component_hierarchy)) {
           $form_field = &_webform_user_find_field($form, $component_hierarchy[$webform_field]);
@@ -490,11 +469,15 @@ function webform_user_form_alter(&$form, &$form_state, $form_id) {
               case 'date':
                 $form_field['#default_value'] = $profile_value;
                 break;
+
               case 'checkboxes':
-                if ($profile_value) { // Will be a 0 if unchecked.
+                // Will be a 0 if unchecked.
+                if ($profile_value) {
+
                   $form_field['#default_value'] = array($profile_value);
                 }
                 break;
+
               default:
                 $form_field['#default_value'] = check_plain($profile_value);
                 break;
@@ -518,7 +501,7 @@ function webform_user_form_alter(&$form, &$form_state, $form_id) {
  * After build to include js and css.
  */
 function webform_user_webform_after_build($form, $form_state) {
-  // Attach the js files
+  // Attach the js files.
   drupal_add_js(drupal_get_path('module', 'webform_user') . '/js/webform_user.js');
   return $form;
 }
@@ -638,21 +621,27 @@ function _webform_user_session_set($nid, $mapped_submission) {
 }
 
 /**
- * Menu callback form, provides user interface to set up form fields to profile fields mapping.
+ * Menu callback form for profile fields mapping.
  *
- * Webform User can map webform components to user profile fields. Values added to the user profile for these fields
- * will be used to populate default values for webform components they are mapped to.
+ * Webform User can map webform components to user profile fields. Values added
+ * to the user profile for these fields will be used to populate default values
+ * for webform components they are mapped to.
  *
- *  Example: we have a user profile field "First Name". We map this to a webform component "First Name" with a form key of first_name.
- *  Note that the name and form key of the component are irrelevant, all that matters is a relationship has been established between
- *  this profile field and this webform component.
+ * Example: we have a user profile field "First Name". We map this to a webform
+ * component "First Name" with a form key of first_name. Note that the name and
+ * form key of the component are irrelevant, all that matters is a relationship
+ * has been established between this profile field and this webform component.
  *
- *  If an anonymous user submits a webform a new user account is created using the email address provided. Whatever value the user entered
- *  in the "First Name" webform component will be used to set the value of the "First Name" profile field as well.
+ * If an anonymous user submits a webform a new user account is created using
+ * the email address provided. Whatever value the user entered in the "First
+ * Name" webform component will be used to set the value of the "First Name"
+ * profile field as well.
  *
- *  For existing users, mapped profile fields are used to provide default values for webform components. For example, given the mapping
- *  described above, if an existing user views a webform, the "First Name" component field will contain a default value that matches
- *  the value in the "First Name" field in that user's profile.
+ * For existing users, mapped profile fields are used to provide default values
+ * for webform components. For example, given the mapping described above, if an
+ * existing user views a webform, the "First Name" component field will contain
+ * a default value that matches the value in the "First Name" field in that
+ * user's profile.
  */
 function webform_user_mapping_form($form, $form_state, $node) {
   $form = array(
@@ -665,8 +654,7 @@ function webform_user_mapping_form($form, $form_state, $node) {
     '#value' => $node->nid,
   );
   $form['info'] = array(
-    '#value' => t('This form allows you to map the submitted form values to Drupal user and profile fields. ' .
-      'When the webform form is submitted, the user\'s profile will be updated with the values from the form.'),
+    '#value' => t("This form allows you to map the submitted form values to Drupal user and profile fields. When the webform form is submitted, the user's profile will be updated with the values from the form."),
     '#weight' => 0,
   );
 
@@ -682,7 +670,7 @@ function webform_user_mapping_form($form, $form_state, $node) {
   foreach ($fields as $field) {
     $options[$field['name']] = $field['title'];
   }
-  // we like alphabetized dropdowns.
+  // We like alphabetized dropdowns.
   asort($options);
   $form['mapping'] = array(
     '#prefix' => '<div id="fields">',
@@ -754,11 +742,14 @@ function webform_user_mapping_form_submit($form, &$form_state) {
  * Implements hook_node_insert().
  */
 function webform_user_node_insert($node) {
-  // If the newly created node is a webform user node, set the defaults and create comps.
+  // If the newly created node is a webform user node, set the defaults and
+  // create components.
   if (_webform_user_is_webform_user_node_type($node->type)) {
     if (_webform_user_is_webform_user_node($node)) {
       _webform_user_set_values($node);
-      if (!isset($node->clone_from_original_nid)) { // Value from node_clone module.
+      // Value from node_clone module.
+      if (!isset($node->clone_from_original_nid)) {
+
         // We only want to create new components if this is NOT a clone.
         _webform_user_create_webform_components($node);
       }
@@ -774,11 +765,14 @@ function webform_user_node_insert($node) {
  */
 function webform_user_node_update($node) {
   if (_webform_user_is_webform_user_node_type($node->type)) {
-    // If the node hasn't been a webform_user form and it's set to be a webform_user form, make it one.
+    // If the node hasn't been a webform_user form and it's set to be a
+    // webform_user form, make it one.
     $current_node = node_load($node->nid);
     if (!_webform_user_is_webform_user_node($current_node) && _webform_user_is_webform_user_node($node)
-       && $current_node->webform['components'][1]['form_key'] != 'mail') { //TODO make sure this ref is correct.
-      // TODO confirm that this works if email not #1, other modules make components too.
+       && $current_node->webform['components'][1]['form_key'] != 'mail') {
+      // @TODO make sure this ref is correct.
+      // @TODO confirm that this works if email not #1, other modules make
+      // components too.
       _webform_user_create_webform_components($node);
     }
     _webform_user_set_values($node);
@@ -818,7 +812,7 @@ function webform_user_node_load($nodes, $types) {
 }
 
 /**
- * Webform related functions, used to crawl through forms and comps and interact with webform.
+ * Webform related functions.
  */
 
 /**
@@ -837,16 +831,31 @@ function &_webform_user_find_field(&$form, $path) {
 }
 
 /**
- * Helper function.
- * Creates a nested array of where components exist in the FAPI array for all components in a webform.
- * This is needed because the webform module allows the user to move components around. Therefore
- * we must be able to find them if they are not in their usual spot.
+ * Creates a nested array of where webform components exist in the FAPI array.
+ *
+ * This is needed because the webform module allows the user to move components
+ * around. We must be able to find them if they are not in their usual spot.
+ *
+ * @return array
+ *   Component values and their "ancestor" components. Partial example:
+ *   -donation (Array, 1 element)
+ *   --submitted (Array, 1 element)
+ *   ---donation (String, 0 characters)
+ *   -amount (Array, 1 element)
+ *   --submitted (Array, 1 element)
+ *   ---donation (Array, 1 element)
+ *   -----amount (String, 0 characters)
+ *   -currency (Array, 1 element)
+ *   --submitted (Array, 1 element)
+ *   ---donation (Array, 1 element)
+ *   ----currency (String, 0 characters)
  */
-function __webform_user_parse_components($nid, $components, $reset = FALSE) {
+function webform_user_parse_components($nid, $components, $reset = FALSE) {
   $component_hierarchy = array();
   foreach ($components as $cid => $component) {
     $component_path = 'submitted[' . implode('][', _webform_user_walk_component_hierarchy($nid, $cid, $reset)) . ']';
-    parse_str($component_path, $output); // Convert string to a nested array.
+    // Convert string to a nested array.
+    parse_str($component_path, $output);
     $component_hierarchy[$component['form_key']] = $output;
   }
   return $component_hierarchy;
@@ -867,7 +876,7 @@ function _webform_user_parse_component($nid, $form_key) {
  * Builds a path from the webform component to it's topmost parent.
  */
 function _webform_user_walk_component_hierarchy($nid, $cid, $reset = FALSE, &$path = array()) {
-  // Store all the components for this node in a static cache to reduce the number of duplicated database hits.
+  // Statically cache to reduce duplicate queries.
   static $component_hierarchy = array();
   if (empty($component_hierarchy[$nid]) || $reset == TRUE) {
     $component_hierarchy[$nid] = array();
@@ -917,18 +926,19 @@ function _webform_user_add_webform_defaults(&$node, &$user) {
 }
 
 /**
- * Query for all the component types for a given node ID. Statically cached to
- * reduce duplicate queries.
+ * Query component types for a given node ID.
  *
- * @param $nid
+ * @param int $nid
  *   Webform node ID.
- * @param $form_key = NULL
+ * @param string $form_key
  *   Optionally filter results by a single form key.
- * @return
+ *
+ * @return array
  *   The component type of a single form key if $form_key is set, or all
  *   component types for the webform node.
  */
 function _webform_user_webform_component_types($nid, $form_key = NULL) {
+  // Statically cache to reduce duplicate queries.
   $component_types = &drupal_static(__FUNCTION__);
   if (!empty($nid) && !isset($component_types[$nid])) {
     $result = db_query("SELECT form_key, type FROM {webform_component} WHERE nid = :nid", array(':nid' => $nid));
@@ -941,7 +951,7 @@ function _webform_user_webform_component_types($nid, $form_key = NULL) {
 }
 
 /**
- * Flatten a submission tree into a flat list. Note: date values are not flattened.
+ * Flatten a submission tree into a flat list. Date values are not flattened.
  */
 function _webform_user_flatten_tree($tree, $nid = NULL) {
   $items = array();
@@ -966,10 +976,14 @@ function _webform_user_flatten_tree($tree, $nid = NULL) {
         foreach ($val as $k => $v) {
           $values[] = $v;
         }
-        if (count($values) == 1) { // Single item select (aka checkbox).
+        // Single item select (aka checkbox).
+        if (count($values) == 1) {
+
           $items[$key] = array_shift($values);
         }
-        elseif (count($values) == 0) { // No value, reset.
+        // No value, reset.
+        elseif (count($values) == 0) {
+
           $items[$key] = NULL;
         }
         else {
@@ -988,7 +1002,9 @@ function _webform_user_flatten_tree($tree, $nid = NULL) {
 }
 
 /**
- * Creates webform components for this node. All selected profile fields, plus the required email field.
+ * Creates webform components for a node.
+ *
+ * All selected profile fields, plus the required email field.
  */
 function _webform_user_create_webform_components(&$node) {
   // Include webform component functions to allow creation.
@@ -998,12 +1014,11 @@ function _webform_user_create_webform_components(&$node) {
   $items = array();
   $fieldset_lookup = array();
   $fields = _webform_user_get_profile_fields();
-  /**
-   * Hook available to other modules: hook_webform_user_get_profile_fields().
-   * This allows other modules to filter, add to, or modify profile fields that
-   * are created by webform user. Allowing for example fundraiser to avoid
-   * duplication of effort, or custom modules to filter out results.
-   */
+  // Hook available to other modules: hook_webform_user_get_profile_fields().
+  // This allows other modules to filter, add to, or modify profile fields that
+  // are created by webform user. Allowing for example fundraiser to avoid
+  // duplication of effort, or custom modules to filter out results.
+  // @TODO This info should go in a .api.php file.
   drupal_alter('webform_user_profile_fields', $fields, $node);
 
   // Set up fieldsets for entry.
@@ -1027,7 +1042,6 @@ function _webform_user_create_webform_components(&$node) {
       $fieldset_lookup[$field['category_key']] = $item;
     }
   }
-
   // Process fields. (If a fieldset has no available fields, don't create it.
   $all = FALSE;
   $default_fields = variable_get('webform_user_default_fields_' . $node->type, array('webform_user_all_profile_fields'));
@@ -1035,31 +1049,31 @@ function _webform_user_create_webform_components(&$node) {
     $all = TRUE;
   }
   foreach ($fields as $field) {
-    // Filter our fields only to those marked in the profile configuration for this
-    // node type. Users can always add more as needed, this is just for default configurations.
-    // The mail field can always be created.
+    // Filter our fields only to those marked in the profile configuration for
+    // this node type. Users can always add more as needed, this is just for
+    // default configurations. The mail field can always be created.
     if ($all || in_array($field['name'], $default_fields) || $field['name'] == 'mail') {
       // Create a webform component array for the field.
       $fieldset_id = 0;
       // Get the fieldset ID, or create it if it doesn't already exist.
       // Prevents fieldsets that aren't being used from getting created.
-
       if (isset($field['category_key']) && !empty($field['category_key'])) {
         if (isset($fieldset_created[$field['category_key']])) {
           $fieldset_id = $fieldset_created[$field['category_key']];
         }
         else {
           $fieldset_id = webform_component_insert($fieldset_lookup[$field['category_key']]);
-          $fieldset_created[$field['category_key']] = $fieldset_id; // Save the created id.
+          // Save the created id.
+          $fieldset_created[$field['category_key']] = $fieldset_id;
         }
       }
-      /**
-       * Standard webform components available are:
-       * date, email, fieldset, file, grid, hidden, markup, number, pagebreak, select, textarea, textfield, time
-       */
+      // Standard webform components available are: date, email, fieldset,
+      // file, grid, hidden, markup, number, pagebreak, select, textarea,
+      // textfield, and time.
       $item = array(
         'nid' => $node->nid,
-        'form_key' => str_replace('profile_', '', $field['name']), // Strip 'profile_' where needed.
+      // Strip 'profile_' where needed.
+        'form_key' => str_replace('profile_', '', $field['name']),
         'pid' => $fieldset_id,
         'name' => $field['title'],
         'type' => $field['type'],
@@ -1073,39 +1087,45 @@ function _webform_user_create_webform_components(&$node) {
 
       // Transform the component array for certain field types.
       // TODO handle:
-      // 'taxonomy_term_reference'
+      // 'taxonomy_term_reference'.
       switch ($item['type']) {
         case 'checkbox':
-        // From list_field_info().
+          // From list_field_info().
         case 'list_boolean':
           $item['type'] = 'select';
           $item['extra']['items'] = $field['name'] . '|' . $field['title'];
           $item['extra']['aslist'] = 0;
           $item['extra']['multiple'] = 'Y';
-          if(isset($field['extra']['title_display'])) {
+          if (isset($field['extra']['title_display'])) {
             $item['extra']['title_display'] = $field['extra']['title_display'];
           }
           break;
+
         case 'list':
           $item['type'] = 'textarea';
           break;
+
         case 'url':
           $item['type'] = 'textfield';
           break;
+
         // From number_field_info().
         case 'number_integer':
         case 'number_decimal':
         case 'number_float':
           $item['type'] = 'textarea';
           break;
+
         // From text_field_info().
         case 'text':
           $item['type'] = 'textfield';
           break;
+
         case 'text_long':
         case 'text_with_summary':
           $item['type'] = 'textarea';
           break;
+
         // From list_field_info().
         case 'list_text':
         case 'list_integer':
@@ -1116,18 +1136,26 @@ function _webform_user_create_webform_components(&$node) {
           $item['extra']['aslist'] = 'Y';
           $item['extra']['multiple'] = 0;
           break;
+
         // From date_field_info().
         case 'date':
         case 'datetime':
         case 'datestamp':
-          $item['type'] = 'date'; // TODO this is partial, dates MAY also have times, and we need to make second component.
+          // TODO this is partial, dates MAY also have times, and we need to
+          // make second component.
+          $item['type'] = 'date';
           break;
+
         // Special hidden types.
         case 'hidden':
-          $item['extra']['private'] = 0; // Allow to be changed by JS.
-          $item['extra']['hidden_type'] = 'hidden'; // Allow to be changed by JS.
-          $item['extra']['conditional_operator'] = '='; // Allow to be changed by JS.
+          // Allow to be changed by JS.
+          $item['extra']['private'] = 0;
+          // Allow to be changed by JS.
+          $item['extra']['hidden_type'] = 'hidden';
+          // Allow to be changed by JS.
+          $item['extra']['conditional_operator'] = '=';
           break;
+
         // Special no-equilivent types.
         case 'image':
           // There is no webform image field, so we don't map this at all.
@@ -1135,6 +1163,7 @@ function _webform_user_create_webform_components(&$node) {
             array('%name' => $field['title'])));
           $item = array();
           break;
+
         case 'file':
           // There is no webform file field, so we don't map this at all.
           drupal_set_message(t('Webform does not support File fields, the File field %name has not been added to this webform.',
@@ -1145,7 +1174,7 @@ function _webform_user_create_webform_components(&$node) {
       if (!empty($item)) {
         // Add the component to the Webform.
         $cid = webform_component_insert($item);
-        // Add the component mapping record
+        // Add the component mapping record.
         $map = array(
           'nid' => $node->nid,
           'cid' => $cid,
@@ -1179,7 +1208,9 @@ function _webform_user_implode_options($options) {
  * Helper function, check to see if this node is enabled for webform user.
  */
 function _webform_user_is_webform_user_node($node) {
-  if (isset($node->is_webform_user)) { // Set by node_load.
+  // Set by node_load.
+  if (isset($node->is_webform_user)) {
+
     return $node->is_webform_user ? TRUE : FALSE;
   }
   return FALSE;
@@ -1189,7 +1220,8 @@ function _webform_user_is_webform_user_node($node) {
  * Helper function, check if this node type is enabled for webform user.
  */
 function _webform_user_is_webform_user_node_type($type) {
-  static $types; // Cache.
+  // Cache.
+  static $types;
   if (isset($types[$type])) {
     return $types[$type];
   }
@@ -1198,7 +1230,7 @@ function _webform_user_is_webform_user_node_type($type) {
 }
 
 /**
- * Helper function, check if webform_user should save submission values to session
+ * Check if webform_user should save submission values to session.
  */
 function _webform_user_is_webform_user_session_store() {
   return variable_get('webform_user_session_store', FALSE);
@@ -1211,6 +1243,7 @@ function _webform_user_is_webform_user_session_store() {
  *   Node ID. Used to get the webform component to user profile map.
  * @param array $fields
  *   The webform component fields, keyed by the webform form key.
+ *
  * @return array
  *   An array of field valudes keyed by user profile field names.
  */
@@ -1247,17 +1280,19 @@ function _webform_user_validate_email($mail) {
 /**
  * Helper function, save mapped profile data to given user.
  *
- * @param obj $account
+ * @param object $account
  *   An account object representing an existing user or a new user.
  * @param array $map
  *   An array of fields names or map ids, keyed by webform form id.
- *   @see _webform_user_get_map()
  *
- * @return obj
+ * @see _webform_user_get_map()
+ *
+ * @return object
  *   An account object.
  */
 function _webform_user_save_profile_map($account, &$map) {
-  // The saved map has to handle saving to both profile2 / entity fields. And profile.module.
+  // The saved map has to handle saving to both profile2 / entity fields. And
+  // profile.module.
   if ($map) {
     // First loop through the map and fields to grab results.
     $profile_values = array();
@@ -1274,6 +1309,7 @@ function _webform_user_save_profile_map($account, &$map) {
             $profile_values[$field['name']] = !empty($map[$field['name']]) ? 1 : 0;
           }
           break;
+
         default:
           // Only add the profile result if the name is in the keys.
           if (in_array($field['name'], array_keys($map))) {
@@ -1284,12 +1320,18 @@ function _webform_user_save_profile_map($account, &$map) {
     }
     // Starting with the mail field.
     if (isset($profile_values['mail'])) {
-      // Check for length. User mail max length: 254
+      // Check for length. User mail max length: 254.
       if (strlen($profile_values['mail']) > 254) {
         $original_field = $profile_values['mail'];
         $profile_values['mail'] = substr($profile_values['mail'], 0, 254);
         watchdog('webform_user', 'Truncated field @field_name at length @length for user @username. Original data: @original_field',
-          array('@field_name' => 'mail', '@length' => 254, '@username' => $account->name, '@original_field' => $original_field));
+          array(
+            '@field_name' => 'mail',
+            '@length' => 254,
+            '@username' => $account->name,
+            '@original_field' => $original_field,
+          )
+        );
       }
       $account->mail = $profile_values['mail'];
       unset($profile_values['mail']);
@@ -1298,18 +1340,24 @@ function _webform_user_save_profile_map($account, &$map) {
     // Fields found, now save the rest of the fields.
     if (count($profile_values) > 0) {
       // Profile2 and entity fields saves on entity fields.
-      // (Both Profile and Profile2 can be installed, so we do both.)
+      // (Both Profile and Profile2 can be installed, so we do both.).
       foreach ($profile_values as $field_name => $field_value) {
         // Check for length.
         $field_info = field_info_field($field_name);
-        // Length is a concern for text fields. Select values set will fail validation.
+        // Length is a concern for text fields, and will fail validation.
         // Text areas are stored in blob form, so not an issue.
         $max_length = isset($field_info['settings']['max_length']) ? $field_info['settings']['max_length'] : '';
         if (!empty($max_length) && strlen($field_value) > $max_length) {
           $original_field = $field_value;
           $field_value = substr($field_value, 0, $max_length);
           watchdog('webform_user', 'Truncated field @field_name at length @length for user @username. Original data: @original_field',
-            array('@field_name' => $field_name, '@length' => $max_length, '@username' => $account->name, '@original_field' => $original_field));
+            array(
+              '@field_name' => $field_name,
+              '@length' => $max_length,
+              '@username' => $account->name,
+              '@original_field' => $original_field,
+            )
+          );
         }
         $account->{$field_name}['und'][0]['value'] = $field_value;
       }
@@ -1323,8 +1371,8 @@ function _webform_user_save_profile_map($account, &$map) {
           $expected_fields = _profile_get_fields($category['name'], FALSE);
           foreach ($expected_fields as $expected_field) {
             if (!isset($profile[$expected_field->name])) {
-              // profile.module saves values in text field type as defined in hook_schema().
-              // Aka mediumtext, 16 MB. So not really an issue for this.
+              // profile.module saves values in text field type as defined in
+              // hook_schema(). Aka mediumtext, 16 MB. So not an issue.
               $this_profile[$expected_field->name] = $profile_values[$expected_field->name];
             }
           }
@@ -1342,20 +1390,20 @@ function _webform_user_save_profile_map($account, &$map) {
 
 /**
  * Database/helper function, fetch an array of user profile fields.
+ *
+ * @return array
+ *   Returns an associative array of fields with the following keys:
+ *   name - form key.
+ *   title - human readable name.
+ *   type - webform component type.
+ *   mandatory - required or not (optional, defaults to 0).
+ *   weight - order of display (optional, defaults to 0).
+ *   explanation - description (optional, defaults to '').
+ *   options - array of select options, required for type list_float.
+ *   category_key - form key for the fieldset for the profile.
+ *   category_name - human readable profile field value.
  */
 function _webform_user_get_profile_fields() {
-  /**
-   * Returns an array of fields with the following fields set:
-   * name - form key
-   * title - human readable name
-   * type - webform component type
-   * mandatory - required or not (optional, defaults to 0)
-   * weight - order of display (optional, defaults to 0)
-   * explanation - description (optional, defaults to '')
-   * options - array of select options, required for type list_float
-   * category_key - form key for the fieldset for the profile
-   * category_name - human readable profile field value
-   */
   $fields = array();
   // Add the e-mail field first.
   $mail_field = array(
@@ -1369,11 +1417,12 @@ function _webform_user_get_profile_fields() {
   );
   $fields[] = $mail_field;
 
-  // Grab settings from profile2 module AND from fields manually added on profile.
-  // These are standard fields types.
+  // Grab settings from profile2 module AND from fields manually added on
+  // profile. These are standard fields types.
   $entity_types = array('user');
   if (module_exists('profile2')) {
-    $entity_types[] = 'profile2'; // Add profile2 values.
+    // Add profile2 values.
+    $entity_types[] = 'profile2';
   }
   $results = db_query('SELECT i.id, i.field_name, i.data, c.data as extra, c.type FROM {field_config_instance} i ' .
     'INNER JOIN {field_config} c ON i.field_name = c.field_name ' .
@@ -1388,7 +1437,8 @@ function _webform_user_get_profile_fields() {
     $field['title'] = $result->data['label'];
     // TODO Map types to types webform understands.
     $field['type'] = $result->type;
-    // UNLESS the display is hidden. Then we need to override this to HIDE the field.
+    // UNLESS the display is hidden. Then we need to override this to HIDE the
+    // field.
     if (!empty($result->data['display']['default']['type']) && $result->data['display']['default']['type'] == 'hidden') {
       $field['type'] = 'hidden';
     }
@@ -1396,13 +1446,14 @@ function _webform_user_get_profile_fields() {
     $field['weight'] = $result->data['widget']['weight'];
     $field['explanantion'] = $result->data['description'];
     $field['options'] = isset($result->extra['settings']['allowed_values']) ? $result->extra['settings']['allowed_values'] : NULL;
-    // FOR NOW: field groups are only coming in from a field group module for these values. Leave it alone.
+    // FOR NOW: field groups are only coming in from afield group module for
+    // these values. Leave it alone.
     $field['category_key'] = NULL;
     $field['category_name'] = NULL;
     $fields[] = $field;
   }
 
-  //  And or grab settings from D7 profile module.
+  // And or grab settings from D7 profile module.
   if (function_exists('_profile_get_fields')) {
     $categories = _user_categories();
     foreach ($categories as $category) {
@@ -1427,7 +1478,7 @@ function _webform_user_get_profile_fields() {
 }
 
 /**
- * Database function, create or update values of the is_webform_user checkbox when the selected node is created.
+ * Create or update value of the is_webform_user checkbox.
  */
 function _webform_user_set_values(&$node) {
   $is_webform_user = $node->is_webform_user ? TRUE : FALSE;
@@ -1468,16 +1519,13 @@ function _webform_user_delete_node_values($node) {
  *
  * @param int $nid
  *   The node ID to lookup.
+ *
  * @return array
  *   An array of fields names or map ids, keyed by webform form id.
  */
 function webform_user_user_map($nid) {
   $map = array();
-  $result = db_query('SELECT w.form_key, c.cid, c.map_id, w.type, f.field_name FROM {webform_component} w ' .
-    'INNER JOIN {webform_user_component_map} c ON c.cid = w.cid AND c.nid = w.nid ' .
-    'LEFT JOIN {field_config_instance} f ON f.id = c.map_id ' .
-    'WHERE c.nid = :nid ' .
-    'ORDER BY c.cid',
+  $result = db_query('SELECT w.form_key, c.cid, c.map_id, w.type, f.field_name FROM {webform_component} w INNER JOIN {webform_user_component_map} c ON c.cid = w.cid AND c.nid = w.nid LEFT JOIN {field_config_instance} f ON f.id = c.map_id WHERE c.nid = :nid ORDER BY c.cid',
     array(':nid' => $nid)
   );
   while ($row = $result->fetchObject()) {
@@ -1507,8 +1555,8 @@ function webform_user_clone_component_map($node, $original_nid) {
 /**
  * Implements hook_theme_registry_alter().
  *
- * We're overriding the theme function for the webform components table
- * so we can add granular access permissions to component actions and the "add" form.
+ * Override the theme function for the webform components table so we can add
+ * granular access permissions to component actions and the "add" form.
  */
 function webform_user_theme_registry_alter(&$theme_registry) {
   if (!empty($theme_registry['webform_components_form'])) {
@@ -1537,9 +1585,10 @@ function theme_webform_user_webform_components_form($variables) {
   $node = $form['#node'];
 
   $header = array(t('Label'), t('Type'), t('Value'), t('Mandatory'), t('Weight'), array(
-      'data' => t('Operations'),
-      'colspan' => 3,
-    ));
+    'data' => t('Operations'),
+    'colspan' => 3,
+  ),
+  );
 
   // Add a row containing form elements for a new item.
   unset($form['add']['name']['#title'], $form['add_type']['#description']);
@@ -1571,16 +1620,16 @@ function theme_webform_user_webform_components_form($variables) {
     _webform_components_tree_build($node->webform['components'], $component_tree, 0, $page_count);
     $component_tree = _webform_components_tree_sort($component_tree);
     // Build the table rows.
-
     foreach ($component_tree['children'] as $cid => $component) {
       _webform_components_form_rows($node, $cid, $component, 0, $form, $rows, $add_form);
     }
   }
   else {
     $rows[] = array(array(
-        'data' => t('No Components, add a component below.'),
-        'colspan' => 9,
-      ));
+      'data' => t('No Components, add a component below.'),
+      'colspan' => 9,
+    ),
+    );
   }
 
   // Append the add form if not already printed.
@@ -1589,11 +1638,20 @@ function theme_webform_user_webform_components_form($variables) {
   }
 
   $output = '';
-  $output .= theme('table', array('header' => $header, 'rows' => $rows, 'attributes' => array('id' => 'webform-components')));
+  $output .= theme('table', array(
+    'header' => $header,
+    'rows' => $rows,
+    'attributes' => array(
+      'id' => 'webform-components',
+    ),
+  ));
   $output .= user_access('alter webform components') ? drupal_render_children($form) : '';
   return $output;
 }
 
+/**
+ * Creates an edit link for a form component.
+ */
 function _webform_user_edit_component_link($node, $cid) {
   if (user_access('alter webform components')) {
     return l(t('Edit'), 'node/' . $node->nid . '/webform/components/' . $cid, array('query' => drupal_get_destination()));
@@ -1601,6 +1659,9 @@ function _webform_user_edit_component_link($node, $cid) {
   return '';
 }
 
+/**
+ * Creates a clone link for a form component.
+ */
 function _webform_user_clone_component_link($node, $cid) {
   if (user_access('alter webform components')) {
     return l(t('Clone'), 'node/' . $node->nid . '/webform/components/' . $cid . '/clone', array('query' => drupal_get_destination()));
@@ -1608,6 +1669,9 @@ function _webform_user_clone_component_link($node, $cid) {
   return '';
 }
 
+/**
+ * Creates a delete links for a form component.
+ */
 function _webform_user_delete_component_link($node, $cid) {
   if (user_access('alter webform components')) {
     return l(t('Delete'), 'node/' . $node->nid . '/webform/components/' . $cid . '/delete', array('query' => drupal_get_destination()));
@@ -1615,6 +1679,9 @@ function _webform_user_delete_component_link($node, $cid) {
   return '';
 }
 
+/**
+ * Builds table rows.
+ */
 function _webform_components_form_rows($node, $cid, $component, $level, &$form, &$rows, &$add_form) {
   // Create presentable values.
   if (drupal_strlen($component['value']) > 30) {
@@ -1685,11 +1752,10 @@ function _webform_components_form_rows($node, $cid, $component, $level, &$form, 
  *
  * @param string $mail
  *   Email address.
- *
  * @param int $uid
  *   User id.
  *
- * @return
+ * @return bool
  *   Returns FALSE if the email address is not in use or currently
  *   in use by the account specified. FALSE otherwise.
  */
@@ -1711,7 +1777,6 @@ function webform_user_webform_component_render_alter(&$element, $component) {
   // #default_value is used by the following types according to the api.
   // checkbox, checkboxes, date, hidden, radio, radios, select, tableselect,
   // textarea, text_format, textfield, token, weight.
-
   // But token replacement probably only makes sense for these types.
   $types = array('textfield', 'hidden', 'markup', 'textarea');
 
