@@ -475,8 +475,7 @@ function salesforce_donation_salesforce_genmap_map_fields(stdClass $donation, En
         // BS field so to cause the export to fail. Also set the stage value to
         // the order status in a manner that is easy to identify in sync reports.
         else {
-          $fields['DO_NOT_SYNC'] = t("Order status $donation->status has not been mapped.");
-          $stage = '[stage:' . $donation->status . ']';
+          $stage = '[Stage:' . $donation->status . ']';
         }
       }
       $fields[$sf_field] = $stage;
