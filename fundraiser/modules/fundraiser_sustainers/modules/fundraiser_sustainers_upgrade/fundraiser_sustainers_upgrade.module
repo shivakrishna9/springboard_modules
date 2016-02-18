@@ -963,7 +963,9 @@ function fundraiser_sustainers_upgrade_mail_alter(&$message) {
 }
 
 /**
- * Implements hook_salesforce_queue_create_item_alter()
+ * Implements hook_salesforce_queue_create_item_alter().
+ *
+ * Relate the upgrade to the sustainer series.
  */
 function fundraiser_sustainers_upgrade_salesforce_queue_create_item_alter(&$item) {
   if ($item['object_type'] == 'Sustainers_Upgrade__c') {

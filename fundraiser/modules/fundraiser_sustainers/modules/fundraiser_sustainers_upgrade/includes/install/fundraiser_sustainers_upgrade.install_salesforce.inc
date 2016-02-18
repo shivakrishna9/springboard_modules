@@ -32,6 +32,9 @@ function fundraiser_sustainers_upgrade_salesforce_uninstall() {
 }
 
 
+/**
+ * Create the sustainers upgrade fieldmap.
+ */
 function fundraiser_sustainers_upgrade_webform_fieldmap() {
   // Create default SF map insert into table.
   $map = array();

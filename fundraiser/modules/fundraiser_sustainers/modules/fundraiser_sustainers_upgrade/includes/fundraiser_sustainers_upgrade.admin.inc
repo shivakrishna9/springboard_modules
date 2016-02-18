@@ -1,12 +1,8 @@
 <?php
 
-/**
- * Page callback for the admin form.
- */
-
 
 /**
- * Token Generator form.
+ * Upgrade link generator form.
  */
 function fundraiser_sustainers_upgrade_token_generator($form, $form_state) {
 
@@ -23,7 +19,6 @@ function fundraiser_sustainers_upgrade_token_generator($form, $form_state) {
     '#size' => 20,
     '#element_validate' => array('element_validate_integer_positive'),
     '#default_value' => isset($_SESSION['fsu_token_generate']) ? $_SESSION['fsu_token_generate']['uid'] : '',
-
   );
 
   $form['fundraiser_sustainers_upgrade']['amount'] = array(
@@ -64,9 +59,22 @@ function fundraiser_sustainers_upgrade_token_generator($form, $form_state) {
   return $form;
 }
 
+/**
+ * Store temporary upgrade link values in session.
+ *
+ * @param $form
+ * @param $form_state
+ */
 function fundraiser_sustainers_upgrade_token_generator_validate($form, $form_state) {
   $_SESSION['fsu_token_generate'] = $form_state['values'];
 }
+
+/**
+ * Create an upgrade link.
+ *
+ * @param $form
+ * @param $form_state
+ */
 function fundraiser_sustainers_upgrade_token_generator_submit($form, $form_state) {
 
   $rollback = FALSE;
