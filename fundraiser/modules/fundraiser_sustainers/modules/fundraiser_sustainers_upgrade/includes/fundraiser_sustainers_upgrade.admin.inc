@@ -11,41 +11,41 @@ function fundraiser_sustainers_upgrade_token_generator($form, $form_state) {
     '#title' => t('Sustainers Upgrade Token'),
     '#collapsible' => TRUE,
     '#collapsed' => FALSE,
+    '#description' => t('If you want to test a successful upgrade, a numeric, whole number value is required for every field except rollback, with real, actually-existing values for UID and Donation ID. If you want to force a failure, leave any field blank or non-numerical, or use invalid values for user or donation.'),
+
   );
 
   $form['fundraiser_sustainers_upgrade']['uid'] = array(
     '#type' => 'textfield',
     '#title' => t('User ID'),
     '#size' => 20,
-    '#element_validate' => array('element_validate_integer_positive'),
+    //'#element_validate' => array('element_validate_integer_positive'),
     '#default_value' => isset($_SESSION['fsu_token_generate']) ? $_SESSION['fsu_token_generate']['uid'] : '',
-    '#required' => TRUE,
+    '#description' => t('Must match the donation UID if you wish to succeed.'),
   );
 
   $form['fundraiser_sustainers_upgrade']['amount'] = array(
     '#type' => 'textfield',
     '#title' => t('Upgrade Amount'),
-    '#description' => t('In cents. $20 = 2000'),
-    '#element_validate' => array('element_validate_integer_positive'),
+    '#description' => t('The new donation amount in cents. $20 = 2000'),
+    //'#element_validate' => array('element_validate_integer_positive'),
     '#default_value' => isset($_SESSION['fsu_token_generate']) ? $_SESSION['fsu_token_generate']['amount'] : '',
-    '#required' => TRUE,
-
   );
 
   $form['fundraiser_sustainers_upgrade']['did'] = array(
     '#type' => 'textfield',
     '#title' => t('Donation ID'),
-    '#element_validate' => array('element_validate_integer_positive'),
+    //'#element_validate' => array('element_validate_integer_positive'),
     '#default_value' => isset($_SESSION['fsu_token_generate']) ? $_SESSION['fsu_token_generate']['did'] : '',
-    '#required' => TRUE,
+    '#description' => t('Must belong to the UID specified above if you wish to succeed.'),
+
   );
 
   $form['fundraiser_sustainers_upgrade']['nid'] = array(
     '#type' => 'textfield',
     '#title' => t('Upgrade Form Node ID'),
-    '#element_validate' => array('element_validate_integer_positive'),
+    //'#element_validate' => array('element_validate_integer_positive'),
     '#default_value' => isset($_SESSION['fsu_token_generate']) ? $_SESSION['fsu_token_generate']['nid'] : '',
-    '#required' => TRUE,
     '#description' => t('Invalid node IDs will cause a fallback to the default upgrade form.'),
   );
 
