@@ -609,9 +609,7 @@ function webform_user_webform_submit($form, &$form_state) {
       }
       // Send the e-mail through the user module.
       if ($node->send_new_user_email) {
-        // Manually set the password so it appears in the e-mail.
-        $account->password = $user_fields['pass'];
-        drupal_mail('user', 'register_no_approval_required', $user_fields['mail'], NULL, array('account' => $account), NULL);
+        drupal_mail('user', 'register_no_approval_required', $account->mail, NULL, array('account' => $account), NULL);
       }
     }
   }
