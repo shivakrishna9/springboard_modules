@@ -565,7 +565,8 @@ function webform_user_webform_submit($form, &$form_state) {
     // Modules like Fundraiser Offline need to skip the checks on global $user.
     $skip_user_check = isset($form_state['webform_user_skip_user_check']) ? $form_state['webform_user_skip_user_check'] : FALSE;
 
-    // We have a uid, so this is an authenticated user, update if this isn't an edit.
+    // We have a uid, so this is an authenticated user, update if this isn't an
+    // edit.
     if (!$skip_user_check && $user->uid && $form_state['redirect']) {
       $account = user_load($user->uid);
       // Update the existing user account.
@@ -582,7 +583,7 @@ function webform_user_webform_submit($form, &$form_state) {
         $submission->webform_user_skip_user_check = TRUE;
       }
       webform_submission_update($node, $submission);
-       // Save webform user fields in user session for the existing user
+      // Save webform user fields in user session for the existing user.
       if (_webform_user_is_webform_user_session_store()) {
         _webform_user_session_set($node->nid, $map);
       }
@@ -602,7 +603,7 @@ function webform_user_webform_submit($form, &$form_state) {
         $submission->webform_user_skip_user_check = TRUE;
       }
       webform_submission_update($node, $submission);
-      // Save webform user fields in user session
+      // Save webform user fields in user session.
       if (_webform_user_is_webform_user_session_store()) {
         _webform_user_session_set($node->nid, $map);
       }
@@ -617,7 +618,7 @@ function webform_user_webform_submit($form, &$form_state) {
 }
 
 /**
- * Save submitted webform user field values in session
+ * Save submitted webform user field values in session.
  */
 function _webform_user_session_set($nid, $mapped_submission) {
   $map = webform_user_user_map($nid);
@@ -1289,8 +1290,8 @@ function _webform_user_save_profile_map($account, &$map) {
       if (strlen($profile_values['mail']) > 254) {
         $original_field = $profile_values['mail'];
         $profile_values['mail'] = substr($profile_values['mail'], 0, 254);
-        watchdog('webform_user', 'Truncated field @field_name at length @length for user #@uid. Original data: @original_field',
-          array('@field_name' => 'mail', '@length' => 254, '@uid' => $uid, '@original_field' => $original_field));
+        watchdog('webform_user', 'Truncated field @field_name at length @length for user @username. Original data: @original_field',
+          array('@field_name' => 'mail', '@length' => 254, '@username' => $account->name, '@original_field' => $original_field));
       }
       $account->mail = $profile_values['mail'];
       unset($profile_values['mail']);
@@ -1309,8 +1310,8 @@ function _webform_user_save_profile_map($account, &$map) {
         if (!empty($max_length) && strlen($field_value) > $max_length) {
           $original_field = $field_value;
           $field_value = substr($field_value, 0, $max_length);
-          watchdog('webform_user', 'Truncated field @field_name at length @length for user #@uid. Original data: @original_field',
-            array('@field_name' => $field_name, '@length' => $max_length, '@uid' => $uid, '@original_field' => $original_field));
+          watchdog('webform_user', 'Truncated field @field_name at length @length for user @username. Original data: @original_field',
+            array('@field_name' => $field_name, '@length' => $max_length, '@username' => $account->name, '@original_field' => $original_field));
         }
         $account->{$field_name}['und'][0]['value'] = $field_value;
       }
