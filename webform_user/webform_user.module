@@ -567,13 +567,15 @@ function webform_user_webform_submit($form, &$form_state) {
 
     // We have a uid, so this is an authenticated user, update if this isn't an edit.
     if (!$skip_user_check && $user->uid && $form_state['redirect']) {
+      $account = user_load($user->uid);
       // Update the existing user account.
-      _webform_user_save_profile_map($user->uid, $map);
+      _webform_user_save_profile_map($account, $map);
     }
     // Or if we found an account matching the email.
     elseif (isset($account->uid) && $form_state['redirect']) {
       // Update the existing user account.
-      _webform_user_save_profile_map($account->uid, $map);
+      // _webform_user_save_profile_map() performs user_save().
+      _webform_user_save_profile_map($account, $map);
       $submission = webform_get_submission($node->nid, $form_state['values']['details']['sid']);
       $submission->uid = $account->uid;
       if ($skip_user_check) {
@@ -587,17 +589,12 @@ function webform_user_webform_submit($form, &$form_state) {
     }
     // Anonymous user, new email to Drupal.
     elseif ($form_state['redirect']) {
-      // Register the user.
-      $user_fields = array(
-        'name' => $fields['mail'],
-        'mail' => $fields['mail'],
-        'init' => $fields['mail'],
-        'pass' => user_password(8),
-        'status' => 1,
-      );
-      $account = user_save('', $user_fields);
-      // Update the new user account.
-      _webform_user_save_profile_map($account->uid, $map);
+      $account = new stdClass();
+      $account->is_new = TRUE;
+      $account->name = $fields['mail'];
+      $account->status = TRUE;
+      // Create the new user account.
+      $account = _webform_user_save_profile_map($account, $map);
       $submission = webform_get_submission($node->nid, $form_state['values']['details']['sid']);
       $submission->uid = $account->uid;
       // Setting this flag skips uid checking during presave.
@@ -618,6 +615,7 @@ function webform_user_webform_submit($form, &$form_state) {
     }
   }
 }
+
 /**
  * Save submitted webform user field values in session
  */
@@ -1249,12 +1247,20 @@ function _webform_user_validate_email($mail) {
 
 /**
  * Helper function, save mapped profile data to given user.
+ *
+ * @param obj $account
+ *   An account object representing an existing user or a new user.
+ * @param array $map
+ *   An array of fields names or map ids, keyed by webform form id.
+ *   @see _webform_user_get_map()
+ *
+ * @return obj
+ *   An account object.
  */
-function _webform_user_save_profile_map($uid, &$map) {
+function _webform_user_save_profile_map($account, &$map) {
   // The saved map has to handle saving to both profile2 / entity fields. And profile.module.
   if ($map) {
     // First loop through the map and fields to grab results.
-    $account = user_load($uid);
     $profile_values = array();
     $fields = _webform_user_get_profile_fields();
     foreach ($fields as $field) {
@@ -1291,28 +1297,23 @@ function _webform_user_save_profile_map($uid, &$map) {
     }
 
     // Fields found, now save the rest of the fields.
-    if (count($profile_values) > 0 && $account->uid) {
+    if (count($profile_values) > 0) {
       // Profile2 and entity fields saves on entity fields.
       // (Both Profile and Profile2 can be installed, so we do both.)
       foreach ($profile_values as $field_name => $field_value) {
-        if (isset($account->{$field_name})) {
-          if (is_array($account->{$field_name})) {
-            // Check for length.
-            $field_info = field_info_field($field_name);
-            // Length is a concern for text fields. Select values set will fail validation.
-            // Text areas are stored in blob form, so not an issue.
-            $max_length = isset($field_info['settings']['max_length']) ? $field_info['settings']['max_length'] : '';
-            if (!empty($max_length) && strlen($field_value) > $max_length) {
-              $original_field = $field_value;
-              $field_value = substr($field_value, 0, $max_length);
-              watchdog('webform_user', 'Truncated field @field_name at length @length for user #@uid. Original data: @original_field',
-                array('@field_name' => $field_name, '@length' => $max_length, '@uid' => $uid, '@original_field' => $original_field));
-            }
-            $account->{$field_name}['und'][0]['value'] = $field_value;
-          }
+        // Check for length.
+        $field_info = field_info_field($field_name);
+        // Length is a concern for text fields. Select values set will fail validation.
+        // Text areas are stored in blob form, so not an issue.
+        $max_length = isset($field_info['settings']['max_length']) ? $field_info['settings']['max_length'] : '';
+        if (!empty($max_length) && strlen($field_value) > $max_length) {
+          $original_field = $field_value;
+          $field_value = substr($field_value, 0, $max_length);
+          watchdog('webform_user', 'Truncated field @field_name at length @length for user #@uid. Original data: @original_field',
+            array('@field_name' => $field_name, '@length' => $max_length, '@uid' => $uid, '@original_field' => $original_field));
         }
+        $account->{$field_name}['und'][0]['value'] = $field_value;
       }
-      user_save($account);
 
       // If the standard profile field system is active, use that.
       if (function_exists('_profile_get_fields')) {
@@ -1332,6 +1333,7 @@ function _webform_user_save_profile_map($uid, &$map) {
         }
       }
     }
+    return user_save($account);
   } // End if map.
 }
 
