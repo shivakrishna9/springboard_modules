@@ -87,7 +87,7 @@ function fundraiser_sustainers_upgrade_token_generator_submit($form, $form_state
 
   $link = fundraiser_sustainers_upgrade_create_link($payload, $rollback);
 
-  drupal_set_message($link);
+  drupal_set_message('<textarea style="width:90%;padding:10px">' . $link . '</textarea>');
 
   if (!empty($_SESSION['next_donation'])) {
     unset($_SESSION['next_donation']);
