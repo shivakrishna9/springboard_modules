@@ -19,6 +19,7 @@ function fundraiser_sustainers_upgrade_token_generator($form, $form_state) {
     '#size' => 20,
     '#element_validate' => array('element_validate_integer_positive'),
     '#default_value' => isset($_SESSION['fsu_token_generate']) ? $_SESSION['fsu_token_generate']['uid'] : '',
+    '#required' => TRUE,
   );
 
   $form['fundraiser_sustainers_upgrade']['amount'] = array(
@@ -27,6 +28,8 @@ function fundraiser_sustainers_upgrade_token_generator($form, $form_state) {
     '#description' => t('In cents. $20 = 2000'),
     '#element_validate' => array('element_validate_integer_positive'),
     '#default_value' => isset($_SESSION['fsu_token_generate']) ? $_SESSION['fsu_token_generate']['amount'] : '',
+    '#required' => TRUE,
+
   );
 
   $form['fundraiser_sustainers_upgrade']['did'] = array(
@@ -34,6 +37,7 @@ function fundraiser_sustainers_upgrade_token_generator($form, $form_state) {
     '#title' => t('Donation ID'),
     '#element_validate' => array('element_validate_integer_positive'),
     '#default_value' => isset($_SESSION['fsu_token_generate']) ? $_SESSION['fsu_token_generate']['did'] : '',
+    '#required' => TRUE,
   );
 
   $form['fundraiser_sustainers_upgrade']['nid'] = array(
@@ -41,6 +45,8 @@ function fundraiser_sustainers_upgrade_token_generator($form, $form_state) {
     '#title' => t('Upgrade Form Node ID'),
     '#element_validate' => array('element_validate_integer_positive'),
     '#default_value' => isset($_SESSION['fsu_token_generate']) ? $_SESSION['fsu_token_generate']['nid'] : '',
+    '#required' => TRUE,
+    '#description' => t('Invalid node IDs will cause a fallback to the default upgrade form.'),
   );
 
   $form['fundraiser_sustainers_upgrade']['rollback'] = array(
