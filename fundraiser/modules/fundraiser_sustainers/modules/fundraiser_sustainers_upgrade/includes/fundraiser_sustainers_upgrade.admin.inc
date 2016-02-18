@@ -21,23 +21,37 @@ function fundraiser_sustainers_upgrade_token_generator($form, $form_state) {
     '#type' => 'textfield',
     '#title' => t('User ID'),
     '#size' => 20,
+    '#element_validate' => array('element_validate_integer_positive'),
+    '#default_value' => isset($_SESSION['fsu_token_generate']) ? $_SESSION['fsu_token_generate']['uid'] : '',
+
   );
+
   $form['fundraiser_sustainers_upgrade']['amount'] = array(
     '#type' => 'textfield',
     '#title' => t('Upgrade Amount'),
-    '#description' => t('In cents. $20 = 2000')
+    '#description' => t('In cents. $20 = 2000'),
+    '#element_validate' => array('element_validate_integer_positive'),
+    '#default_value' => isset($_SESSION['fsu_token_generate']) ? $_SESSION['fsu_token_generate']['amount'] : '',
   );
+
   $form['fundraiser_sustainers_upgrade']['did'] = array(
     '#type' => 'textfield',
     '#title' => t('Donation ID'),
+    '#element_validate' => array('element_validate_integer_positive'),
+    '#default_value' => isset($_SESSION['fsu_token_generate']) ? $_SESSION['fsu_token_generate']['did'] : '',
   );
+
   $form['fundraiser_sustainers_upgrade']['nid'] = array(
     '#type' => 'textfield',
     '#title' => t('Upgrade Form Node ID'),
+    '#element_validate' => array('element_validate_integer_positive'),
+    '#default_value' => isset($_SESSION['fsu_token_generate']) ? $_SESSION['fsu_token_generate']['nid'] : '',
   );
+
   $form['fundraiser_sustainers_upgrade']['rollback'] = array(
     '#type' => 'checkbox',
-    '#title' => 'Rollback'
+    '#title' => 'Rollback',
+    '#default_value' => isset($_SESSION['fsu_token_generate']) ? $_SESSION['fsu_token_generate']['rollback'] : '',
   );
 
   $form['submit'] = array(
@@ -45,11 +59,14 @@ function fundraiser_sustainers_upgrade_token_generator($form, $form_state) {
     '#value' => t('Generate Upgrade Link'),
   );
 
+  $form['#submit'][] = 'fundraiser_sustainers_upgrade_token_generator_validate';
   $form['#submit'][] = 'fundraiser_sustainers_upgrade_token_generator_submit';
   return $form;
 }
 
-
+function fundraiser_sustainers_upgrade_token_generator_validate($form, $form_state) {
+  $_SESSION['fsu_token_generate'] = $form_state['values'];
+}
 function fundraiser_sustainers_upgrade_token_generator_submit($form, $form_state) {
 
   $rollback = FALSE;
