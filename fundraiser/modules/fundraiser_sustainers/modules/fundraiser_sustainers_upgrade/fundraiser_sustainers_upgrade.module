@@ -213,6 +213,14 @@ function fundraiser_sustainers_upgrade_node_view($node) {
         $token_set['recurring'] = $status['recurring'];
       }
       $node->content['body'][0]['#markup'] = token_replace($node->content['body'][0]['#markup'], $token_set);
+      $field = field_get_items('node', $node, 'field_sustainers_auto_upgrade');
+      if (empty($field[0]) && !user_access('administer fundraiser sustainers upgrade')) {
+        $node->content['webform']['#form']['actions']['#access'] = FALSE;
+        $node->content['body']['#access'] = FALSE;
+        $node->content['links']['#access'] = FALSE;
+        drupal_set_title('');
+        $node->content['redirect']['#markup'] = t('Redirecting. Please wait...');
+      }
     }
   }
 }
@@ -229,8 +237,8 @@ function fundraiser_sustainers_form_webform_client_form_alter(&$form, &$form_sta
     if (isset($_SESSION['next_donation'])) {
       unset($_SESSION['next_donation']);
     }
-    if (!empty($_SESSION[$form['#node']->nid]['stop_mail'])) {
-      unset($_SESSION[$form['#node']->nid]['stop_mail']);
+    if (!empty($_SESSION[$form['#node']->nid .'_stop_mail'])) {
+      unset($_SESSION[$form['#node']->nid . '_stop_mail']);
     }
 
     // Get the session values created by springboard_hmac.module.
@@ -278,7 +286,7 @@ function fundraiser_sustainers_form_webform_client_form_alter(&$form, &$form_sta
         $js = drupal_get_path('module', 'fundraiser_sustainers_upgrade') . '/js/sustainers-upgrade-autosubmit.js';
         $form['#attached']['js'][] = $js;
       }
-      elseif (!empty($field[0]) && user_access('administer fundraiser sustainers upgrade')) {
+      elseif (empty($field[0]) && user_access('administer fundraiser sustainers upgrade')) {
         // Show a message about auto-submit for admins.
         drupal_set_message('You are logged in as an adminstrative user. The upgrade form will not auto-submit.', 'notice');
       }
@@ -388,7 +396,7 @@ function fundraiser_sustainers_upgrade_before_webform_submit($form, $form_state)
     if (user_access('administer fundraiser sustainers upgrade')) {
       drupal_set_message($status['status'], 'error');
     }
-    $_SESSION[$form['#node']->nid]['stop_mail'] = TRUE;
+    $_SESSION[$form['#node']->nid . '_stop_mail'] = TRUE;
     // Log the error.
     $variables = array(
       '@status' => $status['status'],
@@ -955,9 +963,9 @@ function fundraiser_sustainers_upgrade_walk_component_hierarchy($nid, $cid, &$pa
  */
 function fundraiser_sustainers_upgrade_mail_alter(&$message) {
   if (!empty($message['params']['node']) && $message['params']['node']->type == 'sustainers_upgrade_form') {
-    if (!empty($_SESSION[$message['params']['node']->nid]['stop_mail']) && $message['module'] == 'email_wrappers') {
+    if (!empty($_SESSION[$message['params']['node']->nid . '_stop_mail']) && $message['module'] == 'email_wrappers') {
       $message['send'] = FALSE;
-      unset($_SESSION[$message['params']['node']->nid]['stop_mail']);
+      unset($_SESSION[$message['params']['node']->nid . '_stop_mail']);
     }
   }
 }
