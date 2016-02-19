@@ -767,7 +767,6 @@ function fundraiser_sustainers_upgrade_create_link($payload, $rollback = FALSE) 
   if ($rollback) {
     $master_did = !empty($_SESSION['next_donation']['master_did']) ? $_SESSION['next_donation']['master_did'] : FALSE;
     $amount = !empty($_SESSION['next_donation']['amount']) ? $_SESSION['next_donation']['amount'] : FALSE;
-    dpm($amount);
     if ($master_did != $payload['did']) {
       return $link;
     }
