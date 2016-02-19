@@ -288,7 +288,7 @@ function springboard_token_get_field_types() {
  *   The ID of the new token set.
  */
 function springboard_token_set_add_set($name) {
-  $tsid = db_insert('token_sets')
+  $tsid = db_insert('springboard_token_sets')
     ->fields(array('name' => $name))
     ->execute();
 
@@ -306,7 +306,7 @@ function springboard_token_set_add_set($name) {
  *   The token description.
  */
 function springboard_token_set_add_token($token_type, $token, $token_description) {
-  $tid = db_insert('tokens')
+  $tid = db_insert('springboard_tokens')
     ->fields(array(
       'token_type' => $token_type,
       'token' => $token,
@@ -334,7 +334,7 @@ function springboard_token_set_update_token($tid, $token, $token_description) {
 
   $token_parts = explode(':', str_replace('[', '', str_replace(']', '', $token)));
 
-  db_update('tokens')
+  db_update('springboard_tokens')
     ->fields(array(
       'token_type' => $token_parts[0],
       'token' => $token,
@@ -353,7 +353,7 @@ function springboard_token_set_update_token($tid, $token, $token_description) {
  *   The ID of the token.
  */
 function springboard_token_set_add_token_to_set($tsid, $tid) {
-  db_insert('token_set_tokens')
+  db_insert('springboard_token_set_tokens')
     ->fields(array(
       'tsid' => $tsid,
       'tid' => $tid,
@@ -370,7 +370,7 @@ function springboard_token_set_add_token_to_set($tsid, $tid) {
  *   The ID of the token.
  */
 function springboard_token_set_remove_token_from_set($tsid, $tid) {
-  db_delete('token_set_tokens')
+  db_delete('springboard_token_set_tokens')
     ->condition('tsid', $tsid)
     ->condition('tid', $tid)
     ->execute();
@@ -383,7 +383,7 @@ function springboard_token_set_remove_token_from_set($tsid, $tid) {
  *   Array of token sets.
  */
 function springboard_token_set_get_sets() {
-  $token_sets = db_select('token_sets', 'ts')
+  $token_sets = db_select('springboard_token_sets', 'ts')
     ->fields('ts', array('tsid', 'name'))
     ->execute()
     ->fetchAll();
@@ -401,7 +401,7 @@ function springboard_token_set_get_sets() {
  *   The token set.
  */
 function springboard_token_set_get_set($tsid) {
-  $token_set = db_select('token_sets', 'ts')
+  $token_set = db_select('springboard_token_sets', 'ts')
     ->fields('ts', array('tsid', 'name'))
     ->condition('tsid', $tsid, '=')
     ->execute()
@@ -420,8 +420,8 @@ function springboard_token_set_get_set($tsid) {
  *   Array of tokens.
  */
 function springboard_token_set_get_tokens($tsid = NULL) {
-  $query = db_select('tokens', 't');
-  $query->join('token_set_tokens', 'tst', 't.tid = tst.tid');
+  $query = db_select('springboard_tokens', 't');
+  $query->join('springboard_token_set_tokens', 'tst', 't.tid = tst.tid');
   $query->fields('t', array('tid', 'token_type', 'token', 'token_description'));
 
   if (!empty($tsid)) {
@@ -443,12 +443,12 @@ function springboard_token_set_get_tokens($tsid = NULL) {
  */
 function springboard_token_set_delete_token($tid) {
   // Delete the token.
-  db_delete('tokens')
+  db_delete('springboard_tokens')
     ->condition('tid', $tid)
     ->execute();
 
   // Delete references from token sets.
-  db_delete('token_set_tokens')
+  db_delete('springboard_token_set_tokens')
     ->condition('tid', $tid)
     ->execute();
 }

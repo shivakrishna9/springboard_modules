@@ -11,7 +11,7 @@
 function springboard_token_set_schema() {
   $schema = array();
 
-  $schema['token_sets'] = array(
+  $schema['springboard_token_sets'] = array(
     'description' => 'Defines token sets.',
     'fields' => array(
       'tsid' => array(
@@ -33,7 +33,7 @@ function springboard_token_set_schema() {
     ),
   );
 
-  $schema['tokens'] = array(
+  $schema['springboard_tokens'] = array(
     'description' => 'Tokens that may be used in token sets.',
     'fields' => array(
       'tid' => array(
@@ -64,7 +64,7 @@ function springboard_token_set_schema() {
     'primary key' => array('tid'),
   );
 
-  $schema['token_set_tokens'] = array(
+  $schema['springboard_token_set_tokens'] = array(
     'description' => 'Maps tokens to token sets.',
     'fields' => array(
       'tsid' => array(
@@ -102,7 +102,7 @@ function springboard_token_set_install() {
     $tsid = springboard_token_set_add_set($token_set->name);
 
     foreach ($token_set->tokens as $token_string) {
-      $tid = db_query('SELECT tid FROM {tokens} WHERE `token` = :token', array(':token' => $token_string))->fetchField();
+      $tid = db_query('SELECT tid FROM {springboard_tokens} WHERE `token` = :token', array(':token' => $token_string))->fetchField();
 
       if (!empty($tid)) {
         springboard_token_set_add_token_to_set($tsid, $tid);
