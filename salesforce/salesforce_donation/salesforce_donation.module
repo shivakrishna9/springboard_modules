@@ -638,6 +638,20 @@ function salesforce_donation_salesforce_genmap_map_fields_alter(&$fields, $conte
 }
 
 /**
+ * Implements hook_salesforce_queue_batch_alter().
+ */
+function salesforce_donation_salesforce_queue_batch_alter(&$batch, SalesforceQueue $queue, SalesforceQueueProcessor $processor) {
+  if ($batch['object_type'] == 'Opportunity') {
+    // Nix any "StageName" tokens for unmapped payment stages.
+    foreach ($batch['items'] as $index => $item) {
+      if (!empty($item->sobject->fields['StageName']) && substr($item->sobject->fields['StageName'], 0, 7) == '[Stage:') {
+        unset($batch['items'][$index]->sobject->fields['StageName']);
+      }
+    }
+  }
+}
+
+/**
  * Implements hook_salesforce_genmap_map_field_info().
  *
  * @param object $node
