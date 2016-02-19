@@ -25,10 +25,6 @@ function fundraiser_sustainers_upgrade_salesforce_uninstall() {
     $mids = array_keys($result['salesforce_genmap_map']);
     entity_delete('salesforce_genmap_map', $mids[0]);
   }
-
-  $result = salesforce_mapping_load_multiple(array('drupal_bundle' => 'sustainers_upgrade_form'));
-  $mapping = array_shift($result);
-  entity_delete('salesforce_mapping', $mapping->salesforce_mapping_id);
 }
 
 
