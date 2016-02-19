@@ -9,6 +9,43 @@
 define('MARKET_SOURCE_VALUE_MAXLENGTH', 255);
 
 /**
+ * Implements hook_libraries_info().
+ */
+function market_source_libraries_info() {
+  $libraries['mobiledetect'] = array(
+    'name' => 'Mobile Detect',
+    'vendor url' => 'https://github.com/serbanghita/Mobile-Detect',
+    'download url' => 'https://github.com/serbanghita/Mobile-Detect/archive/2.8.17.tar.gz',
+    'version' => '2.8',
+    'version arguments' => array(
+      'file' => 'Mobile_Detect.php',
+      'pattern' => '/@version\s+(\d+\.\d+)/',
+      'lines' => 25,
+    ),
+    'files' => array(
+      'php' => array(
+        'Mobile_Detect.php',
+      ),
+    ),
+  );
+
+  $libraries['phpuseragent'] = array(
+    'name' => 'PHP User Agent',
+    'vendor url' => 'https://github.com/donatj/PhpUserAgent',
+    'download url' => 'https://github.com/donatj/PhpUserAgent/archive/v0.5.0.tar.gz',
+    'path' => 'Source',
+    'version' => '0.5.0',
+    'files' => array(
+      'php' => array(
+        'UserAgentParser.php',
+      ),
+    ),
+  );
+
+  return $libraries;
+}
+
+/**
  * Implements hook_menu().
  */
 function market_source_menu() {
@@ -322,6 +359,37 @@ function market_source_webform_after_build($form, &$form_state) {
     // Add form_keys to the JS settings array.
     drupal_add_js(array('market_source' => $settings), 'setting');
   }
+
+  // Populate device info fields.
+  if (libraries_load('mobiledetect')) {
+    $mobile_detect = new Market_Source_Mobile_Detect();
+
+    if (!empty($mobile_detect->getUserAgent())) {
+      $device_properties = $mobile_detect->getDeviceProperties();
+
+      if (!$mobile_detect->isMobile()) {
+        if (libraries_load('phpuseragent')) {
+          $ua_parse = parse_user_agent($mobile_detect->getUserAgent());
+
+          $device_properties['os'] = $ua_parse['platform'];
+          $device_properties['browser'] = $ua_parse['browser'] . ' ' . $ua_parse['version'];
+        }
+      }
+
+      $device_type = &_market_source_form_find_element($form, 'device_type');
+      $device_type['#value'] = $device_properties['type'];
+
+      $device_name = &_market_source_form_find_element($form, 'device_name');
+      $device_name['#value'] = $device_properties['name'];
+
+      $device_os = &_market_source_form_find_element($form, 'device_os');
+      $device_os['#value'] = $device_properties['os'];
+
+      $device_browser = &_market_source_form_find_element($form, 'device_browser');
+      $device_browser['#value'] = $device_properties['browser'];
+    }
+  }
+
   // Mandatory return value for #after_build callbacks.
   return $form;
 }
@@ -420,6 +488,10 @@ function _market_source_build_qs_keys() {
       'search_engine' => isset($default_fields['search_engine']) ? $default_fields['search_engine'] : array(),
       'search_string' => isset($default_fields['search_string']) ? $default_fields['search_string'] : array(),
       'user_agent' => isset($default_fields['user_agent']) ? $default_fields['user_agent'] : array(),
+      'device_type' => isset($default_fields['device_type']) ? $default_fields['device_type'] : array(),
+      'device_name' => isset($default_fields['device_name']) ? $default_fields['device_name'] : array(),
+      'device_os' => isset($default_fields['device_os']) ? $default_fields['device_os'] : array(),
+      'device_browser' => isset($default_fields['device_browser']) ? $default_fields['device_browser'] : array(),
     );
     foreach ($custom_fields as $custom_field) {
       $field_settings[$custom_field['key']] = $custom_field;
@@ -619,6 +691,42 @@ function market_source_market_source_field_info() {
   );
   $fields['user_agent'] = array(
     '#title' => t('User Agent'),
+    '#type' => 'hidden',
+    '#required' => 1,
+    '#extra' => array(
+      'description' => '',
+      'hidden_type' => 'hidden',
+    ),
+  );
+  $fields['device_type'] = array(
+    '#title' => t('Device Type'),
+    '#type' => 'hidden',
+    '#required' => 1,
+    '#extra' => array(
+      'description' => '',
+      'hidden_type' => 'hidden',
+    ),
+  );
+  $fields['device_name'] = array(
+    '#title' => t('Device Name'),
+    '#type' => 'hidden',
+    '#required' => 1,
+    '#extra' => array(
+      'description' => '',
+      'hidden_type' => 'hidden',
+    ),
+  );
+  $fields['device_os'] = array(
+    '#title' => t('Device OS'),
+    '#type' => 'hidden',
+    '#required' => 1,
+    '#extra' => array(
+      'description' => '',
+      'hidden_type' => 'hidden',
+    ),
+  );
+  $fields['device_browser'] = array(
+    '#title' => t('Device Browser'),
     '#type' => 'hidden',
     '#required' => 1,
     '#extra' => array(

@@ -5,3 +5,4 @@ version = 7.x-4.x-dev
 package = Jackson River Springboard
 configure = admin/config/search/market-source
 files[] = tests/market_source.test
+files[] = includes/Market_Source_Mobile_Detect.php
