@@ -122,10 +122,10 @@ function fundraiser_sustainers_upgrade_email_wrapper_add() {
       'Springboard Example</p>',
   );
   $node->email_wrapper_html_message[LANGUAGE_NONE][0] = array(
-    'value' => 'Hi [sustainer_upgrade:name_or_signout]. Thank you for upgrading your sustaining donation by [sustainer_upgrade:upgrade_amount_formatted]',
+    'value' => 'Hi [sustainer_upgrade:name_or_signout]. Thank you for upgrading your sustaining donation by [sustainer_upgrade:upgrade_amount_formatted]. If you wish to undo this action, click this link: [sustainer_upgrade:rollback]',
     'summary' => '',
     'format' => 'filtered_html',
-    'safe_value' => '<p>Hi [sustainer_upgrade:name_or_signout]. Thank you for upgrading your sustaining donation by [sustainer_upgrade:upgrade_amount_formatted]</p>',
+    'safe_value' => '<p>Hi [sustainer_upgrade:name_or_signout]. Thank you for upgrading your sustaining donation by [sustainer_upgrade:upgrade_amount_formatted]. If you wish to undo this action, click this link: [sustainer_upgrade:rollback]</p>',
   );
   $node->email_wrapper_text_template[LANGUAGE_NONE][0] = array(
     'value' => 'Thank You' . "\n" .
@@ -143,9 +143,9 @@ function fundraiser_sustainers_upgrade_email_wrapper_add() {
       'Springboard Example',
   );
   $node->email_wrapper_text_message[LANGUAGE_NONE][0] = array(
-    'value' => 'Hi [sustainer_upgrade:name_or_signout]. Thank you for upgrading your sustaining donation to [sustainer_upgrade:upgrade_amount_formatted]',
+    'value' => 'Hi [sustainer_upgrade:name_or_signout]. Thank you for upgrading your sustaining donation to [sustainer_upgrade:upgrade_amount_formatted]. If you wish to undo this action, click this link: [sustainer_upgrade:rollback]',
     'format' => 'filtered_html',
-    'safe_value' => '<p>Hi [sustainer_upgrade:name_or_signout]. Thank you for upgrading your sustaining donation to [sustainer_upgrade:upgrade_amount_formatted]</p>',
+    'safe_value' => '<p>Hi [sustainer_upgrade:name_or_signout]. Thank you for upgrading your sustaining donation to [sustainer_upgrade:upgrade_amount_formatted]. If you wish to undo this action, click this link: [sustainer_upgrade:rollback]</p>',
   );
   node_save($node);
   // Save extras.

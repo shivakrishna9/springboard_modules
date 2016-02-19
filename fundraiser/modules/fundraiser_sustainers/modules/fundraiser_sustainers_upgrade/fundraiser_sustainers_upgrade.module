@@ -417,12 +417,12 @@ function fundraiser_sustainers_upgrade_before_webform_submit($form, $form_state)
     $currency_code = $next_donation->donation['currency']['code'];
     $payload_decimal = commerce_currency_amount_to_decimal($payload['amount'], $currency_code);
     $formatted_amount = commerce_currency_format($payload_decimal, $currency_code, NULL, FALSE);
-
-    _fundraiser_sustainers_donation_amount_form_update_donations($donation->recurring->master_did, $payload_decimal, $formatted_amount, 'Sustainers Upgrade Module');
-
     $next_donation_amount = commerce_currency_decimal_to_amount($next_donation->amount, $currency_code);
     $_SESSION['next_donation'] = array('master_did' => $next_donation->master_did, 'amount' => $next_donation_amount);
-
+    if (!empty($payload['rollback'])) {
+      $_SESSION[$form['#node']->nid . '_stop_mail'] = TRUE;
+    }
+    _fundraiser_sustainers_donation_amount_form_update_donations($donation->recurring->master_did, $payload_decimal, $formatted_amount, 'Sustainers Upgrade Module');
   }
 }
 
@@ -767,6 +767,7 @@ function fundraiser_sustainers_upgrade_create_link($payload, $rollback = FALSE) 
   if ($rollback) {
     $master_did = !empty($_SESSION['next_donation']['master_did']) ? $_SESSION['next_donation']['master_did'] : FALSE;
     $amount = !empty($_SESSION['next_donation']['amount']) ? $_SESSION['next_donation']['amount'] : FALSE;
+    dpm($amount);
     if ($master_did != $payload['did']) {
       return $link;
     }
@@ -963,7 +964,7 @@ function fundraiser_sustainers_upgrade_walk_component_hierarchy($nid, $cid, &$pa
  */
 function fundraiser_sustainers_upgrade_mail_alter(&$message) {
   if (!empty($message['params']['node']) && $message['params']['node']->type == 'sustainers_upgrade_form') {
-    if (!empty($_SESSION[$message['params']['node']->nid . '_stop_mail']) && $message['module'] == 'email_wrappers') {
+    if (!empty($_SESSION[$message['params']['node']->nid . '_stop_mail'])) {
       $message['send'] = FALSE;
       unset($_SESSION[$message['params']['node']->nid . '_stop_mail']);
     }
