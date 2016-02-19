@@ -199,6 +199,7 @@ function fundraiser_sustainers_upgrade_node_view($node) {
     $node->content['field_sustainers_upgrade_fail'][0]['#access'] = FALSE;
     $payload = fundraiser_sustainers_upgrade_get_session_payload();
     $status = fundraiser_sustainers_upgrade_check_donation_status($payload);
+
     $stop_in_tracks = fundraiser_sustainers_upgrade_stop_in_tracks();
     if (in_array($status['status'], $stop_in_tracks)) {
       $node->content['field_sustainers_upgrade_fail'][0]['#access'] = TRUE;
@@ -243,6 +244,10 @@ function fundraiser_sustainers_form_webform_client_form_alter(&$form, &$form_sta
 
     // Get the session values created by springboard_hmac.module.
     $payload = fundraiser_sustainers_upgrade_get_session_payload();
+    if (!user_access('administer fundraiser sustainers upgrade') && empty($payload)) {
+      drupal_access_denied();
+      drupal_exit();
+    }
     // If there are no session values, stop everything and
     //  display a failure message, even on auto-submit forms.
     // Get the appropriate status messages and donation objects
@@ -824,6 +829,7 @@ function fundraiser_sustainers_upgrade_form_node_type_form_alter(&$form, &$form_
 function fundraiser_sustainers_upgrade_preprocess_webform_confirmation(&$vars) {
 
   if ($vars['node']->type == 'sustainers_upgrade_form' && !empty($vars['sid'])) {
+    drupal_add_css(drupal_get_path('module', 'fundraiser_sustainers_upgrade') . '/css/sustainers-upgrade.css');
     $status = isset($_SESSION['sustainer_upgrade_submit_status_' . $vars['sid']]) ? $_SESSION['sustainer_upgrade_submit_status_' .  $vars['sid']] : FALSE;
     if ($status && $status['status'] == 'valid') {
 
