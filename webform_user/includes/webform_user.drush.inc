@@ -122,7 +122,7 @@ function webform_user_create_missing_users_batch_process($chunk, $node_id, $oper
       $account = user_save('', $user_fields);
     }
 
-    _webform_user_save_profile_map($account->uid, $submission);
+    _webform_user_save_profile_map($account, $submission);
 
     $submission = webform_get_submission($node_id, $sid);
     $submission->uid = $account->uid;
