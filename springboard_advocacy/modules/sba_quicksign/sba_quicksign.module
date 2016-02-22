@@ -61,7 +61,7 @@ function sba_quicksign_form_alter(&$form, &$form_state, $form_id) {
       if (empty($user->uid) || user_access('create ' . $node->type . ' content')) {
         if (sba_quicksign_is_enabled($node)) {
           $components = $node->webform['components'];
-          $component_hierarchy = __webform_user_parse_components($node->nid, $components);
+          $component_hierarchy = webform_user_parse_components($node->nid, $components);
           $form['#after_build'][] = 'sba_quicksign_after_build';
           $quicksign_field = &_webform_user_find_field($form, $component_hierarchy['sba_quicksign']);
           $quicksign_field['children'] = sba_quicksign_form();
@@ -74,7 +74,7 @@ function sba_quicksign_form_alter(&$form, &$form_state, $form_id) {
         // Don't display the quicksign form to logged in users.
         if (sba_quicksign_is_enabled($node)) {
           $components = $node->webform['components'];
-          $component_hierarchy = __webform_user_parse_components($node->nid, $components);
+          $component_hierarchy = webform_user_parse_components($node->nid, $components);
           $quicksign_field = &_webform_user_find_field($form, $component_hierarchy['sba_quicksign']);
           $quicksign_field['#access'] = FALSE;
         }
@@ -93,7 +93,7 @@ function sba_quicksign_after_build($form, $form_state) {
     $form['#attached']['js'][] = drupal_get_path('module', 'sba_quicksign') . '/js/sba_quicksign.js';
     $parents = array_flip($form_state['triggering_element']['#parents']);
     $components = $form['#node']->webform['components'];
-    $component_hierarchy = __webform_user_parse_components($form['#node']->nid, $components);
+    $component_hierarchy = webform_user_parse_components($form['#node']->nid, $components);
     $quicksign_field = &_webform_user_find_field($form, $component_hierarchy['sba_quicksign']);
     //$quicksign_field['#access'] = FALSE;
     if (isset($parents['sba_quicksign'])) {
@@ -163,7 +163,7 @@ function sba_quicksign_form_validate(&$form, &$form_state) {
   $parents = array_flip($form_state['triggering_element']['#parents']);
   $node = node_load($form_state['values']['details']['nid']);
   $components = $node->webform['components'];
-  $component_hierarchy = __webform_user_parse_components($node->nid, $components);
+  $component_hierarchy = webform_user_parse_components($node->nid, $components);
   $qsign_value = _sba_quicksign_find_field_form_state($form_state['values'], $component_hierarchy['sba_quicksign']);
   $quicksign_field = &_webform_user_find_field($form, $component_hierarchy['sba_quicksign']);
 
