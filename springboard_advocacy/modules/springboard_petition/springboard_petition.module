@@ -106,13 +106,15 @@ function springboard_petition_form_alter(&$form, $form_state, $form_id) {
  */
 function springboard_petition_petition_submit($form, $form_state) {
   $submission_fields = _springboard_advocacy_webform_submission_flatten($form['#node']->nid, $form_state['values']['submitted_tree']);
-  $account = user_load_by_mail($submission_fields['mail']);
-  $sid = !empty($_SESSION['social_action_sid']['sid']) ? $_SESSION['social_action_sid']['sid'] : FALSE;
-  $opt_in = count($submission_fields['sbp_rps_optin']) ? TRUE : FALSE;
-  if ($opt_in && !empty($account->uid)) {
-    springboard_petition_log_opt_in($form['#node']->nid, $account->uid, $opt_in, $sid);
+  if (!empty($submission_fields['mail'])) {
+    $account = user_load_by_mail($submission_fields['mail']);
+    $sid = !empty($form_state['values']['details']['sid']) ? $form_state['values']['details']['sid'] : FALSE;
+    $opt_in = count($submission_fields['sbp_rps_optin']) ? TRUE : FALSE;
+    if ($opt_in && !empty($account->uid)) {
+      springboard_petition_log_opt_in($form['#node']->nid, $account->uid, $opt_in, $sid);
+    }
+    springboard_advocacy_success($form['#node'], $account, $submission_fields, $sid);
   }
-  springboard_advocacy_success($form['#node'], $account, $submission_fields, $sid);
 }
 
 /**
