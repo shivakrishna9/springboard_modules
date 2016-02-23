@@ -383,6 +383,9 @@ function sba_message_action_preview_form_submit($form, &$form_state) {
     }
   }
 
+  if (isset($response->data)) {
+    springboard_advocacy_success($node, $form_state['values']['contact'], $response->data);
+  }
   // Add session flag to prevent resubmission of the form
   $_SESSION['action_sid']['completed'] = TRUE;
   unset($_SESSION['retries']);
