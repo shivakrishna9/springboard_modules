@@ -68,7 +68,7 @@ function sba_message_action_send_message(array $user_message, array $form_state)
       // Fire the success hook for one-step actions.
       if (!empty($multi_flow[0]['value']) && $multi_flow[0]['value'] != 'multi') {
         $sid = !empty($values['details']['sid']) ? $values['details']['sid'] : FALSE;
-        springboard_advocacy_success($node, $contact, $response->data, $sid);
+        springboard_advocacy_success($node, $contact, (array) $response->data->messages, $sid);
       }
     }
   }

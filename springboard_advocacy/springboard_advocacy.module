@@ -908,6 +908,20 @@ function springboard_advocacy_update_multistep_components($sid, $node, $changed)
  * The $data and $contact arrays will be structured differently depending
  * on which module is calling springboard_advocacy_success().
  *
+ * With petitions, $contact is a user object cast as an array.
+ *
+ * With message and social actions, $contact is the contact array
+ * that is sent to the transaction server, with the profile values plus zip+4.
+ *
+ * With message actions, $data is the is API $response->data->message cast
+ * as an array. The structure is different for single-step and multi-step
+ * actions.
+ *
+ * With social actions, $data is parsed API $response->data->message,
+ * in a somewhat different arrangement than message actions.
+ *
+ * With petitions, $data is the webform field values in a flat array.
+ *
  * @param $node
  * @param $contact
  * @param $data
