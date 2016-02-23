@@ -905,8 +905,8 @@ function springboard_advocacy_update_multistep_components($sid, $node, $changed)
 /**
  * Action success hook.
  *
- * The $data array will be structured differently depending on which module
- * is calling springboard_advocacy_success().
+ * The $data and $contact arrays will be structured differently depending
+ * on which module is calling springboard_advocacy_success().
  *
  * @param $node
  * @param $contact
