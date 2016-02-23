@@ -33,9 +33,9 @@ function springboard_token_set_menu() {
  * Implements hook_form_FORM_ID_alter()
  */
 function springboard_token_set_form_field_ui_field_edit_form_alter(&$form, &$form_state, $form_id) {
-  $entity = $form['#instance']['entity_type'];
+  $entity_type = $form['#instance']['entity_type'];
   $bundle = $form['#instance']['bundle'];
-  $field = $form['#instance']['field_name'];
+  $field_name = $form['#instance']['field_name'];
 
   $token_sets = springboard_token_set_get_sets();
 
@@ -56,7 +56,7 @@ function springboard_token_set_form_field_ui_field_edit_form_alter(&$form, &$for
     '#type' => 'select',
     '#title' => t('Use token set'),
     '#options' => $token_set_options,
-    '#default_value' => variable_get('token_set_' . $entity . '_' . $bundle . '_' . $field, 0),
+    '#default_value' => springboard_token_set_get_token_set($entity_type, $bundle, $field_name) ,
   );
 
   $form['#submit'][] = 'springboard_token_set_save_field';
@@ -66,10 +66,24 @@ function springboard_token_set_form_field_ui_field_edit_form_alter(&$form, &$for
  * Submit handler for field token set ID.
  */
 function springboard_token_set_save_field($form, &$form_state) {
-  $entity = $form['#instance']['entity_type'];
+  $entity_type = $form['#instance']['entity_type'];
   $bundle = $form['#instance']['bundle'];
-  $field = $form['#instance']['field_name'];
-  variable_set('token_set_' . $entity . '_' . $bundle . '_' . $field, $form_state['values']['token_set_id']);
+  $field_name = $form['#instance']['field_name'];
+  $tsid = $form_state['values']['token_set_id'];
+
+  // Insert this token set if it does not exist; otherwise update it:
+  $exists_query = db_query("SELECT tsid FROM {springboard_token_set_entity_fields} " .
+    "WHERE entity_type = :entity_type AND bundle = :bundle AND field_name = :field_name",
+    array(':entity_type' => $entity_type, ':bundle' => $bundle, ':field_name' => $field_name));
+  foreach ($exists_query as $exists) {
+    db_query("UPDATE {springboard_token_set_entity_fields} SET tsid = :tsid " .
+      "WHERE entity_type = :entity_type AND bundle = :bundle AND field_name = :field_name",
+      array(':entity_type' => $entity_type, ':bundle' => $bundle, ':field_name' => $field_name, ':tsid' => $tsid));
+    return; 
+  }
+  db_query("INSERT INTO {springboard_token_set_entity_fields} (tsid, entity_type, bundle, field_name) " .
+    "VALUES(:tsid, :entity_type, :bundle, :field_name)",
+    array(':entity_type' => $entity_type, ':bundle' => $bundle, ':field_name' => $field_name, ':tsid' => $tsid));
 }
 
 /**
@@ -88,12 +102,12 @@ function springboard_token_set_form_alter(&$form, &$form_state, $form_id) {
   $token_sets = array();
 
   foreach ($fields as $field) {
-    $entity = $field['entity_type'];
+    $entity_type = $field['entity_type'];
     $bundle = $field['bundle'];
     $field_name = $field['field_name'];
 
     // Check for a token set ID associated with the current field.
-    $tsid = variable_get('token_set_' . $entity . '_' . $bundle . '_' . $field_name, 0);
+    $tsid = springboard_token_set_get_token_set($entity_type, $bundle, $field_name);
 
     if ($tsid != 0) {
       // If this token set hasn't been loaded yet, load and store tokens.
@@ -115,7 +129,6 @@ function springboard_token_set_form_alter(&$form, &$form_state, $form_id) {
     'data' => drupal_get_path('module', 'springboard_token_set') . '/js/springboard_token_set.js',
     'type' => 'file',
   );
-
   $form['#attached']['js'][] = array(
     'data' => array('token_sets' => $token_sets),
     'type' => 'setting',
@@ -318,6 +331,23 @@ function springboard_token_set_add_token($token_type, $token, $token_description
 }
 
 /**
+ * Add the label for a new token type.
+ *
+ * @param $token_type
+ *   The machine name of the token type.
+ * @param $label
+ *   The human-readable label of the token type.
+ */
+function springboard_token_set_add_token_type($token_type, $label) {
+  db_insert('springboard_token_types')
+    ->fields(array(
+      'token_type' => $token_type,
+      'label' => $label,
+    ))
+    ->execute();
+}
+
+/**
  * Updates an existing token.
  *
  * @param int $tid
@@ -422,7 +452,9 @@ function springboard_token_set_get_set($tsid) {
 function springboard_token_set_get_tokens($tsid = NULL) {
   $query = db_select('springboard_tokens', 't');
   $query->join('springboard_token_set_tokens', 'tst', 't.tid = tst.tid');
-  $query->fields('t', array('tid', 'token_type', 'token', 'token_description'));
+  $query->join('springboard_token_types', 'ttype', 't.token_type = ttype.token_type');
+  $query->fields('t', array('tid', 'token', 'token_description'));
+  $query->addField('ttype', 'label', 'token_type');
 
   if (!empty($tsid)) {
     $query->condition('tst.tsid', $tsid, '=');
@@ -451,4 +483,25 @@ function springboard_token_set_delete_token($tid) {
   db_delete('springboard_token_set_tokens')
     ->condition('tid', $tid)
     ->execute();
+}
+
+/**
+ * Gets the token set ID associaed with a given entity field.
+ * 0 is returned if no token set is associated with the target field.
+ *
+ * @param $entity_type
+ *   The target field's entity type.
+ * @param $bundle
+ *   The target field's entity bundle.
+ * @param $field_name
+ *   The target field's machine name.
+ */
+function springboard_token_set_get_token_set($entity_type, $bundle, $field_name) {
+  $tsid_query = db_query("SELECT tsid FROM {springboard_token_set_entity_fields} WHERE " .
+    "entity_type = :entity_type AND bundle = :bundle AND field_name = :field_name",
+    array(':entity_type' => $entity_type, ':bundle' => $bundle, ':field_name' => $field_name));
+  foreach ($tsid_query as $tsid_data) {
+    return $tsid_data->tsid;
+  }
+  return 0;
 }

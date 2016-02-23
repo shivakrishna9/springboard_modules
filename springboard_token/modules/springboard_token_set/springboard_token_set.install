@@ -64,6 +64,25 @@ function springboard_token_set_schema() {
     'primary key' => array('tid'),
   );
 
+  $schema['springboard_token_types'] = array(
+    'description' => 'Provides labels for token types.',
+    'fields' => array(
+      'token_type' => array(
+        'description' => 'The machine name for each type of token.',
+        'type' => 'varchar',
+        'length' => '32',
+        'not null' => TRUE,
+      ),
+      'label' => array(
+        'description' => 'The human-readable label for each type of token.',
+        'type' => 'varchar',
+        'length' => '32',
+        'not null' => TRUE,
+      ),
+    ),
+    'primary key' => array('token_type'),
+  );
+
   $schema['springboard_token_set_tokens'] = array(
     'description' => 'Maps tokens to token sets.',
     'fields' => array(
@@ -83,6 +102,37 @@ function springboard_token_set_schema() {
     'primary key' => array('tsid', 'tid'),
   );
 
+  $schema['springboard_token_set_entity_fields'] = array(
+    'description' => 'Maps token sets to entity fields.',
+    'fields' => array(
+      'tsid' => array(
+        'description' => 'Unique ID of the token set.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'entity_type' => array(
+        'description' => 'The entity type of the target field.',
+        'type' => 'varchar',
+        'length' => '32',
+        'not null' => TRUE,
+      ),
+      'bundle' => array(
+        'description' => 'The bundle of the target field.',
+        'type' => 'varchar',
+        'length' => '32',
+        'not null' => TRUE,
+      ),
+      'field_name' => array(
+        'description' => 'The machine name of the target field.',
+        'type' => 'varchar',
+        'length' => '32',
+        'not null' => TRUE,
+      ),
+    ),
+    'primary key' => array('tsid'),
+  );
+
   return $schema;
 }
 
@@ -92,11 +142,14 @@ function springboard_token_set_schema() {
 function springboard_token_set_install() {
   $token_data = json_decode(file_get_contents(drupal_get_path('module', 'springboard_token_set') . '/data/token_sets.json'));
 
+  // Add default token type labels.
+  foreach ($token_data->token_types as $token_type) {
+    springboard_token_set_add_token_type($token_type[0], $token_type[1]);
+  }
   // Add default tokens.
   foreach ($token_data->tokens as $token) {
     springboard_token_set_add_token($token[0], $token[1], $token[2]);
   }
-
   // Add default tokens to token sets.
   foreach ($token_data->token_sets as $token_set) {
     $tsid = springboard_token_set_add_set($token_set->name);

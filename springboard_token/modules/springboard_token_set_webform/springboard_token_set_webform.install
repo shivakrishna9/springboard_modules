@@ -1,0 +1,40 @@
+<?php
+
+/**
+ * @file
+ * Install hooks for the springboard_token_set_webform module.
+ */
+
+/**
+ * Implements hook_schema()
+ */
+function springboard_token_set_webform_schema() {
+  $schema = array();
+
+  $schema['springboard_token_set_webform_fields'] = array(
+    'description' => 'Maps token sets to webform fields.',
+    'fields' => array(
+      'tsid' => array(
+        'description' => 'Unique ID of the token set.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'nid' => array(
+        'description' => 'The node ID of the target webform.',
+        'type' => 'varchar',
+        'length' => '32',
+        'not null' => TRUE,
+      ),
+      'cid' => array(
+        'description' => 'The ID of the target webform component.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+    ),
+    'primary key' => array('tsid'),
+  );
+
+  return $schema;
+}

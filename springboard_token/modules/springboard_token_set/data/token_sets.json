@@ -1,4 +1,15 @@
 {
+  "token_types": [
+    ["action", "Action"],
+    ["contact", "Contact"],
+    ["current-date", "Current Date"],
+    ["donation", "Donation"],
+    ["goal", "Goals"],
+    ["sb_social", "Social"],
+    ["site", "Site"],
+    ["springboard_petition", "Petitions"],
+    ["target", "Target"]
+  ],
   "tokens": [
     ["donation", "[donation:address]", "Donor address"],
     ["donation", "[donation:address_line_2]", "Donor address line 2"],

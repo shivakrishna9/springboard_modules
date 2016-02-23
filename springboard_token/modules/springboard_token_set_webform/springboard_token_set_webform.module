@@ -3,13 +3,17 @@
 /**
  * Implements hook_form_FORM_ID_alter()
  */
-function springboard_token_set_webform_form_webform_configure_form_alter(&$form, &$form_state, $form_id) {
+//function springboard_token_set_webform_form_webform_configure_form_alter(&$form, &$form_state, $form_id) {
+function springboard_token_set_webform_form_webform_component_edit_form_alter(&$form, &$form_state, $form_id) {
   $nid = $form['nid']['#value'];
-  $action_parts = explode('/', $form['#action']);
-  $action = $action_parts[count($action_parts) - 1];
+  $cid = arg(4);
+
+  if (!is_numeric($cid)) {
+    return;
+  }
 
   // Get the saved token set ID for this form.
-  $tsid = variable_get('token_set_webform_' . $nid . '_' . $action, 0);
+  $tsid = springboard_token_set_webform_get_token_set($nid, $cid);
 
   // Create array of used token sets for JS setting.
   $token_sets = array(
@@ -75,15 +79,59 @@ function springboard_token_set_webform_form_webform_configure_form_alter(&$form,
     '#default_value' => $tsid,
   );
 
-  $form['#submit'][] = 'springboard_token_set_webform_configure_save';
+  $form['#submit'][] = 'springboard_token_set_webform_component_save';
 }
 
 /**
  * Submit handler for field token set ID.
  */
-function springboard_token_set_webform_configure_save($form, &$form_state) {
+function springboard_token_set_webform_component_save($form, &$form_state) {
   $nid = $form['nid']['#value'];
-  $action_parts = explode('/', $form['#action']);
-  $action = $action_parts[count($action_parts) - 1];
-  variable_set('token_set_webform_' . $nid . '_' . $action, $form_state['values']['token_set_id']);
+  $cid = arg(4);
+  $tsid = $form_state['values']['token_set']['token_set_id'];
+  if (!is_numeric($tsid) || !is_numeric($cid) || !is_numeric($nid)) {
+    return;
+  }
+  springboard_token_set_webform_set_token_set($nid, $cid, $tsid);
+}
+
+/**
+ * Gets the token set ID associated with a given webform component.
+ * 0 is returned if no token set is associated with the target field.
+ *
+ * @param $nid
+ *   The target webform's node ID
+ * @param $cid
+ *   The target webform component's ID
+ */
+function springboard_token_set_webform_get_token_set($nid, $cid) {
+  $tsid_query = db_query("SELECT tsid FROM {springboard_token_set_webform_fields} WHERE " .
+    "nid = :nid AND cid = :cid",
+    array(':nid' => $nid, ':cid' => $cid));
+  foreach ($tsid_query as $tsid_data) {
+    return $tsid_data->tsid;
+  }
+  return 0;
+}
+
+/**
+ * Set's the token set ID for a given webform component.
+ *
+ * @param $nid
+ *   The target webform's node ID
+ * @param $cid
+ *   The target webform component's ID
+ * @param $tsid
+ *   The new token set ID to be associated with this component.
+ */
+function springboard_token_set_webform_set_token_set($nid, $cid, $tsid) {
+  $exists_query = db_query("SELECT tsid FROM {springboard_token_set_webform_fields} " .
+    "WHERE nid = :nid AND cid = :cid", array(':nid' => $nid, ':cid' => $cid));
+  foreach ($exists_query as $exists) {
+    db_query("UPDATE {springboard_token_set_webform_fields} SET tsid = :tsid " .
+      "WHERE nid = :nid AND cid = :cid", array(':nid' => $nid, ':cid' => $cid, ':tsid' => $tsid));
+    return;
+  }
+  db_query("INSERT INTO {springboard_token_set_webform_fields} (tsid, nid, cid) " .
+    "VALUES(:tsid, :nid, :cid)", array(':nid' => $nid, ':cid' => $cid, ':tsid' => $tsid));
 }
