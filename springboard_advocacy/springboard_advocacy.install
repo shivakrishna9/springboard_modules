@@ -240,3 +240,23 @@ function springboard_advocacy_update_7009() {
     db_add_field('sba_message_action_confirm', 'fail_message', $schema['sba_message_action_confirm']['fields']['fail_message']);
   }
 }
+
+/**
+ *  Add action optin id table if it does not exist.
+ */
+function springboard_advocacy_update_7010() {
+  $schema = module_invoke('springboard_advocacy', 'schema');
+  if(db_table_exists('springboard_action_opt_in') == FALSE) {
+    db_create_table('springboard_action_opt_in', $schema['springboard_action_opt_in']);
+  }
+}
+
+/**
+ *  Add action optin block table if it does not exist.
+ */
+function springboard_advocacy_update_7011() {
+  $schema = module_invoke('springboard_advocacy', 'schema');
+  if(db_table_exists('springboard_action_opt_in_block') == FALSE) {
+    db_create_table('springboard_action_opt_in_block', $schema['springboard_action_opt_in_block']);
+  }
+}
