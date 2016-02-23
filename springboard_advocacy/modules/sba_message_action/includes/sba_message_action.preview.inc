@@ -382,9 +382,11 @@ function sba_message_action_preview_form_submit($form, &$form_state) {
       return;
     }
   }
+
   // Fire the success hook for multi-step actions.
   if (isset($response->data)) {
-    springboard_advocacy_success($node, $form_state['values']['contact'], $response->data);
+    $sid = !empty($_SESSION['social_action_sid']['sid']) ? $_SESSION['social_action_sid']['sid'] : FALSE;
+    springboard_advocacy_success($node, $form_state['values']['contact'], $response->data, $sid);
   }
   // Add session flag to prevent resubmission of the form
   $_SESSION['action_sid']['completed'] = TRUE;

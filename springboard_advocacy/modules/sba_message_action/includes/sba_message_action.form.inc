@@ -128,7 +128,7 @@ function sba_message_action_additional_elements(&$form, &$form_state) {
   }
 
   $form['#validate'][] = 'sba_message_action_form_validate';
-  array_unshift($form['#submit'], 'sba_message_action_form_submit');
+  $form['#submit'][] = 'sba_message_action_form_submit';
 }
 
 /**

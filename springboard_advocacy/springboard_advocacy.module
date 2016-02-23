@@ -911,7 +911,8 @@ function springboard_advocacy_update_multistep_components($sid, $node, $changed)
  * @param $node
  * @param $contact
  * @param $data
+ * @param $sid
  */
-function springboard_advocacy_success($node, $contact, $data) {
-  module_invoke_all('action_success', $node, $contact, $data);
+function springboard_advocacy_success($node, $contact, $data, $sid) {
+  module_invoke_all('action_success', $node, $contact, $data, $sid);
 }
