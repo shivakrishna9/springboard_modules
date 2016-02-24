@@ -166,6 +166,9 @@ function sba_quicksign_form_validate(&$form, &$form_state) {
   $component_hierarchy = webform_user_parse_components($node->nid, $components);
   $qsign_value = _sba_quicksign_find_field_form_state($form_state['values'], $component_hierarchy['sba_quicksign']);
   $quicksign_field = &_webform_user_find_field($form, $component_hierarchy['sba_quicksign']);
+  if (isset($component_hierarchy['sba_quicksign_flag'])) {
+    $quicksign_flag = &_webform_user_find_field($form, $component_hierarchy['sba_quicksign_flag']);
+  }
 
   if (!isset($parents['sba_quicksign'])) {
     // Quicksign button was not clicked.
@@ -262,6 +265,9 @@ function sba_quicksign_form_validate(&$form, &$form_state) {
       $form_state['node'] = $node;
       $_SESSION['sba_quicksign'] = TRUE;
       _sba_quicksign_build_values($form, $form_state, $node, $profile);
+      if (!empty($quicksign_flag)) {
+        form_set_value($quicksign_flag, 1, $form_state);
+      }
     }
   }
 }
@@ -405,6 +411,17 @@ function sba_quicksign_form_node_form_alter(&$form, &$form_state, $form_id) {
   }
 }
 
+function sba_quicksign_node_load($nodes, $types) {
+  // If no quicksign nodes are loaded no need to continue.
+  if (!array_intersect(array('springboard_petition', 'sba_social_action', 'sba_message_action'), $types)) {
+    return;
+  }
+  foreach ($nodes as $nid => $node) {
+    if (sba_quicksign_is_quicksign_type($node->type)) {
+      $node->quicksign_enabled = sba_quicksign_is_enabled($node);
+    }
+  }
+}
 
 /**
  * Implements hook_node_insert().
@@ -412,7 +429,7 @@ function sba_quicksign_form_node_form_alter(&$form, &$form_state, $form_id) {
 function sba_quicksign_node_insert($node) {
   if (sba_quicksign_is_quicksign_type($node->type) && !empty($node->quicksign_enabled)) {
     sba_quicksign_save($node);
-    sba_quicksign_insert_components($node, 'insert');
+    sba_quicksign_insert_components($node, 'insert', FALSE, FALSE);
   }
 }
 
@@ -421,22 +438,27 @@ function sba_quicksign_node_insert($node) {
  */
 function sba_quicksign_node_update($node) {
   if (sba_quicksign_is_quicksign_type($node->type)) {
-    $has_component = FALSE;
-    $cid = NULL;
+    $has_form_component = FALSE;
+    $has_flag_component = FALSE;
+    $form_cid = NULL;
+    $flag_cid = NULL;
     foreach ($node->webform['components'] as $key => $component) {
       if ($component['form_key'] == 'sba_quicksign') {
-        $has_component = TRUE;
-        $cid = $key;
+        $has_form_component = TRUE;
+        $form_cid = $key;
+      }
+      if ($component['form_key'] == 'sba_quicksign_flag') {
+        $has_flag_component = TRUE;
+        $flag_cid = $key;
       }
     }
-
     if (isset($node->quicksign_enabled)) {
       sba_quicksign_save($node);
-      if (!empty($node->quicksign_enabled) && !$has_component) {
-        sba_quicksign_insert_components($node, 'update');
+      if (!empty($node->quicksign_enabled) && (!$has_form_component || !$has_flag_component)) {
+        sba_quicksign_insert_components($node, 'update', $has_form_component, $has_flag_component);
       }
-      if (empty($node->quicksign_enabled) && $has_component) {
-        sba_quicksign_delete_components($node, $cid);
+      if (empty($node->quicksign_enabled) && ($has_form_component || $has_flag_component)) {
+        sba_quicksign_delete_components($node, $form_cid, $flag_cid);
       }
     }
   }
@@ -595,26 +617,42 @@ function sba_quicksign_is_quicksign_type($type) {
  * @param $node
  * @param $op
  */
-function sba_quicksign_insert_components($node, $op) {
+function sba_quicksign_insert_components($node, $op, $has_form_component, $has_flag_component) {
   module_load_include('inc', 'webform', 'includes/webform.components');
+  $fields = array();
 
-  $fields[] = array(
-    'nid' => $node->nid,
-    'form_key' => 'sba_quicksign',
-    'pid' => 0,
-    'name' => 'Quicksign Form',
-    'type' => 'markup',
-    'weight' => -100,
-    'email' => 0,
-    'extra' => array(
-      'attributes' => array(),
-      'private' => FALSE,
-    ),
-  );
+  if (!$has_form_component) {
+    $fields[] = array(
+      'nid' => $node->nid,
+      'form_key' => 'sba_quicksign',
+      'pid' => 0,
+      'name' => 'Quicksign Form',
+      'type' => 'markup',
+      'weight' => -100,
+      'email' => 0,
+      'extra' => array(
+        'attributes' => array(),
+        'private' => FALSE,
+      ),
+    );
+  }
+
+  if (!$has_flag_component) {
+    $fields[] = array(
+      'nid' => $node->nid,
+      'form_key' => 'sba_quicksign_flag',
+      'pid' => 0,
+      'name' => t('Quicksign Flag'),
+      'type' => 'hidden',
+      'value' => 0,
+      'weight' => -100,
+      'email' => 1,
+    );
+  }
 
   $exclude = array();
   $exclude[] = 'sba_quicksign';
-
+  $exclude[] = 'sba_quicksign_flag';
   // Add the component to the Webform.
   foreach ($fields as $field) {
     // Don't insert fields if cloning.
@@ -636,8 +674,13 @@ function sba_quicksign_insert_components($node, $op) {
  * @param $node
  * @param $cid
  */
-function sba_quicksign_delete_components($node, $cid) {
-  webform_component_delete($node, $node->webform['components'][$cid]);
+function sba_quicksign_delete_components($node, $form_cid, $flag_cid) {
+  if ($form_cid) {
+    webform_component_delete($node, $node->webform['components'][$form_cid]);
+  }
+  if ($flag_cid) {
+    webform_component_delete($node, $node->webform['components'][$flag_cid]);
+  }
 }
 
 /**
