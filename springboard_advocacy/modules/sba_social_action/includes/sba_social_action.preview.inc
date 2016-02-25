@@ -27,9 +27,10 @@ function sba_social_action_message_preview_page($nid) {
       else {
         $mess = 0;
       }
-
+      $numbers = range(0, $mess - 1);
+      shuffle($numbers);
       for ($x=0; $x<$mess; $x++) {
-        $random_array[$node->messages[$message['message_id']]->sba_message_id][] = mt_rand(0, $mess - 1);
+        $random_array[$node->messages[$message['message_id']]->sba_message_id][] = $numbers[$x];
       }
 
       // Sort criteria for message targets.
@@ -87,7 +88,7 @@ function sba_social_action_message_preview_page($nid) {
     '#markup' => $markup,
   ),
     'noscript' => array('#markup' => '<noscript><div class="alert error">Javascript is required. Please enable javascript in your browser.</div></noscript>'),
-    'sba_social_action_preview_form' => drupal_get_form('sba_social_action_preview_form', $node, $messages, $random_array),
+      'sba_social_action_preview_form' => drupal_get_form('sba_social_action_preview_form', $node, $messages, $random_array),
   );
 
   return $build;
@@ -106,7 +107,7 @@ function sba_social_action_message_preview_page($nid) {
  *
  * @return mixed
  */
-function sba_social_action_preview_form($form, $form_state, $node, $messages, $random_array) {
+  function sba_social_action_preview_form($form, $form_state, $node, $messages, $random_array) {
   // Access variable to determine form element accessibility.
   $access = FALSE;
   module_load_include('inc', 'sba_social_action', 'includes/sba_social_action.oauth_cache');
@@ -245,7 +246,7 @@ function sba_social_action_preview_form($form, $form_state, $node, $messages, $r
       if ($id != $message_entity->sba_message_id) {
         $n = 0;
       }
-      // $random_array is defined in the build function so that it does not
+        // $random_array is defined in the build function so that it does not
       // change after the form ajax reload.
       if (isset($random_array[$message_entity->sba_message_id])) {
         $rand_count = count($random_array[$message_entity->sba_message_id]);
