@@ -229,14 +229,27 @@ function sba_message_action_node_presave($node) {
 
 /**
  * Implements hook_node_insert().
- *
- * Adds some custom fields to new webforms.
  */
 function sba_message_action_node_insert($node) {
   if ($node->type == 'sba_message_action') {
+    // Adds some custom fields to new webforms.
     module_load_include('inc', 'sba_message_action', 'includes/sba_message_action.components');
     sba_message_action_insert_components($node);
     sba_message_action_update_multiflow_component($node);
+
+    // If this is a cloned node, save the cloned confirmation message data.
+    // We cannot do with with hook_clone_node_alter() because the nid of the new
+    // node is not yet available when that hook is fired.
+    if (isset($node->clone_from_original_nid)) {
+      if (isset($node->custom_confirmation)) {
+        $record = array(
+          'nid' => $node->nid,
+          'custom_confirmation' => $node->custom_confirmation,
+          'fail_message' => $node->custom_fail_message,
+        );
+        drupal_write_record('sba_message_action_confirm', $record);
+      }
+    }
   }
 }
 
