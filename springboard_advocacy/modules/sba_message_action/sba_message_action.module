@@ -1027,7 +1027,7 @@ function sba_message_action_flush_caches() {
 function sba_message_action_page_wrappers_page_node_alter(&$node) {
   if (arg(2) == 'message-preview' && is_numeric(arg(1))) {
     $is_wrapped = node_load(arg(1));
-    if (isset($is_wrapped->type) && $is_wrapped->type ='sba_message_action') {
+    if (isset($is_wrapped->type) && $is_wrapped->type == 'sba_message_action') {
       $node = $is_wrapped;
     }
   }
