@@ -551,6 +551,39 @@ function sba_message_preprocess_views_exposed_form(&$vars, $hook) {
   }
 }
 
+function sba_message_node_insert($node) {
+  $message_types = variable_get('sba_message_node_types', array());
+  if (isset($message_types[$node->type])) {
+    if (!empty($node->clone_from_original_nid)) {
+      foreach ($node->messages as $id => $message) {
+        $message->sba_message_id = NULL;
+        unset($message->data['group_id']);
+        $message->is_new = TRUE;
+        $message->data['message_id'] = str_replace(' ', '-', uniqid(substr(variable_get('site_name', ''), 0, 10) . '-' . substr($node->title, 0, 10) . '-'));
+        $message->field_sba_action_id[LANGUAGE_NONE][0]['target_id'] = $node->nid;
+        $message->save();
+
+        $arg = json_encode(array($node->nid));
+        $record = array(
+          'view_name' => 'sba_messages_node',
+          'view_display' => 'block_1',
+          'args' => $arg,
+          'entity_id' => $message->sba_message_id,
+          'weight' => $message->data['weight'],
+        );
+        drupal_write_record('draggableviews_structure', $record);
+
+        $send = array();
+        $send['values']['data']['recipients'] = $message->data['recipients'];
+        $send['values']['data']['message_id'] = $message->data['message_id'];
+        $send['values']['advocacy_id'] = $node->advocacy_id;
+        module_load_include('inc', 'sba_message', 'sba_message.api_calls');
+        _sba_message_api_save($message, TRUE, $send);
+      }
+    }
+  }
+}
+
 
 /**
  * The class used for sba_message entities.
