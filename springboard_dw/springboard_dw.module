@@ -1,0 +1,116 @@
+ <?php
+/**
+ * @file
+ * Base Springboard data warehouse functions.
+ */
+
+ /**
+  * Implements hook_fundraiser_donation_success().
+  * @param $donation
+  */
+function springboard_dw_fundraiser_donation_success($donation) {
+	// TODO: Queue up donation for export
+
+  dsm($donation);
+
+  $item = array();
+  $item['type'] = 'donation';
+  $item['data'] = $donation->donation;
+  $item['data']['nid'] = $donation->nid;
+  $item['data']['uid'] = $donation->uid;
+  $item['data']['sid'] = $donation->sid;
+  $item['data']['currency'] = $donation->currency;
+  $item['data']['did'] = $donation->did;
+  $item['data']['status'] = $donation->status;
+  $item['data']['txn_id'] = $donation->txn_id;
+  $item['data']['gateway'] = $donation->gateway['id'];
+  if ($donation->donation['payment_method'] == 'credit') {
+    $item['data']['card_type'] = $donation->donation['payment_fields']['credit']['card_type'];
+  }
+
+  unset($item['data']['payment_fields']);
+
+  dsm($item);
+
+
+  //$d = fundraiser_donation_get_donation($donation->did, true);
+	//dsm($d);
+    
+  $user_entity = entity_get_property_info('user');  
+  dsm($user_entity);
+
+  $wrapper = entity_metadata_wrapper('user', $donation->user);
+  dsm(get_all_entity_properties($wrapper));
+
+  $queue = DrupalQueue::get("springboard_dw_export");
+  $queue->createItem($donation->did);
+}
+
+function get_all_entity_properties($wrapper) {
+  $values = array();
+  foreach ($wrapper->getPropertyInfo() as $key => $val) {
+    $values[$key] = $wrapper->$key->value();
+  }
+  return $values;
+}
+
+/**
+ * Implements hook_menu().
+ */
+function springboard_dw_menu() {
+  $items['admin/config/services/springboard-dw'] = array(
+  	'title' => 'Springboard Data Warehouse',
+  	'description' => 'Configuration settings for Springboard Data Warehousing.',
+  	'page callback' => 'springboard_dw_settings_page',
+  	'access arguments' => array('administer springboard data warehouse'),
+  	'type' => MENU_NORMAL_ITEM,
+  	'file' => 'includes/springboard_dw.admin.inc',
+  );
+
+  return $items;
+}
+
+/**
+ * Implements hook_cron_queue_info().
+ */
+function springboard_dw_cron_queue_info() {
+  $queues['springboard_dw_export'] = array (
+    'worker callback' => 'springboard_dw_export_item',
+    'time' => 60,
+    'skip on cron' => TRUE,
+  );
+
+  return $queues;
+}
+
+/**
+ * Sends an item to the data warehouse receiver app.
+ */
+function springboard_dw_export_item($item) {
+  watchdog('springboard data warehouse', 'sending item to the warehouse...');
+}
+
+/**
+ * STOLEN FROM drupal_cron_run. Needs improvement.
+ * Ideas:
+ *  - Add a time argument.
+ *  - Add a queue argument (like salesforce queue).
+ *  - Make sure this is locked correctly.
+ */
+function springboard_dw_process_queue() {
+  $callback = 'springboard_dw_export_item';
+  $end = time() + 60;
+  $queue = DrupalQueue::get('springboard_dw_export');
+  while (time() < $end && ($item = $queue->claimItem())) {
+    try {
+      call_user_func($callback, $item->data);
+      $queue->deleteItem($item);
+    }
+    catch (Exception $e) {
+      // In case of exception log it and leave the item in the queue
+      // to be processed again later.
+      watchdog_exception('cron', $e);
+    }
+  }
+  
+}
