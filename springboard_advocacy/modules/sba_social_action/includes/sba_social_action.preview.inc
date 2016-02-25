@@ -246,7 +246,7 @@ function sba_social_action_preview_form($form, $form_state, $node, $messages, $r
       if ($id != $message_entity->sba_message_id) {
         $n = 0;
       }
-        // $random_array is defined in the build function so that it does not
+      // $random_array is defined in the build function so that it does not
       // change after the form ajax reload.
       if (isset($random_array[$message_entity->sba_message_id])) {
         $rand_count = count($random_array[$message_entity->sba_message_id]);
