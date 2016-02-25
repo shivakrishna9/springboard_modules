@@ -4,6 +4,9 @@
  * Test the webform user form submissions.
  */
 
+/**
+ * Tests webform_user submissions.
+ */
 class WebformUserSubmissionTestCase extends WebformUserTestSetup {
 
   /**
@@ -32,12 +35,14 @@ class WebformUserSubmissionTestCase extends WebformUserTestSetup {
   }
 
   /**
-   * Tests that a new user account is created when an anonymous user with a
-   * non-matching email address submits a webform user form.
+   * Tests that a new account is created.
+   *
+   * A new user should be craeted when an anonymous user with anon-matching
+   * email address submits a webform user form.
    */
   public function testWebformUserAnonymousSubmission() {
     // Create a form for testing.
-    $this->_webform_user_create_node();
+    $this->webformUserCreateNode();
 
     // Load the form and verify all fields are present.
     $this->drupalGet('node/1');
@@ -111,12 +116,14 @@ class WebformUserSubmissionTestCase extends WebformUserTestSetup {
   }
 
   /**
-   * Verify that an existing user is updated when a form is submitted by an
+   * Verify that an existing user is updated.
+   *
+   * Existing user should be updated when a form is submitted by an
    * anonymous user with a matching email address.
    */
   public function testWebformUserAnonymousWithExistingEmail() {
     // Create a form for testing.
-    $this->_webform_user_create_node();
+    $this->webformUserCreateNode();
 
     // Create a user to test with.
     $user = $this->webformUserCreateUser();
@@ -182,12 +189,11 @@ class WebformUserSubmissionTestCase extends WebformUserTestSetup {
   }
 
   /**
-   * Test that a form is prepopulated correctly when an authenticated user
-   * visits a form.
+   * Test that a form is prepopulated for an authenticated user.
    */
   public function testWebformUserAuthenticatedFormRender() {
     // Create a form for testing.
-    $this->_webform_user_create_node();
+    $this->webformUserCreateNode();
 
     // Create a user to test with.
     $user = $this->webformUserCreateUser();
@@ -215,7 +221,7 @@ class WebformUserSubmissionTestCase extends WebformUserTestSetup {
    */
   public function testWebformUserEmailNotification() {
     // Create a form for testing.
-    $this->_webform_user_create_node();
+    $this->webformUserCreateNode();
 
     // Set the send new user email option on the form.
     db_update('webform_user')
