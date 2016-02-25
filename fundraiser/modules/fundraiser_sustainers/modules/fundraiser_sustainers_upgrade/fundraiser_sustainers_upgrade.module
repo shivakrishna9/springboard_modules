@@ -147,7 +147,7 @@ function fundraiser_sustainers_upgrade_springboard_views_springboard_dashboard_p
 function fundraiser_sustainers_upgrade_views_pre_render(&$view) {
   if ($view->name =='sbv_forms') {
     foreach ($view->result as $key => $result) {
-      if ($result->node_type == 'sustainers_upgrade_form') {
+      if (!empty($result->node_type) && $result->node_type == 'sustainers_upgrade_form') {
         if(isset($result->_field_data)) {
           $node = $result->_field_data['nid']['entity'];
         }
