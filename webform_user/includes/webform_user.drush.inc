@@ -55,7 +55,7 @@ function webform_user_create_missing_users($node_id) {
           $chunk,
           $node_id,
           'details' => t('(Processing chunk @chunk of @count)', array('@chunk' => $i, '@count' => $chunk_count)),
-        )
+        ),
       );
     }
 
