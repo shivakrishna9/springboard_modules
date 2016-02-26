@@ -299,16 +299,52 @@ function springboard_advocacy_views_api() {
  *
  *   Saves a UUID for action nodes.
  */
-function springboard_advocacy_node_insert($node) {
-  $types = variable_get('sba_action_types', array());
-  if (in_array($node->type, $types)) {
-    $uuid = array(
-      'nid' => $node->nid,
-      'advocacy_id' => str_replace(' ', '-', uniqid(substr(variable_get('site_name', ''), 0, 10) . '-' . substr($node->title, 0, 10) . '-')),
-    );
-    drupal_write_record('sba_form_id', $uuid);
-  }
-}
+ function springboard_advocacy_node_insert($node) {
+
+   $types = variable_get('sba_action_types', array());
+   if (in_array($node->type, $types)) {
+     $uuid = array(
+       'nid' => $node->nid,
+       'advocacy_id' => str_replace(' ', '-', uniqid(substr(variable_get('site_name', ''), 0, 10) . '-' . substr($node->title, 0, 10) . '-')),
+     );
+     drupal_write_record('sba_form_id', $uuid);
+
+     // Clone messages if this is a clone.
+     if (!empty($node->clone_from_original_nid) && !empty($node->messages) && module_exists('sba_message')) {
+       foreach ($node->messages as $id => $message) {
+
+         // The node object still has the original node's message entities loaded
+         // but not saved. Recast them as new, unset some API values
+         // replace the entity reference ID with our new node ID
+         // and save them as new messages.
+         $message->sba_message_id = NULL;
+         if (isset($message->data['group_id'])) {
+           unset($message->data['group_id']);
+         }
+         $message->is_new = TRUE;
+         $message->data['message_id'] = str_replace(' ', '-', uniqid(substr(variable_get('site_name', ''), 0, 10) . '-' . substr($message->name, 0, 10) . '-'));
+         $message->field_sba_action_id[LANGUAGE_NONE][0]['target_id'] = $node->nid;
+         $created = time();
+         $message->created = $created;
+         $message->changed = $created;
+         $message->save();
+
+         // Save the draggable views record
+         $arg = json_encode(array($node->nid));
+         sba_message_draggable_save($arg, $message->sba_message_id, $message->data['weight']);
+
+         // Create a record on the API server
+         $pseudo_form_state = array();
+         $pseudo_form_state['values']['data']['recipients'] = $message->data['recipients'];
+         $pseudo_form_state['values']['data']['message_id'] = $message->data['message_id'];
+         $pseudo_form_state['values']['advocacy_id'] = $uuid['advocacy_id'];
+         module_load_include('inc', 'sba_message', 'sba_message.api_calls');
+         _sba_message_api_save($message, TRUE, $pseudo_form_state);
+       }
+     }
+   }
+
+ }
 
 
 
