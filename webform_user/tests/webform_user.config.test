@@ -84,8 +84,7 @@ class WebformUserConfigTestCase extends WebformUserTestSetup {
   }
 
   /**
-   * Test that new fields added to the user entity get created on new
-   * webform user forms.
+   * Test that new fields added to the user entity get created.
    */
   public function testWebformUserCustomComponentCreation() {
     // Add a new field to the user entity.
@@ -113,8 +112,7 @@ class WebformUserConfigTestCase extends WebformUserTestSetup {
   }
 
   /**
-   * Test that webform user correctly adds the default profile fields as
-   * the correct webform component types.
+   * Webform user correctly adds the default profile fields to the webform.
    */
   public function testWebformUserDefaultComponentCreation() {
 
@@ -128,7 +126,6 @@ class WebformUserConfigTestCase extends WebformUserTestSetup {
     $this->drupalPost('node/add/petition', $edit, t('Save'));
 
     // Confirm webform components are created.
-
     // Email.
     $component = $this->webformUserComponentDetails(1, 'mail');
     $this->assertNotNull($component, t('Email component created.'));
@@ -220,8 +217,7 @@ class WebformUserConfigTestCase extends WebformUserTestSetup {
     $this->assertEqual('hidden', $component->type, 'Salesforce Contact Id component type is hidden.');
 
     // @todo Create the form.
-    // $form = $this->_webform_user_create_node();
-
+    // $form = $this->webformUserCreateNode();
     // @todo Request it for viewing.
     // $this->drupalGet('node/1');
   }

@@ -36,12 +36,11 @@ class WebformUserConfirmationTestCase extends WebformUserTestSetup {
   }
 
   /**
-   * Tests the user token replacements that can be made when an authenticated
-   * user submits a webform user form.
+   * Tests the user token replacements for an authenticated user.
    */
   public function testWebformUserConfirmationPageTokens() {
     // Create a form for testing.
-    $this->_webform_user_create_node();
+    $this->webformUserCreateNode();
 
     // Simulate someone configuring the confirmation page so that webform_
     // confirmations module knows it should do its thing.
@@ -75,7 +74,8 @@ class WebformUserConfirmationTestCase extends WebformUserTestSetup {
     // and I don't know why.
     // Anyway, not sure why user token values are available since most
     // submissions are anonymous.
-    // $this->assertText('Thank you for saving the humans, Ralph', 'The text Thank you for saving the humans, Ralph appears on page.');
+    // $this->assertText('Thank you for saving the humans, Ralph', 'The text
+    // Thank you for saving the humans, Ralph appears on page.');.
   }
 
 }

@@ -1,7 +1,7 @@
 <?php
 /**
  * @file
- * Webform user module setup class for children test cases,
+ * Webform user module setup class for children test cases,.
  */
 
 /**
@@ -23,10 +23,9 @@ abstract class WebformUserTestSetup extends DrupalWebTestCase {
     parent::setUp($enable_modules);
 
     // Setup the environment to a default standard.
-    $this->_webform_user_setup_user_profile();
-    $this->_webform_user_create_type();
-    // $this->_webform_user_create_node();
-
+    $this->webformUserSetupUserProfile();
+    $this->webformUserCreateType();
+    // $this->webformUserCreateNode();
     // Create a webform editor to test creating and editing own content.
     $permissions['editor'] = array(
       'access content',
@@ -70,7 +69,7 @@ abstract class WebformUserTestSetup extends DrupalWebTestCase {
   /**
    * Create an instance of a webform user enabled node to use for testing.
    */
-  protected function _webform_user_create_node() {
+  protected function webformUserCreateNode() {
     // Create the node.
     $node = new stdClass();
     $node->is_new = 1;
@@ -115,7 +114,7 @@ abstract class WebformUserTestSetup extends DrupalWebTestCase {
   /**
    * Create a petition content type and webform user enable it.
    */
-  protected function _webform_user_create_type() {
+  protected function webformUserCreateType() {
     $type = node_type_set_defaults();
     $type->name = t('Petition');
     $type->type = 'petition';
@@ -156,10 +155,9 @@ abstract class WebformUserTestSetup extends DrupalWebTestCase {
   }
 
   /**
-   * Creates the standard set of user profile fields that are used
-   * in webform_user.
+   * Creates standard set of user profile fields that are used in webform_user.
    */
-  protected function _webform_user_setup_user_profile() {
+  protected function webformUserSetupUserProfile() {
     // Get default profile field definitions.
     $profile_fields = $this->webformUserDefaultProfileFields();
 
@@ -445,4 +443,5 @@ abstract class WebformUserTestSetup extends DrupalWebTestCase {
 
     return $profile_fields;
   }
+
 }
