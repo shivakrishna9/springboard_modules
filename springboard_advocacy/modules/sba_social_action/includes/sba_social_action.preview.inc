@@ -27,9 +27,10 @@ function sba_social_action_message_preview_page($nid) {
       else {
         $mess = 0;
       }
-
+      $numbers = range(0, $mess - 1);
+      shuffle($numbers);
       for ($x=0; $x<$mess; $x++) {
-        $random_array[$node->messages[$message['message_id']]->sba_message_id][] = mt_rand(0, $mess - 1);
+        $random_array[$node->messages[$message['message_id']]->sba_message_id][] = $numbers[$x];
       }
 
       // Sort criteria for message targets.
