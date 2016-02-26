@@ -435,10 +435,11 @@ function webform_user_form_alter(&$form, &$form_state, $form_id) {
               case 'checkboxes':
                 // Will be a 0 if unchecked.
                 if ($profile_value) {
+
                   $form_field['#default_value'] = array($profile_field);
                 }
-
                 break;
+
               default:
                 $form_field['#default_value'] = check_plain($profile_value);
                 break;
@@ -596,6 +597,7 @@ function webform_user_webform_submit($form, &$form_state) {
     }
   }
 }
+
 /**
  * Save submitted webform user field values in session.
  */
@@ -746,7 +748,7 @@ function webform_user_node_insert($node) {
     if (_webform_user_is_webform_user_node($node)) {
       _webform_user_set_values($node);
       // Value from node_clone module.
-      if (!isset($node->clone_from_original_nid)) { 
+      if (!isset($node->clone_from_original_nid)) {
 
         // We only want to create new components if this is NOT a clone.
         _webform_user_create_webform_components($node);
@@ -768,8 +770,8 @@ function webform_user_node_update($node) {
     $current_node = node_load($node->nid);
     if (!_webform_user_is_webform_user_node($current_node) && _webform_user_is_webform_user_node($node)
        && $current_node->webform['components'][1]['form_key'] != 'mail') {
-      // TODO make sure this ref is correct.
-      // TODO confirm that this works if email not #1, other modules make
+      // @TODO make sure this ref is correct.
+      // @TODO confirm that this works if email not #1, other modules make
       // components too.
       _webform_user_create_webform_components($node);
     }
@@ -874,7 +876,7 @@ function _webform_user_parse_component($nid, $form_key) {
  * Builds a path from the webform component to it's topmost parent.
  */
 function _webform_user_walk_component_hierarchy($nid, $cid, $reset = FALSE, &$path = array()) {
-  // Statically cache to reduce duplicate queries. 
+  // Statically cache to reduce duplicate queries.
   static $component_hierarchy = array();
   if (empty($component_hierarchy[$nid]) || $reset == TRUE) {
     $component_hierarchy[$nid] = array();
@@ -1055,7 +1057,6 @@ function _webform_user_create_webform_components(&$node) {
       $fieldset_id = 0;
       // Get the fieldset ID, or create it if it doesn't already exist.
       // Prevents fieldsets that aren't being used from getting created.
-
       if (isset($field['category_key']) && !empty($field['category_key'])) {
         if (isset($fieldset_created[$field['category_key']])) {
           $fieldset_id = $fieldset_created[$field['category_key']];
