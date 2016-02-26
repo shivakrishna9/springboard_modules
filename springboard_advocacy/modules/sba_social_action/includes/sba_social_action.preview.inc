@@ -91,6 +91,13 @@ function sba_social_action_message_preview_page($nid) {
     'sba_social_action_preview_form' => drupal_get_form('sba_social_action_preview_form', $node, $messages, $random_array),
   );
 
+  // We can't really tell if the user takes action, so non-empty $messages
+  // is the closest we'll get.
+  $sid = !empty($_SESSION['social_action_sid']['sid']) ? $_SESSION['social_action_sid']['sid'] : FALSE;
+  if (!empty($_SESSION['social_contact']) && !empty($messages)) {
+    springboard_advocacy_success($node, $_SESSION['social_contact'], $messages, $sid);
+  }
+
   return $build;
 }
 

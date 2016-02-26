@@ -1,4 +1,4 @@
- <?php
+<?php
 /**
  * @file
  * Base Springboard advocacy functions.
@@ -56,18 +56,18 @@ function springboard_advocacy_menu() {
   );
 
   $items['admin/springboard/advocacy/actions'] = array(
-    'title' => 'Advocacy: Actions',
-    'page arguments' => array('actions'),
-    'access callback' => 'springboard_advocacy_user_can_create_advocacy_type',
-  ) + springboard_advocacy_menu_common(FALSE, TRUE);
+      'title' => 'Advocacy: Actions',
+      'page arguments' => array('actions'),
+      'access callback' => 'springboard_advocacy_user_can_create_advocacy_type',
+    ) + springboard_advocacy_menu_common(FALSE, TRUE);
 
   $items['admin/springboard/advocacy/message-actions/all'] = array(
-    'title' => 'Advocacy: All Message Actions',
-    'page arguments' => array('message-actions/all'),
-    'access arguments' => array(
-      'create sba_message_action content',
-    ),
-  ) + springboard_advocacy_menu_common(FALSE, TRUE);
+      'title' => 'Advocacy: All Message Actions',
+      'page arguments' => array('message-actions/all'),
+      'access arguments' => array(
+        'create sba_message_action content',
+      ),
+    ) + springboard_advocacy_menu_common(FALSE, TRUE);
 
   $items['admin/springboard/advocacy/social-actions/all'] = array(
       'title' => 'Advocacy: All Social Actions',
@@ -78,28 +78,28 @@ function springboard_advocacy_menu() {
     ) + springboard_advocacy_menu_common(FALSE, TRUE);
 
   $items['admin/springboard/advocacy/petitions/all'] = array(
-    'title' => 'Advocacy: All Petitions',
-    'page arguments' => array('petitions/all'),
-    'access arguments' => array(
-      'create springboard_petition content',
-    ),
-  ) + springboard_advocacy_menu_common(FALSE, TRUE);
+      'title' => 'Advocacy: All Petitions',
+      'page arguments' => array('petitions/all'),
+      'access arguments' => array(
+        'create springboard_petition content',
+      ),
+    ) + springboard_advocacy_menu_common(FALSE, TRUE);
 
   $items['admin/springboard/advocacy/reports'] = array(
-    'title' => 'Advocacy Reports',
-    'page arguments' => array('reports'),
-    'page callback' => 'springboard_advocacy_settings_page',
-  ) + springboard_advocacy_menu_common();
+      'title' => 'Advocacy Reports',
+      'page arguments' => array('reports'),
+      'page callback' => 'springboard_advocacy_settings_page',
+    ) + springboard_advocacy_menu_common();
 
   $items['advocacy/ajax/search'] = array(
-      'title' => 'Data',
-      'page callback' => 'springboard_advocacy_ajax_search',
-      'type' => MENU_CALLBACK,
-      'file' => 'springboard_advocacy.views.inc',
-      'file path' => drupal_get_path('module', 'springboard_advocacy') . '/includes/views',
-       'access callback' => 'user_access',
-       'access arguments' => array('create sba_social_action content')
-    );
+    'title' => 'Data',
+    'page callback' => 'springboard_advocacy_ajax_search',
+    'type' => MENU_CALLBACK,
+    'file' => 'springboard_advocacy.views.inc',
+    'file path' => drupal_get_path('module', 'springboard_advocacy') . '/includes/views',
+    'access callback' => 'user_access',
+    'access arguments' => array('create sba_social_action content')
+  );
 
   return $items;
 }
@@ -936,4 +936,33 @@ function springboard_advocacy_update_multistep_components($sid, $node, $changed)
   $submission = webform_get_submission($node->nid, $sid, TRUE);
   // Update to trigger salesforce resync.
   webform_submission_update($node, $submission);
+}
+
+/**
+ * Action success hook.
+ *
+ * The $data and $contact arrays will be structured differently depending
+ * on which module is calling springboard_advocacy_success().
+ *
+ * With petitions, $contact is a user object cast as an array.
+ *
+ * With message and social actions, $contact is the contact array
+ * that is sent to the transaction server, with the profile values plus zip+4.
+ *
+ * With message actions, $data is the is API $response->data->message cast
+ * as an array. The structure is different for single-step and multi-step
+ * actions.
+ *
+ * With social actions, $data is parsed API $response->data->message,
+ * in a somewhat different arrangement than message actions.
+ *
+ * With petitions, $data is the webform field values in a flat array.
+ *
+ * @param $node
+ * @param $contact
+ * @param $data
+ * @param $sid
+ */
+function springboard_advocacy_success($node, $contact, $data, $sid) {
+  module_invoke_all('action_success', $node, $contact, $data, $sid);
 }
