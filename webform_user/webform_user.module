@@ -1347,7 +1347,7 @@ function _webform_user_save_profile_map($account, &$map) {
         // Length is a concern for text fields, and will fail validation.
         // Text areas are stored in blob form, so not an issue.
         $max_length = isset($field_info['settings']['max_length']) ? $field_info['settings']['max_length'] : '';
-        if (!empty($max_length) && strlen($field_value) > $max_length) {
+        if (!empty($max_length) && is_string($field_value) && strlen($field_value) > $max_length) {
           $original_field = $field_value;
           $field_value = substr($field_value, 0, $max_length);
           watchdog('webform_user', 'Truncated field @field_name at length @length for user @username. Original data: @original_field',
@@ -1358,6 +1358,10 @@ function _webform_user_save_profile_map($account, &$map) {
               '@original_field' => $original_field,
             )
           );
+        }
+        // Implode array values:
+        else if (is_array($field_value)) {
+          $field_value = implode(';', $field_value);
         }
         $account->{$field_name}['und'][0]['value'] = $field_value;
       }
