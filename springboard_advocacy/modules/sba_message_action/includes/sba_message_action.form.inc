@@ -331,7 +331,7 @@ function sba_message_action_message_form(&$form, $message, $action_type) {
  * @param $form
  * @param $form_state
  */
-function sba_message_action_form_validate($form, &$form_state) {
+function sba_message_action_form_validate(&$form, &$form_state) {
   $node = $form['#node'];
   $node_wrapper = entity_metadata_wrapper('node', $node);
   $multi_flow = $node_wrapper->field_sba_action_flow->value() == 'multi' ? TRUE : FALSE;
@@ -350,11 +350,13 @@ function sba_message_action_form_validate($form, &$form_state) {
     // Enforce mandatory editing.
     if ($body_edited == $body_default && isset($message['body_required']) && $message['body_required']['#value'] == 1) {
         form_set_error('body_editable', t('Please personalize your message before sending.'));
+        $form['sba_messages']['message'][$message_id]['edited_body']['#attributes']['class'][] =  'error';
     }
     elseif ($body_edited != $body_default) {
       $changed = TRUE;
     }
     if ($subject_edited == $subject_default && isset($message['subject_required']) && $message['subject_required']['#value'] == 1) {
+       $form['sba_messages']['message'][$message_id]['subject']['#attributes']['class'][] =  'error';
         form_set_error('subject', t('Please personalize the subject line before sending your message.'));
     }
     elseif (!isset($message['subject_show']) && $subject_edited != $subject_default) {
@@ -376,7 +378,9 @@ function sba_message_action_form_validate($form, &$form_state) {
     }
   }
   else {
-    form_set_error('', t('We could not verify your address. Please check that the street, city, state and zip code information is correct.'));
+    if (empty($form_state['storage']['quicksign_validated'])) {
+      form_set_error('', t('We could not verify your address. Please check that the street, city, state and zip code information is correct.'));
+    }
   }
 }
 
