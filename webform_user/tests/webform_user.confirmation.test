@@ -4,6 +4,9 @@
  * Test the webform user confirmation page.
  */
 
+/**
+ * Tests webform_user confirmations.
+ */
 class WebformUserConfirmationTestCase extends WebformUserTestSetup {
 
   /**

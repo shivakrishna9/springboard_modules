@@ -4,6 +4,9 @@
  * Test the configuation and form creation functionality of webform user.
  */
 
+/**
+ * Tests webform_user configuration.
+ */
 class WebformUserConfigTestCase extends WebformUserTestSetup {
 
   /**

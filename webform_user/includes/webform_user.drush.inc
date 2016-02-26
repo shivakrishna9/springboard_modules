@@ -74,6 +74,9 @@ function webform_user_create_missing_users($node_id) {
   }
 }
 
+/**
+ *
+ */
 function webform_user_create_missing_users_batch_process($chunk, $node_id, $operation_details, &$context) {
   module_load_include('inc', 'webform', 'includes/webform.submissions');
 
@@ -103,7 +106,7 @@ function webform_user_create_missing_users_batch_process($chunk, $node_id, $oper
   // Create users from the webform submissions.
   foreach ($submissions as $sid => $submission) {
     $account = user_load_by_mail($submission['mail']);
-    
+
     // Remove empty string values from submission to avoid datatype exceptions
     $submission = array_filter($submission, 'strlen');
     if (empty($account)) {
@@ -143,10 +146,16 @@ function webform_user_create_missing_users_batch_process($chunk, $node_id, $oper
   }
 }
 
+/**
+ *
+ */
 function webform_user_create_missing_users_batch_process_complete($success, $results, $operations) {
   print t('Webform user creation complete.');
 }
 
+/**
+ *
+ */
 function webform_user_create_missing_users_create_log_table() {
   if (!db_table_exists('webform_user_create_missing_users_log')) {
     $schema = array(

@@ -248,19 +248,6 @@ function webform_user_queue_batch_item_alter(&$object, $type, $action, $oid) {
 }
 
 /**
- * Only show the related object field tab if the form is webform_user and it has been mapped to a salesforce object
- */ // TODO - called from where?
-function _webform_user_check_settings($op) {
-  if ($op == 'Map webform submissions to Salesforce objects') {
-    $node = node_load(arg(1));
-    if (_webform_user_is_webform_user_node($node) && !empty($node->sf_webform_object)) {
-      return TRUE;
-    }
-  }
-  return FALSE;
-}
-
-/**
  * Implements hook_form_alter().
  *
  * Alter content type settings to add 'Enable fundraiser?' checkbox on node content types.
@@ -780,7 +767,7 @@ function webform_user_node_update($node) {
     // If the node hasn't been a webform_user form and it's set to be a webform_user form, make it one.
     $current_node = node_load($node->nid);
     if (!_webform_user_is_webform_user_node($current_node) && _webform_user_is_webform_user_node($node)
-       && $current_node->webform['components'][1]['form_key'] != 'mail') { //TODO make sure this ref is correct.
+      && $current_node->webform['components'][1]['form_key'] != 'mail') { //TODO make sure this ref is correct.
       // TODO confirm that this works if email not #1, other modules make components too.
       _webform_user_create_webform_components($node);
     }
@@ -1001,12 +988,11 @@ function _webform_user_create_webform_components(&$node) {
   $items = array();
   $fieldset_lookup = array();
   $fields = _webform_user_get_profile_fields();
-  /**
-   * Hook available to other modules: hook_webform_user_get_profile_fields().
-   * This allows other modules to filter, add to, or modify profile fields that
-   * are created by webform user. Allowing for example fundraiser to avoid
-   * duplication of effort, or custom modules to filter out results.
-   */
+  // Hook available to other modules: hook_webform_user_get_profile_fields().
+  // This allows other modules to filter, add to, or modify profile fields that
+  // are created by webform user. Allowing for example fundraiser to avoid
+  // duplication of effort, or custom modules to filter out results.
+  // @TODO This info should go in a .api.php file.
   drupal_alter('webform_user_profile_fields', $fields, $node);
 
   // Set up fieldsets for entry.
@@ -1056,10 +1042,9 @@ function _webform_user_create_webform_components(&$node) {
           $fieldset_created[$field['category_key']] = $fieldset_id; // Save the created id.
         }
       }
-      /**
-       * Standard webform components available are:
-       * date, email, fieldset, file, grid, hidden, markup, number, pagebreak, select, textarea, textfield, time
-       */
+      // Standard webform components available are: date, email, fieldset,
+      // file, grid, hidden, markup, number, pagebreak, select, textarea,
+      // textfield, and time.
       $item = array(
         'nid' => $node->nid,
         'form_key' => str_replace('profile_', '', $field['name']), // Strip 'profile_' where needed.
@@ -1085,7 +1070,7 @@ function _webform_user_create_webform_components(&$node) {
           $item['extra']['items'] = $field['name'] . '|' . $field['title'];
           $item['extra']['aslist'] = 0;
           $item['extra']['multiple'] = 'Y';
-          if(isset($field['extra']['title_display'])) {
+          if (isset($field['extra']['title_display'])) {
             $item['extra']['title_display'] = $field['extra']['title_display'];
           }
           break;
@@ -1307,9 +1292,9 @@ function _webform_user_save_profile_map($uid, &$map) {
               $field_value = substr($field_value, 0, $max_length);
               watchdog('webform_user', 'Truncated field @field_name at length @length for user #@uid. Original data: @original_field',
                 array('@field_name' => $field_name, '@length' => $max_length, '@uid' => $uid, '@original_field' => $original_field));
-            } 
+            }
             // Implode array values:
-            else if (is_array($field_value)) {
+            elseif (is_array($field_value)) {
               $field_value = implode(';', $field_value);
             }
 
@@ -1346,20 +1331,20 @@ function _webform_user_save_profile_map($uid, &$map) {
 
 /**
  * Database/helper function, fetch an array of user profile fields.
+ *
+ * @return array
+ *   Returns an associative array of fields with the following keys:
+ *   name - form key.
+ *   title - human readable name.
+ *   type - webform component type.
+ *   mandatory - required or not (optional, defaults to 0).
+ *   weight - order of display (optional, defaults to 0).
+ *   explanation - description (optional, defaults to '').
+ *   options - array of select options, required for type list_float.
+ *   category_key - form key for the fieldset for the profile.
+ *   category_name - human readable profile field value.
  */
 function _webform_user_get_profile_fields() {
-  /**
-   * Returns an array of fields with the following fields set:
-   * name - form key
-   * title - human readable name
-   * type - webform component type
-   * mandatory - required or not (optional, defaults to 0)
-   * weight - order of display (optional, defaults to 0)
-   * explanation - description (optional, defaults to '')
-   * options - array of select options, required for type list_float
-   * category_key - form key for the fieldset for the profile
-   * category_name - human readable profile field value
-   */
   $fields = array();
   // Add the e-mail field first.
   $mail_field = array(
@@ -1598,6 +1583,9 @@ function theme_webform_user_webform_components_form($variables) {
   return $output;
 }
 
+/**
+ * Creates an edit link for a form component.
+ */
 function _webform_user_edit_component_link($node, $cid) {
   if (user_access('alter webform components')) {
     return l(t('Edit'), 'node/' . $node->nid . '/webform/components/' . $cid, array('query' => drupal_get_destination()));
@@ -1605,6 +1593,9 @@ function _webform_user_edit_component_link($node, $cid) {
   return '';
 }
 
+/**
+ * Creates a clone link for a form component.
+ */
 function _webform_user_clone_component_link($node, $cid) {
   if (user_access('alter webform components')) {
     return l(t('Clone'), 'node/' . $node->nid . '/webform/components/' . $cid . '/clone', array('query' => drupal_get_destination()));
@@ -1612,6 +1603,9 @@ function _webform_user_clone_component_link($node, $cid) {
   return '';
 }
 
+/**
+ * Creates a delete links for a form component.
+ */
 function _webform_user_delete_component_link($node, $cid) {
   if (user_access('alter webform components')) {
     return l(t('Delete'), 'node/' . $node->nid . '/webform/components/' . $cid . '/delete', array('query' => drupal_get_destination()));
@@ -1619,6 +1613,9 @@ function _webform_user_delete_component_link($node, $cid) {
   return '';
 }
 
+/**
+ * Builds table rows.
+ */
 function _webform_components_form_rows($node, $cid, $component, $level, &$form, &$rows, &$add_form) {
   // Create presentable values.
   if (drupal_strlen($component['value']) > 30) {

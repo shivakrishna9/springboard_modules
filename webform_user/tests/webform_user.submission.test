@@ -4,6 +4,9 @@
  * Test the webform user form submissions.
  */
 
+/**
+ * Tests webform_user submissions.
+ */
 class WebformUserSubmissionTestCase extends WebformUserTestSetup {
 
   /**
