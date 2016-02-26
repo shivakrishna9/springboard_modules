@@ -45,7 +45,7 @@
     ["donation", "[donation:payment-transaction:transaction-id]", "Payment transaction ID in Springboard"],
     ["donation", "[donation:mail]", "Donor email address"],
     ["donation", "[donation:first_name]", "Donor first name"],
-    ["donation", "[donation:amount_formatted]", "Donation amount with currency symbol and formatting ($1,000.00)"],
+    ["donation", "[donation:amount_formatted]", "Donation amount with currency symbol and formatting."],
     ["donation", "[donation:card_number]", "Last four digits of credit card number (1234)"],
     ["donation", "[donation:last_name]", "Donor last name"],
     ["donation", "[donation:payment_method]", "Donation payment method"],
@@ -72,8 +72,8 @@
     ["springboard_petition", "[springboard_petition:recent_signers]", "List of people who recently signed the petition"],
     ["goal", "[goal:progress-starter]", "The goal starter message OR progress bar"],
     ["goal", "[goal:target]", "The goal target"],
-    ["goal", "[goal:total]", "Progress toward the goal so far ($ raised, number of signers, etc)"],
-    ["goal", "[goal:progress-percent]", "Unrounded percentage of the goal that has been met so far"],
+    ["goal", "[goal:total]", "Progress toward the goal so far like $ raised or num. signers"],
+    ["goal", "[goal:progress-percent]", "Unrounded percentage of the goal met so far"],
     ["target", "[target:salutation]", "Target's salutation (Rep., Sen., Ms., etc)"],
     ["target", "[target:first_name]", "Target's first name"],
     ["target", "[target:last_name]", "Target's last name"],
@@ -85,7 +85,7 @@
     ["action", "[action:undelivered_messages]", "Undeliverable messages generated"],
     ["donation", "[donation:node:title]", "Donation form title"],
     ["donation", "[donation:node:sid]", "Donation form submission ID"],
-    ["donation", "[donation:webform-tokens:?]", "Custom format for value and form name (value-form_name) replaces ? wildcard."]
+    ["donation", "[donation:webform-tokens:?]", "Custom (value-form_name) format, replaces ? wildcard."]
   ],
   "token_sets": [
     {

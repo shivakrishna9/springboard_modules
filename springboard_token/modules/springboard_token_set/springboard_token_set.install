@@ -130,7 +130,6 @@ function springboard_token_set_schema() {
         'not null' => TRUE,
       ),
     ),
-    'primary key' => array('tsid'),
   );
 
   return $schema;
@@ -153,10 +152,8 @@ function springboard_token_set_install() {
   // Add default tokens to token sets.
   foreach ($token_data->token_sets as $token_set) {
     $tsid = springboard_token_set_add_set($token_set->name);
-
     foreach ($token_set->tokens as $token_string) {
       $tid = db_query('SELECT tid FROM {springboard_tokens} WHERE `token` = :token', array(':token' => $token_string))->fetchField();
-
       if (!empty($tid)) {
         springboard_token_set_add_token_to_set($tsid, $tid);
       }

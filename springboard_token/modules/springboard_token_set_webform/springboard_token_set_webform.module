@@ -34,21 +34,17 @@ function springboard_token_set_webform_form_webform_component_edit_form_alter(&$
         }
       }
     }
-
     if (empty($form['#attached']['js'])) {
       $form['#attached']['js'] = array();
     }
-
     $form['#attached']['js'] = array(
       'data' => drupal_get_path('module', 'springboard_token_set') . '/js/springboard_token_set.js',
       'type' => 'file',
     );
-
     $form['#attached']['js'][] = array(
       'data' => array('token_sets' => $token_sets),
       'type' => 'setting',
     );
-
     $form['#attached']['css'] = array(
       'data' => drupal_get_path('module', 'springboard_token_set') . '/css/springboard_token_set.css',
       'type' => 'file',
@@ -70,6 +66,8 @@ function springboard_token_set_webform_form_webform_component_edit_form_alter(&$
     '#type' => 'fieldset',
     '#collapsible' => TRUE,
     '#weight' => 99,
+    '#description' => t('Please select the set of tokens that should available to the description and default value of this component.') . ' ' .
+      t('This form\'s tokens will be updated after it is submitted.'),
   );
 
   $form['token_set']['token_set_id'] = array(
@@ -80,6 +78,37 @@ function springboard_token_set_webform_form_webform_component_edit_form_alter(&$
   );
 
   $form['#submit'][] = 'springboard_token_set_webform_component_save';
+
+  // Add the tokens UI:
+  _springboard_token_set_webform_insert_token_ui($form);
+}
+
+/**
+ * Adds the token UI to the webform component settings form. 
+ *
+ * @param $form
+ *   The form where token UI should be added.
+ */
+function _springboard_token_set_webform_insert_token_ui(&$form) {
+  // Unset tokens webform provides:
+  $form['extra']['description']['#description'] = t('A short description of the field used as help for the user when he/she uses the form.');
+  $form['value']['#description'] = t('The default value of the field.');
+
+  // Store token set and field data for JS settings.
+  $nid = arg(1); $cid = arg(4);
+  $tsid = springboard_token_set_webform_get_token_set($nid, $cid);
+  if (empty($tsid)) {
+    return;
+  }
+  $tokens = springboard_token_set_get_tokens($tsid);
+  $token_sets = array($tsid => $tokens);
+
+  // Store a reference to token set ID in the field attributes.
+  $form['extra']['description']['#attributes']['data-token-set-id'] = $tsid;
+  $form['value']['#attributes']['data-token-set-id'] = $tsid;
+  
+  // Add the jQuery and CSS for the token UI:
+  springboard_token_set_attach_token_ui($form, $token_sets);
 }
 
 /**

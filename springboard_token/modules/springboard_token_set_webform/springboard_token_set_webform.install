@@ -10,7 +10,6 @@
  */
 function springboard_token_set_webform_schema() {
   $schema = array();
-
   $schema['springboard_token_set_webform_fields'] = array(
     'description' => 'Maps token sets to webform fields.',
     'fields' => array(
@@ -33,8 +32,6 @@ function springboard_token_set_webform_schema() {
         'not null' => TRUE,
       ),
     ),
-    'primary key' => array('tsid'),
   );
-
   return $schema;
 }

@@ -121,23 +121,8 @@ function springboard_token_set_form_alter(&$form, &$form_state, $form_id) {
     }
   }
 
-  if (empty($form['#attached']['js'])) {
-    $form['#attached']['js'] = array();
-  }
-
-  $form['#attached']['js'] = array(
-    'data' => drupal_get_path('module', 'springboard_token_set') . '/js/springboard_token_set.js',
-    'type' => 'file',
-  );
-  $form['#attached']['js'][] = array(
-    'data' => array('token_sets' => $token_sets),
-    'type' => 'setting',
-  );
-
-  $form['#attached']['css'] = array(
-    'data' => drupal_get_path('module', 'springboard_token_set') . '/css/springboard_token_set.css',
-    'type' => 'file',
-  );
+  // Add the jQuery and CSS for the token UI:
+  springboard_token_set_attach_token_ui($form, $token_sets);
 }
 
 /**
@@ -504,4 +489,30 @@ function springboard_token_set_get_token_set($entity_type, $bundle, $field_name)
     return $tsid_data->tsid;
   }
   return 0;
+}
+
+/**
+ * Add the token UI JS and CSS to a particular form.
+ *
+ * @param $form
+ *   The form in question.
+ * @param $token_sets
+ *   The token data to be used by jQuery.
+ */
+function springboard_token_set_attach_token_ui(&$form, $token_sets) {
+  if (empty($form['#attached']['js'])) {
+    $form['#attached']['js'] = array();
+  }
+  $form['#attached']['js'] = array(
+    'data' => drupal_get_path('module', 'springboard_token_set') . '/js/springboard_token_set.js',
+    'type' => 'file',
+  );
+  $form['#attached']['js'][] = array(
+    'data' => array('token_sets' => $token_sets),
+    'type' => 'setting',
+  );
+  $form['#attached']['css'] = array(
+    'data' => drupal_get_path('module', 'springboard_token_set') . '/css/springboard_token_set.css',
+    'type' => 'file',
+  );
 }
