@@ -140,7 +140,13 @@ function webform_salesforce_genmap_map_fields(stdClass $submission, Entity $map,
     $wf_field = $node->webform['components'][$cid]['form_key'];
     if (isset($map->field_map['webform_map'][$wf_field])) {
       $sf_field = $map->field_map['webform_map'][$wf_field];
-      $fields[$sf_field] = $values['value'][0];
+      // Salesforce expects multi-value fields to be semicolon-delimited:
+      if (count($values['value']) > 1) {
+        $fields[$sf_field] = implode(';', $values['value']);
+      }
+      else {
+        $fields[$sf_field] = $values['value'][0];
+      }
     }
   }
   // Node properties map.
