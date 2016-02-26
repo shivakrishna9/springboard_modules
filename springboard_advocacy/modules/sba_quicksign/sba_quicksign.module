@@ -777,3 +777,18 @@ function sba_quicksign_check_message_fields($form, $form_state) {
   }
   return $error;
 }
+
+/**
+ * Implements hook_node_clone_alter().
+ */
+function sba_quicksign_clone_node_alter(&$node, $context) {
+  if (sba_quicksign_is_enabled($context['original_node'])) {
+    $original_settings = sba_quicksign_settings($context['original_node']->nid);
+    $node->quicksign_enabled = $original_settings['quicksign_enabled'];
+    $node->quicksign_label = $original_settings['quicksign_label'];
+    $node->quicksign_description['value'] = $original_settings['quicksign_description'];
+    $node->quicksign_description['format'] = $original_settings['quicksign_description_format'];
+    $node->quicksign_button_text = $original_settings['quicksign_button_text'];
+  }
+}
+

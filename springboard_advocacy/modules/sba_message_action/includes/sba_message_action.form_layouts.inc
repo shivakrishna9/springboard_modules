@@ -281,7 +281,7 @@ function theme_message_action_webform_wrapper($vars) {
     $fieldset_title_field = field_get_items('node', $vars['element']['#node'], 'field_sba_message_action_label');
     $fieldset_title = field_view_value('node', $vars['element']['#node'], 'field_sba_message_action_label', $fieldset_title_field[0]);
     $title = drupal_render($fieldset_title);
-    $title = !empty($title) ? $title : t('Take Acton Now!');
+    $title = !empty($title) ? $title : t('Take Action Now!');
     return ' <div class="row-fluid"><fieldset id="take-action-wrapper" class = "form-wrapper"><legend>' . $title . '</legend>' . $vars['element']['#children'] . '</fieldset></div>';
   }
 }
