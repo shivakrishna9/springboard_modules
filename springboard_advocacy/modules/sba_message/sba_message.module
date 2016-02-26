@@ -207,6 +207,24 @@ function sba_message_drag_submit(&$form, &$form_state) {
 }
 
 /**
+ * Save a draggable views record.
+ *
+ * @param $arg
+ * @param $sba_message_id
+ * @param $weight
+ */
+function sba_message_draggable_save($arg, $sba_message_id, $weight) {
+  $record = array(
+    'view_name' => 'sba_messages_node',
+    'view_display' => 'block_1',
+    'args' => $arg,
+    'entity_id' => $sba_message_id,
+    'weight' => $weight,
+  );
+  drupal_write_record('draggableviews_structure', $record);
+}
+
+/**
  * Implements hook_node_delete().
  *
  * When an action node is deleted, delete its messages.
