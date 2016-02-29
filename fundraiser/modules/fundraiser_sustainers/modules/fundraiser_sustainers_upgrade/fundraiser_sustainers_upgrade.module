@@ -197,12 +197,13 @@ function fundraiser_sustainers_upgrade_form_fundraiser_admin_settings_alter(&$fo
 function fundraiser_sustainers_upgrade_node_view($node) {
   if ($node->type == 'sustainers_upgrade_form') {
     $node->content['field_sustainers_upgrade_fail'][0]['#access'] = FALSE;
+    $node->content['field_sustainers_upgrade_roll'][0]['#access'] = FALSE;
     $payload = fundraiser_sustainers_upgrade_get_session_payload();
     $status = fundraiser_sustainers_upgrade_check_donation_status($payload);
 
     $stop_in_tracks = fundraiser_sustainers_upgrade_stop_in_tracks();
     if (in_array($status['status'], $stop_in_tracks)) {
-      if (!user_access('administer fundraiser sustainers upgrade')) {
+      if (!user_access('administer fundraiser sustainers upgrade') && empty($payload)) {
         $node->content['field_sustainers_upgrade_fail'][0]['#access'] = TRUE;
         $node->content['body'][0]['#access'] = FALSE;
       }
@@ -834,17 +835,27 @@ function fundraiser_sustainers_upgrade_preprocess_webform_confirmation(&$vars) {
     drupal_add_css(drupal_get_path('module', 'fundraiser_sustainers_upgrade') . '/css/sustainers-upgrade.css');
     $status = isset($_SESSION['sustainer_upgrade_submit_status_' . $vars['sid']]) ? $_SESSION['sustainer_upgrade_submit_status_' .  $vars['sid']] : FALSE;
     if ($status && $status['status'] == 'valid') {
-
+      $payload = fundraiser_sustainers_upgrade_get_session_payload();
       $donation = $status['donation'];
       // Do token replacement.
       $token_set = array(
         'donation' => $donation,
       );
-      // This is weird that the node object needs to be altered.
-      $nwc = token_replace($vars['node']->webform['confirmation'], $token_set);
-      $vars['node']->webform['confirmation'] = $nwc;
-      $cm = token_replace($vars['confirmation_message'], $token_set);
-      $vars['confirmation_message'] = $cm;
+      if (empty($payload['rollback'])) {
+        // This is weird that the node object needs to be altered.
+        $nwc = token_replace($vars['node']->webform['confirmation'], $token_set);
+        $vars['node']->webform['confirmation'] = $nwc;
+        $cm = token_replace($vars['confirmation_message'], $token_set);
+        $vars['confirmation_message'] = $cm;
+      }
+      else {
+        $node = $vars['node'];
+        $field = field_get_items('node', $node, 'field_sustainers_upgrade_roll');
+        $value = field_view_value('node', $node, 'field_sustainers_upgrade_roll', $field[0]);
+        $nwc = token_replace($value['#markup'], $token_set);
+        $vars['node']->webform['confirmation'] = $nwc;
+        $vars['confirmation_message'] = $nwc;
+      }
     }
     else if($status && $status['status'] != 'valid') {
 
