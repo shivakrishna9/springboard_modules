@@ -210,7 +210,7 @@ function sba_message_action_build_contact(array $values, $zip, array $geo) {
  */
 function sba_message_action_set_confirmation_session_vars($response, $contact) {
   if (!empty($response->messages)) {
-
+    $_SESSION['response_messages'] = (array) $response->messages;
     $_SESSION['delivered_messages'] = array();
     $_SESSION['undelivered_messages'] = array();
     $_SESSION['contact'] = $contact;

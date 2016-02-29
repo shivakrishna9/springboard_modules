@@ -128,7 +128,9 @@ function sba_message_action_additional_elements(&$form, &$form_state) {
   }
 
   $form['#validate'][] = 'sba_message_action_form_validate';
-  $form['#submit'][] = 'sba_message_action_form_submit';
+  array_unshift($form['#submit'], 'sba_message_action_form_submit');
+  $form['#submit'][] = 'sba_message_action_after_webform_form_submit';
+
 }
 
 /**
@@ -394,6 +396,7 @@ function sba_message_action_form_validate(&$form, &$form_state) {
  * @param $form_state
  */
 function sba_message_action_form_submit($form, &$form_state) {
+
   $node = $form['#node'];
   $node_wrapper = entity_metadata_wrapper('node', $node);
   $multi_flow = $node_wrapper->field_sba_action_flow->value() == 'multi' ? TRUE : FALSE;
@@ -402,6 +405,7 @@ function sba_message_action_form_submit($form, &$form_state) {
   $_SESSION['undelivered_messages'] = array();
   $_SESSION['contact'] = array();
   $_SESSION['form_details'] = array();
+  $_SESSION['response_messages'] = array();
   $_SESSION['action_sid'] = FALSE;
   //$_SESSION['action_completed'] = FALSE;
   // Create array of messages to submit for target resolution.
@@ -430,6 +434,20 @@ function sba_message_action_form_submit($form, &$form_state) {
   }
 }
 
+
+/**
+ * Fire the success hook if the correct values are present.
+ *
+ * @param $form
+ * @param $form_state
+ */
+function sba_message_action_after_webform_form_submit($form, &$form_state) {
+  if (!empty( $_SESSION['response_messages'])) {
+    $node = $form['#node'];
+    $sid = !empty($form_state['values']['details']['sid']) ? $form_state['values']['details']['sid'] : FALSE;
+    springboard_advocacy_success($node, $_SESSION['contact'], $_SESSION['response_messages'], $sid);
+  }
+}
 
 /**
  * Helper function to build message bodies.
