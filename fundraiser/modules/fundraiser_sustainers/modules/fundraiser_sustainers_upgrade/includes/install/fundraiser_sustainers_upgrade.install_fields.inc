@@ -11,6 +11,7 @@ function _fundraiser_sustainers_upgrade_add_fields() {
   _fundraiser_sustainers_upgrade_name_field($fields);
   _fundraiser_sustainers_upgrade_body_field($fields);
   _fundraiser_sustainers_upgrade_fail_field($fields);
+  _fundraiser_sustainers_upgrade_rollback_field($fields);
   _fundraiser_sustainers_upgrade_auto_field($fields);
 
   // Create the fields.
@@ -51,6 +52,8 @@ function _fundraiser_sustainers_upgrade_install_groups() {
   $field_group->children = array(
     0 => 'field_sustainers_upgrade_fail',
     1 => 'field_sustainers_auto_upgrade',
+    2 => 'field_sustainers_upgrade_roll',
+
   );
   $field_group->format_type = 'fieldset';
   $field_group->format_settings = array(
@@ -308,6 +311,84 @@ function _fundraiser_sustainers_upgrade_fail_field(&$fields) {
   );
 }
 
+
+/**
+ * Field definition function.
+ *
+ * @param $fields
+ */
+function _fundraiser_sustainers_upgrade_rollback_field(&$fields) {
+
+  $fields['field_sustainers_upgrade_roll'] = array(
+    'active' => 1,
+    'cardinality' => 1,
+    'deleted' => 0,
+    'entity_types' => array(
+      0 => 'node',
+    ),
+    'field_name' => 'field_sustainers_upgrade_roll',
+    'foreign keys' => array(
+      'format' => array(
+        'columns' => array(
+          'format' => 'format',
+        ),
+        'table' => 'filter_format',
+      ),
+    ),
+    'indexes' => array(
+      'format' => array(
+        0 => 'format',
+      ),
+    ),
+    'locked' => 0,
+    'module' => 'text',
+    'settings' => array(),
+    'translatable' => 0,
+    'type' => 'text_long',
+    '_instance' => array(
+      'bundle' => 'sustainers_upgrade_form',
+      'default_value' => array(
+        0 => array(
+          'value' => "",
+          'format' => 'filtered_html',
+        ),
+      ),
+      'deleted' => 0,
+      'description' => 'This text will appear after the upgrade is rolled back.',
+      'display' => array(
+        'default' => array(
+          'label' => 'hidden',
+          'settings' => array(),
+          'type' => 'text_long',
+          'weight' => 6,
+        ),
+        'teaser' => array(
+          'label' => 'hidden',
+          'settings' => array(),
+          'type' => 'hidden',
+          'weight' => 0,
+        ),
+      ),
+      'entity_type' => 'node',
+      'field_name' => 'field_sustainers_upgrade_roll',
+      'label' => 'Rollback Message',
+      'required' => 0,
+      'settings' => array(
+        'text_processing' => 1,
+        'user_register_form' => FALSE,
+      ),
+      'widget' => array(
+        'active' => 1,
+        'module' => 'text',
+        'settings' => array(
+          'rows' => 3,
+        ),
+        'type' => 'text_textarea',
+        'weight' => 3,
+      ),
+    ),
+  );
+}
 
 /**
  * Field definition function.
