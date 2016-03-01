@@ -633,3 +633,18 @@ function springboard_p2p_update_7008() {
 
   db_add_field('springboard_p2p_personal_campaign_action', 'status', $status);
 }
+
+/**
+ * Adds donor_name field to personal campaign actions.
+ */
+function springboard_p2p_update_7009() {
+  $donor_name = array(
+    'description' => 'The name to show for the submission.',
+    'type' => 'varchar',
+    'length' => 255,
+    'not null' => FALSE,
+    'default' => NULL,   
+  );
+  
+  db_add_field('springboard_p2p_personal_campaign_action', 'donor_name', $donor_name);
+}

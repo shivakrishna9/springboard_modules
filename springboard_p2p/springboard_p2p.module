@@ -2114,6 +2114,18 @@ function springboard_p2p_fundraiser_donation_success($donation) {
 
     // Now that the donation is successful, mark the action as visible.
     $action['status'] = 1;
+    
+    // If the donor has opted to show their name, save it with the action.
+    if ($action['show_name']) {
+      $account = user_load($action['uid']);
+      $donor_name = springboard_p2p_format_user_full_name($account);
+      
+      // Unlikely this would be empty here...
+      if ($donor_name) {
+        $action['donor_name'] = $donor_name;
+      }
+    }
+    
     springboard_p2p_save_personal_campaign_action($action, array('sid'));
   }
 }
@@ -2158,7 +2170,10 @@ function springboard_p2p_save_personal_campaign_action($record, $key = NULL) {
   if (empty($record['created'])) {
     $record['created'] = REQUEST_TIME;
   }
-
+  
+  // Allow other modules to update the action before saving.
+  drupal_alter('springboard_p2p_save_personal_campaign_action', $record, $key);
+  
   if (!empty($key)) {
     drupal_write_record('springboard_p2p_personal_campaign_action', $record, $key);
   }
