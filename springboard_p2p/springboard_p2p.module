@@ -2192,7 +2192,7 @@ function springboard_p2p_save_personal_campaign_action($record, $key = NULL) {
  *   An associative array, or FALSE.
  */
 function springboard_p2p_get_personal_campaign_action_by_sid($sid) {
-  $query = "SELECT category_nid, campaign_nid, personal_campaign_nid, personal_campaign_uid, form_nid, action_type, uid, show_name, comment, amount, created, sid, status FROM {springboard_p2p_personal_campaign_action} WHERE sid = :sid";
+  $query = "SELECT category_nid, campaign_nid, personal_campaign_nid, personal_campaign_uid, form_nid, action_type, uid, show_name, comment, amount, created, sid, status, donor_name FROM {springboard_p2p_personal_campaign_action} WHERE sid = :sid";
 
   return db_query($query, array(':sid' => $sid))->fetchAssoc();
 }
