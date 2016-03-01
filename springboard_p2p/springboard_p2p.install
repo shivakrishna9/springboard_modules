@@ -232,6 +232,13 @@ function springboard_p2p_schema() {
         'not null' => TRUE,
         'default' => 0,
       ),
+      'donor_name' => array(
+        'description' => 'The name to show for the submission.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => FALSE,
+        'default' => NULL,  
+      ),
     ),
     'indexes' => array(
       'personal_campaign_nid' => array('personal_campaign_nid'),
