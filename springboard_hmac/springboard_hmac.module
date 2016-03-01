@@ -104,6 +104,7 @@ function springboard_hmac_verify($payload, $hmac) {
   // Check the payload for errors.
   $failure_reason = springboard_hmac_verify_payload($parsed_payload);
   if (!empty($failure_reason)) {
+    springboard_hmac_save($hmac);
     return springboard_hmac_failure($failure_reason, $parsed_payload);
   }
 
@@ -117,6 +118,7 @@ function springboard_hmac_verify($payload, $hmac) {
   // If the orginal token matches the one we just generated the data is unaltered and we can continue.
   if ($hmac != $verification_hmac) {
     $reason = t('Authentication failed. Tokens do not match.');
+    springboard_hmac_save($hmac);
     return springboard_hmac_failure($reason, $parsed_payload);
   }
   else {
@@ -173,8 +175,8 @@ function springboard_hmac_verify_payload($parsed_payload) {
  */
 function springboard_hmac_success($parsed_payload, $hmac) {
 
-  springboard_hmac_save($hmac);
-  springboard_hmac_create_payload_session($parsed_payload);
+  //springboard_hmac_save($hmac);
+  springboard_hmac_create_payload_session($parsed_payload, $hmac);
 
   // Is it expected that modules using this hook will always implement drupal_goto()?
   $invoke = module_invoke_all('springboard_hmac_success', $parsed_payload);
@@ -300,6 +302,7 @@ function springboard_hmac_save($hmac)  {
  *
  * @param $payload
  */
-function springboard_hmac_create_payload_session($payload) {
+function springboard_hmac_create_payload_session($payload, $hmac) {
   $_SESSION['springboard_hmac'] = $payload;
+  $_SESSION['springboard_hmac']['hmac'] = $hmac;
 }

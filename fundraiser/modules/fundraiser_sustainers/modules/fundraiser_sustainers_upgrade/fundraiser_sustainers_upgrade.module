@@ -456,6 +456,7 @@ function fundraiser_sustainers_upgrade_before_webform_submit($form, $form_state)
  */
 function fundraiser_sustainers_upgrade_after_webform_submit($form, $form_state) {
 
+  springboard_hmac_save($_SESSION['springboard_hmac']['hmac']);
   $status = $form_state['values']['status'];
   $node = $form['#node'];
   $_SESSION['sustainer_upgrade_submit_status_' . $form_state['values']['details']['sid']] = $status;
@@ -517,7 +518,8 @@ function fundraiser_sustainer_upgrade_stop_at_form(&$form, $status, $payload) {
   );
   $message = 'Sustainer upgrade failed: @status | Amount: @amount | Donation ID: @did | Timestamp: @timestamp | URL: @url';
   watchdog('Sustainers Upgrade', $message, $variables, WATCHDOG_ERROR);
-
+  springboard_hmac_save($_SESSION['springboard_hmac']['hmac']);
+  fundraiser_sustainers_upgrade_clear_session_payload();
   $form['actions']['#access'] = FALSE;
 }
 
@@ -1032,6 +1034,7 @@ function fundraiser_sustainers_upgrade_salesforce_queue_create_item_alter(&$item
  * Cancel session.
  */
 function fundraiser_sustainers_upgrade_cancel_redirect() {
+  springboard_hmac_save($_SESSION['springboard_hmac']['hmac']);
   fundraiser_sustainers_upgrade_clear_session_payload();
   $redirect = isset($_GET['destination']) ? $_GET['destination'] : '';
   drupal_goto($redirect);
