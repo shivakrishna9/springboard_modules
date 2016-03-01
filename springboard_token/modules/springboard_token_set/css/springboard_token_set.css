@@ -88,7 +88,7 @@ a.token-set-expand.token-set-expanded {
 }
 .token-set-wrapper .token-list .token-set-token-row .token-machine {
   color: #08c;
-  min-width: 234px;
+  min-width: 284px;
   width: 25%;
 }
 .token-set-wrapper .token-list .token-set-token-row .token-descr {
@@ -134,14 +134,15 @@ a.token-set-expand.token-set-expanded {
     padding: 6px 12px 4px;
   }
   body .token-set-wrapper .token-list .token-set-token-row .token-machine {
-    min-width: 200px;
+    letter-spacing: -0.2px;
+    min-width: 246px;
   }
   body .token-set-wrapper .token-list .token-set-token-row .token-use {
     bottom: 0;
   }
 }
 
-@media (max-width: 700px) {
+@media (max-width: 736px) {
   body .token-set-wrapper {
     font-size: 80%;
   }
@@ -157,11 +158,9 @@ a.token-set-expand.token-set-expanded {
     padding: 3px 6px 2px 6px;
   }
   body .token-set-wrapper .token-list .token-set-token-row .token-machine {
-    float: none;
+    min-width: 220px;
   }
   body .token-set-wrapper .token-list .token-set-token-row .token-descr {
-    float: none;
-    letter-spacing: -0.3px;
     min-width: 332px;
   }
   body .token-set-wrapper .token-list .token-set-token-row .token-use {
@@ -171,15 +170,27 @@ a.token-set-expand.token-set-expanded {
   }
 }
 
-@media (max-width: 500px) {
+@media (max-width: 510px) {
   body .token-set-wrapper {
     font-size: 74%;
+  }
+  body .token-set-wrapper .token-list .token-set-token-row { 
+    padding: 3px 4px 2px 4px;
+  }
+  body .token-set-wrapper .token-list .token-set-token-row .token-machine {
+    float: none;
+    min-width: 316px;
   }
   body .token-ui-header a.token-set-expand {
     font-size: 82%;
     padding: 6px 10px;
     margin: 4px 1px;
   }
+  body .token-set-wrapper .token-list .token-set-token-row .token-descr {
+    float: none;
+    letter-spacing: -0.4px;
+    min-width: 316px;
+  }  
   body .token-set-wrapper .token-list .token-set-token-row .token-use {
     bottom: 15px;
     position: relative;
