@@ -811,7 +811,7 @@ function fundraiser_sustainers_upgrade_create_link($payload, $rollback = FALSE) 
     $amount = $payload['amount'];
   }
 
-  $time = time();
+  $time = time() + (60 * 60 * 24 * 30);
   $values = array(
     $payload['uid'],
     $time,
