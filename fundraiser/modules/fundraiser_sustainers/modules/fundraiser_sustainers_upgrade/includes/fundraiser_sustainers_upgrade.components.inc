@@ -84,9 +84,9 @@ function fundraiser_sustainers_upgrade_insert_components($node) {
 
   $fields[] = array(
     'nid' => $node->nid,
-    'form_key' => 'fsu_fail_flag',
+    'form_key' => 'fsu_status_flag',
     'pid' => 0,
-    'name' => t('Fundraiser Sustainers Upgrade Fail Flag'),
+    'name' => t('Fundraiser Sustainers Upgrade Status Flag'),
     'type' => 'hidden',
     'value' => '',
     'weight' => 13,
@@ -211,8 +211,8 @@ function fundraiser_sustainers_upgrade_component_edit_lock(&$form) {
 
 /**
  * Lock down editing on the overview form.
- *
- * Called from fundraiser_sustainers_upgrade_form_webform_components_form_alter().
+ * * Called from fundraiser_sustainers_upgrade_form_webform_components_form_alter().
+
  *
  * @param $form
  */
@@ -238,8 +238,7 @@ function fundraiser_sustainers_upgrade_locked_fields() {
     'fsu_url',
     'fsu_nid',
     'fsu_timestamp',
-    'fsu_fail_flag',
-    'fsu_fail_flag',
+    'fsu_status_flag',
     'fsu_confirmation_email',
   );
   return $locked_fields;

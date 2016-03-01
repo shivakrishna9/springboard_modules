@@ -46,7 +46,7 @@ function fundraiser_sustainers_upgrade_webform_fieldmap() {
       'fsu_amount' => 'Upgrade_Amount__c',
       'fsu_did' => 'Donation_ID__c',
       'fsu_uid' => 'User_ID__c',
-      'fsu_fail_flag' => 'Failure_Flag__c',
+      'fsu_status_flag' => 'Status_Flag__c',
       'fsu_timestamp' => 'Timestamp__c',
       'fsu_form_id' => 'Form_ID__c',
       'fsu_url' => 'Form_URL__c',
