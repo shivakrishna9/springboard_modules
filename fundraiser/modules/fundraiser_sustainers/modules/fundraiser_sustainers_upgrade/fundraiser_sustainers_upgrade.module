@@ -213,7 +213,7 @@ function fundraiser_sustainers_upgrade_node_view($node) {
 
     $stop_in_tracks = fundraiser_sustainers_upgrade_stop_in_tracks();
     if (in_array($status['status'], $stop_in_tracks)) {
-      if (!user_access('administer fundraiser sustainers upgrade') && empty($payload)) {
+      if (!user_access('administer fundraiser sustainers upgrade')) {
         $node->content['field_sustainers_upgrade_fail'][0]['#access'] = TRUE;
         $node->content['body'][0]['#access'] = FALSE;
       }
