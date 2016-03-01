@@ -518,8 +518,10 @@ function fundraiser_sustainer_upgrade_stop_at_form(&$form, $status, $payload) {
   );
   $message = 'Sustainer upgrade failed: @status | Amount: @amount | Donation ID: @did | Timestamp: @timestamp | URL: @url';
   watchdog('Sustainers Upgrade', $message, $variables, WATCHDOG_ERROR);
-  springboard_hmac_save($_SESSION['springboard_hmac']['hmac']);
-  fundraiser_sustainers_upgrade_clear_session_payload();
+  if (!empty($_SESSION['springboard_hmac']['hmac'])) {
+    springboard_hmac_save($_SESSION['springboard_hmac']['hmac']);
+    fundraiser_sustainers_upgrade_clear_session_payload();
+  }
   $form['actions']['#access'] = FALSE;
 }
 
