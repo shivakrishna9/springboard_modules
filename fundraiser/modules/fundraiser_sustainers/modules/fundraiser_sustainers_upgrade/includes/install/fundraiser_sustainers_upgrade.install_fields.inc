@@ -13,6 +13,8 @@ function _fundraiser_sustainers_upgrade_add_fields() {
   _fundraiser_sustainers_upgrade_fail_field($fields);
   _fundraiser_sustainers_upgrade_rollback_field($fields);
   _fundraiser_sustainers_upgrade_auto_field($fields);
+  _fundraiser_sustainers_upgrade_cancel_field($fields);
+
 
   // Create the fields.
   foreach ($fields as $key => $values) {
@@ -53,6 +55,8 @@ function _fundraiser_sustainers_upgrade_install_groups() {
     0 => 'field_sustainers_upgrade_fail',
     1 => 'field_sustainers_auto_upgrade',
     2 => 'field_sustainers_upgrade_roll',
+    3 => 'field_sustainers_upgrade_cancel',
+
 
   );
   $field_group->format_type = 'fieldset';
@@ -359,7 +363,7 @@ function _fundraiser_sustainers_upgrade_rollback_field(&$fields) {
         'default' => array(
           'label' => 'hidden',
           'settings' => array(),
-          'type' => 'text_long',
+          'type' => 'hidden',
           'weight' => 6,
         ),
         'teaser' => array(
@@ -463,6 +467,79 @@ function _fundraiser_sustainers_upgrade_auto_field(&$fields) {
 }
 
 /**
+ * Field definition function.
+ *
+ * @param $fields
+ */
+function _fundraiser_sustainers_upgrade_cancel_field(&$fields) {
+  $fields['field_sustainers_upgrade_cancel'] = array(
+    'active' => '1',
+    'cardinality' => '1',
+    'deleted' => '0',
+    'entity_types' => array(),
+    'field_name' => 'field_sustainers_upgrade_cancel',
+    'foreign keys' => array(
+      'format' => array(
+        'columns' => array(
+          'format' => 'format',
+        ),
+        'table' => 'filter_format',
+      ),
+    ),
+    'indexes' => array(
+      'format' => array(
+        0 => 'format',
+      ),
+    ),
+    'locked' => '0',
+    'module' => 'text',
+    'settings' => array(
+      'max_length' => '255',
+    ),
+    'translatable' => '0',
+    'type' => 'text',
+
+    '_instance' => array(
+      'bundle' => 'sustainers_upgrade_form',
+      'default_value' => NULL,
+      'deleted' => '0',
+      'description' => 'The page to redirect to if the user clicks the "I\'m not" link; e.g, node/4',
+      'display' => array(
+        'default' => array(
+          'label' => 'above',
+          'settings' => array(),
+          'type' => 'hidden',
+          'weight' => '2',
+        ),
+        'teaser' => array(
+          'label' => 'above',
+          'settings' => array(),
+          'type' => 'hidden',
+          'weight' => 0,
+        ),
+      ),
+      'entity_type' => 'node',
+      'field_name' => 'field_sustainers_upgrade_cancel',
+      'label' => 'Cancel Redirect',
+      'required' => 1,
+      'settings' => array(
+        'text_processing' => '0',
+        'user_register_form' => FALSE,
+      ),
+      'widget' => array(
+        'active' => 1,
+        'module' => 'text',
+        'settings' => array(
+          'size' => '60',
+        ),
+        'type' => 'text_textfield',
+        'weight' => '10',
+      ),
+    ),
+  );
+}
+
+/**
  * Delete springboard message action fields.
  */
 function _fundraiser_sustainers_upgrade_delete_fields() {
@@ -470,6 +547,9 @@ function _fundraiser_sustainers_upgrade_delete_fields() {
     'field_sustainers_upgrade_name',
     'field_sustainers_upgrade_fail',
     'field_sustainers_auto_upgrade',
+    'field_sustainers_upgrade_roll',
+    'field_sustainers_upgrade_cancel',
+
   );
   foreach ($fields as $field_name) {
     $field = field_info_instance('node', $field_name, 'sustainers_upgrade_form');
