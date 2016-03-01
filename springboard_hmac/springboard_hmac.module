@@ -22,7 +22,7 @@ function springboard_hmac_menu() {
     'title' => 'Springboard HMAC Settings',
     'description' => 'Settings for Springboard HMAC',
     'page callback' => 'springboard_hmac_settings_page',
-    'access callback' => user_access('administer modules'),
+    'access callback' => user_access('administer springboard hmac'),
     'file' => 'springboard_hmac.admin.inc',
     'file path' => drupal_get_path('module', 'springboard_hmac'),
     'type' => MENU_CALLBACK,
