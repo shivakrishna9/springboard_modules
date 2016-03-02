@@ -85,12 +85,11 @@ function fundraiser_sustainers_upgrade_springboard_hmac_success($payload) {
       if (!empty($node->type) && $node->type == 'sustainers_upgrade_form') {
         drupal_goto('node/' . $node->nid);
       }
-      else {
-        $nid = variable_get('fundraiser_sustainers_upgrade_default_form', '');
-        if (!empty($nid)) {
-          drupal_goto('node/' . $nid);
-        }
-      }
+    }
+    // If there's no form in the payload, try the default form.
+    $nid = variable_get('fundraiser_sustainers_upgrade_default_form', '');
+    if (!empty($nid)) {
+      drupal_goto('node/' . $nid);
     }
   }
 }
@@ -305,8 +304,8 @@ function fundraiser_sustainers_form_webform_client_form_alter(&$form, &$form_sta
       fundraiser_sustainer_upgrade_stop_at_form($form, $status, $payload);
     }
     else {
-      // Add the javascript for an auto-submit if that option is selected.
-      // and exempt admin users from auto-submit/
+      // Add the javascript for an auto-submit if that option is selected
+      // and exempt admin users from auto-submit.
       $field = field_get_items('node', $form['#node'], 'field_sustainers_auto_upgrade');
       if ((empty($field[0]) || !empty($payload['rollback'])) && !user_access('administer fundraiser sustainers upgrade')) {
         $js = drupal_get_path('module', 'fundraiser_sustainers_upgrade') . '/js/sustainers-upgrade-autosubmit.js';
@@ -346,7 +345,6 @@ function fundraiser_sustainers_upgrade_stop_in_tracks() {
  *
  * Update the hidden component values prior to submission.
  * These values mostly get synced to saleforce.
- *
  */
 function fundraiser_sustainers_upgrade_form_validate(&$form, &$form_state) {
   $payload = $form_state['values']['payload'];

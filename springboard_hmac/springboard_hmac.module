@@ -202,7 +202,7 @@ function springboard_hmac_success($parsed_payload, $hmac) {
   $invoke = module_invoke_all('springboard_hmac_success', $parsed_payload);
 
   if (empty($invoke)) {
-    $reason = t('No dependencies are enabled.');
+    $reason = t('Either no dependencies are enabled, or none have successfully redirected the request.');
     return springboard_hmac_failure($reason, $parsed_payload);
   }
 
