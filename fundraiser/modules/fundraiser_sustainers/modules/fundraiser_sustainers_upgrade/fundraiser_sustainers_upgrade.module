@@ -521,10 +521,10 @@ function fundraiser_sustainer_upgrade_stop_at_form(&$form, $status, $payload) {
   $variables = array(
     '@status' => $status['status'],
     '@url'    => url(current_path(), array('absolute' => TRUE, 'query' => drupal_get_query_parameters())),
-    '@uid'    => isset($payload['uid']) ? $payload['uid'] : '',
-    '@did'    => isset($payload['did']) ? $payload['did'] : '',
-    '@amount' => isset($payload['amount']) ? $payload['amount'] : '',
-    '@timestamp' => isset($payload['timestamp']) ? $payload['timestamp'] : '',
+    '@uid'    => $payload['uid'],
+    '@did'    => $payload['did'],
+    '@amount' => $payload['amount'],
+    '@timestamp' => $payload['timestamp'],
   );
   $message = 'Sustainer upgrade failed: @status | Amount: @amount | Donation ID: @did | Timestamp: @timestamp | URL: @url';
   watchdog('Sustainers Upgrade', $message, $variables, WATCHDOG_ERROR);
@@ -759,12 +759,10 @@ function fundraiser_sustainers_upgrade_tokens($type, $tokens, $data = array(), $
           if (!empty($payload['uid'])) {
             $account = user_load($payload['uid']);
             $first_name = field_get_items('user', $account, 'sbp_first_name');
+            $value = check_plain($account->mail);
             if (!empty($first_name[0])) {
               $value = field_view_value('user', $account, 'sbp_first_name', $first_name[0]);
               $value = $value['#markup'];
-            }
-            else {
-              $value = check_plain($account->mail);
             }
             $query = '';
             $node = node_load(arg(1));
@@ -892,46 +890,56 @@ function fundraiser_sustainers_upgrade_form_node_type_form_alter(&$form, &$form_
  * Replace the donation tokens if present.
  */
 function fundraiser_sustainers_upgrade_preprocess_webform_confirmation(&$vars) {
-
   if ($vars['node']->type == 'sustainers_upgrade_form' && !empty($vars['sid'])) {
     drupal_add_css(drupal_get_path('module', 'fundraiser_sustainers_upgrade') . '/css/sustainers-upgrade.css');
-    $status = isset($_SESSION['sustainer_upgrade_submit_status_' . $vars['sid']]) ? $_SESSION['sustainer_upgrade_submit_status_' . $vars['sid']] : FALSE;
-    if ($status && $status['status'] == 'valid') {
-      $payload = fundraiser_sustainers_upgrade_get_session_payload();
-      $donation = $status['donation'];
-      // Do token replacement.
-      $token_set = array(
-        'donation' => $donation,
-      );
-      if (empty($payload['rollback'])) {
-        // This is weird that the node object needs to be altered.
-        $nwc = token_replace($vars['node']->webform['confirmation'], $token_set);
-        $vars['node']->webform['confirmation'] = $nwc;
-        $cm = token_replace($vars['confirmation_message'], $token_set);
-        $vars['confirmation_message'] = $cm;
-      }
-      else {
-        $node = $vars['node'];
-        $field = field_get_items('node', $node, 'field_sustainers_upgrade_roll');
-        $value = field_view_value('node', $node, 'field_sustainers_upgrade_roll', $field[0]);
-        $nwc = token_replace($value['#markup'], $token_set);
-        $vars['node']->webform['confirmation'] = $nwc;
-        $vars['confirmation_message'] = $nwc;
-      }
-    }
-    elseif ($status && $status['status'] != 'valid') {
-
-      if (user_access('administer fundraiser sustainers upgrade') && $status) {
-        drupal_set_message($status['status'], 'error', FALSE);
-      }
+    $status = isset($_SESSION['sustainer_upgrade_submit_status_' . $vars['sid']]) ? $_SESSION['sustainer_upgrade_submit_status_' . $vars['sid']] : array();
+    if (!empty($status)) {
       $node = $vars['node'];
-      $field = field_get_items('node', $node, 'field_sustainers_upgrade_fail');
-      $value = field_view_value('node', $node, 'field_sustainers_upgrade_fail', $field[0]);
-
-      $vars['node']->webform['confirmation'] = $value['#markup'];
-      $vars['confirmation_message'] = $value['#markup'];
+      $message = fundraiser_sustainers_upgrade_tokenize_confirmation($status, $vars['confirmation_message'], $node);
+      $vars['confirmation_message'] = $vars['node']->webform['confirmation'] = $message;
     }
   }
+}
+
+/**
+ * Tokenize the confirmation, or replace it with failure message.
+ *
+ * @param array $status
+ *   The upgrade status.
+ * @param string $confirmation_message
+ *   The message.
+ * @param object $node
+ *   The upgrade node.
+ *
+ * @return mixed
+ *   The message, tokenized.
+ */
+function fundraiser_sustainers_upgrade_tokenize_confirmation($status, $confirmation_message, $node) {
+  $donation = $status['donation'];
+  // Do token replacement.
+  $token_set = array(
+    'donation' => $donation,
+  );
+  if ($status && $status['status'] == 'valid') {
+    $payload = fundraiser_sustainers_upgrade_get_session_payload();
+    if (empty($payload['rollback'])) {
+      $confirmation_message = token_replace($confirmation_message, $token_set);
+    }
+    else {
+      $field = field_get_items('node', $node, 'field_sustainers_upgrade_roll');
+      $value = field_view_value('node', $node, 'field_sustainers_upgrade_roll', $field[0]);
+      $confirmation_message = token_replace($value['#markup'], $token_set);
+    }
+  }
+  elseif ($status) {
+    if (user_access('administer fundraiser sustainers upgrade') && $status) {
+      drupal_set_message($status['status'], 'error', FALSE);
+    }
+    $field = field_get_items('node', $node, 'field_sustainers_upgrade_fail');
+    $value = field_view_value('node', $node, 'field_sustainers_upgrade_fail', $field[0]);
+    $confirmation_message = token_replace($value['#markup'], $token_set);
+  }
+  return $confirmation_message;
 }
 
 /**
