@@ -68,15 +68,13 @@ function fundraiser_sustainers_upgrade_permission() {
 
 /**
  * Implements hook_springboard_hmac_allowed_actions().
- *
- * @return string
  */
 function fundraiser_sustainers_upgrade_springboard_hmac_allowed_actions() {
   return 'su';
 }
 
 /**
- * Implements hook_springboard_hmac_success();
+ * Implements hook_springboard_hmac_success().
  *
  * Redirect to the upgrade form if hmac validated.
  */
@@ -124,7 +122,8 @@ function fundraiser_sustainers_upgrade_module_implements_alter(&$implementations
  * Implements hook_form_alter().
  */
 function fundraiser_sustainers_upgrade_form_alter(&$form, &$form_state, $form_id) {
-  // Empty function needed for hook_implements_alter to work with hook_form_id_alter.
+  // Empty function needed for hook_implements_alter to work with
+  // hook_form_id_alter.
 }
 
 /**
@@ -156,7 +155,7 @@ function fundraiser_sustainers_upgrade_springboard_views_springboard_dashboard_p
  * the view result with a different field's value.
  */
 function fundraiser_sustainers_upgrade_views_pre_render(&$view) {
-  if ($view->name =='sbv_forms') {
+  if ($view->name == 'sbv_forms') {
     foreach ($view->result as $key => $result) {
       if (!empty($result->_field_data['nid']['entity']) && $result->_field_data['nid']['entity']->type == 'sustainers_upgrade_form') {
         if (isset($result->_field_data)) {
@@ -271,7 +270,7 @@ function fundraiser_sustainers_form_webform_client_form_alter(&$form, &$form_sta
       drupal_exit();
     }
     // If there are no session values, stop everything and
-    //  display a failure message, even on auto-submit forms.
+    // display a failure message, even on auto-submit forms.
     // Get the appropriate status messages and donation objects
     // based on payload values.
     $status = fundraiser_sustainers_upgrade_check_donation_status($payload);
@@ -325,6 +324,7 @@ function fundraiser_sustainers_form_webform_client_form_alter(&$form, &$form_sta
  * Helper for invalid status values.
  *
  * @return array
+ *   Statuses.
  */
 function fundraiser_sustainers_upgrade_stop_in_tracks() {
   // For these statuses, prevent submissions.
@@ -336,7 +336,7 @@ function fundraiser_sustainers_upgrade_stop_in_tracks() {
     'Not a recurring donation.',
     'Non-numeric values in payload.',
     'Donation ID is not a master ID.',
-    'No session values found.'
+    'No session values found.',
   );
   return $stop_in_tracks;
 }
@@ -347,8 +347,6 @@ function fundraiser_sustainers_upgrade_stop_in_tracks() {
  * Update the hidden component values prior to submission.
  * These values mostly get synced to saleforce.
  *
- * @param $form
- * @param $form_state
  */
 function fundraiser_sustainers_upgrade_form_validate(&$form, &$form_state) {
   $payload = $form_state['values']['payload'];
@@ -363,36 +361,43 @@ function fundraiser_sustainers_upgrade_form_validate(&$form, &$form_state) {
           $value = !empty($payload['did']) ? $payload['did'] : '';
           form_set_value($field, $value, $form_state);
           break;
+
         case 'fsu_uid':
           $value = !empty($payload['uid']) ? $payload['uid'] : '';
           form_set_value($field, $value, $form_state);
           break;
+
         case 'fsu_amount':
           $value = !empty($payload['amount']) ? $payload['amount'] : '';
           form_set_value($field, $value, $form_state);
           break;
+
         case 'fsu_url':
           $value = url(current_path(), array('absolute' => TRUE, 'query' => drupal_get_query_parameters()));
           form_set_value($field, $value, $form_state);
           break;
+
         case 'fsu_nid':
           $value = $node->nid;
           form_set_value($field, $value, $form_state);
           break;
+
         case 'fsu_timestamp':
           $value = time();
           form_set_value($field, $value, $form_state);
           break;
+
         case 'fsu_status_flag':
-            $value = $form_state['values']['status']['status'];
-            if ($value == 'valid') {
-              $status = empty($payload['rollback']) ? t('Succeeded') : t('Rolled back');
-            }
-            else {
-              $status = t('Failed');
-            }
-            form_set_value($field, $status, $form_state);
+          $value = $form_state['values']['status']['status'];
+          if ($value == 'valid') {
+            $status = empty($payload['rollback']) ? t('Succeeded') : t('Rolled back');
+          }
+          else {
+            $status = t('Failed');
+          }
+          form_set_value($field, $status, $form_state);
           break;
+
         case 'fsu_confirmation_email':
           $uid = !empty($payload['uid']) ? $payload['uid'] : '';
           if (!empty($uid)) {
@@ -409,9 +414,6 @@ function fundraiser_sustainers_upgrade_form_validate(&$form, &$form_state) {
  * Submit the new donation amount and clear the session.
  *
  * Fires before webform's submit hook.
- *
- * @param $form
- * @param $form_state
  */
 function fundraiser_sustainers_upgrade_before_webform_submit($form, $form_state) {
 
@@ -419,7 +421,7 @@ function fundraiser_sustainers_upgrade_before_webform_submit($form, $form_state)
   $status = $form_state['values']['status'];
 
   // Check for errors or update the Fundraiser sustainers record.
-  // We've got errors
+  // We've got errors.
   if (empty($payload) || (empty($status['status']) || $status['status'] != 'valid')) {
     $submitted = $form_state['values']['submitted'];
     $flat = _fundraiser_webform_submission_flatten($form['#node']->nid, $submitted);
@@ -463,9 +465,6 @@ function fundraiser_sustainers_upgrade_before_webform_submit($form, $form_state)
  * Replaces tokens when there is a confirmation redirect.
  *
  * Fires after webform's submit hook.
- *
- * @param $form
- * @param $form_state
  */
 function fundraiser_sustainers_upgrade_after_webform_submit($form, $form_state) {
 
@@ -544,8 +543,11 @@ function fundraiser_sustainer_upgrade_stop_at_form(&$form, $status, $payload) {
  * Get the donation object and recurring array, and validate its eligibility
  * for an upgrade.
  *
- * @param $payload
+ * @param array $payload
+ *   The payload values.
+ *
  * @return array
+ *   The statuses.
  */
 function fundraiser_sustainers_upgrade_check_donation_status($payload) {
   $status = &drupal_static(__FUNCTION__);
@@ -585,11 +587,17 @@ function fundraiser_sustainers_upgrade_check_donation_status($payload) {
 /**
  * Get the appropriate status messages. Validation helper helper.
  *
- * @param $recurring
- * @param $donation
- * @param $payload
- * @param $min_amount
+ * @param array $recurring
+ *   The recurring donation array.
+ * @param object $donation
+ *   The donation object.
+ * @param array $payload
+ *   Array of apyload values.
+ * @param int $min_amount
+ *   The minimum donation amount.
+ *
  * @return string
+ *   The status message.
  */
 function fundraiser_sustainers_upgrade_get_status_message($recurring, $donation, $payload, $min_amount) {
   $messages = array();
@@ -634,16 +642,22 @@ function fundraiser_sustainers_upgrade_get_status_message($recurring, $donation,
 /**
  * Helper to validate donation amount.
  *
- * @param $recurring
- * @param $donation
- * @param $payload
- * @param $min_amount
+ * @param array $recurring
+ *   The recurring donation array.
+ * @param object $donation
+ *   The donation object.
+ * @param array $payload
+ *   Array of apyload values.
+ * @param int $min_amount
+ *   The minimum donation amount.
+ *
  * @return array
+ *   An array of staus messages.
  */
 function fundraiser_sustainers_upgrade_check_recurring_amount($recurring, $donation, $payload, $min_amount) {
   $messages = array();
-  // Payload amount must be greater than current recurring amount.
 
+  // Payload amount must be greater than current recurring amount.
   $node_currency = fundraiser_get_currency_from_node($donation->node);
   $payload_decimal = commerce_currency_amount_to_decimal($payload['amount'], $node_currency['code']);
 
@@ -660,12 +674,11 @@ function fundraiser_sustainers_upgrade_check_recurring_amount($recurring, $donat
   return $messages;
 }
 
-
-
 /**
  * Session value loader.
  *
  * @return array
+ *   The payload from the hmac link's session.
  */
 function fundraiser_sustainers_upgrade_get_session_payload() {
   $payload = &drupal_static(__FUNCTION__);
@@ -764,6 +777,7 @@ function fundraiser_sustainers_upgrade_tokens($type, $tokens, $data = array(), $
             $replacements[$original] = "(I'm Not " . l($value, 'sustainers-upgrade/cancel', array('absolute' => TRUE, 'query' => array('destination' => $query))) . ")";
           }
           break;
+
         case 'upgrade_amount_formatted':
           if (!empty($payload['amount'])) {
             $status = fundraiser_sustainers_upgrade_check_donation_status($payload);
@@ -776,6 +790,7 @@ function fundraiser_sustainers_upgrade_tokens($type, $tokens, $data = array(), $
             }
           }
           break;
+
         case 'next_charge_amount_formatted':
           $status = fundraiser_sustainers_upgrade_check_donation_status($payload);
           $stop_in_tracks = fundraiser_sustainers_upgrade_stop_in_tracks();
@@ -786,6 +801,7 @@ function fundraiser_sustainers_upgrade_tokens($type, $tokens, $data = array(), $
             $replacements[$original] = commerce_currency_format($order_total['amount'], $order_total['currency_code']);
           }
           break;
+
         case 'charges_remaining':
           $status = fundraiser_sustainers_upgrade_check_donation_status($payload);
           $stop_in_tracks = fundraiser_sustainers_upgrade_stop_in_tracks();
@@ -793,6 +809,7 @@ function fundraiser_sustainers_upgrade_tokens($type, $tokens, $data = array(), $
             $replacements[$original] = count($status['recurring']);
           }
           break;
+
         case 'rollback':
           $status = fundraiser_sustainers_upgrade_check_donation_status($payload);
           if ($status['status'] == 'valid') {
@@ -809,9 +826,13 @@ function fundraiser_sustainers_upgrade_tokens($type, $tokens, $data = array(), $
 /**
  * Create a rollback token link or test upgrade link.
  *
- * @param $payload
+ * @param array $payload
+ *   The payload values.
  * @param bool $rollback
+ *   Is this a rollback link.
+ *
  * @return string
+ *   The sustainer upgrade url.
  */
 function fundraiser_sustainers_upgrade_create_link($payload, $rollback = FALSE) {
   $link = '';
@@ -861,9 +882,9 @@ function fundraiser_sustainers_upgrade_create_link($payload, $rollback = FALSE) 
 function fundraiser_sustainers_upgrade_form_node_type_form_alter(&$form, &$form_state) {
   if (isset($form['#node_type']) && $form['#node_type'] == 'sustainers_upgrade_form') {
     $form['fundraiser_type']['#disabled'] = TRUE;
-    $form['fundraiser_type']['fundraiser']['#description'] =  t('This option is not available for sustainers upgrade forms.');
+    $form['fundraiser_type']['fundraiser']['#description'] = t('This option is not available for sustainers upgrade forms.');
     $form['webform_user']['#disabled'] = TRUE;
-    $form['webform_user']['webform_user']['#description'] =  t('This option is not available for sustainers upgrade forms.');
+    $form['webform_user']['webform_user']['#description'] = t('This option is not available for sustainers upgrade forms.');
   }
 }
 
@@ -965,14 +986,19 @@ function fundraiser_sustainers_upgrade_node_delete($node) {
  *
  * Used by the validation hook to help set component field values.
  *
- * @param $form
- * @param $path
+ * @param array $form
+ *   The drupal form.
+ * @param array $path
+ *   The component hierarchy.
+ *
  * @return mixed
+ *   The field array referenced.
  */
 function &_fundraiser_sustainers_upgrade_find_field(&$form, $path) {
   if (is_array($path)) {
     foreach (array_keys($path) as $v) {
-      if (is_array($path[$v]) && count($path[$v])) { // if there are more keys
+      if (is_array($path[$v]) && count($path[$v])) {
+        // If there are more keys.
         return _fundraiser_sustainers_upgrade_find_field($form[$v], $path[$v]);
       }
       else {
@@ -983,17 +1009,22 @@ function &_fundraiser_sustainers_upgrade_find_field(&$form, $path) {
 }
 
 /**
- *  * Helper function to get component parents.
+ * Helper function to get component parents.
  *
- * @param $nid
- * @param $components
+ * @param int $nid
+ *   The node ID.
+ * @param array $components
+ *   Webform components.
+ *
  * @return array
+ *   The component hierarchy.
  */
 function _fundraiser_sustainers_upgrade_parse_form($nid, $components) {
   $component_hierarchy = array();
   foreach ($components as $cid => $component) {
     $component_path = 'submitted[' . implode('][', fundraiser_sustainers_upgrade_walk_component_hierarchy($nid, $cid)) . ']';
-    parse_str($component_path, $output); // convert string to a nested array
+    // Convert string to a nested array.
+    parse_str($component_path, $output);
     $component_hierarchy[$component['form_key']] = $output;
   }
   return $component_hierarchy;
@@ -1002,10 +1033,15 @@ function _fundraiser_sustainers_upgrade_parse_form($nid, $components) {
 /**
  * Helper function to get component parents.
  *
- * @param $nid
- * @param $cid
+ * @param int $nid
+ *   The node ID.
+ * @param int $cid
+ *   The webform component ID.
  * @param array $path
+ *   The path hierarchy.
+ *
  * @return array
+ *   The path hierarchy.
  */
 function fundraiser_sustainers_upgrade_walk_component_hierarchy($nid, $cid, &$path = array()) {
   $result = db_query("SELECT cid, pid, form_key FROM {webform_component} WHERE nid = :nid and cid = :cid", array(':nid' => $nid, ':cid' => $cid));
