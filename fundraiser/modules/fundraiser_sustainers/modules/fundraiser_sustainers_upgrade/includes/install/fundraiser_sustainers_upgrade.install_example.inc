@@ -1,5 +1,13 @@
 <?php
 
+/**
+ * @file
+ * Install functions for the default form and email wrapper.
+ */
+
+/**
+ * Install the default upgrade form.
+ */
 function _fundraiser_sustainers_upgrade_add_example() {
   $node = new stdClass();
   $node->is_new = 1;
@@ -78,6 +86,9 @@ To upgrade your sustaining donation to [sustainer_upgrade:upgrade_amount_formatt
   drupal_set_message(t('A default sustainers upgrade form has been created.'));
 }
 
+/**
+ * Install the default email wrapper.
+ */
 function fundraiser_sustainers_upgrade_email_wrapper_add() {
   $node = new stdClass();
   $node->is_new = 1;
@@ -108,18 +119,10 @@ function fundraiser_sustainers_upgrade_email_wrapper_add() {
     'safe_value' => 'Your sustaining donation upgrade',
   );
   $node->email_wrapper_html_template[LANGUAGE_NONE][0] = array(
-    'value' => 'Thank you for upgrading your donation!' . "\n" .
-      "\n" .
-      '%html_message' . "\n" .
-      "\n" .
-      '-----' . "\n" .
-      'Springboard Example',
+    'value' => 'Thank you for upgrading your donation!' . "\n" . "\n" . '%html_message' . "\n" . "\n" . '-----' . "\n" . 'Springboard Example',
     'summary' => '',
     'format' => 'filtered_html',
-    'safe_value' => '<p>Thank you for upgrading your donation!</p>' . "\n" .
-      '<p>%html_message</p>' . "\n" .
-      '<p>-----<br>' . "\n" .
-      'Springboard Example</p>',
+    'safe_value' => '<p>Thank you for upgrading your donation!</p>' . "\n" . '<p>%html_message</p>' . "\n" . '<p>-----<br>' . "\n" . 'Springboard Example</p>',
   );
   $node->email_wrapper_html_message[LANGUAGE_NONE][0] = array(
     'value' => 'Thank you [donation:first_name] [donation:last_name] for upgrading your sustaining donation to [sustainer_upgrade:upgrade_amount_formatted]. You have [sustainer_upgrade:charges_remaining] charges remaining in this series.' . "\n" . "\n" . ' To undo the upgrade, click this link: [sustainer_upgrade:rollback]',
@@ -128,24 +131,14 @@ function fundraiser_sustainers_upgrade_email_wrapper_add() {
     'safe_value' => '<p>Thank you [donation:first_name] [donation:last_name] for upgrading your sustaining donation to [sustainer_upgrade:upgrade_amount_formatted]. You have [sustainer_upgrade:charges_remaining] charges remaining in this series.</p><p>To undo the upgrade, click this link: [sustainer_upgrade:rollback]</p>',
   );
   $node->email_wrapper_text_template[LANGUAGE_NONE][0] = array(
-    'value' => 'Thank you for upgrading your donation!' . "\n" .
-      "\n" .
-      '%text_message' . "\n" .
-      "\n" .
-      '-----' . "\n" .
-      'Springboard Example',
+    'value' => 'Thank you for upgrading your donation!' . "\n" . "\n" . '%text_message' . "\n" . "\n" . '-----' . "\n" . 'Springboard Example',
     'format' => '',
-    'safe_value' => 'Thank you for upgrading your donation!' . "\n" .
-      "\n" .
-      '%text_message' . "\n" .
-      "\n" .
-      '-----' . "\n" .
-      'Springboard Example',
+    'safe_value' => 'Thank you for upgrading your donation!' . "\n" . "\n" . '%text_message' . "\n" . "\n" . '-----' . "\n" . 'Springboard Example',
   );
   $node->email_wrapper_text_message[LANGUAGE_NONE][0] = array(
     'value' => 'Thank you [donation:first_name] [donation:last_name] for upgrading your sustaining donation to [sustainer_upgrade:upgrade_amount_formatted]. You have [sustainer_upgrade:charges_remaining] charges remaining in this series.' . "\n" . "\n" . 'To undo the upgrade, click this link: [sustainer_upgrade:rollback]',
     'format' => 'filtered_html',
-    'safe_value' => 'Thank you [donation:first_name] [donation:last_name] for upgrading your sustaining donation to [sustainer_upgrade:upgrade_amount_formatted]. You have [sustainer_upgrade:charges_remaining] charges remaining in this series.' . "\n" . "\n" .'To undo the upgrade, click this link: [sustainer_upgrade:rollback]',
+    'safe_value' => 'Thank you [donation:first_name] [donation:last_name] for upgrading your sustaining donation to [sustainer_upgrade:upgrade_amount_formatted]. You have [sustainer_upgrade:charges_remaining] charges remaining in this series.' . "\n" . "\n" . 'To undo the upgrade, click this link: [sustainer_upgrade:rollback]',
   );
   node_save($node);
   // Save extras.

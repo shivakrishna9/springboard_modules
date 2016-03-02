@@ -158,10 +158,10 @@ function fundraiser_sustainers_upgrade_views_pre_render(&$view) {
   if ($view->name =='sbv_forms') {
     foreach ($view->result as $key => $result) {
       if (!empty($result->_field_data['nid']['entity']) && $result->_field_data['nid']['entity']->type == 'sustainers_upgrade_form') {
-        if(isset($result->_field_data)) {
+        if (isset($result->_field_data)) {
           $node = $result->_field_data['nid']['entity'];
         }
-        elseif(isset($result->nid)) {
+        elseif (isset($result->nid)) {
           $node = node_load($result->nid);
         }
         if (!empty($node)) {
@@ -223,7 +223,7 @@ function fundraiser_sustainers_upgrade_node_view($node) {
       if (!empty($status['donation'])) {
         $token_set['donation'] = $status['donation'];
       }
-      if(!empty($status['recurring'])) {
+      if (!empty($status['recurring'])) {
         $token_set['recurring'] = $status['recurring'];
       }
       $node->content['body'][0]['#markup'] = token_replace($node->content['body'][0]['#markup'], $token_set);
@@ -251,7 +251,7 @@ function fundraiser_sustainers_form_webform_client_form_alter(&$form, &$form_sta
     if (isset($_SESSION['next_donation'])) {
       unset($_SESSION['next_donation']);
     }
-    if (!empty($_SESSION[$form['#node']->nid .'_stop_mail'])) {
+    if (!empty($_SESSION[$form['#node']->nid . '_stop_mail'])) {
       unset($_SESSION[$form['#node']->nid . '_stop_mail']);
     }
 
@@ -306,7 +306,7 @@ function fundraiser_sustainers_form_webform_client_form_alter(&$form, &$form_sta
       }
       elseif (empty($field[0]) && user_access('administer fundraiser sustainers upgrade')) {
         // Show a message about auto-submit for admins.
-        drupal_set_message('You are logged in as an adminstrative user. The upgrade form will not auto-submit.', 'notice');
+        drupal_set_message(t('You are logged in as an adminstrative user. The upgrade form will not auto-submit.'), 'notice');
       }
     }
   }
@@ -613,7 +613,7 @@ function fundraiser_sustainers_upgrade_get_status_message($recurring, $donation,
     }
   }
 
-  if(empty($messages)) {
+  if (empty($messages)) {
     $messages[] = 'valid';
   }
 
@@ -752,7 +752,7 @@ function fundraiser_sustainers_upgrade_tokens($type, $tokens, $data = array(), $
             if (!empty($redirect[0]['value'])) {
               $query = $redirect[0]['value'];
             }
-            $replacements[$original] = "(I'm Not " . l($value, 'sustainers-upgrade/cancel', array('absolute' => TRUE, 'query' => array('destination' => $query))) .  ")";
+            $replacements[$original] = "(I'm Not " . l($value, 'sustainers-upgrade/cancel', array('absolute' => TRUE, 'query' => array('destination' => $query))) . ")";
           }
           break;
         case 'upgrade_amount_formatted':
@@ -867,7 +867,7 @@ function fundraiser_sustainers_upgrade_preprocess_webform_confirmation(&$vars) {
 
   if ($vars['node']->type == 'sustainers_upgrade_form' && !empty($vars['sid'])) {
     drupal_add_css(drupal_get_path('module', 'fundraiser_sustainers_upgrade') . '/css/sustainers-upgrade.css');
-    $status = isset($_SESSION['sustainer_upgrade_submit_status_' . $vars['sid']]) ? $_SESSION['sustainer_upgrade_submit_status_' .  $vars['sid']] : FALSE;
+    $status = isset($_SESSION['sustainer_upgrade_submit_status_' . $vars['sid']]) ? $_SESSION['sustainer_upgrade_submit_status_' . $vars['sid']] : FALSE;
     if ($status && $status['status'] == 'valid') {
       $payload = fundraiser_sustainers_upgrade_get_session_payload();
       $donation = $status['donation'];
@@ -891,7 +891,7 @@ function fundraiser_sustainers_upgrade_preprocess_webform_confirmation(&$vars) {
         $vars['confirmation_message'] = $nwc;
       }
     }
-    else if($status && $status['status'] != 'valid') {
+    elseif ($status && $status['status'] != 'valid') {
 
       if (user_access('administer fundraiser sustainers upgrade') && $status) {
         drupal_set_message($status['status'], 'error', FALSE);

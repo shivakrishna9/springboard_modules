@@ -7,8 +7,10 @@
 
 /**
  * Page callback for the admin form.
+ *
+ * @return array $build
+ *   The render array.
  */
-
 function springboard_hmac_settings_page() {
   $build = array();
   $build['content'] = array(

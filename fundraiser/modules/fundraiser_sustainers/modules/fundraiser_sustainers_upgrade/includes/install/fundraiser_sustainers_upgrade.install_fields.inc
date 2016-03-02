@@ -79,7 +79,7 @@ function _fundraiser_sustainers_upgrade_install_groups() {
   ));
 
   foreach ($export as $field_group) {
-    if(empty($groups['node']['sba_message_action']['form'][$field_group->group_name])) {
+    if (empty($groups['node']['sba_message_action']['form'][$field_group->group_name])) {
       field_group_group_save($field_group);
     }
   }

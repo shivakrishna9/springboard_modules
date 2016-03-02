@@ -6,6 +6,7 @@
  */
 
 /**
+ * Install the fieldmap.
  */
 function _fundraiser_sustainers_upgrade_salesforce_install() {
   fundraiser_sustainers_upgrade_webform_fieldmap();
@@ -19,7 +20,8 @@ function fundraiser_sustainers_upgrade_salesforce_uninstall() {
   $query = new EntityFieldQuery();
   $query->entityCondition('entity_type', 'salesforce_genmap_map');
   $query->propertyCondition('module', 'fundraiser_sustainers_upgrade');
-  $query->propertyCondition('nid', -40); // This should use the constant, but it doesn't work.
+  // This should use the constant, but it doesn't work.
+  $query->propertyCondition('nid', -40);
   $result = $query->execute();
   if (!empty($result)) {
     $mids = array_keys($result['salesforce_genmap_map']);

@@ -143,7 +143,7 @@ function fundraiser_sustainers_upgrade_insert_components($node) {
     }
   }
 
-  if(!isset($node->clone_from_original_nid)) {
+  if (!isset($node->clone_from_original_nid)) {
     // Set up the default Email Wrapper for this node.
     if ($email_nid != NULL) {
       $settings = array(

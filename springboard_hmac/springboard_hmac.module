@@ -13,7 +13,7 @@ function springboard_hmac_menu() {
     'title' => 'Authorization Request',
     'description' => 'Endpoint to verify hmac encoded payloads',
     'page callback' => 'springboard_hmac_verify_page',
-    'page arguments' => array(1,2),
+    'page arguments' => array(1, 2),
     'access callback' => TRUE,
     'type' => MENU_CALLBACK,
   );
@@ -22,7 +22,7 @@ function springboard_hmac_menu() {
     'title' => 'Springboard HMAC Settings',
     'description' => 'Settings for Springboard HMAC',
     'page callback' => 'springboard_hmac_settings_page',
-    'access callback' => user_access('administer springboard hmac'),
+    'access arguments' => array('administer springboard hmac'),
     'file' => 'springboard_hmac.admin.inc',
     'file path' => drupal_get_path('module', 'springboard_hmac'),
     'type' => MENU_CALLBACK,
@@ -46,6 +46,7 @@ function springboard_hmac_permission() {
  * Allow other modules to add allowed action types.
  *
  * @return array
+ *   An array of allowed actions, e.g. "su" for sustainer upgrades.
  */
 function springboard_hmac_allowed_actions() {
   $actions = module_invoke_all('springboard_hmac_allowed_actions');
@@ -60,9 +61,13 @@ function springboard_hmac_allowed_actions() {
  * hook_springboard_hmac_success(), and calls drupal_goto
  * or some other redirect method, and this page will not be seen.
  *
- * @param $payload
- * @param $hmac
- * @return null|string
+ * @param string $payload
+ *   The base64 encoded payload string.
+ * @param string $hmac
+ *   The hmac hash.
+ *
+ * @return string
+ *   The error message, if any.
  */
 function springboard_hmac_verify_page($payload, $hmac) {
   $verify = springboard_hmac_verify($payload, $hmac);
@@ -79,10 +84,13 @@ function springboard_hmac_verify_page($payload, $hmac) {
 /**
  * Verify that a given payload has not been tampered with in route.
  *
- * @param $payload
+ * @param string $payload
  *   A payload string, base64 encoded.
- * @param $hmac
+ * @param string $hmac
  *   A hased message authentication token.
+ *
+ * @return null|string
+ *   An error message or NULL if successful.
  */
 function springboard_hmac_verify($payload, $hmac) {
 
@@ -108,14 +116,15 @@ function springboard_hmac_verify($payload, $hmac) {
     return springboard_hmac_failure($failure_reason, $parsed_payload);
   }
 
-  // Get our key
+  // Get our key.
   $key = springboard_hmac_get_key();
 
   // Regenerate the hmac token given the payload data. If it matches the payload
   // has not been tampered with in route.
   $verification_hmac = springboard_hmac_get_verification_hmac($parsed_payload, $key);
 
-  // If the orginal token matches the one we just generated the data is unaltered and we can continue.
+  // If the orginal token matches the one we just generated the data is
+  // unaltered and we can continue.
   if ($hmac != $verification_hmac) {
     $reason = t('Authentication failed. Tokens do not match.');
     springboard_hmac_save($hmac);
@@ -129,8 +138,11 @@ function springboard_hmac_verify($payload, $hmac) {
 /**
  * Check the payload for errors.
  *
- * @param $parsed_payload
- * @return null|string
+ * @param array $parsed_payload
+ *   The decoded payload.
+ *
+ * @return null|
+ *   Error reason if validation fails, null if not.
  */
 function springboard_hmac_verify_payload($parsed_payload) {
 
@@ -139,7 +151,7 @@ function springboard_hmac_verify_payload($parsed_payload) {
   }
 
   // Check the action to see if the action is valid.
-  $allowed_actions =   springboard_hmac_allowed_actions();
+  $allowed_actions = springboard_hmac_allowed_actions();
   if (empty($parsed_payload['action']) || (!in_array($parsed_payload['action'], $allowed_actions))) {
     return t('Unknown action.');
   }
@@ -166,19 +178,23 @@ function springboard_hmac_verify_payload($parsed_payload) {
 /**
  * HMAC authentication was successful.
  *
- * Save the token, create the session vars and allow other modules to respond.
+ * Create the session vars and allow other modules to respond.
  * Return an error message if no modules implement the hook.
  *
- * @param $parsed_payload
- * @param $hmac
+ * @param array $parsed_payload
+ *   The payload values.
+ * @param string $hmac
+ *    The hash.
+ *
  * @return null|string
+ *   A failure message if failed, null on success.
  */
 function springboard_hmac_success($parsed_payload, $hmac) {
 
-  //springboard_hmac_save($hmac);
   springboard_hmac_create_payload_session($parsed_payload, $hmac);
 
-  // Is it expected that modules using this hook will always implement drupal_goto()?
+  // Is it expected that modules using this hook will always
+  // implement drupal_goto()?
   $invoke = module_invoke_all('springboard_hmac_success', $parsed_payload);
 
   if (empty($invoke)) {
@@ -195,8 +211,11 @@ function springboard_hmac_success($parsed_payload, $hmac) {
  * Log watchdog errors, allow other modules to act on failure,
  * and return error message.
  *
- * @param $reason
- * @return mixed
+ * @param string $reason
+ *   The failure reason.
+ *
+ * @return string
+ *   The reason.
  */
 function springboard_hmac_failure($reason, $parsed_payload = array()) {
   $variables = array();
@@ -219,13 +238,16 @@ function springboard_hmac_failure($reason, $parsed_payload = array()) {
  *
  * Can be called from other modules to create a rollback token.
  *
- * @param $message
- * @param $key
+ * @param array $values
+ *    The constuent values of the payload.
+ * @param string $key
+ *   The secure prepopulate key.
+ *
  * @return string
+ *   The hash.
  */
-function springboard_hmac_create_hmac($message, $key) {
-  //$joined_message = implode('', $message);
-  $hmac = base64_encode(hash_hmac('sha256', (string) implode('', $message), (string) $key, TRUE));
+function springboard_hmac_create_hmac($values, $key) {
+  $hmac = base64_encode(hash_hmac('sha256', (string) implode('', $values), (string) $key, TRUE));
   $hmac = strtr($hmac, array('+' => '-', '/' => '_', '=' => ''));
   return $hmac;
 }
@@ -233,18 +255,21 @@ function springboard_hmac_create_hmac($message, $key) {
 /**
  * Parses a message payload string into an array.
  *
- * @param $payload
+ * @param array $payload
+ *    The payload from the clicked link.
+ *
  * @return array
+ *   The payload separated into constituent elements.
  */
 function springboard_hmac_parse_payload($payload) {
   // Return the message with delimiter removed.
   $parsed_payload = array();
-  $message = explode('.',  base64_decode($payload));
+  $message = explode('.', base64_decode($payload));
   if (count($message) > 3) {
     $parsed_payload = array(
       'uid' => $message[0],
       'timestamp' => $message[1],
-      'action' => $message[2]
+      'action' => $message[2],
     );
 
     $parsed_payload += array_splice($message, 3);
@@ -252,19 +277,17 @@ function springboard_hmac_parse_payload($payload) {
   return $parsed_payload;
 }
 
-/**
- * @param $payload
- */
-function springboard_hmac_format_payload($payload) {
-
-}
 
 /**
+ * Gets a key from secure prepopulate.
+ *
  * @return string
+ *    The secure key.
  */
 function springboard_hmac_get_key() {
   // @TODO: This is very bad. Either refactor secure pp to include a function to deliver this information
-  // or use the encrypt module's encrypt key instead. The encrypt key is not currently stored in Salesforce
+  // or use the encrypt module's encrypt key instead. The encrypt key is not
+  // currently stored in Salesforce
   // so that would have to happen in order to be able to use it;
   $key = variable_get('secure_prepopulate_key', NULL);
   $iv = variable_get('secure_prepopulate_iv', NULL);
@@ -275,9 +298,13 @@ function springboard_hmac_get_key() {
 /**
  * Returns a URL-compatible base64-encoded hmac token.
  *
- * @param $payload
- * @param $key
+ * @param array $payload
+ *   The payload values.
+ * @param string $key
+ *    The key provided by secure prepoulate module.
+ *
  * @return string
+ *   The hamc token.
  */
 function springboard_hmac_get_verification_hmac($payload, $key) {
   $hmac = base64_encode(hash_hmac('sha256', (string) implode('', $payload), (string) $key, TRUE));
@@ -288,9 +315,10 @@ function springboard_hmac_get_verification_hmac($payload, $key) {
 /**
  * Save a used hmac token to the db.
  *
- * @param $hmac
+ * @param string $hmac
+ *    Never should be an update.
  */
-function springboard_hmac_save($hmac)  {
+function springboard_hmac_save($hmac) {
   $data = array(
     'hmac' => $hmac,
   );
@@ -300,7 +328,10 @@ function springboard_hmac_save($hmac)  {
 /**
  * Create a session entry with the payload values.
  *
- * @param $payload
+ * @param array $payload
+ *    The payload values.
+ * @param string $hmac
+ *    The hmac is included so that a submodule may save it after use.
  */
 function springboard_hmac_create_payload_session($payload, $hmac) {
   $_SESSION['springboard_hmac'] = $payload;
