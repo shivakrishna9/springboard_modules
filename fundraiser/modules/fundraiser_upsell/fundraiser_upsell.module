@@ -430,6 +430,11 @@ function fundraiser_upsell_page_alter(&$page) {
         // Make sure the payment method used supports recurring.
         $info = _fundraiser_get_donation_gateway($donation->did);
         if (_fundraiser_sustainers_supports_recurring($info['allow_recurring'], $donation->donation['payment_method'])) {
+          // Hide the modal if the donation amount matches no brackets:
+          if (!isset($donation->donation['amount'])
+            || !fundraiser_upsell_find_suggested_amount($donation->donation['amount'])) {
+            return;
+          }
 
           // If the donation is offsite recurring && charge time set to
           // one month, don't show modal.
@@ -1172,7 +1177,7 @@ function fundraiser_upsell_is_enabled($node) {
  *   The given amount.
  *
  * @return float
- *   The suggested amount to upsell to.
+ *   The suggested amount to upsell to or 0 if no amount is found.
  */
 function fundraiser_upsell_find_suggested_amount($amount) {
   $default_upsell = 10;
@@ -1189,7 +1194,7 @@ function fundraiser_upsell_find_suggested_amount($amount) {
     // If this is the last loop and we don't have an upsell yet,
     // set it for the highest bracket.
     if ($i == count($brackets) - 1) {
-      return $bracket['upsell'];
+      return 0;
     }
   }
   return $default_upsell;
