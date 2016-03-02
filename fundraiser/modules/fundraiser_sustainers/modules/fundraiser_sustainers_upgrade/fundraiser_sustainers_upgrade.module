@@ -206,6 +206,7 @@ function fundraiser_sustainers_upgrade_form_fundraiser_admin_settings_alter(&$fo
 function fundraiser_sustainers_upgrade_node_view($node) {
   if ($node->type == 'sustainers_upgrade_form') {
 
+    // Set an error message if SPP is not configured.
     if (user_access('administer fundraiser sustainers upgrade')) {
       $key = springboard_hmac_get_key();
       if (empty($key)) {
@@ -217,10 +218,13 @@ function fundraiser_sustainers_upgrade_node_view($node) {
     $node->content['field_sustainers_upgrade_roll'][0]['#access'] = FALSE;
     $payload = fundraiser_sustainers_upgrade_get_session_payload();
     $status = fundraiser_sustainers_upgrade_check_donation_status($payload);
-
     $stop_in_tracks = fundraiser_sustainers_upgrade_stop_in_tracks();
     if (in_array($status['status'], $stop_in_tracks)) {
       if (!user_access('administer fundraiser sustainers upgrade')) {
+        $node->content['field_sustainers_upgrade_fail'][0]['#access'] = TRUE;
+        $node->content['body'][0]['#access'] = FALSE;
+      }
+      elseif (!empty($payload)) {
         $node->content['field_sustainers_upgrade_fail'][0]['#access'] = TRUE;
         $node->content['body'][0]['#access'] = FALSE;
       }
@@ -937,7 +941,7 @@ function fundraiser_sustainers_upgrade_tokenize_confirmation($status, $confirmat
     }
     $field = field_get_items('node', $node, 'field_sustainers_upgrade_fail');
     $value = field_view_value('node', $node, 'field_sustainers_upgrade_fail', $field[0]);
-    $confirmation_message = token_replace($value['#markup'], $token_set);
+    $confirmation_message = $value['#markup'];
   }
   return $confirmation_message;
 }
