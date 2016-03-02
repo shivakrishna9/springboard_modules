@@ -118,6 +118,10 @@ function springboard_hmac_verify($payload, $hmac) {
 
   // Get our key.
   $key = springboard_hmac_get_key();
+  if (empty($key)) {
+    $failure_reason = t('A configuration problem prevented this action from completing.');
+    return springboard_hmac_failure($failure_reason, $parsed_payload);
+  }
 
   // Regenerate the hmac token given the payload data. If it matches the payload
   // has not been tampered with in route.
@@ -281,18 +285,17 @@ function springboard_hmac_parse_payload($payload) {
 /**
  * Gets a key from secure prepopulate.
  *
- * @return string
- *    The secure key.
+ * @return mixed
+ *    The secure key, or false.
  */
 function springboard_hmac_get_key() {
-  // @TODO: This is very bad. Either refactor secure pp to include a function to deliver this information
-  // or use the encrypt module's encrypt key instead. The encrypt key is not
-  // currently stored in Salesforce
-  // so that would have to happen in order to be able to use it;
-  $key = variable_get('secure_prepopulate_key', NULL);
-  $iv = variable_get('secure_prepopulate_iv', NULL);
-
-  return $key . $iv;
+  $kv = secure_prepopulate_get_key_and_vector();
+  if (!empty($kv)) {
+    return $kv['key'] . $kv['iv'];
+  }
+  else {
+    return FALSE;
+  }
 }
 
 /**

@@ -10,6 +10,11 @@
  */
 function fundraiser_sustainers_upgrade_token_generator($form, $form_state) {
 
+  $key = springboard_hmac_get_key();
+  if (empty($key)) {
+    drupal_set_message(t('Secure Prepopulate key and initialization vector are not set. Upgrade links will not work.'), 'error');
+  }
+
   $uid = '';
   $amount = '';
   $did = '';

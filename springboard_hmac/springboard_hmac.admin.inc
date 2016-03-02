@@ -30,6 +30,12 @@ function springboard_hmac_settings_page() {
  * Configuration settings form for Springboard advocacy.
  */
 function springboard_hmac_settings_form() {
+
+  $key = springboard_hmac_get_key();
+  if (empty($key)) {
+    drupal_set_message(t('Secure Prepopulate key and initialization vector are not set. Springboard HMAC will not function.'), 'error');
+  }
+
   $form = array();
 
   $form['hmac'] = array(

@@ -27,6 +27,7 @@ function fundraiser_sustainers_upgrade_init() {
     }
   }
 }
+
 /**
  * Implmentation of hook_menu().
  */
@@ -206,6 +207,14 @@ function fundraiser_sustainers_upgrade_form_fundraiser_admin_settings_alter(&$fo
  */
 function fundraiser_sustainers_upgrade_node_view($node) {
   if ($node->type == 'sustainers_upgrade_form') {
+
+    if (user_access('administer fundraiser sustainers upgrade')) {
+      $key = springboard_hmac_get_key();
+      if (empty($key)) {
+        drupal_set_message(t('Secure Prepopulate key and initialization vector are not set. Upgrade forms will not work.'), 'error');
+      }
+    }
+
     $node->content['field_sustainers_upgrade_fail'][0]['#access'] = FALSE;
     $node->content['field_sustainers_upgrade_roll'][0]['#access'] = FALSE;
     $payload = fundraiser_sustainers_upgrade_get_session_payload();
