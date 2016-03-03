@@ -677,7 +677,7 @@ function springboard_p2p_update_7009(&$sandox) {
       db_query($update_query, array(':donor_name' => $donor_name, ':uid' => $record['uid'], ':sid' => $record['sid']));
     }
     $sandbox['progress']++;
-    $sandbox['current_nid'] = $record['sid'];
+    $sandbox['current_sid'] = $record['sid'];
   }
   
   $sandbox['#finished'] = empty($sandbox['max']) ? 1 : ($sandbox['progress'] / $sandbox['max']);
