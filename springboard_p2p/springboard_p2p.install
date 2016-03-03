@@ -644,7 +644,7 @@ function springboard_p2p_update_7008() {
 /**
  * Adds donor_name field to personal campaign actions.
  */
-function springboard_p2p_update_7009(&$sandox) {
+function springboard_p2p_update_7009() {
   $donor_name = array(
     'description' => 'The name to show for the submission.',
     'type' => 'varchar',
@@ -654,12 +654,17 @@ function springboard_p2p_update_7009(&$sandox) {
   );
   
   db_add_field('springboard_p2p_personal_campaign_action', 'donor_name', $donor_name);
-  
-  if (!isset($sandbox['progress'])) {
+}
+
+/**
+ * Populates donor_name field in springboard_p2p_personal_campaign_action for existing users.
+ */
+function springboard_p2p_update_7010(&$sandbox) {
+  if (!isset($sandbox['max'])) {
     $sandbox['progress'] = 0;
     $sandbox['current_sid'] = 0;
     $query = "SELECT COUNT(sid) FROM {springboard_p2p_personal_campaign_action} WHERE show_name = 1 AND status = 1 AND action_type = 'fundraiser'";
-    $sandbox['max'] = db_query($query)->fetchField();
+    $sandbox['total'] = db_query($query)->fetchField();
   }
   
   $result = db_select('springboard_p2p_personal_campaign_action', 'a')
@@ -667,11 +672,18 @@ function springboard_p2p_update_7009(&$sandox) {
     ->condition('a.show_name', 1)
     ->condition('a.status', 1)
     ->condition('a.action_type', 'fundraiser')
+    ->isNull('a.donor_name')
+    ->range(0,10)
     ->execute();
   
   $update_query = "UPDATE {springboard_p2p_personal_campaign_action} set donor_name = :donor_name WHERE uid = :uid AND sid = :sid";
   while ($record = $result->fetchAssoc()) {
     $account = user_load($record['uid']);
+    
+    //If the user no longer exists, move on.
+    if (!is_object($account)) {
+      continue;
+    }
     $donor_name = springboard_p2p_format_user_full_name($account);
     if (!empty($donor_name)) {
       db_query($update_query, array(':donor_name' => $donor_name, ':uid' => $record['uid'], ':sid' => $record['sid']));
@@ -685,7 +697,4 @@ function springboard_p2p_update_7009(&$sandox) {
   if ($sandbox['#finished'] >= 1) {
     return t('springboard_p2p_personal_campaign_action table donor_names updated.');
   }
-
-  
-
 }
