@@ -301,7 +301,6 @@ function fundraiser_sustainers_form_webform_client_form_alter(&$form, &$form_sta
     array_unshift($form['#submit'], 'fundraiser_sustainers_upgrade_before_webform_submit');
     // Submit hook for confirmation token replacement.
     $form['#submit'][] = 'fundraiser_sustainers_upgrade_after_webform_submit';
-
     // Check whether we have enough info to submit the form.
     $stop_in_tracks = fundraiser_sustainers_upgrade_stop_in_tracks();
     if (in_array($status['status'], $stop_in_tracks)) {
@@ -522,15 +521,24 @@ function fundraiser_sustainer_upgrade_stop_at_form(&$form, $status, $payload) {
   if (user_access('administer fundraiser sustainers upgrade')) {
     drupal_set_message($status['status'], 'error');
   }
+
   $variables = array(
     '@status' => $status['status'],
     '@url'    => url(current_path(), array('absolute' => TRUE, 'query' => drupal_get_query_parameters())),
+  );
+
+  $message = 'Sustainer upgrade failed: @status | URL: @url';
+
+  if (!empty($payload)) {
+    $variables += array(
     '@uid'    => $payload['uid'],
     '@did'    => $payload['did'],
     '@amount' => $payload['amount'],
     '@timestamp' => $payload['timestamp'],
-  );
-  $message = 'Sustainer upgrade failed: @status | Amount: @amount | Donation ID: @did | Timestamp: @timestamp | URL: @url';
+    );
+    $message .= ' | Amount: @amount | Donation ID: @did | Timestamp: @timestamp ';
+  }
+
   watchdog('Sustainers Upgrade', $message, $variables, WATCHDOG_ERROR);
   if (!empty($_SESSION['springboard_hmac']['hmac'])) {
     springboard_hmac_save($_SESSION['springboard_hmac']['hmac']);
