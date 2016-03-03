@@ -678,15 +678,16 @@ function springboard_p2p_update_7010(&$sandbox) {
     ->condition('a.action_type', 'fundraiser')
     ->isNull('a.donor_name')
     ->orderBy('a.sid', 'desc')
-    ->range($sandbox['current_sid'], $limit)
+    ->range($sandbox['progress'], $limit)
     ->execute();
   
   $update_query = "UPDATE {springboard_p2p_personal_campaign_action} set donor_name = :donor_name WHERE uid = :uid AND sid = :sid";
   while ($record = $result->fetchAssoc()) {
     $account = user_load($record['uid']);
     
-    //If the user no longer exists, move on.
+    //If the user no longer exists, update progress and move on.
     if (!is_object($account)) {
+      $sandbox['progress']++;
       continue;
     }
     $donor_name = springboard_p2p_format_user_full_name($account);
