@@ -660,11 +660,15 @@ function springboard_p2p_update_7009() {
  * Populates donor_name field in springboard_p2p_personal_campaign_action for existing users.
  */
 function springboard_p2p_update_7010(&$sandbox) {
+  $limit = 10;
   if (!isset($sandbox['max'])) {
     $sandbox['progress'] = 0;
     $sandbox['current_sid'] = 0;
-    $query = "SELECT COUNT(sid) FROM {springboard_p2p_personal_campaign_action} WHERE show_name = 1 AND status = 1 AND action_type = 'fundraiser'";
-    $sandbox['total'] = db_query($query)->fetchField();
+    $query = "SELECT COUNT(sid) FROM {springboard_p2p_personal_campaign_action}
+      WHERE show_name = 1 AND status = 1 AND action_type = 'fundraiser'
+      AND donor_name IS NULL
+      ";
+    $sandbox['max'] = db_query($query)->fetchField();
   }
   
   $result = db_select('springboard_p2p_personal_campaign_action', 'a')
@@ -673,7 +677,8 @@ function springboard_p2p_update_7010(&$sandbox) {
     ->condition('a.status', 1)
     ->condition('a.action_type', 'fundraiser')
     ->isNull('a.donor_name')
-    ->range(0,10)
+    ->orderBy('a.sid', 'desc')
+    ->range($sandbox['current_sid'], $limit)
     ->execute();
   
   $update_query = "UPDATE {springboard_p2p_personal_campaign_action} set donor_name = :donor_name WHERE uid = :uid AND sid = :sid";
