@@ -1156,3 +1156,14 @@ function fundraiser_sustainers_upgrade_cancel_redirect() {
   $redirect = isset($_GET['destination']) ? $_GET['destination'] : '';
   drupal_goto($redirect);
 }
+
+/**
+ * Implements hook_form_FORM_ID_alter().
+ *
+ * Don't allow redirect changes on sustaier upgrade forms.
+ */
+function fundraiser_sustainers_form_webform_configure_form_alter(&$form, &$form_state) {
+  if ($form['#node']->type == 'sustainers_upgrade_form') {
+    $form['submission']['redirection']['#access'] = FALSE;
+  }
+}
