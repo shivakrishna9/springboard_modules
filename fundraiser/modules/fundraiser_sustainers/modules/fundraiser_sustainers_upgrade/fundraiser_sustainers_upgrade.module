@@ -238,13 +238,15 @@ function fundraiser_sustainers_upgrade_node_view($node) {
         $token_set['recurring'] = $status['recurring'];
       }
       $node->content['body'][0]['#markup'] = token_replace($node->content['body'][0]['#markup'], $token_set);
-      $field = field_get_items('node', $node, 'field_sustainers_auto_upgrade');
-      if ((empty($field[0]) || !empty($payload['rollback'])) && !user_access('administer fundraiser sustainers upgrade')) {
+      $auto_upgrade = field_get_items('node', $node, 'field_sustainers_auto_upgrade');
+      if ((empty($auto_upgrade[0]) || !empty($payload['rollback'])) && !user_access('administer fundraiser sustainers upgrade')) {
         $node->content['webform']['#form']['actions']['#access'] = FALSE;
         $node->content['body']['#access'] = FALSE;
         $node->content['links']['#access'] = FALSE;
-        drupal_set_title('');
-        $node->content['redirect']['#markup'] = t('Redirecting. Please wait...');
+        $form_error = &drupal_static('form_set_error');
+        if (!empty($form_error)) {
+          $node->content['field_sustainers_upgrade_fail'][0]['#access'] = TRUE;
+        }
       }
     }
   }
@@ -278,6 +280,28 @@ function fundraiser_sustainers_form_webform_client_form_alter(&$form, &$form_sta
     // based on payload values.
     $status = fundraiser_sustainers_upgrade_check_donation_status($payload);
 
+    // Check whether we have enough info to submit the form.
+    $stop_in_tracks = fundraiser_sustainers_upgrade_stop_in_tracks();
+    if (in_array($status['status'], $stop_in_tracks)) {
+      fundraiser_sustainer_upgrade_stop_at_form($form, $status, $payload);
+    }
+    else {
+      // Auto-submit if that option is selected
+      // and exempt admin users from auto-submit.
+      $auto_upgrade = field_get_items('node', $form['#node'], 'field_sustainers_auto_upgrade');
+      if ((empty($auto_upgrade[0]) || !empty($payload['rollback'])) && !user_access('administer fundraiser sustainers upgrade')) {
+        if (empty($form_state['storage']['auto_submit'])) {
+          fundraiser_sustainers_upgrade_auto_submitter($form, $form_state);
+        }
+      }
+      elseif (empty($auto_upgrade[0]) && user_access('administer fundraiser sustainers upgrade')) {
+        // Show a message about auto-submit for admins.
+        drupal_set_message(t('You are logged in as an adminstrative user. The upgrade form will not auto-submit.'), 'notice');
+      }
+    }
+
+    // If we've gotten here, this is either a non-auto-submit,
+    // or the stage two of the auto-submit.
     $form['payload'] = array(
       '#type' => 'value',
       '#value' => $payload,
@@ -301,24 +325,47 @@ function fundraiser_sustainers_form_webform_client_form_alter(&$form, &$form_sta
     array_unshift($form['#submit'], 'fundraiser_sustainers_upgrade_before_webform_submit');
     // Submit hook for confirmation token replacement.
     $form['#submit'][] = 'fundraiser_sustainers_upgrade_after_webform_submit';
-    // Check whether we have enough info to submit the form.
-    $stop_in_tracks = fundraiser_sustainers_upgrade_stop_in_tracks();
-    if (in_array($status['status'], $stop_in_tracks)) {
-      fundraiser_sustainer_upgrade_stop_at_form($form, $status, $payload);
-    }
-    else {
-      // Add the javascript for an auto-submit if that option is selected
-      // and exempt admin users from auto-submit.
-      $field = field_get_items('node', $form['#node'], 'field_sustainers_auto_upgrade');
-      if ((empty($field[0]) || !empty($payload['rollback'])) && !user_access('administer fundraiser sustainers upgrade')) {
-        $js = drupal_get_path('module', 'fundraiser_sustainers_upgrade') . '/js/sustainers-upgrade-autosubmit.js';
-        $form['#attached']['js'][] = $js;
-      }
-      elseif (empty($field[0]) && user_access('administer fundraiser sustainers upgrade')) {
-        // Show a message about auto-submit for admins.
-        drupal_set_message(t('You are logged in as an adminstrative user. The upgrade form will not auto-submit.'), 'notice');
-      }
-    }
+  }
+}
+
+
+/**
+ * Auto submit function.
+ *
+ * Reworking of drupal_form_submit().
+ *
+ * @param array $form
+ *   The form.
+ * @param array $form_state
+ *   The form state.
+ */
+function fundraiser_sustainers_upgrade_auto_submitter($form, $form_state) {
+
+  $node = $form['#node'];
+  $form_id = $form['#form_id'];
+
+  $form_state['values']['op'] = $form['actions']['submit']['#value'];
+  $form_state['input'] = $form_state['values'];
+  $form_state['programmed'] = TRUE;
+  // Programmed forms are always submitted.
+  $form_state['submitted'] = TRUE;
+  $form_state['storage']['auto_submit'] = TRUE;
+
+  // Reset form validation.
+  $form_state['must_validate'] = TRUE;
+  form_clear_error();
+
+  // Prepare and process.
+  drupal_prepare_form($form_id, $form, $form_state);
+  drupal_process_form($form_id, $form, $form_state);
+  $form_state['executed'];
+  $form_state['programmed'] = FALSE;
+  $form_state['rebuild'] = FALSE;
+
+  // Don't redirect if errors to prevent looping.
+  $form_error = &drupal_static('form_set_error');
+  if (!empty($form_state['redirect']) && empty($form_error)) {
+    drupal_redirect_form($form_state);
   }
 }
 
@@ -350,6 +397,7 @@ function fundraiser_sustainers_upgrade_stop_in_tracks() {
  * These values mostly get synced to saleforce.
  */
 function fundraiser_sustainers_upgrade_form_validate(&$form, &$form_state) {
+
   $payload = $form_state['values']['payload'];
   $node = $form['#node'];
   $components = $node->webform['components'];
@@ -498,7 +546,7 @@ function fundraiser_sustainers_upgrade_after_webform_submit($form, $form_state) 
       }
     }
 
-    // Remove the default fundsraiser sustainer message.
+    // Remove the default fundraiser sustainer message.
     $dsm_statuses = drupal_get_messages('status');
     if (!empty($dsm_statuses['status'])) {
       $match = 'The amount of all future donations has been updated';
