@@ -198,26 +198,26 @@ function commerce_paywithmybank_bank_submit_form($payment_method, $pane_values, 
  * Payment method callback: checkout form validation.
  */
 function commerce_paywithmybank_bank_submit_form_validate($payment_method, $pane_form, $pane_values, $order, $form_parents = array()) {
-  
+
 }
 
 /**
  * Payment method callback: checkout form submission.
  */
 function commerce_paywithmybank_bank_submit_form_submit($payment_method, $pane_form, $pane_values, $order, $charge) {
-  
+
 }
 
 function commerce_paywithmybank_bank_cardonfile_charge($payment_method, $card_data, $order, $charge = NULL) {
-  
+
 }
 
 function commerce_paywithmybank_bank_cardonfile_update($form, &$form_state, $payment_method, $card_data) {
-  
+
 }
 
 function commerce_paywithmybank_bank_cardonfile_delete() {
-  
+
 }
 
 /**
@@ -579,6 +579,10 @@ function commerce_paywithmybank_create_payment_transaction($api_transaction, $pa
       $transaction->amount = commerce_currency_decimal_to_amount($api_transaction->paid, $api_transaction->currency);
       break;
 
+    case PayWithMyBank::TRANSACTION_STATUS_VOIDED:
+      $transaction->status = COMMERCE_CREDIT_VOID;
+      break;
+
     case PayWithMyBank::TRANSACTION_STATUS_FAILED:
     case PayWithMyBank::TRANSACTION_STATUS_EXPIRED:
     case PayWithMyBank::TRANSACTION_STATUS_CANCELED:
@@ -606,6 +610,9 @@ function commerce_paywithmybank_create_payment_transaction($api_transaction, $pa
     case PayWithMyBank::TRANSACTION_STATUS_REFUNDED:
     case PayWithMyBank::TRANSACTION_STATUS_REVERSED:
       $updated_donation_status = 'refunded';
+      break;
+    case PayWithMyBank::TRANSACTION_STATUS_VOIDED:
+      $updated_donation_status = 'void';
       break;
     case PayWithMyBank::TRANSACTION_STATUS_FAILED:
     case PayWithMyBank::TRANSACTION_STATUS_EXPIRED:
