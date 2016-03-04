@@ -1,70 +1,198 @@
- <?php
+<?php
 /**
  * @file
  * Base Springboard data warehouse functions.
  */
 
- /**
-  * Implements hook_fundraiser_donation_success().
-  * @param $donation
-  */
-function springboard_dw_fundraiser_donation_success($donation) {
-	// TODO: Queue up donation for export
+/**
+ * Implements hook_schema().
+ */
+function springboard_dw_schema()
+{
 
-  dsm($donation);
+  $schema['springboard_data_warehouse'] = array(
+    'description' => 'The base table for data warehousing',
+    'fields'      => array(
+      'id'      => array(
+        'description' => 'The primary identifier for a node.',
+        'type'        => 'serial',
+        'unsigned'    => true,
+        'not null'    => true,
+      ),
+      'uid'     => array(
+        'description' => 'The user id.',
+        'type'        => 'numeric'
+      ),
+      'created' => array(
+        'description' => 'The timestamp this record was created',
+        'type'        => 'numeric'
+      )
+    ),
+    'primary key' => array('id')
+  );
 
-  $item = array();
-  $item['type'] = 'donation';
-  $item['data'] = $donation->donation;
-  $item['data']['nid'] = $donation->nid;
-  $item['data']['uid'] = $donation->uid;
-  $item['data']['sid'] = $donation->sid;
-  $item['data']['currency'] = $donation->currency;
-  $item['data']['did'] = $donation->did;
-  $item['data']['status'] = $donation->status;
-  $item['data']['txn_id'] = $donation->txn_id;
-  $item['data']['gateway'] = $donation->gateway['id'];
-  if ($donation->donation['payment_method'] == 'credit') {
-    $item['data']['card_type'] = $donation->donation['payment_fields']['credit']['card_type'];
-  }
-
-  unset($item['data']['payment_fields']);
-
-  dsm($item);
-
-
-  //$d = fundraiser_donation_get_donation($donation->did, true);
-	//dsm($d);
-    
-  $user_entity = entity_get_property_info('user');  
-  dsm($user_entity);
-
-  $wrapper = entity_metadata_wrapper('user', $donation->user);
-  dsm(get_all_entity_properties($wrapper));
-
-  $queue = DrupalQueue::get("springboard_dw_export");
-  $queue->createItem($donation->did);
+  return $schema;
 }
 
-function get_all_entity_properties($wrapper) {
+/**
+ * Implements hook_update().
+ */
+function springboard_dw_update_7001()
+{
+  $schema = module_invoke('springboard_dw', 'schema');
+
+  if (db_table_exists('springboard_data_warehouse') == false) {
+    db_create_table('springboard_data_warehouse', $schema['springboard_data_warehouse']);
+  }
+}
+
+/**
+ * Implements hook_fundraiser_donation_success().
+ * @param $donation
+ */
+function springboard_dw_fundraiser_donation_success($donation)
+{
+
+  // Get the Drupal data warehouse queue
+  $queue = DrupalQueue::get("springboard_dw_export");
+
+  // Ready the donation object for queue insertion
+  $donation_item = array();
+  $donation_item['queue_type'] = 'donation';
+  $donation_item['amount'] = $donation->amount;
+  $donation_item['currency'] = $donation->currency;
+  $donation_item['quantity'] = $donation->donation['quantity'];
+  $donation_item['ms'] = $donation->donation['ms'];
+  $donation_item['cid'] = $donation->donation['cid'];
+  $donation_item['first_name'] = $donation->donation['first_name'];
+  $donation_item['last_name'] = $donation->donation['last_name'];
+  $donation_item['email'] = $donation->donation['mail'];
+  $donation_item['address'] = $donation->donation['address'];
+  $donation_item['address_line_2'] = $donation->donation['address_line_2'];
+  $donation_item['city'] = $donation->donation['city'];
+  $donation_item['state'] = $donation->donation['state'];
+  $donation_item['country'] = $donation->donation['country'];
+  $donation_item['zip'] = $donation->donation['zip'];
+  $donation_item['referrer'] = $donation->donation['referrer'];
+  $donation_item['initial_referrer'] = $donation->donation['initial_referrer'];
+  $donation_item['payment_method'] = $donation->donation['payment_method'];
+  $donation_item['recurs_monthly'] = $donation->donation['recurs_monthly'];
+  $donation_item['search_engine'] = $donation->donation['search_engine'];
+  $donation_item['search_string'] = $donation->donation['search_string'];
+  $donation_item['user_agent'] = $donation->donation['user_agent'];
+  $donation_item['device_type'] = $donation->donation['device_type'];
+  $donation_item['device_name'] = $donation->donation['device_name'];
+  $donation_item['device_os'] = $donation->donation['device_os'];
+  $donation_item['device_browser'] = $donation->donation['device_browser'];
+  $donation_item['form_id'] = $donation->nid;
+  $donation_item['user_id'] = $donation->uid;
+  $donation_item['submission_id'] = $donation->sid;
+  $donation_item['donation_id'] = $donation->did;
+  $donation_item['status'] = $donation->status;
+  $donation_item['transaction_id'] = $donation->txn_id;
+  $donation_item['gateway'] = $donation->gateway['id'];
+  $donation_item['card_type'] = $donation->data['payment_fields']['credit']['card_type'];
+  $donation_item['card_last_4'] = $donation->data['payment_fields']['credit']['card_number'];
+  $donation_item['card_expiration_month'] = $donation->data['payment_fields']['credit']['card_expiration_month'];
+  $donation_item['card_expiration_year'] = $donation->data['payment_fields']['credit']['card_expiration_year'];
+  $donation_item['created_at'] = date('m/d/y h:i:s');
+  $donation_item['updated_at'] = date('m/d/y h:i:s');
+  $donation_item['extra_props'] = json_encode(array());
+
+  // dsm($donation_item);
+
+  $user_obj = entity_metadata_wrapper('user', $donation->user);
+  $user_data = get_all_entity_properties($user_obj);
+
+  // Get the user account
+  $user_item = array();
+  $user_item['queue_type'] = 'user';
+  $user_item['contact_id'] = $donation->uid;
+  $user_item['username'] = $user_data['name'];
+  $user_item['email'] = $user_data['mail'];
+  $user_item['first_name'] = $user_data['sbp_first_name'];
+  $user_item['last_name'] = $user_data['sbp_last_name'];
+  $user_item['address'] = $user_data['sbp_address'];
+  $user_item['address_line_2'] = $user_data['sbp_address_line_2'];
+  $user_item['city'] = $user_data['sbp_city'];
+  $user_item['state'] = $user_data['sbp_state'];
+  $user_item['country'] = $user_data['sbp_country'];
+  $user_item['zip'] = $user_data['sbp_zip'];
+  $user_item['ms'] = $user_data['sbp_ms'];
+  $user_item['cid'] = $user_data['sbp_cid'];
+  $user_item['referrer'] = $user_data['sbp_referrer'];
+  $user_item['initial_referrer'] = $user_data['sbp_initial_referrer'];
+  $user_item['search_engine'] = $user_data['sbp_search_engine'];
+  $user_item['search_string'] = $user_data['sbp_search_string'];
+  $user_item['user_agent'] = $user_data['sbp_user_agent'];
+  $user_item['device_type'] = $user_data['sbp_device_type'];
+  $user_item['device_name'] = $user_data['sbp_device_name'];
+  $user_item['device_os'] = $user_data['sbp_device_os'];
+  $user_item['device_browser'] = $user_data['sbp_device_browser'];
+  $user_item['salesforce_account_id'] = $user_data['sbp_salesforce_account_id'];
+  $user_item['salesforce_contact_id'] = $user_data['sbp_salesforce_contact_id'];
+  $user_item['created_at'] = $user_data['created'];
+  $user_item['updated_at'] = $user_data['created'];;
+  $user_item['extra_props'] = json_encode(array());
+
+  $user_query = db_query("select * from {springboard_data_warehouse} where uid = :uid", array(':uid' => $donation->uid));
+
+  // Check if the user record exists already
+  $user_warehoused_count = 0;
+  foreach ($user_query as $item) {
+    $user_warehoused_count++;
+  }
+
+  // Create the API request to warehouse the donation
+  $donation_response = $queue->createItem($donation_item);
+
+  // If the response is successful, add the user_warehoused parameter to the Drupal user account so we can skip this check in subsequent donations
+  if ($donation_response['message'] == 'Successfully created donation.') {
+
+    // If the user account has not been warehoused, attempt to do so here
+    if (!$user_warehoused_count) {
+
+      // Create the contact item in the queue
+      $contact_response = $queue->createItem($donation_item);
+
+      // If the API call response looks good, exclude the user account from being warehoused again
+      if ($contact_response == 'Successfully created contact.') {
+
+        // Insert the user account into the Drupal data warehouse table
+        db_insert('springboard_data_warehouse')->fields(array(
+          'uid'     => $donation->uid,
+          'created' => time()
+        ))->execute();
+      }
+
+    }
+
+  }
+
+}
+
+function get_all_entity_properties($wrapper)
+{
   $values = array();
   foreach ($wrapper->getPropertyInfo() as $key => $val) {
     $values[$key] = $wrapper->$key->value();
   }
+
   return $values;
 }
 
 /**
  * Implements hook_menu().
  */
-function springboard_dw_menu() {
+function springboard_dw_menu()
+{
   $items['admin/config/services/springboard-dw'] = array(
-  	'title' => 'Springboard Data Warehouse',
-  	'description' => 'Configuration settings for Springboard Data Warehousing.',
-  	'page callback' => 'springboard_dw_settings_page',
-  	'access arguments' => array('administer springboard data warehouse'),
-  	'type' => MENU_NORMAL_ITEM,
-  	'file' => 'includes/springboard_dw.admin.inc',
+    'title'            => 'Springboard Data Warehouse',
+    'description'      => 'Configuration settings for Springboard Data Warehousing.',
+    'page callback'    => 'springboard_dw_settings_page',
+    'access arguments' => array('administer springboard data warehouse'),
+    'type'             => MENU_NORMAL_ITEM,
+    'file'             => 'includes/springboard_dw.admin.inc',
   );
 
   return $items;
@@ -73,11 +201,12 @@ function springboard_dw_menu() {
 /**
  * Implements hook_cron_queue_info().
  */
-function springboard_dw_cron_queue_info() {
-  $queues['springboard_dw_export'] = array (
+function springboard_dw_cron_queue_info()
+{
+  $queues['springboard_dw_export'] = array(
     'worker callback' => 'springboard_dw_export_item',
-    'time' => 60,
-    'skip on cron' => TRUE,
+    'time'            => 60,
+    'skip on cron'    => true,
   );
 
   return $queues;
@@ -86,8 +215,112 @@ function springboard_dw_cron_queue_info() {
 /**
  * Sends an item to the data warehouse receiver app.
  */
-function springboard_dw_export_item($item) {
-  watchdog('springboard data warehouse', 'sending item to the warehouse...');
+function springboard_dw_export_item($item)
+{
+  // watchdog('springboard data warehouse', 'sending item to the warehouse...');
+
+  if ($item['queue_type'] == 'donation') {
+    call_user_func('springboard_dw_donation', $item);
+  } elseif ($item['queue_type'] == 'contact') {
+    call_user_func('springboard_dw_contact', $item);
+  } // ... other queues
+  elseif ($item['queue_type'] == 'advocacy') {
+    call_user_func('springboard_dw_advocacy_message', $item);
+  }
+
+}
+
+/**
+ * Returns a new instance of Guzzle Http client
+ * @return \GuzzleHttp\Client
+ */
+function springboard_api_client()
+{
+
+  // Composer Vendor autoload
+  drush_autoload("sites/all/vendor/autoload.php");
+
+  // Guzzle Cast to SDK variable
+  $guzzle = new GuzzleHttp\Client(['http_errors' => false]);
+
+  return $guzzle;
+}
+
+/**
+ * Send a contact record to the Springboard data warehouse API.
+ * @param $item
+ */
+function springboard_dw_contact($item)
+{
+
+  // Define the endpoint
+  $endpoint = 'http://159.203.115.210/contact/create';
+
+  // Instantiate an API client instance
+  $APIClient = call_user_func('springboard_api_client');
+
+  // Remove the queue type from the item
+  unset($item['queue_type']);
+
+  // Add the authentication token and client id
+  $item['authenticationToken'] = variable_get('authentication_token', NULL);
+  $item['sbClientId'] = variable_get('client_id', NULL);
+
+  // Attempt Guzzle client request
+
+  $res = $APIClient->request('POST', $endpoint, array(
+    'form_params' => $item
+  ));
+
+  // Looks like the api response was good
+  if ($res->getStatusCode() == 200) {
+    drush_print_r(json_decode($res->getBody()));
+  } else {
+    drush_log('Error sending API call.', 'warning');
+    drush_print_r(json_decode($res->getBody()));
+  }
+
+}
+
+/**
+ * Send a donation record to the Springboard data warehouse API.
+ * @param $item
+ */
+function springboard_dw_donation($item)
+{
+
+  // Define the endpoint
+  $endpoint = 'http://159.203.115.210/donation/create';
+
+  // Instantiate an API client instance
+  $APIClient = call_user_func('springboard_api_client');
+
+  // Remove the queue type from the item
+  unset($item['queue_type']);
+
+  // Add the authentication token and client id
+  $item['authenticationToken'] = variable_get('authentication_token', NULL);
+  $item['sbClientId'] = variable_get('client_id', NULL);
+
+  // Attempt Guzzle client request
+
+  $res = $APIClient->request('POST', $endpoint, array(
+    'form_params' => $item
+  ));
+
+  // Looks like the api response was good
+  if ($res->getStatusCode() == 200) {
+    drush_print_r(json_decode($res->getBody()));
+  } else {
+    drush_log('Error sending API call.', 'warning');
+    drush_print_r(json_decode($res->getBody()));
+  }
+
+}
+
+function springboard_dw_advocacy_message($item)
+{
+
 }
 
 /**
@@ -97,20 +330,52 @@ function springboard_dw_export_item($item) {
  *  - Add a queue argument (like salesforce queue).
  *  - Make sure this is locked correctly.
  */
-function springboard_dw_process_queue() {
+function springboard_dw_process_queue()
+{
   $callback = 'springboard_dw_export_item';
+
+  // drush_print_r(variable_get('client_id', NULL));
+
   $end = time() + 60;
   $queue = DrupalQueue::get('springboard_dw_export');
   while (time() < $end && ($item = $queue->claimItem())) {
     try {
       call_user_func($callback, $item->data);
       $queue->deleteItem($item);
-    }
-    catch (Exception $e) {
+      // $queue->releaseItem($item);
+    } catch (Exception $e) {
       // In case of exception log it and leave the item in the queue
       // to be processed again later.
       watchdog_exception('cron', $e);
     }
   }
-  
+
+}
+
+/*
+ **
+ * Implements hook_cron().
+ */
+
+function springboard_dw_process_cron()
+{
+  $queue = DrupalQueue::get('springboard_dw_export');
+
+  foreach (remoteData() as $item) {
+    $queue->createItem($item);
+  }
+}
+
+/**
+ * Implements hook_cron_queue_info().
+ */
+function springboard_dw_process_cron_queue_info()
+{
+  $queues = array();
+  $queues['springboard_dw_export'] = array(
+    'worker callback' => 'saveRemoteData', //function to call for each item
+    'time'            => 60, //seconds to spend working on the queue
+  );
+
+  return $queues;
 }
