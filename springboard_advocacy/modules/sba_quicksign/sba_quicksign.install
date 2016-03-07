@@ -117,3 +117,30 @@ function sba_quicksign_update_7001() {
     module_disable(array('springboard_petition_quicksign'));
   }
 }
+
+/**
+ * Implements hook_enable().
+ */
+function sba_quicksign_enable() {
+  // Re-add component to webforms where quicksign is enabled.
+  $results = db_query('SELECT nid FROM {sba_quicksign} WHERE quicksign_enabled = 1');
+  if ($results) {
+    foreach ($results as $result) {
+      $node = node_load($result->nid);
+      sba_quicksign_insert_components($node, 'update', FALSE, TRUE);
+    }
+  }
+}
+
+/**
+ * Implements hook_disable().
+ */
+function sba_quicksign_disable() {
+  // Remove component from webforms where quicksign is enabled.
+  $nids = db_query('SELECT nid FROM {sba_quicksign} WHERE quicksign_enabled = 1')
+    ->fetchCol();
+  db_delete('webform_component')
+    ->condition('nid', $nids, 'IN')
+    ->condition('form_key', 'sba_quicksign')
+    ->execute();
+}
