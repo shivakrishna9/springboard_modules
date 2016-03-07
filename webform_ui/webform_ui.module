@@ -150,7 +150,7 @@ function webform_ui_form_webform_configure_after_build($form, $form_state) {
 
 
 /**
- * Implements hook_formwebform_client_form_alter().
+ * Implements hook_form_webform_client_form_alter().
  *
  * Make hidden fields on results page editable so salesforce syncs can
  * be corrected.
