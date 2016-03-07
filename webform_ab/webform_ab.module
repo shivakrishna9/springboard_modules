@@ -658,6 +658,19 @@ function webform_ab_view(&$node, $view_mode) {
   // overview page instead of directing them to one of the webforms in the test
   // If view_webform is set in the URL, don't show the overview
   if (node_access('update', $node) && (empty($_GET['view_webform']) || $_GET['view_webform'] != 1)) {
+    // Remove the node clone link for webform_ab notes if the node_clone module is enabled:
+    if (module_exists('clone')) {
+      $js = '
+        (function ($) {
+          $("ul.action-links").each(function () {
+            if ($(this).text().indexOf("Clone") >= 0) {
+              $(this).hide();
+            }
+          });
+        })(jQuery);
+      ';
+      drupal_add_js($js, array('type' => 'inline', 'scope' => 'footer', 'cache' => TRUE));
+    }
     $type = node_type_get_type($node);
     $node->content['description'] = array(
       '#markup' => 'This is the admin overview of the A/B Test. If an unprivileged or anonymous user visits this same URL, ' .
@@ -1011,6 +1024,19 @@ function webform_ab_form_node_delete_confirm_alter(&$form, $form_state) {
         ':input[name="ab_confirmation"]' => array('checked' => TRUE),
       ),
     );
+  }
+}
+
+/**
+ * Implements hook_form_FORM_ID_alter().
+ * Hide reference to webform_ab on node clone settings, since it is not compatible:
+ */
+function webform_ab_form_clone_settings_alter(&$form, &$form_state, $form_id) {
+  if (isset($form['publishing']['clone_reset_webform_ab'])) {
+    unset($form['publishing']['clone_reset_webform_ab']);
+  }
+  if (isset($form['omit']['clone_omitted']['#default_value']['webform_ab'])) {
+    unset($form['omit']['clone_omitted']['#options']['webform_ab']);
   }
 }
 
