@@ -629,20 +629,22 @@ function springboard_admin_asset_page() {
   $used_types = array();
   $tables = array();
   // Render the views tables for the appropriate set of content types.
-  foreach ($set_types as $key => $type) {
-    if ($type !== 0 && in_array($type, array_keys($node_types))) {
-      $used_types[$type] = $node_types[$type];
-      $view = views_get_view('sbv_assets');
-      $view -> set_display('block_1');
-      $view -> set_arguments(array($type));
-      $view -> pre_execute();
-      $view -> execute();
-      if ($view && $view -> access('block_1')) {
-        if(!empty($view -> result)) {
-          $tables[$type] = $view -> render();
-        }
-        else {
-          $tables[$type] = "<p>" . t('No @type have been created yet.', array('@type' => $node_types[$type]->name . 's')) . "</p>";
+  if(module_exists('springboard_views')) {
+    foreach ($set_types as $key => $type) {
+      if ($type !== 0 && in_array($type, array_keys($node_types))) {
+        $used_types[$type] = $node_types[$type];
+        $view = views_get_view('sbv_assets');
+        $view->set_display('block_1');
+        $view->set_arguments(array($type));
+        $view->pre_execute();
+        $view->execute();
+        if ($view && $view->access('block_1')) {
+          if (!empty($view->result)) {
+            $tables[$type] = $view->render();
+          }
+          else {
+            $tables[$type] = "<p>" . t('No @type have been created yet.', array('@type' => $node_types[$type]->name . 's')) . "</p>";
+          }
         }
       }
     }
@@ -775,16 +777,18 @@ function springboard_admin_forms_page($springboard_type) {
   }
 
   // Render the views tables for the appropriate set of content types.
-  foreach ($display_types as $type) {
-    $view = views_get_view('sbv_forms');
-    $view -> set_display($display);
-    $view -> set_arguments(array($type->type));
-    $view -> pre_execute();
-    $view -> execute();
+  if(module_exists('springboard_views')) {
+    foreach ($display_types as $type) {
+      $view = views_get_view('sbv_forms');
+      $view->set_display($display);
+      $view->set_arguments(array($type->type));
+      $view->pre_execute();
+      $view->execute();
 
-    $tables[$type->type] = '';
-    if ($view && $view -> access($display)) {
-      $tables[$type->type] = $view -> render();
+      $tables[$type->type] = '';
+      if ($view && $view->access($display)) {
+        $tables[$type->type] = $view->render();
+      }
     }
   }
   return theme('springboard_admin_forms_page', array('types' => $display_types, 'springboard_type' => $springboard_type, 'tables' => $tables));
@@ -815,25 +819,27 @@ function springboard_admin_template_page() {
   $output = '';
 
   // Load Page Wrappers view.
-  $view = views_get_view('sbv_page_wrappers');
-  $view -> set_display('block_1');
-  $view -> set_arguments(array());
-  $view -> pre_execute();
-  $view -> execute();
-  if ($view && $view -> access('block_1') && !empty($view -> result)) {
-    $output .= '<h2>' . $view -> get_title('block_1') . '</h2>';
-    $output .= $view -> render();
-  }
+  if(module_exists('springboard_views')) {
+    $view = views_get_view('sbv_page_wrappers');
+    $view->set_display('block_1');
+    $view->set_arguments(array());
+    $view->pre_execute();
+    $view->execute();
+    if ($view && $view->access('block_1') && !empty($view->result)) {
+      $output .= '<h2>' . $view->get_title('block_1') . '</h2>';
+      $output .= $view->render();
+    }
 
-  // Load Email Templates view.
-  $view = views_get_view('sbv_email_templates');
-  $view -> set_display('block_1');
-  $view -> set_arguments(array());
-  $view -> pre_execute();
-  $view -> execute();
-  if ($view && $view -> access('block_1') && !empty($view -> result)) {
-    $output .= '<h2>' . $view -> get_title('block_1') . '</h2>';
-    $output .= $view -> render();
+    // Load Email Templates view.
+    $view = views_get_view('sbv_email_templates');
+    $view->set_display('block_1');
+    $view->set_arguments(array());
+    $view->pre_execute();
+    $view->execute();
+    if ($view && $view->access('block_1') && !empty($view->result)) {
+      $output .= '<h2>' . $view->get_title('block_1') . '</h2>';
+      $output .= $view->render();
+    }
   }
 
   return $output;
