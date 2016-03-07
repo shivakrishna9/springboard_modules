@@ -372,8 +372,7 @@ function sba_social_action_form_alter(&$form, &$form_state, $form_id) {
     // Yes it is the user-facing form. Add all our custom non-webform-component
     // form items which insert or display message-entity data in the
     // message-action webform.
-    if ($client_form !== FALSE) {
-
+    if ($client_form !== FALSE && arg(2) != 'submission') {
       if (empty($form['#node']->show_my_name)) {
         $form['submitted']['sbp_sba_action_optin']['#access'] = FALSE;
       }
