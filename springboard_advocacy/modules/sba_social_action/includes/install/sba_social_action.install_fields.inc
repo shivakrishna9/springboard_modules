@@ -526,7 +526,7 @@ function _sba_social_action_create_node_fields($update = false) {
         ),
       ),
       'deleted' => 0,
-      'description' => 'If you require authentication, users will have to log into the Springboard Twitter app before tweeting, and you will then gain access to some of their Twitter profile information. By Requiring Twitter Authentication you certify that you have read and agree to adhere to the Twitter terms of services, located <a href="https://twitter.com/tos">here</a>......',
+      'description' => 'If you require authentication, users will have to log into the Springboard Twitter app before tweeting, and you will then gain access to some of their Twitter profile information. By Requiring Twitter Authentication you certify that you have read and agree to adhere to the Twitter terms of services, located <a href="https://twitter.com/tos">here</a>.',
       'display' => array(
         'default' => array(
           'label' => 'hidden',
