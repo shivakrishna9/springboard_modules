@@ -168,6 +168,7 @@ function webform_ab_test_reports($node) {
  */
 function webform_ab_test_webforms($node) {
   $return = '';
+  drupal_set_message('!');
 
   // Status labels
   $webform_ab_status_labels = array(
@@ -182,15 +183,28 @@ function webform_ab_test_webforms($node) {
     t('Status'),
     t('Operations'),
   );
+
+  // Prevent removal of tests if any tests have recorded data already:
+  $testing_has_started = FALSE;
+  if (_webform_ab_has_testing_started($node)) {
+    $testing_has_started = TRUE;
+  }
+
   $rows = array();
   if (!empty($node->included_webforms) && is_array($node->included_webforms)) {
     foreach ($node->included_webforms as $webform_nid => $webform_details) {
+      if ($testing_has_started) {
+        $removal_link = '&nbsp;';
+      }
+      else {
+        $removal_link = l(t('remove from test'), 'node/' . $node->nid . '/webforms/remove/' . $webform_nid);
+      }
       $rows[] = array(
         $webform_details['title'],
         $webform_ab_status_labels[$webform_details['status']],
         l(t('view'), 'node/' . $webform_nid) . ' ' .
         l(t('edit'), 'node/' . $webform_nid . '/edit') . ' ' .
-        l(t('remove from test'), 'node/' . $node->nid . '/webforms/remove/' . $webform_nid),
+        $removal_link,
       );
     }
   }
@@ -214,7 +228,7 @@ function webform_ab_test_webforms($node) {
  * Form to add webforms to the A/B Test
  *
  * @param $form_state
- * @param $node   Node object
+ * @param $node Node object
  */
 function webform_ab_webform_list_add($form, &$form_state, $node) {
   // Get all valid forms for the form type from other modules
@@ -251,6 +265,11 @@ function webform_ab_webform_list_add($form, &$form_state, $node) {
     '#type' => 'submit',
     '#value' => t('Add'),
   );
+
+  // If any tests alrady have data recorded disallow adding new tests:
+  if (_webform_ab_has_testing_started($node)) {
+    unset($form['add']);
+  }
 
   // If there are no more webforms that may be added, disable the form
   if (count($indexed_forms) == 0) {
@@ -388,4 +407,26 @@ function webform_ab_clear_test_data_confirm_submit($form, &$form_state) {
   module_invoke_all('webform_ab_reset_data', $form['#test_nid']);
   drupal_set_message(t('The data has been cleared.'));
   $form_state['redirect'] = 'node/' . $form['#test_nid'] . '/reports';
+}
+
+/**
+ * Determine if any webform_ab tests are populated with data.
+ *
+ * @param $node Node Object of the webform_ab node.
+ *
+ */
+function _webform_ab_has_testing_started($node) {
+  foreach ($node->included_webforms as $webform_nid => $webform_details) {
+    $query_token = array(':nid' => $webform_nid);
+    $hits_query = db_query("SELECT test_nid FROM {webform_ab_hits} WHERE test_nid = :nid", $query_token);
+    foreach ($hits_query as $result) {
+      return TRUE;
+    }
+    $conversions_query = db_query("SELECT test_nid FROM {webform_ab_conversion} WHERE test_nid = :nid", $query_token);
+    foreach ($conversions_query as $result) {
+      return TRUE;
+    }
+  }
+
+  return FALSE; 
 }
