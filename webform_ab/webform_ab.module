@@ -821,6 +821,17 @@ function webform_ab_view(&$node, $view_mode) {
     }
   }
   else {
+    // If this user is anonymous and no tests are active then prevent viewing of the webform_an node view page:
+    global $user;
+    if (!$user->uid) {
+      drupal_set_message('The page you are trying to access is not available at this time.', 'warning');
+      if (drupal_is_front_page()) {
+        drupal_set_title('Access denied');
+      }
+      else {
+        drupal_goto('<front>');
+      }
+    }
     $node->content['no_webforms'] = array(
       '#value' => t('There are no webforms in this A/B test.'),
     );
