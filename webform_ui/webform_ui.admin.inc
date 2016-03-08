@@ -80,6 +80,14 @@ function webform_ui_settings_form($form, &$form_state) {
     '#weight' => 8,
   );
 
+  $form['webform_ui_make_hidden_editable'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Make hidden fields editable on the submission result edit page.'),
+    '#default_value' => variable_get('webform_ui_make_hidden_editable', 'FALSE'),
+    '#description' => t("Make market source and other hidden fields editable in order to correct salesforce sync errors."),
+    '#weight' => 8,
+  );
+
   $form['#submit'][] = 'webform_ui_settings_form_submit';
   return system_settings_form($form);
 }
