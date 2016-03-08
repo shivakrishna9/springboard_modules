@@ -400,7 +400,7 @@ function sba_quicksign_form_node_form_alter(&$form, &$form_state, $form_id) {
       '#default_value' => isset($settings['quicksign_button_text']) ? $settings['quicksign_button_text'] : t('Sign now'),
     );
 
-    $default_desc = $node->type == 'sba_message_action' ? t('If we already have your information, just enter your email address and click to send this message now.') : t('If we already have your information, just enter your email address and click to sign this petition now.');
+    $default_desc = ($node->type == 'sba_message_action' || $node->type == 'sba_social_action') ? t('If we already have your information, just enter your email address and click to send this message now.') : t('If we already have your information, just enter your email address and click to sign this petition now.');
     $form['sba_quicksign']['quicksign_description'] = array(
       '#type' => 'text_format',
       '#title' => t('Form description'),
@@ -490,13 +490,14 @@ function sba_quicksign_webform_component_delete($component) {
  */
 function sba_quicksign_save($node) {
   sba_quicksign_delete($node->nid);
+  $default_desc = ($node->type == 'sba_message_action' || $node->type == 'sba_social_action') ? t('If we already have your information, just enter your email address and click to send this message now.') : t('If we already have your information, just enter your email address and click to sign this petition now.');
   $record = array(
     'nid' => $node->nid,
     'quicksign_enabled' => $node->quicksign_enabled,
-    'form_label' => $node->quicksign_label,
-    'form_description' => $node->quicksign_description['value'],
-    'form_description_format' => $node->quicksign_description['format'],
-    'submit_button_text' => $node->quicksign_button_text,
+    'form_label' => isset($node->quicksign_label) ? $node->quicksign_label : t('Already a supporter?'),
+    'form_description' => isset($node->quicksign_description['value']) ? $node->quicksign_description['value'] : $default_desc,
+    'form_description_format' => isset($node->quicksign_description['format']) ? $node->quicksign_description['format'] : 'filtered_html',
+    'submit_button_text' => isset($node->quicksign_button_text) ? $node->quicksign_button_text : t('Sign now'),
   );
   drupal_write_record('sba_quicksign', $record);
 }
