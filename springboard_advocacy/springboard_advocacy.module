@@ -737,6 +737,17 @@ function springboard_advocacy_node_view($node, $view_mode, $langcode) {
         }
       }
 
+      // Warn of messages with no targets.
+      if (!empty($node->messages)) {
+        foreach ($node->messages as $message) {
+          $target_set = (array) json_decode($message->data['recipients']);
+          if (empty($target_set)) {
+            drupal_set_message(t("This action contains one or more messages that have no targets. Don't forget to assign targets before publishing!"), 'warning');
+            break;
+          }
+        }
+      }
+
       // Smarty streets warning.
       $unconfigured = springboard_advocacy_api_unconfigured('smarty');
       if (!empty($unconfigured)) {
