@@ -489,15 +489,29 @@ function sba_quicksign_webform_component_delete($component) {
  *   The node object.
  */
 function sba_quicksign_save($node) {
-  sba_quicksign_delete($node->nid);
+
+  // Get the current settings if any.
+  $settings = db_query('SELECT * FROM {sba_quicksign} WHERE nid = :nid', array(':nid' => $node->nid))->fetchAssoc();
   $default_desc = ($node->type == 'sba_message_action' || $node->type == 'sba_social_action') ? t('If we already have your information, just enter your email address and click to send this message now.') : t('If we already have your information, just enter your email address and click to sign this petition now.');
+
+  // Delete the existing record if it exists.
+  sba_quicksign_delete($node->nid);
+
+  // User may want to disable quicksign, but keep any custom text already set,
+  // so get those values if they exist, otherwise use default.
+  $label = isset($settings['form_label']) ? $settings['form_label'] : t('Already a supporter?');
+  $description = isset($settings['form_description']) ? $settings['form_description'] : $default_desc;
+  $format = isset($settings['form_description_format']) ? $settings['form_description_format'] : 'filtered_html';
+  $submit = isset($settings['submit_button_text']) ? $settings['submit_button_text'] : t('Sign now');
+
+  // Create or re-create the record.
   $record = array(
     'nid' => $node->nid,
     'quicksign_enabled' => $node->quicksign_enabled,
-    'form_label' => isset($node->quicksign_label) ? $node->quicksign_label : t('Already a supporter?'),
-    'form_description' => isset($node->quicksign_description['value']) ? $node->quicksign_description['value'] : $default_desc,
-    'form_description_format' => isset($node->quicksign_description['format']) ? $node->quicksign_description['format'] : 'filtered_html',
-    'submit_button_text' => isset($node->quicksign_button_text) ? $node->quicksign_button_text : t('Sign now'),
+    'form_label' => isset($node->quicksign_label) ? $node->quicksign_label : $label,
+    'form_description' => isset($node->quicksign_description['value']) ? $node->quicksign_description['value'] : $description,
+    'form_description_format' => isset($node->quicksign_description['format']) ? $node->quicksign_description['format'] : $format,
+    'submit_button_text' => isset($node->quicksign_button_text) ? $node->quicksign_button_text : $submit,
   );
   drupal_write_record('sba_quicksign', $record);
 }
