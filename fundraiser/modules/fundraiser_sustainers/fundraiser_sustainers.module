@@ -2925,19 +2925,18 @@ function _fundraiser_sustainers_get_donation_sets_recurr_by_uid($uid) {
     'WHERE d.uid = :uid GROUP BY r.master_did ORDER BY r.master_did DESC', 
      array(':uid' => $uid))->fetchAll();
   foreach ($donation_sets as $index => $donation_set) {
-    if (_fundraiser_sustainers_series_was_auto_canceled($donation_set->master_did)) {
-      $donation_sets[$index]->next_charge = '';
-      $donation_sets[$index]->status = t('Auto-Canceled');
-      continue;
-    }
-    // If this recurring donation was not auto-canceled then fetch status via next charge:
     $next_charge = _fundraiser_sustainers_get_donations_next_charge($donation_set->master_did);
     if (isset($next_charge->next_charge)) {
-      if ($next_charge->gateway_resp == 'canceled') {
-        $status = t('Canceled');
-      }
-      else {
-        $status = t('Active');
+      switch ($next_charge->gateway_resp) {
+        case 'canceled':
+          $status = t('Canceled');
+          break;
+        case 'auto_canceled':
+          $status = t('Auto-Canceled');
+          break;
+        default:
+          $status = t('Active');
+          break;
       }
       $donation_sets[$index]->next_charge = $next_charge->next_charge;
       $donation_sets[$index]->status = $status;
@@ -3077,25 +3076,6 @@ function _fundraiser_sustainers_get_donations_recurr_processed($master_did) {
     'AND r.gateway_resp = \'success\' ' .
     'ORDER BY r.next_charge ASC', array(':master_did' => $master_did))->fetchAll();
   return $donations;
-}
-
-/** 
- * Determine if a series of recurring donations has been auto-canceled.
- *
- * @param int $master_did
- *   The master donation ID of a series of recurring donations.
- */
-function _fundraiser_sustainers_series_was_auto_canceled($master_did) {
-  $canceled_query = db_query("SELECT did FROM {fundraiser_sustainers} " .
-    "WHERE master_did = :master_did " .
-    "AND gateway_resp = 'auto_canceled' LIMIT 1",
-    array(
-      ':master_did' => $master_did,
-    ));
-  foreach ($canceled_query as $result) {
-    return TRUE;
-  }
-  return FALSE;
 }
 
 /**
