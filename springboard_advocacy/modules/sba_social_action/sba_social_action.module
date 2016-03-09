@@ -185,7 +185,7 @@ function sba_social_action_node_load($nodes, $types) {
       $visibility = db_query('select visibility from {springboard_action_opt_in_block} WHERE nid=:nid', array(':nid' => $node->nid))->fetchField();
       $node->show_my_name = $visibility;
       // Unset form layout if default.
-      if (isset($node->form_layouts) &&  $node->form_layouts == 'one_column ') {
+      if (isset($node->form_layouts) &&  $node->form_layouts == 'one_column' || arg(2) == 'submission') {
         unset($node->form_layouts);
       }
       if (!empty($node->message_ids)) {

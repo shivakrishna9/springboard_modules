@@ -330,7 +330,7 @@ function sba_message_action_node_load($nodes, $types) {
       $node->precedence = !empty($precedence) ? $precedence : 0;
 
       // Unset form layout if default.
-      if (isset($node->form_layouts) &&  ($node->form_layouts == 'two_column_message_right' || $node->form_layouts == 'one_column ')) {
+      if (isset($node->form_layouts) &&  ($node->form_layouts == 'two_column_message_right' || $node->form_layouts == 'one_column' || arg(2) == 'submission')) {
         unset($node->form_layouts);
       }
 
@@ -370,10 +370,11 @@ function sba_message_action_process_page(&$vars) {
  * Insert webform goals widget.
  */
 function sba_message_action_preprocess_node(&$vars) {
+
   if ($vars['node']->type == 'sba_message_action') {
     // Add theme wrappers for non-form-layout layouts.
     $vars['use_layouts'] = !empty($vars['form_layouts']) && $vars['form_layouts'] != 'one_column' ? TRUE : FALSE;
-    if (empty($vars['use_layouts']) || $vars['form_layouts'] == 'one_column') {
+    if (empty($vars['use_layouts']) || $vars['form_layouts'] == 'one_column' || arg(2) == 'submission') {
       $vars['content']['webform']['#theme_wrappers'][] = 'message_action_webform_wrapper';
       $vars['content']['webform']['#form']['submitted']['#theme_wrappers'][] = 'message_action_submitted_wrapper';
       $vars['content']['webform']['#form']['sba_messages']['#theme_wrappers'][] = 'message_action_messages_wrapper';
