@@ -2913,16 +2913,24 @@ function _fundraiser_sustainers_delete_recurring($did) {
 }
 
 /**
- * DB funct, get user donation set information that are recurring.
+ * Fetch user-specific, recurring donation sets data.
+ *
+ * @param int $uid
+ *   The User ID of the donor in question.
  */
 function _fundraiser_sustainers_get_donation_sets_recurr_by_uid($uid) {
   $donation_sets = db_query('SELECT r.master_did, MIN(r.next_charge) AS start_date, ' .
     'MAX(r.next_charge) AS expire_date FROM {fundraiser_sustainers} r ' .
     'LEFT JOIN {fundraiser_donation} d on r.did = d.did ' .
-    'WHERE d.uid = :uid ' .
-    'GROUP BY r.master_did ' .
-    'ORDER BY r.master_did DESC', array(':uid' => $uid))->fetchAll();
+    'WHERE d.uid = :uid GROUP BY r.master_did ORDER BY r.master_did DESC', 
+     array(':uid' => $uid))->fetchAll();
   foreach ($donation_sets as $index => $donation_set) {
+    if (_fundraiser_sustainers_series_was_auto_canceled($donation_set->master_did)) {
+      $donation_sets[$index]->next_charge = '';
+      $donation_sets[$index]->status = t('Auto-Canceled');
+      continue;
+    }
+    // If this recurring donation was not auto-canceled then fetch status via next charge:
     $next_charge = _fundraiser_sustainers_get_donations_next_charge($donation_set->master_did);
     if (isset($next_charge->next_charge)) {
       if ($next_charge->gateway_resp == 'canceled') {
@@ -3069,6 +3077,25 @@ function _fundraiser_sustainers_get_donations_recurr_processed($master_did) {
     'AND r.gateway_resp = \'success\' ' .
     'ORDER BY r.next_charge ASC', array(':master_did' => $master_did))->fetchAll();
   return $donations;
+}
+
+/** 
+ * Determine if a series of recurring donations has been auto-canceled.
+ *
+ * @param int $master_did
+ *   The master donation ID of a series of recurring donations.
+ */
+function _fundraiser_sustainers_series_was_auto_canceled($master_did) {
+  $canceled_query = db_query("SELECT did FROM {fundraiser_sustainers} " .
+    "WHERE master_did = :master_did " .
+    "AND gateway_resp = 'auto_canceled' LIMIT 1",
+    array(
+      ':master_did' => $master_did,
+    ));
+  foreach ($canceled_query as $result) {
+    return TRUE;
+  }
+  return FALSE;
 }
 
 /**
