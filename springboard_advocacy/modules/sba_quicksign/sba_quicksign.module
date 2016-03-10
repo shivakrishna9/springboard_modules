@@ -418,7 +418,17 @@ function sba_quicksign_node_load($nodes, $types) {
   }
   foreach ($nodes as $nid => $node) {
     if (sba_quicksign_is_quicksign_type($node->type)) {
-      $node->quicksign_enabled = sba_quicksign_is_enabled($node);
+      $settings = sba_quicksign_settings($node->nid);
+      if (!empty($settings)) {
+        $node->quicksign_label = $settings['quicksign_label'];
+        $node->quicksign_description['value'] = $settings['quicksign_description'];
+        $node->quicksign_description['format'] = $settings['quicksign_description_format'];
+        $node->quicksign_button_text = $settings['quicksign_button_text'];
+        $node->quicksign_enabled = $settings['quicksign_enabled'];
+      }
+      else {
+        $node->quicksign_enabled = FALSE;
+      }
     }
   }
 }
@@ -427,8 +437,8 @@ function sba_quicksign_node_load($nodes, $types) {
  * Implements hook_node_insert().
  */
 function sba_quicksign_node_insert($node) {
-  if (sba_quicksign_is_quicksign_type($node->type) && !empty($node->quicksign_enabled)) {
-    sba_quicksign_save($node);
+  if (sba_quicksign_is_quicksign_type($node->type) && (!empty($node->quicksign_enabled) || isset($node->clone_from_original_nid))) {
+    sba_quicksign_save($node, 'insert');
     sba_quicksign_insert_components($node, 'insert', FALSE, FALSE);
   }
 }
@@ -453,7 +463,7 @@ function sba_quicksign_node_update($node) {
       }
     }
     if (isset($node->quicksign_enabled)) {
-      sba_quicksign_save($node);
+      sba_quicksign_save($node, 'update');
       if (!empty($node->quicksign_enabled) && (!$has_form_component || !$has_flag_component)) {
         sba_quicksign_insert_components($node, 'update', $has_form_component, $has_flag_component);
       }
@@ -474,31 +484,33 @@ function sba_quicksign_node_delete($node) {
 }
 
 /**
- * @param $component
- */
-function sba_quicksign_webform_component_delete($component) {
-  if ($component['form_key'] == 'sba_quicksign') {
-    sba_quicksign_delete($component['nid']);
-  }
-}
-
-/**
  * Save quick sign settings per-node.
  *
  * @param object $node
  *   The node object.
  */
-function sba_quicksign_save($node) {
-  sba_quicksign_delete($node->nid);
+function sba_quicksign_save($node, $op) {
+
+  // Default values.
   $default_desc = ($node->type == 'sba_message_action' || $node->type == 'sba_social_action') ? t('If we already have your information, just enter your email address and click to send this message now.') : t('If we already have your information, just enter your email address and click to sign this petition now.');
+  $label = t('Already a supporter?');
+  $description = $default_desc;
+  $format = 'filtered_html';
+  $submit = t('Sign now');
+
+  if ($op == 'update') {
+    sba_quicksign_delete($node->nid);
+  }
+
   $record = array(
     'nid' => $node->nid,
     'quicksign_enabled' => $node->quicksign_enabled,
-    'form_label' => isset($node->quicksign_label) ? $node->quicksign_label : t('Already a supporter?'),
-    'form_description' => isset($node->quicksign_description['value']) ? $node->quicksign_description['value'] : $default_desc,
-    'form_description_format' => isset($node->quicksign_description['format']) ? $node->quicksign_description['format'] : 'filtered_html',
-    'submit_button_text' => isset($node->quicksign_button_text) ? $node->quicksign_button_text : t('Sign now'),
+    'form_label' => isset($node->quicksign_label) ? $node->quicksign_label : $label,
+    'form_description' => isset($node->quicksign_description['value']) ? $node->quicksign_description['value'] : $description,
+    'form_description_format' => isset($node->quicksign_description['format']) ? $node->quicksign_description['format'] : $format,
+    'submit_button_text' => isset($node->quicksign_button_text) ? $node->quicksign_button_text : $submit,
   );
+
   drupal_write_record('sba_quicksign', $record);
 }
 
