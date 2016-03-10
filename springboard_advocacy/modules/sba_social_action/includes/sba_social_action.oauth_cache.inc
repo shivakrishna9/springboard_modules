@@ -76,5 +76,5 @@ function sba_social_action_get_sid() {
  * Delete any oauth caches that are an hour past their default expiration
  */
 function sba_social_action_cron_expire_sessions() {
-  db_delete('cache_sba_social_action')->condition('expire', '<', time() - (60 * 60))->execute();
+  db_delete('cache_sba_social_action')->condition('expire', time() - (60 * 60), '<')->execute();
 }

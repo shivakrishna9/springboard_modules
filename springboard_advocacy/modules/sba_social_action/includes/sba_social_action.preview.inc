@@ -27,9 +27,10 @@ function sba_social_action_message_preview_page($nid) {
       else {
         $mess = 0;
       }
-
+      $numbers = range(0, $mess - 1);
+      shuffle($numbers);
       for ($x=0; $x<$mess; $x++) {
-        $random_array[$node->messages[$message['message_id']]->sba_message_id][] = mt_rand(0, $mess - 1);
+        $random_array[$node->messages[$message['message_id']]->sba_message_id][] = $numbers[$x];
       }
 
       // Sort criteria for message targets.
@@ -89,6 +90,13 @@ function sba_social_action_message_preview_page($nid) {
     'noscript' => array('#markup' => '<noscript><div class="alert error">Javascript is required. Please enable javascript in your browser.</div></noscript>'),
     'sba_social_action_preview_form' => drupal_get_form('sba_social_action_preview_form', $node, $messages, $random_array),
   );
+
+  // We can't really tell if the user takes action, so non-empty $messages
+  // is the closest we'll get.
+  $sid = !empty($_SESSION['social_action_sid']['sid']) ? $_SESSION['social_action_sid']['sid'] : FALSE;
+  if (!empty($_SESSION['social_contact']) && !empty($messages)) {
+    springboard_advocacy_success($node, $_SESSION['social_contact'], $messages, $sid);
+  }
 
   return $build;
 }
