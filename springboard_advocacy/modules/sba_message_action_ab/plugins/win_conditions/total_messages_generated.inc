@@ -2,7 +2,7 @@
 
 /**
  * @file
- * Provide a Webform A/B Test win condition: Total number of conversions
+ * Provide a Webform A/B Test win condition: Total messages generated
  */
 
 // Plugin details
