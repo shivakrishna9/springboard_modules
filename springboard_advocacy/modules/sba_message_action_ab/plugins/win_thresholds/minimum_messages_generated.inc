@@ -2,7 +2,7 @@
 
 /**
  * @file
- * Provide a Webform A/B Test win threshold: Minimum number of hits
+ * Provide a Webform A/B Test win threshold: Minimum message action messages generated.
  */
 
 // Plugin details
