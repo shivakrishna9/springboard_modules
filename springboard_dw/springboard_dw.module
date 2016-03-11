@@ -258,13 +258,13 @@ function springboard_dw_export_item($item)
 {
   // watchdog('springboard data warehouse', 'sending item to the warehouse...');
   if ($item['queue_type'] == 'donation') {
-    return call_user_func('springboard_dw_donation', $item);
+    return springboard_dw_donation($item);
   } elseif ($item['queue_type'] == 'contact') {
-    return call_user_func('springboard_dw_contact', $item);
+    return springboard_dw_contact($item);
   } elseif ($item['queue_type'] == 'form') {
-    return call_user_func('springboard_dw_form', $item);
+    return springboard_dw_form($item);
   } elseif ($item['queue_type'] == 'advocacy') {
-    return call_user_func('springboard_dw_advocacy_message', $item);
+    return springboard_dw_advocacy($item);
   }
   // ... other queues
 }
@@ -323,11 +323,11 @@ function springboard_dw_item_is_warehoused($type, $drupal_id)
 
   // If an item is found, we do not need to warehouse this item
   if ($query->rowCount() > 0) {
-    return true;
+    return True;
   }
 
   // If this item is not warehoused, return false
-  return false;
+  return False;
 
 }
 
@@ -342,10 +342,10 @@ function springboard_dw_contact($item)
   $endpoint = springboard_dw_api_endpoint('contact/create');
 
   // Instantiate an API client instance
-  $APIClient = call_user_func('springboard_api_client');
+  $APIClient = springboard_api_client();
 
   // Clean up the item and add authentication to the form params
-  $item = call_user_func('springboard_api_prep_call', $item);
+  $item = springboard_api_prep_call($item);
 
   // Attempt Guzzle client request
   $res = $APIClient->request('POST', $endpoint, array(
@@ -364,7 +364,7 @@ function springboard_dw_contact($item)
       'created'   => time()
     ))->execute();
 
-    return true;
+    return True;
 
   } else {
     drush_log('Error sending contact API call.', 'warning');
@@ -372,7 +372,7 @@ function springboard_dw_contact($item)
     drush_print_r($resBody);
 
     // Respond back with failure to retry in the queue
-    return false;
+    return False;
   }
 
 }
@@ -388,10 +388,10 @@ function springboard_dw_donation($item)
   $endpoint = springboard_dw_api_endpoint('donation/create');
 
   // Instantiate an API client instance
-  $APIClient = call_user_func('springboard_api_client');
+  $APIClient = springboard_api_client();
 
   // Clean up the item and add authentication to the form params
-  $item = call_user_func('springboard_api_prep_call', $item);
+  $item = springboard_api_prep_call($item);
 
   // Attempt Guzzle client request
   $res = $APIClient->request('POST', $endpoint, array(
@@ -412,7 +412,7 @@ function springboard_dw_donation($item)
     ))->execute();
 
     // Respond back successfully to the queue to remove the item
-    return true;
+    return True;
 
   } else {
     drush_log('Error sending donation API call.', 'warning');
@@ -420,7 +420,7 @@ function springboard_dw_donation($item)
     drush_print_r($resBody);
 
     // Respond back with failure to retry in the queue
-    return false;
+    return False;
   }
 
 }
@@ -436,10 +436,10 @@ function springboard_dw_form($item)
   $endpoint = springboard_dw_api_endpoint('form/create');
 
   // Instantiate an API client instance
-  $APIClient = call_user_func('springboard_api_client');
+  $APIClient = springboard_api_client();
 
   // Clean up the item and add authentication to the form params
-  $item = call_user_func('springboard_api_prep_call', $item);
+  $item = springboard_api_prep_call($item);
 
   // Attempt Guzzle client request
   $res = $APIClient->request('POST', $endpoint, array(
@@ -461,7 +461,7 @@ function springboard_dw_form($item)
     ))->execute();
 
     // Respond back successfully to the queue to remove the item
-    return true;
+    return True;
 
   } else {
 
@@ -471,9 +471,19 @@ function springboard_dw_form($item)
     drush_print_r($resBody);
 
     // Respond back with failure to retry in the queue
-    return false;
+    return False;
   }
 
+}
+
+/**
+ * Send an advocacy record to the Springboard data warehouse API.
+ * @param $item
+ */
+function springboard_dw_advocacy($item)
+{
+  // Todo: build this out
+  return True;
 }
 
 /**
