@@ -5,6 +5,23 @@
  */
 
 /**
+ * Implements hook_menu().
+ */
+function springboard_dw_menu()
+{
+  $items['admin/config/services/springboard-dw'] = array(
+    'title'            => 'Springboard Data Warehouse',
+    'description'      => 'Configuration settings for Springboard Data Warehousing.',
+    'page callback'    => 'springboard_dw_settings_page',
+    'access arguments' => array('administer springboard data warehouse'),
+    'type'             => MENU_NORMAL_ITEM,
+    'file'             => 'includes/springboard_dw.admin.inc',
+  );
+
+  return $items;
+}
+
+/**
  * Implements hook_schema().
  */
 function springboard_dw_schema()
@@ -13,19 +30,26 @@ function springboard_dw_schema()
   $schema['springboard_data_warehouse'] = array(
     'description' => 'The base table for data warehousing',
     'fields'      => array(
-      'id'      => array(
-        'description' => 'The primary identifier for a node.',
+      'id'        => array(
+        'description' => 'The auto-increment field identifier for this data warehouse record.',
         'type'        => 'serial',
         'unsigned'    => true,
         'not null'    => true,
       ),
-      'uid'     => array(
-        'description' => 'The user id.',
-        'type'        => 'numeric'
+      'type'      => array(
+        'description' => 'The type of item that has been warehoused.',
+        'type'        => 'varchar',
+        'length'      => 64
       ),
-      'created' => array(
-        'description' => 'The timestamp this record was created',
-        'type'        => 'numeric'
+      'drupal_id' => array(
+        'description' => 'The unique Drupal id for this item.',
+        'type'        => 'numeric',
+        'unsigned'    => true
+      ),
+      'created'   => array(
+        'description' => 'The timestamp this record was created.',
+        'type'        => 'numeric',
+        'unsigned'    => true
       )
     ),
     'primary key' => array('id')
@@ -47,6 +71,21 @@ function springboard_dw_update_7001()
 }
 
 /**
+ * Get all entity properties by way of a wrapper.
+ * @param $wrapper
+ * @return array
+ */
+function get_all_entity_properties($wrapper)
+{
+  $values = array();
+  foreach ($wrapper->getPropertyInfo() as $key => $val) {
+    $values[$key] = $wrapper->$key->value();
+  }
+
+  return $values;
+}
+
+/**
  * Implements hook_fundraiser_donation_success().
  * @param $donation
  */
@@ -56,12 +95,45 @@ function springboard_dw_fundraiser_donation_success($donation)
   // Get the Drupal data warehouse queue
   $queue = DrupalQueue::get("springboard_dw_export");
 
-  // Ready the donation object for queue insertion
+  // Queue the donation object which should not be in the queue, so there's no need to check if this item is warehoused
+  $donation_item = springboard_dw_map_donation_item($donation);
+  $queue->createItem($donation_item);
+
+  // Create the user item in the queue if not warehoused
+  if (!springboard_dw_item_is_warehoused('contact', $donation->uid)) {
+    $contact_item = springboard_dw_map_contact_item($donation);
+    $queue->createItem($contact_item);
+  }
+
+  // Create the form item in the queue if not warehoused
+  if (!springboard_dw_item_is_warehoused('form', $donation->node->nid)) {
+    $form_item = springboard_dw_map_form_item($donation);
+    $queue->createItem($form_item);
+  }
+
+}
+
+/**
+ * Map the donation object to an array formatted for an API call for data warehousing.
+ * @param $donation
+ * @return array
+ */
+function springboard_dw_map_donation_item($donation)
+{
+  // Get the donation object details and prep for warehousing (sb_donation)
   $donation_item = array();
+
   $donation_item['queue_type'] = 'donation';
+  $donation_item['donation_id'] = $donation->did;
+  $donation_item['group_id'] = ''; // Will come later
   $donation_item['amount'] = $donation->amount;
   $donation_item['currency'] = $donation->currency;
   $donation_item['quantity'] = $donation->donation['quantity'];
+
+  // Todo: Where do these come from ?
+  $donation_item['quick_submit'] = '';
+  $donation_item['click_submit'] = '';
+
   $donation_item['ms'] = $donation->donation['ms'];
   $donation_item['cid'] = $donation->donation['cid'];
   $donation_item['first_name'] = $donation->donation['first_name'];
@@ -87,7 +159,6 @@ function springboard_dw_fundraiser_donation_success($donation)
   $donation_item['form_id'] = $donation->nid;
   $donation_item['user_id'] = $donation->uid;
   $donation_item['submission_id'] = $donation->sid;
-  $donation_item['donation_id'] = $donation->did;
   $donation_item['status'] = $donation->status;
   $donation_item['transaction_id'] = $donation->txn_id;
   $donation_item['gateway'] = $donation->gateway['id'];
@@ -95,107 +166,314 @@ function springboard_dw_fundraiser_donation_success($donation)
   $donation_item['card_last_4'] = $donation->data['payment_fields']['credit']['card_number'];
   $donation_item['card_expiration_month'] = $donation->data['payment_fields']['credit']['card_expiration_month'];
   $donation_item['card_expiration_year'] = $donation->data['payment_fields']['credit']['card_expiration_year'];
-  $donation_item['created_at'] = date('m/d/y h:i:s');
-  $donation_item['updated_at'] = date('m/d/y h:i:s');
+
+  # Todo: fix these
+  $donation_item['bank_account_mask'] = '';
+  $donation_item['ip_address'] = '';
+
+  $donation_item['created_at'] = date('U');
+  $donation_item['updated_at'] = date('U');
+
+  // Todo: Add the extra props attributes
   $donation_item['extra_props'] = json_encode(array());
 
-  // dsm($donation_item);
+  return $donation_item;
+}
+
+/**
+ * Map the donation object to a contact array formatted for an API call for data warehousing.
+ * @param $donation
+ * @return array
+ */
+function springboard_dw_map_contact_item($donation)
+{
 
   $user_obj = entity_metadata_wrapper('user', $donation->user);
   $user_data = get_all_entity_properties($user_obj);
 
-  // Get the user account
-  $user_item = array();
-  $user_item['queue_type'] = 'user';
-  $user_item['contact_id'] = $donation->uid;
-  $user_item['username'] = $user_data['name'];
-  $user_item['email'] = $user_data['mail'];
-  $user_item['first_name'] = $user_data['sbp_first_name'];
-  $user_item['last_name'] = $user_data['sbp_last_name'];
-  $user_item['address'] = $user_data['sbp_address'];
-  $user_item['address_line_2'] = $user_data['sbp_address_line_2'];
-  $user_item['city'] = $user_data['sbp_city'];
-  $user_item['state'] = $user_data['sbp_state'];
-  $user_item['country'] = $user_data['sbp_country'];
-  $user_item['zip'] = $user_data['sbp_zip'];
-  $user_item['ms'] = $user_data['sbp_ms'];
-  $user_item['cid'] = $user_data['sbp_cid'];
-  $user_item['referrer'] = $user_data['sbp_referrer'];
-  $user_item['initial_referrer'] = $user_data['sbp_initial_referrer'];
-  $user_item['search_engine'] = $user_data['sbp_search_engine'];
-  $user_item['search_string'] = $user_data['sbp_search_string'];
-  $user_item['user_agent'] = $user_data['sbp_user_agent'];
-  $user_item['device_type'] = $user_data['sbp_device_type'];
-  $user_item['device_name'] = $user_data['sbp_device_name'];
-  $user_item['device_os'] = $user_data['sbp_device_os'];
-  $user_item['device_browser'] = $user_data['sbp_device_browser'];
-  $user_item['salesforce_account_id'] = $user_data['sbp_salesforce_account_id'];
-  $user_item['salesforce_contact_id'] = $user_data['sbp_salesforce_contact_id'];
-  $user_item['created_at'] = $user_data['created'];
-  $user_item['updated_at'] = $user_data['created'];;
-  $user_item['extra_props'] = json_encode(array());
+  // Get the user account details and prep for warehousing (sb_contact)
+  $contact_item = array();
+  $contact_item['queue_type'] = 'contact';
+  $contact_item['contact_id'] = $donation->uid;
+  $contact_item['group_id'] = ''; // Will come later
+  $contact_item['username'] = $user_data['name'];
+  $contact_item['email'] = $user_data['mail'];
+  $contact_item['first_name'] = $user_data['sbp_first_name'];
+  $contact_item['last_name'] = $user_data['sbp_last_name'];
+  $contact_item['address'] = $user_data['sbp_address'];
+  $contact_item['address_line_2'] = $user_data['sbp_address_line_2'];
+  $contact_item['city'] = $user_data['sbp_city'];
+  $contact_item['state'] = $user_data['sbp_state'];
+  $contact_item['country'] = $user_data['sbp_country'];
+  $contact_item['zip'] = $user_data['sbp_zip'];
+  $contact_item['ms'] = $user_data['sbp_ms'];
+  $contact_item['cid'] = $user_data['sbp_cid'];
+  $contact_item['referrer'] = $user_data['sbp_referrer'];
+  $contact_item['initial_referrer'] = $user_data['sbp_initial_referrer'];
+  $contact_item['search_engine'] = $user_data['sbp_search_engine'];
+  $contact_item['search_string'] = $user_data['sbp_search_string'];
+  $contact_item['user_agent'] = $user_data['sbp_user_agent'];
+  $contact_item['salesforce_account_id'] = $user_data['sbp_salesforce_account_id'];
+  $contact_item['salesforce_contact_id'] = $user_data['sbp_salesforce_contact_id'];
+  $contact_item['created_at'] = $user_data['created'];
+  $contact_item['updated_at'] = $user_data['created'];
 
-  $user_query = db_query("select * from {springboard_data_warehouse} where uid = :uid", array(':uid' => $donation->uid));
+  // Todo: Add the extra props attributes
+  $contact_item['extra_props'] = json_encode(array());
 
-  // Check if the user record exists already
-  $user_warehoused_count = 0;
-  foreach ($user_query as $item) {
-    $user_warehoused_count++;
-  }
+  return $contact_item;
 
-  // Create the API request to warehouse the donation
-  $donation_response = $queue->createItem($donation_item);
-
-  // If the response is successful, add the user_warehoused parameter to the Drupal user account so we can skip this check in subsequent donations
-  if ($donation_response['message'] == 'Successfully created donation.') {
-
-    // If the user account has not been warehoused, attempt to do so here
-    if (!$user_warehoused_count) {
-
-      // Create the contact item in the queue
-      $contact_response = $queue->createItem($donation_item);
-
-      // If the API call response looks good, exclude the user account from being warehoused again
-      if ($contact_response == 'Successfully created contact.') {
-
-        // Insert the user account into the Drupal data warehouse table
-        db_insert('springboard_data_warehouse')->fields(array(
-          'uid'     => $donation->uid,
-          'created' => time()
-        ))->execute();
-      }
-
-    }
-
-  }
-
-}
-
-function get_all_entity_properties($wrapper)
-{
-  $values = array();
-  foreach ($wrapper->getPropertyInfo() as $key => $val) {
-    $values[$key] = $wrapper->$key->value();
-  }
-
-  return $values;
 }
 
 /**
- * Implements hook_menu().
+ * Map the donation object to a form array formatted for an API call for data warehousing.
+ * @param $donation
+ * @return array
  */
-function springboard_dw_menu()
+function springboard_dw_map_form_item($donation)
 {
-  $items['admin/config/services/springboard-dw'] = array(
-    'title'            => 'Springboard Data Warehouse',
-    'description'      => 'Configuration settings for Springboard Data Warehousing.',
-    'page callback'    => 'springboard_dw_settings_page',
-    'access arguments' => array('administer springboard data warehouse'),
-    'type'             => MENU_NORMAL_ITEM,
-    'file'             => 'includes/springboard_dw.admin.inc',
-  );
 
-  return $items;
+  // Get the user account details and prep for warehousing (sb_contact)
+  $form_item = array();
+  $form_item['queue_type'] = 'form';
+  $form_item['form_id'] = $donation->node->nid;
+  $form_item['group_id'] = ''; // Will come later
+  $form_item['form_type'] = $donation->node->type;
+  $form_item['name'] = $donation->node->title;
+  $form_item['url'] = drupal_get_path_alias('node/' . $donation->node->nid);
+  $form_item['created_at'] = $donation->node->created;
+  $form_item['updated_at'] = $donation->node->changed;
+
+  // Todo: Add the extra props attributes
+  $form_item['extra_props'] = json_encode(array());
+
+  return $form_item;
+
+}
+
+/**
+ * Sends an item to the data warehouse receiver app.
+ */
+function springboard_dw_export_item($item)
+{
+  // watchdog('springboard data warehouse', 'sending item to the warehouse...');
+  if ($item['queue_type'] == 'donation') {
+    return call_user_func('springboard_dw_donation', $item);
+  } elseif ($item['queue_type'] == 'contact') {
+    return call_user_func('springboard_dw_contact', $item);
+  } elseif ($item['queue_type'] == 'form') {
+    return call_user_func('springboard_dw_form', $item);
+  } elseif ($item['queue_type'] == 'advocacy') {
+    return call_user_func('springboard_dw_advocacy_message', $item);
+  }
+  // ... other queues
+}
+
+/**
+ * Returns a new instance of Guzzle Http client.
+ * @return \GuzzleHttp\Client
+ */
+function springboard_api_client()
+{
+
+  // Composer Vendor autoload
+  drush_autoload("sites/all/vendor/autoload.php");
+
+  // Load Guzzle client
+  $guzzle = new GuzzleHttp\Client(['http_errors' => false]);
+
+  // Return an instance of the client
+  return $guzzle;
+}
+
+/**
+ * Removes the queue type used to distinguish api calls and adds authentication token and client ID to the item params.
+ * @param $item
+ */
+function springboard_api_prep_call($item)
+{
+  // Remove the queue type from the item
+  unset($item['queue_type']);
+
+  // Add the authentication token and client id
+  $item['authenticationToken'] = variable_get('authentication_token', NULL);
+  $item['sbClientId'] = variable_get('client_id', NULL);
+
+  return $item;
+}
+
+/**
+ * Returns the endpoint used to make API calls to the data warehouse receiver app.
+ */
+function springboard_dw_api_endpoint($endpoint)
+{
+  return 'http://159.203.115.210/'.ltrim($endpoint,'/');
+}
+
+/**
+ * Helper function to query the data warehouse table to determine if this item has been recorded as being warehoused already.
+ * @param $type
+ * @param $drupal_id
+ */
+function springboard_dw_item_is_warehoused($type, $drupal_id)
+{
+
+  // Query items from the data warehouse table that match the item id and type
+  $query = db_query("select * from {springboard_data_warehouse} where drupal_id = :drupal_id and type = :type", array(':type' => $type, ':drupal_id' => $drupal_id));
+
+  // If an item is found, we do not need to warehouse this item
+  if ($query->rowCount() > 0) {
+    return true;
+  }
+
+  // If this item is not warehoused, return false
+  return false;
+
+}
+
+/**
+ * Send a contact record to the Springboard data warehouse API.
+ * @param $item
+ */
+function springboard_dw_contact($item)
+{
+
+  // Define the endpoint
+  $endpoint = springboard_dw_api_endpoint('contact/create');
+
+  // Instantiate an API client instance
+  $APIClient = call_user_func('springboard_api_client');
+
+  // Clean up the item and add authentication to the form params
+  $item = call_user_func('springboard_api_prep_call', $item);
+
+  // Attempt Guzzle client request
+  $res = $APIClient->request('POST', $endpoint, array(
+    'form_params' => $item
+  ));
+
+  // Response body
+  $resBody = json_decode($res->getBody());
+
+  // Looks like the api response was good
+  if ($res->getStatusCode() == 200) {
+    // Insert the user account into the Drupal data warehouse table
+    db_insert('springboard_data_warehouse')->fields(array(
+      'type'      => 'contact',
+      'drupal_id' => $item['contact_id'],
+      'created'   => time()
+    ))->execute();
+
+    return true;
+
+  } else {
+    drush_log('Error sending contact API call.', 'warning');
+    drush_print($endpoint.'?'.url_encode($item));
+    drush_print_r($resBody);
+
+    // Respond back with failure to retry in the queue
+    return false;
+  }
+
+}
+
+/**
+ * Send a donation record to the Springboard data warehouse API.
+ * @param $item
+ */
+function springboard_dw_donation($item)
+{
+
+  // Define the endpoint
+  $endpoint = springboard_dw_api_endpoint('donation/create');
+
+  // Instantiate an API client instance
+  $APIClient = call_user_func('springboard_api_client');
+
+  // Clean up the item and add authentication to the form params
+  $item = call_user_func('springboard_api_prep_call', $item);
+
+  // Attempt Guzzle client request
+  $res = $APIClient->request('POST', $endpoint, array(
+    'form_params' => $item
+  ));
+
+
+  // Response body
+  $resBody = json_decode($res->getBody());
+
+  // If the response is successful, add the user_warehoused parameter to the Drupal user account so we can skip this check in subsequent donations
+  if ($res->getStatusCode() == 200) {
+    // Insert the user account into the Drupal data warehouse table
+    db_insert('springboard_data_warehouse')->fields(array(
+      'type'      => 'donation',
+      'drupal_id' => $item['donation_id'],
+      'created'   => time()
+    ))->execute();
+
+    // Respond back successfully to the queue to remove the item
+    return true;
+
+  } else {
+    drush_log('Error sending donation API call.', 'warning');
+    drush_print($endpoint.'?'.http_build_query($item));
+    drush_print_r($resBody);
+
+    // Respond back with failure to retry in the queue
+    return false;
+  }
+
+}
+
+/**
+ * Send a form record to the Springboard data warehouse API.
+ * @param $item
+ */
+function springboard_dw_form($item)
+{
+
+  // Define the endpoint
+  $endpoint = springboard_dw_api_endpoint('form/create');
+
+  // Instantiate an API client instance
+  $APIClient = call_user_func('springboard_api_client');
+
+  // Clean up the item and add authentication to the form params
+  $item = call_user_func('springboard_api_prep_call', $item);
+
+  // Attempt Guzzle client request
+  $res = $APIClient->request('POST', $endpoint, array(
+    'form_params' => $item
+  ));
+
+  // Response body
+  $resBody = json_decode($res->getBody());
+
+  // Looks like the api response was good
+  if ($res->getStatusCode() == 200) {
+  //if ($res->getStatusCode() == 200 && $resBody['message'] == 'Successfully created form.') {
+
+    // Insert the user account into the Drupal data warehouse table
+    db_insert('springboard_data_warehouse')->fields(array(
+      'type'      => 'form',
+      'drupal_id' => $item['form_id'],
+      'created'   => time()
+    ))->execute();
+
+    // Respond back successfully to the queue to remove the item
+    return true;
+
+  } else {
+
+    // Log the API error
+    drush_log('Error sending form API call.', 'warning');
+    drush_print($endpoint.'?'.http_build_query($item));
+    drush_print_r($resBody);
+
+    // Respond back with failure to retry in the queue
+    return false;
+  }
+
 }
 
 /**
@@ -213,117 +491,6 @@ function springboard_dw_cron_queue_info()
 }
 
 /**
- * Sends an item to the data warehouse receiver app.
- */
-function springboard_dw_export_item($item)
-{
-  // watchdog('springboard data warehouse', 'sending item to the warehouse...');
-
-  if ($item['queue_type'] == 'donation') {
-    call_user_func('springboard_dw_donation', $item);
-  } elseif ($item['queue_type'] == 'contact') {
-    call_user_func('springboard_dw_contact', $item);
-  } // ... other queues
-  elseif ($item['queue_type'] == 'advocacy') {
-    call_user_func('springboard_dw_advocacy_message', $item);
-  }
-
-}
-
-/**
- * Returns a new instance of Guzzle Http client
- * @return \GuzzleHttp\Client
- */
-function springboard_api_client()
-{
-
-  // Composer Vendor autoload
-  drush_autoload("sites/all/vendor/autoload.php");
-
-  // Guzzle Cast to SDK variable
-  $guzzle = new GuzzleHttp\Client(['http_errors' => false]);
-
-  return $guzzle;
-}
-
-/**
- * Send a contact record to the Springboard data warehouse API.
- * @param $item
- */
-function springboard_dw_contact($item)
-{
-
-  // Define the endpoint
-  $endpoint = 'http://159.203.115.210/contact/create';
-
-  // Instantiate an API client instance
-  $APIClient = call_user_func('springboard_api_client');
-
-  // Remove the queue type from the item
-  unset($item['queue_type']);
-
-  // Add the authentication token and client id
-  $item['authenticationToken'] = variable_get('authentication_token', NULL);
-  $item['sbClientId'] = variable_get('client_id', NULL);
-
-  // Attempt Guzzle client request
-
-  $res = $APIClient->request('POST', $endpoint, array(
-    'form_params' => $item
-  ));
-
-  // Looks like the api response was good
-  if ($res->getStatusCode() == 200) {
-    drush_print_r(json_decode($res->getBody()));
-  } else {
-    drush_log('Error sending API call.', 'warning');
-    drush_print_r(json_decode($res->getBody()));
-  }
-
-}
-
-/**
- * Send a donation record to the Springboard data warehouse API.
- * @param $item
- */
-function springboard_dw_donation($item)
-{
-
-  // Define the endpoint
-  $endpoint = 'http://159.203.115.210/donation/create';
-
-  // Instantiate an API client instance
-  $APIClient = call_user_func('springboard_api_client');
-
-  // Remove the queue type from the item
-  unset($item['queue_type']);
-
-  // Add the authentication token and client id
-  $item['authenticationToken'] = variable_get('authentication_token', NULL);
-  $item['sbClientId'] = variable_get('client_id', NULL);
-
-  // Attempt Guzzle client request
-
-  $res = $APIClient->request('POST', $endpoint, array(
-    'form_params' => $item
-  ));
-
-  // Looks like the api response was good
-  if ($res->getStatusCode() == 200) {
-    drush_print_r(json_decode($res->getBody()));
-  } else {
-    drush_log('Error sending API call.', 'warning');
-    drush_print_r(json_decode($res->getBody()));
-  }
-
-}
-
-function springboard_dw_advocacy_message($item)
-{
-
-}
-
-/**
  * STOLEN FROM drupal_cron_run. Needs improvement.
  * Ideas:
  *  - Add a time argument.
@@ -334,48 +501,43 @@ function springboard_dw_process_queue()
 {
   $callback = 'springboard_dw_export_item';
 
-  // drush_print_r(variable_get('client_id', NULL));
-
   $end = time() + 60;
+
+  // Get an instance of the Drupal data warehouse queue
   $queue = DrupalQueue::get('springboard_dw_export');
+
+  // Lock and claim an item for queue processing
   while (time() < $end && ($item = $queue->claimItem())) {
-    try {
-      call_user_func($callback, $item->data);
+
+    // If the api responds back correctly, remove the queue item
+    if (call_user_func($callback, $item->data)) {
       $queue->deleteItem($item);
-      // $queue->releaseItem($item);
-    } catch (Exception $e) {
-      // In case of exception log it and leave the item in the queue
-      // to be processed again later.
-      watchdog_exception('cron', $e);
+    } else {
+      // Release the item back onto the queue for retry
+      //
+      drush_log('Bad API call, releasing item. ', 'warning');
+      drush_print_r($item);
+      $queue->releaseItem($item);
+      break;
     }
+
+    /*
+     * WHAT DO WE BENEFIT WITH USING WATCHDOG EXCEPTION DIRECTLY?
+     *
+        try {
+          $queue->deleteItem($item);
+
+        } catch (Exception $e) {
+
+          // In case of exception log it and leave the item in the queue
+          // to be processed again later.
+          watchdog_exception('cron', $e);
+
+          // Release the item back onto the queue for retry
+          // $queue->releaseItem($item);
+        }
+    */
+
   }
 
-}
-
-/*
- **
- * Implements hook_cron().
- */
-
-function springboard_dw_process_cron()
-{
-  $queue = DrupalQueue::get('springboard_dw_export');
-
-  foreach (remoteData() as $item) {
-    $queue->createItem($item);
-  }
-}
-
-/**
- * Implements hook_cron_queue_info().
- */
-function springboard_dw_process_cron_queue_info()
-{
-  $queues = array();
-  $queues['springboard_dw_export'] = array(
-    'worker callback' => 'saveRemoteData', //function to call for each item
-    'time'            => 60, //seconds to spend working on the queue
-  );
-
-  return $queues;
 }
