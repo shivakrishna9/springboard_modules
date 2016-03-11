@@ -13,6 +13,7 @@ $plugin = array(
   'config form validation' => 'fundraiser_ab_donations_count_config_validate',
   'config summary' => 'fundraiser_ab_donations_count_config_summary',
   'check criteria' => 'fundraiser_ab_donations_count_check_win',
+  'current value' => 'fundraiser_ab_donations_count_current_value',
 );
 
 /**
@@ -44,6 +45,18 @@ function fundraiser_ab_donations_count_config_validate($config, $field_name_pref
   }
 }
 
+/**
+ * Returns the current value this win condition is measuring for a given test.
+ *
+ * @param $webform_nid
+ *   Node ID of the webform currently being test.
+ */
+function fundraiser_ab_donations_count_current_value($webform_nid) {
+  // TODO implement count() or similar:
+  return db_query("SELECT nid FROM {fundraiser_donation} WHERE nid = :webform_nid",
+    array(':webform_nid' => $webform_nid))
+    ->rowCount();
+}
 
 /**
  * Return a summary of the plugin config, for listing on the admin view of a
@@ -52,7 +65,6 @@ function fundraiser_ab_donations_count_config_validate($config, $field_name_pref
 function fundraiser_ab_donations_count_config_summary($config) {
   return $config['donations'];
 }
-
 
 /**
  * Check if the given Webform A/B Test node has a winner
