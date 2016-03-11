@@ -14,7 +14,7 @@ function springboard_dw_settings_page() {
 }
 
 /**
- * Configuration settings form for Springboard advocacy.
+ * Configuration settings form for Springboard data warehousing.
  */
 function springboard_dw_settings_form() {
   $form = array();
