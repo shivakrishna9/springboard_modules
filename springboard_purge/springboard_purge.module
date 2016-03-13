@@ -24,6 +24,8 @@ function springboard_purge_get_user_whitelist($days, $custom_roles) {
 
   // Add in the anonymous user for safekeeping.
   $users_to_keep[] = 0;
+  $count_of_active_users = count($users_to_keep);
+  drush_log("Identified $count_of_active_users active users. These will be protected from deletion.", 'ok');
   return $users_to_keep;
 }
 
@@ -93,12 +95,15 @@ function springboard_purge_get_purgeable_users($uids_to_keep, $batch_size) {
 /**
  * Deletes a configurable number of users.
  *
- * @param array $uids_to_keep
- *   An array of uids that should not be deleted.
+ * @param int $days_old
+ *   Minimum number of days old a submission must be.
  * @param int $batch_size
- *   The number of users to select for deletion.
+ *   Number of webform submissions to return.
+ * @param array $custom_roles
+ *   An array of custom role names.
  */
-function springboard_purge_delete_users($uids_to_keep, $batch_size) {
+function springboard_purge_delete_users($days_old, $batch_size, $custom_roles) {
+  $uids_to_keep = springboard_purge_get_user_whitelist($days_old, $custom_roles);
   $uids = springboard_purge_get_purgeable_users($uids_to_keep, $batch_size);
   if (count($uids)) {
     $time_start = microtime(TRUE);
@@ -170,17 +175,20 @@ function springboard_purge_get_submissions_with_active_order($days_old) {
 /**
  * Delets an array of webform submissions.
  *
- * @param array $submissions_to_delete
- *   An array of webform sumissions to delete.
+ * @param int $days_old
+ *   Minimum number of days old a commerce order must be.
+ * @param int $batch_size
+ *   Number of commerce orders to return.
  */
-function springboard_purge_delete_webform_submissions($submissions_to_delete) {
+function springboard_purge_delete_webform_submissions($days_old, $batch_size) {
   module_load_include('inc', 'webform', 'includes/webform.submissions');
+  $submissions_to_keep = springboard_purge_get_submissions_with_active_order($days_old);
+  $submissions_to_delete = springboard_purge_get_old_submisions($days_old, $batch_size, $submissions_to_keep);
   foreach ($submissions_to_delete as $submission) {
     $node = node_load($submission->nid);
     $submission = webform_get_submission($submission->nid, $submission->sid);
     webform_submission_delete($node, $submission);
   }
-
 }
 
 /**
@@ -244,11 +252,29 @@ function springboard_purge_get_old_commerce_orders($days_old, $batch_size, $dona
  * Deletes records from commerce_order, fundraiser_donation, and
  * fundraiser_sustainers tables.
  *
- * @param array $order_ids
- *   A list of order_ids.
+ * @param int $days_old
+ *   Minimum number of days old a commerce order must be.
+ * @param int $batch_size
+ *   Number of commerce orders to return.
  */
-function springboard_purge_delete_commerce_orders($order_ids) {
-  commerce_order_delete_multiple($order_ids);
-  $fd_query = db_query("delete from fundraiser_donation where did in (:order_ids)", array(':order_ids' => $order_ids));
-  $fs_query = db_query("delete from fundraiser_sustainers where did in (:order_ids)", array(':order_ids' => $order_ids));
+function springboard_purge_delete_commerce_orders($days_old, $batch_size) {
+  // Do not delete donations that are part of an active series.
+  $donations_to_keep = springboard_purge_get_donations_in_nonexpired_series();
+  $commerce_orders_to_delete = springboard_purge_get_old_commerce_orders($days_old, $batch_size, $donations_to_keep);
+  commerce_order_delete_multiple($commerce_orders_to_delete);
+  $fd_query = db_query("delete from fundraiser_donation where did in (:order_ids)", array(':order_ids' => $commerce_orders_to_delete));
+  $fs_query = db_query("delete from fundraiser_sustainers where did in (:order_ids)", array(':order_ids' => $commerce_orders_to_delete));
+}
+
+/**
+ * Count rows in a given table for logging purposes.
+ * @param string $table
+ *   The table to count.
+ * @return int
+ *   Rows in the table.
+ */
+function springboard_purge_count_rows($table) {
+  $query = db_select($table, 'o');
+  $count = $query->countQuery()->execute()->fetchField();
+  return $count;
 }
