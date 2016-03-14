@@ -1358,7 +1358,6 @@ function fundraiser_sustainers_edit_form($did) {
 
   // Gather further donation data.
   $remaining_donation_count = _fundraiser_sustainers_count_donations_recurr_remaining($did);
-  $remaining_donation_count = 10;
   $payment_info = '<div id="payment-info">' .
   '<h2>Recurring Payment Info</h2>' .
   '<dl>' .
