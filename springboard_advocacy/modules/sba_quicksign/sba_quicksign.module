@@ -16,7 +16,6 @@
  * have been form altered into the webform, and would lose those
  * values on submit.
  *
- * @return array
  */
 function sba_quicksign_webform_component_info() {
   $components = array();
@@ -468,8 +467,8 @@ function sba_quicksign_node_update($node) {
       if (!empty($node->quicksign_enabled) && (!$has_form_component || !$has_flag_component)) {
         sba_quicksign_insert_components($node, 'update', $has_form_component, $has_flag_component);
       }
-      if (empty($node->quicksign_enabled) && ($has_form_component || $has_flag_component)) {
-        sba_quicksign_delete_components($node, $form_cid, $flag_cid);
+      if (empty($node->quicksign_enabled) && $has_form_component) {
+        sba_quicksign_delete_components($node, $form_cid);
       }
     }
   }
@@ -688,12 +687,9 @@ function sba_quicksign_insert_components($node, $op, $has_form_component, $has_f
  * @param $node
  * @param $cid
  */
-function sba_quicksign_delete_components($node, $form_cid, $flag_cid) {
+function sba_quicksign_delete_components($node, $form_cid) {
   if ($form_cid) {
     webform_component_delete($node, $node->webform['components'][$form_cid]);
-  }
-  if ($flag_cid) {
-    webform_component_delete($node, $node->webform['components'][$flag_cid]);
   }
 }
 
