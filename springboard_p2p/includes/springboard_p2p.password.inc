@@ -201,7 +201,7 @@ function springboard_p2p_set_password_form($form, &$form_state, $uid, $timestamp
           // Include this from user.pages.inc: Let the user's password be changed without the current password check.
           $token = drupal_random_key();
           $_SESSION['pass_reset_' . $user->uid] = $token;
-          // Also redirect as in user.pages.inc so that the form is rebuilt with the porper token.
+          // Also redirect as in user.pages.inc so that the form is rebuilt with the proper token.
           drupal_goto('p2p/set_password/' . $user->uid . "/$timestamp/$hashed_pass", array('query' => array('pass-reset-token' => $token)));
         }
         else {
