@@ -67,6 +67,7 @@ function sba_quicksign_form_alter(&$form, &$form_state, $form_id) {
           $quicksign_field['children'] = sba_quicksign_form();
           $quicksign_field['children']['#weight'] = 1001;
           $form['#attached']['css'][] = drupal_get_path('module', 'sba_quicksign') . '/css/sba-quicksign.css';
+          $form['#attached']['js'][] = drupal_get_path('module', 'sba_quicksign') . '/js/sba_quicksign.js';
           array_unshift($form['#validate'], 'sba_quicksign_form_validate');
         }
       }
