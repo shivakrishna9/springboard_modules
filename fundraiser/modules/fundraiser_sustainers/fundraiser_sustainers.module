@@ -1358,6 +1358,7 @@ function fundraiser_sustainers_edit_form($did) {
 
   // Gather further donation data.
   $remaining_donation_count = _fundraiser_sustainers_count_donations_recurr_remaining($did);
+  $remaining_donation_count = 10;
   $payment_info = '<div id="payment-info">' .
   '<h2>Recurring Payment Info</h2>' .
   '<dl>' .
@@ -2124,8 +2125,9 @@ function fundraiser_sustainers_update_billing_info_in_series($donations, $submis
  *
  */
 function _fundraiser_sustainers_create_future_orders($donation, $month, $year, $source_donation = NULL, $start = NULL) {
-  // Handle the rest of the set based on the given donation.
-  if (is_null($start)) {
+  // To prevent donations being created in the past, use current date instead of
+  // passed $start date.
+  if (is_null($start) || $start < strtotime("now")) {
     $start = strtotime("now");
   }
 
@@ -2148,7 +2150,6 @@ function _fundraiser_sustainers_create_future_orders($donation, $month, $year, $
 
   // Create a schedule object from the starting charge and the expiration date.
   $schedule = new sustainersMonthlySchedule($previous_charge, $month . '/1/' . $year, $donation);
-
   $sustainer_key = fundraiser_sustainers_get_sustainer_key_value();
 
   // Get existing donations, if they exist.
