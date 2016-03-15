@@ -104,7 +104,7 @@ function springboard_purge($type = NULL) {
       $log['@count_fundraiser_donation_deleted'] = $count_fundraiser_donation_before - $count_fundraiser_donation_after;
       $log['@count_fundraiser_sustainers_deleted'] = $count_fundraiser_sustainers_before - $count_fundraiser_sustainers_after;
       $log['@time_elapsed'] = round(microtime(TRUE) - $time_start, 2);
-      watchdog('springboard_purge', '@count_commerce_order_deleted rows deleted from the commerce_order table (@count_commerce_order_after remain), @count_fundraiser_donation_deleted rows deleted from the commerce_order table (@count_fundraiser_donation_after remain), @count_fundraiser_sustainers_deleted rows deleted from the commerce_order table (@count_fundraiser_sustainers_after remain) in @time_elapsed seconds.', $log);
+      watchdog('springboard_purge', '@count_commerce_order_deleted rows deleted from the commerce_order table (@count_commerce_order_after remain), @count_fundraiser_donation_deleted rows deleted from the fundraiser_donation table (@count_fundraiser_donation_after remain), @count_fundraiser_sustainers_deleted rows deleted from the fundraiser_sustainers table (@count_fundraiser_sustainers_after remain) in @time_elapsed seconds.', $log);
       break;
 
     default:
