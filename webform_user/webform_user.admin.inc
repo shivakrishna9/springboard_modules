@@ -16,7 +16,7 @@ function webform_user_admin_settings_form($form, &$form_state) {
   $form['webform_user_session_store'] = array(
     '#type' => 'checkbox',
     '#title' => t('Store user submitted values in session?'),
-    '#description' => t('Enable this checkbox if webform user should store submitted values in the user\'s session for all webform user enabled content types.'),
+    '#description' => t("Enable this checkbox if webform user should store submitted values in the user's session for all webform user enabled content types."),
     '#default_value' => variable_get('webform_user_session_store', 0),
   );
   return system_settings_form($form);
