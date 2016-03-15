@@ -4,6 +4,9 @@
  * Test the webform user form submissions.
  */
 
+/**
+ * Tests webform_user truncation.
+ */
 class WebformUserFieldTruncateTestCase extends WebformUserTestSetup {
 
   /**
@@ -32,12 +35,14 @@ class WebformUserFieldTruncateTestCase extends WebformUserTestSetup {
   }
 
   /**
-   * Tests that a new user account is created when an anonymous user with a
-   * non-matching email address submits a webform user form.
+   * Tests that a new user account is created.
+   *
+   * A new account should be crated when an anonymous user with a non-matching
+   * email address submits a webform user form.
    */
   public function testWebformUserAnonymousSubmission() {
     // Create a form for testing.
-    $this->_webform_user_create_node();
+    $this->webformUserCreateNode();
 
     // Load the form and verify all fields are present.
     $this->drupalGet('node/1');

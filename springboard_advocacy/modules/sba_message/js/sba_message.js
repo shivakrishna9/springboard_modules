@@ -1279,6 +1279,8 @@
             }
             if (this.type == 'text') {
                 $(this).val('');
+                $(this).prop('disabled', false);
+                $(this).removeClass('disabled');
             }
         });
         $('.views-targets-button-wrapper').fadeOut(333);
