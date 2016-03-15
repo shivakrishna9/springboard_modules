@@ -263,7 +263,7 @@ function springboard_purge_delete_commerce_orders($days_old, $batch_size) {
   $commerce_orders_to_delete = springboard_purge_get_old_commerce_orders($days_old, $batch_size, $donations_to_keep);
   commerce_order_delete_multiple($commerce_orders_to_delete);
   $fd_query = db_query("delete from fundraiser_donation where did in (:order_ids)", array(':order_ids' => $commerce_orders_to_delete));
-  $fs_query = db_query("delete from fundraiser_sustainers where did in (:order_ids)", array(':order_ids' => $commerce_orders_to_delete));
+  entity_delete_multiple('fundraiser_sustainer_record', $commerce_orders_to_delete);
 }
 
 /**
