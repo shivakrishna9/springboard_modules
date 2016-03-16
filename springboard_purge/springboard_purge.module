@@ -209,9 +209,7 @@ function springboard_purge_check_webform_confirmations_submissions_purge_enabled
  *   List of donation IDs (did).
  */
 function springboard_purge_get_donations_in_nonexpired_series() {
-  // @TODO is this a legit way to get all donations that are part of an active
-  // sustainer series? Adapted from
-  // _fundraiser_sustainers_count_donations_recurr_remaining().
+  // Adapted from _fundraiser_sustainers_count_donations_recurr_remaining().
   $max_processing_attempts = variable_get('fundraiser_sustainers_max_processing_attempts', 3);
   $replacements = array(
     ':status' => FUNDRAISER_SUSTAINERS_RETRY_STATUS,
@@ -262,14 +260,26 @@ function springboard_purge_delete_commerce_orders($days_old, $batch_size) {
   $donations_to_keep = springboard_purge_get_donations_in_nonexpired_series();
   $commerce_orders_to_delete = springboard_purge_get_old_commerce_orders($days_old, $batch_size, $donations_to_keep);
   commerce_order_delete_multiple($commerce_orders_to_delete);
-  $fd_query = db_query("delete from fundraiser_donation where did in (:order_ids)", array(':order_ids' => $commerce_orders_to_delete));
+
+  // Delete fundraiser_sustainer records.
   entity_delete_multiple('fundraiser_sustainer_record', $commerce_orders_to_delete);
+
+  // Delete dundraiser_doantion records.
+  // fundraiser_donation is not an entity so we can't use entity_delete() here.
+  // Using fundraiser_donation_delete() also looks problematic, because other
+  // modules implement hook_fundriaser_donation_delete() and do things we
+  // probably don't want done while purging old records, such as canceling
+  // orders in salesforce (salesforce_donation.module), and re-counting the
+  // number of donations on its donation form (springboard_stats.module).
+  $fd_query = db_query("delete from fundraiser_donation where did in (:order_ids)", array(':order_ids' => $commerce_orders_to_delete));
 }
 
 /**
  * Count rows in a given table for logging purposes.
+ *
  * @param string $table
  *   The table to count.
+ *
  * @return int
  *   Rows in the table.
  */
