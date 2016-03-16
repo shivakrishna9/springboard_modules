@@ -7,17 +7,17 @@
 /**
  * Returns an array of user ids that should not be deleted.
  *
- * @param int $days
+ * @param int $days_old
  *   The number of days the last login day should be less than.
  * @param array $custom_roles
  *   An array of custom role names.
  */
-function springboard_purge_get_user_whitelist($days, $custom_roles) {
+function springboard_purge_get_user_whitelist($days_old, $custom_roles) {
   // Create an array of users that we do not want deleted.
   $users_to_keep = array_merge(
     springboard_purge_get_privileged_users($custom_roles),
     springboard_purge_get_sustainers(),
-    springboard_purge_get_active_users($active_user_days),
+    springboard_purge_get_active_users($days_old),
     springboard_purge_get_queued_users()
   );
   $users_to_keep = array_unique($users_to_keep);
@@ -63,10 +63,10 @@ function springboard_purge_get_sustainers() {
 /**
  * Returns ids of all users that have logged in last X number of days.
  *
- * @param int $days
+ * @param int $days_old
  *   The number of days the last login day should be less than.
  */
-function springboard_purge_get_active_users($days = 90) {
+function springboard_purge_get_active_users($days_old) {
   // @TODO I think we need to look at created date here, too. We don't want to
   // delete a user that was just created but they have not yet had the chance
   // to log in.
