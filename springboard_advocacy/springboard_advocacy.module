@@ -966,3 +966,101 @@ function springboard_advocacy_update_multistep_components($sid, $node, $changed)
 function springboard_advocacy_success($node, $contact, $data, $sid) {
   module_invoke_all('action_success', $node, $contact, $data, $sid);
 }
+
+/**
+ * Check for outdated legislators and warn administrators.
+ *
+ * @param object $sba_message
+ *   A fully-loaded sba_message object.
+ */
+function springboard_advocacy_check_outdated_targets($sba_message) {
+  if (!user_access('add target to action')
+    || $sba_message->data['recipients'] == '{}'
+    || (arg(2) != 'messages')
+    || arg(4) != $sba_message->sba_message_id
+  ) {
+    return;
+  }
+
+  $targets = json_decode($sba_message->data['recipients']);
+  $groups = array();
+  $api_call = springboard_advocacy_api_call();
+  $individual_count = 0;
+  // Check individual targets first.
+  foreach ($targets as $key => $target) {
+    if (isset($target->id)) {
+      $individual_count++;
+      $response = $api_call->invokeClientMethod('searchTargets', array('id' => $target->id));
+      if(empty($response->data->targets[0])) {
+        $name = $target->sal . ' ' . $target->first . ' ' . $target->last;
+        drupal_set_message(t('@name in the message "@title" is no longer a valid target. Please update your message targets.', array('@name' => $name, '@title' => $sba_message->name)), 'error');
+      }
+    }
+    // Groups with gender or social criteria can be quick-added as a group
+    // in Drupal but are saved as individual targets on the transaction server.
+    elseif (isset($target->gender) || isset($target->social)) {
+      $groups[$key] = $target;
+    }
+  }
+
+  // Check group targets.
+  foreach ($groups as $group) {
+    if (isset($group->ids)) {
+      $existing_targets_count = count(explode('|', $group->ids));
+      unset($group->ids);
+    }
+    else {
+      $group_id = $sba_message->data['group_id'];
+      $existing_targets = $api_call->invokeClientMethod('getTargetGroup', $group_id);
+      $existing_targets_count = count($existing_targets->data->targets) - $individual_count;
+    }
+    $error = _springboard_advocacy_check_group_target_count($group, $existing_targets_count, $api_call);
+    if (!empty($error)) {
+      drupal_set_message(t('A target group in the message "@title" contains inactive targets. Please remove and recreate the group with the values @values', array('@values' => $error, '@title' => $sba_message->name)), 'error');
+    }
+  }
+}
+
+/**
+ * A helper function that counts the number of targets in a group target.
+ *
+ * Compares the count with the original target count on a message.
+ *
+ * @param object $group
+ *    The json_decoded recipient object.
+ * @param int $count
+ *    The existing target count.
+ * @param object $api_call
+ *    The api_call object.
+ *
+ * @return string An error message.
+ */
+function _springboard_advocacy_check_group_target_count($group, $count, $api_call) {
+  $response = $api_call->invokeClientMethod('searchTargets', (array) $group);
+  $error = NULL;
+  if (!empty($response->data->targets)) {
+    if (count($response->data->targets) < $count) {
+      // Transform the target group into a string for the error message.
+      $group = (array) $group;
+      array_walk($group,
+        create_function('&$value,$key', '$value=" $key=$value";')
+      );
+      $error = implode($group, ", ");
+      $trans = array(
+        "FS" => "Federal Senate",
+        "FR" => "Federal House",
+        "SS" => "State Senate",
+        "SR" => "State House",
+        "FE" => "Federal Executives",
+        "SE" => "State Executives",
+        "M" => "Male",
+        "F" => "Female",
+        "R" => "Republicans",
+        "D" => "Democrats",
+        "O" => "Other",
+      );
+      $error = strtr($error, $trans);
+    }
+  }
+  return $error;
+}

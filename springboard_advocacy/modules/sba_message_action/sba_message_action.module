@@ -340,6 +340,7 @@ function sba_message_action_node_load($nodes, $types) {
         $messages_by_id = array();
         foreach ($messages as $message) {
           $messages_by_id[$message->data['message_id']] = $message;
+          springboard_advocacy_check_outdated_targets($message);
         }
         $node->messages = $messages_by_id;
       }
