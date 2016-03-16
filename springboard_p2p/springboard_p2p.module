@@ -2490,7 +2490,7 @@ function springboard_p2p_preprocess_html(&$vars) {
  *   An array of personal campaign actions, keyed by column name.
  */
 function springboard_p2p_get_personal_campaign_comments($nid, $exclude_empty_comments = FALSE) {
-  $query = "SELECT action_type, uid, show_name, amount, comment, created FROM {springboard_p2p_personal_campaign_action} WHERE personal_campaign_nid = :nid AND status = :status";
+  $query = "SELECT action_type, uid, show_name, amount, comment, created, donor_name FROM {springboard_p2p_personal_campaign_action} WHERE personal_campaign_nid = :nid AND status = :status";
 
   if ($exclude_empty_comments) {
     $query .= " AND comment != ''";
