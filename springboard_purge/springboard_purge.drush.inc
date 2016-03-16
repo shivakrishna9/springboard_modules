@@ -22,11 +22,12 @@ function springboard_purge_drush_command() {
     'options'   => array(
       'days-old' => 'The number of days old the record should be to be considered for deletion. Defaults to ' . SPRINGBOARD_PURGE_DEFAULT_DAYS_OLD,
       'batch-size' => 'The number of records to delete. Defaults to ' . SPRINGBOARD_PURGE_DEFAULT_BATCH_SIZE,
-      // @TODO custom-roles.
+      'protected-roles' => 'Additional roles to be protected when purging users.'
     ),
     'examples' => array(
       'drush sbp user' => 'Deletes ' . SPRINGBOARD_PURGE_DEFAULT_BATCH_SIZE . ' users that have not logged in for at least ' . SPRINGBOARD_PURGE_DEFAULT_DAYS_OLD . ' days.',
       'drush sbp webforms --days-old=100 --batch-size=500' => 'Deletes 500 webform submissions at least 100 days old.',
+      'drush sbp users --protected-roles="Red shirts, Brown shirts"' => 'Deletes users while ommitting specific roles (in addition to the defaults.'
     ),
   );
   return $items;
@@ -53,8 +54,7 @@ function springboard_purge($type = NULL) {
   // Get options.
   $days_old = drush_get_option('days-old', SPRINGBOARD_PURGE_DEFAULT_DAYS_OLD);
   $batch_size = drush_get_option('batch-size', SPRINGBOARD_PURGE_DEFAULT_BATCH_SIZE);
-  $custom_roles = drush_get_option('custom-roles');
-
+  $protected_roles = array_map('trim',explode(",",drush_get_option('protected-roles')));
   $time_start = microtime(TRUE);
 
   switch ($type) {
@@ -62,7 +62,7 @@ function springboard_purge($type = NULL) {
       // Count rows before deletion.
       $count_users_before = springboard_purge_count_rows('users');
       // Perform the delete.
-      springboard_purge_delete_users($days_old, $batch_size, $custom_roles);
+      springboard_purge_delete_users($days_old, $batch_size, $protected_roles);
       // Count rows after deletion and log the results.
       $count_users_after = springboard_purge_count_rows('users');
       $log['@count_users_after'] = number_format($count_users_after);

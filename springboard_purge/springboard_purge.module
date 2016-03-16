@@ -9,13 +9,13 @@
  *
  * @param int $days_old
  *   The number of days the last login day should be less than.
- * @param array $custom_roles
+ * @param array $protected_roles
  *   An array of custom role names.
  */
-function springboard_purge_get_user_whitelist($days_old, $custom_roles) {
+function springboard_purge_get_user_whitelist($days_old, $protected_roles) {
   // Create an array of users that we do not want deleted.
   $users_to_keep = array_merge(
-    springboard_purge_get_privileged_users($custom_roles),
+    springboard_purge_get_privileged_users($protected_roles),
     springboard_purge_get_sustainers(),
     springboard_purge_get_active_users($days_old),
     springboard_purge_get_queued_users()
@@ -32,18 +32,18 @@ function springboard_purge_get_user_whitelist($days_old, $custom_roles) {
 /**
  * Returns the ids of all priviledged users that should not be deleted.
  *
- * @param array $custom_roles
+ * @param array $protected_roles
  *   Any additional custom roles whose assigned users should
  *   not be deleted.
  */
-function springboard_purge_get_privileged_users($custom_roles = array()) {
+function springboard_purge_get_privileged_users($protected_roles = array()) {
   $privileged_roles = array(
     'Administrator',
     'Springboard administrator',
     'Springboard editor',
     'Springboard P2P campaigner',
   );
-  $privileged_roles = array_merge($privileged_roles, $custom_roles);
+  $privileged_roles = array_merge($privileged_roles, $protected_roles);
 
   // Get all uids with admin permissions.
   $query = 'SELECT DISTINCT(ur.uid) FROM {users_roles} ur INNER JOIN role r ON r.rid = ur.rid WHERE r.name IN (:roles)';
@@ -99,11 +99,11 @@ function springboard_purge_get_purgeable_users($uids_to_keep, $batch_size) {
  *   Minimum number of days old a submission must be.
  * @param int $batch_size
  *   Number of webform submissions to return.
- * @param array $custom_roles
+ * @param array $protected_roles
  *   An array of custom role names.
  */
-function springboard_purge_delete_users($days_old, $batch_size, $custom_roles) {
-  $uids_to_keep = springboard_purge_get_user_whitelist($days_old, $custom_roles);
+function springboard_purge_delete_users($days_old, $batch_size, $protected_roles) {
+  $uids_to_keep = springboard_purge_get_user_whitelist($days_old, $protected_roles);
   $uids = springboard_purge_get_purgeable_users($uids_to_keep, $batch_size);
   if (count($uids)) {
     $time_start = microtime(TRUE);
