@@ -515,7 +515,7 @@ function commerce_cybersource_soap_cc_submit_form_submit($payment_method, $pane_
       return FALSE;
     }
     $request->recurringSubscriptionInfo = (object) array('subscriptionID' => $card_data->remote_id);
-  } 
+  }
   else {
     // Add the billing information.
     $request->billTo = commerce_cybersource_address('billing', $order, 'commerce_customer_billing');
@@ -1163,9 +1163,9 @@ function commerce_cybersource_soap_api_request($payment_method, $request) {
 function commerce_cybersource_soap_wsdl_url($transaction_mode) {
   switch ($transaction_mode) {
     case CYBERSOURCE_TXN_MODE_PRODUCTION:
-      return 'https://ics2ws.ic3.com/commerce/1.x/transactionProcessor/CyberSourceTransaction_1.107.wsdl';
+      return 'https://ics2ws.ic3.com/commerce/1.x/transactionProcessor/CyberSourceTransaction_1.123.wsdl';
     case CYBERSOURCE_TXN_MODE_TEST:
-      return 'https://ics2wstest.ic3.com/commerce/1.x/transactionProcessor/CyberSourceTransaction_1.107.wsdl';
+      return 'https://ics2wstest.ic3.com/commerce/1.x/transactionProcessor/CyberSourceTransaction_1.123.wsdl';
   }
 }
 
