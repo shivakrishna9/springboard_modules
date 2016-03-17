@@ -24,7 +24,12 @@
         $("#token-set-tokens").remove();
 
         var token_set_id = element.closest(".has-token-data").data("token-set-id");
-        var tokens = Drupal.settings.token_sets[token_set_id];
+        if (Drupal.settings["token_sets_" + token_set_id] == undefined) {
+          var tokens = Drupal.settings.token_sets[token_set_id];
+        }
+        else {
+          var tokens = Drupal.settings["token_sets_" + token_set_id];
+        }
 
         // Generate tokens markup.
         var last_token_type = '';
