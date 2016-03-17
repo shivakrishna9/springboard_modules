@@ -465,12 +465,11 @@ function salesforce_donation_salesforce_genmap_map_fields(stdClass $donation, En
 
     if (isset($map->field_map['salesforce_donation_map']['stage'])) {
       $sf_field = $map->field_map['salesforce_donation_map']['stage'];
-      $stage = 'Posted';
+      $stage = '';
       $mapped_stages = variable_get('salesforce_donation_mapped_stages', salesforce_donation_default_stage_map());
       if (!empty($mapped_stages)) {
         if (in_array($donation->status, $mapped_stages)) {
           $flipped_stages = array_flip($mapped_stages);
-
           $stage = $flipped_stages[$donation->status];
         }
       }
