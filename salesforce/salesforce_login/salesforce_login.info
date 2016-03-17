@@ -1,0 +1,8 @@
+name = Salesforce Login
+description =  Create Drupal users from Salesforce contacts on-demand.
+package = Salesforce
+core = 7.x
+
+dependencies[] = salesforce
+
+configure = admin/config/salesforce/salesforce-login
