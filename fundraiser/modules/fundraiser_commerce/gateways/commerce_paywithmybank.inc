@@ -82,8 +82,9 @@ function commerce_paywithmybank_fundraiser_commerce_redirect($method_instance, $
     'paymentType' => NULL,
   );
 
+
   // Set up payment parameters for recurring payments.
-  if (isset($donation->submission_data['recurs_monthly']) && !empty($donation->submission_data['recurs_monthly'])) {
+  if (isset($donation->submission_data['recurs_monthly']) && !empty($donation->submission_data['recurs_monthly']) && $donation->submission_data['recurs_monthly'] != 'false') {
     // Start / end dates must be UNIX timestamps in milliseconds.
     $start_time = round(microtime(true) * 1000);
 
@@ -161,7 +162,7 @@ function commerce_paywithmybank_fundraiser_commerce_redirect_submit($method_inst
     if ($success) {
       $pane_values = commerce_paywithmybank_pane_values($donation);
 
-      if (!empty($donation->submission_data['recurs_monthly'])) {
+      if (isset($donation->submission_data['recurs_monthly']) && !empty($donation->submission_data['recurs_monthly']) && $donation->submission_data['recurs_monthly'] != 'false') {
         $donation->donation['recurs_monthly'] = TRUE;
 
         // Donation is recurring, so create a card on file record.
