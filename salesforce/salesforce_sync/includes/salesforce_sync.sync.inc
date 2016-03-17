@@ -649,6 +649,10 @@ class SalesforceSync {
             elseif ($value != '') {
               $item->sobject->fields[$field_name] = date('c', strtotime($value));
             }
+            else {
+              unset($item->sobject->fields[$field_name]);
+              $item->sobject->fieldsToNull[] = $field_name;
+            }
             break;
 
           case 'date':
