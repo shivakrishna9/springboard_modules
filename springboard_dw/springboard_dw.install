@@ -1,0 +1,55 @@
+<?php
+/**
+ * @file
+ * Springboard data warehouse installation functions.
+ */
+
+
+/**
+ * Implements hook_schema().
+ */
+function springboard_dw_schema()
+{
+
+  $schema['springboard_data_warehouse'] = array(
+    'description' => 'The base table for data warehousing',
+    'fields'      => array(
+      'id'        => array(
+        'description' => 'The auto-increment field identifier for this data warehouse record.',
+        'type'        => 'serial',
+        'unsigned'    => true,
+        'not null'    => true,
+      ),
+      'type'      => array(
+        'description' => 'The type of item that has been warehoused.',
+        'type'        => 'varchar',
+        'length'      => 64
+      ),
+      'drupal_id' => array(
+        'description' => 'The unique Drupal id for this item.',
+        'type'        => 'varchar',
+        'length'      => 64
+      ),
+      'created'   => array(
+        'description' => 'The timestamp this record was created.',
+        'type'        => 'numeric',
+        'unsigned'    => true
+      )
+    ),
+    'primary key' => array('id')
+  );
+
+  return $schema;
+}
+
+/**
+ * Implements hook_update().
+ */
+function springboard_dw_update_7001()
+{
+  $schema = module_invoke('springboard_dw', 'schema');
+
+  if (db_table_exists('springboard_data_warehouse') == false) {
+    db_create_table('springboard_data_warehouse', $schema['springboard_data_warehouse']);
+  }
+}

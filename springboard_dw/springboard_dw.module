@@ -21,54 +21,6 @@ function springboard_dw_menu()
   return $items;
 }
 
-/**
- * Implements hook_schema().
- */
-function springboard_dw_schema()
-{
-
-  $schema['springboard_data_warehouse'] = array(
-    'description' => 'The base table for data warehousing',
-    'fields'      => array(
-      'id'        => array(
-        'description' => 'The auto-increment field identifier for this data warehouse record.',
-        'type'        => 'serial',
-        'unsigned'    => true,
-        'not null'    => true,
-      ),
-      'type'      => array(
-        'description' => 'The type of item that has been warehoused.',
-        'type'        => 'varchar',
-        'length'      => 64
-      ),
-      'drupal_id' => array(
-        'description' => 'The unique Drupal id for this item.',
-        'type'        => 'varchar',
-        'length'      => 64
-      ),
-      'created'   => array(
-        'description' => 'The timestamp this record was created.',
-        'type'        => 'numeric',
-        'unsigned'    => true
-      )
-    ),
-    'primary key' => array('id')
-  );
-
-  return $schema;
-}
-
-/**
- * Implements hook_update().
- */
-function springboard_dw_update_7001()
-{
-  $schema = module_invoke('springboard_dw', 'schema');
-
-  if (db_table_exists('springboard_data_warehouse') == false) {
-    db_create_table('springboard_data_warehouse', $schema['springboard_data_warehouse']);
-  }
-}
 
 /**
  * Get all entity properties by way of a wrapper.
@@ -353,7 +305,7 @@ function springboard_dw_map_donation_item($donation)
   // at some point.
   $donation_item['bank_account_mask'] = '';
   /** 
-   * 3/17/2016: pcave - IP address comes from the submission, which isn't availble with the donation
+   * 3/17/2016: pcave - IP address comes from the submission, which isn't available with the donation
    * object and I don't want to load it here. We'll need to have the fundraiser_webform module
    * add that so it will be readily available.
    */
@@ -381,7 +333,7 @@ function springboard_dw_extract_donation_extra_props($donation, $donation_item) 
   // never be exported. The payment_fields array will contain full credit card numbers!
   $field_blacklist = variable_get('springboard_dw_donation_field_blacklist', array('mail', 'payment_fields', 'other_amount'));
   
-  // Extract items in $donation->donation that are not already explicity added to 
+  // Extract items in $donation->donation that are not already explicitly added to
   // $donation_item. Any custom fields that were added to a donation form will be
   // in the $donation->donation data structure.
   $extra_props = array();
