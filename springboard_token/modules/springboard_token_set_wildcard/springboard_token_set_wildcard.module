@@ -1,0 +1,325 @@
+<?php
+
+/**
+ * @file
+ * Extends springboard_token_set module to support path-based token sets.
+ */
+
+/**
+ * Implements hook_form_alter()
+ *
+ * Attach the token UI and Token Set selector based on path wildcard + form_keys.
+ */
+function springboard_token_set_wildcard_form_alter(&$form, &$form_state, $form_id) {
+  // Add form submit handling for any token set updates:
+  $form['#submit'][] = '_springboard_token_set_wildcard_token_set_form_submit';
+
+  // Get any form keys associated with any path wildcards matching this path:
+  $target_form_keys = _springboard_token_set_wildcard_get_path_form_keys(current_path());
+
+  // Attach the Token Set selector and token UI CSS/JS to each of the matching form keys:
+  _springboard_token_set_wildcard_attach_to_target_form_keys($form, $target_form_keys);
+}
+
+/**
+ * Submit handler for Token Set selectors.
+ */
+function _springboard_token_set_wildcard_token_set_form_submit($form, &$form_state) {
+  $token_set_settings = _springboard_token_set_wildcard_get_form_token_set_values($form_state['input']);
+  if (empty($token_set_settings)) {
+    return;
+  }
+
+  // If new content is being create then copy token settings to the new content:
+  $new_content_submitted = _springboard_token_set_wildcard_process_new(
+    $form_state['build_info']['form_id'],
+    $token_set_settings); 
+
+  // If this is a new form being saved then do not save settings for the "add" form:
+  if (!$new_content_submitted) {
+    foreach ($token_set_settings as $target_key => $value) {
+      _springboard_token_set_wildcard_update_token_set(current_path(), $target_key, $value);
+    }
+  }
+}
+
+/**
+ * Implements hook_sba_message_ajax_update().
+ *
+ * The usual "form alter submit function" approach does not work when saving
+ * messages so the same thing is done here instead.
+ */
+function springboard_token_set_wildcard_sba_message_ajax_update($sba_message, $is_new, $form_state) {
+  _springboard_token_set_wildcard_token_set_form_submit(NULL, $form_state);
+}
+
+/**
+ * Implements hook_node_insert().
+ * 
+ * When a node is cloned by the node_clone module, also copy any Token Set
+ * settings related to it based on path.
+ */
+function springboard_token_set_wildcard_node_insert($node) {
+  if (isset($node->clone_from_original_nid)) {
+    $original_prefix = 'node/' . $node->clone_from_original_nid . '/';
+    $settings_query = db_query("SELECT tsid, path, form_key FROM {springboard_token_set_path_field_map} " .
+      "WHERE path LIKE :node_prefix", array(':node_prefix' => $original_prefix . '%'));
+    foreach ($settings_query as $result) {
+      $new_path = str_replace($original_prefix, 'node/' . $node->nid . '/', $result->path);
+      db_query("INSERT INTO {springboard_token_set_path_field_map} (tsid, path, form_key) " .
+        "VALUES (:tsid, :path, :form_key)", array(
+        ':tsid' => $result->tsid,
+        ':path' => $new_path,
+        ':form_key' => $result->form_key));
+    }      
+  }
+}
+
+/**
+ * Adds the Token Set selection fieldset to a form element.
+ *
+ * @param $form
+ *   The form on which this token set should be added.
+ * 
+ * @param $default_tsid
+ *   The index of the currently select token set, if available.
+ *
+ * @param $target_form_key
+ *   The form field key of the field which needs the token set selector.
+ */
+function _springboard_token_set_wildcard_insert_token_set_selector(&$target_element, $default_tsid, $target_form_key) {
+  // Get all possible token sets to build form select element.
+  $all_token_sets = springboard_token_set_get_sets();
+  $token_set_options = array(
+    0 => 'None',
+  );
+  foreach ($all_token_sets as $token_set) {
+    $token_set_options[$token_set->tsid] = $token_set->name;
+  }
+  $target_element['token_set'] = array(
+    '#title' => t('Token Set'),
+    '#type' => 'fieldset',
+    '#collapsible' => TRUE,
+    '#weight' => 9999,
+    '#description' => 
+      t('Please select the set of tokens that should available to this field.') .
+      ' ' . t('This field\'s tokens will be updated after it is submitted.'),
+  );
+  $target_element['token_set']['token_set_id__' . $target_form_key] = array(
+    '#type' => 'select',
+    '#title' => t('Use token set'),
+    '#options' => $token_set_options,
+    '#default_value' => $default_tsid,
+  );
+}
+
+/**
+ *  If any form keys match this path based on wildcard defitions, return an array
+ *  of form keys where the token set selector should be displayed + the currently
+ *  selected token set for each form key, if available.
+ *
+ *  @param $path
+ *    The URL path to be checked.
+ */
+function _springboard_token_set_wildcard_get_path_form_keys($path) {
+  $form_keys = array();
+  module_load_include('inc', 'springboard_token_set_wildcard', 'springboard_token_set_wildcard.settings');
+  $wildcard_settings_list = _springboard_token_set_wildcard_get_wildcard_definitions();
+  foreach ($wildcard_settings_list as $wildcard_settings) {
+    if (preg_match($wildcard_settings['wildcard_path'], $path)) {
+      foreach ($wildcard_settings['form_keys'] as $form_key) {
+        $form_keys[$form_key] = $wildcard_settings['default_tsid'];
+      }
+    }
+  }
+  // Include the current value for Token Sets if available:
+  $keys_query = db_query("SELECT tsid, form_key FROM {springboard_token_set_path_field_map} " .
+    "WHERE path = :path", array(':path' => $path));
+  foreach ($keys_query as $keys_data) {
+    $form_keys[$keys_data->form_key] = $keys_data->tsid;
+  }
+  return $form_keys;
+}
+
+/**
+ * Attach the token UI to all target fields that exist on this form.
+ *
+ * @param $element
+ *   The form in question or the current, parent element being checked.
+ *
+ * @param $target_form_keys
+ *   The form keys that should receive the Token Set selector.
+ */
+function _springboard_token_set_wildcard_attach_to_target_form_keys(&$element, $target_form_keys) {
+  $results = array();
+  $children = element_children($element);
+  foreach ($children as $key) {
+    $child = &$element[$key];
+    if (is_array($child)) {
+      if (!empty($child['#type'])) {
+        $results[$key] = &$child;
+        if (array_key_exists($key, $target_form_keys)) {
+          $tsid = $target_form_keys[$key];
+          // Replace the target element with a container for itself, the token UI, and the token selector:
+          unset($original_weight);
+          if (isset($child['#weight'])) {
+            $original_weight = $child['#weight'];
+          }
+          $child = array(
+            '#title' => isset($child['#title']) ? $child['#title'] : '',
+            '#description' => '',
+            '#type' => 'fieldset',
+            '#collapsible' => TRUE,
+            '#collapsed' => FALSE,
+            'original_element' => $child,
+          );
+          if (isset($original_weight)) {
+            $child['#weight'] = $original_weight;
+          }
+          $child['extra']['description']['#attributes']['data-token-set-id'] = $tsid;
+          $child['#attributes']['data-token-set-id'] = $tsid;
+          $child['#attributes']['class'][] = 'form-wrapper';
+          $child['#attributes']['class'][] = 'token-ui-field';
+
+          // Add the tokens UI + associated CSS and JS:
+          $tokens = springboard_token_set_get_tokens($tsid);
+          $token_sets = $tokens;
+          $sb_token_set_path = drupal_get_path('module', 'springboard_token_set');
+          $child['original_element']['#title'] = '';
+          $child['original_element']['#attributes']['name'] = $key;
+          $child['original_element']['#attached']['js'] = array(
+            'data' => $sb_token_set_path . '/js/springboard_token_set.js', 'type' => 'file');
+          $child['original_element']['#attached']['js'][] = array(
+            'data' => array('token_sets_' . $tsid => $token_sets), 'type' => 'setting');
+          $child['original_element']['#attached']['css'] = array(
+            'data' => $sb_token_set_path . '/css/springboard_token_set.css', 'type' => 'file');
+          springboard_token_set_attach_token_ui($child, $token_sets);
+
+          // Add the Token Set selector:
+          _springboard_token_set_wildcard_insert_token_set_selector($child, $tsid, $key);
+        }
+      }
+
+      if (!isset($child['original_element'])) {
+        $results = array_merge($results,
+          _springboard_token_set_wildcard_attach_to_target_form_keys($child, $target_form_keys));
+      }
+    }
+    unset($child);
+  }
+  return $results;
+}
+
+/**
+ * Updates the currently selected Token Set for a given Token Set Selector.
+ *
+ * @param $path
+ *   The path associated with this Token Set selector instance.
+ * @param $form_key
+ *   The form key associated with this Token Set selector instance.
+ * @param $tsid
+ *   The ID of the newly selected Token Set.
+ */
+function _springboard_token_set_wildcard_update_token_set($path, $form_key, $tsid) {
+  $exists_query = db_query("SELECT tsid FROM {springboard_token_set_path_field_map} " .
+    "WHERE path = :path AND form_key = :form_key",
+    array(':path' => $path, ':form_key' => $form_key));
+  foreach ($exists_query as $exists) {
+    db_query("UPDATE {springboard_token_set_path_field_map} SET tsid = :tsid " .
+      "WHERE path = :path AND form_key = :form_key",
+      array(':tsid' => $tsid, ':path' => $path, ':form_key' => $form_key));
+    return;
+  } 
+  db_query("INSERT INTO {springboard_token_set_path_field_map} (tsid, path, form_key) " .
+    "VALUES (:tsid, :path, :form_key)",
+    array(':tsid' => $tsid, ':path' => $path, ':form_key' => $form_key));
+}
+
+/**
+ * Saves the newly selected token set selected, both when a thing is being updated
+ * and when the settings need to be associated with its future edit path.
+ *
+ * Returns TRUE if new content was being saved on this form submission.
+ *
+ * @param $form_id
+ *   The form ID of the form creation form that has been submitted.
+ * @param $token_set_settings
+ *   An array mapping the form_key and current value of all submitted oken sets.
+ */
+function _springboard_token_set_wildcard_process_new($form_id, $token_set_settings) {
+  module_load_include('inc', 'springboard_token_set_wildcard', 'springboard_token_set_wildcard.settings');
+  $wildcard_settings = _springboard_token_set_wildcard_get_wildcard_definitions();
+  
+  // Get the current page's path if this content is not being created
+  foreach ($wildcard_settings as $settings_key => $settings) {
+    if (!isset($settings['add_form_id']) && preg_match($settings['wildcard_path'], current_path())) {
+      $new_path = current_path();
+    }
+  }
+  // If this content is new then get its future path:
+  if (!isset($new_path)) { 
+    foreach ($wildcard_settings as $settings_key => $settings) {
+      if (!isset($settings['add_form_id']) || $form_id != $settings['add_form_id']) {
+        continue;
+      }
+      // Set values for query tokens if needed: 
+      if (!empty($settings['next_id_query_tokens'])) {
+        // The node ID:
+        $arg0 = 'node'; $arg1 = arg(1);
+        if (isset($settings['next_id_query_tokens'][':nid']) && $arg0 == 'node' && is_numeric($arg1)) {
+          $settings['next_id_query_tokens'][':nid'] = $arg1;
+        }
+      }
+      $new_content_data = db_query_range($settings['next_id_query'], 0, 1, $settings['next_id_query_tokens'])
+        ->fetchAssoc();
+      // Populate the new path from args, if needed:
+      if (isset($settings['edit_tokens_args'])) {
+        foreach ($settings['edit_tokens_args'] as $token => $arg) {
+          $arg_value = arg($arg);
+          $settings['edit_path'] = str_replace($token, $arg_value, $settings['edit_path']);
+          unset($settings['edit_path_token_names'][$token]);
+        }
+      }
+      $new_content_data = array_values($new_content_data);
+      $new_path = str_replace(
+        $settings['edit_path_token_names'],
+        $new_content_data,
+        $settings['edit_path']);
+      $new_content_submitted = TRUE;
+      break;
+    }
+  }
+  // Save token settings if a path has been identified:
+  $new_content_data_saved = FALSE;
+  if (isset($new_path)) {
+    foreach ($token_set_settings as $form_key => $token_set_value) {
+      _springboard_token_set_wildcard_update_token_set($new_path, $form_key, $token_set_value);
+      if (isset($new_content_submitted)) {
+        $new_content_data_saved = TRUE;
+      }
+    }
+    
+  }
+  return $new_content_data_saved;
+}
+
+/**
+ * Return any token set values that may be buried in the form_state array of a submitted form.
+ *
+ * @param $form_array
+ *   The form in question.
+ */
+function _springboard_token_set_wildcard_get_form_token_set_values(&$form_array) {
+  $results = array();
+  foreach ($form_array as $key => $child) {
+    if (is_array($child)) {
+      $merge_value = _springboard_token_set_wildcard_get_form_token_set_values($child);
+      $results = array_merge($results, $merge_value);
+    }
+    elseif (strpos($key, 'token_set_id__') !== FALSE) {
+      $results[str_replace('token_set_id__', '', $key)] = $form_array[$key];
+    }
+    unset($child);
+  }
+  return $results;
+} 
