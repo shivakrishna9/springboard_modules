@@ -97,6 +97,12 @@ function _sba_message_api_save($sba_message, $is_new, $form_state) {
       _sba_message_api_invalid_response($sba_message);
     }
   }
+
+  // Let other modules respond to form submission via hook_sba_message_ajax_update()
+  // because it is submitted via JavaScript:
+  if (sizeof(module_implements('sba_message_ajax_update')) > 0) {
+    module_invoke_all('sba_message_ajax_update', $sba_message, $is_new, $form_state);
+  }
 }
 
 /**
