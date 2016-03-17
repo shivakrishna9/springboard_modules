@@ -158,7 +158,6 @@ function springboard_dw_webform_submission_data_keyed($nid, $sid)
  */
 function springboard_dw_fundraiser_donation_success($donation)
 {
-
   // Get the Drupal data warehouse queue
   $queue = DrupalQueue::get("springboard_dw_export");
 
@@ -310,8 +309,11 @@ function springboard_dw_map_donation_item($donation)
   $donation_item['quantity'] = $donation->donation['quantity'];
 
   // Todo: Where do these come from ?
-  $donation_item['quick_submit'] = '';
-  $donation_item['click_submit'] = '';
+  // 3/17/2016: pcave - These have not been implemented for donations yet. Eventually
+  // they will be available in the $donation->donation data structure albeit
+  // probably with a different name. Setting to 0 until those are implemented.
+  $donation_item['quick_submit'] = 0;
+  $donation_item['click_submit'] = 0;
 
   $donation_item['ms'] = $donation->donation['ms'];
   $donation_item['cid'] = $donation->donation['cid'];
@@ -347,16 +349,49 @@ function springboard_dw_map_donation_item($donation)
   $donation_item['card_expiration_year'] = $donation->data['payment_fields']['credit']['card_expiration_year'];
 
   # Todo: fix these
+  // 3/17/2016: pcave - We'll probably end up with some sort of payment_method switch in here
+  // at some point.
   $donation_item['bank_account_mask'] = '';
+  /** 
+   * 3/17/2016: pcave - IP address comes from the submission, which isn't availble with the donation
+   * object and I don't want to load it here. We'll need to have the fundraiser_webform module
+   * add that so it will be readily available.
+   */
   $donation_item['ip_address'] = '';
 
   $donation_item['created_at'] = date('U');
   $donation_item['updated_at'] = date('U');
 
-  // Todo: Add the extra props attributes
-  $donation_item['extra_props'] = json_encode(array());
+  // Add the extra props attributes
+  $donation_item['extra_props'] = json_encode(springboard_dw_extract_donation_extra_props($donation, $donation_item));
 
   return $donation_item;
+}
+
+/**
+ * Extracts non-standard fields out of the donation and returns an array of extra_props.
+ *
+ * @param $donation
+ *   The donation from which properties are to be extracted.
+ * @param $donation_item
+ *   The donation item being prepared for the queue.
+ */
+function springboard_dw_extract_donation_extra_props($donation, $donation_item) {
+  // Maintain a field blacklist because there are some donation properties that should
+  // never be exported. The payment_fields array will contain full credit card numbers!
+  $field_blacklist = variable_get('springboard_dw_donation_field_blacklist', array('mail', 'payment_fields', 'other_amount'));
+  
+  // Extract items in $donation->donation that are not already explicity added to 
+  // $donation_item. Any custom fields that were added to a donation form will be
+  // in the $donation->donation data structure.
+  $extra_props = array();
+  foreach ($donation->donation as $key => $value) {
+    if (!in_array($key, $field_blacklist) && !array_key_exists($key, $donation_item)) {
+      $extra_props[$key] = $value;
+    }
+  }
+
+  return $extra_props;
 }
 
 /**
