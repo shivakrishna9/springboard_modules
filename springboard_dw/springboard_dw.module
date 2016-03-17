@@ -43,8 +43,8 @@ function springboard_dw_schema()
       ),
       'drupal_id' => array(
         'description' => 'The unique Drupal id for this item.',
-        'type'        => 'numeric',
-        'unsigned'    => true
+        'type'        => 'varchar',
+        'length'      => 64
       ),
       'created'   => array(
         'description' => 'The timestamp this record was created.',
@@ -91,8 +91,6 @@ function springboard_dw_action_success($node, $contact, $data, $sid)
   // Get the Drupal data warehouse queue
   $queue = DrupalQueue::get("springboard_dw_export");
 
-  // $webform_submission_data = webform_get_submission($node->nid, $sid);
-
   $webform_submission_data = springboard_dw_webform_submission_data_keyed($node->nid, $sid);
 
   $action = new stdClass();
@@ -101,8 +99,6 @@ function springboard_dw_action_success($node, $contact, $data, $sid)
   $action->contact = $contact;
   $action->data = $data;
   $action->webform = $webform_submission_data;
-
-  dsm($action);
 
   // Create the Advocacy action item in the queue if not warehoused
   if (!springboard_dw_item_is_warehoused('advocacy action', $node->nid)) {
@@ -116,11 +112,16 @@ function springboard_dw_action_success($node, $contact, $data, $sid)
   if (!empty($action->data['message_ids'])) {
 
     // Loop through the messages
-    foreach ($action->data['message_ids'] as $message) {
+    foreach ($action->data['message_ids'] as $key => $message) {
 
-      if (!springboard_dw_item_is_warehoused('advocacy message', $message)) {
+      if (!springboard_dw_item_is_warehoused('advocacy message', $message->{'$id'})) {
 
-        $message_item = springboard_dw_map_advocacy_message_item($message);
+        // Get the Advocacy message object id and prep for warehousing (sb_message)
+        $message_item = array();
+        $message_item['queue_type'] = 'advocacy message';
+        $message_item['message_id'] = $message->{'$id'};
+        $message_item['action_id'] = $action->node->advocacy_id;
+
         $queue->createItem($message_item);
       }
     }
@@ -255,13 +256,37 @@ function springboard_dw_map_advocacy_action_item($message_action)
  * @param $donation
  * @return array
  */
-function springboard_dw_map_advocacy_message_item($message)
+function springboard_dw_map_advocacy_message_item($message, $full_message)
 {
 
-  // Get the Advocacy message object id and prep for warehousing (sb_message)
-  $message_item = array();
-  $message_item['queue_type'] = 'advocacy message';
-  $message_item['message_id'] = $message;
+  $message_item = $message;
+
+  // $full_message = $full_message->{0};
+  $full_message = json_decode(json_encode($full_message), true);
+
+  $message_item['message_id'] = $message['message_id'];
+  $message_item['action_id'] = $message['action_id'];
+  $message_item['group_id'] = $message['group_id'];
+  $message_item['message_id'] = $message['message_id'];
+  $message_item['action_id'] = $message['action_id'];
+  $message_item['subject'] = $full_message['message']['subject'];
+  $message_item['body'] = $full_message['message']['body'];
+  // $message_item['user_edited'] = $full_message->;  Todo: fix this
+  $message_item['target_id'] = $full_message['target']['id'];
+  $message_item['target_salutation'] = $full_message['target']['salutation'];
+  $message_item['target_first_name'] = $full_message['target']['firstName'];
+  $message_item['target_last_name'] = $full_message['target']['lastName'];
+  $message_item['target_gender'] = $full_message['target']['gender'];
+  $message_item['target_state'] = $full_message['target']['state'];
+  $message_item['target_party'] = $full_message['target']['party'];
+  $message_item['target_district_code'] = $full_message['target']['districtCode'];
+  $message_item['target_district_name'] = $full_message['target']['districtName'];
+  // $message_item['target_fec_id'] = $full_message['target']['districtCode']; Todo: Add fec ID
+  $message_item['target_role'] = $full_message['target']['role'];
+  $message_item['target_person_id'] = $full_message['target']['personId'];
+  $message_item['created_at'] = $full_message['delivery']['createdAt']['sec'];
+  $message_item['updated_at'] = $full_message['delivery']['updatedAt']['sec'];
+  $message_item['extra_props'] = array();
 
   return $message_item;
 
@@ -419,6 +444,8 @@ function springboard_dw_export_item($item)
     return springboard_dw_form($item);
   } elseif ($item['queue_type'] == 'advocacy action') {
     return springboard_dw_advocacy_action($item);
+  } elseif ($item['queue_type'] == 'advocacy message') {
+    return springboard_dw_advocacy_message($item);
   }
   // ... other queues
 }
@@ -496,13 +523,13 @@ function springboard_dw_contact($item)
   $endpoint = springboard_dw_api_endpoint('contact/create');
 
   // Instantiate an API client instance
-  $APIClient = springboard_api_client();
+  $api_client = springboard_api_client();
 
   // Clean up the item and add authentication to the form params
   $item = springboard_api_prep_call($item);
 
   // Attempt Guzzle client request
-  $res = $APIClient->request('POST', $endpoint, array(
+  $res = $api_client->request('POST', $endpoint, array(
     'form_params' => $item
   ));
 
@@ -542,13 +569,13 @@ function springboard_dw_donation($item)
   $endpoint = springboard_dw_api_endpoint('donation/create');
 
   // Instantiate an API client instance
-  $APIClient = springboard_api_client();
+  $api_client = springboard_api_client();
 
   // Clean up the item and add authentication to the form params
   $item = springboard_api_prep_call($item);
 
   // Attempt Guzzle client request
-  $res = $APIClient->request('POST', $endpoint, array(
+  $res = $api_client->request('POST', $endpoint, array(
     'form_params' => $item
   ));
 
@@ -589,13 +616,13 @@ function springboard_dw_form($item)
   $endpoint = springboard_dw_api_endpoint('form/create');
 
   // Instantiate an API client instance
-  $APIClient = springboard_api_client();
+  $api_client = springboard_api_client();
 
   // Clean up the item and add authentication to the form params
   $item = springboard_api_prep_call($item);
 
   // Attempt Guzzle client request
-  $res = $APIClient->request('POST', $endpoint, array(
+  $res = $api_client->request('POST', $endpoint, array(
     'form_params' => $item
   ));
 
@@ -639,20 +666,23 @@ function springboard_dw_advocacy_message($item)
   $endpoint = springboard_dw_api_endpoint('message/create');
 
   // Instantiate an API client instance
-  $APIClient = springboard_api_client();
+  $api_client = springboard_api_client();
 
   // Clean up the item and add authentication to the form params
   $item = springboard_api_prep_call($item);
 
+  $transaction_server_api_call = springboard_advocacy_api_call();
+  $full_message = $transaction_server_api_call->invokeClientMethod('getMessage', $item['message_id']);
+
+  $item = springboard_dw_map_advocacy_message_item($item, $full_message->data[0]);
+
   // Attempt Guzzle client request
-  $res = $APIClient->request('POST', $endpoint, array(
+  $res = $api_client->request('POST', $endpoint, array(
     'form_params' => $item
   ));
 
   // Response body
   $resBody = json_decode($res->getBody());
-
-  // dsm($resBody);
 
   // Looks like the api response was good
   if ($res->getStatusCode() == 200) {
@@ -670,7 +700,7 @@ function springboard_dw_advocacy_message($item)
   } else {
 
     // Log the API error
-    drush_log('Error sending form API call.', 'warning');
+    drush_log('Error sending message API call.', 'warning');
     drush_print($endpoint . '?' . http_build_query($item));
     drush_print_r($resBody);
 
@@ -689,20 +719,18 @@ function springboard_dw_advocacy_action($item)
   $endpoint = springboard_dw_api_endpoint('action/create');
 
   // Instantiate an API client instance
-  $APIClient = springboard_api_client();
+  $api_client = springboard_api_client();
 
   // Clean up the item and add authentication to the form params
   $item = springboard_api_prep_call($item);
 
   // Attempt Guzzle client request
-  $res = $APIClient->request('POST', $endpoint, array(
+  $res = $api_client->request('POST', $endpoint, array(
     'form_params' => $item
   ));
 
   // Response body
   $resBody = json_decode($res->getBody());
-
-  // dsm($resBody);
 
   // Looks like the api response was good
   if ($res->getStatusCode() == 200) {
@@ -769,7 +797,7 @@ function springboard_dw_process_queue()
       // Release the item back onto the queue for retry
       //
       drush_log('Bad API call, releasing item. ', 'warning');
-      drush_print_r($item);
+      // drush_print_r($item);
       $queue->releaseItem($item);
       break;
     }
