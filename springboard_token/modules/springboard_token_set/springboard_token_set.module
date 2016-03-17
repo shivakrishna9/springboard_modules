@@ -184,8 +184,6 @@ function springboard_token_set_tokens_admin_form($form, &$form_state) {
  * Submit handler for tokens admin form.
  */
 function springboard_token_set_tokens_admin_form_submit($form, $form_state) {
-  dpm($form_state);
-
   foreach ($form_state['values']['tokens'] as $submitted_token) {
     if ($submitted_token['delete'] == 1) {
       springboard_token_set_delete_token($submitted_token['tid']);
