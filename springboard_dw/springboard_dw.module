@@ -21,7 +21,6 @@ function springboard_dw_menu()
   return $items;
 }
 
-
 /**
  * Get all entity properties by way of a wrapper.
  * @param $wrapper
@@ -127,13 +126,25 @@ function springboard_dw_fundraiser_donation_success($donation)
     $contact_item = springboard_dw_map_contact_item($donation->uid);
     $queue->createItem($contact_item);
   }
+}
 
-  // Create the form item in the queue if not warehoused
-  if (!springboard_dw_item_is_warehoused('form', $donation->node->nid)) {
-    $form_item = springboard_dw_map_form_item($donation);
-    $queue->createItem($form_item);
+/**
+ * Implements hook_node_insert().
+ * @param $node
+ */
+function springboard_dw_node_insert($node)
+{
+  // Create the form item
+  if ($node->is_webform_user) {
+    // Get the Drupal data warehouse queue
+    $queue = DrupalQueue::get("springboard_dw_export");
+
+    // Create the form item in the queue if not warehoused
+    if (!springboard_dw_item_is_warehoused('form', $node->nid)) {
+      $form_item = springboard_dw_map_form_item($node);
+      $queue->createItem($form_item);
+    }
   }
-
 }
 
 /**
@@ -310,7 +321,7 @@ function springboard_dw_map_donation_item($donation)
   // 3/17/2016: pcave - We'll probably end up with some sort of payment_method switch in here
   // at some point.
   $donation_item['bank_account_mask'] = '';
-  /** 
+  /**
    * 3/17/2016: pcave - IP address comes from the submission, which isn't available with the donation
    * object and I don't want to load it here. We'll need to have the fundraiser_webform module
    * add that so it will be readily available.
@@ -334,11 +345,12 @@ function springboard_dw_map_donation_item($donation)
  * @param $donation_item
  *   The donation item being prepared for the queue.
  */
-function springboard_dw_extract_donation_extra_props($donation, $donation_item) {
+function springboard_dw_extract_donation_extra_props($donation, $donation_item)
+{
   // Maintain a field blacklist because there are some donation properties that should
   // never be exported. The payment_fields array will contain full credit card numbers!
   $field_blacklist = variable_get('springboard_dw_donation_field_blacklist', array('mail', 'payment_fields', 'other_amount'));
-  
+
   // Extract items in $donation->donation that are not already explicitly added to
   // $donation_item. Any custom fields that were added to a donation form will be
   // in the $donation->donation data structure.
@@ -405,11 +417,12 @@ function springboard_dw_map_contact_item($contact_id)
  * @param $contact_item
  *   The contact item being prepared for the queue.
  */
-function springboard_dw_extract_contact_extra_props($user, $contact_item) {
+function springboard_dw_extract_contact_extra_props($user, $contact_item)
+{
   // Maintain a field blacklist because there are some donation properties that should
   // never be exported. The payment_fields array will contain full credit card numbers!
   $field_blacklist = variable_get('springboard_dw_contact_field_blacklist', array('status', 'theme', 'created', 'edit_url', 'url', 'mail', 'name', 'uid', 'roles'));
-  
+
   // Extract items in $user that are not already explicitly added to
   // $contact_item. Any custom profile fields that were added to a contact and mapped
   // via the user map will be in the $user data structure.
@@ -428,19 +441,19 @@ function springboard_dw_extract_contact_extra_props($user, $contact_item) {
  * @param $donation
  * @return array
  */
-function springboard_dw_map_form_item($donation)
+function springboard_dw_map_form_item($node)
 {
 
   // Get the user account details and prep for warehousing (sb_contact)
   $form_item = array();
   $form_item['queue_type'] = 'form';
-  $form_item['form_id'] = $donation->node->nid;
-  $form_item['group_id'] = ''; // Will come later
-  $form_item['form_type'] = $donation->node->type;
-  $form_item['name'] = $donation->node->title;
-  $form_item['url'] = drupal_get_path_alias('node/' . $donation->node->nid);
-  $form_item['created_at'] = $donation->node->created;
-  $form_item['updated_at'] = $donation->node->changed;
+  $form_item['form_id'] = $node->nid;
+  $form_item['group_id'] = ''; // Todo: Will come later
+  $form_item['form_type'] = $node->type;
+  $form_item['name'] = $node->title;
+  $form_item['url'] = drupal_get_path_alias('node/' . $node->nid);
+  $form_item['created_at'] = $node->created;
+  $form_item['updated_at'] = $node->changed;
 
   // Todo: Add the extra props attributes
   $form_item['extra_props'] = json_encode(array());
