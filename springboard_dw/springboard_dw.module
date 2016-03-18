@@ -46,7 +46,6 @@ function springboard_dw_action_success($node, $contact, $data, $sid)
   $webform_submission_data = springboard_dw_webform_submission_data_keyed($node->nid, $sid);
 
   $action = new stdClass();
-
   $action->node = $node;
   $action->contact = $contact;
   $action->data = $data;
@@ -77,6 +76,12 @@ function springboard_dw_action_success($node, $contact, $data, $sid)
         $queue->createItem($message_item);
       }
     }
+  }
+
+  // Create the user item in the queue if not warehoused
+  if (!springboard_dw_item_is_warehoused('contact', $action->node->uid)) {
+    $contact_item = springboard_dw_map_contact_item($action->node->uid);
+    $queue->createItem($contact_item);
   }
 
 }
@@ -119,7 +124,7 @@ function springboard_dw_fundraiser_donation_success($donation)
 
   // Create the user item in the queue if not warehoused
   if (!springboard_dw_item_is_warehoused('contact', $donation->uid)) {
-    $contact_item = springboard_dw_map_contact_item($donation);
+    $contact_item = springboard_dw_map_contact_item($donation->uid);
     $queue->createItem($contact_item);
   }
 
@@ -351,16 +356,17 @@ function springboard_dw_extract_donation_extra_props($donation, $donation_item) 
  * @param $donation
  * @return array
  */
-function springboard_dw_map_contact_item($donation)
+function springboard_dw_map_contact_item($contact_id)
 {
 
-  $user_obj = entity_metadata_wrapper('user', $donation->user);
+  $user = user_load($contact_id);
+  $user_obj = entity_metadata_wrapper('user', $user);
   $user_data = get_all_entity_properties($user_obj);
 
   // Get the user account details and prep for warehousing (sb_contact)
   $contact_item = array();
   $contact_item['queue_type'] = 'contact';
-  $contact_item['contact_id'] = $donation->uid;
+  $contact_item['contact_id'] = $contact_id;
   $contact_item['group_id'] = ''; // Will come later
   $contact_item['username'] = $user_data['name'];
   $contact_item['email'] = $user_data['mail'];
