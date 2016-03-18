@@ -25,6 +25,12 @@ function springboard_token_set_wildcard_schema() {
         'length' => '128',
         'not null' => TRUE,
       ),
+      'form_id' => array(
+        'description' => 'The form ID of the form where the token should be attached.',
+        'type' => 'varchar',
+        'length' => '128',
+        'not null' => TRUE,
+      ),
       'form_key' => array(
         'description' => 'The form key of the field where the token should be attached.',
         'type' => 'varchar',

@@ -15,7 +15,7 @@ function springboard_token_set_wildcard_form_alter(&$form, &$form_state, $form_i
   $form['#submit'][] = '_springboard_token_set_wildcard_token_set_form_submit';
 
   // Get any form keys associated with any path wildcards matching this path:
-  $target_form_keys = _springboard_token_set_wildcard_get_path_form_keys(current_path());
+  $target_form_keys = _springboard_token_set_wildcard_get_path_form_keys(current_path(), $form_id);
 
   // Attach the Token Set selector and token UI CSS/JS to each of the matching form keys:
   _springboard_token_set_wildcard_attach_to_target_form_keys($form, $target_form_keys);
@@ -29,16 +29,15 @@ function _springboard_token_set_wildcard_token_set_form_submit($form, &$form_sta
   if (empty($token_set_settings)) {
     return;
   }
+  $form_id = $form_state['build_info']['form_id'];
 
   // If new content is being create then copy token settings to the new content:
-  $new_content_submitted = _springboard_token_set_wildcard_process_new(
-    $form_state['build_info']['form_id'],
-    $token_set_settings); 
+  $new_content_submitted = _springboard_token_set_wildcard_process_new($form_id, $token_set_settings); 
 
   // If this is a new form being saved then do not save settings for the "add" form:
   if (!$new_content_submitted) {
     foreach ($token_set_settings as $target_key => $value) {
-      _springboard_token_set_wildcard_update_token_set(current_path(), $target_key, $value);
+      _springboard_token_set_wildcard_update_token_set(current_path(), $target_key, $form_id, $value);
     }
   }
 }
@@ -62,14 +61,15 @@ function springboard_token_set_wildcard_sba_message_ajax_update($sba_message, $i
 function springboard_token_set_wildcard_node_insert($node) {
   if (isset($node->clone_from_original_nid)) {
     $original_prefix = 'node/' . $node->clone_from_original_nid . '/';
-    $settings_query = db_query("SELECT tsid, path, form_key FROM {springboard_token_set_path_field_map} " .
+    $settings_query = db_query("SELECT tsid, path, form_id, form_key FROM {springboard_token_set_path_field_map} " .
       "WHERE path LIKE :node_prefix", array(':node_prefix' => $original_prefix . '%'));
     foreach ($settings_query as $result) {
       $new_path = str_replace($original_prefix, 'node/' . $node->nid . '/', $result->path);
-      db_query("INSERT INTO {springboard_token_set_path_field_map} (tsid, path, form_key) " .
+      db_query("INSERT INTO {springboard_token_set_path_field_map} (tsid, path, form_id, form_key) " .
         "VALUES (:tsid, :path, :form_key)", array(
         ':tsid' => $result->tsid,
         ':path' => $new_path,
+        ':form_id' => $result->form_id,
         ':form_key' => $result->form_key));
     }      
   }
@@ -114,27 +114,31 @@ function _springboard_token_set_wildcard_insert_token_set_selector(&$target_elem
 }
 
 /**
- *  If any form keys match this path based on wildcard defitions, return an array
- *  of form keys where the token set selector should be displayed + the currently
- *  selected token set for each form key, if available.
+ *  If any form keys match this path/form_id combination based on wildcard defitions,
+ *  return an array of form keys where the Token Set selector should be displayed
+ *  as well as the currently selected token set for each form key, if present.
  *
  *  @param $path
  *    The URL path to be checked.
+ *  @param $form_id
+ *    The form ID of the form to be checked.
  */
-function _springboard_token_set_wildcard_get_path_form_keys($path) {
+function _springboard_token_set_wildcard_get_path_form_keys($path, $form_id) {
   $form_keys = array();
   module_load_include('inc', 'springboard_token_set_wildcard', 'springboard_token_set_wildcard.settings');
   $wildcard_settings_list = _springboard_token_set_wildcard_get_wildcard_definitions();
   foreach ($wildcard_settings_list as $wildcard_settings) {
     if (preg_match($wildcard_settings['wildcard_path'], $path)) {
       foreach ($wildcard_settings['form_keys'] as $form_key) {
-        $form_keys[$form_key] = $wildcard_settings['default_tsid'];
+        if (array_key_exists($form_key, $wildcard_settings['default_tsids'])) {
+          $form_keys[$form_key] = $wildcard_settings['default_tsids'][$form_key];
+        }
       }
     }
   }
   // Include the current value for Token Sets if available:
-  $keys_query = db_query("SELECT tsid, form_key FROM {springboard_token_set_path_field_map} " .
-    "WHERE path = :path", array(':path' => $path));
+  $keys_query = db_query("SELECT tsid, form_id, form_key FROM {springboard_token_set_path_field_map} " .
+    "WHERE form_id = :form_id AND path = :path", array(':form_id' => $form_id, ':path' => $path));
   foreach ($keys_query as $keys_data) {
     $form_keys[$keys_data->form_key] = $keys_data->tsid;
   }
@@ -220,22 +224,24 @@ function _springboard_token_set_wildcard_attach_to_target_form_keys(&$element, $
  *   The path associated with this Token Set selector instance.
  * @param $form_key
  *   The form key associated with this Token Set selector instance.
+ * @param $form_id
+ *   The form ID associated with this Token Set selector instance.
  * @param $tsid
  *   The ID of the newly selected Token Set.
  */
-function _springboard_token_set_wildcard_update_token_set($path, $form_key, $tsid) {
+function _springboard_token_set_wildcard_update_token_set($path, $form_key, $form_id, $tsid) {
   $exists_query = db_query("SELECT tsid FROM {springboard_token_set_path_field_map} " .
-    "WHERE path = :path AND form_key = :form_key",
-    array(':path' => $path, ':form_key' => $form_key));
+    "WHERE path = :path AND form_id = :form_id AND form_key = :form_key",
+    array(':path' => $path, ':form_id' => $form_id, ':form_key' => $form_key));
   foreach ($exists_query as $exists) {
     db_query("UPDATE {springboard_token_set_path_field_map} SET tsid = :tsid " .
-      "WHERE path = :path AND form_key = :form_key",
-      array(':tsid' => $tsid, ':path' => $path, ':form_key' => $form_key));
+      "WHERE path = :path AND form_id = :form_id AND form_key = :form_key",
+      array(':tsid' => $tsid, ':path' => $path, ':form_id' => $form_id, ':form_key' => $form_key));
     return;
   } 
-  db_query("INSERT INTO {springboard_token_set_path_field_map} (tsid, path, form_key) " .
-    "VALUES (:tsid, :path, :form_key)",
-    array(':tsid' => $tsid, ':path' => $path, ':form_key' => $form_key));
+  db_query("INSERT INTO {springboard_token_set_path_field_map} (tsid, path, form_id, form_key) " .
+    "VALUES (:tsid, :path, :form_id, :form_key)",
+    array(':tsid' => $tsid, ':path' => $path, ':form_id' => $form_id, ':form_key' => $form_key));
 }
 
 /**
@@ -296,7 +302,7 @@ function _springboard_token_set_wildcard_process_new($form_id, $token_set_settin
   $new_content_data_saved = FALSE;
   if (isset($new_path)) {
     foreach ($token_set_settings as $form_key => $token_set_value) {
-      _springboard_token_set_wildcard_update_token_set($new_path, $form_key, $token_set_value);
+      _springboard_token_set_wildcard_update_token_set($new_path, $form_key, $form_id, $token_set_value);
       if (isset($new_content_submitted)) {
         $new_content_data_saved = TRUE;
       }

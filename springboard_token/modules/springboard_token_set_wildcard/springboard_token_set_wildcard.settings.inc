@@ -12,7 +12,10 @@ function _springboard_token_set_wildcard_get_wildcard_definitions() {
     'form_keys' => array(
       'confirmation',
       'submit_description'),
-    'default_tsid' => 9,
+    'default_tsids' => array(
+      'confirmation' => 9,
+      'submit_description' => 9, 
+    ),
   );
 
   // webform email component (add and edit forms):
@@ -25,12 +28,12 @@ function _springboard_token_set_wildcard_get_wildcard_definitions() {
     'edit_path' => 'node/:nid/webform/emails/:eid',
     'edit_path_token_names' => array(':nid', ':eid'),
     'form_keys' => array('template'),
-    'default_tsid' => 8,
+    'default_tsids' => array('template' => 8),
   );
   $wildcard_settings['webform_email_comp_edit'] = array(
     'wildcard_path' => '/^node\/\d+\/webform\/emails\/\d+/',
-    'form_keys' => array('template'),
-    'default_tsid' => 8,
+    'form_keys' => $wildcard_settings['webform_email_comp_add']['form_keys'],
+    'default_tsids' => $wildcard_settings['webform_email_comp_add']['default_tsids'],
   );
 
   // Webform component (add and edit forms):
@@ -43,12 +46,12 @@ function _springboard_token_set_wildcard_get_wildcard_definitions() {
     'edit_path' => 'node/:nid/webform/components/:cid',
     'edit_path_token_names' => array(':nid', ':cid'),
     'form_keys' => array('description'),
-    'default_tsid' => 9,
+    'default_tsids' => array('description' => 9),
   );
   $wildcard_settings['webform_component_edit'] = array(
     'wildcard_path' => '/^node\/\d+\/webform\/components\/\d+/',
-    'form_keys' => array('description'),
-    'default_tsid' => 9,
+    'form_keys' => $wildcard_settings['webform_component_add']['form_keys'],
+    'default_tsids' => $wildcard_settings['webform_component_add']['default_tsids'],
   );
 
   // Message action message (add and edit forms):
@@ -67,19 +70,24 @@ function _springboard_token_set_wildcard_get_wildcard_definitions() {
       'field_sba_message',
       'field_sba_signature',
     ),
-    'default_tsid' => 17,
+    'default_tsids' => array(
+      'field_sba_message' => 17,
+      'field_sba_signature' => 17,
+    ),
   );
   $wildcard_settings['message_action_message_edit'] = array(
     'wildcard_path' => '/^node\/\d+\/messages\/sba_message\/\d+\/edit/',
     'form_keys' => $wildcard_settings['message_action_message_add']['form_keys'],
-    'default_tsid' => 17,
+    'default_tsids' => $wildcard_settings['message_action_message_add']['default_tsids'],
   );
 
   // Social share:
   $wildcard_settings['social_share'] = array(
     'wildcard_path' => '/^node\/\d+\/share_settings/',
     'form_keys' => array('description'),
-    'default_tsid' => 6,
+    'default_tsids' => array(
+      'description' => 6,
+    ),
   );
 
   // Webform goals (add and edit forms):
@@ -95,15 +103,15 @@ function _springboard_token_set_wildcard_get_wildcard_definitions() {
       'starter_message',
       'template',
     ),
-    'default_tsid' => 20,
+    'default_tsids' => array(
+      'starter_message' => 20,
+      'template' => 20,
+    ),
   );
   $wildcard_settings['webform_goals_edit'] = array(
     'wildcard_path' => '/^admin\/config\/content\/webform_goals\/\d+\/edit/',
-    'form_keys' => array(
-      'starter_message',
-      'template',
-    ),
-    'default_tsid' => 20,
+    'form_keys' => $wildcard_settings['webform_goals_add']['form_keys'],
+    'default_tsids' => $wildcard_settings['webform_goals_add']['default_tsids'],
   );
 
   return $wildcard_settings;
