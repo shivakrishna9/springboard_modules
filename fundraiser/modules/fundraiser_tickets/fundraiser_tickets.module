@@ -1324,7 +1324,7 @@ function fundraiser_tickets_form_action_submit($nid, $app_id = NULL, $submission
         $submission['payment_fields']['credit']['expiration_date']['card_expiration_month'] = $submission['payment_fields']['credit']['card_expiration_month'];
         unset($submission['payment_fields']['credit']['card_expiration_month']);
       }
-      if (!empty($submission['payment_fields']['credit']['card_expiration_month'])) {
+      if (!empty($submission['payment_fields']['credit']['card_expiration_year'])) {
         $submission['payment_fields']['credit']['expiration_date']['card_expiration_year'] = $submission['payment_fields']['credit']['card_expiration_year'];
         unset($submission['payment_fields']['credit']['card_expiration_year']);
       }
