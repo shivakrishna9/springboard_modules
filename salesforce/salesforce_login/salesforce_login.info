@@ -3,6 +3,6 @@ description =  Create Drupal users from Salesforce contacts on-demand.
 package = Salesforce
 core = 7.x
 
-dependencies[] = salesforce
+dependencies[] = salesforce_sync
 
 configure = admin/config/salesforce/salesforce-login
