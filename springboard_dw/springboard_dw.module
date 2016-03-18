@@ -129,6 +129,7 @@ function springboard_dw_fundraiser_donation_success($donation)
 }
 
 /**
+ * Hook to listen for new form items to ship to the data warehouse.
  * Implements hook_node_insert().
  * @param $node
  */
@@ -145,6 +146,29 @@ function springboard_dw_node_insert($node)
       $queue->createItem($form_item);
     }
   }
+}
+
+/**
+ * Ship an updated user record to the data warehouse.
+ * Implements hook_user_update().
+ * @param $edit
+ * @param $account
+ * @param $category
+ */
+function springboard_dw_user_update(&$edit, $account, $category)
+{
+
+  // Take the account object and prep for contact mapping
+  $user_obj = entity_metadata_wrapper('user', $account);
+  $user_data = get_all_entity_properties($user_obj);
+
+  // Map the user contact
+  $contact_item = springboard_dw_map_contact_item($account->uid, $user_data, True); // Update operation
+
+  // Create the queue item to update the contact record
+  $queue = DrupalQueue::get("springboard_dw_export");
+  $queue->createItem($contact_item);
+
 }
 
 /**
@@ -228,8 +252,7 @@ function springboard_dw_map_advocacy_message_item($message, $full_message)
 
   $message_item = $message;
 
-  // $full_message = $full_message->{0};
-  $full_message = json_decode(json_encode($full_message), true);
+  $full_message = json_decode(json_encode($full_message), True);
 
   $message_item['message_id'] = $message['message_id'];
   $message_item['action_id'] = $message['action_id'];
@@ -369,16 +392,25 @@ function springboard_dw_extract_donation_extra_props($donation, $donation_item)
  * @param $donation
  * @return array
  */
-function springboard_dw_map_contact_item($contact_id)
+function springboard_dw_map_contact_item($contact_id, $user_data = array(), $update = False)
 {
 
-  $user = user_load($contact_id);
-  $user_obj = entity_metadata_wrapper('user', $user);
-  $user_data = get_all_entity_properties($user_obj);
+  // If the $user_data parameter is empty we can assume this is a new record we need to insert
+  if(empty($user_data)) {
+    $user = user_load($contact_id);
+    $user_obj = entity_metadata_wrapper('user', $user);
+    $user_data = get_all_entity_properties($user_obj);
+  }
 
   // Get the user account details and prep for warehousing (sb_contact)
   $contact_item = array();
   $contact_item['queue_type'] = 'contact';
+
+  // If user data is being passed to update, flag this queue item for an update
+  if (!empty($user_data) && $update == True) {
+    $contact_item['queue_item_update'] = True;
+  }
+
   $contact_item['contact_id'] = $contact_id;
   $contact_item['group_id'] = ''; // Will come later
   $contact_item['username'] = $user_data['name'];
@@ -555,6 +587,11 @@ function springboard_dw_contact($item)
   // Define the endpoint
   $endpoint = springboard_dw_api_endpoint('contact/create');
 
+  // If the queue item is an update, change the API call accordingly
+  if (isset($item['queue_item_update']) && $item['queue_item_update']) {
+    $endpoint = springboard_dw_api_endpoint('contact/update');
+  }
+
   // Instantiate an API client instance
   $api_client = springboard_api_client();
 
@@ -571,18 +608,22 @@ function springboard_dw_contact($item)
 
   // Looks like the api response was good
   if ($res->getStatusCode() == 200) {
-    // Insert the user account into the Drupal data warehouse table
-    db_insert('springboard_data_warehouse')->fields(array(
-      'type'      => 'contact',
-      'drupal_id' => $item['contact_id'],
-      'created'   => time()
-    ))->execute();
+
+    // If the item hasn't been warehoused then this is an insert and we should consider the item tracked in Drupal
+    if (!isset($item['queue_item_update']) && !springboard_dw_item_is_warehoused('contact', $item['contact_id'])) {
+      // Insert the user account into the Drupal data warehouse table
+      db_insert('springboard_data_warehouse')->fields(array(
+        'type'      => 'contact',
+        'drupal_id' => $item['contact_id'],
+        'created'   => time()
+      ))->execute();
+    }
 
     return true;
 
   } else {
     drush_log('Error sending contact API call.', 'warning');
-    drush_print($endpoint . '?' . url_encode($item));
+    drush_print($endpoint . '?' . http_build_query($item));
     drush_print_r($resBody);
 
     // Respond back with failure to retry in the queue
