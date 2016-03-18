@@ -61,7 +61,66 @@ function salesforce_login_pass_validate($form, &$form_state) {
     form_set_value(array('#parents' => array('account')), $account, $form_state);
   }
   else {
-    // @TODO This is where we'll look in salesforce for a corresponding contact.
-    form_set_error('name', t('Sorry, %name is not recognized as a user name or an e-mail address.', array('%name' => $name)));
+    $contacts = salesforce_login_get_contacts_by_email($name);
+    $contacts_count = count($contacts);
+    if ($contacts_count == 0) {
+      form_set_error('name', variable_get('salesforce_login_no_contact_found_error'));
+    }
+    elseif ($contacts_count == 1) {
+      $account = salesforce_login_user_save($name, $contacts);
+      if ($account) {
+        $form_state['values']['account'] = $account;
+      }
+      else {
+        form_set_error('name', t('There was a problem creating your account.'));
+      }
+    }
+    elseif ($contacts_count > 1) {
+      form_set_error('name', variable_get('salesforce_login_multiple_contacts_error'));
+    }
   }
+}
+
+/**
+ * Creates Drupal user from returned Salesforce Contact.
+ */
+function salesforce_login_user_save($mail, $contact) {
+  $account = new stdClass();
+  $account->is_new = TRUE;
+  // @TODO How are we going to handle user names?
+  $account->name = $mail;
+  $account->mail = $mail;
+  $account->status = TRUE;
+  // @TODO Handle saving user profile fields.
+  return user_save($account);
+}
+/**
+ * Helper function that queries Salesforce for Contact by email address.
+ *
+ * @param string $email
+ *   Email address to be queried for in Salesforce.
+ *
+ * @return array
+ *   Returns array of Salesforce Objects containing all fields mapped in the
+ *   user_to_contact record of the salesforce_mapping module.
+ */
+function salesforce_login_get_contacts_by_email($email) {
+  // Find the Salesforce fields that map to Drupal user fields so we can return
+  // them all in the query.
+  $user_to_contact_mapping = salesforce_mapping_load('user_to_contact');
+  $salesforce_fields = array();
+  foreach ($user_to_contact_mapping->field_mappings as $mapping) {
+    if ($mapping['direction'] == 'sf_drupal') {
+      $salesforce_fields[] = $mapping['salesforce_field']['name'];
+      // Find the Salesforce field mapps to the Drupal's user's mail field.
+      if ($mapping['drupal_field']['fieldmap_value'] == 'mail') {
+        $salesforce_mail_field = $mapping['salesforce_field']['name'];
+      }
+    }
+  }
+  // Query Salesforce.
+  $sfapi = salesforce_get_api();
+  $soap = new SalesforceSoapPartner($sfapi);
+  $salesforce_sync = new SalesforceSync($sfapi, $soap);
+  return $salesforce_sync->fetchByField('Contact', $salesforce_fields, $salesforce_mail_field, array($email));
 }
