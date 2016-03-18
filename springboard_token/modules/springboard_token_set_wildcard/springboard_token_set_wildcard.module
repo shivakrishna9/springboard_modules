@@ -142,7 +142,8 @@ function _springboard_token_set_wildcard_get_path_form_keys($path) {
 }
 
 /**
- * Attach the token UI to all target fields that exist on this form.
+ * Attach the token UI to all target fields that exist on this form and
+ * have a non-0 Token Set ID, as 0 means "None".
  *
  * @param $element
  *   The form in question or the current, parent element being checked.
@@ -159,8 +160,8 @@ function _springboard_token_set_wildcard_attach_to_target_form_keys(&$element, $
       if (!empty($child['#type'])) {
         $results[$key] = &$child;
         if (array_key_exists($key, $target_form_keys)) {
-          $tsid = $target_form_keys[$key];
           // Replace the target element with a container for itself, the token UI, and the token selector:
+          $tsid = $target_form_keys[$key];
           unset($original_weight);
           if (isset($child['#weight'])) {
             $original_weight = $child['#weight'];
@@ -177,23 +178,25 @@ function _springboard_token_set_wildcard_attach_to_target_form_keys(&$element, $
             $child['#weight'] = $original_weight;
           }
           $child['extra']['description']['#attributes']['data-token-set-id'] = $tsid;
-          $child['#attributes']['data-token-set-id'] = $tsid;
           $child['#attributes']['class'][] = 'form-wrapper';
           $child['#attributes']['class'][] = 'token-ui-field';
-
-          // Add the tokens UI + associated CSS and JS:
-          $tokens = springboard_token_set_get_tokens($tsid);
-          $token_sets = $tokens;
-          $sb_token_set_path = drupal_get_path('module', 'springboard_token_set');
           $child['original_element']['#title'] = '';
-          $child['original_element']['#attributes']['name'] = $key;
-          $child['original_element']['#attached']['js'] = array(
-            'data' => $sb_token_set_path . '/js/springboard_token_set.js', 'type' => 'file');
-          $child['original_element']['#attached']['js'][] = array(
-            'data' => array('token_sets_' . $tsid => $token_sets), 'type' => 'setting');
-          $child['original_element']['#attached']['css'] = array(
-            'data' => $sb_token_set_path . '/css/springboard_token_set.css', 'type' => 'file');
-          springboard_token_set_attach_token_ui($child, $token_sets);
+          // Add the tokens UI + associated CSS and JS if a Token Set is selected:
+          if ($tsid != 0) {
+            $tokens = springboard_token_set_get_tokens($tsid);
+            $token_sets = $tokens;
+            $sb_token_set_path = drupal_get_path('module', 'springboard_token_set');
+
+            $child['#attributes']['data-token-set-id'] = $tsid;
+            $child['original_element']['#attributes']['name'] = $key;
+            $child['original_element']['#attached']['js'] = array(
+             'data' => $sb_token_set_path . '/js/springboard_token_set.js', 'type' => 'file');
+            $child['original_element']['#attached']['js'][] = array(
+              'data' => array('token_sets_' . $tsid => $token_sets), 'type' => 'setting');
+            $child['original_element']['#attached']['css'] = array(
+              'data' => $sb_token_set_path . '/css/springboard_token_set.css', 'type' => 'file');
+            springboard_token_set_attach_token_ui($child, $token_sets);
+          }         
 
           // Add the Token Set selector:
           _springboard_token_set_wildcard_insert_token_set_selector($child, $tsid, $key);
