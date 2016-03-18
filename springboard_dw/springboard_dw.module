@@ -258,7 +258,8 @@ function springboard_dw_map_donation_item($donation)
   $donation_item['group_id'] = ''; // Will come later
   $donation_item['amount'] = $donation->amount;
   $donation_item['currency'] = $donation->currency;
-  $donation_item['quantity'] = $donation->donation['quantity'];
+  // Legacy property so check for it first.
+  $donation_item['quantity'] = array_key_exists('quantity', $donation->donation) ? $donation->donation['quantity'] : 1;
 
   // Todo: Where do these come from ?
   // 3/17/2016: pcave - These have not been implemented for donations yet. Eventually
@@ -384,11 +385,36 @@ function springboard_dw_map_contact_item($donation)
   $contact_item['created_at'] = $user_data['created'];
   $contact_item['updated_at'] = $user_data['created'];
 
-  // Todo: Add the extra props attributes
-  $contact_item['extra_props'] = json_encode(array());
+  // Add the extra props attributes
+  $contact_item['extra_props'] = json_encode(springboard_dw_extract_contact_extra_props($user_data, $contact_item));
 
   return $contact_item;
+}
 
+/**
+ * Extracts non-standard fields out of a user object and returns an array of extra_props.
+ *
+ * @param $user
+ *   The user object from which properties are to be extracted.
+ * @param $contact_item
+ *   The contact item being prepared for the queue.
+ */
+function springboard_dw_extract_contact_extra_props($user, $contact_item) {
+  // Maintain a field blacklist because there are some donation properties that should
+  // never be exported. The payment_fields array will contain full credit card numbers!
+  $field_blacklist = variable_get('springboard_dw_contact_field_blacklist', array('status', 'theme', 'created', 'edit_url', 'url', 'mail', 'name', 'uid', 'roles'));
+  
+  // Extract items in $user that are not already explicitly added to
+  // $contact_item. Any custom profile fields that were added to a contact and mapped
+  // via the user map will be in the $user data structure.
+  $extra_props = array();
+  foreach ($user as $key => $value) {
+    if (!in_array($key, $field_blacklist) && !array_key_exists($key, $contact_item) && substr($key, 0, 4) != 'sbp_') {
+      $extra_props[$key] = $value;
+    }
+  }
+
+  return $extra_props;
 }
 
 /**
