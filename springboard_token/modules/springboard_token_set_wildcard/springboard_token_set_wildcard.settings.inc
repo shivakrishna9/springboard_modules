@@ -84,9 +84,10 @@ function _springboard_token_set_wildcard_get_wildcard_definitions() {
   // Social share:
   $wildcard_settings['social_share'] = array(
     'wildcard_path' => '/^node\/\d+\/share_settings/',
-    'form_keys' => array('description'),
+    'form_keys' => array('fb_description', 'email_message'),
     'default_tsids' => array(
-      'description' => 6,
+      'fb_description' => 6,
+      'email_message' => 6,
     ),
   );
 
