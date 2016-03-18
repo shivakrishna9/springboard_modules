@@ -475,6 +475,7 @@ function springboard_api_prep_call($item)
  */
 function springboard_dw_api_endpoint($endpoint)
 {
+  // TODO: point this to a gospringboard.io subdomain
   return 'http://159.203.115.210/' . ltrim($endpoint, '/');
 }
 
