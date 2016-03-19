@@ -144,17 +144,22 @@ function salesforce_login_user_save($mail, $contact) {
  */
 function salesforce_login_get_contacts_by_email($email) {
   // Find the Salesforce fields that map to Drupal user fields so we can return
-  // them all in the query.
+  // them all those values in the query.
   $user_to_contact_mapping = salesforce_mapping_load('user_to_contact');
   $salesforce_fields = array();
   foreach ($user_to_contact_mapping->field_mappings as $mapping) {
     if ($mapping['direction'] == 'sf_drupal') {
       $salesforce_fields[] = $mapping['salesforce_field']['name'];
-      // Find the Salesforce field mapps to the Drupal's user's mail field.
+      // Find the Salesforce field that maps to the Drupal's user's mail field.
       if ($mapping['drupal_field']['fieldmap_value'] == 'mail') {
         $salesforce_mail_field = $mapping['salesforce_field']['name'];
       }
     }
+  }
+  // Provide opportunity to override the email field that is queried.
+  $salesforce_login_query_field = variable_get('salesforce_login_query_field');
+  if (!empty($salesforce_login_query_field)) {
+    $salesforce_mail_field = $salesforce_login_query_field;
   }
   // Query Salesforce.
   $sfapi = salesforce_get_api();

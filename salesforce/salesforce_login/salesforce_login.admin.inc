@@ -27,5 +27,14 @@ function salesforce_login_admin_form($form, $form_state) {
     '#required' => TRUE,
   );
 
+  $form['salesforce_login_query_field'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Query field override.'),
+    '#default_value' => variable_get('salesforce_login_query_field'),
+    '#description' => t('Specify the Salesforce email field that should be queried when looking up a new user. This can usually be left blank, as it defaults to the email field in the <a href="@user-to-contact-link">user_to_contact</a> Salesforce mapping.', array('@user-to-contact-link' => '/springboard/settings/config/mappings/manage/user_to_contact')),
+    '#size' => 60,
+    '#maxlength' => 128,
+  );
+
   return system_settings_form($form);
 }
