@@ -35,9 +35,9 @@ function salesforce_login_permission() {
 }
 
 /**
- * Implements hook_form_alter().
+ * Implements hook_form_FORM_ID_alter().
  */
-function salesforce_login_form_alter(&$form, $form_state, $form_id) {
+function salesforce_login_form_user_pass_alter(&$form, $form_state, $form_id) {
   // Search for and replace the user_pass_validate() and user_pass_submit()
   // callbacks with our own.
   $form['#validate'] = str_replace('user_pass_validate', 'salesforce_login_pass_validate', $form['#validate']);
