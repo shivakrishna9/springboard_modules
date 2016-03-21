@@ -620,7 +620,7 @@ class SalesforceQueueProcessor {
     // Invokes hook_salesforce_queue_preprocess_batch().
     module_invoke_all('salesforce_queue_preprocess_batch', $batch, $this->queue);
 
-    // Invokes hook_salesforce_queue_process_batch_alter().
+    // Invokes hook_salesforce_queue_batch_alter().
     drupal_alter('salesforce_queue_batch', $batch, $this->queue, $this);
 
     // Prepare the batch before checking the lease expiration to minimize time

@@ -2574,6 +2574,55 @@ function fundraiser_commerce_form_rules_ui_edit_element_alter(&$form, &$form_sta
   }
 }
 
+
+/**
+ * Implements hook_form_FORM_ID_alter().
+ *
+ * Prevent disabling of a gateway if it is in use on a donation form by
+ * disabling the submit button on the confirmation form.
+ */
+function fundraiser_commerce_form_rules_ui_form_rules_config_confirm_op_alter(&$form, &$form_state) {
+  // Seems like there should be a better way to find the rule id than arg()
+  $rule = rules_config_load(arg(5));
+  // Select all records so we can search inside the serizalied gateways field.
+  $donation_forms = db_query("SELECT nid, gateways FROM {fundraiser}");
+  if ($donation_forms) {
+    // Compile list of forms to use when building the message to the user.
+    $matching_donation_forms = array();
+    while ($donation_form = $donation_forms->fetchAssoc()) {
+      $gateways = unserialize($donation_form['gateways']);
+      foreach ($gateways as $gateway) {
+        if (!empty($gateway['id'])) {
+          if (strpos($gateway['id'], $rule->name) && $gateway['status'] == 1) {
+            $matching_donation_forms[] = $donation_form['nid'];
+          }
+        }
+      }
+    }
+    if (!empty($matching_donation_forms)) {
+      // Disable submit button.
+      $form['actions']['submit']['#disabled'] = TRUE;
+      // Build user message with links to enabled donation forms.
+      $message = t('The payment gateway @rule_label cannot be disabled because it is currently in use on the following donation forms:',
+        array('@rule_label' => $rule->label));
+      $matching_nodes = db_select('node', 'n')
+        ->condition('nid', $matching_donation_forms, 'IN')
+        ->fields('n', array('nid', 'title'))
+        ->execute();
+      while ($matching_node = $matching_nodes->fetchAssoc()) {
+        $message .= t('<li><a href="@donation_form_url">@node_title</a></li>',
+          array(
+            '@donation_form_url' => url('node/' . $matching_node['nid']),
+            '@node_title' => $matching_node['title'],
+          )
+        );
+      }
+      $message .= '</ul>';
+      drupal_set_message($message, 'warning');
+    }
+  }
+}
+
 /**
  * Log the payment method form settings
  */
