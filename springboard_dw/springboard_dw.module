@@ -36,6 +36,14 @@ function get_all_entity_properties($wrapper)
   return $values;
 }
 
+/**
+ * Success hook for advocacy actions and submissions.
+ * Implements advocacy_hook_success()
+ * @param $node
+ * @param $contact
+ * @param $data
+ * @param $sid
+ */
 function springboard_dw_action_success($node, $contact, $data, $sid)
 {
 
@@ -135,6 +143,7 @@ function springboard_dw_fundraiser_donation_success($donation)
  */
 function springboard_dw_node_insert($node)
 {
+
   // Create the form item
   if ($node->is_webform_user) {
     // Get the Drupal data warehouse queue
@@ -147,6 +156,26 @@ function springboard_dw_node_insert($node)
     }
   }
 }
+
+/**
+ * Ship an updated form record to the data warehouse.
+ * Implements hook_node_update().
+ * @param $node
+ */
+function springboard_dw_node_update($node)
+{
+
+  dsm($node);
+
+  // Map the node
+  $node_item = springboard_dw_map_form_item($node, True); // Update operation
+
+  // Create the queue item to update the node record
+  $queue = DrupalQueue::get("springboard_dw_export");
+  $queue->createItem($node_item);
+
+}
+
 
 /**
  * Ship an updated user record to the data warehouse.
@@ -184,12 +213,14 @@ function springboard_dw_map_advocacy_action_item($message_action)
 
   $advocacy_item['queue_type'] = 'advocacy action';
   $advocacy_item['action_id'] = $message_action->node->advocacy_id;
+  $advocacy_item['action_type'] = $message_action->node->type;
   $advocacy_item['group_id'] = ''; // Will come later
   $advocacy_item['contact_id'] = $message_action->node->uid;
   $advocacy_item['form_id'] = $message_action->node->nid;
 
-  $advocacy_item['quick_submit'] = '';
-  $advocacy_item['click_submit'] = '';
+  // TODO: Fix these
+  $advocacy_item['quick_submit'] = 0;
+  $advocacy_item['click_submit'] = 0;
 
   $advocacy_item['ip_address'] = ip_address();
 
@@ -205,6 +236,7 @@ function springboard_dw_map_advocacy_action_item($message_action)
   $advocacy_item['device_os'] = $message_action->webform['device_os']['value'][0];
   $advocacy_item['device_browser'] = $message_action->webform['device_browser']['value'][0];
 
+  // Legislative and organizational issues get added as CSV strings if they exist
   $legislative_issues = '';
   $organizational_issues = '';
 
@@ -473,17 +505,24 @@ function springboard_dw_extract_contact_extra_props($user, $contact_item)
  * @param $donation
  * @return array
  */
-function springboard_dw_map_form_item($node)
+function springboard_dw_map_form_item($node, $update = False)
 {
 
   // Get the user account details and prep for warehousing (sb_contact)
   $form_item = array();
   $form_item['queue_type'] = 'form';
+
+  // If form data is being passed to update, flag this queue item for an update
+  if ($update == True) {
+    $form_item['queue_item_update'] = True;
+  }
+
   $form_item['form_id'] = $node->nid;
   $form_item['group_id'] = ''; // Todo: Will come later
   $form_item['form_type'] = $node->type;
   $form_item['name'] = $node->title;
   $form_item['url'] = drupal_get_path_alias('node/' . $node->nid);
+
   $form_item['created_at'] = $node->created;
   $form_item['updated_at'] = $node->changed;
 
@@ -689,6 +728,11 @@ function springboard_dw_form($item)
   // Define the endpoint
   $endpoint = springboard_dw_api_endpoint('form/create');
 
+  // If the queue item is an update, change the API call accordingly
+  if (isset($item['queue_item_update']) && $item['queue_item_update']) {
+    $endpoint = springboard_dw_api_endpoint('form/update');
+  }
+
   // Instantiate an API client instance
   $api_client = springboard_api_client();
 
@@ -707,12 +751,16 @@ function springboard_dw_form($item)
   if ($res->getStatusCode() == 200) {
     //if ($res->getStatusCode() == 200 && $resBody['message'] == 'Successfully created form.') {
 
-    // Insert the user account into the Drupal data warehouse table
-    db_insert('springboard_data_warehouse')->fields(array(
-      'type'      => 'form',
-      'drupal_id' => $item['form_id'],
-      'created'   => time()
-    ))->execute();
+    // If the item hasn't been warehoused then this is an insert and we should consider the item tracked in Drupal
+    if (!isset($item['queue_item_update']) && !springboard_dw_item_is_warehoused('form', $item['form_id'])) {
+
+      // Insert the user account into the Drupal data warehouse table
+      db_insert('springboard_data_warehouse')->fields(array(
+        'type'      => 'form',
+        'drupal_id' => $item['form_id'],
+        'created'   => time()
+      ))->execute();
+    }
 
     // Respond back successfully to the queue to remove the item
     return true;
