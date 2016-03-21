@@ -322,14 +322,7 @@ function sba_message_edit_form_submit(&$form, &$form_state) {
     $sba_message->data['weight']  = $weight + 1;
     $sba_message->save();
 
-    $record = array(
-      'view_name' => 'sba_messages_node',
-      'view_display' => 'block_1',
-      'args' => $arg,
-      'entity_id' => $sba_message->sba_message_id,
-      'weight' => $weight + 1,
-    );
-    drupal_write_record('draggableviews_structure', $record);
+    sba_message_draggable_save($arg, $sba_message->sba_message_id, $sba_message->data['weight']);
   }
 
   form_load_include($form_state, 'inc', 'sba_message', 'sba_message.api_calls');
