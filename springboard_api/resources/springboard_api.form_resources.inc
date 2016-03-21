@@ -116,7 +116,7 @@ function springboard_api_form_action_submit($nid, $app_id = NULL, $submission = 
         }
       }
     }
-    drupal_form_submit($form_id, $form_state, $node, $webform_submission);
+    drupal_form_submit($form_id, $form_state, $node, (object)$webform_submission);
     // Taken from node_resources.inc, if errors are encountered during form
     // submission we return a 406 HTTP response code and any errors encountered.
     if ($errors = form_get_errors()) {

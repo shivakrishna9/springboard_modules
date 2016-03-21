@@ -29,13 +29,21 @@ function commerce_paypal_wps_fundraiser_donation_form_config_check($node) {
   foreach ($node->gateways as $method => $gateway) {
     if (!empty($gateway['id'])  && !empty($gateway['status'])) {
       $gateway_config = _fundraiser_gateway_info($gateway['id']);
-      if ($gateway_config['gateway_details']['method_id'] == 'paypal_wps' &&
-        (empty($gateway_config['gateway_details']['settings']['server']) ||
-        $gateway_config['gateway_details']['settings']['server'] == 'sandbox')) {
-        return array(t('The PayPal WPS payment gateway is currently in sandbox mode and will not process live transactions.'));
+      if ($gateway_config['gateway_details']['method_id'] == 'paypal_wps') {
+        // Check for sandbox mode.
+        if (empty($gateway_config['gateway_details']['settings']['server'])
+            || ($gateway_config['gateway_details']['settings']['server'] == 'sandbox')) {
+          $messages[] = t('The PayPal WPS payment gateway is currently in sandbox mode and will not process live transactions.');
+        }
+        // Check for recurring only donation form.
+        if ($node->recurring_setting == 'always') {
+          $messages[] = t('Edit your enabled payment gateways. The PayPal WPS payment gateway is not supported on donation forms that offer only recurring payments.');
+        }
       }
     }
   }
+
+  return (!empty($messages)) ? $messages : NULL;
 }
 
 function commerce_paypal_wps_fundraiser_gateway_status_cron_check($details) {

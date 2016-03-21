@@ -3159,45 +3159,69 @@ function _fundraiser_get_tracking_by_nid($nid) {
  * CRUD style DB function for fundraiser_tracking.
  */
 function _fundraiser_update_tracking($tracking) {
-  $tracking = (array) $tracking;
-  $tracking_data = FALSE;
-  if (isset($tracking['nid'])) {
-    $tracking_data = _fundraiser_get_tracking_by_nid($tracking['nid']);
-  }
-  if (!$tracking_data) {
-    _fundraiser_create_tracking($tracking);
-  }
-  else {
-    $tracking = array_merge((array) $tracking_data, $tracking);
-    drupal_write_record('fundraiser_tracking', $tracking, 'nid');
-  }
+  /** 
+   * Code commented out on 2/18/2016 by pcave for performance reasons.
+   * When a donation form encounters significant traffic, updating a single row
+   * in this table over and over during a request can cause lock contentions. 
+   * This eventually cascades to other database operations thus slowing down
+   * the entire response.
+   * 
+   * $tracking = (array) $tracking;
+   * $tracking_data = FALSE;
+   * if (isset($tracking['nid'])) {
+   *   $tracking_data = _fundraiser_get_tracking_by_nid($tracking['nid']);
+   * }
+   * if (!$tracking_data) {
+   *   _fundraiser_create_tracking($tracking);
+   * }
+   * else {
+   *   $tracking = array_merge((array) $tracking_data, $tracking);
+   *   drupal_write_record('fundraiser_tracking', $tracking, 'nid');
+   * }
+   */
 }
 
 /**
  * CRUD style DB function for fundraiser_tracking.
  */
 function _fundraiser_delete_tracking($nid) {
-  db_delete('fundraiser_tracking')->condition('nid', $nid)->execute();
+  /** 
+   * Code commented out on 2/18/2016 by pcave for performance reasons.
+   * When a donation form encounters significant traffic, updating a single row
+   * in this table over and over during a request can cause lock contentions. 
+   * This eventually cascades to other database operations thus slowing down
+   * the entire response.
+   * 
+   * db_delete('fundraiser_tracking')->condition('nid', $nid)->execute();
+   */
 }
 
 /**
  * DB function for updating the stats in fundraiser_tracking.
  */
 function _fundraiser_update_tracking_value($nid, $field) {
-  $tracking = _fundraiser_get_tracking_by_nid($nid);
-  // No tracking data? Create one.
-  if (!$tracking) {
-    $tracking = new stdClass();
-    $tracking->nid = $nid;
-    _fundraiser_create_tracking($tracking);
-    $tracking = _fundraiser_get_tracking_by_nid($nid);
+   /** 
+   * Code commented out on 2/18/2016 by pcave for performance reasons.
+   * When a donation form encounters significant traffic, updating a single row
+   * in this table over and over during a request can cause lock contentions. 
+   * This eventually cascades to other database operations thus slowing down
+   * the entire response.
+   * 
+   * $tracking = _fundraiser_get_tracking_by_nid($nid);
+   * // No tracking data? Create one.
+   * if (!$tracking) {
+   *   $tracking = new stdClass();
+   *   $tracking->nid = $nid;
+   *   _fundraiser_create_tracking($tracking);
+   *   $tracking = _fundraiser_get_tracking_by_nid($nid);
+   * }
+   * // Check to make sure we weren't handed a non-existing track.
+   * if (isset($tracking->$field)) {
+   *   $tracking->$field++;
+   *   _fundraiser_update_tracking($tracking);
+   * }
+   */
   }
-  // Check to make sure we weren't handed a non-existing track.
-  if (isset($tracking->$field)) {
-    $tracking->$field++;
-    _fundraiser_update_tracking($tracking);
-  }
-}
 
 /**
  * Implements hook_webform_token_selector_blacklist_alter().

@@ -2300,7 +2300,7 @@ function fundraiser_sustainers_cancel_form($form, &$form_state, $donation) {
   $form['reason'] = array(
     '#type' => 'textarea',
     '#title' => t('Reason'),
-    '#default_value' => t('Please enter a brief description of why you are cancelling. ' .
+    '#default_value' => t('Please enter a brief description of why you are canceling. ' .
       'This will help us better serve you in the future.'),
     '#maxlength' => 500,
     '#cols' => 70,
@@ -2323,7 +2323,7 @@ function fundraiser_sustainers_cancel_form_submit($form, &$form_state) {
   global $user;
   $master_did = $form_state['values']['master_did'];
   $reason = $form_state['values']['reason'];
-  if (empty($reason) || $reason == t('Please enter a brief description of why you are cancelling. ' .
+  if (empty($reason) || $reason == t('Please enter a brief description of why you are canceling. ' .
       'This will help us better serve you in the future.')) {
     $reason = t('No reason given.');
   }
@@ -2913,23 +2913,30 @@ function _fundraiser_sustainers_delete_recurring($did) {
 }
 
 /**
- * DB funct, get user donation set information that are recurring.
+ * Fetch user-specific, recurring donation sets data.
+ *
+ * @param int $uid
+ *   The User ID of the donor in question.
  */
 function _fundraiser_sustainers_get_donation_sets_recurr_by_uid($uid) {
   $donation_sets = db_query('SELECT r.master_did, MIN(r.next_charge) AS start_date, ' .
     'MAX(r.next_charge) AS expire_date FROM {fundraiser_sustainers} r ' .
     'LEFT JOIN {fundraiser_donation} d on r.did = d.did ' .
-    'WHERE d.uid = :uid ' .
-    'GROUP BY r.master_did ' .
-    'ORDER BY r.master_did DESC', array(':uid' => $uid))->fetchAll();
+    'WHERE d.uid = :uid GROUP BY r.master_did ORDER BY r.master_did DESC', 
+     array(':uid' => $uid))->fetchAll();
   foreach ($donation_sets as $index => $donation_set) {
     $next_charge = _fundraiser_sustainers_get_donations_next_charge($donation_set->master_did);
     if (isset($next_charge->next_charge)) {
-      if ($next_charge->gateway_resp == 'canceled') {
-        $status = t('Canceled');
-      }
-      else {
-        $status = t('Active');
+      switch ($next_charge->gateway_resp) {
+        case 'canceled':
+          $status = t('Canceled');
+          break;
+        case 'auto_canceled':
+          $status = t('Auto-Canceled');
+          break;
+        default:
+          $status = t('Active');
+          break;
       }
       $donation_sets[$index]->next_charge = $next_charge->next_charge;
       $donation_sets[$index]->status = $status;
