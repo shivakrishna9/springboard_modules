@@ -470,7 +470,6 @@ function salesforce_donation_salesforce_genmap_map_fields(stdClass $donation, En
       if (!empty($mapped_stages)) {
         if (in_array($donation->status, $mapped_stages)) {
           $flipped_stages = array_flip($mapped_stages);
-
           $stage = $flipped_stages[$donation->status];
         }
       }

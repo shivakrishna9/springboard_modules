@@ -1311,10 +1311,25 @@ function fundraiser_tickets_check_addon_required_fields($nid, $donation = NULL, 
  */
 function fundraiser_tickets_form_action_submit($nid, $app_id = NULL, $submission) {
   include_once(drupal_get_path('module', 'springboard_api') . '/resources/springboard_api.form_resources.inc');
-
   if (is_numeric($nid)) {
     $node = node_load($nid);
     $submission = (array) $submission;
+
+    // $submission here is the $donation->donation array, which has an
+    // improperly nested payment_fields array when using credit. Alter it to
+    // give webform the expected structure.
+    if (!empty($submission['payment_fields']['credit'])) {
+      // Month and year aren't nested properly.
+      if (!empty($submission['payment_fields']['credit']['card_expiration_month'])) {
+        $submission['payment_fields']['credit']['expiration_date']['card_expiration_month'] = $submission['payment_fields']['credit']['card_expiration_month'];
+        unset($submission['payment_fields']['credit']['card_expiration_month']);
+      }
+      if (!empty($submission['payment_fields']['credit']['card_expiration_year'])) {
+        $submission['payment_fields']['credit']['expiration_date']['card_expiration_year'] = $submission['payment_fields']['credit']['card_expiration_year'];
+        unset($submission['payment_fields']['credit']['card_expiration_year']);
+      }
+    }
+
     $submission = _springboard_api_convert_submission($submission, $node);
     $submit_text = db_query("SELECT submit_text FROM {webform} WHERE nid = :nid", array(':nid' => $nid))->fetchField();
     if($submit_text == '') {
