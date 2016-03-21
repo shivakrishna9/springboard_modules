@@ -148,6 +148,25 @@ function webform_ui_form_webform_configure_after_build($form, $form_state) {
   return $form;
 }
 
+
+/**
+ * Implements hook_form_webform_client_form_alter().
+ *
+ * Make hidden fields on results page editable so salesforce syncs can
+ * be corrected.
+ */
+function webform_ui_form_webform_client_form_alter(&$form, &$form_state) {
+  if (arg(2) == 'submission' && variable_get('webform_ui_make_hidden_editable', FALSE) && user_access('edit all webform submissions')) {
+    foreach (element_children($form['submitted']) as $key) {
+      if ($form['submitted'][$key]['#type'] == 'hidden') {
+        $form['submitted'][$key]['#type'] = 'textfield';
+        // Prevent the core textfield formatter's default 128 limit.
+        $form['submitted'][$key]['#maxlength'] = NULL;
+      }
+    }
+  }
+}
+
 /**
  * Implements hook_menu_alter().
  *

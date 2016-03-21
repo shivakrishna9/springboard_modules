@@ -3,7 +3,7 @@ description = Embeds third-party javascript snippets
 package = Jackson River Springboard - extras
 core = 7.x
 version = 7.x-4.x
-configure = admin/config/services/springboard-tags
+configure = admin/springboard/springboard-tags
 
 dependencies[] = ctools
 dependencies[] = fundraiser
