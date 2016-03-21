@@ -104,7 +104,9 @@ function salesforce_login_pass_validate($form, &$form_state) {
     }
     elseif ($contacts_count == 1) {
       // One corresponding Contact found in Salesforce. Create Drupal user.
-      $account = salesforce_login_user_save($name, $contacts);
+      // We know there is only one contact now so pass that one using
+      // array_shit().
+      $account = salesforce_login_user_save($name, array_shift($contacts));
       if ($account) {
         $form_state['values']['account'] = $account;
         $form_state['values']['salesforce_login_created_account'] = TRUE;
@@ -129,7 +131,18 @@ function salesforce_login_user_save($mail, $contact) {
   $account->name = $mail;
   $account->mail = $mail;
   $account->status = TRUE;
-  // @TODO Handle saving user profile fields.
+  // Get user_to_contact field mapping and save profile field values in
+  // the appropriate places. eg
+  // $account->sbp_address[LANGUAGE_NONE][0]['value'].
+  // $account->sbp_last_name[LANGUAGE_NONE][0]['value'].
+  $user_to_contact_mapping = salesforce_mapping_load('user_to_contact');
+  foreach ($user_to_contact_mapping->field_mappings as $field_mapping) {
+    if ($field_mapping['direction'] == 'sf_drupal') {
+      if (isset($contact->{$field_mapping['salesforce_field']['name']})) {
+        $account->{$field_mapping['drupal_field']['fieldmap_value']}['und'][0]['value'] = $contact->{$field_mapping['salesforce_field']['name']};
+      }
+    }
+  }
   return user_save($account);
 }
 /**
