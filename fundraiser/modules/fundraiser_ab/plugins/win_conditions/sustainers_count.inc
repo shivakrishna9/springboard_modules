@@ -13,6 +13,7 @@ $plugin = array(
   'config form' => 'fundraiser_ab_sustainers_count_config',
   'config form validation' => 'fundraiser_ab_sustainers_count_config_validate',
   'config summary' => 'fundraiser_ab_sustainers_count_config_summary',
+  'current value' => 'fundraiser_ab_sustainers_count_current_value',
   'check criteria' => 'fundraiser_ab_sustainers_count_check_win',
 );
 
@@ -54,6 +55,18 @@ function fundraiser_ab_sustainers_count_config_summary($config) {
   return $config['sustainers'];
 }
 
+/**
+ * Returns the current value this win condition is measuring for a given test.
+ *
+ * @param $webform_nid
+ *   Node ID of the webform currently being test.
+ */
+function fundraiser_ab_sustainers_count_current_value($webform_nid) {
+  return db_query("SELECT nid FROM {fundraiser_donation} d, {fundraiser_sustainers} s " .
+    "WHERE d.did = s.master_did AND d.nid = :webform_nid",
+    array(':webform_nid' => $webform_nid))
+    ->rowCount();
+}
 
 /**
  * Check if the given Webform A/B Test node has a winner

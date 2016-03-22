@@ -45,118 +45,82 @@ function webform_ab_admin_settings($form, &$form_state) {
  * @param $node Node object
  */
 function webform_ab_test_reports($node) {
+  if (empty($node->included_webforms) || !is_array($node->included_webforms)) {
+    return t('No webforms have been added to this A/B test. Visit the !forms_tab tab to add webforms.',
+        array('!forms_tab' => l(t('Included Webforms'), 'node/' . $node->nid . '/webforms')));
+  }
+
   $return = '';
 
-  // Get total hit counts for all webforms
-  $hit_counts_result = db_query('SELECT webform_nid, count(hit_id) hits FROM {webform_ab_hits} ' .
-    'WHERE test_nid = :test_nid ' .
-    'GROUP BY test_nid, webform_nid',
-    array(':test_nid' => $node->nid));
-  $hit_counts = array();
-  foreach ($hit_counts_result as $row) {
-    $hit_counts[$row->webform_nid] = $row->hits;
-  }
-
-  // Get total conversions for all webforms
-  $conversion_counts_result = db_query('SELECT webform_nid, count(sid) conversions FROM {webform_ab_conversion} ' .
-    'WHERE test_nid = :test_nid ' .
-    'GROUP BY test_nid, webform_nid',
-    array(':test_nid' => $node->nid));
-  $conversion_counts = array();
-  foreach ($conversion_counts_result as $row) {
-    $conversion_counts[$row->webform_nid] = $row->conversions;
-  }
-
-  // If one of the webforms won, determine pre-win and post-win conversions
-  if (($winning_webform_nid = _webform_ab_has_winner_already($node)) > 0) {
-    // Get pre- and post-win hit counts
-    $post_win_hit_data = db_query('SELECT SUM(IF(hits.time > f.win_time, 1, 0)) AS post_win, SUM(IF(hits.time <= f.win_time, 1, 0)) AS pre_win ' .
-      'FROM {webform_ab_forms} f ' .
-      'LEFT JOIN {webform_ab_hits} hits ON hits.test_nid = f.test_nid AND hits.webform_nid = f.webform_nid ' .
-      'WHERE f.test_nid = :test_nid AND f.webform_nid = :webform_nid ' .
-      'GROUP BY f.test_nid, f.webform_nid',
-      array(':test_nid' => $node->nid, ':webform_nid' => $winning_webform_nid))->fetchAssoc();
-
-    // Get pre- and post-win conversions counts
-    $post_win_conversion_data = db_query('SELECT SUM(IF(sub.submitted > f.win_time, 1, 0)) AS post_win, SUM(IF(sub.submitted <= f.win_time, 1, 0)) AS pre_win ' .
-      'FROM {webform_ab_forms} f ' .
-      'LEFT JOIN {webform_ab_conversion} con ON con.test_nid = f.test_nid AND con.webform_nid = f.webform_nid ' .
-      'LEFT JOIN {webform_submissions} sub ON con.sid = sub.sid ' .
-      'WHERE f.test_nid = :test_nid AND f.webform_nid = :webform_nid ' .
-      'GROUP BY f.test_nid, f.webform_nid',
-      array(':test_nid' => $node->nid, ':webform_nid' => $winning_webform_nid))->fetchAssoc();
-  }
-
   // Status labels
-  $webform_ab_status_labels = array(
+  $status_labels = array(
     WEBFORM_AB_WEBFORM_STATUS_ACTIVE => t('Active'),
     WEBFORM_AB_WEBFORM_STATUS_WINNER => t('Winner'),
     WEBFORM_AB_WEBFORM_STATUS_RETIRED => t('Retired'),
   );
-  // Show the list of currently-included forms
+
+  // Set headers present for all A/B reports:
   $headers = array(
     t('Status'),
     t('Name'),
-    t('Hits'),
-    t('Conversions'),
-    t('Conversion %'),
-    t('Pre-win Hits'),
-    t('Pre-win Conversions'),
-    t('Pre-win Conversion %'),
-    t('Post-win Hits'),
-    t('Post-win Conversions'),
-    t('Post-win Conversion %'),
   );
-  $rows = array();
 
-  // Loop over the webforms and add a row to the report table
-  if (!empty($node->included_webforms) && is_array($node->included_webforms)) {
-    foreach ($node->included_webforms as $webform_nid => $webform_details) {
-      $this_hit_count = isset($hit_counts[$webform_nid]) ? $hit_counts[$webform_nid] : 0;
-      $this_conversion_count = isset($conversion_counts[$webform_nid]) ? $conversion_counts[$webform_nid] : 0;
-      $line = array(
-        $webform_ab_status_labels[$webform_details['status']],
-        $webform_details['title'],
-        isset($hit_counts[$webform_nid]) ? $hit_counts[$webform_nid] : 0,
-        isset($conversion_counts[$webform_nid]) ? $conversion_counts[$webform_nid] : 0,
-        ($this_hit_count > 0) ? round(100 * $this_conversion_count / $this_hit_count) . '%' : '0%',
-      );
+  // Add columns for the currently enabled win conditions and gather progress data:
+  $enabled_win_conditions = array();
+  $all_win_conditions = _webform_ab_get_win_condition_plugins();
+  $enabled_win_conditions_query = db_query("SELECT plugin_key, options FROM {webform_ab_win_conditions} " .
+    "WHERE test_nid = :webform_ab_nid", array(':webform_ab_nid' => $node->nid));
+  foreach ($enabled_win_conditions_query as $condition_data) {
+    $plugin_options = unserialize($condition_data->options);
+    $enabled_win_conditions[$condition_data->plugin_key]['value_to_win'] = array_pop($plugin_options);
+    $headers[] = $all_win_conditions[$condition_data->plugin_key]['title'];
+  }
 
-      // If this webform is the winner, show pre- and post-win conversion percentages
-      if ($winning_webform_nid == $webform_nid) {
-        $line[] = isset($post_win_hit_data['pre_win']) ? $post_win_hit_data['pre_win'] : 0;
-        $line[] = isset($post_win_conversion_data['pre_win']) ? $post_win_conversion_data['pre_win'] : 0;
-        // Only divide if greater than 0
-        if (isset($post_win_hit_data['pre_win']) && $post_win_hit_data['pre_win'] > 0) {
-          $line[] = round(100 * $post_win_conversion_data['pre_win'] / $post_win_hit_data['pre_win']) . '%';
-        }
-        else {
-          $line[] = '0%';
-        }
-        $line[] = isset($post_win_hit_data['post_win']) ? $post_win_hit_data['post_win'] : 0;
-        $line[] = isset($post_win_conversion_data['post_win']) ? $post_win_conversion_data['post_win'] : 0;
-        $post_win_hit_data = isset($post_win_hit_data['post_win']) ? $post_win_hit_data['post_win'] : 0;
-        $post_win_conversion_data = isset($post_win_conversion_data['post_win']) ? $post_win_conversion_data['post_win'] : 0;
-        $line[] = ($post_win_hit_data > 0) ? round(100 * $post_win_conversion_data / $post_win_hit_data) . '%' : '0%';
+  // Loop over this test's webforms, adding a row for each webform being tested:
+  foreach ($node->included_webforms as $webform_nid => $webform_details) {
+    $line = array('status' => 'N/A', 'title' => 'N/A');
+
+    // Get this test's webform_ab status and node title:
+    if (isset($webform_details['status']) && isset($status_labels[$webform_details['status']])) {
+      $line['status'] = $status_labels[$webform_details['status']];
+    }
+    if (isset($webform_details['title'])) {
+      $internal_name = _webform_ab_get_internal_name($webform_details['webform_nid']);
+      if ($internal_name) {
+        $line['title'] = $internal_name;
       }
       else {
-        // Not the winning webform. Pad out into the columns for win data
-        while (count($line) < count($headers)) {
-          $line[] = '';
-        }
+        $line['title'] = l($webform_details['title'], 'node/' . $webform_details['webform_nid']);
       }
-      $rows[] = $line;
     }
+    // Add values for each win condition column:
+    foreach ($enabled_win_conditions as $plugin_key => $condition_data) {
+      $condition_current_value = '?';
+      $current_value_function = ctools_plugin_get_function($all_win_conditions[$plugin_key], 'current value');
+      if (is_string($current_value_function)) {
+        $current_value = $current_value_function($webform_nid, $webform_details, $node);
+      } 
+      else {
+        // Output an error value if this win condition plugin is missing its "current value" function:
+        $current_value = t('Plugin Error');
+        drupal_set_message(t('The win condition plugin, ":plugin_key" is missing its "current value" function. Please try clearing cache.',
+          array(':plugin_key' => $plugin_key)), 'error');
+      }
+      // Account for values that should be displayed in percentage format:
+      if (stripos($plugin_key, 'percent') !== FALSE) {
+        $line[$plugin_key] = ($current_value * 100) . '% ' . t('of') . ' ' . ($condition_data['value_to_win'] * 100) . '%';
+      }
+      // Account for boolean values:
+      if (in_array($plugin_key, array('donations_highest_avg', 'donations_highest_gross'))) {
+        $line[$plugin_key] = $current_value ? 'Yes' : 'No';
+      }
+      else {  
+        $line[$plugin_key] = $current_value . ' ' . t('of') . ' ' . $condition_data['value_to_win'];
+      }
+    }
+    $rows[] = $line;
   }
 
-  // If there were no rows, show an empty message
-  if (count($rows) == 0) {
-    $rows[] = array(array(
-        'data' => t('No webforms have been added to this A/B test. Visit the !forms_tab tab to add webforms.',
-          array('!forms_tab' => l(t('Included Webforms'), 'node/' . $node->nid . '/webforms'))),
-        'colspan' => count($headers),
-      ));
-  }
   $return .= theme('table', array('header' => $headers, 'rows' => $rows));
   return $return;
 }
@@ -170,7 +134,7 @@ function webform_ab_test_webforms($node) {
   $return = '';
 
   // Status labels
-  $webform_ab_status_labels = array(
+  $status_labels = array(
     WEBFORM_AB_WEBFORM_STATUS_ACTIVE => t('Active'),
     WEBFORM_AB_WEBFORM_STATUS_WINNER => t('Winner'),
     WEBFORM_AB_WEBFORM_STATUS_RETIRED => t('Retired'),
@@ -187,7 +151,7 @@ function webform_ab_test_webforms($node) {
     foreach ($node->included_webforms as $webform_nid => $webform_details) {
       $rows[] = array(
         $webform_details['title'],
-        $webform_ab_status_labels[$webform_details['status']],
+        $status_labels[$webform_details['status']],
         l(t('view'), 'node/' . $webform_nid) . ' ' .
         l(t('edit'), 'node/' . $webform_nid . '/edit') . ' ' .
         l(t('remove from test'), 'node/' . $node->nid . '/webforms/remove/' . $webform_nid),
@@ -388,4 +352,29 @@ function webform_ab_clear_test_data_confirm_submit($form, &$form_state) {
   module_invoke_all('webform_ab_reset_data', $form['#test_nid']);
   drupal_set_message(t('The data has been cleared.'));
   $form_state['redirect'] = 'node/' . $form['#test_nid'] . '/reports';
+}
+
+/**
+ * Get the internal name for a given webform, which is located within
+ * a node field.  Return FALSE if no internal name is found.
+ * @param $nid
+ *   The node ID of the webform in question.
+ */
+function _webform_ab_get_internal_name($nid) {
+  $node_type = db_query("SELECT type FROM {node} WHERE nid = :nid", array(':nid' => $nid))
+    ->fetchField();
+  if (!$node_type) {
+    return FALSE;
+  }
+  $field_info = field_info_instances('node', $node_type);
+  foreach ($field_info as $field_name => $data) {
+    if (strpos($field_name, 'internal_name') !== FALSE) {
+      $db_table = 'field_data_' . $field_name; 
+      $value_column = $field_name . '_value';
+    }
+  }
+  // Get the internal mame, if possible:
+  return $internal_name_query = db_query("SELECT $value_column FROM {$db_table} WHERE entity_id = :nid",
+    array(':nid' => $nid))
+    ->fetchField();
 }
