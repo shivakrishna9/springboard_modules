@@ -27,6 +27,8 @@ function fundraiser_ab_donations_highest_gross_config_summary($config) {
  *
  * @param $webform_nid
  *   Note ID for the webform being tested.
+ * @param $node
+ *   The Node Object of the a/b test node.
  */
 function fundraiser_ab_donations_highest_gross_current_value($webform_nid, $webform_details, $node) {
   // Get total, currency-agnostic donation amount for the current webform:

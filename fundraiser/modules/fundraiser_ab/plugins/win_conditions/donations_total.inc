@@ -13,6 +13,7 @@ $plugin = array(
   'config form validation' => 'fundraiser_ab_donations_total_config_validate',
   'config summary' => 'fundraiser_ab_donations_total_config_summary',
   'check criteria' => 'fundraiser_ab_donations_total_check_win',
+  'current value' => 'fundraiser_ab_donations_total_current_value',
 );
 
 /**
@@ -54,6 +55,21 @@ function fundraiser_ab_donations_total_config_summary($config) {
   return money_format('$%.2n', $config['donation_sum']);
 }
 
+/**
+ * Returns the current value this win condition is measuring for a given test.
+ *
+ * @param $webform_nid
+ *   Node ID of the webform currently being test.
+ */
+function fundraiser_ab_donations_total_current_value($webform_nid) {
+  $sum = db_query("SELECT SUM(amount) FROM {fundraiser_donation} WHERE nid = :webform_nid",
+    array(':webform_nid' => $webform_nid))
+    ->fetchField();
+  if (!$sum) {
+    return 0;
+  }
+  return $sum;
+}
 
 /**
  * Check if the given Webform A/B Test node has a winner
