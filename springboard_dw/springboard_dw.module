@@ -47,9 +47,6 @@ function get_all_entity_properties($wrapper)
 function springboard_dw_action_success($node, $contact, $data, $sid)
 {
 
-  // Get the Drupal data warehouse queue
-  $queue = DrupalQueue::get("springboard_dw_export");
-
   $webform_submission_data = springboard_dw_webform_submission_data_keyed($node->nid, $sid);
 
   $action = new stdClass();
@@ -57,6 +54,32 @@ function springboard_dw_action_success($node, $contact, $data, $sid)
   $action->contact = $contact;
   $action->data = $data;
   $action->webform = $webform_submission_data;
+  $action->sid = $sid;
+
+  // If the submission is a message action
+  if($action->node->type == 'sba_message_action') {
+    springboard_dw_advocacy_message_action_submission($node, $action);
+  }
+
+  // If the submission is a message action
+  if($action->node->type == 'springboard_petition') {
+    springboard_dw_petition_submission($node, $action);
+  }
+
+  // If the submission is a message action
+  if($action->node->type == 'sba_social_action') {
+    springboard_dw_social_action_submission($node, $action);
+  }
+}
+
+/** Field a message action submission for warehousing.
+ * @param $node
+ * @param $action
+ */
+function springboard_dw_advocacy_message_action_submission($node, $action) {
+
+  // Get the Drupal data warehouse queue
+  $queue = DrupalQueue::get("springboard_dw_export");
 
   // Create the Advocacy action item in the queue if not warehoused
   if (!springboard_dw_item_is_warehoused('advocacy action', $node->nid)) {
@@ -85,13 +108,43 @@ function springboard_dw_action_success($node, $contact, $data, $sid)
     }
   }
 
-  // Create the user item in the queue if not warehoused
-  if (!springboard_dw_item_is_warehoused('contact', $action->node->uid)) {
-    $contact_item = springboard_dw_map_contact_item($action->node->uid);
-    $queue->createItem($contact_item);
+
+}
+
+/** Field a petition submission for warehousing.
+ * @param $node
+ * @param $action
+ */
+function springboard_dw_petition_submission($node, $action) {
+
+  // Get the Drupal data warehouse queue
+  $queue = DrupalQueue::get("springboard_dw_export");
+
+  // Create the Advocacy action item in the queue if not warehoused
+  if (!springboard_dw_item_is_warehoused('petition', $node->nid)) {
+
+    $petition_item = springboard_dw_map_petition_item($action);
+
+    $queue->createItem($petition_item);
+  }
+
+  // Create the Advocacy action item in the queue if not warehoused
+  if (!springboard_dw_item_is_warehoused('submission', $node->nid)) {
+
+    $petition_item = springboard_dw_map_petition_submission_item($action);
+
+    $queue->createItem($petition_item);
   }
 
 }
+
+/** Field a social action submission for warehousing.
+ * @param $node
+ * @param $action
+ */
+function springboard_dw_social_action_submission($node, $action) {
+}
+
 
 /**
  * Get the webform submission dated keyed according to submission.
@@ -129,11 +182,6 @@ function springboard_dw_fundraiser_donation_success($donation)
   $donation_item = springboard_dw_map_donation_item($donation);
   $queue->createItem($donation_item);
 
-  // Create the user item in the queue if not warehoused
-  if (!springboard_dw_item_is_warehoused('contact', $donation->uid)) {
-    $contact_item = springboard_dw_map_contact_item($donation->uid);
-    $queue->createItem($contact_item);
-  }
 }
 
 /**
@@ -165,8 +213,6 @@ function springboard_dw_node_insert($node)
 function springboard_dw_node_update($node)
 {
 
-  dsm($node);
-
   // Map the node
   $node_item = springboard_dw_map_form_item($node, True); // Update operation
 
@@ -178,6 +224,33 @@ function springboard_dw_node_update($node)
 
 
 /**
+ * Ship a user record to the data warehouse.
+ * Implements hook_user_insert().
+ * @param $edit
+ * @param $account
+ * @param $category
+ */
+function springboard_dw_user_insert(&$edit, $account, $category)
+{
+
+  // Create the user item in the queue if not warehoused
+  if (!springboard_dw_item_is_warehoused('contact', $account->uid)) {
+
+    // Take the account object and prep for contact mapping
+    $user_obj = entity_metadata_wrapper('user', $account);
+    $user_data = get_all_entity_properties($user_obj);
+
+    // Map the user contact
+    $contact_item = springboard_dw_map_contact_item($account->uid, $user_data);
+
+    // Create the queue item to update the contact record
+    $queue = DrupalQueue::get("springboard_dw_export");
+    $queue->createItem($contact_item);
+  }
+
+}
+
+/**
  * Ship an updated user record to the data warehouse.
  * Implements hook_user_update().
  * @param $edit
@@ -186,6 +259,13 @@ function springboard_dw_node_update($node)
  */
 function springboard_dw_user_update(&$edit, $account, $category)
 {
+
+  /**
+   * TODO - this runs on general form submissions which is bad, we don't want to try to update the contact record every time.
+   * @author - cameronkingzett
+   * @date - 3/21/16
+   * @time -  4:23 PM
+   */
 
   // Take the account object and prep for contact mapping
   $user_obj = entity_metadata_wrapper('user', $account);
@@ -273,6 +353,122 @@ function springboard_dw_map_advocacy_action_item($message_action)
   return $advocacy_item;
 
 }
+
+/**
+ * Map the Advocacy petition object to an array formatted for an API call for data warehousing.
+ * @param $petition
+ * @return array
+ */
+function springboard_dw_map_petition_item($petition)
+{
+
+  // Get the Advocacy petition object details and prep for warehousing (sb_action)
+  $advocacy_item = array();
+
+  $advocacy_item['queue_type'] = 'petition';
+  $advocacy_item['action_id'] = '';
+  $advocacy_item['action_type'] = $petition->node->type;
+  $advocacy_item['group_id'] = ''; // Will come later
+  $advocacy_item['contact_id'] = $petition->node->uid;
+  $advocacy_item['form_id'] = $petition->node->nid;
+
+  // TODO: Fix these
+  $advocacy_item['quick_submit'] = 0;
+  $advocacy_item['click_submit'] = 0;
+
+  $advocacy_item['ip_address'] = ip_address();
+
+  $advocacy_item['ms'] = $petition->webform['ms']['value'][0];
+  $advocacy_item['cid'] = $petition->webform['cid']['value'][0];
+  $advocacy_item['referrer'] = $petition->webform['referrer']['value'][0];
+  $advocacy_item['initial_referrer'] = $petition->webform['initial_referrer']['value'][0];
+  $advocacy_item['search_engine'] = $petition->webform['search_engine']['value'][0];
+  $advocacy_item['search_string'] = $petition->webform['search_string']['value'][0];
+  $advocacy_item['user_agent'] = $petition->webform['user_agent']['value'][0];
+  $advocacy_item['device_type'] = $petition->webform['device_type']['value'][0];
+  $advocacy_item['device_name'] = $petition->webform['device_name']['value'][0];
+  $advocacy_item['device_os'] = $petition->webform['device_os']['value'][0];
+  $advocacy_item['device_browser'] = $petition->webform['device_browser']['value'][0];
+
+  // organizational issues get added as CSV strings if they exist
+  $organizational_issues = '';
+
+  // If the message action has organizational issues included, add them
+  if (!empty($petition->node->field_sba_organizational_issues)) {
+
+    // Load up and loop through the organizational issues and add them as csv strings
+    foreach ($petition->node->field_sba_organizational_issues['und'] as $issue) {
+      $issue_taxonomy = taxonomy_term_load($issue['tid']);
+      $organizational_issues .= $issue_taxonomy->name . ',';
+    }
+  }
+
+  // Cleanup the organizational issues list before adding to the action array
+  $organizational_issues = rtrim($organizational_issues, ', ');
+  $advocacy_item['organization_issues'] = $organizational_issues;
+
+  $advocacy_item['created_at'] = $petition->node->created;
+  $advocacy_item['updated_at'] = $petition->node->changed;
+
+  return $advocacy_item;
+
+}
+
+
+/**
+ * Map the Advocacy petition submission object to an array formatted for an API call for data warehousing.
+ * @param $petition
+ * @return array
+ */
+function springboard_dw_map_petition_submission_item($petition)
+{
+
+  // Get the Advocacy petition object details and prep for warehousing (sb_action)
+  $advocacy_item = array();
+
+  $advocacy_item['queue_type'] = 'submission';
+  $advocacy_item['submission_id'] = $petition->sid;
+  $advocacy_item['group_id'] = ''; // Will come later
+  $advocacy_item['contact_id'] = $petition->node->uid;
+  $advocacy_item['form_id'] = $petition->node->nid;
+  $advocacy_item['ms'] = $petition->webform['ms']['value'][0];
+  $advocacy_item['cid'] = $petition->webform['cid']['value'][0];
+  $advocacy_item['referrer'] = $petition->webform['referrer']['value'][0];
+  $advocacy_item['initial_referrer'] = $petition->webform['initial_referrer']['value'][0];
+  $advocacy_item['search_engine'] = $petition->webform['search_engine']['value'][0];
+  $advocacy_item['search_string'] = $petition->webform['search_string']['value'][0];
+  $advocacy_item['user_agent'] = $petition->webform['user_agent']['value'][0];
+  $advocacy_item['device_type'] = $petition->webform['device_type']['value'][0];
+  $advocacy_item['device_name'] = $petition->webform['device_name']['value'][0];
+  $advocacy_item['device_os'] = $petition->webform['device_os']['value'][0];
+  $advocacy_item['device_browser'] = $petition->webform['device_browser']['value'][0];
+
+  // organizational issues get added as CSV strings if they exist
+  $organizational_issues = '';
+
+  // If the message action has organizational issues included, add them
+  if (!empty($petition->node->field_sba_organizational_issues)) {
+
+    // Load up and loop through the organizational issues and add them as csv strings
+    foreach ($petition->node->field_sba_organizational_issues['und'] as $issue) {
+      $issue_taxonomy = taxonomy_term_load($issue['tid']);
+      $organizational_issues .= $issue_taxonomy->name . ',';
+    }
+  }
+
+  // Cleanup the organizational issues list before adding to the action array
+  $organizational_issues = rtrim($organizational_issues, ', ');
+  $advocacy_item['organization_issues'] = $organizational_issues;
+
+  $advocacy_item['created_at'] = $petition->node->created;
+  $advocacy_item['updated_at'] = $petition->node->changed;
+
+  return $advocacy_item;
+
+}
+
+
+
 
 /**
  * Map the Advocacy message to an array formatted for an API call for data warehousing.
@@ -549,7 +745,13 @@ function springboard_dw_export_item($item)
     return springboard_dw_advocacy_action($item);
   } elseif ($item['queue_type'] == 'advocacy message') {
     return springboard_dw_advocacy_message($item);
-  }
+  } elseif ($item['queue_type'] == 'petition') {
+    return springboard_dw_petition($item);
+  } elseif ($item['queue_type'] == 'social action') {
+    return springboard_dw_advocacy_action($item);
+  } elseif ($item['queue_type'] == 'submission') {
+  return springboard_dw_submission($item);
+}
   // ... other queues
 }
 
@@ -878,6 +1080,103 @@ function springboard_dw_advocacy_action($item)
     return false;
   }
 }
+
+/**
+ * Send an advocacy petition record to the Springboard data warehouse API.
+ * @param $item
+ */
+function springboard_dw_petition($item)
+{
+  // Define the endpoint
+  $endpoint = springboard_dw_api_endpoint('action/create');
+
+  // Instantiate an API client instance
+  $api_client = springboard_api_client();
+
+  // Clean up the item and add authentication to the form params
+  $item = springboard_api_prep_call($item);
+
+  // Attempt Guzzle client request
+  $res = $api_client->request('POST', $endpoint, array(
+    'form_params' => $item
+  ));
+
+  // Response body
+  $resBody = json_decode($res->getBody());
+
+  // Looks like the api response was good
+  if ($res->getStatusCode() == 200) {
+
+    // Insert the user account into the Drupal data warehouse table
+    db_insert('springboard_data_warehouse')->fields(array(
+      'type'      => 'petition',
+      'drupal_id' => $item['form_id'],
+      'created'   => time()
+    ))->execute();
+
+    // Respond back successfully to the queue to remove the item
+    return true;
+
+  } else {
+
+    // Log the API error
+    drush_log('Error sending petition/action API call.', 'warning');
+    drush_print($endpoint . '?' . http_build_query($item));
+    drush_print_r($resBody);
+
+    // Respond back with failure to retry in the queue
+    return false;
+  }
+}
+
+/**
+ * Send a submission to the Springboard data warehouse API.
+ * @param $item
+ */
+function springboard_dw_submission($item)
+{
+  // Define the endpoint
+  $endpoint = springboard_dw_api_endpoint('submission/create');
+
+  // Instantiate an API client instance
+  $api_client = springboard_api_client();
+
+  // Clean up the item and add authentication to the form params
+  $item = springboard_api_prep_call($item);
+
+  // Attempt Guzzle client request
+  $res = $api_client->request('POST', $endpoint, array(
+    'form_params' => $item
+  ));
+
+  // Response body
+  $resBody = json_decode($res->getBody());
+
+  // Looks like the api response was good
+  if ($res->getStatusCode() == 200) {
+
+    // Insert the user account into the Drupal data warehouse table
+    db_insert('springboard_data_warehouse')->fields(array(
+      'type'      => 'submission',
+      'drupal_id' => $item['submission_id'],
+      'created'   => time()
+    ))->execute();
+
+    // Respond back successfully to the queue to remove the item
+    return true;
+
+  } else {
+
+    // Log the API error
+    drush_log('Error sending submission API call.', 'warning');
+    drush_print($endpoint . '?' . http_build_query($item));
+    drush_print_r($resBody);
+
+    // Respond back with failure to retry in the queue
+    return false;
+  }
+}
+
 
 /**
  * Implements hook_cron_queue_info().
