@@ -478,12 +478,22 @@ function page_wrappers_form_node_form_alter(&$form, $form_state, $form_id) {
 
   // page_wrapper_node_form
   if ($form_id == 'page_wrapper_node_form') {
+    $lang = $form['language']['#value'];
     // add some help the body (Template HTML) field
-    // TODO: fix language lookup.
-    $form['body']['und'][0]['#prefix'] = '<p class="wrapper-text">';
-    $form['body']['und'][0]['#prefix'] .= t('The template should only include the content of the HTML &lt;body&gt; tag. <strong>Do not</strong> include the &lt;html&gt;, &lt;head&gt, or &lt;body&gt  tags in the template.');
-    $form['body']['und'][0]['#prefix'] .= t('Use the placeholder <strong>[content]</strong> to denote where the body content should be output, and <strong>[title]</strong> where the page title should appear, and <strong>[messages]</strong> where the error messages should appear.');
-    $form['body']['und'][0]['#prefix'] .= '</p>';
+    $form['body'][$lang][0]['#prefix'] = '<p class="wrapper-text">';
+    $form['body'][$lang][0]['#prefix'] .= t('The template should only include the content of the HTML &lt;body&gt; tag. <strong>Do not</strong> include the &lt;html&gt;, &lt;head&gt, or &lt;body&gt  tags in the template.');
+    $form['body'][$lang][0]['#prefix'] .= t('Use the placeholder <strong>[content]</strong> to denote where the body content should be output, and <strong>[title]</strong> where the page title should appear, and <strong>[messages]</strong> where the error messages should appear.');
+    $form['body'][$lang][0]['#prefix'] .= '</p>';
+
+    // Remove themes from the CSS list based on settings in springboard_admin
+    if(module_exists('springboard_admin') && _springboard_admin_apply_treatment($GLOBALS['user'])) {
+      $listed_themes = variable_get('springboard_listed_themes', array('springboard_base', 'springboard_backend', 'springboard_frontend'));
+      foreach($form['page_wrappers_theme_css'][$lang]['#options'] as $key=>$theme) {
+        if(!in_array($key, $listed_themes)) {
+          unset($form['page_wrappers_theme_css'][$lang]['#options'][$key]);
+        }
+      }
+    }
   }
 }
 
