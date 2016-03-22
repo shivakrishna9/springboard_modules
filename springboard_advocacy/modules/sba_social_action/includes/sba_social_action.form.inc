@@ -242,7 +242,8 @@ function sba_social_action_form_validate($form, &$form_state) {
       form_set_value($form['smarty_geo'], $smarty_geo, $form_state);
       if (isset($smarty_geo['zip']) && isset($smarty_geo['plus4'])) {
         $zip_plus_four = &_webform_user_find_field($form, $component_hierarchy['sbp_zip_plus_four']);
-        form_set_value($zip_plus_four, $smarty_geo['zip'] . '-' . $smarty_geo['plus4'], $form_state);      }
+        form_set_value($zip_plus_four, $smarty_geo['zip'] . '-' . $smarty_geo['plus4'], $form_state);
+      }
     }
     else {
       form_set_error('', t('We could not verify your address. Please check that the street, city, state and zip code information is correct.'));
