@@ -27,9 +27,10 @@ function sba_social_action_message_preview_page($nid) {
       else {
         $mess = 0;
       }
-
+      $numbers = range(0, $mess - 1);
+      shuffle($numbers);
       for ($x=0; $x<$mess; $x++) {
-        $random_array[$node->messages[$message['message_id']]->sba_message_id][] = mt_rand(0, $mess - 1);
+        $random_array[$node->messages[$message['message_id']]->sba_message_id][] = $numbers[$x];
       }
 
       // Sort criteria for message targets.
@@ -89,6 +90,13 @@ function sba_social_action_message_preview_page($nid) {
     'noscript' => array('#markup' => '<noscript><div class="alert error">Javascript is required. Please enable javascript in your browser.</div></noscript>'),
     'sba_social_action_preview_form' => drupal_get_form('sba_social_action_preview_form', $node, $messages, $random_array),
   );
+
+  // We can't really tell if the user takes action, so non-empty $messages
+  // is the closest we'll get.
+  $sid = !empty($_SESSION['social_action_sid']['sid']) ? $_SESSION['social_action_sid']['sid'] : FALSE;
+  if (!empty($_SESSION['social_contact']) && !empty($messages)) {
+    springboard_advocacy_success($node, $_SESSION['social_contact'], $messages, $sid);
+  }
 
   return $build;
 }
@@ -196,7 +204,8 @@ function sba_social_action_preview_form($form, $form_state, $node, $messages, $r
   );
   // Used to send our second step form through the same helper functions as the first step form.
   module_load_include('inc', 'sba_social_action', 'includes/sba_social_action.form');
-
+  static $id = 0;
+  static $n = 0;
   foreach ($messages as $key => $message) {
 
     // What type of message is this.
@@ -239,7 +248,11 @@ function sba_social_action_preview_form($form, $form_state, $node, $messages, $r
           $alternatives[] = $alt_tweet;
         }
       }
-      static $n = 0;
+
+      // Reset $n if there are multiple messages.
+      if ($id != $message_entity->sba_message_id) {
+        $n = 0;
+      }
       // $random_array is defined in the build function so that it does not
       // change after the form ajax reload.
       if (isset($random_array[$message_entity->sba_message_id])) {
@@ -259,6 +272,7 @@ function sba_social_action_preview_form($form, $form_state, $node, $messages, $r
       else {
         $n = 0;
       }
+      $id = $message_entity->sba_message_id;
     }
 
 
@@ -389,7 +403,7 @@ function sba_social_action_preview_form($form, $form_state, $node, $messages, $r
   $form['#submit'][] = 'sba_social_action_preview_form_submit';
 
   $submit_field = field_get_items('node', $node, 'field_sba_social_step_two_submit');
-  $markup = isset($submit_field[0]['value']) ? $submit_field[0]['value'] : t("I'm done");
+  $markup = !empty($submit_field[0]['value']) ? $submit_field[0]['value'] : t("I'm done");
   // Add submit button
   $form['form_container']['submit'] = array(
     '#prefix' => '<div id="edit-actions">',

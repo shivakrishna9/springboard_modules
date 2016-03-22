@@ -82,7 +82,7 @@ function sba_social_action_additional_elements(&$form, &$form_state) {
     // Hide the address fields. Use webform user to find them.
     $node = $form['#node'];
     $components = $node->webform['components'];
-    $component_hierarchy = __webform_user_parse_components($node->nid, $components);
+    $component_hierarchy = webform_user_parse_components($node->nid, $components);
     $sbp_address = &_webform_user_find_field($form, $component_hierarchy['sbp_address']);
     $sbp_address_line_2 = &_webform_user_find_field($form, $component_hierarchy['sbp_address_line_2']);
     $sbp_city = &_webform_user_find_field($form, $component_hierarchy['sbp_city']);
