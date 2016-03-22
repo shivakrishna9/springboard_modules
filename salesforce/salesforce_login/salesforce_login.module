@@ -137,9 +137,15 @@ function salesforce_login_user_save($mail, $contact) {
   // $account->sbp_last_name[LANGUAGE_NONE][0]['value'].
   $user_to_contact_mapping = salesforce_mapping_load('user_to_contact');
   foreach ($user_to_contact_mapping->field_mappings as $field_mapping) {
+    // Only grab fields that should be synced from Salesforce to Drupal.
     if ($field_mapping['direction'] == 'sf_drupal') {
+      // Only grab mapped fields returned in the query from Salesforce.
       if (isset($contact->{$field_mapping['salesforce_field']['name']})) {
-        $account->{$field_mapping['drupal_field']['fieldmap_value']}['und'][0]['value'] = $contact->{$field_mapping['salesforce_field']['name']};
+        // We explicitly set $account->mail above, so don't change it here.
+        if ($field_mapping['drupal_field']['fieldmap_value'] != 'mail') {
+          // Add the profile field to the $account object.
+          $account->{$field_mapping['drupal_field']['fieldmap_value']}['und'][0]['value'] = $contact->{$field_mapping['salesforce_field']['name']};
+        }
       }
     }
   }
