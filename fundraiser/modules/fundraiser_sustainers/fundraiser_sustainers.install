@@ -910,11 +910,11 @@ function fundraiser_sustainers_update_7013(&$sandbox) {
     $sandbox['current_did'] = $row->master_did;
   }
 
-  $return = array(
-    '#finished' => empty($sandbox['max']) ? 1 : ($sandbox['progress'] / $sandbox['max']),
-  );
+  $sandbox['#finished'] = empty($sandbox['max']) ? 1 : ($sandbox['progress'] / $sandbox['max']);
 
-  return $return;
+  if ($sandbox['#finished'] >= 1) {
+    return t('Fundraiser sustainers donations have been migrated to fundraiser sustainers series entities.');
+  }
 }
 
 /**

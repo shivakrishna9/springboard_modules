@@ -335,6 +335,7 @@ function market_source_webform_after_build($form, &$form_state) {
   }
   // When viewing a submission record, expose Market Source fields for editing.
   if (!empty($form['#submission'])) {
+    // @todo This code totally does not work. kljr 3/10/2016.
     $qs_keys = _market_source_build_qs_keys();
     foreach (array_keys($qs_keys) as $key) {
       $element = &_market_source_form_find_element($form, $key);
@@ -358,33 +359,36 @@ function market_source_webform_after_build($form, &$form_state) {
     );
     // Add form_keys to the JS settings array.
     drupal_add_js(array('market_source' => $settings), 'setting');
-  }
 
-  // Populate device info fields.
-  if (libraries_load('mobiledetect')) {
-    $mobile_detect = new Market_Source_Mobile_Detect();
-    $device_properties = $mobile_detect->getDeviceProperties();
+    // Populate device info fields.
+    if (libraries_load('mobiledetect')) {
+      $mobile_detect = new Market_Source_Mobile_Detect();
 
-    if (!$mobile_detect->isMobile()) {
-      if (libraries_load('phpuseragent')) {
-        $ua_parse = parse_user_agent($mobile_detect->getUserAgent());
+      if (!empty($mobile_detect->getUserAgent())) {
+        $device_properties = $mobile_detect->getDeviceProperties();
 
-        $device_properties['os'] = $ua_parse['platform'];
-        $device_properties['browser'] = $ua_parse['browser'] . ' ' . $ua_parse['version'];
+        if (!$mobile_detect->isMobile()) {
+          if (libraries_load('phpuseragent')) {
+            $ua_parse = parse_user_agent($mobile_detect->getUserAgent());
+
+            $device_properties['os'] = $ua_parse['platform'];
+            $device_properties['browser'] = $ua_parse['browser'] . ' ' . $ua_parse['version'];
+          }
+        }
+
+        $device_type = &_market_source_form_find_element($form, 'device_type');
+        $device_type['#value'] = $device_properties['type'];
+
+        $device_name = &_market_source_form_find_element($form, 'device_name');
+        $device_name['#value'] = $device_properties['name'];
+
+        $device_os = &_market_source_form_find_element($form, 'device_os');
+        $device_os['#value'] = $device_properties['os'];
+
+        $device_browser = &_market_source_form_find_element($form, 'device_browser');
+        $device_browser['#value'] = $device_properties['browser'];
       }
     }
-
-    $device_type = &_market_source_form_find_element($form, 'device_type');
-    $device_type['#value'] = $device_properties['type'];
-
-    $device_name = &_market_source_form_find_element($form, 'device_name');
-    $device_name['#value'] = $device_properties['name'];
-
-    $device_os = &_market_source_form_find_element($form, 'device_os');
-    $device_os['#value'] = $device_properties['os'];
-
-    $device_browser = &_market_source_form_find_element($form, 'device_browser');
-    $device_browser['#value'] = $device_properties['browser'];
   }
 
   // Mandatory return value for #after_build callbacks.

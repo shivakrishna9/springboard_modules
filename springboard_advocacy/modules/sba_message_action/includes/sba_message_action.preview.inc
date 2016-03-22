@@ -227,7 +227,7 @@ function sba_message_action_preview_form($form, $form_state, $node) {
   // Add submit button
   $submit_field = field_get_items('node', $node, 'field_sba_action_step_two_submit');
   $submit_value = field_view_value('node', $node, 'field_sba_action_step_two_submit', $submit_field[0]);
-  $markup = isset($submit_value['#markup']) ? $submit_value['#markup'] : t('Send Now');
+  $markup = !empty($submit_value['#markup']) ? $submit_value['#markup'] : t('Send Now');
   $form['submit'] = array(
     '#prefix' => '<div id="edit-actions">',
     '#suffix' => '</div>',
@@ -382,7 +382,11 @@ function sba_message_action_preview_form_submit($form, &$form_state) {
       return;
     }
   }
-
+  // Fire the success hook for multi-step actions.
+  if (isset($response->data)) {
+    $sid = !empty($_SESSION['action_sid']['sid']) ? $_SESSION['action_sid']['sid'] : FALSE;
+    springboard_advocacy_success($node, $form_state['values']['contact'], (array) $response->data->messages, $sid);
+  }
   // Add session flag to prevent resubmission of the form
   $_SESSION['action_sid']['completed'] = TRUE;
   unset($_SESSION['retries']);

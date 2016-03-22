@@ -144,16 +144,14 @@ function sba_message_action_queues_access($nid) {
  */
 function sba_message_action_preview_access($nid) {
   $node = node_load($nid);
+  $access = FALSE;
   if (isset($node->type) &&  $node->type == 'sba_message_action') {
-    $session_nid = isset($_SESSION['action_sid']['nid']) ? $_SESSION['action_sid']['nid'] : 0;
-    if (($session_nid && $session_nid != $nid)) {
-      return FALSE;
-    }
-    if (!$session_nid) {
-      return FALSE;
+    $session_nid = isset($_SESSION['action_sid']['nid']) ? $_SESSION['action_sid']['nid'] : FALSE;
+    if ($session_nid && $session_nid == $nid) {
+      $access = TRUE;
     }
   }
-  return TRUE;
+  return $access;
 }
 
 /**
@@ -231,14 +229,27 @@ function sba_message_action_node_presave($node) {
 
 /**
  * Implements hook_node_insert().
- *
- * Adds some custom fields to new webforms.
  */
 function sba_message_action_node_insert($node) {
   if ($node->type == 'sba_message_action') {
+    // Adds some custom fields to new webforms.
     module_load_include('inc', 'sba_message_action', 'includes/sba_message_action.components');
     sba_message_action_insert_components($node);
     sba_message_action_update_multiflow_component($node);
+
+    // If this is a cloned node, save the cloned confirmation message data.
+    // We cannot do with with hook_clone_node_alter() because the nid of the new
+    // node is not yet available when that hook is fired.
+    if (isset($node->clone_from_original_nid)) {
+      if (isset($node->custom_confirmation)) {
+        $record = array(
+          'nid' => $node->nid,
+          'custom_confirmation' => $node->custom_confirmation,
+          'fail_message' => $node->custom_fail_message,
+        );
+        drupal_write_record('sba_message_action_confirm', $record);
+      }
+    }
   }
 }
 
@@ -319,7 +330,7 @@ function sba_message_action_node_load($nodes, $types) {
       $node->precedence = !empty($precedence) ? $precedence : 0;
 
       // Unset form layout if default.
-      if (isset($node->form_layouts) &&  ($node->form_layouts == 'two_column_message_right' || $node->form_layouts == 'one_column ')) {
+      if (isset($node->form_layouts) &&  ($node->form_layouts == 'two_column_message_right' || $node->form_layouts == 'one_column' || arg(2) == 'submission')) {
         unset($node->form_layouts);
       }
 
@@ -359,10 +370,11 @@ function sba_message_action_process_page(&$vars) {
  * Insert webform goals widget.
  */
 function sba_message_action_preprocess_node(&$vars) {
+
   if ($vars['node']->type == 'sba_message_action') {
     // Add theme wrappers for non-form-layout layouts.
     $vars['use_layouts'] = !empty($vars['form_layouts']) && $vars['form_layouts'] != 'one_column' ? TRUE : FALSE;
-    if (empty($vars['use_layouts']) || $vars['form_layouts'] == 'one_column') {
+    if (empty($vars['use_layouts']) || $vars['form_layouts'] == 'one_column' || arg(2) == 'submission') {
       $vars['content']['webform']['#theme_wrappers'][] = 'message_action_webform_wrapper';
       $vars['content']['webform']['#form']['submitted']['#theme_wrappers'][] = 'message_action_submitted_wrapper';
       $vars['content']['webform']['#form']['sba_messages']['#theme_wrappers'][] = 'message_action_messages_wrapper';
@@ -414,7 +426,7 @@ function sba_message_action_form_alter(&$form, &$form_state, $form_id) {
     // Yes it is the user-facing form. Add all our custom non-webform-component
     // form items which insert or display message-entity data in the
     // message-action webform.
-    if ($client_form !== FALSE) {
+    if ($client_form !== FALSE && arg(2) != 'submission') {
 
       if (empty($form['#node']->show_my_name)) {
         $form['submitted']['sbp_sba_action_optin']['#access'] = FALSE;
@@ -1029,7 +1041,7 @@ function sba_message_action_flush_caches() {
 function sba_message_action_page_wrappers_page_node_alter(&$node) {
   if (arg(2) == 'message-preview' && is_numeric(arg(1))) {
     $is_wrapped = node_load(arg(1));
-    if (isset($is_wrapped->type) && $is_wrapped->type ='sba_message_action') {
+    if (isset($is_wrapped->type) && $is_wrapped->type == 'sba_message_action') {
       $node = $is_wrapped;
     }
   }
