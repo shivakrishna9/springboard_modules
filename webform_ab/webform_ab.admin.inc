@@ -185,26 +185,17 @@ function webform_ab_test_webforms($node) {
   );
 
   // Prevent removal of tests if any tests have recorded data already:
-  $testing_has_started = FALSE;
-  if (_webform_ab_has_testing_started($node)) {
-    $testing_has_started = TRUE;
-  }
-
+  $testing_has_started = _webform_ab_has_testing_started($node);
   $rows = array();
   if (!empty($node->included_webforms) && is_array($node->included_webforms)) {
     foreach ($node->included_webforms as $webform_nid => $webform_details) {
-      if ($testing_has_started) {
-        $removal_link = '&nbsp;';
-      }
-      else {
-        $removal_link = l(t('remove from test'), 'node/' . $node->nid . '/webforms/remove/' . $webform_nid);
-      }
+      $removal_link = l(t('remove from test'), 'node/' . $node->nid . '/webforms/remove/' . $webform_nid);
       $rows[] = array(
         $webform_details['title'],
         $webform_ab_status_labels[$webform_details['status']],
         l(t('view'), 'node/' . $webform_nid) . ' ' .
         l(t('edit'), 'node/' . $webform_nid . '/edit') . ' ' .
-        $removal_link,
+        $testing_has_started ? '&nbsp;' : $removal_link,
       );
     }
   }
@@ -410,23 +401,24 @@ function webform_ab_clear_test_data_confirm_submit($form, &$form_state) {
 }
 
 /**
- * Determine if any webform_ab tests are populated with data.
+ * Returns TRUE if any webform_ab tests are populated with data.
  *
- * @param $node Node Object of the webform_ab node.
+ * @param $test__node
+ *   Node Object of the a/b test node.
  *
  */
-function _webform_ab_has_testing_started($node) {
-  foreach ($node->included_webforms as $webform_nid => $webform_details) {
-    $query_token = array(':nid' => $webform_nid);
-    $hits_query = db_query("SELECT test_nid FROM {webform_ab_hits} WHERE test_nid = :nid", $query_token);
-    foreach ($hits_query as $result) {
-      return TRUE;
-    }
-    $conversions_query = db_query("SELECT test_nid FROM {webform_ab_conversion} WHERE test_nid = :nid", $query_token);
-    foreach ($conversions_query as $result) {
-      return TRUE;
+function _webform_ab_has_testing_started($test_node) {
+  $win_conditions = _webform_ab_get_win_condition_plugins();
+  foreach ($win_conditions as $plugin_key => $plugin) {
+    if ($has_ab_test_started_function = ctools_plugin_get_function($plugin, 'has test started')) {
+      foreach ($test_node as $webform_nid => $data) {
+        if (function_exists($has_ab_test_started_function)) {
+          if ($has_ab_test_started_function($webform_nid)) {
+            return TRUE;
+          }
+        }
+      }
     }
   }
-
-  return FALSE; 
+  return FALSE;
 }
