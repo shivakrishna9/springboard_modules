@@ -21,7 +21,7 @@
         // Helper function, provides the total display.
         function _recalculate_quantity_total() {
           $('#quantity-total').empty();
-          var amount = $('input[type="radio"][name*="amount"]:checked').val();
+          var amount = $('input[type="radio"][name*="amount"]:checked:visible').val();
           if (amount == 'other') {
             amount = $('input[name*="other_amount"]').val();
           }

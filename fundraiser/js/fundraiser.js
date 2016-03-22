@@ -83,5 +83,15 @@ Drupal.behaviors.fundraiserBehavior = {
   // Show payment option "selected" images when rolling over.
   $('img[id*="payment-option-img"]').hover(hoverInImage, hoverOutImage);
 
+  // Prevent multiple defaults per set of ask amounts.
+  $('#edit-fundraiser-settings input[type=checkbox][name*="[default_amount]"]').change(function(e) {
+    if (this.checked) {
+      // Uncheck all others.
+      $(this).parents('.form-wrapper').first().find(
+        'input[type=checkbox][name*="[default_amount]"]:not([name="' + this.name + '"]):checked'
+      ).attr('checked', false);
+    }
+  });
+
   })(jQuery); }
 }

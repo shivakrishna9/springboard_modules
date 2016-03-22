@@ -80,6 +80,13 @@ function fundraiser_schema() {
         'type' => 'text',
         'not null' => FALSE,
       ),
+      'default_amount' => array(
+        'description' => 'Ask amount for the donation form to default to.',
+        'type' => 'numeric',
+        'not null' => FALSE,
+        'precision' => '15',
+        'scale' => '3',
+      ),
     ),
     'primary key' => array('nid'),
   );
@@ -508,4 +515,21 @@ function fundraiser_update_7008() {
   if (db_table_exists('fundraiser_currencies')) {
     db_drop_table('fundraiser_currencies');
   }
+}
+
+/**
+ * Add default_amount field to {fundraiser}.
+ */
+function fundraiser_update_7009() {
+  $field = array(
+    'default_amount' => array(
+      'description' => 'Ask amount for the donation form to default to.',
+      'type' => 'numeric',
+      'not null' => FALSE,
+      'precision' => '15',
+      'scale' => '3',
+    ),
+  );
+  db_add_field('fundraiser', 'default_amount', $field['default_amount']);
+  return array();
 }

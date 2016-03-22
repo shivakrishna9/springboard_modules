@@ -593,7 +593,7 @@ function _fundraiser_tickets_ticket_settings_form_organize($form, $form_state){
  */
 function _fundraiser_tickets_ticket_settings_form_validate(&$form, &$form_state) {
   // Restore default gateway settings lost due to gateway fields being hidden.
-  $gateways = $form['fundraiser_settings']['gateways'];
+  $gateways = $form['payment_methods']['gateways'];
   foreach (array_keys($gateways) as $gateway_value) {
     if (is_array($gateways[$gateway_value])) {
       $gateway = $gateways[$gateway_value];
