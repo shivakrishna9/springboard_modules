@@ -2117,13 +2117,7 @@ function springboard_p2p_fundraiser_donation_success($donation) {
     
     // If the donor has opted to show their name, save it with the action.
     if ($action['show_name']) {
-      $account = user_load($action['uid']);
-      $donor_name = springboard_p2p_format_user_full_name($account);
-      
-      // Unlikely this would be empty here...
-      if ($donor_name) {
-        $action['donor_name'] = $donor_name;
-      }
+      $action['donor_name'] = $donation->donation['first_name'] . ' ' . $donation->donation['last_name'];
     }
     
     springboard_p2p_save_personal_campaign_action($action, array('sid'));
