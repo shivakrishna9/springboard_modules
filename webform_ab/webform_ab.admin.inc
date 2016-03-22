@@ -132,6 +132,7 @@ function webform_ab_test_reports($node) {
  */
 function webform_ab_test_webforms($node) {
   $return = '';
+  drupal_set_message('!');
 
   // Status labels
   $status_labels = array(
@@ -146,15 +147,19 @@ function webform_ab_test_webforms($node) {
     t('Status'),
     t('Operations'),
   );
+
+  // Prevent removal of tests if any tests have recorded data already:
+  $testing_has_started = _webform_ab_has_testing_started($node);
   $rows = array();
   if (!empty($node->included_webforms) && is_array($node->included_webforms)) {
     foreach ($node->included_webforms as $webform_nid => $webform_details) {
+      $removal_link = l(t('remove from test'), 'node/' . $node->nid . '/webforms/remove/' . $webform_nid);
       $rows[] = array(
         $webform_details['title'],
         $status_labels[$webform_details['status']],
         l(t('view'), 'node/' . $webform_nid) . ' ' .
         l(t('edit'), 'node/' . $webform_nid . '/edit') . ' ' .
-        l(t('remove from test'), 'node/' . $node->nid . '/webforms/remove/' . $webform_nid),
+        $testing_has_started ? '&nbsp;' : $removal_link,
       );
     }
   }
@@ -178,7 +183,7 @@ function webform_ab_test_webforms($node) {
  * Form to add webforms to the A/B Test
  *
  * @param $form_state
- * @param $node   Node object
+ * @param $node Node object
  */
 function webform_ab_webform_list_add($form, &$form_state, $node) {
   // Get all valid forms for the form type from other modules
@@ -215,6 +220,11 @@ function webform_ab_webform_list_add($form, &$form_state, $node) {
     '#type' => 'submit',
     '#value' => t('Add'),
   );
+
+  // If any tests alrady have data recorded disallow adding new tests:
+  if (_webform_ab_has_testing_started($node)) {
+    unset($form['add']);
+  }
 
   // If there are no more webforms that may be added, disable the form
   if (count($indexed_forms) == 0) {
@@ -377,4 +387,27 @@ function _webform_ab_get_internal_name($nid) {
   return $internal_name_query = db_query("SELECT $value_column FROM {$db_table} WHERE entity_id = :nid",
     array(':nid' => $nid))
     ->fetchField();
+}
+
+/**
+ * Returns TRUE if any webform_ab tests are populated with data.
+ *
+ * @param $test__node
+ *   Node Object of the a/b test node.
+ *
+ */
+function _webform_ab_has_testing_started($test_node) {
+  $win_conditions = _webform_ab_get_win_condition_plugins();
+  foreach ($win_conditions as $plugin_key => $plugin) {
+    if ($has_ab_test_started_function = ctools_plugin_get_function($plugin, 'has test started')) {
+      foreach ($test_node as $webform_nid => $data) {
+        if (function_exists($has_ab_test_started_function)) {
+          if ($has_ab_test_started_function($webform_nid)) {
+            return TRUE;
+          }
+        }
+      }
+    }
+  }
+  return FALSE;
 }
