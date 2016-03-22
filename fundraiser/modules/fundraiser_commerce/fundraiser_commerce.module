@@ -946,11 +946,12 @@ function fundraiser_commerce_fundraiser_donation_get_donation($donation) {
   if (!empty($order->status)) {
     $donation->status_label = _fundraiser_commerce_get_label_by_status($order->status);
     $donation->status_charged = _fundraiser_commerce_get_charged_by_status($order->status) ? 1 : 0;
+    $recurring = _fundraiser_sustainers_get_recurring_by_did($donation->did);
     if ($donation->status_charged) {
       $donation->close_date = date('Y-m-d H:i:s', $donation->last_changed);
       $donation->transaction_date = date('Y-m-d H:i:s', $donation->last_changed);
     }
-    elseif (!$donation->status_charged && !isset($donation->close_date)) {
+    elseif (!$donation->status_charged && !isset($donation->close_date) && !$recurring) {
       // Re #739 - set close date to last changed for pwmb
       $donation->close_date = date('Y-m-d', $donation->last_changed);
     }
