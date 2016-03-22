@@ -1,0 +1,92 @@
+<?php
+
+/**
+ * @file
+ * Authenticates automated user actions using HMAC tokens.
+ */
+
+/**
+ * Implements hook_menu().
+ */
+function springboard_hmac_menu() {
+  $items['hmac/%/%'] = array(
+    'title' => 'HMAC verify',
+    'description' => 'Endpoint to verify hmac encoded payloads',
+    'page callback' => 'springboard_hmac_verify',
+    'page arguments' => array(1,2),
+    'access callback' => TRUE,
+    'type' => MENU_CALLBACK,
+  );
+
+  return $items;
+}
+
+/**
+ * Verify that a given payload has not been tampered with in route.
+ * TODO: Detach from menu page callback.
+ *
+ * @param $payload
+ *   A payload string, base64 encoded.
+ * @param $hmac
+ *   A hased message authentication token.
+ */
+function springboard_hmac_verify($payload, $hmac) {
+  // TODO: Has this hmac been used before?
+
+  // Get our key
+  $key = springboard_hmac_get_key();
+  
+  $payload = springboard_hmac_parse_payload($payload);
+
+  // TODO: Check the timestamp first since that's easiest. If it's
+  // expired no need to continue with the other checks.
+
+  // Regenerate the hmac token given the payload data. If it matches the payload
+  // has not been tampered with in route. TODO: Move to a function.
+  $verification_hmac = base64_encode(hash_hmac('sha256', (string) implode('', $payload), (string) $key, TRUE));
+
+  // If the orginal token matches the one we just generated the data is unaltered and we can continue.
+  if ($hmac == $verification_hmac) {
+    // TODO: Store the hmac to use in check for repeated use.
+    // TODO: Stick payload into some sort of session data structure for future use.
+    module_invoke_all('springboard_hmac_validated', $payload);
+  } else {
+    // TODO: Payload cannot be verified. Crash and burn.
+  }
+}
+
+
+function springboard_hmac_create_hmac($message, $key) {
+  $joined_message = implode('', $message);
+  return base64_encode(hash_hmac('sha256', (string) implode('', $joined_message), (string) $key, TRUE));
+}
+
+/**
+ * Parses a message payload string into an array.
+ */
+function springboard_hmac_parse_payload($payload) {
+  // Return the message with delimiter removed.
+  $message = explode('.',  base64_decode($payload));
+  $parsed_payload = array(
+    'uid' => $message[0],
+    'timestamp' => $message[1],
+    'action' => $message[2]
+  );
+
+  $parsed_payload += array_splice($message, 3);
+  return $parsed_payload;
+}
+
+function springboard_hmac_format_payload($payload) {
+
+}
+
+function springboard_hmac_get_key() {
+  // TODO: This is very bad. Either refactor secure pp to include a function to deliver this information
+  // or use the encrypt module's encrypt key instead. The encrypt key is not currently stored in Salesforce
+  // so that would have to happen in order to be able to use it;
+  $key = variable_get('secure_prepopulate_key', NULL);
+  $iv = variable_get('secure_prepopulate_iv', NULL);
+
+  return $key . $iv;
+}
