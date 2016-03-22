@@ -109,14 +109,14 @@ function springboard_p2p_category_field_group_info() {
   $field_group->mode = 'form';
   $field_group->parent_name = 'group_tabs';
   $field_group->data = array(
-    'label' => 'Donation form',
+    'label' => 'Form Banner',
     'weight' => '3',
     'children' => array(
       0 => 'field_p2p_campaign_banner',
     ),
     'format_type' => 'htab',
     'format_settings' => array(
-      'label' => 'Donation form',
+      'label' => 'Form Banner',
       'instance_settings' => array(
         'required_fields' => 1,
         'id' => '',
