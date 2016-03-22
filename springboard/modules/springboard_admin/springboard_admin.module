@@ -190,6 +190,19 @@ function springboard_admin_form_springboard_admin_settings_alter(&$form, &$form_
       '#description' => t('Force the use of the springboard_backend theme on all Springboard-related administrative pages. The administrative theme set at admin/appearence will still be used for other Drupal administrative pages.'),
       '#default_value' => variable_get('springboard_theme_enable', 1),
     );
+    $themes = list_themes();
+    $theme_options = array();
+    foreach($themes as $key=>$theme) {
+      $theme_options[$key] = $theme->name;
+    }
+    $form['admin']['springboard_listed_themes'] = array(
+      '#type' => 'select',
+      '#title' => t('Choose themes to disclose to Springboard Admin users.'),
+      '#description' => t('Allows administrators to control the list of themes available for use in page wrappers.'),
+      '#multiple' => TRUE,
+      '#options' => $theme_options,
+      '#default_value' => variable_get('springboard_listed_themes', array('springboard_base', 'springboard_frontend', 'springboard_backend')),
+    );
     $roles = user_roles(TRUE, 'access springboard dashboard');
     $form['admin']['springboard_user_experience'] = array(
       '#type' => 'checkboxes',
