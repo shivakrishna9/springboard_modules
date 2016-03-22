@@ -1964,6 +1964,17 @@ function springboard_p2p_webform_client_form_submit($form, &$form_state) {
     // the donation is a success.
     $action['status'] = ($action['action_type'] == 'fundraiser') ? 0 : 1;
 
+    // Capture the user name for webform_user action.
+    if ($action['action_type'] == 'webform_user') {
+      $node = $form['#node'];
+      $components = $node->webform['components'];
+      $component_hierarchy = webform_user_parse_components($node->nid, $components);
+      $sbp_first_name = _webform_user_find_field($form, $component_hierarchy['sbp_first_name']);
+      $sbp_last_name = _webform_user_find_field($form, $component_hierarchy['sbp_last_name']);
+      $action['donor_name'] = $sbp_first_name['#value'] . ' ' . $sbp_last_name['#value'];
+    }
+        
+
     springboard_p2p_save_personal_campaign_action($action);
 
     $form_state['redirect'][1]['query']['p2p_pcid'] = $form_state['values']['springboard_p2p_personal_campaign_action']['personal_campaign_nid'];
