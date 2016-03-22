@@ -52,7 +52,6 @@ function fundraiser_ab_donations_count_config_validate($config, $field_name_pref
  *   Node ID of the webform currently being test.
  */
 function fundraiser_ab_donations_count_current_value($webform_nid) {
-  // TODO implement count() or similar:
   return db_query("SELECT nid FROM {fundraiser_donation} WHERE nid = :webform_nid",
     array(':webform_nid' => $webform_nid))
     ->rowCount();
