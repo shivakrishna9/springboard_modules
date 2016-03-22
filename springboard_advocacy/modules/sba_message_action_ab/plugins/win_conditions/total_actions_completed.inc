@@ -12,6 +12,7 @@ $plugin = array(
   'config form' => 'sba_message_action_ab_total_actions_completed_config',
   'config form validation' => 'sba_message_action_ab_total_actions_completed_config_validate',
   'config summary' => 'sba_message_action_ab_total_actions_completed_config_summary',
+  'current value' => 'sba_message_action_ab_total_actions_completed_current_value',
   'check criteria' => 'sba_message_action_ab_total_actions_completed_check_win',
 );
 
@@ -56,6 +57,18 @@ function sba_message_action_ab_total_actions_completed_config_summary($config) {
   return $config['actions_completed'];
 }
 
+
+
+/**
+ * Returns the current value of this win condition.
+ *
+ * @param $webform_nid
+ *   Note ID for the webform being tested.
+ */
+
+function sba_message_action_ab_total_actions_completed_current_value($webform_nid) {
+  return 0;
+}
 
 /**
  * Check if the given Webform A/B Test node has a winner
