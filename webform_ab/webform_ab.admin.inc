@@ -221,17 +221,21 @@ function webform_ab_webform_list_add($form, &$form_state, $node) {
     '#value' => t('Add'),
   );
 
-  // If any tests alrady have data recorded disallow adding new tests:
-  if (_webform_ab_has_testing_started($node)) {
+  // If there are no more webforms that may be added or testing has started, disable the form
+  if (count($indexed_forms) == 0 || _webform_ab_has_testing_started($node)) {
     unset($form['add']);
+    $form['add_form_id']['#title'] = '';
+    $form['add_form_id']['#disabled'] = TRUE;
+    $form['add_form_id']['#type'] = 'fieldset';
+    if (count($indexed_forms) == 0) {
+      $disabled_descr = t('There are no more webforms available to be added to this A/B test.');
+    }
+    else {
+      $disabled_descr = t('Webforms cannot be added or removed because testing has started.');
+    }
+    $form['add_form_id']['#description'] = $disabled_descr;
   }
 
-  // If there are no more webforms that may be added, disable the form
-  if (count($indexed_forms) == 0) {
-    $form['add_form_id']['#disabled'] = TRUE;
-    $form['add_form_id']['#description'] = 'There are no more webforms available to be added to this A/B test.';
-    unset($form['add']);
-  }
   return $form;
 }
 
