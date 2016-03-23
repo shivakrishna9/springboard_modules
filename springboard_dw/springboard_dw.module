@@ -185,8 +185,6 @@ function springboard_dw_map_social_action_item($message, $action, $node)
   return $message_item;
 }
 
-
-
 /**
  * Implements hook_fundraiser_donation_success().
  * @param $donation
@@ -236,7 +234,7 @@ function springboard_dw_node_update($node)
   if (!springboard_dw_item_is_warehoused('form', $node->nid)) {
     // Map the node/form item (insert)
     $node_item = springboard_dw_map_form_item($node);
-  } else{
+  } else {
     // Map the node/form item (update)
     $node_item = springboard_dw_map_form_item($node, true); // Update operation
   }
@@ -299,7 +297,7 @@ function springboard_dw_user_update(&$edit, $account, $category)
   if (!springboard_dw_item_is_warehoused('contact', $account->uid)) {
     // Map the user contact (insert)
     $contact_item = springboard_dw_map_contact_item($account->uid, $user_data);
-  } else{
+  } else {
     // Map the user contact (update)
     $contact_item = springboard_dw_map_contact_item($account->uid, $user_data, true);
   }
@@ -759,26 +757,7 @@ function springboard_dw_export_item($item)
   // ... other queues
 }
 
-/**
- * Helper function to query the data warehouse table to determine if this item has been recorded as being warehoused already.
- * @param $type
- * @param $drupal_id
- */
-function springboard_dw_item_is_warehoused($type, $drupal_id)
-{
 
-  // Query items from the data warehouse table that match the item id and type
-  $query = db_query("select * from {springboard_data_warehouse} where drupal_id = :drupal_id and type = :type", array(':type' => $type, ':drupal_id' => $drupal_id));
-
-  // If an item is found, we do not need to warehouse this item
-  if ($query->rowCount() > 0) {
-    return true;
-  }
-
-  // If this item is not warehoused, return false
-  return false;
-
-}
 
 /**
  * Send a contact record to the Springboard data warehouse API.
@@ -786,47 +765,20 @@ function springboard_dw_item_is_warehoused($type, $drupal_id)
  */
 function springboard_dw_contact($item)
 {
-
-  // Define the endpoint
-  $endpoint = springboard_dw_api_endpoint('contact/create');
-
-  // If the queue item is an update, change the API call accordingly
-  if (isset($item['queue_item_update']) && $item['queue_item_update']) {
-    $endpoint = springboard_dw_api_endpoint('contact/update');
-  }
-
-  // Instantiate an API client instance
-  $api_client = springboard_dw_api_client();
-
-  // Clean up the item and add authentication to the form params
-  $item = springboard_dw_api_prep_call($item);
-
-  // Attempt Guzzle client request
-  $api_response = $api_client->request('POST', $endpoint, array(
-    'form_params' => $item
-  ));
-
-  // Response body
-  $response_body = json_decode($api_response->getBody());
+  // Make the API call
+  $api_response = springboard_dw_api_call('contact/create', $item);
 
   // Looks like the api response was good
   if ($api_response->getStatusCode() == 200) {
 
-    // If the item hasn't been warehoused then this is an insert and we should consider the item tracked in Drupal
-    if (!isset($item['queue_item_update']) && !springboard_dw_item_is_warehoused('contact', $item['contact_id'])) {
-      // Insert the user account into the Drupal data warehouse table
-      db_insert('springboard_data_warehouse')->fields(array(
-        'type'      => 'contact',
-        'drupal_id' => $item['contact_id'],
-        'created'   => time()
-      ))->execute();
-    }
+    // Mark this item as warehoused in Drupal
+    springboard_dw_track_item_warehouse_success('contact', $item['contact_id']);
 
     return true;
 
   } else {
     // Log the API error
-    springboard_dw_api_log_error('Error sending contact API call.',$endpoint, $item, $response_body);
+    springboard_dw_api_log_error('Error sending contact API call.', 'contact/create', $item, json_decode($api_response->getBody()));
 
     // Respond back with failure to retry in the queue
     return false;
@@ -840,39 +792,21 @@ function springboard_dw_contact($item)
  */
 function springboard_dw_donation($item)
 {
-
-  // Define the endpoint
-  $endpoint = springboard_dw_api_endpoint('donation/create');
-
-  // Instantiate an API client instance
-  $api_client = springboard_dw_api_client();
-
-  // Clean up the item and add authentication to the form params
-  $item = springboard_dw_api_prep_call($item);
-
-  // Attempt Guzzle client request
-  $api_response = $api_client->request('POST', $endpoint, array(
-    'form_params' => $item
-  ));
-
-  // Response body
-  $response_body = json_decode($api_response->getBody());
+  // Make the API call
+  $api_response = springboard_dw_api_call('donation/create', $item);
 
   // If the response is successful, add the user_warehoused parameter to the Drupal user account so we can skip this check in subsequent donations
   if ($api_response->getStatusCode() == 200) {
-    // Insert the user account into the Drupal data warehouse table
-    db_insert('springboard_data_warehouse')->fields(array(
-      'type'      => 'donation',
-      'drupal_id' => $item['donation_id'],
-      'created'   => time()
-    ))->execute();
+
+    // Mark this item as warehoused in Drupal
+    springboard_dw_track_item_warehouse_success('donation', $item['donation_id']);
 
     // Respond back successfully to the queue to remove the item
     return true;
 
   } else {
     // Log the API error
-    springboard_dw_api_log_error('Error sending donation API call.',$endpoint, $item, $response_body);
+    springboard_dw_api_log_error('Error sending donation API call.', 'donation/create', $item, json_decode($api_response->getBody()));
 
     // Respond back with failure to retry in the queue
     return false;
@@ -886,49 +820,21 @@ function springboard_dw_donation($item)
  */
 function springboard_dw_form($item)
 {
-  // Define the endpoint
-  $endpoint = springboard_dw_api_endpoint('form/create');
-
-  // If the queue item is an update, change the API call accordingly
-  if (isset($item['queue_item_update']) && $item['queue_item_update']) {
-    $endpoint = springboard_dw_api_endpoint('form/update');
-  }
-
-  // Instantiate an API client instance
-  $api_client = springboard_dw_api_client();
-
-  // Clean up the item and add authentication to the form params
-  $item = springboard_dw_api_prep_call($item);
-
-  // Attempt Guzzle client request
-  $api_response = $api_client->request('POST', $endpoint, array(
-    'form_params' => $item
-  ));
-
-  // Response body
-  $response_body = json_decode($api_response->getBody());
+  // Make the API call
+  $api_response = springboard_dw_api_call('form/create', $item);
 
   // Looks like the api response was good
   if ($api_response->getStatusCode() == 200) {
-    //if ($api_response->getStatusCode() == 200 && $response_body['message'] == 'Successfully created form.') {
 
-    // If the item hasn't been warehoused then this is an insert and we should consider the item tracked in Drupal
-    if (!isset($item['queue_item_update']) && !springboard_dw_item_is_warehoused('form', $item['form_id'])) {
-
-      // Insert the user account into the Drupal data warehouse table
-      db_insert('springboard_data_warehouse')->fields(array(
-        'type'      => 'form',
-        'drupal_id' => $item['form_id'],
-        'created'   => time()
-      ))->execute();
-    }
+    // Mark this item as warehoused in Drupal
+    springboard_dw_track_item_warehouse_success('form', $item['form_id']);
 
     // Respond back successfully to the queue to remove the item
     return true;
 
   } else {
     // Log the API error
-    springboard_dw_api_log_error('Error sending form API call.',$endpoint, $item, $response_body);
+    springboard_dw_api_log_error('Error sending form API call.', 'form/create', $item, json_decode($api_response->getBody()));
 
     // Respond back with failure to retry in the queue
     return false;
@@ -942,44 +848,27 @@ function springboard_dw_form($item)
  */
 function springboard_dw_advocacy_message($item)
 {
-  // Define the endpoint
-  $endpoint = springboard_dw_api_endpoint('message/create');
 
-  // Instantiate an API client instance
-  $api_client = springboard_dw_api_client();
-
-  // Clean up the item and add authentication to the form params
-  $item = springboard_dw_api_prep_call($item);
-
+  // We need to get the full message data before warehousing the message
   $transaction_server_api_call = springboard_advocacy_api_call();
   $full_message = $transaction_server_api_call->invokeClientMethod('getMessage', $item['message_id']);
-
   $item = springboard_dw_map_advocacy_message_item($item, $full_message->data[0]);
 
-  // Attempt Guzzle client request
-  $api_response = $api_client->request('POST', $endpoint, array(
-    'form_params' => $item
-  ));
-
-  // Response body
-  $response_body = json_decode($api_response->getBody());
+  // Make the API call
+  $api_response = springboard_dw_api_call('message/create', $item);
 
   // Looks like the api response was good
   if ($api_response->getStatusCode() == 200) {
 
-    // Insert the user account into the Drupal data warehouse table
-    db_insert('springboard_data_warehouse')->fields(array(
-      'type'      => 'advocacy message',
-      'drupal_id' => $item['message_id'],
-      'created'   => time()
-    ))->execute();
+    // Mark this item as warehoused in Drupal
+    springboard_dw_track_item_warehouse_success('advocacy message', $item['message_id']);
 
     // Respond back successfully to the queue to remove the item
     return true;
 
   } else {
     // Log the API error
-    springboard_dw_api_log_error('Error sending message API call.',$endpoint, $item, $response_body);
+    springboard_dw_api_log_error('Error sending message API call.', 'message/create', $item, json_decode($api_response->getBody()));
 
     // Respond back with failure to retry in the queue
     return false;
@@ -992,39 +881,21 @@ function springboard_dw_advocacy_message($item)
  */
 function springboard_dw_advocacy_action($item)
 {
-  // Define the endpoint
-  $endpoint = springboard_dw_api_endpoint('action/create');
-
-  // Instantiate an API client instance
-  $api_client = springboard_dw_api_client();
-
-  // Clean up the item and add authentication to the form params
-  $item = springboard_dw_api_prep_call($item);
-
-  // Attempt Guzzle client request
-  $api_response = $api_client->request('POST', $endpoint, array(
-    'form_params' => $item
-  ));
-
-  // Response body
-  $response_body = json_decode($api_response->getBody());
+  // Make the API call
+  $api_response = springboard_dw_api_call('action/create', $item);
 
   // Looks like the api response was good
   if ($api_response->getStatusCode() == 200) {
 
-    // Insert the user account into the Drupal data warehouse table
-    db_insert('springboard_data_warehouse')->fields(array(
-      'type'      => 'advocacy action',
-      'drupal_id' => $item['form_id'],
-      'created'   => time()
-    ))->execute();
+    // Mark this item as warehoused in Drupal
+    springboard_dw_track_item_warehouse_success('advocacy action', $item['form_id']);
 
     // Respond back successfully to the queue to remove the item
     return true;
 
   } else {
     // Log the API error
-    springboard_dw_api_log_error('Error sending action API call.',$endpoint, $item, $response_body);
+    springboard_dw_api_log_error('Error sending action API call.', 'action/create', $item, json_decode($api_response->getBody()));
 
     // Respond back with failure to retry in the queue
     return false;
@@ -1037,39 +908,21 @@ function springboard_dw_advocacy_action($item)
  */
 function springboard_dw_petition($item)
 {
-  // Define the endpoint
-  $endpoint = springboard_dw_api_endpoint('action/create');
-
-  // Instantiate an API client instance
-  $api_client = springboard_dw_api_client();
-
-  // Clean up the item and add authentication to the form params
-  $item = springboard_dw_api_prep_call($item);
-
-  // Attempt Guzzle client request
-  $api_response = $api_client->request('POST', $endpoint, array(
-    'form_params' => $item
-  ));
-
-  // Response body
-  $response_body = json_decode($api_response->getBody());
+  // Make the API call
+  $api_response = springboard_dw_api_call('action/create', $item);
 
   // Looks like the api response was good
   if ($api_response->getStatusCode() == 200) {
 
-    // Insert the user account into the Drupal data warehouse table
-    db_insert('springboard_data_warehouse')->fields(array(
-      'type'      => 'petition',
-      'drupal_id' => $item['form_id'],
-      'created'   => time()
-    ))->execute();
+    // Mark this item as warehoused in Drupal
+    springboard_dw_track_item_warehouse_success('petition', $item['form_id']);
 
     // Respond back successfully to the queue to remove the item
     return true;
 
   } else {
     // Log the API error
-    springboard_dw_api_log_error('Error sending petition/action API call.',$endpoint, $item, $response_body);
+    springboard_dw_api_log_error('Error sending petition/action API call.', 'action/create', $item, json_decode($api_response->getBody()));
 
     // Respond back with failure to retry in the queue
     return false;
@@ -1082,39 +935,21 @@ function springboard_dw_petition($item)
  */
 function springboard_dw_submission($item)
 {
-  // Define the endpoint
-  $endpoint = springboard_dw_api_endpoint('submission/create');
-
-  // Instantiate an API client instance
-  $api_client = springboard_dw_api_client();
-
-  // Clean up the item and add authentication to the form params
-  $item = springboard_dw_api_prep_call($item);
-
-  // Attempt Guzzle client request
-  $api_response = $api_client->request('POST', $endpoint, array(
-    'form_params' => $item
-  ));
-
-  // Response body
-  $response_body = json_decode($api_response->getBody());
+  // Make the API call
+  $api_response = springboard_dw_api_call('submission/create', $item);
 
   // Looks like the api response was good
   if ($api_response->getStatusCode() == 200) {
 
-    // Insert the user account into the Drupal data warehouse table
-    db_insert('springboard_data_warehouse')->fields(array(
-      'type'      => 'submission',
-      'drupal_id' => $item['submission_id'],
-      'created'   => time()
-    ))->execute();
+    // Mark this item as warehoused in Drupal
+    springboard_dw_track_item_warehouse_success('submission', $item['submission_id']);
 
     // Respond back successfully to the queue to remove the item
     return true;
 
   } else {
     // Log the API error
-    springboard_dw_api_log_error('Error sending submission API call.',$endpoint, $item, $response_body);
+    springboard_dw_api_log_error('Error sending submission API call.', 'submission/create', $item, json_decode($api_response->getBody()));
 
     // Respond back with failure to retry in the queue
     return false;
@@ -1127,39 +962,21 @@ function springboard_dw_submission($item)
  */
 function springboard_dw_advocacy_social_action_message($item)
 {
-  // Define the endpoint
-  $endpoint = springboard_dw_api_endpoint('message/create');
-
-  // Instantiate an API client instance
-  $api_client = springboard_dw_api_client();
-
-  // Clean up the item and add authentication to the form params
-  $item = springboard_dw_api_prep_call($item);
-
-  // Attempt Guzzle client request
-  $api_response = $api_client->request('POST', $endpoint, array(
-    'form_params' => $item
-  ));
-
-  // Response body
-  $response_body = json_decode($api_response->getBody());
+  // Make the API call
+  $api_response = springboard_dw_api_call('message/create', $item);
 
   // Looks like the api response was good
   if ($api_response->getStatusCode() == 200) {
 
-    // Insert the user account into the Drupal data warehouse table
-    db_insert('springboard_data_warehouse')->fields(array(
-      'type'      => 'advocacy message',
-      'drupal_id' => $item['message_id'],
-      'created'   => time()
-    ))->execute();
+    // Mark this item as warehoused in Drupal
+    springboard_dw_track_item_warehouse_success('advocacy message', $item['message_id']);
 
     // Respond back successfully to the queue to remove the item
     return true;
 
   } else {
     // Log the API error
-    springboard_dw_api_log_error('Error sending social action message API call.',$endpoint, $item, $response_body);
+    springboard_dw_api_log_error('Error sending social action message API call.', 'message/create', $item, json_decode($api_response->getBody()));
 
     // Respond back with failure to retry in the queue
     return false;
@@ -1172,43 +989,24 @@ function springboard_dw_advocacy_social_action_message($item)
  */
 function springboard_dw_petition_message($item)
 {
-  // Define the endpoint
-  $endpoint = springboard_dw_api_endpoint('message/create');
-
-  // Instantiate an API client instance
-  $api_client = springboard_dw_api_client();
-
-  // Clean up the item and add authentication to the form params
-  $item = springboard_dw_api_prep_call($item);
-
-  // Attempt Guzzle client request
-  $api_response = $api_client->request('POST', $endpoint, array(
-    'form_params' => $item
-  ));
-
-  // Response body
-  $response_body = json_decode($api_response->getBody());
+  // Make the API call
+  $api_response = springboard_dw_api_call('message/create', $item);
 
   // Looks like the api response was good
   if ($api_response->getStatusCode() == 200) {
 
-    // Insert the user account into the Drupal data warehouse table
-    db_insert('springboard_data_warehouse')->fields(array(
-      'type'      => 'advocacy message',
-      'drupal_id' => $item['message_id'],
-      'created'   => time()
-    ))->execute();
+    // Mark this item as warehoused in Drupal
+    springboard_dw_track_item_warehouse_success('advocacy message', $item['message_id']);
 
     // Respond back successfully to the queue to remove the item
     return true;
 
   } else {
     // Log the API error
-    springboard_dw_api_log_error('Error sending petition message API call.',$endpoint, $item, $response_body);
+    springboard_dw_api_log_error('Error sending petition message API call.', 'message/create', $item, json_decode($api_response->getBody()));
 
     // Respond back with failure to retry in the queue
     return false;
   }
 
 }
-
