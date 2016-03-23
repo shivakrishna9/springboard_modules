@@ -333,6 +333,9 @@ function sba_message_action_message_form(&$form, $message, $action_type) {
  */
 function sba_message_action_form_validate(&$form, &$form_state) {
   $node = $form['#node'];
+  $components = $node->webform['components'];
+  $component_hierarchy = webform_user_parse_components($node->nid, $components);
+  $form['#hierarchy'] = $component_hierarchy;
   $node_wrapper = entity_metadata_wrapper('node', $node);
   $multi_flow = $node_wrapper->field_sba_action_flow->value() == 'multi' ? TRUE : FALSE;
   if (isset($form_state['values']['sba_messages'])) {
@@ -364,7 +367,8 @@ function sba_message_action_form_validate(&$form, &$form_state) {
     }
     // Set user_edited_flag
     if ($changed && isset($form['submitted']['sba_user_edit_flag'])) {
-      form_set_value($form['submitted']['sba_user_edit_flag'], 1, $form_state);
+      $sba_user_edit_flag = &_webform_user_find_field($form, $component_hierarchy['sba_user_edit_flag']);
+      form_set_value($sba_user_edit_flag, 1, $form_state);
     }
   }
   form_load_include($form_state, 'inc', 'springboard_advocacy', 'includes/springboard_advocacy.smarty_streets');
@@ -374,7 +378,8 @@ function sba_message_action_form_validate(&$form, &$form_state) {
   if (!empty($smarty_geo) && is_array($smarty_geo)) {
     form_set_value($form['smarty_geo'], $smarty_geo, $form_state);
     if (isset($smarty_geo['zip']) && isset($smarty_geo['plus4'])) {
-      form_set_value($form['submitted']['sbp_zip_plus_four'], $smarty_geo['zip'] . '-' . $smarty_geo['plus4'], $form_state);
+      $zip_plus_four = &_webform_user_find_field($form, $component_hierarchy['sbp_zip_plus_four']);
+      form_set_value($zip_plus_four, $smarty_geo['zip'] . '-' . $smarty_geo['plus4'], $form_state);
     }
   }
   else {
@@ -420,8 +425,10 @@ function sba_message_action_form_submit($form, &$form_state) {
       foreach ($data->messages as $key => $message) {
         $deliverable += count($message->deliverable);
       }
-      if (isset($form_state['values']['submitted']['sba_deliverable_count'])) {
-        $form_state['values']['submitted']['sba_deliverable_count'] = $deliverable;
+      $component_hierarchy = $form['#hierarchy'];
+      if (isset($component_hierarchy['sba_deliverable_count'])) {
+        $sba_deliverable_count = &_webform_user_find_field($form, $component_hierarchy['sba_deliverable_count']);
+        form_set_value($sba_deliverable_count, $deliverable, $form_state);
       }
     }
   }
