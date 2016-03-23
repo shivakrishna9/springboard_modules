@@ -35,6 +35,10 @@ function get_all_entity_properties($wrapper)
 
   return $values;
 }
+require_once 'includes/springboard_dw.menu.inc';
+require_once 'includes/springboard_dw.api.inc';
+require_once 'includes/springboard_dw.queue.inc';
+require_once 'includes/springboard_dw.utility.inc';
 
 /**
  * Success hook for advocacy actions and submissions.
