@@ -69,3 +69,24 @@ function springboard_dw_cron_queue_info()
 
   return $queues;
 }
+
+/**
+ * Helper function to query the data warehouse table to determine if this item has been recorded as being warehoused already.
+ * @param $type
+ * @param $drupal_id
+ */
+function springboard_dw_item_is_warehoused($type, $drupal_id)
+{
+
+  // Query items from the data warehouse table that match the item id and type
+  $query = db_query("select * from {springboard_data_warehouse} where drupal_id = :drupal_id and type = :type", array(':type' => $type, ':drupal_id' => $drupal_id));
+
+  // If an item is found, we do not need to warehouse this item
+  if ($query->rowCount() > 0) {
+    return true;
+  }
+
+  // If this item is not warehoused, return false
+  return false;
+
+}
