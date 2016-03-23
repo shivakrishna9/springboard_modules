@@ -67,7 +67,28 @@ function sba_message_action_ab_total_actions_completed_config_summary($config) {
  */
 
 function sba_message_action_ab_total_actions_completed_current_value($webform_nid) {
-  return 0;
+  $actions_completed = 0;
+  // Check whether each submission is a multi-set one.  If not, its having been submitted
+  // means it counts as an action being completed:
+  $multistep_query = db_query("SELECT DISTINCT d.sid, d.data " .
+    "FROM {webform_submitted_data} d, {webform_component} c " .
+    "WHERE d.nid = :nid AND d.cid = c.cid AND c.form_key = 'sba_action_is_multistep'",
+    array(':nid' => $webform_nid));
+  foreach ($multistep_query as $result) {
+    if ($result->data == 'one') {
+       $actions_completed++;
+    }
+    //If a submission is multi-step then explicitly check if it was completed:
+    elseif ($result->data == 'multi') {
+      if ($completed = db_query("SELECT DISTINCT d.data FROM {webform_submitted_data} d, {webform_component} c " .
+        "WHERE d.nid = :nid AND d.cid = c.cid AND d.sid = :sid AND c.form_key = 'sba_multistep_complete'",
+        array(':nid' => $webform_nid, ':sid' => $result->sid))
+        ->fetchField()) {
+        $actions_completed++;
+      }
+    }
+  }
+  return $actions_completed;
 }
 
 /**
