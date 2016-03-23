@@ -57,8 +57,17 @@ function sba_message_action_ab_total_messages_generated_config_summary($config) 
   return $config['messages_generated'];
 }
 
-function sba_message_action_ab_total_messages_generated_current_value($webform_nid) {
-  return 0;
+function sba_message_action_ab_total_messages_generated_current_value($webform_nid, $config, $test_node) {
+  $sum = 0;
+  $message_query = db_query("SELECT DISTINCT d.data, d.sid FROM {webform_submitted_data} d, {webform_component} c " .
+    "WHERE d.nid = :webform_nid AND d.cid = c.cid AND c.form_key = 'sba_deliverable_count'",
+    array(':webform_nid' => $webform_nid));
+  foreach ($message_query as $data) {
+    if (is_numeric($data->data)) {
+      $sum += $data->data;
+    }  
+  }
+  return $sum;
 }
 
 /**
