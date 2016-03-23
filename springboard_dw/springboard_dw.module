@@ -4,10 +4,26 @@
  * Base Springboard data warehouse functions.
  */
 
-require_once 'includes/springboard_dw.menu.inc';
 require_once 'includes/springboard_dw.api.inc';
 require_once 'includes/springboard_dw.queue.inc';
 require_once 'includes/springboard_dw.utility.inc';
+
+/**
+ * Implements hook_menu().
+ */
+function springboard_dw_menu()
+{
+  $items['admin/config/services/springboard-dw'] = array(
+    'title'            => 'Springboard Data Warehouse',
+    'description'      => 'Configuration settings for Springboard Data Warehousing.',
+    'page callback'    => 'springboard_dw_settings_page',
+    'access arguments' => array('administer springboard data warehouse'),
+    'type'             => MENU_NORMAL_ITEM,
+    'file'             => 'includes/springboard_dw.admin.inc',
+  );
+
+  return $items;
+}
 
 /**
  * Success hook for advocacy actions and submissions.
@@ -780,10 +796,10 @@ function springboard_dw_contact($item)
   }
 
   // Instantiate an API client instance
-  $api_client = springboard_api_client();
+  $api_client = springboard_dw_api_client();
 
   // Clean up the item and add authentication to the form params
-  $item = springboard_api_prep_call($item);
+  $item = springboard_dw_api_prep_call($item);
 
   // Attempt Guzzle client request
   $res = $api_client->request('POST', $endpoint, array(
@@ -830,10 +846,10 @@ function springboard_dw_donation($item)
   $endpoint = springboard_dw_api_endpoint('donation/create');
 
   // Instantiate an API client instance
-  $api_client = springboard_api_client();
+  $api_client = springboard_dw_api_client();
 
   // Clean up the item and add authentication to the form params
-  $item = springboard_api_prep_call($item);
+  $item = springboard_dw_api_prep_call($item);
 
   // Attempt Guzzle client request
   $res = $api_client->request('POST', $endpoint, array(
@@ -882,10 +898,10 @@ function springboard_dw_form($item)
   }
 
   // Instantiate an API client instance
-  $api_client = springboard_api_client();
+  $api_client = springboard_dw_api_client();
 
   // Clean up the item and add authentication to the form params
-  $item = springboard_api_prep_call($item);
+  $item = springboard_dw_api_prep_call($item);
 
   // Attempt Guzzle client request
   $res = $api_client->request('POST', $endpoint, array(
@@ -936,10 +952,10 @@ function springboard_dw_advocacy_message($item)
   $endpoint = springboard_dw_api_endpoint('message/create');
 
   // Instantiate an API client instance
-  $api_client = springboard_api_client();
+  $api_client = springboard_dw_api_client();
 
   // Clean up the item and add authentication to the form params
-  $item = springboard_api_prep_call($item);
+  $item = springboard_dw_api_prep_call($item);
 
   $transaction_server_api_call = springboard_advocacy_api_call();
   $full_message = $transaction_server_api_call->invokeClientMethod('getMessage', $item['message_id']);
@@ -989,10 +1005,10 @@ function springboard_dw_advocacy_action($item)
   $endpoint = springboard_dw_api_endpoint('action/create');
 
   // Instantiate an API client instance
-  $api_client = springboard_api_client();
+  $api_client = springboard_dw_api_client();
 
   // Clean up the item and add authentication to the form params
-  $item = springboard_api_prep_call($item);
+  $item = springboard_dw_api_prep_call($item);
 
   // Attempt Guzzle client request
   $res = $api_client->request('POST', $endpoint, array(
@@ -1037,10 +1053,10 @@ function springboard_dw_petition($item)
   $endpoint = springboard_dw_api_endpoint('action/create');
 
   // Instantiate an API client instance
-  $api_client = springboard_api_client();
+  $api_client = springboard_dw_api_client();
 
   // Clean up the item and add authentication to the form params
-  $item = springboard_api_prep_call($item);
+  $item = springboard_dw_api_prep_call($item);
 
   // Attempt Guzzle client request
   $res = $api_client->request('POST', $endpoint, array(
@@ -1085,10 +1101,10 @@ function springboard_dw_submission($item)
   $endpoint = springboard_dw_api_endpoint('submission/create');
 
   // Instantiate an API client instance
-  $api_client = springboard_api_client();
+  $api_client = springboard_dw_api_client();
 
   // Clean up the item and add authentication to the form params
-  $item = springboard_api_prep_call($item);
+  $item = springboard_dw_api_prep_call($item);
 
   // Attempt Guzzle client request
   $res = $api_client->request('POST', $endpoint, array(
@@ -1133,10 +1149,10 @@ function springboard_dw_advocacy_social_action_message($item)
   $endpoint = springboard_dw_api_endpoint('message/create');
 
   // Instantiate an API client instance
-  $api_client = springboard_api_client();
+  $api_client = springboard_dw_api_client();
 
   // Clean up the item and add authentication to the form params
-  $item = springboard_api_prep_call($item);
+  $item = springboard_dw_api_prep_call($item);
 
   // Attempt Guzzle client request
   $res = $api_client->request('POST', $endpoint, array(
@@ -1181,10 +1197,10 @@ function springboard_dw_petition_message($item)
   $endpoint = springboard_dw_api_endpoint('message/create');
 
   // Instantiate an API client instance
-  $api_client = springboard_api_client();
+  $api_client = springboard_dw_api_client();
 
   // Clean up the item and add authentication to the form params
-  $item = springboard_api_prep_call($item);
+  $item = springboard_dw_api_prep_call($item);
 
   // Attempt Guzzle client request
   $res = $api_client->request('POST', $endpoint, array(

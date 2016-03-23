@@ -9,7 +9,7 @@
  * Returns a new instance of Guzzle Http client.
  * @return \GuzzleHttp\Client
  */
-function springboard_api_client()
+function springboard_dw_api_client()
 {
 
   // Composer Vendor autoload
@@ -35,7 +35,7 @@ function springboard_dw_api_endpoint($endpoint)
  * Removes the queue type used to distinguish api calls and adds authentication token and client ID to the item params.
  * @param $item
  */
-function springboard_api_prep_call($item)
+function springboard_dw_api_prep_call($item)
 {
   // Remove the queue type from the item
   unset($item['queue_type']);
