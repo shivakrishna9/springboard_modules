@@ -9,6 +9,7 @@ require_once 'includes/springboard_dw.queue.inc';
 require_once 'includes/springboard_dw.utility.inc';
 
 /**
+ * The menu item for the Springboard data warehouse settings.
  * Implements hook_menu().
  */
 function springboard_dw_menu()
@@ -150,39 +151,8 @@ function springboard_dw_social_action_submission($node, $action)
 
       $message_item = springboard_dw_map_social_action_item($message, $action, $node);
       $queue->createItem($message_item);
-
-      // if (!springboard_dw_item_is_warehoused('advocacy social action message', $message->{'$id'})) {}
     }
   }
-}
-
-function springboard_dw_map_social_action_item($message, $action, $node)
-{
-  // Get the Advocacy message object id and prep for warehousing (sb_message)
-  $message_item = array();
-  $message_item['queue_type'] = 'advocacy social action message';
-  $message_item['message_id'] = '';
-  $message_item['action_id'] = $action->node->advocacy_id;
-  $message_item['group_id'] = '';
-  $message_item['action_type'] = $action->node->type;
-  $message_item['subject'] = $message['subject'];
-  $message_item['body'] = $message['body'];
-  $message_item['target_id'] = $message['targets']->id;
-  $message_item['target_salutation'] = $message['targets']->salutation;
-  $message_item['target_first_name'] = $message['targets']->first_name;
-  $message_item['target_last_name'] = $message['targets']->last_name;
-  $message_item['target_gender'] = $message['targets']->gender;
-  $message_item['target_state'] = $message['targets']->state;
-  $message_item['target_party'] = $message['targets']->party;
-  $message_item['target_district_code'] = $message['targets']->district_code;
-  $message_item['target_district_name'] = $message['targets']->district_name;
-  $message_item['target_role'] = $message['targets']->role;
-  $message_item['target_person_id'] = $message['targets']->person_id;
-  $message_item['created_at'] = date('U');
-  $message_item['updated_at'] = date('U');
-  $message_item['extra_props'] = array();
-
-  return $message_item;
 }
 
 /**
@@ -284,7 +254,7 @@ function springboard_dw_user_update(&$edit, $account, $category)
 
   /**
    * TODO - this runs on general form submissions which is bad, we don't want to try to update the contact record every time.
-   * @author - cameronkingzett
+   * @author - Cameron Kingzett
    * @date   - 3/21/16
    * @time   -  4:23 PM
    */
@@ -619,7 +589,6 @@ function springboard_dw_extract_donation_extra_props($donation, $donation_item)
  */
 function springboard_dw_map_contact_item($contact_id, $user_data = array(), $update = false)
 {
-
   // If the $user_data parameter is empty we can assume this is a new record we need to insert
   if (empty($user_data)) {
     $user = user_load($contact_id);
@@ -693,6 +662,41 @@ function springboard_dw_extract_contact_extra_props($user, $contact_item)
   return $extra_props;
 }
 
+/** Map the social action object to an array formatted for an API call for data warehousing.
+ * @param $message
+ * @param $action
+ * @param $node
+ * @return array
+ */
+function springboard_dw_map_social_action_item($message, $action, $node)
+{
+  // Get the Advocacy message object id and prep for warehousing (sb_message)
+  $message_item = array();
+  $message_item['queue_type'] = 'advocacy social action message';
+  $message_item['message_id'] = '';
+  $message_item['action_id'] = $action->node->advocacy_id;
+  $message_item['group_id'] = '';
+  $message_item['action_type'] = $action->node->type;
+  $message_item['subject'] = $message['subject'];
+  $message_item['body'] = $message['body'];
+  $message_item['target_id'] = $message['targets']->id;
+  $message_item['target_salutation'] = $message['targets']->salutation;
+  $message_item['target_first_name'] = $message['targets']->first_name;
+  $message_item['target_last_name'] = $message['targets']->last_name;
+  $message_item['target_gender'] = $message['targets']->gender;
+  $message_item['target_state'] = $message['targets']->state;
+  $message_item['target_party'] = $message['targets']->party;
+  $message_item['target_district_code'] = $message['targets']->district_code;
+  $message_item['target_district_name'] = $message['targets']->district_name;
+  $message_item['target_role'] = $message['targets']->role;
+  $message_item['target_person_id'] = $message['targets']->person_id;
+  $message_item['created_at'] = date('U');
+  $message_item['updated_at'] = date('U');
+  $message_item['extra_props'] = array();
+
+  return $message_item;
+}
+
 /**
  * Map the donation object to a form array formatted for an API call for data warehousing.
  * @param $donation
@@ -728,6 +732,9 @@ function springboard_dw_map_form_item($node, $update = false)
 
 /**
  * Sends an item to the data warehouse receiver app.
+ * @param $item
+ *    The queue item to process, queue type is inferred by the queue_type parameter
+ * @return bool
  */
 function springboard_dw_export_item($item)
 {
@@ -753,8 +760,6 @@ function springboard_dw_export_item($item)
   } elseif ($item['queue_type'] == 'submission') {
     return springboard_dw_submission($item);
   }
-
-  // ... other queues
 }
 
 
@@ -762,6 +767,7 @@ function springboard_dw_export_item($item)
 /**
  * Send a contact record to the Springboard data warehouse API.
  * @param $item
+ *  The queue information to send to the data warehouse.
  */
 function springboard_dw_contact($item)
 {
@@ -789,6 +795,7 @@ function springboard_dw_contact($item)
 /**
  * Send a donation record to the Springboard data warehouse API.
  * @param $item
+ *  The queue information to send to the data warehouse.
  */
 function springboard_dw_donation($item)
 {
@@ -817,6 +824,7 @@ function springboard_dw_donation($item)
 /**
  * Send a form record to the Springboard data warehouse API.
  * @param $item
+ *  The queue information to send to the data warehouse.
  */
 function springboard_dw_form($item)
 {
@@ -845,6 +853,7 @@ function springboard_dw_form($item)
 /**
  * Send an advocacy message record to the Springboard data warehouse API.
  * @param $item
+ *  The queue information to send to the data warehouse.
  */
 function springboard_dw_advocacy_message($item)
 {
@@ -878,6 +887,7 @@ function springboard_dw_advocacy_message($item)
 /**
  * Send an advocacy record to the Springboard data warehouse API.
  * @param $item
+ *  The queue information to send to the data warehouse.
  */
 function springboard_dw_advocacy_action($item)
 {
@@ -905,6 +915,7 @@ function springboard_dw_advocacy_action($item)
 /**
  * Send an advocacy petition record to the Springboard data warehouse API.
  * @param $item
+ *  The queue information to send to the data warehouse.
  */
 function springboard_dw_petition($item)
 {
@@ -932,6 +943,7 @@ function springboard_dw_petition($item)
 /**
  * Send a submission to the Springboard data warehouse API.
  * @param $item
+ *  The queue information to send to the data warehouse.
  */
 function springboard_dw_submission($item)
 {
@@ -959,6 +971,7 @@ function springboard_dw_submission($item)
 /**
  * Send an advocacy social action message record to the Springboard data warehouse API.
  * @param $item
+ *  The queue information to send to the data warehouse.
  */
 function springboard_dw_advocacy_social_action_message($item)
 {
@@ -986,6 +999,7 @@ function springboard_dw_advocacy_social_action_message($item)
 /**
  * Send an advocacy petition message record to the Springboard data warehouse API.
  * @param $item
+ *  The queue information to send to the data warehouse.
  */
 function springboard_dw_petition_message($item)
 {
