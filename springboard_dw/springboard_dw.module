@@ -4,37 +4,6 @@
  * Base Springboard data warehouse functions.
  */
 
-/**
- * Implements hook_menu().
- */
-function springboard_dw_menu()
-{
-  $items['admin/config/services/springboard-dw'] = array(
-    'title'            => 'Springboard Data Warehouse',
-    'description'      => 'Configuration settings for Springboard Data Warehousing.',
-    'page callback'    => 'springboard_dw_settings_page',
-    'access arguments' => array('administer springboard data warehouse'),
-    'type'             => MENU_NORMAL_ITEM,
-    'file'             => 'includes/springboard_dw.admin.inc',
-  );
-
-  return $items;
-}
-
-/**
- * Get all entity properties by way of a wrapper.
- * @param $wrapper
- * @return array
- */
-function get_all_entity_properties($wrapper)
-{
-  $values = array();
-  foreach ($wrapper->getPropertyInfo() as $key => $val) {
-    $values[$key] = $wrapper->$key->value();
-  }
-
-  return $values;
-}
 require_once 'includes/springboard_dw.menu.inc';
 require_once 'includes/springboard_dw.api.inc';
 require_once 'includes/springboard_dw.queue.inc';
