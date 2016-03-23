@@ -8,6 +8,7 @@
 /**
  * Get all entity properties by way of a wrapper.
  * @param $wrapper
+ *  A wrapper object used to key off to get key value formatted entities.
  * @return array
  */
 function springboard_dw_get_all_entity_properties($wrapper)
