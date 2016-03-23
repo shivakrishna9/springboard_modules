@@ -24,7 +24,9 @@ function springboard_dw_get_all_entity_properties($wrapper)
 /**
  * Get the webform submission dated keyed according to submission.
  * @param $nid
+ *  The node ID to retrieve webform submission data by.
  * @param $sid
+ *  The submission ID to retrieve webform submission data by.
  * @return array
  */
 function springboard_dw_webform_submission_data_keyed($nid, $sid)
