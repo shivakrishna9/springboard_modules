@@ -11,7 +11,6 @@
  */
 function springboard_dw_api_client()
 {
-
   // Composer Vendor autoload
   drush_autoload("sites/all/vendor/autoload.php");
 
@@ -55,8 +54,12 @@ function springboard_dw_api_prep_call($item)
 
 /**
  * Make an api call to the warehouse by supplying an endpoint route and the form params.
- * @param $endpoint_route
- * @param $params
+ * @param        $endpoint_route
+ *  The endpoint route used to construct the full URI for the API call.
+ * @param        $params
+ *  The parameters used in the API call added to the URI for debugging purposes.
+ * @param string $method
+ *  The HTTP verb/method to use for the API call (defaults to POST).
  * @return mixed|\Psr\Http\Message\ResponseInterface
  */
 function springboard_dw_api_call($endpoint_route, $params, $method = 'POST')
@@ -81,7 +84,9 @@ function springboard_dw_api_call($endpoint_route, $params, $method = 'POST')
 /**
  * Mark an item in Drupal as being warehoused.
  * @param $type
+ *  The type or identifier for what kind of item we are tracking.
  * @param $identifier
+ *  The unique identifier for the item (typically a Drupal ID unless it is a message item in which case it is a MongoId string)
  * @throws \Exception
  */
 function springboard_dw_track_item_warehouse_success($type, $identifier)
