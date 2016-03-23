@@ -111,7 +111,7 @@ function webform_ab_test_reports($node) {
         $line[$plugin_key] = ($current_value * 100) . '% ' . t('of') . ' ' . ($condition_data['value_to_win'] * 100) . '%';
       }
       // Account for boolean values:
-      if (in_array($plugin_key, array('donations_highest_avg', 'donations_highest_gross'))) {
+      elseif (in_array($plugin_key, array('donations_highest_avg', 'donations_highest_gross'))) {
         $line[$plugin_key] = $current_value ? 'Yes' : 'No';
       }
       else {  
@@ -132,7 +132,6 @@ function webform_ab_test_reports($node) {
  */
 function webform_ab_test_webforms($node) {
   $return = '';
-  drupal_set_message('!');
 
   // Status labels
   $status_labels = array(
@@ -409,7 +408,6 @@ function _webform_ab_has_testing_started($test_node) {
   }
 
   $win_conditions = _webform_ab_get_win_condition_plugins();
-  dpm($enabled_win_conditions);
   foreach ($win_conditions as $plugin_key => $plugin) {
     if (!in_array($plugin_key, $enabled_win_conditions)) {
       continue;
