@@ -75,7 +75,7 @@ function springboard_dw_cron_queue_info()
  * @param $type
  *  The type of warehouse object object to check against in the DB query.
  * @param $drupal_id
- *  The unique identifier for the item (typically a Drupal ID unless it is a message item in which case it is a string or MongoId object)
+ *  The unique identifier for the item (typically a Drupal ID unless it is a message item in which case it is a MongoId string)
  */
 function springboard_dw_item_is_warehoused($type, $drupal_id)
 {
