@@ -84,15 +84,14 @@ function webform_ab_test_reports($node) {
     if (isset($webform_details['status']) && isset($status_labels[$webform_details['status']])) {
       $line['status'] = $status_labels[$webform_details['status']];
     }
-    if (isset($webform_details['title'])) {
-      $internal_name = _webform_ab_get_internal_name($webform_details['webform_nid']);
-      if ($internal_name) {
-        $line['title'] = $internal_name;
-      }
-      else {
-        $line['title'] = l($webform_details['title'], 'node/' . $webform_details['webform_nid']);
-      }
+    if ($internal_name = _webform_ab_get_internal_name($webform_details['webform_nid'])) {
+      $title_value = $internal_name;
     }
+    else {
+      $title_value = $webform_details['title'];
+    }
+    $line['title'] = l($title_value, 'node/' . $webform_details['webform_nid']);
+
     // Add values for each win condition column:
     foreach ($enabled_win_conditions as $plugin_key => $condition_data) {
       $condition_current_value = '?';
