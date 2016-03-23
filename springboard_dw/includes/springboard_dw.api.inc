@@ -24,16 +24,22 @@ function springboard_dw_api_client()
 
 /**
  * Returns the endpoint used to make API calls to the data warehouse receiver app.
+ * @param $endpoint_route
+ *  The endpoint route to use in constructing the full URL for the api call.
+ * @return string
  */
-function springboard_dw_api_endpoint($endpoint)
+function springboard_dw_api_endpoint($endpoint_route)
 {
   // TODO: point this to a gospringboard.io subdomain
-  return 'http://159.203.115.210/' . ltrim($endpoint, '/');
+  return 'http://159.203.115.210/' . ltrim($endpoint_route, '/');
 }
 
 /**
  * Removes the queue type used to distinguish api calls and adds authentication token and client ID to the item params.
  * @param $item
+ *  An array of values.
+ * @return $item
+ *  An array of values with authentication and client identification parameters added.
  */
 function springboard_dw_api_prep_call($item)
 {
@@ -91,9 +97,13 @@ function springboard_dw_track_item_warehouse_success($type, $identifier)
 /**
  * API utility method for logging API call errors thrown in the queue.
  * @param        $error
+ *  The error to log with Drush.
  * @param        $endpoint
+ *  The endpoint for use in constructing a debug URI to log with Drush.
  * @param        $item
+ *  The parameters used in the API call added to the URI for debugging purposes.
  * @param        $response_body
+ *  The response body generated from the API call with the Guzzle Http client.
  * @param string $log_type
  */
 function springboard_dw_api_log_error($error, $endpoint, $item, $response_body, $log_type = 'warning')
