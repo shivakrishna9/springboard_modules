@@ -1505,30 +1505,22 @@ function fundraiser_sustainers_fundraiser_donation_form($form, $form_state) {
   $selector = ($recurs_monthly_field['#type'] == 'select') ? 'select[name*=recurs_monthly]' : ':input[name*=recurs_monthly]';
 
   // Hide irrelevant fields.
-  if (!$dual_ask_amounts && $form['#node']->recurring_setting != 'always'
-    && !empty($recurring_amounts_field)
-  ) {
-    // Only display recurring amounts if the form is recurring-only or gives dual
-    // ask amounts.
-    $recurring_amounts_field['#prefix'] = '<div style="display:none;">';
-    $recurring_amounts_field['#suffix'] = '</div>';
-    $recurring_amounts_field['#required'] = FALSE;
+  if (!$dual_ask_amounts) {
+    // Even if the user does have a choice, if there's only one set of ask amounts, hide the recurring fields.
+    if (!empty($recurring_amounts_field)) {
+      $recurring_amounts_field['#prefix'] = '<div style="display:none;">';
+      $recurring_amounts_field['#suffix'] = '</div>';
+      $recurring_amounts_field['#required'] = FALSE;
+    }
     if (!empty($recurring_other_amount_field)) {
       $recurring_other_amount_field['#prefix'] = '<div style="display:none;">';
       $recurring_other_amount_field['#suffix'] = '</div>';
     }
-  }
-  if (!$dual_ask_amounts && $form['#node']->recurring_setting == 'always') {
-    $onetime_amounts_field['#prefix'] = '<div style="display:none;">';
-    $onetime_amounts_field['#suffix'] = '</div>';
-    $onetime_amounts_field['#required'] = FALSE;
-    $onetime_other_amount_field['#prefix'] = '<div style="display:none;">';
-    $onetime_other_amount_field['#suffix'] = '</div>';
-  }
-  if ($form['#node']->recurring_setting != 'user_choice' && !empty($recurs_monthly_field)) {
-    // One-time-only and recurring-only forms don't need a visible donation-type selection.
-    $recurs_monthly_field['#prefix'] = '<div style="display:none;">';
-    $recurs_monthly_field['#suffix'] = '</div>';
+    // Also hide the one-time and recurring tabs/radios if user doesn't have a choice of donation type.
+    if ($form['#node']->recurring_setting != 'user_choice') {
+      $recurs_monthly_field['#prefix'] = '<div style="display:none;">';
+      $recurs_monthly_field['#suffix'] = '</div>';
+    }
   }
 
   // Check if each gateway allows recurring payments, and use the States API if it doesn't.
