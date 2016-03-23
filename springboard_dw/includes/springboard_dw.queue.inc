@@ -6,7 +6,7 @@
  */
 
 /**
- * STOLEN FROM drupal_cron_run. Needs improvement.
+ * Queue processing hook.
  * Ideas:
  *  - Add a time argument.
  *  - Add a queue argument (like salesforce queue).
@@ -73,7 +73,9 @@ function springboard_dw_cron_queue_info()
 /**
  * Helper function to query the data warehouse table to determine if this item has been recorded as being warehoused already.
  * @param $type
+ *  The type of warehouse object object to check against in the DB query.
  * @param $drupal_id
+ *  The unique identifier for the item (typically a Drupal ID unless it is a message item in which case it is a string or MongoId object)
  */
 function springboard_dw_item_is_warehoused($type, $drupal_id)
 {
