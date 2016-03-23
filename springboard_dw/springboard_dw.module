@@ -30,9 +30,13 @@ function springboard_dw_menu()
  * Success hook for advocacy actions and submissions.
  * Implements advocacy_hook_success()
  * @param $node
+ *  The node object supplied by the advocacy success hook.
  * @param $contact
+ *   The contact object supplied by the advocacy success hook.
  * @param $data
+ *   The data object or array supplied by the advocacy success hook.
  * @param $sid
+ *   The submission supplied by the advocacy success hook.
  */
 function springboard_dw_action_success($node, $contact, $data, $sid)
 {
