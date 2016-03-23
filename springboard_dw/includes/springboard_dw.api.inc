@@ -46,3 +46,18 @@ function springboard_dw_api_prep_call($item)
 
   return $item;
 }
+
+/**
+ * API utility method for logging API call errors thrown in the queue.
+ * @param        $error
+ * @param        $endpoint
+ * @param        $item
+ * @param        $response_body
+ * @param string $log_type
+ */
+function springboard_dw_api_log_error($error, $endpoint, $item, $response_body, $log_type = 'warning') {
+  // Log the API error
+  drush_log($error, $log_type);
+  drush_print($endpoint . '?' . http_build_query($item));
+  drush_print_r($response_body);
+}

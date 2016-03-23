@@ -802,15 +802,15 @@ function springboard_dw_contact($item)
   $item = springboard_dw_api_prep_call($item);
 
   // Attempt Guzzle client request
-  $res = $api_client->request('POST', $endpoint, array(
+  $api_response = $api_client->request('POST', $endpoint, array(
     'form_params' => $item
   ));
 
   // Response body
-  $resBody = json_decode($res->getBody());
+  $response_body = json_decode($api_response->getBody());
 
   // Looks like the api response was good
-  if ($res->getStatusCode() == 200) {
+  if ($api_response->getStatusCode() == 200) {
 
     // If the item hasn't been warehoused then this is an insert and we should consider the item tracked in Drupal
     if (!isset($item['queue_item_update']) && !springboard_dw_item_is_warehoused('contact', $item['contact_id'])) {
@@ -825,9 +825,8 @@ function springboard_dw_contact($item)
     return true;
 
   } else {
-    drush_log('Error sending contact API call.', 'warning');
-    drush_print($endpoint . '?' . http_build_query($item));
-    drush_print_r($resBody);
+    // Log the API error
+    springboard_dw_api_log_error('Error sending contact API call.',$endpoint, $item, $response_body);
 
     // Respond back with failure to retry in the queue
     return false;
@@ -852,15 +851,15 @@ function springboard_dw_donation($item)
   $item = springboard_dw_api_prep_call($item);
 
   // Attempt Guzzle client request
-  $res = $api_client->request('POST', $endpoint, array(
+  $api_response = $api_client->request('POST', $endpoint, array(
     'form_params' => $item
   ));
 
   // Response body
-  $resBody = json_decode($res->getBody());
+  $response_body = json_decode($api_response->getBody());
 
   // If the response is successful, add the user_warehoused parameter to the Drupal user account so we can skip this check in subsequent donations
-  if ($res->getStatusCode() == 200) {
+  if ($api_response->getStatusCode() == 200) {
     // Insert the user account into the Drupal data warehouse table
     db_insert('springboard_data_warehouse')->fields(array(
       'type'      => 'donation',
@@ -872,9 +871,8 @@ function springboard_dw_donation($item)
     return true;
 
   } else {
-    drush_log('Error sending donation API call.', 'warning');
-    drush_print($endpoint . '?' . http_build_query($item));
-    drush_print_r($resBody);
+    // Log the API error
+    springboard_dw_api_log_error('Error sending donation API call.',$endpoint, $item, $response_body);
 
     // Respond back with failure to retry in the queue
     return false;
@@ -888,7 +886,6 @@ function springboard_dw_donation($item)
  */
 function springboard_dw_form($item)
 {
-
   // Define the endpoint
   $endpoint = springboard_dw_api_endpoint('form/create');
 
@@ -904,16 +901,16 @@ function springboard_dw_form($item)
   $item = springboard_dw_api_prep_call($item);
 
   // Attempt Guzzle client request
-  $res = $api_client->request('POST', $endpoint, array(
+  $api_response = $api_client->request('POST', $endpoint, array(
     'form_params' => $item
   ));
 
   // Response body
-  $resBody = json_decode($res->getBody());
+  $response_body = json_decode($api_response->getBody());
 
   // Looks like the api response was good
-  if ($res->getStatusCode() == 200) {
-    //if ($res->getStatusCode() == 200 && $resBody['message'] == 'Successfully created form.') {
+  if ($api_response->getStatusCode() == 200) {
+    //if ($api_response->getStatusCode() == 200 && $response_body['message'] == 'Successfully created form.') {
 
     // If the item hasn't been warehoused then this is an insert and we should consider the item tracked in Drupal
     if (!isset($item['queue_item_update']) && !springboard_dw_item_is_warehoused('form', $item['form_id'])) {
@@ -930,11 +927,8 @@ function springboard_dw_form($item)
     return true;
 
   } else {
-
     // Log the API error
-    drush_log('Error sending form API call.', 'warning');
-    drush_print($endpoint . '?' . http_build_query($item));
-    drush_print_r($resBody);
+    springboard_dw_api_log_error('Error sending form API call.',$endpoint, $item, $response_body);
 
     // Respond back with failure to retry in the queue
     return false;
@@ -963,15 +957,15 @@ function springboard_dw_advocacy_message($item)
   $item = springboard_dw_map_advocacy_message_item($item, $full_message->data[0]);
 
   // Attempt Guzzle client request
-  $res = $api_client->request('POST', $endpoint, array(
+  $api_response = $api_client->request('POST', $endpoint, array(
     'form_params' => $item
   ));
 
   // Response body
-  $resBody = json_decode($res->getBody());
+  $response_body = json_decode($api_response->getBody());
 
   // Looks like the api response was good
-  if ($res->getStatusCode() == 200) {
+  if ($api_response->getStatusCode() == 200) {
 
     // Insert the user account into the Drupal data warehouse table
     db_insert('springboard_data_warehouse')->fields(array(
@@ -984,11 +978,8 @@ function springboard_dw_advocacy_message($item)
     return true;
 
   } else {
-
     // Log the API error
-    drush_log('Error sending message API call.', 'warning');
-    drush_print($endpoint . '?' . http_build_query($item));
-    drush_print_r($resBody);
+    springboard_dw_api_log_error('Error sending message API call.',$endpoint, $item, $response_body);
 
     // Respond back with failure to retry in the queue
     return false;
@@ -1011,15 +1002,15 @@ function springboard_dw_advocacy_action($item)
   $item = springboard_dw_api_prep_call($item);
 
   // Attempt Guzzle client request
-  $res = $api_client->request('POST', $endpoint, array(
+  $api_response = $api_client->request('POST', $endpoint, array(
     'form_params' => $item
   ));
 
   // Response body
-  $resBody = json_decode($res->getBody());
+  $response_body = json_decode($api_response->getBody());
 
   // Looks like the api response was good
-  if ($res->getStatusCode() == 200) {
+  if ($api_response->getStatusCode() == 200) {
 
     // Insert the user account into the Drupal data warehouse table
     db_insert('springboard_data_warehouse')->fields(array(
@@ -1032,11 +1023,8 @@ function springboard_dw_advocacy_action($item)
     return true;
 
   } else {
-
     // Log the API error
-    drush_log('Error sending form API call.', 'warning');
-    drush_print($endpoint . '?' . http_build_query($item));
-    drush_print_r($resBody);
+    springboard_dw_api_log_error('Error sending action API call.',$endpoint, $item, $response_body);
 
     // Respond back with failure to retry in the queue
     return false;
@@ -1059,15 +1047,15 @@ function springboard_dw_petition($item)
   $item = springboard_dw_api_prep_call($item);
 
   // Attempt Guzzle client request
-  $res = $api_client->request('POST', $endpoint, array(
+  $api_response = $api_client->request('POST', $endpoint, array(
     'form_params' => $item
   ));
 
   // Response body
-  $resBody = json_decode($res->getBody());
+  $response_body = json_decode($api_response->getBody());
 
   // Looks like the api response was good
-  if ($res->getStatusCode() == 200) {
+  if ($api_response->getStatusCode() == 200) {
 
     // Insert the user account into the Drupal data warehouse table
     db_insert('springboard_data_warehouse')->fields(array(
@@ -1080,11 +1068,8 @@ function springboard_dw_petition($item)
     return true;
 
   } else {
-
     // Log the API error
-    drush_log('Error sending petition/action API call.', 'warning');
-    drush_print($endpoint . '?' . http_build_query($item));
-    drush_print_r($resBody);
+    springboard_dw_api_log_error('Error sending petition/action API call.',$endpoint, $item, $response_body);
 
     // Respond back with failure to retry in the queue
     return false;
@@ -1107,15 +1092,15 @@ function springboard_dw_submission($item)
   $item = springboard_dw_api_prep_call($item);
 
   // Attempt Guzzle client request
-  $res = $api_client->request('POST', $endpoint, array(
+  $api_response = $api_client->request('POST', $endpoint, array(
     'form_params' => $item
   ));
 
   // Response body
-  $resBody = json_decode($res->getBody());
+  $response_body = json_decode($api_response->getBody());
 
   // Looks like the api response was good
-  if ($res->getStatusCode() == 200) {
+  if ($api_response->getStatusCode() == 200) {
 
     // Insert the user account into the Drupal data warehouse table
     db_insert('springboard_data_warehouse')->fields(array(
@@ -1128,11 +1113,8 @@ function springboard_dw_submission($item)
     return true;
 
   } else {
-
     // Log the API error
-    drush_log('Error sending submission API call.', 'warning');
-    drush_print($endpoint . '?' . http_build_query($item));
-    drush_print_r($resBody);
+    springboard_dw_api_log_error('Error sending submission API call.',$endpoint, $item, $response_body);
 
     // Respond back with failure to retry in the queue
     return false;
@@ -1155,15 +1137,15 @@ function springboard_dw_advocacy_social_action_message($item)
   $item = springboard_dw_api_prep_call($item);
 
   // Attempt Guzzle client request
-  $res = $api_client->request('POST', $endpoint, array(
+  $api_response = $api_client->request('POST', $endpoint, array(
     'form_params' => $item
   ));
 
   // Response body
-  $resBody = json_decode($res->getBody());
+  $response_body = json_decode($api_response->getBody());
 
   // Looks like the api response was good
-  if ($res->getStatusCode() == 200) {
+  if ($api_response->getStatusCode() == 200) {
 
     // Insert the user account into the Drupal data warehouse table
     db_insert('springboard_data_warehouse')->fields(array(
@@ -1176,11 +1158,8 @@ function springboard_dw_advocacy_social_action_message($item)
     return true;
 
   } else {
-
     // Log the API error
-    drush_log('Error sending message API call.', 'warning');
-    drush_print($endpoint . '?' . http_build_query($item));
-    drush_print_r($resBody);
+    springboard_dw_api_log_error('Error sending social action message API call.',$endpoint, $item, $response_body);
 
     // Respond back with failure to retry in the queue
     return false;
@@ -1203,15 +1182,15 @@ function springboard_dw_petition_message($item)
   $item = springboard_dw_api_prep_call($item);
 
   // Attempt Guzzle client request
-  $res = $api_client->request('POST', $endpoint, array(
+  $api_response = $api_client->request('POST', $endpoint, array(
     'form_params' => $item
   ));
 
   // Response body
-  $resBody = json_decode($res->getBody());
+  $response_body = json_decode($api_response->getBody());
 
   // Looks like the api response was good
-  if ($res->getStatusCode() == 200) {
+  if ($api_response->getStatusCode() == 200) {
 
     // Insert the user account into the Drupal data warehouse table
     db_insert('springboard_data_warehouse')->fields(array(
@@ -1224,14 +1203,12 @@ function springboard_dw_petition_message($item)
     return true;
 
   } else {
-
     // Log the API error
-    drush_log('Error sending message API call.', 'warning');
-    drush_print($endpoint . '?' . http_build_query($item));
-    drush_print_r($resBody);
+    springboard_dw_api_log_error('Error sending petition message API call.',$endpoint, $item, $response_body);
 
     // Respond back with failure to retry in the queue
     return false;
   }
+
 }
 
