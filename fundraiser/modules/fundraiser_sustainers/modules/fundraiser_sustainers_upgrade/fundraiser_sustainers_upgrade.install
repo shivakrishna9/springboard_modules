@@ -1,0 +1,44 @@
+<?php
+/**
+ * @file
+ * Sets up the petition module and content type.
+ */
+
+/**
+ * Implements hook_install().
+ */
+function fundraiser_sustainers_upgrade_install() {
+  $webform_node_types = variable_get('webform_node_types', array());
+  $webform_node_types[] = 'sustainers_upgrade_form';
+  variable_set('webform_node_types', $webform_node_types);
+  $webform_node_types_primary = variable_get('webform_node_types_primary', array());
+  $webform_node_types_primary[] = 'sustainers_upgrade_form';
+  variable_set('webform_node_types_primary', $webform_node_types_primary);
+
+  module_load_include('inc', 'fundraiser_sustainers_upgrade', 'includes/install/fundraiser_sustainers_upgrade.install');
+  module_load_include('inc', 'fundraiser_sustainers_upgrade', 'includes/install/fundraiser_sustainers_upgrade.install_fields');
+  module_load_include('inc', 'fundraiser_sustainers_upgrade', 'includes/install/fundraiser_sustainers_upgrade.install_example');
+  module_load_include('inc', 'fundraiser_sustainers_upgrade', 'includes/install/fundraiser_sustainers_upgrade.install_salesforce');
+
+
+  _fundraiser_sustainers_upgrade_add_content_type();
+  _fundraiser_sustainers_upgrade_add_fields();
+  _fundraiser_sustainers_upgrade_salesforce_install();
+  _fundraiser_sustainers_upgrade_add_example();
+}
+
+
+/**
+ * Implements hook_uninstall().
+ */
+function fundraiser_sustainers_upgrade_uninstall() {
+  module_load_include('inc', 'fundraiser_sustainers_upgrade', 'includes/install/fundraiser_sustainers_upgrade.install');
+  module_load_include('inc', 'fundraiser_sustainers_upgrade', 'includes/install/fundraiser_sustainers_upgrade.install_fields');
+  module_load_include('inc', 'fundraiser_sustainers_upgrade', 'includes/install/fundraiser_sustainers_upgrade.install_salesforce');
+
+  _fundraiser_sustainers_upgrade_delete_nodes();
+  _fundraiser_sustainers_upgrade_delete_fields();
+  node_type_delete('sustainers_upgrade_form');
+  field_purge_batch(1000);
+  fundraiser_sustainers_upgrade_salesforce_uninstall();
+}
