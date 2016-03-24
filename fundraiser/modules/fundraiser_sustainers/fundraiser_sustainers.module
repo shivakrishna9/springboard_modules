@@ -1581,6 +1581,10 @@ function fundraiser_sustainers_fundraiser_donation_form($form, $form_state) {
     // Save the payment method field.
     $form = fundraiser_update_form_field('fundraiser_sustainers', $form, 'payment_method', $payment_method_field);
 
+    // Toggle the recurring option.
+    $recurs_monthly_field['#recurring_gateways'] = $supporting_gateways;
+    $recurs_monthly_field['#pre_render'][] = 'fundraiser_sustainers_recurs_monthly_pre_render';
+
     // Toggle one-time and recurring ask amounts.
     if ($dual_ask_amounts) {
       $onetime_amounts_field['#states']['visible'][$selector] = $onetime_values;
@@ -1609,6 +1613,17 @@ function fundraiser_sustainers_fundraiser_donation_form($form, $form_state) {
   array_unshift($form['#submit'], 'fundraiser_sustainers_donation_form_submit');
   $form['#validate'][] = 'fundraiser_sustainers_recurring_conflict_validate';
   return $form;
+}
+
+function fundraiser_sustainers_recurs_monthly_pre_render($element) {
+  $conditions = array();
+  foreach ($element['#recurring_gateways'] as $gateway) {
+    $conditions[] = array('value' => $gateway);
+  }
+  $element['recurs']['#states']['visible'] = array(
+    ':input[name*=payment_method]' => $conditions
+  );
+  return $element;
 }
 
 /**
