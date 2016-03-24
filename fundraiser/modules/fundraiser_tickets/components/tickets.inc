@@ -218,21 +218,24 @@ function theme_fundraiser_tickets_webform_table($variables) {
   $rows = array();
   $last_row = array();
   $ticket_prices = array();
+  $total_cost = 0;
 
   // Loop through the element and output the children fields as rows
   foreach (element_children($element) as $id) {
     if ($id == 'fundraiser-tickets-extra-donation'){
-
       try {
         $node_wrapper = entity_metadata_wrapper('node', $node);
-        $addon_node = $node_wrapper->fr_tickets_donation_addon_form->value();
-        $addon_currency = fundraiser_get_currency_from_node($addon_node);
-        $addon_currency_symbol = $addon_currency['symbol'];
+        $currency_code = $node_wrapper->field_fundraiser_currency->value();
       }
       catch (Exception $e) {
-        $addon_currency_symbol = $node_currency_symbol;
+        $currency_code = '';
       }
 
+      $row_cost = '0.00';
+      if (isset($element[$id]['#default_value'])) {
+        $row_cost = $element[$id]['#default_value'];
+      }
+      $total_cost += $row_cost;
       $last_row = array(
         'data' => array(
           t('Additional Donation'),
@@ -240,7 +243,7 @@ function theme_fundraiser_tickets_webform_table($variables) {
           drupal_render($element[$id]),
           '',
           array(
-            'data' => $addon_currency_symbol . ' ' . '0.00',
+            'data' => commerce_currency_format($row_cost, $currency_code, NULL, FALSE),
             'id' => 'fundraiser-tickets-extra-donation-display',
             'align' => 'right',
             ),
@@ -251,11 +254,11 @@ function theme_fundraiser_tickets_webform_table($variables) {
       $tickets_available = $product_wrapper->fr_tickets_quantity->value() - $product_wrapper->fr_tickets_quantity_sold->value();
 
       $ticket_amount = $product_wrapper->commerce_price->amount->value();
-      $ticket_currency_code = $product_wrapper->commerce_price->currency_code->value();
-      $ticket_currency = commerce_currency_load($ticket_currency_code);
+      $currency_code = $product_wrapper->commerce_price->currency_code->value();
+      $ticket_currency = commerce_currency_load($currency_code);
       $ticket_currency_symbol = $ticket_currency['symbol'];
 
-      $formatted_amount = commerce_currency_format($ticket_amount, $ticket_currency_code);
+      $formatted_amount = commerce_currency_format($ticket_amount, $currency_code);
       $row = array();
       $title = array(
         'data' => check_plain($product_wrapper->title->value()) . ' (' . $formatted_amount . ')',
@@ -263,7 +266,7 @@ function theme_fundraiser_tickets_webform_table($variables) {
       );
 
       $ticket_prices[$product_wrapper->product_id->value()] = array(
-        'amount' => number_format(commerce_currency_amount_to_decimal($ticket_amount, $ticket_currency_code), 2),
+        'amount' => number_format(commerce_currency_amount_to_decimal($ticket_amount, $currency_code), 2),
         'currency' => $ticket_currency,
       );
       $description = array(
@@ -272,16 +275,22 @@ function theme_fundraiser_tickets_webform_table($variables) {
         'class' => 'ticket_description',
       );
       $warning_message = array(
-        'data' => $tickets_available > 0 &&
-          $tickets_available <= $product_wrapper->fr_tickets_threshold->value()
+        'data' => $tickets_available > 0 && $tickets_available <= $product_wrapper->fr_tickets_threshold->value()
             ? theme('fundraiser_tickets_warning_indicator', array('warning_message' =>t("Only @tickets remaining!",
                 array('@tickets' => format_plural($tickets_available, '1 ticket', '@count tickets')))))
             : NULL,
         'class' => 'ticket_warning',
       );
+
       // Add a div to contain the ticket total
+      $row_cost = '0.00';
+      if (isset($element[$id]['#default_value'])) {
+        $actual_ticket_cost = number_format(commerce_currency_amount_to_decimal($ticket_amount, $currency_code), 2);
+        $row_cost = $actual_ticket_cost * $element[$id]['#default_value'];
+      }
+      $total_cost += $row_cost;
       $ticket_total = array(
-        'data' => $ticket_currency_symbol . ' ' . '0.00',
+        'data' => commerce_currency_format($row_cost, $currency_code, NULL, FALSE),
         'class' => 'fundraiser-ticket-type-total',
         'id' => 'product-' . $element[$id]['#extra']['product_id'] . '-tickets-total',
         'align' => 'right',
@@ -306,8 +315,10 @@ function theme_fundraiser_tickets_webform_table($variables) {
       array('data' => 0, 'id' => 'fundraiser-tickets-total-quant', 'class' => 'quantity', 'align' => 'right'),
       array('data' => '', 'class' => 'ticket_description'),
       array('data' => '', 'class' => 'ticket_warning'),
-      array('data' => $node_currency_symbol . ' ' . '0.00', 'id' => 'fundraiser-tickets-total-cost', 'class' => 'fundraiser-ticket-type-total', 'align' => 'right')
-    )
+      array(
+        'data' => commerce_currency_format($total_cost, $currency_code, NULL, FALSE),
+        'id' => 'fundraiser-tickets-total-cost', 'class' => 'fundraiser-ticket-type-total', 'align' => 'right'),
+    ),
   );
   $header = array(
     array('data' => t('Type'), 'class' => 'ticket_type'),
