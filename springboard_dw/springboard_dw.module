@@ -283,6 +283,101 @@ function springboard_dw_user_update(&$edit, $account, $category)
 }
 
 /**
+ * Implements hook_webform_user_submission_insert().
+ * 
+ * Ship custom webform user submissions to the data warehouse.
+ */
+function springboard_dw_webform_user_submission_insert($node, $submission, $account) {
+  // TODO: This needs to be more robust because you any type can be a donation form.
+  // Probably a module exists for fundraiser.module and a
+  // fundraiser_is_donation_type($node->type) check.
+  $excluded_types = variable_get('springboard_dw_exluded_submission_types', 
+    array('donation_form', 'springboard_petition', 'sba_social_action', 'sba_message_action')
+    );
+
+  // If the type isn't one of our excluded types, queue up the submission.
+  if (!in_array($node->type, $excluded_types)) {
+    // Get the Drupal data warehouse queue
+    $queue = DrupalQueue::get("springboard_dw_export");
+
+    $submitted_data = array();
+
+    // Jump through some hoops here because the submission data is keyed on cid, making it
+    // practically worthless by itself.
+    foreach ($submission->data as $cid => $submittted_value) {
+      if (array_key_exists($cid, $node->webform['components'])) {
+        $submitted_data[$node->webform['components'][$cid]['form_key']] = $submission->data[$cid]['value'][0];
+      }
+    }
+
+    // Queue the donation object which should not be in the queue, so there's no need to check if this item is warehoused
+    $submission_item = springboard_dw_map_submission_item($submission, $submitted_data);
+    $queue->createItem($submission_item);
+  }
+}
+
+/**
+ * Map a webform submission to an array formatted for an API call for data warehousing.
+ * @param $submission
+ * @param $submitted_data
+ * @return array
+ */
+function springboard_dw_map_submission_item($submission, $submitted_data) {
+  $submission_item = array();
+
+  $submission_item['queue_type'] = 'submission';
+  $submission_item['submission_id'] = $submission->sid;
+  $submission_item['form_id'] = $submission->nid;
+  $submission_item['contact_id'] = $submission->uid;
+
+  $submission_item['group_id'] = ''; // Will come later
+  $submission_item['ms'] = $submitted_data['ms'];
+  $submission_item['cid'] = $submitted_data['cid'];
+  $submission_item['referrer'] = $submitted_data['referrer'];
+  $submission_item['initial_referrer'] = $submitted_data['initial_referrer'];
+  $submission_item['search_engine'] = $submitted_data['search_engine'];
+  $submission_item['search_string'] = $submitted_data['search_string'];
+  $submission_item['user_agent'] = $submitted_data['user_agent'];
+  $submission_item['created_at'] = $submission->submitted;
+  $submission_item['updated_at'] = $submission->submitted;
+  $submission_item['ip_address'] = $submission->remote_addr;
+  $submission_item['device_type'] = $submitted_data['device_type'];
+  $submission_item['device_name'] = $submitted_data['device_name'];
+  $submission_item['device_os'] = $submitted_data['device_os'];
+  $submission_item['device_browser'] = $submitted_data['device_browser'];
+
+  $submission_item['extra_props'] = springboard_dw_extract_submission_extra_props($submitted_data, $submission_item);
+
+  return $submission_item;
+}
+
+/**
+ * Extracts non-standard fields out of a webform submission and returns an array of extra_props.
+ *
+ * @param $donation
+ *   The donation from which properties are to be extracted.
+ * @param $donation_item
+ *   The donation item being prepared for the queue.
+ */
+function springboard_dw_extract_submission_extra_props($submitted_data, $submission_item) {
+  // Maintain a field blacklist because there are some donation properties that should
+  // never be exported. The payment_fields array will contain full credit card numbers!
+  $field_blacklist = variable_get('springboard_dw_submission_field_blacklist', array());
+  
+  // Extract items in $submitted_data that are not already explicitly added to
+  // $submission_item. Any custom fields that were added to a form will be
+  // in the $submitted_data data structure.
+  $extra_props = array();
+  foreach ($submitted_data as $key => $value) {
+    if (!in_array($key, $field_blacklist) && !array_key_exists($key, $submission_item)) {
+      $extra_props[$key] = $value;
+    }
+  }
+
+  return $extra_props;
+}
+
+/**
  * Map the Advocacy action object to an array formatted for an API call for data warehousing.
  * @param $donation
  * @return array
