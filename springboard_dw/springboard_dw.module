@@ -775,8 +775,11 @@ function springboard_dw_export_item($item)
  */
 function springboard_dw_contact($item)
 {
+  // Check if the queue item should be an update and route the endpoint accordingly
+  $api_endpoint = isset($item['queue_item_update']) && $item['queue_item_update'] ? 'contact/update' : 'contact/create';
+
   // Make the API call
-  $api_response = springboard_dw_api_call('contact/create', $item);
+  $api_response = springboard_dw_api_call($api_endpoint, $item);
 
   // Looks like the api response was good
   if ($api_response->getStatusCode() == 200) {
@@ -788,7 +791,7 @@ function springboard_dw_contact($item)
 
   } else {
     // Log the API error
-    springboard_dw_api_log_error('Error sending contact API call.', 'contact/create', $item, json_decode($api_response->getBody()));
+    springboard_dw_api_log_error('Error sending contact API call.', $api_endpoint, $item, json_decode($api_response->getBody()));
 
     // Respond back with failure to retry in the queue
     return false;
@@ -832,8 +835,12 @@ function springboard_dw_donation($item)
  */
 function springboard_dw_form($item)
 {
+
+  // Check if the queue item should be an update and route the endpoint accordingly
+  $api_endpoint = isset($item['queue_item_update']) && $item['queue_item_update'] ? 'form/update' : 'form/create';
+
   // Make the API call
-  $api_response = springboard_dw_api_call('form/create', $item);
+  $api_response = springboard_dw_api_call($api_endpoint, $item);
 
   // Looks like the api response was good
   if ($api_response->getStatusCode() == 200) {
@@ -846,7 +853,7 @@ function springboard_dw_form($item)
 
   } else {
     // Log the API error
-    springboard_dw_api_log_error('Error sending form API call.', 'form/create', $item, json_decode($api_response->getBody()));
+    springboard_dw_api_log_error('Error sending form API call.', $api_endpoint, $item, json_decode($api_response->getBody()));
 
     // Respond back with failure to retry in the queue
     return false;
