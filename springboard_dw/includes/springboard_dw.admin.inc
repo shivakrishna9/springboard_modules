@@ -19,17 +19,24 @@ function springboard_dw_settings_page() {
 function springboard_dw_settings_form() {
   $form = array();
 
-  $form['client_id'] = array(
+  $form['springboard_dw_api_endpoint'] = array(
     '#type' => 'textfield',
-    '#title' => t('Data warehouse client id'),
-    '#default_value' => variable_get('client_id', NULL),
+    '#title' => t('Data warehouse server url: (I.E https://warehouse.gospringboard.io)'),
+    '#default_value' => variable_get('springboard_dw_api_endpoint', NULL),
     '#required' => TRUE
   );
 
-  $form['authentication_token'] = array(
+  $form['springboard_dw_authentication_token'] = array(
     '#type' => 'textfield',
     '#title' => t('Data warehouse authentication token'),
-    '#default_value' => variable_get('authentication_token', NULL),
+    '#default_value' => variable_get('springboard_dw_authentication_token', NULL),
+    '#required' => TRUE
+  );
+
+  $form['springboard_dw_client_id'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Data warehouse client id'),
+    '#default_value' => variable_get('springboard_dw_client_id', NULL),
     '#required' => TRUE
   );
 

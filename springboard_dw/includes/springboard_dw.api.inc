@@ -29,8 +29,11 @@ function springboard_dw_api_client()
  */
 function springboard_dw_api_endpoint($endpoint_route)
 {
+
+  $api_endpoint = variable_get('springboard_dw_authentication_token', NULL);
+
   // TODO: point this to a gospringboard.io subdomain
-  return 'http://159.203.115.210/' . ltrim($endpoint_route, '/');
+  return $api_endpoint .'/'. ltrim($endpoint_route, '/');
 }
 
 /**
@@ -46,8 +49,8 @@ function springboard_dw_api_prep_call($item)
   unset($item['queue_type']);
 
   // Add the authentication token and client id
-  $item['authenticationToken'] = variable_get('authentication_token', NULL);
-  $item['sbClientId'] = variable_get('client_id', NULL);
+  $item['authenticationToken'] = variable_get('springboard_dw_authentication_token', NULL);
+  $item['sbClientId'] = variable_get('springboard_dw_client_id', NULL);
 
   return $item;
 }
