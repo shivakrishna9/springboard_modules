@@ -47,6 +47,10 @@
         $('input[name*="other_amount"]').change(function() {
           _recalculate_quantity_total();
         });
+        // And do the same if Fundraiser Sustainers is active and the user switches donation types.
+        $('input[name*="recurs_monthly"]').change(function() {
+          _recalculate_quantity_total();
+        });
 
         // Custom Validation Regex rules: AMEX, VISA, MASTERCARD, DISCOVER, Diner's Club, JCB
         $.validator.addMethod('creditcard', function(value, element) {
