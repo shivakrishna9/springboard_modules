@@ -20,7 +20,6 @@ function fundraiser_sustainers_upgrade_install() {
   module_load_include('inc', 'fundraiser_sustainers_upgrade', 'includes/install/fundraiser_sustainers_upgrade.install_example');
   module_load_include('inc', 'fundraiser_sustainers_upgrade', 'includes/install/fundraiser_sustainers_upgrade.install_salesforce');
 
-
   _fundraiser_sustainers_upgrade_add_content_type();
   _fundraiser_sustainers_upgrade_add_fields();
   _fundraiser_sustainers_upgrade_salesforce_install();
@@ -44,17 +43,16 @@ function fundraiser_sustainers_upgrade_uninstall() {
 }
 
 /**
- * add the sustainers upgrade rollback body field.
+ * Add the sustainers upgrade rollback body field.
  */
 function fundraiser_sustainers_upgrade_update_7001() {
   module_load_include('inc', 'fundraiser_sustainers_upgrade', 'includes/install/fundraiser_sustainers_upgrade.install_fields');
   _fundraiser_sustainers_upgrade_add_fields(TRUE);
-  $field_instance = field_info_instance('node','field_sustainers_upgrade_roll','sustainers_upgrade_form');
-  $field_instance['label'] = 'Rollback Confirmation Message';
-  $field_instance['widget']['weight'] = 5;
-  field_update_instance($field_instance);
 }
 
+/**
+ * Put the new field in the right fieldgroup.
+ */
 function fundraiser_sustainers_upgrade_update_7002() {
 
   $groups = field_group_read_groups(array(
@@ -66,5 +64,14 @@ function fundraiser_sustainers_upgrade_update_7002() {
   $group = $groups['node']['sustainers_upgrade_form']['form']['group_sustainers_upgrade_options'];
   $group->children[] = 'field_sustainers_upgrade_b_roll';
   field_group_group_save($group);
+}
 
+/**
+ * Update the rollback confirmaiton label.
+ */
+function fundraiser_sustainers_upgrade_update_7003() {
+  $field_instance = field_info_instance('node', 'field_sustainers_upgrade_roll', 'sustainers_upgrade_form');
+  $field_instance['label'] = 'Rollback Confirmation Message';
+  $field_instance['widget']['weight'] = 5;
+  field_update_instance($field_instance);
 }
