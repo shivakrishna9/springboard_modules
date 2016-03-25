@@ -216,6 +216,7 @@ function fundraiser_sustainers_upgrade_node_view($node) {
 
     $node->content['field_sustainers_upgrade_fail'][0]['#access'] = FALSE;
     $node->content['field_sustainers_upgrade_roll'][0]['#access'] = FALSE;
+    $node->content['field_sustainers_upgrade_b_roll'][0]['#access'] = FALSE;
     $payload = fundraiser_sustainers_upgrade_get_session_payload();
     $status = fundraiser_sustainers_upgrade_check_donation_status($payload);
     $stop_in_tracks = fundraiser_sustainers_upgrade_stop_in_tracks();
@@ -239,7 +240,7 @@ function fundraiser_sustainers_upgrade_node_view($node) {
       }
       $node->content['body'][0]['#markup'] = token_replace($node->content['body'][0]['#markup'], $token_set);
       $auto_upgrade = field_get_items('node', $node, 'field_sustainers_auto_upgrade');
-      if ((empty($auto_upgrade[0]) || !empty($payload['rollback'])) && !user_access('administer fundraiser sustainers upgrade')) {
+      if ((empty($auto_upgrade[0]) && empty($payload['rollback'])) && !user_access('administer fundraiser sustainers upgrade')) {
         $node->content['webform']['#form']['actions']['#access'] = FALSE;
         $node->content['body']['#access'] = FALSE;
         $node->content['links']['#access'] = FALSE;
@@ -247,6 +248,21 @@ function fundraiser_sustainers_upgrade_node_view($node) {
         if (!empty($form_error)) {
           $node->content['field_sustainers_upgrade_fail'][0]['#access'] = TRUE;
         }
+      }
+      elseif (!empty($payload['rollback'])) {
+        $node->content['body']['#access'] = FALSE;
+        $field = field_get_items('node', $node, 'field_sustainers_upgrade_b_roll');
+        $value = field_view_value('node', $node, 'field_sustainers_upgrade_b_roll', $field[0]);
+        $donation = $status['donation'];
+        $token_set = array(
+          'donation' => $donation,
+        );
+        if ($status && $status['status'] == 'valid') {
+          $value['#markup'] = token_replace($value['#markup'], $token_set);
+        }
+        $node->content['field_sustainers_upgrade_b_roll'] = array(
+          '#markup' => $value['#markup'],
+        );
       }
     }
   }
@@ -289,7 +305,7 @@ function fundraiser_sustainers_form_webform_client_form_alter(&$form, &$form_sta
       // Auto-submit if that option is selected
       // and exempt admin users from auto-submit.
       $auto_upgrade = field_get_items('node', $form['#node'], 'field_sustainers_auto_upgrade');
-      if ((empty($auto_upgrade[0]) || !empty($payload['rollback'])) && !user_access('administer fundraiser sustainers upgrade')) {
+      if ((empty($auto_upgrade[0]) &&  empty($payload['rollback'])) && !user_access('administer fundraiser sustainers upgrade')) {
         if (empty($form_state['storage']['auto_submit'])) {
           fundraiser_sustainers_upgrade_auto_submitter($form, $form_state);
         }
