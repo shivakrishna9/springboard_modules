@@ -127,7 +127,6 @@ function salesforce_login_pass_validate($form, &$form_state) {
 function salesforce_login_user_save($mail, $contact) {
   $account = new stdClass();
   $account->is_new = TRUE;
-  // @TODO How are we going to handle user names?
   $account->name = salesforce_login_cleanup_username($mail);
   $account->mail = $mail;
   $account->status = TRUE;
