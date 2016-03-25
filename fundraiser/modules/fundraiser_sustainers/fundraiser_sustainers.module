@@ -2772,7 +2772,8 @@ function fundraiser_sustainers_get_sustainer_key_value() {
  *   exist.
  */
 function fundraiser_sustainers_sustainer_key_file_exists() {
-  $dir = variable_get('encrypt_secure_key_path', '');
+  $default_encrypt_config = encrypt_get_config('default');
+  $dir = $default_encrypt_config['provider_settings']['path'];
   if (!empty($dir)) {
     $filename = rtrim($dir, '/\\') . '/sustainer.key';
     if (file_exists($filename) && $file = fopen($filename, 'r')) {
@@ -2922,7 +2923,7 @@ function _fundraiser_sustainers_get_donation_sets_recurr_by_uid($uid) {
   $donation_sets = db_query('SELECT r.master_did, MIN(r.next_charge) AS start_date, ' .
     'MAX(r.next_charge) AS expire_date FROM {fundraiser_sustainers} r ' .
     'LEFT JOIN {fundraiser_donation} d on r.did = d.did ' .
-    'WHERE d.uid = :uid GROUP BY r.master_did ORDER BY r.master_did DESC', 
+    'WHERE d.uid = :uid GROUP BY r.master_did ORDER BY r.master_did DESC',
      array(':uid' => $uid))->fetchAll();
   foreach ($donation_sets as $index => $donation_set) {
     $next_charge = _fundraiser_sustainers_get_donations_next_charge($donation_set->master_did);
