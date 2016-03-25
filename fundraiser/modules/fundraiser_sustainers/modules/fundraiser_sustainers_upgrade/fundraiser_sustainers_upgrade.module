@@ -764,7 +764,7 @@ function fundraiser_sustainers_upgrade_get_session_payload() {
       $payload['amount'] = $_SESSION['springboard_hmac']['0'];
       $payload['did'] = $_SESSION['springboard_hmac']['1'];
       $payload['nid'] = $_SESSION['springboard_hmac']['2'];
-      $payload['rollback'] = !empty($_SESSION['springboard_hmac']['3']) ? $_SESSION['springboard_hmac']['3'] : NULL;
+      $payload['rollback'] = !empty($_SESSION['springboard_hmac']['3']) && $_SESSION['springboard_hmac']['3'] == 'rollback' ? $_SESSION['springboard_hmac']['3'] : NULL;
     }
   }
   return $payload;
