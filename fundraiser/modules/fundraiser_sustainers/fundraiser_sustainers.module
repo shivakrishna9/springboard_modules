@@ -604,6 +604,28 @@ function fundraiser_sustainers_form_node_form_alter(&$form, &$form_state, $form_
       ),
     );
 
+    // Is this a legacy webform with a donation-type checkbox?
+    if (module_exists('fundraiser_webform')) {
+      $field = _fundraiser_webform_get_component_by_nid_key($form['#node']->nid, 'recurs_monthly');
+      if (!empty($field)) {
+        $field_extra = unserialize($field->extra);
+        if (!empty($field_extra['multiple'])) {
+          // This is a legacy donation-type component, so provide an option to preserve it.
+          $form['fundraiser_settings']['fundraiser_sustainers']['recurring_preserve_donation_type_checkbox'] = array(
+            '#type' => 'checkbox',
+            '#title' => t("Preserve old checkbox-style donation type selector."),
+            '#description' => t("This donation form currently has a \"Recurring Payment\" checkbox. It will be automatically updated to tabs at the top of the form, unless this checkbox is selected."),
+            '#default_value' => !empty($form['#node']->recurring_preserve_donation_type_checkbox),
+            '#states' => array(
+              'visible' => array(
+                'select[name*=recurring_setting]' => array('value' => 'user_choice'),
+              ),
+            ),
+          );
+        }
+      }
+    }
+
     // Configuration for donation type labels and default.
     $form['fundraiser_settings']['fundraiser_sustainers']['donation_type_options'] = array(
       '#type' => 'container',
@@ -615,6 +637,7 @@ function fundraiser_sustainers_form_node_form_alter(&$form, &$form_state, $form_
       '#states' => array(
         'visible' => array(
           'select[name*=recurring_setting]' => array('value' => 'user_choice'),
+          ':input[name*=recurring_preserve_donation_type_checkbox]' => array('unchecked' => TRUE),
         ),
       ),
     );
@@ -658,6 +681,7 @@ function fundraiser_sustainers_form_node_form_alter(&$form, &$form_state, $form_
       '#states' => array(
         'visible' => array(
           'select[name*=recurring_setting]' => array('value' => 'user_choice'),
+          ':input[name*=recurring_preserve_donation_type_checkbox]' => array('unchecked' => TRUE),
         ),
       ),
     );
@@ -964,7 +988,7 @@ function fundraiser_sustainers_fundraiser_get_fundraiser_alter($fundraiser) {
     $fundraiser->recurring_donation_amounts = $exploded_amounts;
   }
   foreach (['show_other_amount', 'minimum_donation_amount', 'default_amount', 'dual_ask_amounts',
-    'donation_type_options', 'default_donation_type'] as $name)
+    'donation_type_options', 'default_donation_type', 'preserve_donation_type_checkbox'] as $name)
   {
     $fundraiser->{"recurring_$name"} = isset($fundraiser_sustainers->{$name}) ? $fundraiser_sustainers->{$name} : NULL;
   }
@@ -1466,9 +1490,11 @@ function _fundraiser_sustainers_recurs_monthly_field_create($fundraiser, $field)
     // If the donor can choose one-time or recurring, delete and recreate pre-existing component.
     // Legacy forms may have a checkbox instead of radios, or labels may have changed.
     if (module_exists('fundraiser_webform')) {
-      foreach ($fundraiser->webform['components'] as $component) {
-        if ($component['form_key'] == 'recurs_monthly') {
-          _fundraiser_webform_delete_component($fundraiser->nid, 'recurs_monthly');
+      if (empty($fundraiser->recurring_preserve_donation_type_checkbox)) {
+        foreach ($fundraiser->webform['components'] as $component) {
+          if ($component['form_key'] == 'recurs_monthly') {
+            _fundraiser_webform_delete_component($fundraiser->nid, 'recurs_monthly');
+          }
         }
       }
     }
@@ -3827,6 +3853,7 @@ function _fundraiser_sustainers_update_sustainers_node($node) {
       ($node->recurring_setting == 'always') ? 'recurs' : 'onetime'
     ),
     'donation_type_help_text' => isset($node->recurring_donation_type_help_text) ? $node->recurring_donation_type_help_text : NULL,
+    'preserve_donation_type_checkbox' => !empty($node->recurring_preserve_donation_type_checkbox),
   );
 
   if (isset($new_data['nid'])) {
