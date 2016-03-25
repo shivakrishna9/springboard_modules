@@ -128,7 +128,7 @@ function salesforce_login_user_save($mail, $contact) {
   $account = new stdClass();
   $account->is_new = TRUE;
   // @TODO How are we going to handle user names?
-  $account->name = $mail;
+  $account->name = salesforce_login_cleanup_username($mail);
   $account->mail = $mail;
   $account->status = TRUE;
   // Get user_to_contact field mapping and save profile field values in
@@ -185,4 +185,23 @@ function salesforce_login_get_contacts_by_email($email) {
   $soap = new SalesforceSoapPartner($sfapi);
   $salesforce_sync = new SalesforceSync($sfapi, $soap);
   return $salesforce_sync->fetchByField('Contact', $salesforce_fields, $salesforce_mail_field, array($email));
+}
+
+/**
+ * Clean name using functions from email_registration.module, if present.
+ *
+ * @param string $name
+ *   A dirty username.
+ *
+ * @return string
+ *   A valid and unique username.
+ */
+function salesforce_login_cleanup_username($name) {
+  if (module_exists('email_registration')) {
+    // Strip off everything after the @ sign.
+    $name = preg_replace('/@.*$/', '', $name);
+    $name = email_registration_cleanup_username($name);
+    $name = email_registration_unique_username($name);
+  }
+  return $name;
 }
