@@ -578,8 +578,10 @@ function fundraiser_sustainers_upgrade_after_webform_submit($form, $form_state) 
 /**
  * Log status and hide actions array if there are no payload session values.
  *
- * @param $form
- * @param $status
+ * @param array $form
+ *   The upgrade form.
+ * @param array $status
+ *   The status message.
  */
 function fundraiser_sustainer_upgrade_stop_at_form(&$form, $status, $payload) {
   if (user_access('administer fundraiser sustainers upgrade')) {
@@ -595,10 +597,10 @@ function fundraiser_sustainer_upgrade_stop_at_form(&$form, $status, $payload) {
 
   if (!empty($payload)) {
     $variables += array(
-    '@uid'    => $payload['uid'],
-    '@did'    => $payload['did'],
-    '@amount' => $payload['amount'],
-    '@timestamp' => $payload['timestamp'],
+      '@uid'    => $payload['uid'],
+      '@did'    => $payload['did'],
+      '@amount' => $payload['amount'],
+      '@timestamp' => $payload['timestamp'],
     );
     $message .= ' | Amount: @amount | Donation ID: @did | Timestamp: @timestamp ';
   }
