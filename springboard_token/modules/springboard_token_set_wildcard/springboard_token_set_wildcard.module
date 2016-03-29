@@ -268,34 +268,46 @@ function _springboard_token_set_wildcard_process_new($form_id, $token_set_settin
   // If this content is new then get its future path:
   if (!isset($new_path)) { 
     foreach ($wildcard_settings as $settings_key => $settings) {
+      unset($new_content_data);
       if (!isset($settings['add_form_id']) || $form_id != $settings['add_form_id']) {
         continue;
       }
-      // Set values for query tokens if needed: 
-      if (!empty($settings['next_id_query_tokens'])) {
-        // The node ID:
-        $arg0 = 'node'; $arg1 = arg(1);
-        if (isset($settings['next_id_query_tokens'][':nid']) && $arg0 == 'node' && is_numeric($arg1)) {
-          $settings['next_id_query_tokens'][':nid'] = $arg1;
+      // Fetch the next ID via a DB query if needed:
+      if (!empty($settings['next_id_query'])) {
+        if (!empty($settings['next_id_query_tokens'])) {
+          // The node ID:
+          $arg0 = 'node'; $arg1 = arg(1);
+          if (isset($settings['next_id_query_tokens'][':nid']) && $arg0 == 'node' && is_numeric($arg1)) {
+            $settings['next_id_query_tokens'][':nid'] = $arg1;
+          }
+        }
+        $new_path_data = db_query_range($settings['next_id_query'], 0, 1, $settings['next_id_query_tokens'])
+          ->fetchAssoc();
+      }
+      // Or get the next ID from this form's submitted data if needed:
+      elseif (!empty($settings['next_id_form_submitted_field_key'])) {
+        $next_id_key = $settings['next_id_form_submitted_field_key'];
+        if (isset($_POST[$next_id_key])) {
+          $new_path_data[$next_id_key] = $_POST[$next_id_key];
         }
       }
-      $new_content_data = db_query_range($settings['next_id_query'], 0, 1, $settings['next_id_query_tokens'])
-        ->fetchAssoc();
-      // Populate the new path from args, if needed:
-      if (isset($settings['edit_tokens_args'])) {
-        foreach ($settings['edit_tokens_args'] as $token => $arg) {
-          $arg_value = arg($arg);
-          $settings['edit_path'] = str_replace($token, $arg_value, $settings['edit_path']);
-          unset($settings['edit_path_token_names'][$token]);
+      // Populate the new path from args, if available and if needed:
+      if (is_array($new_path_data)) {
+        if (isset($settings['edit_tokens_args'])) {
+          foreach ($settings['edit_tokens_args'] as $token => $arg) {
+            $arg_value = arg($arg);
+            $settings['edit_path'] = str_replace($token, $arg_value, $settings['edit_path']);
+            unset($settings['edit_path_token_names'][$token]);
+          }
         }
+        $new_path_data = array_values($new_path_data);
+        $new_path = str_replace(
+          $settings['edit_path_token_names'],
+          $new_path_data,
+          $settings['edit_path']);
+        $new_content_submitted = TRUE;
+        break;
       }
-      $new_content_data = array_values($new_content_data);
-      $new_path = str_replace(
-        $settings['edit_path_token_names'],
-        $new_content_data,
-        $settings['edit_path']);
-      $new_content_submitted = TRUE;
-      break;
     }
   }
   // Save token settings if a path has been identified:

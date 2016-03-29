@@ -6,6 +6,31 @@
 function _springboard_token_set_wildcard_get_wildcard_definitions() {
   $wildcard_settings = array();
 
+  // Springboard tags list:
+  $wildcard_settings['sb_tags_list_add'] = array(
+    'wildcard_path' => '/^admin\/springboard\/springboard-tags\/add/',
+    'add_form_id' => 'ctools_export_ui_edit_item_form',
+    'edit_wildcard' => 'sb_tags_list_edit',
+    'next_id_query' => NULL,
+    'next_id_query_tokens' => array(),
+    'next_id_form_submitted_field_key' => 'admin_title',
+    'edit_path' => 'admin/springboard/springboard-tags/list/:admin_title/edit',
+    'edit_path_token_names' => array(':admin_title'),
+    'form_keys' => array(
+      'tag',
+      'admin_description',
+    ),
+    'default_tsids' => array(
+      'tag' => 21,
+      'admin_description' => 21, 
+    ),
+  );
+  $wildcard_settings['sb_tags_list_edit'] = array(
+    'wildcard_path' => '/^admin\/springboard\/springboard-tags\/list\/\w+\/edit/',
+    'form_keys' => $wildcard_settings['sb_tags_list_add']['form_keys'],
+    'default_tsids' => $wildcard_settings['sb_tags_list_add']['default_tsids'],
+  );
+
   // Webform confirmation page settings:
   $wildcard_settings['webform_conf_page'] = array(
     'wildcard_path' => '/^node\/\d+\/webform\/configure/',
