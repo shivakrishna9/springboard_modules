@@ -170,18 +170,28 @@ function springboard_hmac_verify_payload($parsed_payload) {
     return t('User ID is missing.');
   }
   else {
+    // Does the account not exist?
     $account = user_load($parsed_payload['uid']);
     if (empty($account->uid)) {
       return t('Invalid User ID.');
     }
     else {
+      // Is there a non-anonymous session and
+      // does the user id not match the payload ID?
       global $user;
-      if (!user_access('administer springboard hmac') && $user->uid != $account->uid) {
+      if (!user_access('administer springboard hmac') && ($user->uid > 0 && $user->uid != $parsed_payload['uid'])) {
         return t('Payload User ID does not match User ID.');
+      }
+      // Is there a springboard cookie and
+      // does the cookie user id not match the payload ID?
+      if (module_exists('springboard_cookie')) {
+        $cookie = springboard_cookie_get_cookie();
+        if (!user_access('administer springboard hmac') && isset($cookie['uid']) && $parsed_payload['uid'] != $cookie['uid']) {
+          return t('Payload User ID does not match Springboard Cookie User ID.');
+        }
       }
     }
   }
-
   return NULL;
 }
 
