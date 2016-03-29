@@ -601,6 +601,9 @@ function fundraiser_sustainers_form_node_form_alter(&$form, &$form_state, $form_
         'visible' => array(
           'select[name*=recurring_setting]' => array('value' => 'user_choice'),
         ),
+        'enabled' => array(
+          ':input[name*=recurring_preserve_donation_type_checkbox]' => array('unchecked' => TRUE),
+        ),
       ),
     );
 
@@ -619,6 +622,7 @@ function fundraiser_sustainers_form_node_form_alter(&$form, &$form_state, $form_
             '#states' => array(
               'visible' => array(
                 'select[name*=recurring_setting]' => array('value' => 'user_choice'),
+                ':input[name*=recurring_dual_ask_amounts]' => array('unchecked' => TRUE),
               ),
             ),
           );
