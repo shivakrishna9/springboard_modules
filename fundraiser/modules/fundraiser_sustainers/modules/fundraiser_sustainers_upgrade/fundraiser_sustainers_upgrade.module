@@ -1213,10 +1213,20 @@ function fundraiser_sustainers_upgrade_cancel_redirect() {
 /**
  * Implements hook_form_FORM_ID_alter().
  *
- * Don't allow redirect changes on sustaier upgrade forms.
+ * Don't allow redirect changes on sustainer upgrade forms.
  */
-function fundraiser_sustainers_form_webform_configure_form_alter(&$form, &$form_state) {
+function fundraiser_sustainers_upgrade_form_webform_configure_form_alter(&$form, &$form_state) {
   if ($form['#node']->type == 'sustainers_upgrade_form') {
     $form['submission']['redirection']['#access'] = FALSE;
   }
+}
+
+/**
+ * Implements hook_form_FORM_ID_alter().
+ *
+ * Temporarily hiding the auto-upgrade option until issues around it are
+ * settled.
+ */
+function fundraiser_sustainers_upgrade_form_sustainers_upgrade_form_node_form_alter(&$form, &$form_state) {
+  $form['field_sustainers_auto_upgrade']['#access'] = FALSE;
 }
