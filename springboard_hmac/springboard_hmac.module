@@ -184,12 +184,12 @@ function springboard_hmac_verify_payload($parsed_payload) {
       }
       // Is there a springboard cookie and
       // does the cookie user id not match the payload ID?
-      if (module_exists('springboard_cookie')) {
-        $cookie = springboard_cookie_get_cookie();
-        if (!user_access('administer springboard hmac') && isset($cookie['uid']) && $parsed_payload['uid'] != $cookie['uid']) {
-          return t('Payload User ID does not match Springboard Cookie User ID.');
-        }
-      }
+//      if (module_exists('springboard_cookie')) {
+//        $cookie = springboard_cookie_get_cookie();
+//        if (!user_access('administer springboard hmac') && isset($cookie['uid']) && $parsed_payload['uid'] != $cookie['uid']) {
+//          return t('Payload User ID does not match Springboard Cookie User ID.');
+//        }
+//      }
     }
   }
   return NULL;
