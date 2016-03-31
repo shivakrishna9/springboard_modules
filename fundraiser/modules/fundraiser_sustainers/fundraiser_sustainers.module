@@ -1053,13 +1053,17 @@ function fundraiser_sustainers_node_presave($node) {
       }
     }
     // Sort and serialize the donation type options and labels.
-    uasort($node->donation_type_options, function($a, $b) {return ($a['weight'] < $b['weight']) ? -1 : 1;});
-    $donation_type_options = array();
-    foreach ($node->donation_type_options as $type => $settings) {
-      $donation_type_options[] = "$type|" . $settings['label'];
+    if (!empty($node->donation_type_options)) {  // Only if potentially new configuration is coming from the node edit form.
+      uasort($node->donation_type_options, function ($a, $b) {
+        return ($a['weight'] < $b['weight']) ? -1 : 1;
+      });
+      $donation_type_options = array();
+      foreach ($node->donation_type_options as $type => $settings) {
+        $donation_type_options[] = "$type|" . $settings['label'];
+      }
+      $node->recurring_donation_type_options = $donation_type_options;
+      unset($node->donation_type_options);
     }
-    $node->recurring_donation_type_options = $donation_type_options;
-    unset($node->donation_type_options);
     // Set the donation amounts where we expect them to be for processing.
     // These are buried under amount_wrapper because we set 'TREE' on that in the form.
     $node->recurring_donation_amounts = $node->recurring_amount_wrapper['recurring_donation_amounts'];
@@ -1482,7 +1486,8 @@ function _fundraiser_sustainers_recurs_monthly_field_create($fundraiser, $field)
   else if ($fundraiser->recurring_setting == 'user_choice') {
     // Use options and default given in the node edit form.
     if (!empty($fundraiser->recurring_donation_type_options)) {
-      $field['#extra']['items'] = implode("\n", $fundraiser->recurring_donation_type_options);
+      $field['#extra']['items'] = is_array($fundraiser->recurring_donation_type_options) ?  // Array comes from node edit form, string comes from DB.
+        implode("\n", $fundraiser->recurring_donation_type_options) : str_replace('|||', "\n", $fundraiser->recurring_donation_type_options);
     }
     if (!empty($fundraiser->recurring_default_donation_type)) {
       $field['#value'] = $fundraiser->recurring_default_donation_type;
@@ -3852,7 +3857,9 @@ function _fundraiser_sustainers_update_sustainers_node($node) {
     'minimum_donation_amount' => $node->recurring_minimum_donation_amount,
     'default_amount' => $node->recurring_default_amount,
     'dual_ask_amounts' => ($node->recurring_dual_ask_amounts && $node->recurring_setting == 'user_choice'),
-    'donation_type_options' => !empty($node->recurring_donation_type_options) ? implode('|||', $node->recurring_donation_type_options) : NULL,
+    'donation_type_options' => empty($node->recurring_donation_type_options) ? NULL : (
+      is_array($node->recurring_donation_type_options) ? implode('|||', $node->recurring_donation_type_options) : $node->recurring_donation_type_options
+    ),  // If we aren't processing the node edit form, this setting may already be a string pulled directly from the DB.
     'default_donation_type' => !empty($node->recurring_default_donation_type) ? $node->recurring_default_donation_type : (
       ($node->recurring_setting == 'always') ? 'recurs' : 'onetime'
     ),
