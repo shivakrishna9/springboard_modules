@@ -864,17 +864,6 @@ function _fundraiser_commerce_zone_field_display($form, $form_state, $field) {
 }
 
 /**
- * Implements hook_fundraiser_get_credit_encryption_path().
- * This is called by modules that need to check for processing availablity outside of normal.
- * Such as sustainer.
- *
- * @deprecated This hook has been removed because it's only used by one module.
- */
-function fundraiser_commerce_fundraiser_get_credit_encryption_path() {
-  return variable_get('encrypt_secure_key_path', t('Not configured, see below.')); // From the encrypt module.
-}
-
-/**
  * Implements hook_fundraiser_donation_get_donation().
  */
 function fundraiser_commerce_fundraiser_donation_get_donation($donation) {
