@@ -76,7 +76,14 @@ function _webform_render_tickets($component, $value = NULL, $filter = TRUE) {
         if ($product_wrapper->status->value() == FALSE){
           continue;
         }
+
+        // Display the "Quantity displayed" number of ticket rather than the actual quantity if "Quantity displayed" is less:
         $tickets_available = $product_wrapper->fr_tickets_quantity->value() - $product_wrapper->fr_tickets_quantity_sold->value();
+        $quantity_displayed = $product_wrapper->fr_tickets_quantity_displayed->value();
+        if (!empty($quantity_displayed) && $quantity_displayed < $tickets_available) {
+          $tickets_available = $quantity_displayed;
+        }
+
         $id = $product_wrapper->product_id->value();
         $item = array();
         $item['#type'] = 'select';
