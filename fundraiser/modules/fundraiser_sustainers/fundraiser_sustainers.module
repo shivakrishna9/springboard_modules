@@ -2772,10 +2772,10 @@ function fundraiser_sustainers_get_sustainer_key_value() {
  *   exist.
  */
 function fundraiser_sustainers_sustainer_key_file_exists() {
-  $default_encrypt_config = encrypt_get_config('default');
-  $dir = $default_encrypt_config['provider_settings']['path'];
-  if (!empty($dir)) {
-    $filename = rtrim($dir, '/\\') . '/sustainer.key';
+  $default_encrypt_config = variable_get('encrypt_default_config', NULL);
+  $default_encrypt_config = encrypt_get_config($default_encrypt_config);
+  if (!empty($default_encrypt_config['provider_settings']['path'])) {
+    $filename = rtrim($default_encrypt_config['provider_settings']['path'], '/\\') . '/sustainer.key';
     if (file_exists($filename) && $file = fopen($filename, 'r')) {
       return $filename;
     }
