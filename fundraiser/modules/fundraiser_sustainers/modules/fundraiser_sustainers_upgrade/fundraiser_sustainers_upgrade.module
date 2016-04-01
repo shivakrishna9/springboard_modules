@@ -524,7 +524,7 @@ function fundraiser_sustainers_upgrade_before_webform_submit($form, $form_state)
     $payload_decimal = commerce_currency_amount_to_decimal($payload['amount'], $currency_code);
     $formatted_amount = commerce_currency_format($payload_decimal, $currency_code, NULL, FALSE);
     $next_donation_amount = commerce_currency_decimal_to_amount($next_donation->amount, $currency_code);
-    $_SESSION['next_donation'] = array('master_did' => $next_donation->master_did, 'amount' => $next_donation_amount);
+    $_SESSION['next_donation'] = array('master_did' => $donation->recurring->master_did, 'amount' => $next_donation_amount);
     if (!empty($payload['rollback'])) {
       $_SESSION[$form['#node']->nid . '_stop_mail'] = TRUE;
     }
@@ -649,7 +649,6 @@ function fundraiser_sustainers_upgrade_check_donation_status($payload) {
         $recurring = _fundraiser_sustainers_get_donations_recurr_remaining($payload['did']);
         $message = fundraiser_sustainers_upgrade_get_status_message($recurring, $donation, $payload, $min_amount);
         $status['status'] = $message;
-
         $stop_in_tracks = fundraiser_sustainers_upgrade_stop_in_tracks();
         if (!in_array($status['status'], $stop_in_tracks)) {
           $status['donation'] = $donation;
@@ -700,7 +699,6 @@ function fundraiser_sustainers_upgrade_get_status_message($recurring, $donation,
   if (!is_numeric($payload['amount']) || !is_numeric($payload['did']) || !is_numeric($payload['uid'])) {
     return t('Non-numeric values in payload.');
   }
-
   if (property_exists($donation, 'master_did')) {
     return t('Donation ID is not a master ID.');
   }
