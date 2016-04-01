@@ -143,7 +143,7 @@
           $('input[name*="other_amount"]').rules("add", {
             required: {
               depends: function(element) {
-                if ($('input[type="radio"][name$="[amount]"][value="other"]').is(":checked"))
+                if ($('input[type="radio"][name$="[amount]"][value="other"]:visible').is(":checked"))
                   return true;
                 else
                   return false;

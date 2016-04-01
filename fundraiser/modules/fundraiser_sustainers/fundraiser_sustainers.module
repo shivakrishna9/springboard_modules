@@ -1537,6 +1537,9 @@ function fundraiser_sustainers_fundraiser_donation_form($form, $form_state) {
 
   // Does the form have dual ask amounts?
   $dual_ask_amounts = !empty($form['#node']->recurring_dual_ask_amounts);
+  if ($dual_ask_amounts) {
+    $form['#attached']['js'][] = drupal_get_path('module', 'fundraiser_sustainers') . '/js/dual_ask_validation.js';
+  }
 
   // Set up the values that we're going to require in the States array. If it's a select list or
   // radio buttons, check for 'value'. Otherwise, it's a checkbox, so check for 'checked' == FALSE.
