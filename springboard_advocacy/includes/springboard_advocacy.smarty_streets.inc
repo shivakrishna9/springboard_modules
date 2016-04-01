@@ -27,7 +27,13 @@ function springboard_advocacy_smarty_lookup(array $values) {
   );
 
   $url = url('https://api.smartystreets.com/street-address', array('query' => $query));
-  $response = drupal_http_request($url);
+  if (module_exists('chr')) {
+    $response = chr_curl_http_request($url);
+  }
+  else {
+    $response = drupal_http_request($url);
+  }
+
   $geo = array();
 
   if (isset($response->error)) {
