@@ -38,20 +38,33 @@ class FundraiserDateModeTest extends DrupalWebTestCase {
       'encrypt',
       'fundraiser_date_mode',
       'salesforce_mapping',
+      'views',
+      'date_views',
     );
     $enable_modules = array_merge($enable_modules, $additional_modules);
 
     // Call the parent to set all of the base modules up.
     parent::setUp($enable_modules);
 
-    // Create a key file
-    variable_set('encrypt_secure_key_path', DRUPAL_ROOT . '/' . variable_get('file_public_path', conf_path() . '/files'));
-    variable_set('encrypt_default_method', 'mcrypt_rij_256');
-    $key_file = variable_get('encrypt_secure_key_path', '') . '/' . ENCRYPT_SECURE_KEY_FILE;
+    // Configure encrypt module's default configuration record and create key
+    // file.
+    $key_path = DRUPAL_ROOT . '/' . variable_get('file_public_path', conf_path() . '/files');
+    $record = array(
+      'name' => 'default',
+      'provider' => 'file',
+      'description' => 'Default encrypt config updated for test run',
+      // @TODO mcrypt_rij_256 is deprecated.
+      'method' => 'mcrypt_rij_256',
+      'provider_settings' => serialize(array(
+        'path' => $key_path,
+        'method' => 'file_contents',
+      )),
+    );
+    $update_status = drupal_write_record('encrypt_config', $record, 'name');
+    $key_file = $key_path . '/encrypt_key.key';
     $open_file = fopen($key_file, 'wb');
-    $new_key = md5(uniqid(mt_rand(0, mt_rand()), TRUE)) . md5(uniqid(mt_rand(0, mt_rand()), TRUE));
-    // Create file with new key in it.
-    fwrite($open_file, $new_key);
+    $key = drupal_random_bytes(16);
+    fwrite($open_file, $key);
     fclose($open_file);
 
     // Setup the environment to a default standard.
