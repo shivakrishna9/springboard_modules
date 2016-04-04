@@ -616,8 +616,8 @@ function fundraiser_sustainers_form_node_form_alter(&$form, &$form_state, $form_
           // This is a legacy donation-type component, so provide an option to preserve it.
           $form['fundraiser_settings']['fundraiser_sustainers']['recurring_preserve_donation_type_checkbox'] = array(
             '#type' => 'checkbox',
-            '#title' => t("Preserve old checkbox-style donation type selector."),
-            '#description' => t("This donation form currently has a \"Recurring Payment\" checkbox. It will be automatically updated to tabs at the top of the form, unless this checkbox is selected."),
+            '#title' => t("Don't upgrade this form"),
+            '#description' => t("This form uses the Springboard 4.9 or earlier form components and a \"Recurring Payment\" checkbox. It will be automatically updated to support using different ask amounts if this option is un-checked. WARNING: The update cannot be undone."),
             '#default_value' => !empty($form['#node']->recurring_preserve_donation_type_checkbox),
             '#states' => array(
               'visible' => array(
@@ -628,6 +628,8 @@ function fundraiser_sustainers_form_node_form_alter(&$form, &$form_state, $form_
               ),
             ),
           );
+          $form['fundraiser_settings']['fundraiser_sustainers']['recurring_dual_ask_amounts']['#description'] =
+            t("Requires the form to be upgraded.");
         }
       }
     }
