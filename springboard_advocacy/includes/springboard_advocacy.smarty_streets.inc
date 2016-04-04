@@ -17,7 +17,7 @@
  *   An array of smarty streets data derived from the address.
  */
 function springboard_advocacy_smarty_lookup(array $values) {
-  watchdog('springboard_advocacy', 'SmartyStreets API lookup.', array(), WATCHDOG_DEBUG);
+  watchdog('springboard_advocacy', 'SmartyStreets API lookup.', array(), WATCHDOG_INFO);
 
   $query = array(
     'street' => $values['sbp_address'],
