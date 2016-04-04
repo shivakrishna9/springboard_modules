@@ -235,3 +235,29 @@ function _dynamic_gift_strings_alert($amounts, $nid) {
     }
   }
 }
+
+
+/**
+ * Implements hook_node_load().
+ *
+ * If a webform is not a donation form, has a redirect,
+ * and $_GET['gs'] exists and is not already in the node's redirect url setting,
+ * add the gift string paramter to the $node->webform['redirect'] string.
+ */
+function dynamic_gift_strings_node_load($nodes, $types) {
+  foreach ($nodes as $node) {
+    if (isset($_GET['gs'])
+      && !fundraiser_is_donation_type($node->type)
+      && in_array($node->type, variable_get('webform_node_types', array()))) {
+      $redirect_url = $node->webform['redirect_url'];
+      if ($redirect_url != '<confirmation>' && $redirect_url != '<none>') {
+        $parts = drupal_parse_url($redirect_url);
+        if (!isset($parts['query']['gs'])) {
+          $num = count($parts['query']);
+          $qstring = $num <= 1 ? '?gs=' . $_GET['gs'] : '&gs=' . $_GET['gs'];
+          $node->webform['redirect_url'] = $node->webform['redirect_url'] . $qstring;
+        }
+      }
+    }
+  }
+}
