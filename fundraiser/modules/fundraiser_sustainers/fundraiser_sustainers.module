@@ -830,6 +830,9 @@ function fundraiser_sustainers_form_node_form_alter(&$form, &$form_state, $form_
     );
     $form['#validate'][] = '_fundraiser_sustainers_form_amounts_validate';
   }
+
+  // Attach .js for special node edit form handling.
+  $form['#attached']['js'][] = drupal_get_path('module', 'fundraiser_sustainers') . '/js/recurring_node_edit.js';
 }
 
 /**
