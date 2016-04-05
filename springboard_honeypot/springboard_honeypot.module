@@ -32,7 +32,7 @@ function springboard_honeypot_honeypot_reject($form_id, $uid, $type) {
 }
 
 /**
- * Add an IP to the blacklist.
+ * Record the IP and uid of a Honeypot rejection.
  */
 function springboard_honeypot_add($uid, $ip) {
   db_insert('springboard_honeypot')
