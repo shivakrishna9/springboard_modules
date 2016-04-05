@@ -62,4 +62,10 @@ function springboard_honeypot_add_to_blacklist($ip) {
     ->fields(array('ip' => $ip))
     ->execute();
   watchdog('springboard_honeypot', 'Banned IP address %ip', array('%ip' => $ip));
+
+  // Now that the IP has been added to the system blacklist, delete the IP from
+  // springboard_honeypot to keep it from growing too large.
+  db_delete('springboard_honeypot')
+    ->condition('ip', $ip)
+    ->execute();
 }
