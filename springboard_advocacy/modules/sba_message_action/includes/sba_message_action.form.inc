@@ -128,7 +128,8 @@ function sba_message_action_additional_elements(&$form, &$form_state) {
   }
 
   $form['#validate'][] = 'sba_message_action_form_validate';
-  $form['#submit'][] = 'sba_message_action_form_submit';
+  $form['#submit'][] = 'sba_message_action_form_submit_success';
+  array_unshift($form['#submit'], 'sba_message_action_form_submit');
 }
 
 /**
@@ -399,16 +400,14 @@ function sba_message_action_form_validate(&$form, &$form_state) {
  * @param $form_state
  */
 function sba_message_action_form_submit($form, &$form_state) {
-  $node = $form['#node'];
-  $node_wrapper = entity_metadata_wrapper('node', $node);
-  $multi_flow = $node_wrapper->field_sba_action_flow->value() == 'multi' ? TRUE : FALSE;
 
   $_SESSION['delivered_messages'] = array();
   $_SESSION['undelivered_messages'] = array();
   $_SESSION['contact'] = array();
   $_SESSION['form_details'] = array();
   $_SESSION['action_sid'] = FALSE;
-  //$_SESSION['action_completed'] = FALSE;
+  $_SESSION['success_messages'] = array();
+
   // Create array of messages to submit for target resolution.
   if (isset($form_state['values']['sba_messages'])) {
     $messages = array();
@@ -437,7 +436,27 @@ function sba_message_action_form_submit($form, &$form_state) {
   }
 }
 
-
+/**
+ * Second submit hook to fire after webform_client_submit().
+ *
+ * In order to get the submission ID we need a second submit hook which
+ * fires after webform has done its processing. The other submit hook has
+ * to fire before webform in order to make session values available for token
+ * replacement in confirmation messages when there is a reirect set in
+ * confirmation settings.
+ *
+ * @param array $form
+ *   The form array.
+ * @param array $form_state
+ *   The form_state array.
+ */
+function sba_message_action_form_submit_success($form, &$form_state) {
+  if (!empty($_SESSION['success_messages'])) {
+    $node = $form['#node'];
+    $sid = !empty($_SESSION['webform_confirmations_sid']) ? $_SESSION['webform_confirmations_sid'] : FALSE;
+    springboard_advocacy_success($node, $_SESSION['contact'], $_SESSION['success_messages'], $sid);
+  }
+}
 /**
  * Helper function to build message bodies.
  *
