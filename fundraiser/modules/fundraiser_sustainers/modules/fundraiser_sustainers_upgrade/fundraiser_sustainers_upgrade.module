@@ -216,6 +216,7 @@ function fundraiser_sustainers_upgrade_node_view($node) {
 
     $node->content['field_sustainers_upgrade_fail'][0]['#access'] = FALSE;
     $node->content['field_sustainers_upgrade_roll'][0]['#access'] = FALSE;
+    $node->content['field_sustainers_upgrade_b_roll'][0]['#access'] = FALSE;
     $payload = fundraiser_sustainers_upgrade_get_session_payload();
     $status = fundraiser_sustainers_upgrade_check_donation_status($payload);
     $stop_in_tracks = fundraiser_sustainers_upgrade_stop_in_tracks();
@@ -238,15 +239,37 @@ function fundraiser_sustainers_upgrade_node_view($node) {
         $token_set['recurring'] = $status['recurring'];
       }
       $node->content['body'][0]['#markup'] = token_replace($node->content['body'][0]['#markup'], $token_set);
-      $auto_upgrade = field_get_items('node', $node, 'field_sustainers_auto_upgrade');
-      if ((empty($auto_upgrade[0]) || !empty($payload['rollback'])) && !user_access('administer fundraiser sustainers upgrade')) {
-        $node->content['webform']['#form']['actions']['#access'] = FALSE;
-        $node->content['body']['#access'] = FALSE;
-        $node->content['links']['#access'] = FALSE;
-        $form_error = &drupal_static('form_set_error');
-        if (!empty($form_error)) {
-          $node->content['field_sustainers_upgrade_fail'][0]['#access'] = TRUE;
+      $require_confirmation = field_get_items('node', $node, 'field_sustainers_auto_upgrade');
+      $verified_user = fundraiser_sustainers_upgrade_check_user_status($payload);
+      // Test if this form can be auto-submitted.
+      if ((empty($require_confirmation[0]) && empty($payload['rollback'])) && !user_access('administer fundraiser sustainers upgrade')) {
+        if ($verified_user) {
+          // Remove items not needed for auto-submit.
+          $node->content['webform']['#form']['actions']['#access'] = FALSE;
+          $node->content['body']['#access'] = FALSE;
+          $node->content['links']['#access'] = FALSE;
+          // Check for errors that would prevent auto-submit and display message
+          // if so.
+          $form_error = &drupal_static('form_set_error');
+          if (!empty($form_error)) {
+            $node->content['field_sustainers_upgrade_fail'][0]['#access'] = TRUE;
+          }
         }
+      }
+      elseif (!empty($payload['rollback'])) {
+        $node->content['body']['#access'] = FALSE;
+        $field = field_get_items('node', $node, 'field_sustainers_upgrade_b_roll');
+        $value = field_view_value('node', $node, 'field_sustainers_upgrade_b_roll', $field[0]);
+        $donation = $status['donation'];
+        $token_set = array(
+          'donation' => $donation,
+        );
+        if ($status && $status['status'] == 'valid') {
+          $value['#markup'] = token_replace($value['#markup'], $token_set);
+        }
+        $node->content['field_sustainers_upgrade_b_roll'] = array(
+          '#markup' => $value['#markup'],
+        );
       }
     }
   }
@@ -258,7 +281,7 @@ function fundraiser_sustainers_upgrade_node_view($node) {
  * Load the donation object and recurring array into the form if valid session
  * info is found. Hide the submit button if it isn't.
  */
-function fundraiser_sustainers_form_webform_client_form_alter(&$form, &$form_state) {
+function fundraiser_sustainers_upgrade_form_webform_client_form_alter(&$form, &$form_state) {
   if (!empty($form['#node']) && $form['#node']->type == 'sustainers_upgrade_form') {
 
     if (isset($_SESSION['next_donation'])) {
@@ -288,13 +311,14 @@ function fundraiser_sustainers_form_webform_client_form_alter(&$form, &$form_sta
     else {
       // Auto-submit if that option is selected
       // and exempt admin users from auto-submit.
-      $auto_upgrade = field_get_items('node', $form['#node'], 'field_sustainers_auto_upgrade');
-      if ((empty($auto_upgrade[0]) || !empty($payload['rollback'])) && !user_access('administer fundraiser sustainers upgrade')) {
-        if (empty($form_state['storage']['auto_submit'])) {
+      $require_confirmation = field_get_items('node', $form['#node'], 'field_sustainers_auto_upgrade');
+      $verified_user = fundraiser_sustainers_upgrade_check_user_status($payload);
+      if ((empty($require_confirmation[0]) && empty($payload['rollback'])) && !user_access('administer fundraiser sustainers upgrade')) {
+        if (empty($form_state['storage']['auto_submit']) && $verified_user) {
           fundraiser_sustainers_upgrade_auto_submitter($form, $form_state);
         }
       }
-      elseif (empty($auto_upgrade[0]) && user_access('administer fundraiser sustainers upgrade')) {
+      elseif (empty($require_confirmation[0]) && user_access('administer fundraiser sustainers upgrade')) {
         // Show a message about auto-submit for admins.
         drupal_set_message(t('You are logged in as an adminstrative user. The upgrade form will not auto-submit.'), 'notice');
       }
@@ -500,7 +524,7 @@ function fundraiser_sustainers_upgrade_before_webform_submit($form, $form_state)
     $payload_decimal = commerce_currency_amount_to_decimal($payload['amount'], $currency_code);
     $formatted_amount = commerce_currency_format($payload_decimal, $currency_code, NULL, FALSE);
     $next_donation_amount = commerce_currency_decimal_to_amount($next_donation->amount, $currency_code);
-    $_SESSION['next_donation'] = array('master_did' => $next_donation->master_did, 'amount' => $next_donation_amount);
+    $_SESSION['next_donation'] = array('master_did' => $donation->recurring->master_did, 'amount' => $next_donation_amount);
     if (!empty($payload['rollback'])) {
       $_SESSION[$form['#node']->nid . '_stop_mail'] = TRUE;
     }
@@ -562,8 +586,10 @@ function fundraiser_sustainers_upgrade_after_webform_submit($form, $form_state) 
 /**
  * Log status and hide actions array if there are no payload session values.
  *
- * @param $form
- * @param $status
+ * @param array $form
+ *   The upgrade form.
+ * @param array $status
+ *   The status message.
  */
 function fundraiser_sustainer_upgrade_stop_at_form(&$form, $status, $payload) {
   if (user_access('administer fundraiser sustainers upgrade')) {
@@ -579,10 +605,10 @@ function fundraiser_sustainer_upgrade_stop_at_form(&$form, $status, $payload) {
 
   if (!empty($payload)) {
     $variables += array(
-    '@uid'    => $payload['uid'],
-    '@did'    => $payload['did'],
-    '@amount' => $payload['amount'],
-    '@timestamp' => $payload['timestamp'],
+      '@uid'    => $payload['uid'],
+      '@did'    => $payload['did'],
+      '@amount' => $payload['amount'],
+      '@timestamp' => $payload['timestamp'],
     );
     $message .= ' | Amount: @amount | Donation ID: @did | Timestamp: @timestamp ';
   }
@@ -623,7 +649,6 @@ function fundraiser_sustainers_upgrade_check_donation_status($payload) {
         $recurring = _fundraiser_sustainers_get_donations_recurr_remaining($payload['did']);
         $message = fundraiser_sustainers_upgrade_get_status_message($recurring, $donation, $payload, $min_amount);
         $status['status'] = $message;
-
         $stop_in_tracks = fundraiser_sustainers_upgrade_stop_in_tracks();
         if (!in_array($status['status'], $stop_in_tracks)) {
           $status['donation'] = $donation;
@@ -674,7 +699,6 @@ function fundraiser_sustainers_upgrade_get_status_message($recurring, $donation,
   if (!is_numeric($payload['amount']) || !is_numeric($payload['did']) || !is_numeric($payload['uid'])) {
     return t('Non-numeric values in payload.');
   }
-
   if (property_exists($donation, 'master_did')) {
     return t('Donation ID is not a master ID.');
   }
@@ -696,7 +720,19 @@ function fundraiser_sustainers_upgrade_get_status_message($recurring, $donation,
   return $message;
 }
 
-
+function fundraiser_sustainers_upgrade_check_user_status($payload) {
+  global $user;
+  if ($user->uid > 0 && $user->uid == $payload['uid']) {
+    return TRUE;
+  }
+  if (module_exists('springboard_cookie')) {
+    $cookie = springboard_cookie_get_cookie();
+    if (isset($cookie['uid']) && $payload['uid'] == $cookie['uid']) {
+      return TRUE;
+    }
+  }
+  return FALSE;
+}
 /**
  * Helper to validate donation amount.
  *
@@ -748,7 +784,7 @@ function fundraiser_sustainers_upgrade_get_session_payload() {
       $payload['amount'] = $_SESSION['springboard_hmac']['0'];
       $payload['did'] = $_SESSION['springboard_hmac']['1'];
       $payload['nid'] = $_SESSION['springboard_hmac']['2'];
-      $payload['rollback'] = !empty($_SESSION['springboard_hmac']['3']) ? $_SESSION['springboard_hmac']['3'] : NULL;
+      $payload['rollback'] = !empty($_SESSION['springboard_hmac']['3']) && $_SESSION['springboard_hmac']['3'] == 'rollback' ? $_SESSION['springboard_hmac']['3'] : NULL;
     }
   }
   return $payload;
@@ -830,7 +866,7 @@ function fundraiser_sustainers_upgrade_tokens($type, $tokens, $data = array(), $
             if (!empty($redirect[0]['value'])) {
               $query = $redirect[0]['value'];
             }
-            $replacements[$original] = "(I'm Not " . l($value, 'sustainers-upgrade/cancel', array('absolute' => TRUE, 'query' => array('destination' => $query))) . ")";
+            $replacements[$original] = "(I'm Not " . l($value, 'sustainers-upgrade/cancel', array('absolute' => TRUE, 'query' => array('su_redirect' => $query))) . ")";
           }
           break;
 
@@ -1153,17 +1189,42 @@ function fundraiser_sustainers_upgrade_salesforce_queue_create_item_alter(&$item
 function fundraiser_sustainers_upgrade_cancel_redirect() {
   springboard_hmac_save($_SESSION['springboard_hmac']['hmac']);
   fundraiser_sustainers_upgrade_clear_session_payload();
-  $redirect = isset($_GET['destination']) ? $_GET['destination'] : '';
-  drupal_goto($redirect);
+  $redirect_url = isset($_GET['su_redirect']) ? $_GET['su_redirect'] : '';
+  $redirect_url = trim($redirect_url);
+  $redirect_url = preg_replace('/^' . preg_quote($GLOBALS['base_url'], '/') . '\//', '', $redirect_url);
+  $redirect = array();
+  $options = array();
+  if (valid_url($redirect_url, TRUE)) {
+    $redirect = $redirect_url;
+  }
+  elseif ($redirect_url && strpos($redirect_url, 'http') !== 0) {
+    $parts = drupal_parse_url($redirect_url);
+    $redirect = $parts['path'];
+    $options = array(
+      'query' => $parts['query'],
+      'fragment' => $parts['fragment'],
+    );
+  }
+  drupal_goto($redirect, $options);
 }
 
 /**
  * Implements hook_form_FORM_ID_alter().
  *
- * Don't allow redirect changes on sustaier upgrade forms.
+ * Don't allow redirect changes on sustainer upgrade forms.
  */
-function fundraiser_sustainers_form_webform_configure_form_alter(&$form, &$form_state) {
+function fundraiser_sustainers_upgrade_form_webform_configure_form_alter(&$form, &$form_state) {
   if ($form['#node']->type == 'sustainers_upgrade_form') {
     $form['submission']['redirection']['#access'] = FALSE;
   }
+}
+
+/**
+ * Implements hook_form_FORM_ID_alter().
+ *
+ * Temporarily hiding the auto-upgrade option until issues around it are
+ * settled.
+ */
+function fundraiser_sustainers_upgrade_form_sustainers_upgrade_form_node_form_alter(&$form, &$form_state) {
+  $form['field_sustainers_auto_upgrade']['#access'] = FALSE;
 }
