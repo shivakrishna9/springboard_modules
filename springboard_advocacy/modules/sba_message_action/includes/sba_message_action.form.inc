@@ -374,17 +374,20 @@ function sba_message_action_form_validate(&$form, &$form_state) {
   form_load_include($form_state, 'inc', 'springboard_advocacy', 'includes/springboard_advocacy.smarty_streets');
   $webform_values_flat = _springboard_advocacy_webform_submission_flatten($form['#node']->nid, $form_state['values']['submitted']);
   form_set_value($form['webform_flat'], $webform_values_flat, $form_state);
-  $smarty_geo = springboard_advocacy_smarty_lookup($webform_values_flat);
-  if (!empty($smarty_geo) && is_array($smarty_geo)) {
-    form_set_value($form['smarty_geo'], $smarty_geo, $form_state);
-    if (isset($smarty_geo['zip']) && isset($smarty_geo['plus4'])) {
-      $zip_plus_four = &_webform_user_find_field($form, $component_hierarchy['sbp_zip_plus_four']);
-      form_set_value($zip_plus_four, $smarty_geo['zip'] . '-' . $smarty_geo['plus4'], $form_state);
+  $form_error = &drupal_static('form_set_error');
+  if (empty($form_error)) {
+    $smarty_geo = springboard_advocacy_smarty_lookup($webform_values_flat);
+    if (!empty($smarty_geo) && is_array($smarty_geo)) {
+      form_set_value($form['smarty_geo'], $smarty_geo, $form_state);
+      if (isset($smarty_geo['zip']) && isset($smarty_geo['plus4'])) {
+        $zip_plus_four = &_webform_user_find_field($form, $component_hierarchy['sbp_zip_plus_four']);
+        form_set_value($zip_plus_four, $smarty_geo['zip'] . '-' . $smarty_geo['plus4'], $form_state);
+      }
     }
-  }
-  else {
-    if (empty($form_state['storage']['quicksign_validated'])) {
-      form_set_error('', t('We could not verify your address. Please check that the street, city, state and zip code information is correct.'));
+    else {
+      if (empty($form_state['storage']['quicksign_validated'])) {
+        form_set_error('', t('We could not verify your address. Please check that the street, city, state and zip code information is correct.'));
+      }
     }
   }
 }
