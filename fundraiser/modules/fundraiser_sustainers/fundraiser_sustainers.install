@@ -140,6 +140,13 @@ function fundraiser_sustainers_schema() {
         'type' => 'text',
         'not null' => FALSE,
       ),
+      'preserve_donation_type_checkbox' => array(
+        'description' => 'Flag to preserve legacy form donation type selection component.',
+        'type' => 'int',
+        'size' => 'tiny',
+        'not null' => FALSE,
+        'default' => 1,
+      ),
     ),
     'primary key' => array('nid'),
   );
@@ -1021,4 +1028,21 @@ function fundraiser_sustainers_update_7018(&$sandbox) {
     ),
   );
   db_add_field('fundraiser_sustainers_nodes', 'donation_type_help_text', $fields['donation_type_help_text']);
+}
+
+
+/**
+ * Adds {fundraiser_sustainers_nodes} column to force preservation of legacy donation-type checkboxes.
+ */
+function fundraiser_sustainers_update_7019(&$sandbox) {
+  $fields = array(
+    'preserve_donation_type_checkbox' => array(
+      'description' => 'Flag to preserve legacy form donation type selection component.',
+      'type' => 'int',
+      'size' => 'tiny',
+      'not null' => FALSE,
+      'default' => 1,
+    ),
+  );
+  db_add_field('fundraiser_sustainers_nodes', 'preserve_donation_type_checkbox', $fields['preserve_donation_type_checkbox']);
 }
