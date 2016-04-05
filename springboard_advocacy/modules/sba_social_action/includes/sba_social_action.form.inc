@@ -226,7 +226,7 @@ function sba_social_action_message_form(&$form, $message, $message_entity_type, 
  * @param $form
  * @param $form_state
  */
-function sba_social_action_form_validate($form, &$form_state) {
+function sba_social_action_form_validate(&$form, &$form_state) {
   $components = $form['#node']->webform['components'];
   $component_hierarchy = webform_user_parse_components($form['#node']->nid, $components);
   $form['#hierarchy'] = $component_hierarchy;
