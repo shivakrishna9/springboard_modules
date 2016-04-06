@@ -259,6 +259,7 @@ function fundraiser_tickets_form_node_form_alter(&$form, &$form_state) {
     // Don't allow them to tinker with dollar handles or recurring gift settings
     $form['fundraiser_settings']['fundraiser_sustainers']['#access'] = FALSE;
     $form['fundraiser_settings']['amount_wrapper']['#access'] = FALSE;
+    $form['fundraiser_settings']['recurring_amount_wrapper']['#access'] = FALSE;
 
     if (arg(0) == 'node' && (arg(2) == 'edit' || arg(1) == 'add')){
       // Hide all tickets fields on the standard node add/edit page.
