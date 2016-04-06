@@ -59,35 +59,48 @@ function sb_social_share_event_load($share_id) {
  *   share event.
  */
 function sb_social_share_save($record, $settings = FALSE, $url_path = FALSE) {
+  // Avoid duplicate records saved within the last 10 seconds:
+  $is_duplicate = db_query("SELECT created FROM {sb_social_shares} WHERE " .
+    "uid = :uid AND nid = :nid AND did = :did AND service = :service AND created > :created",
+    array(':uid' => $record['uid'], ':nid' => $record['nid'],
+      ':did' => $record['did'], ':service' => $record['service'],
+      ':created' => time() - 10,
+    ))->fetchField();
+ 
   // Update is not included as these records should only be created when a share
   // event has taken place and should not be editable after the fact.
-  $query = db_insert('sb_social_shares');
-  $share_id = $query->fields($record)->execute();
+  if (!$is_duplicate) {
+    $query = db_insert('sb_social_shares');
+    $share_id = $query->fields($record)->execute();
+  }
   
   // Generate url and update share record.
   if (empty($record['url']) && $settings && $url_path) {
     $url = sb_social_share_tracker_url($share_id, $settings, $url_path);
-    // URL context is set in $_SESSION so any data set during a form submission
-    // is still available after Webform redirects to a confirmation page.
-    // This lets 3rd party modules set url context info during the form submission
-    // and then check for their data when the URL alter hook is executed.
-    $url_context = isset($_SESSION['sb_social_url_context']) ? $_SESSION['sb_social_url_context'] : FALSE;
-    $node = node_load($record['nid']);
-    drupal_alter('sb_social_share_url', $url, $node, $url_context);
     $record['url'] = $url;
-    db_query('UPDATE {sb_social_shares} set url = :url WHERE share_id = :share_id', array(':url' => $url, ':share_id' => $share_id));
+    if (!$is_duplicate) {
+      // URL context is set in $_SESSION so any data set during a form submission
+      // is still available after Webform redirects to a confirmation page.
+      // This lets 3rd party modules set url context info during the form submission
+      // and then check for their data when the URL alter hook is executed.
+      $url_context = isset($_SESSION['sb_social_url_context']) ? $_SESSION['sb_social_url_context'] : FALSE;
+      $node = node_load($record['nid']);
+      drupal_alter('sb_social_share_url', $url, $node, $url_context);
+      db_query('UPDATE {sb_social_shares} set url = :url WHERE share_id = :share_id', array(':url' => $url, ':share_id' => $share_id));
+      watchdog('sb_social', 'share id:' . $share_id);  //@TODO: Is this test code that should be removed?
+    }
   }
   
-  watchdog('sb_social', 'share id:' . $share_id);  //@TODO: Is this test code that should be removed?
-
   // Behold, a new entity!
-  if ($share_id) {
-    $record['share_id'] = $share_id;
-    module_invoke_all('entity_insert', (object)$record, 'sb_social_share');
-  }
+  if (!$is_duplicate) {
+    if ($share_id) {
+      $record['share_id'] = $share_id;
+      module_invoke_all('entity_insert', (object)$record, 'sb_social_share');
+    }
   
-  // Let modules react to the share event. This is a legacy hook for the benefit of old implementations.
-  module_invoke_all('sb_social_share_event_save', $record);
+    // Let modules react to the share event. This is a legacy hook for the benefit of old implementations.
+    module_invoke_all('sb_social_share_event_save', $record);
+  }
 
   return $record['url'];
 }
