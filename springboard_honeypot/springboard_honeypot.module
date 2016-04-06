@@ -32,7 +32,24 @@ function springboard_honeypot_honeypot_reject($form_id, $uid, $type) {
 }
 
 /**
- * Record the IP and uid of a Honeypot rejection.
+ * Implements hook_honeypot_form_protections_alter().
+ */
+function springboard_honeypot_honeypot_form_protections_alter(&$options, $form) {
+  // Get our timer blacklist.
+  $blacklist = variable_get('springboard_honeypot_timer_blacklist', '');
+  $blacklist = explode("\n", $blacklist);
+
+  // Remove the time restriction option from each blacklisted form.
+  foreach ($blacklist as $form_id) {
+    if ($form['form_id']['#value'] == $form_id && in_array('time_restriction', $options)) {
+      $key = array_search('time_restriction', $options);
+      unset($options[$key]);
+    }
+  }
+}
+
+/**
+ * Add an IP to the blacklist.
  */
 function springboard_honeypot_add($uid, $ip) {
   db_insert('springboard_honeypot')
