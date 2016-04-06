@@ -1360,7 +1360,7 @@ function fundraiser_sustainers_fundraiser_field_info() {
   // Recurring ask amounts fields. Copy as much as possible from one-time donation fields.
   $one_time_fields = fundraiser_fundraiser_field_info();
   $fields['donation']['recurring_amount'] = $one_time_fields['donation']['amount'];
-  $fields['donation']['recurring_amount']['#title'] = t('Recurring Amount');
+  $fields['donation']['recurring_amount']['#title'] = t('Please select your tax-deductible gift amount below');
   $fields['donation']['recurring_amount']['#create_callback'] = '_fundraiser_sustainers_recurring_amount_field_create';
   $fields['donation']['recurring_other_amount'] = $one_time_fields['donation']['other_amount'];
   $fields['donation']['recurring_other_amount']['#create_callback'] = '_fundraiser_sustainers_other_amount_field_create';
