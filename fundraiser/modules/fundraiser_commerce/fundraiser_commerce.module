@@ -2859,7 +2859,7 @@ function fundraiser_commerce_form_alter(&$form, &$form_state, $form_id) {
       // Add standalone image if only one gateway is enabled.
       if ($enabled == 1) {
         foreach ($node->gateways as $gateway) {
-          if (!empty($gateway['status']) && $gateway['status'] == 1) {
+          if (!empty($gateway['status']) && $gateway['status'] == 1 && !empty($settings) && is_array($settings['payment_method'])) {
             $form['submitted']['payment_information']['payment_fields'][$gateway['method']]['#description'] = '<img src="' . $settings['payment_method']['settings']['standalone_image'] . '">';
           }
         }
