@@ -314,13 +314,6 @@ function sb_social_menu() {
 }
 
 /**
- * Content for the page used to test if popup blocking is in use.
- */
-function _sb_social_share_popup_test() {
-  echo 'This is a popup!';
-}
-
-/**
  * Implements hook_admin_paths().
  */
 function sb_social_admin_paths() {
