@@ -1268,39 +1268,50 @@ function fundraiser_tickets_fundraiser_donation_process($donation) {
 }
 
 /**
- *  Make sure the required fields in the addon donation form are matched
+ * Ensure required fields on the addon donation form exist.
+ *
+ * @param int $nid
+ *    The node id of the donation form (webform) that is being added.
+ * @param object $donation
+ *    Donation object.
+ * @param object $node
+ *    The webform node object to compare the components of param #1 against.
+ *
+ * @return bool
+ *    Returns FALSE of a required field or the other_amount field is missing.
  */
 function fundraiser_tickets_check_addon_required_fields($nid, $donation = NULL, $node = NULL) {
   $addon_details = springboard_api_get_form_details($nid);
-  if($donation) {
-    //validate the submission
+  if ($donation) {
+    // Validate the submission.
     foreach ($addon_details['fields'] as $name => $field) {
-      if(isset($field['required']) && $field['required'] == 1) {
+      if (isset($field['required']) && $field['required'] == 1) {
         if ($name == 'quantity') {
           $donation->donation[$name] = 1;
         }
-        if(!isset($donation->donation[$name]) || $donation->donation[$name] == '') {
+        if (!isset($donation->donation[$name]) || $donation->donation[$name] == '') {
           drupal_set_message(t('Add on donation could not be processed. There was a problem with required field %field', array('%field' => $name)), 'error');
           return FALSE;
         }
       }
     }
   }
-  elseif($node) {
-    //validate the settings form entity reference field
+  elseif ($node) {
+    // Validate the settings form entity reference field.
     $components = array();
-    foreach($node->webform['components'] as $id => $component) {
+    foreach ($node->webform['components'] as $id => $component) {
       $components[$component['form_key']] = $node->webform['components'][$id];
     }
     foreach ($addon_details['fields'] as $name => $field) {
-      if($field['required'] == 1 && $name != 'quantity') {
-        if(!isset($components[$name]) || $components[$name]['mandatory'] == '0' ) {
+      if ($field['required'] == 1 && $name != 'quantity') {
+        if (!isset($components[$name]) || $components[$name]['mandatory'] == '0') {
+          // print ("nid $nid field $name is returning FALSE. \n\r------------\n\r");
           return FALSE;
         }
       }
     }
   }
-  if(!isset($addon_details['fields']['other_amount'])) {
+  if (!isset($addon_details['fields']['other_amount'])) {
     return FALSE;
   }
   return TRUE;
