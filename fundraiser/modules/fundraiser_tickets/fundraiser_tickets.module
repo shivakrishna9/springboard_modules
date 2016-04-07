@@ -1270,6 +1270,9 @@ function fundraiser_tickets_fundraiser_donation_process($donation) {
 /**
  * Ensure required fields on the addon donation form exist.
  *
+ * Also, omits fields listed in the variable
+ * fundraiser_tickets_exempt_add_on_fields.
+ *
  * @param int $nid
  *    The node id of the donation form (webform) that is being added.
  * @param object $donation
@@ -1281,14 +1284,12 @@ function fundraiser_tickets_fundraiser_donation_process($donation) {
  *    Returns FALSE of a required field or the other_amount field is missing.
  */
 function fundraiser_tickets_check_addon_required_fields($nid, $donation = NULL, $node = NULL) {
+  $exempt_fields = variable_get('fundraiser_tickets_exempt_add_on_fields', array('quantity', 'recurring_amount'));
   $addon_details = springboard_api_get_form_details($nid);
   if ($donation) {
     // Validate the submission.
     foreach ($addon_details['fields'] as $name => $field) {
-      if (isset($field['required']) && $field['required'] == 1) {
-        if ($name == 'quantity') {
-          $donation->donation[$name] = 1;
-        }
+      if (isset($field['required']) && $field['required'] == 1 && !in_array($name, $exempt_fields)) {
         if (!isset($donation->donation[$name]) || $donation->donation[$name] == '') {
           drupal_set_message(t('Add on donation could not be processed. There was a problem with required field %field', array('%field' => $name)), 'error');
           return FALSE;
@@ -1303,7 +1304,7 @@ function fundraiser_tickets_check_addon_required_fields($nid, $donation = NULL, 
       $components[$component['form_key']] = $node->webform['components'][$id];
     }
     foreach ($addon_details['fields'] as $name => $field) {
-      if ($field['required'] == 1 && $name != 'quantity') {
+      if ($field['required'] == 1 && !in_array($name, $exempt_fields)) {
         if (!isset($components[$name]) || $components[$name]['mandatory'] == '0') {
           // print ("nid $nid field $name is returning FALSE. \n\r------------\n\r");
           return FALSE;
