@@ -367,7 +367,3 @@ function theme_fundraiser_tickets_closed_message($vars){
 function theme_fundraiser_tickets_soldout_message($vars){
   return $vars['message']['safe_value'];
 }
-
-
-
-
