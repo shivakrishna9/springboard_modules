@@ -7,12 +7,30 @@ var addthis_share = {
 
 
 (function ($) {
-  //$(document).ready(function() {
   Drupal.behaviors.sb_social = {
     attach: function (context, settings) {
+      // Display a message if popup blocking is detected:
+      $(document).ready(function() {
+        if ($('.addthis_toolbox').length > 0) {
+          function detectPopupBlocker() {
+            var popupBlockTest = window.open('about:blank', '', 'directories=no,height=100,width=100,menubar=no,' +
+              'resizable=no,scrollbars=no,status=no,titlebar=no,top=0,location=no');
+            if (popupBlockTest == null || !popupBlockTest || popupBlockTest.closed || typeof popupBlockTest == 'undefined' ||
+                typeof popupBlockTest.closed == 'undefined') {
+              $('.addthis_toolbox').before('<div class="social-share-popup-blocker-msg"><strong>' +
+                'Please disable your pop-up blocker to share!' + '</strong></div><br />');
+            }
+            else {
+              popupBlockTest.close();
+            }
+          }
+          setTimeout(function() { detectPopupBlocker();}, 50); 
+        }
+      });
+
       // AddThis requires some global configuration objects be populated
       // set up the AddThis account ID from admin settings
-      if (typeof window.addthis_config !== "undefined") {
+      if (typeof window.addthis_config !== 'undefined') {
         settings = {
           pubid: Drupal.settings.sb_social.pubid
         };
