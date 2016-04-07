@@ -314,6 +314,13 @@ function sb_social_menu() {
 }
 
 /**
+ * Content for the page used to test if popup blocking is in use.
+ */
+function _sb_social_share_popup_test() {
+  echo 'This is a popup!';
+}
+
+/**
  * Implements hook_admin_paths().
  */
 function sb_social_admin_paths() {
@@ -669,7 +676,7 @@ function sb_social_init() {
       }
     }
     $prefix = !empty($_SERVER['HTTPS']) ? 'https://' : 'http://';
-    drupal_add_js($prefix . 's7.addthis.com/js/250/addthis_widget.js', array('type' => 'external', 'scope' => 'footer'));
+    drupal_add_js($prefix . 's7.addthis.com/js/300/addthis_widget.js', array('type' => 'external', 'scope' => 'footer'));
     drupal_add_js(drupal_get_path('module', 'sb_social') . '/scripts/sb_social.addthis.js', 'file');
   }
 
