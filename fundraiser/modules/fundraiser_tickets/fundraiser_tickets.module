@@ -1306,7 +1306,6 @@ function fundraiser_tickets_check_addon_required_fields($nid, $donation = NULL, 
     foreach ($addon_details['fields'] as $name => $field) {
       if ($field['required'] == 1 && !in_array($name, $exempt_fields)) {
         if (!isset($components[$name]) || $components[$name]['mandatory'] == '0') {
-          // print ("nid $nid field $name is returning FALSE. \n\r------------\n\r");
           return FALSE;
         }
       }
