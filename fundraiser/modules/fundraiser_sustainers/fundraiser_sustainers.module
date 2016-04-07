@@ -1360,7 +1360,7 @@ function fundraiser_sustainers_fundraiser_field_info() {
   // Recurring ask amounts fields. Copy as much as possible from one-time donation fields.
   $one_time_fields = fundraiser_fundraiser_field_info();
   $fields['donation']['recurring_amount'] = $one_time_fields['donation']['amount'];
-  $fields['donation']['recurring_amount']['#title'] = t('Recurring Amount');
+  $fields['donation']['recurring_amount']['#title'] = t('Please select your tax-deductible gift amount below');
   $fields['donation']['recurring_amount']['#create_callback'] = '_fundraiser_sustainers_recurring_amount_field_create';
   $fields['donation']['recurring_other_amount'] = $one_time_fields['donation']['other_amount'];
   $fields['donation']['recurring_other_amount']['#create_callback'] = '_fundraiser_sustainers_other_amount_field_create';
@@ -1395,9 +1395,13 @@ function _fundraiser_sustainers_recurring_amount_field_create($fundraiser, $fiel
   $onetime_donation_amounts = $fundraiser->donation_amounts;
   $onetime_default_amount = $fundraiser->default_amount;
   $onetime_show_other_amount = $fundraiser->show_other_amount;
-  $fundraiser->donation_amounts = $fundraiser->recurring_donation_amounts;
-  $fundraiser->default_amount = $fundraiser->recurring_default_amount;
-  $fundraiser->show_other_amount = $fundraiser->recurring_show_other_amount;
+  if (isset($fundraiser->recurring_donation_amounts)) {
+    // Sometimes node_save() is invoked on a new node being constructed programmatically without
+    // these recurring config fields, in which case we rely on the one-time config.
+    $fundraiser->donation_amounts = $fundraiser->recurring_donation_amounts;
+    $fundraiser->default_amount = $fundraiser->recurring_default_amount;
+    $fundraiser->show_other_amount = $fundraiser->recurring_show_other_amount;
+  }
   $field = _fundraiser_amount_field_create($fundraiser, $field);
   $fundraiser->donation_amounts = $onetime_donation_amounts;
   $fundraiser->default_amount = $onetime_default_amount;
@@ -1408,8 +1412,12 @@ function _fundraiser_sustainers_recurring_amount_field_create($fundraiser, $fiel
 function _fundraiser_sustainers_other_amount_field_create($fundraiser, $field) {
   $onetime_show_other_amount = $fundraiser->show_other_amount;
   $onetime_minimum_donation_amount = $fundraiser->minimum_donation_amount;
-  $fundraiser->show_other_amount = $fundraiser->recurring_show_other_amount;
-  $fundraiser->minimum_donation_amount = $fundraiser->recurring_minimum_donation_amount;
+  if (isset($fundraiser->recurring_donation_amounts)) {
+    // Sometimes node_save() is invoked on a new node being constructed programmatically without
+    // these recurring config fields, in which case we rely on the one-time config.
+    $fundraiser->show_other_amount = $fundraiser->recurring_show_other_amount;
+    $fundraiser->minimum_donation_amount = $fundraiser->recurring_minimum_donation_amount;
+  }
   $field = _fundraiser_other_amount_field_create($fundraiser, $field);
   $fundraiser->show_other_amount = $onetime_show_other_amount;
   $fundraiser->minimum_donation_amount = $onetime_minimum_donation_amount;
@@ -3887,19 +3895,19 @@ function _fundraiser_sustainers_get_sustainers_node_by_nid($nid) {
  * CRUD style DB function for fundraiser_sustainers_sustainers_node.
  */
 function _fundraiser_sustainers_update_sustainers_node($node) {
-  $imploded_amounts = [];
+  $imploded_amounts = array();
   _fundraiser_sustainers_flatten_amounts($node);  // Just in case.
-  foreach ($node->recurring_donation_amounts as $amount => $label) {
+  foreach ((isset($node->recurring_donation_amounts) ? $node->recurring_donation_amounts : array()) as $amount => $label) {
     $imploded_amounts[] = "$amount|$label";
   }
   $new_data = array(
     'nid' => $node->nid,
-    'recurring_setting' => $node->recurring_setting,
+    'recurring_setting' => isset($node->recurring_setting) ? $node->recurring_setting : 'never',
     'recurring_donation_amounts' => implode('|||', $imploded_amounts),
-    'show_other_amount' => $node->recurring_show_other_amount,
-    'minimum_donation_amount' => $node->recurring_minimum_donation_amount,
-    'default_amount' => $node->recurring_default_amount,
-    'dual_ask_amounts' => ($node->recurring_dual_ask_amounts && $node->recurring_setting == 'user_choice'),
+    'show_other_amount' => isset($node->recurring_show_other_amount) ? $node->recurring_show_other_amount : TRUE,
+    'minimum_donation_amount' => isset($node->recurring_minimum_donation_amount) ? $node->recurring_minimum_donation_amount : $node->minimum_donation_amount,
+    'default_amount' => isset($node->recurring_default_amount) ? $node->recurring_default_amount : $node->default_amount,
+    'dual_ask_amounts' => (isset($node->recurring_dual_ask_amounts) && $node->recurring_dual_ask_amounts && $node->recurring_setting == 'user_choice'),
     'donation_type_options' => empty($node->recurring_donation_type_options) ? NULL : (
       is_array($node->recurring_donation_type_options) ? implode('|||', $node->recurring_donation_type_options) : $node->recurring_donation_type_options
     ),  // If we aren't processing the node edit form, this setting may already be a string pulled directly from the DB.
