@@ -111,7 +111,7 @@ function fundraiser_upsell_salesforce_upsell_master_donation_alter(&$donation) {
 
   // Save the market source values so they're available when the Salesforce
   // queue item is created.
-  $node_overrides = $donation->node->fundraiser_upsell_salesforce;
+  $node_overrides = !empty($donation->node->fundraiser_upsell_salesforce) ? $donation->node->fundraiser_upsell_salesforce : array();
   $data = fundraiser_upsell_salesforce_update_market_source_with_url_overrides($node_overrides);
   fundraiser_upsell_salesforce_set_market_source($donation->did, $data);
 
@@ -460,6 +460,7 @@ function fundraiser_upsell_salesforce_node_load($nodes, $types) {
   foreach ($nodes as $node) {
     // If this isn't a fundraiser type, ignore it.
     if (fundraiser_upsell_is_available($node)) {
+
       $data = fundraiser_upsell_salesforce_get_node_settings($node->nid);
       if (!is_null($data)) {
         $nodes[$node->nid]->fundraiser_upsell_salesforce = $data;
