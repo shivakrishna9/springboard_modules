@@ -21,7 +21,7 @@
         // Helper function, provides the total display.
         function _recalculate_quantity_total() {
           $('#quantity-total').empty();
-          var amount = $('input[type="radio"][name*="amount"]:checked').val();
+          var amount = $('input[type="radio"][name*="amount"]:checked:visible').val();
           if (amount == 'other') {
             amount = $('input[name*="other_amount"]').val();
           }
@@ -45,6 +45,10 @@
         });
         // And do the same if the other_amout is changed
         $('input[name*="other_amount"]').change(function() {
+          _recalculate_quantity_total();
+        });
+        // And do the same if Fundraiser Sustainers is active and the user switches donation types.
+        $('input[name*="recurs_monthly"]').change(function() {
           _recalculate_quantity_total();
         });
 
@@ -139,7 +143,7 @@
           $('input[name*="other_amount"]').rules("add", {
             required: {
               depends: function(element) {
-                if ($('input[type="radio"][name$="[amount]"][value="other"]').is(":checked"))
+                if ($('input[type="radio"][name$="[amount]"][value="other"]:visible').is(":checked"))
                   return true;
                 else
                   return false;

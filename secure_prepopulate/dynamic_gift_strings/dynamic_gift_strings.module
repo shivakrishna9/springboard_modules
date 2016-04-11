@@ -47,7 +47,6 @@ function dynamic_gift_strings_form_alter(&$form, &$form_state, $form_id) {
         $amount_field = &_fundraiser_webform_find_field($form, $component_hierarchy['amount']);
         // make sure we have the field and a good array of amounts
         if ($amount_field && $amounts) {
-
           // we want to preserve the "other amount" option if present in the original form.
           if (isset($amount_field["#options"]['other'])) {
             $amounts['other'] = t('Other');
@@ -61,6 +60,35 @@ function dynamic_gift_strings_form_alter(&$form, &$form_state, $form_id) {
           // Unset if the default value isn't set nor in the options.
           else {
             unset($amount_field['#default_value']);
+          }
+        }
+        // Might there be recurring ask amounts too?
+        if (module_exists('fundraiser_sustainers') && isset($gs['recurring_amounts'])
+          && isset($node->recurring_setting) && $node->recurring_setting != 'never'
+        ) {
+          $recurring_amounts = _dynamic_gift_strings_parse_amounts($gs['recurring_amounts'], $node->recurring_show_other_amount, $node->nid);
+          $recurring_default = $gs['recurring_default'];
+          // parse out the form components so we can find the 'amount' field
+          $field_name = ($node->recurring_setting == 'always' && empty($component_hierarchy['recurring_amount'])) ?
+            'amount' : 'recurring_amount'
+          ;
+          if (!empty($component_hierarchy[$field_name])) {
+            $recurring_amount_field = &_fundraiser_webform_find_field($form, $component_hierarchy[$field_name]);
+            // make sure we have the field and a good array of amounts
+            if ($recurring_amount_field && $recurring_amounts) {
+              // we want to preserve the "other amount" option if present in the original form.
+              if (isset($recurring_amount_field["#options"]['other'])) {
+                $amounts['other'] = t('Other');
+              }
+              $recurring_amount_field['#options'] = $recurring_amounts;
+              if (is_numeric($recurring_default) && isset($recurring_amount_field['#options'][$recurring_default])) {
+                $recurring_amount_field['#default_value'] = $recurring_default;
+              }
+              // Unset if the default value isn't set nor in the options.
+              else {
+                unset($recurring_amount_field['#default_value']);
+              }
+            }
           }
         }
         // add a submit handler to clear out gift strings if the user donates

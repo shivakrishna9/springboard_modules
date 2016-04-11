@@ -198,7 +198,7 @@ function springboard_views_springboard_admin_alias_patterns() {
 }
 
 function springboard_views_springboard_admin_admin_menu_items_alter(&$items) {
-  // Top Level: Reports
+  // Top Level: Reports.
   $items['admin/springboard/reports'] = array(
     'link_path' => 'admin/springboard/reports',
     'link_title' => t('Reports'),
@@ -238,7 +238,17 @@ function springboard_views_springboard_admin_admin_menu_items_alter(&$items) {
     'customized' => 1,
     'weight' => 0,
   );
-
+  // Reports > Silverpop Transact.
+  if (module_exists('silverpop_transact')) {
+    $items['admin/springboard/reports']['_children']['admin/springboard/reports/silverpop-transact-log'] = array(
+      'link_path' => 'admin/springboard/reports/silverpop-transact-log',
+      'link_title' => 'Silverpop Transact',
+      'menu_name' => 'springboard_admin_menu',
+      'expanded' => 1,
+      'customized' => 1,
+      'weight' => 4,
+    );
+  }
   // Reports > Integration Reports.
   $items['admin/springboard/reports']['_children']['admin/springboard/reports/integration-reports'] = array(
     'link_path' => 'admin/springboard/reports/integration-reports',
@@ -389,6 +399,9 @@ function springboard_views_springboard_dashboard_panes() {
       $webform_types[] = $type->type;
     }
   }
+
+  drupal_alter('springboard_views_springboard_dashboard_panes', $webform_types);
+
   $panes['springboard_recent_donation_forms'] = array(
    'label' => t('Recent donation forms'),
    'description' => t('Configuration and submissions summary for recently created or updated springboard donation forms.'),

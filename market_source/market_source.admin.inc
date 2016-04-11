@@ -119,7 +119,7 @@ function market_source_admin_settings_form($form, &$form_state) {
     '#type' => 'fieldset',
     '#title' => t('Custom Global Fields'),
     '#description' => t('Any global custom fields created will be added as webform components to your webforms when they are created. ' .
-      'Custom fields are not retroactively applied to existing webforms. Leave blank to remove a field.'),
+      'Custom fields are not retroactively applied to existing webforms. To remove a field, leave all values blank and then save settings.'),
     '#collapsible' => TRUE,
     '#collapsed' => FALSE,
     '#tree' => TRUE,
