@@ -48,7 +48,7 @@ function springboard_dw_action_success($node, $contact, $data, $sid)
   $action->data = $data;
   $action->webform = $webform_submission_data;
   $action->sid = $sid;
-
+dpm($action);
   // If the submission is a message action
   if ($action->node->type == 'sba_message_action') {
     springboard_dw_advocacy_message_action_submission($node, $action);
@@ -284,14 +284,14 @@ function springboard_dw_user_update(&$edit, $account, $category)
 
 /**
  * Implements hook_webform_user_submission_insert().
- * 
+ *
  * Ship custom webform user submissions to the data warehouse.
  */
 function springboard_dw_webform_user_submission_insert($node, $submission, $account) {
   // TODO: This needs to be more robust because you any type can be a donation form.
   // Probably a module exists for fundraiser.module and a
   // fundraiser_is_donation_type($node->type) check.
-  $excluded_types = variable_get('springboard_dw_exluded_submission_types', 
+  $excluded_types = variable_get('springboard_dw_exluded_submission_types',
     array('donation_form', 'springboard_petition', 'sba_social_action', 'sba_message_action')
     );
 
@@ -363,7 +363,7 @@ function springboard_dw_extract_submission_extra_props($submitted_data, $submiss
   // Maintain a field blacklist because there are some donation properties that should
   // never be exported. The payment_fields array will contain full credit card numbers!
   $field_blacklist = variable_get('springboard_dw_submission_field_blacklist', array());
-  
+
   // Extract items in $submitted_data that are not already explicitly added to
   // $submission_item. Any custom fields that were added to a form will be
   // in the $submitted_data data structure.
