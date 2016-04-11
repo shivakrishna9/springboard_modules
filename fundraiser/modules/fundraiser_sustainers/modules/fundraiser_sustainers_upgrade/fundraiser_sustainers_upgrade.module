@@ -132,7 +132,8 @@ function fundraiser_sustainers_upgrade_form_alter(&$form, &$form_state, $form_id
  */
 function fundraiser_sustainers_upgrade_springboard_admin_form_page_types_alter(&$display_types, $springboard_type) {
   $types = node_type_get_types();
-  if ($springboard_type == 'fundraiser') {
+  $allowed_types = array_filter(variable_get('springboard_admin_allowed_form_types', array_keys(_springboard_admin_enabled_form_types())));
+  if ($springboard_type == 'fundraiser' && in_array('sustainers_upgrade_form', $allowed_types)) {
     $display_types['sustainers_upgrade_form'] = $types['sustainers_upgrade_form'];
   }
 }
