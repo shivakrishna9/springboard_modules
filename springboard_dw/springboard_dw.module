@@ -48,7 +48,7 @@ function springboard_dw_action_success($node, $contact, $data, $sid)
   $action->data = $data;
   $action->webform = $webform_submission_data;
   $action->sid = $sid;
-dpm($action);
+
   // If the submission is a message action
   if ($action->node->type == 'sba_message_action') {
     springboard_dw_advocacy_message_action_submission($node, $action);

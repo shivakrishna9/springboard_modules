@@ -65,7 +65,7 @@ function springboard_dw_queue_legacy_setup_batch($type = '') {
       break;
 
     case 'advocacy action':
-      $ids = db_query_range('select s.sid FROM {webform_submissions} s INNER JOIN {node} n ON s.nid = n.nid WHERE n.type="sba_message_action"', 0, $limit)->fetchCol();
+      $ids = db_query_range("select s.sid, s.nid, s.uid FROM {webform_submissions} s INNER JOIN {node} n ON s.nid = n.nid WHERE type = 'sba_message_action'", 0, $limit)->fetchAll();
       $batch_process_function = 'springboard_dw_queue_legacy_advocacy_actions';
       break;
 
@@ -195,6 +195,31 @@ function springboard_dw_queue_legacy_forms($ids, $operation_details, &$context) 
 /**
  *
  */
-function springboard_dw_queue_legacy_advocacy_actions($ids, $operation_details, &$context) {
-  var_dump($ids);
+function springboard_dw_queue_legacy_advocacy_actions($submissions, $operation_details, &$context) {
+  // Get the Drupal data warehouse queue.
+  $queue = DrupalQueue::get("springboard_dw_export");
+
+  foreach ($submissions as $submission) {
+    // Build the action object by re-creating the data that is available during
+    // hook_advocacy_success().
+    $node = node_load($submission->nid);
+    $webform_submission_data = springboard_dw_webform_submission_data_keyed($node->nid, $submission->sid);
+    $user = user_load($submission->uid);
+    $action = new stdClass();
+    $action->node = $node;
+    $action->contact = $user;
+    $action->data = $data;
+    $action->webform = $webform_submission_data;
+    $action->sid = $sid;
+
+    // Create the Advocacy action item in the queue if not warehoused
+    if (!springboard_dw_item_is_warehoused('advocacy action', $node->nid)) {
+
+      $message_action_item = springboard_dw_map_advocacy_action_item($action);
+
+      $queue->createItem($message_action_item);
+    }
+  }
+
+  $context['message'] = $operation_details;
 }
