@@ -64,21 +64,20 @@ function dynamic_gift_strings_form_alter(&$form, &$form_state, $form_id) {
         }
         // Might there be recurring ask amounts too?
         if (module_exists('fundraiser_sustainers') && isset($gs['recurring_amounts'])
-          && isset($node->recurring_setting) && $node->recurring_setting != 'never'
+          && isset($node->recurring_setting) && $node->recurring_setting != 'never'  // Not relevant if non-recurring form.
+          && !($node->recurring_setting == 'user_choice' && empty($node->recurring_dual_ask_amounts))  // Not relevant if user-choice form that only uses the one-time ask amounts.
         ) {
           $recurring_amounts = _dynamic_gift_strings_parse_amounts($gs['recurring_amounts'], $node->recurring_show_other_amount, $node->nid);
           $recurring_default = $gs['recurring_default'];
           // parse out the form components so we can find the 'amount' field
-          $field_name = ($node->recurring_setting == 'always' && empty($component_hierarchy['recurring_amount'])) ?
-            'amount' : 'recurring_amount'
-          ;
+          $field_name = ($node->recurring_setting == 'always') ? 'amount' : 'recurring_amount';
           if (!empty($component_hierarchy[$field_name])) {
-            $recurring_amount_field = &_fundraiser_webform_find_field($form, $component_hierarchy[$field_name]);
             // make sure we have the field and a good array of amounts
+            $recurring_amount_field = &_fundraiser_webform_find_field($form, $component_hierarchy[$field_name]);
             if ($recurring_amount_field && $recurring_amounts) {
               // we want to preserve the "other amount" option if present in the original form.
               if (isset($recurring_amount_field["#options"]['other'])) {
-                $amounts['other'] = t('Other');
+                $recurring_amounts['other'] = t('Other');
               }
               $recurring_amount_field['#options'] = $recurring_amounts;
               if (is_numeric($recurring_default) && isset($recurring_amount_field['#options'][$recurring_default])) {
