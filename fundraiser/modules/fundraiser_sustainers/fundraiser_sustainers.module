@@ -798,7 +798,12 @@ function fundraiser_sustainers_form_node_form_alter(&$form, &$form_state, $form_
       '#default_value' => isset($node->recurring_minimum_donation_amount) ?
         number_format($node->recurring_minimum_donation_amount, 2) : variable_get('fundraiser_default_minimum', 10.00),
     );
-    $form['#validate'][] = '_fundraiser_sustainers_form_amounts_validate';
+    foreach ($form['#validate'] as $index => $callback) {
+      if ($callback == '_fundraiser_form_amounts_validate') {
+        // Override.
+        $form['#validate'][$index] = '_fundraiser_sustainers_form_amounts_validate';
+      }
+    }
   }
 }
 
@@ -813,6 +818,16 @@ function _fundraiser_sustainers_donation_settings_form_amounts(&$form, &$form_st
  * Validate handler for amounts configuration.
  */
 function _fundraiser_sustainers_form_amounts_validate($form, &$form_state) {
+  // First, if one-time ask amounts are relevant, call their validator.
+  if ($form_state['values']['recurring_setting'] != 'always') {
+    _fundraiser_form_amounts_validate($form, $form_state);
+
+    if (empty($form_state['values']['recurring_dual_ask_amounts'])) {
+      // And that's all we need to do if recurring ask amounts aren't relevant.
+      return;
+    }
+  }
+
   // Check the ask amounts, if we have a label and we dong have an amount, throw a fit.
   // If we have neither, assume it's meant to be empty and leave it be (it will be removed).
   $amounts = $form_state['values']['recurring_amount_wrapper']['recurring_donation_amounts'];
@@ -832,21 +847,23 @@ function _fundraiser_sustainers_form_amounts_validate($form, &$form_state) {
   }
 
   // Checking the minimum amount.
-  $minimum_donation_amount = $form_state['values']['recurring_amount_wrapper']['recurring_minimum_donation_amount'];
   foreach ($amounts as $amount) {
-    if (empty($amount['remove']) && $amount['amount'] !='') {
-      $min = (isset($min) && $amount['amount'] > $min) ? $min : $amount['amount'];
+    $this_amount = empty($amount['amount']) ? 0 : floatval($amount['amount']);  // Make sure we're cast from string.
+    if (empty($amount['remove']) && $this_amount > 0 && (!isset($min) || $min > $this_amount)) {
+      $min = $this_amount;
     }
   }
   // If no min ask amount is found (no ask amounts set) default to
   // the minimum donation amount. This prevents errors when all ask amounts
   // are removed from a donation form.
-  $min = isset($min) ? $min : $minimum_donation_amount;
-  if ($min < $minimum_donation_amount) {
-    form_set_error('recurring_amount_wrapper][recurring_minimum_donation_amount', t('The minimum donation amount must not be higher than the minimum ask amount.'));
-  }
-  if (!empty($minimum_donation_amount) && !is_numeric($minimum_donation_amount)) {
-    form_set_error('recurring_amount_wrapper][recurring_minimum_donation_amount', t('The minimum donation amount must be a numerical value.'));
+  $minimum_donation_amount = $form_state['values']['recurring_amount_wrapper']['recurring_minimum_donation_amount'];
+  if (!empty($minimum_donation_amount)) {
+    if (!is_numeric($minimum_donation_amount)) {
+      form_set_error('recurring_amount_wrapper][recurring_minimum_donation_amount', t('The minimum donation amount must be a numerical value.'));
+    }
+    else if (!empty($min) && $min < floatval($minimum_donation_amount)) {
+      form_set_error('recurring_amount_wrapper][recurring_minimum_donation_amount', t('The minimum donation amount must not be higher than the minimum ask amount.'));
+    }
   }
 }
 
