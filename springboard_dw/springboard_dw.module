@@ -388,11 +388,14 @@ function springboard_dw_map_advocacy_action_item($message_action)
   // Get the Advocacy action object details and prep for warehousing (sb_action)
   $advocacy_item = array();
 
+  // Reference the global user var
+  global $user;
+
   $advocacy_item['queue_type'] = 'advocacy action';
   $advocacy_item['action_id'] = $message_action->node->advocacy_id;
   $advocacy_item['action_type'] = $message_action->node->type;
   $advocacy_item['group_id'] = ''; // Will come later
-  $advocacy_item['contact_id'] = $message_action->node->uid;
+  $advocacy_item['contact_id'] = $user->uid;
   $advocacy_item['form_id'] = $message_action->node->nid;
 
   // TODO: Fix these
