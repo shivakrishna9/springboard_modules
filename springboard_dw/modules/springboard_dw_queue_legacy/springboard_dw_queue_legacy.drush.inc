@@ -74,7 +74,8 @@ function springboard_dw_queue_legacy_setup_batch($type = '') {
       break;
 
     case 'petition':
-
+      $ids = db_query_range("select s.sid, s.nid, s.uid FROM {webform_submissions} s INNER JOIN {node} n ON s.nid = n.nid WHERE type = 'springboard_petition'", 0, $limit)->fetchAll();
+      $batch_process_function = 'springboard_dw_queue_legacy_petition';
       break;
 
     case 'advocacy petition message':
@@ -200,26 +201,50 @@ function springboard_dw_queue_legacy_advocacy_actions($submissions, $operation_d
   $queue = DrupalQueue::get("springboard_dw_export");
 
   foreach ($submissions as $submission) {
-    // Build the action object by re-creating the data that is available during
-    // hook_advocacy_success().
-    $node = node_load($submission->nid);
-    $webform_submission_data = springboard_dw_webform_submission_data_keyed($node->nid, $submission->sid);
-    $user = user_load($submission->uid);
-    $action = new stdClass();
-    $action->node = $node;
-    $action->contact = $user;
-    $action->data = $data;
-    $action->webform = $webform_submission_data;
-    $action->sid = $sid;
-
+    $action = springboard_dw_queue_legacy_build_action($submission);
     // Create the Advocacy action item in the queue if not warehoused
-    if (!springboard_dw_item_is_warehoused('advocacy action', $node->nid)) {
-
+    if (!springboard_dw_item_is_warehoused('advocacy action', $action->node->nid)) {
       $message_action_item = springboard_dw_map_advocacy_action_item($action);
-
       $queue->createItem($message_action_item);
     }
   }
-
   $context['message'] = $operation_details;
+}
+
+/**
+ *
+ */
+function springboard_dw_queue_legacy_petition($submissions, $operation_details, &$context) {
+// var_dump($submissions);
+  // Get the Drupal data warehouse queue.
+  $queue = DrupalQueue::get("springboard_dw_export");
+  foreach ($submissions as $submission) {
+    $action = springboard_dw_queue_legacy_build_action($submission);
+    // Create the Advocacy action item in the queue if not warehoused.
+    // var_dump($action->node->nid);
+    if (!springboard_dw_item_is_warehoused('petition', $action->node->nid)) {
+      $petition_item = springboard_dw_map_petition_item($action);
+      $queue->createItem($petition_item);
+    }
+  }
+  $context['message'] = $operation_details;
+}
+
+/**
+ *
+ */
+function springboard_dw_queue_legacy_build_action($submission) {
+  // Build the action object by re-creating the data that is available during
+  // hook_advocacy_success().
+  $node = node_load($submission->nid);
+  $webform_submission_data = springboard_dw_webform_submission_data_keyed($node->nid, $submission->sid);
+  $user = user_load($submission->uid);
+  $action = new stdClass();
+  $action->node = $node;
+  $action->contact = $user;
+  // @TODO how to populate $data? What even goes in there?
+  $action->data = $data;
+  $action->webform = $webform_submission_data;
+  $action->sid = $sid;
+  return $action;
 }
