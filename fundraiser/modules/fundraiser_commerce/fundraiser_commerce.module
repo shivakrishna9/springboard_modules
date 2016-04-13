@@ -663,25 +663,6 @@ function fundraiser_commerce_salesforce_genmap_map_field_info_alter(&$fields, $n
 }
 
 /**
- * Implements hook_salesforce_genmap_map_fields_alter().
- */
-function fundraiser_commerce_salesforce_genmap_map_fields_alter(&$fields, $context) {
-  // Are any gateway response fields mapped to Salesforce?
-  if (!empty($context['map']->field_map['gateway_response_fields_map'])) {
-    $donation = $context['object'];
-    $field_map = $context['map']->field_map['gateway_response_fields_map'];
-    $field_values = db_query(
-      "SELECT field_name, value FROM {fundraiser_commerce_gateway_response}
-        WHERE did=:did AND gateway_id=:gateway_id AND field_name IN (:field_names);",
-      array(':did' => $donation->did, ':gateway_id' => $donation->gateway['id'], ':field_names' => array_keys($field_map))
-    );
-    while ($field_value = $field_values->fetchAssoc()) {
-      $fields[ $field_map[$field_value['field_name']] ] = $field_value['value'];
-    }
-  }
-}
-
-/**
  * Does some basic credit card validation.
  *
  * @param array $value
