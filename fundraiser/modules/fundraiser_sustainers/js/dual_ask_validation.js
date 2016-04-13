@@ -14,7 +14,7 @@
               }
             },
             amount: true,
-            min: parseFloat(Drupal.settings.fundraiserWebform.minimum_donation_amount),
+            min: parseFloat(Drupal.settings.fundraiserWebform.recurring_minimum_donation_amount),
             messages: {
               required: "This field is required",
               amount: "Enter a valid amount",

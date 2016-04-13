@@ -1415,6 +1415,10 @@ function fundraiser_webform_webform_submission_render_alter(&$renderable) {
   }
   // Don't clutter regular submission report with empty "Payment Information" fieldset.
   if (isset($renderable['payment_information'])) {
-    unset($renderable['payment_information']);
+    $children = element_children($renderable['payment_information']);
+    if (count($children) == 0 || implode('', $children) == 'payment_method') {
+      // Nothing to see here. We expect 'payment_information' to be empty.
+      unset($renderable['payment_information']);
+    }
   }
 }
