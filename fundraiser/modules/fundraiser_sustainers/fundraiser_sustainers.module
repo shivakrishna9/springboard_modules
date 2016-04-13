@@ -1555,6 +1555,18 @@ function fundraiser_sustainers_fundraiser_donation_form($form, $form_state) {
   $dual_ask_amounts = !empty($form['#node']->recurring_dual_ask_amounts);
   if ($dual_ask_amounts) {
     $form['#attached']['js'][] = drupal_get_path('module', 'fundraiser_sustainers') . '/js/dual_ask_validation.js';
+    if(isset($form['#node']->recurring_minimum_donation_amount)) {
+      $form['#attached']['js'][] = array(
+        'data' => array(
+          'fundraiserWebform' => array(
+            'recurring_minimum_donation_amount' => $form['#node']->recurring_minimum_donation_amount
+          ),
+        ),
+        'type' => 'setting',
+      );
+    }
+
+
   }
 
   // Set up the values that we're going to require in the States array. If it's a select list or
