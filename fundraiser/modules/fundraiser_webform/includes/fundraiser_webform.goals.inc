@@ -15,6 +15,7 @@ function fundraiser_webform_webform_goals_list_metrics($selected_context, $form_
   // or groups if the node type is also a donation node type
   // or form groups if all forms selected in the group are fundraiser enabled.
   if (in_array($selected_context['id'], array('single', 'group', 'form_group'))) {
+
     $is_fundraiser_goal = fundraiser_webform_is_fundraiser_goal($selected_context, $form_state, $goal);
 
     if ($is_fundraiser_goal) {
@@ -125,6 +126,10 @@ function fundraiser_webform_is_fundraiser_goal($selected_context, $form_state, $
 
     if ($selected_context['id'] == 'single' && $nid) {
       $node = node_load($nid);
+      // If this goal's node no longer exists then return false:
+      if (!$node) {
+        return FALSE;
+      }
       $type = $node->type;
     }
     elseif ($selected_context['id'] == 'group') {
