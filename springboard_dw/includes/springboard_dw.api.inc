@@ -12,7 +12,13 @@
 function springboard_dw_api_client()
 {
   // Composer Vendor autoload
-  drush_autoload("sites/all/vendor/autoload.php");
+  if(function_exists('drush_autoload')) {
+    drush_autoload("sites/all/vendor/autoload.php");
+  }
+  else {
+    require_once ("sites/all/vendor/autoload.php");
+  }
+
 
   // Load Guzzle client
   $guzzle = new GuzzleHttp\Client(['http_errors' => false]);
