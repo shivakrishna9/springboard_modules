@@ -27,7 +27,7 @@ function springboard_dw_queue_legacy_drush_command() {
     ),
     'options' => array(
       'limit' => 'limit',
-      'feedback' => 'feedback',
+      'batch-size' => 'batch-size',
       'reset' => 'reset',
     ),
     'examples' => array(
@@ -60,18 +60,20 @@ function springboard_dw_queue_legacy_setup_batch($type = '') {
 
   // Get options.
   $limit = drush_get_option('limit', 999999999);
-  $feedback = drush_get_option('feedback', 10);
+  $batch_size = drush_get_option('batch-size', 10);
 
-  // Populate list of ids to operate on.
+  // Get the highwater mark for this type so we can pick up where we left off.
+  $highwater = springboard_dw_queue_legacy_get_highwater_mark($type);
+
+  // Populate list of records to operate on.
   switch ($type) {
     case 'contact':
-      $highwater = springboard_dw_queue_legacy_get_highwater_mark('contact');
-      $ids = db_query_range('SELECT uid, created FROM {users} WHERE created > :highwater ORDER BY created ASC', 0, $limit, array(':highwater' => $highwater))->fetchAll();
+      $records = db_query_range('SELECT uid, created FROM {users} WHERE created > :highwater ORDER BY created ASC', 0, $limit, array(':highwater' => $highwater))->fetchAll();
       $batch_process_function = 'springboard_dw_queue_legacy_users';
       break;
 
     case 'advocacy action':
-      $ids = db_query_range("SELECT s.sid, s.nid, s.uid FROM {webform_submissions} s INNER JOIN {node} n ON s.nid = n.nid WHERE type = 'sba_message_action'", 0, $limit)->fetchAll();
+      $records = db_query_range("SELECT s.sid, s.nid, s.uid FROM {webform_submissions} s INNER JOIN {node} n ON s.nid = n.nid WHERE type = 'sba_message_action'", 0, $limit)->fetchAll();
       $batch_process_function = 'springboard_dw_queue_legacy_advocacy_actions';
       break;
 
@@ -80,7 +82,7 @@ function springboard_dw_queue_legacy_setup_batch($type = '') {
       break;
 
     case 'petition':
-      $ids = db_query_range("SELECT s.sid, s.nid, s.uid FROM {webform_submissions} s INNER JOIN {node} n ON s.nid = n.nid WHERE type = 'springboard_petition'", 0, $limit)->fetchAll();
+      $records = db_query_range("SELECT s.sid, s.nid, s.uid FROM {webform_submissions} s INNER JOIN {node} n ON s.nid = n.nid WHERE type = 'springboard_petition'", 0, $limit)->fetchAll();
       $batch_process_function = 'springboard_dw_queue_legacy_petition';
       break;
 
@@ -89,7 +91,7 @@ function springboard_dw_queue_legacy_setup_batch($type = '') {
       break;
 
     case 'form':
-      $ids = db_query_range('SELECT n.nid FROM {node} n INNER JOIN {webform_user} w ON n.nid = w.nid ORDER BY created ASC', 0, $limit)->fetchCol();
+      $records = db_query_range('SELECT n.nid, n.created FROM {node} n INNER JOIN {webform_user} w ON n.nid = w.nid ORDER BY created ASC', 0, $limit)->fetchAll();
       $batch_process_function = 'springboard_dw_queue_legacy_forms';
       break;
 
@@ -97,10 +99,10 @@ function springboard_dw_queue_legacy_setup_batch($type = '') {
       return drush_set_error(dt('"@type" is not a valid record type. Nothing was processed.', array('@type' => $type)));
   }
 
-  $record_count = count($ids);
+  $record_count = count($records);
 
   // Break up all of our data so each process does not time out.
-  $chunks = array_chunk($ids, $feedback);
+  $chunks = array_chunk($records, $batch_size);
   $operations = array();
 
   // For every chunk, assign some method to run on that chunk of data.
@@ -109,7 +111,7 @@ function springboard_dw_queue_legacy_setup_batch($type = '') {
     $i++;
     $operations[] = array($batch_process_function,
                       array($chunk, 'details' => t('(Queued records @chunk of @count)',
-                        array('@chunk' => $i * $feedback, '@count' => $record_count)
+                        array('@chunk' => $i * $batch_size, '@count' => $record_count)
                         ),
                       ),
     );
@@ -134,7 +136,9 @@ function springboard_dw_queue_legacy_setup_batch($type = '') {
   // Start processing the batch operations.
   drush_backend_batch_process();
 
-  $last_record = end(array_values($ids));
+  // Set highwater mark for this type so we can pick up where we left off next
+  // time this drush command is run.
+  $last_record = end(array_values($records));
   drush_log(dt('Setting highwater mark to :highwater', array(':highwater' => date(DATE_ATOM, $last_record->created))), 'ok');
   springboard_dw_queue_legacy_set_highwater_mark($type, $last_record->created);
 
@@ -150,17 +154,17 @@ function springboard_dw_queue_legacy_finished_batch($success, $results, $operati
 /**
  * Batch process callbackfor processing users.
  */
-function springboard_dw_queue_legacy_users($uids, $operation_details, &$context) {
-  foreach ($uids as $uid) {
+function springboard_dw_queue_legacy_users($records, $operation_details, &$context) {
+  foreach ($records as $record) {
     // Create the user item in the queue if not warehoused.
-    if (!springboard_dw_item_is_warehoused('contact', $uid->uid)) {
+    if (!springboard_dw_item_is_warehoused('contact', $record->uid)) {
 
       // Take the account object and prep for contact mapping.
-      $user_obj = entity_metadata_wrapper('user', $uid->uid);
+      $user_obj = entity_metadata_wrapper('user', $record->uid);
       $user_data = springboard_dw_get_all_entity_properties($user_obj);
 
       // Map the user contact.
-      $contact_item = springboard_dw_map_contact_item($uid->uid, $user_data);
+      $contact_item = springboard_dw_map_contact_item($record->uid, $user_data);
 
       // Create the queue item to update the contact record.
       $queue = DrupalQueue::get("springboard_dw_export");
@@ -174,9 +178,9 @@ function springboard_dw_queue_legacy_users($uids, $operation_details, &$context)
 /**
  * Batch process callback for pressing webforms.
  */
-function springboard_dw_queue_legacy_forms($ids, $operation_details, &$context) {
-  $nodes = node_load_multiple($ids);
-  foreach ($nodes as $node) {
+function springboard_dw_queue_legacy_forms($records, $operation_details, &$context) {
+  foreach ($records as $record) {
+    $node = node_load($record->nid);
     // Create the form item.
     if (isset($node->is_webform_user) && $node->is_webform_user) {
 
