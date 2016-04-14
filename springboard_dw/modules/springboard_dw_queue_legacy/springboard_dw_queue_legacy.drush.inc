@@ -78,7 +78,8 @@ function springboard_dw_queue_legacy_setup_batch($type = '') {
       break;
 
     case 'advocacy message':
-
+      $records = springboard_dw_queue_legacy_get_advocacy_messages();
+      $batch_process_function = 'springboard_dw_queue_legacy_advocacy_message';
       break;
 
     case 'petition':
@@ -231,8 +232,23 @@ function springboard_dw_queue_legacy_petition($submissions, $operation_details, 
   foreach ($submissions as $submission) {
     $action = springboard_dw_queue_legacy_build_action($submission);
     // Create the Advocacy action item in the queue if not warehoused.
-    // var_dump($action->node->nid);.
     if (!springboard_dw_item_is_warehoused('petition', $action->node->nid)) {
+      $petition_item = springboard_dw_map_petition_item($action);
+      $queue->createItem($petition_item);
+    }
+  }
+  $context['message'] = $operation_details;
+}
+/**
+ *
+ */
+function springboard_dw_queue_legacy_advocacy_message($submissions, $operation_details, &$context) {
+  // Get the Drupal data warehouse queue.
+  $queue = DrupalQueue::get("springboard_dw_export");
+  foreach ($submissions as $submission) {
+    $action = springboard_dw_queue_legacy_build_action($submission);
+    // Create the Advocacy action item in the queue if not warehoused.
+    if (!springboard_dw_item_is_warehoused('advocacy message', $action->node->nid)) {
       $petition_item = springboard_dw_map_petition_item($action);
       $queue->createItem($petition_item);
     }
@@ -282,4 +298,58 @@ function springboard_dw_queue_legacy_set_highwater_mark($type, $timestamp) {
   $record = array('type' => $type, 'highwater' => $timestamp);
   $result = drupal_write_record('springboard_data_warehouse_queue_legacy', $record, 'type');
   return $result;
+}
+
+/**
+ *
+ */
+function springboard_dw_queue_legacy_get_advocacy_messages() {
+  $advocacy_action_records = db_query("SELECT nid FROM {node} WHERE type = 'sba_message_action' ORDER BY created ASC")->fetchAll();
+  $advocacy_ids = array();
+  foreach($advocacy_action_records as $advocacy_action_record) {
+    $node = node_load($advocacy_action_record->nid);
+    $messages = springboard_dw_queue_legacy_get_advocacy_message_details($node->advocacy_id);
+  }
+  return $messages;
+}
+
+/**
+ *
+ */
+function springboard_dw_queue_legacy_get_advocacy_message_details($action_id) {
+  $details = array();
+  drush_log('Getting a page for ' . $action_id, 'ok');
+  $page = springboard_dw_queue_legacy_get_advocacy_message_details_page($action_id, 1);
+  $details[] = $page['data'];
+  while ($page->current_page < $page->last_page) {
+    drush_log('Getting a page for ' . $action_id, 'ok');
+
+    $page = springboard_dw_queue_legacy_get_advocacy_message_details_page($action_id, $page->current_page + 1);
+    $details[] = $page['data'];
+  }
+
+  return $details;
+}
+
+/**
+ * Grabs a single page of JSON data
+ *
+ * @return array
+ */
+function springboard_dw_queue_legacy_get_advocacy_message_details_page($action_id, $page = 1) {
+  // Composer Vendor autoload.
+  drush_autoload(DRUPAL_ROOT."/sites/all/files/vendor/autoload.php");
+
+  // Load Guzzle client.
+  $guzzle = new GuzzleHttp\Client(['http_errors' => FALSE]);
+  $params = array(
+    'query' => array(
+      'access_token' => 'ys9O22HXC9fdyS8JA5diqIzTtdTq5iIpPiYehoLf',
+      'page' => $page,
+    ),
+  );
+  $response = $guzzle->request('GET', 'https://advocacy-staging.gospringboard.io/api/v1/messages/get/' . $action_id, $params);
+  $body = $response->getBody();
+  $body_text = $body->getContents();
+  return json_decode($body_text, TRUE);
 }
