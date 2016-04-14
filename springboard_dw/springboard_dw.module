@@ -12,8 +12,7 @@ require_once 'includes/springboard_dw.utility.inc';
  * The menu item for the Springboard data warehouse settings.
  * Implements hook_menu().
  */
-function springboard_dw_menu()
-{
+function springboard_dw_menu() {
   $items['admin/config/services/springboard-dw'] = array(
     'title'            => 'Springboard Data Warehouse',
     'description'      => 'Configuration settings for Springboard Data Warehousing.',
@@ -27,10 +26,21 @@ function springboard_dw_menu()
 }
 
 /**
+ * Log a queue item to watchdog if the setting is enabled on data warehouse admin.
+ * @param $data
+ */
+function springboard_dw_log_queue_item($data) {
+  // Check if watchdog logging is enabled
+  if(variable_get('springboard_dw_watchdog_enabled')) {
+    watchdog("data_warehouse", '<pre>' . print_r($data, true) . '</pre>');
+  }
+}
+
+/**
  * Success hook for advocacy actions and submissions.
  * Implements advocacy_hook_success()
  * @param $node
- *  The node object supplied by the advocacy success hook.
+ *   The node object supplied by the advocacy success hook.
  * @param $contact
  *   The contact object supplied by the advocacy success hook.
  * @param $data
@@ -38,8 +48,7 @@ function springboard_dw_menu()
  * @param $sid
  *   The submission supplied by the advocacy success hook.
  */
-function springboard_dw_action_success($node, $contact, $data, $sid)
-{
+function springboard_dw_action_success($node, $contact, $data, $sid) {
   $webform_submission_data = springboard_dw_webform_submission_data_keyed($node->nid, $sid);
 
   $action = new stdClass();
@@ -69,8 +78,7 @@ function springboard_dw_action_success($node, $contact, $data, $sid)
  * @param $node
  * @param $action
  */
-function springboard_dw_advocacy_message_action_submission($node, $action)
-{
+function springboard_dw_advocacy_message_action_submission($node, $action) {
   // Get the Drupal data warehouse queue
   $queue = DrupalQueue::get("springboard_dw_export");
 
@@ -79,7 +87,11 @@ function springboard_dw_advocacy_message_action_submission($node, $action)
 
     $message_action_item = springboard_dw_map_advocacy_action_item($action);
 
+    // Create the queue item
     $queue->createItem($message_action_item);
+
+    // Log the queue item
+    springboard_dw_log_queue_item($message_action_item);
   }
 
   // If the Advocacy action messages have not been warehoused, add them
@@ -96,7 +108,11 @@ function springboard_dw_advocacy_message_action_submission($node, $action)
         $message_item['message_id'] = $message->{'$id'};
         $message_item['action_id'] = $action->node->advocacy_id;
 
+        // Create the queue item
         $queue->createItem($message_item);
+
+        // Log the queue item
+        springboard_dw_log_queue_item($message_item);
       }
     }
   }
@@ -106,26 +122,32 @@ function springboard_dw_advocacy_message_action_submission($node, $action)
  * @param $node
  * @param $action
  */
-function springboard_dw_petition_submission($node, $action)
-{
+function springboard_dw_petition_submission($node, $action) {
   // Get the Drupal data warehouse queue
   $queue = DrupalQueue::get("springboard_dw_export");
 
   // Create the Advocacy action item in the queue if not warehoused
   if (!springboard_dw_item_is_warehoused('petition', $node->nid)) {
 
-    $petition_item = springboard_dw_map_petition_item($action);
+    $petition = springboard_dw_map_petition_item($action);
 
-    $queue->createItem($petition_item);
+    // Create the queue item
+    $queue->createItem($petition);
+
+    // Log the queue item
+    springboard_dw_log_queue_item($petition);
   }
 
-  // Create the Advocacy petition item in the queue if not warehoused
   if (!springboard_dw_item_is_warehoused('advocacy petition message', $node->nid)) {
 
     // $petition_item = springboard_dw_map_petition_submission_item($action);
     $petition_item = springboard_dw_map_petition_submission_item($action);
 
+    // Create the queue item
     $queue->createItem($petition_item);
+
+    // Log the queue item
+    springboard_dw_log_queue_item($petition_item);
   }
 
 }
@@ -134,8 +156,7 @@ function springboard_dw_petition_submission($node, $action)
  * @param $node
  * @param $action
  */
-function springboard_dw_social_action_submission($node, $action)
-{
+function springboard_dw_social_action_submission($node, $action) {
   // Get the Drupal data warehouse queue
   $queue = DrupalQueue::get("springboard_dw_export");
 
@@ -144,7 +165,11 @@ function springboard_dw_social_action_submission($node, $action)
 
     $message_action_item = springboard_dw_map_advocacy_action_item($action);
 
+    // Create the queue item
     $queue->createItem($message_action_item);
+
+    // Log the queue item
+    springboard_dw_log_queue_item($message_action_item);
   }
 
   // If the Advocacy action messages have not been warehoused, add them
@@ -154,7 +179,12 @@ function springboard_dw_social_action_submission($node, $action)
     foreach ($action->data as $message) {
 
       $message_item = springboard_dw_map_social_action_item($message, $action, $node);
+
+      // Create the queue item
       $queue->createItem($message_item);
+
+      // Log the queue item
+      springboard_dw_log_queue_item($message_item);
     }
   }
 }
@@ -163,15 +193,18 @@ function springboard_dw_social_action_submission($node, $action)
  * Implements hook_fundraiser_donation_success().
  * @param $donation
  */
-function springboard_dw_fundraiser_donation_success($donation)
-{
+function springboard_dw_fundraiser_donation_success($donation) {
   // Get the Drupal data warehouse queue
   $queue = DrupalQueue::get("springboard_dw_export");
 
   // Queue the donation object which should not be in the queue, so there's no need to check if this item is warehoused
   $donation_item = springboard_dw_map_donation_item($donation);
+
+  // Create the queue item
   $queue->createItem($donation_item);
 
+  // Log the queue item
+  springboard_dw_log_queue_item($donation_item);
 }
 
 /**
@@ -179,8 +212,7 @@ function springboard_dw_fundraiser_donation_success($donation)
  * Implements hook_node_insert().
  * @param $node
  */
-function springboard_dw_node_insert($node)
-{
+function springboard_dw_node_insert($node) {
 
   // Create the form item
   if (isset($node->is_webform_user) && $node->is_webform_user) {
@@ -191,7 +223,12 @@ function springboard_dw_node_insert($node)
     // Create the form item in the queue if not warehoused
     if (!springboard_dw_item_is_warehoused('form', $node->nid)) {
       $form_item = springboard_dw_map_form_item($node);
+
+      // Create the queue item
       $queue->createItem($form_item);
+
+      // Log the queue item
+      springboard_dw_log_queue_item($form_item);
     }
   }
 }
@@ -201,8 +238,7 @@ function springboard_dw_node_insert($node)
  * Implements hook_node_update().
  * @param $node
  */
-function springboard_dw_node_update($node)
-{
+function springboard_dw_node_update($node) {
   // Todo: This could ping the warehouse to check if the record exists also if the overhead isn't bad
   // Check if this should be an insert or update operation in the warehouse (there is no upsert operation available)
   if (!springboard_dw_item_is_warehoused('form', $node->nid)) {
@@ -215,8 +251,12 @@ function springboard_dw_node_update($node)
 
   // Create the queue item to update the node record
   $queue = DrupalQueue::get("springboard_dw_export");
+
+  // Create the queue item
   $queue->createItem($node_item);
 
+  // Log the queue item
+  springboard_dw_log_queue_item($node_item);
 }
 
 /**
@@ -226,8 +266,7 @@ function springboard_dw_node_update($node)
  * @param $account
  * @param $category
  */
-function springboard_dw_user_insert(&$edit, $account, $category)
-{
+function springboard_dw_user_insert(&$edit, $account, $category) {
 
   // Create the user item in the queue if not warehoused
   if (!springboard_dw_item_is_warehoused('contact', $account->uid)) {
@@ -241,7 +280,12 @@ function springboard_dw_user_insert(&$edit, $account, $category)
 
     // Create the queue item to update the contact record
     $queue = DrupalQueue::get("springboard_dw_export");
+
+    // Create the queue item
     $queue->createItem($contact_item);
+
+    // Log the queue item
+    springboard_dw_log_queue_item($contact_item);
   }
 
 }
@@ -253,8 +297,7 @@ function springboard_dw_user_insert(&$edit, $account, $category)
  * @param $account
  * @param $category
  */
-function springboard_dw_user_update(&$edit, $account, $category)
-{
+function springboard_dw_user_update(&$edit, $account, $category) {
 
   /**
    * TODO - this runs on general form submissions which is bad, we don't want to try to update the contact record every time.
@@ -278,8 +321,12 @@ function springboard_dw_user_update(&$edit, $account, $category)
 
   // Create the queue item to update the contact record
   $queue = DrupalQueue::get("springboard_dw_export");
+
+  // Create the queue item
   $queue->createItem($contact_item);
 
+  // Log the queue item
+  springboard_dw_log_queue_item($contact_item);
 }
 
 /**
@@ -293,7 +340,7 @@ function springboard_dw_webform_user_submission_insert($node, $submission, $acco
   // fundraiser_is_donation_type($node->type) check.
   $excluded_types = variable_get('springboard_dw_exluded_submission_types',
     array('donation_form', 'springboard_petition', 'sba_social_action', 'sba_message_action')
-    );
+  );
 
   // If the type isn't one of our excluded types, queue up the submission.
   if (!in_array($node->type, $excluded_types)) {
@@ -312,7 +359,12 @@ function springboard_dw_webform_user_submission_insert($node, $submission, $acco
 
     // Queue the donation object which should not be in the queue, so there's no need to check if this item is warehoused
     $submission_item = springboard_dw_map_submission_item($submission, $submitted_data);
+
+    // Create the queue item
     $queue->createItem($submission_item);
+
+    // Log the queue item
+    springboard_dw_log_queue_item($submission_item);
   }
 }
 
@@ -382,17 +434,19 @@ function springboard_dw_extract_submission_extra_props($submitted_data, $submiss
  * @param $donation
  * @return array
  */
-function springboard_dw_map_advocacy_action_item($message_action)
-{
+function springboard_dw_map_advocacy_action_item($message_action) {
 
   // Get the Advocacy action object details and prep for warehousing (sb_action)
   $advocacy_item = array();
+
+  // Reference the global user var
+  global $user;
 
   $advocacy_item['queue_type'] = 'advocacy action';
   $advocacy_item['action_id'] = $message_action->node->advocacy_id;
   $advocacy_item['action_type'] = $message_action->node->type;
   $advocacy_item['group_id'] = ''; // Will come later
-  $advocacy_item['contact_id'] = $message_action->node->uid;
+  $advocacy_item['contact_id'] = $user->uid;
   $advocacy_item['form_id'] = $message_action->node->nid;
 
   // TODO: Fix these
@@ -456,8 +510,7 @@ function springboard_dw_map_advocacy_action_item($message_action)
  * @param $petition
  * @return array
  */
-function springboard_dw_map_petition_item($petition)
-{
+function springboard_dw_map_petition_item($petition) {
 
   // Get the Advocacy petition object details and prep for warehousing (sb_action)
   $advocacy_item = array();
@@ -516,8 +569,7 @@ function springboard_dw_map_petition_item($petition)
  * @param $petition
  * @return array
  */
-function springboard_dw_map_petition_submission_item($petition)
-{
+function springboard_dw_map_petition_submission_item($petition) {
 
   // Get the Advocacy petition object details and prep for warehousing (sb_action)
   $message_item = array();
@@ -541,8 +593,7 @@ function springboard_dw_map_petition_submission_item($petition)
  * @param $donation
  * @return array
  */
-function springboard_dw_map_advocacy_message_item($message, $full_message)
-{
+function springboard_dw_map_advocacy_message_item($message, $full_message) {
 
   $message_item = $message;
   $full_message = json_decode(json_encode($full_message), true);
@@ -580,8 +631,7 @@ function springboard_dw_map_advocacy_message_item($message, $full_message)
  * @param $donation
  * @return array
  */
-function springboard_dw_map_donation_item($donation)
-{
+function springboard_dw_map_donation_item($donation) {
   // Get the donation object details and prep for warehousing (sb_donation)
   $donation_item = array();
 
@@ -662,8 +712,7 @@ function springboard_dw_map_donation_item($donation)
  * @param $donation_item
  *   The donation item being prepared for the queue.
  */
-function springboard_dw_extract_donation_extra_props($donation, $donation_item)
-{
+function springboard_dw_extract_donation_extra_props($donation, $donation_item) {
   // Maintain a field blacklist because there are some donation properties that should
   // never be exported. The payment_fields array will contain full credit card numbers!
   $field_blacklist = variable_get('springboard_dw_donation_field_blacklist', array('mail', 'payment_fields', 'other_amount'));
@@ -686,8 +735,7 @@ function springboard_dw_extract_donation_extra_props($donation, $donation_item)
  * @param $donation
  * @return array
  */
-function springboard_dw_map_contact_item($contact_id, $user_data = array(), $update = False)
-{
+function springboard_dw_map_contact_item($contact_id, $user_data = array(), $update = false) {
   // If the $user_data parameter is empty we can assume this is a new record we need to insert
   if (empty($user_data)) {
     $user = user_load($contact_id);
@@ -700,8 +748,8 @@ function springboard_dw_map_contact_item($contact_id, $user_data = array(), $upd
   $contact_item['queue_type'] = 'contact';
 
   // If user data is being passed to update, flag this queue item for an update
-  if (!empty($user_data) && $update == True) {
-    $contact_item['queue_item_update'] = True;
+  if (!empty($user_data) && $update == true) {
+    $contact_item['queue_item_update'] = true;
   }
 
   $contact_item['contact_id'] = $contact_id;
@@ -742,8 +790,7 @@ function springboard_dw_map_contact_item($contact_id, $user_data = array(), $upd
  * @param $contact_item
  *   The contact item being prepared for the queue.
  */
-function springboard_dw_extract_contact_extra_props($user, $contact_item)
-{
+function springboard_dw_extract_contact_extra_props($user, $contact_item) {
   // Maintain a field blacklist because there are some donation properties that should
   // never be exported. The payment_fields array will contain full credit card numbers!
   $field_blacklist = variable_get('springboard_dw_contact_field_blacklist', array('status', 'theme', 'created', 'edit_url', 'url', 'mail', 'name', 'uid', 'roles'));
@@ -767,8 +814,7 @@ function springboard_dw_extract_contact_extra_props($user, $contact_item)
  * @param $node
  * @return array
  */
-function springboard_dw_map_social_action_item($message, $action, $node)
-{
+function springboard_dw_map_social_action_item($message, $action, $node) {
   // Get the Advocacy message object id and prep for warehousing (sb_message)
   $message_item = array();
   $message_item['queue_type'] = 'advocacy social action message';
@@ -801,16 +847,15 @@ function springboard_dw_map_social_action_item($message, $action, $node)
  * @param $donation
  * @return array
  */
-function springboard_dw_map_form_item($node, $update = False)
-{
+function springboard_dw_map_form_item($node, $update = false) {
 
   // Get the user account details and prep for warehousing (sb_contact)
   $form_item = array();
   $form_item['queue_type'] = 'form';
 
   // If form data is being passed to update, flag this queue item for an update
-  if ($update == True) {
-    $form_item['queue_item_update'] = True;
+  if ($update == true) {
+    $form_item['queue_item_update'] = true;
   }
 
   $form_item['form_id'] = $node->nid;
@@ -835,8 +880,7 @@ function springboard_dw_map_form_item($node, $update = False)
  *    The queue item to process, queue type is inferred by the queue_type parameter
  * @return bool
  */
-function springboard_dw_export_item($item)
-{
+function springboard_dw_export_item($item) {
   if ($item['queue_type'] == 'donation') {
     return springboard_dw_donation($item);
   } elseif ($item['queue_type'] == 'contact') {
@@ -860,15 +904,12 @@ function springboard_dw_export_item($item)
   }
 }
 
-
-
 /**
  * Send a contact record to the Springboard data warehouse API.
  * @param $item
  *  The queue information to send to the data warehouse.
  */
-function springboard_dw_contact($item)
-{
+function springboard_dw_contact($item) {
   // Check if the queue item should be an update and route the endpoint accordingly
   $api_endpoint = isset($item['queue_item_update']) && $item['queue_item_update'] ? 'contact/update' : 'contact/create';
 
@@ -898,8 +939,7 @@ function springboard_dw_contact($item)
  * @param $item
  *  The queue information to send to the data warehouse.
  */
-function springboard_dw_donation($item)
-{
+function springboard_dw_donation($item) {
   // Make the API call
   $api_response = springboard_dw_api_call('donation/create', $item);
 
@@ -927,8 +967,7 @@ function springboard_dw_donation($item)
  * @param $item
  *  The queue information to send to the data warehouse.
  */
-function springboard_dw_form($item)
-{
+function springboard_dw_form($item) {
 
   // Check if the queue item should be an update and route the endpoint accordingly
   $api_endpoint = isset($item['queue_item_update']) && $item['queue_item_update'] ? 'form/update' : 'form/create';
@@ -960,8 +999,7 @@ function springboard_dw_form($item)
  * @param $item
  *  The queue information to send to the data warehouse.
  */
-function springboard_dw_advocacy_message($item)
-{
+function springboard_dw_advocacy_message($item) {
 
   // We need to get the full message data before warehousing the message
   $transaction_server_api_call = springboard_advocacy_api_call();
@@ -994,8 +1032,7 @@ function springboard_dw_advocacy_message($item)
  * @param $item
  *  The queue information to send to the data warehouse.
  */
-function springboard_dw_advocacy_action($item)
-{
+function springboard_dw_advocacy_action($item) {
   // Make the API call
   $api_response = springboard_dw_api_call('action/create', $item);
 
@@ -1022,8 +1059,7 @@ function springboard_dw_advocacy_action($item)
  * @param $item
  *  The queue information to send to the data warehouse.
  */
-function springboard_dw_petition($item)
-{
+function springboard_dw_petition($item) {
   // Make the API call
   $api_response = springboard_dw_api_call('action/create', $item);
 
@@ -1050,8 +1086,7 @@ function springboard_dw_petition($item)
  * @param $item
  *  The queue information to send to the data warehouse.
  */
-function springboard_dw_submission($item)
-{
+function springboard_dw_submission($item) {
   // Make the API call
   $api_response = springboard_dw_api_call('submission/create', $item);
 
@@ -1078,8 +1113,7 @@ function springboard_dw_submission($item)
  * @param $item
  *  The queue information to send to the data warehouse.
  */
-function springboard_dw_advocacy_social_action_message($item)
-{
+function springboard_dw_advocacy_social_action_message($item) {
   // Make the API call
   $api_response = springboard_dw_api_call('message/create', $item);
 
@@ -1106,8 +1140,7 @@ function springboard_dw_advocacy_social_action_message($item)
  * @param $item
  *  The queue information to send to the data warehouse.
  */
-function springboard_dw_petition_message($item)
-{
+function springboard_dw_petition_message($item) {
   // Make the API call
   $api_response = springboard_dw_api_call('message/create', $item);
 

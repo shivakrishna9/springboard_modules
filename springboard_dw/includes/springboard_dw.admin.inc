@@ -33,6 +33,12 @@ function springboard_dw_settings_form() {
     '#required' => TRUE
   );
 
+  $form['springboard_dw_watchdog_enabled'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Enable watchdog logging of queue item processing'),
+    '#default_value' => variable_get('springboard_dw_watchdog_enabled', 1)
+  );
+
   $form['springboard_dw_client_id'] = array(
     '#type' => 'textfield',
     '#title' => t('Data warehouse client id'),
