@@ -73,7 +73,7 @@ function springboard_dw_queue_legacy_setup_batch($type = '') {
       break;
 
     case 'advocacy action':
-      $records = db_query_range("SELECT s.sid, s.nid, s.uid FROM {webform_submissions} s INNER JOIN {node} n ON s.nid = n.nid WHERE type = 'sba_message_action'", 0, $limit)->fetchAll();
+      $records = db_query_range("SELECT s.sid, s.nid, s.uid, s.submitted AS created FROM {webform_submissions} s INNER JOIN {node} n ON s.nid = n.nid WHERE type = 'sba_message_action' AND s.submitted > :highwater ORDER BY s.submitted ASC", 0, $limit, array(':highwater' => $highwater))->fetchAll();
       $batch_process_function = 'springboard_dw_queue_legacy_advocacy_actions';
       break;
 
@@ -82,7 +82,7 @@ function springboard_dw_queue_legacy_setup_batch($type = '') {
       break;
 
     case 'petition':
-      $records = db_query_range("SELECT s.sid, s.nid, s.uid FROM {webform_submissions} s INNER JOIN {node} n ON s.nid = n.nid WHERE type = 'springboard_petition'", 0, $limit)->fetchAll();
+      $records = db_query_range("SELECT s.sid, s.nid, s.uid, s.submitted AS created FROM {webform_submissions} s INNER JOIN {node} n ON s.nid = n.nid WHERE type = 'springboard_petition' AND s.submitted > :highwater ORDER BY s.submitted ASC", 0, $limit, array(':highwater' => $highwater))->fetchAll();
       $batch_process_function = 'springboard_dw_queue_legacy_petition';
       break;
 
@@ -100,7 +100,7 @@ function springboard_dw_queue_legacy_setup_batch($type = '') {
   }
 
   $record_count = count($records);
-
+  drush_log(dt(':count records found to process.', array(':count' => $record_count)), 'ok');
   // Break up all of our data so each process does not time out.
   $chunks = array_chunk($records, $batch_size);
   $operations = array();
@@ -137,10 +137,17 @@ function springboard_dw_queue_legacy_setup_batch($type = '') {
   drush_backend_batch_process();
 
   // Set highwater mark for this type so we can pick up where we left off next
-  // time this drush command is run.
-  $last_record = end(array_values($records));
-  drush_log(dt('Setting highwater mark to :highwater', array(':highwater' => date(DATE_ATOM, $last_record->created))), 'ok');
-  springboard_dw_queue_legacy_set_highwater_mark($type, $last_record->created);
+  // time this command is run.
+  if ($record_count > 0) {
+    $last_record = end(array_values($records));
+    $highwater = $last_record->created;
+  }
+  // There were no records to process, so set the highwater mark to now.
+  else {
+    $highwater = time();
+  }
+  drush_log(dt('Setting highwater mark to :highwater', array(':highwater' => date(DATE_ATOM, $highwater))), 'ok');
+  springboard_dw_queue_legacy_set_highwater_mark($type, $highwater);
 
 }
 
