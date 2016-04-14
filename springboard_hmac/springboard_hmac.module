@@ -267,7 +267,7 @@ function springboard_hmac_failure($reason, $parsed_payload = array()) {
  *   The hash.
  */
 function springboard_hmac_create_hmac($values, $key) {
-  $hmac = base64_encode(hash_hmac('sha256', (string) implode('', $values), (string) $key, TRUE));
+  $hmac = base64_encode(hash_hmac('sha256', (string) implode('.', $values), (string) $key, TRUE));
   $hmac = strtr($hmac, array('+' => '-', '/' => '_', '=' => ''));
   return $hmac;
 }
@@ -326,7 +326,7 @@ function springboard_hmac_get_key() {
  *   The hamc token.
  */
 function springboard_hmac_get_verification_hmac($payload, $key) {
-  $hmac = base64_encode(hash_hmac('sha256', (string) implode('', $payload), (string) $key, TRUE));
+  $hmac = base64_encode(hash_hmac('sha256', (string) implode('.', $payload), (string) $key, TRUE));
   $hmac = strtr($hmac, array('+' => '-', '/' => '_', '=' => ''));
   return $hmac;
 }
