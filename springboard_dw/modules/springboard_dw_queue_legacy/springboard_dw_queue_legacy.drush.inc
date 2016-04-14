@@ -28,6 +28,7 @@ function springboard_dw_queue_legacy_drush_command() {
     'options' => array(
       'limit' => 'limit',
       'feedback' => 'feedback',
+      'reset' => 'reset',
     ),
     'examples' => array(
       'Standard example' => 'springboard-dw-queue-legacy-data',
@@ -49,6 +50,10 @@ function springboard_dw_queue_legacy_setup_batch($type = '') {
     $options = array(
       'contact' => dt('contact'),
       'form' => dt('form'),
+      'advocacy action' => dt('advocacy action'),
+      'advocacy message' => dt('advocacy message'),
+      'petition' => dt('petition'),
+      'advocacy petition message' => dt('advocacy petition message'),
     );
     $type = drush_choice($options, dt('What kind of record would you like to queue?'));
   }
@@ -60,12 +65,13 @@ function springboard_dw_queue_legacy_setup_batch($type = '') {
   // Populate list of ids to operate on.
   switch ($type) {
     case 'contact':
-      $ids = db_query_range('SELECT uid FROM {users} ORDER BY created ASC', 0, $limit)->fetchCol();
+      $highwater = springboard_dw_queue_legacy_get_highwater_mark('contact');
+      $ids = db_query_range('SELECT uid, created FROM {users} WHERE created > :highwater ORDER BY created ASC', 0, $limit, array(':highwater' => $highwater))->fetchAll();
       $batch_process_function = 'springboard_dw_queue_legacy_users';
       break;
 
     case 'advocacy action':
-      $ids = db_query_range("select s.sid, s.nid, s.uid FROM {webform_submissions} s INNER JOIN {node} n ON s.nid = n.nid WHERE type = 'sba_message_action'", 0, $limit)->fetchAll();
+      $ids = db_query_range("SELECT s.sid, s.nid, s.uid FROM {webform_submissions} s INNER JOIN {node} n ON s.nid = n.nid WHERE type = 'sba_message_action'", 0, $limit)->fetchAll();
       $batch_process_function = 'springboard_dw_queue_legacy_advocacy_actions';
       break;
 
@@ -74,7 +80,7 @@ function springboard_dw_queue_legacy_setup_batch($type = '') {
       break;
 
     case 'petition':
-      $ids = db_query_range("select s.sid, s.nid, s.uid FROM {webform_submissions} s INNER JOIN {node} n ON s.nid = n.nid WHERE type = 'springboard_petition'", 0, $limit)->fetchAll();
+      $ids = db_query_range("SELECT s.sid, s.nid, s.uid FROM {webform_submissions} s INNER JOIN {node} n ON s.nid = n.nid WHERE type = 'springboard_petition'", 0, $limit)->fetchAll();
       $batch_process_function = 'springboard_dw_queue_legacy_petition';
       break;
 
@@ -102,7 +108,7 @@ function springboard_dw_queue_legacy_setup_batch($type = '') {
   foreach ($chunks as $chunk) {
     $i++;
     $operations[] = array($batch_process_function,
-                      array($chunk, 'details' => t('(Importing records @chunk of @count)',
+                      array($chunk, 'details' => t('(Queued records @chunk of @count)',
                         array('@chunk' => $i * $feedback, '@count' => $record_count)
                         ),
                       ),
@@ -112,7 +118,7 @@ function springboard_dw_queue_legacy_setup_batch($type = '') {
   // Put all that information into our batch array.
   $batch = array(
     'operations' => $operations,
-    'title' => t('Import batch'),
+    'title' => t('Queue batch'),
     'init_message' => t('Initializing'),
     'error_message' => t('An error occurred'),
     'finished' => 'springboard_dw_queue_legacy_finished_batch',
@@ -127,25 +133,19 @@ function springboard_dw_queue_legacy_setup_batch($type = '') {
 
   // Start processing the batch operations.
   drush_backend_batch_process();
+
+  $last_record = end(array_values($ids));
+  drush_log(dt('Setting highwater mark to :highwater', array(':highwater' => date(DATE_ATOM, $last_record->created))), 'ok');
+  springboard_dw_queue_legacy_set_highwater_mark($type, $last_record->created);
+
 }
 
 /**
  * Callback for finished batch.
  */
 function springboard_dw_queue_legacy_finished_batch($success, $results, $operations) {
-  print t('Finished queueing!');
+  drush_log(dt('Finished queueing'));
 }
-
-/**
- *
- */
-function springboard_dw_queue_legacy_chunk($chunk, $operation_details, &$context) {
-  // Do something to $chunk, maybe create a node?
-  // var_dump($chunk);
-  springboard_dw_queue_legacy_users($chunk);
-  $context['message'] = $operation_details;
-}
-
 
 /**
  * Batch process callbackfor processing users.
@@ -153,14 +153,14 @@ function springboard_dw_queue_legacy_chunk($chunk, $operation_details, &$context
 function springboard_dw_queue_legacy_users($uids, $operation_details, &$context) {
   foreach ($uids as $uid) {
     // Create the user item in the queue if not warehoused.
-    if (!springboard_dw_item_is_warehoused('contact', $uid)) {
+    if (!springboard_dw_item_is_warehoused('contact', $uid->uid)) {
 
       // Take the account object and prep for contact mapping.
-      $user_obj = entity_metadata_wrapper('user', $uid);
+      $user_obj = entity_metadata_wrapper('user', $uid->uid);
       $user_data = springboard_dw_get_all_entity_properties($user_obj);
 
       // Map the user contact.
-      $contact_item = springboard_dw_map_contact_item($uid, $user_data);
+      $contact_item = springboard_dw_map_contact_item($uid->uid, $user_data);
 
       // Create the queue item to update the contact record.
       $queue = DrupalQueue::get("springboard_dw_export");
@@ -202,7 +202,7 @@ function springboard_dw_queue_legacy_advocacy_actions($submissions, $operation_d
 
   foreach ($submissions as $submission) {
     $action = springboard_dw_queue_legacy_build_action($submission);
-    // Create the Advocacy action item in the queue if not warehoused
+    // Create the Advocacy action item in the queue if not warehoused.
     if (!springboard_dw_item_is_warehoused('advocacy action', $action->node->nid)) {
       $message_action_item = springboard_dw_map_advocacy_action_item($action);
       $queue->createItem($message_action_item);
@@ -215,13 +215,12 @@ function springboard_dw_queue_legacy_advocacy_actions($submissions, $operation_d
  *
  */
 function springboard_dw_queue_legacy_petition($submissions, $operation_details, &$context) {
-// var_dump($submissions);
   // Get the Drupal data warehouse queue.
   $queue = DrupalQueue::get("springboard_dw_export");
   foreach ($submissions as $submission) {
     $action = springboard_dw_queue_legacy_build_action($submission);
     // Create the Advocacy action item in the queue if not warehoused.
-    // var_dump($action->node->nid);
+    // var_dump($action->node->nid);.
     if (!springboard_dw_item_is_warehoused('petition', $action->node->nid)) {
       $petition_item = springboard_dw_map_petition_item($action);
       $queue->createItem($petition_item);
@@ -247,4 +246,29 @@ function springboard_dw_queue_legacy_build_action($submission) {
   $action->webform = $webform_submission_data;
   $action->sid = $sid;
   return $action;
+}
+
+/**
+ * [springboard_dw_queue_legacy_get_highwater_mark description]
+ * @param  [type] $type [description]
+ * @return [type]       [description]
+ */
+function springboard_dw_queue_legacy_get_highwater_mark($type) {
+  if (drush_get_option('reset', FALSE)) {
+    drush_log(dt('Resetting highwater mark to zero.'), 'ok');
+    return 0;
+  }
+  return db_query('SELECT highwater FROM {springboard_data_warehouse_queue_legacy} WHERE type = :type', array(':type' => $type))->fetchAssoc();
+}
+
+/**
+ * [springboard_dw_queue_legacy_set_highwater_mark description]
+ * @param  [type] $type      [description]
+ * @param  [type] $timestamp [description]
+ * @return [type]            [description]
+ */
+function springboard_dw_queue_legacy_set_highwater_mark($type, $timestamp) {
+  $record = array('type' => $type, 'highwater' => $timestamp);
+  $result = drupal_write_record('springboard_data_warehouse_queue_legacy', $record, 'type');
+  return $result;
 }
