@@ -37,29 +37,31 @@ function dynamic_gift_strings_form_alter(&$form, &$form_state, $form_id) {
     if ($node->type == 'donation_form') {
       if (isset($_SESSION['dynamic_gift_string_values'][$node->nid])
          && is_array($_SESSION['dynamic_gift_string_values'][$node->nid])) { // Coder: This is ok.
-        $gs = $_SESSION['dynamic_gift_string_values'][$node->nid]; // Coder: This is ok.
-        // create an array of amounts to replace the defaults
-        $amounts = _dynamic_gift_strings_parse_amounts($gs['amounts'], $node->show_other_amount, $node->nid);
-        // grab the default
-        $default = $gs['default'];
-        // parse out the form components so we can find the 'amount' field
         $component_hierarchy = _fundraiser_webform_parse_components($node->nid, $node->webform['components']);
-        $amount_field = &_fundraiser_webform_find_field($form, $component_hierarchy['amount']);
-        // make sure we have the field and a good array of amounts
-        if ($amount_field && $amounts) {
-          // we want to preserve the "other amount" option if present in the original form.
-          if (isset($amount_field["#options"]['other'])) {
-            $amounts['other'] = t('Other');
-          }
-          $amount_field['#options'] = $amounts;
+        $gs = $_SESSION['dynamic_gift_string_values'][$node->nid]; // Coder: This is ok.
+        if (!empty($gs['amounts'])) {
+          // create an array of amounts to replace the defaults
+          $amounts = _dynamic_gift_strings_parse_amounts($gs['amounts'], $node->show_other_amount, $node->nid);
+          // grab the default
+          $default = $gs['default'];
+          // parse out the form components so we can find the 'amount' field
+          $amount_field = &_fundraiser_webform_find_field($form, $component_hierarchy['amount']);
+          // make sure we have the field and a good array of amounts
+          if ($amount_field && $amounts) {
+            // we want to preserve the "other amount" option if present in the original form.
+            if (isset($amount_field["#options"]['other'])) {
+              $amounts['other'] = t('Other');
+            }
+            $amount_field['#options'] = $amounts;
 
-          // Set the default if available and in the options.
-          if (is_numeric($default) && isset($amount_field['#options'][$default])) {
-            $amount_field['#default_value'] = $default;
-          }
-          // Unset if the default value isn't set nor in the options.
-          else {
-            unset($amount_field['#default_value']);
+            // Set the default if available and in the options.
+            if (is_numeric($default) && isset($amount_field['#options'][$default])) {
+              $amount_field['#default_value'] = $default;
+            }
+            // Unset if the default value isn't set nor in the options.
+            else {
+              unset($amount_field['#default_value']);
+            }
           }
         }
         // Might there be recurring ask amounts too?
