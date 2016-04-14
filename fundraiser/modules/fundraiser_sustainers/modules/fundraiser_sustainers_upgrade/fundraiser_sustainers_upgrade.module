@@ -1228,3 +1228,23 @@ function fundraiser_sustainers_upgrade_form_webform_configure_form_alter(&$form,
 function fundraiser_sustainers_upgrade_form_sustainers_upgrade_form_node_form_alter(&$form, &$form_state) {
   $form['field_sustainers_auto_upgrade']['#access'] = FALSE;
 }
+
+/**
+ * Implements hook_springboard_admin_admin_menu_items_alter().
+ *
+ * Add sustainers upgrade create link to Springboard donation form menu.
+ */
+function fundraiser_sustainers_upgrade_springboard_admin_admin_menu_items_alter(&$items) {
+  $items['admin/springboard/donation-forms/all']['_children']['node/add/sustainers-upgrade-form'] = array(
+    'link_path' => 'node/add/sustainers-upgrade-form',
+    'link_title' => 'Create a Sustainers Upgrade Form',
+    'menu_name' => 'springboard_admin_menu',
+    'expanded' => 1,
+    'customized' => 1,
+    'weight' => 1,
+    'access callback' => 'user_access',
+    'access arguments' => array(
+      'create sustainers_upgrade_form content',
+    ),
+  );
+}
