@@ -91,7 +91,7 @@ function springboard_dw_queue_legacy_setup_batch($type = '') {
       break;
 
     case 'form':
-      $records = db_query_range('SELECT n.nid, n.created FROM {node} n INNER JOIN {webform_user} w ON n.nid = w.nid ORDER BY created ASC', 0, $limit)->fetchAll();
+      $records = db_query_range('SELECT n.nid, n.created FROM {node} n INNER JOIN {webform_user} w ON n.nid = w.nid WHERE n.created > :highwater ORDER BY created ASC', 0, $limit, array(':highwater' => $highwater))->fetchAll();
       $batch_process_function = 'springboard_dw_queue_legacy_forms';
       break;
 
