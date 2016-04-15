@@ -92,7 +92,8 @@ function springboard_dw_queue_legacy_setup_batch($type = '') {
       break;
 
     case 'advocacy petition message':
-
+      $records = db_query_range("SELECT s.sid, s.nid, s.uid, s.submitted AS created FROM {webform_submissions} s INNER JOIN {node} n ON s.nid = n.nid WHERE type = 'springboard_petition' AND s.submitted > :highwater ORDER BY s.submitted ASC", 0, $limit, array(':highwater' => $highwater))->fetchAll();
+      $batch_process_function = 'springboard_dw_queue_legacy_advocacy_petition_message';
       break;
 
     case 'form':
@@ -242,6 +243,25 @@ function springboard_dw_queue_legacy_petition($submissions, $operation_details, 
   }
   $context['message'] = $operation_details;
 }
+
+
+/**
+ * Batch process callback for pressing petitions.
+ */
+function springboard_dw_queue_legacy_advocacy_petition_message($submissions, $operation_details, &$context) {
+  // Get the Drupal data warehouse queue.
+  $queue = DrupalQueue::get("springboard_dw_export");
+  foreach ($submissions as $submission) {
+    $action = springboard_dw_queue_legacy_build_action($submission);
+    // Create the Advocacy action item in the queue if not warehoused.
+    if (!springboard_dw_item_is_warehoused('advocacy petiion message', $action->node->nid)) {
+      $petition_item = springboard_dw_map_petition_submission_item($action);
+      $queue->createItem($petition_item);
+    }
+  }
+  $context['message'] = $operation_details;
+}
+
 /**
  * Batch process callback for pressing advocacy messages.
  */
