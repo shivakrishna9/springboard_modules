@@ -1,7 +1,7 @@
 <?php
 /**
  * @file
- * Drush commands for the Springboard data warehouse module.
+ * Drush command and supporting functions.
  */
 
 /**
@@ -207,7 +207,7 @@ function springboard_dw_queue_legacy_forms($records, $operation_details, &$conte
 }
 
 /**
- *
+ * Batch process callback for pressing advocacy actions.
  */
 function springboard_dw_queue_legacy_advocacy_actions($submissions, $operation_details, &$context) {
   // Get the Drupal data warehouse queue.
@@ -225,7 +225,7 @@ function springboard_dw_queue_legacy_advocacy_actions($submissions, $operation_d
 }
 
 /**
- *
+ * Batch process callback for pressing petitions.
  */
 function springboard_dw_queue_legacy_petition($submissions, $operation_details, &$context) {
   // Get the Drupal data warehouse queue.
@@ -241,35 +241,32 @@ function springboard_dw_queue_legacy_petition($submissions, $operation_details, 
   $context['message'] = $operation_details;
 }
 /**
- *
+ * Batch process callback for pressing advocacy messages.
  */
-function springboard_dw_queue_legacy_advocacy_message($submissions, $operation_details, &$context) {
+function springboard_dw_queue_legacy_advocacy_message($messages, $operation_details, &$context) {
 
   // Get the Drupal data warehouse queue.
   $queue = DrupalQueue::get("springboard_dw_export");
-  foreach ($submissions as $submission) {
+  foreach ($messages as $message) {
     // Create the Advocacy action item in the queue if not warehoused.
-    if (!springboard_dw_item_is_warehoused('advocacy message', $message->{'$id'})) {
-
-      // Get the Advocacy message object id and prep for warehousing (sb_message)
+    if (!springboard_dw_item_is_warehoused('advocacy message', $message['id'])) {
       $message_item = array();
       $message_item['queue_type'] = 'advocacy message';
-      $message_item['message_id'] = $message->{'$id'};
-      $message_item['action_id'] = $action->node->advocacy_id;
-
+      $message_item['message_id'] = $message['id'];
+      $message_item['action_id'] = $message['action_id'];
       $queue->createItem($message_item);
-
     }
   }
   $context['message'] = $operation_details;
 }
 
 /**
+ * Builds action object.
  *
+ *  Build the action object by re-creating the data that is available during
+ *  hook_advocacy_success().
  */
 function springboard_dw_queue_legacy_build_action($submission) {
-  // Build the action object by re-creating the data that is available during
-  // hook_advocacy_success().
   $node = node_load($submission->nid);
   $webform_submission_data = springboard_dw_webform_submission_data_keyed($node->nid, $submission->sid);
   $user = user_load($submission->uid);
@@ -319,13 +316,16 @@ function springboard_dw_queue_legacy_set_highwater_mark($type, $timestamp) {
 }
 
 /**
+ * Get list of advocacy message.
  *
+ * @return array
+ *   Array of all message values.
  */
 function springboard_dw_queue_legacy_get_advocacy_messages() {
   // Getnids of all sba_message_action nodes.
   $advocacy_action_records = db_query("SELECT nid FROM {node} WHERE type = 'sba_message_action' ORDER BY created ASC")->fetchAll();
   $advocacy_ids = array();
-  foreach($advocacy_action_records as $advocacy_action_record) {
+  foreach ($advocacy_action_records as $advocacy_action_record) {
     $node = node_load($advocacy_action_record->nid);
     $messages = springboard_dw_queue_legacy_get_advocacy_message_details($node->advocacy_id);
   }
@@ -333,14 +333,18 @@ function springboard_dw_queue_legacy_get_advocacy_messages() {
 }
 
 /**
+ * Get advocacy messages related to a single sba_message_action.
  *
+ * Loops through all available pages to get entire dataset.
+ *
+ * @return array
  */
 function springboard_dw_queue_legacy_get_advocacy_message_details($action_id) {
   $details = array();
   $current_page = 1;
   $last_page = 2;
   while ($current_page < $last_page) {
-    drush_log('Getting a page for ' . $action_id, 'ok');
+    drush_log('Getting a page of data for ' . $action_id, 'ok');
     $page = springboard_dw_queue_legacy_get_advocacy_message_details_page($action_id, $page->current_page + 1);
     $current_page = $page['current_page'];
     $last_page = $page['last_page'];
@@ -356,22 +360,24 @@ function springboard_dw_queue_legacy_get_advocacy_message_details($action_id) {
 }
 
 /**
- * Grabs a single page of JSON data
+ * GET a single page of JSON data.
  *
  * @return array
  */
 function springboard_dw_queue_legacy_get_advocacy_message_details_page($action_id, $page = 1) {
   // Composer Vendor autoload.
-  drush_autoload(DRUPAL_ROOT."/sites/all/files/vendor/autoload.php");
+  drush_autoload(DRUPAL_ROOT . "/sites/all/files/vendor/autoload.php");
 
   // Load Guzzle client.
   $guzzle = new GuzzleHttp\Client(['http_errors' => FALSE]);
   $params = array(
     'query' => array(
+      // @TODO hard-coded access_token.
       'access_token' => 'ys9O22HXC9fdyS8JA5diqIzTtdTq5iIpPiYehoLf',
       'page' => $page,
     ),
   );
+  // @TODO hard-coded staging URL.
   $response = $guzzle->request('GET', 'https://advocacy-staging.gospringboard.io/api/v1/messages/get/' . $action_id, $params);
   $body = $response->getBody();
   $body_text = $body->getContents();
