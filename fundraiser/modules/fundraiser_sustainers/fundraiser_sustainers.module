@@ -1652,8 +1652,20 @@ function fundraiser_sustainers_fundraiser_donation_form($form, $form_state) {
     $form = fundraiser_update_form_field('fundraiser_sustainers', $form, 'payment_method', $payment_method_field);
 
     // Toggle the recurring option.
-    $recurs_monthly_field['#recurring_gateways'] = $supporting_gateways;
-    $recurs_monthly_field['#pre_render'][] = 'fundraiser_sustainers_recurs_monthly_pre_render';
+    if ($dual_ask_amounts) {
+      // Hand this to a pre-render callback, which can access individual radio buttons.
+      $recurs_monthly_field['#recurring_gateways'] = $supporting_gateways;
+      $recurs_monthly_field['#pre_render'][] = 'fundraiser_sustainers_recurs_monthly_pre_render';
+    } else {
+      // For a single checkbox, the whole element toggles off when payment method is not recurring-compatible.
+      $conditions = array();
+      foreach ($supporting_gateways as $gateway) {
+        $conditions[] = array('value' => $gateway);
+      }
+      $recurs_monthly_field['#states']['visible'] = array(
+        ':input[name*=payment_method]' => $conditions
+      );
+    }
 
     // Toggle one-time and recurring ask amounts.
     if ($dual_ask_amounts) {
