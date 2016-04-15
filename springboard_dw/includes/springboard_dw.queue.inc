@@ -26,33 +26,24 @@ function springboard_dw_process_queue()
 
     // If the api responds back correctly, remove the queue item
     if (call_user_func($callback, $item->data)) {
-      $queue->deleteItem($item);
+      try {
+        $queue->deleteItem($item);
+      } catch (Exception $e) {
+        // In case of exception log it and leave the item in the queue
+        // to be processed again later.
+        watchdog_exception('cron', $e);
+
+        // Release the item back onto the queue for retry
+        $queue->releaseItem($item);
+      }
     } else {
-      // Release the item back onto the queue for retry
-      //
+      // Log the API error
       drush_log('Bad API call, releasing item. ', 'warning');
-      // drush_print_r($item);
+
+      // Release the item back onto the queue for retry
       $queue->releaseItem($item);
       break;
     }
-
-    /*
-     * WHAT DO WE BENEFIT WITH USING WATCHDOG EXCEPTION DIRECTLY?
-     *
-        try {
-          $queue->deleteItem($item);
-
-        } catch (Exception $e) {
-
-          // In case of exception log it and leave the item in the queue
-          // to be processed again later.
-          watchdog_exception('cron', $e);
-
-          // Release the item back onto the queue for retry
-          // $queue->releaseItem($item);
-        }
-    */
-
   }
 }
 
