@@ -78,6 +78,7 @@ function springboard_dw_queue_legacy_setup_batch($type = '') {
       break;
 
     case 'advocacy message':
+      // @TODO 'advocacy message' does not support highwater mark.
       $records = springboard_dw_queue_legacy_get_advocacy_messages();
       $batch_process_function = 'springboard_dw_queue_legacy_advocacy_message';
       break;
@@ -243,14 +244,21 @@ function springboard_dw_queue_legacy_petition($submissions, $operation_details, 
  *
  */
 function springboard_dw_queue_legacy_advocacy_message($submissions, $operation_details, &$context) {
+
   // Get the Drupal data warehouse queue.
   $queue = DrupalQueue::get("springboard_dw_export");
   foreach ($submissions as $submission) {
-    $action = springboard_dw_queue_legacy_build_action($submission);
     // Create the Advocacy action item in the queue if not warehoused.
-    if (!springboard_dw_item_is_warehoused('advocacy message', $action->node->nid)) {
-      $petition_item = springboard_dw_map_petition_item($action);
-      $queue->createItem($petition_item);
+    if (!springboard_dw_item_is_warehoused('advocacy message', $message->{'$id'})) {
+
+      // Get the Advocacy message object id and prep for warehousing (sb_message)
+      $message_item = array();
+      $message_item['queue_type'] = 'advocacy message';
+      $message_item['message_id'] = $message->{'$id'};
+      $message_item['action_id'] = $action->node->advocacy_id;
+
+      $queue->createItem($message_item);
+
     }
   }
   $context['message'] = $operation_details;
@@ -276,9 +284,15 @@ function springboard_dw_queue_legacy_build_action($submission) {
 }
 
 /**
- * [springboard_dw_queue_legacy_get_highwater_mark description]
- * @param  [type] $type [description]
- * @return [type]       [description]
+ * Gets timestamp of the last queued item.
+ *
+ * Can be reset to 0 for a particular type by passing the --reset flag.
+ *
+ * @param string $type
+ *   Type of queue record to create. eg contact, petition, message action, etc.
+ *
+ * @return int
+ *   Number of seconds since the Unix Epoch.
  */
 function springboard_dw_queue_legacy_get_highwater_mark($type) {
   if (drush_get_option('reset', FALSE)) {
@@ -289,21 +303,26 @@ function springboard_dw_queue_legacy_get_highwater_mark($type) {
 }
 
 /**
- * [springboard_dw_queue_legacy_set_highwater_mark description]
- * @param  [type] $type      [description]
- * @param  [type] $timestamp [description]
- * @return [type]            [description]
+ * Records timestamp of last queued item so the next batch can start afterwards.
+ *
+ * @param string $type
+ *   Type of queue record to create. eg contact, petition, message action, etc.
+ * @param int $timestamp
+ *   Number of seconds since the Unix Epoch.
+ *
+ * @return mixed
+ *   FALSE on error. Otherwise, SAVED_NEW or SAVED_UPDATED.
  */
 function springboard_dw_queue_legacy_set_highwater_mark($type, $timestamp) {
   $record = array('type' => $type, 'highwater' => $timestamp);
-  $result = drupal_write_record('springboard_data_warehouse_queue_legacy', $record, 'type');
-  return $result;
+  return drupal_write_record('springboard_data_warehouse_queue_legacy', $record, 'type');
 }
 
 /**
  *
  */
 function springboard_dw_queue_legacy_get_advocacy_messages() {
+  // Getnids of all sba_message_action nodes.
   $advocacy_action_records = db_query("SELECT nid FROM {node} WHERE type = 'sba_message_action' ORDER BY created ASC")->fetchAll();
   $advocacy_ids = array();
   foreach($advocacy_action_records as $advocacy_action_record) {
@@ -318,16 +337,21 @@ function springboard_dw_queue_legacy_get_advocacy_messages() {
  */
 function springboard_dw_queue_legacy_get_advocacy_message_details($action_id) {
   $details = array();
-  drush_log('Getting a page for ' . $action_id, 'ok');
-  $page = springboard_dw_queue_legacy_get_advocacy_message_details_page($action_id, 1);
-  $details[] = $page['data'];
-  while ($page->current_page < $page->last_page) {
+  $current_page = 1;
+  $last_page = 2;
+  while ($current_page < $last_page) {
     drush_log('Getting a page for ' . $action_id, 'ok');
-
     $page = springboard_dw_queue_legacy_get_advocacy_message_details_page($action_id, $page->current_page + 1);
-    $details[] = $page['data'];
+    $current_page = $page['current_page'];
+    $last_page = $page['last_page'];
+    foreach ($page['data'] as $message) {
+      array_push($details, array(
+        'id' => $message['_id']['$id'],
+        'action_id' => $action_id,
+        'created' => $message['delivery']['createdAt']['sec'],
+      ));
+    }
   }
-
   return $details;
 }
 
