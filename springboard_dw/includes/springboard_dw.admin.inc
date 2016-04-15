@@ -21,7 +21,7 @@ function springboard_dw_settings_form() {
 
   $form['springboard_dw_api_endpoint'] = array(
     '#type' => 'textfield',
-    '#title' => t('Data warehouse server url: (I.E https://warehouse.gospringboard.io)'),
+    '#title' => t('Data warehouse server url: (I.E https://dw.gospringboard.io)'),
     '#default_value' => variable_get('springboard_dw_api_endpoint', NULL),
     '#required' => TRUE
   );
