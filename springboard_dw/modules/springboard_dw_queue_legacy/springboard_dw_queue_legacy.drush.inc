@@ -27,11 +27,14 @@ function springboard_dw_queue_legacy_drush_command() {
     ),
     'options' => array(
       'limit' => 'limit',
-      'batch-size' => 'batch-size',
+      'batch-size' => 'batch-size (Default 100)',
       'reset' => 'reset',
     ),
     'examples' => array(
-      'Standard example' => 'springboard-dw-queue-legacy-data',
+      'drush sb-dw-queue contact' => 'Queues all users',
+      'drush sb-dw-queue "advocacy action" --limit=500' => 'Queues next 500 advocacy actions.',
+      'drush sb-dw-queue petition --reset --limit=500' => 'Reset highwater mark to zero. Queues 100 petitions.',
+      'drush sb-dw-queue petition --batch-size=10' => 'Queue all petitions, 10 at a time. Defaults to 100. Potentially useful if you run into memory issues.',
     ),
     'aliases' => array('sb-dw-queue'),
   );
@@ -60,7 +63,7 @@ function springboard_dw_queue_legacy_setup_batch($type = '') {
 
   // Get options.
   $limit = drush_get_option('limit', 999999999);
-  $batch_size = drush_get_option('batch-size', 10);
+  $batch_size = drush_get_option('batch-size', 100);
 
   // Get the highwater mark for this type so we can pick up where we left off.
   $highwater = springboard_dw_queue_legacy_get_highwater_mark($type);
@@ -178,7 +181,6 @@ function springboard_dw_queue_legacy_users($records, $operation_details, &$conte
       // Create the queue item to update the contact record.
       $queue = DrupalQueue::get("springboard_dw_export");
       $queue->createItem($contact_item);
-      drush_log('Queued contact item.', 'ok');
     }
   }
   $context['message'] = $operation_details;
