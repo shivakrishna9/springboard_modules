@@ -39,12 +39,5 @@ function springboard_dw_settings_form() {
     '#default_value' => variable_get('springboard_dw_watchdog_enabled', 1)
   );
 
-  $form['springboard_dw_client_id'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Data warehouse client id'),
-    '#default_value' => variable_get('springboard_dw_client_id', NULL),
-    '#required' => TRUE
-  );
-
   return system_settings_form($form);
 }
