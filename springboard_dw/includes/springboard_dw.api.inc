@@ -19,9 +19,8 @@ function springboard_dw_api_client()
     require_once ("sites/all/libraries/springboard_composer/vendor/autoload.php");
   }
 
-
   // Load Guzzle client
-  $guzzle = new GuzzleHttp\Client(['http_errors' => false]);
+  $guzzle = new GuzzleHttp\Client(['http_errors' => false, 'verify' => false]);
 
   // Return an instance of the client
   return $guzzle;
@@ -36,7 +35,7 @@ function springboard_dw_api_client()
 function springboard_dw_api_endpoint($endpoint_route)
 {
 
-  $api_endpoint = variable_get('springboard_dw_authentication_token', NULL);
+  $api_endpoint = variable_get('springboard_dw_api_endpoint', NULL);
 
   // TODO: point this to a gospringboard.io subdomain
   return $api_endpoint .'/'. ltrim($endpoint_route, '/');
@@ -82,12 +81,21 @@ function springboard_dw_api_call($endpoint_route, $params, $method = 'POST')
   // Clean up the item and add authentication to the form params
   $params = springboard_dw_api_prep_call($params);
 
-  // Attempt Guzzle client request
-  $api_response = $api_client->request($method, $endpoint, array(
-    'form_params' => $params
-  ));
+  try {
+    // Attempt Guzzle client request
+    $api_response = $api_client->request($method, $endpoint, array(
+      'form_params' => $params
+    ));
 
-  return $api_response;
+    return $api_response;
+  }
+  catch (GuzzleHttp\Exception\ClientException $e) {
+    $response = $e->getResponse();
+    $responseBodyAsString = $response->getBody()->getContents();
+
+    watchdog("data_warehouse", '<pre>' . print_r($e, true) . '</pre>');
+  }
+
 }
 
 /**
