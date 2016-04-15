@@ -1725,14 +1725,11 @@ function fundraiser_sustainers_recurring_conflict_validate($form, $form_state) {
   // Only run through this validation if the form submit is recurring.
   if (
     empty($submission_fields['recurs_monthly'])
-    || (
-      is_scalar($submission_fields['recurs_monthly'])
-      && $submission_fields['recurs_monthly'] != 'recurs'
-    )
-    || (
-      !empty($submission_fields['recurs_monthly']['recurs'])
-      && ($submission_fields['recurs_monthly']['recurs'] != 'recurs')
-    )
+    || (is_scalar($submission_fields['recurs_monthly']) && $submission_fields['recurs_monthly'] != 'recurs')
+    || (is_array($submission_fields['recurs_monthly']) && (
+      empty($submission_fields['recurs_monthly']['recurs'])
+      || $submission_fields['recurs_monthly']['recurs'] != 'recurs'
+    ))
   ) {
     return;
   }
