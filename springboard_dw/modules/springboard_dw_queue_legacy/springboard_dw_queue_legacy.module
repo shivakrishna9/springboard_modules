@@ -3,3 +3,31 @@
  * @file
  * Drupal hooks.
  */
+
+/**
+ * Implements hook_form_FORM_ID_alter().
+ */
+function springboard_dw_queue_legacy_form_springboard_dw_settings_form_alter(&$form, &$form_state, $form_id) {
+
+  $form['springboard_dw_queue_legacy'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Queueing legacy data'),
+    '#collapsible' => FALSE,
+    '#collapsed' => FALSE,
+    '#description' => 'Queing legacy Advocacy messages for ingestion to the data wareshouse requires gathering information from the advocacy server.',
+  );
+
+  $form['springboard_dw_queue_legacy']['springboard_dw_advocacy_api_endpoint'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Advocacy server url: (I.E https://advocacy.gospringboard.io or https://advocacy-staging.gospringboard.io)'),
+    '#default_value' => variable_get('springboard_dw_advocacy_api_endpoint', NULL),
+    '#required' => TRUE
+  );
+
+  $form['springboard_dw_queue_legacy']['springboard_dw_advocacy_authentication_token'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Advocacy server authentication token'),
+    '#default_value' => variable_get('springboard_dw_advocacy_authentication_token', NULL),
+    '#required' => TRUE
+  );
+}

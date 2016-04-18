@@ -394,13 +394,12 @@ function springboard_dw_queue_legacy_get_advocacy_message_details_page($action_i
   $guzzle = new GuzzleHttp\Client(['http_errors' => FALSE]);
   $params = array(
     'query' => array(
-      // @TODO hard-coded access_token.
-      'access_token' => 'ys9O22HXC9fdyS8JA5diqIzTtdTq5iIpPiYehoLf',
+      'access_token' => variable_get('springboard_dw_advocacy_authentication_token'),
       'page' => $page,
     ),
   );
-  // @TODO hard-coded staging URL.
-  $response = $guzzle->request('GET', 'https://advocacy-staging.gospringboard.io/api/v1/messages/get/' . $action_id, $params);
+  $endpoint = variable_get('springboard_dw_advocacy_api_endpoint') . '/api/v1/messages/get/'. $action_id;
+  $response = $guzzle->request('GET', $endpoint, $params);
   $body = $response->getBody();
   $body_text = $body->getContents();
   return json_decode($body_text, TRUE);
