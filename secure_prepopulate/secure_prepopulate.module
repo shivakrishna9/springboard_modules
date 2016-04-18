@@ -138,7 +138,7 @@ function secure_prepopulate_init() {
           $synonym_keys = array_keys($synonyms);
           $field_keys = array_keys($fields);
           foreach ($field_keys as $field_key) {
-            if (in_array($field_key, $synonym_keys)) {
+            if (in_array($field_key, $synonym_keys) && !empty($synonyms[$field_key])) {
               foreach ($synonyms[$field_key] as $synonym) {
                 $fields[$synonym] = $fields[$field_key];
               }
@@ -185,7 +185,10 @@ function secure_prepopulate_node_view($node, $view_mode, $langcode) {
 
   // First check to see if there is any prepopulate values available.
   if (isset($_SESSION['secure_prepopulate_values']) && is_array($_SESSION['secure_prepopulate_values'])) { // Coder: This is ok.
-    if ($view_mode == 'full' && !empty($node->webform) && array_key_exists($node->nid, $_SESSION['secure_prepopulate_values'])) { // Coder: This is ok.
+    if ($view_mode == 'full' && !empty($node->webform)
+      && array_key_exists($node->nid, $_SESSION['secure_prepopulate_values'])
+      && !empty($_SESSION['secure_prepopulate_values'][$node->nid]['first_name'])  // Just in case the name is missing.
+    ) { // Coder: This is ok.
       $node->content['welcome_back'] = array(
         '#markup' => theme(array('secure_prepopulate_welcome_message_' . $node->nid, 'secure_prepopulate_welcome_message'),
           array('values' => $_SESSION['secure_prepopulate_values'][$node->nid], 'nid' => $node->nid)), // Coder: This is ok.
