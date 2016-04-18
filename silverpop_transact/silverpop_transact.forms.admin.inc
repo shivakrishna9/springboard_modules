@@ -100,6 +100,13 @@ function silverpop_transact_admin() {
     '#default_value' => variable_get('silverpop_transact_submit_on_cron', ''),
     '#description' => 'Queue messages for cron run rather than sending immediately.',
   );
+  $form['silverpop_transact_row_limit'] = array(
+    '#type' => 'select',
+    '#title' => t('Log retention'),
+    '#default_value' => variable_get('silverpop_transact_row_limit', 10000),
+    '#options' => array(0 => t('All')) + drupal_map_assoc(array(10000, 100000, 1000000)),
+    '#description' => t('The maximum number of messages to keep in the silverpop transact log. Requires a <a href="@cron">cron maintenance task</a>. Set high enough so that pending messages are not deleted before they can be submitted to Silverpop', array('@cron' => url('admin/reports/status')))
+  );
   $form['#submit'] = array(
     'silverpop_transact_encrypt_password',
     'sliverpop_transact_admin_form_submit',

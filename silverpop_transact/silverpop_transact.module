@@ -257,6 +257,38 @@ function silverpop_transact_cron() {
   if (variable_get('silverpop_transact_process_logs_during_cron', TRUE)) {
     silverpop_transact_cron_log_status_update();
   }
+
+  // Cleanup the silverpop_transact_log table.
+  $row_limit = variable_get('silverpop_transact_row_limit', 10000);
+
+  // For row limit n, get the id of the nth row in descending id order.
+  // Counting the most recent n rows avoids issues with wid number sequences,
+  // e.g. auto_increment value > 1 or rows deleted directly from the table.
+  if ($row_limit > 0) {
+    $min_row = db_select('silverpop_transact_log', 's')
+      ->fields('s', array('id'))
+      ->orderBy('id', 'DESC')
+      ->range($row_limit - 1, 1)
+      ->execute()->fetchField();
+
+    $filenames = db_select('silverpop_transact_log', s)
+      ->fields('s', array('filename'))
+      ->condition('id', $min_row, '<')
+      ->execute()->fetchCol();
+
+    // Delete files associated with log records that are about to get deleted.
+    foreach ($filenames as $filename) {
+      $filename = $filename . '.status';
+      file_unmanaged_delete($filename);
+    }
+
+    // Delete all table entries older than the nth row, if nth row was found.
+    if ($min_row) {
+      db_delete('silverpop_transact_log')
+        ->condition('id', $min_row, '<')
+        ->execute();
+    }
+  }
 }
 
 /**
