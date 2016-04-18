@@ -378,7 +378,12 @@ function secure_prepopulate_parse_qs($qs) {
   if (count($segments)) {
     foreach ($segments as $segment) {
       $key_value = explode('=', $segment);
-      $result[$key_value[0]] = $key_value[1];
+      if (isset($key_value[1])) {
+        $result[$key_value[0]] = $key_value[1];
+      } else {
+        // No key given, so fall back to numeric index.
+        $result[] = $key_value[0];
+      }
     }
   }
   return $result;
