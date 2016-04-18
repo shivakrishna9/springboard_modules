@@ -2844,23 +2844,27 @@ function fundraiser_commerce_form_alter(&$form, &$form_state, $form_id) {
 
           // Add payment selection images.
           $option_text = !empty($form['submitted']['payment_information']['payment_method']['#options'][$gateway['method']]) ? $form['submitted']['payment_information']['payment_method']['#options'][$gateway['method']] : '';
-          $form['submitted']['payment_information']['payment_method']['#options'][$gateway['method']] = '<img data-gateway="' . $gateway['method'] . '" id="' . $gateway['method'] . '-payment-option-img" src="//:0" />' . $option_text;
-          $button_info[$active_gateway['method']]['unselected_image'] = !empty($settings['payment_method']['settings']['unselected_image']) ? $settings['payment_method']['settings']['unselected_image'] : '';
-          $button_info[$active_gateway['method']]['selected_image'] = !empty($settings['payment_method']['settings']['selected_image']) ? $settings['payment_method']['settings']['selected_image'] : '';
-          $button_info[$active_gateway['method']]['standalone_image'] = !empty($settings['payment_method']['settings']['standalone_image']) ? $settings['payment_method']['settings']['standalone_image'] : '';
+          $form['submitted']['payment_information']['payment_method']['#options'][$gateway['method']] = '<img data-gateway="' . $gateway['method'] . '" id="' . $gateway['method'] . '-payment-option-img" src="//:0" alt="' . $option_text . '" title="' . $option_text . '" />';
+          $button_info[$active_gateway['method']]['unselected_image'] = !empty($settings['payment_method']['settings']['unselected_image']) && preg_match('/(\.jpg|\.png|\.gif)$/', $settings['payment_method']['settings']['unselected_image']) ? $settings['payment_method']['settings']['unselected_image'] : '';
+          $button_info[$active_gateway['method']]['selected_image'] = !empty($settings['payment_method']['settings']['selected_image']) && preg_match('/(\.jpg|\.png|\.gif)$/', $settings['payment_method']['settings']['selected_image']) ? $settings['payment_method']['settings']['selected_image'] : '';
+          $button_info[$active_gateway['method']]['standalone_image'] = !empty($settings['payment_method']['settings']['standalone_image']) && preg_match('/(\.jpg|\.png|\.gif)$/', $settings['payment_method']['settings']['standalone_image']) ? $settings['payment_method']['settings']['standalone_image'] : '';
 
           if (!empty($settings['payment_method']['settings']['unselected_image'])) {
-            $form['submitted']['payment_information']['payment_method']['#options'][$gateway['method']] = '<img data-gateway="' . $gateway['method'] . '" id="' .$gateway['method'] . '-payment-option-img" src="'. $settings['payment_method']['settings']['unselected_image'] . '"> ' . $option_text;
+            $form['submitted']['payment_information']['payment_method']['#options'][$gateway['method']] = '<img data-gateway="' . $gateway['method'] . '" id="' .$gateway['method'] . '-payment-option-img" src="'. $settings['payment_method']['settings']['unselected_image'] . '" alt="' . $option_text . '" title="' . $option_text . '">';
           }
+
         }
       }
       // Pass number of enabled gateways to js.
       $button_info['enabled_count'] = $enabled;
       // Add standalone image if only one gateway is enabled.
       if ($enabled == 1) {
-        foreach ($node->gateways as $gateway) {
-          if (!empty($gateway['status']) && $gateway['status'] == 1 && !empty($settings) && is_array($settings['payment_method'])) {
-            $form['submitted']['payment_information']['payment_fields'][$gateway['method']]['#description'] = '<img src="' . $settings['payment_method']['settings']['standalone_image'] . '">';
+        foreach ($node->gateways as $gateway_key => $gateway) {
+          // Set the alt/title label:
+          if (!empty($gateway['status']) && $gateway['status'] == 1) {
+            $option_text = isset($gateway['label']) && !empty($gateway['label']) ? $gateway['label'] : ucwords($gateway_key);
+            $form['submitted']['payment_information']['payment_fields'][$gateway['method']]['#description'] =
+              '<img src="' . $settings['payment_method']['settings']['standalone_image'] . '" alt="' . $option_text . '" title="' . $option_text . '">';
           }
         }
       }
