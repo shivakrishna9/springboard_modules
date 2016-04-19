@@ -2898,10 +2898,16 @@ function fundraiser_commerce_form_alter(&$form, &$form_state, $form_id) {
 }
 
 function fundraiser_commerce_gateway_image_validate($element, &$form_state, $form) {
-  if ($element['#title'] == 'Selected image URL' && !empty($form_state['values']['parameter']['payment_method']['settings']['payment_method']['settings']['unselected_image'])) {
+  if ($element['#title'] == 'Selected image URL'
+    && !empty($form_state['values']['parameter']['payment_method']['settings']['payment_method']['settings']['unselected_image'])
+    && empty($form_state['values']['parameter']['payment_method']['settings']['payment_method']['settings']['selected_image'])
+  ) {
     form_error($element, t('Selected image field is required'));
   }
-  if ($element['#title'] == 'Unselected image URL' && !empty($form_state['values']['parameter']['payment_method']['settings']['payment_method']['settings']['selected_image'])) {
+  if ($element['#title'] == 'Unselected image URL'
+    && !empty($form_state['values']['parameter']['payment_method']['settings']['payment_method']['settings']['selected_image'])
+    && empty($form_state['values']['parameter']['payment_method']['settings']['payment_method']['settings']['unselected_image'])
+  ) {
     form_error($element, t('Unselected image field is required'));
   }
 }
