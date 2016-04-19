@@ -336,7 +336,8 @@ function theme_fundraiser_tickets_webform_table($variables) {
   $output = drupal_render($table);
 
   // Insert the additional donation currency symbol:
-  $addon_currency_symbol = '<span class="currency-symbol">' . $addon_currency_symbol . '</span>';
+  $addon_currency_symbol = '<span class="currency-symbol">'
+    . (empty($addon_currency_symbol) ? $node_currency_symbol : $addon_currency_symbol) . '</span>';
   $extra_donation_html = '<input type="text" id="fundraiser-tickets-extra-donation"';
   $output = str_replace($extra_donation_html, $addon_currency_symbol . $extra_donation_html, $output);
 
