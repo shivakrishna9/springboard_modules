@@ -13,10 +13,22 @@ require_once 'includes/springboard_dw.utility.inc';
  * Implements hook_menu().
  */
 function springboard_dw_menu() {
+
+  // Admin settings for data warehouse credentials
   $items['admin/config/services/springboard-dw'] = array(
     'title'            => 'Springboard Data Warehouse',
     'description'      => 'Configuration settings for Springboard Data Warehousing.',
     'page callback'    => 'springboard_dw_settings_page',
+    'access arguments' => array('administer springboard data warehouse'),
+    'type'             => MENU_NORMAL_ITEM,
+    'file'             => 'includes/springboard_dw.admin.inc',
+  );
+
+  // Page to reset data warehouse data
+  $items['admin/config/services/springboard-dw/reset-dw'] = array(
+    'title'            => 'Springboard Data Warehouse',
+    'description'      => 'Reset all warehouse data for Springboard.',
+    'page callback'    => 'springboard_dw_admin_warehouse_reset_page',
     'access arguments' => array('administer springboard data warehouse'),
     'type'             => MENU_NORMAL_ITEM,
     'file'             => 'includes/springboard_dw.admin.inc',
