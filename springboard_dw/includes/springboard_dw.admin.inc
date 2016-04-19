@@ -101,6 +101,6 @@ function springboard_dw_admin_warehouse_reset_form_submit(&$form, &$form_state)
   // Delete all the tracking from the Springboard data warehouse table
   db_query("delete from {springboard_data_warehouse}");
 
-  dsm('The data warehouse tracking has been reset and the warehouse queue emptied.');
+  drupal_set_message('The data warehouse tracking has been reset and the warehouse queue emptied.');
 }
 
