@@ -53,6 +53,7 @@ function springboard_dw_queue_legacy_setup_batch($type = '') {
     $options = array(
       'contact' => dt('contact'),
       'form' => dt('form'),
+      'donation' => dt('donation'),
       'advocacy action' => dt('advocacy action'),
       'advocacy message' => dt('advocacy message'),
       'petition' => dt('petition'),
@@ -73,6 +74,11 @@ function springboard_dw_queue_legacy_setup_batch($type = '') {
     case 'contact':
       $records = db_query_range('SELECT uid, created FROM {users} WHERE created > :highwater ORDER BY created ASC', 0, $limit, array(':highwater' => $highwater))->fetchAll();
       $batch_process_function = 'springboard_dw_queue_legacy_users';
+      break;
+
+    case 'donation':
+      $records = db_query_range('SELECT did, nid, created FROM {fundraiser_donation} WHERE created > :highwater ORDER BY created ASC', 0, $limit, array(':highwater' => $highwater))->fetchAll();
+      $batch_process_function = 'springboard_dw_queue_legacy_donations';
       break;
 
     case 'advocacy action':
@@ -165,7 +171,7 @@ function springboard_dw_queue_legacy_finished_batch($success, $results, $operati
 }
 
 /**
- * Batch process callbackfor processing users.
+ * Batch process callback for processing users.
  */
 function springboard_dw_queue_legacy_users($records, $operation_details, &$context) {
   foreach ($records as $record) {
@@ -187,6 +193,21 @@ function springboard_dw_queue_legacy_users($records, $operation_details, &$conte
   $context['message'] = $operation_details;
 }
 
+/**
+ * Batch process callback for processing donations.
+ */
+function springboard_dw_queue_legacy_donations($records, $operation_details, &$context) {
+  $queue = DrupalQueue::get("springboard_dw_export");
+  foreach ($records as $record) {
+    $donation = fundraiser_donation_get_donation($record->did);
+    // Queue the donation object which should not be in the queue, so there's no
+    // need to check if this item is warehoused.
+    $donation_item = springboard_dw_map_donation_item($donation);
+
+    // Create the queue item.
+    $queue->createItem($donation_item);
+  }
+}
 /**
  * Batch process callback for pressing webforms.
  */
