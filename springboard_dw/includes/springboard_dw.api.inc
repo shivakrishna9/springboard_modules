@@ -34,7 +34,6 @@ function springboard_dw_api_client()
  */
 function springboard_dw_api_endpoint($endpoint_route)
 {
-
   $api_endpoint = variable_get('springboard_dw_api_endpoint', NULL);
 
   // TODO: point this to a gospringboard.io subdomain
@@ -55,7 +54,6 @@ function springboard_dw_api_prep_call($item)
 
   // Add the authentication token and client id
   $item['authenticationToken'] = variable_get('springboard_dw_authentication_token', NULL);
-  $item['sbClientId'] = variable_get('springboard_dw_client_id', NULL);
 
   return $item;
 }
@@ -82,6 +80,9 @@ function springboard_dw_api_call($endpoint_route, $params, $method = 'POST')
   $params = springboard_dw_api_prep_call($params);
 
   try {
+
+    drush_print_r($params);
+
     // Attempt Guzzle client request
     $api_response = $api_client->request($method, $endpoint, array(
       'form_params' => $params
@@ -95,7 +96,6 @@ function springboard_dw_api_call($endpoint_route, $params, $method = 'POST')
 
     watchdog("data_warehouse", '<pre>' . print_r($e, true) . '</pre>');
   }
-
 }
 
 /**
