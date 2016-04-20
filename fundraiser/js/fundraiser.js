@@ -26,8 +26,11 @@ Drupal.behaviors.fundraiserBehavior = {
       var text = Drupal.settings.fundraiser[gateway].text;
       var labelImg = Drupal.settings.fundraiser[gateway].selected_image;
       // Automatically change submit button text when payment gateway selected.
-      if (typeof(text) != "undefined") {
+      if (typeof(text) !== "undefined") {
         $("#edit-submit").val(text);
+        var fsm = $(".fundraiser_submit_message");
+        var fsmHtml = fsm.html().replace('SUBMIT', text.toUpperCase());
+        fsm.html(fsmHtml);
       }
       $('label[for='+paymentId+'] img').attr('src', labelImg);
       $("input[name='submitted[payment_information][payment_method]']").each(function(gateway) {
