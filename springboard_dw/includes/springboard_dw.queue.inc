@@ -80,5 +80,22 @@ function springboard_dw_item_is_warehoused($type, $drupal_id)
 
   // If this item is not warehoused, return false
   return false;
+}
 
+/**
+ * Mark an item in Drupal as being warehoused.
+ * @param $type
+ *  The type or identifier for what kind of item we are tracking.
+ * @param $identifier
+ *  The unique identifier for the item (typically a Drupal ID unless it is a message item in which case it is a MongoId string)
+ * @throws \Exception
+ */
+function springboard_dw_track_item_warehouse_queued($type, $identifier)
+{
+  // Insert the user account into the Drupal data warehouse table
+  db_insert('springboard_data_warehouse')->fields(array(
+    'type'      => $type,
+    'drupal_id' => $identifier,
+    'created'   => time()
+  ))->execute();
 }
