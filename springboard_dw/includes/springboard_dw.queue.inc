@@ -70,7 +70,6 @@ function springboard_dw_cron_queue_info()
  */
 function springboard_dw_item_is_warehoused($type, $drupal_id)
 {
-
   // Query items from the data warehouse table that match the item id and type
   $query = db_query("select * from {springboard_data_warehouse} where drupal_id = :drupal_id and type = :type", array(':type' => $type, ':drupal_id' => $drupal_id));
 
