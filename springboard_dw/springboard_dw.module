@@ -1079,8 +1079,6 @@ function springboard_dw_advocacy_action($item) {
   // Make the API call
   $api_response = springboard_dw_api_call('action/create', $item);
 
-  drush_print_r($api_response->getBody()->getContents() );
-
   // Looks like the api response was good
   if ($api_response->getStatusCode() == 200) {
 
