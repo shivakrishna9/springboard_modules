@@ -170,7 +170,7 @@ function silverpop_transact_mail_alter(&$message) {
     }
     if (variable_get('silverpop_transact_model') == 'SMTP') {
       // If no xheader value specified for this email, use the site default.
-      if ($settings['smtp_xheader_value'] == NULL) {
+      if (!isset($settings['smtp_xheader_value'])) {
         $settings['smtp_xheader_value'] = variable_get('silverpop_transact_xheader_value');
       }
       $message['headers']['X-SP-Transact-Id'] = $settings['smtp_xheader_value'];
