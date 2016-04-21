@@ -136,19 +136,20 @@ function silverpop_transact_encrypt_password($form, &$form_state) {
  * Implements hook_form_submit().
  */
 function sliverpop_transact_admin_form_submit($form_id, &$form_state) {
-
-  // Check if XML/SMTP model has been changed. When SMTP is enabled, switch
-  // email_wrapper to use the mailsystem provided by the smtp module.
+  // Check if XML/SMTP model has been changed. When SMTP is enabled, switch to
+  // use the mailsystem provided by the smtp module.
   if ($form_state['input']['silverpop_transact_model'] != variable_get('silverpop_transact_model')) {
     $mail_modes = variable_get('mail_system');
     // SMTP on.
     if ($form_state['input']['silverpop_transact_model'] == 'SMTP') {
       $mail_modes['email_wrappers'] = 'SmtpMailSystem';
+      $mail_modes['default-system'] = 'SmtpMailSystem';
       variable_set('mail_system', $mail_modes);
     }
     // SMTP off.
     else {
       $mail_modes['email_wrappers'] = 'EmailWrappersMailSystemInterface';
+      $mail_modes['default-system'] = 'DefaultMailSystem';
       variable_set('mail_system', $mail_modes);
     }
   }
