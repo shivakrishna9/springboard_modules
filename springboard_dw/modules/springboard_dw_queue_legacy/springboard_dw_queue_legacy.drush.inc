@@ -103,6 +103,7 @@ function springboard_dw_queue_legacy_setup_batch($type = '') {
       break;
 
     case 'form':
+      // @TODO Should we be joining on the webform table, not webform_user?
       $records = db_query_range('SELECT n.nid, n.created FROM {node} n INNER JOIN {webform_user} w ON n.nid = w.nid WHERE n.created > :highwater ORDER BY created ASC', 0, $limit, array(':highwater' => $highwater))->fetchAll();
       $batch_process_function = 'springboard_dw_queue_legacy_forms';
       break;
@@ -200,12 +201,17 @@ function springboard_dw_queue_legacy_donations($records, $operation_details, &$c
   $queue = DrupalQueue::get("springboard_dw_export");
   foreach ($records as $record) {
     $donation = fundraiser_donation_get_donation($record->did);
-    // Queue the donation object which should not be in the queue, so there's no
-    // need to check if this item is warehoused.
-    $donation_item = springboard_dw_map_donation_item($donation);
-
-    // Create the queue item.
-    $queue->createItem($donation_item);
+    // Make sure $donation_item->data was decrypted.
+    if (is_array($donation->data)) {
+      // Queue the donation object which should not be in the queue, so there's
+      // no need to check if this item is warehoused.
+      $donation_item = springboard_dw_map_donation_item($donation);
+      // Create the queue item.
+      $queue->createItem($donation_item);
+    }
+    else {
+      drush_log(dt('Donation data could not be decrypted for did @did. Please check encryption key. Skipping record.', array('@did' => $donation->did)), 'warning');
+    }
   }
 }
 /**
