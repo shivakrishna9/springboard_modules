@@ -73,6 +73,10 @@ function silverpop_transact_form_webform_email_edit_form_alter(&$form, &$form_st
       '#default_value' => $defaults['smtp_xheader_value'],
       '#weight' => '-51',
     );
+    // Hide N/A form elements by setting their type to 'value'. This way, they
+    // still exist and won't cause errors when other modules go looking for
+    // them.
+    $form['email_wrappers_bcc']['#type'] = 'value';
     $form['#submit'][] = 'silverpop_transact_email_submit_callback';
 
   }
