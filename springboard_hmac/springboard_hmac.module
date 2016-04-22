@@ -112,7 +112,7 @@ function springboard_hmac_verify($payload, $hmac) {
   // Check the payload for errors.
   $failure_reason = springboard_hmac_verify_payload($parsed_payload);
   if (!empty($failure_reason)) {
-    springboard_hmac_save($hmac);
+    //springboard_hmac_save($hmac);
     return springboard_hmac_failure($failure_reason, $parsed_payload);
   }
 
@@ -131,7 +131,7 @@ function springboard_hmac_verify($payload, $hmac) {
   // unaltered and we can continue.
   if ($hmac != $verification_hmac) {
     $reason = t('Authentication failed. Tokens do not match.');
-    springboard_hmac_save($hmac);
+    //springboard_hmac_save($hmac);
     return springboard_hmac_failure($reason, $parsed_payload);
   }
   else {

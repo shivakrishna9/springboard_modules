@@ -410,6 +410,8 @@ function fundraiser_sustainers_upgrade_stop_in_tracks() {
     'Non-numeric values in payload.',
     'Donation ID is not a master ID.',
     'No session values found.',
+    'No recurring donations remaining.',
+    'The upgrade amount is lower than or equal to the current donation.',
   );
   return $stop_in_tracks;
 }
