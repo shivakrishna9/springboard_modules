@@ -13,10 +13,22 @@ require_once 'includes/springboard_dw.utility.inc';
  * Implements hook_menu().
  */
 function springboard_dw_menu() {
+
+  // Admin settings for data warehouse credentials
   $items['admin/config/services/springboard-dw'] = array(
     'title'            => 'Springboard Data Warehouse',
     'description'      => 'Configuration settings for Springboard Data Warehousing.',
     'page callback'    => 'springboard_dw_settings_page',
+    'access arguments' => array('administer springboard data warehouse'),
+    'type'             => MENU_NORMAL_ITEM,
+    'file'             => 'includes/springboard_dw.admin.inc',
+  );
+
+  // Page to reset data warehouse data
+  $items['admin/config/services/springboard-dw/reset-dw'] = array(
+    'title'            => 'Springboard Data Warehouse',
+    'description'      => 'Reset all warehouse data for Springboard.',
+    'page callback'    => 'springboard_dw_admin_warehouse_reset_page',
     'access arguments' => array('administer springboard data warehouse'),
     'type'             => MENU_NORMAL_ITEM,
     'file'             => 'includes/springboard_dw.admin.inc',
@@ -92,6 +104,9 @@ function springboard_dw_advocacy_message_action_submission($node, $action) {
 
     // Log the queue item
     springboard_dw_log_queue_item($message_action_item);
+
+    // mark the item as queued
+    springboard_dw_track_item_warehouse_queued('advocacy action', $node->nid);
   }
 
   // If the Advocacy action messages have not been warehoused, add them
@@ -113,6 +128,9 @@ function springboard_dw_advocacy_message_action_submission($node, $action) {
 
         // Log the queue item
         springboard_dw_log_queue_item($message_item);
+
+        // mark the item as queued
+        springboard_dw_track_item_warehouse_queued('advocacy message', $message->{'$id'});
       }
     }
   }
@@ -136,6 +154,9 @@ function springboard_dw_petition_submission($node, $action) {
 
     // Log the queue item
     springboard_dw_log_queue_item($petition);
+
+    // mark the item as queued
+    springboard_dw_track_item_warehouse_queued('petition', $node->nid);
   }
 
   if (!springboard_dw_item_is_warehoused('advocacy petition message', $node->nid)) {
@@ -148,6 +169,9 @@ function springboard_dw_petition_submission($node, $action) {
 
     // Log the queue item
     springboard_dw_log_queue_item($petition_item);
+
+    // mark the item as queued
+    springboard_dw_track_item_warehouse_queued('advocacy petition message', $node->nid);
   }
 
 }
@@ -170,6 +194,9 @@ function springboard_dw_social_action_submission($node, $action) {
 
     // Log the queue item
     springboard_dw_log_queue_item($message_action_item);
+
+    // mark the item as queued
+    springboard_dw_track_item_warehouse_queued('advocacy action', $node->nid);
   }
 
   // If the Advocacy action messages have not been warehoused, add them
@@ -229,6 +256,9 @@ function springboard_dw_node_insert($node) {
 
       // Log the queue item
       springboard_dw_log_queue_item($form_item);
+
+      // mark the item as queued
+      springboard_dw_track_item_warehouse_queued('form', $node->nid);
     }
   }
 }
@@ -257,6 +287,11 @@ function springboard_dw_node_update($node) {
 
   // Log the queue item
   springboard_dw_log_queue_item($node_item);
+
+  // mark the item as queued
+  if (!springboard_dw_item_is_warehoused('form', $node->nid)) {
+    springboard_dw_track_item_warehouse_queued('form', $node->nid);
+  }
 }
 
 /**
@@ -286,6 +321,9 @@ function springboard_dw_user_insert(&$edit, $account, $category) {
 
     // Log the queue item
     springboard_dw_log_queue_item($contact_item);
+
+    // mark the item as queued
+    springboard_dw_track_item_warehouse_queued('contact', $account->uid);
   }
 
 }
@@ -327,6 +365,11 @@ function springboard_dw_user_update(&$edit, $account, $category) {
 
   // Log the queue item
   springboard_dw_log_queue_item($contact_item);
+
+  // mark the item as queued
+  if (!springboard_dw_item_is_warehoused('contact', $account->uid)) {
+    springboard_dw_track_item_warehouse_queued('contact', $account->uid);
+  }
 }
 
 /**
@@ -920,7 +963,7 @@ function springboard_dw_contact($item) {
   if ($api_response->getStatusCode() == 200) {
 
     // Mark this item as warehoused in Drupal
-    springboard_dw_track_item_warehouse_success('contact', $item['contact_id']);
+    // springboard_dw_track_item_warehouse_success('contact', $item['contact_id']);
 
     return true;
 
@@ -947,7 +990,7 @@ function springboard_dw_donation($item) {
   if ($api_response->getStatusCode() == 200) {
 
     // Mark this item as warehoused in Drupal
-    springboard_dw_track_item_warehouse_success('donation', $item['donation_id']);
+    // springboard_dw_track_item_warehouse_success('donation', $item['donation_id']);
 
     // Respond back successfully to the queue to remove the item
     return true;
@@ -979,7 +1022,7 @@ function springboard_dw_form($item) {
   if ($api_response->getStatusCode() == 200) {
 
     // Mark this item as warehoused in Drupal
-    springboard_dw_track_item_warehouse_success('form', $item['form_id']);
+    // springboard_dw_track_item_warehouse_success('form', $item['form_id']);
 
     // Respond back successfully to the queue to remove the item
     return true;
@@ -1013,7 +1056,7 @@ function springboard_dw_advocacy_message($item) {
   if ($api_response->getStatusCode() == 200) {
 
     // Mark this item as warehoused in Drupal
-    springboard_dw_track_item_warehouse_success('advocacy message', $item['message_id']);
+    // springboard_dw_track_item_warehouse_success('advocacy message', $item['message_id']);
 
     // Respond back successfully to the queue to remove the item
     return true;
@@ -1040,7 +1083,7 @@ function springboard_dw_advocacy_action($item) {
   if ($api_response->getStatusCode() == 200) {
 
     // Mark this item as warehoused in Drupal
-    springboard_dw_track_item_warehouse_success('advocacy action', $item['form_id']);
+    // springboard_dw_track_item_warehouse_success('advocacy action', $item['form_id']);
 
     // Respond back successfully to the queue to remove the item
     return true;
@@ -1067,7 +1110,7 @@ function springboard_dw_petition($item) {
   if ($api_response->getStatusCode() == 200) {
 
     // Mark this item as warehoused in Drupal
-    springboard_dw_track_item_warehouse_success('petition', $item['form_id']);
+    // springboard_dw_track_item_warehouse_success('petition', $item['form_id']);
 
     // Respond back successfully to the queue to remove the item
     return true;
@@ -1094,7 +1137,7 @@ function springboard_dw_submission($item) {
   if ($api_response->getStatusCode() == 200) {
 
     // Mark this item as warehoused in Drupal
-    springboard_dw_track_item_warehouse_success('submission', $item['submission_id']);
+    // springboard_dw_track_item_warehouse_success('submission', $item['submission_id']);
 
     // Respond back successfully to the queue to remove the item
     return true;
@@ -1121,7 +1164,7 @@ function springboard_dw_advocacy_social_action_message($item) {
   if ($api_response->getStatusCode() == 200) {
 
     // Mark this item as warehoused in Drupal
-    springboard_dw_track_item_warehouse_success('advocacy message', $item['message_id']);
+    // springboard_dw_track_item_warehouse_success('advocacy message', $item['message_id']);
 
     // Respond back successfully to the queue to remove the item
     return true;
@@ -1148,7 +1191,7 @@ function springboard_dw_petition_message($item) {
   if ($api_response->getStatusCode() == 200) {
 
     // Mark this item as warehoused in Drupal
-    springboard_dw_track_item_warehouse_success('advocacy message', $item['message_id']);
+    // springboard_dw_track_item_warehouse_success('advocacy message', $item['message_id']);
 
     // Respond back successfully to the queue to remove the item
     return true;
