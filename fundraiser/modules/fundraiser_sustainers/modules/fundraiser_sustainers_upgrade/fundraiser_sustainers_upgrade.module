@@ -220,7 +220,7 @@ function fundraiser_sustainers_upgrade_node_view($node) {
     $payload = fundraiser_sustainers_upgrade_get_session_payload();
     $status = fundraiser_sustainers_upgrade_check_donation_status($payload);
     $stop_in_tracks = fundraiser_sustainers_upgrade_stop_in_tracks();
-    if (in_array($status['status'], $stop_in_tracks)) {
+    if (in_array($status['status'], $stop_in_tracks) || strpos($status['status'], 'The upgrade amount is lower than or equal') !== FALSE) {
       if (!user_access('administer fundraiser sustainers upgrade')) {
         $node->content['field_sustainers_upgrade_fail'][0]['#access'] = TRUE;
         $node->content['body'][0]['#access'] = FALSE;
@@ -305,7 +305,7 @@ function fundraiser_sustainers_upgrade_form_webform_client_form_alter(&$form, &$
 
     // Check whether we have enough info to submit the form.
     $stop_in_tracks = fundraiser_sustainers_upgrade_stop_in_tracks();
-    if (in_array($status['status'], $stop_in_tracks)) {
+    if (in_array($status['status'], $stop_in_tracks)|| strpos($status['status'], 'The upgrade amount is lower than or equal') !== FALSE) {
       fundraiser_sustainer_upgrade_stop_at_form($form, $status, $payload);
     }
     else {
@@ -652,7 +652,7 @@ function fundraiser_sustainers_upgrade_check_donation_status($payload) {
         $message = fundraiser_sustainers_upgrade_get_status_message($recurring, $donation, $payload, $min_amount);
         $status['status'] = $message;
         $stop_in_tracks = fundraiser_sustainers_upgrade_stop_in_tracks();
-        if (!in_array($status['status'], $stop_in_tracks)) {
+        if (!in_array($status['status'], $stop_in_tracks) || strpos($status['status'], 'The upgrade amount is lower than or equal') !== FALSE) {
           $status['donation'] = $donation;
           $status['recurring'] = $recurring;
         }
