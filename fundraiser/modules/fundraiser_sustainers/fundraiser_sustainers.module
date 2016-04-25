@@ -1705,6 +1705,10 @@ function fundraiser_sustainers_recurs_monthly_pre_render($element) {
   $element['recurs']['#states']['visible'] = array(
     ':input[name*=payment_method]' => $conditions
   );
+  // Move description from radio group to the monthly button specifically, so it will go with that button's #state.
+  $element['recurs']['#description'] = $element['#description'];
+  unset($element['#description']);
+
   return $element;
 }
 
