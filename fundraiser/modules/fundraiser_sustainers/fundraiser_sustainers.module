@@ -2353,6 +2353,11 @@ function _fundraiser_sustainers_donation_amount_form_update_donations($master_di
     }
   }
 
+  // Update the sustainer series object with the new amount.
+ $fundraiser_sustainers_series = entity_load_single('fundraiser_sustainers_series', $master_did);
+ $fundraiser_sustainers_series->amount = $amount;
+ $fundraiser_sustainers_series->save();
+ 
   drupal_set_message(t('The amount of all future donations has been updated to @amount.', array('@amount' => $formatted_amount)));
 }
 
