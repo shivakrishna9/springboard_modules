@@ -21,6 +21,9 @@ function springboard_dw_process_queue()
   // Get an instance of the Drupal data warehouse queue
   $queue = DrupalQueue::get('springboard_dw_export');
 
+  // Create an array for placeholder to track any failed queue items
+  $failed_queue_items = array();
+
   // Lock and claim an item for queue processing
   while (time() < $end && ($item = $queue->claimItem())) {
 
@@ -33,18 +36,26 @@ function springboard_dw_process_queue()
         // to be processed again later.
         watchdog_exception('cron', $e);
 
-        // Release the item back onto the queue for retry
-        $queue->releaseItem($item);
+        // Add this failed item to the failed queue items array
+        $failed_queue_items[] = $item;
       }
     } else {
-      // Log the API error
       drush_log('Bad API call, releasing item. ', 'warning');
 
-      // Release the item back onto the queue for retry
-      $queue->releaseItem($item);
-      break;
+      // Add this failed item to the failed queue items array
+      $failed_queue_items[] = $item;
     }
   }
+
+  /*
+   * Loop through any failed API call items and release them back onto the queue
+   * This has to be done because releasing directly within the processing loop causes an infinite loop as the failed
+   * item is added back immediately to the top of the queue instead of being postponed till the next queue batch
+   * (Documented https://www.drupal.org/node/1524550 and https://www.drupal.org/node/1832818)
+   */
+  foreach ($failed_queue_items as $queue_item):
+    $queue->releaseItem($queue_item);
+  endforeach;
 }
 
 /**
