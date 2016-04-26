@@ -19,7 +19,7 @@ function _fundraiser_sustainers_upgrade_add_example() {
   $node->promote = 0;
   $node->body[LANGUAGE_NONE][0]['value'] = 'Thank you [donation:first_name] [donation:last_name] [sustainer_upgrade:signout] for upgrading your monthly donation to [sustainer_upgrade:upgrade_amount_formatted].
 
-Your original donation for [donation:currency:code][donation:amount], was made on [donation:payment-transaction:created:short] with your card ending in [donation:card_number]. You have [sustainer_upgrade:charges_remaining] charges remaining in this series, which will be upgraded to [sustainer_upgrade:upgrade_amount_formatted].
+Your original donation for [donation:currency:code][donation:amount], was made on [donation:order:created] with your card ending in [donation:card_number]. You have [sustainer_upgrade:charges_remaining] charges remaining in this series, which will be upgraded to [sustainer_upgrade:upgrade_amount_formatted].
 
 To upgrade your sustaining donation to [sustainer_upgrade:upgrade_amount_formatted], click Confirm below.';
   $node->body[LANGUAGE_NONE][0]['format'] = 'filtered_html';
