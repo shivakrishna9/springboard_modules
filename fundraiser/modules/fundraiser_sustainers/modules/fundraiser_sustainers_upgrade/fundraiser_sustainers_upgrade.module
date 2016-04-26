@@ -818,17 +818,17 @@ function fundraiser_sustainers_upgrade_token_info() {
 
   $tokens['rollback'] = array(
     'name' => t("Rollback link"),
-    'description' => t("Displays a link to undo an upgrade. Used in confirmation pages and emails."),
+    'description' => t("Displays a link to undo an upgrade. Can be used on confirmation pages and emails."),
   );
 
   $tokens['upgrade_amount'] = array(
     'name' => t("Upgrade amount"),
-    'description' => t("Displays the amount that the sustainers series will be upgraded to."),
+    'description' => t("Displays the amount that the sustainer's series will be upgraded to."),
   );
 
   $tokens['next_charge_amount_formatted'] = array(
     'name' => t("Next charge amount - formatted"),
-    'description' => t("Displays the amount of the next charge in the series."),
+    'description' => t("Displays the current amount of the next charge in the series."),
   );
 
   $tokens['charges_remaining'] = array(
