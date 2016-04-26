@@ -813,27 +813,27 @@ function fundraiser_sustainers_upgrade_token_info() {
 
   $tokens['signout'] = array(
     'name' => t("Signout link"),
-    'description' => 'Displays the donor\'s first name and a cancel link.',
+    'description' => t("Displays the donor's first name and a signout/cancel link."),
   );
 
   $tokens['rollback'] = array(
     'name' => t("Rollback link"),
-    'description' => 'Displays a rollback link to undo an upgrade.',
+    'description' => t("Displays a link to undo an upgrade. Used in confirmation pages and emails."),
   );
 
   $tokens['upgrade_amount'] = array(
-    'name' => t("Upgrade Amount"),
-    'description' => 'Displays the amount that the sustainers series will be upgraded to.',
+    'name' => t("Upgrade amount"),
+    'description' => t("Displays the amount that the sustainers series will be upgraded to."),
   );
 
   $tokens['next_charge_amount_formatted'] = array(
     'name' => t("Next charge amount - formatted"),
-    'description' => 'Displays the next charge amount.',
+    'description' => t("Displays the amount of the next charge in the series."),
   );
 
   $tokens['charges_remaining'] = array(
     'name' => t("Charges remaining"),
-    'description' => 'Displays the number of charges remaining in the series.',
+    'description' => t("Displays the number of charges remaining in the series."),
   );
 
   return array(
