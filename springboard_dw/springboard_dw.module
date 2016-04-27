@@ -374,6 +374,47 @@ function springboard_dw_user_update(&$edit, $account, $category) {
 }
 
 /**
+ * Hook used to queue up future sustainer charges to the warehouse.
+ * Implements hook_webform_submission_insert().
+ */
+function springboard_dw_fundraiser_sustainers_future_order_insert($created_donation) {
+
+  // Map the submission data to what
+  $created_donation->donation['ms'] = $created_donation->submission_data['ms'];
+  $created_donation->donation['cid'] = $created_donation->submission_data['cid'];
+  $created_donation->donation['referrer'] = $created_donation->submission_data['referrer'];
+  $created_donation->donation['initial_referrer'] = $created_donation->submission_data['initial_referrer'];
+  $created_donation->donation['cid'] = $created_donation->submission_data['initial_referrer'];
+  $created_donation->donation['cid'] = $created_donation->submission_data['initial_referrer'];
+  $created_donation->donation['search_engine'] = $created_donation->submission_data['search_engine'];
+  $created_donation->donation['search_string'] = $created_donation->submission_data['search_string'];
+  $created_donation->donation['user_agent'] = $created_donation->submission_data['user_agent'];
+  $created_donation->donation['device_type'] = $created_donation->submission_data['device_type'];
+  $created_donation->donation['device_name'] = $created_donation->submission_data['device_name'];
+  $created_donation->donation['device_os'] = $created_donation->submission_data['device_os'];
+  $created_donation->donation['device_browser'] = $created_donation->submission_data['device_browser'];
+  $created_donation->donation['device_browser'] = $created_donation->submission_data['device_browser'];
+
+  // Todo: Donation payment details
+  $created_donation->data['payment_fields']['credit']['card_type'] = '';
+  $created_donation->data['payment_fields']['credit']['card_number'] = '';
+  $created_donation->data['payment_fields']['credit']['card_expiration_month'] = '';
+  $created_donation->data['payment_fields']['credit']['card_expiration_year'] = '';
+
+  // Get the Drupal data warehouse queue
+  $queue = DrupalQueue::get("springboard_dw_export");
+
+  // Queue the donation object which should not be in the queue, so there's no need to check if this item is warehoused
+  $donation_item = springboard_dw_map_donation_item($created_donation);
+
+  // Create the queue item
+  $queue->createItem($donation_item);
+
+  // Log the queue item
+  springboard_dw_log_queue_item($donation_item);
+}
+
+/**
  * Implements hook_webform_submission_insert().
  */
 function springboard_dw_webform_submission_insert($node, $submission) {
