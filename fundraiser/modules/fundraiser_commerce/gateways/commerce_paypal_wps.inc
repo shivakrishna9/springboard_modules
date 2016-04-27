@@ -187,7 +187,7 @@ function commerce_paypal_wps_fundraiser_commerce_refund($payment_method, $refund
  *  Implements hook_form_alter().
  *
  */
-function commerce_paypal_wps_form_rules_ui_edit_element_builder(&$form, &$form_state, $method) {
+function commerce_paypal_wps_form_rules_ui_edit_element_builder(&$form, &$form_state) {
   // Adds needed refund field elements to PayPal settings form.
   $rule = rules_config_load(arg(5));
   // @ToDo: is there a better way to get the rule name?
