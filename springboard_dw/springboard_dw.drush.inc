@@ -44,4 +44,5 @@ function drush_springboard_dw_export_queue_process() {
 
   // Log to the command line with an OK status.
   drush_log('Running springboard-dw-export-queue-process', 'ok');
+  watchdog("data_warehouse", 'Running springboard-dw-export-queue-process');
 }
