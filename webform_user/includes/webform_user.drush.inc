@@ -91,7 +91,7 @@ function webform_user_create_missing_users_batch_process($chunk, $node_id, $oper
     WHERE `s`.`sid` IN (:submission_ids) ORDER BY `s`.`sid` ASC;';
 
   $result = db_query($query, array(
-    ':submission_ids' => implode(',', $chunk),
+    ':submission_ids' => $chunk,
   ));
 
   $submissions = array();
