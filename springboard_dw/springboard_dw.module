@@ -240,9 +240,10 @@ function springboard_dw_fundraiser_donation_success($donation) {
  * @param $node
  */
 function springboard_dw_node_insert($node) {
-
+  // Export all instances of webform enabled types.
+  $webform_enabled_types = variable_get('webform_node_types', array('webform'));
   // Create the form item
-  if (isset($node->is_webform_user) && $node->is_webform_user) {
+  if (in_array($node->type, $webform_enabled_types)) {
 
     // Get the Drupal data warehouse queue
     $queue = DrupalQueue::get("springboard_dw_export");
@@ -373,6 +374,29 @@ function springboard_dw_user_update(&$edit, $account, $category) {
 }
 
 /**
+ * Implements hook_webform_submission_insert().
+ */
+function springboard_dw_webform_submission_insert($node, $submission) {
+  // Ensure the submission is not from a webform user enabled type, which covers all known Springboard types. 
+  if (!isset($node->is_webform_user) || !$node->is_webform_user) {
+    $queue = DrupalQueue::get("springboard_dw_export");
+
+    // Convert the submission to key/value pair format.
+    $submitted_data = springboard_dw_convert_submission_to_keyvalue($submission, $node->webform['components']);
+
+    // Queue the donation object which should not be in the queue, so there's no need to check if this item is warehoused
+    $submission_item = springboard_dw_map_submission_item($submission, $submitted_data);
+
+    // Create the queue item
+    $queue->createItem($submission_item);
+
+    // Log the queue item
+    springboard_dw_log_queue_item($submission_item);
+
+  }
+}
+
+/**
  * Implements hook_webform_user_submission_insert().
  *
  * Ship custom webform user submissions to the data warehouse.
@@ -390,15 +414,8 @@ function springboard_dw_webform_user_submission_insert($node, $submission, $acco
     // Get the Drupal data warehouse queue
     $queue = DrupalQueue::get("springboard_dw_export");
 
-    $submitted_data = array();
-
-    // Jump through some hoops here because the submission data is keyed on cid, making it
-    // practically worthless by itself.
-    foreach ($submission->data as $cid => $submittted_value) {
-      if (array_key_exists($cid, $node->webform['components'])) {
-        $submitted_data[$node->webform['components'][$cid]['form_key']] = $submission->data[$cid]['value'][0];
-      }
-    }
+    // Convert the submission to key/value pair format.
+    $submitted_data = springboard_dw_convert_submission_to_keyvalue($submission, $node->webform['components']);
 
     // Queue the donation object which should not be in the queue, so there's no need to check if this item is warehoused
     $submission_item = springboard_dw_map_submission_item($submission, $submitted_data);
@@ -915,6 +932,27 @@ function springboard_dw_map_form_item($node, $update = false) {
 
   return $form_item;
 
+}
+
+/**
+ * Converts a webform submission array that is keyed by cid to an array
+ * keyed by form key.
+ *
+ * @param $submission
+ * @param $node
+ *
+ * @return array
+ */
+function springboard_dw_convert_submission_to_keyvalue($submission, $components) {
+  $key_value_data = array();
+
+  foreach ($submission->data as $cid => $submittted_value) {
+    if (array_key_exists($cid, $components)) {
+      $key_value_data[$components[$cid]['form_key']] = $submission->data[$cid]['value'][0];
+    }
+  }
+
+  return $key_value_data;
 }
 
 /**
