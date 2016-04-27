@@ -80,13 +80,20 @@ function springboard_dw_api_call($endpoint_route, $params, $method = 'POST')
   $params = springboard_dw_api_prep_call($params);
 
   try {
-
-    drush_print_r($params);
-
     // Attempt Guzzle client request
     $api_response = $api_client->request($method, $endpoint, array(
       'form_params' => $params
     ));
+
+    // Setup an array of the API call details prepped for logging
+    $api_call['endpoint'] = $endpoint;
+    $api_call['method'] = $method;
+    $api_call['params'] = $params;
+    $api_call['response'] = $api_response->getBody()->getContents();
+    $api_call['responseCode'] = $api_response->getStatusCode();
+
+    // Log the full API call details to watchdog
+    watchdog("data_warehouse", '<pre>' . print_r($api_call, true) . '</pre>');
 
     return $api_response;
   }
