@@ -1705,6 +1705,10 @@ function fundraiser_sustainers_recurs_monthly_pre_render($element) {
   $element['recurs']['#states']['visible'] = array(
     ':input[name*=payment_method]' => $conditions
   );
+  // Move description from radio group to the monthly button specifically, so it will go with that button's #state.
+  $element['recurs']['#description'] = $element['#description'];
+  unset($element['#description']);
+
   return $element;
 }
 
@@ -2353,6 +2357,11 @@ function _fundraiser_sustainers_donation_amount_form_update_donations($master_di
     }
   }
 
+  // Update the sustainer series object with the new amount.
+ $fundraiser_sustainers_series = entity_load_single('fundraiser_sustainers_series', $master_did);
+ $fundraiser_sustainers_series->amount = $amount;
+ $fundraiser_sustainers_series->save();
+ 
   drupal_set_message(t('The amount of all future donations has been updated to @amount.', array('@amount' => $formatted_amount)));
 }
 
@@ -2926,12 +2935,10 @@ function _fundraiser_sustainers_create_future_orders($donation, $month, $year, $
       // Update the recurring table.
       _fundraiser_sustainers_create_recurring($recurring_donation);
 
-      // Load the newly created individual donation into salesforce_donation.
-      if (module_exists('salesforce_genmap')) {
-        $sf_donation = fundraiser_donation_get_donation($new_donation->did, TRUE);
-        salesforce_genmap_send_object_to_queue('salesforce_donation', 'insert',
-          $sf_donation->node, $sf_donation->did, $sf_donation, 'donation');
-      }
+      // Load up the new donation so that all it's properties are set correctly.
+      $created_donation = fundraiser_donation_get_donation($new_donation->did, TRUE);
+      // Fire a hook to allow other modules to respond to the future order being created.
+      module_invoke_all('fundraiser_sustainers_future_order_insert', $created_donation);
 
       // Update the previous charge object.
       $previous_charge = $next;
