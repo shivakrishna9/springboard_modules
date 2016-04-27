@@ -187,53 +187,51 @@ function commerce_paypal_wps_fundraiser_commerce_refund($payment_method, $refund
  *  Implements hook_form_alter().
  *
  */
-function commerce_paypal_wps_form_rules_ui_edit_element_alter(&$form, &$form_state) {
+function commerce_paypal_wps_form_rules_ui_edit_element_builder(&$form, &$form_state, $method) {
   // Adds needed refund field elements to PayPal settings form.
-  if (isset($form['parameter']['payment_method']['settings']['payment_method']['method_id']['#value'])) {
-    $id = $form['parameter']['payment_method']['settings']['payment_method']['method_id']['#value'];
-    $is_com = isset($form['parameter']['commerce_order']) ? 1 : 0;
-    if ($id == 'paypal_wps' && $is_com) {
-      $rule = rules_config_load(arg(5));  //@TODO: is there a better way to get the rule name?
-      $actions = $rule->actions();
-      if (!empty($actions)) {
-        // Find the settings for the Authorize.net gateway action.
-        foreach ($actions as $action) {
-          if($action->settings['payment_method']['method_id'] == 'paypal_wps' && $action->elementId() == arg(7)) {  //@TODO: is there a better way to get the action ID?
-            $settings[] = $action->settings;
-          }
-        }
-        $config = isset($settings[0]['payment_method']['settings']) ? $settings[0]['payment_method']['settings'] : '';
-
-        $form['parameter']['payment_method']['settings']['payment_method']['settings']['api_username'] = array(
-          '#type' => 'textfield',
-          '#title' => t('API username'),
-          '#description' => t('These credentials are only needed for initiating PayPal WPS refunds through Springboard.'),
-          '#default_value' => !empty($config['api_username']) ? $config['api_username'] : '',
-        );
-        $form['parameter']['payment_method']['settings']['payment_method']['settings']['api_password'] = array(
-          '#type' => 'textfield',
-          '#title' => t('API password'),
-          '#description' => t('These credentials are only needed for initiating PayPal WPS refunds through Springboard.'),
-          '#default_value' => !empty($config['api_password']) ? $config['api_password'] : '',
-        );
-        $form['parameter']['payment_method']['settings']['payment_method']['settings']['api_signature'] = array(
-          '#type' => 'textfield',
-          '#title' => t('Signature'),
-          '#description' => t('These credentials are only needed for initiating PayPal WPS refunds through Springboard.'),
-          '#default_value' => !empty($config['api_signature']) ? $config['api_signature'] : '',
-        );
-        $form['parameter']['payment_method']['settings']['payment_method']['settings']['log'] = array(
-          '#type' => 'checkboxes',
-          '#title' => t('Log the following messages for debugging'),
-          '#options' => array(
-            'request' => t('API request messages'),
-            'response' => t('API response messages'),
-          ),
-          '#default_value' => isset($config['log']) ? $config['log'] : array('request' => '0', 'response' => '0'),
-        );
+  $rule = rules_config_load(arg(5));
+  // @ToDo: is there a better way to get the rule name?
+  $actions = !empty($rule) ? $rule->actions() : FALSE;
+  if (!empty($actions)) {
+    // Find the settings for the Authorize.net gateway action.
+    foreach ($actions as $action) {
+      if (isset($action->settings['payment_method']['method_id']) && $action->settings['payment_method']['method_id'] == 'paypal_wps' && $action->elementId() == arg(7)) {
+        // @TODO: is there a better way to get the action ID?
+        $settings[] = $action->settings;
       }
     }
+    $config = isset($settings[0]['payment_method']['settings']) ? $settings[0]['payment_method']['settings'] : '';
+
+    $form['parameter']['payment_method']['settings']['payment_method']['settings']['api_username'] = array(
+      '#type' => 'textfield',
+      '#title' => t('API username'),
+      '#description' => t('These credentials are only needed for initiating PayPal WPS refunds through Springboard.'),
+      '#default_value' => !empty($config['api_username']) ? $config['api_username'] : '',
+    );
+    $form['parameter']['payment_method']['settings']['payment_method']['settings']['api_password'] = array(
+      '#type' => 'textfield',
+      '#title' => t('API password'),
+      '#description' => t('These credentials are only needed for initiating PayPal WPS refunds through Springboard.'),
+      '#default_value' => !empty($config['api_password']) ? $config['api_password'] : '',
+    );
+    $form['parameter']['payment_method']['settings']['payment_method']['settings']['api_signature'] = array(
+      '#type' => 'textfield',
+      '#title' => t('Signature'),
+      '#description' => t('These credentials are only needed for initiating PayPal WPS refunds through Springboard.'),
+      '#default_value' => !empty($config['api_signature']) ? $config['api_signature'] : '',
+    );
+    $form['parameter']['payment_method']['settings']['payment_method']['settings']['log'] = array(
+      '#type' => 'checkboxes',
+      '#title' => t('Log the following messages for debugging'),
+      '#options' => array(
+        'request' => t('API request messages'),
+        'response' => t('API response messages'),
+      ),
+      '#default_value' => isset($config['log']) ? $config['log'] : array('request' => '0', 'response' => '0'),
+    );
   }
+
+  return $form;
 }
 
 /**

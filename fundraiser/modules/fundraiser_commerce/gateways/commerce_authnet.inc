@@ -389,89 +389,91 @@ function commerce_authnet_fundraiser_commerce_refund($payment_method, $refund) {
   return $success;
 }
 
-function commerce_authnet_form_rules_ui_edit_element_alter(&$form, &$form_state) {
-  if (isset($form['parameter']['payment_method']['settings']['payment_method']['method_id']['#value'])) {
-    $id = $form['parameter']['payment_method']['settings']['payment_method']['method_id']['#value'];
-    $is_com = isset($form['parameter']['commerce_order']) ? 1 : 0;
-    if ($id == 'authnet_aim' && $is_com) {
-      $rule = rules_config_load(arg(5));  //@TODO: is there a better way to get the rule name?
-      $actions = $rule->actions();
-      if (!empty($actions)) {
-        // Find the settings for the Authorize.net gateway action.
-        foreach ($actions as $action) {
-          if($action->settings['payment_method']['method_id'] == 'authnet_aim' && $action->elementId() == arg(7)) {  //@TODO: is there a better way to get the action ID?
-           $settings[] = $action->settings;
-          }
-        }
-        $config = isset($settings[0]['payment_method']['settings']) ? $settings[0]['payment_method']['settings'] : '';
-        
-        // Add a fieldset of Authorize.net request fields available to have Webform field data mapped to them.
-        $form['parameter']['payment_method']['settings']['payment_method']['settings']['value_map'] = array(
-            '#type' => 'fieldset',
-            '#title' => t('Submission mapping'),
-            '#description' => t('Enter the webform field keys to map to these authorize.net fields.'),
-            '#tree' => TRUE,
-        );
-        $available_fields = _commerce_authnet_extra_fields();
-        unset($available_fields[0]);
-        $i = 1;
-        foreach ($available_fields as $field) {
-          $form['parameter']['payment_method']['settings']['payment_method']['settings']['commerce_authnet_webform_field_' . $i] = array(
-            '#title' => t('Enter webform field #%i', array('%i' => $i)),
-            '#type' => 'textfield',
-            '#description' => t('Example: field_name'),
-            '#default_value' => !empty($config['commerce_authnet_webform_field_' . $i]) ? $config['commerce_authnet_webform_field_' . $i] : '',
-          );
+function commerce_authnet_form_rules_ui_edit_element_builder(&$form, &$form_state) {
 
-          $form['parameter']['payment_method']['settings']['payment_method']['settings']['commerce_authnet_authorize_field_' . $i] = array(
-            '#title' => t('Authorize field #%i', array('%i' => $i)),
-            '#type' => 'select',
-            '#options' => _commerce_authnet_extra_fields(),
-            '#default_value' => !empty($config['commerce_authnet_authorize_field_' . $i]) ? $config['commerce_authnet_authorize_field_' . $i] : '',
-          );
-          $i++;
-        }
-        
-        // Add a fieldset of Authorize.net response fields available to be mapped to donation fields.
-        $form['parameter']['payment_method']['settings']['payment_method']['settings']['response_fields'] = array(
-          '#type' => 'fieldset',
-          '#title' => t('Response Fields for Mapping'),
-          '#description' => t('The selected fields will be made available for mapping to exported donations.'),
-          '#collapsible' => TRUE,
-          '#collapsed' => FALSE,
-          '#element_validate' => array('fundraiser_commerce_response_fields_validate'),
-        );
-        $form['parameter']['payment_method']['settings']['payment_method']['settings']['response_fields']['mappable'] = array(
-          '#type' => 'value',
-          '#value' => array(),
-        );
-        $form['parameter']['payment_method']['settings']['payment_method']['settings']['response_fields']['all'] = array(
-          '#theme' => 'table',
-          '#header' => array(
-            'checkbox' => t('Available'),
-            'description' => t('Authorize.net gateway response field')
-          ),
-          '#rows' => array(),
-        );
-        foreach (_commerce_authnet_response_fields() as $machine_name => $field) {
-          $id = 'mappable_fields-' . $machine_name;
-          $form['parameter']['payment_method']['settings']['payment_method']['settings']['response_fields']['all'][$machine_name] = array(
-            '#id' => $id,
-            '#type' => 'checkbox',
-            '#default_value' => in_array($machine_name, !empty($config['response_fields']['mappable']) ? $config['response_fields']['mappable'] : array()),
-          );
-          $form['parameter']['payment_method']['settings']['payment_method']['settings']['response_fields']['all']['#rows'][$machine_name] = array(
-            'checkbox' => array(
-              // Tricky but it works: The table element's children (the checkboxes) will all have rendered as 
-              // form components by the time the table theme function picks them up by reference here.
-              'data' => &$form['parameter']['payment_method']['settings']['payment_method']['settings']['response_fields']['all'][$machine_name],
-            ),
-            'description' => '<label for="' . $id . '">' . $field['name'] . '</label><span>' . t($field['description']) . '</span>',
-          );
-        }
+  $rule = rules_config_load(arg(5));
+  // @TODO: is there a better way to get the rule name?
+  $actions = !empty($rule) ? $rule->actions() : FALSE;
+  if (!empty($actions)) {
+    // Find the settings for the Authorize.net gateway action.
+    foreach ($actions as $action) {
+      if (isset($action->settings['payment_method']['method_id']) &&  $action->settings['payment_method']['method_id'] == 'authnet_aim' && $action->elementId() == arg(7)) {
+        // @TODO: is there a better way to get the action ID?
+        $settings[] = $action->settings;
       }
     }
+    $config = isset($settings[0]['payment_method']['settings']) ? $settings[0]['payment_method']['settings'] : '';
+
+    // Add a fieldset of Authorize.net request fields
+    // available to have Webform field data mapped to them.
+    $form['parameter']['payment_method']['settings']['payment_method']['settings']['value_map'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Submission mapping'),
+      '#description' => t('Enter the webform field keys to map to these authorize.net fields.'),
+      '#tree' => TRUE,
+    );
+    $available_fields = _commerce_authnet_extra_fields();
+    unset($available_fields[0]);
+    $i = 1;
+    foreach ($available_fields as $field) {
+      $form['parameter']['payment_method']['settings']['payment_method']['settings']['commerce_authnet_webform_field_' . $i] = array(
+        '#title' => t('Enter webform field #%i', array('%i' => $i)),
+        '#type' => 'textfield',
+        '#description' => t('Example: field_name'),
+        '#default_value' => !empty($config['commerce_authnet_webform_field_' . $i]) ? $config['commerce_authnet_webform_field_' . $i] : '',
+      );
+
+      $form['parameter']['payment_method']['settings']['payment_method']['settings']['commerce_authnet_authorize_field_' . $i] = array(
+        '#title' => t('Authorize field #%i', array('%i' => $i)),
+        '#type' => 'select',
+        '#options' => _commerce_authnet_extra_fields(),
+        '#default_value' => !empty($config['commerce_authnet_authorize_field_' . $i]) ? $config['commerce_authnet_authorize_field_' . $i] : '',
+      );
+      $i++;
+    }
+
+    // Add a fieldset of Authorize.net response
+    // fields available to be mapped to donation fields.
+    $form['parameter']['payment_method']['settings']['payment_method']['settings']['response_fields'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Response Fields for Mapping'),
+      '#description' => t('The selected fields will be made available for mapping to exported donations.'),
+      '#collapsible' => TRUE,
+      '#collapsed' => FALSE,
+      '#element_validate' => array('fundraiser_commerce_response_fields_validate'),
+    );
+    $form['parameter']['payment_method']['settings']['payment_method']['settings']['response_fields']['mappable'] = array(
+      '#type' => 'value',
+      '#value' => array(),
+    );
+    $form['parameter']['payment_method']['settings']['payment_method']['settings']['response_fields']['all'] = array(
+      '#theme' => 'table',
+      '#header' => array(
+        'checkbox' => t('Available'),
+        'description' => t('Authorize.net gateway response field'),
+      ),
+      '#rows' => array(),
+    );
+    foreach (_commerce_authnet_response_fields() as $machine_name => $field) {
+      $id = 'mappable_fields-' . $machine_name;
+      $form['parameter']['payment_method']['settings']['payment_method']['settings']['response_fields']['all'][$machine_name] = array(
+        '#id' => $id,
+        '#type' => 'checkbox',
+        '#default_value' => in_array($machine_name, !empty($config['response_fields']['mappable']) ? $config['response_fields']['mappable'] : array()),
+      );
+      $form['parameter']['payment_method']['settings']['payment_method']['settings']['response_fields']['all']['#rows'][$machine_name] = array(
+        'checkbox' => array(
+          // Tricky but it works: The table element's children
+          // (the checkboxes) will all have rendered as
+          // form components by the time the table theme function picks
+          // them up by reference here.
+          'data' => &$form['parameter']['payment_method']['settings']['payment_method']['settings']['response_fields']['all'][$machine_name],
+        ),
+        'description' => '<label for="' . $id . '">' . $field['name'] . '</label><span>' . t($field['description']) . '</span>',
+      );
+    }
   }
+
 }
 
 function fundraiser_commerce_commerce_authnet_aim_request_alter(&$nvp) {
