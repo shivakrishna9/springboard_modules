@@ -378,9 +378,6 @@ function springboard_dw_user_update(&$edit, $account, $category) {
  * Implements hook_webform_submission_insert().
  */
 function springboard_dw_fundraiser_sustainers_future_order_insert($created_donation) {
-
-  dsm($created_donation);
-
   // Map the submission data to what
   $created_donation->donation['ms'] = $created_donation->submission_data['ms'];
   $created_donation->donation['cid'] = $created_donation->submission_data['cid'];
