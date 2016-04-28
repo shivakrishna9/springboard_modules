@@ -379,6 +379,8 @@ function springboard_dw_user_update(&$edit, $account, $category) {
  */
 function springboard_dw_fundraiser_sustainers_future_order_insert($created_donation) {
 
+  dsm($created_donation);
+
   // Map the submission data to what
   $created_donation->donation['ms'] = $created_donation->submission_data['ms'];
   $created_donation->donation['cid'] = $created_donation->submission_data['cid'];
@@ -395,11 +397,14 @@ function springboard_dw_fundraiser_sustainers_future_order_insert($created_donat
   $created_donation->donation['device_browser'] = $created_donation->submission_data['device_browser'];
   $created_donation->donation['device_browser'] = $created_donation->submission_data['device_browser'];
 
-  // Todo: Donation payment details
-  $created_donation->data['payment_fields']['credit']['card_type'] = '';
-  $created_donation->data['payment_fields']['credit']['card_number'] = '';
-  $created_donation->data['payment_fields']['credit']['card_expiration_month'] = '';
-  $created_donation->data['payment_fields']['credit']['card_expiration_year'] = '';
+  // Donation payment details. Currently hardcoded to credit. TODO: Test and handle other payment methods.
+  if (isset($created_donation->donation['payment_fields']) 
+    && is_array($created_donation->donation['payment_fields']['credit'])) {
+    $created_donation->data['payment_fields']['credit']['card_type'] = $created_donation->donation['payment_fields']['credit']['card_type'];
+    $created_donation->data['payment_fields']['credit']['card_number'] = $created_donation->donation['payment_fields']['credit']['card_number'];
+    $created_donation->data['payment_fields']['credit']['card_expiration_month'] = $created_donation->donation['payment_fields']['credit']['card_expiration_month'];
+    $created_donation->data['payment_fields']['credit']['card_expiration_year'] = $created_donation->donation['payment_fields']['credit']['card_expiration_year'];
+  }
 
   // Get the Drupal data warehouse queue
   $queue = DrupalQueue::get("springboard_dw_export");
