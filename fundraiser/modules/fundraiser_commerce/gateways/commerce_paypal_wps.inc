@@ -183,19 +183,39 @@ function commerce_paypal_wps_fundraiser_commerce_refund($payment_method, $refund
   }
 }
 
-/*
- *  Implements hook_form_alter().
+/**
+ * Alter the action form settings field.
  *
+ * Called from fundraiser_commerce_form_rules_ui_edit_element_alter().
+ *
+ * @param $form
+ * @param $form_state
  */
 function commerce_paypal_wps_form_rules_ui_edit_element_builder(&$form, &$form_state) {
   // Adds needed refund field elements to PayPal settings form.
-  $rule = rules_config_load(arg(5));
+  if (arg(4) == 'reaction' && arg(5) == 'manage') {
+    // We're in the rules UI.
+    $rule = rules_config_load(arg(6));
+  }
+  elseif (arg(3) == 'payment-methods' && arg(4) == 'manage') {
+    // We're in the commerce payment method UI.
+    $rule = rules_config_load(arg(5));
+  }
+
   // @ToDo: is there a better way to get the rule name?
   $actions = !empty($rule) ? $rule->actions() : FALSE;
   if (!empty($actions)) {
     // Find the settings for the Authorize.net gateway action.
     foreach ($actions as $action) {
-      if (isset($action->settings['payment_method']['method_id']) && $action->settings['payment_method']['method_id'] == 'paypal_wps' && $action->elementId() == arg(7)) {
+      if (arg(7) == 'edit') {
+        // We're in the rules UI.
+        $action_id = arg(8);
+      }
+      else {
+        // We're in the commerce payment method UI.
+        $action_id = arg(7);
+      }
+      if (isset($action->settings['payment_method']['method_id']) && $action->settings['payment_method']['method_id'] == 'paypal_wps' && $action->elementId() == $action_id) {
         // @TODO: is there a better way to get the action ID?
         $settings[] = $action->settings;
       }
