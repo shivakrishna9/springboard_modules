@@ -259,7 +259,10 @@ function silverpop_transact_views_api() {
 function silverpop_transact_cron() {
   // Wrap in variable check for easy disabling without code push.
   if (variable_get('silverpop_transact_process_logs_during_cron', TRUE)) {
-    silverpop_transact_cron_log_status_update();
+    // Only check the Silverpop logs when in XML mode.
+    if (variable_get('silverpop_transact_model') == 'XML') {
+      silverpop_transact_cron_log_status_update();
+    }
   }
 
   // Cleanup the silverpop_transact_log table.
@@ -275,7 +278,7 @@ function silverpop_transact_cron() {
       ->range($row_limit - 1, 1)
       ->execute()->fetchField();
 
-    $filenames = db_select('silverpop_transact_log', s)
+    $filenames = db_select('silverpop_transact_log', 's')
       ->fields('s', array('filename'))
       ->condition('id', $min_row, '<')
       ->execute()->fetchCol();
