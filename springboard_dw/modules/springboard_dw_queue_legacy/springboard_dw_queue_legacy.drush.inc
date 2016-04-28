@@ -32,9 +32,9 @@ function springboard_dw_queue_legacy_drush_command() {
     ),
     'examples' => array(
       'drush sb-dw-queue contact' => 'Queues all users',
-      'drush sb-dw-queue "advocacy action" --limit=500' => 'Queues next 500 advocacy actions.',
-      'drush sb-dw-queue petition --reset --limit=500' => 'Reset highwater mark to zero. Queues 100 petitions.',
-      'drush sb-dw-queue petition --batch-size=10' => 'Queue all petitions, 10 at a time. Defaults to 100. Potentially useful if you run into memory issues.',
+      'drush sb-dw-queue action --limit=500' => 'Queues next 500 advocacy actions.',
+      'drush sb-dw-queue form --reset --limit=500' => 'Reset highwater mark to zero. Queues 500 forms.',
+      'drush sb-dw-queue donation --batch-size=10' => 'Queue all donations, 10 at a time. Defaults to 100. Potentially useful if you run into memory issues.',
     ),
     'aliases' => array('sb-dw-queue'),
   );
@@ -56,6 +56,8 @@ function springboard_dw_queue_legacy_setup_batch($type = '') {
       'submission' => dt('submission'),
       'donation' => dt('donation'),
       'action' => dt('action'),
+      'message' => dt('message'),
+      'petition message' => dt('petition message'),
     );
     $type = drush_choice($options, dt('What kind of record would you like to queue?'));
   }
@@ -84,9 +86,18 @@ function springboard_dw_queue_legacy_setup_batch($type = '') {
       $batch_process_function = 'springboard_dw_queue_legacy_actions';
       break;
 
+    case 'message':
+      $records = springboard_dw_queue_legacy_get_advocacy_messages();
+      $batch_process_function = 'springboard_dw_queue_legacy_messages';
+      break;
+
+    case 'petition message':
+      $records = db_query("SELECT s.sid, s.nid, s.uid, s.submitted AS created FROM {webform_submissions} s INNER JOIN {node} n ON s.nid = n.nid WHERE n.type = 'springboard_petition' AND s.submitted > 0 ORDER BY s.submitted ASC")->fetchAll();
+      $batch_process_function = 'springboard_dw_queue_legacy_petition_messages';
+      break;
+
     case 'form':
-      // @TODO Should we be joining on the webform table, not webform_user?
-      $records = db_query_range('SELECT n.nid, n.created FROM {node} n INNER JOIN {webform_user} w ON n.nid = w.nid WHERE n.created > :highwater ORDER BY created ASC', 0, $limit, array(':highwater' => $highwater))->fetchAll();
+      $records = db_query_range('SELECT n.nid, n.created FROM {node} n INNER JOIN {webform} w ON n.nid = w.nid WHERE n.created > :highwater ORDER BY created ASC', 0, $limit, array(':highwater' => $highwater))->fetchAll();
       $batch_process_function = 'springboard_dw_queue_legacy_forms';
       break;
 
@@ -310,7 +321,7 @@ function springboard_dw_queue_legacy_actions($actions, $operation_details, &$con
 /**
  * Batch process callback for processing petitions.
  */
-function springboard_dw_queue_legacy_advocacy_petition_message($submissions, $operation_details, &$context) {
+function springboard_dw_queue_legacy_petition_messages($submissions, $operation_details, &$context) {
   // Get the Drupal data warehouse queue.
   $queue = DrupalQueue::get("springboard_dw_export");
   foreach ($submissions as $submission) {
@@ -327,7 +338,7 @@ function springboard_dw_queue_legacy_advocacy_petition_message($submissions, $op
 /**
  * Batch process callback for processing advocacy messages.
  */
-function springboard_dw_queue_legacy_advocacy_message($messages, $operation_details, &$context) {
+function springboard_dw_queue_legacy_messages($messages, $operation_details, &$context) {
   // Get the Drupal data warehouse queue.
   $queue = DrupalQueue::get("springboard_dw_export");
   foreach ($messages as $message) {
@@ -406,11 +417,12 @@ function springboard_dw_queue_legacy_set_highwater_mark($type, $timestamp) {
  */
 function springboard_dw_queue_legacy_get_advocacy_messages() {
   // Getnids of all sba_message_action nodes.
-  $advocacy_action_records = db_query("SELECT nid FROM {node} WHERE type = 'sba_message_action' ORDER BY created ASC")->fetchAll();
-  $advocacy_ids = array();
+  $advocacy_action_records = db_query("SELECT nid FROM {node} WHERE type = 'sba_message_action' OR type = 'sba_social_action' ORDER BY created ASC")->fetchAll();
+  $messages = array();
   foreach ($advocacy_action_records as $advocacy_action_record) {
     $node = node_load($advocacy_action_record->nid);
-    $messages = springboard_dw_queue_legacy_get_advocacy_message_details($node->advocacy_id);
+    $messages = array_merge($messages, springboard_dw_queue_legacy_get_advocacy_message_details($node->advocacy_id));
+
   }
   return $messages;
 }
@@ -427,16 +439,16 @@ function springboard_dw_queue_legacy_get_advocacy_message_details($action_id) {
   $current_page = 1;
   $last_page = 2;
   while ($current_page < $last_page) {
-    drush_log('Getting a page of data for ' . $action_id, 'ok');
+    drush_log('Getting page ' . $current_page . ' of data for ' . $action_id, 'ok');
     $page = springboard_dw_queue_legacy_get_advocacy_message_details_page($action_id, $page->current_page + 1);
     $current_page = $page['current_page'];
     $last_page = $page['last_page'];
     foreach ($page['data'] as $message) {
-      array_push($details, array(
+      $details[] = array(
         'id' => $message['_id']['$id'],
         'action_id' => $action_id,
         'created' => $message['delivery']['createdAt']['sec'],
-      ));
+      );
     }
   }
   return $details;
@@ -462,6 +474,5 @@ function springboard_dw_queue_legacy_get_advocacy_message_details_page($action_i
   $endpoint = variable_get('springboard_dw_advocacy_api_endpoint') . '/api/v1/messages/get/'. $action_id;
   $response = $guzzle->request('GET', $endpoint, $params);
   $body = $response->getBody();
-  $body_text = $body->getContents();
-  return json_decode($body_text, TRUE);
+  return json_decode($body->getContents(), TRUE);
 }

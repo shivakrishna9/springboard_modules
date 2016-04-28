@@ -11,10 +11,11 @@ function springboard_dw_queue_legacy_install() {
   $types = array(
     'contact',
     'form',
-    'advocacy action',
-    'advocacy message',
-    'petition',
-    'advocacy petition message',
+    'submission',
+    'action',
+    'message',
+    'donation',
+    'petition message',
   );
   foreach ($types as $type) {
     $values = db_insert('springboard_data_warehouse_queue_legacy')
