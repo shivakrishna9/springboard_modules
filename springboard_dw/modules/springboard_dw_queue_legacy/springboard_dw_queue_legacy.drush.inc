@@ -112,6 +112,9 @@ function springboard_dw_queue_legacy_setup_batch($type = '') {
 
   $record_count = count($records);
   drush_log(dt(':count records found to process.', array(':count' => $record_count)), 'ok');
+  if ($record_count < 1) {
+    watchdog("data_warehouse", 'Attempted to process %type records when there are :record_count remaining.', array('%type' => $type, ':record_count' => $record_count), WATCHDOG_WARNING);
+  }
   // Break up all of our data so each process does not time out.
   $chunks = array_chunk($records, $batch_size);
   $operations = array();
@@ -209,6 +212,10 @@ function springboard_dw_queue_legacy_donations($records, $operation_details, &$c
       $donation_item = springboard_dw_map_donation_item($donation);
       // Create the queue item.
       $queue->createItem($donation_item);
+      // Log the queue item.
+      springboard_dw_log_queue_item($donation_item);
+      // Mark the item as queued.
+      springboard_dw_track_item_warehouse_queued('donation', $record->did);
     }
     else {
       drush_log(dt('Donation data could not be decrypted for did @did. Please check encryption key. Skipping record.', array('@did' => $donation->did)), 'warning');
@@ -260,14 +267,13 @@ function springboard_dw_queue_legacy_submissions($records, $operation_details, &
         $submitted_data[$node->webform['components'][$cid]['form_key']] = $submission->data[$cid]['value'][0];
       }
     }
-
-    // Queue the donation object which should not be in the queue, so there's no need to check if this item is warehoused
+    // Queue the donation object which should not be in the queue, so there's
+    // no need to check if this item is warehoused.
     $submission_item = springboard_dw_map_submission_item($submission, $submitted_data);
-
-    // Create the queue item
+    // Create the queue item.
     $queue->createItem($submission_item);
+    springboard_dw_log_queue_item($submission_item);
   }
-
   $context['message'] = $operation_details;
 }
 
@@ -294,8 +300,9 @@ function springboard_dw_queue_legacy_actions($actions, $operation_details, &$con
     if ($node->type == 'sba_message_action' || $node->type == 'sba_social_action') {
       // Create the Advocacy action item in the queue if not warehoused
       if (!springboard_dw_item_is_warehoused('advocacy action', $node->nid)) {
-        $queue->createItem($message_action_item);
-        springboard_dw_log_queue_item($message_action_item);
+        $action_item = springboard_dw_map_advocacy_action_item($action);
+        $queue->createItem($action_item);
+        springboard_dw_log_queue_item($action_item);
         springboard_dw_track_item_warehouse_queued('advocacy action', $node->nid);
       }
     }
@@ -303,16 +310,11 @@ function springboard_dw_queue_legacy_actions($actions, $operation_details, &$con
     // Petition.
     if ($node->type == 'springboard_petition') {
       if (!springboard_dw_item_is_warehoused('petition', $node->nid)) {
-        $queue->createItem($message_action_item);
-        springboard_dw_log_queue_item($message_action_item);
+        $action_item = springboard_dw_map_petition_item($action);
+        $queue->createItem($action_item);
+        springboard_dw_log_queue_item($action_item);
         springboard_dw_track_item_warehouse_queued('petition', $node->nid);
       }
-    }
-
-    // Advocacy action item.
-    if (!springboard_dw_item_is_warehoused('advocacy action', $action->node->nid)) {
-      $message_action_item = springboard_dw_map_advocacy_action_item($action);
-      $queue->createItem($message_action_item);
     }
   }
   $context['message'] = $operation_details;
@@ -330,6 +332,8 @@ function springboard_dw_queue_legacy_petition_messages($submissions, $operation_
     if (!springboard_dw_item_is_warehoused('advocacy petiion message', $action->node->nid)) {
       $petition_item = springboard_dw_map_petition_submission_item($action);
       $queue->createItem($petition_item);
+      springboard_dw_log_queue_item($petition_item);
+      springboard_dw_track_item_warehouse_queued('advocacy petiion message', $node->nid);
     }
   }
   $context['message'] = $operation_details;
@@ -349,6 +353,8 @@ function springboard_dw_queue_legacy_messages($messages, $operation_details, &$c
       $message_item['message_id'] = $message['id'];
       $message_item['action_id'] = $message['action_id'];
       $queue->createItem($message_item);
+      springboard_dw_log_queue_item($message_item);
+      springboard_dw_track_item_warehouse_queued('advocacy message', $message['id']);
     }
   }
   $context['message'] = $operation_details;
@@ -410,7 +416,7 @@ function springboard_dw_queue_legacy_set_highwater_mark($type, $timestamp) {
 }
 
 /**
- * Get list of advocacy message.
+ * Get list of advocacy message node IDs.
  *
  * @return array
  *   Array of all message values.
@@ -428,7 +434,7 @@ function springboard_dw_queue_legacy_get_advocacy_messages() {
 }
 
 /**
- * Get advocacy messages related to a single sba_message_action.
+ * Get advocacy messages related to a single action.
  *
  * Loops through all available pages to get entire dataset.
  *
