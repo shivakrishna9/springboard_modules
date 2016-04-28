@@ -192,7 +192,7 @@ function springboard_dw_queue_legacy_users($records, $operation_details, &$conte
       // Log the queue item.
       springboard_dw_log_queue_item($contact_item);
       // Mark the item as queued.
-      springboard_dw_track_item_warehouse_queued('contact', $account->uid);
+      springboard_dw_track_item_warehouse_queued('contact', $record->uid);
     }
   }
   $context['message'] = $operation_details;
@@ -205,20 +205,20 @@ function springboard_dw_queue_legacy_donations($records, $operation_details, &$c
   $queue = DrupalQueue::get("springboard_dw_export");
   foreach ($records as $record) {
     $donation = fundraiser_donation_get_donation($record->did);
-    // Make sure $donation_item->data was decrypted.
-    if (is_array($donation->data)) {
-      // Queue the donation object which should not be in the queue, so there's
-      // no need to check if this item is warehoused.
-      $donation_item = springboard_dw_map_donation_item($donation);
-      // Create the queue item.
-      $queue->createItem($donation_item);
-      // Log the queue item.
-      springboard_dw_log_queue_item($donation_item);
-      // Mark the item as queued.
-      springboard_dw_track_item_warehouse_queued('donation', $record->did);
+    // If $donation->data could not decrypted, just set the expected values to
+    // empty string.
+    if (!is_array($donation->data)) {
+      $donation->data = array();
+      $donation->data['payment_fields']['credit']['card_type'] = '';
+      $donation->data['payment_fields']['credit']['card_number'] = '';
+      $donation->data['payment_fields']['credit']['card_expiration_month'] = '';
+      $donation->data['payment_fields']['credit']['card_expiration_year'] = '';
     }
-    else {
-      drush_log(dt('Donation data could not be decrypted for did @did. Please check encryption key. Skipping record.', array('@did' => $donation->did)), 'warning');
+    if (!springboard_dw_item_is_warehoused('donation', $record->did)) {
+      $donation_item = springboard_dw_map_donation_item($donation);
+      $queue->createItem($donation_item);
+      springboard_dw_log_queue_item($donation_item);
+      springboard_dw_track_item_warehouse_queued('donation', $record->did);
     }
   }
 }
