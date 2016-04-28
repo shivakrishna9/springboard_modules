@@ -20,14 +20,14 @@ function springboard_p2p_category_field_group_info() {
   $field_group->mode = 'form';
   $field_group->parent_name = 'group_tabs';
   $field_group->data = array(
-    'label' => 'Basic Info',
+    'label' => 'Basic info',
     'weight' => '2',
     'children' => array(
       0 => 'body',
     ),
     'format_type' => 'htab',
     'format_settings' => array(
-      'label' => 'Basic Info',
+      'label' => 'Basic info',
       'instance_settings' => array(
         'required_fields' => 1,
         'id' => '',
@@ -109,14 +109,14 @@ function springboard_p2p_category_field_group_info() {
   $field_group->mode = 'form';
   $field_group->parent_name = 'group_tabs';
   $field_group->data = array(
-    'label' => 'Form Banner',
+    'label' => 'Form banner',
     'weight' => '3',
     'children' => array(
       0 => 'field_p2p_campaign_banner',
     ),
     'format_type' => 'htab',
     'format_settings' => array(
-      'label' => 'Form Banner',
+      'label' => 'Form banner',
       'instance_settings' => array(
         'required_fields' => 1,
         'id' => '',

@@ -10,17 +10,18 @@
  * Implements hook_install().
  */
 function silverpop_transact_install() {
-  $directory = "private://failed-silverpop-data";
+  $directory = "private://silverpop";
   file_prepare_directory($directory, FILE_CREATE_DIRECTORY);
 
   // We default to Silverpop's SMTP model, so enable the smtp module setting.
   variable_set('smtp_on', TRUE);
 
-  // We default to Silverpop's SMTP model, so switch email_wrapper to use the
-  // mailsystem provided by the smtp module.
+  // We default to Silverpop's SMTP model, so switch to use the mailsystem
+  // provided by the smtp module.
   $mail_modes = variable_get('mail_system');
   if (isset($mail_modes['email_wrappers'])) {
     $mail_modes['email_wrappers'] = 'SmtpMailSystem';
+    $mail_modes['default-system'] = 'SmtpMailSystem';
     variable_set('mail_system', $mail_modes);
   }
 }
@@ -34,6 +35,7 @@ function silverpop_transact_disable() {
   $mail_modes = variable_get('mail_system');
   if (isset($mail_modes['email_wrappers'])) {
     $mail_modes['email_wrappers'] = 'EmailWrappersMailSystemInterface';
+    $mail_modes['default-system'] = 'DefaultMailSystem';
     variable_set('mail_system', $mail_modes);
   }
 }
@@ -41,13 +43,12 @@ function silverpop_transact_disable() {
 /**
  * Implements hook_requirements().
  *
- * @TODO file_prepare_directory() does not seem to work.
  */
 function silverpop_transact_requirements($phase) {
   $requirements = array();
   if ($phase == 'runtime') {
-    $directory = "private://failed-silverpop-data";
-    $directory_exists = file_prepare_directory($directory);
+    $directory = "private://silverpop";
+    $directory_exists = file_prepare_directory($directory, FILE_CREATE_DIRECTORY | FILE_MODIFY_PERMISSIONS);
     if ($directory_exists) {
       $requirements['silverpop'] = array(
         'title' => t('Silverpop Transact directory'),

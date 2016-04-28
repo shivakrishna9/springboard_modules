@@ -2230,12 +2230,24 @@ class FundraiserCommerceUIPaymentSettings extends RulesDataUI implements RulesDa
         '#title' => t('Selected image URL'),
         '#description' => t('If added, this image will be shown as part of the radio button label when several payment methods are available to the user and this particular payment method is selected.'),
         '#default_value' => !empty($settings['payment_method']['settings']['selected_image']) ? $settings['payment_method']['settings']['selected_image'] : '',
+        '#element_validate' => array('fundraiser_commerce_gateway_image_validate'),
+        '#states' => array(
+          'required' => array(
+            ':input[name*="[unselected_image]"]' => array('!value' => ''),
+          ),
+        ),
       );
       $form[$name]['settings']['unselected_image'] = array(
         '#type' => 'textfield',
         '#title' => t('Unselected image URL'),
-        '#description' => t('If added, this image will be shown as part of the radio button label when several payment methods are available to the user and this particular payment method is not selected.'),
+        '#description' => t('This image will be shown as part of the radio button label when several payment methods are available to the user and this particular payment method is not selected.'),
         '#default_value' => !empty($settings['payment_method']['settings']['unselected_image']) ? $settings['payment_method']['settings']['unselected_image'] : '',
+        '#element_validate' => array('fundraiser_commerce_gateway_image_validate'),
+        '#states' => array(
+          'required' => array(
+            ':input[name*="[selected_image]"]' => array('!value' => ''),
+          ),
+        ),
       );
       $form[$name]['settings']['standalone_image'] = array(
         '#type' => 'textfield',
@@ -2802,28 +2814,29 @@ function fundraiser_commerce_flatten_gateway_settings($settings) {
  * Ex. webform_client_form_NID.
  */
 function fundraiser_commerce_form_alter(&$form, &$form_state, $form_id) {
-  if (strstr($form_id, 'webform_client_form') !== FALSE && fundraiser_is_donation_type($form['#node']->type)) {
+
+  if (strstr($form_id, 'webform_client_form') !== FALSE && fundraiser_is_donation_type($form['#node']->type) && arg(4) != 'edit') {
     $node = $form['#node'];
     // Load any custom configuration options.
     $config = db_query('SELECT * FROM {fundraiser_webform_messages} f WHERE f.nid = :nid', array(':nid' => $form['#node']->nid))->fetchAssoc();
 
-    // Change submit button text based on webform configuration and payment method
-    // submit button setting (if any).
-    if (empty($config['sitewide_submit']) && empty($form['#node']->webform['submit_text'])) {
-      // Change submit button text to payment gateway default, when only one gateway available.
-      $enabled = 0;
-      $button_info = array();
-      $button_images = array();
-      foreach ($node->gateways as $gateway) {
-        if (!empty($gateway['status']) && $gateway['status'] == 1) {
-          $enabled++;
-          $active_gateway = $gateway;
-          $gateway_rule_name = substr($active_gateway['id'], strpos($active_gateway['id'], "|") + 1); //@TODO: is there a better way to get the rule name?
-          $rule = rules_config_load($gateway_rule_name);
-          $actions = $rule->actions();
-          foreach ($actions as $action) {
-            $settings = $action->settings;
-          }
+    $enabled = 0;
+    $button_info = array();
+    $button_images = array();
+    foreach ($node->gateways as $gateway) {
+      if (!empty($gateway['status']) && $gateway['status'] == 1) {
+        $enabled++;
+        $active_gateway = $gateway;
+        $gateway_rule_name = substr($active_gateway['id'], strpos($active_gateway['id'], "|") + 1); //@TODO: is there a better way to get the rule name?
+        $rule = rules_config_load($gateway_rule_name);
+        $actions = $rule->actions();
+        foreach ($actions as $action) {
+          $settings = $action->settings;
+        }
+        // Change submit button text based on webform configuration and payment method
+        // submit button setting (if any).
+        if (empty($config['sitewide_submit']) && empty($form['#node']->webform['submit_text'])) {
+          // Change submit button text to payment gateway default, when only one gateway available.
           $gateway_config = isset($settings['payment_method']['settings']) ? $settings['payment_method']['settings'] : '';
           if (!empty($gateway_config['submit_text'])) {
             $button_info[$active_gateway['method']]['text'] = $gateway_config['submit_text'];
@@ -2831,42 +2844,47 @@ function fundraiser_commerce_form_alter(&$form, &$form_state, $form_id) {
           else {
             $button_info[$active_gateway['method']]['text'] = $form['actions']['submit']['#value'];
           }
-
-          // Insert Intro HTML settings field into payment information fieldset.
-          if (!empty($settings['payment_method']['settings']['intro_html'])) {
-            // Reorder the intro HTML to be first.
-            $payment_array = $form['submitted']['payment_information']['payment_fields'][$gateway['method']];
-            $reordered = array_slice($payment_array, 0, 2, TRUE) +
-              array('intro_html' => array('#markup' => '<div>' . $settings['payment_method']['settings']['intro_html'] . '</div>')) +
-              array_slice($payment_array, 2, count($payment_array)-2, TRUE);
-              $form['submitted']['payment_information']['payment_fields'][$gateway['method']] = $reordered;
-          }
-
-          // Add payment selection images.
-          $option_text = !empty($form['submitted']['payment_information']['payment_method']['#options'][$gateway['method']]) ? $form['submitted']['payment_information']['payment_method']['#options'][$gateway['method']] : '';
-          $form['submitted']['payment_information']['payment_method']['#options'][$gateway['method']] = '<img data-gateway="' . $gateway['method'] . '" id="' . $gateway['method'] . '-payment-option-img" src="//:0" />' . $option_text;
-          $button_info[$active_gateway['method']]['unselected_image'] = !empty($settings['payment_method']['settings']['unselected_image']) ? $settings['payment_method']['settings']['unselected_image'] : '';
-          $button_info[$active_gateway['method']]['selected_image'] = !empty($settings['payment_method']['settings']['selected_image']) ? $settings['payment_method']['settings']['selected_image'] : '';
-          $button_info[$active_gateway['method']]['standalone_image'] = !empty($settings['payment_method']['settings']['standalone_image']) ? $settings['payment_method']['settings']['standalone_image'] : '';
-
-          if (!empty($settings['payment_method']['settings']['unselected_image'])) {
-            $form['submitted']['payment_information']['payment_method']['#options'][$gateway['method']] = '<img data-gateway="' . $gateway['method'] . '" id="' .$gateway['method'] . '-payment-option-img" src="'. $settings['payment_method']['settings']['unselected_image'] . '"> ' . $option_text;
-          }
         }
-      }
-      // Pass number of enabled gateways to js.
-      $button_info['enabled_count'] = $enabled;
-      // Add standalone image if only one gateway is enabled.
-      if ($enabled == 1) {
-        foreach ($node->gateways as $gateway) {
-          if (!empty($gateway['status']) && $gateway['status'] == 1 && !empty($settings) && is_array($settings['payment_method'])) {
-            $form['submitted']['payment_information']['payment_fields'][$gateway['method']]['#description'] = '<img src="' . $settings['payment_method']['settings']['standalone_image'] . '">';
-          }
+
+        // Insert Intro HTML settings field into payment information fieldset.
+        if (!empty($settings['payment_method']['settings']['intro_html'])) {
+          // Reorder the intro HTML to be first.
+          $payment_array = $form['submitted']['payment_information']['payment_fields'][$gateway['method']];
+          $reordered = array_slice($payment_array, 0, 2, TRUE) +
+            array('intro_html' => array('#markup' => '<div>' . $settings['payment_method']['settings']['intro_html'] . '</div>')) +
+            array_slice($payment_array, 2, count($payment_array)-2, TRUE);
+          $form['submitted']['payment_information']['payment_fields'][$gateway['method']] = $reordered;
         }
+
+        // Add payment selection images.
+        $option_text = !empty($form['submitted']['payment_information']['payment_method']['#options'][$gateway['method']]) ? $form['submitted']['payment_information']['payment_method']['#options'][$gateway['method']] : '';
+        if (!empty($settings['payment_method']['settings']['selected_image']) && !empty($settings['payment_method']['settings']['unselected_image'])) {
+          $form['submitted']['payment_information']['payment_method']['#options'][$gateway['method']] = '<img data-gateway="' . $gateway['method'] . '" id="' . $gateway['method'] . '-payment-option-img" src="//:0" alt="' . $option_text . '" title="' . $option_text . '" />';
+        }
+        $button_info[$active_gateway['method']]['unselected_image'] = !empty($settings['payment_method']['settings']['unselected_image']) && preg_match('/(\.jpg|\.png|\.gif)$/', $settings['payment_method']['settings']['unselected_image']) ? $settings['payment_method']['settings']['unselected_image'] : '';
+        $button_info[$active_gateway['method']]['selected_image'] = !empty($settings['payment_method']['settings']['selected_image']) && preg_match('/(\.jpg|\.png|\.gif)$/', $settings['payment_method']['settings']['selected_image']) ? $settings['payment_method']['settings']['selected_image'] : '';
+        $button_info[$active_gateway['method']]['standalone_image'] = !empty($settings['payment_method']['settings']['standalone_image']) && preg_match('/(\.jpg|\.png|\.gif)$/', $settings['payment_method']['settings']['standalone_image']) ? $settings['payment_method']['settings']['standalone_image'] : '';
+        if (!empty($settings['payment_method']['settings']['unselected_image'])) {
+          $form['submitted']['payment_information']['payment_method']['#options'][$gateway['method']] = '<img data-gateway="' . $gateway['method'] . '" id="' .$gateway['method'] . '-payment-option-img" src="'. $settings['payment_method']['settings']['unselected_image'] . '" alt="' . $option_text . '" title="' . $option_text . '">';
+        }
+
       }
-      drupal_add_js(drupal_get_path('module', 'fundraiser') . '/js/fundraiser.js');
-      drupal_add_js(array('fundraiser' => $button_info), 'setting');
     }
+    // Pass number of enabled gateways to js.
+    $button_info['enabled_count'] = $enabled;
+    // Add standalone image if only one gateway is enabled.
+    if ($enabled == 1) {
+      foreach ($node->gateways as $gateway_key => $gateway) {
+        // Set the alt/title label:
+        if (!empty($gateway['status']) && $gateway['status'] == 1 && !empty($settings['payment_method']['settings']['standalone_image'])) {
+          $option_text = isset($gateway['label']) && !empty($gateway['label']) ? $gateway['label'] : ucwords($gateway_key);
+          $form['submitted']['payment_information']['payment_fields'][$gateway['method']]['#description'] =
+            '<img src="' . $settings['payment_method']['settings']['standalone_image'] . '" alt="' . $option_text . '" title="' . $option_text . '">';
+        }
+      }
+    }
+    drupal_add_js(drupal_get_path('module', 'fundraiser') . '/js/fundraiser.js');
+    drupal_add_js(array('fundraiser' => $button_info), 'setting');
 
   }
   // Make sure our form_alter hooks in payment gateway include files are always loaded.
@@ -2874,7 +2892,22 @@ function fundraiser_commerce_form_alter(&$form, &$form_state, $form_id) {
   $methods->payment_methods = array();
   rules_invoke_all('commerce_payment_methods', $methods);
   foreach ($methods->payment_methods as $id => $info) {
-      $method_instance = commerce_payment_method_instance_load($id); // From commerce_payment.module.
-      module_load_include('inc', 'fundraiser_commerce', '/gateways/' . $method_instance['module']);
+    $method_instance = commerce_payment_method_instance_load($id); // From commerce_payment.module.
+    module_load_include('inc', 'fundraiser_commerce', '/gateways/' . $method_instance['module']);
+  }
+}
+
+function fundraiser_commerce_gateway_image_validate($element, &$form_state, $form) {
+  if ($element['#title'] == 'Selected image URL'
+    && !empty($form_state['values']['parameter']['payment_method']['settings']['payment_method']['settings']['unselected_image'])
+    && empty($form_state['values']['parameter']['payment_method']['settings']['payment_method']['settings']['selected_image'])
+  ) {
+    form_error($element, t('Selected image field is required'));
+  }
+  if ($element['#title'] == 'Unselected image URL'
+    && !empty($form_state['values']['parameter']['payment_method']['settings']['payment_method']['settings']['selected_image'])
+    && empty($form_state['values']['parameter']['payment_method']['settings']['payment_method']['settings']['unselected_image'])
+  ) {
+    form_error($element, t('Unselected image field is required'));
   }
 }
