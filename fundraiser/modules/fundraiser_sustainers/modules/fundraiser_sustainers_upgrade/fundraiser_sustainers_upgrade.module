@@ -365,7 +365,6 @@ function fundraiser_sustainers_upgrade_form_webform_client_form_alter(&$form, &$
  */
 function fundraiser_sustainers_upgrade_auto_submitter($form, $form_state) {
 
-  $node = $form['#node'];
   $form_id = $form['#form_id'];
 
   $form_state['values']['op'] = $form['actions']['submit']['#value'];
@@ -884,7 +883,7 @@ function fundraiser_sustainers_upgrade_tokens($type, $tokens, $data = array(), $
             if (!empty($redirect[0]['value'])) {
               $query = $redirect[0]['value'];
             }
-            $replacements[$original] = "(Not " . $value ."? " . l('Click here.', 'sustainers-upgrade/cancel', array('absolute' => TRUE, 'query' => array('su_redirect' => $query))) . ")";
+            $replacements[$original] = "(Not " . $value . "? " . l(t('Click here.'), 'sustainers-upgrade/cancel', array('absolute' => TRUE, 'query' => array('su_redirect' => $query))) . ")";
           }
           break;
 
@@ -1245,7 +1244,7 @@ function fundraiser_sustainers_upgrade_form_webform_configure_form_alter(&$form,
  */
 function fundraiser_sustainers_upgrade_form_sustainers_upgrade_form_node_form_alter(&$form, &$form_state) {
   $form['field_sustainers_auto_upgrade']['#access'] = FALSE;
-  //Create the token fieldset
+  // Create the token fieldset.
   $form['template']['tokens'] = array(
     '#type' => 'fieldset',
     '#title' => t('Available tokens'),
@@ -1254,7 +1253,7 @@ function fundraiser_sustainers_upgrade_form_sustainers_upgrade_form_node_form_al
     '#weight' => 9,
   );
 
-  //Get the node tokens.
+  // Get the node tokens.
   $token_set = array('donation', 'sustainer_upgrade');
 
   $form['template']['tokens']['tokens'] = array(
@@ -1264,7 +1263,7 @@ function fundraiser_sustainers_upgrade_form_sustainers_upgrade_form_node_form_al
       'token_types' => $token_set,
       'global_types' => FALSE,
       'recursion_limit' => 2,
-      'click_insert' => FALSE
+      'click_insert' => FALSE,
     )),
   );
 
