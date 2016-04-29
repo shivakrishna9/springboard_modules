@@ -548,6 +548,22 @@ function fundraiser_sustainers_upgrade_after_webform_submit($form, $form_state) 
   $node = $form['#node'];
   $_SESSION['sustainer_upgrade_submit_status_' . $form_state['values']['details']['sid']] = $status;
 
+  // Update anonymous submissions with payload uid.
+  if (empty($form_state['values']['details']['uid'])) {
+    if (!empty($form_state['values']['details']['sid'] && !empty($form_state['values']['payload']['uid']))) {
+      $update_submitted_uid = db_update('webform_submissions')
+        ->fields(array(
+          'uid' => $form_state['values']['payload']['uid'],
+        ))
+        ->condition('sid', $form_state['values']['details']['sid'], '=')
+        ->execute();
+      // If update was successful, clear the static cache.
+      if ($update_submitted_uid) {
+        drupal_static_reset('webform_get_submission');
+      }
+    }
+  }
+
   if ($status['status'] == 'valid') {
     $donation = $form_state['values']['donation'];
 
