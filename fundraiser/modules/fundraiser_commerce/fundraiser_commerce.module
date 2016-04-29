@@ -2887,14 +2887,6 @@ function fundraiser_commerce_form_alter(&$form, &$form_state, $form_id) {
     drupal_add_js(array('fundraiser' => $button_info), 'setting');
 
   }
-  // Make sure our form_alter hooks in payment gateway include files are always loaded.
-  $methods = new stdClass();
-  $methods->payment_methods = array();
-  rules_invoke_all('commerce_payment_methods', $methods);
-  foreach ($methods->payment_methods as $id => $info) {
-    $method_instance = commerce_payment_method_instance_load($id); // From commerce_payment.module.
-    module_load_include('inc', 'fundraiser_commerce', '/gateways/' . $method_instance['module']);
-  }
 }
 
 function fundraiser_commerce_gateway_image_validate($element, &$form_state, $form) {
