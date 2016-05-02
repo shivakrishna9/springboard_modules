@@ -1194,7 +1194,7 @@ function fundraiser_sustainers_upgrade_cancel_redirect() {
   $redirect_url = isset($_GET['su_redirect']) ? $_GET['su_redirect'] : '';
   $redirect_url = trim($redirect_url);
   $redirect_url = preg_replace('/^' . preg_quote($GLOBALS['base_url'], '/') . '\//', '', $redirect_url);
-  $redirect = array();
+  $redirect = NULL;
   $options = array();
   if (valid_url($redirect_url, TRUE)) {
     $redirect = $redirect_url;

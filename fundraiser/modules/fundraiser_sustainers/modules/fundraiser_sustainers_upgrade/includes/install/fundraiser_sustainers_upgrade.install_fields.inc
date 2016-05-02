@@ -582,7 +582,11 @@ function _fundraiser_sustainers_upgrade_cancel_field(&$fields) {
 
     '_instance' => array(
       'bundle' => 'sustainers_upgrade_form',
-      'default_value' => NULL,
+      'default_value' => array(
+        0 => array(
+          'value' => variable_get('site_frontpage', 'node'),
+        ),
+      ),
       'deleted' => '0',
       'description' => 'The page to redirect to if the user clicks the "I\'m not" link; e.g, node/4',
       'display' => array(
