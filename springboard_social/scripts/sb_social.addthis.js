@@ -15,16 +15,24 @@ var addthis_share = {
           function detectPopupBlocker() {
             var popupBlockTest = window.open('about:blank', '', 'directories=no,height=100,width=100,menubar=no,' +
               'resizable=no,scrollbars=no,status=no,titlebar=no,top=0,location=no');
+            if (popupBlockTest != null) {
+              popupBlockTest.document.write('-.-.-');
+            }
             if (popupBlockTest == null || !popupBlockTest || popupBlockTest.closed || typeof popupBlockTest == 'undefined' ||
-                typeof popupBlockTest.closed == 'undefined') {
-              $('.addthis_toolbox').before('<div class="social-share-popup-blocker-msg"><strong>' +
-                'Please disable your pop-up blocker to share!' + '</strong></div><br />');
+                typeof popupBlockTest.closed == 'undefined' || typeof $(popupBlockTest.document.body).text() == 'undefined' ||
+                $(popupBlockTest.document.body).text() != '-.-.-') {
+              if ($('.social-share-popup-blocker-msg').length == 0) {
+                $('.addthis_toolbox').before('<div class="social-share-popup-blocker-msg"><strong>' +
+                  'Please disable your pop-up blocker to share!' + '</strong></div><br />');
+              }
             }
             else {
               popupBlockTest.close();
             }
           }
-          setTimeout(function() { detectPopupBlocker();}, 50); 
+          setTimeout(function() {
+            detectPopupBlocker();
+          }, 500); 
         }
       });
 
@@ -47,7 +55,14 @@ var addthis_share = {
            // Add a class to ensure the click event handler is only attached
            // a single time regardless of how many times attach is triggered.
            $(this).addClass('social-processed');
-           $(this).click(function() {
+           $(this).click(function(e) {
+               // Prevent multi-clicking via timestamp:
+               var lastClicklock = $(this).data('clicklock'); 
+               $(this).data('clicklock', (new Date).getTime());
+               if (typeof lastClicklock != 'undefined' && (new Date).getTime() - lastClicklock < 1000) {
+                 return;
+               }
+
                $elem = $(this);
                // account for subdirectory install
                $url = Drupal.settings.basePath;
@@ -81,7 +96,7 @@ var addthis_share = {
                        $elem.context.conf.url = response;
                        $elem.context.share.url = response;
                    },
-                   async: false
+                   async: true 
                });
            });
          }
