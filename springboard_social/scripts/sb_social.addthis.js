@@ -23,21 +23,23 @@ var addthis_trackingProtectionDetected = 1;
         }
         // Display a message if popup blocking is detected:
         function detectPopupBlocker() {
-          var popupBlockTest = window.open('about:blank', '', 'directories=no,height=100,width=100,menubar=no,' +
-          'resizable=no,scrollbars=no,status=no,titlebar=no,top=0,location=no');
-          if (popupBlockTest != null) {
-            popupBlockTest.document.write('-.-.-');
-          }
-          if (popupBlockTest == null || !popupBlockTest || popupBlockTest.closed || typeof popupBlockTest == 'undefined' ||
-            typeof popupBlockTest.closed == 'undefined' || typeof $(popupBlockTest.document.body).text() == 'undefined' ||
-            $(popupBlockTest.document.body).text() != '-.-.-') {
-            if ($('.social-share-popup-blocker-msg').length == 0) {
-              $('.addthis_toolbox').before('<div class="social-share-popup-blocker-msg"><strong>' +
-                'Please disable your pop-up blocker to share!' + '</strong></div><br />');
+          if ($('.addthis_toolbox').length > ) {
+            var popupBlockTest = window.open('about:blank', '', 'directories=no,height=100,width=100,menubar=no,' +
+            'resizable=no,scrollbars=no,status=no,titlebar=no,top=0,location=no');
+            if (popupBlockTest != null) {
+              popupBlockTest.document.write('-.-.-');
             }
-          }
-          else {
-            popupBlockTest.close();
+            if (popupBlockTest == null || !popupBlockTest || popupBlockTest.closed || typeof popupBlockTest == 'undefined' ||
+              typeof popupBlockTest.closed == 'undefined' || typeof $(popupBlockTest.document.body).text() == 'undefined' ||
+              $(popupBlockTest.document.body).text() != '-.-.-') {
+              if ($('.social-share-popup-blocker-msg').length == 0) {
+                $('.addthis_toolbox').before('<div class="social-share-popup-blocker-msg"><strong>' +
+                  'Please disable your pop-up blocker to share!' + '</strong></div><br />');
+              }
+            }
+            else {
+              popupBlockTest.close();
+            }
           }
         }
         setTimeout(function() {
