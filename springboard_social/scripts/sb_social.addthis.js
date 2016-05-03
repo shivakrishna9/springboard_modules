@@ -23,7 +23,7 @@ var addthis_trackingProtectionDetected = 1;
         }
         // Display a message if popup blocking is detected:
         function detectPopupBlocker() {
-          if ($('.addthis_toolbox').length > ) {
+          if ($('.addthis_toolbox').length > 0) {
             var popupBlockTest = window.open('about:blank', '', 'directories=no,height=100,width=100,menubar=no,' +
             'resizable=no,scrollbars=no,status=no,titlebar=no,top=0,location=no');
             if (popupBlockTest != null) {
