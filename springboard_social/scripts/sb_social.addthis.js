@@ -5,13 +5,24 @@ var addthis_config = {
 var addthis_share = {
 };
 
+var addthis_trackingProtectionDetected = 1;
 
 (function ($) {
   Drupal.behaviors.sb_social = {
     attach: function (context, settings) {
-      // Display a message if popup blocking is detected:
       $(document).ready(function() {
         if ($('.addthis_toolbox').length > 0) {
+          // Display a message if Firefox's Tracking Protection is preventing addthis icons from appearing or being clickable:
+          $('.addthis_toolbox').before('<iframe src="//googlesyndication.com" onload="addthis_trackingProtectionDetected = 0;" ' +
+            'style="width: 1px !important; height: 1px !important; position: absolute !important; left: -10000px !important; ' +
+            'top: -1000px !important;"></iframe>');
+          function detectTrackingProtection() {
+            if (addthis_trackingProtectionDetected == '1') {
+              $('.addthis_toolbox').before('<div class="social-share-popup-blocker-msg"><strong>' +
+                'Please disable your browser\'s Tracking Protection to share!' + '</strong></div><br />');
+            }
+          }
+          // Display a message if popup blocking is detected:
           function detectPopupBlocker() {
             var popupBlockTest = window.open('about:blank', '', 'directories=no,height=100,width=100,menubar=no,' +
               'resizable=no,scrollbars=no,status=no,titlebar=no,top=0,location=no');
@@ -32,6 +43,7 @@ var addthis_share = {
           }
           setTimeout(function() {
             detectPopupBlocker();
+            detectTrackingProtection();
           }, 500); 
         }
       });
