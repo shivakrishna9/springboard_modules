@@ -28,6 +28,14 @@ function springboard_dw_queue_legacy_install() {
 }
 
 /**
+ * Implements hook_uninstall().
+ */
+function springboard_dw_queue_legacy_uninstall() {
+  variable_del('springboard_dw_advocacy_authentication_token');
+  variable_del('springboard_dw_advocacy_api_endpoint');
+}
+
+/**
  * Implements hook_schema().
  */
 function springboard_dw_queue_legacy_schema() {
