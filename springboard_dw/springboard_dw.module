@@ -9,6 +9,16 @@ require_once 'includes/springboard_dw.queue.inc';
 require_once 'includes/springboard_dw.utility.inc';
 
 /**
+ * Show a warning to the user if the Springboard data warehouse module is enabled but not configured.
+ * Implements hook_node_view().
+ */
+function springboard_dw_node_view($node, $view_mode, $langcode) {
+  if (!variable_get('springboard_dw_api_endpoint') || !variable_get('springboard_dw_authentication_token')) {
+    drupal_set_message('Springboard data warehouse settings have not been configured. <a href="/admin/config/services/springboard-dw">Update your settings.</a>', 'warning');
+  }
+}
+
+/**
  * The menu item for the Springboard data warehouse settings.
  * Implements hook_menu().
  */
