@@ -365,7 +365,6 @@ function fundraiser_sustainers_upgrade_form_webform_client_form_alter(&$form, &$
  */
 function fundraiser_sustainers_upgrade_auto_submitter($form, $form_state) {
 
-  $node = $form['#node'];
   $form_id = $form['#form_id'];
 
   $form_state['values']['op'] = $form['actions']['submit']['#value'];
@@ -547,6 +546,22 @@ function fundraiser_sustainers_upgrade_after_webform_submit($form, $form_state) 
   $status = $form_state['values']['status'];
   $node = $form['#node'];
   $_SESSION['sustainer_upgrade_submit_status_' . $form_state['values']['details']['sid']] = $status;
+
+  // Update anonymous submissions with payload uid.
+  if (empty($form_state['values']['details']['uid'])) {
+    if (!empty($form_state['values']['details']['sid'] && !empty($form_state['values']['payload']['uid']))) {
+      $update_submitted_uid = db_update('webform_submissions')
+        ->fields(array(
+          'uid' => $form_state['values']['payload']['uid'],
+        ))
+        ->condition('sid', $form_state['values']['details']['sid'], '=')
+        ->execute();
+      // If update was successful, clear the static cache.
+      if ($update_submitted_uid) {
+        drupal_static_reset('webform_get_submission');
+      }
+    }
+  }
 
   if ($status['status'] == 'valid') {
     $donation = $form_state['values']['donation'];
@@ -868,7 +883,7 @@ function fundraiser_sustainers_upgrade_tokens($type, $tokens, $data = array(), $
             if (!empty($redirect[0]['value'])) {
               $query = $redirect[0]['value'];
             }
-            $replacements[$original] = "(Not " . $value ."? " . l('Click here.', 'sustainers-upgrade/cancel', array('absolute' => TRUE, 'query' => array('su_redirect' => $query))) . ")";
+            $replacements[$original] = "(Not " . $value . "? " . l(t('Click here.'), 'sustainers-upgrade/cancel', array('absolute' => TRUE, 'query' => array('su_redirect' => $query))) . ")";
           }
           break;
 
@@ -1229,7 +1244,8 @@ function fundraiser_sustainers_upgrade_form_webform_configure_form_alter(&$form,
  */
 function fundraiser_sustainers_upgrade_form_sustainers_upgrade_form_node_form_alter(&$form, &$form_state) {
   $form['field_sustainers_auto_upgrade']['#access'] = FALSE;
-  //Create the token fieldset
+
+  // Create the token fieldset.
   $form['fsu_tokens'] = array(
     '#type' => 'fieldset',
     '#title' => t('Available tokens'),
@@ -1238,7 +1254,7 @@ function fundraiser_sustainers_upgrade_form_sustainers_upgrade_form_node_form_al
     '#weight' => !empty($form['#groups']['group_sustainers_upgrade_options']->weight) ? $form['#groups']['group_sustainers_upgrade_options']->weight + 1 : 34,
   );
 
-  //Get the node tokens.
+  // Get the node tokens.
   $token_set = array('donation', 'sustainer_upgrade');
 
   $form['fsu_tokens']['tokens'] = array(
