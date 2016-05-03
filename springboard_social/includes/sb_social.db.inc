@@ -59,12 +59,12 @@ function sb_social_share_event_load($share_id) {
  *   share event.
  */
 function sb_social_share_save($record, $settings = FALSE, $url_path = FALSE) {
-  // Avoid duplicate records saved within the last 10 seconds:
+  // Avoid duplicate records saved within the last 60 seconds:
   $is_duplicate = db_query("SELECT created FROM {sb_social_shares} WHERE " .
     "uid = :uid AND nid = :nid AND did = :did AND service = :service AND created > :created",
     array(':uid' => $record['uid'], ':nid' => $record['nid'],
       ':did' => $record['did'], ':service' => $record['service'],
-      ':created' => time() - 10,
+      ':created' => time() - 60,
     ))->fetchField();
  
   // Update is not included as these records should only be created when a share
