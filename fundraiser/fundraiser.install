@@ -518,7 +518,7 @@ function fundraiser_update_7008() {
 }
 
 /**
- * Add default_amount field to {fundraiser}.
+ * Add default_amount field to {fundraiser} and populate from webform components.
  */
 function fundraiser_update_7009() {
   $field = array(
@@ -531,5 +531,16 @@ function fundraiser_update_7009() {
     ),
   );
   db_add_field('fundraiser', 'default_amount', $field['default_amount']);
-  return array();
+  // Look up each webform's "amount" component and pull the value.
+  if (module_exists('fundraiser_webform')) {
+    foreach (db_query('SELECT nid FROM {fundraiser}')->fetchCol() as $nid) {
+      $amount_component = _fundraiser_webform_get_component_by_nid_key($nid, 'amount');
+      if (!empty($amount_component->value)) {
+        db_query(
+          "UPDATE {fundraiser} SET default_amount=:default_amount WHERE nid=:nid",
+          array(':default_amount' => $amount_component->value, ':nid' => $nid)
+        );
+      }
+    }
+  }
 }
