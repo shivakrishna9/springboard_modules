@@ -113,7 +113,7 @@ function silverpop_transact_form_webform_email_edit_form_alter(&$form, &$form_st
     $form['silverpop_transact_additional_tokens'] = array(
       '#type' => 'textarea',
       '#title' => t('Additional Silverpop Tokens'),
-      '#description' => t('All webform values are included automatically. Enter a list of key|value pairs for additional tokens to be used in Silverpop templates.'),
+      '#description' => t('All webform components and their submitted values are included automatically. Additional tokens can be included by entering key|value pairs in the following format:<br>site_name|[site:name]<br>donation_country|[donation:country]<br>donation_number|[donation:order:order-id]'),
       '#default_value' => $defaults['additional_tokens'],
       '#weight' => '-50',
     );
@@ -142,7 +142,7 @@ function silverpop_transact_form_fundraiser_admin_settings_alter(&$form, &$form_
     $form['fundraiser_sustainers']['fundraiser_cc_expiration_message']['silverpop_transact_cc_expiration_message_tokens'] = array(
       '#type' => 'textarea',
       '#title' => t('Silverpop Tokens'),
-      '#description' => t('Enter a list of key|value pairs for additional tokens to be used in Silverpop templates.'),
+      '#description' => t('Enter a list of key|value pairs for additional tokens to be used in Silverpop templates in the following format:<br>site_name|[site:name]<br>current_date|[current-date:short]<br>donation_number|[donation:order:order-id]'),
       '#default_value' => variable_get('silverpop_transact_cc_expiration_message_tokens'),
       '#weight' => '49',
     );
