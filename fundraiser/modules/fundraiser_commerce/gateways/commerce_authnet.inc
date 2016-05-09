@@ -389,28 +389,62 @@ function commerce_authnet_fundraiser_commerce_refund($payment_method, $refund) {
   return $success;
 }
 
-function commerce_authnet_form_rules_ui_edit_element_alter(&$form, &$form_state) {
+/**
+ * Alter the action form settings field.
+ *
+ * This function was formerly an implemention of
+ * hook_form_rules_ui_edit_element_alter() but behaved inconsistently here
+ * in the gateway.inc file. Now it is renamed and called dynamically from
+ * fundraiser_commerce_form_rules_ui_edit_element_alter() using
+ * form_load_include().
+ *
+ * @param $form
+ * @param $form_state
+ */
+function commerce_authnet_form_rules_ui_edit_element_builder(&$form, &$form_state) {
+  // The following two "if" checks are probably not needed, but retained for
+  // readability purposes.
   if (isset($form['parameter']['payment_method']['settings']['payment_method']['method_id']['#value'])) {
     $id = $form['parameter']['payment_method']['settings']['payment_method']['method_id']['#value'];
     $is_com = isset($form['parameter']['commerce_order']) ? 1 : 0;
     if ($id == 'authnet_aim' && $is_com) {
-      $rule = rules_config_load(arg(5));  //@TODO: is there a better way to get the rule name?
-      $actions = $rule->actions();
+      // Check if we're in the commerce_ui or rules UI admin pages.
+      if (arg(4) == 'reaction' && arg(5) == 'manage') {
+        // We're in the rules UI.
+        $rule = rules_config_load(arg(6));
+      }
+      elseif (arg(3) == 'payment-methods' && arg(4) == 'manage') {
+        // We're in the commerce payment method UI.
+        $rule = rules_config_load(arg(5));
+      }
+
+      // @TODO: is there a better way to get the rule?
+      $actions = !empty($rule) ? $rule->actions() : FALSE;
       if (!empty($actions)) {
         // Find the settings for the Authorize.net gateway action.
         foreach ($actions as $action) {
-          if($action->settings['payment_method']['method_id'] == 'authnet_aim' && $action->elementId() == arg(7)) {  //@TODO: is there a better way to get the action ID?
-           $settings[] = $action->settings;
+          if (arg(7) == 'edit') {
+            // We're in the rules UI.
+            $action_id = arg(8);
+          }
+          else {
+            // We're in the commerce payment method UI.
+            $action_id = arg(7);
+          }
+          if (isset($action->settings['payment_method']['method_id']) && $action->settings['payment_method']['method_id'] == 'authnet_aim' && $action->elementId() == $action_id) {
+            // @TODO: is there a better way to get the action ID?
+            $settings[] = $action->settings;
           }
         }
         $config = isset($settings[0]['payment_method']['settings']) ? $settings[0]['payment_method']['settings'] : '';
-        
-        // Add a fieldset of Authorize.net request fields available to have Webform field data mapped to them.
+
+        // Add a fieldset of Authorize.net request fields
+        // available to have Webform field data mapped to them.
         $form['parameter']['payment_method']['settings']['payment_method']['settings']['value_map'] = array(
-            '#type' => 'fieldset',
-            '#title' => t('Submission mapping'),
-            '#description' => t('Enter the webform field keys to map to these authorize.net fields.'),
-            '#tree' => TRUE,
+          '#type' => 'fieldset',
+          '#title' => t('Submission mapping'),
+          '#description' => t('Enter the webform field keys to map to these authorize.net fields.'),
+          '#tree' => TRUE,
         );
         $available_fields = _commerce_authnet_extra_fields();
         unset($available_fields[0]);
@@ -431,8 +465,9 @@ function commerce_authnet_form_rules_ui_edit_element_alter(&$form, &$form_state)
           );
           $i++;
         }
-        
-        // Add a fieldset of Authorize.net response fields available to be mapped to donation fields.
+
+        // Add a fieldset of Authorize.net response
+        // fields available to be mapped to donation fields.
         $form['parameter']['payment_method']['settings']['payment_method']['settings']['response_fields'] = array(
           '#type' => 'fieldset',
           '#title' => t('Response Fields for Mapping'),
@@ -449,7 +484,7 @@ function commerce_authnet_form_rules_ui_edit_element_alter(&$form, &$form_state)
           '#theme' => 'table',
           '#header' => array(
             'checkbox' => t('Available'),
-            'description' => t('Authorize.net gateway response field')
+            'description' => t('Authorize.net gateway response field'),
           ),
           '#rows' => array(),
         );
@@ -462,8 +497,10 @@ function commerce_authnet_form_rules_ui_edit_element_alter(&$form, &$form_state)
           );
           $form['parameter']['payment_method']['settings']['payment_method']['settings']['response_fields']['all']['#rows'][$machine_name] = array(
             'checkbox' => array(
-              // Tricky but it works: The table element's children (the checkboxes) will all have rendered as 
-              // form components by the time the table theme function picks them up by reference here.
+              // Tricky but it works: The table element's children
+              // (the checkboxes) will all have rendered as
+              // form components by the time the table theme function picks
+              // them up by reference here.
               'data' => &$form['parameter']['payment_method']['settings']['payment_method']['settings']['response_fields']['all'][$machine_name],
             ),
             'description' => '<label for="' . $id . '">' . $field['name'] . '</label><span>' . t($field['description']) . '</span>',
