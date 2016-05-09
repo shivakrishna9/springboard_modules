@@ -392,21 +392,27 @@ function commerce_authnet_fundraiser_commerce_refund($payment_method, $refund) {
 /**
  * Alter the action form settings field.
  *
- * Called from fundraiser_commerce_form_rules_ui_edit_element_alter().
+ * This function was formerly an implemention of
+ * hook_form_rules_ui_edit_element_alter() but behaved inconsistently here
+ * in the gateway.inc file. Now it is renamed and called dynamically from
+ * fundraiser_commerce_form_rules_ui_edit_element_alter() using
+ * form_load_include().
  *
  * @param $form
  * @param $form_state
  */
 function commerce_authnet_form_rules_ui_edit_element_builder(&$form, &$form_state) {
 
+  // Check if we're in the commerce_ui or rules UI admin pages.
   if (arg(4) == 'reaction' && arg(5) == 'manage') {
     // We're in the rules UI.
     $rule = rules_config_load(arg(6));
   }
-    elseif (arg(3) == 'payment-methods' && arg(4) == 'manage') {
+  elseif (arg(3) == 'payment-methods' && arg(4) == 'manage') {
     // We're in the commerce payment method UI.
     $rule = rules_config_load(arg(5));
   }
+
   // @TODO: is there a better way to get the rule?
   $actions = !empty($rule) ? $rule->actions() : FALSE;
   if (!empty($actions)) {
