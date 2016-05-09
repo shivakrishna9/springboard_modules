@@ -36,9 +36,19 @@ function springboard_dw_menu() {
 
   // Page to reset data warehouse data
   $items['admin/config/services/springboard-dw/reset-dw'] = array(
-    'title'            => 'Springboard Data Warehouse',
+    'title'            => 'Springboard Data Warehouse - Reset Data',
     'description'      => 'Reset all warehouse data for Springboard.',
     'page callback'    => 'springboard_dw_admin_warehouse_reset_page',
+    'access arguments' => array('administer springboard data warehouse'),
+    'type'             => MENU_NORMAL_ITEM,
+    'file'             => 'includes/springboard_dw.admin.inc',
+  );
+
+  // Page to reset data warehouse credentials
+  $items['admin/config/services/springboard-dw/reset-dw-credentials'] = array(
+    'title'            => 'Springboard Data Warehouse - Reset Credentials',
+    'description'      => 'Reset warehouse credentials for Springboard.',
+    'page callback'    => 'springboard_dw_admin_warehouse_reset_config_page',
     'access arguments' => array('administer springboard data warehouse'),
     'type'             => MENU_NORMAL_ITEM,
     'file'             => 'includes/springboard_dw.admin.inc',
