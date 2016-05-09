@@ -62,6 +62,20 @@ function springboard_dw_queue_legacy_setup_batch($type = '') {
     $type = drush_choice($options, dt('What kind of record would you like to queue?'));
   }
 
+  // Special snowflake checks for 'message' type.
+  if ($type == 'message') {
+    // Exit early if the API endpoint and auth token have not been set.
+    if (variable_get('springboard_dw_advocacy_authentication_token') == NULL ||
+        variable_get('springboard_dw_advocacy_api_endpoint') == NULL) {
+      watchdog('data_warehouse', 'API endpoint and/or authentication token have not been set.', NULL, WATCHDOG_ERROR, l('Fix this on the config page', 'admin/config/services/springboard-dw'));
+      return drush_set_error(dt('API endpoint and/or authentication token have not been set.'));
+    }
+    // Exit early if trying to use the --reset option on the 'message' type.
+    if (drush_get_option('reset')) {
+      return drush_set_error(dt('Type "message" cannot be run with the --reset option, as the highwater mark is not supported via the Advocacy service.'));
+    }
+  }
+
   // Get options.
   $limit = drush_get_option('limit', 999999999);
   $batch_size = drush_get_option('batch-size', 100);
