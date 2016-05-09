@@ -104,3 +104,60 @@ function springboard_dw_admin_warehouse_reset_form_submit(&$form, &$form_state)
   drupal_set_message('The data warehouse tracking has been reset and the warehouse queue emptied.');
 }
 
+/**
+ * Page callback for the Springboard data warehouse reset form.
+ */
+
+function springboard_dw_admin_warehouse_reset_config_page()
+{
+  return drupal_get_form('springboard_dw_admin_warehouse_reset_config_form');
+}
+
+/**
+ * Reset form for Springboard data warehouse config.
+ */
+function springboard_dw_admin_warehouse_reset_config_form()
+{
+  $form = array();
+
+  $form['springboard_dw_reset_verify'] = array(
+    '#type'          => 'checkbox',
+    '#title'         => t('Are you really sure you want to reset the data warehouse config? Use with caution, this cannot be undone.'),
+    '#default_value' => 0
+  );
+
+  $form['springboard_dw_reset_submit'] = array(
+    '#type'  => 'submit',
+    '#value' => t('Submit')
+  );
+
+  return $form;
+}
+
+/**
+ * Validation method to make sure verification is made before resetting data warehouse config.
+ * Implements hook_form_validate()
+ * @param $form
+ * @param $form_state
+ */
+function springboard_dw_admin_warehouse_reset_config_form_validate(&$form, &$form_state)
+{
+  if (!$form_state['values']['springboard_dw_reset_verify']) {
+    form_set_error('name', 'You must verify you want to reset the data warehouse configuration.');
+  }
+}
+
+/**
+ * Form submission handler for resetting the Springboard data warehouse config.
+ * Implements hook_form_submit()
+ * @param $form
+ * @param $form_state
+ */
+function springboard_dw_admin_warehouse_reset_config_form_submit(&$form, &$form_state)
+{
+  // Reset the configuration for Springboard data warehouse
+  variable_del('springboard_dw_api_endpoint');
+  variable_del('springboard_dw_authentication_token');
+
+  drupal_set_message('The data warehouse configuration been reset.');
+}
