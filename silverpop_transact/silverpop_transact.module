@@ -204,6 +204,8 @@ function silverpop_transact_mail_alter(&$message) {
       $webform_components = silverpop_transact_load_webform_components($message['params']['submission']->data, $message['params']['node']->webform['components']);
       $personalization_tokens = array_merge($drupal_tokens, $webform_components);
       silverpop_transact_create_mailing($message['to'], $settings['group_id'], $personalization_tokens);
+      // Set to false to stop drupal_mail() from sending.
+      $message['send'] = FALSE;
     }
   }
 }
