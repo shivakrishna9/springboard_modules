@@ -604,7 +604,7 @@ function fundraiser_sustainers_form_node_form_alter(&$form, &$form_state, $form_
       ),
     );
     // Figure out the appropriate default value for "Donation type form component."
-    $default_component = 'tabs';
+    $default_component = 'radios';
     if (!empty($form['#node']->recurring_donation_type_component)) {
       $default_component = $form['#node']->recurring_donation_type_component;
     } else if (module_exists('fundraiser_webform') && !empty($form['#node']->webform)) {
@@ -618,11 +618,10 @@ function fundraiser_sustainers_form_node_form_alter(&$form, &$form_state, $form_
     }
     $form['fundraiser_settings']['fundraiser_sustainers']['recurring_donation_type_component'] = array(
       '#type' => 'radios',
-      '#title' => t('Donation type form component'),
+      '#title' => t('Recurring donation selector'),
       '#options' => array(
-        'checkbox' => t('On/Off Checkbox'),
+        'checkbox' => t('On/off checkbox'),
         'radios' => t('Radio buttons'),
-        'tabs' => t('Tabs'),
       ),
       '#default_value' => $default_component,
       '#states' => array(
@@ -678,7 +677,7 @@ function fundraiser_sustainers_form_node_form_alter(&$form, &$form_state, $form_
     }
     $form['fundraiser_settings']['fundraiser_sustainers']['recurring_donation_type_help_text'] = array(
       '#type' => 'textfield',
-      '#description' => t("This help text will appear below the one-time/recurring tabs or buttons on the donation form."),
+      '#description' => t("This help text will appear below the one-time/recurring buttons on the donation form."),
       '#default_value' => isset($form['#node']->recurring_donation_type_help_text) ?
         $form['#node']->recurring_donation_type_help_text :
         t('Selecting "Monthly" will cause your credit card to be charged once per month until its expiration date.')
@@ -1511,10 +1510,10 @@ function _fundraiser_sustainers_recurs_monthly_field_create($fundraiser, $field)
     $field['#value'] = 'NO_RECURR';
   }
   else if ($fundraiser->recurring_setting == 'user_choice') {
-    // Set the "multiple" attribute: TRUE for a checkbox, FALSE for radios or tabs.
+    // Set the "multiple" attribute: TRUE for a checkbox, FALSE for radios.
     $field['#extra']['multiple'] = empty($fundraiser->recurring_donation_type_component) ?
       TRUE : $field['#extra']['multiple'] = ($fundraiser->recurring_donation_type_component == 'checkbox');
-    // Was a non-checkbox (i.e., radios or tabs) component requested?
+    // Was a non-checkbox (i.e., radios) component requested?
     if (!$field['#extra']['multiple']) {
       // Use the options and default value given in the node edit form.
       if (!empty($fundraiser->recurring_donation_type_options)) {
@@ -1541,7 +1540,6 @@ function _fundraiser_sustainers_recurs_monthly_field_create($fundraiser, $field)
             || ($component['extra']['multiple'] != $field['#extra']['multiple'])
             || (!$field['#extra']['multiple'] && $field['#extra']['items'] != $component['extra']['items'])
             || (!$field['#extra']['multiple'] && $field['#value'] != $component['value'])
-            || ($fundraiser->recurring_donation_type_component == 'tabs' && $component['pid'] != $amount_component->pid)
             || ($fundraiser->recurring_dual_ask_amounts && $component['pid'] != $amount_component->pid)
           ) {
             _fundraiser_webform_delete_component($fundraiser->nid, 'recurs_monthly');
@@ -1560,7 +1558,7 @@ function _fundraiser_sustainers_recurs_monthly_field_create($fundraiser, $field)
  * Note: this only gets called when fundraiser_webform is the "glue module."
  */
 function _fundraiser_sustainers_recurs_monthly_field_component_alter($fundraiser, $component) {
-  if (!empty($fundraiser->recurring_dual_ask_amounts) || $fundraiser->recurring_donation_type_component == 'tabs') {
+  if (!empty($fundraiser->recurring_dual_ask_amounts)) {
     // For a dual-ask form, we need to place the recurs_monthly component in the
     // same fieldset as the ask amounts.
     $amount_component = _fundraiser_webform_get_component_by_nid_key($fundraiser->nid, 'amount');
@@ -1608,11 +1606,6 @@ function fundraiser_sustainers_fundraiser_donation_form($form, $form_state) {
     }
   }
 
-  // Does the form present one-time/recurring as radios themed to look like tabs?
-  if (isset($form['#node']->recurring_donation_type_component) && 'tabs' == $form['#node']->recurring_donation_type_component) {
-    $form['#attached']['css'][] = drupal_get_path('module', 'fundraiser_sustainers') . '/css/fundraiser_sustainers-tabs.css';
-  }
-
   // Set up the values that we're going to require in the States array. If it's a select list or
   // radio buttons, check for 'value'. Otherwise, it's a checkbox, so check for 'checked' == FALSE.
   if ($recurs_monthly_field['#type'] == 'select' || $recurs_monthly_field['#type'] == 'radios') {
@@ -1642,7 +1635,7 @@ function fundraiser_sustainers_fundraiser_donation_form($form, $form_state) {
       $recurring_other_amount_field['#suffix'] = '</div>';
       $recurring_other_amount_field['#type'] = 'hidden';
     }
-    // Also hide the one-time and recurring tabs/radios if user doesn't have a choice of donation type.
+    // Also hide the one-time and recurring radios if user doesn't have a choice of donation type.
     if ($form['#node']->recurring_setting != 'user_choice') {
       $recurs_monthly_field['#prefix'] = '<div style="display:none;">';
       $recurs_monthly_field['#suffix'] = '</div>';
