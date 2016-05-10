@@ -7,12 +7,14 @@
 
 /**
  * Get all entity properties by way of a wrapper.
+ *
  * @param $wrapper
- *  A wrapper object used to key off to get key value formatted entities.
+ *   A wrapper object used to key off to get key value formatted entities.
+ *
  * @return array
  */
-function springboard_dw_get_all_entity_properties($wrapper)
-{
+function springboard_dw_get_all_entity_properties($wrapper) {
+
   $values = array();
 
   foreach ($wrapper->getPropertyInfo() as $key => $val) {
@@ -24,21 +26,23 @@ function springboard_dw_get_all_entity_properties($wrapper)
 
 /**
  * Get the webform submission dated keyed according to submission.
+ *
  * @param $nid
- *  The node ID to retrieve webform submission data by.
+ *   The node ID to retrieve webform submission data by.
  * @param $sid
- *  The submission ID to retrieve webform submission data by.
+ *   The submission ID to retrieve webform submission data by.
+ *
  * @return array
  */
-function springboard_dw_webform_submission_data_keyed($nid, $sid)
-{
+function springboard_dw_webform_submission_data_keyed($nid, $sid) {
+
   $data = array();
   $node = node_load($nid);
 
   module_load_include('inc', 'webform', 'includes/webform.submissions');
   $submission = webform_get_submission($nid, $sid);
 
-  foreach ($node->webform['components'] AS $key => $component) {
+  foreach ($node->webform['components'] as $key => $component) {
     if (isset($submission->data[$key])) {
       $data[$component['form_key']] = $submission->data[$key];
     }
