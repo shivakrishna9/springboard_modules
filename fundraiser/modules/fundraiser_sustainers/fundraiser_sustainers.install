@@ -123,6 +123,12 @@ function fundraiser_sustainers_schema() {
         'not null' => FALSE,
         'default' => 0,
       ),
+      'donation_type_component' => array(
+        'description' => 'The type of component to present on user-choice forms to select the donation type.',
+        'type' => 'varchar',
+        'length' => 16,
+        'not null' => FALSE,
+      ),
       'donation_type_options' => array(
         'description' => 'The onetime/recurring option names, labels, and order.',
         'type' => 'varchar',
@@ -712,6 +718,7 @@ function fundraiser_sustainers_update_7009() {
     ->condition('attempts', 3, '<')
     ->condition('lock_id', 0)
     ->execute();
+
 }
 
 /**
@@ -992,6 +999,12 @@ function fundraiser_sustainers_update_7016(&$sandbox) {
  */
 function fundraiser_sustainers_update_7017(&$sandbox) {
   $fields = array(
+    'donation_type_component' => array(
+      'description' => 'The type of component to present on user-choice forms to select the donation type.',
+      'type' => 'varchar',
+      'length' => 16,
+      'not null' => FALSE,
+    ),
     'donation_type_options' => array(
       'description' => 'The onetime/recurring option names, labels, and order.',
       'type' => 'varchar',
@@ -1003,22 +1016,15 @@ function fundraiser_sustainers_update_7017(&$sandbox) {
       'type' => 'varchar',
       'length' => 16,
       'not null' => FALSE,
-    )
-  );
-  db_add_field('fundraiser_sustainers_nodes', 'donation_type_options', $fields['donation_type_options']);
-  db_add_field('fundraiser_sustainers_nodes', 'default_donation_type', $fields['default_donation_type']);
-}
-
-/**
- * Adds {fundraiser_sustainers_nodes} column to make onetime/recurring help text configurable.
- */
-function fundraiser_sustainers_update_7018(&$sandbox) {
-  $fields = array(
+    ),
     'donation_type_help_text' => array(
       'description' => 'Help text to show under the onetime/recurring buttons on dual-ask forms.',
       'type' => 'text',
       'not null' => FALSE,
     ),
   );
+  db_add_field('fundraiser_sustainers_nodes', 'donation_type_component', $fields['donation_type_component']);
+  db_add_field('fundraiser_sustainers_nodes', 'donation_type_options', $fields['donation_type_options']);
+  db_add_field('fundraiser_sustainers_nodes', 'default_donation_type', $fields['default_donation_type']);
   db_add_field('fundraiser_sustainers_nodes', 'donation_type_help_text', $fields['donation_type_help_text']);
 }
