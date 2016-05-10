@@ -83,7 +83,7 @@ function springboard_dw_admin_warehouse_reset_form()
 function springboard_dw_admin_warehouse_reset_form_validate(&$form, &$form_state)
 {
   if (!$form_state['values']['springboard_dw_reset_verify']) {
-    form_set_error('name', 'You must verify you want to reset the existing data warehouse tracking and warehouse queue.');
+    form_set_error('name', t('You must verify you want to reset the existing data warehouse tracking and warehouse queue.'));
   }
 }
 
@@ -104,7 +104,7 @@ function springboard_dw_admin_warehouse_reset_form_submit(&$form, &$form_state)
   db_delete('springboard_data_warehouse')
     ->execute();
 
-  drupal_set_message('The data warehouse tracking has been reset and the warehouse queue emptied.');
+  drupal_set_message(t('The data warehouse tracking has been reset and the warehouse queue emptied.'));
 }
 
 /**
@@ -146,7 +146,7 @@ function springboard_dw_admin_warehouse_reset_config_form()
 function springboard_dw_admin_warehouse_reset_config_form_validate(&$form, &$form_state)
 {
   if (!$form_state['values']['springboard_dw_reset_verify']) {
-    form_set_error('name', 'You must verify you want to reset the data warehouse configuration.');
+    form_set_error('name', t('You must verify you want to reset the data warehouse configuration.'));
   }
 }
 
@@ -162,5 +162,5 @@ function springboard_dw_admin_warehouse_reset_config_form_submit(&$form, &$form_
   variable_del('springboard_dw_api_endpoint');
   variable_del('springboard_dw_authentication_token');
 
-  drupal_set_message('The data warehouse configuration been reset.');
+  drupal_set_message(t('The data warehouse configuration been reset.'));
 }
