@@ -14,7 +14,7 @@ require_once 'includes/springboard_dw.utility.inc';
  */
 function springboard_dw_node_view($node, $view_mode, $langcode) {
   if (!variable_get('springboard_dw_api_endpoint') || !variable_get('springboard_dw_authentication_token')) {
-    drupal_set_message('Springboard data warehouse settings have not been configured. <a href="/admin/config/services/springboard-dw">Update your settings.</a>', 'warning');
+    drupal_set_message(t('Springboard data warehouse settings have not been configured. <a href="/admin/config/services/springboard-dw">Update your settings.</a>', 'warning'));
   }
 }
 
@@ -133,7 +133,7 @@ function springboard_dw_advocacy_message_action_submission($node, $action) {
   if (!empty($action->data['message_ids'])) {
 
     // Loop through the messages
-    foreach ($action->data['message_ids'] as $key => $message) {
+    foreach ($action->data['message_ids'] as $message) {
 
       if (!springboard_dw_item_is_warehoused('advocacy message', $message->{'$id'})) {
 
@@ -360,7 +360,6 @@ function springboard_dw_user_update(&$edit, $account, $category) {
 
   /**
    * TODO - this runs on general form submissions which is bad, we don't want to try to update the contact record every time.
-   * @author - Cameron Kingzett
    * @date   - 3/21/16
    * @time   -  4:23 PM
    */
@@ -1063,9 +1062,6 @@ function springboard_dw_contact($item) {
   // Looks like the api response was good
   if ($api_response->getStatusCode() == 200) {
 
-    // Mark this item as warehoused in Drupal
-    // springboard_dw_track_item_warehouse_success('contact', $item['contact_id']);
-
     return true;
 
   } else {
@@ -1089,9 +1085,6 @@ function springboard_dw_donation($item) {
 
   // If the response is successful, add the user_warehoused parameter to the Drupal user account so we can skip this check in subsequent donations
   if ($api_response->getStatusCode() == 200) {
-
-    // Mark this item as warehoused in Drupal
-    // springboard_dw_track_item_warehouse_success('donation', $item['donation_id']);
 
     // Respond back successfully to the queue to remove the item
     return true;
@@ -1121,9 +1114,6 @@ function springboard_dw_form($item) {
 
   // Looks like the api response was good
   if ($api_response->getStatusCode() == 200) {
-
-    // Mark this item as warehoused in Drupal
-    // springboard_dw_track_item_warehouse_success('form', $item['form_id']);
 
     // Respond back successfully to the queue to remove the item
     return true;
@@ -1156,9 +1146,6 @@ function springboard_dw_advocacy_message($item) {
   // Looks like the api response was good
   if ($api_response->getStatusCode() == 200) {
 
-    // Mark this item as warehoused in Drupal
-    // springboard_dw_track_item_warehouse_success('advocacy message', $item['message_id']);
-
     // Respond back successfully to the queue to remove the item
     return true;
 
@@ -1182,9 +1169,6 @@ function springboard_dw_advocacy_action($item) {
 
   // Looks like the api response was good
   if ($api_response->getStatusCode() == 200) {
-
-    // Mark this item as warehoused in Drupal
-    // springboard_dw_track_item_warehouse_success('advocacy action', $item['form_id']);
 
     // Respond back successfully to the queue to remove the item
     return true;
@@ -1210,9 +1194,6 @@ function springboard_dw_petition($item) {
   // Looks like the api response was good
   if ($api_response->getStatusCode() == 200) {
 
-    // Mark this item as warehoused in Drupal
-    // springboard_dw_track_item_warehouse_success('petition', $item['form_id']);
-
     // Respond back successfully to the queue to remove the item
     return true;
 
@@ -1236,9 +1217,6 @@ function springboard_dw_submission($item) {
 
   // Looks like the api response was good
   if ($api_response->getStatusCode() == 200) {
-
-    // Mark this item as warehoused in Drupal
-    // springboard_dw_track_item_warehouse_success('submission', $item['submission_id']);
 
     // Respond back successfully to the queue to remove the item
     return true;
@@ -1264,9 +1242,6 @@ function springboard_dw_advocacy_social_action_message($item) {
   // Looks like the api response was good
   if ($api_response->getStatusCode() == 200) {
 
-    // Mark this item as warehoused in Drupal
-    // springboard_dw_track_item_warehouse_success('advocacy message', $item['message_id']);
-
     // Respond back successfully to the queue to remove the item
     return true;
 
@@ -1290,9 +1265,6 @@ function springboard_dw_petition_message($item) {
 
   // Looks like the api response was good
   if ($api_response->getStatusCode() == 200) {
-
-    // Mark this item as warehoused in Drupal
-    // springboard_dw_track_item_warehouse_success('advocacy message', $item['message_id']);
 
     // Respond back successfully to the queue to remove the item
     return true;
