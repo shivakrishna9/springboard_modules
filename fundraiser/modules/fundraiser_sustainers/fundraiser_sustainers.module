@@ -1720,8 +1720,10 @@ function fundraiser_sustainers_fundraiser_donation_form($form, $form_state) {
     }
   }
 
-  // Put the onetime/recurring selection input at the top.
-  $recurs_monthly_field['#weight'] = -1;
+  // Put the onetime/recurring selection input above ask amounts if there are multiple of them.
+  if ($dual_ask_amounts) {
+    $recurs_monthly_field['#weight'] = -1;
+  }
 
   // Save the updated fields.
   $form = fundraiser_update_form_field('fundraiser_sustainers', $form, 'amount', $onetime_amounts_field);
