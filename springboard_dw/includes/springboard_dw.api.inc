@@ -98,9 +98,6 @@ function springboard_dw_api_call($endpoint_route, $params, $method = 'POST')
     return $api_response;
   }
   catch (GuzzleHttp\Exception\ClientException $e) {
-    $response = $e->getResponse();
-    $responseBodyAsString = $response->getBody()->getContents();
-
     watchdog("data_warehouse", '<pre>' . print_r($e, true) . '</pre>');
   }
 }
