@@ -220,7 +220,7 @@ function fundraiser_sustainers_upgrade_node_view($node) {
     $payload = fundraiser_sustainers_upgrade_get_session_payload();
     $status = fundraiser_sustainers_upgrade_check_donation_status($payload);
     $stop_in_tracks = fundraiser_sustainers_upgrade_stop_in_tracks();
-    if (in_array($status['status'], $stop_in_tracks)) {
+    if (in_array($status['status'], $stop_in_tracks) || strpos($status['status'], 'The upgrade amount is lower than or equal') !== FALSE) {
       if (!user_access('administer fundraiser sustainers upgrade')) {
         $node->content['field_sustainers_upgrade_fail'][0]['#access'] = TRUE;
         $node->content['body'][0]['#access'] = FALSE;
@@ -305,7 +305,7 @@ function fundraiser_sustainers_upgrade_form_webform_client_form_alter(&$form, &$
 
     // Check whether we have enough info to submit the form.
     $stop_in_tracks = fundraiser_sustainers_upgrade_stop_in_tracks();
-    if (in_array($status['status'], $stop_in_tracks)) {
+    if (in_array($status['status'], $stop_in_tracks)|| strpos($status['status'], 'The upgrade amount is lower than or equal') !== FALSE) {
       fundraiser_sustainer_upgrade_stop_at_form($form, $status, $payload);
     }
     else {
@@ -365,7 +365,6 @@ function fundraiser_sustainers_upgrade_form_webform_client_form_alter(&$form, &$
  */
 function fundraiser_sustainers_upgrade_auto_submitter($form, $form_state) {
 
-  $node = $form['#node'];
   $form_id = $form['#form_id'];
 
   $form_state['values']['op'] = $form['actions']['submit']['#value'];
@@ -410,6 +409,8 @@ function fundraiser_sustainers_upgrade_stop_in_tracks() {
     'Non-numeric values in payload.',
     'Donation ID is not a master ID.',
     'No session values found.',
+    'No recurring donations remaining.',
+    'The upgrade amount is lower than or equal to the current donation.',
   );
   return $stop_in_tracks;
 }
@@ -546,6 +547,22 @@ function fundraiser_sustainers_upgrade_after_webform_submit($form, $form_state) 
   $node = $form['#node'];
   $_SESSION['sustainer_upgrade_submit_status_' . $form_state['values']['details']['sid']] = $status;
 
+  // Update anonymous submissions with payload uid.
+  if (empty($form_state['values']['details']['uid'])) {
+    if (!empty($form_state['values']['details']['sid'] && !empty($form_state['values']['payload']['uid']))) {
+      $update_submitted_uid = db_update('webform_submissions')
+        ->fields(array(
+          'uid' => $form_state['values']['payload']['uid'],
+        ))
+        ->condition('sid', $form_state['values']['details']['sid'], '=')
+        ->execute();
+      // If update was successful, clear the static cache.
+      if ($update_submitted_uid) {
+        drupal_static_reset('webform_get_submission');
+      }
+    }
+  }
+
   if ($status['status'] == 'valid') {
     $donation = $form_state['values']['donation'];
 
@@ -650,7 +667,7 @@ function fundraiser_sustainers_upgrade_check_donation_status($payload) {
         $message = fundraiser_sustainers_upgrade_get_status_message($recurring, $donation, $payload, $min_amount);
         $status['status'] = $message;
         $stop_in_tracks = fundraiser_sustainers_upgrade_stop_in_tracks();
-        if (!in_array($status['status'], $stop_in_tracks)) {
+        if (!in_array($status['status'], $stop_in_tracks) || strpos($status['status'], 'The upgrade amount is lower than or equal') !== FALSE) {
           $status['donation'] = $donation;
           $status['recurring'] = $recurring;
         }
@@ -806,32 +823,32 @@ function fundraiser_sustainers_upgrade_token_info() {
 
   $types['sustainer_upgrade'] = array(
     'name' => t("Sustainer Upgrades"),
-    'description' => t("Tokens for sustainer upgrades."),
+    'description' => t("Tokens for sustainers upgrades."),
   );
 
   $tokens['signout'] = array(
-    'name' => t("Sustainer name and cancel link"),
-    'description' => 'Displays the sustainers first name and a cancel link.',
+    'name' => t("Signout link"),
+    'description' => t("Displays the donor's first name and a signout/cancel link."),
   );
 
   $tokens['rollback'] = array(
-    'name' => t("Rollback link to undo a sustainer upgrade."),
-    'description' => '',
+    'name' => t("Rollback link"),
+    'description' => t("Displays a link to undo an upgrade. Can be used on confirmation pages and emails."),
   );
 
   $tokens['upgrade_amount'] = array(
-    'name' => t("Sustainer name and cancel link"),
-    'description' => 'Displays the sustainers first name and a cancel link',
+    'name' => t("Upgrade amount"),
+    'description' => t("Displays the amount that the sustainer's series will be upgraded to."),
   );
 
   $tokens['next_charge_amount_formatted'] = array(
-    'name' => t("Sustainer name and cancel link"),
-    'description' => 'Displays the sustainers first name and a cancel link',
+    'name' => t("Next charge amount - formatted"),
+    'description' => t("Displays the current amount of the next charge in the series."),
   );
 
   $tokens['charges_remaining'] = array(
-    'name' => t("Sustainer name and cancel link"),
-    'description' => 'Displays the sustainers first name and a cancel link',
+    'name' => t("Charges remaining"),
+    'description' => t("Displays the number of charges remaining in the series."),
   );
 
   return array(
@@ -866,7 +883,7 @@ function fundraiser_sustainers_upgrade_tokens($type, $tokens, $data = array(), $
             if (!empty($redirect[0]['value'])) {
               $query = $redirect[0]['value'];
             }
-            $replacements[$original] = "(I'm Not " . l($value, 'sustainers-upgrade/cancel', array('absolute' => TRUE, 'query' => array('su_redirect' => $query))) . ")";
+            $replacements[$original] = "(Not " . $value . "? " . l(t('Click here.'), 'sustainers-upgrade/cancel', array('absolute' => TRUE, 'query' => array('su_redirect' => $query))) . ")";
           }
           break;
 
@@ -874,7 +891,7 @@ function fundraiser_sustainers_upgrade_tokens($type, $tokens, $data = array(), $
           if (!empty($payload['amount'])) {
             $status = fundraiser_sustainers_upgrade_check_donation_status($payload);
             $stop_in_tracks = fundraiser_sustainers_upgrade_stop_in_tracks();
-            if (!in_array($status['status'], $stop_in_tracks)) {
+            if (!in_array($status['status'], $stop_in_tracks) || arg(2) == 'done') {
               $order = commerce_order_load($status['donation']->did);
               $order_wrapper = entity_metadata_wrapper('commerce_order', $order);
               $order_total = $order_wrapper->commerce_order_total->value();
@@ -886,7 +903,7 @@ function fundraiser_sustainers_upgrade_tokens($type, $tokens, $data = array(), $
         case 'next_charge_amount_formatted':
           $status = fundraiser_sustainers_upgrade_check_donation_status($payload);
           $stop_in_tracks = fundraiser_sustainers_upgrade_stop_in_tracks();
-          if (!in_array($status['status'], $stop_in_tracks)) {
+          if (!in_array($status['status'], $stop_in_tracks) || arg(2) == 'done') {
             $order = commerce_order_load($status['recurring'][0]->did);
             $order_wrapper = entity_metadata_wrapper('commerce_order', $order);
             $order_total = $order_wrapper->commerce_order_total->value();
@@ -897,7 +914,7 @@ function fundraiser_sustainers_upgrade_tokens($type, $tokens, $data = array(), $
         case 'charges_remaining':
           $status = fundraiser_sustainers_upgrade_check_donation_status($payload);
           $stop_in_tracks = fundraiser_sustainers_upgrade_stop_in_tracks();
-          if (!in_array($status['status'], $stop_in_tracks)) {
+          if (!in_array($status['status'], $stop_in_tracks) || arg(2) == 'done') {
             $replacements[$original] = count($status['recurring']);
           }
           break;
@@ -1192,7 +1209,7 @@ function fundraiser_sustainers_upgrade_cancel_redirect() {
   $redirect_url = isset($_GET['su_redirect']) ? $_GET['su_redirect'] : '';
   $redirect_url = trim($redirect_url);
   $redirect_url = preg_replace('/^' . preg_quote($GLOBALS['base_url'], '/') . '\//', '', $redirect_url);
-  $redirect = array();
+  $redirect = NULL;
   $options = array();
   if (valid_url($redirect_url, TRUE)) {
     $redirect = $redirect_url;
@@ -1227,4 +1244,47 @@ function fundraiser_sustainers_upgrade_form_webform_configure_form_alter(&$form,
  */
 function fundraiser_sustainers_upgrade_form_sustainers_upgrade_form_node_form_alter(&$form, &$form_state) {
   $form['field_sustainers_auto_upgrade']['#access'] = FALSE;
+
+  // Create the token fieldset.
+  $form['fsu_tokens'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Available tokens'),
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
+    '#weight' => !empty($form['#groups']['group_sustainers_upgrade_options']->weight) ? $form['#groups']['group_sustainers_upgrade_options']->weight + 1 : 34,
+  );
+
+  // Get the node tokens.
+  $token_set = array('donation', 'sustainer_upgrade');
+
+  $form['fsu_tokens']['tokens'] = array(
+    '#type' => 'item',
+    '#title' => t('Drupal tokens'),
+    '#description' => theme('token_tree', array(
+      'token_types' => $token_set,
+      'global_types' => FALSE,
+      'recursion_limit' => 2,
+      'click_insert' => FALSE,
+    )),
+  );
+}
+
+/**
+ * Implements hook_springboard_admin_admin_menu_items_alter().
+ *
+ * Add sustainers upgrade create link to Springboard donation form menu.
+ */
+function fundraiser_sustainers_upgrade_springboard_admin_admin_menu_items_alter(&$items) {
+  $items['admin/springboard/donation-forms/all']['_children']['node/add/sustainers-upgrade-form'] = array(
+    'link_path' => 'node/add/sustainers-upgrade-form',
+    'link_title' => 'Create a Sustainers Upgrade Form',
+    'menu_name' => 'springboard_admin_menu',
+    'expanded' => 1,
+    'customized' => 1,
+    'weight' => 1,
+    'access callback' => 'user_access',
+    'access arguments' => array(
+      'create sustainers_upgrade_form content',
+    ),
+  );
 }

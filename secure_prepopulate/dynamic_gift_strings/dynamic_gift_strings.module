@@ -37,48 +37,49 @@ function dynamic_gift_strings_form_alter(&$form, &$form_state, $form_id) {
     if ($node->type == 'donation_form') {
       if (isset($_SESSION['dynamic_gift_string_values'][$node->nid])
          && is_array($_SESSION['dynamic_gift_string_values'][$node->nid])) { // Coder: This is ok.
-        $gs = $_SESSION['dynamic_gift_string_values'][$node->nid]; // Coder: This is ok.
-        // create an array of amounts to replace the defaults
-        $amounts = _dynamic_gift_strings_parse_amounts($gs['amounts'], $node->show_other_amount, $node->nid);
-        // grab the default
-        $default = $gs['default'];
-        // parse out the form components so we can find the 'amount' field
         $component_hierarchy = _fundraiser_webform_parse_components($node->nid, $node->webform['components']);
-        $amount_field = &_fundraiser_webform_find_field($form, $component_hierarchy['amount']);
-        // make sure we have the field and a good array of amounts
-        if ($amount_field && $amounts) {
-          // we want to preserve the "other amount" option if present in the original form.
-          if (isset($amount_field["#options"]['other'])) {
-            $amounts['other'] = t('Other');
-          }
-          $amount_field['#options'] = $amounts;
+        $gs = $_SESSION['dynamic_gift_string_values'][$node->nid]; // Coder: This is ok.
+        if (!empty($gs['amounts'])) {
+          // create an array of amounts to replace the defaults
+          $amounts = _dynamic_gift_strings_parse_amounts($gs['amounts'], $node->show_other_amount, $node->nid);
+          // grab the default
+          $default = !empty($gs['default']) ? $gs['default'] : NULL;
+          // parse out the form components so we can find the 'amount' field
+          $amount_field = &_fundraiser_webform_find_field($form, $component_hierarchy['amount']);
+          // make sure we have the field and a good array of amounts
+          if ($amount_field && $amounts) {
+            // we want to preserve the "other amount" option if present in the original form.
+            if (isset($amount_field["#options"]['other'])) {
+              $amounts['other'] = t('Other');
+            }
+            $amount_field['#options'] = $amounts;
 
-          // Set the default if available and in the options.
-          if (is_numeric($default) && isset($amount_field['#options'][$default])) {
-            $amount_field['#default_value'] = $default;
-          }
-          // Unset if the default value isn't set nor in the options.
-          else {
-            unset($amount_field['#default_value']);
+            // Set the default if available and in the options.
+            if (is_numeric($default) && isset($amount_field['#options'][$default])) {
+              $amount_field['#default_value'] = $default;
+            }
+            // Unset if the default value isn't set nor in the options.
+            else {
+              unset($amount_field['#default_value']);
+            }
           }
         }
         // Might there be recurring ask amounts too?
         if (module_exists('fundraiser_sustainers') && isset($gs['recurring_amounts'])
-          && isset($node->recurring_setting) && $node->recurring_setting != 'never'
+          && isset($node->recurring_setting) && $node->recurring_setting != 'never'  // Not relevant if non-recurring form.
+          && !($node->recurring_setting == 'user_choice' && empty($node->recurring_dual_ask_amounts))  // Not relevant if user-choice form that only uses the one-time ask amounts.
         ) {
           $recurring_amounts = _dynamic_gift_strings_parse_amounts($gs['recurring_amounts'], $node->recurring_show_other_amount, $node->nid);
-          $recurring_default = $gs['recurring_default'];
+          $recurring_default = !empty($gs['recurring_default']) ? $gs['recurring_default'] : NULL;
           // parse out the form components so we can find the 'amount' field
-          $field_name = ($node->recurring_setting == 'always' && empty($component_hierarchy['recurring_amount'])) ?
-            'amount' : 'recurring_amount'
-          ;
+          $field_name = ($node->recurring_setting == 'always') ? 'amount' : 'recurring_amount';
           if (!empty($component_hierarchy[$field_name])) {
-            $recurring_amount_field = &_fundraiser_webform_find_field($form, $component_hierarchy[$field_name]);
             // make sure we have the field and a good array of amounts
+            $recurring_amount_field = &_fundraiser_webform_find_field($form, $component_hierarchy[$field_name]);
             if ($recurring_amount_field && $recurring_amounts) {
               // we want to preserve the "other amount" option if present in the original form.
               if (isset($recurring_amount_field["#options"]['other'])) {
-                $amounts['other'] = t('Other');
+                $recurring_amounts['other'] = t('Other');
               }
               $recurring_amount_field['#options'] = $recurring_amounts;
               if (is_numeric($recurring_default) && isset($recurring_amount_field['#options'][$recurring_default])) {
