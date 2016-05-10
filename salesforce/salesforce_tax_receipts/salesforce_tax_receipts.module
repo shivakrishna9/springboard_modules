@@ -1,0 +1,77 @@
+<?php
+
+/**
+ * @file
+ * Query and render donor tax records from Salesforce.
+ */
+
+/**
+ * Implements hook_menu().
+ */
+function salesforce_tax_receipts_menu() {
+  $items = array();
+
+  // TODO: Implement a custom permission handler
+  // to ensure the user has a salesforce account id.
+  $items['user/%user/tax-receipts'] = array(
+    'title' => 'Donation tax receipts',
+    'page callback' => 'salesforce_tax_receipts_summary',
+    'page arguments' => array(1),
+    'access callback' => 'user_edit_access',
+    'access arguments' => array(1),
+    'type' => MENU_LOCAL_TASK,
+  );
+
+  $items['user/%user/tax-receipts/%year'] = array(
+    'title' => 'Donation tax receipts for year X',
+    'page callback' => 'salesforce_tax_receipts_by_year',
+    'page arguments' => array(1),
+    'access callback' => 'user_edit_access',
+    'access arguments' => array(1),
+  );
+
+  return $items;
+}
+
+/**
+ * Generates a list of tax receipt years for the current user.
+ */
+function salesforce_tax_receipts_summary() {
+  global $user;
+
+  if ($account_id = salesforce_tax_receipts_user_account_id($user->uid)) {
+    return t('Hello, World! ' . $account_id);  
+  }
+
+  return 'So sad :-(';
+}
+
+function salesforce_tax_receipts_get_available_years() {
+
+}
+
+function salesforce_tax_receipts_get_by_year($year) {
+
+}
+
+/**
+ * Get the SF account id for a given user.
+ */
+function salesforce_tax_receipts_user_account_id($uid) {
+  // Sync map lookup requires this format.
+  $record = array(
+    'module' => 'user',
+    'delta' => 'user',
+    'drupal_id' => $uid,
+    'object_type' => 'Account',
+  );
+
+  $map = salesforce_sync_load_map($record);
+  
+  // If the user has been exported, return it's account id.
+  if (!empty($map)) {
+    return $map->sfid;
+  }
+
+  return FALSE;
+}
