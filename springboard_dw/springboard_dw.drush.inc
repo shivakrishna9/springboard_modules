@@ -37,6 +37,15 @@ function springboard_dw_drush_command() {
  * Processes the Springboard data warehouse export queue.
  */
 function drush_springboard_dw_export_queue_process() {
+
+  // If the data warehouse config is not set, don't try to process the queue
+  if (!variable_get('springboard_dw_api_endpoint') || !variable_get('springboard_dw_authentication_token')) {
+    drush_log('Could not process the data warehouse queue because config has not been set.');
+    watchdog("data_warehouse", 'Could not process the data warehouse queue because config has not been set.');
+    exit;
+  }
+
+  // Provide CLI feedback
   drush_print('Processing the Springboard data warehouse export queue');
 
   // Process the items in the queue.
