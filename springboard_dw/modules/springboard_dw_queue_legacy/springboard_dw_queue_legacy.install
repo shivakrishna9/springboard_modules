@@ -18,7 +18,7 @@ function springboard_dw_queue_legacy_install() {
     'petition message',
   );
   foreach ($types as $type) {
-    $values = db_insert('springboard_data_warehouse_queue_legacy')
+    db_insert('springboard_data_warehouse_queue_legacy')
       ->fields(array(
         'type' => $type,
         'highwater' => 0,
