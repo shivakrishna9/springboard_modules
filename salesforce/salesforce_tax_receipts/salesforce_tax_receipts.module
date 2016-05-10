@@ -40,6 +40,19 @@ function salesforce_tax_receipts_summary() {
   global $user;
 
   if ($account_id = salesforce_tax_receipts_user_account_id($user->uid)) {
+    // Get salesforce and build a query all fancy like. The alternative is
+    // to pass raw SOQL like $results = $sfapi->query($soql), which might be
+    // the right way to go for this.
+    $sf = salesforce_tax_receipts_get_salesforce();
+    $query = new SalesforceSelectQuery('Opportunity');
+    $query->fields = array('Id', 'Name');
+    $query->limit = 10;
+    // Execute query
+    $result = $sf->query($query);
+
+    // In the real world we would produce a data table with this info.
+    dsm($result);
+
     return t('Hello, World! ' . $account_id);  
   }
 
@@ -74,4 +87,20 @@ function salesforce_tax_receipts_user_account_id($uid) {
   }
 
   return FALSE;
+}
+
+/**
+ * Gets the active Salesforce connection object. 
+ * TODO: There is probably a standard wrapper function for this
+ * somewhere.
+ */
+function salesforce_tax_receipts_get_salesforce() {
+  $sfapi = salesforce_get_api();
+  
+  if (!is_object($sfapi) || !$sfapi->isAuthorized()) {
+    // Throw error, log and exit gracefully.
+    return FALSE;
+  }
+
+  return $sfapi;
 }
