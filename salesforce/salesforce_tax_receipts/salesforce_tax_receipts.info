@@ -3,3 +3,5 @@ description = Query and render donor tax records from Salesforce.
 package = Salesforce
 core = 7.x
 dependencies[] = salesforce
+
+configure = admin/config/services/salesforce/salesforce_tax_receipts

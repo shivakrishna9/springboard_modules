@@ -11,6 +11,16 @@
 function salesforce_tax_receipts_menu() {
   $items = array();
 
+  $items['admin/config/services/salesforce/salesforce_tax_receipts'] = array(
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('salesforce_tax_receipts_admin'),
+    'access arguments' => array('administer Salesforce_tax_receipts settings'),
+    'title' => 'Salesforce Tax Receipts',
+    'type' => MENU_NORMAL_ITEM,
+    'file' => 'salesforce_tax_receipts.admin.inc',
+    'description' => 'Manage Salesforce Tax Receipts settings.',
+  );
+
   // TODO: Implement a custom permission handler
   // to ensure the user has a salesforce account id.
   $items['user/%user/tax-receipts'] = array(
@@ -29,6 +39,8 @@ function salesforce_tax_receipts_menu() {
     'access callback' => 'user_edit_access',
     'access arguments' => array(1),
   );
+
+  // @TODO menu item for individual tax receipts.
 
   return $items;
 }
@@ -53,7 +65,7 @@ function salesforce_tax_receipts_summary() {
     // In the real world we would produce a data table with this info.
     dsm($result);
 
-    return t('Hello, World! ' . $account_id);  
+    return t('Hello, World! ' . $account_id);
   }
 
   return 'So sad :-(';
@@ -80,7 +92,7 @@ function salesforce_tax_receipts_user_account_id($uid) {
   );
 
   $map = salesforce_sync_load_map($record);
-  
+
   // If the user has been exported, return it's account id.
   if (!empty($map)) {
     return $map->sfid;
@@ -90,13 +102,13 @@ function salesforce_tax_receipts_user_account_id($uid) {
 }
 
 /**
- * Gets the active Salesforce connection object. 
+ * Gets the active Salesforce connection object.
  * TODO: There is probably a standard wrapper function for this
  * somewhere.
  */
 function salesforce_tax_receipts_get_salesforce() {
   $sfapi = salesforce_get_api();
-  
+
   if (!is_object($sfapi) || !$sfapi->isAuthorized()) {
     // Throw error, log and exit gracefully.
     return FALSE;
