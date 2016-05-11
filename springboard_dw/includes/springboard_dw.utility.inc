@@ -8,10 +8,11 @@
 /**
  * Get all entity properties by way of a wrapper.
  *
- * @param $wrapper
+ * @param object $wrapper
  *   A wrapper object used to key off to get key value formatted entities.
  *
  * @return array
+ *   Entity values
  */
 function springboard_dw_get_all_entity_properties($wrapper) {
 
@@ -27,12 +28,13 @@ function springboard_dw_get_all_entity_properties($wrapper) {
 /**
  * Get the webform submission dated keyed according to submission.
  *
- * @param $nid
+ * @param int $nid
  *   The node ID to retrieve webform submission data by.
- * @param $sid
+ * @param int $sid
  *   The submission ID to retrieve webform submission data by.
  *
  * @return array
+ *   The keyed submission data array.
  */
 function springboard_dw_webform_submission_data_keyed($nid, $sid) {
 
