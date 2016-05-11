@@ -457,7 +457,11 @@ function sba_message_action_form_submit_success($form, &$form_state) {
     $node = $form['#node'];
     $sid = !empty($_SESSION['webform_confirmations_sid']) ? $_SESSION['webform_confirmations_sid'] : FALSE;
 
-    springboard_advocacy_success($_SESSION['warehouse_node_data'], $_SESSION['warehouse_contact_data'], $_SESSION['warehouse_response_data'], $sid);
+    springboard_advocacy_success($_SESSION['springboard_dw']['node_data'], $_SESSION['springboard_dw']['contact_data'], $_SESSION['springboard_dw']['response_data'], $sid);
+
+  // Cleanup the session data now that it has been used for the advocacy
+  // success hook call and is no longer needed.
+  unset($_SESSION['springboard_dw']);
 }
 /**
  * Helper function to build message bodies.
