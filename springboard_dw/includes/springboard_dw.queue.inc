@@ -7,10 +7,6 @@
 
 /**
  * Queue processing hook.
- * Ideas:
- *  - Add a time argument.
- *  - Add a queue argument (like salesforce queue).
- *  - Make sure this is locked correctly.
  */
 function springboard_dw_process_queue() {
 
@@ -51,9 +47,12 @@ function springboard_dw_process_queue() {
 
   /*
    * Loop through any failed API call items and release them back onto the queue
-   * This has to be done because releasing directly within the processing loop causes an infinite loop as the failed
-   * item is added back immediately to the top of the queue instead of being postponed till the next queue batch
-   * (Documented https://www.drupal.org/node/1524550 and https://www.drupal.org/node/1832818)
+   * This has to be done because releasing directly within the processing
+   * loop causes an infinite loop as the failed
+   * item is added back immediately to the top of the queue instead of being
+   * postponed till the next queue batch
+   * (Documented https://www.drupal.org/node/1524550
+   * and https://www.drupal.org/node/1832818)
    */
   foreach ($failed_queue_items as $queue_item) :
         $queue->releaseItem($queue_item);
@@ -75,12 +74,13 @@ function springboard_dw_cron_queue_info() {
 }
 
 /**
- * Helper function to query the data warehouse table to determine if this item has been recorded as being warehoused already.
+ * Query the data warehouse table to check if an item has been recorded already.
  *
- * @param $type
+ * @param string $type
  *   The type of warehouse object object to check against in the DB query.
- * @param $drupal_id
- *   The unique identifier for the item (typically a Drupal ID unless it is a message item in which case it is a MongoId string)
+ * @param int $drupal_id
+ *   The unique identifier for the item (typically a Drupal ID unless it is
+ *   a message item in which case it is a MongoId string).
  */
 function springboard_dw_item_is_warehoused($type, $drupal_id) {
 
@@ -99,10 +99,11 @@ function springboard_dw_item_is_warehoused($type, $drupal_id) {
 /**
  * Mark an item in Drupal as being warehoused.
  *
- * @param $type
+ * @param string $type
  *   The type or identifier for what kind of item we are tracking.
- * @param $identifier
- *   The unique identifier for the item (typically a Drupal ID unless it is a message item in which case it is a MongoId string)
+ * @param mixed $identifier
+ *   The unique identifier for the item (typically a Drupal ID
+ *   unless it is a message item in which case it is a MongoId string).
  *
  * @throws \Exception
  */
