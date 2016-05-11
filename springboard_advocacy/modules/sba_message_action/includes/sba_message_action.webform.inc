@@ -72,9 +72,9 @@ function sba_message_action_send_message(array $user_message, array $form_state)
         // Set session data to use in later in
         // sba_message_action_form_submit_success hook that needs to have $sid
         // present
-        $_SESSION['warehouse_node_data'] =  $node;
-        $_SESSION['warehouse_contact_data'] =  $contact;
-        $_SESSION['warehouse_response_data'] =  (array) $response->data;
+        $_SESSION['springboard_dw']['node_data'] =  $node;
+        $_SESSION['springboard_dw']['contact_data'] =  $contact;
+        $_SESSION['springboard_dw']['response_data'] =  (array) $response->data;
       }
     }
   }
