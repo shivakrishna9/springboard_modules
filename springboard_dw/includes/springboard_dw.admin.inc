@@ -73,11 +73,14 @@ function springboard_dw_admin_warehouse_reset_form() {
 }
 
 /**
- * Validation method to make sure verification is made before deleting pending queue items and truncating warehouse table.
+ * Validation method for verification before resetting warehouse table.
+ *
  * Implements hook_form_validate()
  *
- * @param $form
- * @param $form_state
+ * @param object $form
+ *   The form object to validate.
+ * @param object $form_state
+ *   The current form state object.
  */
 function springboard_dw_admin_warehouse_reset_form_validate(&$form, &$form_state) {
 
@@ -87,11 +90,14 @@ function springboard_dw_admin_warehouse_reset_form_validate(&$form, &$form_state
 }
 
 /**
- * Form submission handler for resetting the Springboard data warehouse queue and tracking table.
+ * Form submission handler for resetting the data warehouse tracking.
+ *
  * Implements hook_form_submit()
  *
- * @param $form
- * @param $form_state
+ * @param object $form
+ *   The form object to validate.
+ * @param object $form_state
+ *   The current form state object.
  */
 function springboard_dw_admin_warehouse_reset_form_submit(&$form, &$form_state) {
 
@@ -137,11 +143,14 @@ function springboard_dw_admin_warehouse_reset_config_form() {
 }
 
 /**
- * Validation method to make sure verification is made before resetting data warehouse config.
+ * Validation method for verification before resetting data warehouse config.
+ *
  * Implements hook_form_validate()
  *
- * @param $form
- * @param $form_state
+ * @param object $form
+ *   The form object to validate.
+ * @param object $form_state
+ *   The current form state object.
  */
 function springboard_dw_admin_warehouse_reset_config_form_validate(&$form, &$form_state) {
 
@@ -152,10 +161,13 @@ function springboard_dw_admin_warehouse_reset_config_form_validate(&$form, &$for
 
 /**
  * Form submission handler for resetting the Springboard data warehouse config.
+ *
  * Implements hook_form_submit()
  *
- * @param $form
- * @param $form_state
+ * @param object $form
+ *   The form object to validate.
+ * @param object $form_state
+ *   The current form state object.
  */
 function springboard_dw_admin_warehouse_reset_config_form_submit(&$form, &$form_state) {
 
