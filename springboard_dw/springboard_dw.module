@@ -22,7 +22,7 @@ require_once 'includes/springboard_dw.utility.inc';
  */
 function springboard_dw_node_view($node, $view_mode, $langcode) {
   if (!variable_get('springboard_dw_api_endpoint') || !variable_get('springboard_dw_authentication_token')) {
-    drupal_set_message(t('Springboard data warehouse settings have not been configured. <a href="/admin/config/services/springboard-dw">Update your settings.</a>', 'warning'));
+    drupal_set_message(t('Springboard data warehouse settings have not been configured. <a href="/admin/config/services/springboard-dw">Update your settings.</a>'), 'warning');
   }
 }
 
