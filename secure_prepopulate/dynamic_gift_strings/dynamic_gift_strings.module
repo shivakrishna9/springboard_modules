@@ -43,7 +43,7 @@ function dynamic_gift_strings_form_alter(&$form, &$form_state, $form_id) {
           // create an array of amounts to replace the defaults
           $amounts = _dynamic_gift_strings_parse_amounts($gs['amounts'], $node->show_other_amount, $node->nid);
           // grab the default
-          $default = $gs['default'];
+          $default = !empty($gs['default']) ? $gs['default'] : NULL;
           // parse out the form components so we can find the 'amount' field
           $amount_field = &_fundraiser_webform_find_field($form, $component_hierarchy['amount']);
           // make sure we have the field and a good array of amounts
@@ -70,7 +70,7 @@ function dynamic_gift_strings_form_alter(&$form, &$form_state, $form_id) {
           && !($node->recurring_setting == 'user_choice' && empty($node->recurring_dual_ask_amounts))  // Not relevant if user-choice form that only uses the one-time ask amounts.
         ) {
           $recurring_amounts = _dynamic_gift_strings_parse_amounts($gs['recurring_amounts'], $node->recurring_show_other_amount, $node->nid);
-          $recurring_default = $gs['recurring_default'];
+          $recurring_default = !empty($gs['recurring_default']) ? $gs['recurring_default'] : NULL;
           // parse out the form components so we can find the 'amount' field
           $field_name = ($node->recurring_setting == 'always') ? 'amount' : 'recurring_amount';
           if (!empty($component_hierarchy[$field_name])) {
