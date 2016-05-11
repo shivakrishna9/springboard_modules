@@ -604,7 +604,7 @@ function fundraiser_sustainers_form_node_form_alter(&$form, &$form_state, $form_
       ),
     );
     // Figure out the appropriate default value for "Donation type form component."
-    $default_component = 'radios';
+    $default_component = 'checkbox';
     if (!empty($form['#node']->recurring_donation_type_component)) {
       $default_component = $form['#node']->recurring_donation_type_component;
     } else if (module_exists('fundraiser_webform') && !empty($form['#node']->webform)) {
