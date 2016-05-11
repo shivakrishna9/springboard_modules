@@ -454,13 +454,10 @@ function sba_message_action_form_submit($form, &$form_state) {
  *   The form_state array.
  */
 function sba_message_action_form_submit_success($form, &$form_state) {
-  if (!empty($_SESSION['success_messages'])) {
-
     $node = $form['#node'];
     $sid = !empty($_SESSION['webform_confirmations_sid']) ? $_SESSION['webform_confirmations_sid'] : FALSE;
 
     springboard_advocacy_success($_SESSION['warehouse_node_data'], $_SESSION['warehouse_contact_data'], $_SESSION['warehouse_response_data'], $sid);
-  }
 }
 /**
  * Helper function to build message bodies.
