@@ -8,24 +8,24 @@
 /**
  * Implements hook_menu().
  */
-function salesforce_tax_receipts_menu() {
+function salesforce_donation_history_menu() {
   $items = array();
 
-  $items['admin/config/services/salesforce/salesforce_tax_receipts'] = array(
+  $items['admin/config/salesforce/salesforce_donation_history'] = array(
     'page callback' => 'drupal_get_form',
-    'page arguments' => array('salesforce_tax_receipts_admin'),
-    'access arguments' => array('administer Salesforce_tax_receipts settings'),
-    'title' => 'Salesforce Tax Receipts',
+    'page arguments' => array('salesforce_donation_history_admin'),
+    'access arguments' => array('administer salesforce_donation_history settings'),
+    'title' => 'Salesforce Donation History',
     'type' => MENU_NORMAL_ITEM,
-    'file' => 'salesforce_tax_receipts.admin.inc',
-    'description' => 'Manage Salesforce Tax Receipts settings.',
+    'file' => 'salesforce_donation_history.admin.inc',
+    'description' => 'Manage Salesforce Donation History settings.',
   );
 
   // TODO: Implement a custom permission handler
   // to ensure the user has a salesforce account id.
   $items['user/%user/tax-receipts'] = array(
     'title' => 'Donation tax receipts',
-    'page callback' => 'salesforce_tax_receipts_summary',
+    'page callback' => 'salesforce_donation_history_summary',
     'page arguments' => array(1),
     'access callback' => 'user_edit_access',
     'access arguments' => array(1),
@@ -34,7 +34,7 @@ function salesforce_tax_receipts_menu() {
 
   $items['user/%user/tax-receipts/%year'] = array(
     'title' => 'Donation tax receipts for year X',
-    'page callback' => 'salesforce_tax_receipts_by_year',
+    'page callback' => 'salesforce_donation_history_by_year',
     'page arguments' => array(1),
     'access callback' => 'user_edit_access',
     'access arguments' => array(1),
@@ -46,16 +46,41 @@ function salesforce_tax_receipts_menu() {
 }
 
 /**
+ * Gets all opportunities for a user.
+ *
+ * @param $uid
+ *   User ID.
+ *
+ * @return array
+ *   An array of opportunity data that was specified in the SOQL query stored in
+ *   the variable salesforce_donation_history_query.
+ */
+function salesforce_donation_history_get_opportunities($uid) {
+
+  if ($account_id = salesforce_donation_history_user_account_id($uid)) {
+    $sfapi = salesforce_get_api();
+    $results = $sfapi->query($soql);
+    if (!isset($results['errorCode'])) {
+      dpm($$results);
+    }
+    else {
+      watchdog('Salesforce Donation History', $results['errorCode'] . ':' . $results['message'], array(), WATCHDOG_ERROR);
+    }
+
+  }
+}
+
+/**
  * Generates a list of tax receipt years for the current user.
  */
-function salesforce_tax_receipts_summary() {
+function salesforce_donation_history_summary() {
   global $user;
 
-  if ($account_id = salesforce_tax_receipts_user_account_id($user->uid)) {
+  if ($account_id = salesforce_donation_history_user_account_id($user->uid)) {
     // Get salesforce and build a query all fancy like. The alternative is
     // to pass raw SOQL like $results = $sfapi->query($soql), which might be
     // the right way to go for this.
-    $sf = salesforce_tax_receipts_get_salesforce();
+    $sf = salesforce_donation_history_get_salesforce();
     $query = new SalesforceSelectQuery('Opportunity');
     $query->fields = array('Id', 'Name');
     $query->limit = 10;
@@ -71,18 +96,18 @@ function salesforce_tax_receipts_summary() {
   return 'So sad :-(';
 }
 
-function salesforce_tax_receipts_get_available_years() {
+function salesforce_donation_history_get_available_years() {
 
 }
 
-function salesforce_tax_receipts_get_by_year($year) {
+function salesforce_donation_history_get_by_year($year) {
 
 }
 
 /**
  * Get the SF account id for a given user.
  */
-function salesforce_tax_receipts_user_account_id($uid) {
+function salesforce_donation_history_user_account_id($uid) {
   // Sync map lookup requires this format.
   $record = array(
     'module' => 'user',
@@ -106,7 +131,7 @@ function salesforce_tax_receipts_user_account_id($uid) {
  * TODO: There is probably a standard wrapper function for this
  * somewhere.
  */
-function salesforce_tax_receipts_get_salesforce() {
+function salesforce_donation_history_get_salesforce() {
   $sfapi = salesforce_get_api();
 
   if (!is_object($sfapi) || !$sfapi->isAuthorized()) {

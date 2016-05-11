@@ -1,0 +1,14 @@
+<?php
+
+/**
+ * @file
+ * Install functions for salesforce_donation_history module.
+ */
+
+/**
+ * Implements hook_schema().
+ */
+function salesforce_donation_history_schema() {
+  $schema['cache_salesforce_donation_history'] = drupal_get_schema_unprocessed('system', 'cache');
+  return $schema;
+}
