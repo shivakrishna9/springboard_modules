@@ -611,12 +611,20 @@ function fundraiser_sustainers_form_node_form_alter(&$form, &$form_state, $form_
       $form['#node']->recurring_donation_type_options :
       variable_get('fundraiser_sustainers_default_donation_type_options', 'NO_RECURR|One-time|||recurs|Monthly')
     ;
+    $donation_type_help_text = isset($form['#node']->recurring_donation_type_help_text) ?
+      $form['#node']->recurring_donation_type_help_text :
+      t('Selecting "Monthly" will cause your credit card to be charged once per month until its expiration date.')
+    ;
     if (module_exists('fundraiser_webform') && !empty($form['#node']->webform)) {
       // The "glue" module is fundraiser_webform. Look for existing "recurs_monthly" component.
       foreach ($form['#node']->webform['components'] as $component) {
         if ($component['form_key'] == 'recurs_monthly' && $component['type'] != 'hidden') {
           $default_component = empty($component['extra']['multiple']) ? 'radios' : 'checkbox';
-          $donation_types_string = str_replace("\n", '|||', $component['extra']['items']);
+          $donation_type_help_text = $component['extra']['description'];
+          // For now, we're only providing node-edit configuration magic for radios components.
+          if ($default_component == 'radios') {
+            $donation_types_string = str_replace("\n", '|||', $component['extra']['items']);
+          }
           break;
         }
       }
@@ -677,18 +685,27 @@ function fundraiser_sustainers_form_node_form_alter(&$form, &$form_state, $form_
         '#title_display' => 'invisible',
       );
     }
+    // Substitute for the table header in theme_fundraiser_sustainers_donation_type_options().
+    $form['fundraiser_settings']['fundraiser_sustainers']['recurring_donation_type_help_text_heading'] = array(
+      '#type' => 'container',
+      '#states' => array(
+        'visible' => array(
+          'select[name*=recurring_setting]' => array('value' => 'user_choice'),
+          ':input[name*=recurring_donation_type_component]' => array('value' => 'checkbox'),
+        ),
+      ),
+      'markup' => array(
+        '#markup' => '<hr /><h4>' . t("One-time/recurring selection") . '</h4>',
+      )
+    );
     $form['fundraiser_settings']['fundraiser_sustainers']['recurring_donation_type_help_text'] = array(
       '#type' => 'textfield',
-      '#description' => t("This help text will appear below the one-time/recurring buttons on the donation form."),
-      '#default_value' => isset($form['#node']->recurring_donation_type_help_text) ?
-        $form['#node']->recurring_donation_type_help_text :
-        t('Selecting "Monthly" will cause your credit card to be charged once per month until its expiration date.')
-      ,
+      '#description' => t("This help text will appear below the one-time/recurring checkbox or buttons on the donation form."),
+      '#default_value' => $donation_type_help_text,
       '#size' => 80,
       '#states' => array(
         'visible' => array(
           'select[name*=recurring_setting]' => array('value' => 'user_choice'),
-          ':input[name*=recurring_donation_type_component]' => array('!value' => 'checkbox'),
         ),
       ),
     );
