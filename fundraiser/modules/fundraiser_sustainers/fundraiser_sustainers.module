@@ -1381,7 +1381,7 @@ function fundraiser_sustainers_fundraiser_field_info() {
       'items' => 'recurs|Yes',
       'multiple' => 1,
     ),
-    '#node_extra_settings' => array('description' => TRUE, 'items' => TRUE, 'multiple' => TRUE),  // Make these updatable.
+    '#node_extra_settings' => array('description' => TRUE, 'multiple' => TRUE),  // Make these updatable.
     '#allow_update' => 1,
     '#allow_respawn' => 1,
     '#reset_value' => 1,
@@ -1555,19 +1555,20 @@ function _fundraiser_sustainers_recurs_monthly_field_create($fundraiser, $field)
     // Set the "multiple" attribute: TRUE for a checkbox, FALSE for radios.
     $field['#extra']['multiple'] = empty($fundraiser->recurring_donation_type_component) ?
       TRUE : $field['#extra']['multiple'] = ($fundraiser->recurring_donation_type_component == 'checkbox');
+    // Use the help text given in the node edit form.
+    if (isset($fundraiser->recurring_donation_type_help_text)) {
+      $field['#extra']['description'] = t($fundraiser->recurring_donation_type_help_text);
+    }
     // Was a non-checkbox (i.e., radios) component requested?
     if (!$field['#extra']['multiple']) {
       // Use the options and default value given in the node edit form.
       if (!empty($fundraiser->recurring_donation_type_options)) {
         $field['#extra']['items'] = is_array($fundraiser->recurring_donation_type_options) ?  // Array comes from node edit form, string comes from DB.
           implode("\n", $fundraiser->recurring_donation_type_options) : str_replace('|||', "\n", $fundraiser->recurring_donation_type_options);
+        $field['#node_extra_settings']['items'] = TRUE;  //@TODO: If we ever make items configurable from the node edit form for checkbox components, move this up to fundraiser_sustainers_fundraiser_field_info().
       }
       if (!empty($fundraiser->recurring_default_donation_type)) {
         $field['#value'] = $fundraiser->recurring_default_donation_type;
-      }
-      if (isset($fundraiser->recurring_donation_type_help_text)) {
-        //@TODO: Does this require delete-component action below?
-        $field['#extra']['description'] = t($fundraiser->recurring_donation_type_help_text);
       }
       // Default to not showing the component title.
       $field['#extra']['title_display'] = 'none';
@@ -1583,6 +1584,10 @@ function _fundraiser_sustainers_recurs_monthly_field_create($fundraiser, $field)
             // Toggle component title display on/off when switching between checkbox and radios.
             $field['#extra']['title_display'] = $field['#extra']['multiple'] ? 'before' : 'none';
             $field['#node_extra_settings']['title_display'] = TRUE;
+            if ($field['#extra']['multiple']) {
+              // If switching from radios to checkbox, also make sure we overwrite the selection items.
+              $field['#node_extra_settings']['items'] = TRUE;  //@TODO: If we ever make items configurable from the node edit form for checkbox components, we can lose this.
+            }
           }
           break;
         }
