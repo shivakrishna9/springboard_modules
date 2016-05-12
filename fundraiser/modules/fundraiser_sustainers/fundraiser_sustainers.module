@@ -4007,7 +4007,7 @@ function _fundraiser_sustainers_update_sustainers_node($node) {
     'recurring_donation_amounts' => implode('|||', $imploded_amounts),
     'show_other_amount' => isset($node->recurring_show_other_amount) ? $node->recurring_show_other_amount : TRUE,
     'minimum_donation_amount' => isset($node->recurring_minimum_donation_amount) ? $node->recurring_minimum_donation_amount : $node->minimum_donation_amount,
-    'default_amount' => isset($node->recurring_default_amount) ? $node->recurring_default_amount : $node->default_amount,
+    'default_amount' => property_exists($node, 'recurring_default_amount') ? $node->recurring_default_amount : $node->default_amount,
     'dual_ask_amounts' => (isset($node->recurring_dual_ask_amounts) && $node->recurring_dual_ask_amounts && $node->recurring_setting == 'user_choice'),
     'donation_type_component' => isset($node->recurring_donation_type_component) ? $node->recurring_donation_type_component : NULL,
     'donation_type_options' => empty($node->recurring_donation_type_options) ? NULL : (
