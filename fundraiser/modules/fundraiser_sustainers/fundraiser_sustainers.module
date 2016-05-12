@@ -626,7 +626,7 @@ function fundraiser_sustainers_form_node_form_alter(&$form, &$form_state, $form_
       '#type' => 'radios',
       '#title' => t('Recurring donation selector'),
       '#options' => array(
-        'checkbox' => t('On/off checkbox'),
+        'checkbox' => t('Checkbox'),
         'radios' => t('Radio buttons'),
       ),
       '#default_value' => $default_component,
