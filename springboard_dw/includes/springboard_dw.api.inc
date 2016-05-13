@@ -157,8 +157,12 @@ function springboard_dw_track_item_warehouse_success($type, $identifier) {
  *   The type of log to make.
  */
 function springboard_dw_api_log_error($error, $endpoint, $item, $response_body, $log_type = 'warning') {
+  // Define the endpoint.
+  $endpoint = springboard_dw_api_endpoint($endpoint);
+
   // Log the API error.
   drush_log($error, $log_type);
-  drush_print($endpoint . '?' . http_build_query($item));
+  drush_print($endpoint . '?' . http_build_query(springboard_dw_api_prep_call
+    ($item)));
   drush_print_r($response_body);
 }
