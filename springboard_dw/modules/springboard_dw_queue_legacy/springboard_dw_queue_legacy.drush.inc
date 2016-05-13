@@ -174,7 +174,7 @@ function springboard_dw_queue_legacy_setup_batch($type = '') {
   else {
     $highwater = time();
   }
-  drush_log(dt('Setting highwater mark to :highwater', array(':highwater' => date(DATE_ATOM, $highwater))), 'ok');
+  drush_log(dt('Setting highwater mark to %highwater', array('%highwater' => date(DATE_ATOM, $highwater))), 'ok');
   springboard_dw_queue_legacy_set_highwater_mark($type, $highwater);
 }
 
@@ -480,8 +480,13 @@ function springboard_dw_queue_legacy_get_advocacy_message_details($action_id) {
  * @return array
  */
 function springboard_dw_queue_legacy_get_advocacy_message_details_page($action_id, $page = 1) {
-  // Composer Vendor autoload.
-  drush_autoload(DRUPAL_ROOT . "/sites/all/files/vendor/autoload.php");
+  // Composer Vendor autoload
+  if(function_exists('drush_autoload')) {
+    drush_autoload("sites/all/libraries/springboard_composer/vendor/autoload.php");
+  }
+  else {
+    require_once ("sites/all/libraries/springboard_composer/vendor/autoload.php");
+  }
 
   // Load Guzzle client.
   $guzzle = new GuzzleHttp\Client(['http_errors' => FALSE]);
