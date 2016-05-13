@@ -180,7 +180,7 @@ function springboard_dw_queue_legacy_setup_batch($type = '') {
   else {
     $highwater = time();
   }
-  drush_log(dt('Setting highwater mark to :highwater', array(':highwater' => date(DATE_ATOM, $highwater))), 'ok');
+  drush_log(dt('Setting highwater mark to %highwater', array('%highwater' => date(DATE_ATOM, $highwater))), 'ok');
   springboard_dw_queue_legacy_set_highwater_mark($type, $highwater);
 }
 
@@ -242,6 +242,7 @@ function springboard_dw_queue_legacy_donations($records, $operation_details, &$c
       springboard_dw_track_item_warehouse_queued('donation', $record->did);
     }
   }
+  $context['message'] = $operation_details;
 }
 
 /**
@@ -468,10 +469,10 @@ function springboard_dw_queue_legacy_get_advocacy_message_details($action_id) {
   $details = array();
   $current_page = 1;
   $last_page = 2;
-  while ($current_page < $last_page) {
+  while ($current_page <= $last_page) {
     drush_log('Getting page ' . $current_page . ' of data for ' . $action_id, 'ok');
-    $page = springboard_dw_queue_legacy_get_advocacy_message_details_page($action_id, $page->current_page + 1);
-    $current_page = $page['current_page'];
+    $page = springboard_dw_queue_legacy_get_advocacy_message_details_page($action_id, $current_page);
+    $current_page = $page['current_page'] + 1;
     $last_page = $page['last_page'];
     foreach ($page['data'] as $message) {
       $details[] = array(
@@ -491,8 +492,13 @@ function springboard_dw_queue_legacy_get_advocacy_message_details($action_id) {
  *   Return an array of message data for a specified pagination offset.
  */
 function springboard_dw_queue_legacy_get_advocacy_message_details_page($action_id, $page = 1) {
-  // Composer Vendor autoload.
-  drush_autoload(DRUPAL_ROOT . "/sites/all/files/vendor/autoload.php");
+  // Composer Vendor autoload
+  if(function_exists('drush_autoload')) {
+    drush_autoload("sites/all/libraries/springboard_composer/vendor/autoload.php");
+  }
+  else {
+    require_once ("sites/all/libraries/springboard_composer/vendor/autoload.php");
+  }
 
   // Load Guzzle client.
   $guzzle = new Client(['http_errors' => FALSE]);
