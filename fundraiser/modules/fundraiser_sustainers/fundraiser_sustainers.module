@@ -2489,6 +2489,10 @@ function fundraiser_sustainers_change_charge_date($master_did, $new_day) {
         salesforce_genmap_send_object_to_queue('salesforce_donation', 'update',
           $sf_donation->node, $sf_donation->did, $sf_donation, 'donation');
       }
+
+      // Fire a hook so that other modules can respond to the sustainer
+      // charge date change.
+      module_invoke_all('fundraiser_sustainers_change_charge_date', $donation);
     }
   }
 }
@@ -3320,6 +3324,9 @@ function fundraiser_sustainers_fundraiser_donation_cancel($donation) {
     'cancellation_reason' => $reason,
   );
   _fundraiser_sustainers_update_recurring($recurring);
+
+  // Fire a hook so that other modules can respond to the deletion.
+  module_invoke_all('fundraiser_sustainers_fundraiser_donation_cancel', $donation);
 }
 
 /**
@@ -3635,6 +3642,9 @@ function _fundraiser_sustainers_update_recurring($donation) {
     $log = fundraiser_sustainers_log();
     $log->log($donation, $original);
   }
+
+  // Fire a hook so that other modules can respond to the update.
+  module_invoke_all('fundraiser_sustainers_update_recurring', $donation);
 }
 
 /**
@@ -3650,6 +3660,9 @@ function _fundraiser_sustainers_delete_recurring($did) {
   );
   $log = fundraiser_sustainers_log();
   $log->log($log_record, $original);
+
+  // Fire a hook so that other modules can respond to the deletion.
+  module_invoke_all('fundraiser_sustainers_delete_recurring', $did);
 }
 
 /**
