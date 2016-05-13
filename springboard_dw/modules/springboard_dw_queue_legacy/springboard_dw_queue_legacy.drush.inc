@@ -242,6 +242,7 @@ function springboard_dw_queue_legacy_donations($records, $operation_details, &$c
       springboard_dw_track_item_warehouse_queued('donation', $record->did);
     }
   }
+  $context['message'] = $operation_details;
 }
 
 /**
