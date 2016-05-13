@@ -288,6 +288,29 @@ function springboard_dw_fundraiser_donation_success($donation) {
 }
 
 /**
+ * Hook for canceling warehouse sustainer donations by id.
+ *
+ * Implements fundraiser_sustainers_fundraiser_donation_cancel().
+ *
+ * @param object $did
+ *   The donation id to delete.
+ */
+function springboard_dw_fundraiser_sustainers_fundraiser_donation_cancel($donation) {
+  // Get the Drupal data warehouse queue.
+  $queue = DrupalQueue::get("springboard_dw_export");
+
+  // Queue the donation object which should not be in the queue,
+  // so there's no need to check if this item is warehoused.
+  $donation_item = springboard_dw_map_donation_item_cancel($donation);
+
+  // Create the queue item.
+  $queue->createItem($donation_item);
+
+  // Log the queue item.
+  springboard_dw_log_queue_item($donation_item);
+}
+
+/**
  * Hook to listen for new form items to ship to the data warehouse.
  *
  * Implements hook_node_insert().
@@ -867,9 +890,14 @@ function springboard_dw_map_advocacy_message_item($message, $full_message) {
  * @return array
  *   The mapped array ready for an api call.
  */
-function springboard_dw_map_donation_item($donation) {
+function springboard_dw_map_donation_item($donation, $update = FALSE) {
   // Get the donation object details and prep for warehousing (sb_donation).
   $donation_item = array();
+
+  // If user data is being passed to update, flag this queue item for an update.
+  if (!empty($user_data) && $update == TRUE) {
+    $contact_item['queue_item_update'] = TRUE;
+  }
 
   $donation_item['queue_type'] = 'donation';
   $donation_item['donation_id'] = $donation->did;
@@ -941,6 +969,30 @@ function springboard_dw_map_donation_item($donation) {
 
   // Add the extra props attributes.
   $donation_item['extra_props'] = json_encode(springboard_dw_extract_donation_extra_props($donation, $donation_item));
+
+  return $donation_item;
+}
+
+/**
+ * Map the donation object to set status to canceled to an array formatted for an
+ * API
+ * call.
+ *
+ * @param object $donation
+ *   The donation object.
+ *
+ * @return array
+ *   The mapped array ready for an api call.
+ */
+function springboard_dw_map_donation_item_cancel($donation) {
+  // Get the donation object details and prep for warehousing (sb_donation).
+  $donation_item = array();
+
+  $donation_item['queue_type'] = 'donation';
+  $donation_item['queue_item_update_status'] = TRUE;
+
+  $donation_item['donation_id'] = $donation->did;
+  $donation_item['status'] = $donation->status;
 
   return $donation_item;
 }
@@ -1263,8 +1315,21 @@ function springboard_dw_contact($item) {
  *   The queue information to send to the data warehouse.
  */
 function springboard_dw_donation($item) {
+
+  // Check if the queue item should be an update and
+  // route the endpoint accordingly.
+  $api_endpoint = isset($item['queue_item_update']) &&
+  $item['queue_item_update'] ? 'donation/update' : 'donation/create';
+
+  // If this is a status update call only, change the endpoint
+  if (isset($item['queue_item_update_status'])
+  && $item['queue_item_update_status']):
+    $api_endpoint = 'donation/update-status';
+    unset($item['queue_item_update_status']);
+  endif;
+
   // Make the API call.
-  $api_response = springboard_dw_api_call('donation/create', $item);
+  $api_response = springboard_dw_api_call($api_endpoint, $item);
 
   // If the response is successful, add the user_warehoused
   // parameter to the Drupal user account so we can skip this check in
@@ -1277,7 +1342,7 @@ function springboard_dw_donation($item) {
   }
   else {
     // Log the API error.
-    springboard_dw_api_log_error('Error sending donation API call.', 'donation/create', $item, json_decode($api_response->getBody()));
+    springboard_dw_api_log_error('Error sending donation API call.', $api_endpoint, $item, json_decode($api_response->getBody()));
 
     // Respond back with failure to retry in the queue.
     return FALSE;
