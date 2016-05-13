@@ -17,9 +17,9 @@ function _fundraiser_sustainers_upgrade_add_example() {
   $node->title = 'Default Sustainers Upgrade Form';
   $node->status = 1;
   $node->promote = 0;
-  $node->body[LANGUAGE_NONE][0]['value'] = 'Thank you [donation:first_name] [donation:last_name] [sustainer_upgrade:signout] for upgrading your monthly donation to [sustainer_upgrade:upgrade_amount_formatted].
+  $node->body[LANGUAGE_NONE][0]['value'] = 'Thank you [donation:first_name] [donation:last_name]. [sustainer_upgrade:signout] To upgrade your monthly donation to [sustainer_upgrade:upgrade_amount_formatted], click Confirm below.
 
-  Your original donation for [donation:currency:code][donation:amount], was made on [donation:order:created:] with your card ending in [donation:card_number]. You have [sustainer_upgrade:charges_remaining] charges remaining in this series, which will be upgraded to [sustainer_upgrade:upgrade_amount_formatted].';
+  Your original donation for [donation:currency:symbol][donation:amount], was made on [donation:order:created] with your card ending in [donation:card_number]. You have [sustainer_upgrade:charges_remaining] charges remaining in this series, which will be upgraded to [sustainer_upgrade:upgrade_amount_formatted].';
   $node->body[LANGUAGE_NONE][0]['format'] = 'filtered_html';
   $node->field_sustainers_upgrade_name[LANGUAGE_NONE][0]['value'] = "Default Sustainers Upgrade Form";
   $node->field_sustainers_upgrade_fail[LANGUAGE_NONE][0]['value'] = "Donation upgrade can not be completed.";

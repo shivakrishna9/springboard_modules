@@ -113,7 +113,7 @@ function silverpop_transact_form_webform_email_edit_form_alter(&$form, &$form_st
     $form['silverpop_transact_additional_tokens'] = array(
       '#type' => 'textarea',
       '#title' => t('Additional Silverpop Tokens'),
-      '#description' => t('All webform values are included automatically. Enter a list of key|value pairs for additional tokens to be used in Silverpop templates.'),
+      '#description' => t('All webform components and their submitted values are included automatically. Additional tokens can be included by entering key|value pairs in the following format:<br>site_name|[site:name]<br>donation_country|[donation:country]<br>donation_number|[donation:order:order-id]'),
       '#default_value' => $defaults['additional_tokens'],
       '#weight' => '-50',
     );
@@ -142,7 +142,7 @@ function silverpop_transact_form_fundraiser_admin_settings_alter(&$form, &$form_
     $form['fundraiser_sustainers']['fundraiser_cc_expiration_message']['silverpop_transact_cc_expiration_message_tokens'] = array(
       '#type' => 'textarea',
       '#title' => t('Silverpop Tokens'),
-      '#description' => t('Enter a list of key|value pairs for additional tokens to be used in Silverpop templates.'),
+      '#description' => t('Enter a list of key|value pairs for additional tokens to be used in Silverpop templates in the following format:<br>site_name|[site:name]<br>current_date|[current-date:short]<br>donation_number|[donation:order:order-id]'),
       '#default_value' => variable_get('silverpop_transact_cc_expiration_message_tokens'),
       '#weight' => '49',
     );
@@ -204,6 +204,8 @@ function silverpop_transact_mail_alter(&$message) {
       $webform_components = silverpop_transact_load_webform_components($message['params']['submission']->data, $message['params']['node']->webform['components']);
       $personalization_tokens = array_merge($drupal_tokens, $webform_components);
       silverpop_transact_create_mailing($message['to'], $settings['group_id'], $personalization_tokens);
+      // Set to false to stop drupal_mail() from sending.
+      $message['send'] = FALSE;
     }
   }
 }
@@ -259,7 +261,10 @@ function silverpop_transact_views_api() {
 function silverpop_transact_cron() {
   // Wrap in variable check for easy disabling without code push.
   if (variable_get('silverpop_transact_process_logs_during_cron', TRUE)) {
-    silverpop_transact_cron_log_status_update();
+    // Only check the Silverpop logs when in XML mode.
+    if (variable_get('silverpop_transact_model') == 'XML') {
+      silverpop_transact_cron_log_status_update();
+    }
   }
 
   // Cleanup the silverpop_transact_log table.
@@ -275,7 +280,7 @@ function silverpop_transact_cron() {
       ->range($row_limit - 1, 1)
       ->execute()->fetchField();
 
-    $filenames = db_select('silverpop_transact_log', s)
+    $filenames = db_select('silverpop_transact_log', 's')
       ->fields('s', array('filename'))
       ->condition('id', $min_row, '<')
       ->execute()->fetchCol();

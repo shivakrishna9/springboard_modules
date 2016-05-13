@@ -183,22 +183,51 @@ function commerce_paypal_wps_fundraiser_commerce_refund($payment_method, $refund
   }
 }
 
-/*
- *  Implements hook_form_alter().
+/**
+ * Alter the action form settings field.
  *
+ * This function was formerly an implemention of
+ * hook_form_rules_ui_edit_element_alter() but behaved inconsistently here
+ * in the gateway.inc file. Now it is renamed and called dynamically from
+ * fundraiser_commerce_form_rules_ui_edit_element_alter() using
+ * form_load_include().
+ *
+ * @param $form
+ * @param $form_state
  */
-function commerce_paypal_wps_form_rules_ui_edit_element_alter(&$form, &$form_state) {
+function commerce_paypal_wps_form_rules_ui_edit_element_builder(&$form, &$form_state) {
   // Adds needed refund field elements to PayPal settings form.
+  // The following two "if" checks are probably not needed, but retained for
+  // readability purposes.
   if (isset($form['parameter']['payment_method']['settings']['payment_method']['method_id']['#value'])) {
     $id = $form['parameter']['payment_method']['settings']['payment_method']['method_id']['#value'];
     $is_com = isset($form['parameter']['commerce_order']) ? 1 : 0;
     if ($id == 'paypal_wps' && $is_com) {
-      $rule = rules_config_load(arg(5));  //@TODO: is there a better way to get the rule name?
-      $actions = $rule->actions();
+      // Check if we're in the commerce_ui or rules UI admin pages.
+      if (arg(4) == 'reaction' && arg(5) == 'manage') {
+        // We're in the rules UI.
+        $rule = rules_config_load(arg(6));
+      }
+      elseif (arg(3) == 'payment-methods' && arg(4) == 'manage') {
+        // We're in the commerce payment method UI.
+        $rule = rules_config_load(arg(5));
+      }
+
+      // @ToDo: is there a better way to get the rule name?
+      $actions = !empty($rule) ? $rule->actions() : FALSE;
       if (!empty($actions)) {
         // Find the settings for the Authorize.net gateway action.
         foreach ($actions as $action) {
-          if($action->settings['payment_method']['method_id'] == 'paypal_wps' && $action->elementId() == arg(7)) {  //@TODO: is there a better way to get the action ID?
+          if (arg(7) == 'edit') {
+            // We're in the rules UI.
+            $action_id = arg(8);
+          }
+          else {
+            // We're in the commerce payment method UI.
+            $action_id = arg(7);
+          }
+          if (isset($action->settings['payment_method']['method_id']) && $action->settings['payment_method']['method_id'] == 'paypal_wps' && $action->elementId() == $action_id) {
+            // @TODO: is there a better way to get the action ID?
             $settings[] = $action->settings;
           }
         }
@@ -229,7 +258,10 @@ function commerce_paypal_wps_form_rules_ui_edit_element_alter(&$form, &$form_sta
             'request' => t('API request messages'),
             'response' => t('API response messages'),
           ),
-          '#default_value' => isset($config['log']) ? $config['log'] : array('request' => '0', 'response' => '0'),
+          '#default_value' => isset($config['log']) ? $config['log'] : array(
+            'request' => '0',
+            'response' => '0'
+          ),
         );
       }
     }
@@ -248,7 +280,7 @@ function commerce_paypal_wps_form_rules_ui_edit_element_alter(&$form, &$form_sta
 function commerce_paypal_form__fundraiser_refund_form_alter(&$form, $form_state, $form_id) {
   $donation_id = arg(3);
   if (!is_numeric($donation_id)) {
-    return;  
+    return;
   }
   $donation = fundraiser_donation_get_donation($donation_id);
   if (!isset($donation->refunds) || empty($donation->refunds)) {
@@ -266,5 +298,5 @@ function commerce_paypal_form__fundraiser_refund_form_alter(&$form, $form_state,
       );
       break;
     }
-  } 
+  }
 }

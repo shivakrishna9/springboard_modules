@@ -207,10 +207,10 @@ function sba_message_action_message_form(&$form, $message, $action_type) {
   // The subject is not editable.
   else {
     // Show the non-editable subject if there aren't multiple messages.
-   // if (!$multiple && !$multi_flow) {
-      if ($action_type != 'multiple_not_multi_flow') {
+    // if (!$multiple && !$multi_flow) {
+    if ($action_type != 'multiple_not_multi_flow') {
 
-        $form['message'][$message->sba_message_id]['subject_show'] = array(
+      $form['message'][$message->sba_message_id]['subject_show'] = array(
         '#type' => 'item',
         '#title' => t('Subject'),
         '#markup' => check_plain($subject),
@@ -353,15 +353,15 @@ function sba_message_action_form_validate(&$form, &$form_state) {
     $changed = FALSE;
     // Enforce mandatory editing.
     if ($body_edited == $body_default && isset($message['body_required']) && $message['body_required']['#value'] == 1) {
-        form_set_error('body_editable', t('Please personalize your message before sending.'));
-        $form['sba_messages']['message'][$message_id]['edited_body']['#attributes']['class'][] =  'error';
+      form_set_error('body_editable', t('Please personalize your message before sending.'));
+      $form['sba_messages']['message'][$message_id]['edited_body']['#attributes']['class'][] =  'error';
     }
     elseif ($body_edited != $body_default) {
       $changed = TRUE;
     }
     if ($subject_edited == $subject_default && isset($message['subject_required']) && $message['subject_required']['#value'] == 1) {
-       $form['sba_messages']['message'][$message_id]['subject']['#attributes']['class'][] =  'error';
-        form_set_error('subject', t('Please personalize the subject line before sending your message.'));
+      $form['sba_messages']['message'][$message_id]['subject']['#attributes']['class'][] =  'error';
+      form_set_error('subject', t('Please personalize the subject line before sending your message.'));
     }
     elseif (!isset($message['subject_show']) && $subject_edited != $subject_default) {
       $changed = TRUE;
@@ -445,7 +445,7 @@ function sba_message_action_form_submit($form, &$form_state) {
  * In order to get the submission ID we need a second submit hook which
  * fires after webform has done its processing. The other submit hook has
  * to fire before webform in order to make session values available for token
- * replacement in confirmation messages when there is a reirect set in
+ * replacement in confirmation messages when there is a redirect set in
  * confirmation settings.
  *
  * @param array $form
@@ -454,11 +454,14 @@ function sba_message_action_form_submit($form, &$form_state) {
  *   The form_state array.
  */
 function sba_message_action_form_submit_success($form, &$form_state) {
-  if (!empty($_SESSION['success_messages'])) {
-    $node = $form['#node'];
-    $sid = !empty($_SESSION['webform_confirmations_sid']) ? $_SESSION['webform_confirmations_sid'] : FALSE;
-    springboard_advocacy_success($node, $_SESSION['contact'], $_SESSION['success_messages'], $sid);
-  }
+  $node = $form['#node'];
+  $sid = !empty($_SESSION['webform_confirmations_sid']) ? $_SESSION['webform_confirmations_sid'] : FALSE;
+
+  springboard_advocacy_success($_SESSION['springboard_dw']['node_data'], $_SESSION['springboard_dw']['contact_data'], $_SESSION['springboard_dw']['response_data'], $sid);
+
+  // Cleanup the session data now that it has been used for the advocacy
+  // success hook call and is no longer needed.
+  unset($_SESSION['springboard_dw']);
 }
 /**
  * Helper function to build message bodies.

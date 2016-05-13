@@ -68,9 +68,13 @@ function sba_message_action_send_message(array $user_message, array $form_state)
 
       // Fire the success hook for one-step actions.
       if (!empty($multi_flow[0]['value']) && $multi_flow[0]['value'] != 'multi') {
-        $_SESSION['success_messages'] =  (array) $response->data->messages;
 
-        springboard_advocacy_success($node, $contact, (array) $response->data, $sid);
+        // Set session data to use in later in
+        // sba_message_action_form_submit_success hook that needs to have $sid
+        // present
+        $_SESSION['springboard_dw']['node_data'] =  $node;
+        $_SESSION['springboard_dw']['contact_data'] =  $contact;
+        $_SESSION['springboard_dw']['response_data'] =  (array) $response->data;
       }
     }
   }

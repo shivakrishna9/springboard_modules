@@ -4,6 +4,8 @@
  * Drush command and supporting functions.
  */
 
+use GuzzleHttp\Client;
+
 /**
  * Implements hook_drush_help().
  */
@@ -65,9 +67,12 @@ function springboard_dw_queue_legacy_setup_batch($type = '') {
   // Special snowflake checks for 'message' type.
   if ($type == 'message') {
     // Exit early if the API endpoint and auth token have not been set.
-    if (variable_get('springboard_dw_advocacy_authentication_token') == NULL ||
-        variable_get('springboard_dw_advocacy_api_endpoint') == NULL) {
-      watchdog('data_warehouse', 'API endpoint and/or authentication token have not been set.', NULL, WATCHDOG_ERROR, l('Fix this on the config page', 'admin/config/services/springboard-dw'));
+    if (variable_get('springboard_dw_advocacy_authentication_token') == NULL
+          || variable_get('springboard_dw_advocacy_api_endpoint') == NULL
+      ) {
+      watchdog('data_warehouse', 'API endpoint and/or authentication token
+      have not been set.', NULL, WATCHDOG_ERROR, l(t('Fix this on the config page'),
+        'admin/config/services/springboard-dw'));
       return drush_set_error(dt('API endpoint and/or authentication token have not been set.'));
     }
     // Exit early if trying to use the --reset option on the 'message' type.
@@ -86,37 +91,37 @@ function springboard_dw_queue_legacy_setup_batch($type = '') {
   // Populate list of records to operate on.
   switch ($type) {
     case 'contact':
-      $records = db_query_range('SELECT uid, created FROM {users} WHERE created > :highwater ORDER BY created ASC', 0, $limit, array(':highwater' => $highwater))->fetchAll();
+        $records = db_query_range('SELECT uid, created FROM {users} WHERE created > :highwater ORDER BY created ASC', 0, $limit, array(':highwater' => $highwater))->fetchAll();
       $batch_process_function = 'springboard_dw_queue_legacy_users';
       break;
 
     case 'donation':
-      $records = db_query_range('SELECT did, nid, created FROM {fundraiser_donation} WHERE created > :highwater ORDER BY created ASC', 0, $limit, array(':highwater' => $highwater))->fetchAll();
+        $records = db_query_range('SELECT did, nid, created FROM {fundraiser_donation} WHERE created > :highwater ORDER BY created ASC', 0, $limit, array(':highwater' => $highwater))->fetchAll();
       $batch_process_function = 'springboard_dw_queue_legacy_donations';
       break;
 
     case 'action':
-      $records = db_query_range("SELECT n.nid, n.created, n.type FROM {node} n WHERE type='springboard_petition' OR type='sba_social_action' OR type='sba_message_action' ORDER BY created ASC", 0, $limit, array(':highwater' => $highwater))->fetchAll();
+        $records = db_query_range("SELECT n.nid, n.created, n.type FROM {node} n WHERE type='springboard_petition' OR type='sba_social_action' OR type='sba_message_action' ORDER BY created ASC", 0, $limit, array(':highwater' => $highwater))->fetchAll();
       $batch_process_function = 'springboard_dw_queue_legacy_actions';
       break;
 
     case 'message':
-      $records = springboard_dw_queue_legacy_get_advocacy_messages();
+        $records = springboard_dw_queue_legacy_get_advocacy_messages();
       $batch_process_function = 'springboard_dw_queue_legacy_messages';
       break;
 
     case 'petition message':
-      $records = db_query("SELECT s.sid, s.nid, s.uid, s.submitted AS created FROM {webform_submissions} s INNER JOIN {node} n ON s.nid = n.nid WHERE n.type = 'springboard_petition' AND s.submitted > 0 ORDER BY s.submitted ASC")->fetchAll();
+        $records = db_query("SELECT s.sid, s.nid, s.uid, s.submitted AS created FROM {webform_submissions} s INNER JOIN {node} n ON s.nid = n.nid WHERE n.type = 'springboard_petition' AND s.submitted > 0 ORDER BY s.submitted ASC")->fetchAll();
       $batch_process_function = 'springboard_dw_queue_legacy_petition_messages';
       break;
 
     case 'form':
-      $records = db_query_range('SELECT n.nid, n.created FROM {node} n INNER JOIN {webform} w ON n.nid = w.nid WHERE n.created > :highwater ORDER BY created ASC', 0, $limit, array(':highwater' => $highwater))->fetchAll();
+        $records = db_query_range('SELECT n.nid, n.created FROM {node} n INNER JOIN {webform} w ON n.nid = w.nid WHERE n.created > :highwater ORDER BY created ASC', 0, $limit, array(':highwater' => $highwater))->fetchAll();
       $batch_process_function = 'springboard_dw_queue_legacy_forms';
       break;
 
     case 'submission':
-      $records = db_query_range("SELECT s.sid, s.nid, s.uid, s.submitted AS created FROM {webform_submissions} s INNER JOIN {node} n ON s.nid = n.nid WHERE n.type <> 'springboard_petition' AND n.type <> 'donation_form' AND n.type <> 'sba_message_action' AND n.type <> 'sba_social_action' AND s.submitted > 0 ORDER BY s.submitted ASC", 0, $limit, array(':highwater' => $highwater))->fetchAll();
+        $records = db_query_range("SELECT s.sid, s.nid, s.uid, s.submitted AS created FROM {webform_submissions} s INNER JOIN {node} n ON s.nid = n.nid WHERE n.type <> 'springboard_petition' AND n.type <> 'donation_form' AND n.type <> 'sba_message_action' AND n.type <> 'sba_social_action' AND s.submitted > 0 ORDER BY s.submitted ASC", 0, $limit, array(':highwater' => $highwater))->fetchAll();
       $batch_process_function = 'springboard_dw_queue_legacy_submissions';
       break;
 
@@ -138,10 +143,11 @@ function springboard_dw_queue_legacy_setup_batch($type = '') {
   foreach ($chunks as $chunk) {
     $i++;
     $operations[] = array($batch_process_function,
-                      array($chunk, 'details' => t('(Queued records @chunk of @count)',
+                    array($chunk, 'details' => t(
+                        '(Queued records @chunk of @count)',
                         array('@chunk' => $i * $batch_size, '@count' => $record_count)
-                        ),
                       ),
+                    ),
     );
   }
 
@@ -182,6 +188,7 @@ function springboard_dw_queue_legacy_setup_batch($type = '') {
  * Callback for finished batch.
  */
 function springboard_dw_queue_legacy_finished_batch($success, $results, $operations) {
+
   drush_log(dt('Finished queueing'));
 }
 
@@ -236,6 +243,7 @@ function springboard_dw_queue_legacy_donations($records, $operation_details, &$c
     }
   }
 }
+
 /**
  * Batch process callback for processing webforms.
  */
@@ -308,11 +316,10 @@ function springboard_dw_queue_legacy_actions($actions, $operation_details, &$con
     // $action->contact = $contact;
     // $action->data = $data;
     // $action->webform = $webform_submission_data;
-    // $action->sid = $sid;
-
+    // $action->sid = $sid;.
     // Message action and social action.
     if ($node->type == 'sba_message_action' || $node->type == 'sba_social_action') {
-      // Create the Advocacy action item in the queue if not warehoused
+      // Create the Advocacy action item in the queue if not warehoused.
       if (!springboard_dw_item_is_warehoused('advocacy action', $node->nid)) {
         $action_item = springboard_dw_map_advocacy_action_item($action);
         $queue->createItem($action_item);
@@ -419,12 +426,14 @@ function springboard_dw_queue_legacy_get_highwater_mark($type) {
  * @param string $type
  *   Type of queue record to create. eg contact, petition, message action, etc.
  * @param int $timestamp
+ *   of seconds since the Unix Epoch.
  *   Number of seconds since the Unix Epoch.
  *
  * @return mixed
  *   FALSE on error. Otherwise, SAVED_NEW or SAVED_UPDATED.
  */
 function springboard_dw_queue_legacy_set_highwater_mark($type, $timestamp) {
+
   $record = array('type' => $type, 'highwater' => $timestamp);
   return drupal_write_record('springboard_data_warehouse_queue_legacy', $record, 'type');
 }
@@ -453,6 +462,7 @@ function springboard_dw_queue_legacy_get_advocacy_messages() {
  * Loops through all available pages to get entire dataset.
  *
  * @return array
+ *   Return an array of messages and pagination details.
  */
 function springboard_dw_queue_legacy_get_advocacy_message_details($action_id) {
   $details = array();
@@ -478,6 +488,7 @@ function springboard_dw_queue_legacy_get_advocacy_message_details($action_id) {
  * GET a single page of JSON data.
  *
  * @return array
+ *   Return an array of message data for a specified pagination offset.
  */
 function springboard_dw_queue_legacy_get_advocacy_message_details_page($action_id, $page = 1) {
   // Composer Vendor autoload
@@ -489,14 +500,14 @@ function springboard_dw_queue_legacy_get_advocacy_message_details_page($action_i
   }
 
   // Load Guzzle client.
-  $guzzle = new GuzzleHttp\Client(['http_errors' => FALSE]);
+  $guzzle = new Client(['http_errors' => FALSE]);
   $params = array(
     'query' => array(
       'access_token' => variable_get('springboard_dw_advocacy_authentication_token'),
       'page' => $page,
     ),
   );
-  $endpoint = variable_get('springboard_dw_advocacy_api_endpoint') . '/api/v1/messages/get/'. $action_id;
+  $endpoint = variable_get('springboard_dw_advocacy_api_endpoint') . '/api/v1/messages/get/' . $action_id;
   $response = $guzzle->request('GET', $endpoint, $params);
   $body = $response->getBody();
   return json_decode($body->getContents(), TRUE);

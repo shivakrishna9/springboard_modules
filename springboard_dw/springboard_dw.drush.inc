@@ -9,6 +9,7 @@
  * Implements hook_drush_help().
  */
 function springboard_dw_drush_help($command) {
+
   switch ($command) {
     case 'drush:springboard-dw-export-queue-process':
       return dt('Processes the Springboard data warehouse export queue.');
@@ -19,6 +20,7 @@ function springboard_dw_drush_help($command) {
  * Implements hook_drush_command().
  */
 function springboard_dw_drush_command() {
+
   $items = array();
   $items['springboard-dw-export-queue-process'] = array(
     'description' => dt('Processes the Springboard data warehouse export queue.'),
@@ -37,12 +39,21 @@ function springboard_dw_drush_command() {
  * Processes the Springboard data warehouse export queue.
  */
 function drush_springboard_dw_export_queue_process() {
-  drush_print('Processing the Springboard data warehouse export queue');
 
-  // Process the items in the queue.
-  springboard_dw_process_queue();
+  // If the data warehouse config is not set, don't try to process the queue.
+  if (!variable_get('springboard_dw_api_endpoint', FALSE) || !variable_get('springboard_dw_api_endpoint', FALSE)) {
+    drush_print('Could not process the data warehouse queue because config has not been set.');
+    watchdog("data_warehouse", 'Could not process the data warehouse queue because config has not been set.');
+  }
+  else {
+    // Provide CLI feedback.
+    drush_print('Processing the Springboard data warehouse export queue');
 
-  // Log to the command line with an OK status.
-  drush_log('Running springboard-dw-export-queue-process', 'ok');
-  watchdog("data_warehouse", 'Running springboard-dw-export-queue-process');
+    // Process the items in the queue.
+    springboard_dw_process_queue();
+
+    // Log to the command line with an OK status.
+    drush_log('Running springboard-dw-export-queue-process', 'ok');
+    watchdog("data_warehouse", 'Running springboard-dw-export-queue-process');
+  }
 }

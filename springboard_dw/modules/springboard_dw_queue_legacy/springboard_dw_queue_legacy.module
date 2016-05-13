@@ -21,13 +21,13 @@ function springboard_dw_queue_legacy_form_springboard_dw_settings_form_alter(&$f
     '#type' => 'textfield',
     '#title' => t('Advocacy server url: (I.E https://advocacy.gospringboard.io or https://advocacy-staging.gospringboard.io)'),
     '#default_value' => variable_get('springboard_dw_advocacy_api_endpoint', NULL),
-    '#required' => TRUE
+    '#required' => TRUE,
   );
 
   $form['springboard_dw_queue_legacy']['springboard_dw_advocacy_authentication_token'] = array(
     '#type' => 'textfield',
     '#title' => t('Advocacy server authentication token'),
     '#default_value' => variable_get('springboard_dw_advocacy_authentication_token', NULL),
-    '#required' => TRUE
+    '#required' => TRUE,
   );
 }
