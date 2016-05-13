@@ -466,7 +466,8 @@ function springboard_dw_fundraiser_sustainers_future_order_insert($created_donat
 
   // Donation payment details. Currently hardcoded to credit.
   // TODO: Test and handle other payment methods.
-  if (isset($created_donation->donation['payment_fields'])
+  if (isset($created_donation->donation['payment_fields']) && isset
+    ($created_donation->donation['payment_fields']['credit'])
     && is_array($created_donation->donation['payment_fields']['credit'])
   ) {
     $created_donation->data['payment_fields']['credit']['card_type'] = $created_donation->donation['payment_fields']['credit']['card_type'];
