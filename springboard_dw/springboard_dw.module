@@ -901,6 +901,9 @@ function springboard_dw_map_donation_item($donation, $update = FALSE) {
 
   $donation_item['queue_type'] = 'donation';
   $donation_item['donation_id'] = $donation->did;
+  $donation_item['parent_id'] = isset($donation->master_did) ?
+    $donation->master_did: '';
+
   // Will come later.
   $donation_item['group_id'] = '';
   $donation_item['amount'] = $donation->amount;
@@ -966,6 +969,11 @@ function springboard_dw_map_donation_item($donation, $update = FALSE) {
 
   $donation_item['created_at'] = date('U');
   $donation_item['updated_at'] = date('U');
+
+  // If this is a future payment use the close date of the sustainer to
+  // persist to the data warehouse as the transaction date
+  $donation_item['transaction_date'] = isset($donation->close_date) ?
+    strtotime($donation->close_date): date('U');
 
   // Add the extra props attributes.
   $donation_item['extra_props'] = json_encode(springboard_dw_extract_donation_extra_props($donation, $donation_item));
