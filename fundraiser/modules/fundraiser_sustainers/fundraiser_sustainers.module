@@ -2492,7 +2492,9 @@ function fundraiser_sustainers_change_charge_date($master_did, $new_day) {
 
       // Fire a hook so that other modules can respond to the sustainer
       // charge date change.
-      module_invoke_all('fundraiser_sustainers_change_charge_date', $donation);
+      module_invoke_all('fundraiser_sustainers_change_charge_date',
+        $donation, strtotime(date('m/', $old_charge_date) . str_pad($new_day, 2, '0',
+          STR_PAD_LEFT) . date('/Y', $old_charge_date)));
     }
   }
 }
