@@ -6,6 +6,11 @@
  */
 
 /**
+ * Default select SOQL query
+ */
+define('DONATION_HISTORY_DEFAULT_SOQL', "SELECT AccountId, Amount, CC_Last_4__c, CC_Type__c FROM Opportunity WHERE AccountId = ':accountId'");
+
+/**
  * Implements hook_menu().
  */
 function salesforce_donation_history_menu() {
@@ -48,51 +53,51 @@ function salesforce_donation_history_menu() {
 /**
  * Gets all opportunities for a user.
  *
- * @param $uid
- *   User ID.
+ * @param $sfid
+ *   SF Account ID.
  *
  * @return array
- *   An array of opportunity data that was specified in the SOQL query stored in
- *   the variable salesforce_donation_history_query.
+ *   An array of opportunity data that was specified in the SOQL query.
  */
-function salesforce_donation_history_get_opportunities($uid) {
-
-  if ($account_id = salesforce_donation_history_user_account_id($uid)) {
-    $sfapi = salesforce_get_api();
-    $results = $sfapi->query($soql);
-    if (!isset($results['errorCode'])) {
-      dpm($$results);
+function salesforce_donation_history_get_opportunities($sfid) {
+  $opportunities = &drupal_static(__FUNCTION__);
+  if (!isset($opportunities)) {
+    if ($cache = cache_get($sfid, 'cache_salesforce_donation_history')) {
+      $opportunities = $cache->data;
     }
     else {
-      watchdog('Salesforce Donation History', $results['errorCode'] . ':' . $results['message'], array(), WATCHDOG_ERROR);
+      $soql = strtr(variable_get('salesforce_donation_history_query', DONATION_HISTORY_DEFAULT_SOQL), array(':accountId'=> $sfid));
+      $soql = rawurlencode($soql);
+      $sfapi = salesforce_get_api();
+      if ($sfapi->isAuthorized()) {
+        // The query() method wants a SOQL object.
+        // Since we already have the string, call the API directly.
+        $results = $sfapi->apiCall('query?q=' . $soql);
+      }
+      if (!isset($results['errorCode'])) {
+        $opportunities = $results['records'];
+        cache_set($sfid, $opportunities, 'cache_salesforce_donation_history');
+      }
+      else {
+        watchdog('Salesforce Donation History', $results['errorCode'] . ':' . $results['message'], array(), WATCHDOG_ERROR);
+        return FALSE;
+      }
     }
-
   }
+  return $opportunities;
 }
 
 /**
  * Generates a list of tax receipt years for the current user.
  */
-function salesforce_donation_history_summary() {
-  global $user;
-
-  if ($account_id = salesforce_donation_history_user_account_id($user->uid)) {
-    // Get salesforce and build a query all fancy like. The alternative is
-    // to pass raw SOQL like $results = $sfapi->query($soql), which might be
-    // the right way to go for this.
-    $sf = salesforce_donation_history_get_salesforce();
-    $query = new SalesforceSelectQuery('Opportunity');
-    $query->fields = array('Id', 'Name');
-    $query->limit = 10;
-    // Execute query
-    $result = $sf->query($query);
-
+function salesforce_donation_history_summary($user) {
+  $sfid = salesforce_donation_history_user_account_id($user->uid);
+  if ($sfid) {
+    $results = salesforce_donation_history_get_opportunities($sfid);
     // In the real world we would produce a data table with this info.
-    dsm($result);
-
-    return t('Hello, World! ' . $account_id);
+    // dsm($results);
+    return t('Hello, World! ' . $sfid);
   }
-
   return 'So sad :-(';
 }
 
