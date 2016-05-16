@@ -8,7 +8,14 @@
 /**
  * Default select SOQL query
  */
-define('DONATION_HISTORY_DEFAULT_SOQL', "SELECT AccountId, Amount, CC_Last_4__c, CC_Type__c FROM Opportunity WHERE AccountId = ':accountId'");
+define('DONATION_HISTORY_DEFAULT_SOQL', "SELECT AccountId, Amount, CreatedDate, CC_Last_4__c, CC_Type__c FROM Opportunity WHERE AccountId = ':accountId'");
+
+/**
+ * Implements hook_flush_caches().
+ */
+function salesforce_donation_history_flush_caches() {
+  return array('cache_salesforce_donation_history');
+}
 
 /**
  * Implements hook_menu().
@@ -54,7 +61,7 @@ function salesforce_donation_history_menu() {
  * Gets all opportunities for a user.
  *
  * @param $sfid
- *   SF Account ID.
+ *   Salesforce Account ID.
  *
  * @return array
  *   An array of opportunity data that was specified in the SOQL query.
@@ -66,7 +73,7 @@ function salesforce_donation_history_get_opportunities($sfid) {
       $opportunities = $cache->data;
     }
     else {
-      $soql = strtr(variable_get('salesforce_donation_history_query', DONATION_HISTORY_DEFAULT_SOQL), array(':accountId'=> $sfid));
+      $soql = strtr(variable_get('salesforce_donation_history_query', DONATION_HISTORY_DEFAULT_SOQL), array(':accountId' => $sfid));
       $soql = rawurlencode($soql);
       $sfapi = salesforce_get_api();
       if ($sfapi->isAuthorized()) {
@@ -76,6 +83,7 @@ function salesforce_donation_history_get_opportunities($sfid) {
       }
       if (!isset($results['errorCode'])) {
         $opportunities = $results['records'];
+        // @TODO Encrypt cached oppontunity data?
         cache_set($sfid, $opportunities, 'cache_salesforce_donation_history');
       }
       else {
