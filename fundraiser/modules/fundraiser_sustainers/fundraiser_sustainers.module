@@ -703,6 +703,7 @@ function fundraiser_sustainers_form_node_form_alter(&$form, &$form_state, $form_
       '#description' => t("This help text will appear below the one-time/recurring checkbox or buttons on the donation form."),
       '#default_value' => $donation_type_help_text,
       '#size' => 80,
+      '#maxlength' => 1024,
       '#states' => array(
         'visible' => array(
           'select[name*=recurring_setting]' => array('value' => 'user_choice'),
