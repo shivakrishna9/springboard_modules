@@ -1444,11 +1444,9 @@ function _fundraiser_sustainers_recurring_amount_field_create($fundraiser, $fiel
 
 function _fundraiser_sustainers_recurring_amount_field_component_alter($fundraiser, $component) {
   $amount_component = _fundraiser_webform_get_component_by_nid_key($fundraiser->nid, 'amount');
-  if ($component['weight'] < $amount_component->weight) {
-    // Note that fundraiser_webform will only respect this for a new component, meaning existing weight
-    // will be preserved on an existing form.
-    $component['weight'] = $amount_component->weight + 1;
-  }
+  // Note that fundraiser_webform will only respect this for a new component, meaning existing weight
+  // will be preserved on an existing form.
+  $component['weight'] = $amount_component->weight;
   return $component;
 }
 
@@ -1469,11 +1467,9 @@ function _fundraiser_sustainers_other_amount_field_create($fundraiser, $field) {
 
 function _fundraiser_sustainers_recurring_other_amount_field_component_alter($fundraiser, $component) {
   $amount_component = _fundraiser_webform_get_component_by_nid_key($fundraiser->nid, 'amount');
-  if ($component['weight'] < $amount_component->weight) {
-    // Note that fundraiser_webform will only respect this for a new component, meaning existing weight
-    // will be preserved on an existing form.
-    $component['weight'] = $amount_component->weight + 2;
-  }
+  // Note that fundraiser_webform will only respect this for a new component, meaning existing weight
+  // will be preserved on an existing form.
+  $component['weight'] = $amount_component->weight + 1;
   return $component;
 }
 
