@@ -1601,6 +1601,27 @@ function springboard_dw_donation($item) {
     unset($item['queue_item_update_status']);
   endif;
 
+  // If this is a transaction date update call only, change the endpoint
+  if (isset($item['queue_item_update_transaction_date'])
+    && $item['queue_item_update_transaction_date']):
+    $api_endpoint = 'donation/update-transaction-date';
+    unset($item['queue_item_update_transaction_date']);
+  endif;
+
+  // If this is an amount update call only, change the endpoint
+  if (isset($item['queue_item_update_amount'])
+    && $item['queue_item_update_amount']):
+    $api_endpoint = 'donation/update-amount';
+    unset($item['queue_item_update_amount']);
+  endif;
+
+  // If this is an amount update call only, change the endpoint
+  if (isset($item['queue_item_update_extra_props'])
+    && $item['queue_item_update_extra_props']):
+    $api_endpoint = 'donation/update-extra-props';
+    unset($item['queue_item_update_extra_props']);
+  endif;
+
   // Make the API call.
   $api_response = springboard_dw_api_call($api_endpoint, $item);
 
