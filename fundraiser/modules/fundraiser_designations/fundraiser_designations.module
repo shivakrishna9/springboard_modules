@@ -1,0 +1,558 @@
+<?php
+/**
+ * @file
+ * fundraiser_designations.module
+ */
+
+/**
+ * Implements hook_menu().
+ */
+function fundraiser_designations_menu() {
+  $items = array();
+
+  $items['node/%node/designations'] = array(
+    'title' => 'Designations',
+    'description' => 'Designation settings',
+    'page callback' => 'fundraiser_designations_edit_settings',
+    'page arguments' => array(1),
+    'access callback' => 'fundraiser_designations_manage_access',
+    'access arguments' => array(1),
+    'weight' => 2,
+    'type' => MENU_LOCAL_TASK,
+    'context' => MENU_CONTEXT_PAGE | MENU_CONTEXT_INLINE,
+  );
+
+
+  $items['node/%node/designations/settings'] = array(
+    'title' => 'Settings',
+    'description' => 'Designation settings',
+    'page callback' => 'fundraiser_designations_edit_settings',
+    'page arguments' => array(1),
+    'access callback' => 'fundraiser_designations_manage_access',
+    'access arguments' => array(1),
+    'weight' => 3,
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+  );
+
+  $items['node/%node/designations/designations'] = array(
+    'title' => 'Designations',
+    'description' => 'Designations',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('fundraiser_designations_order_designation_types_form', 1),
+    'access callback' => 'fundraiser_designations_manage_access',
+    'access arguments' => array(1),
+    'type' => MENU_LOCAL_TASK,
+    'file' => 'fundraiser_designations.forms.inc',
+    'weight' => 4,
+  );
+
+  return $items;
+}
+
+/**
+ * Implements hook_permission().
+ */
+function fundraiser_designations_permission() {
+  return array(
+    'manage designations' => array(
+      'title' => t('Manage designations'),
+      'description' => t('Manage designations on any fundraiser designation form.'),
+    ),
+  );
+}
+
+/**
+ * Menu access callback.
+ *
+ * Ensure node has designationing enabled and user has node
+ * 'update' permission.
+ */
+function fundraiser_designations_manage_access($node, $account = NULL) {
+  global $user;
+  $account = isset($account) ? $account : $user;
+  $designation_types = fundraiser_designations_get_designation_types();
+  return node_access('update', $node, $account) && $designation_types[$node->type] == TRUE;
+}
+
+/**
+ * Implements hook_fundraiser_field_info().
+ *
+ * Adds the designation element to the webform.
+ */
+function fundraiser_designations_fundraiser_field_info() {
+
+  // Donation amounts are handled in a special case.
+  $fields['designations'] = array(
+    '#title' => t('Designations'),
+    '#type' => 'fieldset',
+    '#required' => 0,
+    '#create_callback' => '_fundraiser_designations_designation_field_create',
+    '#display_callback' => '_fundraiser_designations_designation_field_display',
+    // Display callback, hide this field if the node isn't a designation node.
+  );
+  $fields['designations']['designation_box'] = array(
+    '#title' => t('Designations'),
+    '#type' => 'designations',
+    '#required' => 1,
+    '#allow_update' => 1,
+  );
+
+  $fields['amount'] = array(
+    '#title' => t('Amount'),
+    '#type' => 'hidden',
+    '#value' => '',
+    '#required' => 1,
+    '#extra' => array(
+      'description' => '',
+      'hidden_type' => 'hidden',
+    ),
+  );
+
+  return $fields;
+}
+
+/**
+ * Implements hook_fundraiser_field_info_alter().
+ *
+ * Remove the donation fields, since we don't want them on designation pages.
+ */
+function fundraiser_designations_fundraiser_field_info_alter(&$info) {
+  $info['donation']['#create_callback'] = '_fundraiser_designations_donation_create';
+  $info['donation']['#display_callback'] = '_fundraiser_designations_donation_display';
+}
+
+/**
+ * Field create callback.
+ *
+ * Adjsut the type of the recurring page shown, based on fundraiser settings.
+ */
+function _fundraiser_designations_designation_field_create($fundraiser, $field) {
+  // If not a designation page, drop the designation field,
+  // drop the recurring field.
+  if (!fundraiser_designations_is_designation_type($fundraiser->type)) {
+    return FALSE;
+  }
+  else {
+    return $field;
+  }
+}
+
+/**
+ * Field create callback.
+ *
+ * Adjsut the type of the recurring page shown, based on fundraiser settings.
+ */
+function _fundraiser_designations_donation_create($fundraiser, $field) {
+  // If not a designation page, drop the designation field,
+  // drop the recurring field.
+  if (fundraiser_designations_is_designation_type($fundraiser->type)) {
+    return FALSE;
+  }
+  else {
+    return $field;
+  }
+}
+
+
+/**
+ * Implements hook_webform_component_info().
+ */
+function fundraiser_designations_webform_component_info() {
+  $components = array();
+  $components['designations'] = array(
+    'label' => t('Designation box'),
+    'description' => t('The designation listing box.'),
+    'features' => array(
+      'csv' => TRUE,
+      'email' => TRUE,
+      'email_address' => FALSE,
+      'email_name' => FALSE,
+      'required' => FALSE,
+      'title_display' => FALSE,
+      'title_inline' => FALSE,
+      'conditional' => FALSE,
+      'group' => FALSE,
+      'spam_analysis' => FALSE,
+      'attachment' => FALSE,
+      'description' => FALSE,
+      'default_value' => FALSE,
+    ),
+    'file' => 'components/designations.inc',
+  );
+  return $components;
+}
+
+/**
+ * Page callback for the designations settings management page.
+ */
+function fundraiser_designations_edit_settings($node) {
+
+  $form = array();
+
+  return drupal_render($form);
+}
+
+/**
+ * Implements hook_form_alter().
+ */
+function fundraiser_designations_form_alter(&$form, &$form_state, $form_id) {
+  // Do not allow users to muck with defined form keys in component
+  // editting form. They're named what they're named for a reason and we need
+  // those keys to remain unharmed.
+  if ($form_id == 'webform_component_edit_form') {
+    $node = node_load($form['nid']['#value']);
+    // For donation types ONLY prevent type trigger.
+    if (fundraiser_designations_is_designation_type($node->type)) {
+      $form_key = $form['form_key']['#default_value'];
+      if ($form_key == 'designations') {
+        $form['form_key']['#disabled'] = TRUE;
+        $form['form_key']['#description'] .= '</br>' . t('This field key is required by Fundraiser and cannot be changed.');
+        $form['form_key']['#value'] = $form['form_key']['#default_value'];
+      }
+    }
+  }
+}
+
+/**
+ * Implements hook_form_alter().
+ *
+ * Alter designation settings form and add validation callback.
+ */
+function fundraiser_designations_form_node_form_alter(&$form, &$form_state) {
+
+  if (fundraiser_designations_is_designation_type($form['type']['#value'])) {
+
+    // Don't allow them to tinker with dollar handles or
+    // recurring gift settings.
+    $form['fundraiser_settings']['fundraiser_sustainers']['#access'] = FALSE;
+    $form['fundraiser_settings']['amount_wrapper']['#access'] = FALSE;
+    $form['fundraiser_settings']['recurring_amount_wrapper']['#access'] = FALSE;
+
+    if (arg(0) == 'node' && (arg(2) == 'edit' || arg(1) == 'add')) {
+      // Hide all designations fields on the standard node add/edit page.
+      foreach (element_children($form) as $child) {
+        if (fundraiser_designations_is_designation_field($child)) {
+          $form[$child]['#access'] = FALSE;
+        }
+      }
+      $form['#validate'][] = '_fundraiser_designations_form_node_form_validate';
+    }
+    elseif (arg(0) == 'node' && arg(2) == 'designations') {
+      $form['#validate'] = array('_fundraiser_designations_designation_settings_form_validate');
+    }
+  }
+}
+
+/**
+ * Validate callback for node form.
+ *
+ * Make sure recurring billing is disabled on designation forms.
+ */
+function _fundraiser_designations_form_node_form_validate(&$form, &$form_state) {
+  $form_state['values']['recurring_setting'] = 'never';
+}
+
+/**
+ * Implements hook_commerce_line_item_type_info().
+ */
+function fundraiser_designations_commerce_line_item_type_info() {
+  $line_item_types = array();
+  $line_item_types['designation'] = array(
+    'type' => 'designation',
+    'name' => t('Donation Designation'),
+    'description' => t('A funding designation for a portion of a donation.'),
+    'product' => TRUE,
+    'base' => 'commerce_product_line_item',
+  );
+  return $line_item_types;
+}
+
+/**
+ * Implements hook_fundraiser_commerce_generate_line_items().
+ *
+ * Generate line items for the designation sales and the extra donation.
+ * Returns TRUE if line items have been generated. Otherwise, returns FALSE.
+ */
+function fundraiser_designations_fundraiser_commerce_generate_line_items($donation, $order) {
+  if (isset($donation->donation['designation_box']) && is_array($donation->donation['designation_box']) && count($donation->donation['designation_box'])) {
+    $order_wrapper = entity_metadata_wrapper('commerce_order', $order);
+    $node_wrapper = entity_metadata_wrapper('node', $donation->node);
+    foreach ($donation->donation['designation_box'] as $offset => $serialized_value) {
+      $form_row = unserialize($serialized_value);
+      list ($key, $quantity) = each($form_row);
+      $product_id = _fundraiser_designations_get_product_id_from_form_element_name($key);
+      if ($product_id && $quantity > 0) {
+        $product_wrapper = entity_metadata_wrapper('commerce_product', commerce_product_load($product_id));
+        $line_item = commerce_line_item_new('designation', $order->order_id);
+
+        // Populate the line item with default values, sets the unit price.
+        commerce_product_line_item_populate($line_item, $product_wrapper->value());
+
+        // Set the label from the product title and the quantity from the webform component value.
+        $line_item->line_item_label = t('Designation - ' . $product_wrapper->title->value());
+        $line_item->quantity = $quantity;
+
+        commerce_line_item_save($line_item);
+
+        // Add the line item to the order, this will be saved by fundraiser_commerce.
+        $order_wrapper->commerce_line_items[] = $line_item;
+      }
+    }
+
+    // Let fundraiser commerce know that we created line items.
+    return TRUE;
+  }
+  else {
+    return FALSE;
+  }
+}
+
+/**
+ * Implements hook_fundraiser_donation_success().
+ */
+function fundraiser_designations_fundraiser_donation_success($donation) {
+  // Only proceed if this donation is adesignated donations.
+  if (empty($donation->node) || !fundraiser_designations_is_designation_type($donation->node->type)) {
+    return;
+  }
+
+  // Load up the commerce order and wrapper.
+  $order = commerce_order_load($donation->did);
+  $order_wrapper = entity_metadata_wrapper('commerce_order', $order);
+
+  // Ensure we have line items.
+  if (!empty($order_wrapper->commerce_line_items)) {
+    // Resave the line items to have them sent to the queue and update totals.
+    foreach ($order_wrapper->commerce_line_items as $line_item_wrapper) {
+      commerce_line_item_save($line_item_wrapper->value());
+    }
+  }
+
+}
+
+/**
+ * Alter an item before it is added to the queue.
+ *
+ * @param array $item
+ *   Array of values to be added to the queue
+ */
+function fundraiser_designations_salesforce_queue_create_item_alter(&$item) {
+  // Connect a designation line item to the donation opportunity.
+  if ($item['module'] == 'commerce_line_item' && $item['delta'] == 'designation') {
+    $line_item = commerce_line_item_load($item['drupal_id']);
+    $line_item_wrapper = entity_metadata_wrapper('commerce_line_item', $line_item);
+    $item['sobject']->fields['Opportunity__c'] = sprintf('[Opportunity:donation:%d]', $line_item->order_id);
+  }
+}
+
+/**
+ * Implements hook_salesforce_mapping_confirm_entity_for_queue.
+ *
+ * Stop designation line items from syncing till the order has charged.
+ */
+function fundraiser_designations_salesforce_mapping_confirm_entity_for_queue($entity, $entity_type, $op) {
+  // Only bother with commerce entities.
+  if ($entity_type != 'commerce_line_item') {
+    return;
+  }
+
+  $line_item = $entity;
+  if ($line_item->type == 'designation' && !empty($line_item->order_id)) {
+    $order = commerce_order_load($line_item->order_id);
+    if (empty($order->data['commerce_payment_order_paid_in_full_invoked'])) {
+      return FALSE;
+    }
+  }
+}
+
+/**
+ * Helper function: parse the product id out of the form element name.
+ */
+function _fundraiser_designations_get_product_id_from_form_element_name($name) {
+  list ($prefix, $product_id) = explode('-', $name);
+  if (strstr($prefix, 'product') && is_numeric($product_id)) {
+    return $product_id;
+  }
+  else {
+    return NULL;
+  }
+}
+
+
+/**
+ * Validate callback for node form when in designation settings view.
+ */
+function _fundraiser_designations_designation_settings_form_validate(&$form, &$form_state) {
+
+}
+
+
+/**
+ * Implements hook_form_alter().
+ *
+ * Alter content type settings to add "Enabledesignated donationss?" checkbox.
+ */
+function fundraiser_designations_form_node_type_form_alter(&$form, &$form_state) {
+  if (isset($form['type'])) {
+    $form['fundraiser_type']['fundraiser_designations'] = array(
+      '#type' => 'checkbox',
+      '#title' => t('Enable designated donations?'),
+      '#default_value' => variable_get('fundraiser_designations_' . $form['#node_type']->type, FALSE),
+      '#description' => t('Enable this checkbox if this content type should provide designated donations.  Fundraiser must be enabled as well.'),
+    );
+    $form['#validate'][] = 'fundraiser_designations_form_node_type_form_validate';
+  }
+}
+
+/**
+ * Validation callback for the node type form. Called during form validation.
+ */
+function fundraiser_designations_form_node_type_form_validate($form, &$form_state) {
+  if ($form_state['values']['fundraiser_designations'] && !$form_state['values']['fundraiser']) {
+    form_set_error('fundraiser', t('Fundraiser must also be enabled for designated donations content types.'));
+  }
+}
+
+/**
+ * Implements hook_node_type_insert.
+ */
+function fundraiser_designations_node_type_insert($type) {
+  if (fundraiser_designations_is_designation_type($type->type)) {
+    if (!fundraiser_is_donation_type($type->type)) {
+      drupal_set_message(t('Fundraiser must also be enabled fordesignated donations sales.'), 'error');
+    }
+    else {
+      module_load_include('inc', 'fundraiser_designations', 'includes/fundraiser_designations.fields');
+      module_load_include('inc', 'fundraiser_designations', 'includes/fundraiser_designations.product');
+      module_load_include('inc', 'fundraiser_designations', 'includes/fundraiser_designations.taxonomy');
+      _fundraiser_designations_add_default_fields($type->type);
+      _fundraiser_designations_create_fundraiser_designation_product();
+      _fundraiser_designations_install_vocab_fd_designation_categories('fundraiser_designation');
+    }
+  }
+}
+
+/**
+ * Implements hook_node_type_update().
+ */
+function fundraiser_designations_node_type_update($type) {
+  if (fundraiser_designations_is_designation_type($type->type)) {
+    if (!fundraiser_is_donation_type($type->type)) {
+      drupal_set_message(t('Fundraiser must also be enabled for designated donations.'), 'error');
+    }
+    else {
+      module_load_include('inc', 'fundraiser_designations', 'includes/fundraiser_designations.fields');
+      module_load_include('inc', 'fundraiser_designations', 'includes/fundraiser_designations.product');
+      module_load_include('inc', 'fundraiser_designations', 'includes/fundraiser_designations.taxonomy');
+      _fundraiser_designations_add_default_fields($type->type);
+      _fundraiser_designations_create_fundraiser_designation_product();
+      _fundraiser_designations_install_vocab_fd_designation_categories('fundraiser_designation');
+
+    }
+  }
+}
+
+/**
+ * Implements hook_node_view().
+ */
+function fundraiser_designations_node_view($node, $view_mode, $langcode) {
+  // If this isn't a fundraiser designation type, ignore it.
+  if (fundraiser_designations_is_designation_type($node->type)) {
+    if ($view_mode == 'full') {
+      // If there are no designations yet, or if we are closed or sold out,
+      // figure out what to do with them based on the form settings.
+      if (fundraiser_designations_no_designations_added($node)) {
+        global $user;
+        if ($user->uid) {
+          $message = t('The form will not work properly until designations have been created. !link_url.', array('!link_url' => l(t('To add designations, click here'), 'node/' . $node->nid . '/designations/designations')));
+          drupal_set_message($message, 'error');
+        }
+      }
+    }
+  }
+}
+
+/**
+ * Implements hook_clone_node_alter().
+ */
+function fundraiser_designations_clone_node_alter(&$node, $context) {
+  if (fundraiser_designations_is_designation_type($context['original_node']->type)) {
+  }
+}
+
+/**
+ * Implements hook_node_update().
+ */
+function fundraiser_designations_node_update($node) {
+  if (!fundraiser_designations_is_designation_type($node->type)) {
+    return;
+  }
+}
+
+
+/**
+ * Implements hook_form_alter().
+ *
+ * Hide the SKU and weight fields of designations from users.
+ */
+function fundraiser_designations_form_commerce_product_ui_product_form_alter(&$form, &$form_state) {
+  $product = $form_state['commerce_product'];
+  if ($product->type == 'fundraiser_designation') {
+    //$form['#validate'][] = 'fundraiser_designations_form_commerce_product_ui_product_form_validate';
+  }
+}
+
+/**
+ * Helper function, determine if this node type supports designated donationss.
+ */
+function fundraiser_designations_is_designation_type($type) {
+  static $fundraiser_designations_types;
+  // Cache fundraiser designation content types during page execution.
+  if (!isset($fundraiser_designations_types[$type])) {
+    $fundraiser_designations_types[$type] = variable_get('fundraiser_designations_' . $type, FALSE);
+  }
+  return $fundraiser_designations_types[$type];
+}
+
+/**
+ * Helper function, determine if this node type supportsdesignated donationss.
+ */
+function fundraiser_designations_get_designation_types() {
+  // For all types, check if they are a fundraiser type.
+  $types = node_type_get_types();
+  $fundraiser_designations_types = [];
+  foreach ($types as $type => $type_info) {
+    $fundraiser_designations_types[$type] = variable_get('fundraiser_designations_' . $type, FALSE);
+  }
+  return $fundraiser_designations_types;
+}
+
+/**
+ * Helper function, determine if a given field is a designationing field.
+ */
+function fundraiser_designations_is_designation_field($field_name) {
+  static $fundraiser_designation_fields;
+  // Cache fundraiser designation fields during page execution.
+  if (!is_array($fundraiser_designation_fields)) {
+    $fundraiser_designation_fields = fundraiser_designations_get_designation_field_keys();
+  }
+  return in_array($field_name, $fundraiser_designation_fields);
+}
+
+/**
+ * Helper function, get the field names of the designationing fields.
+ */
+function fundraiser_designations_get_designation_field_keys() {
+  module_load_include('inc', 'fundraiser_designations', 'includes/fundraiser_designations.fields');
+  return array_keys(_fundraiser_designations_default_fields_settings(NULL));
+}
+
+/**
+ * Helper function determine if the form has any designations attached to it.
+ */
+function fundraiser_designations_no_designations_added($node) {
+  if (isset($node->fr_designations_designation_types) && empty($node->fr_designations_designation_types)) {
+    return TRUE;
+  }
+  return FALSE;
+}
