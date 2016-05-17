@@ -1318,7 +1318,21 @@ function springboard_dw_map_contact_item($contact_id, $user_data = array(), $upd
   $contact_item['updated_at'] = $user_data['created'];
 
   // Add the extra props attributes.
-  $contact_item['extra_props'] = json_encode(springboard_dw_extract_contact_extra_props($user_data, $contact_item));
+  $dw_extra_props = springboard_dw_extract_contact_extra_props($user_data,
+    $contact_item);
+
+  // Get extra props from other modules if set.
+  $modules_extra_props = module_invoke_all('springboard_dw_add_extra_props',
+    $dw_extra_props, $contact_item['queue_type']);
+
+  // Validate extra props set in other modules are of array type
+  if (is_array($modules_extra_props) && is_array($dw_extra_props)) {
+    $dw_extra_props = array_merge($dw_extra_props, $modules_extra_props);
+  }
+
+  // Add the extra props to the field mapping
+  $contact_item['extra_props']= json_encode($dw_extra_props);
+
 
   return $contact_item;
 }
