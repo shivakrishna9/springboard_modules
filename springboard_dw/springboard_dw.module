@@ -1155,6 +1155,34 @@ function springboard_dw_map_donation_update_status($donation_id,
 
   return $donation_item;
 }
+
+/**
+ * Map the donation object to set status to canceled to an array formatted for an
+ * API
+ * call.
+ *
+ * @param integer $donation_id
+ *   The donation object id.
+ *
+ * @param array $donation_extra_props
+ *   The extra props to add to the donation record.
+ *
+ * @return array The mapped array ready for an api call.
+ *   The mapped array ready for an api call.
+ */
+function springboard_dw_map_donation_update_extra_props($donation_id,
+                                                   $donation_extra_props) {
+  // Get the donation object details and prep for warehousing (sb_donation).
+  $donation_item = array();
+
+  $donation_item['queue_type'] = 'donation';
+  $donation_item['queue_item_update_extra_props'] = TRUE;
+
+  $donation_item['donation_id'] = $donation_id;
+  $donation_item['extra_props'] = $donation_extra_props;
+
+  return $donation_item;
+}
  * @param object $donation
  *   The donation object.
  *
