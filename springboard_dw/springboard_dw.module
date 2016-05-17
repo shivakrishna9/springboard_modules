@@ -739,9 +739,9 @@ function springboard_dw_map_submission_item($submission, $submitted_data) {
 /**
  * Extracts non-standard fields out of a webform submission.
  *
- * @param object $submitted_data
+ * @param array $submitted_data
  *   The submission data from which properties are to be extracted.
- * @param object $submission_item
+ * @param array $submission_item
  *   The submission item being prepared for the queue.
  */
 function springboard_dw_extract_submission_extra_props($submitted_data, $submission_item) {
