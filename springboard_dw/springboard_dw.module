@@ -1462,7 +1462,19 @@ function springboard_dw_map_form_item($node, $update = FALSE) {
   $form_item['updated_at'] = $node->changed;
 
   // Todo: Add the extra props attributes.
-  $form_item['extra_props'] = json_encode(array());
+  $dw_extra_props = array();
+
+  // Get extra props from other modules if set.
+  $modules_extra_props = module_invoke_all('springboard_dw_add_extra_props',
+    $dw_extra_props, $form_item['queue_type']);
+
+  // Validate extra props set in other modules are of array type
+  if (is_array($modules_extra_props) && is_array($dw_extra_props)) {
+    $dw_extra_props = array_merge($dw_extra_props, $modules_extra_props);
+  }
+
+  // Add the extra props to the field mapping
+  $form_item['extra_props'] = json_encode($dw_extra_props);
 
   return $form_item;
 
