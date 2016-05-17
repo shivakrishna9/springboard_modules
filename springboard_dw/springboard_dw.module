@@ -288,12 +288,35 @@ function springboard_dw_fundraiser_donation_success($donation) {
 }
 
 /**
+ * Hook for updating warehouse sustainers donation charge date.
+ *
+ * Implements springboard_dw_fundraiser_sustainers_change_charge_date().
+ *
+ * @param object $donation
+ * @param string $transaction_date
+ */
+function springboard_dw_fundraiser_sustainers_change_charge_date($donation, $transaction_date) {
+  // Get the Drupal data warehouse queue.
+  $queue = DrupalQueue::get("springboard_dw_export");
+
+  // Map the donation item update fields
+  $donation_item = springboard_dw_map_donation_item_transaction_date_change
+  ($donation, $transaction_date);
+
+  // Create the queue item.
+  $queue->createItem($donation_item);
+
+  // Log the queue item.
+  springboard_dw_log_queue_item($donation_item);
+}
+
+/**
  * Hook for canceling warehouse sustainer donations by id.
  *
  * Implements fundraiser_sustainers_fundraiser_donation_cancel().
  *
  * @param object $did
- *   The donation id to delete.
+ *   The donation id to cancel.
  */
 function springboard_dw_fundraiser_sustainers_fundraiser_donation_cancel($donation) {
   // Get the Drupal data warehouse queue.
