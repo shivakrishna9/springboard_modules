@@ -391,6 +391,20 @@ function springboard_dw_fundraiser_sustainers_donation_update_amount
   // Log the queue item.
   springboard_dw_log_queue_item($donation_item);
 }
+
+/**
+ * Hook for deleting warehouse sustainer donations by id.
+ *
+ * Implements fundraiser_sustainers_delete_recurring().
+ *
+ * @param object $did
+ *   The donation id to delete.
+ */
+function springboard_dw_fundraiser_sustainers_delete_recurring($did) {
+  // dsm('Delete recurring record');
+}
+
+/**
  * Hook to listen for new form items to ship to the data warehouse.
  *
  * Implements hook_node_insert().
