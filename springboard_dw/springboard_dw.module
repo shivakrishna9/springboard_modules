@@ -717,7 +717,21 @@ function springboard_dw_map_submission_item($submission, $submitted_data) {
   $submission_item['device_os'] = $submitted_data['device_os'];
   $submission_item['device_browser'] = $submitted_data['device_browser'];
 
-  $submission_item['extra_props'] = springboard_dw_extract_submission_extra_props($submitted_data, $submission_item);
+  // Extract extra props to add to the record if applicable.
+  $dw_extra_props =
+    springboard_dw_extract_submission_extra_props($submitted_data, $submission_item);
+
+  // Get extra props from other modules if set.
+  $modules_extra_props = module_invoke_all('springboard_dw_add_extra_props',
+    $submission_item['extra_props'], $submission_item['queue_type']);
+
+  // Validate extra props set in other modules are of array type
+  if (is_array($modules_extra_props) && is_array($dw_extra_props)) {
+    $dw_extra_props = array_merge($dw_extra_props, $modules_extra_props);
+  }
+
+  // Add the extra props to the field mapping
+  $submission_item['extra_props'] = json_encode($dw_extra_props);
 
   return $submission_item;
 }
