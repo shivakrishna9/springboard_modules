@@ -213,6 +213,21 @@ function fundraiser_designations_form_alter(&$form, &$form_state, $form_id) {
   }
 }
 
+
+/**
+ * Implements hook_module_implements_alter().
+ *
+ * Fundraiser_designations is alphabetically loaded prior
+ * to fundraiser_sustainers. This undoes that for form_alter hooks.
+ */
+function fundraiser_designations_module_implements_alter(&$implementations, $hook) {
+  if ($hook == 'form_node_form_alter' || $hook == 'form_alter') {
+    $group = $implementations['fundraiser_designations'];
+    unset($implementations['fundraiser_designations']);
+    $implementations['fundraiser_designations'] = $group;
+  }
+}
+
 /**
  * Implements hook_form_alter().
  *
