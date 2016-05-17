@@ -1207,21 +1207,25 @@ function springboard_dw_map_donation_item_update_amount($donation_id,
   return $donation_item;
 }
 
+/**
+ * Map the donation object to update the transaction date.
+ *
  * @param object $donation
  *   The donation object.
  *
  * @return array
  *   The mapped array ready for an api call.
  */
-function springboard_dw_map_donation_item_cancel($donation) {
+function springboard_dw_map_donation_item_transaction_date_change($donation,
+                                                                  $transaction_date) {
   // Get the donation object details and prep for warehousing (sb_donation).
   $donation_item = array();
 
   $donation_item['queue_type'] = 'donation';
-  $donation_item['queue_item_update_status'] = TRUE;
+  $donation_item['queue_item_update_transaction_date'] = TRUE;
 
   $donation_item['donation_id'] = $donation->did;
-  $donation_item['status'] = $donation->status;
+  $donation_item['transaction_date'] = $transaction_date;
 
   return $donation_item;
 }
