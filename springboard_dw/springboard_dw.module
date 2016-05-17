@@ -1183,6 +1183,30 @@ function springboard_dw_map_donation_update_extra_props($donation_id,
 
   return $donation_item;
 }
+
+/**
+ * Map the donation object to change amount of sustainer gifts in a series.
+ *
+ * @param integer $donation_id
+ *   The donation object id.
+ *
+ * @return array
+ *   The mapped array ready for an api call.
+ */
+function springboard_dw_map_donation_item_update_amount($donation_id,
+  $donation_amount) {
+  // Get the donation object details and prep for warehousing (sb_donation).
+  $donation_item = array();
+
+  $donation_item['queue_type'] = 'donation';
+  $donation_item['queue_item_update_amount'] = TRUE;
+
+  $donation_item['donation_id'] = $donation_id;
+  $donation_item['amount'] = $donation_amount;
+
+  return $donation_item;
+}
+
  * @param object $donation
  *   The donation object.
  *
