@@ -324,7 +324,8 @@ function springboard_dw_fundraiser_sustainers_fundraiser_donation_cancel($donati
 
   // Queue the donation object which should not be in the queue,
   // so there's no need to check if this item is warehoused.
-  $donation_item = springboard_dw_map_donation_item_cancel($donation);
+  $donation_item = springboard_dw_map_donation_update_status($donation->did,
+    $donation->status);
 
   // Create the queue item.
   $queue->createItem($donation_item);
