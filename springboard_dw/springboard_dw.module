@@ -335,6 +335,37 @@ function springboard_dw_fundraiser_sustainers_fundraiser_donation_cancel($donati
 }
 
 /**
+ * Hook for refunding donations warehouse.
+ *
+ * Implements springboard_dw_fundraiser_refund_success().
+ *
+ * @param object $refund
+ *   The refund object.
+ */
+function springboard_dw_fundraiser_refund_success($refund) {
+  // Get the Drupal data warehouse queue.
+  $queue = DrupalQueue::get("springboard_dw_export");
+
+  // Update the donation status of the donation.
+  $donation_item = springboard_dw_map_donation_update_status
+  ($refund->did, $refund->new_status);
+
+  // Create the queue item.
+  $queue->createItem($donation_item);
+
+  // Log the queue item.
+  springboard_dw_log_queue_item($donation_item);
+
+  // Prepare the extra props for api call.
+  $donation_item_extra_props = springboard_dw_map_donation_update_extra_props
+  ($refund->did, array(
+    'refund_amount' => $refund->amount,
+    'refund_reason' => $refund->reason,
+    ));
+
+  // Create the queue item for the extra props update.
+  $queue->createItem($donation_item_extra_props);
+}
  * Hook to listen for new form items to ship to the data warehouse.
  *
  * Implements hook_node_insert().
