@@ -35,9 +35,9 @@ function salesforce_donation_history_menu() {
 
   // TODO: Implement a custom permission handler
   // to ensure the user has a salesforce account id.
-  $items['user/%user/tax-receipts'] = array(
-    'title' => 'Donation tax receipts',
-    'page callback' => 'salesforce_donation_history_summary',
+  $items['user/%user/donation-history'] = array(
+    'title' => 'My donation history',
+    'page callback' => 'salesforce_donation_history',
     'page arguments' => array(1),
     'access callback' => 'user_edit_access',
     'access arguments' => array(1),
@@ -98,15 +98,48 @@ function salesforce_donation_history_get_opportunities($sfid) {
 /**
  * Generates a list of tax receipt years for the current user.
  */
-function salesforce_donation_history_summary($user) {
+function salesforce_donation_history($user) {
   $sfid = salesforce_donation_history_user_account_id($user->uid);
-  if ($sfid) {
-    $results = salesforce_donation_history_get_opportunities($sfid);
-    // In the real world we would produce a data table with this info.
-    // dsm($results);
-    return t('Hello, World! ' . $sfid);
+  $output = array();
+  if (!$sfid) {
+    drupal_set_message('No account ID could be found.', 'error');
   }
-  return 'So sad :-(';
+  else {
+    $results = salesforce_donation_history_get_opportunities($sfid);
+    if (count($results) < 1) {
+      $output['no-results'] = array(
+        '#type' => 'markup',
+        '#markup' => t('No donations found.'),
+      );
+    }
+    else {
+      foreach ($results as $result) {
+        $rows[] = array(
+          $result['CreatedDate'],
+          $result['Amount'],
+          $result['CC_Type__c'],
+          'Online/Recurring (Where does this data come from?)',
+          l('Print receipt', '#'),
+        );
+      }
+      $current_year = date("Y");
+      $output['year'] = array(
+        '#title' => t('Select year'),
+        '#type' => 'select',
+        '#options' => array($current_year, $current_year-1, $current_year-2,$current_year-3 ),
+      );
+      $output['annual-tax-receipt'] = array(
+        '#type' => 'markup',
+        '#markup' => l('Annual Tax Reciept', '#'),
+      );
+      $output['table'] = array(
+        '#theme' => 'table',
+        '#header' => array(t('Date'), t('Amount'), t('Payment Method'), t('type'), ''),
+        '#rows' => $rows,
+      );
+    }
+  }
+  return $output;
 }
 
 function salesforce_donation_history_get_available_years() {
