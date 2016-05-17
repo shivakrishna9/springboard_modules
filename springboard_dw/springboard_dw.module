@@ -366,6 +366,31 @@ function springboard_dw_fundraiser_refund_success($refund) {
   // Create the queue item for the extra props update.
   $queue->createItem($donation_item_extra_props);
 }
+
+/**
+ * Hook for updating a fundraiser donation in the warehouse.
+ *
+ * Implements hook_fundraiser_donation_post_update().
+ *
+ * @param object $donation
+ *   The donation object.
+ */
+function springboard_dw_fundraiser_sustainers_donation_update_amount
+($donation_did, $donation_amount) {
+
+  // Get the Drupal data warehouse queue.
+  $queue = DrupalQueue::get("springboard_dw_export");
+
+  // Queue the donation object update.
+  $donation_item = springboard_dw_map_donation_item_update_amount
+  ($donation_did, $donation_amount);
+
+  // Create the queue item.
+  $queue->createItem($donation_item);
+
+  // Log the queue item.
+  springboard_dw_log_queue_item($donation_item);
+}
  * Hook to listen for new form items to ship to the data warehouse.
  *
  * Implements hook_node_insert().
