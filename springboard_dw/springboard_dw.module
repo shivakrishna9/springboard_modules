@@ -77,7 +77,7 @@ function springboard_dw_log_queue_item($data) {
   if (variable_get('springboard_dw_watchdog_enabled')) {
 
     $watchdog_string = '<pre>' . print_r($data, TRUE) . '</pre>';
-    watchdog("data_warehouse", $watchdog_string);
+    // watchdog("data_warehouse", $watchdog_string);
   }
 }
 
