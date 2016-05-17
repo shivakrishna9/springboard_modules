@@ -1615,7 +1615,7 @@ function springboard_dw_donation($item) {
     unset($item['queue_item_update_amount']);
   endif;
 
-  // If this is an amount update call only, change the endpoint
+  // If this is a extra props update call only, change the endpoint
   if (isset($item['queue_item_update_extra_props'])
     && $item['queue_item_update_extra_props']):
     $api_endpoint = 'donation/update-extra-props';
