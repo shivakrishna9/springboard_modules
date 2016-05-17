@@ -703,6 +703,7 @@ function fundraiser_sustainers_form_node_form_alter(&$form, &$form_state, $form_
       '#description' => t("This help text will appear below the one-time/recurring checkbox or buttons on the donation form."),
       '#default_value' => $donation_type_help_text,
       '#size' => 80,
+      '#maxlength' => 1024,
       '#states' => array(
         'visible' => array(
           'select[name*=recurring_setting]' => array('value' => 'user_choice'),
@@ -1444,11 +1445,9 @@ function _fundraiser_sustainers_recurring_amount_field_create($fundraiser, $fiel
 
 function _fundraiser_sustainers_recurring_amount_field_component_alter($fundraiser, $component) {
   $amount_component = _fundraiser_webform_get_component_by_nid_key($fundraiser->nid, 'amount');
-  if ($component['weight'] < $amount_component->weight) {
-    // Note that fundraiser_webform will only respect this for a new component, meaning existing weight
-    // will be preserved on an existing form.
-    $component['weight'] = $amount_component->weight + 1;
-  }
+  // Note that fundraiser_webform will only respect this for a new component, meaning existing weight
+  // will be preserved on an existing form.
+  $component['weight'] = $amount_component->weight;
   return $component;
 }
 
@@ -1469,11 +1468,9 @@ function _fundraiser_sustainers_other_amount_field_create($fundraiser, $field) {
 
 function _fundraiser_sustainers_recurring_other_amount_field_component_alter($fundraiser, $component) {
   $amount_component = _fundraiser_webform_get_component_by_nid_key($fundraiser->nid, 'amount');
-  if ($component['weight'] < $amount_component->weight) {
-    // Note that fundraiser_webform will only respect this for a new component, meaning existing weight
-    // will be preserved on an existing form.
-    $component['weight'] = $amount_component->weight + 2;
-  }
+  // Note that fundraiser_webform will only respect this for a new component, meaning existing weight
+  // will be preserved on an existing form.
+  $component['weight'] = $amount_component->weight + 1;
   return $component;
 }
 
