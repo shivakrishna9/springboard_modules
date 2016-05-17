@@ -1133,6 +1133,28 @@ function springboard_dw_map_donation_item($donation, $update = FALSE) {
  * API
  * call.
  *
+ * @param object $donation_id
+ *   The donation object.
+ *
+ * @param string $donation_status
+ *   The status to update the donation with.
+ *
+ * @return array The mapped array ready for an api call.
+ *   The mapped array ready for an api call.
+ */
+function springboard_dw_map_donation_update_status($donation_id,
+                                                   $donation_status) {
+  // Get the donation object details and prep for warehousing (sb_donation).
+  $donation_item = array();
+
+  $donation_item['queue_type'] = 'donation';
+  $donation_item['queue_item_update_status'] = TRUE;
+
+  $donation_item['donation_id'] = $donation_id;
+  $donation_item['status'] = $donation_status;
+
+  return $donation_item;
+}
  * @param object $donation
  *   The donation object.
  *
