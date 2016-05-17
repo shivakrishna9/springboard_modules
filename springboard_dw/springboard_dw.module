@@ -997,7 +997,20 @@ function springboard_dw_map_advocacy_message_item($message, $full_message) {
   $message_item['target_person_id'] = $full_message['target']['personId'];
   $message_item['created_at'] = $full_message['delivery']['createdAt']['sec'];
   $message_item['updated_at'] = $full_message['delivery']['updatedAt']['sec'];
-  $message_item['extra_props'] = array();
+
+  $dw_extra_props = array();
+
+  // Get extra props from other modules if set.
+  $modules_extra_props = module_invoke_all('springboard_dw_add_extra_props',
+    $message_item['extra_props'], $message_item['queue_type']);
+
+  // Validate extra props set in other modules are of array type
+  if (is_array($modules_extra_props) && is_array($dw_extra_props)) {
+    $dw_extra_props = array_merge($dw_extra_props, $modules_extra_props);
+  }
+
+  // Add the extra props to the field mapping
+  $message_item['extra_props'] = json_encode($dw_extra_props);
 
   return $message_item;
 }
