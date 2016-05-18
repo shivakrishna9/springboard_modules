@@ -106,7 +106,11 @@ function springboard_dw_queue_legacy_dashboard() {
 
   $output .= '<br>--submissions: ';
   $highwater = springboard_dw_queue_legacy_get_highwater_mark('submission');
-  $records = db_query_range("SELECT s.sid, s.nid, s.uid, s.submitted AS created FROM {webform_submissions} s INNER JOIN {node} n ON s.nid = n.nid WHERE n.type <> 'springboard_petition' AND n.type <> 'donation_form' AND n.type <> 'sba_message_action' AND n.type <> 'sba_social_action' AND s.submitted > :highwater ORDER BY s.submitted ASC", 0, 999999999, array(':highwater' => $highwater))->fetchAll();
+  $excluded_types = springboard_dw_queue_legacy_get_donation_types();
+  $excluded_types[] = 'springboard_petition';
+  $excluded_types[] = 'sba_message_action';
+  $excluded_types[] = 'sba_social_action';
+  $records = db_query_range("SELECT s.sid, s.nid, s.uid, s.submitted AS created FROM {webform_submissions} s INNER JOIN {node} n ON s.nid = n.nid WHERE n.type NOT IN (:excluded_types) AND s.submitted > :highwater ORDER BY s.submitted ASC", 0, 999999999, array(':highwater' => $highwater, ':excluded_types' => $excluded_types))->fetchAll();
   $output .= count($records);
 
   return $output;
@@ -161,4 +165,18 @@ function springboard_dw_queue_legacy_reset_highwater_marks() {
   foreach ($types as $type) {
     springboard_dw_queue_legacy_set_highwater_mark($type, 0);
   }
+}
+
+/**
+ * Gets array of donation-enabled content types.
+ */
+function springboard_dw_queue_legacy_get_donation_types() {
+  $list = array();
+  $types = fundraiser_get_donation_types();
+  foreach ($types as $key => $value) {
+    if ($value) {
+      $list[] = $key;
+    }
+  }
+  return $list;
 }

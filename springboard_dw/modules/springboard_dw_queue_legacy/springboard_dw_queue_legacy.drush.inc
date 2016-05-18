@@ -127,7 +127,11 @@ function springboard_dw_queue_legacy_setup_batch($type = '') {
       break;
 
     case 'submission':
-        $records = db_query_range("SELECT s.sid, s.nid, s.uid, s.submitted AS created FROM {webform_submissions} s INNER JOIN {node} n ON s.nid = n.nid WHERE n.type <> 'springboard_petition' AND n.type <> 'donation_form' AND n.type <> 'sba_message_action' AND n.type <> 'sba_social_action' AND s.submitted > :highwater ORDER BY s.submitted ASC", 0, $limit, array(':highwater' => $highwater))->fetchAll();
+      $excluded_types = springboard_dw_queue_legacy_get_donation_types();
+      $excluded_types[] = 'springboard_petition';
+      $excluded_types[] = 'sba_message_action';
+      $excluded_types[] = 'sba_social_action';
+      $records = db_query_range("SELECT s.sid, s.nid, s.uid, s.submitted AS created FROM {webform_submissions} s INNER JOIN {node} n ON s.nid = n.nid WHERE n.type NOT IN (:excluded_types) AND s.submitted > :highwater ORDER BY s.submitted ASC", 0, $limit, array(':highwater' => $highwater, ':excluded_types' => $excluded_types))->fetchAll();
       $batch_process_function = 'springboard_dw_queue_legacy_submissions';
       break;
 
