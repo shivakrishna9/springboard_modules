@@ -59,11 +59,22 @@ function _fundraiser_designations_product_fields() {
       'field_name' => 'fd_designations_description',
       'locked' => 0,
       'module' => 'text',
-      'settings' => array(
-        'max_length' => 255,
+      'settings' => array(),
+      'foreign keys' => array(
+        'format' => array(
+          'columns' => array(
+            'format' => 'format',
+          ),
+          'table' => 'filter_format',
+        ),
+      ),
+      'indexes' => array(
+        'format' => array(
+          0 => 'format',
+        ),
       ),
       'translatable' => 0,
-      'type' => 'text',
+      'type' => 'text_with_summary',
     ),
     'field_instance' => array(
       'bundle' => 'fundraiser_designation',
@@ -72,13 +83,13 @@ function _fundraiser_designations_product_fields() {
       'description' => '',
       'display' => array(
         'default' => array(
-          'label' => 'above',
+          'label' => 'hidden',
           'settings' => array(),
           'type' => 'hidden',
           'weight' => 2,
         ),
         'teaser' => array(
-          'label' => 'above',
+          'label' => 'hidden',
           'settings' => array(),
           'type' => 'hidden',
           'weight' => 0,
@@ -89,17 +100,19 @@ function _fundraiser_designations_product_fields() {
       'label' => 'Description',
       'required' => 0,
       'settings' => array(
-        'text_processing' => 0,
+        'display_summary' => 0,
+        'text_processing' => 1,
         'user_register_form' => FALSE,
       ),
       'widget' => array(
         'active' => 1,
         'module' => 'text',
         'settings' => array(
-          'size' => 128,
+          'rows' => 10,
+          'summary_rows' => 5,
         ),
-        'type' => 'text_textfield',
-        'weight' => 2,
+        'type' => 'text_textarea_with_summary',
+        'weight' => 7,
       ),
     ),
   );

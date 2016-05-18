@@ -18,11 +18,10 @@ function _fundraiser_designations_install_vocab_fd_designation_categories($produ
     }
   }
   if (!$already_exists) {
-    $t = get_t();
     $status = taxonomy_vocabulary_save((object) array(
       'name' => t("Fundraiser Designation Categories"),
       'machine_name' => 'fd_designation_categories',
-      'description' => $t("Categories for Fund Designations."),
+      'description' => t("Categories for Fund Designations."),
     ));
     if ($status == SAVED_NEW) {
       $vocab = taxonomy_vocabulary_machine_name_load('fd_designation_categories');
@@ -31,17 +30,17 @@ function _fundraiser_designations_install_vocab_fd_designation_categories($produ
       foreach (_fundraiser_designations_default_categories() as $parent => $children) {
         taxonomy_term_save((object) array(
           'vid' => $vocab->vid,
-          'name' => $t($parent),
+          'name' => $parent,
           'weight' => $weight++,
           'vocabulary_machine_name' => $vocab->machine_name,
         ));
-        $parent_terms = taxonomy_term_load_multiple(array(), array('name' => $t($parent), 'vid' => $vocab->vid));
+        $parent_terms = taxonomy_term_load_multiple(array(), array('name' => $parent, 'vid' => $vocab->vid));
         if (!empty($parent_terms)) {
           $parent_term = reset($parent_terms);
           foreach ($children as $child) {
             taxonomy_term_save((object) array(
               'vid' => $vocab->vid,
-              'name' => $t($child),
+              'name' => $child,
               'weight' => $weight++,
               'parent' => array($parent_term->tid),
               'vocabulary_machine_name' => $vocab->machine_name,

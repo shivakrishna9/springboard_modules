@@ -37,7 +37,7 @@ function fundraiser_designations_menu() {
     'title' => 'Designations',
     'description' => 'Designations',
     'page callback' => 'drupal_get_form',
-    'page arguments' => array('fundraiser_designations_order_designation_types_form', 1),
+    'page arguments' => array('fundraiser_designations_order_designation_groups_form', 1),
     'access callback' => 'fundraiser_designations_manage_access',
     'access arguments' => array(1),
     'type' => MENU_LOCAL_TASK,
@@ -597,7 +597,8 @@ function fundraiser_designations_get_designation_field_keys() {
  * Helper function determine if the form has any designations attached to it.
  */
 function fundraiser_designations_no_designations_added($node) {
-  if (isset($node->fr_designations_designation_types) && empty($node->fr_designations_designation_types)) {
+  // @TODO add this pseudo-field to node_load
+  if (isset($node->fd_designation_groups) && empty($node->fd_designation_groups)) {
     return TRUE;
   }
   return FALSE;
