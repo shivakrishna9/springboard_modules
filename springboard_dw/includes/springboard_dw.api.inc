@@ -103,6 +103,9 @@ function springboard_dw_api_call($endpoint_route, $params, $method = 'POST') {
     $api_call['params'] = $params;
     $api_call['response'] = $api_response->getBody()->getContents();
     $api_call['responseCode'] = $api_response->getStatusCode();
+    $api_call['fullUrl'] = $endpoint . '?' . http_build_query(springboard_dw_api_prep_call
+      ($api_call['params']));
+
 
     $watchdog_string = '<pre>' . print_r($api_call, TRUE) . '</pre>';
 
