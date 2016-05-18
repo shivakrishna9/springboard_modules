@@ -67,8 +67,7 @@ function _webform_render_designations($component, $value = NULL, $filter = TRUE)
   $node = isset($component['nid']) ? node_load($component['nid']) : NULL;
   $node_wrapper = entity_metadata_wrapper('node', $node);
   if (fundraiser_designations_is_designation_type($node->type)) {
-
-
+    // @todo foreach loop here to retrieve each active funding group.
   }
   return $element;
 }

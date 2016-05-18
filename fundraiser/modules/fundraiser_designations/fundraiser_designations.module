@@ -22,7 +22,6 @@ function fundraiser_designations_menu() {
     'context' => MENU_CONTEXT_PAGE | MENU_CONTEXT_INLINE,
   );
 
-
   $items['node/%node/designations/settings'] = array(
     'title' => 'Settings',
     'description' => 'Designation settings',
@@ -303,13 +302,16 @@ function fundraiser_designations_fundraiser_commerce_generate_line_items($donati
         // Populate the line item with default values, sets the unit price.
         commerce_product_line_item_populate($line_item, $product_wrapper->value());
 
-        // Set the label from the product title and the quantity from the webform component value.
-        $line_item->line_item_label = t('Designation - ' . $product_wrapper->title->value());
+        // Set the label from the product title and the quantity from
+        // the webform component value.
+        $text = 'Designation - ' . $product_wrapper->title->value();
+        $line_item->line_item_label = $text;
         $line_item->quantity = $quantity;
 
         commerce_line_item_save($line_item);
 
-        // Add the line item to the order, this will be saved by fundraiser_commerce.
+        // Add the line item to the order, this will be saved
+        // by fundraiser_commerce.
         $order_wrapper->commerce_line_items[] = $line_item;
       }
     }
@@ -349,7 +351,7 @@ function fundraiser_designations_fundraiser_donation_success($donation) {
  * Alter an item before it is added to the queue.
  *
  * @param array $item
- *   Array of values to be added to the queue
+ *   Array of values to be added to the queue.
  */
 function fundraiser_designations_salesforce_queue_create_item_alter(&$item) {
   // Connect a designation line item to the donation opportunity.
@@ -361,14 +363,14 @@ function fundraiser_designations_salesforce_queue_create_item_alter(&$item) {
 }
 
 /**
- * Implements hook_salesforce_mapping_confirm_entity_for_queue.
+ * Implements hook_salesforce_mapping_confirm_entity_for_queue().
  *
  * Stop designation line items from syncing till the order has charged.
  */
 function fundraiser_designations_salesforce_mapping_confirm_entity_for_queue($entity, $entity_type, $op) {
   // Only bother with commerce entities.
   if ($entity_type != 'commerce_line_item') {
-    return;
+    return NULL;
   }
 
   $line_item = $entity;
@@ -405,16 +407,46 @@ function _fundraiser_designations_designation_settings_form_validate(&$form, &$f
 /**
  * Implements hook_form_alter().
  *
- * Alter content type settings to add "Enabledesignated donationss?" checkbox.
+ * Alter content type settings to add "Enable designated donations?" checkbox.
  */
 function fundraiser_designations_form_node_type_form_alter(&$form, &$form_state) {
   if (isset($form['type'])) {
+
+    $designation_default = variable_get('fundraiser_designations_' . $form['#node_type']->type, FALSE);
+    $fundraiser_default = variable_get('fundraiser_' . $form['#node_type']->type, FALSE);
     $form['fundraiser_type']['fundraiser_designations'] = array(
       '#type' => 'checkbox',
       '#title' => t('Enable designated donations?'),
-      '#default_value' => variable_get('fundraiser_designations_' . $form['#node_type']->type, FALSE),
+      '#default_value' => $designation_default,
       '#description' => t('Enable this checkbox if this content type should provide designated donations.  Fundraiser must be enabled as well.'),
     );
+
+    // Enabling fundraiser designations on a content type is destructive and
+    // irreversable. The UI should not allow designations to be enabled on a
+    // content type that already has fundraiser or fundraiser tickets enabled,
+    // or disabled on a content type that already has
+    // fundraiser designations enabled.
+    if ($designation_default) {
+      $form['fundraiser_type']['fundraiser_designations']['#disabled'] = TRUE;
+    }
+    if ($fundraiser_default) {
+      $form['fundraiser_type']['fundraiser']['#disabled'] = TRUE;
+      $form['fundraiser_type']['fundraiser_designations']['#disabled'] = TRUE;
+    }
+
+    // If fundraiser tickets is enabled, make sure both
+    // options can't be activated.
+    if (!empty($form['fundraiser_type']['fundraiser_tickets'])) {
+      if (!$designation_default && !$fundraiser_default) {
+        $form['fundraiser_type']['fundraiser_designations']['#states']['disabled'][] = array(
+          ':input[name="fundraiser_tickets"]' => array('checked' => TRUE),
+        );
+        $form['fundraiser_type']['fundraiser_tickets']['#states']['disabled'][] = array(
+          ':input[name="fundraiser_designations"]' => array('checked' => TRUE),
+        );
+      }
+    }
+
     $form['#validate'][] = 'fundraiser_designations_form_node_type_form_validate';
   }
 }
@@ -429,7 +461,7 @@ function fundraiser_designations_form_node_type_form_validate($form, &$form_stat
 }
 
 /**
- * Implements hook_node_type_insert.
+ * Implements hook_node_type_insert().
  */
 function fundraiser_designations_node_type_insert($type) {
   if (fundraiser_designations_is_designation_type($type->type)) {
@@ -513,7 +545,6 @@ function fundraiser_designations_node_update($node) {
 function fundraiser_designations_form_commerce_product_ui_product_form_alter(&$form, &$form_state) {
   $product = $form_state['commerce_product'];
   if ($product->type == 'fundraiser_designation') {
-    //$form['#validate'][] = 'fundraiser_designations_form_commerce_product_ui_product_form_validate';
   }
 }
 
@@ -530,7 +561,7 @@ function fundraiser_designations_is_designation_type($type) {
 }
 
 /**
- * Helper function, determine if this node type supportsdesignated donationss.
+ * Helper function, determine if this node type supports designated donationss.
  */
 function fundraiser_designations_get_designation_types() {
   // For all types, check if they are a fundraiser type.
@@ -543,7 +574,7 @@ function fundraiser_designations_get_designation_types() {
 }
 
 /**
- * Helper function, determine if a given field is a designationing field.
+ * Helper function, determine if a given field is a designation field.
  */
 function fundraiser_designations_is_designation_field($field_name) {
   static $fundraiser_designation_fields;

@@ -58,9 +58,9 @@ function _fundraiser_designations_install_vocab_fd_designation_categories($produ
  * Define legislative issues terms.
  *
  * @return array
+ *   Default terms.
  */
 function _fundraiser_designations_default_categories() {
-  $t = get_t();
   return array(
     "General" => array(),
   );
@@ -69,9 +69,8 @@ function _fundraiser_designations_default_categories() {
 /**
  * Install the legislative issue and org issue taxonomy fields on a node type.
  *
- * @param $product_type
- * @throws \Exception
- * @throws \FieldException
+ * @param string $product_type
+ *   Type is fundraiser_designation.
  */
 function _fundraiser_designations_install_taxonomy_fields($product_type) {
   module_load_include('inc', 'field', 'field.crud');
@@ -94,10 +93,10 @@ function _fundraiser_designations_install_taxonomy_fields($product_type) {
 /**
  * Taxonomy field definitions.
  *
- * @return mixed
+ * @return array
+ *   Field definitions.
  */
 function _fundraiser_designations_install_taxonomy_field_definitions($product_type) {
-  $t = get_t();
 
   $fields['fd_designation_categories'] = array(
     'field_config' => array(
@@ -133,7 +132,7 @@ function _fundraiser_designations_install_taxonomy_field_definitions($product_ty
       'field_name' => 'field_fd_designation_categories',
       'entity_type' => 'commerce_product',
       'bundle' => 'fundraiser_designation',
-      'label' => $t("Fund Categories"),
+      'label' => t("Fund Categories"),
       'default_value' => NULL,
       'required' => 0,
       'description' => '',
