@@ -2334,6 +2334,11 @@ function _fundraiser_sustainers_donation_amount_form_update_donations($master_di
 
     fundraiser_donation_update($donation);
 
+    // Let other modules know the amount has been updated
+    module_invoke_all('fundraiser_sustainers_donation_update_amount',
+      $donation->did,
+      $donation->donation['amount']);
+
     // Add a comment.
     if (!isset($origin)) {
       global $user;
