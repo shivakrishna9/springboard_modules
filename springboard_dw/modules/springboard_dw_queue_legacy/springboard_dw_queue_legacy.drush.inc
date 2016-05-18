@@ -409,24 +409,6 @@ function springboard_dw_queue_legacy_build_action($submission) {
 }
 
 /**
- * Records timestamp of last queued item so the next batch can start afterwards.
- *
- * @param string $type
- *   Type of queue record to create. eg contact, petition, message action, etc.
- * @param int $timestamp
- *   of seconds since the Unix Epoch.
- *   Number of seconds since the Unix Epoch.
- *
- * @return mixed
- *   FALSE on error. Otherwise, SAVED_NEW or SAVED_UPDATED.
- */
-function springboard_dw_queue_legacy_set_highwater_mark($type, $timestamp) {
-
-  $record = array('type' => $type, 'highwater' => $timestamp);
-  return drupal_write_record('springboard_data_warehouse_queue_legacy', $record, 'type');
-}
-
-/**
  * Get list of advocacy message node IDs.
  *
  * @return array

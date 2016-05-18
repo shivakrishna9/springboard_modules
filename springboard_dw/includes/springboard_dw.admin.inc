@@ -110,6 +110,11 @@ function springboard_dw_admin_warehouse_reset_form_submit(&$form, &$form_state) 
   db_delete('springboard_data_warehouse')
     ->execute();
 
+  // Reset highwater marks used in queueing legacy data.
+  if (function_exists('springboard_dw_queue_legacy_reset_highwater_marks')) {
+    springboard_dw_queue_legacy_reset_highwater_marks();
+  }
+
   drupal_set_message(t('The data warehouse tracking has been reset and the warehouse queue emptied.'));
 }
 
