@@ -85,6 +85,12 @@ function springboard_dw_queue_legacy_setup_batch($type = '') {
   $limit = drush_get_option('limit', 999999999);
   $batch_size = drush_get_option('batch-size', 100);
 
+  // Reset highwater mark to 0, if option is set.
+  if (drush_get_option('reset', FALSE)) {
+    springboard_dw_queue_legacy_set_highwater_mark($type, 0);
+    drush_log(dt('Resetting highwater mark to zero.'), 'ok');
+  }
+
   // Get the highwater mark for this type so we can pick up where we left off.
   $highwater = springboard_dw_queue_legacy_get_highwater_mark($type);
 
@@ -101,7 +107,7 @@ function springboard_dw_queue_legacy_setup_batch($type = '') {
       break;
 
     case 'action':
-        $records = db_query_range("SELECT n.nid, n.created, n.type FROM {node} n WHERE type='springboard_petition' OR type='sba_social_action' OR type='sba_message_action' ORDER BY created ASC", 0, $limit, array(':highwater' => $highwater))->fetchAll();
+        $records = db_query_range("SELECT n.nid, n.created, n.type FROM {node} n WHERE (type='springboard_petition' OR type='sba_social_action' OR type='sba_message_action') AND created > :highwater ORDER BY created ASC", 0, $limit, array(':highwater' => $highwater))->fetchAll();
       $batch_process_function = 'springboard_dw_queue_legacy_actions';
       break;
 
@@ -111,7 +117,7 @@ function springboard_dw_queue_legacy_setup_batch($type = '') {
       break;
 
     case 'petition message':
-        $records = db_query("SELECT s.sid, s.nid, s.uid, s.submitted AS created FROM {webform_submissions} s INNER JOIN {node} n ON s.nid = n.nid WHERE n.type = 'springboard_petition' AND s.submitted > 0 ORDER BY s.submitted ASC")->fetchAll();
+        $records = db_query_range("SELECT s.sid, s.nid, s.uid, s.submitted AS created FROM {webform_submissions} s INNER JOIN {node} n ON s.nid = n.nid WHERE n.type = 'springboard_petition' AND s.submitted > :highwater ORDER BY s.submitted ASC", 0, $limit, array(':highwater' => $highwater))->fetchAll();
       $batch_process_function = 'springboard_dw_queue_legacy_petition_messages';
       break;
 
@@ -121,7 +127,7 @@ function springboard_dw_queue_legacy_setup_batch($type = '') {
       break;
 
     case 'submission':
-        $records = db_query_range("SELECT s.sid, s.nid, s.uid, s.submitted AS created FROM {webform_submissions} s INNER JOIN {node} n ON s.nid = n.nid WHERE n.type <> 'springboard_petition' AND n.type <> 'donation_form' AND n.type <> 'sba_message_action' AND n.type <> 'sba_social_action' AND s.submitted > 0 ORDER BY s.submitted ASC", 0, $limit, array(':highwater' => $highwater))->fetchAll();
+        $records = db_query_range("SELECT s.sid, s.nid, s.uid, s.submitted AS created FROM {webform_submissions} s INNER JOIN {node} n ON s.nid = n.nid WHERE n.type <> 'springboard_petition' AND n.type <> 'donation_form' AND n.type <> 'sba_message_action' AND n.type <> 'sba_social_action' AND s.submitted > :highwater ORDER BY s.submitted ASC", 0, $limit, array(':highwater' => $highwater))->fetchAll();
       $batch_process_function = 'springboard_dw_queue_legacy_submissions';
       break;
 
@@ -400,25 +406,6 @@ function springboard_dw_queue_legacy_build_action($submission) {
   $action->webform = $webform_submission_data;
   $action->sid = $sid;
   return $action;
-}
-
-/**
- * Gets timestamp of the last queued item.
- *
- * Can be reset to 0 for a particular type by passing the --reset flag.
- *
- * @param string $type
- *   Type of queue record to create. eg contact, petition, message action, etc.
- *
- * @return int
- *   Number of seconds since the Unix Epoch.
- */
-function springboard_dw_queue_legacy_get_highwater_mark($type) {
-  if (drush_get_option('reset', FALSE)) {
-    drush_log(dt('Resetting highwater mark to zero.'), 'ok');
-    return 0;
-  }
-  return db_query('SELECT highwater FROM {springboard_data_warehouse_queue_legacy} WHERE type = :type', array(':type' => $type))->fetchAssoc();
 }
 
 /**

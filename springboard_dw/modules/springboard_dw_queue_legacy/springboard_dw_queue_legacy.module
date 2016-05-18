@@ -5,6 +5,22 @@
  */
 
 /**
+ * Implements hook_menu().
+ */
+function springboard_dw_queue_legacy_menu() {
+  // Page to view progress.
+  $items['admin/config/services/springboard-dw/dashboard'] = array(
+    'title'            => 'Springboard Data Warehouse - Progress Dashboard',
+    'description'      => 'View queueing progress.',
+    'page callback'    => 'springboard_dw_queue_legacy_dashboard',
+    'access arguments' => array('administer springboard data warehouse'),
+    'type'             => MENU_NORMAL_ITEM,
+  );
+
+  return $items;
+}
+
+/**
  * Implements hook_form_FORM_ID_alter().
  */
 function springboard_dw_queue_legacy_form_springboard_dw_settings_form_alter(&$form, &$form_state, $form_id) {
@@ -30,4 +46,82 @@ function springboard_dw_queue_legacy_form_springboard_dw_settings_form_alter(&$f
     '#default_value' => variable_get('springboard_dw_advocacy_authentication_token', NULL),
     '#required' => TRUE,
   );
+}
+
+/**
+ * Page callback for progress dashboard.
+ */
+function springboard_dw_queue_legacy_dashboard() {
+  $output = 'PROCESSED - Records in springboard_data_warehouse table: <strong>';
+  $query = db_select('springboard_data_warehouse', 'w')
+    ->fields('w', array('id'))
+    ->execute();
+  $output .= $query->rowCount();
+
+  $output .= '</strong><br>IN PROCESS - Records in queue table: <strong>';
+  $query = db_select('queue', 'q')
+    ->condition('name', 'springboard_dw_export', '=')
+    ->fields('q', array('item_id'))
+    ->execute();
+  $output .= $query->rowCount();
+  $output .= '</strong><br>TO BE PROCESSED - Records where created data > current highwater mark: ';
+
+  $output .= '<br>--contacts: ';
+  $highwater = springboard_dw_queue_legacy_get_highwater_mark('contact');
+  $query = db_select('users', 'u')
+    ->condition('created', $highwater, '>')
+    ->fields('u', array('uid'))
+    ->execute();
+  $output .= $query->rowCount();
+
+  $output .= '<br>--donations: ';
+  $highwater = springboard_dw_queue_legacy_get_highwater_mark('donation');
+  $query = db_select('fundraiser_donation', 'd')
+    ->condition('created', $highwater, '>')
+    ->fields('d', array('did'))
+    ->execute();
+  $output .= $query->rowCount();
+
+  $output .= '<br>--actions: ';
+  $highwater = springboard_dw_queue_legacy_get_highwater_mark('action');
+  $query = db_select('node', 'n')
+    ->condition('type', array('springboard_petition', 'sba_social_action', 'sba_message_action'), 'IN')
+    ->condition('created', $highwater, '>')
+    ->fields('n', array('nid'))
+    ->execute();
+  $output .= $query->rowCount();
+
+  $output .='<br>--messages: unkown (highwater mark not supported)';
+
+  $output .= '<br>--petition messages: ';
+  $highwater = springboard_dw_queue_legacy_get_highwater_mark('petition message');
+  $records = db_query_range("SELECT s.sid, s.nid, s.uid, s.submitted AS created FROM {webform_submissions} s INNER JOIN {node} n ON s.nid = n.nid WHERE n.type = 'springboard_petition' AND s.submitted > :highwater ORDER BY s.submitted ASC", 0, 9999999999, array(':highwater' => $highwater))->fetchAll();
+  $output .= count($records);
+
+  $output .= '<br>--forms: ';
+  $highwater = springboard_dw_queue_legacy_get_highwater_mark('form');
+  $records = db_query_range('SELECT n.nid, n.created FROM {node} n INNER JOIN {webform} w ON n.nid = w.nid WHERE n.created > :highwater ORDER BY created ASC', 0, 999999999, array(':highwater' => $highwater))->fetchAll();
+  $output .= count($records);
+
+  $output .= '<br>--submissions: ';
+  $highwater = springboard_dw_queue_legacy_get_highwater_mark('submission');
+  $records = db_query_range("SELECT s.sid, s.nid, s.uid, s.submitted AS created FROM {webform_submissions} s INNER JOIN {node} n ON s.nid = n.nid WHERE n.type <> 'springboard_petition' AND n.type <> 'donation_form' AND n.type <> 'sba_message_action' AND n.type <> 'sba_social_action' AND s.submitted > :highwater ORDER BY s.submitted ASC", 0, 999999999, array(':highwater' => $highwater))->fetchAll();
+  $output .= count($records);
+
+  return $output;
+}
+
+/**
+ * Gets timestamp of the last queued item.
+ *
+ * Can be reset to 0 for a particular type by passing the --reset flag.
+ *
+ * @param string $type
+ *   Type of queue record to create. eg contact, petition, message action, etc.
+ *
+ * @return int
+ *   Number of seconds since the Unix Epoch.
+ */
+function springboard_dw_queue_legacy_get_highwater_mark($type) {
+  return db_query('SELECT highwater FROM {springboard_data_warehouse_queue_legacy} WHERE type = :type', array(':type' => $type))->fetchAssoc();
 }
