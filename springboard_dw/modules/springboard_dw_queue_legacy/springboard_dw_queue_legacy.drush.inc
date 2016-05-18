@@ -351,11 +351,11 @@ function springboard_dw_queue_legacy_petition_messages($submissions, $operation_
   foreach ($submissions as $submission) {
     $action = springboard_dw_queue_legacy_build_action($submission);
     // Create the Advocacy action item in the queue if not warehoused.
-    if (!springboard_dw_item_is_warehoused('advocacy petiion message', $action->node->nid)) {
+    if (!springboard_dw_item_is_warehoused('advocacy petition message', $action->node->nid)) {
       $petition_item = springboard_dw_map_petition_submission_item($action);
       $queue->createItem($petition_item);
       springboard_dw_log_queue_item($petition_item);
-      springboard_dw_track_item_warehouse_queued('advocacy petiion message', $node->nid);
+      springboard_dw_track_item_warehouse_queued('advocacy petition message', $node->nid);
     }
   }
   $context['message'] = $operation_details;
