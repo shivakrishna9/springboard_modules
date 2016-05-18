@@ -946,7 +946,7 @@ function springboard_dw_map_petition_submission_item($petition) {
 
   // Get extra props from other modules if set.
   $modules_extra_props = module_invoke_all('springboard_dw_add_extra_props',
-    $message_item['extra_props'], $message_item['queue_type']);
+    $dw_extra_props, $message_item['queue_type']);
 
   // Validate extra props set in other modules are of array type
   if (is_array($modules_extra_props) && is_array($dw_extra_props)) {
