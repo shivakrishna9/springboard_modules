@@ -10,34 +10,13 @@
 function fundraiser_designations_menu() {
   $items = array();
 
+
+
   $items['node/%node/designations'] = array(
     'title' => 'Designations',
-    'description' => 'Designation settings',
-    'page callback' => 'fundraiser_designations_edit_settings',
-    'page arguments' => array(1),
-    'access callback' => 'fundraiser_designations_manage_access',
-    'access arguments' => array(1),
-    'weight' => 2,
-    'type' => MENU_LOCAL_TASK,
-    'context' => MENU_CONTEXT_PAGE | MENU_CONTEXT_INLINE,
-  );
-
-  $items['node/%node/designations/settings'] = array(
-    'title' => 'Settings',
-    'description' => 'Designation settings',
-    'page callback' => 'fundraiser_designations_edit_settings',
-    'page arguments' => array(1),
-    'access callback' => 'fundraiser_designations_manage_access',
-    'access arguments' => array(1),
-    'weight' => 3,
-    'type' => MENU_DEFAULT_LOCAL_TASK,
-  );
-
-  $items['node/%node/designations/designations'] = array(
-    'title' => 'Designations',
     'description' => 'Designations',
-    'page callback' => 'drupal_get_form',
-    'page arguments' => array('fundraiser_designations_order_designation_groups_form', 1),
+    'page callback' => 'fundraiser_designations_designation_groups_page',
+    'page arguments' => array(1),
     'access callback' => 'fundraiser_designations_manage_access',
     'access arguments' => array(1),
     'type' => MENU_LOCAL_TASK,
