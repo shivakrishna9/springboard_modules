@@ -1873,7 +1873,7 @@ function fundraiser_commerce_fundraiser_refund_process($refund) {
 }
 
 /**
- * Implements hookfundraiser_refund_success().
+ * Implements hook_fundraiser_refund_success().
  */
 function fundraiser_commerce_fundraiser_refund_success($refund) {
   // Mark as complete.
@@ -2345,33 +2345,52 @@ function _fundraiser_commerce_ipn_refund($donation, $payment_method, $ipn) {
   if ($results) {
     return;
   }
-  // Set up the refund.
+
+  // Ensure the refund amount is present:
+  if (!isset($ipn['mc_gross'])) {
+    watchdog('ipn_refund_fail', 'A refund issue from PayPal failed due to a missing refund amount.');
+    return;
+  }
+
+  // Gather info about this refund:
+  $refund_amount = floatval(round(abs($ipn['mc_gross']), 2, PHP_ROUND_HALF_DOWN));
+  $original_donation_amount = floatval(round($donation->donation['amount'], 2, PHP_ROUND_HALF_DOWN));
+  $refunded_total = floatval(0.0);
   $already_refunded = fundraiser_refund_get_refunds_by_did($donation->did, TRUE);
-  $refunded_total = 0;
   if(!empty($already_refunded)) {
     foreach ($already_refunded as $prior) {
       // Omit the same refund transaction, if submitted through Springboard.
       if ($prior->txn_id != $ipn['parent_txn_id']) {
-        $refunded_total += ($prior->amount * -1);
+        $refunded_total += floatval(round($prior->amount, 2, PHP_ROUND_HALF_DOWN));
       }
-    }
+    }   
   }
-  $able_to_refund = ($donation->donation['amount'] + $refunded_total);
-  $new_status = 'partially_refunded';
-  // Partial refund
-  $amount = $ipn['mc_gross'];
-  if ($amount >= $able_to_refund) {
+  $max_refund_amount = $original_donation_amount - $refunded_total;
+  $max_refund_amount = floatval(round($max_refund_amount, 2, PHP_ROUND_HALF_DOWN));
+
+  // Determine the appropriate status for this refund:
+  if ($refund_amount > $max_refund_amount) {
     $new_status = COMMERCE_PAYMENT_STATUS_FAILURE;
   }
+  else if ($refund_amount == $max_refund_amount) {
+    $new_status = 'refunded';
+  }
+  else {
+    $new_status = 'partially_refunded';
+  }
 
+  // Create the refund:
   $refund = new stdClass();
   $refund->did = $donation->did;
-  $refund->amount =  $amount;
+  $refund->amount =  strval($refund_amount);
   $refund->currency = $donation->currency;
   $refund = fundraiser_refund_create($refund);
+
+  // Process the refund:
   $refund->new_status = $new_status;
   $refund->ipn = TRUE;
   fundraiser_refund_process($refund);
+
   // At this point $donation->result is set and responses can be handled.
   if (!isset($refund->result['message'])) {
     $refund->result['message'] = '';
@@ -2382,7 +2401,7 @@ function _fundraiser_commerce_ipn_refund($donation, $payment_method, $ipn) {
   }
   else {
     $donation->result['success'] = FALSE;
-    watchdog('ipn_refund_fail', '%ipn: A reversal failed to be processed.', array('%ipn', $ipn['item_name1']));
+    watchdog('ipn_refund_fail', '%ipn: A refund issue from PayPal failed to be processed.', array('%ipn', $ipn['item_name1']));
   }
 }
 
