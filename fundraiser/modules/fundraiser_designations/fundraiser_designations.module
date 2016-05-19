@@ -582,3 +582,14 @@ function fundraiser_designations_no_designations_added($node) {
   }
   return FALSE;
 }
+
+
+function fundraiser_designations_theme() {
+  $theme = array(
+    'fundraiser_designations_bundler_form' => array(
+      'render element' => 'form',
+      'file' => 'fundraiser_designations.forms.inc',
+    ),
+  );
+  return $theme;
+}

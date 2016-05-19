@@ -1,0 +1,35 @@
+#fundraiser-designations-categories {
+    width: 45%;
+    float:left;
+}
+
+#fundraiser-designations-groups {
+    width: 40%;
+    float: left;
+    background: #ddd;
+    margin-left:10%;
+    padding:10px;
+    border-radius: 5px;
+}
+
+#fundraiser-designations-categories th,
+#fundraiser-designations-groups th {
+    padding: 2px 4px;
+}
+
+#fundraiser-designations-categories td,
+#fundraiser-designations-groups td {
+    padding: 2px 10px;
+}
+
+
+th .control-group {
+    float: right;
+    margin-bottom: 0;
+}
+
+th .control-group label{
+    vertical-align: top;
+    font-size: 90%;
+}
+

@@ -79,4 +79,9 @@ function fundraiser_designations_schema() {
     ),
     'primary key' => array('fund_group_id', 'fund_id'),
   );
+  return $schema;
+}
+
+function fundraiser_designations_update_7002() {
+  drupal_install_schema('fundraiser_designations');
 }
