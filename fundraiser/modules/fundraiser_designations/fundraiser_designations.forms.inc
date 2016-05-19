@@ -110,16 +110,31 @@ function fundraiser_designations_bundler_form($form, $form_state, $node) {
     array(':nid' => $node->nid)
   )->fetchAll();
 
+  $groups = db_query('
+    SELECT g.fund_group_name,
+    g.fund_group_id,
+    g.fund_group_weight,
+    g.fund_group_featured
+    FROM {fd_fund_group} g
+    WHERE g.fund_group_form_id = :nid',
+    array(':nid' => $node->nid)
+  )->fetchAll();
+
+
   $funds_by_group = [];
-  foreach ($funds as $id => $fund) {
-    $funds_by_group[$fund->fund_group_id]['name'] = $fund->fund_group_name;
-    $funds_by_group[$fund->fund_group_id]['featured'] = $fund->fund_group_featured;
-    $funds_by_group[$fund->fund_group_id]['weight'] = $fund->fund_group_weight;
-    $funds_by_group[$fund->fund_group_id]['funds'][] = array(
-      'fund_name' => $fund->product_name,
-      'fund_id' => $fund->fund_id,
-      'fund_weight' => $fund->fund_weight,
-    );
+  foreach ($groups as $group) {
+    $funds_by_group[$group->fund_group_id]['name'] = $group->fund_group_name;
+    $funds_by_group[$group->fund_group_id]['featured'] = $group->fund_group_featured;
+    $funds_by_group[$group->fund_group_id]['weight'] = $group->fund_group_weight;
+    foreach ($funds as $fund) {
+      if ($fund->fund_group_id == $group->fund_group_id) {
+        $funds_by_group[$group->fund_group_id]['funds'][] = array(
+          'fund_name' => $fund->product_name,
+          'fund_id' => $fund->fund_id,
+          'fund_weight' => $fund->fund_weight,
+        );
+      }
+    }
   }
 
 
@@ -138,19 +153,21 @@ function fundraiser_designations_bundler_form($form, $form_state, $node) {
       '#default_value' => $group['featured'],
     );
 
-    foreach ($group['funds'] as $fund) {
-      $form['groups'][$group_id]['funds'][$fund['fund_id']]['name'] = array(
-        '#type' => 'hidden',
-        '#default_value' => $fund['fund_name'],
-      );
-      $form['groups'][$group_id]['funds'][$fund['fund_id']]['weight'] = array(
-        '#type' => 'hidden',
-        '#default_value' => $fund['fund_weight'],
-      );
-      $form['groups'][$group_id]['funds'][$fund['fund_id']]['fund_id'] = array(
-        '#type' => 'hidden',
-        '#default_value' => $fund['fund_id'],
-      );
+    if (!empty($group['funds'])) {
+      foreach ($group['funds'] as $fund) {
+        $form['groups'][$group_id]['funds'][$fund['fund_id']]['name'] = array(
+          '#type' => 'hidden',
+          '#default_value' => $fund['fund_name'],
+        );
+        $form['groups'][$group_id]['funds'][$fund['fund_id']]['weight'] = array(
+          '#type' => 'hidden',
+          '#default_value' => $fund['fund_weight'],
+        );
+        $form['groups'][$group_id]['funds'][$fund['fund_id']]['fund_id'] = array(
+          '#type' => 'hidden',
+          '#default_value' => $fund['fund_id'],
+        );
+      }
     }
 
   }
@@ -173,19 +190,22 @@ function theme_fundraiser_designations_bundler_form($variables) {
         array('data' => $form['groups'][$child]['name']['#value'] . ' funds'),
         array('data' => drupal_render($form['groups'][$child]['featured'])),
     );
-    $fund_children = element_children($form['groups'][$child]['funds']);
     $rows = [];
-    foreach ($fund_children as $id) {
-      $rows[] = array(
-        'data' => array(
-          'data' => array(
-            'data' => $form['groups'][$child]['funds'][$id]['name']['#value'],
-            'colspan' => 2,
-          ),
-        ),
-        'data-product-id' => $id,
-      );
 
+    if (!empty($form['groups'][$child]['funds'])) {
+      $fund_children = element_children($form['groups'][$child]['funds']);
+      foreach ($fund_children as $id) {
+        $rows[] = array(
+          'data' => array(
+            'data' => array(
+              'data' => $form['groups'][$child]['funds'][$id]['name']['#value'],
+              'colspan' => 2,
+            ),
+          ),
+          'data-product-id' => $id,
+        );
+
+      }
     }
 
     $output .= theme('table', array('header' => $header, 'rows' => $rows, 'attributes' => array('id' => 'webform-components')));
