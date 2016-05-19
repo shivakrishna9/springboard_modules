@@ -56,53 +56,35 @@ function springboard_dw_queue_legacy_dashboard() {
   $query = db_select('springboard_data_warehouse', 'w')
     ->fields('w', array('id'))
     ->execute();
-  $output .= $query->rowCount();
+  $output .= db_query("SELECT count(id) FROM {springboard_data_warehouse}")->fetchField();
 
   $output .= '</strong><br>IN PROCESS - Records in queue table: <strong>';
-  $query = db_select('queue', 'q')
-    ->condition('name', 'springboard_dw_export', '=')
-    ->fields('q', array('item_id'))
-    ->execute();
-  $output .= $query->rowCount();
+  $output .= db_query("SELECT count(item_id) FROM {queue} WHERE name = 'springboard_dw_export'")->fetchField();
   $output .= '</strong><br>TO BE PROCESSED - Records where created date > current highwater mark: ';
   $output .= '<br><em>* Note, these numbers may not reach zero on sites where content is actively being created. Newly created records get submitted immediately to the DW but remain above the highwater mark used by the legacy data processing script.</em>';
 
   $output .= '<br>--contacts: ';
   $highwater = springboard_dw_queue_legacy_get_highwater_mark('contact');
-  $query = db_select('users', 'u')
-    ->condition('created', $highwater, '>')
-    ->fields('u', array('uid'))
-    ->execute();
-  $output .= $query->rowCount();
+  $output .= db_query("SELECT count(uid) FROM {users} WHERE created > :highwater", array(':highwater' => $highwater))->fetchField();
 
   $output .= '<br>--donations: ';
   $highwater = springboard_dw_queue_legacy_get_highwater_mark('donation');
-  $query = db_select('fundraiser_donation', 'd')
-    ->condition('created', $highwater, '>')
-    ->fields('d', array('did'))
-    ->execute();
-  $output .= $query->rowCount();
+  $output .= db_query("SELECT count(did) FROM {fundraiser_donation} WHERE created > :highwater", array(':highwater' => $highwater))->fetchField();
 
   $output .= '<br>--actions: ';
   $highwater = springboard_dw_queue_legacy_get_highwater_mark('action');
-  $query = db_select('node', 'n')
-    ->condition('type', array('springboard_petition', 'sba_social_action', 'sba_message_action'), 'IN')
-    ->condition('created', $highwater, '>')
-    ->fields('n', array('nid'))
-    ->execute();
-  $output .= $query->rowCount();
+  $output .= db_query("SELECT count(nid) FROM {node} WHERE type IN ('springboard_petition', 'sba_social_action', 'sba_message_action') AND created > :highwater", array(':highwater' => $highwater))->fetchField();
 
   $output .='<br>--messages: unknown (highwater mark not supported)';
 
   $output .= '<br>--petition messages: ';
+  // $nbr_records = db_query("SELECT count(nid) FROM {joke}")->fetchField();
   $highwater = springboard_dw_queue_legacy_get_highwater_mark('petition message');
-  $records = db_query_range("SELECT s.sid, s.nid, s.uid, s.submitted AS created FROM {webform_submissions} s INNER JOIN {node} n ON s.nid = n.nid WHERE n.type = 'springboard_petition' AND s.submitted > :highwater ORDER BY s.submitted ASC", 0, 9999999999, array(':highwater' => $highwater))->fetchAll();
-  $output .= count($records);
+  $output .= db_query("SELECT count(s.sid) FROM {webform_submissions} s INNER JOIN {node} n ON s.nid = n.nid WHERE n.type = 'springboard_petition' AND s.submitted > :highwater", array(':highwater' => $highwater))->fetchField();
 
   $output .= '<br>--forms: ';
   $highwater = springboard_dw_queue_legacy_get_highwater_mark('form');
-  $records = db_query_range('SELECT n.nid, n.created FROM {node} n INNER JOIN {webform} w ON n.nid = w.nid WHERE n.created > :highwater ORDER BY created ASC', 0, 999999999, array(':highwater' => $highwater))->fetchAll();
-  $output .= count($records);
+  $output .= db_query('SELECT count(n.nid) FROM {node} n INNER JOIN {webform} w ON n.nid = w.nid WHERE n.created > :highwater', array(':highwater' => $highwater))->fetchField();
 
   $output .= '<br>--submissions: ';
   $highwater = springboard_dw_queue_legacy_get_highwater_mark('submission');
@@ -110,8 +92,7 @@ function springboard_dw_queue_legacy_dashboard() {
   $excluded_types[] = 'springboard_petition';
   $excluded_types[] = 'sba_message_action';
   $excluded_types[] = 'sba_social_action';
-  $records = db_query_range("SELECT s.sid, s.nid, s.uid, s.submitted AS created FROM {webform_submissions} s INNER JOIN {node} n ON s.nid = n.nid WHERE n.type NOT IN (:excluded_types) AND s.submitted > :highwater ORDER BY s.submitted ASC", 0, 999999999, array(':highwater' => $highwater, ':excluded_types' => $excluded_types))->fetchAll();
-  $output .= count($records);
+  $output .= db_query("SELECT count(s.sid) FROM {webform_submissions} s INNER JOIN {node} n ON s.nid = n.nid WHERE n.type NOT IN (:excluded_types) AND s.submitted > :highwater", array(':highwater' => $highwater, ':excluded_types' => $excluded_types))->fetchField();
 
   return $output;
 }
