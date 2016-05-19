@@ -593,3 +593,29 @@ function fundraiser_designations_theme() {
   );
   return $theme;
 }
+
+/**
+ * Implements hook_springboard_admin_admin_menu_items_alter().
+ *
+ * Put the link to the admin page under the springboard/settings/config.
+ */
+function fundraiser_designations_springboard_admin_admin_menu_items_alter(&$items) {
+  $items['admin/springboard/settings']['_children']['admin/springboard/settings/config']['_children']['admin/springboard/settings/config/designations'] = array(
+    'link_path' => 'admin/springboard/settings/config/designations',
+    'link_title' => t('Fundraiser Designations'),
+    'menu_name' => 'springboard_admin_menu',
+    'expanded' => 1,
+    'customized' => 1,
+    'weight' => 1,
+  );
+}
+  /**
+   * Implements hook_views_api().
+   */
+  function fundraiser_designations_views_api() {
+    return array(
+      'api' => 3.0,
+      'path' => drupal_get_path('module', 'fundraiser_designations') . '/includes/views',
+      'template path' => drupal_get_path('module', 'fundraiser_designations') . '/includes/views/templates',
+    );
+}

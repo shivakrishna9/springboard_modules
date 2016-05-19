@@ -179,16 +179,15 @@ function fundraiser_designations_bundler_form($form, $form_state, $node) {
 }
 
 function theme_fundraiser_designations_bundler_form($variables) {
+
   $form = $variables['form'];
-  $rows = array();
   $output = '';
   $children = element_children($form['groups']);
-  foreach ($children as $child) {
 
+  foreach ($children as $child) {
     $header = array(
-      'data' =>
-        array('data' => $form['groups'][$child]['name']['#value'] . ' funds'),
-        array('data' => drupal_render($form['groups'][$child]['featured'])),
+      'data' => array('data' => $form['groups'][$child]['name']['#value'] . ' funds'),
+      array('data' => drupal_render($form['groups'][$child]['featured'])),
     );
     $rows = [];
 
@@ -204,13 +203,17 @@ function theme_fundraiser_designations_bundler_form($variables) {
           ),
           'data-product-id' => $id,
         );
-
       }
     }
 
-    $output .= theme('table', array('header' => $header, 'rows' => $rows, 'attributes' => array('id' => 'webform-components')));
-
+    $output .= theme('table', array(
+      'header' => $header,
+      'rows' => $rows,
+      'attributes' => array('id' => 'designations-group-table'),
+      )
+    );
   }
+
   $output .= drupal_render_children($form);
   return $output;
 }

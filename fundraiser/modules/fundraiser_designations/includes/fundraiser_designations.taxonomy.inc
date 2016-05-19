@@ -133,7 +133,7 @@ function _fundraiser_designations_install_taxonomy_field_definitions($product_ty
       'bundle' => 'fundraiser_designation',
       'label' => t("Fund Categories"),
       'default_value' => NULL,
-      'required' => 0,
+      'required' => 1,
       'description' => '',
       'display' => array(
         'default' => array(
