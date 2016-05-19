@@ -261,19 +261,15 @@ function springboard_dw_queue_legacy_donations($records, $operation_details, &$c
 function springboard_dw_queue_legacy_forms($records, $operation_details, &$context) {
   foreach ($records as $record) {
     $node = node_load($record->nid);
-    // Create the form item.
-    if (isset($node->is_webform_user) && $node->is_webform_user) {
+    // Get the Drupal data warehouse queue.
+    $queue = DrupalQueue::get("springboard_dw_export");
 
-      // Get the Drupal data warehouse queue.
-      $queue = DrupalQueue::get("springboard_dw_export");
-
-      // Create the form item in the queue if not warehoused.
-      if (!springboard_dw_item_is_warehoused('form', $node->nid)) {
-        $form_item = springboard_dw_map_form_item($node);
-        $queue->createItem($form_item);
-        springboard_dw_log_queue_item($form_item);
-        springboard_dw_track_item_warehouse_queued('form', $node->nid);
-      }
+    // Create the form item in the queue if not warehoused.
+    if (!springboard_dw_item_is_warehoused('form', $node->nid)) {
+      $form_item = springboard_dw_map_form_item($node);
+      $queue->createItem($form_item);
+      springboard_dw_log_queue_item($form_item);
+      springboard_dw_track_item_warehouse_queued('form', $node->nid);
     }
   }
   $context['message'] = $operation_details;
