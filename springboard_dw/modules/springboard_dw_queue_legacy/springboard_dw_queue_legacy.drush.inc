@@ -131,7 +131,7 @@ function springboard_dw_queue_legacy_setup_batch($type = '') {
       $excluded_types[] = 'springboard_petition';
       $excluded_types[] = 'sba_message_action';
       $excluded_types[] = 'sba_social_action';
-      $records = db_query_range("SELECT s.sid, s.nid, s.uid, s.submitted AS created FROM {webform_submissions} s INNER JOIN {node} n ON s.nid = n.nid WHERE n.type NOT IN (:excluded_types) AND s.submitted > :highwater ORDER BY s.submitted ASC", 0, $limit, array(':highwater' => $highwater, ':excluded_types' => $excluded_types))->fetchAll();
+      $records = db_query_range("SELECT s.sid, s.nid, s.uid, s.remote_addr, s.submitted AS created FROM {webform_submissions} s INNER JOIN {node} n ON s.nid = n.nid WHERE n.type NOT IN (:excluded_types) AND s.submitted > :highwater ORDER BY s.submitted ASC", 0, $limit, array(':highwater' => $highwater, ':excluded_types' => $excluded_types))->fetchAll();
       $batch_process_function = 'springboard_dw_queue_legacy_submissions';
       break;
 
@@ -289,19 +289,33 @@ function springboard_dw_queue_legacy_submissions($records, $operation_details, &
   foreach ($records as $record) {
     $node = node_load($record->nid);
     $submission = webform_get_submission($record->nid, $record->sid);
-    $submitted_data = array();
-    // Put the submission data in key/value pair format.
-    foreach ($submission->data as $cid => $submittted_value) {
-      if (array_key_exists($cid, $node->webform['components'])) {
-        $submitted_data[$node->webform['components'][$cid]['form_key']] = $submission->data[$cid]['value'][0];
+    // If submission is false, the webform_submitted_data table was probably
+    // cleared out at some point. So, let's populate a $submission object with
+    // the data we have available from the webform_submissions table.
+    if (!$submission) {
+      $submission = new stdClass();
+      $submission->sid = $record->sid;
+      $submission->nid = $record->nid;
+      $submission->uid = $record->uid;
+      $submission->submitted = $record->created;
+      $submission->remote_addr = $record->remote_addr;
+    }
+    if (is_array($submission->data)) {
+      $submitted_data = array();
+      // Put the submission data in key/value pair format.
+      foreach ($submission->data as $cid => $submittted_value) {
+        if (array_key_exists($cid, $node->webform['components'])) {
+          $submitted_data[$node->webform['components'][$cid]['form_key']] = $submission->data[$cid]['value'][0];
+        }
       }
     }
-    // Queue the donation object which should not be in the queue, so there's
-    // no need to check if this item is warehoused.
-    $submission_item = springboard_dw_map_submission_item($submission, $submitted_data);
-    // Create the queue item.
-    $queue->createItem($submission_item);
-    springboard_dw_log_queue_item($submission_item);
+    if (!springboard_dw_item_is_warehoused('submission', $node->nid)) {
+      $submission_item = springboard_dw_map_submission_item($submission, $submitted_data);
+      // Create the queue item.
+      $queue->createItem($submission_item);
+      springboard_dw_log_queue_item($submission_item);
+      springboard_dw_track_item_warehouse_queued('submission', $record->sid);
+    }
   }
   $context['message'] = $operation_details;
 }

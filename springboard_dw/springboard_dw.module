@@ -718,8 +718,10 @@ function springboard_dw_map_submission_item($submission, $submitted_data) {
   $submission_item['device_browser'] = $submitted_data['device_browser'];
 
   // Extract extra props to add to the record if applicable.
-  $dw_extra_props =
+  if (is_array($submitted_data)) {
+    $dw_extra_props =
     springboard_dw_extract_submission_extra_props($submitted_data, $submission_item);
+  }
 
   // Get extra props from other modules if set.
   $modules_extra_props = module_invoke_all('springboard_dw_add_extra_props',
