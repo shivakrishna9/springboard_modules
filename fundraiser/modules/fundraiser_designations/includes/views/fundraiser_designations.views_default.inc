@@ -90,6 +90,7 @@ function fundraiser_designations_views_default_views() {
   $handler->display->display_options['fields']['field_fd_designation_categories']['table'] = 'field_data_field_fd_designation_categories';
   $handler->display->display_options['fields']['field_fd_designation_categories']['field'] = 'field_fd_designation_categories';
   $handler->display->display_options['fields']['field_fd_designation_categories']['label'] = 'Fund Category';
+  $handler->display->display_options['fields']['field_fd_designation_categories']['type'] = 'taxonomy_term_reference_plain';
   $handler->display->display_options['fields']['field_fd_designation_categories']['delta_offset'] = '0';
   /* Field: Commerce Product: Delete link */
   $handler->display->display_options['fields']['delete_product']['id'] = 'delete_product';
