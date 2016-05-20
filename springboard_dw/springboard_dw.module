@@ -1409,7 +1409,7 @@ function springboard_dw_extract_form_extra_props($form, $form_item) {
   ));
 
   $extra_props = array();
-  foreach($form as $key => $value) {
+  foreach ($form as $key => $value) {
     if (!in_array($key, $field_blacklist) && !array_key_exists($key, $form_item)) {
       $extra_props[$key] = $value;
     }

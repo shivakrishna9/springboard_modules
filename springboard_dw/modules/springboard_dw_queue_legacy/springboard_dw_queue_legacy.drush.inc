@@ -476,11 +476,11 @@ function springboard_dw_queue_legacy_get_advocacy_message_details($action_id) {
  */
 function springboard_dw_queue_legacy_get_advocacy_message_details_page($action_id, $page = 1) {
   // Composer Vendor autoload
-  if(function_exists('drush_autoload')) {
+  if (function_exists('drush_autoload')) {
     drush_autoload("sites/all/libraries/springboard_composer/vendor/autoload.php");
   }
   else {
-    require_once ("sites/all/libraries/springboard_composer/vendor/autoload.php");
+    require_once("sites/all/libraries/springboard_composer/vendor/autoload.php");
   }
 
   // Load Guzzle client.
