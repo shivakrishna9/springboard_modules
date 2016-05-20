@@ -8,5 +8,6 @@ dependencies[] = commerce_order
 dependencies[] = commerce_payment
 dependencies[] = commerce_customer
 dependencies[] = commerce_product_ui
-dependencies[] = taxonomy
+dependencies[] = springboard_taxonomy
+
 files[] = includes/views/fundraiser_designations.views_default.inc
