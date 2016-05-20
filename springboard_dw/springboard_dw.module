@@ -733,7 +733,7 @@ function springboard_dw_map_submission_item($submission, $submitted_data) {
   }
 
   // Add the extra props to the field mapping
-  $submission_item['extra_props'] = json_encode($dw_extra_props);
+  $submission_item['extra_props'] = $dw_extra_props;
 
   return $submission_item;
 }
@@ -956,7 +956,7 @@ function springboard_dw_map_petition_submission_item($petition) {
   }
 
   // Add the extra props to the field mapping
-  $message_item['extra_props'] = json_encode($dw_extra_props);
+  $message_item['extra_props'] = $dw_extra_props;
 
   return $message_item;
 }
@@ -1012,7 +1012,7 @@ function springboard_dw_map_advocacy_message_item($message, $full_message) {
   }
 
   // Add the extra props to the field mapping
-  $message_item['extra_props'] = json_encode($dw_extra_props);
+  $message_item['extra_props'] = $dw_extra_props;
 
   return $message_item;
 }
@@ -1124,7 +1124,7 @@ function springboard_dw_map_donation_item($donation, $update = FALSE) {
   }
 
   // Add the extra props to the field mapping
-  $donation_item['extra_props'] = json_encode($dw_extra_props);
+  $donation_item['extra_props'] = $dw_extra_props;
 
 
   return $donation_item;
@@ -1333,7 +1333,7 @@ function springboard_dw_map_contact_item($contact_id, $user_data = array(), $upd
   }
 
   // Add the extra props to the field mapping
-  $contact_item['extra_props']= json_encode($dw_extra_props);
+  $contact_item['extra_props']= $dw_extra_props;
 
 
   return $contact_item;
@@ -1468,7 +1468,7 @@ function springboard_dw_map_social_action_item($message, $action, $node) {
   }
 
   // Add the extra props to the field mapping
-  $message_item['extra_props'] = json_encode($dw_extra_props);
+  $message_item['extra_props'] = $dw_extra_props;
 
   return $message_item;
 }
@@ -1531,7 +1531,7 @@ function springboard_dw_map_form_item($node, $update = FALSE) {
   }
 
   // Add the extra props to the field mapping
-  $form_item['extra_props'] = json_encode($dw_extra_props);
+  $form_item['extra_props'] = $dw_extra_props;
 
   return $form_item;
 
