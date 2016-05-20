@@ -1375,6 +1375,48 @@ function springboard_dw_extract_contact_extra_props($user, $contact_item) {
 }
 
 /**
+ * Extracts non-standard fields from the form entity and returns extra_props.
+ *
+ * @param $form
+ *   The form entity from which properties are to be extracted.
+ * @param $form_item
+ *   The form item being prepared for the queue.
+ */
+function springboard_dw_extract_form_extra_props($form, $form_item) {
+  // Maintain a field blacklist because some node properties don't need to
+  // be exported.
+  $field_blacklist = variable_get('springboard_dw_form_field_blacklist', array(
+    'title',
+    'body',
+    'nid',
+    'vid',
+    'is_new',
+    'type',
+    'edit_url',
+    'status',
+    'promote',
+    'sticky',
+    'created',
+    'changed',
+    'author',
+    'source',
+    'log',
+    'revision',
+    'field_fundraiser_internal_name',
+    'field_webform_user_internal_name',
+  ));
+
+  $extra_props = array();
+  foreach($form as $key => $value) {
+    if (!in_array($key, $field_blacklist) && !array_key_exists($key, $form_item)) {
+      $extra_props[$key] = $value;
+    }
+  }
+
+  return $extra_props;
+}
+
+/**
  * Map the social action object to an array formatted for an API call.
  *
  * @param object $message
@@ -1461,8 +1503,21 @@ function springboard_dw_map_form_item($node, $update = FALSE) {
   $form_item['created_at'] = $node->created;
   $form_item['updated_at'] = $node->changed;
 
-  // Todo: Add the extra props attributes.
-  $dw_extra_props = array();
+  $node_obj = entity_metadata_wrapper('node', $node);
+  $node_data = springboard_dw_get_all_entity_properties($node_obj);
+
+  $donation_types = springboard_dw_get_donation_types();
+  // Only webform user enabled and donation forms will have an internal name field. Of
+  // course the field names are different so we have to check the types.
+  if (in_array($node->type, $donation_types)) {
+    $form_item['internal_name'] = $node_data['field_fundraiser_internal_name'];
+  }
+  elseif (isset($node->is_webform_user) && $node->is_webform_user) {
+    $form_item['internal_name'] = $node_data['field_webform_user_internal_name'];  
+  }
+
+  // Extract the extra props attributes from the nodes metadata definition.
+  $dw_extra_props = springboard_dw_extract_form_extra_props($node_data, $form_item);
 
   // Get extra props from other modules if set.
   $modules_extra_props = module_invoke_all('springboard_dw_add_extra_props',
