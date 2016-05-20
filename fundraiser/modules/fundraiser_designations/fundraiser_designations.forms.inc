@@ -7,6 +7,11 @@
 function fundraiser_designations_designation_groups_page($node) {
   $build = array();
   $build['#attached']['css'][] = drupal_get_path('module', 'fundraiser_designations') . '/css/designation_form.css';
+  $build['#attached']['js'][] = drupal_get_path('module', 'fundraiser_designations') . '/js/jquery-ui/jquery-ui.min.js';
+  $build['#attached']['js'][] = drupal_get_path('module', 'fundraiser_designations') . '/js/bundler.js';
+
+  $build['#attached']['css'][] = drupal_get_path('module', 'fundraiser_designations') . '/js/jquery-ui/jquery-ui.structure.css';
+
   $form = drupal_get_form('fundraiser_designations_bundler_form', $node);
   $build['content'] = array(
     'header' => array(
@@ -75,7 +80,7 @@ function fundraiser_designations_categories_list() {
         'data' => array('data' => $name . ' funds', 'data-category-id' => $values['tid']),
       ),
       'rows' => $rows,
-      'attributes' => array('data-category-id' => $values['tid']),
+      'attributes' => array('class' => array('designations-category-table')), array('data-category-id' => $values['tid']),
     ));
 
   }
@@ -209,7 +214,7 @@ function theme_fundraiser_designations_bundler_form($variables) {
     $output .= theme('table', array(
       'header' => $header,
       'rows' => $rows,
-      'attributes' => array('id' => 'designations-group-table'),
+      'attributes' => array('class' => array('designations-group-table')),
       )
     );
   }
