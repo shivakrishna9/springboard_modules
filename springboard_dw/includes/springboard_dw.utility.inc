@@ -52,3 +52,17 @@ function springboard_dw_webform_submission_data_keyed($nid, $sid) {
 
   return $data;
 }
+
+/**
+ * Gets array of donation-enabled content types.
+ */
+function springboard_dw_get_donation_types() {
+  $list = array();
+  $types = fundraiser_get_donation_types();
+  foreach ($types as $key => $value) {
+    if ($value) {
+      $list[] = $key;
+    }
+  }
+  return $list;
+}

@@ -127,7 +127,7 @@ function springboard_dw_queue_legacy_setup_batch($type = '') {
       break;
 
     case 'submission':
-      $excluded_types = springboard_dw_queue_legacy_get_donation_types();
+      $excluded_types = springboard_dw_get_donation_types();
       $excluded_types[] = 'springboard_petition';
       $excluded_types[] = 'sba_message_action';
       $excluded_types[] = 'sba_social_action';
