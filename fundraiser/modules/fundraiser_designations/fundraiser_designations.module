@@ -659,3 +659,10 @@ function fundraiser_designations_form_taxonomy_overview_terms_alter(&$form, &$fo
     );
   }
 }
+
+function fundraiser_designations_views_pre_render(&$view) {
+  if ($view->name == 'fundraiser_designations') {
+    $css = drupal_get_path('module', 'fundraiser_designations') . '/css/designation-views.css';
+    drupal_add_css($css);
+  }
+}

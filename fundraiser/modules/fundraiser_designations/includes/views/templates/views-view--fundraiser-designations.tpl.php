@@ -11,11 +11,19 @@
   <?php endif; ?>
   <div class="buttons-wrapper">
     <?php
+    $path = base_path() . 'springboard/taxonomy/fd_designation_categories/add';
+    $link = l(t('Create New Category'), $path, array('query' => array('destination' => current_path()), 'attributes' => array('class' => 'button add-button')));
+    ?>
+    <?php print $link; ?>
+  </div>
+  <div class="buttons-wrapper">
+    <?php
       $path = base_path() . 'springboard/commerce/products/add/fundraiser-designation';
       $link = l(t('Create New Fund Designation'), $path, array('query' => array('destination' => current_path()), 'attributes' => array('class' => 'button add-button')));
     ?>
     <?php print $link; ?>
   </div>
+
   <?php if ($exposed): ?>
   <div class="view-filters">
     <?php print $exposed; ?>
