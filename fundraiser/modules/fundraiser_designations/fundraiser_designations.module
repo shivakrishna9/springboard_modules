@@ -621,7 +621,16 @@ function fundraiser_designations_springboard_admin_admin_menu_items_alter(&$item
     'menu_name' => 'springboard_admin_menu',
     'expanded' => 1,
     'customized' => 1,
-    'weight' => 1,
+    'weight' => 20,
+  );
+
+  $items['admin/springboard/settings']['_children']['admin/springboard/settings/config']['_children']['admin/springboard/taxonomy/fd_designation_categories'] = array(
+    'link_path' => 'admin/springboard/taxonomy/fd_designation_categories',
+    'link_title' => t('Fundraiser Designation Categories'),
+    'menu_name' => 'springboard_admin_menu',
+    'expanded' => 1,
+    'customized' => 1,
+    'weight' => 21,
   );
 }
   /**
@@ -633,4 +642,20 @@ function fundraiser_designations_springboard_admin_admin_menu_items_alter(&$item
       'path' => drupal_get_path('module', 'fundraiser_designations') . '/includes/views',
       'template path' => drupal_get_path('module', 'fundraiser_designations') . '/includes/views/templates',
     );
+}
+
+/**
+ * Implements hook_springboard_admin_admin_menu_items_alter().
+ */
+function fundraiser_designations_springboard_taxonomy_allowed_vocabularies_alter(&$names) {
+  $names[] = 'fd_designation_categories';
+}
+
+function fundraiser_designations_form_taxonomy_overview_terms_alter(&$form, &$form_state) {
+  if (arg(3) == 'fd_designation_categories') {
+    $form['#attached']['js'][] = array(
+      'data' => "jQuery(document).ready(function(){var tab = jQuery(\"ul.tabs.primary li a:contains('Settings')\");jQuery(tab).hide();})",
+      'type' => 'inline',
+    );
+  }
 }
