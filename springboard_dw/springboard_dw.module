@@ -286,6 +286,22 @@ function springboard_dw_fundraiser_donation_success($donation) {
 
   // Log the queue item.
   springboard_dw_log_queue_item($donation_item);
+
+  // Check if the transaction id exists
+  if(isset($donation_item['transaction_id'])) {
+    // Get the transaction date from the commerce payment transaction
+    $transaction = springboard_dw_transaction_get_by_id
+    ($donation_item['transaction_id']);
+
+    // Queue the payment object.
+    $payment_item = springboard_dw_map_payment_item($transaction, $donation_item);
+
+    // Create the queue item.
+    $queue->createItem($payment_item);
+
+    // Log the queue item.
+    springboard_dw_log_queue_item($payment_item);
+  }
 }
 
 /**
@@ -354,10 +370,10 @@ function springboard_dw_fundraiser_refund_success($refund) {
   // Create the queue item.
   $queue->createItem($donation_item);
 
+  /*
   // Log the queue item.
   springboard_dw_log_queue_item($donation_item);
 
-  // Prepare the extra props for api call.
   $donation_item_extra_props = springboard_dw_map_donation_update_extra_props
   ($refund->did, array(
     'refund_amount' => $refund->amount,
@@ -366,6 +382,26 @@ function springboard_dw_fundraiser_refund_success($refund) {
 
   // Create the queue item for the extra props update.
   $queue->createItem($donation_item_extra_props);
+  */
+
+  // Check if the transaction id exists
+  if(isset($refund->txn_id)) {
+    // Get the transaction date from the commerce payment transaction.
+    $transaction = springboard_dw_transaction_get_by_id
+    ($refund->txn_id);
+
+    // Queue the payment object.
+    $payment_item = springboard_dw_map_payment_refund_item($transaction,
+      $refund);
+
+    // Create the queue item.
+    $queue->createItem($payment_item);
+
+    // Log the queue item.
+    springboard_dw_log_queue_item($payment_item);
+
+  }
+
 }
 
 /**
@@ -1160,9 +1196,91 @@ function springboard_dw_map_donation_update_status($donation_id,
 }
 
 /**
- * Map the donation object to set status to canceled to an array formatted for an
- * API
- * call.
+ * Map the payment object to an array formatted for an API call.
+ *
+ * @param array $payment
+ *    The payment array to populate the record with.
+ *
+ * @param array $donation
+ *    The donation array to associate with the payment.
+ * @param array $extra_props
+ *    Any extra props that should be mapped to the payment item record.
+ *
+ * @return array $payment_item
+ *    The mapped array ready for an api call.
+ */
+function springboard_dw_map_payment_item($payment, $donation, $extra_props =
+array()) {
+  // Get the payment object details and prep for warehousing (sb_payment).
+  $payment_item = array();
+
+  $payment_item["queue_type"]    = 'payment';
+
+  $payment_item["donation_id"]    = $donation['donation_id'];
+  $payment_item["group_id"]       = '';
+  $payment_item["contact_id"] = $payment['uid'];
+  $payment_item["payment_method"] = $payment['payment_method'];
+  $payment_item["gateway_id"]     = $payment['instance_id'];
+  $payment_item["transaction_id"] = $payment['transaction_id'];
+  $payment_item["amount"]         = number_format($payment['amount']/100, 2,
+    '.', ' '); // this is coming from commerce in cents
+  $payment_item["currency"]       = $payment['currency_code'];
+  $payment_item["status"]         = $payment['status'];
+  $payment_item["message"]         = $payment['message'];
+  $payment_item["gateway_status"] = $payment['remote_status'];
+  $payment_item["created_at"]     = $payment['created'];
+  $payment_item["updated_at"]     = $payment['changed'];
+
+  // Add extra props to the payment item if passed.
+  $payment_item["extra_props"] = !empty($extra_props) ? $extra_props:array();
+
+  return $payment_item;
+}
+
+/**
+ * Map the payment object to an array formatted for an API call.
+ *
+ * @param array $payment
+ *    The payment array to populate the record with.
+ * @param object $refund
+ *    The refund object to associate with the payment.
+ * @param array $extra_props
+ *    Any extra props that should be mapped to the payment item record.
+ *
+ * @return array $payment_item
+ *    The mapped array ready for an api call.
+ */
+function springboard_dw_map_payment_refund_item($payment, $refund,
+                                              $extra_props =
+array()) {
+  // Get the payment object details and prep for warehousing (sb_payment).
+  $payment_item = array();
+
+  $payment_item["queue_type"]    = 'payment';
+
+  $payment_item["donation_id"]    = $refund->did;
+  $payment_item["group_id"]       = '';
+  $payment_item["contact_id"]     = $payment['uid'];
+  $payment_item["payment_method"] = $payment['payment_method'];
+  $payment_item["gateway_id"]     = $payment['instance_id'];
+  $payment_item["transaction_id"] = $refund->txn_id;
+  $payment_item["amount"]         = $refund->amount;
+  $payment_item["currency"]       = $payment['currency_code'];
+  $payment_item["status"]         = $payment['status'];
+  $payment_item["gateway_status"] = $refund->new_status;
+  $payment_item["message"]        = $payment['message'];
+  $payment_item["created_at"]     = $payment['created'];
+  $payment_item["updated_at"]     = $payment['changed'];
+
+  // Add extra props to the payment item if passed.
+  $payment_item["extra_props"] = !empty($extra_props) ? $extra_props:array();
+
+  return $payment_item;
+}
+
+/**
+ * Map the donation object to set status to canceled to an array formatted
+ * for an API call.
  *
  * @param integer $donation_id
  *   The donation object id.
@@ -1611,6 +1729,9 @@ function springboard_dw_export_item($item) {
   elseif ($item['queue_type'] == 'submission') {
     return springboard_dw_submission($item);
   }
+  elseif ($item['queue_type'] == 'payment') {
+    return springboard_dw_payment($item);
+  }
 }
 
 /**
@@ -1842,6 +1963,33 @@ function springboard_dw_submission($item) {
   else {
     // Log the API error.
     springboard_dw_api_log_error('Error sending submission API call.', 'submission/create', $item, json_decode($api_response->getBody()));
+
+    // Respond back with failure to retry in the queue.
+    return FALSE;
+  }
+}
+
+/**
+ * Send a payment to the Springboard data warehouse API.
+ *
+ * @param array $item
+ *   The queue information to send to the data warehouse.
+ */
+function springboard_dw_payment($item) {
+  // Make the API call.
+  $api_response = springboard_dw_api_call('payment/create', $item);
+
+  // Looks like the api response was good.
+  if ($api_response->getStatusCode() == 200) {
+
+    // Respond back successfully to the queue to remove the item.
+    return TRUE;
+
+  }
+  else {
+    // Log the API error.
+    springboard_dw_api_log_error('Error sending paymentAPI call.',
+      'payment/create', $item, json_decode($api_response->getBody()));
 
     // Respond back with failure to retry in the queue.
     return FALSE;
