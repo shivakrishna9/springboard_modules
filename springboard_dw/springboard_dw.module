@@ -1273,7 +1273,9 @@ array()) {
   $payment_item["updated_at"]     = $payment['changed'];
 
   // Add extra props to the payment item if passed.
-  $dw_extra_props = !empty($extra_props) ? $extra_props:array();
+  $dw_extra_props = !empty($extra_props) ? $extra_props:array(
+    'refund_reason' => $refund->reason
+  );
 
   // Get extra props from other modules if set.
   $modules_extra_props = module_invoke_all('springboard_dw_add_extra_props',
