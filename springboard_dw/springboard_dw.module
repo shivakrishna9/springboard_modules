@@ -7,6 +7,7 @@
 require_once 'includes/springboard_dw.api.inc';
 require_once 'includes/springboard_dw.queue.inc';
 require_once 'includes/springboard_dw.utility.inc';
+require_once 'includes/springboard_dw.transaction.inc';
 
 /**
  * Hook for showing an error message if module is enabled but not configured.
