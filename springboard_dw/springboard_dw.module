@@ -1273,7 +1273,19 @@ array()) {
   $payment_item["updated_at"]     = $payment['changed'];
 
   // Add extra props to the payment item if passed.
-  $payment_item["extra_props"] = !empty($extra_props) ? $extra_props:array();
+  $dw_extra_props = !empty($extra_props) ? $extra_props:array();
+
+  // Get extra props from other modules if set.
+  $modules_extra_props = module_invoke_all('springboard_dw_add_extra_props',
+    $dw_extra_props, $payment_item['queue_type']);
+
+  // Validate extra props set in other modules are of array type
+  if (is_array($modules_extra_props) && is_array($dw_extra_props)) {
+    $dw_extra_props = array_merge($dw_extra_props, $modules_extra_props);
+  }
+
+  // Add the extra props to the field mapping
+  $payment_item['extra_props']= $dw_extra_props;
 
   return $payment_item;
 }
