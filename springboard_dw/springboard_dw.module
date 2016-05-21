@@ -1509,13 +1509,17 @@ function springboard_dw_map_form_item($node, $update = FALSE) {
   $node_data = springboard_dw_get_all_entity_properties($node_obj);
 
   $donation_types = springboard_dw_get_donation_types();
-  // Only webform user enabled and donation forms will have an internal name field. Of
-  // course the field names are different so we have to check the types.
+  // Only webform user enabled and donation forms will have an internal name
+  // field. Of course the field names are different so we have to check
+  // the types.
   if (in_array($node->type, $donation_types)) {
     $form_item['internal_name'] = $node_data['field_fundraiser_internal_name'];
   }
   elseif (isset($node->is_webform_user) && $node->is_webform_user) {
-    $form_item['internal_name'] = $node_data['field_webform_user_internal_name'];  
+    // If we don't have a webform user internal name, just leave a blank string
+    $form_item['internal_name'] =
+      isset($node_data['field_webform_user_internal_name']) ?
+        $node_data['field_webform_user_internal_name']: '';
   }
 
   // Extract the extra props attributes from the nodes metadata definition.
