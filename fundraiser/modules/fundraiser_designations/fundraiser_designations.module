@@ -214,9 +214,9 @@ function fundraiser_designations_form_node_form_alter(&$form, &$form_state) {
 
     // Don't allow them to tinker with dollar handles or
     // recurring gift settings.
-    $form['fundraiser_settings']['fundraiser_sustainers']['#access'] = FALSE;
-    $form['fundraiser_settings']['amount_wrapper']['#access'] = FALSE;
-    $form['fundraiser_settings']['recurring_amount_wrapper']['#access'] = FALSE;
+   // $form['fundraiser_settings']['fundraiser_sustainers']['#access'] = FALSE;
+    //$form['fundraiser_settings']['amount_wrapper']['#access'] = FALSE;
+   // $form['fundraiser_settings']['recurring_amount_wrapper']['#access'] = FALSE;
 
     if (arg(0) == 'node' && (arg(2) == 'edit' || arg(1) == 'add')) {
       // Hide all designations fields on the standard node add/edit page.
@@ -239,7 +239,7 @@ function fundraiser_designations_form_node_form_alter(&$form, &$form_state) {
  * Make sure recurring billing is disabled on designation forms.
  */
 function _fundraiser_designations_form_node_form_validate(&$form, &$form_state) {
-  $form_state['values']['recurring_setting'] = 'never';
+  //$form_state['values']['recurring_setting'] = 'never';
 }
 
 function fundraiser_designations_form_commerce_product_ui_product_delete_form_alter(&$form, &$form_State) {
