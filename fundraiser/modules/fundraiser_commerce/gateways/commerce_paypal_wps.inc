@@ -287,6 +287,10 @@ function commerce_paypal_form__fundraiser_refund_form_alter(&$form, $form_state,
     return;
   }
 
+  if (!isset($donation->gateway['id']) || $donation->gateway['id'] != 'paypal_wps|commerce_payment_paypal_wps') {
+    return;
+  }
+
   // If this refund is partial than block further, partial refunds; a full refund will already have an appropriate message:
   foreach ($donation->refunds as $refund) {
     if ($refund->status == 'partially_refunded') {
