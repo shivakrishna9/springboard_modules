@@ -6,15 +6,14 @@
                     Handlers: {}
                 };
                 App.Handlers.reorderItems = function () {
-
                     $('#fundraiser-designations-categories table:not("table.sticky-header")').draggable({
                         connectToSortable: "#fundraiser-designations-groups form",
                         helper: "clone",
                         revert: false,
-                        placeholder: 'sortable-placeholder',
+                        placeholder: 'table-sortable-placeholder',
                         opacity: 0.5,
                         delay: 150,
-                        cursorAt: {left: 5},
+                        cursorAt: {right: 25},
                         stop: function (event, ui) {
                             App.Handlers.reorderItems();
                         }
@@ -26,8 +25,8 @@
                         revert: false,
                         cancel: 'th',
                         delay: 150,
-                        placeholder: 'sortable-placeholder',
-                        cursorAt: {left: 5},
+                        placeholder: 'row-sortable-placeholder',
+                        cursorAt: {right: 25},
                         stop: function (event, ui) {
                             App.Handlers.reorderItems();
                         }
@@ -38,16 +37,15 @@
                         helper: "original",
                         revert: false,
                         cancel: 'th',
-                        placeholder: 'sortable-placeholder',
-                        cursorAt: {left: 5}
+                        placeholder: 'row-sortable-placeholder',
+                        cursorAt: {left: 25}
                     });
-
 
                     $('#fundraiser-designations-groups form table:not("table.sticky-header")').sortable({
                         cancel: 'th, thead',
-                        placeholder: 'sortable-placeholder',
+                        placeholder: 'row-sortable-placeholder',
                         items: 'tr:not("thead tr")',
-                        cursorAt: {left: 5},
+                        cursorAt: {left: 25},
                         forcePlaceholderSize: true,
                         opacity: 0.5,
                         delay: 150,
@@ -59,14 +57,18 @@
                     });
 
                     $('#fundraiser-designations-groups form').sortable({
-                        placeholder: 'sortable-placeholder',
+                        placeholder: 'table-sortable-placeholder',
                         items: 'table:not("table.sticky-header")',
-                        cursorAt: {left: 5},
+                        cursorAt: {left: 25},
                         tolerance: "pointer",
                         opacity: 0.5,
                         delay: 150,
-                        //forcePlaceholderSize: true,
                         start: function (event, ui) {
+                            ui.placeholder.hide();
+                        },
+                        change: function (event, ui) {
+                            ui.placeholder.hide();
+                            ui.placeholder.show(250, 'linear');
                         },
                         stop: function (event, ui) {
                             App.Handlers.reorderItems();

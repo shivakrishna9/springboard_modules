@@ -37,33 +37,11 @@ th .control-group label{
     font-size: 90%;
 }
 
-.ui-state-highlight {
-    width: 100%;
-    clear: both;
-    float: left;
-    position: relative;
-    height:45px;
-    border:2px dashed #b5b5b5;
-}
-
-.sortable-placeholder,
-.placeholder{
+.table-sortable-placeholder {
     height: 30px;
+    width: 100%;
     margin:10px;
     padding:5px;
     border:1px dotted #ccc;
     background-color:#fbfaeb;
-    list-style-type: none;
-}
-
-.ui-sortable-placeholder {
-    border:2px dashed fuchsia;
-    margin-bottom:5px;
-    margin-top:5px;
-}
-
-.ui-sortable-helper {
-    border:2px dotted #9a9a9a;
-    display: block;
-    /*clear:both;*/
 }
