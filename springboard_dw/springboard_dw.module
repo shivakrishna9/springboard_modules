@@ -1221,7 +1221,8 @@ array()) {
   $payment_item["contact_id"] = $payment['uid'];
   $payment_item["payment_method"] = $payment['payment_method'];
   $payment_item["gateway_id"]     = $payment['instance_id'];
-  $payment_item["transaction_id"] = $payment['transaction_id'];
+  $payment_item["transaction_id"] = $payment['remote_id']; // the id returned
+  // from the gateway
   $payment_item["amount"]         = number_format($payment['amount']/100, 2,
     '.', ' '); // this is coming from commerce in cents
   $payment_item["currency"]       = $payment['currency_code'];
