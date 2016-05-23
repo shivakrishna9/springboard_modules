@@ -141,7 +141,7 @@ function fundraiser_offline_form_alter(&$form, $form_state, $form_id) {
   }
   // Add "offline only" UI to payment methods on donation form edit screen.
   if (strstr($form_id, '_node_form') !== FALSE && fundraiser_is_donation_type($form['#node']->type)) {
-    $gateway_elements = element_children($form['fundraiser_settings']['gateways']);
+    $gateway_elements = element_children($form['payment_methods']['gateways']);
     // Only available on node edit forms, missing on node add form.
     $node_gateways = isset($form_state['node']->gateways) ? $form_state['node']->gateways : FALSE;
     if (!$node_gateways) {
@@ -150,7 +150,7 @@ function fundraiser_offline_form_alter(&$form, $form_state, $form_id) {
     }
     $offline_only = 0;
     foreach ($gateway_elements as $gateway) {
-      $form['fundraiser_settings']['gateways'][$gateway]['offline_only'] = array(
+      $form['payment_methods']['gateways'][$gateway]['offline_only'] = array(
         '#type' => 'checkbox',
         '#title' => t('Offline Only'),
         '#default_value' => isset($node_gateways[$gateway]['offline_only']) ? $node_gateways[$gateway]['offline_only'] : 0,

@@ -129,15 +129,33 @@ function _fundraiser_recent_donors_donation_form_submit($form, &$form_state) {
     )
   );
   foreach ($did_query as $did_data) {
-    db_query("INSERT INTO {fundraiser_donor_opt_in} VALUES (:sid, :nid, :did, :created)",
-      array(
-        ':sid' => $form_state['values']['details']['sid'],
-        ':nid' => $form_state['values']['details']['nid'],
-        ':did' => $did_data->did,
-        ':created' => time(),
-      )
+    _fundraiser_recent_donors_insert_donor_optin(
+      $form_state['values']['details']['sid'],
+      $form_state['values']['details']['nid'],
+      $did_data->did
     );
     return;
+  }
+}
+
+/**
+ * Implements hook_commerce_paypal_ipn_process().
+ * 
+ * Track opt-in being checked on successful PayPal payment.
+ */
+function fundraiser_recent_donors_commerce_paypal_ipn_process($order, $payment_method, $ipn) {
+  if ($ipn['payment_status'] == 'Completed') {
+    $donation = fundraiser_donation_get_donation($order->order_id);
+
+    // Track this donation's opt-in if the opt-in box was checked:
+    if (isset($donation->submission_data['recent_donors_list_optin']) &&
+      !empty($donation->submission_data['recent_donors_list_optin'])) {
+      _fundraiser_recent_donors_insert_donor_optin(
+        $donation->sid,
+        $donation->nid,
+        $donation->did
+      );      
+    }
   }
 }
 
@@ -433,6 +451,32 @@ function _fundraiser_recent_donors_set_node_opt_in_data($nid, $is_enabled, $min_
       ':min_donation_amount' => $min_optin_amount,
       ':visibility' => $is_enabled,
     ) 
+  );
+}
+
+/**
+ * Saves opt-in data for a single donation.
+ *
+ * @param $sid 
+ *   The webform submission's ID
+ * @param $nid
+ *   The donation form's node ID
+ * @param $did
+ *   The donation ID (also the order ID)
+ * @param $donation_timestamp
+ *   Timestamp of when the donation was made.
+ */
+function _fundraiser_recent_donors_insert_donor_optin($sid, $nid, $did, $donation_timestamp = FALSE) {
+  if (!$donation_timestamp) {
+    $donation_timestamp = time();
+  }
+  db_query("INSERT INTO {fundraiser_donor_opt_in} VALUES (:sid, :nid, :did, :created)",
+    array(
+      ':sid' => $sid,
+      ':nid' => $nid,
+      ':did' => $did,
+      ':created' => $donation_timestamp,
+    )
   );
 }
 
