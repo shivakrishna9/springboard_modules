@@ -10,6 +10,7 @@
 #fundraiser-designations-categories table,
 #fundraiser-designations-groups table {
     max-width: 400px;
+    margin-bottom:30px;
 }
 
 #fundraiser-designations-groups {
@@ -44,6 +45,7 @@ th .control-group label{
     height:45px;
     border:2px dashed #b5b5b5;
 }
+
 .sortable-placeholder,
 .placeholder{
     height: 30px;
@@ -54,29 +56,12 @@ th .control-group label{
     list-style-type: none;
 }
 
-/*.ui-sortable-helper {*/
-    /*border:2px dotted #9a9a9a;*/
-    /*margin-bottom:0px;*/
-    /*margin-top:0px;*/
-    /*!* Opacity *!*/
-    /*!* IE 8 *!*/
-    /*-ms-filter: "progid:DXImageTransform.Microsoft.Alpha(Opacity=60)";*/
-    /*!* IE 5-7 *!*/
-    /*filter: alpha(opacity=60);*/
-    /*!* Netscape *!*/
-    /*-moz-opacity: 0.6;*/
-    /*!* Safari 1.x *!*/
-    /*-khtml-opacity: 0.6;*/
-    /*!* Good browsers *!*/
-    /*opacity: 0.6;*/
-    /*z-index: 100;*/
-/*}*/
 .ui-sortable-placeholder {
     border:2px dashed fuchsia;
     margin-bottom:5px;
     margin-top:5px;
 }
-.ui-sortable-helper,
+
 .ui-sortable-helper {
     border:2px dotted #9a9a9a;
     display: block;
