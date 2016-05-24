@@ -242,6 +242,18 @@ function springboard_dw_queue_legacy_donations($records, $operation_details, &$c
   $queue = DrupalQueue::get("springboard_dw_export");
   foreach ($records as $record) {
     $donation = fundraiser_donation_get_donation($record->did);
+    // Massage values into format springboard_dw_map_donation_item() expects.
+    $donation->donation['referrer'] = $donation->submission_data['referrer'];
+    $donation->donation['initial_referrer'] = $donation->submission_data['initial_referrer'];
+    $donation->donation['payment_method'] = $donation->submission_data['payment_method'];
+    $donation->donation['recurs_monthly'] = $donation->submission_data['recurs_monthly'];
+    $donation->donation['search_engine'] = $donation->submission_data['search_engine'];
+    $donation->donation['search_string'] = $donation->submission_data['search_string'];
+    $donation->donation['user_agent'] = $donation->submission_data['user_agent'];
+    $donation->donation['device_type'] = $donation->submission_data['device_type'];
+    $donation->donation['device_name'] = $donation->submission_data['device_name'];
+    $donation->donation['device_os'] = $donation->submission_data['device_os'];
+    $donation->donation['device_browser'] = $donation->submission_data['device_browser'];
     // If $donation->data could not decrypted, just set the expected values to
     // empty string.
     if (!is_array($donation->data)) {
