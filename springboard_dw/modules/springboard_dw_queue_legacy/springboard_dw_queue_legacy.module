@@ -94,6 +94,10 @@ function springboard_dw_queue_legacy_dashboard() {
   $excluded_types[] = 'sba_social_action';
   $output .= db_query("SELECT count(s.sid) FROM {webform_submissions} s INNER JOIN {node} n ON s.nid = n.nid WHERE n.type NOT IN (:excluded_types) AND s.submitted > :highwater", array(':highwater' => $highwater, ':excluded_types' => $excluded_types))->fetchField();
 
+  $output .= '<br>--payments: ';
+  $highwater = springboard_dw_queue_legacy_get_highwater_mark('payment');
+  $output .= db_query('SELECT count(transaction_id) FROM {commerce_payment_transaction} WHERE created > :highwater', array(':highwater' => $highwater))->fetchField();
+
   return $output;
 }
 
