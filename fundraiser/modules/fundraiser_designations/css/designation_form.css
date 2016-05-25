@@ -7,14 +7,27 @@
     border-radius: 5px;
 }
 
+#fundraiser-designations-categories table tbody {
+    display: inline-block;
+    position:relative;
+}
+
 #fundraiser-designations-categories table,
 #fundraiser-designations-groups table {
     max-width: 400px;
-    margin-bottom:30px;
+    margin-top:15px;
+    margin-bottom: 15px;
 }
 
 #fundraiser-designations-groups {
     margin-left:10%;
+}
+
+#fundraiser-designations-categories tr,
+#fundraiser-designations-groups tr {
+    width: 400px;
+    display: inline-table;
+
 }
 
 #fundraiser-designations-categories th,
@@ -44,4 +57,31 @@ th .control-group label{
     padding:5px;
     border:1px dotted #ccc;
     background-color:#fbfaeb;
+}
+
+/*.row-sortable-placeholder {*/
+    /*border:1px dotted #ccc;*/
+    /*background-color:#fbfaeb;*/
+    /*z-index:9999;*/
+
+    /*padding:50px;*/
+/*}*/
+
+.ui-draggable-dragging {
+    border:2px dotted #9a9a9a;
+}
+
+tr.row-sortable-placeholder {
+    background-color: #fbfaeb;
+visibility: visible;
+    width: 400px;
+}
+
+tr.row-sortable-placeholder td {
+    width: 400px;
+    background-color: #fbfaeb;
+
+}
+tr.row-sortable-placeholder td:before {
+    content: " "; /* Insert content that looks like bullets */
 }
