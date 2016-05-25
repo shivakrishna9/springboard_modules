@@ -38,6 +38,7 @@
                         cursorAt: {right: 25},
                         start: function(event, ui) {
                             $(ui.placeholder).children('td').attr('colspan' , '2')
+                            $(ui.helper).addClass('ui-draggable-dragging')
                         },
                         stop: function (event, ui) {
                             App.Handlers.reorderItems();
@@ -72,6 +73,7 @@
                         },
                         stop: function (event, ui) {
                             ui.item.children('td').attr('colspan' , '2')
+                            $('.empty-placeholder').remove();
                             App.Handlers.reorderItems();
                         },
                         receive: function(event, ui) {

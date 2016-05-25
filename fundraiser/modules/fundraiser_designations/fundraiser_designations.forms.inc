@@ -194,8 +194,8 @@ function theme_fundraiser_designations_bundler_form($variables) {
       'data' => array('data' => $form['groups'][$child]['name']['#value'] . ' funds'),
       array('data' => drupal_render($form['groups'][$child]['featured'])),
     );
-    $rows = [];
 
+    $rows = [];
     if (!empty($form['groups'][$child]['funds'])) {
       $fund_children = element_children($form['groups'][$child]['funds']);
       foreach ($fund_children as $id) {
@@ -209,6 +209,18 @@ function theme_fundraiser_designations_bundler_form($variables) {
           'data-product-id' => $id,
         );
       }
+    }
+
+    if (empty($rows)) {
+      $rows[] = array(
+        'data' => array(
+          'data' => array(
+            'data' => 'This group is empty. Please add a designation.',
+            'colspan' => 2,
+          ),
+        ),
+        'class' => array('empty-placeholder'),
+      );
     }
 
     $output .= theme('table', array(

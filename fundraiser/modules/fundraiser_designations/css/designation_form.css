@@ -9,7 +9,7 @@
 
 #fundraiser-designations-categories table tbody {
     display: inline-block;
-    position:relative;
+    /*position:relative;*/
 }
 
 #fundraiser-designations-categories table,
@@ -27,7 +27,6 @@
 #fundraiser-designations-groups tr {
     width: 400px;
     display: inline-table;
-
 }
 
 #fundraiser-designations-categories th,
@@ -59,21 +58,14 @@ th .control-group label{
     background-color:#fbfaeb;
 }
 
-/*.row-sortable-placeholder {*/
-    /*border:1px dotted #ccc;*/
-    /*background-color:#fbfaeb;*/
-    /*z-index:9999;*/
-
-    /*padding:50px;*/
-/*}*/
-
 .ui-draggable-dragging {
     border:2px dotted #9a9a9a;
+    height: 10px !important;
 }
 
 tr.row-sortable-placeholder {
     background-color: #fbfaeb;
-visibility: visible;
+    visibility: visible;
     width: 400px;
 }
 
