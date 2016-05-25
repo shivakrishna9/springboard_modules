@@ -60,7 +60,12 @@ th .control-group label{
 
 .ui-draggable-dragging {
     border:2px dotted #9a9a9a;
-    height: 10px !important;
+}
+
+.ui-draggable-dragging td {
+   max-height: 20px;
+    display:block;
+    overflow: hidden;
 }
 
 tr.row-sortable-placeholder {
