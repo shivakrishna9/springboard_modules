@@ -134,20 +134,16 @@ function springboard_dw_advocacy_message_action_submission($node, $action) {
   // Get the Drupal data warehouse queue.
   $queue = DrupalQueue::get("springboard_dw_export");
 
-  // Create the Advocacy action item in the queue if not warehoused.
-  if (!springboard_dw_item_is_warehoused('advocacy action', $node->nid)) {
+  $message_action_item = springboard_dw_map_advocacy_action_item($action);
 
-    $message_action_item = springboard_dw_map_advocacy_action_item($action);
+  // Create the queue item.
+  $queue->createItem($message_action_item);
 
-    // Create the queue item.
-    $queue->createItem($message_action_item);
+  // Log the queue item.
+  springboard_dw_log_queue_item($message_action_item);
 
-    // Log the queue item.
-    springboard_dw_log_queue_item($message_action_item);
-
-    // Mark the item as queued.
-    springboard_dw_track_item_warehouse_queued('advocacy action', $node->nid);
-  }
+  // Mark the item as queued.
+  springboard_dw_track_item_warehouse_queued('advocacy action', $message_action_item['unique_id']);
 
   // If the Advocacy action messages have not been warehoused, add them.
   if (!empty($action->data['message_ids'])) {
@@ -163,6 +159,7 @@ function springboard_dw_advocacy_message_action_submission($node, $action) {
         $message_item['queue_type'] = 'advocacy message';
         $message_item['message_id'] = $message->{'$id'};
         $message_item['action_id'] = $action->node->advocacy_id;
+        $message_item['sb_action_unique_id'] = $message_action_item['unique_id'];
 
         // Create the queue item.
         $queue->createItem($message_item);
@@ -189,9 +186,6 @@ function springboard_dw_petition_submission($node, $action) {
   // Get the Drupal data warehouse queue.
   $queue = DrupalQueue::get("springboard_dw_export");
 
-  // Create the Advocacy action item in the queue if not warehoused.
-  if (!springboard_dw_item_is_warehoused('petition', $node->nid)) {
-
     $petition = springboard_dw_map_petition_item($action);
 
     // Create the queue item.
@@ -201,13 +195,16 @@ function springboard_dw_petition_submission($node, $action) {
     springboard_dw_log_queue_item($petition);
 
     // Mark the item as queued.
-    springboard_dw_track_item_warehouse_queued('petition', $node->nid);
-  }
+    springboard_dw_track_item_warehouse_queued('petition',
+      $petition['unique_id']);
 
-  if (!springboard_dw_item_is_warehoused('advocacy petition message', $node->nid)) {
+
+  // if (!springboard_dw_item_is_warehoused('advocacy petition message',
+    // $petition['unique_id'])) {
 
     // $petition_item = springboard_dw_map_petition_submission_item($action);
-    $petition_item = springboard_dw_map_petition_submission_item($action);
+    $petition_item = springboard_dw_map_petition_submission_item($action,
+      $petition['unique_id']);
 
     // Create the queue item.
     $queue->createItem($petition_item);
@@ -216,8 +213,9 @@ function springboard_dw_petition_submission($node, $action) {
     springboard_dw_log_queue_item($petition_item);
 
     // Mark the item as queued.
-    springboard_dw_track_item_warehouse_queued('advocacy petition message', $node->nid);
-  }
+    springboard_dw_track_item_warehouse_queued('advocacy petition message',
+      $petition['unique_id']);
+  // }
 
 }
 
@@ -233,20 +231,18 @@ function springboard_dw_social_action_submission($node, $action) {
   // Get the Drupal data warehouse queue.
   $queue = DrupalQueue::get("springboard_dw_export");
 
-  // Create the Advocacy action item in the queue if not warehoused.
-  if (!springboard_dw_item_is_warehoused('advocacy action', $node->nid)) {
-
-    $message_action_item = springboard_dw_map_advocacy_action_item($action);
+    $social_action_item = springboard_dw_map_advocacy_action_item($action);
 
     // Create the queue item.
-    $queue->createItem($message_action_item);
+    $queue->createItem($social_action_item);
 
     // Log the queue item.
-    springboard_dw_log_queue_item($message_action_item);
+    springboard_dw_log_queue_item($social_action_item);
 
     // Mark the item as queued.
-    springboard_dw_track_item_warehouse_queued('advocacy action', $node->nid);
-  }
+    springboard_dw_track_item_warehouse_queued('advocacy action',
+      $social_action_item['unique_id']);
+
 
   // If the Advocacy action messages have not been warehoused, add them.
   if (!empty($action->data)) {
@@ -254,7 +250,8 @@ function springboard_dw_social_action_submission($node, $action) {
     // Loop through the messages.
     foreach ($action->data as $message) {
 
-      $message_item = springboard_dw_map_social_action_item($message, $action, $node);
+      $message_item = springboard_dw_map_social_action_item($message,
+        $action, $node, $social_action_item['unique_id']);
 
       // Create the queue item.
       $queue->createItem($message_item);
@@ -427,18 +424,6 @@ function springboard_dw_fundraiser_sustainers_donation_update_amount
 
   // Log the queue item.
   springboard_dw_log_queue_item($donation_item);
-}
-
-/**
- * Hook for deleting warehouse sustainer donations by id.
- *
- * Implements fundraiser_sustainers_delete_recurring().
- *
- * @param object $did
- *   The donation id to delete.
- */
-function springboard_dw_fundraiser_sustainers_delete_recurring($did) {
-  // dsm('Delete recurring record');
 }
 
 /**
@@ -823,6 +808,11 @@ function springboard_dw_map_advocacy_action_item($message_action) {
   global $user;
 
   $advocacy_item['queue_type'] = 'advocacy action';
+
+  $advocacy_item['unique_id'] = uniqid(); // Actions need a unique_id
+  // to be created in Drupal because their could be multiple messages
+  // assigned to a given action
+
   $advocacy_item['action_id'] = $message_action->node->advocacy_id;
   $advocacy_item['action_type'] = $message_action->node->type;
   // Will come later.
@@ -887,7 +877,6 @@ function springboard_dw_map_advocacy_action_item($message_action) {
   $advocacy_item['updated_at'] = $message_action->node->changed;
 
   return $advocacy_item;
-
 }
 
 /**
@@ -906,14 +895,19 @@ function springboard_dw_map_petition_item($petition) {
   $advocacy_item = array();
 
   $advocacy_item['queue_type'] = 'petition';
+
+  $advocacy_item['unique_id'] = uniqid(); // Actions need a unique_id
+  // to be created in Drupal because their could be multiple messages
+  // assigned to a given action
+
   $advocacy_item['action_id'] = '';
   $advocacy_item['action_type'] = $petition->node->type;
+
   // Will come later.
   $advocacy_item['group_id'] = '';
   $advocacy_item['contact_id'] = $petition->node->uid;
   $advocacy_item['form_id'] = $petition->node->nid;
 
-  // TODO: Fix these.
   $advocacy_item['quick_submit'] = 0;
   $advocacy_item['click_submit'] = 0;
 
@@ -962,10 +956,15 @@ function springboard_dw_map_petition_item($petition) {
  * @param object $petition
  *   The petition object to map to an array for making an api call.
  *
- * @return array
+ * @param string $petition_unique_id
+ *    The unique id of the advocacy petition to associate with the
+ *    petition count.
+ *
+ * @return array The petition array ready to send with an api call.
  *   The petition array ready to send with an api call.
  */
-function springboard_dw_map_petition_submission_item($petition) {
+function springboard_dw_map_petition_submission_item($petition,
+                                                     $petition_unique_id) {
 
   // Get the Advocacy petition object details and prep
   // for warehousing (sb_action).
@@ -975,6 +974,7 @@ function springboard_dw_map_petition_submission_item($petition) {
   $message_item['message_id'] = '';
   $message_item['action_id'] = '';
   $message_item['group_id'] = '';
+  $message_item['sb_action_unique_id'] = $petition_unique_id;
   $message_item['subject'] = $petition->node->title;
   $message_item['body'] = '';
   $message_item['user_edited'] = '';
@@ -1561,18 +1561,27 @@ function springboard_dw_extract_form_extra_props($form, $form_item) {
  *   The action object to map.
  * @param object $node
  *   The node object to map.
+ * @param string $action_unique_id
+ *   The unique id of the action this social action message belongs to.
  *
- * @return array
+ * @return array An array of message item details.
  *   An array of message item details.
  */
-function springboard_dw_map_social_action_item($message, $action, $node) {
+function springboard_dw_map_social_action_item($message, $action, $node,
+                                               $action_unique_id) {
   // Get the Advocacy message object id and prep for warehousing (sb_message)
   $message_item = array();
   $message_item['queue_type'] = 'advocacy social action message';
+
+  $advocacy_item['unique_id'] = uniqid(); // Actions need a unique_id
+  // to be created in Drupal because their could be multiple messages
+  // assigned to a given action
+
   $message_item['message_id'] = '';
-  $message_item['action_id'] = $action->node->advocacy_id;
   $message_item['group_id'] = '';
+  $message_item['action_id'] = $action->node->advocacy_id;
   $message_item['action_type'] = $action->node->type;
+  $message_item['sb_action_unique_id'] = $action_unique_id;
   $message_item['subject'] = $message['subject'];
   $message_item['body'] = $message['body'];
   $message_item['target_id'] = $message['targets']->id;
