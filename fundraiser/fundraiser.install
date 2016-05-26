@@ -87,6 +87,37 @@ function fundraiser_schema() {
         'precision' => '15',
         'scale' => '3',
       ),
+      'expired' => array(
+        'description' => 'Whether this fundraiser has expired.',
+        'type' => 'int',
+        'size' => 'tiny',
+        'not null' => FALSE,
+        'default' => 0,
+      ),
+      'expiration_date' => array(
+        'description' => 'The date this fundraiser expires.',
+        'type' => 'varchar',
+        'mysql_type' => 'datetime',
+        'not null' => FALSE,
+      ),
+      'expiration_action' => array(
+        'description' => 'The action to take if the fundraiser has expired.',
+        'type' => 'int',
+        'size' => 'tiny',
+        'not null' => FALSE,
+        'default' => 0,
+      ),
+      'expiration_redirect' => array(
+        'description' => 'The URL to redirect to if the fundraiser has expired.',
+        'type' => 'varchar',
+        'length' => '255',
+        'not null' => FALSE,
+      ),
+      'expiration_message' => array(
+        'description' => 'The message to display if the fundraiser has expired.',
+        'type' => 'text',
+        'not null' => FALSE,
+      ),
     ),
     'primary key' => array('nid'),
   );
@@ -542,5 +573,47 @@ function fundraiser_update_7009() {
         );
       }
     }
+  }
+}
+
+/**
+ * Add expiration fields to {fundraiser}.
+ */
+function fundraiser_update_7010() {
+  $fields = array(
+    'expired' => array(
+      'description' => 'Whether this fundraiser has expired.',
+      'type' => 'int',
+      'size' => 'tiny',
+      'not null' => FALSE,
+      'default' => 0,
+    ),
+    'expiration_date' => array(
+      'description' => 'The date this fundraiser expires.',
+      'type' => 'varchar',
+      'mysql_type' => 'datetime',
+      'not null' => FALSE,
+    ),
+    'expiration_action' => array(
+      'description' => 'The action to take if the fundraiser has expired.',
+      'type' => 'int',
+      'size' => 'tiny',
+      'not null' => FALSE,
+      'default' => 0,
+    ),
+    'expiration_redirect' => array(
+      'description' => 'The URL to redirect to if the fundraiser has expired.',
+      'type' => 'varchar',
+      'length' => '255',
+      'not null' => FALSE,
+    ),
+    'expiration_message' => array(
+      'description' => 'The message to display if the fundraiser has expired.',
+      'type' => 'text',
+      'not null' => FALSE,
+    ),
+  );
+  foreach ($fields as $key => $field) {
+    db_add_field('fundraiser', $key, $field);
   }
 }

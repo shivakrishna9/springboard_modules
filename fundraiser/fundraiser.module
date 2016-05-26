@@ -5,6 +5,9 @@
  * Provides behaviors to handle donation form creation and donation submission.
  */
 
+define('FUNDRAISER_EXPIRATION_ACTION_REDIRECT', 0);
+define('FUNDRAISER_EXPIRATION_ACTION_MESSAGE', 1);
+
 // Include theme related functions.
 // @todo Merge this back in.
 require_once 'fundraiser.theme.inc';
@@ -484,38 +487,62 @@ function fundraiser_node_validate($node, $form, &$form_state) {
 function fundraiser_node_view($node, $view_mode, $langcode) {
   // If this isn't a fundraiser type, ignore it.
   if (fundraiser_is_donation_type($node->type)) {
-    // Track the pageview.
     if ($view_mode == 'full') {
+      // Track the pageview.
       _fundraiser_update_tracking_value($node->nid, 'pageviews');
-    }
 
-    // Messaging checks. We want to hide warning/admin messages if user can't
-    // edit the current node.
-    if ($view_mode == 'full' && node_access("update", $node)) {
-      // Set a reminder to turn off development mode on the page view.
-      if (variable_get('fundraiser_development_mode', 0)) {
-        $link = l('turn off', 'admin/config/system/fundraiser');
-        drupal_set_message(t('Fundraiser is currently running in development mode. Remember to ' .
-          '!link this feature on production websites.',
-           array('!link' => $link)), 'warning');
+      // Messaging checks. We want to hide warning/admin messages if user can't
+      // edit the current node.
+      if (node_access('update', $node)) {
+        // Set a reminder to turn off development mode on the page view.
+        if (variable_get('fundraiser_development_mode', 0)) {
+          $link = l('turn off', 'admin/config/system/fundraiser');
+          drupal_set_message(t('Fundraiser is currently running in development mode. Remember to ' .
+            '!link this feature on production websites.',
+             array('!link' => $link)), 'warning');
+        }
+
+        // Throw a warning if no confirmation email has been configured.
+        if (module_exists('email_wrappers') && !email_wrappers_load_settings($node->nid, NULL)) {
+          drupal_set_message(t('No confirmation emails have been configured for this donation form.' .
+            ' Users who submit a donation will not receive an email confirming their donation.'), 'warning');
+        }
+
+        // Allow other modules to throw up warnings on the donation form
+        // when it is not configured correctly.
+        $messages = module_invoke_all("fundraiser_donation_form_config_check", $node);
+
+        if (!empty($messages)) {
+          foreach($messages as $message) {
+            drupal_set_message($message, 'error');
+          }
+        }
       }
-      // Throw a warning if no confirmation email has been configured.
-      if (module_exists('email_wrappers') && !email_wrappers_load_settings($node->nid, NULL)) {
-        drupal_set_message(t('No confirmation emails have been configured for this donation form.' .
-          ' Users who submit a donation will not receive an email confirming their donation.'), 'warning');
+
+      // If the fundraiser has expired, execute the configured action.
+      $expired = $node->expired;
+      $expiration_date = $node->expiration_date;
+      if (!$expired && strtotime($expiration_date) < time()) {
+        // This fundraiser has expired, but hasn't been updated yet in the
+        // schema. Update it now before continuing.
+        $expired = TRUE;
+        db_update('fundraiser')
+          ->fields(array('expired' => TRUE))
+          ->condition('nid', $node->nid, '=')
+          ->execute();
       }
 
-      // Allow other modules to throw up warnings on the donation form
-      // when it is not configured correctly.
-      $messages = module_invoke_all("fundraiser_donation_form_config_check", $node);
-
-      if (!empty($messages)) {
-        foreach($messages as $message) {
-          drupal_set_message($message, 'error');
+      if ($expired) {
+        $action = $node->expiration_action;
+        if ($action == FUNDRAISER_EXPIRATION_ACTION_REDIRECT) {
+          drupal_goto($node->expiration_redirect);
+        }
+        elseif ($action == FUNDRAISER_EXPIRATION_ACTION_MESSAGE) {
+          $node->content['body'][0]['#markup'] = $node->expiration_message;
+          unset($node->content['webform']);
         }
       }
     }
-
   }
   // NOTE: Glue display modules are responsible for using hook_node_view to display themselves with the node.
   // Some, like webform based glue modules, already do the work of displaying on a form themselves.
@@ -555,6 +582,72 @@ function _fundraiser_donation_settings_form(&$form, &$form_state) {
   if (!fundraiser_is_donation_type($node->type)) {
     return;
   }
+
+  // Expiration settings.
+  $form['expiration_settings'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Expiration settings'),
+    '#weight' => -4.94,
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
+    '#group' => 'additional_settings',
+  );
+  $form['expiration_settings']['expired'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Fundraiser has expired'),
+    '#default_value' => isset($form['#node']->expired) ? $form['#node']->expired : FALSE,
+    '#description' => t('Check this box to manually expire the fundraiser.'),
+  );
+  $form['expiration_settings']['expiration_date'] = array(
+    '#type' => 'date_popup',
+    '#title' => t('Expiration Date'),
+    '#description' => t('Select the date this fundraiser will expire. If empty, the fundraiser will be available indefinitely.'),
+    '#date_type' => DATE_DATETIME,
+    '#date_format' => 'm/d/Y',
+    '#default_value' => isset($form['#node']->expiration_date) ? $form['#node']->expiration_date : 'YYYY-MM-DD 00:00:00',
+    '#date_year_range' => '0:+3',
+  );
+  $form['expiration_settings']['expiration_action'] = array(
+    '#title' => t('When a fundraiser expires, users should be:'),
+    '#type' => 'radios',
+    '#default_value' => isset($form['#node']->expiration_action) ? $form['#node']->expiration_action : FUNDRAISER_EXPIRATION_ACTION_REDIRECT,
+    '#options' => array(
+      FUNDRAISER_EXPIRATION_ACTION_REDIRECT => t('Redirected to another page'),
+      FUNDRAISER_EXPIRATION_ACTION_MESSAGE => t('Shown a message'),
+    ),
+  );
+  $form['expiration_settings']['expiration_redirect'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Redirect URL'),
+    '#description' => t('The URL the user should be redirected to. This can either be an external URL or an internal URL.'),
+    '#states' => array(
+      'visible' => array(
+        ':input[name="expiration_action"]' => array('value' => FUNDRAISER_EXPIRATION_ACTION_REDIRECT),
+      ),
+    ),
+    '#attributes' => array(
+      'placeholder' => 'http://',
+    ),
+    '#default_value' => isset($form['#node']->expiration_redirect) ? $form['#node']->expiration_redirect : NULL,
+  );
+  // Because a bug exists in D7 where the input filter help information doesn't
+  // respect the '#states' property, we need to wrap the message in a container
+  // and apply the #states property to the container instead.
+  // See https://www.drupal.org/node/997826 for more info.
+  $form['expiration_settings']['expired_message_container'] = array(
+    '#type' => 'container',
+    '#states' => array(
+      'visible' => array(
+        ':input[name="expiration_action"]' => array('value' => FUNDRAISER_EXPIRATION_ACTION_MESSAGE),
+      ),
+    ),
+  );
+  $form['expiration_settings']['expired_message_container']['expiration_message'] = array(
+    '#type' => 'text_format',
+    '#title' => t('Fundraiser Expired Message'),
+    '#default_value' => isset($form['#node']->expiration_message) ? $form['#node']->expiration_message : NULL,
+  );
+  $form['#validate'][] = '_fundraiser_form_expiration_validate';
 
   // Payment methods.
   $form['payment_methods'] = array(
@@ -898,6 +991,16 @@ function _fundraiser_form_payment_method_config_fieldset($gateways, $configurati
     }
   }
   return $fieldset;
+}
+
+/**
+ * Validate handler for expiration settings.
+ */
+function _fundraiser_form_expiration_validate($form, &$form_state) {
+  $values = $form_state['values'];
+  if (($values['expired'] || !empty($values['expiration_date'])) && $values['expiration_action'] == FUNDRAISER_EXPIRATION_ACTION_REDIRECT && empty($values['expiration_redirect'])) {
+    form_set_error('expiration_settings][expiration_redirect', t('A redirect URL must be given if redirecting when the fundraiser has expired.'));
+  }
 }
 
 /**
@@ -2816,6 +2919,11 @@ function _fundraiser_create_fundraiser($fundraiser) {
       'receipt_email_address' => variable_get('site_mail', ''),
       'receipt_email_subject' => t('Thank you for your donation'),
       'redirect_url' => '<confirmation>',
+      'expired' => FALSE,
+      'expiriration_date' => NULL,
+      'expiration_action' => 0,
+      'expiration_redirect' => NULL,
+      'expiration_message' => NULL,
     );
     $record = array_merge($record, $fundraiser);
     if (isset($record['default_amount']) && empty($record['default_amount'])) unset($record['default_amount']); // NULL > empty
@@ -2894,6 +3002,18 @@ function _fundraiser_update_fundraiser($fundraiser) {
     }
     // Serialize for storage, our configured gateway values for storage in components.
     $fundraiser['gateways'] = serialize($fundraiser['gateways']);
+
+    // Check if the expiration date has passed, and if so, set the fundraiser to
+    // expired.
+    if (!empty($fundraiser['expiriration_date']) && !$fundraiser['expired'] && strtotime($fundraiser['expiration_date']) < time()) {
+      $fundraiser['expired'] = TRUE;
+    }
+
+    // Apply the designated filter on the "fundraiser expired" message.
+    if (!empty($fundraiser['expiration_message']['value'])) {
+      $fundraiser['expiration_message'] = check_markup($fundraiser['expiration_message']['value'], $fundraiser['expiration_message']['format']);
+    }
+
     $record = $fundraiser;
     if (isset($record['default_amount']) && empty($record['default_amount'])) unset($record['default_amount']); // NULL > empty
     drupal_write_record('fundraiser', $record, 'nid');
@@ -3128,13 +3248,13 @@ function _fundraiser_get_tracking_by_nid($nid) {
  * CRUD style DB function for fundraiser_tracking.
  */
 function _fundraiser_update_tracking($tracking) {
-  /** 
+  /**
    * Code commented out on 2/18/2016 by pcave for performance reasons.
    * When a donation form encounters significant traffic, updating a single row
-   * in this table over and over during a request can cause lock contentions. 
+   * in this table over and over during a request can cause lock contentions.
    * This eventually cascades to other database operations thus slowing down
    * the entire response.
-   * 
+   *
    * $tracking = (array) $tracking;
    * $tracking_data = FALSE;
    * if (isset($tracking['nid'])) {
@@ -3154,13 +3274,13 @@ function _fundraiser_update_tracking($tracking) {
  * CRUD style DB function for fundraiser_tracking.
  */
 function _fundraiser_delete_tracking($nid) {
-  /** 
+  /**
    * Code commented out on 2/18/2016 by pcave for performance reasons.
    * When a donation form encounters significant traffic, updating a single row
-   * in this table over and over during a request can cause lock contentions. 
+   * in this table over and over during a request can cause lock contentions.
    * This eventually cascades to other database operations thus slowing down
    * the entire response.
-   * 
+   *
    * db_delete('fundraiser_tracking')->condition('nid', $nid)->execute();
    */
 }
@@ -3169,13 +3289,13 @@ function _fundraiser_delete_tracking($nid) {
  * DB function for updating the stats in fundraiser_tracking.
  */
 function _fundraiser_update_tracking_value($nid, $field) {
-   /** 
+   /**
    * Code commented out on 2/18/2016 by pcave for performance reasons.
    * When a donation form encounters significant traffic, updating a single row
-   * in this table over and over during a request can cause lock contentions. 
+   * in this table over and over during a request can cause lock contentions.
    * This eventually cascades to other database operations thus slowing down
    * the entire response.
-   * 
+   *
    * $tracking = _fundraiser_get_tracking_by_nid($nid);
    * // No tracking data? Create one.
    * if (!$tracking) {
