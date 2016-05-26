@@ -60,6 +60,7 @@ function springboard_dw_queue_legacy_setup_batch($type = '') {
       'action' => dt('action'),
       'message' => dt('message'),
       'petition message' => dt('petition message'),
+      'payment' => dt('payment'),
     );
     $type = drush_choice($options, dt('What kind of record would you like to queue?'));
   }
@@ -133,6 +134,11 @@ function springboard_dw_queue_legacy_setup_batch($type = '') {
       $excluded_types[] = 'sba_social_action';
       $records = db_query_range("SELECT s.sid, s.nid, s.uid, s.remote_addr, s.submitted AS created FROM {webform_submissions} s INNER JOIN {node} n ON s.nid = n.nid WHERE n.type NOT IN (:excluded_types) AND s.submitted > :highwater ORDER BY s.submitted ASC", 0, $limit, array(':highwater' => $highwater, ':excluded_types' => $excluded_types))->fetchAll();
       $batch_process_function = 'springboard_dw_queue_legacy_submissions';
+      break;
+
+    case 'payment':
+        $records = db_query_range('SELECT transaction_id, order_id AS donation_id, remote_id, uid, payment_method, instance_id, currency_code, status, message, remote_status, created, changed FROM {commerce_payment_transaction} WHERE created > :highwater ORDER BY created ASC', 0, $limit, array(':highwater' => $highwater))->fetchAll();
+      $batch_process_function = 'springboard_dw_queue_legacy_payments';
       break;
 
     default:
@@ -236,6 +242,18 @@ function springboard_dw_queue_legacy_donations($records, $operation_details, &$c
   $queue = DrupalQueue::get("springboard_dw_export");
   foreach ($records as $record) {
     $donation = fundraiser_donation_get_donation($record->did);
+    // Massage values into format springboard_dw_map_donation_item() expects.
+    $donation->donation['referrer'] = $donation->submission_data['referrer'];
+    $donation->donation['initial_referrer'] = $donation->submission_data['initial_referrer'];
+    $donation->donation['payment_method'] = $donation->submission_data['payment_method'];
+    $donation->donation['recurs_monthly'] = $donation->submission_data['recurs_monthly'];
+    $donation->donation['search_engine'] = $donation->submission_data['search_engine'];
+    $donation->donation['search_string'] = $donation->submission_data['search_string'];
+    $donation->donation['user_agent'] = $donation->submission_data['user_agent'];
+    $donation->donation['device_type'] = $donation->submission_data['device_type'];
+    $donation->donation['device_name'] = $donation->submission_data['device_name'];
+    $donation->donation['device_os'] = $donation->submission_data['device_os'];
+    $donation->donation['device_browser'] = $donation->submission_data['device_browser'];
     // If $donation->data could not decrypted, just set the expected values to
     // empty string.
     if (!is_array($donation->data)) {
@@ -270,6 +288,37 @@ function springboard_dw_queue_legacy_forms($records, $operation_details, &$conte
       $queue->createItem($form_item);
       springboard_dw_log_queue_item($form_item);
       springboard_dw_track_item_warehouse_queued('form', $node->nid);
+    }
+  }
+  $context['message'] = $operation_details;
+}
+
+/**
+ * Batch process callback for processing payments
+ */
+function springboard_dw_queue_legacy_payments($records, $operation_details, &$context) {
+  // var_dump($records);
+  foreach ($records as $record) {
+    $queue = DrupalQueue::get("springboard_dw_export");
+
+    // Create the form item in the queue if not warehoused.
+    if (!springboard_dw_item_is_warehoused('payment', $record->transaction_id)) {
+      $donation['donation_id'] = $record->donation_id;
+      $payment['uid'] = $record->uid;
+      $payment['payment_method'] = $record->payment_method;
+      $payment['instance_id'] = $record->instance_id;
+      $payment['remote_id'] = $record->remote_id; // the id returned from the gateway
+      $payment['amount'] = $record->amount;
+      $payment['currency_code'] = $record->currency_code;
+      $payment['status'] = $record->status;
+      $payment['message'] = $record->message;
+      $payment['remote_status'] = $record->remote_status;
+      $payment['created'] = $record->created;
+      $payment['changed'] = $record->changed;
+      $payment_item = springboard_dw_map_payment_item($payment, $donation);
+      $queue->createItem($payment_item);
+      springboard_dw_log_queue_item($payment_item);
+      springboard_dw_track_item_warehouse_queued('payment', $payment['transaction_id']);
     }
   }
   $context['message'] = $operation_details;

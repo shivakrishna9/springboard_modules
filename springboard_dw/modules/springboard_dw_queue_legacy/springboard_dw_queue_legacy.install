@@ -16,6 +16,7 @@ function springboard_dw_queue_legacy_install() {
     'message',
     'donation',
     'petition message',
+    'payment',
   );
   foreach ($types as $type) {
     db_insert('springboard_data_warehouse_queue_legacy')
