@@ -584,3 +584,51 @@ function hook_fundraiser_get_donation_gateway($did, $gateway) {
 function hook_fundraiser_get_total_donations_by_nids($nids, $start, $end) {
 
 }
+
+/**
+ * Allow other modules to alter the expiration behavior of a fundraiser.
+ *
+ * @param array $data
+ *   An array of information about the expiration action:
+ *     - expires [bool] Whether the fundraiser has expired.
+ *     - action [integer] The action to take if the fundraiser has expired. Can
+ *       be either FUNDRAISER_EXPIRATION_ACTION_MESSAGE or
+ *       FUNDRAISER_EXPIRATION_ACTION_REDIRECT.
+ *     - message [array] An array of information about the message to display.
+ *       - message [string] The message to display
+ *       - format [string] The format of the message, defaults to filtered_html.
+ *     - redirect [string] The URL to redirect to.
+ *     - access [boolean] Whether the current user has access to update the
+ *       fundraiser.
+ */
+function hook_fundraiser_expiration_alter($data) {
+
+}
+
+/**
+ * Allow other modules to act before the expiration behavior of a fundraiser.
+ *
+ * @param array $node
+ *   The fundraiser node object.
+ * @param array $data
+ *   An array of information about the expiration action. More information can
+ *   be found in the function documentation for
+ *   hook_fundraiser_expiration_alter().
+ */
+function hook_fundraiser_expiration_action_before($node, $data) {
+
+}
+
+/**
+ * Allow other modules to act after the expiration behavior of a fundraiser.
+ *
+ * @param array $node
+ *   The fundraiser node object.
+ * @param array $data
+ *   An array of information about the expiration action. More information can
+ *   be found in the function documentation for
+ *   hook_fundraiser_expiration_alter().
+ */
+function hook_fundraiser_expiration_action_after($node, $data) {
+
+}
