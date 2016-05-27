@@ -108,7 +108,7 @@ function springboard_dw_queue_legacy_setup_batch($type = '') {
       break;
 
     case 'action':
-      $records = db_query_range("SELECT s.sid, s.nid, s.uid, n.type, s.submitted AS created FROM {webform_submissions} s INNER JOIN {node} n ON s.nid = n.nid WHERE n.type IN ('sba_message_action', 'sba_social_action', 'springboard_petition') AND s.submitted > :highwater ORDER BY s.submitted ASC", 0, $limit, array(':highwater' => $highwater))->fetchAll();
+      $records = db_query_range("SELECT s.sid, s.nid, s.uid, n.type, s.remote_addr, s.submitted AS created FROM {webform_submissions} s INNER JOIN {node} n ON s.nid = n.nid WHERE n.type IN ('sba_message_action', 'sba_social_action', 'springboard_petition') AND s.submitted > :highwater ORDER BY s.submitted ASC", 0, $limit, array(':highwater' => $highwater))->fetchAll();
 
       $batch_process_function = 'springboard_dw_queue_legacy_actions';
       break;
@@ -381,6 +381,8 @@ function springboard_dw_queue_legacy_actions($records, $operation_details, &$con
     $action->node = node_load($record->nid);
     $action->webform = springboard_dw_webform_submission_data_keyed($record->nid, $record->sid);
     $action->sid = $record->sid;
+    $action->uid = $record->uid;
+    $action->ip_address = $record->remote_addr;
 
     // Message action and social action.
     if ($record->type == 'sba_message_action' || $node->type == 'sba_social_action') {

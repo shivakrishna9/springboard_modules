@@ -105,6 +105,7 @@ function springboard_dw_action_success($node, $contact, $data, $sid) {
   $action->data = $data;
   $action->webform = $webform_submission_data;
   $action->sid = $sid;
+  $action->ip_address = ip_address();
 
   // If the submission is a message action.
   if ($action->node->type == 'sba_message_action') {
@@ -804,10 +805,6 @@ function springboard_dw_map_advocacy_action_item($message_action) {
   // warehousing (sb_action).
   $advocacy_item = array();
 
-  // Reference the global user var.
-  // @TODO: this will make the uid wrong when legacy data is being submitted.
-  global $user;
-
   $advocacy_item['queue_type'] = 'advocacy action';
 
   $advocacy_item['unique_id'] = uniqid(); // Actions need a unique_id
@@ -818,15 +815,19 @@ function springboard_dw_map_advocacy_action_item($message_action) {
   $advocacy_item['action_type'] = $message_action->node->type;
   // Will come later.
   $advocacy_item['group_id'] = '';
-  $advocacy_item['contact_id'] = $user->uid;
+  // Set user if it was not passed in.
+  if (!isset($message_action->uid)) {
+    global $user;
+    $message_action->uid = $user->uid;
+  }
+  $advocacy_item['contact_id'] = $message_action->uid;
   $advocacy_item['form_id'] = $message_action->node->nid;
 
   // TODO: Fix these.
   $advocacy_item['quick_submit'] = 0;
   $advocacy_item['click_submit'] = 0;
 
-  // TODO: This IP will be wrong when legacy data is being submitted.
-  $advocacy_item['ip_address'] = ip_address();
+  $advocacy_item['ip_address'] = $message_action->ip_address;
 
   $advocacy_item['ms'] = $message_action->webform['ms']['value'][0];
   $advocacy_item['cid'] = $message_action->webform['cid']['value'][0];
