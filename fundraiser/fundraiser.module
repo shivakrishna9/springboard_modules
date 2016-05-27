@@ -534,16 +534,17 @@ function fundraiser_node_view($node, $view_mode, $langcode) {
 
       if ($expired) {
         $action = $node->expiration_action;
-        global $user;
-        $access = node_access('update', $node, $user);
+        $access = node_access('update', $node);
         switch ($action) {
           case FUNDRAISER_EXPIRATION_ACTION_MESSAGE:
             $node->content['body']['#access'] = FALSE;
             $node->content['webform']['#access'] = FALSE;
             $message = $node->expiration_message;
+            $format = $node->expiration_message_format;
+            $message = check_markup($message, $format);
             if (!empty($message)) {
-              $node->content['closed_message'] = array(
-                '#markup' => theme('fundraiser_closed_message', array('message' => $message)),
+              $node->content['expiration_message'] = array(
+                '#markup' => theme('fundraiser_expiration_message', array('message' => $message)),
                 '#weight' => 10,
               );
             }
@@ -3000,6 +3001,7 @@ function _fundraiser_create_fundraiser($fundraiser) {
       'expiration_action' => 0,
       'expiration_redirect' => NULL,
       'expiration_message' => NULL,
+      'expiration_message_format' => 'filtered_html',
     );
     $record = array_merge($record, $fundraiser);
     if (isset($record['default_amount']) && empty($record['default_amount'])) unset($record['default_amount']); // NULL > empty
@@ -3090,10 +3092,8 @@ function _fundraiser_update_fundraiser($fundraiser) {
       }
     }
 
-    // Apply the designated filter on the "fundraiser expired" message.
-    if (!empty($fundraiser['expiration_message']['value'])) {
-      $fundraiser['expiration_message'] = check_markup($fundraiser['expiration_message']['value'], $fundraiser['expiration_message']['format']);
-    }
+    $fundraiser['expiration_message_format'] = $fundraiser['expiration_message']['format'];
+    $fundraiser['expiration_message'] = $fundraiser['expiration_message']['value'];
 
     $record = $fundraiser;
     if (isset($record['default_amount']) && empty($record['default_amount'])) unset($record['default_amount']); // NULL > empty

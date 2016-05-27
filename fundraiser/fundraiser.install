@@ -118,6 +118,12 @@ function fundraiser_schema() {
         'type' => 'text',
         'not null' => FALSE,
       ),
+      'expiration_message_format' => array(
+        'description' => 'The format of the expiration message.',
+        'type' => 'varchar',
+        'length' => '255',
+        'not null' => FALSE,
+      ),
     ),
     'primary key' => array('nid'),
   );
@@ -610,6 +616,12 @@ function fundraiser_update_7010() {
     'expiration_message' => array(
       'description' => 'The message to display if the fundraiser has expired.',
       'type' => 'text',
+      'not null' => FALSE,
+    ),
+    'expiration_message_format' => array(
+      'description' => 'The format of the expiration message.',
+      'type' => 'varchar',
+      'length' => '255',
       'not null' => FALSE,
     ),
   );
