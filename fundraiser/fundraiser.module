@@ -598,15 +598,27 @@ function _fundraiser_donation_settings_form(&$form, &$form_state) {
     '#default_value' => isset($form['#node']->expired) ? $form['#node']->expired : FALSE,
     '#description' => t('Check this box to manually expire the fundraiser.'),
   );
-  $form['expiration_settings']['expiration_date'] = array(
-    '#type' => 'date_popup',
-    '#title' => t('Expiration Date'),
-    '#description' => t('Select the date this fundraiser will expire. If empty, the fundraiser will be available indefinitely.'),
-    '#date_type' => DATE_DATETIME,
-    '#date_format' => 'm/d/Y',
-    '#default_value' => isset($form['#node']->expiration_date) ? $form['#node']->expiration_date : 'YYYY-MM-DD 00:00:00',
-    '#date_year_range' => '0:+3',
-  );
+  if (module_exists('date_popup')) {
+    $form['expiration_settings']['expiration_date'] = array(
+      '#type' => 'date_popup',
+      '#title' => t('Expiration Date'),
+      '#description' => t('Select the date this fundraiser will expire. If empty, the fundraiser will be available indefinitely.'),
+      '#date_type' => DATE_DATETIME,
+      '#date_format' => 'm/d/Y',
+      '#default_value' => isset($form['#node']->expiration_date) ? $form['#node']->expiration_date : 'YYYY-MM-DD 00:00:00',
+      '#date_year_range' => '0:+3',
+    );
+  }
+  else {
+    $form['expiration_settings']['expiration_date'] = array(
+      '#type' => 'textfield',
+      '#title' => t('Expiration Date'),
+      '#description' => t('Select the date this fundraiser will expire. If empty, the fundraiser will be available indefinitely. Dates should be formatted as mm/dd/yyyy, e.g. 05/27/2016.'),
+      '#size' => 20,
+    );
+  }
+  $form['#attached']['js'][] = drupal_get_path('module', 'fundraiser') . '/js/fundraiser_admin.js';
+
   $form['expiration_settings']['expiration_action'] = array(
     '#title' => t('When a fundraiser expires, users should be:'),
     '#type' => 'radios',
@@ -1000,6 +1012,40 @@ function _fundraiser_form_expiration_validate($form, &$form_state) {
   $values = $form_state['values'];
   if (($values['expired'] || !empty($values['expiration_date'])) && $values['expiration_action'] == FUNDRAISER_EXPIRATION_ACTION_REDIRECT && empty($values['expiration_redirect'])) {
     form_set_error('expiration_settings][expiration_redirect', t('A redirect URL must be given if redirecting when the fundraiser has expired.'));
+  }
+  elseif (!empty($values['expiration_date'])) {
+    // Checks that the date given matches the expected format. This should
+    // almost never fail, and will probably only fail if javascript is disabled
+    // (or broken) and the jquery mask plugin wasn't used.
+    $matches_pattern = preg_match('/[0-9]{2}\/[0-9]{2}\/[0-9]{4}/', $values['expiration_action']);
+    if ($matches_pattern === FALSE) {
+      form_set_error('expiration_settings][expiration_date', t('The expiration date did not match the expected format of !format.', array(
+        '!format' => '<strong>mm/dd/yyyy</strong>',
+      )));
+    }
+
+    $date = date("m/d/Y", strtotime($values['expiration_date']));
+    $date_values = explode('/', $date);
+    $month = $date_values[0];
+    $day = $date_values[1];
+    if ($month < 1 || $month > 12) {
+      form_set_error('expiration_settings][expiration_date', t('You entered an invalid month for the expiration date. Please ensure the month is a valid value from 01-12.'));
+    }
+    elseif ($day < 1 || $day > 31) {
+      form_set_error('expiration_settings][expiration_date', t('You entered an invalid day for the expiration date. Please ensure the day is a valid value from 01-31.'));
+    }
+
+    $time_string = strtotime($values['expiration_date']);
+    if (!$time_string) {
+      form_set_error('expiration_settings][expiration_date', t('An unexpected error ocurred while parsing the expiration date. Please ensure the format of the date is !format.', array(
+        '!format' => '<strong>mm/dd/yyyy</strong>',
+      )));
+    }
+    else {
+      if ($time_string < time()) {
+        form_set_error('expiration_settings][expiration_date', t("The expiration date must be set to a future date relative to today's date."));
+      }
+    }
   }
 }
 
@@ -2913,6 +2959,17 @@ function _fundraiser_create_fundraiser($fundraiser) {
     // For now, this will have to do.
     // Serialize for storage, our configured gateway values for storage in components.
     $fundraiser['gateways'] = isset($fundraiser['gateways']) ? serialize($fundraiser['gateways']) : serialize('');
+
+    if (!empty($fundraiser['expiration_date'])) {
+      $expiration_date_time = strtotime($fundraiser['expiration_date']);
+      $fundraiser['expiration_date'] = date("Y-m-d H:i:s", $expiration_date_time);
+
+      // Check if the expiration date has passed, and if so, set the fundraiser
+      // to expired.
+      if (!$fundraiser['expired'] && $expiration_date_time < time()) {
+        $fundraiser['expired'] = TRUE;
+      }
+    }
     // After the node is created, add additional data to fundraiser.
     $record = array(
       'receipt_email_from' => variable_get('site_name', ''),
@@ -3003,10 +3060,15 @@ function _fundraiser_update_fundraiser($fundraiser) {
     // Serialize for storage, our configured gateway values for storage in components.
     $fundraiser['gateways'] = serialize($fundraiser['gateways']);
 
-    // Check if the expiration date has passed, and if so, set the fundraiser to
-    // expired.
-    if (!empty($fundraiser['expiriration_date']) && !$fundraiser['expired'] && strtotime($fundraiser['expiration_date']) < time()) {
-      $fundraiser['expired'] = TRUE;
+    if (!empty($fundraiser['expiration_date'])) {
+      $expiration_date_time = strtotime($fundraiser['expiration_date']);
+      $fundraiser['expiration_date'] = date("Y-m-d H:i:s", $expiration_date_time);
+
+      // Check if the expiration date has passed, and if so, set the fundraiser
+      // to expired.
+      if (!$fundraiser['expired'] && $expiration_date_time < time()) {
+        $fundraiser['expired'] = TRUE;
+      }
     }
 
     // Apply the designated filter on the "fundraiser expired" message.
