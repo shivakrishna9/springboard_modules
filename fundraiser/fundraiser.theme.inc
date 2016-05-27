@@ -32,6 +32,9 @@ function fundraiser_theme($existing, $type, $theme, $path) {
     'fundraiser_form_payment_methods' => array(
       'render element' => 'form',
     ),
+    'fundraiser_closed_message' => array(
+      'variables' => array('message' => NULL),
+    ),
   );
 }
 
