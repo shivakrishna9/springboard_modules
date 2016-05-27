@@ -80,6 +80,7 @@ function salesforce_donation_history_get_opportunities($sfid) {
         // The query() method wants a SOQL object.
         // Since we already have the string, call the API directly.
         $results = $sfapi->apiCall('query?q=' . $soql);
+        dpm($results);
       }
       if (!isset($results['errorCode'])) {
         $opportunities = $results['records'];
@@ -96,10 +97,24 @@ function salesforce_donation_history_get_opportunities($sfid) {
 }
 
 /**
+ * Get object description from Salesforce API.
+ *
+ * @param string $sfobject_name
+ *   Name of the Salesforce object to describe. eg Account or Opportunity
+ */
+function salesforce_donation_history_describe_object($sfobject_name) {
+  $sfapi = salesforce_get_api();
+  if ($sfapi->isAuthorized()) {
+    return $sfapi->objectDescribe($sfobject_name);
+  }
+}
+
+/**
  * Generates a list of tax receipt years for the current user.
  */
 function salesforce_donation_history($user) {
   $sfid = salesforce_donation_history_user_account_id($user->uid);
+
   $output = array();
   if (!$sfid) {
     drupal_set_message('No account ID could be found.', 'error');
