@@ -805,6 +805,7 @@ function springboard_dw_map_advocacy_action_item($message_action) {
   $advocacy_item = array();
 
   // Reference the global user var.
+  // @TODO: this will make the uid wrong when legacy data is being submitted.
   global $user;
 
   $advocacy_item['queue_type'] = 'advocacy action';
@@ -824,6 +825,7 @@ function springboard_dw_map_advocacy_action_item($message_action) {
   $advocacy_item['quick_submit'] = 0;
   $advocacy_item['click_submit'] = 0;
 
+  // TODO: This IP will be wrong when legacy data is being submitted.
   $advocacy_item['ip_address'] = ip_address();
 
   $advocacy_item['ms'] = $message_action->webform['ms']['value'][0];

@@ -108,7 +108,8 @@ function springboard_dw_queue_legacy_setup_batch($type = '') {
       break;
 
     case 'action':
-        $records = db_query_range("SELECT n.nid, n.created, n.type FROM {node} n WHERE (type='springboard_petition' OR type='sba_social_action' OR type='sba_message_action') AND created > :highwater ORDER BY created ASC", 0, $limit, array(':highwater' => $highwater))->fetchAll();
+      $records = db_query_range("SELECT s.sid, s.nid, s.uid, n.type, s.submitted AS created FROM {webform_submissions} s INNER JOIN {node} n ON s.nid = n.nid WHERE n.type IN ('sba_message_action', 'sba_social_action', 'springboard_petition') AND s.submitted > :highwater ORDER BY s.submitted ASC", 0, $limit, array(':highwater' => $highwater))->fetchAll();
+
       $batch_process_function = 'springboard_dw_queue_legacy_actions';
       break;
 
@@ -297,7 +298,6 @@ function springboard_dw_queue_legacy_forms($records, $operation_details, &$conte
  * Batch process callback for processing payments
  */
 function springboard_dw_queue_legacy_payments($records, $operation_details, &$context) {
-  // var_dump($records);
   foreach ($records as $record) {
     $queue = DrupalQueue::get("springboard_dw_export");
 
@@ -372,39 +372,34 @@ function springboard_dw_queue_legacy_submissions($records, $operation_details, &
 /**
  * Batch process callback for processing actions.
  */
-function springboard_dw_queue_legacy_actions($actions, $operation_details, &$context) {
+function springboard_dw_queue_legacy_actions($records, $operation_details, &$context) {
   // Get the Drupal data warehouse queue.
   $queue = DrupalQueue::get("springboard_dw_export");
 
-  foreach ($actions as $action) {
-    $node = node_load($action->nid);
-
+  foreach ($records as $record) {
     $action = new stdClass();
-    $action->node = $node;
-    // None of these appear to be relvant for actions themselves, only their
-    // associated messages, which we process separately.
-    // $action->contact = $contact;
-    // $action->data = $data;
-    // $action->webform = $webform_submission_data;
-    // $action->sid = $sid;.
+    $action->node = node_load($record->nid);
+    $action->webform = springboard_dw_webform_submission_data_keyed($record->nid, $record->sid);
+    $action->sid = $record->sid;
+
     // Message action and social action.
-    if ($node->type == 'sba_message_action' || $node->type == 'sba_social_action') {
+    if ($record->type == 'sba_message_action' || $node->type == 'sba_social_action') {
       // Create the Advocacy action item in the queue if not warehoused.
-      if (!springboard_dw_item_is_warehoused('advocacy action', $node->nid)) {
+      if (!springboard_dw_item_is_warehoused('advocacy action', $record->sid)) {
         $action_item = springboard_dw_map_advocacy_action_item($action);
         $queue->createItem($action_item);
         springboard_dw_log_queue_item($action_item);
-        springboard_dw_track_item_warehouse_queued('advocacy action', $node->nid);
+        springboard_dw_track_item_warehouse_queued('advocacy action', $record->sid);
       }
     }
 
     // Petition.
-    if ($node->type == 'springboard_petition') {
-      if (!springboard_dw_item_is_warehoused('petition', $node->nid)) {
+    if ($record->type == 'springboard_petition') {
+      if (!springboard_dw_item_is_warehoused('petition', $record->sid)) {
         $action_item = springboard_dw_map_petition_item($action);
         $queue->createItem($action_item);
         springboard_dw_log_queue_item($action_item);
-        springboard_dw_track_item_warehouse_queued('petition', $node->nid);
+        springboard_dw_track_item_warehouse_queued('petition', $record->sid);
       }
     }
   }
