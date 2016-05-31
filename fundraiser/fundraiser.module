@@ -631,15 +631,15 @@ function _fundraiser_donation_settings_form(&$form, &$form_state) {
   );
   $form['expiration_settings']['expired'] = array(
     '#type' => 'checkbox',
-    '#title' => t('Fundraiser has expired'),
+    '#title' => t('Donation Form has expired'),
     '#default_value' => isset($form['#node']->expired) ? $form['#node']->expired : FALSE,
-    '#description' => t('Check this box to manually expire the fundraiser.'),
+    '#description' => t('Check this box to expire the donation form immediately. Once the form is expired it will no longer accept donations.'),
   );
   if (module_exists('date_popup')) {
     $form['expiration_settings']['expiration_date'] = array(
       '#type' => 'date_popup',
       '#title' => t('Expiration Date'),
-      '#description' => t('Select the date this fundraiser will expire. If empty, the fundraiser will be available indefinitely.'),
+      '#description' => t('Select the date this donation form will expire. If empty, the donation form will be available indefinitely.'),
       '#date_type' => DATE_DATETIME,
       '#date_format' => 'm/d/Y',
       '#default_value' => isset($form['#node']->expiration_date) ? $form['#node']->expiration_date : 'YYYY-MM-DD 00:00:00',
@@ -650,14 +650,14 @@ function _fundraiser_donation_settings_form(&$form, &$form_state) {
     $form['expiration_settings']['expiration_date'] = array(
       '#type' => 'textfield',
       '#title' => t('Expiration Date'),
-      '#description' => t('Select the date this fundraiser will expire. If empty, the fundraiser will be available indefinitely. Dates should be formatted as mm/dd/yyyy, e.g. 05/27/2016.'),
+      '#description' => t('Select the date this donation form will expire. If empty, the donation form will be available indefinitely. Dates should be formatted as mm/dd/yyyy, e.g. 05/27/2016.'),
       '#size' => 20,
     );
   }
   $form['#attached']['js'][] = drupal_get_path('module', 'fundraiser') . '/js/fundraiser_admin.js';
 
   $form['expiration_settings']['expiration_action'] = array(
-    '#title' => t('When a fundraiser expires, users should be:'),
+    '#title' => t('When this donation form expires, users should be:'),
     '#type' => 'radios',
     '#default_value' => isset($form['#node']->expiration_action) ? $form['#node']->expiration_action : FUNDRAISER_EXPIRATION_ACTION_REDIRECT,
     '#options' => array(
@@ -693,7 +693,7 @@ function _fundraiser_donation_settings_form(&$form, &$form_state) {
   );
   $form['expiration_settings']['expired_message_container']['expiration_message'] = array(
     '#type' => 'text_format',
-    '#title' => t('Fundraiser Expired Message'),
+    '#title' => t('Donation Form Expired Message'),
     '#default_value' => isset($form['#node']->expiration_message) ? $form['#node']->expiration_message : NULL,
   );
   $form['#validate'][] = '_fundraiser_form_expiration_validate';
