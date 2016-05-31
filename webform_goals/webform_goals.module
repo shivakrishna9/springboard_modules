@@ -30,14 +30,16 @@ function webform_goals_init() {
 
   if (arg(0) == 'webform_goals_jsonp') {
 
-    $callback = isset($_GET['jsonp_callback']) ? $_GET['jsonp_callback'] : '';
+    $callback = isset($_GET['jsonp_callback']) ?
+      filter_xss($_GET['jsonp_callback']) :
+    '';
 
     // Fail early if we don't have anything to work with.
     if (!isset($_GET['goal_ids'])) {
       webform_goals_jsonp_fail($callback);
     }
 
-    $ids = explode(',', $_GET['goal_ids']);
+    $ids = explode(',', filter_xss($_GET['goal_ids']));
 
     // Fail if we don't get IDs.
     if (!is_array($ids) || count($ids) < 1) {
