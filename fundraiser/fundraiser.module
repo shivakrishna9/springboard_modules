@@ -1047,8 +1047,35 @@ function _fundraiser_form_payment_method_config_fieldset($gateways, $configurati
  */
 function _fundraiser_form_expiration_validate($form, &$form_state) {
   $values = $form_state['values'];
-  if (($values['expired'] || !empty($values['expiration_date'])) && $values['expiration_action'] == FUNDRAISER_EXPIRATION_ACTION_REDIRECT && empty($values['expiration_redirect'])) {
-    form_set_error('expiration_settings][expiration_redirect', t('A redirect URL must be given if redirecting when the fundraiser has expired.'));
+  if (($values['expired'] || !empty($values['expiration_date'])) && $values['expiration_action'] == FUNDRAISER_EXPIRATION_ACTION_REDIRECT) {
+    if (empty($values['expiration_redirect'])) {
+      form_set_error('expiration_settings][expiration_redirect', t('A redirect URL must be given if redirecting when the fundraiser has expired.'));
+    }
+    else {
+      if (!empty($form_state['node']->nid)) {
+        $nid = $form_state['node']->nid;
+        $redirect = $values['expiration_redirect'];
+        $external = url_is_external($redirect);
+        // If this is an internal path, or if it's external but pointing to the
+        // host site, check that the redirect URL isn't pointing to this node,
+        // which would cause an infinite redirect.
+        $form_error = FALSE;
+        $redirect_without_base = str_replace($GLOBALS['base_url'] . '/', '', $redirect);
+        if ($redirect_without_base == $values['path']['alias']) {
+          $form_error = TRUE;
+        }
+        if (!$external || $external && strpos($redirect, $GLOBALS['base_url']) !== FALSE) {
+          $path = url('node/' . $nid);
+          $path = ltrim($path, '/');
+          if ($redirect_without_base == $path || $redirect_without_base == 'node/' . $nid) {
+            $form_error = TRUE;
+          }
+        }
+        if ($form_error) {
+          form_set_error('expiration_settings][expiration_redirect', t("Pointing your redirect URL to this donation form would cause an infinite redirect. Please use a different URL."));
+        }
+      }
+    }
   }
   elseif (!empty($values['expiration_date'])) {
     // Checks that the date given matches the expected format. This should
@@ -3103,7 +3130,12 @@ function _fundraiser_update_fundraiser($fundraiser) {
     $fundraiser['gateways'] = serialize($fundraiser['gateways']);
 
     if (!empty($fundraiser['expiration_date'])) {
-      $expiration_date_time = strtotime($fundraiser['expiration_date']);
+      if (is_array($fundraiser['expiration_date'])) {
+        $expiration_date_time = strtotime($fundraiser['expiration_date']['date']);
+      }
+      else {
+        $expiration_date_time = strtotime($fundraiser['expiration_date']);
+      }
       $fundraiser['expiration_date'] = date("Y-m-d H:i:s", $expiration_date_time);
 
       // Check if the expiration date has passed, and if so, set the fundraiser
