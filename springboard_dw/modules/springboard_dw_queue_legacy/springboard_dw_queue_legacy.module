@@ -146,6 +146,7 @@ function springboard_dw_queue_legacy_reset_highwater_marks() {
     'message',
     'donation',
     'petition message',
+    'payment',
   );
   foreach ($types as $type) {
     springboard_dw_queue_legacy_set_highwater_mark($type, 0);

@@ -150,20 +150,8 @@ function springboard_dw_queue_legacy_setup_batch($type = '') {
   drush_log(dt('@count records found to process.', array('@count' => $record_count)), 'ok');
   if ($record_count < 1) {
     watchdog("data_warehouse", 'Attempted to process %type records when there are :record_count remaining.', array('%type' => $type, ':record_count' => $record_count), WATCHDOG_WARNING);
+    springboard_dw_queue_legacy_set_highwater_mark($type, time());
   }
-
-  // Set highwater mark for this type so we can pick up where we left off next
-  // time this command is run.
-  if ($record_count > 0) {
-    $last_record = end(array_values($records));
-    $highwater = $last_record->created;
-  }
-  // There were no records to process, so set the highwater mark to now.
-  else {
-    $highwater = time();
-  }
-  drush_log(dt('Setting highwater mark to @highwater', array('@highwater' => date(DATE_ATOM, $highwater))), 'ok');
-  springboard_dw_queue_legacy_set_highwater_mark($type, $highwater);
 
   // Break up all of our data so each process does not time out.
   $chunks = array_chunk($records, $batch_size);
@@ -206,7 +194,6 @@ function springboard_dw_queue_legacy_setup_batch($type = '') {
  * Callback for finished batch.
  */
 function springboard_dw_queue_legacy_finished_batch($success, $results, $operations) {
-
   drush_log(dt('Finished queueing'));
 }
 
@@ -233,6 +220,8 @@ function springboard_dw_queue_legacy_users($records, $operation_details, &$conte
       // Mark the item as queued.
       springboard_dw_track_item_warehouse_queued('contact', $record->uid);
     }
+    // Set highwater mark.
+    springboard_dw_queue_legacy_set_highwater_mark('contact', $record->created);
   }
   $context['message'] = $operation_details;
 }
@@ -271,6 +260,8 @@ function springboard_dw_queue_legacy_donations($records, $operation_details, &$c
       springboard_dw_log_queue_item($donation_item);
       springboard_dw_track_item_warehouse_queued('donation', $record->did);
     }
+    // Set highwater mark.
+    springboard_dw_queue_legacy_set_highwater_mark('donation', $record->created);
   }
   $context['message'] = $operation_details;
 }
@@ -291,6 +282,8 @@ function springboard_dw_queue_legacy_forms($records, $operation_details, &$conte
       springboard_dw_log_queue_item($form_item);
       springboard_dw_track_item_warehouse_queued('form', $node->nid);
     }
+    // Set highwater mark.
+    springboard_dw_queue_legacy_set_highwater_mark('form', $record->created);
   }
   $context['message'] = $operation_details;
 }
@@ -321,6 +314,8 @@ function springboard_dw_queue_legacy_payments($records, $operation_details, &$co
       springboard_dw_log_queue_item($payment_item);
       springboard_dw_track_item_warehouse_queued('payment', $payment['transaction_id']);
     }
+    // Set highwater mark.
+    springboard_dw_queue_legacy_set_highwater_mark('payment', $record->created);
   }
   $context['message'] = $operation_details;
 }
@@ -366,6 +361,8 @@ function springboard_dw_queue_legacy_submissions($records, $operation_details, &
       springboard_dw_log_queue_item($submission_item);
       springboard_dw_track_item_warehouse_queued('submission', $record->sid);
     }
+    // Set highwater mark.
+    springboard_dw_queue_legacy_set_highwater_mark('submission', $record->created);
   }
   $context['message'] = $operation_details;
 }
@@ -394,6 +391,8 @@ function springboard_dw_queue_legacy_actions($records, $operation_details, &$con
         springboard_dw_log_queue_item($action_item);
         springboard_dw_track_item_warehouse_queued('advocacy action', $record->sid);
       }
+      // Set highwater mark.
+      springboard_dw_queue_legacy_set_highwater_mark('action', $record->created);
     }
 
     // Petition.
@@ -404,6 +403,8 @@ function springboard_dw_queue_legacy_actions($records, $operation_details, &$con
         springboard_dw_log_queue_item($action_item);
         springboard_dw_track_item_warehouse_queued('petition', $record->sid);
       }
+      // Set highwater mark.
+      springboard_dw_queue_legacy_set_highwater_mark('petition', $record->created);
     }
   }
   $context['message'] = $operation_details;
@@ -412,18 +413,20 @@ function springboard_dw_queue_legacy_actions($records, $operation_details, &$con
 /**
  * Batch process callback for processing petitions.
  */
-function springboard_dw_queue_legacy_petition_messages($submissions, $operation_details, &$context) {
+function springboard_dw_queue_legacy_petition_messages($records, $operation_details, &$context) {
   // Get the Drupal data warehouse queue.
   $queue = DrupalQueue::get("springboard_dw_export");
-  foreach ($submissions as $submission) {
-    $action = springboard_dw_queue_legacy_build_action($submission);
+  foreach ($records as $record) {
+    $action = springboard_dw_queue_legacy_build_action($record);
     // Create the Advocacy action item in the queue if not warehoused.
     if (!springboard_dw_item_is_warehoused('advocacy petition message', $action->node->nid)) {
-      $petition_item = springboard_dw_map_petition_submission_item($action);
+      $petition_item = springboard_dw_map_petition_submission_item($action, '');
       $queue->createItem($petition_item);
       springboard_dw_log_queue_item($petition_item);
       springboard_dw_track_item_warehouse_queued('advocacy petition message', $node->nid);
     }
+    // Set highwater mark.
+    springboard_dw_queue_legacy_set_highwater_mark('petition message', $record->created);
   }
   $context['message'] = $operation_details;
 }
