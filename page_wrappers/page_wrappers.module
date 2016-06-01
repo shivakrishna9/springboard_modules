@@ -1165,6 +1165,7 @@ function _page_wrapper_preview_form() {
   $form['cc']['number'] = array(
     '#type' => 'textfield',
     '#title' => t('Card Number'),
+    '#attributes' => array('autocomplete' => array('off')),
   );
 
   $form['cc']['expdate'] = array(
@@ -1175,6 +1176,7 @@ function _page_wrapper_preview_form() {
   $form['cc']['cvv'] = array(
     '#type' => 'textfield',
     '#title' => t('Card Security Code'),
+    '#attributes' => array('autocomplete' => array('off')),
   );
 
   $form['cc']['recurs'] = array(
