@@ -1,0 +1,40 @@
+(function ($) {
+    Drupal.behaviors.fgfGroups = {
+        attach: function (context, settings) {
+            $('div.item-list').each(function(){
+                columnize($(this).find('ul'));
+                var list = $(this);
+                list.find('ul').hide();
+                list.find('h3').addClass('group-toggle');
+                var op = list.prepend('<div class="group-toggle">+</div>');
+                list.find('.group-toggle').on('click', function(){
+                    list.find('ul').slideToggle('slow', function() {
+                        var text = $(this).closest('div.item-list').find('div.group-toggle').text();
+                        console.log(text);
+                        if (text.indexOf('+') !== -1) {
+                            text = text.replace('+', '-')
+                            $(this).closest('div.item-list').find('div.group-toggle').text(text)
+                        }
+                        else {
+                            text = text.replace('-', '+')
+                            $(this).closest('div.item-list').find('div.group-toggle').text(text)
+                        }
+                    });
+                });
+            });
+        }
+    };
+
+    function columnize(origList){
+        var size = origList.find("li").size();
+        var limit = Math.ceil(size / 3);
+        for (var i=0; i<3; i++){
+            var items = origList.find("li").slice(0, limit);
+            if (items.length > 0) {
+                var column = $('<ul/>').append(items);
+                origList.closest('div.item-list').append(column);
+            }
+        }
+        origList.remove();
+    }
+})(jQuery);

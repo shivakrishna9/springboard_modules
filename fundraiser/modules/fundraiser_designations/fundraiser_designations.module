@@ -5,51 +5,6 @@
  */
 
 /**
- * Implements hook_menu().
- */
-function fundraiser_designations_menu() {
-  $items = array();
-  $items['node/%node/designations'] = array(
-    'title' => 'Designations',
-    'description' => 'Designations',
-    'page callback' => 'fundraiser_designations_designation_groups_page',
-    'page arguments' => array(1),
-    'access callback' => 'fundraiser_designations_manage_access',
-    'access arguments' => array(1),
-    'type' => MENU_LOCAL_TASK,
-    'file' => 'fundraiser_designations.forms.inc',
-    'weight' => 4,
-  );
-
-  return $items;
-}
-
-/**
- * Implements hook_permission().
- */
-function fundraiser_designations_permission() {
-  return array(
-    'manage designations' => array(
-      'title' => t('Manage designations'),
-      'description' => t('Manage designations on any fundraiser designation form.'),
-    ),
-  );
-}
-
-/**
- * Menu access callback.
- *
- * Ensure node has designationing enabled and user has node
- * 'update' permission.
- */
-function fundraiser_designations_manage_access($node, $account = NULL) {
-  global $user;
-  $account = isset($account) ? $account : $user;
-  $designation_types = fundraiser_designations_get_designation_types();
-  return node_access('update', $node, $account) && $designation_types[$node->type] == TRUE;
-}
-
-/**
  * Implements hook_fundraiser_field_info().
  *
  * Adds the designation element to the webform.
@@ -242,6 +197,10 @@ function _fundraiser_designations_form_node_form_validate(&$form, &$form_state) 
   //$form_state['values']['recurring_setting'] = 'never';
 }
 
+/**
+ * @param $form
+ * @param $form_State
+ */
 function fundraiser_designations_form_commerce_product_ui_product_delete_form_alter(&$form, &$form_State) {
   $pid = arg(3);
   $product = entity_load_single('commerce_product', $pid);
@@ -460,7 +419,7 @@ function fundraiser_designations_form_node_type_form_validate($form, &$form_stat
 function fundraiser_designations_node_type_insert($type) {
   if (fundraiser_designations_is_designation_type($type->type)) {
     if (!fundraiser_is_donation_type($type->type)) {
-      drupal_set_message(t('Fundraiser must also be enabled fordesignated donations sales.'), 'error');
+      drupal_set_message(t('Fundraiser must also be enabled for designated donations'), 'error');
     }
     else {
       module_load_include('inc', 'fundraiser_designations', 'includes/fundraiser_designations.fields');
@@ -562,7 +521,10 @@ function fundraiser_designations_get_designation_types() {
   $types = node_type_get_types();
   $fundraiser_designations_types = [];
   foreach ($types as $type => $type_info) {
-    $fundraiser_designations_types[$type] = variable_get('fundraiser_designations_' . $type, FALSE);
+    $exists = variable_get('fundraiser_designations_' . $type, FALSE);
+    if ($exists) {
+      $fundraiser_designations_types[$type] = $exists;
+    }
   }
   return $fundraiser_designations_types;
 }
@@ -599,6 +561,9 @@ function fundraiser_designations_no_designations_added($node) {
 }
 
 
+/**
+ * Implements hook_theme().
+ */
 function fundraiser_designations_theme() {
   $theme = array(
     'fundraiser_designations_bundler_form' => array(
@@ -633,15 +598,15 @@ function fundraiser_designations_springboard_admin_admin_menu_items_alter(&$item
     'weight' => 21,
   );
 }
-  /**
-   * Implements hook_views_api().
-   */
-  function fundraiser_designations_views_api() {
-    return array(
-      'api' => 3.0,
-      'path' => drupal_get_path('module', 'fundraiser_designations') . '/includes/views',
-      'template path' => drupal_get_path('module', 'fundraiser_designations') . '/includes/views/templates',
-    );
+/**
+ * Implements hook_views_api().
+ */
+function fundraiser_designations_views_api() {
+  return array(
+    'api' => 3.0,
+    'path' => drupal_get_path('module', 'fundraiser_designations') . '/includes/views',
+    'template path' => drupal_get_path('module', 'fundraiser_designations') . '/includes/views/templates',
+  );
 }
 
 /**
@@ -651,6 +616,11 @@ function fundraiser_designations_springboard_taxonomy_allowed_vocabularies_alter
   $names[] = 'fd_designation_categories';
 }
 
+/**
+ * Implements hook_form_FORM_ID_alter().
+ *
+ * Hide the settings tab that the organization issues vocab uses.
+ */
 function fundraiser_designations_form_taxonomy_overview_terms_alter(&$form, &$form_state) {
   if (arg(3) == 'fd_designation_categories') {
     $form['#attached']['js'][] = array(
@@ -660,9 +630,29 @@ function fundraiser_designations_form_taxonomy_overview_terms_alter(&$form, &$fo
   }
 }
 
+/**
+ * Implements hook_views_pre_render().
+ */
 function fundraiser_designations_views_pre_render(&$view) {
   if ($view->name == 'fundraiser_designations') {
     $css = drupal_get_path('module', 'fundraiser_designations') . '/css/designation-views.css';
     drupal_add_css($css);
+  }
+}
+
+/**
+ * Implements hook_node_load().
+ *
+ * Add the group entity references to designation form nodes.
+ */
+function fundraiser_designations_node_load($nodes, $types) {
+  $designation_types = array_keys(fundraiser_designations_get_designation_types());
+  if (count(array_intersect($designation_types, $types))) {
+    $group_ids = db_query(
+      'SELECT entity_id, field_ffg_form_id_target_id FROM {field_data_field_ffg_form_id} WHERE field_ffg_form_id_target_id IN (:nids)',
+      array(':nids' => array_keys($nodes)));
+    foreach ($group_ids as $group_id) {
+      $nodes[$group_id->field_ffg_form_id_target_id]->group_ids[] = $group_id->entity_id;
+    }
   }
 }

@@ -9,7 +9,6 @@ function fundraiser_designations_designation_groups_page($node) {
   $build['#attached']['css'][] = drupal_get_path('module', 'fundraiser_designations') . '/css/designation_form.css';
   $build['#attached']['js'][] = drupal_get_path('module', 'fundraiser_designations') . '/js/jquery-ui/jquery-ui.min.js';
   $build['#attached']['js'][] = drupal_get_path('module', 'fundraiser_designations') . '/js/bundler.js';
-
   $build['#attached']['css'][] = drupal_get_path('module', 'fundraiser_designations') . '/js/jquery-ui/jquery-ui.structure.css';
 
   $form = drupal_get_form('fundraiser_designations_bundler_form', $node);
@@ -40,6 +39,10 @@ function fundraiser_designations_designation_groups_page($node) {
   return $build;
 }
 
+/**
+ * @return string
+ * @throws \Exception
+ */
 function fundraiser_designations_categories_list() {
 
   $products_with_tags = db_query("
@@ -87,6 +90,12 @@ function fundraiser_designations_categories_list() {
   return $output;
 }
 
+/**
+ * @param $form
+ * @param $form_state
+ * @param $node
+ * @return array
+ */
 function fundraiser_designations_bundler_form($form, $form_state, $node) {
   $form = array(
     '#tree' => TRUE,
@@ -183,6 +192,11 @@ function fundraiser_designations_bundler_form($form, $form_state, $node) {
   return $form;
 }
 
+/**
+ * @param $variables
+ * @return string
+ * @throws \Exception
+ */
 function theme_fundraiser_designations_bundler_form($variables) {
 
   $form = $variables['form'];
