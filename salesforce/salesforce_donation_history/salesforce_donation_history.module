@@ -67,8 +67,8 @@ function salesforce_donation_history_menu() {
  *   An array of opportunity data that was specified in the SOQL query.
  */
 function salesforce_donation_history_get_opportunities($sfid) {
-  dpm('sfid');
-  dpm($sfid);
+  // dpm('sfid');
+  // dpm($sfid);
   $opportunities = &drupal_static(__FUNCTION__);
   if (!isset($opportunities)) {
     if ($cache = cache_get($sfid, 'cache_salesforce_donation_history')) {
@@ -76,11 +76,12 @@ function salesforce_donation_history_get_opportunities($sfid) {
     }
     else {
       $soql = strtr(variable_get('salesforce_donation_history_query', DONATION_HISTORY_DEFAULT_SOQL), array(':accountId' => $sfid));
+      // dpm($soql);
       $sfapi = salesforce_get_api();
       $soap = new SalesforceSoapPartner($sfapi);
       $response = $soap->query($soql);
       $result = new QueryResult($response);
-      dpm($response);
+      // dpm($response);
       // Print createQueryResultTable($response->records, 0);.
       if ($result) {
         $opportunities = $result->records;
@@ -119,8 +120,22 @@ function salesforce_donation_history($user) {
     drupal_set_message('No account ID could be found.', 'error');
   }
   else {
+    $current_year = date("Y");
+    $output['year'] = array(
+      '#title' => t('Select year'),
+      '#type' => 'select',
+      '#options' => array($current_year, $current_year-1, $current_year-2,$current_year-3 ),
+    );
+    $output['annual-tax-receipt'] = array(
+      '#type' => 'markup',
+      '#markup' => l('Annual Tax Reciept', '#'),
+      );
     $results = salesforce_donation_history_get_opportunities($sfid);
-    $output = createQueryResultTable($results, 0);
+    $output['table'] = array(
+      '#type' => 'markup',
+      // @TODO this is not how one should output a table.
+      '#markup' => createQueryResultTable($results, 0),
+    );
   }
 
   // $output = array();
@@ -145,16 +160,16 @@ function salesforce_donation_history($user) {
   //         l('Print receipt', '#'),
   //       );
   //     }
-  //     $current_year = date("Y");
-  //     $output['year'] = array(
-  //       '#title' => t('Select year'),
-  //       '#type' => 'select',
-  //       '#options' => array($current_year, $current_year-1, $current_year-2,$current_year-3 ),
-  //     );
-  //     $output['annual-tax-receipt'] = array(
-  //       '#type' => 'markup',
-  //       '#markup' => l('Annual Tax Reciept', '#'),
-  //     );
+      // $current_year = date("Y");
+      // $output['year'] = array(
+      //   '#title' => t('Select year'),
+      //   '#type' => 'select',
+      //   '#options' => array($current_year, $current_year-1, $current_year-2,$current_year-3 ),
+      // );
+      // $output['annual-tax-receipt'] = array(
+      //   '#type' => 'markup',
+      //   '#markup' => l('Annual Tax Reciept', '#'),
+      // );
   //     $output['table'] = array(
   //       '#theme' => 'table',
   //       '#header' => array(t('Date'), t('Amount'), t('Payment Method'), t('type'), ''),
@@ -212,7 +227,7 @@ function salesforce_donation_history_get_salesforce() {
 }
 
 function createQueryResultTable($records, $rowNum) {
-  dpm($records);
+  // dpm($records);
   $table = "<table id='query_results'>\n";
   // Call shared recusive function for header printing.
   $table .= "<tr><th>&nbsp;</th><th>";
