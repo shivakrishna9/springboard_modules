@@ -33,18 +33,17 @@ function salesforce_donation_history_admin_validate($form, &$form_state){
  * Replaces the WHERE claue of the SOQL query with LIMIT 1. This should return
  * the first available result, including all of the fields included in the
  * query.
- *
  */
 function salesforce_donation_history_test_query($query) {
   $soql = strtr($query, array("WHERE AccountId = ':accountId'" => 'LIMIT 1'));
-  // dpm($soql);
-  // $soql = rawurlencode($soql);
+  // @TODO maybe do this in a try/catch to avoid unexpected error message if the
+  // SOQL is malformed.
   $sfapi = salesforce_get_api();
   $soap = new SalesforceSoapPartner($sfapi);
   $response = $soap->query($soql);
-  $queryResult = new QueryResult($response);
-  // print createQueryResultTable($response->records, 0);
-  if ($queryResult->size != 1) {
+  $result = new QueryResult($response);
+  // Print createQueryResultTable($response->records, 0);.
+  if ($result->size != 1) {
     return FALSE;
   }
   return TRUE;
