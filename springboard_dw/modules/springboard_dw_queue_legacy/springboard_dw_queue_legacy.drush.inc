@@ -98,18 +98,17 @@ function springboard_dw_queue_legacy_setup_batch($type = '') {
   // Populate list of records to operate on.
   switch ($type) {
     case 'contact':
-        $records = db_query_range('SELECT uid, created FROM {users} WHERE created > :highwater ORDER BY created ASC', 0, $limit, array(':highwater' => $highwater))->fetchAll();
+        $records = db_query_range('SELECT uid, created FROM {users} WHERE created >= :highwater ORDER BY created ASC', 0, $limit, array(':highwater' => $highwater))->fetchAll();
       $batch_process_function = 'springboard_dw_queue_legacy_users';
       break;
 
     case 'donation':
-        $records = db_query_range('SELECT did, nid, created FROM {fundraiser_donation} WHERE created > :highwater ORDER BY created ASC', 0, $limit, array(':highwater' => $highwater))->fetchAll();
+        $records = db_query_range('SELECT did, nid, created FROM {fundraiser_donation} WHERE created >= :highwater ORDER BY created ASC', 0, $limit, array(':highwater' => $highwater))->fetchAll();
       $batch_process_function = 'springboard_dw_queue_legacy_donations';
       break;
 
     case 'action':
-      $records = db_query_range("SELECT s.sid, s.nid, s.uid, n.type, s.remote_addr, s.submitted AS created FROM {webform_submissions} s INNER JOIN {node} n ON s.nid = n.nid WHERE n.type IN ('sba_message_action', 'sba_social_action', 'springboard_petition') AND s.submitted > :highwater ORDER BY s.submitted ASC", 0, $limit, array(':highwater' => $highwater))->fetchAll();
-
+      $records = db_query_range("SELECT s.sid, s.nid, s.uid, n.type, s.remote_addr, s.submitted AS created FROM {webform_submissions} s INNER JOIN {node} n ON s.nid = n.nid WHERE n.type IN ('sba_message_action', 'sba_social_action', 'springboard_petition') AND s.submitted >= :highwater ORDER BY s.submitted ASC", 0, $limit, array(':highwater' => $highwater))->fetchAll();
       $batch_process_function = 'springboard_dw_queue_legacy_actions';
       break;
 
@@ -119,12 +118,12 @@ function springboard_dw_queue_legacy_setup_batch($type = '') {
       break;
 
     case 'petition message':
-        $records = db_query_range("SELECT s.sid, s.nid, s.uid, s.submitted AS created FROM {webform_submissions} s INNER JOIN {node} n ON s.nid = n.nid WHERE n.type = 'springboard_petition' AND s.submitted > :highwater ORDER BY s.submitted ASC", 0, $limit, array(':highwater' => $highwater))->fetchAll();
+        $records = db_query_range("SELECT s.sid, s.nid, s.uid, s.submitted AS created FROM {webform_submissions} s INNER JOIN {node} n ON s.nid = n.nid WHERE n.type = 'springboard_petition' AND s.submitted >= :highwater ORDER BY s.submitted ASC", 0, $limit, array(':highwater' => $highwater))->fetchAll();
       $batch_process_function = 'springboard_dw_queue_legacy_petition_messages';
       break;
 
     case 'form':
-        $records = db_query_range('SELECT n.nid, n.created FROM {node} n INNER JOIN {webform} w ON n.nid = w.nid WHERE n.created > :highwater ORDER BY created ASC', 0, $limit, array(':highwater' => $highwater))->fetchAll();
+        $records = db_query_range('SELECT n.nid, n.created FROM {node} n INNER JOIN {webform} w ON n.nid = w.nid WHERE n.created >= :highwater ORDER BY created ASC', 0, $limit, array(':highwater' => $highwater))->fetchAll();
       $batch_process_function = 'springboard_dw_queue_legacy_forms';
       break;
 
@@ -133,12 +132,12 @@ function springboard_dw_queue_legacy_setup_batch($type = '') {
       $excluded_types[] = 'springboard_petition';
       $excluded_types[] = 'sba_message_action';
       $excluded_types[] = 'sba_social_action';
-      $records = db_query_range("SELECT s.sid, s.nid, s.uid, s.remote_addr, s.submitted AS created FROM {webform_submissions} s INNER JOIN {node} n ON s.nid = n.nid WHERE n.type NOT IN (:excluded_types) AND s.submitted > :highwater ORDER BY s.submitted ASC", 0, $limit, array(':highwater' => $highwater, ':excluded_types' => $excluded_types))->fetchAll();
+      $records = db_query_range("SELECT s.sid, s.nid, s.uid, s.remote_addr, s.submitted AS created FROM {webform_submissions} s INNER JOIN {node} n ON s.nid = n.nid WHERE n.type NOT IN (:excluded_types) AND s.submitted >= :highwater ORDER BY s.submitted ASC", 0, $limit, array(':highwater' => $highwater, ':excluded_types' => $excluded_types))->fetchAll();
       $batch_process_function = 'springboard_dw_queue_legacy_submissions';
       break;
 
     case 'payment':
-        $records = db_query_range('SELECT transaction_id, order_id AS donation_id, remote_id, uid, payment_method, instance_id, currency_code, status, message, remote_status, created, changed FROM {commerce_payment_transaction} WHERE created > :highwater ORDER BY created ASC', 0, $limit, array(':highwater' => $highwater))->fetchAll();
+        $records = db_query_range('SELECT transaction_id, order_id AS donation_id, remote_id, uid, payment_method, instance_id, currency_code, status, message, remote_status, created, changed FROM {commerce_payment_transaction} WHERE created >= :highwater ORDER BY created ASC', 0, $limit, array(':highwater' => $highwater))->fetchAll();
       $batch_process_function = 'springboard_dw_queue_legacy_payments';
       break;
 
