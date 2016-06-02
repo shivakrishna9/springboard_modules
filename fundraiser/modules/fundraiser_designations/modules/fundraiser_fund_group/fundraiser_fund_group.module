@@ -143,7 +143,7 @@ function theme_fundraiser_fund_group_form(&$variables) {
   $output = '';
   foreach ($products_by_tag as $name => $values) {
     $items = [];
-    $items[] = '<div class="form-item control-group form-type-checkbox"><input name="' . $name . '" type="checkbox"><label class="option">Select all</label></div>';
+    $items[] = '<div class="form-item control-group form-type-checkbox"><input class="select-all" name="' . $name . '" type="checkbox"><label class="option">Select all</label></div>';
     foreach ($values['product'] as $pwt) {
       $key = array_search($pwt['id'], $children);
       if (!empty($element[$children[$key]]['#printed'])) {

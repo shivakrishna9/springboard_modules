@@ -10,7 +10,6 @@
                 list.find('.group-toggle').on('click', function(){
                     list.find('ul').slideToggle('slow', function() {
                         var text = $(this).closest('div.item-list').find('div.group-toggle').text();
-                        console.log(text);
                         if (text.indexOf('+') !== -1) {
                             text = text.replace('+', '-')
                             $(this).closest('div.item-list').find('div.group-toggle').text(text)
@@ -22,6 +21,20 @@
                     });
                 });
             });
+
+            $('input.select-all').each(function(){
+                var siblings = $(this).closest('div.item-list').find('.form-checkbox:not(".select-all")');
+                var checkedSiblings = $(this).closest('div.item-list').find('.form-checkbox[checked="checked"]');
+                if (siblings.length == checkedSiblings.length) {
+                    $(this).prop("checked", true);
+                }
+            });
+
+            $('div.form-item').has('input.select-all').on('click', function(){
+               checkAll(this);
+            });
+
+
         }
     };
 
@@ -37,4 +50,14 @@
         }
         origList.remove();
     }
+
+    function checkAll(item){
+      if ($(item).find('input').prop("checked")) {
+          $(item).closest('div.item-list').find('input').prop("checked", true);
+      }
+      else{
+          $(item).closest('div.item-list').find('input').prop("checked", false);
+      }
+    }
+
 })(jQuery);
