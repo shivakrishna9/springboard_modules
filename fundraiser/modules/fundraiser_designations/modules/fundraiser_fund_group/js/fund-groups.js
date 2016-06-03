@@ -30,8 +30,11 @@
                 }
             });
 
-            $('div.form-item').has('input.select-all').on('click', function(){
+            $('div.form-item').has('input.select-all').children('label').on('click', function(){
                checkAll(this);
+            });
+            $('input.select-all').on('click', function(){
+                checkAll(this);
             });
 
 
@@ -52,12 +55,18 @@
     }
 
     function checkAll(item){
-      if ($(item).find('input').prop("checked")) {
-          $(item).closest('div.item-list').find('input').prop("checked", true);
-      }
-      else{
-          $(item).closest('div.item-list').find('input').prop("checked", false);
-      }
+        if (typeof($(item)[0].type) === 'undefined') {
+            var checked = true
+        }
+        else {
+            checked = false
+        }
+        if ($(item).closest('div.item-list').find('input.select-all').prop("checked")) {
+            $(item).closest('div.item-list').find('input').prop("checked", !checked);
+        }
+        else {
+            $(item).closest('div.item-list').find('input').prop("checked", checked);
+        }
     }
 
 })(jQuery);
