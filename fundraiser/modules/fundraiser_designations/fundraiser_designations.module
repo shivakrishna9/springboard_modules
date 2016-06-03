@@ -158,6 +158,13 @@ function fundraiser_designations_module_implements_alter(&$implementations, $hoo
   }
 }
 
+
+function fundraiser_designations_webform_component_insert($component) {
+  if ($component['form_key'] == 'designations') {
+    $component['weight'] = -100;
+    webform_component_update($component);
+  }
+}
 /**
  * Implements hook_form_alter().
  *
