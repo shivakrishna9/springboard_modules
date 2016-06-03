@@ -1,0 +1,34 @@
+fieldset#webform-component-designations legend {
+  margin-bottom: 0!important;
+}
+
+.fundraiser-designation-group-wrapper {
+  padding: 10px;
+  margin-bottom: 5px;
+}
+
+.fundraiser-designation-group-image {
+  float: left;
+  margin: 0 15px 15px 0;
+  max-width: 250px;
+}
+
+.fundraiser-designation-group-description {
+  margin: 0 15px;
+}
+
+.fundraiser-designation-group-table {
+  clear: left;
+}
+.fundraiser-designation-group-table tr {
+  background: inherit;
+}
+
+.fundraiser-designation-group-table td {
+  padding: 4px;
+}
+
+.fundraiser-designation-group-table td select {
+  margin: 0;
+  padding: 0;
+}

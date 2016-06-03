@@ -60,17 +60,60 @@ function _webform_render_designations($component, $value = NULL, $filter = TRUE)
     '#attributes' => array('class' => array('webform-component-designations')),
     '#title_display' => 'none',
     '#webform_component' => $component,
-    '#theme' => 'fundraiser_designations_webform_table',
-    '#attached' => array('js' => array(drupal_get_path('module', 'fundraiser_designations') . '/js/fundraiser_designations.js')),
+    '#theme' => 'fundraiser_designations_fund_groups_component',
+    '#attached' => array(
+      'js' => array(drupal_get_path('module', 'fundraiser_designations') . '/js/fundraiser_designations.js'),
+      'css' => array(drupal_get_path('module', 'fundraiser_designations') . '/css/designation-client-form.css'),
+    ),
   );
 
   $node = isset($component['nid']) ? node_load($component['nid']) : NULL;
-  $node_wrapper = entity_metadata_wrapper('node', $node);
-  if (fundraiser_designations_is_designation_type($node->type)) {
-    // @todo foreach loop here to retrieve each active funding group.
+
+  if (fundraiser_designations_is_designation_type($node->type) && !empty($node->designation_group_ids)) {
+    $groups = entity_load('fundraiser_fund_group', $node->designation_group_ids);
+    //@todo sort by group weight.
+    foreach ($groups as $group) {
+      $group_wrapper = entity_metadata_wrapper('fundraiser_fund_group', $group);
+      $funds = $group_wrapper->field_ffg_fd_reference->value();
+      $num = count($funds);
+      if ($num > 1) {
+        _webform_render_funds_multiple($element, $node, $group_wrapper, $funds);
+      }
+      else {
+        _webform_render_funds_single($element, $node, $group_wrapper, $funds);
+      }
+    }
   }
   return $element;
 }
+
+function _webform_render_funds_multiple(&$element, $node, $group_wrapper, $funds) {
+
+  $options = array();
+  foreach ($funds as $fund) {
+    $options[$fund->sku] = $fund->title;
+  }
+
+  $id = $group_wrapper->fundraiser_fund_group_id->value();
+  $item = array();
+  $item['#type'] = 'select';
+  $item['#id'] = 'fund-group-' . $id . '-funds';
+  $item['#extra']['group_id'] = $id;
+  $item['#options'] = $options;
+  $item['#title'] = '';
+  $element[$item['#id']] = $item;
+}
+
+function _webform_render_funds_single(&$element, $node, $group_wrapper, $funds) {
+  $id = $group_wrapper->fundraiser_fund_group_id->value();
+  $item = array();
+  $item['#type'] = 'item';
+  $item['#id'] = 'fund-group-' . $id . '-funds';
+  $item['#extra']['group_id'] = $id;
+  $item['#title'] = '&nbsp;';
+  $element[$item['#id']] = $item;
+}
+
 
 /**
  * Pre-render function to add our id to the js settings.
@@ -85,12 +128,79 @@ function webform_designations_prerender($element) {
 /**
  * Theme the form elements into a table.
  */
-function theme_fundraiser_designations_webform_table($variables) {
+function theme_fundraiser_designations_fund_groups_component($variables) {
 
-  $output = 'test';
   $element = $variables['element'];
-
   $node = node_load($element['#webform_component']['nid']);
+  $output = '';
 
+  foreach (element_children($element) as $id) {
+    $build = array();
+    if (isset($element[$id]['#extra']['group_id'])) {
+
+      $group_wrapper = entity_metadata_wrapper('fundraiser_fund_group', entity_load_single('fundraiser_fund_group', $element[$id]['#extra']['group_id']));
+      $description = $group_wrapper->field_ffg_description->value();
+      $image = $group_wrapper->field_ffg_image->value();
+      $image['path'] = file_create_url($image['uri']);
+
+      $build['content'] = array(
+
+        '#prefix' => '<div class="fundraiser-designation-group-wrapper">',
+        '#suffix' => '</div>',
+
+        'fund_group_title' => array(
+          '#prefix' => '<div class="fundraiser-designation-group-title"><h4>',
+          '#suffix' => '</h4></div>',
+          '#markup' => check_plain($group_wrapper->name->value()),
+          '#weight' => -9,
+        ),
+
+        'fund_group_image' => array(
+          '#type' => 'markup',
+          '#markup' => theme('image', $image),
+          '#prefix' => '<div class="fundraiser-designation-group-image">',
+          '#suffix' => '</div>',
+          '#weight' => -8,
+        ),
+
+        'fund_group_description' => array(
+          '#type' => 'markup',
+          '#markup' => check_markup($description['value'], $description['format']),
+          '#prefix' => '<div class="fundraiser-designation-group-description">',
+          '#suffix' => '</div>',
+          '#weight' => -7,
+        ),
+
+        'fund_group_table' => array(
+          '#type' => 'markup',
+          '#markup' => fundraiser_designations_selection_table($element[$id]),
+          '#prefix' => '<div class="fundraiser-designation-group-table">',
+          '#suffix' => '</div>',
+          '#weight' => -6,
+        ),
+      );
+
+      $output .= drupal_render($build);
+    }
+  }
   return $output;
+}
+
+function fundraiser_designations_selection_table($element) {
+
+  $row['data'] = array(
+    array('data' => drupal_render($element), 'align' => 'right'),
+    ' Amounts go here',
+    ' | add button goes here',
+  );
+
+  $table = array(
+    '#theme' => 'table',
+    '#header' => array(),
+    '#rows' => $row,
+    '#attributes' => array(
+      'class' => array('ticket_box'),
+    ),
+  );
+  return drupal_render($table);
 }
