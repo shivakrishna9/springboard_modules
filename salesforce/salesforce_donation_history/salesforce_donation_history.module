@@ -8,7 +8,7 @@
 /**
  * Default select SOQL query
  */
-define('DONATION_HISTORY_DEFAULT_SOQL', "SELECT AccountId, Amount, CreatedDate, CC_Last_4__c, CC_Type__c FROM Opportunity WHERE AccountId = ':accountId'");
+define('DONATION_HISTORY_DEFAULT_SOQL', "SELECT AccountId, Amount, CloseDate, CC_Last_4__c, CC_Type__c FROM Opportunity WHERE AccountId = ':accountId'");
 
 /**
  * Implements hook_flush_caches().
@@ -131,11 +131,7 @@ function salesforce_donation_history($user) {
       '#markup' => l('Annual Tax Reciept', '#'),
       );
     $results = salesforce_donation_history_get_opportunities($sfid);
-    $output['table'] = array(
-      '#type' => 'markup',
-      // @TODO this is not how one should output a table.
-      '#markup' => createQueryResultTable($results, 0),
-    );
+    $output['table'] = createQueryResultTable($results, 1);
   }
 
   // $output = array();
@@ -227,21 +223,18 @@ function salesforce_donation_history_get_salesforce() {
 }
 
 function createQueryResultTable($records, $rowNum) {
-  // dpm($records);
-  $table = "<table id='query_results'>\n";
+  $table = array('#theme' => 'table');
   // Call shared recusive function for header printing.
-  $table .= "<tr><th>&nbsp;</th><th>";
   if ($records[0] instanceof SObject) {
-    $table .= implode("</th><th>", getQueryResultHeaders($records[0]));
+    $table['#header'] = getQueryResultHeaders($records[0]);
   }
   else {
-    $table .= implode("</th><th>", getQueryResultHeaders(new SObject($records[0])));
+    $table['#header'] = getQueryResultHeaders(new SObject($records[0]));
   }
-  $table .= "</th></tr>\n";
   // Print the remaining rows in the body.
+  $table['#rows'] = array();
   foreach ($records as $record) {
     // Call shared recusive function for row printing.
-    $table .= "<tr><td>" . $rowNum++ . "</td><td>";
     if ($record instanceof SObject) {
       $row = getQueryResultRow($record);
     }
@@ -249,27 +242,25 @@ function createQueryResultTable($records, $rowNum) {
       $row = getQueryResultRow(new SObject($record));
     }
     for ($i = 0; $i < count($row); $i++) {
+      // I've actually never seen this if statement satisfied.
       if ($row[$i] instanceof QueryResult && !is_array($row[$i])) {
+        // dpm("cell is instance of QueryResult and not !is_array(row[i])");
         $row[$i] = array($row[$i]);
       }
+      // If the cell is an array and [0] is a QueryResult, we recurse and
+      // create a table within a table.
       if (isset($row[$i][0]) && $row[$i][0] instanceof QueryResult) {
         foreach ($row[$i] as $qr) {
-          $table .= createQueryResultTable($qr->records, 1);
-          if ($qr != end($row[$i])) {
-            $table .= "</td><td>";
-          }
+          $nested_table = createQueryResultTable($qr->records, 1);
+          // @TODO I don't think rendering the nested table and inserting the
+          // markup into the parent cell should be necessary but I couldn't get
+          // it to display as nested render arrays.
+          $row[$i] = render($nested_table);
         }
       }
-      else {
-        $table .= $row[$i];
-      }
-      if ($i + 1 != count($row)) {
-        $table .= "</td><td>";
-      }
     }
-    $table .= "</td></tr>\n";
+    $table['#rows'][] = $row;
   }
-  $table .= "</table>";
   return $table;
 }
 
