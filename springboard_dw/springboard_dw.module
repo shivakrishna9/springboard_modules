@@ -368,19 +368,15 @@ function springboard_dw_fundraiser_refund_success($refund) {
   // Create the queue item.
   $queue->createItem($donation_item);
 
-  /*
-  // Log the queue item.
-  springboard_dw_log_queue_item($donation_item);
+  // Calculate the donation refund.
+  $new_amount = $refund->donation->amount - $refund->amount;
 
-  $donation_item_extra_props = springboard_dw_map_donation_update_extra_props
-  ($refund->did, array(
-    'refund_amount' => $refund->amount,
-    'refund_reason' => $refund->reason,
-    ));
+  // Post the updated donation amount back to the donation record.
+  $donation_amount_update = springboard_dw_map_donation_item_update_amount
+  ($refund->did, $new_amount);
 
-  // Create the queue item for the extra props update.
-  $queue->createItem($donation_item_extra_props);
-  */
+  // Create the queue item update record.
+  $queue->createItem($donation_amount_update);
 
   // Check if the transaction id exists
   if(isset($refund->txn_id)) {
@@ -397,7 +393,6 @@ function springboard_dw_fundraiser_refund_success($refund) {
 
     // Log the queue item.
     springboard_dw_log_queue_item($payment_item);
-
   }
 
 }
