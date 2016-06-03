@@ -233,25 +233,31 @@ function createQueryResultTable($records, $rowNum) {
   $table .= "<tr><th>&nbsp;</th><th>";
   if ($records[0] instanceof SObject) {
     $table .= implode("</th><th>", getQueryResultHeaders($records[0]));
-  } else {
+  }
+  else {
     $table .= implode("</th><th>", getQueryResultHeaders(new SObject($records[0])));
   }
   $table .= "</th></tr>\n";
   // Print the remaining rows in the body.
   foreach ($records as $record) {
     // Call shared recusive function for row printing.
-      $table .= "<tr><td>" . $rowNum++ . "</td><td>";
+    $table .= "<tr><td>" . $rowNum++ . "</td><td>";
     if ($record instanceof SObject) {
       $row = getQueryResultRow($record);
-    } else {
+    }
+    else {
       $row = getQueryResultRow(new SObject($record));
     }
     for ($i = 0; $i < count($row); $i++) {
-      if ($row[$i] instanceof QueryResult && !is_array($row[$i])) $row[$i] = array($row[$i]);
+      if ($row[$i] instanceof QueryResult && !is_array($row[$i])) {
+        $row[$i] = array($row[$i]);
+      }
       if (isset($row[$i][0]) && $row[$i][0] instanceof QueryResult) {
         foreach ($row[$i] as $qr) {
           $table .= createQueryResultTable($qr->records, 1);
-          if ($qr != end($row[$i])) $table .= "</td><td>";
+          if ($qr != end($row[$i])) {
+            $table .= "</td><td>";
+          }
         }
       }
       else {
