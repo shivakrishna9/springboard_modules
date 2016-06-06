@@ -326,6 +326,31 @@ function fundraiser_upsell_add_node_settings(&$form) {
   drupal_alter('upsell_node_settings', $form);
 
   $form['#validate'][] = 'fundraiser_upsell_node_form_validate';
+
+  // Register appropriate fields for translation:
+  $form['#submit'][] = '_fundraiser_upsell_register_i18n_translations';
+}
+
+/**
+ * Register translatable field content for potential translation.
+ */
+function _fundraiser_upsell_register_i18n_translations($form, &$form_state) {
+  if (!isset($form_state['values']['nid'])) {
+    return;
+  }
+
+  $fields_to_translate = array('content');
+  foreach ($fields_to_translate as $field) {
+    if (isset($form_state['values']['fundraiser_upsell'][$field])) {
+      sb_i18n_set(
+        'fundraiser',
+        'upsell',
+        $form_state['values']['nid'],
+        $field,
+        $form_state['values']['fundraiser_upsell'][$field]
+      );
+    }
+  } 
 }
 
 /**
@@ -509,8 +534,14 @@ function fundraiser_upsell_donation_form($form, &$form_state) {
   $node = node_load($nid);
   $currency = fundraiser_get_currency_from_node($node);
 
+  $content = $node->fundraiser_upsell['content'];
+
+  // Translate the content if a translation is possible:
+  $content = sb_i18n_get('fundraiser', 'upsell', $nid, 'content', $content);
+
   // Replace tokens in the content.
-  $content = token_replace($node->fundraiser_upsell['content'], array('donation' => $donation));
+  $content = token_replace($content, array('donation' => $donation));
+
   $form['content'] = array(
     '#markup' => $content,
     '#weight' => 0,
