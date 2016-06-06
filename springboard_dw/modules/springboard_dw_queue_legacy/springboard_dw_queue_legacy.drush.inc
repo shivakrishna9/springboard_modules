@@ -160,10 +160,16 @@ function springboard_dw_queue_legacy_setup_batch($type = '') {
   $i = 0;
   foreach ($chunks as $chunk) {
     $i++;
+
+    // The size of the chunk count should not be greater than the record
+    // count but can be the size of the total record count.
+    $chunk_count = ($i * $batch_size >= $record_count) ? $record_count:($i *
+      $batch_size);
+
     $operations[] = array($batch_process_function,
                     array($chunk, 'details' => t(
                         '(Queued records @chunk of @count)',
-                        array('@chunk' => $i * $batch_size, '@count' => $record_count)
+                        array('@chunk' => $chunk_count, '@count' => $record_count)
                       ),
                     ),
     );
