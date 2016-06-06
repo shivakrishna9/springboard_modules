@@ -176,10 +176,16 @@ function fundraiser_designations_form_node_form_alter(&$form, &$form_state) {
 
     // Don't allow them to tinker with dollar handles or
     // recurring gift settings.
-   // $form['fundraiser_settings']['fundraiser_sustainers']['#access'] = FALSE;
-    //$form['fundraiser_settings']['amount_wrapper']['#access'] = FALSE;
-   // $form['fundraiser_settings']['recurring_amount_wrapper']['#access'] = FALSE;
+    /*
+    $form['fundraiser_settings']['fundraiser_sustainers']['#access']= FALSE;
+    $form['fundraiser_settings']['amount_wrapper']['#access'] = FALSE;
+    $form['fundraiser_settings']['recurring_amount_wrapper']['#access'] = FALSE;
+     */
 
+    // This setting is irrelevant. Hide it.
+    // @todo Figure out why fundraiser tickets specifically
+    // prohibited "tinker with dollar handles".
+    $form['fundraiser_settings']['amount_wrapper']['show_other_amount']['#access'] = FALSE;
     if (arg(0) == 'node' && (arg(2) == 'edit' || arg(1) == 'add')) {
       // Hide all designations fields on the standard node add/edit page.
       foreach (element_children($form) as $child) {
@@ -419,6 +425,29 @@ function fundraiser_designations_form_node_type_form_validate($form, &$form_stat
     form_set_error('fundraiser', t('Fundraiser must also be enabled for designated donations content types.'));
   }
 }
+
+function fundraiser_designations_form_webform_client_form_alter(&$form, &$form_state) {
+  $designations =& $form['submitted']['designations']['designation_box'];
+  foreach (element_children($designations) as $child) {
+    if (!empty($form['submitted']['recurs_monthly']) && !empty($form['#node']->recurring_dual_ask_amounts)) {
+      $designations[$child]['recurring_amounts']['#states'] = array(
+        'visible' => array(
+          'input[name="submitted[recurs_monthly][recurs]"]' => array(
+            'checked' => TRUE,
+          ),
+        ),
+      );
+      $designations[$child]['default_amounts']['#states'] = array(
+        'visible' => array(
+          'input[name="submitted[recurs_monthly][recurs]"]' => array(
+            'checked' => FALSE,
+          ),
+        ),
+      );
+    }
+  }
+}
+
 
 /**
  * Implements hook_node_type_insert().

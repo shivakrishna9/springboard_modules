@@ -68,26 +68,28 @@ function _webform_render_designations($component, $value = NULL, $filter = TRUE)
   );
 
   $node = isset($component['nid']) ? node_load($component['nid']) : NULL;
+  $amounts = fundraiser_designations_get_display_amounts($node);
 
   if (fundraiser_designations_is_designation_type($node->type) && !empty($node->designation_group_ids)) {
     $groups = entity_load('fundraiser_fund_group', $node->designation_group_ids);
     //@todo sort by group weight.
     foreach ($groups as $group) {
+
       $group_wrapper = entity_metadata_wrapper('fundraiser_fund_group', $group);
       $funds = $group_wrapper->field_ffg_fd_reference->value();
       $num = count($funds);
       if ($num > 1) {
-        _webform_render_funds_multiple($element, $node, $group_wrapper, $funds);
+        _webform_render_funds_multiple($element, $node, $group_wrapper, $funds, $amounts);
       }
       else {
-        _webform_render_funds_single($element, $node, $group_wrapper, $funds);
+        _webform_render_funds_single($element, $node, $group_wrapper, $funds, $amounts);
       }
     }
   }
   return $element;
 }
 
-function _webform_render_funds_multiple(&$element, $node, $group_wrapper, $funds) {
+function _webform_render_funds_multiple(&$element, $node, $group_wrapper, $funds, $amounts) {
 
   $options = array();
   foreach ($funds as $fund) {
@@ -95,25 +97,92 @@ function _webform_render_funds_multiple(&$element, $node, $group_wrapper, $funds
   }
 
   $id = $group_wrapper->fundraiser_fund_group_id->value();
-  $item = array();
-  $item['#type'] = 'select';
-  $item['#id'] = 'fund-group-' . $id . '-funds';
-  $item['#extra']['group_id'] = $id;
-  $item['#options'] = $options;
-  $item['#title'] = '';
-  $element[$item['#id']] = $item;
-}
 
-function _webform_render_funds_single(&$element, $node, $group_wrapper, $funds) {
-  $id = $group_wrapper->fundraiser_fund_group_id->value();
   $item = array();
+  $item['#id'] = $id;
+  $item['#extra']['group_id'] = $id;
   $item['#type'] = 'item';
-  $item['#id'] = 'fund-group-' . $id . '-funds';
-  $item['#extra']['group_id'] = $id;
-  $item['#title'] = '&nbsp;';
   $element[$item['#id']] = $item;
+
+  $child = array();
+  $child['#type'] = 'select';
+  $child['#id'] = 'funds_select';
+  $child['#extra']['group_id'] = $id;
+  $child['#options'] = $options;
+  $child['#title'] = '';
+  $element[$item['#id']][$child['#id']] = $child;
+
+  _fundraiser_designations_build_child_elements($id, $item, $element, $amounts);
+
 }
 
+function _webform_render_funds_single(&$element, $node, $group_wrapper, $funds, $amounts) {
+  $id = $group_wrapper->fundraiser_fund_group_id->value();
+
+  $item = array();
+  $item['#id'] = $id;
+  $item['#extra']['group_id'] = $id;
+  $item['#type'] = 'item';
+  $element[$item['#id']] = $item;
+
+  $child = array();
+  $child['#type'] = 'item';
+  $child['#id'] = 'funds_placeholder';
+  $child['#extra']['group_id'] = $id;
+  $child['#title'] = '';
+  $element[$item['#id']][$child['#id']] = $child;
+
+  _fundraiser_designations_build_child_elements($id, $item, $element, $amounts);
+
+}
+
+/**
+ *
+ */
+function _fundraiser_designations_build_child_elements($id, $item, &$element, $amounts) {
+  $donation_amounts = [];
+  if (!empty($amounts['default'])) {
+    foreach ($amounts['default'] as $key => $amount) {
+      $donation_amounts[$amount[0]] = "$amount[1]";
+    }
+    $child = array();
+    $child['#type'] = 'radios';
+    $child['#id'] = 'default_amounts';
+    $child['#extra']['group_id'] = $id;
+    $child['#options'] = $donation_amounts;
+    $child['#title'] = '';
+    $element[$item['#id']][$child['#id']] = $child;
+  }
+
+  $recurring_donation_amounts = [];
+  if(!empty($amounts['recurring'])) {
+    foreach ($amounts['recurring'] as $key => $amount) {
+      $recurring_donation_amounts[$amount[0]] = "$amount[1]";
+    }
+    $child = array();
+    $child['#type'] = 'radios';
+    $child['#id'] = 'recurring_amounts';
+    $child['#extra']['group_id'] = $id;
+    $child['#options'] = $recurring_donation_amounts;
+    $child['#title'] = '';
+    $element[$item['#id']][$child['#id']] = $child;
+  }
+
+  $child = array();
+  $child['#type'] = 'textfield';
+  $child['#id'] = 'fd_other';
+  $child['#extra']['group_id'] = $id;
+  $child['#title'] = 'Other amount';
+  $element[$item['#id']][$child['#id']] = $child;
+
+
+  $child = array();
+  $child['#type'] = 'button';
+  $child['#id'] = 'add';
+  $child['#extra']['group_id'] = $id;
+  $child['#value'] = 'Add';
+  $element[$item['#id']][$child['#id']] = $child;
+}
 
 /**
  * Pre-render function to add our id to the js settings.
@@ -179,19 +248,17 @@ function theme_fundraiser_designations_fund_groups_component($variables) {
           '#weight' => -6,
         ),
       );
-
       $output .= drupal_render($build);
     }
   }
+
+
   return $output;
 }
 
 function fundraiser_designations_selection_table($element) {
-
   $row['data'] = array(
     array('data' => drupal_render($element), 'align' => 'right'),
-    ' Amounts go here',
-    ' | add button goes here',
   );
 
   $table = array(
@@ -199,8 +266,41 @@ function fundraiser_designations_selection_table($element) {
     '#header' => array(),
     '#rows' => $row,
     '#attributes' => array(
-      'class' => array('ticket_box'),
+      'class' => array('fund-box'),
     ),
   );
   return drupal_render($table);
+}
+
+function fundraiser_designations_get_display_amounts($node) {
+  $recurring = $node->recurring_setting;
+  $recurring_amounts = $node->recurring_donation_amounts;
+  $donation_amounts = $node->donation_amounts;
+  $dual_ask = $node->recurring_dual_ask_amounts;
+
+  $price_sets = [];
+  $price_sets['default_amount'] = $node->default_amount;
+  $price_sets['recurring_default_amount'] = $node->recurring_default_amount;
+
+  switch ($recurring) {
+    case 'never':
+      $price_sets['default'] = $donation_amounts;
+      break;
+
+    case 'user_choice':
+      if (!empty($dual_ask)) {
+        $price_sets['default'] = $donation_amounts;
+        $price_sets['recurring'] = $recurring_amounts;
+      }
+      else {
+        $price_sets['default'] = $donation_amounts;
+      }
+      break;
+
+    case 'always':
+      $price_sets['recurring'] = $recurring_amounts;
+      break;
+  }
+
+  return $price_sets;
 }

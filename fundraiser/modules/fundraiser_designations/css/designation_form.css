@@ -80,5 +80,5 @@ tr.row-sortable-placeholder td {
 
 }
 tr.row-sortable-placeholder td:before {
-    content: " "; /* Insert content that looks like bullets */
+    content: " ";
 }

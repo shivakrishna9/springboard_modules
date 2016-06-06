@@ -32,3 +32,20 @@ fieldset#webform-component-designations legend {
   margin: 0;
   padding: 0;
 }
+
+
+.fund-box .control-group {
+  float: left;
+  clear: none;
+  margin-right: 10px;
+  width: auto
+}
+
+.fund-box .control-group label{
+  margin-left: 4px;
+}
+
+label[for="fd_other"] {
+  float:left;
+  margin-right: 4px;
+}
