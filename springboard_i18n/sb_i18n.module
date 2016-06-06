@@ -1,0 +1,49 @@
+<?php
+
+/**
+ * Implements hook_form_FORM_ID_alter().
+ *
+ * Add a submit function for capturing strings needing translating.
+ */
+function springboard_i18n_form_donation_form_node_form_alter(&$form, &$form_state) {
+ $form['#submit'][] = '_sb_i18n_fundraiser_upsell_submit';
+}
+
+/**
+ * Submit function for capturing strings needing translation.
+ */
+function _sb_i18n_fundraiser_upsell_submit(&$form, &$form_state) {
+  if (!isset($form_state['values']['fundraiser_upsell']) || !isset($form_state['node']->nid) ||
+    !is_numeric($form_state['node']->nid)) {
+    return;
+  }
+  $nid = $form_state['node']->nid;
+  $values = $form_state['values']['fundraiser_upsell'];
+
+  $fields_to_translate = array('content');
+  foreach ($fields_to_translate as $field) {
+    if (isset($values[$field]) && !is_array($values[$field])) {
+      i18n_string_update(
+        'fundraiser' . ':' . 'upsell' . ':' . $nid . ':' . $field,
+        $values[$field]
+      );
+    }
+  }
+}
+
+/**
+ * Implements hook_form_FORM_ID_alter().
+ *
+ * Alter the output of the Upsell modal to display translated content.
+ */
+function sb_i18n_form_fundraiser_upsell_donation_form_alter(&$form, &$form_state) {
+  $nid = arg(1);
+
+  if (!isset($form['content']['#markup']) || !isset($nid) || !is_numeric($nid)) {
+    return;
+  }
+  $form['content']['#markup'] = i18n_string_translate(
+    'fundraiser' . ':' . 'upsell' . ':' . $nid . ':' . 'content',
+    $form['content']['#markup']
+  );
+}

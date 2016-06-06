@@ -1,0 +1,6 @@
+name = Springboard i18n
+description = Enables multilingual support in Springboard
+core = 7.x
+package = Jackson River Springboard
+version = 7.x-4.x
+dependencies[] = i18n_string
