@@ -29,19 +29,19 @@ function _fundraiser_designations_create_fundraiser_designation_product() {
   }
 
   // Now check for fields and if not there add them.
-  $field_data = _fundraiser_designations_product_fields();
-
-  foreach ($field_data as $field_name => $field_details) {
-    $field_id = field_info_field($field_name);
-    $instance_id = field_info_instance('commerce_product', $field_name, 'fundraiser_designation');
-
-    if (empty($field_id)) {
-      field_create_field($field_data[$field_name]['field_config']);
-    }
-    if (empty($instance_id)) {
-      field_create_instance($field_data[$field_name]['field_instance']);
-    }
-  }
+//  $field_data = _fundraiser_designations_product_fields();
+//
+//  foreach ($field_data as $field_name => $field_details) {
+//    $field_id = field_info_field($field_name);
+//    $instance_id = field_info_instance('commerce_product', $field_name, 'fundraiser_designation');
+//
+//    if (empty($field_id)) {
+//      field_create_field($field_data[$field_name]['field_config']);
+//    }
+//    if (empty($instance_id)) {
+//      field_create_instance($field_data[$field_name]['field_instance']);
+//    }
+//  }
 }
 
 /**
