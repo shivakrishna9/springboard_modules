@@ -219,6 +219,9 @@ function springboard_dw_queue_legacy_users($records, $operation_details, &$conte
       // Mark the item as queued.
       springboard_dw_track_item_warehouse_queued('contact', $record->uid);
     }
+    else {
+      drush_log('Attempted to queue contact ' . $record->uid . ' but it is already warehoused', 'warning');
+    }
     // Set highwater mark.
     springboard_dw_queue_legacy_set_highwater_mark('contact', $record->created);
   }
@@ -259,6 +262,9 @@ function springboard_dw_queue_legacy_donations($records, $operation_details, &$c
       springboard_dw_log_queue_item($donation_item);
       springboard_dw_track_item_warehouse_queued('donation', $record->did);
     }
+    else {
+      drush_log('Attempted to queue donation ' . $record->did . ' but it is already warehoused', 'warning');
+    }
     // Set highwater mark.
     springboard_dw_queue_legacy_set_highwater_mark('donation', $record->created);
   }
@@ -280,6 +286,9 @@ function springboard_dw_queue_legacy_forms($records, $operation_details, &$conte
       $queue->createItem($form_item);
       springboard_dw_log_queue_item($form_item);
       springboard_dw_track_item_warehouse_queued('form', $node->nid);
+    }
+    else {
+      drush_log('Attempted to queue form ' . $record->nid . ' but it is already warehoused.', 'warning');
     }
     // Set highwater mark.
     springboard_dw_queue_legacy_set_highwater_mark('form', $record->created);
@@ -312,6 +321,9 @@ function springboard_dw_queue_legacy_payments($records, $operation_details, &$co
       $queue->createItem($payment_item);
       springboard_dw_log_queue_item($payment_item);
       springboard_dw_track_item_warehouse_queued('payment', $payment['transaction_id']);
+    }
+    else {
+      drush_log('Attempted to queue payment ' . $record->transaction_id . ' but it is already warehoused', 'warning');
     }
     // Set highwater mark.
     springboard_dw_queue_legacy_set_highwater_mark('payment', $record->created);
@@ -360,6 +372,9 @@ function springboard_dw_queue_legacy_submissions($records, $operation_details, &
       springboard_dw_log_queue_item($submission_item);
       springboard_dw_track_item_warehouse_queued('submission', $record->sid);
     }
+    else {
+      drush_log('Attempted to queue submission ' . $node->nid . ' but it is already warehoused', 'warning');
+    }
     // Set highwater mark.
     springboard_dw_queue_legacy_set_highwater_mark('submission', $record->created);
   }
@@ -390,6 +405,9 @@ function springboard_dw_queue_legacy_actions($records, $operation_details, &$con
         springboard_dw_log_queue_item($action_item);
         springboard_dw_track_item_warehouse_queued('advocacy action', $record->sid);
       }
+      else {
+        drush_log('Attempted to queue action ' . $record->sid . ' but it is already warehoused', 'warning');
+      }
       // Set highwater mark.
       springboard_dw_queue_legacy_set_highwater_mark('action', $record->created);
     }
@@ -401,6 +419,9 @@ function springboard_dw_queue_legacy_actions($records, $operation_details, &$con
         $queue->createItem($action_item);
         springboard_dw_log_queue_item($action_item);
         springboard_dw_track_item_warehouse_queued('petition', $record->sid);
+      }
+      else {
+        drush_log('Attempted to queue petition ' . $record->sid . ' but it is already warehoused', 'warning');
       }
       // Set highwater mark.
       springboard_dw_queue_legacy_set_highwater_mark('petition', $record->created);
@@ -446,6 +467,9 @@ function springboard_dw_queue_legacy_messages($messages, $operation_details, &$c
       $queue->createItem($message_item);
       springboard_dw_log_queue_item($message_item);
       springboard_dw_track_item_warehouse_queued('advocacy message', $message['id']);
+    }
+    else {
+      drush_log('Attempted to queue message ' . $message['id'] . ' but it is already warehoused', 'warning');
     }
   }
   $context['message'] = $operation_details;
