@@ -43,6 +43,11 @@ function springboard_advocacy_smarty_lookup(array $values) {
 
     $data = json_decode($response->data);
 
+    if (variable_get('springboard_advocacy_smarty_debug', 0)) {
+      $message = isset($data[0]->components) ? print_r($data[0]->components, TRUE) : '';
+      watchdog('advocacy', 'SmartyStreets API lookup: @message', array('@message' => $message), WATCHDOG_INFO);
+    }
+
     if (empty($data)) {
       if (user_access('administer springboard advocacy')) {
         drupal_set_message(t('A zip code + four could not be found for the address entered.'), 'error');

@@ -115,6 +115,13 @@ function springboard_advocacy_settings_form() {
     '#required' => TRUE,
   );
 
+  $form['geo']['smarty']['springboard_advocacy_smarty_debug'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Log Smarty API calls to Watchdog'),
+    '#description' => t('Log smarty responses watchdog. Not recommended for production sites.'),
+    '#default_value' => variable_get('springboard_advocacy_smarty_debug', ''),
+  );
+
   if(module_exists('sba_social_action')) {
 
     // Twitter Oauth credentials. These are different than the credentials in the

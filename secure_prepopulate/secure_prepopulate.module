@@ -138,7 +138,7 @@ function secure_prepopulate_init() {
           $synonym_keys = array_keys($synonyms);
           $field_keys = array_keys($fields);
           foreach ($field_keys as $field_key) {
-            if (in_array($field_key, $synonym_keys)) {
+            if (in_array($field_key, $synonym_keys) && !empty($synonyms[$field_key])) {
               foreach ($synonyms[$field_key] as $synonym) {
                 $fields[$synonym] = $fields[$field_key];
               }
@@ -185,7 +185,10 @@ function secure_prepopulate_node_view($node, $view_mode, $langcode) {
 
   // First check to see if there is any prepopulate values available.
   if (isset($_SESSION['secure_prepopulate_values']) && is_array($_SESSION['secure_prepopulate_values'])) { // Coder: This is ok.
-    if ($view_mode == 'full' && !empty($node->webform) && array_key_exists($node->nid, $_SESSION['secure_prepopulate_values'])) { // Coder: This is ok.
+    if ($view_mode == 'full' && !empty($node->webform)
+      && array_key_exists($node->nid, $_SESSION['secure_prepopulate_values'])
+      && !empty($_SESSION['secure_prepopulate_values'][$node->nid]['first_name'])  // Just in case the name is missing.
+    ) { // Coder: This is ok.
       $node->content['welcome_back'] = array(
         '#markup' => theme(array('secure_prepopulate_welcome_message_' . $node->nid, 'secure_prepopulate_welcome_message'),
           array('values' => $_SESSION['secure_prepopulate_values'][$node->nid], 'nid' => $node->nid)), // Coder: This is ok.
@@ -276,7 +279,7 @@ function secure_prepopulate_form_webform_client_form_alter(&$form, $form_state) 
   }
 
   // Clear out any other form fields that might be populated by another module.
-  $dynamic_gift_string_field_ids = array('amount', 'other_amount', 'payment_method');
+  $dynamic_gift_string_field_ids = array('amount', 'other_amount', 'recurring_amount', 'recurring_other_amount', 'payment_method');
   foreach ($component_hierarchy as $form_key => $value) {
     if (!in_array($form_key, $dynamic_gift_string_field_ids)
       && !array_key_exists($form_key, $prepopulate_data)) { // the key is not in the prepopuldate data, so lets clear it out
@@ -378,7 +381,12 @@ function secure_prepopulate_parse_qs($qs) {
   if (count($segments)) {
     foreach ($segments as $segment) {
       $key_value = explode('=', $segment);
-      $result[$key_value[0]] = $key_value[1];
+      if (isset($key_value[1])) {
+        $result[$key_value[0]] = $key_value[1];
+      } else {
+        // No key given, so fall back to numeric index.
+        $result[] = $key_value[0];
+      }
     }
   }
   return $result;
@@ -514,16 +522,14 @@ function &_secure_prepopulate_find_field(&$form, $path) {
  *   The encrypted string.
  */
 function secure_prepopulate_encrypt($input) {
-  $key = variable_get('secure_prepopulate_key', NULL);  // The 128 bit key to use to decrypt the string.
-  $iv = variable_get('secure_prepopulate_iv', NULL);  // The initialization vector to use to decrypt the string.
-  if (!$key || !$iv) {
-    watchdog('Secure Prepopulate', 'Cannot perform encryption because AES Key and IV have not been configured correctly.', NULL, WATCHDOG_CRITICAL);
+  $kv = secure_prepopulate_get_key_and_vector();
+  if (empty($kv)) {
     return;
   }
   $size = mcrypt_get_block_size(MCRYPT_RIJNDAEL_128, MCRYPT_MODE_CBC);
   $input = pkcs5_pad($input, $size);
   $descriptor = mcrypt_module_open(MCRYPT_RIJNDAEL_128, '', MCRYPT_MODE_CBC, '');
-  mcrypt_generic_init($descriptor, $key, $iv);
+  mcrypt_generic_init($descriptor, $kv['key'], $kv['iv']);
   $cipher = mcrypt_generic($descriptor, $input);
   mcrypt_generic_deinit($descriptor);
   mcrypt_module_close($descriptor);
@@ -532,28 +538,46 @@ function secure_prepopulate_encrypt($input) {
 }
 
 /**
- * Decrypt AES encrypted data using the configured key and initialization vector.
+ * Decrypt AES encrypted data using the configured key and
+ * initialization vector.
  *
  * @param $cipher
  *   The encrypted data to decrypt.
  */
 function secure_prepopulate_decrypt($cipher) {
-  $key = variable_get('secure_prepopulate_key', NULL);  // The 128 bit key to use to decrypt the string.
-  $iv = variable_get('secure_prepopulate_iv', NULL);  // The initialization vector to use to decrypt the string.
-  if (!$key || !$iv) {
-    watchdog('Secure Prepopulate', 'Cannot perform decryption because AES Key and IV have not been configured correctly.', NULL, WATCHDOG_CRITICAL);
+  $kv = secure_prepopulate_get_key_and_vector();
+  if (empty($kv)) {
     return;
   }
   $cipher = base64_decode($cipher);
   $descriptor = mcrypt_module_open(MCRYPT_RIJNDAEL_128, '', MCRYPT_MODE_CBC, '');
-  mcrypt_generic_init($descriptor, $key, $iv);
+  mcrypt_generic_init($descriptor, $kv['key'], $kv['iv']);
   $decrypted_data = mdecrypt_generic($descriptor, $cipher);
   mcrypt_generic_deinit($descriptor);
   mcrypt_module_close($descriptor);
-  // account for some PHP AES shortcomings
+  // Account for some PHP AES shortcomings.
   $decrypted_data = pkcs5_unpad($decrypted_data);
   $decrypted_data = rtrim($decrypted_data);
   return $decrypted_data;
+}
+
+/**
+ * Get the SPP key and vector.
+ *
+ * @return array|bool
+ *   The key and vector in an array, or FALSE
+ */
+function secure_prepopulate_get_key_and_vector() {
+
+  // The 128 bit key to use to decrypt the string.
+  $key = variable_get('secure_prepopulate_key', NULL);
+  // The initialization vector to use to decrypt the string.
+  $iv = variable_get('secure_prepopulate_iv', NULL);
+  if (!$key || !$iv) {
+    watchdog('Secure Prepopulate', 'Cannot perform decryption because AES Key and IV have not been configured correctly.', NULL, WATCHDOG_CRITICAL);
+    return FALSE;
+  }
+  return array('key' => $key, 'iv' => $iv);
 }
 
 /**

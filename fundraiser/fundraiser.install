@@ -80,6 +80,13 @@ function fundraiser_schema() {
         'type' => 'text',
         'not null' => FALSE,
       ),
+      'default_amount' => array(
+        'description' => 'Ask amount for the donation form to default to.',
+        'type' => 'numeric',
+        'not null' => FALSE,
+        'precision' => '15',
+        'scale' => '3',
+      ),
     ),
     'primary key' => array('nid'),
   );
@@ -507,5 +514,33 @@ function fundraiser_update_7008() {
 
   if (db_table_exists('fundraiser_currencies')) {
     db_drop_table('fundraiser_currencies');
+  }
+}
+
+/**
+ * Add default_amount field to {fundraiser} and populate from webform components.
+ */
+function fundraiser_update_7009() {
+  $field = array(
+    'default_amount' => array(
+      'description' => 'Ask amount for the donation form to default to.',
+      'type' => 'numeric',
+      'not null' => FALSE,
+      'precision' => '15',
+      'scale' => '3',
+    ),
+  );
+  db_add_field('fundraiser', 'default_amount', $field['default_amount']);
+  // Look up each webform's "amount" component and pull the value.
+  if (module_exists('fundraiser_webform')) {
+    foreach (db_query('SELECT nid FROM {fundraiser}')->fetchCol() as $nid) {
+      $amount_component = _fundraiser_webform_get_component_by_nid_key($nid, 'amount');
+      if (!empty($amount_component->value)) {
+        db_query(
+          "UPDATE {fundraiser} SET default_amount=:default_amount WHERE nid=:nid",
+          array(':default_amount' => $amount_component->value, ':nid' => $nid)
+        );
+      }
+    }
   }
 }

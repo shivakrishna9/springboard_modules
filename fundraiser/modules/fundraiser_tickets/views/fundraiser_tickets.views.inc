@@ -25,7 +25,8 @@ function fundraiser_tickets_views_query_alter(&$view, &$query) {
 function fundraiser_tickets_views_post_execute(&$view) {
   if ($view->name == 'donation_forms' && $view->current_display == 'entityreference_1') {
     if(arg(4) == 'node' && arg(0) == 'entityreference' && is_numeric(arg(6))) {
-      $entity = array_pop(entity_load('node', array(arg(6))));
+      $entity = entity_load('node', array(arg(6)));
+      $entity = array_pop($entity);
     }
     if (!empty($entity->nid)) {
       foreach ($view->result as $index => $result) {
