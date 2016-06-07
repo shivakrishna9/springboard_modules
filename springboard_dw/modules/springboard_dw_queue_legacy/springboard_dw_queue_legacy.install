@@ -15,7 +15,7 @@ function springboard_dw_queue_legacy_install() {
     'action',
     'message',
     'donation',
-    'petition message',
+    'petition_message',
     'payment',
   );
   foreach ($types as $type) {

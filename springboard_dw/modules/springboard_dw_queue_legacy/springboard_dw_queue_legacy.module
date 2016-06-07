@@ -78,8 +78,7 @@ function springboard_dw_queue_legacy_dashboard() {
   $output .='<br>--messages: unknown (highwater mark not supported)';
 
   $output .= '<br>--petition messages: ';
-  // $nbr_records = db_query("SELECT count(nid) FROM {joke}")->fetchField();
-  $highwater = springboard_dw_queue_legacy_get_highwater_mark('petition message');
+  $highwater = springboard_dw_queue_legacy_get_highwater_mark('petition_message');
   $output .= db_query("SELECT count(s.sid) FROM {webform_submissions} s INNER JOIN {node} n ON s.nid = n.nid WHERE n.type = 'springboard_petition' AND s.submitted > :highwater", array(':highwater' => $highwater))->fetchField();
 
   $output .= '<br>--forms: ';
@@ -113,7 +112,7 @@ function springboard_dw_queue_legacy_dashboard() {
  *   Number of seconds since the Unix Epoch.
  */
 function springboard_dw_queue_legacy_get_highwater_mark($type) {
-  return db_query('SELECT highwater FROM {springboard_data_warehouse_queue_legacy} WHERE type = :type', array(':type' => $type))->fetchAssoc();
+  return db_query('SELECT highwater FROM {springboard_data_warehouse_queue_legacy} WHERE type = :type LIMIT 1', array(':type' => $type))->fetchField();
 }
 
 /**
@@ -124,12 +123,17 @@ function springboard_dw_queue_legacy_get_highwater_mark($type) {
  * @param int $timestamp
  *   of seconds since the Unix Epoch.
  *   Number of seconds since the Unix Epoch.
+ *  @param  mixed $idlist
+ *   False or array if IDs that are being specifically queued.
  *
  * @return mixed
  *   FALSE on error. Otherwise, SAVED_NEW or SAVED_UPDATED.
  */
-function springboard_dw_queue_legacy_set_highwater_mark($type, $timestamp) {
-
+function springboard_dw_queue_legacy_set_highwater_mark($type, $timestamp, $idlist = FALSE) {
+  // If we are working with a specific set of IDs, don't move highwater mark.
+  if($idlist) {
+    return;
+  }
   $record = array('type' => $type, 'highwater' => $timestamp);
   return drupal_write_record('springboard_data_warehouse_queue_legacy', $record, 'type');
 }
@@ -145,7 +149,7 @@ function springboard_dw_queue_legacy_reset_highwater_marks() {
     'action',
     'message',
     'donation',
-    'petition message',
+    'petition_message',
     'payment',
   );
   foreach ($types as $type) {
