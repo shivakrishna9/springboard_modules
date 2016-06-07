@@ -215,7 +215,8 @@ function theme_fundraiser_tickets_webform_table($variables) {
   // but we don't have the equivalent in the JS so instead we use dumbed down
   // currency formatting here to stay consistent with what the JS does.
   $node_currency_symbol = $node_currency['symbol'];
-
+  $node_symbol_placement = $node_currency['symbol_placement'];
+  $node_symbol_spacer = $node_currency['symbol_spacer'];
   $rows = array();
   $last_row = array();
   $ticket_prices = array();
@@ -230,9 +231,13 @@ function theme_fundraiser_tickets_webform_table($variables) {
         $addon_node = $node_wrapper->fr_tickets_donation_addon_form->value();
         $addon_currency = fundraiser_get_currency_from_node($addon_node);
         $addon_currency_symbol = $addon_currency['symbol'];
+        $addon_symbol_placement = $addon_currency['symbol_placement'];
+        $addon_symbol_spacer = $addon_currency['symbol_spacer'];
       }
       catch (Exception $e) {
         $addon_currency_symbol = $node_currency_symbol;
+        $addon_symbol_placement = $node_symbol_placement;
+        $addon_symbol_spacer = $node_symbol_spacer;
       }
 
       $last_row = array(
@@ -242,7 +247,8 @@ function theme_fundraiser_tickets_webform_table($variables) {
           drupal_render($element[$id]),
           '',
           array(
-            'data' => $addon_currency_symbol . ' ' . '0.00',
+            'data' => $addon_symbol_placement != 'after' ? $addon_currency_symbol . $addon_symbol_spacer . '0.00' :
+              '0.00' . $addon_symbol_spacer . $addon_currency_symbol,
             'id' => 'fundraiser-tickets-extra-donation-display',
             'align' => 'right',
             ),
@@ -255,7 +261,9 @@ function theme_fundraiser_tickets_webform_table($variables) {
       $ticket_amount = $product_wrapper->commerce_price->amount->value();
       $ticket_currency_code = $product_wrapper->commerce_price->currency_code->value();
       $ticket_currency = commerce_currency_load($ticket_currency_code);
+      $symbol_placement = $ticket_currency['symbol_placement'];
       $ticket_currency_symbol = $ticket_currency['symbol'];
+      $ticket_symbol_spacer = $ticket_currency['symbol_spacer'];
 
       $formatted_amount = commerce_currency_format($ticket_amount, $ticket_currency_code);
       $row = array();
@@ -283,7 +291,8 @@ function theme_fundraiser_tickets_webform_table($variables) {
       );
       // Add a div to contain the ticket total
       $ticket_total = array(
-        'data' => $ticket_currency_symbol . ' ' . '0.00',
+        'data' => ($symbol_placement != 'after' ? $ticket_currency_symbol . $ticket_symbol_spacer . '0.00' :
+          '0.00' . $ticket_symbol_spacer . $ticket_currency_symbol),
         'class' => 'fundraiser-ticket-type-total',
         'id' => 'product-' . $element[$id]['#extra']['product_id'] . '-tickets-total',
         'align' => 'right',
@@ -308,7 +317,9 @@ function theme_fundraiser_tickets_webform_table($variables) {
       array('data' => 0, 'id' => 'fundraiser-tickets-total-quant', 'class' => 'quantity', 'align' => 'right'),
       array('data' => '', 'class' => 'ticket_description'),
       array('data' => '', 'class' => 'ticket_warning'),
-      array('data' => $node_currency_symbol . ' ' . '0.00', 'id' => 'fundraiser-tickets-total-cost', 'class' => 'fundraiser-ticket-type-total', 'align' => 'right')
+      array('data' => $node_symbol_placement != 'after' ? $node_currency_symbol . $node_symbol_spacer . '0.00' :
+        '0.00' . $node_symbol_spacer . $node_currency_symbol,
+        'id' => 'fundraiser-tickets-total-cost', 'class' => 'fundraiser-ticket-type-total', 'align' => 'right')
     )
   );
   $header = array(
@@ -322,7 +333,7 @@ function theme_fundraiser_tickets_webform_table($variables) {
 
   // Add the JS for the settings too
   drupal_add_js(array('fundraiserTickets' => array('ticketPrices' => $ticket_prices)), 'setting');
-
+ 
   // Add CSS
   drupal_add_css(drupal_get_path('module', 'fundraiser_tickets') . '/css/ticketing_form.css');
 
@@ -334,16 +345,25 @@ function theme_fundraiser_tickets_webform_table($variables) {
       'class' => array('ticket_box'),
     )
   );
-
   $output = drupal_render($table);
 
   // Insert the additional donation currency symbol:
   if ($addon_donation_exists) {
-    $addon_currency_symbol = '<span class="currency-symbol">'
-      . (empty($addon_currency_symbol) ? $node_currency_symbol : $addon_currency_symbol) . '</span>';
-    $extra_donation_html = '<input type="text" id="fundraiser-tickets-extra-donation"';
-    $output = str_replace($extra_donation_html, $addon_currency_symbol . $extra_donation_html, $output);
-  }
+
+    $addon_currency_symbol = empty($addon_currency_symbol) ? $node_currency_symbol : $addon_currency_symbol;
+    $addon_symbol_spacer = empty($addon_symbol_spacer) ? $node_symbol_spacer : $addon_symbol_spacer;
+    $addon_symbol_spacer = ($addon_symbol_spacer == ' ' ? '&nbsp;' : $addon_symbol_spacer);
+    $addon_currency_symbol = '<span class="currency-symbol addon-currency-symbol">' .
+      ($addon_symbol_placement != 'after' ? $addon_currency_symbol . $addon_symbol_spacer :
+        $addon_symbol_spacer . $addon_currency_symbol) . '</span>';
+    if ($addon_symbol_placement != 'after') {
+      $preg_replace = $addon_currency_symbol . '$1';
+    }
+    else {
+      $preg_replace = '$1' . $addon_currency_symbol;
+    }
+    $output = preg_replace('/(<input.*?id="fundraiser-tickets-extra-donation".*?\/>)/', $preg_replace, $output);
+  } 
 
   return $output;
 }

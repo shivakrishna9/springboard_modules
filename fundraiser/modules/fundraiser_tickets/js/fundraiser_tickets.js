@@ -31,8 +31,23 @@
 
     $('#fundraiser-tickets-extra-donation').keyup(function() {
       self.setAmounts();
+      self.positionSymbol();
     });
 
+    $('#fundraiser-tickets-extra-donation').change(function() {
+      self.positionSymbol();
+    });
+  }
+
+  /**
+   * Ensure the currency symbol is correctly positioned around the additional donation field
+   */
+  Drupal.fundraiserTickets.prototype.positionSymbol = function() {
+    if (Drupal.settings.fundraiser.currency.symbol_placement == 'after') {
+      setTimeout(function () {
+        $('.form-item-submitted-tickets-ticket-box-fundraiser-tickets-extra-donation label').before($('.addon-currency-symbol'));
+      }, 20);
+    }
   }
 
   /**
@@ -43,12 +58,26 @@
     total = self.calcTotal(),
     extra = self.calcExtra(),
     totalQuantity = self.calcQuantity();
-    $('#fundraiser-tickets-total-cost').text(Drupal.settings.fundraiser.currency.symbol + (total).formatMoney(2, '.', ','));
-    $('#fundraiser-tickets-extra-donation-display').text(Drupal.settings.fundraiser.currency.symbol + (extra).formatMoney(2, '.', ','));
+    var symbolSpacer = Drupal.settings.fundraiser.currency.symbol_spacer;
+    if (Drupal.settings.fundraiser.currency.symbol_placement != 'after') {
+
+      $('#fundraiser-tickets-total-cost').text(Drupal.settings.fundraiser.currency.symbol + symbolSpacer + (total).formatMoney(2, '.', ','));
+      $('#fundraiser-tickets-extra-donation-display').text(Drupal.settings.fundraiser.currency.symbol + symbolSpacer + (extra).formatMoney(2, '.', ','));
+    }
+    else {
+      $('#fundraiser-tickets-total-cost').text((total).formatMoney(2, '.', ',') + symbolSpacer + Drupal.settings.fundraiser.currency.symbol);
+      $('#fundraiser-tickets-extra-donation-display').text((extra).formatMoney(2, '.', ',') + symbolSpacer + Drupal.settings.fundraiser.currency.symbol);
+    }
     $("input[name='submitted[amount]']").val((total).formatMoney(2, '.', ''));
     $('#fundraiser-tickets-total-quant').text(totalQuantity);
     $.each(self.ticketPrices, function(productId, price) {
-      $('#product-' + productId + '-tickets-total').text(price.currency.symbol + (self.calcField(productId, price.amount)).formatMoney(2, '.', ','));
+      symbolSpacer = price.currency.symbol_spacer;
+      if (price.currency.symbol_placement != 'after') {
+        $('#product-' + productId + '-tickets-total').text(price.currency.symbol + symbolSpacer + (self.calcField(productId, price.amount)).formatMoney(2, '.', ','));
+      }
+      else {
+        $('#product-' + productId + '-tickets-total').text((self.calcField(productId, price.amount)).formatMoney(2, '.', ',') + symbolSpacer + price.currency.symbol);
+      }
     });
   }
 
