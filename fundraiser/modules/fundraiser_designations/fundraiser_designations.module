@@ -430,20 +430,39 @@ function fundraiser_designations_form_webform_client_form_alter(&$form, &$form_s
   $designations =& $form['submitted']['designations']['designation_box'];
   foreach (element_children($designations) as $child) {
     if (!empty($form['submitted']['recurs_monthly']) && !empty($form['#node']->recurring_dual_ask_amounts)) {
-      $designations[$child]['recurring_amounts']['#states'] = array(
-        'visible' => array(
-          'input[name="submitted[recurs_monthly][recurs]"]' => array(
-            'checked' => TRUE,
+      if ($form['submitted']['recurs_monthly']['#type'] != 'radios') {
+        $designations[$child]['recurring_amounts']['#states'] = array(
+          'visible' => array(
+            'input[name="submitted[recurs_monthly][recurs]"]' => array(
+              'checked' => TRUE,
+            ),
           ),
-        ),
-      );
-      $designations[$child]['default_amounts']['#states'] = array(
-        'visible' => array(
-          'input[name="submitted[recurs_monthly][recurs]"]' => array(
-            'checked' => FALSE,
+        );
+        $designations[$child]['default_amounts']['#states'] = array(
+          'visible' => array(
+            'input[name="submitted[recurs_monthly][recurs]"]' => array(
+              'checked' => FALSE,
+            ),
           ),
-        ),
-      );
+        );
+      }
+      else {
+        dpm('d');
+        $designations[$child]['recurring_amounts']['#states'] = array(
+          'visible' => array(
+            'input[name="submitted[recurs_monthly]"]' => array(
+              'value' => 'recurs',
+            ),
+          ),
+        );
+        $designations[$child]['default_amounts']['#states'] = array(
+          'visible' => array(
+            'input[name="submitted[recurs_monthly]"]' => array(
+              '!value' => 'recurs',
+            ),
+          ),
+        );
+      }
     }
   }
 }
