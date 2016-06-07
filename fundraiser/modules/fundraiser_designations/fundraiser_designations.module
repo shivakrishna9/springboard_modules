@@ -27,6 +27,21 @@ function fundraiser_designations_fundraiser_field_info() {
     '#allow_update' => 1,
   );
 
+  $fields['cart_container'] = array(
+    '#title' => t('Cart'),
+    '#type' => 'fieldset',
+    '#required' => 0,
+    '#create_callback' => '_fundraiser_designations_designation_field_create',
+    '#display_callback' => '_fundraiser_designations_designation_field_display',
+    // Display callback, hide this field if the node isn't a designation node.
+  );
+  $fields['cart_container']['cart'] = array(
+    '#title' => t('Cart'),
+    '#type' => 'cart',
+    '#required' => 1,
+    '#allow_update' => 1,
+  );
+
   $fields['amount'] = array(
     '#title' => t('Amount'),
     '#type' => 'hidden',
@@ -109,6 +124,26 @@ function fundraiser_designations_webform_component_info() {
     ),
     'file' => 'components/designations.inc',
   );
+  $components['cart'] = array(
+    'label' => t('Fund cart'),
+    'description' => t('The designation cart'),
+    'features' => array(
+      'csv' => TRUE,
+      'email' => TRUE,
+      'email_address' => FALSE,
+      'email_name' => FALSE,
+      'required' => FALSE,
+      'title_display' => FALSE,
+      'title_inline' => FALSE,
+      'conditional' => FALSE,
+      'group' => FALSE,
+      'spam_analysis' => FALSE,
+      'attachment' => FALSE,
+      'description' => FALSE,
+      'default_value' => FALSE,
+    ),
+    'file' => 'components/cart.inc',
+  );
   return $components;
 }
 
@@ -162,6 +197,10 @@ function fundraiser_designations_module_implements_alter(&$implementations, $hoo
 function fundraiser_designations_webform_component_insert($component) {
   if ($component['form_key'] == 'designations') {
     $component['weight'] = -100;
+    webform_component_update($component);
+  }
+  if ($component['form_key'] == 'cart_container') {
+    $component['weight'] = -99;
     webform_component_update($component);
   }
 }
@@ -627,6 +666,10 @@ function fundraiser_designations_theme() {
     'fundraiser_designations_fund_groups_component' => array(
       'render element' => 'element',
       'file' => 'components/designations.inc',
+    ),
+    'fundraiser_designations_fund_cart_component' => array(
+      'render element' => 'element',
+      'file' => 'components/cart.inc',
     ),
   );
   return $theme;
