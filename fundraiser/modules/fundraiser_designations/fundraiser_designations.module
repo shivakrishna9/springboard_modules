@@ -428,7 +428,6 @@ function fundraiser_designations_form_node_type_form_validate($form, &$form_stat
 
 function fundraiser_designations_form_webform_client_form_alter(&$form, &$form_state) {
   $designations =& $form['submitted']['designations']['designation_box'];
-  //dpm($designations);
   foreach (element_children($designations) as $child) {
     if (!empty($form['submitted']['recurs_monthly']) && !empty($form['#node']->recurring_dual_ask_amounts)) {
       if ($form['submitted']['recurs_monthly']['#type'] != 'radios') {
@@ -465,8 +464,6 @@ function fundraiser_designations_form_webform_client_form_alter(&$form, &$form_s
       }
     }
   }
- // dpm($designations);
-
 }
 
 

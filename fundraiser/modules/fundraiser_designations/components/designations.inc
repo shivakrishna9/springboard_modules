@@ -72,8 +72,12 @@ function _webform_render_designations($component, $value = NULL, $filter = TRUE)
 
   if (fundraiser_designations_is_designation_type($node->type) && !empty($node->designation_group_ids)) {
     $groups = entity_load('fundraiser_fund_group', $node->designation_group_ids);
-    //@todo sort by group weight.
-    foreach ($groups as $group) {
+    $groups_by_weight = [];
+    foreach ($groups as $key => $group) {
+      $groups_by_weight[$group->data['weight'] . $key] = $group;
+    }
+    ksort($groups_by_weight);
+    foreach ($groups_by_weight as $group) {
 
       $group_wrapper = entity_metadata_wrapper('fundraiser_fund_group', $group);
       $funds = $group_wrapper->field_ffg_fd_reference->value();
