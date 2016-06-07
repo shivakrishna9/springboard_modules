@@ -447,7 +447,6 @@ function fundraiser_designations_form_webform_client_form_alter(&$form, &$form_s
         );
       }
       else {
-        dpm('d');
         $designations[$child]['recurring_amounts']['#states'] = array(
           'visible' => array(
             'input[name="submitted[recurs_monthly]"]' => array(
