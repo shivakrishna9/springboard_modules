@@ -131,7 +131,7 @@ function salesforce_donation_history($user) {
       '#markup' => l('Annual Tax Reciept', '#'),
       );
     $results = salesforce_donation_history_get_opportunities($sfid);
-    $output['table'] = createQueryResultTable($results, 1);
+    $output['table'] = salesforce_donation_history_create_table($results, 1);
   }
 
   // $output = array();
@@ -222,24 +222,24 @@ function salesforce_donation_history_get_salesforce() {
   return $sfapi;
 }
 
-function createQueryResultTable($records, $rowNum) {
+function salesforce_donation_history_create_table($records, $rowNum) {
   $table = array('#theme' => 'table');
   // Call shared recusive function for header printing.
   if ($records[0] instanceof SObject) {
-    $table['#header'] = getQueryResultHeaders($records[0]);
+    $table['#header'] = salesforce_donation_history_create_table_headers($records[0]);
   }
   else {
-    $table['#header'] = getQueryResultHeaders(new SObject($records[0]));
+    $table['#header'] = salesforce_donation_history_create_table_headers(new SObject($records[0]));
   }
   // Print the remaining rows in the body.
   $table['#rows'] = array();
   foreach ($records as $record) {
     // Call shared recusive function for row printing.
     if ($record instanceof SObject) {
-      $row = getQueryResultRow($record);
+      $row = salesforce_donation_history_create_table_row($record);
     }
     else {
-      $row = getQueryResultRow(new SObject($record));
+      $row = salesforce_donation_history_create_table_row(new SObject($record));
     }
     for ($i = 0; $i < count($row); $i++) {
       // I've actually never seen this if statement satisfied.
@@ -251,7 +251,7 @@ function createQueryResultTable($records, $rowNum) {
       // create a table within a table.
       if (isset($row[$i][0]) && $row[$i][0] instanceof QueryResult) {
         foreach ($row[$i] as $qr) {
-          $nested_table = createQueryResultTable($qr->records, 1);
+          $nested_table = salesforce_donation_history_create_table($qr->records, 1);
           // @TODO I don't think rendering the nested table and inserting the
           // markup into the parent cell should be necessary but I couldn't get
           // it to display as nested render arrays.
@@ -264,7 +264,7 @@ function createQueryResultTable($records, $rowNum) {
   return $table;
 }
 
-function getQueryResultHeaders($sobject, $tail="") {
+function salesforce_donation_history_create_table_headers($sobject, $tail="") {
   if (!isset($headerBufferArray)) {
     $headerBufferArray = array();
   }
@@ -274,7 +274,7 @@ function getQueryResultHeaders($sobject, $tail="") {
   if (isset($sobject->fields)) {
     foreach ($sobject->fields as $fieldname => $fieldvalue) {
       if ($fieldvalue instanceof SObject) {
-        $recurse = getQueryResultHeaders($fieldvalue, $tail . htmlspecialchars($fieldvalue->type,ENT_QUOTES) . ".");
+        $recurse = salesforce_donation_history_create_table_headers($fieldvalue, $tail . htmlspecialchars($fieldvalue->type,ENT_QUOTES) . ".");
         $headerBufferArray = array_merge($headerBufferArray, $recurse);
       }
       else {
@@ -291,7 +291,7 @@ function getQueryResultHeaders($sobject, $tail="") {
   return $headerBufferArray;
 }
 
-function getQueryResultRow($sobject, $escapeHtmlChars=true) {
+function salesforce_donation_history_create_table_row($sobject, $escapeHtmlChars=true) {
   if (!isset($rowBuffer)) {
     $rowBuffer = array();
   }
@@ -301,7 +301,7 @@ function getQueryResultRow($sobject, $escapeHtmlChars=true) {
   if (isset($sobject->fields)) {
     foreach ($sobject->fields as $datum) {
       if ($datum instanceof SObject) {
-        $rowBuffer = array_merge($rowBuffer, getQueryResultRow($datum,$escapeHtmlChars));
+        $rowBuffer = array_merge($rowBuffer, salesforce_donation_history_create_table_row($datum,$escapeHtmlChars));
       } else {
         $rowBuffer[] = ($escapeHtmlChars ? htmlspecialchars($datum,ENT_QUOTES) : $datum);
       }

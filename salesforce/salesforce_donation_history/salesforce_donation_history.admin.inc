@@ -42,6 +42,7 @@ function salesforce_donation_history_test_query($query) {
   $soap = new SalesforceSoapPartner($sfapi);
   $response = $soap->query($soql);
   $result = new QueryResult($response);
+  dpm($result);
   // Print createQueryResultTable($response->records, 0);.
   if ($result->size != 1) {
     return FALSE;
