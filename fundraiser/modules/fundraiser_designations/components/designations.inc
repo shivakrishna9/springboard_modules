@@ -147,7 +147,7 @@ function _fundraiser_designations_build_child_elements($id, $item, &$element, $a
     }
     $child = array();
     $child['#type'] = 'radios';
-    $child['#id'] = 'default_amounts';
+    $child['#id'] = 'default_amounts_' . $id;
     $child['#extra']['group_id'] = $id;
     $child['#options'] = $donation_amounts;
     $child['#title'] = '';
@@ -161,7 +161,7 @@ function _fundraiser_designations_build_child_elements($id, $item, &$element, $a
     }
     $child = array();
     $child['#type'] = 'radios';
-    $child['#id'] = 'recurring_amounts';
+    $child['#id'] = 'recurring_amounts_' . $id;
     $child['#extra']['group_id'] = $id;
     $child['#options'] = $recurring_donation_amounts;
     $child['#title'] = '';
@@ -170,7 +170,7 @@ function _fundraiser_designations_build_child_elements($id, $item, &$element, $a
 
   $child = array();
   $child['#type'] = 'textfield';
-  $child['#id'] = 'fd_other';
+  $child['#id'] = 'fd_other_' . $id;
   $child['#extra']['group_id'] = $id;
   $child['#title'] = 'Other amount';
   $element[$item['#id']][$child['#id']] = $child;
@@ -178,7 +178,7 @@ function _fundraiser_designations_build_child_elements($id, $item, &$element, $a
 
   $child = array();
   $child['#type'] = 'button';
-  $child['#id'] = 'add';
+  $child['#id'] = 'add_' . $id;
   $child['#extra']['group_id'] = $id;
   $child['#value'] = 'Add';
   $element[$item['#id']][$child['#id']] = $child;

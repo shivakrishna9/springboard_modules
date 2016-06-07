@@ -45,7 +45,7 @@ fieldset#webform-component-designations legend {
   margin-left: 4px;
 }
 
-label[for="fd_other"] {
+label[for*="fd_other"] {
   float:left;
   margin-right: 4px;
 }

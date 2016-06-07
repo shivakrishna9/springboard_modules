@@ -428,17 +428,18 @@ function fundraiser_designations_form_node_type_form_validate($form, &$form_stat
 
 function fundraiser_designations_form_webform_client_form_alter(&$form, &$form_state) {
   $designations =& $form['submitted']['designations']['designation_box'];
+  //dpm($designations);
   foreach (element_children($designations) as $child) {
     if (!empty($form['submitted']['recurs_monthly']) && !empty($form['#node']->recurring_dual_ask_amounts)) {
       if ($form['submitted']['recurs_monthly']['#type'] != 'radios') {
-        $designations[$child]['recurring_amounts']['#states'] = array(
+        $designations[$child]['recurring_amounts_' . $child]['#states'] = array(
           'visible' => array(
             'input[name="submitted[recurs_monthly][recurs]"]' => array(
               'checked' => TRUE,
             ),
           ),
         );
-        $designations[$child]['default_amounts']['#states'] = array(
+        $designations[$child]['default_amounts_' . $child]['#states'] = array(
           'visible' => array(
             'input[name="submitted[recurs_monthly][recurs]"]' => array(
               'checked' => FALSE,
@@ -447,14 +448,14 @@ function fundraiser_designations_form_webform_client_form_alter(&$form, &$form_s
         );
       }
       else {
-        $designations[$child]['recurring_amounts']['#states'] = array(
+        $designations[$child]['recurring_amounts_' . $child]['#states'] = array(
           'visible' => array(
             'input[name="submitted[recurs_monthly]"]' => array(
               'value' => 'recurs',
             ),
           ),
         );
-        $designations[$child]['default_amounts']['#states'] = array(
+        $designations[$child]['default_amounts_' . $child]['#states'] = array(
           'visible' => array(
             'input[name="submitted[recurs_monthly]"]' => array(
               '!value' => 'recurs',
@@ -464,6 +465,8 @@ function fundraiser_designations_form_webform_client_form_alter(&$form, &$form_s
       }
     }
   }
+ // dpm($designations);
+
 }
 
 
