@@ -157,23 +157,25 @@ function _fundraiser_tickets_validate_webform_field($element, &$form_state) {
     unset($ticket_values['fundraiser-tickets-extra-donation']);
   }
 
-  // Grab the selected values and verify we have at least one
-  $selected = array_filter($ticket_values);
-  if (empty($selected)) {
-    form_error($element, 'Please select at least one ticket type.');
-  }
+  if (!empty($ticket_values)) {
+    // Grab the selected values and verify we have at least one
+    $selected = array_filter($ticket_values);
+    if (empty($selected)) {
+      form_error($element, 'Please select at least one ticket type.');
+    }
 
-  // Verify we still have enough tickets to fulfill the order
-  foreach ($selected as $key => $quantity) {
-    $product_id = _fundraiser_tickets_get_product_id_from_form_element_name($key);
+    // Verify we still have enough tickets to fulfill the order
+    foreach ($selected as $key => $quantity) {
+      $product_id = _fundraiser_tickets_get_product_id_from_form_element_name($key);
 
-    if ($product_id && $quantity > 0) {
-      $product_wrapper = entity_metadata_wrapper('commerce_product', commerce_product_load($product_id));
+      if ($product_id && $quantity > 0) {
+        $product_wrapper = entity_metadata_wrapper('commerce_product', commerce_product_load($product_id));
 
-      // Compute the available tickets
-      $available_tickets = $product_wrapper->fr_tickets_quantity->value() - $product_wrapper->fr_tickets_quantity_sold->value();
-      if ($quantity > $available_tickets) {
-        form_error($element, t('Your order could not be completed because only @quantity @type tickets remain.', array('@quantity' => $available_tickets, '@type' => $product_wrapper->title->value())));
+        // Compute the available tickets
+        $available_tickets = $product_wrapper->fr_tickets_quantity->value() - $product_wrapper->fr_tickets_quantity_sold->value();
+        if ($quantity > $available_tickets) {
+          form_error($element, t('Your order could not be completed because only @quantity @type tickets remain.', array('@quantity' => $available_tickets, '@type' => $product_wrapper->title->value())));
+        }
       }
     }
   }
@@ -187,7 +189,7 @@ function _fundraiser_tickets_sanitize_webform_field($element, &$form_state) {
   $ticket_values = drupal_array_get_nested_value($form_state['values'], $element['#parents']);
   $extra_donation_key = 'fundraiser-tickets-extra-donation';
 
-  if (!array_key_exists($extra_donation_key, $ticket_values)) {
+  if (!empty($ticket_values) && !array_key_exists($extra_donation_key, $ticket_values)) {
     return;
   }
 
