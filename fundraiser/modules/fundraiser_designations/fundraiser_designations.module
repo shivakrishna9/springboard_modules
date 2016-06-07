@@ -27,7 +27,7 @@ function fundraiser_designations_fundraiser_field_info() {
     '#allow_update' => 1,
   );
 
-  $fields['designation_amount'] = array(
+  $fields['amount'] = array(
     '#title' => t('Amount'),
     '#type' => 'hidden',
     '#value' => '',
