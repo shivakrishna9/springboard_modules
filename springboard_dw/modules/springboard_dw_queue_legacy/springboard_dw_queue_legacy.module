@@ -70,14 +70,14 @@ function springboard_dw_queue_legacy_dashboard() {
   $records_in_drupal_count = $total_contacts + $total_donations + $total_actions + $total_petition_messages + $total_forms + $total_submissions + $total_payments + $total_messages;
 
   $total_records = array(
-    'action:&nbsp;' . $total_actions,
-    'action message:&nbsp;' . $total_messages,
-    'contact:&nbsp;' . $total_contacts,
-    'donation:&nbsp;' . $total_donations,
-    'form:&nbsp;' . $total_forms,
-    'payment:&nbsp;' . $total_payments,
-    'petition message:&nbsp;' . $total_petition_messages,
-    'submission:&nbsp;' . $total_submissions,
+    'action:&nbsp;' . number_format($total_actions, 0, '', ','),
+    'action message:&nbsp;' . number_format($total_messages, 0, '', ','),
+    'contact:&nbsp;' . number_format($total_contacts, 0, '', ','),
+    'donation:&nbsp;' . number_format($total_donations, 0, '', ','),
+    'form:&nbsp;' . number_format($total_forms, 0, '', ','),
+    'payment:&nbsp;' . number_format($total_payments, 0, '', ','),
+    'petition message:&nbsp;' . number_format($total_petition_messages, 0, '', ','),
+    'submission:&nbsp;' . number_format($total_submissions, 0, '', ','),
   );
 
   $records_in_queue_table = db_query("SELECT count(item_id) FROM {queue} WHERE name = 'springboard_dw_export'")->fetchField();
@@ -98,7 +98,7 @@ function springboard_dw_queue_legacy_dashboard() {
   );
   $processed_records = array();
   foreach ($processed_counts as $type) {
-    $processed_records[] = $type->type . ':&nbsp;' . $type->count;
+    $processed_records[] = $type->type . ':&nbsp;' . number_format($type->count, 0, '', ',');
     // Massaging into assoc array for easier access below.
     $processed_counts_by_type[$type->type] = $type->count;
     $data_warehouse_total += $type->count;
@@ -117,7 +117,7 @@ function springboard_dw_queue_legacy_dashboard() {
   $unprocessed_items = array();
   $unprocessed_total = 0;
   foreach ($unprocessed_counts as $key => $val) {
-    $unprocessed_items[] = $key . ':&nbsp;' . $val;
+    $unprocessed_items[] = $key . ':&nbsp;' . number_format($val, 0, '', ',');
     $unprocessed_total += $val;
   }
 
@@ -125,7 +125,7 @@ function springboard_dw_queue_legacy_dashboard() {
   $dw_totals = array();
   $dw_total_count = 0;
   foreach ($dw_types as $key => $val) {
-    $dw_totals[] = $key . ':&nbsp;' . $val;
+    $dw_totals[] = $key . ':&nbsp;' . number_format($val, 0, '', ',');
     $dw_total_count += $val;
   }
   $dw_totals[] = l('View recent submissions', 'https://dw.gospringboard.io/report/recent-submissions?authenticationToken=' . variable_get("springboard_dw_authentication_token"));
@@ -140,11 +140,11 @@ function springboard_dw_queue_legacy_dashboard() {
       theme('item_list',array('items' => $dw_totals)),
     ),
     array(
-      $records_in_drupal_count,
-      $unprocessed_total,
-      $data_warehouse_total,
-      $records_in_queue_table,
-      $dw_total_count,
+      number_format($records_in_drupal_count, 0, '', ','),
+      number_format($unprocessed_total, 0, '', ','),
+      number_format($data_warehouse_total, 0, '', ','),
+      number_format($records_in_queue_table, 0, '', ','),
+      number_format($dw_total_count, 0, '', ','),
     ),
   );
   $output .= theme('table', array('header' => $header, 'rows' => $rows));
