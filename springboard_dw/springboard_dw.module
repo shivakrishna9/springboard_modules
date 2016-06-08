@@ -33,10 +33,8 @@ function springboard_dw_node_view($node, $view_mode, $langcode) {
  * Implements hook_menu().
  */
 function springboard_dw_menu() {
-
-  // Admin settings for data warehouse credentials.
   $items['admin/config/services/springboard-dw'] = array(
-    'title'            => 'Springboard Data Warehouse',
+    'title'            => 'Data Warehouse',
     'description'      => 'Configuration settings for Springboard Data Warehousing.',
     'page callback'    => 'springboard_dw_settings_page',
     'access arguments' => array('administer springboard data warehouse'),
@@ -44,23 +42,33 @@ function springboard_dw_menu() {
     'file'             => 'includes/springboard_dw.admin.inc',
   );
 
+  // Admin settings for data warehouse credentials.
+  $items['admin/config/services/springboard-dw/configure'] = array(
+    'title'            => 'Configure',
+    'description'      => 'Configuration settings for Springboard Data Warehousing.',
+    'page callback'    => 'springboard_dw_settings_page',
+    'access arguments' => array('administer springboard data warehouse'),
+    'type'             => MENU_DEFAULT_LOCAL_TASK,
+    'file'             => 'includes/springboard_dw.admin.inc',
+  );
+
   // Page to reset data warehouse data.
   $items['admin/config/services/springboard-dw/reset-dw'] = array(
-    'title'            => 'Springboard Data Warehouse - Reset Data',
+    'title'            => 'Reset Data',
     'description'      => 'Reset all warehouse data for Springboard.',
     'page callback'    => 'springboard_dw_admin_warehouse_reset_page',
     'access arguments' => array('administer springboard data warehouse'),
-    'type'             => MENU_NORMAL_ITEM,
+    'type'             => MENU_LOCAL_TASK,
     'file'             => 'includes/springboard_dw.admin.inc',
   );
 
   // Page to reset data warehouse credentials.
   $items['admin/config/services/springboard-dw/reset-dw-credentials'] = array(
-    'title'            => 'Springboard Data Warehouse - Reset Credentials',
+    'title'            => 'Reset Credentials',
     'description'      => 'Reset warehouse credentials for Springboard.',
     'page callback'    => 'springboard_dw_admin_warehouse_reset_config_page',
     'access arguments' => array('administer springboard data warehouse'),
-    'type'             => MENU_NORMAL_ITEM,
+    'type'             => MENU_LOCAL_TASK,
     'file'             => 'includes/springboard_dw.admin.inc',
   );
 
