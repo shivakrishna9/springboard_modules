@@ -144,6 +144,7 @@ function fundraiser_sustainers_schema() {
       'donation_type_help_text' => array(
         'description' => 'Help text to show under the onetime/recurring buttons on dual-ask forms.',
         'type' => 'text',
+        'length' => 1024,
         'not null' => FALSE,
       ),
     ),
@@ -1020,6 +1021,7 @@ function fundraiser_sustainers_update_7017(&$sandbox) {
     'donation_type_help_text' => array(
       'description' => 'Help text to show under the onetime/recurring buttons on dual-ask forms.',
       'type' => 'text',
+      'length' => 1024,
       'not null' => FALSE,
     ),
   );
