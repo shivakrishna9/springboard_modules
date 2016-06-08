@@ -2,50 +2,57 @@ fieldset#webform-component-designations legend {
   margin-bottom: 0!important;
 }
 
-.fundraiser-designation-group-wrapper {
+.designation-group-wrapper,
+.fundraiser-designation-cart-wrapper{
   padding: 10px;
   margin-bottom: 5px;
 }
 
-.fundraiser-designation-group-image {
+.designation-group-image {
   float: left;
   margin: 0 15px 15px 0;
   max-width: 250px;
 }
 
-.fundraiser-designation-group-description {
+.designation-group-description {
   margin: 0 15px;
 }
 
-.fundraiser-designation-group-table {
+.designation-group-funds-table-wrapper {
   clear: left;
 }
-.fundraiser-designation-group-table tr {
+.designation-group-funds-table tr,
+.fundraiser-designation-cart-table tr{
   background: inherit;
 }
 
-.fundraiser-designation-group-table td {
+.designation-group-funds-table td, .fundraiser-designation-cart-table td {
   padding: 4px;
 }
 
-.fundraiser-designation-group-table td select {
+.designation-group-funds-table td select {
   margin: 0;
   padding: 0;
 }
 
 
-.fund-box .control-group {
+.designation-group-funds-table .control-group {
   float: left;
   clear: none;
   margin-right: 10px;
   width: auto
 }
 
-.fund-box .control-group label{
+.designation-group-funds-table .control-group label{
   margin-left: 4px;
 }
 
-label[for*="fd_other"] {
+label[for*="fd-other"] {
   float:left;
   margin-right: 4px;
+}
+
+.designation-group-funds-table,
+.fundraiser-designation-cart-table {
+  width: 100%;
 }

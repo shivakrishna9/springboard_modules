@@ -114,7 +114,7 @@ function theme_fundraiser_designations_fund_cart_component($vars) {
     'fund_cart_table' => array(
       '#type' => 'markup',
       '#markup' => fundraiser_designations_cart_table($element),
-      '#prefix' => '<div class="fundraiser-designation-cart-table">',
+      '#prefix' => '<div class="fundraiser-designation-cart-table-wrapper">',
       '#suffix' => '</div>',
       '#weight' => -6,
     ),
@@ -142,7 +142,7 @@ function fundraiser_designations_cart_table($element) {
         'class' => array('fund-amount'),
       ),
     ),
-    'class' => array('cart-fund', 'cart-fund-empty'),
+    'class' => array('cart-fund-row', 'cart-fund-empty'),
   );
   $rows[] = array(
     'data' => array(
@@ -160,7 +160,7 @@ function fundraiser_designations_cart_table($element) {
     '#header' => $header,
     '#rows' => $rows,
     '#attributes' => array(
-      'class' => array('fund-box'),
+      'class' => array('fundraiser-designation-cart-table'),
     ),
   );
   return drupal_render($table);
