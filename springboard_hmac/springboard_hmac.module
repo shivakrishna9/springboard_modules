@@ -112,7 +112,7 @@ function springboard_hmac_verify($payload, $hmac) {
   // Check the payload for errors.
   $failure_reason = springboard_hmac_verify_payload($parsed_payload);
   if (!empty($failure_reason)) {
-    springboard_hmac_save($hmac);
+    //springboard_hmac_save($hmac);
     return springboard_hmac_failure($failure_reason, $parsed_payload);
   }
 
@@ -131,7 +131,7 @@ function springboard_hmac_verify($payload, $hmac) {
   // unaltered and we can continue.
   if ($hmac != $verification_hmac) {
     $reason = t('Authentication failed. Tokens do not match.');
-    springboard_hmac_save($hmac);
+    //springboard_hmac_save($hmac);
     return springboard_hmac_failure($reason, $parsed_payload);
   }
   else {
@@ -170,12 +170,28 @@ function springboard_hmac_verify_payload($parsed_payload) {
     return t('User ID is missing.');
   }
   else {
+    // Does the account not exist?
     $account = user_load($parsed_payload['uid']);
     if (empty($account->uid)) {
       return t('Invalid User ID.');
     }
+    else {
+      // Is there a non-anonymous session and
+      // does the user id not match the payload ID?
+      global $user;
+      if (!user_access('administer springboard hmac') && ($user->uid > 0 && $user->uid != $parsed_payload['uid'])) {
+        return t('Payload User ID does not match User ID.');
+      }
+      // Is there a springboard cookie and
+      // does the cookie user id not match the payload ID?
+//      if (module_exists('springboard_cookie')) {
+//        $cookie = springboard_cookie_get_cookie();
+//        if (!user_access('administer springboard hmac') && isset($cookie['uid']) && $parsed_payload['uid'] != $cookie['uid']) {
+//          return t('Payload User ID does not match Springboard Cookie User ID.');
+//        }
+//      }
+    }
   }
-
   return NULL;
 }
 
@@ -251,7 +267,7 @@ function springboard_hmac_failure($reason, $parsed_payload = array()) {
  *   The hash.
  */
 function springboard_hmac_create_hmac($values, $key) {
-  $hmac = base64_encode(hash_hmac('sha256', (string) implode('', $values), (string) $key, TRUE));
+  $hmac = base64_encode(hash_hmac('sha256', (string) implode('.', $values), (string) $key, TRUE));
   $hmac = strtr($hmac, array('+' => '-', '/' => '_', '=' => ''));
   return $hmac;
 }
@@ -310,7 +326,7 @@ function springboard_hmac_get_key() {
  *   The hamc token.
  */
 function springboard_hmac_get_verification_hmac($payload, $key) {
-  $hmac = base64_encode(hash_hmac('sha256', (string) implode('', $payload), (string) $key, TRUE));
+  $hmac = base64_encode(hash_hmac('sha256', (string) implode('.', $payload), (string) $key, TRUE));
   $hmac = strtr($hmac, array('+' => '-', '/' => '_', '=' => ''));
   return $hmac;
 }

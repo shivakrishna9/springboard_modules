@@ -3,7 +3,7 @@
 /**
  * Adds the node fields and field group
  */
-function _fundraiser_sustainers_upgrade_add_fields() {
+function _fundraiser_sustainers_upgrade_add_fields($update = FALSE) {
 
   $fields = array();
 
@@ -12,6 +12,7 @@ function _fundraiser_sustainers_upgrade_add_fields() {
   _fundraiser_sustainers_upgrade_body_field($fields);
   _fundraiser_sustainers_upgrade_fail_field($fields);
   _fundraiser_sustainers_upgrade_rollback_field($fields);
+  _fundraiser_sustainers_upgrade_rollback_body($fields);
   _fundraiser_sustainers_upgrade_auto_field($fields);
   _fundraiser_sustainers_upgrade_cancel_field($fields);
 
@@ -31,7 +32,9 @@ function _fundraiser_sustainers_upgrade_add_fields() {
   }
 
   // Create the field groups.
-  _fundraiser_sustainers_upgrade_install_groups();
+  if ($update == FALSE) {
+    _fundraiser_sustainers_upgrade_install_groups();
+  }
 }
 
 /**
@@ -54,8 +57,9 @@ function _fundraiser_sustainers_upgrade_install_groups() {
   $field_group->children = array(
     0 => 'field_sustainers_upgrade_fail',
     1 => 'field_sustainers_auto_upgrade',
-    2 => 'field_sustainers_upgrade_roll',
-    3 => 'field_sustainers_upgrade_cancel',
+    2 => 'field_sustainers_upgrade_b_roll',
+    3 => 'field_sustainers_upgrade_roll',
+    4 => 'field_sustainers_upgrade_cancel',
 
 
   );
@@ -75,7 +79,7 @@ function _fundraiser_sustainers_upgrade_install_groups() {
   $groups = field_group_read_groups(array(
     'entity_type' => 'node',
     'bundle'      => 'sustainers_upgrade_form',
-    'view_mode'   => 'full'
+    'view_mode'   => 'full',
   ));
 
   foreach ($export as $field_group) {
@@ -164,7 +168,7 @@ function _fundraiser_sustainers_upgrade_name_field(&$fields) {
  *
  * @param $fields
  */
-function  _fundraiser_sustainers_upgrade_body_field($fields) {
+function _fundraiser_sustainers_upgrade_body_field($fields) {
   $fields['body'] = array(
     'active' => 1,
     'cardinality' => 1,
@@ -315,6 +319,83 @@ function _fundraiser_sustainers_upgrade_fail_field(&$fields) {
   );
 }
 
+/**
+ * Field definition function.
+ *
+ * @param $fields
+ */
+function _fundraiser_sustainers_upgrade_rollback_body(&$fields) {
+
+  $fields['field_sustainers_upgrade_b_roll'] = array(
+    'active' => 1,
+    'cardinality' => 1,
+    'deleted' => 0,
+    'entity_types' => array(
+      0 => 'node',
+    ),
+    'field_name' => 'field_sustainers_upgrade_b_roll',
+    'foreign keys' => array(
+      'format' => array(
+        'columns' => array(
+          'format' => 'format',
+        ),
+        'table' => 'filter_format',
+      ),
+    ),
+    'indexes' => array(
+      'format' => array(
+        0 => 'format',
+      ),
+    ),
+    'locked' => 0,
+    'module' => 'text',
+    'settings' => array(),
+    'translatable' => 0,
+    'type' => 'text_long',
+    '_instance' => array(
+      'bundle' => 'sustainers_upgrade_form',
+      'default_value' => array(
+        0 => array(
+          'value' => "",
+          'format' => 'filtered_html',
+        ),
+      ),
+      'deleted' => 0,
+      'description' => 'This text will appear before the upgrade is rolled back.',
+      'display' => array(
+        'default' => array(
+          'label' => 'hidden',
+          'settings' => array(),
+          'type' => 'hidden',
+          'weight' => 6,
+        ),
+        'teaser' => array(
+          'label' => 'hidden',
+          'settings' => array(),
+          'type' => 'hidden',
+          'weight' => 0,
+        ),
+      ),
+      'entity_type' => 'node',
+      'field_name' => 'field_sustainers_upgrade_b_roll',
+      'label' => 'Rollback Message',
+      'required' => 0,
+      'settings' => array(
+        'text_processing' => 1,
+        'user_register_form' => FALSE,
+      ),
+      'widget' => array(
+        'active' => 1,
+        'module' => 'text',
+        'settings' => array(
+          'rows' => 3,
+        ),
+        'type' => 'text_textarea',
+        'weight' => 4,
+      ),
+    ),
+  );
+}
 
 /**
  * Field definition function.
@@ -375,7 +456,7 @@ function _fundraiser_sustainers_upgrade_rollback_field(&$fields) {
       ),
       'entity_type' => 'node',
       'field_name' => 'field_sustainers_upgrade_roll',
-      'label' => 'Rollback Message',
+      'label' => 'Rollback Confirmation Message',
       'required' => 0,
       'settings' => array(
         'text_processing' => 1,
@@ -388,7 +469,7 @@ function _fundraiser_sustainers_upgrade_rollback_field(&$fields) {
           'rows' => 3,
         ),
         'type' => 'text_textarea',
-        'weight' => 3,
+        'weight' => 5,
       ),
     ),
   );
@@ -501,7 +582,11 @@ function _fundraiser_sustainers_upgrade_cancel_field(&$fields) {
 
     '_instance' => array(
       'bundle' => 'sustainers_upgrade_form',
-      'default_value' => NULL,
+      'default_value' => array(
+        0 => array(
+          'value' => variable_get('site_frontpage', 'node'),
+        ),
+      ),
       'deleted' => '0',
       'description' => 'The page to redirect to if the user clicks the "I\'m not" link; e.g, node/4',
       'display' => array(
@@ -549,6 +634,7 @@ function _fundraiser_sustainers_upgrade_delete_fields() {
     'field_sustainers_auto_upgrade',
     'field_sustainers_upgrade_roll',
     'field_sustainers_upgrade_cancel',
+    'field_sustainers_upgrade_b_roll',
 
   );
   foreach ($fields as $field_name) {

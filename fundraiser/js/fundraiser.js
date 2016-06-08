@@ -11,7 +11,7 @@ Drupal.behaviors.fundraiserBehavior = {
   });
 
   // Auto-populate label fields when amount is entered.
-  $('#ask-amounts input[id$="amount"]').blur(function() {
+  $('div[id$="ask-amounts"] input[id$="amount"]').blur(function() {
     var amount = $(this).val();
     var label = $(this).parents('tr').find('input[id*="label"]').val();
     if ((label.length === 0) && (amount.length !== 0)) {
@@ -26,7 +26,12 @@ Drupal.behaviors.fundraiserBehavior = {
       var text = Drupal.settings.fundraiser[gateway].text;
       var labelImg = Drupal.settings.fundraiser[gateway].selected_image;
       // Automatically change submit button text when payment gateway selected.
-      $("#edit-submit").val(text);
+      if (typeof(text) !== "undefined") {
+        $("#edit-submit").val(text);
+        var fsm = $(".fundraiser_submit_message");
+        var fsmHtml = fsm.html().replace('SUBMIT', text.toUpperCase());
+        fsm.html(fsmHtml);
+      }
       $('label[for='+paymentId+'] img').attr('src', labelImg);
       $("input[name='submitted[payment_information][payment_method]']").each(function(gateway) {
           if (!$(this).is(":checked")) {

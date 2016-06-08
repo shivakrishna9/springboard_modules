@@ -788,6 +788,18 @@ function _fundraiser_node_form_after_build($form, &$form_state) {
     $form['springboard_display']['#description'] = t('No display settings are enabled at this time.');
   }
 
+  // Add no-settings note if Fundraiser Settings has been emptied by alter hooks.
+  $fundraiser_settings_is_empty = TRUE;
+  foreach (element_children($form['fundraiser_settings']) as $key) {
+    if (!isset($form['fundraiser_settings'][$key]['#access']) || $form['fundraiser_settings'][$key]['#access']) {
+      $fundraiser_settings_is_empty = FALSE;
+      break;
+    }
+    if ($fundraiser_settings_is_empty) {
+      $form['fundraiser_settings']['#description'] = t("There are no Fundraiser settings to display.");
+    }
+  }
+
   // Add additional js and css for this form.
   drupal_add_css(drupal_get_path('module', 'fundraiser') . '/css/fundraiser.css');
   drupal_add_js(drupal_get_path('module', 'fundraiser') . '/js/fundraiser.js');
