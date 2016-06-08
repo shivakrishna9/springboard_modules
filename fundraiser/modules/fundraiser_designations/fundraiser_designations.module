@@ -42,17 +42,6 @@ function fundraiser_designations_fundraiser_field_info() {
     '#allow_update' => 1,
   );
 
-  $fields['amount'] = array(
-    '#title' => t('Amount'),
-    '#type' => 'hidden',
-    '#value' => '',
-    '#required' => 1,
-    '#extra' => array(
-      'description' => '',
-      'hidden_type' => 'hidden',
-    ),
-  );
-
   return $fields;
 }
 
@@ -62,6 +51,20 @@ function fundraiser_designations_fundraiser_field_info() {
  * Remove the donation fields, since we don't want them on designation pages.
  */
 function fundraiser_designations_fundraiser_field_info_alter(&$info) {
+
+  if (!module_exists('fundraiser_tickets')) {
+    $info['amount'] = array(
+      '#title' => t('Amount'),
+      '#type' => 'hidden',
+      '#value' => '',
+      '#required' => 1,
+      '#extra' => array(
+        'description' => '',
+        'hidden_type' => 'hidden',
+      ),
+    );
+  }
+
   $info['donation']['#create_callback'] = '_fundraiser_designations_donation_create';
   $info['donation']['#display_callback'] = '_fundraiser_designations_donation_display';
 }
@@ -90,7 +93,11 @@ function _fundraiser_designations_designation_field_create($fundraiser, $field) 
 function _fundraiser_designations_donation_create($fundraiser, $field) {
   // If not a designation page, drop the designation field,
   // drop the recurring field.
-  if (fundraiser_designations_is_designation_type($fundraiser->type)) {
+  $ticket_type = FALSE;
+  if (module_exists('fundraiser_tickets')) {
+    $ticket_type = fundraiser_tickets_is_ticket_type($fundraiser->type);
+  }
+  if (fundraiser_designations_is_designation_type($fundraiser->type) || $ticket_type) {
     return FALSE;
   }
   else {
@@ -190,23 +197,32 @@ function fundraiser_designations_module_implements_alter(&$implementations, $hoo
     $group = $implementations['fundraiser_designations'];
     unset($implementations['fundraiser_designations']);
     $implementations['fundraiser_designations'] = $group;
-  }
+   }
+  if ($hook == 'fundraiser_field_info_alter') {
+    $group = $implementations['fundraiser_designations'];
+    unset($implementations['fundraiser_designations']);
+    $implementations['fundraiser_designations'] = $group;
+   }
 }
 
 
 function fundraiser_designations_webform_component_insert($component) {
-  if ($component['form_key'] == 'recurs_monthly') {
-    $component['weight'] = -101;
-    $component['pid'] = 0;
-    webform_component_update($component);
-  }
-  if ($component['form_key'] == 'designations') {
-    $component['weight'] = -100;
-    webform_component_update($component);
-  }
-  if ($component['form_key'] == 'cart_container') {
-    $component['weight'] = -99;
-    webform_component_update($component);
+  $node = node_load($component['nid']);
+
+  if (fundraiser_designations_is_designation_type($node->type)) {
+    if ($component['form_key'] == 'recurs_monthly') {
+      $component['weight'] = -101;
+      $component['pid'] = 0;
+      webform_component_update($component);
+    }
+    if ($component['form_key'] == 'designations') {
+      $component['weight'] = -100;
+      webform_component_update($component);
+    }
+    if ($component['form_key'] == 'cart_container') {
+      $component['weight'] = -99;
+      webform_component_update($component);
+    }
   }
 }
 /**
