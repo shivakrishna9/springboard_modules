@@ -63,6 +63,7 @@ function springboard_dw_queue_legacy_setup_batch($type = '') {
       'message' => dt('message'),
       'petition_message' => dt('petition_message'),
       'payment' => dt('payment'),
+      'salesforce_sync' => dt('salesforce_sync'),
     );
     $type = drush_choice($options, dt('What kind of record would you like to queue?'));
   }
@@ -449,6 +450,29 @@ function springboard_dw_queue_legacy_message($messages, $operation_details, $idl
 }
 
 /**
+ * Batch process callback for processing salesforce_sync items.
+ */
+function springboard_dw_queue_legacy_salesforce_sync($records, $operation_details, $idlist, &$context) {
+  foreach ($records as $record) {
+    if (!springboard_dw_item_is_warehoused('salesforce_sync', $record->id)) {
+      $salesforce_sync_array = (array) $record;
+      $salesforce_sync_item = springboard_dw_map_sync_map_item($salesforce_sync_array);
+      $queue = DrupalQueue::get("springboard_dw_export");
+      $queue->createItem($salesforce_sync_item);
+      springboard_dw_log_queue_item($salesforce_sync_item);
+      springboard_dw_track_item_warehouse_queued('salesforce sync', $record->id);
+    }
+    else {
+      drush_log('Attempted to queue salesforce_sync_item ' . $record->id . ' but it is already warehoused', 'warning');
+    }
+    // Set highwater mark.
+    // @TODO highwater mark not yet supported on $salesforce_sync items.
+    // springboard_dw_queue_legacy_set_highwater_mark('$salesforce_sync_item', $record->created, $idlist);
+  }
+  $context['message'] = $operation_details;
+}
+
+/**
  * Builds action object.
  *
  *  Build the action object by re-creating the data that is available during
@@ -681,6 +705,25 @@ function springboard_dw_queue_legacy_get_records($type, $limit = FALSE, $highwat
         $query->condition('created', $highwater, '>=');
       }
       break;
+    case 'salesforce_sync':
+      $query = db_select('salesforce_sync_map', 's');
+      $query->addField('s', 'rmid', 'id');
+      $query->addField('s', 'mid');
+      $query->addField('s', 'sfid');
+      $query->addField('s', 'drupal_id');
+      $query->addField('s', 'module');
+      $query->addField('s', 'delta');
+      $query->addField('s', 'object_type');
+      $query->orderBy('rmid', 'ASC');
+
+      if ($idlist) {
+        $query->condition('rmid', $idlist, 'IN');
+      }
+      // @TODO the salesforce_sync_map does not have a created field.
+      // elseif ($highwater) {
+      //   $query->condition('created', $highwater, '>=');
+      // }
+      break;
 
     default:
       return drush_set_error(dt('"@type" is not a valid record type. Nothing was processed.', array('@type' => $type)));
@@ -689,7 +732,6 @@ function springboard_dw_queue_legacy_get_records($type, $limit = FALSE, $highwat
     if ($limit) {
       $query->range(0, $limit);
     }
-    $query->orderBy('created', 'ASC');
     $records = $query->execute()->fetchAll();
   }
   return $records;

@@ -66,8 +66,8 @@ function springboard_dw_queue_legacy_dashboard() {
   $total_submissions = db_query("SELECT count(s.sid) FROM {webform_submissions} s INNER JOIN {node} n ON s.nid = n.nid WHERE n.type NOT IN (:excluded_types)", array(':excluded_types' => $excluded_types))->fetchField();
   $total_payments = db_query('SELECT count(transaction_id) FROM {commerce_payment_transaction}')->fetchField();
   $total_messages = springboard_dw_queue_legacy_get_advocacy_messages_count();
-
-  $records_in_drupal_count = $total_contacts + $total_donations + $total_actions + $total_petition_messages + $total_forms + $total_submissions + $total_payments + $total_messages;
+  $total_salesforce_sync = db_query('SELECT count(rmid) FROM {salesforce_sync_map}')->fetchField();
+  $records_in_drupal_count = $total_contacts + $total_donations + $total_actions + $total_petition_messages + $total_forms + $total_submissions + $total_payments + $total_messages + $total_salesforce_sync;
 
   $total_records = array(
     'action:&nbsp;' . number_format($total_actions, 0, '', ','),
@@ -77,6 +77,7 @@ function springboard_dw_queue_legacy_dashboard() {
     'form:&nbsp;' . number_format($total_forms, 0, '', ','),
     'payment:&nbsp;' . number_format($total_payments, 0, '', ','),
     'petition message:&nbsp;' . number_format($total_petition_messages, 0, '', ','),
+    'salesforce sync:&nbsp;' . number_format($total_salesforce_sync, 0, '', ','),
     'submission:&nbsp;' . number_format($total_submissions, 0, '', ','),
   );
 
@@ -94,6 +95,7 @@ function springboard_dw_queue_legacy_dashboard() {
     'submission' => 0,
     'advocacy petition message' => 0,
     'advocacy message' => 0,
+    'salesforce sync' => 0,
 
   );
   $processed_records = array();
@@ -112,6 +114,7 @@ function springboard_dw_queue_legacy_dashboard() {
     'form' => strval($total_forms - $processed_counts_by_type['form']),
     'payment' => strval($total_payments - $processed_counts_by_type['payment']),
     'petition message' => strval($total_petition_messages - $processed_counts_by_type['advocacy petition message']),
+    'salesforce sync' => strval($total_salesforce_sync - $processed_counts_by_type['salesforce sync']),
     'submission' => strval($total_submissions - $processed_counts_by_type['submission']),
   );
   $unprocessed_items = array();
@@ -221,6 +224,7 @@ function springboard_dw_queue_legacy_reset_highwater_marks() {
     'donation',
     'petition_message',
     'payment',
+    'salesforce_sync'
   );
   foreach ($types as $type) {
     springboard_dw_queue_legacy_set_highwater_mark($type, 0);

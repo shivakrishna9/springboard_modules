@@ -730,6 +730,9 @@ function springboard_dw_salesforce_sync_pass_item($item, $result) {
 
   // Log the queue item.
   springboard_dw_log_queue_item($sb_vendor_mapping_item);
+
+  // Mark item as tracked.
+  springboard_dw_track_item_warehouse_queued('salesforce_sync', $item->rmid);
 }
 
 /**

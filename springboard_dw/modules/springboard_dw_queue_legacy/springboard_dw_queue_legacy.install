@@ -17,6 +17,7 @@ function springboard_dw_queue_legacy_install() {
     'donation',
     'petition_message',
     'payment',
+    'salesforce_sync',
   );
   foreach ($types as $type) {
     db_insert('springboard_data_warehouse_queue_legacy')
