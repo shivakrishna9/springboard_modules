@@ -453,7 +453,7 @@ function springboard_dw_queue_legacy_message($messages, $operation_details, $idl
  */
 function springboard_dw_queue_legacy_salesforce_sync($records, $operation_details, $idlist, &$context) {
   foreach ($records as $record) {
-    if (!springboard_dw_item_is_warehoused('salesforce_sync', $record->id)) {
+    if (!springboard_dw_item_is_warehoused('salesforce sync', $record->id)) {
       $salesforce_sync_array = (array) $record;
       $salesforce_sync_item = springboard_dw_map_sync_map_item($salesforce_sync_array);
       $queue = DrupalQueue::get("springboard_dw_export");
@@ -462,10 +462,10 @@ function springboard_dw_queue_legacy_salesforce_sync($records, $operation_detail
       springboard_dw_track_item_warehouse_queued('salesforce sync', $record->id);
     }
     else {
-      drush_log('Attempted to queue salesforce_sync_item ' . $record->id . ' but it is already warehoused', 'warning');
+      drush_log('Attempted to queue salesforce_sync ' . $record->id . ' but it is already warehoused', 'warning');
     }
     // Set highwater mark.
-    springboard_dw_queue_legacy_set_highwater_mark('$salesforce_sync_item', $record->id, $idlist);
+    springboard_dw_queue_legacy_set_highwater_mark('$salesforce_sync', $record->id, $idlist);
   }
   $context['message'] = $operation_details;
 }
