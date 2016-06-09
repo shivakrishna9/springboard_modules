@@ -706,6 +706,10 @@ function springboard_dw_queue_legacy_get_records($type, $limit = FALSE, $highwat
       $query->addField('s', 'module');
       $query->addField('s', 'delta');
       $query->addField('s', 'object_type');
+      $or = db_or();
+      $or->condition('delta', array('user', 'sba_message_action', 'sba_social_action', 'springboard_petition', 'donation'), 'IN');
+      $or->condition('object_type', 'sb_Actions_Taken__c', '=');
+      $query->condition($or);
       $query->orderBy('rmid', 'ASC');
 
       if ($idlist) {
