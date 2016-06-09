@@ -15,3 +15,10 @@
     margin-bottom: 20px;
     font-size: 12px;
 }
+
+.download-csv-results {
+    float:right;
+    display: inline;
+    margin-top: -76px;
+    margin-bottom: 40px;
+}
