@@ -111,7 +111,6 @@ function springboard_dw_queue_legacy_setup_batch($type = '') {
   drush_log(dt('@count records found to process.', array('@count' => $record_count)), 'ok');
   if ($record_count < 1 && !$idlist) {
     watchdog("data_warehouse", 'Attempted to process %type records when there are :record_count remaining.', array('%type' => $type, ':record_count' => $record_count), WATCHDOG_WARNING);
-    springboard_dw_queue_legacy_set_highwater_mark($type, time(), $idlist);
   }
 
   // Break up all of our data so each process does not time out.
@@ -192,7 +191,7 @@ function springboard_dw_queue_legacy_contact($records, $operation_details, $idli
       drush_log('Attempted to queue contact ' . $record->id . ' but it is already warehoused', 'warning');
     }
     // Set highwater mark.
-    springboard_dw_queue_legacy_set_highwater_mark('contact', $record->created, $idlist);
+    springboard_dw_queue_legacy_set_highwater_mark('contact', $record->id, $idlist);
   }
   $context['message'] = $operation_details;
 }
@@ -235,7 +234,7 @@ function springboard_dw_queue_legacy_donation($records, $operation_details, $idl
       drush_log('Attempted to queue donation ' . $record->id . ' but it is already warehoused', 'warning');
     }
     // Set highwater mark.
-    springboard_dw_queue_legacy_set_highwater_mark('donation', $record->created, $idlist);
+    springboard_dw_queue_legacy_set_highwater_mark('donation', $record->id, $idlist);
   }
   $context['message'] = $operation_details;
 }
@@ -260,7 +259,7 @@ function springboard_dw_queue_legacy_form($records, $operation_details, $idlist,
       drush_log('Attempted to queue form ' . $record->id . ' but it is already warehoused.', 'warning');
     }
     // Set highwater mark.
-    springboard_dw_queue_legacy_set_highwater_mark('form', $record->created, $idlist);
+    springboard_dw_queue_legacy_set_highwater_mark('form', $record->id, $idlist);
   }
   $context['message'] = $operation_details;
 }
@@ -295,7 +294,7 @@ function springboard_dw_queue_legacy_payment($records, $operation_details, $idli
       drush_log('Attempted to queue payment ' . $record->id . ' but it is already warehoused', 'warning');
     }
     // Set highwater mark.
-    springboard_dw_queue_legacy_set_highwater_mark('payment', $record->created, $idlist);
+    springboard_dw_queue_legacy_set_highwater_mark('payment', $record->id, $idlist);
   }
   $context['message'] = $operation_details;
 }
@@ -345,7 +344,7 @@ function springboard_dw_queue_legacy_submission($records, $operation_details, $i
       drush_log('Attempted to queue submission ' . $record->nid . ' but it is already warehoused', 'warning');
     }
     // Set highwater mark.
-    springboard_dw_queue_legacy_set_highwater_mark('submission', $record->created, $idlist);
+    springboard_dw_queue_legacy_set_highwater_mark('submission', $record->id, $idlist);
   }
   $context['message'] = $operation_details;
 }
@@ -378,7 +377,7 @@ function springboard_dw_queue_legacy_action($records, $operation_details, $idlis
         drush_log('Attempted to queue action ' . $record->id . ' but it is already warehoused', 'warning');
       }
       // Set highwater mark.
-      springboard_dw_queue_legacy_set_highwater_mark('action', $record->created, $idlist);
+      springboard_dw_queue_legacy_set_highwater_mark('action', $record->id, $idlist);
     }
     // Queue petition.
     else if ($record->type == 'springboard_petition') {
@@ -392,7 +391,7 @@ function springboard_dw_queue_legacy_action($records, $operation_details, $idlis
         drush_log('Attempted to queue petition ' . $record->id . ' but it is already warehoused', 'warning');
       }
       // Set highwater mark.
-      springboard_dw_queue_legacy_set_highwater_mark('petition', $record->created, $idlist);
+      springboard_dw_queue_legacy_set_highwater_mark('petition', $record->id, $idlist);
     }
     else {
       drush_log('Record type ' . $record->type . ' on record ' . $record->id . ' not recognized', 'error');
@@ -420,7 +419,7 @@ function springboard_dw_queue_legacy_petition_message($records, $operation_detai
       drush_log('Attempted to queue petition message' . $record->id . ' but it is already warehoused', 'warning');
     }
     // Set highwater mark.
-    springboard_dw_queue_legacy_set_highwater_mark('petition_message', $record->created, $idlist);
+    springboard_dw_queue_legacy_set_highwater_mark('petition_message', $record->id, $idlist);
   }
   $context['message'] = $operation_details;
 }
@@ -466,8 +465,7 @@ function springboard_dw_queue_legacy_salesforce_sync($records, $operation_detail
       drush_log('Attempted to queue salesforce_sync_item ' . $record->id . ' but it is already warehoused', 'warning');
     }
     // Set highwater mark.
-    // @TODO highwater mark not yet supported on $salesforce_sync items.
-    // springboard_dw_queue_legacy_set_highwater_mark('$salesforce_sync_item', $record->created, $idlist);
+    springboard_dw_queue_legacy_set_highwater_mark('$salesforce_sync_item', $record->id, $idlist);
   }
   $context['message'] = $operation_details;
 }
@@ -574,7 +572,6 @@ function springboard_dw_queue_legacy_get_records($type, $limit = FALSE, $highwat
   // Populate list of records to operate on.
   switch ($type) {
     case 'contact':
-      // $records = db_query_range('SELECT uid, created FROM {users} WHERE created >= :highwater ORDER BY created ASC', 0, $limit, array(':highwater' => $highwater))->fetchAll();
       $query = db_select('users', 'u');
       $query->addField('u', 'uid', 'id');
       $query->addField('u', 'created', 'created');
@@ -583,12 +580,11 @@ function springboard_dw_queue_legacy_get_records($type, $limit = FALSE, $highwat
         $query->condition('uid', $idlist, 'IN');
       }
       elseif ($highwater) {
-        $query->condition('created', $highwater, '>=');
+        $query->condition('uid', $highwater, '>');
       }
       break;
 
     case 'donation':
-      // $records = db_query_range('SELECT did, nid, created FROM {fundraiser_donation} WHERE created >= :highwater ORDER BY created ASC', 0, $limit, array(':highwater' => $highwater))->fetchAll();
       $query = db_select('fundraiser_donation', 'f');
       $query->addField('f', 'did', 'id');
       $query->addField('f', 'nid');
@@ -598,12 +594,11 @@ function springboard_dw_queue_legacy_get_records($type, $limit = FALSE, $highwat
         $query->condition('did', $idlist, 'IN');
       }
       elseif ($highwater) {
-        $query->condition('created', $highwater, '>=');
+        $query->condition('did', $highwater, '>');
       }
       break;
 
     case 'action':
-      // $records = db_query_range("SELECT s.sid, s.nid, s.uid, n.type, s.remote_addr, s.submitted AS created FROM {webform_submissions} s INNER JOIN {node} n ON s.nid = n.nid WHERE n.type IN ('sba_message_action', 'sba_social_action', 'springboard_petition') AND s.submitted >= :highwater ORDER BY s.submitted ASC", 0, $limit, array(':highwater' => $highwater))->fetchAll();
       $query = db_select('webform_submissions', 's');
       $query->addField('s', 'sid', 'id');
       $query->addField('s', 'nid');
@@ -618,7 +613,7 @@ function springboard_dw_queue_legacy_get_records($type, $limit = FALSE, $highwat
         $query->condition('sid', $idlist, 'IN');
       }
       elseif ($highwater) {
-        $query->condition('submitted', $highwater, '>=');
+        $query->condition('sid', $highwater, '>');
       }
       break;
 
@@ -627,7 +622,6 @@ function springboard_dw_queue_legacy_get_records($type, $limit = FALSE, $highwat
       break;
 
     case 'petition_message':
-      // $records = db_query_range("SELECT s.sid, s.nid, s.uid, s.submitted AS created FROM {webform_submissions} s INNER JOIN {node} n ON s.nid = n.nid WHERE n.type = 'springboard_petition' AND s.submitted >= :highwater ORDER BY s.submitted ASC", 0, $limit, array(':highwater' => $highwater))->fetchAll();
       $query = db_select('webform_submissions', 's');
       $query->addField('s', 'sid', 'id');
       $query->addField('s', 'nid');
@@ -640,12 +634,11 @@ function springboard_dw_queue_legacy_get_records($type, $limit = FALSE, $highwat
         $query->condition('sid', $idlist, 'IN');
       }
       elseif ($highwater) {
-        $query->condition('submitted', $highwater, '>=');
+        $query->condition('sid', $highwater, '>');
       }
       break;
 
     case 'form':
-      // $records = db_query_range('SELECT n.nid, n.created FROM {node} n INNER JOIN {webform} w ON n.nid = w.nid WHERE n.created >= :highwater ORDER BY created ASC', 0, $limit, array(':highwater' => $highwater))->fetchAll();
       $query = db_select('node', 'n');
       $query->addField('n', 'nid', 'id');
       $query->addField('n', 'created');
@@ -655,7 +648,7 @@ function springboard_dw_queue_legacy_get_records($type, $limit = FALSE, $highwat
         $query->condition('nid', $idlist, 'IN');
       }
       elseif ($highwater) {
-        $query->condition('created', $highwater, '>=');
+        $query->condition('nid', $highwater, '>');
       }
       break;
 
@@ -664,7 +657,6 @@ function springboard_dw_queue_legacy_get_records($type, $limit = FALSE, $highwat
       $excluded_types[] = 'springboard_petition';
       $excluded_types[] = 'sba_message_action';
       $excluded_types[] = 'sba_social_action';
-      // $records = db_query_range("SELECT s.sid, s.nid, s.uid, s.remote_addr, s.submitted AS created FROM {webform_submissions} s INNER JOIN {node} n ON s.nid = n.nid WHERE n.type NOT IN (:excluded_types) AND s.submitted >= :highwater ORDER BY s.submitted ASC", 0, $limit, array(':highwater' => $highwater, ':excluded_types' => $excluded_types))->fetchAll();
       $query = db_select('webform_submissions', 's');
       $query->addField('s', 'sid', 'id');
       $query->addField('s', 'nid');
@@ -678,12 +670,11 @@ function springboard_dw_queue_legacy_get_records($type, $limit = FALSE, $highwat
         $query->condition('sid', $idlist, 'IN');
       }
       elseif ($highwater) {
-        $query->condition('submitted', $highwater, '>=');
+        $query->condition('sid', $highwater, '>');
       }
       break;
 
     case 'payment':
-      // $records = db_query_range('SELECT transaction_id, order_id AS donation_id, remote_id, uid, payment_method, instance_id, currency_code, status, message, remote_status, created, changed FROM {commerce_payment_transaction} WHERE created >= :highwater ORDER BY created ASC', 0, $limit, array(':highwater' => $highwater))->fetchAll();
       $query = db_select('commerce_payment_transaction', 'c');
       $query->addField('c', 'transaction_id', 'id');
       $query->addField('c', 'order_id', 'donation_id');
@@ -702,9 +693,10 @@ function springboard_dw_queue_legacy_get_records($type, $limit = FALSE, $highwat
         $query->condition('transaction_id', $idlist, 'IN');
       }
       elseif ($highwater) {
-        $query->condition('created', $highwater, '>=');
+        $query->condition('transaction_id', $highwater, '>');
       }
       break;
+
     case 'salesforce_sync':
       $query = db_select('salesforce_sync_map', 's');
       $query->addField('s', 'rmid', 'id');
@@ -719,10 +711,9 @@ function springboard_dw_queue_legacy_get_records($type, $limit = FALSE, $highwat
       if ($idlist) {
         $query->condition('rmid', $idlist, 'IN');
       }
-      // @TODO the salesforce_sync_map does not have a created field.
-      // elseif ($highwater) {
-      //   $query->condition('created', $highwater, '>=');
-      // }
+      elseif ($highwater) {
+        $query->condition('rmid', $highwater, '>');
+      }
       break;
 
     default:
