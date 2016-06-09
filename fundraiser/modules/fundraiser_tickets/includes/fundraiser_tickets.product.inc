@@ -131,7 +131,7 @@ function _fundraiser_tickets_product_fields() {
       'entity_type' => 'commerce_product',
       'field_name' => 'fr_tickets_quantity_displayed',
       'label' => 'Quantity displayed',
-      'required' => 1,
+      'required' => 0,
       'settings' => array(
         'text_processing' => 0,
         'user_register_form' => FALSE,
