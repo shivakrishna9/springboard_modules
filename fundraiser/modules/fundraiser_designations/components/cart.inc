@@ -97,8 +97,6 @@ function webform_designations_cart_prerender($element) {
   $id = 'webform-component-' . str_replace('_', '-', implode('--', array_slice($element['#parents'], 1)));
   $element['#attributes']['id'] = $id;
   drupal_add_js(array('fundraiserDesignationsCart' => array('table' => array('id' => $id))), 'setting');
-  drupal_add_library('system','effects');
-  drupal_add_library('system','effects.slide');
 
   return $element;
 }

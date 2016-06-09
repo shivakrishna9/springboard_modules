@@ -61,7 +61,10 @@ td.fund-cancel {
   color: red;
   cursor: pointer;
   width: 10px;
+}
 
+td.fund-amount, td.fund-amount-empty {
+  width: 100px;
 }
 
 tr.cart-fund-empty td:first-child {
@@ -70,4 +73,8 @@ tr.cart-fund-empty td:first-child {
 
 td.fund-name {
   min-width: 200px;
+}
+
+tr.cart-fund-row {
+  border-bottom: 1px solid #ccc;
 }

@@ -13,15 +13,19 @@
     this.fundGroups = $('.designation-group-wrapper');
     this.cart = $('.fundraiser-designation-cart-wrapper');
     this.cartTemplate = '<tr class="cart-fund-row"><td class="fund-cancel">x</td><td class="fund-name"></td><td class="fund-amount"></td> </tr>';
-    this.addListener();
+    this.errorTemplate = '<div class="error-message"></div>';
+    this.addListeners();
     this.cancelButton();
-  }
+    var cart_total = $('#cart_total').val();
+    var val = cart_total > 0 ? cart_total : 0;
+    $('#cart_total').val(Drupal.settings.fundraiser.currency.symbol + (val).formatMoney(2, '.', ','));
+  };
 
   /**
    * Set the amounts on select
    */
   // Iterate over each field in the settings and add listener
-  Drupal.fundraiserDesignations.prototype.addListener = function() {
+  Drupal.fundraiserDesignations.prototype.addListeners = function() {
 
     var self = this;
     $.each(self.fundGroups, function(key, item) {
@@ -33,8 +37,25 @@
       var recurAmts = $('div[id*="recurring-amounts-"]', fundGroup);
       var otherAmt = $('input[type="text"]', fundGroup);
 
+      $(window).ready(function () {
+        self.validateOtherAmt(fundGroupId);
+      });
+
       otherAmt.keyup(function() {
-        //@todo clear radios
+        $('input[type="radio"]', fundGroup).each(function(){
+          $(this).prop('checked', false);
+        })
+      });
+
+      otherAmt.blur(function() {
+        var message = $('label.error').text();
+        $('label.error').remove();
+      });
+
+      $.each($('input[type="radio"]', fundGroup), function(){
+        $(this).on('click', function(){
+          otherAmt.val('');
+        });
       });
 
       $('input[type="submit"]', fundGroup).click(function() {
@@ -47,7 +68,13 @@
 
   Drupal.fundraiserDesignations.prototype.addFund = function(button, fundGroupId, selector, defaultAmts, recurAmts, otherAmt) {
     var self = this;
-    self.validateFund(fundGroupId, selector, defaultAmts, recurAmts, otherAmt);
+
+    var go = self.validateFund(fundGroupId, selector, defaultAmts, recurAmts, otherAmt);
+
+    if (go != 'ok') {
+      return;
+    }
+
     var amt = 0;
     if (defaultAmts.length > 0 && defaultAmts.is(':visible')) {
       amt = $(defaultAmts).find('input:checked').val();
@@ -64,8 +91,25 @@
     var newRow = $(self.cartTemplate);
     $('.fund-amount', newRow).text(amt)
     $('.fund-name', newRow).text(fundName);
-    newRow.insertBefore('.cart-total-row').hide().show(300);
-    if($(".cart-fund-empty").is(':visible')) {
+    newRow.attr('data-fund-id', fundId);
+    newRow.attr('data-fund-amount', amt);
+
+    var exists = false;
+    $('tr', self.cart).each(function(){
+      if($(this).attr('data-fund-id') == fundId) {
+        var oldAmt = parseInt($('.fund-amount', $(this)).text());
+        var newAmt = parseInt($('.fund-amount', newRow).text()) + oldAmt;
+        $('.fund-amount', newRow).text(newAmt)
+        $(this).replaceWith(newRow);
+        exists = true;
+      }
+    });
+
+    if (!exists) {
+      newRow.insertBefore('.cart-total-row').hide().show(300);
+    }
+
+    if ($(".cart-fund-empty").is(':visible')) {
       $(".cart-fund-empty").hide();
     }
     self.cancelButton();
@@ -73,8 +117,73 @@
 
   }
 
+  Drupal.fundraiserDesignations.prototype.validateOtherAmt = function(groupId) {
+      if ($('#fd-other-' + groupId)[0]) {
+        $('#fd-other-' + groupId).rules("add", {
+          amount: true,
+          min: parseFloat(Drupal.settings.fundraiserWebform.minimum_donation_amount),
+          messages: {
+            required: "This field is required",
+            amount: "Enter a valid amount",
+            min: "The amount entered is less than the minimum donation amount."
+          }
+        });
+      }
+  };
+
   Drupal.fundraiserDesignations.prototype.validateFund = function(fundGroupId, selector, defaultAmts, recurAmts, otherAmt) {
     var self = this;
+    var fundSel = selector.val() != 0 ? true : false;
+    if (defaultAmts.length > 0 && defaultAmts.is(':visible')) {
+      var amt = $(defaultAmts).find('input:checked').val();
+    }
+    if (recurAmts.length > 0 && recurAmts.is(':visible')) {
+      amt = $(recursAmts).find('input:checked').val();
+    }
+    if (otherAmt.val()) {
+      amt = otherAmt.val();
+    }
+    if (typeof(amt) !== 'undefined') {
+      var amtSel = true;
+    }
+    else {
+      amtSel = false;
+    }
+
+    var message = 'ok';
+    if (!fundSel &&!amtSel) {
+      message = 'Please choose a fund and select an amount.';
+    }
+    else if(!fundSel) {
+      message = 'Please choose a fund.';
+    }
+    else if(!amtSel) {
+      message = 'Please choose a fund and select an amount'
+    }
+
+    var amtFloat = parseFloat(amt);
+    console.log(amtFloat)
+    if (Number.isNaN(amtFloat) || !$.isNumeric(amt)) {
+      message += ' Not a valid amount.';
+    }
+    else {
+      var MinAmt = parseFloat(Drupal.settings.fundraiserWebform.minimum_donation_amount);
+      if (amtFloat < MinAmt) {
+        message += ' Below the minumum amount.'
+      }
+    }
+
+    var errorContain = $("#designation-group-" + fundGroupId + " .designation-group-title");
+    if (message != 'ok') {
+      var error = $(self.errorTemplate).text(message);
+        errorContain.find('.error-message').remove();
+        errorContain.append(error)
+    }
+    else {
+      errorContain.find('.error-message').remove();
+    }
+
+    return message;
   }
 
   /**
@@ -102,7 +211,6 @@
   Drupal.fundraiserDesignations.prototype.setAmounts = function() {
     var self = this,
     total = self.calcTotal();
-    console.log(total);
     $('#cart_total').val(Drupal.settings.fundraiser.currency.symbol + (total).formatMoney(2, '.', ','));
     $("input[name='submitted[amount]']").val((total).formatMoney(2, '.', ''));
   }

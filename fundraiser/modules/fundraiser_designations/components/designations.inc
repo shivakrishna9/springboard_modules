@@ -95,6 +95,7 @@ function _webform_render_designations($component, $value = NULL, $filter = TRUE)
 function _webform_render_funds_multiple(&$element, $node, $group_wrapper, $funds, $amounts, $groups_by_weight) {
 
   $options = array();
+  $options[] = 'Select';
   foreach ($funds as $fund) {
     $options[$fund->sku] = $fund->title;
   }

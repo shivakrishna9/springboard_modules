@@ -168,6 +168,8 @@ function fundraiser_designations_edit_settings($node) {
  * Implements hook_form_alter().
  */
 function fundraiser_designations_form_alter(&$form, &$form_state, $form_id) {
+  drupal_add_library('system','effects');
+  drupal_add_library('system','effects.slide');
   // Do not allow users to muck with defined form keys in component
   // editting form. They're named what they're named for a reason and we need
   // those keys to remain unharmed.
@@ -487,40 +489,42 @@ function fundraiser_designations_form_node_type_form_validate($form, &$form_stat
 }
 
 function fundraiser_designations_form_webform_client_form_alter(&$form, &$form_state) {
-  $designations =& $form['submitted']['designations']['designation_box'];
-  foreach (element_children($designations) as $child) {
-    if (!empty($form['submitted']['recurs_monthly']) && !empty($form['#node']->recurring_dual_ask_amounts)) {
-      if ($form['submitted']['recurs_monthly']['#type'] != 'radios') {
-        $designations[$child]['recurring_amounts_' . $child]['#states'] = array(
-          'visible' => array(
-            'input[name="submitted[recurs_monthly][recurs]"]' => array(
-              'checked' => TRUE,
+  if ($ticket_type = fundraiser_designations_is_designation_type($form['#node']->type)) {
+    $designations =& $form['submitted']['designations']['designation_box'];
+    foreach (element_children($designations) as $child) {
+      if (!empty($form['submitted']['recurs_monthly']) && !empty($form['#node']->recurring_dual_ask_amounts)) {
+        if ($form['submitted']['recurs_monthly']['#type'] != 'radios') {
+          $designations[$child]['recurring_amounts_' . $child]['#states'] = array(
+            'visible' => array(
+              'input[name="submitted[recurs_monthly][recurs]"]' => array(
+                'checked' => TRUE,
+              ),
             ),
-          ),
-        );
-        $designations[$child]['default_amounts_' . $child]['#states'] = array(
-          'visible' => array(
-            'input[name="submitted[recurs_monthly][recurs]"]' => array(
-              'checked' => FALSE,
+          );
+          $designations[$child]['default_amounts_' . $child]['#states'] = array(
+            'visible' => array(
+              'input[name="submitted[recurs_monthly][recurs]"]' => array(
+                'checked' => FALSE,
+              ),
             ),
-          ),
-        );
-      }
-      else {
-        $designations[$child]['recurring_amounts_' . $child]['#states'] = array(
-          'visible' => array(
-            'input[name="submitted[recurs_monthly]"]' => array(
-              'value' => 'recurs',
+          );
+        }
+        else {
+          $designations[$child]['recurring_amounts_' . $child]['#states'] = array(
+            'visible' => array(
+              'input[name="submitted[recurs_monthly]"]' => array(
+                'value' => 'recurs',
+              ),
             ),
-          ),
-        );
-        $designations[$child]['default_amounts_' . $child]['#states'] = array(
-          'visible' => array(
-            'input[name="submitted[recurs_monthly]"]' => array(
-              '!value' => 'recurs',
+          );
+          $designations[$child]['default_amounts_' . $child]['#states'] = array(
+            'visible' => array(
+              'input[name="submitted[recurs_monthly]"]' => array(
+                '!value' => 'recurs',
+              ),
             ),
-          ),
-        );
+          );
+        }
       }
     }
   }
