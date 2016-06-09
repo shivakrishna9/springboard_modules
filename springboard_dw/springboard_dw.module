@@ -1509,8 +1509,6 @@ function springboard_dw_map_contact_item($contact_id, $user_data = array(), $upd
   $contact_item['search_engine'] = $user_data['sbp_search_engine'];
   $contact_item['search_string'] = $user_data['sbp_search_string'];
   $contact_item['user_agent'] = $user_data['sbp_user_agent'];
-  $contact_item['salesforce_account_id'] = $user_data['sbp_salesforce_account_id'];
-  $contact_item['salesforce_contact_id'] = $user_data['sbp_salesforce_contact_id'];
   $contact_item['created_at'] = $user_data['created'];
   $contact_item['updated_at'] = $user_data['created'];
 
