@@ -3128,13 +3128,13 @@ function _fundraiser_get_tracking_by_nid($nid) {
  * CRUD style DB function for fundraiser_tracking.
  */
 function _fundraiser_update_tracking($tracking) {
-  /** 
+  /**
    * Code commented out on 2/18/2016 by pcave for performance reasons.
    * When a donation form encounters significant traffic, updating a single row
-   * in this table over and over during a request can cause lock contentions. 
+   * in this table over and over during a request can cause lock contentions.
    * This eventually cascades to other database operations thus slowing down
    * the entire response.
-   * 
+   *
    * $tracking = (array) $tracking;
    * $tracking_data = FALSE;
    * if (isset($tracking['nid'])) {
@@ -3154,13 +3154,13 @@ function _fundraiser_update_tracking($tracking) {
  * CRUD style DB function for fundraiser_tracking.
  */
 function _fundraiser_delete_tracking($nid) {
-  /** 
+  /**
    * Code commented out on 2/18/2016 by pcave for performance reasons.
    * When a donation form encounters significant traffic, updating a single row
-   * in this table over and over during a request can cause lock contentions. 
+   * in this table over and over during a request can cause lock contentions.
    * This eventually cascades to other database operations thus slowing down
    * the entire response.
-   * 
+   *
    * db_delete('fundraiser_tracking')->condition('nid', $nid)->execute();
    */
 }
@@ -3169,13 +3169,13 @@ function _fundraiser_delete_tracking($nid) {
  * DB function for updating the stats in fundraiser_tracking.
  */
 function _fundraiser_update_tracking_value($nid, $field) {
-   /** 
+   /**
    * Code commented out on 2/18/2016 by pcave for performance reasons.
    * When a donation form encounters significant traffic, updating a single row
-   * in this table over and over during a request can cause lock contentions. 
+   * in this table over and over during a request can cause lock contentions.
    * This eventually cascades to other database operations thus slowing down
    * the entire response.
-   * 
+   *
    * $tracking = _fundraiser_get_tracking_by_nid($nid);
    * // No tracking data? Create one.
    * if (!$tracking) {
@@ -3617,4 +3617,11 @@ function fundraiser_log_donation_processing($donation, $log = array()) {
  */
 function _fundraiser_amount_value_sanitize($amount) {
   return preg_replace('/[^\d\.]/i', '', $amount);
+}
+
+/**
+ * Implements hook_springboard_node_expire_expiration_message().
+ */
+function fundraiser_springboard_node_expire_node_view_alter(&$node) {
+  $node->content['webform']['#access'] = FALSE;
 }
