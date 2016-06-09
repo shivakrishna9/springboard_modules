@@ -34,4 +34,9 @@
   </div>
 </div>
 <h2>Legislative Target Results</h2>
+<div class="download-csv-results feed-icon-wrapper">
+  <a href="<?php print $legislative_results_download_link; ?>" target="_blank"
+   class="views-data-export"><span class="img-caption">Download as
+      .CSV</span></a>
+</div>
 <?php print $targets_table; ?>
