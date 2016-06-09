@@ -4,7 +4,10 @@
  * Admin form definition for salesforce_donation_history.
  */
 
-function salesforce_donation_history_admin() {
+/**
+ * Page callback.
+ */
+function salesforce_donation_history_query() {
   $form = array();
   $form['salesforce_donation_history_query'] = array(
     '#type' => 'textarea',
@@ -12,7 +15,47 @@ function salesforce_donation_history_admin() {
     '#default_value' => variable_get('salesforce_donation_history_query', DONATION_HISTORY_DEFAULT_SOQL),
     '#description' => "Enter the Salesforce SOQL query used to get opportunities. The query must end in <samp>WHERE AccountId = ':accountId'</samp>. Do not include a LIMIT clause.",
   );
-  $form['#validate'][] = 'salesforce_donation_history_admin_validate';
+  $form['#validate'][] = 'salesforce_donation_history_query_validate';
+  $form = system_settings_form($form);
+  return $form;
+}
+
+/**
+ * Page callback.
+ */
+function salesforce_donation_history_fields() {
+  $form = array();
+  $field_definitions = variable_get('salesforce_donation_history_query_fields');
+  $form['sf-fields'] = array(
+    '#prefix' => '<div id="sf-fields">',
+    '#suffix' => '</div>',
+    '#tree' => TRUE,
+    '#theme' => 'salesforce_donation_history_textfield_table'
+  );
+  foreach ($field_definitions as $sf_table => $sf_field) {
+    foreach ($sf_field as $name => $value) {
+      $form['sf-fields'][$sf_table . '-' . $name]['label'] = array(
+        '#type' => 'textfield',
+        '#default_value' => '',
+        '#extra_data' => array(
+          'field_table' => $sf_table,
+          'field_name' => $name,
+        ),
+      );
+      $form['sf-fields'][$sf_table . '-' . $name]['show_on_tab'] = array(
+        '#type' => 'checkbox',
+        '#default_value' => '',
+      );
+      $form['sf-fields'][$sf_table . '-' . $name]['show_on_receipt'] = array(
+        '#type' => 'checkbox',
+        '#default_value' => '',
+      );
+      $form['sf-fields'][$sf_table . '-' . $name]['show_on_summary'] = array(
+        '#type' => 'checkbox',
+        '#default_value' => '',
+      );
+    }
+  }
   $form = system_settings_form($form);
   return $form;
 }
@@ -20,11 +63,12 @@ function salesforce_donation_history_admin() {
 /**
  * Validation callback for salesforce_donation_history_admin form.
  */
-function salesforce_donation_history_admin_validate($form, &$form_state){
-  // $result = salesforce_donation_history_test_query($form_state['input']['salesforce_donation_history_query']);
-  if (!salesforce_donation_history_test_query($form_state['input']['salesforce_donation_history_query'])) {
+function salesforce_donation_history_query_validate($form, &$form_state){
+  $result = salesforce_donation_history_test_query($form_state['input']['salesforce_donation_history_query']);
+  if ($result->size != 1) {
     form_set_error('salesforce_donation_history_query', t('There was a problem performing this query. A sample record could not be found.'));
   }
+  variable_set('salesforce_donation_history_query_fields', salesforce_donation_history_get_field_definitions($result->records));
 }
 
 /**
@@ -42,10 +86,5 @@ function salesforce_donation_history_test_query($query) {
   $soap = new SalesforceSoapPartner($sfapi);
   $response = $soap->query($soql);
   $result = new QueryResult($response);
-  dpm($result);
-  // Print createQueryResultTable($response->records, 0);.
-  if ($result->size != 1) {
-    return FALSE;
-  }
-  return TRUE;
+  return $result;
 }
