@@ -1,10 +1,8 @@
 (function ($) {
+
   Drupal.behaviors.fundraiserDesignations = {
     attach: function(context, settings) {
-
-      if (Drupal.settings.fundraiserDesignations) {
         new Drupal.fundraiserDesignations();
-      }
     }
   };
 
@@ -12,51 +10,101 @@
    * Set the amounts on page load
    */
   Drupal.fundraiserDesignations = function() {
-    this.productPrices = Drupal.settings.fundraiserDesignations.productPrices;
-    this.setAmounts();
-    this.productSelect();
+    this.fundGroups = $('.designation-group-wrapper');
+    this.cart = $('.fundraiser-designation-cart-wrapper');
+    this.cartTemplate = '<tr class="cart-fund-row"><td class="fund-cancel">x</td><td class="fund-name"></td><td class="fund-amount"></td> </tr>';
+    this.addListener();
+    this.cancelButton();
   }
 
   /**
    * Set the amounts on select
    */
   // Iterate over each field in the settings and add listener
-  Drupal.fundraiserDesignations.prototype.productSelect = function() {
+  Drupal.fundraiserDesignations.prototype.addListener = function() {
+
     var self = this;
-    $.each(self.productPrices, function(productId, price) {
-      $('#product-' + productId + '-product-quant').change(function() {
-        self.setAmounts();
+    $.each(self.fundGroups, function(key, item) {
+
+      var fundGroup = $(item);
+      var fundGroupId = item['id'].replace('designation-group-', '')
+      var selector = fundGroup.find('select');
+      var defaultAmts = $('div[id*="default-amounts-"]', fundGroup);
+      var recurAmts = $('div[id*="recurring-amounts-"]', fundGroup);
+      var otherAmt = $('input[type="text"]', fundGroup);
+
+      otherAmt.keyup(function() {
+        //@todo clear radios
+      });
+
+      $('input[type="submit"]', fundGroup).click(function() {
+        button = $(this);
+        self.addFund(button, fundGroupId, selector, defaultAmts, recurAmts, otherAmt);
+        return false;
       });
     });
+  };
 
-    $('#fundraiser-products-extra-donation').keyup(function() {
-      self.setAmounts();
-    });
+  Drupal.fundraiserDesignations.prototype.addFund = function(button, fundGroupId, selector, defaultAmts, recurAmts, otherAmt) {
+    var self = this;
+    self.validateFund(fundGroupId, selector, defaultAmts, recurAmts, otherAmt);
+    var amt = 0;
+    if (defaultAmts.length > 0 && defaultAmts.is(':visible')) {
+      amt = $(defaultAmts).find('input:checked').val();
+    }
+    if (recurAmts.length > 0 && recurAmts.is(':visible')) {
+      amt = $(recursAmts).find('input:checked').val();
+    }
+    if (otherAmt.val()) {
+      amt = otherAmt.val();
+    }
+
+    var fundId = selector.val()
+    var fundName = $('option:selected', selector).text();
+    var newRow = $(self.cartTemplate);
+    $('.fund-amount', newRow).text(amt)
+    $('.fund-name', newRow).text(fundName);
+    newRow.insertBefore('.cart-total-row').hide().show(300);
+    if($(".cart-fund-empty").is(':visible')) {
+      $(".cart-fund-empty").hide();
+    }
+    self.cancelButton();
+    self.setAmounts();
 
   }
+
+  Drupal.fundraiserDesignations.prototype.validateFund = function(fundGroupId, selector, defaultAmts, recurAmts, otherAmt) {
+    var self = this;
+  }
+
+  /**
+   * Set the amounts on select
+   */
+    // Iterate over each field in the settings and add listener
+  Drupal.fundraiserDesignations.prototype.cancelButton = function() {
+    var self = this;
+    $.each($('tr', self.cart), function(key, row) {
+      $('.fund-cancel', this).click(function() {
+         $(row).hide(300, function(){
+           $(row).remove();
+           self.setAmounts();
+           if ($('tr.cart-fund-row', self.cart).length == 1) {
+             $(".cart-fund-empty").show(100);
+           }
+         });
+      });
+    });
+  };
 
   /**
    * Update the various HTML elements with our amounts
    */
   Drupal.fundraiserDesignations.prototype.setAmounts = function() {
     var self = this,
-    total = self.calcTotal(),
-    extra = self.calcExtra(),
-    totalQuantity = self.calcQuantity();
-    $('#fundraiser-products-total-cost').text(Drupal.settings.fundraiser.currency.symbol + (total).formatMoney(2, '.', ','));
-    $('#fundraiser-products-extra-donation-display').text(Drupal.settings.fundraiser.currency.symbol + (extra).formatMoney(2, '.', ','));
+    total = self.calcTotal();
+    console.log(total);
+    $('#cart_total').val(Drupal.settings.fundraiser.currency.symbol + (total).formatMoney(2, '.', ','));
     $("input[name='submitted[amount]']").val((total).formatMoney(2, '.', ''));
-    $('#fundraiser-products-total-quant').text(totalQuantity);
-    $.each(self.productPrices, function(productId, price) {
-      $('#product-' + productId + '-products-total').text(price.currency.symbol + (self.calcField(productId, price.amount)).formatMoney(2, '.', ','));
-    });
-  }
-
-  /**
-   * Calculate the value of a field
-   */
-  Drupal.fundraiserDesignations.prototype.calcField = function(productId, price) {
-    return $('#product-' + productId + '-product-quant').val() * parseFloat(price.replace(/\,/g,''));
   }
 
   /**
@@ -65,25 +113,10 @@
   Drupal.fundraiserDesignations.prototype.calcTotal = function() {
     var self = this;
     var total = 0;
-    $.each(self.productPrices, function(productId, price) {
-      total = total + (parseFloat(price.amount.replace(/\,/g,'')) * $('#product-' + productId + '-product-quant').val());
+    $.each($('td.fund-amount', self.cart), function(i, price) {
+      total = total + parseInt($(price).text());
     });
-    if ($('#fundraiser-products-extra-donation').val()){
-      total = total + parseFloat($('#fundraiser-products-extra-donation').val().replace(/\,/g,''));
-    }
     return total;
-  }
-
-  /**
-   * Calculate the quantity of products selected
-   */
-  Drupal.fundraiserDesignations.prototype.calcQuantity = function() {
-    var self = this;
-    var quantity = 0;
-    $.each(self.productPrices, function(productId, price) {
-       quantity = quantity + Number($('#product-' + productId + '-product-quant').val());
-    });
-    return quantity;
   }
 
   /**

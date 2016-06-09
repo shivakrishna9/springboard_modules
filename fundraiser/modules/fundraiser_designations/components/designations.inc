@@ -181,7 +181,7 @@ function _fundraiser_designations_build_child_elements($id, $item, &$element, $a
     }
     $child = array();
     $child['#type'] = 'radios';
-    $child['#id'] = 'recurring-mounts-' . $id;
+    $child['#id'] = 'recurring-amounts-' . $id;
     $child['#extra']['group_id'] = $id;
     $child['#options'] = $recurring_donation_amounts;
     $child['#title'] = '';

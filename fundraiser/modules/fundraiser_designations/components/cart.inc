@@ -97,6 +97,9 @@ function webform_designations_cart_prerender($element) {
   $id = 'webform-component-' . str_replace('_', '-', implode('--', array_slice($element['#parents'], 1)));
   $element['#attributes']['id'] = $id;
   drupal_add_js(array('fundraiserDesignationsCart' => array('table' => array('id' => $id))), 'setting');
+  drupal_add_library('system','effects');
+  drupal_add_library('system','effects.slide');
+
   return $element;
 }
 
@@ -118,6 +121,13 @@ function theme_fundraiser_designations_fund_cart_component($vars) {
       '#suffix' => '</div>',
       '#weight' => -6,
     ),
+    'fund_catcher' => array(
+      '#type' => 'markup',
+      '#markup' => drupal_render($element['cart']['fund_catcher']),
+      '#prefix' => '<div id="fund-catcher">',
+      '#suffix' => '</div>',
+      '#weight' => -6,
+    ),
   );
   $output .= drupal_render($build);
 
@@ -126,6 +136,7 @@ function theme_fundraiser_designations_fund_cart_component($vars) {
 
 function fundraiser_designations_cart_table($element) {
   $header = array(
+    '',
     'Fund',
     'Amount',
   );
@@ -134,19 +145,25 @@ function fundraiser_designations_cart_table($element) {
   $rows[] = array(
     'data' => array(
       array(
+        'data' => '&nbsp;',
+      ),
+      array(
         'data' => t('No funds selected'),
         'class' => array('fund-name'),
       ),
       array(
-        'data' => t('0.00'),
-        'class' => array('fund-amount'),
+        'data' => '&nbsp;',
+        'class' => array('fund-amount-empty'),
       ),
     ),
     'class' => array('cart-fund-row', 'cart-fund-empty'),
   );
   $rows[] = array(
     'data' => array(
-      check_plain($element['cart']['cart_total']['#title']),
+      array(
+        'data' => check_plain($element['cart']['cart_total']['#title']),
+        'colspan' => 2,
+      ),
       array(
         'data'  => drupal_render($element['cart']['cart_total']),
         'class' => array('cart-total-cell'),

@@ -56,3 +56,18 @@ label[for*="fd-other"] {
 .fundraiser-designation-cart-table {
   width: 100%;
 }
+
+td.fund-cancel {
+  color: red;
+  cursor: pointer;
+  width: 10px;
+
+}
+
+tr.cart-fund-empty td:first-child {
+  width: 10px;
+}
+
+td.fund-name {
+  min-width: 200px;
+}
