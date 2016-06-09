@@ -66,3 +66,38 @@ function springboard_dw_get_donation_types() {
   }
   return $list;
 }
+
+/**
+ * Examines sync map items and determines their corresponding
+ * data warehouse types.
+ *
+ * @param string $module
+ *   The name of the handling module.
+ * @param string $delta
+ *   The delta of the handling module.
+ * @param string $object_type
+ *   The type of Salesforce object.
+ *
+ * @return string
+ */
+function springboard_dw_convert_sf_type($module, $delta, $object_type) {
+
+  if ($delta == 'user') {
+    return 'Contact';
+  }
+
+  if ($delta == 'sba_message_action' || $delta == 'sba_social_action' || $delta == 'springboard_petition') {
+    return 'Form';
+  }
+
+  if ($delta == 'donation') {
+    return 'Donation';
+  }
+
+  if ($object_type == 'sb_Actions_Taken__c') {
+    return 'Action';
+  }
+
+  // If it's not one of the above types we're not going to deal with it.
+  return FALSE;
+}

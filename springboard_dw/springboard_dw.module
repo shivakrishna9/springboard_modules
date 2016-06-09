@@ -708,6 +708,61 @@ function springboard_dw_webform_user_submission_insert($node, $submission, $acco
 }
 
 /**
+ * Implements hook_salesforce_sync_pass_item().
+ */
+function springboard_dw_salesforce_sync_pass_item($item, $result) {
+  // Create a data structure that mimics a sync_map record.
+  $map_item = array(
+    'drupal_id' => $item->drupal_id,
+    'module' => $item->module,
+    'delta' => $item->delta,
+    'sfid' => $result->id,
+    'object_type' => $item->object_type,
+  );
+
+  $sb_vendor_mapping_item = springboard_dw_map_sync_map_item($map_item);
+
+  // Get the Drupal data warehouse queue.
+  $queue = DrupalQueue::get("springboard_dw_export");
+
+  // Create the queue item.
+  $queue->createItem($sb_vendor_mapping_item);
+
+  // Log the queue item.
+  springboard_dw_log_queue_item($sb_vendor_mapping_item);
+}
+
+/**
+ * Map a sync map item to an array formatted for an API call.
+ *
+ * @param object $submission
+ *   The submission object.
+ * @param array $submitted_data
+ *   The submitted data.
+ *
+ * @return array
+ *   The submission item mapped to API consumable format.
+ */
+function springboard_dw_map_sync_map_item($item) {
+  $sb_vendor_mapping_item = array();
+
+  $dw_exportable_type = springboard_dw_convert_sf_type($item['module'], $item['delta'], $item['object_type']);
+
+  if ($dw_exportable_type) {
+    $sb_vendor_mapping_item['queue_type'] = 'vendor_mapping';
+    $sb_vendor_mapping_item['dw_id'] = $item['drupal_id'];
+    $sb_vendor_mapping_item['dw_type'] = $dw_exportable_type;
+    $sb_vendor_mapping_item['group_id'] = '';
+    $sb_vendor_mapping_item['external_id'] = $item['sfid'];
+    $sb_vendor_mapping_item['external_type'] = $item['object_type'];
+    $sb_vendor_mapping_item['external_system'] = 'Salesforce';
+    $sb_vendor_mapping_item['extra_props'] = array();
+  }
+
+  return $sb_vendor_mapping_item;
+}
+
+/**
  * Map a webform submission to an array formatted for an API call.
  *
  * @param object $submission
