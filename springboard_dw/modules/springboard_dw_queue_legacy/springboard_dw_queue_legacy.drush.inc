@@ -465,7 +465,7 @@ function springboard_dw_queue_legacy_salesforce_sync($records, $operation_detail
       drush_log('Attempted to queue salesforce_sync ' . $record->id . ' but it is already warehoused', 'warning');
     }
     // Set highwater mark.
-    springboard_dw_queue_legacy_set_highwater_mark('$salesforce_sync', $record->id, $idlist);
+    springboard_dw_queue_legacy_set_highwater_mark('salesforce_sync', $record->id, $idlist);
   }
   $context['message'] = $operation_details;
 }
