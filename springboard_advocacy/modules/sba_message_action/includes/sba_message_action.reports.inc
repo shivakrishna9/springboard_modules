@@ -14,6 +14,7 @@ function sba_message_action_performance_page($nid) {
 
   // API Client instance
   $client = springboard_advocacy_api_call();
+
   // Try to make the API call and if it fails return a response.
   $responses = sba_message_action_report_cache($client, $node->advocacy_id);
   // Check the status of the API call return and if it's an error return that to the browser.
@@ -56,6 +57,14 @@ function sba_message_action_performance_targets_table($responses, $node) {
     'nodeId' => $node->nid
   ));
 
+  // Get the advocacy endpoint for use in the legislative results download link
+  $springboard_advocacy_endpoint = variable_get
+  ('springboard_advocacy_server_url');
+
+  // Get the advocacy access token for use in the legislative results
+  // download link
+  $auth_token = variable_get('springboard_advocacy_access_token')->access_token;
+
   $output = theme('messsage_deliverability_dashboard', array(
     'targets_table_header'           => $header,
     'targets'                        => $rows,
@@ -63,6 +72,9 @@ function sba_message_action_performance_targets_table($responses, $node) {
     'nodeId'                         => $node->nid,
     'tabs'                           => $tabs,
     'deliverability_cache_timestamp' => $responses['deliverability_cache_timestamp'],
+    'legislative_results_download_link' =>
+      preg_replace("@//@", "/", "$springboard_advocacy_endpoint/api/v1
+      /deliverability/action/$advocacy_id/download?access_token=$auth_token"),
   ));
 
   return $output;
