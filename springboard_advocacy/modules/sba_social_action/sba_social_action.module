@@ -185,7 +185,7 @@ function sba_social_action_node_load($nodes, $types) {
       $visibility = db_query('select visibility from {springboard_action_opt_in_block} WHERE nid=:nid', array(':nid' => $node->nid))->fetchField();
       $node->show_my_name = $visibility;
       // Unset form layout if default.
-      if (isset($node->form_layouts) &&  $node->form_layouts == 'one_column ') {
+      if (isset($node->form_layouts) &&  $node->form_layouts == 'one_column' || arg(2) == 'submission') {
         unset($node->form_layouts);
       }
       if (!empty($node->message_ids)) {
@@ -372,8 +372,7 @@ function sba_social_action_form_alter(&$form, &$form_state, $form_id) {
     // Yes it is the user-facing form. Add all our custom non-webform-component
     // form items which insert or display message-entity data in the
     // message-action webform.
-    if ($client_form !== FALSE) {
-
+    if ($client_form !== FALSE && arg(2) != 'submission') {
       if (empty($form['#node']->show_my_name)) {
         $form['submitted']['sbp_sba_action_optin']['#access'] = FALSE;
       }
@@ -409,7 +408,7 @@ function sba_social_action_form_sba_social_action_node_form_alter(&$form, &$form
     '#weight' => 6,
     '#required' => TRUE,
   );
-//
+
   $form['#group_children']['social_submit_button_text'] = 'group_sba_social_page_elements';
   // Loads the springboard_taxonomy_options fieldset and form js/css if it
   // is not already present.
@@ -459,6 +458,14 @@ function sba_social_action_form_sba_social_action_node_form_alter(&$form, &$form
   $form['actions']['submit']['#validate'][] = 'sba_social_action_form_sba_social_action_node_form_validate';
   $form['actions']['submit']['#submit'][] = 'sba_social_action_form_sba_social_action_node_form_submit';
 
+  // Hide field_sba_social_require_auth field if twitter configuration is not
+  // complete at admin/config/services/advocacy.
+  if (empty(variable_get('social_actions_twitter_callback_url')) ||
+      empty(variable_get('social_action_twitter_consumer_key')) ||
+      empty(variable_get('social_action_twitter_consumer_secret'))) {
+    $form['field_sba_social_require_auth'][LANGUAGE_NONE]['#type'] = 'value';
+    $form['field_sba_social_require_auth'][LANGUAGE_NONE]['#default_value'][0] = 0;
+  }
 }
 
 /**
@@ -916,6 +923,21 @@ function sba_social_action_preprocess_webform_confirmation(&$vars) {
   if ($vars['node']->type == 'sba_social_action' && (empty($_SESSION['deliverable_social_messages']))) {
     if (isset($vars['node']->custom_fail_message) && !empty($vars['node']->messages)) {
       $vars['confirmation_message'] = check_markup($vars['node']->custom_fail_message, 'full_html');
+    }
+  }
+}
+
+
+/**
+ * Implements hook_page_wrappers_page_node_alter()
+ *
+ * Put the page wrapper around the multi-step form.
+ */
+function sba_social_action_page_wrappers_page_node_alter(&$node) {
+  if (arg(2) == 'social-message-preview' && is_numeric(arg(1))) {
+    $is_wrapped = node_load(arg(1));
+    if (isset($is_wrapped->type) && $is_wrapped->type == 'sba_social_action') {
+      $node = $is_wrapped;
     }
   }
 }

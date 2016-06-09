@@ -64,6 +64,11 @@ function sba_message_action_send_message(array $user_message, array $form_state)
     if (isset($response->data)) {
       // We got a valid response, build the confirmation message array.
       sba_message_action_set_confirmation_session_vars($response->data, $contact);
+
+      // Fire the success hook for one-step actions.
+      if (!empty($multi_flow[0]['value']) && $multi_flow[0]['value'] != 'multi') {
+        $_SESSION['success_messages'] =  (array) $response->data->messages;
+      }
     }
   }
   return !empty($response->data) ? $response->data : NULL;

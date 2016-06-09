@@ -421,7 +421,8 @@ function fundraiser_node_load($nodes, $types) {
 function fundraiser_node_presave($node) {
   // If this isn't a fundraiser type, ignore it.
   if (fundraiser_is_donation_type($node->type) && isset($node->amount_wrapper)) {
-    // Check the submission to remove the donation amounts marked.
+    // Check the submission to remove the donation amounts marked and (optionally) set the default.
+    $node->default_amount = NULL;
     foreach ($node->amount_wrapper['donation_amounts'] as $index => $donation_amount) {
       // If the remove marker is set.
       if (isset($donation_amount['remove']) && $donation_amount['remove'] == 1) {
@@ -433,12 +434,15 @@ function fundraiser_node_presave($node) {
         unset($node->amount_wrapper['donation_amounts'][$index]);
       }
       unset($node->amount_wrapper['donation_amounts'][$index]['remove']);
+      // If the default amount box is checked.
+      if (!empty($donation_amount['default_amount'])) {
+        $node->default_amount = $donation_amount['amount'];
+      }
     }
     // Set the donation amounts where we expect them to be for processing.
     // These are buried under amount_wrapper because we set 'TREE' on that in the form.
     $node->donation_amounts = $node->amount_wrapper['donation_amounts'];
     $node->show_other_amount = $node->amount_wrapper['show_other_amount'];
-    $node->ask_for_quantity = $node->amount_wrapper['ask_for_quantity'];
     $node->minimum_donation_amount = is_numeric($node->amount_wrapper['minimum_donation_amount']) ?
       $node->amount_wrapper['minimum_donation_amount'] : variable_get('fundraiser_default_minimum', 10.00);
     unset($node->amount_wrapper);
@@ -539,7 +543,7 @@ function fundraiser_form_node_form_alter(&$form, &$form_state, $form_id) {
  *
  * It ultimately populates the fundraiser table from which donation forms are created :
  * nid, gateway, receipt_email_from, receipt_email_address, receipt_email_subject, receipt_email_message,
- * donation_amounts, show_other_amount, ask_for_quantity, minimum_donation_amount, confirmation_page_title,
+ * donation_amounts, show_other_amount, minimum_donation_amount, confirmation_page_title,
  * confirmation_page_body, confirmation_page_format, redirect_url.
  */
 function _fundraiser_donation_settings_form(&$form, &$form_state) {
@@ -551,10 +555,12 @@ function _fundraiser_donation_settings_form(&$form, &$form_state) {
   if (!fundraiser_is_donation_type($node->type)) {
     return;
   }
-  $form['fundraiser_settings'] = array(
+
+  // Payment methods.
+  $form['payment_methods'] = array(
     '#type' => 'fieldset',
-    '#title' => t('Fundraiser settings'),
-    '#weight' => -4.96,
+    '#title' => t("Payment methods"),
+    '#weight' => -4.95,
     '#collapsible' => TRUE,
     '#collapsed' => TRUE,
     '#group' => 'additional_settings',
@@ -563,7 +569,7 @@ function _fundraiser_donation_settings_form(&$form, &$form_state) {
   $gateway_options = array();
   $gateways = _fundraiser_gateway_info();
   if (empty($gateways)) {
-    $form['fundraiser_settings']['gateways'] = array(
+    $form['payment_methods']['gateways'] = array(
       '#markup' => '<div>' . t('There are no gateways configured. Please create some gateways in the store configuration.') . '</div>',
     );
   }
@@ -578,10 +584,20 @@ function _fundraiser_donation_settings_form(&$form, &$form_state) {
       '#theme' => 'fundraiser_form_payment_methods',
     );
     $configuration = !empty($node->gateways) ? $node->gateways : variable_get('fundraiser_payment_method_config_defaults', array());
-    $form['fundraiser_settings']['gateways'] = _fundraiser_form_payment_method_config_fieldset($gateways, $configuration, $fieldset, 'gateways');
+    $form['payment_methods']['gateways'] = _fundraiser_form_payment_method_config_fieldset($gateways, $configuration, $fieldset, 'gateways');
     // add a validate callback.
     $form['#validate'][] = '_fundraiser_form_payment_method_validate';
   }
+
+  // Fundraiser Settings (i.e., ask amounts).
+  $form['fundraiser_settings'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Fundraiser settings'),
+    '#weight' => -4.96,
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
+    '#group' => 'additional_settings',
+  );
 
   // Make changes to the currency settings field.
   if (!empty($form['field_fundraiser_currency'])) {
@@ -664,13 +680,12 @@ function _fundraiser_donation_settings_form(&$form, &$form_state) {
   $donation_amounts[] = array('', '');
   // Generate a form set for each existing amount. (To be themed into table format.)
   $index = 0;
-
   foreach ($donation_amounts as $weight => $donation_amount) {
     // Filter out other|Other combinations. We don't want to display those in this form.
     // And if we did, the value would fail validation (not a number).
     // There is probably a better way to track this, but for now this'll do.
     if (count($donation_amount) == 2 && $donation_amount[0] != 'other') {
-      $form['fundraiser_settings']['amount_wrapper']['donation_amounts'][] = _fundraiser_ask_form($donation_amount, $index, $node, $weight);
+      $form['fundraiser_settings']['amount_wrapper']['donation_amounts'][$index] = _fundraiser_ask_form($donation_amount, $index, $node, $weight);
     }
     ++$index;
   }
@@ -703,15 +718,6 @@ function _fundraiser_donation_settings_form(&$form, &$form_state) {
     ),
   );
 
-  $form['fundraiser_settings']['amount_wrapper']['no_default_amount'] = array(
-    '#type' => 'radio',
-    '#default_value' => isset($node->default_amount) ? $node->default_amount : '',
-    '#return_value' => '',
-    '#parents' => array('default_amount'),
-    '#title' => t('No default ask amount'),
-    '#description' => t('Do not use a preselected ask amount.'),
-  );
-
   // Additional fundraiser settings.
   $form['fundraiser_settings']['amount_wrapper']['show_other_amount'] = array(
     '#type' => 'checkbox',
@@ -719,13 +725,6 @@ function _fundraiser_donation_settings_form(&$form, &$form_state) {
     '#description' => t('Use this option if you want to provide an "Other Amount" field in conjunction with the list ' .
       'of Donation Amounts.'),
     '#default_value' => isset($node->show_other_amount) ? $node->show_other_amount : variable_get('fundraiser_default_other', TRUE),
-  );
-  $form['fundraiser_settings']['amount_wrapper']['ask_for_quantity'] = array(
-    '#type' => 'checkbox',
-    '#title' => t('Ask for quantity'),
-    '#description' => t('Use this option if you want to provide a "Quantity" field in conjunction with the list ' .
-      'of Donation Amounts.'),
-    '#default_value' => isset($node->ask_for_quantity) ? $node->ask_for_quantity : FALSE,
   );
   $form['fundraiser_settings']['amount_wrapper']['minimum_donation_amount'] = array(
     '#type' => 'textfield',
@@ -787,6 +786,18 @@ function _fundraiser_node_form_after_build($form, &$form_state) {
   }
   if ($display_settings_is_empty) {
     $form['springboard_display']['#description'] = t('No display settings are enabled at this time.');
+  }
+
+  // Add no-settings note if Fundraiser Settings has been emptied by alter hooks.
+  $fundraiser_settings_is_empty = TRUE;
+  foreach (element_children($form['fundraiser_settings']) as $key) {
+    if (!isset($form['fundraiser_settings'][$key]['#access']) || $form['fundraiser_settings'][$key]['#access']) {
+      $fundraiser_settings_is_empty = FALSE;
+      break;
+    }
+    if ($fundraiser_settings_is_empty) {
+      $form['fundraiser_settings']['#description'] = t("There are no Fundraiser settings to display.");
+    }
   }
 
   // Add additional js and css for this form.
@@ -989,6 +1000,10 @@ function _fundraiser_payment_method_weight_compare($a, $b) {
  * Generate donation ask amount fields, used by donation form
  */
 function _fundraiser_ask_form($amount_values = array(), $index, $node, $weight) {
+  $form['default_amount'] = array(
+    '#type' => 'checkbox',
+    '#default_value' => isset($node->default_amount) ? ($node->default_amount == $amount_values[0]) : FALSE,
+  );
   $form['amount'] = array(
     '#type' => 'textfield',
     '#default_value' => isset($amount_values[0]) ? $amount_values[0] : '',
@@ -998,12 +1013,6 @@ function _fundraiser_ask_form($amount_values = array(), $index, $node, $weight) 
     '#type' => 'textfield',
     '#default_value' => isset($amount_values[1]) ? $amount_values[1] : '',
     '#size' => 30,
-  );
-  $form['default_amount'] = array(
-    '#type' => 'radio',
-    '#default_value' => isset($node->default_amount) ? $node->default_amount : '',
-    '#return_value' => $amount_values[0],
-    '#parents' => array('default_amount'),
   );
   $form['remove'] = array(
     '#type' => 'checkbox',
@@ -1097,27 +1106,6 @@ function fundraiser_fundraiser_field_info() {
     '#display_callback' => '_fundraiser_currency_field_display',
   );
 
-  $quantity_max = variable_get('fundraiser_default_quantity', '10');
-  $quantitys = range(1, $quantity_max);
-  $formatted_quantitys = '';
-  foreach ($quantitys as $quantity) {
-    $formatted_quantitys .= $quantity . '|' . $quantity . "\n";
-  }
-  $fields['donation']['quantity'] = array(
-    '#title' => t('Quantity'),
-    '#type' => 'select',
-    '#allow_update' => 1,
-    '#extra' => array(
-      'description' => t('The number of these donations to make.'),
-      'items' => $formatted_quantitys,
-      'aslist' => TRUE,
-      'width' => 10,
-    ),
-    '#value' => 1,
-    '#required' => TRUE,
-    '#create_callback' => '_fundraiser_quantity_field_create',
-    '#validate_callback' => '_fundraiser_quantity_field_validate',
-  );
   $fields['donor_information'] = array(
     '#title' => t('Your Information'),
     '#type' => 'fieldset',
@@ -1263,15 +1251,18 @@ function _fundraiser_amount_field_create($fundraiser, $field) {
       'multiple' => 0,
     );
     $default = $keys[0];
-    if (isset($fundraiser->default_amount)) {
-      if (in_array($fundraiser->default_amount, $keys)) {
-        // Default is one of the defined ask amounts.
-        $default = $fundraiser->default_amount;
-      }
-      elseif ($fundraiser->default_amount == '') {
-        // Don't pick a default value.
-        $default = '';
-      }
+    if (empty($fundraiser->default_amount)) {
+      $default = '';
+    }
+    else if (in_array($fundraiser->default_amount, $keys)) {
+      // Default is one of the defined ask amounts.
+      $default = $fundraiser->default_amount;
+    }
+
+    // Extra settings may get clobbered in fundraiser_webform. if we don't flag them.
+    // See "extra config" comment under _fundraiser_webform_update_component().
+    if (!empty($field['#extra'])) {
+      $field['#node_extra_settings'] = $field['#extra'];
     }
 
     $field['#value'] = $default;
@@ -1294,7 +1285,8 @@ function _fundraiser_other_amount_field_create($fundraiser, $field) {
     return FALSE; // FALSE as opposed to empty, means we delete this field if it exists.
   }
   // Update the min with fundraiser's min.
-  $field['#extra']['description'] = 'Minimum payment [currency-symbol]' . number_format($fundraiser->minimum_donation_amount, 2) . '.';
+  $field['#extra']['description'] = $field['#node_extra_settings']['description'] =
+    'Minimum payment [currency-symbol]' . number_format($fundraiser->minimum_donation_amount, 2) . '.';
 
   // Return the field to be created.
   return $field;
@@ -1393,31 +1385,6 @@ function _fundraiser_email_field_validate($form, $form_state, $submission_fields
   if (!_fundraiser_validate_email(trim($value))) {
     return array('mail' => t('You must enter a valid email address.'));
   }
-}
-
-/**
- * Validation callback for field other_amount. Called during form validation.
- */
-function _fundraiser_quantity_field_validate($form, $form_state, $submission_fields, $value) {
-  // Check for confusing selection.
-  if (empty($submission_fields['quantity'])) {
-    return array('quantity' => t('You did not enter a quantity.'));
-  }
-  // Not numeric.
-  if (!is_numeric($submission_fields['quantity'])) {
-    return array('quantity' => t('You did not enter a valid number.'));
-  }
-}
-
-/**
- * Field callback, called at runtime to update the field with fundraiser specific settings during creation.
- */
-function _fundraiser_quantity_field_create($fundraiser, $field) {
-  if (empty($fundraiser->ask_for_quantity) || !($fundraiser->ask_for_quantity)) {
-    // If empty or false, don't create the field - return empty.
-    return FALSE;
-  }
-  return $field;
 }
 
 /**
@@ -1605,6 +1572,8 @@ function _fundraiser_donation_form_js_validation_config($node) {
  */
 function fundraiser_donation_form(&$form, &$form_state) {
   $node = $form['#node'];
+  // Load any custom configuration options.
+  $config = db_query('SELECT * FROM {fundraiser_webform_messages} f WHERE f.nid = :nid', array(':nid' => $form['#node']->nid))->fetchAssoc();
 
   // Attach the js files.
   $form['#attached']['js'] = array(
@@ -1670,7 +1639,7 @@ function fundraiser_donation_form(&$form, &$form_state) {
       'type' => 'setting',
     );
 
-    // Add class to quantity field
+    // Add class to quantity field (for legacy forms)
     $quantity = _fundraiser_get_form_field($form, 'quantity');
     if (!empty($quantity)) {
       $quantity['#attributes']['class'][] = 'input-medium';
@@ -1695,6 +1664,7 @@ function fundraiser_donation_form(&$form, &$form_state) {
       }
     }
     $form = _fundraiser_update_form_field($form, 'amount', $amount);
+
 
     // Call hook to allow sub modules to add / manipulate the form.
     // NOTE: we are not using module_invoke_all on purpose here.
@@ -1954,7 +1924,7 @@ function fundraiser_donation_update($donation, $vocal_mode = TRUE) {
     $donation_record['amount'] = $donation->amount;
   } else if (!empty($donation->donation['amount'])) {
     $donation_record['amount'] = $donation->donation['amount'];
-    // was a quantity (of > 1) specified?
+    // was a quantity (of > 1) specified? (legacy forms)
     if (isset($donation->donation['quantity']) && $donation->donation['quantity'] > 1) {
       // multiply base donation amount by quantity to get the donation total
       $donation_record['amount'] = number_format($donation->donation['amount'] * $donation->donation['quantity'], 2);
@@ -2271,24 +2241,22 @@ function _fundraiser_refund_form($form, &$form_state, $did) {
 
   if (is_array($donation->refunds)) {
     foreach ($donation->refunds as $refund) {
-      // Convert the refunded amount to a whole number.
-      $refund_amount = commerce_currency_decimal_to_amount($refund->amount, $donation->currency);
-      $refunded_total += $refund_amount;
-      $refund_summary[] = t('Refund #%id for %amount on %date.',
+      if ($refund->status == 'refunded' || $refund->status == 'partially_refunded') {
+        $refunded_total += abs($refund->amount);
+      }
+      $refund_summary[] = t('%status #%id for $%amount on %date.',
         array(
-          '%id' => $refund->did,
-          '%amount' => commerce_currency_format($refund_amount, $donation->currency),
-          '%date' => date('m/d/y', isset($refund->created) ? $refund->created : 0),
-        )
-      );
+        '%id' => $refund->rid,
+        '%amount' => abs($refund->amount),
+        '%date' => date('m/d/y', isset($refund->created) ? $refund->created : 0),
+        '%status' => $refund->status,
+      )
+      ); //TODO fix up value display for international.
     }
 
     $refund_summary = !empty($refund_summary) ? theme('item_list', array('items' => $refund_summary)) : t('No refunds have been made.');
+    $refunded_total = $refunded_total;
   }
-
-  // Set the able to refund value from the donation amount.
-  $able_to_refund = $donation_amount - $refunded_total;
-
   // Display form.
   if ($donation->refunds == FALSE) {
     $form['payment_summary']['no_payments'] = array(
@@ -2306,7 +2274,7 @@ function _fundraiser_refund_form($form, &$form_state, $did) {
   $form['payment_summary']['refunded_total'] = array(
     '#type' => 'item',
     '#title' => t('Refunded Total'),
-    '#markup' => commerce_currency_format($refunded_total, $donation->currency),
+    '#markup' => commerce_currency_format($refunded_total, $donation->currency, NULL, FALSE),
   );
   if (!empty($refund_summary)) {
     $form['payment_summary']['refunded_summary'] = array(
@@ -2333,7 +2301,7 @@ function _fundraiser_refund_form($form, &$form_state, $did) {
     if (!empty($donation->gateway['allow_refund']) && in_array($donation->donation['payment_method'], $donation->gateway['allow_refund'])) {
       $can_refund = TRUE;
     }
-
+    $able_to_refund = $donation->donation['amount'] - $refunded_total;
     if (!$can_refund || $able_to_refund <= 0) {
       // They've made a payment, but it cannot be refunded
       if ($able_to_refund <= 0) {
@@ -2373,10 +2341,10 @@ function _fundraiser_refund_form($form, &$form_state, $did) {
         '#title' => t('Refund options'),
         '#type' => 'radios',
         '#options' => array(
-          'full' => t('Full Refund ( %amount )', array('%amount' => commerce_currency_format($able_to_refund, $donation->currency))),
+          'full' => t('Full Refund ( %amount )', array('%amount' => commerce_currency_format(commerce_currency_decimal_to_amount($able_to_refund, $donation->currency), $donation->currency))),
           'partial' => t('Partial Refund'),
         ),
-        '#default_value' => 'full',
+        '#default_value' => isset($form_state['input']['refund_type']) ? $form_state['input']['refund_type'] : 'full',
       );
       $form['refund_options']['amount'] = array(
         '#type' => 'textfield',
@@ -2384,6 +2352,9 @@ function _fundraiser_refund_form($form, &$form_state, $did) {
         '#size' => 40,
         '#maxlength' => 255,
         '#states' => array(
+          'required' => array(
+            ':input[name="refund_type"]' => array('value' => 'partial'),
+          ),
           'visible' => array(
             ':input[name="refund_type"]' => array('value' => 'partial'),
           ),
@@ -2401,6 +2372,14 @@ function _fundraiser_refund_form($form, &$form_state, $did) {
         '#type' => 'submit',
         '#value' => t('Issue Refund'),
         '#required' => TRUE,
+      );
+      $form['able_to_refund'] = array(
+        '#type' => 'hidden',
+        '#value' => number_format($able_to_refund, 2),
+      );
+      $form['refunded_total'] = array(
+        '#type' => 'hidden',
+        '#value' => number_format($refunded_total, 2),
       );
     }
   }
@@ -2433,9 +2412,9 @@ function _fundraiser_refund_form_validate($form, &$form_state) {
 
   // A full refund uses the $able_to_refund amount, a partial refund needs to validate the entered amount.
   if ($refund_type != 'full') {
-    // Convert the entered amount to a whole number.
+    // Convert the entered amount and refund amount to whole numbers.
     $amount = commerce_currency_decimal_to_amount(_fundraiser_amount_value_sanitize($form_state['values']['amount']), $donation->currency);
-
+    $able_to_refund = commerce_currency_decimal_to_amount(_fundraiser_amount_value_sanitize($able_to_refund), $donation->currency);
     if ($amount <= 0) {
       form_set_error('amount', t('Enter a positive numerical refund amount.'));
     }
@@ -2585,7 +2564,7 @@ function fundraiser_refund_update($refund) {
  */
 function fundraiser_refund_process($refund) {
   // Pass this down to the processing module.
-  module_invoke_all('fundraiser_refund_process', $refund);
+    module_invoke_all('fundraiser_refund_process', $refund);
   // And save the refund as it is at this stage since it was created.
   // This makes sure that any changes made stay in place.
   fundraiser_refund_update($refund, FALSE);
@@ -2839,6 +2818,7 @@ function _fundraiser_create_fundraiser($fundraiser) {
       'redirect_url' => '<confirmation>',
     );
     $record = array_merge($record, $fundraiser);
+    if (isset($record['default_amount']) && empty($record['default_amount'])) unset($record['default_amount']); // NULL > empty
     drupal_write_record('fundraiser', $record);
     // And invoke the hooks for all the other modules to respond.
     module_invoke_all('fundraiser_create_fundraiser_alter', (object) $fundraiser);
@@ -2856,7 +2836,7 @@ function _fundraiser_get_fundraiser_by_nid($nid) {
   $fundraiser = db_query('SELECT * FROM {fundraiser} WHERE nid = :nid', array(':nid' => $nid))->fetchObject();
   if ($fundraiser) {
     // Explode the donation amounts that were imploded during save.
-    $donation_amounts = explode(',', $fundraiser->donation_amounts);
+    $donation_amounts = explode('|||', $fundraiser->donation_amounts);
     $donation_amounts = array_unique($donation_amounts);
     $exploded_amounts = array();
     foreach ($donation_amounts as $donation_amount) {
@@ -2915,6 +2895,7 @@ function _fundraiser_update_fundraiser($fundraiser) {
     // Serialize for storage, our configured gateway values for storage in components.
     $fundraiser['gateways'] = serialize($fundraiser['gateways']);
     $record = $fundraiser;
+    if (isset($record['default_amount']) && empty($record['default_amount'])) unset($record['default_amount']); // NULL > empty
     drupal_write_record('fundraiser', $record, 'nid');
     // And invoke the hooks for all the other modules to respond.
     module_invoke_all('fundraiser_update_fundraiser_alter', (object) $fundraiser);
@@ -3088,10 +3069,10 @@ function _fundraiser_get_refunds_by_did($did) {
 /**
  * DB function for fundraiser_refund.
  */
-function _fundraiser_get_refund_by_receipt_id($receipt_id) {
+function _fundraiser_get_refund_by_txn_id($txn_id) {
   return db_query('SELECT * FROM {fundraiser_refund} ' .
-    'WHERE receipt_id = :receipt_id',
-    array(':receipt_id' => $receipt_id))->fetchAll();
+    'WHERE txn_id = :txn_id',
+    array(':txn_id' => $txn_id))->fetchAll();
 }
 
 /**
@@ -3147,45 +3128,69 @@ function _fundraiser_get_tracking_by_nid($nid) {
  * CRUD style DB function for fundraiser_tracking.
  */
 function _fundraiser_update_tracking($tracking) {
-  $tracking = (array) $tracking;
-  $tracking_data = FALSE;
-  if (isset($tracking['nid'])) {
-    $tracking_data = _fundraiser_get_tracking_by_nid($tracking['nid']);
-  }
-  if (!$tracking_data) {
-    _fundraiser_create_tracking($tracking);
-  }
-  else {
-    $tracking = array_merge((array) $tracking_data, $tracking);
-    drupal_write_record('fundraiser_tracking', $tracking, 'nid');
-  }
+  /** 
+   * Code commented out on 2/18/2016 by pcave for performance reasons.
+   * When a donation form encounters significant traffic, updating a single row
+   * in this table over and over during a request can cause lock contentions. 
+   * This eventually cascades to other database operations thus slowing down
+   * the entire response.
+   * 
+   * $tracking = (array) $tracking;
+   * $tracking_data = FALSE;
+   * if (isset($tracking['nid'])) {
+   *   $tracking_data = _fundraiser_get_tracking_by_nid($tracking['nid']);
+   * }
+   * if (!$tracking_data) {
+   *   _fundraiser_create_tracking($tracking);
+   * }
+   * else {
+   *   $tracking = array_merge((array) $tracking_data, $tracking);
+   *   drupal_write_record('fundraiser_tracking', $tracking, 'nid');
+   * }
+   */
 }
 
 /**
  * CRUD style DB function for fundraiser_tracking.
  */
 function _fundraiser_delete_tracking($nid) {
-  db_delete('fundraiser_tracking')->condition('nid', $nid)->execute();
+  /** 
+   * Code commented out on 2/18/2016 by pcave for performance reasons.
+   * When a donation form encounters significant traffic, updating a single row
+   * in this table over and over during a request can cause lock contentions. 
+   * This eventually cascades to other database operations thus slowing down
+   * the entire response.
+   * 
+   * db_delete('fundraiser_tracking')->condition('nid', $nid)->execute();
+   */
 }
 
 /**
  * DB function for updating the stats in fundraiser_tracking.
  */
 function _fundraiser_update_tracking_value($nid, $field) {
-  $tracking = _fundraiser_get_tracking_by_nid($nid);
-  // No tracking data? Create one.
-  if (!$tracking) {
-    $tracking = new stdClass();
-    $tracking->nid = $nid;
-    _fundraiser_create_tracking($tracking);
-    $tracking = _fundraiser_get_tracking_by_nid($nid);
+   /** 
+   * Code commented out on 2/18/2016 by pcave for performance reasons.
+   * When a donation form encounters significant traffic, updating a single row
+   * in this table over and over during a request can cause lock contentions. 
+   * This eventually cascades to other database operations thus slowing down
+   * the entire response.
+   * 
+   * $tracking = _fundraiser_get_tracking_by_nid($nid);
+   * // No tracking data? Create one.
+   * if (!$tracking) {
+   *   $tracking = new stdClass();
+   *   $tracking->nid = $nid;
+   *   _fundraiser_create_tracking($tracking);
+   *   $tracking = _fundraiser_get_tracking_by_nid($nid);
+   * }
+   * // Check to make sure we weren't handed a non-existing track.
+   * if (isset($tracking->$field)) {
+   *   $tracking->$field++;
+   *   _fundraiser_update_tracking($tracking);
+   * }
+   */
   }
-  // Check to make sure we weren't handed a non-existing track.
-  if (isset($tracking->$field)) {
-    $tracking->$field++;
-    _fundraiser_update_tracking($tracking);
-  }
-}
 
 /**
  * Implements hook_webform_token_selector_blacklist_alter().

@@ -53,6 +53,23 @@ function fundraiser_sustainers_requirements($phase) {
 }
 
 /**
+ * Implements hook_update_dependencies().
+ */
+function fundraiser_sustainers_update_dependencies() {
+  // We need the NPSP module to create the series table.
+  $dependencies['fundraiser_sustainers'][7013] = array(
+    'salesforce_npsp' => 7001,
+  );
+
+  // We need the fundraiser module to have a "default_amount" column.
+  $dependencies['fundraiser_sustainers'][7015] = array(
+    'fundraiser' => 7009,
+  );
+
+  return $dependencies;
+}
+
+/**
  * Implements hook_schema().
  */
 function fundraiser_sustainers_schema() {
@@ -71,6 +88,64 @@ function fundraiser_sustainers_schema() {
         'length' => 32,
         'not null' => TRUE,
         'default' => 'user_choice', // user_choice, always, never
+      ),
+      'recurring_donation_amounts' => array(
+        'description' => 'A comma delimited string of ask amounts to be displayed on the donation form.',
+        'type' => 'varchar',
+        'length' => '1024',
+        'not null' => FALSE,
+      ),
+      'show_other_amount' => array(
+        'description' => 'Flag to toggle the other amount field on and off.',
+        'type' => 'int',
+        'size' => 'tiny',
+        'not null' => FALSE,
+        'default' => 0,
+      ),
+      'minimum_donation_amount' => array(
+        'description' => 'The minimum donation amount the donation form will accept.',
+        'type' => 'numeric',
+        'not null' => FALSE,
+        'precision' => '15',
+        'scale' => '3',
+      ),
+      'default_amount' => array(
+        'description' => 'Ask amount for the donation form to default to.',
+        'type' => 'numeric',
+        'not null' => FALSE,
+        'precision' => '15',
+        'scale' => '3',
+      ),
+      'dual_ask_amounts' => array(
+        'description' => 'Flag to toggle dual ask amounts on and off.',
+        'type' => 'int',
+        'size' => 'tiny',
+        'not null' => FALSE,
+        'default' => 0,
+      ),
+      'donation_type_component' => array(
+        'description' => 'The type of component to present on user-choice forms to select the donation type.',
+        'type' => 'varchar',
+        'length' => 16,
+        'not null' => FALSE,
+      ),
+      'donation_type_options' => array(
+        'description' => 'The onetime/recurring option names, labels, and order.',
+        'type' => 'varchar',
+        'length' => '1024',
+        'not null' => FALSE,
+      ),
+      'default_donation_type' => array(
+        'description' => 'The type of donation and ask amounts to default to.',
+        'type' => 'varchar',
+        'length' => 16,
+        'not null' => FALSE,
+      ),
+      'donation_type_help_text' => array(
+        'description' => 'Help text to show under the onetime/recurring buttons on dual-ask forms.',
+        'type' => 'text',
+        'length' => 1024,
+        'not null' => FALSE,
       ),
     ),
     'primary key' => array('nid'),
@@ -644,6 +719,7 @@ function fundraiser_sustainers_update_7009() {
     ->condition('attempts', 3, '<')
     ->condition('lock_id', 0)
     ->execute();
+
 }
 
 /**
@@ -732,7 +808,7 @@ function fundraiser_sustainers_update_7011() {
   db_add_index('fundraiser_sustainers_log', 'fundraiser_sustainers_log_new_state', array('new_state'));
 }
 
-/**
+/*
  * Creates new sustainers series table.
  */
 function fundraiser_sustainers_update_7012() {
@@ -847,4 +923,110 @@ function fundraiser_sustainers_update_7013(&$sandbox) {
   if ($sandbox['#finished'] >= 1) {
     return t('Fundraiser sustainers donations have been migrated to fundraiser sustainers series entities.');
   }
+}
+
+/**
+ * Adds {fundraiser_sustainers_nodes} fields for recurring ask amounts.
+ */
+function fundraiser_sustainers_update_7014(&$sandbox) {
+  $fields = array(
+    'recurring_donation_amounts' => array(
+      'description' => 'A comma delimited string of ask amounts to be displayed on the donation form.',
+      'type' => 'varchar',
+      'length' => '1024',
+      'not null' => FALSE,
+    ),
+    'show_other_amount' => array(
+      'description' => 'Flag to toggle the other amount field on and off.',
+      'type' => 'int',
+      'size' => 'tiny',
+      'not null' => FALSE,
+      'default' => 0,
+    ),
+    'minimum_donation_amount' => array(
+      'description' => 'The minimum donation amount the donation form will accept.',
+      'type' => 'numeric',
+      'not null' => FALSE,
+      'precision' => '15',
+      'scale' => '3',
+    ),
+    'default_amount' => array(
+      'description' => 'Ask amount for the donation form to default to.',
+      'type' => 'numeric',
+      'not null' => FALSE,
+      'precision' => '15',
+      'scale' => '3',
+    ),
+  );
+  db_add_field('fundraiser_sustainers_nodes', 'recurring_donation_amounts', $fields['recurring_donation_amounts']);
+  db_add_field('fundraiser_sustainers_nodes', 'show_other_amount', $fields['show_other_amount']);
+  db_add_field('fundraiser_sustainers_nodes', 'minimum_donation_amount', $fields['minimum_donation_amount']);
+  db_add_field('fundraiser_sustainers_nodes', 'default_amount', $fields['default_amount']);
+}
+
+/**
+ * Copies {fundraiser} values to corresponding {fundraiser_sustainers_nodes} records
+ * for recurring ask amounts.
+ */
+function fundraiser_sustainers_update_7015(&$sandbox) {
+  db_query(
+    "UPDATE {fundraiser_sustainers_nodes} fsn, {fundraiser} f
+      SET fsn.recurring_donation_amounts=f.donation_amounts,
+        fsn.show_other_amount=f.show_other_amount,
+        fsn.minimum_donation_amount=f.minimum_donation_amount,
+        fsn.default_amount=f.default_amount
+      WHERE fsn.nid=f.nid;"
+  );
+}
+
+/**
+ * Adds {fundraiser_sustainers_nodes} column to toggle dual ask amounts.
+ */
+function fundraiser_sustainers_update_7016(&$sandbox) {
+  $fields = array(
+    'dual_ask_amounts' => array(
+      'description' => 'Flag to toggle dual ask amounts on and off.',
+      'type' => 'int',
+      'size' => 'tiny',
+      'not null' => FALSE,
+      'default' => 0,
+    ),
+  );
+  db_add_field('fundraiser_sustainers_nodes', 'dual_ask_amounts', $fields['dual_ask_amounts']);
+}
+
+/**
+ * Adds {fundraiser_sustainers_nodes} columns to make one-time/recurring donation type options configurable.
+ */
+function fundraiser_sustainers_update_7017(&$sandbox) {
+  $fields = array(
+    'donation_type_component' => array(
+      'description' => 'The type of component to present on user-choice forms to select the donation type.',
+      'type' => 'varchar',
+      'length' => 16,
+      'not null' => FALSE,
+    ),
+    'donation_type_options' => array(
+      'description' => 'The onetime/recurring option names, labels, and order.',
+      'type' => 'varchar',
+      'length' => '1024',
+      'not null' => FALSE,
+    ),
+    'default_donation_type' => array(
+      'description' => 'The type of donation and ask amounts to default to.',
+      'type' => 'varchar',
+      'length' => 16,
+      'not null' => FALSE,
+    ),
+    'donation_type_help_text' => array(
+      'description' => 'Help text to show under the onetime/recurring buttons on dual-ask forms.',
+      'type' => 'text',
+      'length' => 1024,
+      'not null' => FALSE,
+    ),
+  );
+  db_add_field('fundraiser_sustainers_nodes', 'donation_type_component', $fields['donation_type_component']);
+  db_add_field('fundraiser_sustainers_nodes', 'donation_type_options', $fields['donation_type_options']);
+  db_add_field('fundraiser_sustainers_nodes', 'default_donation_type', $fields['default_donation_type']);
+  db_add_field('fundraiser_sustainers_nodes', 'donation_type_help_text', $fields['donation_type_help_text']);
 }

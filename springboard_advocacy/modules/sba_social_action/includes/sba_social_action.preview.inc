@@ -27,9 +27,10 @@ function sba_social_action_message_preview_page($nid) {
       else {
         $mess = 0;
       }
-
+      $numbers = range(0, $mess - 1);
+      shuffle($numbers);
       for ($x=0; $x<$mess; $x++) {
-        $random_array[$node->messages[$message['message_id']]->sba_message_id][] = mt_rand(0, $mess - 1);
+        $random_array[$node->messages[$message['message_id']]->sba_message_id][] = $numbers[$x];
       }
 
       // Sort criteria for message targets.
@@ -90,6 +91,13 @@ function sba_social_action_message_preview_page($nid) {
     'sba_social_action_preview_form' => drupal_get_form('sba_social_action_preview_form', $node, $messages, $random_array),
   );
 
+  // We can't really tell if the user takes action, so non-empty $messages
+  // is the closest we'll get.
+  $sid = !empty($_SESSION['social_action_sid']['sid']) ? $_SESSION['social_action_sid']['sid'] : FALSE;
+  if (!empty($_SESSION['social_contact']) && !empty($messages)) {
+    springboard_advocacy_success($node, $_SESSION['social_contact'], $messages, $sid);
+  }
+
   return $build;
 }
 
@@ -111,7 +119,7 @@ function sba_social_action_preview_form($form, $form_state, $node, $messages, $r
   $access = FALSE;
   module_load_include('inc', 'sba_social_action', 'includes/sba_social_action.oauth_cache');
   $twitter_user_cache = sba_social_action_cache_get('sba_twitter');
-  $form['twitter_user_cache'] = array (
+  $form['twitter_user_cache'] = array(
     '#type' => 'value',
     '#value' => $twitter_user_cache,
   );
@@ -121,8 +129,10 @@ function sba_social_action_preview_form($form, $form_state, $node, $messages, $r
     $twitter_user_cache['values']['oauth_token_secret'] = decrypt($twitter_user_cache['values']['oauth_token_secret']);
   }
 
-  // Bypass authentication and use Twitter web intents if that node option is set.
-  if (empty($node->field_sba_social_require_auth)) {
+  // Bypass authentication and use Twitter web intents if that node
+  // option is set.
+  $require_auth = field_get_items('node', $node, 'field_sba_social_require_auth');
+  if (empty($require_auth[0]['value'])) {
     $access = TRUE;
   }
 

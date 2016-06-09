@@ -163,6 +163,20 @@ function secure_prepopulate_token_generator($form, $form_state) {
       '#description' => t('If you want one of the supplied amounts to be selected by default, enter that value here.'),
       '#size' => 5,
     );
+    if (module_exists('fundraiser_sustainers')) {
+      $form['dynamic_gift_strings']['recurring_amounts'] = array(
+        '#title' => t('Recurring ask amounts'),
+        '#type' => 'textfield',
+        '#description' => t('Enter the ask amounts you want to show here. Values should be comma-separated. Example: 27,47,97'),
+        '#size' => 50,
+      );
+      $form['dynamic_gift_strings']['recurring_default'] = array(
+        '#title' => t('Recurring default amount'),
+        '#type' => 'textfield',
+        '#description' => t('If you want one of the supplied amounts to be selected by default, enter that value here.'),
+        '#size' => 5,
+      );
+    }
   }
   $form['submit'] = array(
     '#type' => 'submit',
@@ -218,14 +232,24 @@ function secure_prepopulate_generate_af_string($input) {
 }
 
 function secure_prepopulate_generate_gs_string($input) {
-  $query = array();
-  if (isset($input['amounts']) && $input['amounts']) {
-    $query_str = 'amounts=' . str_replace(',', '|', $input['amounts']);
-    if (isset($input['default_amount'])) {
+  $query_str = '';
+  if (!empty($input['amounts'])) {
+    $query_str .= 'amounts=' . str_replace(',', '|', $input['amounts']);
+    if (!empty($input['default_amount'])) {
       $query_str .= '&default=' . $input['default_amount'];
     }
+  }
+  if (!empty($input['recurring_amounts'])) {
+    if (!empty($query_str)) $query_str .= '&';
+    $query_str .= 'recurring_amounts=' . str_replace(',', '|', $input['recurring_amounts']);
+    if (!empty($input['recurring_default'])) {
+      $query_str .= '&recurring_default=' . $input['recurring_default'];
+    }
+  }
+  if (!empty($query_str)) {
     $crypt = secure_prepopulate_encrypt($query_str);
     return 'gs=' . urlencode($crypt);
+  } else {
+    return FALSE;
   }
-  return FALSE;
 }
