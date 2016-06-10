@@ -2,6 +2,7 @@
 
 /**
  * @file
+ * Functions for the shopping cart component.
  */
 
 /**
@@ -68,7 +69,7 @@ function _webform_render_cart($component, $value = NULL, $filter = TRUE) {
   );
 
   $item = array();
-  $item['#id'] = 'cart';
+  $item['#id'] = 'cart_body';
   $item['#type'] = 'item';
   $element[$item['#id']] = $item;
 
@@ -121,7 +122,7 @@ function theme_fundraiser_designations_fund_cart_component($vars) {
     ),
     'fund_catcher' => array(
       '#type' => 'markup',
-      '#markup' => drupal_render($element['cart']['fund_catcher']),
+      '#markup' => drupal_render($element['cart_body']['fund_catcher']),
       '#prefix' => '<div id="fund-catcher">',
       '#suffix' => '</div>',
       '#weight' => -6,
@@ -159,11 +160,11 @@ function fundraiser_designations_cart_table($element) {
   $rows[] = array(
     'data' => array(
       array(
-        'data' => check_plain($element['cart']['cart_total']['#title']),
+        'data' => check_plain($element['cart_body']['cart_total']['#title']),
         'colspan' => 2,
       ),
       array(
-        'data'  => drupal_render($element['cart']['cart_total']),
+        'data'  => drupal_render($element['cart_body']['cart_total']),
         'class' => array('cart-total-cell'),
       ),
     ),

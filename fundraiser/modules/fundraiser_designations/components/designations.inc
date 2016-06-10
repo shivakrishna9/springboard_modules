@@ -2,6 +2,7 @@
 
 /**
  * @file
+ * Designation component functions.
  */
 
 /**
@@ -68,19 +69,30 @@ function _webform_render_designations($component, $value = NULL, $filter = TRUE)
   );
 
   $node = isset($component['nid']) ? node_load($component['nid']) : NULL;
+
+  // Get the one-time and/or recurring price sets to be displayed as radios.
   $amounts = fundraiser_designations_get_display_amounts($node);
 
   if (fundraiser_designations_is_designation_type($node->type) && !empty($node->designation_group_ids)) {
+
+    // Load the fund group entities.
     $groups = entity_load('fundraiser_fund_group', $node->designation_group_ids);
+
+    // Arrange the groups by weight set by draggableviews.
     $groups_by_weight = [];
     foreach ($groups as $key => $group) {
       $groups_by_weight[$group->data['weight'] . $key] = $group;
     }
     ksort($groups_by_weight);
+
+    // Build the groups for display.
     foreach ($groups_by_weight as $group) {
       $group_wrapper = entity_metadata_wrapper('fundraiser_fund_group', $group);
       $funds = $group_wrapper->field_ffg_fd_reference->value();
       $num = count($funds);
+
+      // Groups with multiple funds refenced get a select field, a "group of
+      // one" fund doesn't.
       if ($num > 1) {
         _webform_render_funds_multiple($element, $node, $group_wrapper, $funds, $amounts, $groups_by_weight);
       }
@@ -92,6 +104,22 @@ function _webform_render_designations($component, $value = NULL, $filter = TRUE)
   return $element;
 }
 
+/**
+ * Render the component when it has multiple funds.
+ *
+ * @param array $element
+ *   The webform component.
+ * @param object $node
+ *   The node.
+ * @param object $group_wrapper
+ *   The fund group.
+ * @param object $funds
+ *   The funds in the fund group.
+ * @param array $amounts
+ *   The one-time and/or recurring price sets.
+ * @param array $groups_by_weight
+ *   The fund groups on this form.
+ */
 function _webform_render_funds_multiple(&$element, $node, $group_wrapper, $funds, $amounts, $groups_by_weight) {
 
   $options = array();
@@ -118,9 +146,25 @@ function _webform_render_funds_multiple(&$element, $node, $group_wrapper, $funds
   $child['#title'] = '';
   $element[$id]['funds_select_' . $id] = $child;
 
-  _fundraiser_designations_build_child_elements($id, $item, $element, $amounts);
+  _fundraiser_designations_build_child_elements($id, $element, $amounts);
 }
 
+/**
+ * Render the component when it has a single fund.
+ *
+ * @param array $element
+ *   The webform component.
+ * @param object $node
+ *   The node.
+ * @param object $group_wrapper
+ *   The fund group.
+ * @param object $funds
+ *   The funds in the fund group.
+ * @param array $amounts
+ *   The one-time and/or recurring price sets.
+ * @param array $groups_by_weight
+ *   The fund groups on this form.
+ */
 function _webform_render_funds_single(&$element, $node, $group_wrapper, $funds, $amounts, $groups_by_weight) {
   $id = $group_wrapper->fundraiser_fund_group_id->value();
 
@@ -139,10 +183,21 @@ function _webform_render_funds_single(&$element, $node, $group_wrapper, $funds, 
   $child['#title'] = '';
   $element[$id]['funds_placeholder_' . $id] = $child;
 
-  _fundraiser_designations_build_child_elements($id, $item, $element, $amounts);
+  _fundraiser_designations_build_child_elements($id, $element, $amounts);
 
 }
 
+/**
+ * Figure out which groups are first and last to add CSS classes.
+ *
+ * @param array $groups_by_weight
+ *   An array of fund groups.
+ * @param int $id
+ *   A group id.
+ *
+ * @return string
+ *   A css class.
+ */
 function _webform_render_funds_get_position($groups_by_weight, $id) {
   reset($groups_by_weight);
   $first_key = key($groups_by_weight);
@@ -157,10 +212,16 @@ function _webform_render_funds_get_position($groups_by_weight, $id) {
   return 'desigation-group-middle';
 }
 
+
 /**
- *
+ * @param int $id
+ *   A group entity id.
+ * @param array $element
+ *   The parent webform component.
+ * @param array $amounts
+ *   The one-time and/or recurring price sets.
  */
-function _fundraiser_designations_build_child_elements($id, $item, &$element, $amounts) {
+function _fundraiser_designations_build_child_elements($id, &$element, $amounts) {
   $donation_amounts = [];
   if (!empty($amounts['default'])) {
     foreach ($amounts['default'] as $key => $amount) {
@@ -195,7 +256,6 @@ function _fundraiser_designations_build_child_elements($id, $item, &$element, $a
   $child['#extra']['group_id'] = $id;
   $child['#title'] = 'Other amount';
   $element[$id]['fd_other_' . $id] = $child;
-
 
   $child = array();
   $child['#type'] = 'button';
@@ -261,10 +321,18 @@ function theme_fundraiser_designations_fund_groups_component($variables) {
     }
   }
 
-
   return $output;
 }
 
+/**
+ * Build a table display for each fund group.
+ *
+ * @param array $element
+ *   The fund group component.
+ *
+ * @return string
+ *   The rendered table.
+ */
 function fundraiser_designations_selection_table($element) {
   $row[] = array(
     'data' => array(
@@ -287,6 +355,15 @@ function fundraiser_designations_selection_table($element) {
   return drupal_render($table);
 }
 
+/**
+ * Get the one-time and/or recurring price sets for this form.
+ *
+ * @param object $node
+ *   The donation form node.
+ *
+ * @return array
+ *   An array of prices arranged by type.
+ */
 function fundraiser_designations_get_display_amounts($node) {
   $recurring = $node->recurring_setting;
   $recurring_amounts = $node->recurring_donation_amounts;

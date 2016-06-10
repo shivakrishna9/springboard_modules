@@ -6,7 +6,7 @@
  */
 
 /**
- * Install Fundraiser  Designations categories vocabulary.
+ * Install Fundraiser Designations categories vocabulary.
  *
  */
 function _fundraiser_designations_install_vocab_fd_designation_categories($product_type) {
@@ -54,7 +54,7 @@ function _fundraiser_designations_install_vocab_fd_designation_categories($produ
 }
 
 /**
- * Define legislative issues terms.
+ * Define designation categories default terms.
  *
  * @return array
  *   Default terms.
@@ -66,7 +66,7 @@ function _fundraiser_designations_default_categories() {
 }
 
 /**
- * Install the legislative issue and org issue taxonomy fields on a node type.
+ * Install the fundraiser designation categories fields on a product type.
  *
  * @param string $product_type
  *   Type is fundraiser_designation.
