@@ -377,10 +377,14 @@ function webform_ab_form(&$node, $form_state) {
       $form[$condition][$plugin_key]['#type'] = 'fieldset';
       $form[$condition][$plugin_key]['#attributes'] = array('class' => array(str_replace(' ', '-', $condition) . '-container'));
       // Set the visible conditions:
-      $form[$condition][$plugin_key]['#states']['visible'][$target][] = array('value' => $this_webform_type);
+      if ($this_webform_type != 'webform_ab') {
+        $form[$condition][$plugin_key]['#states']['visible'][$target] = array(
+          array('value' => str_replace('_ab', '', $this_webform_type)),
+        );
+      }
       // Set the invisible conditions:
       foreach ($webform_types as $webform_type => $type_label) {
-        if ($webform_type . '_ab' != $this_webform_type) {
+        if ($this_webform_type != $webform_type . '_ab' && $this_webform_type != 'webform_ab') {
           $form[$condition][$plugin_key]['#states']['invisible'][$target] = array(
             'value' => $webform_type);
         }
