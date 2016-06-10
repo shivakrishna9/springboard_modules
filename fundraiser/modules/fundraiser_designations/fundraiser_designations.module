@@ -21,7 +21,7 @@ function fundraiser_designations_fundraiser_field_info() {
     // Display callback, hide this field if the node isn't a designation node.
   );
   $fields['designations']['designation_box'] = array(
-    '#title' => t('Designations'),
+    '#title' => t('Designations internal component (not editable)'),
     '#type' => 'designations',
     '#required' => 1,
     '#allow_update' => 1,
@@ -36,7 +36,7 @@ function fundraiser_designations_fundraiser_field_info() {
     // Display callback, hide this field if the node isn't a designation node.
   );
   $fields['cart_container']['cart'] = array(
-    '#title' => t('Cart'),
+    '#title' => t('Cart internal component (not editable)'),
     '#type' => 'cart',
     '#required' => 1,
     '#allow_update' => 1,
@@ -162,7 +162,6 @@ function fundraiser_designations_webform_component_info() {
  * Implements hook_form_alter().
  */
 function fundraiser_designations_form_alter(&$form, &$form_state, $form_id) {
-
   // Do not allow users to muck with defined form keys in component
   // editing form. They're named what they're named for a reason and we need
   // those keys to remain unharmed.
@@ -171,15 +170,30 @@ function fundraiser_designations_form_alter(&$form, &$form_state, $form_id) {
     // For donation types ONLY prevent type trigger.
     if (fundraiser_designations_is_designation_type($node->type)) {
       $form_key = $form['form_key']['#default_value'];
-      if ($form_key == 'designations' || $form_key == 'cart') {
+      if ($form_key == 'designations' || $form_key == 'cart_container' || $form_key == 'designation_box') {
         $form['form_key']['#disabled'] = TRUE;
-        $form['form_key']['#description'] .= '</br>' . t('This field key is required by Fundraiser and cannot be changed.');
+        $form['form_key']['#description'] = t('This field key is required by Fundraiser and cannot be changed.');
         $form['form_key']['#value'] = $form['form_key']['#default_value'];
+      }
+      if ($form_key == 'designation_box' || $form_key == 'cart') {
+        $form['name']['#access'] = FALSE;
       }
     }
   }
 }
 
+/**
+ * Implements hook_form_FORM_ID_alter().
+ */
+function fundraiser_designations_form_webform_components_form_alter(&$form, &$form_state, $form_id) {
+  // Hide the uneditable sub-components on the component listing page.
+  if (fundraiser_designations_is_designation_type($form['#node']->type)) {
+    $form['#attached']['js'][] = array(
+      'data' => "jQuery(document).ready(function(){jQuery('td:contains(\"internal component\")').closest('tr').hide();})",
+      'type' => 'inline',
+    );
+  }
+}
 
 /**
  * Implements hook_module_implements_alter().
