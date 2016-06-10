@@ -253,9 +253,17 @@ function webform_ab_form(&$node, $form_state) {
     '#collapsed' => FALSE,
     '#tree' => TRUE,
   );
+
+  $filter_groups = array();
+
   // Get win condition plugins and show them as options
   $win_thresholds = _webform_ab_get_win_threshold_plugins();
   foreach ($win_thresholds as $plugin_key => $plugin) {
+    // Gather data for form filtering:
+    $filter_groups[$plugin['module']][] = array(
+      'condition' => 'win_thresholds',
+      'plugin_key' => $plugin_key,
+    );
     // Add a checkbox to enable this win threshold
     $form['win_thresholds'][$plugin_key]['enable'] = array(
       '#type' => 'checkbox',
@@ -310,6 +318,12 @@ function webform_ab_form(&$node, $form_state) {
   // Get win condition plugins and show them as options
   $win_conditions = _webform_ab_get_win_condition_plugins();
   foreach ($win_conditions as $plugin_key => $plugin) {
+    // Gather data for form filtering:
+    $filter_groups[$plugin['module']][] = array(
+      'condition' => 'win_conditions',
+      'plugin_key' => $plugin_key,
+    );
+
     // Add a checkbox to enable this win condition
     $form['win_conditions'][$plugin_key]['enable'] = array(
       '#type' => 'checkbox',
@@ -353,6 +367,26 @@ function webform_ab_form(&$node, $form_state) {
     }
   }
 
+  // Hide win conditions and thresholds not associated with the currently selected webform type:
+  $webform_types = module_invoke_all('webform_ab_get_webform_types');
+  $target = ':input[name="webform_types"]';
+  foreach ($filter_groups as $this_webform_type => $plugins) {
+    foreach ($plugins as $plugin_data) {
+      $condition = $plugin_data['condition']; $plugin_key = $plugin_data['plugin_key'];
+      // Make the container a proper fieldset so states can be applied:
+      $form[$condition][$plugin_key]['#type'] = 'fieldset';
+      $form[$condition][$plugin_key]['#attributes'] = array('class' => array(str_replace(' ', '-', $condition) . '-container'));
+      // Set the visible conditions:
+      $form[$condition][$plugin_key]['#states']['visible'][$target][] = array('value' => $this_webform_type);
+      // Set the invisible conditions:
+      foreach ($webform_types as $webform_type => $type_label) {
+        if ($webform_type . '_ab' != $this_webform_type) {
+          $form[$condition][$plugin_key]['#states']['invisible'][$target] = array(
+            'value' => $webform_type);
+        }
+      }  
+    }
+  }
   return $form;
 }
 
