@@ -26,33 +26,34 @@ function salesforce_donation_history_query() {
 function salesforce_donation_history_fields() {
   $form = array();
   $field_definitions = variable_get('salesforce_donation_history_query_fields');
-  $form['sf-fields'] = array(
-    '#prefix' => '<div id="sf-fields">',
+  $field_defaults = variable_get('salesforce_donation_history_field_settings', NULL);
+  $form['salesforce_donation_history_field_settings'] = array(
+    '#prefix' => '<div id="salesforce_donation_history_field_settings">',
     '#suffix' => '</div>',
     '#tree' => TRUE,
-    '#theme' => 'salesforce_donation_history_textfield_table'
+    '#theme' => 'salesforce_donation_history_admin_field_table'
   );
   foreach ($field_definitions as $sf_table => $sf_field) {
     foreach ($sf_field as $name => $value) {
-      $form['sf-fields'][$sf_table . '-' . $name]['label'] = array(
+      $form['salesforce_donation_history_field_settings'][$sf_table . '-' . $name]['label'] = array(
         '#type' => 'textfield',
-        '#default_value' => '',
+        '#default_value' => $field_defaults[$sf_table . '-' . $name]['label'],
         '#extra_data' => array(
           'field_table' => $sf_table,
           'field_name' => $name,
         ),
       );
-      $form['sf-fields'][$sf_table . '-' . $name]['show_on_tab'] = array(
+      $form['salesforce_donation_history_field_settings'][$sf_table . '-' . $name]['show_on_tab'] = array(
         '#type' => 'checkbox',
-        '#default_value' => '1',
+        '#default_value' => $field_defaults[$sf_table . '-' . $name]['show_on_tab'],
       );
-      $form['sf-fields'][$sf_table . '-' . $name]['show_on_receipt'] = array(
+      $form['salesforce_donation_history_field_settings'][$sf_table . '-' . $name]['show_on_receipt'] = array(
         '#type' => 'checkbox',
-        '#default_value' => '1',
+        '#default_value' => $field_defaults[$sf_table . '-' . $name]['show_on_receipt'],
       );
-      $form['sf-fields'][$sf_table . '-' . $name]['show_on_summary'] = array(
+      $form['salesforce_donation_history_field_settings'][$sf_table . '-' . $name]['show_on_summary'] = array(
         '#type' => 'checkbox',
-        '#default_value' => '1',
+        '#default_value' => $field_defaults[$sf_table . '-' . $name]['show_on_summary'],
       );
     }
   }

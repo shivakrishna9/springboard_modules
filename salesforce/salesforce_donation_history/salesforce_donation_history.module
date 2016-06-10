@@ -77,13 +77,13 @@ function salesforce_donation_history_menu() {
  */
 function salesforce_donation_history_theme() {
   return array(
-    'salesforce_donation_history_textfield_table' => array(
+    'salesforce_donation_history_admin_field_table' => array(
       'render element' => 'element'
     )
   );
 }
 
-function theme_salesforce_donation_history_textfield_table($vars) {
+function theme_salesforce_donation_history_admin_field_table($vars) {
   $element = $vars['element'];
   $rows = array();
   foreach (element_children($element) as $key) {
@@ -94,7 +94,6 @@ function theme_salesforce_donation_history_textfield_table($vars) {
       array('data' => render($element[$key]['show_on_tab'])),
       array('data' => render($element[$key]['show_on_receipt'])),
       array('data' => render($element[$key]['show_on_summary'])),
-
     );
   }
   $header = array(t('SF Table'), t('Field'), t('Custom Label'), t('Show on User Tab'), t('Show on Donation Receipt'), t('Show on Annual Summary'));
@@ -274,20 +273,20 @@ function salesforce_donation_history_create_table($records, $displayHeaders = TR
 }
 
 function salesforce_donation_history_create_table_headers($sobject, $tail="") {
-  if (!isset($headerBufferArray)) {
-    $headerBufferArray = array();
+  if (!isset($header_buffer_array)) {
+    $header_buffer_array = array();
   }
   if (isset($sobject->Id) && !isset($sobject->fields->Id)) {
-    $headerBufferArray[] = $tail . "Id";
+    $header_buffer_array[] = $tail . "Id";
   }
   if (isset($sobject->fields)) {
     foreach ($sobject->fields as $fieldname => $fieldvalue) {
       if ($fieldvalue instanceof SObject) {
         $recurse = salesforce_donation_history_create_table_headers($fieldvalue, $tail . htmlspecialchars($fieldvalue->type,ENT_QUOTES) . ".");
-        $headerBufferArray = array_merge($headerBufferArray, $recurse);
+        $header_buffer_array = array_merge($header_buffer_array, $recurse);
       }
       else {
-        $headerBufferArray[] = $tail . htmlspecialchars($fieldname,ENT_QUOTES);
+        $header_buffer_array[] = $tail . htmlspecialchars($fieldname,ENT_QUOTES);
       }
     }
   }
@@ -296,10 +295,10 @@ function salesforce_donation_history_create_table_headers($sobject, $tail="") {
       $sobject->queryResult = array($sobject->queryResult);
     }
     foreach ($sobject->queryResult as $qr) {
-      $headerBufferArray[] = $qr->records[0]->type;
+      $header_buffer_array[] = $qr->records[0]->type;
     }
   }
-  return $headerBufferArray;
+  return $header_buffer_array;
 }
 
 function salesforce_donation_history_create_table_row($sobject, $escapeHtmlChars=true) {
@@ -347,7 +346,7 @@ function salesforce_donation_history_get_field_definitions($records) {
   }
   // Let's see if this ever gets run.
   if (isset($sobject->Id) && !isset($sobject->fields->Id)) {
-    // $headerBufferArray[] = $tail . "Id";
+    // $header_buffer_array[] = $tail . "Id";
     // dpm('Check this code');
   }
   // Does this sobject have fields?
