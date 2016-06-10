@@ -1841,7 +1841,6 @@ function springboard_dw_contact($item) {
   if ($api_response->getStatusCode() == 200) {
 
     return TRUE;
-
   }
   else {
     // Log the API error.
@@ -1904,7 +1903,6 @@ function springboard_dw_donation($item) {
 
     // Respond back successfully to the queue to remove the item.
     return TRUE;
-
   }
   else {
     // Log the API error.
@@ -1936,7 +1934,6 @@ function springboard_dw_form($item) {
 
     // Respond back successfully to the queue to remove the item.
     return TRUE;
-
   }
   else {
     // Log the API error.
@@ -1969,7 +1966,6 @@ function springboard_dw_advocacy_message($item) {
 
     // Respond back successfully to the queue to remove the item.
     return TRUE;
-
   }
   else {
     // Log the API error.
@@ -1995,7 +1991,6 @@ function springboard_dw_advocacy_action($item) {
 
     // Respond back successfully to the queue to remove the item.
     return TRUE;
-
   }
   else {
     // Log the API error.
@@ -2021,7 +2016,6 @@ function springboard_dw_petition($item) {
 
     // Respond back successfully to the queue to remove the item.
     return TRUE;
-
   }
   else {
     // Log the API error.
@@ -2047,7 +2041,6 @@ function springboard_dw_submission($item) {
 
     // Respond back successfully to the queue to remove the item.
     return TRUE;
-
   }
   else {
     // Log the API error.
@@ -2073,7 +2066,6 @@ function springboard_dw_payment($item) {
 
     // Respond back successfully to the queue to remove the item.
     return TRUE;
-
   }
   else {
     // Log the API error.
@@ -2100,7 +2092,6 @@ function springboard_dw_advocacy_social_action_message($item) {
 
     // Respond back successfully to the queue to remove the item.
     return TRUE;
-
   }
   else {
     // Log the API error.
@@ -2126,7 +2117,6 @@ function springboard_dw_petition_message($item) {
 
     // Respond back successfully to the queue to remove the item.
     return TRUE;
-
   }
   else {
     // Log the API error.
@@ -2151,7 +2141,6 @@ function springboard_dw_petition_message($item) {
 
       // Respond back successfully to the queue to remove the item.
       return TRUE;
-
     }
     else {
       // Log the API error.
