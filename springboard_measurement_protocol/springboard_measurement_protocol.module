@@ -40,9 +40,11 @@ function springboard_measurement_protocol_springboard_admin_admin_menu_items_alt
  * Implements hook_commerce_paypal_ipn_process().
  */
 function springboard_measurement_protocol_commerce_paypal_ipn_process($order, $payment_method, $ipn) {
-  // The googleanalytics module needs to be enabled in order to use its UA
-  // variable.
-  if (module_exists('googleanalytics') && variable_get('springboard_measurement_protocol_paypal_enable', FALSE)) {
+  if (variable_get('springboard_measurement_protocol_paypal_enable', FALSE)) {
+    if (variable_get('springboard_measurement_protocol_ga_account', 'UA-') == 'UA-') {
+      drupal_set_message(t('The Springboard Measurement Protocol module must be configured before PayPal IPN messages can be processed.'), 'warning');
+      return;
+    }
     // @todo Support refund events.
     if ($ipn['payment_status'] == 'Completed') {
       // Load the donation object using the order id from $ipn.
@@ -81,7 +83,7 @@ function springboard_measurement_protocol_commerce_paypal_ipn_process($order, $p
         // The Measurement Protocol version.
         'v' => 1,
         // The Tracking ID.
-        'tid' => variable_get('googleanalytics_account', ''),
+        'tid' => variable_get('springboard_measurement_protocol_ga_account', ''),
         // The client ID.
         'cid' => $cid,
         // The type of event.
@@ -92,31 +94,30 @@ function springboard_measurement_protocol_commerce_paypal_ipn_process($order, $p
         'ea' => 'purchase',
         // The product action.
         'pa' => 'purchase',
-        // The product ID.
-        'pr1id' => $donation->nid,
-        // The product name.
-        'pr1nm' => $donation->node->title,
-        // The product price.
-        'pr1pr' => $donation->donation['amount'],
-        // The product quantity.
-        'pr1qt' => 1,
-        // The transaction ID.
-        'ti' => $donation->did,
-        // The transaction revenue.
-        'tr' => $donation->donation['amount'],
-        // The transaction item code (SKU).
-        'ic' => $donation->nid,
-        // The transaction item name.
-        'in' => $donation->node->title,
         // The transaction item quantity.
         'iq' => 1,
-        // The transaction item price.
-        'ip' => $donation->donation['amount'],
-        // The transaction item category.
-        'iv' => ($donation->donation['recurs_monthly'] == 1) ? 'Monthly' : 'One-time',
-        // The currency type.
-        'cu' => $donation->donation['currency']['code'],
       );
+
+      // Check each of the following to prevent php notices/warnings in the
+      // watchdog. If any of the following aren't set, the hit will likely fail.
+      if (isset($donation->nid)) {
+        $variables['pr1id'] = $variables['ic'] = $donation->nid;
+      }
+      if (isset($donation->node->title)) {
+        $variables['pr1nm'] = $variables['in'] = $donation->node->title;
+      }
+      if (isset($donation->donation['amount'])) {
+        $variables['pr1pr'] = $variables['ip'] = $donation->donation['amount'];
+      }
+      if (isset($donation->did)) {
+        $variables['ti'] = $donation->did;
+      }
+      if (isset($donation->donation['recurs_monthly'])) {
+        $variables['iv'] = ($donation->donation['recurs_monthly'] == 1) ? 'Monthly' : 'One-time';
+      }
+      if (isset($donation->donation['currency']['code'])) {
+        $variables['cu'] = $donation->donation['currency']['code'];
+      }
 
       $variables = http_build_query($variables);
       $host = 'https://www.google-analytics.com/collect';
@@ -139,7 +140,7 @@ function springboard_measurement_protocol_commerce_paypal_ipn_process($order, $p
         curl_setopt($ch, CURLOPT_NOPROGRESS, 1);
         curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 0);
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 1);
-        curl_setopt($ch, CURLOPT_SSLVERSION, CURL_SSLVERSION_TLSv1);
+        curl_setopt($ch, CURLOPT_SSLVERSION, CURL_SSLVERSION_TLSv1_2);
 
         $response = curl_exec($ch);
 
@@ -151,7 +152,14 @@ function springboard_measurement_protocol_commerce_paypal_ipn_process($order, $p
         curl_close($ch);
       }
 
-      watchdog('springboard_measurement_protocol', 'Sent the following to GA Message Protocol: !message', array('!message' => $host . '/?' . $variables), WATCHDOG_NOTICE);
+      if (variable_get('springboard_measurement_protocol_debug', FALSE)) {
+        watchdog('springboard_measurement_protocol', 'Sent the following to the GA Measurement Protocol service: %message<br /><br />To verify this was a valid hit, in your terminal execute the following command: !curl', array(
+          '%message' => $host . '?' . $variables,
+          '!curl' => '<pre>' . format_string('curl --http1.1 --data "@variables" "https://www.google-analytics.com/debug/collect"', array(
+            '@variables' => $variables,
+          )) . '</pre>',
+        ), WATCHDOG_NOTICE);
+      }
     }
   }
 }
