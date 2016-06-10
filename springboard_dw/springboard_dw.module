@@ -2150,5 +2150,6 @@ function springboard_dw_petition_message($item) {
       // Respond back with failure to retry in the queue.
       return FALSE;
     }
+  }
 
 }
