@@ -101,21 +101,27 @@ function springboard_measurement_protocol_commerce_paypal_ipn_process($order, $p
       // Check each of the following to prevent php notices/warnings in the
       // watchdog. If any of the following aren't set, the hit will likely fail.
       if (isset($donation->nid)) {
+        // The product ID and transaction item code (SKU).
         $variables['pr1id'] = $variables['ic'] = $donation->nid;
       }
       if (isset($donation->node->title)) {
+        // The product and transaction item name.
         $variables['pr1nm'] = $variables['in'] = $donation->node->title;
       }
       if (isset($donation->donation['amount'])) {
+        // The product and transaction item price.
         $variables['pr1pr'] = $variables['ip'] = $donation->donation['amount'];
       }
       if (isset($donation->did)) {
+        // The transaction ID.
         $variables['ti'] = $donation->did;
       }
       if (isset($donation->donation['recurs_monthly'])) {
+        // The transaction item category.
         $variables['iv'] = ($donation->donation['recurs_monthly'] == 1) ? 'Monthly' : 'One-time';
       }
       if (isset($donation->donation['currency']['code'])) {
+        // The currency type.
         $variables['cu'] = $donation->donation['currency']['code'];
       }
 

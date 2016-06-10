@@ -9,6 +9,7 @@
  * Page callback for admin settings.
  */
 function springboard_measurement_protocol_admin() {
+  $form = array();
   $form['general_settings'] = array(
     '#type' => 'fieldset',
     '#collapsible' => TRUE,
