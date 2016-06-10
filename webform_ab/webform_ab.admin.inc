@@ -120,19 +120,24 @@ function webform_ab_test_reports($node) {
   foreach ($node->included_webforms as $webform_nid => $webform_details) {
     $line = array('status' => 'N/A', 'title' => 'N/A');
 
-    // Get this test's webform_ab status and node title:
+    // Get this test's webform_ab status and either internal name or title:
     if (isset($webform_details['status']) && isset($status_labels[$webform_details['status']])) {
       $line['status'] = $status_labels[$webform_details['status']];
     }
-    if (isset($webform_details['title'])) {
-      $line['title'] = l($webform_details['title'], 'node/' . $webform_details['webform_nid']);
+    $internal_name = _webform_ab_get_internal_name($webform_nid);
+    if (!$internal_name && isset($webform_details['title'])) {
+      $line['title'] = l($webform_details['title'], 'node/' . $webform_nid);
     }
+    else {
+      $line['title'] = l($internal_name, 'node/' . $webform_nid);
+    }
+
     // Add values for each win condition column:
     foreach ($enabled_win_conditions as $plugin_key => $condition_data) {
       $condition_current_value = '?';
       $current_value_function = ctools_plugin_get_function($all_win_conditions[$plugin_key], 'current value');
       if (is_string($current_value_function)) {
-        $current_value = $current_value_function($webform_nid);
+        $current_value = $current_value_function($webform_nid, $webform_details, $node);
       } 
       else {
         // Output an error value if this win condition plugin is missing its "current value" function:
@@ -143,6 +148,10 @@ function webform_ab_test_reports($node) {
       // Account for values that should be displayed in percentage format:
       if (stripos($plugin_key, 'percent') !== FALSE) {
         $line[$plugin_key] = ($current_value * 100) . '% ' . t('of') . ' ' . ($condition_data['value_to_win'] * 100) . '%';
+      }
+      // Account for boolean values:
+      elseif (in_array($plugin_key, array('donations_highest_avg', 'donations_highest_gross'))) {
+         $line[$plugin_key] = $current_value ? t('Yes') : t('No');
       }
       else {  
         $line[$plugin_key] = $current_value . ' ' . t('of') . ' ' . $condition_data['value_to_win'];
@@ -382,4 +391,29 @@ function webform_ab_clear_test_data_confirm_submit($form, &$form_state) {
   module_invoke_all('webform_ab_reset_data', $form['#test_nid']);
   drupal_set_message(t('The data has been cleared.'));
   $form_state['redirect'] = 'node/' . $form['#test_nid'] . '/reports';
+}
+
+/**
+ * Get the internal name for a given webform, which is located within
+ * a node field.  Return FALSE if no internal name is found.
+ * @param $nid
+ *   The node ID of the webform in question.
+ */
+function _webform_ab_get_internal_name($nid) {
+  $node_type = db_query("SELECT type FROM {node} WHERE nid = :nid", array(':nid' => $nid))
+    ->fetchField();
+  if (!$node_type) {
+    return FALSE;
+  }
+  $field_info = field_info_instances('node', $node_type);
+  foreach ($field_info as $field_name => $data) {
+    if (strpos($field_name, 'internal_name') !== FALSE) {
+      $db_table = 'field_data_' . $field_name;
+      $value_column = $field_name . '_value';
+    }
+  }
+  // Get the internal name, if possible:
+  return db_query("SELECT $value_column FROM {$db_table} WHERE entity_id = :nid",
+    array(':nid' => $nid))
+    ->fetchField();
 }
