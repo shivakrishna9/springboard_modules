@@ -273,6 +273,7 @@ function salesforce_donation_history_create_table($records, $displayHeaders = TR
 }
 
 function salesforce_donation_history_create_table_headers($sobject, $tail="") {
+  $field_settings = variable_get('salesforce_donation_history_field_settings', NULL);
   if (!isset($header_buffer_array)) {
     $header_buffer_array = array();
   }
@@ -286,6 +287,8 @@ function salesforce_donation_history_create_table_headers($sobject, $tail="") {
         $header_buffer_array = array_merge($header_buffer_array, $recurse);
       }
       else {
+        // Use the custom label as the field header, if one has been specified.
+        $fieldname = (!empty($field_settings[$sobject->type . '-' . $fieldname]['label'])) ? $field_settings[$sobject->type . '-' . $fieldname]['label'] : $fieldname;
         $header_buffer_array[] = $tail . htmlspecialchars($fieldname,ENT_QUOTES);
       }
     }
@@ -295,6 +298,7 @@ function salesforce_donation_history_create_table_headers($sobject, $tail="") {
       $sobject->queryResult = array($sobject->queryResult);
     }
     foreach ($sobject->queryResult as $qr) {
+      // @TODO display custom label for headers of subqueries.
       $header_buffer_array[] = $qr->records[0]->type;
     }
   }
