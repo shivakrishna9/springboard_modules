@@ -8,6 +8,8 @@
 function sba_message_action_performance_page($nid) {
   // CSS and JS assets
   drupal_add_css(drupal_get_path('module', 'sba_message_action') . '/css/message-performance.css');
+  drupal_add_js(drupal_get_path('module', 'sba_message_action') .
+    '/js/message-performance.js');
 
   // Load up the message action node.
   $node = node_load($nid);
@@ -32,8 +34,34 @@ function sba_message_action_performance_page($nid) {
  * a data structure that can be rendered in an HTML table.
  */
 function sba_message_action_performance_targets_table($responses, $node) {
+
+  // Set the pager to a sensible default if not set
+  $pager_limit = isset($_GET['limit']) && is_numeric($_GET['limit']) ?
+  $_GET['limit']:25;
+
+  // The minimum page amount allowed
+  $min_pager = 5;
+
+  // If the page limit is less than the minimum, enforce the minimum
+  if($pager_limit < $min_pager){
+    $pager_limit = $min_pager;
+  }
+  // If the limit is set to all, set a number for it
+  elseif($_GET['limit'] === 'all') {
+    $pager_limit = 100000;
+  }
+
+  $current_url = current_path();
+  $url_query_params = drupal_get_query_parameters(NULL, $exclude = array('q','limit'));
+  $query_string_rebuild = '';
+
+  foreach($url_query_params as $key => $param) {
+    $query_string_rebuild.=$key."=".$param."&";
+  }
+  $form_url_with_input = $current_url.'?'.$query_string_rebuild."limit=";
+
   $targets = !empty($responses['report']->data->targets) ? $responses['report']->data->targets : array();
-  $targets = sba_message_action_pager_default_initialize($targets, 10);
+  $targets = sba_message_action_pager_default_initialize($targets, $pager_limit);
 
   $rows = array();
   $advocacy_id = $node->advocacy_id;
@@ -47,7 +75,7 @@ function sba_message_action_performance_targets_table($responses, $node) {
       $target->deliverability->delivered,
       $target->deliverability->failed,
       $target->deliverability->hold,
-      $target->deliverability->totalMessages
+      $target->deliverability->totalMessages,
     );
   }
 
@@ -75,6 +103,7 @@ function sba_message_action_performance_targets_table($responses, $node) {
     'legislative_results_download_link' =>
       preg_replace("@//@", "/", "$springboard_advocacy_endpoint/api/v1
       /deliverability/action/$advocacy_id/download?access_token=$auth_token"),
+    'form_url_with_input'            => $form_url_with_input,
   ));
 
   return $output;
@@ -181,4 +210,17 @@ function sba_message_action_target_cache($client, $target_id, $advocacy_id) {
   }
 
   return $responses;
+}
+
+/**
+ * Helper function to set selected state on option if it matches the value
+ * specified in the method input.
+ */
+function sba_message_action_pager_option_selected($input) {
+  if(isset($_GET['limit']) && isset($input) && (is_numeric($input) || $input ==
+  'all')) {
+    if ($input == $_GET['limit']) {
+      echo "selected";
+    }
+  }
 }
