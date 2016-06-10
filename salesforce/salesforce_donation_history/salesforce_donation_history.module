@@ -272,24 +272,22 @@ function salesforce_donation_history_create_table($records, $displayHeaders = TR
   return $table;
 }
 
-function salesforce_donation_history_create_table_headers($sobject, $tail="") {
+function salesforce_donation_history_create_table_headers($sobject) {
   $field_settings = variable_get('salesforce_donation_history_field_settings', NULL);
   if (!isset($header_buffer_array)) {
     $header_buffer_array = array();
   }
-  if (isset($sobject->Id) && !isset($sobject->fields->Id)) {
-    $header_buffer_array[] = $tail . "Id";
-  }
   if (isset($sobject->fields)) {
     foreach ($sobject->fields as $fieldname => $fieldvalue) {
       if ($fieldvalue instanceof SObject) {
-        $recurse = salesforce_donation_history_create_table_headers($fieldvalue, $tail . htmlspecialchars($fieldvalue->type,ENT_QUOTES) . ".");
+        $recurse = salesforce_donation_history_create_table_headers($fieldvalue);
         $header_buffer_array = array_merge($header_buffer_array, $recurse);
       }
       else {
-        // Use the custom label as the field header, if one has been specified.
+        // Use the custom label as the field header, if one has been specified
+        // otherwise use the salesforce field name.
         $fieldname = (!empty($field_settings[$sobject->type . '-' . $fieldname]['label'])) ? $field_settings[$sobject->type . '-' . $fieldname]['label'] : $fieldname;
-        $header_buffer_array[] = $tail . htmlspecialchars($fieldname,ENT_QUOTES);
+        $header_buffer_array[] = htmlspecialchars($fieldname, ENT_QUOTES);
       }
     }
   }
@@ -298,8 +296,10 @@ function salesforce_donation_history_create_table_headers($sobject, $tail="") {
       $sobject->queryResult = array($sobject->queryResult);
     }
     foreach ($sobject->queryResult as $qr) {
-      // @TODO display custom label for headers of subqueries.
-      $header_buffer_array[] = $qr->records[0]->type;
+      // Use the custom label as the field header, if one has been specified,
+      // otherwise use the salesforce table name.
+      $fieldname = (!empty($field_settings[$qr->records[0]->type])) ? $field_settings[$qr->records[0]->type]['label'] : $qr->records[0]->type;
+      $header_buffer_array[] = $fieldname;
     }
   }
   return $header_buffer_array;

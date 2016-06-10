@@ -34,6 +34,26 @@ function salesforce_donation_history_fields() {
     '#theme' => 'salesforce_donation_history_admin_field_table'
   );
   foreach ($field_definitions as $sf_table => $sf_field) {
+    $form['salesforce_donation_history_field_settings'][$sf_table]['label'] = array(
+      '#type' => 'textfield',
+      '#default_value' => $field_defaults[$sf_table]['label'],
+      '#extra_data' => array(
+        'field_table' => $sf_table,
+        'field_name' => '',
+      ),
+    );
+    $form['salesforce_donation_history_field_settings'][$sf_table]['show_on_tab'] = array(
+      '#type' => 'checkbox',
+      '#default_value' => $field_defaults[$sf_table]['show_on_tab'],
+    );
+    $form['salesforce_donation_history_field_settings'][$sf_table]['show_on_receipt'] = array(
+      '#type' => 'checkbox',
+      '#default_value' => $field_defaults[$sf_table]['show_on_receipt'],
+    );
+    $form['salesforce_donation_history_field_settings'][$sf_table]['show_on_summary'] = array(
+      '#type' => 'checkbox',
+      '#default_value' => $field_defaults[$sf_table]['show_on_summary'],
+    );
     foreach ($sf_field as $name => $value) {
       $form['salesforce_donation_history_field_settings'][$sf_table . '-' . $name]['label'] = array(
         '#type' => 'textfield',
