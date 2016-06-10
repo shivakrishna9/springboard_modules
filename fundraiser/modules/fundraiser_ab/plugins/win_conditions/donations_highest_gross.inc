@@ -11,6 +11,7 @@ $plugin = array(
   'description' => t('A donation form will be declared the winner if it meets all other win conditions, and has the highest sum of donation amounts among the donation forms included in the A/B test.'),
   'config summary' => 'fundraiser_ab_donations_highest_gross_config_summary',
   'check criteria' => 'fundraiser_ab_donations_highest_gross_check_win',
+  'current value' => 'fundraiser_ab_donations_highest_gross_current_value',
 );
 
 
@@ -20,9 +21,45 @@ $plugin = array(
  * Webform A/B test node
  */
 function fundraiser_ab_donations_highest_gross_config_summary($config) {
-  return 'Yes';
+  return t('Yes');
 }
 
+/**
+ * Returns the current value of this win condition.
+ *
+ * @param $webform_nid
+ *   Note ID for the webform being tested.
+ */
+function fundraiser_ab_donations_highest_gross_current_value($webform_nid, $webform_details, $node) {
+  // Get total, currency-agnostic donation amount for the current webform:
+  $target_sum_donation = _fundraiser_ab_donations_highest_gross_get_sum_donation($webform_nid);
+  foreach ($node->included_webforms as $nid => $details) {
+    $this_sum_donation = _fundraiser_ab_donations_highest_gross_get_sum_donation($nid);
+    if ($this_sum_donation > $target_sum_donation) {
+      return 0;
+    }
+  }
+  return 1;
+}
+
+/**
+ * Get the average donation amount in US for a given webform:
+ */
+function _fundraiser_ab_donations_highest_gross_get_sum_donation($webform_nid) {
+  $amount_query = db_query("SELECT amount, currency FROM {fundraiser_donation} WHERE nid = :nid",
+    array(':nid' => $webform_nid));
+  $sum = 0;
+  foreach ($amount_query as $result) {
+    $currency_amount = $result->amount;
+    $currency_code = $result->currency;
+    // Convert non-US currencies to USD for comparison's sake:
+    if ($currency_code != "USD") {
+      $currency_amount = commerce_currency_convert($currency_amount, $currency_code, 'USD');
+    }
+    $sum += $currency_amount;
+  }
+  return $sum;
+}
 
 /**
  * Check if the given Webform A/B Test node has a winner

@@ -14,6 +14,7 @@ $plugin = array(
   'config form validation' => 'fundraiser_ab_sustainers_percentage_config_validate',
   'config summary' => 'fundraiser_ab_sustainers_percentage_config_summary',
   'check criteria' => 'fundraiser_ab_sustainers_percentage_check_win',
+  'current value' => 'fundraiser_ab_sustainers_percentage_current_value',
   'prep for save' => 'fundraiser_ab_sustainers_percentage_prep_save',
 );
 
@@ -86,6 +87,25 @@ function fundraiser_ab_sustainers_percentage_prep_save(&$config) {
   }
 }
 
+/**
+ * Returns the current value this win condition is measuring for a given test.
+ *
+ * @param $webform_nid
+ *   Node ID of the webform currently being tested.
+ */
+function fundraiser_ab_sustainers_percentage_current_value($webform_nid) {
+  $overall_donation_count = db_query("SELECT nid FROM {fundraiser_donation} d WHERE d.nid = :webform_nid",
+    array(':webform_nid' => $webform_nid))
+    ->rowCount();
+  $sustainer_donation_count = db_query("SELECT nid FROM {fundraiser_donation} d, {fundraiser_sustainers} s " .
+    "WHERE d.did = s.master_did AND d.nid = :webform_nid",
+    array(':webform_nid' => $webform_nid))
+    ->rowCount();
+  if (!$overall_donation_count) {
+    return 0;
+  }
+  return round($sustainer_donation_count / $overall_donation_count, 2);
+}
 
 /**
  * Check if the given Webform A/B Test node has a winner
