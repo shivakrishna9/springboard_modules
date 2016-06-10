@@ -187,15 +187,35 @@ function _springboard_node_expire_node_insert($node) {
     return;
   }
 
+  $update_fields = array();
+  $now = strtotime("now");
+  $then = strtotime($node->expire);
+  if ($now > $then && $node->expired == FALSE) {
+    $update_fields['expired'] = 1;
+  }
+  elseif ($now < $then && $node->expired == TRUE) {
+    $update_fields['expired'] = 0;
+  }
+
+  if (isset($node->expiration_action)) {
+    $update_fields['action'] = $node->expiration_action;
+  }
+  if (isset($node->expiration_redirect)) {
+    $update_fields['redirect_url'] = $node->expiration_redirect;
+  }
+  if (isset($node->expiration_message['value'])) {
+    $update_fields['message'] = $node->expiration_message['value'];
+  }
+  if (isset($node->expiration_message['format'])) {
+    $update_fields['message_format'] = $node->expiration_message['format'];
+  }
+
   db_merge('node_expire')
     ->key(array('nid' => $node->nid))
-    ->fields(array(
-      'action' => $node->expiration_action,
-      'redirect_url' => $node->expiration_redirect,
-      'message' => $node->expiration_message['value'],
-      'message_format' => $node->expiration_message['format'],
-    ))
+    ->fields($update_fields)
     ->execute();
+
+  cache_clear_all();
 }
 
 /**
