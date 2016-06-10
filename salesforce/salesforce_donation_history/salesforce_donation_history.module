@@ -284,10 +284,13 @@ function salesforce_donation_history_create_table_headers($sobject) {
         $header_buffer_array = array_merge($header_buffer_array, $recurse);
       }
       else {
-        // Use the custom label as the field header, if one has been specified
-        // otherwise use the salesforce field name.
-        $fieldname = (!empty($field_settings[$sobject->type . '-' . $fieldname]['label'])) ? $field_settings[$sobject->type . '-' . $fieldname]['label'] : $fieldname;
-        $header_buffer_array[] = htmlspecialchars($fieldname, ENT_QUOTES);
+        // Only add the header if it is configured to be displayed.
+        if ($field_settings[$sobject->type . '-' . $fieldname]['show_on_tab']) {
+          // Use the custom label as the field header if one has been specified.
+          // Else, default to the salesforce field name.
+          $fieldname = (!empty($field_settings[$sobject->type . '-' . $fieldname]['label'])) ? $field_settings[$sobject->type . '-' . $fieldname]['label'] : $fieldname;
+          $header_buffer_array[] = htmlspecialchars($fieldname, ENT_QUOTES);
+        }
       }
     }
   }
@@ -296,8 +299,8 @@ function salesforce_donation_history_create_table_headers($sobject) {
       $sobject->queryResult = array($sobject->queryResult);
     }
     foreach ($sobject->queryResult as $qr) {
-      // Use the custom label as the field header, if one has been specified,
-      // otherwise use the salesforce table name.
+      // Use the custom label as the field header if one has been specified.
+      // Else, default to the salesforce table name.
       $fieldname = (!empty($field_settings[$qr->records[0]->type])) ? $field_settings[$qr->records[0]->type]['label'] : $qr->records[0]->type;
       $header_buffer_array[] = $fieldname;
     }
@@ -306,6 +309,7 @@ function salesforce_donation_history_create_table_headers($sobject) {
 }
 
 function salesforce_donation_history_create_table_row($sobject, $escapeHtmlChars=true) {
+  $field_settings = variable_get('salesforce_donation_history_field_settings', NULL);
   if (!isset($rowBuffer)) {
     $rowBuffer = array();
   }
@@ -313,16 +317,20 @@ function salesforce_donation_history_create_table_row($sobject, $escapeHtmlChars
     $rowBuffer[] = $sobject->Id;
   }
   if (isset($sobject->fields)) {
-    foreach ($sobject->fields as $datum) {
+    foreach ($sobject->fields as $key => $datum) {
       if ($datum instanceof SObject) {
         $rowBuffer = array_merge($rowBuffer, salesforce_donation_history_create_table_row($datum,$escapeHtmlChars));
       } else {
-        $rowBuffer[] = ($escapeHtmlChars ? htmlspecialchars($datum,ENT_QUOTES) : $datum);
+        // Add datum to row if it is not set (so we don't end up with too few
+        // cells in a row OR the field settings say to include it.)
+        if (!isset($datum) || $field_settings[$sobject->type . '-' . $key]['show_on_tab']) {
+          $rowBuffer[] = ($escapeHtmlChars ? htmlspecialchars($datum,ENT_QUOTES) : $datum);
+        }
       }
     }
   }
   if (isset($sobject->queryResult)) {
-      $rowBuffer[] = $sobject->queryResult;
+    $rowBuffer[] = $sobject->queryResult;
   }
   return $rowBuffer;
 }
