@@ -44,15 +44,15 @@ function salesforce_donation_history_fields() {
       );
       $form['sf-fields'][$sf_table . '-' . $name]['show_on_tab'] = array(
         '#type' => 'checkbox',
-        '#default_value' => '',
+        '#default_value' => '1',
       );
       $form['sf-fields'][$sf_table . '-' . $name]['show_on_receipt'] = array(
         '#type' => 'checkbox',
-        '#default_value' => '',
+        '#default_value' => '1',
       );
       $form['sf-fields'][$sf_table . '-' . $name]['show_on_summary'] = array(
         '#type' => 'checkbox',
-        '#default_value' => '',
+        '#default_value' => '1',
       );
     }
   }

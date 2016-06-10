@@ -4,4 +4,4 @@ package = Salesforce
 core = 7.x
 dependencies[] = salesforce_donation
 
-configure = admin/config/salesforce/salesforce_donation_history
+configure = admin/config/salesforce/donation_history
