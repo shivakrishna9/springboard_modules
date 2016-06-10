@@ -97,7 +97,7 @@ function _webform_render_funds_multiple(&$element, $node, $group_wrapper, $funds
   $options = array();
   $options[] = 'Select';
   foreach ($funds as $fund) {
-    $options[$fund->sku] = $fund->title;
+    $options[$fund->product_id] = $fund->title;
   }
 
   $id = $group_wrapper->fundraiser_fund_group_id->value();

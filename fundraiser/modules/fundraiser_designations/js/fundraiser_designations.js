@@ -109,6 +109,8 @@
       newRow.insertBefore('.cart-total-row').hide().show(300);
     }
 
+    self.setFormValue();
+
     if ($(".cart-fund-empty").is(':visible')) {
       $(".cart-fund-empty").hide();
     }
@@ -116,6 +118,19 @@
     self.setAmounts();
 
   }
+
+  // attaches JSONified data attributes of the recipients list to a hidden form field
+  Drupal.fundraiserDesignations.prototype.setFormValue = function () {
+    var obj = {};
+    $('.cart-fund-row').each(function(i) {
+      obj[i] = $(this).data();
+    });
+    var lineItems = JSON.stringify(obj).replace(/"/g, '&quot;');
+    console.log(lineItems);
+
+    $('input[name$="[fund_catcher]"]').val(lineItems);
+
+  };
 
   Drupal.fundraiserDesignations.prototype.validateOtherAmt = function(groupId) {
       if ($('#fd-other-' + groupId)[0]) {
@@ -158,18 +173,19 @@
       message = 'Please choose a fund.';
     }
     else if(!amtSel) {
-      message = 'Please choose a fund and select an amount'
+      message = 'Please select an amount'
     }
 
-    var amtFloat = parseFloat(amt);
-    console.log(amtFloat)
-    if (Number.isNaN(amtFloat) || !$.isNumeric(amt)) {
-      message += ' Not a valid amount.';
-    }
-    else {
-      var MinAmt = parseFloat(Drupal.settings.fundraiserWebform.minimum_donation_amount);
-      if (amtFloat < MinAmt) {
-        message += ' Below the minumum amount.'
+    if (amtSel) {
+      var amtFloat = parseFloat(amt);
+      if (Number.isNaN(amtFloat) || !$.isNumeric(amt)) {
+        message += ' Not a valid amount.';
+      }
+      else {
+        var MinAmt = parseFloat(Drupal.settings.fundraiserWebform.minimum_donation_amount);
+        if (amtFloat < MinAmt) {
+          message += ' Below the minumum amount.'
+        }
       }
     }
 

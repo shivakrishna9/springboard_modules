@@ -316,31 +316,23 @@ function fundraiser_designations_commerce_line_item_type_info() {
  * Returns TRUE if line items have been generated. Otherwise, returns FALSE.
  */
 function fundraiser_designations_fundraiser_commerce_generate_line_items($donation, $order) {
-  if (isset($donation->donation['designation_box']) && is_array($donation->donation['designation_box']) && count($donation->donation['designation_box'])) {
+  if (isset($donation->donation['cart']) && is_array($donation->donation['cart']) && count($donation->donation['cart'])) {
     $order_wrapper = entity_metadata_wrapper('commerce_order', $order);
-    $node_wrapper = entity_metadata_wrapper('node', $donation->node);
-    foreach ($donation->donation['designation_box'] as $offset => $serialized_value) {
+    foreach ($donation->donation['cart'] as $offset => $serialized_value) {
       $form_row = unserialize($serialized_value);
-      list ($key, $quantity) = each($form_row);
-      $product_id = _fundraiser_designations_get_product_id_from_form_element_name($key);
-      if ($product_id && $quantity > 0) {
-        $product_wrapper = entity_metadata_wrapper('commerce_product', commerce_product_load($product_id));
-        $line_item = commerce_line_item_new('designation', $order->order_id);
-
-        // Populate the line item with default values, sets the unit price.
-        commerce_product_line_item_populate($line_item, $product_wrapper->value());
-
-        // Set the label from the product title and the quantity from
-        // the webform component value.
-        $text = 'Designation - ' . $product_wrapper->title->value();
-        $line_item->line_item_label = $text;
-        $line_item->quantity = $quantity;
-
-        commerce_line_item_save($line_item);
-
-        // Add the line item to the order, this will be saved
-        // by fundraiser_commerce.
-        $order_wrapper->commerce_line_items[] = $line_item;
+      $fund_object = json_decode(str_replace('&quot;', '"', $form_row['cart']['fund_catcher']));
+      foreach ($fund_object as $fund) {
+        if (!empty($fund->fundId)) {
+          $product_wrapper = entity_metadata_wrapper('commerce_product', commerce_product_load($fund->fundId));
+          $line_item = commerce_line_item_new('designation', $order->order_id);
+          commerce_product_line_item_populate($line_item, $product_wrapper->value());
+          $text = $product_wrapper->title->value();
+          $line_item->line_item_label = $text;
+          $line_item->commerce_unit_price[LANGUAGE_NONE][0]['amount'] = $fund->fundAmount * 100;
+          $line_item->commerce_unit_price[LANGUAGE_NONE][0]['data']['components'][0]['price']['amount'] = $fund->fundAmount * 100;
+          commerce_line_item_save($line_item);
+          $order_wrapper->commerce_line_items[] = $line_item;
+        }
       }
     }
 
@@ -356,7 +348,7 @@ function fundraiser_designations_fundraiser_commerce_generate_line_items($donati
  * Implements hook_fundraiser_donation_success().
  */
 function fundraiser_designations_fundraiser_donation_success($donation) {
-  // Only proceed if this donation is adesignated donations.
+  // Only proceed if this donation is a designated donations.
   if (empty($donation->node) || !fundraiser_designations_is_designation_type($donation->node->type)) {
     return;
   }
@@ -409,20 +401,6 @@ function fundraiser_designations_salesforce_mapping_confirm_entity_for_queue($en
     }
   }
 }
-
-/**
- * Helper function: parse the product id out of the form element name.
- */
-function _fundraiser_designations_get_product_id_from_form_element_name($name) {
-  list ($prefix, $product_id) = explode('-', $name);
-  if (strstr($prefix, 'product') && is_numeric($product_id)) {
-    return $product_id;
-  }
-  else {
-    return NULL;
-  }
-}
-
 
 /**
  * Validate callback for node form when in designation settings view.
