@@ -13,6 +13,7 @@ $plugin = array(
   'config form validation' => 'webform_ab_total_conversions_config_validate',
   'config summary' => 'webform_ab_total_conversions_config_summary',
   'check criteria' => 'webform_ab_total_conversions_check_win',
+  'current value' => 'webform_ab_total_conversions_current_value',
 );
 
 
@@ -56,6 +57,17 @@ function webform_ab_total_conversions_config_summary($config) {
   return $config['conversions'];
 }
 
+/**
+ * Returns the current value of this win condition.
+ *
+ * @param $webform_nid
+ *   Note ID for the webform being tested.
+ */
+function webform_ab_total_conversions_current_value($webform_nid) {
+  return db_query("SELECT webform_nid FROM {webform_ab_conversion} WHERE webform_nid = :webform_nid",
+    array(':webform_nid' => $webform_nid))
+    ->rowCount();
+}
 
 /**
  * Check if the given Webform A/B Test node has a winner

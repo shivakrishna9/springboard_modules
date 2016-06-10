@@ -45,6 +45,11 @@ function webform_ab_admin_settings($form, &$form_state) {
  * @param $node Node object
  */
 function webform_ab_test_reports($node) {
+  if (empty($node->included_webforms) || !is_array($node->included_webforms)) {
+    return t('No webforms have been added to this A/B test. Visit the !forms_tab tab to add webforms.',
+      array('!forms_tab' => l(t('Included Webforms'), 'node/' . $node->nid . '/webforms')));
+  }
+  
   $return = '';
 
   // Get total hit counts for all webforms
@@ -93,70 +98,59 @@ function webform_ab_test_reports($node) {
     WEBFORM_AB_WEBFORM_STATUS_WINNER => t('Winner'),
     WEBFORM_AB_WEBFORM_STATUS_RETIRED => t('Retired'),
   );
-  // Show the list of currently-included forms
+
+  // Set headers present for all A/B reports:
   $headers = array(
     t('Status'),
     t('Name'),
-    t('Hits'),
-    t('Conversions'),
-    t('Conversion %'),
-    t('Pre-win Hits'),
-    t('Pre-win Conversions'),
-    t('Pre-win Conversion %'),
-    t('Post-win Hits'),
-    t('Post-win Conversions'),
-    t('Post-win Conversion %'),
   );
-  $rows = array();
 
-  // Loop over the webforms and add a row to the report table
-  if (!empty($node->included_webforms) && is_array($node->included_webforms)) {
-    foreach ($node->included_webforms as $webform_nid => $webform_details) {
-      $this_hit_count = isset($hit_counts[$webform_nid]) ? $hit_counts[$webform_nid] : 0;
-      $this_conversion_count = isset($conversion_counts[$webform_nid]) ? $conversion_counts[$webform_nid] : 0;
-      $line = array(
-        $webform_ab_status_labels[$webform_details['status']],
-        $webform_details['title'],
-        isset($hit_counts[$webform_nid]) ? $hit_counts[$webform_nid] : 0,
-        isset($conversion_counts[$webform_nid]) ? $conversion_counts[$webform_nid] : 0,
-        ($this_hit_count > 0) ? round(100 * $this_conversion_count / $this_hit_count) . '%' : '0%',
-      );
+  // Add columns for the currently enabled win conditions and gather progress data:
+  $enabled_win_conditions = array();
+  $all_win_conditions = _webform_ab_get_win_condition_plugins();
+  $enabled_win_conditions_query = db_query("SELECT plugin_key, options FROM {webform_ab_win_conditions} " .
+    "WHERE test_nid = :webform_ab_nid", array(':webform_ab_nid' => $node->nid));
+  foreach ($enabled_win_conditions_query as $condition_data) {
+    $plugin_options = unserialize($condition_data->options);
+    $enabled_win_conditions[$condition_data->plugin_key]['value_to_win'] = array_pop($plugin_options);
+    $headers[] = $all_win_conditions[$condition_data->plugin_key]['title'];
+  }
 
-      // If this webform is the winner, show pre- and post-win conversion percentages
-      if ($winning_webform_nid == $webform_nid) {
-        $line[] = isset($post_win_hit_data['pre_win']) ? $post_win_hit_data['pre_win'] : 0;
-        $line[] = isset($post_win_conversion_data['pre_win']) ? $post_win_conversion_data['pre_win'] : 0;
-        // Only divide if greater than 0
-        if (isset($post_win_hit_data['pre_win']) && $post_win_hit_data['pre_win'] > 0) {
-          $line[] = round(100 * $post_win_conversion_data['pre_win'] / $post_win_hit_data['pre_win']) . '%';
-        }
-        else {
-          $line[] = '0%';
-        }
-        $line[] = isset($post_win_hit_data['post_win']) ? $post_win_hit_data['post_win'] : 0;
-        $line[] = isset($post_win_conversion_data['post_win']) ? $post_win_conversion_data['post_win'] : 0;
-        $post_win_hit_data = isset($post_win_hit_data['post_win']) ? $post_win_hit_data['post_win'] : 0;
-        $post_win_conversion_data = isset($post_win_conversion_data['post_win']) ? $post_win_conversion_data['post_win'] : 0;
-        $line[] = ($post_win_hit_data > 0) ? round(100 * $post_win_conversion_data / $post_win_hit_data) . '%' : '0%';
-      }
-      else {
-        // Not the winning webform. Pad out into the columns for win data
-        while (count($line) < count($headers)) {
-          $line[] = '';
-        }
-      }
-      $rows[] = $line;
+  // Loop over this test's webforms, adding a row for each webform being tested:
+  foreach ($node->included_webforms as $webform_nid => $webform_details) {
+    $line = array('status' => 'N/A', 'title' => 'N/A');
+
+    // Get this test's webform_ab status and node title:
+    if (isset($webform_details['status']) && isset($status_labels[$webform_details['status']])) {
+      $line['status'] = $status_labels[$webform_details['status']];
     }
+    if (isset($webform_details['title'])) {
+      $line['title'] = l($webform_details['title'], 'node/' . $webform_details['webform_nid']);
+    }
+    // Add values for each win condition column:
+    foreach ($enabled_win_conditions as $plugin_key => $condition_data) {
+      $condition_current_value = '?';
+      $current_value_function = ctools_plugin_get_function($all_win_conditions[$plugin_key], 'current value');
+      if (is_string($current_value_function)) {
+        $current_value = $current_value_function($webform_nid);
+      } 
+      else {
+        // Output an error value if this win condition plugin is missing its "current value" function:
+        $current_value = t('Plugin Error');
+        drupal_set_message(t('The win condition plugin, ":plugin_key" is missing its "current value" function. Please try clearing cache.',
+          array(':plugin_key' => $plugin_key)), 'error');
+      }
+      // Account for values that should be displayed in percentage format:
+      if (stripos($plugin_key, 'percent') !== FALSE) {
+        $line[$plugin_key] = ($current_value * 100) . '% ' . t('of') . ' ' . ($condition_data['value_to_win'] * 100) . '%';
+      }
+      else {  
+        $line[$plugin_key] = $current_value . ' ' . t('of') . ' ' . $condition_data['value_to_win'];
+      }
+    }
+    $rows[] = $line;
   }
 
-  // If there were no rows, show an empty message
-  if (count($rows) == 0) {
-    $rows[] = array(array(
-        'data' => t('No webforms have been added to this A/B test. Visit the !forms_tab tab to add webforms.',
-          array('!forms_tab' => l(t('Included Webforms'), 'node/' . $node->nid . '/webforms'))),
-        'colspan' => count($headers),
-      ));
-  }
   $return .= theme('table', array('header' => $headers, 'rows' => $rows));
   return $return;
 }

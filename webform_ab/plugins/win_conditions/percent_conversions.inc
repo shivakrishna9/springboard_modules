@@ -15,6 +15,7 @@ $plugin = array(
   'config summary' => 'webform_ab_percent_conversions_config_summary',
   'check criteria' => 'webform_ab_percent_conversions_check_win',
   'prep for save' => 'webform_ab_percent_conversions_prep_save',
+  'current value' => 'webform_ab_percent_conversions_current_value',
 );
 
 /**
@@ -82,6 +83,22 @@ function webform_ab_percent_conversions_prep_save(&$config) {
     // Convert to a decimal
     $config['percentage'] = $number / 100;
   }
+}
+
+/**
+ * Returns the current value of this win condition.
+ * 
+ * @param $webform_nid
+ *   Note ID for the webform being tested.
+ */
+function webform_ab_percent_conversions_current_value($webform_nid) {
+  $query_data = array(':webform_nid' => $webform_nid);
+  $conversions = db_query("SELECT webform_nid FROM {webform_ab_conversion} WHERE webform_nid = :webform_nid",
+    $query_data)->rowCount();
+  $hits = db_query("SELECT webform_nid FROM {webform_ab_hits} WHERE webform_nid = :webform_nid",
+    $query_data)->rowCount();
+  $value = $hits > 0 ? $conversions / $hits : 0;
+  return round($value, 2);
 }
 
 /**
