@@ -175,9 +175,10 @@ function salesforce_donation_history($user) {
       );
       $output['annual-tax-receipt'] = array(
         '#type' => 'markup',
-        '#markup' => l('Annual Tax Reciept', '#'),
+        '#markup' => l('Print Annual Tax Reciept', '#'),
         );
       $output['table'] = salesforce_donation_history_create_table($results);
+      $output['table'] = salesforce_donation_history_append_column($output['table'], '', l('Print Receipt', '#'));
     }
   }
   return $output;
@@ -371,4 +372,24 @@ function salesforce_donation_history_get_field_definitions($records) {
     }
   }
   return $field_definitions;
+}
+
+/**
+ * Appends a column to a table render array.
+ *
+ * @param array $table
+ *   A table render array.
+ * @param string $header
+ *   The header to display on the appended column.
+ * @param string $column
+ *   The string to display in each row of the appended column.
+ *
+ * @todo Would be nice to support a string and an array of values in $column.
+ */
+function salesforce_donation_history_append_column($table, $header, $column) {
+  $table['#header'][] = $header;
+  for ($i = 0; $i < count($table['#rows']); $i++) {
+    $table['#rows'][$i][] = $column;
+  }
+  return $table;
 }
