@@ -86,8 +86,15 @@
       amt = otherAmt.val();
     }
 
-    var fundId = selector.val()
-    var fundName = $('option:selected', selector).text();
+    if (selector.length > 0) {
+      var fundId = selector.val()
+      var fundName = $('option:selected', selector).text();
+    }
+    else {
+       fundId = $('tr.group-row-' + fundGroupId).attr('data-placeholder-fund-id')
+       fundName = $('#funds-placeholder-' + fundGroupId).find('label').text();
+    }
+
     var newRow = $(self.cartTemplate);
     $('.fund-amount', newRow).text(amt)
     $('.fund-name', newRow).text(fundName);

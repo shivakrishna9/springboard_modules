@@ -172,6 +172,9 @@ function _webform_render_funds_single(&$element, $node, $group_wrapper, $funds, 
   $item['#id'] = 'group-item-' . $id;
   $item['#extra']['group_id'] = $id;
   $item['#extra']['fund_type'] = 'single';
+  $item['#extra']['fund_id'] = $funds[0]->product_id;
+  $item['#attributes'] = array('class' => $funds[0]->product_id);
+
   $item['#extra']['position'] = _webform_render_funds_get_position($groups_by_weight, $id);
   $item['#type'] = 'item';
   $element[$id] = $item;
@@ -180,7 +183,7 @@ function _webform_render_funds_single(&$element, $node, $group_wrapper, $funds, 
   $child['#type'] = 'item';
   $child['#id'] = 'funds-placeholder-' . $id;
   $child['#extra']['group_id'] = $id;
-  $child['#title'] = '';
+  $child['#title'] = check_plain($funds[0]->title);
   $element[$id]['funds_placeholder_' . $id] = $child;
 
   _fundraiser_designations_build_child_elements($id, $element, $amounts);
@@ -343,6 +346,10 @@ function fundraiser_designations_selection_table($element) {
     ),
     'class' => array('group-row-' . $element['#extra']['group_id']),
   );
+
+  if (isset($element['#extra']['fund_id'])) {
+    $row[0]['data-placeholder-fund-id'] = $element['#extra']['fund_id'];
+  }
 
   $table = array(
     '#theme' => 'table',
