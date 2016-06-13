@@ -162,23 +162,47 @@ function fundraiser_designations_webform_component_info() {
  * Implements hook_form_alter().
  */
 function fundraiser_designations_form_alter(&$form, &$form_state, $form_id) {
+  // Needed to support implementation of hook_module_implements_alter().
+}
+
+/**
+ * Implements hook_form_FORM_ID_alter().
+ */
+function fundraiser_designations_form_webform_component_edit_form_alter(&$form, &$form_state, $form_id) {
+  $node = node_load($form['nid']['#value']);
+
+  // Add the subheader field to the edit form.
+  if (fundraiser_designations_is_designation_type($node->type)) {
+    $component = webform_menu_component_load(arg(4), $node->nid, NULL);
+    if ($component['form_key'] == 'designations') {
+      $form['extra']['subheader'] = array(
+        '#type' => 'textfield',
+        '#title' => t('Sub-header'),
+        '#default_value' => !empty($component['extra']['subheader']) ? _webform_filter_xss($component['extra']['subheader']) : '',
+        '#description' => t('On a form with multiple fund groups, this sub-header can appear below the top, featured, fund group.'),
+        '#weight' => -0.5,
+      );
+    }
+    $form['name']['#title'] = t('Header');
+  }
+
+
   // Do not allow users to muck with defined form keys in component
   // editing form. They're named what they're named for a reason and we need
   // those keys to remain unharmed.
-  if ($form_id == 'webform_component_edit_form') {
-    $node = node_load($form['nid']['#value']);
-    // For donation types ONLY prevent type trigger.
-    if (fundraiser_designations_is_designation_type($node->type)) {
-      $form_key = $form['form_key']['#default_value'];
-      if ($form_key == 'designations' || $form_key == 'cart_container' || $form_key == 'designation_box') {
-        $form['form_key']['#disabled'] = TRUE;
-        $form['form_key']['#description'] = t('This field key is required by Fundraiser and cannot be changed.');
-        $form['form_key']['#value'] = $form['form_key']['#default_value'];
-      }
-      if ($form_key == 'designation_box' || $form_key == 'cart') {
-        $form['name']['#access'] = FALSE;
-      }
+  $node = node_load($form['nid']['#value']);
+  // For donation types ONLY prevent type trigger.
+  if (fundraiser_designations_is_designation_type($node->type)) {
+    $form_key = $form['form_key']['#default_value'];
+    if ($form_key == 'designations' || $form_key == 'cart_container' || $form_key == 'designation_box') {
+      $form['form_key']['#disabled'] = TRUE;
+      $form['form_key']['#description'] = t('This field key is required by Fundraiser and cannot be changed.');
+      $form['form_key']['#value'] = $form['form_key']['#default_value'];
     }
+    if ($form_key == 'designation_box' || $form_key == 'cart') {
+      $form['name']['#access'] = FALSE;
+    }
+
   }
 }
 
@@ -201,7 +225,7 @@ function fundraiser_designations_form_webform_components_form_alter(&$form, &$fo
 function fundraiser_designations_module_implements_alter(&$implementations, $hook) {
   // Fundraiser_designations is alphabetically loaded prior
   // to fundraiser_sustainers. This undoes that for form_alter hooks.
-  if ($hook == 'form_node_form_alter' || $hook == 'form_alter') {
+  if (($hook == 'form_node_form_alter' || $hook == 'form_alter') && isset($implementations['fundraiser_designations'])) {
     $group = $implementations['fundraiser_designations'];
     unset($implementations['fundraiser_designations']);
     $implementations['fundraiser_designations'] = $group;
@@ -718,3 +742,4 @@ function fundraiser_designations_node_load($nodes, $types) {
     }
   }
 }
+

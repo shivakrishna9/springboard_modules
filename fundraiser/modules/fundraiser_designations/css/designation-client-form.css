@@ -78,3 +78,12 @@ td.fund-name {
 tr.cart-fund-row {
   border-bottom: 1px solid #ccc;
 }
+
+.designation-group-wrapper h4 {
+  font-weight: normal;
+}
+
+.designation-group-subheader h3 {
+  font-size: 20px;
+  font-weight: normal;
+}

@@ -96,7 +96,7 @@ function _webform_render_designations($component, $value = NULL, $filter = TRUE)
       if ($num > 1) {
         _webform_render_funds_multiple($element, $node, $group_wrapper, $funds, $amounts, $groups_by_weight);
       }
-      else {
+      elseif ($num == 1) {
         _webform_render_funds_single($element, $node, $group_wrapper, $funds, $amounts, $groups_by_weight);
       }
     }
@@ -272,9 +272,9 @@ function _fundraiser_designations_build_child_elements($id, &$element, $amounts)
  * Theme the form elements into a table.
  */
 function theme_fundraiser_designations_fund_groups_component($variables) {
-
   $element = $variables['element'];
   $output = '';
+  $x = 0;
 
   foreach (element_children($element) as $id) {
     $build = array();
@@ -285,6 +285,7 @@ function theme_fundraiser_designations_fund_groups_component($variables) {
       $image = $group_wrapper->field_ffg_image->value();
       $image['path'] = file_create_url($image['uri']);
       $build['content'] = array(
+
 
         '#prefix' => '<div class="designation-group-wrapper ' . $element[$id]['#extra']['position'] . '" id="designation-group-' . $element[$id]['#extra']['group_id'] . '">',
         '#suffix' => '</div>',
@@ -320,6 +321,21 @@ function theme_fundraiser_designations_fund_groups_component($variables) {
           '#weight' => -6,
         ),
       );
+
+      // Add subheader.
+      if ($x === 1) {
+        $pid = $element['#webform_component']['pid'];
+        $nid = $element['#webform_component']['nid'];
+        $component = webform_menu_component_load($pid, $nid, NULL);
+        $build['content']['fund_group_subheader'] = array(
+          '#prefix' => '<div class="designation-group-subheader"><h3>',
+          '#suffix' => '</h3></div>',
+          '#markup' => check_plain($component['extra']['subheader']),
+          '#weight' => -9,
+        );
+      }
+      $x++;
+
       $output .= drupal_render($build);
     }
   }
