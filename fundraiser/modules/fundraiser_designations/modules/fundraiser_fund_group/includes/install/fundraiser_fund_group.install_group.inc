@@ -18,6 +18,8 @@ function _fundraiser_fund_group_install_default_entity() {
   $fields['field_ffg_description'] = fundraiser_fund_group_description_field();
   $fields['field_ffg_image'] = fundraiser_fund_group_image_field();
   $fields['field_ffg_form_id'] = fundraiser_fund_group_form_reference_field();
+  $fields['field_ffg_quantity'] = fundraiser_fund_group_quantity_field();
+
 
   foreach ($fields as $key => $values) {
     $base = field_info_field($key);
@@ -357,6 +359,74 @@ function fundraiser_fund_group_form_reference_field() {
   return $field;
 }
 
+function fundraiser_fund_group_quantity_field() {
+  $field = array(
+    'base' => array(
+      'active' => 1,
+      'cardinality' => 2,
+      'deleted' => 0,
+      'entity_types' => array(),
+      'field_name' => 'field_ffg_quantity',
+      'foreign keys' => array(),
+      'indexes' => array(
+        'value' => array(
+          0 => 'value',
+        ),
+      ),
+      'locked' => 0,
+      'module' => 'list',
+      'settings' => array(
+        'allowed_values' => array(
+          1 => 'Enabled',
+        ),
+        'allowed_values_function' => '',
+      ),
+      'translatable' => 0,
+      'type' => 'list_text',
+      ),
+      'instance' => array(
+        'bundle' => 'fundraiser_fund_group_default',
+        'default_value' => array(
+          0 => array(
+            'value' => 0,
+          ),
+        ),
+        'deleted' => 0,
+        'description' => 'Check this box to enable a quantity field on the group.',
+        'display' => array(
+          'default' => array(
+            'label' => 'hidden',
+            'module' => 'list',
+            'settings' => array(),
+            'type' => 'hidden',
+            'weight' => 3,
+          ),
+          'teaser' => array(
+            'label' => 'hidden',
+            'settings' => array(),
+            'type' => 'hidden',
+            'weight' => 0,
+          ),
+        ),
+        'entity_type' => 'fundraiser_fund_group',
+        'field_name' => 'field_ffg_quantity',
+        'label' => 'Quantity field',
+        'required' => 0,
+        'settings' => array(
+          'user_register_form' => FALSE,
+        ),
+        'widget' => array(
+          'active' => 1,
+          'module' => 'options',
+          'settings' => array(),
+          'type' => 'options_buttons',
+          'weight' => 31,
+        ),
+    ),
+  );
+  return $field;
+}
+
 /**
  * Create the node edit form field groups.
  */
@@ -378,6 +448,7 @@ function fundraiser_fund_group_create_field_groups() {
   $field_group->children = array(
     0 => 'field_ffg_description',
     1 => 'field_ffg_image',
+    2 => 'field_ffg_quantity',
   );
   $field_group->format_type = 'fieldset';
   $field_group->format_settings = array(
@@ -432,6 +503,7 @@ function _fundraiser_fund_group_delete_default_entity_fields() {
     'field_ffg_fd_reference',
     'field_ffg_form_id',
     'field_ffg_image',
+    'field_ffg_quantity',
   );
 
   foreach ($fields as $field_name) {

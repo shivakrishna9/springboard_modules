@@ -52,7 +52,16 @@ fieldset#webform-component-designations legend {
   margin-left: 4px;
 }
 
-label[for*="fd-other"] {
+div[class*="funds-quant"] {
+  width: auto!important;
+}
+
+select[name*="funds_quant"] {
+  width: 50px;
+}
+
+label[for*="fd-other"],
+label[for*="funds-quant"]{
   float:left;
   margin-right: 4px;
 }

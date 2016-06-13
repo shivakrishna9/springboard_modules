@@ -146,7 +146,7 @@ function _webform_render_funds_multiple(&$element, $node, $group_wrapper, $funds
   $child['#title'] = '';
   $element[$id]['funds_select_' . $id] = $child;
 
-  _fundraiser_designations_build_child_elements($id, $element, $amounts);
+  _fundraiser_designations_build_child_elements($id, $element, $amounts, $group_wrapper);
 }
 
 /**
@@ -167,7 +167,6 @@ function _webform_render_funds_multiple(&$element, $node, $group_wrapper, $funds
  */
 function _webform_render_funds_single(&$element, $node, $group_wrapper, $funds, $amounts, $groups_by_weight) {
   $id = $group_wrapper->fundraiser_fund_group_id->value();
-
   $item = array();
   $item['#id'] = 'group-item-' . $id;
   $item['#extra']['group_id'] = $id;
@@ -186,7 +185,7 @@ function _webform_render_funds_single(&$element, $node, $group_wrapper, $funds, 
   $child['#title'] = check_plain($funds[0]->title);
   $element[$id]['funds_placeholder_' . $id] = $child;
 
-  _fundraiser_designations_build_child_elements($id, $element, $amounts);
+  _fundraiser_designations_build_child_elements($id, $element, $amounts, $group_wrapper);
 
 }
 
@@ -224,7 +223,7 @@ function _webform_render_funds_get_position($groups_by_weight, $id) {
  * @param array $amounts
  *   The one-time and/or recurring price sets.
  */
-function _fundraiser_designations_build_child_elements($id, &$element, $amounts) {
+function _fundraiser_designations_build_child_elements($id, &$element, $amounts, $group_wrapper) {
   $donation_amounts = [];
   if (!empty($amounts['default'])) {
     foreach ($amounts['default'] as $key => $amount) {
@@ -259,6 +258,19 @@ function _fundraiser_designations_build_child_elements($id, &$element, $amounts)
   $child['#extra']['group_id'] = $id;
   $child['#title'] = 'Other amount';
   $element[$id]['fd_other_' . $id] = $child;
+
+
+  $quantity =  $group_wrapper->field_ffg_quantity[0]->value();
+
+  if (!empty($quantity)) {
+    $child = array();
+    $child['#type'] = 'select';
+    $child['#id'] = 'funds-quant-select-' . $id;
+    $child['#extra']['group_id'] = $id;
+    $child['#options'] = array(1 => 1, 2, 3, 4, 5);
+    $child['#title'] = 'Quantity';
+    $element[$id]['funds_quant_select_' . $id] = $child;
+  }
 
   $child = array();
   $child['#type'] = 'button';

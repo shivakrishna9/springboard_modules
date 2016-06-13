@@ -332,6 +332,7 @@ function fundraiser_designations_fundraiser_commerce_generate_line_items($donati
           commerce_product_line_item_populate($line_item, $product_wrapper->value());
           $text = $product_wrapper->title->value();
           $line_item->line_item_label = $text;
+          $line_item->quantity = $fund->fundQuantity;
           // @todo must be a better way to set these amounts.
           $line_item->commerce_unit_price[LANGUAGE_NONE][0]['amount'] = $fund->fundAmount * 100;
           $line_item->commerce_unit_price[LANGUAGE_NONE][0]['data']['components'][0]['price']['amount'] = $fund->fundAmount * 100;

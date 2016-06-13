@@ -53,10 +53,12 @@
 
       var fundGroup = $(item);
       var fundGroupId = item['id'].replace('designation-group-', '')
-      var selector = fundGroup.find('select');
+      var selector = fundGroup.find('select[name*="funds_select"]');
       var defaultAmts = $('div[id*="default-amounts-"]', fundGroup);
       var recurAmts = $('div[id*="recurring-amounts-"]', fundGroup);
       var otherAmt = $('input[type="text"]', fundGroup);
+      var quantity = fundGroup.find('select[name*="funds_quant"]');
+
 
       $(window).ready(function () {
         self.validateOtherAmt(fundGroupId);
@@ -81,13 +83,13 @@
 
       $('input[type="submit"]', fundGroup).click(function() {
         button = $(this);
-        self.addFund(button, fundGroupId, selector, defaultAmts, recurAmts, otherAmt);
+        self.addFund(button, fundGroupId, selector, defaultAmts, recurAmts, otherAmt, quantity);
         return false;
       });
     });
   };
 
-  Drupal.fundraiserDesignations.prototype.addFund = function(button, fundGroupId, selector, defaultAmts, recurAmts, otherAmt) {
+  Drupal.fundraiserDesignations.prototype.addFund = function(button, fundGroupId, selector, defaultAmts, recurAmts, otherAmt, quantity) {
     var self = this;
 
     var go = self.validateFund(fundGroupId, selector, defaultAmts, recurAmts, otherAmt);
@@ -107,6 +109,13 @@
       amt = otherAmt.val();
     }
 
+    var quant = 1;
+    var displayAmt = amt;
+    if (quantity.length > 0) {
+      quant = quantity.val();
+      displayAmt = amt * quant;
+    }
+
     if (selector.length > 0) {
       var fundId = selector.val()
       var fundName = $('option:selected', selector).text();
@@ -117,10 +126,12 @@
     }
 
     var newRow = $(self.cartTemplate);
-    $('.fund-amount', newRow).text(amt)
+    $('.fund-amount', newRow).text(displayAmt)
     $('.fund-name', newRow).text(fundName);
     newRow.attr('data-fund-id', fundId);
     newRow.attr('data-fund-amount', amt);
+    newRow.attr('data-fund-quantity', quant);
+
 
     var exists = false;
     $('tr', self.cart).each(function(){

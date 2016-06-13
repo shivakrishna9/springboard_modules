@@ -113,8 +113,36 @@ function fundraiser_fund_group_schema() {
   return $schema;
 }
 
+/**
+ *
+ */
 function fundraiser_fund_group_install() {
   module_load_include('inc', 'fundraiser_fund_group', 'includes/install/fundraiser_fund_group.install_group');
   _fundraiser_fund_group_install_default_entity();
 }
 
+
+/**
+ * Add the fundraiser_fund_group_quantity field.
+ */
+function fundraiser_fund_group_update_7004() {
+
+  module_load_include('inc', 'fundraiser_fund_group', 'includes/install/fundraiser_fund_group.install_group');
+  $field = fundraiser_fund_group_quantity_field();
+
+  $base = field_info_field('field_ffg_quantity');
+  if (empty($base)) {
+    field_create_field($field['base']);
+    field_create_instance($field['instance']);
+  }
+
+  $groups = field_group_read_groups(array(
+    'entity_type' => 'fundraiser_fund_group',
+    'bundle'      => 'fundraiser_fund_group_default',
+    'view_mode'   => 'full',
+  ));
+  $group = $groups['fundraiser_fund_group']['fundraiser_fund_group_default']['form']['group_fgf_options'];
+  $group->children[] = 'field_ffg_quantity';
+  field_group_group_save($group);
+
+}
