@@ -59,7 +59,7 @@ function salesforce_donation_history_menu() {
     'type' => MENU_LOCAL_TASK,
   );
 
-  $items['user/%user/tax-receipts/%year'] = array(
+  $items['user/%user/donation-history/summary/%year'] = array(
     'title' => 'Donation tax receipts for year X',
     'page callback' => 'salesforce_donation_history_by_year',
     'page arguments' => array(1),
@@ -67,7 +67,13 @@ function salesforce_donation_history_menu() {
     'access arguments' => array(1),
   );
 
-  // @TODO menu item for individual tax receipts.
+  $items['user/%user/donation-history/receipt/%Id'] = array(
+    'title' => 'Donation tax receipts for year X',
+    'page callback' => 'salesforce_donation_history_Id',
+    'page arguments' => array(1),
+    'access callback' => 'user_edit_access',
+    'access arguments' => array(1),
+  );
 
   return $items;
 }
@@ -177,7 +183,6 @@ function salesforce_donation_history($user) {
         '#markup' => l('Print Annual Tax Reciept', '#'),
       );
       $output['table'] = salesforce_donation_history_create_table($results[$selected_year]);
-      $output['table'] = salesforce_donation_history_append_column($output['table'], '', l('Print Receipt', '#'));
     }
   }
   return $output;
@@ -298,8 +303,7 @@ function salesforce_donation_history_sort_by_year($records) {
  * @return array
  *   Render array for a table.
  */
-function salesforce_donation_history_create_table($records, $displayHeaders = TRUE) {
-$displayHeaders = TRUE;
+function salesforce_donation_history_create_table($records, $displayHeaders = TRUE, $add_print_receipt_column = TRUE) {
   $table = array('#theme' => 'table');
   if ($displayHeaders) {
     // Call shared recusive function for header printing.
@@ -329,7 +333,7 @@ $displayHeaders = TRUE;
       // create a table within a table.
       if (isset($row[$i][0]) && $row[$i][0] instanceof QueryResult) {
         foreach ($row[$i] as $qr) {
-          $nested_table = salesforce_donation_history_create_table($qr->records, FALSE);
+          $nested_table = salesforce_donation_history_create_table($qr->records, FALSE, FALSE);
           // @TODO I don't think rendering the nested table and inserting the
           // markup into the parent cell should be necessary but I couldn't get
           // it to display as nested render arrays.
@@ -337,7 +341,16 @@ $displayHeaders = TRUE;
         }
       }
     }
+    // Add 'print receipt' cell to the end of each row.
+    if ($add_print_receipt_column) {
+      // @todo: hard coded user ID.
+      $row[] = l(t('Print Receipt'), 'user/55718/donation-history/receipt/' . $record->Id[0]);
+    }
     $table['#rows'][] = $row;
+  }
+  // Add 'print receipt' column header.
+  if ($add_print_receipt_column) {
+    $table['#header'][] = '';
   }
   return $table;
 }
@@ -502,24 +515,4 @@ function salesforce_donation_history_get_query_fields($records) {
     }
   }
   return $field_definitions;
-}
-
-/**
- * Appends a column to a table render array.
- *
- * @param array $table
- *   A table render array.
- * @param string $header
- *   The header to display on the appended column.
- * @param string $column
- *   The string to display in each row of the appended column.
- *
- * @todo Would be nice to support a string and an array of values in $column.
- */
-function salesforce_donation_history_append_column($table, $header, $column) {
-  $table['#header'][] = $header;
-  for ($i = 0; $i < count($table['#rows']); $i++) {
-    $table['#rows'][$i][] = $column;
-  }
-  return $table;
 }
