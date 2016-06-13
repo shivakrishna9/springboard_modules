@@ -101,7 +101,7 @@
       amt = $(defaultAmts).find('input:checked').val();
     }
     if (recurAmts.length > 0 && recurAmts.is(':visible')) {
-      amt = $(recursAmts).find('input:checked').val();
+      amt = $(recurAmts).find('input:checked').val();
     }
     if (otherAmt.val()) {
       amt = otherAmt.val();
@@ -181,7 +181,7 @@
       var amt = $(defaultAmts).find('input:checked').val();
     }
     if (recurAmts.length > 0 && recurAmts.is(':visible')) {
-      amt = $(recursAmts).find('input:checked').val();
+      amt = $(recurAmts).find('input:checked').val();
     }
     if (otherAmt.val()) {
       amt = otherAmt.val();
