@@ -153,12 +153,13 @@ function salesforce_donation_history_describe_object($sfobject_name) {
  */
 function salesforce_donation_history($user) {
   $output = array();
+  $params = drupal_get_query_parameters();
   $sfid = salesforce_donation_history_user_account_id($user->uid);
   if (!$sfid) {
     drupal_set_message('No account ID could be found.', 'error');
   }
   else {
-    $results = salesforce_donation_history_get_opportunities($sfid);
+    $results = salesforce_donation_history_sort_by_year(salesforce_donation_history_get_opportunities($sfid));
     if (count($results) < 1) {
       $output['no-results'] = array(
         '#type' => 'markup',
@@ -166,29 +167,49 @@ function salesforce_donation_history($user) {
       );
     }
     else {
-      $output['select-year'] = drupal_get_form('salesforce_donation_history_select_year');
+      // @TODO what happens when we default to displaying the current year but
+      // there are only donations from previous years?
+      $selected_year = isset($params['year']) ? $params['year'] : date('Y');
+      $available_years = array_keys($results);
+      $output['select-year'] = drupal_get_form('salesforce_donation_history_select_year', $available_years, $selected_year);
       $output['annual-tax-receipt'] = array(
         '#type' => 'markup',
         '#markup' => l('Print Annual Tax Reciept', '#'),
       );
-      $output['table'] = salesforce_donation_history_create_table($results);
+      $output['table'] = salesforce_donation_history_create_table($results[$selected_year]);
       $output['table'] = salesforce_donation_history_append_column($output['table'], '', l('Print Receipt', '#'));
     }
   }
   return $output;
 }
 
-function salesforce_donation_history_select_year() {
-  $params = drupal_get_query_parameters();
-  $current_year = date("Y");
+/**
+ * Form callback. Returns auto-submitting select box.
+ *
+ * @param array $form
+ *   Provided by drupal_get_form().
+ * @param array $form_state
+ *   Provided by drupal_get_form().
+ * @param array $available_years
+ *   List of years to be displayed in the select box.
+ * @param string $selected_year
+ *   The currently-selected year. Defaults to current year.
+ *
+ * @return array
+ *   A form.
+ */
+function salesforce_donation_history_select_year($form, &$form_state, $available_years, $selected_year) {
+  $current_year = date('Y');
   $output['#method'] = 'get';
   $output['year'] = array(
     '#title' => t('Select year'),
     '#type' => 'select',
-    '#options' => array($current_year, $current_year-1, $current_year-2,$current_year-3 ),
-    '#default_value' => isset($params['year']) ? $params['year'] : '',
+    '#default_value' => $selected_year,
     '#attributes' => array('onchange' => 'this.form.submit();'),
   );
+  foreach ($available_years as $year) {
+    $output['year']['#options'][$year] = $year;
+  }
   $output['submit'] = array(
     '#type' => 'submit',
     '#value' => 'Select year',
@@ -229,7 +250,8 @@ function salesforce_donation_history_user_account_id($uid) {
 
 /**
  * Gets the active Salesforce connection object.
- * TODO: There is probably a standard wrapper function for this
+ *
+ * @todo There is probably a standard wrapper function for this
  * somewhere.
  */
 function salesforce_donation_history_get_salesforce() {
@@ -243,6 +265,40 @@ function salesforce_donation_history_get_salesforce() {
   return $sfapi;
 }
 
+/**
+ * Groups an array of SF records by year.
+ *
+ * @param array $records
+ *   An array of records as found in QueryResult->records.
+ *
+ * @return array
+ *   An associative array containing the available years and their records. E.g:
+ *
+ */
+function salesforce_donation_history_sort_by_year($records) {
+  $return_array = array();
+  foreach ($records as $record) {
+    if (!($record instanceof SObject)) {
+      $sobject = new SObject($record);
+    }
+    // @TODO Make date field and format configurable?
+    $date = DateTime::createFromFormat("Y-m-d", $sobject->fields->CloseDate);
+    $year = $date->format("Y");
+    $return_array[$year][] = $record;
+  }
+  dpm($return_array);
+  return $return_array;
+}
+
+/**
+ * Creates table of donation history activity.
+ *
+ * @param array $records
+ * @param bool $displayHeaders
+ *
+ * @return array
+ *   Render array for a table.
+ */
 function salesforce_donation_history_create_table($records, $displayHeaders = TRUE) {
   $table = array('#theme' => 'table');
   if ($displayHeaders) {
@@ -286,6 +342,15 @@ function salesforce_donation_history_create_table($records, $displayHeaders = TR
   return $table;
 }
 
+/**
+ * Returns an array of headers.
+ *
+ * @param object $sobject
+ *   A salesforce object.
+ *
+ * @return array
+ *   A list of headers to be used in the table.
+ */
 function salesforce_donation_history_create_table_headers($sobject) {
   $field_settings = variable_get('salesforce_donation_history_field_settings', NULL);
   if (!isset($header_buffer_array)) {
@@ -322,6 +387,17 @@ function salesforce_donation_history_create_table_headers($sobject) {
   return $header_buffer_array;
 }
 
+/**
+ * Returns an array representing the data in a table row.
+ *
+ * @param object $sobject
+ *   A salesforce object.
+ * @param bool $escapeHtmlChars
+ *   Whether or not the output should be run through htmlspecialchars().
+ *
+ * @return array
+ *   An array representing the data in a table row.
+ */
 function salesforce_donation_history_create_table_row($sobject, $escapeHtmlChars=true) {
   $field_settings = variable_get('salesforce_donation_history_field_settings', NULL);
   if (!isset($rowBuffer)) {
@@ -350,14 +426,32 @@ function salesforce_donation_history_create_table_row($sobject, $escapeHtmlChars
 }
 
 /**
+ * Saves the SF tables and fields from the results of a SOQL query.
  *
+ * This function will call itself recursively to process the tables and fields
+ * in sub-select statements of the SOQL results.
+ *
+ * @param array $records
+ *    An array of salesforce objects. This function only examines $records[0].
+ *
+ * @return array
+ *    An associative array representing the tables and fields. E.g.:
+ *    -Opportunity:
+ *    --CloseDate: ''
+ *    --Amount: ''
+ *    -kell01__Allocation__c:
+ *    ---Name: ''
+ *    ---kell01__Amount__c: ''
+ *    -kell01__Fund__c:
+ *    ---Name: ''
+ *    --OwnerId: ''
  */
-function salesforce_donation_history_get_field_definitions($records) {
+function salesforce_donation_history_get_query_fields($records) {
   // Create an SObject to work with.
   // We only care about the headers, so we should only need to deal with the
   // first ([0]) record.
   if (!is_array($records)) {
-      $records = array($records);
+    $records = array($records);
   }
   if ($records[0] instanceof SObject) {
     $sobject = $records[0];
@@ -370,16 +464,11 @@ function salesforce_donation_history_get_field_definitions($records) {
   if (!isset($field_definitions)) {
     $field_definitions = array();
   }
-  // Let's see if this ever gets run.
-  if (isset($sobject->Id) && !isset($sobject->fields->Id)) {
-    // $header_buffer_array[] = $tail . "Id";
-    // dpm('Check this code');
-  }
-  // Does this sobject have fields?
+  // Process the sobject fields.
   if (isset($sobject->fields)) {
     foreach ($sobject->fields as $fieldname => $fieldvalue) {
       if ($fieldvalue instanceof SObject) {
-        $recurse = salesforce_donation_history_get_field_definitions($fieldvalue);
+        $recurse = salesforce_donation_history_get_query_fields($fieldvalue);
         $field_definitions = array_merge($field_definitions, $recurse);
       }
       else {
@@ -387,12 +476,13 @@ function salesforce_donation_history_get_field_definitions($records) {
       }
     }
   }
+  // Process the sobject queryResult, if any.
   if (isset($sobject->queryResult)) {
     if (!is_array($sobject->queryResult)) {
       $sobject->queryResult = array($sobject->queryResult);
     }
     foreach ($sobject->queryResult as $qr) {
-      $recurse = salesforce_donation_history_get_field_definitions($qr->records);
+      $recurse = salesforce_donation_history_get_query_fields($qr->records);
       $field_definitions = array_merge($field_definitions, $recurse);
     }
   }

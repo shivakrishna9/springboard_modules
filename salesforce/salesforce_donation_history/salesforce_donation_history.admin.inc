@@ -82,14 +82,16 @@ function salesforce_donation_history_fields() {
 }
 
 /**
- * Validation callback for salesforce_donation_history_admin form.
+ * Validation callback for salesforce_donation_history_query form.
  */
 function salesforce_donation_history_query_validate($form, &$form_state){
   $result = salesforce_donation_history_test_query($form_state['input']['salesforce_donation_history_query']);
   if ($result->size != 1) {
     form_set_error('salesforce_donation_history_query', t('There was a problem performing this query. A sample record could not be found.'));
   }
-  variable_set('salesforce_donation_history_query_fields', salesforce_donation_history_get_field_definitions($result->records));
+  else {
+    variable_set('salesforce_donation_history_query_fields', salesforce_donation_history_get_query_fields($result->records));
+  }
 }
 
 /**
