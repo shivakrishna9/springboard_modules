@@ -30,6 +30,11 @@ fieldset#webform-component-designations legend {
   padding: 4px;
 }
 
+.designation-group-funds-table div[id*="funds-placeholder"],
+.designation-group-funds-table div.form-type-select {
+  text-align: left;
+}
+
 .designation-group-funds-table td select {
   margin: 0;
   padding: 0;
@@ -50,6 +55,10 @@ fieldset#webform-component-designations legend {
 label[for*="fd-other"] {
   float:left;
   margin-right: 4px;
+}
+
+label[for*="funds-placeholder"] {
+  font-weight: bold;
 }
 
 .designation-group-funds-table,

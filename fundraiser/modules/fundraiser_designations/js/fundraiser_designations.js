@@ -16,9 +16,30 @@
     this.errorTemplate = '<div class="error-message"></div>';
     this.addListeners();
     this.cancelButton();
-    var cart_total = $('#cart_total').val();
+    var ct = $('#cart_total');
+    var cart_total = ct.val();
     var val = cart_total > 0 ? cart_total : 0;
-    $('#cart_total').val(Drupal.settings.fundraiser.currency.symbol + (val).formatMoney(2, '.', ','));
+    ct.val(Drupal.settings.fundraiser.currency.symbol + (val).formatMoney(2, '.', ','));
+
+    var selectContain = $('.designation-group-funds-table div.form-type-select');
+    var selectContainWidth = 0;
+    selectContain.each(function() {
+     if ($(this).width() > selectContainWidth) {
+       selectContainWidth = $(this).width();
+     }
+   });
+
+    var fundContain = $('.designation-group-funds-table div[id*="funds-placeholder"]');
+    var fundContainWidth = 0;
+    fundContain.each(function() {
+      if ($(this).width() > fundContainWidth) {
+        fundContainWidth = $(this).width();
+      }
+    });
+
+    var wide = fundContainWidth > selectContainWidth ? fundContainWidth : selectContainWidth;
+    selectContain.css('width', wide);
+    fundContain.css('width', wide);
   };
 
   /**
