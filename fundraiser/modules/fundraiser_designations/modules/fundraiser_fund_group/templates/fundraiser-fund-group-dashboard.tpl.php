@@ -21,10 +21,10 @@
     <?php endif; ?>
     <div class="buttons-wrapper">
       <?php if (isset($section['manage_link'])): ?>
-        <div class="sba-button"><?php print l($section['manage_link']['title'], $section['manage_link']['href'], array('attributes' => array('class' => array('button', 'more-button')))); ?></div>
+        <div class="ffg-button"><?php print l($section['manage_link']['title'], $section['manage_link']['href'], array('attributes' => array('class' => array('button', 'more-button')))); ?></div>
       <?php endif; ?>
       <?php if (isset($section['create_link'])): ?>
-        <div class="sba-button"><?php print l($section['create_link']['title'], $section['create_link']['href'], array('attributes' => array('class' => array('button', 'sba-add-button')))); ?></div>
+        <div class="ffg-button"><?php print l($section['create_link']['title'], $section['create_link']['href'], array('attributes' => array('class' => array('button', 'ffg-add-button')))); ?></div>
       <?php endif; ?>
     </div>
     <?php if (isset($section['content'])): ?>

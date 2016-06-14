@@ -254,7 +254,7 @@ function _fundraiser_designations_build_child_elements($id, &$element, $amounts,
     $element[$id]['recurring_amounts_' . $id] = $child;
   }
 
-  $other_amount =  $group_wrapper->field_ffg_other_amt[0]->value();
+  $other_amount = $group_wrapper->field_ffg_other_amt[0]->value();
   if (!empty($other_amount)) {
     $child = array();
     $child['#type'] = 'textfield';
@@ -264,7 +264,7 @@ function _fundraiser_designations_build_child_elements($id, &$element, $amounts,
     $element[$id]['fd_other_' . $id] = $child;
   }
 
-  $quantity =  $group_wrapper->field_ffg_quantity[0]->value();
+  $quantity = $group_wrapper->field_ffg_quantity[0]->value();
 
   if (!empty($quantity)) {
     $child = array();

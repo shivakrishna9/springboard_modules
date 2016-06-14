@@ -110,13 +110,6 @@ function fundraiser_fund_group_views_default_views() {
       'separator' => '',
       'empty_column' => 0,
     ),
-    'field_sba_subject' => array(
-      'sortable' => 0,
-      'default_sort_order' => 'asc',
-      'align' => '',
-      'separator' => '',
-      'empty_column' => 0,
-    ),
     'edit_fundraiser_fund_group' => array(
       'align' => '',
       'separator' => ' | ',

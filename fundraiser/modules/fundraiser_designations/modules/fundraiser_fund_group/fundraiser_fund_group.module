@@ -205,7 +205,7 @@ function fundraiser_fund_group_form_alter(&$form, &$form_state, $form_id) {
   if (in_array($form_id, $forms)) {
     $messages = $form_state['build_info']['args'][0]->result;
     if (isset($messages) && count($messages) > 1) {
-      $form['actions']['submit']['#submit'][] = 'sba_message_drag_submit';
+      $form['actions']['submit']['#submit'][] =  'fundraiser_fund_group_drag_submit';
     }
     else {
       // Don't show save button if only one item in the draggable table.
@@ -219,7 +219,7 @@ function fundraiser_fund_group_form_alter(&$form, &$form_state, $form_id) {
  *
  * Save the weight after dragging.
  */
-function sba_message_drag_submit(&$form, &$form_state) {
+function fundraiser_fund_group_drag_submit(&$form, &$form_state) {
   $groups = $form_state['values']['draggableviews'];
   foreach ($groups as $group) {
     if (isset($group['id'])) {
