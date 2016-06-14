@@ -259,8 +259,7 @@ function fundraiser_fund_group_draggable_save($arg, $fundraiser_fund_group_id, $
  * When an action node is deleted, delete its messages.
  */
 function fundraiser_fund_group_node_delete($node) {
-  $types = variable_get('sba_action_types', array());
-  if (in_array($node->type, $types)) {
+  if (fundraiser_designations_is_designation_type($node->type)) {
     $fundraiser_fund_group_ids = db_query(
       'SELECT entity_id FROM {field_data_field_ffg_form_id} a WHERE a.field_ffg_form_id_target_id = :nid',
       array(':nid' => $node->nid))
