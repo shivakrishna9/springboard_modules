@@ -90,7 +90,9 @@ function salesforce_donation_history_query_validate($form, &$form_state){
     form_set_error('salesforce_donation_history_query', t('There was a problem performing this query. A sample record could not be found.'));
   }
   else {
-    variable_set('salesforce_donation_history_query_fields', salesforce_donation_history_get_query_fields($result->records));
+    $query_fields = salesforce_donation_history_get_query_fields($result->records);
+    $field_types = salesforce_donation_history_get_field_types($query_fields);
+    variable_set('salesforce_donation_history_query_fields', $field_types);
     cache_clear_all('*', 'cache_salesforce_donation_history', TRUE);
   }
 }

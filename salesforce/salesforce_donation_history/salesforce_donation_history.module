@@ -427,13 +427,11 @@ function salesforce_donation_history_create_table_headers($sobject) {
  *
  * @param object $sobject
  *   A salesforce object.
- * @param bool $escapeHtmlChars
- *   Whether or not the output should be run through htmlspecialchars().
  *
  * @return array
  *   An array representing the data in a table row.
  */
-function salesforce_donation_history_create_table_row($sobject, $escapeHtmlChars=true) {
+function salesforce_donation_history_create_table_row($sobject) {
   $field_settings = variable_get('salesforce_donation_history_field_settings', NULL);
   if (!isset($row)) {
     $row = array();
@@ -447,12 +445,12 @@ function salesforce_donation_history_create_table_row($sobject, $escapeHtmlChars
   if (isset($sobject->fields)) {
     foreach ($sobject->fields as $key => $datum) {
       if ($datum instanceof SObject) {
-        $row = array_merge($row, salesforce_donation_history_create_table_row($datum,$escapeHtmlChars));
+        $row = array_merge($row, salesforce_donation_history_create_table_row($datum));
       } else {
         // Add datum to row if it is not set (so we don't end up with too few
         // cells in a row OR the field settings say to include it.)
         if (!isset($datum) || $field_settings[$sobject->type . '-' . $key]['show_on_tab']) {
-          $row[] = ($escapeHtmlChars ? htmlspecialchars($datum,ENT_QUOTES) : $datum);
+          $row[] = salesforce_donation_history_format_field($datum, $sobject->type, $key);
         }
       }
     }
@@ -461,6 +459,30 @@ function salesforce_donation_history_create_table_row($sobject, $escapeHtmlChars
     $row[] = $sobject->queryResult;
   }
   return $row;
+}
+
+/**
+ * Formats the output based on the type of SF field that is being displayed.
+ *
+ * @param string $fieldvalue
+ *   The string to be formatted.
+ * @param string $object
+ *   The SF Object (table) of the field being formatted.
+ * @param string $fieldname
+ *   The SF field name of the value being formatted.
+ *
+ * @return string
+ *   The formatted value.
+ */
+function salesforce_donation_history_format_field($fieldvalue, $object, $fieldname) {
+  // @todo consider statically caching $query_fields? This gets called a lot.
+  $query_fields = variable_get('salesforce_donation_history_query_fields', NULL);
+  if ($query_fields[$object][$fieldname]['type'] == 'currency') {
+    return money_format('$%i', $fieldvalue);
+  }
+  else {
+    return htmlspecialchars($fieldvalue, ENT_QUOTES);
+  }
 }
 
 /**
@@ -499,22 +521,22 @@ function salesforce_donation_history_get_query_fields($records) {
   }
   // Static array to store field definitions when this function is called
   // recursively.
-  if (!isset($field_definitions)) {
-    $field_definitions = array();
+  if (!isset($fields)) {
+    $fields = array();
   }
   // Process the sobject Id.
   if (isset($sobject->Id) && !isset($sobject->fields->Id)) {
-    $field_definitions[$sobject->type]['Id'] = '';
+    $fields[$sobject->type]['Id'] = '';
   }
   // Process the sobject fields.
   if (isset($sobject->fields)) {
     foreach ($sobject->fields as $fieldname => $fieldvalue) {
       if ($fieldvalue instanceof SObject) {
         $recurse = salesforce_donation_history_get_query_fields($fieldvalue);
-        $field_definitions = array_merge($field_definitions, $recurse);
+        $fields = array_merge($fields, $recurse);
       }
       else {
-        $field_definitions[$sobject->type][$fieldname] = '';
+        $fields[$sobject->type][$fieldname] = '';
       }
     }
   }
@@ -525,8 +547,51 @@ function salesforce_donation_history_get_query_fields($records) {
     }
     foreach ($sobject->queryResult as $qr) {
       $recurse = salesforce_donation_history_get_query_fields($qr->records);
-      $field_definitions = array_merge($field_definitions, $recurse);
+      $fields = array_merge($fields, $recurse);
     }
   }
-  return $field_definitions;
+  return $fields;
+}
+
+/**
+ * Adds the field type to each field in the provided array.
+ *
+ * @param array $query_fields
+ *   An associative array representing the tables and fields, as provided by
+ *   function salesforce_donation_history_get_query_fields(). E.g.:
+ *   -Opportunity:
+ *   --CloseDate: ''
+ *   --Amount: ''
+ *   -kell01__Allocation__c:
+ *   ---Name: ''
+ *   ---kell01__Amount__c: ''
+ *   -kell01__Fund__c:
+ *   ---Name: ''
+ *   --OwnerId: ''.
+ *
+ * @return array
+ *   The same array with ['type'] = $type added to each child element. E.g.:
+ *   -Opportunity:
+ *   --CloseDate:
+ *   ---type = 'date'
+ *   --Amount:
+ *   ---type = 'currency'
+ *   -kell01__Allocation__c:
+ *   --Name:
+ *   ---type = 'string'
+ *   --kell01__Amount__c:
+ *   ---type = 'currency'
+ *   -etc.
+ */
+function salesforce_donation_history_get_field_types($query_fields) {
+  foreach ($query_fields as $table => $fields) {
+    $sobject = salesforce_donation_history_describe_object($table);
+    for ($i = 0; $i < count($sobject['fields']); $i++) {
+      if (array_key_exists($sobject['fields'][$i]['name'], $fields)) {
+        $fiend_name = $sobject['fields'][$i]['name'];
+        $query_fields[$table][$fiend_name]['type'] = $sobject['fields'][$i]['type'];
+      }
+    }
+  }
+  return $query_fields;
 }
