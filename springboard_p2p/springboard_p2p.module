@@ -373,7 +373,6 @@ function springboard_p2p_ajax($form, $form_state) {
  * Implements hook_form_FORM_ID_alter().
  */
 function springboard_p2p_form_p2p_personal_campaign_node_form_alter(&$form, &$form_state, $form_id) {
-
   // Create a function to unset the filter choice and tips area.
   $form['body']['#after_build'][] = '_filter_tips_p2p_campaign_intro';
 
@@ -437,11 +436,35 @@ function springboard_p2p_form_p2p_personal_campaign_node_form_alter(&$form, &$fo
 
       $language = $campaign_node->language;
 
+      $parameters = drupal_get_query_parameters();
+      $clear_cookies = FALSE;
+      if (isset($_COOKIE['Drupal_visitor_campaign_name'])) {
+        $parameters['campaign_name'] = check_plain($_COOKIE['Drupal_visitor_campaign_name']);
+        $clear_cookies = TRUE;
+      }
+      if (isset($_COOKIE['Drupal_visitor_campaign_goal'])) {
+        $parameters['campaign_goal'] = check_plain($_COOKIE['Drupal_visitor_campaign_goal']);
+        $clear_cookies = TRUE;
+      }
+      if (isset($_COOKIE['Drupal_visitor_campaign_url'])) {
+        $parameters['campaign_url'] = check_plain($_COOKIE['Drupal_visitor_campaign_url']);
+        $clear_cookies = TRUE;
+      }
+
+      if ($clear_cookies) {
+        $form['#submit'][] = '_springboard_p2p_form_p2p_personal_campaign_node_form_submit_clear_cookies';
+      }
+
       // Prefill the title with a suggestion.
-      $form['title']['#default_value'] = springboard_p2p_get_personal_campaign_title_suggestion($campaign_node->title);
+      $form['title']['#default_value'] = !isset($parameters['campaign_name']) ? springboard_p2p_get_personal_campaign_title_suggestion($campaign_node->title) : check_url($parameters['campaign_name']);
 
       // Prefill the url with a suggestion based on title.
-      $form['field_p2p_personal_campaign_url'][$language][0]['value']['#default_value'] = springboard_p2p_create_alias_from_title($campaign_node->title);
+      $form['field_p2p_personal_campaign_url'][$language][0]['value']['#default_value'] = !isset($parameters['campaign_url']) ? springboard_p2p_create_alias_from_title($campaign_node->title) : check_url($parameters['campaign_url']);
+
+      // Prefill the goal amount if the parameter in the URL is set.
+      if (isset($parameters['campaign_goal'])) {
+        $form['field_p2p_personal_campaign_goal'][$language][0]['value']['#default_value'] = $parameters['campaign_goal'];
+      }
 
       // Campaign intro, default from parent campaign, display disabled content
       // preview if edit is disabled.
@@ -586,6 +609,18 @@ function springboard_p2p_form_p2p_personal_campaign_node_form_alter(&$form, &$fo
   // Hide progress fields.
   $form['field_p2p_campaign_progress']['#access'] = FALSE;
   $form['#validate'][] = 'springboard_p2p_personal_campaign_validate';
+}
+
+/**
+ * Submission callback to delete any campaign-related cookies on submission.
+ *
+ * @see _springboard_p2p_form_p2p_personal_campaign_node_form_alter()
+ */
+function _springboard_p2p_form_p2p_personal_campaign_node_form_submit_clear_cookies($form, &$form_state) {
+  $cookies = array('campaign_name', 'campaign_goal', 'campaign_url');
+  foreach ($cookies as $cookie) {
+    user_cookie_delete($cookie);
+  }
 }
 
 /**
