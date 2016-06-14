@@ -85,7 +85,7 @@ function salesforce_donation_history_theme() {
   return array(
     'salesforce_donation_history_admin_field_table' => array(
       'render element' => 'element'
-    )
+    ),
   );
 }
 

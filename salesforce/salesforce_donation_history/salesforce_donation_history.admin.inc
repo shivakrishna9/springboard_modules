@@ -91,6 +91,7 @@ function salesforce_donation_history_query_validate($form, &$form_state){
   }
   else {
     variable_set('salesforce_donation_history_query_fields', salesforce_donation_history_get_query_fields($result->records));
+    cache_clear_all('*', 'cache_salesforce_donation_history', TRUE);
   }
 }
 
