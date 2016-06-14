@@ -138,7 +138,7 @@
 
     var exists = false;
     $('tr', self.cart).each(function(){
-      if($(this).attr('data-fund-id') == fundId) {
+      if($(this).attr('data-fund-id') == fundId && $(this).attr('data-fund-amount') == amt) {
         var oldAmt = parseInt($('.fund-amount', $(this)).text());
         var oldQuant = $(this).attr('data-fund-quantity');
         var newQuant = parseInt(oldQuant) + parseInt(quant);
