@@ -13,7 +13,7 @@ function salesforce_donation_history_query() {
     '#type' => 'textarea',
     '#title' => t('Opportunities query'),
     '#default_value' => variable_get('salesforce_donation_history_query', DONATION_HISTORY_DEFAULT_SOQL),
-    '#description' => "Enter the Salesforce SOQL query used to get opportunities. The query must end in <samp>WHERE AccountId = ':accountId'</samp>. Do not include a LIMIT clause.",
+    '#description' => "Enter the Salesforce SOQL query used to get opportunities. <ul><li>The Opportunity fields <samp>Id</samp> and <samp>CloseDate</samp> are required.</li><li>The query must end in <samp>WHERE AccountId = ':accountId'</samp>.</li><li>Do not include a LIMIT clause.</li>",
   );
   $form['#validate'][] = 'salesforce_donation_history_query_validate';
   $form = system_settings_form($form);

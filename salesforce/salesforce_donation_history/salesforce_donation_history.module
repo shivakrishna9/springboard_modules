@@ -6,9 +6,9 @@
  */
 
 /**
- * Default select SOQL query
+ * Default select SOQL query.
  */
-define('DONATION_HISTORY_DEFAULT_SOQL', "SELECT AccountId, Amount, CloseDate, CC_Last_4__c, CC_Type__c FROM Opportunity WHERE AccountId = ':accountId'");
+define('DONATION_HISTORY_DEFAULT_SOQL', "SELECT Id, Amount, CloseDate, CC_Last_4__c, CC_Type__c FROM Opportunity WHERE AccountId = ':accountId'");
 
 /**
  * Implements hook_flush_caches().
@@ -89,8 +89,13 @@ function salesforce_donation_history_theme() {
   );
 }
 
-function theme_salesforce_donation_history_admin_field_table($vars) {
-  $element = $vars['element'];
+/**
+ * Returns HTML for a table of form elements for donation history admin page.
+ *
+ * @ingroup themeable
+ */
+function theme_salesforce_donation_history_admin_field_table($variables) {
+  $element = $variables['element'];
   $rows = array();
   foreach (element_children($element) as $key) {
     $rows[] = array(
