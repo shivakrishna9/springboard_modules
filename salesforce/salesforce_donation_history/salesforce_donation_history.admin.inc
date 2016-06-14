@@ -82,7 +82,7 @@ function salesforce_donation_history_fields() {
 }
 
 /**
- * Validation callback for salesforce_donation_history_query form.
+ * Validation handler for salesforce_donation_history_query form.
  */
 function salesforce_donation_history_query_validate($form, &$form_state){
   $result = salesforce_donation_history_test_query($form_state['input']['salesforce_donation_history_query']);
@@ -94,6 +94,8 @@ function salesforce_donation_history_query_validate($form, &$form_state){
     $field_types = salesforce_donation_history_get_field_types($query_fields);
     variable_set('salesforce_donation_history_query_fields', $field_types);
     cache_clear_all('*', 'cache_salesforce_donation_history', TRUE);
+    drupal_set_message('Please review the field configuration options below.');
+    $form_state['redirect'] = array('admin/config/salesforce/donation_history/fields');
   }
 }
 
@@ -106,11 +108,16 @@ function salesforce_donation_history_query_validate($form, &$form_state){
  */
 function salesforce_donation_history_test_query($query) {
   $soql = strtr($query, array("WHERE AccountId = ':accountId'" => 'LIMIT 1'));
-  // @TODO maybe do this in a try/catch to avoid unexpected error message if the
-  // SOQL is malformed.
-  $sfapi = salesforce_get_api();
-  $soap = new SalesforceSoapPartner($sfapi);
-  $response = $soap->query($soql);
-  $result = new QueryResult($response);
+  try {
+    $sfapi = salesforce_get_api();
+    $soap = new SalesforceSoapPartner($sfapi);
+    $response = $soap->query($soql);
+    $result = new QueryResult($response);
+  }
+  catch (Exception $e) {
+    drupal_set_message($e->getMessage(), 'error');
+    return FALSE;
+  }
+
   return $result;
 }
