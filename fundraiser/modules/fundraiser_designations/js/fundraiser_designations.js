@@ -118,7 +118,6 @@
       if (quant > 1) {
         displayQuant = ' (' + quant + ')';
       }
-
     }
 
     if (selector.length > 0) {
@@ -141,8 +140,19 @@
     $('tr', self.cart).each(function(){
       if($(this).attr('data-fund-id') == fundId) {
         var oldAmt = parseInt($('.fund-amount', $(this)).text());
+        var oldQuant = $(this).attr('data-fund-quantity');
+        var newQuant = parseInt(oldQuant) + parseInt(quant);
         var newAmt = parseInt($('.fund-amount', newRow).text()) + oldAmt;
+        newRow.attr('data-fund-quantity', newQuant);
+
+        if (newQuant > 1) {
+          displayQuant = ' (' + newQuant + ')';
+        }
+
+        $('.fund-name', newRow).text(fundName + displayQuant);
+
         $('.fund-amount', newRow).text(newAmt)
+
         $(this).replaceWith(newRow);
         exists = true;
       }
