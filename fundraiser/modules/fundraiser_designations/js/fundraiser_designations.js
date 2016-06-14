@@ -110,13 +110,15 @@
     }
 
     var quant = 1;
-    var displayAmt = amt;
+    var displayAmt = Drupal.settings.fundraiser.currency.symbol + (parseInt(amt)).formatMoney(2, '.', ',');
+
     var displayQuant = '';
     if (quantity.length > 0) {
       quant = quantity.val();
       displayAmt = amt * quant;
+      displayAmt = Drupal.settings.fundraiser.currency.symbol + (parseInt(displayAmt)).formatMoney(2, '.', ',');
       if (quant > 1) {
-        displayQuant = ' (' + quant + ')';
+        displayQuant = ' (' + quant + ' x ' + Drupal.settings.fundraiser.currency.symbol + amt + ')';
       }
     }
 
@@ -139,19 +141,19 @@
     var exists = false;
     $('tr', self.cart).each(function(){
       if($(this).attr('data-fund-id') == fundId && $(this).attr('data-fund-amount') == amt) {
-        var oldAmt = parseInt($('.fund-amount', $(this)).text());
+        var oldAmt = parseInt($('.fund-amount', $(this)).text().replace('$', ''));
         var oldQuant = $(this).attr('data-fund-quantity');
         var newQuant = parseInt(oldQuant) + parseInt(quant);
-        var newAmt = parseInt($('.fund-amount', newRow).text()) + oldAmt;
+        var newAmt = parseInt($('.fund-amount', newRow).text().replace('$', '')) + oldAmt;
         newRow.attr('data-fund-quantity', newQuant);
 
         if (newQuant > 1) {
-          displayQuant = ' (' + newQuant + ')';
+          displayQuant = ' (' +  newQuant + ' x ' + Drupal.settings.fundraiser.currency.symbol + amt + ')';
         }
 
         $('.fund-name', newRow).text(fundName + displayQuant);
 
-        $('.fund-amount', newRow).text(newAmt)
+        $('.fund-amount', newRow).text(Drupal.settings.fundraiser.currency.symbol + (parseInt(newAmt)).formatMoney(2, '.', ','))
 
         $(this).replaceWith(newRow);
         exists = true;
@@ -291,7 +293,7 @@
     var self = this;
     var total = 0;
     $.each($('td.fund-amount', self.cart), function(i, price) {
-      total = total + parseInt($(price).text());
+      total = total + parseInt($(price).text().replace('$', ''));
     });
     return total;
   }
