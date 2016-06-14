@@ -207,6 +207,7 @@ function theme_fundraiser_tickets_webform_table($variables) {
 
   $element = $variables['element'];
 
+  $addon_donation_exists = FALSE;
   $node = node_load($element['#webform_component']['nid']);
   $node_currency = fundraiser_get_currency_from_node($node);
 
@@ -223,6 +224,7 @@ function theme_fundraiser_tickets_webform_table($variables) {
   foreach (element_children($element) as $id) {
     if ($id == 'fundraiser-tickets-extra-donation'){
 
+      $addon_donation_exists = TRUE;
       try {
         $node_wrapper = entity_metadata_wrapper('node', $node);
         $addon_node = $node_wrapper->fr_tickets_donation_addon_form->value();
@@ -336,9 +338,12 @@ function theme_fundraiser_tickets_webform_table($variables) {
   $output = drupal_render($table);
 
   // Insert the additional donation currency symbol:
-  $addon_currency_symbol = '<span class="currency-symbol">' . $addon_currency_symbol . '</span>';
-  $extra_donation_html = '<input type="text" id="fundraiser-tickets-extra-donation"';
-  $output = str_replace($extra_donation_html, $addon_currency_symbol . $extra_donation_html, $output);
+  if ($addon_donation_exists) {
+    $addon_currency_symbol = '<span class="currency-symbol">'
+      . (empty($addon_currency_symbol) ? $node_currency_symbol : $addon_currency_symbol) . '</span>';
+    $extra_donation_html = '<input type="text" id="fundraiser-tickets-extra-donation"';
+    $output = str_replace($extra_donation_html, $addon_currency_symbol . $extra_donation_html, $output);
+  }
 
   return $output;
 }
@@ -365,7 +370,3 @@ function theme_fundraiser_tickets_closed_message($vars){
 function theme_fundraiser_tickets_soldout_message($vars){
   return $vars['message']['safe_value'];
 }
-
-
-
-
