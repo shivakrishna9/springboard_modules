@@ -541,8 +541,15 @@ function fundraiser_designations_form_webform_client_form_alter(&$form, &$form_s
         }
       }
     }
+
+    if (module_exists('dynamic_gift_strings')) {
+      if (isset($_SESSION['dynamic_gift_string_values'][$form['#node']->nid]) && is_array($_SESSION['dynamic_gift_string_values'][$form['#node']->nid])) {
+        $form['#submit'][] = 'dynamic_gift_strings_submit';
+      }
+    }
+
   }
-  elseif ($ticket_type = fundraiser_designations_is_designation_type($form['#node']->type) && arg(2) == 'submission') {
+  elseif (fundraiser_designations_is_designation_type($form['#node']->type) && arg(2) == 'submission') {
     // Remove these fields on the result edit form.
     unset($form['submitted']['cart_container']);
     unset($form['submitted']['designations']);

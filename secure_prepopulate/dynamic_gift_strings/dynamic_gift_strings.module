@@ -33,6 +33,7 @@ function dynamic_gift_strings_init() {
 function dynamic_gift_strings_form_alter(&$form, &$form_state, $form_id) {
   // make sure the node has a webform
   if (strstr($form_id, 'webform_client_form')) {
+
     $node = $form['#node'];
     if ($node->type == 'donation_form') {
       if (isset($_SESSION['dynamic_gift_string_values'][$node->nid])

@@ -408,10 +408,42 @@ function fundraiser_designations_get_display_amounts($node) {
   $recurring_amounts = $node->recurring_donation_amounts;
   $donation_amounts = $node->donation_amounts;
   $dual_ask = $node->recurring_dual_ask_amounts;
+  $default_amount = $node->default_amount;
+  $recurring_default_amount = $node->recurring_default_amount;
+
+  if (module_exists('dynamic_gift_strings')) {
+    if (isset($_SESSION['dynamic_gift_string_values'][$node->nid]) && is_array($_SESSION['dynamic_gift_string_values'][$node->nid])) {
+      $gs = $_SESSION['dynamic_gift_string_values'][$node->nid];
+      if (!empty($gs['amounts'])) {
+        $gs_amounts = _dynamic_gift_strings_parse_amounts($gs['amounts'], $node->show_other_amount, $node->nid);
+        if ($gs_amounts) {
+          $donation_amounts = [];
+          $default_amount = $_SESSION['dynamic_gift_string_values'][$node->nid]['default'];
+          foreach ($gs_amounts as $plain => $c_coded) {
+            if (is_numeric($plain)) {
+              $donation_amounts[] = array($plain, $c_coded);
+            }
+          }
+        }
+      }
+      if (!empty($gs['recurring_amounts'])) {
+        $gs_recurring_amounts = _dynamic_gift_strings_parse_amounts($gs['recurring_amounts'], $node->recurring_show_other_amount, $node->nid);
+        if ($gs_recurring_amounts) {
+          $recurring_amounts = [];
+          $recurring_default_amount = $_SESSION['dynamic_gift_string_values'][$node->nid]['recurring_default'];
+          foreach ($gs_recurring_amounts as $plain => $c_coded) {
+            if (is_numeric($plain)) {
+              $recurring_amounts[] = array($plain, $c_coded);
+            }
+          }
+        }
+      }
+    }
+  }
 
   $price_sets = [];
-  $price_sets['default_amount'] = $node->default_amount;
-  $price_sets['recurring_default_amount'] = $node->recurring_default_amount;
+  $price_sets['default_amount'] = $default_amount;
+  $price_sets['recurring_default_amount'] = $recurring_default_amount;
 
   switch ($recurring) {
     case 'never':
