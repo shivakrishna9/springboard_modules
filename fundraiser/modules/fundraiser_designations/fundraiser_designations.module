@@ -780,4 +780,3 @@ function fundraiser_designations_node_load($nodes, $types) {
     }
   }
 }
-

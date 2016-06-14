@@ -81,9 +81,11 @@
     var amt = 0;
     if (defaultAmts.length > 0 && defaultAmts.is(':visible')) {
       amt = $(defaultAmts).find('input:checked').val();
+      $(defaultAmts).find('input:checked').attr('checked', false);
     }
     if (recurAmts.length > 0 && recurAmts.is(':visible')) {
       amt = $(recurAmts).find('input:checked').val();
+      $(recurAmts).find('input:checked').attr('checked', false);
     }
     if (otherAmt.val()) {
       amt = otherAmt.val();
@@ -126,12 +128,13 @@
     var exists = false;
     $('tr', self.cart).each(function(){
       if($(this).attr('data-fund-id') == fundId && $(this).attr('data-fund-amount') == amt) {
+
         var oldAmt = parseInt($('.fund-amount', $(this)).text().replace('$', ''));
         var oldQuant = $(this).attr('data-fund-quantity');
         var newQuant = parseInt(oldQuant) + parseInt(quant);
         var newAmt = parseInt($('.fund-amount', newRow).text().replace('$', '')) + oldAmt;
-        newRow.attr('data-fund-quantity', newQuant);
 
+        newRow.attr('data-fund-quantity', newQuant);
         if (newQuant > 1) {
           displayQuant = ' (' +  newQuant + ' x ' + Drupal.settings.fundraiser.currency.symbol + amt + ')';
         }
