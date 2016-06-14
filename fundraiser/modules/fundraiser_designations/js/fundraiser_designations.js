@@ -16,30 +16,9 @@
     this.errorTemplate = '<div class="error-message"></div>';
     this.addListeners();
     this.cancelButton();
-    var ct = $('#cart_total');
-    var cart_total = ct.val();
-    var val = cart_total > 0 ? cart_total : 0;
-    ct.val(Drupal.settings.fundraiser.currency.symbol + (val).formatMoney(2, '.', ','));
-
-    var selectContain = $('.designation-group-funds-table div.form-type-select');
-    var selectContainWidth = 0;
-    selectContain.each(function() {
-     if ($(this).width() > selectContainWidth) {
-       selectContainWidth = $(this).width();
-     }
-   });
-
-    var fundContain = $('.designation-group-funds-table div[id*="funds-placeholder"]');
-    var fundContainWidth = 0;
-    fundContain.each(function() {
-      if ($(this).width() > fundContainWidth) {
-        fundContainWidth = $(this).width();
-      }
-    });
-
-    var wide = fundContainWidth > selectContainWidth ? fundContainWidth : selectContainWidth;
-    selectContain.css('width', wide);
-    fundContain.css('width', wide);
+    this.setWidths();
+    var val = this.calcTotal();
+    $('#cart_total').val(Drupal.settings.fundraiser.currency.symbol + (val).formatMoney(2, '.', ','));
   };
 
   /**
@@ -92,12 +71,13 @@
   Drupal.fundraiserDesignations.prototype.addFund = function(button, fundGroupId, selector, defaultAmts, recurAmts, otherAmt, quantity) {
     var self = this;
 
+    // Test to see if fund and amount selection has been made.
     var go = self.validateFund(fundGroupId, selector, defaultAmts, recurAmts, otherAmt);
-
     if (go != 'ok') {
       return;
     }
 
+    // Grab amount.
     var amt = 0;
     if (defaultAmts.length > 0 && defaultAmts.is(':visible')) {
       amt = $(defaultAmts).find('input:checked').val();
@@ -109,9 +89,11 @@
       amt = otherAmt.val();
     }
 
-    var quant = 1;
+    // The displayAmount is currency formatted, and can be different than the line item amount (i.e., totaled)
     var displayAmt = Drupal.settings.fundraiser.currency.symbol + (parseInt(amt)).formatMoney(2, '.', ',');
 
+    // Grab the quantity. Update the display Amount.
+    var quant = 1;
     var displayQuant = '';
     if (quantity.length > 0) {
       quant = quantity.val();
@@ -122,6 +104,7 @@
       }
     }
 
+    // Grab the fund name and ID.
     if (selector.length > 0) {
       var fundId = selector.val()
       var fundName = $('option:selected', selector).text();
@@ -131,6 +114,7 @@
        fundName = $('#funds-placeholder-' + fundGroupId).find('label').text();
     }
 
+    // Get the cart row template and add the fund, amount and qunatity html5 attributes.
     var newRow = $(self.cartTemplate);
     $('.fund-amount', newRow).text(displayAmt)
     $('.fund-name', newRow).text(fundName + displayQuant);
@@ -138,6 +122,7 @@
     newRow.attr('data-fund-amount', amt);
     newRow.attr('data-fund-quantity', quant);
 
+    // Check if a row already exists for this fund and donation amount. Replace if so.
     var exists = false;
     $('tr', self.cart).each(function(){
       if($(this).attr('data-fund-id') == fundId && $(this).attr('data-fund-amount') == amt) {
@@ -160,21 +145,24 @@
       }
     });
 
+    // Insert a new row if not exists.
     if (!exists) {
       newRow.insertBefore('.cart-total-row').hide().show(300);
     }
 
+    // Set the json encoded fund values in the hidden field.
     self.setFormValue();
 
+    // Update the cart, the total, and delete listener.
     if ($(".cart-fund-empty").is(':visible')) {
       $(".cart-fund-empty").hide();
     }
     self.cancelButton();
     self.setAmounts();
 
-  }
+  };
 
-  // attaches JSONified data attributes of the recipients list to a hidden form field
+  // Attaches JSONified data attributes of the funds to a hidden form field.
   Drupal.fundraiserDesignations.prototype.setFormValue = function () {
     var obj = {};
     $('.cart-fund-row').each(function(i) {
@@ -184,12 +172,12 @@
     console.log(lineItems);
 
     $('input[name$="[fund_catcher]"]').val(lineItems);
-
   };
 
   Drupal.fundraiserDesignations.prototype.validateOtherAmt = function(groupId) {
-      if ($('#fd-other-' + groupId)[0]) {
-        $('#fd-other-' + groupId).rules("add", {
+      var field = $('#fd-other-' + groupId);
+      if (field[0]) {
+        field.rules("add", {
           amount: true,
           min: parseFloat(Drupal.settings.fundraiserWebform.minimum_donation_amount),
           messages: {
@@ -203,7 +191,7 @@
 
   Drupal.fundraiserDesignations.prototype.validateFund = function(fundGroupId, selector, defaultAmts, recurAmts, otherAmt) {
     var self = this;
-    var fundSel = selector.val() != 0 ? true : false;
+    var fundSel = selector.val() != 0;
     if (defaultAmts.length > 0 && defaultAmts.is(':visible')) {
       var amt = $(defaultAmts).find('input:checked').val();
     }
@@ -213,12 +201,7 @@
     if (otherAmt.val()) {
       amt = otherAmt.val();
     }
-    if (typeof(amt) !== 'undefined') {
-      var amtSel = true;
-    }
-    else {
-      amtSel = false;
-    }
+    var amtSel = typeof(amt) !== 'undefined';
 
     var message = 'ok';
     if (!fundSel &&!amtSel) {
@@ -284,8 +267,7 @@
     total = self.calcTotal();
     $('#cart_total').val(Drupal.settings.fundraiser.currency.symbol + (total).formatMoney(2, '.', ','));
     $("input[name='submitted[amount]']").val((total).formatMoney(2, '.', ''));
-  }
-
+  };
   /**
    * Calculate the total amount
    */
@@ -295,9 +277,31 @@
     $.each($('td.fund-amount', self.cart), function(i, price) {
       total = total + parseInt($(price).text().replace('$', ''));
     });
+    total = total > 0 ? total : 0;
     return total;
-  }
+  };
 
+  Drupal.fundraiserDesignations.prototype.setWidths = function() {
+    var selectContain = $('.designation-group-funds-table div.form-type-select');
+    var selectContainWidth = 0;
+    selectContain.each(function () {
+      if ($(this).width() > selectContainWidth) {
+        selectContainWidth = $(this).width();
+      }
+    });
+
+    var fundContain = $('.designation-group-funds-table div[id*="funds-placeholder"]');
+    var fundContainWidth = 0;
+    fundContain.each(function () {
+      if ($(this).width() > fundContainWidth) {
+        fundContainWidth = $(this).width();
+      }
+    });
+
+    var wide = fundContainWidth > selectContainWidth ? fundContainWidth : selectContainWidth;
+    selectContain.css('width', wide);
+    fundContain.css('width', wide);
+  };
   /**
    * Format values as money
    *

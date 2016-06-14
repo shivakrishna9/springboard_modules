@@ -175,8 +175,6 @@ function fundraiser_fund_group_views_default_views() {
     'fundraiser_fund_group_default' => 'fundraiser_fund_group_default',
   );
 
-
-
   $views[$view->name] = $view;
   return $views;
 
