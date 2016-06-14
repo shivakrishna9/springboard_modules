@@ -320,27 +320,57 @@ function fundraiser_designations_commerce_line_item_type_info() {
  * Returns TRUE if line items have been generated. Otherwise, returns FALSE.
  */
 function fundraiser_designations_fundraiser_commerce_generate_line_items($donation, $order) {
-  if (isset($donation->donation['cart']) && is_array($donation->donation['cart']) && count($donation->donation['cart'])) {
+  if (!empty($donation->donation['cart'][0]) && $cart = unserialize($donation->donation['cart'][0])) {
+
+    // Get the cart values from the hidden field containing the json string.
+    $fund_object = json_decode(str_replace('&quot;', '"', $cart['cart_body']['fund_catcher']));
+
+    // Not sure why this is needed.
+    // @see fundraiser_tickets_fundraiser_commerce_generate_line_items()
     $order_wrapper = entity_metadata_wrapper('commerce_order', $order);
-    foreach ($donation->donation['cart'] as $offset => $serialized_value) {
-      $form_row = unserialize($serialized_value);
-      $fund_object = json_decode(str_replace('&quot;', '"', $form_row['cart_body']['fund_catcher']));
-      foreach ($fund_object as $fund) {
-        if (!empty($fund->fundId)) {
-          $product_wrapper = entity_metadata_wrapper('commerce_product', commerce_product_load($fund->fundId));
-          $line_item = commerce_line_item_new('designation', $order->order_id);
-          commerce_product_line_item_populate($line_item, $product_wrapper->value());
-          $text = $product_wrapper->title->value();
-          $line_item->line_item_label = $text;
-          $line_item->quantity = $fund->fundQuantity;
-          // @todo must be a better way to set these amounts.
-          $line_item->commerce_unit_price[LANGUAGE_NONE][0]['amount'] = $fund->fundAmount * 100;
-          $line_item->commerce_unit_price[LANGUAGE_NONE][0]['data']['components'][0]['price']['amount'] = $fund->fundAmount * 100;
-          commerce_line_item_save($line_item);
-          $order_wrapper->commerce_line_items[] = $line_item;
-        }
+
+    foreach ($fund_object as $fund) {
+      if (!empty($fund->fundId)) {
+
+        // Create a new line item.
+        $product_wrapper = entity_metadata_wrapper('commerce_product', commerce_product_load($fund->fundId));
+        $line_item = commerce_line_item_new('designation', $order->order_id);
+
+        // Populate new line item with product default price and value.
+        commerce_product_line_item_populate($line_item, $product_wrapper->value());
+        $text = $product_wrapper->title->value();
+        $line_item->line_item_label = $text;
+
+        // Alter line item with custom parameters from the donation.
+        $line_item->quantity = $fund->fundQuantity;
+        $code = $donation->donation['currency']['code'];
+        $donor_amount = commerce_currency_decimal_to_amount($fund->fundAmount, $code);
+        $line_item_wrapper = entity_metadata_wrapper('commerce_line_item', $line_item);
+        $line_item_wrapper->commerce_unit_price->amount = $donor_amount;
+        $line_item_wrapper->commerce_unit_price->currency_code = $code;
+
+        // @todo try to understand why this step is necessary.
+        // Change the product price all the way down, for whatever reason.
+        $data = array(
+          'amount' => $donor_amount,
+          'currency_code' => $code,
+          'data' => array(),
+        );
+        $line_item_wrapper->commerce_unit_price->data = commerce_price_component_add(
+          $data,
+          'base_price',
+          $data,
+          TRUE
+        );
+
+        commerce_line_item_save($line_item_wrapper->value());
+
+        // Update the order.
+        // @todo why? (copied from fundraiser tickets, does nothing, not passed by reference).
+        $order_wrapper->commerce_line_items[] = $line_item_wrapper->value();
       }
     }
+
     // Let fundraiser commerce know that we created line items.
     return TRUE;
   }
