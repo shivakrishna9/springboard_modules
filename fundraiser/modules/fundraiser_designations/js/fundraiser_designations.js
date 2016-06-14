@@ -111,9 +111,14 @@
 
     var quant = 1;
     var displayAmt = amt;
+    var displayQuant = '';
     if (quantity.length > 0) {
       quant = quantity.val();
       displayAmt = amt * quant;
+      if (quant > 1) {
+        displayQuant = ' (' + quant + ')';
+      }
+
     }
 
     if (selector.length > 0) {
@@ -127,11 +132,10 @@
 
     var newRow = $(self.cartTemplate);
     $('.fund-amount', newRow).text(displayAmt)
-    $('.fund-name', newRow).text(fundName);
+    $('.fund-name', newRow).text(fundName + displayQuant);
     newRow.attr('data-fund-id', fundId);
     newRow.attr('data-fund-amount', amt);
     newRow.attr('data-fund-quantity', quant);
-
 
     var exists = false;
     $('tr', self.cart).each(function(){
