@@ -1,7 +1,7 @@
 <?php
 /**
  * @file
- * Admin form definition for salesforce_donation_history.
+ * Admin form definitions for salesforce_donation_history.
  */
 
 /**

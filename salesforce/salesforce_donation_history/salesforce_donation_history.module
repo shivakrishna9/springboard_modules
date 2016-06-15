@@ -29,7 +29,7 @@ function salesforce_donation_history_menu() {
     'page callback' => 'drupal_get_form',
     'page arguments' => array('salesforce_donation_history_query'),
     'access arguments' => array('administer salesforce_donation_history settings'),
-    'file' => 'salesforce_donation_history.admin.inc',
+    'file' => 'includes/salesforce_donation_history.admin.inc',
   );
 
   $items['admin/config/salesforce/donation_history/query'] = array(
@@ -45,18 +45,19 @@ function salesforce_donation_history_menu() {
     'title' => 'Fields',
     'type' => MENU_LOCAL_TASK,
     'description' => 'Manage Salesforce Donation History Fields.',
-    'file' => 'salesforce_donation_history.admin.inc',
+    'file' => 'includes/salesforce_donation_history.admin.inc',
   );
 
   // TODO: Implement a custom permission handler
   // to ensure the user has a salesforce account id.
   $items['user/%user/donation-history'] = array(
     'title' => 'My donation history',
-    'page callback' => 'salesforce_donation_history',
+    'page callback' => 'salesforce_donation_history_page',
     'page arguments' => array(1),
     'access callback' => 'user_edit_access',
     'access arguments' => array(1),
     'type' => MENU_LOCAL_TASK,
+    'file' => 'includes/salesforce_donation_history.pages.inc',
   );
 
   $items['user/%user/donation-history/summary/%year'] = array(
@@ -164,42 +165,6 @@ function salesforce_donation_history_describe_object($sfobject_name) {
   if ($sfapi->isAuthorized()) {
     return $sfapi->objectDescribe($sfobject_name);
   }
-}
-
-/**
- * Generates a list of tax receipt years for the current user.
- */
-function salesforce_donation_history($user) {
-  $output = array();
-  $results = array();
-  $params = drupal_get_query_parameters();
-  $sfid = salesforce_donation_history_user_account_id($user->uid);
-  if ($sfid) {
-    $results = salesforce_donation_history_sort_by_year(salesforce_donation_history_get_opportunities($sfid));
-  }
-  // Check to see if there are pending donations in the salesforce sync queue.
-  if ($pending_count = salesforce_donation_history_count_pending_donations($user->uid)) {
-    drupal_set_message(t('You have :count donation(s) in-process. Donations may take up to 30 minutes to appear here.', array(':count' => $pending_count)));
-  }
-  if (count($results) > 0) {
-    // @TODO what happens when we default to displaying the current year but
-    // there are only donations from previous years?
-    $selected_year = isset($params['year']) ? $params['year'] : date('Y');
-    $available_years = array_keys($results);
-    $output['select-year'] = drupal_get_form('salesforce_donation_history_select_year', $available_years, $selected_year);
-    $output['annual-tax-receipt'] = array(
-      '#type' => 'markup',
-      '#markup' => l(t('Print Annual Tax Reciept'), '#'),
-    );
-    $output['table'] = salesforce_donation_history_create_table($results[$selected_year]);
-  }
-  else {
-    $output['no-donations'] = array(
-      '#type' => 'markup',
-      '#markup' => t('No donations found.'),
-    );
-  }
-  return $output;
 }
 
 /**

@@ -26,7 +26,7 @@ function salesforce_donation_history_install() {
     $field_types = salesforce_donation_history_get_field_types($query_fields);
     variable_set('salesforce_donation_history_query_fields', $field_types);
     // Provide sensible defaults for custom labels and visibility.
-    module_load_include('inc', 'salesforce_donation_history', 'salesforce_donation_history.admin');
+    module_load_include('inc', 'salesforce_donation_history', 'includes/salesforce_donation_history.admin');
     $form_state = array();
     $form_state['values']['salesforce_donation_history_field_settings']['Opportunity-CloseDate']['label'] = 'Date';
     $form_state['values']['salesforce_donation_history_field_settings']['Opportunity-CloseDate']['show_on_tab'] = 1;
