@@ -12,7 +12,7 @@ function salesforce_donation_history_query() {
   $form['salesforce_donation_history_query'] = array(
     '#type' => 'textarea',
     '#title' => t('Opportunities query'),
-    '#default_value' => variable_get('salesforce_donation_history_query', DONATION_HISTORY_DEFAULT_SOQL),
+    '#default_value' => variable_get('salesforce_donation_history_query', SALESFORCE_DONATION_HISTORY_DEFAULT_SOQL),
     '#description' => "Enter the Salesforce SOQL query used to get opportunities. <ul><li>The Opportunity fields <samp>Id</samp> and <samp>CloseDate</samp> are required.</li><li>The query must end in <samp>WHERE AccountId = ':accountId'</samp>.</li><li>Do not include a LIMIT clause.</li>",
   );
   $form['#validate'][] = 'salesforce_donation_history_query_validate';
@@ -31,7 +31,7 @@ function salesforce_donation_history_fields() {
     '#prefix' => '<div id="salesforce_donation_history_field_settings">',
     '#suffix' => '</div>',
     '#tree' => TRUE,
-    '#theme' => 'salesforce_donation_history_admin_field_table'
+    '#theme' => 'salesforce_donation_history_admin_field_table',
   );
   foreach ($field_definitions as $sf_table => $sf_field) {
     $form['salesforce_donation_history_field_settings'][$sf_table]['label'] = array(
@@ -84,7 +84,7 @@ function salesforce_donation_history_fields() {
 /**
  * Validation handler for salesforce_donation_history_query form.
  */
-function salesforce_donation_history_query_validate($form, &$form_state){
+function salesforce_donation_history_query_validate($form, &$form_state) {
   $result = salesforce_donation_history_test_query($form_state['input']['salesforce_donation_history_query']);
   if ($result->size != 1) {
     form_set_error('salesforce_donation_history_query', t('There was a problem performing this query. A sample record could not be found.'));
