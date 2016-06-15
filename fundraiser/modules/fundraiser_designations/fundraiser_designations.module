@@ -321,7 +321,6 @@ function fundraiser_designations_commerce_line_item_type_info() {
  */
 function fundraiser_designations_fundraiser_commerce_generate_line_items($donation, $order) {
   if (!empty($donation->donation['cart'][0]) && $cart = unserialize($donation->donation['cart'][0])) {
-
     // Get the cart values from the hidden field containing the json string.
     $fund_object = json_decode(str_replace('&quot;', '"', $cart['cart_body']['fund_catcher']));
 
@@ -345,6 +344,7 @@ function fundraiser_designations_fundraiser_commerce_generate_line_items($donati
         $line_item->quantity = $fund->fundQuantity;
         $code = $donation->donation['currency']['code'];
         $donor_amount = commerce_currency_decimal_to_amount($fund->fundAmount, $code);
+
         $line_item_wrapper = entity_metadata_wrapper('commerce_line_item', $line_item);
         $line_item_wrapper->commerce_unit_price->amount = $donor_amount;
         $line_item_wrapper->commerce_unit_price->currency_code = $code;
@@ -362,9 +362,7 @@ function fundraiser_designations_fundraiser_commerce_generate_line_items($donati
           $data,
           TRUE
         );
-
         commerce_line_item_save($line_item_wrapper->value());
-
         // Update the order.
         // @todo why? (copied from fundraiser tickets, does nothing, not passed by reference).
         $order_wrapper->commerce_line_items[] = $line_item_wrapper->value();
@@ -378,6 +376,33 @@ function fundraiser_designations_fundraiser_commerce_generate_line_items($donati
     return FALSE;
   }
 }
+
+
+/**
+ * Manipluate the line items and prices when there is an addon donation line item
+ * that has been removed from a sustainers series in the generate line items function above
+ * (todo!).
+ */
+function fundraiser_designations_fundraiser_donation_create($donation) {
+  $node = node_load($donation->nid);
+  if (!empty($donation->recurring->master_did) && fundraiser_designations_is_designation_type($node->type)) {
+
+    $order = commerce_order_load($donation->did);
+    $order_wrapper = entity_metadata_wrapper('commerce_order', $order);
+    $amount = $order_wrapper->commerce_order_total->value();
+    $amount_converted = commerce_currency_amount_to_decimal($amount['amount'], $amount['currency_code']);
+    $line_items = $order_wrapper->commerce_line_items->value();
+
+    if (!empty($line_items)) {
+      $donation->amount = $amount_converted;
+      $donation->donation['amount'] = $amount_converted;
+      $fundraiser_sustainers_series = entity_load_single('fundraiser_sustainers_series', $donation->recurring->master_did);
+      $fundraiser_sustainers_series->amount = $amount_converted;
+      $fundraiser_sustainers_series->save();
+    }
+  }
+}
+
 
 /**
  * Implements hook_fundraiser_donation_success().

@@ -20,6 +20,39 @@ function fundraiser_fund_group_menu() {
     'page callback' => 'fundraiser_fund_group_dashboard',
     'file' => 'fundraiser_fund_group.dashboard.inc',
     'file path' => drupal_get_path('module', 'fundraiser_fund_group') . '/includes',
+    'context' => MENU_CONTEXT_PAGE | MENU_CONTEXT_INLINE,
+  );
+
+  $items['node/%node/designations/groups'] = array(
+    'title' => 'Designation Groups',
+    'page arguments' => array(1),
+    'access callback' => 'fundraiser_fund_group_access',
+    'access arguments' => array('manage-groups'),
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+    'page callback' => 'fundraiser_fund_group_dashboard',
+    'file' => 'fundraiser_fund_group.dashboard.inc',
+    'file path' => drupal_get_path('module', 'fundraiser_fund_group') . '/includes',
+  );
+
+  $items['node/%node/designations/add-ons'] = array(
+    'title' => 'Add On Donation',
+    'access callback' => 'fundraiser_fund_group_access',
+    'access arguments' => array('manage-groups'),
+    'type' => MENU_LOCAL_TASK,
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('fundraiser_fund_groups_addon_form'),
+    'file' => 'fundraiser_fund_group.addon.inc',
+    'file path' => drupal_get_path('module', 'fundraiser_fund_group') . '/includes',
+    'weight' => 10,
+  );
+
+  $items['fund_groups/autocomplete_callback'] = array(
+    'title' => 'Simplest AJAX Example',
+    'page callback' => 'fundraiser_fund_groups_autocomplete_callback',
+    'access callback' => array('manage-groups'),
+    'file' => 'fundraiser_fund_group.addon.inc',
+    'file path' => drupal_get_path('module', 'fundraiser_fund_group') . '/includes',
+    'type' => MENU_CALLBACK,
   );
 
   return $items;
