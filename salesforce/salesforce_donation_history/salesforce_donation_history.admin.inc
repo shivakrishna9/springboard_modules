@@ -98,26 +98,3 @@ function salesforce_donation_history_query_validate($form, &$form_state) {
     $form_state['redirect'] = array('admin/config/salesforce/donation_history/fields');
   }
 }
-
-/**
- * Perform a test query of the given SOQL.
- *
- * Replaces the WHERE claue of the SOQL query with LIMIT 1. This should return
- * the first available result, including all of the fields included in the
- * query.
- */
-function salesforce_donation_history_test_query($query) {
-  $soql = strtr($query, array("WHERE AccountId = ':accountId'" => 'LIMIT 1'));
-  try {
-    $sfapi = salesforce_get_api();
-    $soap = new SalesforceSoapPartner($sfapi);
-    $response = $soap->query($soql);
-    $result = new QueryResult($response);
-  }
-  catch (Exception $e) {
-    drupal_set_message($e->getMessage(), 'error');
-    return FALSE;
-  }
-
-  return $result;
-}
