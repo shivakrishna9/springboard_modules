@@ -597,3 +597,15 @@ function springboard_p2p_personal_campaign_node_update($node) {
 
   }
 }
+
+/**
+ * Implements hook_node_delete().
+ *
+ * Deletes personal campaign actions when personal campaign is deleted.
+ */
+function springboard_p2p_personal_campaign_node_delete($node) {
+  $nid = $node->nid;
+  db_delete('springboard_p2p_personal_campaign_action')
+    ->condition('personal_campaign_nid', $nid)
+    ->execute();
+}
