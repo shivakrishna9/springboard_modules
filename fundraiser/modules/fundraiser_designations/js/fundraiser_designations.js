@@ -89,6 +89,7 @@
     }
     if (otherAmt.val()) {
       amt = otherAmt.val();
+      otherAmt.val('');
     }
 
     // The displayAmount is currency formatted, and can be different than the line item amount (i.e., totaled)
@@ -172,7 +173,6 @@
       obj[i] = $(this).data();
     });
     var lineItems = JSON.stringify(obj).replace(/"/g, '&quot;');
-    console.log(lineItems);
 
     $('input[name$="[fund_catcher]"]').val(lineItems);
   };
