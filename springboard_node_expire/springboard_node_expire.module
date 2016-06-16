@@ -119,7 +119,7 @@ function springboard_node_expire_form_alter(&$form, &$form_state, $form_id) {
       );
       $form['expiration_settings']['expired_message_container']['expiration_message'] = array(
         '#type' => 'text_format',
-        '#title' => t('Donation Form Expired Message'),
+        '#title' => t('Node expired message'),
         '#default_value' => isset($form['#node']->expiration_message) ? $form['#node']->expiration_message : NULL,
       );
       $form['#validate'][] = '_springboard_node_expire_form_validate';
