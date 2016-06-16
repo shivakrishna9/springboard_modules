@@ -12,6 +12,8 @@
   Drupal.fundraiserDesignations = function() {
     this.fundGroups = $('.designation-group-wrapper');
     this.cart = $('.fundraiser-designation-cart-wrapper');
+    this.addon = $('.designation-addon-wrapper');
+
     this.cartTemplate = '<tr class="cart-fund-row"><td class="fund-cancel">x</td><td class="fund-name"></td><td class="fund-amount"></td> </tr>';
     this.errorTemplate = '<div class="error-message"></div>';
     this.addListeners();
@@ -61,36 +63,52 @@
       });
 
       $('input[type="submit"]', fundGroup).click(function() {
-        button = $(this);
-        self.addFund(button, fundGroupId, selector, defaultAmts, recurAmts, otherAmt, quantity);
+        var type = 'fund';
+        self.addFund(type, fundGroupId, selector, defaultAmts, recurAmts, otherAmt, quantity);
         return false;
       });
     });
+
+    $.each(self.addon, function(key, item) {
+      var addOnFundId = item['id'].replace('designation-addon-', '')
+      var addOnAmts = $('div[id*="default-amounts-"]', $(item));
+      $('input[type="radio"]', $(item)).click(function() {
+        type = 'addon';
+        self.addFund(type, addOnFundId, null, addOnAmts, null, null, 1);
+      });
+
+    });
   };
 
-  Drupal.fundraiserDesignations.prototype.addFund = function(button, fundGroupId, selector, defaultAmts, recurAmts, otherAmt, quantity) {
+  Drupal.fundraiserDesignations.prototype.addFund = function(type, fundGroupId, selector, defaultAmts, recurAmts, otherAmt, quantity) {
     var self = this;
 
-    // Test to see if fund and amount selection has been made.
-    var go = self.validateFund(fundGroupId, selector, defaultAmts, recurAmts, otherAmt);
-    if (go != 'ok') {
-      return;
+    if (type == 'fund') {
+      // Test to see if fund and amount selection has been made.
+      var go = self.validateFund(fundGroupId, selector, defaultAmts, recurAmts, otherAmt);
+      if (go != 'ok') {
+        return;
+      }
     }
 
     // Grab amount.
     var amt = 0;
     if (defaultAmts.length > 0 && defaultAmts.is(':visible')) {
       amt = $(defaultAmts).find('input:checked').val();
-      $(defaultAmts).find('input:checked').attr('checked', false);
+      if (type == 'fund') {
+        $(defaultAmts).find('input:checked').attr('checked', false)
+      }
     }
-    if (recurAmts.length > 0 && recurAmts.is(':visible')) {
-      amt = $(recurAmts).find('input:checked').val();
-      $(recurAmts).find('input:checked').attr('checked', false);
-    }
+    if (type == 'fund') {
+      if (recurAmts.length > 0 && recurAmts.is(':visible')) {
+        amt = $(recurAmts).find('input:checked').val();
+        $(recurAmts).find('input:checked').attr('checked', false);
+      }
     if (otherAmt.val()) {
       amt = otherAmt.val();
       otherAmt.val('');
     }
+  }
 
     // The displayAmount is currency formatted, and can be different than the line item amount (i.e., totaled)
     var displayAmt = Drupal.settings.fundraiser.currency.symbol + (parseInt(amt)).formatMoney(2, '.', ',');
@@ -98,7 +116,7 @@
     // Grab the quantity. Update the display Amount.
     var quant = 1;
     var displayQuant = '';
-    if (quantity.length > 0) {
+    if (type == 'fund' && quantity.length > 0) {
       quant = quantity.val();
       displayAmt = amt * quant;
       displayAmt = Drupal.settings.fundraiser.currency.symbol + (parseInt(displayAmt)).formatMoney(2, '.', ',');
@@ -108,20 +126,31 @@
     }
 
     // Grab the fund name and ID.
-    if (selector.length > 0) {
-      var fundId = selector.val()
-      var fundName = $('option:selected', selector).text();
+    if (type =='fund') {
+      if (selector.length > 0) {
+        var fundId = selector.val()
+        var fundName = $('option:selected', selector).text();
+      }
+      else {
+        fundId = $('tr.group-row-' + fundGroupId).attr('data-placeholder-fund-id')
+        fundName = $('#funds-placeholder-' + fundGroupId).find('label').text();
+      }
     }
     else {
-       fundId = $('tr.group-row-' + fundGroupId).attr('data-placeholder-fund-id')
-       fundName = $('#funds-placeholder-' + fundGroupId).find('label').text();
+      fundId = fundGroupId;
+      fundName = 'One-time addon donation';
     }
 
     // Get the cart row template and add the fund, amount and qunatity html5 attributes.
     var newRow = $(self.cartTemplate);
     $('.fund-amount', newRow).text(displayAmt)
     $('.fund-name', newRow).text(fundName + displayQuant);
-    newRow.attr('data-fund-id', fundId);
+    if (type == 'fund') {
+      newRow.attr('data-fund-id', fundId);
+    }
+    else {
+      newRow.attr('data-addon-id', fundId);
+    }
     newRow.attr('data-fund-amount', amt);
     newRow.attr('data-fund-quantity', quant);
 
@@ -144,6 +173,10 @@
 
         $('.fund-amount', newRow).text(Drupal.settings.fundraiser.currency.symbol + (parseInt(newAmt)).formatMoney(2, '.', ','))
 
+        $(this).replaceWith(newRow);
+        exists = true;
+      }
+      if($(this).attr('data-addon-id') == fundId) {
         $(this).replaceWith(newRow);
         exists = true;
       }
