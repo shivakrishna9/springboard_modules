@@ -77,6 +77,8 @@ function springboard_node_expire_form_alter(&$form, &$form_state, $form_id) {
         ),
       );
       $form['expiration_settings']['expire'] = $form['options']['expire'];
+      $form['expiration_settings']['expire']['#date_label_position'] = 'none';
+      $form['expiration_settings']['expire']['#description'] = t('Date on which this node will expire.');
       unset($form['options']['expire']);
 
       $form['expiration_settings']['expiration_action'] = array(
@@ -124,6 +126,8 @@ function springboard_node_expire_form_alter(&$form, &$form_state, $form_id) {
 
       $form['#attached']['js'][] = drupal_get_path('module', 'springboard_node_expire') . '/js/springboard_node_expire_admin.js';
 
+      $form['#after_build'][] = "_springboard_node_expire_form_alter__node_form";
+
       drupal_add_js(array(
         'springboard_node_expire' => array(
           'use_date_popup' => variable_get('node_expire_date_entry_elements', 0) == 1,
@@ -132,6 +136,14 @@ function springboard_node_expire_form_alter(&$form, &$form_state, $form_id) {
       ), 'setting');
     }
   }
+}
+
+/**
+ * Helper function called after node add/edit form has been built.
+ */
+function _springboard_node_expire_form_alter__node_form($form, &$form_state) {
+  $form['expiration_settings']['expire']['date']['#description'] = 'Format: YYYY-MM-DD';
+  return $form;
 }
 
 /**
