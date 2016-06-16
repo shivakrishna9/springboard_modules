@@ -1,7 +1,7 @@
 <?php
 /**
  * @file
- * Webform A/B Testing admin functions
+ * Multivariate Testing admin functions
  */
 
 /**
@@ -40,13 +40,13 @@ function webform_ab_admin_settings($form, &$form_state) {
 }
 
 /**
- * Menu callback for the Reports and Monitoring tab on Test A/B
+ * Menu callback for the Reports and Monitoring tab on Multivariate Test
  *
  * @param $node Node object
  */
 function webform_ab_test_reports($node) {
   if (empty($node->included_webforms) || !is_array($node->included_webforms)) {
-    return t('No webforms have been added to this A/B test. Visit the !forms_tab tab to add webforms.',
+    return t('No webforms have been added to this Multivariate test. Visit the !forms_tab tab to add webforms.',
         array('!forms_tab' => l(t('Included Webforms'), 'node/' . $node->nid . '/webforms')));
   }
 
@@ -59,7 +59,7 @@ function webform_ab_test_reports($node) {
     WEBFORM_AB_WEBFORM_STATUS_RETIRED => t('Retired'),
   );
 
-  // Set headers present for all A/B reports:
+  // Set headers present for all Multivariate reports:
   $headers = array(
     t('Status'),
     t('Name'),
@@ -125,7 +125,7 @@ function webform_ab_test_reports($node) {
 }
 
 /**
- * Menu callback for the Included Forms tab on A/B Test nodes
+ * Menu callback for the Included Forms tab on Multivariate test nodes
  *
  * @param $node Node object
  */
@@ -165,7 +165,7 @@ function webform_ab_test_webforms($node) {
   // If there are no webforms included, show an empty message
   if (count($rows) == 0) {
     $rows[] = array(array(
-        'data' => t('No webforms have been added to this A/B test. ' .
+        'data' => t('No webforms have been added to this Multivariate test. ' .
           'Select a webform in the dropdown below and click the Add button.'),
         'colspan' => count($headers),
       ));
@@ -178,7 +178,7 @@ function webform_ab_test_webforms($node) {
 }
 
 /**
- * Form to add webforms to the A/B Test
+ * Form to add webforms to the Multivariate Test
  *
  * @param $form_state
  * @param $node Node object
@@ -226,7 +226,7 @@ function webform_ab_webform_list_add($form, &$form_state, $node) {
     $form['add_form_id']['#disabled'] = TRUE;
     $form['add_form_id']['#type'] = 'fieldset';
     if (count($indexed_forms) == 0) {
-      $disabled_descr = t('There are no more webforms available to be added to this A/B test.');
+      $disabled_descr = t('There are no more webforms available to be added to this Multivariate test.');
     }
     else {
       $disabled_descr = t('Webforms cannot be added or removed because testing has started.');
@@ -238,7 +238,7 @@ function webform_ab_webform_list_add($form, &$form_state, $node) {
 }
 
 /**
- * Handle submission of the form to add a webform to an A/B Test
+ * Handle submission of the form to add a webform to an Multivariate Test
  */
 function webform_ab_webform_list_add_submit($form, &$form_state) {
   // Only continue if they actually selected a webform
@@ -278,7 +278,7 @@ function webform_ab_test_remove_webform($node, $webform_nid) {
   }
   else {
     // Somehow tried to remove a webform that isn't in the test
-    drupal_set_message(t('That form is not in this A/B test.'), 'error');
+    drupal_set_message(t('That form is not in this Multivariate test.'), 'error');
     drupal_goto('node/' . $node->nid . '/webforms');
   }
 }
@@ -294,7 +294,7 @@ function webform_ab_test_remove_webform_confirm($form, &$form_state, $test_nid, 
     array(':nid' => $webform_nid))->fetchField();
   return confirm_form(
     $form,
-    t('Are you sure you want to remove webform %title from the A/B test?', array('%title' => $title)),
+    t('Are you sure you want to remove webform %title from the Multivariate test?', array('%title' => $title)),
     'node/' . $test_nid . '/webforms',
     t('This action cannot be undone.'),
     t('Remove'),
@@ -306,7 +306,7 @@ function webform_ab_test_remove_webform_confirm($form, &$form_state, $test_nid, 
  * Remove a webform from a test
  */
 function webform_ab_test_remove_webform_confirm_submit($form, &$form_state) {
-  // Remove data specific to the form that is being removed from this A/B test:
+  // Remove data specific to the form that is being removed from this Multivariate test:
   $tables_to_update = array(
     'webform_ab_forms',
     'webform_ab_conversion',
@@ -321,7 +321,7 @@ function webform_ab_test_remove_webform_confirm_submit($form, &$form_state) {
 
   // Notify other modules that the webform is being removed
   module_invoke_all('webform_ab_remove_form', $form['#test_nid'], $form['#webform_nid']);
-  drupal_set_message(t('The form has been removed from the A/B test.'));
+  drupal_set_message(t('The form has been removed from the Multivariate test.'));
   $form_state['redirect'] = 'node/' . $form['#test_nid'] . '/webforms';
 }
 
@@ -337,7 +337,7 @@ function webform_ab_clear_test_data_confirm($form, &$form_state, $node) {
       'node/' . $node->nid . '/reports',
     t('This action will remove all hit and conversion records saved for this test, return all included webforms to ' .
       'the Active status, and it cannot be undone. Note that any data submitted to the included webforms will remain ' .
-      'intact, it just won\'t be associated with this A/B Test or used to declare a winning webform.'),
+      'intact, it just won\'t be associated with this MultivariateTest or used to declare a winning webform.'),
     t('Reset'),
     t('Cancel'));
 }

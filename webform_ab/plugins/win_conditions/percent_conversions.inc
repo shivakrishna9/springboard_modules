@@ -2,7 +2,7 @@
 
 /**
  * @file
- * Provide a Webform A/B Test win condition: Percentage of hits that result in
+ * Provide a Multivariate Test win condition: Percentage of hits that result in
  * conversions
  */
 
@@ -64,7 +64,7 @@ function webform_ab_percent_conversions_config_validate($config, $field_name_pre
 
 /**
  * Return a summary of the plugin config, for listing on the admin view of a
- * Webform A/B test node
+ * Multivariate test node
  */
 function webform_ab_percent_conversions_config_summary($config) {
   if ($config['percentage'] > 0) {
@@ -103,15 +103,15 @@ function webform_ab_percent_conversions_current_value($webform_nid) {
 }
 
 /**
- * Check if the given Webform A/B Test node has a winner
+ * Check if the given Multivariate test node has a winner
  *
  * @param $config
- *   Array of config options for this plugin for the Webform A/B test being
+ *   Array of config options for this plugin for the Multivariate test being
  *   checked for a win. In this case, the array will contain 'percentage'
  * @param $webform_details
  *   Array of info about the webform to check.
  * @param $test_node
- *   Webform A/B Test node
+ *   Multivariate test node
  */
 function webform_ab_percent_conversions_check_win($config, $webform_details, $test_node) {
   if ($webform_details['hits'] > 0) {

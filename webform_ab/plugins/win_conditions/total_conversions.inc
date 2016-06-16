@@ -2,7 +2,7 @@
 
 /**
  * @file
- * Provide a Webform A/B Test win condition: Total number of conversions
+ * Provide a Multivariate Testing win condition: Total number of conversions
  */
 
 // Plugin details
@@ -51,7 +51,7 @@ function webform_ab_total_conversions_config_validate($config, $field_name_prefi
 
 /**
  * Return a summary of the plugin config, for listing on the admin view of a
- * Webform A/B test node
+ * Multivariate test node
  */
 function webform_ab_total_conversions_config_summary($config) {
   return $config['conversions'];
@@ -70,15 +70,15 @@ function webform_ab_total_conversions_current_value($webform_nid) {
 }
 
 /**
- * Check if the given Webform A/B Test node has a winner
+ * Check if the given Multivariate Test node has a winner
  *
  * @param $config
- *   Array of config options for this plugin for the Webform A/B test being
+ *   Array of config options for this plugin for the Multivariate test being
  *   checked for a win. In this case, the array will contain 'conversions'
  * @param $webform_details
  *   Array of info about the webform to check.
  * @param $test_node
- *   Webform A/B Test node
+ *   Multivariate test node
  */
 function webform_ab_total_conversions_check_win($config, $webform_details, $test_node) {
   return isset($webform_details['conversions']) ? $webform_details['conversions'] >= $config['conversions'] : FALSE;

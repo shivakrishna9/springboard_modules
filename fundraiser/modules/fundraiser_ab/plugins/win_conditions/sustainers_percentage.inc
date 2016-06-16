@@ -2,7 +2,7 @@
 
 /**
  * @file
- * Provide a Webform A/B Test win condition: Minimum percentage of donations
+ * Provide a Multivariate Testing win condition: Minimum percentage of donations
  * that are from sustainers
  */
 
@@ -65,7 +65,7 @@ function fundraiser_ab_sustainers_percentage_config_validate($config, $field_nam
 
 /**
  * Return a summary of the plugin config, for listing on the admin view of a
- * Webform A/B test node
+ * Multivariate Testing test node
  */
 function fundraiser_ab_sustainers_percentage_config_summary($config) {
   if ($config['percentage'] > 0) {
@@ -109,15 +109,15 @@ function fundraiser_ab_sustainers_percentage_current_value($webform_nid) {
 
 
 /**
- * Check if the given Webform A/B Test node has a winner
+ * Check if the given Multivariate Testing Test node has a winner
  *
  * @param $config
- *   Array of config options for this plugin for the Webform A/B test being
+ *   Array of config options for this plugin for the Multivariate Testing test being
  *   checked for a win. In this case, the array will contain 'percentage'
  * @param $webform_details
  *   Array of info about the webform to check.
  * @param $test_node
- *   Webform A/B Test node
+ *   Multivariate Testing Test node
  */
 function fundraiser_ab_sustainers_percentage_check_win($config, $webform_details, $test_node) {
   if (isset($webform_details['fundraiser']) && is_array($webform_details['fundraiser']) && ($webform_details['fundraiser']['sustainer_count'] > 0)) {

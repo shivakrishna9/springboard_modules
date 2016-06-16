@@ -2,7 +2,7 @@
 
 /**
  * @file
- * Provide a Webform A/B Test win condition: Minimum number of sustainer
+ * Provide a Multivariate test win condition: Minimum number of sustainer
  * donations
  */
 
@@ -49,7 +49,7 @@ function fundraiser_ab_sustainers_count_config_validate($config, $field_name_pre
 
 /**
  * Return a summary of the plugin config, for listing on the admin view of a
- * Webform A/B test node
+ * Multivariate test node
  */
 function fundraiser_ab_sustainers_count_config_summary($config) {
   return $config['sustainers'];
@@ -69,15 +69,15 @@ function fundraiser_ab_sustainers_count_current_value($webform_nid) {
 }
 
 /**
- * Check if the given Webform A/B Test node has a winner
+ * Check if the given Multivariate test node has a winner
  *
  * @param $config
- *   Array of config options for this plugin for the Webform A/B test being
+ *   Array of config options for this plugin for the multivariate test being
  *   checked for a win. In this case, the array will contain 'sustainers'
  * @param $webform_details
  *   Array of info about the webform to check.
  * @param $test_node
- *   Webform A/B Test node
+ *   Multivariate Test node
  */
 function fundraiser_ab_sustainers_count_check_win($config, $webform_details, $test_node) {
   return isset($webform_details['fundraiser']) && is_array($webform_details['fundraiser']) && ($webform_details['fundraiser']['sustainer_count'] >= $config['sustainers']);

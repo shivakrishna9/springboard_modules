@@ -2,7 +2,7 @@
 
 /**
  * @file
- * Provide a Webform A/B Test win condition: Total messages generated
+ * Provide a Multivariate Testing win condition: Total messages generated
  */
 
 // Plugin details
@@ -51,7 +51,7 @@ function sba_message_action_ab_total_messages_generated_config_validate($config,
 
 /**
  * Return a summary of the plugin config, for listing on the admin view of a
- * Webform A/B test node
+ * Multivariate test node
  */
 function sba_message_action_ab_total_messages_generated_config_summary($config) {
   return $config['messages_generated'];
@@ -71,15 +71,15 @@ function sba_message_action_ab_total_messages_generated_current_value($webform_n
 }
 
 /**
- * Check if the given Webform A/B Test node has a winner
+ * Check if the given Multivariate test node has a winner
  *
  * @param $config
- *   Array of config options for this plugin for the Webform A/B test being
+ *   Array of config options for this plugin for the Multivariate test being
  *   checked for a win. In this case, the array will contain 'conversions'
  * @param $webform_details
  *   Array of info about the webform to check.
  * @param $test_node
- *   Webform A/B Test node
+ *   Multivariate test node
  */
 function sba_message_action_ab_total_messages_generated_check_win($config, $webform_details, $test_node) {
   return isset($webform_details['messages_generated']) ? $webform_details['messages_generated'] >= $config['messages_generated'] : FALSE;

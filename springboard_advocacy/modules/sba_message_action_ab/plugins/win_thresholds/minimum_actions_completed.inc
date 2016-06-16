@@ -2,7 +2,7 @@
 
 /**
  * @file
- * Provide a Webform A/B Test win threshold: Minimum actions completed. 
+ * Provide a Multivariate Testing win threshold: Minimum actions completed. 
  */
 
 // Plugin details
@@ -47,7 +47,7 @@ function sba_message_action_ab_minimum_actions_completed_config_validate($config
 
 /**
  * Return a summary of the plugin config, for listing on the admin view of a
- * Webform A/B test node
+ * Multivariate Testing node
  */
 function sba_message_action_ab_minimum_actions_completed_config_summary($config) {
   return $config['actions_completed'];
@@ -55,15 +55,15 @@ function sba_message_action_ab_minimum_actions_completed_config_summary($config)
 
 
 /**
- * Check if the given Webform A/B Test node has a winner
+ * Check if the given Multivariate test node has a winner
  *
  * @param $config
- *   Array of config options for this plugin for the Webform A/B test being
+ *   Array of config options for this plugin for the Multivariate test being
  *   checked for a win. In this case, the array will contain 'hits'
  * @param $webform_details
  *   Array of info about the webform to check.
  * @param $test_node
- *   Webform A/B Test node
+ *   Multivariate test node
  */
 function sba_message_action_ab_minimum_actions_completed_check_threshold($config, $webform_details, $test_node) {
   $messages = isset($webform_details['actions_completed']) ? $webform_details['actions_completed'] : 0;
