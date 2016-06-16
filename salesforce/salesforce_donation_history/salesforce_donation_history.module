@@ -80,6 +80,18 @@ function salesforce_donation_history_menu() {
 }
 
 /**
+ * Implements hook_permission().
+ */
+function salesforce_donation_history_permission() {
+  return array(
+    'administer salesforce_donation_history settings' => array(
+      'title' => t('Administer Salesforce Donation History settings'),
+      'description' => t('Grants access to change settings.'),
+    ),
+  );
+}
+
+/**
  * Implements hook_theme().
  */
 function salesforce_donation_history_theme() {
