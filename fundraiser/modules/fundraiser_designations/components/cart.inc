@@ -136,7 +136,7 @@ function theme_fundraiser_designations_fund_cart_component($vars) {
 function fundraiser_designations_cart_table($element) {
   $header = array(
     '',
-    'Fund',
+    'Your Fund Selections',
     'Amount',
   );
 

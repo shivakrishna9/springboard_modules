@@ -1,8 +1,20 @@
 <?php
 
-function fundraiser_fund_groups_addon_form($form, $form_state) {
-  // Load the node up from form data so we have everything.
-  $node = node_load(arg(1));
+function fundraiser_fund_groups_addon_form($form, $form_state, $node) {
+
+  $data = !empty($node->fd_addon) ? $node->fd_addon : array();
+
+  $addon_default ='';
+  if (!empty($data['pid'])) {
+
+    $addon = commerce_product_load($data['pid']);
+    $addon_default = $addon->title . ' [' . $addon->product_id . ']';
+  }
+
+  $form['nid'] = array(
+    '#type' => 'value',
+    '#value' => $node->nid,
+  );
 
   // Fundraiser Settings (i.e., ask amounts).
   $form['addon_settings'] = array(
@@ -12,6 +24,14 @@ function fundraiser_fund_groups_addon_form($form, $form_state) {
     '#collapsible' => TRUE,
     '#collapsed' => FALSE,
     '#group' => 'additional_settings',
+  );
+
+  $form['addon_settings']['addon'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Choose a fund designation'),
+    '#autocomplete_path' => 'fund_groups/autocomplete_callback',
+    '#weight' => -10,
+    '#default_value' => $addon_default,
   );
 
   $form['addon_settings']['amount_wrapper'] = array(
@@ -41,11 +61,18 @@ function fundraiser_fund_groups_addon_form($form, $form_state) {
     ksort($donation_amounts);
   }
   else {
+    $price_set = [];
+    if (!empty($data['price_set'])) {
+      $amounts = unserialize($data['price_set']);
+      foreach ($amounts as $amount) {
+        $price_set[] = array($amount['amount'], $amount['label']);
+      }
+    }
+    $donation_amounts = $price_set;
 
-    $donation_amounts = isset($node->donation_amounts) ? $node->donation_amounts : array();
     // If not there, then grab some defaults.
     if (count($donation_amounts) == 0) {
-      $default_amounts =  '10|$10' . "\n" . '20|$20' . "\n" . '50|$50' . "\n" . '100|$100';
+      $default_amounts =  '25|$25' . "\n" . '50|$50' . "\n" . '75|$75';
       $default_amounts = explode("\n", $default_amounts);
       $default_amounts = array_unique($default_amounts);
       $exploded_amounts = array();
@@ -105,12 +132,7 @@ function fundraiser_fund_groups_addon_form($form, $form_state) {
     ),
   );
 
-  $form['addon_settings']['addon'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Choose a fund designation'),
-    '#autocomplete_path' => 'fund_groups/autocomplete_callback',
-    '#weight' => -10,
-  );
+
 
   $form['actions'] = array(
     '#type' => 'actions',
@@ -168,10 +190,29 @@ function fundraiser_fund_groups_addon_form_validate($form, &$form_state) {
     }
   }
   if (!empty($pid)) {
-    $form_state['values']['node'] = $pid;
+    $form_state['values']['addon'] = $pid;
   }
 }
 
 function fundraiser_fund_groups_addon_form_submit($form, &$form_state) {
+  $values = $form_state['values'];
+  $sets = [];
+
+  db_delete('fundraiser_fund_group_addon')
+    ->condition('nid', $values['nid'], '=')
+    ->execute();
+
+  foreach ($values['amount_wrapper']['donation_amounts'] as $amount) {
+    if (empty($amount['remove']) && !empty($amount['amount'])) {
+      $sets[] = $amount;
+    }
+  }
+
+  $data = array(
+    'nid' => $values['nid'],
+    'pid' => $values['addon'],
+    'price_set' => $sets,
+  );
+  drupal_write_record('fundraiser_fund_group_addon', $data);
 
 }

@@ -28,7 +28,7 @@ function fundraiser_designations_fundraiser_field_info() {
   );
 
   $fields['cart_container'] = array(
-    '#title' => t('Cart'),
+    '#title' => t('Your Donation Cart'),
     '#type' => 'fieldset',
     '#required' => 0,
     '#create_callback' => '_fundraiser_designations_designation_field_create',
@@ -38,6 +38,22 @@ function fundraiser_designations_fundraiser_field_info() {
   $fields['cart_container']['cart'] = array(
     '#title' => t('Cart internal component (not editable)'),
     '#type' => 'cart',
+    '#required' => 1,
+    '#allow_update' => 1,
+  );
+
+  $fields['addon_container'] = array(
+    '#title' => t('Upgrade Your Donation'),
+    '#type' => 'fieldset',
+    '#required' => 0,
+    '#create_callback' => '_fundraiser_designations_designation_field_create',
+    '#display_callback' => '_fundraiser_designations_designation_field_display',
+    // Display callback, hide this field if the node isn't a designation node.
+  );
+
+  $fields['addon_container']['fd_addon'] = array(
+    '#title' => t('Add-on internal component (not editable)'),
+    '#type' => 'fd_addon',
     '#required' => 1,
     '#allow_update' => 1,
   );
@@ -155,6 +171,26 @@ function fundraiser_designations_webform_component_info() {
     ),
     'file' => 'components/cart.inc',
   );
+  $components['fd_addon'] = array(
+    'label' => t('Add on'),
+    'description' => t('The addon donation'),
+    'features' => array(
+      'csv' => TRUE,
+      'email' => TRUE,
+      'email_address' => FALSE,
+      'email_name' => FALSE,
+      'required' => FALSE,
+      'title_display' => FALSE,
+      'title_inline' => FALSE,
+      'conditional' => FALSE,
+      'group' => FALSE,
+      'spam_analysis' => FALSE,
+      'attachment' => FALSE,
+      'description' => FALSE,
+      'default_value' => FALSE,
+    ),
+    'file' => 'components/addon.inc',
+  );
   return $components;
 }
 
@@ -254,10 +290,16 @@ function fundraiser_designations_webform_component_insert($component) {
     }
     if ($component['form_key'] == 'designations') {
       $component['weight'] = -100;
+      $component['extra']['subheader'] = 'Other ways to give';
       webform_component_update($component);
     }
     if ($component['form_key'] == 'cart_container') {
       $component['weight'] = -99;
+      webform_component_update($component);
+    }
+    if ($component['form_key'] == 'addon_container') {
+      $component['weight'] = -98;
+      $component['extra']['description'] = 'One more chance to give where help is needed most';
       webform_component_update($component);
     }
   }
@@ -567,6 +609,9 @@ function fundraiser_designations_form_webform_client_form_alter(&$form, &$form_s
       }
     }
 
+    if (empty($form['#node']->fd_addon)) {
+      $form['submitted']['addon_container']['#access'] = FALSE;
+    }
     if (module_exists('dynamic_gift_strings')) {
       if (isset($_SESSION['dynamic_gift_string_values'][$form['#node']->nid]) && is_array($_SESSION['dynamic_gift_string_values'][$form['#node']->nid])) {
         $form['#submit'][] = 'dynamic_gift_strings_submit';
@@ -719,6 +764,10 @@ function fundraiser_designations_theme() {
       'render element' => 'element',
       'file' => 'components/cart.inc',
     ),
+    'fundraiser_designations_fund_addon_component' => array(
+      'render element' => 'element',
+      'file' => 'components/addon.inc',
+    ),
   );
   return $theme;
 }
@@ -802,6 +851,11 @@ function fundraiser_designations_node_load($nodes, $types) {
       array(':nids' => array_keys($nodes)));
     foreach ($group_ids as $group_id) {
       $nodes[$group_id->field_ffg_form_id_target_id]->designation_group_ids[] = $group_id->entity_id;
+    }
+    $addons = db_query('SELECT * FROM {fundraiser_fund_group_addon}');
+    foreach ($addons as $addon) {
+      $nodes[$addon->nid]->fd_addon['pid'] = $addon->pid;
+      $nodes[$addon->nid]->fd_addon['price_set'] = $addon->price_set;
     }
   }
 }

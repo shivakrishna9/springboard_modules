@@ -110,6 +110,32 @@ function fundraiser_fund_group_schema() {
     ),
   );
 
+  $schema['fundraiser_fund_group_addon'] = array(
+    'description' => 'An addon donation for fund groups',
+    'fields' => array(
+      'nid' => array(
+        'description' => 'Donation form ID',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'pid' => array(
+        'description' => 'product ID',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'price_set' => array(
+        'type' => 'blob',
+        'not null' => FALSE,
+        'size' => 'big',
+        'serialize' => TRUE,
+        'description' => 'A serialized array of additional data.',
+      ),
+    ),
+    'primary key' => array('nid', 'pid'),
+  );
+
   return $schema;
 }
 
@@ -170,4 +196,13 @@ function fundraiser_fund_group_update_7005() {
   $group->children[] = 'field_ffg_other_amt';
   field_group_group_save($group);
 
+}
+/**
+ *  Add addon table
+ */
+function fundraiser_fund_group_update_7006() {
+  $schema = module_invoke('fundraiser_fund_group', 'schema');
+  if (db_table_exists('fundraiser_fund_group_addon') == FALSE) {
+    db_create_table('fundraiser_fund_group_addon', $schema['fundraiser_fund_group_addon']);
+  }
 }

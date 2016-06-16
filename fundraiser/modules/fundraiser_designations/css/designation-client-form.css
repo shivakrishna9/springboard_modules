@@ -3,7 +3,8 @@ fieldset#webform-component-designations legend {
 }
 
 .designation-group-wrapper,
-.fundraiser-designation-cart-wrapper{
+.fundraiser-designation-cart-wrapper,
+.designation-addon-wrapper {
   padding: 10px;
   margin-bottom: 5px;
 }
@@ -21,15 +22,18 @@ fieldset#webform-component-designations legend {
 .designation-group-funds-table-wrapper {
   clear: left;
 }
+
 .designation-group-funds-table tr,
-.fundraiser-designation-cart-table tr{
+.fundraiser-designation-cart-table tr,
+.designation-addon-funds-table tr {
   background: inherit;
 }
 
-.designation-group-funds-table td, .fundraiser-designation-cart-table td {
+.designation-group-funds-table td, .fundraiser-designation-cart-table td, .designation-addon-funds-table td {
   padding: 4px;
 }
 
+.designation-addon-funds-table div[id*="funds-placeholder"],
 .designation-group-funds-table div[id*="funds-placeholder"],
 .designation-group-funds-table div.form-type-select {
   text-align: left;
@@ -40,7 +44,7 @@ fieldset#webform-component-designations legend {
   padding: 0;
 }
 
-
+.designation-addon-funds-table .control-group,
 .designation-group-funds-table .control-group {
   float: left;
   clear: none;
@@ -48,7 +52,8 @@ fieldset#webform-component-designations legend {
   width: auto
 }
 
-.designation-group-funds-table .control-group label{
+.designation-addon-funds-table .control-group label,
+.designation-group-funds-table .control-group label {
   margin-left: 4px;
 }
 
@@ -70,6 +75,7 @@ label[for*="funds-placeholder"] {
   font-weight: bold;
 }
 
+.designation-addon-funds-table,
 .designation-group-funds-table,
 .fundraiser-designation-cart-table {
   width: 100%;

@@ -40,7 +40,7 @@ function fundraiser_fund_group_menu() {
     'access arguments' => array('manage-groups'),
     'type' => MENU_LOCAL_TASK,
     'page callback' => 'drupal_get_form',
-    'page arguments' => array('fundraiser_fund_groups_addon_form'),
+    'page arguments' => array('fundraiser_fund_groups_addon_form', 1),
     'file' => 'fundraiser_fund_group.addon.inc',
     'file path' => drupal_get_path('module', 'fundraiser_fund_group') . '/includes',
     'weight' => 10,
@@ -49,10 +49,10 @@ function fundraiser_fund_group_menu() {
   $items['fund_groups/autocomplete_callback'] = array(
     'title' => 'Simplest AJAX Example',
     'page callback' => 'fundraiser_fund_groups_autocomplete_callback',
-    'access callback' => array('manage-groups'),
     'file' => 'fundraiser_fund_group.addon.inc',
     'file path' => drupal_get_path('module', 'fundraiser_fund_group') . '/includes',
     'type' => MENU_CALLBACK,
+    'access callback' => TRUE,
   );
 
   return $items;
