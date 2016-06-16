@@ -622,7 +622,7 @@ function fundraiser_designations_form_webform_client_form_alter(&$form, &$form_s
       }
     }
 
-    if (empty($form['#node']->fd_addon)) {
+    if (empty($form['#node']->fd_addon) || $form['#node']->fd_addon['status'] == 0) {
       $form['submitted']['addon_container']['#access'] = FALSE;
     }
     if (module_exists('dynamic_gift_strings')) {
@@ -868,6 +868,7 @@ function fundraiser_designations_node_load($nodes, $types) {
     $addons = db_query('SELECT * FROM {fundraiser_fund_group_addon}');
     foreach ($addons as $addon) {
       $nodes[$addon->nid]->fd_addon['pid'] = $addon->pid;
+      $nodes[$addon->nid]->fd_addon['status'] = $addon->status;
       $nodes[$addon->nid]->fd_addon['price_set'] = $addon->price_set;
     }
   }

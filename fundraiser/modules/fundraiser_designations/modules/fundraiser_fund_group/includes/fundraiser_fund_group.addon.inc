@@ -6,7 +6,6 @@ function fundraiser_fund_groups_addon_form($form, $form_state, $node) {
 
   $addon_default ='';
   if (!empty($data['pid'])) {
-
     $addon = commerce_product_load($data['pid']);
     $addon_default = $addon->title . ' [' . $addon->product_id . ']';
   }
@@ -14,6 +13,13 @@ function fundraiser_fund_groups_addon_form($form, $form_state, $node) {
   $form['nid'] = array(
     '#type' => 'value',
     '#value' => $node->nid,
+  );
+
+  $form['status'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Enable add-on donation'),
+    '#weight' => -10,
+    '#default_value' => isset($data['status']) ? $data['status'] : 0,
   );
 
   // Fundraiser Settings (i.e., ask amounts).
@@ -207,10 +213,10 @@ function fundraiser_fund_groups_addon_form_submit($form, &$form_state) {
       $sets[] = $amount;
     }
   }
-
   $data = array(
     'nid' => $values['nid'],
     'pid' => $values['addon'],
+    'status' => (int) $values['status'],
     'price_set' => $sets,
   );
   drupal_write_record('fundraiser_fund_group_addon', $data);
