@@ -48,8 +48,6 @@ function salesforce_donation_history_menu() {
     'file' => 'includes/salesforce_donation_history.admin.inc',
   );
 
-  // TODO: Implement a custom permission handler
-  // to ensure the user has a salesforce account id.
   $items['user/%user/donation-history'] = array(
     'title' => 'My donation history',
     'page callback' => 'salesforce_donation_history_page',
@@ -60,15 +58,17 @@ function salesforce_donation_history_menu() {
     'file' => 'includes/salesforce_donation_history.pages.inc',
   );
 
-  $items['user/%user/donation-history/summary/%year'] = array(
+  $items['user/%user/donation-history/summary/%'] = array(
     'title' => 'Donation tax receipts for year X',
-    'page callback' => 'salesforce_donation_history_by_year',
-    'page arguments' => array(1),
+    'page callback' => 'salesforce_donation_history_annual_summary_page',
+    'page arguments' => array(1, 4),
     'access callback' => 'user_edit_access',
     'access arguments' => array(1),
+    'type' => MENU_NORMAL_ITEM,
+    'file' => 'includes/salesforce_donation_history.pages.inc',
   );
 
-  $items['user/%user/donation-history/receipt/%Id'] = array(
+  $items['user/%user/donation-history/receipt/%'] = array(
     'title' => 'Donation tax receipts for year X',
     'page callback' => 'salesforce_donation_history_Id',
     'page arguments' => array(1),
@@ -87,6 +87,12 @@ function salesforce_donation_history_theme() {
     'salesforce_donation_history_admin_field_table' => array(
       'render element' => 'element',
     ),
+    // 'salesforce_donation_history_annual_summary' => array(
+    //   // 'variables' => array('contents' => array()),
+    //   'render element' => 'contents',
+    //   'template' => 'salesforce_donation_history_annual_summary',
+    //   'path' => drupal_get_path('module', 'salesforce_donation_history') . '/templates',
+    // ),
   );
 }
 

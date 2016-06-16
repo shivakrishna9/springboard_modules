@@ -40,3 +40,15 @@ function salesforce_donation_history_page($user) {
   }
   return $output;
 }
+
+/**
+ * Page callback for annual tax summary.
+ */
+function salesforce_donation_history_annual_summary_page($user, $year) {
+  $output = array();
+  $output['intro'] = array(
+    '#type' => 'markup',
+    '#markup' => t('This is the tax summary for user :uid for year :year', array(':uid' => $user->uid, ':year' => $year)),
+  );
+  return $output;
+}
