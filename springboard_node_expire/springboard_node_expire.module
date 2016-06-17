@@ -7,6 +7,7 @@
 
 define('SPRINGBOARD_NODE_EXPIRE_ACTION_REDIRECT', 0);
 define('SPRINGBOARD_NODE_EXPIRE_ACTION_MESSAGE', 1);
+define('SPRINGBOARD_NODE_EXPIRE_DEFAULT_MESSAGE_FORMAT', 'filtered_html');
 
 /**
  * Implements hook_theme().
@@ -219,7 +220,7 @@ function springboard_node_expire_node_insert($node) {
   if (!empty($message)) {
     $update_fields['message'] = $message;
   }
-  $format = is_array($node->expiration_message) && isset($node->expiration_message['format']) ? $node->expiration_message['format'] : 'filtered_html';
+  $format = is_array($node->expiration_message) && isset($node->expiration_message['format']) ? $node->expiration_message['format'] : SPRINGBOARD_NODE_EXPIRE_DEFAULT_MESSAGE_FORMAT;
   $update_fields['message_format'] = $format;
 
   db_merge('node_expire')
@@ -271,35 +272,49 @@ function springboard_node_expire_node_load($nodes, $types) {
 
     $time = strtotime("now");
 
-    foreach ($query as $key => $record) {
-      $nodes[$key]->expiration_action = $record->action;
-      $nodes[$key]->expiration_redirect = isset($record->redirect_url) ? $record->redirect_url : '';
-      $nodes[$key]->expiration_message = isset($record->message) ? $record->message : '';
-      $nodes[$key]->expiration_message_format = $record->message_format;
-      $nodes[$key]->access = node_access('update', $nodes[$key]);
+    // If any records exist, set the node object's properties to their
+    // expiration setting values.
+    if (count($query)) {
+      foreach ($query as $key => $record) {
+        $nodes[$key]->expiration_action = $record->action;
+        $nodes[$key]->expiration_redirect = isset($record->redirect_url) ? $record->redirect_url : '';
+        $nodes[$key]->expiration_message = isset($record->message) ? $record->message : '';
+        $nodes[$key]->expiration_message_format = $record->message_format;
+        $nodes[$key]->access = node_access('update', $nodes[$key]);
 
-      // Ensure the node expiration value is right. Since the check from the
-      // parent module (node_expire) happens on every cron run, some users might
-      // want to ensure the expiration value is set before a user views the
-      // node.
-      if (variable_get('springboard_node_expire_check_expiration', FALSE)) {
-        if (!$nodes[$key]->expired && !empty($nodes[$key]->expire) && $time > strtotime($nodes[$key]->expire)) {
-          // If the expiration time has passed, update the record.
-          $update_record = array(
-            'nid' => $nodes[$key]->nid,
-            'expired' => TRUE,
-          );
-          drupal_write_record('node_expire', $update_record, 'nid');
-          $nodes[$key]->expired = TRUE;
+        // Ensure the node expiration value is right. Since the check from the
+        // parent module (node_expire) happens on every cron run, some users
+        // might want to ensure the expiration value is set before a user views
+        // the node.
+        if (variable_get('springboard_node_expire_check_expiration', FALSE)) {
+          if (!$nodes[$key]->expired && !empty($nodes[$key]->expire) && $time > strtotime($nodes[$key]->expire)) {
+            // If the expiration time has passed, update the record.
+            $update_record = array(
+              'nid' => $nodes[$key]->nid,
+              'expired' => TRUE,
+            );
+            drupal_write_record('node_expire', $update_record, 'nid');
+            $nodes[$key]->expired = TRUE;
+          }
+          elseif ($nodes[$key]->expired && !empty($nodes[$key]->expire) && $time < strtotime($nodes[$key]->expire)) {
+            $update_record = array(
+              'nid' => $nodes[$key]->nid,
+              'expired' => FALSE,
+            );
+            drupal_write_record('node_expire', $update_record, 'nid');
+            $nodes[$key]->expired = FALSE;
+          }
         }
-        elseif ($nodes[$key]->expired && !empty($nodes[$key]->expire) && $time < strtotime($nodes[$key]->expire)) {
-          $update_record = array(
-            'nid' => $nodes[$key]->nid,
-            'expired' => FALSE,
-          );
-          drupal_write_record('node_expire', $update_record, 'nid');
-          $nodes[$key]->expired = FALSE;
-        }
+      }
+    }
+    // Otherwise, set the default expiration settings.
+    else {
+      foreach ($nodes as $node) {
+        $node->expiration_action = 0;
+        $node->expiration_redirect = NULL;
+        $node->expiration_message = NULL;
+        $node->expiration_message_format = SPRINGBOARD_NODE_EXPIRE_DEFAULT_MESSAGE_FORMAT;
+        $node->expired = FALSE;
       }
     }
   }
