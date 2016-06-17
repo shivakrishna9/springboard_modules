@@ -184,13 +184,13 @@ function _springboard_node_expire_form_validate($form, &$form_state) {
  * Implements hook_node_update().
  */
 function springboard_node_expire_node_update($node) {
-  _springboard_node_expire_node_insert($node);
+  springboard_node_expire_node_insert($node);
 }
 
 /**
- * Helper function to modify expiration settings when inserting/updating a node.
+ * Implements hook_node_insert().
  */
-function _springboard_node_expire_node_insert($node) {
+function springboard_node_expire_node_insert($node) {
   $ntypes = variable_get('node_expire_ntypes', array());
   if (!isset($ntypes[$node->type])) {
     return;
@@ -215,12 +215,12 @@ function _springboard_node_expire_node_insert($node) {
   if (isset($node->expiration_redirect)) {
     $update_fields['redirect_url'] = $node->expiration_redirect;
   }
-  if (isset($node->expiration_message['value'])) {
-    $update_fields['message'] = $node->expiration_message['value'];
+  $message = is_array($node->expiration_message) ? $node->expiration_message['value'] : $node->expiration_message;
+  if (!empty($message)) {
+    $update_fields['message'] = $message;
   }
-  if (isset($node->expiration_message['format'])) {
-    $update_fields['message_format'] = $node->expiration_message['format'];
-  }
+  $format = is_array($node->expiration_message) && isset($node->expiration_message['format']) ? $node->expiration_message['format'] : 'filtered_html';
+  $update_fields['message_format'] = $format;
 
   db_merge('node_expire')
     ->key(array('nid' => $node->nid))
