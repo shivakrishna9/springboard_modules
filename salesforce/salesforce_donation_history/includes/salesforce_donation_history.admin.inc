@@ -82,6 +82,72 @@ function salesforce_donation_history_fields() {
 }
 
 /**
+ * Page callback.
+ */
+function salesforce_donation_history_receipts() {
+  $form = array();
+  $defaults = array(
+    'value' => '',
+    'format' => filter_default_format(),
+  );
+
+  $form['header_fields'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Header Fields'),
+    '#collapsible' => FALSE,
+    '#collapsed' => FALSE,
+  );
+
+  $form['header_fields']['salesforce_donation_history_receipts_logo'] = array(
+    '#type' => 'file',
+    '#title' => t('Logo'),
+    '#description' => t('Upload a file, allowed extensions: jpg, jpeg, png, gif'),
+  );
+
+  $salesforce_donation_history_receipts_address = variable_get('salesforce_donation_history_receipts_address', $defaults);
+  $form['header_fields']['salesforce_donation_history_receipts_address'] = array(
+    '#type' => 'text_format',
+    '#title' => t('Address'),
+    '#default_value' => $salesforce_donation_history_receipts_address['value'],
+    '#description' => "",
+    '#format' => $salesforce_donation_history_receipts_address['format'],
+  );
+  $salesforce_donation_history_receipts_intro = variable_get('salesforce_donation_history_receipts_intro', $defaults);
+  $form['header_fields']['salesforce_donation_history_receipts_intro'] = array(
+    '#type' => 'text_format',
+    '#title' => t('Introduction'),
+    '#default_value' => $salesforce_donation_history_receipts_intro['value'],
+    '#description' => "",
+    '#format' => $salesforce_donation_history_receipts_intro['format'],
+
+  );
+
+  $form['table'] = array(
+    '#type' => 'markup',
+    '#markup' => t('A table with donation information will appear between the header and footer fields, here. You can control which columns are displayed in this table on the <a href="fields">Fields</a> tab.'),
+  );
+
+  $form['footer_fields'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Footer Fields'),
+    '#collapsible' => FALSE,
+    '#collapsed' => FALSE,
+  );
+
+  $salesforce_donation_history_receipts_outro = variable_get('salesforce_donation_history_receipts_outro', $defaults);
+  $form['footer_fields']['salesforce_donation_history_receipts_outro'] = array(
+    '#type' => 'text_format',
+    '#title' => t('Footer text'),
+    '#default_value' => $salesforce_donation_history_receipts_outro['value'],
+    '#description' => "",
+    '#format' => $salesforce_donation_history_receipts_outro['format'],
+  );
+
+  $form = system_settings_form($form);
+  return $form;
+}
+
+/**
  * Validation handler for salesforce_donation_history_query form.
  */
 function salesforce_donation_history_query_validate($form, &$form_state) {

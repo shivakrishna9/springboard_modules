@@ -28,7 +28,8 @@ function salesforce_donation_history_page($user) {
     $output['select-year'] = drupal_get_form('salesforce_donation_history_select_year', $available_years, $selected_year);
     $output['annual-tax-receipt'] = array(
       '#type' => 'markup',
-      '#markup' => l(t('Print Annual Tax Reciept'), '#'),
+      // @todo hard-coded user ID.
+      '#markup' => l(t('Print Annual Tax Reciept'), 'user/55718/donation-history/summary/' . $selected_year),
     );
     $output['table'] = salesforce_donation_history_create_table($results[$selected_year]);
   }
@@ -46,9 +47,37 @@ function salesforce_donation_history_page($user) {
  */
 function salesforce_donation_history_annual_summary_page($user, $year) {
   $output = array();
+  $output['logo'] = array(
+    '#type' => 'markup',
+    '#markup' => '<p>LOGO GOES HERE</p>',
+  );
+  $address = variable_get('salesforce_donation_history_receipts_address', NULL);
+  $output['address'] = array(
+    '#type' => 'markup',
+    '#markup' => check_markup($address['value'], $address['format']),
+  );
+  $intro = variable_get('salesforce_donation_history_receipts_intro', NULL);
   $output['intro'] = array(
     '#type' => 'markup',
-    '#markup' => t('This is the tax summary for user :uid for year :year', array(':uid' => $user->uid, ':year' => $year)),
+    '#markup' => check_markup($intro['value'], $intro['format']),
+  );
+  $sfid = salesforce_donation_history_user_account_id($user->uid);
+  if ($sfid) {
+    $results = salesforce_donation_history_sort_by_year(salesforce_donation_history_get_opportunities($sfid));
+  }
+  if (count($results) > 0) {
+    $output['table'] = salesforce_donation_history_create_table($results[$year], 'show_on_summary');
+  }
+  else {
+    $output['no-donations'] = array(
+      '#type' => 'markup',
+      '#markup' => t('No donations found.'),
+    );
+  }
+  $outro = variable_get('salesforce_donation_history_receipts_outro', NULL);
+  $output['footer'] = array(
+    '#type' => 'markup',
+    '#markup' => check_markup($outro['value'], $outro['format']),
   );
   return $output;
 }
