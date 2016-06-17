@@ -466,8 +466,10 @@ function fundraiser_designations_fundraiser_donation_create($donation) {
       $donation->amount = $amount_converted;
       $donation->donation['amount'] = $amount_converted;
       $fundraiser_sustainers_series = entity_load_single('fundraiser_sustainers_series', $donation->recurring->master_did);
-      $fundraiser_sustainers_series->amount = $amount_converted;
-      $fundraiser_sustainers_series->save();
+      if ($fundraiser_sustainers_series->amount != $amount_converted) {
+        $fundraiser_sustainers_series->amount = $amount_converted;
+        $fundraiser_sustainers_series->save();
+      }
     }
   }
 }
