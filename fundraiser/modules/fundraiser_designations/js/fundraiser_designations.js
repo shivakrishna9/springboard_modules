@@ -138,7 +138,7 @@
     }
     else {
       fundId = fundGroupId;
-      fundName = 'One-time addon donation';
+      fundName = 'One-time add-on donation';
     }
 
     // Get the cart row template and add the fund, amount and qunatity html5 attributes.
