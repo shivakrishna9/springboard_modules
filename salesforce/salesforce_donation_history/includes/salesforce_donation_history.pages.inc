@@ -31,7 +31,7 @@ function salesforce_donation_history_page($user) {
       '#prefix' => '<div>',
       '#suffix' => '</div>',
       // @todo hard-coded user ID.
-      '#markup' => l(t('Print Annual Tax Reciept'), 'user/55718/donation-history/summary/' . $selected_year),
+      '#markup' => l(t('Print Annual Tax Reciept'), 'user/' . $user->uid . '/donation-history/summary/' . $selected_year),
     );
     $output['table'] = salesforce_donation_history_create_table($results[$selected_year]);
   }

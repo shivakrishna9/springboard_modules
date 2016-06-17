@@ -365,7 +365,7 @@ function salesforce_donation_history_create_table($records, $display_key = 'show
     // Add 'print receipt' cell to the end of each row.
     if ($add_print_receipt_column) {
       // @todo hard-coded user ID.
-      $row[] = l(t('Print Receipt'), 'user/55718/donation-history/receipt/' . $record->Id[0]);
+      $row[] = l(t('Print Receipt'), 'user/' . arg(1) . '/donation-history/receipt/' . $record->Id[0]);
     }
     $table['#rows'][] = $row;
   }
