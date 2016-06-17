@@ -363,28 +363,20 @@ function fundraiser_designations_commerce_line_item_type_info() {
  */
 function fundraiser_designations_fundraiser_commerce_generate_line_items($donation, $order) {
   if (!empty($donation->donation['cart'][0]) && $cart = unserialize($donation->donation['cart'][0])) {
+
     // Get the cart values from the hidden field containing the json string.
     $fund_object = json_decode(str_replace('&quot;', '"', $cart['cart_body']['fund_catcher']));
-    // Not sure why this is needed.
-    // @see fundraiser_tickets_fundraiser_commerce_generate_line_items()
-    $order_wrapper = entity_metadata_wrapper('commerce_order', $order);
 
     foreach ($fund_object as $fund) {
+      // Add the line items which are not "add-on" line items.
       if (!empty($fund->fundId)) {
-
-        $line_item_wrapper = fundraiser_designations_build_line_item($fund, $order, $donation);
-        commerce_line_item_save($line_item_wrapper->value());
-        // Update the order.
-        // @todo why? (copied from fundraiser tickets, does nothing, not passed by reference).
-        $order_wrapper->commerce_line_items[] = $line_item_wrapper->value();
+        fundraiser_desinations_save_new_line_item($fund, $order, $donation);
       }
+      // Add the line items which are "add-on" line items to
+      // the master donation only.
       elseif (!empty($fund->addonId) && empty($donation->recurring->master_did)) {
         $fund->fundId = $fund->addonId;
-        $line_item_wrapper = fundraiser_designations_build_line_item($fund, $order, $donation);
-        commerce_line_item_save($line_item_wrapper->value());
-        // Update the order.
-        // @todo why? (copied from fundraiser tickets, does nothing, not passed by reference).
-        $order_wrapper->commerce_line_items[] = $line_item_wrapper->value();
+        fundraiser_desinations_save_new_line_item($fund, $order, $donation);
       }
     }
 
@@ -396,17 +388,28 @@ function fundraiser_designations_fundraiser_commerce_generate_line_items($donati
   }
 }
 
+/**
+ * @param object $fund
+ *   The fund product.
+ * @param object $order
+ *    The comemrce order.
+ * @param object $donation
+ *   The donation object.
+ *
+ * @return object
+ *   \EntityMetadataWrapper
+ */
 function fundraiser_designations_build_line_item($fund, $order, $donation) {
   // Create a new line item.
   $product_wrapper = entity_metadata_wrapper('commerce_product', commerce_product_load($fund->fundId));
   $line_item = commerce_line_item_new('designation', $order->order_id);
 
-// Populate new line item with product default price and value.
+  // Populate new line item with product default price and value.
   commerce_product_line_item_populate($line_item, $product_wrapper->value());
   $text = $product_wrapper->title->value();
   $line_item->line_item_label = $text;
 
-// Alter line item with custom parameters from the donation.
+  // Alter line item with custom parameters from the donation.
   $line_item->quantity = $fund->fundQuantity;
   $code = $donation->donation['currency']['code'];
   $donor_amount = commerce_currency_decimal_to_amount($fund->fundAmount, $code);
@@ -415,8 +418,7 @@ function fundraiser_designations_build_line_item($fund, $order, $donation) {
   $line_item_wrapper->commerce_unit_price->amount = $donor_amount;
   $line_item_wrapper->commerce_unit_price->currency_code = $code;
 
-// @todo try to understand why this step is necessary.
-// Change the product price all the way down, for whatever reason.
+  // Change the product price all the way down.
   $data = array(
     'amount' => $donor_amount,
     'currency_code' => $code,
@@ -428,15 +430,27 @@ function fundraiser_designations_build_line_item($fund, $order, $donation) {
     $data,
     TRUE
   );
+
   return $line_item_wrapper;
 }
 
+function fundraiser_desinations_save_new_line_item($fund, $order, $donation) {
+  $line_item_wrapper = fundraiser_designations_build_line_item($fund, $order, $donation);
+  commerce_line_item_save($line_item_wrapper->value());
 
+  // Update the order.
+  // @todo why? (copied from fundraiser tickets, does nothing, not passed by reference).
+  // @see fundraiser_tickets_fundraiser_commerce_generate_line_items()
+  $order_wrapper = entity_metadata_wrapper('commerce_order', $order);
+  $order_wrapper->commerce_line_items[] = $line_item_wrapper->value();
+}
 
 /**
- * Manipluate the line items and prices when there is an addon donation line item
- * that has been removed from a sustainers series in the generate line items function above
- * (todo!).
+ * Implements hook_fundraiser_donation_create().
+ *
+ * Manipluate the line items and prices when there is an addon donation
+ * line item that has been removed from a sustainers series in the generate
+ * line items function above.
  */
 function fundraiser_designations_fundraiser_donation_create($donation) {
   $node = node_load($donation->nid);
