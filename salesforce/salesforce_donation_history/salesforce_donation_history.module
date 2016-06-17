@@ -48,6 +48,16 @@ function salesforce_donation_history_menu() {
     'file' => 'includes/salesforce_donation_history.admin.inc',
   );
 
+  $items['admin/config/salesforce/donation_history/receipts'] = array(
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('salesforce_donation_history_receipts'),
+    'access arguments' => array('administer salesforce_donation_history settings'),
+    'title' => 'Receipt Customization',
+    'type' => MENU_LOCAL_TASK,
+    'description' => 'Manage Salesforce Donation History Receipts.',
+    'file' => 'includes/salesforce_donation_history.admin.inc',
+  );
+
   $items['user/%user/donation-history'] = array(
     'title' => 'My donation history',
     'page callback' => 'salesforce_donation_history_page',
@@ -304,21 +314,25 @@ function salesforce_donation_history_sort_by_year($records) {
  *
  * @param array $records
  *   An array of records returned by the SOQL query.
+ * @param string $display_key
+ *   Used to control which fields display on a particular table. Corresponds to
+ *   an array key value from the fields settings form. Valid values include
+ *   'show_on_tab', 'show_on_receipt', and 'show_on_summary'.
  * @param bool $display_headers
  *   Used to omit headers on nested tables.
  *
  * @return array
  *   Render array for a table.
  */
-function salesforce_donation_history_create_table($records, $display_headers = TRUE, $add_print_receipt_column = TRUE) {
+function salesforce_donation_history_create_table($records, $display_key = 'show_on_tab', $display_headers = TRUE, $add_print_receipt_column = TRUE) {
   $table = array('#theme' => 'table');
   if ($display_headers) {
     // Call shared recusive function for header printing.
     if ($records[0] instanceof SObject) {
-      $table['#header'] = salesforce_donation_history_create_table_headers($records[0]);
+      $table['#header'] = salesforce_donation_history_create_table_headers($records[0], $display_key);
     }
     else {
-      $table['#header'] = salesforce_donation_history_create_table_headers(new SObject($records[0]));
+      $table['#header'] = salesforce_donation_history_create_table_headers(new SObject($records[0]), $display_key);
     }
   }
   // Print the remaining rows in the body.
@@ -326,10 +340,10 @@ function salesforce_donation_history_create_table($records, $display_headers = T
   foreach ($records as $record) {
     // Call shared recusive function for row printing.
     if ($record instanceof SObject) {
-      $row = salesforce_donation_history_create_table_row($record);
+      $row = salesforce_donation_history_create_table_row($record, $display_key);
     }
     else {
-      $row = salesforce_donation_history_create_table_row(new SObject($record));
+      $row = salesforce_donation_history_create_table_row(new SObject($record), $display_key);
     }
     for ($i = 0; $i < count($row); $i++) {
       // I've actually never seen this if statement satisfied.
@@ -340,7 +354,7 @@ function salesforce_donation_history_create_table($records, $display_headers = T
       // create a table within a table.
       if (isset($row[$i][0]) && $row[$i][0] instanceof QueryResult) {
         foreach ($row[$i] as $qr) {
-          $nested_table = salesforce_donation_history_create_table($qr->records, FALSE, FALSE);
+          $nested_table = salesforce_donation_history_create_table($qr->records, $display_key, FALSE, FALSE);
           // @TODO I don't think rendering the nested table and inserting the
           // markup into the parent cell should be necessary but I couldn't get
           // it to display as nested render arrays.
@@ -350,6 +364,7 @@ function salesforce_donation_history_create_table($records, $display_headers = T
     }
     // Add 'print receipt' cell to the end of each row.
     if ($add_print_receipt_column) {
+      // @todo hard-coded user ID.
       $row[] = l(t('Print Receipt'), 'user/55718/donation-history/receipt/' . $record->Id[0]);
     }
     $table['#rows'][] = $row;
@@ -370,14 +385,14 @@ function salesforce_donation_history_create_table($records, $display_headers = T
  * @return array
  *   A list of headers to be used in the table.
  */
-function salesforce_donation_history_create_table_headers($sobject) {
+function salesforce_donation_history_create_table_headers($sobject, $display_key) {
   $field_settings = variable_get('salesforce_donation_history_field_settings', NULL);
   if (!isset($header_buffer_array)) {
     $header_buffer_array = array();
   }
   if (isset($sobject->Id) && !isset($sobject->fields->Id)) {
     // Only add the Id to header if it is configured to be displayed.
-    if ($field_settings[$sobject->type . '-Id']['show_on_tab']) {
+    if ($field_settings[$sobject->type . '-Id'][$display_key]) {
       // Use the custom label as the header if one has been specified.
       // Else, default to the salesforce field name (Id).
       $header_buffer_array[] = (!empty($field_settings[$sobject->type . '-Id']['label'])) ? $field_settings[$sobject->type . '-Id']['label'] : 'Id';
@@ -391,7 +406,7 @@ function salesforce_donation_history_create_table_headers($sobject) {
       }
       else {
         // Only add the header if it is configured to be displayed.
-        if ($field_settings[$sobject->type . '-' . $fieldname]['show_on_tab']) {
+        if ($field_settings[$sobject->type . '-' . $fieldname][$display_key]) {
           // Use the custom label as the field header if one has been specified.
           // Else, default to the salesforce field name.
           $fieldname = (!empty($field_settings[$sobject->type . '-' . $fieldname]['label'])) ? $field_settings[$sobject->type . '-' . $fieldname]['label'] : $fieldname;
@@ -423,26 +438,26 @@ function salesforce_donation_history_create_table_headers($sobject) {
  * @return array
  *   An array representing the data in a table row.
  */
-function salesforce_donation_history_create_table_row($sobject) {
+function salesforce_donation_history_create_table_row($sobject, $display_key) {
   $field_settings = variable_get('salesforce_donation_history_field_settings', NULL);
   if (!isset($row)) {
     $row = array();
   }
   if (isset($sobject->Id) && !isset($sobject->fields->Id)) {
     // Only add the Id to the row if it is configured to be displayed.
-    if ($field_settings[$sobject->type . '-Id']['show_on_tab']) {
+    if ($field_settings[$sobject->type . '-Id'][$display_key]) {
       $row[] = $sobject->Id;
     }
   }
   if (isset($sobject->fields)) {
     foreach ($sobject->fields as $key => $datum) {
       if ($datum instanceof SObject) {
-        $row = array_merge($row, salesforce_donation_history_create_table_row($datum));
+        $row = array_merge($row, salesforce_donation_history_create_table_row($datum, $display_key));
       }
       else {
         // Add datum to row if it is not set (so we don't end up with too few
         // cells in a row OR the field settings say to include it).
-        if (!isset($datum) || $field_settings[$sobject->type . '-' . $key]['show_on_tab']) {
+        if (!isset($datum) || $field_settings[$sobject->type . '-' . $key][$display_key]) {
           $row[] = salesforce_donation_history_format_field($datum, $sobject->type, $key);
         }
       }
