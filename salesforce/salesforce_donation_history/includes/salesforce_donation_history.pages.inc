@@ -30,7 +30,6 @@ function salesforce_donation_history_page($user) {
       '#type' => 'markup',
       '#prefix' => '<div>',
       '#suffix' => '</div>',
-      // @todo hard-coded user ID.
       '#markup' => l(t('Print Annual Tax Reciept'), 'user/' . $user->uid . '/donation-history/summary/' . $selected_year),
     );
     $output['table'] = salesforce_donation_history_create_table($results[$selected_year]);
@@ -49,9 +48,10 @@ function salesforce_donation_history_page($user) {
  */
 function salesforce_donation_history_annual_summary_page($user, $year) {
   $output = array();
-  $output['logo'] = array(
-    '#type' => 'markup',
-    '#markup' => '<p>LOGO GOES HERE</p>',
+  $output['header-banner'] = array(
+    // @TODO: Should we add an image style?
+    '#theme' => 'image',
+    '#path' => file_load(variable_get('salesforce_donation_history_receipts_header_banner', ''))->uri,
   );
   $address = variable_get('salesforce_donation_history_receipts_address', NULL);
   $output['address'] = array(
@@ -80,6 +80,11 @@ function salesforce_donation_history_annual_summary_page($user, $year) {
   $output['footer'] = array(
     '#type' => 'markup',
     '#markup' => check_markup($outro['value'], $outro['format']),
+  );
+  $output['footer-banner'] = array(
+    // @TODO: Should we add an image style?
+    '#theme' => 'image',
+    '#path' => file_load(variable_get('salesforce_donation_history_receipts_footer_banner', ''))->uri,
   );
   return $output;
 }

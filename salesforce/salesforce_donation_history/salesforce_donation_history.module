@@ -109,6 +109,9 @@ function salesforce_donation_history_theme() {
     'salesforce_donation_history_admin_field_table' => array(
       'render element' => 'element',
     ),
+    'salesforce_donation_history_image_preview' => array(
+      'render element' => 'element',
+    ),
     // 'salesforce_donation_history_annual_summary' => array(
     //   // 'variables' => array('contents' => array()),
     //   'render element' => 'contents',
@@ -147,6 +150,28 @@ function theme_salesforce_donation_history_admin_field_table($variables) {
   return theme('table', array('header' => $header, 'rows' => $rows));
 }
 
+/**
+ * Theme callback for banner image preview.
+ *
+ * @ingroup themeable
+ */
+function theme_salesforce_donation_history_image_preview($variables) {
+  $element = $variables['element'];
+  if (!$element['#file'] && $element['#default_value']) {
+    $results = db_query('SELECT * FROM {file_managed} WHERE uri=:uri', array(':uri' => $element['#default_value']));
+    $file = $results->fetchObject();
+    if (is_object($file)) {
+      $element['#file'] = $file;
+    }
+  }
+  if (isset($element['#file']->uri)) {
+    $output = '<div id="edit-logo-ajax-wrapper"><div class="form-item form-type-managed-file form-item-logo"><span class="file">';
+    $output .= '<img height="150px" src="' . file_create_url($element['#file']->uri) . '" />';
+    $output .= '</span><input type="submit" id="edit-' . $element['#name'] . '-remove-button" name="' . $element['#name'] . '_remove_button" value="Remove" class="form-submit ajax-processed">';
+    $output .= '<input type="hidden" name="' . $element['#name'] . '[fid]" value="' . $element['#file']->fid . '">';
+    return $output;
+  }
+}
 /**
  * Gets all opportunities for a user.
  *
