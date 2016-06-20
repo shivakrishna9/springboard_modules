@@ -162,26 +162,6 @@ function fundraiser_fund_group_edit_form($form, &$form_state, $fundraiser_fund_g
   );
   
   $form['data']['#tree'] = TRUE;
-  // Get/Set the message UUID.
-  $form['data']['message_id'] = array(
-    '#type' => 'hidden',
-    '#value' => isset($fundraiser_fund_group->data['message_id']) ? $fundraiser_fund_group->data['message_id'] : str_replace(' ', '-', uniqid(substr(variable_get('site_name', ''), 0, 10) . '-' . substr($node->title, 0, 10) . '-')),
-  );
-
-  $form['data']['recipients'] = array(
-    '#type' => 'hidden',
-    '#default_value' => isset($fundraiser_fund_group->data['recipients']) ? str_replace('"', '&quot;', $fundraiser_fund_group->data['recipients']) : '',
-  );
-
-  $form['data']['group_id'] = array(
-    '#type' => 'hidden',
-    '#default_value' => isset($fundraiser_fund_group->data['group_id']) ? $fundraiser_fund_group->data['group_id'] : '',
-  );
-
-  $form['data']['precedence'] = array(
-    '#type' => 'hidden',
-    '#default_value' => isset($node->precedence) ? $node->precedence : 0,
-  );
 
   if (empty($fundraiser_fund_group->is_new)) {
     $form['data']['weight'] = array(
