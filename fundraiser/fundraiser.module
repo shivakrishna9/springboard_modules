@@ -788,16 +788,18 @@ function _fundraiser_node_form_after_build($form, &$form_state) {
     $form['springboard_display']['#description'] = t('No display settings are enabled at this time.');
   }
 
-  // Add no-settings note if Fundraiser Settings has been emptied by alter hooks.
+  // Add no-settings note if Fundraiser Settings has been emptied by alter
+  // hooks.
   $fundraiser_settings_is_empty = TRUE;
   foreach (element_children($form['fundraiser_settings']) as $key) {
     if (!isset($form['fundraiser_settings'][$key]['#access']) || $form['fundraiser_settings'][$key]['#access']) {
       $fundraiser_settings_is_empty = FALSE;
       break;
     }
-    if ($fundraiser_settings_is_empty) {
-      $form['fundraiser_settings']['#description'] = t("There are no Fundraiser settings to display.");
-    }
+  }
+
+  if ($fundraiser_settings_is_empty) {
+    $form['fundraiser_settings']['#description'] = t("There are no Fundraiser settings to display.");
   }
 
   // Add additional js and css for this form.
@@ -3128,13 +3130,13 @@ function _fundraiser_get_tracking_by_nid($nid) {
  * CRUD style DB function for fundraiser_tracking.
  */
 function _fundraiser_update_tracking($tracking) {
-  /** 
+  /**
    * Code commented out on 2/18/2016 by pcave for performance reasons.
    * When a donation form encounters significant traffic, updating a single row
-   * in this table over and over during a request can cause lock contentions. 
+   * in this table over and over during a request can cause lock contentions.
    * This eventually cascades to other database operations thus slowing down
    * the entire response.
-   * 
+   *
    * $tracking = (array) $tracking;
    * $tracking_data = FALSE;
    * if (isset($tracking['nid'])) {
@@ -3154,13 +3156,13 @@ function _fundraiser_update_tracking($tracking) {
  * CRUD style DB function for fundraiser_tracking.
  */
 function _fundraiser_delete_tracking($nid) {
-  /** 
+  /**
    * Code commented out on 2/18/2016 by pcave for performance reasons.
    * When a donation form encounters significant traffic, updating a single row
-   * in this table over and over during a request can cause lock contentions. 
+   * in this table over and over during a request can cause lock contentions.
    * This eventually cascades to other database operations thus slowing down
    * the entire response.
-   * 
+   *
    * db_delete('fundraiser_tracking')->condition('nid', $nid)->execute();
    */
 }
@@ -3169,13 +3171,13 @@ function _fundraiser_delete_tracking($nid) {
  * DB function for updating the stats in fundraiser_tracking.
  */
 function _fundraiser_update_tracking_value($nid, $field) {
-   /** 
+   /**
    * Code commented out on 2/18/2016 by pcave for performance reasons.
    * When a donation form encounters significant traffic, updating a single row
-   * in this table over and over during a request can cause lock contentions. 
+   * in this table over and over during a request can cause lock contentions.
    * This eventually cascades to other database operations thus slowing down
    * the entire response.
-   * 
+   *
    * $tracking = _fundraiser_get_tracking_by_nid($nid);
    * // No tracking data? Create one.
    * if (!$tracking) {
