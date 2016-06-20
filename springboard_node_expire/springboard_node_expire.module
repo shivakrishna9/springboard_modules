@@ -41,8 +41,8 @@ function springboard_node_expire_form_alter(&$form, &$form_state, $form_id) {
     );
     $form['springboard_node_expire']['springboard_node_expire_check_expiration'] = array(
       '#type' => 'checkbox',
-      '#title' => t('Check expiration status on node load'),
-      '#description' => t("The node_expire module will only check a node's expiration status on every cron run. Check this box to check a node's expiration status when it is loaded instead. Note that this will have a small performance impact."),
+      '#title' => t('Check expiration status on page load'),
+      '#description' => t("The node_expire module will only check a page's expiration status on every cron run. Check this box to check a page's expiration status when it is loaded instead. Note that this will have a small performance impact."),
       '#default_value' => variable_get('springboard_node_expire_check_expiration', FALSE),
     );
   }
@@ -79,11 +79,11 @@ function springboard_node_expire_form_alter(&$form, &$form_state, $form_id) {
       );
       $form['expiration_settings']['expire'] = $form['options']['expire'];
       $form['expiration_settings']['expire']['#date_label_position'] = 'none';
-      $form['expiration_settings']['expire']['#description'] = t('Date on which this node will expire.');
+      $form['expiration_settings']['expire']['#description'] = t('Date on which this page will expire.');
       unset($form['options']['expire']);
 
       $form['expiration_settings']['expiration_action'] = array(
-        '#title' => t('When this node expires, users should be:'),
+        '#title' => t('When this page expires, users should be:'),
         '#type' => 'radios',
         '#default_value' => isset($form['#node']->expiration_action) ? $form['#node']->expiration_action : SPRINGBOARD_NODE_EXPIRE_ACTION_REDIRECT,
         '#options' => array(
@@ -120,7 +120,7 @@ function springboard_node_expire_form_alter(&$form, &$form_state, $form_id) {
       );
       $form['expiration_settings']['expired_message_container']['expiration_message'] = array(
         '#type' => 'text_format',
-        '#title' => t('Node expired message'),
+        '#title' => t('Page expired message'),
         '#default_value' => isset($form['#node']->expiration_message) ? $form['#node']->expiration_message : NULL,
       );
       $form['#validate'][] = '_springboard_node_expire_form_validate';
@@ -176,7 +176,7 @@ function _springboard_node_expire_form_validate($form, &$form_state) {
       }
     }
     if ($form_error) {
-      form_set_error('expiration_settings][expiration_redirect', t("Pointing your redirect URL to the same node would cause an infinite redirect. Please use a different URL."));
+      form_set_error('expiration_settings][expiration_redirect', t("Pointing your redirect URL to the same page would cause an infinite redirect. Please use a different URL."));
     }
   }
 }
