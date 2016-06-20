@@ -25,7 +25,7 @@ function salesforce_donation_history_query() {
  */
 function salesforce_donation_history_fields() {
   $form = array();
-  $field_definitions = variable_get('salesforce_donation_history_query_fields');
+  $field_definitions = variable_get('salesforce_donation_history_query_fields', NULL);
   $field_defaults = variable_get('salesforce_donation_history_field_settings', NULL);
   $form['salesforce_donation_history_field_settings'] = array(
     '#prefix' => '<div id="salesforce_donation_history_field_settings">',
