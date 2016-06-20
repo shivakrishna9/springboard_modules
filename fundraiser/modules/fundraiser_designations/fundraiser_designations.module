@@ -585,7 +585,8 @@ function fundraiser_designations_fundraiser_donation_update($donation) {
     $first_order = commerce_order_load($next_donation->did);
     $first_order_wrapper = entity_metadata_wrapper('commerce_order', $first_order);
 
-    // Update the donation amount.
+    // Update the donation amount on the donation object with the total from
+    // the next recurring.
     $amount = $first_order_wrapper->commerce_order_total->value();
     $amount_converted = commerce_currency_amount_to_decimal($amount['amount'], $amount['currency_code']);
     $donation->amount = $amount_converted;
@@ -599,21 +600,25 @@ function fundraiser_designations_fundraiser_donation_update($donation) {
 
     if (!empty($first_order_line_items)) {
 
+      // Load this order.
       $this_order = commerce_order_load($donation->did);
       $this_order_wrapper = entity_metadata_wrapper('commerce_order', $this_order);
       $this_line_items = $this_order_wrapper->commerce_line_items->value();
 
+      // Update the line items for this order with values from the edited order.
       foreach ($this_line_items as $line_item) {
 
         $code = $donation->donation['currency']['code'];
-        // Get the new amount and quantity/
+        // Get the new amount and quantity.
         $amount = $by_master_line_item_id[$line_item->data['master_line_item_id']]->commerce_unit_price[LANGUAGE_NONE][0]['amount'];
         $quantity = $by_master_line_item_id[$line_item->data['master_line_item_id']]->quantity;
 
+        // Update the line item.
         $line_item_wrapper = entity_metadata_wrapper('commerce_line_item', $line_item);
         $line_item_wrapper->commerce_unit_price->amount = $amount;
         $line_item_wrapper->commerce_unit_price->currency_code = $code;
         $line_item_wrapper->quantity = $quantity;
+
         // Change the product price all the way down.
         $data = array(
           'amount' => $amount,
@@ -633,13 +638,13 @@ function fundraiser_designations_fundraiser_donation_update($donation) {
   }
 }
 
-
 /**
  * Implements hook_fundraiser_donation_create().
  *
- * Manipluate the line items and prices when there is an addon donation
- * line item that has been removed from a sustainers series in the generate
- * line items function above.
+ * In a sustainers series where the master donation has an "add-on" line item,
+ * the recurring donations will have had the add-on line item removed, and
+ * the amount of the addon subtracted from the total. We need to make the
+ * fundraiser_sustainers_series table aware of that.
  */
 function fundraiser_designations_fundraiser_donation_create($donation) {
   $node = node_load($donation->nid);
@@ -784,11 +789,12 @@ function fundraiser_designations_form_node_type_form_validate($form, &$form_stat
 
 /**
  * Implements hook_form_webform_client_form_alter().
- *
- * Add form_process_states configuration for designation ask amounts.
  */
 function fundraiser_designations_form_webform_client_form_alter(&$form, &$form_state) {
   if ($ticket_type = fundraiser_designations_is_designation_type($form['#node']->type) && arg(2) != 'submission') {
+
+    // The designation container can display both one-time and recurring
+    // ask amounts. Add #states properties to controil visibility.
     $designations =& $form['submitted']['designations']['designation_box'];
     foreach (element_children($designations) as $child) {
       if (!empty($form['submitted']['recurs_monthly']) && !empty($form['#node']->recurring_dual_ask_amounts)) {
@@ -827,9 +833,12 @@ function fundraiser_designations_form_webform_client_form_alter(&$form, &$form_s
       }
     }
 
+    // Don't show the add-on componenet if disabled.
     if (empty($form['#node']->fd_addon) || $form['#node']->fd_addon['status'] == 0) {
       $form['submitted']['addon_container']['#access'] = FALSE;
     }
+
+    // Add the dynamic gift strings submit hook.
     if (module_exists('dynamic_gift_strings')) {
       if (isset($_SESSION['dynamic_gift_string_values'][$form['#node']->nid]) && is_array($_SESSION['dynamic_gift_string_values'][$form['#node']->nid])) {
         $form['#submit'][] = 'dynamic_gift_strings_submit';
