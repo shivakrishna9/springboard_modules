@@ -411,7 +411,7 @@ function fundraiser_designations_fundraiser_commerce_generate_line_items($donati
     }
     else {
       // Create line items on the sustainers series.
-      fundraiser_desinations_save_cloned_line_items($order, $donation);
+      fundraiser_designations_save_cloned_line_items($order, $donation);
     }
 
     // Let fundraiser commerce know that we created line items.
@@ -460,7 +460,7 @@ function fundraiser_desinations_save_new_line_item($fund, $order, $donation, $ty
  * @param object $donation
  *   The fundraiser donation object.
  */
-function fundraiser_desinations_save_cloned_line_items($order, $donation) {
+function fundraiser_designations_save_cloned_line_items($order, $donation) {
 
   // Load the master donation order.
   $master_order = commerce_order_load($donation->recurring->master_did);
@@ -561,8 +561,8 @@ function fundraiser_designations_form_fundraiser_sustainers_donation_amount_form
     }
     $form_state['commerce_order'] = $order = commerce_order_load($next_donation->did);
     field_attach_form('commerce_order', $order, $form, $form_state, NULL, array('field_name' => 'commerce_line_items'));
-    $form['commerce_line_items'][LANGUAGE_NONE]['actions']['#access'] = FALSE;
-    $form['commerce_line_items'][LANGUAGE_NONE]['#description'] = $form['fee_amount']['#description'];
+    $form['commerce_line_items'][$form['commerce_line_items']['#language']]['actions']['#access'] = FALSE;
+    $form['commerce_line_items'][$form['commerce_line_items']['#language']]['#description'] = $form['fee_amount']['#description'];
     $form['fee_amount']['#access'] = FALSE;
     $form['fee_amount']['#required'] = FALSE;
     $line_items =& $form['commerce_line_items'][$form['commerce_line_items']['#language']]['line_items'];
@@ -627,9 +627,9 @@ function fundraiser_designations_fundraiser_donation_update($donation) {
 
       // Update the line items in the remaining orders.
       $first_order_line_items = $first_order_wrapper->commerce_line_items->value();
-      $by_master_line_item_id = [];
+      $line_items_by_master_item_id = [];
       foreach ($first_order_line_items as $item) {
-        $by_master_line_item_id[$item->data['master_line_item_id']] = $item;
+        $line_items_by_master_item_id[$item->data['master_line_item_id']] = $item;
       }
 
       if (!empty($first_order_line_items)) {
@@ -645,8 +645,8 @@ function fundraiser_designations_fundraiser_donation_update($donation) {
 
           $code = $donation->donation['currency']['code'];
           // Get the new amount and quantity.
-          $amount = $by_master_line_item_id[$line_item->data['master_line_item_id']]->commerce_unit_price[LANGUAGE_NONE][0]['amount'];
-          $quantity = $by_master_line_item_id[$line_item->data['master_line_item_id']]->quantity;
+          $amount = $line_items_by_master_item_id[$line_item->data['master_line_item_id']]->commerce_unit_price[LANGUAGE_NONE][0]['amount'];
+          $quantity = $line_items_by_master_item_id[$line_item->data['master_line_item_id']]->quantity;
 
           // Update the line item.
           $line_item_wrapper = entity_metadata_wrapper('commerce_line_item', $line_item);
@@ -1121,5 +1121,101 @@ function fundraiser_designations_node_load($nodes, $types) {
       $nodes[$addon->nid]->fd_addon['status'] = $addon->status;
       $nodes[$addon->nid]->fd_addon['price_set'] = $addon->price_set;
     }
+  }
+}
+
+/**
+ * Implements hook_node_insert().
+ *
+ * Cloning operations.
+ */
+function fundraiser_designations_node_insert($node) {
+  if (fundraiser_designations_is_designation_type($node->type)) {
+    if (!empty($node->clone_from_original_nid)) {
+      fundraiser_designations_clone_fund_groups($node);
+      fundraiser_designations_clone_addons($node);
+    }
+  }
+}
+
+/**
+ * Clone the fund groups!
+ *
+ * @param object $node
+ *   The fundraiser node.
+ */
+function fundraiser_designations_clone_fund_groups($node) {
+  // Clone the fund groups.
+  if (!empty($node->designation_group_ids)) {
+    foreach ($node->designation_group_ids as $group_id) {
+      $group = fundraiser_fund_group_load($group_id);
+      $group->fundraiser_fund_group_id = NULL;
+      $group->is_new = TRUE;
+      $group->field_ffg_form_id[LANGUAGE_NONE][0]['target_id'] = $node->nid;
+
+      $created = time();
+      $group->created = $created;
+      $group->changed = $created;
+      $group->save();
+      // Save the draggable views record.
+      $arg = json_encode(array($node->nid));
+      fundraiser_fund_group_draggable_save($arg, $group->fundraiser_fund_group_id, $group->data['weight']);
+    }
+  }
+}
+
+/**
+ * @param object $node
+ *   The fundraiser node.
+ */
+function fundraiser_designations_clone_addons($node) {
+  // Clone the add-on.
+  $record = array();
+  $addons = db_query('SELECT * FROM {fundraiser_fund_group_addon} WHERE nid = :nid', array(':nid' => $node->clone_from_original_nid));
+  if ($addons) {
+    foreach ($addons as $addon) {
+      $record['nid'] = $node->nid;
+      $record['pid'] = $addon->pid;
+      $record['status'] = $addon->status;
+      $record['price_set'] = unserialize($addon->price_set);
+    }
+    drupal_write_record('fundraiser_fund_group_addon', $record);
+  }
+}
+
+/**
+ * Implements hook_fundraiser_create_fundraiser_alter().
+ *
+ * Clone the ask amounts!
+ *
+ * Normal fundraiser forms just rely on webform.module to copy the
+ * donation component and ask amounts, which does not exist on designated forms.
+ */
+function fundraiser_designations_fundraiser_create_fundraiser_alter($node) {
+  if (fundraiser_designations_is_designation_type($node->type) && !empty($node->clone_from_original_nid)) {
+    $donation_amounts = [];
+    $orig = _fundraiser_get_fundraiser_by_nid($node->clone_from_original_nid);
+
+    foreach ($orig->donation_amounts as $index => $donation_amount) {
+      if (isset($donation_amount[0]) && isset($donation_amount[1])) {
+        $donation_amounts[] = $donation_amount[0] . '|' . $donation_amount[1];
+      }
+    }
+
+    if (count($donation_amounts)) {
+      ksort($donation_amounts);
+      $imploded_amounts = array_unique($donation_amounts);
+      $amount_string = implode('|||', $imploded_amounts);
+    }
+    else {
+      $amount_string = '';
+    }
+
+    $record = array(
+      'nid' => $node->nid,
+      'donation_amounts' => $amount_string,
+    );
+
+    drupal_write_record('fundraiser', $record, 'nid');
   }
 }
