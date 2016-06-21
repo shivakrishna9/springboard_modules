@@ -299,7 +299,9 @@ function theme_fundraiser_designations_fund_groups_component($variables) {
       $group_wrapper = entity_metadata_wrapper('fundraiser_fund_group', entity_load_single('fundraiser_fund_group', $element[$id]['#extra']['group_id']));
       $description = $group_wrapper->field_ffg_description->value();
       $image = $group_wrapper->field_ffg_image->value();
-      $image['path'] = file_create_url($image['uri']);
+      if (!empty($image)) {
+        $image['path'] = file_create_url($image['uri']);
+      }
       $build['content'] = array(
 
 
@@ -313,9 +315,10 @@ function theme_fundraiser_designations_fund_groups_component($variables) {
           '#weight' => -9,
         ),
 
+
         'fund_group_image' => array(
           '#type' => 'markup',
-          '#markup' => theme('image', $image),
+          '#markup' => !empty($image) ? theme('image', $image) : '',
           '#prefix' => '<div class="designation-group-image">',
           '#suffix' => '</div>',
           '#weight' => -8,
