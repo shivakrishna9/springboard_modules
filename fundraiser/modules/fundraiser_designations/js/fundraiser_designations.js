@@ -25,8 +25,8 @@
     if (cartVals.length > 0) {
       cartVals = JSON.parse(cartVals);
       var self = this;
-      $.each(cartVals, function(){
-        self.repop(this)
+      $.each(cartVals, function(i, item){
+        self.repop(item);
       });
     }
   };
@@ -41,7 +41,7 @@
     $.each(self.fundGroups, function(key, item) {
 
       var fundGroup = $(item);
-      var fundGroupId = item['id'].replace('designation-group-', '')
+      var fundGroupId = item['id'].replace('designation-group-', '');
       var selector = fundGroup.find('select[name*="funds_select"]');
       var defaultAmts = $('div[id*="default-amounts-"]', fundGroup);
       var recurAmts = $('div[id*="recurring-amounts-"]', fundGroup);
@@ -60,7 +60,7 @@
       });
 
       otherAmt.blur(function() {
-        var message = $('label.error').text();
+        //var message = $('label.error').text();
         $('label.error').remove();
       });
 
@@ -78,10 +78,10 @@
     });
 
     $.each(self.addon, function(key, item) {
-      var addOnFundId = item['id'].replace('designation-addon-', '')
+      var addOnFundId = item['id'].replace('designation-addon-', '');
       var addOnAmts = $('div[id*="default-amounts-"]', $(item));
       $('input[type="radio"]', $(item)).click(function() {
-        type = 'addon';
+        var type = 'addon';
         self.addFund(type, addOnFundId, null, addOnAmts, null, null, 1);
       });
 
@@ -136,11 +136,11 @@
     // Grab the fund name and ID.
     if (type =='fund') {
       if (selector.length > 0) {
-        var fundId = selector.val()
+        var fundId = selector.val();
         var fundName = $('option:selected', selector).text();
       }
       else {
-        fundId = $('tr.group-row-' + fundGroupId).attr('data-placeholder-fund-id')
+        fundId = $('tr.group-row-' + fundGroupId).attr('data-placeholder-fund-id');
         fundName = $('#funds-placeholder-' + fundGroupId).find('label').text();
       }
     }
@@ -151,6 +151,16 @@
     self.newRow(displayAmt, displayQuant, type, fundId, amt, quant, fundName, fundGroupId);
   };
 
+  /**
+   * @param {
+   * {fundAmount:string},
+   * {fundQuantity:string},
+   * {fundId:string},
+   * {fundName:string},
+   * {fundGroup:string},
+   * {addonId:string}
+   * } item
+   */
   Drupal.fundraiserDesignations.prototype.repop = function(item) {
     var self = this;
 
@@ -163,7 +173,7 @@
     // Grab the quantity. Update the display Amount.
     var quant = item.fundQuantity;
     var displayQuant = '';
-    type = typeof(item.fundId) != 'undefined' ? 'fund' : 'addon'
+    var type = typeof(item.fundId) != 'undefined' ? 'fund' : 'addon';
     if (type == 'fund') {
       displayAmt = amt * quant;
       displayAmt = Drupal.settings.fundraiser.currency.symbol + (parseInt(displayAmt)).formatMoney(2, '.', ',');
@@ -172,8 +182,8 @@
       }
     }
 
-    var fundId = typeof(item.fundId) != 'undefined' ? item.fundId : item.addonId
-    var fundName = item.fundName
+    var fundId = typeof(item.fundId) != 'undefined' ? item.fundId : item.addonId;
+    var fundName = item.fundName;
     var fundGroupId = item.fundGroup;
 
     self.newRow(displayAmt, displayQuant, type, fundId, amt, quant, fundName, fundGroupId);
@@ -183,7 +193,7 @@
     // Get the cart row template and add the fund, amount and qunatity html5 attributes.
     var self = this;
     var newRow = $(self.cartTemplate);
-    $('.fund-amount', newRow).text(displayAmt)
+    $('.fund-amount', newRow).text(displayAmt);
     $('.fund-name', newRow).text(fundName + displayQuant);
     if (type == 'fund') {
       newRow.attr('data-fund-id', fundId);
@@ -213,7 +223,7 @@
 
         $('.fund-name', newRow).text(fundName + displayQuant);
 
-        $('.fund-amount', newRow).text(Drupal.settings.fundraiser.currency.symbol + (parseInt(newAmt)).formatMoney(2, '.', ','))
+        $('.fund-amount', newRow).text(Drupal.settings.fundraiser.currency.symbol + (parseInt(newAmt)).formatMoney(2, '.', ','));
 
         $(this).replaceWith(newRow);
         exists = true;
@@ -226,14 +236,15 @@
 
     // Insert a new row if not exists.
     if (!exists) {
-      newRow.insertBefore('.cart-total-row').hide().show(300);
+      newRow.insertBefore('.cart-total-row');
+      newRow.hide().show(300);
     }
 
     // Set the json encoded fund values in the hidden field.
     self.setFormValue();
-
-    if ($(".cart-fund-empty").is(':visible')) {
-      $(".cart-fund-empty").hide();
+    var cfe = $(".cart-fund-empty");
+    if (cfe.is(':visible')) {
+      cfe.hide();
     }
     self.cancelButton();
     self.setAmounts();
