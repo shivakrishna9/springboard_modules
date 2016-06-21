@@ -7,7 +7,7 @@
 
 // Plugin details
 $plugin = array(
-  'title' => t('Minimum messages generated'),
+  'title' => t('Minimum Messages Generated'),
   'description' => t('All message actions must generated at least this many messages before the win conditions are checked.'),
   'config form' => 'sba_message_action_ab_minimum_messages_generated_config',
   'config form validation' => 'sba_message_action_ab_minimum_messages_generated_config_validate',
@@ -40,7 +40,7 @@ function sba_message_action_ab_minimum_messages_generated_config($current_config
  */
 function sba_message_action_ab_minimum_messages_generated_config_validate($config, $field_name_prefix) {
   if (!ctype_digit($config['messages_generated']) || !($config['messages_generated'] > 0)) {
-    form_set_error($field_name_prefix . 'messages_generated', t('Please enter an integer for Messages Generated win threshold.'));
+    form_set_error($field_name_prefix . 'messages_generated', t('Please enter an integer for the Minimum Messages Generated win threshold.'));
   }
 }
 

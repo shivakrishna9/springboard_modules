@@ -7,7 +7,7 @@
 
 // Plugin details
 $plugin = array(
-  'title' => t('Minimum actions completed'),
+  'title' => t('Minimum Actions Completed'),
   'description' => t('All message actions must hve completed at least this many actions before the win conditions are checked.'),
   'config form' => 'sba_message_action_ab_minimum_actions_completed_config',
   'config form validation' => 'sba_message_action_ab_minimum_actions_completed_config_validate',
@@ -40,7 +40,7 @@ function sba_message_action_ab_minimum_actions_completed_config($current_config)
  */
 function sba_message_action_ab_minimum_actions_completed_config_validate($config, $field_name_prefix) {
   if (!ctype_digit($config['actions_completed']) || !($config['actions_completed'] > 0)) {
-    form_set_error($field_name_prefix . 'actions_completed', t('Please enter an integer for Actions Completed win threshold.'));
+    form_set_error($field_name_prefix . 'actions_completed', t('Please enter an integer for the Minimum Actions Completed win threshold.'));
   }
 }
 

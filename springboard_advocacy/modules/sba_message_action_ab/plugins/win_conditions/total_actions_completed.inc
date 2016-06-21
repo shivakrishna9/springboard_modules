@@ -43,7 +43,7 @@ function sba_message_action_ab_total_actions_completed_config($current_config) {
  */
 function sba_message_action_ab_total_actions_completed_config_validate($config, $field_name_prefix) {
   if (!ctype_digit($config['actions_completed']) || !($config['actions_completed'] > 0)) {
-    form_set_error($field_name_prefix . 'actions_completed', t('Please enter an integer for the Number of Actions Completed win condition.'));
+    form_set_error($field_name_prefix . 'actions_completed', t('Please enter an integer for the Total Actions Completed win condition.'));
   }
   return TRUE;
 }
