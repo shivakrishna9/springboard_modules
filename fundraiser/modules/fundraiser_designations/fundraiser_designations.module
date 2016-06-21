@@ -770,7 +770,9 @@ function fundraiser_designations_salesforce_mapping_confirm_entity_for_queue($en
  */
 function fundraiser_designations_form_node_type_form_alter(&$form, &$form_state) {
   if (isset($form['type'])) {
-
+    if (empty($form['type']['#dedfault_value'])) {
+      $form['display']['node_submitted']['#default_value'] = FALSE;
+    }
     $designation_default = variable_get('fundraiser_designations_' . $form['#node_type']->type, FALSE);
     $fundraiser_default = variable_get('fundraiser_' . $form['#node_type']->type, FALSE);
     $form['fundraiser_type']['fundraiser_designations'] = array(
@@ -830,7 +832,7 @@ function fundraiser_designations_form_webform_client_form_alter(&$form, &$form_s
   if ($ticket_type = fundraiser_designations_is_designation_type($form['#node']->type) && arg(2) != 'submission') {
 
     // The designation container can display both one-time and recurring
-    // ask amounts. Add #states properties to controil visibility.
+    // ask amounts. Add #states properties to control visibility.
     $designations =& $form['submitted']['designations']['designation_box'];
     foreach (element_children($designations) as $child) {
       if (!empty($form['submitted']['recurs_monthly']) && !empty($form['#node']->recurring_dual_ask_amounts)) {
