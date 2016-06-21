@@ -831,6 +831,9 @@ function fundraiser_designations_form_node_type_form_validate($form, &$form_stat
 function fundraiser_designations_form_webform_client_form_alter(&$form, &$form_state) {
   if ($ticket_type = fundraiser_designations_is_designation_type($form['#node']->type) && arg(2) != 'submission') {
 
+    $form['#attached']['library'][] = array('system', 'effects.slide');
+
+
     // The designation container can display both one-time and recurring
     // ask amounts. Add #states properties to control visibility.
     $designations =& $form['submitted']['designations']['designation_box'];

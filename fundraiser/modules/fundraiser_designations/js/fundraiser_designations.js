@@ -209,7 +209,7 @@
     // Check if a row already exists for this fund and donation amount. Replace if so.
     var exists = false;
     $('tr', self.cart).each(function(){
-      if($(this).attr('data-fund-id') == fundId && $(this).attr('data-fund-amount') == amt) {
+      if($(this).attr('data-fund-id') == fundId && $(this).attr('data-fund-amount') == amt && type == 'fund') {
 
         var oldAmt = parseInt($('.fund-amount', $(this)).text().replace('$', ''));
         var oldQuant = $(this).attr('data-fund-quantity');
@@ -228,7 +228,7 @@
         $(this).replaceWith(newRow);
         exists = true;
       }
-      if($(this).attr('data-addon-id') == fundId) {
+      if($(this).attr('data-addon-id') == fundId && type != 'fund') {
         $(this).replaceWith(newRow);
         exists = true;
       }
@@ -236,8 +236,7 @@
 
     // Insert a new row if not exists.
     if (!exists) {
-      newRow.insertBefore('.cart-total-row');
-      newRow.hide().show(300);
+      newRow.insertBefore('.cart-total-row').hide().show(300);
     }
 
     // Set the json encoded fund values in the hidden field.
