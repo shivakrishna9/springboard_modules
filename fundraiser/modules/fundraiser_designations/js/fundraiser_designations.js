@@ -21,6 +21,14 @@
     this.setWidths();
     var val = this.calcTotal();
     $('#cart_total').val(Drupal.settings.fundraiser.currency.symbol + (val).formatMoney(2, '.', ','));
+    var cartVals = $('input[name$="[fund_catcher]"]').val().replace(/&quot;/g, '"');
+    if (cartVals.length > 0) {
+      cartVals = JSON.parse(cartVals);
+      var self = this;
+      $.each(cartVals, function(){
+        self.repop(this)
+      });
+    }
   };
 
   /**
@@ -140,8 +148,40 @@
       fundId = fundGroupId;
       fundName = 'One-time add-on donation';
     }
+    self.newRow(displayAmt, displayQuant, type, fundId, amt, quant, fundName, fundGroupId);
+  };
 
+  Drupal.fundraiserDesignations.prototype.repop = function(item) {
+    var self = this;
+
+    // Grab amount.
+    var amt = item.fundAmount;
+
+    // The displayAmount is currency formatted, and can be different than the line item amount (i.e., totaled)
+    var displayAmt = Drupal.settings.fundraiser.currency.symbol + (parseInt(amt)).formatMoney(2, '.', ',');
+
+    // Grab the quantity. Update the display Amount.
+    var quant = item.fundQuantity;
+    var displayQuant = '';
+    type = typeof(item.fundId) != 'undefined' ? 'fund' : 'addon'
+    if (type == 'fund') {
+      displayAmt = amt * quant;
+      displayAmt = Drupal.settings.fundraiser.currency.symbol + (parseInt(displayAmt)).formatMoney(2, '.', ',');
+      if (quant > 1) {
+        displayQuant = ' (' + quant + ' x ' + Drupal.settings.fundraiser.currency.symbol + amt + ')';
+      }
+    }
+
+    var fundId = typeof(item.fundId) != 'undefined' ? item.fundId : item.addonId
+    var fundName = item.fundName
+    var fundGroupId = item.fundGroup;
+
+    self.newRow(displayAmt, displayQuant, type, fundId, amt, quant, fundName, fundGroupId);
+  };
+
+  Drupal.fundraiserDesignations.prototype.newRow = function (displayAmt, displayQuant, type, fundId, amt, quant, fundName, fundGroupId) {
     // Get the cart row template and add the fund, amount and qunatity html5 attributes.
+    var self = this;
     var newRow = $(self.cartTemplate);
     $('.fund-amount', newRow).text(displayAmt)
     $('.fund-name', newRow).text(fundName + displayQuant);
@@ -153,6 +193,8 @@
     }
     newRow.attr('data-fund-amount', amt);
     newRow.attr('data-fund-quantity', quant);
+    newRow.attr('data-fund-name', fundName);
+    newRow.attr('data-fund-group', fundGroupId);
 
     // Check if a row already exists for this fund and donation amount. Replace if so.
     var exists = false;
@@ -190,7 +232,6 @@
     // Set the json encoded fund values in the hidden field.
     self.setFormValue();
 
-    // Update the cart, the total, and delete listener.
     if ($(".cart-fund-empty").is(':visible')) {
       $(".cart-fund-empty").hide();
     }
@@ -202,7 +243,7 @@
   // Attaches JSONified data attributes of the funds to a hidden form field.
   Drupal.fundraiserDesignations.prototype.setFormValue = function () {
     var obj = {};
-    $('.cart-fund-row').each(function(i) {
+    $('.cart-fund-row:not(".cart-fund-empty")').each(function(i) {
       obj[i] = $(this).data();
     });
     var lineItems = JSON.stringify(obj).replace(/"/g, '&quot;');
@@ -274,7 +315,7 @@
     }
 
     return message;
-  }
+  };
 
   /**
    * Set the amounts on select
