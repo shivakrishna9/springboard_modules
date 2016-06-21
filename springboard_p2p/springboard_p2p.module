@@ -1499,7 +1499,6 @@ function springboard_p2p_get_campaign_id_from_request() {
  * Saves the campaign approval status and changes the redirect.
  */
 function springboard_p2p_set_redirect($form, &$form_state) {
-
   if (!empty($form_state['uid'])) {
     $uid = $form_state['uid'];
   }
@@ -1548,12 +1547,26 @@ function springboard_p2p_set_redirect($form, &$form_state) {
       else {
         drupal_set_message('You can now create a personal campaign in ' . $campaign->title);
 
+        $parameters = drupal_get_query_parameters();
+        // We only want to deal with the campaign_name, campaign_url, and
+        // campaign_goal parameters, and ignore any others.
+        $pass = array();
+        if (isset($parameters['campaign_name'])) {
+          $pass['campaign_name'] = $parameters['campaign_name'];
+        }
+        if (isset($parameters['campaign_url'])) {
+          $pass['campaign_url'] = $parameters['campaign_url'];
+        }
+        if (isset($parameters['campaign_goal'])) {
+          $pass['campaign_goal'] = $parameters['campaign_goal'];
+        }
+
         $form_state['redirect'] = array(
           'node/add/p2p-personal-campaign',
           array(
-            'query' => array(
+            'query' => array_merge($pass, array(
               'p2p_cid' => $campaign_id,
-            ),
+            )),
           ),
         );
 
@@ -2008,7 +2021,7 @@ function springboard_p2p_webform_client_form_submit($form, &$form_state) {
       $sbp_last_name = _webform_user_find_field($form, $component_hierarchy['sbp_last_name']);
       $action['donor_name'] = $sbp_first_name['#value'] . ' ' . $sbp_last_name['#value'];
     }
-        
+
 
     springboard_p2p_save_personal_campaign_action($action);
 
@@ -2160,12 +2173,12 @@ function springboard_p2p_fundraiser_donation_success($donation) {
 
     // Now that the donation is successful, mark the action as visible.
     $action['status'] = 1;
-    
+
     // If the donor has opted to show their name, save it with the action.
     if ($action['show_name']) {
       $action['donor_name'] = $donation->donation['first_name'] . ' ' . $donation->donation['last_name'];
     }
-    
+
     springboard_p2p_save_personal_campaign_action($action, array('sid'));
   }
 }
@@ -2210,10 +2223,10 @@ function springboard_p2p_save_personal_campaign_action($record, $key = NULL) {
   if (empty($record['created'])) {
     $record['created'] = REQUEST_TIME;
   }
-  
+
   // Allow other modules to update the action before saving.
   drupal_alter('springboard_p2p_save_personal_campaign_action', $record, $key);
-  
+
   if (!empty($key)) {
     drupal_write_record('springboard_p2p_personal_campaign_action', $record, $key);
   }
