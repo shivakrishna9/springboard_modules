@@ -335,13 +335,13 @@
     var self = this;
     $.each($('tr', self.cart), function(key, row) {
       $('.fund-cancel', this).click(function() {
-         $(row).hide(300, function(){
-           $(row).remove();
-           self.setAmounts();
-           if ($('tr.cart-fund-row', self.cart).length == 1) {
-             $(".cart-fund-empty").show(100);
-           }
-         });
+        $(row).find('td').animate({ paddingTop: 0, paddingBottom: 0 }).wrapInner('<div />').find('div').slideUp(400, function() {
+          $(row).remove();
+          self.setAmounts();
+          if ($('tr.cart-fund-row', self.cart).length == 1) {
+            $(".cart-fund-empty").show(200);
+          }
+        });
       });
     });
   };
