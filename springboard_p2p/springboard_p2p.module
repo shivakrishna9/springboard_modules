@@ -1552,13 +1552,13 @@ function springboard_p2p_set_redirect($form, &$form_state) {
         // campaign_goal parameters, and ignore any others.
         $pass = array();
         if (isset($parameters['campaign_name'])) {
-          $pass['campaign_name'] = $parameters['campaign_name'];
+          $pass['campaign_name'] = filter_xss($parameters['campaign_name']);
         }
         if (isset($parameters['campaign_url'])) {
-          $pass['campaign_url'] = $parameters['campaign_url'];
+          $pass['campaign_url'] = filter_xss($parameters['campaign_url']);
         }
         if (isset($parameters['campaign_goal'])) {
-          $pass['campaign_goal'] = $parameters['campaign_goal'];
+          $pass['campaign_goal'] = filter_xss($parameters['campaign_goal']);
         }
 
         $form_state['redirect'] = array(
