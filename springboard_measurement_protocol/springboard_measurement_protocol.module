@@ -4,6 +4,16 @@
  * Module file for springboard_measurement_protocol.
  */
 
+// @codingStandardsIgnoreStart
+/**
+ * For older versions of PHP (< 5.5.19, < 5.6.3), we need to manually define
+ * this constant.
+ */
+if (!defined('CURL_SSLVERSION_TLSv1_2')) {
+  define('CURL_SSLVERSION_TLSv1_2', 6);
+}
+// @codingStandardsIgnoreEnd
+
 /**
  * Implements hook_menu().
  */
