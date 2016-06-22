@@ -832,7 +832,7 @@ function fundraiser_designations_form_webform_client_form_alter(&$form, &$form_s
   if ($ticket_type = fundraiser_designations_is_designation_type($form['#node']->type) && arg(2) != 'submission') {
 
     $form['#attached']['library'][] = array('system', 'effects.slide');
-
+    $form['#validate'][] = 'fundraiser_designations_client_form_validate';
 
     // The designation container can display both one-time and recurring
     // ask amounts. Add #states properties to control visibility.
@@ -891,6 +891,25 @@ function fundraiser_designations_form_webform_client_form_alter(&$form, &$form_s
     // Remove these fields on the result edit form.
     unset($form['submitted']['cart_container']);
     unset($form['submitted']['designations']);
+  }
+}
+
+function fundraiser_designations_client_form_validate($form, &$form_state) {
+  if (empty($form_state['values']['submitted']['amount'])) {
+    form_set_error('amount', t('Your cart is empty.'));
+  }
+  if (!empty($form_state['values']['submitted']['cart_container']['cart']['cart_body']['fund_catcher'])) {
+    $fund_field = $form_state['values']['submitted']['cart_container']['cart']['cart_body']['fund_catcher'];
+    $funds = json_decode(str_replace('&quot;', '"', $fund_field));
+    $has_fund = FALSE;
+    foreach ($funds as $fund) {
+      if (!empty($fund->fundId)) {
+        $has_fund = TRUE;
+      }
+    }
+    if (!$has_fund) {
+      form_set_error('amount', t("You haven't selected a fund."));
+    }
   }
 }
 
