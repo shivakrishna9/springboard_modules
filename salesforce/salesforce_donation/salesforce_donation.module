@@ -605,7 +605,10 @@ function salesforce_donation_salesforce_genmap_map_fields(stdClass $donation, En
       // Get the latest reason and amount.
       foreach ($donation->refunds as $refund) {
         $fields['Cancellation_Reason__c'] = $refund->reason;
-        $fields['Amount'] = $fields['Amount'] - $refund->amount;
+        // Round values with high precision to avoid changing the data while also avoiding
+        // a near-zero result such as -1.4210854715202e-14 when subtracting floats.  A precision of 8
+        // is used because it's unlikely we'll have a currency with an amount value such as 10.00000003
+        $fields['Amount'] = round($fields['Amount'], 8) - round($refund->amount, 8);
         $fields['Transaction_Date_Time__c']  = gmdate('c', $refund->changed);
         $fields['CloseDate']  = gmdate('c', $refund->changed);
       }
