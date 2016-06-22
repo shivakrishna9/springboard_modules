@@ -2451,6 +2451,8 @@ function _fundraiser_refund_form_validate($form, &$form_state) {
  * Submit the refund form
  */
 function _fundraiser_refund_form_submit($form, &$form_state) {
+  drupal_page_is_cacheable(FALSE);
+
   // Get the donation.
   $donation = fundraiser_donation_get_donation($form_state['donation_id']);
 
