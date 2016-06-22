@@ -201,6 +201,7 @@ function sba_message_action_message_form(&$form, $message, $action_type) {
       '#default_value' => $subject,
       '#description' => !empty($description) ? $description : '',
       '#access' => $access,
+      '#maxlength' => 70,
     );
 
   }
