@@ -267,3 +267,40 @@ function commerce_paypal_wps_form_rules_ui_edit_element_builder(&$form, &$form_s
     }
   }
 }
+
+/**
+ * Implements hook_form_FORM_ID_alter().
+ *
+ * Prevent multiple, partial donations because PayPal is returning 10007 errors after 1 or sometimes 2 partial donations sent
+ * from Drupal.  Although this limitation ignores the number of refunds sent from PayPal, making this distinction could cause
+ * confusion.  Note: This error is seen in the paypal sandbox; I have not tested it on production. - Josh Estep
+ *
+ * TODO: Fix it.  This function may be removed when this 10007 error is understood.
+ */
+function commerce_paypal_form__fundraiser_refund_form_alter(&$form, $form_state, $form_id) {
+  $donation_id = arg(3);
+  if (!is_numeric($donation_id)) {
+    return;
+  }
+  $donation = fundraiser_donation_get_donation($donation_id);
+  if (!isset($donation->refunds) || empty($donation->refunds)) {
+    return;
+  }
+
+  if (!isset($donation->gateway['id']) || $donation->gateway['id'] != 'paypal_wps|commerce_payment_paypal_wps') {
+    return;
+  }
+
+  // If this refund is partial than block further, partial refunds; a full refund will already have an appropriate message:
+  foreach ($donation->refunds as $refund) {
+    if ($refund->status == 'partially_refunded') {
+      $form['refund_options'] = array(
+        '#type' => 'fieldset',
+        '#title' => t('Refund Options'),
+        '#description' => '<strong>' . t('This donation has already been partially refunded.') . ' ' .
+          t('Please make any additional refunds from your paypal.com account.') . '</strong>',
+      );
+      break;
+    }
+  }
+}
