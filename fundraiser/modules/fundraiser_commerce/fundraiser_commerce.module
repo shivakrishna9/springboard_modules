@@ -2353,22 +2353,22 @@ function _fundraiser_commerce_ipn_refund($donation, $payment_method, $ipn) {
   }
 
   // Gather info about this refund:
-  $refund_amount = abs($ipn['mc_gross']);
+  $refund_amount = round(abs($ipn['mc_gross']), 8, PHP_ROUND_HALF_DOWN);
   $original_donation_amount = $donation->donation['amount'];
-  $refunded_total = 0;
+  $refunded_total = 0.0;
   $already_refunded = fundraiser_refund_get_refunds_by_did($donation->did, TRUE);
   if(!empty($already_refunded)) {
     foreach ($already_refunded as $prior) {
-      $refunded_total += floatval($prior->amount);
+      $refunded_total = round($refunded_total + floatval($prior->amount), 8, PHP_ROUND_HALF_DOWN);
     }
   }
   $max_refund_amount = $original_donation_amount - $refunded_total;
-
+  $max_refund_amount = round($max_refund_amount, 8, PHP_ROUND_HALF_DOWN);
   // Determine the appropriate status for this refund:
   if ($refund_amount > $max_refund_amount) {
     $new_status = COMMERCE_PAYMENT_STATUS_FAILURE;
   }
-  else if ($refund_amount == $max_refund_amount || ($refunded_total + $refund_amount) == $original_donation_amount) {
+  else if ($max_refund_amount == $refund_amount) {
     $new_status = 'refunded';
   }
   else {
