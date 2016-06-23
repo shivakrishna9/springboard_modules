@@ -4,7 +4,7 @@ function fundraiser_fund_groups_addon_form($form, $form_state, $node) {
 
   $data = !empty($node->fd_addon) ? $node->fd_addon : array();
 
-  $addon_default ='';
+  $addon_default = '';
   if (!empty($data['pid'])) {
     $addon = commerce_product_load($data['pid']);
     $addon_default = $addon->title . ' [' . $addon->product_id . ']';
@@ -150,7 +150,7 @@ function fundraiser_fund_groups_addon_form($form, $form_state, $node) {
   );
 
   $form['#validate'] = array('fundraiser_fund_groups_addon_form_validate');
-  $form['#submite'] = array('fundraiser_fund_groups_addon_form_submite');
+  $form['#submit'] = array('fundraiser_fund_groups_addon_form_submit');
 
   return $form;
 }
