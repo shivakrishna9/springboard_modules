@@ -8,3 +8,7 @@
     font-size: 0.8em;
     font-weight: bold;
 }
+
+#edit-override-settings .form-type-checkbox {
+    z-index: 10;
+}

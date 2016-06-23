@@ -149,6 +149,7 @@ function fundraiser_fund_groups_addon_form($form, $form_state, $node) {
     '#value' => t('Submit'),
   );
 
+  $form['#attached']['css'][] = drupal_get_path('module', 'fundraiser_fund_group') . '/css/fund-groups.css';
   $form['#validate'] = array('fundraiser_fund_groups_addon_form_validate');
   $form['#submit'] = array('fundraiser_fund_groups_addon_form_submit');
 
