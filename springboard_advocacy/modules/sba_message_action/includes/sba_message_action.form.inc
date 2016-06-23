@@ -107,7 +107,7 @@ function sba_message_action_additional_elements(&$form, &$form_state) {
     );
     $form['sba_messages']['multiple_not_multi_flow']['message'] = array(
       '#type' => 'item',
-      '#markup' => '<p>' . $prompt_text . '</p><p></p>' . ctools_modal_text_button('View all possible messages.', $href, t('View messages'), 'ctools-modal-message-window-style') . '</p>',
+      '#markup' => '<p>' . $prompt_text . '</p><p></p>' . sba_message_action_ajax_text_button('View all possible messages.', $href, t('View messages'), 'ctools-modal-message-window-style') . '</p>',
     );
   }
   elseif ($action_type == 'multi_flow') {
@@ -130,6 +130,17 @@ function sba_message_action_additional_elements(&$form, &$form_state) {
   $form['#validate'][] = 'sba_message_action_form_validate';
   $form['#submit'][] = 'sba_message_action_form_submit_success';
   array_unshift($form['#submit'], 'sba_message_action_form_submit');
+}
+
+
+/**
+ * Override ctools_modal_text_button().
+ *
+ * If javascript is disabled open in a new window.
+ */
+function sba_message_action_ajax_text_button($text, $dest, $alt, $class = '', $type = 'ctools-use-modal') {
+  drupal_add_library('system', 'drupal.ajax');
+  return l($text, $dest, array('html' => TRUE, 'attributes' => array('class' => array($type, $class), 'title' => $alt, 'target' => '_blank')));
 }
 
 /**
