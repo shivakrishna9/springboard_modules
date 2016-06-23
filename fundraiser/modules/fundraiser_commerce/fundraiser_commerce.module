@@ -2352,7 +2352,6 @@ function _fundraiser_commerce_ipn_refund($donation, $payment_method, $ipn) {
     return;
   }
 
-
   // Gather info about this refund:
   $refund_amount = abs($ipn['mc_gross']);
   $original_donation_amount = $donation->donation['amount'];
@@ -2369,7 +2368,7 @@ function _fundraiser_commerce_ipn_refund($donation, $payment_method, $ipn) {
   if ($refund_amount > $max_refund_amount) {
     $new_status = COMMERCE_PAYMENT_STATUS_FAILURE;
   }
-  else if ($refunded_total + $refund_amount == $original_donation_amount) {
+  else if ($refund_amount == $max_refund_amount || ($refunded_total + $refund_amount) == $original_donation_amount) {
     $new_status = 'refunded';
   }
   else {
