@@ -2364,6 +2364,7 @@ function _fundraiser_commerce_ipn_refund($donation, $payment_method, $ipn) {
   }
   $max_refund_amount = $original_donation_amount - $refunded_total;
   $max_refund_amount = round($max_refund_amount, 8, PHP_ROUND_HALF_DOWN);
+
   // Determine the appropriate status for this refund:
   if ($refund_amount > $max_refund_amount) {
     $new_status = COMMERCE_PAYMENT_STATUS_FAILURE;
