@@ -107,6 +107,7 @@ function fundraiser_designations_price_override_form(&$form, &$form_state, $prod
   $form['override_settings']['amount_wrapper']['amount_more'] = array(
     '#type' => 'button',
     '#submit' => array(),
+    '#validate' => array('fundraiser_designations_override_form_button_validate'),
     '#value' => t('Add another'),
     '#description' => t('Click here to add more choices.'),
     '#ajax' => array(
@@ -123,6 +124,13 @@ function fundraiser_designations_price_override_form(&$form, &$form_state, $prod
 
 function _fundraiser_designations_settings_form_amounts(&$form, &$form_state) {
   return $form['override_settings']['amount_wrapper']['donation_amounts'];
+}
+
+function fundraiser_designations_override_form_button_validate(&$form, &$form_state) {
+  if (form_get_errors()) {
+    form_clear_error();
+    drupal_get_messages('error');
+  }
 }
 
 function fundraiser_designations_override_form_submit($form, &$form_state) {
