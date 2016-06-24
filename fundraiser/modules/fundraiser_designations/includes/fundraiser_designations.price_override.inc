@@ -1,11 +1,20 @@
 <?php
 
+/**
+ * Add ask amounts to commerce product edit form.
+ *
+ * @param array $form
+ *   The form.
+ * @param array $form_state
+ *   The form state.
+ * @param object $product
+ *   A new or existing commerce product.
+ */
 function fundraiser_designations_price_override_form(&$form, &$form_state, $product) {
 
   $data = !empty($product->fd_overrides) ? $product->fd_overrides : array();
   $form['#attached']['js'][] = drupal_get_path('module', 'fundraiser_designations') . '/js/price-sets.js';
 
-  // Fundraiser Settings (i.e., ask amounts).
   $form['override_settings'] = array(
     '#type' => 'fieldset',
     '#title' => t('Override Ask Amounts'),
@@ -30,7 +39,7 @@ function fundraiser_designations_price_override_form(&$form, &$form_state, $prod
     '#collapsed' => FALSE,
     '#prefix' => '<div class="clear-block" id="ask-wrapper">',
     '#suffix' => '</div>',
-    '#states' =>  array(
+    '#states' => array(
       'visible' => array(
         ':input[name="statuses"]' => array('checked' => TRUE),
       ),
@@ -86,7 +95,7 @@ function fundraiser_designations_price_override_form(&$form, &$form_state, $prod
     // And if we did, the value would fail validation (not a number).
     // There is probably a better way to track this, but for now this'll do.
     if (count($donation_amount) == 2 && $donation_amount[0] != 'other') {
-      $form['override_settings']['amount_wrapper']['donation_amounts'][$index] = _designation_ask_form($donation_amount, $index, $default_amount, $weight);
+      $form['override_settings']['amount_wrapper']['donation_amounts'][$index] = _designation_ask_form($donation_amount, $default_amount, $weight);
     }
     ++$index;
   }
@@ -124,10 +133,21 @@ function fundraiser_designations_price_override_form(&$form, &$form_state, $prod
 
 }
 
+/**
+ * Ajax replacement.
+ *
+ * @param array $form
+ * @param array $form_state
+ *
+ * @return mixed
+ */
 function _fundraiser_designations_settings_form_amounts(&$form, &$form_state) {
   return $form['override_settings']['amount_wrapper']['donation_amounts'];
 }
 
+/**
+ * Implements hook_form_validate().
+ */
 function fundraiser_designations_override_form_button_validate(&$form, &$form_state) {
   if (form_get_errors()) {
     form_clear_error();
@@ -135,6 +155,9 @@ function fundraiser_designations_override_form_button_validate(&$form, &$form_st
   }
 }
 
+/**
+ * Implements hook_form_submit().
+ */
 function fundraiser_designations_override_form_submit($form, &$form_state) {
 
   $values = $form_state['values'];
@@ -163,9 +186,17 @@ function fundraiser_designations_override_form_submit($form, &$form_state) {
 }
 
 /**
- * Generate override ask amount .
+ * @param array $amount_values
+ *   The array of prices and labels.
+ * @param int $default_amount
+ *   The default amount.
+ * @param int $weight
+ *   The table row weight in the form widget.
+ *
+ * @return mixed
+ *   A renderable form array.
  */
-function _designation_ask_form($amount_values = array(), $index, $default_amount, $weight) {
+function _designation_ask_form($amount_values, $default_amount, $weight) {
   $form['default_amount'] = array(
     '#type' => 'checkbox',
     '#default_value' => isset($default_amount) ? ($default_amount == $amount_values[0]) : FALSE,

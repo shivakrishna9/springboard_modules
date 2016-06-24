@@ -250,7 +250,6 @@ function fundraiser_designations_form_webform_component_edit_form_alter(&$form, 
     $form['name']['#title'] = t('Header');
   }
 
-
   // Do not allow users to muck with defined form keys in component
   // editing form. They're named what they're named for a reason and we need
   // those keys to remain unharmed.
@@ -912,6 +911,11 @@ function fundraiser_designations_form_webform_client_form_alter(&$form, &$form_s
   }
 }
 
+/**
+ * Implements hook_form_validate().
+ *
+ * Validate the cart.
+ */
 function fundraiser_designations_client_form_validate($form, &$form_state) {
 
   $components = $form['#node']->webform['components'];
@@ -1238,6 +1242,8 @@ function fundraiser_designations_clone_fund_groups($node) {
 }
 
 /**
+ * Clones the add-on donation.
+ *
  * @param object $node
  *   The fundraiser node.
  */
@@ -1293,11 +1299,22 @@ function fundraiser_designations_fundraiser_create_fundraiser_alter($node) {
   }
 }
 
-function _fundraiser_designations_find_field_form_state($form_state_values, $path) {
-  foreach (array_keys($path) as $v) {
-    if (is_array($path[$v]) && count($path[$v])) {
+/**
+ * Parses form state array to return correct tree structure.
+ *
+ * @param array $form_state_values
+ *   The form_state['values'] array.
+ * @param array $tree
+ *   The form item tree.
+ *
+ * @return mixed
+ *   the value in correct tree structure.
+ */
+function _fundraiser_designations_find_field_form_state($form_state_values, $tree) {
+  foreach (array_keys($tree) as $v) {
+    if (is_array($tree[$v]) && count($tree[$v])) {
       // Recurse if there are more keys.
-      return _fundraiser_designations_find_field_form_state($form_state_values[$v], $path[$v]);
+      return _fundraiser_designations_find_field_form_state($form_state_values[$v], $tree[$v]);
     }
     else {
       return $form_state_values[$v];

@@ -1,5 +1,18 @@
 <?php
 
+/**
+ * Create the add-on donation form.
+ *
+ * @param array $form
+ *   The form.
+ * @param array $form_state
+ *   The form state.
+ * @param object $node
+ *   A node this add-on belongs to.
+ *
+ * @return array $form
+ *   The add-on form.
+ */
 function fundraiser_fund_groups_addon_form($form, $form_state, $node) {
 
   $data = !empty($node->fd_addon) ? $node->fd_addon : array();
@@ -15,7 +28,6 @@ function fundraiser_fund_groups_addon_form($form, $form_state, $node) {
     '#value' => $node->nid,
   );
 
-  // Fundraiser Settings (i.e., ask amounts).
   $form['addon_settings'] = array(
     '#type' => 'fieldset',
     '#title' => t('Add-on Donation'),
@@ -38,7 +50,7 @@ function fundraiser_fund_groups_addon_form($form, $form_state, $node) {
     '#autocomplete_path' => 'fund_groups/autocomplete_callback',
     '#weight' => -10,
     '#default_value' => $addon_default,
-    '#states' =>  array(
+    '#states' => array(
       'visible' => array(
         ':input[name="statuses"]' => array('checked' => TRUE),
       ),
@@ -53,7 +65,7 @@ function fundraiser_fund_groups_addon_form($form, $form_state, $node) {
     '#prefix' => '<div class="clear-block" id="ask-wrapper">',
     '#suffix' => '</div>',
     '#tree' => TRUE,
-    '#states' =>  array(
+    '#states' => array(
       'visible' => array(
         ':input[name="statuses"]' => array('checked' => TRUE),
       ),
@@ -88,7 +100,7 @@ function fundraiser_fund_groups_addon_form($form, $form_state, $node) {
 
     // If not there, then grab some defaults.
     if (count($donation_amounts) == 0) {
-      $default_amounts =  '25|$25' . "\n" . '50|$50' . "\n" . '75|$75';
+      $default_amounts = '25|$25' . "\n" . '50|$50' . "\n" . '75|$75';
       $default_amounts = explode("\n", $default_amounts);
       $default_amounts = array_unique($default_amounts);
       $exploded_amounts = array();
@@ -107,7 +119,7 @@ function fundraiser_fund_groups_addon_form($form, $form_state, $node) {
   // this line will add an extra field as expected on reload.
   $donation_amounts[] = array('', '');
   // Generate a form set for each existing amount.
-  // (To be themed into table format.)
+  // (To be themed into table format).
   $index = 0;
   foreach ($donation_amounts as $weight => $donation_amount) {
     // Filter out other|Other combinations.
@@ -165,10 +177,19 @@ function fundraiser_fund_groups_addon_form($form, $form_state, $node) {
   return $form;
 }
 
+/**
+ * Ajax replacement.
+ */
 function _fundraiser_fund_groups_settings_form_amounts(&$form, &$form_state) {
   return $form['addon_settings']['amount_wrapper']['donation_amounts'];
 }
 
+/**
+ * Autocomplete callback for the add-on fund selector.
+ *
+ * @param string $string
+ *   The commerce product title.
+ */
 function fundraiser_fund_groups_autocomplete_callback($string = "") {
   $matches = array();
   if ($string) {
@@ -187,6 +208,9 @@ function fundraiser_fund_groups_autocomplete_callback($string = "") {
 }
 
 
+/**
+ * Implements hook_form_validate().
+ */
 function fundraiser_fund_groups_addon_form_validate($form, &$form_state) {
   foreach ($form_state['values']['amount_wrapper']['donation_amounts'] as $index => $amount_set) {
     if (!empty($amount_set['amount']) && empty($amount_set['label'])) {
@@ -228,6 +252,9 @@ function fundraiser_fund_groups_addon_form_validate($form, &$form_state) {
   }
 }
 
+/**
+ * Impelments hook_form_submit().
+ */
 function fundraiser_fund_groups_addon_form_submit($form, &$form_state) {
   $values = $form_state['values'];
   $sets = [];
