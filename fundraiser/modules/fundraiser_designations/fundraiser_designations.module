@@ -836,20 +836,25 @@ function fundraiser_designations_form_webform_client_form_alter(&$form, &$form_s
 
     // The designation container can display both one-time and recurring
     // ask amounts. Add #states properties to control visibility.
-    $designations =& $form['submitted']['designations']['designation_box'];
+    $components = $form['#node']->webform['components'];
+    $component_hierarchy = webform_user_parse_components($form['#node']->nid, $components);
+    $box = $component_hierarchy['designation_box'];
+    $designations = &_webform_user_find_field($form, $box);
+    $recurs_monthly = $component_hierarchy['recurs_monthly'];
+    $recurs = &_webform_user_find_field($form, $recurs_monthly);
     foreach (element_children($designations) as $child) {
-      if (!empty($form['submitted']['recurs_monthly']) && !empty($form['#node']->recurring_dual_ask_amounts)) {
-        if ($form['submitted']['recurs_monthly']['#type'] != 'radios') {
+      if (!empty($recurs) && !empty($form['#node']->recurring_dual_ask_amounts)) {
+        if ($recurs['#type'] != 'radios') {
           $designations[$child]['recurring_amounts_' . $child]['#states'] = array(
             'visible' => array(
-              'input[name="submitted[recurs_monthly][recurs]"]' => array(
+              'input[name$="recurs_monthly][recurs]"]' => array(
                 'checked' => TRUE,
               ),
             ),
           );
           $designations[$child]['default_amounts_' . $child]['#states'] = array(
             'visible' => array(
-              'input[name="submitted[recurs_monthly][recurs]"]' => array(
+              'input[name$="recurs_monthly][recurs]"]' => array(
                 'checked' => FALSE,
               ),
             ),
@@ -858,14 +863,14 @@ function fundraiser_designations_form_webform_client_form_alter(&$form, &$form_s
         else {
           $designations[$child]['recurring_amounts_' . $child]['#states'] = array(
             'visible' => array(
-              'input[name="submitted[recurs_monthly]"]' => array(
+              'input[name$="recurs_monthly]"]' => array(
                 'value' => 'recurs',
               ),
             ),
           );
           $designations[$child]['default_amounts_' . $child]['#states'] = array(
             'visible' => array(
-              'input[name="submitted[recurs_monthly]"]' => array(
+              'input[name$="recurs_monthly]"]' => array(
                 '!value' => 'recurs',
               ),
             ),
@@ -876,7 +881,10 @@ function fundraiser_designations_form_webform_client_form_alter(&$form, &$form_s
 
     // Don't show the add-on componenet if disabled.
     if (empty($form['#node']->fd_addon) || $form['#node']->fd_addon['status'] == 0) {
-      $form['submitted']['addon_container']['#access'] = FALSE;
+      $component_hierarchy = webform_user_parse_components($form['#node']->nid, $components);
+      $container = $component_hierarchy['addon_container'];
+      $addon = &_webform_user_find_field($form, $container);
+      $addon['#access'] = FALSE;
     }
 
     // Add the dynamic gift strings submit hook.
@@ -889,17 +897,36 @@ function fundraiser_designations_form_webform_client_form_alter(&$form, &$form_s
   }
   elseif (fundraiser_designations_is_designation_type($form['#node']->type) && arg(2) == 'submission') {
     // Remove these fields on the result edit form.
-    unset($form['submitted']['cart_container']);
-    unset($form['submitted']['designations']);
+    // @todo loop.
+    $components = $form['#node']->webform['components'];
+    $component_hierarchy = webform_user_parse_components($form['#node']->nid, $components);
+    $container = $component_hierarchy['cart_container'];
+    $cart =& _webform_user_find_field($form, $container);
+    $container = $component_hierarchy['designations'];
+    $designations =& _webform_user_find_field($form, $container);
+    $container = $component_hierarchy['addon_container'];
+    $addon =& _webform_user_find_field($form, $container);
+    $cart['#access'] = FALSE;
+    $designations['#access'] = FALSE;
+    $addon['#access'] = FALSE;
   }
 }
 
 function fundraiser_designations_client_form_validate($form, &$form_state) {
-  if (empty($form_state['values']['submitted']['amount'])) {
+
+  $components = $form['#node']->webform['components'];
+  $component_hierarchy = webform_user_parse_components($form['#node']->nid, $components);
+
+  $amount = $component_hierarchy['amount'];
+  $total = _fundraiser_designations_find_field_form_state($form_state['values'], $amount);
+  if (empty($total)) {
     form_set_error('amount', t('Your cart is empty.'));
   }
-  if (!empty($form_state['values']['submitted']['cart_container']['cart']['cart_body']['fund_catcher'])) {
-    $fund_field = $form_state['values']['submitted']['cart_container']['cart']['cart_body']['fund_catcher'];
+
+  $container = $component_hierarchy['cart_container'];
+  $cart = _fundraiser_designations_find_field_form_state($form_state['values'], $container);
+  if (!empty($cart['cart']['cart_body']['fund_catcher'])) {
+    $fund_field = $cart['cart']['cart_body']['fund_catcher'];
     $funds = json_decode(str_replace('&quot;', '"', $fund_field));
     $has_fund = FALSE;
     foreach ($funds as $fund) {
@@ -1263,5 +1290,17 @@ function fundraiser_designations_fundraiser_create_fundraiser_alter($node) {
     );
 
     drupal_write_record('fundraiser', $record, 'nid');
+  }
+}
+
+function _fundraiser_designations_find_field_form_state($form_state_values, $path) {
+  foreach (array_keys($path) as $v) {
+    if (is_array($path[$v]) && count($path[$v])) {
+      // Recurse if there are more keys.
+      return _fundraiser_designations_find_field_form_state($form_state_values[$v], $path[$v]);
+    }
+    else {
+      return $form_state_values[$v];
+    }
   }
 }
