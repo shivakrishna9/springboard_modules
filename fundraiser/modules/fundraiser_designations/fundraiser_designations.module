@@ -832,6 +832,14 @@ function fundraiser_designations_form_webform_client_form_alter(&$form, &$form_s
 
     $form['#attached']['library'][] = array('system', 'effects.slide');
     $form['#validate'][] = 'fundraiser_designations_client_form_validate';
+    if (!empty($form['#node']->recurring_setting) && !empty($form['#node']->recurring_dual_ask_amounts)) {
+      $settings = array('fdIsDualAsk' => 1);
+    }
+    else {
+      $settings = array('fdIsDualAsk' => 0);
+    }
+    $form['#attached']['js'][] = array('data' => $settings, 'type' => 'setting');
+
 
     // The designation container can display both one-time and recurring
     // ask amounts. Add #states properties to control visibility.

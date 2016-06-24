@@ -115,3 +115,7 @@ tr.cart-fund-row {
 .error-message {
   color: red;
 }
+
+.checkbox-locked {
+  font-weight: bold;
+}

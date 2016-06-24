@@ -247,6 +247,7 @@
     }
     self.cancelButton();
     self.setAmounts();
+    self.lockRecurs(1);
 
   };
 
@@ -341,10 +342,29 @@
           self.setFormValue();
           if ($('tr.cart-fund-row', self.cart).length == 1) {
             $(".cart-fund-empty").show(200);
+            self.lockRecurs(0);
           }
         });
       });
     });
+  };
+
+  Drupal.fundraiserDesignations.prototype.lockRecurs =  function(state) {
+    var dual = Drupal.settings.fdIsDualAsk;
+    if (dual == 1) {
+      var rcr = $('input[name*="[recurs_monthly]"]');
+      if(state == 1) {
+        rcr.attr('disabled', 'disabled');
+        rcr.siblings('.description').children('.checkbox-locked').remove();
+        rcr.siblings('.description').prepend('<span class="checkbox-locked"> This value cannot be changed while items are in the cart. <br /></span>');
+        rcr.siblings('.description').children('.checkbox-locked').hide();
+        rcr.siblings('.description').children('.checkbox-locked').show(300);
+      }
+      else {
+        rcr.attr('disabled', false);
+        rcr.siblings('.description').children('.checkbox-locked').hide(100);
+      }
+    }
   };
 
   /**
@@ -363,7 +383,7 @@
     var self = this;
     var total = 0;
     $.each($('td.fund-amount', self.cart), function(i, price) {
-      total = total + parseInt($(price).text().replace('$', ''));
+      total = total + parseInt($(price).text().replace('$', '').replace(',', ''));
     });
     total = total > 0 ? total : 0;
     return total;
