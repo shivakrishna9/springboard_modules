@@ -1482,7 +1482,8 @@ function _fundraiser_sustainers_other_amount_field_validate($form, $form_state, 
     ($form['#node']->recurring_setting == 'always' && isset($submission_fields['recurring_amount']))
     || (
       $form['#node']->recurring_setting == 'user_choice' && $form['#node']->recurring_dual_ask_amounts
-        && $submission_fields['recurs_monthly'] == 'recurs'
+      && (is_array($submission_fields['recurs_monthly']) ? !empty($submission_fields['recurs_monthly']['recurs'])
+        : $submission_fields['recurs_monthly'] == 'recurs')
     )
   ) return;
   // Pass through.
@@ -1492,7 +1493,9 @@ function _fundraiser_sustainers_other_amount_field_validate($form, $form_state, 
 function _fundraiser_sustainers_recurring_other_amount_field_validate($form, $form_state, $submission_fields, $value) {
   // This validation is only relevant if making a recurring donation via the recurring-amount fields.
   if (
-    empty($form['#node']->recurring_dual_ask_amounts) || $submission_fields['recurs_monthly'] != 'recurs'
+    empty($form['#node']->recurring_dual_ask_amounts)
+    || (is_array($submission_fields['recurs_monthly']) ? empty($submission_fields['recurs_monthly']['recurs'])
+      : $submission_fields['recurs_monthly'] != 'recurs')
   ) return;
   // Check for confusing selection.
   if (!empty($submission_fields['recurring_amount']) && $submission_fields['recurring_amount'] != "other" && !empty($submission_fields['recurring_other_amount'])) {
