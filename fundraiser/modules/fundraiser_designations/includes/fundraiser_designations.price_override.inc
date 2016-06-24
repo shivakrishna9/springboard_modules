@@ -3,6 +3,8 @@
 function fundraiser_designations_price_override_form(&$form, &$form_state, $product) {
 
   $data = !empty($product->fd_overrides) ? $product->fd_overrides : array();
+  $form['#attached']['js'][] = drupal_get_path('module', 'fundraiser_designations') . '/js/price-sets.js';
+
   // Fundraiser Settings (i.e., ask amounts).
   $form['override_settings'] = array(
     '#type' => 'fieldset',

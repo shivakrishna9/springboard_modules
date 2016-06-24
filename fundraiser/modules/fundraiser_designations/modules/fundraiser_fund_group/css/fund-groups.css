@@ -42,6 +42,9 @@ div.item-list ul li input[type="checkbox"] {
     padding:0;
 }
 
+.form-item-addon.form-item.control-group {
+    margin-top:15px;
+}
 .form-item-addon  .selected {
     background-color: #EFF9FF !important;
     cursor: pointer !important;
@@ -59,3 +62,12 @@ div.item-list ul li input[type="checkbox"] {
     padding: 4px;
     margin:0;
 }
+
+#fundraiser-fund-groups-addon-form .fieldset-legend {
+    top:36px;
+}
+
+#fundraiser-fund-groups-addon-form .fieldset-description {
+    margin-bottom:10px;
+}
+

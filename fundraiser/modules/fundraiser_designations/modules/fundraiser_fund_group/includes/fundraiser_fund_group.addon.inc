@@ -15,21 +15,21 @@ function fundraiser_fund_groups_addon_form($form, $form_state, $node) {
     '#value' => $node->nid,
   );
 
-  $form['status'] = array(
+  // Fundraiser Settings (i.e., ask amounts).
+  $form['addon_settings'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Add-on Donation'),
+    '#weight' => -4.96,
+    '#collapsible' => FALSE,
+    '#collapsed' => FALSE,
+    '#description' => t('An add-on donation is a one-time line item that will appear as an upsell opportunity on the form.'),
+  );
+
+  $form['addon_settings']['statuses'] = array(
     '#type' => 'checkbox',
     '#title' => t('Enable add-on donation'),
     '#weight' => -10,
     '#default_value' => isset($data['status']) ? $data['status'] : 0,
-  );
-
-  // Fundraiser Settings (i.e., ask amounts).
-  $form['addon_settings'] = array(
-    '#type' => 'fieldset',
-    '#title' => t('Addon Donation'),
-    '#weight' => -4.96,
-    '#collapsible' => TRUE,
-    '#collapsed' => FALSE,
-    '#group' => 'additional_settings',
   );
 
   $form['addon_settings']['addon'] = array(
@@ -38,6 +38,11 @@ function fundraiser_fund_groups_addon_form($form, $form_state, $node) {
     '#autocomplete_path' => 'fund_groups/autocomplete_callback',
     '#weight' => -10,
     '#default_value' => $addon_default,
+    '#states' =>  array(
+      'visible' => array(
+        ':input[name="statuses"]' => array('checked' => TRUE),
+      ),
+    ),
   );
 
   $form['addon_settings']['amount_wrapper'] = array(
@@ -48,6 +53,11 @@ function fundraiser_fund_groups_addon_form($form, $form_state, $node) {
     '#prefix' => '<div class="clear-block" id="ask-wrapper">',
     '#suffix' => '</div>',
     '#tree' => TRUE,
+    '#states' =>  array(
+      'visible' => array(
+        ':input[name="statuses"]' => array('checked' => TRUE),
+      ),
+    ),
   );
 
   $form['addon_settings']['amount_wrapper']['donation_amounts'] = array(
@@ -138,18 +148,17 @@ function fundraiser_fund_groups_addon_form($form, $form_state, $node) {
     ),
   );
 
-
-
   $form['actions'] = array(
     '#type' => 'actions',
   );
 
   $form['actions']['submit'] = array(
     '#type' => 'submit',
-    '#value' => t('Submit'),
+    '#value' => t('Save'),
   );
 
   $form['#attached']['css'][] = drupal_get_path('module', 'fundraiser_fund_group') . '/css/fund-groups.css';
+  $form['#attached']['js'][] = drupal_get_path('module', 'fundraiser_designations') . '/js/price-sets.js';
   $form['#validate'] = array('fundraiser_fund_groups_addon_form_validate');
   $form['#submit'] = array('fundraiser_fund_groups_addon_form_submit');
 
@@ -179,6 +188,18 @@ function fundraiser_fund_groups_autocomplete_callback($string = "") {
 
 
 function fundraiser_fund_groups_addon_form_validate($form, &$form_state) {
+  foreach ($form_state['values']['amount_wrapper']['donation_amounts'] as $index => $amount_set) {
+    if (!empty($amount_set['amount']) && empty($amount_set['label'])) {
+      form_set_error('', t('The label cannot be empty when an amount is set.'));
+    }
+    if (empty($amount_set['amount']) && !empty($amount_set['label'])) {
+      form_set_error('', t('The amount cannot be empty when a label is set.'));
+    }
+    if (!is_numeric($amount_set['amount']) && !empty($amount_set['amount'])) {
+      form_set_error('', t('The amount must be a number.'));
+    }
+  }
+
   $title = $form_state['values']['addon'];
   $matches = array();
 
@@ -193,6 +214,12 @@ function fundraiser_fund_groups_addon_form_validate($form, &$form_state) {
     $designation = commerce_product_load($pid);
     if (empty($designation)) {
       form_set_error('addon', t('Sorry, no designation with id %nid can be found', array('%nid' => $pid)));
+      return;
+    }
+  }
+  else {
+    if (empty($designation)) {
+      form_set_error('addon', t('Sorry, you must choose a fund.'));
       return;
     }
   }
@@ -217,7 +244,7 @@ function fundraiser_fund_groups_addon_form_submit($form, &$form_state) {
   $data = array(
     'nid' => $values['nid'],
     'pid' => $values['addon'],
-    'status' => (int) $values['status'],
+    'status' => (int) $values['statuses'],
     'price_set' => $sets,
   );
   drupal_write_record('fundraiser_fund_group_addon', $data);
