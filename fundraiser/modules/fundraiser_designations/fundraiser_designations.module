@@ -340,6 +340,7 @@ function fundraiser_designations_form_node_form_alter(&$form, &$form_state) {
   if (fundraiser_designations_is_designation_type($form['type']['#value'])) {
     // This setting is irrelevant. Hide it.
     $form['fundraiser_settings']['amount_wrapper']['show_other_amount']['#access'] = FALSE;
+    $form['fundraiser_settings']['recurring_amount_wrapper']['recurring_show_other_amount']['#access'] = FALSE;
   }
 }
 
