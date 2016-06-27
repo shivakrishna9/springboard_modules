@@ -1164,6 +1164,19 @@ function fundraiser_designations_form_taxonomy_overview_terms_alter(&$form, &$fo
       'data' => "jQuery(document).ready(function(){var tab = jQuery(\"ul.tabs.primary li a:contains('Settings')\");jQuery(tab).hide();})",
       'type' => 'inline',
     );
+    $form['#parent_fields'] = FALSE;
+  }
+}
+
+/**
+ * Implements hook_help().
+ */
+function fundraiser_designations_help($path, $arg) {
+  switch ($path) {
+    case 'admin/structure/taxonomy/%':
+      if (arg(3) == 'fd_designation_categories') {
+        return '<p>' . t('Parent terms/nested hierachies are not allowed in this vocabulary.') . '</p>';
+      }
   }
 }
 
