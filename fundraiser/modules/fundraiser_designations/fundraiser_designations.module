@@ -917,7 +917,7 @@ function fundraiser_designations_form_webform_client_form_alter(&$form, &$form_s
     $parsed_uri = drupal_parse_url(request_uri());
     if (isset($parsed_uri['query'])) {
       if (!empty($parsed_uri['query']['fund']) && !empty($parsed_uri['query']['amount'])) {
-        $frequency = !empty($parsed_uri['query']['frequency']) ? $parsed_uri['query']['frequency'] : 'one-time';
+        $frequency = !empty($parsed_uri['query']['recurs']) ? $parsed_uri['query']['recurs'] : 'one-time';
         $quantity = !empty($parsed_uri['query']['quantity']) ? $parsed_uri['query']['quantity'] : 1;
         $group = !empty($parsed_uri['query']['group']) ? $parsed_uri['query']['group'] : NULL;
         $product = commerce_product_load($parsed_uri['query']['fund']);
