@@ -283,6 +283,15 @@ function fundraiser_designations_form_webform_components_form_alter(&$form, &$fo
 }
 
 /**
+ * Implements hook_access().
+ */
+function fundraiser_designations_form_taxonomy_form_term_alter(&$form, &$form_state) {
+  if ($form['#vocabulary']->machine_name == 'fd_designation_categories') {
+    $form['relations']['#access'] = FALSE;
+  }
+}
+
+/**
  * Implements hook_module_implements_alter().
  */
 function fundraiser_designations_module_implements_alter(&$implementations, $hook) {
