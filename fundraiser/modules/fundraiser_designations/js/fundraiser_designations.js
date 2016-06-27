@@ -2,14 +2,15 @@
 
   Drupal.behaviors.fundraiserDesignations = {
     attach: function(context, settings) {
-        new Drupal.fundraiserDesignations();
+        new Drupal.fundraiserDesignations(settings);
     }
   };
 
   /**
    * Set the amounts on page load
    */
-  Drupal.fundraiserDesignations = function() {
+  Drupal.fundraiserDesignations = function(settings) {
+    var self = this;
     this.fundGroups = $('.designation-group-wrapper');
     this.cart = $('.fundraiser-designation-cart-wrapper');
     this.addon = $('.designation-addon-wrapper');
@@ -19,15 +20,45 @@
     this.addListeners();
     this.cancelButton();
     this.setWidths();
+    this.loadQueryString();
     var val = this.calcTotal();
-    $('#cart_total').val(Drupal.settings.fundraiser.currency.symbol + (val).formatMoney(2, '.', ','));
+    this.prepop(settings, val);
+  };
+
+  Drupal.fundraiserDesignations.prototype.prepop = function(settings, val) {
+    $('#cart_total').val(settings.fundraiser.currency.symbol + (val).formatMoney(2, '.', ','));
     var cartVals = $('input[name$="[fund_catcher]"]').val().replace(/&quot;/g, '"');
     if (cartVals.length > 0) {
       cartVals = JSON.parse(cartVals);
-      var self = this;
       $.each(cartVals, function(i, item){
         self.repop(item);
       });
+    }
+    else if(typeof(settings.fundraiser_designations) != "undefined") {
+      var sfd = settings.fundraiser_designations;
+      self.repop(sfd);
+      $('select#funds-select-' + sfd.fundGroup + ' option[value=' + sfd.fundId +']').prop('selected', true)
+      if (typeof(sfd.recurs) != 'undefined') {
+        var rcr = $('input[name*="[recurs_monthly]"]');
+        var freq = sfd.recurs;
+        switch (freq) {
+          case 'one-time':
+          case 'yearly':
+            rcr.each(function(){
+              if (this.value == 'NO_RECURR') {
+                $(this).attr('checked', true);
+              }
+            });
+            break;
+          case 'monthly':
+            rcr.each(function(){
+              if (this.value == 'recurs') {
+                $(this).attr('checked', true);
+              }
+            });
+            break;
+        }
+      }
     }
   };
 
@@ -389,6 +420,11 @@
     return total;
   };
 
+  Drupal.fundraiserDesignations.prototype.loadQueryString = function() {
+    self = this;
+
+  };
+
   Drupal.fundraiserDesignations.prototype.setWidths = function() {
     var selectContain = $('.designation-group-funds-table div.form-type-select');
     var selectContainWidth = 0;
@@ -410,6 +446,7 @@
     selectContain.css('width', wide);
     fundContain.css('width', wide);
   };
+
   /**
    * Format values as money
    *

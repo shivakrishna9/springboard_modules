@@ -836,6 +836,8 @@ function fundraiser_designations_form_node_type_form_validate($form, &$form_stat
 
 /**
  * Implements hook_form_webform_client_form_alter().
+ *
+ * @todo break into sub functions.
  */
 function fundraiser_designations_form_webform_client_form_alter(&$form, &$form_state) {
   if ($ticket_type = fundraiser_designations_is_designation_type($form['#node']->type) && arg(2) != 'submission') {
@@ -858,10 +860,10 @@ function fundraiser_designations_form_webform_client_form_alter(&$form, &$form_s
     $box = $component_hierarchy['designation_box'];
     $designations = &_webform_user_find_field($form, $box);
     $recurs_monthly = $component_hierarchy['recurs_monthly'];
-    $recurs = &_webform_user_find_field($form, $recurs_monthly);
+    $recurs_field = &_webform_user_find_field($form, $recurs_monthly);
     foreach (element_children($designations) as $child) {
-      if (!empty($recurs) && !empty($form['#node']->recurring_dual_ask_amounts)) {
-        if ($recurs['#type'] != 'radios') {
+      if (!empty($recurs_field) && !empty($form['#node']->recurring_dual_ask_amounts)) {
+        if ($recurs_field['#type'] != 'radios') {
           $designations[$child]['recurring_amounts_' . $child]['#states'] = array(
             'visible' => array(
               'input[name$="recurs_monthly][recurs]"]' => array(
@@ -911,6 +913,33 @@ function fundraiser_designations_form_webform_client_form_alter(&$form, &$form_s
       }
     }
 
+    // Pass along query string parameters to designation forms.
+    $parsed_uri = drupal_parse_url(request_uri());
+    if (isset($parsed_uri['query'])) {
+      if (!empty($parsed_uri['query']['fund']) && !empty($parsed_uri['query']['amount'])) {
+        $frequency = !empty($parsed_uri['query']['frequency']) ? $parsed_uri['query']['frequency'] : 'one-time';
+        $quantity = !empty($parsed_uri['query']['quantity']) ? $parsed_uri['query']['quantity'] : 1;
+        $group = !empty($parsed_uri['query']['group']) ? $parsed_uri['query']['group'] : NULL;
+        $product = commerce_product_load($parsed_uri['query']['fund']);
+        if (
+          !empty($product)
+          && $product->type == 'fundraiser_designation'
+          && $product->status == 1
+        ) {
+          $inherit = array(
+            'fundName' => $product->title,
+            'fundId' => $product->product_id,
+            'fundQuantity' => $quantity,
+            'fundGroup' => $group,
+            'fundAmount' => $parsed_uri['query']['amount'],
+          );
+          if ($form['#node']->recurring_setting == 'user_choice') {
+            $inherit['recurs'] = $frequency;
+          }
+          $form['#attached']['js'][] = array('data' => array('fundraiser_designations' => $inherit), 'type' => 'setting');
+        }
+      }
+    }
   }
   elseif (fundraiser_designations_is_designation_type($form['#node']->type) && arg(2) == 'submission') {
     // Remove these fields on the result edit form.
