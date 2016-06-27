@@ -276,6 +276,15 @@ function commerce_paypal_wps_form_rules_ui_edit_element_builder(&$form, &$form_s
  *
  * TODO: Fix it.  This function may be removed when this 10007 error is addressed.
  */
+
+/**
+ * Implements hook_form_FORM_ID_alter().
+ *
+ * Prevent multiple, partial donations because PayPal occasionally returns 10007 errors when a refund is issued from Drupal.
+ * Note: This error is seen in the paypal sandbox; I have not tested it on production. - Josh Estep 2016/06/22
+ *
+ * TODO: Fix it.  This function may be removed when this 10007 error is addressed.
+ */
 function commerce_paypal_form__fundraiser_refund_form_alter(&$form, $form_state, $form_id) {
   $donation_id = arg(3);
   if (!is_numeric($donation_id)) {
@@ -291,15 +300,27 @@ function commerce_paypal_form__fundraiser_refund_form_alter(&$form, $form_state,
   }
 
   // If this refund is partial than block further, partial refunds; a full refund will already have an appropriate message:
+  $max_partial_refunds = 2;
+  $partial_refunds_count = 0;
   foreach ($donation->refunds as $refund) {
-    if ($refund->status == 'partially_refunded') {
-      $form['refund_options'] = array(
-        '#type' => 'fieldset',
-        '#title' => t('Refund Options'),
-        '#description' => '<strong>' . t('This donation has already been partially refunded.') . ' ' .
-          t('Please make any additional refunds from your paypal.com account.') . '</strong>',
-      );
-      break;
+    if ($refund->status != 'partially_refunded') {
+      continue;
+    }
+    else {
+      $partial_refunds_count++;
+      if ($partial_refunds_count > 0) {
+        unset($form['refund_options']['refund_type']['#options']['full']);
+        $form['refund_options']['refund_type']['#default_value'] = 'partial';
+      }
+      if ($partial_refunds_count == $max_partial_refunds) {
+        $form['refund_options'] = array(
+          '#type' => 'fieldset',
+          '#title' => t('Refund Options'),
+          '#description' => '<strong>' . t('This donation has already been partially refunded.') . ' ' .
+            t('Please make any additional refunds from your paypal.com account.') . '</strong>',
+        );
+        break;
+      }
     }
   }
 }
