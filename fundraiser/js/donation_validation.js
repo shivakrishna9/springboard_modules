@@ -140,7 +140,8 @@
         }
         // Other Amount
         if ($('input[name*="other_amount"]')[0]) {
-          $('input[name*="other_amount"]').rules("add", {
+          $('input[name*="other_amount"]').each(function() {
+            $(this).rules("add", {
             required: {
               depends: function(element) {
                 if ($('input[type="radio"][name$="[amount]"][value="other"]:visible').is(":checked"))
@@ -157,6 +158,7 @@
               min: "The amount entered is less than the minimum donation amount."
             }
           });
+        });
         }
 
         // Focus and Blur conditional functions for non-recurring other amount

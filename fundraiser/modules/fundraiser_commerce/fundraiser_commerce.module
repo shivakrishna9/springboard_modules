@@ -2309,29 +2309,30 @@ function fundraiser_commerce_commerce_paypal_ipn_process($order, $payment_method
   if ($ipn['payment_status'] == 'Pending') {
     return;
   }
-  if ($ipn['payment_status'] == 'Completed') {
-    // Grab the donation object from the order.
-    $donation = fundraiser_donation_get_donation($order->order_id);
-    // Update the donation and order data and result values based on the success.
-    _fundraiser_commerce_update_donation_result_data($donation, TRUE);
-    // Finish up any last cleanup for this transaction.
-    fundraiser_commerce_fundraiser_donation_after_process($donation);
-    // Save the donation
-    fundraiser_donation_update($donation);
-    // Finish up the submission to kick off success / decline triggers.
-    _fundraiser_donation_submit_after_process($donation);
-  }
-  if ($ipn['payment_status'] == 'Refunded') {
-    // commerce_paypal_wps handles the Commerce refund transactions. This is here to record the fundrasier_refund item
-    // when the refund is initiated from the PayPal dashboard.
-    $donation = fundraiser_donation_get_donation($order->order_id);
-    _fundraiser_commerce_ipn_refund($donation, $payment_method, $ipn);
+  if (!empty($order) && !empty($payment_method) && !empty($ipn)) {
+    if ($ipn['payment_status'] == 'Completed' && !empty($order)) {
+      // Grab the donation object from the order.
+      $donation = fundraiser_donation_get_donation($order->order_id);
+      // Update the donation and order data and result values based on the success.
+      _fundraiser_commerce_update_donation_result_data($donation, TRUE);
+      // Finish up any last cleanup for this transaction.
+      fundraiser_commerce_fundraiser_donation_after_process($donation);
+      // Save the donation
+      fundraiser_donation_update($donation);
+      // Finish up the submission to kick off success / decline triggers.
+      _fundraiser_donation_submit_after_process($donation);
+    }
+    elseif ($ipn['payment_status'] == 'Refunded') {
+      // commerce_paypal_wps handles the Commerce refund transactions. This is here to record the fundrasier_refund item
+      // when the refund is initiated from the PayPal dashboard.
+      $donation = fundraiser_donation_get_donation($order->order_id);
+      _fundraiser_commerce_ipn_refund($donation, $payment_method, $ipn);
 
-  }
-  if ($ipn['payment_status'] == 'Reversed') {
-    $donation = fundraiser_donation_get_donation($order->order_id);
-    _fundraiser_commerce_ipn_reverse($donation, $ipn);
-
+    }
+    elseif ($ipn['payment_status'] == 'Reversed') {
+      $donation = fundraiser_donation_get_donation($order->order_id);
+      _fundraiser_commerce_ipn_reverse($donation, $ipn);
+    }
   }
 }
 
