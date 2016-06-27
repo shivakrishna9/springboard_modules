@@ -967,7 +967,7 @@ function springboard_admin_springboard_admin_alias_patterns() {
         'replacement' => FALSE,
       ),
     ),
-    // Webform A/B Associated Webforms page.
+    // Multivariate Testing-associated Webforms page.
     'node/%/webforms' => array(
       'path' => array(
         'regex' => '|^/node/([0-9]+)/webforms(/.*)?$|',
