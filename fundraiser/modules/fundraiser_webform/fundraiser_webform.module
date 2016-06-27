@@ -1488,25 +1488,18 @@ function fundraiser_webform_webform_submission_render_alter(&$renderable) {
     $commerce_view->execute();
 
     $view_html = $commerce_view->render();
-    $doc = new DOMDocument();
-    $doc->loadHTML($view_html);
-    $rows = $doc->getElementsByTagName('tr');
-    $total_row = $doc->createDocumentFragment();
-
+    
     // Populate the additional amount if available:
     if ($total_amount != $original_amount) {
-      $additional_row = $doc->createDocumentFragment();
-      $additional_row->appendXML('<tr class="additional-row"><td>Additional amount</td><td>' .
-        $additional_formatted . '</td>' . '<td>1</td><td>' . $additional_formatted . '</td></tr>');
-      $rows->item($rows->length - 1)->appendChild($additional_row);
+      $additional_row = '<tr class="additional-row"><td>Additional amount</td><td>' .
+        $additional_formatted . '</td>' . '<td>1</td><td>' . $additional_formatted . '</td></tr>';
+      $view_html = str_replace('</tbody>', $additional_row . '</tbody>', $view_html);
     }
     // Populate the total amount:
-    $total_row->appendXML('<tr><td class="total-row" colspan="3">Total</td><td class="amount">' .
-      $total_formatted . '</td></tr>');
-    $rows->item($rows->length - 1)->appendChild($total_row);
-    // Remove the doctype and html element wrapper DOMDocument adds:
-    $doc->doctype->parentNode->removeChild($doc->doctype);
-    $renderable['tickets']['#description'] = $doc->saveHTML($doc->getElementsByTagName("div")->item(0));
+    $total_row = '<tr><td class="total-row" colspan="3">Total</td><td class="amount">' .
+      $total_formatted . '</td></tr>';
+    $view_html = str_replace('</tbody>', $total_row . '</tbody>', $view_html);       
+    $renderable['tickets']['#description'] = $view_html;
   }
 
   // Display an additional donation amount if one is available:
