@@ -408,7 +408,7 @@ function sba_social_action_form_sba_social_action_node_form_alter(&$form, &$form
     '#weight' => 6,
     '#required' => TRUE,
   );
-//
+
   $form['#group_children']['social_submit_button_text'] = 'group_sba_social_page_elements';
   // Loads the springboard_taxonomy_options fieldset and form js/css if it
   // is not already present.
@@ -458,6 +458,14 @@ function sba_social_action_form_sba_social_action_node_form_alter(&$form, &$form
   $form['actions']['submit']['#validate'][] = 'sba_social_action_form_sba_social_action_node_form_validate';
   $form['actions']['submit']['#submit'][] = 'sba_social_action_form_sba_social_action_node_form_submit';
 
+  // Hide field_sba_social_require_auth field if twitter configuration is not
+  // complete at admin/config/services/advocacy.
+  if (empty(variable_get('social_actions_twitter_callback_url')) ||
+      empty(variable_get('social_action_twitter_consumer_key')) ||
+      empty(variable_get('social_action_twitter_consumer_secret'))) {
+    $form['field_sba_social_require_auth'][LANGUAGE_NONE]['#type'] = 'value';
+    $form['field_sba_social_require_auth'][LANGUAGE_NONE]['#default_value'][0] = 0;
+  }
 }
 
 /**

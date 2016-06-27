@@ -21,7 +21,7 @@
         // Helper function, provides the total display.
         function _recalculate_quantity_total() {
           $('#quantity-total').empty();
-          var amount = $('input[type="radio"][name*="amount"]:checked').val();
+          var amount = $('input[type="radio"][name*="amount"]:checked:visible').val();
           if (amount == 'other') {
             amount = $('input[name*="other_amount"]').val();
           }
@@ -45,6 +45,10 @@
         });
         // And do the same if the other_amout is changed
         $('input[name*="other_amount"]').change(function() {
+          _recalculate_quantity_total();
+        });
+        // And do the same if Fundraiser Sustainers is active and the user switches donation types.
+        $('input[name*="recurs_monthly"]').change(function() {
           _recalculate_quantity_total();
         });
 
@@ -139,7 +143,7 @@
           $('input[name*="other_amount"]').rules("add", {
             required: {
               depends: function(element) {
-                if ($('input[type="radio"][name$="[amount]"][value="other"]').is(":checked"))
+                if ($('input[type="radio"][name$="[amount]"][value="other"]:visible').is(":checked"))
                   return true;
                 else
                   return false;
@@ -155,17 +159,28 @@
           });
         }
 
-        // Focus and Blur conditional functions
-        $('input[type="radio"][name*="amount"]').change(function(){
+        // Focus and Blur conditional functions for non-recurring other amount
+        $('input[type="radio"][name*="[amount]"]').change(function(){
           if ($(this).val() == 'other') {
-            $('input[name*="other_amount"]').focus();
+            $('input[name*="[other_amount]"]').focus();
           } else {
-            $('input[name*="other_amount"]').clearEle();
+            $('input[name*="[other_amount]"]').clearEle();
           }
         });
-        $('input[name*="other_amount"]').focus(function(){
-          $('input[type="radio"][name*="amount"][value="other"]').attr('checked', 'checked');
-        })
+        $('input[name*="[other_amount]"]').focus(function(){
+          $('input[type="radio"][name*="[amount]"][value="other"]').attr('checked', 'checked');
+        });
+        // Focus and Blur conditional functions for recurring other amount
+        $('input[type="radio"][name*="[recurring_amount]"]').change(function(){
+          if ($(this).val() == 'other') {
+            $('input[name*="[recurring_other_amount]"]').focus();
+          } else {
+            $('input[name*="[recurring_other_amount]"]').clearEle();
+          }
+        });
+        $('input[name*="[recurring_other_amount]"]').focus(function(){
+          $('input[type="radio"][name*="[recurring_amount]"][value="other"]').attr('checked', 'checked');
+        });
 
         // Runs on Other Amount field
         $('input[name*="other_amount"]').blur(function(){
@@ -181,7 +196,7 @@
               } else {
                 // Remove all non-integer/period chars
                 value = value.replace(/[^\d\.]+/g,'')
-                  // make first decimal unique
+                // make first decimal unique
                   .replace(/\./i,'-')
                   // replace subsequent decimals
                   .replace(/\./g,'')
@@ -227,7 +242,7 @@
           range: jQuery.validator.format("Enter a value between {0} and {1}"),
           max: jQuery.validator.format("Enter a value less than or equal to {0}"),
           min: jQuery.validator.format("Enter a value greater than or equal to {0}")
-          });
+        });
         // Small helper item
         $('select').each(function(){
           if ($(this).next().is('select')) {
