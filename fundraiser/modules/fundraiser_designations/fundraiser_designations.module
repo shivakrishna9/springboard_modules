@@ -1161,7 +1161,7 @@ function fundraiser_designations_springboard_taxonomy_allowed_vocabularies_alter
 function fundraiser_designations_form_taxonomy_overview_terms_alter(&$form, &$form_state) {
   if (arg(3) == 'fd_designation_categories') {
     $form['#attached']['js'][] = array(
-      'data' => "jQuery(document).ready(function(){var tab = jQuery(\"ul.tabs.primary li a:contains('Settings')\");jQuery(tab).hide();})",
+      'data' => "jQuery(document).ready(function(){var tab = jQuery(\"ul.tabs.primary li a:contains('Settings')\");jQuery(tab).hide();jQuery('#block-system-help p:not(\".fd-designations\")').remove()})",
       'type' => 'inline',
     );
     $form['#parent_fields'] = FALSE;
@@ -1175,7 +1175,7 @@ function fundraiser_designations_help($path, $arg) {
   switch ($path) {
     case 'admin/structure/taxonomy/%':
       if (arg(3) == 'fd_designation_categories') {
-        return '<p>' . t('Parent terms/nested hierachies are not allowed in this vocabulary.') . '</p>';
+        return '<p class="fd-designations">' . t('Parent terms/nested hierachies are not allowed in this vocabulary. You can sort the terms using their drag-and-drop handles.') . '</p>';
       }
   }
 }
