@@ -387,7 +387,11 @@ function theme_fundraiser_tickets_warning_indicator($vars){
  * closed.
  */
 function theme_fundraiser_tickets_closed_message($vars){
-  return $vars['message']['safe_value'];
+  if (isset($vars['message']['value'])) {
+    $format = isset($vars['message']['format']) ? $vars['message']['format'] : filter_fallback_format();
+    return check_markup($vars['message']['value'], $format);
+  }
+  return '';
 }
 
 /**
@@ -395,5 +399,9 @@ function theme_fundraiser_tickets_closed_message($vars){
  * sold out.
  */
 function theme_fundraiser_tickets_soldout_message($vars){
-  return $vars['message']['safe_value'];
+  if (isset($vars['message']['value'])) {
+    $format = isset($vars['message']['format']) ? $vars['message']['format'] : filter_fallback_format();
+    return check_markup($vars['message']['value'], $format);
+  }
+  return '';
 }
