@@ -126,9 +126,7 @@ function fundraiser_fund_group_delete_form_wrapper($fundraiser_fund_group) {
  */
 function fundraiser_fund_group_edit_form($form, &$form_state, $fundraiser_fund_group, $node) {
 
-
-
-  if(!empty($node)) {
+  if (!empty($node)) {
     $form_state['storage']['node'] = $node;
   }
   else {
@@ -168,11 +166,6 @@ function fundraiser_fund_group_edit_form($form, &$form_state, $fundraiser_fund_g
     );
   }
 
-  if (isset($fundraiser_fund_group->data['group_id']) && $fundraiser_fund_group->data['group_id'] == 'no_response') {
-    drupal_set_message('A remote group ID could not be found.');
-    watchdog('advocacy', 'A remote group ID could not be found. Local ID: @message', array('@message' => $fundraiser_fund_group->data['group_id']), WATCHDOG_ERROR);
-  }
-
   $form['actions'] = array(
     '#type' => 'container',
     '#attributes' => array('class' => array('form-actions')),
@@ -184,13 +177,6 @@ function fundraiser_fund_group_edit_form($form, &$form_state, $fundraiser_fund_g
   if (!empty($form['#submit'])) {
     $submit += $form['#submit'];
   }
-
-  $form['message_error'] = array(
-    '#markup' => '',
-    '#prefix' => '<div id = "advo-error-wrapper">',
-    '#suffix' => '</div>',
-    '#weight' => 10,
-  );
 
   $form['actions']['submit'] = array(
     '#type' => 'submit',
@@ -277,7 +263,7 @@ function fundraiser_fund_group_edit_form_submit(&$form, &$form_state) {
  *    The form meta-data and values.
  */
 function fundraiser_fund_group_form_submit_delete(&$form, &$form_state) {
-  $nid =  $form_state['values']['nid'];
+  $nid = $form_state['values']['nid'];
   $form_state['redirect'] = 'node/' . $nid . '/designations/fundraiser_fund_group/' . $form_state['fundraiser_fund_group']->fundraiser_fund_group_id . '/delete';
 }
 
