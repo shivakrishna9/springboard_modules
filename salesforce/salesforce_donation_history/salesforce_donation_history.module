@@ -36,6 +36,7 @@ function salesforce_donation_history_menu() {
     'title' => 'Query',
     'type' => MENU_DEFAULT_LOCAL_TASK,
     'description' => 'Manage Salesforce Donation History Query.',
+    'weight' => 0,
   );
 
   $items['admin/config/salesforce/donation_history/fields'] = array(
@@ -46,6 +47,7 @@ function salesforce_donation_history_menu() {
     'type' => MENU_LOCAL_TASK,
     'description' => 'Manage Salesforce Donation History Fields.',
     'file' => 'includes/salesforce_donation_history.admin.inc',
+    'weight' => 1,
   );
 
   $items['admin/config/salesforce/donation_history/annual-summary-receipt'] = array(
@@ -56,6 +58,7 @@ function salesforce_donation_history_menu() {
     'type' => MENU_LOCAL_TASK,
     'description' => 'Manage Salesforce Donation History Receipts.',
     'file' => 'includes/salesforce_donation_history.admin.inc',
+    'weight' => 2,
   );
 
   $items['user/%user/donation-history'] = array(
