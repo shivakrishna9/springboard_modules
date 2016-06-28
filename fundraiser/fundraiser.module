@@ -3620,3 +3620,10 @@ function fundraiser_log_donation_processing($donation, $log = array()) {
 function _fundraiser_amount_value_sanitize($amount) {
   return preg_replace('/[^\d\.]/i', '', $amount);
 }
+
+/**
+ * Implements hook_springboard_node_expire_expiration_message().
+ */
+function fundraiser_springboard_node_expire_node_view_alter(&$node) {
+  $node->content['webform']['#access'] = FALSE;
+}
