@@ -1002,7 +1002,7 @@ function _webform_goals_get_selected_metric($selected_context, $form_state, $goa
   if (!empty($form_state['values']['metrics'])) {
     $selected_metric = $metrics[$form_state['values']['metrics']];
   }
-  elseif (!empty($goal['metric'])) {
+  elseif (!empty($goal['metric']) && isset($metrics[$goal['metric']])) {
     $selected_metric = $metrics[$goal['metric']];
   }
   return $selected_metric;
