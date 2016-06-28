@@ -149,9 +149,6 @@ function fundraiser_fund_group_edit_form($form, &$form_state, $fundraiser_fund_g
   $form_state['fundraiser_fund_group'] = $fundraiser_fund_group;
   field_attach_form('fundraiser_fund_group', $fundraiser_fund_group, $form, $form_state);
 
-  form_load_include($form_state, 'inc', 'fundraiser_fund_group', 'includes/fundraiser_fund_group.price_override');
-  fundraiser_fund_group_price_override_form($form, $form_state, $fundraiser_fund_group, $node);
-
   $form['parent_node']['nid'] = array(
     '#type' => 'hidden',
     '#value' => $form_state['storage']['node']->nid,
@@ -205,6 +202,9 @@ function fundraiser_fund_group_edit_form($form, &$form_state, $fundraiser_fund_g
     '#value' => t('Save group'),
     '#submit' => $submit + array('fundraiser_fund_group_edit_form_submit'),
   );
+
+  form_load_include($form_state, 'inc', 'fundraiser_fund_group', 'includes/fundraiser_fund_group.price_override');
+  fundraiser_fund_group_price_override_form($form, $form_state, $fundraiser_fund_group, $node);
 
   // We append the validate handler to #validate in case a form callback_wrapper
   // is used to add validate handlers earlier.

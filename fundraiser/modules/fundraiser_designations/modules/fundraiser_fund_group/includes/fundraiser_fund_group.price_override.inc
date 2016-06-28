@@ -10,7 +10,7 @@
  * @param object $product
  *   A new or existing commerce product.
  */
-function fundraiser_fund_group_price_override_form(&$form, &$form_state, $group, $node) {
+function fundraiser_fund_group_price_override_form(&$form, $form_state, $group, $node) {
 
   $data = !empty($group->fd_overrides) ? $group->fd_overrides : array();
   $form['#attached']['js'][] = drupal_get_path('module', 'fundraiser_fund_group') . '/js/price-sets.js';
@@ -38,7 +38,7 @@ function fundraiser_fund_group_price_override_form(&$form, &$form_state, $group,
     fundraiser_fund_group_default_ask($form, $form_state, 'recurring', $data);
   }
 
-  $form['#submit'][] = 'fundraiser_fund_group_override_form_submit';
+  $form['actions']['submit']['#submit'][] = 'fundraiser_fund_group_override_form_submit';
 
 }
 
@@ -157,7 +157,6 @@ function fundraiser_fund_group_default_ask(&$form, $form_state, $type, $data) {
  * @return mixed
  */
 function _fundraiser_fund_group_settings_default_form_amounts(&$form, &$form_state) {
-  $type = $form_state['triggering_element']['#ask_type'];
   return $form['override_settings']['default_amount_wrapper']['donation_amounts'];
 }
 
@@ -189,15 +188,18 @@ function fundraiser_fund_group_override_form_submit($form, &$form_state) {
     ->condition('gid', $values['gid'], '=')
     ->execute();
 
-  foreach ($values['default_amount_wrapper']['donation_amounts'] as $amount) {
-    if (empty($amount['remove']) && !empty($amount['amount'])) {
-      $sets['default'][] = $amount;
+  if (isset($values['default_amount_wrapper'])) {
+    foreach ($values['default_amount_wrapper']['donation_amounts'] as $amount) {
+      if (empty($amount['remove']) && !empty($amount['amount'])) {
+        $sets['default'][] = $amount;
+      }
     }
   }
-
-  foreach ($values['recurring_amount_wrapper']['donation_amounts'] as $amount) {
-    if (empty($amount['remove']) && !empty($amount['amount'])) {
-      $sets['recurring'][] = $amount;
+  if (isset($values['recurring_amount_wrapper'])) {
+    foreach ($values['recurring_amount_wrapper']['donation_amounts'] as $amount) {
+      if (empty($amount['remove']) && !empty($amount['amount'])) {
+        $sets['recurring'][] = $amount;
+      }
     }
   }
 
