@@ -1,0 +1,6 @@
+name = Springboard Quick Donation
+description = Enables functionality for quick donations.
+package = Jackson River Springboard - extras
+core = 7.x
+dependencies[] = fundraiser
+dependencies[] = commerce_cardonfile
