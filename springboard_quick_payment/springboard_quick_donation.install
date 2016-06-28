@@ -1,0 +1,77 @@
+<?php
+
+/**
+ * @file
+ * Install file for springboard_quick_donation.
+ */
+
+/**
+ * Implements hook_schema_alter().
+ */
+function springboard_quick_donation_schema_alter(&$schema) {
+  // Add quickdonation and quickdonation_message fields to fundraiser table.
+  $schema['fundraiser']['fields']['quickdonation'] = array(
+    'description' => 'Boolean value which indicates whether this fundraiser is designated to have quick payment functionality enabled on it.',
+    'type' => 'int',
+    'size' => 'tiny',
+    'not null' => FALSE,
+    'default' => 0,
+  );
+  $schema['fundraiser']['fields']['quickdonation_message'] = array(
+    'description' => 'The message to display to end users if the fundraiser has quick payments enabled.',
+    'type' => 'text',
+    'not null' => FALSE,
+  );
+  $schema['fundraiser']['fields']['quickdonation_message_format'] = array(
+    'description' => 'The format of the quick payments message.',
+    'type' => 'varchar',
+    'length' => '255',
+    'not null' => FALSE,
+  );
+  // Add quickdonation field to commerce_cardonfile table.
+  $schema['commerce_cardonfile']['fields']['quickdonation'] = array(
+    'description' => 'Boolean value which indicates whether this card is designated to be used for quick payments.',
+    'type' => 'int',
+    'size' => 'tiny',
+    'not null' => FALSE,
+    'default' => 0,
+  );
+}
+
+/**
+ * Implements hook_install().
+ */
+function springboard_quick_donation_install() {
+  $tables_to_check = array('commerce_cardonfile', 'fundraiser');
+  foreach ($tables_to_check as $table) {
+    // Retrieve the adjusted schema and add any columns that don't exist in the
+    // specified table.
+    $schema = drupal_get_schema($table, TRUE);
+    foreach ($schema['fields'] as $field => $spec) {
+      if (!db_field_exists($table, $field)) {
+        db_add_field($table, $field, $spec);
+      }
+    }
+  }
+}
+
+/**
+ * Implements hook_node_uninstall().
+ */
+function springboard_quick_donation_uninstall() {
+  $schema_array_to_drop = array(
+    'commerce_cardonfile' => array(
+      'quickdonation',
+    ),
+    'fundraiser' => array(
+      'quickdonation',
+      'quickdonation_message',
+      'quickdonation_message_format',
+    ),
+  );
+  foreach ($schema_array_to_drop as $table => $fields) {
+    foreach ($fields as $field) {
+      db_drop_field($table, $field);
+    }
+  }
+}
