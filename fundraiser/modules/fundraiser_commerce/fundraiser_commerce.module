@@ -2906,9 +2906,8 @@ function fundraiser_commerce_form_alter(&$form, &$form_state, $form_id) {
         }
       }
     }
-    drupal_add_js(drupal_get_path('module', 'fundraiser') . '/js/fundraiser.js');
-    drupal_add_js(array('fundraiser' => $button_info), 'setting');
-
+    $form['#attached']['js'][] = drupal_get_path('module', 'fundraiser_commerce') . '/js/gateway-client-form.js';
+    $form['#attached']['js'][] = array('data' => array('fundraiser' => $button_info), 'type' => 'setting');
   }
 }
 
