@@ -48,16 +48,6 @@ function salesforce_donation_history_page($user) {
  */
 function salesforce_donation_history_annual_summary_page($user, $year) {
   $output = array();
-  $output['header-banner'] = array(
-    // @TODO: Should we add an image style?
-    '#theme' => 'image',
-    '#path' => file_load(variable_get('salesforce_donation_history_receipts_header_banner', ''))->uri,
-  );
-  $address = variable_get('salesforce_donation_history_receipts_address', NULL);
-  $output['address'] = array(
-    '#type' => 'markup',
-    '#markup' => check_markup($address['value'], $address['format']),
-  );
   $intro = variable_get('salesforce_donation_history_receipts_intro', NULL);
   $output['intro'] = array(
     '#type' => 'markup',
@@ -80,11 +70,6 @@ function salesforce_donation_history_annual_summary_page($user, $year) {
   $output['footer'] = array(
     '#type' => 'markup',
     '#markup' => check_markup($outro['value'], $outro['format']),
-  );
-  $output['footer-banner'] = array(
-    // @TODO: Should we add an image style?
-    '#theme' => 'image',
-    '#path' => file_load(variable_get('salesforce_donation_history_receipts_footer_banner', ''))->uri,
   );
   return $output;
 }

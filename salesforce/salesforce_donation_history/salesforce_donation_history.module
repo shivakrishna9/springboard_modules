@@ -48,11 +48,11 @@ function salesforce_donation_history_menu() {
     'file' => 'includes/salesforce_donation_history.admin.inc',
   );
 
-  $items['admin/config/salesforce/donation_history/receipts'] = array(
+  $items['admin/config/salesforce/donation_history/annual-summary-receipt'] = array(
     'page callback' => 'drupal_get_form',
     'page arguments' => array('salesforce_donation_history_receipts'),
     'access arguments' => array('administer salesforce_donation_history settings'),
-    'title' => 'Receipt Customization',
+    'title' => 'Annual Summary Receipt',
     'type' => MENU_LOCAL_TASK,
     'description' => 'Manage Salesforce Donation History Receipts.',
     'file' => 'includes/salesforce_donation_history.admin.inc',
@@ -109,15 +109,6 @@ function salesforce_donation_history_theme() {
     'salesforce_donation_history_admin_field_table' => array(
       'render element' => 'element',
     ),
-    'salesforce_donation_history_image_preview' => array(
-      'render element' => 'element',
-    ),
-    // 'salesforce_donation_history_annual_summary' => array(
-    //   // 'variables' => array('contents' => array()),
-    //   'render element' => 'contents',
-    //   'template' => 'salesforce_donation_history_annual_summary',
-    //   'path' => drupal_get_path('module', 'salesforce_donation_history') . '/templates',
-    // ),
   );
 }
 
@@ -150,28 +141,6 @@ function theme_salesforce_donation_history_admin_field_table($variables) {
   return theme('table', array('header' => $header, 'rows' => $rows));
 }
 
-/**
- * Theme callback for banner image preview.
- *
- * @ingroup themeable
- */
-function theme_salesforce_donation_history_image_preview($variables) {
-  $element = $variables['element'];
-  if (!$element['#file'] && $element['#default_value']) {
-    $results = db_query('SELECT * FROM {file_managed} WHERE uri=:uri', array(':uri' => $element['#default_value']));
-    $file = $results->fetchObject();
-    if (is_object($file)) {
-      $element['#file'] = $file;
-    }
-  }
-  if (isset($element['#file']->uri)) {
-    $output = '<div id="edit-logo-ajax-wrapper"><div class="form-item form-type-managed-file form-item-logo"><span class="file">';
-    $output .= '<img height="150px" src="' . file_create_url($element['#file']->uri) . '" />';
-    $output .= '</span><input type="submit" id="edit-' . $element['#name'] . '-remove-button" name="' . $element['#name'] . '_remove_button" value="Remove" class="form-submit ajax-processed">';
-    $output .= '<input type="hidden" name="' . $element['#name'] . '[fid]" value="' . $element['#file']->fid . '">';
-    return $output;
-  }
-}
 /**
  * Gets all opportunities for a user.
  *
@@ -389,7 +358,6 @@ function salesforce_donation_history_create_table($records, $display_key = 'show
     }
     // Add 'print receipt' cell to the end of each row.
     if ($add_print_receipt_column) {
-      // @todo hard-coded user ID.
       $row[] = l(t('Print Receipt'), 'user/' . arg(1) . '/donation-history/receipt/' . $record->Id[0]);
     }
     $table['#rows'][] = $row;

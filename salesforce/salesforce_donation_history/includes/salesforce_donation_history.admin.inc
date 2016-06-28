@@ -90,96 +90,29 @@ function salesforce_donation_history_receipts() {
     'value' => '',
     'format' => filter_default_format(),
   );
-  $form['header_fields'] = array(
-    '#type' => 'fieldset',
-    '#title' => t('Header Fields'),
-    '#collapsible' => FALSE,
-    '#collapsed' => FALSE,
-  );
-  $form['header_fields']['salesforce_donation_history_receipts_header_banner'] = array(
-    '#type' => 'managed_file',
-    '#title' => t('Header Banner Image'),
-    '#theme' => 'salesforce_donation_history_image_preview',
-    '#description' => t('Upload a file, allowed extensions: jpg, jpeg, png, gif'),
-    '#default_value' => variable_get('salesforce_donation_history_receipts_header_banner', ''),
-    '#upload_location' => 'public://salesforce_donation_history/',
-    '#upload_validators' => array(
-      'file_validate_extensions' => array('gif png jpg jpeg'),
-    ),
-  );
-  $salesforce_donation_history_receipts_address = variable_get('salesforce_donation_history_receipts_address', $defaults);
-  $form['header_fields']['salesforce_donation_history_receipts_address'] = array(
-    '#type' => 'text_format',
-    '#title' => t('Address'),
-    '#default_value' => $salesforce_donation_history_receipts_address['value'],
-    '#description' => "",
-    '#format' => $salesforce_donation_history_receipts_address['format'],
+  $form['description'] = array(
+    '#type' => 'markup',
+    '#markup' => t('The header and footer text fields will appear above and below a table containing the donation information on the receipt. You can control which columns are displayed in this table on the <a href="fields">Fields</a> tab.'),
   );
   $salesforce_donation_history_receipts_intro = variable_get('salesforce_donation_history_receipts_intro', $defaults);
-  $form['header_fields']['salesforce_donation_history_receipts_intro'] = array(
+  $form['salesforce_donation_history_receipts_intro'] = array(
     '#type' => 'text_format',
-    '#title' => t('Introduction'),
+    '#title' => t('Header text'),
     '#default_value' => $salesforce_donation_history_receipts_intro['value'],
-    '#description' => "",
+    '#description' => 'This will appear above the table containing donation information.',
     '#format' => $salesforce_donation_history_receipts_intro['format'],
 
   );
-  $form['table'] = array(
-    '#type' => 'markup',
-    '#markup' => t('A table with donation information will appear between the header and footer fields, here. You can control which columns are displayed in this table on the <a href="fields">Fields</a> tab.'),
-  );
-  $form['footer_fields'] = array(
-    '#type' => 'fieldset',
-    '#title' => t('Footer Fields'),
-    '#collapsible' => FALSE,
-    '#collapsed' => FALSE,
-  );
   $salesforce_donation_history_receipts_outro = variable_get('salesforce_donation_history_receipts_outro', $defaults);
-  $form['footer_fields']['salesforce_donation_history_receipts_outro'] = array(
+  $form['salesforce_donation_history_receipts_outro'] = array(
     '#type' => 'text_format',
     '#title' => t('Footer text'),
     '#default_value' => $salesforce_donation_history_receipts_outro['value'],
-    '#description' => "",
+    '#description' => 'This will appear below the table containing donation formation.',
     '#format' => $salesforce_donation_history_receipts_outro['format'],
   );
-  $form['footer_fields']['salesforce_donation_history_receipts_footer_banner'] = array(
-    '#type' => 'managed_file',
-    '#title' => t('Footer Banner Image'),
-    '#theme' => 'salesforce_donation_history_image_preview',
-    '#description' => t('Upload a file, allowed extensions: jpg, jpeg, png, gif'),
-    '#default_value' => variable_get('salesforce_donation_history_receipts_footer_banner', ''),
-    '#upload_location' => 'public://salesforce_donation_history/',
-    '#upload_validators' => array(
-      'file_validate_extensions' => array('gif png jpg jpeg'),
-    ),
-  );
-  $form['#submit'][] = 'salesforce_donation_history_receipts_submit';
   $form = system_settings_form($form);
   return $form;
-}
-
-/**
- * Submit handler for salesforce_donation_history_receipts form.
- */
-function salesforce_donation_history_receipts_submit($form, $form_state) {
-  if ($form_state['values']['salesforce_donation_history_receipts_header_banner']) {
-    $value = $form_state['values']['salesforce_donation_history_receipts_header_banner'];
-    $file = file_load($value);
-    if ($file && !$file->status) {
-      $file->status = FILE_STATUS_PERMANENT;
-      file_save($file);
-      file_usage_add($file, 'salesforce_donation_history', 'admin_default', 1);
-    }
-  }
-  if ($form_state['values']['salesforce_donation_history_receipts_footer_banner']) {
-    $value = $form_state['values']['salesforce_donation_history_receipts_footer_banner'];
-    $file = file_load($value);
-    if ($file && !$file->status) {
-      $file->status = FILE_STATUS_PERMANENT;
-      file_save($file);
-      file_usage_add($file, 'salesforce_donation_history', 'admin_default', 1);
-    }
-  }
 }
 
 /**
