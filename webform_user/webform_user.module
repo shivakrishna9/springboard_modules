@@ -1296,6 +1296,7 @@ function _webform_user_save_profile_map($account, &$map) {
   if ($map) {
     // First loop through the map and fields to grab results.
     $profile_values = array();
+    $map_array_keys = array_keys($map);
     $fields = _webform_user_get_profile_fields();
     foreach ($fields as $field) {
       // So far no types actually require a unique solution.
@@ -1312,7 +1313,7 @@ function _webform_user_save_profile_map($account, &$map) {
 
         default:
           // Only add the profile result if the name is in the keys.
-          if (in_array($field['name'], array_keys($map))) {
+          if (in_array($field['name'], $map_array_keys)) {
             $profile_values[$field['name']] = $map[$field['name']];
           }
           break;
