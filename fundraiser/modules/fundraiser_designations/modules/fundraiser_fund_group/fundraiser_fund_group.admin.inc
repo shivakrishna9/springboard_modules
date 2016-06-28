@@ -2,7 +2,7 @@
 
 /**
  * @file
- * SBA Message editing UI.
+ * Fund Group Editing UI.
  */
 
 /**
@@ -39,7 +39,6 @@ class FundGroupUIController extends EntityDefaultUIController {
       'page arguments' => array($id_count + 1),
       'access callback' => 'fundraiser_fund_group_access',
       'access arguments' => array('edit', $id_count + 1),
-      'weight' => 0,
       'file' => 'fundraiser_fund_group.admin.inc',
       'file path' => drupal_get_path('module', $this->entityInfo['module']),
       'type' => MENU_DEFAULT_LOCAL_TASK,
@@ -59,12 +58,13 @@ class FundGroupUIController extends EntityDefaultUIController {
     );
     return $items;
   }
+
 }
 
 /**
  * Form callback wrapper: create or edit a fundraiser_fund_group.
  *
- * @param $fundraiser_fund_group
+ * @param object $fundraiser_fund_group
  *   The fundraiser_fund_group object being edited by this form.
  *
  * @return array
@@ -98,7 +98,7 @@ function fundraiser_fund_group_form_wrapper($fundraiser_fund_group) {
 /**
  * Form callback wrapper: delete a fundraiser_fund_group.
  *
- * @param $fundraiser_fund_group
+ * @param object $fundraiser_fund_group
  *   The fundraiser_fund_group object being edited by this form.
  *
  * @return mixed
@@ -116,11 +116,11 @@ function fundraiser_fund_group_delete_form_wrapper($fundraiser_fund_group) {
  *
  * This is where all the targeting elements are added.
  *
- * @param $form
+ * @param array $form
  *   The form array.
- * @param $form_state
+ * @param array $form_state
  *    The form meta-data and values.
- * @param $fundraiser_fund_group
+ * @param object $fundraiser_fund_group
  *
  * @return mixed
  */
@@ -156,7 +156,6 @@ function fundraiser_fund_group_edit_form($form, &$form_state, $fundraiser_fund_g
     '#required' => TRUE,
     '#weight' => -5,
   );
-  
   $form['data']['#tree'] = TRUE;
 
   if (empty($fundraiser_fund_group->is_new)) {
@@ -197,9 +196,9 @@ function fundraiser_fund_group_edit_form($form, &$form_state, $fundraiser_fund_g
 /**
  * Form API validate callback for the fundraiser_fund_group form.
  *
- * @param $form
+ * @param array $form
  *   The form array.
- * @param $form_state
+ * @param array $form_state
  *    The form meta-data and values.
  */
 function fundraiser_fund_group_edit_form_validate(&$form, &$form_state) {
@@ -212,19 +211,17 @@ function fundraiser_fund_group_edit_form_validate(&$form, &$form_state) {
 /**
  * Form API submit callback for the fundraiser_fund_group form.
  *
- * @param $form
+ * @param array $form
  *   The form array.
- * @param $form_state
+ * @param array $form_state
  *    The form meta-data and values.
  */
 function fundraiser_fund_group_edit_form_submit(&$form, &$form_state) {
 
   $fundraiser_fund_group = entity_ui_controller('fundraiser_fund_group')->entityFormSubmitBuildEntity($form, $form_state);
   // Add in created and changed times.
-  $is_new = FALSE;
   if ($fundraiser_fund_group->is_new = isset($fundraiser_fund_group->is_new) ? $fundraiser_fund_group->is_new : 0) {
     $fundraiser_fund_group->created = time();
-    $is_new = TRUE;
   }
 
   $fundraiser_fund_group->changed = time();
@@ -257,9 +254,9 @@ function fundraiser_fund_group_edit_form_submit(&$form, &$form_state) {
 /**
  * Form API submit callback for the delete button.
  *
- * @param $form
+ * @param array $form
  *   The form array.
- * @param $form_state
+ * @param array $form_state
  *    The form meta-data and values.
  */
 function fundraiser_fund_group_form_submit_delete(&$form, &$form_state) {
@@ -271,15 +268,17 @@ function fundraiser_fund_group_form_submit_delete(&$form, &$form_state) {
 /**
  * Form callback: confirmation form for deleting a fundraiser_fund_group.
  *
- * @see confirm_form()
- *
- * @param $form
+ * @param array $form
  *   The form array.
- * @param $form_state
- *    The form meta-data and values.
- * @param $fundraiser_fund_group  The fundraiser_fund_group to delete
+ * @param array $form_state
+ *   The form meta-data and values.
+ * @param object $fundraiser_fund_group
+ *   The fundraiser_fund_group to delete.
+ *
+ *  @see confirm_form()
  *
  * @return mixed
+ *   The confirmation form.
  */
 function fundraiser_fund_group_delete_form($form, &$form_state, $fundraiser_fund_group) {
   $form_state['fundraiser_fund_group'] = $fundraiser_fund_group;
@@ -300,10 +299,11 @@ function fundraiser_fund_group_delete_form($form, &$form_state, $fundraiser_fund
 }
 
 /**
- * Submit callback for fundraiser_fund_group_delete_form
- * @param $form
+ * Submit callback for fundraiser_fund_group_delete_form.
+ *
+ * @param array $form
  *   The form array.
- * @param $form_state
+ * @param array $form_state
  *    The form meta-data and values.
  */
 function fundraiser_fund_group_delete_form_submit($form, &$form_state) {
