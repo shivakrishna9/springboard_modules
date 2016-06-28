@@ -91,7 +91,7 @@ function fundraiser_fund_group_form_wrapper($fundraiser_fund_group) {
     drupal_get_path(
       'module',
       'fundraiser_fund_group'
-    ) . '/js/fundraiser_fund_group.js' => array('group' => JS_THEME, 'weight' => 99999),
+    ) . '/js/fund-groups.js' => array('group' => JS_THEME, 'weight' => 99999),
   );
   $node = node_load(arg(1));
   $build['content'] = array(
@@ -131,6 +131,8 @@ function fundraiser_fund_group_delete_form_wrapper($fundraiser_fund_group) {
  */
 function fundraiser_fund_group_edit_form($form, &$form_state, $fundraiser_fund_group, $node) {
 
+
+
   if(!empty($node)) {
     $form_state['storage']['node'] = $node;
   }
@@ -146,6 +148,10 @@ function fundraiser_fund_group_edit_form($form, &$form_state, $fundraiser_fund_g
   // Add the field related form elements.
   $form_state['fundraiser_fund_group'] = $fundraiser_fund_group;
   field_attach_form('fundraiser_fund_group', $fundraiser_fund_group, $form, $form_state);
+
+  form_load_include($form_state, 'inc', 'fundraiser_fund_group', 'includes/fundraiser_fund_group.price_override');
+  fundraiser_fund_group_price_override_form($form, $form_state, $fundraiser_fund_group, $node);
+
   $form['parent_node']['nid'] = array(
     '#type' => 'hidden',
     '#value' => $form_state['storage']['node']->nid,

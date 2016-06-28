@@ -8,31 +8,7 @@
 function fundraiser_designations_schema() {
   $schema = array();
 
-  $schema['fundraiser_designations_overrides'] = array(
-    'description' => 'Price overrides for funding designations',
-    'fields' => array(
-      'pid' => array(
-        'description' => 'product ID',
-        'type' => 'int',
-        'unsigned' => TRUE,
-        'not null' => TRUE,
-      ),
-      'status' => array(
-        'description' => 'status',
-        'type' => 'int',
-        'unsigned' => TRUE,
-        'not null' => TRUE,
-      ),
-      'price_set' => array(
-        'type' => 'blob',
-        'not null' => FALSE,
-        'size' => 'big',
-        'serialize' => TRUE,
-        'description' => 'A serialized array of additional data.',
-      ),
-    ),
-    'primary key' => array('pid'),
-  );
+
   return $schema;
 }
 

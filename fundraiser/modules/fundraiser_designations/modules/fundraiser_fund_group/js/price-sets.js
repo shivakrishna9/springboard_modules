@@ -1,8 +1,6 @@
 Drupal.behaviors.fundraiserBehavior = {
     attach: function(context, settings) { (function($) {
 
-
-
         // Auto-populate label fields when amount is entered.
         $('div[id$="ask-amounts"] input[id$="amount"]').blur(function() {
             var amount = $(this).val();
@@ -23,4 +21,4 @@ Drupal.behaviors.fundraiserBehavior = {
         });
 
     })(jQuery); }
-}
+};

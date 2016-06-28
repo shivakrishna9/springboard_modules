@@ -142,6 +142,32 @@ function fundraiser_fund_group_schema() {
     'primary key' => array('nid', 'pid'),
   );
 
+  $schema['fundraiser_fund_group_overrides'] = array(
+    'description' => 'Price overrides for funding designations',
+    'fields' => array(
+      'gid' => array(
+        'description' => 'group ID',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'status' => array(
+        'description' => 'status',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'price_set' => array(
+        'type' => 'blob',
+        'not null' => FALSE,
+        'size' => 'big',
+        'serialize' => TRUE,
+        'description' => 'A serialized array of additional data.',
+      ),
+    ),
+    'primary key' => array('gid'),
+  );
+
   return $schema;
 }
 
@@ -210,5 +236,13 @@ function fundraiser_fund_group_update_7006() {
   $schema = module_invoke('fundraiser_fund_group', 'schema');
   if (db_table_exists('fundraiser_fund_group_addon') == FALSE) {
     db_create_table('fundraiser_fund_group_addon', $schema['fundraiser_fund_group_addon']);
+  }
+}
+
+function fundraiser_fund_group_update_7007() {
+  $schema = module_invoke('fundraiser_fund_group', 'schema');
+  db_drop_table('fundraiser_designations_overrides');
+  if (db_table_exists('fundraiser_fund_group_overrides') == FALSE) {
+    db_create_table('fundraiser_fund_group_overrides', $schema['fundraiser_fund_group_overrides']);
   }
 }

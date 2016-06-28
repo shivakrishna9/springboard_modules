@@ -10,18 +10,17 @@
  * @param object $product
  *   A new or existing commerce product.
  */
-function fundraiser_designations_price_override_form(&$form, &$form_state, $product) {
+function fundraiser_fund_group_price_override_form(&$form, &$form_state, $group, $node) {
 
-  $data = !empty($product->fd_overrides) ? $product->fd_overrides : array();
-  $form['#attached']['js'][] = drupal_get_path('module', 'fundraiser_designations') . '/js/price-sets.js';
-
+  $data = !empty($group->fd_overrides) ? $group->fd_overrides : array();
+  $form['#attached']['js'][] = drupal_get_path('module', 'fundraiser_fund_group') . '/js/price-sets.js';
   $form['override_settings'] = array(
     '#type' => 'fieldset',
     '#title' => t('Override Ask Amounts'),
-    '#weight' => -4.96,
-    '#collapsible' => FALSE,
-    '#collapsed' => FALSE,
-    '#description' => t('Ask amounts set here will override the ask amounts set on the form, for this designation only.'),
+    '#weight' => 10,
+    '#collapsible' => TRUE,
+    '#collapsed' => empty($data['status']),
+    '#description' => t('Ask amounts set here will override the ask amounts set on the form, for this group only.'),
   );
 
   $form['override_settings']['statuses'] = array(
@@ -29,15 +28,26 @@ function fundraiser_designations_price_override_form(&$form, &$form_state, $prod
     '#title' => t('Enable'),
     '#weight' => -10,
     '#default_value' => isset($data['status']) ? $data['status'] : 0,
-    '#decription' => t('Set prices that will override the fund group defaults if this item is selected.'),
+    '#decription' => t('Set prices that will override the donation form defaults if this item is selected.'),
   );
 
-  $form['override_settings']['amount_wrapper'] = array(
+  fundraiser_fund_group_default_ask($form, $form_state, 'default', $data);
+  if (!empty($node->recurring_dual_ask_amounts)) {
+    fundraiser_fund_group_default_ask($form, $form_state, 'recurring', $data);
+  }
+
+  $form['#submit'][] = 'fundraiser_fund_group_override_form_submit';
+
+}
+
+function fundraiser_fund_group_default_ask(&$form, $form_state, $type, $data) {
+
+  $form['override_settings'][$type . '_amount_wrapper'] = array(
     '#type' => 'fieldset',
-    '#title' => t('Ask amounts'),
+    '#title' => ucfirst($type) . ' ' . t('Ask amounts'),
     '#collapsible' => TRUE,
     '#collapsed' => FALSE,
-    '#prefix' => '<div class="clear-block" id="ask-wrapper">',
+    '#prefix' => '<div class="clear-block" id="' . $type . '-ask-wrapper">',
     '#suffix' => '</div>',
     '#states' => array(
       'visible' => array(
@@ -47,10 +57,11 @@ function fundraiser_designations_price_override_form(&$form, &$form_state, $prod
     '#tree' => TRUE,
   );
 
-  $form['override_settings']['amount_wrapper']['donation_amounts'] = array(
-    '#prefix' => '<div id="ask-amounts">',
+  $form['override_settings'][$type . '_amount_wrapper']['donation_amounts'] = array(
+    '#prefix' => '<div id="' . $type . '-ask-amounts">',
     '#suffix' => '</div>',
     '#theme' => 'fundraiser_ask_amounts',
+    '#table_id' => $type . '-ask-amounts-table',
     '#tree' => TRUE,
   );
 
@@ -58,8 +69,8 @@ function fundraiser_designations_price_override_form(&$form, &$form_state, $prod
   $donation_amounts = array();
   $default_amount = NULL;
   // The last submission takes precedence.
-  if (isset($form_state['values']['amount_wrapper']['donation_amounts'])) {
-    foreach ($form_state['values']['amount_wrapper']['donation_amounts'] as $index => $values) {
+  if (isset($form_state['values'][$type . '_amount_wrapper']['donation_amounts'])) {
+    foreach ($form_state['values'][$type . '_amount_wrapper']['donation_amounts'] as $index => $values) {
       $donation_amounts[$values['weight']] = array($values['amount'], $values['label']);
     }
     ksort($donation_amounts);
@@ -68,20 +79,22 @@ function fundraiser_designations_price_override_form(&$form, &$form_state, $prod
     $price_set = [];
     if (!empty($data['price_set'])) {
       $amounts = unserialize($data['price_set']);
-      foreach ($amounts as $amount) {
-        $price_set[] = array($amount['amount'], $amount['label']);
-        if (!empty($amount['default_amount'])) {
-          $default_amount = $amount['amount'];
+      if (isset($amounts[$type])) {
+        foreach ($amounts[$type] as $amount) {
+          $price_set[] = array($amount['amount'], $amount['label']);
+          if (!empty($amount['default_amount'])) {
+            $default_amount = $amount['amount'];
+          }
         }
       }
     }
     $donation_amounts = $price_set;
-
     // If not there, then grab some defaults.
     if (count($donation_amounts) == 0) {
       $donation_amounts = array();
     }
   }
+
   // Default provide one spare blank for users to fill in.
   // If the button clicked was to add another,
   // this line will add an extra field as expected on reload.
@@ -90,12 +103,13 @@ function fundraiser_designations_price_override_form(&$form, &$form_state, $prod
   // (To be themed into table format.)
   $index = 0;
   foreach ($donation_amounts as $weight => $donation_amount) {
+
     // Filter out other|Other combinations.
     // We don't want to display those in this form.
     // And if we did, the value would fail validation (not a number).
     // There is probably a better way to track this, but for now this'll do.
     if (count($donation_amount) == 2 && $donation_amount[0] != 'other') {
-      $form['override_settings']['amount_wrapper']['donation_amounts'][$index] = _designation_ask_form($donation_amount, $default_amount, $weight);
+      $form['override_settings'][$type . '_amount_wrapper']['donation_amounts'][$index] = _designation_ask_form($donation_amount, $default_amount, $weight);
     }
     ++$index;
   }
@@ -103,33 +117,32 @@ function fundraiser_designations_price_override_form(&$form, &$form_state, $prod
   // AJAX fix: reorder donation amounts in $form_state['input'] by weight.
   // Corrects the display order of donation amounts when an ajax event is
   // triggered.
-  if (isset($form_state['input']['amount_wrapper']['donation_amounts'])) {
-    $old_donation_amounts = $form_state['input']['amount_wrapper']['donation_amounts'];
-    unset($form_state['input']['amount_wrapper']['donation_amounts']);
+  if (isset($form_state['input'][$type . '_amount_wrapper']['donation_amounts'])) {
+    $old_donation_amounts = $form_state['input'][$type . '_amount_wrapper']['donation_amounts'];
+    unset($form_state['input'][$type . '_amount_wrapper']['donation_amounts']);
     foreach ($old_donation_amounts as $donation_amount) {
       $new_donation_amounts[$donation_amount['weight']] = $donation_amount;
     }
     ksort($new_donation_amounts);
     foreach ($new_donation_amounts as $donation_amount) {
-      $form_state['input']['amount_wrapper']['donation_amounts'][] = $donation_amount;
+      $form_state['input'][$type . '_amount_wrapper']['donation_amounts'][] = $donation_amount;
     }
   }
 
-  $form['override_settings']['amount_wrapper']['amount_more'] = array(
+  $form['override_settings'][$type . '_amount_wrapper'][$type . '_amount_more'] = array(
     '#type' => 'button',
     '#submit' => array(),
-    '#validate' => array('fundraiser_designations_override_form_button_validate'),
-    '#value' => t('Add another'),
+    '#validate' => array('fundraiser_fund_group_override_form_button_validate'),
+    '#value' => t('Add ' . $type),
     '#description' => t('Click here to add more choices.'),
     '#ajax' => array(
-      'callback' => '_fundraiser_designations_settings_form_amounts',
-      'wrapper' => 'ask-amounts',
+      'callback' => '_fundraiser_fund_group_settings_' .$type .'_form_amounts',
+      'wrapper' => $type . '-ask-amounts',
       'method' => 'replace',
       'effect' => 'fade',
     ),
+    '#ask_type' => $type,
   );
-
-  $form['actions']['submit']['#submit'][] = 'fundraiser_designations_override_form_submit';
 
 }
 
@@ -141,14 +154,20 @@ function fundraiser_designations_price_override_form(&$form, &$form_state, $prod
  *
  * @return mixed
  */
-function _fundraiser_designations_settings_form_amounts(&$form, &$form_state) {
-  return $form['override_settings']['amount_wrapper']['donation_amounts'];
+function _fundraiser_fund_group_settings_default_form_amounts(&$form, &$form_state) {
+  $type = $form_state['triggering_element']['#ask_type'];
+  return $form['override_settings']['default_amount_wrapper']['donation_amounts'];
 }
+
+function _fundraiser_fund_group_settings_recurring_form_amounts(&$form, &$form_state) {
+  return $form['override_settings']['recurring_amount_wrapper']['donation_amounts'];
+}
+
 
 /**
  * Implements hook_form_validate().
  */
-function fundraiser_designations_override_form_button_validate(&$form, &$form_state) {
+function fundraiser_fund_group_override_form_button_validate(&$form, &$form_state) {
   if (form_get_errors()) {
     form_clear_error();
     drupal_get_messages('error');
@@ -158,30 +177,36 @@ function fundraiser_designations_override_form_button_validate(&$form, &$form_st
 /**
  * Implements hook_form_submit().
  */
-function fundraiser_designations_override_form_submit($form, &$form_state) {
+function fundraiser_fund_group_override_form_submit($form, &$form_state) {
 
   $values = $form_state['values'];
   $sets = [];
-  $values['pid'] = $form_state['commerce_product']->product_id;
+  $values['gid'] = $form_state['fundraiser_fund_group']->fundraiser_fund_group_id;
 
-  db_delete('fundraiser_designations_overrides')
-    ->condition('pid', $values['pid'], '=')
+  db_delete('fundraiser_fund_group_overrides')
+    ->condition('gid', $values['gid'], '=')
     ->execute();
 
-  foreach ($values['amount_wrapper']['donation_amounts'] as $amount) {
+  foreach ($values['default_amount_wrapper']['donation_amounts'] as $amount) {
     if (empty($amount['remove']) && !empty($amount['amount'])) {
-      $sets[] = $amount;
+      $sets['default'][] = $amount;
+    }
+  }
+
+  foreach ($values['recurring_amount_wrapper']['donation_amounts'] as $amount) {
+    if (empty($amount['remove']) && !empty($amount['amount'])) {
+      $sets['recurring'][] = $amount;
     }
   }
 
   $data = array(
-    'pid' => $values['pid'],
+    'gid' => $values['gid'],
     'status' => (int) $values['statuses'],
     'default_amt' => '',
     'price_set' => $sets,
   );
 
-  drupal_write_record('fundraiser_designations_overrides', $data);
+  drupal_write_record('fundraiser_fund_group_overrides', $data);
 
 }
 
@@ -223,5 +248,6 @@ function _designation_ask_form($amount_values, $default_amount, $weight) {
     '#delta' => 10,
     '#title_display' => 'invisible',
   );
+
   return $form;
 }

@@ -71,13 +71,12 @@ function _webform_render_designations($component, $value = NULL, $filter = TRUE)
   $node = isset($component['nid']) ? node_load($component['nid']) : NULL;
 
   // Get the one-time and/or recurring price sets to be displayed as radios.
-  $amounts = fundraiser_designations_get_display_amounts($node);
+  $amounts = fundraiser_designations_get_form_display_amounts($node);
 
   if (fundraiser_designations_is_designation_type($node->type) && !empty($node->designation_group_ids)) {
 
     // Load the fund group entities.
-    $groups = entity_load('fundraiser_fund_group', $node->designation_group_ids);
-
+    $groups = fundraiser_fund_group_load_multiple($node->designation_group_ids);
     // Arrange the groups by weight set by draggableviews.
     $groups_by_weight = [];
     foreach ($groups as $key => $group) {
@@ -87,6 +86,7 @@ function _webform_render_designations($component, $value = NULL, $filter = TRUE)
 
     // Build the groups for display.
     foreach ($groups_by_weight as $group) {
+
       $group_wrapper = entity_metadata_wrapper('fundraiser_fund_group', $group);
       $funds = $group_wrapper->field_ffg_fd_reference->value();
       $num = count($funds);
@@ -94,10 +94,10 @@ function _webform_render_designations($component, $value = NULL, $filter = TRUE)
       // Groups with multiple funds refenced get a select field, a "group of
       // one" fund doesn't.
       if ($num > 1) {
-        _webform_render_funds_multiple($element, $node, $group_wrapper, $funds, $amounts, $groups_by_weight);
+        _webform_render_funds_multiple($element, $node, $group, $funds, $amounts, $groups_by_weight);
       }
       elseif ($num == 1) {
-        _webform_render_funds_single($element, $node, $group_wrapper, $funds, $amounts, $groups_by_weight);
+        _webform_render_funds_single($element, $node, $group, $funds, $amounts, $groups_by_weight);
       }
     }
   }
@@ -120,7 +120,7 @@ function _webform_render_designations($component, $value = NULL, $filter = TRUE)
  * @param array $groups_by_weight
  *   The fund groups on this form.
  */
-function _webform_render_funds_multiple(&$element, $node, $group_wrapper, $funds, $amounts, $groups_by_weight) {
+function _webform_render_funds_multiple(&$element, $node, $group, $funds, $amounts, $groups_by_weight) {
 
   $options = array();
   $options[] = 'Select';
@@ -130,6 +130,7 @@ function _webform_render_funds_multiple(&$element, $node, $group_wrapper, $funds
     }
   }
 
+  $group_wrapper = entity_metadata_wrapper('fundraiser_fund_group', $group);
   $id = $group_wrapper->fundraiser_fund_group_id->value();
 
   $item = array();
@@ -148,7 +149,7 @@ function _webform_render_funds_multiple(&$element, $node, $group_wrapper, $funds
   $child['#title'] = '';
   $element[$id]['funds_select_' . $id] = $child;
 
-  _fundraiser_designations_build_child_elements($id, $element, $amounts, $group_wrapper);
+  _fundraiser_designations_build_child_elements($id, $element, $amounts, $group, $node);
 }
 
 /**
@@ -167,7 +168,8 @@ function _webform_render_funds_multiple(&$element, $node, $group_wrapper, $funds
  * @param array $groups_by_weight
  *   The fund groups on this form.
  */
-function _webform_render_funds_single(&$element, $node, $group_wrapper, $funds, $amounts, $groups_by_weight) {
+function _webform_render_funds_single(&$element, $node, $group, $funds, $amounts, $groups_by_weight) {
+  $group_wrapper = entity_metadata_wrapper('fundraiser_fund_group', $group);
   $id = $group_wrapper->fundraiser_fund_group_id->value();
   $item = array();
   $item['#id'] = 'group-item-' . $id;
@@ -187,7 +189,7 @@ function _webform_render_funds_single(&$element, $node, $group_wrapper, $funds, 
   $child['#title'] = check_plain($funds[0]->title);
   $element[$id]['funds_placeholder_' . $id] = $child;
 
-  _fundraiser_designations_build_child_elements($id, $element, $amounts, $group_wrapper);
+  _fundraiser_designations_build_child_elements($id, $element, $amounts, $group, $node);
 
 }
 
@@ -225,7 +227,11 @@ function _webform_render_funds_get_position($groups_by_weight, $id) {
  * @param array $amounts
  *   The one-time and/or recurring price sets.
  */
-function _fundraiser_designations_build_child_elements($id, &$element, $amounts, $group_wrapper) {
+function _fundraiser_designations_build_child_elements($id, &$element, $amounts, $group, $node) {
+  if (!empty($group->fd_overrides) && !empty($group->fd_overrides['status'])) {
+    $amounts = fundraiser_designations_get_group_display_amounts($group, $node);
+  }
+
   $donation_amounts = [];
   if (!empty($amounts['default'])) {
     foreach ($amounts['default'] as $key => $amount) {
@@ -253,7 +259,7 @@ function _fundraiser_designations_build_child_elements($id, &$element, $amounts,
     $child['#title'] = '';
     $element[$id]['recurring_amounts_' . $id] = $child;
   }
-
+  $group_wrapper = entity_metadata_wrapper('fundraiser_fund_group', $group);
   $other_amount = $group_wrapper->field_ffg_other_amt[0]->value();
   if (!empty($other_amount)) {
     $child = array();
@@ -406,18 +412,21 @@ function fundraiser_designations_selection_table($element) {
  * @return array
  *   An array of prices arranged by type.
  */
-function fundraiser_designations_get_display_amounts($node) {
+function fundraiser_designations_get_form_display_amounts($node) {
   $recurring = $node->recurring_setting;
   $recurring_amounts = $node->recurring_donation_amounts;
   $donation_amounts = $node->donation_amounts;
   $dual_ask = $node->recurring_dual_ask_amounts;
   $default_amount = $node->default_amount;
   $recurring_default_amount = $node->recurring_default_amount;
+  $dynamic = FALSE;
 
   if (module_exists('dynamic_gift_strings')) {
     if (isset($_SESSION['dynamic_gift_string_values'][$node->nid]) && is_array($_SESSION['dynamic_gift_string_values'][$node->nid])) {
+      $dynamic = TRUE;
       $gs = $_SESSION['dynamic_gift_string_values'][$node->nid];
       if (!empty($gs['amounts'])) {
+        $dynamic = TRUE;
         $gs_amounts = _dynamic_gift_strings_parse_amounts($gs['amounts'], $node->show_other_amount, $node->nid);
         if ($gs_amounts) {
           $donation_amounts = [];
@@ -447,6 +456,7 @@ function fundraiser_designations_get_display_amounts($node) {
   $price_sets = [];
   $price_sets['default_amount'] = $default_amount;
   $price_sets['recurring_default_amount'] = $recurring_default_amount;
+  $price_sets['dynamic'] = $dynamic;
 
   switch ($recurring) {
     case 'never':
@@ -465,6 +475,47 @@ function fundraiser_designations_get_display_amounts($node) {
 
     case 'always':
       $price_sets['recurring'] = $recurring_amounts;
+      break;
+  }
+
+  return $price_sets;
+}
+
+function fundraiser_designations_get_group_display_amounts($group, $node) {
+  $override_price_set = unserialize($group->fd_overrides['price_set']);
+  $price_sets = [];
+  $donation_amounts = [];
+  foreach ($override_price_set['default'] as $key => $price) {
+    if (!empty($price['default_amount'])) {
+      $price_sets['default_amount'] = $price['default_amount'];
+      $price_sets['recurring_default_amount'] = $price['default_amount'];
+    }
+    $donation_amounts[$key][] = $price['amount'];
+    $donation_amounts[$key][] = $price['label'];
+
+  }
+
+  $recurring = $node->recurring_setting;
+  $dual_ask = $node->recurring_dual_ask_amounts;
+
+
+  switch ($recurring) {
+    case 'never':
+      $price_sets['default'] = $donation_amounts;
+      break;
+
+    case 'user_choice':
+      if (!empty($dual_ask)) {
+        $price_sets['default'] = $donation_amounts;
+        $price_sets['recurring'] = $donation_amounts;
+      }
+      else {
+        $price_sets['default'] = $donation_amounts;
+      }
+      break;
+
+    case 'always':
+      $price_sets['recurring'] = $donation_amounts;
       break;
   }
 

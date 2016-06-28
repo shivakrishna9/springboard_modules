@@ -1120,8 +1120,8 @@ function fundraiser_designations_form_commerce_product_ui_product_form_alter(&$f
   if ($product->type == 'fundraiser_designation') {
     $form['commerce_price']['#access'] = FALSE;
     $form['commerce_price'][$form['commerce_price']['#language']][0]['amount']['#default_value'] = 0;
-    form_load_include($form_state, 'inc', 'fundraiser_designations', 'includes/fundraiser_designations.price_override');
-    fundraiser_designations_price_override_form($form, $form_state, $product);
+//    form_load_include($form_state, 'inc', 'fundraiser_designations', 'includes/fundraiser_designations.price_override');
+//    fundraiser_designations_price_override_form($form, $form_state, $product);
     $form['#attached']['css'][] = drupal_get_path('module', 'fundraiser_designations') . '/css/product-form.css';
   }
 }
@@ -1288,24 +1288,6 @@ function fundraiser_designations_node_load($nodes, $types) {
   }
 }
 
-/**
- * Implements hook_entity_load().
- *
- * Add the group entity references to designation form nodes.
- */
-function fundraiser_designations_entity_load($entities, $types) {
-  $designation_types = array('fundraiser_designation');
-  if ($types == 'commerce_product') {
-    $overrides = db_query('SELECT * FROM {fundraiser_designations_overrides}');
-    foreach ($overrides as $override) {
-      if (!empty($entities[$override->pid])) {
-        $entities[$override->pid]->fd_overrides['pid'] = $override->pid;
-        $entities[$override->pid]->fd_overrides['status'] = $override->status;
-        $entities[$override->pid]->fd_overrides['price_set'] = $override->price_set;
-      }
-    }
-  }
-}
 
 /**
  * Implements hook_node_insert().
