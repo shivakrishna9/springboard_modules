@@ -231,7 +231,6 @@ function _fundraiser_designations_build_child_elements($id, &$element, $amounts,
   if (!empty($group->fd_overrides) && !empty($group->fd_overrides['status'])) {
     $amounts = fundraiser_designations_get_group_display_amounts($group, $node);
   }
-
   $donation_amounts = [];
   if (!empty($amounts['default'])) {
     foreach ($amounts['default'] as $key => $amount) {
@@ -485,37 +484,45 @@ function fundraiser_designations_get_group_display_amounts($group, $node) {
   $override_price_set = unserialize($group->fd_overrides['price_set']);
   $price_sets = [];
   $donation_amounts = [];
+
   foreach ($override_price_set['default'] as $key => $price) {
     if (!empty($price['default_amount'])) {
-      $price_sets['default_amount'] = $price['default_amount'];
-      $price_sets['recurring_default_amount'] = $price['default_amount'];
+      $price_sets['default']['default_amount'] = $price['default_amount'];
     }
-    $donation_amounts[$key][] = $price['amount'];
-    $donation_amounts[$key][] = $price['label'];
+    $donation_amounts['default'][$key][] = $price['amount'];
+    $donation_amounts['default'][$key][] = $price['label'];
+
+  }
+
+  foreach ($override_price_set['recurring'] as $key => $price) {
+    if (!empty($price['default_amount'])) {
+      $price_sets['recurring']['recurring_default_amount'] = $price['default_amount'];
+    }
+    $donation_amounts['recurring'][$key][] = $price['amount'];
+    $donation_amounts['recurring'][$key][] = $price['label'];
 
   }
 
   $recurring = $node->recurring_setting;
   $dual_ask = $node->recurring_dual_ask_amounts;
 
-
   switch ($recurring) {
     case 'never':
-      $price_sets['default'] = $donation_amounts;
+      $price_sets['default'] = $donation_amounts['default'];
       break;
 
     case 'user_choice':
       if (!empty($dual_ask)) {
-        $price_sets['default'] = $donation_amounts;
-        $price_sets['recurring'] = $donation_amounts;
+        $price_sets['default'] = $donation_amounts['default'];
+        $price_sets['recurring'] = $donation_amounts['recurring'];
       }
       else {
-        $price_sets['default'] = $donation_amounts;
+        $price_sets['default'] = $donation_amounts['default'];
       }
       break;
 
     case 'always':
-      $price_sets['recurring'] = $donation_amounts;
+      $price_sets['recurring'] = $donation_amounts['recurring'];
       break;
   }
 

@@ -31,8 +31,10 @@ function fundraiser_fund_group_price_override_form(&$form, &$form_state, $group,
     '#decription' => t('Set prices that will override the donation form defaults if this item is selected.'),
   );
 
-  fundraiser_fund_group_default_ask($form, $form_state, 'default', $data);
-  if (!empty($node->recurring_dual_ask_amounts)) {
+  if ($node->recurring_setting == 'user_choice' || $node->recurring_setting == 'never') {
+    fundraiser_fund_group_default_ask($form, $form_state, 'default', $data);
+  }
+  if ((!empty($node->recurring_dual_ask_amounts) && $node->recurring_setting == 'user_choice') || $node->recurring_setting == 'always') {
     fundraiser_fund_group_default_ask($form, $form_state, 'recurring', $data);
   }
 
