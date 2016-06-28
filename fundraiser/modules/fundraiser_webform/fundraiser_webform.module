@@ -1378,8 +1378,15 @@ function fundraiser_webform_form_webform_configure_form_alter(&$form, &$form_sta
 
 function fundraiser_webform_submit_text_submit(&$form, &$form_state) {
   if (isset($form_state['values']['submit_description']) || isset($form_state['values']['sitewide_submit'])) {
-    $fields = array('nid' => $form['#node']->nid, 'message' => isset($form_state['values']['submit_description']) ? $form_state['values']['submit_description'] : '', 'sitewide_submit' => $form_state['values']['sitewide_submit']);
-    $nid = db_query('SELECT nid FROM {fundraiser_webform_messages} f WHERE f.nid = :nid', array(':nid' => $form['#node']->nid))->fetchField();
+    $fields = array(
+      'nid' => $form['#node']->nid,
+      'message' => isset($form_state['values']['submit_description']) ? $form_state['values']['submit_description'] : '',
+      'sitewide_submit' => $form_state['values']['sitewide_submit']
+    );
+    $nid = db_query("SELECT nid FROM {fundraiser_webform_messages} f " .
+      "WHERE f.nid = :nid", 
+      array(':nid' => $form['#node']->nid))
+      ->fetchField();
     if (!$nid) {
       db_insert('fundraiser_webform_messages')->fields($fields)->execute();
     }
