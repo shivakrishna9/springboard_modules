@@ -27,12 +27,24 @@ $plugin = array(
 function springboard_p2p_fboauth_login_render($subtype, $conf, $panel_args, $context) {
   if (module_exists('fboauth')) {
     $campaign_id = springboard_p2p_get_campaign_id_from_request();
+    $campaign_name = isset($_GET['campaign_name']) ? filter_xss($_GET['campaign_name']) : '';
+
+    $url = 'p2p/fb?p2p_cid=' . $campaign_id;
+    if (isset($_GET['campaign_name'])) {
+      $url .= '&campaign_name=' . filter_xss($_GET['campaign_name']);
+    }
+    if (isset($_GET['campaign_url'])) {
+      $url .= '&campaign_url=' . filter_xss($_GET['campaign_url']);
+    }
+    if (isset($_GET['campaign_goal'])) {
+      $url .= '&campaign_goal=' . filter_xss($_GET['campaign_goal']);
+    }
 
     $output = array();
 
     // Wrap the button using an output array.
     $output[] = '<div class="fb-oauth-wrapper">';
-    $output[] = fboauth_action_display('connect', 'p2p/fb?p2p_cid=' . $campaign_id);
+    $output[] = fboauth_action_display('connect', $url);
     $output[] = '</div>';
 
     // Build the content type block.
