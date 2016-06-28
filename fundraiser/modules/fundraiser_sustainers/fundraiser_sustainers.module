@@ -498,6 +498,14 @@ function fundraiser_sustainers_salesforce_genmap_map_fields_alter(&$fields, $con
       $fields['Is_Recurring_Donation__c'] = TRUE;
     }
 
+    // Add the card-on-file token if available.
+    if (module_exists('fundraiser_commerce')) {
+      $cardonfile_data = _fundraiser_commerce_donation_cardonfile_card($donation, FALSE);
+      if (!empty($cardonfile_data)) {
+        $fields['Card_On_File_Token__c'] = $cardonfile_data->remote_id;
+      }
+    }
+
     // Add additional values for where not offsite recurring.
     if (!$offsite_recurring) {
       if (isset($map->field_map['salesforce_donation_map']['probability'])) {
