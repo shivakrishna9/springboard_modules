@@ -34,8 +34,7 @@ class FundGroupUIController extends EntityDefaultUIController {
       );
     }
 
-    // Loading and editing fundraiser_fund_group entities.
-    $items[$this->path . '/fundraiser_fund_group/' . $wildcard] = array(
+    $items[$this->path . '/fundraiser_fund_group/' . $wildcard . '/edit'] = array(
       'page callback' => 'fundraiser_fund_group_form_wrapper',
       'page arguments' => array($id_count + 1),
       'access callback' => 'fundraiser_fund_group_access',
@@ -43,10 +42,6 @@ class FundGroupUIController extends EntityDefaultUIController {
       'weight' => 0,
       'file' => 'fundraiser_fund_group.admin.inc',
       'file path' => drupal_get_path('module', $this->entityInfo['module']),
-      'type' => MENU_LOCAL_TASK,
-    );
-    $items[$this->path . '/fundraiser_fund_group/' . $wildcard . '/edit'] = array(
-      'title' => 'Edit',
       'type' => MENU_DEFAULT_LOCAL_TASK,
       'weight' => -10,
     );
@@ -56,7 +51,7 @@ class FundGroupUIController extends EntityDefaultUIController {
       'page arguments' => array($id_count + 1),
       'access callback' => 'fundraiser_fund_group_access',
       'access arguments' => array('delete', $id_count + 1),
-      'type' => MENU_LOCAL_TASK,
+      'type' => MENU_DEFAULT_LOCAL_TASK,
       'context' => MENU_CONTEXT_INLINE,
       'weight' => 10,
       'file' => 'fundraiser_fund_group.admin.inc',
@@ -283,7 +278,7 @@ function fundraiser_fund_group_edit_form_submit(&$form, &$form_state) {
  */
 function fundraiser_fund_group_form_submit_delete(&$form, &$form_state) {
   $nid =  $form_state['values']['nid'];
-  $form_state['redirect'] = 'node/' . $nid . '/messages/fundraiser_fund_group/' . $form_state['fundraiser_fund_group']->fundraiser_fund_group_id . '/delete';
+  $form_state['redirect'] = 'node/' . $nid . '/designations/fundraiser_fund_group/' . $form_state['fundraiser_fund_group']->fundraiser_fund_group_id . '/delete';
 }
 
 
@@ -304,18 +299,17 @@ function fundraiser_fund_group_delete_form($form, &$form_state, $fundraiser_fund
   $form_state['fundraiser_fund_group'] = $fundraiser_fund_group;
   $wrapper = entity_metadata_wrapper('fundraiser_fund_group', $fundraiser_fund_group);
   $nid = $wrapper->field_ffg_form_id->value()->nid;
-
   $form['#submit'][] = 'fundraiser_fund_group_delete_form_submit';
 
   $form = confirm_form($form,
-    t('Are you sure you want to delete fundraiser_fund_group %name?', array('%name' => $fundraiser_fund_group->name)),
-    'node/' . $nid . '/messages/fundraiser_fund_group',
-    '<p>' . t('This action cannot be undone.') . '</p>',
+    '',
+    'node/' . $nid . '/designations/fundraiser_fund_group',
+    t('Are you sure you want to delete the fund group %name?', array('%name' => $fundraiser_fund_group->name)),
     t('Delete'),
     t('Cancel'),
     'confirm'
   );
-  
+
   return $form;
 }
 
