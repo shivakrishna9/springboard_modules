@@ -268,7 +268,18 @@ function springboard_admin_admin_menu_items() {
     '_children' => array(),
   );
 
-  if(module_exists('salesforce_mapping')) {
+  if (user_access('administer springboard')) {
+    $items['admin/springboard/settings']['_children']['admin/springboard/settings/config']['_children']['admin/springboard/settings/springboard'] = array(
+      'link_path' => 'admin/springboard/settings/springboard',
+      'link_title' => 'Springboard Admin Settings',
+      'menu_name' => 'springboard_admin_menu',
+      'expanded' => 0,
+      'customized' => 1,
+      'weight' => -2,
+    );
+  }
+
+  if (module_exists('salesforce_mapping')) {
     // Settings > Settings > Fieldmaps.
     $items['admin/springboard/settings']['_children']['admin/springboard/settings/config']['_children']['admin/structure/salesforce/mappings'] = array(
       'link_path' => 'admin/structure/salesforce/mappings',
