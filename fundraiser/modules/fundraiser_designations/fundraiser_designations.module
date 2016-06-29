@@ -1182,6 +1182,10 @@ function fundraiser_designations_theme() {
       'render element' => 'element',
       'file' => 'components/addon.inc',
     ),
+    'fundraiser_designations_line_item_token' => array(
+      'variables' => array('line_items' => NULL),
+      'file' => 'fundraiser_designations.tokens.inc',
+    ),
   );
   return $theme;
 }
