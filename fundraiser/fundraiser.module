@@ -1290,6 +1290,7 @@ function _fundraiser_other_amount_field_create($fundraiser, $field) {
   // Update the min with fundraiser's min.
   $currency = fundraiser_get_currency_from_node($fundraiser);
   $field['#extra']['description'] = $field['#node_extra_settings']['description'] =
+    t('Minimum payment') . ' ' .
     commerce_currency_format(number_format($fundraiser->minimum_donation_amount, $currency['decimals']), $currency['code'], NULL, FALSE);  
 
   // Return the field to be created.
