@@ -7,7 +7,7 @@
  *   The form.
  * @param array $form_state
  *   The form state.
- * @param object $product
+ * @param object $group
  *   A new or existing commerce product.
  */
 function fundraiser_fund_group_price_override_form(&$form, $form_state, $group, $node) {
@@ -46,7 +46,7 @@ function fundraiser_fund_group_default_ask(&$form, $form_state, $type, $data) {
 
   $form['override_settings'][$type . '_amount_wrapper'] = array(
     '#type' => 'fieldset',
-    '#title' => ucfirst($type) . ' ' . t('Ask amounts'),
+    '#title' => t('@type Ask amounts', array('@type' => ucfirst($type))),
     '#collapsible' => TRUE,
     '#collapsed' => FALSE,
     '#prefix' => '<div class="clear-block" id="' . $type . '-ask-wrapper">',
@@ -102,7 +102,7 @@ function fundraiser_fund_group_default_ask(&$form, $form_state, $type, $data) {
   // this line will add an extra field as expected on reload.
   $donation_amounts[] = array('', '');
   // Generate a form set for each existing amount.
-  // (To be themed into table format.)
+  // (To be themed into table format).
   $index = 0;
   foreach ($donation_amounts as $weight => $donation_amount) {
 
@@ -135,10 +135,10 @@ function fundraiser_fund_group_default_ask(&$form, $form_state, $type, $data) {
     '#type' => 'button',
     '#submit' => array(),
     '#validate' => array('fundraiser_fund_group_override_form_button_validate'),
-    '#value' => t('Add ' . $type),
+    '#value' => t('Add @type', array('@type' => $type)),
     '#description' => t('Click here to add more choices.'),
     '#ajax' => array(
-      'callback' => '_fundraiser_fund_group_settings_' .$type .'_form_amounts',
+      'callback' => '_fundraiser_fund_group_settings_' . $type . '_form_amounts',
       'wrapper' => $type . '-ask-amounts',
       'method' => 'replace',
       'effect' => 'fade',
@@ -150,16 +150,14 @@ function fundraiser_fund_group_default_ask(&$form, $form_state, $type, $data) {
 
 /**
  * Ajax replacement.
- *
- * @param array $form
- * @param array $form_state
- *
- * @return mixed
  */
 function _fundraiser_fund_group_settings_default_form_amounts(&$form, &$form_state) {
   return $form['override_settings']['default_amount_wrapper']['donation_amounts'];
 }
 
+/**
+ * Ajax replacement.
+ */
 function _fundraiser_fund_group_settings_recurring_form_amounts(&$form, &$form_state) {
   return $form['override_settings']['recurring_amount_wrapper']['donation_amounts'];
 }
