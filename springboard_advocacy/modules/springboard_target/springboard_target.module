@@ -13,28 +13,62 @@
 function springboard_target_menu() {
   $items = array();
 
-  $items['admin/springboard/advocacy/targets/custom-targets'] = array(
+  $items['admin/springboard/advocacy/targets'] = array(
     'title' => 'Advocacy: Target Center',
+    'page arguments' => array('target-center'),
+    'access arguments' => array('view targets'),
+  ) + springboard_advocacy_menu_common(FALSE, TRUE);
+
+  $items['admin/springboard/advocacy/targets/custom-targets'] = array(
+    'title' => 'Advocacy: Target Center: Custom Targets',
     'page arguments' => array('custom-targets'),
     'access arguments' => array('view targets'),
   ) + springboard_advocacy_menu_common(FALSE, TRUE);
 
   $items['admin/springboard/advocacy/targets/custom-targets/add'] = array(
-    'title' => 'Advocacy: Target Center: Add',
+    'title' => 'Advocacy: Target Center: Add Custom Target',
     'access arguments' => array('create targets'),
     'page arguments' => array('add-custom-targets'),
   ) + springboard_advocacy_menu_common(FALSE, TRUE);
 
   $items['admin/springboard/advocacy/targets/custom-targets/%/edit'] = array(
-    'title' => 'Advocacy: Target Center: Edit',
+    'title' => 'Advocacy: Target Center: Edit Custom Target',
     'access arguments' => array('edit targets'),
     'page arguments' => array('edit-custom-targets', 5),
   ) + springboard_advocacy_menu_common(FALSE, TRUE);
 
   $items['admin/springboard/advocacy/targets/custom-targets/%/delete'] = array(
-    'title' => 'Advocacy: Target Center: Delete',
+    'title' => 'Advocacy: Target Center: Delete Custom Target',
     'access arguments' => array('delete targets'),
     'page arguments' => array('springboard_target_delete', 5),
+    'page callback' => 'drupal_get_form',
+    'file' => 'springboard_target.custom_targets.inc',
+    'file path' => drupal_get_path('module', 'springboard_target') . '/includes',
+    'type' => MENU_CALLBACK,
+  );
+
+  $items['admin/springboard/advocacy/targets/custom-groups'] = array(
+    'title' => 'Advocacy: Target Center: Custom Groups',
+    'page arguments' => array('custom-groups'),
+    'access arguments' => array('view targets'),
+  ) + springboard_advocacy_menu_common(FALSE, TRUE);
+
+  $items['admin/springboard/advocacy/targets/custom-groups/add'] = array(
+    'title' => 'Advocacy: Target Center: Add Custom Group',
+    'access arguments' => array('create groups'),
+    'page arguments' => array('add-custom-groups'),
+  ) + springboard_advocacy_menu_common(FALSE, TRUE);
+
+  $items['admin/springboard/advocacy/targets/custom-groups/%/edit'] = array(
+    'title' => 'Advocacy: Target Center: Edit Custom Group',
+    'access arguments' => array('edit groups'),
+    'page arguments' => array('edit-custom-groups', 5),
+  ) + springboard_advocacy_menu_common(FALSE, TRUE);
+
+  $items['admin/springboard/advocacy/targets/custom-groups/%/delete'] = array(
+    'title' => 'Advocacy: Target Center: Delete Custom Group',
+    'access arguments' => array('delete groups'),
+    'page arguments' => array('springboard_group_delete', 5),
     'page callback' => 'drupal_get_form',
     'file' => 'springboard_target.custom_targets.inc',
     'file path' => drupal_get_path('module', 'springboard_target') . '/includes',
@@ -66,9 +100,29 @@ function springboard_target_permission() {
       'title' => t('Delete Targets'),
       'description' => t('Custom targets.'),
     ),
+    'view groups' => array(
+      'title' => t('View Groups'),
+      'description' => t('View Custom groups.'),
+    ),
+    'create groups' => array(
+      'title' => t('Create Groups'),
+      'description' => t('Create Custom groups.'),
+    ),
+    'edit groups' => array(
+      'title' => t('Edit Groups'),
+      'description' => t('Edit Custom my groups.'),
+    ),
+    'delete groups' => array(
+      'title' => t('Delete Groups'),
+      'description' => t('Custom groups.'),
+    ),
     'add target to action' => array(
       'title' => t('Add target to action.'),
       'description' => t('Add target to action.'),
+    ),
+    'add group to action' => array(
+      'title' => t('Add group to action.'),
+      'description' => t('Add group to action.'),
     ),
   );
 }
@@ -82,6 +136,16 @@ function springboard_target_user_can_access_targets() {
     || user_access('create targets')
     || user_access('edit targets')
     || user_access('delete targets');
+}
+
+/**
+ * Determines if a user can access any group management features.
+ */
+function springboard_target_user_can_access_groups() {
+  return user_access('view groups')
+  || user_access('create groups')
+  || user_access('edit groups')
+  || user_access('delete groups');
 }
 
 
@@ -107,6 +171,16 @@ function springboard_target_views_pre_render(&$view) {
       $query = count($view->build_info['springboard_advocacy_search']);
       if ($result == 0 && $query > 1) {
         $view->empty['area']->options['content'] = t('No custom targets match your search.');
+      }
+    }
+  }
+  elseif ($view->name == 'sba_custom_targets' && $view->current_display == 'block_2') {
+    // Contextual update the no results message.
+    if (isset($view->empty['area'])) {
+      $result = count($view->result);
+      $query = count($view->build_info['springboard_advocacy_search']);
+      if ($result == 0 && $query > 1) {
+        $view->empty['area']->options['content'] = t('No custom groups match your search.');
       }
     }
   }

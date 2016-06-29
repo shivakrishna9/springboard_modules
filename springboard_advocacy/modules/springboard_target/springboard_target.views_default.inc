@@ -11,7 +11,7 @@ function springboard_target_views_default_views() {
 
   $view = new view();
   $view->name = 'sba_custom_targets';
-  $view->description = 'Advocacy Custom Target Landing page and search';
+  $view->description = 'Advocacy Custom Target and Custom Groups lists and search.';
   $view->tag = 'Advocacy';
   $view->base_table = 'advocacy';
   $view->human_name = 'SBA Custom Targets';
@@ -334,8 +334,9 @@ function springboard_target_views_default_views() {
     ),
   );
 
-  /* Display: Landing page block */
-  $handler = $view->new_display('block', 'Landing page block', 'block_1');
+  /* Display: Custom Targets block */
+  $handler = $view->new_display('block', 'Custom Targets block', 'block_1');
+  $handler->display->display_options['defaults']['title'] = TRUE;
   $handler->display->display_options['defaults']['use_ajax'] = FALSE;
   $handler->display->display_options['use_ajax'] = TRUE;
   $handler->display->display_options['defaults']['exposed_form'] = FALSE;
@@ -547,6 +548,105 @@ function springboard_target_views_default_views() {
     5 => 0,
   );
   $handler->display->display_options['filters']['search_state']['expose']['reduce'] = TRUE;
+
+  /* Display: Custom Groups block */
+  $handler = $view->new_display('block', 'Custom Groups block', 'block_2');
+  $handler->display->display_options['defaults']['title'] = FALSE;
+  $handler->display->display_options['title'] = 'Custom Groups';
+  $handler->display->display_options['defaults']['use_ajax'] = FALSE;
+  $handler->display->display_options['use_ajax'] = TRUE;
+  $handler->display->display_options['defaults']['exposed_form'] = FALSE;
+  $handler->display->display_options['exposed_form']['type'] = 'basic';
+  $handler->display->display_options['defaults']['empty'] = FALSE;
+  /* No results behavior: Global: Text area */
+  $handler->display->display_options['empty']['area']['id'] = 'area';
+  $handler->display->display_options['empty']['area']['table'] = 'views';
+  $handler->display->display_options['empty']['area']['field'] = 'area';
+  $handler->display->display_options['empty']['area']['label'] = 'No results';
+  $handler->display->display_options['empty']['area']['empty'] = TRUE;
+  $handler->display->display_options['empty']['area']['content'] = '<h4>No custom groups have been created yet. </h4>
+<p>You can <a href="/springboard/advocacy/targets/custom-groups/add">create one</a>.</p>';
+  $handler->display->display_options['empty']['area']['format'] = 'full_html';
+  $handler->display->display_options['defaults']['fields'] = FALSE;
+  /* Field: Advocacy: Salutation */
+  $handler->display->display_options['fields']['salutation']['id'] = 'salutation';
+  $handler->display->display_options['fields']['salutation']['table'] = 'advocacy';
+  $handler->display->display_options['fields']['salutation']['field'] = 'salutation';
+  /* Field: Advocacy: First Name */
+  $handler->display->display_options['fields']['first_name']['id'] = 'first_name';
+  $handler->display->display_options['fields']['first_name']['table'] = 'advocacy';
+  $handler->display->display_options['fields']['first_name']['field'] = 'first_name';
+  /* Field: Advocacy: Last Name */
+  $handler->display->display_options['fields']['last_name']['id'] = 'last_name';
+  $handler->display->display_options['fields']['last_name']['table'] = 'advocacy';
+  $handler->display->display_options['fields']['last_name']['field'] = 'last_name';
+  $handler->display->display_options['fields']['last_name']['label'] = 'Name';
+  /* Field: Advocacy: Organization */
+  $handler->display->display_options['fields']['organization']['id'] = 'organization';
+  $handler->display->display_options['fields']['organization']['table'] = 'advocacy';
+  $handler->display->display_options['fields']['organization']['field'] = 'organization';
+  $handler->display->display_options['fields']['organization']['label'] = 'Organization/Affiliation';
+  /* Field: Advocacy: Organization title */
+  $handler->display->display_options['fields']['title']['id'] = 'title';
+  $handler->display->display_options['fields']['title']['table'] = 'advocacy';
+  $handler->display->display_options['fields']['title']['field'] = 'title';
+  $handler->display->display_options['fields']['title']['label'] = 'Title/Role';
+  /* Field: Advocacy: Target Actions */
+  $handler->display->display_options['fields']['target_actions']['id'] = 'target_actions';
+  $handler->display->display_options['fields']['target_actions']['table'] = 'advocacy';
+  $handler->display->display_options['fields']['target_actions']['field'] = 'target_actions';
+  $handler->display->display_options['fields']['target_actions']['label'] = 'Actions';
+  $handler->display->display_options['fields']['target_actions']['which_links'] = array(
+    'edit' => 'edit',
+    'delete' => 'delete',
+    'view' => 0,
+  );
+  $handler->display->display_options['defaults']['filter_groups'] = FALSE;
+  $handler->display->display_options['defaults']['filters'] = FALSE;
+  /* Filter criterion: Advocacy: Search Multiple Target Fields by Keywords */
+  $handler->display->display_options['filters']['combine']['id'] = 'combine';
+  $handler->display->display_options['filters']['combine']['table'] = 'advocacy';
+  $handler->display->display_options['filters']['combine']['field'] = 'combine';
+  $handler->display->display_options['filters']['combine']['group'] = 1;
+  $handler->display->display_options['filters']['combine']['exposed'] = TRUE;
+  $handler->display->display_options['filters']['combine']['expose']['operator_id'] = 'combine_op';
+  $handler->display->display_options['filters']['combine']['expose']['label'] = 'Name or Organization Name';
+  $handler->display->display_options['filters']['combine']['expose']['operator'] = 'combine_op';
+  $handler->display->display_options['filters']['combine']['expose']['identifier'] = 'combine';
+  $handler->display->display_options['filters']['combine']['expose']['remember_roles'] = array(
+    2 => '2',
+    1 => 0,
+    3 => 0,
+    4 => 0,
+    5 => 0,
+  );
+  // @TODO update keyword search filter once the Group entity is created.
+  $handler->display->display_options['filters']['combine']['fields'] = array(
+    'first_name' => 'first_name',
+    'last_name' => 'last_name',
+    'organization' => 'organization',
+  );
+  /* Filter criterion: Advocacy: Search By Type */
+  // @TODO update search by type filter once the Group entity is created.
+  $handler->display->display_options['filters']['search_class_name']['id'] = 'search_class_name';
+  $handler->display->display_options['filters']['search_class_name']['table'] = 'advocacy';
+  $handler->display->display_options['filters']['search_class_name']['field'] = 'search_class_name';
+  $handler->display->display_options['filters']['search_class_name']['value'] = array(
+    'Target' => 'Target',
+  );
+  $handler->display->display_options['filters']['search_class_name']['group'] = 1;
+  $handler->display->display_options['filters']['search_class_name']['expose']['operator_id'] = 'search_class_name_op';
+  $handler->display->display_options['filters']['search_class_name']['expose']['label'] = 'Search By Type';
+  $handler->display->display_options['filters']['search_class_name']['expose']['operator'] = 'search_class_name_op';
+  $handler->display->display_options['filters']['search_class_name']['expose']['identifier'] = 'search_class_name';
+  $handler->display->display_options['filters']['search_class_name']['expose']['multiple'] = TRUE;
+  $handler->display->display_options['filters']['search_class_name']['expose']['remember_roles'] = array(
+    2 => '2',
+    1 => 0,
+    3 => 0,
+    4 => 0,
+    5 => 0,
+  );
 
   $views[$view->name] = $view;
 
