@@ -289,20 +289,30 @@ function fundraiser_fund_group_draggable_save($arg, $fundraiser_fund_group_id, $
 /**
  * Implements hook_node_delete().
  *
- * When an action node is deleted, delete its groups.
+ * When an designation node is deleted, delete its groups and extras.
  */
 function fundraiser_fund_group_node_delete($node) {
   if (fundraiser_designations_is_designation_type($node->type)) {
+
+    db_delete('fundraiser_fund_group_addon')
+      ->condition('nid', $node->nid, '=')
+      ->execute();
+
     $fundraiser_fund_group_ids = db_query(
       'SELECT entity_id FROM {field_data_field_ffg_form_id} a WHERE a.field_ffg_form_id_target_id = :nid',
       array(':nid' => $node->nid))
       ->fetchAllAssoc('entity_id');
 
     if (!empty($fundraiser_fund_group_ids)) {
+
       fundraiser_fund_group_delete_multiple(array_keys($fundraiser_fund_group_ids));
 
       db_delete('draggableviews_structure')
         ->condition('entity_id', array_keys($fundraiser_fund_group_ids), 'IN')
+        ->execute();
+
+      db_delete('fundraiser_fund_group_overrides')
+        ->condition('gid', array_keys($fundraiser_fund_group_ids), 'IN')
         ->execute();
     }
   }
@@ -500,6 +510,10 @@ function fundraiser_fund_group_delete(FundGroup $fundraiser_fund_group) {
   // Cleanup draggableviews table.
   db_delete('draggableviews_structure')
     ->condition('entity_id', $fundraiser_fund_group->fundraiser_fund_group_id)
+    ->execute();
+  // Clean up price overrides.
+  db_delete('fundraiser_fund_group_overrides')
+    ->condition('gid', $fundraiser_fund_group->fundraiser_fund_group_id)
     ->execute();
 }
 
