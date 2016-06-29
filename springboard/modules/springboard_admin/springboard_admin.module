@@ -1072,6 +1072,19 @@ function springboard_admin_springboard_admin_alias_patterns() {
         'replacement' => 'springboard/user/$1$2',
       ),
     ),
+
+    // User creation page
+    'admin/people/create' => array(
+      'path' => array(
+        'regex' => '|^/admin/people/create$|',
+        'replacement' => 'admin/people/create',
+      ),
+      'alias' => array(
+        'regex' => '|^springboard/settings/administrators/add$|',
+        'replacement' => 'springboard/settings/administrators/add',
+      ),
+    ),
+
     // Donation reports.
     'admin/reports/salesforce/donations' => array(
       'path' => array(
