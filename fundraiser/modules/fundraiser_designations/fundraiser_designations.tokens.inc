@@ -57,5 +57,5 @@ function theme_fundraiser_designations_line_item_token($vars) {
   foreach ($vars['line_items'] as $name => $item) {
     $list[] = $name . ' (' . (int) $item['quantity'] . ') ' . $symbol . commerce_currency_amount_to_decimal($item['quantity'] * $item['amount']['amount'], $item['amount']['currency_code']);
   }
-  return theme('item_list', array('items' => $list, 'title' => 't(Designated Funds'));
+  return theme('item_list', array('items' => $list, 'title' => t('Designated Funds')));
 }
