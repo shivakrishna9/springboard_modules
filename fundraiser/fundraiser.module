@@ -1286,9 +1286,11 @@ function _fundraiser_other_amount_field_create($fundraiser, $field) {
   if (!$fundraiser->show_other_amount) {
     return FALSE; // FALSE as opposed to empty, means we delete this field if it exists.
   }
+
   // Update the min with fundraiser's min.
+  $currency = fundraiser_get_currency_from_node($fundraiser);
   $field['#extra']['description'] = $field['#node_extra_settings']['description'] =
-    'Minimum payment [currency-symbol]' . number_format($fundraiser->minimum_donation_amount, 2) . '.';
+    commerce_currency_format(number_format($fundraiser->minimum_donation_amount, $currency['decimals']), $currency['code'], NULL, FALSE);  
 
   // Return the field to be created.
   return $field;
