@@ -204,6 +204,8 @@ function springboard_dw_queue_legacy_donation($records, $operation_details, $idl
   foreach ($records as $record) {
     $donation = fundraiser_donation_get_donation($record->id);
     // Massage values into format springboard_dw_map_donation_item() expects.
+    $donation->donation['ms'] = $donation->submission_data['ms'];
+    $donation->donation['cid'] = $donation->submission_data['cid'];
     $donation->donation['referrer'] = $donation->submission_data['referrer'];
     $donation->donation['initial_referrer'] = $donation->submission_data['initial_referrer'];
     $donation->donation['payment_method'] = $donation->submission_data['payment_method'];
