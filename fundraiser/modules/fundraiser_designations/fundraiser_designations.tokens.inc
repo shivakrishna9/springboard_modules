@@ -58,9 +58,17 @@ function theme_fundraiser_designations_line_item_token($vars) {
   $symbol = $vars['donation']->donation['currency']['symbol'];
   foreach ($vars['line_items'] as $name => $item) {
     if ($item['pid'] == $vars['donation']->node->fd_addon['pid']) {
-      $name = t('One time add-on donation - @name', array('@name' => $name));
+      $name = t('One time add-on donation - !name', array('!name' => $name));
     }
-    $list[] = $name . ': quantity: ' . (int) $item['quantity'] . ', total: ' . $symbol . commerce_currency_amount_to_decimal($item['quantity'] * $item['amount']['amount'], $item['amount']['currency_code']) . '.';
+    $amount = $symbol . commerce_currency_amount_to_decimal($item['quantity'] * $item['amount']['amount'], $item['amount']['currency_code']);
+    $li = t('!name: quantity: !quantity, total: @amount.',
+      array(
+        '!name' => $name,
+        '!quantity' => (int) $item['quantity'],
+        '@amount' => $amount,
+      )
+    );
+    $list[] = check_markup($li);
   }
   return theme('item_list', array('items' => $list, 'title' => t('Designated Funds')));
 }
