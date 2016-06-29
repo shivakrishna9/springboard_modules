@@ -39,6 +39,8 @@ function fundraiser_fund_group_price_override_form(&$form, $form_state, $group, 
   }
 
   $form['actions']['submit']['#submit'][] = 'fundraiser_fund_group_override_form_submit';
+  $form['#validate'][] = 'fundraiser_fund_group_override_form_validate';
+
 
 }
 
@@ -171,6 +173,51 @@ function fundraiser_fund_group_override_form_button_validate(&$form, &$form_stat
     form_clear_error();
     drupal_get_messages('error');
   }
+}
+
+/**
+ * Implements hook_form_validate().
+ */
+function fundraiser_fund_group_override_form_validate($form, &$form_state) {
+  $default_has_price = FALSE;
+  $recurring_has_price = FALSE;
+  $node = node_load($form_state['values']['nid']);
+
+  if ($form_state['values']['statuses'] == 1) {
+    if (isset($form_state['values']['default_amount_wrapper'])) {
+      foreach ($form_state['values']['default_amount_wrapper']['donation_amounts'] as $amount) {
+        if (!empty($amount['amount'])) {
+          $default_has_price = TRUE;
+        }
+      }
+    }
+    if (isset($form_state['values']['recurring_amount_wrapper'])) {
+      foreach ($form_state['values']['recurring_amount_wrapper']['donation_amounts'] as $amount) {
+        if (!empty($amount['amount'])) {
+          $recurring_has_price = TRUE;
+        }
+      }
+    }
+
+    if (($node->recurring_setting == 'user_choice' && empty($node->recurring_dual_ask_amounts)) || $node->recurring_setting == 'never') {
+      if ($default_has_price == FALSE) {
+        form_set_error('', t('If overrides are enabled, you must create default ask amounts.'));
+      }
+    }
+
+    if ($node->recurring_setting == 'always') {
+      if ($recurring_has_price == FALSE) {
+        form_set_error('', t('If overrides are enabled, you must create recurring ask amounts.'));
+      }
+    }
+
+    if (!empty($node->recurring_dual_ask_amounts)) {
+      if ($default_has_price == FALSE || $recurring_has_price == FALSE) {
+        form_set_error('', t('If overrides are enabled, you must create default and recurring ask amounts.'));
+      }
+    }
+  }
+
 }
 
 /**

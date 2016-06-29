@@ -228,7 +228,7 @@ function fundraiser_fund_group_edit_form_submit(&$form, &$form_state) {
 
   $status = $fundraiser_fund_group->save();
   if ($status) {
-    drupal_set_message(t('Message saved.'));
+    drupal_set_message(t('Group saved.'));
   }
 
   $wrapper = entity_metadata_wrapper('fundraiser_fund_group', $fundraiser_fund_group);
