@@ -54,19 +54,19 @@ function springboard_dw_queue_legacy_form_springboard_dw_settings_form_alter(&$f
 function springboard_dw_queue_legacy_dashboard() {
   $output = '';
 
-  $total_contacts = db_query("SELECT count(uid) FROM {users}")->fetchField();
-  $total_donations = db_query("SELECT count(did) FROM {fundraiser_donation}")->fetchField();
-  $total_actions = db_query("SELECT count(s.sid) FROM {webform_submissions} s INNER JOIN {node} n ON s.nid = n.nid WHERE n.type IN ('sba_message_action', 'sba_social_action', 'springboard_petition')")->fetchField();
-  $total_petition_messages = db_query("SELECT count(s.sid) FROM {webform_submissions} s INNER JOIN {node} n ON s.nid = n.nid WHERE n.type = 'springboard_petition'")->fetchField();
-  $total_forms = db_query('SELECT count(n.nid) FROM {node} n INNER JOIN {webform} w ON n.nid = w.nid')->fetchField();
+  $total_contacts = db_query("SELECT count(uid) FROM {users}", array(), array(), array('target' => 'slave'))->fetchField();
+  $total_donations = db_query("SELECT count(did) FROM {fundraiser_donation}", array(), array('target' => 'slave'))->fetchField();
+  $total_actions = db_query("SELECT count(s.sid) FROM {webform_submissions} s INNER JOIN {node} n ON s.nid = n.nid WHERE n.type IN ('sba_message_action', 'sba_social_action', 'springboard_petition')", array(), array('target' => 'slave'))->fetchField();
+  $total_petition_messages = db_query("SELECT count(s.sid) FROM {webform_submissions} s INNER JOIN {node} n ON s.nid = n.nid WHERE n.type = 'springboard_petition'", array(), array('target' => 'slave'))->fetchField();
+  $total_forms = db_query('SELECT count(n.nid) FROM {node} n INNER JOIN {webform} w ON n.nid = w.nid', array(), array('target' => 'slave'))->fetchField();
   $excluded_types = springboard_dw_get_donation_types();
   $excluded_types[] = 'springboard_petition';
   $excluded_types[] = 'sba_message_action';
   $excluded_types[] = 'sba_social_action';
-  $total_submissions = db_query("SELECT count(s.sid) FROM {webform_submissions} s INNER JOIN {node} n ON s.nid = n.nid WHERE n.type NOT IN (:excluded_types)", array(':excluded_types' => $excluded_types))->fetchField();
+  $total_submissions = db_query("SELECT count(s.sid) FROM {webform_submissions} s INNER JOIN {node} n ON s.nid = n.nid WHERE n.type NOT IN (:excluded_types)", array(':excluded_types' => $excluded_types), array('target' => 'slave'))->fetchField();
   $total_payments = db_query('SELECT count(transaction_id) FROM {commerce_payment_transaction}')->fetchField();
   $total_messages = springboard_dw_queue_legacy_get_advocacy_messages_count();
-  $total_salesforce_sync = db_query("SELECT count(rmid) FROM {salesforce_sync_map} WHERE (delta IN (:included_types) OR object_type = 'sb_Actions_Taken__c')", array(':included_types' => array('user', 'sba_message_action', 'sba_social_action', 'springboard_petition', 'donation')))->fetchField();
+  $total_salesforce_sync = db_query("SELECT count(rmid) FROM {salesforce_sync_map} WHERE (delta IN (:included_types) OR object_type = 'sb_Actions_Taken__c')", array(':included_types' => array('user', 'sba_message_action', 'sba_social_action', 'springboard_petition', 'donation')), array('target' => 'slave'))->fetchField();
   $records_in_drupal_count = $total_contacts + $total_donations + $total_actions + $total_petition_messages + $total_forms + $total_submissions + $total_payments + $total_messages + $total_salesforce_sync;
 
   $total_records = array(
@@ -81,9 +81,9 @@ function springboard_dw_queue_legacy_dashboard() {
     'submission:&nbsp;' . number_format($total_submissions, 0, '', ','),
   );
 
-  $records_in_queue_table = db_query("SELECT count(item_id) FROM {queue} WHERE name = 'springboard_dw_export'")->fetchField();
+  $records_in_queue_table = db_query("SELECT count(item_id) FROM {queue} WHERE name = 'springboard_dw_export'", array(), array('target' => 'slave'))->fetchField();
 
-  $processed_counts = db_query("SELECT type, COUNT(*) as count FROM {springboard_data_warehouse} GROUP BY type ORDER BY type ASC")->fetchAll();
+  $processed_counts = db_query("SELECT type, COUNT(*) as count FROM {springboard_data_warehouse} GROUP BY type ORDER BY type ASC", array(), array('target' => 'slave'))->fetchAll();
   $data_warehouse_total = 0;
   $processed_counts_by_type = array(
     'advocacy action' => 0,
@@ -162,7 +162,7 @@ function springboard_dw_queue_legacy_get_dw_totals() {
 }
 
 function springboard_dw_queue_legacy_get_advocacy_messages_count() {
-  $advocacy_action_records = db_query("SELECT nid FROM {node} WHERE type = 'sba_message_action' OR type = 'sba_social_action' ORDER BY created ASC")->fetchAll();
+  $advocacy_action_records = db_query("SELECT nid FROM {node} WHERE type = 'sba_message_action' OR type = 'sba_social_action' ORDER BY created ASC", array(), array('target' => 'slave'))->fetchAll();
   $total = 0;
   foreach ($advocacy_action_records as $advocacy_action_record) {
     $node = node_load($advocacy_action_record->nid);

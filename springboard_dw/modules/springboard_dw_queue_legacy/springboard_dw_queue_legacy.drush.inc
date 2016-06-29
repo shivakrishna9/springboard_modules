@@ -500,7 +500,7 @@ function springboard_dw_queue_legacy_build_action($submission) {
  */
 function springboard_dw_queue_legacy_get_advocacy_messages() {
   // Get nids of all sba_message_action nodes.
-  $advocacy_action_records = db_query("SELECT nid FROM {node} WHERE type = 'sba_message_action' OR type = 'sba_social_action' ORDER BY created ASC")->fetchAll();
+  $advocacy_action_records = db_query("SELECT nid FROM {node} WHERE type = 'sba_message_action' OR type = 'sba_social_action' ORDER BY created ASC", array(), array('target' => 'slave'))->fetchAll();
   $messages = array();
   foreach ($advocacy_action_records as $advocacy_action_record) {
     $node = node_load($advocacy_action_record->nid);
@@ -574,7 +574,7 @@ function springboard_dw_queue_legacy_get_records($type, $limit = FALSE, $highwat
   // Populate list of records to operate on.
   switch ($type) {
     case 'contact':
-      $query = db_select('users', 'u');
+      $query = db_select('users', 'u', array('target' => 'slave'));
       $query->addField('u', 'uid', 'id');
       $query->addField('u', 'created', 'created');
       $query->orderBy('created', 'ASC');
@@ -587,7 +587,7 @@ function springboard_dw_queue_legacy_get_records($type, $limit = FALSE, $highwat
       break;
 
     case 'donation':
-      $query = db_select('fundraiser_donation', 'f');
+      $query = db_select('fundraiser_donation', 'f', array('target' => 'slave'));
       $query->addField('f', 'did', 'id');
       $query->addField('f', 'nid');
       $query->addField('f', 'created');
@@ -601,7 +601,7 @@ function springboard_dw_queue_legacy_get_records($type, $limit = FALSE, $highwat
       break;
 
     case 'action':
-      $query = db_select('webform_submissions', 's');
+      $query = db_select('webform_submissions', 's', array('target' => 'slave'));
       $query->addField('s', 'sid', 'id');
       $query->addField('s', 'nid');
       $query->addField('s', 'uid');
@@ -624,7 +624,7 @@ function springboard_dw_queue_legacy_get_records($type, $limit = FALSE, $highwat
       break;
 
     case 'petition_message':
-      $query = db_select('webform_submissions', 's');
+      $query = db_select('webform_submissions', 's', array('target' => 'slave'));
       $query->addField('s', 'sid', 'id');
       $query->addField('s', 'nid');
       $query->addField('s', 'uid');
@@ -641,7 +641,7 @@ function springboard_dw_queue_legacy_get_records($type, $limit = FALSE, $highwat
       break;
 
     case 'form':
-      $query = db_select('node', 'n');
+      $query = db_select('node', 'n', array('target' => 'slave'));
       $query->addField('n', 'nid', 'id');
       $query->addField('n', 'created');
       $query->orderBy('created', 'ASC');
@@ -677,7 +677,7 @@ function springboard_dw_queue_legacy_get_records($type, $limit = FALSE, $highwat
       break;
 
     case 'payment':
-      $query = db_select('commerce_payment_transaction', 'c');
+      $query = db_select('commerce_payment_transaction', 'c', array('target' => 'slave'));
       $query->addField('c', 'transaction_id', 'id');
       $query->addField('c', 'order_id', 'donation_id');
       $query->addField('c', 'remote_id');
@@ -700,7 +700,7 @@ function springboard_dw_queue_legacy_get_records($type, $limit = FALSE, $highwat
       break;
 
     case 'salesforce_sync':
-      $query = db_select('salesforce_sync_map', 's');
+      $query = db_select('salesforce_sync_map', 's', array('target' => 'slave'));
       $query->addField('s', 'rmid', 'id');
       $query->addField('s', 'mid');
       $query->addField('s', 'sfid');
