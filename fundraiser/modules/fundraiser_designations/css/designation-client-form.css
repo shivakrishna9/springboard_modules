@@ -57,11 +57,11 @@ fieldset#webform-component-designations legend {
   margin-left: 4px;
 }
 
-div[class*="funds-quant"] {
+#webform-component-designations div[class*="funds-quant"] {
   width: auto!important;
 }
 
-select[name*="funds_quant"] {
+#webform-component-designations select[name*="funds_quant"] {
   width: 50px;
 }
 

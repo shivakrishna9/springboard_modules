@@ -484,25 +484,26 @@ function fundraiser_designations_get_group_display_amounts($group, $node) {
   $override_price_set = unserialize($group->fd_overrides['price_set']);
   $price_sets = [];
   $donation_amounts = [];
-
-  foreach ($override_price_set['default'] as $key => $price) {
-    if (!empty($price['default_amount'])) {
-      $price_sets['default']['default_amount'] = $price['default_amount'];
+  if (isset($override_price_set['default'])) {
+    foreach ($override_price_set['default'] as $key => $price) {
+      if (!empty($price['default_amount'])) {
+        $price_sets['default']['default_amount'] = $price['default_amount'];
+      }
+      $donation_amounts['default'][$key][] = $price['amount'];
+      $donation_amounts['default'][$key][] = $price['label'];
     }
-    $donation_amounts['default'][$key][] = $price['amount'];
-    $donation_amounts['default'][$key][] = $price['label'];
-
   }
 
-  foreach ($override_price_set['recurring'] as $key => $price) {
-    if (!empty($price['default_amount'])) {
-      $price_sets['recurring']['recurring_default_amount'] = $price['default_amount'];
+  if (isset($override_price_set['recurring'])) {
+    foreach ($override_price_set['recurring'] as $key => $price) {
+      if (!empty($price['default_amount'])) {
+        $price_sets['recurring']['recurring_default_amount'] = $price['default_amount'];
+      }
+      $donation_amounts['recurring'][$key][] = $price['amount'];
+      $donation_amounts['recurring'][$key][] = $price['label'];
+
     }
-    $donation_amounts['recurring'][$key][] = $price['amount'];
-    $donation_amounts['recurring'][$key][] = $price['label'];
-
   }
-
   $recurring = $node->recurring_setting;
   $dual_ask = $node->recurring_dual_ask_amounts;
 
