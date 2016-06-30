@@ -200,13 +200,22 @@ function springboard_node_expire_node_insert($node) {
     return;
   }
 
-  $update_fields = array();
-  $now = strtotime("now");
-  $then = strtotime($node->expire);
-  if ($now > $then && $node->expired == FALSE) {
-    $update_fields['expired'] = 1;
+  if (!property_exists($node, 'expired')) {
+    $node->expired = FALSE;
   }
-  elseif ($now < $then && $node->expired == TRUE) {
+
+  if (!empty($node->expire)) {
+    $update_fields = array();
+    $now = strtotime("now");
+    $then = strtotime($node->expire);
+    if ($now > $then && $node->expired == FALSE) {
+      $update_fields['expired'] = 1;
+    }
+    elseif ($now < $then && $node->expired == TRUE) {
+      $update_fields['expired'] = 0;
+    }
+  }
+  else {
     $update_fields['expired'] = 0;
   }
 
