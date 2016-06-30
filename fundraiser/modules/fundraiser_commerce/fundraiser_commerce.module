@@ -2473,7 +2473,7 @@ function _fundraiser_commerce_submit_handler_pane_values(&$pane_values, $donatio
       // This ensures card on file integrations create new profiles only
       // for new cards.
       if (empty($card)) {
-        $pane_values[$form_key]['cardonfile_store'] = TRUE;
+        $pane_values[$form_key]['cardonfile_store'] = isset($donation->donation['payment_fields'][$donation->donation['payment_method']]['cardonfile_store']) ? $donation->donation['payment_fields'][$donation->donation['payment_method']]['cardonfile_store'] : TRUE;
       }
       else {
         $pane_values[$form_key]['cardonfile_store'] = FALSE;
