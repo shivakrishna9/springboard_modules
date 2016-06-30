@@ -1309,12 +1309,20 @@ function _fundraiser_other_amount_field_display($form, $form_state, $field) {
     $currency = fundraiser_get_currency_from_node($form['#node']);
   }
 
+  // Set the currency symbol for the Other amount field:
   $field['#attributes']['class'][] = 'input-medium';
-  $field['#field_prefix'] = $currency['symbol'];
+  unset($field['#field_prefix']);
+  unset($field['#field_suffix']);
+  $field[($currency['symbol_placement'] == 'after' ? '#field_suffix' : '#field_prefix')] = $currency['symbol'];
 
-  // Replace the currency-symbol token.
-  if (isset($field['#description'])) {
-    $field['#description'] = str_replace('[currency-symbol]', $currency['symbol'], $field['#description']);
+  // Populate the Other field's description:
+  if (!empty($form['#node']->minimum_donation_amount) && isset($field['#description'])) {
+    $minimum_donation_amount = number_format(
+      $form['#node']->minimum_donation_amount,
+      $currency['decimals']
+    );
+    $field['#description'] = t('Minimum payment') . ' ' .
+      commerce_currency_format($minimum_donation_amount, $currency['code'], NULL, FALSE);
   }
 
   return $field;

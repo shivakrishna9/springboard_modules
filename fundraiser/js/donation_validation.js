@@ -140,7 +140,8 @@
         }
         // Other Amount
         if ($('input[name*="other_amount"]')[0]) {
-          $('input[name*="other_amount"]').each(function() {
+          $('input[name*="other_amount"]').each(function () {
+            var otherAmountField = $(this);
             $(this).rules("add", {
             required: {
               depends: function(element) {
@@ -156,6 +157,12 @@
               required: "This field is required",
               amount: "Enter a valid amount",
               min: "The amount entered is less than the minimum donation amount."
+            },
+            errorPlacement: function(error, element) {
+              if (otherAmountField.parent().children('.field-suffix').length > 0) {
+                var errorMessage = otherAmountField.parent().children('label.error').detach();
+                otherAmountField.parent().children('.description').after(errorMessage);
+              }
             }
           });
         });
