@@ -11,7 +11,7 @@
  * @return array
  *   Component defaults.
  */
-function _webform_defaults_cart() {
+function _webform_defaults_fd_cart() {
   return array(
     'name' => '',
     'form_key' => NULL,
@@ -29,7 +29,7 @@ function _webform_defaults_cart() {
 /**
  * Implements _webform_edit_component().
  */
-function _webform_edit_cart($component) {
+function _webform_edit_fd_cart($component) {
   $form = array();
   $form['edit_notice']['#markup'] = '<div>' . t('The settings for this field are controlled by Fundraiser.') . '</div>';
   $form['display']['#access'] = FALSE;
@@ -41,7 +41,7 @@ function _webform_edit_cart($component) {
  *
  * Convert submitted keys and values into serialized, saveable data.
  */
-function _webform_submit_cart($component, $values) {
+function _webform_submit_fd_cart($component, $values) {
   $return = array();
   foreach ($values as $key => $submitted_value) {
     $return[] = serialize(array($key => $submitted_value));
@@ -52,7 +52,7 @@ function _webform_submit_cart($component, $values) {
 /**
  * Implements _webform_render_component().
  */
-function _webform_render_cart($component, $value = NULL, $filter = TRUE) {
+function _webform_render_fd_cart($component, $value = NULL, $filter = TRUE) {
 
   $element = array(
     '#type' => 'item',

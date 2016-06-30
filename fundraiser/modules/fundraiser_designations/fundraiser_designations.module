@@ -20,6 +20,7 @@ function fundraiser_designations_fundraiser_field_info() {
     '#display_callback' => '_fundraiser_designations_designation_field_display',
     // Display callback, hide this field if the node isn't a designation node.
   );
+
   $fields['designations']['designation_box'] = array(
     '#title' => t('Designations internal component (not editable)'),
     '#type' => 'designations',
@@ -27,7 +28,7 @@ function fundraiser_designations_fundraiser_field_info() {
     '#allow_update' => 1,
   );
 
-  $fields['cart_container'] = array(
+  $fields['fd_cart_container'] = array(
     '#title' => t('Your Donation Cart'),
     '#type' => 'fieldset',
     '#required' => 0,
@@ -35,14 +36,14 @@ function fundraiser_designations_fundraiser_field_info() {
     '#display_callback' => '_fundraiser_designations_designation_field_display',
     // Display callback, hide this field if the node isn't a designation node.
   );
-  $fields['cart_container']['cart'] = array(
+  $fields['fd_cart_container']['fd_cart'] = array(
     '#title' => t('Cart internal component (not editable)'),
-    '#type' => 'cart',
+    '#type' => 'fd_cart',
     '#required' => 1,
     '#allow_update' => 1,
   );
 
-  $fields['addon_container'] = array(
+  $fields['fd_addon_container'] = array(
     '#title' => t('Upgrade Your Donation'),
     '#type' => 'fieldset',
     '#required' => 0,
@@ -51,7 +52,7 @@ function fundraiser_designations_fundraiser_field_info() {
     // Display callback, hide this field if the node isn't a designation node.
   );
 
-  $fields['addon_container']['fd_addon'] = array(
+  $fields['fd_addon_container']['fd_addon'] = array(
     '#title' => t('Add-on internal component (not editable)'),
     '#type' => 'fd_addon',
     '#required' => 1,
@@ -151,7 +152,7 @@ function fundraiser_designations_webform_component_info() {
     ),
     'file' => 'components/designations.inc',
   );
-  $components['cart'] = array(
+  $components['fd_cart'] = array(
     'label' => t('Fund cart'),
     'description' => t('The designation cart'),
     'features' => array(
@@ -257,12 +258,12 @@ function fundraiser_designations_form_webform_component_edit_form_alter(&$form, 
   // For donation types ONLY prevent type trigger.
   if (fundraiser_designations_is_designation_type($node->type)) {
     $form_key = $form['form_key']['#default_value'];
-    if ($form_key == 'designations' || $form_key == 'cart_container' || $form_key == 'designation_box') {
+    if ($form_key == 'designations' || $form_key == 'fd_cart_container' || $form_key == 'designation_box') {
       $form['form_key']['#disabled'] = TRUE;
       $form['form_key']['#description'] = t('This field key is required by Fundraiser and cannot be changed.');
       $form['form_key']['#value'] = $form['form_key']['#default_value'];
     }
-    if ($form_key == 'designation_box' || $form_key == 'cart') {
+    if ($form_key == 'designation_box' || $form_key == 'fd_cart') {
       $form['name']['#access'] = FALSE;
     }
 
@@ -329,11 +330,11 @@ function fundraiser_designations_webform_component_insert($component) {
       $component['extra']['subheader'] = 'Other ways to give';
       webform_component_update($component);
     }
-    if ($component['form_key'] == 'cart_container') {
+    if ($component['form_key'] == 'fd_cart_container') {
       $component['weight'] = -99;
       webform_component_update($component);
     }
-    if ($component['form_key'] == 'addon_container') {
+    if ($component['form_key'] == 'fd_addon_container') {
       $component['weight'] = -98;
       $component['extra']['description'] = 'One more chance to give where help is needed most';
       webform_component_update($component);
@@ -399,7 +400,7 @@ function fundraiser_designations_commerce_line_item_type_info() {
  * Returns TRUE if line items have been generated. Otherwise, returns FALSE.
  */
 function fundraiser_designations_fundraiser_commerce_generate_line_items($donation, $order) {
-  if (!empty($donation->donation['cart'][0]) && $cart = unserialize($donation->donation['cart'][0])) {
+  if (!empty($donation->donation['fd_cart'][0]) && $cart = unserialize($donation->donation['fd_cart'][0])) {
     // Get the cart values from the hidden field containing the json string.
     $fund_object = json_decode(str_replace('&quot;', '"', $cart['cart_body']['fund_catcher']));
 
@@ -874,7 +875,7 @@ function fundraiser_designations_form_webform_client_form_alter(&$form, &$form_s
 
     // Remove some fields on the webform result edit form.
     if (arg(2) == 'submission') {
-      $items = array('cart_container', 'designations', 'addon_container');
+      $items = array('fd_cart_container', 'designations', 'fd_addon_container');
       foreach ($items as $item) {
         $container = $component_hierarchy[$item];
         $field =& _webform_user_find_field($form, $container);
@@ -896,7 +897,7 @@ function fundraiser_designations_form_webform_client_form_alter(&$form, &$form_s
 function _fundraiser_designations_addon_status(&$form, $component_hierarchy) {
   // Don't show the add-on component if disabled.
   if (empty($form['#node']->fd_addon) || $form['#node']->fd_addon['status'] == 0) {
-    $container = $component_hierarchy['addon_container'];
+    $container = $component_hierarchy['fd_addon_container'];
     $addon = &_webform_user_find_field($form, $container);
     $addon['#access'] = FALSE;
   }
@@ -1020,10 +1021,10 @@ function fundraiser_designations_client_form_validate($form, &$form_state) {
     form_set_error('amount', t('Your cart is empty.'));
   }
 
-  $container = $component_hierarchy['cart_container'];
+  $container = $component_hierarchy['fd_cart_container'];
   $cart = _fundraiser_designations_find_field_form_state($form_state['values'], $container);
-  if (!empty($cart['cart']['cart_body']['fund_catcher'])) {
-    $fund_field = $cart['cart']['cart_body']['fund_catcher'];
+  if (!empty($cart['fd_cart']['cart_body']['fund_catcher'])) {
+    $fund_field = $cart['fd_cart']['cart_body']['fund_catcher'];
     $funds = json_decode(str_replace('&quot;', '"', $fund_field));
     $has_fund = FALSE;
     foreach ($funds as $fund) {

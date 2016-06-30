@@ -480,7 +480,7 @@ function fundraiser_fund_group_other_amount_field() {
       ),
       'entity_type' => 'fundraiser_fund_group',
       'field_name' => 'field_ffg_other_amt',
-      'label' => '"Other amount" field',
+      'label' => 'Other Amount field',
       'required' => 0,
       'settings' => array(
         'user_register_form' => FALSE,
@@ -543,7 +543,7 @@ function fundraiser_fund_group_create_field_groups() {
   $field_group->bundle = 'fundraiser_fund_group_default';
   $field_group->mode = 'form';
   $field_group->parent_name = '';
-  $field_group->label = 'Designation funds';
+  $field_group->label = 'Designation Funds';
   $field_group->weight = '6';
   $field_group->children = array(
     0 => 'field_ffg_fd_reference',
