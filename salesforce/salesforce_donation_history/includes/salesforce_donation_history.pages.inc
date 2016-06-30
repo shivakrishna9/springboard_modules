@@ -48,7 +48,7 @@ function salesforce_donation_history_page($user) {
  */
 function salesforce_donation_history_annual_summary_page($user, $year) {
   $output = array();
-  $intro = variable_get('salesforce_donation_history_receipts_intro', NULL);
+  $intro = variable_get('salesforce_donation_history_annual_summary_intro', NULL);
   $output['intro'] = array(
     '#type' => 'markup',
     '#markup' => check_markup($intro['value'], $intro['format']),
@@ -66,7 +66,38 @@ function salesforce_donation_history_annual_summary_page($user, $year) {
       '#markup' => t('No donations found.'),
     );
   }
-  $outro = variable_get('salesforce_donation_history_receipts_outro', NULL);
+  $outro = variable_get('salesforce_donation_history_annual_summary_outro', NULL);
+  $output['footer'] = array(
+    '#type' => 'markup',
+    '#markup' => check_markup($outro['value'], $outro['format']),
+  );
+  return $output;
+}
+
+/**
+ * Page callback for individual donation receipt
+ */
+function salesforce_donation_history_donation_receipt_page($user, $donation_id) {
+  $output = array();
+  $intro = variable_get('salesforce_donation_history_donation_intro', NULL);
+  $output['intro'] = array(
+    '#type' => 'markup',
+    '#markup' => check_markup($intro['value'], $intro['format']),
+  );
+  $user_sfid = salesforce_donation_history_user_account_id($user->uid);
+  if ($user_sfid) {
+    $results = salesforce_donation_history_get_opportunity($user_sfid, $donation_id);
+  }
+  if (count($results) > 0) {
+    $output['table'] = salesforce_donation_history_create_table($results, 'show_on_receipt', TRUE, FALSE);
+  }
+  else {
+    $output['no-donations'] = array(
+      '#type' => 'markup',
+      '#markup' => t('No donations found.'),
+    );
+  }
+  $outro = variable_get('salesforce_donation_history_donation_outro', NULL);
   $output['footer'] = array(
     '#type' => 'markup',
     '#markup' => check_markup($outro['value'], $outro['format']),

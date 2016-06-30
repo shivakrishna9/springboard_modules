@@ -82,9 +82,9 @@ function salesforce_donation_history_fields() {
 }
 
 /**
- * Page callback.
+ * Page callback for annual summary admin form.
  */
-function salesforce_donation_history_receipts() {
+function salesforce_donation_history_annual_summary() {
   $form = array();
   $defaults = array(
     'value' => '',
@@ -94,26 +94,61 @@ function salesforce_donation_history_receipts() {
     '#type' => 'markup',
     '#markup' => t('The header and footer text fields will appear above and below a table containing the donation information on the receipt. You can control which columns are displayed in this table on the <a href="fields">Fields</a> tab.'),
   );
-  $salesforce_donation_history_receipts_intro = variable_get('salesforce_donation_history_receipts_intro', $defaults);
-  $form['salesforce_donation_history_receipts_intro'] = array(
+  $salesforce_donation_history_annual_summary_intro = variable_get('salesforce_donation_history_annual_summary_intro', $defaults);
+  $form['salesforce_donation_history_annual_summary_intro'] = array(
     '#type' => 'text_format',
     '#title' => t('Header text'),
-    '#default_value' => $salesforce_donation_history_receipts_intro['value'],
+    '#default_value' => $salesforce_donation_history_annual_summary_intro['value'],
     '#description' => 'This will appear above the table containing donation information.',
-    '#format' => $salesforce_donation_history_receipts_intro['format'],
+    '#format' => $salesforce_donation_history_annual_summary_intro['format'],
 
   );
-  $salesforce_donation_history_receipts_outro = variable_get('salesforce_donation_history_receipts_outro', $defaults);
-  $form['salesforce_donation_history_receipts_outro'] = array(
+  $salesforce_donation_history_annual_summary_outro = variable_get('salesforce_donation_history_annual_summary_outro', $defaults);
+  $form['salesforce_donation_history_annual_summary_outro'] = array(
     '#type' => 'text_format',
     '#title' => t('Footer text'),
-    '#default_value' => $salesforce_donation_history_receipts_outro['value'],
+    '#default_value' => $salesforce_donation_history_annual_summary_outro['value'],
     '#description' => 'This will appear below the table containing donation formation.',
-    '#format' => $salesforce_donation_history_receipts_outro['format'],
+    '#format' => $salesforce_donation_history_annual_summary_outro['format'],
   );
   $form = system_settings_form($form);
   return $form;
 }
+
+/**
+ * Page callback for individual donation admin form.
+ */
+function salesforce_donation_history_donation() {
+  $form = array();
+  $defaults = array(
+    'value' => '',
+    'format' => filter_default_format(),
+  );
+  $form['description'] = array(
+    '#type' => 'markup',
+    '#markup' => t('The header and footer text fields will appear above and below a table containing the donation information on the receipt. You can control which columns are displayed in this table on the <a href="fields">Fields</a> tab.'),
+  );
+  $salesforce_donation_history_donation_intro = variable_get('salesforce_donation_history_donation_intro', $defaults);
+  $form['salesforce_donation_history_donation_intro'] = array(
+    '#type' => 'text_format',
+    '#title' => t('Header text'),
+    '#default_value' => $salesforce_donation_history_donation_intro['value'],
+    '#description' => 'This will appear above the table containing donation information.',
+    '#format' => $salesforce_donation_history_donation_intro['format'],
+
+  );
+  $salesforce_donation_history_donation_outro = variable_get('salesforce_donation_history_donation_outro', $defaults);
+  $form['salesforce_donation_history_donation_outro'] = array(
+    '#type' => 'text_format',
+    '#title' => t('Footer text'),
+    '#default_value' => $salesforce_donation_history_donation_outro['value'],
+    '#description' => 'This will appear below the table containing donation formation.',
+    '#format' => $salesforce_donation_history_donation_outro['format'],
+  );
+  $form = system_settings_form($form);
+  return $form;
+}
+
 
 /**
  * Validation handler for salesforce_donation_history_query form.

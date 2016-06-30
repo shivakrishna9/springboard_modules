@@ -52,11 +52,22 @@ function salesforce_donation_history_menu() {
 
   $items['admin/config/salesforce/donation_history/annual-summary-receipt'] = array(
     'page callback' => 'drupal_get_form',
-    'page arguments' => array('salesforce_donation_history_receipts'),
+    'page arguments' => array('salesforce_donation_history_annual_summary'),
     'access arguments' => array('administer salesforce_donation_history settings'),
     'title' => 'Annual Summary Receipt',
     'type' => MENU_LOCAL_TASK,
-    'description' => 'Manage Salesforce Donation History Receipts.',
+    'description' => 'Manage Salesforce Annual Summary Receipts.',
+    'file' => 'includes/salesforce_donation_history.admin.inc',
+    'weight' => 2,
+  );
+
+  $items['admin/config/salesforce/donation_history/donation-receipt'] = array(
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('salesforce_donation_history_donation'),
+    'access arguments' => array('administer salesforce_donation_history settings'),
+    'title' => 'Individual Donation Receipt',
+    'type' => MENU_LOCAL_TASK,
+    'description' => 'Manage Salesforce Individual Donation Receipts.',
     'file' => 'includes/salesforce_donation_history.admin.inc',
     'weight' => 2,
   );
@@ -83,10 +94,12 @@ function salesforce_donation_history_menu() {
 
   $items['user/%user/donation-history/receipt/%'] = array(
     'title' => 'Donation tax receipts for year X',
-    'page callback' => 'salesforce_donation_history_Id',
-    'page arguments' => array(1),
+    'page callback' => 'salesforce_donation_history_donation_receipt_page',
+    'page arguments' => array(1, 4),
     'access callback' => 'user_edit_access',
     'access arguments' => array(1),
+    'type' => MENU_NORMAL_ITEM,
+    'file' => 'includes/salesforce_donation_history.pages.inc',
   );
 
   return $items;
@@ -138,7 +151,7 @@ function theme_salesforce_donation_history_admin_field_table($variables) {
     t('Field'),
     t('Custom Label'),
     t('Show on User Tab'),
-    t('Show on Donation Receipt'),
+    t('Show on Individual Donation Receipt'),
     t('Show on Annual Summary'),
   );
   return theme('table', array('header' => $header, 'rows' => $rows));
@@ -178,6 +191,36 @@ function salesforce_donation_history_get_opportunities($sfid) {
   }
   return $opportunities;
 }
+
+/**
+ * Get single donation by opportunity ID.
+ *
+ * @param string $user_sfid
+ *   Salesforce Account ID.
+ * @param string $donation_sfid
+ *   The ID of the opportunity object.
+ *
+ * @return array
+ *   If found, array contains one value, which is the stdObj representing the
+ *   opportunity.
+ */
+function salesforce_donation_history_get_opportunity($user_sfid, $donation_sfid) {
+  $results = array();
+  $opportunities = salesforce_donation_history_get_opportunities($user_sfid);
+  if (count($opportunities) > 0) {
+    foreach ($opportunities as $opportunity) {
+      // dpm($opportunity->Id);
+      foreach ($opportunity->Id as $id) {
+        if ($id == $donation_sfid) {
+          $results[] = $opportunity;
+          return $results;
+        }
+      }
+    }
+  }
+  return $results;
+}
+
 
 /**
  * Get object description from Salesforce API.
