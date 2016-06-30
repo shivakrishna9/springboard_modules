@@ -378,8 +378,6 @@ function springboard_dw_queue_legacy_action($records, $operation_details, $idlis
       else {
         drush_log('Attempted to queue action ' . $record->id . ' but it is already warehoused', 'warning');
       }
-      // Set highwater mark.
-      springboard_dw_queue_legacy_set_highwater_mark('action', $record->id, $idlist);
     }
     // Queue petition.
     else if ($record->type == 'springboard_petition') {
@@ -392,12 +390,12 @@ function springboard_dw_queue_legacy_action($records, $operation_details, $idlis
       else {
         drush_log('Attempted to queue petition ' . $record->id . ' but it is already warehoused', 'warning');
       }
-      // Set highwater mark.
-      springboard_dw_queue_legacy_set_highwater_mark('petition', $record->id, $idlist);
     }
     else {
       drush_log('Record type ' . $record->type . ' on record ' . $record->id . ' not recognized', 'error');
     }
+    // Set highwater mark.
+    springboard_dw_queue_legacy_set_highwater_mark('action', $record->id, $idlist);
   }
   $context['message'] = $operation_details;
 }
