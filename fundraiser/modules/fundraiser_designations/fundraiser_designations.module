@@ -284,7 +284,7 @@ function fundraiser_designations_form_webform_components_form_alter(&$form, &$fo
 }
 
 /**
- * Implements hook_access().
+ * Implements hook_form_FORM_ID_alter().
  */
 function fundraiser_designations_form_taxonomy_form_term_alter(&$form, &$form_state) {
   if ($form['#vocabulary']->machine_name == 'fd_designation_categories') {

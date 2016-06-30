@@ -295,6 +295,10 @@ function _fundraiser_designations_build_child_elements($id, &$element, $amounts,
 function theme_fundraiser_designations_fund_groups_component($variables) {
   $element = $variables['element'];
   $output = '';
+  $node = menu_get_object();
+  if (empty(element_children($element)) && (user_access("edit any {$node->type} content") || user_access("edit own {$node->type} content") || user_access("administer fund groups"))) {
+    $output = t('No designation groups have been created yet. You can !create now.', array('!create' => l('create one', 'node/' . arg(1) . '/designations/add/fundraiser_fund_group_default')));
+  }
   $x = 0;
 
   foreach (element_children($element) as $id) {
