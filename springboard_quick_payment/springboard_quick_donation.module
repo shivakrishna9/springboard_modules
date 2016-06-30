@@ -10,10 +10,6 @@
  */
 function springboard_quick_donation_form_alter(&$form, &$form_state, $form_id) {
   if (!empty($form['#node']->type) && fundraiser_is_donation_type($form['#node']->type)) {
-    dpm($form);
-    dpm($form_state);
-    dpm($form_id);
-
     // If this is an appropriate node edit/add form, add the "quick donation"
     // checkbox to the "Payment methods" fieldset.
     if (strpos($form_id, 'node_form') !== FALSE && !empty($form['#node']->gateways)) {
@@ -129,8 +125,6 @@ function springboard_quick_donation_fundraiser_field_info_alter(&$fields) {
  * Adds a "quick pay" field to the form.
  */
 function springboard_quick_donation_fundraiser_donation_form($form, $form_state) {
-  dpm($form);
-  dpm($form_state);
   // Exit if this isn't the right node type.
   if (empty($form['#node']->type) || !fundraiser_is_donation_type($form['#node']->type)) {
     return;
@@ -138,11 +132,6 @@ function springboard_quick_donation_fundraiser_donation_form($form, $form_state)
 
   // Exit if the quick donation option isn't enabled on this form.
   if (empty($form['#node']->quickdonation) || !$form['#node']->quickdonation) {
-    return;
-  }
-
-  // DENY if user is not defined or is anonymous.
-  if (!user_is_logged_in()) {
     return;
   }
 
@@ -160,44 +149,36 @@ function springboard_quick_donation_fundraiser_donation_form($form, $form_state)
     // Check to see if the currently selected payment method is Card on File
     // enabled (via the cardonfile boolean in its info array).
     $payment_method = commerce_payment_method_instance_load($instance_id);
-    dpm($payment_method);
 
     // Skip if payment method is not capable of card on file.
     if (!_commerce_cardonfile_capable_payment_method_check($payment_method)) {
       continue;
     }
 
-    // For onsite payment methods add a checkbox to the credit card
-    // details container to store the credit card for future use.
-    if (!$payment_method['offsite']) {
-      $type = 'card';
-      if ($gateway_type == 'bank account') {
-        // @todo What should this be?
-        $type = 'bank account';
-      }
-      $form['submitted']['payment_information']['payment_fields'][$gateway_type]['quick_donation'] = array(
-        '#type' => 'checkbox',
-        '#title' => t('Save this @type for future use?', array('@type' => $type)),
-        '#description' => isset($form['#node']->quickdonation_message) ? format_string($form['#node']->quickdonation_message, array('@type' => $type)) : variable_get('springboard_quick_donation_default_message', t('Save your @type details and donate faster next time. We may email you from time to time with quick donate opportunities. You can update your @type details or cancel your enrollment at any time.', array('@type' => $type))),
-        '#suffix' => t('Already have a saved @type? !login.', array(
-          '@type' => $type,
-          // @todo update login path
-          '!login' => l(t('Click here to log in'), '/user'),
-        )),
-      );
+    $type = 'card';
+    if ($gateway_type == 'bank account') {
+      // @todo What should this be?
+      $type = 'bank account';
     }
+
+    $form['submitted']['payment_information']['payment_fields'][$gateway_type]['cardonfile_store'] = array(
+      '#type' => 'checkbox',
+      '#title' => t('Save this @type for future use?', array('@type' => $type)),
+      '#default_value' => FALSE,
+      '#description' => isset($form['#node']->quickdonation_message) ? format_string($form['#node']->quickdonation_message, array('@type' => $type)) : variable_get('springboard_quick_donation_default_message', t('Save your @type details and donate faster next time. We may email you from time to time with quick donate opportunities. You can update your @type details or cancel your enrollment at any time.', array('@type' => $type))),
+    );
 
     // Load existing active cards for the payment method instance and user.
     $stored_cards = commerce_cardonfile_load_multiple_by_uid($user->uid, $payment_method['instance_id']);
-dpm($stored_cards);
-dpm($user->uid);
-dpm($payment_method['instance_id']);
+
     // Build options form.
     $cardonfile_options_form = array();
     $instance_default_card_id = NULL;
 
     // If have stored cards ...
     if (!empty($stored_cards)) {
+      _springboard_quick_donation_checkout_form_hide_payment_fields($form['submitted']['payment_information']['payment_fields'][$gateway_type]);
+
       $valid_cards = array_filter($stored_cards, 'commerce_cardonfile_validate_card_expiration');
 
       // If have un-expired cards ...
@@ -227,10 +208,6 @@ dpm($payment_method['instance_id']);
           '#options' => $card_options,
           '#default_value' => $card_options_default_value,
           '#weight' => -10,
-          '#ajax' => array(
-            'callback' => 'commerce_payment_pane_checkout_form_details_refresh',
-            'wrapper' => 'payment-details',
-          ),
         );
       }
     }
@@ -272,102 +249,91 @@ dpm($payment_method['instance_id']);
     $force_instance_default = empty($stored_cards);
     $form['submitted']['payment_information']['payment_fields'][$gateway_type]['cardonfile_instance_default'] = array(
       '#type' => 'checkbox',
-      '#title' => t('Set as your default @type', array('@type' => $type)),
+      '#title' => t('Set as your default payment method for future donations?'),
       '#default_value' => $instance_default_default_value || $force_instance_default,
-      '#access' => !$instance_default_default_value,
       '#disabled' => $force_instance_default,
       '#states' => array(
-        'invisible' => array(
-          ':input[name$="[cardonfile]"]' => array('value' => 'new'),
-        ),
         'visible' => array(
-          ':input[name$="[quick_donation]"]' => array('checked' => TRUE),
+          ':input[name$="[' . $gateway_type . '][cardonfile]"]' => array('value' => 'new'),
+          ':input[name$="[' . $gateway_type . '][cardonfile_store]"]' => array('checked' => TRUE),
         ),
       ),
     );
 
+    if (!user_is_logged_in()) {
+      $form['submitted']['payment_information']['payment_fields'][$gateway_type]['cardonfile_instance_default']['#suffix'] = t('Already have a saved @type? !login.', array(
+        '@type' => $type,
+        // @todo update login path
+        '!login' => l(t('Click here to log in'), '/user'),
+      ));
+    }
+
     // Allow others to alter this alter.
     // drupal_alter('springboard_quick_donation_checkout_form', $form['submitted']['payment_information']['payment_fields'][$gateway_type], $form);
-
-    // Add submit handler.
-    $form['#submit'][] = '_springboard_quick_donation_checkout_form_submit';
   }
 
+  // Add submit handler.
+  $form['#submit'][] = '_springboard_quick_donation_checkout_form_submit';
+
   return $form;
+}
+
+/**
+ * Helper function to traverse a form array and set #states for the QD form.
+ */
+function _springboard_quick_donation_checkout_form_hide_payment_fields(&$element) {
+  $children = element_get_visible_children($element);
+  foreach ($children as $child) {
+    if (!isset($element[$child]['#states'])) {
+      $element[$child]['#states'] = array();
+    }
+
+    $element[$child]['#states']['visible'][':input[name$="[cardonfile]"]'] = array('value' => 'new');
+
+    $grandchildren = element_get_visible_children($element[$child]);
+    if (count($grandchildren)) {
+      _springboard_quick_donation_checkout_form_hide_payment_fields($element[$child]);
+    }
+  }
 }
 
 /**
  * Submission handler for springboard_quick_donation_fundraiser_donation_form().
  */
 function _springboard_quick_donation_checkout_form_submit($form, &$form_state) {
-  kpr($form);
-  kpr($form_state);
   if (empty($form_state['#donation'])) {
     return;
   }
 
-  $values = &$form_state['values']['submitted_tree']['payment_information'];
+  $values = $form_state['values']['submitted_tree']['payment_information'];
   $method = $values['payment_method'];
-  $store_card = !empty($values['payment_fields']['credit']['cardonfile_store']);
+  $store_card = !empty($values['payment_fields'][$method]['cardonfile_store']);
 
   // Exit if no card selection.
-  if (empty($values['payment_fields'][$method]['cardonfile'])) {
+  if (!$store_card || empty($values['payment_fields'][$method]['cardonfile'])) {
     return;
   }
 
-  // Load a fresh copy of the order stored in the form.
-  $order = commerce_order_load($form_state['#donation']->did);
-  kpr($order);
-  $order_wrapper = entity_metadata_wrapper('commerce_order', $order);
-
   $account = $form_state['#donation']->user;
-  $instance_id = $form_state['#donation']->gateway['id'];
 
-  // Get card on file value.
-  $card_id_selected = NULL;
-  if ($values['payment_fields'][$method]['cardonfile'] != 'new') {
-    $card_id_selected = intval($values['payment_fields'][$method]['cardonfile']);
-  }
-
-  // Submit actions for card selected.
-  if (!empty($card_id_selected)) {
-    // Mark as default.
-    if (!empty($values['payment_fields'][$method]['cardonfile_instance_default'])) {
-      commerce_cardonfile_set_default_card($card_id_selected);
+  if (!empty($values['payment_fields'][$method]['cardonfile_instance_default'])) {
+    if ($values['payment_fields'][$method]['cardonfile'] != 'new') {
+      // Get card on file value.
+      $card_id_selected = intval($values['payment_fields'][$method]['cardonfile']);
+      // Submit actions for card selected.
+      if (!empty($card_id_selected)) {
+        // Mark as default.
+        commerce_cardonfile_set_default_card($card_id_selected);
+      }
+    }
+    else {
+      $query = db_select('commerce_cardonfile', 'cc')
+        ->fields('cc', array('card_id'))
+        ->condition('uid', $account->uid, '=')
+        ->orderBy('card_id', 'DESC')
+        ->range(0, 1);
+      $card_id = $query->execute()->fetchField();
+      commerce_cardonfile_set_default_card($card_id);
     }
   }
-  kpr($card_id_selected);
-  die();
-}
-
-/**
- * Implements hook_fundraiser_gateway_info_alter().
- */
-/*function springboard_quick_donation_fundraiser_gateway_info_alter(&$gateways) {
-  dpm($gateways);
-}*/
-
-/**
- * Implements hook_node_load().
- */
-/*function springboard_quick_donation_node_load($nodes, $types) {
-  foreach ($nodes as $node) {
-    if (fundraiser_is_donation_type($node->type)) {
-      // Attach quick donation information to the donation form.
-    }
-  }
-}*/
-
-/**
- * Implements hook_fundraiser_get_fundraiser_alter().
- */
-function springboard_quick_donation_fundraiser_get_fundraiser_alter($fundraiser) {
-  // dpm($fundraiser);
-}
-
-/**
- * Implements hook_fundraiser_update_fundraiser_alter().
- */
-function springboard_quick_donation_fundraiser_updating_fundraiser_alter(&$fundraiser) {
-  dpm($fundraiser);
 }
