@@ -101,7 +101,8 @@ function salesforce_donation_history_annual_summary() {
     '#default_value' => $salesforce_donation_history_annual_summary_intro['value'],
     '#description' => 'This will appear above the table containing donation information.',
     '#format' => $salesforce_donation_history_annual_summary_intro['format'],
-
+    '#element_validate' => array('token_element_validate'),
+    '#token_types' => array('user'),
   );
   $salesforce_donation_history_annual_summary_outro = variable_get('salesforce_donation_history_annual_summary_outro', $defaults);
   $form['salesforce_donation_history_annual_summary_outro'] = array(
@@ -110,6 +111,12 @@ function salesforce_donation_history_annual_summary() {
     '#default_value' => $salesforce_donation_history_annual_summary_outro['value'],
     '#description' => 'This will appear below the table containing donation formation.',
     '#format' => $salesforce_donation_history_annual_summary_outro['format'],
+    '#element_validate' => array('token_element_validate'),
+    '#token_types' => array('user'),
+  );
+  $form['token_help'] = array(
+    '#theme' => 'token_tree_link',
+    '#token_types' => array('user'),
   );
   $form = system_settings_form($form);
   return $form;
@@ -135,7 +142,8 @@ function salesforce_donation_history_donation() {
     '#default_value' => $salesforce_donation_history_donation_intro['value'],
     '#description' => 'This will appear above the table containing donation information.',
     '#format' => $salesforce_donation_history_donation_intro['format'],
-
+    '#element_validate' => array('token_element_validate'),
+    '#token_types' => array('user'),
   );
   $salesforce_donation_history_donation_outro = variable_get('salesforce_donation_history_donation_outro', $defaults);
   $form['salesforce_donation_history_donation_outro'] = array(
@@ -144,6 +152,12 @@ function salesforce_donation_history_donation() {
     '#default_value' => $salesforce_donation_history_donation_outro['value'],
     '#description' => 'This will appear below the table containing donation formation.',
     '#format' => $salesforce_donation_history_donation_outro['format'],
+    '#element_validate' => array('token_element_validate'),
+    '#token_types' => array('user'),
+  );
+  $form['token_help'] = array(
+    '#theme' => 'token_tree_link',
+    '#token_types' => array('user'),
   );
   $form = system_settings_form($form);
   return $form;

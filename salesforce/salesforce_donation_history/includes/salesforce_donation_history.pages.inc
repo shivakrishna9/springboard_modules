@@ -51,7 +51,7 @@ function salesforce_donation_history_annual_summary_page($user, $year) {
   $intro = variable_get('salesforce_donation_history_annual_summary_intro', NULL);
   $output['intro'] = array(
     '#type' => 'markup',
-    '#markup' => check_markup($intro['value'], $intro['format']),
+    '#markup' => token_replace(check_markup($intro['value'], $intro['format']), array('user' => $user)),
   );
   $sfid = salesforce_donation_history_user_account_id($user->uid);
   if ($sfid) {
@@ -69,7 +69,7 @@ function salesforce_donation_history_annual_summary_page($user, $year) {
   $outro = variable_get('salesforce_donation_history_annual_summary_outro', NULL);
   $output['footer'] = array(
     '#type' => 'markup',
-    '#markup' => check_markup($outro['value'], $outro['format']),
+    '#markup' => token_replace(check_markup($outro['value'], $outro['format']), array('user' => $user)),
   );
   return $output;
 }
@@ -82,7 +82,7 @@ function salesforce_donation_history_donation_receipt_page($user, $donation_id) 
   $intro = variable_get('salesforce_donation_history_donation_intro', NULL);
   $output['intro'] = array(
     '#type' => 'markup',
-    '#markup' => check_markup($intro['value'], $intro['format']),
+    '#markup' => token_replace(check_markup($intro['value'], $intro['format']), array('user' => $user)),
   );
   $user_sfid = salesforce_donation_history_user_account_id($user->uid);
   if ($user_sfid) {
@@ -100,7 +100,7 @@ function salesforce_donation_history_donation_receipt_page($user, $donation_id) 
   $outro = variable_get('salesforce_donation_history_donation_outro', NULL);
   $output['footer'] = array(
     '#type' => 'markup',
-    '#markup' => check_markup($outro['value'], $outro['format']),
+    '#markup' => token_replace(check_markup($outro['value'], $outro['format']), array('user' => $user)),
   );
   return $output;
 }
