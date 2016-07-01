@@ -83,7 +83,6 @@ function salesforce_donation_history_menu() {
   );
 
   $items['user/%user/donation-history/summary/%'] = array(
-    'title' => 'Donation tax receipts for year X',
     'page callback' => 'salesforce_donation_history_annual_summary_page',
     'page arguments' => array(1, 4),
     'access callback' => 'user_edit_access',
@@ -93,7 +92,6 @@ function salesforce_donation_history_menu() {
   );
 
   $items['user/%user/donation-history/receipt/%'] = array(
-    'title' => 'Donation tax receipts for year X',
     'page callback' => 'salesforce_donation_history_donation_receipt_page',
     'page arguments' => array(1, 4),
     'access callback' => 'user_edit_access',
