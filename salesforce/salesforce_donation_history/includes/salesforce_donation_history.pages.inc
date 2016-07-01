@@ -9,6 +9,7 @@
  * Page callback.
  */
 function salesforce_donation_history_page($user) {
+  drupal_add_css(drupal_get_path('module', 'salesforce_donation_history') . '/salesforce_donation_history.css');
   $output = array();
   $results = array();
   $params = drupal_get_query_parameters();
@@ -28,9 +29,9 @@ function salesforce_donation_history_page($user) {
     $output['select-year'] = drupal_get_form('salesforce_donation_history_select_year', $available_years, $selected_year);
     $output['annual-tax-receipt'] = array(
       '#type' => 'markup',
-      '#prefix' => '<div>',
+      '#prefix' => '<div id="print-annual-tax-receipt">',
       '#suffix' => '</div>',
-      '#markup' => l(t('Print Annual Tax Reciept'), 'user/' . $user->uid . '/donation-history/summary/' . $selected_year),
+      '#markup' => l(t('Print Annual Tax Receipt'), 'user/' . $user->uid . '/donation-history/summary/' . $selected_year),
     );
     $output['table'] = salesforce_donation_history_create_table($results[$selected_year]);
   }
