@@ -49,6 +49,7 @@ function salesforce_donation_history_page($user) {
  * Page callback for annual tax summary.
  */
 function salesforce_donation_history_annual_summary_page($user, $year) {
+  drupal_add_css(drupal_get_path('module', 'salesforce_donation_history') . '/salesforce_donation_history.css');
   drupal_set_title(t('Annual Tax Receipt for :year', array(':year' => $year)), PASS_THROUGH);
   $output = array();
   $intro = variable_get('salesforce_donation_history_annual_summary_intro', NULL);
@@ -81,6 +82,7 @@ function salesforce_donation_history_annual_summary_page($user, $year) {
  * Page callback for individual donation receipt
  */
 function salesforce_donation_history_donation_receipt_page($user, $donation_id) {
+  drupal_add_css(drupal_get_path('module', 'salesforce_donation_history') . '/salesforce_donation_history.css');
   $output = array();
   $intro = variable_get('salesforce_donation_history_donation_intro', NULL);
   $output['intro'] = array(

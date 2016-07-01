@@ -8,3 +8,6 @@
 #print-annual-tax-receipt {
   float:right;
 }
+.page-user-donation-history table {
+  width: 100%;
+}
