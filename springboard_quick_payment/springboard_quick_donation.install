@@ -36,6 +36,7 @@ function springboard_quick_donation_schema() {
         'type' => 'varchar',
         'length' => '255',
         'not null' => FALSE,
+        'default' => 'plain_text',
       ),
       'quickdonation_login_message' => array(
         'description' => 'The login message to display to end users if the fundraiser has quick payments enabled.',
