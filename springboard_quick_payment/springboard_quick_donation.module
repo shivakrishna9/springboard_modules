@@ -6,6 +6,82 @@
  */
 
 /**
+ * Implements hook_menu().
+ */
+function springboard_quick_donation_menu() {
+  $items = array();
+
+  $items['admin/config/system/fundraiser/quick-donate/token-generator'] = array(
+    'title' => 'Quick Donate Token Generator',
+    'description' => 'Generate quick donate HMAC tokens for testing or use',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('springboard_quick_donation_token_generator'),
+    'access arguments' => array('administer fundraiser quick_donate'),
+    'file' => 'includes/springboard_quick_donation.admin.inc',
+    'type' => MENU_LOCAL_TASK,
+  );
+
+  return $items;
+}
+
+/**
+ * Create HMAC token link for quick donations.
+ *
+ * @param array $payload
+ *   The payload values.
+ *
+ * @return string
+ *   The quick donation url.
+ */
+function springboard_quick_donation_create_link($payload, $rollback = FALSE) {
+  $link = '';
+  $amount = $payload['amount'];
+
+  $time = time();
+  $values = array(
+    $payload['uid'],
+    $time,
+    'qd',
+    $amount,
+    $payload['pid'],
+    $payload['nid'],
+  );
+
+  $payload_string = implode('.', $values);
+
+  $payload_string = base64_encode($payload_string);
+  $key = springboard_hmac_get_key();
+  $hmac = springboard_hmac_create_hmac($values, $key);
+
+  $link = url('hmac/' . $payload_string . '/' . $hmac, array('absolute' => TRUE));
+
+  return $link;
+}
+
+/**
+ * Implements hook_springboard_hmac_allowed_actions().
+ */
+function springboard_quick_donation_hmac_allowed_actions() {
+  return 'qd';
+}
+
+/**
+ * Implements hook_springboard_hmac_success().
+ *
+ * Redirect to the donation form if hmac validated.
+ */
+function springboard_quick_donation_springboard_hmac_success($payload) {
+  if ($payload['action'] == 'qd') {
+    if (isset($payload[2]) && is_numeric($payload[2])) {
+      $node = node_load($payload[2]);
+      if (!empty($node->type) && $node->type == 'sustainers_upgrade_form') {
+        drupal_goto('node/' . $node->nid);
+      }
+    }
+  }
+}
+
+/**
  * Implements hook_form_alter().
  */
 function springboard_quick_donation_form_node_form_alter(&$form, &$form_state, $form_id) {
@@ -214,7 +290,7 @@ function springboard_quick_donation_fundraiser_field_info_alter(&$fields) {
 /**
  * Implements hook_fundraiser_donation_form().
  *
- * Adds a "quick pay" field to the form.
+ * Adds a "quick pay" fields to the form.
  */
 function springboard_quick_donation_fundraiser_donation_form($form, $form_state) {
   // Exit if this isn't the right node type.
@@ -462,11 +538,3 @@ function _springboard_quick_donation_users_latest_cardid($uid) {
   return $query->execute()->fetchField();
 }
 
-/**
- * Implements hook_entity_insert().
- */
-function springboard_quick_donation_entity_insert($entity, $type) {
-  if ($type != 'commerce_cardonfile') {
-    return;
-  }
-}
