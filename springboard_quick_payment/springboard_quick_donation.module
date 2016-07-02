@@ -135,7 +135,7 @@ function springboard_quick_donation_form_node_form_alter(&$form, &$form_state, $
         }
       }
 
-      if (!count($usable_paypment_processors['credit']) && !count($usable_paypment_processors['bank account'])) {
+      if (empty($usable_paypment_processors['credit']) && empty($usable_paypment_processors['bank'])) {
         // If no usable payment processors are available, disable the checkbox
         // and display a note to the user.
         $form['payment_methods']['quickdonation']['#attributes']['disabled'] = TRUE;
@@ -152,6 +152,11 @@ function springboard_quick_donation_form_node_form_alter(&$form, &$form_state, $
           '#title' => t('"Quick Donation" opt-in text'),
           '#description' => t('This is the title of the opt-in checkbox. The "@type" placeholder can be used to specify the type of payment method (either credit card or bank account). Defaults to "Save this @type for future use".'),
           '#default_value' => isset($form['#node']->quickdonation_optin_message) ? $form['#node']->quickdonation_optin_message : variable_get('springboard_quick_donation_default_optin_message', t('Save this @type for future use')),
+          '#states' => array(
+            'visible' => array(
+              ':input[name="quickdonation"]' => array('checked' => TRUE),
+            ),
+          ),
         );
 
         // Because a bug exists in D7 where the input filter help information
@@ -180,6 +185,11 @@ function springboard_quick_donation_form_node_form_alter(&$form, &$form_state, $
           '#title' => t('"Quick Donation" login text'),
           '#description' => t('This is the title of the log-in checkbox. The "@type" placeholder can be used to specify the type of payment method (credit card or bank account). Defaults to "Already have a saved @type?".'),
           '#default_value' => isset($form['#node']->quickdonation_login_message) ? $form['#node']->quickdonation_login_message : variable_get('springboard_quick_donation_default_login_message', t('Already have a saved @type?')),
+          '#states' => array(
+            'visible' => array(
+              ':input[name="quickdonation"]' => array('checked' => TRUE),
+            ),
+          ),
         );
 
         $form['payment_methods']['quickdonation_login_link_message'] = array(
@@ -187,6 +197,11 @@ function springboard_quick_donation_form_node_form_alter(&$form, &$form_state, $
           '#title' => t('"Quick Donation" login link text'),
           '#description' => t('This is the title of the log-in checkbox. Defaults to "Click here to login".'),
           '#default_value' => isset($form['#node']->quickdonation_login_link_message) ? $form['#node']->quickdonation_login_link_message : variable_get('springboard_quick_donation_default_login_link_message', t('Click here to login')),
+          '#states' => array(
+            'visible' => array(
+              ':input[name="quickdonation"]' => array('checked' => TRUE),
+            ),
+          ),
         );
       }
 
@@ -273,6 +288,7 @@ function _springboard_quick_donation_attach_quick_donation_fields(stdClass $node
   foreach ($results as $key => $result) {
     $node->{$key} = $result;
   }
+  $node->quickdonation = TRUE;
   return $node;
 }
 
@@ -441,7 +457,7 @@ function springboard_quick_donation_fundraiser_donation_form($form, $form_state)
     }
 
     // Allow others to alter this alter.
-    // drupal_alter('springboard_quick_donation_checkout_form', $form['submitted']['payment_information']['payment_fields'][$gateway_type], $form);
+    drupal_alter('springboard_quick_donation_checkout_form', $form['submitted']['payment_information']['payment_fields'][$gateway_type], $form);
   }
 
   // Add submit handler.

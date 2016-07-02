@@ -7,14 +7,19 @@
       }
 
       var $gateways = {'credit': $('#edit-gateways-credit-id'), bank: $('#edit-gateways-bank-account-id')};
-      var $gateways_enabled = {};
+      var $gateways_enabled;
       var $quickdonation = $('.form-item-quickdonation');
       var gateway_available = {'credit': true, 'bank': true};
+
+      var gateways_enabled = function() {
+        $gateways_enabled = {'credit': $('#edit-gateways-credit-status').is(':checked'), 'bank': $('#edit-gateways-bank-account-status').is(':checked')};
+      };
+      gateways_enabled();
 
       var checkGateway = function($this, type) {
         $('.form-item-quickdonation').next('.note').remove();
 
-        $gateways_enabled = {'credit': $('#edit-gateways-credit-status').is(':checked'), 'bank': $('#edit-gateways-bank-account-status').is(':checked')};
+        gateways_enabled();
 
         var $option_name = $gateways[type].find('option[value="' + $this.value + '"]').text();
         var $option_value = this.value;
@@ -31,7 +36,7 @@
           // Not a usable credit payment processor, display a note.
           $quickdonation.find('input[type=checkbox]').attr('disabled', 'disabled');
           if ($quickdonation.next('.note').length == 0) {
-            $quickdonation.after('<div class="note"><strong>Note:</strong> Quick donations are not available for one or more of the payment processors you have selected: <ul><li>' + $option_name + '</li></ul>You\'ll need to configure the <a href="/admin/commerce/config/payment-methods">different payment methods</a> to utilize the card on file functionality.<br/><br/></div>');
+            $quickdonation.after('<div class="note"><strong>Note:</strong> Quick donations are not available for one or more of the payment processors you have selected: <ul><li>' + $option_name + '</li></ul>You\'ll need to configure the <a href="/admin/commerce/config/payment-methods">different payment methods</a> to utilize the quick donation functionality.<br/><br/></div>');
           }
           else {
             $quickdonation.next('.note').find('ul').append('<li>$option_name</li>');
