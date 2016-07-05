@@ -37,11 +37,16 @@ function springboard_quick_donation_token_generator($form, $form_state) {
     '#default_value' => 1000,
   );
 
+  $default_nid = _springboard_quick_donation_token_generator_get_default_nid();
+  if ($default_nid < 0) {
+    drupal_set_message(t('There are currently no fundraiser nodes, so the node ID will be set to 0. Note that authorization will fail.'), 'warning', FALSE);
+    $default_nid = 0;
+  }
   $form['springboard_quick_donation']['nid'] = array(
     '#type' => 'textfield',
     '#title' => t('Fundraiser Node ID'),
     '#description' => t('The fundraiser node ID, if desired.'),
-    '#default_value' => 0,
+    '#default_value' => $default_nid,
   );
 
   $form['springboard_quick_donation']['pid'] = array(
@@ -60,6 +65,35 @@ function springboard_quick_donation_token_generator($form, $form_state) {
   $form['#submit'][] = 'springboard_quick_donation_token_generator_submit';
 
   return $form;
+}
+
+/**
+ * Helper function to retrieve a donation nid.
+ * @return int
+ *   The node ID.
+ */
+function _springboard_quick_donation_token_generator_get_default_nid() {
+  $default_nid = &drupal_static(__FUNCTION__);
+  if (!isset($default_nid)) {
+    $types = array_keys(fundraiser_get_donation_types());
+    $query = db_select('node', 'n')
+      ->fields('n', array('nid'))
+      ->condition('status', 0, '>')
+      ->condition('type', $types, 'IN')
+      ->orderBy('nid', 'ASC')
+      ->range(0, 1)
+      ->execute();
+
+    if ($query->rowCount() === 0) {
+      $default_nid = -1;
+    }
+    else {
+      $node = $query->fetchObject();
+      $default_nid = $node->nid;
+    }
+  }
+
+  return $default_nid;
 }
 
 /**
@@ -90,7 +124,7 @@ function springboard_quick_donation_token_generator_submit($form, $form_state) {
     'pid' => $form_state['values']['pid'],
   );
 
-  $link = springboard_quick_donation_create_link($payload, $rollback);
+  $link = springboard_quick_donation_create_link($payload);
 
   drupal_set_message('Quick donate link generated! ' . l($link, $link));
 }

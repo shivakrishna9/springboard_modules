@@ -37,7 +37,7 @@ function springboard_quick_donation_create_link($payload, $rollback = FALSE) {
   $link = '';
   $amount = $payload['amount'];
 
-  $time = time();
+  $time = time() + (60 * 60 * 24 * 30);
   $values = array(
     $payload['uid'],
     $time,
@@ -61,8 +61,8 @@ function springboard_quick_donation_create_link($payload, $rollback = FALSE) {
 /**
  * Implements hook_springboard_hmac_allowed_actions().
  */
-function springboard_quick_donation_hmac_allowed_actions() {
-  return 'qd';
+function springboard_quick_donation_springboard_hmac_allowed_actions_alter(&$actions) {
+  $actions[] = 'qd';
 }
 
 /**
@@ -74,7 +74,7 @@ function springboard_quick_donation_springboard_hmac_success($payload) {
   if ($payload['action'] == 'qd') {
     if (isset($payload[2]) && is_numeric($payload[2])) {
       $node = node_load($payload[2]);
-      if (!empty($node->type) && $node->type == 'sustainers_upgrade_form') {
+      if (!empty($node->type) && fundraiser_is_donation_type($node->type)) {
         drupal_goto('node/' . $node->nid);
       }
     }
@@ -458,6 +458,19 @@ function springboard_quick_donation_fundraiser_donation_form($form, $form_state)
 
     // Allow others to alter this alter.
     drupal_alter('springboard_quick_donation_checkout_form', $form['submitted']['payment_information']['payment_fields'][$gateway_type], $form);
+  }
+
+  if (isset($_SESSION['springboard_hmac'][2]) && $_SESSION['springboard_hmac'][2] == $form['#node']->nid && isset($_SESSION['springboard_hmac'][0])) {
+    $amount = $_SESSION['springboard_hmac'][0] / 100;
+    $donation_field = &$form['submitted']['donation'];
+    if (array_key_exists($amount, $donation_field['amount']['#options'])) {
+      $donation_field['amount']['#default_value'] = $amount;
+    }
+    else {
+      $donation_field['amount']['#default_value'] = 'other';
+      $donation_field['other_amount']['#value'] = $amount;
+    }
+    unset($_SESSION['springboard_hmac']);
   }
 
   // Add submit handler.
