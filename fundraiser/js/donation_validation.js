@@ -119,7 +119,7 @@
         // On submission hide the button and replace it with a new value.
         // Wrap the click in a once trigger to be sure that we bind it the one time.
         $('.fundraiser-donation-form').once(function() {
-          $('.fundraiser-donation-form').submit(function() {
+          $('.fundraiser-donation-form').submit(function( event ) {
             // Validate the form
             if (donationValidate.form()) {
               if ($('.fundraiser-donation-form').data('submitted') === true) {
