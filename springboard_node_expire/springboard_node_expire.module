@@ -77,7 +77,14 @@ function springboard_node_expire_form_alter(&$form, &$form_state, $form_id) {
           'class' => array('springboard-node-expire-form'),
         ),
       );
-      $form['expiration_settings']['expire'] = isset($form['options']['expire']) ? $form['options']['expire'] : FALSE;
+      $form['expiration_settings']['expire'] = isset($form['options']['expire']) ? $form['options']['expire'] : array(
+        '#title' => t('Expiration date'),
+        '#description' => t('Time date to consider the node expired. Format: <em class="placeholder">2016-07-05</em> (YYYY-MM-DD).'),
+        '#type' => 'textfield',
+        '#maxlength' => 25,
+        '#required' => FALSE,
+        '#default_value' => '',
+      );
       $form['expiration_settings']['expire']['#date_label_position'] = 'none';
       $form['expiration_settings']['expire']['#description'] = t('Date on which this page will expire.');
       unset($form['options']['expire']);
