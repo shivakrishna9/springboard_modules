@@ -688,6 +688,17 @@ function webform_ab_delete(&$node) {
 }
 
 /**
+ * Implements hook_views_post_render().
+ */
+function webform_ab_views_post_render(&$view, &$output, &$cache) {
+  // Remove the node clone link from the list of webform_ab nodes:
+  if (!module_exists('clone') || $view->name != 'webform_ab_tests') {
+    return;
+  }
+  $output = preg_replace('/(<a.*?Clone.*?<\/a>)/', '', $output);
+}
+
+/**
  * Implements hook_view().
  */
 function webform_ab_view(&$node, $view_mode) {
