@@ -1176,7 +1176,7 @@ function fundraiser_sustainers_upgrade_walk_component_hierarchy($nid, $cid, &$pa
 /**
  * Implements hook_mail_alter().
  *
- * Stop email wrappers email from sending if upgrade failed.
+ * Stop email templates email from sending if upgrade failed.
  */
 function fundraiser_sustainers_upgrade_mail_alter(&$message) {
   if (!empty($message['params']['node']) && $message['params']['node']->type == 'sustainers_upgrade_form') {
