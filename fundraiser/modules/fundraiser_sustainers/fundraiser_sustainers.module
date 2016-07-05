@@ -336,6 +336,7 @@ function _fundraiser_sustainers_user_has_recurring_donations($user) {
  * Menu callback for the standalone cron.
  */
 function fundraiser_sustainers_standalone_cron() {
+  drupal_page_is_cacheable(FALSE);
   // Process recurring donations.
   $process_recurring = TRUE;
   $processor_key_match = fundraiser_sustainers_processor_key_match();
@@ -2454,7 +2455,7 @@ function _fundraiser_sustainers_donation_amount_form_update_donations($master_di
  $fundraiser_sustainers_series = entity_load_single('fundraiser_sustainers_series', $master_did);
  $fundraiser_sustainers_series->amount = $amount;
  $fundraiser_sustainers_series->save();
- 
+
   drupal_set_message(t('The amount of all future donations has been updated to @amount.', array('@amount' => $formatted_amount)));
 }
 
@@ -3755,7 +3756,7 @@ function _fundraiser_sustainers_get_donation_sets_recurr_by_uid($uid) {
   $donation_sets = db_query('SELECT r.master_did, MIN(r.next_charge) AS start_date, ' .
     'MAX(r.next_charge) AS expire_date FROM {fundraiser_sustainers} r ' .
     'LEFT JOIN {fundraiser_donation} d on r.did = d.did ' .
-    'WHERE d.uid = :uid GROUP BY r.master_did ORDER BY r.master_did DESC', 
+    'WHERE d.uid = :uid GROUP BY r.master_did ORDER BY r.master_did DESC',
      array(':uid' => $uid))->fetchAll();
   foreach ($donation_sets as $index => $donation_set) {
     $next_charge = _fundraiser_sustainers_get_donations_next_charge($donation_set->master_did);
