@@ -21,6 +21,26 @@ function springboard_petition_install() {
 }
 
 /**
+ * Implements hook_uninstall().
+ */
+function springboard_petition_uninstall() {
+  $petitions = db_select('node', 'n')
+              ->fields('n', array('nid'))
+              ->condition('type', 'springboard_petition')
+              ->execute();
+  foreach ($petitions as $petition) {
+    $nids[] = $petition->nid;
+  }
+  if (!empty($nids)) {
+    node_delete_multiple($nids);
+    drupal_set_message(t('%count petitions have been deleted.', array('%count' => count($nids))));
+  }
+  node_type_delete('springboard_petition');
+  node_types_rebuild();
+  menu_rebuild();
+}
+
+/**
  * Creates the springboard_petition content type.
  */
 function springboard_petition_add_content_type() {

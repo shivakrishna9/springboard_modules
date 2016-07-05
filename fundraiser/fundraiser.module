@@ -1578,12 +1578,10 @@ function fundraiser_donation_form(&$form, &$form_state) {
   $config = db_query('SELECT * FROM {fundraiser_webform_messages} f WHERE f.nid = :nid', array(':nid' => $form['#node']->nid))->fetchAssoc();
 
   // Attach the js files.
-  $form['#attached']['js'] = array(
-    drupal_get_path('module', 'fundraiser') . '/js/jquery.alphanumeric.min.js',
-    drupal_get_path('module', 'fundraiser') . '/js/jquery.validate.min.js',
-    drupal_get_path('module', 'fundraiser') . '/js/donation_validation.js',
-  );
-
+  $path = drupal_get_path('module', 'fundraiser');
+  $form['#attached']['js'][] =  $path . '/js/jquery.alphanumeric.min.js';
+  $form['#attached']['js'][] =  $path . '/js/jquery.validate.min.js';
+  $form['#attached']['js'][] =  $path . '/js/donation_validation.js';
   // Add the validation configuration settings array.
   $form_validation_js = _fundraiser_donation_form_js_validation_config($node);
   if (!empty($form_validation_js)) {
@@ -3619,4 +3617,11 @@ function fundraiser_log_donation_processing($donation, $log = array()) {
  */
 function _fundraiser_amount_value_sanitize($amount) {
   return preg_replace('/[^\d\.]/i', '', $amount);
+}
+
+/**
+ * Implements hook_springboard_node_expire_expiration_message().
+ */
+function fundraiser_springboard_node_expire_node_view_alter(&$node) {
+  $node->content['webform']['#access'] = FALSE;
 }

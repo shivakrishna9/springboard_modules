@@ -1081,6 +1081,10 @@ function fundraiser_upsell_modal($node, $did, $ajax) {
     if($form_state['preview'] == TRUE) {
       $output[0]['output'] .= '<div class="close-modal-wrapper" style="background-color:#000; padding: .2em; color: #000; position: absolute; top: -13px; right: -10px; opacity: .4;"><a href="#" class="ctools-close-modal" style="color: #fff;">Close Preview</a></div>';
     }
+    // Slightly different close button for the real modal.
+    else {
+      $output[0]['output'] .= '<div class="close-modal-wrapper top-close"><a href="#" class="ctools-close-modal">Close</a></div>';
+    }
 
     if (!empty($form_state['executed'])) {
       $content = '';
