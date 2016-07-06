@@ -1288,7 +1288,7 @@ array()) {
   $payment_item["transaction_id"] = $payment['remote_id']; // the id returned
   // from the gateway
   $payment_item["amount"]         = number_format($payment['amount']/100, 2,
-    '.', ' '); // this is coming from commerce in cents
+    '.', ''); // this is coming from commerce in cents
   $payment_item["currency"]       = $payment['currency_code'];
   $payment_item["status"]         = $payment['status'];
   $payment_item["message"]         = $payment['message'];
