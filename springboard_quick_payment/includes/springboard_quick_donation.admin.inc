@@ -49,11 +49,12 @@ function springboard_quick_donation_token_generator($form, $form_state) {
     '#default_value' => $default_nid,
   );
 
-  $form['springboard_quick_donation']['pid'] = array(
+  $default_did = _springboard_quick_donation_token_generator_get_default_did();
+  $form['springboard_quick_donation']['did'] = array(
     '#type' => 'textfield',
-    '#title' => t('Payment ID'),
+    '#title' => t('Donation ID'),
     '#description' => t('The payment ID, if desired.'),
-    '#default_value' => 0,
+    '#default_value' => $default_did,
   );
 
   $form['submit'] = array(
@@ -68,7 +69,8 @@ function springboard_quick_donation_token_generator($form, $form_state) {
 }
 
 /**
- * Helper function to retrieve a donation nid.
+ * Helper function to retrieve a donation node id.
+ *
  * @return int
  *   The node ID.
  */
@@ -97,6 +99,36 @@ function _springboard_quick_donation_token_generator_get_default_nid() {
 }
 
 /**
+ * Helper function to retrieve a donation ID.
+ *
+ * @return int
+ *   The node ID.
+ */
+function _springboard_quick_donation_token_generator_get_default_did() {
+  $default_did = &drupal_static(__FUNCTION__);
+  if (!isset($default_nid)) {
+    global $user;
+
+    $query = db_select('fundraiser_donation', 'fd')
+      ->fields('fd', array('did'))
+      ->condition('uid', $user->uid, '=')
+      ->orderBy('did', 'ASC')
+      ->range(0, 1)
+      ->execute();
+
+    if ($query->rowCount() === 0) {
+      $default_did = -1;
+    }
+    else {
+      $donation = $query->fetchObject();
+      $default_did = $donation->did;
+    }
+  }
+
+  return $default_did;
+}
+
+/**
  * Store temporary upgrade link values in session.
  *
  * @param array $form
@@ -121,7 +153,7 @@ function springboard_quick_donation_token_generator_submit($form, $form_state) {
     'uid' => $form_state['values']['uid'],
     'amount' => $form_state['values']['amount'],
     'nid' => $form_state['values']['nid'],
-    'pid' => $form_state['values']['pid'],
+    'did' => $form_state['values']['did'],
   );
 
   $link = springboard_quick_donation_create_link($payload);

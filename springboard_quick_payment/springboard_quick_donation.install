@@ -79,6 +79,12 @@ function springboard_quick_donation_schema() {
         'not null' => TRUE,
         'default' => 0,
       ),
+      'donation_id' => array(
+        'description' => 'The donation ID.',
+        'type' => 'int',
+        'not null' => FALSE,
+        'default' => 0,
+      ),
       'market_source' => array(
         'description' => 'The market source.',
         'type' => 'varchar',
@@ -104,6 +110,10 @@ function springboard_quick_donation_schema() {
       'uid_uid' => array(
         'table' => 'users',
         'columns' => array('uid' => 'uid'),
+      ),
+      'donation_id' => array(
+        'table' => 'fundraiser_donation',
+        'columns' => array('did' => 'donation_id'),
       ),
     ),
   );
