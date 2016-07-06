@@ -660,6 +660,7 @@ function springboard_dw_queue_legacy_get_records($type, $limit = FALSE, $highwat
       $query->addField('u', 'uid', 'id');
       $query->addField('u', 'created', 'created');
       $query->orderBy('created', 'ASC');
+      $query->condition('uid', 0, '<>');
       if ($idlist) {
         $query->condition('uid', $idlist, 'IN');
       }

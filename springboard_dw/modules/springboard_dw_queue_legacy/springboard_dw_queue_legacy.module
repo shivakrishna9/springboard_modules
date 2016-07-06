@@ -54,7 +54,7 @@ function springboard_dw_queue_legacy_form_springboard_dw_settings_form_alter(&$f
 function springboard_dw_queue_legacy_dashboard() {
   $output = '';
 
-  $total_contacts = db_query("SELECT count(uid) FROM {users}", array(), array(), array('target' => 'slave'))->fetchField();
+  $total_contacts = db_query("SELECT count(uid) FROM {users} WHERE uid <> 0", array(), array(), array('target' => 'slave'))->fetchField();
   $total_donations = db_query("SELECT count(did) FROM {fundraiser_donation}", array(), array('target' => 'slave'))->fetchField();
   $total_actions = db_query("SELECT count(s.sid) FROM {webform_submissions} s INNER JOIN {node} n ON s.nid = n.nid WHERE n.type IN ('sba_message_action', 'sba_social_action', 'springboard_petition')", array(), array('target' => 'slave'))->fetchField();
   $total_petition_messages = db_query("SELECT count(s.sid) FROM {webform_submissions} s INNER JOIN {node} n ON s.nid = n.nid WHERE n.type = 'springboard_petition'", array(), array('target' => 'slave'))->fetchField();
