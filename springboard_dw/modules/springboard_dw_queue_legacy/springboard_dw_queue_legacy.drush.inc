@@ -99,7 +99,7 @@ function springboard_dw_queue_legacy_missing($type = '') {
       break;
 
     case 'petition_message':
-        $ids_in_dw = springboard_dw_queue_legacy_get_dw_by_type('petition message');
+        $ids_in_dw = springboard_dw_queue_legacy_get_dw_by_type('advocacy petition message');
       break;
 
     case 'salesforce_sync':
