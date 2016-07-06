@@ -89,6 +89,9 @@ function _webform_render_designations($component, $value = NULL, $filter = TRUE)
 
       $group_wrapper = entity_metadata_wrapper('fundraiser_fund_group', $group);
       $funds = $group_wrapper->field_ffg_fd_reference->value();
+      uasort($funds, function ($a, $b) {
+        return strcmp($a->title, $b->title);
+      });
       $num = count($funds);
 
       // Groups with multiple funds refenced get a select field, a "group of
