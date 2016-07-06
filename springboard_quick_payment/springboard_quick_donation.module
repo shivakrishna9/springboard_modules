@@ -43,7 +43,7 @@ function springboard_quick_donation_create_link($payload, $rollback = FALSE) {
     $time,
     'qd',
     $amount,
-    $payload['pid'],
+    $payload['did'],
     $payload['nid'],
   );
 
@@ -79,6 +79,74 @@ function springboard_quick_donation_springboard_hmac_success($payload) {
       }
     }
   }
+}
+
+/**
+ * Implements hook_springboard_hmac_failure().
+ *
+ * Redirect to the donation form if hmac not validated.
+ */
+function springboard_quick_donation_springboard_hmac_failure($reason, $payload) {
+  if (variable_get('springboard_quick_donation_debug', FALSE)) {
+    global $user;
+    if (module_exists('devel') && user_access('access devel information', $user)) {
+      dpm($reason);
+    }
+    else {
+      drupal_set_message($reason, 'warning', FALSE);
+    }
+  }
+}
+
+/**
+ * Helper function to get a mapping of hmac values for quick donations.
+ *
+ * @return array
+ *   A map of hmac types to their corresponding keys.
+ */
+function _springboard_quick_donation_hmac_mapping() {
+  return array(
+    'amount' => 0,
+    'donation_id' => 1,
+    'uid' => 'uid',
+    'fundraiser_id' => 2,
+  );
+}
+
+/**
+ * Implements hook_springboard_hmac_verify_payload().
+ */
+function springboard_quick_donation_springboard_hmac_verify_payload($payload) {
+  $qd_hmac_mapping = _springboard_quick_donation_hmac_mapping();
+  $did = $payload[$qd_hmac_mapping['donation_id']];
+  $donation = fundraiser_donation_get_donation($did);
+  $nid = $payload[$qd_hmac_mapping['fundraiser_id']];
+
+  if ($donation->node->nid == $nid) {
+    $node = $donation['node'];
+  }
+  else {
+    $node = node_load($nid);
+  }
+
+  if (!fundraiser_is_donation_type($node->type)) {
+    return t('Not a valid node type.');
+  }
+
+  if (empty($node->gateways)) {
+    return t('No gateway information available.');
+  }
+
+  if (empty($donation->gateway['payment_method'])) {
+    return t('No payment information available.');
+  }
+
+  $payment_method = $donation->gateway['payment_method'][0];
+  if (!array_key_exists($payment_method, $node->gateways) || !$node->gateways[$payment_method]['status'] || $donation->gateway['id'] !== $node->gateways[$payment_method]['id']) {
+    return t('The payment method is not available for the specified node.');
+  }
+
+  return NULL;
 }
 
 /**
@@ -326,6 +394,14 @@ function springboard_quick_donation_fundraiser_donation_form($form, $form_state)
     return;
   }
 
+  $qd_hmac_mapping = _springboard_quick_donation_hmac_mapping();
+
+  $qd_did = isset($_SESSION['springboard_hmac'][$qd_hmac_mapping['donation_id']]) ? $_SESSION['springboard_hmac'][$qd_hmac_mapping['donation_id']] : FALSE;
+  $qd = FALSE;
+  if ($qd_did) {
+    $qd = fundraiser_donation_get_donation($qd_did);
+  }
+
   foreach ($form['#node']->gateways as $gateway_type => $gateway) {
     if (empty($gateway['status']) || empty($gateway['id'])) {
       continue;
@@ -460,8 +536,8 @@ function springboard_quick_donation_fundraiser_donation_form($form, $form_state)
     drupal_alter('springboard_quick_donation_checkout_form', $form['submitted']['payment_information']['payment_fields'][$gateway_type], $form);
   }
 
-  if (isset($_SESSION['springboard_hmac'][2]) && $_SESSION['springboard_hmac'][2] == $form['#node']->nid && isset($_SESSION['springboard_hmac'][0])) {
-    $amount = $_SESSION['springboard_hmac'][0] / 100;
+  if (isset($_SESSION['springboard_hmac'][$qd_hmac_mapping['uid']]) && $_SESSION['springboard_hmac'][$qd_hmac_mapping['uid']] == $form['#node']->nid && isset($_SESSION['springboard_hmac'][$qd_hmac_mapping['amount']])) {
+    $amount = $_SESSION['springboard_hmac'][$qd_hmac_mapping['amount']] / 100;
     $donation_field = &$form['submitted']['donation'];
     if (array_key_exists($amount, $donation_field['amount']['#options'])) {
       $donation_field['amount']['#default_value'] = $amount;
@@ -470,7 +546,7 @@ function springboard_quick_donation_fundraiser_donation_form($form, $form_state)
       $donation_field['amount']['#default_value'] = 'other';
       $donation_field['other_amount']['#value'] = $amount;
     }
-    unset($_SESSION['springboard_hmac']);
+    // unset($_SESSION['springboard_hmac']);
   }
 
   // Add submit handler.
@@ -550,6 +626,7 @@ function _springboard_quick_donation_checkout_form_submit($form, &$form_state) {
         'card_id' => $card_id,
         'optin_date' => time(),
         'uid' => $account->uid,
+        'donation_id' => $donation->did,
       ))
       ->execute();
   }
