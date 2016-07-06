@@ -43,7 +43,92 @@ function springboard_dw_queue_legacy_drush_command() {
     'aliases' => array('sb-dw-queue'),
   );
 
+  $items['springboard-dw-queue-legacy-missing'] = array(
+    'callback' => 'springboard_dw_queue_legacy_missing',
+    'description' => dt('Find records missing from warehouse by type'),
+    'arguments' => array(
+      'type' => 'The type of record',
+    ),
+    'options' => array(
+      'auto-queue' => 'auto-queue',
+    ),
+    'aliases' => array('sb-dw-missing'),
+  );
+
   return $items;
+}
+
+/**
+ * Callback function for springboard-dw-queue-legacy-missing
+ */
+function springboard_dw_queue_legacy_missing($type = '') {
+  // Check for existence of argument.
+  if (!$type) {
+    $options = array(
+      'contact' => dt('contact'),
+      'form' => dt('form'),
+      'submission' => dt('submission'),
+      'donation' => dt('donation'),
+      'action' => dt('action'),
+      'message' => dt('message'),
+      'petition_message' => dt('petition_message'),
+      'payment' => dt('payment'),
+      'salesforce_sync' => dt('salesforce_sync'),
+    );
+    $type = drush_choice($options, dt('What kind of record would you like to queue?'));
+  }
+  // Populate list of records to operate on.
+  $records = springboard_dw_queue_legacy_get_records($type);
+  switch ($type) {
+    case 'contact':
+    case 'donation':
+    case 'form':
+    case 'payment':
+    case 'submission':
+      $ids_in_dw = springboard_dw_queue_legacy_get_dw_by_type($type);
+      break;
+
+    case 'action':
+      $advocacy_action_ids_in_dw = springboard_dw_queue_legacy_get_dw_by_type('advocacy action');
+      $petition_ids_in_dw = springboard_dw_queue_legacy_get_dw_by_type('petition');
+      $ids_in_dw = array_merge($advocacy_action_ids_in_dw, $petition_ids_in_dw);
+      break;
+
+    case 'message':
+      $ids_in_dw = springboard_dw_queue_legacy_get_dw_by_type('advocacy message');
+      break;
+
+    case 'petition_message':
+        $ids_in_dw = springboard_dw_queue_legacy_get_dw_by_type('petition message');
+      break;
+
+    case 'salesforce_sync':
+      $ids_in_dw = springboard_dw_queue_legacy_get_dw_by_type('salesforce sync');
+      break;
+
+    default:
+      return drush_set_error(dt('"@type" is not a valid record type. Nothing was processed.', array('@type' => $type)));
+  }
+
+  drush_log(dt('Found @count records of type @type', array('@count' => count($records), '@type' => $type)), 'ok');
+  $record_ids = array_column($records, 'id');
+
+  // Create array that only contains the IDs.
+  $ids = array_map(function($records) {
+      return is_object($records) ? $records->id : $records['id'];
+  }, $records);
+
+  $missing_ids = array_diff($ids, $ids_in_dw);
+
+  drush_log(dt('Found @count records of type @type missing from the springboard_data_warehouse table', array('@count' => count($missing_ids), '@type' => $type)), 'ok');
+  if (count($missing_ids) > 0) {
+    drush_log(dt('They are: @list', array('@list' => implode(',', $missing_ids))), 'ok');
+
+    if (drush_get_option('auto-queue')) {
+      drush_log(dt('Attempting to queue these records.'), 'ok');
+      drush_invoke_process(drush_sitealias_get_record('@self'), 'springboard-dw-queue-legacy-data', array($type), array('idlist' => implode(',', $missing_ids)));
+    }
+  }
 }
 
 /**
@@ -644,10 +729,10 @@ function springboard_dw_queue_legacy_get_records($type, $limit = FALSE, $highwat
       $query->orderBy('created', 'ASC');
       $query->join('webform', 'w', 'n.nid = w.nid');
       if ($idlist) {
-        $query->condition('nid', $idlist, 'IN');
+        $query->condition('n.nid', $idlist, 'IN');
       }
       elseif ($highwater) {
-        $query->condition('nid', $highwater, '>');
+        $query->condition('n.nid', $highwater, '>');
       }
       break;
 
@@ -729,5 +814,13 @@ function springboard_dw_queue_legacy_get_records($type, $limit = FALSE, $highwat
     }
     $records = $query->execute()->fetchAll();
   }
+  return $records;
+}
+
+function springboard_dw_queue_legacy_get_dw_by_type($type) {
+  $query = db_select('springboard_data_warehouse', 's', array('target' => 'slave'));
+  $query->addField('s', 'drupal_id', 'id');
+  $query->condition('type', $type, '=');
+  $records = $query->execute()->fetchCol();
   return $records;
 }
