@@ -272,7 +272,6 @@ function springboard_dw_queue_legacy_form($records, $operation_details, $idlist,
 function springboard_dw_queue_legacy_payment($records, $operation_details, $idlist, &$context) {
   foreach ($records as $record) {
     $queue = DrupalQueue::get("springboard_dw_export");
-
     // Create the form item in the queue if not warehoused.
     if (!springboard_dw_item_is_warehoused('payment', $record->id)) {
       $donation['donation_id'] = $record->id;
@@ -683,6 +682,7 @@ function springboard_dw_queue_legacy_get_records($type, $limit = FALSE, $highwat
       $query->addField('c', 'payment_method');
       $query->addField('c', 'instance_id');
       $query->addField('c', 'currency_code');
+      $query->addField('c', 'amount');
       $query->addField('c', 'status');
       $query->addField('c', 'message');
       $query->addField('c', 'remote_status');
