@@ -162,6 +162,7 @@ function theme_fundraiser_fund_group_form(&$variables) {
     INNER JOIN {commerce_product} cp ON dc.entity_id = cp.product_id
     LEFT JOIN {taxonomy_vocabulary} tv ON ttd.vid = tv.vid
     WHERE cp.status = 1 AND tv.machine_name IN ('fd_designation_categories')
+    ORDER BY ttd.weight, cp.title ASC
   ")->fetchAll();
 
   $products_by_tag = array();
