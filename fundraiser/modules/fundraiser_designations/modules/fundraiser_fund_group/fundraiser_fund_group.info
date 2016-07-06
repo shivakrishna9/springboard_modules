@@ -11,4 +11,6 @@ files[] = views/fundraiser_fund_group.views.inc
 files[] = views/fundraiser_fund_group_handler_link_field.inc
 files[] = views/fundraiser_fund_group_handler_delete_link_field.inc
 files[] = views/fundraiser_fund_group_handler_edit_link_field.inc
+files[] = views/fundraiser_fund_group_handler_override_field.inc
+
 

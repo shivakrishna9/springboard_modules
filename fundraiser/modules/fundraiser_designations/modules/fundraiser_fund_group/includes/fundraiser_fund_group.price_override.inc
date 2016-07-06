@@ -32,10 +32,10 @@ function fundraiser_fund_group_price_override_form(&$form, $form_state, $group, 
   );
 
   if ($node->recurring_setting == 'user_choice' || $node->recurring_setting == 'never') {
-    fundraiser_fund_group_default_ask($form, $form_state, 'default', $data);
+    fundraiser_fund_group_default_ask($form, $form_state, 'default', $data, $node);
   }
   if ((!empty($node->recurring_dual_ask_amounts) && $node->recurring_setting == 'user_choice') || $node->recurring_setting == 'always') {
-    fundraiser_fund_group_default_ask($form, $form_state, 'recurring', $data);
+    fundraiser_fund_group_default_ask($form, $form_state, 'recurring', $data, $node);
   }
 
   $form['actions']['submit']['#submit'][] = 'fundraiser_fund_group_override_form_submit';
@@ -44,7 +44,7 @@ function fundraiser_fund_group_price_override_form(&$form, $form_state, $group, 
 
 }
 
-function fundraiser_fund_group_default_ask(&$form, $form_state, $type, $data) {
+function fundraiser_fund_group_default_ask(&$form, $form_state, $type, $data, $node) {
 
   $form['override_settings'][$type . '_amount_wrapper'] = array(
     '#type' => 'fieldset',
@@ -81,16 +81,23 @@ function fundraiser_fund_group_default_ask(&$form, $form_state, $type, $data) {
   }
   else {
     $price_set = [];
+    $amounts = [];
+
     if (!empty($data['price_set'])) {
       $amounts = unserialize($data['price_set']);
-      if (isset($amounts[$type])) {
-        foreach ($amounts[$type] as $amount) {
-          $price_set[] = array($amount['amount'], $amount['label']);
-          if (!empty($amount['default_amount'])) {
-            $default_amount = $amount['amount'];
-          }
+    }
+
+    if (isset($amounts[$type])) {
+      foreach ($amounts[$type] as $amount) {
+        $price_set[] = array($amount['amount'], $amount['label']);
+        if (!empty($amount['default_amount'])) {
+          $default_amount = $amount['amount'];
         }
       }
+    }
+    else {
+      $node_form_amounts = fundraiser_designations_get_form_display_amounts($node);
+      $price_set = $node_form_amounts[$type];
     }
     $donation_amounts = $price_set;
     // If not there, then grab some defaults.

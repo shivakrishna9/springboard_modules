@@ -485,6 +485,7 @@ function fundraiser_designations_get_form_display_amounts($node) {
 }
 
 function fundraiser_designations_get_group_display_amounts($group, $node) {
+  $node_form_amounts = fundraiser_designations_get_form_display_amounts($node);
   $override_price_set = unserialize($group->fd_overrides['price_set']);
   $price_sets = [];
   $donation_amounts = [];
@@ -497,6 +498,9 @@ function fundraiser_designations_get_group_display_amounts($group, $node) {
       $donation_amounts['default'][$key][] = $price['label'];
     }
   }
+  else {
+    $donation_amounts['default'] = $node_form_amounts['default'];
+  }
 
   if (isset($override_price_set['recurring'])) {
     foreach ($override_price_set['recurring'] as $key => $price) {
@@ -507,6 +511,9 @@ function fundraiser_designations_get_group_display_amounts($group, $node) {
       $donation_amounts['recurring'][$key][] = $price['label'];
 
     }
+  }
+  else {
+    $donation_amounts['recurring'] = $node_form_amounts['recurring'];
   }
   $recurring = $node->recurring_setting;
   $dual_ask = $node->recurring_dual_ask_amounts;
@@ -519,7 +526,12 @@ function fundraiser_designations_get_group_display_amounts($group, $node) {
     case 'user_choice':
       if (!empty($dual_ask)) {
         $price_sets['default'] = $donation_amounts['default'];
-        $price_sets['recurring'] = $donation_amounts['recurring'];
+        if (!empty($donation_amounts['recurring'])) {
+          $price_sets['recurring'] = $donation_amounts['recurring'];
+        }
+        else {
+          $price_sets['recurring'] = $donation_amounts['default'];
+        }
       }
       else {
         $price_sets['default'] = $donation_amounts['default'];

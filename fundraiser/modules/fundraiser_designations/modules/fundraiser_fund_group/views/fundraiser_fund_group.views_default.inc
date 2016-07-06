@@ -97,15 +97,26 @@ function fundraiser_fund_group_views_default_views() {
   $handler->display->display_options['style_plugin'] = 'table';
   $handler->display->display_options['style_options']['columns'] = array(
     'name' => 'name',
-    'edit_fundraiser_fund_group' => 'edit_fundraiser_fund_group',
-    'delete_fundraiser_fund_group' => 'edit_fundraiser_fund_group',
     'draggableviews' => 'draggableviews',
+    'delete_fundraiser_fund_group' => 'edit_fundraiser_fund_group',
+    'edit_fundraiser_fund_group' => 'edit_fundraiser_fund_group',
+    'override_fundraiser_fund_group' => 'name',
   );
   $handler->display->display_options['style_options']['default'] = '-1';
   $handler->display->display_options['style_options']['info'] = array(
     'name' => array(
       'sortable' => 0,
       'default_sort_order' => 'asc',
+      'align' => '',
+      'separator' => ' ',
+      'empty_column' => 0,
+    ),
+    'draggableviews' => array(
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
+    'delete_fundraiser_fund_group' => array(
       'align' => '',
       'separator' => '',
       'empty_column' => 0,
@@ -115,12 +126,7 @@ function fundraiser_fund_group_views_default_views() {
       'separator' => ' | ',
       'empty_column' => 0,
     ),
-    'delete_fundraiser_fund_group' => array(
-      'align' => '',
-      'separator' => '',
-      'empty_column' => 0,
-    ),
-    'draggableviews' => array(
+    'override_fundraiser_fund_group' => array(
       'align' => '',
       'separator' => '',
       'empty_column' => 0,
@@ -157,6 +163,15 @@ function fundraiser_fund_group_views_default_views() {
   $handler->display->display_options['fields']['edit_fundraiser_fund_group']['table'] = 'fundraiser_fund_group';
   $handler->display->display_options['fields']['edit_fundraiser_fund_group']['field'] = 'edit_fundraiser_fund_group';
   $handler->display->display_options['fields']['edit_fundraiser_fund_group']['label'] = 'Actions';
+  /* Field: Fund group: Override status */
+  $handler->display->display_options['fields']['override_fundraiser_fund_group']['id'] = 'override_fundraiser_fund_group';
+  $handler->display->display_options['fields']['override_fundraiser_fund_group']['table'] = 'fundraiser_fund_group';
+  $handler->display->display_options['fields']['override_fundraiser_fund_group']['field'] = 'override_fundraiser_fund_group';
+  $handler->display->display_options['fields']['override_fundraiser_fund_group']['label'] = 'Amounts Overridden?';
+  $handler->display->display_options['fields']['override_fundraiser_fund_group']['alter']['alter_text'] = TRUE;
+  $handler->display->display_options['fields']['override_fundraiser_fund_group']['alter']['text'] = '([override_fundraiser_fund_group])';
+  $handler->display->display_options['fields']['override_fundraiser_fund_group']['element_label_colon'] = FALSE;
+  $handler->display->display_options['fields']['override_fundraiser_fund_group']['text'] = 'blik';
   $handler->display->display_options['defaults']['sorts'] = FALSE;
   /* Sort criterion: Draggableviews: Weight */
   $handler->display->display_options['sorts']['weight']['id'] = 'weight';
@@ -174,6 +189,7 @@ function fundraiser_fund_group_views_default_views() {
   $handler->display->display_options['filters']['type']['value'] = array(
     'fundraiser_fund_group_default' => 'fundraiser_fund_group_default',
   );
+
 
   $views[$view->name] = $view;
   return $views;
