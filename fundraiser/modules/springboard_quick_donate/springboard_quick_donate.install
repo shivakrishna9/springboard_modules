@@ -2,16 +2,16 @@
 
 /**
  * @file
- * Install file for springboard_quick_donation.
+ * Install file for springboard_quick_donate.
  */
 
 /**
  * Implements hook_schema().
  */
-function springboard_quick_donation_schema() {
+function springboard_quick_donate_schema() {
   $schema = array();
 
-  $schema['springboard_quick_donation'] = array(
+  $schema['fundraiser_springboard_quick_donate'] = array(
     'description' => 'Stores data about quick donations for fundraisers.',
     'fields' => array(
       'fundraiser_nid' => array(
@@ -58,7 +58,7 @@ function springboard_quick_donation_schema() {
     ),
   );
 
-  $schema['springboard_quick_donation_cardonfile'] = array(
+  $schema['fundraiser_springboard_quick_donate_cardonfile'] = array(
     'description' => 'Stores data about user\'s payment information to be used for quick donations.',
     'fields' => array(
       'card_id' => array(
@@ -79,29 +79,41 @@ function springboard_quick_donation_schema() {
         'not null' => TRUE,
         'default' => 0,
       ),
-      'donation_id' => array(
+      'did' => array(
         'description' => 'The donation ID.',
         'type' => 'int',
         'not null' => FALSE,
         'default' => 0,
       ),
-      'market_source' => array(
+      'ms' => array(
         'description' => 'The market source.',
         'type' => 'varchar',
         'length' => 255,
         'not null' => FALSE,
       ),
-      'campaign_id' => array(
+      'cid' => array(
         'description' => 'The campaign id.',
         'type' => 'int',
         'unsigned' => TRUE,
         'not null' => FALSE,
       ),
+      'nid' => array(
+        'description' => 'The node ID the user opted in to quick donations.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'gateway' => array(
+        'description' => 'The gateway instance used when opting in to quick donations.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+      ),
     ),
     'primary key' => array('uid'),
     'indexes' => array(
       'card_id' => array('card_id'),
-      'donation_id' => array('donation_id'),
+      'donation_id' => array('did'),
     ),
     'foreign keys' => array(
       'cardid' => array(
@@ -114,7 +126,7 @@ function springboard_quick_donation_schema() {
       ),
       'donationid' => array(
         'table' => 'fundraiser_donation',
-        'columns' => array('did' => 'donation_id'),
+        'columns' => array('did' => 'did'),
       ),
     ),
   );
