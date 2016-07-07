@@ -152,8 +152,8 @@ function webform_ab_test_webforms($node) {
   if (!empty($node->included_webforms) && is_array($node->included_webforms)) {
     foreach ($node->included_webforms as $webform_nid => $webform_details) {
       $webform_node = node_load($webform_nid);
-      if (isset($webform_node->field_fundraiser_internal_name[$webform_node->language][0]['value'])) {
-        $title = $webform_node->field_fundraiser_internal_name[$webform_node->language][0]['value'];
+      if ($internal_name = _webform_ab_get_internal_name($webform_details['webform_nid'])) {
+        $title = $internal_name;
       }
       else {
         $title = $webform_details['title'];
