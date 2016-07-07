@@ -136,11 +136,11 @@ function springboard_dw_queue_legacy_dashboard() {
   $header = array('Records in Drupal', 'Unprocessed', 'Processed', 'Queued for Export', 'In Data Warehouse');
   $rows = array(
     array(
-      theme('item_list',array('items' => $total_records)),
-      theme('item_list',array('items' => $unprocessed_items)),
-      theme('item_list',array('items' => $processed_records)),
+      theme('item_list', array('items' => $total_records)),
+      theme('item_list', array('items' => $unprocessed_items)),
+      theme('item_list', array('items' => $processed_records)),
       $records_in_queue_table,
-      theme('item_list',array('items' => $dw_totals)),
+      theme('item_list', array('items' => $dw_totals)),
     ),
     array(
       number_format($records_in_drupal_count, 0, '', ','),
@@ -163,7 +163,7 @@ function springboard_dw_queue_legacy_dashboard() {
 
 function springboard_dw_queue_legacy_get_dw_totals() {
   $token = variable_get('springboard_dw_authentication_token');
-  $data = json_decode(drupal_http_request('https://dw.gospringboard.io/report/submissions?authenticationToken=' . $token . '&jsonReturn=true')->data, true);
+  $data = json_decode(drupal_http_request('https://dw.gospringboard.io/report/submissions?authenticationToken=' . $token . '&jsonReturn=true')->data, TRUE);
   ksort($data);
   return $data;
 }
@@ -174,7 +174,7 @@ function springboard_dw_queue_legacy_get_advocacy_messages_count() {
   foreach ($advocacy_action_records as $advocacy_action_record) {
     $node = node_load($advocacy_action_record->nid);
     $node->advocacy_id;
-    $data = json_decode(drupal_http_request(variable_get('springboard_dw_advocacy_api_endpoint') . '/api/v1/messages/get/' . $node->advocacy_id . '?access_token=' . variable_get('springboard_dw_advocacy_authentication_token'))->data, true);
+    $data = json_decode(drupal_http_request(variable_get('springboard_dw_advocacy_api_endpoint') . '/api/v1/messages/get/' . $node->advocacy_id . '?access_token=' . variable_get('springboard_dw_advocacy_authentication_token'))->data, TRUE);
     $total += $data['total'];
   }
   return $total;
@@ -211,7 +211,7 @@ function springboard_dw_queue_legacy_get_highwater_mark($type) {
  */
 function springboard_dw_queue_legacy_set_highwater_mark($type, $timestamp, $idlist = FALSE) {
   // If we are working with a specific set of IDs, don't move highwater mark.
-  if($idlist) {
+  if ($idlist) {
     return;
   }
   $record = array('type' => $type, 'highwater' => $timestamp);

@@ -294,7 +294,7 @@ function springboard_dw_fundraiser_donation_success($donation) {
   springboard_dw_log_queue_item($donation_item);
 
   // Check if the transaction id exists
-  if(isset($donation_item['transaction_id'])) {
+  if (isset($donation_item['transaction_id'])) {
     // Get the transaction date from the commerce payment transaction
     $transaction = springboard_dw_transaction_get_by_id
     ($donation_item['transaction_id']);
@@ -387,7 +387,7 @@ function springboard_dw_fundraiser_refund_success($refund) {
   $queue->createItem($donation_amount_update);
 
   // Check if the transaction id exists
-  if(isset($refund->txn_id)) {
+  if (isset($refund->txn_id)) {
     // Get the transaction date from the commerce payment transaction.
     $transaction = springboard_dw_transaction_get_by_id
     ($refund->txn_id);
@@ -1606,7 +1606,7 @@ function springboard_dw_extract_form_extra_props($form, $form_item) {
 
   $extra_props = array();
   foreach ($form as $key => $value) {
-    if (!in_array($key, $field_blacklist) && !array_key_exists($key, $form_item) && !preg_match('@fr_tickets_@',$key)) {
+    if (!in_array($key, $field_blacklist) && !array_key_exists($key, $form_item) && !preg_match('@fr_tickets_@', $key)) {
       $extra_props[$key] = $value;
     }
   }

@@ -464,7 +464,7 @@ function springboard_dw_queue_legacy_action($records, $operation_details, $idlis
       }
     }
     // Queue petition.
-    else if ($record->type == 'springboard_petition') {
+    elseif ($record->type == 'springboard_petition') {
       if (!springboard_dw_item_is_warehoused('petition', $record->id)) {
         $action_item = springboard_dw_map_petition_item($action);
         $queue->createItem($action_item);
