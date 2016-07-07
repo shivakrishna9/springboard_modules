@@ -49,7 +49,22 @@ function fundraiser_fund_groups_addon_form($form, $form_state, $node) {
     '#title' => t('Choose a fund designation'),
     '#autocomplete_path' => 'fund_groups/autocomplete_callback',
     '#weight' => -10,
+    '#required' => TRUE,
     '#default_value' => $addon_default,
+    '#states' => array(
+      'visible' => array(
+        ':input[name="statuses"]' => array('checked' => TRUE),
+      ),
+    ),
+  );
+
+  $form['addon_settings']['cart_text'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Cart display text'),
+    '#weight' => -9,
+    '#default_value' => isset($data['cart_text']) ? $data['cart_text'] : 'One-time add-on donation',
+    '#description' => t('The text that will appear in the shopping cart if a donor makes an add-on donation.'),
+    '#required' => TRUE,
     '#states' => array(
       'visible' => array(
         ':input[name="statuses"]' => array('checked' => TRUE),
@@ -77,6 +92,8 @@ function fundraiser_fund_groups_addon_form($form, $form_state, $node) {
     '#suffix' => '</div>',
     '#theme' => 'fundraiser_ask_amounts',
     '#tree' => TRUE,
+    '#required' => TRUE,
+
   );
 
   // AJAXy bits.
@@ -272,6 +289,7 @@ function fundraiser_fund_groups_addon_form_submit($form, &$form_state) {
     'nid' => $values['nid'],
     'pid' => $values['addon'],
     'status' => (int) $values['statuses'],
+    'cart_text' => $values['cart_text'],
     'price_set' => $sets,
   );
   drupal_write_record('fundraiser_fund_group_addon', $data);

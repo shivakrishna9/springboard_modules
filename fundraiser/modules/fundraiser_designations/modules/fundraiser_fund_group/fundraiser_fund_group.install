@@ -131,6 +131,13 @@ function fundraiser_fund_group_schema() {
         'unsigned' => TRUE,
         'not null' => TRUE,
       ),
+      'cart_text' => array(
+        'description' => 'The text that will appear in the cart..',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+      ),
       'price_set' => array(
         'type' => 'blob',
         'not null' => FALSE,
@@ -177,4 +184,18 @@ function fundraiser_fund_group_schema() {
 function fundraiser_fund_group_install() {
   module_load_include('inc', 'fundraiser_fund_group', 'includes/install/fundraiser_fund_group.install_group');
   _fundraiser_fund_group_install_default_entity();
+}
+
+/**
+ * Add cart text field.
+ */
+function fundraiser_fund_group_update_7001() {
+  $field = array(
+    'description' => 'The text that will appear in the cart..',
+    'type' => 'varchar',
+    'length' => 255,
+    'not null' => TRUE,
+    'default' => '',
+  );
+  db_add_field('fundraiser_fund_group_addon', 'cart_text', $field);
 }
