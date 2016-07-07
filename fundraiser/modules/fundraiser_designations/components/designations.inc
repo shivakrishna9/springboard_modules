@@ -129,7 +129,7 @@ function _webform_render_funds_multiple(&$element, $node, $group, $funds, $amoun
   $options[] = 'Select';
   foreach ($funds as $fund) {
     if ($fund->status == 1) {
-      $options[$fund->product_id] = $fund->title;
+      $options[$fund->product_id] = check_plain($fund->title);
     }
   }
 
@@ -239,7 +239,7 @@ function _fundraiser_designations_build_child_elements($id, &$element, $amounts,
   $donation_amounts = [];
   if (!empty($amounts['default'])) {
     foreach ($amounts['default'] as $key => $amount) {
-      $donation_amounts[$amount[0]] = "$amount[1]";
+      $donation_amounts[$amount[0]] = check_plain($amount[1]);
     }
     $child = array();
     $child['#type'] = 'radios';
@@ -253,7 +253,7 @@ function _fundraiser_designations_build_child_elements($id, &$element, $amounts,
   $recurring_donation_amounts = [];
   if (!empty($amounts['recurring'])) {
     foreach ($amounts['recurring'] as $key => $amount) {
-      $recurring_donation_amounts[$amount[0]] = "$amount[1]";
+      $recurring_donation_amounts[$amount[0]] = check_plain($amount[1]);
     }
     $child = array();
     $child['#type'] = 'radios';
@@ -520,8 +520,8 @@ function fundraiser_designations_get_group_display_amounts($group, $node) {
       if (!empty($price['default_amount'])) {
         $price_sets['default']['default_amount'] = $price['default_amount'];
       }
-      $donation_amounts['default'][$key][] = $price['amount'];
-      $donation_amounts['default'][$key][] = $price['label'];
+      $donation_amounts['default'][$key][] = check_plain($price['amount']);
+      $donation_amounts['default'][$key][] = check_plain($price['label']);
     }
   }
   else {
@@ -535,8 +535,8 @@ function fundraiser_designations_get_group_display_amounts($group, $node) {
       if (!empty($price['default_amount'])) {
         $price_sets['recurring']['recurring_default_amount'] = $price['default_amount'];
       }
-      $donation_amounts['recurring'][$key][] = $price['amount'];
-      $donation_amounts['recurring'][$key][] = $price['label'];
+      $donation_amounts['recurring'][$key][] = check_plain($price['amount']);
+      $donation_amounts['recurring'][$key][] = check_plain($price['label']);
 
     }
   }

@@ -136,7 +136,7 @@ function _fundraiser_designations_addon_build_child_elements($id, &$element, $am
   $donation_amounts = [];
   if (!empty($amounts)) {
     foreach ($amounts as $key => $amount) {
-      $donation_amounts[$amount[0]] = "$amount[1]";
+      $donation_amounts[$amount[0]] = check_plain($amount[1]);
     }
     $child = array();
     $child['#type'] = 'radios';
