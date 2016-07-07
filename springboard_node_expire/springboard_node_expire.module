@@ -138,6 +138,7 @@ function springboard_node_expire_form_alter(&$form, &$form_state, $form_id) {
     }
   }
 }
+
 /**
  * Helper function called after node add/edit form has been built.
  */
@@ -250,6 +251,14 @@ function _springboard_node_expire_node_type_expirable($types) {
   if (empty($ntypes)) {
     return;
   }
+
+  $ntypes = array_filter($ntypes, function($value) {
+    return $value['enabled'];
+  });
+  if (empty($ntypes)) {
+    return;
+  }
+
   $ntypes = array_keys($ntypes);
   $intersection = array_intersect($types, $ntypes);
   return count($intersection) > 0;
@@ -275,15 +284,15 @@ function springboard_node_expire_node_load($nodes, $types) {
         'message_format',
       ))
       ->condition('nid', $nids, 'IN')
-      ->execute()
-      ->fetchAllAssoc('nid');
+      ->execute();
 
     $time = strtotime("now");
 
     // If any records exist, set the node object's properties to their
     // expiration setting values.
-    if (count($query)) {
-      foreach ($query as $key => $record) {
+    if ($query->rowCount()) {
+      $results = $query->fetchAllAssoc('nid');
+      foreach ($results as $key => $record) {
         $nodes[$key]->expiration_action = $record->action;
         $nodes[$key]->expiration_redirect = isset($record->redirect_url) ? $record->redirect_url : '';
         $nodes[$key]->expiration_message = isset($record->message) ? $record->message : '';
@@ -304,7 +313,7 @@ function springboard_node_expire_node_load($nodes, $types) {
             drupal_write_record('node_expire', $update_record, 'nid');
             $nodes[$key]->expired = TRUE;
           }
-          elseif ($nodes[$key]->expired && !empty($nodes[$key]->expire) && $time < strtotime($nodes[$key]->expire)) {
+          elseif (property_exists($nodes[$key], 'expired') && $nodes[$key]->expired && !empty($nodes[$key]->expire) && $time < strtotime($nodes[$key]->expire)) {
             $update_record = array(
               'nid' => $nodes[$key]->nid,
               'expired' => FALSE,
