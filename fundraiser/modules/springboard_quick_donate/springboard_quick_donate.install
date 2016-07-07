@@ -21,29 +21,29 @@ function springboard_quick_donate_schema() {
         'description' => 'The {node}.nid of the fundraiser.',
         'default' => 0,
       ),
-      'quickdonation_optin_message' => array(
+      'quickdonate_optin_message' => array(
         'description' => 'The opt-in message to display to end users if the fundraiser has quick payments enabled.',
         'type' => 'text',
         'not null' => FALSE,
       ),
-      'quickdonation_help_message' => array(
+      'quickdonate_help_message' => array(
         'description' => 'The help message to display to end users if the fundraiser has quick payments enabled.',
         'type' => 'text',
         'not null' => FALSE,
       ),
-      'quickdonation_help_message_format' => array(
+      'quickdonate_help_message_format' => array(
         'description' => 'The format of the help message.',
         'type' => 'varchar',
         'length' => '255',
         'not null' => FALSE,
         'default' => 'plain_text',
       ),
-      'quickdonation_login_message' => array(
+      'quickdonate_login_message' => array(
         'description' => 'The login message to display to end users if the fundraiser has quick payments enabled.',
         'type' => 'text',
         'not null' => FALSE,
       ),
-      'quickdonation_login_link_message' => array(
+      'quickdonate_login_link_message' => array(
         'description' => 'The login link message to display to end users if the fundraiser has quick payments enabled.',
         'type' => 'text',
         'not null' => FALSE,
