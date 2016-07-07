@@ -1,8 +1,8 @@
 (function($) {
-  Drupal.behaviors.springboard_quick_donation = {
+  Drupal.behaviors.springboard_quick_donate = {
     attach: function(context, settings) {
       // Return early if no payment processors are available.
-      if (undefined == Drupal.settings.springboard_quick_donation) {
+      if (undefined == Drupal.settings.springboard_quick_donate) {
         return;
       }
 
@@ -32,7 +32,7 @@
           $quickdonation.find('input[type=checkbox]').attr('disabled', 'disabled');
           $('#edit-quickdonation-message-container').hide();
         }
-        else if ($gateways_enabled[type] && Drupal.settings.springboard_quick_donation.usable_paypment_processors[type].indexOf($option_value) < 0) {
+        else if ($gateways_enabled[type] && Drupal.settings.springboard_quick_donate.usable_paypment_processors[type].indexOf($option_value) < 0) {
           // Not a usable credit payment processor, display a note.
           $quickdonation.find('input[type=checkbox]').attr('disabled', 'disabled');
           if ($quickdonation.next('.note').length == 0) {
