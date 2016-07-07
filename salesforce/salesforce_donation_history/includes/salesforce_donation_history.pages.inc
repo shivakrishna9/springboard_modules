@@ -16,7 +16,9 @@ function salesforce_donation_history_page($user) {
   $params = drupal_get_query_parameters();
   $sfid = salesforce_donation_history_user_account_id($user->uid);
   if ($sfid) {
-    $results = salesforce_donation_history_sort_by_year(salesforce_donation_history_get_opportunities($sfid));
+    $results = salesforce_donation_history_get_opportunities($sfid);
+    $results = salesforce_donation_history_filter_by_date($results);
+    $results = salesforce_donation_history_sort_by_year($results);
   }
   // Check to see if there are pending donations in the salesforce sync queue.
   if ($pending_count = salesforce_donation_history_count_pending_donations($user->uid)) {
@@ -59,7 +61,9 @@ function salesforce_donation_history_annual_summary_page($user, $year) {
   );
   $sfid = salesforce_donation_history_user_account_id($user->uid);
   if ($sfid) {
-    $results = salesforce_donation_history_sort_by_year(salesforce_donation_history_get_opportunities($sfid));
+    $results = salesforce_donation_history_get_opportunities($sfid);
+    $results = salesforce_donation_history_filter_by_date($results);
+    $results = salesforce_donation_history_sort_by_year($results);
   }
   if (count($results) > 0) {
     $output['table'] = salesforce_donation_history_create_table($results[$year], 'show_on_summary', TRUE, FALSE);

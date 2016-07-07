@@ -348,6 +348,25 @@ function salesforce_donation_history_sort_by_year($records) {
 }
 
 /**
+ * Removes records with CloseDate set in the future.
+ */
+function salesforce_donation_history_filter_by_date($records) {
+  $return_array = array();
+  foreach ($records as $record) {
+    if (!($record instanceof SObject)) {
+      $sobject = new SObject($record);
+    }
+    // @TODO Make date field and format configurable?
+    $close_date = DateTime::createFromFormat("Y-m-d", $sobject->fields->CloseDate);
+    $now = new DateTime();
+    if ($close_date <= $now) {
+      $return_array[] = $record;
+    }
+  }
+  return $return_array;
+}
+
+/**
  * Creates table of donation history activity.
  *
  * @param array $records
