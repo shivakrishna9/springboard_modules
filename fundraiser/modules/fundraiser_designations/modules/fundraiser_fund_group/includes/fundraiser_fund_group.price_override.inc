@@ -1,4 +1,8 @@
 <?php
+/**
+ * @file
+ * Donation amount override functions for fund groups.
+ */
 
 /**
  * Add ask amounts to commerce product edit form.
@@ -16,11 +20,11 @@ function fundraiser_fund_group_price_override_form(&$form, $form_state, $group, 
   $form['#attached']['js'][] = drupal_get_path('module', 'fundraiser_fund_group') . '/js/price-sets.js';
   $form['override_settings'] = array(
     '#type' => 'fieldset',
-    '#title' => t('Override Ask Amounts'),
+    '#title' => t('Ask Amounts'),
     '#weight' => 10,
     '#collapsible' => TRUE,
     '#collapsed' => empty($data['status']),
-    '#description' => t('Ask amounts set here will override the ask amounts set on the form, for this group only.'),
+    '#description' => t('Ask amounts set here will override the ask amounts set on the form, for this group only. To set dual ask amounts, you must first select "Set different ask amounts for recurring donations" on the donation form.'),
   );
 
   $form['override_settings']['statuses'] = array(
@@ -40,10 +44,23 @@ function fundraiser_fund_group_price_override_form(&$form, $form_state, $group, 
 
   $form['actions']['submit']['#submit'][] = 'fundraiser_fund_group_override_form_submit';
   $form['#validate'][] = 'fundraiser_fund_group_override_form_validate';
-
-
 }
 
+
+/**
+ * Form builder for ask amounts on fund group edit page.
+ *
+ * @param array $form
+ *   The form array.
+ * @param array $form_state
+ *   The form state.
+ * @param string $type
+ *   Default or recurring type.
+ * @param array $data
+ *   Previously set ask amounts.
+ * @param object $node
+ *   The node this group belongs to.
+ */
 function fundraiser_fund_group_default_ask(&$form, $form_state, $type, $data, $node) {
 
   $form['override_settings'][$type . '_amount_wrapper'] = array(
@@ -267,6 +284,8 @@ function fundraiser_fund_group_override_form_submit($form, &$form_state) {
 }
 
 /**
+ * Table row defaults for ask mount form.
+ *
  * @param array $amount_values
  *   The array of prices and labels.
  * @param int $default_amount

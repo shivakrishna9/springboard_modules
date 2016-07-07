@@ -94,7 +94,7 @@ function _webform_render_designations($component, $value = NULL, $filter = TRUE)
       });
       $num = count($funds);
 
-      // Groups with multiple funds refenced get a select field, a "group of
+      // Groups with multiple funds referenced get a select field, a "group of
       // one" fund doesn't.
       if ($num > 1) {
         _webform_render_funds_multiple($element, $node, $group, $funds, $amounts, $groups_by_weight);
@@ -114,7 +114,7 @@ function _webform_render_designations($component, $value = NULL, $filter = TRUE)
  *   The webform component.
  * @param object $node
  *   The node.
- * @param object $group_wrapper
+ * @param object $group
  *   The fund group.
  * @param object $funds
  *   The funds in the fund group.
@@ -124,7 +124,7 @@ function _webform_render_designations($component, $value = NULL, $filter = TRUE)
  *   The fund groups on this form.
  */
 function _webform_render_funds_multiple(&$element, $node, $group, $funds, $amounts, $groups_by_weight) {
-
+  // @todo these two functions can be combined.
   $options = array();
   $options[] = 'Select';
   foreach ($funds as $fund) {
@@ -162,7 +162,7 @@ function _webform_render_funds_multiple(&$element, $node, $group, $funds, $amoun
  *   The webform component.
  * @param object $node
  *   The node.
- * @param object $group_wrapper
+ * @param object $group
  *   The fund group.
  * @param object $funds
  *   The funds in the fund group.
@@ -223,6 +223,8 @@ function _webform_render_funds_get_position($groups_by_weight, $id) {
 
 
 /**
+ * Adds the quantity and ammount forms to the group.
+ *
  * @param int $id
  *   A group entity id.
  * @param array $element
@@ -316,7 +318,6 @@ function theme_fundraiser_designations_fund_groups_component($variables) {
       }
       $build['content'] = array(
 
-
         '#prefix' => '<div class="designation-group-wrapper ' . $element[$id]['#extra']['position'] . '" id="designation-group-' . $element[$id]['#extra']['group_id'] . '">',
         '#suffix' => '</div>',
 
@@ -326,7 +327,6 @@ function theme_fundraiser_designations_fund_groups_component($variables) {
           '#markup' => check_plain($group_wrapper->name->value()),
           '#weight' => -9,
         ),
-
 
         'fund_group_image' => array(
           '#type' => 'markup',
@@ -487,11 +487,32 @@ function fundraiser_designations_get_form_display_amounts($node) {
   return $price_sets;
 }
 
+/**
+ * Get the override display amounts for a group.
+ *
+ * @param object $group
+ *   The fund group to apply price sets to.
+ * @param object $node
+ *   The node which owns the fund group.
+ *
+ * @return array
+ *   A price set.
+ */
 function fundraiser_designations_get_group_display_amounts($group, $node) {
+
+  // Get the default donation amounts for the form.
+  // Used if price override is enabled, but no overries defined. (i.e., when
+  // switching to dual ask on alredy overriden forms).
   $node_form_amounts = fundraiser_designations_get_form_display_amounts($node);
+
+  // Get the group override ask amounts.
   $override_price_set = unserialize($group->fd_overrides['price_set']);
+
+  // Build the price set array.
   $price_sets = [];
   $donation_amounts = [];
+
+  // Get default override.
   if (isset($override_price_set['default'])) {
     foreach ($override_price_set['default'] as $key => $price) {
       if (!empty($price['default_amount'])) {
@@ -502,9 +523,11 @@ function fundraiser_designations_get_group_display_amounts($group, $node) {
     }
   }
   else {
+    // If no default override, use the donation form amounts.
     $donation_amounts['default'] = $node_form_amounts['default'];
   }
 
+  // Get the recurring overrides.
   if (isset($override_price_set['recurring'])) {
     foreach ($override_price_set['recurring'] as $key => $price) {
       if (!empty($price['default_amount'])) {
@@ -516,11 +539,14 @@ function fundraiser_designations_get_group_display_amounts($group, $node) {
     }
   }
   else {
+    // If no recurring override get the donation form default.
     $donation_amounts['recurring'] = $node_form_amounts['recurring'];
   }
+
   $recurring = $node->recurring_setting;
   $dual_ask = $node->recurring_dual_ask_amounts;
 
+  // Set the override amounts based on form configuraiton.
   switch ($recurring) {
     case 'never':
       $price_sets['default'] = $donation_amounts['default'];

@@ -1,4 +1,4 @@
-Drupal.behaviors.fundraiserBehavior = {
+Drupal.behaviors.priceSetBehavior = {
     attach: function(context, settings) { (function($) {
 
         // Auto-populate label fields when amount is entered.
