@@ -358,12 +358,14 @@ function theme_fundraiser_designations_fund_groups_component($variables) {
         $pid = $element['#webform_component']['pid'];
         $nid = $element['#webform_component']['nid'];
         $component = webform_menu_component_load($pid, $nid, NULL);
-        $build['content']['fund_group_subheader'] = array(
-          '#prefix' => '<div class="designation-group-subheader"><h3>',
-          '#suffix' => '</h3></div>',
-          '#markup' => check_plain($component['extra']['subheader']),
-          '#weight' => -9,
-        );
+        if (!empty($component['extra']['subheader'])) {
+          $build['content']['fund_group_subheader'] = array(
+            '#prefix' => '<div class="designation-group-subheader"><h3>',
+            '#suffix' => '</h3></div>',
+            '#markup' => check_plain($component['extra']['subheader']),
+            '#weight' => -9,
+          );
+        }
       }
       $x++;
 
