@@ -1865,7 +1865,11 @@ function fundraiser_sustainers_donation_form_submit(&$form, &$form_state) {
   // Are there recurring ask amounts?
   if (!empty($form['#node']->recurring_dual_ask_amounts)) {
     // Is it a recurring donation being submitted?
-    if (_fundraiser_sustainers_get_form_state_value($form_state, 'recurs_monthly') == 'recurs') {
+    $recurs_monthly_value = _fundraiser_sustainers_get_form_state_value($form_state, 'recurs_monthly');
+    if (is_array($recurs_monthly_value)) {  // Checkbox element's value is reported as an array.
+      $recurs_monthly_value = isset($recurs_monthly_value['recurs']) ? $recurs_monthly_value['recurs'] : '';
+    }
+    if ($recurs_monthly_value === 'recurs') {
       $recurring_amount = _fundraiser_sustainers_get_form_state_value($form_state, 'recurring_amount');
       // Are there recurring-amounts fields? (Legacy forms might not have them.)
       if ($recurring_amount !== NULL) {
