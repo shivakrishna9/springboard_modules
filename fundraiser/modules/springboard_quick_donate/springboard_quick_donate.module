@@ -157,11 +157,11 @@ function springboard_quick_donate_form_node_form_alter(&$form, &$form_state, $fo
     // If this is an appropriate node edit/add form, add the "quick donation"
     // checkbox to the "Payment methods" fieldset.
     if (!empty($form['#node']->gateways)) {
-      $form['payment_methods']['quickdonation'] = array(
+      $form['payment_methods']['quickdonate'] = array(
         '#type' => 'checkbox',
         '#title' => t('Enable quick donations on this form?'),
         '#description' => t('When enabled, the "quick donation" option will be offered to users, which saves their payment information for faster payments in the future.'),
-        '#default_value' => isset($form['#node']->quickdonation) ? $form['#node']->quickdonation : FALSE,
+        '#default_value' => isset($form['#node']->quickdonate) ? $form['#node']->quickdonate : FALSE,
       );
 
       $usable_paypment_processors = array('credit' => array(), 'bank' => array());
@@ -206,8 +206,8 @@ function springboard_quick_donate_form_node_form_alter(&$form, &$form_state, $fo
       if (empty($usable_paypment_processors['credit']) && empty($usable_paypment_processors['bank'])) {
         // If no usable payment processors are available, disable the checkbox
         // and display a note to the user.
-        $form['payment_methods']['quickdonation']['#attributes']['disabled'] = TRUE;
-        $form['payment_methods']['quickdonation']['#suffix'] = '<span class="note"><strong>Note:</strong> no usable payment processors were found, so quick donations will not be available.</span>';
+        $form['payment_methods']['quickdonate']['#attributes']['disabled'] = TRUE;
+        $form['payment_methods']['quickdonate']['#suffix'] = '<span class="note"><strong>Note:</strong> no usable payment processors were found, so quick donations will not be available.</span>';
       }
       else {
         drupal_add_js(array(
@@ -215,14 +215,14 @@ function springboard_quick_donate_form_node_form_alter(&$form, &$form_state, $fo
             'usable_paypment_processors' => $usable_paypment_processors,
           ),
         ), 'setting');
-        $form['payment_methods']['quickdonation_optin_message'] = array(
+        $form['payment_methods']['quickdonate_optin_message'] = array(
           '#type' => 'textfield',
           '#title' => t('"Quick Donation" opt-in text'),
           '#description' => t('This is the title of the opt-in checkbox. The "@type" placeholder can be used to specify the type of payment method (either credit card or bank account). Defaults to "Save this @type for future use".'),
-          '#default_value' => isset($form['#node']->quickdonation_optin_message) ? $form['#node']->quickdonation_optin_message : variable_get('springboard_quick_donate_default_optin_message', t('Save this @type for future use')),
+          '#default_value' => isset($form['#node']->quickdonate_optin_message) ? $form['#node']->quickdonate_optin_message : variable_get('springboard_quick_donate_default_optin_message', t('Save this @type for future use')),
           '#states' => array(
             'visible' => array(
-              ':input[name="quickdonation"]' => array('checked' => TRUE),
+              ':input[name="quickdonate"]' => array('checked' => TRUE),
             ),
           ),
         );
@@ -232,42 +232,42 @@ function springboard_quick_donate_form_node_form_alter(&$form, &$form_state, $fo
         // in a container and apply the #states property to the container
         // instead.
         // See https://www.drupal.org/node/997826 for more info.
-        $form['payment_methods']['quickdonation_help_container'] = array(
+        $form['payment_methods']['quickdonate_help_container'] = array(
           '#type' => 'container',
           '#states' => array(
             'visible' => array(
-              ':input[name="quickdonation"]' => array('checked' => TRUE),
+              ':input[name="quickdonate"]' => array('checked' => TRUE),
             ),
           ),
         );
-        $form['payment_methods']['quickdonation_help_container']['quickdonation_help_message'] = array(
+        $form['payment_methods']['quickdonate_help_container']['quickdonate_help_message'] = array(
           '#type' => 'text_format',
           '#title' => t('"Quick Donation" help text'),
           '#description' => t('This message will be shown to users to provide information about quick donations. Use !type to print the type of payment method, which will be either credit or bank account.<br/><br/>', array('!type' => '<strong>@type</strong>')),
-          '#default_value' => isset($form['#node']->quickdonation_help_message) ? $form['#node']->quickdonation_help_message : variable_get('springboard_quick_donate_default_help_message', t('Save your @type details and donate faster next time. We may email you from time to time with quick donate opportunities. You can update your @type details or cancel your enrollment at any time.')),
-          '#format' => isset($form['#node']->quickdonation_help_message_format) ? $form['#node']->quickdonation_help_message_format : 'plain_text',
+          '#default_value' => isset($form['#node']->quickdonate_help_message) ? $form['#node']->quickdonate_help_message : variable_get('springboard_quick_donate_default_help_message', t('Save your @type details and donate faster next time. We may email you from time to time with quick donate opportunities. You can update your @type details or cancel your enrollment at any time.')),
+          '#format' => isset($form['#node']->quickdonate_help_message_format) ? $form['#node']->quickdonate_help_message_format : 'plain_text',
         );
 
-        $form['payment_methods']['quickdonation_login_message'] = array(
+        $form['payment_methods']['quickdonate_login_message'] = array(
           '#type' => 'textfield',
           '#title' => t('"Quick Donation" login text'),
           '#description' => t('This is the title of the log-in checkbox. The "@type" placeholder can be used to specify the type of payment method (credit card or bank account). Defaults to "Already have a saved @type?".'),
-          '#default_value' => isset($form['#node']->quickdonation_login_message) ? $form['#node']->quickdonation_login_message : variable_get('springboard_quick_donate_default_login_message', t('Already have a saved @type?')),
+          '#default_value' => isset($form['#node']->quickdonate_login_message) ? $form['#node']->quickdonate_login_message : variable_get('springboard_quick_donate_default_login_message', t('Already have a saved @type?')),
           '#states' => array(
             'visible' => array(
-              ':input[name="quickdonation"]' => array('checked' => TRUE),
+              ':input[name="quickdonate"]' => array('checked' => TRUE),
             ),
           ),
         );
 
-        $form['payment_methods']['quickdonation_login_link_message'] = array(
+        $form['payment_methods']['quickdonate_login_link_message'] = array(
           '#type' => 'textfield',
           '#title' => t('"Quick Donation" login link text'),
           '#description' => t('This is the title of the log-in checkbox. Defaults to "Click here to login".'),
-          '#default_value' => isset($form['#node']->quickdonation_login_link_message) ? $form['#node']->quickdonation_login_link_message : variable_get('springboard_quick_donate_default_login_link_message', t('Click here to login')),
+          '#default_value' => isset($form['#node']->quickdonate_login_link_message) ? $form['#node']->quickdonate_login_link_message : variable_get('springboard_quick_donate_default_login_link_message', t('Click here to login')),
           '#states' => array(
             'visible' => array(
-              ':input[name="quickdonation"]' => array('checked' => TRUE),
+              ':input[name="quickdonate"]' => array('checked' => TRUE),
             ),
           ),
         );
@@ -287,14 +287,14 @@ function springboard_quick_donate_form_node_form_alter(&$form, &$form_state, $fo
 function _springboard_quick_donate_node_form_submit($form, &$form_state) {
   $fields = array(
     'fundraiser_nid' => $form['#node']->nid,
-    'quickdonation_optin_message' => $form_state['values']['quickdonation_optin_message'],
-    'quickdonation_help_message_format' => $form_state['values']['quickdonation_help_message']['format'],
-    'quickdonation_help_message' => $form_state['values']['quickdonation_help_message']['value'],
-    'quickdonation_login_message' => $form_state['values']['quickdonation_login_message'],
-    'quickdonation_login_link_message' => $form_state['values']['quickdonation_login_link_message'],
+    'quickdonate_optin_message' => $form_state['values']['quickdonate_optin_message'],
+    'quickdonate_help_message_format' => $form_state['values']['quickdonate_help_message']['format'],
+    'quickdonate_help_message' => $form_state['values']['quickdonate_help_message']['value'],
+    'quickdonate_login_message' => $form_state['values']['quickdonate_login_message'],
+    'quickdonate_login_link_message' => $form_state['values']['quickdonate_login_link_message'],
   );
 
-  db_merge('springboard_quick_donate')
+  db_merge('fundraiser_springboard_quick_donate')
     ->key(array('fundraiser_nid' => $fields['fundraiser_nid']))
     ->fields($fields)
     ->execute();
@@ -337,13 +337,13 @@ function springboard_quick_donate_node_prepare($node) {
  *   The modified node object.
  */
 function _springboard_quick_donate_attach_quick_donate_fields(stdClass $node) {
-  $query = db_select('springboard_quick_donate', 'sqd')
+  $query = db_select('fundraiser_springboard_quick_donate', 'sqd')
     ->fields('sqd', array(
-      'quickdonation_optin_message',
-      'quickdonation_help_message_format',
-      'quickdonation_help_message',
-      'quickdonation_login_message',
-      'quickdonation_login_link_message',
+      'quickdonate_optin_message',
+      'quickdonate_help_message_format',
+      'quickdonate_help_message',
+      'quickdonate_login_message',
+      'quickdonate_login_link_message',
     ))
     ->condition('fundraiser_nid', $node->nid, '=')
     ->execute();
@@ -356,7 +356,7 @@ function _springboard_quick_donate_attach_quick_donate_fields(stdClass $node) {
   foreach ($results as $key => $result) {
     $node->{$key} = $result;
   }
-  $node->quickdonation = TRUE;
+  $node->quickdonate = TRUE;
   return $node;
 }
 
@@ -383,7 +383,7 @@ function springboard_quick_donate_fundraiser_donation_form($form, $form_state) {
   }
 
   // Exit if the quick donation option isn't enabled on this form.
-  if (empty($form['#node']->quickdonation) || !$form['#node']->quickdonation) {
+  if (empty($form['#node']->quickdonate) || !$form['#node']->quickdonate) {
     return;
   }
 
@@ -419,9 +419,9 @@ function springboard_quick_donate_fundraiser_donation_form($form, $form_state) {
 
     $form['submitted']['payment_information']['payment_fields'][$gateway_type]['cardonfile_store'] = array(
       '#type' => 'checkbox',
-      '#title' => isset($form['#node']->quickdonation_optin_message) ? format_string($form['#node']->quickdonation_optin_message, array('@type' => $type)) : format_string(variable_get('springboard_quick_donate_default_optin_message', 'Save this @type for future use?'), array('@type' => $type)),
+      '#title' => isset($form['#node']->quickdonate_optin_message) ? format_string($form['#node']->quickdonate_optin_message, array('@type' => $type)) : format_string(variable_get('springboard_quick_donate_default_optin_message', 'Save this @type for future use?'), array('@type' => $type)),
       '#default_value' => FALSE,
-      '#description' => isset($form['#node']->quickdonation_help_message) ? check_markup(format_string($form['#node']->quickdonation_help_message, array('@type' => $type)), $form['#node']->quickdonation_help_message_format) : format_string(variable_get('springboard_quick_donate_default_help_message', 'Save your @type details and donate faster next time. We may email you from time to time with quick donate opportunities. You can update your @type details or cancel your enrollment at any time.'), array('@type' => $type)),
+      '#description' => isset($form['#node']->quickdonate_help_message) ? check_markup(format_string($form['#node']->quickdonate_help_message, array('@type' => $type)), $form['#node']->quickdonate_help_message_format) : format_string(variable_get('springboard_quick_donate_default_help_message', 'Save your @type details and donate faster next time. We may email you from time to time with quick donate opportunities. You can update your @type details or cancel your enrollment at any time.'), array('@type' => $type)),
     );
 
     // Load existing active cards for the payment method instance and user.
@@ -517,8 +517,8 @@ function springboard_quick_donate_fundraiser_donation_form($form, $form_state) {
     );
 
     if (!user_is_logged_in()) {
-      $login_text = isset($form['#node']->quickdonation_login_message) ? $form['#node']->quickdonation_login_message : variable_get('springboard_quick_donate_default_login_message', t('Already have a saved @type?'));
-      $login_link_text = isset($form['#node']->quickdonation_login_link_message) ? $form['#node']->quickdonation_login_link_message : variable_get('springboard_quick_donate_default_login_link_message', t('Click here to login'));
+      $login_text = isset($form['#node']->quickdonate_login_message) ? $form['#node']->quickdonate_login_message : variable_get('springboard_quick_donate_default_login_message', t('Already have a saved @type?'));
+      $login_link_text = isset($form['#node']->quickdonate_login_link_message) ? $form['#node']->quickdonate_login_link_message : variable_get('springboard_quick_donate_default_login_link_message', t('Click here to login'));
       $form['submitted']['payment_information']['payment_fields'][$gateway_type]['cardonfile_store']['#suffix'] = format_string($login_text, array(
         '@type' => $type,
       )) . ' ' . l($login_link_text, '/user');
@@ -549,7 +549,7 @@ function springboard_quick_donate_fundraiser_donation_form($form, $form_state) {
       $donation_field['amount']['#default_value'] = 'other';
       $donation_field['other_amount']['#value'] = $amount;
     }
-    // unset($_SESSION['springboard_hmac']);
+    unset($_SESSION['springboard_hmac']);
   }
 
   // Add submit handler.
@@ -585,7 +585,7 @@ function _springboard_quick_donate_checkout_form_submit($form, &$form_state) {
     return;
   }
 
-  $values = $form_state['values']['submitted_tree']['payment_information'];
+  $values = &$form_state['values']['submitted_tree']['payment_information'];
   $method = $values['payment_method'];
   $payment_fields = $values['payment_fields'];
   $store_card = !empty($payment_fields[$method]['cardonfile_store']);
@@ -606,7 +606,7 @@ function _springboard_quick_donate_checkout_form_submit($form, &$form_state) {
       // Get card on file value.
       $card_id = intval($payment_fields[$method]['cardonfile']);
       // Submit actions for card selected.
-      if (!empty($card_id_selected)) {
+      if (!empty($card_id)) {
         // Mark as default.
         commerce_cardonfile_set_default_card($card_id);
       }
@@ -614,35 +614,52 @@ function _springboard_quick_donate_checkout_form_submit($form, &$form_state) {
     elseif ($cardonfile_default == 'opt-out') {
       // If the cardonfile configuration is set to save by default, set the
       // newest card as the default.
-      $card_id = _springboard_quick_donate_users_latest_cardid();
+      $card_id = _springboard_quick_donate_users_latest_cardid($account->uid);
       commerce_cardonfile_set_default_card($card_id);
     }
   }
-  else {
-    $card_id = _springboard_quick_donate_users_latest_cardid();
+
+  // In the case that the card id is still set to 0, retrieve user's latest
+  // card on file.
+  if ($card_id == 0) {
+    $card_id = _springboard_quick_donate_users_latest_cardid($account->uid);
+    // If no card was found, return early.
+    if ($card_id === FALSE) {
+      return;
+    }
   }
 
-  if (!$card_id) {
-    db_merge('springboard_quick_donate_cardonfile')
-      ->key(array('uid' => $account->uid))
-      ->fields(array(
-        'card_id' => $card_id,
-        'optin_date' => time(),
-        'uid' => $account->uid,
-        'donation_id' => $donation->did,
-      ))
-      ->execute();
-  }
+  db_merge('fundraiser_springboard_quick_donate_cardonfile')
+    ->key(array('uid' => $account->uid))
+    ->fields(array(
+      'card_id' => $card_id,
+      'optin_date' => time(),
+      'uid' => $account->uid,
+      'did' => $donation->did,
+      'nid' => $donation->nid,
+      'gateway' => $donation->gateway['id'],
+    ))
+    ->execute();
 }
 
 /**
  * Helper function to retrieve the newest card id belonging to specific user.
  */
-function _springboard_quick_donate_users_latest_cardid($uid) {
+function _springboard_quick_donate_users_latest_cardid($uid = NULL) {
+  if (empty($uid)) {
+    global $user;
+    $uid = $user->uid;
+  }
+
   $query = db_select('commerce_cardonfile', 'cc')
     ->fields('cc', array('card_id'))
     ->condition('uid', $uid, '=')
     ->orderBy('card_id', 'DESC')
-    ->range(0, 1);
-  return $query->execute()->fetchField();
+    ->range(0, 1)
+    ->execute();
+  if ($query->rowCount() == 0) {
+    return FALSE;
+  }
+
+  return $query->fetchField();
 }

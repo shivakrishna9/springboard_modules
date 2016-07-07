@@ -114,6 +114,9 @@ function _fundraiser_commerce_credit_card_cleanup($submission_fields) {
  *    Values from the submitted form
  */
 function _fundraiser_commerce_credit_card_validate($submission_fields, $form_parents) {
+  dpm($submission_fields);
+  dpm($form_parents);
+
   $prefix = implode('][', $form_parents) . '][';
   // Include the file with the validation info.
   module_load_include('inc', 'commerce_payment', 'includes/commerce_payment.credit_card');
