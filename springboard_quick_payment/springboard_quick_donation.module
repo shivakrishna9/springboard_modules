@@ -394,14 +394,6 @@ function springboard_quick_donation_fundraiser_donation_form($form, $form_state)
     return;
   }
 
-  $qd_hmac_mapping = _springboard_quick_donation_hmac_mapping();
-
-  $qd_did = isset($_SESSION['springboard_hmac'][$qd_hmac_mapping['donation_id']]) ? $_SESSION['springboard_hmac'][$qd_hmac_mapping['donation_id']] : FALSE;
-  $qd = FALSE;
-  if ($qd_did) {
-    $qd = fundraiser_donation_get_donation($qd_did);
-  }
-
   foreach ($form['#node']->gateways as $gateway_type => $gateway) {
     if (empty($gateway['status']) || empty($gateway['id'])) {
       continue;
@@ -534,6 +526,17 @@ function springboard_quick_donation_fundraiser_donation_form($form, $form_state)
 
     // Allow others to alter this alter.
     drupal_alter('springboard_quick_donation_checkout_form', $form['submitted']['payment_information']['payment_fields'][$gateway_type], $form);
+  }
+
+  $qd_hmac_mapping = _springboard_quick_donation_hmac_mapping();
+  $qd_did = isset($_SESSION['springboard_hmac'][$qd_hmac_mapping['donation_id']]) ? $_SESSION['springboard_hmac'][$qd_hmac_mapping['donation_id']] : FALSE;
+  $qd = FALSE;
+  if ($qd_did) {
+    $qd = fundraiser_donation_get_donation($qd_did);
+  }
+
+  if ($qd && isset($form['submitted']['payment_information']['payment_method']['#options'][$qd->gateway['payment_method'][0]])) {
+    $form['submitted']['payment_information']['payment_method']['#default_value'] = $qd->gateway['payment_method'][0];
   }
 
   if (isset($_SESSION['springboard_hmac'][$qd_hmac_mapping['uid']]) && $_SESSION['springboard_hmac'][$qd_hmac_mapping['uid']] == $form['#node']->nid && isset($_SESSION['springboard_hmac'][$qd_hmac_mapping['amount']])) {

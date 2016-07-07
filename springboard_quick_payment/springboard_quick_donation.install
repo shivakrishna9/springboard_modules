@@ -62,8 +62,8 @@ function springboard_quick_donation_schema() {
     'description' => 'Stores data about user\'s payment information to be used for quick donations.',
     'fields' => array(
       'card_id' => array(
-        'description' => 'Serial numeric ID of the truncated card data in the local database.',
-        'type' => 'serial',
+        'description' => 'Numeric ID of the truncated card data in the local database.',
+        'type' => 'int',
         'unsigned' => TRUE,
         'not null' => TRUE,
       ),
@@ -101,17 +101,18 @@ function springboard_quick_donation_schema() {
     'primary key' => array('uid'),
     'indexes' => array(
       'card_id' => array('card_id'),
+      'donation_id' => array('donation_id'),
     ),
     'foreign keys' => array(
-      'card_id' => array(
+      'cardid' => array(
         'table' => 'commerce_cardonfile',
         'columns' => array('card_id' => 'card_id'),
       ),
-      'uid_uid' => array(
+      'creator' => array(
         'table' => 'users',
         'columns' => array('uid' => 'uid'),
       ),
-      'donation_id' => array(
+      'donationid' => array(
         'table' => 'fundraiser_donation',
         'columns' => array('did' => 'donation_id'),
       ),
