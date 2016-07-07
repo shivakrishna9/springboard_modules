@@ -225,6 +225,9 @@ function springboard_node_expire_node_insert($node) {
   if (isset($node->expiration_redirect)) {
     $update_fields['redirect_url'] = $node->expiration_redirect;
   }
+  if (!isset($node->expiration_message)) {
+    $node->expiration_message = '';
+  }
   $message = is_array($node->expiration_message) ? $node->expiration_message['value'] : $node->expiration_message;
   if (!empty($message)) {
     $update_fields['message'] = $message;
