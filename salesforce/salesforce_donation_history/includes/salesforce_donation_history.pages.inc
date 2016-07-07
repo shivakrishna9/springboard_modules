@@ -17,6 +17,7 @@ function salesforce_donation_history_page($user) {
   $sfid = salesforce_donation_history_user_account_id($user->uid);
   if ($sfid) {
     $results = salesforce_donation_history_get_opportunities($sfid);
+    $results = salesforce_donation_history_filter_by_status($results);
     $results = salesforce_donation_history_filter_by_date($results);
     $results = salesforce_donation_history_sort_by_year($results);
   }
@@ -62,6 +63,7 @@ function salesforce_donation_history_annual_summary_page($user, $year) {
   $sfid = salesforce_donation_history_user_account_id($user->uid);
   if ($sfid) {
     $results = salesforce_donation_history_get_opportunities($sfid);
+    $results = salesforce_donation_history_filter_by_status($results);
     $results = salesforce_donation_history_filter_by_date($results);
     $results = salesforce_donation_history_sort_by_year($results);
   }

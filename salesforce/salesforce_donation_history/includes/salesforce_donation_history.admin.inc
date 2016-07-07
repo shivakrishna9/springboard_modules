@@ -13,7 +13,13 @@ function salesforce_donation_history_query() {
     '#type' => 'textarea',
     '#title' => t('Opportunities query'),
     '#default_value' => variable_get('salesforce_donation_history_query', SALESFORCE_DONATION_HISTORY_DEFAULT_SOQL),
-    '#description' => "Enter the Salesforce SOQL query used to get opportunities. <ul><li>The Opportunity fields <samp>Id</samp> and <samp>CloseDate</samp> are required.</li><li>The query must end in <samp>WHERE AccountId = ':accountId'</samp>.</li><li>Do not include a LIMIT clause.</li>",
+    '#description' => "Enter the Salesforce SOQL query used to get opportunities. <ul><li>The Opportunity fields <samp>StageName</samp>, <samp>Id</samp> and <samp>CloseDate</samp> are required.</li><li>The query must end in <samp>WHERE AccountId = ':accountId'</samp>.</li><li>Do not include a LIMIT clause.</li>",
+  );
+  $form['salesforce_donation_history_stage_name'] = array(
+    '#type' => 'textarea',
+    '#title' => t('StageName values included'),
+    '#default_value' => variable_get('salesforce_donation_history_stage_name', SALESFORCE_DONATION_HISTORY_DEFAULT_STAGE_NAME),
+    '#description' => "Enter the values for the StageName field for the Opportunities you wish to include in display, e.g. <samp>Posted</samp> and <samp>Partially Refunded</samp>. One value per line. Values are not case sensitive. This is used to prevent inappropriate opportunities (like pledged or refunded, for example) from being displayed on the donation history page or the annual tax summary receipt.",
   );
   $form['#validate'][] = 'salesforce_donation_history_query_validate';
   $form = system_settings_form($form);

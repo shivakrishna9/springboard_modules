@@ -9,6 +9,10 @@
  * Default select SOQL query.
  */
 define('SALESFORCE_DONATION_HISTORY_DEFAULT_SOQL', "SELECT Id, CloseDate, Amount, CC_Type__c, CC_Last_4__c FROM Opportunity WHERE AccountId = ':accountId'");
+/**
+ * Default StageName values on Opportunity object.
+ */
+define('SALESFORCE_DONATION_HISTORY_DEFAULT_STAGE_NAME', "Posted\nPartially Refunded");
 
 /**
  * Implements hook_flush_caches().
@@ -360,6 +364,30 @@ function salesforce_donation_history_filter_by_date($records) {
     $close_date = DateTime::createFromFormat("Y-m-d", $sobject->fields->CloseDate);
     $now = new DateTime();
     if ($close_date <= $now) {
+      $return_array[] = $record;
+    }
+  }
+  return $return_array;
+}
+
+/**
+ * Removes records based on StageName value.
+ *
+ * Records that do not have a StageName value that matches those included in
+ * the salesforce_donation_history_stage_name variable.
+ */
+function salesforce_donation_history_filter_by_status($records) {
+  $return_array = array();
+  // Explode status values from text area into array on any (reasonable) newline
+  // combo.
+  $statuses = preg_split("/\r\n|\n|\r/", variable_get('salesforce_donation_history_stage_name', SALESFORCE_DONATION_HISTORY_DEFAULT_STAGE_NAME));
+  $statuses = array_map('trim', $statuses);
+  $statuses = array_map('strtolower', $statuses);
+  foreach ($records as $record) {
+    if (!($record instanceof SObject)) {
+      $sobject = new SObject($record);
+    }
+    if (in_array(strtolower($sobject->fields->StageName), $statuses)) {
       $return_array[] = $record;
     }
   }
