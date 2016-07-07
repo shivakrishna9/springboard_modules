@@ -177,7 +177,7 @@
     }
     else {
       fundId = fundGroupId;
-      fundName = Drupal.settings.addon.cart_text;
+      fundName = typeof(Drupal.settings.addon.cart_text) != "undefined" ? Drupal.settings.addon.cart_text : "One-time add-on donation";
     }
     self.newRow(displayAmt, displayQuant, type, fundId, amt, quant, fundName, fundGroupId);
   };

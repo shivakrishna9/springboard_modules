@@ -62,7 +62,7 @@ function fundraiser_fund_groups_addon_form($form, $form_state, $node) {
     '#type' => 'textfield',
     '#title' => t('Cart display text'),
     '#weight' => -9,
-    '#default_value' => isset($data['cart_text']) ? $data['cart_text'] : 'One-time add-on donation',
+    '#default_value' => !empty($data['cart_text']) ? $data['cart_text'] : 'One-time add-on donation',
     '#description' => t('The text that will appear in the shopping cart if a donor makes an add-on donation.'),
     '#required' => TRUE,
     '#states' => array(
