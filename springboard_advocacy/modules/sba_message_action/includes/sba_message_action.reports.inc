@@ -101,8 +101,7 @@ function sba_message_action_performance_targets_table($responses, $node) {
     'tabs'                           => $tabs,
     'deliverability_cache_timestamp' => $responses['deliverability_cache_timestamp'],
     'legislative_results_download_link' =>
-      preg_replace("@//@", "/", "$springboard_advocacy_endpoint/api/v1
-      /deliverability/action/$advocacy_id/download?access_token=$auth_token"),
+      preg_replace("@[^://]//@", "/", "$springboard_advocacy_endpoint/api/v1/deliverability/action/$advocacy_id/download?access_token=$auth_token"),
     'form_url_with_input'            => $form_url_with_input,
   ));
 
