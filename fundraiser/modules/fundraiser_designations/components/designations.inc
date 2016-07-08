@@ -421,71 +421,73 @@ function fundraiser_designations_selection_table($element) {
  *   An array of prices arranged by type.
  */
 function fundraiser_designations_get_form_display_amounts($node) {
-  $recurring = $node->recurring_setting;
-  $recurring_amounts = $node->recurring_donation_amounts;
-  $donation_amounts = $node->donation_amounts;
-  $dual_ask = $node->recurring_dual_ask_amounts;
-  $default_amount = $node->default_amount;
-  $recurring_default_amount = $node->recurring_default_amount;
-  $dynamic = FALSE;
+  $price_sets = &drupal_static(__FUNCTION__);
+  if (!isset($price_sets)) {
+    $recurring = $node->recurring_setting;
+    $recurring_amounts = $node->recurring_donation_amounts;
+    $donation_amounts = $node->donation_amounts;
+    $dual_ask = $node->recurring_dual_ask_amounts;
+    $default_amount = $node->default_amount;
+    $recurring_default_amount = $node->recurring_default_amount;
+    $dynamic = FALSE;
 
-  if (module_exists('dynamic_gift_strings')) {
-    if (isset($_SESSION['dynamic_gift_string_values'][$node->nid]) && is_array($_SESSION['dynamic_gift_string_values'][$node->nid])) {
-      $dynamic = TRUE;
-      $gs = $_SESSION['dynamic_gift_string_values'][$node->nid];
-      if (!empty($gs['amounts'])) {
+    if (module_exists('dynamic_gift_strings')) {
+      if (isset($_SESSION['dynamic_gift_string_values'][$node->nid]) && is_array($_SESSION['dynamic_gift_string_values'][$node->nid])) {
         $dynamic = TRUE;
-        $gs_amounts = _dynamic_gift_strings_parse_amounts($gs['amounts'], $node->show_other_amount, $node->nid);
-        if ($gs_amounts) {
-          $donation_amounts = [];
-          $default_amount = $_SESSION['dynamic_gift_string_values'][$node->nid]['default'];
-          foreach ($gs_amounts as $plain => $c_coded) {
-            if (is_numeric($plain)) {
-              $donation_amounts[] = array($plain, $c_coded);
+        $gs = $_SESSION['dynamic_gift_string_values'][$node->nid];
+        if (!empty($gs['amounts'])) {
+          $dynamic = TRUE;
+          $gs_amounts = _dynamic_gift_strings_parse_amounts($gs['amounts'], $node->show_other_amount, $node->nid);
+          if ($gs_amounts) {
+            $donation_amounts = [];
+            $default_amount = $_SESSION['dynamic_gift_string_values'][$node->nid]['default'];
+            foreach ($gs_amounts as $plain => $c_coded) {
+              if (is_numeric($plain)) {
+                $donation_amounts[] = array($plain, $c_coded);
+              }
             }
           }
         }
-      }
-      if (!empty($gs['recurring_amounts'])) {
-        $gs_recurring_amounts = _dynamic_gift_strings_parse_amounts($gs['recurring_amounts'], $node->recurring_show_other_amount, $node->nid);
-        if ($gs_recurring_amounts) {
-          $recurring_amounts = [];
-          $recurring_default_amount = $_SESSION['dynamic_gift_string_values'][$node->nid]['recurring_default'];
-          foreach ($gs_recurring_amounts as $plain => $c_coded) {
-            if (is_numeric($plain)) {
-              $recurring_amounts[] = array($plain, $c_coded);
+        if (!empty($gs['recurring_amounts'])) {
+          $gs_recurring_amounts = _dynamic_gift_strings_parse_amounts($gs['recurring_amounts'], $node->recurring_show_other_amount, $node->nid);
+          if ($gs_recurring_amounts) {
+            $recurring_amounts = [];
+            $recurring_default_amount = $_SESSION['dynamic_gift_string_values'][$node->nid]['recurring_default'];
+            foreach ($gs_recurring_amounts as $plain => $c_coded) {
+              if (is_numeric($plain)) {
+                $recurring_amounts[] = array($plain, $c_coded);
+              }
             }
           }
         }
       }
     }
-  }
 
-  $price_sets = [];
-  $price_sets['default_amount'] = $default_amount;
-  $price_sets['recurring_default_amount'] = $recurring_default_amount;
-  $price_sets['dynamic'] = $dynamic;
+    $price_sets = [];
+    $price_sets['default_amount'] = $default_amount;
+    $price_sets['recurring_default_amount'] = $recurring_default_amount;
+    $price_sets['dynamic'] = $dynamic;
 
-  switch ($recurring) {
-    case 'never':
-      $price_sets['default'] = $donation_amounts;
-      break;
-
-    case 'user_choice':
-      if (!empty($dual_ask)) {
+    switch ($recurring) {
+      case 'never':
         $price_sets['default'] = $donation_amounts;
+        break;
+
+      case 'user_choice':
+        if (!empty($dual_ask)) {
+          $price_sets['default'] = $donation_amounts;
+          $price_sets['recurring'] = $recurring_amounts;
+        }
+        else {
+          $price_sets['default'] = $donation_amounts;
+        }
+        break;
+
+      case 'always':
         $price_sets['recurring'] = $recurring_amounts;
-      }
-      else {
-        $price_sets['default'] = $donation_amounts;
-      }
-      break;
-
-    case 'always':
-      $price_sets['recurring'] = $recurring_amounts;
-      break;
+        break;
+    }
   }
-
   return $price_sets;
 }
 
