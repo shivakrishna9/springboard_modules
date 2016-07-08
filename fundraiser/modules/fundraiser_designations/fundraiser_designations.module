@@ -748,7 +748,8 @@ function fundraiser_designations_salesforce_queue_create_item_alter(&$item) {
   // Connect a designation line item to the donation opportunity.
   if ($item['module'] == 'commerce_line_item' && $item['delta'] == 'designation') {
     $line_item = commerce_line_item_load($item['drupal_id']);
-    $item['sobject']->fields['Opportunity__c'] = sprintf('[Opportunity:donation:%d]', $line_item->order_id);
+    $item['sobject']->fields['kell01__Opportunity__c'] = sprintf('[Opportunity:donation:%d]', $line_item->order_id);
+    $item['sobject']->fields['kell01__Fund__c'] = sprintf('[kell01__Fund__c:fundraiser_designation:%d]', $line_item->commerce_product[LANGUAGE_NONE][0]['product_id']);
   }
 }
 
