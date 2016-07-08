@@ -209,7 +209,7 @@
         // Legislative committee specific search elements
         var comWidgets = $('#edit-search-committee-chamber-wrapper, #edit-search-committee-wrapper');
         // Custom target specific search elements
-        var custWidgets = $('#edit-search-custom-wrapper', '#edit-search-groups-wrapper'); //@TODO determine these, I made these up.
+        var custWidgets = $('#edit-search-custom-name-wrapper, #edit-search-group-name-wrapper');
 
         //committee tab click event
         $('.committee-search').click(function () {
@@ -272,7 +272,8 @@
         //set up some defaults based on current window state after ajax reload
         if(window.search_state == 'committee' ) {
             $('.views-targets-button-wrapper').hide();
-            hideWidgets.hide();
+            indvWidgets.hide();
+            custWidgets.hide();
             //$('.views-targets-button-wrappers, .search-reset').hide();
             comWidgets.show(300);
             $('.faux-tab').removeClass('active');
@@ -292,8 +293,9 @@
             Sba.toggleStateAndBranch();
             $('a.committee-search').closest('.faux-tab').removeClass('active');
             $('a.individual').closest('.faux-tab').addClass('active');
-            hideWidgets.show(300);
+            indvWidgets.show(300);
             comWidgets.hide();
+            custWidgets.hide();
             $('#edit-submit-targets').show().attr('value', 'Search');
         }
 

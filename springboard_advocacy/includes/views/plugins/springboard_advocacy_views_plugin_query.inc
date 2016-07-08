@@ -7,6 +7,8 @@
 /**
  * Class springboard_advocacy_views_plugin_query
  * Override views default db query with advocacy REST API query.
+ * Queries transaction server for Advocacy targets and custom groups
+ *
  */
 class springboard_advocacy_views_plugin_query extends views_plugin_query {
 
