@@ -108,7 +108,7 @@ function _fundraiser_designations_designation_field_create($fundraiser, $field) 
  * Field create callback.
  *
  * Suppress the donation fields if this is a designation type (or fundraiser
- * tickets typeal: as, there is no good way at the moment to isolate these
+ * tickets type: as there is no good way at the moment to isolate these
  * two types without refactoring fundraiser webform).
  */
 function _fundraiser_designations_donation_create($fundraiser, $field) {
@@ -285,6 +285,9 @@ function fundraiser_designations_form_webform_components_form_alter(&$form, &$fo
 
 /**
  * Implements hook_form_FORM_ID_alter().
+ *
+ * Don't allow creation of parent relationships within the designation
+ * vocabulary. Keep it flat.
  */
 function fundraiser_designations_form_taxonomy_form_term_alter(&$form, &$form_state) {
   if ($form['#vocabulary']->machine_name == 'fd_designation_categories') {
@@ -303,7 +306,9 @@ function fundraiser_designations_module_implements_alter(&$implementations, $hoo
     unset($implementations['fundraiser_designations']);
     $implementations['fundraiser_designations'] = $group;
   }
-  // Needed because we share a field definition with fundraiser tickets.
+  // Needed because we share a field definition ("amount")
+  // with fundraiser tickets, and we need to see if it already exists in
+  // hook_fundraiser_field_info_alter.
   if ($hook == 'fundraiser_field_info_alter') {
     $group = $implementations['fundraiser_designations'];
     unset($implementations['fundraiser_designations']);
@@ -342,9 +347,9 @@ function fundraiser_designations_webform_component_insert($component) {
   }
 }
 /**
- * Implements hook_form_alter().
+ * Implements hook_form_node_form_alter().
  *
- * Alter designation settings form and add validation callback.
+ * Hide some irrelevant fundraiser settings.
  */
 function fundraiser_designations_form_node_form_alter(&$form, &$form_state) {
   if (fundraiser_designations_is_designation_type($form['type']['#value'])) {
@@ -824,7 +829,7 @@ function fundraiser_designations_form_node_type_form_alter(&$form, &$form_state)
 }
 
 /**
- * Validation callback for the node type form. Called during form validation.
+ * Validation callback for the node type form.
  */
 function fundraiser_designations_form_node_type_form_validate($form, &$form_state) {
   if ($form_state['values']['fundraiser_designations'] && !$form_state['values']['fundraiser']) {
@@ -859,8 +864,7 @@ function fundraiser_designations_form_webform_client_form_alter(&$form, &$form_s
       // Add the visibility javascript.
       _fundraiser_designations_process_states($form, $component_hierarchy);
 
-      // Add the "inherit from landing page" query params to js settings,
-      // if any.
+      // Add the js settings.
       _fundraiser_designations_add_js_settings($form);
 
       // Check addon status.
@@ -962,7 +966,8 @@ function _fundraiser_designations_process_states(&$form, $component_hierarchy) {
 /**
  * Adds js settings to the client form.
  *
- * @param $form
+ * @param array $form
+ *   The webform.
  */
 function _fundraiser_designations_add_js_settings(&$form) {
 
@@ -971,19 +976,20 @@ function _fundraiser_designations_add_js_settings(&$form) {
   if (!empty($form['#node']->recurring_setting) && !empty($form['#node']->recurring_dual_ask_amounts)) {
     $settings = array('fdIsDualAsk' => 1);
   }
-
   $form['#attached']['js'][] = array(
     'data' => $settings,
     'type' => 'setting',
   );
 
+  // Add the cart text option.
   if (!empty($form['#node']->fd_addon['cart_text'])) {
     $settings = array('cart_text' => $form['#node']->fd_addon['cart_text']);
     $form['#attached']['js'][] = array('data' => array('addon' => $settings), 'type' => 'setting');
 
   }
 
-  // Pass along query string parameters to designation forms.
+  // Pass along landing page query string parameters to designation forms.
+  // These can be used to pre-popualte the cart with an item.
   $parsed_uri = drupal_parse_url(request_uri());
   if (!empty($parsed_uri['query']['fund']) && !empty($parsed_uri['query']['amount'])) {
     $product = commerce_product_load($parsed_uri['query']['fund']);
@@ -1022,12 +1028,14 @@ function fundraiser_designations_client_form_validate($form, &$form_state) {
   $components = $form['#node']->webform['components'];
   $component_hierarchy = webform_user_parse_components($form['#node']->nid, $components);
 
+  // Check if the cart is empty.
   $amount = $component_hierarchy['amount'];
   $total = _fundraiser_designations_find_field_form_state($form_state['values'], $amount);
   if (empty($total)) {
     form_set_error('amount', t('Your cart is empty.'));
   }
 
+  // Make sure there is not just an add-on conation in the cart.
   $container = $component_hierarchy['fd_cart_container'];
   $cart = _fundraiser_designations_find_field_form_state($form_state['values'], $container);
   if (!empty($cart['fd_cart']['cart_body']['fund_catcher'])) {
@@ -1102,14 +1110,6 @@ function fundraiser_designations_node_view($node, $view_mode, $langcode) {
 }
 
 /**
- * Implements hook_clone_node_alter().
- */
-function fundraiser_designations_clone_node_alter(&$node, $context) {
-  if (fundraiser_designations_is_designation_type($context['original_node']->type)) {
-  }
-}
-
-/**
  * Implements hook_node_update().
  */
 function fundraiser_designations_node_update($node) {
@@ -1128,8 +1128,6 @@ function fundraiser_designations_form_commerce_product_ui_product_form_alter(&$f
   if ($product->type == 'fundraiser_designation') {
     $form['commerce_price']['#access'] = FALSE;
     $form['commerce_price'][$form['commerce_price']['#language']][0]['amount']['#default_value'] = 0;
-//    form_load_include($form_state, 'inc', 'fundraiser_designations', 'includes/fundraiser_designations.price_override');
-//    fundraiser_designations_price_override_form($form, $form_state, $product);
     $form['#attached']['css'][] = drupal_get_path('module', 'fundraiser_designations') . '/css/product-form.css';
   }
 }
