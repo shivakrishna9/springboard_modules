@@ -46,8 +46,8 @@ function sba_message_action_performance_targets_table($responses, $node) {
   if($pager_limit < $min_pager){
     $pager_limit = $min_pager;
   }
-  // If the limit is set to all, set a number for it
-  elseif($_GET['limit'] === 'all') {
+  // If the limit is set to all, set a number for it.
+  elseif (isset($_GET['limit']) && $_GET['limit'] === 'all') {
     $pager_limit = 100000;
   }
 
