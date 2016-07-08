@@ -120,7 +120,7 @@ function springboard_measurement_protocol_commerce_paypal_ipn_process($order, $p
       }
       if (isset($donation->donation['amount'])) {
         // The product and transaction item price.
-        $variables['pr1pr'] = $variables['ip'] = $donation->donation['amount'];
+        $variables['pr1pr'] = $variables['ip'] = $variables['tr'] = $donation->donation['amount'];
       }
       if (isset($donation->did)) {
         // The transaction ID.
