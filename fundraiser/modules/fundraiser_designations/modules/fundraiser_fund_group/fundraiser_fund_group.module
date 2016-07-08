@@ -239,7 +239,7 @@ function fundraiser_fund_group_form_alter(&$form, &$form_state, $form_id) {
   if (in_array($form_id, $forms)) {
     $groups = $form_state['build_info']['args'][0]->result;
     if (isset($groups) && count($groups) > 1) {
-      $form['actions']['submit']['#submit'][] =  'fundraiser_fund_group_drag_submit';
+      $form['actions']['submit']['#submit'][] = 'fundraiser_fund_group_drag_submit';
     }
     else {
       // Don't show save button if only one item in the draggable table.

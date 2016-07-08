@@ -158,7 +158,6 @@ function theme_fundraiser_designations_fund_addon_component($variables) {
     $build = array();
     if (isset($element[$id]['#extra']['addon_id'])) {
 
-      $description = '';
       $build['content'] = array(
         '#prefix' => '<div class="designation-addon-wrapper" id="designation-addon-' . $element[$id]['#extra']['addon_id'] . '">',
         '#suffix' => '</div>',
