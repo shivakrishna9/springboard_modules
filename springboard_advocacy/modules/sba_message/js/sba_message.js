@@ -17,8 +17,9 @@
             // Reset district option elements to default on State element change.
             Sba.buildStateField();
 
-            // Set up tabs, click events and other customizations for committee search
-            Sba.buildCommitteeSearch();
+            // Set up tabs and UI wrapping elements for target search.
+            // Renamed from buildCommitteeSearch();
+            Sba.buildSearchUI();
 
             // Define click events for add target links
             Sba.buildTargetLinkEvent(context);
@@ -191,29 +192,34 @@
         }
     };
 
-    // Set up tabs, click events and other customizations for committee search
-    Sba.buildCommitteeSearch = function () {
-
+    // Set up tabs and other shared UI elements for target search.
+    // renamed from buildCommitteeSearch().
+    Sba.buildSearchUI = function () {
         // tabs
-        $('.view-targets').once('advocacy-committee-search', function() {
+        $('.view-targets').once('advocacy-search-tabs', function () {
             var finder = $('.view-targets', '#springboard-advocacy-find-targets-container');
-            finder.prepend('<div class="faux-tab-container"><div class="faux-tab"' +
-            '><a href ="#full" class="full-search">Target Search</a></div><' +
-            'div class="faux-tab committee"><a href ="#committee" class="committee-search">Committee Search</a></div>');
+            finder.prepend('<div class="faux-tab-container"><div class="faux-tab individual"' +
+              '><a href ="#full" class="individual-search">Legislative Targets</a></div><' +
+              'div class="faux-tab committee"><a href ="#committee" class="committee-search">Legislative Committees</a></div><' +
+              'div class="faux-tab custom"><a href ="#groups" class="custom-search">Custom Targets</a></div>');
         });
 
-        //target search elements to hide
-        var hideWidgets = $('#edit-search-role-1-wrapper, #edit-search-party-wrapper, #edit-search-social-wrapper, #edit-search-gender-wrapper, #edit-search-district-name-wrapper, #edit-combine-wrapper');
-       //committee search elements
+        // Legislative target specific search elements
+        var indvWidgets = $('#edit-search-role-1-wrapper, #edit-search-party-wrapper, #edit-search-social-wrapper, #edit-search-gender-wrapper, #edit-search-district-name-wrapper, #edit-combine-wrapper');
+        // Legislative committee specific search elements
         var comWidgets = $('#edit-search-committee-chamber-wrapper, #edit-search-committee-wrapper');
+        // Custom target specific search elements
+        var custWidgets = $('#edit-search-custom-wrapper', '#edit-search-groups-wrapper'); //@TODO determine these, I made these up.
+
         //committee tab click event
         $('.committee-search').click(function () {
             Sba.reset('committee');
-            hideWidgets.hide();
+            indvWidgets.hide();
+            custWidgets.hide();
             $('.views-targets-button-wrappers, .search-reset').hide(); //breaks if put in hideWidget object
             comWidgets.show(300);
-            $('a.committee-search').closest('.faux-tab').addClass('active');
-            $('a.full-search').closest('.faux-tab').removeClass('active');
+            $('.faux-tab').removeClass('active');
+            $('.faux-tab.committee').addClass('active');
             window.search_state = 'committee';
             Sba.buildSubscriptions();
             Sba.toggleStateAndChambers();
@@ -221,17 +227,36 @@
             return false;
         });
 
+        //custom tab click event
+        $('.custom-search').click(function () {
+            Sba.reset('custom');
+            indvWidgets.hide();
+            comWidgets.hide();
+            $('.views-targets-button-wrappers, .search-reset').hide(); //breaks if put in hideWidget object
+            custWidgets.show(300);
+            $('.faux-tab').removeClass('active');
+            $('.faux-tab.custom').addClass('active');
+            window.search_state = 'custom';
+            Sba.buildSubscriptions();
+            Sba.toggleStateAndChambers();
+            Sba.CommitteeElStates(true);
+            return false;
+        });
+
         //target tab click event
-        $('.full-search').click(function () {
+        $('.individual-search').click(function () {
             $('div.narrow-search').remove();
             comWidgets.hide();
-            $('a.committee-search').closest('.faux-tab').removeClass('active');
-            $('a.full-search').closest('.faux-tab').addClass('active');
-            hideWidgets.show(300);
+            custWidgets.hide();
+            $('.faux-tab').removeClass('active');
+            $('.faux-tab.individual').addClass('active');
+            indvWidgets.show(300);
             $('.search-reset').show(300);
-            window.search_state = 'full-search';
+            window.search_state = 'individual';
             Sba.buildSubscriptions();
             Sba.reset('committee');
+            Sba.reset('custom');
+
             $('#edit-submit-targets').attr('value', 'Search').show();
             $('#edit-search-state').prop('disabled', false).removeClass('disabled');
             return false;
@@ -248,15 +273,25 @@
         if(window.search_state == 'committee' ) {
             $('.views-targets-button-wrapper').hide();
             hideWidgets.hide();
-           //$('.views-targets-button-wrappers, .search-reset').hide();
+            //$('.views-targets-button-wrappers, .search-reset').hide();
             comWidgets.show(300);
-            $('a.committee-search').closest('.faux-tab').addClass('active');
+            $('.faux-tab').removeClass('active');
+            $('.faux-tab.committee').addClass('active');
             Sba.CommitteeElStates();
+        }
+        else if(window.search_state == 'custom') {
+            //Sba.toggleStateAndBranch();
+            $('.faux-tab').removeClass('active');
+            $('.faux-tab.custom').addClass('active');
+            custWidgets.show(300);
+            indvWidgets.hide();
+            comWidgets.hide();
+           //$('#edit-submit-targets').show().attr('value', 'Search');
         }
         else {
             Sba.toggleStateAndBranch();
             $('a.committee-search').closest('.faux-tab').removeClass('active');
-            $('a.full-search').closest('.faux-tab').addClass('active');
+            $('a.individual').closest('.faux-tab').addClass('active');
             hideWidgets.show(300);
             comWidgets.hide();
             $('#edit-submit-targets').show().attr('value', 'Search');
@@ -280,7 +315,7 @@
             }
             Sba.setElStates();
         });
-    };
+    }
 
     // Define click events for add target links
     Sba.buildTargetLinkEvent = function (context) {
