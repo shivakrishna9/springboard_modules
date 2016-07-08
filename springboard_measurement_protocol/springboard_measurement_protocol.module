@@ -106,6 +106,8 @@ function springboard_measurement_protocol_commerce_paypal_ipn_process($order, $p
         'pa' => 'purchase',
         // The transaction item quantity.
         'iq' => 1,
+        // The product item quantity.
+        'pr1qt' => 1,
       );
 
       // Check each of the following to prevent php notices/warnings in the
