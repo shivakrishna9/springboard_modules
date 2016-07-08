@@ -1289,14 +1289,18 @@ function fundraiser_designations_node_load($nodes, $types) {
       'SELECT entity_id, field_ffg_form_id_target_id FROM {field_data_field_ffg_form_id} WHERE field_ffg_form_id_target_id IN (:nids)',
       array(':nids' => array_keys($nodes)));
     foreach ($group_ids as $group_id) {
-      $nodes[$group_id->field_ffg_form_id_target_id]->designation_group_ids[] = $group_id->entity_id;
+      if (!empty($nodes[$group_id->field_ffg_form_id_target_id])) {
+        $nodes[$group_id->field_ffg_form_id_target_id]->designation_group_ids[] = $group_id->entity_id;
+      }
     }
     $addons = db_query('SELECT * FROM {fundraiser_fund_group_addon}');
     foreach ($addons as $addon) {
-      $nodes[$addon->nid]->fd_addon['pid'] = $addon->pid;
-      $nodes[$addon->nid]->fd_addon['status'] = $addon->status;
-      $nodes[$addon->nid]->fd_addon['cart_text'] = $addon->cart_text;
-      $nodes[$addon->nid]->fd_addon['price_set'] = $addon->price_set;
+      if (!empty($nodes[$addon->nid])) {
+        $nodes[$addon->nid]->fd_addon['pid'] = $addon->pid;
+        $nodes[$addon->nid]->fd_addon['status'] = $addon->status;
+        $nodes[$addon->nid]->fd_addon['cart_text'] = $addon->cart_text;
+        $nodes[$addon->nid]->fd_addon['price_set'] = $addon->price_set;
+      }
     }
   }
 }
