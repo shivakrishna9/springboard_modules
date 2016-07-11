@@ -1666,21 +1666,6 @@ function fundraiser_donation_form(&$form, &$form_state) {
     $zip['#attributes']['class'][] = 'input-medium';
     $form = _fundraiser_update_form_field($form, 'zip', $zip);
 
-    // Change ask amount labels.
-    $amount = _fundraiser_get_form_field($form, 'amount');
-    if (isset($amount) && !empty($amount)) {
-      if (isset($amount['#options'])) {
-        foreach ($amount['#options'] as $val => $label) {
-          $amount['#options'][$val] = str_replace('$', $symbol, $label);
-        }
-      }
-      else {
-        $amount['#field_prefix'] = $symbol;
-      }
-    }
-    $form = _fundraiser_update_form_field($form, 'amount', $amount);
-
-
     // Call hook to allow sub modules to add / manipulate the form.
     // NOTE: we are not using module_invoke_all on purpose here.
     // Node objects (common on webform objs) flag as recursive warnings.
