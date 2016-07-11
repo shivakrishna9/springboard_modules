@@ -590,6 +590,10 @@ function springboard_quick_donate_fundraiser_donation_submit($form, $form_state,
 
 /**
  * Implements hook_fundraiser_commerce_submit_handler_pane_values_alter().
+ *
+ * Sets the appropriate 'cardonfile' element to the card id value if set, which
+ * is necessary for payment gateways to determine when to use cardonfile
+ * functionality.
  */
 function springboard_quick_donate_fundraiser_commerce_submit_handler_pane_values_alter(&$pane_values, &$donation) {
   if (isset($donation->data['cardonfile']) && $donation->data['cardonfile'] != 'new' && $donation->data['cardonfile'] > 0) {
@@ -617,7 +621,6 @@ function _springboard_quick_donate_checkout_form_submit($form, &$form_state) {
 
   $donation = $form_state['#donation'];
   $account = $donation->user;
-  $cardonfile_default = variable_get('commerce_cardonfile_storage', 'opt-in');
 
   $card_id = 0;
 
@@ -631,9 +634,7 @@ function _springboard_quick_donate_checkout_form_submit($form, &$form_state) {
         commerce_cardonfile_set_default_card($card_id);
       }
     }
-    elseif ($cardonfile_default == 'opt-out') {
-      // If the cardonfile configuration is set to save by default, set the
-      // newest card as the default.
+    else {
       $card_id = _springboard_quick_donate_users_latest_cardid($account->uid);
       commerce_cardonfile_set_default_card($card_id);
     }
