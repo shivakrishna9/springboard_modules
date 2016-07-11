@@ -1692,6 +1692,7 @@ function fundraiser_donation_validate(&$form, &$form_state) {
   // Call hook to validate donation values against fundraiser needs and sub module needs.
   // Each is meant to return a not ok response or nothing.
   // No response = we're all good, otherwise we return an array of values for handling.
+  drupal_alter('fundraiser_donation_validate', $form, $form_state);
   $errors = module_invoke_all('fundraiser_donation_validate', $form, $form_state);
   // Then handle our own business.
   if (!empty($errors)) {
