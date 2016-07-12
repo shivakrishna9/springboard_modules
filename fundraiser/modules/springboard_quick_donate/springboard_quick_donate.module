@@ -87,6 +87,18 @@ function springboard_quick_donate_springboard_hmac_success($payload) {
  * Redirect to the donation form if hmac not validated.
  */
 function springboard_quick_donate_springboard_hmac_failure($reason, $payload) {
+  $mapping = _springboard_quick_donate_hmac_mapping();
+
+  // If the Springboard cookie is set and matches the uid from the token,
+  // redirect user to donation form. This scenario is treated as a success
+  // condition.
+  $cookie = springboard_cookie_get_cookie();
+  if (!empty($cookie['uid']) && $cookie['uid'] == $payload[$mapping['uid']]) {
+    drupal_goto(drupal_get_path_alias('node/' . $payload[$mapping['fundraiser_id']]));
+  }
+
+  // Otherwise this is a failure condition. Output the reason if configured to
+  // do so.
   if (variable_get('springboard_quick_donate_debug', FALSE)) {
     global $user;
     if (module_exists('devel') && user_access('access devel information', $user)) {
@@ -97,10 +109,10 @@ function springboard_quick_donate_springboard_hmac_failure($reason, $payload) {
     }
   }
 
+  // Redirect to the login form.
   drupal_session_start();
   $_SESSION['quickdonate'] = TRUE;
 
-  $mapping = _springboard_quick_donate_hmac_mapping();
   $nid = $payload[$mapping['fundraiser_id']];
   drupal_goto('/user', array(
     'query' => array(
