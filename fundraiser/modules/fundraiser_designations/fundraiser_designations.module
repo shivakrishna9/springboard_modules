@@ -744,42 +744,6 @@ function fundraiser_designations_fundraiser_donation_success($donation) {
 }
 
 /**
- * Alter an item before it is added to the queue.
- *
- * @param array $item
- *   Array of values to be added to the queue.
- */
-function fundraiser_designations_salesforce_queue_create_item_alter(&$item) {
-  // Connect a designation line item to the donation opportunity.
-  if ($item['module'] == 'commerce_line_item' && $item['delta'] == 'designation') {
-    $line_item = commerce_line_item_load($item['drupal_id']);
-    $item['sobject']->fields['kell01__Opportunity__c'] = sprintf('[Opportunity:donation:%d]', $line_item->order_id);
-    $item['sobject']->fields['kell01__Fund__c'] = sprintf('[kell01__Fund__c:fundraiser_designation:%d]', $line_item->commerce_product[LANGUAGE_NONE][0]['product_id']);
-  }
-}
-
-/**
- * Implements hook_salesforce_mapping_confirm_entity_for_queue().
- *
- * Stop designation line items from syncing till the order has charged.
- */
-function fundraiser_designations_salesforce_mapping_confirm_entity_for_queue($entity, $entity_type, $op) {
-  // Only bother with commerce entities.
-  if ($entity_type != 'commerce_line_item') {
-    return NULL;
-  }
-
-  $line_item = $entity;
-  if ($line_item->type == 'designation' && !empty($line_item->order_id)) {
-    $order = commerce_order_load($line_item->order_id);
-    if (empty($order->data['commerce_payment_order_paid_in_full_invoked'])) {
-      return FALSE;
-    }
-  }
-}
-
-
-/**
  * Implements hook_form_form_id_alter().
  *
  * Alter content type settings to add "Enable designated donations?" checkbox.
