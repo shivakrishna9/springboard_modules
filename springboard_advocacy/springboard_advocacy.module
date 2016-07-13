@@ -445,6 +445,11 @@ function springboard_advocacy_theme($existing, $type, $theme) {
       ),
       'file' => 'includes/views/springboard_advocacy.views.inc',
     ),
+    'springboard_advocacy_legislators' => array(
+      'variables' => array(
+        'legislators' => array(),
+      ),
+    ),
   );
   // Look for theme templates in springboard_advocacy.
   $templates += drupal_find_theme_functions($existing, array($theme));
@@ -976,4 +981,87 @@ function springboard_advocacy_update_multistep_components($sid, $node, $changed)
  */
 function springboard_advocacy_success($node, $contact, $data, $sid) {
   module_invoke_all('action_success', $node, $contact, $data, $sid);
+}
+
+
+/**
+ * Implements hook_block_info().
+ */
+function springboard_advocacy_block_info() {
+  $blocks['sba_legislator_lookup'] = array(
+    'info' => t('Springboard Advocacy Legislator Lookup'),
+    'region' => BLOCK_REGION_NONE,
+  );
+
+  return $blocks;
+}
+
+/**
+ * Implements hook_block_configure().
+ */
+function springboard_advocacy_block_configure($delta) {
+  $form = array();
+
+  switch ($delta) {
+    case 'sba_legislator_lookup':
+      module_load_include(
+        'inc',
+        'springboard_advocacy',
+        'includes/springboard_advocacy.lookup'
+      );
+      $options = springboard_advocacy_legislator_roles();
+      $form['sba_legislator_lookup_types'] = array(
+        '#type' => 'checkboxes',
+        '#title' => t('Configure the legislator types you want to display'),
+        '#options' => $options,
+        '#default_value' => variable_get('sba_legislator_lookup_types', array('FS', 'FR', 'SS', 'SR', 'GOVNR', 'PRES01', 'PRES03')),
+      );
+      break;
+  }
+
+  return $form;
+}
+
+/**
+ * Implements hook_block_save().
+ */
+function springboard_advocacy_block_save($delta = '', $edit = array()) {
+
+  switch ($delta) {
+    case 'sba_legislator_lookup':
+      module_load_include(
+        'inc',
+        'springboard_advocacy',
+        'includes/springboard_advocacy.lookup'
+      );
+      $enabled_types = array();
+// Filter out only those types selected.
+      foreach ($edit['sba_legislator_lookup_types'] as $type) {
+        if ($type) {
+          $enabled_types[$type] = $type;
+        }
+      }
+      variable_set('sba_legislator_lookup_types', $enabled_types);
+      break;
+  }
+
+  return;
+}
+
+/**
+ * Implements hook_block_view().
+ */
+function springboard_advocacy_block_view($delta = '') {
+  switch ($delta) {
+    case 'sba_legislator_lookup':
+      module_load_include(
+        'inc',
+        'springboard_advocacy',
+        'includes/springboard_advocacy.lookup'
+      );
+      $block['subject'] = t('Find your legislators'); // TODO: Change to setting
+      $block['content'] = springboard_advocacy_legislator_lookup($delta);
+      return $block;
+      break;
+  }
 }
