@@ -449,7 +449,7 @@ function springboard_quick_donate_fundraiser_donation_form($form, $form_state) {
     return;
   }
 
-  if (!empty($_SESSION['springboard_hmac']) && !$_SESSION['springboard_hmac']['quickdonate']['status']) {
+  if (!empty($_SESSION['springboard_hmac']['quickdonate']) && !$_SESSION['springboard_hmac']['quickdonate']['status']) {
     $reasons = array(
       SPRINGBOARD_QUICK_DONATE_UID_NOT_EQUAL_TOKEN => t("Uh oh. It looks like we weren't able to verify your saved payment details. Please !login to access your stored card information, or complete the donation form below.", array(
         '!login' => l(t('login'), '/user'),
