@@ -335,7 +335,7 @@
 
     if (amtSel) {
       var amtFloat = parseFloat(amt);
-      if (Number.isNaN(amtFloat) || !$.isNumeric(amt)) {
+      if ((typeof(amtFloat) === 'number' && isNaN(amtFloat)) || !$.isNumeric(amt)) {
         message += ' Not a valid amount.';
       }
       else {
