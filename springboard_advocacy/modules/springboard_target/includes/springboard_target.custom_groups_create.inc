@@ -40,9 +40,25 @@ function springboard_target_create_custom_groups_form() {
  */
 function springboard_target_create_custom_groups_form_submit($form, &$form_state) {
   $input = $form_state['values'];
+  /* @TODO - format an array for the group that matches the following:
+   *  array(
+   *    'name' => 'group name', //required
+   *    'is_template' => 1, // required, should be 1 in this instance
+   *    'chambers' => array(
+   *         0 => array('chamber' => 'fs', 'party =>'r', state => 'MA'),
+   *         1 => array('chamber' => 'fs', 'party =>'d', state => 'MA')
+   *       )
+   *    'executives' => array(
+   *         0 => array('role' => 'PRES01', 'party =>'r'),
+   *         1 => array('role' => 'PRES03', 'party =>'d')
+   *       )
+   *     )
+   *     'target_ids' => array('1', '2', '3', '4', '5', '6', '7'),
+   *   )
+   */
 
   $api_call = springboard_advocacy_api_call();
-  $group = $api_call->invokeClientMethod('createCustomGroup', $input); // @TODO Create createCustomGroup method like createCustomTarget
+  $group = $api_call->invokeClientMethod('createTargetGroup', $input);
 
   if (!empty($group->data)) {
     $message = implode(' ', (array) $group->data->status);

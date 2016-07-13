@@ -34,7 +34,7 @@ function springboard_target_group_form($group_id = NULL) {
   if (isset($group_id) && is_numeric($group_id)) {
     $api_call = springboard_advocacy_api_call();
 
-    $group = $api_call->invokeClientMethod('getCustomGroup', $group_id); // @TODO create getCustomGroup method like getCustomTarget
+    $group = $api_call->invokeClientMethod('getTargetGroup', $group_id);
 
     if (isset($group->error)) {
       $form = array();
@@ -113,7 +113,7 @@ function springboard_target_group_delete_submit(&$form, &$form_state) {
   $form_state['redirect'] = 'springboard/advocacy/targets/custom-groups';
 
   $api_call = springboard_advocacy_api_call();
-  $response = $api_call->invokeClientMethod('deleteCustomGroup', $form_state['values']['group_id']); //@TODO create deleteCustomGroup method like deleteCustomTarget
+  $response = $api_call->invokeClientMethod('deleteTargetGroup', $form_state['values']['group_id']);
 
   if (isset($response->data)) {
     drupal_set_message('Group deleted.');

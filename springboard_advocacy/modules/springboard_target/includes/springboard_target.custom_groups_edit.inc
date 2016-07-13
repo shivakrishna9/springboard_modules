@@ -54,7 +54,29 @@ function springboard_target_edit_custom_groups_form_submit($form, &$form_state) 
   $id = $form_state['build_info']['args'][0];
   $input = $form_state['values'];
   $api_call = springboard_advocacy_api_call();
-  $group = $api_call->invokeClientMethod('updateCustomGroup', $input, $id); // @TODO create updateCustomGroup method like updateCustomTarget
+  /* @TODO ensure $input follows the following format:
+   *
+   * 'name' => 'group name', //required
+   *    'is_template' => 0, //required boolean @TODO
+   *    'chambers' => array(
+   *         0 => array('chamber' => 'fs', 'party =>'r', state => 'MA'),
+   *         1 => array('chamber' => 'fs', 'party =>'d', state => 'MA')
+   *       )
+   *    'executives' => array(
+   *         0 => array('role' => 'PRES01', 'party =>'r'),
+   *         1 => array('role' => 'PRES03', 'party =>'d')
+   *       )
+   *     )
+   *     'target_ids' => array('1', '2', '3', '4', '5', '6', '7'),
+   *
+   *     'message' => array(
+   *       group_id =>
+   *       message_id =>
+   *       form_id =>
+   *      ),
+   *   )
+   */
+  $group = $api_call->invokeClientMethod('updateTargetGroup', $input, $id);
 
   if (!empty($group->data)) {
     $message = implode(' ', (array) $group->data->status);
