@@ -35,6 +35,7 @@
         else if ($gateways_enabled[type] && Drupal.settings.springboard_quick_donate.usable_paypment_processors[type].indexOf($option_value) < 0) {
           // Not a usable credit payment processor, display a note.
           $quickdonate.find('input[type=checkbox]').attr('disabled', 'disabled');
+          $quickdonate.nextAll('.form-item, .form-wrapper').hide();
           if ($quickdonate.next('.note').length == 0) {
             $quickdonate.after('<div class="note"><strong>Note:</strong> Quick donations are not available for one or more of the payment processors you have selected: <ul><li>' + $option_name + '</li></ul>You\'ll need to configure the <a href="/admin/commerce/config/payment-methods">different payment methods</a> to utilize the quick donation functionality.<br/><br/></div>');
           }
@@ -45,6 +46,7 @@
         }
         else {
           $quickdonate.find('input[type=checkbox]').removeAttr('disabled');
+          $quickdonate.nextAll('.form-item, .form-wrapper').show();
           $quickdonate.next('.note').remove();
           gateway_available[type] = true;
         }
