@@ -203,6 +203,10 @@
               'div class="faux-tab committee"><a href ="#committee" class="committee-search">Legislative Committees</a></div><' +
               'div class="faux-tab custom"><a href ="#groups" class="custom-search">Custom Targets</a></div>');
         });
+        // Hide the 'type' switch
+        //$("#edit-search-class-name-wrapper").hide();
+        // Set the default search type
+        Sba.setTargetType("Legislator");
 
         // Legislative target specific search elements
         var indvWidgets = $('#edit-search-role-1-wrapper, #edit-search-party-wrapper, #edit-search-social-wrapper, #edit-search-gender-wrapper, #edit-search-district-name-wrapper, #edit-combine-wrapper');
@@ -210,12 +214,16 @@
         var comWidgets = $('#edit-search-committee-chamber-wrapper, #edit-search-committee-wrapper');
         // Custom target specific search elements
         var custWidgets = $('#edit-search-custom-name-wrapper, #edit-search-group-name-wrapper');
+        // Elements to hide only on custom tab
+        var custHideWidgets = $('#state-district-wrapper');
 
         //committee tab click event
         $('.committee-search').click(function () {
             Sba.reset('committee');
+            Sba.setTargetType("Legislator");
             indvWidgets.hide();
             custWidgets.hide();
+            custHideWidgets.show();
             $('.views-targets-button-wrappers, .search-reset').hide(); //breaks if put in hideWidget object
             comWidgets.show(300);
             $('.faux-tab').removeClass('active');
@@ -230,8 +238,10 @@
         //custom tab click event
         $('.custom-search').click(function () {
             Sba.reset('custom');
+            Sba.setTargetType("Target");
             indvWidgets.hide();
             comWidgets.hide();
+            custHideWidgets.hide();
             $('.views-targets-button-wrappers, .search-reset').hide(); //breaks if put in hideWidget object
             custWidgets.show(300);
             $('.faux-tab').removeClass('active');
@@ -248,6 +258,7 @@
             $('div.narrow-search').remove();
             comWidgets.hide();
             custWidgets.hide();
+            custHideWidgets.show();
             $('.faux-tab').removeClass('active');
             $('.faux-tab.individual').addClass('active');
             indvWidgets.show(300);
@@ -259,6 +270,8 @@
 
             $('#edit-submit-targets').attr('value', 'Search').show();
             $('#edit-search-state').prop('disabled', false).removeClass('disabled');
+            Sba.setTargetType("Legislator");
+
             return false;
         });
 
@@ -271,6 +284,7 @@
 
         //set up some defaults based on current window state after ajax reload
         if(window.search_state == 'committee' ) {
+            Sba.setTargetType("Legislator");
             $('.views-targets-button-wrapper').hide();
             indvWidgets.hide();
             custWidgets.hide();
@@ -281,6 +295,7 @@
             Sba.CommitteeElStates();
         }
         else if(window.search_state == 'custom') {
+            Sba.setTargetType("Target");
             //Sba.toggleStateAndBranch();
             $('.faux-tab').removeClass('active');
             $('.faux-tab.custom').addClass('active');
@@ -290,6 +305,7 @@
            //$('#edit-submit-targets').show().attr('value', 'Search');
         }
         else {
+            Sba.setTargetType("Legislator");
             Sba.toggleStateAndBranch();
             $('a.committee-search').closest('.faux-tab').removeClass('active');
             $('a.individual').closest('.faux-tab').addClass('active');
@@ -803,6 +819,11 @@
             chamber.prop('disabled', false);
             chamber.removeClass('disabled');
         }
+    };
+
+    // Set the hidden search type field
+    Sba.setTargetType = function (type) {
+      $('#edit-search-class-name').val(type);
     };
 
     // quick target click function, builds query array
