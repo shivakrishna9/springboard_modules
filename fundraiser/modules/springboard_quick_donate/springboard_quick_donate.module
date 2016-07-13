@@ -452,7 +452,11 @@ function springboard_quick_donate_fundraiser_donation_form($form, $form_state) {
   if (!empty($_SESSION['springboard_hmac']['quickdonate']) && !$_SESSION['springboard_hmac']['quickdonate']['status']) {
     $reasons = array(
       SPRINGBOARD_QUICK_DONATE_UID_NOT_EQUAL_TOKEN => t("Uh oh. It looks like we weren't able to verify your saved payment details. Please !login to access your stored card information, or complete the donation form below.", array(
-        '!login' => l(t('login'), '/user'),
+        '!login' => l(t('login'), '/user', array(
+          'query' => array(
+            'destination' => current_path(),
+          ),
+        )),
       )),
     );
     $form['#prefix'] = $reasons[$_SESSION['springboard_hmac']['quickdonate']['reason']];
@@ -600,7 +604,11 @@ function springboard_quick_donate_fundraiser_donation_form($form, $form_state) {
       $login_link_text = isset($form['#node']->quickdonate_login_link_message) ? $form['#node']->quickdonate_login_link_message : variable_get('springboard_quick_donate_default_login_link_message', t('Click here to login'));
       $form['submitted']['payment_information']['payment_fields'][$gateway_type]['cardonfile_store']['#suffix'] = format_string($login_text, array(
         '@type' => $type,
-      )) . ' ' . l($login_link_text, '/user');
+      )) . ' ' . l($login_link_text, '/user', array(
+        'query' => array(
+          'destination' => current_path(),
+        ),
+      ));
     }
 
     // Allow others to alter this alter.
