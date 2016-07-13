@@ -8,7 +8,7 @@
 
       var $gateways = {'credit': $('#edit-gateways-credit-id'), bank: $('#edit-gateways-bank-account-id')};
       var $gateways_enabled;
-      var $quickdonation = $('.form-item-quickdonation');
+      var $quickdonate = $('.form-item-quickdonate');
       var gateway_available = {'credit': true, 'bank': true};
 
       var gateways_enabled = function() {
@@ -17,7 +17,7 @@
       gateways_enabled();
 
       var checkGateway = function($this, type) {
-        $('.form-item-quickdonation').next('.note').remove();
+        $quickdonate.next('.note').remove();
 
         gateways_enabled();
 
@@ -28,24 +28,24 @@
           $option_value = $gateways[type].find('option:selected').val();
         }
         if (!$gateways_enabled.credit && !$gateways_enabled.bank) {
-          $quickdonation.after('<div class="note"><strong>Note:</strong> Quick donation functionality is only available when using one of the supported payment processors above.<br/></div>');
-          $quickdonation.find('input[type=checkbox]').attr('disabled', 'disabled');
-          $('#edit-quickdonation-message-container').hide();
+          $quickdonate.after('<div class="note"><strong>Note:</strong> Quick donation functionality is only available when using one of the supported payment processors above.<br/></div>');
+          $quickdonate.find('input[type=checkbox]').attr('disabled', 'disabled');
+          $('#edit-quickdonate-message-container').hide();
         }
         else if ($gateways_enabled[type] && Drupal.settings.springboard_quick_donate.usable_paypment_processors[type].indexOf($option_value) < 0) {
           // Not a usable credit payment processor, display a note.
-          $quickdonation.find('input[type=checkbox]').attr('disabled', 'disabled');
-          if ($quickdonation.next('.note').length == 0) {
-            $quickdonation.after('<div class="note"><strong>Note:</strong> Quick donations are not available for one or more of the payment processors you have selected: <ul><li>' + $option_name + '</li></ul>You\'ll need to configure the <a href="/admin/commerce/config/payment-methods">different payment methods</a> to utilize the quick donation functionality.<br/><br/></div>');
+          $quickdonate.find('input[type=checkbox]').attr('disabled', 'disabled');
+          if ($quickdonate.next('.note').length == 0) {
+            $quickdonate.after('<div class="note"><strong>Note:</strong> Quick donations are not available for one or more of the payment processors you have selected: <ul><li>' + $option_name + '</li></ul>You\'ll need to configure the <a href="/admin/commerce/config/payment-methods">different payment methods</a> to utilize the quick donation functionality.<br/><br/></div>');
           }
           else {
-            $quickdonation.next('.note').find('ul').append('<li>$option_name</li>');
+            $quickdonate.next('.note').find('ul').append('<li>$option_name</li>');
           }
           gateway_available[type] = false;
         }
         else {
-          $quickdonation.find('input[type=checkbox]').removeAttr('disabled');
-          $quickdonation.next('.note').remove();
+          $quickdonate.find('input[type=checkbox]').removeAttr('disabled');
+          $quickdonate.next('.note').remove();
           gateway_available[type] = true;
         }
 
@@ -54,10 +54,10 @@
         if (!$gateways_enabled.credit && !$gateways_enabled.bank
           || $gateways_enabled.credit && !gateway_available.credit && !$gateways_enabled.bank
           || $gateways_enabled.bank && !gateway_available.bank && !$gateways_enabled.credit) {
-          $('#edit-quickdonation-message-container').hide();
+          $('#edit-quickdonate-message-container').hide();
         }
         else {
-          $('#edit-quickdonation-message-container').show();
+          $('#edit-quickdonate-message-container').show();
         }
       };
 
