@@ -927,6 +927,24 @@ function sba_message_views_default_views() {
   );
 
 
+  /* Filter criterion: Advocacy: Search By Type */
+  $handler->display->display_options['filters']['search_class_name']['id'] = 'search_class_name';
+  $handler->display->display_options['filters']['search_class_name']['table'] = 'advocacy';
+  $handler->display->display_options['filters']['search_class_name']['field'] = 'search_class_name';
+  $handler->display->display_options['filters']['search_class_name']['exposed'] = TRUE;
+  $handler->display->display_options['filters']['search_class_name']['expose']['operator_id'] = 'search_class_name_op';
+  $handler->display->display_options['filters']['search_class_name']['expose']['label'] = 'Search By Type';
+  $handler->display->display_options['filters']['search_class_name']['expose']['operator'] = 'search_class_name_op';
+  $handler->display->display_options['filters']['search_class_name']['expose']['identifier'] = 'search_class_name';
+  $handler->display->display_options['filters']['search_class_name']['expose']['remember_roles'] = array(
+    2 => '2',
+    1 => 0,
+    3 => 0,
+    4 => 0,
+    5 => 0,
+    6 => 0,
+  );
+  
   $views[$view->name] = $view;
 
 
