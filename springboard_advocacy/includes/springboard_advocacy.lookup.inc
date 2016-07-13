@@ -48,7 +48,7 @@ function springboard_advocacy_legislator_markup($legislator) {
     $markup .= '<span class="sba-legislator-phone" itemprop="telephone">' . $legislator->addresses[0]->area_code . '-' . $legislator->addresses[0]->phone . '</span><br />';
   }
   if (!empty($legislator->email)) {
-    $markup .= '<a class="sba-legislator-email" href="mailto:' . $legislator->email .'" itemprop="email">' . $legislator->email . '</a><br />';
+    $markup .= '<a class="sba-legislator-email" href="mailto:' . $legislator->email . '" itemprop="email">' . $legislator->email . '</a><br />';
   }
   if (!empty($legislator->facebook)) {
     $markup .= '<a class="sba-legislator-facebook" href="' . $legislator->facebook . '">Facebook</a><br />';
@@ -69,6 +69,9 @@ function springboard_advocacy_legislator_markup($legislator) {
  * elected officials id displayed in it's place.
  */
 function springboard_advocacy_legislator_lookup_form($form, &$form_state) {
+
+  $form['#attached']['css'][] = drupal_get_path('module', 'springboard_advocacy') . '/css/lookup.css';
+
   // If form has been submitted and we have some legislators, show them.
   if (!empty($form_state['legislators'])) {
     $form['submission'] = array(
@@ -92,7 +95,7 @@ function springboard_advocacy_legislator_lookup_form($form, &$form_state) {
     $form['sbp_state'] = array(
       '#type' => 'select',
       '#title' => t('State'),
-      '#options' => springboard_target_states(),
+      '#options' => springboard_advocacy_states(),
       '#required' => TRUE,
       '#maxlength' => 2,
     );
@@ -161,7 +164,7 @@ function springboard_advocacy_legislator_lookup_form_submit($form, &$form_state)
 function springboard_advocacy_sort_legislators($legislators) {
   $sorted_legislators = array();
   $sba_legislator_lookup_types = variable_get('sba_legislator_lookup_types',
-    array('FS', 'FR', 'SS', 'SR', 'GOVNR', 'PRES01', 'PRES03')
+    array('FS', 'FR', 'SS', 'SR', 'GOVNR', 'PRES01', 'PRES02', 'PRES03')
   );
 
   foreach ($legislators as $legislator) {
@@ -185,6 +188,66 @@ function springboard_advocacy_legislator_roles() {
     'SR' => t('State Representative'),
     'GOVNR' => t('Governor'),
     'PRES01' => t('President'),
+    'PRES02' => t('First Lady'),
     'PRES03' => t('Vice President'),
   );
+}
+
+function springboard_advocacy_states() {
+  $states = array(
+    '' => '',
+    'AL' => 'Alabama',
+    'AK' => 'Alaska',
+    'AZ' => 'Arizona',
+    'AR' => 'Arkansas',
+    'CA' => 'California',
+    'CO' => 'Colorado',
+    'CT' => 'Connecticut',
+    'DE' => 'Delaware',
+    'DC' => 'District Of Columbia',
+    'FL' => 'Florida',
+    'GA' => 'Georgia',
+    'HI' => 'Hawaii',
+    'ID' => 'Idaho',
+    'IL' => 'Illinois',
+    'IN' => 'Indiana',
+    'IA' => 'Iowa',
+    'KS' => 'Kansas',
+    'KY' => 'Kentucky',
+    'LA' => 'Louisiana',
+    'ME' => 'Maine',
+    'MD' => 'Maryland',
+    'MA' => 'Massachusetts',
+    'MI' => 'Michigan',
+    'MN' => 'Minnesota',
+    'MS' => 'Mississippi',
+    'MO' => 'Missouri',
+    'MT' => 'Montana',
+    'NE' => 'Nebraska',
+    'NV' => 'Nevada',
+    'NH' => 'New Hampshire',
+    'NJ' => 'New Jersey',
+    'NM' => 'New Mexico',
+    'NY' => 'New York',
+    'NC' => 'North Carolina',
+    'ND' => 'North Dakota',
+    'OH' => 'Ohio',
+    'OK' => 'Oklahoma',
+    'OR' => 'Oregon',
+    'PA' => 'Pennsylvania',
+    'RI' => 'Rhode Island',
+    'SC' => 'South Carolina',
+    'SD' => 'South Dakota',
+    'TN' => 'Tennessee',
+    'TX' => 'Texas',
+    'UT' => 'Utah',
+    'VT' => 'Vermont',
+    'VA' => 'Virginia',
+    'WA' => 'Washington',
+    'WV' => 'West Virginia',
+    'WI' => 'Wisconsin',
+    'WY' => 'Wyoming',
+  );
+
+  return $states;
 }
