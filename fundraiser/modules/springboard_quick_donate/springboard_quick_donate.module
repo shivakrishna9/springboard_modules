@@ -1,9 +1,10 @@
 <?php
-
 /**
  * @file
  * Module file for springboard_quick_donate.
  */
+
+define('SPRINGBOARD_QUICK_DONATE_UID_NOT_EQUAL_TOKEN', 0);
 
 /**
  * Implements hook_menu().
@@ -72,6 +73,21 @@ function springboard_quick_donate_springboard_hmac_allowed_actions_alter(&$actio
  */
 function springboard_quick_donate_springboard_hmac_success($payload) {
   if ($payload['action'] == 'qd') {
+    $mapping = _springboard_quick_donate_hmac_mapping();
+    // Need to do some more validation at this point since we don't want to show
+    // an access denied message.
+    if (!user_is_logged_in()) {
+      $cookie = springboard_cookie_get_cookie();
+      if (isset($cookie['uid']) && $cookie['uid'] != $payload[$mapping['uid']]) {
+        // Set a flag to tell us later that uid authentication failed, so we can
+        // set an appropriate message on the donation form.
+        $_SESSION['springboard_hmac']['quickdonate'] = array(
+          'status' => FALSE,
+          'reason' => SPRINGBOARD_QUICK_DONATE_UID_NOT_EQUAL_TOKEN,
+        );
+      }
+    }
+
     if (isset($payload[2]) && is_numeric($payload[2])) {
       $node = node_load($payload[2]);
       if (!empty($node->type) && fundraiser_is_donation_type($node->type)) {
@@ -162,7 +178,7 @@ function springboard_quick_donate_springboard_hmac_verify_payload($payload) {
   $nid = $payload[$qd_hmac_mapping['fundraiser_id']];
 
   if ($donation->node->nid == $nid) {
-    $node = $donation['node'];
+    $node = $donation->node;
   }
   else {
     $node = node_load($nid);
@@ -431,6 +447,15 @@ function springboard_quick_donate_fundraiser_donation_form($form, $form_state) {
   // Exit if no payment method instance id.
   if (empty($form['#node']->gateways)) {
     return;
+  }
+
+  if (isset($_SESSION) && !$_SESSION['springboard_hmac']['quickdonate']['status']) {
+    $reasons = array(
+      SPRINGBOARD_QUICK_DONATE_UID_NOT_EQUAL_TOKEN => t("Uh oh. It looks like we weren't able to verify your saved payment details. Please !login to access your stored card information, or complete the donation form below.", array(
+        '!login' => l(t('login'), '/user'),
+      )),
+    );
+    $form['#prefix'] = $reasons[$_SESSION['springboard_hmac']['quickdonate']['reason']];
   }
 
   foreach ($form['#node']->gateways as $gateway_type => $gateway) {
