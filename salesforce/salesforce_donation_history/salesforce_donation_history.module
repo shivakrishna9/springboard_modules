@@ -490,7 +490,7 @@ function salesforce_donation_history_create_table_headers($sobject, $display_key
       }
       else {
         // Only add the header if it is configured to be displayed.
-        if ($field_settings[$sobject->type . '-' . $fieldname][$display_key]) {
+        if (!empty($field_settings[$sobject->type . '-' . $fieldname][$display_key])) {
           // Use the custom label as the field header if one has been specified.
           // Else, default to the salesforce field name.
           $fieldname = (!empty($field_settings[$sobject->type . '-' . $fieldname]['label'])) ? $field_settings[$sobject->type . '-' . $fieldname]['label'] : $fieldname;
@@ -541,7 +541,7 @@ function salesforce_donation_history_create_table_row($sobject, $display_key) {
       else {
         // Add datum to row if it is not set (so we don't end up with too few
         // cells in a row OR the field settings say to include it).
-        if (!isset($datum) || $field_settings[$sobject->type . '-' . $key][$display_key]) {
+        if (!isset($datum) || !empty($field_settings[$sobject->type . '-' . $key][$display_key])) {
           $row[] = salesforce_donation_history_format_field($datum, $sobject->type, $key);
         }
       }
