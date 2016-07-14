@@ -104,12 +104,14 @@ function salesforce_login_pass_validate($form, &$form_state) {
     }
     elseif ($contacts_count == 1) {
       // One corresponding Contact found in Salesforce. Create Drupal user.
-      // We know there is only one contact now so pass that one using
-      // array_shit().
-      $account = salesforce_login_user_save($name, array_shift($contacts));
+      $account = salesforce_login_user_save($name, $contacts[0]);
       if ($account) {
         $form_state['values']['account'] = $account;
         $form_state['values']['salesforce_login_created_account'] = TRUE;
+        // Save salesforce_sync_map records for Account and Contact immediately
+        // so that My Donation History can be populated with donations before
+        // the next salesforce sync job runs.
+        salesforce_login_sync_map_save($account->uid, $contacts);
       }
       else {
         form_set_error('name', t('There was a problem creating your account.'));
@@ -150,6 +152,29 @@ function salesforce_login_user_save($mail, $contact) {
   }
   return user_save($account);
 }
+
+/**
+ *
+ */
+function salesforce_login_sync_map_save($uid, $contacts) {
+    $account_record = array(
+      'sfid' => $contacts[0]->fields->AccountId,
+      'drupal_id' => $uid,
+      'module' => 'user',
+      'delta' => 'user',
+      'object_type' => 'Account',
+    );
+    $contact_record = array(
+      'sfid' => $contacts[0]->fields->Id,
+      'drupal_id' => $uid,
+      'module' => 'user',
+      'delta' => 'user',
+      'object_type' => 'Contact',
+    );
+    salesforce_sync_save_map($account_record);
+    salesforce_sync_save_map($contact_record);
+}
+
 /**
  * Helper function that queries Salesforce for Contact by email address.
  *
