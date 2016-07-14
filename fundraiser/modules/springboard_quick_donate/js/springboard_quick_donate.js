@@ -30,6 +30,7 @@
         if (!$gateways_enabled.credit && !$gateways_enabled.bank) {
           $quickdonate.after('<div class="note"><strong>Note:</strong> Quick donation functionality is only available when using one of the supported payment processors above.<br/></div>');
           $quickdonate.find('input[type=checkbox]').attr('disabled', 'disabled');
+          $quickdonate.nextAll('.form-item, .form-wrapper').hide();
           $('#edit-quickdonate-message-container').hide();
         }
         else if ($gateways_enabled[type] && Drupal.settings.springboard_quick_donate.usable_paypment_processors[type].indexOf($option_value) < 0) {
@@ -49,6 +50,10 @@
           $quickdonate.nextAll('.form-item, .form-wrapper').show();
           $quickdonate.next('.note').remove();
           gateway_available[type] = true;
+        }
+
+        if (!$('#edit-quickdonate').is(':checked')) {
+          $quickdonate.nextAll('.form-item, .form-wrapper').hide();
         }
 
         // Only hide the quick donation message settings if both processing
