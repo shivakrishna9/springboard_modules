@@ -46,6 +46,8 @@ function springboard_quick_donate_create_link($payload, $rollback = FALSE) {
     $amount,
     $payload['did'],
     $payload['nid'],
+    $payload['ms'],
+    $payload['cid'],
   );
 
   $payload_string = implode('.', $values);
@@ -175,6 +177,8 @@ function _springboard_quick_donate_hmac_mapping() {
     'donation_id' => 1,
     'uid' => 'uid',
     'fundraiser_id' => 2,
+    'ms' => 3,
+    'cid' => 4,
   );
 }
 
@@ -687,6 +691,15 @@ function springboard_quick_donate_fundraiser_donation_form($form, $form_state) {
         $donation_field['other_amount']['#value'] = $amount;
       }
     }
+
+    if (isset($values[$mapping['ms']])) {
+      $form['submitted']['ms']['#default_value'] = $form['submitted']['ms']['#webform_component']['value'] = $_SESSION['springboard_hmac']['quickdonate'][$mapping['ms']];
+    }
+
+    if (isset($values[$mapping['cid']])) {
+      $form['submitted']['cid']['#default_value'] = $form['submitted']['cid']['#webform_component']['value'] = $_SESSION['springboard_hmac']['quickdonate'][$mapping['cid']];
+    }
+
     unset($_SESSION['springboard_hmac']['quickdonate']);
   }
 
