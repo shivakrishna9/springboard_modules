@@ -93,8 +93,8 @@ function springboard_quick_donate_schema() {
       ),
       'cid' => array(
         'description' => 'The campaign id.',
-        'type' => 'int',
-        'unsigned' => TRUE,
+        'type' => 'varchar',
+        'length' => 255,
         'not null' => FALSE,
       ),
       'nid' => array(
