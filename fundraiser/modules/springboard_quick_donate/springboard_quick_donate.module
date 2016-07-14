@@ -184,13 +184,12 @@ function _springboard_quick_donate_hmac_mapping() {
 function springboard_quick_donate_springboard_hmac_verify_payload($payload) {
   $qd_hmac_mapping = _springboard_quick_donate_hmac_mapping();
   $did = $payload[$qd_hmac_mapping['donation_id']];
-  $donation = fundraiser_donation_get_donation($did);
-  $nid = $payload[$qd_hmac_mapping['fundraiser_id']];
-
-  if ($donation->node->nid == $nid) {
+  if ($did > 0) {
+    $donation = fundraiser_donation_get_donation($did);
     $node = $donation->node;
   }
   else {
+    $nid = $payload[$qd_hmac_mapping['fundraiser_id']];
     $node = node_load($nid);
   }
 
