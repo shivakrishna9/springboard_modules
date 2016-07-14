@@ -20,9 +20,11 @@ function springboard_quick_donate_token_generator($form, $form_state) {
     'amount' => 1000,
     'nid' => 0,
     'did' => 0,
+    'ms' => '',
+    'cid' => '',
   );
   foreach ($default_defaults as $key => $default) {
-    if (isset($_SESSION['qd_token_generate'])) {
+    if (isset($_SESSION['qd_token_generate'][$key])) {
       $defaults[$key] = $_SESSION['qd_token_generate'][$key];
     }
     else {
@@ -68,6 +70,20 @@ function springboard_quick_donate_token_generator($form, $form_state) {
     '#title' => t('Donation ID'),
     '#description' => t('The payment ID, if desired. Note that in order for the authorization to succeed, this must be associated with the node ID.'),
     '#default_value' => $defaults['did'],
+  );
+
+  $form['springboard_quick_donate']['ms'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Market Source'),
+    '#description' => t('The market source value.'),
+    '#default_value' => $defaults['ms'],
+  );
+
+  $form['springboard_quick_donate']['cid'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Campaign ID'),
+    '#description' => t('The campaign ID value.'),
+    '#default_value' => $defaults['cid'],
   );
 
   $form['submit'] = array(
@@ -194,6 +210,8 @@ function springboard_quick_donate_token_generator_submit($form, $form_state) {
     'amount' => $form_state['values']['amount'],
     'nid' => $form_state['values']['nid'],
     'did' => $form_state['values']['did'],
+    'ms' => $form_state['values']['ms'],
+    'cid' => $form_state['values']['cid'],
   );
 
   $link = springboard_quick_donate_create_link($payload);
