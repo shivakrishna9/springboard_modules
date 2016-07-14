@@ -135,11 +135,11 @@ function sba_leg_lookup_legislator_lookup_form($form, &$form_state, $mb_delta) {
  * in form_state to be used in the submission handler.
  */
 function sba_leg_lookup_legislator_lookup_form_validate($form, &$form_state) {
-  form_load_include($form_state, 'inc', 'sba_leg_lookup', 'includes/sba_leg_lookup.smarty_streets');
+  form_load_include($form_state, 'inc', 'springboard_advocacy', 'includes/springboard_advocacy.smarty_streets');
 
   $form_error = &drupal_static('form_set_error');
   if (empty($form_error)) {
-    $geo = sba_leg_lookup_smarty_lookup($form_state['values']);
+    $geo = springboard_advocacy_smarty_lookup($form_state['values']);
   }
 
   if (!empty($geo) && !empty($geo['zip']) && !empty($geo['plus4'])) {
