@@ -190,12 +190,13 @@ function springboard_quick_donate_springboard_hmac_verify_payload($payload) {
   $did = $payload[$qd_hmac_mapping['donation_id']];
   if ($did > 0) {
     $donation = fundraiser_donation_get_donation($did);
-    $node = $donation->node;
   }
   else {
-    $nid = $payload[$qd_hmac_mapping['fundraiser_id']];
-    $node = node_load($nid);
+    return t('No donation information available.');
   }
+
+  $nid = $payload[$qd_hmac_mapping['fundraiser_id']];
+  $node = node_load($nid);
 
   if (!fundraiser_is_donation_type($node->type)) {
     return t('Not a valid node type.');
