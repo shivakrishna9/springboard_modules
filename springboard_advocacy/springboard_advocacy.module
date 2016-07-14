@@ -449,6 +449,7 @@ function springboard_advocacy_theme($existing, $type, $theme) {
       'variables' => array(
         'legislators' => array(),
       ),
+      'file' => 'includes/springboard_advocacy.lookup.inc',
     ),
   );
   // Look for theme templates in springboard_advocacy.
