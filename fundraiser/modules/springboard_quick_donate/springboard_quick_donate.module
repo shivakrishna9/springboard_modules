@@ -832,6 +832,8 @@ function _springboard_quick_donate_checkout_form_submit($form, &$form_state) {
       'did' => $donation->did,
       'nid' => $donation->nid,
       'gateway' => $donation->gateway['id'],
+      'ms' => $form_state['values']['submitted_tree']['ms'],
+      'cid' => $form_state['values']['submitted_tree']['cid'],
     ))
     ->execute();
 
