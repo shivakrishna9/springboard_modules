@@ -696,7 +696,9 @@ function salesforce_donation_history_get_field_types($query_fields) {
  * query.
  */
 function salesforce_donation_history_test_query($query) {
-  $soql = strtr($query, array("WHERE AccountId = ':accountId'" => 'LIMIT 1'));
+  // Find last occurance of 'WHERE '. Replace everything from there to the end
+  // of the query with 'LIMIT 1'.
+  $soql = substr_replace($query, 'LIMIT 1', strrpos($query, 'WHERE '), strlen($query));
   try {
     $sfapi = salesforce_get_api();
     $soap = new SalesforceSoapPartner($sfapi);
@@ -704,6 +706,7 @@ function salesforce_donation_history_test_query($query) {
     $result = new QueryResult($response);
   }
   catch (Exception $e) {
+    drupal_set_message(t('The Test SOQL query performed was: :soql', array(':soql' => $soql)), 'error');
     drupal_set_message($e->getMessage(), 'error');
     return FALSE;
   }
