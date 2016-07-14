@@ -99,6 +99,18 @@ function sba_leg_lookup_block_view($delta = '', $edit = array()) {
   $block = array();
   switch ($delta) {
     case 'sba_legislator_lookup':
+      $unconfigured = springboard_advocacy_api_unconfigured('springboard');
+      if ($unconfigured) {
+        if (user_access('administer springboard advocacy')) {
+          $items = implode(', ', $unconfigured);
+          $message = t('Please <a href="!url">configure</a> the Springboard Advocacy API settings. There are empty values in :items. This feature will not function without required configuration.', array(
+            '!url' => url('admin/config/services/advocacy'),
+            ':items' => $items,
+          ));
+          drupal_set_message($message, 'error');
+        }
+        break;
+      }
       module_load_include(
         'inc',
         'sba_leg_lookup',
