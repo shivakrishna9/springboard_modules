@@ -19,7 +19,17 @@ function theme_springboard_advocacy_legislators($variables) {
   $legislator_roles = springboard_advocacy_legislator_roles();
   $output = '<div id="sba-legislators">';
   foreach ($variables['legislators'] as $role => $legislators) {
-    $output .= '<div class="sba-legislator-role"><strong>' . $legislator_roles[$role] . '</strong>';
+    $label = $legislator_roles[$role];
+    if (in_array($role, array(
+      'Federal Representative',
+      "Federal Senator",
+      'State Representative',
+      'State Senator',
+    ))) {
+      $num = count($legislators);
+      $label = format_plural($num, $legislator_roles[$role], $legislator_roles[$role] . 's');
+    }
+    $output .= '<div class="sba-legislator-role"><strong>' . $label . '</strong>';
     foreach ($legislators as $legislator) {
       $output .= springboard_advocacy_legislator_markup($legislator);
     }
@@ -182,7 +192,7 @@ function springboard_advocacy_sort_legislators($legislators) {
  */
 function springboard_advocacy_legislator_roles() {
   return array(
-    'FS' => t('Federal Senators'),
+    'FS' => t('Federal Senator'),
     'FR' => t('Federal Representative'),
     'SS' => t('State Senator'),
     'SR' => t('State Representative'),
