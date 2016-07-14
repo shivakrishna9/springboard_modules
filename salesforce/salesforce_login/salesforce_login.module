@@ -150,6 +150,29 @@ function salesforce_login_user_save($mail, $contact) {
   }
   return user_save($account);
 }
+
+/**
+ *
+ */
+function salesforce_login_sync_map_save($uid, $contacts) {
+    $account_record = array(
+      'sfid' => $contacts[0]->fields->AccountId,
+      'drupal_id' => $uid,
+      'module' => 'user',
+      'delta' => 'user',
+      'object_type' => 'Account',
+    );
+    $contact_record = array(
+      'sfid' => $contacts[0]->fields->Id,
+      'drupal_id' => $uid,
+      'module' => 'user',
+      'delta' => 'user',
+      'object_type' => 'Contact',
+    );
+    salesforce_sync_save_map($account_record);
+    salesforce_sync_save_map($contact_record);
+}
+
 /**
  * Helper function that queries Salesforce for Contact by email address.
  *
