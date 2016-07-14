@@ -4,10 +4,10 @@
 /**
  * Provides content for the legislator lookup block.
  */
-function springboard_advocacy_legislator_lookup($delta) {
+function sba_leg_lookup_legislator_lookup($delta) {
   switch ($delta) {
     case 'sba_legislator_lookup':
-      return drupal_get_form('springboard_advocacy_legislator_lookup_form');
+      return drupal_get_form('sba_leg_lookup_legislator_lookup_form');
   }
   return NULL;
 }
@@ -15,8 +15,8 @@ function springboard_advocacy_legislator_lookup($delta) {
 /**
  * Theme function to render list of legislators.
  */
-function theme_springboard_advocacy_legislators($variables) {
-  $legislator_roles = springboard_advocacy_legislator_roles();
+function theme_sba_leg_lookup_legislators($variables) {
+  $legislator_roles = sba_leg_lookup_legislator_roles();
   $output = '<div id="sba-legislators">';
   foreach ($variables['legislators'] as $role => $legislators) {
     $label = $legislator_roles[$role];
@@ -31,7 +31,7 @@ function theme_springboard_advocacy_legislators($variables) {
     }
     $output .= '<div class="sba-legislator-role"><strong>' . $label . '</strong>';
     foreach ($legislators as $legislator) {
-      $output .= springboard_advocacy_legislator_markup($legislator);
+      $output .= sba_leg_lookup_legislator_markup($legislator);
     }
     $output .= '</div>';
   }
@@ -42,7 +42,7 @@ function theme_springboard_advocacy_legislators($variables) {
 /**
  * Creates the HTML markup to render a single legislator.
  */
-function springboard_advocacy_legislator_markup($legislator) {
+function sba_leg_lookup_legislator_markup($legislator) {
   $markup = '<div class="sba-legislator" itemscope itemtype="http://schema.org/Person">';
   $markup .= '<span itemprop="jobTitle">' . $legislator->salutation . '</span> <span itemprop="name">' . $legislator->first_name . ' ' . $legislator->last_name .' (' . $legislator->party . ')</span>';
   $markup .= '<div itemprop="address" itemscope itemtype="http://schema.org/PostalAddress">';
@@ -78,14 +78,14 @@ function springboard_advocacy_legislator_markup($legislator) {
  * lookup. After successful submission the form is hidden and a list of
  * elected officials id displayed in it's place.
  */
-function springboard_advocacy_legislator_lookup_form($form, &$form_state) {
+function sba_leg_lookup_legislator_lookup_form($form, &$form_state) {
 
-  $form['#attached']['css'][] = drupal_get_path('module', 'springboard_advocacy') . '/css/lookup.css';
+  $form['#attached']['css'][] = drupal_get_path('module', 'sba_leg_lookup') . '/css/lookup.css';
 
   // If form has been submitted and we have some legislators, show them.
   if (!empty($form_state['legislators'])) {
     $form['submission'] = array(
-      '#markup' => theme('springboard_advocacy_legislators', array('legislators' => $form_state['legislators'])),
+      '#markup' => theme('sba_leg_lookup_legislators', array('legislators' => $form_state['legislators'])),
     );
   }
   else {
@@ -105,7 +105,7 @@ function springboard_advocacy_legislator_lookup_form($form, &$form_state) {
     $form['sbp_state'] = array(
       '#type' => 'select',
       '#title' => t('State'),
-      '#options' => springboard_advocacy_states(),
+      '#options' => sba_leg_lookup_states(),
       '#required' => TRUE,
       '#maxlength' => 2,
     );
@@ -130,17 +130,17 @@ function springboard_advocacy_legislator_lookup_form($form, &$form_state) {
 }
 
 /**
- * Validation handler for springboard_advocacy_legislator_lookup_form.
+ * Validation handler for sba_leg_lookup_legislator_lookup_form.
  *
  * Performs address validation and if successful stashes the plus4
  * in form_state to be used in the submission handler.
  */
-function springboard_advocacy_legislator_lookup_form_validate($form, &$form_state) {
-  form_load_include($form_state, 'inc', 'springboard_advocacy', 'includes/springboard_advocacy.smarty_streets');
+function sba_leg_lookup_legislator_lookup_form_validate($form, &$form_state) {
+  form_load_include($form_state, 'inc', 'sba_leg_lookup', 'includes/sba_leg_lookup.smarty_streets');
 
   $form_error = &drupal_static('form_set_error');
   if (empty($form_error)) {
-    $geo = springboard_advocacy_smarty_lookup($form_state['values']);
+    $geo = sba_leg_lookup_smarty_lookup($form_state['values']);
   }
 
   if (!empty($geo) && !empty($geo['zip']) && !empty($geo['plus4'])) {
@@ -152,17 +152,17 @@ function springboard_advocacy_legislator_lookup_form_validate($form, &$form_stat
 }
 
 /**
- * Submit handler for springboard_advocacy_legislator_lookup_form.
+ * Submit handler for sba_leg_lookup_legislator_lookup_form.
  *
  * Invokes the advocacy server getLegislator method and stashes the
  * result in form_state to user in the form display.
  */
-function springboard_advocacy_legislator_lookup_form_submit($form, &$form_state) {
+function sba_leg_lookup_legislator_lookup_form_submit($form, &$form_state) {
   $full_zip = $form_state['values']['sbp_zip'] . '-' . $form_state['values']['plus4'];
   $api_call = new AdvocacyApiCall();
   $response = $api_call->invokeClientMethod('getLegislators', $full_zip);
   if (isset($response->data) && $response->status_code == 200) {
-    $form_state['legislators'] = springboard_advocacy_sort_legislators(get_object_vars($response->data));
+    $form_state['legislators'] = sba_leg_lookup_sort_legislators(get_object_vars($response->data));
   }
 
   $form_state['rebuild'] = TRUE;
@@ -174,7 +174,7 @@ function springboard_advocacy_legislator_lookup_form_submit($form, &$form_state)
  * Prunes out roles according to the
  * block settings.
  */
-function springboard_advocacy_sort_legislators($legislators) {
+function sba_leg_lookup_sort_legislators($legislators) {
   $sorted_legislators = array();
   $sba_legislator_lookup_types = variable_get('sba_legislator_lookup_types',
     array('FS', 'FR', 'SS', 'SR', 'GOVNR', 'PRES01', 'PRES02', 'PRES03')
@@ -193,7 +193,7 @@ function springboard_advocacy_sort_legislators($legislators) {
 /**
  * Returns the legislator roles.
  */
-function springboard_advocacy_legislator_roles() {
+function sba_leg_lookup_legislator_roles() {
   return array(
     'FS' => t('Federal Senator'),
     'FR' => t('Federal Representative'),
@@ -206,7 +206,7 @@ function springboard_advocacy_legislator_roles() {
   );
 }
 
-function springboard_advocacy_states() {
+function sba_leg_lookup_states() {
   $states = array(
     '' => '',
     'AL' => 'Alabama',
