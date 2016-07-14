@@ -14,6 +14,22 @@ function springboard_quick_donate_token_generator($form, $form_state) {
     drupal_set_message(t('Secure Prepopulate key and initialization vector are not set. Upgrade links will not work.'), 'error');
   }
 
+  $defaults = array();
+  $default_defaults = array(
+    'uid' => 1,
+    'amount' => 1000,
+    'nid' => 0,
+    'did' => 0,
+  );
+  foreach ($default_defaults as $key => $default) {
+    if (isset($_SESSION['qd_token_generate'])) {
+      $defaults[$key] = $_SESSION['qd_token_generate'][$key];
+    }
+    else {
+      $defaults[$key] = $default;
+    }
+  }
+
   $form['springboard_quick_donate'] = array(
     '#type' => 'fieldset',
     '#title' => t('Quick Donate Token'),
@@ -26,7 +42,7 @@ function springboard_quick_donate_token_generator($form, $form_state) {
     '#type' => 'textfield',
     '#title' => t('User ID'),
     '#size' => 20,
-    '#default_value' => 1,
+    '#default_value' => $defaults['uid'],
     '#description' => t('The UID of the donator.'),
   );
 
@@ -34,27 +50,24 @@ function springboard_quick_donate_token_generator($form, $form_state) {
     '#type' => 'textfield',
     '#title' => t('Upgrade Amount'),
     '#description' => t('The donation amount in cents. E.g. $20 = 2000'),
-    '#default_value' => 1000,
+    '#default_value' => $defaults['amount'],
   );
 
-  $default_nid = _springboard_quick_donate_token_generator_get_default_nid();
-  if ($default_nid < 0) {
+  if ($defaults['nid'] < 1) {
     drupal_set_message(t('There are currently no fundraiser nodes, so the node ID will be set to 0. Note that authorization will fail.'), 'warning', FALSE);
-    $default_nid = 0;
   }
   $form['springboard_quick_donate']['nid'] = array(
     '#type' => 'textfield',
     '#title' => t('Fundraiser Node ID'),
     '#description' => t('The fundraiser node ID, if desired.'),
-    '#default_value' => $default_nid,
+    '#default_value' => $defaults['nid'],
   );
 
-  $default_did = _springboard_quick_donate_token_generator_get_default_did();
   $form['springboard_quick_donate']['did'] = array(
     '#type' => 'textfield',
     '#title' => t('Donation ID'),
-    '#description' => t('The payment ID, if desired.'),
-    '#default_value' => $default_did,
+    '#description' => t('The payment ID, if desired. Note that in order for the authorization to succeed, this must be associated with the node ID.'),
+    '#default_value' => $defaults['did'],
   );
 
   $form['submit'] = array(
@@ -77,25 +90,61 @@ function springboard_quick_donate_token_generator($form, $form_state) {
 function _springboard_quick_donate_token_generator_get_default_nid() {
   $default_nid = &drupal_static(__FUNCTION__);
   if (!isset($default_nid)) {
-    $types = array_keys(fundraiser_get_donation_types());
-    $query = db_select('node', 'n')
-      ->fields('n', array('nid'))
-      ->condition('status', 0, '>')
-      ->condition('type', $types, 'IN')
-      ->orderBy('nid', 'ASC')
-      ->range(0, 1)
-      ->execute();
-
-    if ($query->rowCount() === 0) {
-      $default_nid = -1;
+    $donation = _springboard_quick_donate_token_generator_get_default_donation();
+    if ($donation) {
+      $default_nid = $donation->node->nid;
     }
     else {
-      $node = $query->fetchObject();
-      $default_nid = $node->nid;
+      $types = array_keys(fundraiser_get_donation_types());
+      $query = db_select('node', 'n')
+        ->fields('n', array('nid'))
+        ->condition('status', 0, '>')
+        ->condition('type', $types, 'IN')
+        ->orderBy('nid', 'ASC')
+        ->range(0, 1)
+        ->execute();
+
+      if ($query->rowCount() === 0) {
+        $default_nid = 0;
+      }
+      else {
+        $node = $query->fetchObject();
+        $default_nid = $node->nid;
+      }
     }
   }
 
   return $default_nid;
+}
+
+/**
+ * Helper function to retrieve a default donation.
+ *
+ * @return int
+ *   The node ID.
+ */
+function _springboard_quick_donate_token_generator_get_default_donation() {
+  $default_donation = &drupal_static(__FUNCTION__);
+  if (!isset($default_donation)) {
+    global $user;
+
+    $query = db_select('fundraiser_donation', 'fd')
+      ->fields('fd', array('did'))
+      ->condition('uid', $user->uid, '=')
+      ->orderBy('did', 'ASC')
+      ->range(0, 1)
+      ->execute();
+
+    if ($query->rowCount() === 0) {
+      $donation = FALSE;
+    }
+    else {
+      $donation = $query->fetchObject();
+      $donation = fundraiser_donation_get_donation($donation->did);
+    }
+  }
+
+  return $donation;
 }
 
 /**
@@ -107,21 +156,12 @@ function _springboard_quick_donate_token_generator_get_default_nid() {
 function _springboard_quick_donate_token_generator_get_default_did() {
   $default_did = &drupal_static(__FUNCTION__);
   if (!isset($default_nid)) {
-    global $user;
-
-    $query = db_select('fundraiser_donation', 'fd')
-      ->fields('fd', array('did'))
-      ->condition('uid', $user->uid, '=')
-      ->orderBy('did', 'ASC')
-      ->range(0, 1)
-      ->execute();
-
-    if ($query->rowCount() === 0) {
-      $default_did = -1;
+    $donation = _springboard_quick_donate_token_generator_get_default_donation();
+    if ($donation) {
+      $default_did = $donation->did;
     }
     else {
-      $donation = $query->fetchObject();
-      $default_did = $donation->did;
+      $default_did = 0;
     }
   }
 
@@ -137,7 +177,7 @@ function _springboard_quick_donate_token_generator_get_default_did() {
  *   The form state.
  */
 function springboard_quick_donate_token_generator_validate($form, $form_state) {
-
+  $_SESSION['qd_token_generate'] = $form_state['values'];
 }
 
 /**
