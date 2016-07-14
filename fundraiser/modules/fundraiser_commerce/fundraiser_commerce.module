@@ -1090,7 +1090,23 @@ function fundraiser_commerce_fundraiser_donation_create($donation) {
   }
   // Update profile with the billing information.
   $field = field_info_field('commerce_customer_address');
-  $instance =field_info_instance('commerce_customer_profile', 'commerce_customer_address', 'billing');
+  $instance = field_info_instance('commerce_customer_profile', 'commerce_customer_address', 'billing');
+  if (module_exists('strip_utf8mb4')) {
+    $strip_fields = array(
+      'country',
+      'first_name',
+      'last_name',
+      'state',
+      'address',
+      'address_line_2',
+      'city',
+      'zip',
+    );
+    foreach ($strip_fields as $field) {
+      $donation->donation[$field] = _strip_utf8mb4_for_text_fields($donation->donation[$field], variable_get('strip_utf8mb4_replace_string', '--'));
+    }
+  }
+
   $profile->commerce_customer_address[LANGUAGE_NONE][0] = addressfield_default_values($field, $instance);
   $profile->commerce_customer_address[LANGUAGE_NONE][0]['country'] = $donation->donation['country'];
   $profile->commerce_customer_address[LANGUAGE_NONE][0]['name_line'] = $donation->donation['first_name'] . ' ' . $donation->donation['last_name'];
