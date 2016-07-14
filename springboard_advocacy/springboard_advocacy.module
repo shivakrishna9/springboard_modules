@@ -1036,7 +1036,7 @@ function springboard_advocacy_block_save($delta = '', $edit = array()) {
         'includes/springboard_advocacy.lookup'
       );
       $enabled_types = array();
-// Filter out only those types selected.
+      // Filter out only those types selected.
       foreach ($edit['sba_legislator_lookup_types'] as $type) {
         if ($type) {
           $enabled_types[$type] = $type;
@@ -1060,7 +1060,7 @@ function springboard_advocacy_block_view($delta = '') {
         'springboard_advocacy',
         'includes/springboard_advocacy.lookup'
       );
-      $block['subject'] = t('Find your legislators'); // TODO: Change to setting
+      $block['subject'] = t('Find your legislators');
       $block['content'] = springboard_advocacy_legislator_lookup($delta);
       return $block;
       break;

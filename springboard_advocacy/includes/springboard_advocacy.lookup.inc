@@ -138,7 +138,10 @@ function springboard_advocacy_legislator_lookup_form($form, &$form_state) {
 function springboard_advocacy_legislator_lookup_form_validate($form, &$form_state) {
   form_load_include($form_state, 'inc', 'springboard_advocacy', 'includes/springboard_advocacy.smarty_streets');
 
-  $geo = springboard_advocacy_smarty_lookup($form_state['values']);
+  $form_error = &drupal_static('form_set_error');
+  if (empty($form_error)) {
+    $geo = springboard_advocacy_smarty_lookup($form_state['values']);
+  }
 
   if (!empty($geo) && !empty($geo['zip']) && !empty($geo['plus4'])) {
     $form_state['values']['plus4'] = $geo['plus4'];
