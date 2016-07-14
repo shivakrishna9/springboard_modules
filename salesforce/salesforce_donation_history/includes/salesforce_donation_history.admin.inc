@@ -42,7 +42,7 @@ function salesforce_donation_history_fields() {
   foreach ($field_definitions as $sf_table => $sf_field) {
     $form['salesforce_donation_history_field_settings'][$sf_table]['label'] = array(
       '#type' => 'textfield',
-      '#default_value' => $field_defaults[$sf_table]['label'],
+      '#default_value' => !empty($field_defaults[$sf_table]['label']) ? $field_defaults[$sf_table]['label'] : NULL,
       '#extra_data' => array(
         'field_table' => $sf_table,
         'field_name' => '',
@@ -50,20 +50,20 @@ function salesforce_donation_history_fields() {
     );
     $form['salesforce_donation_history_field_settings'][$sf_table]['show_on_tab'] = array(
       '#type' => 'checkbox',
-      '#default_value' => $field_defaults[$sf_table]['show_on_tab'],
+      '#default_value' => !empty($field_defaults[$sf_table]['show_on_tab']) ?: 0,
     );
     $form['salesforce_donation_history_field_settings'][$sf_table]['show_on_receipt'] = array(
       '#type' => 'checkbox',
-      '#default_value' => $field_defaults[$sf_table]['show_on_receipt'],
+      '#default_value' => !empty($field_defaults[$sf_table]['show_on_receipt']) ?: 0,
     );
     $form['salesforce_donation_history_field_settings'][$sf_table]['show_on_summary'] = array(
       '#type' => 'checkbox',
-      '#default_value' => $field_defaults[$sf_table]['show_on_summary'],
+      '#default_value' => !empty($field_defaults[$sf_table]['show_on_summary']) ?: 0,
     );
     foreach ($sf_field as $name => $value) {
       $form['salesforce_donation_history_field_settings'][$sf_table . '-' . $name]['label'] = array(
         '#type' => 'textfield',
-        '#default_value' => $field_defaults[$sf_table . '-' . $name]['label'],
+        '#default_value' => !empty($field_defaults[$sf_table . '-' . $name]['label']) ? $field_defaults[$sf_table . '-' . $name]['label'] : NULL,
         '#extra_data' => array(
           'field_table' => $sf_table,
           'field_name' => $name,
@@ -71,15 +71,15 @@ function salesforce_donation_history_fields() {
       );
       $form['salesforce_donation_history_field_settings'][$sf_table . '-' . $name]['show_on_tab'] = array(
         '#type' => 'checkbox',
-        '#default_value' => $field_defaults[$sf_table . '-' . $name]['show_on_tab'],
+        '#default_value' => !empty($field_defaults[$sf_table . '-' . $name]['show_on_tab']) ?: 0,
       );
       $form['salesforce_donation_history_field_settings'][$sf_table . '-' . $name]['show_on_receipt'] = array(
         '#type' => 'checkbox',
-        '#default_value' => $field_defaults[$sf_table . '-' . $name]['show_on_receipt'],
+        '#default_value' => !empty($field_defaults[$sf_table . '-' . $name]['show_on_receipt']) ?: 0,
       );
       $form['salesforce_donation_history_field_settings'][$sf_table . '-' . $name]['show_on_summary'] = array(
         '#type' => 'checkbox',
-        '#default_value' => $field_defaults[$sf_table . '-' . $name]['show_on_summary'],
+        '#default_value' => !empty($field_defaults[$sf_table . '-' . $name]['show_on_summary']) ?: 0,
       );
     }
   }
