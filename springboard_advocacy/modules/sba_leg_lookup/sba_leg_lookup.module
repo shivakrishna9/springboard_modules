@@ -35,7 +35,16 @@ function sba_leg_lookup_block_configure($delta, $edit = array()) {
         '#type' => 'checkboxes',
         '#title' => t('Configure the legislator types you want to display'),
         '#options' => $options,
-        '#default_value' => variable_get('sba_legislator_lookup_types_' . $mb_delta, array('FS', 'FR', 'SS', 'SR', 'GOVNR', 'PRES01', 'PRES03')),
+        '#default_value' => variable_get('sba_legislator_lookup_types_' . $mb_delta, array(
+          'FS',
+          'FR',
+          'SS',
+          'SR',
+          'GOVNR',
+          'PRES01',
+          'PRES02',
+          'PRES03',
+        )),
       );
       break;
   }
@@ -79,6 +88,7 @@ function sba_leg_lookup_block_save($delta = '', $edit = array()) {
  * Implements hook_block_view().
  */
 function sba_leg_lookup_block_view($delta = '', $edit = array()) {
+  $block = array();
   switch ($delta) {
     case 'sba_legislator_lookup':
       module_load_include(
@@ -88,9 +98,10 @@ function sba_leg_lookup_block_view($delta = '', $edit = array()) {
       );
       $block['subject'] = t('Find your legislators');
       $block['content'] = sba_leg_lookup_legislator_lookup($delta);
-      return $block;
       break;
+
   }
+  return $block;
 }
 
 
