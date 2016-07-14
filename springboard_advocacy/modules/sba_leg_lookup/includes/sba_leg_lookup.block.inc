@@ -4,10 +4,10 @@
 /**
  * Provides content for the legislator lookup block.
  */
-function sba_leg_lookup_legislator_lookup($delta) {
+function sba_leg_lookup_legislator_lookup($delta, $mb_delta) {
   switch ($delta) {
     case 'sba_legislator_lookup':
-      return drupal_get_form('sba_leg_lookup_legislator_lookup_form');
+      return drupal_get_form('sba_leg_lookup_legislator_lookup_form', $mb_delta);
   }
   return NULL;
 }
@@ -78,8 +78,7 @@ function sba_leg_lookup_legislator_markup($legislator) {
  * lookup. After successful submission the form is hidden and a list of
  * elected officials id displayed in it's place.
  */
-function sba_leg_lookup_legislator_lookup_form($form, &$form_state) {
-
+function sba_leg_lookup_legislator_lookup_form($form, &$form_state, $mb_delta) {
   $form['#attached']['css'][] = drupal_get_path('module', 'sba_leg_lookup') . '/css/lookup.css';
 
   // If form has been submitted and we have some legislators, show them.
@@ -119,7 +118,7 @@ function sba_leg_lookup_legislator_lookup_form($form, &$form_state) {
 
     $form['submit'] = array(
       '#type' => 'submit',
-      '#value' => 'Find my legislators',
+      '#value' => variable_get('sba_legislator_lookup_submit_text_' . $mb_delta, array('Find my legislators')),
       '#attributes' => array(
         'class' => 'btn',
       ),

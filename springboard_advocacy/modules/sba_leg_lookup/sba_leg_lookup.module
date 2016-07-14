@@ -46,6 +46,13 @@ function sba_leg_lookup_block_configure($delta, $edit = array()) {
           'PRES03',
         )),
       );
+
+      $form['sba_legislator_lookup_submit_text'] = array(
+        '#type' => 'textfield',
+        '#title' => t('Submit button text'),
+        '#default_value' => variable_get('sba_legislator_lookup_submit_text_' . $mb_delta, array('Find my legislators')),
+      );
+
       break;
   }
 
@@ -78,10 +85,11 @@ function sba_leg_lookup_block_save($delta = '', $edit = array()) {
       }
 
       variable_set('sba_legislator_lookup_types_' . $mb_delta, $enabled_types);
+      variable_set('sba_legislator_lookup_submit_text_' . $mb_delta, $edit['sba_legislator_lookup_submit_text']);
+
       break;
   }
 
-  return;
 }
 
 /**
@@ -97,7 +105,11 @@ function sba_leg_lookup_block_view($delta = '', $edit = array()) {
         'includes/sba_leg_lookup.block'
       );
       $block['subject'] = t('Find your legislators');
-      $block['content'] = sba_leg_lookup_legislator_lookup($delta);
+      $mb_delta = 0;
+      if (!empty($edit['multiblock_delta']['#value'])) {
+        $mb_delta = $edit['multiblock_delta']['#value'];
+      }
+      $block['content'] = sba_leg_lookup_legislator_lookup($delta, $mb_delta);
       break;
 
   }
