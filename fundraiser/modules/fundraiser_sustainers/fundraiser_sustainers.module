@@ -1333,7 +1333,7 @@ function fundraiser_sustainers_user_overview($user, $did = NULL) {
     else {
       // Else display the list.
       // Get the whole set of user donations (in case there's more than just this one). IIF the user owns this one.
-      $donations_header = array('Amount', 'Start Date', 'Next Charge Date', 'Expire Date', 'Status');
+      $donations_header = array('Amount', 'Start Date', 'Next Charge Date', 'Final Charge Date', 'Status');
       $donations_rows = array();
       foreach ($donations as $master_donation) {
         $this_donation = fundraiser_donation_get_donation($master_donation->master_did);
