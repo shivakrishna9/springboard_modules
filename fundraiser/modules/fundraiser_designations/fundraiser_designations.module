@@ -1051,10 +1051,8 @@ function fundraiser_designations_node_type_build($type) {
       drupal_set_message(t('Fundraiser must also be enabled for designated donations.'), 'error');
     }
     else {
-      module_load_include('inc', 'fundraiser_designations', 'includes/fundraiser_designations.fields');
       module_load_include('inc', 'fundraiser_designations', 'includes/fundraiser_designations.product');
       module_load_include('inc', 'fundraiser_designations', 'includes/fundraiser_designations.taxonomy');
-      _fundraiser_designations_add_default_fields($type->type);
       _fundraiser_designations_create_fundraiser_designation_product();
       _fundraiser_designations_install_vocab_fd_designation_categories('fundraiser_designation');
     }
