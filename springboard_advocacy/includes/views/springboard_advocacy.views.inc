@@ -489,7 +489,7 @@ function springboard_advocacy_target_type() {
   $value_options = array(
     'Target' => t('Custom Target'),
     'Legislator' => t('Legislator'),
-    'group' => t('Group'),
+    'Group' => t('Group'),
   );
   return $value_options;
 }
