@@ -106,8 +106,7 @@ function springboard_dw_api_call($endpoint_route, $params, $method = 'POST') {
     $api_call['fullUrl'] = $endpoint . '?' . http_build_query(springboard_dw_api_prep_call
       ($api_call['params']));
 
-
-    $watchdog_string = '<pre>' . print_r($api_call, TRUE) . '</pre>';
+    $watchdog_string = "<pre>Warehouse API call: \n" . print_r($api_call, TRUE) . "</pre>";
 
     // Log the full API call details to watchdog.
     watchdog("data_warehouse", $watchdog_string);
@@ -142,30 +141,4 @@ function springboard_dw_track_item_warehouse_success($type, $identifier) {
       'created'   => time(),
     )
   )->execute();
-}
-
-/**
- * API utility method for logging API call errors thrown in the queue.
- *
- * @param string $error
- *   The error to log with Drush.
- * @param string $endpoint
- *   The endpoint for use in constructing a debug URI to log with Drush.
- * @param array $item
- *   The parameters used in the API call added to the URI for debugging
- *   purposes.
- * @param string $response_body
- *   The response body generated from the API call with the Guzzle Http client.
- * @param string $log_type
- *   The type of log to make.
- */
-function springboard_dw_api_log_error($error, $endpoint, $item, $response_body, $log_type = 'warning') {
-  // Define the endpoint.
-  $endpoint = springboard_dw_api_endpoint($endpoint);
-
-  // Log the API error.
-  drush_log($error, $log_type);
-  drush_print($endpoint . '?' . http_build_query(springboard_dw_api_prep_call
-    ($item)));
-  drush_print_r($response_body);
 }
