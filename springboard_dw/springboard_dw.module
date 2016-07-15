@@ -293,6 +293,8 @@ function springboard_dw_fundraiser_donation_success($donation) {
   // Log the queue item.
   springboard_dw_log_queue_item($donation_item);
 
+  springboard_dw_track_item_warehouse_queued('donation', $donation->did);
+
   // Check if the transaction id exists
   if (isset($donation_item['transaction_id'])) {
     // Get the transaction date from the commerce payment transaction
@@ -307,6 +309,8 @@ function springboard_dw_fundraiser_donation_success($donation) {
 
     // Log the queue item.
     springboard_dw_log_queue_item($payment_item);
+
+    springboard_dw_track_item_warehouse_queued('payment', $transaction['transaction_id']);
   }
 }
 
@@ -708,31 +712,34 @@ function springboard_dw_webform_user_submission_insert($node, $submission, $acco
 }
 
 /**
- * Implements hook_salesforce_sync_pass_item().
+ * Implements hook_entity_insert().
  */
-function springboard_dw_salesforce_sync_pass_item($item, $result) {
-  // Create a data structure that mimics a sync_map record.
-  $map_item = array(
-    'drupal_id' => $item->drupal_id,
-    'module' => $item->module,
-    'delta' => $item->delta,
-    'sfid' => $result->id,
-    'object_type' => $item->object_type,
-  );
+function springboard_dw_entity_insert($entity, $type) {
+  if ($type == 'salesforce_sync_map') {
+    $map_item = array(
+      'drupal_id' => $entity->drupal_id,
+      'module' => $entity->module,
+      'delta' => $entity->delta,
+      'sfid' => $entity->sfid,
+      'object_type' => $entity->object_type,
+    );
 
-  $sb_vendor_mapping_item = springboard_dw_map_sync_map_item($map_item);
+    $sb_vendor_mapping_item = springboard_dw_map_sync_map_item($map_item);
 
-  // Get the Drupal data warehouse queue.
-  $queue = DrupalQueue::get("springboard_dw_export");
+    if (!empty($sb_vendor_mapping_item)) {
+      // Get the Drupal data warehouse queue.
+      $queue = DrupalQueue::get("springboard_dw_export");
 
-  // Create the queue item.
-  $queue->createItem($sb_vendor_mapping_item);
+      // Create the queue item.
+      $queue->createItem($sb_vendor_mapping_item);
 
-  // Log the queue item.
-  springboard_dw_log_queue_item($sb_vendor_mapping_item);
+      // Log the queue item.
+      springboard_dw_log_queue_item($sb_vendor_mapping_item);
 
-  // Mark item as tracked.
-  springboard_dw_track_item_warehouse_queued('salesforce_sync', $item->rmid);
+      // Mark item as tracked.
+      springboard_dw_track_item_warehouse_queued('salesforce_sync', $entity->rmid);
+    }
+  }
 }
 
 /**
