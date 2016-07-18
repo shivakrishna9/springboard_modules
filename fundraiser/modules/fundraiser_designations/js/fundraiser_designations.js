@@ -34,6 +34,15 @@
         self.repop(item);
       });
     }
+    else if(cook = $.cookie('designations_' + Drupal.settings.fdNid)) {
+      cook = cook.replace(/&quot;/g, '"');
+      if (cook.length > 0) {
+        cook = JSON.parse(cook);
+        $.each(cook, function(i, item){
+          self.repop(item);
+        });
+      }
+    }
     else if(typeof(settings.fundraiser_designations) != "undefined") {
       var sfd = settings.fundraiser_designations;
       self.repop(sfd);
@@ -291,6 +300,7 @@
     var lineItems = JSON.stringify(obj).replace(/"/g, '&quot;');
 
     $('input[name$="[fund_catcher]"]').val(lineItems);
+    $.cookie('designations_' + Drupal.settings.fdNid, lineItems);
   };
 
   Drupal.fundraiserDesignations.prototype.validateOtherAmt = function(groupId) {
