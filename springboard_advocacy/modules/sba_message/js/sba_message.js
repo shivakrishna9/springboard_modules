@@ -220,8 +220,8 @@
         var comWidgets = $('#edit-search-committee-chamber-wrapper, #edit-search-committee-wrapper');
         // Custom target specific search elements
         var custWidgets = $('.faux-subtab-container'); // both custom options
-        var custIndividualWidgets  = $('#edit-search-custom-name-wrapper'); // custom individual search only
-        var custGroupWidgets = $('#edit-search-group-name-wrapper');  // custom group search only
+        var custIndividualWidgets  = $('#edit-combine-wrapper'); // custom individual search only
+        var custGroupWidgets = $('#edit-group-name-wrapper');  // custom group search only
         // Elements to hide only on custom tab
         var custHideWidgets = $('#state-district-wrapper');
 
@@ -262,7 +262,8 @@
             Sba.buildSubscriptions();
             // Sba.toggleStateAndChambers();
             // Sba.CommitteeElStates(false);
-            $('.faux-tab.custom, .faux-tab.custom-individual').addClass('active');
+          $('#edit-submit-targets').attr('value', 'Search').show();
+          $('.faux-tab.custom, .faux-tab.custom-individual').addClass('active');
           return false;
         });
 
@@ -283,11 +284,12 @@
             Sba.buildSubscriptions();
             //Sba.toggleStateAndChambers();
             //Sba.CommitteeElStates(false);
-            $('.faux-tab.custom, .faux-tab.custom-groups').addClass('active');
+          $('#edit-submit-targets').attr('value', 'Search').show();
+          $('.faux-tab.custom, .faux-tab.custom-groups').addClass('active');
             return false;
         });
 
-        //target tab click event
+        //legislative target tab click event
         $('.legislative-search').click(function () {
             $('div.narrow-search').remove();
             $('.faux-tab').removeClass('active');
@@ -1225,19 +1227,24 @@
       var queryObj = {};
         $(query).each(function(index, value) {
             var segments = value.split('=');
-            if (segments[0] == 'ids') {
+          // @TODO needs comments
+          if (segments[0] == 'ids') {
+            // seems to be in the case there are multiple IDs....?
                 return false;
             }
             if(typeof(segments[1]) == "undefined") {
                 return true;
             }
             segments[0] = segments[0].SbaUcfirst();
-            if(segments[0] != 'Search_committee') {
+          // @TODO figure out this purpose and add comment
+          if(segments[0] != 'Search_committee') {
                 segments[1] = segments[1].replace(/%7C/g, '|');
                 queryObj[segments[0]] = segments[1].split('|');
             }
+            // If this is a legislative group...
             else {
-                segments[1] = segments[1].replace(/%7C/g, ' ');
+
+              segments[1] = segments[1].replace(/%7C/g, ' ');
                 queryObj['Committee'] = segments[1];
             }
 
@@ -1292,6 +1299,7 @@
         // Individual targets
         if (typeof(queryObj.Id) !== 'undefined') {
             var type = '';
+            var group = '';
             var sal = '';
             var first = '';
             var last = '';
@@ -1302,6 +1310,9 @@
             var district = '';
             if (typeof(queryObj.Type) !== 'undefined') {
                 type = queryObj.Type.toString().SbaStrCln();
+            }
+            if (typeof(queryObj.Group_name) !== 'undefined') {
+                group = queryObj.Group_name.toString().SbaStrCln();
             }
             if (typeof(queryObj.Sal) !== 'undefined') {
                 sal = queryObj.Sal.toString().SbaStrCln();
@@ -1340,8 +1351,22 @@
             var legislative_organization = district != '' && title != '' ? title + ', ' +  district  :  org;
             var affiliation = district != ''  ? legislative_organization : non_legislative_organization;
 
-            return  '<div class="individual">' + sal + " " +  first + " " + last + ' ' + party  + "<br />" + affiliation +'</div>';
+            // Add class to distinquish between legislative targets and custom individual or group targets.
+            var divClass = 'target legislator';
+            var displayTitle = sal + " " +  first + " " + last + ' ' + party  + "<br />" + affiliation;
+            if (type == 'group') {
+                divClass = 'target group';
+                displayTitle = group;
+            }
+            else if(type == 'Target') {
+                divClass = 'target individual';
+            }
+
+            return  '<div class="' + divClass + '">' + displayTitle +'</div>';
         }
+
+        // If this is a queried group (rather than an editable group entity)
+        //
         var cleanUp = JSON.stringify(queryObj).SbaJsonToReadable();
         if (typeof(queryObj.Fields) !== 'undefined' || typeof(queryObj.Genderxxxx) !== 'undefined'
             || typeof(queryObj.Socialxxxx) !== 'undefined' ||  typeof(queryObj.District) !== 'undefined') {
@@ -1361,6 +1386,9 @@
         }
         else if (type == 'committee') {
             Sba.resetFull();
+        }
+        else if (type == 'custom') {
+          Sba.resetFull();
         }
         else {
             $('.view-empty').hide();
