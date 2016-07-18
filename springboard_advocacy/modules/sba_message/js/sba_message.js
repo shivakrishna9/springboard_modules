@@ -311,7 +311,6 @@
             return false;
         });
 
-
         // update committee fields after autocomplete textfield update
         var comField = $('#edit-search-committee');
         comField.on('blur', function() { // "change" no work in ie11
@@ -373,7 +372,19 @@
             $('.faux-tab.legislative').addClass('active');
         }
 
-        //set up up default placeholder text in textfield
+      //set up up default placeholder text in group search textfield
+      var groupField = $('#edit-group-name');
+      //if (groupField.val().length == 0) {
+        var desc = $('#edit-group-name-wrapper .description');
+        var placeholder = desc.text().trim();
+        desc.hide();
+        groupField.attr('placeholder', placeholder);
+        groupField.focus(function () {
+          $(this).attr('placeholder', '');
+        });
+      //}
+
+        //set up up default placeholder text in name search textfield
         if (comField.text().length == 0) {
             var desc = $('.description', '#edit-search-committee-wrapper');
             var placeholder = desc.text().trim();

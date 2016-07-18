@@ -291,17 +291,48 @@
                 height: 22px;
             }
 
-            #springboard-advocacy-message-recipients .target-recipient .individual {
+            #springboard-advocacy-message-recipients .target-recipient .legislator {
+                background: transparent url(/sites/all/modules/springboard/springboard_advocacy/modules/sba_message/img/icon-user.jpg) no-repeat 0 0;
+                padding: 0 0 0 4px;
+                text-indent: 20px;
+            }
 
-                background: url("../img/icon-user.jpg") left center no-repeat;
-                padding: 5px 30px;
+            #springboard-advocacy-message-recipients .target-recipient .legislator:first-line {
+                font-size: 1.2em;
+                line-height: 24px;
+                padding-bottom: 4px;
+            }
+
+
+            #springboard-advocacy-message-recipients .target-recipient .group {
+                background: transparent url(/sites/all/modules/springboard/springboard_advocacy/modules/sba_message/img/icon-custom-group.jpg) no-repeat 0 0;
+                padding: 0 0 0 4px;
+                text-indent: 32px;
+            }
+
+            #springboard-advocacy-message-recipients .target-recipient .group:first-line {
+                font-size: 1.2em;
+                line-height: 24px;
+                padding-bottom: 4px;
+            }
+
+            #springboard-advocacy-message-recipients .target-recipient .individual {
+                background: transparent url(/sites/all/modules/springboard/springboard_advocacy/modules/sba_message/img/icon-custom.jpg) no-repeat 0 0;
+                padding: 0 0 0 4px;
+                text-indent: 20px;
+            }
+
+            #springboard-advocacy-message-recipients .target-recipient .individual:first-line {
+                font-size: 1.2em;
+                line-height: 24px;
+                padding-bottom: 4px;
             }
 
             #springboard-advocacy-message-recipients .target-recipient .title h4 {
-                margin: 2px 0 10px 10px;
-                font-size: 1.2em;
-                background: url("../img/icon-group.jpg") left center no-repeat;
-                padding: 5px 40px;
+                margin: 0 0 2px 0;
+                ont-size: 1.2em;
+                background: url("../img/icon-group.jpg") 0 0 no-repeat;
+                padding: 0 0 0 34px;
             }
 
         #springboard-advocacy-message-recipients .targeting-count {
@@ -417,9 +448,28 @@
                     background: #EFF9FF;
 
                 }
-        #springboard-advocacy-find-targets div.view-filters {
+#springboard-advocacy-find-targets-container .view-targets .faux-subtab-container {
+  float: right;
+    margin: -10px 28px 20px 0;
+}
+
+#springboard-advocacy-find-targets-container .view-targets .faux-subtab-container .faux-tab {
+    border-bottom: 1px solid #ccc;
+    border-radius: 3px;
+}
+
+#springboard-advocacy-find-targets-container .view-targets .faux-subtab-container .faux-tab:first-child {
+    border-radius: 3px 0 0 3px;
+}
+
+#springboard-advocacy-find-targets-container .view-targets .faux-subtab-container .faux-tab:last-child {
+    border-radius: 0 3px 3px 0;
+}
+
+#springboard-advocacy-find-targets div.view-filters {
             margin: 0 2em 0 2em;
             padding: 0;
+            clear: both;
         }
 
         #springboard-advocacy-find-targets .views-exposed-form {
@@ -524,7 +574,8 @@
 
 
             #springboard-advocacy-find-targets  .views-widget input#edit-combine,
-            #springboard-advocacy-find-targets  .views-widget input#edit-search-committee{
+            #springboard-advocacy-find-targets  .views-widget input#edit-search-committee,
+            #springboard-advocacy-find-targets  .views-widget input#edit-group-name {
                 border-radius: 4px;
                 max-width: 708px;
                 width: 100%;
@@ -536,7 +587,12 @@
                 padding: 8px 20px 8px 40px;
                 height: auto;
             }
+#springboard-advocacy-find-targets #edit-group-name-wrapper {
+    float: none;
+}
+#springboard-advocacy-find-targets #edit-group-name-wrapper label {
 
+}
 
         #springboard-advocacy-find-targets  div[id*=search-role] {
             clear:left;
