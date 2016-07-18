@@ -116,7 +116,14 @@ class springboard_advocacy_views_plugin_query extends views_plugin_query {
       }
 
       // Get the targets.
-      $targets = $api_call->invokeClientMethod('searchTargets', $fields);
+      // Custom Group search
+      if(isset($fields['class_name']) && $fields['class_name'] == 'Group') {
+         $targets = $api_call->invokeClientMethod('searchTargetGroups', $fields);
+      }
+      // Legislative and custom individuals
+      else {
+         $targets = $api_call->invokeClientMethod('searchTargets', $fields);
+      }
 
       if (!empty($targets->data->targets)) {
 

@@ -298,19 +298,14 @@ function springboard_advocacy_views_data() {
     ),
   );
 
-  // Search by custom target name.
-  $data['advocacy']['search_custom_name'] = array(
-    'title' => t('Search by Custom Target Name'),
-    'help' => t('Custom target name search'),
-    'filter' => array(
-      'handler' => 'springboard_advocacy_views_handler_filter_string',
+  // Custom group name field.
+  $data['advocacy']['group_name'] = array(
+    'title' => t('Group Name'),
+    'help' => t('Custom group name'),
+    'field' => array(
+      'handler' => 'springboard_advocacy_views_handler_field',
+      'click sortable' => TRUE,
     ),
-  );
-
-  // Search by custom group name.
-  $data['advocacy']['search_group_name'] = array(
-    'title' => t('Search by Custom Group Name'),
-    'help' => t('Custom group name search'),
     'filter' => array(
       'handler' => 'springboard_advocacy_views_handler_filter_string',
     ),
