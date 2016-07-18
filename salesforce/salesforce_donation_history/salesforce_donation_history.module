@@ -569,12 +569,12 @@ function salesforce_donation_history_create_table_row($sobject, $display_key) {
 function salesforce_donation_history_format_field($fieldvalue, $object, $fieldname) {
   // @todo consider statically caching $query_fields? This gets called a lot.
   $query_fields = variable_get('salesforce_donation_history_query_fields', NULL);
-  if ($query_fields[$object][$fieldname]['type'] == 'currency') {
-    return money_format('$%i', $fieldvalue);
+  if (!empty($query_fields[$object][$fieldname]['type'])) {
+    if ($query_fields[$object][$fieldname]['type'] == 'currency') {
+      return money_format('$%i', $fieldvalue);
+    }
   }
-  else {
-    return htmlspecialchars($fieldvalue, ENT_QUOTES);
-  }
+  return htmlspecialchars($fieldvalue, ENT_QUOTES);
 }
 
 /**
