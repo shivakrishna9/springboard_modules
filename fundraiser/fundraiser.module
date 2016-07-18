@@ -2181,6 +2181,13 @@ function fundraiser_donation_get_donation($did, $refresh = FALSE) {
 }
 
 /**
+ * Provide a menu router autoloader wrapper for fundraiser_donation_get_donation().
+ */
+function fundraiser_donation_load($did) {
+  return fundraiser_donation_get_donation($did);
+}
+
+/**
  * Get the first donation ID that matches the given submission ID.
  *
  * Be aware that multiple donations may have the same submission ID.

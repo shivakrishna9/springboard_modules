@@ -145,6 +145,14 @@ function fundraiser_sustainers_menu() {
     'access arguments' => array('fastforward recurring donations'),
     'type' => MENU_CALLBACK,
   );
+  $items['sustainer-series/%fundraiser_donation/billing'] = array(
+    'title' => 'Update billing information',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('fundraiser_sustainers_billing_update_form', 1),
+    'access callback' => 'fundraiser_sustainers_billing_update_access',
+    'access arguments' => array(1),
+    'type' => MENU_CALLBACK,
+  );
   $items['fundraiser_sustainers/%/skip/%'] = array(
     'title' => 'Skip recurring donation',
     'page callback' => 'drupal_get_form',
@@ -2106,7 +2114,7 @@ function fundraiser_update_cron_settings($form, $form_state) {
 }
 
 /**
- * Provide administrative form for editting a donation set.
+ * Provide administrative form for editing a donation set.
  */
 function fundraiser_sustainers_edit_form($did) {
   // Add js and css to the form.
@@ -2692,6 +2700,14 @@ function fundraiser_sustainers_billing_update_form($form, &$form_state, $donatio
  */
 function fundraiser_sustainers_billing_update_after_build($form, &$form_state) {
   return fundraiser_donation_form_after_build($form, $form_state);
+}
+
+/**
+ * Access function for the billing form. Only accept the user him/herself.
+ */
+function fundraiser_sustainers_billing_update_access($donation) {
+  global $user;
+  return ($donation->uid == $user->uid);
 }
 
 /**
