@@ -7,16 +7,18 @@
   };
 
   /**
-   * Set the amounts on page load
+   * Default settings on page load
    */
   Drupal.fundraiserDesignations = function(settings) {
-    var self = this;
+
+    // Page elements.
     this.fundGroups = $('.designation-group-wrapper');
     this.cart = $('.fundraiser-designation-cart-wrapper');
     this.addon = $('.designation-addon-wrapper');
-
     this.cartTemplate = '<tr class="cart-fund-row"><td class="fund-cancel">x</td><td class="fund-name"></td><td class="fund-amount"></td> </tr>';
     this.errorTemplate = '<div class="error-message"></div>';
+
+    // Actions.
     this.addListeners();
     this.cancelButton();
     this.setWidths();
@@ -25,8 +27,16 @@
     this.prepop(settings, val);
   };
 
+  /**
+   * (P)repopulate cart after php validation fail, page reload or presence of
+   * query string params from a landing page.
+   */
   Drupal.fundraiserDesignations.prototype.prepop = function(settings, val) {
+    var self = this;
+
     $('#cart_total').val(settings.fundraiser.currency.symbol + (val).formatMoney(2, '.', ','));
+
+    // Validation fail.
     var cartVals = $('input[name$="[fund_catcher]"]').val().replace(/&quot;/g, '"');
     if (cartVals.length > 0) {
       cartVals = JSON.parse(cartVals);
@@ -35,6 +45,7 @@
       });
     }
     else if(cook = $.cookie('designations_' + Drupal.settings.fdNid)) {
+      // Page reload/
       cook = cook.replace(/&quot;/g, '"');
       if (cook.length > 0) {
         cook = JSON.parse(cook);
@@ -43,6 +54,7 @@
         });
       }
     }
+    // Landing page query params are present in Drupal.settings.
     else if(typeof(settings.fundraiser_designations) != "undefined") {
       var sfd = settings.fundraiser_designations;
       self.repop(sfd);
@@ -71,9 +83,6 @@
     }
   };
 
-  /**
-   * Set the amounts on select
-   */
   // Iterate over each field in the settings and add listener
   Drupal.fundraiserDesignations.prototype.addListeners = function() {
 
@@ -87,7 +96,6 @@
       var recurAmts = $('div[id*="recurring-amounts-"]', fundGroup);
       var otherAmt = $('input[type="text"]', fundGroup);
       var quantity = fundGroup.find('select[name*="funds_quant"]');
-
 
       $(window).ready(function () {
         self.validateOtherAmt(fundGroupId);
