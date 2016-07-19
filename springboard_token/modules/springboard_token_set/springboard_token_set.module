@@ -26,6 +26,13 @@ function springboard_token_set_menu() {
     'weight' => 0,
   );
 
+  $items['sb-token-set-ajax'] = array(
+    'page callback' => '_springboard_token_set_ajax_fetch',
+    'page arguments' => array(1),
+    'access arguments' => array('access content'),
+    'type' => MENU_CALLBACK,
+  );
+
   return $items;
 }
 
@@ -47,7 +54,7 @@ function springboard_token_set_form_field_ui_field_edit_form_alter(&$form, &$for
   }
 
   $form['token_set'] = array(
-    '#title' => t('Token Set'),
+    '#title' => t('Manage Token Set'),
     '#type' => 'fieldset',
     '#collapsible' => FALSE,
   );
@@ -55,6 +62,7 @@ function springboard_token_set_form_field_ui_field_edit_form_alter(&$form, &$for
   $form['token_set']['token_set_id'] = array(
     '#type' => 'select',
     '#title' => t('Use token set'),
+    '#description' => t('Please select the token set available to this field; setting this to "None" removes the tokens widget from this field.'),
     '#options' => $token_set_options,
     '#default_value' => springboard_token_set_get_token_set($entity_type, $bundle, $field_name) ,
   );
@@ -490,6 +498,18 @@ function springboard_token_set_get_token_set($entity_type, $bundle, $field_name)
 }
 
 /**
+ * Returns an array of all available token sets and their IDs, ordered alphabetically.
+ */
+function springboard_token_set_get_token_sets_list() {
+  $token_set_query = db_query("SELECT tsid, name FROM {springboard_token_sets} ORDER BY name");
+  $token_set_data = array();
+  foreach ($token_set_query as $result) {
+    $token_set_data[$result->tsid] = $result->name;
+  }
+  return $token_set_data;
+}
+
+/**
  * Add the token UI JS and CSS to a particular form.
  *
  * @param $form
@@ -506,11 +526,31 @@ function springboard_token_set_attach_token_ui(&$form, $token_sets) {
     'type' => 'file',
   );
   $form['#attached']['js'][] = array(
-    'data' => array('token_sets' => $token_sets),
+    'data' => array(
+      'token_sets' => $token_sets,
+      'token_sets_list' => springboard_token_set_get_token_sets_list(),
+    ),
     'type' => 'setting',
   );
   $form['#attached']['css'] = array(
     'data' => drupal_get_path('module', 'springboard_token_set') . '/css/springboard_token_set.css',
     'type' => 'file',
   );
+}
+
+/**
+ * AJAX callback for fetching a token set's data.
+ *
+ * @param $tsid
+ *   The ID of the token set data to return.
+ */
+function _springboard_token_set_ajax_fetch($tsid) {
+  $output_data = array();
+  if (!empty($tsid)) {
+    $token_set_data = springboard_token_set_get_tokens($tsid != 'all' ? $tsid : NULL);
+    foreach ($token_set_data as $token_data) {
+      $output_data[] = (array) $token_data;
+    }
+  }
+  drupal_json_output($output_data);
 }
