@@ -32,9 +32,12 @@ function fundraiser_designations_tokens_alter(&$replacements, $context) {
 
     $designations = [];
     foreach ($order_wrapper->commerce_line_items as $delta => $line_item_wrapper) {
-      $designations[$line_item_wrapper->line_item_label->value()]['quantity'] = $line_item_wrapper->quantity->value();
-      $designations[$line_item_wrapper->line_item_label->value()]['amount'] = $line_item_wrapper->commerce_unit_price->value();
-      $designations[$line_item_wrapper->line_item_label->value()]['pid'] = $line_item_wrapper->commerce_product->product_id->value();
+      $item = entity_load_single('commerce_line_item', $line_item_wrapper->line_item_id->value());
+      $designations[$delta]['name'] = $line_item_wrapper->line_item_label->value();
+      $designations[$delta]['quantity'] = $line_item_wrapper->quantity->value();
+      $designations[$delta]['amount'] = $line_item_wrapper->commerce_unit_price->value();
+      $designations[$delta]['pid'] = $line_item_wrapper->commerce_product->product_id->value();
+      $designations[$delta]['type'] = $item->data['type'];
     }
 
     $yadda = theme('fundraiser_designations_line_item_token', array('line_items' => $designations, 'donation' => $donation));
@@ -46,7 +49,6 @@ function fundraiser_designations_tokens_alter(&$replacements, $context) {
       }
     }
   }
-
 }
 
 /**
@@ -56,8 +58,9 @@ function theme_fundraiser_designations_line_item_token($vars) {
   $list = [];
   $vars['donation']->node->fd_addon['pid'];
   $symbol = $vars['donation']->donation['currency']['symbol'];
-  foreach ($vars['line_items'] as $name => $item) {
-    if ($item['pid'] == $vars['donation']->node->fd_addon['pid']) {
+  foreach ($vars['line_items'] as $delta => $item) {
+    $name = $item['name'];
+    if ($item['pid'] == $vars['donation']->node->fd_addon['pid'] && $item['type'] == 'addon') {
       $name = t('One time add-on donation - !name', array('!name' => $name));
     }
     $amount = $symbol . commerce_currency_amount_to_decimal($item['quantity'] * $item['amount']['amount'], $item['amount']['currency_code']);
