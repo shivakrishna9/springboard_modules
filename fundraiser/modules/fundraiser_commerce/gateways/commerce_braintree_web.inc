@@ -31,7 +31,6 @@ function commerce_braintree_web_fundraiser_commerce_fundraiser_gateway_info() {
  * Callback function, use this form for the given gateway.
  */
 function commerce_braintree_web_fundraiser_commerce_form($payment_method) {
-  // dpm($payment_method);
   if ($payment_method == 'credit') {
      $form = fundraiser_commerce_braintree_credit_card_form();
   }
@@ -47,7 +46,7 @@ function commerce_braintree_web_fundraiser_commerce_form($payment_method) {
 function fundraiser_commerce_braintree_paypal_form() {
   global $user;
 
-  $form['#attached']['library'][] = array('braintree_payment', 'braintree.js');
+  // $form['#attached']['library'][] = array('braintree_payment', 'braintree.js');
 
   // Initialize Braintree and create a token.
   braintree_initialize();
@@ -58,13 +57,11 @@ function fundraiser_commerce_braintree_paypal_form() {
   $form['js'] =  array(
     '#markup' => '<script src="https://js.braintreegateway.com/js/braintree-2.26.0.min.js"></script>
     <script>
-      braintree.setup("'.Braintree_ClientToken::generate().'", "custom", {
+      braintree.setup("'.Braintree_ClientToken::generate().'", "paypal", {
+        id: "webform-client-form-2",
         paypal: {
           container: "paypal-container",
-        },
-        // onPaymentMethodReceived: function (obj) {
-        //   doSomethingWithTheNonce(obj.nonce);
-        // }
+        }
       });
     </script>'
   );
@@ -122,7 +119,7 @@ function fundraiser_commerce_braintree_credit_card_form() {
 function commerce_braintree_web_fundraiser_commerce_charge($method_instance, $donation) {
 
   // Translate from donation settings to the correct values for the plugin.
-  module_load_include('inc', 'fundraiser_commerce', 'includes/fundraiser_commerce.credit_card');
+  // module_load_include('inc', 'fundraiser_commerce', 'includes/fundraiser_commerce.credit_card');
   $order = commerce_order_load($donation->did);
   $wrapper = entity_metadata_wrapper('commerce_order', $order);
   $charge = $wrapper->commerce_order_total->value();
@@ -131,10 +128,11 @@ function commerce_braintree_web_fundraiser_commerce_charge($method_instance, $do
 
   // @TODO this function won't work b/c it is looking at CC field values that
   // do not exist with hosted fields.
-  $pane_values = _fundraiser_commerce_credit_card_pane_values($donation);
+  // $pane_values = _fundraiser_commerce_credit_card_pane_values($donation);
+    $pane_values = array();
 
   // This only does stuff when commerce_cardonfile is enabled.
-  _fundraiser_commerce_submit_handler_pane_values($pane_values, $donation);
+  // _fundraiser_commerce_submit_handler_pane_values($pane_values, $donation);
 
   $result = commerce_braintree_web_submit_form_submit($method_instance, $pane_form, $pane_values, $order, $charge);
   $success = FALSE;
@@ -142,7 +140,7 @@ function commerce_braintree_web_fundraiser_commerce_charge($method_instance, $do
     $success = TRUE;
   }
   // Perform post processing functions.
-  _fundraiser_commerce_charge_submit_form_process($success, $payment_method, $pane_values, $donation);
+  _fundraiser_commerce_charge_submit_form_process($success, $method_instance, $pane_values, $donation);
   return $success;
 
 }
