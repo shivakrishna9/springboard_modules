@@ -490,7 +490,7 @@ function salesforce_donation_history_create_table_headers($sobject, $display_key
       }
       else {
         // Only add the header if it is configured to be displayed.
-        if ($field_settings[$sobject->type . '-' . $fieldname][$display_key]) {
+        if (!empty($field_settings[$sobject->type . '-' . $fieldname][$display_key])) {
           // Use the custom label as the field header if one has been specified.
           // Else, default to the salesforce field name.
           $fieldname = (!empty($field_settings[$sobject->type . '-' . $fieldname]['label'])) ? $field_settings[$sobject->type . '-' . $fieldname]['label'] : $fieldname;
@@ -541,7 +541,7 @@ function salesforce_donation_history_create_table_row($sobject, $display_key) {
       else {
         // Add datum to row if it is not set (so we don't end up with too few
         // cells in a row OR the field settings say to include it).
-        if (!isset($datum) || $field_settings[$sobject->type . '-' . $key][$display_key]) {
+        if (!isset($datum) || !empty($field_settings[$sobject->type . '-' . $key][$display_key])) {
           $row[] = salesforce_donation_history_format_field($datum, $sobject->type, $key);
         }
       }
@@ -569,12 +569,12 @@ function salesforce_donation_history_create_table_row($sobject, $display_key) {
 function salesforce_donation_history_format_field($fieldvalue, $object, $fieldname) {
   // @todo consider statically caching $query_fields? This gets called a lot.
   $query_fields = variable_get('salesforce_donation_history_query_fields', NULL);
-  if ($query_fields[$object][$fieldname]['type'] == 'currency') {
-    return money_format('$%i', $fieldvalue);
+  if (!empty($query_fields[$object][$fieldname]['type'])) {
+    if ($query_fields[$object][$fieldname]['type'] == 'currency') {
+      return money_format('$%i', $fieldvalue);
+    }
   }
-  else {
-    return htmlspecialchars($fieldvalue, ENT_QUOTES);
-  }
+  return htmlspecialchars($fieldvalue, ENT_QUOTES);
 }
 
 /**
@@ -696,7 +696,9 @@ function salesforce_donation_history_get_field_types($query_fields) {
  * query.
  */
 function salesforce_donation_history_test_query($query) {
-  $soql = strtr($query, array("WHERE AccountId = ':accountId'" => 'LIMIT 1'));
+  // Find last occurance of 'WHERE '. Replace everything from there to the end
+  // of the query with 'LIMIT 1'.
+  $soql = substr_replace($query, 'LIMIT 1', strrpos($query, 'WHERE '), strlen($query));
   try {
     $sfapi = salesforce_get_api();
     $soap = new SalesforceSoapPartner($sfapi);
@@ -704,6 +706,7 @@ function salesforce_donation_history_test_query($query) {
     $result = new QueryResult($response);
   }
   catch (Exception $e) {
+    drupal_set_message(t('The Test SOQL query performed was: :soql', array(':soql' => $soql)), 'error');
     drupal_set_message($e->getMessage(), 'error');
     return FALSE;
   }

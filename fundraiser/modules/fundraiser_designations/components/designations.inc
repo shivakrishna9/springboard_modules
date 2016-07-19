@@ -281,7 +281,7 @@ function _fundraiser_designations_build_child_elements($id, &$element, $amounts,
     $child['#type'] = 'select';
     $child['#id'] = 'funds-quant-select-' . $id;
     $child['#extra']['group_id'] = $id;
-    $child['#options'] = array(1 => 1, 2, 3, 4, 5);
+    $child['#options'] = array(1 => 1, 2, 3, 4, 5, 6, 7, 8, 9, 10);
     $child['#title'] = 'Quantity';
     $element[$id]['funds_quant_select_' . $id] = $child;
   }

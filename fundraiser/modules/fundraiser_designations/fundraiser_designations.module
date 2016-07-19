@@ -824,7 +824,7 @@ function fundraiser_designations_form_webform_client_form_alter(&$form, &$form_s
 
       // Add the validation hook.
       $form['#validate'][] = 'fundraiser_designations_client_form_validate';
-
+      $form['#submit'][] = 'fundraiser_designations_client_form_submit';
       // Add the visibility javascript.
       _fundraiser_designations_process_states($form, $component_hierarchy);
 
@@ -940,6 +940,7 @@ function _fundraiser_designations_add_js_settings(&$form) {
   if (!empty($form['#node']->recurring_setting) && !empty($form['#node']->recurring_dual_ask_amounts)) {
     $settings = array('fdIsDualAsk' => 1);
   }
+  $settings['fdNid'] = $form['#node']->nid;
   $form['#attached']['js'][] = array(
     'data' => $settings,
     'type' => 'setting',
@@ -949,7 +950,6 @@ function _fundraiser_designations_add_js_settings(&$form) {
   if (!empty($form['#node']->fd_addon['cart_text'])) {
     $settings = array('cart_text' => $form['#node']->fd_addon['cart_text']);
     $form['#attached']['js'][] = array('data' => array('addon' => $settings), 'type' => 'setting');
-
   }
 
   // Pass along landing page query string parameters to designation forms.
@@ -1017,6 +1017,14 @@ function fundraiser_designations_client_form_validate($form, &$form_state) {
   }
 }
 
+function fundraiser_designations_client_form_submit($form, &$form_state) {
+  $cookie = 'designations_' . $form['#node']->nid;
+  if (isset($_COOKIE[$cookie])) {
+    unset($_COOKIE[$cookie]);
+    setcookie($cookie, '', time() - 3600);
+  }
+}
+
 /**
  * Implements hook_node_type_insert().
  */
@@ -1043,10 +1051,8 @@ function fundraiser_designations_node_type_build($type) {
       drupal_set_message(t('Fundraiser must also be enabled for designated donations.'), 'error');
     }
     else {
-      module_load_include('inc', 'fundraiser_designations', 'includes/fundraiser_designations.fields');
       module_load_include('inc', 'fundraiser_designations', 'includes/fundraiser_designations.product');
       module_load_include('inc', 'fundraiser_designations', 'includes/fundraiser_designations.taxonomy');
-      _fundraiser_designations_add_default_fields($type->type);
       _fundraiser_designations_create_fundraiser_designation_product();
       _fundraiser_designations_install_vocab_fd_designation_categories('fundraiser_designation');
     }
