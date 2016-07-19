@@ -837,7 +837,7 @@ function fundraiser_upsell_node_insert($node) {
     $record = fundraiser_upsell_node_record($node);
     drupal_write_record('fundraiser_upsell', $record);
 
-    // If we have email wrappers settings then we're coming from a form,
+    // If we have email templates settings then we're coming from a form,
     // so we need to save them.
     if (isset($node->fundraiser_upsell['email_wrappers']) && is_array($node->fundraiser_upsell['email_wrappers'])) {
       fundraiser_upsell_save_email_wrapper_settings($node->nid, $node->fundraiser_upsell['email_wrappers']);
@@ -910,7 +910,7 @@ function fundraiser_upsell_node_load($nodes, $types) {
  * Implements hook_node_delete().
  */
 function fundraiser_upsell_node_delete($node) {
-  // Delete the email wrapper settings.
+  // Delete the email template settings.
   $params = array(
     'module' => 'fundraiser_upsell',
     'delta' => 'nid_' . $node->nid,
