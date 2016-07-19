@@ -123,3 +123,25 @@ function springboard_quick_donate_fundraiser_field_info_alter(&$fields) {
   );
   return $fields;
 }
+
+/**
+ * Implements hook_payment_method_fields_alter().
+ */
+function springboard_quick_donate_payment_method_fields_alter(&$element, &$payment_method, &$context) {
+  $element['quickdonate'] = array(
+    '#type' => 'hidden',
+    '#value' => 'false',
+  );
+}
+
+/**
+ * Implements hook_salesforce_genmap_map_item().
+ */
+function springboard_quick_donate_salesforce_genmap_map_item_alter(&$item, &$drupal_object) {
+  if ($drupal_object->data['payment_fields'][$drupal_object->data['payment_method']]['quickdonate']) {
+    $item['sobject']->fields['Quick_Donation__c'] = 'true';
+  }
+  else {
+    $item['sobject']->fields['Quick_Donation__c'] = 'false';
+  }
+}

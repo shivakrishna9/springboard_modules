@@ -50,7 +50,7 @@ function springboard_quick_donate_token_generator($form, $form_state) {
 
   $form['springboard_quick_donate']['amount'] = array(
     '#type' => 'textfield',
-    '#title' => t('Upgrade Amount'),
+    '#title' => t('Donation Amount'),
     '#description' => t('The donation amount in cents. E.g. $20 = 2000'),
     '#default_value' => $defaults['amount'],
   );
