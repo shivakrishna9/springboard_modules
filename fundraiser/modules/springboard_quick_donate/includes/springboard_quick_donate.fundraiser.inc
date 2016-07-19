@@ -31,59 +31,6 @@ function springboard_quick_donate_fundraiser_donation_form($form, $form_state) {
   $mapping = _springboard_quick_donate_hmac_mapping();
   global $user;
 
-  // If the user is coming from an HMAC token.
-  if (!empty($_SESSION['springboard_hmac']['quickdonate'])) {
-    if (!empty($_SESSION['springboard_hmac']['quickdonate']['status']) && !$_SESSION['springboard_hmac']['quickdonate']['status']) {
-      $reasons = array(
-        // @todo Make the message configurable.
-        SPRINGBOARD_QUICK_DONATE_UID_NOT_EQUAL_TOKEN => t("Uh oh. It looks like we weren't able to verify your saved payment details. Please !login to access your stored card information, or complete the donation form below.", array(
-          '!login' => l(t('login'), '/user', array(
-            'query' => array(
-              'destination' => current_path(),
-            ),
-          )),
-        )),
-      );
-      $form['#prefix'] = $reasons[$_SESSION['springboard_hmac']['quickdonate']['reason']];
-    }
-    else {
-      // Load the $user variable based on uid from HMAC token.
-      $user = user_load($_SESSION['springboard_hmac']['quickdonate'][$mapping['uid']]);
-
-      // Go back and update form elements.
-      $donor_info = &$form['submitted']['donor_information'];
-      if (isset($user->sbp_first_name[LANGUAGE_NONE][0]['value'])) {
-        $donor_info['first_name']['#default_value'] = $user->sbp_first_name[LANGUAGE_NONE][0]['value'];
-      }
-      if (isset($user->sbp_last_name[LANGUAGE_NONE][0]['value'])) {
-        $donor_info['last_name']['#default_value'] = $user->sbp_last_name[LANGUAGE_NONE][0]['value'];
-      }
-      if (isset($user->mail)) {
-        $donor_info['mail']['#default_value'] = $user->mail;
-      }
-
-      $billing_info = &$form['submitted']['billing_information'];
-      if (isset($user->sbp_address[LANGUAGE_NONE][0]['value'])) {
-        $billing_info['address']['#default_value'] = $user->sbp_address[LANGUAGE_NONE][0]['value'];
-      }
-      if (isset($user->sbp_address_line_2[LANGUAGE_NONE][0]['value'])) {
-        $billing_info['address_line_2']['#default_value'] = $user->sbp_address_line_2[LANGUAGE_NONE][0]['value'];
-      }
-      if (isset($user->sbp_city[LANGUAGE_NONE][0]['value'])) {
-        $billing_info['city']['#default_value'] = $user->sbp_city[LANGUAGE_NONE][0]['value'];
-      }
-      if (isset($user->sbp_state[LANGUAGE_NONE][0]['value'])) {
-        $billing_info['state']['#default_value'] = $user->sbp_state[LANGUAGE_NONE][0]['value'];
-      }
-      if (isset($user->sbp_country[LANGUAGE_NONE][0]['value'])) {
-        $billing_info['country']['#default_value'] = $user->sbp_country[LANGUAGE_NONE][0]['value'];
-      }
-      if (isset($user->sbp_zip[LANGUAGE_NONE][0]['value'])) {
-        $billing_info['zip']['#default_value'] = $user->sbp_zip[LANGUAGE_NONE][0]['value'];
-      }
-    }
-  }
-
   foreach ($form['#node']->gateways as $gateway_type => $gateway) {
     if (empty($gateway['status']) || empty($gateway['id'])) {
       continue;
@@ -237,8 +184,58 @@ function springboard_quick_donate_fundraiser_donation_form($form, $form_state) {
     drupal_alter('springboard_quick_donate_checkout_form', $form['submitted']['payment_information']['payment_fields'][$gateway_type], $form);
   }
 
-  if (isset($_SESSION['springboard_hmac']['quickdonate'])) {
+  if (!empty($_SESSION['springboard_hmac']['quickdonate'])) {
     $values = $_SESSION['springboard_hmac']['quickdonate'];
+
+    if (!empty($values['status']) && !$values['status']) {
+      $reasons = array(
+        // @todo Make the message configurable.
+        SPRINGBOARD_QUICK_DONATE_UID_NOT_EQUAL_TOKEN => t("Uh oh. It looks like we weren't able to verify your saved payment details. Please !login to access your stored card information, or complete the donation form below.", array(
+          '!login' => l(t('login'), '/user', array(
+            'query' => array(
+              'destination' => current_path(),
+            ),
+          )),
+        )),
+      );
+      $form['#prefix'] = $reasons[$values['reason']];
+    }
+    else {
+      // Load the $user variable based on uid from HMAC token.
+      $user = user_load($values[$mapping['uid']]);
+
+      // Go back and update form elements.
+      $donor_info = &$form['submitted']['donor_information'];
+      if (isset($user->sbp_first_name[LANGUAGE_NONE][0]['value'])) {
+        $donor_info['first_name']['#default_value'] = $user->sbp_first_name[LANGUAGE_NONE][0]['value'];
+      }
+      if (isset($user->sbp_last_name[LANGUAGE_NONE][0]['value'])) {
+        $donor_info['last_name']['#default_value'] = $user->sbp_last_name[LANGUAGE_NONE][0]['value'];
+      }
+      if (isset($user->mail)) {
+        $donor_info['mail']['#default_value'] = $user->mail;
+      }
+
+      $billing_info = &$form['submitted']['billing_information'];
+      if (isset($user->sbp_address[LANGUAGE_NONE][0]['value'])) {
+        $billing_info['address']['#default_value'] = $user->sbp_address[LANGUAGE_NONE][0]['value'];
+      }
+      if (isset($user->sbp_address_line_2[LANGUAGE_NONE][0]['value'])) {
+        $billing_info['address_line_2']['#default_value'] = $user->sbp_address_line_2[LANGUAGE_NONE][0]['value'];
+      }
+      if (isset($user->sbp_city[LANGUAGE_NONE][0]['value'])) {
+        $billing_info['city']['#default_value'] = $user->sbp_city[LANGUAGE_NONE][0]['value'];
+      }
+      if (isset($user->sbp_state[LANGUAGE_NONE][0]['value'])) {
+        $billing_info['state']['#default_value'] = $user->sbp_state[LANGUAGE_NONE][0]['value'];
+      }
+      if (isset($user->sbp_country[LANGUAGE_NONE][0]['value'])) {
+        $billing_info['country']['#default_value'] = $user->sbp_country[LANGUAGE_NONE][0]['value'];
+      }
+      if (isset($user->sbp_zip[LANGUAGE_NONE][0]['value'])) {
+        $billing_info['zip']['#default_value'] = $user->sbp_zip[LANGUAGE_NONE][0]['value'];
+      }
+    }
 
     $qd_did = isset($values[$mapping['donation_id']]) ? $values[$mapping['donation_id']] : FALSE;
     $qd = FALSE;
@@ -268,6 +265,13 @@ function springboard_quick_donate_fundraiser_donation_form($form, $form_state) {
 
     if (isset($values[$mapping['cid']])) {
       $form['submitted']['cid']['#default_value'] = $form['submitted']['cid']['#webform_component']['value'] = $_SESSION['springboard_hmac']['quickdonate'][$mapping['cid']];
+    }
+
+    if (!empty($form['submitted']['payment_information']['payment_fields']['credit'])) {
+      $form['submitted']['payment_information']['payment_fields']['credit']['quickdonate']['#value'] = TRUE;
+    }
+    if (!empty($form['submitted']['payment_information']['payment_fields']['bank'])) {
+      $form['submitted']['payment_information']['payment_fields']['bank']['quickdonate']['#value'] = TRUE;
     }
 
     unset($_SESSION['springboard_hmac']['quickdonate']);
@@ -325,7 +329,7 @@ function _springboard_quick_donate_checkout_form_hide_payment_fields(&$element) 
 function springboard_quick_donate_fundraiser_donation_submit($form, $form_state, $donation) {
   $payment_info = $form_state['values']['submitted_tree']['payment_information'];
   $payment_fields = $payment_info['payment_fields'];
-  if (isset($payment_fields['token']) && $payment_fields['token'] && isset($donation->data['cardonfile'])) {
+  if (isset($payment_fields['token']) && $payment_fields['token']) {
     $donation->data['cardonfile'] = $payment_fields[$payment_info['payment_method']]['cardonfile'];
   }
 }
