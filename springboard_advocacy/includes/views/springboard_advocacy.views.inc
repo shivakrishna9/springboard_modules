@@ -298,6 +298,18 @@ function springboard_advocacy_views_data() {
     ),
   );
 
+  // Custom group name field.
+  $data['advocacy']['group_name'] = array(
+    'title' => t('Group Name'),
+    'help' => t('Custom group name'),
+    'field' => array(
+      'handler' => 'springboard_advocacy_views_handler_field',
+      'click sortable' => TRUE,
+    ),
+    'filter' => array(
+      'handler' => 'springboard_advocacy_views_handler_filter_string',
+    ),
+  );
 
   $data['springboard_action_opt_in']['table'] = array(
     'group' => t('Springboard Advocacy'),
@@ -472,7 +484,7 @@ function springboard_advocacy_target_type() {
   $value_options = array(
     'Target' => t('Custom Target'),
     'Legislator' => t('Legislator'),
-    'group' => t('Group'),
+    'Group' => t('Group'),
   );
   return $value_options;
 }

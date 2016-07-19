@@ -225,6 +225,7 @@ function _sba_message_api_build_chambers_shmoosher(&$chamber_rows_container, $ch
 
 /**
  * Create a target group and targets on the API server.
+ * This is a group of targets on a message, not a reusable group
  * @param $api_call
  * @param $sba_message
  * @param $chamber_rows
@@ -250,6 +251,7 @@ function _sba_message_api_create_group($api_call, $sba_message, $chamber_rows, $
 
 /**
  * Update existing message group on the API server
+ *  * This is a group of targets on a message, not a reusable group
  * @param $api_call
  * @param $sba_message
  * @param $chamber_rows
@@ -277,6 +279,7 @@ function _sba_message_api_update_group($api_call, $sba_message, $chamber_rows, $
  * try to retrieve it via the message id. This would happen if the
  * group creation fails or if the creation response was interrupted.
  *
+ *  * This is a group of targets on a message, not a reusable group
  * @param $api_call
  * @param $message_id
  * @return mixed

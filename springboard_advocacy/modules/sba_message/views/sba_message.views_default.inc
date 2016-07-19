@@ -484,6 +484,40 @@ function sba_message_views_default_views() {
     4 => 0,
     5 => 0,
   );
+  /* Filter criterion: Advocacy: Search by Custom Target Name */
+  $handler->display->display_options['filters']['search_custom_name']['id'] = 'search_custom_name';
+  $handler->display->display_options['filters']['search_custom_name']['table'] = 'advocacy';
+  $handler->display->display_options['filters']['search_custom_name']['field'] = 'search_custom_name';
+  $handler->display->display_options['filters']['search_custom_name']['group'] = 1;
+  $handler->display->display_options['filters']['search_custom_name']['exposed'] = TRUE;
+  $handler->display->display_options['filters']['search_custom_name']['expose']['operator_id'] = 'search_custom_name_op';
+  $handler->display->display_options['filters']['search_custom_name']['expose']['description'] = 'Search by Custom Target Name';
+  $handler->display->display_options['filters']['search_custom_name']['expose']['operator'] = 'search_custom_name_op';
+  $handler->display->display_options['filters']['search_custom_name']['expose']['identifier'] = 'search_custom_name';
+  $handler->display->display_options['filters']['search_custom_name']['expose']['remember_roles'] = array(
+    2 => '2',
+    1 => 0,
+    3 => 0,
+    4 => 0,
+    5 => 0,
+  );
+  /* Filter criterion: Advocacy: Search by Custom Group Name */
+  $handler->display->display_options['filters']['search_group_name']['id'] = 'search_group_name';
+  $handler->display->display_options['filters']['search_group_name']['table'] = 'advocacy';
+  $handler->display->display_options['filters']['search_group_name']['field'] = 'search_group_name';
+  $handler->display->display_options['filters']['search_group_name']['group'] = 1;
+  $handler->display->display_options['filters']['search_group_name']['exposed'] = TRUE;
+  $handler->display->display_options['filters']['search_group_name']['expose']['operator_id'] = 'search_group_name_op';
+  $handler->display->display_options['filters']['search_group_name']['expose']['description'] = 'Search by Custom Group Name';
+  $handler->display->display_options['filters']['search_group_name']['expose']['operator'] = 'search_group_name_op';
+  $handler->display->display_options['filters']['search_group_name']['expose']['identifier'] = 'search_group_name';
+  $handler->display->display_options['filters']['search_group_name']['expose']['remember_roles'] = array(
+    2 => '2',
+    1 => 0,
+    3 => 0,
+    4 => 0,
+    5 => 0,
+  );
   /* Filter criterion: Advocacy: Search By State */
   $handler->display->display_options['filters']['search_state']['id'] = 'search_state';
   $handler->display->display_options['filters']['search_state']['table'] = 'advocacy';
@@ -893,6 +927,24 @@ function sba_message_views_default_views() {
   );
 
 
+  /* Filter criterion: Advocacy: Search By Type */
+  $handler->display->display_options['filters']['search_class_name']['id'] = 'search_class_name';
+  $handler->display->display_options['filters']['search_class_name']['table'] = 'advocacy';
+  $handler->display->display_options['filters']['search_class_name']['field'] = 'search_class_name';
+  $handler->display->display_options['filters']['search_class_name']['exposed'] = TRUE;
+  $handler->display->display_options['filters']['search_class_name']['expose']['operator_id'] = 'search_class_name_op';
+  $handler->display->display_options['filters']['search_class_name']['expose']['label'] = 'Search By Type';
+  $handler->display->display_options['filters']['search_class_name']['expose']['operator'] = 'search_class_name_op';
+  $handler->display->display_options['filters']['search_class_name']['expose']['identifier'] = 'search_class_name';
+  $handler->display->display_options['filters']['search_class_name']['expose']['remember_roles'] = array(
+    2 => '2',
+    1 => 0,
+    3 => 0,
+    4 => 0,
+    5 => 0,
+    6 => 0,
+  );
+  
   $views[$view->name] = $view;
 
 

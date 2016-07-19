@@ -569,6 +569,52 @@ function sba_message_preprocess_views_exposed_form(&$vars, $hook) {
   }
 }
 
+/**
+ * Implements hook_preprocess_views_view_table().
+ *
+ * Change the table output of the Target search when only custom groups are searched.
+ */
+
+function sba_message_preprocess_views_view_table(&$vars) {
+  $view = $vars['view'];
+  $fields = &$view->field;
+  $columns = $view->style_plugin->options['columns'];
+  if($view->name == 'targets' && $view->current_display == 'block_3' && in_array('Groups', array_keys($view->filter['search_class_name']->value))) {
+    $group_fields = array('last_name', 'group_name', 'target_actions');
+    foreach($vars['header'] as $key => $head) {
+      if(!in_array($key, $group_fields)) {
+        unset($vars['header'][$key]);
+
+      }
+    }
+    foreach($columns as $key => $column) {
+      if(!in_array($key, $group_fields)) {
+        // prevent headers from being rebuilt in springboard_advocacy_preprocess_views_view_table().
+        unset($columns[$key]);
+      }
+    }
+    foreach($fields as $key=> $field) {
+       if(!in_array($key, $group_fields)) {
+         unset($fields[$key]);
+       }
+    }
+    $vars['view']->style_plugin->options['columns'] = $columns;
+    $vars['view']->style_options['columns'] = $columns;
+    $vars['options']['columns'] = $columns;
+    foreach($vars['rows'] as $key => $row) {
+      foreach($row as $field_name => $value) {
+        if(!in_array($field_name, $group_fields)) {
+          unset($vars['rows'][$key][$field_name]);
+        }
+      }
+    }
+
+    $header = $vars['header'];
+    $rows = $vars['rows'];
+  }
+
+}
+
 
 /**
  * The class used for sba_message entities.
