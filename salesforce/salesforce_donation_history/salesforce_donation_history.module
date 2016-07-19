@@ -187,8 +187,7 @@ function salesforce_donation_history_get_opportunities($sfid) {
         return FALSE;
       }
       $opportunities = $result->records;
-      // @TODO Encrypt cached oppontunity data?
-      cache_set($sfid, $opportunities, 'cache_salesforce_donation_history');
+      cache_set($sfid, $opportunities, 'cache_salesforce_donation_history', CACHE_TEMPORARY);
     }
   }
   return $opportunities;
