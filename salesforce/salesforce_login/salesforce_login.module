@@ -10,7 +10,7 @@
 function salesforce_login_menu() {
   // Settings form.
   $items['admin/config/salesforce/salesforce-login'] = array(
-    'title' => 'Login',
+    'title' => 'Salesforce Login',
     'description' => 'Configuration settings for Salesforce Login.',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('salesforce_login_admin_form'),
