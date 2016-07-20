@@ -34,8 +34,17 @@ function springboard_cookie_init() {
       // Quietly create a user account for this email, if there isn't one already.
       $account = user_load_by_mail($email);
       if (!$account) {
+          if (module_exists('email_registration')) {
+            // Strip off everything after the @ sign.
+            $name = preg_replace('/@.*$/', '', $name);
+            $name = email_registration_cleanup_username($name);
+            $name = email_registration_unique_username($name);
+          }
+          else {
+            $name = $email;
+          }
         $user_fields = array(
-          'name' => $email,
+          'name' => $name,
           'mail' => $email,
           'init' => $email,
           'pass' => user_password(8),
