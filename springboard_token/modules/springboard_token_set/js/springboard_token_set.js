@@ -1,7 +1,7 @@
 (function ($) {
   Drupal.behaviors.SpringboardTokenSet = {
     attach: function (context, settings) {
-      // Add token click handler to form elements with token set IDs.
+      // Add token click handler to form elements with token set IDs:
       $(".form-wrapper, #webform-component-edit-form #edit-value, #webform-component-edit-form #edit-extra-description").each(function() {
         var token_set_id = $(this).data("token-set-id");
         if (typeof token_set_id !== typeof undefined) {
@@ -12,29 +12,36 @@
           }
           targetElement.filter('textarea').each(function () {
             $(this).after('<div class="sb-tokens-expander"><a href="#">+View tokens</a></div>');
-            $(this).parent().children('.sb-tokens-expander').click(function (e) {
+            var targetTextarea = $(this);
+            targetTextarea.parent().children('.sb-tokens-expander').click(function (e) {
               e.preventDefault();
-              $(this).parent().children('textarea').click();
+              if (typeof targetTextarea.attr('sb-token-last-cursor-start-pos') != 'undefined') {
+                targetTextarea.attr('sb-token-initial-cursor-pos', targetTextarea.attr('sb-token-last-cursor-start-pos'));
+              }
+              else {
+                var endPosition = targetTextarea.val().length;
+                targetTextarea.attr('sb-token-initial-cursor-pos', endPosition);
+              }
+              targetTextarea.click();
             });
           });
-         
+ 
           targetElement.filter("textarea").click(function() {
             $('.sb-tokens-expander, .sb-tokens-expander a').each(function () {
               $(this).show(); 
             });
             $(this).parent().children('.sb-tokens-expander').hide();
+            if (typeof $(this).attr('sb-token-initial-cursor-pos') != 'undefined') {
+              $(this).attr('sb-token-last-cursor-start-pos', $(this).attr('sb-token-initial-cursor-pos'));
+              $(this).attr('sb-token-last-cursor-end-pos', $(this).attr('sb-token-initial-cursor-pos'));
+              $(this).removeAttr('sb-token-initial-cursor-pos');
+            }
+            else if (typeof $(this)[0].selectionStart != 'undefined') {
+              $(this).attr('sb-token-last-cursor-start-pos', $(this)[0].selectionStart);
+              $(this).attr('sb-token-last-cursor-end-pos', $(this)[0].selectionEnd);
+            }
+            $(this).addClass('sb-token-textarea');
 
-            if (document.selection) {
-              var cursorPos = document.selection.createRange();
-            }
-            else if ($(this)[0].selectionStart || ($(this)[0].selectionStart === '0')) {
-              var cursorPos = $(this)[0].selectionStart;
-            }
-            else {
-              var cursorPos = $(this).length;
-            }
-
-            $(this).attr('sb-token-last-cursor-pos', cursorPos);
             Drupal.settings.token_set_last_selected_field = this;
             showTokens($(this));
             $('.first-token-set').click();
@@ -55,7 +62,14 @@
         if ($('#token-set-tokens').attr('target-element-id') == $(element).attr('id')) {
           return;
         }
-        $("#token-set-tokens").remove();
+        $('#token-set-tokens').remove();
+
+        $('.sb-token-textarea').each(function () {
+          if ($(this) != $(element)) {
+            $(this).removeAttr('sb-token-last-cursor-start-pos');
+            $(this).removeAttr('sb-token-last-cursor-end-pos');
+          }
+        });
 
         var targetElementID = $(element).attr('id');
         var token_set_id = element.closest(".has-token-data").data("token-set-id");
@@ -187,27 +201,37 @@
       };
 
       var insertToken = function (element, token) {
-       var cursorPos = $(element).attr('sb-token-last-cursor-pos');
-
-       element.value = element.value.substring(0, cursorPos)
-         + token
-         + element.value.substring(cursorPos, element.value.length);
-       return;
-
-        // IE support.
-        if (document.selection) {
-          element.focus();
-          sel = document.selection.createRange();
-          sel.text = token;
+        var cursorPos;
+        var cursorEndPos;
+        if (typeof $(element).attr('sb-token-last-cursor-start-pos') != 'undefined') {
+          cursorPos = $(element).attr('sb-token-last-cursor-start-pos');
         }
-        // Mozilla support.
-        else if (element.selectionStart || (element.selectionStart === '0')) {
-          element.value = element.value.substring(0, element.selectionStart)
-            + token
-            + element.value.substring(element.selectionEnd, element.value.length);
-        } else {
-          element.value += token;
+        else if (typeof $(element)[0].selectionStart != 'undefined') {
+          cursorPos = $(element)[0].selectionStart;
         }
+        else {
+          cursorPos = $(element).val().length;
+        }
+
+        if (typeof $(element).attr('sb-token-last-cursor-end-pos') != 'undefined') {
+          cursorEndPos = $(element).attr('sb-token-last-cursor-end-pos');
+        }
+        else if (typeof $(element)[0].selectionEnd != 'undefined') {
+          cursorEndPos = $(element)[0].selectionEnd;
+        }
+        else {
+          cursorEndPos = cursorPos; 
+        }
+        
+        // Reset the textarea's content with the selection replaced with this token:
+        element.value = element.value.substring(0, cursorPos)
+          + token
+          + element.value.substring(cursorEndPos, element.value.length);
+
+        // If a selection was replaced, the selection's end position is no longer valid:
+        $(element).attr('sb-token-last-cursor-start-pos', cursorPos);
+        $(element).attr('sb-token-last-cursor-end-pos', cursorPos);
+
       };
     }
   };
