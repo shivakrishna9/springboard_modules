@@ -712,3 +712,17 @@ function salesforce_donation_history_test_query($query) {
 
   return $result;
 }
+
+/**
+ * Implements hook_salesforce_sync_pass_item().
+ */
+function salesforce_donation_history_salesforce_sync_pass_item($item, $result) {
+  // Delete cache item for a user when an Opportunity item for them syncs.
+  if ($item->sobject->type == 'Opportunity') {
+    if (isset($item->sobject->fields['AccountId'])) {
+      $num_deleted = db_delete('cache_salesforce_donation_history')
+        ->condition('cid', $item->sobject->fields['AccountId'])
+        ->execute();
+    }
+  }
+}
