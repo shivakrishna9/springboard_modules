@@ -11,6 +11,10 @@
 function salesforce_login_admin_form($form, $form_state) {
   $form = array();
 
+  if (!variable_get('email_registration_login_with_username', TRUE)) {
+    drupal_set_message(t('Salesforce Login: It is reccomended that you enable the "Allow users login with e-mail or username." option on the <a href="/admin/config/people/accounts">Account Settings</a> page.'), 'warning');
+  }
+
   $form['salesforce_login_multiple_contacts_error'] = array(
     '#type' => 'textarea',
     '#title' => t('Multiple contacts error message'),
