@@ -20,11 +20,39 @@ function commerce_braintree_web_fundraiser_commerce_fundraiser_gateway_info() {
     // 'validate callback' => 'commerce_authnet_fundraiser_commerce_validate',
     'charge callback' => 'commerce_braintree_web_fundraiser_commerce_charge',
     // 'update callback' => 'commerce_authnet_fundraiser_commerce_update',
-    // 'refund callback' => 'commerce_authnet_fundraiser_commerce_refund',
+    'refund callback' => 'commerce_braintree_web_fundraiser_commerce_refund',
     // 'cardonfile callback' => 'commerce_authnet_fundraiser_commerce_cardonfile',
     // 'response fields callback' => 'commerce_authnet_fundraiser_commerce_response_fields',
     // 'response save callback' => 'commerce_authnet_fundraiser_commerce_response_save',
   );
+}
+
+/**
+ * Refund callback for authnet, wraps the admin form used for refund with our own system.
+ */
+function commerce_braintree_web_fundraiser_commerce_refund($payment_method, $refund) {
+  // Retrieve data.
+  $refunding_order = commerce_order_load($refund->did);
+  $transactions = commerce_payment_transaction_load_multiple(array(), $conditions = array('order_id' => $refunding_order->order_id));
+  $transaction = array_shift($transactions); // The first one is the original donation.
+
+  $form = array();
+  $form_state = array();
+  // Set up the values needed for the transaction to go through.
+  $form_state['transaction'] = $transaction;
+  $form_state['values']['amount'] = $refund->amount;
+  $form_state['order'] = $refunding_order;
+
+  $form_state['payment_method'] = commerce_payment_method_instance_load($transaction->instance_id);
+  // Submit the donation form.
+  // module_load_include('inc', 'commerce_braintree_web', '/includes/commerce_authnet.admin');
+  $result = commerce_braintree_web_refund_form_submit($form, $form_state);
+  // At this point the card has been saved on the user profile.
+  $success = FALSE;
+  if ($result !== FALSE) {
+    $success = TRUE;
+  }
+  return $success;
 }
 
 /**
@@ -117,7 +145,6 @@ function fundraiser_commerce_braintree_credit_card_form() {
  * Callback function, charge gateway.
  */
 function commerce_braintree_web_fundraiser_commerce_charge($method_instance, $donation) {
-
   // Translate from donation settings to the correct values for the plugin.
   // module_load_include('inc', 'fundraiser_commerce', 'includes/fundraiser_commerce.credit_card');
   $order = commerce_order_load($donation->did);
