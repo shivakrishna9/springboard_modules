@@ -149,6 +149,8 @@ function _springboard_token_set_wildcard_get_path_form_keys($path, $form_id) {
  * Attach the token UI to all target fields that exist on this form and
  * have a non-0 Token Set ID, as 0 means "None".
  *
+ * This function checks all form fields via recursion.
+ *
  * @param $element
  *   The form in question or the current, parent element being checked.
  *
@@ -164,9 +166,7 @@ function _springboard_token_set_wildcard_attach_to_target_form_keys(&$element, $
       if (!empty($child['#type'])) {
         $results[$key] = &$child;
         if (array_key_exists($key, $target_form_keys)) {
-          // Replace the target element with a container for itself, the token UI, and the token selector:
           $tsid = $target_form_keys[$key];
-
           if ($tsid != 0) {
             $tokens = springboard_token_set_get_tokens($tsid);
             $token_sets = $tokens;
@@ -184,6 +184,8 @@ function _springboard_token_set_wildcard_attach_to_target_form_keys(&$element, $
               'data' => $sb_token_set_path . '/css/springboard_token_set.css', 'type' => 'file');
             springboard_token_set_attach_token_ui($child, $token_sets);
           }
+        } else {
+          _springboard_token_set_wildcard_attach_to_target_form_keys($child, $target_form_keys);
         }
       }
     }
