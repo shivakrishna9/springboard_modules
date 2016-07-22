@@ -168,7 +168,7 @@ function springboard_advocacy_taxonomy_access() {
  * Add the advocacy links to springboard admin.
  */
 function springboard_advocacy_springboard_admin_admin_menu_items_alter(&$items) {
-  if (module_exists('springboard_advocacy')) {
+
     // Top Level: Springboard Advocacy.
     $items['admin/springboard/advocacy/actions'] = array(
       'link_path' => 'admin/springboard/advocacy/actions',
@@ -188,7 +188,7 @@ function springboard_advocacy_springboard_admin_admin_menu_items_alter(&$items) 
       'customized' => 1,
       'weight' => -2,
     );
-  }
+
 
   $types = node_type_get_types();
 
@@ -219,9 +219,29 @@ function springboard_advocacy_springboard_admin_admin_menu_items_alter(&$items) 
   if (module_exists('springboard_target')) {
 
     // Springboard Advocacy > Custom Targets.
-    $items['admin/springboard/advocacy/actions']['_children']['admin/springboard/advocacy/targets/custom-targets'] = array(
-      'link_path' => 'admin/springboard/advocacy/targets/custom-targets',
+    $items['admin/springboard/advocacy/actions']['_children']['admin/springboard/advocacy/targets'] = array(
+      'link_path' => 'admin/springboard/advocacy/targets',
       'link_title' => 'Custom Targets',
+      'menu_name' => 'springboard_admin_menu',
+      'expanded' => 1,
+      'customized' => 1,
+      'weight' => 2,
+    );
+
+    // Springboard Advocacy > Custom Individual Targets.
+    $items['admin/springboard/advocacy/actions']['_children']['admin/springboard/advocacy/targets']['_children']['admin/springboard/advocacy/targets/custom-targets'] = array(
+      'link_path' => 'admin/springboard/advocacy/targets/custom-targets',
+      'link_title' => 'Custom Individual Targets',
+      'menu_name' => 'springboard_admin_menu',
+      'expanded' => 1,
+      'customized' => 1,
+      'weight' => 1,
+    );
+
+    // Springboard Advocacy > Custom Group Targets.
+    $items['admin/springboard/advocacy/actions']['_children']['admin/springboard/advocacy/targets']['_children']['admin/springboard/advocacy/targets/custom-groups'] = array(
+      'link_path' => 'admin/springboard/advocacy/targets/custom-groups',
+      'link_title' => 'Custom Groups',
       'menu_name' => 'springboard_admin_menu',
       'expanded' => 1,
       'customized' => 1,
