@@ -1,0 +1,199 @@
+<?php
+
+/**
+* Implements hook_menu().
+*/
+function sba_target_search_menu() {
+// Committee Search Selector autocomplete path.
+$items['target-search/committee/autocomplete'] = array(
+'page callback' => '_sba_target_search_committee_autocomplete',
+'access arguments' => array('add target to action'),
+'type' => MENU_CALLBACK,
+);
+
+return $items;
+}
+
+/**
+ * Autocomplete callback to populate committee list dropdown.
+ *
+ * @param string $name
+ *   The value of the autocomplete textfield.
+ * @param string $state
+ *   The value of the state field.
+ * @param string $chamber
+ *   The value of the chamber field.
+ */
+function _sba_target_search_committee_autocomplete($name, $state, $chamber) {
+  $matches = array();
+
+  // Retrieve committee list from cache or via API call if not cached.
+  $api_call = springboard_advocacy_api_call();
+  $committee_list = $api_call->getCommittees();
+
+  // Grep the results using patterns based on form input.
+  $name_pattern = '/' . $name . '/i';
+  $state_pattern = '/\(' . $state . '\)/i';
+  $chamber_pattern = '/\(' . $chamber . '\)/i';
+
+  if (!empty($committee_list)) {
+    $results = preg_grep($name_pattern, $committee_list);
+    if ($state != 'All') {
+      $results = preg_grep($state_pattern, $results);
+    }
+    if ($chamber != 'All') {
+      $results = preg_grep($chamber_pattern, $results);
+    }
+    if (is_array($results)) {
+      $num = count($results);
+      // Limit the displayed results (there are 7,000+ committees)
+      // and create a tally message.
+      $results = array_slice($results, 0, 5);
+      $rest = $num - 5;
+      if ($rest > 0) {
+        $results['message'] = 'Plus ' . $rest . ' more. Try narrowing your search with more letters, words or filters';
+      }
+      else {
+        // Prevent the autocompelte js from bolding the last suggestion.
+        $results['message'] = '';
+      }
+      foreach ($results as $key => $row) {
+        $matches[$row] = $row;
+      }
+    }
+  }
+  drupal_json_output($matches);
+}
+
+/**
+ * Implements hook_theme().
+ */
+function sba_target_search_theme() {
+  return array(
+    'views_exposed_form' => array(
+      'template' => 'templates/views-exposed-form--targets-block-3',
+      'render element' => 'form',
+    ),
+    'views_view' => array(
+      'template' => 'templates/views-view--targets-block-3',
+      'render element' => 'form',
+    ),
+  );
+}
+
+
+/**
+ * Implements hook_preprocess_hook().
+ *
+ * Override springboard theme's conversion of button text.
+ */
+function sba_target_search_preprocess_views_exposed_form(&$vars, $hook) {
+  if (isset($vars['theme_hook_suggestion']) &&  $vars['theme_hook_suggestion'] == 'views_exposed_form__targets__block_3') {
+    unset($vars['form']['submit']['#printed']);
+    $vars['target_button'] = drupal_render($vars['form']['submit']);
+  }
+}
+
+
+/**
+ * Implements hook_preprocess_views_view_table().
+ *
+ * Change the table output of the Target search when only custom groups are searched.
+ */
+
+function sba_target_search_preprocess_views_view_table(&$vars) {
+  $view = $vars['view'];
+  $fields = &$view->field;
+  $columns = $view->style_plugin->options['columns'];
+  if($view->name == 'targets' && $view->current_display == 'block_3' && in_array('Groups', array_keys($view->filter['search_class_name']->value))) {
+    $group_fields = array('last_name', 'group_name', 'target_actions');
+    foreach($vars['header'] as $key => $head) {
+      if(!in_array($key, $group_fields)) {
+        unset($vars['header'][$key]);
+
+      }
+    }
+    foreach($columns as $key => $column) {
+      if(!in_array($key, $group_fields)) {
+        // prevent headers from being rebuilt in springboard_advocacy_preprocess_views_view_table().
+        unset($columns[$key]);
+      }
+    }
+    foreach($fields as $key=> $field) {
+      if(!in_array($key, $group_fields)) {
+        unset($fields[$key]);
+      }
+    }
+    $vars['view']->style_plugin->options['columns'] = $columns;
+    $vars['view']->style_options['columns'] = $columns;
+    $vars['options']['columns'] = $columns;
+    foreach($vars['rows'] as $key => $row) {
+      foreach($row as $field_name => $value) {
+        if(!in_array($field_name, $group_fields)) {
+          unset($vars['rows'][$key][$field_name]);
+        }
+      }
+    }
+
+    $header = $vars['header'];
+    $rows = $vars['rows'];
+  }
+
+}
+
+function sba_target_search_add_target_search_form($form, &$form_state, $entity = '') {
+  $form['recipients'] = array(
+    '#type' => 'hidden',
+    '#default_value' => '',
+  );
+
+  if(is_object($entity)) {
+    $form['recipients']['#default_value'] = isset($entity->data['recipients']) ? str_replace('"', '&quot;', $entity->data['recipients']) : '';
+  }
+  else if (is_array($entity)) {
+    $form['recipients']['#default_value'] = isset($entity['recipients']) ? str_replace('"', '&quot;', $entity['recipients']) : '';
+  }
+
+  $form['message_recipients'] = array (
+      // @todo make these IDs more generic
+      '#id' => 'springboard-advocacy-message-recipients',
+      '#type' => 'markup',
+      '#markup' => '<div id="springboard-advocacy-message-recipients"><h3>Message Targets</h3><div class = "sba-charcount-status"></div><div class = "sba-target-status"></div><div class = "sba-message-status"></div><div id="springboard-advocacy-message-recipients-content"></div></div>',
+      '#prefix' => '<div id="springboard-advocacy-message-recipients-container">',
+      '#suffix' => '</div>',
+      '#weight' => 99,
+    );
+
+  $form['#suffix'] .= '<div id="springboard-advocacy-find-targets-container"><div id="springboard-advocacy-find-targets"><h3>Find Targets</h3>' . views_embed_view('targets', 'block_3') . '</div></div>';
+
+  // @TODO font should be in theme, most of CSS shoudl be in theme
+  $form['#attached']['css'][] = drupal_get_path('module', 'sba_target_search') . '/css/sba_target_search.css';
+  $form['#attached']['css'][] = 'https://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800';
+
+  $form['#attached']['js'][] = drupal_get_path('module', 'sba_target_search') . '/js/sba_target_search.js';
+
+  $form['#attributes']['class'][] = 'sba_target_search_parent_form';
+
+  $form['#submit'][] = '';
+
+  return $form;
+}
+
+/**
+ * Form API submit callback for the sba_message form.
+ *
+ * @param $form
+ *   The form array.
+ * @param $form_state
+ *    The form meta-data and values.
+ */
+function sba_target_search_edit_form_submit(&$form, &$form_state) {
+  $entity = entity_ui_controller('sba_message')->entityFormSubmitBuildEntity($form, $form_state);
+
+  $form_state['values']['recipients'] = str_replace('&quot;', '"', $form_state['values']['recipients']);
+
+  form_load_include($form_state, 'inc', 'sba_target_search', 'sba_target_search.api_calls');
+// save the group of targets move this to sba_target_search
+  _sba_target_search_api_save($entity, $is_new, $form_state);
+}
+

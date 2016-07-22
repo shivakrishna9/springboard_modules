@@ -28,6 +28,9 @@ function springboard_target_create_custom_groups_form() {
       '#attributes' => array('class' => 'group-add'),
     );
   }
+  if(module_exists('sba_target_search')) {
+    $form = sba_target_search_add_target_search_form($form, $form_state);
+  }
   return $form;
 }
 

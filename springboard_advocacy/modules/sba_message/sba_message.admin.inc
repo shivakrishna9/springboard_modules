@@ -23,8 +23,8 @@ class SbaMessageUIController extends EntityDefaultUIController {
     foreach (sba_message_get_types() as $type) {
       $items[$this->path . '/add/' . $type->type] = array(
         'title' => 'Add ' . $type->label,
-        'page callback' => 'sba_message_form_wrapper',
-        'page arguments' => array($type->type),
+        'page callback' => 'drupal_get_form',
+        'page arguments' => array('sba_message_edit_form', $type->type),
         'access callback' => 'sba_message_access',
         'access arguments' => array('create', 'create ' . $type->type),
         'file' => 'sba_message.admin.inc',
@@ -36,8 +36,8 @@ class SbaMessageUIController extends EntityDefaultUIController {
 
     // Loading and editing sba_message entities.
     $items[$this->path . '/sba_message/' . $wildcard] = array(
-      'page callback' => 'sba_message_form_wrapper',
-      'page arguments' => array($id_count + 1),
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('sba_message_edit_form', $id_count + 1),
       'access callback' => 'sba_message_access',
       'access arguments' => array('edit', $id_count + 1),
       'weight' => 0,
@@ -64,56 +64,6 @@ class SbaMessageUIController extends EntityDefaultUIController {
     );
     return $items;
   }
-}
-
-/**
- * Form callback wrapper: create or edit a sba_message.
- *
- * @param $sba_message
- *   The sba_message object being edited by this form.
- *
- * @return array
- *   The message page render array.
- *
- * @see sba_message_edit_form()
- */
-function sba_message_form_wrapper($sba_message) {
-  if (is_string($sba_message)) {
-    $sba_message = sba_message_create(array('type' => $sba_message));
-  }
-  $build = array();
-  $build['#attached']['css'] = array(
-    drupal_get_path('module', 'sba_message') . '/css/sba_message.css',
-    'https://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800',
-  );
-
-  $build['#attached']['js'] = array(
-    drupal_get_path(
-      'module',
-      'sba_message'
-    ) . '/js/sba_message.js' => array('group' => JS_THEME, 'weight' => 99999),
-  );
-  $node = node_load(arg(1));
-  $build['content'] = array(
-    'sba_message_edit_form' => drupal_get_form('sba_message_edit_form', $sba_message, $node),
-    'message_recipients' => array(
-      '#id' => 'springboard-advocacy-message-recipients',
-      '#type' => 'markup',
-      '#markup' => '<div id="springboard-advocacy-message-recipients"><h3>Message Targets</h3><div class = "sba-charcount-status"></div><div class = "sba-target-status"></div><div class = "sba-message-status"></div><div id="springboard-advocacy-message-recipients-content"></div></div>',
-      '#prefix' => '<div id="springboard-advocacy-message-recipients-container">',
-      '#suffix' => '</div>',
-      '#weight' => 2,
-    ),
-    'find_targets' => array(
-      '#id' => 'springboard-advocacy-find-targets',
-      '#type' => 'markup',
-      '#markup' => views_embed_view('targets', 'block_3'),
-      '#prefix' => '<div id="springboard-advocacy-find-targets-container"><div id="springboard-advocacy-find-targets"><h3>Find Targets</h3>',
-      '#suffix' => '</div></div>',
-      '#weight' => 3,
-    ),
-  );
-  return $build;
 }
 
 /**
@@ -261,6 +211,10 @@ function sba_message_edit_form($form, &$form_state, $sba_message, $node) {
     '#submit' => $submit + array('sba_message_edit_form_submit'),
   );
 
+  if(module_exists('sba_target_search')) {
+    // Add the target search and elements for saving targets.
+    $form = sba_target_search_add_target_search_form($form, $form_state, $sba_message);
+  }
   // We append the validate handler to #validate in case a form callback_wrapper
   // is used to add validate handlers earlier.
   $form['#validate'][] = 'sba_message_edit_form_validate';
@@ -292,8 +246,6 @@ function sba_message_edit_form_validate(&$form, &$form_state) {
  *    The form meta-data and values.
  */
 function sba_message_edit_form_submit(&$form, &$form_state) {
-  $form_state['values']['data']['recipients'] = str_replace('&quot;', '"', $form_state['values']['data']['recipients']);
-
   $sba_message = entity_ui_controller('sba_message')->entityFormSubmitBuildEntity($form, $form_state);
   // Add in created and changed times.
   $is_new = FALSE;
@@ -324,9 +276,6 @@ function sba_message_edit_form_submit(&$form, &$form_state) {
 
     sba_message_draggable_save($arg, $sba_message->sba_message_id, $sba_message->data['weight']);
   }
-
-  form_load_include($form_state, 'inc', 'sba_message', 'sba_message.api_calls');
-  _sba_message_api_save($sba_message, $is_new, $form_state);
 
   $form_state['redirect'] = 'node/' . $nid . '/messages';
 }

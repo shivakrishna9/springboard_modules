@@ -813,14 +813,16 @@ function springboard_advocacy_form_views_exposed_form_alter(&$form, &$form_state
   if ($form_id == 'views_exposed_form' && $form_state['view']->name == 'targets' && $form_state['view']->base_table ='advocacy') {
 
     // Committee autocomplete.
-    $form['search_committee']['#autocomplete_path'] = 'message-action/committee/autocomplete';
+    if(module_exists('sba_target_search')) {
+      $form['search_committee']['#autocomplete_path'] = 'target-search/committee/autocomplete';
 
-    // Override stock Drupal autocomplete js
-    // needed to add values from chamber and state fields
-    // to the ajax request path.
-    $form['#attached']['js'] = array(
-      drupal_get_path('module', 'sba_message') . '/js/autocomplete_override.js',
-    );
+      // Override stock Drupal autocomplete js
+      // needed to add values from chamber and state fields
+      // to the ajax request path.
+      $form['#attached']['js'] = array(
+        drupal_get_path('module', 'sba_target_search') . '/js/autocomplete_override.js',
+      );
+    }
 
     // Convert select fields to checkboxes.
     if (isset($form['search_role_1'])) {
