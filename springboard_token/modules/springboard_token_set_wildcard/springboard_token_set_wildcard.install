@@ -14,7 +14,7 @@ function springboard_token_set_wildcard_schema() {
     'description' => 'Maps token sets to path+form_key combinations.',
     'fields' => array(
       'tsid' => array(
-        'description' => 'Unique ID of the token set.',
+        'description' => 'Default token set ID for the target field.',
         'type' => 'int',
         'unsigned' => TRUE,
         'not null' => TRUE,
