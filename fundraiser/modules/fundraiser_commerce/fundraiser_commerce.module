@@ -880,86 +880,88 @@ function fundraiser_commerce_fundraiser_get_credit_encryption_path() {
 function fundraiser_commerce_fundraiser_donation_get_donation($donation) {
   // Load the order object, line items and profile.
   $order = commerce_order_load($donation->did);
-  $order_wrapper = entity_metadata_wrapper('commerce_order', $order);
+  if ($order) {
+    $order_wrapper = entity_metadata_wrapper('commerce_order', $order);
 
-  // Data from order.
-  $donation->donation['mail'] = isset($order->mail) ? $order->mail : '';
+    // Data from order.
+    $donation->donation['mail'] = isset($order->mail) ? $order->mail : '';
 
-  $order_total = $order_wrapper->commerce_order_total->value();
+    $order_total = $order_wrapper->commerce_order_total->value();
 
-  // Reverse the work done by commerce_currency_decimal_to_amount($donation->donation['amount'], $donation->donation['currency'])
-  // So we have the correct decimaled value.
-  // Note that commerce_currency_amount_to_decimal() does not pad the decimal
-  // places, but commerce_currency_format() does. (ie. 10.5 vs $10.50).
-  // Also note that this number_format does not include a comma.
-  // The number_format won't play nicely with other currencies that use
-  // difference separators.
-  // This should later be fixed to not use the numbeer_format, and for display
-  // tokens use amount_formatted for display and amount for math and backend
-  // things.
-  $donation->donation['amount'] = number_format(commerce_currency_amount_to_decimal($order_total['amount'], $order_total['currency_code']), 2, '.', '');
-  $donation->donation['currency'] = commerce_currency_load($order_total['currency_code']);
-  $donation->donation['amount_formatted'] = commerce_currency_format($order_total['amount'], $order_total['currency_code']);
+    // Reverse the work done by commerce_currency_decimal_to_amount($donation->donation['amount'], $donation->donation['currency'])
+    // So we have the correct decimaled value.
+    // Note that commerce_currency_amount_to_decimal() does not pad the decimal
+    // places, but commerce_currency_format() does. (ie. 10.5 vs $10.50).
+    // Also note that this number_format does not include a comma.
+    // The number_format won't play nicely with other currencies that use
+    // difference separators.
+    // This should later be fixed to not use the numbeer_format, and for display
+    // tokens use amount_formatted for display and amount for math and backend
+    // things.
+    $donation->donation['amount'] = number_format(commerce_currency_amount_to_decimal($order_total['amount'], $order_total['currency_code']), 2, '.', '');
+    $donation->donation['currency'] = commerce_currency_load($order_total['currency_code']);
+    $donation->donation['amount_formatted'] = commerce_currency_format($order_total['amount'], $order_total['currency_code']);
 
-  $donation->donation['quantity'] = 1;
-  $donation->donation['hostname'] = $order->hostname;
+    $donation->donation['quantity'] = 1;
+    $donation->donation['hostname'] = $order->hostname;
 
-  // Check for a donation line item that may contain a quantity
-  foreach ($order_wrapper->commerce_line_items as $line_item_wrapper) {
-    if ($line_item_wrapper->type->value() == 'donation' && $line_item_wrapper->quantity->value() > 1) {
-      // Reset the donation amount and quantity from this line item
-      $donation->donation['quantity'] = $line_item_wrapper->quantity->value();
-      $donation->donation['amount'] = number_format(commerce_currency_amount_to_decimal(
-        $line_item_wrapper->commerce_unit_price->amount->value() * $line_item_wrapper->quantity->value(),
-        $line_item_wrapper->commerce_unit_price->currency_code->value()
-      ), 2, '.', '');
-      $donation->donation['currency'] = commerce_currency_load($line_item_wrapper->commerce_unit_price->currency_code->value());
-    }
-  }
-
-  // Data from profile.
-  if (isset($order->commerce_customer_billing[LANGUAGE_NONE][0]['profile_id'])) {
-    $profile = commerce_customer_profile_load($order->commerce_customer_billing[LANGUAGE_NONE][0]['profile_id']);
-    $map = array(
-      'first_name' => 'first_name',
-      'last_name' => 'last_name',
-      'address' => 'thoroughfare',
-      'address_line_2' => 'premise',
-      'city' => 'locality',
-      'country' => 'country',
-      'state' => 'administrative_area',
-      'zip' => 'postal_code',
-    );
-    $field_info = _fundraiser_get_field_keys();
-    foreach ($field_info as $field_name) {
-      if (isset($map[$field_name])) {
-        $order_name = $map[$field_name];
-        $donation->donation[$field_name] = isset($profile->commerce_customer_address[LANGUAGE_NONE][0][$order_name]) ?
-          $profile->commerce_customer_address[LANGUAGE_NONE][0][$order_name] : '';
+    // Check for a donation line item that may contain a quantity
+    foreach ($order_wrapper->commerce_line_items as $line_item_wrapper) {
+      if ($line_item_wrapper->type->value() == 'donation' && $line_item_wrapper->quantity->value() > 1) {
+        // Reset the donation amount and quantity from this line item
+        $donation->donation['quantity'] = $line_item_wrapper->quantity->value();
+        $donation->donation['amount'] = number_format(commerce_currency_amount_to_decimal(
+          $line_item_wrapper->commerce_unit_price->amount->value() * $line_item_wrapper->quantity->value(),
+          $line_item_wrapper->commerce_unit_price->currency_code->value()
+        ), 2, '.', '');
+        $donation->donation['currency'] = commerce_currency_load($line_item_wrapper->commerce_unit_price->currency_code->value());
       }
     }
-  }
-  // Time of last update / charge.
-  $donation->last_changed = $order->changed;
-  // Add the order status data.
-  $donation->status = $donation->status_label = isset($order->status) ? $order->status : 'unknown';
-  if (!empty($order->status)) {
-    $donation->status_label = _fundraiser_commerce_get_label_by_status($order->status);
-    $donation->status_charged = _fundraiser_commerce_get_charged_by_status($order->status) ? 1 : 0;
-    if ($donation->status_charged) {
-      $donation->close_date = date('Y-m-d H:i:s', $donation->last_changed);
-      $donation->transaction_date = date('Y-m-d H:i:s', $donation->last_changed);
-    }
-  }
-  // This order data was stored during hook_fundraiser_donation_process(), and scrubbed by the gateway.
-  if (!empty($order->data)) {
-    $data = _fundraiser_commerce_order_data_retrieve($order->data['fundraiser_commerce']);
 
-    // Put data stored data into the right places.
-    $donation->donation['payment_method'] = isset($data['payment_method']) ? $data['payment_method'] : '';
-    $donation->donation['payment_fields'] = isset($data['payment_fields']) ? $data['payment_fields'] : array();
-    // Put data on the donation object for reference later.
-    $donation->data = $data; // Data will contain any gateway payment processing information.
+    // Data from profile.
+    if (isset($order->commerce_customer_billing[LANGUAGE_NONE][0]['profile_id'])) {
+      $profile = commerce_customer_profile_load($order->commerce_customer_billing[LANGUAGE_NONE][0]['profile_id']);
+      $map = array(
+        'first_name' => 'first_name',
+        'last_name' => 'last_name',
+        'address' => 'thoroughfare',
+        'address_line_2' => 'premise',
+        'city' => 'locality',
+        'country' => 'country',
+        'state' => 'administrative_area',
+        'zip' => 'postal_code',
+      );
+      $field_info = _fundraiser_get_field_keys();
+      foreach ($field_info as $field_name) {
+        if (isset($map[$field_name])) {
+          $order_name = $map[$field_name];
+          $donation->donation[$field_name] = isset($profile->commerce_customer_address[LANGUAGE_NONE][0][$order_name]) ?
+            $profile->commerce_customer_address[LANGUAGE_NONE][0][$order_name] : '';
+        }
+      }
+    }
+    // Time of last update / charge.
+    $donation->last_changed = $order->changed;
+    // Add the order status data.
+    $donation->status = $donation->status_label = isset($order->status) ? $order->status : 'unknown';
+    if (!empty($order->status)) {
+      $donation->status_label = _fundraiser_commerce_get_label_by_status($order->status);
+      $donation->status_charged = _fundraiser_commerce_get_charged_by_status($order->status) ? 1 : 0;
+      if ($donation->status_charged) {
+        $donation->close_date = date('Y-m-d H:i:s', $donation->last_changed);
+        $donation->transaction_date = date('Y-m-d H:i:s', $donation->last_changed);
+      }
+    }
+    // This order data was stored during hook_fundraiser_donation_process(), and scrubbed by the gateway.
+    if (!empty($order->data)) {
+      $data = _fundraiser_commerce_order_data_retrieve($order->data['fundraiser_commerce']);
+
+      // Put data stored data into the right places.
+      $donation->donation['payment_method'] = isset($data['payment_method']) ? $data['payment_method'] : '';
+      $donation->donation['payment_fields'] = isset($data['payment_fields']) ? $data['payment_fields'] : array();
+      // Put data on the donation object for reference later.
+      $donation->data = $data; // Data will contain any gateway payment processing information.
+    }
   }
 }
 
@@ -1088,7 +1090,23 @@ function fundraiser_commerce_fundraiser_donation_create($donation) {
   }
   // Update profile with the billing information.
   $field = field_info_field('commerce_customer_address');
-  $instance =field_info_instance('commerce_customer_profile', 'commerce_customer_address', 'billing');
+  $instance = field_info_instance('commerce_customer_profile', 'commerce_customer_address', 'billing');
+  if (module_exists('strip_utf8mb4')) {
+    $strip_fields = array(
+      'country',
+      'first_name',
+      'last_name',
+      'state',
+      'address',
+      'address_line_2',
+      'city',
+      'zip',
+    );
+    foreach ($strip_fields as $field) {
+      $donation->donation[$field] = _strip_utf8mb4_for_text_fields($donation->donation[$field], variable_get('strip_utf8mb4_replace_string', '--'));
+    }
+  }
+
   $profile->commerce_customer_address[LANGUAGE_NONE][0] = addressfield_default_values($field, $instance);
   $profile->commerce_customer_address[LANGUAGE_NONE][0]['country'] = $donation->donation['country'];
   $profile->commerce_customer_address[LANGUAGE_NONE][0]['name_line'] = $donation->donation['first_name'] . ' ' . $donation->donation['last_name'];

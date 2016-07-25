@@ -176,6 +176,7 @@ function springboard_petition_add_example_petition() {
   $node->language = LANGUAGE_NONE;
   $node->uid = 1;
   $node->title = 'Example Petition Form';
+  $node->field_webform_user_internal_name = array($node->language => array(0 => array('value' => 'Example Petition Form')));
   $node->status = 1;
   $node->promote = 0;
   $node->body[LANGUAGE_NONE][0]['value'] = 'Donec placerat. Nullam nibh dolor, blandit sed, fermentum id, ' .
@@ -266,7 +267,7 @@ function springboard_petition_email_wrapper_add() {
   $node->type = 'email_wrapper';
   $node->language = LANGUAGE_NONE;
   $node->uid = 1;
-  $node->title = 'Example Petition Email Wrapper';
+  $node->title = 'Example Petition Email Template';
   $node->status = 0;
   $node->promote = 0;
   $node->email_wrapper_from_name[LANGUAGE_NONE][0] = array(

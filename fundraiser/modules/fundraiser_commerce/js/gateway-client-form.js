@@ -1,5 +1,3 @@
-console.log('f')
-
 Drupal.behaviors.fundraiserGatewayBehavior = {
 
 attach: function(context, settings) { (function($) {
