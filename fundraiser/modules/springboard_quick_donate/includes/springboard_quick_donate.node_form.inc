@@ -135,7 +135,7 @@ function springboard_quick_donate_form_node_form_alter(&$form, &$form_state, $fo
     );
   }
 
-  $form['#submit'][] = '_springboard_quick_donate_node_form_submit';
+  $form['actions']['submit']['#submit'][] = '_springboard_quick_donate_node_form_submit';
   $form['#attached']['js'][] = drupal_get_path('module', 'springboard_quick_donate') . '/js/springboard_quick_donate.js';
 }
 
@@ -146,7 +146,7 @@ function springboard_quick_donate_form_node_form_alter(&$form, &$form_state, $fo
  */
 function _springboard_quick_donate_node_form_submit($form, &$form_state) {
   $fields = array(
-    'fundraiser_nid' => $form['#node']->nid,
+    'fundraiser_nid' => $form_state['nid'],
     'quickdonate_optin_message' => $form_state['values']['quickdonate_optin_message'],
     'quickdonate_help_message_format' => $form_state['values']['quickdonate_help_message']['format'],
     'quickdonate_help_message' => $form_state['values']['quickdonate_help_message']['value'],
