@@ -553,13 +553,13 @@ function webform_user_webform_submit($form, &$form_state) {
     if (!$skip_user_check && $user->uid && $form_state['redirect']) {
       $account = user_load($user->uid);
       // Update the existing user account.
-      _webform_user_save_profile_map($account, $map);
+      _webform_user_save_profile_map($account, $map, $form, $form_state);
     }
     // Or if we found an account matching the email.
     elseif (isset($account->uid) && $form_state['redirect']) {
       // Update the existing user account.
       // _webform_user_save_profile_map() performs user_save().
-      _webform_user_save_profile_map($account, $map);
+      _webform_user_save_profile_map($account, $map, $form, $form_state);
       $submission = webform_get_submission($node->nid, $form_state['values']['details']['sid']);
       $submission->uid = $account->uid;
       if ($skip_user_check) {
@@ -578,7 +578,7 @@ function webform_user_webform_submit($form, &$form_state) {
       $account->name = $fields['mail'];
       $account->status = TRUE;
       // Create the new user account.
-      $account = _webform_user_save_profile_map($account, $map);
+      $account = _webform_user_save_profile_map($account, $map, $form, $form_state);
       $submission = webform_get_submission($node->nid, $form_state['values']['details']['sid']);
       $submission->uid = $account->uid;
       // Setting this flag skips uid checking during presave.
@@ -1290,7 +1290,7 @@ function _webform_user_validate_email($mail) {
  * @return object
  *   An account object.
  */
-function _webform_user_save_profile_map($account, &$map) {
+function _webform_user_save_profile_map($account, &$map, $form, $form_state) {
   // The saved map has to handle saving to both profile2 / entity fields. And
   // profile.module.
   if ($map) {
@@ -1385,6 +1385,8 @@ function _webform_user_save_profile_map($account, &$map) {
         }
       }
     }
+
+    drupal_alter('webform_user_save_profile_map', $account, $form, $form_state);
     return user_save($account);
   } // End if map.
 }

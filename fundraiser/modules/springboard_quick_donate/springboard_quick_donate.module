@@ -135,13 +135,15 @@ function springboard_quick_donate_payment_method_fields_alter(&$element, &$payme
 }
 
 /**
- * Implements hook_salesforce_genmap_map_item().
+ * Implements hook_webform_user_save_profile_map_alter().
  */
-function springboard_quick_donate_salesforce_genmap_map_item_alter(&$item, &$drupal_object) {
-  if ($drupal_object->data['payment_fields'][$drupal_object->data['payment_method']]['quickdonate']) {
-    $item['sobject']->fields['Quick_Donation__c'] = 'true';
-  }
-  else {
-    $item['sobject']->fields['Quick_Donation__c'] = 'false';
+function springboard_quick_donate_webform_user_save_profile_map_alter(&$account, $form, $form_state) {
+  if (isset($form['#node']['quickdonate']) && $form['#node']['quickdonate']) {
+    $account->quickdonate_optin_date = time();
+    if (isset($_SESSION['springboard_hmac']['quickdonate'])) {
+      module_load_include('inc', 'springboard_quick_donate', 'includes/springboard_quick_donate.springboard_hmac');
+      $mapping = _springboard_hmac_quick_mapping();
+      $account->quickdonate_market_source = $_SESSION['springboard_hmac']['quickdonate'][$mapping['ms']];
+    }
   }
 }

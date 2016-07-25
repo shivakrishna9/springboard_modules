@@ -273,8 +273,6 @@ function springboard_quick_donate_fundraiser_donation_form($form, $form_state) {
     if (!empty($form['submitted']['payment_information']['payment_fields']['bank'])) {
       $form['submitted']['payment_information']['payment_fields']['bank']['quickdonate']['#value'] = TRUE;
     }
-
-    unset($_SESSION['springboard_hmac']['quickdonate']);
   }
 
   // Add submit handler.
@@ -344,6 +342,9 @@ function springboard_quick_donate_fundraiser_donation_submit($form, $form_state,
 function springboard_quick_donate_fundraiser_commerce_submit_handler_pane_values_alter(&$pane_values, &$donation) {
   if (isset($donation->data['cardonfile']) && $donation->data['cardonfile'] != 'new' && $donation->data['cardonfile'] > 0) {
     $pane_values['cardonfile'] = $donation->data['cardonfile'];
+  }
+  if ($_SESSION['springboard_hmac']['quickdonate']) {
+    unset($_SESSION['springboard_hmac']['quickdonate']);
   }
 }
 
