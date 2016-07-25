@@ -1068,7 +1068,7 @@
                     if(oldQueryObj.hasOwnProperty(key)){
                         var newQueryValuesArr = values.split('|');
                         $.each(newQueryValuesArr, function(i, value){
-                            if(oldQueryObj[key].toString().indexOf(value) == -1) {
+                            if(oldQueryObj[key].toString().indexOf(value) == -1 || value == '') {
                                 missing = true;
                             }
                             else {
