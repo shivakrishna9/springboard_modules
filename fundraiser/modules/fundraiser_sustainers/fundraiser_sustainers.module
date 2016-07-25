@@ -499,7 +499,7 @@ function fundraiser_sustainers_salesforce_genmap_map_fields_alter(&$fields, $con
     }
 
     // Add the card-on-file token if available.
-    if (module_exists('fundraiser_commerce')) {
+    if (module_exists('fundraiser_commerce') && module_exists('commerce_cardonfile')) {
       $cardonfile_data = _fundraiser_commerce_donation_cardonfile_card($donation, FALSE);
       if (!empty($cardonfile_data)) {
         $fields['Card_On_File_Token__c'] = $cardonfile_data->remote_id;
