@@ -582,7 +582,7 @@
 
         // Editing a pre-existing message, append the recipients
         // to the recipients div using hidden form value
-        var recipients =  $('input[type="hidden"][name$="recipients"]').val();
+        var recipients =  $('input[type="hidden"][name$="data[recipients]"]').val();
         if(recipients.length > 0) {
             $('body').once('edit-page', function() {
                 Sba.buildEditPage(recipients);
@@ -995,7 +995,6 @@
 
     //dedupe add target requests
     Sba.addTargetDedupe = function(newQueryArr) {
-
         var duplicate;
         var soloTarget;
 
@@ -1088,7 +1087,7 @@
             if(oldQueryArr.length > newQueryArr.length &&  duplicate != true) {
                 duplicate = false;
             }
-        });
+        });  // end $('target-recipients').each();
 
         if(duplicate == true) {
             if(soloTarget == -1) {

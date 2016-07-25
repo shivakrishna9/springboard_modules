@@ -18,7 +18,7 @@ function springboard_target_group_form($group_id = NULL) {
   $form['#attached']['css'][] = drupal_get_path('module', 'springboard_target') . '/css/sba_target.css';
   $form['#attached']['js'][] = drupal_get_path('module', 'springboard_target') . '/js/sba_target.js';
 
-  // Display a warning if the API is unconfigured and reurn an empty form.
+  // Display a warning if the API is unconfigured and return an empty form.
   $unconfigured = springboard_advocacy_api_unconfigured('springboard');
   if(!empty($unconfigured)) {
     $items = implode(', ', $unconfigured);
@@ -44,19 +44,7 @@ function springboard_target_group_form($group_id = NULL) {
     $group = $group->data;
   }
 
-  // Set up the form. Use containers to facilitate styling.
-  $form['row_one'] = array(
-    '#type' => 'container',
-    '#attributes' => array(
-      'class' => array(
-        'target-row-one',
-        'target-row',
-      ),
-    ),
-    '#weight' => -5,
-  );
-
-  $form['row_one']['group_name'] = array(
+  $form['group_name'] = array(
     '#type' => 'textfield',
     '#title' => t('Group Name'),
     '#default_value' => isset($group->group_name) ? $group->group_name : '',
@@ -65,6 +53,15 @@ function springboard_target_group_form($group_id = NULL) {
     '#required' => TRUE,
     '#attributes' => array('class' => array('group-add', 'group-name')),
   );
+
+  $form['data']['group_id'] = array(
+    '#type' => 'hidden',
+    '#default_value' => $group_id,
+  );
+
+  if(module_exists('sba_target_search')) {
+    $form = sba_target_search_add_target_search_form($form, $form_state, $group);
+  }
 
   return $form;
 }

@@ -147,11 +147,6 @@ function sba_message_edit_form($form, &$form_state, $sba_message, $node) {
     '#value' => isset($sba_message->data['message_id']) ? $sba_message->data['message_id'] : str_replace(' ', '-', uniqid(substr(variable_get('site_name', ''), 0, 10) . '-' . substr($node->title, 0, 10) . '-')),
   );
 
-  $form['data']['recipients'] = array(
-    '#type' => 'hidden',
-    '#default_value' => isset($sba_message->data['recipients']) ? str_replace('"', '&quot;', $sba_message->data['recipients']) : '',
-  );
-
   $form['data']['group_id'] = array(
     '#type' => 'hidden',
     '#default_value' => isset($sba_message->data['group_id']) ? $sba_message->data['group_id'] : '',

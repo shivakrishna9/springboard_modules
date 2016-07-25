@@ -69,21 +69,33 @@ class springboard_advocacy_views_handler_field_target_actions extends views_hand
   function render_links($values) {
     $legislator = TRUE;
 
-    if (isset($values->class_name) && $values->class_name == "Legislator") {
-      $path = 'springboard/advocacy/targets/legislator';
-    }
-    else {
-      $path = 'springboard/advocacy/targets/custom-targets';
-      $legislator = FALSE;
+    switch($values->class_name) {
+      case "Legislator":
+        $path = 'springboard/advocacy/targets/legislator';
+      break;
+      case "group":
+        $path = 'springboard/advocacy/targets/custom-groups';
+        $legislator = FALSE;
+        break;
+      default:
+        $path = 'springboard/advocacy/targets/custom-targets';
+        $legislator = FALSE;
+        break;
     }
 
     $links  = array();
     // Add Target to Action Link used in message entity's target search form results.
     if (user_access('add target to action') && !empty($this->options['which_links']['add'])) {
-      $links[] = l(t('add'), 'add-target', array(
-        'external' => TRUE,
-        'attributes' => array('class' => array('advocacy-add-target')),
-        'query' => array(
+      $query = array();
+      if($values->class_name == 'group') {
+        $query = array(
+          'id' => $values->id,
+          'type' => !empty($values->class_name) ? $values->class_name : '',
+          'group_name' => !empty($values->group_name) ? $values->group_name : '',
+        );
+      }
+      else {
+        $query = array(
           'id' => $values->id,
           'type' => !empty($values->class_name) ? $values->class_name : '',
           'group_name' => !empty($values->group_name) ? $values->group_name : '',
@@ -100,8 +112,15 @@ class springboard_advocacy_views_handler_field_target_actions extends views_hand
           // Need to send an empty string if the last query segment is empty
           // so that the query string
           // contains "party=", otherwise, without "=" javascript chokes.
-          'party' => !empty($values->party) ? $values->party: '',
-        )
+          'party' => !empty($values->party) ? $values->party : '',
+        );
+      }
+      $links[] = l(t('add'), 'add-target', array(
+        'external' => TRUE,
+        'attributes' => array(
+          'class' => array('advocacy-add-target')
+        ),
+          'query' => $query,
       ));
     }
 

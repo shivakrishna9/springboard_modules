@@ -142,17 +142,20 @@ function sba_target_search_preprocess_views_view_table(&$vars) {
 }
 
 function sba_target_search_add_target_search_form($form, &$form_state, $entity = '') {
-  $form['recipients'] = array(
+  $form['data']['#tree'] = TRUE;
+  $recipients = '';
+  // data structure for messages
+  if(isset($entity->data['recipients'])) {
+    $recipients = str_replace('"', '&quot;', $entity->data['recipients']);
+  }
+  // data structure for groups
+  else if (isset($entity->recipients)) {
+    $recipients = str_replace('"', '&quot;', $entity->recipients);
+  }
+  $form['data']['recipients'] = array(
     '#type' => 'hidden',
-    '#default_value' => '',
+    '#default_value' => $recipients,
   );
-
-  if(is_object($entity)) {
-    $form['recipients']['#default_value'] = isset($entity->data['recipients']) ? str_replace('"', '&quot;', $entity->data['recipients']) : '';
-  }
-  else if (is_array($entity)) {
-    $form['recipients']['#default_value'] = isset($entity['recipients']) ? str_replace('"', '&quot;', $entity['recipients']) : '';
-  }
 
   $form['message_recipients'] = array (
       // @todo make these IDs more generic

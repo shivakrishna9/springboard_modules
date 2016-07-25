@@ -21,7 +21,8 @@ function springboard_target_edit_custom_groups_form($form, &$form_state, $group_
 
   module_load_include('inc', 'springboard_target', 'includes/springboard_target.custom_groups');
 
-  $form = springboard_target_form($group_id);
+  $form = springboard_target_group_form($group_id);
+  
   if (!isset($form['not_found'])) {
 
     $form['header'] = array(
