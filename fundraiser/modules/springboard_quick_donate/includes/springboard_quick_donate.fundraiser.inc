@@ -343,7 +343,7 @@ function springboard_quick_donate_fundraiser_commerce_submit_handler_pane_values
   if (isset($donation->data['cardonfile']) && $donation->data['cardonfile'] != 'new' && $donation->data['cardonfile'] > 0) {
     $pane_values['cardonfile'] = $donation->data['cardonfile'];
   }
-  if ($_SESSION['springboard_hmac']['quickdonate']) {
+  if (isset($_SESSION['springboard_hmac']['quickdonate']) && $_SESSION['springboard_hmac']['quickdonate']) {
     unset($_SESSION['springboard_hmac']['quickdonate']);
   }
 }
