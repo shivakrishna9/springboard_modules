@@ -89,27 +89,41 @@ function springboard_quick_donate_node_prepare($node) {
  * @return object
  *   The modified node object.
  */
-function _springboard_quick_donate_attach_quick_donate_fields(stdClass $node) {
-  $query = db_select('fundraiser_springboard_quick_donate', 'sqd')
-    ->fields('sqd', array(
-      'quickdonate_optin_message',
-      'quickdonate_help_message_format',
-      'quickdonate_help_message',
-      'quickdonate_login_message',
-      'quickdonate_login_link_message',
-    ))
-    ->condition('fundraiser_nid', $node->nid, '=')
-    ->execute();
+function _springboard_quick_donate_attach_quick_donate_fields($node) {
+  if (isset($node->nid)) {
+    $query = db_select('fundraiser_springboard_quick_donate', 'sqd')
+      ->fields('sqd', array(
+        'quickdonate_optin_message',
+        'quickdonate_help_message_format',
+        'quickdonate_help_message',
+        'quickdonate_login_message',
+        'quickdonate_login_link_message',
+      ))
+      ->condition('fundraiser_nid', $node->nid, '=')
+      ->execute();
 
-  if (!$query->rowCount()) {
-    return $node;
+    if (!$query->rowCount()) {
+      return $node;
+    }
+
+    $results = $query->fetchAssoc();
+    $results['quickdonate'] = TRUE;
+  }
+  else {
+    // Set default values.
+    $results = array(
+      'quickdonate_optin_message' => variable_get('springboard_quick_donate_default_optin_message', 'Save this @type for future use?'),
+      'quickdonate_help_message_format' => 'filtered_html',
+      'quickdonate_help_message' => variable_get('springboard_quick_donate_default_help_message', 'Save your @type details and donate faster next time. We may email you from time to time with quick donate opportunities. You can update your @type details or cancel your enrollment at any time.'),
+      'quickdonate_login_message' => variable_get('springboard_quick_donate_default_login_message', t('Already have a saved @type?')),
+      'quickdonate_login_link_message' => variable_get('springboard_quick_donate_default_login_link_message', t('Click here to login')),
+      'quickdonate' => FALSE,
+    );
   }
 
-  $results = $query->fetchAssoc();
   foreach ($results as $key => $result) {
     $node->{$key} = $result;
   }
-  $node->quickdonate = TRUE;
   return $node;
 }
 
