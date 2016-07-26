@@ -1,0 +1,39 @@
+<?php
+/**
+ * @file
+ * Florida Disclaimer custom module for generating text below the submit button on donation forms.
+ */
+
+/**
+ * Implements hook_menu().
+ */
+function florida_disclaimer_menu() {
+  $items['admin/config/system/fundraiser/florida-disclaimer'] = array(
+    'title' => 'Florida Donation Form Disclaimer',
+    'description' => 'Administer donation form disclaimer settings.',
+    'access arguments' => array('administer site configuration'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('florida_disclaimer_admin'),
+    'file' => 'florida_disclaimer.admin.inc',
+    'type' => MENU_NORMAL_ITEM,
+  );
+
+  return $items;
+}
+
+/**
+ *  Implements hook_form_alter().
+ * @todo: Use geographic firewall to attach our js to forms when user is in Florida.
+ */
+function florida_disclaimer_form_alter(&$form, &$form_state, $form_id) {
+  if (strstr($form_id, 'webform_client_form') !== FALSE && fundraiser_is_donation_type($form['#node']->type)) {
+    // Add a blank donation disclaimer element to all donation forms.
+    $form['actions']['submit']['#suffix'] = '<p class="donation_disclaimer"></p>';
+    // Add js logic to determine if, and with what, the dislaimer element should be populated with.
+    $florida_text = variable_get('florida_disclaimer_text', '');
+    drupal_add_js(array('florida_disclaimer' => array('disclaimer_text' => $florida_text)), array('type' => 'setting'));
+    drupal_add_js(drupal_get_path('module', 'florida_disclaimer') . '/js/florida_disclaimer.state_select.js');
+    drupal_add_css(drupal_get_path('module', 'florida_disclaimer') . '/css/florida_disclaimer.css');
+    $form['#attached']['js'][] = drupal_get_path('module', 'florida_disclaimer') . '/js/florida_disclaimer.state_select.js';
+  }
+}

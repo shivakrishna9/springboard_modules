@@ -1,0 +1,9 @@
+name = Florida Disclaimer
+description = Generates a legal disclaimer below the submit button on donation forms.
+core = 7.x
+package = Custom
+
+configure = admin/config/system/florida-disclaimer
+
+dependencies[] = springboard
+dependencies[] = fundraiser_webform
