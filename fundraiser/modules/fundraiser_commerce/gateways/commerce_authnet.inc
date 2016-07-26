@@ -383,7 +383,18 @@ function commerce_authnet_fundraiser_commerce_refund($payment_method, $refund) {
   $result = commerce_authnet_aim_credit_form_submit($form, $form_state);
   // At this point the card has been saved on the user profile.
   $success = FALSE;
-  if ($result !== FALSE) {
+
+  // Was a failure noted in the database?:
+  if (db_select('commerce_payment_transaction')
+    ->condition('order_id', $refunding_order->order_id)
+    ->condition('revision_id', $transaction->revision_id)
+    ->condition('payload', '%' . 'The referenced transaction does not meet the criteria for issuing a credit.' . '%', 'LIKE')
+    ->countQuery()
+    ->execute()
+    ->fetchField()) {
+    $success = FALSE;
+  }
+  elseif ($result !== FALSE) {
     $success = TRUE;
   }
   return $success;
