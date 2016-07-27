@@ -112,18 +112,23 @@ function fundraiser_commerce_braintree_credit_card_form() {
   $form['card'] = array(
 
     '#markup' => '
-      <label for="card-number">Card Number</label>
-      <div id="card-number" style="height: 20px" class="braintree-hosted-field"></div>
-
-      <label for="cvv">CVV</label>
-      <div id="cvv" style="height: 20px" class="braintree-hosted-field"></div>
-
-      <label for="expiration-date">Expiration Date</label>
-      <div id="expiration-date" style="height: 20px" class="braintree-hosted-field"></div>'
+      <div class="control-group">
+        <label for="card-number">Card Number</label>
+        <div id="card-number" style="height: 20px" class="braintree-hosted-field control-group required"></div>
+      </div>
+      <div class="control-group">
+        <label for="expiration-date">Expiration Date (MM/YY)</label>
+        <div id="expiration-date" style="height: 20px" class="braintree-hosted-field control-group required"></div>
+      <div class="control-group">
+        <label for="cvv">CVV</label>
+        <div id="cvv" style="height: 20px" class="braintree-hosted-field control-group required"></div>
+      </div>'
   );
   $form['js'] =  array(
     '#markup' => '<script src="https://js.braintreegateway.com/js/braintree-2.26.0.min.js"></script>
     <script>
+      braintree["errorStatus"] = false;
+
       braintree.setup("'.Braintree_ClientToken::generate().'", "custom", {
         id: "webform-client-form-2",
         hostedFields: {
@@ -135,7 +140,29 @@ function fundraiser_commerce_braintree_credit_card_form() {
           },
           expirationDate: {
             selector: "#expiration-date"
+          },
+          onFieldEvent: function (event) {
+            if (event.type === "blur") {
+              // console.log(event.isValid);
+              if (event.isValid) {
+                jQuery(event.target.container).removeClass("error").addClass("success");
+              }
+              else {
+                jQuery(event.target.container).removeClass("success").addClass("error");
+                jQuery(braintree).triggerHandler("baz");
+              }
+            } else if (event.type === "fieldStateChange") {
+              if (event.card) {
+                console.log(event.card.type);
+              }
+            }
+
           }
+        },
+        onError: function (event) {
+          console.log("setting error status");
+          braintree["errorStatus"] = true;
+          console.log(braintree["errorStatus"]);
         }
       });
     </script>'

@@ -15,6 +15,7 @@
       })(jQuery);
 
       $(window).ready(function(){
+
         // Turn autocomplete off on CC and CVV form elements.
         $('input[name*="card_number"], input[name*="card_cvv"]').attr('autocomplete','off');
 
@@ -121,7 +122,7 @@
         $('.fundraiser-donation-form #edit-submit').once(function() {
           $('.fundraiser-donation-form #edit-submit').click(function() {
             // Validate the form
-            if (donationValidate.form()) {
+            if (donationValidate.form() && braintree[errorStatus] == false) {
               $(this).hide();
               $('.fundraiser_submit_message').hide();
               $(this).after('<div class="donation-processing-wrapper">' +
