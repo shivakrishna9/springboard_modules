@@ -152,8 +152,18 @@ function springboard_quick_donate_payment_method_fields_alter(&$element, &$payme
  * Implements hook_webform_user_save_profile_map_alter().
  */
 function springboard_quick_donate_webform_user_save_profile_map_alter(&$account, $form, $form_state) {
-  if (isset($form['#node']->quickdonate) && $form['#node']->quickdonate) {
-    $account->quickdonate_optin_date = time();
+  $values = $form_state['values']['submitted_tree']['payment_information'];
+  if (isset($form['#node']->quickdonate) && $form['#node']->quickdonate && $values['payment_fields'][$values['payment_method']]['quickdonate']) {
+    $account->field_quick_donate_opt_in = array(
+      LANGUAGE_NONE => array(
+        0 => array(
+          'value' => date("Y-m-d H:i:s"),
+          'timezone' => drupal_get_user_timezone(),
+          'timezone_db' => 'UTC',
+          'date_type' => 'datetime',
+        ),
+      ),
+    );
     if (isset($_SESSION['springboard_hmac']['quickdonate'])) {
       module_load_include('inc', 'springboard_quick_donate', 'includes/springboard_quick_donate.springboard_hmac');
       $mapping = _springboard_hmac_quick_mapping();
