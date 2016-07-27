@@ -37,9 +37,9 @@ class SbaMessageUIController extends EntityDefaultUIController {
     // Loading and editing sba_message entities.
     $items[$this->path . '/sba_message/' . $wildcard] = array(
       'page callback' => 'drupal_get_form',
-      'page arguments' => array('sba_message_edit_form', $id_count + 1),
+      'page arguments' => array('sba_message_edit_form', $id_count + 1, $id_count - 2),
       'access callback' => 'sba_message_access',
-      'access arguments' => array('edit', $id_count + 1),
+      'access arguments' => array('edit', $id_count + 2),
       'weight' => 0,
       'file' => 'sba_message.admin.inc',
       'file path' => drupal_get_path('module', $this->entityInfo['module']),
