@@ -65,6 +65,11 @@ function commerce_braintree_web_fundraiser_commerce_form($payment_method) {
   if ($payment_method == 'paypal') {
      $form = fundraiser_commerce_braintree_paypal_form();
   }
+  $form['#attached']['js'] = array(
+    'https://js.braintreegateway.com/js/braintree-2.26.0.min.js' => array(
+      'type' => 'external',
+    ),
+  );
   return $form;
 }
 
@@ -74,8 +79,6 @@ function commerce_braintree_web_fundraiser_commerce_form($payment_method) {
 function fundraiser_commerce_braintree_paypal_form() {
   global $user;
 
-  // $form['#attached']['library'][] = array('braintree_payment', 'braintree.js');
-
   // Initialize Braintree and create a token.
   braintree_initialize();
 
@@ -83,8 +86,9 @@ function fundraiser_commerce_braintree_paypal_form() {
     '#markup' => '<div id="paypal-container"></div>'
   );
   $form['js'] =  array(
-    '#markup' => '<script src="https://js.braintreegateway.com/js/braintree-2.26.0.min.js"></script>
+    '#markup' => '
     <script>
+      braintree["errorStatus"] = false;
       braintree.setup("'.Braintree_ClientToken::generate().'", "paypal", {
         id: "webform-client-form-2",
         paypal: {
@@ -100,10 +104,7 @@ function fundraiser_commerce_braintree_paypal_form() {
  *
  */
 function fundraiser_commerce_braintree_credit_card_form() {
-
   global $user;
-
-  $form['#attached']['library'][] = array('braintree_payment', 'braintree.js');
 
   // Initialize Braintree and create a token.
   braintree_initialize();
@@ -125,7 +126,7 @@ function fundraiser_commerce_braintree_credit_card_form() {
       </div>'
   );
   $form['js'] =  array(
-    '#markup' => '<script src="https://js.braintreegateway.com/js/braintree-2.26.0.min.js"></script>
+    '#markup' => '
     <script>
       braintree["errorStatus"] = false;
 
