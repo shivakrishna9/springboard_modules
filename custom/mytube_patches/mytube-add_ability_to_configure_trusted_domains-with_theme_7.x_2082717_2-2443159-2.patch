@@ -1,0 +1,31 @@
+diff --git a/mytube.module b/mytube.module
+index 3c7393e..4efe728 100644
+--- a/mytube.module
++++ b/mytube.module
+@@ -114,6 +114,12 @@ function mytube_admin_settings() {
+     '#default_value' => variable_get('mytube_ytparams', ''),
+     '#description' => t('Parameters for <a href="@google">customizing</a> YouTube videos. Note: <code>autoplay=1</code> is added automatically.', array('@google' => 'http://code.google.com/apis/youtube/player_parameters.html'))
+   );
++  $form['mytube_trusted_domains'] = array(
++    '#type' => 'textarea',
++    '#title' => "Trusted domains",
++    '#default_value' => variable_get('mytube_trusted_domains', ''),
++    '#description' => t('Domains whose content MyTube should allow through instead of filtering, one per line. For example: example.com, myotherdomain.org'),
++  );
+   $form['mytube_default_width'] = array(
+     '#type' => 'textfield',
+     '#title' => "Default width",
+@@ -366,6 +372,13 @@ function _mytube_replaceembed($embedded, $tag) {
+   $embed_url = preg_replace("[^//]", $PROTOCOL, $embed_url);
+   $embed_urlinfo = parse_url($embed_url);
+   $embed_domain = _mytube_toplevel($embed_urlinfo['host']);
++
++  // If this video is from a trusted domain, let it through unmodified.
++  $trusted_domains = variable_get('mytube_trusted_domains');
++  if (is_numeric(strpos($trusted_domains, $embed_domain))) {
++    return;
++  }
++
+   // first, find the thumbnail
+   $thumb = _mytube_thumb($embedded, $embed_url, $embed_domain);
+   $width = (int)check_plain(variable_get("mytube_default_width", ""));

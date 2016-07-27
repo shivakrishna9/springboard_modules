@@ -1,0 +1,156 @@
+diff --git a/mytube-instance.tpl.php b/mytube-instance.tpl.php
+index 7ed8206..9e85935 100644
+--- a/mytube-instance.tpl.php
++++ b/mytube-instance.tpl.php
+@@ -1,9 +1,10 @@
+ <div class="mytube" style="width: <?php print $width; ?>px;">
+-  <div class="mytubetrigger" id="mytube<?php print $index; ?>">
++  <div class="mytubetrigger">
+     <img width="<?php print $width; ?>" height="<?php print $height; ?>" class="mytubethumb" alt="mytubethumb" src="<?php print str_replace('?q=', '', $thumb); ?>" />
+     <img src="<?php print $play_icon; ?>" class="mytubeplay" alt="play" style="top: <?php print (int)$height / 2 - 30; ?>px; left: <?php print (int)$width / 2 - 30; ?>px;" />
++    <div class="mytubeembedcode"><?php print $escaped_embed; ?></div>
+   </div><!--mytubetrigger-->
+-  <div class="mytubetext" id="mytubetext<?php print $index; ?>">
++  <div class="mytubetext">
+     <?php print l(t('Privacy info.'), $privacy_url) . filter_xss_admin(" $privacy_text"); ?>
+   </div>
+ </div>
+diff --git a/mytube.css b/mytube.css
+index a8cbe40..6160174 100644
+--- a/mytube.css
++++ b/mytube.css
+@@ -2,6 +2,10 @@
+   position: relative;
+ }
+ 
++.mytubeembedcode {
++  display: none;
++}
++
+ .mytube .mytubethumb {
+   cursor: pointer;
+ }
+diff --git a/mytube.js b/mytube.js
+index 9366634..b62faca 100644
+--- a/mytube.js
++++ b/mytube.js
+@@ -2,13 +2,10 @@
+ 
+ Drupal.behaviors.mytube = {
+   attach: function (context, settings) {
+-    $('.mytubetrigger').click(function(){
+-      id = $(this).attr('id');
+-      index = id.substring(6);
++    $('.mytubetrigger').once('mytubetrigger').click(function(){
+       $(this).hide();
+-      $(this).after(unescape(mytubes[index]));
+-      var textid = '#mytubetext'+index;
+-      var caption = $(textid).html();
++      $(this).after(unescape($('.mytubeembedcode', this).html()));
++      Drupal.attachBehaviors(this);
+     });
+   }
+ };
+diff --git a/mytube.module b/mytube.module
+index 3c7393e..2be9913 100644
+--- a/mytube.module
++++ b/mytube.module
+@@ -83,7 +83,7 @@ function mytube_theme() {
+         'play_icon' => NULL,
+         'width' => 0,
+         'height' => 0,
+-        'index' => 0,
++        'escaped_embed' => NULL,
+         'privacy_url' => NULL,
+         'privacy_text' => NULL
+       ),
+@@ -168,41 +168,9 @@ function mytube_filter_info() {
+  * Callback for mytube_filter_info
+  */
+ function _mytube($text = "", $format = -1) {
+-      // Close all HTML tags
+-      $text = _mytube_close_tags($text);
+-      $text = _mytube_process($text);
+-      global $_mytube_embedcodes;
+-      $width = (int)check_plain(variable_get("mytube_default_width", ""));
+-      if($width == 0) { // TODO: Should be replaced with default settings
+-        // Width not defined in MyTube configuration
+-        $width = "320";
+-      }
+-      $height = (int)check_plain(variable_get("mytube_default_height", ""));
+-      if($height == 0) { // TODO: Should be replaced with default settings
+-      // Height not defined in MyTube configuration
+-        $height = "240";
+-      }
+-      if ($_mytube_embedcodes) {
+-        // if necessary, add js
+-        $js = "var mytubes = new Array(" . count($_mytube_embedcodes) . ");\n";
+-      }
+-      if (is_array($_mytube_embedcodes)) {
+-        foreach ($_mytube_embedcodes as $index => $code) {
+-          // Escape quotes
+-          $code = str_replace('"', "%22", $code);
+-          // Escape apostrophes
+-          $code = str_replace("'", "%22", $code);
+-          // Escape HTML
+-          $code = str_replace('<', "%3C", $code);
+-          // Escape HTML
+-          $code = str_replace('>', "%3E", $code);
+-          // Escape ampersands
+-          $code = str_replace('&', "%26", $code);
+-          $js .= "mytubes[$index] = '$code';\n";
+-        }
+-        $text .= "<script type=\"text/javascript\">$js</script>";
+-      }
+-      return $text;
++  // Close all HTML tags.
++  $text = _mytube_close_tags($text);
++  return _mytube_process($text);
+ }
+ 
+ function _mytube_tips ($filter, $format, $long = FALSE) {
+@@ -241,7 +209,6 @@ $output .= "<div class=\"mytubetext\" style=\"font-size:10px;line-height:10px;\"
+  *  Helper for mytube_filter()
+  */
+ function _mytube_process($text) {
+-  global $_mytube_index;
+   $width = (int)check_plain(variable_get("mytube_default_width", ""));
+   if($width == 0) {
+     // Width not defined in MyTube configuration
+@@ -352,7 +319,6 @@ function _mytube_str_excise(&$text, $start, $end) {
+  *  @param tag - The tag that defines this embed string
+  */
+ function _mytube_replaceembed($embedded, $tag) {
+-  global $_mytube_base_url, $_mytube_index, $_mytube_embedcodes;
+   $out = "";
+   if (isset($_SERVER['HTTPS']))
+     $PROTOCOL = 'https://';
+@@ -409,24 +375,21 @@ function _mytube_replaceembed($embedded, $tag) {
+     $privacy_text = filter_xss_admin($privacy_text);
+   }
+   $play_icon = str_replace('?q=', '', url(drupal_get_path('module', 'mytube') . '/play.png'));
+-  $_mytube_index++;
++
++  // Modify the code-to-be-revealed if necessary.
++  _mytube_fixembedded($embedded, $embed_url, $embed_domain, $width, $height);
+ 
+   $variables = array(
+     'thumb' => $thumb,
+     'play_icon' => $play_icon,
+     'width' => $width,
+     'height' => $height,
+-    'index' => $_mytube_index,
++    'escaped_embed' => rawurlencode($embedded),
+     'privacy_url' => $privacy_url,
+     'privacy_text' => $privacy_text,
+   );
+   $out = theme('mytube_instance', $variables);
+ 
+-  // modify the code-to-be-revealed if necessary
+-  _mytube_fixembedded($embedded, $embed_url, $embed_domain, $width, $height);
+-  // pass the code-to-be-revealed to the JavaScript
+-  $_mytube_embedcodes[$_mytube_index] = $embedded;
+-
+   return $out;
+ }
+ 

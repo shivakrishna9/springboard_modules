@@ -1,0 +1,43 @@
+diff --git a/mytube-instance.tpl.php b/mytube-instance.tpl.php
+index 9e85935..60c0a14 100644
+--- a/mytube-instance.tpl.php
++++ b/mytube-instance.tpl.php
+@@ -1,5 +1,5 @@
+ <div class="mytube" style="width: <?php print $width; ?>px;">
+-  <div class="mytubetrigger">
++  <div class="mytubetrigger" tabIndex="0">
+     <img width="<?php print $width; ?>" height="<?php print $height; ?>" class="mytubethumb" alt="mytubethumb" src="<?php print str_replace('?q=', '', $thumb); ?>" />
+     <img src="<?php print $play_icon; ?>" class="mytubeplay" alt="play" style="top: <?php print (int)$height / 2 - 30; ?>px; left: <?php print (int)$width / 2 - 30; ?>px;" />
+     <div class="mytubeembedcode"><?php print $escaped_embed; ?></div>
+diff --git a/mytube.js b/mytube.js
+index 8ebf833..94968ba 100644
+--- a/mytube.js
++++ b/mytube.js
+@@ -2,17 +2,25 @@
+ 
+ Drupal.behaviors.mytube = {
+   attach: function (context, settings) {
+-    $('.mytubetrigger').once('mytubetrigger').click(function(){
++    $('.mytubetrigger', context).once('mytubetrigger').click(function(){
+       $(this).hide();
+       $(this).after(unescape($('.mytubeembedcode', this).html()));
+       Drupal.attachBehaviors(this);
+-
++      
+       // If API usage is enabled, instantiate the API.
+       if (Drupal.settings.mytube.enable_js_api === 1) {
+         Drupal.behaviors.mytube.InitiateYouTubeAPI();
+       }
+ 
+     });
++    
++    // Start the video when pressing the Enter button
++    $('.mytubetrigger', context).keypress(function(e){
++      if(e.which == 13){ // Enter key pressed
++        $(this).click(); // Trigger search button click event
++      }
++    });
++    
+   }
+ };
+ 

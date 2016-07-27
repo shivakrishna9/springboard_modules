@@ -1,0 +1,44 @@
+diff --git a/mytube.install b/mytube.install
+index ea6f1ef..c92b7b1 100644
+--- a/mytube.install
++++ b/mytube.install
+@@ -5,10 +5,10 @@
+  */
+ function mytube_install() {
+   if (user_permission('administer filters')) {
+-    drupal_set_message(st('You will want to apply this filter to one or more <a href="!filters">Input Formats</a> for MyTube to work.<br />See <a href="!help">documentation</a> for more information', array('!filters' => url('admin/settings/filters'), '!help' => url('admin/help/mytube'))), 'status');
++    drupal_set_message(st('You will want to apply this filter to one or more <a href="!filters">Input Formats</a> for MyTube to work.<br />See <a href="!help">documentation</a> for more information', array('!filters' => url('admin/config/content/formats'), '!help' => url('admin/help/mytube'))), 'status');
+   }
+   if (user_permission('administer permissions')) {
+-    drupal_set_message(st('You will need to assign <a href="!perms#module-mytube">MyTube Permissions</a> in order to configure this module.', array('!perms' => url('admin/user/permissions'))), 'status');
++    drupal_set_message(st('You will need to assign <a href="!perms#module-mytube">MyTube Permissions</a> in order to configure this module.', array('!perms' => url('admin/people/permissions'))), 'status');
+   }
+ }
+ 
+diff --git a/mytube.module b/mytube.module
+index c165bbe..6a87e4f 100644
+--- a/mytube.module
++++ b/mytube.module
+@@ -4,8 +4,7 @@
+  * Implementation of hook_menu().
+  */
+ function mytube_menu() {
+-// A couple modifications made here to interface with Drupal 6 instead of 5
+-  $out['admin/config/mytube'] = array(
++  $out['admin/config/content/mytube'] = array(
+     'title' => 'MyTube Settings',
+     'description' => 'Configure appearance of Flash videos, thumbnails, and descriptions.',
+     'page callback' => 'drupal_get_form',
+@@ -57,10 +56,10 @@ function mytube_help($path, $arg) {
+       $filter[0] = "MyTube";
+       $output .= '<p>' . t('After installing the module, administrators should enable "@filtername" for any <a href="@inputformats">input formats</a> that will allow embeds. It is <em>strongly</em> recommended that administrators then enable the HTML Filter and arrange it before MyTube, especially if relatively anonymous users are allowed to submit embed code; failure to do so means it may be possible for users to inject arbitrary scripts in using embeds. MyTube should not conflict with the HTML Filter, but the appropriate tags should be allowed; any tags the administrator wishes to restrict (such as <code>&lt;iframe&gt;</code> tags) can be restricted without breaking MyTube\'s ability to filter other authorized tags. For similar security reasons, MyTube will automatically implement the HTML Corrector filter, whether that filter is enabled or not. If enabled, the HTML Corrector will be run twice.', array(
+         '@filtername' => $filter[0],
+-        '@inputformats' => url('admin/settings/filters')
++        '@inputformats' => url('admin/config/content/formats')
+       )) . "</p>";
+       $output .= "<p>" . t('Beyond this initial setup, MyTube should require little if any configuration, but offers several <a href="@options">customizable options</a> for appearance on its settings page. All <code>&lt;embed&gt;</code>, <code>&lt;param&gt;</code>, and <code>&lt;object&gt;</code> tags passed through the @filtername filter will be replaced with MyTube thumbnails. For individual videos, a custom thumbnail can be added by adding <code>thumb="$relative_directory"</code> to the first affected tag. Default thumbnails for YouTube&trade; and Vimeo&trade; videos are downloaded to <code>@filepath</code> automatically and cannot be overridden.', array(
+-        '@options' => url('admin/settings/mytube'),
++        '@options' => url('admin/config/content/mytube'),
+         '@filtername' => $filter_name,
+         '@filepath' => 'sites/default/files/mytube',
+       )) . '</p>';

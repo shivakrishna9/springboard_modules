@@ -1,0 +1,73 @@
+diff --git a/mytube.module b/mytube.module
+index d09a185..22fb459 100644
+--- a/mytube.module
++++ b/mytube.module
+@@ -363,11 +363,11 @@ function _mytube_replaceembed($embedded, $tag) {
+     $embed_url = "http://www.example.com/";
+   }
+   // Bug in parse_url causes problems for URL of form "//$HOST/$PATH" (defined in RFC 3986)
+-  $embed_url = preg_replace("[^//]", $PROTOCOL, $embed_url);
+-  $embed_urlinfo = parse_url($embed_url);
++  $parseable_embed_url = preg_replace("[^//]", $PROTOCOL, $embed_url);
++  $embed_urlinfo = parse_url($parseable_embed_url);
+   $embed_domain = _mytube_toplevel($embed_urlinfo['host']);
+   // first, find the thumbnail
+-  $thumb = _mytube_thumb($embedded, $embed_url, $embed_domain);
++  $thumb = _mytube_thumb($embedded, $parseable_embed_url, $embed_domain);
+   $width = (int)check_plain(variable_get("mytube_default_width", ""));
+   if($width == 0) {
+     $width = 320;
+@@ -734,46 +734,15 @@ function _mytube_fixembedded(&$embedded, $embed_url, $embed_domain, $width, $hei
+   // Add autoplay attribute
+   switch ($embed_domain) {
+     case "youtube.com":
+-      $ytid = _mytube_ytid($embed_url);
+-      // Legacy YouTube embed requires an & while iframe requires a ? to separate URL from variables
+-      if (preg_match("[/embed/]", $embed_url) > 0)
+-        $firstChar = '?';
+-      else
+-        $firstChar = '&';
+-      $ytparams = variable_get("mytube_ytparams", "");
+-      // Escape apostrophes to prevent XSS
+-      $ytparams = str_replace('"',"&quot;",$ytparams);
+-      if (variable_get("mytube_ytparams", "") != "") {
+-        $ytparams = "$firstChar$ytparams";
+-        $firstChar = '&';
+-      }
+-      if ($firstChar == '?')
+-        $embedded = _mytube_add_param($embed_url, "$firstChar" . "autoplay=1", $embedded);
+-      else
+-        $embedded = str_replace($embed_url, "$embed_url$firstChar" . "autoplay=1", $embedded);
+-      $embedded = str_replace($embed_url, "$embed_url$ytparams", $embedded);
+-      // Make sure there aren't any more flags to disable autoplay anywhere
+-      $embedded = str_replace("autoplay=0", "autoplay=1", $embedded);
+-      break;
+     case "youtube-nocookie.com":
+-      $ytid = _mytube_ytid($embed_url);
+-      // Legacy YouTube embed requires an & while iframe requires a ? to separate URL from variables
+-      if (preg_match("/embed/", $embed_url) > 0)
+-        $firstChar = '?';
+-      else
+-        $firstChar = '&';
+-      $ytparams = variable_get("mytube_ytparams", "");
+-      if (variable_get("mytube_ytparams", "") != "") {
+-        $ytparams = "$firstChar$ytparams";
+-        $firstChar = '&';
++      $ytparams = str_replace('"',"&quot;", trim(variable_get("mytube_ytparams", "")));
++      $ytparams = str_replace('?', '', $ytparams);
++      if (!empty($ytparams) && strpos($ytparams, '&') !== 0) {
++        $ytparams = '&' . $ytparams;
+       }
+-      if ($firstChar == '?')
+-        $embedded = _mytube_add_param($embed_url, "$firstChar" . "autoplay=1", $embedded);
+-      else
+-        $embedded = str_replace($embed_url, "$embed_url$firstChar" . "autoplay=1", $embedded);
+-      $embedded = str_replace($embed_url, "$embed_url$ytparams", $embedded);
+-      // Make sure there aren't any more flags to disable autoplay anywhere
+-      $embedded = preg_replace("{autoplay=0}", "{autoplay=1}", $embedded);
++
++      $embedded = _mytube_add_param($embed_url, "autoplay=1" . $ytparams, $embedded);
++      $embedded = str_replace("autoplay=0", "autoplay=1", $embedded);
+       break;
+     case "mtvnservices.com":
+       $embedded = str_replace($embed_url, $embed_url . "&autoPlay=true", $embedded);

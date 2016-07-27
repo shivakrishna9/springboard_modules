@@ -1,0 +1,22 @@
+diff --git a/mytube.module b/mytube.module
+index c165bbe..0ecc1d0 100644
+--- a/mytube.module
++++ b/mytube.module
+@@ -727,7 +727,7 @@ function _mytube_fixembedded(&$embedded, $embed_url, $embed_domain, $width, $hei
+         $ytparams = "$firstChar$ytparams";
+         $firstChar = '&';
+       }
+-      if (firstChar == '?')
++      if ($firstChar == '?')
+         $embedded = _mytube_add_param($embed_url, "$firstChar" . "autoplay=1", $embedded);
+       else
+         $embedded = str_replace($embed_url, "$embed_url$firstChar" . "autoplay=1", $embedded);
+@@ -747,7 +747,7 @@ function _mytube_fixembedded(&$embedded, $embed_url, $embed_domain, $width, $hei
+         $ytparams = "$firstChar$ytparams";
+         $firstChar = '&';
+       }
+-      if (firstChar == '?')
++      if ($firstChar == '?')
+         $embedded = _mytube_add_param($embed_url, "$firstChar" . "autoplay=1", $embedded);
+       else
+         $embedded = str_replace($embed_url, "$embed_url$firstChar" . "autoplay=1", $embedded);

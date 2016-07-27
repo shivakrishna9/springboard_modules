@@ -1,0 +1,71 @@
+diff --git a/mytube.module b/mytube.module
+index 2b7138b..f33f13f 100644
+--- a/mytube.module
++++ b/mytube.module
+@@ -530,8 +530,33 @@ function _mytube_thumb($e, $url = false, $domain = false) {
+     $urlinfo = parse_url($url);
+     $domain = _mytube_toplevel($urlinfo['host']);
+   }
++  // The user has provided us a thumb= attribute
++  if (array_key_exists("thumb", $atts)) {
++    $out = $atts['thumb'];
++    // Matches HTTP or HTTPS protocols
++    $rex = "/https?:\/\//";
++    // Check for matches
++    preg_match($rex, $out, $matches);
++    // Should return false if array is empty
++    if (!($matches)) {
++      // Not HTTP/HTTPS, so try FTP
++      $rex = "/ftp:\/\//";
++      preg_match($rex, $out, $matches);
++    }
++    // We detected a remote thumbail
++    if ($matches) {
++      // Check if user is allowed to use remote thumbs
++      if (!variable_get("mytube_allow_remote_thumb", 0)) {
++        // If not, use included default.gif instead
++        $out = drupal_get_path("module", "mytube") . "/default.gif";
++      }
++    }
++    else {
++      $out = str_replace("?q=", "", url($out));
++    }
++  }
+   // This is a YouTube embed,
+-  if ($domain == "youtube.com") {
++  elseif ($domain == "youtube.com") {
+     // so let's fetch the thumbnail automatically.
+     $out = url(_mytube_download_thumb($url));
+     // Couldn't find thumbnail
+@@ -558,31 +583,6 @@ function _mytube_thumb($e, $url = false, $domain = false) {
+     if ($out == url(""))
+       $out = str_replace("?q=", "", url(drupal_get_path("module", "mytube") . "/default.gif"));
+   }
+-  // The user has provided us a thumb= attribute
+-  else if (array_key_exists("thumb", $atts)) {
+-    $out = $atts['thumb'];
+-    // Matches HTTP or HTTPS protocols
+-    $rex = "/https?:\/\//";
+-    // Check for matches
+-    preg_match($rex, $out, $matches);
+-    // Should return false if array is empty
+-    if (!($matches)) {
+-      // Not HTTP/HTTPS, so try FTP
+-      $rex = "/ftp:\/\//";
+-      preg_match($rex, $out, $matches);
+-    }
+-    // We detected a remote thumbail
+-    if ($matches) {
+-      // Check if user is allowed to use remote thumbs
+-      if (!variable_get("mytube_allow_remote_thumb", 0)) {
+-        // If not, use included default.gif instead
+-        $out = drupal_get_path("module", "mytube") . "/default.gif";
+-      }
+-    }
+-    else {
+-      $out = str_replace("?q=", "", url($out));
+-    }
+-  }
+   else { // no user-specified thumbnail, use a default image
+     $MODULEDIR = drupal_get_path("module", "mytube");
+     $out = str_replace("?q=", "", url($MODULEDIR . "/default.gif"));
