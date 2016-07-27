@@ -1,0 +1,16 @@
+name = "MyTube"
+description = "Protect visitors' information from third-party embeds like YouTube."
+package = "Input filters"
+core = "7.x"
+configure = admin/config/mytube
+files[] = mytube.module
+files[] = mytube.install
+stylesheets[all][] = mytube.css
+scripts[] = mytube.js
+
+; Information added by drupal.org packaging script on 2012-09-17
+version = "7.x-1.0-beta3"
+core = "7.x"
+project = "mytube"
+datestamp = "1347853076"
+

@@ -1,0 +1,148 @@
+diff --git a/mytube.module b/mytube.module
+index f5c6585..e0fcf8f 100644
+--- a/mytube.module
++++ b/mytube.module
+@@ -82,6 +82,8 @@ function mytube_theme() {
+         'play_icon' => NULL,
+         'width' => 0,
+         'height' => 0,
++        'mytube_extra_class' => NULL,
++        'mytube_style' => NULL,
+         'escaped_embed' => NULL,
+         'privacy_url' => NULL,
+         'privacy_text' => NULL
+@@ -338,40 +340,67 @@ function _mytube_replaceembed($embedded, $tag) {
+   $embed_urlinfo = parse_url($parseable_embed_url);
+   $embed_domain = _mytube_toplevel($embed_urlinfo['host']);
+ 
++  $tagtext = substr($embedded, 0, strpos($embedded, ">"));
++  $atts = _mytube_html_tag_atts($tagtext);
++  $full_size_iframe = 0;
++
++  if (isset($atts['privacy-url']) && $atts['privacy-url'] != "") {
++    $privacy_url =  $atts['privacy-url'];
++    $parseable_privacy_url = preg_replace("[^//]", $PROTOCOL, $privacy_url);
++    $privacy_urlinfo = parse_url($parseable_privacy_url);
++    $privacyurl_domain = _mytube_toplevel($privacy_urlinfo['host']); 
++    $check_embed_domain = $privacyurl_domain;
++    $full_size_iframe = 1;
++  } else {
++    $privacy_url = $embed_url;
++    $check_embed_domain = $embed_domain;
++  }
++
+   // If this video is from a trusted domain, let it through unmodified.
+   $trusted_domains = variable_get('mytube_trusted_domains');
+-  if (is_numeric(strpos($trusted_domains, $embed_domain))) {
++  if (is_numeric(strpos($trusted_domains, $check_embed_domain))) {
+     return;
+   }
+ 
+   // first, find the thumbnail
+   $thumb = _mytube_thumb($embedded, $parseable_embed_url, $embed_domain);
+-  $width = (int)check_plain(variable_get("mytube_default_width", ""));
+-  if($width == 0) {
+-    $width = 320;
+-  }
+-  $height = (int)check_plain(variable_get("mytube_default_height", ""));
+-  if($height == 0) {
+-    $height = 240;
+-  }
+-  if (variable_get("mytube_allow_custom_size", 0)) {
++  if ($full_size_iframe) {
++    // Don't use the mytube video variables to determine height and width
++    $width = "100%";
++    $height = "100%";
++    $mytube_override_class = "other-embed";
++    $mytube_style = "width: " . $atts['width'] . "px; height: " . $atts['height'] . "px;";
++  } else {
++    $mytube_override_class = "default-embed";
++    $width = (int)check_plain(variable_get("mytube_default_width", ""));
++    if($width == 0) {
++      $width = 320;
++    }
++    $height = (int)check_plain(variable_get("mytube_default_height", ""));
++    if($height == 0) {
++      $height = 240;
++    }
++    if (variable_get("mytube_allow_custom_size", 0)) {
+       // Search multiple tags for width/height attributes
+-    foreach (array("embed", "object", "iframe") as $tag) {
+-      $start_embed = strpos($embedded, "<$tag", 0);
+-      $end_embed = strpos($embedded, ">", $start_embed);
+-      $embed_tag = substr($embedded, $start_embed + 1, $end_embed);
+-      // Remove units from width/height
+-      $embed_tag = preg_replace('/="?.?p[xt].?"?/', "", $embed_tag);
+-      $atts = _mytube_html_tag_atts($embed_tag);
+-      if(!$atts){$atts = array();}
+-      if(array_key_exists("width", $atts)) {
+-        $width = preg_replace("/p?[xt]?/", "", $atts['width']);
+-      }
+-      if(array_key_exists("height", $atts)) {
+-        $height = preg_replace("/p?[xt]?/", "", $atts['height']);
++      foreach (array("embed", "object", "iframe") as $tag) {
++        $start_embed = strpos($embedded, "<$tag", 0);
++        $end_embed = strpos($embedded, ">", $start_embed);
++        $embed_tag = substr($embedded, $start_embed + 1, $end_embed);
++        // Remove units from width/height
++        $embed_tag = preg_replace('/="?.?p[xt].?"?/', "", $embed_tag);
++        $atts = _mytube_html_tag_atts($embed_tag);
++        if(!$atts){$atts = array();}
++        if(array_key_exists("width", $atts)) {
++          $width = preg_replace("/p?[xt]?/", "", $atts['width']);
++        }
++        if(array_key_exists("height", $atts)) {
++          $height = preg_replace("/p?[xt]?/", "", $atts['height']);
++        }
+       }
+     }
++    $mytube_style = "width: " . $width . "px;";
+   }
++
+   // determine the output html
+   $privacy_url = variable_get("mytube_url", "");
+   if ($privacy_url == "") {
+@@ -379,23 +408,25 @@ function _mytube_replaceembed($embedded, $tag) {
+   }
+   $privacy_text = filter_xss_admin(variable_get("mytube_text", ""));
+   if ($privacy_text == "") {
+-    $privacy_text = t('This embed will serve content from') . ' <em><a rel="nofollow" href="' . url($embed_url) . '">' . check_plain($embed_domain) . '</a></em><br />';
++    $privacy_text = t('This embed will serve content from') . ' <em><a rel="nofollow" href="' . url($privacy_url) . '">' . check_plain($check_embed_domain) . '</a></em><br />';
+   }
+   else {
+-    $privacy_text = str_replace("!embed", $embed_url, $privacy_text);
+-    $privacy_text = str_replace("!domain", $embed_domain, $privacy_text);
++    $privacy_text = str_replace("!embed", $privacy_url, $privacy_text);
++    $privacy_text = str_replace("!domain", $check_embed_domain, $privacy_text);
+     $privacy_text = filter_xss_admin($privacy_text);
+   }
+   $play_icon = str_replace('?q=', '', url(drupal_get_path('module', 'mytube') . '/play.png'));
+ 
+   // Modify the code-to-be-revealed if necessary.
+-  _mytube_fixembedded($embedded, $embed_url, $embed_domain, $width, $height);
++  _mytube_fixembedded($embedded, $embed_url, $embed_domain, $width, $height, $full_size_iframe);
+ 
+   $variables = array(
+     'thumb' => $thumb,
+     'play_icon' => $play_icon,
+     'width' => $width,
+     'height' => $height,
++    'mytube_extra_class' => $mytube_override_class,
++    'mytube_style' => $mytube_style,
+     'escaped_embed' => rawurlencode($embedded),
+     'privacy_url' => $privacy_url,
+     'privacy_text' => $privacy_text,
+@@ -725,7 +756,12 @@ function _mytube_ytid($url_input) {
+  *  Currently, all this does is add the AutoPlay attribute to YouTube embeds
+  *  In the future, other embedcode-improvements can live in this function too
+  */
+-function _mytube_fixembedded(&$embedded, $embed_url, $embed_domain, $width, $height) {
++function _mytube_fixembedded(&$embedded, $embed_url, $embed_domain, $width, $height, $full_size_iframe) {
++  if ($full_size_iframe) {
++    $embedded = preg_replace('/(\<iframe.*width=\")(.*?)(\".*?\>)/', '${1}100%${3}', $embedded);
++    $embedded = preg_replace('/(\<iframe.*height=\")(.*?)(\".*?\>)/', '${1}100%${3}', $embedded);
++    return;
++  } 
+   // Add autoplay attribute
+   switch ($embed_domain) {
+     case "youtube.com":

@@ -1,0 +1,61 @@
+diff --git a/mytube.js b/mytube.js
+index b62faca..8ebf833 100644
+--- a/mytube.js
++++ b/mytube.js
+@@ -6,9 +6,30 @@ Drupal.behaviors.mytube = {
+       $(this).hide();
+       $(this).after(unescape($('.mytubeembedcode', this).html()));
+       Drupal.attachBehaviors(this);
++
++      // If API usage is enabled, instantiate the API.
++      if (Drupal.settings.mytube.enable_js_api === 1) {
++        Drupal.behaviors.mytube.InitiateYouTubeAPI();
++      }
++
+     });
+   }
+ };
+ 
+-})(jQuery);
++/**
++ * If API usage is enabled, initalize the player once the API is ready.
++ */
++Drupal.behaviors.mytube.InitiateYouTubeAPI = function(context) {
++  if (typeof this.initialized === 'undefined') {
++    this.initialized = false;
++  }
++  if (!this.initialized) {
++    // Load the iFrame Player API code asynchronously.
++    var tag = document.createElement('script');
++    tag.src = "//www.youtube.com/iframe_api";
++    var firstScriptTag = document.getElementsByTagName('script')[0];
++    firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
++  }
++};
+ 
++})(jQuery);
+diff --git a/mytube.module b/mytube.module
+index f5c6585..617ecf5 100644
+--- a/mytube.module
++++ b/mytube.module
+@@ -36,6 +36,7 @@ function mytube_init() {
+   // Add global JavaScript and CSS files.
+   $MODULEDIR = drupal_get_path("module", "mytube");
+   drupal_add_css("$MODULEDIR/mytube.css", "module");
++  drupal_add_js(array('mytube' => array('enable_js_api' => variable_get('mytube_enable_js_api', 0))), 'setting');
+   drupal_add_js("$MODULEDIR/mytube.js", 'file');
+ }
+ 
+@@ -150,6 +151,12 @@ function mytube_admin_settings() {
+       '@default' => url(drupal_get_path("module","mytube") . "/default.gif")
+     ))
+   );
++  $form['mytube_enable_js_api'] = array(
++    '#type' => 'checkbox',
++    '#title' => t('Enable the <a href="https://developers.google.com/youtube/js_api_reference">YouTube Javascript API</a>.'),
++    '#default_value' => variable_get('mytube_enable_js_api', 0),
++    '#description' => t('If checked, the iFrame Player API code will be loaded asynchronously and the API will be instantiated when a video thumbnail is clicked.')
++  );
+   return system_settings_form($form);
+ }
+ 
