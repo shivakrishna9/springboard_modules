@@ -225,6 +225,6 @@ function springboard_quick_donate_uninstall() {
     field_delete_instance($instance);
   }
 
-  field_delete($field_name);
+  field_delete_field($field_name);
   field_purge_batch();
 }
