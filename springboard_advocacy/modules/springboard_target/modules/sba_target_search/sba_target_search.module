@@ -15,6 +15,15 @@ return $items;
 }
 
 /**
+ * Implements hook_views_api().
+ */
+function sba_target_search_views_api() {
+  return array(
+    'api' => 3.0,
+  );
+}
+
+/**
  * Autocomplete callback to populate committee list dropdown.
  *
  * @param string $name
@@ -141,6 +150,15 @@ function sba_target_search_preprocess_views_view_table(&$vars) {
 
 }
 
+
+/**
+ * @param $form
+ * @param $form_state
+ * @param string $entity
+ * @return mixed
+ *
+ * @TODO comment this mofo
+ */
 function sba_target_search_add_target_search_form($form, &$form_state, $entity = '') {
   $form['data']['#tree'] = TRUE;
   $recipients = '';
@@ -177,8 +195,6 @@ function sba_target_search_add_target_search_form($form, &$form_state, $entity =
 
   $form['#attributes']['class'][] = 'sba_target_search_parent_form';
 
-  $form['#submit'][] = '';
-
   return $form;
 }
 
@@ -189,14 +205,16 @@ function sba_target_search_add_target_search_form($form, &$form_state, $entity =
  *   The form array.
  * @param $form_state
  *    The form meta-data and values.
- */
+
+ * @TODO this is not currently being used
 function sba_target_search_edit_form_submit(&$form, &$form_state) {
   $entity = entity_ui_controller('sba_message')->entityFormSubmitBuildEntity($form, $form_state);
 
   $form_state['values']['recipients'] = str_replace('&quot;', '"', $form_state['values']['recipients']);
 
-  form_load_include($form_state, 'inc', 'sba_target_search', 'sba_target_search.api_calls');
-// save the group of targets move this to sba_target_search
-  _sba_target_search_api_save($entity, $is_new, $form_state);
-}
+  form_load_include($form_state, 'inc', 'springboard_target', 'springboard_target.api_calls');
+// save the group of targets move this to springboard_target
+  // @TODO - needs $is_template flag
+  _springboard_target_api_save($entity, $is_new, $form_state);
+} */
 

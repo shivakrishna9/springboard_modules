@@ -1,4 +1,4 @@
-name = Springboard Advocacy Target Search
+name = Springboard Target Search
 description = Data fields and search UI for adding Targets to an entity.
 core = 7.x
 package = Springboard Advocacy

@@ -5,12 +5,13 @@
  */
 function sba_target_search_views_default_views() {
   $views = array();
+
   $view = new view();
   $view->name = 'targets';
-  $view->description = 'Search block for message add page';
+  $view->description = 'Search controls for legislative & custom Advocacy targets';
   $view->tag = 'Advocacy';
   $view->base_table = 'advocacy';
-  $view->human_name = 'SBA Message Targets';
+  $view->human_name = 'SBA Targets Search';
   $view->core = 7;
   $view->api_version = '3.0';
   $view->disabled = FALSE; /* Edit this to true to make a default view disabled initially */
@@ -295,10 +296,14 @@ function sba_target_search_views_default_views() {
     'last_name' => 'last_name',
     'email' => 'email',
     'party' => 'party',
+    'title' => 'title',
+    'organization' => 'organization',
     'role' => 'role',
     'state' => 'state',
+    'district_code' => 'district_code',
     'committee_memberships' => 'committee_memberships',
     'target_actions' => 'target_actions',
+    'group_name' => 'last_name',
   );
   $handler->display->display_options['style_options']['default'] = 'last_name';
   $handler->display->display_options['style_options']['info'] = array(
@@ -333,6 +338,20 @@ function sba_target_search_views_default_views() {
       'separator' => '',
       'empty_column' => 0,
     ),
+    'title' => array(
+      'sortable' => 0,
+      'default_sort_order' => 'asc',
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
+    'organization' => array(
+      'sortable' => 0,
+      'default_sort_order' => 'asc',
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
     'role' => array(
       'sortable' => 1,
       'default_sort_order' => 'asc',
@@ -347,6 +366,13 @@ function sba_target_search_views_default_views() {
       'separator' => '',
       'empty_column' => 0,
     ),
+    'district_code' => array(
+      'sortable' => 0,
+      'default_sort_order' => 'asc',
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
     'committee_memberships' => array(
       'sortable' => 0,
       'default_sort_order' => 'asc',
@@ -355,6 +381,13 @@ function sba_target_search_views_default_views() {
       'empty_column' => 1,
     ),
     'target_actions' => array(
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
+    'group_name' => array(
+      'sortable' => 0,
+      'default_sort_order' => 'asc',
       'align' => '',
       'separator' => '',
       'empty_column' => 0,
@@ -435,6 +468,10 @@ function sba_target_search_views_default_views() {
     'edit' => 0,
     'delete' => 0,
   );
+  /* Field: Advocacy: Group Name */
+  $handler->display->display_options['fields']['group_name']['id'] = 'group_name';
+  $handler->display->display_options['fields']['group_name']['table'] = 'advocacy';
+  $handler->display->display_options['fields']['group_name']['field'] = 'group_name';
   $handler->display->display_options['defaults']['filter_groups'] = FALSE;
   $handler->display->display_options['defaults']['filters'] = FALSE;
   /* Filter criterion: Advocacy: Search Multiple Target Fields by Keywords */
@@ -470,40 +507,6 @@ function sba_target_search_views_default_views() {
   $handler->display->display_options['filters']['search_committee']['expose']['operator'] = 'search_committee_op';
   $handler->display->display_options['filters']['search_committee']['expose']['identifier'] = 'search_committee';
   $handler->display->display_options['filters']['search_committee']['expose']['remember_roles'] = array(
-    2 => '2',
-    1 => 0,
-    3 => 0,
-    4 => 0,
-    5 => 0,
-  );
-  /* Filter criterion: Advocacy: Search by Custom Target Name */
-  $handler->display->display_options['filters']['search_custom_name']['id'] = 'search_custom_name';
-  $handler->display->display_options['filters']['search_custom_name']['table'] = 'advocacy';
-  $handler->display->display_options['filters']['search_custom_name']['field'] = 'search_custom_name';
-  $handler->display->display_options['filters']['search_custom_name']['group'] = 1;
-  $handler->display->display_options['filters']['search_custom_name']['exposed'] = TRUE;
-  $handler->display->display_options['filters']['search_custom_name']['expose']['operator_id'] = 'search_custom_name_op';
-  $handler->display->display_options['filters']['search_custom_name']['expose']['description'] = 'Search by Custom Target Name';
-  $handler->display->display_options['filters']['search_custom_name']['expose']['operator'] = 'search_custom_name_op';
-  $handler->display->display_options['filters']['search_custom_name']['expose']['identifier'] = 'search_custom_name';
-  $handler->display->display_options['filters']['search_custom_name']['expose']['remember_roles'] = array(
-    2 => '2',
-    1 => 0,
-    3 => 0,
-    4 => 0,
-    5 => 0,
-  );
-  /* Filter criterion: Advocacy: Search by Custom Group Name */
-  $handler->display->display_options['filters']['search_group_name']['id'] = 'search_group_name';
-  $handler->display->display_options['filters']['search_group_name']['table'] = 'advocacy';
-  $handler->display->display_options['filters']['search_group_name']['field'] = 'search_group_name';
-  $handler->display->display_options['filters']['search_group_name']['group'] = 1;
-  $handler->display->display_options['filters']['search_group_name']['exposed'] = TRUE;
-  $handler->display->display_options['filters']['search_group_name']['expose']['operator_id'] = 'search_group_name_op';
-  $handler->display->display_options['filters']['search_group_name']['expose']['description'] = 'Search by Custom Group Name';
-  $handler->display->display_options['filters']['search_group_name']['expose']['operator'] = 'search_group_name_op';
-  $handler->display->display_options['filters']['search_group_name']['expose']['identifier'] = 'search_group_name';
-  $handler->display->display_options['filters']['search_group_name']['expose']['remember_roles'] = array(
     2 => '2',
     1 => 0,
     3 => 0,
@@ -917,18 +920,34 @@ function sba_target_search_views_default_views() {
     4 => 0,
     5 => 0,
   );
-
-
   /* Filter criterion: Advocacy: Search By Type */
   $handler->display->display_options['filters']['search_class_name']['id'] = 'search_class_name';
   $handler->display->display_options['filters']['search_class_name']['table'] = 'advocacy';
   $handler->display->display_options['filters']['search_class_name']['field'] = 'search_class_name';
+  $handler->display->display_options['filters']['search_class_name']['group'] = 1;
   $handler->display->display_options['filters']['search_class_name']['exposed'] = TRUE;
   $handler->display->display_options['filters']['search_class_name']['expose']['operator_id'] = 'search_class_name_op';
   $handler->display->display_options['filters']['search_class_name']['expose']['label'] = 'Search By Type';
   $handler->display->display_options['filters']['search_class_name']['expose']['operator'] = 'search_class_name_op';
   $handler->display->display_options['filters']['search_class_name']['expose']['identifier'] = 'search_class_name';
   $handler->display->display_options['filters']['search_class_name']['expose']['remember_roles'] = array(
+    2 => '2',
+    1 => 0,
+    3 => 0,
+    4 => 0,
+    5 => 0,
+    6 => 0,
+  );
+  /* Filter criterion: Advocacy: Group Name */
+  $handler->display->display_options['filters']['group_name']['id'] = 'group_name';
+  $handler->display->display_options['filters']['group_name']['table'] = 'advocacy';
+  $handler->display->display_options['filters']['group_name']['field'] = 'group_name';
+  $handler->display->display_options['filters']['group_name']['exposed'] = TRUE;
+  $handler->display->display_options['filters']['group_name']['expose']['operator_id'] = 'group_name_op';
+  $handler->display->display_options['filters']['group_name']['expose']['description'] = 'Group Name';
+  $handler->display->display_options['filters']['group_name']['expose']['operator'] = 'group_name_op';
+  $handler->display->display_options['filters']['group_name']['expose']['identifier'] = 'group_name';
+  $handler->display->display_options['filters']['group_name']['expose']['remember_roles'] = array(
     2 => '2',
     1 => 0,
     3 => 0,
