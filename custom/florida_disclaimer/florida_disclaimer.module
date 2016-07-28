@@ -15,7 +15,8 @@ function florida_disclaimer_menu() {
     'page callback' => 'drupal_get_form',
     'page arguments' => array('florida_disclaimer_admin'),
     'file' => 'florida_disclaimer.admin.inc',
-    'type' => MENU_NORMAL_ITEM,
+    'type' => MENU_LOCAL_TASK,
+    'weight' => 30
   );
 
   return $items;
