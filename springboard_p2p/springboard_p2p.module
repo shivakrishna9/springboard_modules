@@ -2024,7 +2024,7 @@ function springboard_p2p_webform_client_form_submit($form, &$form_state) {
 
     if (module_exists('strip_utf8mb4')) {
       // Filter the comment textarea of any emoticons.
-      $form_state['values']['springboard_p2p_personal_campaign_action'] = $action['comment'] = _strip_utf8mb4_for_text_fields($action['comment'], variable_get('strip_utf8mb4_replace_string', '--'));
+      $form_state['values']['springboard_p2p_personal_campaign_action']['comment'] = $action['comment'] = _strip_utf8mb4_for_text_fields($action['comment'], variable_get('strip_utf8mb4_replace_string', '--'));
     }
 
     springboard_p2p_save_personal_campaign_action($action);
