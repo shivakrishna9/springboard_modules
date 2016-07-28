@@ -128,17 +128,6 @@ function _springboard_quick_donate_attach_quick_donate_fields($node) {
 }
 
 /**
- * Implements hook_fundraiser_field_info().
- */
-function springboard_quick_donate_fundraiser_field_info_alter(&$fields) {
-  $fields['payment_information']['quick_donate'] = array(
-    '#type' => 'checkbox',
-    '#title' => variable_get('springboard_quick_donate_default_optin_message', t('Save this card for future use')),
-  );
-  return $fields;
-}
-
-/**
  * Implements hook_payment_method_fields_alter().
  */
 function springboard_quick_donate_payment_method_fields_alter(&$element, &$payment_method, &$context) {
@@ -170,4 +159,29 @@ function springboard_quick_donate_webform_user_save_profile_map_alter(&$account,
       $account->sbp_ms = $_SESSION['springboard_hmac']['quickdonate'][$mapping['ms']];
     }
   }
+}
+
+/**
+ * Implements hook_webform_user_profile_fields_alter().
+ *
+ * Used to remove the user profile field for quick donations from components.
+ */
+function springboard_quick_donate_webform_user_profile_fields_alter(&$fields, $node) {
+  $fields = array_filter($fields, function($value) {
+    return $value['name'] != 'field_quick_donate_opt_in';
+  });
+}
+
+/**
+ * Implements hook_fundraiser_field_info().
+ *
+ * Used to add a webform component for quick donations.
+ */
+function springboard_quick_donate_fundraiser_field_info_alter(&$fields) {
+  $fields['quick_donate'] = array(
+    '#type' => 'hidden',
+    '#name' => 'sbp_quick_donate_opt_in',
+    '#title' => 'Quick Donate Opt-in',
+  );
+  return $fields;
 }
