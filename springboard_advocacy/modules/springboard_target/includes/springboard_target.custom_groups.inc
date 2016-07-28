@@ -61,9 +61,22 @@ function springboard_target_group_form($group_id = NULL) {
 
   if(module_exists('sba_target_search')) {
     $form = sba_target_search_add_target_search_form($form, $form_state, $group);
+    $form['#submit'][] = 'springboard_target_group_save_group';
   }
 
   return $form;
+}
+
+/**
+ * Submit handler for Group create/edit forms
+ * Submits the group via the Advocacy API
+ */
+
+function springboard_target_group_save_group($form, &$form_state) {
+  $values = $form_state['values'];
+  if(isset($values['data']['recipients'])) {
+
+  }
 }
 
 /**
@@ -85,7 +98,7 @@ function springboard_target_group_form_validate($form, &$form_state) {
  *
  * @TODO - prevent deletion if the group is used in any messages.
  */
-function springboard_target_group_delete($form, $form_state, $target_id) {
+function springboard_target_group_delete($form, $form_state, $group_id) {
   $form['group_id'] = array(
     '#type' => 'value',
     '#value' => $group_id,
@@ -96,7 +109,7 @@ function springboard_target_group_delete($form, $form_state, $target_id) {
   $description = t('Are you sure you want to delete this group?');
   $yes_button = t('Yes');
   $no_button = t('Cancel');
-  $confirm_name = 'springboard_target_group_delete';
+  $confirm_name = 'springboard_target_group_delete_submit';
   return confirm_form($form, $confirmation_question, $cancel_path, $description, $yes_button, $no_button, $confirm_name);
 }
 

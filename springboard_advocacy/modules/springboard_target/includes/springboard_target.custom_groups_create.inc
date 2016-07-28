@@ -28,9 +28,7 @@ function springboard_target_create_custom_groups_form() {
       '#attributes' => array('class' => 'group-add'),
     );
   }
-  if(module_exists('sba_target_search')) {
-    $form = sba_target_search_add_target_search_form($form, $form_state);
-  }
+
   return $form;
 }
 
@@ -40,7 +38,7 @@ function springboard_target_create_custom_groups_form() {
  *
  * @param $form
  * @param $form_state
- */
+
 function springboard_target_create_custom_groups_form_submit($form, &$form_state) {
   $input = $form_state['values'];
   /* @TODO - format an array for the group that matches the following:
@@ -58,7 +56,8 @@ function springboard_target_create_custom_groups_form_submit($form, &$form_state
    *     )
    *     'target_ids' => array('1', '2', '3', '4', '5', '6', '7'),
    *   )
-   */
+
+  $group_id = _springboard_target_api_save_target_group($form_state, $is_new = TRUE, $entity = array(), $is_template = FALSE
 
   $api_call = springboard_advocacy_api_call();
   $group = $api_call->invokeClientMethod('createTargetGroup', $input);
@@ -71,3 +70,4 @@ function springboard_target_create_custom_groups_form_submit($form, &$form_state
     }
   }
 }
+ */

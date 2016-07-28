@@ -21,6 +21,7 @@ class SbaMessageUIController extends EntityDefaultUIController {
     // not "correct" but they do allow the tabs to remain consistent
     // throughout editing workflow.
     foreach (sba_message_get_types() as $type) {
+      //node/*/messages/add/*
       $items[$this->path . '/add/' . $type->type] = array(
         'title' => 'Add ' . $type->label,
         'page callback' => 'drupal_get_form',
@@ -35,9 +36,10 @@ class SbaMessageUIController extends EntityDefaultUIController {
     }
 
     // Loading and editing sba_message entities.
+    // node/*/messages/sba_message/*/edit
     $items[$this->path . '/sba_message/' . $wildcard] = array(
       'page callback' => 'drupal_get_form',
-      'page arguments' => array('sba_message_edit_form', $id_count + 1, $id_count - 2),
+      'page arguments' => array('sba_message_edit_form', $id_count + 1),
       'access callback' => 'sba_message_access',
       'access arguments' => array('edit', $id_count + 2),
       'weight' => 0,
@@ -90,12 +92,19 @@ function sba_message_delete_form_wrapper($sba_message) {
  * @param $form
  *   The form array.
  * @param $form_state
- *    The form meta-data and values.
+ *   The form meta-data and values.
  * @param $sba_message
+ *   The message node being edited.
+ * @param $node
+ *   The parent sba_message_action node.
  *
  * @return mixed
  */
-function sba_message_edit_form($form, &$form_state, $sba_message, $node) {
+function sba_message_edit_form($form, &$form_state, $sba_message) {
+  if (is_string($sba_message)) {
+    $sba_message = sba_message_create(array('type' => $sba_message));
+  }
+  $node = node_load(arg(1));
   $unconfigured = springboard_advocacy_api_unconfigured('springboard');
   if (!$unconfigured) {
     $apiCall = springboard_advocacy_api_call();
@@ -216,7 +225,6 @@ function sba_message_edit_form($form, &$form_state, $sba_message, $node) {
   return $form;
 }
 
-
 /**
  * Form API validate callback for the sba_message form.
  *
@@ -270,6 +278,23 @@ function sba_message_edit_form_submit(&$form, &$form_state) {
     $sba_message->save();
 
     sba_message_draggable_save($arg, $sba_message->sba_message_id, $sba_message->data['weight']);
+  }
+
+  $values = $form_state['values'];
+  if(isset($values['data']['recipients'])) {
+    module_load_include('inc', 'springboard_target', 'includes/springboard_target.api_calls');
+    $group_id = springboard_target_api_save_target_group($values['data']['recipients'], $is_new, $sba_message, FALSE);
+    if ($group_id) {
+      $sba_message->data['group_id'] = $group_id;
+      $sba_message->changed = time();
+      $sba_message->save();
+    }
+    else {
+      $sba_message->data['group_id'] = 'no_response';
+      drupal_set_message('There was a problem saving the message targets to the advocacy server.', 'warning');
+      $sba_message->changed = time();
+      $sba_message->save();
+    }
   }
 
   $form_state['redirect'] = 'node/' . $nid . '/messages';
@@ -339,7 +364,10 @@ function sba_message_delete_form_submit($form, &$form_state) {
   watchdog('sba_message', 'Deleted sba_message: %name.', array('%name' => $sba_message->name));
   form_load_include($form_state, 'inc', 'sba_message', 'sba_message.api_calls');
 
-  _sba_message_api_delete_target_group($sba_message);
+  if(isset($sba_message->data['group_id']) && $sba_message->data['group_id'] != 'no_response') {
+    module_load_include('inc', 'springboard_target', 'includes/springboard_target.api_calls');
+    springboard_target_api_delete_target_group($sba_message);
+  }
 
   $form_state['redirect'] = 'node/' . $nid . '/messages';
 }
