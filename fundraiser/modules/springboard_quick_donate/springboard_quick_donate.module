@@ -167,7 +167,7 @@ function springboard_quick_donate_webform_user_save_profile_map_alter(&$account,
     if (isset($_SESSION['springboard_hmac']['quickdonate'])) {
       module_load_include('inc', 'springboard_quick_donate', 'includes/springboard_quick_donate.springboard_hmac');
       $mapping = _springboard_hmac_quick_mapping();
-      $account->quickdonate_market_source = $_SESSION['springboard_hmac']['quickdonate'][$mapping['ms']];
+      $account->sbp_ms = $_SESSION['springboard_hmac']['quickdonate'][$mapping['ms']];
     }
   }
 }
