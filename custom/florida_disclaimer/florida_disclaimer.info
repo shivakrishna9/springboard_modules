@@ -3,7 +3,7 @@ description = Generates a legal disclaimer below the submit button on donation f
 core = 7.x
 package = Custom
 
-configure = admin/config/system/florida-disclaimer
+configure = admin/config/system/fundraiser/florida-disclaimer
 
 dependencies[] = springboard
 dependencies[] = fundraiser_webform
