@@ -8,8 +8,8 @@
 /**
  * Implements hook_views_data().
  */
-function springboard_quick_donate_views_data() {
-  $data['fundraiser_springboard_quick_donate_cardonfile']['table'] = array(
+function fundraiser_quick_donate_views_data() {
+  $data['fundraiser_quick_donate_cardonfile']['table'] = array(
     'group' => t('Springboard Quick Donations'),
     'base' => array(
       'title' => t('Springboard Quck Donation Opt In'),
@@ -34,7 +34,7 @@ function springboard_quick_donate_views_data() {
       ),
     ),
   );
-  $data['fundraiser_springboard_quick_donate_cardonfile']['nid'] = array(
+  $data['fundraiser_quick_donate_cardonfile']['nid'] = array(
     'title' => t('Fundraiser node'),
     'help' => t('Fundraiser form node id.'),
     'relationship' => array(
@@ -57,7 +57,7 @@ function springboard_quick_donate_views_data() {
       'handler' => 'views_handler_argument_numeric',
     ),
   );
-  $data['fundraiser_springboard_quick_donate_cardonfile']['uid'] = array(
+  $data['fundraiser_quick_donate_cardonfile']['uid'] = array(
     'title' => t('Quick donation opt-in user'),
     'help' => t('User associated with quick donation opt-in record.'),
     'relationship' => array(
@@ -80,7 +80,7 @@ function springboard_quick_donate_views_data() {
       'handler' => 'views_handler_argument_numeric',
     ),
   );
-  $data['fundraiser_springboard_quick_donate_cardonfile']['status'] = array(
+  $data['fundraiser_quick_donate_cardonfile']['status'] = array(
     'title' => t('Quick donation opt-in status'),
     'help' => t('Whether the user is actively enrolled in quick donations.'),
     'field' => array(
@@ -97,7 +97,7 @@ function springboard_quick_donate_views_data() {
       'handler' => 'views_handler_argument_numeric',
     ),
   );
-  $data['fundraiser_springboard_quick_donate_cardonfile']['card_id'] = array(
+  $data['fundraiser_quick_donate_cardonfile']['card_id'] = array(
     'title' => t('Quick donation opt-in card ID'),
     'help' => t('The card ID associated with the quick donation.'),
     'relationship' => array(
@@ -120,7 +120,7 @@ function springboard_quick_donate_views_data() {
       'handler' => 'views_handler_argument_numeric',
     ),
   );
-  $data['fundraiser_springboard_quick_donate_cardonfile']['did'] = array(
+  $data['fundraiser_quick_donate_cardonfile']['did'] = array(
     'title' => t('Quick donation opt-in donation ID'),
     'help' => t('The donation ID associated with the quick donation.'),
     'relationship' => array(
@@ -143,7 +143,7 @@ function springboard_quick_donate_views_data() {
       'handler' => 'views_handler_argument_string',
     ),
   );
-  $data['fundraiser_springboard_quick_donate_cardonfile']['optin_date'] = array(
+  $data['fundraiser_quick_donate_cardonfile']['optin_date'] = array(
     'title' => t('Quick donation opt-in time'),
     'help' => t('Timestamp of when user opted into quick donations.'),
     'field' => array(
@@ -157,7 +157,7 @@ function springboard_quick_donate_views_data() {
       'handler' => 'views_handler_sort_date',
     ),
   );
-  $data['fundraiser_springboard_quick_donate_cardonfile']['ms'] = array(
+  $data['fundraiser_quick_donate_cardonfile']['ms'] = array(
     'title' => t('Quick donation market source'),
     'help' => t('Market source value for the quick donation record.'),
     'field' => array(

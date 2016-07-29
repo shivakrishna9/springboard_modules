@@ -8,7 +8,7 @@
 /**
  * Implements hook_form_alter().
  */
-function springboard_quick_donate_form_node_form_alter(&$form, &$form_state, $form_id) {
+function fundraiser_quick_donate_form_node_form_alter(&$form, &$form_state, $form_id) {
   if (empty($form['#node']->type) || !fundraiser_is_donation_type($form['#node']->type)) {
     return;
   }
@@ -73,7 +73,7 @@ function springboard_quick_donate_form_node_form_alter(&$form, &$form_state, $fo
   }
   else {
     drupal_add_js(array(
-      'springboard_quick_donate' => array(
+      'fundraiser_quick_donate' => array(
         'usable_paypment_processors' => $usable_paypment_processors,
       ),
     ), 'setting');
@@ -81,7 +81,7 @@ function springboard_quick_donate_form_node_form_alter(&$form, &$form_state, $fo
       '#type' => 'textfield',
       '#title' => t('"Quick Donation" opt-in text'),
       '#description' => t('This is the title of the opt-in checkbox. The "@type" placeholder can be used to specify the type of payment method (either credit card or bank account). Defaults to "Save this @type for future use".'),
-      '#default_value' => isset($form['#node']->quickdonate_optin_message) ? $form['#node']->quickdonate_optin_message : variable_get('springboard_quick_donate_default_optin_message', t('Save this @type for future use')),
+      '#default_value' => isset($form['#node']->quickdonate_optin_message) ? $form['#node']->quickdonate_optin_message : variable_get('fundraiser_quick_donate_default_optin_message', t('Save this @type for future use')),
       '#states' => array(
         'visible' => array(
           ':input[name="quickdonate"]' => array('checked' => TRUE),
@@ -106,7 +106,7 @@ function springboard_quick_donate_form_node_form_alter(&$form, &$form_state, $fo
       '#type' => 'text_format',
       '#title' => t('"Quick Donation" help text'),
       '#description' => t('This message will be shown to users to provide information about quick donations. Use !type to print the type of payment method, which will be either credit or bank account.<br/><br/>', array('!type' => '<strong>@type</strong>')),
-      '#default_value' => isset($form['#node']->quickdonate_help_message) ? $form['#node']->quickdonate_help_message : variable_get('springboard_quick_donate_default_help_message', t('Save your @type details and donate faster next time. We may email you from time to time with quick donate opportunities. You can update your @type details or cancel your enrollment at any time.')),
+      '#default_value' => isset($form['#node']->quickdonate_help_message) ? $form['#node']->quickdonate_help_message : variable_get('fundraiser_quick_donate_default_help_message', t('Save your @type details and donate faster next time. We may email you from time to time with quick donate opportunities. You can update your @type details or cancel your enrollment at any time.')),
       '#format' => isset($form['#node']->quickdonate_help_message_format) ? $form['#node']->quickdonate_help_message_format : 'plain_text',
     );
 
@@ -114,7 +114,7 @@ function springboard_quick_donate_form_node_form_alter(&$form, &$form_state, $fo
       '#type' => 'textfield',
       '#title' => t('"Quick Donation" login text'),
       '#description' => t('This is the title of the log-in checkbox. The "@type" placeholder can be used to specify the type of payment method (credit card or bank account). Defaults to "Already have a saved @type?".'),
-      '#default_value' => isset($form['#node']->quickdonate_login_message) ? $form['#node']->quickdonate_login_message : variable_get('springboard_quick_donate_default_login_message', t('Already have a saved @type?')),
+      '#default_value' => isset($form['#node']->quickdonate_login_message) ? $form['#node']->quickdonate_login_message : variable_get('fundraiser_quick_donate_default_login_message', t('Already have a saved @type?')),
       '#states' => array(
         'visible' => array(
           ':input[name="quickdonate"]' => array('checked' => TRUE),
@@ -126,7 +126,7 @@ function springboard_quick_donate_form_node_form_alter(&$form, &$form_state, $fo
       '#type' => 'textfield',
       '#title' => t('"Quick Donation" login link text'),
       '#description' => t('This is the title of the log-in checkbox. Defaults to "Click here to login".'),
-      '#default_value' => isset($form['#node']->quickdonate_login_link_message) ? $form['#node']->quickdonate_login_link_message : variable_get('springboard_quick_donate_default_login_link_message', t('Click here to login')),
+      '#default_value' => isset($form['#node']->quickdonate_login_link_message) ? $form['#node']->quickdonate_login_link_message : variable_get('fundraiser_quick_donate_default_login_link_message', t('Click here to login')),
       '#states' => array(
         'visible' => array(
           ':input[name="quickdonate"]' => array('checked' => TRUE),
@@ -135,8 +135,8 @@ function springboard_quick_donate_form_node_form_alter(&$form, &$form_state, $fo
     );
   }
 
-  $form['actions']['submit']['#submit'][] = '_springboard_quick_donate_node_form_submit';
-  $form['#attached']['js'][] = drupal_get_path('module', 'springboard_quick_donate') . '/js/springboard_quick_donate.js';
+  $form['actions']['submit']['#submit'][] = '_fundraiser_quick_donate_node_form_submit';
+  $form['#attached']['js'][] = drupal_get_path('module', 'fundraiser_quick_donate') . '/js/fundraiser_quick_donate.js';
 }
 
 /**
@@ -144,7 +144,7 @@ function springboard_quick_donate_form_node_form_alter(&$form, &$form_state, $fo
  *
  * Restructures array before it's passed to hook insert/update functions.
  */
-function _springboard_quick_donate_node_form_submit($form, &$form_state) {
+function _fundraiser_quick_donate_node_form_submit($form, &$form_state) {
   $fields = array(
     'fundraiser_nid' => $form_state['nid'],
     'quickdonate_optin_message' => $form_state['values']['quickdonate_optin_message'],
@@ -154,7 +154,7 @@ function _springboard_quick_donate_node_form_submit($form, &$form_state) {
     'quickdonate_login_link_message' => $form_state['values']['quickdonate_login_link_message'],
   );
 
-  db_merge('fundraiser_springboard_quick_donate')
+  db_merge('fundraiser_quick_donate')
     ->key(array('fundraiser_nid' => $fields['fundraiser_nid']))
     ->fields($fields)
     ->execute();

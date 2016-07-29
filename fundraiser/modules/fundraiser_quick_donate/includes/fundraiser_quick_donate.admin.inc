@@ -8,7 +8,7 @@
 /**
  * Upgrade link generator form.
  */
-function springboard_quick_donate_token_generator($form, $form_state) {
+function fundraiser_quick_donate_token_generator($form, $form_state) {
   $key = springboard_hmac_get_key();
   if (empty($key)) {
     drupal_set_message(t('Secure Prepopulate key and initialization vector are not set. Upgrade links will not work.'), 'error');
@@ -32,7 +32,7 @@ function springboard_quick_donate_token_generator($form, $form_state) {
     }
   }
 
-  $form['springboard_quick_donate'] = array(
+  $form['fundraiser_quick_donate'] = array(
     '#type' => 'fieldset',
     '#title' => t('Quick Donate Token'),
     '#collapsible' => TRUE,
@@ -40,7 +40,7 @@ function springboard_quick_donate_token_generator($form, $form_state) {
     '#description' => t('To test quick donation tokens, enter the following field information and press "Generate Token".'),
   );
 
-  $form['springboard_quick_donate']['uid'] = array(
+  $form['fundraiser_quick_donate']['uid'] = array(
     '#type' => 'textfield',
     '#title' => t('User ID'),
     '#size' => 20,
@@ -48,7 +48,7 @@ function springboard_quick_donate_token_generator($form, $form_state) {
     '#description' => t('The UID of the donator.'),
   );
 
-  $form['springboard_quick_donate']['amount'] = array(
+  $form['fundraiser_quick_donate']['amount'] = array(
     '#type' => 'textfield',
     '#title' => t('Donation Amount'),
     '#description' => t('The donation amount in cents. E.g. $20 = 2000'),
@@ -58,28 +58,28 @@ function springboard_quick_donate_token_generator($form, $form_state) {
   if ($defaults['nid'] < 1) {
     drupal_set_message(t('There are currently no fundraiser nodes, so the node ID will be set to 0. Note that authorization will fail.'), 'warning', FALSE);
   }
-  $form['springboard_quick_donate']['nid'] = array(
+  $form['fundraiser_quick_donate']['nid'] = array(
     '#type' => 'textfield',
     '#title' => t('Fundraiser Node ID'),
     '#description' => t('The fundraiser node ID, if desired.'),
     '#default_value' => $defaults['nid'],
   );
 
-  $form['springboard_quick_donate']['did'] = array(
+  $form['fundraiser_quick_donate']['did'] = array(
     '#type' => 'textfield',
     '#title' => t('Donation ID'),
     '#description' => t('The payment ID, if desired. Note that in order for the authorization to succeed, this must be associated with the node ID.'),
     '#default_value' => $defaults['did'],
   );
 
-  $form['springboard_quick_donate']['ms'] = array(
+  $form['fundraiser_quick_donate']['ms'] = array(
     '#type' => 'textfield',
     '#title' => t('Market Source'),
     '#description' => t('The market source value.'),
     '#default_value' => $defaults['ms'],
   );
 
-  $form['springboard_quick_donate']['cid'] = array(
+  $form['fundraiser_quick_donate']['cid'] = array(
     '#type' => 'textfield',
     '#title' => t('Campaign ID'),
     '#description' => t('The campaign ID value.'),
@@ -91,8 +91,8 @@ function springboard_quick_donate_token_generator($form, $form_state) {
     '#value' => t('Generate Token'),
   );
 
-  $form['#submit'][] = 'springboard_quick_donate_token_generator_validate';
-  $form['#submit'][] = 'springboard_quick_donate_token_generator_submit';
+  $form['#submit'][] = 'fundraiser_quick_donate_token_generator_validate';
+  $form['#submit'][] = 'fundraiser_quick_donate_token_generator_submit';
 
   return $form;
 }
@@ -103,10 +103,10 @@ function springboard_quick_donate_token_generator($form, $form_state) {
  * @return int
  *   The node ID.
  */
-function _springboard_quick_donate_token_generator_get_default_nid() {
+function _fundraiser_quick_donate_token_generator_get_default_nid() {
   $default_nid = &drupal_static(__FUNCTION__);
   if (!isset($default_nid)) {
-    $donation = _springboard_quick_donate_token_generator_get_default_donation();
+    $donation = _fundraiser_quick_donate_token_generator_get_default_donation();
     if ($donation) {
       $default_nid = $donation->node->nid;
     }
@@ -139,7 +139,7 @@ function _springboard_quick_donate_token_generator_get_default_nid() {
  * @return int
  *   The node ID.
  */
-function _springboard_quick_donate_token_generator_get_default_donation() {
+function _fundraiser_quick_donate_token_generator_get_default_donation() {
   $default_donation = &drupal_static(__FUNCTION__);
   if (!isset($default_donation)) {
     global $user;
@@ -169,10 +169,10 @@ function _springboard_quick_donate_token_generator_get_default_donation() {
  * @return int
  *   The node ID.
  */
-function _springboard_quick_donate_token_generator_get_default_did() {
+function _fundraiser_quick_donate_token_generator_get_default_did() {
   $default_did = &drupal_static(__FUNCTION__);
   if (!isset($default_nid)) {
-    $donation = _springboard_quick_donate_token_generator_get_default_donation();
+    $donation = _fundraiser_quick_donate_token_generator_get_default_donation();
     if ($donation) {
       $default_did = $donation->did;
     }
@@ -192,7 +192,7 @@ function _springboard_quick_donate_token_generator_get_default_did() {
  * @param array $form_state
  *   The form state.
  */
-function springboard_quick_donate_token_generator_validate($form, $form_state) {
+function fundraiser_quick_donate_token_generator_validate($form, $form_state) {
   $_SESSION['qd_token_generate'] = $form_state['values'];
 }
 
@@ -204,7 +204,7 @@ function springboard_quick_donate_token_generator_validate($form, $form_state) {
  * @param array $form_state
  *   The form state.
  */
-function springboard_quick_donate_token_generator_submit($form, $form_state) {
+function fundraiser_quick_donate_token_generator_submit($form, $form_state) {
   $payload = array(
     'uid' => $form_state['values']['uid'],
     'amount' => $form_state['values']['amount'],
@@ -214,7 +214,7 @@ function springboard_quick_donate_token_generator_submit($form, $form_state) {
     'cid' => $form_state['values']['cid'],
   );
 
-  $link = springboard_quick_donate_create_link($payload);
+  $link = fundraiser_quick_donate_create_link($payload);
 
   drupal_set_message('Quick donate link generated! ' . l($link, $link));
 }

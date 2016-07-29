@@ -15,7 +15,7 @@
  * @return string
  *   The quick donation url.
  */
-function springboard_quick_donate_create_link($payload, $rollback = FALSE) {
+function fundraiser_quick_donate_create_link($payload, $rollback = FALSE) {
   $link = '';
   $amount = $payload['amount'];
 
@@ -45,7 +45,7 @@ function springboard_quick_donate_create_link($payload, $rollback = FALSE) {
 /**
  * Implements hook_springboard_hmac_allowed_actions().
  */
-function springboard_quick_donate_springboard_hmac_allowed_actions_alter(&$actions) {
+function fundraiser_quick_donate_springboard_hmac_allowed_actions_alter(&$actions) {
   $actions[] = 'qd';
 }
 
@@ -54,10 +54,10 @@ function springboard_quick_donate_springboard_hmac_allowed_actions_alter(&$actio
  *
  * Redirect to the donation form if hmac validated.
  */
-function springboard_quick_donate_springboard_hmac_success($payload) {
+function fundraiser_quick_donate_springboard_hmac_success($payload) {
   if ($payload['action'] == 'qd') {
     $status = TRUE;
-    $mapping = _springboard_quick_donate_hmac_mapping();
+    $mapping = _fundraiser_quick_donate_hmac_mapping();
     // Need to do some more validation at this point since we don't want to show
     // an access denied message.
     if (!user_is_logged_in()) {
@@ -67,7 +67,7 @@ function springboard_quick_donate_springboard_hmac_success($payload) {
         // set an appropriate message on the donation form.
         $_SESSION['springboard_hmac']['quickdonate'] = array(
           'status' => FALSE,
-          'reason' => SPRINGBOARD_QUICK_DONATE_UID_NOT_EQUAL_TOKEN,
+          'reason' => fundraiser_quick_donate_UID_NOT_EQUAL_TOKEN,
         );
         $status = FALSE;
       }
@@ -95,8 +95,8 @@ function springboard_quick_donate_springboard_hmac_success($payload) {
  *
  * Redirect to the donation form if hmac not validated.
  */
-function springboard_quick_donate_springboard_hmac_failure($reason, $payload) {
-  $mapping = _springboard_quick_donate_hmac_mapping();
+function fundraiser_quick_donate_springboard_hmac_failure($reason, $payload) {
+  $mapping = _fundraiser_quick_donate_hmac_mapping();
 
   // If the Springboard cookie is set and matches the uid from the token,
   // redirect user to donation form. This scenario is treated as a success
@@ -108,7 +108,7 @@ function springboard_quick_donate_springboard_hmac_failure($reason, $payload) {
 
   // Otherwise this is a failure condition. Output the reason if configured to
   // do so.
-  if (variable_get('springboard_quick_donate_debug', FALSE)) {
+  if (variable_get('fundraiser_quick_donate_debug', FALSE)) {
     global $user;
     if (module_exists('devel') && user_access('access devel information', $user)) {
       dpm($reason);
@@ -133,8 +133,8 @@ function springboard_quick_donate_springboard_hmac_failure($reason, $payload) {
 /**
  * Implements hook_springboard_hmac_verify_payload().
  */
-function springboard_quick_donate_springboard_hmac_verify_payload($payload) {
-  $qd_hmac_mapping = _springboard_quick_donate_hmac_mapping();
+function fundraiser_quick_donate_springboard_hmac_verify_payload($payload) {
+  $qd_hmac_mapping = _fundraiser_quick_donate_hmac_mapping();
   $did = $payload[$qd_hmac_mapping['donation_id']];
   if ($did > 0) {
     $donation = fundraiser_donation_get_donation($did);
@@ -172,7 +172,7 @@ function springboard_quick_donate_springboard_hmac_verify_payload($payload) {
  * @return array
  *   A map of hmac types to their corresponding keys.
  */
-function _springboard_quick_donate_hmac_mapping() {
+function _fundraiser_quick_donate_hmac_mapping() {
   return array(
     'amount' => 0,
     'donation_id' => 1,
