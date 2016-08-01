@@ -61,7 +61,7 @@ function springboard_node_expire_form_alter(&$form, &$form_state, $form_id) {
     $form['expiration_settings']['node_expire_container'] = $form['workflow']['node_expire_container'];
     unset($form['workflow']['node_expire_container']);
   }
-  elseif (strpos($form_id, '_node_form') !== FALSE && $form['#node_edit_form'] && isset($form['options']['expire'])) {
+  elseif (strpos($form_id, '_node_form') !== FALSE && $form['#node_edit_form']) {
     // Move the parent module's settings to its own fieldset and add some
     // settings of our own.
     $types = array($form['#node']->type);
@@ -77,10 +77,14 @@ function springboard_node_expire_form_alter(&$form, &$form_state, $form_id) {
           'class' => array('springboard-node-expire-form'),
         ),
       );
-      $form['expiration_settings']['expire'] = $form['options']['expire'];
+      $options = 'options';
+      if (!$form['options']['#access']) {
+        $options = 'options1';
+      }
+      $form['expiration_settings']['expire'] = $form[$options]['expire'];
       $form['expiration_settings']['expire']['#date_label_position'] = 'none';
       $form['expiration_settings']['expire']['#description'] = t('Date on which this page will expire.');
-      unset($form['options']['expire']);
+      unset($form[$options]['expire']);
 
       $form['expiration_settings']['expiration_action'] = array(
         '#title' => t('When this page expires, users should be:'),
