@@ -80,6 +80,7 @@ function springboard_node_expire_form_alter(&$form, &$form_state, $form_id) {
       $options = 'options';
       if (!$form['options']['#access']) {
         $options = 'options1';
+        $form[$options]['#group'] = 'additional_settings';
       }
       $form['expiration_settings']['expire'] = $form[$options]['expire'];
       $form['expiration_settings']['expire']['#date_label_position'] = 'none';
