@@ -1,0 +1,38 @@
+<?php
+
+/**
+ * @file
+ *   A simple-as-possible migration of Commerce product and product display node
+ *   information.
+ *
+ *   You can run this migration with
+ *     drush mi FdMigrateProduct
+ *     drush mi FdMigrateProductDisplay
+ *
+ *   To see the status of all migrations and what migrations are available:
+ *     drush ms
+ *
+ *   To roll back migrations:
+ *     drush migrate-rollback FdMigrateProductDisplay
+ *     drush migrate-rollback FdMigrateProduct
+ *
+ *   Please make sure you don't get one of the products into the cart while
+ *   you're rolling back, as this makes no end of messiness. Products in the cart
+ *   are (not supposed to be able) to be deleted.
+ */
+
+/*
+ * Implements hook_migrate_api().
+ */
+function fd_migrate_migrate_api() {
+  $api = array(
+    'api' => 2,
+    'migrations' => array(
+      'FdMigrateProduct' => array(
+        'class_name' => 'FdMigrateProductMigration',
+      ),
+    ),
+  );
+
+  return $api;
+}

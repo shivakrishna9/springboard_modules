@@ -1,0 +1,11 @@
+core = 7.x
+description = Fundraiser designations migrate
+name = Fundraiser Designationa Migrate
+files[] = fd_migrate.migrate.inc
+dependencies[] = migrate
+dependencies[] = migrate_extras
+dependencies[] = commerce_product
+dependencies[] = fundraiser_designations
+
+files[] = plugins/destinations/commerce_product.inc
+files[] = plugins/destinations/fields.inc

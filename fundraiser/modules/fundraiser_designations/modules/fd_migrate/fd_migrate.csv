@@ -1,0 +1,176 @@
+Sku,Title,Category,Price
+F-000001,Where it's needed most,General,1
+F-000002,Education,General,1
+F-000003,Health,General,1
+F-000004,Livelihood,General,1
+F-000005,Water and Sanitation,General,1
+F-000006,Winterization,General,1
+F-000007,Women's Programs,General,1
+F-000008,Children in Need,General,1
+F-000009,General Udhiyah/Qurbani,General,1
+F-000010,Fidya/Kaffara,General,1
+F-000011,Sadaqah,General,1
+F-000012,Zakat Al Fitr,General,1
+F-000013,General Food Aid,General,1
+F-000014,General Humanitarian Aid,General,1
+F-000015,General Orphan Support,General,1
+F-000016,General Zakah,General,1
+F-000017,USA Zakat,General,1
+F-000018,General Ramadan Food Packages,General,1
+F-000019,Afghanistan food package,Food Aid,1
+F-000020,Albania food package,Food Aid,1
+F-000021,Bangladesh food package,Food Aid,1
+F-000022,Bosnia food package,Food Aid,1
+F-000023,Chad food package,Food Aid,1
+F-000024,Chechnya food package,Food Aid,1
+F-000025,Ethiopia food package,Food Aid,1
+F-000026,India food package,Food Aid,1
+F-000027,Indonesia food package,Food Aid,1
+F-000028,Iraq food package,Food Aid,1
+F-000029,Jordan food package,Food Aid,1
+F-000030,Kenya food package,Food Aid,1
+F-000031,Kosovo food package,Food Aid,1
+F-000032,Lebanon food package,Food Aid,1
+F-000033,Malawi food package,Food Aid,1
+F-000034,Mali food package,Food Aid,1
+F-000035,Myanmar (Burma) food package,Food Aid,1
+F-000036,Niger food package,Food Aid,1
+F-000037,Pakistan food package,Food Aid,1
+F-000038,Palestine food package,Food Aid,1
+F-000039,Somalia food package,Food Aid,1
+F-000040,South Africa food package,Food Aid,1
+F-000041,South Sudan food package,Food Aid,1
+F-000042,Sri Lanka food package,Food Aid,1
+F-000043,Syria food package,Food Aid,1
+F-000044,USA food package,Food Aid,1
+F-000045,Yemen food package,Food Aid,1
+F-000046,Zimbabwe food package,Food Aid,1
+F-000047,Afghanistan Humanitarian Aid,Humanitarian Aid,1
+F-000048,Albania Humanitarian Aid,Humanitarian Aid,1
+F-000049,Bangladesh Humanitarian Aid,Humanitarian Aid,1
+F-000050,Benin Humanitarian Aid,Humanitarian Aid,1
+F-000051,Bosnia Humanitarian Aid,Humanitarian Aid,1
+F-000052,Central African Republic Humanitarian Aid,Humanitarian Aid,1
+F-000053,Chad Humanitarian Aid,Humanitarian Aid,1
+F-000054,Chechnya Humanitarian Aid,Humanitarian Aid,1
+F-000055,Eastern Africa Humanitarian Aid,Humanitarian Aid,1
+F-000056,Ecuador Humanitarian Aid,Humanitarian Aid,1
+F-000057,Ethiopia Humanitarian Aid,Humanitarian Aid,1
+F-000058,Ghana Humanitarian Aid,Humanitarian Aid,1
+F-000059,India Humanitarian Aid,Humanitarian Aid,1
+F-000060,Iraq Humanitarian Aid,Humanitarian Aid,1
+F-000061,Jordan Humanitarian Aid,Humanitarian Aid,1
+F-000062,Kenya Humanitarian Aid,Humanitarian Aid,1
+F-000063,Kosovo Humanitarian Aid,Humanitarian Aid,1
+F-000064,Lebanon Humanitarian Aid,Humanitarian Aid,1
+F-000065,Malawi Humanitarian Aid,Humanitarian Aid,1
+F-000066,Mali Humanitarian Aid,Humanitarian Aid,1
+F-000067,Myanmar Humanitarian Aid,Humanitarian Aid,1
+F-000068,Nepal Humanitarian Aid,Humanitarian Aid,1
+F-000069,Niger Humanitarian Aid,Humanitarian Aid,1
+F-000070,Pakistan Humanitarian Aid,Humanitarian Aid,1
+F-000071,Palestine Humanitarian Aid,Humanitarian Aid,1
+F-000072,Philippines Humanitarian Aid,Humanitarian Aid,1
+F-000073,Refugee Humanitarian Aid,Humanitarian Aid,1
+F-000074,Somalia Humanitarian Aid,Humanitarian Aid,1
+F-000075,South Africa Humanitarian Aid,Humanitarian Aid,1
+F-000076,South Sudan Humanitarian Aid,Humanitarian Aid,1
+F-000077,Sri Lanka Humanitarian Aid,Humanitarian Aid,1
+F-000078,Sudan Humanitarian Aid,Humanitarian Aid,1
+F-000079,Syria Humanitarian Aid,Humanitarian Aid,1
+F-000080,Tunisia Humanitarian Aid,Humanitarian Aid,1
+F-000081,USA Humanitarian Aid,Humanitarian Aid,1
+F-000082,Yemen Humanitarian Aid,Humanitarian Aid,1
+F-000083,Afghanistan Orphan General Donation,Orphan Support,1
+F-000084,Albania Orphan General Donation,Orphan Support,1
+F-000085,Bangladesh Orphan General Donation,Orphan Support,1
+F-000086,Bosnia Orphan General Donation,Orphan Support,1
+F-000087,Chechnya Orphan General Donation,Orphan Support,1
+F-000088,Ethiopia Orphan General Donation,Orphan Support,1
+F-000089,India Orphan General Donation,Orphan Support,1
+F-000090,Indonesia Orphan General Donation,Orphan Support,1
+F-000091,Iraq Orphan GeNeral Donation,Orphan Support,1
+F-000092,Jordan Orphan General Donation,Orphan Support,1
+F-000093,Kenya Orphan General Donation,Orphan Support,1
+F-000094,Kosovo Orphan General Donation,Orphan Support,1
+F-000095,Lebanon Orphan General Donation,Orphan Support,1
+F-000096,Mali Orphan General Donation,Orphan Support,1
+F-000097,Niger Orphan General Donation,Orphan Support,1
+F-000098,Pakistan Orphan General Donation,Orphan Support,1
+F-000099,Palestine Orphan General Donation,Orphan Support,1
+F-000100,Somalia Orphan General Donation,Orphan Support,1
+F-000101,South Africa Orphan General Donation,Orphan Support,1
+F-000102,Sri Lanka Orphan General Donation,Orphan Support,1
+F-000103,Yemen Orphan General Donation,Orphan Support,1
+F-000104,Afghanistan Orphan Sponsorship,Orphan Sponsorship,1
+F-000105,Albania Orphan Sponsorship,Orphan Sponsorship,1
+F-000106,Bangladesh Orphan Sponsorship,Orphan Sponsorship,1
+F-000107,Bosnia Orphan Sponsorship,Orphan Sponsorship,1
+F-000108,Chechnya Orphan Sponsorship,Orphan Sponsorship,1
+F-000109,Ethiopia Orphan Sponsorship,Orphan Sponsorship,1
+F-000110,India Orphan Sponsorship,Orphan Sponsorship,1
+F-000111,Indonesia Orphan Sponsorship,Orphan Sponsorship,1
+F-000112,Iraq Orphan Sponsorship,Orphan Sponsorship,1
+F-000113,Jordan Orphan Sponsorship,Orphan Sponsorship,1
+F-000114,Kenya Orphan Sponsorship,Orphan Sponsorship,1
+F-000115,Kosovo Orphan Sponsorship,Orphan Sponsorship,1
+F-000116,Lebanon Orphan Sponsorship,Orphan Sponsorship,1
+F-000117,Mali Orphan Sponsorship,Orphan Sponsorship,1
+F-000118,Niger Orphan Sponsorship,Orphan Sponsorship,1
+F-000119,Pakistan Orphan Sponsorship,Orphan Sponsorship,1
+F-000120,Palestine Orphan Sponsorship,Orphan Sponsorship,1
+F-000121,Somalia Orphan Sponsorship,Orphan Sponsorship,1
+F-000122,South Africa Orphan Sponsorship,Orphan Sponsorship,1
+F-000123,Sri Lanka Orphan Sponsorship,Orphan Sponsorship,1
+F-000124,Yemen Orphan Sponsorship,Orphan Sponsorship,1
+F-000125,Afghanistan Zakah,Zakah,1
+F-000126,Bangladesh Zakah,Zakah,1
+F-000127,Bosnia Zakah,Zakah,1
+F-000128,Chechnya Zakah,Zakah,1
+F-000129,Ethiopia Zakah,Zakah,1
+F-000130,India Zakah,Zakah,1
+F-000131,Iraq Zakah,Zakah,1
+F-000132,Kenya Zakah,Zakah,1
+F-000133,Kosovo Zakah,Zakah,1
+F-000134,Lebanon Zakah,Zakah,1
+F-000135,Mali Zakah,Zakah,1
+F-000136,Niger Zakah,Zakah,1
+F-000137,Pakistan Zakah,Zakah,1
+F-000138,Palestine Zakah,Zakah,1
+F-000139,Somalia Zakah,Zakah,1
+F-000140,Sudan Zakah,Zakah,1
+F-000141,Syria Zakah,Zakah,1
+F-000142,USA Zakah,Zakah,1
+F-000143,Yemen Zakah,Zakah,1
+F-000144,Afghanistan Qurbani,Qurbani,1
+F-000145,Albania Qurbani,Qurbani,1
+F-000146,Bangladesh Qurbani,Qurbani,1
+F-000147,Bosnia Qurbani,Qurbani,1
+F-000148,Chad Qurbani,Qurbani,1
+F-000149,Chechnya Qurbani,Qurbani,1
+F-000150,China Qurbani,Qurbani,1
+F-000151,Ethiopia Qurbani,Qurbani,1
+F-000152,India Qurbani,Qurbani,1
+F-000153,Indonesia Qurbani,Qurbani,1
+F-000154,Iraq Qurbani,Qurbani,1
+F-000155,Jordan Qurbani,Qurbani,1
+F-000156,Kenya Qurbani,Qurbani,1
+F-000157,Kosovo Qurbani,Qurbani,1
+F-000158,Lebanon Qurbani,Qurbani,1
+F-000159,Malawi Qurbani,Qurbani,1
+F-000160,Mali Qurbani,Qurbani,1
+F-000161,Myanmar Qurbani,Qurbani,1
+F-000162,Niger Qurbani,Qurbani,1
+F-000163,Pakistan Qurbani,Qurbani,1
+F-000164,Palestine Qurbani,Qurbani,1
+F-000165,Qurbani - Global,Qurbani,1
+F-000166,Somalia Qurbani,Qurbani,1
+F-000167,South Africa Qurbani,Qurbani,1
+F-000168,South Sudan Qurbani,Qurbani,1
+F-000169,Sri Lanka Qurbani,Qurbani,1
+F-000170,Sudan Qurbani,Qurbani,1
+F-000171,Syria Qurbani,Qurbani,1
+F-000172,Tunisia Qurbani,Qurbani,1
+F-000173,USA Qurbani,Qurbani,1
+F-000174,Yemen Qurbani,Qurbani,1
+F-000175,Zimbabwe Qurbani,Qurbani,1
