@@ -272,45 +272,9 @@ function form_layouts_form_layouts_info() {
     'hide title' => TRUE,
   );
 
-  $templates['two_column_petition_form_left'] = array(
-    'name' => t('Two column: petition with the form on the left'),
-    'types' => array('petition'),
-    'theme' => 'two_column_petition_form_left',
-    'pattern' => 'two_column_petition_form_left_\'0-9\'+',
-    'template' => 'two-column-petition-form-left',
-    'path' => drupal_get_path('module', 'form_layouts') . '/templates',
-    'hide title' => TRUE,
-  );
-
-  $templates['two_column_petition_form_right'] = array(
-    'name' => t('Two column: petition with the form on the right'),
-    'types' => array('petition'),
-    'theme' => 'two_column_petition_form_right',
-    'pattern' => 'two_column_petition_form_right_\'0-9\'+',
-    'template' => 'two-column-petition-form-right',
-    'path' => drupal_get_path('module', 'form_layouts') . '/templates',
-    'hide title' => TRUE,
-  );
-
-  $templates['one_column_petition_form_top'] = array(
-    'name' => t('One column: petition with the form on the top'),
-    'types' => array('petition'),
-    'theme' => 'one_column_petition_form_top',
-    'pattern' => 'one_column_petition_form_top_\'0-9\'+',
-    'template' => 'one-column-petition-form-top',
-    'path' => drupal_get_path('module', 'form_layouts') . '/templates',
-    'hide title' => TRUE,
-  );
-
-  $templates['two_column_hybrid_donation'] = array(
-    'name' => t('Hybrid two column: donation form'),
-    'types' => array('fundraiser'),
-    'theme' => 'two_column_hybrid_donation',
-    'pattern' => 'two_column_hybrid_donation_\'0-9\'+',
-    'template' => 'two-column-hybrid-donation',
-    'path' => drupal_get_path('module', 'form_layouts') . '/templates/',
-    'hide title' => FALSE,
-  );
+  if (module_exists('springboard_petition')) {
+    $templates = array_merge(_springboard_petition_get_form_layouts_templates(), $templates);
+  }
 
   $templates['two_column_left_right'] = array(
     'name' => t('Two column: left-right fieldsets'),

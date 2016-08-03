@@ -190,6 +190,43 @@ function springboard_petition_tokens($type, $tokens, array $data = array(), arra
 }
 
 /**
+ * Returns form_layouts template definitions.
+ */
+function _springboard_petition_get_form_layouts_templates() {
+  $path = drupal_get_path('module', 'springboard_petition') . '/templates';
+  $templates['two_column_petition_form_left'] = array(
+    'name' => t('Two column: petition with the form on the left'),
+    'types' => array('petition'),
+    'theme' => 'two_column_petition_form_left',
+    'pattern' => 'two_column_petition_form_left_\'0-9\'+',
+    'template' => 'two-column-petition-form-left',
+    'path' => $path,
+    'hide title' => TRUE,
+  );
+
+  $templates['two_column_petition_form_right'] = array(
+    'name' => t('Two column: petition with the form on the right'),
+    'types' => array('petition'),
+    'theme' => 'two_column_petition_form_right',
+    'pattern' => 'two_column_petition_form_right_\'0-9\'+',
+    'template' => 'two-column-petition-form-right',
+    'path' => $path,
+    'hide title' => TRUE,
+  );
+
+  $templates['one_column_petition_form_top'] = array(
+    'name' => t('One column: petition with the form on the top'),
+    'types' => array('petition'),
+    'theme' => 'one_column_petition_form_top',
+    'pattern' => 'one_column_petition_form_top_\'0-9\'+',
+    'template' => 'one-column-petition-form-top',
+    'path' => $path,
+    'hide title' => TRUE,
+  );
+  return $templates;
+}
+
+/**
  * Log opt in.
  *
  * @param int $nid
