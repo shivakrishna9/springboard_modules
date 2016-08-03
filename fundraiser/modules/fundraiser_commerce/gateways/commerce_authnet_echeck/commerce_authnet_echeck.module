@@ -1,0 +1,27 @@
+<?php
+
+/**
+ * @file
+ * Implements Authorize.Net eCheck payment services for use in Drupal Commerce.
+ *
+ * Based on https://www.drupal.org/sandbox/actorrunning/2716153
+ */
+
+/**
+ * Implements hook_commerce_payment_method_info().
+ */
+function commerce_authnet_echeck_commerce_payment_method_info() {
+  $payment_methods = array();
+
+  $payment_methods['authnet_echeck'] = array(
+    'base' => 'commerce_authnet_echeck',
+    'title' => t('Authorize.Net AIM - eCheck.Net'),
+    'short_title' => t('eCheck.Net'),
+    'display_title' => t('eCheck'),
+    'description' => t('Integrates Authorize.Net Advanced Integration Method
+       for eCheck transactions.'),
+    'file' => 'includes/commerce_authnet_echeck.echeck.inc',
+  );
+
+  return $payment_methods;
+}
