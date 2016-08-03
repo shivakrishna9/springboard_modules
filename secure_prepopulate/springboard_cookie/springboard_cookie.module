@@ -130,6 +130,34 @@ function springboard_cookie_springboard_quick_donate_optin_create($account, $don
 }
 
 /**
+ * Implements hook_action_success().
+ */
+function springboard_cookie_action_success($node, $contact, $data, $sid) {
+  // Webform user will add the uid and email, so no need to do that here.
+  $action_data = array(
+    //'uid' => $data['account_id'],
+    //'email' => $contact['email'],
+    'last_action_nid' => $node->nid,
+    'last_action_sid' => $sid,
+    'last_action_date' => time(),
+  );
+
+  if ($node->type == 'sba_message_action') {
+    $action_data['salutation'] = $contact['salutation'];
+    $action_data['first_name'] = $contact['first_name'];
+    $action_data['last_name'] = $contact['last_name'];
+    $action_data['address'] = $contact['address'];
+    $action_data['address_line_2'] = $contact['address_line_2'];
+    $action_data['city'] = $contact['city'];
+    $action_data['state'] = $contact['state'];
+    $action_data['zip'] = $contact['zip'];
+    $action_data['phone'] = $contact['phone'];
+  }
+
+  springboard_cookie_tag_client($action_data);
+}
+
+/**
  * Implmentation of hook_form_alter().
  */
 function springboard_cookie_form_alter(&$form, &$form_state, $form_id) {
