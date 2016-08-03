@@ -93,6 +93,17 @@ function springboard_cookie_fundraiser_donation_post_submit_alter(&$form, &$form
   if (!empty($donation->donation['mail'])) {
     $new_data['email'] = $donation->donation['mail'];
   }
+
+  // Store basic profile data in cookie after a donation.
+  $new_data['first_name'] = $donation->donation['first_name'];
+  $new_data['last_name'] = $donation->donation['last_name'];
+  $new_data['address'] = $donation->donation['address'];
+  $new_data['address_line_2'] = $donation->donation['address_line_2'];
+  $new_data['city'] = $donation->donation['city'];
+  $new_data['country'] = $donation->donation['country'];
+  $new_data['state'] = $donation->donation['state'];
+  $new_data['zip'] = $donation->donation['zip'];
+
   springboard_cookie_tag_client($new_data);
 }
 
