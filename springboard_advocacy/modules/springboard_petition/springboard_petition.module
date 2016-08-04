@@ -60,6 +60,39 @@ function springboard_petition_form_webform_component_delete_form_alter(&$form, &
 }
 
 /**
+ * Implements hook_webform_submission_delete().
+ *
+ * Removes a springboard_petition_opt_in record on submission deletion.
+ */
+function springboard_petition_webform_submission_delete($node, $submission) {
+  if ($node->type != 'springboard_petition') {
+    return;
+  }
+  db_query("DELETE FROM {springboard_petition_opt_in} WHERE sid = :sid AND nid = :nid",
+    array(
+      ':sid' => $submission->sid,
+      ':nid' => $node->nid,
+    )
+  );
+}
+
+/**
+ * Implements hook_node_delete().
+ *
+ * Removes all related springboard_petition_opt_in and springboard_petition_opt_in_block
+ * records upon donation webform deletion.
+ */
+function springboard_petition_node_delete($node) {
+  if ($node->type != 'springboard_petition') {
+    return;
+  }
+  db_query("DELETE FROM {springboard_petition_opt_in} WHERE nid = :nid",
+    array(':nid' => $node->nid));
+  db_query("DELETE FROM {springboard_petition_opt_in_block} WHERE nid = :nid",
+    array(':nid' => $node->nid));
+}
+
+/**
  * Implements hook_form_FORM_ID_alter().
  */
 function springboard_petition_form_node_type_form_alter(&$form, $form_state) {
