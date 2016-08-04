@@ -21,6 +21,11 @@ function commerce_authnet_echeck_commerce_payment_method_info() {
     'description' => t('Integrates Authorize.Net Advanced Integration Method
        for eCheck transactions.'),
     'file' => 'includes/commerce_authnet_echeck.echeck.inc',
+    'cardonfile' => array(
+      'charge callback' => 'commerce_authnet_echeck_cardonfile_charge',
+      'update callback' => 'commerce_authnet_echeck_cardonfile_update',
+      'delete callback' => 'commerce_authnet_echeck_cardonfile_delete',
+    ),
   );
 
   return $payment_methods;

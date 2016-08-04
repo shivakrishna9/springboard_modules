@@ -15,6 +15,7 @@ function commerce_authnet_echeck_settings_form($settings = NULL) {
   $settings = (array) $settings + array(
     'login' => '',
     'tran_key' => '',
+    'email_customer' => FALSE,
     'txn_mode' => AUTHNET_TXN_MODE_LIVE_TEST,
     'log' => array('request' => '0', 'response' => '0'),
   );
@@ -65,7 +66,42 @@ function commerce_authnet_echeck_settings_form($settings = NULL) {
     '#default_value' => $settings['log'],
   );
 
+  // CIM support in conjunction with AIM requires the Card on File module.
+  if (module_exists('commerce_cardonfile')) {
+    $form['cardonfile'] = array(
+      '#type' => 'checkbox',
+      '#title' => t('Enable Card on File functionality with this payment method using Authorize.Net CIM.'),
+      '#description' => t('This requires an Authorize.Net account upgraded to include support for CIM (Customer Information Manager).'),
+      '#default_value' => $settings['cardonfile'],
+    );
+  }
+
+  else {
+    $form['cardonfile'] = array(
+      '#type' => 'markup',
+      '#markup' => t('To enable Card on File funcitionality download and install the Card on File module.'),
+    );
+  }
+
+  $form['email_customer'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Tell Authorize.net to e-mail the customer a receipt based on your account settings.'),
+    '#default_value' => $settings['email_customer'],
+  );
+
   return $form;
+}
+
+function commerce_authnet_echeck_cardonfile_charge($payment_method, $card_data, $order, $charge = NULL) {
+
+}
+
+function commerce_authnet_echeck_cardonfile_update($form, &$form_state, $payment_method, $card_data) {
+
+}
+
+function commerce_authnet_echeck_cardonfile_delete() {
+
 }
 
 /**
@@ -180,12 +216,22 @@ function commerce_authnet_echeck_submit_form($payment_method, $pane_values = arr
  */
 function commerce_authnet_echeck_submit_form_validate($payment_method, $pane_form, $pane_values, $order, $form_parents = array()) {
   // Validate the echeck fields.
-  $settings = array(
-    'form_parents' => array_merge($form_parents, array('bank account')),
-  );
+  $prefix = implode('][', $form_parents) . '][';
 
-  if (!commerce_authnet_echeck_payment_validate($pane_values['bank account'], $settings)) {
-    return FALSE;
+  // Validate the aba (routing) number.
+  if (!commerce_authnet_echeck_payment_validate_aba($pane_values['bank account']['aba_code'])) {
+    form_set_error($prefix . 'aba_code', t('You have entered an invalid routing number.'));
+  }
+
+  // Ensure that the account numbers match.
+  if ($pane_values['bank account']['acct_num'] != $pane_values['bank account']['confirm_acct_num']) {
+    form_set_error($prefix . 'acct_num', t('The account numbers do not match.'));
+    form_set_error($prefix . 'confirm_acct_num');
+  }
+
+  // Validate the account number.
+  if (!commerce_authnet_echeck_payment_validate_account($pane_values['bank account']['acct_num'])) {
+    form_set_error($prefix . 'acct_num', t('You have entered an invalid account number.'));
   }
 }
 
@@ -193,6 +239,13 @@ function commerce_authnet_echeck_submit_form_validate($payment_method, $pane_for
  * Payment method callback: checkout form submission.
  */
 function commerce_authnet_echeck_submit_form_submit($payment_method, $pane_form, $pane_values, $order, $charge) {
+  // If the customer specified payment using a card on file, attempt that now
+  // and simply return the result.
+  if (module_exists('commerce_cardonfile') && $payment_method['settings']['cardonfile'] &&
+    !empty($pane_values['cardonfile']) && $pane_values['cardonfile'] !== 'new') {
+    return commerce_authnet_cim_submit_form_submit($payment_method, $pane_form, $pane_values, $order, $charge);
+  }
+
   // Build a name-value pair array for this transaction.
   $nvp = array(
     'x_method' => 'ECHECK',
@@ -202,6 +255,7 @@ function commerce_authnet_echeck_submit_form_submit($payment_method, $pane_form,
     'x_bank_name' => isset($pane_values['bank account']['bank_name']) ? substr($pane_values['bank account']['bank_name'], 0, 50) : '',
     'x_bank_acct_name' => isset($pane_values['bank account']['bank_name']) ? substr($pane_values['bank account']['acct_name'], 0, 50) : '',
     'x_echeck_type' => 'WEB',
+    // Recurring should always be false, recurring transactions are handled by CIM
     'x_recurring_billing' => 'FALSE',
     'x_amount' => commerce_currency_amount_to_decimal($charge['amount'], $charge['currency_code']),
   );
@@ -264,6 +318,139 @@ function commerce_authnet_echeck_submit_form_submit($payment_method, $pane_form,
     drupal_set_message(check_plain($response[3]), 'error');
     return FALSE;
   }
+
+  // If Card on File storage is enabled via CIM and the form says to store data...
+  if (module_exists('commerce_cardonfile') && !empty($payment_method['settings']['cardonfile']) &&
+    !empty($pane_values['bank account']['cardonfile_store']) && $pane_values['bank account']['cardonfile_store']) {
+    // Build a payment details array for the credit card.
+    $payment_details = array(
+      'accountNumber' => $pane_values['bank account']['acct_num'],
+      'routingNumber' => $pane_values['bank account']['aba_code'],
+      'nameOnAccount' => $pane_values['bank account']['acct_name']
+    );
+
+    // First look to see if we already have cards on file for the user.
+    $stored_cards = commerce_cardonfile_load_multiple_by_uid($order->uid, $payment_method['instance_id']);
+    // If we didn't find any, attempt to make a new Customer Profile now.
+    if (empty($stored_cards)) {
+      // Submit a CIM request to create the Customer Profile.
+      if ($response = commerce_authnet_echeck_cim_create_customer_profile_request($payment_method, $order, $payment_details)) {
+        // If the Customer Profile creation was a success, store the new card on
+        // file data locally.
+        if ((string) $response->messages->resultCode == 'Ok') {
+          // Build a remote ID that includes the Customer Profile ID and the
+          // Payment Profile ID.
+          $remote_id = (string) $response->customerProfileId . '|' . (string) $response->customerPaymentProfileIdList->numericString;
+
+          // Load the card on file values for this donation
+          $cardonfile_fields = _fundraiser_commerce_credit_card_cardonfile_fields($donation);
+          $expires = commerce_authnet_echeck_fundraiser_commerce_expire(array());
+
+          $card_data = commerce_cardonfile_new();
+          $card_data->uid = $order->uid;
+          $card_data->payment_method = $payment_method['method_id'];
+          $card_data->instance_id = $payment_method['instance_id'];
+          $card_data->remote_id = $remote_id;
+          $card_data->card_type = !empty($card_type) ? $card_type : 'card';
+          $card_data->card_name = !empty($billing_address['name_line']) ? $billing_address['name_line'] : '';
+          $card_data->card_number = $cardonfile_fields['card_number'];
+          $card_data->card_exp_month = $expires['month'];
+          $card_data->card_exp_year = $expires['year'];
+          $card_data->status = 1;
+
+          // Save and log the creation of the new card on file.
+          commerce_cardonfile_save($card_data);
+          watchdog('commerce_authnet_echeck', 'CIM Customer Profile @profile_id created and saved to user @uid.', array('@profile_id' => (string) $response->customerProfileId, '@uid' => $order->uid));
+        }
+        elseif ((string) $response->messages->message->code == 'E00039') {
+          // But if a Customer Profile already existed for this user, attempt
+          // instead to add this card as a new Payment Profile to it.
+          $result = array_filter(explode(' ', (string) $response->messages->message->text), 'is_numeric');
+          $add_to_profile = reset($result);
+        }
+      }
+    }
+    else {
+      // Extract the user's Customer Profile ID from the first card's remote ID.
+      $card_data = reset($stored_cards);
+      list($cim_customer_profile_id, $cim_payment_profile_id) = explode('|', $card_data->remote_id);
+
+      // Attempt to add the card as a new payment profile to this Customer Profile.
+      $add_to_profile = $cim_customer_profile_id;
+    }
+
+    // Attempt to add the card to an existing Customer Profile if specified.
+    if (!empty($add_to_profile)) {
+      $response = commerce_authnet_cim_create_customer_payment_profile_request($payment_method, $add_to_profile, $order, $payment_details);
+
+      // If the Payment Profile creation was a success, store the new card on
+      // file data locally.
+      if ((string) $response->messages->resultCode == 'Ok') {
+        // Build a remote ID that includes the Customer Profile ID and the new
+        // Payment Profile ID.
+        $remote_id = $add_to_profile . '|' . (string) $response->customerPaymentProfileId;
+
+        // Load the card on file values for this donation
+        $cardonfile_fields = _fundraiser_commerce_credit_card_cardonfile_fields($donation);
+        $expires = commerce_authnet_echeck_fundraiser_commerce_expire(array());
+
+        $card_data = commerce_cardonfile_new();
+        $card_data->uid = $order->uid;
+        $card_data->payment_method = $payment_method['method_id'];
+        $card_data->instance_id = $payment_method['instance_id'];
+        $card_data->remote_id = $remote_id;
+        $card_data->card_type = !empty($card_type) ? $card_type : 'card';
+        $card_data->card_name = !empty($billing_address['name_line']) ? $billing_address['name_line'] : '';
+        $card_data->card_number = $cardonfile_fields['card_number'];
+        $card_data->card_exp_month = $expires['month'];
+        $card_data->card_exp_year = $expires['year'];
+        $card_data->status = 1;
+
+        // Save and log the creation of the new card on file.
+        commerce_cardonfile_save($card_data);
+        watchdog('commerce_authnet_echeck', 'CIM Payment Profile added to Customer Profile @profile_id for user @uid.', array('@profile_id' => $add_to_profile, '@uid' => $order->uid));
+      }
+      elseif (!empty($card_data) && (string) $response->messages->message->code == 'E00040') {
+        // But if we could not find a customer profile, assume the existing
+        // customer profile ID we had is no longer valid and deactivate the card
+        // data that resulted in the error.
+        $card_data->status = 0;
+        commerce_cardonfile_save($card_data);
+
+        // Submit a CIM request to create the Customer Profile.
+        if ($response = commerce_authnet_cim_create_customer_profile_request($payment_method, $order, $payment_details)) {
+          // If the Customer Profile creation was a success, store the new card on
+          // file data locally.
+          if ((string) $response->messages->resultCode == 'Ok') {
+            // Build a remote ID that includes the Customer Profile ID and the
+            // Payment Profile ID.
+            $remote_id = (string) $response->customerProfileId . '|' . (string) $response->customerPaymentProfileIdList->numericString;
+
+            // Load the card on file values for this donation
+            $cardonfile_fields = _fundraiser_commerce_credit_card_cardonfile_fields($donation);
+            $expires = commerce_authnet_echeck_fundraiser_commerce_expire(array());
+
+            $card_data = commerce_cardonfile_new();
+            $card_data->uid = $order->uid;
+            $card_data->payment_method = $payment_method['method_id'];
+            $card_data->instance_id = $payment_method['instance_id'];
+            $card_data->remote_id = $remote_id;
+            $card_data->card_type = !empty($card_type) ? $card_type : 'card';
+            $card_data->card_name = !empty($billing_address['name_line']) ? $billing_address['name_line'] : '';
+            $card_data->card_number = $cardonfile_fields['card_number'];
+            $card_data->card_exp_month = $expires['month'];
+            $card_data->card_exp_year = $expires['year'];
+            $card_data->status = 1;
+
+            // Save and log the creation of the new card on file.
+            commerce_cardonfile_save($card_data);
+            watchdog('commerce_authnet_echeck', 'CIM Customer Profile @profile_id created and saved to user @uid.', array('@profile_id' => (string) $response->customerProfileId, '@uid' => $order->uid));
+          }
+        }
+      }
+    }
+  }
+
 }
 
 /**
@@ -344,44 +531,49 @@ function commerce_authnet_echeck_request_order_details(&$nvp, $order) {
 }
 
 /**
- * Validates a set of eCheck details entered via the eCheck form.
- *
- * @param array $details
- *   An array of eCheck details as retrieved from the eCheck array in the for
- *   values of a form containing the eCheck form.
- * @param array $settings
- *   Settings used for calling validation functions and setting form errors:
- *     form_parents: an array of parent elements identifying where the eCheck
- *     form was situated in the form array.
- *
- * @return bool
- *   TRUE or FALSE indicating the validity of all the data.
- *
- * @see commerce_payment_echeck_form()
+ * Implements hook_fundraiser_donation_update()
  */
-function commerce_authnet_echeck_payment_validate($details, $settings) {
-  $prefix = implode('][', $settings['form_parents']) . '][';
-  $valid = TRUE;
+function commerce_authnet_echeck_fundraiser_donation_update($donation) {
+  $gateway_config = _fundraiser_gateway_info($donation->gateway['id']);
+  if ($gateway_config['gateway_details']['method_id'] == 'commerce_authnet_echeck') {
+    // If a recurring donation is skipped, create the next series donation.
+    if (($donation->status == 'skipped') && isset($donation->recurring) && !empty($donation->recurring)) {
+      $master_donation = fundraiser_donation_get_donation($donation->recurring->master_did);
 
-  // Validate the aba (routing) number.
-  if (!commerce_authnet_echeck_payment_validate_aba($details['aba_code'])) {
-    form_set_error($prefix . 'aba_code', t('You have entered an invalid routing number.'));
-    $valid = FALSE;
+      if (!empty($master_donation)) {
+          // If the next recurring series entry doesn't exist, create one.
+          if (($donation->status <> 'failed') && _fundraiser_sustainers_count_donations_recurr_remaining($donation->recurring->master_did) < 1) {
+
+          // Update expiration date and generate the next donation.
+          $cards_on_file = commerce_cardonfile_load_multiple_by_remote_id($master_donation->auth_txn_id);
+
+          if (!empty($cards_on_file)) {
+            $card_data = current($cards_on_file);
+
+            // Move card expiration date ahead one month.
+            $new_expire_time = mktime(0, 0, 0, ($card_data->card_exp_month + 1), 1, $card_data->card_exp_year);
+
+            $card_data->card_exp_month = date('m', $new_expire_time);
+            $card_data->card_exp_year = date('Y', $new_expire_time);
+
+            // Update card using master donation so transaction ID is available.
+            commerce_authnet_echeck_fundraiser_commerce_update($master_donation, $card_data);
+
+            $submission_fields = array(
+              'payment_fields' => array(
+                'bank account' => array(
+                  'card_expiration_month' => $card_data->card_exp_month,
+                  'card_expiration_year' => $card_data->card_exp_year,
+                ),
+              ),
+            );
+
+            fundraiser_sustainers_update_billing_info_create_new_donations($master_donation, $donation, $submission_fields);
+          }
+        }
+      }
+    }
   }
-
-  // Ensure that the account numbers match.
-  if ($details['acct_num'] != $details['confirm_acct_num']) {
-    form_set_error($prefix . 'acct_num', t('The account numbers do not match.'));
-    form_set_error($prefix . 'confirm_acct_num');
-  }
-
-  // Validate the account number.
-  if (!commerce_authnet_echeck_payment_validate_account($details['acct_num'])) {
-    form_set_error($prefix . 'acct_num', t('You have entered an invalid account number.'));
-    $valid = FALSE;
-  }
-
-  return $valid;
 }
 
 /**
@@ -438,4 +630,23 @@ function commerce_authnet_echeck_payment_types() {
     'business_checking' => t('Business Checking'),
     'savings' => t('Savings'),
   );
+}
+
+/**
+ * Implements hook_mail_alter().
+ */
+function commerce_authnet_echeck_mail_alter(&$message) {
+  // Suppress expiration emails for pwmb transactions
+  if ($message['id'] == 'fundraiser_sustainers_fundraiser_cc_notification') {
+    $params = $message['params'];
+    if ($params && array_key_exists('fundraiser_sustainers_token_set', $params) && array_key_exists('donation', $params['fundraiser_sustainers_token_set'])) {
+      $donation = $params['fundraiser_sustainers_token_set']['donation'];
+      $gateway_config = _fundraiser_gateway_info($donation->gateway['id']);
+      if ($donation && $gateway_config['gateway_details']['method_id'] == 'commerce_authnet_echeck') {
+        // Suppress email and log
+        watchdog('commerce_authnet_echeck', 'Credit card expiration email suppressed for donation ID @did', array('@did' => $donation->did), WATCHDOG_INFO);
+        $message['send'] = FALSE;
+      }
+    }
+  }
 }
