@@ -299,6 +299,21 @@ function _springboard_petition_get_form_layouts_templates() {
 }
 
 /**
+ * Returns TRUE if the recent signers feature is enabled for a given node.
+ *
+ * @param $nid
+ *   Node ID of the springboard_petition node in question.
+ */
+function _springboard_petition_is_recent_signers_enabled($nid) {
+  $enabled = db_select('springboard_petition_opt_in_block', 'p')
+    ->fields('p', array('visibility'))
+    ->condition('nid', $nid, '=')
+    ->execute()
+    ->fetchField();
+  return $enabled ? TRUE : FALSE;
+}
+
+/**
  * Log opt in.
  *
  * @param int $nid
@@ -337,4 +352,48 @@ function springboard_petition_log_opt_in($nid, $uid, $opt_in, $sid) {
 function _springboard_petition_get_uid_from_sid($sid) {
   $result = db_query('SELECT uid FROM {webform_submissions} WHERE sid = :sid', array(':sid' => $sid));
   return $result->fetchField();
+}
+
+/**
+ * Get the recent signers opt-in view's rendered HTML.
+ */
+function _springboard_petition_render_recent_signers_view() {
+  $arg1 = arg(1);
+  $output = '';
+  if (!is_numeric($arg1)) {
+    return $output;
+  }
+  $view = views_get_view('recent_petition_signatures');
+  $view->set_display('block_1');
+  $view->set_arguments(array($arg1));
+  $view->pre_execute();
+  $view->execute();
+  if (isset($view->total_rows) && $view->total_rows) {
+    $output .= '<h2>' . $view->get_title() . '</h2>';
+  }
+  $output .= $view->preview('block_1');
+  return $output;
+}
+
+/**
+ * These functions implement hook_proprocess_HOOK() to include the
+ * recent signers view block's HTML as a variable within these templates:
+ */
+function springboard_petition_preprocess_one_column_petition_form_top(&$vars) {
+  if (isset($vars['element']['#node']->nid)
+    && _springboard_petition_is_recent_signers_enabled($vars['element']['#node']->nid)) {
+    $vars['recent_signers_opt_in_view'] = _springboard_petition_render_recent_signers_view();
+  }
+}
+function springboard_petition_preprocess_two_column_petition_form_left(&$vars) {
+  if (isset($vars['element']['#node']->nid)
+    && _springboard_petition_is_recent_signers_enabled($vars['element']['#node']->nid)) {
+    $vars['recent_signers_opt_in_view'] = _springboard_petition_render_recent_signers_view();
+  }
+}
+function springboard_petition_preprocess_two_column_petition_form_right(&$vars) {
+  if (isset($vars['element']['#node']->nid)
+    && _springboard_petition_is_recent_signers_enabled($vars['element']['#node']->nid)) {
+    $vars['recent_signers_opt_in_view'] = _springboard_petition_render_recent_signers_view();
+  }
 }
