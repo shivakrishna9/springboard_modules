@@ -110,20 +110,20 @@ function springboard_petition_form_springboard_petition_node_form_alter(&$form, 
     '#collapsible' => TRUE,
     '#collapsed' => FALSE,
   );
-  $visibility = isset($form['#node']->enable_recent_signers) ? $form['#node']->enable_recent_signers : 0;
+  $visibility = isset($form['#node']->enable_recent_signers) ? $form['#node']->enable_recent_signers : FALSE;
   $form['springboard_display']['recent_signers']['show_signers'] = array(
     '#type' => 'checkbox',
     '#title' => t('Allow users to opt-in and also display the recent signers list'),
     '#default_value' => $visibility,
     '#weight' => -4,
   );
-  $form['#submit'][] = '_springboard_petition_process_recent_signers_setting';
+  $form['#submit'][] = '_springboard_petition_process_recent_signers_setting_submit';
 }
 
 /**
  * Save the submitted value for the "Recent Signers List" checkbox.
  */
-function _springboard_petition_process_recent_signers_setting(&$form, &$form_state) {
+function _springboard_petition_process_recent_signers_setting_submit(&$form, &$form_state) {
   $data = array(
     'nid' => $form_state['values']['nid'],
     'visibility' => $form_state['values']['show_signers']
@@ -133,7 +133,13 @@ function _springboard_petition_process_recent_signers_setting(&$form, &$form_sta
     ->condition('nid', $data['nid'], '=')
     ->execute()
     ->fetchField();
-  drupal_write_record('springboard_petition_opt_in_block', $data, $exists ? 'nid' : array());
+  if ($exists) {
+    drupal_write_record('springboard_petition_opt_in_block', $data, 'nid');
+  }
+  // If the record doesn't exist, save the submitted value for use during node insertion:
+  else {
+    variable_set('sb_petition_last_signers_opt_in_val', $form_state['values']['show_signers']);
+  }
 }
 
 /**
@@ -352,6 +358,61 @@ function springboard_petition_log_opt_in($nid, $uid, $opt_in, $sid) {
 function _springboard_petition_get_uid_from_sid($sid) {
   $result = db_query('SELECT uid FROM {webform_submissions} WHERE sid = :sid', array(':sid' => $sid));
   return $result->fetchField();
+}
+
+/**
+ * Duplicates the node-specific, opt-in settings for a given node.
+ * This is used during node cloning.
+ *
+ * @param $original_nid
+ *   The node ID of the original donation form.
+ * @param $new_nid
+ *   The node ID of the newly cloned donation form.
+ */
+function _springboard_petition_clone_node_optin_data($original_nid, $new_nid) {
+  // Fetch the original node's opt-in data:
+  $opt_in_query = db_query("SELECT visibility " .
+    "FROM {springboard_petition_opt_in_block} " .
+    "WHERE nid = :nid",
+    array(':nid' => $original_nid));
+  foreach ($opt_in_query as $data) {
+    // Duplicate the original node's opt-in data for the newly cloned node:
+    db_query("INSERT INTO {springboard_petition_opt_in_block} " .
+      "(nid, visibility) VALUES (:nid, :visibility)",
+      array(
+        ':nid' => $new_nid,
+        ':visibility' => $data->visibility,
+      ));
+    break;
+  }
+}
+
+/**
+ * Implements hook_node_insert().
+ * 
+ * - When a petition node is cloned by the node_clone module, also copy its opt-in setting value.
+ * - When a new petition node is created, create an opt-in record, with opt-in disabled by default.
+ */
+function springboard_petition_node_insert($node) {
+  if ($node->type != 'springboard_petition') {
+    return;
+  }
+
+  // Support for node cloning:
+  if (isset($node->clone_from_original_nid)) {
+    _springboard_petition_clone_node_optin_data($node->clone_from_original_nid, $node->nid);
+  }
+  // If this isn't a clone then insert a record with opt-in disabled:
+  else {
+    $visibility = variable_get('sb_petition_last_signers_opt_in_val', FALSE);
+    variable_del('sb_petition_last_signers_opt_in_val');
+    db_query("INSERT INTO {springboard_petition_opt_in_block} " .
+      "(nid, visibility) VALUES (:nid, :visibility)",
+       array(
+        ':nid' => $node->nid,
+        ':visibility' => !empty($visibility) ? 1 : 0,
+      ));
+  }
 }
 
 /**
