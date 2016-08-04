@@ -120,12 +120,7 @@ function springboard_petition_add_content_type() {
   db_query('UPDATE {system} SET weight = :weight WHERE name = :name', array(':weight' => 1000, ':name' => 'springboard_petition'));
 
   // Enable form layouts for this content type by default:
-  $webform_types = webform_variable_get('webform_node_types');
-  $webform_key = array_search('springboard_petition', $webform_types);
-  if ($webform_key === FALSE) {
-    $webform_types[] = 'springboard_petition';
-    variable_set('webform_node_types', $webform_types);
-  } 
+  variable_set('form_layouts_' . 'springboard_petition', 1);
 }
 
 /**
