@@ -453,10 +453,13 @@ function springboard_petition_node_insert($node) {
  */
 function springboard_petition_node_update($node) {
   // Add the opt-in checkbox if it does not already exist and opt-in is enabled for this node:
-  // Do nothing if recent signers support is disabled:
   if (_springboard_petition_is_recent_signers_enabled($node->nid)) {
     _springboard_petition_add_opt_in_webform_component($node);
   }
+  // Remove the opt-in checkbox if recent signers is disabled for this node:
+  else {
+    _springboard_petition_remove_opt_in_webform_component($node);
+  } 
 }
 
 /**
@@ -466,7 +469,7 @@ function springboard_petition_node_update($node) {
  *
  * This returns the new checkbox's cid if successful; otherwise, FALSE.
  *
- * @params $node
+ * @param $node
  *   The node object for the webform on which the opt-in checkbox will be added.
  */
 function _springboard_petition_add_opt_in_webform_component($node) {
@@ -500,6 +503,23 @@ function _springboard_petition_add_opt_in_webform_component($node) {
   );
 
   return webform_component_insert($component);
+}
+
+/**
+ * Deletes the opt-in checkbox from the petition webform if it exists.
+ *
+ * @param $node
+ *   The ID of the webform node whose checkbox component should be deleted.
+ */
+function _springboard_petition_remove_opt_in_webform_component($node) {
+  $lowest_component_weight = 0;
+  if (isset($node->webform['components']) && !empty($node->webform['components'])) {
+    foreach ($node->webform['components'] as $component) {
+      if ($component['form_key'] == 'sbp_rps_optin') {
+        webform_component_delete($node, $component);
+      }
+    }
+  }
 }
 
 /**
