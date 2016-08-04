@@ -33,21 +33,20 @@ function springboard_target_group_form($group_id = NULL) {
   // Load the target if Group ID is present.
   if (isset($group_id) && is_numeric($group_id)) {
     $api_call = springboard_advocacy_api_call();
+    $response = $api_call->invokeClientMethod('getTargetGroup', $group_id);
 
-    $group = $api_call->invokeClientMethod('getTargetGroup', $group_id);
-
-    if (isset($group->error)) {
+    if (isset($response->error)) {
       $form = array();
-      $form['not_found']['#markup'] = $group->error->message;
+      $form['not_found']['#markup'] = $response->error->message;
       return $form;
     }
-    $group = $group->data;
+    $group = $response->data;
   }
 
   $form['group_name'] = array(
     '#type' => 'textfield',
     '#title' => t('Group Name'),
-    '#default_value' => isset($group->group_name) ? $group->group_name : '',
+    '#default_value' => isset($group->name) ? $group->name : '',
     '#size' => 40,
     '#maxlength' => 128,
     '#required' => TRUE,
@@ -61,8 +60,9 @@ function springboard_target_group_form($group_id = NULL) {
 
   if(module_exists('sba_target_search')) {
     $form = sba_target_search_add_target_search_form($form, $form_state, $group);
-    $form['#submit'][] = 'springboard_target_group_save_group';
   }
+
+  $form['#submit'][] = 'springboard_target_group_save_group';
 
   return $form;
 }
@@ -74,9 +74,28 @@ function springboard_target_group_form($group_id = NULL) {
 
 function springboard_target_group_save_group($form, &$form_state) {
   $values = $form_state['values'];
-  if(isset($values['data']['recipients'])) {
-
+  $is_new = TRUE;
+  $group = array(
+    'recipients' => '',
+    'name' => $values['group_name'],
+    'is_template' => 1,
+  );
+  if(isset($values['data']['group_id']) && $values['data']['group_id'] != '') {
+    $group['group_id'] = $values['data']['group_id'];
+    $is_new = FALSE;
   }
+  if(isset($values['data']['recipients'])) {
+    $group['recipients'] = $values['data']['recipients'];
+    module_load_include('inc', 'springboard_target', 'includes/springboard_target.api_calls');
+    $group_id = springboard_target_api_save_target_group($group, $is_new);
+    if ($group_id) {
+      drupal_set_message('The group @name was successfully saved to the advocacy server.', 'success', array('@name' => $group->name));
+    }
+    else {
+      drupal_set_message('There was a problem saving the group @name to the advocacy server.', 'warning', array('@name' => $group->name));
+    }
+  }
+  $form_state['redirect'] = 'admin/springboard/advocacy/targets/custom-groups';
 }
 
 /**

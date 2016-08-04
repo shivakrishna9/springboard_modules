@@ -101,6 +101,7 @@ function sba_message_delete_form_wrapper($sba_message) {
  * @return mixed
  */
 function sba_message_edit_form($form, &$form_state, $sba_message) {
+
   if (is_string($sba_message)) {
     $sba_message = sba_message_create(array('type' => $sba_message));
   }
@@ -284,8 +285,20 @@ function sba_message_edit_form_submit(&$form, &$form_state) {
 
   $values = $form_state['values'];
   if(isset($values['data']['recipients'])) {
+    // Build a group object for saving
+    $group = array(
+      'group_id' => $sba_message->data['group_id'],
+      'recipients' => $values['data']['recipients'],
+      'name' => $values['data']['message_id'],
+      'is_template' => 0,
+      'message' => array(
+        'group_id' => $sba_message->data['group_id'],
+        'message_id' => $values['data']['message_id'],
+        'form_id' => $values['advocacy_id'],
+      ),
+    );
     module_load_include('inc', 'springboard_target', 'includes/springboard_target.api_calls');
-    $group_id = springboard_target_api_save_target_group($values['data']['recipients'], $is_new, $sba_message, FALSE);
+    $group_id = springboard_target_api_save_target_group($group, $is_new);
     if ($group_id) {
       $sba_message->data['group_id'] = $group_id;
       $sba_message->changed = time();

@@ -2,28 +2,45 @@
 /**
  *
  * Save the target message data to the API server
- * @param $sba_message
- * @param $is_new
- * @param $form_state
- * @param $is_template
+ * @param stdClass $group
+ *   ->group_name string
+ *   ->group_id int
+ *   ->recipients json encoded string
+ *   ->is_template boolean
+ *   ->message array
+ *     message_id => string
+ *     form_id => string
+ *
+ * @param boolean $is_new
  *
  * The api is expecting an array structured like so:
  *
-array(
-'name' => 'group name', //required
-'chambers' => array(
-0 => array('chamber' => 'fs', 'party =>'r', state => 'MA'),
-1 => array('chamber' => 'fs', 'party =>'d', state => 'MA')
-2 => array('chamber' => 'PRES01', 'party =>'r'),
-3 => array('chamber' => 'PRES03', 'party =>'d')
-)
-'target_ids' => array('1', '2', '3', '4', '5', '6', '7'),
-)
+ *  array(
+ *    'name' => 'group name', //required
+ *    'is_template' => 0, //required boolean @TODO
+ *    'chambers' => array(
+ *         0 => array('chamber' => 'fs', 'party =>'r', state => 'MA'),
+ *         1 => array('chamber' => 'fs', 'party =>'d', state => 'MA')
+ *       )
+ *    'executives' => array(
+ *         0 => array('role' => 'PRES01', 'party =>'r'),
+ *         1 => array('role' => 'PRES03', 'party =>'d')
+ *       )
+ *     )
+ *     'target_ids' => array('1', '2', '3', '4', '5', '6', '7'),
+ *
+ *     'message' => array(
+ *       group_id =>
+ *       message_id =>
+ *       form_id =>
+ *      ),
+ *   )
  *
  * @TODO update this
  */
 
-function springboard_target_api_save_target_group($recipients, $is_new = TRUE, $entity = array(), $is_template = FALSE) {
+function springboard_target_api_save_target_group($group, $is_new = TRUE) {
+
   $indvds = array();
   $multi_indvds = array();
   $has_gender_or_social = array();
@@ -31,8 +48,9 @@ function springboard_target_api_save_target_group($recipients, $is_new = TRUE, $
   $chamber_rows = array();
   $unstructured_chambers = array();
 
-  if (!empty($recipients)) {
-    $recipients = html_entity_decode($recipients);  //@TODO should this happen earlier?
+  if (!empty($group['recipients'])) {
+    $recipients = html_entity_decode($group['recipients']);
+    unset($group['recipients']);
     $recipients = urldecode($recipients);
     $targets = json_decode($recipients);
     foreach ($targets as $target) {
@@ -62,12 +80,17 @@ function springboard_target_api_save_target_group($recipients, $is_new = TRUE, $
   $combined = array_merge($multi_indvds, $indvds, $gender_or_social_rows);
   $indvds = !empty($combined) ? json_encode($combined) : '';
 
+  $group['chambers'] = $chamber_rows;
+  $group['target_ids'] = $indvds;
+  // @TODO add attribute for gender/social rows?
+
   $api_call = springboard_advocacy_api_call();
-  $group_id = isset($entity->group_id) ? $entity->group_id : NULL;
+  $group_id = isset($group['group_id']) ? $group['group_id'] : NULL;
+
   // Is this a new message? Then create a new target group for it.
 
   if ($is_new) {
-    $response = _springboard_target_api_create_target_group($api_call, $entity, $chamber_rows, $indvds, $values);
+    $response = $api_call->invokeClientMethod('createTargetGroup', $group);
     if (!empty($response->data->id)) {
       $group_id = $response->data->id;
     }
@@ -79,23 +102,24 @@ function springboard_target_api_save_target_group($recipients, $is_new = TRUE, $
   elseif (!$is_new) {
     // Perhaps during group creation the response was interrupted
     // or the group creation failed
-    if ($entity->group_id == 'no_response' && $entity->type == "sba_message") {
-      $response = _springboard_target_api_get_group_by_message_id($api_call, $entity->data['message_id']);
+    if ($group['group_id'] == 'no_response' && isset($group['message'])) {
+      $response = _springboard_target_api_get_group_by_message_id($api_call, $group['message']['message_id']);
       if (!empty($response) && !empty($response->data->id)) {
-        $entity->data['group_id'] = $response->data->id;
+        $group['group_id'] = $response->data->id;
 
-        $update = _springboard_target_api_update_target_group($api_call, $entity, $chamber_rows, $indvds, $values);
+        $response = $api_call->invokeClientMethod('updateTargetGroup', $group, $group_id);
       }
       else {
-        $update = _springboard_target_api_create_target_group($api_call, $entity, $chamber_rows, $indvds, $values, $is_template);
+        unset($group['group_id']);
+        $response = $api_call->invokeClientMethod('createTargetGroup', $group);
       }
     }
     // everything was OK.
     else {
-      $update = _springboard_target_api_update_target_group($api_call, $entity, $chamber_rows, $indvds, $values);
+      $response = $api_call->invokeClientMethod('updateTargetGroup', $group, $group_id);
     }
-    if (!empty($update->data->id)) {
-      $group_id = $update->data->id;
+    if (!empty($response->data->id)) {
+      $group_id = $response->data->id;
     }
     else {
       $group_id = FALSE;
@@ -250,9 +274,9 @@ function _springboard_target_api_get_group_by_message_id($api_call, $message_id)
  * @param $indvds
  * @param $values
  * @return mixed
- */
+ *
 
-function _springboard_target_api_create_target_group($api_call, $entity, $chamber_rows, $indvds, $values, $is_template = FALSE) {
+function _springboard_target_api_create_target_group($api_call, $group, $chamber_rows, $indvds) {
   $group = array (
     'name' => $entity->name,
     'chambers' => $chamber_rows,
@@ -270,7 +294,7 @@ function _springboard_target_api_create_target_group($api_call, $entity, $chambe
 
   return $response;
 
-}
+}*/
 
 /**
 Update existing message group on the API server
@@ -281,7 +305,7 @@ Update existing message group on the API server
  * @param $values
  * @return mixed
 
- */
+
 
 function _springboard_target_api_update_target_group($api_call, $entity, $chamber_rows, $indvds, $values, $is_template = FALSE) {
   $group = array (
@@ -297,10 +321,10 @@ function _springboard_target_api_update_target_group($api_call, $entity, $chambe
       'form_id' => $entity->advocacy_id,
     );
   }
-  $response = $api_call->invokeClientMethod('updateTargetGroup', $group, $sba_message->data['group_id']);
+  $response = $api_call->invokeClientMethod('updateTargetGroup', $group, $group_id);
 
   return $response;
-}
+}*/
 
 /**
  * @param $sba_message @todo needs to be generic

@@ -57,7 +57,7 @@ function springboard_target_create_custom_groups_form_submit($form, &$form_state
    *     'target_ids' => array('1', '2', '3', '4', '5', '6', '7'),
    *   )
 
-  $group_id = _springboard_target_api_save_target_group($form_state, $is_new = TRUE, $entity = array(), $is_template = FALSE
+  $group_id = _springboard_target_api_save_target_group($gropu, $is_new = TRUE);
 
   $api_call = springboard_advocacy_api_call();
   $group = $api_call->invokeClientMethod('createTargetGroup', $input);

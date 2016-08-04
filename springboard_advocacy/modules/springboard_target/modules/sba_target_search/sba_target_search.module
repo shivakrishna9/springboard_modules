@@ -198,23 +198,3 @@ function sba_target_search_add_target_search_form($form, &$form_state, $entity =
   return $form;
 }
 
-/**
- * Form API submit callback for the sba_message form.
- *
- * @param $form
- *   The form array.
- * @param $form_state
- *    The form meta-data and values.
-
- * @TODO this is not currently being used
-function sba_target_search_edit_form_submit(&$form, &$form_state) {
-  $entity = entity_ui_controller('sba_message')->entityFormSubmitBuildEntity($form, $form_state);
-
-  $form_state['values']['recipients'] = str_replace('&quot;', '"', $form_state['values']['recipients']);
-
-  form_load_include($form_state, 'inc', 'springboard_target', 'springboard_target.api_calls');
-// save the group of targets move this to springboard_target
-  // @TODO - needs $is_template flag
-  _springboard_target_api_save($entity, $is_new, $form_state);
-} */
-
