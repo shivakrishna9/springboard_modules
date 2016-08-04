@@ -89,6 +89,54 @@ function springboard_petition_node_type_submit($form, $form_state) {
 }
 
 /**
+ * Implements hook_form_FORM_ID_alter().
+ *
+ * Add the Display settings -> Recent Signers List setting to the petition node edit form:
+ */
+function springboard_petition_form_springboard_petition_node_form_alter(&$form, &$form_state) {
+  if (empty($form['springboard_display'])) {
+    $form['springboard_display'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Display settings'),
+      '#collapsible' => TRUE,
+      '#collapsed' => FALSE,
+      '#group' => 'additional_settings',
+    );
+  }
+  $form['springboard_display']['recent_signers'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Recent Signers List'),
+    '#description' => t('Choose whether petition signers can opt-in to having their name displayed on the petition page.'),
+    '#collapsible' => TRUE,
+    '#collapsed' => FALSE,
+  );
+  $visibility = isset($form['#node']->enable_recent_signers) ? $form['#node']->enable_recent_signers : 0;
+  $form['springboard_display']['recent_signers']['show_signers'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Allow users to opt-in and also display the recent signers list'),
+    '#default_value' => $visibility,
+    '#weight' => -4,
+  );
+  $form['#submit'][] = '_springboard_petition_process_recent_signers_setting';
+}
+
+/**
+ * Save the submitted value for the "Recent Signers List" checkbox.
+ */
+function _springboard_petition_process_recent_signers_setting(&$form, &$form_state) {
+  $data = array(
+    'nid' => $form_state['values']['nid'],
+    'visibility' => $form_state['values']['show_signers']
+  );
+  $exists = db_select('springboard_petition_opt_in_block', 'p')
+    ->fields('p', array('nid'))
+    ->condition('nid', $data['nid'], '=')
+    ->execute()
+    ->fetchField();
+  drupal_write_record('springboard_petition_opt_in_block', $data, $exists ? 'nid' : array());
+}
+
+/**
  * Implements hook_form_alter().
  *
  * Add opt-in tracking submit handler to Petition webforms.
@@ -187,6 +235,30 @@ function springboard_petition_tokens($type, $tokens, array $data = array(), arra
     }
   }
   return $replacements;
+}
+
+/**
+ * Implements hook_node_load().
+ *
+ * Add enable_recent_signers to the node object.
+ */
+function springboard_petition_node_load($nodes, $types) {
+  // If no petition nodes are loaded no need to continue.
+  if (!in_array('springboard_petition', $types)) {
+    return;
+  }
+
+  foreach ($nodes as $nid => $node) {
+    if ($node->type != 'springboard_petition') {
+      continue;
+    }
+    $visibility = db_select('springboard_petition_opt_in_block', 'p')
+      ->fields('p', array('visibility'))
+      ->condition('nid', $nid, '=')
+      ->execute()
+      ->fetchField();
+    $node->enable_recent_signers = $visibility ? TRUE : FALSE; 
+  }
 }
 
 /**
