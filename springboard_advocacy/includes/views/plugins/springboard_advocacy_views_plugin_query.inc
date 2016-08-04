@@ -118,18 +118,24 @@ class springboard_advocacy_views_plugin_query extends views_plugin_query {
       // Get the targets.
       // Custom Group search
       if(isset($fields['class_name']) && $fields['class_name'] == 'Group') {
-         $targets = $api_call->invokeClientMethod('searchTargetGroups', $fields);
+         $response = $api_call->invokeClientMethod('searchTargetGroups', $fields);
       }
       // Legislative and custom individuals
       else {
-         $targets = $api_call->invokeClientMethod('searchTargets', $fields);
+         $response = $api_call->invokeClientMethod('searchTargets', $fields);
       }
-
-      if (!empty($targets->data->targets)) {
+      $items = array();
+      if(isset($response->data->targets)) {
+        $items = $response->data->targets;
+      }
+      else if(isset($response->data->groups)) {
+        $items = $response->data->groups;
+      }
+      if (!empty($items)) {
 
         // Build the pager.
         if ($this->pager->use_pager()) {
-          $this->pager->total_items = $targets->data->count;
+          $this->pager->total_items = $response->data->count;
           if (!empty($this->pager->options['offset'])) {
             $this->pager->total_items -= $this->pager->options['offset'];
           }
@@ -138,14 +144,14 @@ class springboard_advocacy_views_plugin_query extends views_plugin_query {
 
         // Add target IDs to build info. We retrieve elsewhere for use in
         // Target Add links.
-        $view->build_info['target_ids'] = $targets->data->ids;
+        $view->build_info['target_ids'] = $response->data->ids;
       }
 
       $view->result = array();
 
       // Put target data into results array.
-      if (!empty($targets->data->targets)) {
-        $view->result = $targets->data->targets;
+      if (!empty($items)) {
+        $view->result = $items;
       }
 
       // Build the pager.

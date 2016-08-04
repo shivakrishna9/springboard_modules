@@ -38,63 +38,19 @@ function springboard_target_views_default_views() {
   $handler->display->display_options['pager']['options']['quantity'] = '9';
   $handler->display->display_options['style_plugin'] = 'table';
   $handler->display->display_options['style_options']['columns'] = array(
-    'salutation' => 'salutation',
-    'first_name' => 'last_name',
-    'last_name' => 'last_name',
-    'organization' => 'organization',
-    'title' => 'title',
-    'email' => 'email',
-    'state' => 'state',
-    'target_actions' => 'target_actions',
+    'name' => 'name',
+    'group_actions' => 'group_actions',
   );
-  $handler->display->display_options['style_options']['default'] = '-1';
+  $handler->display->display_options['style_options']['default'] = 'name';
   $handler->display->display_options['style_options']['info'] = array(
-    'salutation' => array(
-      'align' => '',
-      'separator' => '',
-      'empty_column' => 0,
-    ),
-    'first_name' => array(
-      'sortable' => 0,
-      'default_sort_order' => 'asc',
-      'align' => '',
-      'separator' => '',
-      'empty_column' => 0,
-    ),
-    'last_name' => array(
-      'sortable' => 1,
-      'default_sort_order' => 'asc',
-      'align' => '',
-      'separator' => ' ',
-      'empty_column' => 0,
-    ),
-    'organization' => array(
+    'name' => array(
       'sortable' => 1,
       'default_sort_order' => 'asc',
       'align' => '',
       'separator' => '',
       'empty_column' => 0,
     ),
-    'title' => array(
-      'sortable' => 0,
-      'default_sort_order' => 'asc',
-      'align' => '',
-      'separator' => '',
-      'empty_column' => 0,
-    ),
-    'email' => array(
-      'align' => '',
-      'separator' => '',
-      'empty_column' => 0,
-    ),
-    'state' => array(
-      'sortable' => 1,
-      'default_sort_order' => 'asc',
-      'align' => '',
-      'separator' => '',
-      'empty_column' => 0,
-    ),
-    'target_actions' => array(
+    'group_actions' => array(
       'align' => '',
       'separator' => '',
       'empty_column' => 0,
@@ -570,15 +526,20 @@ function springboard_target_views_default_views() {
   $handler->display->display_options['empty']['area']['format'] = 'full_html';
   $handler->display->display_options['defaults']['fields'] = FALSE;
   /* Field: Advocacy: Group Name */
-  $handler->display->display_options['fields']['group_name']['id'] = 'group_name';
-  $handler->display->display_options['fields']['group_name']['table'] = 'advocacy';
-  $handler->display->display_options['fields']['group_name']['field'] = 'group_name';
-  /* Field: Advocacy: Target Actions */
-  $handler->display->display_options['fields']['target_actions']['id'] = 'target_actions';
-  $handler->display->display_options['fields']['target_actions']['table'] = 'advocacy';
-  $handler->display->display_options['fields']['target_actions']['field'] = 'target_actions';
-  $handler->display->display_options['fields']['target_actions']['label'] = 'Actions';
-  $handler->display->display_options['fields']['target_actions']['which_links'] = array(
+  $handler->display->display_options['fields']['name']['id'] = 'name';
+  $handler->display->display_options['fields']['name']['table'] = 'advocacy';
+  $handler->display->display_options['fields']['name']['field'] = 'name';
+  $handler->display->display_options['fields']['name']['element_label_colon'] = FALSE;
+  /* Field: Advocacy: Group Actions */
+  $handler->display->display_options['fields']['group_actions']['id'] = 'group_actions';
+  $handler->display->display_options['fields']['group_actions']['table'] = 'advocacy';
+  $handler->display->display_options['fields']['group_actions']['field'] = 'group_actions';
+  $handler->display->display_options['fields']['group_actions']['label'] = '';
+  $handler->display->display_options['fields']['group_actions']['element_label_colon'] = FALSE;
+  $handler->display->display_options['fields']['group_actions']['which_links'] = array(
+    0 => 'view',
+    1 => 'edit',
+    2 => 'delete',
     'edit' => 'edit',
     'delete' => 'delete',
     'view' => 0,
@@ -606,15 +567,15 @@ function springboard_target_views_default_views() {
     5 => 0,
   );
   /* Filter criterion: Advocacy: Group Name */
-  $handler->display->display_options['filters']['group_name']['id'] = 'group_name';
-  $handler->display->display_options['filters']['group_name']['table'] = 'advocacy';
-  $handler->display->display_options['filters']['group_name']['field'] = 'group_name';
-  $handler->display->display_options['filters']['group_name']['exposed'] = TRUE;
-  $handler->display->display_options['filters']['group_name']['expose']['operator_id'] = 'group_name_op';
-  $handler->display->display_options['filters']['group_name']['expose']['label'] = 'Group Name';
-  $handler->display->display_options['filters']['group_name']['expose']['operator'] = 'group_name_op';
-  $handler->display->display_options['filters']['group_name']['expose']['identifier'] = 'group_name';
-  $handler->display->display_options['filters']['group_name']['expose']['remember_roles'] = array(
+  $handler->display->display_options['filters']['name']['id'] = 'name';
+  $handler->display->display_options['filters']['name']['table'] = 'advocacy';
+  $handler->display->display_options['filters']['name']['field'] = 'name';
+  $handler->display->display_options['filters']['name']['exposed'] = TRUE;
+  $handler->display->display_options['filters']['name']['expose']['operator_id'] = 'name_op';
+  $handler->display->display_options['filters']['name']['expose']['label'] = 'Group Name';
+  $handler->display->display_options['filters']['name']['expose']['operator'] = 'name_op';
+  $handler->display->display_options['filters']['name']['expose']['identifier'] = 'name';
+  $handler->display->display_options['filters']['name']['expose']['remember_roles'] = array(
     2 => '2',
     1 => 0,
     3 => 0,

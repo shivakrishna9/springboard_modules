@@ -44,13 +44,13 @@ class springboard_advocacy_views_handler_field_group_actions extends views_handl
 
     $links  = array();
     if (user_access('view targets') && !empty($this->options['which_links']['view'])) {
-      $links[] = l('view', 'springboard/advocacy/groups/'. $values->id . '/view');
+      $links[] = l('view', 'admin/springboard/advocacy/targets/custom-groups/'. $values->id . '/view');
     }
     if ($values->class_name != "Legislator" && user_access('edit targets') && !empty($this->options['which_links']['edit'])) {
-      $links[] = l('edit', 'springboard/advocacy/groups/'. $values->id . '/edit');
+      $links[] = l('edit', 'admin/springboard/advocacy/targets/custom-groups/'. $values->id . '/edit');
     }
     if ($values->class_name != "Legislator" && user_access('delete targets') && !empty($this->options['which_links']['delete'])) {
-      $links[] = l('delete', 'springboard/advocacy/groups/'. $values->id . '/delete');
+      $links[] = l('delete', 'admin/springboard/advocacy/targets/custom-groups/'. $values->id . '/delete');
     }
     return implode(' | ', $links);
   }

@@ -91,14 +91,14 @@ class springboard_advocacy_views_handler_field_target_actions extends views_hand
         $query = array(
           'id' => $values->id,
           'type' => !empty($values->class_name) ? $values->class_name : '',
-          'group_name' => !empty($values->group_name) ? $values->group_name : '',
+          'name' => !empty($values->name) ? $values->name : '',
         );
       }
       else {
         $query = array(
           'id' => $values->id,
           'type' => !empty($values->class_name) ? $values->class_name : '',
-          'group_name' => !empty($values->group_name) ? $values->group_name : '',
+          'name' => !empty($values->name) ? $values->name : '',
           'first' => !empty($values->first_name) ? $values->first_name : '',
           'last' => !empty($values->last_name) ? $values->last_name : '',
           'sal' => !empty($values->salutation) ? $values->salutation : '',
