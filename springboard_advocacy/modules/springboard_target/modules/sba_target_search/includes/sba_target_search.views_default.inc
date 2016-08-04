@@ -303,7 +303,7 @@ function sba_target_search_views_default_views() {
     'district_code' => 'district_code',
     'committee_memberships' => 'committee_memberships',
     'target_actions' => 'target_actions',
-    'group_name' => 'last_name',
+    'name' => 'last_name',
   );
   $handler->display->display_options['style_options']['default'] = 'last_name';
   $handler->display->display_options['style_options']['info'] = array(
@@ -385,7 +385,7 @@ function sba_target_search_views_default_views() {
       'separator' => '',
       'empty_column' => 0,
     ),
-    'group_name' => array(
+    'name' => array(
       'sortable' => 0,
       'default_sort_order' => 'asc',
       'align' => '',
@@ -469,9 +469,9 @@ function sba_target_search_views_default_views() {
     'delete' => 0,
   );
   /* Field: Advocacy: Group Name */
-  $handler->display->display_options['fields']['group_name']['id'] = 'group_name';
-  $handler->display->display_options['fields']['group_name']['table'] = 'advocacy';
-  $handler->display->display_options['fields']['group_name']['field'] = 'group_name';
+  $handler->display->display_options['fields']['name']['id'] = 'name';
+  $handler->display->display_options['fields']['name']['table'] = 'advocacy';
+  $handler->display->display_options['fields']['name']['field'] = 'name';
   $handler->display->display_options['defaults']['filter_groups'] = FALSE;
   $handler->display->display_options['defaults']['filters'] = FALSE;
   /* Filter criterion: Advocacy: Search Multiple Target Fields by Keywords */
@@ -939,15 +939,15 @@ function sba_target_search_views_default_views() {
     6 => 0,
   );
   /* Filter criterion: Advocacy: Group Name */
-  $handler->display->display_options['filters']['group_name']['id'] = 'group_name';
-  $handler->display->display_options['filters']['group_name']['table'] = 'advocacy';
-  $handler->display->display_options['filters']['group_name']['field'] = 'group_name';
-  $handler->display->display_options['filters']['group_name']['exposed'] = TRUE;
-  $handler->display->display_options['filters']['group_name']['expose']['operator_id'] = 'group_name_op';
-  $handler->display->display_options['filters']['group_name']['expose']['description'] = 'Group Name';
-  $handler->display->display_options['filters']['group_name']['expose']['operator'] = 'group_name_op';
-  $handler->display->display_options['filters']['group_name']['expose']['identifier'] = 'group_name';
-  $handler->display->display_options['filters']['group_name']['expose']['remember_roles'] = array(
+  $handler->display->display_options['filters']['name']['id'] = 'name';
+  $handler->display->display_options['filters']['name']['table'] = 'advocacy';
+  $handler->display->display_options['filters']['name']['field'] = 'name';
+  $handler->display->display_options['filters']['name']['exposed'] = TRUE;
+  $handler->display->display_options['filters']['name']['expose']['operator_id'] = 'name_op';
+  $handler->display->display_options['filters']['name']['expose']['description'] = 'Group Name';
+  $handler->display->display_options['filters']['name']['expose']['operator'] = 'name_op';
+  $handler->display->display_options['filters']['name']['expose']['identifier'] = 'name';
+  $handler->display->display_options['filters']['name']['expose']['remember_roles'] = array(
     2 => '2',
     1 => 0,
     3 => 0,

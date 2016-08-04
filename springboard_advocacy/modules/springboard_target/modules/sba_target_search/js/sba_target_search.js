@@ -221,7 +221,7 @@
         // Custom target specific search elements
         var custWidgets = $('.faux-subtab-container'); // both custom options
         var custIndividualWidgets  = $('#edit-combine-wrapper'); // custom individual search only
-        var custGroupWidgets = $('#edit-group-name-wrapper');  // custom group search only
+        var custGroupWidgets = $('#edit-name-wrapper');  // custom group search only
         // Elements to hide only on custom tab
         var custHideWidgets = $('#state-district-wrapper');
 
@@ -373,9 +373,9 @@
         }
 
       //set up up default placeholder text in group search textfield
-      var groupField = $('#edit-group-name');
+      var groupField = $('#edit-name');
       //if (groupField.val().length == 0) {
-        var desc = $('#edit-group-name-wrapper .description');
+        var desc = $('#edit-name-wrapper .description');
         var placeholder = desc.text().trim();
         desc.hide();
         groupField.attr('placeholder', placeholder);
@@ -511,7 +511,9 @@
 
     //set up the event for the message save button validation and submit
     Sba.messageFormSubmitter = function () {
-        $("#edit-submit, #edit-delete").click(function (e) {
+        /* messages specific
+
+         $("#edit-submit, #edit-delete").click(function (e) {
             e.preventDefault();
             var messages = [];
             //if($('[name*="field_sba_subject_editable"]').length != 0 && !$('[name*="field_sba_subject_editable"]').is(':checked')) {
@@ -525,7 +527,6 @@
                     messages.push({type: 'required', message: $("label[for='" + this.id + "']").text().replace('*', '')});
                 }
             });
-
             if(typeof(Drupal.settings.charCount) !== 'undefined') {
 
                 var handleCount = Drupal.settings.charCount.size;
@@ -559,12 +560,16 @@
             }
 
             if(messages.length === 0) {
-                $("#edit-submit-hidden").trigger('click');
+                console.log('submit trigger');
+                $("#edit-submit-hidden").trigger('click'); // message-specific
+
             }
             else {
+                console.log('error trigger'
+                );
                 Sba.setError(messages);
             }
-        });
+        });*/
     };
 
     //rearrange some elements on the exposed form and recipients container
@@ -592,6 +597,7 @@
             $('.sba-message-status').text('No recipients have been selected.').show('slow');
         }
     };
+
 
     //recipients container scroll calculations
     Sba.scroller = function (context) {
