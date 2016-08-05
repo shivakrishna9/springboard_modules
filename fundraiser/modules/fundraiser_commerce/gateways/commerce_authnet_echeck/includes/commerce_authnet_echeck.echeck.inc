@@ -343,7 +343,6 @@ function commerce_authnet_echeck_submit_form_submit($payment_method, $pane_form,
           $remote_id = (string) $response->customerProfileId . '|' . (string) $response->customerPaymentProfileIdList->numericString;
 
           // Load the card on file values for this donation
-          $cardonfile_fields = _fundraiser_commerce_credit_card_cardonfile_fields($donation);
           $expires = commerce_authnet_echeck_fundraiser_commerce_expire(array());
 
           $card_data = commerce_cardonfile_new();
@@ -353,7 +352,7 @@ function commerce_authnet_echeck_submit_form_submit($payment_method, $pane_form,
           $card_data->remote_id = $remote_id;
           $card_data->card_type = !empty($card_type) ? $card_type : 'card';
           $card_data->card_name = !empty($billing_address['name_line']) ? $billing_address['name_line'] : '';
-          $card_data->card_number = $cardonfile_fields['card_number'];
+          $card_data->card_number = substr($pane_values['bank account']['acct_num'], -3);
           $card_data->card_exp_month = $expires['month'];
           $card_data->card_exp_year = $expires['year'];
           $card_data->status = 1;
@@ -391,6 +390,7 @@ function commerce_authnet_echeck_submit_form_submit($payment_method, $pane_form,
         $remote_id = $add_to_profile . '|' . (string) $response->customerPaymentProfileId;
 
         // Load the card on file values for this donation
+        $donation = fundraiser_donation_get_donation($order->order_id);
         $cardonfile_fields = _fundraiser_commerce_credit_card_cardonfile_fields($donation);
         $expires = commerce_authnet_echeck_fundraiser_commerce_expire(array());
 
