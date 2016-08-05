@@ -93,6 +93,18 @@ function springboard_cookie_fundraiser_donation_post_submit_alter(&$form, &$form
   if (!empty($donation->donation['mail'])) {
     $new_data['email'] = $donation->donation['mail'];
   }
+
+  // Store basic profile data in cookie after a donation.
+  $new_data['first_name'] = trim($donation->donation['first_name']);
+  $new_data['last_name'] = trim($donation->donation['last_name']);
+  // Store address data in their own array so it won't be checked for consistency with other submissions.
+  $new_data['contact']['address'] = $donation->donation['address'];
+  $new_data['contact']['address_line_2'] = $donation->donation['address_line_2'];
+  $new_data['contact']['city'] = $donation->donation['city'];
+  $new_data['contact']['country'] = $donation->donation['country'];
+  $new_data['contact']['state'] = $donation->donation['state'];
+  $new_data['contact']['zip'] = $donation->donation['zip'];
+
   springboard_cookie_tag_client($new_data);
 }
 
@@ -106,6 +118,44 @@ function springboard_cookie_sb_social_share_event_save($share_data) {
       'share_ids' => array($share_data['share_id'])
     ));
   }
+}
+
+/**
+ * Implements hook_springboard_quick_donate_optin_create().
+ */
+function springboard_cookie_springboard_quick_donate_optin_create($account, $donation, $card_id) {
+  springboard_cookie_tag_client(array(
+    'quick_donate_optin_date' => time(),
+    'quick_donate_card_id' => $card_id,
+  ));
+}
+
+/**
+ * Implements hook_action_success().
+ */
+function springboard_cookie_action_success($node, $contact, $data, $sid) {
+  // Webform user will add the uid and email, so no need to do that here.
+  $action_data = array(
+    //'uid' => $data['account_id'],
+    //'email' => $contact['email'],
+    'last_action_nid' => $node->nid,
+    'last_action_sid' => $sid,
+    'last_action_date' => time(),
+  );
+
+  if ($node->type == 'sba_message_action') {
+    $action_data['salutation'] = $contact['salutation'];
+    $action_data['first_name'] = trim($contact['first_name']);
+    $action_data['last_name'] = trim($contact['last_name']);
+    $action_data['contact']['address'] = $contact['address'];
+    $action_data['contact']['address_line_2'] = $contact['address_line_2'];
+    $action_data['contact']['city'] = $contact['city'];
+    $action_data['contact']['state'] = $contact['state'];
+    $action_data['contact']['zip'] = $contact['zip'];
+    $action_data['contact']['phone'] = $contact['phone'];
+  }
+
+  springboard_cookie_tag_client($action_data);
 }
 
 /**
@@ -227,7 +277,7 @@ function springboard_cookie_tag_client($new_data = array()) {
         // If the existing and new values are arrays, simply combine them.
         $new_cookie[$name] = array_unique(array_merge($new_cookie[$name], $new_data[$name]));
       }
-      else if ($new_cookie[$name] != $new_data[$name]) {
+      else if (strtolower($new_cookie[$name]) != strtolower($new_data[$name])) {  // Non-case-sensitive comparison.
         // New data doesn't match data already in the client's cookie, so throw out the old cookie data and start fresh.
         $new_cookie = $new_data;
         break;
