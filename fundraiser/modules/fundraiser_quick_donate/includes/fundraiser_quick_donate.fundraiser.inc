@@ -326,13 +326,21 @@ function _fundraiser_quick_donate_checkout_form_hide_payment_fields(&$element) {
 }
 
 /**
- * Implements hook_fundraiser_donation_submit().
+ * Implements hook_fundraiser_donation_submit_alter().
  */
-function fundraiser_quick_donate_fundraiser_donation_submit($form, $form_state, $donation) {
+function fundraiser_quick_donate_fundraiser_donation_submit_alter($form, $form_state, &$donation) {
   $payment_info = $form_state['values']['submitted_tree']['payment_information'];
   $payment_fields = $payment_info['payment_fields'];
   if (isset($payment_fields['token']) && $payment_fields['token']) {
     $donation->data['cardonfile'] = $payment_fields[$payment_info['payment_method']]['cardonfile'];
+    $card = commerce_cardonfile_load($donation->data['cardonfile']);
+    if (!empty($card)) {
+      $donation->donation['payment_fields'][$payment_info['payment_method']]['card_number'] = $card->card_number;
+      $donation->donation['payment_fields'][$payment_info['payment_method']]['card_type'] = $card->card_type;
+      $donation->donation['payment_fields'][$payment_info['payment_method']]['card_expiration_month'] = $card->card_exp_month;
+      $donation->donation['payment_fields'][$payment_info['payment_method']]['card_expiration_year'] = $card->card_exp_year;
+      $donation->donation['payment_fields'][$payment_info['payment_method']]['quickdonate'] = TRUE;
+    }
   }
 }
 
