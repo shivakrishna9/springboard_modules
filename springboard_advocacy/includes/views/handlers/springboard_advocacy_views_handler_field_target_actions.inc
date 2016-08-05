@@ -87,10 +87,11 @@ class springboard_advocacy_views_handler_field_target_actions extends views_hand
     // Add Target to Action Link used in message entity's target search form results.
     if (user_access('add target to action') && !empty($this->options['which_links']['add'])) {
       $query = array();
-      if($values->class_name == 'group') {
+      // Groups do not use the class_name attribute
+      if(!isset($values->class_name)) {
         $query = array(
           'id' => $values->id,
-          'type' => !empty($values->class_name) ? $values->class_name : '',
+          'type' => 'group',
           'name' => !empty($values->name) ? $values->name : '',
         );
       }

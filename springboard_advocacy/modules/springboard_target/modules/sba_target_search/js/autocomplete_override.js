@@ -4,7 +4,6 @@
      * pass extra options for state and chamber
      * to the autocomplete menu callback
      */
-    console.log('correct autcomplete file reached');
 
     Drupal.jsAC.prototype.onkeydown = function (input, e) {
         if (!e) {
