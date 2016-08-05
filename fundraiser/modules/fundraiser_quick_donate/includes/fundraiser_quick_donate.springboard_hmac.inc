@@ -72,6 +72,8 @@ function fundraiser_quick_donate_springboard_hmac_success($payload) {
   // set, we need to do it here instead because of the way the springboard_hmac
   // module is structured.
 
+  $did = $payload[$mapping['donation_id']];
+  $donation = fundraiser_donation_get_donation($did);
   $gateway_id = $donation->gateway['id'];
   $default_data = variable_get(FUNDRAISER_QUICK_DONATE_DEFAULT_FORM_PREFIX . $gateway_id, array());
   $default_nid = 0;

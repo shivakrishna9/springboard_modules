@@ -75,7 +75,7 @@ function fundraiser_quick_donate_admin_settings_submit($form, &$form_state) {
     }
     $data = array(
       'title' => $form_state['values'][$key],
-      'value' => $matches[1],
+      'nid' => $matches[1],
     );
     $form_state['values'][$key] = serialize($data);
   }

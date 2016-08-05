@@ -22,7 +22,7 @@ function fundraiser_quick_donate_autopopulate_permission() {
  * Implements hook_node_view().
  */
 function fundraiser_quick_donate_autopopulate_form_alter(&$form, &$form_state, $form_id) {
-  if (!isset($form['#node']) || !user_access('autopopulate quickdonation')) {
+  if (!isset($form['#node']) || !user_access('autopopulate quickdonation') || strpos($form_id, 'webform_client_form') === FALSE) {
     return;
   }
 
