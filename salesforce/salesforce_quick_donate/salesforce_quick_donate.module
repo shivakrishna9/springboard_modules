@@ -1,0 +1,54 @@
+<?php
+
+/**
+ * Implements hook_springboard_quick_donate_optin_create().
+ */
+function salesforce_quick_donate_springboard_quick_donate_optin_create($account, $donation, $card_id) {
+  // Load the full card on file entity.
+  $card_on_file = commerce_cardonfile_load($card_id);
+
+  // Create a quick donate subscription object and queue it up.
+  $sobject = new stdClass();
+  $sobject->type = 'Quick_Donate_Subscription__c';
+  $sobject->fields = array(
+    'Payment_Token_Id__c' => $card_id,
+    'Payment_Method__c' => $card_on_file->payment_method,
+    'Payment_Gateway__c' => $card_on_file->instance_id,
+    'Payment_Token__c' => $card_on_file->remote_id,
+    'CC_Type__c' => $card_on_file->card_type,
+    'Donor_Name__c' => $card_on_file->card_name,
+    'CC_Last_4__c' => $card_on_file->card_number,
+    'CC_Exp_Month__c' => $card_on_file->card_exp_month,
+    'CC_Exp_Year__c' => $card_on_file->card_exp_year,
+    'Opt_In_Date__c' => $card_on_file->created,
+    'Default_Payment_Method__c' => $card_on_file->instance_default,
+    'Contact__c' => sprintf('[Contact:user:%d]', $account->uid),
+    'Donation__c' => sprintf('[Opportunity:donation:%d]', $donation->did),
+    'Donation_Form_Id__c' => $donation->node->nid,
+    'Donation_Form_Name__c' => $donation->node->title,
+  );
+
+  $item = array(
+    'drupal_id' => $card_id,
+    'module' => 'salesforce_quick_donate',
+    'delta' => 'commerce_cardonfile',
+    'object_type' => 'Quick_Donate_Subscription__c',
+    'operation' => 'CREATE',
+    'sobject' => $sobject,
+  );
+
+  $queue = salesforce_queue_load();
+  $result = $queue->createItem($item);
+}
+
+/**
+ * Implements hook_salesforce_genmap_map_fields_alter().
+ */
+function salesforce_quick_donate_salesforce_genmap_map_fields_alter(&$fields, $context) {
+  if ($context['module'] == 'salesforce_donation') {
+    // Add the card on file id to the opportunity if it was a quick donate transaction.
+    if (isset($context['object']->data['is_quick_donate'])) {
+      $fields['Quick_Donate_Token_Id__c'] = $context['object']->data['cardonfile'];  
+    }
+  }
+}
