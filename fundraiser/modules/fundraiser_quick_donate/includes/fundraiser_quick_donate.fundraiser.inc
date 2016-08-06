@@ -384,6 +384,7 @@ function fundraiser_quick_donate_fundraiser_donation_submit_alter($form, $form_s
   if (isset($payment_fields['token']) && $payment_fields['token']) {
     $donation->data['cardonfile'] = $payment_fields[$payment_info['payment_method']]['cardonfile'];
     $card = commerce_cardonfile_load($donation->data['cardonfile']);
+    $donation->data['is_quick_donate'] = TRUE;
     if (!empty($card)) {
       $donation->donation['payment_fields'][$payment_info['payment_method']]['card_number'] = $card->card_number;
       $donation->donation['payment_fields'][$payment_info['payment_method']]['card_type'] = $card->card_type;
@@ -474,6 +475,8 @@ function _fundraiser_quick_donate_checkout_form_submit($form, &$form_state) {
       'status' => 1,
     ))
     ->execute();
+
+  module_invoke_all('springboard_quick_donate_optin_create', $account, $donation, $card_id);  
 
   if (empty($account->pass)) {
     // Assuming this user account was just created since the password is empty.
