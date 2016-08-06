@@ -30,6 +30,11 @@ function fundraiser_quick_donate_fundraiser_donation_form($form, $form_state) {
   module_load_include('inc', 'fundraiser_quick_donate', 'includes/fundraiser_quick_donate.springboard_hmac');
   $mapping = _fundraiser_quick_donate_hmac_mapping();
   global $user;
+  // If the user isn't logged in but is coming from an HMAC token URL, load the
+  // user with the uid provided in the HMAC token.
+  if ($user->uid == 0 && !empty($_SESSION['springboard_hmac']['quickdonate']['uid'])) {
+    $user = user_load($_SESSION['springboard_hmac']['quickdonate']['uid']);
+  }
 
   foreach ($form['#node']->gateways as $gateway_type => $gateway) {
     if (empty($gateway['status']) || empty($gateway['id'])) {
