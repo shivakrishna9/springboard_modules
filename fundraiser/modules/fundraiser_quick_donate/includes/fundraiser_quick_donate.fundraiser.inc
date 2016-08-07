@@ -213,8 +213,6 @@ function fundraiser_quick_donate_fundraiser_donation_form($form, $form_state) {
   // Allow others to alter this form.
   drupal_alter('fundraiser_quick_donate_checkout_form', $form, $form_state);
 
-  dpm($form);
-
   return $form;
 }
 
@@ -476,7 +474,7 @@ function _fundraiser_quick_donate_checkout_form_submit($form, &$form_state) {
     ))
     ->execute();
 
-  module_invoke_all('springboard_quick_donate_optin_create', $account, $donation, $card_id);  
+  module_invoke_all('springboard_quick_donate_optin_create', $account, $donation, $card_id);
 
   if (empty($account->pass)) {
     // Assuming this user account was just created since the password is empty.
