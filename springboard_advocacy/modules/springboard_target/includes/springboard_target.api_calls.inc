@@ -42,7 +42,7 @@
 function springboard_target_api_save_target_group($group, $is_new = TRUE) {
 
   $indvds = array();
-  $groups = array();
+  $child_ids = array();
   $multi_indvds = array();
   $has_gender_or_social = array();
   $gender_or_social_rows = array();
@@ -56,7 +56,7 @@ function springboard_target_api_save_target_group($group, $is_new = TRUE) {
     $targets = json_decode($recipients);
     foreach ($targets as $target) {
       if (isset($target->id) && $target->type == 'group') {
-        $groups[$target->id] = $target->id;
+        $child_ids[$target->id] = $target->id;
       }
       elseif (isset($target->id)) {
         $indvds[$target->id] = $target->id;
@@ -86,7 +86,7 @@ function springboard_target_api_save_target_group($group, $is_new = TRUE) {
 
   $group['chambers'] = $chamber_rows;
   $group['target_ids'] = $indvds;
-  $group['groups'] = $groups;
+  $group['custom_group_ids'] = $child_ids;
   // @TODO add attribute for gender/social rows?
 
   $api_call = springboard_advocacy_api_call();
