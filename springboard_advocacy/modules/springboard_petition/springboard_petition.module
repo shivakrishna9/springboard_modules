@@ -146,7 +146,7 @@ function springboard_petition_form_springboard_petition_node_form_alter(&$form, 
   $visibility = isset($form['#node']->enable_recent_signers) ? $form['#node']->enable_recent_signers : FALSE;
   $form['springboard_display']['recent_signers']['show_signers'] = array(
     '#type' => 'checkbox',
-    '#title' => t('Allow users to opt-in and also display the recent signers list'),
+    '#title' => t('Allow users to opt-in and show recent signers list'),
     '#default_value' => $visibility,
     '#weight' => -4,
   );
