@@ -110,7 +110,7 @@ function springboard_target_permission() {
     ),
     'edit groups' => array(
       'title' => t('Edit Groups'),
-      'description' => t('Edit Custom my groups.'),
+      'description' => t('Edit Custom groups.'),
     ),
     'delete groups' => array(
       'title' => t('Delete Groups'),
