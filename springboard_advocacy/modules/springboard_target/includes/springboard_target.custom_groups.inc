@@ -62,17 +62,15 @@ function springboard_target_group_form($group_id = NULL) {
     $form = sba_target_search_add_target_search_form($form, $form_state, $group);
   }
 
-  $form['#submit'][] = 'springboard_target_group_save_group';
-
   return $form;
 }
 
 /**
- * Submit handler for Group create/edit forms
+ * Validation handler for Group create/edit forms
  * Submits the group via the Advocacy API
  */
 
-function springboard_target_group_save_group($form, &$form_state) {
+function springboard_target_group_form_validate($form, &$form_state) {
   $values = $form_state['values'];
   $is_new = TRUE;
   $group = array(
@@ -90,21 +88,12 @@ function springboard_target_group_save_group($form, &$form_state) {
     $group_id = springboard_target_api_save_target_group($group, $is_new);
     if ($group_id) {
       drupal_set_message('The group @name was successfully saved to the advocacy server.', 'success', array('@name' => $group->name));
+      $form_state['redirect'] = 'admin/springboard/advocacy/targets/custom-groups';
     }
     else {
-      drupal_set_message('There was a problem saving the group @name to the advocacy server.', 'warning', array('@name' => $group->name));
+      form_set_error('data][recipients', 'There was a problem saving the group @name to the advocacy server.');
     }
   }
-  $form_state['redirect'] = 'admin/springboard/advocacy/targets/custom-groups';
-}
-
-/**
- * Target edit form validation.
- * @param $form
- * @param $form_state
- */
-function springboard_target_group_form_validate($form, &$form_state) {
-
 }
 
 /**

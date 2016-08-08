@@ -164,13 +164,11 @@ function sba_target_search_add_target_search_form($form, &$form_state, $entity =
   $form['data']['#tree'] = TRUE;
   $recipients = '';
   // data structure for messages
+  // @TODO Need a way to save recipients json string or generate it from grou entity returned from API
   if(isset($entity->data['recipients'])) {
     $recipients = str_replace('"', '&quot;', $entity->data['recipients']);
   }
-  // data structure for groups
-  else if (isset($entity->recipients)) {
-    $recipients = str_replace('"', '&quot;', $entity->recipients);
-  }
+
   $form['data']['recipients'] = array(
     '#type' => 'hidden',
     '#default_value' => $recipients,
