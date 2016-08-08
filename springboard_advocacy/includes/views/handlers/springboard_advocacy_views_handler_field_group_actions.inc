@@ -49,7 +49,8 @@ class springboard_advocacy_views_handler_field_group_actions extends views_handl
     if ($values->class_name != "Legislator" && user_access('edit targets') && !empty($this->options['which_links']['edit'])) {
       $links[] = l('edit', 'admin/springboard/advocacy/targets/custom-groups/'. $values->id . '/edit');
     }
-    if ($values->class_name != "Legislator" && user_access('delete targets') && !empty($this->options['which_links']['delete'])) {
+    // Only add the delete link if the group has no parents (is not in use by another group or message).
+    if ($values->class_name != "Legislator" && user_access('delete targets') && !empty($this->options['which_links']['delete']) && empty($values->parents)) {
       $links[] = l('delete', 'admin/springboard/advocacy/targets/custom-groups/'. $values->id . '/delete');
     }
     return implode(' | ', $links);

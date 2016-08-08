@@ -68,9 +68,9 @@ function springboard_target_menu() {
   $items['admin/springboard/advocacy/targets/custom-groups/%/delete'] = array(
     'title' => 'Advocacy: Target Center: Delete Custom Group',
     'access arguments' => array('delete groups'),
-    'page arguments' => array('springboard_group_delete', 5),
-    'page callback' => 'drupal_get_form',
-    'file' => 'springboard_target.custom_targets.inc',
+    'page arguments' => array(5),
+    'page callback' => 'springboard_target_group_delete',
+    'file' => 'springboard_target.custom_groups.inc',
     'file path' => drupal_get_path('module', 'springboard_target') . '/includes',
     'type' => MENU_CALLBACK,
   );

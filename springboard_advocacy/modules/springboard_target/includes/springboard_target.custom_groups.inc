@@ -117,15 +117,35 @@ function springboard_target_group_form_validate($form, &$form_state) {
  *
  * @TODO - prevent deletion if the group is used in any messages.
  */
-function springboard_target_group_delete($form, $form_state, $group_id) {
+function springboard_target_group_delete($group_id) {
+  // Load group to determine if it is eligible for deletion.
+  $api_call = springboard_advocacy_api_call();
+  $response = $api_call->invokeClientMethod('getTargetGroup', $group_id);
+
+  // If the group has parents (is in use by another group or message) it cannot be deleted.
+  if(isset($response->data) && (!empty($response->data->parents))) {
+    $output = "<p>" . t("The group @name is in use and cannot be deleted. ", array("@name" => $response->data->name)) . l('Return to the Groups list.', 'admin/springboard/advocacy/targets/custom-groups') . "</p>";
+  }
+  else if (isset($response->data)) {
+    $output = drupal_get_form('springboard_target_group_delete_form', $group_id, $response->data->name);
+  }
+  // The group does not exist. Return to the Groups management page.
+  else {
+    drupal_goto('springboard/advocacy/targets/custom-groups');
+  }
+  return $output;
+}
+
+function springboard_target_group_delete_form($form, &$form_state, $group_id, $group_name) {
   $form['group_id'] = array(
     '#type' => 'value',
     '#value' => $group_id,
   );
+  $form['#submit'][] = 'springboard_target_group_delete_submit';
 
-  $confirmation_question = t('Delete This Group?');
+  $confirmation_question = t('Delete Group @name?', array('@name' => $group_name));
   $cancel_path = 'springboard/advocacy/targets/custom-groups';
-  $description = t('Are you sure you want to delete this group?');
+  $description = t('Are you sure you want to delete this group? This cannot be undone.');
   $yes_button = t('Yes');
   $no_button = t('Cancel');
   $confirm_name = 'springboard_target_group_delete_submit';
