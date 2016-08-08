@@ -1327,8 +1327,8 @@
             if (typeof(queryObj.Type) !== 'undefined') {
                 type = queryObj.Type.toString().SbaStrCln();
             }
-            if (typeof(queryObj.Group_name) !== 'undefined') {
-                group = queryObj.Group_name.toString().SbaStrCln();
+            if (typeof(queryObj.Name) !== 'undefined') {
+                group = queryObj.Name.toString().SbaStrCln();
             }
             if (typeof(queryObj.Sal) !== 'undefined') {
                 sal = queryObj.Sal.toString().SbaStrCln();

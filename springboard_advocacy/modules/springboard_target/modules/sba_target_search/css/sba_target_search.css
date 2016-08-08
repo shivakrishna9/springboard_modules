@@ -170,14 +170,14 @@
   top: -13px;
   right: -4px;
   cursor: pointer;
-  background: url("../images/icon-close.png");
+  background: url("../img/icon-close.png");
   display: block;
   width: 22px;
   height: 22px;
 }
 
 #springboard-advocacy-message-recipients .target-recipient .legislator {
-  background: transparent url("../images/icon-user.jpg") no-repeat 0 0;
+  background: transparent url("../img/icon-user.jpg") no-repeat 0 0;
   padding: 0 0 0 4px;
   text-indent: 20px;
 }
@@ -190,7 +190,7 @@
 
 
 #springboard-advocacy-message-recipients .target-recipient .group {
-  background: transparent url("../images/icon-custom-group.jpg") no-repeat 0 0;
+  background: transparent url("../img/icon-custom-group.jpg") no-repeat 0 0;
   padding: 0 0 0 4px;
   text-indent: 32px;
 }
@@ -202,7 +202,7 @@
 }
 
 #springboard-advocacy-message-recipients .target-recipient .individual {
-  background: transparent url("../images/icon-custom.jpg") no-repeat 0 0;
+  background: transparent url("../img/icon-custom.jpg") no-repeat 0 0;
   padding: 0 0 0 4px;
   text-indent: 20px;
 }
@@ -216,7 +216,7 @@
 #springboard-advocacy-message-recipients .target-recipient .title h4 {
   margin: 0 0 2px 0;
   ont-size: 1.2em;
-  background: url("../images/icon-group.jpg") 0 0 no-repeat;
+  background: url("../img/icon-group.jpg") 0 0 no-repeat;
   padding: 0 0 0 34px;
 }
 
@@ -279,7 +279,7 @@
   display: block;
   border-radius: 4px;
   border:none;
-  background: url("../images/arrow-message-save-button.png") 34% center no-repeat #247AAD;
+  background: url("../img/arrow-message-save-button.png") 34% center no-repeat #247AAD;
   font-family: "Open Sans";
   font-size: 28px;
   font-weight: 400;
@@ -290,7 +290,7 @@
 }
 
 #springboard-advocacy-find-targets-container #edit-actions input:hover {
-  background: url("../images/arrow-message-save-button.png") 34% center no-repeat #1E72A3;
+  background: url("../img/arrow-message-save-button.png") 34% center no-repeat #1E72A3;
 }
 
 
@@ -392,7 +392,7 @@
   margin:0;
   font-weight:bold;
   padding-top: 20px;
-  background: url("../images/search-gradient-ramp.jpg") no-repeat scroll center 65% transparent;
+  background: url("../img/search-gradient-ramp.jpg") no-repeat scroll center 65% transparent;
 
 }
 
@@ -485,7 +485,7 @@
   max-width: 708px;
   width: 100%;
   margin: 0;
-  background: url("../images/icon-search.jpg") no-repeat scroll 14px 10px transparent;
+  background: url("../img/icon-search.jpg") no-repeat scroll 14px 10px transparent;
   -webkit-box-sizing: border-box;
   -moz-box-sizing: border-box;
   box-sizing: border-box;
@@ -529,6 +529,10 @@
   margin: 1em 3em 1em 0;
 }
 
+#springboard-advocacy-find-targets .radio-widgets .views-exposed-widget#edit-name-wrapper {
+  margin: -1.2em -1em 1em;
+}
+
 #springboard-advocacy-find-targets .views-exposed-widget {
   vertical-align: top;
   margin-right: 2.5em;
@@ -570,7 +574,7 @@
   margin-top: -45px;
   margin-bottom: 0;
   width: 223px;
-  background: url("../images/arrow-quick-target.png") no-repeat scroll 0 20px transparent;
+  background: url("../img/arrow-quick-target.png") no-repeat scroll 0 20px transparent;
   padding-left: 56px;
   display:none;
 }
@@ -881,10 +885,10 @@ div.narrow-search {
     width:70%;
   }
   #springboard-advocacy-find-targets-container #edit-actions input {
-    background: url("../images/arrow-message-save-button.png") 30% center no-repeat #247AAD;
+    background: url("../img/arrow-message-save-button.png") 30% center no-repeat #247AAD;
   }
   #springboard-advocacy-find-targets-container #edit-actions input:hover {
-    background: url("../images/arrow-message-save-button.png") 30% center no-repeat #1E72A3;
+    background: url("../img/arrow-message-save-button.png") 30% center no-repeat #1E72A3;
   }
 }
 
@@ -937,10 +941,10 @@ div.narrow-search {
     text-align: center;
   }
   #springboard-advocacy-find-targets-container #edit-actions input {
-    background: url("../images/arrow-message-save-button.png") 25% center no-repeat #247AAD;
+    background: url("../img/arrow-message-save-button.png") 25% center no-repeat #247AAD;
   }
   #springboard-advocacy-find-targets-container #edit-actions input:hover {
-    background: url("../images/arrow-message-save-button.png") 25% center no-repeat #1E72A3;
+    background: url("../img/arrow-message-save-button.png") 25% center no-repeat #1E72A3;
   }
 
 }
