@@ -94,17 +94,6 @@ function springboard_cookie_fundraiser_donation_post_submit_alter(&$form, &$form
     $new_data['email'] = $donation->donation['mail'];
   }
 
-  // Store basic profile data in cookie after a donation.
-  $new_data['first_name'] = trim($donation->donation['first_name']);
-  $new_data['last_name'] = trim($donation->donation['last_name']);
-  // Store address data in their own array so it won't be checked for consistency with other submissions.
-  $new_data['contact']['address'] = $donation->donation['address'];
-  $new_data['contact']['address_line_2'] = $donation->donation['address_line_2'];
-  $new_data['contact']['city'] = $donation->donation['city'];
-  $new_data['contact']['country'] = $donation->donation['country'];
-  $new_data['contact']['state'] = $donation->donation['state'];
-  $new_data['contact']['zip'] = $donation->donation['zip'];
-
   springboard_cookie_tag_client($new_data);
 }
 
@@ -125,8 +114,10 @@ function springboard_cookie_sb_social_share_event_save($share_data) {
  */
 function springboard_cookie_springboard_quick_donate_optin_create($account, $donation, $card_id) {
   springboard_cookie_tag_client(array(
-    'quick_donate_optin_date' => time(),
-    'quick_donate_card_id' => $card_id,
+    'quick_donate' => array(
+      'optin_date' => time(),
+      'card_id' => $card_id,
+    ),
   ));
 }
 
@@ -134,28 +125,61 @@ function springboard_cookie_springboard_quick_donate_optin_create($account, $don
  * Implements hook_action_success().
  */
 function springboard_cookie_action_success($node, $contact, $data, $sid) {
-  // Webform user will add the uid and email, so no need to do that here.
+  // Add advocacy information to the cookie.
   $action_data = array(
-    //'uid' => $data['account_id'],
-    //'email' => $contact['email'],
-    'last_action_nid' => $node->nid,
-    'last_action_sid' => $sid,
-    'last_action_date' => time(),
+    'advocacy' => array(
+      'last_action_nid' => $node->nid,
+      'last_action_sid' => $sid,
+      'last_action_date' => time(),
+      'last_action_type' => $node->type,
+    ),
   );
 
-  if ($node->type == 'sba_message_action') {
-    $action_data['salutation'] = $contact['salutation'];
-    $action_data['first_name'] = trim($contact['first_name']);
-    $action_data['last_name'] = trim($contact['last_name']);
-    $action_data['contact']['address'] = $contact['address'];
-    $action_data['contact']['address_line_2'] = $contact['address_line_2'];
-    $action_data['contact']['city'] = $contact['city'];
-    $action_data['contact']['state'] = $contact['state'];
-    $action_data['contact']['zip'] = $contact['zip'];
-    $action_data['contact']['phone'] = $contact['phone'];
+  springboard_cookie_tag_client($action_data);
+}
+
+/**
+ * Implements hook_webform_user_submission_insert().
+ */
+function springboard_cookie_webform_user_submission_insert($node, $submission, $account) {
+  $profile_data = array('profile' => array());
+  try {
+    $user_wrapper = entity_metadata_wrapper('user', $account);
+    $properties = $user_wrapper->getPropertyInfo();
+    
+    if (array_key_exists('sbp_salutation', $properties)) {
+      $profile_data['profile']['salutation'] = $user_wrapper->sbp_salutation->value();
+    }
+    if (array_key_exists('sbp_first_name', $properties)) {
+      $profile_data['profile']['first_name'] = $user_wrapper->sbp_first_name->value();
+    }
+    if (array_key_exists('sbp_last_name', $properties)) {
+      $profile_data['profile']['last_name'] = $user_wrapper->sbp_last_name->value();
+    }
+    if (array_key_exists('sbp_address', $properties)) {
+      $profile_data['profile']['address'] = $user_wrapper->sbp_address->value();
+    }
+    if (array_key_exists('sbp_address_line_2', $properties)) {
+      $profile_data['profile']['address_line_2'] = $user_wrapper->sbp_address_line_2->value();
+    }
+    if (array_key_exists('sbp_city', $properties)) {
+      $profile_data['profile']['city'] = $user_wrapper->sbp_city->value();
+    }
+    if (array_key_exists('sbp_state', $properties)) {
+      $profile_data['profile']['state'] = $user_wrapper->sbp_state->value();
+    }
+    if (array_key_exists('sbp_zip', $properties)) {
+      $profile_data['profile']['zip'] = $user_wrapper->sbp_zip->value();
+    }
+    if (array_key_exists('sbp_phone', $properties)) {
+      $profile_data['profile']['phone'] = $user_wrapper->sbp_phone->value();
+    }    
+  }
+  catch (EntityMetadataWrapperException $exc) {
+
   }
 
-  springboard_cookie_tag_client($action_data);
+  springboard_cookie_tag_client($profile_data);
 }
 
 /**
