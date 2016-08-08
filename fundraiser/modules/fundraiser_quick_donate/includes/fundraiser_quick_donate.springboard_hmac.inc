@@ -1,10 +1,8 @@
 <?php
-
 /**
  * @file
  * springboard_hmac hooks for Springboard Quick Donate.
  */
-
 
 /**
  * Create HMAC token link for quick donations.
@@ -112,20 +110,20 @@ function fundraiser_quick_donate_springboard_hmac_success($payload) {
   // Need to do some more validation at this point since we don't want to show
   // an access denied message.
   if (!user_is_logged_in()) {
+    $_SESSION['springboard_hmac']['quickdonate'] = array();
+    $_SESSION['springboard_hmac']['quickdonate']['status'] = FALSE;
     $cookie = springboard_cookie_get_cookie();
     if (isset($cookie['uid']) && $cookie['uid'] != $payload[$mapping['uid']]) {
       // Set a flag to tell us later that uid authentication failed, so we can
       // set an appropriate message on the donation form.
-      $_SESSION['springboard_hmac']['quickdonate'] = array(
-        'status' => FALSE,
-        'reason' => FUNDRAISER_QUICK_DONATE_UID_NOT_EQUAL_TOKEN,
-      );
-      $status = FALSE;
+      $_SESSION['springboard_hmac']['quickdonate']['reason'] = FUNDRAISER_QUICK_DONATE_UID_NOT_EQUAL_TOKEN;
+    }
+    else {
+      $_SESSION['springboard_hmac']['quickdonate']['reason'] = FUNDRAISER_QUICK_DONATE_USER_NOT_LOGGED_IN;
     }
   }
-
   // Move quickdonate values into their own array for our own sanity.
-  if ($status) {
+  else {
     foreach ($mapping as $key) {
       $_SESSION['springboard_hmac']['quickdonate'][$key] = $payload[$key];
       unset($_SESSION['springboard_hmac'][$key]);
@@ -133,9 +131,9 @@ function fundraiser_quick_donate_springboard_hmac_success($payload) {
   }
 
   $parameters = drupal_get_query_parameters();
-  if (isset($payload[2]) && is_numeric($payload[2]) || isset($parameters['form_id']) && is_numeric($parameters['form_id'])) {
+  if (isset($payload[2]) && is_numeric($payload[$mapping['fundraiser_id']]) || isset($parameters['form_id']) && is_numeric($parameters['form_id'])) {
     // Default for the form_id parameter if it's set, otherwise the payload nid.
-    $nid = isset($parameters['form_id']) ? $parameters['form_id'] : $payload[2];
+    $nid = isset($parameters['form_id']) ? $parameters['form_id'] : $payload[$mapping['fundraiser_id']];
     $node = node_load($nid);
     if (!empty($node->type) && fundraiser_is_donation_type($node->type)) {
       drupal_goto('node/' . $node->nid);
@@ -164,8 +162,10 @@ function fundraiser_quick_donate_springboard_hmac_failure($reason, $payload) {
   // redirect user to donation form. This scenario is treated as a success
   // condition.
   $cookie = springboard_cookie_get_cookie();
+  $parameters = drupal_get_query_parameters();
+  $nid = isset($parameters['form_id']) ? $parameters['form_id'] : $payload[$mapping['fundraiser_id']];
   if (!empty($cookie['uid']) && $cookie['uid'] == $payload[$mapping['uid']]) {
-    drupal_goto(drupal_get_path_alias('node/' . $payload[$mapping['fundraiser_id']]));
+    drupal_goto(drupal_get_path_alias('node/' . $nid));
   }
 
   // Otherwise this is a failure condition. Output the reason if configured to
@@ -178,7 +178,6 @@ function fundraiser_quick_donate_springboard_hmac_failure($reason, $payload) {
   drupal_session_start();
   $_SESSION['quickdonate'] = TRUE;
 
-  $nid = $payload[$mapping['fundraiser_id']];
   drupal_goto('/user', array(
     'query' => array(
       'destination' => drupal_get_path_alias('node/' . $nid),
@@ -192,17 +191,13 @@ function fundraiser_quick_donate_springboard_hmac_failure($reason, $payload) {
 function fundraiser_quick_donate_springboard_hmac_verify_payload($payload) {
   $qd_hmac_mapping = _fundraiser_quick_donate_hmac_mapping();
   $did = $payload[$qd_hmac_mapping['donation_id']];
-  if ($did > 0) {
-    $donation = fundraiser_donation_get_donation($did);
-  }
-  else {
+  if ($did <= 0) {
     return t('No donation information available.');
   }
 
-  if (empty($donation->gateway['id'])) {
-    // This should never happen, but as a precaution.
-    return t('No gateway information available.');
-  }
+  // Since we want to have the ability of redirecting the user to a default form
+  // most of the actual verification is done in the
+  // `hook_springboard_hmac_success` hook.
 
   return NULL;
 }

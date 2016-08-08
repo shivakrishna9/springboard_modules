@@ -5,6 +5,7 @@
  */
 
 define('FUNDRAISER_QUICK_DONATE_UID_NOT_EQUAL_TOKEN', 0);
+define('FUNDRAISER_QUICK_DONATE_USER_NOT_LOGGED_IN', 1);
 
 /**
  * Implements hook_fundraiser_donation_form().
@@ -233,7 +234,7 @@ function fundraiser_quick_donate_fundraiser_donation_form($form, $form_state) {
  */
 function _fundraiser_quick_donate_update_user_fields_with_hmac_values(&$form, &$form_state, $mapping, $values) {
   global $user;
-  if (!empty($values['status']) && !$values['status']) {
+  if (isset($values['status']) && !$values['status']) {
     $reasons = array(
       // @todo Make the message configurable.
       FUNDRAISER_QUICK_DONATE_UID_NOT_EQUAL_TOKEN => t("Uh oh. It looks like we weren't able to verify your saved payment details. Please !login to access your stored card information, or complete the donation form below.", array(
@@ -244,6 +245,9 @@ function _fundraiser_quick_donate_update_user_fields_with_hmac_values(&$form, &$
         )),
       )),
     );
+    // @todo Right now the messages are the same, need to check if they need to
+    // be different.
+    $reasons[FUNDRAISER_QUICK_DONATE_USER_NOT_LOGGED_IN] = $reasons[FUNDRAISER_QUICK_DONATE_UID_NOT_EQUAL_TOKEN];
     $form['#prefix'] = $reasons[$values['reason']];
   }
   else {
