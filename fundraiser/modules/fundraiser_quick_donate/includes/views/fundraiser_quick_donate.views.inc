@@ -12,8 +12,8 @@
  * custom options. Exported from the adjusted view.
  */
 function fundraiser_quick_donate_views_default_views_alter(&$views) {
-  $handler = &$views['commerce_card_on_file_user_cards']->display['master']->handler;
-
+  /* Display: Master */
+  $handler = &$views['commerce_card_on_file_user_cards']->display['default']->handler;
   $handler->display->display_options['title'] = 'Stored cards';
   $handler->display->display_options['use_more_always'] = FALSE;
   $handler->display->display_options['access']['type'] = 'perm';
@@ -140,6 +140,16 @@ function fundraiser_quick_donate_views_default_views_alter(&$views) {
   $handler->display->display_options['filters']['status']['value'] = array(
     1 => '1',
   );
+
+  /* Display: Page */
+  $handler = &$views['commerce_card_on_file_user_cards']->display['page']->handler;
+  $handler->display->display_options['path'] = 'user/%/cards';
+  $handler->display->display_options['menu']['type'] = 'tab';
+  $handler->display->display_options['menu']['title'] = 'Stored cards';
+  $handler->display->display_options['menu']['description'] = 'Manage your stored card data.';
+  $handler->display->display_options['menu']['weight'] = '0';
+  $handler->display->display_options['menu']['name'] = 'management';
+  $handler->display->display_options['menu']['context'] = 0;
 }
 
 /**
