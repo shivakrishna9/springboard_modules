@@ -222,6 +222,7 @@ function sba_message_edit_form($form, &$form_state, $sba_message) {
   }
 
   $form['#attached']['js'][] = drupal_get_path('module', 'sba_message') . '/js/sba_message.js';
+  $form['#attached']['css'][] = drupal_get_path('module', 'sba_message') . '/css/sba_message.css';
   // We append the validate handler to #validate in case a form callback_wrapper
   // is used to add validate handlers earlier.
   $form['#validate'][] = 'sba_message_edit_form_validate';

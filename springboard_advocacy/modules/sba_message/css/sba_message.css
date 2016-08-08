@@ -1,126 +1,14 @@
 /***************** Message Add/Edit form ****************/
 
-/**** Field API field Styles **************/
-
-/* @TODO move to sba_targets_search */
-@media only screen and (min-width: 769px) and (max-width: 1200px) {
-  *#springboard-advocacy-find-targets div.button-container {
-    margin-top: 45px
-  }
-
-  #springboard-advocacy-find-targets .radio-widgets .views-exposed-widget {
-    margin: 1em 1.2em 1em 0;
-  }
-
-  #springboard-advocacy-find-targets div.views-exposed-widget.views-targets-button-wrapper {
-    float: right;
-    margin-right: 0;
-    margin-top: -45px;
-    width: 40%;
-  }
-
-  #springboard-advocacy-find-targets div.views-exposed-widget.views-submit-button {
-    margin-top: 0;
-    margin-right: 0;
-    width: 45%;
-    overflow: visible;
-  }
-
-  #springboard-advocacy-find-targets div.views-exposed-widget.views-submit-button input {
-    width: 70%;
-  }
-
+#springboard-advocacy-message-form-container .form-wrapper {
+  margin-top: 5px;
+  padding: 0 2em;
 }
 
-@media only screen and (min-width: 769px) and (max-width: 1200px) {
-
-  #edit-search-gender-wrapper {
-    /*clear:left;*/
-  }
-
+#springboard-advocacy-message-form-container fieldset .form-wrapper {
+  padding: 0;
 }
 
-/* @todo move to sba_targets_search */
-@media only screen and (min-width: 769px) and (max-width: 979px) {
-  #springboard-advocacy-find-targets div.views-exposed-widget.views-submit-button {
-    width: 70%;
-  }
-
-  #springboard-advocacy-find-targets .radio-widgets .views-exposed-widget {
-    margin: 1em 0 1em 0;
-    width: 50%;
-  }
-
-  #springboard-advocacy-find-targets div.views-exposed-widget.views-targets-button-wrapper {
-    float: none;
-    width: 66%;
-    margin-top: 5px;
-  }
-
-  #springboard-advocacy-find-targets div.views-exposed-widget.views-targets-button-wrapper .target-button-header {
-    margin: 0 auto;
-    text-align: center;
-  }
-
-  #springboard-advocacy-find-targets div.views-exposed-widget.views-targets-button-wrapper .target-button-help {
-    margin: 0 auto;
-    text-align: center;
-  }
-
-  #springboard-advocacy-find-targets div.views-exposed-widget.views-targets-button {
-    margin: 0 auto;
-    text-align: center;
-  }
-
-  #springboard-advocacy-find-targets div.views-exposed-widget.views-submit-button {
-    margin: 0 auto;
-    float: none;
-    text-align: center;
-  }
-
-}
-
-@media only screen and (min-width: 769px) and (max-width: 979px) {
-
-  #edit-search-gender-wrapper {
-    clear: left;
-  }
-
-}
-
-/* @todo move to sba_targets_search */
-@media only screen and (min-width: 320px) and (max-width: 769px) {
-  #springboard-advocacy-find-targets div.views-exposed-widget.views-submit-button {
-    width: 223px;
-    margin-right: -2.75em;
-    padding-left: 56px;
-    float: none;
-    text-align: center;
-  }
-
-  #springboard-advocacy-find-targets div.views-exposed-widget.views-targets-button-wrapper {
-    float: none;
-    /*width: 66%;*/
-    margin-top: 5px;
-    text-align: center;
-  }
-
-  #springboard-advocacy-find-targets .radio-widgets .views-exposed-widget {
-    margin: 1em 0;
-    width: 50%;
-  }
-
-  #springboard-advocacy-find-targets div.views-exposed-widget.views-targets-button {
-    margin-right: auto;
-    text-align: center;
-  }
-
-}
-
-@media only screen and (min-width: 320px) and (max-width: 769px) {
-
-  #edit-search-gender-wrapper {
-    clear: left;
-  }
-
+#springboard-advocacy-message-form-container fieldset.form-wrapper input#edit-field-sba-placeholder-greeting-und-0-value {
+  width: 90%;
 }
