@@ -12,3 +12,26 @@
 #springboard-advocacy-message-form-container fieldset.form-wrapper input#edit-field-sba-placeholder-greeting-und-0-value {
   width: 90%;
 }
+
+#springboard-advocacy-message-form-container #edit-save-target-group {
+  padding: 0;
+}
+#springboard-advocacy-message-form-container .form-item-save-target-group {
+  margin: 1.5em 0 0;
+}
+
+#springboard-advocacy-find-targets-container .form-item-save-target-group-save-target-group-toggle input#edit-save-target-group-save-target-group-toggle {
+  width: auto;
+  display: inline-block;
+  margin: 0;
+}
+
+#springboard-advocacy-find-targets-container .form-item-save-target-group-save-target-group-name input#edit-save-target-group-save-target-group-name {
+  width: 96%;
+}
+
+#springboard-advocacy-find-targets-container .form-item-save-target-group-save-target-group-name label {
+  font-weight: lighter;
+  color: #333;
+
+}

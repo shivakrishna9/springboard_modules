@@ -10,6 +10,8 @@
     // Functions which need to happen on initial page load, but not ajax reload
     $(document).ready(function () {
 
+         // UI prep
+         Sbam.messageFormUI();
         // Define click events for submit and delete buttons
         Sbam.messageFormSubmitter();
 
@@ -20,6 +22,15 @@
 
     //namespace
     window.Sbam = {};
+
+    // move the checkbox to save a custom group below the Message Targets
+     // container, and other UI prep.
+     Sbam.messageFormUI = function() {
+          if ($('#springboard-advocacy-find-targets-container')) {
+               var groupSave = $('#edit-save-target-group').detach();
+             $('#springboard-advocacy-message-recipients-container .inner').append(groupSave);
+          }
+     }
 
     //set up the event for the message save button validation and submit
     Sbam.messageFormSubmitter = function () {

@@ -84,16 +84,21 @@
 }
 
 #springboard-advocacy-message-recipients {
+  width: 99%;
+  border:1px solid #d5d5d5;
+  border-radius: 4px;
+  background:#fff;
+  padding-bottom: 1em;
+}
+
+#springboard-advocacy-message-recipients-container .inner {
   min-height: 100px;
-  max-height:500px;
+  max-height: 500px;
   overflow-y: auto;
   position: absolute;
   right: 0;
   top: 0;
   width: 100%;
-  border:1px solid #d5d5d5;
-  border-radius: 4px;
-  background:#fff;
 }
 /* adjust the recipients box position when admin menu is in use. */
 #springboard-advocacy-message-recipients.recipients-fixed {

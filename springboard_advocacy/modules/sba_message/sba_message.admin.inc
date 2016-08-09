@@ -219,6 +219,34 @@ function sba_message_edit_form($form, &$form_state, $sba_message) {
   if(module_exists('sba_target_search')) {
     // Add the target search and elements for saving targets.
     $form = sba_target_search_add_target_search_form($form, $form_state, $sba_message);
+    // If this is a new message, give the option to save the recipients as a
+    // re-usable custom group.
+    if($sba_message->is_new) {
+      $form['save_target_group'] = array(
+        '#tree' => true,
+        '#type' => 'container',
+        '#weight' => 99,
+        '#element_validate' => array('sba_message_save_target_group_validate'),
+      );
+      $form['save_target_group']['save_target_group_toggle'] = array(
+        '#type' => 'checkbox',
+        '#title' => t('Save these targets as a custom group.'),
+        '#weight' => 0,
+      );
+      $form['save_target_group']['save_target_group_name'] = array(
+        '#type' => 'textfield',
+        '#title' => t('Group name'),
+        '#weight' => 1,
+        '#states' => array(
+          'invisible' => array(
+            ':input[name="save_target_group[save_target_group_toggle]"]' => array('checked' => FALSE),
+          ),
+          'required' => array(
+            ':input[name="save_target_group[save_target_group_toggle]"]' => array('checked' => TRUE),
+          ),
+        ),
+      );
+    }
   }
 
   $form['#attached']['js'][] = drupal_get_path('module', 'sba_message') . '/js/sba_message.js';
@@ -227,6 +255,44 @@ function sba_message_edit_form($form, &$form_state, $sba_message) {
   // is used to add validate handlers earlier.
   $form['#validate'][] = 'sba_message_edit_form_validate';
   return $form;
+}
+
+/**
+ * Custom validation callback to save recipients as a custom group.
+ */
+
+function sba_message_save_target_group_validate($element, &$form_state, $form) {
+  $values = $form_state['values'];
+  if($values['save_target_group']['save_target_group_toggle'] == 1) {
+    if($values['save_target_group']['save_target_group_name'] == '') {
+      form_set_error('save_target_group_name', t('Please provide a name for your custom group.'));
+    }
+    else if(!isset($values['data']['recipients']) || $values['data']['recipients'] == '') {
+      form_set_error('save_target_group', t('Please add targets to save as a custom group.'));
+    }
+    else {
+      // Build a group object for saving
+      $group = array(
+        'recipients' => $values['data']['recipients'],
+        'name' => $values['save_target_group']['save_target_group_name'],
+        'is_template' => 1,
+      );
+      module_load_include('inc', 'springboard_target', 'includes/springboard_target.api_calls');
+      $group_id = springboard_target_api_save_target_group($group, true);
+      if ($group_id) {
+        // Replace the recipients list with the new group.
+        $recipients[] = array(
+          'id' => $group_id,
+          'type' => 'group',
+          'name' => $values['save_target_group']['save_target_group_name'],
+          );
+        $form_state['values']['data']['recipients'] = json_encode($recipients);
+      }
+      else {
+        form_set_error('save_target_group', t('There was a problem saving the Group to the Advocacy server. Try again or uncheck "Save these targets as custom group"'));
+      }
+    }
+  }
 }
 
 /**
