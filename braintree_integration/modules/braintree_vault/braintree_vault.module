@@ -169,14 +169,14 @@ function braintree_vault_hook_info() {
  * @return bool|\Braintree_Customer
  */
 function braintree_customer_load_by_account($account, $reset = FALSE) {
-  return static_cache_get('braintree_customer_cache', $account->uid, $reset, function() use ($account) {
-    if ($customer_id = braintree_customer_id($account)) {
+  // return static_cache_get('braintree_customer_cache', $account->uid, $reset, function() use ($account) {
+    // if ($customer_id = braintree_customer_id($account)) {
       $customer = braintree_customer_load($customer_id);
       return $customer;
-    }
+    // }
 
-    return FALSE;
-  });
+    // return FALSE;
+  // });
 }
 
 /**

@@ -122,7 +122,7 @@
         $('.fundraiser-donation-form #edit-submit').once(function() {
           $('.fundraiser-donation-form #edit-submit').click(function() {
             // Validate the form
-            if (donationValidate.form() && braintree[errorStatus] == false) {
+            if (donationValidate.form()) {
               $(this).hide();
               $('.fundraiser_submit_message').hide();
               $(this).after('<div class="donation-processing-wrapper">' +

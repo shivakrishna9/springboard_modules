@@ -59,17 +59,91 @@ function commerce_braintree_web_fundraiser_commerce_refund($payment_method, $ref
  * Callback function, use this form for the given gateway.
  */
 function commerce_braintree_web_fundraiser_commerce_form($payment_method) {
-  if ($payment_method == 'credit') {
-     $form = fundraiser_commerce_braintree_credit_card_form();
-  }
+  // dpm('calling commerce form');
   if ($payment_method == 'paypal') {
-     $form = fundraiser_commerce_braintree_paypal_form();
+    $payment_method = 'braintree_paypal';
   }
-  $form['#attached']['js'] = array(
-    'https://js.braintreegateway.com/js/braintree-2.26.0.min.js' => array(
-      'type' => 'external',
-    ),
+  // @TODO replace with _braintree_payment_form().
+
+
+  // if ($payment_method == 'credit') {
+  //    $form = fundraiser_commerce_braintree_credit_card_form();
+  // }
+  // if ($payment_method == 'paypal') {
+  //    $form = fundraiser_commerce_braintree_paypal_form();
+  // }
+  // $form['#attached']['js'] = array(
+  //   'https://js.braintreegateway.com/js/braintree-2.26.0.min.js' => array(
+  //     'type' => 'external',
+  //   ),
+  // );
+  //
+
+  global $user;
+  $using_existing = FALSE;
+
+  $form['#attached']['library'][] = array('braintree_payment', 'braintree.js');
+
+  // Initialize Braintree and create a token.
+  braintree_initialize();
+
+  $form['braintree'] = array(
+    '#type' => 'container',
   );
+
+  $form['braintree']['new'] = array(
+    '#type' => 'container',
+    '#attributes' => array(
+      'class' => array('braintree-payment-form'),
+    ),
+    '#prefix' => '<div id="braintree-payment-form-outer">',
+    '#suffix' => '</div>',
+  );
+
+  _braintree_payment_form_element($form['braintree']['new'], $form, $form_state, $payment_method);
+
+  if ($using_existing && ($user->uid > 0) && module_exists('braintree_vault') && ($customer = braintree_customer_load_by_account($user))) {
+    $default_method = braintree_customer_default_payment_method($customer);
+    $options = braintree_payment_method_options($customer->paymentMethods);
+
+    if (count($options) > 0) {
+      $form['braintree']['using_existing_payment_method'] = array(
+        '#type' => 'hidden',
+        '#default_value' => 1,
+      );
+
+      if (!empty($form_state['values'])) {
+        $parent_array[] = 'payment_details';
+        $parent_array[] = 'braintree';
+        $parent_array[] = 'using_existing_payment_method';
+
+        if ($default_value = drupal_array_get_nested_value($form_state['values'], $parent_array)) {
+          $form['braintree']['using_existing_payment_method']['#default_value'] = $default_value;
+        }
+
+      }
+
+      $form['braintree']['payment_method_token'] = array(
+        '#type' => 'select',
+        //'#title' => t('Choose your default payment method'),
+        '#options' => $options,
+        '#default_value' => $default_method->token,
+        '#attributes' => array(
+          'class' => array('braintree-primary-payment-method'),
+        ),
+      );
+
+      $form['braintree']['default_method_token'] = array(
+        '#type' => 'value',
+        '#value' => $default_method->token,
+      );
+    }
+  }
+
+  // $form['#validate'][] = '_braintree_payment_form_validate';
+  // $form['#submit'][] = '_braintree_payment_form_submit';
+  //
+  //
   return $form;
 }
 
