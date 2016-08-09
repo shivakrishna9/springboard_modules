@@ -77,13 +77,13 @@
 
 /********** Floating Recipients "block"  **************/
 
-#springboard-advocacy-message-recipients-container {
+#springboard-advocacy-target-recipients-container {
   width:33%;
   float:right;
   position:relative;
 }
 
-#springboard-advocacy-message-recipients {
+#springboard-advocacy-target-recipients {
   width: 99%;
   border:1px solid #d5d5d5;
   border-radius: 4px;
@@ -91,7 +91,7 @@
   padding-bottom: 1em;
 }
 
-#springboard-advocacy-message-recipients-container .inner {
+#springboard-advocacy-target-recipients-container .inner {
   min-height: 100px;
   max-height: 500px;
   overflow-y: auto;
@@ -101,27 +101,27 @@
   width: 100%;
 }
 /* adjust the recipients box position when admin menu is in use. */
-#springboard-advocacy-message-recipients.recipients-fixed {
+#springboard-advocacy-target-recipients.recipients-fixed {
   margin-top: 44px;
 }
 
-#springboard-advocacy-message-recipients #not-saved {
+#springboard-advocacy-target-recipients #not-saved {
   float: left;
   top: 10px;
   padding-left: 10px;
 }
 
-#springboard-advocacy-message-recipients h3 {
+#springboard-advocacy-target-recipients h3 {
   margin-left: 1em;
 }
 
-#springboard-advocacy-message-recipients .sba-message-status {
+#springboard-advocacy-target-recipients .sba-message-status {
   margin-left: 1.5em;
   display: none;
   color: #ff0000;
 }
 
-#springboard-advocacy-message-recipients .target-recipient {
+#springboard-advocacy-target-recipients .target-recipient {
   margin: 1em 1.75em;
   border: 1px solid #d5d5d5;
   padding: 0.5em;
@@ -130,10 +130,10 @@
   position: relative;
 }
 
-#springboard-advocacy-message-recipients .target-recipient.new {
+#springboard-advocacy-target-recipients .target-recipient.new {
   background: #FFFFD8;
 }
-#springboard-advocacy-message-recipients .target-recipient.trans {
+#springboard-advocacy-target-recipients .target-recipient.trans {
   background-color: #FFF;
   -moz-transition: background-color  350ms linear 250ms;
   -webkit-transition: background-color  350ms linear 250ms;
@@ -142,12 +142,12 @@
   transition: background-color 350ms linear 250ms;
 }
 
-#springboard-advocacy-message-recipients .target-recipient:after {
+#springboard-advocacy-target-recipients .target-recipient:after {
   clear: both;
   content: "";
   display: table;
 }
-#springboard-advocacy-message-recipients .target-recipient ul  {
+#springboard-advocacy-target-recipients .target-recipient ul  {
   display: block;
   float: left;
   width: 45%;
@@ -160,17 +160,17 @@
   box-sizing: border-box;
 }
 
-#springboard-advocacy-message-recipients .target-recipient ul li.heading {
+#springboard-advocacy-target-recipients .target-recipient ul li.heading {
   font-weight: 600;
   font-size: 12px;
 }
 
-#springboard-advocacy-message-recipients .target-recipient ul li {
+#springboard-advocacy-target-recipients .target-recipient ul li {
   position: relative; left: 1em;
   margin-bottom: 0;
 }
 
-#springboard-advocacy-message-recipients .target-recipient .remove-target {
+#springboard-advocacy-target-recipients .target-recipient .remove-target {
   position: absolute;
   top: -13px;
   right: -4px;
@@ -181,62 +181,62 @@
   height: 22px;
 }
 
-#springboard-advocacy-message-recipients .target-recipient .legislator {
+#springboard-advocacy-target-recipients .target-recipient .legislator {
   background: transparent url("../img/icon-user.jpg") no-repeat 0 0;
   padding: 0 0 0 4px;
   text-indent: 20px;
 }
 
-#springboard-advocacy-message-recipients .target-recipient .legislator:first-line {
+#springboard-advocacy-target-recipients .target-recipient .legislator:first-line {
   font-size: 1.2em;
   line-height: 24px;
   padding-bottom: 4px;
 }
 
 
-#springboard-advocacy-message-recipients .target-recipient .group {
+#springboard-advocacy-target-recipients .target-recipient .group {
   background: transparent url("../img/icon-custom-group.jpg") no-repeat 0 0;
   padding: 0 0 0 4px;
   text-indent: 32px;
 }
 
-#springboard-advocacy-message-recipients .target-recipient .group:first-line {
+#springboard-advocacy-target-recipients .target-recipient .group:first-line {
   font-size: 1.2em;
   line-height: 24px;
   padding-bottom: 4px;
 }
 
-#springboard-advocacy-message-recipients .target-recipient .individual {
+#springboard-advocacy-target-recipients .target-recipient .individual {
   background: transparent url("../img/icon-custom.jpg") no-repeat 0 0;
   padding: 0 0 0 4px;
   text-indent: 20px;
 }
 
-#springboard-advocacy-message-recipients .target-recipient .individual:first-line {
+#springboard-advocacy-target-recipients .target-recipient .individual:first-line {
   font-size: 1.2em;
   line-height: 24px;
   padding-bottom: 4px;
 }
 
-#springboard-advocacy-message-recipients .target-recipient .title h4 {
+#springboard-advocacy-target-recipients .target-recipient .title h4 {
   margin: 0 0 2px 0;
   ont-size: 1.2em;
   background: url("../img/icon-group.jpg") 0 0 no-repeat;
   padding: 0 0 0 34px;
 }
 
-#springboard-advocacy-message-recipients .targeting-count {
+#springboard-advocacy-target-recipients .targeting-count {
   text-align: right;
   font-size: 14px;
   margin: 20px 1.75em;
   font-family: 'Open Sans', sans-serif;
 }
 
-#springboard-advocacy-message-recipients .targeting-count strong {
+#springboard-advocacy-target-recipients .targeting-count strong {
   font-weight: 700;
 }
 
-#springboard-advocacy-message-recipients .remove-all-targets {
+#springboard-advocacy-target-recipients .remove-all-targets {
   -webkit-border-radius: 4px;
   -moz-border-radius: 4px;
   border-radius: 4px;
@@ -250,7 +250,7 @@
   cursor:pointer;
 }
 
-#springboard-advocacy-message-recipients .remove-all-targets:hover {
+#springboard-advocacy-target-recipients .remove-all-targets:hover {
   text-decoration: none;
   background-color: #FFB063;
 }

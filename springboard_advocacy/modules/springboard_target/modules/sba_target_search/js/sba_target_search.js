@@ -574,7 +574,7 @@
 
     //rearrange some elements on the exposed form and recipients container
     Sba.prepareMessageForm = function () {
-        var recipContainer = $('#springboard-advocacy-message-recipients-container');
+        var recipContainer = $('#springboard-advocacy-target-recipients-container');
         var finder = $('#springboard-advocacy-find-targets-container');
         var actions = $('#edit-actions', 'form.sba_target_search_parent_form');
         var err = $('#advo-error-wrapper');
@@ -607,7 +607,7 @@
         }
         if ((typeof(context) !== 'undefined' && typeof(context[0]) === 'undefined') || id.indexOf('add-more-wrapper') != -1 || id.indexOf('message-edit-form') != -1) {
             setTimeout(function () {
-                var recips = $('#springboard-advocacy-message-recipients');
+                var recips = $('#springboard-advocacy-target-recipients');
                 var offset = recips.offset();
                 var newTop;
                 if (recips.hasClass('recipients-fixed')) {
@@ -1126,7 +1126,7 @@
 
     // Rebuild the recipients list on existing messages
     Sba.buildEditPage = function (recipients) {
-        $('#springboard-advocacy-message-recipients-content').text('');
+        $('#springboard-advocacy-target-recipients-content').text('');
         recipients = recipients.replace(/&quot;/g, '"');
         $.each(JSON.parse(recipients), function(id, obj) {
             var query = JSON.stringify(obj)
@@ -1141,7 +1141,7 @@
              Sba.buildDiv(id, readable, query, 'reload');
         });
         //reverse the display order so newest are at top.
-        var content = $('#springboard-advocacy-message-recipients-content');
+        var content = $('#springboard-advocacy-target-recipients-content');
         var contentItems = content.children('.target-recipient');
         content.append(contentItems.get().reverse());
         Sba.setCountMessage();
@@ -1157,7 +1157,7 @@
         else{
             isnew = 'reloaded';
         }
-        $('#springboard-advocacy-message-recipients-content')
+        $('#springboard-advocacy-target-recipients-content')
             .prepend('<div id = "target-' + id + '" class = "target-recipient ' + isnew +'" style="display: none;">' + readable +
             ' <span><a class ="target-delete remove-target" href="#"></a></span></div>');
         $('#target-' + id).show(200).addClass('trans');
@@ -1224,7 +1224,7 @@
         var countMessage = '<strong>Targeting: </strong> ' + message.join(' & ');
         var counter = '<div class="targeting-count">' + countMessage + '</div><a class="remove-all-targets">Remove All Targets</a></div>';
         if(individs > 0 || groups > 0) {
-            $('#springboard-advocacy-message-recipients-content').append(counter);
+            $('#springboard-advocacy-target-recipients-content').append(counter);
         }
 
         $('.remove-all-targets').click(function(){
@@ -1243,16 +1243,13 @@
       var queryObj = {};
         $(query).each(function(index, value) {
             var segments = value.split('=');
-          // @TODO needs comments
           if (segments[0] == 'ids') {
-            // seems to be in the case there are multiple IDs....?
                 return false;
             }
             if(typeof(segments[1]) == "undefined") {
                 return true;
             }
             segments[0] = segments[0].SbaUcfirst();
-          // @TODO figure out this purpose and add comment
           if(segments[0] != 'Search_committee') {
                 segments[1] = segments[1].replace(/%7C/g, '|');
                 queryObj[segments[0]] = segments[1].split('|');

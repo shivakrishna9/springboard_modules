@@ -87,7 +87,7 @@ function springboard_target_group_form_validate($form, &$form_state) {
     module_load_include('inc', 'springboard_target', 'includes/springboard_target.api_calls');
     $group_id = springboard_target_api_save_target_group($group, $is_new);
     if ($group_id) {
-      drupal_set_message('The group @name was successfully saved to the advocacy server.', 'success', array('@name' => $group->name));
+      drupal_set_message('The group was successfully saved to the advocacy server.', 'status');
       $form_state['redirect'] = 'admin/springboard/advocacy/targets/custom-groups';
     }
     else {
@@ -104,7 +104,6 @@ function springboard_target_group_form_validate($form, &$form_state) {
  * @param $group_id
  * @return mixed
  *
- * @TODO - prevent deletion if the group is used in any messages.
  */
 function springboard_target_group_delete($group_id) {
   // Load group to determine if it is eligible for deletion.

@@ -28,7 +28,7 @@
      Sbam.messageFormUI = function() {
           if ($('#springboard-advocacy-find-targets-container')) {
                var groupSave = $('#edit-save-target-group').detach();
-             $('#springboard-advocacy-message-recipients-container .inner').append(groupSave);
+             $('#springboard-advocacy-target-recipients-container .inner').append(groupSave);
           }
      }
 

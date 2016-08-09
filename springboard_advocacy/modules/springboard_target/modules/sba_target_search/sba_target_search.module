@@ -153,18 +153,19 @@ function sba_target_search_preprocess_views_view_table(&$vars) {
 
 
 /**
+ * Helper function. Adds Target Search-related functionality to any form.
+ *
  * @param $form
  * @param $form_state
  * @param string $entity
  * @return mixed
  *
- * @TODO comment this mofo
  */
 function sba_target_search_add_target_search_form($form, &$form_state, $entity = '') {
   $form['data']['#tree'] = TRUE;
   $recipients = '';
-  // data structure for messages
-  // @TODO Need a way to save recipients json string or generate it from grou entity returned from API
+
+  // @TODO Need a way to save recipients json string or generate it from group entity returned from API
   if(isset($entity->data['recipients'])) {
     $recipients = str_replace('"', '&quot;', $entity->data['recipients']);
   }
@@ -174,24 +175,19 @@ function sba_target_search_add_target_search_form($form, &$form_state, $entity =
     '#default_value' => $recipients,
   );
 
-  $form['message_recipients'] = array (
-      // @todo make these IDs more generic
-      '#id' => 'springboard-advocacy-message-recipients',
+  $form['target_recipients'] = array (
+      '#id' => 'springboard-advocacy-target-recipients',
       '#type' => 'markup',
-      '#markup' => '<div id="springboard-advocacy-message-recipients"><h3>Message Targets</h3><div class = "sba-charcount-status"></div><div class = "sba-target-status"></div><div class = "sba-message-status"></div><div id="springboard-advocacy-message-recipients-content"></div></div>',
-      '#prefix' => '<div id="springboard-advocacy-message-recipients-container"><div class="inner">',
+      '#markup' => '<div id="springboard-advocacy-target-recipients"><h3>Message Targets</h3><div class = "sba-charcount-status"></div><div class = "sba-target-status"></div><div class = "sba-message-status"></div><div id="springboard-advocacy-target-recipients-content"></div></div>',
+      '#prefix' => '<div id="springboard-advocacy-target-recipients-container"><div class="inner">',
       '#suffix' => '</div></div>',
       '#weight' => 99,
     );
 
   $form['#suffix'] .= '<div id="springboard-advocacy-find-targets-container"><div id="springboard-advocacy-find-targets"><h3>Find Targets</h3>' . views_embed_view('targets', 'block_3') . '</div></div>';
 
-  // @TODO font should be in theme, most of CSS shoudl be in theme
   $form['#attached']['css'][] = drupal_get_path('module', 'sba_target_search') . '/css/sba_target_search.css';
-  $form['#attached']['css'][] = 'https://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800';
-
   $form['#attached']['js'][] = drupal_get_path('module', 'sba_target_search') . '/js/sba_target_search.js';
-
   $form['#attributes']['class'][] = 'sba_target_search_parent_form';
 
   return $form;
