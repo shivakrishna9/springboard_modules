@@ -353,9 +353,7 @@ function braintree_transaction_sale(&$sale_data, &$context = array(), &$error_me
     }
 
     // Execute the API sale method to create a sale object.
-    dpm($sale_data);
     $result = Braintree_Transaction::sale($sale_data);
-    dpm($result->transaction->channel);
     $context['result'] = $result;
   }
   catch (Exception $e) {
