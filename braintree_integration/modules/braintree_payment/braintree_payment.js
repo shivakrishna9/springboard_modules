@@ -5,14 +5,11 @@
       // var $paymentMethod = $('input[name="commerce_payment[payment_method]"], input[name="payment_method"]', context);
       var $paymentMethod = $('input[name="submitted[payment_information][payment_method]"]', context);
 
-console.log('paymentMethod');
-console.log($paymentMethod);
       if ($paymentMethod.length > 0) {
         var formId = settings.braintree.formId;
         var $form = $('#' + formId);
 
         $paymentMethod.bind('change', function(event) {
-          console.log('change event');
           // Show spinning icon.
           $('.checkout-processing', this.$form).removeClass('element-invisible');
 
