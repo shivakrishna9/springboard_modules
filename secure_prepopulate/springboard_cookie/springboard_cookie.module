@@ -79,6 +79,8 @@ function springboard_cookie_user_login(&$edit, $account) {
     'uid' => $account->uid,
     'last_login' => time(),
   ));
+
+  // TODO: When a user logs in rehydrate the entire cookie if needed.
 }
 
 /**
