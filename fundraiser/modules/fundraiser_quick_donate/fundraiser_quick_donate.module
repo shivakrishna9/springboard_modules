@@ -8,23 +8,12 @@ define('FUNDRAISER_QUICK_DONATE_DEFAULT_FORM_PREFIX', 'fundraiser_quick_donate_d
 
 require_once __DIR__ . '/includes/fundraiser_quick_donate.fundraiser.inc';
 require_once __DIR__ . '/includes/fundraiser_quick_donate.node_form.inc';
-require_once __DIR__ . '/includes/fundraiser_quick_donate.springboard_hmac.inc';
 
 /**
  * Implements hook_menu().
  */
 function fundraiser_quick_donate_menu() {
   $items = array();
-
-  $items['admin/config/system/fundraiser/quick-donate/token-generator'] = array(
-    'title' => 'Quick Donate Token Generator',
-    'description' => 'Generate quick donate HMAC tokens for testing or use',
-    'page callback' => 'drupal_get_form',
-    'page arguments' => array('fundraiser_quick_donate_token_generator'),
-    'access arguments' => array('administer fundraiser quick_donate'),
-    'file' => 'includes/fundraiser_quick_donate.admin.inc',
-    'type' => MENU_LOCAL_TASK,
-  );
 
   $items['admin/springboard/options/fundraiser/fundraiser_quick_donate'] = array(
     'title' => 'Quick Donate Settings',
