@@ -4,8 +4,6 @@
  * Fundraiser related hooks for Fundraiser Quick Donate.
  */
 
-define('FUNDRAISER_QUICK_DONATE_UID_NOT_EQUAL_TOKEN', 0);
-
 /**
  * Implements hook_fundraiser_donation_form().
  *
@@ -27,10 +25,12 @@ function fundraiser_quick_donate_fundraiser_donation_form($form, $form_state) {
     return;
   }
 
-  module_load_include('inc', 'fundraiser_quick_donate', 'includes/fundraiser_quick_donate.springboard_hmac');
-  $mapping = _fundraiser_quick_donate_hmac_mapping();
   global $user;
+  // Allow other modules to alter the user object before we load their stored
+  // cards.
+  drupal_alter('fundraiser_quick_donate_fundraiser_donation_form_user', $user);
 
+  // Load user's stored cardonfile cards for each gateway.
   foreach ($form['#node']->gateways as $gateway_type => $gateway) {
     if (empty($gateway['status']) || empty($gateway['id'])) {
       continue;
@@ -48,6 +48,9 @@ function fundraiser_quick_donate_fundraiser_donation_form($form, $form_state) {
       continue;
     }
 
+    // This variable stores the type of payment method, and will be shown to the
+    // end user.
+    // @todo Wrap in t()?
     $type = 'card';
     if ($gateway_type == 'bank account') {
       // @todo What should this be?
@@ -81,7 +84,7 @@ function fundraiser_quick_donate_fundraiser_donation_form($form, $form_state) {
 
       $valid_cards = array_filter($stored_cards, 'commerce_cardonfile_validate_card_expiration');
 
-      // If have un-expired cards ...
+      // If have un-expired cards...
       if (!empty($valid_cards)) {
         // Get options list with labels.
         $card_option_element_type = variable_get('commerce_cardonfile_selector', 'radios');
@@ -158,6 +161,8 @@ function fundraiser_quick_donate_fundraiser_donation_form($form, $form_state) {
       }
     }
 
+    // If the following variable is TRUE, the following form element will be
+    // checked and disabled (ie it WILL be set as default).
     $force_instance_default = empty($stored_cards);
     $form['submitted']['payment_information']['payment_fields'][$gateway_type]['cardonfile_instance_default'] = array(
       '#type' => 'checkbox',
@@ -172,6 +177,8 @@ function fundraiser_quick_donate_fundraiser_donation_form($form, $form_state) {
       ),
     );
 
+    // If the user isn't logged in, present a message asking if they already
+    // have an account and stored card, and to log in.
     if (!user_is_logged_in()) {
       $login_text = isset($form['#node']->quickdonate_login_message) ? $form['#node']->quickdonate_login_message : variable_get('fundraiser_quick_donate_default_login_message', t('Already have a saved @type?'));
       $login_link_text = isset($form['#node']->quickdonate_login_link_message) ? $form['#node']->quickdonate_login_link_message : variable_get('fundraiser_quick_donate_default_login_link_message', t('Click here to login'));
@@ -183,106 +190,48 @@ function fundraiser_quick_donate_fundraiser_donation_form($form, $form_state) {
         ),
       ));
     }
-
-    // Allow others to alter this alter.
-    drupal_alter('fundraiser_quick_donate_checkout_form', $form['submitted']['payment_information']['payment_fields'][$gateway_type], $form);
-  }
-
-  if (!empty($_SESSION['springboard_hmac']['quickdonate'])) {
-    $values = $_SESSION['springboard_hmac']['quickdonate'];
-
-    if (!empty($values['status']) && !$values['status']) {
-      $reasons = array(
-        // @todo Make the message configurable.
-        fundraiser_quick_donate_UID_NOT_EQUAL_TOKEN => t("Uh oh. It looks like we weren't able to verify your saved payment details. Please !login to access your stored card information, or complete the donation form below.", array(
-          '!login' => l(t('login'), '/user', array(
-            'query' => array(
-              'destination' => current_path(),
-            ),
-          )),
-        )),
-      );
-      $form['#prefix'] = $reasons[$values['reason']];
-    }
-    else {
-      // Load the $user variable based on uid from HMAC token.
-      $user = user_load($values[$mapping['uid']]);
-
-      // Go back and update form elements.
-      $donor_info = &$form['submitted']['donor_information'];
-      if (isset($user->sbp_first_name[LANGUAGE_NONE][0]['value'])) {
-        $donor_info['first_name']['#default_value'] = $user->sbp_first_name[LANGUAGE_NONE][0]['value'];
-      }
-      if (isset($user->sbp_last_name[LANGUAGE_NONE][0]['value'])) {
-        $donor_info['last_name']['#default_value'] = $user->sbp_last_name[LANGUAGE_NONE][0]['value'];
-      }
-      if (isset($user->mail)) {
-        $donor_info['mail']['#default_value'] = $user->mail;
-      }
-
-      $billing_info = &$form['submitted']['billing_information'];
-      if (isset($user->sbp_address[LANGUAGE_NONE][0]['value'])) {
-        $billing_info['address']['#default_value'] = $user->sbp_address[LANGUAGE_NONE][0]['value'];
-      }
-      if (isset($user->sbp_address_line_2[LANGUAGE_NONE][0]['value'])) {
-        $billing_info['address_line_2']['#default_value'] = $user->sbp_address_line_2[LANGUAGE_NONE][0]['value'];
-      }
-      if (isset($user->sbp_city[LANGUAGE_NONE][0]['value'])) {
-        $billing_info['city']['#default_value'] = $user->sbp_city[LANGUAGE_NONE][0]['value'];
-      }
-      if (isset($user->sbp_state[LANGUAGE_NONE][0]['value'])) {
-        $billing_info['state']['#default_value'] = $user->sbp_state[LANGUAGE_NONE][0]['value'];
-      }
-      if (isset($user->sbp_country[LANGUAGE_NONE][0]['value'])) {
-        $billing_info['country']['#default_value'] = $user->sbp_country[LANGUAGE_NONE][0]['value'];
-      }
-      if (isset($user->sbp_zip[LANGUAGE_NONE][0]['value'])) {
-        $billing_info['zip']['#default_value'] = $user->sbp_zip[LANGUAGE_NONE][0]['value'];
-      }
-    }
-
-    $qd_did = isset($values[$mapping['donation_id']]) ? $values[$mapping['donation_id']] : FALSE;
-    $qd = FALSE;
-    if ($qd_did) {
-      $qd = fundraiser_donation_get_donation($qd_did);
-    }
-
-    if ($qd && isset($form['submitted']['payment_information']['payment_method']['#options'][$qd->gateway['payment_method'][0]])) {
-      $form['submitted']['payment_information']['payment_method']['#default_value'] = $qd->gateway['payment_method'][0];
-    }
-
-    if (isset($values[$mapping['amount']])) {
-      $amount = $values[$mapping['amount']] / 100;
-      $donation_field = &$form['submitted']['donation'];
-      if (array_key_exists($amount, $donation_field['amount']['#options'])) {
-        $donation_field['amount']['#default_value'] = $amount;
-      }
-      else {
-        $donation_field['amount']['#default_value'] = 'other';
-        $donation_field['other_amount']['#value'] = $amount;
-      }
-    }
-
-    if (isset($values[$mapping['ms']])) {
-      $form['submitted']['ms']['#default_value'] = $form['submitted']['ms']['#webform_component']['value'] = $_SESSION['springboard_hmac']['quickdonate'][$mapping['ms']];
-    }
-
-    if (isset($values[$mapping['cid']])) {
-      $form['submitted']['cid']['#default_value'] = $form['submitted']['cid']['#webform_component']['value'] = $_SESSION['springboard_hmac']['quickdonate'][$mapping['cid']];
-    }
-
-    if (!empty($form['submitted']['payment_information']['payment_fields']['credit'])) {
-      $form['submitted']['payment_information']['payment_fields']['credit']['quickdonate']['#value'] = TRUE;
-    }
-    if (!empty($form['submitted']['payment_information']['payment_fields']['bank'])) {
-      $form['submitted']['payment_information']['payment_fields']['bank account']['quickdonate']['#value'] = TRUE;
-    }
   }
 
   // Add submit handler.
   $form['#submit'][] = '_fundraiser_quick_donate_checkout_form_submit';
 
+  // Allow others to alter this form.
+  drupal_alter('fundraiser_quick_donate_fundraiser_donation_form', $form, $form_state);
+
   return $form;
+}
+
+/**
+ * Implements hook_fundraiser_quick_donate_fundraiser_donation_form_alter().
+ */
+function fundraiser_quick_donate_fundraiser_quick_donate_fundraiser_donation_form_alter(&$form, &$form_state) {
+  $parameters = drupal_get_query_parameters();
+  if (isset($parameters['amount'])) {
+    $amount = $parameters['amount'] / 100;
+    $donation_field = &$form['submitted']['donation'];
+    if (array_key_exists($amount, $donation_field['amount']['#options'])) {
+      $donation_field['amount']['#default_value'] = $amount;
+    }
+    else {
+      $donation_field['amount']['#default_value'] = 'other';
+      $donation_field['other_amount']['#value'] = $amount;
+    }
+  }
+
+  if (isset($parameters['ms'])) {
+    $form['submitted']['ms']['#default_value'] = $form['submitted']['ms']['#webform_component']['value'] = $parameters['amount'];
+  }
+
+  if (isset($parameters['cid'])) {
+    $form['submitted']['cid']['#default_value'] = $form['submitted']['cid']['#webform_component']['value'] = $parameters['cid'];
+  }
+
+  if (!empty($form['submitted']['payment_information']['payment_fields']['credit'])) {
+    $form['submitted']['payment_information']['payment_fields']['credit']['quickdonate']['#value'] = TRUE;
+  }
+  if (!empty($form['submitted']['payment_information']['payment_fields']['bank'])) {
+    $form['submitted']['payment_information']['payment_fields']['bank account']['quickdonate']['#value'] = TRUE;
+  }
 }
 
 /**
@@ -426,7 +375,7 @@ function _fundraiser_quick_donate_checkout_form_submit($form, &$form_state) {
     ))
     ->execute();
 
-  module_invoke_all('springboard_quick_donate_optin_create', $account, $donation, $card_id);  
+  module_invoke_all('springboard_quick_donate_optin_create', $account, $donation, $card_id);
 
   if (empty($account->pass)) {
     // Assuming this user account was just created since the password is empty.

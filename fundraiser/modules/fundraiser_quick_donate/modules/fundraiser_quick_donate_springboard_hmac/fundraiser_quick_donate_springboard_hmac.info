@@ -1,0 +1,6 @@
+name = Fundraiser Quick Donate - Springboard HMAC Integration
+description = Integration functionality for Fundraiser Quick Donate to Springboard HMAC
+package = Jackson River Springboard
+core = 7.x
+dependencies[] = fundraiser_quick_donate
+dependencies[] = springboard_hmac
