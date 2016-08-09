@@ -109,6 +109,7 @@ function commerce_braintree_web_settings_form($settings = array()) {
   // Merge default settings into the stored settings array.
   $settings = (array) $settings + array(
     'merchant_account_id' => '',
+    'channel' => '',
   );
 
   // Braintree supports multiple currencies through the use of multiple merchant
@@ -136,6 +137,14 @@ function commerce_braintree_web_settings_form($settings = array()) {
       '#required' => TRUE,
     );
   }
+
+  $form['channel'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Channel/Partner ID for @currency', array('@currency' => $currency['code'])),
+    '#size' => 30,
+    '#maxlength' => 128,
+    '#default_value' => isset($settings['channel']) ? $settings['channel'] : 0,
+  );
 
   $form['single_settlement_currency'] = array(
     '#type' => 'checkbox',
@@ -458,7 +467,7 @@ function commerce_braintree_web_submit_form_submit($payment_method, $pane_form, 
       form_set_error('braintree', t('Unknown error happened. Please try again or contact us for help.'));
       return FALSE;
     }
-
+    $sale_data['channel'] = $payment_method['settings']['channel'];
     braintree_transaction_sale($sale_data, $context, $error_message);
     $result = $context['result'];
   }

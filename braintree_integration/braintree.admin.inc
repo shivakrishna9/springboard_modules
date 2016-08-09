@@ -74,6 +74,12 @@ function braintree_admin_settings($form, &$form_state) {
     '#required' => TRUE,
   );
 
+  $form['sandbox']['channel'] = array(
+    '#title' => t('Channel/Parter ID'),
+    '#type' => 'textfield',
+    '#default_value' => $settings['sandbox']['channel'],
+  );
+
   $form['production'] = array(
     '#title' => t('Production environment'),
     '#type' => 'fieldset',
@@ -108,6 +114,12 @@ function braintree_admin_settings($form, &$form_state) {
     '#type' => 'textfield',
     '#default_value' => $settings['production']['merchant_account_id'],
     '#required' => ($environment == 'production'),
+  );
+
+  $form['production']['channel'] = array(
+    '#title' => t('Channel/Parter ID'),
+    '#type' => 'textfield',
+    '#default_value' => $settings['sandbox']['channel'],
   );
 
   $form['actions'] = array('#type' => 'actions');

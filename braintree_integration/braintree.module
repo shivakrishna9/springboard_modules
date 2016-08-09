@@ -153,12 +153,14 @@ function braintree_settings($type = NULL) {
         'public_key' => '',
         'private_key' => '',
         'merchant_account_id' => '',
+        'channel' => '',
       ),
       'production' => array(
         'merchant_id' => '',
         'public_key' => '',
         'private_key' => '',
         'merchant_account_id' => '',
+        'channel' => '',
       ),
     );
 
@@ -351,7 +353,9 @@ function braintree_transaction_sale(&$sale_data, &$context = array(), &$error_me
     }
 
     // Execute the API sale method to create a sale object.
+    dpm($sale_data);
     $result = Braintree_Transaction::sale($sale_data);
+    dpm($result->transaction->channel);
     $context['result'] = $result;
   }
   catch (Exception $e) {
@@ -403,6 +407,7 @@ function braintree_transaction_authorize($customer, $price, $data = []) {
     'options' => array(
       'submitForSettlement' => FALSE,
     ),
+    'channel' => $settings['channel']
   );
 
   // Add extra values like custom fields.
