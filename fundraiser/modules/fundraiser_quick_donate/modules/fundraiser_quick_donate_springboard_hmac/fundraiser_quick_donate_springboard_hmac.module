@@ -120,7 +120,7 @@ function fundraiser_quick_donate_springboard_hmac_springboard_hmac_success($payl
   else {
     // User no longer exists.
     // TODO: This is were we would need the Springboard cookie to intervene
-    // and do the form population.
+    // and do the form population. But I'm not sold it's worth it as this point.
   }
 }
 
@@ -153,8 +153,7 @@ function _fundraiser_quick_donate_springboard_hmac_get_nid($payload) {
     }
   }
 
-  // TODO: Need fallback if neither are valid.
-
+  // TODO: $goto_nid could still be invalid at this point. Need fallback.
   return $goto_nid;
 }
 
