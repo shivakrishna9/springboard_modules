@@ -65,7 +65,6 @@ function fundraiser_quick_donate_admin_settings_autocomplete_callback($gateway_k
  * Submission handler for fundraiser_quick_donate_admin_settings().
  */
 function fundraiser_quick_donate_admin_settings_submit($form, &$form_state) {
-  dsm($form_state);
   foreach ($form_state['values'] as $key => $value) {
     if (strpos($key, FUNDRAISER_QUICK_DONATE_DEFAULT_FORM_PREFIX) === FALSE) {
       continue;
