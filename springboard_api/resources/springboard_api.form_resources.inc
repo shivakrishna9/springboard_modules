@@ -71,9 +71,18 @@ function springboard_api_form_action_submit($nid, $app_id = NULL, $submission = 
     $node = node_load($nid);
     // Typecast in case the submission was JSON encoded as an object.
     $submission = (array) $submission;
+    // If we have an advocacy type, handle non-webform fields.
+    if (module_exists('springboard_advocacy')) {
+      if (springboard_advocacy_is_action_type($node->type)) {
+        $action_submission = _springboard_api_convert_action_submission($submission, $node);
+        if (is_array($action_submission) && !empty($action_submission)) {
+          $action_type = TRUE;	
+        }
+      }
+    }
+    
     // Convert submission values to nested array.
     $submission = _springboard_api_convert_submission($submission, $node);
-
     // The op value must match the configured submit_text value.
     $submit_text = empty($node->webform['submit_text']) ? t('Submit') : t($node->webform['submit_text']);
 
@@ -92,6 +101,10 @@ function springboard_api_form_action_submit($nid, $app_id = NULL, $submission = 
       ),
       'values' => array(),
     );
+    if ($action_type === TRUE) {
+      // Merge in any submitted advocacy fields.
+      $form_state['values'] += $action_submission;
+    }
     $form_state['clicked_button']['#parents'] = NULL;
     $form_state['values']['submitted'] = springboard_api_submission_tree_build($submission, $node->webform['components'], $tree, 0);
     $webform_submission = array(
@@ -117,7 +130,7 @@ function springboard_api_form_action_submit($nid, $app_id = NULL, $submission = 
       }
     }
     drupal_form_submit($form_id, $form_state, $node, (object)$webform_submission);
-    // Taken from node_resources.inc, if errors are encountered during form
+    
     // submission we return a 406 HTTP response code and any errors encountered.
     if ($errors = form_get_errors()) {
       // Strip down error keys to form key.
@@ -128,7 +141,13 @@ function springboard_api_form_action_submit($nid, $app_id = NULL, $submission = 
       // Since $form_state is passed by reference, we have full access to all
       // of the additional data that Webform and Fundraiser have added.
       $sid = $form_state['values']['details']['sid'];
-      return array('status' => t('Submission successful'), 'submission id' => $sid);
+      $response = array(
+        'status' => t('Submission successful'),
+        'submission_id' => $sid,
+      );
+      // Allow other modules to alter the response.
+      drupal_alter('springboard_api_response', $response);
+      return array($response);
     }
   }
 }

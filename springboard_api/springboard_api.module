@@ -349,6 +349,12 @@ function springboard_api_get_form_details($nid) {
       'fields' => array(),
       'token' => drupal_get_token('services'),
     );
+    // Handle advocacy fields if enabled.
+    if (module_exists('springboard_advocacy')) {
+      if (springboard_advocacy_is_action_type($node->type)) {
+        springboard_api_get_action_form_details($node, $form_details);
+      }
+    }
     // Build form field list.
     foreach ($node->webform['components'] as $cid => $component) {
       // Skip fieldsets.
@@ -387,6 +393,64 @@ function springboard_api_get_form_details($nid) {
   }
   else {
     return FALSE;
+  }
+}
+
+/**
+ * Get form node & field information for a requested advocacy form.
+ */
+function springboard_api_get_action_form_details($node, &$form_details) {
+  switch ($node->type) {
+    case 'sba_message_action':
+      $form = array(
+        '#node' => $node,
+      );
+      // Add fields from springboard_advocacy_form_alter().
+      if (!empty($node->message_ids)) {
+        $form['messages'] = array();
+        $form['messages']['#tree'] = TRUE;
+        foreach ($node->message_ids as $id) {
+          $form['messages'][$id] = array(
+              '#type' => 'hidden',
+              '#value' => $id,
+          );
+        }
+      } 
+      $form['advocacy_id'] = array('#type' => 'hidden', '#value' => $node->advocacy_id);
+      // Pass-thru to populate advocacy fields.
+      module_load_include('inc', 'sba_message_action', 'includes/sba_message_action.form');
+      sba_message_action_additional_elements($form, $form_state);
+      
+      // If this is a single step, check for editable message subject or body.
+      if (isset($form['sba_messages']['single_not_multi_flow'])) {
+        // Subject or body editable and required?
+        $message = current($form['sba_messages']['message']);
+        $message_id = $message['sba_message_id']['#value'];
+        $message = &$form['sba_messages']['message'][$message_id];
+        // Denote the actual subject and edit_body fields as required in the form details. 
+        if (isset($message['subject_required'])) {
+          $message['subject']['#required'] = $message['subject_required']['#value'];
+        }
+        if (isset($message['body_required'])) {
+          $message['edited_body']['#required'] = $message['body_required']['#value'];
+        }
+        if ($message['edited_body']['#required'] || $message['subject']['#required']) {
+          // If subject or body is required, mark their containers required.
+          $form['sba_messages']['#required'] = TRUE;
+          $form['sba_messages']['message']['#required'] = TRUE;
+        }
+      }
+      // Parse the form built by advocacy.
+      foreach (element_children($form) as $key) {
+        // Skip fieldsets & markup.
+        if (isset($form[$key]['#type']) && ($form[$key]['#type'] == 'fieldset' || $form[$key]['#type'] == 'markup')) {
+          continue;
+        }
+        $save = &$form_details['fields'][$key];
+        $fapi = $form[$key];
+        _springboard_api_parse_component_fapi($save, $fapi);
+      }
+      break;
   }
 }
 
@@ -444,7 +508,7 @@ function _springboard_api_parse_component_fapi(&$save, $fapi, $component_type = 
  */
 function _springboard_api_convert_submission($submission, $node) {
   $converted_submission = array();
-
+  
   foreach ($node->webform['components'] as $cid => $component) {
     $form_key = $component['form_key'];
     // Skip fieldsets & markup.
@@ -504,14 +568,33 @@ function _springboard_api_convert_fapi(&$converted_submission, $fapi, $submissio
 }
 
 /**
- * Unpack webform component "extra" data.
+ * Convert submission flat array to nested array.
  *
- * @param string $items
- *   Raw "extra" string.
+ * @param array $submission
+ *   Associative array of field keys and submitted values.
  *
- * @return mixed
- *   Returns unpacked array of data.
+ * @param mixed $node
+ *   Webform node the data will be submitted to.
+ *
+ * @return array
+ *   Returns a nested array of submission values formatted for consumption by
+ *   the submit endpoint.
  */
+function _springboard_api_convert_action_submission($submission, $node) {
+  $converted_submission = array();
+  switch ($node->type) {
+    case 'sba_message_action':
+      $keys = array('advocacy_id', 'message_ids', 'messages', 'sba_messages');
+      foreach ($keys as $key) {
+        if (isset($submission[$key])) {
+          $converted_submission[$key] = $submission[$key];
+        }
+      }
+      break;
+  }
+  return $converted_submission;
+}
+  
 function _springboard_api_parse_extra_items($items) {
   $parts = explode("\n", $items);
   foreach ($parts as $part) {
@@ -573,4 +656,24 @@ function springboard_api_log_service_usage($op, $access, $data = NULL, $api_key 
  */
 function _springboard_api_is_secure() {
   return (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] == 'on') ? TRUE : FALSE;
+}
+
+/**
+ * Implements hook_springboard_api_response_alter().
+ * TODO: Move this somewhere else, 
+ */
+function springboard_api_springboard_api_response_alter(&$response) {
+  // If advocacy is enabled, check for transaction server response in session.
+  if (module_exists('springboard_advocacy')) {
+    $delivered_html = theme('webform_confirmations_delivered', $_SESSION['delivered_messages']);
+    $undelivered_html = theme('webform_confirmations_undelivered', $_SESSION['undelivered_messages']);
+    // Add the transaction server results to the response to the client.
+    $data = array(
+      'confirmations_delivered' => $delivered_html,
+      'confirmations_undelivered' => $undelivered_html,
+      'raw_confirmations_delivered' => $_SESSION['delivered_messages'],
+      'raw_confirmations_undelivered' => $_SESSION['undelivered_messages'],
+    );
+    $response['data'] = $data;
+  }
 }
