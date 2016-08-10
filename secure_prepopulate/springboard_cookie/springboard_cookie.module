@@ -141,9 +141,9 @@ function springboard_cookie_action_success($node, $contact, $data, $sid) {
 }
 
 /**
- * Implements hook_webform_user_submission_insert().
+ * Implements hook_user_update().
  */
-function springboard_cookie_webform_user_submission_insert($node, $submission, $account) {
+function springboard_cookie_user_update(&$edit, $account, $category) {
   $profile_data = array('profile' => array());
   try {
     $user_wrapper = entity_metadata_wrapper('user', $account);
