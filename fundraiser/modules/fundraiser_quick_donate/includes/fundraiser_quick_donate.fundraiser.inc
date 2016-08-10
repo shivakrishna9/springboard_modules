@@ -379,7 +379,7 @@ function _fundraiser_quick_donate_checkout_form_submit($form, &$form_state) {
 
   if (empty($account->pass)) {
     // Assuming this user account was just created since the password is empty.
-    drupal_mail('user', 'register_no_approval_required', $account->mail, LANGUAGE_NONE, array('account' => $account), NULL);
+    drupal_mail('user', 'register_no_approval_required', $account->mail, language_default(), array('account' => $account), NULL, TRUE);
   }
 }
 

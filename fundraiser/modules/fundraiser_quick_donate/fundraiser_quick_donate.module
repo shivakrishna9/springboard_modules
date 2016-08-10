@@ -163,11 +163,6 @@ function fundraiser_quick_donate_webform_user_save_profile_map_alter(&$account, 
         ),
       ),
     );
-    if (isset($_SESSION['springboard_hmac']['quickdonate'])) {
-      module_load_include('inc', 'fundraiser_quick_donate', 'includes/fundraiser_quick_donate.springboard_hmac');
-      $mapping = _fundraiser_quick_donate_hmac_mapping();
-      $account->sbp_ms = $_SESSION['springboard_hmac']['quickdonate'][$mapping['ms']];
-    }
   }
 }
 

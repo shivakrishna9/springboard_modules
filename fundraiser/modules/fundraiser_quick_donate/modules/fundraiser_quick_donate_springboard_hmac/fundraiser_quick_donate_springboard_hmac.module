@@ -381,3 +381,13 @@ function fundraiser_quick_donate_springboard_hmac_fundraiser_quick_donate_fundra
     $user = user_load($_SESSION['springboard_hmac']['quickdonate'][$mapping['uid']]);
   }
 }
+
+/**
+ * Implements hook_webform_user_save_profile_map_alter().
+ */
+function fundraiser_quick_donate_springboard_hmac_webform_user_save_profile_map_alter(&$account, $form, $form_state) {
+  if (isset($_SESSION['springboard_hmac']['quickdonate'])) {
+    $mapping = _fundraiser_quick_donate_springboard_hmac_hmac_mapping();
+    $account->sbp_ms = $_SESSION['springboard_hmac']['quickdonate'][$mapping['ms']];
+  }
+}
