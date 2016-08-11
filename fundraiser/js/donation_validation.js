@@ -119,17 +119,24 @@
 
         // On submission hide the button and replace it with a new value.
         // Wrap the click in a once trigger to be sure that we bind it the one time.
-        $('.fundraiser-donation-form #edit-submit').once(function() {
-          $('.fundraiser-donation-form #edit-submit').click(function() {
+        $('.fundraiser-donation-form').once(function() {
+          $('.fundraiser-donation-form').submit(function( event ) {
             // Validate the form
             if (donationValidate.form()) {
-              $(this).hide();
-              $('.fundraiser_submit_message').hide();
-              $(this).after('<div class="donation-processing-wrapper">' +
-                '<p class="donation-processing">Processing' +
-                '<span class="donation-processing-spinner"></span>' +
-                '</p>' +
-                '</div>');
+              if ($('.fundraiser-donation-form').data('submitted') === true) {
+                // Previously submitted, don't submit again.
+                event.preventDefault();
+              } else {
+                $('.fundraiser-donation-form #edit-submit').hide();
+                $('.fundraiser_submit_message').hide();
+                $('.fundraiser-donation-form #edit-submit').after('<div class="donation-processing-wrapper">' +
+                  '<p class="donation-processing">Processing' +
+                  '<span class="donation-processing-spinner"></span>' +
+                  '</p>' +
+                  '</div>');
+                // Mark it as submitted so that the next submit can be ignored.
+                $('.fundraiser-donation-form').data('submitted', true);
+              }
             }
           });
         });
