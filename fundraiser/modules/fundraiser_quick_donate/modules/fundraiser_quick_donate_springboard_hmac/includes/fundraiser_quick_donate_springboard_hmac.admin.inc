@@ -51,29 +51,6 @@ function fundraiser_quick_donate_springboard_hmac_token_generator($form, $form_s
     '#default_value' => $defaults['card_id'],
   );
 
-  $gateways = _fundraiser_gateway_info();
-  $gateways = array_keys($gateways);
-  $allowable = array();
-  foreach ($gateways as $gateway) {
-    $payment_method = commerce_payment_method_instance_load($gateway);
-    if (_commerce_cardonfile_capable_payment_method_check($payment_method)) {
-      $allowable[$gateway] = $gateway;
-    }
-  }
-  $gateways = array_intersect($gateways, $allowable);
-  foreach ($gateways as $key => $gateway) {
-    $gateways[$gateway] = $gateway;
-    unset($gateways[$key]);
-  }
-
-  $form['fundraiser_quick_donate_springboard_hmac']['gateway_id'] = array(
-    '#type' => 'select',
-    '#title' => t('Gateway ID'),
-    '#description' => t('The gateway ID.'),
-    '#options' => $gateways,
-    '#default_value' => $defaults['gateway_id'],
-  );
-
   $form['submit'] = array(
     '#type' => 'submit',
     '#value' => t('Generate Token'),
@@ -109,7 +86,6 @@ function fundraiser_quick_donate_springboard_hmac_token_generator_submit($form, 
   $payload = array(
     'uid' => $form_state['values']['uid'],
     'card_id' => $form_state['values']['card_id'],
-    'gateway_id' => $form_state['values']['gateway_id'],
   );
 
   $link = fundraiser_quick_donate_springboard_hmac_create_link($payload);
