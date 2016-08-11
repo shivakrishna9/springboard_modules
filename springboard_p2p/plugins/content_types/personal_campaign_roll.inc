@@ -29,7 +29,7 @@ function springboard_p2p_personal_campaign_roll_render($subtype, $conf, $panel_a
   if (empty($context) || empty($context->data)) {
     if (isset($_GET['p2p_pcid']) && is_numeric($_GET['p2p_pcid'])) {
       $personal_campaign = node_load($_GET['p2p_pcid']);
-
+    
     }
     else {
       return;
@@ -37,9 +37,10 @@ function springboard_p2p_personal_campaign_roll_render($subtype, $conf, $panel_a
   }
   else {
     $personal_campaign = $context->data;
-  }
+  } 
 
-  if (!isset($personal_campaign->type) || $personal_campaign->type != 'p2p_personal_campaign' || !isset($personal_campaign->field_p2p_campaign[$personal_campaign->language][0]['target_id'])) {
+  if (!isset($personal_campaign->type) || $personal_campaign->type != 'p2p_personal_campaign'
+     || !isset($personal_campaign->field_p2p_campaign[$personal_campaign->language][0]['target_id'])) {
     return;
   }
   else {
@@ -48,13 +49,19 @@ function springboard_p2p_personal_campaign_roll_render($subtype, $conf, $panel_a
       return;
     }
   }
+  $goal_type = springboard_p2p_get_goal_type_from_campaign($campaign);
+
+  if ($goal_type == 'amount') {
+    $block = new stdClass();
+    $block->title = t('Recent Donors');
+    $block->content = views_embed_view('p2p_personal_campaign_recent_optin_donors');
+    return $block;
+  }
 
   $comments = springboard_p2p_get_personal_campaign_comments($personal_campaign->nid, FALSE);
   if (count($comments) < 1) {
     return;
   }
-
-  $goal_type = springboard_p2p_get_goal_type_from_campaign($campaign);
 
   if ($goal_type == 'amount') {
     $title = 'Recent donors';
