@@ -140,21 +140,23 @@ function fundraiser_quick_donate_springboard_hmac_springboard_hmac_success($payl
 function _fundraiser_quick_donate_springboard_hmac_get_nid($payload) {
   $parameters = drupal_get_query_parameters();
   
+  // Look up the gateway's instance id based on the stored card.
   $card_on_file = commerce_cardonfile_load($payload['card_id']);
-  $gateway_id= $card_on_file->instance_id;
-
-  // Get the default nid for the gateway instance.
-  $goto_nid = fundraiser_quick_donate_get_default_form_for_gateway($gateway_id);
+  $gateway_id = $card_on_file->instance_id;
 
   // If a form_id was passed, let's try to use it first.
-  if (isset($parameters['form_id']) && is_numeric($parameters['form_id'])) {
-    if (fundraiser_quick_donate_form_has_gateway($parameters['form_id'], $gateway_id)) {
-      $goto_nid = $parameters['form_id'];
-    }
+  if (isset($parameters['form_id']) && is_numeric($parameters['form_id']) &&
+    fundraiser_quick_donate_form_has_gateway($parameters['form_id'], $gateway_id)) {
+      return $parameters['form_id'];
   }
 
-  // TODO: $goto_nid could still be invalid at this point. Need fallback.
-  return $goto_nid;
+  // Get the default nid for the gateway instance.
+  if ($nid = fundraiser_quick_donate_get_default_form_for_gateway($gateway_id)) {
+    return $nid;
+  }
+
+  // We were unable to determine which form to use w/ the given gateway.
+  return FALSE;
 }
 
 /**
@@ -170,7 +172,7 @@ function fundraiser_quick_donate_get_default_form_for_gateway($gateway_id) {
   $default_data = variable_get(FUNDRAISER_QUICK_DONATE_DEFAULT_FORM_PREFIX . $gateway_id, array());    
   if (!empty($default_data)) {
     $default_data = unserialize($default_data);
-    return $default_data['nid'];  
+    return $default_data['nid'];
   }
 
   return FALSE;
@@ -216,13 +218,7 @@ function fundraiser_quick_donate_form_has_gateway($nid, $gateway_id) {
  */
 function fundraiser_quick_donate_user_is_opted_in($uid) {
   $cookie = springboard_cookie_get_cookie();
-
-  // Ensure uids match and optin date is set.
-  if ($cookie['uid'] == $uid) {
-    return TRUE;
-  }
-
-  return FALSE;
+  return isset($cookie['uid']) && $cookie['uid'] == $uid;
 }
 
 /**
@@ -254,7 +250,7 @@ function fundraiser_quick_donate_springboard_hmac_failure($reason, $payload) {
   }
   else {
     // Otherwise, just take the user to the donation form.
-    drupal_goto(drupal_get_path_alias('node/' . $nid));
+    drupal_goto('node/' . $nid);
   }
 }
 

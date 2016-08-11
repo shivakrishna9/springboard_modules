@@ -178,7 +178,7 @@ function springboard_cookie_user_update(&$edit, $account, $category) {
     }    
   }
   catch (EntityMetadataWrapperException $exc) {
-
+    watchdog('springboard_cookie', 'Error loading user profile data into cookie for card id %uid.', array('%uid' => $account->uid), WATCHDOG_ERROR);
   }
 
   springboard_cookie_tag_client($profile_data);
@@ -303,7 +303,7 @@ function springboard_cookie_tag_client($new_data = array()) {
         // If the existing and new values are arrays, simply combine them.
         $new_cookie[$name] = array_unique(array_merge($new_cookie[$name], $new_data[$name]));
       }
-      else if (strtolower($new_cookie[$name]) != strtolower($new_data[$name])) {  // Non-case-sensitive comparison.
+      elseif (strtolower($new_cookie[$name]) != strtolower($new_data[$name])) {  // Non-case-sensitive comparison.
         // New data doesn't match data already in the client's cookie, so throw out the old cookie data and start fresh.
         $new_cookie = $new_data;
         break;
