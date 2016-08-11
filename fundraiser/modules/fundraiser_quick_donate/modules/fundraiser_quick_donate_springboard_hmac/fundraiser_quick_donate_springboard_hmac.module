@@ -259,15 +259,15 @@ function fundraiser_quick_donate_springboard_hmac_failure($reason, $payload) {
  */
 function fundraiser_quick_donate_springboard_hmac_springboard_hmac_verify_payload($payload) {
   $payload = _fundraiser_quick_donate_springboard_hmac_hmac_mapping($payload);
-  $card_id = $payload['card_id'];
-  if (!isset($card_id)) {
-    return t('No card information available.');
+  // If the card id isn't available we can't continue. 
+  // TODO: Maybe we should also query to see if the card exists in the database.
+  if (!isset($payload['card_id']) || !is_numeric($payload['card_id'])) {
+    return t('Unable to perform quick donate because stored card information was not available in the payload.'); 
   }
 
   // Since we want to have the ability of redirecting the user to a default form
   // most of the actual verification is done in the
   // `hook_springboard_hmac_success` hook.
-
   return NULL;
 }
 
