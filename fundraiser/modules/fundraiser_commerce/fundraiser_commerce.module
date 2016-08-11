@@ -2668,6 +2668,7 @@ function fundraiser_commerce_commerce_authnet_cim_request_alter($api_request_ele
     $config = $donation->gateway['gateway_details']['settings'];
     $extra = (string) $api_request_element->extraOptions;
     $extra = substr($extra, 9, -3);
+    module_load_include('inc', 'fundraiser_commerce', 'gateways/commerce_authnet');
     $fields = _commerce_authnet_extra_fields();
     unset($fields[0]);
     $i = 1;

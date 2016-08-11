@@ -30,7 +30,7 @@ function commerce_authnet_echeck_fundraiser_donation_form_config_check($node) {
   foreach ($node->gateways as $method => $gateway) {
     if (!empty($gateway['id']) && !empty($gateway['status'])) {
       $gateway_config = _fundraiser_gateway_info($gateway['id']);
-      if ($gateway_config['gateway_details']['method_id'] == 'commerce_authnet_echeck' &&
+      if ($gateway_config['gateway_details']['method_id'] == 'authnet_echeck' &&
         $gateway_config['gateway_details']['settings']['txn_mode'] != AUTHNET_TXN_MODE_LIVE) {
         return array(t('The authnet EFT payment gateway is currently in !mode mode and will not process live transactions.', array('!mode' => $gateway_config['gateway_details']['settings']['txn_mode'])));
       }
@@ -39,7 +39,7 @@ function commerce_authnet_echeck_fundraiser_donation_form_config_check($node) {
 }
 
 function commerce_authnet_echeck_fundraiser_gateway_status_cron_check($details) {
-  if ($details['method_id'] == 'commerce_authnet_echeck') {
+  if ($details['method_id'] == 'authnet_echeck') {
     if ($details['settings']['txn_mode'] != AUTHNET_TXN_MODE_LIVE) {
       return $details['settings']['txn_mode'];
     }
@@ -126,24 +126,20 @@ function commerce_authnet_echeck_fundraiser_commerce_charge($method_instance, $d
     $success = TRUE;
   }
 
-  if ($success == TRUE) {
+  if ($success == TRUE && isset($donation->recurring) && !empty($donation->recurring)) {
     // Update expiration date and generate the next donation.
-    $donation = fundraiser_donation_get_donation($donation->did);
-    $card_data = commerce_cardonfile_load($pane_values['cardonfile']);
+    $cardonfile_fields = commerce_authnet_echeck_cardonfile_fields($donation);
+    $card_data = _fundraiser_commerce_cardonfile_match($cardonfile_fields);
 
-    if (!empty($card_data)) {
+    if (!empty($card_data) && $donation->status <> 'failed') {
       // If the next recurring series entry doesn't exist, create one.
-      if (($donation->status <> 'failed') && _fundraiser_sustainers_count_donations_recurr_remaining($donation->recurring->master_did) < 1) {
+      if (_fundraiser_sustainers_count_donations_recurr_remaining($donation->recurring->master_did) < 1) {
 
         // Move card expiration date ahead one month.
         $new_expire_time = mktime(0, 0, 0, ($card_data->card_exp_month + 1), 1, $card_data->card_exp_year);
 
         $card_data->card_exp_month = date('m', $new_expire_time);
         $card_data->card_exp_year = date('Y', $new_expire_time);
-
-        $master_donation = fundraiser_donation_get_donation($donation->recurring->master_did);
-        // Update card using master donation so transaction ID is available.
-        commerce_authnet_echeck_fundraiser_commerce_update($master_donation, $card_data);
 
         $submission_fields = array(
           'payment_fields' => array(
@@ -153,6 +149,12 @@ function commerce_authnet_echeck_fundraiser_commerce_charge($method_instance, $d
             ),
           ),
         );
+
+        // Update card data
+        commerce_cardonfile_save($card_data);
+
+        // Create new orders
+        $master_donation = fundraiser_donation_get_donation($donation->recurring->master_did);
         fundraiser_sustainers_update_billing_info_create_new_donations($master_donation, $donation, $submission_fields);
       }
     }
@@ -197,10 +199,18 @@ function commerce_authnet_echeck_fundraiser_commerce_cardonfile($donation) {
 function commerce_authnet_echeck_fundraiser_commerce_expire($submission_fields) {
   $expires = array();
 
-  $expire_time = strtotime("now + 1 month");
+  if (!empty($submission_fields) && array_key_exists('card_expiration_month', $submission_fields['payment_fields']['bank account']) && array_key_exists('card_expiration_year', $submission_fields['payment_fields']['bank account'])) {
+    // Donation passed
+    $expires['month'] = $submission_fields['payment_fields']['bank account']['card_expiration_month'];
+    $expires['year'] = $submission_fields['payment_fields']['bank account']['card_expiration_year'];
+  }
+  else {
+    // If no expiration date given, use current date + 1 month
+    $expire_time = strtotime("now + 1 month");
 
-  $expires['month'] = date('m', $expire_time);
-  $expires['year'] = date('Y', $expire_time);
+    $expires['month'] = date('m', $expire_time);
+    $expires['year'] = date('Y', $expire_time);
+  }
 
   return $expires;
 }
@@ -225,7 +235,9 @@ function commerce_authnet_echeck_fundraiser_commerce_update($donation, $card_dat
     $card_data = commerce_cardonfile_load($donation->data['cardonfile']);
   }
   else {
-    // TODO try to load card data
+    // If there wasn't card data on the donation, try to load it for user/payment method
+    $cardonfile_fields = commerce_authnet_echeck_cardonfile_fields($donation);
+    $card_data = _fundraiser_commerce_cardonfile_match($cardonfile_fields);
   }
 
   if (empty($card_data)) {
@@ -245,9 +257,6 @@ function commerce_authnet_echeck_fundraiser_commerce_update($donation, $card_dat
 
   // Load the card on file values for this donation
   $cardonfile_fields = commerce_authnet_echeck_cardonfile_fields($donation);
-
-  // Get card expiration date.
-  $expires = commerce_authnet_echeck_fundraiser_commerce_expire(array());
 
   // Check the card number to see if it matches the current card data number
   // If it does then we use the update function
@@ -270,12 +279,15 @@ function commerce_authnet_echeck_fundraiser_commerce_update($donation, $card_dat
     // If cardonfile matched, set it here
     $donation->data['cardonfile'] = $card_data->card_id;
   }
+
   if ($action == 'update') {
     $card_data->card_number = $cardonfile_fields['card_number'];
 
     // We're mirroring the commerce_authnet_cim_cardonfile_update function so setup values that function uses, see that function for details
     $form['bank account']['acct_num']['#default_value'] = '';
     $form_state['values']['bank account']['acct_num'] = $pane_values['bank account']['acct_num'];
+    $form_state['values']['bank account']['aba_code'] = $pane_values['bank account']['aba_code'];
+    $form_state['values']['bank account']['acct_name'] = $pane_values['bank account']['acct_name'];
     $form_state['values']['bank account']['owner'] = isset($donation->donation['first_name']) ? $donation->donation['first_name'] : '';
     $form_state['values']['bank account']['owner'] .= isset($donation->donation['last_name']) ? ' ' . $donation->donation['last_name'] : '';
     $form_state['values']['bank account']['address'] = isset($donation->donation['address']) ? $donation->donation['address'] : '';
@@ -288,6 +300,7 @@ function commerce_authnet_echeck_fundraiser_commerce_update($donation, $card_dat
     $response = _commerce_authnet_echeck_fundraiser_commerce_authnet_cim_cardonfile_update($form, $form_state, $payment_method, $card_data);
 
     if ($response) {
+      $donation->data['cardonfile'] = $card_data->card_id;
       commerce_cardonfile_save($card_data);
       return $card_data;
     }
@@ -316,6 +329,9 @@ function commerce_authnet_echeck_fundraiser_commerce_update($donation, $card_dat
       $all_types = commerce_payment_credit_card_types();
       $card_type = !empty($all_types[$card_type]) ? $all_types[$card_type] : 'card';
 
+      // Get card expiration date to use if we don't have one
+      $expires = commerce_authnet_echeck_fundraiser_commerce_expire(array());
+
       // Create a new cardonfile entity
       $card_data = commerce_cardonfile_new();
       $card_data->uid = $order->uid;
@@ -325,8 +341,8 @@ function commerce_authnet_echeck_fundraiser_commerce_update($donation, $card_dat
       $card_data->card_type = $card_type;
       $card_data->card_name = !empty($card_data->card_name) ? $card_data->card_name : '';
       $card_data->card_number = $cardonfile_fields['card_number'];
-      $card_data->card_exp_month = $expires['month'];
-      $card_data->card_exp_year = $expires['year'];
+      $card_data->card_exp_month = !empty($card_data->card_exp_month) ? $card_data->card_exp_month : $expires['month'];
+      $card_data->card_exp_year = !empty($card_data->card_exp_year) ? $card_data->card_exp_year : $expires['year'];
       $card_data->status = 1;
 
       // Save and log the creation of the new card on file.
@@ -397,12 +413,15 @@ function _commerce_authnet_echeck_fundraiser_commerce_authnet_cim_cardonfile_upd
       ),
       'payment' => array(
         'bankAccount' => array(
-          'accountNumber' => $number
+          'routingNumber' => $form_state['values']['bank account']['aba_code'],
+          'accountNumber' => $form_state['values']['bank account']['acct_num'],
+          'nameOnAccount' => $form_state['values']['bank account']['acct_name']
         ),
       ),
       'customerPaymentProfileId' => $cim_payment_profile_id,
     ),
   );
+
   // Fetch the response from the API server and let Card on File know if the update was successful.
   $xml_response = commerce_authnet_cim_request($payment_method, 'updateCustomerPaymentProfileRequest', $api_request_data);
   return (string) $xml_response->messages->message->code == 'I00001';
@@ -486,7 +505,7 @@ function commerce_authnet_echeck_cim_create_customer_profile_request($payment_me
     unset($api_request_data['profile']['merchantCustomerId']);
   }
 
-  // Add credit card payment details to the default payment profile if given.
+  // Add bank account payment details to the default payment profile if given.
   $bank_account = commerce_authnet_echeck_cim_bank_account_array($payment_details);
 
   if (!empty($bank_account)) {
