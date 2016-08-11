@@ -6,8 +6,9 @@
 
 define('FUNDRAISER_QUICK_DONATE_DEFAULT_FORM_PREFIX', 'fundraiser_quick_donate_default_form_');
 
-require_once __DIR__ . '/includes/fundraiser_quick_donate.fundraiser.inc';
-require_once __DIR__ . '/includes/fundraiser_quick_donate.node_form.inc';
+require_once 'includes/fundraiser_quick_donate.fundraiser.inc';
+require_once 'includes/fundraiser_quick_donate.node_form.inc';
+require_once 'includes/fundraiser_quick_donate.springboard_hmac.inc';
 
 /**
  * Implements hook_menu().
@@ -32,6 +33,17 @@ function fundraiser_quick_donate_menu() {
     'access arguments' => array('use autocomplete'),
     'type' => MENU_CALLBACK,
     'file' => 'includes/fundraiser_quick_donate.admin.inc',
+  );
+
+  // HMAC token generator page.
+  $items['admin/config/system/fundraiser/quick-donate/token-generator'] = array(
+    'title' => 'Quick Donate Token Generator',
+    'description' => 'Generate quick donate HMAC tokens for testing or use',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('fundraiser_quick_donate_token_generator'),
+    'access arguments' => array('administer fundraiser quick_donate'),
+    'file' => 'includes/fundraiser_quick_donate.admin.inc',
+    'type' => MENU_LOCAL_TASK,
   );
 
   return $items;
@@ -101,22 +113,9 @@ function fundraiser_quick_donate_node_prepare($node) {
  */
 function _fundraiser_quick_donate_attach_quick_donate_fields($node) {
   if (isset($node->nid)) {
-    $query = db_select('fundraiser_quick_donate', 'sqd')
-      ->fields('sqd', array(
-        'quickdonate_optin_message',
-        'quickdonate_help_message_format',
-        'quickdonate_help_message',
-        'quickdonate_login_message',
-        'quickdonate_login_link_message',
-      ))
-      ->condition('fundraiser_nid', $node->nid, '=')
-      ->execute();
-
-    if (!$query->rowCount()) {
-      return $node;
-    }
-
-    $results = $query->fetchAssoc();
+    $results = db_query('SELECT quickdonate_optin_message, quickdonate_help_message_format, quickdonate_help_message, quickdonate_login_message, quickdonate_login_link_message FROM {fundraiser_quick_donate} WHERE fundraiser_nid = :nid', array(
+      ':nid' => $node->nid,
+    ))->fetchAssoc();
     $results['quickdonate'] = TRUE;
   }
   else {

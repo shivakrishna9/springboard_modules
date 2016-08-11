@@ -244,15 +244,9 @@ function fundraiser_quick_donate_fundraiser_quick_donate_fundraiser_donation_for
  *   The user's quick donation payment information.
  */
 function _fundraiser_quick_donate_get_payment_info_for_uid($uid) {
-  $query = db_select('fundraiser_quick_donate_cardonfile', 'fqdc')
-    ->fields('fqdc', array('card_id'))
-    ->condition('uid', $uid, '=')
-    ->execute();
-  if (!$query->rowCount()) {
-    return FALSE;
-  }
-
-  return $query->fetchField();
+  return db_query('SELECT card_id FROM {fundraiser_quick_donate_cardonfile} WHERE uid = :uid', array(
+    ':uid' => $uid,
+  ))->fetchField();
 }
 
 /**
@@ -405,15 +399,7 @@ function _fundraiser_quick_donate_users_latest_cardid($uid = NULL) {
     $uid = $user->uid;
   }
 
-  $query = db_select('commerce_cardonfile', 'cc')
-    ->fields('cc', array('card_id'))
-    ->condition('uid', $uid, '=')
-    ->orderBy('card_id', 'DESC')
-    ->range(0, 1)
-    ->execute();
-  if ($query->rowCount() == 0) {
-    return FALSE;
-  }
-
-  return $query->fetchField();
+  return db_query('SELECT card_id FROM {commerce_cardonfile} WHERE uid = :uid ORDER BY card_id LIMIT 1', array(
+    ':uid' => $uid,
+  ))->fetchField();
 }

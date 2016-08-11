@@ -4,32 +4,6 @@
  * springboard_hmac hooks for Springboard Quick Donate.
  */
 
-define('FUNDRAISER_QUICK_DONATE_SPRINGBOARD_HMAC_UID_NOT_EQUAL_TOKEN', 0);
-define('FUNDRAISER_QUICK_DONATE_SPRINGBOARD_HMAC_USER_NOT_LOGGED_IN', 1);
-define('FUNDRAISER_QUICK_DONATE_SPRINGBOARD_HMAC_USER_NO_ACCESS', 2);
-define('FUNDRAISER_QUICK_DONATE_SPRINGBOARD_HMAC_PAYMENT_METHOD_UNAVAILABLE', 3);
-define('FUNDRAISER_QUICK_DONATE_SPRINGBOARD_HMAC_GATEWAY_UNAVAILABLE', 4);
-define('FUNDRAISER_QUICK_DONATE_SPRINGBOARD_HMAC_INVALID_NODE_TYPE', 5);
-
-/**
- * Implements hook_menu().
- */
-function fundraiser_quick_donate_springboard_hmac_menu() {
-  $items = array();
-
-  $items['admin/config/system/fundraiser/quick-donate/token-generator'] = array(
-    'title' => 'Quick Donate Token Generator',
-    'description' => 'Generate quick donate HMAC tokens for testing or use',
-    'page callback' => 'drupal_get_form',
-    'page arguments' => array('fundraiser_quick_donate_springboard_hmac_token_generator'),
-    'access arguments' => array('administer fundraiser quick_donate'),
-    'file' => 'includes/fundraiser_quick_donate_springboard_hmac.admin.inc',
-    'type' => MENU_LOCAL_TASK,
-  );
-
-  return $items;
-}
-
 /**
  * Create HMAC token link for quick donations.
  *
@@ -39,7 +13,7 @@ function fundraiser_quick_donate_springboard_hmac_menu() {
  * @return string
  *   The quick donation url.
  */
-function fundraiser_quick_donate_springboard_hmac_create_link($payload, $rollback = FALSE) {
+function fundraiser_quick_donate_create_link($payload, $rollback = FALSE) {
   $link = '';
 
   $time = time() + (60 * 60 * 24 * 30);
@@ -64,7 +38,7 @@ function fundraiser_quick_donate_springboard_hmac_create_link($payload, $rollbac
 /**
  * Implements hook_springboard_hmac_allowed_actions().
  */
-function fundraiser_quick_donate_springboard_hmac_springboard_hmac_allowed_actions_alter(&$actions) {
+function fundraiser_quick_donate_springboard_hmac_allowed_actions_alter(&$actions) {
   $actions[] = 'qd';
 }
 
@@ -73,33 +47,33 @@ function fundraiser_quick_donate_springboard_hmac_springboard_hmac_allowed_actio
  *
  * Redirect to the donation form if hmac validated.
  */
-function fundraiser_quick_donate_springboard_hmac_springboard_hmac_success($payload) {
+function fundraiser_quick_donate_springboard_hmac_success($payload) {
   if ($payload['action'] != 'qd') {
     return;
   }
 
   // Make payload variable easier to work with.
-  $payload = _fundraiser_quick_donate_springboard_hmac_hmac_mapping($payload);
-  
-  // First, verify the uid in the payload matches what's stored in the cookie, if 
-  // it doesn't we can just stop right here.
+  $payload = _fundraiser_quick_donate_hmac_mapping($payload);
+
+  // First, verify the uid in the payload matches what's stored in the cookie,
+  // if it doesn't we can just stop right here.
   if (!fundraiser_quick_donate_user_is_opted_in($payload['uid'])) {
-    // TODO: What is the ideal user experience for someone how has lost
-    // their cookie? Let's log this occurence but should we take them to the 
+    // TODO: What is the ideal user experience for someone who has lost
+    // their cookie? Let's log this occurence but should we take them to the
     // form anyway and let them donate the old fashioned way?
     watchdog('quick_donate', 'Quick donate attempted but opt-in could not be verified for user %uid and card_id %card_id.', array('%uid' => $payload['uid'], '%card_id' => $payload['card_id']), WATCHDOG_WARNING);
     return;
   }
 
   // Figure out where we're going. Could be the default or a url param override.
-  $goto_nid = _fundraiser_quick_donate_springboard_hmac_get_nid($payload);
+  $goto_nid = _fundraiser_quick_donate_get_nid($payload);
 
   global $user;
   // Assume we have no user.
   $existing_user = FALSE;
 
-  // If the user isn't logged in, attempt to load them. We're doing this to see if the
-  // user account still exists.
+  // If the user isn't logged in, attempt to load them. We're doing this to see
+  // if the user account still exists.
   if (!user_is_logged_in()) {
     // Prep the log-in.
     $existing_user = user_load($payload['uid']);
@@ -107,7 +81,6 @@ function fundraiser_quick_donate_springboard_hmac_springboard_hmac_success($payl
 
   // If it's an existing user, we'll be able to log them in after verification.
   if ($existing_user) {
-
     // Overwrite the anonymous user prior to login.
     $user = $existing_user;
     $form_state = array('uid' => $payload['uid']);
@@ -115,13 +88,13 @@ function fundraiser_quick_donate_springboard_hmac_springboard_hmac_success($payl
     // Execute the log-in.
     user_login_finalize($form_state);
 
-    _fundraiser_quick_donate_springboard_hmac_redirect_to_form($goto_nid);   
+    _fundraiser_quick_donate_redirect_to_form($goto_nid);
   }
-  else {
-    // User no longer exists.
-    // TODO: This is were we would need the Springboard cookie to intervene
-    // and do the form population. But I'm not sold it's worth it as this point.
-  }
+  /*else {*/
+  // User no longer exists.
+  // TODO: This is were we would need the Springboard cookie to intervene
+  // and do the form population. But I'm not sold it's worth it as this point.
+  /*}*/
 }
 
 
@@ -137,9 +110,9 @@ function fundraiser_quick_donate_springboard_hmac_springboard_hmac_success($payl
  * @return int|void
  *   The fundraiser ID or an invokation of `springboard_hmac_failure`.
  */
-function _fundraiser_quick_donate_springboard_hmac_get_nid($payload) {
+function _fundraiser_quick_donate_get_nid($payload) {
   $parameters = drupal_get_query_parameters();
-  
+
   // Look up the gateway's instance id based on the stored card.
   $card_on_file = commerce_cardonfile_load($payload['card_id']);
   $gateway_id = $card_on_file->instance_id;
@@ -147,7 +120,7 @@ function _fundraiser_quick_donate_springboard_hmac_get_nid($payload) {
   // If a form_id was passed, let's try to use it first.
   if (isset($parameters['form_id']) && is_numeric($parameters['form_id']) &&
     fundraiser_quick_donate_form_has_gateway($parameters['form_id'], $gateway_id)) {
-      return $parameters['form_id'];
+    return $parameters['form_id'];
   }
 
   // Get the default nid for the gateway instance.
@@ -169,7 +142,7 @@ function _fundraiser_quick_donate_springboard_hmac_get_nid($payload) {
  *   The nid of the default form for the gateway instance or FALSE.
  */
 function fundraiser_quick_donate_get_default_form_for_gateway($gateway_id) {
-  $default_data = variable_get(FUNDRAISER_QUICK_DONATE_DEFAULT_FORM_PREFIX . $gateway_id, array());    
+  $default_data = variable_get(FUNDRAISER_QUICK_DONATE_DEFAULT_FORM_PREFIX . $gateway_id, array());
   if (!empty($default_data)) {
     $default_data = unserialize($default_data);
     return $default_data['nid'];
@@ -186,11 +159,11 @@ function fundraiser_quick_donate_get_default_form_for_gateway($gateway_id) {
  * @param string $gateway_id
  *   The gateway instance identifier.
  *
- * @return boolean
+ * @return bool
  *   If the gateway is configured on the form, true. Otherwise false.
  */
 function fundraiser_quick_donate_form_has_gateway($nid, $gateway_id) {
-  $gateways = db_query("SELECT gateways FROM {fundraiser} WHERE nid = :nid", array(':nid' => $nid))->fetchField();
+  $gateways = db_query('SELECT gateways FROM {fundraiser} WHERE nid = :nid', array(':nid' => $nid))->fetchField();
   if ($gateways) {
     $gateways = unserialize($gateways);
     foreach ($gateways as $gateway) {
@@ -208,12 +181,12 @@ function fundraiser_quick_donate_form_has_gateway($nid, $gateway_id) {
  *
  * Uses the Springboard cookie to see if the given uid matches
  * the value stored in the browser's cookie and that the quick
- * doante opt-in data is set.
+ * donate opt-in data is set.
  *
  * @param int $uid
  *   The uid to verify.
- * 
- * @return boolean
+ *
+ * @return bool
  *   True if the user is opted into quick donate. Otherwise false.
  */
 function fundraiser_quick_donate_user_is_opted_in($uid) {
@@ -224,7 +197,7 @@ function fundraiser_quick_donate_user_is_opted_in($uid) {
 /**
  * Helper function to redirect to a node if $nid > 0.
  */
-function _fundraiser_quick_donate_springboard_hmac_redirect_to_form($nid = 0) {
+function _fundraiser_quick_donate_redirect_to_form($nid = 0) {
   drupal_goto('node/' . $nid);
 }
 
@@ -233,14 +206,14 @@ function _fundraiser_quick_donate_springboard_hmac_redirect_to_form($nid = 0) {
  *
  * Redirect to the donation form if hmac not validated.
  */
-function fundraiser_quick_donate_springboard_hmac_failure($reason, $payload) {
-  $payload = _fundraiser_quick_donate_springboard_hmac_hmac_mapping($payload);
+function fundraiser_quick_donate_failure($reason, $payload) {
+  $payload = _fundraiser_quick_donate_hmac_mapping($payload);
 
   // If the payload didn't validate any number of things could have happened,
   // therefore let's fallback to cookie data if available and prompt the user
   // to login.
   $cookie = springboard_cookie_get_cookie();
-  $nid = _fundraiser_quick_donate_springboard_hmac_get_nid($payload);
+  $nid = _fundraiser_quick_donate_get_nid($payload);
   if (!empty($cookie['uid']) && $cookie['uid'] == $payload['uid']) {
     drupal_goto('/user', array(
       'query' => array(
@@ -257,11 +230,12 @@ function fundraiser_quick_donate_springboard_hmac_failure($reason, $payload) {
 /**
  * Implements hook_springboard_hmac_verify_payload().
  */
-function fundraiser_quick_donate_springboard_hmac_springboard_hmac_verify_payload($payload) {
-  $payload = _fundraiser_quick_donate_springboard_hmac_hmac_mapping($payload);
-  // If the card id isn't available or doesn't belong to the user we can't continue. 
+function fundraiser_quick_donate_springboard_hmac_verify_payload($payload) {
+  $payload = _fundraiser_quick_donate_hmac_mapping($payload);
+  // If the card id isn't available or doesn't belong to the user we can't
+  // continue.
   if (!isset($payload['card_id']) || !is_numeric($payload['card_id'])) {
-    return t('Unable to perform quick donate because stored card information was not available in the payload.'); 
+    return t('Unable to perform quick donate because stored card information was not available in the payload.');
   }
   elseif (!_fundraiser_quick_donate_card_belongs_to_user($payload['uid'], $payload['card_id'])) {
     return t('Unable to perform quick donate because stored card id %card_id does not belong to user %uid.', array('%card_id' => $payload['card_id'], '%uid' => $payload['uid']));
@@ -281,7 +255,7 @@ function fundraiser_quick_donate_springboard_hmac_springboard_hmac_verify_payloa
  * @return array
  *   A map of hmac types to their corresponding keys.
  */
-function _fundraiser_quick_donate_springboard_hmac_hmac_mapping($payload) {
+function _fundraiser_quick_donate_hmac_mapping($payload) {
   return array(
     'uid' => $payload['uid'],
     'card_id' => $payload[0],
@@ -296,10 +270,10 @@ function _fundraiser_quick_donate_springboard_hmac_hmac_mapping($payload) {
  * @param int $card_id
  *   The card id to check.
  *
- * @return boolean
+ * @return bool
  *   True if the card belongs to the user. Otherwise false.
  */
 function _fundraiser_quick_donate_card_belongs_to_user($uid, $card_id) {
   $card_owner = db_query("SELECT uid FROM {commerce_cardonfile} WHERE card_id = :card_id", array(':card_id' => $card_id))->fetchField();
-  return ($card_owner == $uid);
+  return $card_owner == $uid;
 }
