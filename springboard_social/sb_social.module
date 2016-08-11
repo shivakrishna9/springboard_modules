@@ -593,7 +593,6 @@ function sb_social_init() {
   $js_settings = array(
     'id' => 0,
     'id_type' => '',
-    'pubid' => variable_get('springboard_social_addthis_profile_id'),
     'market_source' => '',
   );
   if (isset($_GET['sid']) && is_numeric($_GET['sid'])) {
@@ -669,7 +668,6 @@ function sb_social_init() {
       }
     }
     $prefix = !empty($_SERVER['HTTPS']) ? 'https://' : 'http://';
-    drupal_add_js($prefix . 's7.addthis.com/js/250/addthis_widget.js', array('type' => 'external', 'scope' => 'footer'));
     drupal_add_js(drupal_get_path('module', 'sb_social') . '/scripts/sb_social.addthis.js', 'file');
   }
 

@@ -52,7 +52,7 @@ function sb_social_facebook_token_info() {
   $facebook_tokens = array();
   $facebook_tokens['facebook_share_link'] = array(
     'name' => t('Facebook Share link'),
-    'description' => t('AddThis Facebook Share link'),
+    'description' => t('Facebook Share link'),
   );
   // fb title
   $facebook_tokens['facebook_title'] = array(
@@ -73,7 +73,7 @@ function sb_social_facebook_token_info() {
   return $facebook_tokens;
 }
 
-function sb_social_facebook_token_replace($tokens, &$replacements, $settings, $node = FALSE, $submission_id = FALSE, $extra = FALSE) {
+function sb_social_facebook_token_replace($tokens, &$replacements, $settings, $node = FALSE, $submission_id = FALSE, $extra = '') {
   foreach ($tokens as $key => $token) {
     switch ($key) {
       case 'facebook_share_link':
@@ -81,18 +81,21 @@ function sb_social_facebook_token_replace($tokens, &$replacements, $settings, $n
         $vars['extra'] = '';
         $vars['contents'] = sb_social_facebook_custom_button_contents();
 
-        if (isset($extra) && function_exists($extra)) {
+        if (!empty($extra) && function_exists($extra)) {
           $vars['extra'] = $extra($settings['data']['facebook']);
         }
         $button = theme('sb_social_share_button', $vars);
         $replacements[$token] = theme('sb_social_share', array('buttons' => $button));
         break;
+
       case 'facebook_title':
         $replacements[$token] = !empty($settings['data']['facebook']['title']) ? _sb_social_replace_tokens($settings['data']['facebook']['title'], $node, $submission_id) : '';
         break;
+
       case 'facebook_description':
-        $replacements[$token] =  !empty($settings['data']['facebook']['description']) ? _sb_social_replace_tokens($settings['data']['facebook']['description'], $node, $submission_id) : '';
+        $replacements[$token] = !empty($settings['data']['facebook']['description']) ? _sb_social_replace_tokens($settings['data']['facebook']['description'], $node, $submission_id) : '';
         break;
+
       case 'facebook_image':
         $fid = $settings['data']['facebook']['image'];
         $image_url = FALSE;
@@ -102,7 +105,7 @@ function sb_social_facebook_token_replace($tokens, &$replacements, $settings, $n
             $image_url = file_create_url($file->uri);
           }
         }
-        $replacements[$token] =  $image_url ? $image_url : '';
+        $replacements[$token] = $image_url ? $image_url : '';
         break;
     }
   }
@@ -321,6 +324,9 @@ function sb_social_facebook_custom_button_contents() {
       $url = file_create_url($icon_file->uri);
       $contents .= '<img src="' . $url . '">';
     }
+  }
+  elseif (empty($icon) && empty($text)) {
+    $contents .= '<img src="' . base_path() . drupal_get_path('module', 'sb_social') . '/img/facebook.png">';
   }
   if ($text) {
     $contents .= '<span>' . $text . '</span>';

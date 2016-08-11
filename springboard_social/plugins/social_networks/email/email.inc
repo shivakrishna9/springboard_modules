@@ -12,7 +12,6 @@ $plugin = array(
   'admin_setings_submit' => 'sb_social_email_admin_settings_submit',
   'process' => 'sb_social_email_process_settings',
   'share_config' => 'sb_social_email_share_js_config',
-  'js' => 'plugins/social_networks/email/email.share.js',
   'defaults' => 'sb_social_email_defaults',
   'button_extra' => 'sb_social_email_button_extra',
   'button_contents' => sb_social_email_custom_button_contents(),
@@ -26,7 +25,7 @@ function sb_social_email_token_info() {
   $email_tokens = array();
   $email_tokens['email_share_link'] = array(
     'name' => t('Email share link'),
-    'description' => t('AddThis Email link'),
+    'description' => t('Email link'),
   );
   $email_tokens['email_subject'] = array(
     'name' => t('Email subject'),
@@ -192,6 +191,9 @@ function sb_social_email_custom_button_contents() {
       $url = file_create_url($icon_file->uri);
       $contents .= '<img src="' . $url . '">';
     }
+  }
+  elseif (empty($icon) && empty($text)) {
+    $contents .= '<img src="' . base_path() . drupal_get_path('module', 'sb_social') . '/img/email.png">';
   }
   if ($text) {
     $contents .= '<span>' . $text . '</span>';

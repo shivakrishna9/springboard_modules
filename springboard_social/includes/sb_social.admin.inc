@@ -9,16 +9,11 @@
  * Admin settings form.
  */
 function sb_social_admin() {
-  $form['springboard_social_addthis_profile_id'] = array(
-    '#type' => 'textfield',
-    '#title' => t('AddThis Profile ID'),
-    '#default_value' => variable_get('springboard_social_addthis_profile_id', ''),
-    '#required' => TRUE,
-  );
   $form['springboard_social_debug_mode'] = array(
     '#type' => 'checkbox',
     '#title' => t('Enable debug mode'),
     '#default_value' => variable_get('springboard_social_debug_mode', 0),
+    '#description' => t('Disable the short URL conversion')
   );
 
   // Begin settings for users to customize block title and description.
@@ -67,11 +62,6 @@ function sb_social_admin() {
     '#title' => t('Enabled services'),
     '#options' => $services,
     '#default_value' => variable_get('springboard_social_services', array()),
-  );
-  $form['springboard_social_addthis_profile_id'] = array(
-    '#type' => 'textfield',
-    '#title' => t('AddThis Profile ID'),
-    '#default_value' => variable_get('springboard_social_addthis_profile_id', ''),
   );
 
   // Each plugin should implement an an admin settings callback that outputs

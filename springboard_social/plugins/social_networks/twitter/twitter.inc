@@ -2,7 +2,7 @@
 
 /**
  * @file
- * Plugin for AddThis + Twitter.
+ * Plugin for Twitter.
  */
 
 $plugin = array(
@@ -13,7 +13,6 @@ $plugin = array(
   'process' => 'sb_social_twitter_process_settings',
   'admin_setings_submit' => 'sb_social_twitter_admin_settings_submit',
   'share_config' => 'sb_social_twitter_share_js_config',
-  'js' => 'plugins/social_networks/twitter/twitter.share.js',
   'defaults' => 'sb_social_twitter_defaults',
   'uninstall' => 'sb_social_twitter_uninstall',
   'token_info' => sb_social_twitter_token_info(),
@@ -24,7 +23,7 @@ $plugin = array(
 function sb_social_twitter_token_info() {
   $twitter_tokens['twitter_share_link'] = array(
     'name' => t('Twitter Share link'),
-    'description' => t('AddThis Twitter tweet link'),
+    'description' => t('Twitter tweet link'),
   );
   // twitter message
   $twitter_tokens['twitter_message'] = array(
@@ -166,6 +165,9 @@ function sb_social_twitter_custom_button_contents() {
       $url = file_create_url($icon_file->uri);
       $contents .= '<img src="' . $url . '">';
     }
+  }
+  elseif (empty($icon) && empty($text)) {
+    $contents .= '<img src="' . base_path() . drupal_get_path('module', 'sb_social') . '/img/twitter.png">';
   }
   if ($text) {
     $contents .= '<span>' . $text . '</span>';
