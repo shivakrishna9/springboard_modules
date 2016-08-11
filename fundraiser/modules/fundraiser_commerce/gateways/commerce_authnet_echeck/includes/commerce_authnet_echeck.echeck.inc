@@ -333,7 +333,12 @@ function commerce_authnet_echeck_submit_form_submit($payment_method, $pane_form,
         $remote_id = (string) $response->customerProfileId . '|' . (string) $response->customerPaymentProfileIdList->numericString;
 
         // Load the card on file values for this donation
-        $expires = commerce_authnet_echeck_fundraiser_commerce_expire(array());
+        $expires = array();
+        // If no expiration date given, use current date + 1 month
+        $expire_time = strtotime("now + 1 month");
+
+        $expires['month'] = date('m', $expire_time);
+        $expires['year'] = date('Y', $expire_time);
 
         $card_data = commerce_cardonfile_new();
         $card_data->uid = $order->uid;

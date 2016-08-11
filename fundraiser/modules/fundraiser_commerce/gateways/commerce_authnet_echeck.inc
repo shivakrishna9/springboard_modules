@@ -205,6 +205,7 @@ function commerce_authnet_echeck_fundraiser_commerce_expire($submission_fields) 
     $expires['year'] = $submission_fields['payment_fields']['bank account']['card_expiration_year'];
   }
   else {
+    // TODO this is causing a problem on billing updates, wherein future orders are deleted
     // If no expiration date given, use current date + 1 month
     $expire_time = strtotime("now + 1 month");
 
@@ -234,22 +235,10 @@ function commerce_authnet_echeck_fundraiser_commerce_update($donation, $card_dat
   if (empty($card_data) && !empty($donation->data['cardonfile'])) {
     $card_data = commerce_cardonfile_load($donation->data['cardonfile']);
   }
-  else {
+  elseif (empty($card_data)) {
     // If there wasn't card data on the donation, try to load it for user/payment method
     $cardonfile_fields = commerce_authnet_echeck_cardonfile_fields($donation);
     $card_data = _fundraiser_commerce_cardonfile_match($cardonfile_fields);
-  }
-
-  if (empty($card_data)) {
-    // Log the missing card data
-    watchdog(
-      'fundraiser',
-      'A card update was attempted on donation @id but no stored card data was found.',
-      array('@id' => $donation->did),
-      WATCHDOG_CRITICAL
-    );
-
-    return;
   }
 
   // Pull the new credit card values from the donation
@@ -262,7 +251,7 @@ function commerce_authnet_echeck_fundraiser_commerce_update($donation, $card_dat
   // If it does then we use the update function
   // if its a new card check if we should create a new CIM profile
   $action = 'update';
-  if ($cardonfile_fields['card_number'] != $card_data->card_number) {
+  if (!isset($card_data) || $cardonfile_fields['card_number'] != $card_data->card_number) {
     // This is a new card for this donation, make sure we don't have an existing profile
     // First check with the card number and date
     if ($existing = _fundraiser_commerce_cardonfile_match($cardonfile_fields)) {
@@ -325,28 +314,27 @@ function commerce_authnet_echeck_fundraiser_commerce_update($donation, $card_dat
       $remote_id = (string) $response->customerProfileId . '|' . (string) $response->customerPaymentProfileIdList->numericString;
 
       // Get the card type
-      $card_type = commerce_payment_validate_credit_card_type($pane_values['credit_card']['number'], array_keys(commerce_payment_credit_card_types()));
-      $all_types = commerce_payment_credit_card_types();
-      $card_type = !empty($all_types[$card_type]) ? $all_types[$card_type] : 'card';
+      $card_type = 'card';
 
       // Get card expiration date to use if we don't have one
-      $expires = commerce_authnet_echeck_fundraiser_commerce_expire(array());
+      $expires = commerce_authnet_echeck_fundraiser_commerce_expire();
 
       // Create a new cardonfile entity
-      $card_data = commerce_cardonfile_new();
-      $card_data->uid = $order->uid;
-      $card_data->payment_method = $payment_method['method_id'];
-      $card_data->instance_id = $payment_method['instance_id'];
-      $card_data->remote_id = $remote_id;
-      $card_data->card_type = $card_type;
-      $card_data->card_name = !empty($card_data->card_name) ? $card_data->card_name : '';
-      $card_data->card_number = $cardonfile_fields['card_number'];
-      $card_data->card_exp_month = !empty($card_data->card_exp_month) ? $card_data->card_exp_month : $expires['month'];
-      $card_data->card_exp_year = !empty($card_data->card_exp_year) ? $card_data->card_exp_year : $expires['year'];
-      $card_data->status = 1;
+      $new_data = commerce_cardonfile_new();
+      $new_data->uid = $order->uid;
+      $new_data->payment_method = $payment_method['method_id'];
+      $new_data->instance_id = $payment_method['instance_id'];
+      $new_data->remote_id = $remote_id;
+      $new_data->card_type = $card_type;
+      $new_data->card_name = !empty($card_data->card_name) ? $card_data->card_name : '';
+      $new_data->card_number = $cardonfile_fields['card_number'];
+      // We want to use the exp date and month from the old card, so that sustainers won't delete any orders
+      $new_data->card_exp_month = !empty($card_data->card_exp_month) ? $card_data->card_exp_month : $expires['month'];
+      $new_data->card_exp_year = !empty($card_data->card_exp_year) ? $card_data->card_exp_year : $expires['year'];
+      $new_data->status = 1;
 
       // Save and log the creation of the new card on file.
-      commerce_cardonfile_save($card_data);
+      commerce_cardonfile_save($new_data);
       // Set the value on the donation
       $donation->data['cardonfile'] = $new_data->card_id;
       watchdog('commerce_authnet', 'CIM Customer Profile @profile_id created and saved to user @uid.', array('@profile_id' => (string) $response->customerProfileId, '@uid' => $order->uid));
