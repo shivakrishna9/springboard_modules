@@ -126,6 +126,9 @@ function commerce_authnet_echeck_fundraiser_commerce_charge($method_instance, $d
     $success = TRUE;
   }
 
+  // Perform post processing functions.
+  _fundraiser_commerce_charge_submit_form_process($success, $method_instance, $pane_values, $donation, 'bank account');
+
   if ($success == TRUE && isset($donation->recurring) && !empty($donation->recurring)) {
     // Update expiration date and generate the next donation.
     $cardonfile_fields = commerce_authnet_echeck_cardonfile_fields($donation);
@@ -159,9 +162,6 @@ function commerce_authnet_echeck_fundraiser_commerce_charge($method_instance, $d
       }
     }
   }
-
-  // Perform post processing functions.
-  _fundraiser_commerce_charge_submit_form_process($success, $method_instance, $pane_values, $donation);
 
   return $success;
 }
