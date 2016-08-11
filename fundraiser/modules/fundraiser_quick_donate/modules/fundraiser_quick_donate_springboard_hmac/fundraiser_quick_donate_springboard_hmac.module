@@ -259,10 +259,12 @@ function fundraiser_quick_donate_springboard_hmac_failure($reason, $payload) {
  */
 function fundraiser_quick_donate_springboard_hmac_springboard_hmac_verify_payload($payload) {
   $payload = _fundraiser_quick_donate_springboard_hmac_hmac_mapping($payload);
-  // If the card id isn't available we can't continue. 
-  // TODO: Maybe we should also query to see if the card exists in the database.
+  // If the card id isn't available or doesn't belong to the user we can't continue. 
   if (!isset($payload['card_id']) || !is_numeric($payload['card_id'])) {
     return t('Unable to perform quick donate because stored card information was not available in the payload.'); 
+  }
+  elseif (!_fundraiser_quick_donate_card_belongs_to_user($payload['uid'], $payload['card_id'])) {
+    return t('Unable to perform quick donate because stored card id %card_id does not belong to user %uid.', array('%card_id' => $payload['card_id'], '%uid' => $payload['uid']));
   }
 
   // Since we want to have the ability of redirecting the user to a default form
@@ -284,4 +286,20 @@ function _fundraiser_quick_donate_springboard_hmac_hmac_mapping($payload) {
     'uid' => $payload['uid'],
     'card_id' => $payload[0],
   );
+}
+
+/**
+ * Helper function to determine if the given card belongs to a user.
+ *
+ * @param int $uid
+ *   The user id to check.
+ * @param int $card_id
+ *   The card id to check.
+ *
+ * @return boolean
+ *   True if the card belongs to the user. Otherwise false.
+ */
+function _fundraiser_quick_donate_card_belongs_to_user($uid, $card_id) {
+  $card_owner = db_query("SELECT uid FROM {commerce_cardonfile} WHERE card_id = :card_id", array(':card_id' => $card_id))->fetchField();
+  return ($card_owner == $uid);
 }
