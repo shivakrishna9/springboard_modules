@@ -26,6 +26,7 @@ $plugin = array(
  */
 function springboard_p2p_personal_campaign_roll_render($subtype, $conf, $panel_args, $context) {
   $personal_campaign = NULL;
+
   if (empty($context) || empty($context->data)) {
     if (isset($_GET['p2p_pcid']) && is_numeric($_GET['p2p_pcid'])) {
       $personal_campaign = node_load($_GET['p2p_pcid']);
@@ -54,7 +55,7 @@ function springboard_p2p_personal_campaign_roll_render($subtype, $conf, $panel_a
   if ($goal_type == 'amount') {
     $block = new stdClass();
     $block->title = t('Recent Donors');
-    $block->content = views_embed_view('p2p_personal_campaign_recent_optin_donors');
+    $block->content = views_embed_view('p2p_personal_campaign_recent_optin_donors', 'block');
     return $block;
   }
 
