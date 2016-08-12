@@ -342,7 +342,7 @@ function braintree_transaction_sale(&$sale_data, &$context = array(), &$error_me
     // Just CC for now (we don't use any Paypal non-recurring vault transxns?)
     // device_data hidden input is added to form via braintree.prototype.getOptions() in braintree_payment.js
     $order = isset($context['order']) ? $context['order'] : NULL;
-    $payment_method = $order ? explode('|', $order->data['payment_method']) : array();
+    $payment_method = $order ? explode('|', $order->data['fundraiser_commerce']) : array();
     $payment_method = reset($payment_method);
     if ($payment_method == 'braintree_hostedfields' && !empty($_POST['device_data'])) {
       $sale_data['deviceData'] = $_POST['device_data'];

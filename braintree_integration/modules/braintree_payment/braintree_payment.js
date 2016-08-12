@@ -341,18 +341,14 @@
    * @see https://developers.braintreepayments.com/javascript+php/guides/hosted-fields/events
    */
   Drupal.braintree.prototype.onFieldEvent = function (event) {
-    //if (event.type === "focus") {
-    //  // Handle focus
-    //} else if (event.type === "blur") {
-    //  // Handle blur
-    //} else if (event.type === "fieldStateChange") {
-    //  // Handle a change in validation or card type
-    //  console.log(event.isValid); // true|false
-    //  if (event.card) {
-    //    console.log(event.card.type);
-    //    // visa|master-card|american-express|diners-club|discover|jcb|unionpay|maestro
-    //  }
-    //}
+    if (event.type === "focus") {
+     // Handle focus
+    } else if (event.type === "blur") {
+     // Handle blur
+    } else if (event.type === "fieldStateChange") {
+     // Handle a change in validation.
+     $(document).triggerHandler('braintree.fieldEvent', event);
+    }
   }
 
   // PayPal event callback

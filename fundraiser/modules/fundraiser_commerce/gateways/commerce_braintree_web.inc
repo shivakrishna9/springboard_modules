@@ -65,20 +65,6 @@ function commerce_braintree_web_fundraiser_commerce_form($payment_method) {
   }
   // @TODO replace with _braintree_payment_form().
 
-
-  // if ($payment_method == 'credit') {
-  //    $form = fundraiser_commerce_braintree_credit_card_form();
-  // }
-  // if ($payment_method == 'paypal') {
-  //    $form = fundraiser_commerce_braintree_paypal_form();
-  // }
-  // $form['#attached']['js'] = array(
-  //   'https://js.braintreegateway.com/js/braintree-2.26.0.min.js' => array(
-  //     'type' => 'external',
-  //   ),
-  // );
-  //
-
   global $user;
   $using_existing = FALSE;
 
