@@ -36,6 +36,19 @@ function fundraiser_quick_donate_admin_settings($form, $form_state) {
     );
   }
 
+  $data = variable_get(FUNDRAISER_QUICK_DONATE_DEFAULT_FORM_PREFIX . 'default', array());
+  if (!empty($data)) {
+    $data = unserialize($data);
+    $default = $data['title'];
+  }
+  $form['default_forms'][FUNDRAISER_QUICK_DONATE_DEFAULT_FORM_PREFIX . 'default'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Default node ID for all gateways'),
+    '#description' => t('The node ID of the form you want to be used as default.'),
+    '#autocomplete_path' => 'admin/springboard/options/fundraiser/fundraiser_quick_donate/autocomplete/all',
+    '#default_value' => $default,
+  );
+
   $form['#submit'][] = 'fundraiser_quick_donate_admin_settings_submit';
 
   return system_settings_form($form);
@@ -44,13 +57,17 @@ function fundraiser_quick_donate_admin_settings($form, $form_state) {
 /**
  * Autocomplete callback function for fundraiser_quick_donate_admin_settings().
  */
-function fundraiser_quick_donate_admin_settings_autocomplete_callback($gateway_key, $string = '') {
+function fundraiser_quick_donate_admin_settings_autocomplete_callback($gateway_key = 'all', $string = '') {
   // Using db_select here because we need to also join the node table.
-  $result = db_select('fundraiser', 'f');
-  $result->join('node', 'n', 'f.nid = n.nid');
-  $result = $result->fields('n', array('nid', 'title'))
-    ->fields('f', array('gateways'))
-    ->condition('f.gateways', '%' . db_like($gateway_key) . '%', 'LIKE')
+  $result = db_select('node', 'n')
+    ->fields('n', array('nid', 'title'));
+  if ($gateway_key != 'all') {
+    $result->join('fundraiser', 'f', 'f.nid = n.nid');
+    $result = $result->fields('f', array('gateways'))
+      ->condition('f.gateways', '%' . db_like($gateway_key) . '%', 'LIKE');
+  }
+  $types = array_keys(fundraiser_get_donation_types());
+  $result = $result->condition('n.type', $types, 'IN')
     ->condition('n.title', db_like($string) . '%', 'LIKE')
     ->range(0, 10)
     ->execute()
