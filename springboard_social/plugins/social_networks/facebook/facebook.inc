@@ -326,7 +326,7 @@ function sb_social_facebook_custom_button_contents() {
     }
   }
   elseif (empty($icon) && empty($text)) {
-    $contents .= '<img src="' . base_path() . drupal_get_path('module', 'sb_social') . '/img/facebook.png">';
+    $contents .= '<img src="' . base_path() . drupal_get_path('module', 'sb_social') . '/img/bk.png">';
   }
   if ($text) {
     $contents .= '<span>' . $text . '</span>';

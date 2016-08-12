@@ -663,7 +663,7 @@ function sb_social_init() {
         drupal_add_js($path . '/' . $plugin['js']);
       }
     }
-    drupal_add_js(drupal_get_path('module', 'sb_social') . '/scripts/sb_social.addthis.js', 'file');
+    drupal_add_js(drupal_get_path('module', 'sb_social') . '/scripts/sb_social.js', 'file');
   }
 
   drupal_add_js(array('sb_social' => $js_settings), 'setting');

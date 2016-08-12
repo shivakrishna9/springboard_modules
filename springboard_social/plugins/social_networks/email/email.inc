@@ -187,7 +187,7 @@ function sb_social_email_custom_button_contents() {
     }
   }
   elseif (empty($icon) && empty($text)) {
-    $contents .= '<img src="' . base_path() . drupal_get_path('module', 'sb_social') . '/img/email.png">';
+    $contents .= '<img src="' . base_path() . drupal_get_path('module', 'sb_social') . '/img/ml.png">';
   }
   if ($text) {
     $contents .= '<span>' . $text . '</span>';

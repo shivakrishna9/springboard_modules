@@ -164,7 +164,7 @@ function sb_social_twitter_custom_button_contents() {
     }
   }
   elseif (empty($icon) && empty($text)) {
-    $contents .= '<img src="' . base_path() . drupal_get_path('module', 'sb_social') . '/img/twitter.png">';
+    $contents .= '<img src="' . base_path() . drupal_get_path('module', 'sb_social') . '/img/tr.png">';
   }
   if ($text) {
     $contents .= '<span>' . $text . '</span>';
