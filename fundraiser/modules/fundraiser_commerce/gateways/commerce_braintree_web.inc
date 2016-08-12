@@ -16,7 +16,7 @@ function commerce_braintree_web_fundraiser_commerce_fundraiser_gateway_info() {
     'form callback' => 'commerce_braintree_web_fundraiser_commerce_form',
     // 'cleanup callback' => 'commerce_authnet_fundraiser_commerce_cleanup',
     // 'scrub callback' => 'commerce_authnet_fundraiser_commerce_scrub',
-    // 'expire callback' => 'commerce_authnet_fundraiser_commerce_expire',
+    'expire callback' => 'commerce_braintree_web_fundraiser_commerce_expire',
     // 'validate callback' => 'commerce_authnet_fundraiser_commerce_validate',
     'charge callback' => 'commerce_braintree_web_fundraiser_commerce_charge',
     // 'update callback' => 'commerce_authnet_fundraiser_commerce_update',
@@ -25,6 +25,27 @@ function commerce_braintree_web_fundraiser_commerce_fundraiser_gateway_info() {
     // 'response fields callback' => 'commerce_authnet_fundraiser_commerce_response_fields',
     // 'response save callback' => 'commerce_authnet_fundraiser_commerce_response_save',
   );
+}
+
+/**
+ * Callback function, return the user entered experation dates for this submission.
+ */
+function commerce_braintree_web_fundraiser_commerce_expire($submission_fields) {
+  $expires = array();
+  $payload = db_query("SELECT payload FROM {commerce_payment_transaction} WHERE remote_id = :txn_id LIMIT 1", array(':txn_id' => $submission_fields['txn_id']))->fetchField();
+  if (isset($payload)) {
+    $braintree_response_object = unserialize($payload);
+    reset($braintree_response_object);
+    $first_key = key($braintree_response_object);
+    $transaction = $braintree_response_object[$first_key]->transaction;
+    if (isset($transaction->creditCard['expirationMonth'])) {
+      $expires['month'] = $transaction->creditCard['expirationMonth'];
+    }
+    if (isset($transaction->creditCard['expirationYear'])) {
+      $expires['year'] = $transaction->creditCard['expirationYear'];
+    }
+  }
+  return $expires;
 }
 
 /**
