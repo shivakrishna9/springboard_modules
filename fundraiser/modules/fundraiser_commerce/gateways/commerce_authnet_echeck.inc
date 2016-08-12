@@ -425,9 +425,11 @@ function _commerce_authnet_echeck_fundraiser_commerce_authnet_cim_cardonfile_upd
  *   The pane values.
  */
 function commerce_authnet_echeck_pane_values($donation) {
-  $pane_values = array(
-    'bank account' => $donation->donation['payment_fields']['bank account']
-  );
+  $pane_values = array();
+
+  if (isset($donation) && isset($donation->donation['payment_fields']['bank account'])) {
+    $pane_values['bank account'] = $donation->donation['payment_fields']['bank account'];
+  }
 
   return $pane_values;
 }

@@ -51,7 +51,7 @@ function commerce_authnet_echeck_mail_alter(&$message) {
 }
 
 /**
- * Implements hook_fundraiser_donation_update()
+ * Implements hook_fundraiser_donation_update().
  */
 function commerce_authnet_echeck_fundraiser_donation_update($donation) {
   $gateway_config = _fundraiser_gateway_info($donation->gateway['id']);

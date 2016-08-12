@@ -18,6 +18,7 @@ function commerce_authnet_echeck_settings_form($settings = NULL) {
     'email_customer' => FALSE,
     'txn_mode' => AUTHNET_TXN_MODE_LIVE_TEST,
     'log' => array('request' => '0', 'response' => '0'),
+    'cardonfile' => FALSE
   );
 
   $form['login'] = array(
