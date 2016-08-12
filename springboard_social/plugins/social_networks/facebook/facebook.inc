@@ -12,7 +12,7 @@ $plugin = array(
   'admin_settings' => 'sb_social_facebook_admin_settings', // additions to admin defaults settings form
   'admin_setings_submit' => 'sb_social_facebook_admin_settings_submit',
   'process' => 'sb_social_facebook_process_settings', // submit handler for node & path settings fields
-  'share_config' => 'sb_social_facebook_share_opengraph_config', // render share settings required by AddThis
+  'share_config' => 'sb_social_facebook_share_opengraph_config', // render share settings
   'js' => FALSE, // include js settings as needed
   'defaults' => 'sb_social_facebook_defaults', // provide default settings
   'uninstall' => 'sb_social_facebook_uninstall', // uninstall hook: remove variables, etc.
@@ -73,17 +73,13 @@ function sb_social_facebook_token_info() {
   return $facebook_tokens;
 }
 
-function sb_social_facebook_token_replace($tokens, &$replacements, $settings, $node = FALSE, $submission_id = FALSE, $extra = '') {
+function sb_social_facebook_token_replace($tokens, &$replacements, $settings, $node = FALSE, $submission_id = FALSE) {
   foreach ($tokens as $key => $token) {
     switch ($key) {
       case 'facebook_share_link':
         $vars['service'] = 'facebook';
-        $vars['extra'] = '';
         $vars['contents'] = sb_social_facebook_custom_button_contents();
 
-        if (!empty($extra) && function_exists($extra)) {
-          $vars['extra'] = $extra($settings['data']['facebook']);
-        }
         $button = theme('sb_social_share_button', $vars);
         $replacements[$token] = theme('sb_social_share', array('buttons' => $button));
         break;
@@ -105,7 +101,7 @@ function sb_social_facebook_token_replace($tokens, &$replacements, $settings, $n
             $image_url = file_create_url($file->uri);
           }
         }
-        $replacements[$token] = $image_url ? $image_url : '';
+        $replacements[$token] =  $image_url ? $image_url : '';
         break;
     }
   }
@@ -267,13 +263,13 @@ function sb_social_facebook_process_settings(&$data, $form_state) {
 }
 
 /**
- * Configure AddThis share buttons for Facebook.
+ * Configure share buttons for Facebook.
  *
  * Add OpenGraph meta tags used by Facebook to define custom title, description,
  * and image content on shares.
  *
  * Facebook and a few other services use opengraph tags to define custom share
- * content instead of the usual AddThis javascript configuration objects.
+ * content instead of javascript configuration objects.
  *
  */
 function sb_social_facebook_share_opengraph_config($settings, $node = FALSE, $sid = FALSE) {

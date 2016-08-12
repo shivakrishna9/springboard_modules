@@ -4,7 +4,7 @@
 /**
  * @file
  * Primary module file for Springboard Social, which integrates customized
- * share content with AddThis service and Salesforce.
+ * share content with Salesforce.
  */
 
 require_once 'includes/sb_social.db.inc';
@@ -483,15 +483,7 @@ function sb_social_block_view($delta = '') {
       // Render button for each enabled service.
       foreach ($plugins as $service => $plugin) {
         $vars['service'] = $service;
-        $vars['extra'] = '';
         $vars['contents'] = isset($plugin['button_contents']) ? $plugin['button_contents'] : '';
-
-        if (isset($plugin['button_extra'])) {
-          $func = $plugin['button_extra'];
-          if (function_exists($func)) {
-            $vars['extra'] = $func($settings['data'][$service], $node);
-          }
-        }
         $buttons[] = theme('sb_social_share_button', $vars);
       }
       $buttons = implode("\n", $buttons);
@@ -829,31 +821,14 @@ function sb_social_tokens($type, $tokens, $data = array(), $options = array()) {
     foreach ($enabled_plugins as $service => $plugin) {
       if (!empty($plugin['token_replace'])) {
         $func = $plugin['token_replace'];
-        $extra_func = isset($plugin['button_extra']) ? $plugin['button_extra'] : FALSE;
-        if ($extra_func && function_exists($extra_func)) {
-          $extra = $extra_func($settings['data'][$service], $node, $submission_id);
-        }
-        else {
-          $extra = FALSE;
-        }
-        $func($tokens, $replacements, $settings, $node, $submission_id, $extra);
+        $func($tokens, $replacements, $settings, $node, $submission_id);
       }
     }
     $keys = array_keys($tokens);
     if (in_array('share_links', $keys)) {
       foreach ($enabled_plugins as $service => $plugin) {
         $vars['service'] = $service;
-        $vars['extra'] = '';
         $vars['contents'] = isset($plugin['button_contents']) ? $plugin['button_contents'] : '';
-
-        // Some buttons (like email) require additional html attributes.
-        // The button_extra callback provides these values.
-        if (isset($plugin['button_extra'])) {
-          $func = $plugin['button_extra'];
-          if (function_exists($func)) {
-            $vars['extra'] = $func($settings['data'][$service], $node, $submission_id);
-          }
-        }
         $buttons[] = theme('sb_social_share_button', $vars);
       }
       $buttons = implode("\n", $buttons);

@@ -1,7 +1,7 @@
 <?php
 /**
  * @file
- * Plugin for AddThis email feature.
+ * Plugin for email feature.
  */
 
 $plugin = array(
@@ -13,7 +13,6 @@ $plugin = array(
   'process' => 'sb_social_email_process_settings',
   'share_config' => 'sb_social_email_share_js_config',
   'defaults' => 'sb_social_email_defaults',
-  'button_extra' => 'sb_social_email_button_extra',
   'button_contents' => sb_social_email_custom_button_contents(),
   'uninstall' => 'sb_social_email_uninstall',
   'token_info' => sb_social_email_token_info(),
@@ -40,19 +39,20 @@ function sb_social_email_token_info() {
   return $email_tokens;
 }
 
-function sb_social_email_token_replace($tokens, &$replacements, $settings, $node = FALSE, $submission_id = FALSE, $extra = FALSE) {
+function sb_social_email_token_replace($tokens, &$replacements, $settings, $node = FALSE, $submission_id = FALSE) {
   foreach ($tokens as $key => $token) {
     switch ($key) {
       case 'email_share_link':
         $vars['service'] = 'email';
-        $vars['extra'] = sb_social_email_button_extra($settings['data']['email'], $node, $submission_id);
         $vars['contents'] = sb_social_email_custom_button_contents();
         $button = theme('sb_social_share_button', $vars);
         $replacements[$token] = theme('sb_social_share', array('buttons' => $button));
         break;
+
       case 'email_subject':
         $replacements[$token] = !empty($settings['data']['email']['subject']) ? _sb_social_replace_tokens($settings['data']['email']['subject'], $node, $submission_id) : '';
         break;
+
       case 'email_message':
         $replacements[$token] = !empty($settings['data']['email']['message']) ? _sb_social_replace_tokens($settings['data']['email']['message'], $node, $submission_id) : '';
         break;
@@ -172,13 +172,6 @@ function sb_social_email_share_js_config($settings, $node = FALSE, $sid = FALSE)
 function sb_social_email_uninstall() {
   variable_del('springboard_social_email_subject');
   variable_del('springboard_social_email_message');
-}
-
-// undocumented little hack to set the email subject to a value we control.
-// by setting the title attribute in the link we override AddThis' default behavior which
-// is pulling in the <title></title> contents as the email subject.
-function sb_social_email_button_extra($settings, $node = FALSE, $submission_id = FALSE) {
-   return 'addthis:title="' . _sb_social_replace_tokens($settings['subject'], $node, $submission_id) . '"';
 }
 
 function sb_social_email_custom_button_contents() {
