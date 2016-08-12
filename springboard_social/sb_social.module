@@ -139,7 +139,6 @@ function sb_social_share_event_save($service, $id, $type, $market_source) {
     $type = 'page';
     $url_path = sb_social_get_path($id);
     $settings_id = sb_social_get_sid_by_id($id, 'path');
-    $node = FALSE;
   }
 
   // Prepare the new share record.
@@ -150,8 +149,8 @@ function sb_social_share_event_save($service, $id, $type, $market_source) {
     'did' => !empty($did) ? $did : 0,
     'nid' => !empty($nid) ? $nid : 0,
     'market_source' => $market_source,
-    'page_name' => $page_name,
-    'internal_name' => $internal_name,
+    'page_name' => isset($page_name) ? $page_name : '',
+    'internal_name' => isset($internal_name) ? $internal_name : '',
     'type' => $type,
     'service' => $service,
     'created' => (int) time(),
@@ -457,6 +456,7 @@ function sb_social_block_info() {
  * Implements hook_block_view().
  */
 function sb_social_block_view($delta = '') {
+  $block = array();
   if ($delta = 'social_sharing') {
     $block['subject'] = '';
     $block['content'] = '';
@@ -479,11 +479,12 @@ function sb_social_block_view($delta = '') {
       // Permit 3rd party modules to alter settings & node context.
       drupal_alter('sb_social_init_settings_load', $settings);
       if (empty($settings)) {
-        return;
+        return FALSE;
       }
       drupal_alter('sb_social_tokens_data', $node);
       $plugins = sb_social_get_enabled_plugins();
       // Render button for each enabled service.
+      $buttons = array();
       foreach ($plugins as $service => $plugin) {
         $vars['service'] = $service;
         $vars['contents'] = isset($plugin['button_contents']) ? $plugin['button_contents'] : '';
@@ -494,8 +495,8 @@ function sb_social_block_view($delta = '') {
       $description = array_key_exists('block_description', $settings['data']) ? $settings['data']['block_description'] : variable_get('springboard_social_default_block_description', '');
       $block['content'] = theme('sb_social_share', array('buttons' => $buttons, 'description' => $description));
     }
-    return $block;
   }
+  return $block;
 }
 
 /**
@@ -767,7 +768,7 @@ function sb_social_webform_submission_insert($node, $submission) {
  * Implements hook_token_info().
  */
 function sb_social_token_info() {
-  $enabled_services = sb_social_get_enabled_services();
+  // $enabled_services = sb_social_get_enabled_services();
   $enabled_plugins = sb_social_get_enabled_plugins();
 
   $info['types']['sb_social'] = array(
@@ -828,6 +829,7 @@ function sb_social_tokens($type, $tokens, $data = array(), $options = array()) {
     }
     $keys = array_keys($tokens);
     if (in_array('share_links', $keys)) {
+      $buttons = array();
       foreach ($enabled_plugins as $service => $plugin) {
         $vars['service'] = $service;
         $vars['contents'] = isset($plugin['button_contents']) ? $plugin['button_contents'] : '';
@@ -838,6 +840,7 @@ function sb_social_tokens($type, $tokens, $data = array(), $options = array()) {
     }
     return $replacements;
   }
+  return FALSE;
 }
 
 /**
