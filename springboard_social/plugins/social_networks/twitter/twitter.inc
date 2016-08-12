@@ -13,6 +13,7 @@ $plugin = array(
   'process' => 'sb_social_twitter_process_settings',
   'admin_setings_submit' => 'sb_social_twitter_admin_settings_submit',
   'share_config' => 'sb_social_twitter_share_js_config',
+  'js' => FALSE,
   'defaults' => 'sb_social_twitter_defaults',
   'uninstall' => 'sb_social_twitter_uninstall',
   'token_info' => sb_social_twitter_token_info(),
@@ -25,7 +26,6 @@ function sb_social_twitter_token_info() {
     'name' => t('Twitter Share link'),
     'description' => t('Twitter tweet link'),
   );
-  // twitter message
   $twitter_tokens['twitter_message'] = array(
     'name' => t('Twitter tweet message'),
     'description' => t('Message content for Twitter tweet'),

@@ -68,8 +68,8 @@ function sb_social_admin() {
   // the specific form fields required by the service. These fields are used to
   // configure sitewide defaults for share content.
   foreach ($plugins as $service => $plugin) {
-    $func = isset($plugin['admin_settings']) ? $plugin['admin_settings'] : FALSE;
-    if (function_exists($func)) {
+    $func = isset($plugin['admin_settings']) ? $plugin['admin_settings'] : '';
+    if (!empty($func) && function_exists($func)) {
       $func($form);
     }
   }

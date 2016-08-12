@@ -13,6 +13,7 @@ $plugin = array(
   'process' => 'sb_social_email_process_settings',
   'share_config' => 'sb_social_email_share_js_config',
   'defaults' => 'sb_social_email_defaults',
+  'js' => FALSE,
   'button_contents' => sb_social_email_custom_button_contents(),
   'uninstall' => 'sb_social_email_uninstall',
   'token_info' => sb_social_email_token_info(),

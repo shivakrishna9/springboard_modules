@@ -6,16 +6,16 @@
  */
 
 $plugin = array(
-  'name' => 'facebook', // internal service name
-  'title' => t('Facebook'), // Human-readable service name
-  'settings' => 'sb_social_facebook_settings', // additions to path and node settings forms
-  'admin_settings' => 'sb_social_facebook_admin_settings', // additions to admin defaults settings form
+  'name' => 'facebook',
+  'title' => t('Facebook'),
+  'settings' => 'sb_social_facebook_settings',
+  'admin_settings' => 'sb_social_facebook_admin_settings',
   'admin_setings_submit' => 'sb_social_facebook_admin_settings_submit',
-  'process' => 'sb_social_facebook_process_settings', // submit handler for node & path settings fields
-  'share_config' => 'sb_social_facebook_share_opengraph_config', // render share settings
-  'js' => FALSE, // include js settings as needed
-  'defaults' => 'sb_social_facebook_defaults', // provide default settings
-  'uninstall' => 'sb_social_facebook_uninstall', // uninstall hook: remove variables, etc.
+  'process' => 'sb_social_facebook_process_settings',
+  'share_config' => 'sb_social_facebook_share_opengraph_config',
+  'js' => FALSE,
+  'defaults' => 'sb_social_facebook_defaults',
+  'uninstall' => 'sb_social_facebook_uninstall',
   'token_info' => sb_social_facebook_token_info(),
   'token_replace' => 'sb_social_facebook_token_replace',
   'metatag_view_alter' => 'facebook_metatag_view_alter',
@@ -236,7 +236,11 @@ function sb_social_facebook_settings(&$form, $enabled_services = array(), $setti
   $form['fb_settings']['tokens']['token_help'] = array(
     '#type' => 'item',
     '#title' => t('Drupal tokens'),
-    '#description' => theme('token_tree', array('token_types' => $token_set, 'recursion_limit' => 2, 'click_insert' => FALSE)),
+    '#description' => theme('token_tree', array(
+      'token_types' => $token_set,
+      'recursion_limit' => 2,
+      'click_insert' => FALSE,
+    )),
   );
 }
 
