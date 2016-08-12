@@ -317,7 +317,7 @@ function commerce_authnet_echeck_fundraiser_commerce_update($donation, $card_dat
       $card_type = 'card';
 
       // Get card expiration date to use if we don't have one
-      $expires = commerce_authnet_echeck_fundraiser_commerce_expire();
+      $expires = commerce_authnet_echeck_fundraiser_commerce_expire(array());
 
       // Create a new cardonfile entity
       $new_data = commerce_cardonfile_new();

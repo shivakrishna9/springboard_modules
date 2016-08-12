@@ -236,3 +236,23 @@ function commerce_authnet_echeck_cardonfile_delete($form, &$form_state, $payment
 
   return in_array($code, array('I00001', 'E00040'));
 }
+
+/**
+ * Implements hook_fundraiser_sustainers_series_end_date_alter().
+ */
+function commerce_authnet_echeck_fundraiser_sustainers_series_end_date_alter(&$end_date, $context) {
+  // Because our expire callback causes sustainers to delete future orders, we want to set the end date of a
+  // recurring series to the month/year of the cardonfile entry of the last recurring donation
+  $master_donation = $context['master_donation'];
+  // Get the last donation in the series
+  $last_donation_did = db_query('SELECT max(did) FROM {fundraiser_sustainers} WHERE master_did = :master_did', array(':master_did' => $master_donation->did))->fetchField();
+  $last_donation = fundraiser_donation_get_donation($last_donation_did);
+  if (module_exists('commerce_cardonfile') && isset($last_donation->data['cardonfile'])) {
+    // If we have a cardonfile entry for this donation, use that for the exp date.
+    $card_data = commerce_cardonfile_load($last_donation->data['cardonfile']);
+    if ($card_data) {
+      $end_date['month'] = $card_data->card_exp_month;
+      $end_date['year'] = $card_data->card_exp_year;
+    }
+  }
+}
