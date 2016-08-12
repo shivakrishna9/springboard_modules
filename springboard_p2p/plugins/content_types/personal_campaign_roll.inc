@@ -52,7 +52,14 @@ function springboard_p2p_personal_campaign_roll_render($subtype, $conf, $panel_a
   }
   $goal_type = springboard_p2p_get_goal_type_from_campaign($campaign);
 
+  // Display the recent donors view block if it is not empty:
   if ($goal_type == 'amount') {
+    $view_markup = views_embed_view('p2p_personal_campaign_recent_optin_donors', 'block');
+    $markup_test = strip_tags($view_markup);
+    $markup_test = trim($markup_test);
+    if (empty($markup_test)) {
+      return;
+    }
     $block = new stdClass();
     $block->title = t('Recent Donors');
     $block->content = views_embed_view('p2p_personal_campaign_recent_optin_donors', 'block');
