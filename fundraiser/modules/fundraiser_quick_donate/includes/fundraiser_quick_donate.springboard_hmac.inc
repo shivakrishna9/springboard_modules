@@ -62,39 +62,70 @@ function fundraiser_quick_donate_springboard_hmac_success($payload) {
     // their cookie? Let's log this occurence but should we take them to the
     // form anyway and let them donate the old fashioned way?
     watchdog('quick_donate', 'Quick donate attempted but opt-in could not be verified for user %uid and card_id %card_id.', array('%uid' => $payload['uid'], '%card_id' => $payload['card_id']), WATCHDOG_WARNING);
+    // Redirect to the default default node ID if it's set, otherwise return.
+    $goto_nid = fundraiser_quick_donate_get_default_form_for_gateway('default');
+    if ($goto_nid) {
+      drupal_goto('node/' . $goto_nid);
+    }
     return;
   }
 
   // Figure out where we're going. Could be the default or a url param override.
   $goto_nid = _fundraiser_quick_donate_get_nid($payload);
 
-  global $user;
-  // Assume we have no user.
-  $existing_user = FALSE;
+  $user = _fundraiser_quick_donate_springboard_hmac_check_user($goto_nid, $payload);
 
+  // Ensure that the card ID is valid and belongs to the user.
+  $card = commerce_cardonfile_load($payload['card_id']);
+  // @todo Determine if we should use commerce_cardonfile_access in this
+  // condition instead.
+  if (!$card || $card->uid != $user->uid && !$card_to_be_updated) {
+    // Redirect to the default default form, or return if not set.
+    $goto_nid = fundraiser_quick_donate_get_default_form_for_gateway('default');
+    if ($goto_nid) {
+      drupal_goto('node/' . $goto_nid);
+    }
+    return;
+  }
+
+  // Otherwise redirect to the calculated form ID.
+  drupal_goto('node/' . $goto_nid);
+}
+
+/**
+ * Helper function to check if a user is logged in or if their account exists.
+ */
+function _fundraiser_quick_donate_springboard_hmac_check_user($goto_nid, $payload) {
+  global $user;
   // If the user isn't logged in, attempt to load them. We're doing this to see
   // if the user account still exists.
   if (!user_is_logged_in()) {
     // Prep the log-in.
     $existing_user = user_load($payload['uid']);
+
+    // If it's an existing user, we'll be able to log them in after
+    // verification.
+    if ($existing_user) {
+      // Overwrite the anonymous user prior to login.
+      $user = $existing_user;
+      $form_state = array('uid' => $payload['uid']);
+
+      // Execute the log-in.
+      user_login_finalize($form_state);
+    }
+    else {
+      // User no longer exists.
+      $cookie = springboard_cookie_get_cookie();
+      if (isset($cookie['profile']) && !empty($cookie['profile'])) {
+        $_SESSION['secure_prepopulate_values'][$goto_nid] = $cookie['profile'];
+        // Since the rest of the validation involves card data, which the user
+        // will need to re-enter, just redirect them now.
+        drupal_goto('node/' . $goto_nid);
+      }
+    }
   }
 
-  // If it's an existing user, we'll be able to log them in after verification.
-  if ($existing_user) {
-    // Overwrite the anonymous user prior to login.
-    $user = $existing_user;
-    $form_state = array('uid' => $payload['uid']);
-
-    // Execute the log-in.
-    user_login_finalize($form_state);
-
-    _fundraiser_quick_donate_redirect_to_form($goto_nid);
-  }
-  /*else {*/
-  // User no longer exists.
-  // TODO: This is were we would need the Springboard cookie to intervene
-  // and do the form population. But I'm not sold it's worth it as this point.
-  /*}*/
+  return $user;
 }
 
 
@@ -112,6 +143,9 @@ function fundraiser_quick_donate_springboard_hmac_success($payload) {
  */
 function _fundraiser_quick_donate_get_nid($payload) {
   $parameters = drupal_get_query_parameters();
+  if (!isset($payload['card_id'])) {
+    $payload = _fundraiser_quick_donate_hmac_mapping($payload);
+  }
 
   // Look up the gateway's instance id based on the stored card.
   $card_on_file = commerce_cardonfile_load($payload['card_id']);
@@ -125,6 +159,11 @@ function _fundraiser_quick_donate_get_nid($payload) {
 
   // Get the default nid for the gateway instance.
   if ($nid = fundraiser_quick_donate_get_default_form_for_gateway($gateway_id)) {
+    return $nid;
+  }
+
+  // Return the default donation form nid (DD) if set.
+  if ($nid = fundraiser_quick_donate_get_default_form_for_gateway('default')) {
     return $nid;
   }
 
@@ -195,19 +234,17 @@ function fundraiser_quick_donate_user_is_opted_in($uid) {
 }
 
 /**
- * Helper function to redirect to a node if $nid > 0.
- */
-function _fundraiser_quick_donate_redirect_to_form($nid = 0) {
-  drupal_goto('node/' . $nid);
-}
-
-/**
  * Implements hook_springboard_hmac_failure().
  *
  * Redirect to the donation form if hmac not validated.
  */
-function fundraiser_quick_donate_failure($reason, $payload) {
+function fundraiser_quick_donate_springboard_hmac_failure($reason, $payload) {
   $payload = _fundraiser_quick_donate_hmac_mapping($payload);
+  $goto_nid = _fundraiser_quick_donate_get_nid($payload);
+
+  // Make sure the user account still exists. If it doesn't this function will
+  // redirect to the node id provided.
+  _fundraiser_quick_donate_springboard_hmac_check_user($goto_nid, $payload);
 
   // If the payload didn't validate any number of things could have happened,
   // therefore let's fallback to cookie data if available and prompt the user

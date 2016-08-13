@@ -50,11 +50,9 @@ function fundraiser_quick_donate_fundraiser_donation_form($form, $form_state) {
 
     // This variable stores the type of payment method, and will be shown to the
     // end user.
-    // @todo Wrap in t()?
-    $type = 'card';
+    $type = t('card');
     if ($gateway_type == 'bank account') {
-      // @todo What should this be?
-      $type = 'bank account';
+      $type = t('bank account');
     }
 
     $form['submitted']['payment_information']['payment_fields'][$gateway_type]['cardonfile_store'] = array(
@@ -70,6 +68,8 @@ function fundraiser_quick_donate_fundraiser_donation_form($form, $form_state) {
 
     // Load existing active cards for the payment method instance and user.
     $stored_cards = commerce_cardonfile_load_multiple_by_uid($user->uid, $payment_method['instance_id']);
+    // Allow other modules to alter what stored cards will be displayed.
+    drupal_alter('fundraiser_quick_donate_fundraiser_donation_form_stored_cards', $stored_cards);
 
     // The ID of the cardonfile record specified for quick donations.
     $quick_donate_card = _fundraiser_quick_donate_get_payment_info_for_uid($user->uid);
