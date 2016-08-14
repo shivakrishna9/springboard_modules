@@ -154,7 +154,28 @@ function fundraiser_quick_donate_token_generator($form, $form_state) {
   $form['#submit'][] = 'fundraiser_quick_donate_token_generator_validate';
   $form['#submit'][] = 'fundraiser_quick_donate_token_generator_submit';
 
+  $form['#attached']['js'][] = drupal_get_path('module', 'fundraiser_quick_donate') . '/js/fundraiser_quick_donate.admin.js';
+
   return $form;
+}
+
+/**
+ * Helper function to get card id's for a user.
+ *
+ * @param int $uid
+ *   The uid of the user.
+ *
+ * @return array
+ *   An array of card ids for the user.
+ */
+function _fundraiser_quick_donate_admin_get_card_ids_by_uid($uid) {
+  $query = new EntityFieldQuery();
+  $query
+    ->entityCondition('entity_type', 'commerce_cardonfile')
+    ->propertyCondition('uid', $uid)
+    ->propertyCondition('status', 1);
+  $result = $query->execute();
+  drupal_json_output(array_keys($result['commerce_cardonfile']));
 }
 
 /**
