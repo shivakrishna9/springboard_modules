@@ -50,7 +50,7 @@ build:
         hosts:
             local.dev: '127.0.0.1'
         apache2:
-            modules: ['rewrite']
+            modules: ['rewrite', 'mod_mime']
             sites:
                 springboard:
                     web_root: '.'
