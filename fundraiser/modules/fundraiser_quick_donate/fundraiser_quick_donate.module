@@ -58,6 +58,21 @@ function fundraiser_quick_donate_menu() {
 }
 
 /**
+ * Implements hook_springboard_admin_admin_menu_items_alter().
+ */
+function fundraiser_quick_donate_springboard_admin_admin_menu_items_alter(&$items) {
+  // Settings > Settings > Sustainer Upsell.
+  $items['admin/springboard/settings']['_children']['admin/springboard/settings/config']['_children']['admin/springboard/options/fundraiser/fundraiser_quick_donate'] = array(
+    'link_path' => 'admin/springboard/options/fundraiser/fundraiser_quick_donate',
+    'link_title' => 'Quick Donate Settings',
+    'menu_name' => 'springboard_admin_menu',
+    'expanded' => 0,
+    'customized' => 1,
+    'weight' => 0,
+  );
+}
+
+/**
  * Implements hook_views_api().
  */
 function fundraiser_quick_donate_views_api() {
