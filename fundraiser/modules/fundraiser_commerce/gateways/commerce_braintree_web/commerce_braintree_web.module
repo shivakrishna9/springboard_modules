@@ -313,78 +313,78 @@ function commerce_braintree_web_submit_form_submit($payment_method, $pane_form, 
   }
 
   // Deal with Braintree subscription.
-  if (!empty($use_subscription)) {
+//   if (!empty($use_subscription)) {
 
-    $subscription_data = array();
+//     $subscription_data = array();
 
-    // Manage subscription by custom callback.
-    if (!empty($order->data['commerce_braintree_web_callback'])) {
-      $callback = $order->data['commerce_braintree_web_callback'];
+//     // Manage subscription by custom callback.
+//     if (!empty($order->data['commerce_braintree_web_callback'])) {
+//       $callback = $order->data['commerce_braintree_web_callback'];
 
-      if (function_exists($callback)) {
+//       if (function_exists($callback)) {
 
-        // Use default payment token or create new payment method from nonce.
-        if (!empty($token)) {
-          $subscription_data['paymentMethodToken'] = $token;
-        }
-        elseif (!empty($nonce)) {
-          $subscription_data['paymentMethodNonce'] = $nonce;
-        }
-        else {
-          form_set_error('braintree', t('Unknown error happened. Please try again or contact us for help.'));
-          return FALSE;
-        }
-        $context['subscription_data'] = $subscription_data;
+//         // Use default payment token or create new payment method from nonce.
+//         if (!empty($token)) {
+//           $subscription_data['paymentMethodToken'] = $token;
+//         }
+//         elseif (!empty($nonce)) {
+//           $subscription_data['paymentMethodNonce'] = $nonce;
+//         }
+//         else {
+//           form_set_error('braintree', t('Unknown error happened. Please try again or contact us for help.'));
+//           return FALSE;
+//         }
+//         $context['subscription_data'] = $subscription_data;
 
-        $result = $callback($context, $error_message);
-        if ($result === FALSE) {
-          form_set_error('braintree', $error_message);
-          return FALSE;
-        }
-      }
+//         $result = $callback($context, $error_message);
+//         if ($result === FALSE) {
+//           form_set_error('braintree', $error_message);
+//           return FALSE;
+//         }
+//       }
 
-    }
-    // Default behavior to create a new subscription.
-    else {
-      if ($customer_id) {
-//        $braintree_customer = braintree_customer_load_by_account($user);
-//        $braintree_payment_method = braintree_customer_default_payment_method($braintree_customer);
-//        $token = $braintree_payment_method->token;
-      }
-      else {
-        $customer_data = array(
-          'firstName' => $first_name,
-          'lastName' => $last_name,
-          'email' => $customer_mail,
-          'paymentMethodNonce' => $nonce,
-        );
+//     }
+//     // Default behavior to create a new subscription.
+//     else {
+//       if ($customer_id) {
+// //        $braintree_customer = braintree_customer_load_by_account($user);
+// //        $braintree_payment_method = braintree_customer_default_payment_method($braintree_customer);
+// //        $token = $braintree_payment_method->token;
+//       }
+//       else {
+//         $customer_data = array(
+//           'firstName' => $first_name,
+//           'lastName' => $last_name,
+//           'email' => $customer_mail,
+//           'paymentMethodNonce' => $nonce,
+//         );
 
-        $result = braintree_vault_customer_save($customer_data, $context, $error_message);
+//         $result = braintree_vault_customer_save($customer_data, $context, $error_message);
 
-        if ($result === FALSE) {
-          form_set_error('braintree', $error_message);
-          return FALSE;
-        }
+//         if ($result === FALSE) {
+//           form_set_error('braintree', $error_message);
+//           return FALSE;
+//         }
 
-        $token = !empty($result->customer->paymentMethods) ? $result->customer->paymentMethods[0]->token : NULL;
-      }
+//         $token = !empty($result->customer->paymentMethods) ? $result->customer->paymentMethods[0]->token : NULL;
+//       }
 
-      $subscription_data['paymentMethodToken'] = $token;
-      $context['subscription_data'] = $subscription_data;
+//       $subscription_data['paymentMethodToken'] = $token;
+//       $context['subscription_data'] = $subscription_data;
 
-      // Braintree plan ID needs to be added in custom implementation.
-//      $subscription_data['planId'] = '';
+//       // Braintree plan ID needs to be added in custom implementation.
+// //      $subscription_data['planId'] = '';
 
-      $result = braintree_subscription_create($subscription_data, $context, $error_message);
-      if ($result === FALSE) {
-        form_set_error('braintree', $error_message);
-        return FALSE;
-      }
-    }
+//       $result = braintree_subscription_create($subscription_data, $context, $error_message);
+//       if ($result === FALSE) {
+//         form_set_error('braintree', $error_message);
+//         return FALSE;
+//       }
+//     }
 
-  }
-  // Create Braintree transaction sale.
-  else {
+//   }
+//   // Create Braintree transaction sale.
+//   else {
     if (module_exists('braintree_vault') && variable_get('braintree_use_vault', 0)) {
       $sale_data = array(
         'amount' => $total_amount,
@@ -470,7 +470,7 @@ function commerce_braintree_web_submit_form_submit($payment_method, $pane_form, 
     $sale_data['channel'] = $payment_method['settings']['channel'];
     braintree_transaction_sale($sale_data, $context, $error_message);
     $result = $context['result'];
-  }
+  // }  // End Braintree subscription else
 
   if ($flag_update_default_method) {
     $context = array();
