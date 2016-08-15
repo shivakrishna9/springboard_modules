@@ -26,6 +26,12 @@ function fundraiser_quick_donate_form_node_form_alter(&$form, &$form_state, $for
     '#default_value' => isset($form['#node']->quickdonate) ? $form['#node']->quickdonate : FALSE,
   );
 
+  if (!count(variable_get(FUNDRAISER_QUICK_DONATE_DEFAULT_FORM_PREFIX . 'default', array()))) {
+    $form['payment_methods']['quickdonate']['#suffix'] = t('<strong>Warning:</strong> since no default form is set on the !config_page, a user might not end up in the right place when coming from an HMAC URL.<br/><br/>', array(
+      '!config_page' => l(t('Quick Donate configuration page'), 'springboard/options/fundraiser/fundraiser_quick_donate'),
+    ));
+  }
+
   $usable_paypment_processors = array('credit' => array(), 'bank' => array());
   if (!empty($form['payment_methods']['gateways']['credit'])) {
     foreach ($form['payment_methods']['gateways']['credit']['id']['#options'] as $gateway => $value) {
