@@ -99,7 +99,7 @@ build:
 #            - 'if [[ "$ALLOWED_BRANCHES" =~ "$SCRUTINIZER_BRANCH" ]]; then drush -l http://local.dev en springboard_tests -y ; fi'
 #            - 'if [[ "$ALLOWED_BRANCHES" =~ "$SCRUTINIZER_BRANCH" ]]; then drush -l http://local.dev sb-test-run springboard --xml=../artifacts ; fi'
             -
-                command: 'if [[ "$ALLOWED_BRANCHES" =~ "$SCRUTINIZER_BRANCH" ]]; then cd ~/acceptance-tests && ./vendor/bin/codecept run fundraiser/DualAskApiCept -vv; fi'
+                command: 'if [[ "$ALLOWED_BRANCHES" =~ "$SCRUTINIZER_BRANCH" ]]; then cd ~/acceptance-tests && ./vendor/bin/codecept run tests/acceptance/fundraiser/DualAskAPICept -vv; fi'
                 idle_timeout: 300
 
 filter:
