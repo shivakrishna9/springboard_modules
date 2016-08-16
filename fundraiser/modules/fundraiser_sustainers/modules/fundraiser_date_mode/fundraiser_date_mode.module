@@ -601,16 +601,22 @@ function fundraiser_date_mode_process_queue_item($item) {
   $sustainer_key = fundraiser_sustainers_get_sustainer_key_value();
   $recurring = $item;
   if ($sustainer_key == $recurring->sustainer_key) {
-    $log = array(
-      'successes' => 0,
-      'fails' => 0,
-    );
-
-    try {
-      fundraiser_sustainers_process_single_recurring_donation($log, $recurring, $sustainer_key);
+    // Run another check to prevent canceled donations from being charged.
+    if ($recurring->gateway_resp != 'canceled' || $recurring->gateway_resp != 'auto_canceled') {
+      $log = array(
+        'successes' => 0,
+        'fails' => 0,
+      );
+  
+      try {
+        fundraiser_sustainers_process_single_recurring_donation($log, $recurring, $sustainer_key);
+      }
+      catch (Exception $e) {
+        fundraiser_sustainers_processing_exception($e, $recurring);
+      }
     }
-    catch (Exception $e) {
-      fundraiser_sustainers_processing_exception($e, $recurring);
+    else {
+      watchdog('fundraiser_sustainers_date_mode', 'Sustainer order id !did was previously canceled, and has been skipped.', array('!did' => $recurring->did), WATCHDOG_NOTICE);
     }
 
     // If we get to here the transaction has been completed.
