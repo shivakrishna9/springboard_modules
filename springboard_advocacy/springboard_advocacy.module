@@ -354,12 +354,34 @@ function springboard_advocacy_views_api() {
          sba_message_draggable_save($arg, $message->sba_message_id, $message->data['weight']);
 
          // Create a record on the API server
-         $pseudo_form_state = array();
-         $pseudo_form_state['values']['data']['recipients'] = $message->data['recipients'];
-         $pseudo_form_state['values']['data']['message_id'] = $message->data['message_id'];
-         $pseudo_form_state['values']['advocacy_id'] = $uuid['advocacy_id'];
-         module_load_include('inc', 'sba_message', 'sba_message.api_calls');
-         _sba_message_api_save($message, TRUE, $pseudo_form_state);
+
+         if (isset($message->data['recipients'])) {
+           module_load_include('inc', 'springboard_target', 'includes/springboard_target.api_calls');
+           // Build a group object for saving
+           $group = array(
+             'group_id' => '',
+             'recipients' => $message->data['recipients'],
+             'name' => $message->data['message_id'],
+             'is_template' => 0,
+             'message' => array(
+               'group_id' => $message->data['group_id'],
+               'message_id' => $message->data['message_id'],
+               'form_id' => $uuid['advocacy_id'],
+             ),
+           );
+           $group_id = springboard_target_api_save_target_group($group, TRUE);
+           if ($group_id) {
+             $message->data['group_id'] = $group_id;
+             $message->changed = time();
+             $message->save();
+           }
+           else {
+             $message->data['group_id'] = 'no_response';
+             drupal_set_message('There was a problem saving the message targets to the advocacy server.', 'warning');
+             $message->changed = time();
+             $message->save();
+           }
+         }
        }
      }
    }
