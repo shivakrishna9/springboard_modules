@@ -359,6 +359,8 @@ function braintree_transaction_sale(&$sale_data, &$context = array(), &$error_me
   catch (Exception $e) {
     $error_message = braintree_exception_error_message($e);
     form_set_error('braintree', $error_message);
+    watchdog('braintree', 'Error performing Braintree_Transaction::sale() Error: @message',
+    array('@message' => $error_message), WATCHDOG_ERROR, NULL);
     return FALSE;
   }
 
@@ -378,6 +380,8 @@ function braintree_transaction_sale(&$sale_data, &$context = array(), &$error_me
 
   $error_message = braintree_result_error_message($result);
   form_set_error('braintree', $error_message);
+  watchdog('braintree', 'Error performing Braintree_Transaction::sale() Error: @message',
+    array('@message' => $error_message), WATCHDOG_ERROR, NULL);
   return FALSE;
 }
 
@@ -653,7 +657,9 @@ function braintree_check_fraud(&$context) {
 
     // Set form error for Decline
     if ($decision == 'Decline') {
-      form_set_error('braintree', t('Sorry, your payment transaction was declined. Please contact the sales team on 03 9285 9788'));
+      form_set_error('braintree', t('Sorry, your payment transaction was declined.'));
+        watchdog('braintree', 'Payment declined.',
+    array(), WATCHDOG_ERROR, NULL);
       return FALSE;
     }
 

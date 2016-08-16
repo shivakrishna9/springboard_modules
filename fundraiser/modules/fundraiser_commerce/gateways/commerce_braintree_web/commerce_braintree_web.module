@@ -228,6 +228,8 @@ function commerce_braintree_web_submit_form_validate($payment_method, $pane_form
 
   if (empty($nonce)) {
     form_set_error('braintree', t('We were unable to charge your card at this time.'));
+    watchdog('commerce_braintree_web', 'We were unable to charge your card at this time.', array(), WATCHDOG_ERROR, NULL);
+
     return FALSE;
   }
 }
@@ -288,6 +290,7 @@ function commerce_braintree_web_submit_form_submit($payment_method, $pane_form, 
 
       if ($result === FALSE) {
         form_set_error('braintree', $error_message);
+        watchdog('commerce_braintree_web', '@error_message', array('@error_message' => $error_message), WATCHDOG_ERROR, NULL);
         return FALSE;
       }
 
@@ -465,6 +468,7 @@ function commerce_braintree_web_submit_form_submit($payment_method, $pane_form, 
     }
     else {
       form_set_error('braintree', t('Unknown error happened. Please try again or contact us for help.'));
+      watchdog('commerce_braintree_web', 'Niether paymentMethodToken nor paymentMethodNonce available when trying to process.', array(), WATCHDOG_ERROR, NULL);
       return FALSE;
     }
     $sale_data['channel'] = $payment_method['settings']['channel'];
@@ -492,6 +496,8 @@ function commerce_braintree_web_submit_form_submit($payment_method, $pane_form, 
   // Set a form error if the payment transaction failed for any reason.
   if (empty($transaction) || empty($transaction->status) || $transaction->status != COMMERCE_PAYMENT_STATUS_SUCCESS) {
     form_set_error('braintree', t('Sorry, your payment transaction could not be processed at this time. @response', array('@response' => $transaction->message)));
+    watchdog('braintree', 'Sorry, your payment transaction could not be processed at this time. @response',
+    array('@response' => $transaction->message), WATCHDOG_ERROR, NULL);
     return FALSE;
   }
 
