@@ -196,6 +196,19 @@ function springboard_p2p_views_data() {
         'title' => t('P2P personal campaign'),
         'help' => t('The P2P personal campaign.'),
       ),
+      'field' => array(
+        'handler' => 'views_handler_field',
+        'click sortable' => TRUE,
+      ),
+      'filter' => array(
+        'handler' => 'views_handler_filter_numeric',
+      ),
+      'sort' => array(
+        'handler' => 'views_handler_sort',
+      ),
+      'argument' => array(
+        'handler' => 'views_handler_argument_numeric',
+      ),
     ),
     'personal_campaign_uid' => array(
       'title' => t('Personal campaign user'),
@@ -284,6 +297,26 @@ function springboard_p2p_views_data() {
     'status' => array(
       'title' => t('Status'),
       'help' => t('Whether the personal campaign action is visible.'),
+      'field' => array(
+        'handler' => 'views_handler_field_boolean',
+        'click sortable' => TRUE,
+        'output formats' => array(
+          'visible-notvisible' => array(t('Visible'), t('Not Visible')),
+        ),
+      ),
+      'filter' => array(
+        'handler' => 'views_handler_filter_boolean_operator',
+        'label' => t('Visible'),
+        'type' => 'yes-no',
+        'use equal' => TRUE,
+      ),
+      'sort' => array(
+        'handler' => 'views_handler_sort',
+      ),
+    ),
+    'show_name' => array(
+      'title' => t('Show Name'),
+      'help' => t('Whether the user checked "Show my name on the campaign page".'),
       'field' => array(
         'handler' => 'views_handler_field_boolean',
         'click sortable' => TRUE,
