@@ -2357,11 +2357,12 @@ function fundraiser_sustainers_donation_amount_form($form, &$form_state, $donati
   );
   $form['min_amount'] = array(
     '#type' => 'hidden',
-    '#value' => isset($donation->node->minimum_donation_amount) ? $donation->node->minimum_donation_amount : 0,
+    '#value' => isset($donation->node->recurring_minimum_donation_amount) ? $donation->node->recurring_minimum_donation_amount : (isset($donation->node->minimum_donation_amount) ? $donation->node->minimum_donation_amount : 0),
   );
 
   $node_currency = fundraiser_get_currency_from_node($donation->node);
-  $formatted_minimum = commerce_currency_format($donation->node->minimum_donation_amount, $node_currency['code'], NULL, FALSE);
+  $min_amount = isset($donation->node->recurring_minimum_donation_amount) ? $donation->node->recurring_minimum_donation_amount : (isset($donation->node->minimum_donation_amount) ? $donation->node->minimum_donation_amount : variable_get('fundraiser_default_minimum', 10.00));
+  $formatted_minimum = commerce_currency_format($min_amount, $node_currency['code'], NULL, FALSE);
 
   $form['formatted_minimum'] = array(
     '#type' => 'value',
