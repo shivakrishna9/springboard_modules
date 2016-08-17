@@ -241,18 +241,16 @@ function commerce_authnet_echeck_cardonfile_delete($form, &$form_state, $payment
  * Implements hook_fundraiser_sustainers_series_end_date_alter().
  */
 function commerce_authnet_echeck_fundraiser_sustainers_series_end_date_alter(&$end_date, $context) {
-  // Because our expire callback causes sustainers to delete future orders, we want to set the end date of a
-  // recurring series to the month/year of the cardonfile entry of the last recurring donation
+  // Bank account recurring transactions can share a cardonfile entry.
+  // Because bank accounts don't have expiration dates, using the cardonfile date isn't a reliable way to increment a series.
   $master_donation = $context['master_donation'];
-  // Get the last donation in the series
-  $last_donation_did = db_query('SELECT max(did) FROM {fundraiser_sustainers} WHERE master_did = :master_did', array(':master_did' => $master_donation->did))->fetchField();
-  $last_donation = fundraiser_donation_get_donation($last_donation_did);
-  if (module_exists('commerce_cardonfile') && isset($last_donation->data['cardonfile'])) {
-    // If we have a cardonfile entry for this donation, use that for the exp date.
-    $card_data = commerce_cardonfile_load($last_donation->data['cardonfile']);
-    if ($card_data) {
-      $end_date['month'] = $card_data->card_exp_month;
-      $end_date['year'] = $card_data->card_exp_year;
-    }
+  // $source_donation = $context['source_donation'];
+  if ($master_donation->gateway['gateway_details']['method_id'] == 'authnet_echeck') {
+    // Get the count of series entries.
+    $charge_count = db_query('SELECT count(did) FROM {fundraiser_sustainers} WHERE master_did = :master_did', array(':master_did' => $master_donation->did))->fetchField();
+    // Set the date so that a new series entry is created.
+    $new_exp = strtotime("now +" . $charge_count ." months");
+    $end_date['month'] = date('m', $new_exp);
+    $end_date['year'] = date('y', $new_exp);
   }
 }
