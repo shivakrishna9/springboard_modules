@@ -26,13 +26,6 @@ function fundraiser_quick_donate_views_default_views_alter(&$views) {
   $handler->display->display_options['style_options']['default_row_class'] = FALSE;
   $handler->display->display_options['style_options']['row_class_special'] = FALSE;
   $handler->display->display_options['row_plugin'] = 'fields';
-  /* No results behavior: Global: Text area */
-  $handler->display->display_options['empty']['area']['id'] = 'area';
-  $handler->display->display_options['empty']['area']['table'] = 'views';
-  $handler->display->display_options['empty']['area']['field'] = 'area';
-  $handler->display->display_options['empty']['area']['empty'] = TRUE;
-  $handler->display->display_options['empty']['area']['content'] = 'no results';
-  $handler->display->display_options['empty']['area']['format'] = 'filtered_html';
 
   // Empty out any pre-existing relationships.
   $handler->display->display_options['relationships'] = array();
