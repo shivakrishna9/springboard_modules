@@ -175,21 +175,6 @@ function commerce_authnet_echeck_fundraiser_commerce_charge($method_instance, $d
 function commerce_authnet_echeck_fundraiser_commerce_cardonfile($donation) {
   $cardonfile_fields = commerce_authnet_echeck_cardonfile_fields($donation);
 
-  // So we need to search locally to see if we have an existing profile for
-  // a card number.
-  // Only perform this when we're in an active non-reference charge.
-  if (isset($donation->reference_charge) && $donation->reference_charge === FALSE) {
-    // Query the db for an existing record.
-    $card_data = _fundraiser_commerce_cardonfile_match($cardonfile_fields);
-
-    // If we have a profile for this user update it locally.
-    if ($card_data) {
-      // Make the update request to authorize.net
-      commerce_authnet_echeck_fundraiser_commerce_update($donation, $card_data);
-    }
-  }
-
-
   return $cardonfile_fields;
 }
 
