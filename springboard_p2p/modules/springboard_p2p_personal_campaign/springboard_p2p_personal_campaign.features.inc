@@ -28,8 +28,7 @@ function springboard_p2p_personal_campaign_ctools_plugin_api($module = NULL, $ap
 function springboard_p2p_personal_campaign_views_api($module = NULL, $api = NULL) {
   return array(
     'api' => '3',
-    'path' => drupal_get_path('module', 'springboard_p2p_personal_campaign') . '/includes/views',
-    'template path' => drupal_get_path('module', 'springboard_p2p_personal_campaign') . '/templates',
+    'path' => drupal_get_path('module', 'springboard_p2p_personal_campaign'),
   );
 } 
 
