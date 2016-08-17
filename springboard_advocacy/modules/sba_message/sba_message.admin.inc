@@ -179,8 +179,6 @@ function sba_message_edit_form($form, &$form_state, $sba_message) {
     watchdog('advocacy', 'A remote group ID could not be found. Local ID: @message', array('@message' => $sba_message->data['group_id']), WATCHDOG_ERROR);
   }
 
-
-
   $form['actions'] = array(
     '#type' => 'container',
     '#attributes' => array('class' => array('form-actions')),
@@ -221,7 +219,7 @@ function sba_message_edit_form($form, &$form_state, $sba_message) {
     $form = sba_target_search_add_target_search_form($form, $form_state, $sba_message);
     // If this is a new message, give the option to save the recipients as a
     // re-usable custom group.
-    if($sba_message->is_new) {
+    if(isset($sba_message->is_new) && $sba_message->is_new != false) {
       $form['save_target_group'] = array(
         '#tree' => true,
         '#type' => 'container',
