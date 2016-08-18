@@ -806,6 +806,9 @@ function springboard_dw_map_submission_item($submission, $submitted_data) {
   $submission_item['device_os'] = $submitted_data['device_os'];
   $submission_item['device_browser'] = $submitted_data['device_browser'];
 
+  // Set the DW extra props to an empty array, for merging in module extra props
+  $dw_extra_props = array();
+
   // Extract extra props to add to the record if applicable.
   if (is_array($submitted_data)) {
     $dw_extra_props =
@@ -815,10 +818,6 @@ function springboard_dw_map_submission_item($submission, $submitted_data) {
   // Get extra props from other modules if set.
   $modules_extra_props = module_invoke_all('springboard_dw_add_extra_props',
     $submission_item['extra_props'], $submission_item['queue_type']);
-
-  // Set the DW extra props to an empty array, and merge in module extra props
-  // if they are set
-  $dw_extra_props = array();
 
   // Validate extra props set in other modules are of array type
   if (is_array($modules_extra_props) && is_array($dw_extra_props)) {
