@@ -118,17 +118,24 @@
 
         // On submission hide the button and replace it with a new value.
         // Wrap the click in a once trigger to be sure that we bind it the one time.
-        $('.fundraiser-donation-form #edit-submit').once(function() {
-          $('.fundraiser-donation-form #edit-submit').click(function() {
+        $('.fundraiser-donation-form').once(function() {
+          $('.fundraiser-donation-form').submit(function( event ) {
             // Validate the form
             if (donationValidate.form()) {
-              $(this).hide();
-              $('.fundraiser_submit_message').hide();
-              $(this).after('<div class="donation-processing-wrapper">' +
-                '<p class="donation-processing">Processing' +
-                '<span class="donation-processing-spinner"></span>' +
-                '</p>' +
-                '</div>');
+              if ($('.fundraiser-donation-form').data('submitted') === true) {
+                // Previously submitted, don't submit again.
+                event.preventDefault();
+              } else {
+                $('.fundraiser-donation-form #edit-submit').hide();
+                $('.fundraiser_submit_message').hide();
+                $('.fundraiser-donation-form #edit-submit').after('<div class="donation-processing-wrapper">' +
+                  '<p class="donation-processing">Processing' +
+                  '<span class="donation-processing-spinner"></span>' +
+                  '</p>' +
+                  '</div>');
+                // Mark it as submitted so that the next submit can be ignored.
+                $('.fundraiser-donation-form').data('submitted', true);
+              }
             }
           });
         });
@@ -140,7 +147,8 @@
         }
         // Other Amount
         if ($('input[name*="other_amount"]')[0]) {
-          $('input[name*="other_amount"]').rules("add", {
+          $('input[name*="other_amount"]').each(function() {
+            $(this).rules("add", {
             required: {
               depends: function(element) {
                 if ($('input[type="radio"][name$="[amount]"][value="other"]:visible').is(":checked"))
@@ -157,19 +165,31 @@
               min: "The amount entered is less than the minimum donation amount."
             }
           });
+        });
         }
 
-        // Focus and Blur conditional functions
-        $('input[type="radio"][name*="amount"]').change(function(){
+        // Focus and Blur conditional functions for non-recurring other amount
+        $('input[type="radio"][name*="[amount]"]').change(function(){
           if ($(this).val() == 'other') {
-            $('input[name*="other_amount"]').focus();
+            $('input[name*="[other_amount]"]').focus();
           } else {
-            $('input[name*="other_amount"]').clearEle();
+            $('input[name*="[other_amount]"]').clearEle();
           }
         });
-        $('input[name*="other_amount"]').focus(function(){
-          $('input[type="radio"][name*="amount"][value="other"]').attr('checked', 'checked');
-        })
+        $('input[name*="[other_amount]"]').focus(function(){
+          $('input[type="radio"][name*="[amount]"][value="other"]').attr('checked', 'checked');
+        });
+        // Focus and Blur conditional functions for recurring other amount
+        $('input[type="radio"][name*="[recurring_amount]"]').change(function(){
+          if ($(this).val() == 'other') {
+            $('input[name*="[recurring_other_amount]"]').focus();
+          } else {
+            $('input[name*="[recurring_other_amount]"]').clearEle();
+          }
+        });
+        $('input[name*="[recurring_other_amount]"]').focus(function(){
+          $('input[type="radio"][name*="[recurring_amount]"][value="other"]').attr('checked', 'checked');
+        });
 
         // Runs on Other Amount field
         $('input[name*="other_amount"]').blur(function(){
@@ -185,7 +205,7 @@
               } else {
                 // Remove all non-integer/period chars
                 value = value.replace(/[^\d\.]+/g,'')
-                  // make first decimal unique
+                // make first decimal unique
                   .replace(/\./i,'-')
                   // replace subsequent decimals
                   .replace(/\./g,'')
@@ -231,7 +251,7 @@
           range: jQuery.validator.format("Enter a value between {0} and {1}"),
           max: jQuery.validator.format("Enter a value less than or equal to {0}"),
           min: jQuery.validator.format("Enter a value greater than or equal to {0}")
-          });
+        });
         // Small helper item
         $('select').each(function(){
           if ($(this).next().is('select')) {

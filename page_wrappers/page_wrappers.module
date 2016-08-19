@@ -173,6 +173,13 @@ function page_wrappers_css_alter(&$css) {
       }
     }
 
+    if (function_exists('honeypot_get_css_file_path')) {
+      $honeypot_css = honeypot_get_css_file_path();
+      if (file_exists($honeypot_css)) {
+        $keep[] = $honeypot_css;
+      }
+    }
+
     // If a stylesheet has been added to the wrapper, don't remove it.
     if (!empty($css_files)) {
       foreach ($css_files as $css_file) {
@@ -1165,6 +1172,7 @@ function _page_wrapper_preview_form() {
   $form['cc']['number'] = array(
     '#type' => 'textfield',
     '#title' => t('Card Number'),
+    '#attributes' => array('autocomplete' => array('off')),
   );
 
   $form['cc']['expdate'] = array(
@@ -1175,6 +1183,7 @@ function _page_wrapper_preview_form() {
   $form['cc']['cvv'] = array(
     '#type' => 'textfield',
     '#title' => t('Card Security Code'),
+    '#attributes' => array('autocomplete' => array('off')),
   );
 
   $form['cc']['recurs'] = array(

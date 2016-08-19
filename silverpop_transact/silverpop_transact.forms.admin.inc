@@ -100,6 +100,13 @@ function silverpop_transact_admin() {
     '#default_value' => variable_get('silverpop_transact_submit_on_cron', ''),
     '#description' => 'Queue messages for cron run rather than sending immediately.',
   );
+  $form['silverpop_transact_row_limit'] = array(
+    '#type' => 'select',
+    '#title' => t('Log retention'),
+    '#default_value' => variable_get('silverpop_transact_row_limit', 10000),
+    '#options' => array(0 => t('All')) + drupal_map_assoc(array(10000, 100000, 1000000)),
+    '#description' => t('The maximum number of messages to keep in the silverpop transact log. Requires a <a href="@cron">cron maintenance task</a>. Set high enough so that pending messages are not deleted before they can be submitted to Silverpop', array('@cron' => url('admin/reports/status')))
+  );
   $form['#submit'] = array(
     'silverpop_transact_encrypt_password',
     'sliverpop_transact_admin_form_submit',
@@ -129,19 +136,20 @@ function silverpop_transact_encrypt_password($form, &$form_state) {
  * Implements hook_form_submit().
  */
 function sliverpop_transact_admin_form_submit($form_id, &$form_state) {
-
-  // Check if XML/SMTP model has been changed. When SMTP is enabled, switch
-  // email_wrapper to use the mailsystem provided by the smtp module.
+  // Check if XML/SMTP model has been changed. When SMTP is enabled, switch to
+  // use the mailsystem provided by the smtp module.
   if ($form_state['input']['silverpop_transact_model'] != variable_get('silverpop_transact_model')) {
     $mail_modes = variable_get('mail_system');
     // SMTP on.
     if ($form_state['input']['silverpop_transact_model'] == 'SMTP') {
       $mail_modes['email_wrappers'] = 'SmtpMailSystem';
+      $mail_modes['default-system'] = 'SmtpMailSystem';
       variable_set('mail_system', $mail_modes);
     }
     // SMTP off.
     else {
       $mail_modes['email_wrappers'] = 'EmailWrappersMailSystemInterface';
+      $mail_modes['default-system'] = 'DefaultMailSystem';
       variable_set('mail_system', $mail_modes);
     }
   }
