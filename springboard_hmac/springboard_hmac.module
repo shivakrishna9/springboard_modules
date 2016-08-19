@@ -74,6 +74,7 @@ function springboard_hmac_verify_page($payload, $hmac) {
   $text = '';
   $format = NULL;
   if (!empty($verify)) {
+    drupal_set_title(variable_get('springboard_hmac_error_title', ''));
     $message = variable_get('springboard_hmac_error_message', array('value' => t('An error occurred and we could not complete the operation.'), 'format' => NULL));
     if (is_array($message)) {
       $text = $message['value'];
