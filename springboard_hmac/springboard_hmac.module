@@ -10,7 +10,7 @@
  */
 function springboard_hmac_menu() {
   $items['hmac/%/%'] = array(
-    'title' => 'Authorization Request',
+    'title' => '',
     'description' => 'Endpoint to verify hmac encoded payloads',
     'page callback' => 'springboard_hmac_verify_page',
     'page arguments' => array(1, 2),
@@ -71,14 +71,22 @@ function springboard_hmac_allowed_actions() {
  */
 function springboard_hmac_verify_page($payload, $hmac) {
   $verify = springboard_hmac_verify($payload, $hmac);
-  $output = '';
+  $text = '';
+  $format = NULL;
   if (!empty($verify)) {
-    $output = variable_get('springboard_hmac_error_message', t('An error occurred and we could not complete the operation.'));
+    $message = variable_get('springboard_hmac_error_message', array('value' => t('An error occurred and we could not complete the operation.'), 'format' => NULL));
+    if (is_array($message)) {
+      $text = $message['value'];
+      $format = $message['format'];
+    }
+    else {
+      $text = $message;
+    }
     if (user_access('administer springboard hmac')) {
       drupal_set_message($verify, 'error');
     }
   }
-  return $output;
+  return check_markup($text, $format);
 }
 
 /**
@@ -355,4 +363,40 @@ function springboard_hmac_save($hmac) {
 function springboard_hmac_create_payload_session($payload, $hmac) {
   $_SESSION['springboard_hmac'] = $payload;
   $_SESSION['springboard_hmac']['hmac'] = $hmac;
+}
+
+/**
+ * Implements hook_springboard_admin_admin_menu_items_alter().
+ */
+function springboard_hmac_springboard_admin_admin_menu_items_alter(&$items) {
+  if (user_access('administer springboard hmac')) {
+    $items['admin/springboard/settings']['_children']['admin/springboard/settings/config']['_children']['admin/config/hmac'] = array(
+      'link_path' => 'admin/config/hmac',
+      'link_title' => 'Springboard HMAC Settings',
+      'menu_name' => 'springboard_admin_menu',
+      'expanded' => 0,
+      'customized' => 1,
+      'weight' => -2,
+    );
+  }
+}
+
+
+/**
+ * Implements hook_springboard_admin_alias_patterns().
+ */
+function springboard_hmac_springboard_admin_alias_patterns() {
+  return array(
+    // Springboard Social config page.
+    'admin/config/hmac' => array(
+      'path' => array(
+        'regex' => '|^/admin/config/hmac$|',
+        'replacement' => 'admin/config/hmac',
+      ),
+      'alias' => array(
+        'regex' => '|^springboard/hmac$|',
+        'replacement' => 'springboard/hmac',
+      ),
+    ),
+  );
 }
