@@ -455,7 +455,7 @@ function sba_social_action_form_sba_social_action_node_form_alter(&$form, &$form
     '#weight' => -4,
   );
   $form['#attached']['css'][] = drupal_get_path('module', 'sba_social_action') . '/css/sba-social-node-form.css';
-  $form['#validate'][] = 'sba_social_action_form_sba_social_action_node_form_validate';
+  $form['actions']['submit']['#validate'][] = 'sba_social_action_form_sba_social_action_node_form_validate';
   $form['actions']['submit']['#submit'][] = 'sba_social_action_form_sba_social_action_node_form_submit';
 
   // Hide field_sba_social_require_auth field if twitter configuration is not
