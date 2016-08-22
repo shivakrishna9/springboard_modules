@@ -132,6 +132,7 @@ function commerce_braintree_web_fundraiser_commerce_form($payment_method) {
 
   $form['braintree'] = array(
     '#type' => 'container',
+    '#id' => 'payment-details',
   );
 
   $form['braintree']['new'] = array(
@@ -183,10 +184,9 @@ function commerce_braintree_web_fundraiser_commerce_form($payment_method) {
     }
   }
 
-  // $form['#validate'][] = '_braintree_payment_form_validate';
-  // $form['#submit'][] = '_braintree_payment_form_submit';
-  //
-  //
+  $form['#validate'][] = '_braintree_payment_form_validate';
+  $form['#submit'][] = '_braintree_payment_form_submit';
+
   return $form;
 }
 

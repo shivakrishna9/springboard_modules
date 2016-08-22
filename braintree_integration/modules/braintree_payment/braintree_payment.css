@@ -15,7 +15,8 @@
   margin-right: 10px;
 }
 
-#payment-details .commerce-month-year-divider {
+#payment-details .commerce-month-year-divider,
+#payment-details .braintree-month-year-divider{
   display: inline-block;
   vertical-align: bottom;
   margin: 0px 5px 0px 2px;
