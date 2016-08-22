@@ -73,6 +73,10 @@ function silverpop_transact_form_webform_email_edit_form_alter(&$form, &$form_st
       '#default_value' => $defaults['smtp_xheader_value'],
       '#weight' => '-51',
     );
+    // Hide N/A form elements by setting their type to 'value'. This way, they
+    // still exist and won't cause errors when other modules go looking for
+    // them.
+    $form['email_wrappers_bcc']['#type'] = 'value';
     $form['#submit'][] = 'silverpop_transact_email_submit_callback';
 
   }
@@ -109,7 +113,7 @@ function silverpop_transact_form_webform_email_edit_form_alter(&$form, &$form_st
     $form['silverpop_transact_additional_tokens'] = array(
       '#type' => 'textarea',
       '#title' => t('Additional Silverpop Tokens'),
-      '#description' => t('All webform values are included automatically. Enter a list of key|value pairs for additional tokens to be used in Silverpop templates.'),
+      '#description' => t('All webform components and their submitted values are included automatically. Additional tokens can be included by entering key|value pairs in the following format:<br>site_name|[site:name]<br>donation_country|[donation:country]<br>donation_number|[donation:order:order-id]'),
       '#default_value' => $defaults['additional_tokens'],
       '#weight' => '-50',
     );
@@ -138,7 +142,7 @@ function silverpop_transact_form_fundraiser_admin_settings_alter(&$form, &$form_
     $form['fundraiser_sustainers']['fundraiser_cc_expiration_message']['silverpop_transact_cc_expiration_message_tokens'] = array(
       '#type' => 'textarea',
       '#title' => t('Silverpop Tokens'),
-      '#description' => t('Enter a list of key|value pairs for additional tokens to be used in Silverpop templates.'),
+      '#description' => t('Enter a list of key|value pairs for additional tokens to be used in Silverpop templates in the following format:<br>site_name|[site:name]<br>current_date|[current-date:short]<br>donation_number|[donation:order:order-id]'),
       '#default_value' => variable_get('silverpop_transact_cc_expiration_message_tokens'),
       '#weight' => '49',
     );
@@ -170,7 +174,7 @@ function silverpop_transact_mail_alter(&$message) {
     }
     if (variable_get('silverpop_transact_model') == 'SMTP') {
       // If no xheader value specified for this email, use the site default.
-      if ($settings['smtp_xheader_value'] == NULL) {
+      if (!isset($settings['smtp_xheader_value']) || $settings['smtp_xheader_value'] === '') {
         $settings['smtp_xheader_value'] = variable_get('silverpop_transact_xheader_value');
       }
       $message['headers']['X-SP-Transact-Id'] = $settings['smtp_xheader_value'];
@@ -200,6 +204,8 @@ function silverpop_transact_mail_alter(&$message) {
       $webform_components = silverpop_transact_load_webform_components($message['params']['submission']->data, $message['params']['node']->webform['components']);
       $personalization_tokens = array_merge($drupal_tokens, $webform_components);
       silverpop_transact_create_mailing($message['to'], $settings['group_id'], $personalization_tokens);
+      // Set to false to stop drupal_mail() from sending.
+      $message['send'] = FALSE;
     }
   }
 }
@@ -255,7 +261,42 @@ function silverpop_transact_views_api() {
 function silverpop_transact_cron() {
   // Wrap in variable check for easy disabling without code push.
   if (variable_get('silverpop_transact_process_logs_during_cron', TRUE)) {
-    silverpop_transact_cron_log_status_update();
+    // Only check the Silverpop logs when in XML mode.
+    if (variable_get('silverpop_transact_model') == 'XML') {
+      silverpop_transact_cron_log_status_update();
+    }
+  }
+
+  // Cleanup the silverpop_transact_log table.
+  $row_limit = variable_get('silverpop_transact_row_limit', 10000);
+
+  // For row limit n, get the id of the nth row in descending id order.
+  // Counting the most recent n rows avoids issues with wid number sequences,
+  // e.g. auto_increment value > 1 or rows deleted directly from the table.
+  if ($row_limit > 0) {
+    $min_row = db_select('silverpop_transact_log', 's')
+      ->fields('s', array('id'))
+      ->orderBy('id', 'DESC')
+      ->range($row_limit - 1, 1)
+      ->execute()->fetchField();
+
+    $filenames = db_select('silverpop_transact_log', 's')
+      ->fields('s', array('filename'))
+      ->condition('id', $min_row, '<')
+      ->execute()->fetchCol();
+
+    // Delete files associated with log records that are about to get deleted.
+    foreach ($filenames as $filename) {
+      $filename = $filename . '.status';
+      file_unmanaged_delete($filename);
+    }
+
+    // Delete all table entries older than the nth row, if nth row was found.
+    if ($min_row) {
+      db_delete('silverpop_transact_log')
+        ->condition('id', $min_row, '<')
+        ->execute();
+    }
   }
 }
 
@@ -282,19 +323,20 @@ function silverpop_transact_cron_log_status_update() {
       // status file, check the status message, and update the corresponding
       // silverpop_transact_log record.
       while ($log_record = $result->fetchAssoc()) {
-        // Get rid of "public://" for easier matching with xml status filenames.
-        $bare_log_filename = str_replace('public://', '', $log_record['filename']);
+        // Get rid of "private://silverpop/silverpop/" for easier matching with xml status filenames.
+        $bare_log_filename = str_replace('private://silverpop/', '', $log_record['filename']);
         if (in_array($bare_log_filename, $status_files)) {
           // Get XML.
           $file = $bare_log_filename . '.status';
-          if (ftp_get($connection, 'private://failed-silverpop-data/' . $file, $file, FTP_ASCII)) {
+
+          if (ftp_get($connection, drupal_realpath($log_record['filename']) . '.status', $file, FTP_ASCII)) {
             watchdog('silverpop_transact', 'Status file downloaded: %file', array('%file' => $file));
           }
           else {
             watchdog('silverpop_transact', 'Could not download status file: %file', array('%file' => $file));
           }
           // Look for status value.
-          $silverpop_status = silverpop_transact_get_xml_status('private://failed-silverpop-data/' . $file);
+          $silverpop_status = silverpop_transact_get_xml_status('private://silverpop/' . $file);
           // Update log record.
           $data = array('silverpop_message' => $silverpop_status, 'id' => $log_record['id']);
           drupal_write_record('silverpop_transact_log', $data, 'id');
@@ -335,7 +377,7 @@ function silverpop_transact_create_mailing($recipient_email, $mailing_id = NULL,
     'personalization' => $personalization,
   );
   $xml = theme('silverpop_transact_mail', $data);
-  $file = file_unmanaged_save_data($xml, "public://", FILE_EXISTS_RENAME);
+  $file = file_unmanaged_save_data($xml, 'private://silverpop/'.time(), FILE_EXISTS_RENAME);
   if (variable_get('silverpop_transact_submit_on_cron')) {
     $queue = DrupalQueue::get("silverpop_transact_queue_xml");
     $queue->createItem($file);
@@ -522,10 +564,12 @@ function silverpop_transact_submit_xml($file) {
   if (!$connection) {
     return 0;
   }
-  // Get the url of the file to be sent to Silverpop.
-  $file_url = file_create_url($file);
+  // Get the file to be sent to Silverpop.
+  $local_file_path = drupal_realpath($file);
+  $remote_file_path = 'transact/inbound/' . str_replace('private://silverpop/', '', $file);
+
   // Attempt to send the XML file to Silverpop.
-  if (ftp_put($connection, 'transact/inbound/' . str_replace('public://', '', $file), $file_url, FTP_ASCII)) {
+  if (ftp_put($connection, $remote_file_path, $local_file_path, FTP_ASCII)) {
     watchdog('silverpop_transact', 'successfully uploaded file %file', array('%file' => $file));
     file_unmanaged_delete($file);
     return 1;
@@ -624,13 +668,13 @@ function silverpop_transact_load_webform_components($submission_data, $component
  * When given an local xml silverpop.satus file, returns <status> value.
  *
  * @param string $file
- *   Path and filename of local xml file. eg 'public://example.status'.
+ *   Path and filename of local xml file. eg 'private://silverpop/example.status'.
  *
  * @return int
  *   Returns value of <status> xml node, eg 1, 2, 3.
  */
 function silverpop_transact_get_xml_status($file) {
-  $xml = simplexml_load_string(file_get_contents($file));
+  $xml = simplexml_load_string(file_get_contents(drupal_realpath($file)));
   return $xml->STATUS;
 }
 
@@ -653,7 +697,7 @@ function silverpop_transact_resubmit_xml($cmt, $context = array()) {
  * Cron queue callback. Uploads xml file and updates log record.
  *
  * @param string $file
- *   Path and filename of local xml file. eg 'public://fileTjVTQB'.
+ *   Path and filename of local xml file. eg 'private://silverpop/fileTjVTQB'.
  */
 function silverpop_transact_process_cron_queue($file) {
   $submit_status = silverpop_transact_submit_xml($file);

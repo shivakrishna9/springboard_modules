@@ -2,7 +2,7 @@
 
 /**
  * @file
- * Install functions for the default form and email wrapper.
+ * Install functions for the default form and email template.
  */
 
 /**
@@ -17,16 +17,14 @@ function _fundraiser_sustainers_upgrade_add_example() {
   $node->title = 'Default Sustainers Upgrade Form';
   $node->status = 1;
   $node->promote = 0;
-  $node->body[LANGUAGE_NONE][0]['value'] = 'Thank you [donation:first_name] [donation:last_name] [sustainer_upgrade:signout] for upgrading your monthly donation to [sustainer_upgrade:upgrade_amount_formatted].
+  $node->body[LANGUAGE_NONE][0]['value'] = 'Thank you [donation:first_name] [donation:last_name]. [sustainer_upgrade:signout] To upgrade your monthly donation to [sustainer_upgrade:upgrade_amount_formatted], click Confirm below.
 
-Your original donation for [donation:currency:code][donation:amount], was made on [donation:payment-transaction:created:short] with your card ending in [donation:card_number]. You have [sustainer_upgrade:charges_remaining] charges remaining in this series, which will be upgraded to [sustainer_upgrade:upgrade_amount_formatted].
-
-To upgrade your sustaining donation to [sustainer_upgrade:upgrade_amount_formatted], click Confirm below.';
+  Your original donation for [donation:currency:symbol][donation:amount], was made on [donation:order:created] with your card ending in [donation:card_number]. You have [sustainer_upgrade:charges_remaining] charges remaining in this series, which will be upgraded to [sustainer_upgrade:upgrade_amount_formatted].';
   $node->body[LANGUAGE_NONE][0]['format'] = 'filtered_html';
   $node->field_sustainers_upgrade_name[LANGUAGE_NONE][0]['value'] = "Default Sustainers Upgrade Form";
   $node->field_sustainers_upgrade_fail[LANGUAGE_NONE][0]['value'] = "Donation upgrade can not be completed.";
-  $node->field_sustainers_upgrade_roll[LANGUAGE_NONE][0]['value'] = "Your donation upgrade has been cancelled and rolled back to [sustainer_upgrade:upgrade_amount_formatted].";
-  $node->field_sustainers_upgrade_b_roll[LANGUAGE_NONE][0]['value'] = 'Hello [donation:first_name] [donation:last_name] [sustainer_upgrade:signout]. To rollback your sustaining donation to [sustainer_upgrade:upgrade_amount_formatted], click Confirm below';
+  $node->field_sustainers_upgrade_roll[LANGUAGE_NONE][0]['value'] = "Your donation upgrade has been canceled and rolled back to [sustainer_upgrade:upgrade_amount_formatted].";
+  $node->field_sustainers_upgrade_b_roll[LANGUAGE_NONE][0]['value'] = 'Hello [donation:first_name] [donation:last_name]. [sustainer_upgrade:signout] To rollback your sustaining donation to [sustainer_upgrade:upgrade_amount_formatted], click Confirm below.';
   $node->webform = array(
     'confirmation' => 'Thank you [donation:first_name] [donation:last_name] for upgrading your sustaining donation to [sustainer_upgrade:upgrade_amount_formatted].',
     'confirmation_format' => 'filtered_html',
@@ -73,7 +71,7 @@ To upgrade your sustaining donation to [sustainer_upgrade:upgrade_amount_formatt
   $confirmation['nid'] = $node->nid;
   $confirmation['confirmation_page_title'] = '';
   _webform_confirmations_update($confirmation);
-  // Save email wrapper details.
+  // Save email template details.
   foreach ($node->webform['components'] as $component) {
     if ($component['form_key'] == 'fsu_confirmation_email') {
       $cid = $component['cid'];
@@ -87,7 +85,7 @@ To upgrade your sustaining donation to [sustainer_upgrade:upgrade_amount_formatt
 }
 
 /**
- * Install the default email wrapper.
+ * Install the default email template.
  */
 function fundraiser_sustainers_upgrade_email_wrapper_add() {
   $node = new stdClass();
@@ -95,7 +93,7 @@ function fundraiser_sustainers_upgrade_email_wrapper_add() {
   $node->type = 'email_wrapper';
   $node->language = LANGUAGE_NONE;
   $node->uid = 1;
-  $node->title = 'Default Sustainers Upgrade Email Wrapper';
+  $node->title = 'Default Sustainers Upgrade Email Template';
   $node->status = 0;
   $node->promote = 0;
   $node->email_wrapper_from_name[LANGUAGE_NONE][0] = array(
