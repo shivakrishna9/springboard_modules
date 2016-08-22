@@ -266,7 +266,7 @@ function braintree_result_error_message($result) {
   // The error message provided by Braintree is fairly user-friendly. We just
   // expose this message to end-user. Improve it when we get unfriendly message.
   // @see https://developers.braintreepayments.com/reference/general/validation-errors/all/php#customer
-  $message = t('@message Please try to fix the problem and try again, or contact Zoos Victoria by phone on 1300 966 784.', array(
+  $message = t('@message Please try to fix the problem and try again.', array(
     '@message' => $result->message,
   ));
 
