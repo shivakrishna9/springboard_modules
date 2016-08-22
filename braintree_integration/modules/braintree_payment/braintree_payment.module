@@ -178,9 +178,6 @@ function _braintree_payment_form_element(&$element, &$form, &$form_state, $payme
 
   $js_settings['clientToken'] = $token;
 
-// @TODO Scott 7/28. How to pass in formId dynamitcally on donation forms?
-$js_settings['formId'] = 'webform-client-form-2';
-
   if ($payment_method == 'braintree_paypal') {
     $js_settings['integration'] = 'paypal';
     $js_settings['paypalContainer'] = 'paypal-container';

@@ -41,48 +41,49 @@ function commerce_braintree_web_form_alter(&$form, &$form_state, $form_id) {
 
   // Use form alter to make sure the external javsacript is always loaded.
   // Attaching in the payment method submit form isn't consistent.
-  if (strstr($form_id, 'commerce_checkout_form') && isset($form['commerce_payment']['payment_details']['braintree'])) {
+  if ((isset($form['#node']->gateways['credit']['id']) && strstr($form['#node']->gateways['credit']['id'], 'braintree_hostedfields')) ||
+       (isset($form['#node']->gateways['paypal']['id']) && strstr($form['#node']->gateways['paypal']['id'], 'braintree_paypal'))) {
     // Add an anchor to jump to payment section when reload page.
     $form['commerce_payment']['payment_anchor'] = array(
       '#markup' => '<a name="payment-section"></a>',
       '#weight' => -10,
     );
 
-    $order = $form_state['order'];
+    // $order = $form_state['order'];
 
-    $charge = commerce_payment_order_balance($order);
+    // $charge = commerce_payment_order_balance($order);
 
-    if ($charge['amount'] === 0) {
-      return TRUE;
-    }
+    // if ($charge['amount'] === 0) {
+    //   return TRUE;
+    // }
 
-    if (!empty($payment_method['settings']['single_settlement_currency'])) {
-      $default_currency_code = commerce_default_currency();
-      $total_amount = commerce_currency_convert($charge['amount'], $charge['currency_code'], $default_currency_code);
-      $total_amount = commerce_braintree_web_price_amount($total_amount, $default_currency_code);
-      $currency = $default_currency_code;
-    }
-    else {
-      $total_amount = commerce_braintree_web_price_amount($charge['amount'], $charge['currency_code']);
-      $currency = $charge['currency_code'];
-    }
+    // if (!empty($payment_method['settings']['single_settlement_currency'])) {
+    //   $default_currency_code = commerce_default_currency();
+    //   $total_amount = commerce_currency_convert($charge['amount'], $charge['currency_code'], $default_currency_code);
+    //   $total_amount = commerce_braintree_web_price_amount($total_amount, $default_currency_code);
+    //   $currency = $default_currency_code;
+    // }
+    // else {
+    //   $total_amount = commerce_braintree_web_price_amount($charge['amount'], $charge['currency_code']);
+    //   $currency = $charge['currency_code'];
+    // }
 
     // Add form ID here for payment method change event.
     $js_settings = array();
     $js_settings['formId'] = str_replace('_', '-', $form_id);
 
-    if (module_exists('braintree_subscription') && variable_get('braintree_use_subscription', 0)) {
-      $use_subscription = braintree_subscription_in_order($order);
-    }
+    // if (module_exists('braintree_subscription') && variable_get('braintree_use_subscription', 0)) {
+    //   $use_subscription = braintree_subscription_in_order($order);
+    // }
 
-    if (!empty($use_subscription)) {
-      $js_settings['singleUse'] = FALSE;
-    }
-    else {
-      $js_settings['singleUse'] = TRUE;
-      $js_settings['amount'] = $total_amount;
-      $js_settings['currency'] = $currency;
-    }
+    // if (!empty($use_subscription)) {
+    //   $js_settings['singleUse'] = FALSE;
+    // }
+    // else {
+    //   $js_settings['singleUse'] = TRUE;
+    //   $js_settings['amount'] = $total_amount;
+    //   $js_settings['currency'] = $currency;
+    // }
 
     $form['#attached']['js'][] = array(
       'data' => array('braintree' => $js_settings),
