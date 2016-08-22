@@ -1005,7 +1005,7 @@ function springboard_advocacy_node_form_post_save($node) {
     drupal_write_record('webform', $submit, 'nid');
   }
 
-  if (empty($node->is_new)) {
+  if (!empty($node->is_new)) {
     $path = 'node/' . $node->nid . '/messages';
     $form_state['redirect'] = $path;
   }
