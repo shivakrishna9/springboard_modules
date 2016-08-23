@@ -163,10 +163,48 @@ function _fundraiser_quick_donate_attach_quick_donate_fields($node) {
  * Implements hook_payment_method_fields_alter().
  */
 function fundraiser_quick_donate_payment_method_fields_alter(&$element, &$payment_method, &$context) {
+  $keys = array(
+    'card_number' => array(),
+    'expiration_date' => array(
+      'card_expiration_year' => array(),
+    ),
+    'card_cvv' => array(),
+    'card_type' => array(),
+  );
+
+  // The way this is set up in fundraiser_commerce, it assumes that all payment
+  // fields will be required. We need to change that by copying the #states
+  // value in the parent element to each applicable child element, then unset
+  // the #states element in the parent.
+  _fundraiser_quick_donate_payment_method_fields_alter_states($element['#states'], $keys, $element);
+  unset($element['#states']);
+
   $element['quickdonate'] = array(
     '#type' => 'hidden',
     '#value' => 'false',
   );
+}
+
+/**
+ * Helper function to update the #states property based on provided keys.
+ *
+ * @param array $states
+ *   The original #states value to copy to the each key in $keys.
+ * @param array $keys
+ *   A multi-dimensional array specifying the keys of the element children to
+ *   copy the states for.
+ * @param array $element
+ *   The form element array.
+ */
+function _fundraiser_quick_donate_payment_method_fields_alter_states($states, $keys, &$element) {
+  foreach ($keys as $key => $value) {
+    if (count($value)) {
+      _fundraiser_quick_donate_payment_method_fields_alter_states($states, $value, $element[$key]);
+    }
+    else {
+      $element[$key]['#states'] = $states;
+    }
+  }
 }
 
 /**
