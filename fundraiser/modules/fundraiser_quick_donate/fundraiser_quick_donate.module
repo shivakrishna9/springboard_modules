@@ -163,14 +163,24 @@ function _fundraiser_quick_donate_attach_quick_donate_fields($node) {
  * Implements hook_payment_method_fields_alter().
  */
 function fundraiser_quick_donate_payment_method_fields_alter(&$element, &$payment_method, &$context) {
-  $keys = array(
-    'card_number' => array(),
-    'expiration_date' => array(
-      'card_expiration_year' => array(),
-    ),
-    'card_cvv' => array(),
-    'card_type' => array(),
-  );
+  if (array_key_exists('bank_name', $element)) {
+    $keys = array(
+      'bank_name' => array(),
+      'account_number' => array(),
+      'confirm_account_number' => array(),
+      'account_type' => array(),
+    );
+  }
+  else {
+    $keys = array(
+      'card_number' => array(),
+      'expiration_date' => array(
+        'card_expiration_year' => array(),
+      ),
+      'card_cvv' => array(),
+      'card_type' => array(),
+    );
+  }
 
   // The way this is set up in fundraiser_commerce, it assumes that all payment
   // fields will be required. We need to change that by copying the #states
