@@ -70,13 +70,13 @@ function sba_message_action_send_message(array $user_message, array $form_state)
       // Set session data to use in later in
       // sba_message_action_form_submit_success hook that needs to have $sid
       // present
-      $_SESSION['springboard_dw']['node_data'] =  $node;
-      $_SESSION['springboard_dw']['contact_data'] =  $contact;
-      $_SESSION['springboard_dw']['response_data'] =  (array) $response->data;
+      $_SESSION['springboard_advocacy_action_webform_data']['node_data'] =  $node;
+      $_SESSION['springboard_advocacy_action_webform_data']['contact_data'] =  $contact;
+      $_SESSION['springboard_advocacy_action_webform_data']['response_data'] =  (array) $response->data;
 
       // Also set reference to the single or multi-step action type so we can
       // submit the data to advocacy success hooks at the appropriate time.
-      $_SESSION['springboard_dw']['is_multiflow_action'] =
+      $_SESSION['springboard_advocacy_action_webform_data']['is_multiflow_action'] =
         ($multi_flow[0]['value'] == 'one') ? FALSE:TRUE;
     }
   }
