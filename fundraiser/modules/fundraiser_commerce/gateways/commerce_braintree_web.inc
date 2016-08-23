@@ -81,6 +81,14 @@ function commerce_braintree_web_fundraiser_commerce_expire($submission_fields) {
     if (isset($transaction->creditCard['expirationYear'])) {
       $expires['year'] = $transaction->creditCard['expirationYear'];
     }
+    // If we could not find expiration month and year (eg paypal), stub an
+    // expiration date 24 months in the future.
+    if (!isset($expires['month']) && !isset($expires['year'])) {
+      $months = variable_get('commerce_braintree_web_sustainer_series_count', 24);
+      $exp_timestamp = strtotime('+' . $months . ' months');
+      $expires['month'] = date('m', $exp_timestamp);
+      $expires['year'] = date('Y', $exp_timestamp);
+    }
   }
   return $expires;
 }
