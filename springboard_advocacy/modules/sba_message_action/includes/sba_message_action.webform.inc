@@ -58,6 +58,7 @@ function sba_message_action_send_message(array $user_message, array $form_state)
     if (!empty($multi_flow[0]['value']) && $multi_flow[0]['value'] == 'multi') {
       $submission['multiflow'] = 'step_one';
     }
+
     // Send submission to API Client.
     $api_call = springboard_advocacy_api_call();
     $response = $api_call->invokeClientMethod('resolveTargets', $submission);
@@ -73,6 +74,10 @@ function sba_message_action_send_message(array $user_message, array $form_state)
       $_SESSION['springboard_dw']['contact_data'] =  $contact;
       $_SESSION['springboard_dw']['response_data'] =  (array) $response->data;
 
+      // Also set reference to the single or multi-step action type so we can
+      // submit the data to advocacy success hooks at the appropriate time.
+      $_SESSION['springboard_dw']['is_multiflow_action'] =
+        ($multi_flow[0]['value'] == 'one') ? FALSE:TRUE;
     }
   }
   return !empty($response->data) ? $response->data : NULL;
