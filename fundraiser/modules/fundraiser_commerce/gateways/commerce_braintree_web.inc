@@ -323,8 +323,10 @@ function commerce_braintree_web_fundraiser_commerce_charge($method_instance, $do
   _fundraiser_commerce_submit_handler_pane_values($pane_values, $donation);
 
   $result = commerce_braintree_web_submit_form_submit($method_instance, $pane_form, $pane_values, $order, $charge);
-
-  if (isset($result->transaction->creditCard['last4'])) {
+  if (isset($result->card_id)) {
+    $donation->data['cardonfile'] = $result->card_id;
+  }
+  if ($result->transaction->paymentInstrumentType == 'credit_card') {
     $donation->donation['payment_fields'] = array(
       'credit' => array(
         'card_number' => $result->transaction->creditCard['last4'],

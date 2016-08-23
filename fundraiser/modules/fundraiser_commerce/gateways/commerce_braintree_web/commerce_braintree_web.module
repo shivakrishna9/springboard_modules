@@ -465,20 +465,21 @@ function commerce_braintree_web_submit_form_submit($payment_method, $pane_form, 
   if (module_exists('commerce_cardonfile')) {
 
     // Store the token with cardonfile.
-    $card_data = commerce_cardonfile_new();
-    $card_data->uid = $order->uid;
-    $card_data->payment_method = $payment_method['method_id'];
-    $card_data->instance_id = $payment_method['instance_id'];
-    $card_data->remote_id = $result->transaction->creditCardDetails->token;
-    $card_data->card_type = $result->transaction->creditCardDetails->cardType;
-    $card_data->card_name = $result->transaction->billingDetails->firstName . ' ' . $result->transaction->billingDetails->lastName;
-    $card_data->card_number = $result->transaction->creditCardDetails->last4;
-    $card_data->card_exp_month = $result->transaction->creditCardDetails->expirationMonth;
-    $card_data->card_exp_year = $result->transaction->creditCardDetails->expirationYear;
-    $card_data->status = 1;
+    $card = commerce_cardonfile_new();
+    $card->uid = $order->uid;
+    $card->payment_method = $payment_method['method_id'];
+    $card->instance_id = $payment_method['instance_id'];
+    $card->remote_id = $result->transaction->creditCardDetails->token;
+    $card->card_type = $result->transaction->creditCardDetails->cardType;
+    $card->card_name = $result->transaction->billingDetails->firstName . ' ' . $result->transaction->billingDetails->lastName;
+    $card->card_number = $result->transaction->creditCardDetails->last4;
+    $card->card_exp_month = $result->transaction->creditCardDetails->expirationMonth;
+    $card->card_exp_year = $result->transaction->creditCardDetails->expirationYear;
+    $card->status = 1;
     // Save and log the creation of the new card on file.
-    $card_entity = commerce_cardonfile_save($card_data);
+    commerce_cardonfile_save($card);
     watchdog('commerce_braintree_web', 'Braintree customer ID @profile_id created and saved to Drupal user @uid.', array('@profile_id' => (string) $result->transaction->customerDetails->id, '@uid' => $order->uid));
+    $result->card_id = $card->card_id;
   }
 
   if ($flag_update_default_method) {
