@@ -491,3 +491,53 @@ function springboard_modules_enabled($modules) {
     }
   }
 }
+
+/**
+ * Contextually registers a string for translation.
+ *
+ * Returns TRUE if multilingual support is enabled, FALSE if not.
+ *
+ * @params $textgroup, $type, $id, $property
+ *   The context of the string to be translated; like this:
+ *   fundraiser -> upsell -> [node ID] -> [field name]
+ * @param $source_string
+ *   The text needing translation.
+ * @param $options
+ *   An array of options as accepted by i18n_string_update().
+ */
+function sb_i18n_set($textgroup, $type, $id, $property, $source_string, $options = array()) {
+  if (!function_exists('i18n_string_update')) {
+    return FALSE;
+  }
+  i18n_string_update(
+    $textgroup . ':' . $type . ':' . $id . ':' . $property,
+    $source_string,
+    $options
+  );
+  return TRUE;
+}
+
+/**
+ * Returns a translated version of text content based on a context, if possible.
+ *
+ * The original string is returned if a translation is
+ * not available for the user's language OR if multilingual
+ * support is not enabled.
+ * 
+ * @params $textgroup, $type, $id, $property
+ *   The context of the string to be translated.
+ * @param $source_string
+ *   The text needing translation.
+ * @param $options
+ *   An array of options as accepted by i18n_string_translate().
+ */
+function sb_i18n_get($textgroup, $type, $id, $property, $source_string, $options = array()) {
+  if (!function_exists('i18n_string_translate')) {
+    return $source_string;
+  }
+  return i18n_string_translate(
+    $textgroup . ':' . $type . ':' . $id . ':' . $property,
+    $source_string,
+    $options
+  );
+}
