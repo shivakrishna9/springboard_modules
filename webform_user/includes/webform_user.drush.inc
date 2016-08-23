@@ -106,6 +106,13 @@ function webform_user_create_missing_users_batch_process($chunk, $node_id, $oper
 
   // Create users from the webform submissions.
   foreach ($submissions as $sid => $submission) {
+    // Skip this submission if mail is empty, otherwise we create a user account
+    // with a blank name, mail, and init field.
+    if (empty($submission['mail'])) {
+      drush_log(dt('Submission @sid missing $submission[\'mail\'], skipping user creation', array('@sid' => $sid)), 'warning');
+      continue;
+    }
+
     $account = user_load_by_mail($submission['mail']);
 
     // Remove empty string values from submission to avoid datatype exceptions.
