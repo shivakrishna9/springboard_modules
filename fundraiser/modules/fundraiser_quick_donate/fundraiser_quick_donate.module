@@ -166,6 +166,7 @@ function fundraiser_quick_donate_payment_method_fields_alter(&$element, &$paymen
   if (array_key_exists('bank_name', $element)) {
     $keys = array(
       'bank_name' => array(),
+      'routing_number' => array(),
       'account_number' => array(),
       'confirm_account_number' => array(),
       'account_type' => array(),
@@ -187,12 +188,16 @@ function fundraiser_quick_donate_payment_method_fields_alter(&$element, &$paymen
   // value in the parent element to each applicable child element, then unset
   // the #states element in the parent.
   _fundraiser_quick_donate_payment_method_fields_alter_states($element['#states'], $keys, $element);
-  unset($element['#states']);
 
   $element['quickdonate'] = array(
     '#type' => 'hidden',
     '#value' => 'false',
+    '#states' => array(
+      'visible' => $element['#states']['visible'],
+    ),
   );
+  unset($element['quickdonate']['#states']['required']);
+  unset($element['#states']['required']);
 }
 
 /**
