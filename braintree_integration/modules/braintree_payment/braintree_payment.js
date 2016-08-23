@@ -27,6 +27,8 @@
           else if ($paymentMethod.filter(':checked').val() == 'credit') {
             settings.braintree.integration = 'custom';
             Drupal.myBraintree.bootstrap();
+          } else {
+            settings.braintree.integration = null;
           }
         });
       }
