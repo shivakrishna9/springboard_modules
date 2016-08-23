@@ -18,6 +18,16 @@
 
           // Destroy Braintree integration.
           Drupal.myBraintreeIntegration && Drupal.myBraintreeIntegration.teardown($.proxy(Drupal.myBraintree.teardown, Drupal.myBraintree));
+
+          // Setup new integration.
+          if ($paymentMethod.filter(':checked').val() == 'paypal') {
+            settings.braintree.integration = 'paypal';
+            Drupal.myBraintree.bootstrap();
+          }
+          else if ($paymentMethod.filter(':checked').val() == 'credit') {
+            settings.braintree.integration = 'custom';
+            Drupal.myBraintree.bootstrap();
+          }
         });
       }
     }
@@ -30,7 +40,7 @@
         return;
       }
 
-      // Set the integration to the one that is currently selected.
+      // Set the integration to the default (checked) one.
       var $paymentMethod = $('input[name="submitted[payment_information][payment_method]"]', context);
       if ($paymentMethod.filter(':checked').val() == 'paypal') {
         settings.braintree.integration = 'paypal';
