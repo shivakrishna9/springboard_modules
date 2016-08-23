@@ -145,17 +145,23 @@
         });
 
         function formIsValid() {
-          // If we are using Braintree hosted fields, both they and the drupal
+          // If we are using Braintree, both the braintree form and the drupal
           // fields must validate.
-          if($('.braintree-hosted-field').length) {
+          if(Drupal.settings.braintree.integration === 'custom') {
             if (donationValidate.form() && braintreeFieldsAreValid()) {
+                return true;
+              } else {
+                return false;
+              }
+          } else if (Drupal.settings.braintree.integration === 'paypal') {
+            if(donationValidate.form() && $('input[name=payment_method_nonce]').length > 0) {
               return true;
-            }
-            else {
+            } else {
               return false;
             }
+          } else {
+            return donationValidate.form();
           }
-          return donationValidate.form();
         }
 
         function braintreeFieldsAreValid() {

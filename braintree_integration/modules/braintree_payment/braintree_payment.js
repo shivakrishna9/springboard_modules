@@ -30,6 +30,15 @@
         return;
       }
 
+      // Set the integration to the one that is currently selected.
+      var $paymentMethod = $('input[name="submitted[payment_information][payment_method]"]', context);
+      if ($paymentMethod.filter(':checked').val() == 'paypal') {
+        settings.braintree.integration = 'paypal';
+      }
+      else if ($paymentMethod.filter(':checked').val() == 'credit') {
+        settings.braintree.integration = 'custom';
+      }
+
       var $body = $('body');
 
       var bootstrapBraitnree = function() {
@@ -367,6 +376,7 @@
 
     this.$submit.removeAttr('disabled');
 
+    // This isn't used anywhere? Also, why not just use obj.nonce?
     var $nonce_el = $('input[name=payment_method_nonce]');
     if ($nonce_el.length > 1) {
       var nonce = $($nonce_el[0]).val();
