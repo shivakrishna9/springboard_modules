@@ -806,7 +806,12 @@ function springboard_dw_map_submission_item($submission, $submitted_data) {
   $submission_item['device_os'] = $submitted_data['device_os'];
   $submission_item['device_browser'] = $submitted_data['device_browser'];
 
-  // Set the DW extra props to an empty array, for merging in module extra props
+  // Set the submission item extra props to an empty array, so we can merge
+  // in from $dw_extra_props.
+  $submission_item['extra_props'] = array();
+
+  // Set the DW extra props to an empty array, for merging
+  // in module extra props.
   $dw_extra_props = array();
 
   // Extract extra props to add to the record if applicable.
