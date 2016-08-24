@@ -1954,6 +1954,7 @@ function fundraiser_donation_update($donation, $vocal_mode = TRUE) {
     $donation_record['form_url'] = $donation->form_url;
   }
   $donation_record['changed'] = REQUEST_TIME;
+  drupal_alter('fundraiser_donation_update_record', $donation, $donation_record);
   _fundraiser_update_donation($donation_record);
   // Refresh the cache. No need to change the donation object passed in, but stored values should be zapped.
   fundraiser_donation_get_donation($donation->did, TRUE);
