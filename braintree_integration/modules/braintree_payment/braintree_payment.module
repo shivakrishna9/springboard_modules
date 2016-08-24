@@ -130,8 +130,10 @@ function _braintree_payment_form_element(&$element, &$form, &$form_state, $payme
     $element['number'] = array(
       '#type' => 'item',
       '#title' => t('Card number'),
-      '#markup' => '<div id="card-number" class="braintree-hosted-field"></div>',
+      '#markup' => '<div id="card-number" class="braintree-hosted-field control-group required"></div>',
       '#id' => 'braintree-field-card-number',
+      '#prefix' => '<div class="control-group">',
+      '#suffix' => '</div>',
     );
 
     $element['expiration'] = array(
@@ -144,7 +146,7 @@ function _braintree_payment_form_element(&$element, &$form, &$form_state, $payme
     $element['expiration']['month'] = array(
       '#type' => 'item',
       '#title' => t('Expiry Month'),
-      '#markup' => '<div id="expiration-month" class="braintree-hosted-field"></div>',
+      '#markup' => '<div id="expiration-month" class="braintree-hosted-field control-group required"></div>',
     );
 
     $element['expiration']['divider'] = array(
@@ -154,18 +156,17 @@ function _braintree_payment_form_element(&$element, &$form, &$form_state, $payme
     $element['expiration']['year'] = array(
       '#type' => 'item',
       '#title' => t('Year'),
-      '#markup' => '<div id="expiration-year" class="braintree-hosted-field"></div>',
+      '#markup' => '<div id="expiration-year" class="braintree-hosted-field control-group required"></div>',
     );
 
     $element['cvv'] = array(
       '#title' => '<a href="#" class="tooltip"><div class="tooltip__text">' . t('The 3 or 4 digit security code on your card') . '</div></a>',
       '#type' => 'item',
       '#title' => t('CVV'),
-      '#markup' => '<div id="cvv" class="braintree-hosted-field"></div>',
+      '#markup' => '<div id="cvv" class="braintree-hosted-field control-group required"></div>',
       '#id' => 'braintree-field-card-cvv',
     );
   }
-
 
   $js_settings = array();
   $arguments = array();

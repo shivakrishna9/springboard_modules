@@ -1,4 +1,4 @@
-#payment-details .form-item {
+/*#payment-details .form-item {
   margin: 0px;
   display: inline-block;
   vertical-align: bottom;
@@ -34,6 +34,16 @@
   background: #FFF;
   box-sizing: content-box;
 }
+*/
+
+/* Why are these IDs so long? */
+#edit-submitted-payment-information-payment-fields-credit-braintree-new-expiration-month,
+#edit-submitted-payment-information-payment-fields-credit-braintree-new-expiration-year {
+  display: inline-block;
+  width: 8em;
+  clear:none;
+  float: none;
+}
 
 #expiration-month {
   width: 6em;
@@ -47,6 +57,12 @@
   width: 5em;
 }
 
+.braintree-month-year-divider {
+    display: inline-block;
+    width: 1em;
+}
+
+/*
 .braintree-hosted-fields-focused {
   border-color: #777;
 }
@@ -83,3 +99,4 @@ body.using-existing-payment-method #payment-details .form-item-commerce-payment-
   clear: both;
   margin-top: 1rem;
 }
+*/
