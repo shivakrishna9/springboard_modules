@@ -135,13 +135,9 @@ function fundraiser_quick_donate_node_prepare($node) {
  *   The modified node object.
  */
 function _fundraiser_quick_donate_attach_quick_donate_fields($node) {
-  if (isset($node->nid)) {
-    $results = db_query('SELECT quickdonate_optin_message, quickdonate_help_message_format, quickdonate_help_message, quickdonate_login_message, quickdonate_login_link_message FROM {fundraiser_quick_donate} WHERE fundraiser_nid = :nid', array(
-      ':nid' => $node->nid,
-    ))->fetchAssoc();
-    $results['quickdonate'] = TRUE;
-  }
-  else {
+  if (!isset($node->nid) || empty($results = db_query('SELECT quickdonate_optin_message, quickdonate_help_message_format, quickdonate_help_message, quickdonate_login_message, quickdonate_login_link_message FROM {fundraiser_quick_donate} WHERE fundraiser_nid = :nid', array(
+    ':nid' => $node->nid,
+  ))->fetchAssoc())) {
     // Set default values.
     $results = array(
       'quickdonate_optin_message' => variable_get('fundraiser_quick_donate_default_optin_message', 'Save this @type for future use?'),
@@ -152,10 +148,13 @@ function _fundraiser_quick_donate_attach_quick_donate_fields($node) {
       'quickdonate' => FALSE,
     );
   }
-
-  foreach ($results as $key => $result) {
-    $node->{$key} = $result;
+  else {
+    $results['quickdonate'] = TRUE;
+    foreach ($results as $key => $result) {
+      $node->{$key} = $result;
+    }
   }
+
   return $node;
 }
 
