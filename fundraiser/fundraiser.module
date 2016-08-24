@@ -1890,6 +1890,7 @@ function fundraiser_donation_create($donation) {
   elseif (is_array($donation->gateway) && isset($donation->gateway['id']) && !empty($donation->gateway['id'])) {
     $donation_record['gateway'] = $donation->gateway['id'];
   }
+  drupal_alter('fundraiser_donation_create_record', $donation, $donation_record);
   _fundraiser_create_donation($donation_record);
   // Add a comment.
   global $user;

@@ -2943,3 +2943,15 @@ function fundraiser_commerce_gateway_image_validate($element, &$form_state, $for
     form_error($element, t('Unselected image field is required'));
   }
 }
+
+/**
+ * Implements hook_fundraiser_donation_create_record_alter().
+ */
+function fundraiser_commerce_fundraiser_donation_create_record_alter($donation, &$donation_record) {
+  if (module_exists('commerce_cardonfile')) {
+    $card = _fundraiser_commerce_donation_cardonfile_card($donation);
+    if (!empty($card)) {
+      $donation_record['card_id'] = $card->card_id;
+    }
+  }
+}
