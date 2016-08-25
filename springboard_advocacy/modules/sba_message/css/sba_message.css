@@ -35,3 +35,19 @@
   color: #333;
 
 }
+
+#edit-actions #edit-submit {
+  width: 65%;
+  line-height: 2em;
+  display: block;
+  border-radius: 4px;
+  border: none;
+  background: url("../img/arrow-message-save-button.png") 34% center no-repeat #247AAD;
+  font-family: "Open Sans";
+  font-size: 28px;
+  font-weight: 400;
+  color: #FFF;
+  text-align: center;
+  margin-bottom: 25px;
+  margin-top: 20px;
+}
