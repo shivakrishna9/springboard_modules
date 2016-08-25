@@ -264,7 +264,14 @@ function commerce_braintree_web_submit_form_submit($payment_method, $pane_form, 
     $merchant_account_id = commerce_braintree_web_get_merchant_account_id($payment_method, $charge['currency_code']);
   }
 
-  $customer_id = (module_exists('braintree_vault')) ? braintree_customer_id() : NULL;
+  // $customer_id = (module_exists('braintree_vault')) ? braintree_customer_id() : NULL;
+
+  // Get the customer's braintree customer_id from the Drupal User, if it has
+  // been previously saved.
+  if (module_exists('braintree_vault')) {
+    $customer = user_load_by_mail($customer_mail);
+    $customer_id = braintree_customer_id($customer);
+  }
 
   if (isset($pane_form['braintree']['using_existing_payment_method']) &&
     !empty($pane_values['braintree']['using_existing_payment_method']) &&
@@ -298,10 +305,10 @@ function commerce_braintree_web_submit_form_submit($payment_method, $pane_form, 
       $braintree_payment_method = $result->paymentMethod;
       $token = $braintree_payment_method->token;
     }
-    elseif ($default_token != $token) {
-      $flag_update_default_method = TRUE;
-      $braintree_payment_method = braintree_payment_method_load_in_account($token, $user);
-    }
+    // elseif ($default_token != $token) {
+    //   $flag_update_default_method = TRUE;
+    //   $braintree_payment_method = braintree_payment_method_load_in_account($token, $user);
+    // }
   }
 
   $context = array(
@@ -395,6 +402,7 @@ function commerce_braintree_web_submit_form_submit($payment_method, $pane_form, 
 //        'paymentMethodNonce' => $nonce,
         'options' => array(
           'submitForSettlement' => TRUE,
+          'storeInVaultOnSuccess' => TRUE,
         ),
       );
 
@@ -430,8 +438,6 @@ function commerce_braintree_web_submit_form_submit($payment_method, $pane_form, 
             'region' => $administrative_area,
           ),
         );
-
-        $sale_data['options']['storeInVaultOnSuccess'] = TRUE;
       }
     }
 
@@ -457,39 +463,42 @@ function commerce_braintree_web_submit_form_submit($payment_method, $pane_form, 
     $result = $context['result'];
   // }  // End Braintree subscription else
 
-  // Create a cardonfile record. Adapted from commerce_cybersource.module
+    if ($result->success) {
+      // Save returned braintree customer id, if it has not been previously saved.
+      $return_customer_id = $result->transaction->customerDetails->id;
+      if (empty($customer_id) && $return_customer_id) {
+        braintree_customer_id_save($customer, $return_customer_id);
+      }
 
-  // If Card on File storage is enabled and this appears to be a new card
-  // if (empty($add_payment_form) && module_exists('commerce_cardonfile') && $payment_method['settings']['credit_card']['cardonfile']
-  //   && (empty($pane_values['cardonfile']) || !empty($pane_values['credit_card']['cardonfile_store']))) {
-  if (module_exists('commerce_cardonfile')) {
+      // If cardonfile is enabled and this appears to be a new card.
+      if (module_exists('commerce_cardonfile') && empty(commerce_cardonfile_load_multiple_by_remote_id($result->transaction->creditCardDetails->token))) {
 
-    // Store the token with cardonfile.
-    $card = commerce_cardonfile_new();
-    $card->uid = $order->uid;
-    $card->payment_method = $payment_method['method_id'];
-    $card->instance_id = $payment_method['instance_id'];
-    $card->remote_id = $result->transaction->creditCardDetails->token;
-    $card->card_type = $result->transaction->creditCardDetails->cardType;
-    $card->card_name = $result->transaction->billingDetails->firstName . ' ' . $result->transaction->billingDetails->lastName;
-    $card->card_number = $result->transaction->creditCardDetails->last4;
-    $card->card_exp_month = $result->transaction->creditCardDetails->expirationMonth;
-    $card->card_exp_year = $result->transaction->creditCardDetails->expirationYear;
-    $card->status = 1;
-    // Save and log the creation of the new card on file.
-    commerce_cardonfile_save($card);
-    watchdog('commerce_braintree_web', 'Braintree customer ID @profile_id created and saved to Drupal user @uid.', array('@profile_id' => (string) $result->transaction->customerDetails->id, '@uid' => $order->uid));
-    $result->card_id = $card->card_id;
-  }
+        // Store the token with cardonfile.
+        $card = commerce_cardonfile_new();
+        $card->uid = $order->uid;
+        $card->payment_method = $payment_method['method_id'];
+        $card->instance_id = $payment_method['instance_id'];
+        $card->remote_id = $result->transaction->creditCardDetails->token;
+        $card->card_type = $result->transaction->creditCardDetails->cardType;
+        $card->card_name = $result->transaction->billingDetails->firstName . ' ' . $result->transaction->billingDetails->lastName;
+        $card->card_number = $result->transaction->creditCardDetails->last4;
+        $card->card_exp_month = $result->transaction->creditCardDetails->expirationMonth;
+        $card->card_exp_year = $result->transaction->creditCardDetails->expirationYear;
+        $card->status = 1;
+        // Save and log the creation of the new card on file.
+        commerce_cardonfile_save($card);
+        watchdog('commerce_braintree_web', 'Braintree customer ID @profile_id created and saved to Drupal user @uid.', array('@profile_id' => (string) $result->transaction->customerDetails->id, '@uid' => $order->uid));
+        $result->card_id = $card->card_id;
+      }
 
-  if ($flag_update_default_method) {
-    $context = array();
-    $vault_result = braintree_vault_payment_method_make_default($braintree_payment_method, $context, $error_message);
-    if ($vault_result === FALSE) {
-      watchdog('commerce_braintree_web', 'Failed to update default payment method @token of user @uid', ['@token'=>$token, '@uid'=>$user->uid]);
+      if ($flag_update_default_method) {
+        $context = array();
+        $vault_result = braintree_vault_payment_method_make_default($braintree_payment_method, $context, $error_message);
+        if ($vault_result === FALSE) {
+          watchdog('commerce_braintree_web', 'Failed to update default payment method @token of user @uid', ['@token'=>$token, '@uid'=>$user->uid]);
+        }
+      }
     }
-  }
-
   // Process the Braintree response and create a payment transaction.
   // Note the code after commerce_braintree_web_process_transaction() could be
   // never executed if we redirect user to complete page in the following hook.

@@ -170,12 +170,12 @@ function braintree_vault_hook_info() {
  */
 function braintree_customer_load_by_account($account, $reset = FALSE) {
   // return static_cache_get('braintree_customer_cache', $account->uid, $reset, function() use ($account) {
-    // if ($customer_id = braintree_customer_id($account)) {
+    if ($customer_id = braintree_customer_id($account)) {
       $customer = braintree_customer_load($customer_id);
       return $customer;
-    // }
+    }
 
-    // return FALSE;
+    return FALSE;
   // });
 }
 
@@ -613,19 +613,21 @@ function braintree_vault_payment_method_make_default($payment_method, $context =
     // Braintree makeDefault method only changes default payment method for
     // future payment. For existing subscriptions, we need update payment
     // method token of subscription manually.
-    $customer = braintree_customer_load_by_account($user);
-    $subscriptions = braintree_customer_subscriptions($customer);
+    if (module_exists('braintree_subscription')) {
+      $customer = braintree_customer_load_by_account($user);
+      $subscriptions = braintree_customer_subscriptions($customer);
 
-    foreach ($subscriptions as $subscription) {
-      if ($subscription->paymentMethodToken == $payment_method->token) {
-        continue;
+      foreach ($subscriptions as $subscription) {
+        if ($subscription->paymentMethodToken == $payment_method->token) {
+          continue;
+        }
+
+        $subscription_data = array(
+          'paymentMethodToken' => $payment_method->token,
+        );
+        $context = array('function' => 'braintree_payment_method_make_default_form_submit');
+        braintree_subscription_update($subscription->id, $subscription_data, $context, $error_message);
       }
-
-      $subscription_data = array(
-        'paymentMethodToken' => $payment_method->token,
-      );
-      $context = array('function' => 'braintree_payment_method_make_default_form_submit');
-      braintree_subscription_update($subscription->id, $subscription_data, $context, $error_message);
     }
 
     braintree_customer_cache_reset($user->uid);
