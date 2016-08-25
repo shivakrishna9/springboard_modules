@@ -364,6 +364,7 @@ function sba_message_edit_form_submit(&$form, &$form_state) {
     );
     module_load_include('inc', 'springboard_target', 'includes/springboard_target.api_calls');
     $group_id = springboard_target_api_save_target_group($group, $is_new);
+    $sba_message->data['recipients'] = html_entity_decode($sba_message->data['recipients']);
     if ($group_id) {
       $sba_message->data['group_id'] = $group_id;
       $sba_message->changed = time();
