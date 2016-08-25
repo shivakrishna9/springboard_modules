@@ -115,7 +115,8 @@ function sba_target_search_preprocess_views_view_table(&$vars) {
   $view = $vars['view'];
   $fields = &$view->field;
   $columns = $view->style_plugin->options['columns'];
-  if($view->name == 'targets' && $view->current_display == 'block_3' && in_array('Groups', array_keys($view->filter['search_class_name']->value))) {
+  $classes = $view->filter['search_class_name']->value;
+  if($view->name == 'targets' && $view->current_display == 'block_3' && in_array('Group', $classes)) {
     $group_fields = array('last_name', 'group_name', 'target_actions');
     foreach($vars['header'] as $key => $head) {
       if(!in_array($key, $group_fields)) {
