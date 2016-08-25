@@ -1107,6 +1107,8 @@ function fundraiser_commerce_fundraiser_donation_create($donation) {
     }
   }
 
+  // Assigning this to the data property will allow this to be saved correctly
+  // to the data field schema.
   $profile->data = addressfield_default_values($field, $instance);
   $profile->data['country'] = $donation->donation['country'];
   $profile->data['name_line'] = $donation->donation['first_name'] . ' ' . $donation->donation['last_name'];
@@ -1117,6 +1119,10 @@ function fundraiser_commerce_fundraiser_donation_create($donation) {
   $profile->data['premise'] = $donation->donation['address_line_2'];
   $profile->data['locality'] = $donation->donation['city'];
   $profile->data['postal_code'] = $donation->donation['zip'];
+  // Since some modules rely on the `commerce_customer_address` property being
+  // set (looking at you commerce_authnet), need to assign the same value in
+  // $profile->data.
+  $profile->commerce_customer_address[LANGUAGE_NONE][0] = $profile->data;
   commerce_customer_profile_save($profile);
   $order->commerce_customer_billing[LANGUAGE_NONE][0]['profile_id'] = $profile->profile_id;
 
