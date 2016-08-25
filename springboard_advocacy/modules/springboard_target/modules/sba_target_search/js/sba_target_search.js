@@ -639,7 +639,7 @@
         }
         if ((typeof(context) !== 'undefined' && typeof(context[0]) === 'undefined') || id.indexOf('add-more-wrapper') != -1 || id.indexOf('message-edit-form') != -1) {
             setTimeout(function () {
-                var recips = $('#springboard-advocacy-target-recipients');
+                var recips = $('#springboard-advocacy-target-recipients-container .inner');
                 var offset = recips.offset();
                 var newTop;
                 if (recips.hasClass('recipients-fixed')) {

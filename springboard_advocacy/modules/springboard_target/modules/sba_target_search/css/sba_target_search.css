@@ -101,7 +101,7 @@
   width: 100%;
 }
 /* adjust the recipients box position when admin menu is in use. */
-#springboard-advocacy-target-recipients.recipients-fixed {
+#springboard-advocacy-target-recipients-container .inner.recipients-fixed {
   margin-top: 44px;
 }
 
