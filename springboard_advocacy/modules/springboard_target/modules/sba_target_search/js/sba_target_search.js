@@ -342,7 +342,7 @@
             custHideWidgets.hide();
             custWidgets.show(300);
             custGroupWidgets.show(300);
-            $('.faux-tab.custom').addClass('active');
+            $('.faux-tab.custom-individual').addClass('active');
             $('#edit-submit-targets').show().attr('value', 'Search');
         }
         else if(window.search_state == 'custom-group') {
@@ -355,7 +355,7 @@
             custHideWidgets.hide();
             custWidgets.show(300);
             custGroupWidgets.show(300);
-            $('.faux-tab.groups').addClass('active');
+            $('.faux-tab.custom-groups').addClass('active');
             $('#edit-submit-targets').show().attr('value', 'Search');
         }
         else {
