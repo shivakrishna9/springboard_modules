@@ -221,7 +221,7 @@ function springboard_advocacy_springboard_admin_admin_menu_items_alter(&$items) 
     // Springboard Advocacy > Custom Targets.
     $items['admin/springboard/advocacy/actions']['_children']['admin/springboard/advocacy/targets'] = array(
       'link_path' => 'admin/springboard/advocacy/targets',
-      'link_title' => 'Custom Targets',
+      'link_title' => 'Custom Targets & Groups',
       'menu_name' => 'springboard_admin_menu',
       'expanded' => 1,
       'customized' => 1,
