@@ -179,7 +179,7 @@ function sba_target_search_add_target_search_form($form, &$form_state, $entity =
   $form['target_recipients'] = array (
       '#id' => 'springboard-advocacy-target-recipients',
       '#type' => 'markup',
-      '#markup' => '<div id="springboard-advocacy-target-recipients"><h3>Message Targets</h3><div class = "sba-charcount-status"></div><div class = "sba-target-status"></div><div class = "sba-message-status"></div><div id="springboard-advocacy-target-recipients-content"></div></div>',
+      '#markup' => '<div id="springboard-advocacy-target-recipients"><h3>Message Targets</h3><div class = "sba-charcount-status"></div><div class = "sba-target-status"></div><div class = "sba-message-status"></div><div id="springboard-advocacy-target-recipients-content" class="clearfix"></div></div>',
       '#prefix' => '<div id="springboard-advocacy-target-recipients-container"><div class="inner">',
       '#suffix' => '</div></div>',
       '#weight' => 99,

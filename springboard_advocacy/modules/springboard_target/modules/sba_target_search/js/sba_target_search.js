@@ -1242,7 +1242,7 @@
         $('.targeting-count, .remove-all-targets').remove();
         var message = [];
         var groups = parseInt($('.target-recipient .title').length);
-        var individs = parseInt($('.target-recipient .individual').length);
+        var individs = parseInt($('.target-recipient .legislator').length) + parseInt($('.target-recipient .individual').length);
         var gCount = groups > 1 ? 'groups' : 'group';
         var iCount = individs > 1 ? 'individuals' : 'individual';
 
@@ -1255,7 +1255,9 @@
 
         var countMessage = '<strong>Targeting: </strong> ' + message.join(' & ');
         var counter = '<div class="targeting-count">' + countMessage + '</div><a class="remove-all-targets">Remove All Targets</a></div>';
-        if(individs > 0 || groups > 0) {
+        console.log(individs);
+         console.log(groups);
+         if(individs > 0 || groups > 0) {
             $('#springboard-advocacy-target-recipients-content').append(counter);
         }
 
@@ -1401,7 +1403,7 @@
             var displayTitle = sal + " " +  first + " " + last + ' ' + party  + "<br />" + affiliation;
             if (type == 'group') {
                 divClass = 'target group';
-                displayTitle = group;
+                displayTitle = '<div class="title"><h4>' + group + '</h4></div>';
             }
             else if(type == 'Target') {
                 divClass = 'target individual';
