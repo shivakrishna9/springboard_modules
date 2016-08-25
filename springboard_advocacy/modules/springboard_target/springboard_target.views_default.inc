@@ -526,10 +526,10 @@ function springboard_target_views_default_views() {
   $handler->display->display_options['empty']['area']['format'] = 'full_html';
   $handler->display->display_options['defaults']['fields'] = FALSE;
   /* Field: Advocacy: Group Name */
-  $handler->display->display_options['fields']['name']['id'] = 'name';
-  $handler->display->display_options['fields']['name']['table'] = 'advocacy';
-  $handler->display->display_options['fields']['name']['field'] = 'name';
-  $handler->display->display_options['fields']['name']['element_label_colon'] = FALSE;
+  $handler->display->display_options['fields']['group_name']['id'] = 'group_name';
+  $handler->display->display_options['fields']['group_name']['table'] = 'advocacy';
+  $handler->display->display_options['fields']['group_name']['field'] = 'name';
+  $handler->display->display_options['fields']['group_name']['element_label_colon'] = FALSE;
   /* Field: Advocacy: Group Actions */
   $handler->display->display_options['fields']['group_actions']['id'] = 'group_actions';
   $handler->display->display_options['fields']['group_actions']['table'] = 'advocacy';
@@ -567,15 +567,15 @@ function springboard_target_views_default_views() {
     5 => 0,
   );
   /* Filter criterion: Advocacy: Group Name */
-  $handler->display->display_options['filters']['name']['id'] = 'name';
-  $handler->display->display_options['filters']['name']['table'] = 'advocacy';
-  $handler->display->display_options['filters']['name']['field'] = 'name';
-  $handler->display->display_options['filters']['name']['exposed'] = TRUE;
-  $handler->display->display_options['filters']['name']['expose']['operator_id'] = 'name_op';
-  $handler->display->display_options['filters']['name']['expose']['label'] = 'Group Name';
-  $handler->display->display_options['filters']['name']['expose']['operator'] = 'name_op';
-  $handler->display->display_options['filters']['name']['expose']['identifier'] = 'name';
-  $handler->display->display_options['filters']['name']['expose']['remember_roles'] = array(
+  $handler->display->display_options['filters']['group_name']['id'] = 'group_name';
+  $handler->display->display_options['filters']['group_name']['table'] = 'advocacy';
+  $handler->display->display_options['filters']['group_name']['field'] = 'name';
+  $handler->display->display_options['filters']['group_name']['exposed'] = TRUE;
+  $handler->display->display_options['filters']['group_name']['expose']['operator_id'] = 'name_op';
+  $handler->display->display_options['filters']['group_name']['expose']['label'] = 'Group Name';
+  $handler->display->display_options['filters']['group_name']['expose']['operator'] = 'name_op';
+  $handler->display->display_options['filters']['group_name']['expose']['identifier'] = 'name';
+  $handler->display->display_options['filters']['group_name']['expose']['remember_roles'] = array(
     2 => '2',
     1 => 0,
     3 => 0,

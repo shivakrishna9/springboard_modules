@@ -200,7 +200,7 @@
             var finder = $('.view-targets', '#springboard-advocacy-find-targets-container');
             // create faux sub-tabs for custom targets
             finder.prepend('<div class="faux-subtab-container"><div class="faux-tab custom-individual"' +
-                '><a href ="#custom-individual" class="custom-search custom-individual-subsearch">Targets</a></div><' +
+                '><a href ="#custom-individual" class="custom-search custom-individual-subsearch">Individuals</a></div><' +
                 'div class="faux-tab custom-groups"><a href ="#custom-groups" class="custom-groups-subsearch">Groups</a></div></div>');
             // create faux primary tabs
             finder.prepend('<div class="faux-tab-container"><div class="faux-tab legislative"' +
@@ -221,7 +221,7 @@
         // Custom target specific search elements
         var custWidgets = $('.faux-subtab-container'); // both custom options
         var custIndividualWidgets  = $('#edit-combine-wrapper'); // custom individual search only
-        var custGroupWidgets = $('#edit-name-wrapper');  // custom group search only
+        var custGroupWidgets = $('#edit-group-name-wrapper');  // custom group search only
         // Elements to hide only on custom tab
         var custHideWidgets = $('#state-district-wrapper');
 
@@ -372,28 +372,60 @@
             $('.faux-tab.legislative').addClass('active');
         }
 
-      //set up up default placeholder text in group search textfield
-      var groupField = $('#edit-name');
-      //if (groupField.val().length == 0) {
-        var desc = $('#edit-name-wrapper .description');
-        var placeholder = desc.text().trim();
+      //set up up default placeholder text in legislative/individual search textfield
+      var legField = $('#edit-combine');
+        console.log(legField.val());
+        console.log(legField.val().length);
+        var desc = $('#edit-combine-wrapper .description');
+        var legPlaceholder = desc.text().trim();
         desc.hide();
-        groupField.attr('placeholder', placeholder);
-        groupField.focus(function () {
-          $(this).attr('placeholder', '');
+        if (legField.val().length == 0) {
+            legField.attr('placeholder', legPlaceholder);
+        }
+        legField.focus(function () {
+            $(this).attr('placeholder', '');
         });
-      //}
+        legField.blur(function() {
+            if(legField.val().length == 0) {
+                $(this).attr('placeholder', legPlaceholder);
+            }
+        });
+
+
+        //set up up default placeholder text in group search textfield
+        var groupField = $('#edit-group-name');
+        var groupDesc = $('#edit-group-name-wrapper .description');
+        var groupPlaceholder = groupDesc.text().trim();
+        groupDesc.hide();
+        console.log(groupField.val());
+        if (groupField.val().length == 0) {
+            groupField.attr('placeholder', groupPlaceholder);
+        }
+        groupField.focus(function () {
+            $(this).attr('placeholder', '');
+        });
+        groupField.blur(function() {
+            if(groupField.val().length == 0) {
+                $(this).attr('placeholder', groupPlaceholder);
+            }
+        });
+
 
         //set up up default placeholder text in name search textfield
+        var comDesc = $('.description', '#edit-search-committee-wrapper');
+        var comPlaceholder = comDesc.text().trim();
+        comDesc.hide();
         if (comField.text().length == 0) {
-            var desc = $('.description', '#edit-search-committee-wrapper');
-            var placeholder = desc.text().trim();
-            desc.hide();
-            comField.attr('placeholder', placeholder);
-            comField.focus(function () {
-                $(this).attr('placeholder', '');
-            });
+            comField.attr('placeholder', comPlaceholder);
         }
+        comField.focus(function () {
+            $(this).attr('placeholder', '');
+        });
+        comField.blur(function() {
+            if(comField.val().length == 0) {
+                $(this).attr('placeholder', comPlaceholder);
+            }
+        });
 
         // Hide target results if search criteria are updated
         $('input', '#edit-search-committee-wrapper').on('keydown', function(){

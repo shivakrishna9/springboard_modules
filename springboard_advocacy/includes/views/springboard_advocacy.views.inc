@@ -299,7 +299,7 @@ function springboard_advocacy_views_data() {
   );
 
   // Custom group name field.
-  $data['advocacy']['name'] = array(
+  $data['advocacy']['group_name'] = array(
     'title' => t('Group Name'),
     'help' => t('Custom group name'),
     'field' => array(

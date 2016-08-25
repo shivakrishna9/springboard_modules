@@ -118,7 +118,6 @@ class springboard_advocacy_views_plugin_query extends views_plugin_query {
       // Get the targets.
       // Custom Group search
       if(isset($fields['class_name']) && $fields['class_name'] == 'Group') {
-        $fields['group_name'] = $fields['name'];
          $response = $api_call->invokeClientMethod('searchTargetGroups', $fields);
       }
       // Legislative and custom individuals
@@ -131,6 +130,9 @@ class springboard_advocacy_views_plugin_query extends views_plugin_query {
       }
       else if(isset($response->data->groups)) {
         $items = $response->data->groups;
+        foreach($items as $key => $item) {
+          $items[$key]->group_name = $item->name;
+        }
       }
       if (!empty($items)) {
 

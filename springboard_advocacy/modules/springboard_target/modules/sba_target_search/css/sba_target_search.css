@@ -408,7 +408,8 @@
 
 
 #springboard-advocacy-find-targets  div#edit-combine-wrapper ,
-#springboard-advocacy-find-targets  div#edit-search-committee-wrapper {
+#springboard-advocacy-find-targets  div#edit-search-committee-wrapper,
+#springboard-advocacy-find-targets  div#edit-group-name-wrapper{
   display: block;
   margin-bottom:1em;
   margin-right: 0;
@@ -485,7 +486,7 @@
 
 #springboard-advocacy-find-targets  .views-widget input#edit-combine,
 #springboard-advocacy-find-targets  .views-widget input#edit-search-committee,
-#springboard-advocacy-find-targets  .views-widget input#edit-name {
+#springboard-advocacy-find-targets  .views-widget input#edit-group-name {
   border-radius: 4px;
   max-width: 708px;
   width: 100%;
@@ -497,10 +498,10 @@
   padding: 8px 20px 8px 40px;
   height: auto;
 }
-#springboard-advocacy-find-targets #edit-name-wrapper {
+#springboard-advocacy-find-targets #edit-group_name-wrapper {
   float: none;
 }
-#springboard-advocacy-find-targets #edit-name-wrapper label {
+#springboard-advocacy-find-targets #edit-group-name-wrapper label {
 
 }
 
@@ -534,7 +535,7 @@
   margin: 1em 3em 1em 0;
 }
 
-#springboard-advocacy-find-targets .radio-widgets .views-exposed-widget#edit-name-wrapper {
+#springboard-advocacy-find-targets .radio-widgets .views-exposed-widget#edit-group-name-wrapper {
   margin: -1.2em -1em 1em;
 }
 
