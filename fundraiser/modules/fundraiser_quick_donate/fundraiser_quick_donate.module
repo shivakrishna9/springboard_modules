@@ -335,3 +335,12 @@ function fundraiser_quick_donate_form_commerce_cardonfile_card_form_alter(&$form
     ),
   ) + $form;
 }
+
+/**
+ * Implements hook_form_FORM_ID_alter().
+ *
+ * Remove the Quick Donate Opt In field from appearing on the user edit form.
+ */
+function fundraiser_quick_donate_form_user_profile_form_alter(&$form, $form_state) {
+  unset($form['field_quick_donate_opt_in']);
+}
