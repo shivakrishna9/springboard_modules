@@ -21,7 +21,7 @@ function commerce_braintree_web_commerce_payment_method_info() {
     'cardonfile' => array(
       // 'charge callback' => 'commerce_braintree_web_cardonfile_charge',
       'update callback' => 'commerce_braintree_web_cardonfile_update',
-      // 'delete callback' => 'commerce_braintree_web_cardonfile_delete',
+      'delete callback' => 'commerce_braintree_web_cardonfile_delete',
     ),
   );
 
@@ -62,6 +62,26 @@ function commerce_braintree_web_cardonfile_update($form, &$form_state, $payment_
       drupal_set_message(braintree_result_error_message($result), 'error');
       return FALSE;
     }
+  }
+  return TRUE;
+}
+
+/**
+ * Card on file callback: deletes the payment_method at Braintree.
+ */
+function commerce_braintree_web_cardonfile_delete($form, &$form_state, $payment_method, $card_data) {
+  braintree_initialize();
+  try {
+    $result = Braintree_PaymentMethod::delete($card_data->remote_id);
+  }
+  catch (Exception $e) {
+    $error_message = braintree_exception_error_message($e);
+    watchdog('commerce_braintree_web', 'Error deleting cardonfile id: %card_id (Braintree payment_method id: %remote_id) with Braintree error message: %error_message', array('%card_id' => $card_data->card_id, '%remote_id' => $card_data->remote_id, '%error_message' => $error_message), WATCHDOG_ERROR);
+    return FALSE;
+  }
+  if ($result->success != TRUE) {
+    drupal_set_message(braintree_result_error_message($result), 'error');
+    return FALSE;
   }
   return TRUE;
 }
