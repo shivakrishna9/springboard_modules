@@ -286,9 +286,16 @@ function springboard_dw_fundraiser_donation_success($donation) {
   $is_donation_update = springboard_dw_item_is_warehoused('donation',
     $donation->did) == TRUE ? TRUE:FALSE;
 
-  // Map the donation object.
-  $donation_item = springboard_dw_map_donation_item($donation,
-    $is_donation_update);
+  // Map the donation object
+  if(!$is_donation_update) {
+    $donation_item = springboard_dw_map_donation_item($donation,
+      $is_donation_update);
+  }
+  else {
+    $donation_item = springboard_dw_map_donation_charge_advance_item
+    ($donation,
+      $is_donation_update);
+  }
 
   // Queue the item or flag it for updating.
   $queue->createItem($donation_item);
@@ -1252,6 +1259,29 @@ function springboard_dw_map_donation_item($donation, $update = FALSE) {
 
   // Add the extra props to the field mapping
   $donation_item['extra_props'] = $dw_extra_props;
+
+  return $donation_item;
+}
+
+/**
+ * Map a charge advance item to a donation update.
+ * @param $donation
+ * @return array
+ */
+function springboard_dw_map_donation_charge_advance_item($donation) {
+  // Get the donation object details and prep for warehousing (sb_donation).
+  $donation_item = array();
+
+  // Flag this queue item for an update.
+  $donation_item['queue_item_update'] = TRUE;
+
+  // Define the update properties
+  $donation_item['queue_type'] = 'donation';
+  $donation_item['donation_id'] = $donation->did;
+  $donation_item['status'] = $donation->status;
+  $donation_item['transaction_id'] = $donation->txn_id;
+  $donation_item['updated_at'] = time();
+  $donation_item['transaction_date'] = time();
 
   return $donation_item;
 }
