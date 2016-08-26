@@ -528,7 +528,7 @@ function springboard_target_views_default_views() {
   /* Field: Advocacy: Group Name */
   $handler->display->display_options['fields']['group_name']['id'] = 'group_name';
   $handler->display->display_options['fields']['group_name']['table'] = 'advocacy';
-  $handler->display->display_options['fields']['group_name']['field'] = 'name';
+  $handler->display->display_options['fields']['group_name']['field'] = 'group_name';
   $handler->display->display_options['fields']['group_name']['element_label_colon'] = FALSE;
   /* Field: Advocacy: Group Actions */
   $handler->display->display_options['fields']['group_actions']['id'] = 'group_actions';
@@ -569,12 +569,12 @@ function springboard_target_views_default_views() {
   /* Filter criterion: Advocacy: Group Name */
   $handler->display->display_options['filters']['group_name']['id'] = 'group_name';
   $handler->display->display_options['filters']['group_name']['table'] = 'advocacy';
-  $handler->display->display_options['filters']['group_name']['field'] = 'name';
+  $handler->display->display_options['filters']['group_name']['field'] = 'group_name';
   $handler->display->display_options['filters']['group_name']['exposed'] = TRUE;
-  $handler->display->display_options['filters']['group_name']['expose']['operator_id'] = 'name_op';
+  $handler->display->display_options['filters']['group_name']['expose']['operator_id'] = 'group_name_op';
   $handler->display->display_options['filters']['group_name']['expose']['label'] = 'Group Name';
-  $handler->display->display_options['filters']['group_name']['expose']['operator'] = 'name_op';
-  $handler->display->display_options['filters']['group_name']['expose']['identifier'] = 'name';
+  $handler->display->display_options['filters']['group_name']['expose']['operator'] = 'group_name_op';
+  $handler->display->display_options['filters']['group_name']['expose']['identifier'] = 'group_name';
   $handler->display->display_options['filters']['group_name']['expose']['remember_roles'] = array(
     2 => '2',
     1 => 0,
