@@ -1,0 +1,263 @@
+<?php
+
+/**
+* Implements hook_menu().
+*/
+function webform_translate_menu() {
+  $items = array();
+  $items['node/%node/translation-manager'] = array(
+    'title' => 'Translation Manager',
+    'page callback' => '_webform_translate_render_node_translation_manager',
+    'page arguments' => array(arg(1)),
+    'access callback' => 'webform_translate_access_check',
+    'access arguments' => array(1),
+    'type' => MENU_LOCAL_TASK,
+  );
+  return $items;
+}
+
+/**
+ * Determines whether the current node should display the webform translations tab.
+ */
+function webform_translate_access_check($node) {
+  $webform_types = variable_get('webform_node_types');
+  if (in_array($node->type, $webform_types)) {
+    return TRUE;
+  }
+  return FALSE;
+}
+
+/**
+ * Translation manager page content.
+ */
+function _webform_translate_render_node_translation_manager($node) {
+  $view = views_get_view('webform_translate_translation_manager');
+  $view->set_display('default');
+  $view->pre_execute();
+  $view->execute();
+  $output = $view->render();
+  return $output;
+}
+
+/**
+ * Defines the translation manager form:
+ */
+function webform_translate_translation_manager_form() {
+  $languages =  locale_language_list('name');
+
+  // TO DO - PROPERLY DETECT SOURCE LANGAUGE:
+  unset($languages['en']);
+
+  $form['translation_manager'] = array(
+    '#type' => 'fieldset',
+    '#theme' => 'webform_translate_table_theme',
+    '#component_ids' => array(),
+  );
+  drupal_set_title(drupal_get_title() . ' - ' . 'Translation Manager'); 
+
+  $view = views_get_view('webform_translate_translation_manager');
+  $view->set_display('default');
+  $view->pre_execute();
+  $view->execute();
+  
+  // Group existing translations with the source:
+  $view_data = array();
+  foreach ($view->result as $result) {
+    list($textgroup, $nid, $cid) = explode(':', $result->locales_source_location);
+    $key = $nid . '_' . $cid;
+    $view_data[$key]['source'] = $result->locales_source_source;
+    $view_data[$key]['translations'][$result->locales_target_language] = $result->locales_target_translation;
+    $form['translation_manager']['#component_ids'][] = $cid;
+  }
+  
+  foreach ($view_data as $key => $data) {
+    $form['translation_manager']['rows'][$key] = array(
+      '#type' => 'fieldset',
+    );
+    $form['translation_manager']['rows'][$key][$key . '_source'] = array(
+      '#type' => 'textfield',
+      '#default_value' => $data['source'],
+    );
+    foreach ($languages as $language_code => $language_name) {
+      $form['translation_manager']['rows'][$key][$key . '_' . $language_code] = array(
+        '#type' => 'textfield',
+        '#default_value' => isset($data['translations'][$language_code]) ? $data['translations'][$language_code] : '',
+      );      
+    }
+  }
+  $form['translation_manager']['update_translations'] = array(
+    '#type' => 'submit',
+    '#value' => 'Update Translations',
+  );
+
+
+  $form['#submit'][] = '_webform_translate_update_translations';
+  return $form;
+}
+
+/**
+ * Form submit function for the translation manager.
+ */
+function _webform_translate_update_translations($form, &$form_state) {
+  $nid = arg(1);
+  if (!is_numeric($nid)) {
+    return;
+  }
+
+  $languages =  locale_language_list('name');
+  // TO DO - PROPERLY DETECT SOURCE LANGAUGE:
+  unset($languages['en']);
+
+  foreach ($form_state['input'] as $key => $value) {
+//    if (strpos($input, $nid . '_') !== FALSE && 
+  }
+  foreach ($form['translation_manager']['#component_ids'] as $cid) {
+    if (isset($form_state['input'][$nid . '_' . $cid . '_source'])) {
+      $source_string = $form_state['input'][$nid . '_' . $cid . '_source'];
+      foreach ($languages as $language_code => $language_name) {
+        if (isset($form_state['input'][$nid . '_' . $cid . '_' . $language_code])) {
+          $translated_string = $form_state['input'][$nid . '_' . $cid . '_' . $language_code];
+          $textgroup = 'Webform Component';
+          $location = $nid . ':' . $cid;
+          i18n_string_translation_update(
+            $textgroup . ':' . $location,
+            $translated_string,
+            $language_code,
+            $source_string
+          );
+        }
+      }
+    } 
+  }
+}
+
+/**
+ * Implements hook_theme().
+ */
+function webform_translate_theme() {
+  return array(
+    'webform_translate_table_theme' => array(
+      'render element' => NULL, 
+      'form' => NULL,
+    ),
+  );
+}
+
+function theme_webform_translate_table_theme($form) {
+  $form = array_shift($form);
+
+  $header = array(t('Source'));
+  $languages =  locale_language_list('name');
+  // TO DO - PROPERLY DETECT SOURCE LANGAUGE:
+  unset($languages['en']);
+  foreach ($languages as $language_name) {
+    $header[] = t($language_name);
+  }
+  $rows = array();
+  $attributes = array();
+  foreach ($form['rows'] as $row_data) {
+  
+    if (!is_array($row_data) || !isset($row_data['#type']) || $row_data['#type'] != 'fieldset') {
+      continue;
+     }
+    $row = array('data' => array());
+    foreach ($row_data as $item) {
+      if (!is_array($item) || !isset($item['#type'])) {
+        continue; 
+      }
+      $item['#size'] = 25;
+      $row['data'][] = drupal_render($item);
+    }
+    $rows[] = $row;
+  }
+
+  $output = theme('table', array(
+    'header' => $header,
+    'rows' => $rows,
+    'attributes' => array('id' => 'webform-translation-manager'),
+  ));
+  unset($form['rows']);
+  $output .= drupal_render_children($form);
+  return $output;
+}
+
+/**
+ * Implements hook_views_post_render().
+ */
+function webform_translate_views_post_render(&$view, &$output, &$cache) {
+  if ($view->name != 'webform_translate_translation_manager') {
+    return;
+  }
+  $form = drupal_get_form('webform_translate_translation_manager_form');
+  $form_html = drupal_render($form);
+
+  // Ensure AJAX updates do not break the form:
+  $arg1 = arg(1);
+  $action = '/springboard/node/' . $arg1 . '/translation-manager';
+  $form_html = str_replace('/views/ajax', $action, $form_html);
+
+  // Replace default view content with the translation manager form:
+  $output = preg_replace('/<div class="view-content">(.*?)<\/div>/s', $form_html, $output);
+
+}
+
+/**
+ * Implements hook_webform_component_update().
+ * 
+ * Updates source translation data for this webform component.
+ */
+function webform_translate_webform_component_update($component) {
+  $translatable_types = array('textarea', 'textfield');
+  if (!in_array($component['type'], $translatable_types)) {
+    return;
+  }
+
+  $textgroup = 'Webform Component';
+  $location = $component['nid'] . ':' . $component['cid'];
+  $source_string = $component['name'];
+  $options = array();
+  i18n_string_update(
+    $textgroup . ':' . $location, 
+    $source_string,
+    $options
+  );
+}
+
+/**
+ * Implements hook_views_query_alter().
+ *
+ * Filter the translation manager's results to those specific to the current webform node.
+ */
+function webform_translate_views_query_alter(&$view, &$query) {
+  if ($view->name != 'webform_translate_translation_manager') {
+    return;
+  }
+  $arg1 = arg(1);
+  if (!is_numeric($arg1)) {
+    return;
+  }
+  $query->where[1]['conditions'][] = array(
+    'field' => 'locales_source.location',
+    'value' => 'Webform Component:' . $arg1 . ':%',
+    'operator' => 'LIKE',
+  );
+}
+
+/**
+ * Implements hook_webform_component_render_alter().
+ */
+function webform_translate_webform_component_render_alter(&$element, &$component) {
+  $nid = arg(1);
+  if (!is_numeric($nid)) {
+    return;
+  }
+  $textgroup = 'Webform Component';
+  $options = array();
+  if ($element['#type'] == 'textfield') {
+    $element['#title'] = i18n_string_translate(
+      $textgroup . ':' . $nid . ':' . $component['cid'],
+      $element['#title'],
+      $options
+    );
+  }
+}
