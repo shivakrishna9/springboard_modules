@@ -28,6 +28,23 @@ function commerce_braintree_web_fundraiser_commerce_fundraiser_gateway_info() {
 }
 
 /**
+ * Implements hook_fundraiser_donation_form_config_check().
+ */
+function commerce_braintree_web_fundraiser_donation_form_config_check($node) {
+  foreach ($node->gateways as $gateway) {
+    if (!empty($gateway['id'])  && !empty($gateway['status'])) {
+      $gateway_config = _fundraiser_gateway_info($gateway['id']);
+      if ($gateway_config['gateway_details']['module'] == 'commerce_braintree_web') {
+        $settings = braintree_settings();
+        if ($settings['environment'] == 'sandbox') {
+          return t('Braintree is currently using the sandbox environment and will not process live transactions.');
+        }
+      }
+    }
+  }
+}
+
+/**
  * Card on file callback.
  *
  * We get payment fields from the transaction payload associated with the master
