@@ -18,6 +18,11 @@ function commerce_braintree_web_commerce_payment_method_info() {
     'description' => t('Integrates with Braintree Hosted Fields for secure on-site credit card payment.'),
     'terminal' => FALSE,
     'offsite' => FALSE,
+    'cardonfile' => array(
+      // 'charge callback' => 'commerce_braintree_web_cardonfile_charge',
+      'update callback' => 'commerce_braintree_web_cardonfile_update',
+      // 'delete callback' => 'commerce_braintree_web_cardonfile_delete',
+    ),
   );
 
   $payment_methods['braintree_paypal'] = array(
@@ -31,6 +36,34 @@ function commerce_braintree_web_commerce_payment_method_info() {
   );
 
   return $payment_methods;
+}
+
+/**
+ * Card on file callback: updates the payment_method month & year at Braintree.
+ */
+function commerce_braintree_web_cardonfile_update($form, &$form_state, $payment_method, $card_data) {
+  // If the submitted exp_year or exp_month values have changed.
+  if($form_state['complete form']['credit_card']['exp_month']['#default_value'] != $form_state['values']['credit_card']['exp_month'] ||
+    $form_state['complete form']['credit_card']['exp_year']['#default_value'] != $form_state['values']['credit_card']['exp_year']) {
+    braintree_initialize();
+    try {
+      $params = array(
+        'expirationMonth' => $form_state['values']['credit_card']['exp_month'],
+        'expirationYear' => $form_state['values']['credit_card']['exp_year'],
+      );
+      $result = Braintree_PaymentMethod::update($card_data->remote_id, $params);
+    }
+    catch (Exception $e) {
+      $error_message = braintree_exception_error_message($e);
+      watchdog('commerce_braintree_web', 'Error updating cardonfile id: %card_id (Braintree payment_method id: %remote_id) with Braintree error message: %error_message', array('%card_id' => $card_data->card_id, '%remote_id' => $card_data->remote_id, '%error_message' => $error_message), WATCHDOG_ERROR);
+      return FALSE;
+    }
+    if ($result->success != TRUE) {
+      drupal_set_message(braintree_result_error_message($result), 'error');
+      return FALSE;
+    }
+  }
+  return TRUE;
 }
 
 /**
