@@ -283,8 +283,7 @@ function springboard_dw_fundraiser_donation_success($donation) {
 
   // Check if the item is warehoused already and run an update instead of
   // creating a new record (mainly applies to sustainer charge advancements)
-  $is_donation_update = springboard_dw_item_is_warehoused('donation',
-    $donation->did) == TRUE ? TRUE:FALSE;
+  $is_donation_update = springboard_dw_item_is_warehoused('donation', $donation->did);
 
   // Map the donation object
   if(!$is_donation_update) {
@@ -292,9 +291,8 @@ function springboard_dw_fundraiser_donation_success($donation) {
       $is_donation_update);
   }
   else {
-    $donation_item = springboard_dw_map_donation_charge_advance_item
-    ($donation,
-      $is_donation_update);
+    $donation_item = springboard_dw_map_donation_sustainer_item
+    ($donation);
   }
 
   // Queue the item or flag it for updating.
@@ -1268,7 +1266,7 @@ function springboard_dw_map_donation_item($donation, $update = FALSE) {
  * @param $donation
  * @return array
  */
-function springboard_dw_map_donation_charge_advance_item($donation) {
+function springboard_dw_map_donation_sustainer_item($donation) {
   // Get the donation object details and prep for warehousing (sb_donation).
   $donation_item = array();
 
