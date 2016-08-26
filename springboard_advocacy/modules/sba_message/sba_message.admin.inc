@@ -217,9 +217,10 @@ function sba_message_edit_form($form, &$form_state, $sba_message) {
   if(module_exists('sba_target_search')) {
     // Add the target search and elements for saving targets.
     $form = sba_target_search_add_target_search_form($form, $form_state, $sba_message);
-    // If this is a new message, give the option to save the recipients as a
-    // re-usable custom group.
-    if(isset($sba_message->is_new) && $sba_message->is_new != false) {
+    // If the message current has no recipients, give the option to save the
+    // recipients as a re-usable custom group.
+    $recipients = json_decode($sba_message->data['recipients'], TRUE);
+    if(empty($recipients)){
       $form['save_target_group'] = array(
         '#tree' => true,
         '#type' => 'container',
