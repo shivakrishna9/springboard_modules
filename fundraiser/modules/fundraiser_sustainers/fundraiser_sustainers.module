@@ -2312,7 +2312,7 @@ function fundraiser_sustainers_edit_form($did) {
   else {
     $billing_update_form = t('This recurring donation has been cancelled.');
   }
-  $billing_update_form = '<div id="donation-billing-form"><h2>Update Your Credit Card Information</h2>' . $billing_update_form . '</div>';
+  $billing_update_form = '<div id="donation-billing-form"><h2>Update Your Payment Information</h2>' . $billing_update_form . '</div>';
 
   if ($remaining_donation_count > 0 && empty($cancelled)) {
     $cancel_form_array = drupal_get_form('fundraiser_sustainers_cancel_form', $next_donation);
@@ -2802,7 +2802,7 @@ function fundraiser_sustainers_billing_update_form_validate($form, &$form_state)
 
   if (form_get_errors() || count($credit_card_errors) || $errors) {
     // We've set a form_error by now.
-    drupal_set_message(t('Unable to update credit card information.'));
+    drupal_set_message(t('Unable to update payment information.'));
   }
 }
 
