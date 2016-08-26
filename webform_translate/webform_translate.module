@@ -31,6 +31,8 @@ function webform_translate_access_check($node) {
  * Translation manager page content.
  */
 function _webform_translate_render_node_translation_manager($node) {
+  drupal_set_title(drupal_get_title() . ' - ' . 'Translation Manager'); 
+
   $view = views_get_view('webform_translate_translation_manager');
   $view->set_display('default');
   $view->pre_execute();
@@ -43,7 +45,21 @@ function _webform_translate_render_node_translation_manager($node) {
  * Defines the translation manager form:
  */
 function webform_translate_translation_manager_form() {
+  $view = views_get_view('webform_translate_translation_manager');
+  $view->set_display('default');
+  $view->pre_execute();
+  $view->execute();
+
   $languages =  locale_language_list('name');
+  if (isset($view->filter['language']->value[0])) {
+    if (array_key_exists($view->filter['language']->value[0], $languages)) {
+      foreach ($languages as $language_code => $language_name) {
+        if ($view->filter['language']->value[0] != $language_code) {
+          unset($languages[$language_code]);
+        }
+      }
+    }
+  } 
 
   // TO DO - PROPERLY DETECT SOURCE LANGAUGE:
   unset($languages['en']);
@@ -53,35 +69,54 @@ function webform_translate_translation_manager_form() {
     '#theme' => 'webform_translate_table_theme',
     '#component_ids' => array(),
   );
-  drupal_set_title(drupal_get_title() . ' - ' . 'Translation Manager'); 
 
-  $view = views_get_view('webform_translate_translation_manager');
-  $view->set_display('default');
-  $view->pre_execute();
-  $view->execute();
+
+  $nid = arg(1);
+  $node = node_load($nid);
   
   // Group existing translations with the source:
   $view_data = array();
   foreach ($view->result as $result) {
-    list($textgroup, $nid, $cid) = explode(':', $result->locales_source_location);
-    $key = $nid . '_' . $cid;
+    list($textgroup, $nid, $cid, $sub_field) = explode(':', $result->locales_source_location);
+    $key = $nid . '_' . $cid . '_' . $sub_field;
+    $view_data[$key]['cid'] = $cid;
+    $view_data[$key]['sub_field'] = $sub_field; // Such as the field's Label or description
     $view_data[$key]['source'] = $result->locales_source_source;
     $view_data[$key]['translations'][$result->locales_target_language] = $result->locales_target_translation;
     $form['translation_manager']['#component_ids'][] = $cid;
   }
   
-  foreach ($view_data as $key => $data) {
-    $form['translation_manager']['rows'][$key] = array(
+  foreach ($view_data as $field_key => $data) {
+    $form_key = $node->webform['components'][$data['cid']]['form_key'];
+    $type = $node->webform['components'][$data['cid']]['type'];
+    if ($type == 'hidden') {
+      continue;
+    }
+    // Gather the translations for this row:
+    $translations = array();
+    foreach ($languages as $language_code => $language_name) {
+      $translations[$language_code] = '';
+      if (isset($data['translations'][$language_code])) {
+        $translations[$language_code] = $data['translations'][$language_code];
+      }
+    }
+     
+    $form['translation_manager']['rows'][$field_key] = array(
       '#type' => 'fieldset',
     );
-    $form['translation_manager']['rows'][$key][$key . '_source'] = array(
+
+    $form['translation_manager']['rows'][$field_key][$field_key . '_source'] = array(
       '#type' => 'textfield',
+      '#size' => 22,
       '#default_value' => $data['source'],
+      '#prefix' => $type . ':' . $node->webform['components'][$data['cid']]['form_key'] . ':' . $data['sub_field'],
     );
-    foreach ($languages as $language_code => $language_name) {
-      $form['translation_manager']['rows'][$key][$key . '_' . $language_code] = array(
+    foreach ($translations as $language_code => $translation) {
+      $form['translation_manager']['rows'][$field_key][$field_key . '_' . $language_code] = array(
         '#type' => 'textfield',
-        '#default_value' => isset($data['translations'][$language_code]) ? $data['translations'][$language_code] : '',
+        '#size' => 22,
+        '#default_value' => $translation,
+        '#prefix' => '&nbsp;',
       );      
     }
   }
@@ -107,27 +142,26 @@ function _webform_translate_update_translations($form, &$form_state) {
   $languages =  locale_language_list('name');
   // TO DO - PROPERLY DETECT SOURCE LANGAUGE:
   unset($languages['en']);
-
-  foreach ($form_state['input'] as $key => $value) {
-//    if (strpos($input, $nid . '_') !== FALSE && 
-  }
-  foreach ($form['translation_manager']['#component_ids'] as $cid) {
-    if (isset($form_state['input'][$nid . '_' . $cid . '_source'])) {
-      $source_string = $form_state['input'][$nid . '_' . $cid . '_source'];
-      foreach ($languages as $language_code => $language_name) {
-        if (isset($form_state['input'][$nid . '_' . $cid . '_' . $language_code])) {
-          $translated_string = $form_state['input'][$nid . '_' . $cid . '_' . $language_code];
-          $textgroup = 'Webform Component';
-          $location = $nid . ':' . $cid;
-          i18n_string_translation_update(
-            $textgroup . ':' . $location,
-            $translated_string,
-            $language_code,
-            $source_string
-          );
+  $sub_fields = array('label', 'description');
+  foreach ($sub_fields as $sub_field) {
+    foreach ($form['translation_manager']['#component_ids'] as $cid) {
+      if (isset($form_state['input'][$nid . '_' . $cid . '_' . $sub_field . '_source'])) {
+        $source_string = $form_state['input'][$nid . '_' . $cid . '_' . $sub_field . '_source'];
+        foreach ($languages as $language_code => $language_name) {
+          if (isset($form_state['input'][$nid . '_' . $cid . '_' . $sub_field . '_' . $language_code])) {
+            $translated_string = $form_state['input'][$nid . '_' . $cid . '_' . $sub_field . '_' . $language_code];
+            $textgroup = 'Webform Component';
+            $location = $nid . ':' . $cid . ':' . $sub_field;
+            i18n_string_translation_update(
+              $textgroup . ':' . $location,
+              $translated_string,
+              $language_code,
+              $source_string
+            );
+          }
         }
-      }
-    } 
+      } 
+    }
   }
 }
 
@@ -146,15 +180,12 @@ function webform_translate_theme() {
 function theme_webform_translate_table_theme($form) {
   $form = array_shift($form);
 
-  $header = array(t('Source'));
-  $languages =  locale_language_list('name');
-  // TO DO - PROPERLY DETECT SOURCE LANGAUGE:
-  unset($languages['en']);
-  foreach ($languages as $language_name) {
-    $header[] = t($language_name);
-  }
   $rows = array();
   $attributes = array();
+  $results_language_codes = array();
+  if (!isset($form['rows'])) {
+    return;
+  }
   foreach ($form['rows'] as $row_data) {
   
     if (!is_array($row_data) || !isset($row_data['#type']) || $row_data['#type'] != 'fieldset') {
@@ -165,10 +196,27 @@ function theme_webform_translate_table_theme($form) {
       if (!is_array($item) || !isset($item['#type'])) {
         continue; 
       }
-      $item['#size'] = 25;
+      if (isset($item['#name'])) {
+        list($nid, $cid, $sub_field, $language_code) = explode('_', $item['#name']);
+        if ($language_code != 'source' && !in_array($language_code, $results_language_codes)) {
+          $results_language_codes[] = $language_code;
+        }
+      }
       $row['data'][] = drupal_render($item);
     }
     $rows[] = $row;
+  }
+
+
+  // Populate the header based on results returned:
+  $languages =  locale_language_list('name');
+  unset($languages['en']); // TO DO - PROPERLY DETECT SOURCE LANGAUGE:
+
+  $header = array(t('Source'));
+  foreach ($languages as $language_code => $language_name) {
+    if (in_array($language_code, $results_language_codes)) {
+      $header[] = t($language_name);
+    }
   }
 
   $output = theme('table', array(
@@ -207,20 +255,35 @@ function webform_translate_views_post_render(&$view, &$output, &$cache) {
  * Updates source translation data for this webform component.
  */
 function webform_translate_webform_component_update($component) {
-  $translatable_types = array('textarea', 'textfield');
+/*  $translatable_types = array('textarea', 'textfield');
   if (!in_array($component['type'], $translatable_types)) {
+    return;
+  } */
+  if ($component['type'] == 'hidden') {
     return;
   }
 
   $textgroup = 'Webform Component';
   $location = $component['nid'] . ':' . $component['cid'];
-  $source_string = $component['name'];
   $options = array();
+
+  // Register component label:
+  $source_string = $component['name'];
   i18n_string_update(
-    $textgroup . ':' . $location, 
+    $textgroup . ':' . $location . ':label', 
     $source_string,
     $options
   );
+
+  // Register component description:
+  if (isset($component['extra']['description'])) {
+    $source_string = $component['extra']['description'];
+    i18n_string_update(
+      $textgroup . ':' . $location . ':description',
+      $source_string,
+      $options
+    );
+  }
 }
 
 /**
@@ -244,6 +307,29 @@ function webform_translate_views_query_alter(&$view, &$query) {
 }
 
 /**
+ * Implements hook_form_alter().
+ *
+ * Limit language filter to specific language options or all languages.
+ */
+function webform_translate_form_alter(&$form, &$form_state, $form_id) {
+  if (!isset($form_state['view']->name)
+    || $form_state['view']->name != 'webform_translate_translation_manager'
+    || $form_id != 'views_exposed_form') {
+    return;
+  }
+  $languages =  locale_language_list('name');
+  unset($languages['en']); // TO DO - PROPERLY DETECT SOURCE LANGAUGE:
+  foreach ($form['language']['#options'] as $language_code => $language_name) {
+    if ($language_code == 'All') {
+      continue;
+    }
+    if (!array_key_exists($language_code, $languages)) {
+      unset($form['language']['#options'][$language_code]);
+    }
+  }
+}
+
+/**
  * Implements hook_webform_component_render_alter().
  */
 function webform_translate_webform_component_render_alter(&$element, &$component) {
@@ -253,10 +339,17 @@ function webform_translate_webform_component_render_alter(&$element, &$component
   }
   $textgroup = 'Webform Component';
   $options = array();
-  if ($element['#type'] == 'textfield') {
-    $element['#title'] = i18n_string_translate(
-      $textgroup . ':' . $nid . ':' . $component['cid'],
-      $element['#title'],
+  //if (in_array($element['#type'], array('textfield', 'textarea', 'fieldset'))) {
+  $element['#title'] = i18n_string_translate(
+    $textgroup . ':' . $nid . ':' . $component['cid'] . ':label', 
+    $element['#title'],
+    $options
+  );
+
+  if (isset($element['#description'])) {
+    $element['#description'] = i18n_string_translate(
+      $textgroup . ':' . $nid . ':' . $component['cid'] . ':description',
+      $element['#description'],
       $options
     );
   }
