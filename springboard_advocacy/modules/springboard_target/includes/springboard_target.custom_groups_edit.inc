@@ -22,7 +22,7 @@ function springboard_target_edit_custom_groups_form($form, &$form_state, $group_
   module_load_include('inc', 'springboard_target', 'includes/springboard_target.custom_groups');
 
   $form = springboard_target_group_form($group_id);
-  
+
   if (!isset($form['not_found'])) {
 
     $form['header'] = array(
@@ -56,7 +56,8 @@ function springboard_target_edit_custom_groups_form_submit($form, &$form_state) 
   $input = $form_state['values'];
   $api_call = springboard_advocacy_api_call();
 
-  $group = $api_call->invokeClientMethod('updateTargetGroup', $input, $id);
+  // @TODO need a way to retrieve the target name via the ID
+  //$group = $api_call->invokeClientMethod('updateTargetGroup', $input, $id);
 
   if (!empty($group->data)) {
     $message = implode(' ', (array) $group->data->status);

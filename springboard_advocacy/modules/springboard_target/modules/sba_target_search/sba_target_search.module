@@ -166,9 +166,15 @@ function sba_target_search_add_target_search_form($form, &$form_state, $entity =
   $form['data']['#tree'] = TRUE;
   $recipients = '';
 
-  // @TODO Need a way to save recipients json string or generate it from group entity returned from API
+  // If we are using a Drupal entity that saves the UI json string locally, we
+  // can just use that string directly
   if(isset($entity->data['recipients'])) {
     $recipients = str_replace('"', '&quot;', $entity->data['recipients']);
+  }
+  // Otherwise, a plain group entity needs its attributes converted to the json
+  // string format expected in the UI.
+  else if(isset($entity->targets)) {
+    $recipients = sba_target_search_convert_recipients($entity);
   }
 
   $form['data']['recipients'] = array(
@@ -194,3 +200,52 @@ function sba_target_search_add_target_search_form($form, &$form_state, $entity =
   return $form;
 }
 
+/**
+ * @TODO comment this
+ * @param $group
+ * @return string
+ */
+
+function sba_target_search_convert_recipients($group) {
+  $recipients = array();
+  foreach($group->chambers as $chamber) {
+    $recipient = array();
+    foreach($chamber as $field_name => $value) {
+      if($value != '') {
+        $recipient[$field_name] = $value;
+      }
+    }
+    $recipients[] = $recipient;
+  }
+  foreach($group->executives as $exec) {
+
+  }
+  foreach($group->targets as $target) {
+    //$api_call = springboard_advocacy_api_call();
+    //$response = $api_call->invokeClientMethod('', $target->target_id);
+    $recipients[] = array(
+      'id' => $target->target_id,
+      'type' => 'Legislator', // from response, choose whether type is Legislator or Target
+      'first' => 'some',
+      'last' => 'target',
+      'sal' => '',
+      'twitter' => '',
+      'facebook' => '',
+      'org' => '',
+      'title' => '',
+      'state' => '',
+      'district' => '',
+      'party' => '',
+    );
+
+  }
+  foreach($group->groups as $group) {
+    $recipients[] = array(
+      'id' => $group->group_id,
+      'type' => 'Group',
+      'name' => $group->group_name,
+    );
+  }
+
+  return json_encode($recipients);
+}

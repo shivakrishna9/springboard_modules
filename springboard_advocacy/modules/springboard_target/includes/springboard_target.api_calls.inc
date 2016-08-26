@@ -19,17 +19,17 @@
  *  array(
  *    'name' => 'group name', //required
  *    'is_template' => 0, //required boolean
- *    'chambers' => array(
+ *    'chambers' => json_encode(array(
  *         0 => array('chamber' => 'fs', 'party =>'r', state => 'MA'),
  *         1 => array('chamber' => 'fs', 'party =>'d', state => 'MA')
- *       )
- *    'executives' => array(
+ *       )),
+ *    'executives' => json_encode(array(
  *         0 => array('role' => 'PRES01', 'party =>'r'),
  *         1 => array('role' => 'PRES03', 'party =>'d')
  *       )
- *     )
- *     'target_ids' => array('1', '2', '3', '4', '5', '6', '7'),
- *     'child_group_ids' => array('123', '456', '789'),
+ *     )),
+ *     'target_ids' => json_encode(array('1', '2', '3', '4', '5', '6', '7')),
+ *     'child_group_ids' => json_encode(array('123', '456', '789')),
  *     'message' => array(
  *       group_id =>
  *       message_id =>
@@ -65,7 +65,7 @@ function springboard_target_api_save_target_group($group, $is_new = TRUE) {
         $indvds[$target->id] = $target->id;
       }
       // multiple individual targets
-      elseif (isset($target->ids)) {
+      elseif (isset($target->ids) && !isset($target->search_committee)) { // @TODO - need a  way to actually save committees as pseudo-groups
         $multi_indvds =  array_merge($multi_indvds, explode('|', $target->ids));
       }
       // gender or social media pseudo-groups
@@ -84,13 +84,15 @@ function springboard_target_api_save_target_group($group, $is_new = TRUE) {
   if (!empty($has_gender_or_social)) {
     $gender_or_social_rows = _springboard_target_api_get_gender_or_social_ids($has_gender_or_social);
   }
+  // merge the gender/social rows and chambers
+  $unstructured_chambers = array_merge($unstructured_chambers, $has_gender_or_social);
   // Format the legislative group targets into the API-expected format.
   if (!empty($unstructured_chambers)) {
     $chamber_rows = _springboard_target_api_build_chambers($unstructured_chambers);
   }
 
   // Combine all individual targets into one array.
-  $combined = array_merge($multi_indvds, $indvds, $gender_or_social_rows);
+  $combined = array_merge($multi_indvds, $indvds);
   $indvds = !empty($combined) ? json_encode($combined) : '';
 
   // Set the Group components for each type of target.
@@ -98,6 +100,9 @@ function springboard_target_api_save_target_group($group, $is_new = TRUE) {
   $group['target_ids'] = $indvds;
   $group['custom_group_ids'] = $child_ids;
 
+  //dummy content
+  //$group['chambers'] = array();
+  //$group['target_ids'] = json_encode(array('8', '10', '111'));
   $api_call = springboard_advocacy_api_call();
   $group_id = isset($group['group_id']) ? $group['group_id'] : NULL;
 
@@ -143,6 +148,7 @@ function springboard_target_api_save_target_group($group, $is_new = TRUE) {
 /**
  * @param $target_fields
  * @return array
+ * @TODO this should be obsolete after updating the chambers to include addt'l attributes
  */
 function _springboard_target_api_get_gender_or_social_ids($target_fields) {
 
@@ -162,44 +168,45 @@ function _springboard_target_api_get_gender_or_social_ids($target_fields) {
 
 /**
  * Take the chambers form input and format it for the API callback.
+ *
  * @param $unstructured_chambers
+ *  an array of chamber objects. Example:
+ *  0 (Object)
+ *      role => FR
+ *      party => D
+ *      social => @TODO what are the input options here?
+ *  1 (Object)
+ *      role => PRES01|PRES03|GOVNR
+ *  2 (Object)
+ *      gender => F
+ *      role => SR|SS
+ *  3 (Object)
+ *      role => SR
+ *      district_name => @todo what are the input options here?
  * @return array
+ *  an array of structured data as expected by the API callbacks. Example:
+ *  0 =>
+ *      chamber => FR
+ *      party => D
+ *      social => @TODO what are the input options here?
+ *  1 =>
+ *      chamber => PRES01
+ *  2 =>
+ *      chamber => PRES03
+ *  3 =>
+ *      chamber => GOVNR
+ *  4 =>
+ *      gender => F
+ *      role => SR
+ *  5 =>
+ *      gender => F
+ *      role => SS
+ *  6 =>
+ *      role => SR
+ *      district_name => @todo what are the input options here?
  */
 function _springboard_target_api_build_chambers($unstructured_chambers) {
   $chamber_rows_container = array();
-
-  // An "Unstructured chambers" example:
-  //    0 (Object)
-  //        role => FR
-  //        party => D
-  //    1 (Object)
-  //        role => PRES01|PRES03|GOVNR
-  //    2 (Object)
-  //        state => NY
-  //        role => SR|SS
-
-
-  //Unstructured chambers above will become:
-  //0 =>
-  //    chamber =>FR
-  //    party  => D
-  //1 =>
-  //    chamber => PRES01
-  //    party =>
-  //2 =>
-  //    chamber => PRES03
-  //    party =>
-  //3 =>
-  //    chamber => GOVNR
-  //    party =>
-  //4 =>
-  //    chamber => SR
-  //    party =>
-  //    state => NY
-  //5 =>
-  //    chamber => SS
-  //    party =>
-  //    state => NY
 
   foreach ($unstructured_chambers as $chamber_id => $chamber_fields) {
 
@@ -254,12 +261,12 @@ function _springboard_target_api_build_chambers_shmoosher(&$chamber_rows_contain
   $chamber = isset($chamber_field['chamber']) ? $chamber_field['chamber'] : '';
   $party = isset($chamber_field['party']) ? $chamber_field['party'] : '';
   $state = isset($chamber_field['state']) ? $chamber_field['state'] : '';
-  //$gender = isset($chamber_field['gender']) ? $chamber_field['gender'] : '';
+  $gender = isset($chamber_field['gender']) ? $chamber_field['gender'] : '';
 
   $chamber_rows_container[$chamber_id][$i]['chamber'] = $chamber;
   $chamber_rows_container[$chamber_id][$i]['party'] = $party;
   $chamber_rows_container[$chamber_id][$i]['state'] = $state;
-  //$chamber_rows_container[$chamber_id][$i]['gender'] = $gender;
+  $chamber_rows_container[$chamber_id][$i]['gender'] = $gender;
 
   $chamber_rows_container[$chamber_id][$i][$field_name] = $value;
 }
