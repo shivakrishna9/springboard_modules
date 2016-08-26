@@ -106,7 +106,6 @@ function commerce_authnet_echeck_submit_form($payment_method, $pane_values = arr
   $fields = drupal_map_assoc(array('bank_name', 'acct_name'));
   $fields['type'] = drupal_map_assoc(array(
     'checking',
-    'businesschecking',
     'savings',
   ));
 
@@ -512,7 +511,6 @@ function commerce_authnet_echeck_payment_validate_account($number) {
 function commerce_authnet_echeck_payment_types() {
   return array(
     'checking' => t('Checking'),
-    'businesschecking' => t('Business Checking'),
     'savings' => t('Savings'),
   );
 }
