@@ -270,19 +270,15 @@ function fundraiser_quick_donate_fundraiser_field_info_alter(&$fields) {
 /**
  * Implements hook_form_FORM_ID_alter().
  */
-function fundraiser_quick_donate_form_commerce_cardonfile_card_form_alter(&$form, $form_state) {
-  // Get the uid from the arguments.
-  $args = arg();
-  $uid = $args[1];
+function fundraiser_quick_donate_form_commerce_cardonfile_card_form_alter(&$form, &$form_state) {
+  $card = $form_state['card'];
+  $uid = $card->uid;
 
-  // Load the user's newest donation.
-  $donation = fundraiser_donation_get_newest_donation_by_uid($uid);
+  // Load the user's newest donation for the card's gateway.
+  $donation = fundraiser_donation_get_donations_by_uid($uid, 1, 'DESC', $card->instance_id);
   if (empty($donation)) {
     return;
   }
-
-  $card_id = $args[3];
-  $card = commerce_cardonfile_load($card_id);
 
   drupal_set_title('Edit Payment Method');
 
@@ -301,6 +297,7 @@ function fundraiser_quick_donate_form_commerce_cardonfile_card_form_alter(&$form
         ),
       ),
     ),
+    'card' => $form_state['card'],
   );
   $form = array();
   $form = drupal_get_form('fundraiser_update_billing_form', $data);
@@ -334,6 +331,63 @@ function fundraiser_quick_donate_form_commerce_cardonfile_card_form_alter(&$form
       '#markup' => $title . $card_title . $expires,
     ),
   ) + $form;
+}
+
+/**
+ * Implements hook_fundraiser_update_billing_form_alter().
+ *
+ * Updates the billing update form on cardonfile card edit pages to redirect
+ * back to the cards overview page.
+ */
+function fundraiser_quick_donate_fundraiser_update_billing_form_alter(&$form, &$form_state) {
+  $args = arg();
+  if (!empty($form_state['input']) && $args[2] == 'cards') {
+    $form_state['op'] = 'update';
+    $form['#validate'][] = '_fundraiser_quick_donate_form_commerce_cardonfile_card_form_alter_validate';
+    $form['#validate'][] = 'commerce_cardonfile_card_form_validate';
+    $form['actions']['submit']['#submit'][] = 'commerce_cardonfile_card_form_submit';
+  }
+}
+
+/**
+ * Validation handler for commerce_cardonfile handling.
+ *
+ * Sets some array elements so the cardonfile module can correctly validate and
+ * submit.
+ *
+ * @see fundraiser_quick_donate_form_commerce_cardonfile_card_form_alter
+ */
+function _fundraiser_quick_donate_form_commerce_cardonfile_card_form_alter_validate(&$form, &$form_state) {
+  $values = &$form_state['values'];
+  $values['credit_card']['owner'] = $values['first_name'] . ' ' . $values['last_name'];
+  $values['credit_card']['exp_month'] = $values['payment_fields']['credit']['expiration_date']['card_expiration_month'];
+  $values['credit_card']['exp_year'] = $values['payment_fields']['credit']['expiration_date']['card_expiration_year'];
+
+  $form['credit_card']['number']['#default_value'] = $form_state['card']->card_number;
+  if (!empty($values['payment_fields']['credit']['card_number'])) {
+    $_SESSION['card_number'] = $values['credit_card']['number'] = $values['payment_fields']['credit']['card_number'];
+  }
+  else {
+    $_SESSION['card_number'] = $values['credit_card']['number'] = $form_state['card']->card_number;
+  }
+  $values['credit_card']['cardonfile_instance_default'] = $form_state['card']->instance_default;
+}
+
+/**
+ * Implements hook_entity_presave().
+ *
+ * If the 'card_number' session is set, we'll know that the card number is being
+ * updated, and to update the cardonfile entity before it's saved.
+ *
+ * This function is needed because the cardonfile module doesn't tell us when
+ * it's updating a card, or what the new card values are.
+ */
+function fundraiser_quick_donate_entity_presave($entity, $type) {
+  $args = arg();
+  if ($type == 'commerce_cardonfile' && $args[2] == 'cards' && isset($_SESSION['card_number']) && strlen($_SESSION['card_number']) > 4) {
+    $entity->card_number = substr($_SESSION['card_number'], -4);
+    unset($_SESSION['card_number']);
+  }
 }
 
 /**

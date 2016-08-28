@@ -3676,7 +3676,16 @@ function fundraiser_update_billing_form($form, &$form_state, $data) {
     $fundraiser_path . '/js/donation_validation.js',
   );
 
-  $form['#attributes']['class'][] = 'fundraiser_donation_form';
+  // Add the validation configuration settings array.
+  $form_validation_js = _fundraiser_donation_form_js_validation_config($data['donation']->node);
+  if (!empty($form_validation_js)) {
+    $form['#attached']['js'][] = array(
+      'data' => array('fundraiser' => array('js_validation_settings' => $form_validation_js)),
+      'type' => 'setting',
+    );
+  }
+
+  $form['#attributes']['class'][] = 'fundraiser-donation-form';
   $form['uid'] = array(
     '#type' => 'hidden',
     '#value' => $data['donation']->uid,
@@ -3728,12 +3737,12 @@ function fundraiser_update_billing_form($form, &$form_state, $data) {
     $form['payment_fields'] = array_merge_recursive($form['payment_fields'], $data['payment_fields']);
   }
 
-  // And add a submit button.
-  $form['submit'] = array(
-    '#type' => 'submit',
-    '#value' => t('Save changes'),
-    '#submit' => array(),
-  );
+  if (isset($data['card'])) {
+    $form_state['card'] = $data['card'];
+  }
+
+  $form['actions']['submit']['#type'] = 'submit';
+  $form['actions']['submit']['#value'] = t('Save changes');
   $form['#validate'] = array();
 
   $form['#donation'] = $data['donation'];
@@ -3748,7 +3757,7 @@ function fundraiser_update_billing_form($form, &$form_state, $data) {
   }
 
   $form['#validate'][] = 'fundraiser_update_billing_form_validate';
-  $form['submit']['#submit'][] = 'fundraiser_update_billing_form_submit';
+  $form['actions']['submit']['#submit'][] = 'fundraiser_update_billing_form_submit';
 
   return $form;
 }
@@ -3815,11 +3824,14 @@ function fundraiser_update_billing_form_submit($form, &$form_state) {
 /**
  * Helper function to get donation IDs by user ID.
  */
-function fundraiser_donation_get_donations_by_uid($uid, $limit = 0, $order_by = 'DESC') {
+function fundraiser_donation_get_donations_by_uid($uid, $limit = 0, $order_by = 'DESC', $gateway = NULL) {
   $query = db_select('fundraiser_donation', 'fd')
     ->fields('fd')
-    ->condition('uid', $uid, '=')
-    ->range(0, $limit)
+    ->condition('uid', $uid, '=');
+  if (!empty($gateway)) {
+    $query->condition('gateway', $gateway, '=');
+  }
+  $query = $query->range(0, $limit)
     ->orderBy('did', $order_by)
     ->execute();
   if (!$query->rowCount()) {
