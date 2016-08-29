@@ -67,7 +67,7 @@ function webform_translate_translation_manager_form() {
   $form['translation_manager'] = array(
     '#type' => 'fieldset',
     '#theme' => 'webform_translate_table_theme',
-    '#component_ids' => array(),
+    '#component_data' => array(),
   );
 
 
@@ -86,7 +86,10 @@ function webform_translate_translation_manager_form() {
     $view_data[$key]['sub_field'] = $sub_field; // Label or description
     $view_data[$key]['source'] = $result->locales_source_source;
     $view_data[$key]['translations'][$result->locales_target_language] = $result->locales_target_translation;
-    $form['translation_manager']['#component_ids'][] = $cid;
+    $form['translation_manager']['#component_data'][$cid] = array(
+      'cid' => $cid,
+      'form_key' => $node->webform['components'][$cid]['form_key'],
+    );
   }
   
 
@@ -109,18 +112,20 @@ function webform_translate_translation_manager_form() {
       '#type' => 'fieldset',
     );
 
+    $field_hover_info = $type . ':' . $node->webform['components'][$data['cid']]['form_key'] . ':' . $data['sub_field'];
+
     $form['translation_manager']['rows'][$field_key][$field_key . '_source'] = array(
       '#type' => 'textfield',
       '#size' => 22,
       '#default_value' => $data['source'],
-      '#prefix' => $type . ':' . $node->webform['components'][$data['cid']]['form_key'] . ':' . $data['sub_field'],
+      '#attributes' => array('title' => $data['source']),
     );
     foreach ($translations as $language_code => $translation) {
       $form['translation_manager']['rows'][$field_key][$field_key . '_' . $language_code] = array(
         '#type' => 'textfield',
         '#size' => 22,
         '#default_value' => $translation,
-        '#prefix' => '&nbsp;',
+        '#attributes' => array('title' => $field_hover_info),
       );      
     }
   }
@@ -129,6 +134,8 @@ function webform_translate_translation_manager_form() {
     '#value' => 'Update Translations',
   );
 
+  $form['#attached']['css'][] =  drupal_get_path('module', 'webform_translate') . '/css/webform_translate.css';
+  $form['#attached']['js'][] =  drupal_get_path('module', 'webform_translate') . '/js/webform_translate.js';
 
   $form['#submit'][] = '_webform_translate_update_translations';
   return $form;
@@ -146,25 +153,33 @@ function _webform_translate_update_translations($form, &$form_state) {
   $languages =  locale_language_list('name');
   // TO DO - PROPERLY DETECT SOURCE LANGAUGE:
   unset($languages['en']);
-  $sub_fields = array('label', 'description');
-  foreach ($sub_fields as $sub_field) {
-    foreach ($form['translation_manager']['#component_ids'] as $cid) {
-      if (isset($form_state['input'][$nid . '_' . $cid . '_' . $sub_field . '_source'])) {
-        $source_string = $form_state['input'][$nid . '_' . $cid . '_' . $sub_field . '_source'];
-        foreach ($languages as $language_code => $language_name) {
-          if (isset($form_state['input'][$nid . '_' . $cid . '_' . $sub_field . '_' . $language_code])) {
-            $translated_string = $form_state['input'][$nid . '_' . $cid . '_' . $sub_field . '_' . $language_code];
-            $textgroup = 'Webform Component';
-            $location = $nid . ':' . $cid . ':' . $sub_field;
-            i18n_string_translation_update(
-              $textgroup . ':' . $location,
-              $translated_string,
-              $language_code,
-              $source_string
-            );
-          }
-        }
-      } 
+  foreach ($form['translation_manager']['#component_data'] as $cid => $component_data) {
+    foreach ($form_state['input'] as $input_key => $input_string) {
+      // Handle item lists such as select options:
+      if (strpos($input_key, $nid . '_' . $cid . '_') === FALSE) {
+        continue;
+      }
+
+      if (strpos($input_key, $nid . '_' . $cid . '_option_') !== FALSE) {
+        list($nid, $cid, $sub_field, $option_key, $language_code) = explode('_', $input_key);
+        $sub_field = $sub_field . '_' . $option_key;
+        $is_option = TRUE;
+      }
+      else {
+        list($nid, $cid, $sub_field, $language_code) = explode('_', $input_key);
+        $is_option = FALSE;
+      }
+      // Update the translation:
+      $translated_string = $form_state['input'][$nid . '_' . $cid . '_' . $sub_field . '_' . $language_code];
+      $source_string = $form_state['input'][$nid . '_' . $cid . '_' . $sub_field . '_source'];
+      $textgroup = 'Webform Component';
+      $location = $nid . ':' . $cid . ':' . $sub_field;
+      i18n_string_translation_update(
+        $textgroup . ':' . $location,
+        $translated_string,
+        $language_code,
+        $source_string
+      );
     }
   }
 }
@@ -183,23 +198,25 @@ function webform_translate_theme() {
 
 function theme_webform_translate_table_theme($form) {
   $form = array_shift($form);
-
   $rows = array();
   $attributes = array();
   $results_language_codes = array();
   if (!isset($form['rows'])) {
     return;
   }
-  foreach ($form['rows'] as $row_data) {
-  
+
+  $last_row_id = '';
+  foreach ($form['rows'] as $row_key => $row_data) {
     if (!is_array($row_data) || !isset($row_data['#type']) || $row_data['#type'] != 'fieldset') {
       continue;
-     }
-    $row = array('data' => array());
+    }
+    list($nid, $id, $sub_field) = explode('_', $row_key);
+    $row = array('data' => array(array('class' => 'sub-field', 'data' => $sub_field)));
     foreach ($row_data as $item) {
       if (!is_array($item) || !isset($item['#type'])) {
         continue; 
       }
+      
       if (isset($item['#name'])) {
         list($nid, $cid, $sub_field, $language_code) = explode('_', $item['#name']);
         if ($language_code != 'source' && !in_array($language_code, $results_language_codes)) {
@@ -208,6 +225,19 @@ function theme_webform_translate_table_theme($form) {
       }
       $row['data'][] = drupal_render($item);
     }
+
+    // Add a label before each new field:
+    if ($last_row_id != $id) {
+      $last_row_id = $id;
+      $row_label = '';
+      if (isset($form['#component_data'][$id]['form_key'])) {
+        $row_label = $form['#component_data'][$id]['form_key'];
+      }
+      $label_row = array('data' => array(array('data' => $row_label, 'class' => 'label-row', 'colspan' => count($results_language_codes) + 2)));
+      $rows[] = $label_row;
+    }
+
+    // Add the data:
     $rows[] = $row;
   }
 
@@ -216,7 +246,7 @@ function theme_webform_translate_table_theme($form) {
   $languages =  locale_language_list('name');
   unset($languages['en']); // TO DO - PROPERLY DETECT SOURCE LANGAUGE:
 
-  $header = array(t('Source'));
+  $header = array(t('Field'), t('Source'));
   foreach ($languages as $language_code => $language_name) {
     if (in_array($language_code, $results_language_codes)) {
       $header[] = t($language_name);
@@ -254,11 +284,12 @@ function webform_translate_views_post_render(&$view, &$output, &$cache) {
 }
 
 /**
- * Implements hook_webform_component_update().
- * 
- * Updates source translation data for this webform component.
+ * Updates source translation data for this webform component, excluding hidden fields.
+ *
+ * @param $component
+ *   The webform component being updated.
  */
-function webform_translate_webform_component_update($component) {
+function _webform_translate_webform_register_component($component) {
 /*  $translatable_types = array('textarea', 'textfield');
   if (!in_array($component['type'], $translatable_types)) {
     return;
@@ -269,14 +300,13 @@ function webform_translate_webform_component_update($component) {
 
   $textgroup = 'Webform Component';
   $location = $component['nid'] . ':' . $component['cid'];
-  $options = array();
 
   // Register component label:
   $source_string = $component['name'];
   i18n_string_update(
     $textgroup . ':' . $location . ':label', 
     $source_string,
-    $options
+    array()
   );
 
   // Register component description:
@@ -285,9 +315,31 @@ function webform_translate_webform_component_update($component) {
     i18n_string_update(
       $textgroup . ':' . $location . ':description',
       $source_string,
-      $options
+      array()
     );
   }
+
+  // Register checkbox or radio options:
+  if (in_array($component['type'], array('select')) && isset($component['extra']['items'])) {
+    $options = explode("\n", $component['extra']['items']);
+    foreach ($options as $option) {
+      list($option_key, $option_value) = explode("|", $option);
+      $source_string = $component['name'];
+      $option_value = trim($option_value);
+      i18n_string_update(
+        $textgroup . ':' . $location . ':option_' . $option_key,
+        $option_value,
+        array()
+      );
+    }
+  }
+}
+
+/**
+ * Implements hook_webform_component_update().
+ */
+function webform_translate_webform_component_update($component) {
+  _webform_translate_webform_register_component($component);
 }
 
 /**
@@ -329,7 +381,8 @@ function webform_translate_views_query_alter(&$view, &$query) {
 /**
  * Implements hook_form_alter().
  *
- * Limit language filter to specific language options or all languages.
+ * Ensure the current admin's language is used for the language filter
+ * so that multiple columns are not displayed.
  */
 function webform_translate_form_alter(&$form, &$form_state, $form_id) {
   if (!isset($form_state['view']->name)
@@ -337,16 +390,15 @@ function webform_translate_form_alter(&$form, &$form_state, $form_id) {
     || $form_id != 'views_exposed_form') {
     return;
   }
+
   $languages =  locale_language_list('name');
-  unset($languages['en']); // TO DO - PROPERLY DETECT SOURCE LANGAUGE:
-  foreach ($form['language']['#options'] as $language_code => $language_name) {
-    if ($language_code == 'All') {
-      continue;
-    }
-    if (!array_key_exists($language_code, $languages)) {
-      unset($form['language']['#options'][$language_code]);
-    }
-  }
+  unset($languages['en']);
+  global $language;
+  $current_user_language = $language->language;
+  $form['language']['#default_value'] = $current_user_language;
+
+  // Pass the user's current language code to jQuery for select alerations:
+  $form['language']['#attributes']['default_lang_code'] = $language->language;
 }
 
 /**
