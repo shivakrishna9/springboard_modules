@@ -44,7 +44,7 @@ function fundraiser_quick_donate_fundraiser_donation_form($form, $form_state) {
     $payment_method = commerce_payment_method_instance_load($instance_id);
 
     // Skip if payment method is not capable of card on file.
-    if (!_commerce_cardonfile_capable_payment_method_check($payment_method)) {
+    if (!_commerce_cardonfile_capable_payment_method_check($payment_method) || (isset($payment_method['settings']['cardonfile']) && !$payment_method['settings']['cardonfile'])) {
       continue;
     }
 

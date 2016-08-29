@@ -389,7 +389,7 @@ function _fundraiser_quick_donate_form_commerce_cardonfile_card_form_alter_valid
  */
 function fundraiser_quick_donate_entity_presave($entity, $type) {
   $args = arg();
-  if ($type == 'commerce_cardonfile' && $args[2] == 'cards' && isset($_SESSION['card_number']) && strlen($_SESSION['card_number']) > 4) {
+  if ($type == 'commerce_cardonfile' && isset($args[2]) && $args[2] == 'cards' && isset($_SESSION['card_number']) && strlen($_SESSION['card_number']) > 4) {
     $entity->card_number = substr($_SESSION['card_number'], -4);
     unset($_SESSION['card_number']);
   }
