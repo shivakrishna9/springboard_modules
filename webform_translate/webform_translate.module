@@ -72,20 +72,24 @@ function webform_translate_translation_manager_form() {
 
 
   $nid = arg(1);
+  if (!is_numeric($nid)) {
+    return array();
+  }
   $node = node_load($nid);
   
-  // Group existing translations with the source:
+  // Group source and tranlation data together for display in table rows:
   $view_data = array();
   foreach ($view->result as $result) {
     list($textgroup, $nid, $cid, $sub_field) = explode(':', $result->locales_source_location);
     $key = $nid . '_' . $cid . '_' . $sub_field;
     $view_data[$key]['cid'] = $cid;
-    $view_data[$key]['sub_field'] = $sub_field; // Such as the field's Label or description
+    $view_data[$key]['sub_field'] = $sub_field; // Label or description
     $view_data[$key]['source'] = $result->locales_source_source;
     $view_data[$key]['translations'][$result->locales_target_language] = $result->locales_target_translation;
     $form['translation_manager']['#component_ids'][] = $cid;
   }
   
+
   foreach ($view_data as $field_key => $data) {
     $form_key = $node->webform['components'][$data['cid']]['form_key'];
     $type = $node->webform['components'][$data['cid']]['type'];
