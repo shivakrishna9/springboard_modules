@@ -175,11 +175,14 @@
         }
 
         // Iterate validation settings and apply rules.
-        for ($key in Drupal.settings.fundraiser.js_validation_settings) {
-          if ($('input[name*="' + $key + '"]')[0]) {
-            $('input[name*="' + $key + '"]').rules("add", Drupal.settings.fundraiser.js_validation_settings[$key]);
+        if (Drupal.settings.fundraiser && Drupal.settings.fundraiser.js_validation_settings) {
+          for ($key in Drupal.settings.fundraiser.js_validation_settings) {
+            if ($('input[name*="' + $key + '"]')[0]) {
+              $('input[name*="' + $key + '"]').rules("add", Drupal.settings.fundraiser.js_validation_settings[$key]);
+            }
           }
         }
+
         // Other Amount
         if ($('input[name*="other_amount"]')[0]) {
           $('input[name*="other_amount"]').each(function() {
