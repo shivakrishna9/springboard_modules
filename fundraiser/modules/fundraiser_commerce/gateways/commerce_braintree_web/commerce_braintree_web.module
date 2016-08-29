@@ -95,7 +95,10 @@ function commerce_braintree_web_form_alter(&$form, &$form_state, $form_id) {
   // Use form alter to make sure the external javsacript is always loaded.
   // Attaching in the payment method submit form isn't consistent.
   if ((isset($form['#node']->gateways['credit']['id']) && strstr($form['#node']->gateways['credit']['id'], 'braintree_hostedfields')) ||
-       (isset($form['#node']->gateways['paypal']['id']) && strstr($form['#node']->gateways['paypal']['id'], 'braintree_paypal'))) {
+      (isset($form['#node']->gateways['paypal']['id']) && strstr($form['#node']->gateways['paypal']['id'], 'braintree_paypal')) ||
+      // If we on the Edit Donation Set tab and Braintree is the gateway.
+      $form['#donation']->gateway['gateway_details']['module'] == 'commerce_braintree_web') {
+
     // Add an anchor to jump to payment section when reload page.
     $form['commerce_payment']['payment_anchor'] = array(
       '#markup' => '<a name="payment-section"></a>',
