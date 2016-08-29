@@ -308,6 +308,22 @@ function webform_translate_views_query_alter(&$view, &$query) {
     'value' => 'Webform Component:' . $arg1 . ':%',
     'operator' => 'LIKE',
   );
+
+  // This replaces the translation string filter with a subquery that causes this view to be filtered by
+  // all "rows" where one or more translation string is matched.  This is because the unaltered output
+  // of this view spreads each row's translations across multiple results.
+  foreach ($query->where[1]['conditions'] as $key => $condition) {
+    if ($condition['field'] != 'locales_target.translation') {
+      continue;
+    }
+    $target_value = isset($condition['value']) ? $condition['value'] : '';
+    unset($query->where[1]['conditions'][$key]);
+    $sub_query = db_select('locales_target', 'lt')
+      ->fields('lt', array('lid'))
+      ->condition('translation', $target_value, 'LIKE');
+    $view->query->add_where(0, 'locales_source.lid', $sub_query, 'IN');
+    break;
+  }
 }
 
 /**
