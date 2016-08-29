@@ -281,19 +281,27 @@ function springboard_dw_fundraiser_donation_success($donation) {
   // Get the Drupal data warehouse queue.
   $queue = DrupalQueue::get("springboard_dw_export");
 
-  // Queue the donation object which should not be in the queue,
-  // so there's no need to check if this item is warehoused.
-  $donation_item = springboard_dw_map_donation_item($donation);
+  // Check if the item is warehoused already and run an update instead of
+  // creating a new record (mainly applies to sustainer charge advancements)
+  $is_donation_update = springboard_dw_item_is_warehoused('donation', $donation->did);
 
-  // Create the queue item.
+  // Map the donation object
+  if(!$is_donation_update) {
+    $donation_item = springboard_dw_map_donation_item($donation,
+      $is_donation_update);
+  }
+  else {
+    $donation_item = springboard_dw_map_donation_sustainer_item
+    ($donation);
+  }
+
+  // Queue the item or flag it for updating.
   $queue->createItem($donation_item);
 
   // Log the queue item.
   springboard_dw_log_queue_item($donation_item);
 
-  springboard_dw_track_item_warehouse_queued('donation', $donation->did);
-
-  // Check if the transaction id exists
+  // Check if the transaction id exists and track payment if so.
   if (isset($donation_item['transaction_id'])) {
     // Get the transaction date from the commerce payment transaction
     $transaction = springboard_dw_transaction_get_by_id
@@ -308,8 +316,15 @@ function springboard_dw_fundraiser_donation_success($donation) {
     // Log the queue item.
     springboard_dw_log_queue_item($payment_item);
 
+    // Track the payment.
     springboard_dw_track_item_warehouse_queued('payment', $transaction['transaction_id']);
   }
+
+  // If this is not an update, track the item.
+  if(!$is_donation_update) {
+    springboard_dw_track_item_warehouse_queued('donation', $donation->did);
+  }
+
 }
 
 /**
@@ -632,6 +647,9 @@ function springboard_dw_fundraiser_sustainers_future_order_insert($created_donat
 
   // Log the queue item.
   springboard_dw_log_queue_item($donation_item);
+
+  // Track the future payment.
+  springboard_dw_track_item_warehouse_queued('donation', $created_donation->did);
 }
 
 /**
@@ -1144,9 +1162,9 @@ function springboard_dw_map_donation_item($donation, $update = FALSE) {
   // Get the donation object details and prep for warehousing (sb_donation).
   $donation_item = array();
 
-  // If user data is being passed to update, flag this queue item for an update.
-  if (!empty($user_data) && $update == TRUE) {
-    $contact_item['queue_item_update'] = TRUE;
+  // Flag this queue item for an update.
+  if ($update == TRUE) {
+    $donation_item['queue_item_update'] = TRUE;
   }
 
   $donation_item['queue_type'] = 'donation';
@@ -1239,6 +1257,29 @@ function springboard_dw_map_donation_item($donation, $update = FALSE) {
 
   // Add the extra props to the field mapping
   $donation_item['extra_props'] = $dw_extra_props;
+
+  return $donation_item;
+}
+
+/**
+ * Map a charge advance item to a donation update.
+ * @param $donation
+ * @return array
+ */
+function springboard_dw_map_donation_sustainer_item($donation) {
+  // Get the donation object details and prep for warehousing (sb_donation).
+  $donation_item = array();
+
+  // Flag this queue item for an update.
+  $donation_item['queue_item_update'] = TRUE;
+
+  // Define the update properties
+  $donation_item['queue_type'] = 'donation';
+  $donation_item['donation_id'] = $donation->did;
+  $donation_item['status'] = $donation->status;
+  $donation_item['transaction_id'] = $donation->txn_id;
+  $donation_item['updated_at'] = time();
+  $donation_item['transaction_date'] = time();
 
   return $donation_item;
 }
