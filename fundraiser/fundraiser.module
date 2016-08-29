@@ -1890,7 +1890,6 @@ function fundraiser_donation_create($donation) {
   elseif (is_array($donation->gateway) && isset($donation->gateway['id']) && !empty($donation->gateway['id'])) {
     $donation_record['gateway'] = $donation->gateway['id'];
   }
-  drupal_alter('fundraiser_donation_create_record', $donation, $donation_record);
   _fundraiser_create_donation($donation_record);
   // Add a comment.
   global $user;
@@ -1953,8 +1952,10 @@ function fundraiser_donation_update($donation, $vocal_mode = TRUE) {
   if (isset($donation->form_url) && !empty($donation->form_url)) {
     $donation_record['form_url'] = $donation->form_url;
   }
+  if (isset($donation->data['cardonfile']) && !empty($donation->data['cardonfile']) && $donation->status == 'payment_received') {
+    $donation_record['cardonfile'] = $donation->data['cardonfile'];
+  }
   $donation_record['changed'] = REQUEST_TIME;
-  drupal_alter('fundraiser_donation_update_record', $donation, $donation_record);
   _fundraiser_update_donation($donation_record);
   // Refresh the cache. No need to change the donation object passed in, but stored values should be zapped.
   fundraiser_donation_get_donation($donation->did, TRUE);

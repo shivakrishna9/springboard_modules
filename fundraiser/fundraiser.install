@@ -184,13 +184,6 @@ function fundraiser_schema() {
       'nid_uid' => array('nid', 'uid'),
     ),
   );
-  if (module_exists('commerce_cardonfile')) {
-    $schema['fundraiser_donation']['fields']['card_id'] = array(
-      'description' => 'The cardonfile card ID used to process this donation',
-      'type' => 'int',
-    );
-    $schema['fundraiser_donation']['indexes']['card_id'] = array('card_id');
-  }
   $schema['fundraiser_refund'] = array(
     'description' => 'Stores information about refunds made on donations',
     'fields' => array(
@@ -556,29 +549,10 @@ function fundraiser_update_7009() {
  * Add card_id field to fundraiser_donation.
  */
 function fundraiser_update_7010() {
-  if (module_exists('commerce_cardonfile')) {
-    $field = array(
-      'description' => 'The cardonfile card ID used to process this donation',
-      'type' => 'int',
-    );
-    db_add_field('fundraiser_donation', 'card_id', $field);
-    db_add_index('fundraiser_donation', 'card_id', array('card_id'));
-  }
-}
-
-/**
- * Implements hook_modules_installed().
- *
- * Used to add card_id field to fundraiser_donation table if commerce_cardonfile
- * module is being enabled.
- */
-function fundraiser_modules_installed($modules) {
-  if (in_array('commerce_cardonfile', $modules)) {
-    $field = array(
-      'description' => 'The cardonfile card ID used to process this donation',
-      'type' => 'int',
-    );
-    db_add_field('fundraiser_donation', 'card_id', $field);
-    db_add_index('fundraiser_donation', 'card_id', array('card_id'));
-  }
+  $field = array(
+    'description' => 'The cardonfile card ID used to process this donation',
+    'type' => 'int',
+  );
+  db_add_field('fundraiser_donation', 'card_id', $field);
+  db_add_index('fundraiser_donation', 'card_id', array('card_id'));
 }
