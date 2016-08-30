@@ -370,11 +370,6 @@ function _fundraiser_quick_donate_checkout_form_submit($form, &$form_state) {
     ->execute();
 
   module_invoke_all('springboard_quick_donate_optin_create', $account, $donation, $card_id);
-
-  if (empty($account->pass)) {
-    // Assuming this user account was just created since the password is empty.
-    drupal_mail('user', 'register_no_approval_required', $account->mail, language_default(), array('account' => $account), NULL, TRUE);
-  }
 }
 
 /**

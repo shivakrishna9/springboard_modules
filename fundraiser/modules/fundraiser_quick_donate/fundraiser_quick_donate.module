@@ -344,3 +344,25 @@ function fundraiser_quick_donate_form_commerce_cardonfile_card_form_alter(&$form
 function fundraiser_quick_donate_form_user_profile_form_alter(&$form, $form_state) {
   unset($form['field_quick_donate_opt_in']);
 }
+
+/**
+ * Implements hook_webform_user_send_mail_alter().
+ */
+function fundraiser_quick_donate_webform_user_send_mail_alter(&$options) {
+  if (empty($options['parameters'])) {
+    return;
+  }
+  $params = $options['parameters'];
+
+  // Since this is coming from the webform_user module, and if this is a Quick
+  // Donation, set the email to send regardless of what the node's settings are.
+  if (isset($params['form_state']['values']['submitted_tree']['payment_information'])) {
+    $payment_info = $params['form_state']['values']['submitted_tree']['payment_information'];
+    if (isset($payment_info['payment_method']) && isset($payment_info['payment_fields'][$payment_info['payment_method']])) {
+      $payment_method = $payment_info['payment_fields'][$payment_info['payment_method']];
+      if (isset($payment_method['quickdonate']) && $payment_method['quickdonate']) {
+        $options['send'] = TRUE;
+      }
+    }
+  }
+}
