@@ -16,9 +16,9 @@
       };
       gateways_enabled();
 
+      var disabled = false;
+      var wasChecked = $quickdonate.find('input[type=checkbox]').is(':checked');
       var checkGateway = function($this, type) {
-        $quickdonate.next('.note').remove();
-
         gateways_enabled();
 
         var $option_name = $gateways[type].find('option[value="' + $this.value + '"]').text();
@@ -35,10 +35,8 @@
         }
         else if ($gateways_enabled[type] && Drupal.settings.fundraiser_quick_donate.usable_paypment_processors[type].indexOf($option_value) < 0) {
           // Not a usable credit payment processor, display a note.
-          $quickdonate.find('input[type=checkbox]').attr({
-            'disabled': 'disabled',
-            'checked': false
-          });
+          disabled = true;
+          $quickdonate.find('input[type=checkbox]').attr('disabled', 'disabled').attr('checked', false);
           $quickdonate.nextAll('.form-item, .form-wrapper').hide();
           if ($quickdonate.next('.note').length == 0) {
             $quickdonate.after('<div class="note"><strong>Note:</strong> Quick donations are not available for one or more of the payment processors you have selected: <ul><li>' + $option_name + '</li></ul>You\'ll need to configure the <a href="/admin/commerce/config/payment-methods">different payment methods</a> to utilize the quick donation functionality.<br/><br/></div>');
@@ -48,8 +46,8 @@
           }
           gateway_available[type] = false;
         }
-        else {
-          $quickdonate.find('input[type=checkbox]').removeAttr('disabled');
+        else if (!disabled) {
+          $quickdonate.find('input[type=checkbox]').removeAttr('disabled').attr('checked', wasChecked);
           $quickdonate.nextAll('.form-item, .form-wrapper').show();
           $quickdonate.next('.note').remove();
           gateway_available[type] = true;
@@ -72,6 +70,8 @@
       };
 
       $gateways['credit'].add('#edit-gateways-credit-status').on('change', function() {
+        $quickdonate.next('.note').remove();
+        disabled = false;
         checkGateway(this, 'credit');
       });
       if ($gateways_enabled.credit) {
@@ -79,6 +79,8 @@
       }
 
       $gateways['bank'].add('#edit-gateways-bank-account-status').on('change', function() {
+        $quickdonate.next('.note').remove();
+        disabled = false;
         checkGateway(this, 'bank');
       });
       if ($gateways_enabled.bank) {

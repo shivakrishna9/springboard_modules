@@ -15,6 +15,7 @@ function fundraiser_quick_donate_views_default_views_alter(&$views) {
   /* Display: Master */
   $handler = &$views['commerce_card_on_file_user_cards']->display['default']->handler;
 
+  $handler->display->display_options = array();
   $handler->display->display_options['title'] = 'Stored cards';
   $handler->display->display_options['use_more_always'] = FALSE;
   $handler->display->display_options['access']['type'] = 'perm';
@@ -36,7 +37,9 @@ function fundraiser_quick_donate_views_default_views_alter(&$views) {
   $handler->display->display_options['fields']['card_type']['id'] = 'card_type';
   $handler->display->display_options['fields']['card_type']['table'] = 'commerce_cardonfile';
   $handler->display->display_options['fields']['card_type']['field'] = 'card_type';
+  $handler->display->display_options['fields']['card_type']['label'] = '';
   $handler->display->display_options['fields']['card_type']['exclude'] = TRUE;
+  $handler->display->display_options['fields']['card_type']['element_label_colon'] = FALSE;
   /* Field: Commerce Card on File: Card number */
   $handler->display->display_options['fields']['card_number']['id'] = 'card_number';
   $handler->display->display_options['fields']['card_number']['table'] = 'commerce_cardonfile';
@@ -48,6 +51,12 @@ function fundraiser_quick_donate_views_default_views_alter(&$views) {
   $handler->display->display_options['fields']['card_number']['element_wrapper_type'] = 'h2';
   $handler->display->display_options['fields']['card_number']['element_default_classes'] = FALSE;
   $handler->display->display_options['fields']['card_number']['format'] = 1;
+  /* Field: Commerce Card on File: Card expiration */
+  $handler->display->display_options['fields']['card_exp']['id'] = 'card_exp';
+  $handler->display->display_options['fields']['card_exp']['table'] = 'commerce_cardonfile';
+  $handler->display->display_options['fields']['card_exp']['field'] = 'card_exp';
+  $handler->display->display_options['fields']['card_exp']['label'] = 'Expires';
+  $handler->display->display_options['fields']['card_exp']['element_default_classes'] = FALSE;
   /* Field: Commerce Card on File: Card name */
   $handler->display->display_options['fields']['card_name']['id'] = 'card_name';
   $handler->display->display_options['fields']['card_name']['table'] = 'commerce_cardonfile';
@@ -55,33 +64,6 @@ function fundraiser_quick_donate_views_default_views_alter(&$views) {
   $handler->display->display_options['fields']['card_name']['label'] = '';
   $handler->display->display_options['fields']['card_name']['element_label_colon'] = FALSE;
   $handler->display->display_options['fields']['card_name']['element_default_classes'] = FALSE;
-  /* Field: Commerce Card on File: Instance default */
-  $handler->display->display_options['fields']['instance_default']['id'] = 'instance_default';
-  $handler->display->display_options['fields']['instance_default']['table'] = 'commerce_cardonfile';
-  $handler->display->display_options['fields']['instance_default']['field'] = 'instance_default';
-  $handler->display->display_options['fields']['instance_default']['label'] = 'Default';
-  $handler->display->display_options['fields']['instance_default']['exclude'] = TRUE;
-  $handler->display->display_options['fields']['instance_default']['not'] = 0;
-  /* Field: Commerce Card on File: Card expiration */
-  $handler->display->display_options['fields']['card_exp']['id'] = 'card_exp';
-  $handler->display->display_options['fields']['card_exp']['table'] = 'commerce_cardonfile';
-  $handler->display->display_options['fields']['card_exp']['field'] = 'card_exp';
-  $handler->display->display_options['fields']['card_exp']['label'] = '';
-  $handler->display->display_options['fields']['card_exp']['element_label_colon'] = FALSE;
-  $handler->display->display_options['fields']['card_exp']['element_default_classes'] = FALSE;
-  /* Field: Commerce Card on File: Operations links */
-  $handler->display->display_options['fields']['operations']['id'] = 'operations';
-  $handler->display->display_options['fields']['operations']['table'] = 'commerce_cardonfile';
-  $handler->display->display_options['fields']['operations']['field'] = 'operations';
-  $handler->display->display_options['fields']['operations']['label'] = '';
-  $handler->display->display_options['fields']['operations']['element_label_colon'] = FALSE;
-  $handler->display->display_options['fields']['operations']['add_destination'] = 0;
-  /* Field: Commerce Card on File: Billing Profile */
-  $handler->display->display_options['fields']['commerce_cardonfile_profile']['id'] = 'commerce_cardonfile_profile';
-  $handler->display->display_options['fields']['commerce_cardonfile_profile']['table'] = 'field_data_commerce_cardonfile_profile';
-  $handler->display->display_options['fields']['commerce_cardonfile_profile']['field'] = 'commerce_cardonfile_profile';
-  $handler->display->display_options['fields']['commerce_cardonfile_profile']['label'] = '';
-  $handler->display->display_options['fields']['commerce_cardonfile_profile']['element_label_colon'] = FALSE;
   /* Field: User: Address */
   $handler->display->display_options['fields']['sbp_address']['id'] = 'sbp_address';
   $handler->display->display_options['fields']['sbp_address']['table'] = 'field_data_sbp_address';
@@ -90,7 +72,7 @@ function fundraiser_quick_donate_views_default_views_alter(&$views) {
   $handler->display->display_options['fields']['sbp_address']['label'] = '';
   $handler->display->display_options['fields']['sbp_address']['alter']['alter_text'] = TRUE;
   $handler->display->display_options['fields']['sbp_address']['alter']['text'] = '[sbp_address]
-  ';
+    ';
   $handler->display->display_options['fields']['sbp_address']['element_label_colon'] = FALSE;
   $handler->display->display_options['fields']['sbp_address']['element_default_classes'] = FALSE;
   /* Field: User: City */
@@ -118,6 +100,13 @@ function fundraiser_quick_donate_views_default_views_alter(&$views) {
   $handler->display->display_options['fields']['sbp_zip']['alter']['alter_text'] = TRUE;
   $handler->display->display_options['fields']['sbp_zip']['alter']['text'] = '[sbp_city], [sbp_state] [sbp_zip]';
   $handler->display->display_options['fields']['sbp_zip']['element_label_colon'] = FALSE;
+  /* Field: Commerce Card on File: Operations links */
+  $handler->display->display_options['fields']['operations']['id'] = 'operations';
+  $handler->display->display_options['fields']['operations']['table'] = 'commerce_cardonfile';
+  $handler->display->display_options['fields']['operations']['field'] = 'operations';
+  $handler->display->display_options['fields']['operations']['label'] = '';
+  $handler->display->display_options['fields']['operations']['element_label_colon'] = FALSE;
+  $handler->display->display_options['fields']['operations']['add_destination'] = 0;
   /* Sort criterion: Commerce Card on File: Instance default */
   $handler->display->display_options['sorts']['instance_default']['id'] = 'instance_default';
   $handler->display->display_options['sorts']['instance_default']['table'] = 'commerce_cardonfile';
@@ -141,6 +130,7 @@ function fundraiser_quick_donate_views_default_views_alter(&$views) {
   $handler->display->display_options['filters']['status']['value'] = array(
     1 => '1',
   );
+
 
   /* Display: Page */
   $handler = &$views['commerce_card_on_file_user_cards']->display['page']->handler;
