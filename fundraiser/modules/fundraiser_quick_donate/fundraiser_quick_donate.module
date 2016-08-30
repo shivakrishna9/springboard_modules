@@ -413,6 +413,11 @@ function fundraiser_quick_donate_webform_user_send_mail_alter(&$options) {
   }
   $params = $options['parameters'];
 
+  // If the account password is already set, we can return early.
+  if (!empty($params['account']->pass)) {
+    return;
+  }
+
   // Since this is coming from the webform_user module, and if this is a Quick
   // Donation, set the email to send regardless of what the node's settings are.
   if (isset($params['form_state']['values']['submitted_tree']['payment_information'])) {
