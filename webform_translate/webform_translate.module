@@ -31,7 +31,9 @@ function webform_translate_access_check($node) {
  * Translation manager page content.
  */
 function _webform_translate_render_node_translation_manager($node) {
-  drupal_set_title(drupal_get_title() . ' - ' . 'Translation Manager'); 
+  global $language;
+  drupal_set_title(drupal_get_title() . ' - ' . 'Translation Manager' . 
+    ($language->language != 'en' ? ' - ' . $language->name : '')); 
 
   $view = views_get_view('webform_translate_translation_manager');
   $view->set_display('default');
@@ -45,31 +47,20 @@ function _webform_translate_render_node_translation_manager($node) {
  * Defines the translation manager form:
  */
 function webform_translate_translation_manager_form() {
+  global $language;
+  $languages =  locale_language_list('name');
+  unset($languages['en']); // TO DO - PROPERLY DETECT SOURCE LANGAUGE
+
   $view = views_get_view('webform_translate_translation_manager');
   $view->set_display('default');
   $view->pre_execute();
   $view->execute();
-
-  $languages =  locale_language_list('name');
-  if (isset($view->filter['language']->value[0])) {
-    if (array_key_exists($view->filter['language']->value[0], $languages)) {
-      foreach ($languages as $language_code => $language_name) {
-        if ($view->filter['language']->value[0] != $language_code) {
-          unset($languages[$language_code]);
-        }
-      }
-    }
-  } 
-
-  // TO DO - PROPERLY DETECT SOURCE LANGAUGE:
-  unset($languages['en']);
 
   $form['translation_manager'] = array(
     '#type' => 'fieldset',
     '#theme' => 'webform_translate_table_theme',
     '#component_data' => array(),
   );
-
 
   $nid = arg(1);
   if (!is_numeric($nid)) {
@@ -83,9 +74,20 @@ function webform_translate_translation_manager_form() {
     list($textgroup, $nid, $cid, $sub_field) = explode(':', $result->locales_source_location);
     $key = $nid . '_' . $cid . '_' . $sub_field;
     $view_data[$key]['cid'] = $cid;
-    $view_data[$key]['sub_field'] = $sub_field; // Label or description
+    $view_data[$key]['sub_field'] = $sub_field; // Label, description, or option
+    // Save the node's default country to the form if states are being translated:
+    if ($node->webform['components'][$cid]['form_key'] == 'state') {
+      foreach ($node->webform['components'] as $component_data) {
+        if ($component_data['form_key'] == 'country' && isset($component_data['value'])) {
+          $form['translation_manager']['#default_country_code'] = $component_data['value'];
+          break;
+        }
+      }
+    }
     $view_data[$key]['source'] = $result->locales_source_source;
-    $view_data[$key]['translations'][$result->locales_target_language] = $result->locales_target_translation;
+    if ($result->locales_target_language == $language->language) {
+      $view_data[$key]['translations'][$result->locales_target_language] = $result->locales_target_translation;
+    }
     $form['translation_manager']['#component_data'][$cid] = array(
       'cid' => $cid,
       'form_key' => $node->webform['components'][$cid]['form_key'],
@@ -102,6 +104,9 @@ function webform_translate_translation_manager_form() {
     // Gather the translations for this row:
     $translations = array();
     foreach ($languages as $language_code => $language_name) {
+      if ($language_code != $language->language) {
+        continue;
+      }
       $translations[$language_code] = '';
       if (isset($data['translations'][$language_code])) {
         $translations[$language_code] = $data['translations'][$language_code];
@@ -136,7 +141,6 @@ function webform_translate_translation_manager_form() {
 
   $form['#attached']['css'][] =  drupal_get_path('module', 'webform_translate') . '/css/webform_translate.css';
   $form['#attached']['js'][] =  drupal_get_path('module', 'webform_translate') . '/js/webform_translate.js';
-
   $form['#submit'][] = '_webform_translate_update_translations';
   return $form;
 }
@@ -149,7 +153,6 @@ function _webform_translate_update_translations($form, &$form_state) {
   if (!is_numeric($nid)) {
     return;
   }
-
   $languages =  locale_language_list('name');
   // TO DO - PROPERLY DETECT SOURCE LANGAUGE:
   unset($languages['en']);
@@ -170,16 +173,19 @@ function _webform_translate_update_translations($form, &$form_state) {
         $is_option = FALSE;
       }
       // Update the translation:
-      $translated_string = $form_state['input'][$nid . '_' . $cid . '_' . $sub_field . '_' . $language_code];
-      $source_string = $form_state['input'][$nid . '_' . $cid . '_' . $sub_field . '_source'];
-      $textgroup = 'Webform Component';
-      $location = $nid . ':' . $cid . ':' . $sub_field;
-      i18n_string_translation_update(
-        $textgroup . ':' . $location,
-        $translated_string,
-        $language_code,
-        $source_string
-      );
+      if (isset($form_state['input'][$nid . '_' . $cid . '_' . $sub_field . '_' . $language_code])
+        && isset($form_state['input'][$nid . '_' . $cid . '_' . $sub_field . '_source'])) {
+        $translated_string = $form_state['input'][$nid . '_' . $cid . '_' . $sub_field . '_' . $language_code];
+        $source_string = $form_state['input'][$nid . '_' . $cid . '_' . $sub_field . '_source'];
+        $textgroup = 'Webform Component';
+        $location = $nid . ':' . $cid . ':' . $sub_field;
+        i18n_string_translation_update(
+          $textgroup . ':' . $location,
+          $translated_string,
+          $language_code,
+          $source_string
+        );
+      }
     }
   }
 }
@@ -197,26 +203,71 @@ function webform_translate_theme() {
 }
 
 function theme_webform_translate_table_theme($form) {
+  global $language;
   $form = array_shift($form);
   $rows = array();
   $attributes = array();
   $results_language_codes = array();
+ 
   if (!isset($form['rows'])) {
     return;
   }
 
+  $country_options = _webform_translate_get_enabled_countries();
+
   $last_row_id = '';
+
   foreach ($form['rows'] as $row_key => $row_data) {
     if (!is_array($row_data) || !isset($row_data['#type']) || $row_data['#type'] != 'fieldset') {
       continue;
     }
     list($nid, $id, $sub_field) = explode('_', $row_key);
+    
+    // If the sub-field contains delimited values only use the first value for the label:
+    if (strpos($sub_field, ';') !== FALSE) {
+      $sub_field = substr($sub_field, 0, strpos($sub_field, ';'));
+    }
+
+    // Add a label before each new field:
+    if ($last_row_id != $id) {
+      $last_row_id = $id;
+      $row_label = '';
+      if (isset($form['#component_data'][$id]['form_key'])) {
+        $row_label = $form['#component_data'][$id]['form_key'];
+
+        // Add country filtering for the "State" field:
+        if (function_exists('fundraiser_commerce_get_countries') && $form['#component_data'][$id]['form_key'] == 'state') {
+          $row_label .= '&nbsp;<select class="trans-manager-state-selector">';
+          $row_label .= '<option value="all-countries">- View All States -</option>';
+          foreach ($country_options as $key => $value) {
+            $selected = FALSE;
+            if (isset($form['#default_country_code']) && $key == $form['#default_country_code']) {
+              $selected = TRUE;
+            }
+            $row_label .= '<option ' . ($selected ? 'selected="selected" ' : '') . 'value="' . $key . '">' . $value . '</option>';
+          }
+          $row_label .= '</select>';
+        }
+      }
+      $label_row = array('data' => array(array('data' => $row_label, 'class' => 'label-row', 'colspan' => 3)));
+      $rows[] = $label_row;
+    }
+
     $row = array('data' => array(array('class' => 'sub-field', 'data' => $sub_field)));
     foreach ($row_data as $item) {
       if (!is_array($item) || !isset($item['#type'])) {
         continue; 
       }
-      
+      if (function_exists('fundraiser_commerce_get_countries') && $form['#component_data'][$id]['form_key'] == 'state') {
+        $enabled_countries = _webform_translate_get_enabled_countries();
+        foreach ($enabled_countries as $enabled_country_code => $enabled_country) { 
+          if (strpos($sub_field, 'option;' . $enabled_country_code . ';') !== FALSE) {
+            list($label, $country_code, $state_code) = explode(';', $sub_field);
+            $item['#attributes']['country_code'] = $country_code;
+            break;
+          }
+        }
+      }
       if (isset($item['#name'])) {
         list($nid, $cid, $sub_field, $language_code) = explode('_', $item['#name']);
         if ($language_code != 'source' && !in_array($language_code, $results_language_codes)) {
@@ -226,18 +277,7 @@ function theme_webform_translate_table_theme($form) {
       $row['data'][] = drupal_render($item);
     }
 
-    // Add a label before each new field:
-    if ($last_row_id != $id) {
-      $last_row_id = $id;
-      $row_label = '';
-      if (isset($form['#component_data'][$id]['form_key'])) {
-        $row_label = $form['#component_data'][$id]['form_key'];
-      }
-      $label_row = array('data' => array(array('data' => $row_label, 'class' => 'label-row', 'colspan' => count($results_language_codes) + 2)));
-      $rows[] = $label_row;
-    }
-
-    // Add the data:
+    // Add the row:
     $rows[] = $row;
   }
 
@@ -247,11 +287,7 @@ function theme_webform_translate_table_theme($form) {
   unset($languages['en']); // TO DO - PROPERLY DETECT SOURCE LANGAUGE:
 
   $header = array(t('Field'), t('Source'));
-  foreach ($languages as $language_code => $language_name) {
-    if (in_array($language_code, $results_language_codes)) {
-      $header[] = t($language_name);
-    }
-  }
+  $header[] = $language->name;
 
   $output = theme('table', array(
     'header' => $header,
@@ -319,10 +355,35 @@ function _webform_translate_webform_register_component($component) {
     );
   }
 
+  // Pull state values from the "addressfield" module if it is enabled:
+  if ($component['form_key'] == 'state' && $component['type'] == 'select') {
+    if (module_exists('addressfield')) {
+      module_load_include('inc', 'addressfield', 'addressfield.administrative_areas');
+      $countries = _webform_translate_get_enabled_countries();
+      foreach ($countries as $country_code => $country) {
+        $states_data = addressfield_get_administrative_areas($country_code);
+        foreach ($states_data as $state_code => $state_name) {
+          if ($state_name == '--') {
+            continue;
+          }
+          i18n_string_update(
+            $textgroup . ':' . $location . ':option;' . $country_code . ';' . $state_code,
+            $state_name,
+            array()
+          );
+        }
+      }
+      return;
+    }
+  }
+
   // Register checkbox or radio options:
   if (in_array($component['type'], array('select')) && isset($component['extra']['items'])) {
     $options = explode("\n", $component['extra']['items']);
     foreach ($options as $option) {
+      if (strpos($option, '|') === FALSE) {
+        continue;
+      }
       list($option_key, $option_value) = explode("|", $option);
       $source_string = $component['name'];
       $option_value = trim($option_value);
@@ -360,49 +421,81 @@ function webform_translate_views_query_alter(&$view, &$query) {
     'value' => 'Webform Component:' . $arg1 . ':%',
     'operator' => 'LIKE',
   );
-
-  // This replaces the translation string filter with a subquery that causes this view to be filtered by
-  // all "rows" where one or more translation string is matched.  This is because the unaltered output
-  // of this view spreads each row's translations across multiple results.
-  foreach ($query->where[1]['conditions'] as $key => $condition) {
-    if ($condition['field'] != 'locales_target.translation') {
-      continue;
-    }
-    $target_value = isset($condition['value']) ? $condition['value'] : '';
-    unset($query->where[1]['conditions'][$key]);
-    $sub_query = db_select('locales_target', 'lt')
-      ->fields('lt', array('lid'))
-      ->condition('translation', $target_value, 'LIKE');
-    $view->query->add_where(0, 'locales_source.lid', $sub_query, 'IN');
-    break;
-  }
 }
 
 /**
  * Implements hook_form_alter().
  *
- * Ensure the current admin's language is used for the language filter
- * so that multiple columns are not displayed.
+ * - Alters state component webform output.
+ * - Implements language filtering via a non-view-based exposed filter.
+ * 
  */
 function webform_translate_form_alter(&$form, &$form_state, $form_id) {
-  if (!isset($form_state['view']->name)
-    || $form_state['view']->name != 'webform_translate_translation_manager'
-    || $form_id != 'views_exposed_form') {
+  // Translate webform state component options based on current country:
+  $arg1 = arg(1);
+  if ($form_id == 'webform_client_form_' . $arg1 && isset($form['submitted']['billing_information']['state'])) {
+    $state_data = $form['submitted']['billing_information']['state'];
+    if (!isset($state_data['#webform_component']['cid']) || !isset($state_data['#webform_component']['nid'])) {
+      return;
+    }
+    if (!isset($form['submitted']['billing_information']['country']['#default_value'])) {
+      return;
+    }
+    $country_code = $form['submitted']['billing_information']['country']['#default_value'];
+    $nid = $state_data['#webform_component']['nid'];
+    $cid = $state_data['#webform_component']['cid'];
+
+    foreach ($state_data['#options'] as $state_code => $state_name) {
+      $form['submitted']['billing_information']['state']['#options'][$state_code] = i18n_string_translate(
+        'Webform Component' . ':' . $nid . ':' . $cid . ':option;' . $country_code . ';' . $state_code,
+        $state_name,
+        array()
+      );
+    }
     return;
   }
-
-  $languages =  locale_language_list('name');
-  unset($languages['en']);
-  global $language;
-  $current_user_language = $language->language;
-  $form['language']['#default_value'] = $current_user_language;
-
-  // Pass the user's current language code to jQuery for select alerations:
-  $form['language']['#attributes']['default_lang_code'] = $language->language;
+  // Add the language switcher:
+  else if (isset($form_state['view']->name) && $form_state['view']->name == 'webform_translate_translation_manager'
+    && $form_id == 'views_exposed_form') {
+    $languages =  locale_language_list('name');
+    unset($languages['en']);
+    global $language;
+    $switcher_js = "Drupal.behaviors.webformTranslateManagerFiltersBehavior = {
+      attach: function(context) { (function($) {
+        if ($('#edit-language-wrapper').length) {
+          $('#edit-language-wrapper').remove();
+        }
+        $('.view-webform-translate-translation-manager .views-exposed-widgets .views-submit-button').before(
+          '<div id=\"edit-language-wrapper\" class=\"views-widget-filter-language\">' +
+            '<label for=\"edit-language\">Select language</label>' +
+            '<div class=\"views-widget\">' +
+            '<div class=\"form-item form-type-select form-item-language control-group\">' +
+              '<select id=\"translation-manager-lang\">' +";
+    foreach ($languages as $lang_code => $lang_name) {
+      $is_current_lang = FALSE;
+      if ($language->language == $lang_code) {
+        $is_current_lang = TRUE;
+      }
+      $switcher_js .= "'<option value=\"" . $lang_code . "\"" . ($is_current_lang ? ' selected="selected"' : '') . ">" . $lang_name . "</option>' +";
+    }
+    $switcher_js .= "'</select></div></div></div>');";
+    // Reload the page with a different language set for the current user on change:
+    $switcher_js .= "
+      $('.view-webform-translate-translation-manager #translation-manager-lang').change(function () {
+        $('.view-webform-translate-translation-manager .views-reset-button,' +
+          '.view-webform-translate-translation-manager .views-submit-button').hide();
+        window.location = '/" . current_path() . "?language=' + $(this).val();
+      });";
+    $switcher_js .= "})(jQuery);}}";
+    drupal_add_js($switcher_js, array('type' => 'inline', 'scope' => 'footer', 'cache' => FALSE));
+    return;
+  } // End exposed filters language switcher
 }
 
 /**
  * Implements hook_webform_component_render_alter().
+ *
+ * Translates webform component output.
  */
 function webform_translate_webform_component_render_alter(&$element, &$component) {
   $nid = arg(1);
@@ -410,19 +503,46 @@ function webform_translate_webform_component_render_alter(&$element, &$component
     return;
   }
   $textgroup = 'Webform Component';
-  $options = array();
-  //if (in_array($element['#type'], array('textfield', 'textarea', 'fieldset'))) {
-  $element['#title'] = i18n_string_translate(
-    $textgroup . ':' . $nid . ':' . $component['cid'] . ':label', 
-    $element['#title'],
-    $options
-  );
-
+  if (isset($element['#title'])) {
+    $element['#title'] = i18n_string_translate(
+      $textgroup . ':' . $nid . ':' . $component['cid'] . ':label', 
+      $element['#title'],
+      array()
+    );
+  }
   if (isset($element['#description'])) {
     $element['#description'] = i18n_string_translate(
       $textgroup . ':' . $nid . ':' . $component['cid'] . ':description',
       $element['#description'],
-      $options
+      array()
     );
   }
+  if (in_array($element['#type'], array('checkboxes', 'radios', 'select')) && isset($element['#options'])) {
+    // State options come from the "addressfield" module and are handled elsewhere:
+    if ($component['form_key'] == 'state' && module_exists('addressfield')) {
+      return;
+    }
+    foreach ($element['#options'] as $option_key => $option_value) {
+      $element['#options'][$option_key] = i18n_string_translate(
+        $textgroup . ':' . $nid . ':' . $component['cid'] . ':option_' . $option_key,
+        $option_value,
+        array()
+      );
+    }
+  }
+}
+
+/**
+ * Returns enabled countries.
+ */
+function _webform_translate_get_enabled_countries() {
+  $countries = fundraiser_commerce_get_countries();
+  $include_all_countries = variable_get('fundraiser_all_countries', 0);
+  if ($include_all_countries) {
+    $default_available = array();
+  }
+  else {
+    $default_available = array('US', 'CA');
+  }
+  return fundraiser_commerce_get_country_options($countries->countries, $default_available);
 }
