@@ -1,5 +1,9 @@
-fieldset#edit-translation-manager {
+#edit-translation-manager {
   padding: 0;
+}
+#edit-translation-manager .fieldset-wrapper {
+  padding: 10px 0px 0px 10px;
+  margin: 0;
 }
 #webform-translation-manager td {
   border: none;
@@ -28,6 +32,9 @@ fieldset#edit-translation-manager {
 #webform-translation-manager tr:hover .form-item.form-type-textfield input {
   border: 1px solid #999;
 }
+#webform-translation-manager .form-item.form-type-textfield input:focus {
+  border: 1px solid #143c54;
+}
 #webform-translation-manager .form-item.form-type-textfield input.focus-active {
   border: 1px solid #143c54;
   position: relative;
@@ -36,4 +43,8 @@ fieldset#edit-translation-manager {
 }
 #webform-translation-manager tr:hover .form-item.form-type-textfield input.focus-active {
   border: 1px solid #143c54;
+}
+
+#edit-language-wrapper {
+  float: right;
 }

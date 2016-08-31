@@ -1,7 +1,0 @@
-name = Webform Translate
-description = Provides translation support for webforms
-package = Webform Extra
-core = 7.x
-dependencies[] = i18n_string
-dependencies[] = webform
-dependencies[] = views

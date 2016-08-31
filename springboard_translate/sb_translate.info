@@ -1,0 +1,7 @@
+name = Springboard Translate
+description = Provides node-specific translation support for things such as webform components and fundraiser fields.
+package = Webform Extra
+core = 7.x
+dependencies[] = i18n_string
+dependencies[] = webform
+dependencies[] = views
