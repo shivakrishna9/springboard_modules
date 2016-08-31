@@ -204,6 +204,14 @@ function fundraiser_tokens($type, $tokens, $data = array(), $options = array()) 
   $sanitize = !empty($options['sanitize']);
 
   if ($type == 'donation' && !empty($data['donation'])) {
+
+dpm('inside fundraiser_tokens');
+dpm('type');
+dpm($type);
+dpm('tokens');
+dpm($tokens);
+dpm('data');
+dpm($data);
     $donation = $data['donation'];
     // All set fields.
     $data = is_array($donation->donation) ? $donation->donation : array();
