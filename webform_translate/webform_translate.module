@@ -398,10 +398,26 @@ function _webform_translate_webform_register_component($component) {
 
 /**
  * Implements hook_webform_component_update().
+ * 
+ * Register a component for translation on component update:
  */
 function webform_translate_webform_component_update($component) {
   _webform_translate_webform_register_component($component);
 }
+
+/**
+ * Implements hook_node_presave().
+ */
+function webform_translate_node_presave($node) {
+  $webform_types = variable_get('webform_node_types');
+  if (!in_array($node->type, $webform_types) || !isset($node->webform['components'])) {
+    return;
+  }
+  foreach ($node->webform['components'] as $cid => $component) {
+    _webform_translate_webform_register_component($component);
+  }
+}
+
 
 /**
  * Implements hook_views_query_alter().
@@ -432,8 +448,8 @@ function webform_translate_views_query_alter(&$view, &$query) {
  */
 function webform_translate_form_alter(&$form, &$form_state, $form_id) {
   // Translate webform state component options based on current country:
-  $arg1 = arg(1);
-  if ($form_id == 'webform_client_form_' . $arg1 && isset($form['submitted']['billing_information']['state'])) {
+  if (isset($form['#node']->nid) && $form_id == 'webform_client_form_' . $form['#node']->nid
+    && isset($form['submitted']['billing_information']['state'])) {
     $state_data = $form['submitted']['billing_information']['state'];
     if (!isset($state_data['#webform_component']['cid']) || !isset($state_data['#webform_component']['nid'])) {
       return;
@@ -546,3 +562,5 @@ function _webform_translate_get_enabled_countries() {
   }
   return fundraiser_commerce_get_country_options($countries->countries, $default_available);
 }
+
+
