@@ -399,6 +399,10 @@
     $('#bt-pp-cancel').one('click', function () {
       self.$submit.attr('disabled', 'disabled');
     });
+
+    // Set focus on submit button to ensure it is in view.
+    self.$submit.focus();
+
   }
 
   /**
