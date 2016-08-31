@@ -159,7 +159,7 @@ function springboard_dw_queue_legacy_setup_batch($type = '') {
     if (variable_get('springboard_dw_advocacy_authentication_token') == NULL
           || variable_get('springboard_dw_advocacy_api_endpoint') == NULL
       ) {
-      springboard_dw_watchdog_log('API endpoint and/or authentication token
+      watchdog('data_warehouse','API endpoint and/or authentication token
       have not been set.', NULL, WATCHDOG_ERROR, l(t('Fix this on the config page'),
         'admin/config/services/springboard-dw'));
       return drush_set_error(dt('API endpoint and/or authentication token have not been set.'));
@@ -195,7 +195,8 @@ function springboard_dw_queue_legacy_setup_batch($type = '') {
   $record_count = count($records);
   drush_log(dt('@count records found to process.', array('@count' => $record_count)), 'ok');
   if ($record_count < 1 && !$idlist) {
-    springboard_dw_watchdog_log('Attempted to process %type records when there are :record_count remaining.', array('%type' => $type, ':record_count' => $record_count), WATCHDOG_WARNING);
+    watchdog('data_warehouse', 'Attempted to process %type records when there
+     are :record_count remaining.', array('%type' => $type, ':record_count' => $record_count), WATCHDOG_WARNING);
   }
 
   // Break up all of our data so each process does not time out.
