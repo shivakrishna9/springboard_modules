@@ -84,8 +84,20 @@ function springboard_dw_menu() {
 function springboard_dw_log_queue_item($data) {
   // Check if watchdog logging is enabled.
   if (variable_get('springboard_dw_watchdog_enabled')) {
-
     $watchdog_string = '<pre>' . print_r($data, TRUE) . '</pre>';
+    watchdog("data_warehouse", $watchdog_string);
+  }
+}
+
+/**
+ * Log to watchdog if data warehouse watchdog logging setting is enabled.
+ *
+ * @param array $watchdog_string
+ *   A string to log to watchdog.
+ */
+function springboard_dw_watchdog_log($watchdog_string) {
+  // Check if watchdog logging is enabled.
+  if (variable_get('springboard_dw_watchdog_enabled')) {
     watchdog("data_warehouse", $watchdog_string);
   }
 }
