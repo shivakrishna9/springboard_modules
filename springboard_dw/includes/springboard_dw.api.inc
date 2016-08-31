@@ -108,16 +108,15 @@ function springboard_dw_api_call($endpoint_route, $params, $method = 'POST') {
 
     $watchdog_string = "<pre>Warehouse API call: \n" . print_r($api_call, TRUE) . "</pre>";
 
-    // Log the full API call details to watchdog.
-    watchdog("data_warehouse", $watchdog_string);
+    // Log the full API call details to watchdog if logging is enabled.
+    springboard_dw_watchdog_log($watchdog_string);
 
     return $api_response;
   }
   catch (guzzle_client_exception $e) {
-
+    // Log the full API call failure details to watchdog if logging is enabled.
     $watchdog_string = '<pre>' . print_r($e, TRUE) . '</pre>';
-
-    watchdog("data_warehouse", $watchdog_string);
+    springboard_dw_watchdog_log($watchdog_string);
   }
 }
 
