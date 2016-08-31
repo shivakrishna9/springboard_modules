@@ -167,6 +167,10 @@ function fundraiser_schema() {
         'not null' => TRUE,
         'default' => 0,
       ),
+      'card_id' => array(
+        'description' => 'The cardonfile card ID used to process this donation',
+        'type' => 'int',
+      ),
       // @todo Add transaction information here with the gateway.
     ),
     'primary key' => array('did'),
