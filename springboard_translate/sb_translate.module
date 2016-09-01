@@ -17,9 +17,11 @@ function sb_translate_menu() {
 }
 
 /**
- * Determines whether the current node should display the webform translations tab.
+ * Determines whether the current node should display the translations tab.
  */
 function sb_translate_access_check($node) {
+  // TODO - Replace this with a content type level setting that saves whether translation support is enabled based on
+  // LIKE THIS: $sb_translate_enabled_types = variable_get('sb_translate_content_types');
   $webform_types = variable_get('webform_node_types');
   if (in_array($node->type, $webform_types)) {
     return TRUE;
@@ -157,7 +159,7 @@ function _sb_translate_update_translations($form, &$form_state) {
   // TO DO - PROPERLY DETECT SOURCE LANGAUGE:
   unset($languages['en']);
   foreach ($form['translation_manager']['#component_data'] as $cid => $component_data) {
-    foreach ($form_state['input'] as $input_key => $input_string) {
+    foreach ($form_state['values'] as $input_key => $input_string) {
       // Handle item lists such as select options:
       if (strpos($input_key, $nid . '_' . $cid . '_') === FALSE) {
         continue;
@@ -173,10 +175,10 @@ function _sb_translate_update_translations($form, &$form_state) {
         $is_option = FALSE;
       }
       // Update the translation:
-      if (isset($form_state['input'][$nid . '_' . $cid . '_' . $sub_field . '_' . $language_code])
-        && isset($form_state['input'][$nid . '_' . $cid . '_' . $sub_field . '_source'])) {
-        $translated_string = $form_state['input'][$nid . '_' . $cid . '_' . $sub_field . '_' . $language_code];
-        $source_string = $form_state['input'][$nid . '_' . $cid . '_' . $sub_field . '_source'];
+      if (isset($form_state['values'][$nid . '_' . $cid . '_' . $sub_field . '_' . $language_code])
+        && isset($form_state['values'][$nid . '_' . $cid . '_' . $sub_field . '_source'])) {
+        $translated_string = $form_state['values'][$nid . '_' . $cid . '_' . $sub_field . '_' . $language_code];
+        $source_string = $form_state['values'][$nid . '_' . $cid . '_' . $sub_field . '_source'];
         $textgroup = 'Webform Component';
         $location = $nid . ':' . $cid . ':' . $sub_field;
         i18n_string_translation_update(
@@ -438,6 +440,88 @@ function sb_translate_views_query_alter(&$view, &$query) {
     'value' => '%:' . $arg1 . ':%:%',
     'operator' => 'LIKE',
   );
+}
+
+/**
+ * Implements hook_form_FORM_ID_alter().
+ *
+ * Add translation manager settings to the content type settings form.
+ */
+function sb_translate_form_node_type_form_alter(&$form, &$form_state) {
+  $sb_translate_node_type_settings = variable_get('sb_translate_node_type_settings', array());
+  dpm($sb_translate_node_type_settings);
+  $form['sb_translate'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Translation Manager'),
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
+    '#group' => 'additional_settings',
+  );
+  $form['sb_translate']['sb_translate_status'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Enable i18n-based translation support for') . ' ' . $form['#node_type']->name . ' ' . t(' nodes.'),
+    '#default_value' => isset($sb_translate_node_type_settings[$form['#node_type']->type]['enabled']) ? 
+      $sb_translate_node_type_settings[$form['#node_type']->type]['enabled'] : 0,
+  );
+  $form['sb_translate']['sb_translate_includes'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Toggle translation support'),
+    '#states' => array(
+      'invisible' => array(
+        ':input[name="sb_translate_status"]' => array('checked' => FALSE),
+      ),
+    ),
+  );
+  // Iterate of includes directory contents to provide settings here:
+  $files = file_scan_directory(drupal_get_path('module', 'sb_translate') . '/includes', '/.*?\.inc$/');
+  $enabled_includes = array();
+  foreach ($files as $abs => $file) {
+    module_load_include('inc', 'sb_translate', 'includes/' . $file->name);
+    $hook_sb_translate_include_info = $file->name . '_sb_translate_include_info';
+    /*if (!function_exists($hook_sb_translate_include_info)) {
+      continue;
+    } */
+    $include_info = $hook_sb_translate_include_info();
+    if (isset($include_info['description'])) {
+      $form['sb_translate']['sb_translate_includes']['sb_translate_include_' . $file->name] = array(
+        '#type' => 'checkbox',
+        '#title' => $include_info['description'],
+        '#default_value' => isset($sb_translate_node_type_settings[$form['#node_type']->type]['data'][$file->name]) ? 1 : 0,
+      );
+      $enabled_includes[] = $file->name;
+    }
+  }
+  $form['#enabled_sb_translate_includes'] = $enabled_includes;
+  $form['#submit'][] = '_sb_translate_form_node_type_form_save_settings';
+}
+
+/**
+ * Save content type edit form Translation Manager settings:
+ */
+function _sb_translate_form_node_type_form_save_settings($form, &$form_state) {
+  if (!isset($form_state['build_info']['args'][0]->type)) {
+    return;
+  }
+  $node_type = $form_state['build_info']['args'][0]->type;
+  $sb_translate_node_type_settings = variable_get('sb_translate_node_type_settings', array());
+dpm($form_state);
+  if (isset($form_state['input']['sb_translate_status']) && $form_state['input']['sb_translate_status'] == TRUE) {
+    $sb_translate_node_type_settings[$node_type] = array('enabled' => TRUE);
+    if (isset($form['#enabled_sb_translate_includes'])) {
+      foreach ($form['#enabled_sb_translate_includes'] as $include_name) {
+        if (isset($form_state['input']['sb_translate_include_' . $include_name])
+          && $form_state['input']['sb_translate_include_' . $include_name] == TRUE) {
+          $sb_translate_node_type_settings[$node_type]['data'][$include_name] = $include_name; 
+        } else {
+          unset($sb_translate_node_type_settings[$node_type]['data'][$include_name]);
+        }
+      }
+    }
+  }
+  else {
+    $sb_translate_node_type_settings[$node_type]['enabled'] = FALSE;
+  }
+  variable_set('sb_translate_node_type_settings', $sb_translate_node_type_settings);
 }
 
 /**
