@@ -593,12 +593,56 @@ function webform_user_webform_submit($form, &$form_state) {
       if (_webform_user_is_webform_user_session_store()) {
         _webform_user_session_set($node->nid, $map);
       }
-      // Send the e-mail through the user module.
-      if ($node->send_new_user_email) {
-        drupal_mail('user', 'register_no_approval_required', $account->mail, NULL, array('account' => $account), NULL);
-      }
     }
     module_invoke_all('webform_user_submission_insert', $node, $submission, $account);
+  }
+
+  // This won't necessarily send a new email, but does allow other modules to
+  // hook into the email that would be sent, modify it, and set it to be sent.
+  webform_user_send_mail(array(
+    'module' => 'user',
+    'key' => 'register_no_approval_required',
+    'to' => $account->mail,
+    'parameters' => array(
+      'account' => $account,
+      'node' => $node,
+      'form' => $form,
+      'form_state' => $form_state,
+    ),
+    'send' => $node->send_new_user_email,
+  ));
+}
+
+/**
+ * Similar to drupal_mail, but gives us more granular control over what is sent.
+ *
+ * @param array $options
+ *   An array of parameters which will be sent to drupal_mail.
+ *
+ * @return array
+ *   The same result returned by drupal_mail.
+ */
+function webform_user_send_mail($options = array()) {
+  $required_values = array('module', 'key', 'to');
+  foreach ($required_values as $key) {
+    if (!isset($options[$key])) {
+      return FALSE;
+    }
+  }
+
+  $defaults = array(
+    'language' => language_default(),
+    'parameters' => array(),
+    'from' => NULL,
+    'send' => TRUE,
+  );
+  $options = array_merge($defaults, $options);
+
+  // Allow other modules to intervene before we call drupal_mail().
+  drupal_alter('webform_user_send_mail', $options);
+
+  if ($options['send']) {
+    drupal_mail($options['module'], $options['key'], $options['to'], $options['language'], $options['parameters'], $options['from'], TRUE);
   }
 }
 
