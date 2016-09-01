@@ -225,13 +225,6 @@ function fundraiser_quick_donate_fundraiser_quick_donate_fundraiser_donation_for
   if (isset($parameters['cid'])) {
     $form['submitted']['cid']['#default_value'] = $form['submitted']['cid']['#webform_component']['value'] = $parameters['cid'];
   }
-
-  if (!empty($form['submitted']['payment_information']['payment_fields']['credit'])) {
-    $form['submitted']['payment_information']['payment_fields']['credit']['quickdonate']['#value'] = TRUE;
-  }
-  if (!empty($form['submitted']['payment_information']['payment_fields']['bank'])) {
-    $form['submitted']['payment_information']['payment_fields']['bank account']['quickdonate']['#value'] = TRUE;
-  }
 }
 
 /**

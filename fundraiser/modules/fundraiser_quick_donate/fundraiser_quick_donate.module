@@ -134,7 +134,7 @@ function fundraiser_quick_donate_node_prepare($node) {
  * @return object
  *   The modified node object.
  */
-function _fundraiser_quick_donate_attach_quick_donate_fields($node) {
+function _fundraiser_quick_donate_attach_quick_donate_fields(&$node) {
   if (!isset($node->nid) || empty($results = db_query('SELECT quickdonate_optin_message, quickdonate_help_message_format, quickdonate_help_message, quickdonate_login_message, quickdonate_login_link_message FROM {fundraiser_quick_donate} WHERE fundraiser_nid = :nid', array(
     ':nid' => $node->nid,
   ))->fetchAssoc())) {
@@ -150,9 +150,10 @@ function _fundraiser_quick_donate_attach_quick_donate_fields($node) {
   }
   else {
     $results['quickdonate'] = TRUE;
-    foreach ($results as $key => $result) {
-      $node->{$key} = $result;
-    }
+  }
+
+  foreach ($results as $key => $result) {
+    $node->{$key} = $result;
   }
 
   return $node;
