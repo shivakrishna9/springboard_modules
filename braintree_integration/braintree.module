@@ -286,9 +286,15 @@ function braintree_result_error_message($result) {
 
 /**
  * Gets the payment_method_nonce from the post variables if it exists.
+ *
+ * Optionally override with a test_nonce if supplied in the URL. This provides
+ * an easy way to test the valid and invalid nonces provided by Braintree at
+ * https://developers.braintreepayments.com/reference/general/testing/php.
  */
 function braintree_get_nonce() {
-  return !empty($_POST['payment_method_nonce']) ? check_plain($_POST['payment_method_nonce']) : NULL;
+  $nonce = !empty($_POST['payment_method_nonce']) ? check_plain($_POST['payment_method_nonce']) : NULL;
+  $nonce = !empty($_GET['test_nonce']) ? check_plain($_GET['test_nonce']) : $nonce;
+  return $nonce;
 }
 
 /**
