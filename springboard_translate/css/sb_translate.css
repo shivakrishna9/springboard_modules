@@ -28,8 +28,6 @@
   font-size: 11px;
   height: 12px;
   margin: 2px 0px 2px;
-}
-#sb-translation-manager .form-item.form-type-textfield input {
   width: 90%;
 }
 #sb-translation-manager tr:hover .form-item.form-type-textfield input {
