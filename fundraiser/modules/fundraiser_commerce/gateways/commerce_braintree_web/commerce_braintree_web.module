@@ -12,8 +12,8 @@ function commerce_braintree_web_commerce_payment_method_info() {
 
   $payment_methods['braintree_hostedfields'] = array(
     'base' => 'commerce_braintree_web',
-    'title' => t('Braintree web (Hosted Fields) - Credit Card'),
-    'short_title' => t('Braintree Hosted Fields'),
+    'title' => t('Braintree - Credit Card'),
+    'short_title' => t('Braintree - Credit Card'),
     'display_title' => t('Credit card or debit card'),
     'description' => t('Integrates with Braintree Hosted Fields for secure on-site credit card payment.'),
     'terminal' => FALSE,
@@ -27,8 +27,8 @@ function commerce_braintree_web_commerce_payment_method_info() {
 
   $payment_methods['braintree_paypal'] = array(
     'base' => 'commerce_braintree_web',
-    'title' => t('Braintree Web - PayPal'),
-    'short_title' => t('Braintree PayPal'),
+    'title' => t('Braintree - PayPal'),
+    'short_title' => t('Braintree - PayPal'),
     'display_title' => t('PayPal'),
     'description' => t('Integrates with Braintree web for PayPal.'),
     'terminal' => FALSE,
