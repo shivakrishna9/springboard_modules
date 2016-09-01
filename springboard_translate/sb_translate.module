@@ -237,13 +237,10 @@ function theme_sb_translate_table_theme($form) {
 
         // Add country filtering for the "State" field:
         if (function_exists('fundraiser_commerce_get_countries') && $form['#component_data'][$id]['form_key'] == 'state') {
-          $row_label .= '&nbsp;<select class="trans-manager-state-selector">';
-          $row_label .= '<option value="all-countries">- View All States -</option>';
+          $row_label .= '&nbsp;<select class="trans-manager-state-selector">' .
+            '<option value="all-countries">- View All States -</option>';
           foreach ($country_options as $key => $value) {
-            $selected = FALSE;
-            if (isset($form['#default_country_code']) && $key == $form['#default_country_code']) {
-              $selected = TRUE;
-            }
+            $selected = (isset($form['#default_country_code']) && $key == $form['#default_country_code']) ? TRUE : FALSE;
             $row_label .= '<option ' . ($selected ? 'selected="selected" ' : '') . 'value="' . $key . '">' . $value . '</option>';
           }
           $row_label .= '</select>';
@@ -292,7 +289,7 @@ function theme_sb_translate_table_theme($form) {
   $output = theme('table', array(
     'header' => $header,
     'rows' => $rows,
-    'attributes' => array('id' => 'webform-translation-manager'),
+    'attributes' => array('id' => 'sb-translation-manager'),
   ));
   unset($form['rows']);
   $output .= drupal_render_children($form);
@@ -442,8 +439,8 @@ function sb_translate_views_query_alter(&$view, &$query) {
 /**
  * Implements hook_form_alter().
  *
- * - Alters state component webform output.
  * - Implements language filtering via a non-view-based exposed filter.
+ * - Alters state component webform output.
  * 
  */
 function sb_translate_form_alter(&$form, &$form_state, $form_id) {
@@ -505,7 +502,7 @@ function sb_translate_form_alter(&$form, &$form_state, $form_id) {
     $switcher_js .= "})(jQuery);}}";
     drupal_add_js($switcher_js, array('type' => 'inline', 'scope' => 'footer', 'cache' => FALSE));
     return;
-  } // End exposed filters language switcher
+  }
 }
 
 /**
