@@ -5,43 +5,46 @@
   padding: 10px 0px 0px 10px;
   margin: 0;
 }
-#webform-translation-manager td {
+#sb-translation-manager td {
   border: none;
   padding: 1px 3px 1px 3px;
 }
-#webform-translation-manager td.sub-field {
+#sb-translation-manager td.sub-field {
   text-align: center;
   width: 90px;
 }
-#webform-translation-manager td.label-row {
+#sb-translation-manager td.source-string {
+  width: 42%;
+}
+#sb-translation-manager td.label-row {
   background-color: #01598e;
   color: #fff;
   padding: 4px 6px;
 }
-#webform-translation-manager tr {
+#sb-translation-manager tr {
   background: #fff;
 }
-#webform-translation-manager .form-item.form-type-textfield input {  
+#sb-translation-manager .form-item.form-type-textfield input {  
   font-size: 11px;
   height: 12px;
   margin: 2px 0px 2px;
 }
-#webform-translation-manager .form-item.form-type-textfield input {
+#sb-translation-manager .form-item.form-type-textfield input {
   width: 90%;
 }
-#webform-translation-manager tr:hover .form-item.form-type-textfield input {
+#sb-translation-manager tr:hover .form-item.form-type-textfield input {
   border: 1px solid #999;
 }
-#webform-translation-manager .form-item.form-type-textfield input:focus {
+#sb-translation-manager .form-item.form-type-textfield input:focus {
   border: 1px solid #143c54;
 }
-#webform-translation-manager .form-item.form-type-textfield input.focus-active {
+#sb-translation-manager .form-item.form-type-textfield input.focus-active {
   border: 1px solid #143c54;
   position: relative;
   width: 150%;
   z-index: 2;
 }
-#webform-translation-manager tr:hover .form-item.form-type-textfield input.focus-active {
+#sb-translation-manager tr:hover .form-item.form-type-textfield input.focus-active {
   border: 1px solid #143c54;
 }
 

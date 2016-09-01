@@ -3,10 +3,28 @@
  * js for Webform Translate
  */
 
-Drupal.behaviors.webformTranslateManagerBehavior = {
+Drupal.behaviors.sbTranslateManagerBehavior = {
   attach: function(context) { (function($) {
     // Expand fields on focus:
-    $('#webform-translate-translation-manager-form .form-item.form-type-textfield input').each(function () {
+    $('#sb-translate-translation-manager-form .form-item.form-type-textfield').each(function () {
+      $(this).mouseover(function () {
+        if ($(this).parent().hasClass('source-string')) {
+          $(this).children('input').each(function() {
+            if ($(this).val().length > 32) {
+              $(this).addClass('focus-active');
+            }
+          });
+        }
+      });
+      $(this).mouseout(function () {
+        if ($(this).parent().hasClass('source-string')) {
+          $(this).children('input').each(function() {
+            $(this).removeClass('focus-active');
+          });
+        }
+      });
+    });
+    $('#sb-translate-translation-manager-form .form-item.form-type-textfield input').each(function () {
       $(this).keydown(function () {
         if ($(this).val().length > 32) {
           $(this).addClass('focus-active');
@@ -29,7 +47,7 @@ Drupal.behaviors.webformTranslateManagerBehavior = {
     });
     _transManagerUpdateStateOptions($('.view-webform-translate-translation-manager .trans-manager-state-selector').val());
     function _transManagerUpdateStateOptions(newCountry) {
-      $('#webform-translation-manager .form-type-textfield input').each(function () {
+      $('#sb-translation-manager .form-type-textfield input').each(function () {
         if ($(this).attr('country_code') != undefined) {
           if (newCountry != 'all-countries' && $(this).attr('country_code') != newCountry) {
             $(this).parent().parent().parent().hide();

@@ -94,7 +94,6 @@ function sb_translate_translation_manager_form() {
     );
   }
   
-
   foreach ($view_data as $field_key => $data) {
     $form_key = $node->webform['components'][$data['cid']]['form_key'];
     $type = $node->webform['components'][$data['cid']]['type'];
@@ -123,7 +122,8 @@ function sb_translate_translation_manager_form() {
       '#type' => 'textfield',
       '#size' => 22,
       '#default_value' => $data['source'],
-      '#attributes' => array('title' => $data['source']),
+      '#disabled' => TRUE,
+      '#attributes' => array('title' => $data['source'], 'class' => array('source-string')),
     );
     foreach ($translations as $language_code => $translation) {
       $form['translation_manager']['rows'][$field_key][$field_key . '_' . $language_code] = array(
@@ -205,7 +205,6 @@ function sb_translate_theme() {
 function theme_sb_translate_table_theme($form) {
   global $language;
   $form = array_shift($form);
-  $rows = array();
   $attributes = array();
   $results_language_codes = array();
  
@@ -217,6 +216,8 @@ function theme_sb_translate_table_theme($form) {
 
   $last_row_id = '';
 
+
+  $rows = array();
   foreach ($form['rows'] as $row_key => $row_data) {
     if (!is_array($row_data) || !isset($row_data['#type']) || $row_data['#type'] != 'fieldset') {
       continue;
@@ -228,7 +229,7 @@ function theme_sb_translate_table_theme($form) {
       $sub_field = substr($sub_field, 0, strpos($sub_field, ';'));
     }
 
-    // Add a label before each new field:
+    // Add a label row before each new field:
     if ($last_row_id != $id) {
       $last_row_id = $id;
       $row_label = '';
@@ -250,7 +251,9 @@ function theme_sb_translate_table_theme($form) {
       $rows[] = $label_row;
     }
 
-    $row = array('data' => array(array('class' => 'sub-field', 'data' => $sub_field)));
+    // Prepare data for each row:
+    $row = array();
+    $row['data'][] = array('class' => 'sub-field', 'data' => $sub_field);
     foreach ($row_data as $item) {
       if (!is_array($item) || !isset($item['#type'])) {
         continue; 
@@ -271,7 +274,8 @@ function theme_sb_translate_table_theme($form) {
           $results_language_codes[] = $language_code;
         }
       }
-      $row['data'][] = drupal_render($item);
+      $cell_class = ($language_code == 'source' ? 'source-string' : $language_code . '-string'); 
+      $row['data'][] = array('class' => $cell_class, 'data' => drupal_render($item));
     }
 
     // Add the row:
