@@ -4,4 +4,4 @@ package = Commerce (contrib)
 core = 7.x
 dependencies[] = braintree
 dependencies[] = braintree_payment
-
+dependencies[] = braintree_vault
