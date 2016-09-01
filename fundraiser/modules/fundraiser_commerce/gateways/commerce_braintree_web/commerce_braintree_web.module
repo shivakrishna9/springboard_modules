@@ -515,36 +515,38 @@ function commerce_braintree_web_submit_form_submit($payment_method, $pane_form, 
       return FALSE;
     }
     $sale_data['channel'] = $payment_method['settings']['channel'];
-    braintree_transaction_sale($sale_data, $context, $error_message);
-    $result = $context['result'];
+
+    $success = braintree_transaction_sale($sale_data, $context, $error_message);
+    $braintree_result = $context['result'];
+
   // }  // End Braintree subscription else
 
-    if ($result->success) {
+    if ($success) {
       // Save returned braintree customer id, if it has not been previously saved.
-      $return_customer_id = $result->transaction->customerDetails->id;
+      $return_customer_id = $braintree_result->transaction->customerDetails->id;
       if (empty($customer_id) && $return_customer_id) {
         braintree_customer_id_save($customer, $return_customer_id);
       }
 
       // If cardonfile is enabled and this appears to be a new card.
-      if (module_exists('commerce_cardonfile') && empty(commerce_cardonfile_load_multiple_by_remote_id($result->transaction->creditCardDetails->token))) {
+      if (module_exists('commerce_cardonfile') && empty(commerce_cardonfile_load_multiple_by_remote_id($braintree_result->transaction->creditCardDetails->token))) {
 
         // Store the token with cardonfile.
         $card = commerce_cardonfile_new();
         $card->uid = $order->uid;
         $card->payment_method = $payment_method['method_id'];
         $card->instance_id = $payment_method['instance_id'];
-        $card->remote_id = $result->transaction->creditCardDetails->token;
-        $card->card_type = $result->transaction->creditCardDetails->cardType;
-        $card->card_name = $result->transaction->billingDetails->firstName . ' ' . $result->transaction->billingDetails->lastName;
-        $card->card_number = $result->transaction->creditCardDetails->last4;
-        $card->card_exp_month = $result->transaction->creditCardDetails->expirationMonth;
-        $card->card_exp_year = $result->transaction->creditCardDetails->expirationYear;
+        $card->remote_id = $braintree_result->transaction->creditCardDetails->token;
+        $card->card_type = $braintree_result->transaction->creditCardDetails->cardType;
+        $card->card_name = $braintree_result->transaction->billingDetails->firstName . ' ' . $braintree_result->transaction->billingDetails->lastName;
+        $card->card_number = $braintree_result->transaction->creditCardDetails->last4;
+        $card->card_exp_month = $braintree_result->transaction->creditCardDetails->expirationMonth;
+        $card->card_exp_year = $braintree_result->transaction->creditCardDetails->expirationYear;
         $card->status = 1;
         // Save and log the creation of the new card on file.
         commerce_cardonfile_save($card);
-        watchdog('commerce_braintree_web', 'Braintree customer ID @profile_id created and saved to Drupal user @uid.', array('@profile_id' => (string) $result->transaction->customerDetails->id, '@uid' => $order->uid));
-        $result->card_id = $card->card_id;
+        watchdog('commerce_braintree_web', 'Braintree customer ID @profile_id created and saved to Drupal user @uid.', array('@profile_id' => (string) $braintree_result->transaction->customerDetails->id, '@uid' => $order->uid));
+        $braintree_result->card_id = $card->card_id;
       }
 
       if ($flag_update_default_method) {
@@ -561,7 +563,7 @@ function commerce_braintree_web_submit_form_submit($payment_method, $pane_form, 
   //
   // @see hook_commerce_payment_order_paid_in_full()
   // @also see hook_commerce_payment_transaction_insert()
-  $transaction = commerce_braintree_web_process_transaction($order, $payment_method, $charge, $result);
+  $transaction = commerce_braintree_web_process_transaction($order, $payment_method, $charge, $braintree_result);
 
   // Set a form error if the payment transaction failed for any reason.
   if (empty($transaction) || empty($transaction->status) || $transaction->status != COMMERCE_PAYMENT_STATUS_SUCCESS) {
@@ -571,7 +573,12 @@ function commerce_braintree_web_submit_form_submit($payment_method, $pane_form, 
     return FALSE;
   }
 
-  return $result;
+  if($success) {
+    return $braintree_result;
+  }
+  else {
+    return FALSE;
+  }
 }
 
 /**

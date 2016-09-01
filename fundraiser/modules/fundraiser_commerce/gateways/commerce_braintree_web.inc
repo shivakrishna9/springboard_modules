@@ -343,7 +343,7 @@ function commerce_braintree_web_fundraiser_commerce_charge($method_instance, $do
   if (isset($result->card_id)) {
     $donation->data['cardonfile'] = $result->card_id;
   }
-  if ($result->transaction->paymentInstrumentType == 'credit_card') {
+  if (isset($result->transaction->paymentInstrumentType) && $result->transaction->paymentInstrumentType == 'credit_card') {
     $donation->donation['payment_fields'] = array(
       'credit' => array(
         'card_number' => $result->transaction->creditCard['last4'],

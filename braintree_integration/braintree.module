@@ -381,7 +381,7 @@ function braintree_transaction_sale(&$sale_data, &$context = array(), &$error_me
       $function = $module . '_braintree_transaction_sale_complete';
       $function($result, $context);
     }
-    return $result;
+    return TRUE;
   }
 
   $error_message = braintree_result_error_message($result);
