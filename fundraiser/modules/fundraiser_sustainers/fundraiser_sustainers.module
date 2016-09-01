@@ -1568,20 +1568,14 @@ function _fundraiser_sustainers_recurs_monthly_field_create($fundraiser, $field)
   // If the form is user-choice, and we have enough info, configure the component accordingly.
   else if ($fundraiser->recurring_setting == 'user_choice') {
     // Set the "multiple" attribute: TRUE for a checkbox, FALSE for radios.
-    $orig_multiple = $field['#extra']['multiple'];
     $field['#extra']['multiple'] = empty($fundraiser->recurring_donation_type_component) ?
       TRUE : ($fundraiser->recurring_donation_type_component == 'checkbox');
     // Use the help text given in the node edit form.
     if (isset($fundraiser->recurring_donation_type_help_text)) {
       $field['#extra']['description'] = t($fundraiser->recurring_donation_type_help_text);
     }
-    // Was a checkbox component requested?
-    if ($field['#extra']['multiple']) {
-      // If switching to checkbox, make sure we overwrite any old selection items.
-      $field['#node_extra_settings']['items'] = TRUE;  //@TODO: If we ever make items configurable from the node edit form for checkbox components, we can lose this.
-    }
     // Was a non-checkbox (i.e., radios) component requested?
-    else {
+    if (!$field['#extra']['multiple']) {
       // Use the options and default value given in the node edit form.
       if (!empty($fundraiser->recurring_donation_type_options)) {
         $field['#extra']['items'] = is_array($fundraiser->recurring_donation_type_options) ?  // Array comes from node edit form, string comes from DB.
@@ -1603,6 +1597,10 @@ function _fundraiser_sustainers_recurs_monthly_field_create($fundraiser, $field)
             // Toggle component title display on/off when switching between checkbox and radios.
             $field['#extra']['title_display'] = $field['#extra']['multiple'] ? 'before' : 'none';
             $field['#node_extra_settings']['title_display'] = TRUE;
+            // If switching from radios to checkbox, also make sure we overwrite old selection items.
+            if ($field['#extra']['multiple']) {
+              $field['#node_extra_settings']['items'] = TRUE;  //@TODO: If we ever make items configurable from the node edit form for checkbox components, we can lose this.
+            }
           }
           break;
         }
