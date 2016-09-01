@@ -111,22 +111,13 @@ function _braintree_payment_form_element(&$element, &$form, &$form_state, $payme
     '#parents' => array('braintree', 'errors'),
   );
 
-  $element['method_title'] = array(
-    '#prefix' => '<div class="payment-details-method-title">',
-    '#suffix' => '</div>',
-  );
-
   if ($payment_method == 'braintree_paypal') {
-    $element['method_title']['#markup'] = t('PayPal account');
-
     $element['paypal'] = array(
       '#type' => 'container',
       '#id' => 'paypal-container',
     );
   }
   else {
-    $element['method_title']['#markup'] = t('Credit card details');
-
     $element['number'] = array(
       '#type' => 'item',
       '#title' => t('Card number'),
