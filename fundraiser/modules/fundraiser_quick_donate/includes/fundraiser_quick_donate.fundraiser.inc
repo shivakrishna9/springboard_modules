@@ -190,6 +190,16 @@ function fundraiser_quick_donate_fundraiser_donation_form($form, $form_state) {
         ),
       ));
     }
+
+    // If only one payment type is selected (credit or bank), ensure the #states
+    // key value used is correct.
+    if ($form['submitted']['payment_information']['payment_method']['#type'] == 'hidden') {
+      $form['submitted']['payment_information']['payment_fields'][$gateway_type]['#states']['visible']['input[type="hidden"].fundraiser-payment-methods'] = array_shift($form['submitted']['payment_information']['payment_fields'][$gateway_type]['#states']['visible']);
+      $fields_to_update = array('card_number', 'card_cvv');
+      foreach ($fields_to_update as $field) {
+        $form['submitted']['payment_information']['payment_fields'][$gateway_type][$field]['#states']['visible']['input[type="hidden"].fundraiser-payment-methods'] = array_shift($form['submitted']['payment_information']['payment_fields'][$gateway_type][$field]['#states']['visible']);
+      }
+    }
   }
 
   // Add submit handler.
