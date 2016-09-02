@@ -53,7 +53,7 @@
 
       var $body = $('body');
 
-      var bootstrapBraitnree = function() {
+      var bootstrapBraintree = function() {
         if (typeof settings.braintree != 'undefined' && typeof braintree != 'undefined') {
           var $form = $('#' + settings.braintree.formId);
           Drupal.myBraintree = new Drupal.braintree($form, settings.braintree);
@@ -89,7 +89,7 @@
         }
         else {
           $toggleLink.text(text2);
-          bootstrapBraitnree();
+          bootstrapBraintree();
         }
 
         $toggleLink.click(function() {
@@ -99,7 +99,7 @@
 
             $usingExistingPaymentMethod.val(0);
 
-            bootstrapBraitnree();
+            bootstrapBraintree();
           }
           else {
             $body.addClass(_class);
@@ -118,7 +118,7 @@
 
       }
       else {
-        bootstrapBraitnree();
+        bootstrapBraintree();
       }
 
       // Braintree hijacks all submit buttons for this form. Tear down
