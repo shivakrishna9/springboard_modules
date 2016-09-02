@@ -39,6 +39,37 @@ function commerce_braintree_web_commerce_payment_method_info() {
 }
 
 /**
+ * Implements hook_fundraiser_sustainers_series_end_date_alter().
+ */
+function commerce_braintree_web_fundraiser_sustainers_series_end_date_alter(&$end_date, $context) {
+  // If the source_donation is NULL, this must be the initial submission of a
+  // sustainer series. In that case, don't alter the end date because we want to
+  // use the "stubbed" expiration date (defaults to) 24 months out.
+  if (!empty($context['source_donation'])) {
+    $master_donation = $context['master_donation'];
+    if ($master_donation->gateway['gateway_details']['method_id'] == 'braintree_paypal') {
+      // Because paypal doesn't return expiration dates, using the cardonfile
+      // date isn't a reliable way to increment a series.
+      // Get the count of series entries.
+      $charge_count = db_query('SELECT count(did) FROM {fundraiser_sustainers} WHERE master_did = :master_did', array(':master_did' => $master_donation->did))->fetchField();
+      // We only want to increment the series if there's one remaining donation.
+      if (_fundraiser_sustainers_count_donations_recurr_remaining($master_donation->did) < 1) {
+        // Set the date so that a new series entry is created.
+        $new_exp = strtotime("now +" . $charge_count . " months");
+        $end_date['month'] = date('m', $new_exp);
+        $end_date['year'] = date('y', $new_exp);
+      }
+      else {
+        // If there's more than one future donation, set the dates so that no entries will be created or deleted.
+        $new_exp = strtotime("now +" . ($charge_count - 1) . " months");
+        $end_date['month'] = date('m', $new_exp);
+        $end_date['year'] = date('y', $new_exp);
+      }
+    }
+  }
+}
+
+/**
  * Card on file callback: updates the payment_method month & year at Braintree.
  */
 function commerce_braintree_web_cardonfile_update($form, &$form_state, $payment_method, $card_data) {
@@ -543,6 +574,15 @@ function commerce_braintree_web_submit_form_submit($payment_method, $pane_form, 
         $card->card_exp_month = $braintree_result->transaction->creditCardDetails->expirationMonth;
         $card->card_exp_year = $braintree_result->transaction->creditCardDetails->expirationYear;
         $card->status = 1;
+
+        // If expiration dates are empty, this must have been paypal, so stub
+        // an expiration date 24 months in the future.
+        if (empty($card->card_exp_month) && empty($card->card_exp_month)) {
+          $paypal_exp_date = strtotime("now +" . variable_get('commerce_braintree_web_sustainer_series_count', 24) . " months");
+          $card->card_exp_month = date('m', $paypal_exp_date);
+          $card->card_exp_year = date('Y', $paypal_exp_date);
+        }
+
         // Save and log the creation of the new card on file.
         commerce_cardonfile_save($card);
         watchdog('commerce_braintree_web', 'Braintree customer ID @profile_id created and saved to Drupal user @uid.', array('@profile_id' => (string) $braintree_result->transaction->customerDetails->id, '@uid' => $order->uid));

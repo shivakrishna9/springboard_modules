@@ -86,26 +86,28 @@ function commerce_braintree_web_fundraiser_donation_form_config_check($node) {
  */
 function commerce_braintree_web_fundraiser_commerce_expire($submission_fields) {
   $expires = array();
-  $payload = db_query("SELECT payload FROM {commerce_payment_transaction} WHERE remote_id = :txn_id LIMIT 1", array(':txn_id' => $submission_fields['txn_id']))->fetchField();
-  if (isset($payload)) {
-    $braintree_response_object = unserialize($payload);
-    reset($braintree_response_object);
-    $first_key = key($braintree_response_object);
-    $transaction = $braintree_response_object[$first_key]->transaction;
-    if (isset($transaction->creditCard['expirationMonth'])) {
-      $expires['month'] = $transaction->creditCard['expirationMonth'];
+  if (isset($submission_fields['txn_id'])) {
+    $payload = db_query("SELECT payload FROM {commerce_payment_transaction} WHERE remote_id = :txn_id LIMIT 1", array(':txn_id' => $submission_fields['txn_id']))->fetchField();
+    if (isset($payload)) {
+      $braintree_response_object = unserialize($payload);
+      reset($braintree_response_object);
+      $first_key = key($braintree_response_object);
+      $transaction = $braintree_response_object[$first_key]->transaction;
+      if (isset($transaction->creditCard['expirationMonth'])) {
+        $expires['month'] = $transaction->creditCard['expirationMonth'];
+      }
+      if (isset($transaction->creditCard['expirationYear'])) {
+        $expires['year'] = $transaction->creditCard['expirationYear'];
+      }
     }
-    if (isset($transaction->creditCard['expirationYear'])) {
-      $expires['year'] = $transaction->creditCard['expirationYear'];
-    }
-    // If we could not find expiration month and year (eg paypal), stub an
-    // expiration date 24 months in the future.
-    if (!isset($expires['month']) && !isset($expires['year'])) {
-      $months = variable_get('commerce_braintree_web_sustainer_series_count', 24);
-      $exp_timestamp = strtotime('+' . $months . ' months');
-      $expires['month'] = date('m', $exp_timestamp);
-      $expires['year'] = date('Y', $exp_timestamp);
-    }
+  }
+  // If we could not find expiration month and year in the transaction
+  // payload (eg paypal), stub an expiration date 24 months in the future.
+  if (!isset($expires['month']) && !isset($expires['year'])) {
+    $months = variable_get('commerce_braintree_web_sustainer_series_count', 24);
+    $exp_timestamp = strtotime('+' . $months . ' months');
+    $expires['month'] = date('m', $exp_timestamp);
+    $expires['year'] = date('Y', $exp_timestamp);
   }
   return $expires;
 }
@@ -339,7 +341,12 @@ function commerce_braintree_web_fundraiser_commerce_charge($method_instance, $do
 
   _fundraiser_commerce_submit_handler_pane_values($pane_values, $donation);
 
+  $success = FALSE;
   $result = commerce_braintree_web_submit_form_submit($method_instance, $pane_form, $pane_values, $order, $charge);
+  if ($result !== FALSE) {
+    $success = TRUE;
+  }
+
   if (isset($result->card_id)) {
     $donation->data['cardonfile'] = $result->card_id;
   }
@@ -354,9 +361,33 @@ function commerce_braintree_web_fundraiser_commerce_charge($method_instance, $do
     );
   }
 
-  $success = FALSE;
-  if ($result !== FALSE) {
-    $success = TRUE;
+  // Adapted from commerce_authnet_echeck.inc.
+  // If this is recurring PayPal payment.
+  if ($success == TRUE && isset($donation->recurring) && !empty($donation->recurring) && $method_instance['method_id'] == 'braintree_paypal') {
+    // Update expiration date and generate the next donation.
+    $card_data = _fundraiser_commerce_donation_cardonfile_card($donation);
+    if (!empty($card_data) && $donation->status <> 'failed') {
+      // If the next recurring series entry doesn't exist, create one.
+      if (_fundraiser_sustainers_count_donations_recurr_remaining($donation->recurring->master_did) < 1) {
+        // Move card expiration date ahead one month.
+        $new_expire_time = mktime(0, 0, 0, ($card_data->card_exp_month + 1), 1, $card_data->card_exp_year);
+        $card_data->card_exp_month = date('m', $new_expire_time);
+        $card_data->card_exp_year = date('Y', $new_expire_time);
+        $submission_fields = array(
+          'payment_fields' => array(
+            'braintree_paypal' => array(
+              'card_expiration_month' => $card_data->card_exp_month,
+              'card_expiration_year' => $card_data->card_exp_year,
+            ),
+          ),
+        );
+        // Update card data.
+        commerce_cardonfile_save($card_data);
+        // Create new orders.
+        $master_donation = fundraiser_donation_get_donation($donation->recurring->master_did);
+        fundraiser_sustainers_update_billing_info_create_new_donations($master_donation, $donation, $submission_fields);
+      }
+    }
   }
 
 // _fundraiser_commerce_charge_submit_form_process needs $pane_values[$form_key]['cardonfile_store']
