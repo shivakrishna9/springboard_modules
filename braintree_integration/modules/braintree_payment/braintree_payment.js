@@ -128,6 +128,7 @@
       // If the selected payment method is a NOT a Braintree payment method,
       // bail out without a bootstrap.
       if ($.inArray($paymentMethod, this.settings.enabledMethods) == -1) {
+        this.settings.integration = null;
         return;
       }
       if ($paymentMethod == 'paypal') {

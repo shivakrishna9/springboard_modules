@@ -147,20 +147,22 @@
         function formIsValid() {
           // If we are using Braintree, both the braintree form and the drupal
           // fields must validate.
-          if(Drupal.settings.braintree.integration === 'custom') {
-            if (donationValidate.form() && braintreeFieldsAreValid()) {
+          if (typeof Drupal.myBraintreeIntegration === 'undefined') {
+            return donationValidate.form();
+          } else {
+            if (Drupal.settings.braintree.integration === 'custom') {
+              if (donationValidate.form() && braintreeFieldsAreValid()) {
                 return true;
               } else {
                 return false;
               }
-          } else if (Drupal.settings.braintree.integration === 'paypal') {
-            if(donationValidate.form() && $('input[name=payment_method_nonce]').length > 0) {
-              return true;
-            } else {
-              return false;
+            } else if (Drupal.settings.braintree.integration === 'paypal') {
+              if (donationValidate.form() && $('input[name=payment_method_nonce]').length > 0) {
+                return true;
+              } else {
+                return false;
+              }
             }
-          } else {
-            return donationValidate.form();
           }
         }
 
