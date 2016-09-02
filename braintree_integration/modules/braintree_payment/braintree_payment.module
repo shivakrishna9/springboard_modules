@@ -173,8 +173,11 @@ function _braintree_payment_form_element(&$element, &$form, &$form_state, $payme
   if ($payment_method == 'braintree_paypal') {
     $js_settings['integration'] = 'paypal';
     $js_settings['paypalContainer'] = 'paypal-container';
+    $js_settings['enabledMethods'][] = 'paypal';
+
   }
   else {
+    $js_settings['enabledMethods'][] = 'credit';
     $js_settings['integration'] = 'custom';
     $js_settings['fieldsStyles'] = braintree_hostedfields_styles();
     $js_settings['hostedFields'] = array(

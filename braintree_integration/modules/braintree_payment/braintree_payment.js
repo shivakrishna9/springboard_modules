@@ -10,26 +10,12 @@
         var $form = $('#' + formId);
 
         $paymentMethod.bind('change', function(event) {
-          // Show spinning icon.
-          $('.checkout-processing', this.$form).removeClass('element-invisible');
-
           // Clean up process.
           Drupal.myBraintree && Drupal.myBraintree.cleanUp();
-
           // Destroy Braintree integration.
           Drupal.myBraintreeIntegration && Drupal.myBraintreeIntegration.teardown($.proxy(Drupal.myBraintree.teardown, Drupal.myBraintree));
-
-          // Setup new integration.
-          if ($paymentMethod.filter(':checked').val() == 'paypal') {
-            settings.braintree.integration = 'paypal';
-            Drupal.myBraintree.bootstrap();
-          }
-          else if ($paymentMethod.filter(':checked').val() == 'credit') {
-            settings.braintree.integration = 'custom';
-            Drupal.myBraintree.bootstrap();
-          } else {
-            settings.braintree.integration = null;
-          }
+          // Boot new integration.
+          Drupal.myBraintree.bootstrap();
         });
       }
     }
@@ -40,15 +26,6 @@
       // Only continue when first page load or context has id payment-details.
       if (context != document && $(context).attr('id') != 'payment-details') {
         return;
-      }
-
-      // Set the integration to the default (checked) one.
-      var $paymentMethod = $('input[name="submitted[payment_information][payment_method]"]', context);
-      if ($paymentMethod.filter(':checked').val() == 'paypal') {
-        settings.braintree.integration = 'paypal';
-      }
-      else if ($paymentMethod.filter(':checked').val() == 'credit') {
-        settings.braintree.integration = 'custom';
       }
 
       var $body = $('body');
@@ -144,6 +121,22 @@
   }
 
   Drupal.braintree.prototype.bootstrap = function() {
+    // If more than one payment method is enabled on this form, make sure we
+    // bootstrap braintree using the correct integration.
+    var $paymentMethod = $('input[name="submitted[payment_information][payment_method]"]').filter(':checked').val();
+    if (typeof $paymentMethod !== 'undefined') {
+      // If the selected payment method is a NOT a Braintree payment method,
+      // bail out without a bootstrap.
+      if ($.inArray($paymentMethod, this.settings.enabledMethods) == -1) {
+        return;
+      }
+      if ($paymentMethod == 'paypal') {
+        this.settings.integration = 'paypal';
+      }
+      else if ($paymentMethod == 'credit') {
+        this.settings.integration = 'custom';
+      }
+    }
     var options = this.getOptions(this.settings.integration);
 
     braintree.setup(this.settings.clientToken, this.settings.integration, options);
