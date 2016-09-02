@@ -3734,7 +3734,7 @@ function fundraiser_update_billing_form($form, &$form_state, $data) {
 
   // Set any payment information from the $data variable.
   if (isset($data['payment_fields'])) {
-    $form['payment_fields'] = array_merge_recursive($form['payment_fields'], $data['payment_fields']);
+    $form['payment_fields'] = array_replace_recursive($form['payment_fields'], $data['payment_fields']);
   }
 
   if (isset($data['card'])) {

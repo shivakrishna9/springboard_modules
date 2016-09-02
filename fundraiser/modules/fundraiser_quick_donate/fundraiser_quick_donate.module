@@ -290,10 +290,10 @@ function fundraiser_quick_donate_form_commerce_cardonfile_card_form_alter(&$form
       'credit' => array(
         'expiration_date' => array(
           'card_expiration_month' => array(
-            '#default_value' => $form['credit_card']['exp_month'],
+            '#default_value' => $card->card_exp_month,
           ),
           'card_expiration_year' => array(
-            '#default_value' => $form['credit_card']['exp_year'],
+            '#default_value' => $card->card_exp_year,
           ),
         ),
       ),
@@ -368,7 +368,7 @@ function fundraiser_quick_donate_fundraiser_update_billing_form_alter(&$form, &$
 function _fundraiser_quick_donate_form_commerce_cardonfile_card_form_alter_validate(&$form, &$form_state) {
   $values = &$form_state['values'];
   $values['credit_card']['owner'] = $values['first_name'] . ' ' . $values['last_name'];
-  $values['credit_card']['exp_month'] = $values['payment_fields']['credit']['expiration_date']['card_expiration_month'];
+  $values['credit_card']['exp_month'] = sprintf('%02d', $values['payment_fields']['credit']['expiration_date']['card_expiration_month']);
   $values['credit_card']['exp_year'] = $values['payment_fields']['credit']['expiration_date']['card_expiration_year'];
 
   $form['credit_card']['number']['#default_value'] = $form_state['card']->card_number;
