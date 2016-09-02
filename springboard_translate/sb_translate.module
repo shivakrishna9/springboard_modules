@@ -61,7 +61,7 @@ function sb_translate_translation_manager_form() {
   $form['translation_manager'] = array(
     '#type' => 'fieldset',
     '#theme' => 'sb_translate_table_theme',
-    '#component_data' => array(),
+    '#translation_field_data' => array(),
   );
 
   $nid = arg(1);
@@ -70,38 +70,61 @@ function sb_translate_translation_manager_form() {
   }
   $node = node_load($nid);
   
-  // Group source and tranlation data together for display in table rows:
+  // Group source and tranlation data together for display in table rows and save label info for later:
   $view_data = array();
   foreach ($view->result as $result) {
     list($textgroup, $nid, $cid, $sub_field) = explode(':', $result->locales_source_location);
     $key = $nid . '_' . $cid . '_' . $sub_field;
     $view_data[$key]['cid'] = $cid;
     $view_data[$key]['sub_field'] = $sub_field; // Label, description, or option
-    // Save the node's default country to the form if states are being translated:
-    if ($node->webform['components'][$cid]['form_key'] == 'state') {
-      foreach ($node->webform['components'] as $component_data) {
-        if ($component_data['form_key'] == 'country' && isset($component_data['value'])) {
-          $form['translation_manager']['#default_country_code'] = $component_data['value'];
-          break;
-        }
-      }
-    }
     $view_data[$key]['source'] = $result->locales_source_source;
     if ($result->locales_target_language == $language->language) {
       $view_data[$key]['translations'][$result->locales_target_language] = $result->locales_target_translation;
     }
-    $form['translation_manager']['#component_data'][$cid] = array(
-      'cid' => $cid,
-      'form_key' => $node->webform['components'][$cid]['form_key'],
-    );
-  }
-  
-  foreach ($view_data as $field_key => $data) {
-    $form_key = $node->webform['components'][$data['cid']]['form_key'];
-    $type = $node->webform['components'][$data['cid']]['type'];
-    if ($type == 'hidden') {
-      continue;
+    // Handle webform components:
+    if (!in_array($cid, array('amount', 'recurringamount', 'gateway')) && isset($node->webform['components'][$cid]['form_key'])) {
+      // Save the node's default country to the form if states are being translated:
+      if ($node->webform['components'][$cid]['form_key'] == 'state') {
+        foreach ($node->webform['components'] as $translation_field_data) {
+          if ($translation_field_data['form_key'] == 'country' && isset($translation_field_data['value'])) {
+            $form['translation_manager']['#default_country_code'] = $translation_field_data['value'];
+            break;
+          }
+        }
+      }
+      $form['translation_manager']['#translation_field_data'][$cid] = array(
+        'cid' => $cid,
+        'form_key' => $node->webform['components'][$cid]['form_key'],
+        'textgroup' => $textgroup,
+      );
     }
+    // Handle Fundraiser components:
+    else {
+      $form['translation_manager']['#translation_field_data'][$cid] = array(
+        'cid' => $cid,
+        'form_key' => $cid,
+        'textgroup' => $textgroup,
+      );
+    }
+  }
+  // Build the form elements:
+  foreach ($view_data as $field_key => $data) {
+    if (isset($node->webform['components'][$data['cid']]['form_key'])) {
+      $form_key = $node->webform['components'][$data['cid']]['form_key'];
+    }
+    else {
+      $form_key = $data['cid'];
+    }
+
+    if (isset($node->webform['components'][$data['cid']]['type'])) {    
+      $type = $node->webform['components'][$data['cid']]['type'];
+      if ($type == 'hidden') {
+        continue;
+      }
+    } else {
+      $type = $data['sub_field'];
+    }
+
     // Gather the translations for this row:
     $translations = array();
     foreach ($languages as $language_code => $language_name) {
@@ -118,21 +141,23 @@ function sb_translate_translation_manager_form() {
       '#type' => 'fieldset',
     );
 
-    $field_hover_info = $type . ':' . $node->webform['components'][$data['cid']]['form_key'] . ':' . $data['sub_field'];
-
+    if (isset($node->webform['components'][$data['cid']]['form_key'])) {
+      $field_hover_info = $type . ':' . $node->webform['components'][$data['cid']]['form_key'] . ':' . $data['sub_field'];
+    }
+    $field_hover_data = $type . ':' . $form_key;
     $form['translation_manager']['rows'][$field_key][$field_key . '_source'] = array(
-      '#type' => 'textfield',
+      '#type' => $data['sub_field'] == 'textarea' ? 'textarea' : 'textfield',
       '#size' => 22,
-      '#default_value' => $data['source'],
+      '#default_value' => str_replace('$', '\$', $data['source']),
       '#disabled' => TRUE,
       '#attributes' => array('title' => $data['source'], 'class' => array('source-string')),
     );
     foreach ($translations as $language_code => $translation) {
       $form['translation_manager']['rows'][$field_key][$field_key . '_' . $language_code] = array(
-        '#type' => 'textfield',
+        '#type' => $data['sub_field'] == 'textarea' ? 'textarea' : 'textfield',
         '#size' => 22,
         '#default_value' => $translation,
-        '#attributes' => array('title' => $field_hover_info),
+        '#attributes' => array('title' => isset($field_hover_info) ? $field_hover_info : $field_key),
       );      
     }
   }
@@ -158,7 +183,8 @@ function _sb_translate_update_translations($form, &$form_state) {
   $languages =  locale_language_list('name');
   // TO DO - PROPERLY DETECT SOURCE LANGAUGE:
   unset($languages['en']);
-  foreach ($form['translation_manager']['#component_data'] as $cid => $component_data) {
+  foreach ($form['translation_manager']['#translation_field_data'] as $cid => $translation_field_data) {
+    $textgroup = $translation_field_data['textgroup'];
     foreach ($form_state['values'] as $input_key => $input_string) {
       // Handle item lists such as select options:
       if (strpos($input_key, $nid . '_' . $cid . '_') === FALSE) {
@@ -179,17 +205,17 @@ function _sb_translate_update_translations($form, &$form_state) {
         && isset($form_state['values'][$nid . '_' . $cid . '_' . $sub_field . '_source'])) {
         $translated_string = $form_state['values'][$nid . '_' . $cid . '_' . $sub_field . '_' . $language_code];
         $source_string = $form_state['values'][$nid . '_' . $cid . '_' . $sub_field . '_source'];
-        $textgroup = 'Webform Component';
         $location = $nid . ':' . $cid . ':' . $sub_field;
         i18n_string_translation_update(
           $textgroup . ':' . $location,
-          $translated_string,
+          str_replace('$', '\$', $translated_string),
           $language_code,
           $source_string
         );
       }
     }
   }
+  drupal_set_message('Translated have been updated.');
 }
 
 /**
@@ -235,11 +261,12 @@ function theme_sb_translate_table_theme($form) {
     if ($last_row_id != $id) {
       $last_row_id = $id;
       $row_label = '';
-      if (isset($form['#component_data'][$id]['form_key'])) {
-        $row_label = $form['#component_data'][$id]['form_key'];
+      // Handle webform component labels:
+      if (isset($form['#translation_field_data'][$id]['form_key'])) {
+        $row_label = $form['#translation_field_data'][$id]['form_key'];
 
         // Add country filtering for the "State" field:
-        if (function_exists('fundraiser_commerce_get_countries') && $form['#component_data'][$id]['form_key'] == 'state') {
+        if (function_exists('fundraiser_commerce_get_countries') && $form['#translation_field_data'][$id]['form_key'] == 'state') {
           $row_label .= '&nbsp;<select class="trans-manager-state-selector">' .
             '<option value="all-countries">- View All States -</option>';
           foreach ($country_options as $key => $value) {
@@ -249,6 +276,10 @@ function theme_sb_translate_table_theme($form) {
           $row_label .= '</select>';
         }
       }
+      else {
+        $row_label = 'N/A';
+      }
+      $row_label = str_replace('recurringamount', 'recurring amount', $row_label);
       $label_row = array('data' => array(array('data' => $row_label, 'class' => 'label-row', 'colspan' => 3)));
       $rows[] = $label_row;
     }
@@ -260,7 +291,8 @@ function theme_sb_translate_table_theme($form) {
       if (!is_array($item) || !isset($item['#type'])) {
         continue; 
       }
-      if (function_exists('fundraiser_commerce_get_countries') && $form['#component_data'][$id]['form_key'] == 'state') {
+      if (function_exists('fundraiser_commerce_get_countries') && isset($form['#translation_field_data'][$id]['form_key'])
+        && $form['#translation_field_data'][$id]['form_key'] == 'state') {
         $enabled_countries = _sb_translate_get_enabled_countries();
         foreach ($enabled_countries as $enabled_country_code => $enabled_country) { 
           if (strpos($sub_field, 'option;' . $enabled_country_code . ';') !== FALSE) {
@@ -329,11 +361,15 @@ function sb_translate_views_post_render(&$view, &$output, &$cache) {
  *   The webform component being updated.
  */
 function _sb_translate_webform_register_component($component) {
-/*  $translatable_types = array('textarea', 'textfield');
-  if (!in_array($component['type'], $translatable_types)) {
+  if (!isset($component['cid']) || !is_numeric($component['cid'])) {
     return;
-  } */
+  }
   if ($component['type'] == 'hidden') {
+    return;
+  }
+
+  // Ignore gateway components that are fundraiser-specific:
+  if (in_array($component['form_key'], array('gateway'))) {
     return;
   }
 
@@ -382,6 +418,9 @@ function _sb_translate_webform_register_component($component) {
 
   // Register checkbox or radio options:
   if (in_array($component['type'], array('select')) && isset($component['extra']['items'])) {
+    if(in_array($component['form_key'], array('amount', 'recurring_amount'))) {
+      return;
+    }
     $options = explode("\n", $component['extra']['items']);
     foreach ($options as $option) {
       if (strpos($option, '|') === FALSE) {
@@ -449,7 +488,6 @@ function sb_translate_views_query_alter(&$view, &$query) {
  */
 function sb_translate_form_node_type_form_alter(&$form, &$form_state) {
   $sb_translate_node_type_settings = variable_get('sb_translate_node_type_settings', array());
-  dpm($sb_translate_node_type_settings);
   $form['sb_translate'] = array(
     '#type' => 'fieldset',
     '#title' => t('Translation Manager'),
@@ -504,7 +542,6 @@ function _sb_translate_form_node_type_form_save_settings($form, &$form_state) {
   }
   $node_type = $form_state['build_info']['args'][0]->type;
   $sb_translate_node_type_settings = variable_get('sb_translate_node_type_settings', array());
-dpm($form_state);
   if (isset($form_state['input']['sb_translate_status']) && $form_state['input']['sb_translate_status'] == TRUE) {
     $sb_translate_node_type_settings[$node_type] = array('enabled' => TRUE);
     if (isset($form['#enabled_sb_translate_includes'])) {
@@ -527,36 +564,124 @@ dpm($form_state);
 /**
  * Implements hook_form_alter().
  *
+ * - Adds submit function for registering non-component fundraiser strings for translation.
  * - Implements language filtering via a non-view-based exposed filter.
  * - Alters state component webform output.
  * 
  */
 function sb_translate_form_alter(&$form, &$form_state, $form_id) {
-  // Translate webform state component options based on current country:
-  if (isset($form['#node']->nid) && $form_id == 'webform_client_form_' . $form['#node']->nid
-    && isset($form['submitted']['billing_information']['state'])) {
-    $state_data = $form['submitted']['billing_information']['state'];
-    if (!isset($state_data['#webform_component']['cid']) || !isset($state_data['#webform_component']['nid'])) {
-      return;
-    }
-    if (!isset($form['submitted']['billing_information']['country']['#default_value'])) {
-      return;
-    }
-    $country_code = $form['submitted']['billing_information']['country']['#default_value'];
-    $nid = $state_data['#webform_component']['nid'];
-    $cid = $state_data['#webform_component']['cid'];
-
-    foreach ($state_data['#options'] as $state_code => $state_name) {
-      $form['submitted']['billing_information']['state']['#options'][$state_code] = i18n_string_translate(
-        'Webform Component' . ':' . $nid . ':' . $cid . ':option;' . $country_code . ';' . $state_code,
-        $state_name,
-        array()
-      );
-    }
+  // Save non-component fundraiser fields on node edit form submission:
+  if (isset($form['#node']->type) && $form_id == $form['#node']->type . '_node_form') {
+    $form['#submit'][] = '_sb_translate_register_node_edit_fundraiser_strings';
     return;
   }
+
+  // Save webform confirmation page settings:
+  elseif (isset($form['#node']->type) && isset($form['#node']->nid) && $form_id == 'webform_configure_form') {
+    $form['#submit'][] = '_sb_translate_register_webform_confirmation_settings';
+    return;
+  }
+
+  // Translate node view webform output:
+  elseif (isset($form['#node']->nid) && $form_id == 'webform_client_form_' . $form['#node']->nid) {
+    $nid = $form['#node']->nid;
+    // Fundraiser gateway fields:
+    if (isset($form['submitted']['payment_information']['payment_method']['#options'])) {
+      foreach ($form['submitted']['payment_information']['payment_method']['#options'] as $gateway_key => $gateway_label) {
+        $translation = i18n_string_translate(
+          'Fundraiser' . ':' . $nid . ':' . 'gateway' . ':' . 'option' . ';' . $gateway_key,
+          $gateway_label,
+          array()
+        );
+        $form['submitted']['payment_information']['payment_method']['#options'][$gateway_key] = $translation;
+      }
+    }
+    // Payment amount labels:
+    if (isset($form['submitted']['donation']['amount']['#options'])) {
+      $count = 0;
+      foreach ($form['submitted']['donation']['amount']['#options'] as $amount_key => $amount_label) {
+        $translation = i18n_string_translate(
+          'Fundraiser' . ':' . $nid . ':' . 'amount' . ':' . 'option' . ';' . ($amount_key == 'other' ? 'other' : $count),
+          $amount_label,
+          array()
+        );
+        $translation = str_replace('\$', '$', $translation);
+        $form['submitted']['donation']['amount']['#options'][$amount_key] = $translation;
+        $count++;
+      }
+    }
+    // Recurring payment amount labels:
+    if (isset($form['submitted']['donation']['recurring_amount']['#options'])) {
+     $count = 0;
+      foreach ($form['submitted']['donation']['recurring_amount']['#options'] as $amount_key => $amount_label) {
+        $translation = i18n_string_translate(
+          'Fundraiser' . ':' . $nid . ':' . 'recurringamount' . ':' . 'option' . ';' . ($amount_key == 'other' ? 'other' : $count),
+          $amount_label,
+          array()
+        );
+        $translation = str_replace('\$', '$', $translation);
+        $form['submitted']['donation']['recurring_amount']['#options'][$amount_key] = $translation;
+        $count++;
+      }
+    }
+    // Credit payment info labels:
+    if (isset($form['submitted']['payment_information']['payment_fields']['credit'])) {
+      $payment_info_items = array(
+        'card_number' => 'ccnumber', 
+        'expiration_date' => 'expdate',
+        'card_cvv' => 'cvv',
+      );
+      foreach ($payment_info_items as $key => $data_name) {
+        if (isset($form['submitted']['payment_information']['payment_fields']['credit'][$key])) {
+          $form['submitted']['payment_information']['payment_fields']['credit'][$key]['#title'] = i18n_string_translate(
+            'Fundraiser' . ':' . $nid . ':' . $data_name . ':' . 'label',
+            $form['submitted']['payment_information']['payment_fields']['credit'][$key]['#title'],
+            array()
+          );
+        }
+      } 
+    }
+    // Suffix submission message:
+    $default_submit_string = 'By clicking SUBMIT your credit card will be securely processed.';
+    if (isset($form['submit']['#suffix']) && strpos($form['submit']['#suffix'], $default_submit_string)) {
+      $translated_submit_string = i18n_string_translate(
+        'Fundraiser' . ':' . $nid . ':' . 'submitmessage' . ':' . 'label',
+        $default_submit_string,
+        array()
+      );
+      $form['submit']['#suffix'] = str_replace($default_submit_string, $translated_submit_string, $form['submit']['#suffix']);
+    }
+    // Form submit button: - TODO - find out where this is being updated / might need to use jQuery
+    /* if (isset($form['actions']['submit']['#value'])) {
+      $result = i18n_string_translate(
+        'Fundraiser' . ':' . $nid . ':' . 'submitbutton' . ':' . 'label',
+        $form['actions']['submit']['#value'], 
+        array()
+      );
+    } */
+    // Webform state component options based on current country:
+    if (isset($form['submitted']['billing_information']['state'])) {
+      $state_data = $form['submitted']['billing_information']['state'];
+      if (isset($state_data['#webform_component']['cid']) 
+        && isset($state_data['#webform_component']['nid'])
+        && isset($form['submitted']['billing_information']['country']['#default_value'])) {
+        $country_code = $form['submitted']['billing_information']['country']['#default_value'];
+        $nid = $state_data['#webform_component']['nid'];
+        $cid = $state_data['#webform_component']['cid'];
+        foreach ($state_data['#options'] as $state_code => $state_name) {
+          $form['submitted']['billing_information']['state']['#options'][$state_code] = i18n_string_translate(
+            'Webform Component' . ':' . $nid . ':' . $cid . ':option;' . $country_code . ';' . $state_code,
+            $state_name,
+            array()
+          );
+        }
+      }
+    }
+    return;
+  } // End node view form translations.
+
   // Add the language switcher:
-  else if (isset($form_state['view']->name) && $form_state['view']->name == 'webform_translate_translation_manager'
+  elseif (isset($form_state['view']->name) && $form_state['view']->name == 'webform_translate_translation_manager'
     && $form_id == 'views_exposed_form') {
     $languages =  locale_language_list('name');
     unset($languages['en']);
@@ -590,6 +715,111 @@ function sb_translate_form_alter(&$form, &$form_state, $form_id) {
     $switcher_js .= "})(jQuery);}}";
     drupal_add_js($switcher_js, array('type' => 'inline', 'scope' => 'footer', 'cache' => FALSE));
     return;
+  }
+}
+
+/**
+ * Form submit function for the node edit form that register and updates non-component fundraiser strings for translation.
+ */
+function _sb_translate_register_node_edit_fundraiser_strings($form, &$form_state) {
+  if (!isset($form_state['values']) || !isset($form_state['values']['nid'])) {
+    return;
+  }
+  $textgroup = 'Fundraiser';
+  $values = $form_state['values'];
+  $nid = $values['nid'];
+
+  // Donation amounts:
+  if (isset($values['amount_wrapper']['donation_amounts'])) {
+    foreach ($values['amount_wrapper']['donation_amounts'] as $key => $amount_data) {
+      if (isset($amount_data['label'])) {
+        i18n_string_update(
+          $textgroup . ':' . $nid . ':' . 'amount' . ':' . 'option' . ';' . $key,
+          $amount_data['label'],
+          array()
+        );
+      }
+    }
+    i18n_string_update(
+      $textgroup . ':' . $nid . ':' . 'amount' . ':' . 'option' . ';' . 'other',
+      'Other',
+      array()
+    );    
+  }
+  // Recurring donation amounts:
+  if (isset($values['recurring_amount_wrapper']['recurring_donation_amounts'])) {
+    foreach ($values['recurring_amount_wrapper']['recurring_donation_amounts'] as $key => $amount_data) {
+      if (isset($amount_data['label'])) {
+        i18n_string_update(
+          $textgroup . ':' . $nid . ':' . 'recurringamount' . ':' . 'option' . ';' . $key,
+          $amount_data['label'],
+          array()
+        );
+      }
+    }
+    i18n_string_update(
+      $textgroup . ':' . $nid . ':' . 'recurringamount' . ':' . 'option' . ';' . 'other',
+      'Other',
+      array()
+    );
+  }
+  // Payment method gateway labels:
+  if (isset($values['gateways'])) {
+    foreach($values['gateways'] as $gateway_key => $gateway_data) {
+      if (isset($gateway_data['label'])) {
+        i18n_string_update(
+          $textgroup . ':' . $nid . ':' . 'gateway' . ':' . 'option' . ';' . $gateway_key,
+          $gateway_data['label'],
+          array()
+        );
+      }
+    }
+  }
+  // Defined hardcoded, Fundraiser-related translations:
+  $payment_info = array(
+    'paymentmethod' => 'Payment Method',
+    'ccnumber' => 'Credit card number',
+    'expdate' => 'Expiration date',
+    'cvv' => 'CVV',
+    'submitmessage' => 'By clicking SUBMIT your credit card will be securely processed.',
+    'submitbutton' => 'Submit',
+  );
+  foreach ($payment_info as $key => $label) {
+    i18n_string_update(
+      $textgroup . ':' . $nid . ':' . $key . ':' . 'label',
+      $label, 
+      array()
+    );
+  }
+}
+
+/**
+ * Form submit function for registering webform confirmation page settings for translation:
+ */
+function _sb_translate_register_webform_confirmation_settings($form, &$form_state) {
+  if (!isset($form['#node']->nid)) {
+    return;
+  }
+  $nid = $form['#node']->nid;
+  // Confirmation page title:
+  if (isset($form_state['values']['confirmation']['confirmation_page_title'])) {
+    i18n_string_update(
+      'Webform Setting' . ':' . $nid . ':' . 'confpage' . ':' . 'title',
+      $form_state['values']['confirmation']['confirmation_page_title'],
+      array()
+    );
+  }
+  // Confirmation page text:
+  if (isset($form_state['values']['confirmation']['value'])) {
+    $options = array();
+    if (isset($form_state['values']['confirmation']['format'])) {
+      $options['format'] = $form_state['values']['confirmation']['format'];
+    }
+    i18n_string_update( 
+      'Webform Setting' . ':' . $nid . ':' . 'confpage' . ':' . 'textarea',
+      $form_state['values']['confirmation']['value'],
+      $options
+    );
   }
 }
 
