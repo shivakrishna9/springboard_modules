@@ -641,7 +641,7 @@ function commerce_braintree_web_refund_form_submit($form, &$form_state) {
 
   // Inform the user if there were any issues processing the refund.
   if (empty($result) || empty($result->success)) {
-    $message = !empty($result->_attributes['message']) ? $result->_attributes['message'] : t('No error provided from Braintree');
+    $message = !empty($result->message) ? $result->message : t('No error provided from Braintree');
     drupal_set_message(t('The payment transaction cannot be refunded at this time. @message', array('@message' => $message)), 'error');
     return FALSE;
   }
