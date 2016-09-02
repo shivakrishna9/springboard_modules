@@ -97,7 +97,13 @@ function webform_confirmations_preprocess_webform_confirmation(&$vars) {
       // We get check_markup() from filter.module.
       // Set title if available from configurations.
       if (!empty($vars['node']->confirmation_page_title)) {
-        drupal_set_title($vars['node']->confirmation_page_title);
+        // Translate the title if needed:
+        $conf_page_title = i18n_string_translate(
+          'Webform Setting' . ':' . $vars['node']->nid . ':' . 'confpage' . ':' . 'title',
+          $vars['node']->confirmation_page_title,
+          array()
+        );
+        drupal_set_title($conf_page_title);
       }
       // Replace webform tokens for the submission.
       module_load_include('inc', 'webform', 'includes/webform.submissions');
@@ -106,8 +112,15 @@ function webform_confirmations_preprocess_webform_confirmation(&$vars) {
       // _webform_filter_values removes HTML if strict is set to TRUE.
       // Replace drupal tokens for the submission.
       $token_set = array('node' => node_load($vars['node']->nid));
+      // Translate the confirmation message if needed:
+      $confirmation_message = $vars['confirmation_message'];
+      $confirmation_message = i18n_string_translate(
+        'Webform Setting' . ':' . $vars['node']->nid . ':' . 'confpage' . ':' . 'textarea',
+        $vars['confirmation_message'],
+        array()
+      );
       drupal_alter('webform_confirmations_token_replace', $token_set, $vars['sid']);
-      $vars['confirmation_message'] = token_replace($vars['confirmation_message'], $token_set);
+      $vars['confirmation_message'] = token_replace($confirmation_message, $token_set);
     }
     else {
       // No access.
