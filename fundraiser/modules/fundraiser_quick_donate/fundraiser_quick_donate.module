@@ -349,12 +349,13 @@ function fundraiser_quick_donate_fundraiser_update_billing_form_alter(&$form, &$
     $form['#validate'][] = '_fundraiser_quick_donate_form_commerce_cardonfile_card_form_alter_validate';
     $form['#validate'][] = 'commerce_cardonfile_card_form_validate';
     $form['actions']['submit']['#submit'][] = 'commerce_cardonfile_card_form_submit';
+
+    $card = $form_state['card'];
+    $form['actions']['cancel'] = array(
+      '#markup' => '<span class="cancel"> or ' . l(t('Cancel'), 'user/' . $card->uid . '/cards') . '</span>',
+      '#weight' => 20,
+    );
   }
-  $card = $form_state['card'];
-  $form['actions']['cancel'] = array(
-    '#markup' => '<span class="cancel"> or ' . l(t('Cancel'), 'user/' . $card->uid . '/cards') . '</span>',
-    '#weight' => 20,
-  );
 }
 
 /**
