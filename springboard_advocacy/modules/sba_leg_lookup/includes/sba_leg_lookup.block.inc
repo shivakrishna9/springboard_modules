@@ -113,7 +113,7 @@ function sba_leg_lookup_legislator_lookup_form($form, &$form_state, $mb_delta) {
       '#type' => 'textfield',
       '#title' => t('ZIP Code'),
       '#required' => TRUE,
-      '#maxlength' => 9,
+      '#maxlength' => 5,
     );
 
     $form['mb_delta'] = array(

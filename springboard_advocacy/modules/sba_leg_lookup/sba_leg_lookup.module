@@ -72,15 +72,14 @@ function sba_leg_lookup_block_save($delta = '', $edit = array()) {
       );
       $enabled_types = array();
       // Filter out only those types selected.
-      foreach ($edit['sba_legislator_lookup_types_' . $edit['multiblock_delta']['#value']] as $type) {
-        if ($type) {
-          $enabled_types[$type] = $type;
-        }
-      }
-
       $mb_delta = 0;
       if (!empty($edit['multiblock_delta']['#value'])) {
         $mb_delta = $edit['multiblock_delta']['#value'];
+      }
+      foreach ($edit['sba_legislator_lookup_types_' . $mb_delta] as $type) {
+        if ($type) {
+          $enabled_types[$type] = $type;
+        }
       }
 
       variable_set('sba_legislator_lookup_types_' . $mb_delta, $enabled_types);
