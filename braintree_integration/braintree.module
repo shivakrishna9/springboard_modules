@@ -196,7 +196,22 @@ function braintree_initialize($settings = NULL) {
     return;
   }
 
-  libraries_load('braintree_php');
+  $library = libraries_load('braintree_php');
+  if (empty($library['loaded'])) {
+    // Couldn't load the library. Try to get some info and watchdog it.
+    $replacements = array(
+      '@error' => '',
+      '@error_message' => '',
+    );
+    if (isset($library['error'])) {
+      $replacements['@error'] = $library['error'];
+    }
+    if (isset($library['error message'])) {
+      $replacements['@error_message'] = $library['error message'];
+    }
+    watchdog('braintree', 'braintree_php library not found! @error @error_message', $replacements, WATCHDOG_ALERT);
+    return FALSE;
+  }
 
   if (is_null($settings)) {
     $settings = braintree_settings('active');
