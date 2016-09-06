@@ -116,12 +116,19 @@ function sba_leg_lookup_legislator_lookup_form($form, &$form_state, $mb_delta) {
       '#maxlength' => 9,
     );
 
+    $form['mb_delta'] = array(
+      '#type' => 'hidden',
+      '#value' => $mb_delta,
+    );
+
+    $form['plus4'] = array(
+      '#type' => 'hidden',
+      '#value' => '',
+    );
+
     $form['submit'] = array(
       '#type' => 'submit',
       '#value' => variable_get('sba_legislator_lookup_submit_text_' . $mb_delta, array('Find my legislators')),
-      '#attributes' => array(
-        'class' => 'btn',
-      ),
     );
   }
 
@@ -143,7 +150,7 @@ function sba_leg_lookup_legislator_lookup_form_validate($form, &$form_state) {
   }
 
   if (!empty($geo) && !empty($geo['zip']) && !empty($geo['plus4'])) {
-    $form_state['values']['plus4'] = $geo['plus4'];
+    form_set_value($form['plus4'], $geo['plus4'], $form_state);
   }
   else {
     form_set_error('sbp_address', 'Unable to verify the submitted address. Please try again.');
@@ -161,7 +168,7 @@ function sba_leg_lookup_legislator_lookup_form_submit($form, &$form_state) {
   $api_call = new AdvocacyApiCall();
   $response = $api_call->invokeClientMethod('getLegislators', $full_zip);
   if (isset($response->data) && $response->status_code == 200) {
-    $form_state['legislators'] = sba_leg_lookup_sort_legislators(get_object_vars($response->data));
+    $form_state['legislators'] = sba_leg_lookup_sort_legislators(get_object_vars($response->data), $form_state['values']['mb_delta']);
   }
 
   $form_state['rebuild'] = TRUE;
@@ -173,9 +180,9 @@ function sba_leg_lookup_legislator_lookup_form_submit($form, &$form_state) {
  * Prunes out roles according to the
  * block settings.
  */
-function sba_leg_lookup_sort_legislators($legislators) {
+function sba_leg_lookup_sort_legislators($legislators, $mb_delta) {
   $sorted_legislators = array();
-  $sba_legislator_lookup_types = variable_get('sba_legislator_lookup_types',
+  $sba_legislator_lookup_types = variable_get('sba_legislator_lookup_types_' . $mb_delta,
     array('FS', 'FR', 'SS', 'SR', 'GOVNR', 'PRES01', 'PRES02', 'PRES03')
   );
 

@@ -31,7 +31,7 @@ function sba_leg_lookup_block_configure($delta, $edit = array()) {
         $mb_delta = $edit['multiblock_delta']['#value'];
       }
       $options = sba_leg_lookup_legislator_roles();
-      $form['sba_legislator_lookup_types'] = array(
+      $form['sba_legislator_lookup_types_' . $mb_delta] = array(
         '#type' => 'checkboxes',
         '#title' => t('Configure the legislator types you want to display'),
         '#options' => $options,
@@ -63,7 +63,6 @@ function sba_leg_lookup_block_configure($delta, $edit = array()) {
  * Implements hook_block_save().
  */
 function sba_leg_lookup_block_save($delta = '', $edit = array()) {
-
   switch ($delta) {
     case 'sba_legislator_lookup':
       module_load_include(
@@ -73,7 +72,7 @@ function sba_leg_lookup_block_save($delta = '', $edit = array()) {
       );
       $enabled_types = array();
       // Filter out only those types selected.
-      foreach ($edit['sba_legislator_lookup_types'] as $type) {
+      foreach ($edit['sba_legislator_lookup_types_' . $edit['multiblock_delta']['#value']] as $type) {
         if ($type) {
           $enabled_types[$type] = $type;
         }
