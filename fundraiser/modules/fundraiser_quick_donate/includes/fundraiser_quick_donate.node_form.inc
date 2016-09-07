@@ -113,7 +113,7 @@ function fundraiser_quick_donate_form_node_form_alter(&$form, &$form_state, $for
       '#title' => t('"Quick Donation" help text'),
       '#description' => t('This message will be shown to users to provide information about quick donations. Use !type to print the type of payment method, which will be either credit or bank account.<br/><br/>', array('!type' => '<strong>@type</strong>')),
       '#default_value' => isset($form['#node']->quickdonate_help_message) ? $form['#node']->quickdonate_help_message : variable_get('fundraiser_quick_donate_default_help_message', t('Save your @type details and donate faster next time. We may email you from time to time with quick donate opportunities. You can update your @type details or cancel your enrollment at any time.')),
-      '#format' => isset($form['#node']->quickdonate_help_message_format) ? $form['#node']->quickdonate_help_message_format : 'plain_text',
+      '#format' => isset($form['#node']->quickdonate_help_message_format) ? $form['#node']->quickdonate_help_message_format : variable_get('fundraiser_quick_donate_default_help_message_format', 'plain_text'),
     );
 
     $form['payment_methods']['quickdonate_login_message'] = array(

@@ -49,6 +49,37 @@ function fundraiser_quick_donate_admin_settings($form, $form_state) {
     '#default_value' => $default,
   );
 
+  $form['default_messages'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Default Messages'),
+    '#description' => t('Configure the default quick donate messages that will be displayed to the end user.'),
+  );
+  $form['default_messages']['fundraiser_quick_donate_default_optin_message'] = array(
+    '#type' => 'textfield',
+    '#title' => t('"Quick Donation" opt-in text'),
+    '#description' => t('This is the title of the opt-in checkbox. The "@type" placeholder can be used to specify the type of payment method (either credit card or bank account). Defaults to "Save this @type for future use".'),
+    '#default_value' => variable_get('fundraiser_quick_donate_default_optin_message', t('Save this @type for future use')),
+  );
+  $form['default_messages']['fundraiser_quick_donate_default_help_message'] = array(
+    '#type' => 'text_format',
+    '#title' => t('"Quick Donation" help text'),
+    '#description' => t('This message will be shown to users to provide information about quick donations. Use !type to print the type of payment method, which will be either credit or bank account.<br/><br/>', array('!type' => '<strong>@type</strong>')),
+    '#default_value' => variable_get('fundraiser_quick_donate_default_help_message', t('Save your @type details and donate faster next time. We may email you from time to time with quick donate opportunities. You can update your @type details or cancel your enrollment at any time.')),
+    '#format' => variable_get('fundraiser_quick_donate_default_help_message_format', 'plain_text'),
+  );
+  $form['default_messages']['fundraiser_quick_donate_default_login_message'] = array(
+    '#type' => 'textfield',
+    '#title' => t('"Quick Donation" login text'),
+    '#description' => t('This is the title of the log-in checkbox. The "@type" placeholder can be used to specify the type of payment method (credit card or bank account). Defaults to "Already have a saved @type?".'),
+    '#default_value' => variable_get('fundraiser_quick_donate_default_login_message', t('Already have a saved @type?')),
+  );
+  $form['default_messages']['fundraiser_quick_donate_default_login_link_message'] = array(
+    '#type' => 'textfield',
+    '#title' => t('"Quick Donation" login link text'),
+    '#description' => t('This is the title of the log-in checkbox. Defaults to "Click here to login".'),
+    '#default_value' => variable_get('fundraiser_quick_donate_default_login_link_message', t('Click here to login')),
+  );
+
   $form['#submit'][] = 'fundraiser_quick_donate_admin_settings_submit';
 
   return system_settings_form($form);
@@ -97,6 +128,8 @@ function fundraiser_quick_donate_admin_settings_submit($form, &$form_state) {
     );
     $form_state['values'][$key] = serialize($data);
   }
+  $form_state['values']['fundraiser_quick_donate_default_help_message_format'] = $form_state['values']['fundraiser_quick_donate_default_help_message']['format'];
+  $form_state['values']['fundraiser_quick_donate_default_help_message'] = $form_state['values']['fundraiser_quick_donate_default_help_message']['value'];
 }
 
 /**
