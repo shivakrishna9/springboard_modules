@@ -44,9 +44,6 @@ function _braintree_payment_form(&$form, &$form_state, $payment_method = 'braint
 
   $form['#attached']['library'][] = array('braintree_payment', 'braintree.js');
 
-  // Initialize Braintree and create a token.
-  braintree_initialize();
-
   $form['braintree'] = array(
     '#type' => 'container',
   );
@@ -233,7 +230,7 @@ function _braintree_payment_form_validate($form, &$form_state) {
 }
 
 function _braintree_payment_form_submit($form, &$form_state) {
-  braintree_initialize();
+  // braintree_initialize();
 }
 
 /**

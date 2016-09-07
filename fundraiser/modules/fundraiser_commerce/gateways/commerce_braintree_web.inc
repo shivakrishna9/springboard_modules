@@ -31,17 +31,18 @@ function commerce_braintree_web_fundraiser_commerce_fundraiser_gateway_info() {
  * Implements hook_fundraiser_donation_form_config_check().
  */
 function commerce_braintree_web_fundraiser_donation_form_config_check($node) {
+  $messages = array();
   foreach ($node->gateways as $gateway) {
     if (!empty($gateway['id'])  && !empty($gateway['status'])) {
       $gateway_config = _fundraiser_gateway_info($gateway['id']);
       if ($gateway_config['gateway_details']['module'] == 'commerce_braintree_web') {
-        $settings = braintree_settings();
-        if ($settings['environment'] == 'sandbox') {
-          return t('Braintree is currently using the sandbox environment and will not process live transactions.');
+        if ($gateway_config['gateway_details']['settings']['environment'] == 'sandbox') {
+          $messages[] = t('%gateway is currently using the sandbox environment and will not process live transactions.', array('%gateway' => $gateway_config['title']));
         }
       }
     }
   }
+  return $messages;
 }
 
 /**
@@ -143,7 +144,7 @@ function commerce_braintree_web_fundraiser_commerce_refund($payment_method, $ref
 /**
  * Callback function, use this form for the given gateway.
  */
-function commerce_braintree_web_fundraiser_commerce_form($payment_method) {
+function commerce_braintree_web_fundraiser_commerce_form($payment_method, $config) {
   if ($payment_method == 'paypal') {
     $payment_method = 'braintree_paypal';
   }
@@ -152,10 +153,12 @@ function commerce_braintree_web_fundraiser_commerce_form($payment_method) {
   global $user;
   $using_existing = FALSE;
 
+  $form = array();
   $form['#attached']['library'][] = array('braintree_payment', 'braintree.js');
 
   // Initialize Braintree and create a token.
-  braintree_initialize();
+  $gateway = commerce_payment_method_instance_load($config['id']);
+  braintree_initialize($gateway['settings']);
 
   $form['braintree'] = array(
     '#type' => 'container',
@@ -218,107 +221,10 @@ function commerce_braintree_web_fundraiser_commerce_form($payment_method) {
 }
 
 /**
- *
- */
-function fundraiser_commerce_braintree_paypal_form() {
-  global $user;
-
-  // Initialize Braintree and create a token.
-  braintree_initialize();
-
-  $form['card'] = array(
-    '#markup' => '<div id="paypal-container"></div>'
-  );
-  $form['js'] =  array(
-    '#markup' => '
-    <script>
-      braintree["errorStatus"] = false;
-      braintree.setup("'.Braintree_ClientToken::generate().'", "paypal", {
-        id: "webform-client-form-2",
-        paypal: {
-          container: "paypal-container",
-        }
-      });
-    </script>'
-  );
-  return $form;
-}
-
-/**
- *
- */
-function fundraiser_commerce_braintree_credit_card_form() {
-  global $user;
-
-  // Initialize Braintree and create a token.
-  braintree_initialize();
-
-  // Move expiration date values up in the array. ONLY relevant for the default credit card fields.
-  $form['card'] = array(
-
-    '#markup' => '
-      <div class="control-group">
-        <label for="card-number">Card Number</label>
-        <div id="card-number" style="height: 20px" class="braintree-hosted-field control-group required"></div>
-      </div>
-      <div class="control-group">
-        <label for="expiration-date">Expiration Date (MM/YY)</label>
-        <div id="expiration-date" style="height: 20px" class="braintree-hosted-field control-group required"></div>
-      <div class="control-group">
-        <label for="cvv">CVV</label>
-        <div id="cvv" style="height: 20px" class="braintree-hosted-field control-group required"></div>
-      </div>'
-  );
-  $form['js'] =  array(
-    '#markup' => '
-    <script>
-      braintree["errorStatus"] = false;
-
-      braintree.setup("'.Braintree_ClientToken::generate().'", "custom", {
-        id: "webform-client-form-2",
-        hostedFields: {
-          number: {
-            selector: "#card-number"
-          },
-          cvv: {
-            selector: "#cvv"
-          },
-          expirationDate: {
-            selector: "#expiration-date"
-          },
-          onFieldEvent: function (event) {
-            if (event.type === "blur") {
-              // console.log(event.isValid);
-              if (event.isValid) {
-                jQuery(event.target.container).removeClass("error").addClass("success");
-              }
-              else {
-                jQuery(event.target.container).removeClass("success").addClass("error");
-                jQuery(braintree).triggerHandler("baz");
-              }
-            } else if (event.type === "fieldStateChange") {
-              if (event.card) {
-                console.log(event.card.type);
-              }
-            }
-
-          }
-        },
-        onError: function (event) {
-          console.log("setting error status");
-          braintree["errorStatus"] = true;
-          console.log(braintree["errorStatus"]);
-        }
-      });
-    </script>'
-  );
-  return $form;
-}
-
-/**
  * Callback function, charge gateway.
  */
 function commerce_braintree_web_fundraiser_commerce_charge($method_instance, $donation) {
+
   // Translate from donation settings to the correct values for the plugin.
   // module_load_include('inc', 'fundraiser_commerce', 'includes/fundraiser_commerce.credit_card');
   $order = commerce_order_load($donation->did);
