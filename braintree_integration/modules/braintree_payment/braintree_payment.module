@@ -116,6 +116,25 @@ function _braintree_payment_form_element(&$element, &$form, &$form_state, $payme
       '#type' => 'container',
       '#id' => 'paypal-container',
     );
+    $element['paypal']['nonce'] = array(
+      '#type' => 'hidden',
+      '#name' => 'payment_method_nonce',
+    );
+    $element['paypal']['loggedin'] = array(
+      '#type' => 'container',
+      '#id' => 'braintree-paypal-loggedin',
+    );
+    $element['paypal']['loggedin']['contents'] = array(
+      '#markup' => '<span id="bt-pp-name">PayPal</span><span id="bt-pp-email"></span><button id="bt-pp-cancel">Cancel</button>',
+    );
+
+    $element['paypal']['loggedout'] = array(
+      '#type' => 'container',
+      '#id' => 'braintree-paypal-loggedout',
+    );
+    $element['paypal']['loggedout']['contents'] = array(
+      '#markup' => '<a id="braintree-paypal-button" href="#" style="display: block; width: 115px; height: 44px; overflow: hidden;"><img src="https://checkout.paypal.com/pwpp/2.21.0/images/pay-with-paypal.png" alt="Pay with PayPal" style="max-width: 100%; display: block; width: 100%; height: 100%; outline: none; border: 0px;"></a>'
+    );
   }
   else {
     $element['number'] = array(
