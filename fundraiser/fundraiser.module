@@ -2486,6 +2486,7 @@ function _fundraiser_refund_form_submit($form, &$form_state) {
   $refund->amount = commerce_currency_amount_to_decimal($amount, $donation->currency);
   $refund->currency = $donation->currency;
   $refund->reason = $form_state['values']['refund_notes'];
+  $refund->rid = time();  // Use a timestamp to avoid PayPal error 11607 (duplicate MSGSUBID value)
   $refund = fundraiser_refund_create($refund);
   // Then process it.
   $refund->new_status = $new_status;
