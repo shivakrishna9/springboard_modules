@@ -316,6 +316,13 @@ function commerce_braintree_web_settings_form($settings = array()) {
     '#default_value' => isset($settings['production']['channel']) ? $settings['production']['channel'] : NULL,
   );
 
+  $form['custom_logged_out_state'] = array(
+    '#title' => t('PayPal button override'),
+    '#type' => 'textarea',
+    '#description' => 'If set, this HTML appears in place of Braintree\'s default PayPal button',
+    '#default_value' => isset($settings['custom_logged_out_state']) ? $settings['custom_logged_out_state'] : NULL,
+  );
+
   $form['single_settlement_currency'] = array(
     '#type' => 'checkbox',
     '#title' => t('Single settlement currency'),

@@ -151,7 +151,7 @@
     this.$submit.attr('disabled', 'disabled');
 
     // Bind initAuthFlow button to paypal-container
-    $('#paypal-container').one('click', function () {
+    $('#paypal-container').click(function() {
       Drupal.myBraintreeIntegration.paypal.initAuthFlow();
     });
   }

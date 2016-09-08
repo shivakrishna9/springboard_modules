@@ -145,9 +145,8 @@ function commerce_braintree_web_fundraiser_commerce_refund($payment_method, $ref
  * Callback function, use this form for the given gateway.
  */
 function commerce_braintree_web_fundraiser_commerce_form($payment_method, $config) {
-  if ($payment_method == 'paypal') {
-    $payment_method = 'braintree_paypal';
-  }
+  $payment_method_instance = commerce_payment_method_instance_load($config['id']);
+  braintree_initialize($payment_method_instance['settings']);
   // @TODO Possibily replace with _braintree_payment_form().
 
   global $user;
@@ -155,10 +154,6 @@ function commerce_braintree_web_fundraiser_commerce_form($payment_method, $confi
 
   $form = array();
   $form['#attached']['library'][] = array('braintree_payment', 'braintree.js');
-
-  // Initialize Braintree and create a token.
-  $gateway = commerce_payment_method_instance_load($config['id']);
-  braintree_initialize($gateway['settings']);
 
   $form['braintree'] = array(
     '#type' => 'container',
@@ -174,7 +169,7 @@ function commerce_braintree_web_fundraiser_commerce_form($payment_method, $confi
     '#suffix' => '</div>',
   );
 
-  _braintree_payment_form_element($form['braintree']['new'], $form, $form_state, $payment_method);
+  _braintree_payment_form_element($form['braintree']['new'], $form, $form_state, $payment_method_instance);
 
   if ($using_existing && ($user->uid > 0) && module_exists('braintree_vault') && ($customer = braintree_customer_load_by_account($user))) {
     $default_method = braintree_customer_default_payment_method($customer);

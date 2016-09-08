@@ -122,8 +122,6 @@ body.using-existing-payment-method #payment-details .form-item-commerce-payment-
 }
 #braintree-paypal-loggedout {
   display: block;
-  width: 115px;
-  height: 44px;
   overflow: hidden;
 }
 #bt-pp-name {
@@ -154,4 +152,18 @@ body.using-existing-payment-method #payment-details .form-item-commerce-payment-
   float: right;
   -webkit-font-smoothing: antialiased;
   background-color: transparent;
+}
+#braintree-paypal-button {
+  display: block;
+  width: 115px;
+  height: 44px;
+  overflow: hidden;
+}
+#braintree-paypal-button img {
+  max-width: 100%;
+  display: block;
+  width: 100%;
+  height: 100%;
+  outline: none;
+  border: 0px;
 }

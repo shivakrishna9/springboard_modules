@@ -5,7 +5,7 @@
  */
 
 define('BRAINTREE_WEB_JS', 'https://js.braintreegateway.com/js/braintree-2.21.0.min.js');
-
+define('BRAINTREE_PAYPAL_LOGGED_OUT_STATE', '<a id="braintree-paypal-button" href="#"><img src="https://checkout.paypal.com/pwpp/2.21.0/images/pay-with-paypal.png" alt="Pay with PayPal"></a>');
 /**
  * Implements hook_library().
  */
@@ -101,14 +101,14 @@ function _braintree_payment_form(&$form, &$form_state, $payment_method = 'braint
   $form['#submit'][] = '_braintree_payment_form_submit';
 }
 
-function _braintree_payment_form_element(&$element, &$form, &$form_state, $payment_method = 'braintree_paypal') {
+function _braintree_payment_form_element(&$element, &$form, &$form_state, $payment_method_instance) {
   // Define our own parents to make it consistent and easy to use in JavaScript.
   $element['errors'] = array(
     '#type' => 'hidden',
     '#parents' => array('braintree', 'errors'),
   );
 
-  if ($payment_method == 'braintree_paypal') {
+  if ($payment_method_instance['method_id'] == 'braintree_paypal') {
     $element['paypal'] = array(
       '#type' => 'container',
       '#id' => 'paypal-container',
@@ -130,7 +130,7 @@ function _braintree_payment_form_element(&$element, &$form, &$form_state, $payme
       '#id' => 'braintree-paypal-loggedout',
     );
     $element['paypal']['loggedout']['contents'] = array(
-      '#markup' => '<a id="braintree-paypal-button" href="#" style="display: block; width: 115px; height: 44px; overflow: hidden;"><img src="https://checkout.paypal.com/pwpp/2.21.0/images/pay-with-paypal.png" alt="Pay with PayPal" style="max-width: 100%; display: block; width: 100%; height: 100%; outline: none; border: 0px;"></a>'
+      '#markup' => isset($payment_method_instance['settings']['custom_logged_out_state']) && !empty($payment_method_instance['settings']['custom_logged_out_state']) ? $payment_method_instance['settings']['custom_logged_out_state'] : BRAINTREE_PAYPAL_LOGGED_OUT_STATE,
     );
   }
   else {
@@ -186,7 +186,7 @@ function _braintree_payment_form_element(&$element, &$form, &$form_state, $payme
 
   $js_settings['clientToken'] = $token;
 
-  if ($payment_method == 'braintree_paypal') {
+  if ($payment_method_instance['method_id'] == 'braintree_paypal') {
     $js_settings['integration'] = 'paypal';
     $js_settings['paypalContainer'] = 'paypal-container';
     $js_settings['enabledMethods'][] = 'paypal';
