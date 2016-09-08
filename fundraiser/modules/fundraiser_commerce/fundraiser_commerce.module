@@ -935,8 +935,8 @@ function fundraiser_commerce_fundraiser_donation_get_donation($donation) {
       foreach ($field_info as $field_name) {
         if (isset($map[$field_name])) {
           $order_name = $map[$field_name];
-          $donation->donation[$field_name] = isset($profile->commerce_customer_address[LANGUAGE_NONE][0][$order_name]) ?
-            $profile->commerce_customer_address[LANGUAGE_NONE][0][$order_name] : '';
+          $donation->donation[$field_name] = isset($profile->data[$order_name]) ?
+            $profile->data[$order_name] : '';
         }
       }
     }
@@ -1107,16 +1107,22 @@ function fundraiser_commerce_fundraiser_donation_create($donation) {
     }
   }
 
-  $profile->commerce_customer_address[LANGUAGE_NONE][0] = addressfield_default_values($field, $instance);
-  $profile->commerce_customer_address[LANGUAGE_NONE][0]['country'] = $donation->donation['country'];
-  $profile->commerce_customer_address[LANGUAGE_NONE][0]['name_line'] = $donation->donation['first_name'] . ' ' . $donation->donation['last_name'];
-  $profile->commerce_customer_address[LANGUAGE_NONE][0]['first_name'] = $donation->donation['first_name'];
-  $profile->commerce_customer_address[LANGUAGE_NONE][0]['last_name'] = $donation->donation['last_name'];
-  $profile->commerce_customer_address[LANGUAGE_NONE][0]['administrative_area'] = $donation->donation['state'];
-  $profile->commerce_customer_address[LANGUAGE_NONE][0]['thoroughfare'] = $donation->donation['address'];
-  $profile->commerce_customer_address[LANGUAGE_NONE][0]['premise'] = $donation->donation['address_line_2'];
-  $profile->commerce_customer_address[LANGUAGE_NONE][0]['locality'] = $donation->donation['city'];
-  $profile->commerce_customer_address[LANGUAGE_NONE][0]['postal_code'] = $donation->donation['zip'];
+  // Assigning this to the data property will allow this to be saved correctly
+  // to the data field schema.
+  $profile->data = addressfield_default_values($field, $instance);
+  $profile->data['country'] = $donation->donation['country'];
+  $profile->data['name_line'] = $donation->donation['first_name'] . ' ' . $donation->donation['last_name'];
+  $profile->data['first_name'] = $donation->donation['first_name'];
+  $profile->data['last_name'] = $donation->donation['last_name'];
+  $profile->data['administrative_area'] = $donation->donation['state'];
+  $profile->data['thoroughfare'] = $donation->donation['address'];
+  $profile->data['premise'] = $donation->donation['address_line_2'];
+  $profile->data['locality'] = $donation->donation['city'];
+  $profile->data['postal_code'] = $donation->donation['zip'];
+  // Since some modules rely on the `commerce_customer_address` property being
+  // set (looking at you commerce_authnet), need to assign the same value in
+  // $profile->data.
+  $profile->commerce_customer_address[LANGUAGE_NONE][0] = $profile->data;
   commerce_customer_profile_save($profile);
   $order->commerce_customer_billing[LANGUAGE_NONE][0]['profile_id'] = $profile->profile_id;
 
@@ -1713,16 +1719,16 @@ function fundraiser_commerce_fundraiser_donation_update($donation) {
     // Update profile with the billing information.
     $field = field_info_field('commerce_customer_address');
     $instance = field_info_instance('commerce_customer_profile', 'commerce_customer_address', 'billing');
-    $profile->commerce_customer_address[LANGUAGE_NONE][0] = addressfield_default_values($field, $instance);
-    $profile->commerce_customer_address[LANGUAGE_NONE][0]['country'] = $donation->donation['country'];
-    $profile->commerce_customer_address[LANGUAGE_NONE][0]['name_line'] = $donation->donation['first_name'] . ' ' . $donation->donation['last_name'];
-    $profile->commerce_customer_address[LANGUAGE_NONE][0]['first_name'] = $donation->donation['first_name'];
-    $profile->commerce_customer_address[LANGUAGE_NONE][0]['last_name'] = $donation->donation['last_name'];
-    $profile->commerce_customer_address[LANGUAGE_NONE][0]['administrative_area'] = $donation->donation['state'];
-    $profile->commerce_customer_address[LANGUAGE_NONE][0]['thoroughfare'] = $donation->donation['address'];
-    $profile->commerce_customer_address[LANGUAGE_NONE][0]['premise'] = $donation->donation['address_line_2'];
-    $profile->commerce_customer_address[LANGUAGE_NONE][0]['locality'] = $donation->donation['city'];
-    $profile->commerce_customer_address[LANGUAGE_NONE][0]['postal_code'] = $donation->donation['zip'];
+    $profile->data = addressfield_default_values($field, $instance);
+    $profile->data['country'] = $donation->donation['country'];
+    $profile->data['name_line'] = $donation->donation['first_name'] . ' ' . $donation->donation['last_name'];
+    $profile->data['first_name'] = $donation->donation['first_name'];
+    $profile->data['last_name'] = $donation->donation['last_name'];
+    $profile->data['administrative_area'] = $donation->donation['state'];
+    $profile->data['thoroughfare'] = $donation->donation['address'];
+    $profile->data['premise'] = $donation->donation['address_line_2'];
+    $profile->data['locality'] = $donation->donation['city'];
+    $profile->data['postal_code'] = $donation->donation['zip'];
     commerce_customer_profile_save($profile);
     $order->commerce_customer_billing[LANGUAGE_NONE][0]['profile_id'] = $profile->profile_id;
   }
