@@ -173,6 +173,13 @@ function page_wrappers_css_alter(&$css) {
       }
     }
 
+    if (function_exists('honeypot_get_css_file_path')) {
+      $honeypot_css = honeypot_get_css_file_path();
+      if (file_exists($honeypot_css)) {
+        $keep[] = $honeypot_css;
+      }
+    }
+
     // If a stylesheet has been added to the wrapper, don't remove it.
     if (!empty($css_files)) {
       foreach ($css_files as $css_file) {

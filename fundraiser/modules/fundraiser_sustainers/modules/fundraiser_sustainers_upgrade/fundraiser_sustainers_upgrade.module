@@ -1188,19 +1188,6 @@ function fundraiser_sustainers_upgrade_mail_alter(&$message) {
 }
 
 /**
- * Implements hook_salesforce_queue_create_item_alter().
- *
- * Relate the upgrade to the sustainer series.
- */
-function fundraiser_sustainers_upgrade_salesforce_queue_create_item_alter(&$item) {
-  if ($item['object_type'] == 'Sustainers_Upgrade__c') {
-    $did = $item['sobject']->fields['Donation_ID__c'];
-    $item['sobject']->fields['Recurring_Donations__c'] = sprintf('[npe03__Recurring_Donation__c:fundraiser_sustainers_series:%d]', $did);
-    $item['sync_rules']['Recurring_Donations__c'] = 'always';
-  }
-}
-
-/**
  * Cancel session.
  */
 function fundraiser_sustainers_upgrade_cancel_redirect() {
