@@ -45,11 +45,27 @@ function springboard_hmac_settings_form() {
     '#collapsed' => FALSE,
   );
 
+  $form['hmac']['springboard_hmac_error_title'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Page title'),
+    '#default_value' => variable_get('springboard_hmac_error_title', ''),
+  );
+
+  $format = NULL;
+  $message = variable_get('springboard_hmac_error_message', array('value' => 'An error occurred and we could not complete the operation.', 'format' => NULL));
+  if (is_array($message)) {
+    $text = $message['value'];
+    $format = $message['format'];
+  }
+  else {
+    $text = $message;
+  }
+
   $form['hmac']['springboard_hmac_error_message'] = array(
+    '#type' => 'text_format',
+    '#format' => $format,
     '#title' => t('Error message'),
-    '#description' => t('Message displayed to the user when there is an authentication error.'),
-    '#type' => 'textarea',
-    '#default_value' => variable_get('springboard_hmac_error_message', ''),
+    '#default_value' => $text,
     '#required' => TRUE,
   );
 
