@@ -608,6 +608,12 @@ function fundraiser_sustainers_views_default_views() {
   $handler->display->display_options['filters']['gateway_resp_1']['value'] = 'processing';
   $handler->display->display_options['filters']['gateway_resp_1']['group'] = 2;
   /* Filter criterion: Fundraiser sustainer record: Gateway response */
+  $handler->display->display_options['filters']['gateway_resp_4']['id'] = 'gateway_resp_4';
+  $handler->display->display_options['filters']['gateway_resp_4']['table'] = 'fundraiser_sustainers';
+  $handler->display->display_options['filters']['gateway_resp_4']['field'] = 'gateway_resp';
+  $handler->display->display_options['filters']['gateway_resp_4']['value'] = 'locked';
+  $handler->display->display_options['filters']['gateway_resp_4']['group'] = 2;
+  /* Filter criterion: Fundraiser sustainer record: Gateway response */
   $handler->display->display_options['filters']['gateway_resp_2']['id'] = 'gateway_resp_2';
   $handler->display->display_options['filters']['gateway_resp_2']['table'] = 'fundraiser_sustainers';
   $handler->display->display_options['filters']['gateway_resp_2']['field'] = 'gateway_resp';
@@ -620,6 +626,7 @@ function fundraiser_sustainers_views_default_views() {
   $handler->display->display_options['filters']['next_charge']['operator'] = '<';
   $handler->display->display_options['filters']['next_charge']['value']['value'] = '-1 hour';
   $handler->display->display_options['filters']['next_charge']['value']['type'] = 'offset';
+  $handler->display->display_options['filters']['next_charge']['group'] = 1;
 
   /* Display: Page */
   $handler = $view->new_display('page', 'Page', 'page');

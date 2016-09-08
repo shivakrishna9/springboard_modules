@@ -4341,6 +4341,7 @@ function fundraiser_sustainers_unlock_sustainer_action(&$sustainer_record, $cont
 
   switch ($sustainer_record->gateway_resp) {
     case FUNDRAISER_SUSTAINERS_PROCESSING_STATUS:
+    case FUNDRAISER_SUSTAINERS_LOCKED_STATUS:
       $sustainer_record->lock_id = 0;
       $sustainer_record->gateway_resp = FUNDRAISER_SUSTAINERS_RETRY_STATUS;
       $log->logUnlockedDonation($sustainer_record->did, $sustainer_record->gateway_resp);
