@@ -148,10 +148,15 @@
   }
 
   Drupal.braintree.prototype.bootstrapPaypal = function() {
-    this.$submit.attr('disabled', 'disabled');
+    // this.$submit.attr('disabled', 'disabled');
+
+
 
     // Bind initAuthFlow button to paypal-container
-    $('#paypal-container').click(function() {
+    this.$submit.click(function( event ) {
+console.log(self);
+      $('#' + this.$formId + ' input').prop('disabled', true);
+      event.preventDefault();
       Drupal.myBraintreeIntegration.paypal.initAuthFlow();
     });
   }
@@ -386,31 +391,32 @@
   Drupal.braintree.prototype.onPaymentMethodReceived = function (obj) {
     var self = this;
 
-    $('#braintree-paypal-loggedin').show();
-    $('#braintree-paypal-loggedout').hide();
-    $('#bt-pp-email').text(obj.details.email);
+    // $('#braintree-paypal-loggedin').show();
+    // $('#braintree-paypal-loggedout').hide();
+    // $('#bt-pp-email').text(obj.details.email);
 
-    this.$submit.removeAttr('disabled');
+    // this.$submit.removeAttr('disabled');
 
     $('input[name=payment_method_nonce]').val(obj.nonce);
 
 
     // Bind cancel button to restore PayPal form.
-    $('#bt-pp-cancel').click(function( event ) {
-      event.preventDefault();
-      self.$submit.attr('disabled', 'disabled');
-      // Clean up process.
-      Drupal.myBraintree && Drupal.myBraintree.cleanUp();
-      // Destroy Braintree integration.
-      Drupal.myBraintreeIntegration && Drupal.myBraintreeIntegration.teardown($.proxy(Drupal.myBraintree.teardown, Drupal.myBraintree));
-      // Boot new integration.
-      Drupal.myBraintree.bootstrap();
-    });
+    // $('#bt-pp-cancel').click(function( event ) {
+    //   event.preventDefault();
+    //   self.$submit.attr('disabled', 'disabled');
+    //   // Clean up process.
+    //   Drupal.myBraintree && Drupal.myBraintree.cleanUp();
+    //   // Destroy Braintree integration.
+    //   Drupal.myBraintreeIntegration && Drupal.myBraintreeIntegration.teardown($.proxy(Drupal.myBraintree.teardown, Drupal.myBraintree));
+    //   // Boot new integration.
+    //   Drupal.myBraintree.bootstrap();
+    // });
 
 
 
     // Set focus on submit button to ensure it is in view.
-    self.$submit.focus();
+    // self.$submit.focus();
+    $('#'+self.formId).submit();
 
   }
 
