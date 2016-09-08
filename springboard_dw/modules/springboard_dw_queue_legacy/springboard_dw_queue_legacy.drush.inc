@@ -77,48 +77,16 @@ function springboard_dw_queue_legacy_missing($type = '') {
     );
     $type = drush_choice($options, dt('What kind of record would you like to queue?'));
   }
-  // Populate list of records to operate on.
-  $records = springboard_dw_queue_legacy_get_records($type);
-  switch ($type) {
-    case 'contact':
-    case 'donation':
-    case 'form':
-    case 'payment':
-    case 'submission':
-      $ids_in_dw = springboard_dw_queue_legacy_get_dw_by_type($type);
-      break;
-
-    case 'action':
-      $advocacy_action_ids_in_dw = springboard_dw_queue_legacy_get_dw_by_type('advocacy action');
-      $petition_ids_in_dw = springboard_dw_queue_legacy_get_dw_by_type('petition');
-      $ids_in_dw = array_merge($advocacy_action_ids_in_dw, $petition_ids_in_dw);
-      break;
-
-    case 'message':
-      $ids_in_dw = springboard_dw_queue_legacy_get_dw_by_type('advocacy message');
-      break;
-
-    case 'petition_message':
-        $ids_in_dw = springboard_dw_queue_legacy_get_dw_by_type('advocacy petition message');
-      break;
-
-    case 'salesforce_sync':
-      $ids_in_dw = springboard_dw_queue_legacy_get_dw_by_type('salesforce sync');
-      break;
-
-    default:
-      return drush_set_error(dt('"@type" is not a valid record type. Nothing was processed.', array('@type' => $type)));
-  }
-
-  drush_log(dt('Found @count records of type @type', array('@count' => count($records), '@type' => $type)), 'ok');
-  $record_ids = array_column($records, 'id');
+  // Return only missing records by passing the $find_difference parameter as
+  // TRUE.
+  $records = springboard_dw_queue_legacy_get_records($type, FALSE, 0, FALSE, TRUE);
 
   // Create array that only contains the IDs.
-  $ids = array_map(function($records) {
+  $missing_ids = array_map(function($records) {
       return is_object($records) ? $records->id : $records['id'];
   }, $records);
 
-  $missing_ids = array_diff($ids, $ids_in_dw);
+  // $missing_ids = array_diff($ids, $ids_in_dw);
 
   drush_log(dt('Found @count records of type @type missing from the springboard_data_warehouse table', array('@count' => count($missing_ids), '@type' => $type)), 'ok');
   if (count($missing_ids) > 0) {
@@ -653,7 +621,7 @@ function springboard_dw_queue_legacy_get_advocacy_message_details_page($action_i
 /**
  *
  */
-function springboard_dw_queue_legacy_get_records($type, $limit = FALSE, $highwater = 0, $idlist = FALSE) {
+function springboard_dw_queue_legacy_get_records($type, $limit = FALSE, $highwater = 0, $idlist = FALSE, $find_difference = FALSE) {
   // Populate list of records to operate on.
   switch ($type) {
     case 'contact':
@@ -667,6 +635,10 @@ function springboard_dw_queue_legacy_get_records($type, $limit = FALSE, $highwat
       }
       elseif ($highwater) {
         $query->condition('uid', $highwater, '>');
+      }
+      elseif ($find_difference) {
+        $query->leftJoin('springboard_data_warehouse', 'd', 'u.uid = d.drupal_id');
+        $query->isNull('d.drupal_id');
       }
       break;
 
@@ -682,6 +654,10 @@ function springboard_dw_queue_legacy_get_records($type, $limit = FALSE, $highwat
       elseif ($highwater) {
         $query->condition('did', $highwater, '>');
       }
+      elseif ($find_difference) {
+        $query->leftJoin('springboard_data_warehouse', 'd', 'f.did = d.drupal_id');
+        $query->isNull('d.drupal_id');
+      }
       break;
 
     case 'action':
@@ -693,13 +669,17 @@ function springboard_dw_queue_legacy_get_records($type, $limit = FALSE, $highwat
       $query->addField('s', 'submitted', 'created');
       $query->addField('n', 'type');
       $query->join('node', 'n', 's.nid = n.nid');
-      $query->condition('type', array('sba_message_action', 'sba_social_action', 'springboard_petition'), 'IN');
+      $query->condition('n.type', array('sba_message_action', 'sba_social_action', 'springboard_petition'), 'IN');
       $query->orderBy('submitted', 'ASC');
       if ($idlist) {
         $query->condition('sid', $idlist, 'IN');
       }
       elseif ($highwater) {
         $query->condition('sid', $highwater, '>');
+      }
+      elseif ($find_difference) {
+        $query->leftJoin('springboard_data_warehouse', 'd', 's.sid = d.drupal_id');
+        $query->isNull('d.drupal_id');
       }
       break;
 
@@ -714,13 +694,17 @@ function springboard_dw_queue_legacy_get_records($type, $limit = FALSE, $highwat
       $query->addField('s', 'uid');
       $query->addField('s', 'submitted', 'created');
       $query->join('node', 'n', 's.nid = n.nid');
-      $query->condition('type', 'springboard_petition', '=');
+      $query->condition('n.type', 'springboard_petition', '=');
       $query->orderBy('submitted', 'ASC');
       if ($idlist) {
         $query->condition('sid', $idlist, 'IN');
       }
       elseif ($highwater) {
         $query->condition('sid', $highwater, '>');
+      }
+      elseif ($find_difference) {
+        $query->leftJoin('springboard_data_warehouse', 'd', 's.sid = d.drupal_id');
+        $query->isNull('d.drupal_id');
       }
       break;
 
@@ -736,6 +720,10 @@ function springboard_dw_queue_legacy_get_records($type, $limit = FALSE, $highwat
       elseif ($highwater) {
         $query->condition('n.nid', $highwater, '>');
       }
+      elseif ($find_difference) {
+        $query->leftJoin('springboard_data_warehouse', 'd', 'n.nid = d.drupal_id');
+        $query->isNull('d.drupal_id');
+      }
       break;
 
     case 'submission':
@@ -743,20 +731,24 @@ function springboard_dw_queue_legacy_get_records($type, $limit = FALSE, $highwat
       $excluded_types[] = 'springboard_petition';
       $excluded_types[] = 'sba_message_action';
       $excluded_types[] = 'sba_social_action';
-      $query = db_select('webform_submissions', 's');
+      $query = db_select('webform_submissions', 's', array('target' => 'slave'));
       $query->addField('s', 'sid', 'id');
       $query->addField('s', 'nid');
       $query->addField('s', 'uid');
       $query->addField('s', 'remote_addr');
       $query->addField('s', 'submitted', 'created');
       $query->join('node', 'n', 's.nid = n.nid');
-      $query->condition('type', $excluded_types, 'NOT IN');
+      $query->condition('n.type', $excluded_types, 'NOT IN');
       $query->orderBy('submitted', 'ASC');
       if ($idlist) {
         $query->condition('sid', $idlist, 'IN');
       }
       elseif ($highwater) {
         $query->condition('sid', $highwater, '>');
+      }
+      elseif ($find_difference) {
+        $query->leftJoin('springboard_data_warehouse', 'd', 's.sid = d.drupal_id');
+        $query->isNull('d.drupal_id');
       }
       break;
 
@@ -782,6 +774,10 @@ function springboard_dw_queue_legacy_get_records($type, $limit = FALSE, $highwat
       elseif ($highwater) {
         $query->condition('transaction_id', $highwater, '>');
       }
+      elseif ($find_difference) {
+        $query->leftJoin('springboard_data_warehouse', 'd', 'c.transaction_id = d.drupal_id');
+        $query->isNull('d.drupal_id');
+      }
       break;
 
     case 'salesforce_sync':
@@ -806,11 +802,16 @@ function springboard_dw_queue_legacy_get_records($type, $limit = FALSE, $highwat
       elseif ($highwater) {
         $query->condition('rmid', $highwater, '>');
       }
+      elseif ($find_difference) {
+        $query->leftJoin('springboard_data_warehouse', 'd', 's.rmid = d.drupal_id');
+        $query->isNull('d.drupal_id');
+      }
       break;
 
     default:
       return drush_set_error(dt('"@type" is not a valid record type. Nothing was processed.', array('@type' => $type)));
   }
+
   if ($query) {
     if ($limit) {
       $query->range(0, $limit);
