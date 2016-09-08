@@ -1769,7 +1769,9 @@ function fundraiser_commerce_fundraiser_donation_update($donation) {
   }
 
   // Add the status data.
-  $donation->status = $donation->status_label = isset($order->status) ? $order->status : 'unknown';
+  $new_donation_status = isset($order->status) ? $order->status : 'unknown';
+  $new_donation_status = ($donation->status == 'auto_canceled') ? 'auto_canceled' : $new_donation_status;
+  $donation->status = $donation->status_label = $new_donation_status;
   if (!empty($order->status)) {
     $donation->status_label = _fundraiser_commerce_get_label_by_status($order->status);
     $donation->status_charged = _fundraiser_commerce_get_charged_by_status($order->status);
