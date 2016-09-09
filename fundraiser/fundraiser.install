@@ -535,7 +535,7 @@ function fundraiser_update_7009() {
   if (module_exists('fundraiser_webform')) {
     foreach (db_query('SELECT nid FROM {fundraiser}')->fetchCol() as $nid) {
       $amount_component = _fundraiser_webform_get_component_by_nid_key($nid, 'amount');
-      if (!empty($amount_component->value)) {
+      if (!empty($amount_component->value) && is_numeric($amount_component->value)) {
         db_query(
           "UPDATE {fundraiser} SET default_amount=:default_amount WHERE nid=:nid",
           array(':default_amount' => $amount_component->value, ':nid' => $nid)

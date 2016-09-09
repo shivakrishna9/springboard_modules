@@ -391,7 +391,6 @@ function springboard_hmac_springboard_admin_admin_menu_items_alter(&$items) {
   }
 }
 
-
 /**
  * Implements hook_springboard_admin_alias_patterns().
  */
@@ -409,4 +408,81 @@ function springboard_hmac_springboard_admin_alias_patterns() {
       ),
     ),
   );
+}
+
+/**
+ * Implements hook_springboard_hmac_allowed_actions().
+ */
+function springboard_hmac_springboard_hmac_allowed_actions() {
+  return 'lr';
+}
+
+/**
+ * Implements hook_springboard_hmac_success().
+ */
+function springboard_hmac_springboard_hmac_success($payload) {
+  // Built-in actions.
+  switch ($payload['action']) {
+    case 'lr':  // Log in and redirect.
+      // We need a path to redirect to.
+      if (!empty($payload[0])) {
+        // Assemble the redirect URL.
+        $param = urldecode($payload[0]);
+        $query = array();
+        if ($qs_pos = strpos($param, '?')) {
+          $path = substr($param, 0, $qs_pos);
+          parse_str(substr($param, $qs_pos + 1), $query);
+        } else {
+          $path = $param;
+        }
+        $goto = array($path, array('query' => $query));
+
+        // Log in the user, if not logged in already.
+        global $user;
+        if (!user_is_logged_in()) {
+          // Prep the log-in.
+          $user = user_load($payload['uid']);
+          $form_state = array('uid' => $payload['uid'], 'redirect' => $goto);  // Include redirect info on the off chance some hook preempts our drupal_goto.
+
+          // Is Auto-Logout enabled, and is there a timeout override parameter in the HMAC?
+          // Note: We do this only for a new log-in. An already-logged-in user's timeout shouldn't change mid-session.
+          if (module_exists('autologout') && isset($payload[1]) && is_numeric($payload[1])) {
+            // Is the override necessary?
+            watchdog('trace', '_autologout_get_user_timeout: ' . _autologout_get_user_timeout($user->uid));
+            if (_autologout_get_user_timeout($user->uid) > $payload[1]) {
+              watchdog('trace', 'setting custom autologout setting');
+              // Stash this user's configured timeout if one is set.
+              variable_set('springboard_hmac_autologout_user_' . $user->uid, variable_get('autologout_user_' . $user->uid, "N/A"));
+              variable_set('autologout_user_' . $user->uid, $payload[1]);
+            }
+          }
+
+          // Execute the log-in.
+          user_login_finalize($form_state);
+        }
+        // If user was logged in already, just redirect.
+        call_user_func_array('drupal_goto', $goto);
+
+      }
+      break;
+  }
+}
+
+/**
+ * Implements hook_user_logout().
+ */
+function springboard_hmac_user_logout($user) {
+  // If we set a one-session inactivity timeout for autologout, delete it.
+  $original_timeout = variable_get('springboard_hmac_autologout_user_' . $user->uid, FALSE);
+  if ($original_timeout != FALSE) {
+    if (is_numeric($original_timeout)) {
+      // Switch back to the original timeout.
+      variable_set('autologout_user_' . $user->uid, $original_timeout);
+    } else {
+      // Nothing to switch back to, so kill the autologout variable.
+      variable_del('autologout_user_' . $user->uid);
+    }
+    // Clear our variable too. We're done here.
+    variable_del('springboard_hmac_autologout_user_' . $user->uid);
+  }
 }

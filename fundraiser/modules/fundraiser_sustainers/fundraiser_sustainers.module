@@ -147,6 +147,14 @@ function fundraiser_sustainers_menu() {
     'access arguments' => array('fastforward recurring donations'),
     'type' => MENU_CALLBACK,
   );
+  $items['sustainer-series/%fundraiser_donation/billing'] = array(
+    'title' => 'Update billing information',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('fundraiser_sustainers_billing_update_form', 1),
+    'access callback' => 'fundraiser_sustainers_billing_update_access',
+    'access arguments' => array(1),
+    'type' => MENU_CALLBACK,
+  );
   $items['fundraiser_sustainers/%/skip/%'] = array(
     'title' => 'Skip recurring donation',
     'page callback' => 'drupal_get_form',
@@ -2121,7 +2129,7 @@ function fundraiser_update_cron_settings($form, $form_state) {
 }
 
 /**
- * Provide administrative form for editting a donation set.
+ * Provide administrative form for editing a donation set.
  */
 function fundraiser_sustainers_edit_form($did) {
   // Add js and css to the form.
@@ -2159,37 +2167,7 @@ function fundraiser_sustainers_edit_form($did) {
     $next_donation = fundraiser_donation_get_donation($remaining[0]->did);
   }
 
-  $number = '';
-  $type = '';
-
-  // Use next donation in case it has differnt info than the master donation.
-  if (!empty($next_donation->data['cardonfile']) && module_exists('commerce_cardonfile')) {
-    $cardonfile = commerce_cardonfile_load($next_donation->data['cardonfile']);
-    if (!empty($cardonfile)) {
-      $number = '**** **** **** '  . $cardonfile->card_number;
-      $type = t('Card');
-    }
-  }
-
-  // Gather further donation data.
-  $remaining_donation_count = _fundraiser_sustainers_count_donations_recurr_remaining($did);
-  $payment_info = '<div id="payment-info">' .
-  '<h2>Recurring Payment Info</h2>' .
-  '<dl>' .
-  '<dt>Recurring Donation Amount</dt>' .
-  '<dd>' . $next_donation->donation['amount_formatted'] . '</dd>' .
-  '<dt>Recurring Charges Processed</dt>' .
-  '<dd>' . _fundraiser_sustainers_count_donations_recurr_processed($did) . '</dd>' .
-  '<dt>Recurring Charges Remaining</dt>' .
-  '<dd>' . $remaining_donation_count . '</dd>';
-
-  if (!empty($number) && !empty($type)) {
-    $payment_info .= '<dt>'. $type . ' Number</dt>' .
-    '<dd>' . $number . '</dd>';
-  }
-
-  $payment_info .= '</dl>' .
-  '</div>';
+  $payment_info = fundraiser_sustainers_donation_payment_info($next_donation, $did);
 
   $billing_info = '<div id="billing-info">' .
   '<h2>Billing Address</h2>' .
@@ -2277,6 +2255,7 @@ function fundraiser_sustainers_edit_form($did) {
   $cancelled = isset($next_donation->recurring->cancellation_reason) ? $next_donation->recurring->cancellation_reason : '';
 
   // Generate forms, or error messages as needed.
+  $remaining_donation_count = _fundraiser_sustainers_count_donations_recurr_remaining($did);
   if ($remaining_donation_count > 0 && empty($cancelled)) {
     $donation_amount_form_array = drupal_get_form('fundraiser_sustainers_donation_amount_form', $donation, $next_donation);
     $donation_amount_form = drupal_render($donation_amount_form_array);
@@ -2342,6 +2321,42 @@ function fundraiser_sustainers_edit_form($did) {
   drupal_set_title(t('Recurring donation #@did', array('@did' => $did)));
   $parts = array($payment_info, $billing_info, $future_orders, $donation_amount_form, $donation_date_form, $billing_update_form, $cancel_form);
   return implode('', $parts);
+}
+
+function fundraiser_sustainers_donation_payment_info($next_donation, $master_did) {
+  $number = '';
+  $type = '';
+
+  // Use next donation in case it has differnt info than the master donation.
+  if (!empty($next_donation->data['cardonfile']) && module_exists('commerce_cardonfile')) {
+    $cardonfile = commerce_cardonfile_load($next_donation->data['cardonfile']);
+    if (!empty($cardonfile)) {
+      $number = '**** **** **** '  . $cardonfile->card_number;
+      $type = t('Card');
+    }
+  }
+
+  // Gather further donation data.
+  $remaining_donation_count = _fundraiser_sustainers_count_donations_recurr_remaining($master_did);
+  $payment_info = '<div id="payment-info">' .
+    '<h2>Recurring Payment Info</h2>' .
+    '<dl>' .
+    '<dt>Recurring Donation Amount</dt>' .
+    '<dd>' . $next_donation->donation['amount_formatted'] . '</dd>' .
+    '<dt>Recurring Charges Processed</dt>' .
+    '<dd>' . _fundraiser_sustainers_count_donations_recurr_processed($master_did) . '</dd>' .
+    '<dt>Recurring Charges Remaining</dt>' .
+    '<dd>' . $remaining_donation_count . '</dd>';
+
+  if (!empty($number) && !empty($type)) {
+    $payment_info .= '<dt>'. $type . ' Number</dt>' .
+      '<dd>' . $number . '</dd>';
+  }
+
+  $payment_info .= '</dl>' .
+    '</div>';
+
+  return $payment_info;
 }
 
 /**
@@ -3793,16 +3808,20 @@ function _fundraiser_sustainers_get_donations_recurr_by_masterdid($master_did) {
  * DB funct, count order donation sets that are remaining.
  */
 function _fundraiser_sustainers_count_donations_recurr_remaining($master_did) {
-  $max_processing_attempts = variable_get('fundraiser_sustainers_max_processing_attempts', 3);
-  $replacements = array(
-    ':master_did' => $master_did,
-    ':status' => FUNDRAISER_SUSTAINERS_RETRY_STATUS,
-    ':max_attempts' => $max_processing_attempts,
-  );
+  static $counts = array();
+  if (!isset($counts[$master_did])) {
+    $max_processing_attempts = variable_get('fundraiser_sustainers_max_processing_attempts', 3);
+    $replacements = array(
+      ':master_did' => $master_did,
+      ':status' => FUNDRAISER_SUSTAINERS_RETRY_STATUS,
+      ':max_attempts' => $max_processing_attempts,
+    );
 
-  $count = db_query('SELECT COUNT(*) FROM {fundraiser_sustainers} r WHERE r.master_did = :master_did AND (r.gateway_resp IS NULL OR (r.gateway_resp = :status && r.attempts != :max_attempts))', $replacements)->fetchField();
+    $count = db_query('SELECT COUNT(*) FROM {fundraiser_sustainers} r WHERE r.master_did = :master_did AND (r.gateway_resp IS NULL OR (r.gateway_resp = :status && r.attempts != :max_attempts))', $replacements)->fetchField();
 
-  return is_numeric($count) ? $count : 0;
+    $counts[$master_did] = is_numeric($count) ? $count : 0;
+  }
+  return $counts[$master_did];
 }
 
 /**
