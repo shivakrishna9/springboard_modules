@@ -150,14 +150,18 @@
   Drupal.braintree.prototype.bootstrapPaypal = function() {
     // this.$submit.attr('disabled', 'disabled');
 
-
-
     // Bind initAuthFlow button to paypal-container
     this.$submit.click(function( event ) {
-console.log(self);
-      $('#' + this.$formId + ' input').prop('disabled', true);
-      event.preventDefault();
-      Drupal.myBraintreeIntegration.paypal.initAuthFlow();
+      // If the nonce has not been set by a prevous click of the submit button,
+      // fire off initAuythFlow().
+      console.log('value of nonce is: ' + $('input[name=payment_method_nonce]').val());
+      if ($('input[name=payment_method_nonce]').val() == '') {
+        console.log('no nonce');
+        event.preventDefault();
+        Drupal.myBraintreeIntegration.paypal.initAuthFlow();
+      } else {
+        console.log('nonce found');
+      }
     });
   }
 
@@ -389,35 +393,27 @@ console.log(self);
    * @see https://developers.braintreepayments.com/javascript+php/guides/paypal/client-side
    */
   Drupal.braintree.prototype.onPaymentMethodReceived = function (obj) {
+    console.log('onPaymentMethodReceived fired');
     var self = this;
 
-    // $('#braintree-paypal-loggedin').show();
-    // $('#braintree-paypal-loggedout').hide();
-    // $('#bt-pp-email').text(obj.details.email);
-
-    // this.$submit.removeAttr('disabled');
+    $('#braintree-paypal-loggedin').show();
+    $('#bt-pp-email').text(obj.details.email);
 
     $('input[name=payment_method_nonce]').val(obj.nonce);
 
-
     // Bind cancel button to restore PayPal form.
-    // $('#bt-pp-cancel').click(function( event ) {
-    //   event.preventDefault();
-    //   self.$submit.attr('disabled', 'disabled');
-    //   // Clean up process.
-    //   Drupal.myBraintree && Drupal.myBraintree.cleanUp();
-    //   // Destroy Braintree integration.
-    //   Drupal.myBraintreeIntegration && Drupal.myBraintreeIntegration.teardown($.proxy(Drupal.myBraintree.teardown, Drupal.myBraintree));
-    //   // Boot new integration.
-    //   Drupal.myBraintree.bootstrap();
-    // });
+    $('#bt-pp-cancel').click(function( event ) {
+      event.preventDefault();
+      self.$submit.attr('disabled', 'disabled');
+      // Clean up process.
+      Drupal.myBraintree && Drupal.myBraintree.cleanUp();
+      // Destroy Braintree integration.
+      Drupal.myBraintreeIntegration && Drupal.myBraintreeIntegration.teardown($.proxy(Drupal.myBraintree.teardown, Drupal.myBraintree));
+      // Boot new integration.
+      Drupal.myBraintree.bootstrap();
+    });
 
-
-
-    // Set focus on submit button to ensure it is in view.
-    // self.$submit.focus();
     $('#'+self.formId).submit();
-
   }
 
   /**
@@ -448,7 +444,6 @@ console.log(self);
   Drupal.braintree.prototype.teardownPaypal = function() {
     $('input[name=payment_method_nonce]').val('');
     $('#braintree-paypal-loggedin').hide();
-    $('#braintree-paypal-loggedout').show();
     $('#bt-pp-email').text('');
   }
 

@@ -124,14 +124,6 @@ function _braintree_payment_form_element(&$element, &$form, &$form_state, $payme
     $element['paypal']['loggedin']['contents'] = array(
       '#markup' => '<span id="bt-pp-name">PayPal</span><span id="bt-pp-email"></span><button id="bt-pp-cancel">Cancel</button>',
     );
-
-    $element['paypal']['loggedout'] = array(
-      '#type' => 'container',
-      '#id' => 'braintree-paypal-loggedout',
-    );
-    $element['paypal']['loggedout']['contents'] = array(
-      '#markup' => isset($payment_method_instance['settings']['custom_logged_out_state']) && !empty($payment_method_instance['settings']['custom_logged_out_state']) ? $payment_method_instance['settings']['custom_logged_out_state'] : BRAINTREE_PAYPAL_LOGGED_OUT_STATE,
-    );
   }
   else {
     $element['number'] = array(
