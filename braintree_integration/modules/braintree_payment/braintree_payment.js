@@ -154,13 +154,9 @@
     this.$submit.click(function( event ) {
       // If the nonce has not been set by a prevous click of the submit button,
       // fire off initAuythFlow().
-      console.log('value of nonce is: ' + $('input[name=payment_method_nonce]').val());
       if ($('input[name=payment_method_nonce]').val() == '') {
-        console.log('no nonce');
         event.preventDefault();
         Drupal.myBraintreeIntegration.paypal.initAuthFlow();
-      } else {
-        console.log('nonce found');
       }
     });
   }
@@ -393,7 +389,6 @@
    * @see https://developers.braintreepayments.com/javascript+php/guides/paypal/client-side
    */
   Drupal.braintree.prototype.onPaymentMethodReceived = function (obj) {
-    console.log('onPaymentMethodReceived fired');
     var self = this;
 
     $('#braintree-paypal-loggedin').show();
