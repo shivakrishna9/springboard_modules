@@ -316,6 +316,17 @@ function commerce_braintree_web_settings_form($settings = array()) {
     '#default_value' => isset($settings['production']['channel']) ? $settings['production']['channel'] : NULL,
   );
 
+  $form['autofill'] = array(
+    '#type' => 'radios',
+    '#title' => t('Populate User and Billing fields with data from the donor\'s PayPal account?'),
+    '#options' => array(
+      'never' => t('Never'),
+      'if_blank' => t('Only if all User/Billing fields are blank'),
+      'always' => t('Always'),
+    ),
+    '#default_value' => isset($settings['autofill']) ? $settings['autofill'] : 'if_blank',
+  );
+
   $form['single_settlement_currency'] = array(
     '#type' => 'checkbox',
     '#title' => t('Single settlement currency'),

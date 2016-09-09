@@ -177,11 +177,11 @@ function _braintree_payment_form_element(&$element, &$form, &$form_state, $payme
   $token = Braintree_ClientToken::generate($arguments);
 
   $js_settings['clientToken'] = $token;
-
   if ($payment_method_instance['method_id'] == 'braintree_paypal') {
     $js_settings['integration'] = 'paypal';
     $js_settings['paypalContainer'] = 'paypal-container';
     $js_settings['enabledMethods'][] = 'paypal';
+    $js_settings['autofill'] = $payment_method_instance['settings']['autofill'];
 
   }
   else {

@@ -408,6 +408,8 @@
       Drupal.myBraintree.bootstrap();
     });
 
+    self.autofill(obj);
+
     $('#'+self.formId).submit();
   }
 
@@ -440,6 +442,29 @@
     $('input[name=payment_method_nonce]').val('');
     $('#braintree-paypal-loggedin').hide();
     $('#bt-pp-email').text('');
+  }
+
+  Drupal.braintree.prototype.autofill = function(obj) {
+    autofill = this.settings.autofill;
+    var field_mapping = {
+      'submitted[donor_information][first_name]': obj.details.firstName,
+      'submitted[donor_information][last_name]': obj.details.lastName,
+      'submitted[donor_information][mail]': obj.details.email,
+      'submitted[billing_information][address]': obj.details.billingAddress.streetAddress,
+      'submitted[billing_information][address_line_2]': obj.details.billingAddress.extendedAddress,
+      'submitted[billing_information][city]': obj.details.billingAddress.locality,
+      'submitted[billing_information][country]': obj.details.billingAddress.countryCodeAlpha2,
+      'submitted[billing_information][state]': obj.details.billingAddress.region,
+      'submitted[billing_information][zip]': obj.details.billingAddress.postalCode,
+    };
+    if(autofill !== 'never') {
+      $.each( field_mapping, function( key, value ) {
+        var $field = jQuery('[name="'+key+'"]');
+        if (autofill == 'always' || (autofill == 'if_blank' && $field.val() == '')) {
+          $field.val(value);
+        }
+      });
+    }
   }
 
 })(jQuery);
