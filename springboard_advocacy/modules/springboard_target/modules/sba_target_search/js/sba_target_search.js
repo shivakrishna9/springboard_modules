@@ -374,8 +374,6 @@
 
       //set up up default placeholder text in legislative/individual search textfield
       var legField = $('#edit-combine');
-        console.log(legField.val());
-        console.log(legField.val().length);
         var desc = $('#edit-combine-wrapper .description');
         var legPlaceholder = desc.text().trim();
         desc.hide();
@@ -397,7 +395,6 @@
         var groupDesc = $('#edit-group-name-wrapper .description');
         var groupPlaceholder = groupDesc.text().trim();
         groupDesc.hide();
-        console.log(groupField.val());
         if (groupField.val().length == 0) {
             groupField.attr('placeholder', groupPlaceholder);
         }
@@ -914,6 +911,8 @@
             state.addClass('disabled');
             chamber.prop('disabled', true);
             chamber.addClass('disabled');
+            $('.views-targets-button-wrapper').prop("disabled", false).fadeIn(200).css({'cursor': 'pointer'}).removeClass('cancel-hover');
+            $('.views-targets-button-wrapper input').prop("disabled", false).fadeIn(200).css({'cursor': 'pointer'}).removeClass('cancel-hover');
         }
         else {
             submit.hide('400');
@@ -925,7 +924,22 @@
             state.removeClass('disabled');
             chamber.prop('disabled', false);
             chamber.removeClass('disabled');
-        }
+            $('.views-targets-button-wrapper')
+              .prop("disabled", true)
+              .fadeOut(400, function() {
+                  $(this).hide(500);
+              })
+              .css({'cursor': 'default'})
+              .addClass('cancel-hover');
+            $('.views-targets-button-wrapper input')
+              .prop("disabled", true)
+              .fadeOut(400,  function() {
+                  $(this).hide(500);
+              })
+              .css({'cursor': 'default'})
+              .addClass('cancel-hover');
+
+            }
     };
 
     // Set the hidden search type field
@@ -941,13 +955,20 @@
         var states = [];
         var genders = [];
         var socials = [];
+        var committee = [];
+        var committee_id = [];
 
         //iterate through the form elements and build arrays of checked/selected items
-        $('#views-exposed-form-targets-block-3 input[type="checkbox"], #views-exposed-form-targets-block-3 select').each(function(){
-            if ($(this).prop('checked') || (this.name == 'search_state' && this.value != "All")) {
+        $('#views-exposed-form-targets-block-3 input[type="checkbox"], #views-exposed-form-targets-block-3 select, #edit-search-committee').each(function(){
+            if ($(this).prop('checked') || (this.name == 'search_state' && this.value != "All") || (this.name == 'search_committee' && this.value != '')) {
                 var nm = this.name;
                 var v = this.value;
-                if (nm.indexOf('role') != -1) {
+                if (nm.indexOf('search_committee') != -1) {
+                    var com_id = v.match("id:[0-9]*");
+                    committee.push(v);
+                    committee_id.push(com_id[0].replace('id:', ''));
+                }
+                else if (nm.indexOf('role') != -1) {
                     roles.push(v);
                 }
                 else if (nm.indexOf('party') != -1) {
@@ -973,6 +994,10 @@
         socials = socials.toString().replace(/,/g, '|');
 
         var query = [];
+        if(committee.length > 0) {
+            query.push('committee=' + committee);
+            query.push('committee_id=' + committee_id);
+        }
         if(states.length > 0) {
             query.push('state=' + states);
         }

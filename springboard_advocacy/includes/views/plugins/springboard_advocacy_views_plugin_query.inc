@@ -129,9 +129,11 @@ class springboard_advocacy_views_plugin_query extends views_plugin_query {
         $items = $response->data->targets;
       }
       else if(isset($response->data->groups)) {
-        $items = $response->data->groups;
-        foreach($items as $key => $item) {
+        $groups = $response->data->groups;
+        foreach($groups as $key => $item) {
           $items[$key]->group_name = $item->name;
+          $items[$key]->id = $key;
+          $response->data->groups->$key->id = $key;
         }
       }
       if (!empty($items)) {

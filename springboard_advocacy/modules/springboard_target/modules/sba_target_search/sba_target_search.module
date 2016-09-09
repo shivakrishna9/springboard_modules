@@ -210,9 +210,15 @@ function sba_target_search_convert_recipients($group) {
   $recipients = array();
   foreach($group->chambers as $chamber) {
     $recipient = array();
-    foreach($chamber as $field_name => $value) {
-      if($value != '') {
-        $recipient[$field_name] = $value;
+    if(isset($chamber->committee_id) && $chamber->committee_id != '0' && $chamber->committee_id != '') {
+      $recipient['commitee_id'] = $chamber->committee_id;
+      $recipient['search_committee'] = 'committee name here'; //@TODO set committee name
+    }
+    else {
+      foreach ($chamber as $field_name => $value) {
+        if ($value != '') {
+          $recipient[$field_name] = $value;
+        }
       }
     }
     $recipients[] = $recipient;
@@ -221,21 +227,20 @@ function sba_target_search_convert_recipients($group) {
 
   }
   foreach($group->targets as $target) {
-    //$api_call = springboard_advocacy_api_call();
-    //$response = $api_call->invokeClientMethod('', $target->target_id);
+
     $recipients[] = array(
       'id' => $target->target_id,
-      'type' => 'Legislator', // from response, choose whether type is Legislator or Target
-      'first' => 'some',
-      'last' => 'target',
-      'sal' => '',
-      'twitter' => '',
-      'facebook' => '',
-      'org' => '',
-      'title' => '',
-      'state' => '',
-      'district' => '',
-      'party' => '',
+      'type' => $target->target->class_name,
+      'first' => $target->target->first_name,
+      'last' => $target->target->last_name,
+      'sal' => $target->target->salutation,
+      'twitter' => $target->target->twitter,
+      'facebook' => $target->target->facebook,
+      'org' => $target->target->organization,
+      'title' => $target->target->title,
+      'state' => $target->target->state,
+      'district' => $target->target->district_name,
+      'party' => $target->target->party,
     );
 
   }

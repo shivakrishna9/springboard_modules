@@ -45,6 +45,7 @@ function springboard_target_api_save_target_group($group, $is_new = TRUE) {
   $multi_indvds = array();
   $has_gender_or_social = array();
   $gender_or_social_rows = array();
+  $committees = array();
   $chamber_rows = array();
   $unstructured_chambers = array();
 
@@ -73,6 +74,10 @@ function springboard_target_api_save_target_group($group, $is_new = TRUE) {
         $has_gender_or_social[] = $target;
       }
       // legislative pseudo-groups
+      else if(isset($target->search_committee)) {
+        $committees[] = $target;
+      }
+      // we should never get here
       else {
         $unstructured_chambers[] = $target;
       }
@@ -80,12 +85,13 @@ function springboard_target_api_save_target_group($group, $is_new = TRUE) {
   }
 
   // If there are gender or social pseudo-groups in use, retrieve the actual
-  // individual target IDs
-  if (!empty($has_gender_or_social)) {
+  // individual target IDs @TODO shouldn't need this anymore
+   if (!empty($has_gender_or_social)) {
     $gender_or_social_rows = _springboard_target_api_get_gender_or_social_ids($has_gender_or_social);
   }
   // merge the gender/social rows and chambers
-  $unstructured_chambers = array_merge($unstructured_chambers, $has_gender_or_social);
+  //@TODO this can be simplified in the if statements above.
+  $unstructured_chambers = array_merge($unstructured_chambers, $has_gender_or_social, $committees);
   // Format the legislative group targets into the API-expected format.
   if (!empty($unstructured_chambers)) {
     $chamber_rows = _springboard_target_api_build_chambers($unstructured_chambers);
@@ -149,7 +155,7 @@ function springboard_target_api_save_target_group($group, $is_new = TRUE) {
  * @param $target_fields
  * @return array
  * @TODO this should be obsolete after updating the chambers to include addt'l attributes
- */
+*/
 function _springboard_target_api_get_gender_or_social_ids($target_fields) {
 
   $api_call = springboard_advocacy_api_call();
@@ -164,7 +170,7 @@ function _springboard_target_api_get_gender_or_social_ids($target_fields) {
     }
   }
   return $ids;
-}
+} 
 
 /**
  * Take the chambers form input and format it for the API callback.
@@ -262,11 +268,13 @@ function _springboard_target_api_build_chambers_shmoosher(&$chamber_rows_contain
   $party = isset($chamber_field['party']) ? $chamber_field['party'] : '';
   $state = isset($chamber_field['state']) ? $chamber_field['state'] : '';
   $gender = isset($chamber_field['gender']) ? $chamber_field['gender'] : '';
+  $committee_id = isset($chamber_field['committee_id']) ? $chamber_field['committee_id'] : '';
 
   $chamber_rows_container[$chamber_id][$i]['chamber'] = $chamber;
   $chamber_rows_container[$chamber_id][$i]['party'] = $party;
   $chamber_rows_container[$chamber_id][$i]['state'] = $state;
   $chamber_rows_container[$chamber_id][$i]['gender'] = $gender;
+  $chamber_rows_container[$chamber_id][$i]['committee_id'] = $committee_id;
 
   $chamber_rows_container[$chamber_id][$i][$field_name] = $value;
 }
