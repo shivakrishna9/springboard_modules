@@ -1255,8 +1255,7 @@
 
         var countMessage = '<strong>Targeting: </strong> ' + message.join(' & ');
         var counter = '<div class="targeting-count">' + countMessage + '</div><a class="remove-all-targets">Remove All Targets</a></div>';
-        console.log(individs);
-         console.log(groups);
+
          if(individs > 0 || groups > 0) {
             $('#springboard-advocacy-target-recipients-content').append(counter);
         }
