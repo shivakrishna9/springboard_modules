@@ -2308,6 +2308,8 @@ function fundraiser_sustainers_edit_form($did) {
       'calling module' => 'fundraiser_sustainers',
     );
     $billing_update_form_array = drupal_get_form('fundraiser_update_billing_form', $data);
+    $billing_update_form_array['#attached']['js'][3]['data']['fundraiser']['js_validation_settings']['card_cvv']->required = FALSE;
+    $billing_update_form_array['#attached']['js'][3]['data']['fundraiser']['js_validation_settings']['card_number']->required = FALSE;
     $billing_update_form = drupal_render($billing_update_form_array);
   }
   elseif ($remaining_donation_count == 0) {
