@@ -69,8 +69,8 @@ function fundraiser_sustainers_upgrade_permission() {
 /**
  * Implements hook_springboard_hmac_allowed_actions().
  */
-function fundraiser_sustainers_upgrade_springboard_hmac_allowed_actions() {
-  return 'su';
+function fundraiser_sustainers_upgrade_springboard_hmac_allowed_actions_alter(&$actions) {
+  $actions[] = 'su';
 }
 
 /**

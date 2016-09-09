@@ -1,0 +1,436 @@
+<?php
+/**
+ * @file
+ * Module file for fundraiser_quick_donate.
+ */
+
+define('FUNDRAISER_QUICK_DONATE_DEFAULT_FORM_PREFIX', 'fundraiser_quick_donate_default_form_');
+
+require_once 'includes/fundraiser_quick_donate.fundraiser.inc';
+require_once 'includes/fundraiser_quick_donate.node_form.inc';
+require_once 'includes/fundraiser_quick_donate.springboard_hmac.inc';
+
+/**
+ * Implements hook_menu().
+ */
+function fundraiser_quick_donate_menu() {
+  $items = array();
+
+  $items['admin/springboard/options/fundraiser/fundraiser_quick_donate'] = array(
+    'title' => 'Quick Donate Settings',
+    'description' => 'Settings for quick donations.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('fundraiser_quick_donate_admin_settings'),
+    'access callback' => 'user_access',
+    'access arguments' => array('administer quickdonate configuration'),
+    'type' => MENU_NORMAL_ITEM,
+    'file' => 'includes/fundraiser_quick_donate.admin.inc',
+  );
+
+  $items['admin/springboard/options/fundraiser/fundraiser_quick_donate/autocomplete'] = array(
+    'title' => 'Autocomplete for Quick Donation forms',
+    'page callback' => 'fundraiser_quick_donate_admin_settings_autocomplete_callback',
+    'access arguments' => array('use autocomplete'),
+    'type' => MENU_CALLBACK,
+    'file' => 'includes/fundraiser_quick_donate.admin.inc',
+  );
+
+  $items['admin/springboard/options/fundraiser/fundraiser_quick_donate/card_ids_by_uid'] = array(
+    'title' => 'Autocomplete for fetching card ids associated with a user',
+    'page callback' => '_fundraiser_quick_donate_admin_get_card_ids_by_uid',
+    'access arguments' => array('use autocomplete'),
+    'type' => MENU_CALLBACK,
+    'file' => 'includes/fundraiser_quick_donate.admin.inc',
+  );
+
+  // HMAC token generator page.
+  $items['admin/config/system/fundraiser/quick-donate/token-generator'] = array(
+    'title' => 'Quick Donate Token Generator',
+    'description' => 'Generate quick donate HMAC tokens for testing or use',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('fundraiser_quick_donate_token_generator'),
+    'access arguments' => array('administer fundraiser quick_donate'),
+    'file' => 'includes/fundraiser_quick_donate.admin.inc',
+    'type' => MENU_LOCAL_TASK,
+  );
+
+  return $items;
+}
+
+/**
+ * Implements hook_springboard_admin_admin_menu_items_alter().
+ */
+function fundraiser_quick_donate_springboard_admin_admin_menu_items_alter(&$items) {
+  // Settings > Settings > Sustainer Upsell.
+  $items['admin/springboard/settings']['_children']['admin/springboard/settings/config']['_children']['admin/springboard/options/fundraiser/fundraiser_quick_donate'] = array(
+    'link_path' => 'admin/springboard/options/fundraiser/fundraiser_quick_donate',
+    'link_title' => 'Quick Donate Settings',
+    'menu_name' => 'springboard_admin_menu',
+    'expanded' => 0,
+    'customized' => 1,
+    'weight' => 0,
+  );
+}
+
+/**
+ * Implements hook_views_api().
+ */
+function fundraiser_quick_donate_views_api() {
+  return array(
+    'api' => 3,
+    'path' => drupal_get_path('module', 'fundraiser_quick_donate') . '/includes/views',
+  );
+}
+
+/**
+ * Implements hook_FORM_ID_alter().
+ *
+ * Used to add a quick donation related message.
+ */
+function fundraiser_quick_donate_form_user_login_alter(&$form, &$form_state) {
+  drupal_session_start();
+  $destination = drupal_get_destination();
+  if (isset($_SESSION['quickdonate']) && $_SESSION['quickdonate'] && !empty($destination)) {
+    $destination = $destination['destination'];
+    $form['#prefix'] = t("Please login to verify your identity. Or if you'd prefer, you may !proceed.", array(
+      '!proceed' => l(t('proceed to the full donation form'), $destination),
+    ));
+  }
+}
+
+/**
+ * Implements hook_node_load().
+ */
+function fundraiser_quick_donate_node_load($nodes, $types) {
+  $fundraiser_types = fundraiser_get_donation_types();
+  $fundraiser_types = array_filter($fundraiser_types);
+  $fundraiser_types = array_keys($fundraiser_types);
+  if (!array_intersect($fundraiser_types, $types)) {
+    return;
+  }
+
+  foreach ($nodes as $nid => $node) {
+    _fundraiser_quick_donate_attach_quick_donate_fields($nodes[$nid]);
+  }
+}
+
+/**
+ * Implements hook_node_prepare().
+ */
+function fundraiser_quick_donate_node_prepare($node) {
+  if (!fundraiser_is_donation_type($node->type)) {
+    return;
+  }
+
+  _fundraiser_quick_donate_attach_quick_donate_fields($node);
+}
+
+/**
+ * Helper function to attach quick donation settings to a node.
+ *
+ * @param object $node
+ *   The node object.
+ *
+ * @return object
+ *   The modified node object.
+ */
+function _fundraiser_quick_donate_attach_quick_donate_fields(&$node) {
+  if (!isset($node->nid) || empty($results = db_query('SELECT quickdonate_optin_message, quickdonate_help_message_format, quickdonate_help_message, quickdonate_login_message, quickdonate_login_link_message FROM {fundraiser_quick_donate} WHERE fundraiser_nid = :nid', array(
+    ':nid' => $node->nid,
+  ))->fetchAssoc())) {
+    // Set default values.
+    $results = array(
+      'quickdonate_optin_message' => variable_get('fundraiser_quick_donate_default_optin_message', 'Save this @type for future use?'),
+      'quickdonate_help_message_format' => 'filtered_html',
+      'quickdonate_help_message' => variable_get('fundraiser_quick_donate_default_help_message', 'Save your @type details and donate faster next time. We may email you from time to time with quick donate opportunities. You can update your @type details or cancel your enrollment at any time.'),
+      'quickdonate_login_message' => variable_get('fundraiser_quick_donate_default_login_message', t('Already have a saved @type?')),
+      'quickdonate_login_link_message' => variable_get('fundraiser_quick_donate_default_login_link_message', t('Click here to login')),
+      'quickdonate' => FALSE,
+    );
+  }
+  else {
+    $results['quickdonate'] = TRUE;
+  }
+
+  foreach ($results as $key => $result) {
+    $node->{$key} = $result;
+  }
+
+  return $node;
+}
+
+/**
+ * Implements hook_payment_method_fields_alter().
+ */
+function fundraiser_quick_donate_payment_method_fields_alter(&$element, &$payment_method, &$context) {
+  if (array_key_exists('bank_name', $element)) {
+    $keys = array(
+      'bank_name' => array(),
+      'routing_number' => array(),
+      'account_number' => array(),
+      'confirm_account_number' => array(),
+      'account_type' => array(),
+    );
+  }
+  else {
+    $keys = array(
+      'card_number' => array(),
+      'expiration_date' => array(
+        'card_expiration_year' => array(),
+      ),
+      'card_cvv' => array(),
+      'card_type' => array(),
+    );
+  }
+
+  // The way this is set up in fundraiser_commerce, it assumes that all payment
+  // fields will be required. We need to change that by copying the #states
+  // value in the parent element to each applicable child element, then unset
+  // the #states element in the parent.
+  _fundraiser_quick_donate_payment_method_fields_alter_states($element['#states'], $keys, $element);
+
+  $element['quickdonate'] = array(
+    '#type' => 'hidden',
+    '#value' => 'false',
+    '#states' => array(
+      'visible' => $element['#states']['visible'],
+    ),
+  );
+  unset($element['quickdonate']['#states']['required']);
+  unset($element['#states']['required']);
+}
+
+/**
+ * Helper function to update the #states property based on provided keys.
+ *
+ * @param array $states
+ *   The original #states value to copy to the each key in $keys.
+ * @param array $keys
+ *   A multi-dimensional array specifying the keys of the element children to
+ *   copy the states for.
+ * @param array $element
+ *   The form element array.
+ */
+function _fundraiser_quick_donate_payment_method_fields_alter_states($states, $keys, &$element) {
+  foreach ($keys as $key => $value) {
+    if (count($value)) {
+      _fundraiser_quick_donate_payment_method_fields_alter_states($states, $value, $element[$key]);
+    }
+    else {
+      $element[$key]['#states'] = $states;
+    }
+  }
+}
+
+/**
+ * Implements hook_webform_user_save_profile_map_alter().
+ */
+function fundraiser_quick_donate_webform_user_save_profile_map_alter(&$account, $form, $form_state) {
+  $values = $form_state['values']['submitted_tree']['payment_information'];
+  if (isset($form['#node']->quickdonate) && $form['#node']->quickdonate && $values['payment_fields'][$values['payment_method']]['quickdonate']) {
+    $account->field_quick_donate_opt_in = array(
+      LANGUAGE_NONE => array(
+        0 => array(
+          'value' => date("Y-m-d H:i:s"),
+          'timezone' => drupal_get_user_timezone(),
+          'timezone_db' => 'UTC',
+          'date_type' => 'datetime',
+        ),
+      ),
+    );
+  }
+}
+
+/**
+ * Implements hook_webform_user_profile_fields_alter().
+ *
+ * Used to remove the user profile field for quick donations from webform
+ * components, which is a date field. Replaced with a flag in
+ * fundraiser_quick_donate_fundraiser_field_info_alter().
+ */
+function fundraiser_quick_donate_webform_user_profile_fields_alter(&$fields, $node) {
+  $fields = array_filter($fields, function($value) {
+    return $value['name'] != 'field_quick_donate_opt_in';
+  });
+}
+
+/**
+ * Implements hook_fundraiser_field_info().
+ *
+ * Used to add a webform component for quick donations.
+ */
+function fundraiser_quick_donate_fundraiser_field_info_alter(&$fields) {
+  $fields['quick_donate'] = array(
+    '#type' => 'hidden',
+    '#name' => 'sbp_quick_donate_opt_in',
+    '#title' => 'Quick Donate Opt-in',
+  );
+  return $fields;
+}
+
+/**
+ * Implements hook_form_FORM_ID_alter().
+ */
+function fundraiser_quick_donate_form_commerce_cardonfile_card_form_alter(&$form, &$form_state) {
+  $card = $form_state['card'];
+  $uid = $card->uid;
+
+  // Load the user's newest donation for the card's gateway.
+  $donation = fundraiser_donation_get_donations_by_uid($uid, 1, 'DESC', $card->instance_id);
+  if (empty($donation)) {
+    return;
+  }
+
+  drupal_set_title('Edit Payment Method');
+
+  $data = array(
+    'calling module' => 'fundraiser_quick_donate',
+    'donation' => $donation,
+    'payment_fields' => array(
+      'credit' => array(
+        'expiration_date' => array(
+          'card_expiration_month' => array(
+            '#default_value' => $card->card_exp_month,
+          ),
+          'card_expiration_year' => array(
+            '#default_value' => $card->card_exp_year,
+          ),
+        ),
+      ),
+    ),
+    'card' => $form_state['card'],
+  );
+  $form = array();
+  $form = drupal_get_form('fundraiser_update_billing_form', $data);
+  $title = array(
+    '#type' => 'html_tag',
+    '#tag' => 'h4',
+    '#value' => t('You are editing billing information for:'),
+  );
+  $title = drupal_render($title);
+  $card_title = array(
+    '#type' => 'html_tag',
+    '#tag' => 'span',
+    '#value' => format_string('@type - XXXX-XXXX-XXXX-@number', array(
+      '@type' => strtoupper($card->card_type),
+      '@number' => $card->card_number,
+    )),
+  );
+  $card_title = drupal_render($card_title);
+  $expires = array(
+    '#type' => 'html_tag',
+    '#tag' => 'div',
+    '#value' => t('Expires: @month/@year', array(
+      '@month' => sprintf('%02d', $card->card_exp_month),
+      '@year' => $card->card_exp_year,
+    )),
+  );
+  $expires = drupal_render($expires);
+  $form = array(
+    'message' => array(
+      '#type' => 'markup',
+      '#markup' => $title . $card_title . $expires,
+    ),
+  ) + $form;
+  $form['#attached']['js'][3]['data']['fundraiser']['js_validation_settings']['card_cvv']->required = FALSE;
+  $form['#attached']['js'][3]['data']['fundraiser']['js_validation_settings']['card_number']->required = FALSE;
+}
+
+/**
+ * Implements hook_fundraiser_update_billing_form_alter().
+ *
+ * Updates the billing update form on cardonfile card edit pages to redirect
+ * back to the cards overview page.
+ */
+function fundraiser_quick_donate_fundraiser_update_billing_form_alter(&$form, &$form_state) {
+  $args = arg();
+  if (!empty($form_state['input']) && $args[2] == 'cards') {
+    $form_state['op'] = 'update';
+    $form['#validate'][] = '_fundraiser_quick_donate_form_commerce_cardonfile_card_form_alter_validate';
+    $form['#validate'][] = 'commerce_cardonfile_card_form_validate';
+    $form['actions']['submit']['#submit'][] = 'commerce_cardonfile_card_form_submit';
+
+    $card = $form_state['card'];
+    $form['actions']['cancel'] = array(
+      '#markup' => '<span class="cancel"> or ' . l(t('Cancel'), 'user/' . $card->uid . '/cards') . '</span>',
+      '#weight' => 20,
+    );
+  }
+}
+
+/**
+ * Validation handler for commerce_cardonfile handling.
+ *
+ * Sets some array elements so the cardonfile module can correctly validate and
+ * submit.
+ *
+ * @see fundraiser_quick_donate_form_commerce_cardonfile_card_form_alter
+ */
+function _fundraiser_quick_donate_form_commerce_cardonfile_card_form_alter_validate(&$form, &$form_state) {
+  $values = &$form_state['values'];
+  $values['credit_card']['owner'] = $values['first_name'] . ' ' . $values['last_name'];
+  $values['credit_card']['exp_month'] = sprintf('%02d', $values['payment_fields']['credit']['expiration_date']['card_expiration_month']);
+  $values['credit_card']['exp_year'] = $values['payment_fields']['credit']['expiration_date']['card_expiration_year'];
+
+  $form['credit_card']['number']['#default_value'] = $form_state['card']->card_number;
+  if (!empty($values['payment_fields']['credit']['card_number'])) {
+    $_SESSION['card_number'] = $values['credit_card']['number'] = $values['payment_fields']['credit']['card_number'];
+  }
+  else {
+    $_SESSION['card_number'] = $values['credit_card']['number'] = $form_state['card']->card_number;
+  }
+  $values['credit_card']['cardonfile_instance_default'] = $form_state['card']->instance_default;
+}
+
+/**
+ * Implements hook_entity_presave().
+ *
+ * If the 'card_number' session is set, we'll know that the card number is being
+ * updated, and to update the cardonfile entity before it's saved.
+ *
+ * This function is needed because the cardonfile module doesn't tell us when
+ * it's updating a card, or what the new card values are.
+ */
+function fundraiser_quick_donate_entity_presave($entity, $type) {
+  $args = arg();
+  if ($type == 'commerce_cardonfile' && isset($args[2]) && $args[2] == 'cards' && isset($_SESSION['card_number']) && strlen($_SESSION['card_number']) > 4) {
+    $entity->card_number = substr($_SESSION['card_number'], -4);
+    unset($_SESSION['card_number']);
+  }
+}
+
+/**
+ * Implements hook_form_FORM_ID_alter().
+ *
+ * Remove the Quick Donate Opt In field from appearing on the user edit form.
+ */
+function fundraiser_quick_donate_form_user_profile_form_alter(&$form, $form_state) {
+  unset($form['field_quick_donate_opt_in']);
+}
+
+/**
+ * Implements hook_webform_user_send_mail_alter().
+ */
+function fundraiser_quick_donate_webform_user_send_mail_alter(&$options) {
+  if (empty($options['parameters'])) {
+    return;
+  }
+  $params = $options['parameters'];
+
+  // If the account password is already set, we can return early.
+  if (!empty($params['account']->pass)) {
+    return;
+  }
+
+  // Since this is coming from the webform_user module, and if this is a Quick
+  // Donation, set the email to send regardless of what the node's settings are.
+  if (isset($params['form_state']['values']['submitted_tree']['payment_information'])) {
+    $payment_info = $params['form_state']['values']['submitted_tree']['payment_information'];
+    if (isset($payment_info['payment_method']) && isset($payment_info['payment_fields'][$payment_info['payment_method']])) {
+      $payment_method = $payment_info['payment_fields'][$payment_info['payment_method']];
+      if (isset($payment_method['quickdonate']) && $payment_method['quickdonate']) {
+        $options['send'] = TRUE;
+      }
+    }
+  }
+}

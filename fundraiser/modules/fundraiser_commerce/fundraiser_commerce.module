@@ -2499,7 +2499,7 @@ function _fundraiser_commerce_submit_handler_pane_values(&$pane_values, $donatio
       // This ensures card on file integrations create new profiles only
       // for new cards.
       if (empty($card)) {
-        $pane_values[$form_key]['cardonfile_store'] = TRUE;
+        $pane_values[$form_key]['cardonfile_store'] = isset($donation->donation['payment_fields'][$donation->donation['payment_method']]['cardonfile_store']) ? $donation->donation['payment_fields'][$donation->donation['payment_method']]['cardonfile_store'] : TRUE;
       }
       else {
         $pane_values[$form_key]['cardonfile_store'] = FALSE;
@@ -2950,5 +2950,31 @@ function fundraiser_commerce_gateway_image_validate($element, &$form_state, $for
     && empty($form_state['values']['parameter']['payment_method']['settings']['payment_method']['settings']['unselected_image'])
   ) {
     form_error($element, t('Unselected image field is required'));
+  }
+}
+
+/**
+ * Implements hook_fundraiser_update_billing_form_alter().
+ */
+function fundraiser_sustainers_fundraiser_update_billing_form_alter__fundraiser_commerce(&$form, &$form_state, $default_values) {
+  $form['#validate'][] = 'fundraiser_commerce_update_billing_form_validate';
+}
+
+/**
+ * Form validation handler for billing address update form.
+ */
+function fundraiser_commerce_update_billing_form_validate($form, &$form_state) {
+  // If it's a credit card, do some generic validation.
+  // This is because the gateway's validation doesn't happen during a
+  // billing update.
+  $credit_card_errors = array();
+  if ($submission_fields['payment_method'] == 'credit') {
+    // This returns an array.
+    $credit_card_errors = fundraiser_commerce_generic_credit_card_validate($submission_fields['payment_fields']);
+    if (count($credit_card_errors)) {
+      foreach ($credit_card_errors as $form_key => $message) {
+        form_set_error('payment_fields][credit][' . $form_key, $message);
+      }
+    }
   }
 }
