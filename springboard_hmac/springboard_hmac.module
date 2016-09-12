@@ -382,6 +382,7 @@ function springboard_hmac_springboard_hmac_success($payload) {
         } else {
           $path = $param;
         }
+        $query = array_merge($query, drupal_get_query_parameters());  // Preserve any query string parameters from outside the HMAC.
         $goto = array($path, array('query' => $query));
 
         // Log in the user, if not logged in already.
