@@ -72,6 +72,19 @@
             $(this).parent().children(".description").each(function () {
               $(this).insertAfter(tokensContainer);
             });
+            if (!$('.sb-tokens-contractor').length) {
+              $(this).after('<div class="sb-tokens-contractor"><a href="#">-Hide tokens</a></div>');
+              $(this).parent().children('.sb-tokens-contractor').click(function (e) {
+                e.preventDefault();
+                $(this).parent().children('.sb-tokens-expander').show();
+                $('#token-set-tokens').remove();
+                $('.sb-token-textarea').each(function () {
+                  $(this).removeAttr('sb-selection-start-pos');
+                  $(this).removeAttr('sb-selection-end-pos');
+                });
+                $(this).remove();
+              });
+            }
           });
         }
       });
@@ -82,7 +95,7 @@
           return;
         }
         $('#token-set-tokens').remove();
-
+        $('.sb-tokens-contractor').remove();
         $('.sb-token-textarea').each(function () {
           if (!$(this).is(element)) {
             $(this).removeAttr('sb-selection-start-pos');
@@ -116,15 +129,21 @@
         html += '<div class="fieldset-wrapper token-set-wrapper">';
         html += '<div class="token-list">';
         var firstTokenSet = ' first-token-set';
+        var tokenTabsAdded = [];
+        var tokensAdded = [];
         for (var i = 0; i < tokens.length; i++) {
-          if (tokens[i].token_type !== last_token_type) {
-            headerHTML += '<a class="token-set-expand' + firstTokenSet + '" data-type="' + tokens[i].token_type.replace(' ', '-') + '" data-expanded="0" href="#">' + tokens[i].token_type + '</a>';
+          if (tokens[i].token_type !== last_token_type && jQuery.inArray(tokens[i].token_type, tokenTabsAdded) == -1) {
+            tokenTabsAdded.push(tokens[i].token_type);
+            headerHTML += '<a class="token-set-expand' + firstTokenSet + '" data-type="' + tokens[i].token_type.replace(' ', '-') + 
+              '" data-expanded="0" href="#">' + tokens[i].token_type + '</a>';
             last_token_type = tokens[i].token_type;
           }
           firstTokenSet = '';
-          html += renderToken(tokens[i]);
+          if (jQuery.inArray(tokens[i].token, tokensAdded) == -1) {
+            html += renderToken(tokens[i]);
+            tokensAdded.push(tokens[i].token);
+          }
         }
-
         headerHTML += '</div>';
         
 

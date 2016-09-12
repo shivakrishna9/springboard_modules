@@ -42,7 +42,8 @@ fieldset#token-set-tokens {
   margin: 0 18px;
   width: 300px;
 }
-.sb-tokens-expander {
+.sb-tokens-expander,
+.sb-tokens-contractor {
   font-weight: bold;
   margin-bottom: 14px;
 }
