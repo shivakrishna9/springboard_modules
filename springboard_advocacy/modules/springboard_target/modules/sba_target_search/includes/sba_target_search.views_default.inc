@@ -944,7 +944,7 @@ function sba_target_search_views_default_views() {
   $handler->display->display_options['filters']['group_name']['field'] = 'group_name';
   $handler->display->display_options['filters']['group_name']['exposed'] = TRUE;
   $handler->display->display_options['filters']['group_name']['expose']['operator_id'] = 'group_name_op';
-  $handler->display->display_options['filters']['group_name']['expose']['description'] = 'Group Name';
+  $handler->display->display_options['filters']['group_name']['expose']['description'] = 'Group name or target name';
   $handler->display->display_options['filters']['group_name']['expose']['operator'] = 'group_name_op';
   $handler->display->display_options['filters']['group_name']['expose']['identifier'] = 'group_name';
   $handler->display->display_options['filters']['group_name']['expose']['remember_roles'] = array(
@@ -955,7 +955,6 @@ function sba_target_search_views_default_views() {
     5 => 0,
     6 => 0,
   );
-
 
   $views[$view->name] = $view;
 

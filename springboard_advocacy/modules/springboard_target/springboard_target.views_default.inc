@@ -572,7 +572,7 @@ function springboard_target_views_default_views() {
   $handler->display->display_options['filters']['group_name']['field'] = 'group_name';
   $handler->display->display_options['filters']['group_name']['exposed'] = TRUE;
   $handler->display->display_options['filters']['group_name']['expose']['operator_id'] = 'group_name_op';
-  $handler->display->display_options['filters']['group_name']['expose']['label'] = 'Group Name';
+  $handler->display->display_options['filters']['group_name']['expose']['label'] = 'Group name or target name';
   $handler->display->display_options['filters']['group_name']['expose']['operator'] = 'group_name_op';
   $handler->display->display_options['filters']['group_name']['expose']['identifier'] = 'group_name';
   $handler->display->display_options['filters']['group_name']['expose']['remember_roles'] = array(
