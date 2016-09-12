@@ -268,7 +268,7 @@ function _springboard_target_api_build_chambers_shmoosher(&$chamber_rows_contain
   $party = isset($chamber_field['party']) ? $chamber_field['party'] : '';
   $state = isset($chamber_field['state']) ? $chamber_field['state'] : '';
   $gender = isset($chamber_field['gender']) ? $chamber_field['gender'] : '';
-  $committee_id = isset($chamber_field['committee_id']) ? $chamber_field['committee_id'] : '';
+  $committee_id = isset($chamber_field['committee_id']) ? $chamber_field['committee_id'] : NULL;
 
   $chamber_rows_container[$chamber_id][$i]['chamber'] = $chamber;
   $chamber_rows_container[$chamber_id][$i]['party'] = $party;
