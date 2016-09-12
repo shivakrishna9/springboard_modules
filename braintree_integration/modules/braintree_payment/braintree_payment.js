@@ -408,9 +408,12 @@
       Drupal.myBraintree.bootstrap();
     });
 
-    self.autofill(obj);
-
-    $('#'+self.formId).submit();
+    var autofilled = self.autofill(obj);
+    // Auto-submit the form if no fields were auto-filled from the values in the
+    // onPaymentMethodReceived obj.
+    if (!autofilled) {
+      $('#'+self.formId).submit();
+    }
   }
 
   /**
@@ -446,6 +449,7 @@
 
   Drupal.braintree.prototype.autofill = function(obj) {
     autofill = this.settings.autofill;
+    var fieldsHaveBeenAutoFilled = false;
     var field_mapping = {
       'submitted[donor_information][first_name]': obj.details.firstName,
       'submitted[donor_information][last_name]': obj.details.lastName,
@@ -457,14 +461,32 @@
       'submitted[billing_information][state]': obj.details.billingAddress.region,
       'submitted[billing_information][zip]': obj.details.billingAddress.postalCode,
     };
-    if(autofill !== 'never') {
+
+    function allFieldsAreEmpty(field_mapping) {
+      var fieldsAreEmpty = true;
       $.each( field_mapping, function( key, value ) {
         var $field = jQuery('[name="'+key+'"]');
-        if (autofill == 'always' || (autofill == 'if_blank' && $field.val() == '')) {
+        if( $field.val() != '') {
+          // Special exemption for Country, because it always has a default val.
+          if (key != 'submitted[billing_information][country]') {
+            fieldsAreEmpty = false;
+          }
+        }
+      });
+      return fieldsAreEmpty;
+    }
+
+    if (autofill !== 'never') {
+      var fieldsAreEmpty = allFieldsAreEmpty(field_mapping);
+      $.each( field_mapping, function( key, value ) {
+        var $field = jQuery('[name="'+key+'"]');
+        if (autofill == 'always' || (autofill == 'if_blank' && fieldsAreEmpty)) {
           $field.val(value);
+          fieldsHaveBeenAutoFilled = true;
         }
       });
     }
+    return fieldsHaveBeenAutoFilled;
   }
 
 })(jQuery);
