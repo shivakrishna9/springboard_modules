@@ -148,17 +148,17 @@
   }
 
   Drupal.braintree.prototype.bootstrapPaypal = function() {
-    // this.$submit.attr('disabled', 'disabled');
-
     // Bind initAuthFlow button to paypal-container
-    this.$submit.click(function( event ) {
-      // If the nonce has not been set by a prevous click of the submit button,
-      // fire off initAuythFlow().
-      if ($('input[name=payment_method_nonce]').val() == '') {
-        event.preventDefault();
-        Drupal.myBraintreeIntegration.paypal.initAuthFlow();
-      }
-    });
+    this.$submit.on('click', this.handlePayPalClick);
+  }
+
+  Drupal.braintree.prototype.handlePayPalClick = function(event) {
+    // If the nonce has not been set by a prevous click of the submit button,
+    // fire off initAuythFlow().
+    if ($('input[name=payment_method_nonce]').val() == '') {
+      event.preventDefault();
+      Drupal.myBraintreeIntegration.paypal.initAuthFlow();
+    }
   }
 
   Drupal.braintree.prototype.resetSubmitBtn = function() {
@@ -445,8 +445,12 @@
     $('input[name=payment_method_nonce]').val('');
     $('#braintree-paypal-loggedin').hide();
     $('#bt-pp-email').text('');
+    this.$submit.off('click', this.handlePayPalClick);
   }
 
+  /**
+   * Fill user and billing fields from onPaymentMethodReceived response.
+   */
   Drupal.braintree.prototype.autofill = function(obj) {
     autofill = this.settings.autofill;
     var fieldsHaveBeenAutoFilled = false;
