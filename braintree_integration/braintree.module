@@ -11,13 +11,13 @@ define('BRAINTREE_ADMIN_PATH', 'admin/config/services/braintree');
  */
 function braintree_init() {
   // Avoid "can't use nonce more than once" error if page is reloaded (with same $_POST)
-  if (isset($_POST['payment_method_nonce'])) {
+  if (isset($_POST['payment_method_nonce']) && !empty($_POST['payment_method_nonce'])) {
     if (!isset($_SESSION['payment_method_nonce']) || $_POST['payment_method_nonce'] != $_SESSION['payment_method_nonce']) {
       $_SESSION['payment_method_nonce'] = $_POST['payment_method_nonce'];
     }
     else {
       unset($_SESSION['payment_method_nonce']);
-      // Reload without $_POST to stop payment form from submitting with already used nonce
+      // Reload without $_POST to stop payment form from submitting with already used nonce.
       drupal_goto(current_path());
     }
   }
