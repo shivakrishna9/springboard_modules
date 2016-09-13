@@ -48,9 +48,7 @@ function springboard_dw_process_queue() {
 
       // If watchdog logging is enabled for item processing and API request
       // failures log this queue process failure here.
-      if (variable_get('springboard_dw_watchdog_enabled')) {
-        watchdog("data_warehouse", $error_log_string);
-      }
+      springboard_dw_watchdog_log($error_log_string);
 
       // Add this failed item to the failed queue items array.
       $failed_queue_items[] = $item;
