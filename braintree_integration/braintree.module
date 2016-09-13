@@ -214,10 +214,16 @@ function braintree_initialize($settings) {
 
   $settings = braintree_settings($settings, 'active');
 
-  Braintree_Configuration::merchantId($settings['merchant_id']);
-  Braintree_Configuration::publicKey($settings['public_key']);
-  Braintree_Configuration::privateKey($settings['private_key']);
-  Braintree_Configuration::environment($settings['environment']);
+  if (!empty($settings['merchant_id']) && !empty($settings['public_key']) && !empty($settings['private_key']) && !empty($settings['environment'])) {
+    Braintree_Configuration::merchantId($settings['merchant_id']);
+    Braintree_Configuration::publicKey($settings['public_key']);
+    Braintree_Configuration::privateKey($settings['private_key']);
+    Braintree_Configuration::environment($settings['environment']);
+  }
+  else {
+    drupal_set_message(t('Braintree has not been configured.'), 'error');
+    $booted = FALSE;
+  }
 
   $booted = TRUE;
 }

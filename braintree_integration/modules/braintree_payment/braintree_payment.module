@@ -174,7 +174,16 @@ function _braintree_payment_form_element(&$element, &$form, &$form_state, $payme
   // No need of 'customerId' when generate token as it only applies to the
   // Drop-in UI and is not needed for custom integrations.
   // @see https://developers.braintreepayments.com/javascript+php/reference/request/client-token/generate#customer_id
-  $token = Braintree_ClientToken::generate($arguments);
+  try {
+    $token = Braintree_ClientToken::generate($arguments);
+  }
+  catch (Exception $e) {
+    $token = '';
+    $error_message = braintree_exception_error_message($e, TRUE);
+    $message = t('Braintree token generation failed: @message. Please check Braintree gateway configuration.', array(
+      '@message' => $error_message));
+    drupal_set_message($message, 'error');
+  }
 
   $js_settings['clientToken'] = $token;
   if ($payment_method_instance['method_id'] == 'braintree_paypal') {
