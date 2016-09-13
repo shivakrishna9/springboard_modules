@@ -5,7 +5,7 @@
  */
 
 define('BRAINTREE_WEB_JS', 'https://js.braintreegateway.com/js/braintree-2.21.0.min.js');
-
+define('BRAINTREE_PAYPAL_LOGGED_OUT_STATE', '<a id="braintree-paypal-button" href="#"><img src="https://checkout.paypal.com/pwpp/2.21.0/images/pay-with-paypal.png" alt="Pay with PayPal"></a>');
 /**
  * Implements hook_library().
  */
@@ -43,9 +43,6 @@ function _braintree_payment_form(&$form, &$form_state, $payment_method = 'braint
   global $user;
 
   $form['#attached']['library'][] = array('braintree_payment', 'braintree.js');
-
-  // Initialize Braintree and create a token.
-  braintree_initialize();
 
   $form['braintree'] = array(
     '#type' => 'container',
@@ -104,17 +101,28 @@ function _braintree_payment_form(&$form, &$form_state, $payment_method = 'braint
   $form['#submit'][] = '_braintree_payment_form_submit';
 }
 
-function _braintree_payment_form_element(&$element, &$form, &$form_state, $payment_method = 'braintree_paypal') {
+function _braintree_payment_form_element(&$element, &$form, &$form_state, $payment_method_instance) {
   // Define our own parents to make it consistent and easy to use in JavaScript.
   $element['errors'] = array(
     '#type' => 'hidden',
     '#parents' => array('braintree', 'errors'),
   );
 
-  if ($payment_method == 'braintree_paypal') {
+  if ($payment_method_instance['method_id'] == 'braintree_paypal') {
     $element['paypal'] = array(
       '#type' => 'container',
       '#id' => 'paypal-container',
+    );
+    $element['paypal']['nonce'] = array(
+      '#type' => 'hidden',
+      '#name' => 'payment_method_nonce',
+    );
+    $element['paypal']['loggedin'] = array(
+      '#type' => 'container',
+      '#id' => 'braintree-paypal-loggedin',
+    );
+    $element['paypal']['loggedin']['contents'] = array(
+      '#markup' => '<span id="bt-pp-name">PayPal</span><span id="bt-pp-email"></span><button id="bt-pp-cancel">Cancel</button>',
     );
   }
   else {
@@ -169,11 +177,11 @@ function _braintree_payment_form_element(&$element, &$form, &$form_state, $payme
   $token = Braintree_ClientToken::generate($arguments);
 
   $js_settings['clientToken'] = $token;
-
-  if ($payment_method == 'braintree_paypal') {
+  if ($payment_method_instance['method_id'] == 'braintree_paypal') {
     $js_settings['integration'] = 'paypal';
     $js_settings['paypalContainer'] = 'paypal-container';
     $js_settings['enabledMethods'][] = 'paypal';
+    $js_settings['autofill'] = $payment_method_instance['settings']['autofill'];
 
   }
   else {
@@ -233,7 +241,7 @@ function _braintree_payment_form_validate($form, &$form_state) {
 }
 
 function _braintree_payment_form_submit($form, &$form_state) {
-  braintree_initialize();
+  // braintree_initialize();
 }
 
 /**

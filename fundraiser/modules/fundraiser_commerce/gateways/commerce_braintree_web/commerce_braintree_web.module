@@ -76,7 +76,7 @@ function commerce_braintree_web_cardonfile_update($form, &$form_state, $payment_
   // If the submitted exp_year or exp_month values have changed.
   if($form_state['complete form']['credit_card']['exp_month']['#default_value'] != $form_state['values']['credit_card']['exp_month'] ||
     $form_state['complete form']['credit_card']['exp_year']['#default_value'] != $form_state['values']['credit_card']['exp_year']) {
-    braintree_initialize();
+    braintree_initialize($payment_method['settings']);
     try {
       $params = array(
         'expirationMonth' => $form_state['values']['credit_card']['exp_month'],
@@ -101,7 +101,7 @@ function commerce_braintree_web_cardonfile_update($form, &$form_state, $payment_
  * Card on file callback: deletes the payment_method at Braintree.
  */
 function commerce_braintree_web_cardonfile_delete($form, &$form_state, $payment_method, $card_data) {
-  braintree_initialize();
+  braintree_initialize($payment_method['settings']);
   try {
     $result = Braintree_PaymentMethod::delete($card_data->remote_id);
   }
@@ -208,7 +208,7 @@ function commerce_braintree_web_settings_form($settings = array()) {
 
   $form['merchant_account_id'] = array(
     '#type' => 'fieldset',
-    '#title' => t('Merchant account ID'),
+    '#title' => t('Braintree Merchant account ID'),
     '#description' => t('To find your Merchant account ID: log into the Control Panel of Braintree; navigate to Settings > Processing > Merchant Accounts. Read more information on <a href="@url" target="_blank">Braintree</a>.',
       array('@url' => 'https://articles.braintreepayments.com/control-panel/important-gateway-credentials#merchant-account-id')),
     '#collapsible' => TRUE,
@@ -218,7 +218,7 @@ function commerce_braintree_web_settings_form($settings = array()) {
   foreach ($currencies as $currency) {
     $form['merchant_account_id'][$currency['code']] = array(
       '#type' => 'textfield',
-      '#title' => t('Merchant account ID for @currency', array('@currency' => $currency['code'])),
+      '#title' => t('Merchant Account ID for @currency', array('@currency' => $currency['code'])),
       '#size' => 30,
       '#maxlength' => 128,
       '#default_value' => isset($settings['merchant_account_id'][$currency['code']]) ? $settings['merchant_account_id'][$currency['code']] : NULL,
@@ -226,12 +226,105 @@ function commerce_braintree_web_settings_form($settings = array()) {
     );
   }
 
-  $form['channel'] = array(
+  $form['environment'] = array(
+    '#title' => t('Environment'),
+    '#description' => t('Braintree working environment.'),
+    '#type' => 'radios',
+    '#options' => array(
+      'sandbox' => t('Sandbox'),
+      'production' => t('Production'),
+    ),
+    '#default_value' => isset($settings['environment']) ? $settings['environment'] : NULL,
+    '#required' => TRUE,
+    '#ajax' => array(
+      'callback' => 'braintree_admin_settings_js',
+      'wrapper' => 'braintree-production',
+    ),
+  );
+
+  $environment = isset($settings['environment']) ? $settings['environment'] : NULL;
+  if (!empty($form_state['values']['environment'])) {
+    $environment = $form_state['values']['environment'];
+  }
+
+  $form['sandbox'] = array(
+    '#title' => t('Sandbox environment'),
+    '#type' => 'fieldset',
+    '#collapsible' => TRUE,
+    '#tree' => TRUE,
+  );
+
+  $form['sandbox']['merchant_id'] = array(
+    '#title' => t('Merchant ID'),
     '#type' => 'textfield',
-    '#title' => t('Channel/Partner ID for @currency', array('@currency' => $currency['code'])),
-    '#size' => 30,
-    '#maxlength' => 128,
-    '#default_value' => isset($settings['channel']) ? $settings['channel'] : 0,
+    '#default_value' => isset($settings['sandbox']['merchant_id']) ? $settings['sandbox']['merchant_id'] : NULL,
+    '#required' => TRUE,
+  );
+
+  $form['sandbox']['public_key'] = array(
+    '#title' => t('Public key'),
+    '#type' => 'textfield',
+    '#default_value' => isset($settings['sandbox']['public_key']) ? $settings['sandbox']['public_key'] : NULL,
+    '#required' => TRUE,
+  );
+
+  $form['sandbox']['private_key'] = array(
+    '#title' => t('Private key'),
+    '#type' => 'textfield',
+    '#default_value' => isset($settings['sandbox']['private_key']) ? $settings['sandbox']['private_key'] : NULL,
+    '#required' => TRUE,
+  );
+
+  $form['sandbox']['channel'] = array(
+    '#title' => t('Channel/Parter ID'),
+    '#type' => 'textfield',
+    '#default_value' => isset($settings['sandbox']['channel']) ? $settings['sandbox']['channel'] : NULL,
+  );
+
+  $form['production'] = array(
+    '#title' => t('Production environment'),
+    '#type' => 'fieldset',
+    '#collapsible' => TRUE,
+    '#id' => 'braintree-production',
+    '#tree' => TRUE,
+  );
+
+  $form['production']['merchant_id'] = array(
+    '#title' => t('Merchant ID'),
+    '#type' => 'textfield',
+    '#default_value' => isset($settings['production']['merchant_id']) ? $settings['production']['merchant_id'] : NULL,
+    '#required' => ($environment == 'production'),
+  );
+
+  $form['production']['public_key'] = array(
+    '#title' => t('Public key'),
+    '#type' => 'textfield',
+    '#default_value' => isset($settings['production']['public_key']) ? $settings['production']['public_key'] : NULL,
+    '#required' => ($environment == 'production'),
+  );
+
+  $form['production']['private_key'] = array(
+    '#title' => t('Private key'),
+    '#type' => 'textfield',
+    '#default_value' => isset($settings['production']['private_key']) ? $settings['production']['private_key'] : NULL,
+    '#required' => ($environment == 'production'),
+  );
+
+  $form['production']['channel'] = array(
+    '#title' => t('Channel/Parter ID'),
+    '#type' => 'textfield',
+    '#default_value' => isset($settings['production']['channel']) ? $settings['production']['channel'] : NULL,
+  );
+
+  $form['autofill'] = array(
+    '#type' => 'radios',
+    '#title' => t('Populate User and Billing fields with data from the donor\'s PayPal account?'),
+    '#options' => array(
+      'never' => t('Never'),
+      'if_blank' => t('Only if all User/Billing fields are blank'),
+      'always' => t('Always'),
+    ),
+    '#default_value' => isset($settings['autofill']) ? $settings['autofill'] : 'if_blank',
   );
 
   $form['single_settlement_currency'] = array(
@@ -253,10 +346,10 @@ function commerce_braintree_web_settings_form($settings = array()) {
     $form['single_settlement_currency']['#value'] = 1;
   }
 
-  $form['merchant_account_id']['#weight'] = 9;
+  // $form['merchant_account_id']['#weight'] = 9;
   $form['merchant_account_id']['#prefix'] = '<div id="merchant-account-id-wrapper">';
   $form['merchant_account_id']['#suffix'] = '</div>';
-  $form['environment']['#weight'] = 10;
+  // $form['environment']['#weight'] = 10;
 
   if (!empty($settings['single_settlement_currency'])) {
     $default_currency_code = commerce_default_currency();
@@ -330,7 +423,7 @@ function commerce_braintree_web_submit_form_validate($payment_method, $pane_form
 function commerce_braintree_web_submit_form_submit($payment_method, $pane_form, $pane_values, $order, $form_parents = array()) {
   global $user;
 
-  braintree_initialize();
+  braintree_initialize($payment_method['settings']);
 
   list($amount, $customer_name, $first_name, $last_name, $country, $thoroughfare, $locality, $postal_code, $administrative_area, $customer_mail) = _commerce_braintree_web_get_transaction_informations($order);
 
@@ -545,7 +638,8 @@ function commerce_braintree_web_submit_form_submit($payment_method, $pane_form, 
       watchdog('commerce_braintree_web', 'Niether paymentMethodToken nor paymentMethodNonce available when trying to process order:<br/> <pre>@print_r</pre>', array('@print_r' => var_export($order, TRUE)), WATCHDOG_ERROR, NULL);
       return FALSE;
     }
-    $sale_data['channel'] = $payment_method['settings']['channel'];
+    $active_settings = braintree_settings($payment_method['settings'], 'active');
+    $sale_data['channel'] = $active_settings['channel'];
 
     $success = braintree_transaction_sale($sale_data, $context, $error_message);
     $braintree_result = $context['result'];
@@ -630,7 +724,7 @@ function commerce_braintree_web_refund_form_submit($form, &$form_state) {
   $order = $form_state['order'];
   $payment_method = $form_state['payment_method'];
 
-  braintree_initialize();
+  braintree_initialize($payment_method['settings']);
 
   try {
     $result = Braintree_Transaction::refund($transaction->remote_id, $amount);

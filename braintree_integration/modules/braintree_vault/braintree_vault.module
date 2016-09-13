@@ -20,7 +20,7 @@ function braintree_vault_help($path, $arg) {
  */
 function braintree_vault_init() {
   if (strpos(current_path(), braintree_payment_method_base_url()) === 0) {
-    braintree_initialize();
+    // braintree_initialize();
   }
 }
 
@@ -187,7 +187,7 @@ function braintree_customer_load_by_account($account, $reset = FALSE) {
  * @return bool|\Braintree_Customer
  */
 function braintree_customer_load($customer_id) {
-  braintree_initialize();
+  // braintree_initialize();
   $customer = Braintree_Customer::find($customer_id);
   return $customer;
 }

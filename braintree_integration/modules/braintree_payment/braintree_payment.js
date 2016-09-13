@@ -148,7 +148,17 @@
   }
 
   Drupal.braintree.prototype.bootstrapPaypal = function() {
-    this.$submit.attr('disabled', 'disabled');
+    // Bind initAuthFlow button to paypal-container
+    this.$submit.on('click', this.handlePayPalClick);
+  }
+
+  Drupal.braintree.prototype.handlePayPalClick = function(event) {
+    // If the nonce has not been set by a prevous click of the submit button,
+    // fire off initAuythFlow().
+    if ($('input[name=payment_method_nonce]').val() == '') {
+      event.preventDefault();
+      Drupal.myBraintreeIntegration.paypal.initAuthFlow();
+    }
   }
 
   Drupal.braintree.prototype.resetSubmitBtn = function() {
@@ -277,6 +287,7 @@
     }
 
     var getPayPalOptions = function() {
+      options.headless = true;
       options.container = self.settings.paypalContainer;
       options.onPaymentMethodReceived = $.proxy(self.onPaymentMethodReceived, self);
 
@@ -380,23 +391,29 @@
   Drupal.braintree.prototype.onPaymentMethodReceived = function (obj) {
     var self = this;
 
-    this.$submit.removeAttr('disabled');
+    $('#braintree-paypal-loggedin').show();
+    $('#bt-pp-email').text(obj.details.email);
 
-    // This isn't used anywhere? Also, why not just use obj.nonce?
-    var $nonce_el = $('input[name=payment_method_nonce]');
-    if ($nonce_el.length > 1) {
-      var nonce = $($nonce_el[0]).val();
-      $nonce_el[1].value = nonce;
-    }
+    $('input[name=payment_method_nonce]').val(obj.nonce);
 
     // Bind cancel button to restore PayPal form.
-    $('#bt-pp-cancel').one('click', function () {
+    $('#bt-pp-cancel').click(function( event ) {
+      event.preventDefault();
       self.$submit.attr('disabled', 'disabled');
+      // Clean up process.
+      Drupal.myBraintree && Drupal.myBraintree.cleanUp();
+      // Destroy Braintree integration.
+      Drupal.myBraintreeIntegration && Drupal.myBraintreeIntegration.teardown($.proxy(Drupal.myBraintree.teardown, Drupal.myBraintree));
+      // Boot new integration.
+      Drupal.myBraintree.bootstrap();
     });
 
-    // Set focus on submit button to ensure it is in view.
-    self.$submit.focus();
-
+    var autofilled = self.autofill(obj);
+    // Auto-submit the form if no fields were auto-filled from the values in the
+    // onPaymentMethodReceived obj.
+    if (!autofilled) {
+      $('#'+self.formId).submit();
+    }
   }
 
   /**
@@ -414,6 +431,66 @@
     if (typeof deviceDataInput !== 'undefined') {
       form.removeChild(deviceDataInput);
     }
+
+    if (this.settings.integration == 'paypal') {
+      this.teardownPaypal();
+    }
+
+  }
+
+  /**
+   * Reset paypal-specific elements and data
+   */
+  Drupal.braintree.prototype.teardownPaypal = function() {
+    $('input[name=payment_method_nonce]').val('');
+    $('#braintree-paypal-loggedin').hide();
+    $('#bt-pp-email').text('');
+    this.$submit.off('click', this.handlePayPalClick);
+  }
+
+  /**
+   * Fill user and billing fields from onPaymentMethodReceived response.
+   */
+  Drupal.braintree.prototype.autofill = function(obj) {
+    autofill = this.settings.autofill;
+    var fieldsHaveBeenAutoFilled = false;
+    var field_mapping = {
+      'submitted[donor_information][first_name]': obj.details.firstName,
+      'submitted[donor_information][last_name]': obj.details.lastName,
+      'submitted[donor_information][mail]': obj.details.email,
+      'submitted[billing_information][address]': obj.details.billingAddress.streetAddress,
+      'submitted[billing_information][address_line_2]': obj.details.billingAddress.extendedAddress,
+      'submitted[billing_information][city]': obj.details.billingAddress.locality,
+      'submitted[billing_information][country]': obj.details.billingAddress.countryCodeAlpha2,
+      'submitted[billing_information][state]': obj.details.billingAddress.region,
+      'submitted[billing_information][zip]': obj.details.billingAddress.postalCode,
+    };
+
+    function allFieldsAreEmpty(field_mapping) {
+      var fieldsAreEmpty = true;
+      $.each( field_mapping, function( key, value ) {
+        var $field = jQuery('[name="'+key+'"]');
+        if( $field.val() != '') {
+          // Special exemption for Country, because it always has a default val.
+          if (key != 'submitted[billing_information][country]') {
+            fieldsAreEmpty = false;
+          }
+        }
+      });
+      return fieldsAreEmpty;
+    }
+
+    if (autofill !== 'never') {
+      var fieldsAreEmpty = allFieldsAreEmpty(field_mapping);
+      $.each( field_mapping, function( key, value ) {
+        var $field = jQuery('[name="'+key+'"]');
+        if (autofill == 'always' || (autofill == 'if_blank' && fieldsAreEmpty)) {
+          $field.val(value);
+          fieldsHaveBeenAutoFilled = true;
+        }
+      });
+    }
+    return fieldsHaveBeenAutoFilled;
   }
 
 })(jQuery);

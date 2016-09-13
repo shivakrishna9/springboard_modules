@@ -31,17 +31,18 @@ function commerce_braintree_web_fundraiser_commerce_fundraiser_gateway_info() {
  * Implements hook_fundraiser_donation_form_config_check().
  */
 function commerce_braintree_web_fundraiser_donation_form_config_check($node) {
+  $messages = array();
   foreach ($node->gateways as $gateway) {
     if (!empty($gateway['id'])  && !empty($gateway['status'])) {
       $gateway_config = _fundraiser_gateway_info($gateway['id']);
       if ($gateway_config['gateway_details']['module'] == 'commerce_braintree_web') {
-        $settings = braintree_settings();
-        if ($settings['environment'] == 'sandbox') {
-          return t('Braintree is currently using the sandbox environment and will not process live transactions.');
+        if ($gateway_config['gateway_details']['settings']['environment'] == 'sandbox') {
+          $messages[] = t('%gateway is currently using the sandbox environment and will not process live transactions.', array('%gateway' => $gateway_config['title']));
         }
       }
     }
   }
+  return $messages;
 }
 
 /**
@@ -143,19 +144,16 @@ function commerce_braintree_web_fundraiser_commerce_refund($payment_method, $ref
 /**
  * Callback function, use this form for the given gateway.
  */
-function commerce_braintree_web_fundraiser_commerce_form($payment_method) {
-  if ($payment_method == 'paypal') {
-    $payment_method = 'braintree_paypal';
-  }
+function commerce_braintree_web_fundraiser_commerce_form($payment_method, $config) {
+  $payment_method_instance = commerce_payment_method_instance_load($config['id']);
+  braintree_initialize($payment_method_instance['settings']);
   // @TODO Possibily replace with _braintree_payment_form().
 
   global $user;
   $using_existing = FALSE;
 
+  $form = array();
   $form['#attached']['library'][] = array('braintree_payment', 'braintree.js');
-
-  // Initialize Braintree and create a token.
-  braintree_initialize();
 
   $form['braintree'] = array(
     '#type' => 'container',
@@ -171,7 +169,7 @@ function commerce_braintree_web_fundraiser_commerce_form($payment_method) {
     '#suffix' => '</div>',
   );
 
-  _braintree_payment_form_element($form['braintree']['new'], $form, $form_state, $payment_method);
+  _braintree_payment_form_element($form['braintree']['new'], $form, $form_state, $payment_method_instance);
 
   if ($using_existing && ($user->uid > 0) && module_exists('braintree_vault') && ($customer = braintree_customer_load_by_account($user))) {
     $default_method = braintree_customer_default_payment_method($customer);
@@ -221,6 +219,7 @@ function commerce_braintree_web_fundraiser_commerce_form($payment_method) {
  * Callback function, charge gateway.
  */
 function commerce_braintree_web_fundraiser_commerce_charge($method_instance, $donation) {
+
   // Translate from donation settings to the correct values for the plugin.
   // module_load_include('inc', 'fundraiser_commerce', 'includes/fundraiser_commerce.credit_card');
   $order = commerce_order_load($donation->did);

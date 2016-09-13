@@ -11,13 +11,13 @@ define('BRAINTREE_ADMIN_PATH', 'admin/config/services/braintree');
  */
 function braintree_init() {
   // Avoid "can't use nonce more than once" error if page is reloaded (with same $_POST)
-  if (isset($_POST['payment_method_nonce'])) {
+  if (isset($_POST['payment_method_nonce']) && !empty($_POST['payment_method_nonce'])) {
     if (!isset($_SESSION['payment_method_nonce']) || $_POST['payment_method_nonce'] != $_SESSION['payment_method_nonce']) {
       $_SESSION['payment_method_nonce'] = $_POST['payment_method_nonce'];
     }
     else {
       unset($_SESSION['payment_method_nonce']);
-      // Reload without $_POST to stop payment form from submitting with already used nonce
+      // Reload without $_POST to stop payment form from submitting with already used nonce.
       drupal_goto(current_path());
     }
   }
@@ -76,7 +76,9 @@ function braintree_mail($key, &$message, $params) {
 
     // Link to view braintree transaction
     if (!empty($params['txn_id'])) {
-      $braintree_settings = variable_get('braintree_settings');
+      // TODO: Refactor to use passed settings. There are no global settings to
+      // get anymore.
+      // $braintree_settings = variable_get('braintree_settings');
       $bt_env = $braintree_settings['environment'];
       $subdomain = ($bt_env == 'sandbox') ? 'sandbox' : 'www';
       $bt_url = 'https://' . $subdomain . '.braintreegateway.com/merchants/' . $braintree_settings[$bt_env]['merchant_id'] . '/transactions/' . $params['txn_id'];
@@ -142,7 +144,7 @@ function braintree_hook_info() {
  * @param null $type
  * @return array
  */
-function braintree_settings($type = NULL) {
+function braintree_settings($settings, $type = NULL) {
   static $cache;
 
   if (is_null($cache)) {
@@ -163,9 +165,6 @@ function braintree_settings($type = NULL) {
         'channel' => '',
       ),
     );
-
-    $settings = variable_get('braintree_settings', array());
-
     $cache = array_merge($default_settings, $settings);
   }
 
@@ -189,7 +188,7 @@ function braintree_settings($type = NULL) {
  *
  * @param null $settings
  */
-function braintree_initialize($settings = NULL) {
+function braintree_initialize($settings) {
   static $booted = FALSE;
 
   if ($booted) {
@@ -213,9 +212,7 @@ function braintree_initialize($settings = NULL) {
     return FALSE;
   }
 
-  if (is_null($settings)) {
-    $settings = braintree_settings('active');
-  }
+  $settings = braintree_settings($settings, 'active');
 
   Braintree_Configuration::merchantId($settings['merchant_id']);
   Braintree_Configuration::publicKey($settings['public_key']);
@@ -418,28 +415,31 @@ function braintree_transaction_sale(&$sale_data, &$context = array(), &$error_me
  *
  * @return array|bool
  */
-function braintree_transaction_authorize($customer, $price, $data = []) {
-  $settings = braintree_settings('active');
-  $payment_method = braintree_customer_default_payment_method($customer);
+// function braintree_transaction_authorize($customer, $price, $data = []) {
+//
+// TODO: Delete. Function appears to be unused.
+//
+//   $settings = braintree_settings('active');
+//   $payment_method = braintree_customer_default_payment_method($customer);
 
-  $sale_data = array(
-    'amount' => $price,
-    'merchantAccountId' => $settings['merchant_account_id'],
-    'paymentMethodToken' => $payment_method->token,
-    'customerId' => $customer->id,
-    'options' => array(
-      'submitForSettlement' => FALSE,
-    ),
-    'channel' => $settings['channel']
-  );
+//   $sale_data = array(
+//     'amount' => $price,
+//     'merchantAccountId' => $settings['merchant_account_id'],
+//     'paymentMethodToken' => $payment_method->token,
+//     'customerId' => $customer->id,
+//     'options' => array(
+//       'submitForSettlement' => FALSE,
+//     ),
+//     'channel' => $settings['channel']
+//   );
 
-  // Add extra values like custom fields.
-  $sale_data = array_merge($sale_data, $data);
+//   // Add extra values like custom fields.
+//   $sale_data = array_merge($sale_data, $data);
 
-  $context = array();
-  $result = braintree_transaction_sale($sale_data, $context, $error_message);
-  return $result;
-}
+//   $context = array();
+//   $result = braintree_transaction_sale($sale_data, $context, $error_message);
+//   return $result;
+// }
 
 /**
  * Void a Braintree transaction.
@@ -592,8 +592,8 @@ function braintree_df($data, $label = NULL) {
 /**
  * @return bool
  */
-function braintree_is_sandbox() {
-  $settings = braintree_settings('active');
+function braintree_is_sandbox($settings) {
+  $settings = braintree_settings($settings, 'active');
   return $settings['environment'] == 'sandbox';
 }
 
@@ -642,39 +642,41 @@ function braintree_check_fraud(&$context) {
   // Check for fraud-protection-declined transactions
   // NB for the sandbox fraud testing CC number, the sandbox doesn't add riskData, just rejects the transaction flat
   // Let's add the property here so we can test the alert email etc.
-  $braintree_settings = variable_get('braintree_settings');
 
-  if ($braintree_settings['environment'] == 'sandbox' && isset($result->transaction->creditCard)
-    && $result->transaction->creditCard['bin'] == '400011' && $result->transaction->creditCard['last4'] == '1511'
-  ) {
-    $result->transaction->riskData = (object) array(
-      'decision' => 'Decline',
-      'id' => NULL
-    );
-  }
+  // There are no global settings to get anymore.
+  // $braintree_settings = variable_get('braintree_settings');
+
+  // if ($braintree_settings['environment'] == 'sandbox' && isset($result->transaction->creditCard)
+  //   && $result->transaction->creditCard['bin'] == '400011' && $result->transaction->creditCard['last4'] == '1511'
+  // ) {
+  //   $result->transaction->riskData = (object) array(
+  //     'decision' => 'Decline',
+  //     'id' => NULL
+  //   );
+  // }
 
   // NB braintree result must use magic getters, property_exists doesn't work here
   if (!empty($result->transaction->riskData)) {
     $decision = $result->transaction->riskData->decision;
 
     // Send an alert email for Decline/Review
-    if ($decision == 'Review') {
-      $from = variable_get('site_mail');
-      // To: use dev address if braintree env is sandbox
-      $braintree_env_settings = isset($braintree_settings['environment'])
-        ? $braintree_settings[$braintree_settings['environment']] : array();
-      $to = $braintree_env_settings['alert_email'] ?: variable_get('site_mail');
-      $params = array(
-        'order' => $context['order'],
-        'txn_id' => $result->transaction->id,
-        'decision' => $decision,
-      );
-      $lang = language_default();
+    // if ($decision == 'Review') {
+    //   $from = variable_get('site_mail');
+    //   // To: use dev address if braintree env is sandbox
+    //   $braintree_env_settings = isset($braintree_settings['environment'])
+    //     ? $braintree_settings[$braintree_settings['environment']] : array();
+    //   $to = $braintree_env_settings['alert_email'] ?: variable_get('site_mail');
+    //   $params = array(
+    //     'order' => $context['order'],
+    //     'txn_id' => $result->transaction->id,
+    //     'decision' => $decision,
+    //   );
+    //   $lang = language_default();
 
-      if ($from && $to) {
-        drupal_mail('braintree', 'transaction_fraud', $to, $lang, $params, $from);
-      }
-    }
+    //   if ($from && $to) {
+    //     drupal_mail('braintree', 'transaction_fraud', $to, $lang, $params, $from);
+    //   }
+    // }
 
     // Set form error for Decline
     if ($decision == 'Decline') {
