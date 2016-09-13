@@ -1279,7 +1279,7 @@ function _springboard_p2p_fboauth_image($variables) {
   // Ripped out and modified from fboauth.module.
   $action = $variables['action'];
   $link = $variables['properties'];
-  $url = fboauth_action_url($link['href'], array('query' => $link['query']));
+  $url = url($link['href'], array('query' => $link['query']));
   $link['attributes']['class'] = isset($link['attributes']['class']) ? $link['attributes']['class'] : 'facebook-action-connect';
   $link['attributes']['rel'] = 'nofollow';
   $attributes = isset($link['attributes']) ? drupal_attributes($link['attributes']) : '';
