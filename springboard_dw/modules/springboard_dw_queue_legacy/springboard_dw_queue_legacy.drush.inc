@@ -79,8 +79,7 @@ function springboard_dw_queue_legacy_missing($type = '') {
   }
   // Return only missing records by passing the $find_difference parameter as
   // TRUE.
-  $records = springboard_dw_queue_legacy_get_records($type, FALSE, 0, FALSE, TRUE);
-
+  $records = springboard_dw_queue_legacy_get_missing_records($type);
   // Create array that only contains the IDs.
   $missing_ids = array_map(function($records) {
       return is_object($records) ? $records->id : $records['id'];
@@ -621,7 +620,7 @@ function springboard_dw_queue_legacy_get_advocacy_message_details_page($action_i
 /**
  *
  */
-function springboard_dw_queue_legacy_get_records($type, $limit = FALSE, $highwater = 0, $idlist = FALSE, $find_difference = FALSE) {
+function springboard_dw_queue_legacy_get_records($type, $limit = FALSE, $highwater = 0, $idlist = FALSE) {
   // Populate list of records to operate on.
   switch ($type) {
     case 'contact':
@@ -636,10 +635,6 @@ function springboard_dw_queue_legacy_get_records($type, $limit = FALSE, $highwat
       elseif ($highwater) {
         $query->condition('uid', $highwater, '>');
       }
-      elseif ($find_difference) {
-        $query->leftJoin('springboard_data_warehouse', 'd', 'u.uid = d.drupal_id');
-        $query->isNull('d.drupal_id');
-      }
       break;
 
     case 'donation':
@@ -653,10 +648,6 @@ function springboard_dw_queue_legacy_get_records($type, $limit = FALSE, $highwat
       }
       elseif ($highwater) {
         $query->condition('did', $highwater, '>');
-      }
-      elseif ($find_difference) {
-        $query->leftJoin('springboard_data_warehouse', 'd', 'f.did = d.drupal_id');
-        $query->isNull('d.drupal_id');
       }
       break;
 
@@ -676,10 +667,6 @@ function springboard_dw_queue_legacy_get_records($type, $limit = FALSE, $highwat
       }
       elseif ($highwater) {
         $query->condition('sid', $highwater, '>');
-      }
-      elseif ($find_difference) {
-        $query->leftJoin('springboard_data_warehouse', 'd', 's.sid = d.drupal_id');
-        $query->isNull('d.drupal_id');
       }
       break;
 
@@ -702,10 +689,6 @@ function springboard_dw_queue_legacy_get_records($type, $limit = FALSE, $highwat
       elseif ($highwater) {
         $query->condition('sid', $highwater, '>');
       }
-      elseif ($find_difference) {
-        $query->leftJoin('springboard_data_warehouse', 'd', 's.sid = d.drupal_id');
-        $query->isNull('d.drupal_id');
-      }
       break;
 
     case 'form':
@@ -719,10 +702,6 @@ function springboard_dw_queue_legacy_get_records($type, $limit = FALSE, $highwat
       }
       elseif ($highwater) {
         $query->condition('n.nid', $highwater, '>');
-      }
-      elseif ($find_difference) {
-        $query->leftJoin('springboard_data_warehouse', 'd', 'n.nid = d.drupal_id');
-        $query->isNull('d.drupal_id');
       }
       break;
 
@@ -745,10 +724,6 @@ function springboard_dw_queue_legacy_get_records($type, $limit = FALSE, $highwat
       }
       elseif ($highwater) {
         $query->condition('sid', $highwater, '>');
-      }
-      elseif ($find_difference) {
-        $query->leftJoin('springboard_data_warehouse', 'd', 's.sid = d.drupal_id');
-        $query->isNull('d.drupal_id');
       }
       break;
 
@@ -774,10 +749,6 @@ function springboard_dw_queue_legacy_get_records($type, $limit = FALSE, $highwat
       elseif ($highwater) {
         $query->condition('transaction_id', $highwater, '>');
       }
-      elseif ($find_difference) {
-        $query->leftJoin('springboard_data_warehouse', 'd', 'c.transaction_id = d.drupal_id');
-        $query->isNull('d.drupal_id');
-      }
       break;
 
     case 'salesforce_sync':
@@ -802,16 +773,11 @@ function springboard_dw_queue_legacy_get_records($type, $limit = FALSE, $highwat
       elseif ($highwater) {
         $query->condition('rmid', $highwater, '>');
       }
-      elseif ($find_difference) {
-        $query->leftJoin('springboard_data_warehouse', 'd', 's.rmid = d.drupal_id');
-        $query->isNull('d.drupal_id');
-      }
       break;
 
     default:
       return drush_set_error(dt('"@type" is not a valid record type. Nothing was processed.', array('@type' => $type)));
   }
-
   if ($query) {
     if ($limit) {
       $query->range(0, $limit);
@@ -819,6 +785,161 @@ function springboard_dw_queue_legacy_get_records($type, $limit = FALSE, $highwat
     $records = $query->execute()->fetchAll();
   }
   return $records;
+}
+
+/**
+ * Find records that have not been added to salesforce_sync_map.
+ */
+function springboard_dw_queue_legacy_get_missing_records($type) {
+  // Populate list of records missing from springboard_data_warehouse.
+  switch ($type) {
+    case 'contact':
+      $result = db_query("SELECT table_name, id
+                          FROM
+                          (
+                            SELECT 'users' as table_name, uid as id
+                              FROM
+                              {users} u
+                              WHERE  (uid <> 0)
+                            UNION ALL
+                            SELECT 'springboard_data_warehouse' as table_name, drupal_id as id
+                              FROM {springboard_data_warehouse}
+                              WHERE type = 'contact'
+                          ) tmp
+                          GROUP BY id
+                          HAVING COUNT(*) = 1")->fetchAll();
+      break;
+
+    case 'donation':
+      $result = db_query("SELECT table_name, id
+                          FROM
+                          (
+                            SELECT 'fundraiser_donation' as table_name, did as id
+                              FROM
+                              {fundraiser_donation}
+                            UNION ALL
+                            SELECT 'springboard_data_warehouse' as table_name, drupal_id as id
+                              FROM {springboard_data_warehouse}
+                              WHERE type = 'contact'
+                          ) tmp
+                          GROUP BY id
+                          HAVING COUNT(*) = 1")->fetchAll();
+      break;
+
+    case 'action':
+      $result = db_query("SELECT table_name, id
+                          FROM
+                          (
+                            SELECT 'webform_submissions' as table_name, sid as id
+                              FROM {webform_submissions} ws
+                              INNER JOIN {node} n on n.nid = ws.nid
+                              WHERE n.type IN ('sba_message_action', 'sba_social_action', 'springboard_petition')
+                            UNION ALL
+                            SELECT 'springboard_data_warehouse' as table_name, drupal_id as id
+                              FROM {springboard_data_warehouse}
+                              WHERE type = 'advocacy action'
+                          ) tmp
+                          GROUP BY id
+                          HAVING COUNT(*) = 1")->fetchAll();
+      break;
+
+    case 'message':
+      $records = springboard_dw_queue_legacy_get_advocacy_messages();
+      break;
+
+    case 'petition_message':
+      $result = db_query("SELECT table_name, id
+                          FROM
+                          (
+                            SELECT 'webform_submissions' as table_name, sid as id
+                              FROM {webform_submissions} ws
+                              INNER JOIN {node} n on n.nid = ws.nid
+                              WHERE n.type = 'springboard_petition'
+                            UNION ALL
+                            SELECT 'springboard_data_warehouse' as table_name, drupal_id as id
+                              FROM {springboard_data_warehouse}
+                              WHERE type = 'petition_message'
+                          ) tmp
+                          GROUP BY id
+                          HAVING COUNT(*) = 1")->fetchAll();
+      break;
+
+    case 'form':
+      $result = db_query("SELECT table_name, id
+                          FROM
+                          (
+                            SELECT 'node' as table_name, n.nid as id
+                              FROM {node} n
+                              INNER JOIN {webform} w on n.nid = w.nid
+                            UNION ALL
+                            SELECT 'springboard_data_warehouse' as table_name, drupal_id as id
+                              FROM {springboard_data_warehouse}
+                              WHERE type = 'form'
+                          ) tmp
+                          GROUP BY id
+                          HAVING COUNT(*) = 1")->fetchAll();
+      break;
+
+    case 'submission':
+      $excluded_types = springboard_dw_get_donation_types();
+      $excluded_types[] = 'springboard_petition';
+      $excluded_types[] = 'sba_message_action';
+      $excluded_types[] = 'sba_social_action';
+      $excluded_string = "'" . implode("','", $excluded_types) . "'";
+      $result = db_query("SELECT table_name, id
+                          FROM
+                          (
+                            SELECT 'webform_submissions' as table_name, sid as id
+                              FROM {webform_submissions} ws
+                              INNER JOIN {node} n on n.nid = ws.nid
+                              WHERE n.type IN (" . $excluded_string . ")
+                            UNION ALL
+                            SELECT 'springboard_data_warehouse' as table_name, drupal_id as id
+                              FROM {springboard_data_warehouse}
+                              WHERE type = 'advocacy action'
+                          ) tmp
+                          GROUP BY id
+                          HAVING COUNT(*) = 1")->fetchAll();
+      break;
+
+    case 'payment':
+
+      $result = db_query("SELECT table_name, id
+                          FROM
+                          (
+                            SELECT 'commerce_payment_transaction' as table_name, transaction_id as id
+                              FROM {commerce_payment_transaction}
+                            UNION ALL
+                            SELECT 'springboard_data_warehouse' as table_name, drupal_id as id
+                              FROM {springboard_data_warehouse}
+                              WHERE type = 'payment'
+                          ) tmp
+                          GROUP BY id
+                          HAVING COUNT(*) = 1")->fetchAll();
+      break;
+
+    case 'salesforce_sync':
+      $result = db_query("SELECT table_name, id
+                          FROM
+                          (
+                            SELECT 'salesforce_sync_map' as table_name, rmid as id
+                              FROM {salesforce_sync_map}
+                              WHERE (delta IN ('user', 'sba_message_action', 'sba_social_action', 'springboard_petition', 'donation')
+                              OR object_type = 'sb_Actions_Taken__c') AND sfid <> ''
+                            UNION ALL
+                            SELECT 'springboard_data_warehouse' as table_name, drupal_id as id
+                              FROM {springboard_data_warehouse}
+                              WHERE type = 'salesforce sync'
+                          ) tmp
+                          GROUP BY id
+                          HAVING COUNT(*) = 1")->fetchAll();
+      break;
+
+    default:
+      return drush_set_error(dt('"@type" is not a valid record type. Nothing was processed.', array('@type' => $type)));
+  }
+
+  return $result;
 }
 
 function springboard_dw_queue_legacy_get_dw_by_type($type) {
