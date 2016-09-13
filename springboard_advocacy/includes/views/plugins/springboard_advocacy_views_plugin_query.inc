@@ -131,6 +131,7 @@ class springboard_advocacy_views_plugin_query extends views_plugin_query {
       else if(isset($response->data->groups)) {
         $groups = $response->data->groups;
         foreach($groups as $key => $item) {
+          $items[$key] = new stdClass();
           $items[$key]->group_name = $item->name;
           $items[$key]->id = $key;
           $response->data->groups->$key->id = $key;

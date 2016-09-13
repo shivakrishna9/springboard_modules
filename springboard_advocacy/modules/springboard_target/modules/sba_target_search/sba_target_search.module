@@ -115,7 +115,7 @@ function sba_target_search_preprocess_views_view_table(&$vars) {
   $view = $vars['view'];
   $fields = &$view->field;
   $columns = $view->style_plugin->options['columns'];
-  $classes = $view->filter['search_class_name']->value;
+  $classes = isset($view->filter['search_class_name']->value) ? $view->filter['search_class_name']->value : '';
   if($view->name == 'targets' && $view->current_display == 'block_3' && in_array('Group', $classes)) {
     $group_fields = array('last_name', 'group_name', 'target_actions');
     foreach($vars['header'] as $key => $head) {
@@ -191,7 +191,7 @@ function sba_target_search_add_target_search_form($form, &$form_state, $entity =
       '#weight' => 99,
     );
 
-  $form['#suffix'] .= '<div id="springboard-advocacy-find-targets-container"><div id="springboard-advocacy-find-targets"><h3>Find Targets</h3>' . views_embed_view('targets', 'block_3') . '</div></div>';
+  $form['#suffix'] = '<div id="springboard-advocacy-find-targets-container"><div id="springboard-advocacy-find-targets"><h3>Find Targets</h3>' . views_embed_view('targets', 'block_3') . '</div></div>';
 
   $form['#attached']['css'][] = drupal_get_path('module', 'sba_target_search') . '/css/sba_target_search.css';
   $form['#attached']['js'][] = drupal_get_path('module', 'sba_target_search') . '/js/sba_target_search.js';
@@ -212,7 +212,7 @@ function sba_target_search_convert_recipients($group) {
     $recipient = array();
     if(isset($chamber->committee_id) && $chamber->committee_id != '0' && $chamber->committee_id != '') {
       $recipient['commitee_id'] = $chamber->committee_id;
-      $recipient['search_committee'] = $chamber->committee_name; 
+      $recipient['search_committee'] = $chamber->committee_name;
     }
     else {
       foreach ($chamber as $field_name => $value) {
