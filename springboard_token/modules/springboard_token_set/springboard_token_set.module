@@ -5,7 +5,6 @@
  */
 function springboard_token_set_menu() {
   $items = array();
-
   $items['admin/config/content/tokens'] = array(
     'title' => 'Springboard Tokens',
     'description' => 'Manage tokens.',
@@ -15,7 +14,6 @@ function springboard_token_set_menu() {
     'type' => MENU_NORMAL_ITEM,
     'weight' => 0,
   );
-
   $items['admin/config/content/token-sets'] = array(
     'title' => 'Springboard Token Sets',
     'description' => 'Manage tokens within token sets.',
@@ -25,14 +23,36 @@ function springboard_token_set_menu() {
     'type' => MENU_NORMAL_ITEM,
     'weight' => 0,
   );
-
+  $items['admin/config/content/token-sets/add'] = array(
+    'title' => 'Create token set',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('springboard_token_set_add_token_set_admin_form'),
+    'access arguments' => array('administer springboard'),
+    'type' => MENU_CALLBACK,
+  );
+  $items['admin/config/content/token-sets/delete'] = array(
+    'title' => 'Delete token set',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('springboard_token_set_delete_token_set_admin_form'),
+    'access arguments' => array('administer springboard'),
+    'type' => MENU_CALLBACK,
+  );
+  $items['sb-admin-token-add-ajax'] = array(
+    'page callback' => '_springboard_token_set_admin_add_token_ajax',
+    'access arguments' => array('administer springboard'),
+    'type' => MENU_CALLBACK,
+  );
+  $items['sb-admin-token-delete-ajax'] = array(
+    'page callback' => '_springboard_token_set_admin_delete_token_ajax',
+    'access arguments' => array('administer springboard'),
+    'type' => MENU_CALLBACK,
+  );
   $items['sb-token-set-ajax'] = array(
     'page callback' => '_springboard_token_set_ajax_fetch',
     'page arguments' => array(1),
     'access arguments' => array('access content'),
     'type' => MENU_CALLBACK,
   );
-
   return $items;
 }
 
@@ -210,6 +230,13 @@ function springboard_token_set_sets_admin_form($form, &$form_state) {
 
   $form = array();
 
+  $form['add-token-set'] = array(
+    '#markup' => l('+ Add token set', 'admin/config/content/token-sets/add', array(
+      'query' => array('destination' => 'admin/config/content/token-sets'),
+      'attributes' => array('class' => array('add-token-set')))
+    ),
+  );
+
   $form['token-sets'] = array(
     '#type' => 'container',
     '#tree' => TRUE,
@@ -225,49 +252,163 @@ function springboard_token_set_sets_admin_form($form, &$form_state) {
 
     $tokens = springboard_token_set_get_tokens($token_set->tsid);
 
+    // Column labels:
+    $form['token-sets']['token-set-' . $token_set->tsid]['labels'] = array(
+      '#markup' =>
+        '<div class="token-labels">' .
+          '<span class="token-label">Token</span>' .
+          '<span class="token-label">Token description</span>' .
+        '</div>',
+    );
+
     foreach ($tokens as $token) {
       $form['token-sets']['token-set-' . $token_set->tsid][$token->token] = array(
         '#type' => 'container',
       );
-
       $form['token-sets']['token-set-' . $token_set->tsid][$token->token]['token'] = array(
         '#type' => 'textfield',
+        '#disabled' => TRUE,
         '#default_value' => $token->token,
       );
-
       $form['token-sets']['token-set-' . $token_set->tsid][$token->token]['token_description'] = array(
         '#type' => 'textfield',
         '#default_value' => $token->token_description,
       );
-
       $form['token-sets']['token-set-' . $token_set->tsid][$token->token]['delete'] = array(
-        '#type' => 'checkbox',
-        '#title' => 'Remove token from token set',
+        '#markup' => '<a href="#" class="remove-token-link" tsid="' . $token_set->tsid . '" tid="' . $token->tid . '">Remove token</a>',
       );
     }
+
+    // Add tokens to a token set via AJAX submit:
+    $form['token-sets']['token-set-' . $token_set->tsid]['add-token'] = array(
+      '#type' => 'container',
+    );
+    $form['token-sets']['token-set-' . $token_set->tsid]['add-token']['new_token'] = array(
+      '#type' => 'textfield',
+      '#attributes' => array('class' => array('token-machine'), 'tsid' => $token_set->tsid),
+    );
+    $form['token-sets']['token-set-' . $token_set->tsid]['add-token']['new_token_description'] = array(
+      '#type' => 'textfield',
+      '#attributes' => array('class' => array('token-description'), 'tsid' => $token_set->tsid),
+    );
+    $form['token-sets']['token-set-' . $token_set->tsid]['add-token']['add-button'] = array(
+      '#type' => 'button',
+      '#attributes' => array('class' => array('add-token-button'), 'tsid' => $token_set->tsid),
+      '#value' => 'Add token',
+    );
+
+    // Token set deletion:
+    $form['token-sets']['token-set-' . $token_set->tsid]['delete-token-set'] = array(
+      '#markup' => l('Delete token set', 'admin/config/content/token-sets/delete/' . $token_set->tsid, array(
+        'query' => array('destination' => 'admin/config/content/token-sets'),
+        'attributes' => array('class' => array('delete-token-set')))
+      ),
+    );
   }
-
-  $form['submit-button'] = array(
-    '#type' => 'submit',
-    '#value' => 'Submit',
-  );
-
-  $form['#submit'] = array('springboard_token_set_sets_admin_form_submit');
 
   $form['#attached']['css'] = array(
     'data' => drupal_get_path('module', 'springboard_token_set') . '/css/springboard_token_set_admin.css',
     'type' => 'file',
   );
-
+  $form['#attached']['js'] = array(
+    'data' => drupal_get_path('module', 'springboard_token_set') . '/js/springboard_token_set_admin.js',
+    'type' => 'file',
+  );
   return $form;
 }
 
 /**
- * Submit handler for token sets admin form.
+ * Page callback for "add token set" admin form.
  */
-function springboard_token_set_sets_admin_form_submit($form, $form_state) {
-
+function springboard_token_set_add_token_set_admin_form($form, &$form_state) {
+  $form['add-token-set'] = array(
+    '#type' => 'fieldset',
+  );
+  $form['add-token-set']['token-set-name'] = array(
+    '#type' => 'textfield',
+    '#title' => 'Token set name',
+    '#description' => 'Please enter a human-readable name for this token set.',
+    '#maxlength' => '64',
+    '#required' => TRUE,
+  );
+  $form['add-token-set']['submit'] = array(
+    '#type' => 'submit',
+    '#value' => 'Save token set',
+    '#suffix' => l('Cancel', 'admin/config/content/token-sets'),
+  );
+  return $form;
 }
+
+/**
+ * Form validation handler for "add token set" admin form.
+ */
+function springboard_token_set_add_token_set_admin_form_validate($form, &$form_state) {
+  // Make sure the new token set's name is unused:
+  $new_name = trim($form_state['values']['token-set-name']);
+  $name_query = db_query("SELECT name FROM {springboard_token_sets} WHERE name LIKE :name",
+    array(':name' => $new_name));
+  foreach ($name_query as $result) {
+    form_set_error('token-set-name', t('A token set called ":name" already exists! Please enter an unused name for this token set.', array(':name' => $result->name)));
+  }
+}
+
+/**
+ * Form submit handler for "Add token set" admin form.
+ */
+function springboard_token_set_add_token_set_admin_form_submit($form, &$form_state) {
+  $new_name = trim($form_state['values']['token-set-name']);
+  db_query("INSERT INTO {springboard_token_sets} (name) VALUES(:name)", array(':name' => $new_name));
+  drupal_set_message('Token set "' . $new_name . '" has been created!');
+}
+
+/**
+ * Page callback for "Delete token set" admin form.
+ */
+function springboard_token_set_delete_token_set_admin_form($form, &$form_state) {
+  $arg5 = arg(5);
+  if (!is_numeric($arg5)) {
+    drupal_set_message('The token set ID is expected but not present in the URL.');
+    return array();
+  }
+  $tsid = $arg5;
+  $token_set_name = db_query("SELECT name FROM {springboard_token_sets} WHERE tsid = :tsid", array(':tsid' => $tsid))
+    ->fetchField();
+  drupal_set_title(t('Are you sure you want to delete token set "' . $token_set_name . '"?'));
+  $form['delete-token-set']['submit'] = array(
+    '#prefix' => '<div id="ts-delete-blurb">This action cannot be undone.</div><br />',
+    '#suffix' => l('Cancel', 'admin/config/content/token-sets'),
+    '#type' => 'submit',
+    '#value' => 'Delete',
+  );
+  return $form;
+}
+
+/**
+ * Form submit for the token set deletion form:
+ */
+function springboard_token_set_delete_token_set_admin_form_submit($form, &$form_state) {
+  $arg5 = arg(5);
+  if (!is_numeric($arg5)) {
+    drupal_set_message('The token set ID is expected but not present in the URL.');
+    return array();
+  }
+  $tsid = $arg5;
+
+  $token_set_name = db_query("SELECT name FROM {springboard_token_sets} WHERE tsid = :tsid", array(':tsid' => $tsid))
+    ->fetchField();
+
+  // Delete records mapping tokens to this token set:
+  db_query("DELETE FROM {springboard_token_set_tokens} WHERE tsid = :tsid", array(':tsid' => $tsid));
+
+  // Also delete any tokens no longer associated with any token sets:
+  db_query("DELETE FROM {springboard_tokens} WHERE tid NOT IN (SELECT tid FROM {springboard_token_set_tokens})");
+
+  // Finally, delete the token set itself:
+  db_query("DELETE FROM {springboard_token_sets} WHERE tsid = :tsid LIMIT 1", array(':tsid' => $tsid));
+
+  drupal_set_message('Token set "' . $token_set_name . '" has been deleted!');
+}
+
 
 /**
  * Gets an array of field types that can be used with tokens.
@@ -553,4 +694,117 @@ function _springboard_token_set_ajax_fetch($tsid) {
     }
   }
   drupal_json_output($output_data);
+}
+
+/**
+ * AJAX callback for removing a token from a token set on the token set manager form.
+ * The token's record will also be deleted if it is not used in any other token sets.
+ */
+function _springboard_token_set_admin_delete_token_ajax() {
+  // Ensure required data is present:
+  if (!isset($_POST['tsid']) || !is_numeric($_POST['tsid']) || !isset($_POST['tid']) || !is_numeric($_POST['tid'])) {
+    echo 'There was a problem with the removal of this token!';
+    return;
+  }
+  $tid = $_POST['tid']; $tsid = $_POST['tsid'];
+  // Remove this token from its token set:
+  db_query("DELETE FROM {springboard_token_set_tokens} WHERE tid = :tid AND tsid = :tsid",
+    array(':tid' => $tid, ':tsid' => $tsid));
+
+  // Delete this token if it is not being used anywhere:
+  db_query("DELETE FROM {springboard_tokens} WHERE tid = :tid AND tid NOT IN (SELECT tid FROM {springboard_token_set_tokens})",
+    array(':tid' => $tid));
+
+  // Tell jQuery the operation was successful:
+  echo 'success';
+}
+
+/**
+ * AJAX callback for adding a new token to a token set on the token set manager form.
+ */
+function _springboard_token_set_admin_add_token_ajax() {
+  // Ensure required data is present:
+  if (!isset($_POST['tsid']) || !is_numeric($_POST['tsid'])) {
+    echo 'There was a problem with creating this token!';
+    return;
+  }
+  else if (!isset($_POST['token_machine']) || empty($_POST['token_machine'])) {
+    echo 'Please enter the token, for example: [donation:foo]';
+    return;
+  } 
+  else if (!isset($_POST['token_descr']) || empty($_POST['token_descr'])) {
+    echo 'Please enter a description for this token.';
+    return;
+  }
+  $tsid = $_POST['tsid'];
+  $token_machine = check_plain($_POST['token_machine']); $token_machine = trim($token_machine);
+  $token_descr = check_plain($_POST['token_descr']); $token_descr = trim($token_descr);
+  $token_descr = str_replace('&#039;', "'", $token_descr);
+
+  // Validate token format:
+  if (strpos($token_machine, ':') === FALSE
+    || strpos($token_machine, '[') !== 0
+    || strpos($token_machine, ']') !== (strlen($token_machine) - 1)
+  ) {
+    echo 'Please ensure the token format is correct; for example: [foo:bar]';
+    return;
+  }
+
+  // Get the token type:
+  $token_type_data = str_replace(array('[', ']'), '', $token_machine);
+  $token_data = explode(':', $token_type_data);
+  if (!is_array($token_data) || !isset($token_data[0]) || empty($token_data[0]) || strpos($token_data[0], ':') !== FALSE) {
+    echo 'Please ensure the token format is correct; for example: [foo:bar]';
+    return;
+  }
+  $token_type = strtolower($token_data[0]);
+
+  // Make sure this token type exists:
+  $type_query = db_query("SELECT token_type FROM {springboard_token_types} WHERE token_type = :token_type",
+    array(':token_type' => $token_type));
+  $type_exists = FALSE;
+  foreach ($type_query as $result) {
+    $type_exists = TRUE;
+  }
+  if (!$type_exists) {
+    echo 'Please enter a valid token type; for example, "donation" is the token type for [donation:foo]';
+    return;
+  }
+
+  // If this token already exists then get its token ID; otherwise, create it and then get the token ID:
+  $exists_query = db_query("SELECT tid FROM {springboard_tokens} WHERE token = :token", array(':token' => $token_machine));
+  foreach ($exists_query as $result) {
+    $tid = $result->tid;
+  }
+  if (!isset($tid)) {
+    // Create the token if it doesn't already exist:
+    db_query("INSERT INTO {springboard_tokens} (token_type, token, token_description) " .
+      "VALUES(:token_type, :token_machine, :token_descr)", array(
+        ':token_type' => $token_type, 
+        ':token_machine' => $token_machine,
+        ':token_descr' => $token_descr,
+      ));
+    // Get the token ID for the newly inserted token:
+    $tid_query = db_query("SELECT tid FROM {springboard_tokens} WHERE token = :token_machine",
+      array(':token_machine' => $token_machine));
+    foreach ($tid_query as $result) {
+      $tid = $result->tid;
+    }
+  }
+
+  // Check if this token is already associated with the target token set:
+  $ts_map_query = db_query("SELECT tid FROM {springboard_token_set_tokens} WHERE tsid = :tsid AND tid = :tid",
+    array(':tsid' => $tsid, ':tid' => $tid));
+  foreach ($ts_map_query as $result) {
+    echo 'Token ' . $token_machine . ' already belongs to this token set!';
+    return;
+  }
+  // Map the token to the target token set:
+  db_query("INSERT INTO {springboard_token_set_tokens} (tsid, tid) VALUES(:tsid, :tid)", array(
+    ':tsid' => $tsid,
+    ':tid' => $tid,
+  ));
+
+  // Tell jQuery the tid of the newly added token row:
+  echo $tid;
 }

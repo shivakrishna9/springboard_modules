@@ -1,3 +1,26 @@
 div#edit-tokens div.form-item, div#edit-token-sets div.form-item {
   display: inline-block;
 }
+
+#springboard-token-set-sets-admin-form a.add-token-set {
+  display: block;
+  font-size: 13px;
+  font-weight: bold;
+  margin-bottom: 16px;
+}
+#springboard-token-set-sets-admin-form a.delete-token-set {
+  float: right;
+  font-size: 13px;
+  font-weight: bold;
+}
+#springboard-token-set-sets-admin-form .token-labels {
+  clear: both;
+  height: 18px;
+}
+#springboard-token-set-sets-admin-form .token-labels .token-label {
+  float: left;
+  height: 16px;
+  overflow: hidden;
+  margin-right: 4px;
+  width: 343.993px;
+}
