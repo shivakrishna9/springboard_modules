@@ -514,15 +514,15 @@ function springboard_admin_theme($existing, $type, $theme, $path) {
   return array(
     'springboard_admin_forms_page' => array(
       'variables' => array('tables' => array(), 'types' => array()),
-      'template' => drupal_get_path('module', $theme) . '/templates/springboard-admin-forms-page',
+      'template' => '/templates/springboard-admin-forms-page',
     ),
     'springboard_admin_asset_page' => array(
       'variables' => array('tables' => array(), 'types' => array()),
-      'template' => drupal_get_path('module', $theme) . '/templates/springboard-admin-asset-page',
+      'template' => '/templates/springboard-admin-asset-page',
     ),
     'springboard_admin_home_link' => array(
       'variables' => array('springboard_link' => ''),
-      'template' => drupal_get_path('module', $theme) . '/templates/springboard-admin-home-link',
+      'template' => '/templates/springboard-admin-home-link',
     ),
   );
 }

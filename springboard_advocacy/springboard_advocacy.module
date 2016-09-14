@@ -429,12 +429,12 @@ function springboard_advocacy_settings_submit($form, $form_state) {
  *
  * Wraps various views in a common theme template.
  */
-function springboard_advocacy_theme($existing, $type, $theme) {
+function springboard_advocacy_theme($existing, $type, $theme, $path) {
   $path = drupal_get_path('module', 'springboard_advocacy');
   $templates = array(
     'springboard_advocacy_dashboard' => array(
       'variables' => array('sections' => array()),
-      'template' => drupal_get_path('module', $theme) . '/templates/springboard-advocacy-dashboard',
+      'template' => '/templates/springboard-advocacy-dashboard',
     ),
 
     'springboard_advocacy_views_attachment_before' => array(

@@ -169,9 +169,7 @@ function springboard_p2p_springboard_admin_admin_menu_items_alter(&$items) {
 /**
  * Implements hook_theme().
  */
-function springboard_p2p_theme($existing, $type, $theme) {
-  $path = drupal_get_path('module', 'springboard_p2p');
-
+function springboard_p2p_theme($existing, $type, $theme, $path) {
   $templates = array(
     'springboard_p2p_admin_settings' => array(
       'render element' => 'form',
@@ -180,7 +178,7 @@ function springboard_p2p_theme($existing, $type, $theme) {
     ),
     'springboard_p2p_dashboard' => array(
       'variables' => array('views' => array()),
-      'template' => drupal_get_path('module', $theme) . '/templates/springboard-p2p-dashboard',
+      'template' => '/templates/springboard-p2p-dashboard',
     ),
   );
 
