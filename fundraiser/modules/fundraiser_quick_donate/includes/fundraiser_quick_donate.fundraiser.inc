@@ -72,7 +72,12 @@ function fundraiser_quick_donate_fundraiser_donation_form($form, $form_state) {
     drupal_alter('fundraiser_quick_donate_fundraiser_donation_form_stored_cards', $stored_cards);
 
     // The ID of the cardonfile record specified for quick donations.
-    $quick_donate_card = _fundraiser_quick_donate_get_payment_info_for_uid($user->uid);
+    if (isset($_SESSION['springboard_hmac']['quickdonate']['card_id']) && !empty($_SESSION['springboard_hmac']['quickdonate']['card_id'])) {
+      $quick_donate_card = $_SESSION['springboard_hmac']['quickdonate']['card_id'];
+    }
+    else {
+      $quick_donate_card = _fundraiser_quick_donate_get_payment_info_for_uid($user->uid);
+    }
 
     // Build options form.
     $cardonfile_options_form = array();

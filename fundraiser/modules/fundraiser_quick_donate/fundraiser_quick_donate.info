@@ -5,4 +5,5 @@ core = 7.x
 dependencies[] = commerce_cardonfile
 dependencies[] = commerce_payment
 dependencies[] = fundraiser
+dependencies[] = springboard_cookie
 dependencies[] = springboard_hmac

@@ -115,12 +115,26 @@ function fundraiser_quick_donate_admin_settings_autocomplete_callback($gateway_k
  */
 function fundraiser_quick_donate_admin_settings_submit($form, &$form_state) {
   foreach ($form_state['values'] as $key => $value) {
-    if (strpos($key, FUNDRAISER_QUICK_DONATE_DEFAULT_FORM_PREFIX) === FALSE) {
+    if (strpos($key, FUNDRAISER_QUICK_DONATE_DEFAULT_FORM_PREFIX) === FALSE || empty($value)) {
       continue;
     }
     $match = preg_match('/.*\[([0-9]+)\].*/', $value, $matches);
-    if ($match !== FALSE && count($matches) < 2) {
-      continue;
+    if (!$match || $match !== FALSE && count($matches) < 2) {
+      if (!is_numeric($value)) {
+        continue;
+      }
+
+      // Try to get the title based on just the node ID.
+      $query = db_query('SELECT title FROM {node} WHERE nid = :nid', array(
+        ':nid' => $value,
+      ))->fetchField();
+
+      if (empty($query)) {
+        continue;
+      }
+
+      $form_state['values'][$key] = $query . ' [' . $value . ']';
+      $matches[1] = $value;
     }
     $data = array(
       'title' => $form_state['values'][$key],
@@ -197,9 +211,6 @@ function fundraiser_quick_donate_token_generator($form, $form_state) {
  *
  * @param int $uid
  *   The uid of the user.
- *
- * @return array
- *   An array of card ids for the user.
  */
 function _fundraiser_quick_donate_admin_get_card_ids_by_uid($uid) {
   $query = new EntityFieldQuery();

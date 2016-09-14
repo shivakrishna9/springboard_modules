@@ -1,7 +1,7 @@
 <?php
 /**
  * @file
- * springboard_hmac hooks for Springboard Quick Donate.
+ * Springboard HMAC hook implementations for Springboard Quick Donate.
  */
 
 /**
@@ -88,7 +88,9 @@ function fundraiser_quick_donate_springboard_hmac_success($payload) {
     return;
   }
 
-  // Otherwise redirect to the calculated form ID.
+  // Otherwise save the card ID to a session and redirect to the calculated form
+  // ID.
+  $_SESSION['springboard_hmac']['quickdonate']['card_id'] = $payload['card_id'];
   drupal_goto('node/' . $goto_nid);
 }
 
@@ -127,7 +129,6 @@ function _fundraiser_quick_donate_springboard_hmac_check_user($goto_nid, $payloa
 
   return $user;
 }
-
 
 /**
  * Return the node ID of the fundraiser for an HMAC token.
