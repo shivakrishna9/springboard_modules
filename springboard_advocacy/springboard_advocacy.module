@@ -434,7 +434,7 @@ function springboard_advocacy_theme($existing, $type, $theme) {
   $templates = array(
     'springboard_advocacy_dashboard' => array(
       'variables' => array('sections' => array()),
-      'template' => drupal_get_path('theme', $theme) . '/templates/springboard-advocacy-dashboard',
+      'template' => drupal_get_path('module', $theme) . '/templates/springboard-advocacy-dashboard',
     ),
 
     'springboard_advocacy_views_attachment_before' => array(

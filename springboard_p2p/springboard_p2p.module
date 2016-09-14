@@ -180,7 +180,7 @@ function springboard_p2p_theme($existing, $type, $theme) {
     ),
     'springboard_p2p_dashboard' => array(
       'variables' => array('views' => array()),
-      'template' => drupal_get_path('theme', $theme) . '/templates/springboard-p2p-dashboard',
+      'template' => drupal_get_path('module', $theme) . '/templates/springboard-p2p-dashboard',
     ),
   );
 
