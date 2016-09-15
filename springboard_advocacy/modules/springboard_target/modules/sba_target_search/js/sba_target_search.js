@@ -336,12 +336,12 @@
             $('.faux-tab').removeClass('active');
             Sba.setTargetType("Target");
             //Sba.toggleStateAndBranch();
-            custIndividualWidgets.hide();
+            custGroupWidgets.hide();
             legWidgets.hide();
             comWidgets.hide();
             custHideWidgets.hide();
             custWidgets.show(300);
-            custGroupWidgets.show(300);
+            custIndividualWidgets.show(300);
             $('.faux-tab.custom-individual').addClass('active');
             $('#edit-submit-targets').show().attr('value', 'Search');
         }
@@ -1492,6 +1492,7 @@
             }
             if (this.type == 'text') {
                 $(this).val('');
+                $(this).attr('value', ''); // I'm not sure why this is needed, but the POST values were not being cleared with .val()
                 $(this).prop('disabled', false);
                 $(this).removeClass('disabled');
             }
