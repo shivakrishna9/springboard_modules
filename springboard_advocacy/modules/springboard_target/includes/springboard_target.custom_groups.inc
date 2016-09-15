@@ -42,11 +42,15 @@ function springboard_target_group_form($group_id = NULL) {
     }
     $group = $response->data;
   }
+  else {
+    $group = NULL;
+  }
 
-  $form['group_name'] = array(
+  $form['group_group_name'] = array(
     '#type' => 'textfield',
     '#title' => t('Group Name'),
     '#default_value' => isset($group->name) ? $group->name : '',
+    '#description' => t('Provide a descriptive name for your group.'),
     '#size' => 40,
     '#maxlength' => 128,
     '#required' => TRUE,
@@ -75,7 +79,7 @@ function springboard_target_group_form_validate($form, &$form_state) {
   $is_new = TRUE;
   $group = array(
     'recipients' => '',
-    'name' => $values['group_name'],
+    'name' => $values['group_group_name'],
     'is_template' => 1,
   );
   if(isset($values['data']['group_id']) && $values['data']['group_id'] != '') {
