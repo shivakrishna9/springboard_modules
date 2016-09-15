@@ -14,6 +14,15 @@ function springboard_token_set_menu() {
     'type' => MENU_NORMAL_ITEM,
     'weight' => 0,
   );
+ /* $items['admin/config/content/token-set-fields'] = array(
+    'title' => 'Springboard Token Fields',
+    'description' => 'Enable/disable tokens for a given form field.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('springboard_token_set_fields_admin_form'),
+    'access arguments' => array('administer springboard'),
+    'type' => MENU_NORMAL_ITEM,
+    'weight' => 0,
+  ); */
   $items['admin/config/content/token-sets'] = array(
     'title' => 'Springboard Token Sets',
     'description' => 'Manage tokens within token sets.',
@@ -54,6 +63,40 @@ function springboard_token_set_menu() {
     'type' => MENU_CALLBACK,
   );
   return $items;
+}
+
+/**
+ * Token set field manager form.
+ */
+function springboard_token_set_fields_admin_form($form, &$form_state) {
+  $form = array();
+  // Loop over existing settings
+
+  // Add AJAXified fields for adding/removing a default token set to a field:
+  $form['token-fields']['add-mapping'] = array(
+    '#type' => 'container',
+  );
+  $form['token-fields']['add-mapping']['form_id'] = array(
+    '#type' => 'select',
+    '#title' => 'Target form',
+    '#options' => array('- Select a form -'),
+  );
+  $form['token-fields']['add-mapping']['field_key'] = array(
+    '#type' => 'select',
+    '#disabled' => TRUE,
+    '#title' => 'Target field',
+    '#options' => array('- Select a form field -'),
+  );
+  $form['token-fields']['add-mapping']['token_set'] = array(
+    '#type' => 'select',
+    '#title' => 'Desired token set',
+    '#options' => array('- Select a Token Set -'),
+  );
+  $form['token-fields']['add-mapping']['token_add'] = array(
+    '#type' => 'button',
+    '#value' => 'Enable',
+  );
+  return $form;
 }
 
 /**
@@ -178,6 +221,7 @@ function springboard_token_set_tokens_admin_form($form, &$form_state) {
 
     $form['tokens']['token-' . $token->tid]['token'] = array(
       '#type' => 'textfield',
+      '#disabled' => TRUE,
       '#size' => 40,
       '#default_value' => $token->token,
     );
