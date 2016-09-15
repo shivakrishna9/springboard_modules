@@ -892,7 +892,7 @@ function springboard_dw_queue_legacy_get_missing_records($type) {
                             SELECT 'webform_submissions' as table_name, sid as id
                               FROM {webform_submissions} ws
                               INNER JOIN {node} n on n.nid = ws.nid
-                              WHERE n.type IN (" . $excluded_string . ")
+                              WHERE n.type NOT IN (" . $excluded_string . ")
                             UNION ALL
                             SELECT 'springboard_data_warehouse' as table_name, drupal_id as id
                               FROM {springboard_data_warehouse}
