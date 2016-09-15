@@ -18,7 +18,8 @@ fieldset#token-set-tokens {
   margin-bottom: 10px;
   padding-bottom: 0;
   position: relative;
-  top: -23px;
+  top: -47px;
+  z-index: 0;
 }
 #token-set-tokens .token-set-tokens-inner {
   background: #fff;
@@ -45,7 +46,13 @@ fieldset#token-set-tokens {
 .sb-tokens-expander,
 .sb-tokens-contractor {
   font-weight: bold;
-  margin-bottom: 14px;
+  margin-bottom: 12px;
+  position: relative;
+  z-index: 1;
+}
+.sb-tokens-expander a,
+.sb-tokens-contractor a {
+  line-height: 35px;
 }
 div.token-ui-header {
   clear: both;
