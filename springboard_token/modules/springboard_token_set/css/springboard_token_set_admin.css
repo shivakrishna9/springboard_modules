@@ -24,3 +24,19 @@ div#edit-tokens div.form-item, div#edit-token-sets div.form-item {
   margin-right: 4px;
   width: 343.993px;
 }
+#springboard-token-set-fields-admin-form .form-item {
+  float: left;
+  margin-right: 20px;
+}
+#springboard-token-set-fields-admin-form .form-item select {
+  width: 100%;
+}
+#springboard-token-set-fields-admin-form .form-item-form-id {
+  width: 28%;
+}
+#springboard-token-set-fields-admin-form .form-item-field-key {
+  width: 30%;
+}
+#springboard-token-set-fields-admin-form #edit-token-add {
+  margin-top: 22px;
+}
