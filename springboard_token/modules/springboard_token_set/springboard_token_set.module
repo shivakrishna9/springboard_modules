@@ -316,6 +316,7 @@ function springboard_token_set_sets_admin_form($form, &$form_state) {
       );
       $form['token-sets']['token-set-' . $token_set->tsid][$token->token]['token_description'] = array(
         '#type' => 'textfield',
+        '#disabled' => TRUE,
         '#default_value' => $token->token_description,
       );
       $form['token-sets']['token-set-' . $token_set->tsid][$token->token]['delete'] = array(
