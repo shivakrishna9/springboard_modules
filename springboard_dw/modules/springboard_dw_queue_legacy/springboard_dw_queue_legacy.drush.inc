@@ -820,7 +820,7 @@ function springboard_dw_queue_legacy_get_missing_records($type) {
                             UNION ALL
                             SELECT 'springboard_data_warehouse' as table_name, drupal_id as id
                               FROM {springboard_data_warehouse}
-                              WHERE type = 'contact'
+                              WHERE type = 'donation'
                           ) tmp
                           GROUP BY id
                           HAVING COUNT(*) = 1")->fetchAll();
@@ -896,7 +896,7 @@ function springboard_dw_queue_legacy_get_missing_records($type) {
                             UNION ALL
                             SELECT 'springboard_data_warehouse' as table_name, drupal_id as id
                               FROM {springboard_data_warehouse}
-                              WHERE type = 'advocacy action'
+                              WHERE type = 'submission'
                           ) tmp
                           GROUP BY id
                           HAVING COUNT(*) = 1")->fetchAll();
