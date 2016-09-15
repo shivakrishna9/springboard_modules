@@ -3447,6 +3447,40 @@ function fundraiser_sustainers_auto_cancel($donation) {
 }
 
 /**
+ * Creates a form for donation amount update.
+ */
+function fundraiser_sustainers_billing_update_form($form, &$form_state, $donation) {
+  // Include some extra info to provide context.
+  $form['series-info'] = array(
+    '#prefix' => '<div id="recurring-series-info">',
+    '#suffix' => '</div>',
+  );
+  $form['series-info']['recurring-payment-info'] = array(
+    '#markup' => fundraiser_sustainers_donation_payment_info($donation, $donation->did),
+  );
+  $form['series-info']['recurring-payment-link'] = array(
+    '#markup' => l("Edit Recurring Donation", "user/{$donation->uid}/recurring_overview/{$donation->did}"),
+    '#prefix' => '<div id="payment-edit-link">',
+    '#suffix' => '</div>',
+  );
+
+  // Build the generic billing update form.
+  $data = array(
+    'donation' => $donation,
+  );
+  $form = fundraiser_update_billing_form($form, $form_state, $data);
+  return $form;
+}
+
+/**
+ * Access function for the billing form. Only accept the user him/herself.
+ */
+function fundraiser_sustainers_billing_update_access($donation) {
+  global $user;
+  return ($donation->uid == $user->uid);
+}
+
+/**
  * Cron queue worker callback.
  *
  * Creates the sustainer series during cron.
