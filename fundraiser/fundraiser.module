@@ -3670,7 +3670,7 @@ function fundraiser_update_billing_form($form, &$form_state, $data) {
   // If the 'calling module' array element is set, also provide a more granular
   // hook for modules to hook into. This granular hook name will be
   // `fundraiser_update_billing_form_preprocess__{calling module}`.
-  if (isset($data['calling module']) && !empty($data['calling module'])) {
+  if (!empty($data['calling module'])) {
     $functions[] = sprintf('fundraiser_update_billing_form_preprocess__%s', $data['calling module']);
   }
   foreach ($functions as $function) {
@@ -3761,8 +3761,10 @@ function fundraiser_update_billing_form($form, &$form_state, $data) {
   // Allow other modules to alter this form.
   $functions = array(
     'fundraiser_update_billing_form',
-    sprintf('fundraiser_update_billing_form__%s_', $data['calling module']),
   );
+  if (!empty($data['calling module'])) {
+    sprintf('fundraiser_update_billing_form__%s', $data['calling module']);
+  }
   foreach ($functions as $function) {
     drupal_alter($function, $form, $form_state, $data);
   }
