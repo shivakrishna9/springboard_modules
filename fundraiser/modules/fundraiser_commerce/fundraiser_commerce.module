@@ -936,7 +936,7 @@ function fundraiser_commerce_fundraiser_donation_get_donation($donation) {
         if (isset($map[$field_name])) {
           $order_name = $map[$field_name];
           $donation->donation[$field_name] = isset($profile->data[$order_name]) ?
-            $profile->data[$order_name] : '';
+            $profile->data[$order_name] : $profile->commerce_customer_address[LANGUAGE_NONE][0][$order_name];
         }
       }
     }
