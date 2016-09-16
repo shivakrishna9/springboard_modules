@@ -69,11 +69,13 @@ function springboard_advocacy_dashboard($path, $arg = NULL) {
           'header' => t('Custom Targets'),
           'content' => $targets_view->preview(),
           'css' => drupal_get_path('module', 'springboard_advocacy') . '/css/sba.css',
+          'manage_link' => array('title' => t('View All Custom Targets'), 'href' => 'admin/springboard/advocacy/targets/custom-targets'),
         ),
         'sba_groups' => array(
           'header' => t('Custom Groups'),
           'content' => $groups_view->preview(),
           'css' => drupal_get_path('module', 'springboard_advocacy') . '/css/sba.css',
+          'manage_link' => array('title' => t('View all Target Groups'), 'href' => 'admin/springboard/advocacy/targets/custom-groups'),
         ),
       );
 
