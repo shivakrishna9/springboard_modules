@@ -221,11 +221,22 @@ function sba_message_edit_form($form, &$form_state, $sba_message) {
     // recipients as a re-usable custom group.
     $recipients = json_decode($sba_message->data['recipients'], TRUE);
     if(empty($recipients)){
+      $form['save_target_group_toggle_val'] = array(
+        '#type' => 'hidden',
+        '#value' => '',
+        '#attributes' => array('id' => 'edit-save-target-group-save-target-group-toggle_val'),
+      );
+      $form['save_target_group_name_val'] = array(
+        '#type' => 'hidden',
+        '#value' => '',
+        '#attributes' => array('id' => 'edit-save-target-group-save-target-group-name_val'),
+
+      );
       $form['save_target_group'] = array(
         '#tree' => true,
         '#type' => 'container',
+        '#title' => 'save target group',
         '#weight' => 99,
-        '#element_validate' => array('sba_message_save_target_group_validate'),
       );
       $form['save_target_group']['save_target_group_toggle'] = array(
         '#type' => 'checkbox',
@@ -245,6 +256,7 @@ function sba_message_edit_form($form, &$form_state, $sba_message) {
           ),
         ),
       );
+      $form['#validate'][] = 'sba_message_save_target_group_validate';
     }
   }
 
@@ -261,9 +273,9 @@ function sba_message_edit_form($form, &$form_state, $sba_message) {
  */
 
 function sba_message_save_target_group_validate($element, &$form_state, $form) {
-  $values = $form_state['values'];
-  if($values['save_target_group']['save_target_group_toggle'] == 1) {
-    if($values['save_target_group']['save_target_group_name'] == '') {
+  $values = $form_state['input'];
+  if($values['save_target_group_toggle_val'] == 1) {
+    if($values['save_target_group_name_val'] == '') {
       form_set_error('save_target_group_name', t('Please provide a name for your custom group.'));
     }
     else if(!isset($values['data']['recipients']) || $values['data']['recipients'] == '') {
@@ -273,7 +285,7 @@ function sba_message_save_target_group_validate($element, &$form_state, $form) {
       // Build a group object for saving
       $group = array(
         'recipients' => $values['data']['recipients'],
-        'name' => $values['save_target_group']['save_target_group_name'],
+        'name' => $values['save_target_group_name_val'],
         'is_template' => 1,
       );
       module_load_include('inc', 'springboard_target', 'includes/springboard_target.api_calls');
@@ -283,7 +295,7 @@ function sba_message_save_target_group_validate($element, &$form_state, $form) {
         $recipients[] = array(
           'id' => $group_id,
           'type' => 'group',
-          'name' => $values['save_target_group']['save_target_group_name'],
+          'name' => $values['save_target_group_name_val'],
           );
         $form_state['values']['data']['recipients'] = json_encode($recipients);
       }

@@ -27,10 +27,30 @@
      // container, and other UI prep.
      Sbam.messageFormUI = function() {
           if ($('#springboard-advocacy-find-targets-container')) {
-               var groupSave = $('#edit-save-target-group').detach();
-             $('#springboard-advocacy-target-recipients-container .inner').append(groupSave);
+               $('#edit-save-target-group').once(function(){
+                    var groupSave = $('#edit-save-target-group').detach();
+                    $('#springboard-advocacy-target-recipients-container .inner').append(groupSave);
+               });
+               // Events to populate the real hidden form elements with values from
+               // the visible UI form inputs (because they need to be moved outside
+               // the real form for UI presentation)
+               $('#edit-save-target-group input').change(function(){
+                    var id = $(this).attr('id');
+                    console.log('change ' + id);
+                    if($(this).attr('type') == 'checkbox') {
+                         if($(this).prop('checked')) {
+                              $('input#' + id + '_val').val($(this).val());
+                         }
+                         else {
+                              $('input#' + id + '_val').val(null);
+                         }
+                    }
+                    else {
+                         $('input#' + id + '_val').val($(this).val());
+                    }
+               });
           }
-     }
+     };
 
     //set up the event for the message save button validation and submit
     Sbam.messageFormSubmitter = function () {
