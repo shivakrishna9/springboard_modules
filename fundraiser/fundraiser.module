@@ -3748,8 +3748,22 @@ function fundraiser_update_billing_form($form, &$form_state, $data) {
     $form['payment_fields'] = array_replace_recursive($form['payment_fields'], $data['payment_fields']);
   }
 
-  if (isset($data['card'])) {
-    $form_state['card'] = $data['card'];
+  $form_state['op'] = 'update';
+  $card = NULL;
+  if (isset($data['card']) && !empty($data['card'])) {
+    $card = $data['card'];
+  }
+  elseif ((!isset($data['card']) || empty($data['card'])) && isset($data['donation'])) {
+    // Try to load the card from the donation.
+    $card_id = $data['donation']->data['cardonfile'];
+    $card = commerce_cardonfile_load($card_id);
+  }
+  if (!empty($card)) {
+    $form_state['card'] = $card;
+    $form['actions']['cancel'] = array(
+      '#markup' => '<span class="cancel"> or ' . l(t('Cancel'), 'user/' . $card->uid . '/cards') . '</span>',
+      '#weight' => 20,
+    );
   }
 
   $form['actions']['submit']['#type'] = 'submit';
@@ -3757,6 +3771,10 @@ function fundraiser_update_billing_form($form, &$form_state, $data) {
   $form['#validate'] = array();
 
   $form['#donation'] = $data['donation'];
+
+  // Make the card number and cvv optional by default.
+  $form['#attached']['js'][3]['data']['fundraiser']['js_validation_settings']['card_cvv']->required = FALSE;
+  $form['#attached']['js'][3]['data']['fundraiser']['js_validation_settings']['card_number']->required = FALSE;
 
   // Allow other modules to alter this form.
   $functions = array(
@@ -3769,7 +3787,14 @@ function fundraiser_update_billing_form($form, &$form_state, $data) {
     drupal_alter($function, $form, $form_state, $data);
   }
 
+  // Ensure the validation and submit functions from commerce_cardonfile are
+  // loaded.
+  module_load_include('inc', 'commerce_cardonfile', 'includes/commerce_cardonfile.pages');
+  $form['#validate'][] = '_fundraiser_update_billing_form_validate_prepare_cardonfile';
+  $form['#validate'][] = 'commerce_cardonfile_card_form_validate';
   $form['#validate'][] = 'fundraiser_update_billing_form_validate';
+
+  $form['actions']['submit']['#submit'][] = 'commerce_cardonfile_card_form_submit';
   $form['actions']['submit']['#submit'][] = 'fundraiser_update_billing_form_submit';
 
   return $form;
@@ -3808,6 +3833,25 @@ function _fundraiser_create_field_from_info($field_key, $field_info, $data) {
  */
 function fundraiser_update_billing_form_after_build($form, &$form_state) {
   return fundraiser_donation_form_after_build($form, $form_state);
+}
+
+/**
+ * Validate function to move values for cardonfile.
+ */
+function _fundraiser_update_billing_form_validate_prepare_cardonfile(&$form, &$form_state) {
+  $values = &$form_state['values'];
+  $values['credit_card']['owner'] = $values['first_name'] . ' ' . $values['last_name'];
+  $values['credit_card']['exp_month'] = sprintf('%02d', $values['payment_fields']['credit']['expiration_date']['card_expiration_month']);
+  $values['credit_card']['exp_year'] = $values['payment_fields']['credit']['expiration_date']['card_expiration_year'];
+
+  $form['credit_card']['number']['#default_value'] = $form_state['card']->card_number;
+  if (!empty($values['payment_fields']['credit']['card_number'])) {
+    $_SESSION['card_number'] = $values['credit_card']['number'] = $values['payment_fields']['credit']['card_number'];
+  }
+  else {
+    $_SESSION['card_number'] = $values['credit_card']['number'] = $form_state['card']->card_number;
+  }
+  $values['credit_card']['cardonfile_instance_default'] = $form_state['card']->instance_default;
 }
 
 /**
