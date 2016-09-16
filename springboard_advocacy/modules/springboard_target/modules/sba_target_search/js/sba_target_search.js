@@ -250,8 +250,8 @@
             $('div.narrow-search').remove();
             $('.faux-tab').removeClass('active');
             window.search_state = 'custom';
-            Sba.setTargetType("Target");
             Sba.reset('custom');
+            Sba.setTargetType("Target");
             legWidgets.hide();
             custGroupWidgets.hide();
             comWidgets.hide();
@@ -272,8 +272,8 @@
             $('div.narrow-search').remove();
             $('.faux-tab').removeClass('active');
             window.search_state = 'custom-group';
-            Sba.setTargetType("Group");
             Sba.reset('custom');
+            Sba.setTargetType("Group");
             legWidgets.hide();
             custIndividualWidgets.hide();
             comWidgets.hide();
