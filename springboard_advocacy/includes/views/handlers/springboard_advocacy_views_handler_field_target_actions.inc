@@ -67,19 +67,20 @@ class springboard_advocacy_views_handler_field_target_actions extends views_hand
    * @return string
    */
   function render_links($values) {
-    $legislator = TRUE;
-
+    $type = '';
+    $path = '';
     switch($values->class_name) {
       case "Legislator":
         $path = 'springboard/advocacy/targets/legislator';
+        $type = "legislator";
       break;
       case "group":
         $path = 'springboard/advocacy/targets/custom-groups';
-        $legislator = FALSE;
+        $type = "group";
         break;
       default:
         $path = 'springboard/advocacy/targets/custom-targets';
-        $legislator = FALSE;
+        $type = "target";
         break;
     }
 
@@ -128,11 +129,11 @@ class springboard_advocacy_views_handler_field_target_actions extends views_hand
     }
 
     // Custom targets can be edited and deleted. Legislators can't.
-    if (!$legislator) {
-      if (user_access('edit targets') && !empty($this->options['which_links']['edit'])) {
+    if ($type != "legislator") {
+      if (user_access('edit ' . $type . 's') && !empty($this->options['which_links']['edit'])) {
         $links[] = l(t('edit'), $path . '/' . $values->id . '/edit');
       }
-      if (user_access('delete targets') && !empty($this->options['which_links']['delete'])) {
+      if (user_access('delete ' . $type . 's') && !empty($this->options['which_links']['delete'])) {
         $links[] = l(t('delete'), $path . '/' . $values->id . '/delete');
       }
     }
