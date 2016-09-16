@@ -219,7 +219,7 @@ function sba_message_edit_form($form, &$form_state, $sba_message) {
     $form = sba_target_search_add_target_search_form($form, $form_state, $sba_message);
     // If the message current has no recipients, give the option to save the
     // recipients as a re-usable custom group.
-    $recipients = json_decode($sba_message->data['recipients'], TRUE);
+    $recipients = isset($sba_message->data['recipients']) ? json_decode($sba_message->data['recipients'], TRUE) : '';
     if(empty($recipients)){
       $form['save_target_group_toggle_val'] = array(
         '#type' => 'hidden',
@@ -272,7 +272,7 @@ function sba_message_edit_form($form, &$form_state, $sba_message) {
  * Custom validation callback to save recipients as a custom group.
  */
 
-function sba_message_save_target_group_validate($element, &$form_state, $form) {
+function sba_message_save_target_group_validate(&$form, &$form_state) {
   $values = $form_state['input'];
   if($values['save_target_group_toggle_val'] == 1) {
     if($values['save_target_group_name_val'] == '') {
