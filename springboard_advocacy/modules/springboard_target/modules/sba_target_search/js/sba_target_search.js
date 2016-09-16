@@ -249,9 +249,9 @@
         $('.custom-search').click(function () {
             $('div.narrow-search').remove();
             $('.faux-tab').removeClass('active');
-            Sba.reset('custom');
-            Sba.setTargetType("Target");
             window.search_state = 'custom';
+            Sba.setTargetType("Target");
+            Sba.reset('custom');
             legWidgets.hide();
             custGroupWidgets.hide();
             comWidgets.hide();
@@ -271,9 +271,9 @@
         $('.custom-groups-subsearch').click(function () {
             $('div.narrow-search').remove();
             $('.faux-tab').removeClass('active');
-            Sba.reset('custom');
-            Sba.setTargetType("Group");
             window.search_state = 'custom-group';
+            Sba.setTargetType("Group");
+            Sba.reset('custom');
             legWidgets.hide();
             custIndividualWidgets.hide();
             comWidgets.hide();
