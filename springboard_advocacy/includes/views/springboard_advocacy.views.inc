@@ -687,21 +687,7 @@ function springboard_advocacy_views_pre_render(&$view) {
 function theme_springboard_advocacy_views_attachment_before($vars) {
   $output = '';
   if (!empty($vars['query'])) {
-    if (!empty($vars['view']->build_info['target_ids'])) {
-
-      $ids_required = array(
-        'fields',
-        'gender',
-        'district_name',
-        'gender', 'social',
-      );
-      $ids_required = array_intersect(array_keys($vars['query']), $ids_required);
-
-      if (!empty($ids_required)) {
-        $vars['query']['ids'] = implode('|', $vars['view']->build_info['target_ids']);
-      }
-    }
-
+    
     if(isset($vars['query']['search_committee'])) {
       $matches = array();
       preg_match('|id:[0-9]*|', $vars['query']['search_committee'], $matches);
