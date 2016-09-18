@@ -80,6 +80,16 @@ function fundraiser_quick_donate_admin_settings($form, $form_state) {
     '#default_value' => variable_get('fundraiser_quick_donate_default_login_link_message', t('Click here to login')),
   );
 
+  $form['other'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Other options'),
+  );
+  $form['other']['fundraiser_quick_donate_allow_multiple_cards'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Allow multiple stored cards to be configured for quick donations'),
+    '#default_value' => variable_get('fundraiser_quick_donate_allow_multiple_cards', FALSE),
+  );
+
   $form['#submit'][] = 'fundraiser_quick_donate_admin_settings_submit';
 
   return system_settings_form($form);
