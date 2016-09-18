@@ -207,6 +207,14 @@ function fundraiser_quick_donate_fundraiser_donation_form($form, $form_state) {
     }
   }
 
+  if (isset($_SESSION['springboard_hmac']['quickdonate']) && $_SESSION['springboard_hmac']['quickdonate']) {
+    $form['#attached']['js'][] = drupal_get_path('module', 'fundraiser_quick_donate') . '/js/fundraiser_quick_donate.fundraiser.js';
+    $form['#attached']['js'][] = array(
+      'data' => array('fundraiser' => array('quickdonate' => array('readonly' => TRUE))),
+      'type' => 'setting',
+    );
+  }
+
   // Add submit handler.
   $form['#submit'][] = '_fundraiser_quick_donate_checkout_form_submit';
 
