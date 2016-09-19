@@ -5,7 +5,7 @@
 
 Drupal.behaviors.sbTranslateManagerBehavior = {
   attach: function(context) { (function($) {
-    // Expand fields on focus:
+    // Expand fields with a lot of text on focus:
     $('#sb-translate-translation-manager-form .form-item.form-type-textfield').each(function () {
       $(this).mouseover(function () {
         if ($(this).parent().hasClass('source-string')) {
@@ -58,6 +58,30 @@ Drupal.behaviors.sbTranslateManagerBehavior = {
         }
       });
     }
+    // Show or hide rows based on the selected textgroup:
+    function _transManagerSelectTextgroup(textgroup) {
+      $('#sb-translation-manager td').each(function () {
+        if ($(this).hasClass(textgroup)) {
+          $(this).parent().show();
+        }
+        else {
+          $(this).parent().hide();
+        }
+      });
+    }
+    // Cause textgroups to update if a textgruop tab is clicked:
+    $('#edit-translation-manager .sb-textgroup-tabs a').each(function () {
+      $(this).click(function () {
+        $('#edit-translation-manager .sb-textgroup-tabs a').each(function () {
+          $(this).removeClass('active');
+          $(this).parent().removeClass('active');
+        });
+        _transManagerSelectTextgroup($(this).attr('textgroup'));
+        $(this).addClass('active');
+        $(this).parent().addClass('active');
+      });
+    });
+    $('#edit-translation-manager .sb-textgroup-tabs a:first').click();
   })(jQuery); }
   
 }

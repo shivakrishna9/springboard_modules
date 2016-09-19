@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Implements hook_sb_translate_plugin_info().
+ * Implements INCLUDE_sb_translate_plugin_info().
  */
 function webform_sb_translate_include_info() {
   return array(

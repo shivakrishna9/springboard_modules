@@ -353,21 +353,40 @@ function fundraiser_upsell_node_form_validate($form, &$form_state) {
  * Form submit function that registers values for translation.
  */
 function _fundraiser_upsell_register_i18n_translations($form, &$form_state) {
-  if (!isset($form_state['values']['nid'])) {
+  if (!isset($form_state['values']['nid']) && function_exists('i18n_string_update')) {
     return;
   }
-
-  $fields_to_translate = array('content');
-  foreach ($fields_to_translate as $field) {
-    if (!isset($form_state['values']['fundraiser_upsell'][$field])) {
+  $fields_to_translate = array('content' => 'textarea', 'footer' => 'label', 'thankyou' => 'textarea');
+  foreach ($fields_to_translate as $field => $type) {
+    if (!isset($form_state['values']['fundraiser_upsell'][$field]) && empty($form_state['values']['fundraiser_upsell'][$field])) {
       continue;
     }
-    sb_i18n_set(
-      'fundraiser',
-      'upsell',
-      $form_state['values']['nid'],
-      $field,
-      $form_state['values']['fundraiser_upsell'][$field]
+    i18n_string_update(
+      'Fundraiser Upsell' . ':' . $form_state['values']['nid'] . ':' . $field . ':' . $type,
+      $form_state['values']['fundraiser_upsell'][$field],
+      array()
+    );
+  }
+  $email_header_fields_to_translate = array('from_name' => 'label', 'from_mail' => 'label'); 
+  foreach ($email_header_fields_to_translate as $field => $type) {
+    if (!isset($form_state['values']['fundraiser_upsell']['email_wrappers']['headers'][$field]) && empty($form_state['values']['fundraiser_upsell']['email_wrappers']['headers'][$field])) {
+      continue;
+    }
+    i18n_string_update(
+      'Fundraiser Upsell' . ':' . $form_state['values']['nid'] . ':' . $field . ':' . $type,
+      $form_state['values']['fundraiser_upsell']['email_wrappers']['headers'][$field],
+      array()
+    );
+  }
+  $email_bedy_fields_to_translate = array('subject' => 'label', 'html_body' => 'textarea', 'text_body' => 'textarea');
+  foreach ($email_bedy_fields_to_translate as $field => $type) {
+    if (!isset($form_state['values']['fundraiser_upsell']['email_wrappers']['message'][$field]) && empty($form_state['values']['fundraiser_upsell']['email_wrappers']['message'][$field])) {
+      continue;
+    } 
+    i18n_string_update(
+      'Fundraiser Upsell' . ':' . $form_state['values']['nid'] . ':' . $field . ':' . $type,
+      $form_state['values']['fundraiser_upsell']['email_wrappers']['message'][$field],
+      array()
     );
   }
 }
@@ -538,7 +557,13 @@ function fundraiser_upsell_donation_form($form, &$form_state) {
   $content = $node->fundraiser_upsell['content'];
 
   // Translate the content if translation is possible:
-  $content = sb_i18n_get('fundraiser', 'upsell', $nid, 'content', $content);
+  if (function_exists('i18n_string_translate')) {
+    $content = i18n_string_translate(
+      'Fundraiser Upsell' . ':' . $nid . ':' . 'content' . ':' . 'textarea',
+      $content,
+      array()
+    );
+  }
 
   // Replace tokens in the content.
   $content = token_replace($content, array('donation' => $donation));

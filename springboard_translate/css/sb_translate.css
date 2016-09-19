@@ -1,49 +1,83 @@
+#sb-translate-translation-manager-form ul.tabs.secondary {
+  background-color: #f4f3ee;
+  position: static;
+  margin-bottom: 0;
+}
+#sb-translate-translation-manager-form ul.tabs.secondary a {
+  margin-right: 16px;
+}
 #edit-translation-manager {
   padding: 0;
+  width: 100%;
 }
 #edit-translation-manager .fieldset-wrapper {
-  padding: 10px 0px 0px 10px;
+  background-color: #f4f3ee;
+  padding: 0;
   margin: 0;
 }
+#sb-translation-manager {
+  padding: 0;
+  width: 100%;
+}
 #sb-translation-manager td {
+  background-color: #f4f3ee;
   border: none;
   padding: 1px 3px 1px 3px;
 }
 #sb-translation-manager td.sub-field {
-  text-align: center;
-  width: 90px;
+  font-size: 10px;
+  text-align: right;
+  width: 50px;
 }
 #sb-translation-manager td.source-string {
   width: 42%;
 }
 #sb-translation-manager td.label-row {
-  background-color: #01598e;
-  color: #fff;
-  padding: 4px 6px;
+  background-color: #f4f3ee;
+  color: #143C54;
+  font-size: 14px;
+  font-weight: bold;
+  line-height: 15px;
+  padding: 8px 5px 3px;
+}
+#sb-translation-manager td.label-row.label-row-first {
+  padding-top: 5px;
+}
+#sb-translation-manager td.label-row .selector {
+  height: 36px;
 }
 #sb-translation-manager tr {
   background: #fff;
+}
+#sb-translaion-manager .trans-manager-state-selector {
+  padding: 2px 4px;
+}
+#sb-translation-manager .form-item textarea {
+  font-size: 11px;
+  width: 90%;
 }
 #sb-translation-manager .form-item.form-type-textfield input {  
   font-size: 11px;
   height: 12px;
   margin: 2px 0px 2px;
+  padding: 2px 4px;
   width: 90%;
 }
 #sb-translation-manager tr:hover .form-item.form-type-textfield input {
-  border: 1px solid #999;
+  border: 1px solid #555;
 }
 #sb-translation-manager .form-item.form-type-textfield input:focus {
   border: 1px solid #143c54;
 }
 #sb-translation-manager .form-item.form-type-textfield input.focus-active {
-  border: 1px solid #143c54;
   position: relative;
   width: 150%;
   z-index: 2;
 }
 #sb-translation-manager tr:hover .form-item.form-type-textfield input.focus-active {
-  border: 1px solid #143c54;
+  border: 1px solid #0086d6;
+  position: relative;
+  z-index: 3;
 }
 
 #edit-language-wrapper {
