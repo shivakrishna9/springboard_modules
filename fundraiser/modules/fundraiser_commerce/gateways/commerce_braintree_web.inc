@@ -17,7 +17,7 @@ function commerce_braintree_web_fundraiser_commerce_fundraiser_gateway_info() {
     // 'cleanup callback' => 'commerce_authnet_fundraiser_commerce_cleanup',
     // 'scrub callback' => 'commerce_authnet_fundraiser_commerce_scrub',
     'expire callback' => 'commerce_braintree_web_fundraiser_commerce_expire',
-    // 'validate callback' => 'commerce_authnet_fundraiser_commerce_validate',
+    'validate callback' => 'commerce_braintree_web_fundraiser_commerce_validate',
     'charge callback' => 'commerce_braintree_web_fundraiser_commerce_charge',
     // 'update callback' => 'commerce_authnet_fundraiser_commerce_update',
     'refund callback' => 'commerce_braintree_web_fundraiser_commerce_refund',
@@ -25,6 +25,16 @@ function commerce_braintree_web_fundraiser_commerce_fundraiser_gateway_info() {
     // 'response fields callback' => 'commerce_authnet_fundraiser_commerce_response_fields',
     // 'response save callback' => 'commerce_authnet_fundraiser_commerce_response_save',
   );
+}
+
+/**
+ * Validate the submitted values with the commerce validate function.
+ */
+function commerce_braintree_web_fundraiser_commerce_validate($submission_fields, $payment_fields, $payment_method) {
+  // Because user input is handled client-side by braintree, all we can and
+  // should do is check for the existence of a value in the hidden nonce field.
+  commerce_braintree_web_submit_form_validate(NULL, $submission_fields, $payment_fields, NULL);
+  return $submission_fields;
 }
 
 /**
