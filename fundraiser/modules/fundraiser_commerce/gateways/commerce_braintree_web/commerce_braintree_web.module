@@ -668,7 +668,7 @@ function commerce_braintree_web_submit_form_submit($payment_method, $pane_form, 
         $card->instance_id = $payment_method['instance_id'];
         $card->remote_id = $braintree_result->transaction->creditCardDetails->token;
         $card->card_type = $braintree_result->transaction->creditCardDetails->cardType;
-        $card->card_name = $braintree_result->transaction->billingDetails->firstName . ' ' . $braintree_result->transaction->billingDetails->lastName;
+        $card->card_name = $braintree_result->transaction->creditCardDetails->cardholderName;
         $card->card_number = $braintree_result->transaction->creditCardDetails->last4;
         $card->card_exp_month = $braintree_result->transaction->creditCardDetails->expirationMonth;
         $card->card_exp_year = $braintree_result->transaction->creditCardDetails->expirationYear;
@@ -680,6 +680,10 @@ function commerce_braintree_web_submit_form_submit($payment_method, $pane_form, 
           $paypal_exp_date = strtotime("now +" . variable_get('commerce_braintree_web_sustainer_series_count', 24) . " months");
           $card->card_exp_month = date('m', $paypal_exp_date);
           $card->card_exp_year = date('Y', $paypal_exp_date);
+          $card->card_type = 'PayPal';
+          $card->card_name = $braintree_result->transaction->paypalDetails->payerEmail;
+          $card->card_number = 'N/A';
+
         }
 
         // Save and log the creation of the new card on file.
