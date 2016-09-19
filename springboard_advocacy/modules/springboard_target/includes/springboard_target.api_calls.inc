@@ -129,7 +129,7 @@ function springboard_target_api_save_target_group($group, $is_new = TRUE) {
       $response = _springboard_target_api_get_group_by_message_id($api_call, $group['message']['message_id']);
       if (!empty($response) && !empty($response->data->id)) {
         $group['group_id'] = $response->data->id;
-        $response = $api_call->invokeClientMethod('updateTargetGroup', $group, $group_id);
+        $response = $api_call->invokeClientMethod('updateTargetGroup', $group, $group['group_id']);
       }
       else {
         unset($group['group_id']);
@@ -138,7 +138,7 @@ function springboard_target_api_save_target_group($group, $is_new = TRUE) {
     }
     // Uncomplicated group updates.
     else {
-      $response = $api_call->invokeClientMethod('updateTargetGroup', $group, $group_id);
+      $response = $api_call->invokeClientMethod('updateTargetGroup', $group, $group['group_id']);
     }
     // set the group ID based on the API response.
     if (!empty($response->data->id)) {
