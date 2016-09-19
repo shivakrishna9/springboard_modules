@@ -1589,7 +1589,11 @@ function _fundraiser_sustainers_recurs_monthly_field_create($fundraiser, $field)
         $field['#node_extra_settings']['items'] = TRUE;  //@TODO: If we ever make items configurable from the node edit form for checkbox components, move this up to fundraiser_sustainers_fundraiser_field_info().
       }
       if (!empty($fundraiser->recurring_default_donation_type)) {
-        $field['#value'] = $fundraiser->recurring_default_donation_type;
+        // In case the items are set to something nonstandard, verify first that the default value is actually an option.
+        $regex = "/(?<![a-zA-Z0-9_]){$fundraiser->recurring_default_donation_type}\\|/s";
+        if (preg_match($regex, $field['#extra']['items'])) {
+          $field['#value'] = $fundraiser->recurring_default_donation_type;
+        }
       }
     }
     // If fundraiser_webform is the "glue" module, look for a pre-existing component.
