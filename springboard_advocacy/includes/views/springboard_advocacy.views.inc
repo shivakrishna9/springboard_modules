@@ -687,20 +687,19 @@ function springboard_advocacy_views_pre_render(&$view) {
 function theme_springboard_advocacy_views_attachment_before($vars) {
   $output = '';
   if (!empty($vars['query'])) {
-    
-    if(isset($vars['query']['search_committee'])) {
+
+    if (isset($vars['query']['search_committee'])) {
       $matches = array();
       preg_match('|id:[0-9]*|', $vars['query']['search_committee'], $matches);
-      foreach($matches as $key => $str) {
+      foreach ($matches as $key => $str) {
         $matches[$key] = str_replace('id:', '', $str);
       }
       $vars['query']['committee_id'] = $matches[0];
     }
-
     if (!empty($vars['total_rows'])) {
       $plural = $vars['total_rows'] > 1 ? 'matches found' : 'match found';
       $output = '<div id ="advocacy-attachment-before-rows"><span class = "target-results">Search Results </span><span class = "target-count">' . $vars['total_rows'] . ' ' . $plural . '</span></div>';
-      if (user_access('add target to action')) {
+      if (user_access('add target to action') && $vars['query']['class_name'] != 'Group') {
         $output .= '<div id ="advocacy-attachment-before-add-all">';
         $output .= l(
           t('Add All Targets'),
