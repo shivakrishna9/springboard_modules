@@ -226,6 +226,10 @@ function _fundraiser_quick_donate_payment_method_fields_alter_states($states, $k
  * Implements hook_webform_user_save_profile_map_alter().
  */
 function fundraiser_quick_donate_webform_user_save_profile_map_alter(&$account, $form, $form_state) {
+  if (empty($form['#node']->type) || !fundraiser_is_donation_type($form['#node']->type)) {
+    return;
+  }
+
   $values = $form_state['values']['submitted_tree']['payment_information'];
   if (isset($form['#node']->quickdonate) && $form['#node']->quickdonate && $values['payment_fields'][$values['payment_method']]['quickdonate']) {
     $account->field_quick_donate_opt_in = array(
