@@ -66,6 +66,7 @@ function fundraiser_quick_donate_fundraiser_donation_form($form, $form_state) {
       '#description' => isset($form['#node']->quickdonate_help_message) ? check_markup(format_string($form['#node']->quickdonate_help_message, array('@type' => $type)), $form['#node']->quickdonate_help_message_format) : format_string(variable_get('fundraiser_quick_donate_default_help_message', 'Save your @type details and donate faster next time. We may email you from time to time with quick donate opportunities. You can update your @type details or cancel your enrollment at any time.'), array('@type' => $type)),
     );
 
+    $quick_donate_card = 0;
     // The ID of the cardonfile record specified for quick donations.
     if (isset($_SESSION['springboard_hmac']['quickdonate']['card_id']) && !empty($_SESSION['springboard_hmac']['quickdonate']['card_id'])) {
       $quick_donate_card = $_SESSION['springboard_hmac']['quickdonate']['card_id'];
@@ -74,15 +75,16 @@ function fundraiser_quick_donate_fundraiser_donation_form($form, $form_state) {
       $quick_donate_card = _fundraiser_quick_donate_get_payment_info_for_uid($user->uid);
     }
 
-    if (!variable_get('fundraiser_quick_donate_allow_multiple_cards', FALSE)) {
+    $stored_cards = array();
+    if (!variable_get('fundraiser_quick_donate_allow_multiple_cards', FALSE) && $quick_donate_card > 0) {
       $stored_cards = array($quick_donate_card => commerce_cardonfile_load($quick_donate_card));
     }
     else {
       // Load existing active cards for the payment method instance and user.
       $stored_cards = commerce_cardonfile_load_multiple_by_uid($user->uid, $payment_method['instance_id']);
-      // Allow other modules to alter what stored cards will be displayed.
     }
 
+    // Allow other modules to alter what stored cards will be displayed.
     drupal_alter('fundraiser_quick_donate_fundraiser_donation_form_stored_cards', $stored_cards);
 
     // Build options form.
@@ -219,6 +221,8 @@ function fundraiser_quick_donate_fundraiser_donation_form($form, $form_state) {
       'data' => array('fundraiser' => array('quickdonate' => array('readonly' => TRUE))),
       'type' => 'setting',
     );
+
+    unset($_SESSION['springboard_hmac']['quickdonate']);
   }
 
   // Add submit handler.
@@ -320,9 +324,6 @@ function fundraiser_quick_donate_fundraiser_donation_submit_alter($form, $form_s
 function fundraiser_quick_donate_fundraiser_commerce_submit_handler_pane_values_alter(&$pane_values, &$donation) {
   if (isset($donation->data['cardonfile']) && $donation->data['cardonfile'] != 'new' && $donation->data['cardonfile'] > 0) {
     $pane_values['cardonfile'] = $donation->data['cardonfile'];
-  }
-  if (isset($_SESSION['springboard_hmac']['quickdonate']) && $_SESSION['springboard_hmac']['quickdonate']) {
-    unset($_SESSION['springboard_hmac']['quickdonate']);
   }
 }
 
