@@ -28,7 +28,7 @@ function springboard_target_edit_custom_groups_form($form, &$form_state, $group_
     $form['header'] = array(
       '#prefix' => '<h2>',
       '#suffix' => '</h2>',
-      '#markup' => check_plain($form['group_name']['#default_value']),
+      '#markup' => check_plain($form['group_group_name']['#default_value']),
       '#weight' => '-100' ,
     );
 
