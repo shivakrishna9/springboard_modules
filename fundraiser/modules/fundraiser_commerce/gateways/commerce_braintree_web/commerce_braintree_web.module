@@ -33,6 +33,9 @@ function commerce_braintree_web_commerce_payment_method_info() {
     'description' => t('Integrates with Braintree web for PayPal.'),
     'terminal' => FALSE,
     'offsite' => FALSE,
+    'cardonfile' => array(
+      'delete callback' => 'commerce_braintree_web_cardonfile_delete',
+    ),
   );
 
   return $payment_methods;
