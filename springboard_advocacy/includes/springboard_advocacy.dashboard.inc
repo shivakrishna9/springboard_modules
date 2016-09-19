@@ -150,11 +150,8 @@ function springboard_advocacy_dashboard($path, $arg = NULL) {
             'css' => drupal_get_path('module', 'springboard_advocacy') . '/css/sba.css',
           ),
         );
-        if (module_exists('springboard_target') && springboard_target_user_can_access_targets()) {
-          $sections['sba_actions']['manage_link'] = array('title' => t('Manage Custom Targets'), 'href' => 'admin/springboard/advocacy/targets/custom-targets');
-        }
-        if (module_exists('springboard_target') && springboard_target_user_can_access_groups()) {
-          $sections['sba_actions']['manage_link'] = array('title' => t('Manage Custom Target Groups'), 'href' => 'admin/springboard/advocacy/targets/custom-groups');
+        if (module_exists('springboard_target') && (springboard_target_user_can_access_targets() || springboard_target_user_can_access_groups())) {
+          $sections['sba_actions']['manage_link'] = array('title' => t('Manage Custom Targets'), 'href' => 'admin/springboard/advocacy/targets');
         }
       }
 
@@ -168,11 +165,8 @@ function springboard_advocacy_dashboard($path, $arg = NULL) {
             'viewmore_link' => array('title' => t('View All Social Actions'), 'href' => 'admin/springboard/advocacy/social-actions/all'),
             'css' => drupal_get_path('module', 'springboard_advocacy') . '/css/sba.css',
         );
-        if (module_exists('springboard_target') && springboard_target_user_can_access_targets()) {
-          $sections['sba_social_actions']['manage_link'] = array('title' => t('Manage Custom Targets'), 'href' => 'admin/springboard/advocacy/targets/custom-targets');
-        }
-        if (module_exists('springboard_target') && springboard_target_user_can_access_groups()) {
-          $sections['sba_social_actions']['manage_link'] = array('title' => t('Manage Custom Target Groups'), 'href' => 'admin/springboard/advocacy/targets/custom-groups');
+        if (module_exists('springboard_target') && (springboard_target_user_can_access_targets() || springboard_target_user_can_access_groups())) {
+          $sections['sba_social_actions']['manage_link'] = array('title' => t('Manage Custom Targets'), 'href' => 'admin/springboard/advocacy/targets');
         }
       }
 
@@ -207,13 +201,9 @@ function springboard_advocacy_dashboard($path, $arg = NULL) {
       if (user_access('create sba_message_action content')) {
         $sections['sba_actions']['create_link'] = array('title' => t('Create a new message action'), 'href' => 'node/add/sba-message-action');
       }
-      if (springboard_target_user_can_access_targets()) {
-        $sections['sba_actions']['manage_link'] = array('title' => t('Manage Custom Targets'), 'href' => 'admin/springboard/advocacy/targets/custom-targets');
+      if (springboard_target_user_can_access_targets() || springboard_target_user_can_access_groups()) {
+        $sections['sba_actions']['manage_link'] = array('title' => t('Manage Custom Targets'), 'href' => 'admin/springboard/advocacy/targets');
       }
-      if (springboard_target_user_can_access_groups()) {
-        $sections['sba_actions']['manage_link'] = array('title' => t('Manage Custom Target Groups'), 'href' => 'admin/springboard/advocacy/targets/custom-groups');
-      }
-
       break;
 
     case 'social-actions/all':
@@ -232,11 +222,8 @@ function springboard_advocacy_dashboard($path, $arg = NULL) {
       if (user_access('create sba_message_action content')) {
         $sections['sba_social_actions']['create_link'] = array('title' => t('Create a new social action'), 'href' => 'node/add/sba-social-action');
       }
-      if (springboard_target_user_can_access_targets()) {
-        $sections['sba_social_actions']['manage_link'] = array('title' => t('Manage Custom Targets'), 'href' => 'admin/springboard/advocacy/targets/custom-targets');
-      }
-      if (springboard_target_user_can_access_groups()) {
-        $sections['sba_social_actions']['manage_link'] = array('title' => t('Manage Custom Target Groups'), 'href' => 'admin/springboard/advocacy/targets/custom-groups');
+      if (springboard_target_user_can_access_targets() || springboard_target_user_can_access_groups()) {
+        $sections['sba_social_actions']['manage_link'] = array('title' => t('Manage Custom Targets'), 'href' => 'admin/springboard/advocacy/targets');
       }
 
       break;
