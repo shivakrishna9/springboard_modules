@@ -79,14 +79,22 @@ function springboard_target_group_form_validate($form, &$form_state) {
   $is_new = TRUE;
   $group = array(
     'recipients' => '',
-    'name' => $values['group_group_name'],
+    'name' => '',
     'is_template' => 1,
   );
+  $errors = FALSE;
+  if(isset($values['group_group_name']) && $values['group_group_name'] != '') {
+    $group['name'] = $values['group_group_name'];
+  }
+  else {
+    form_set_error('group_group_name]', 'Please enter a valid name for your group.');
+    $errors = TRUE;
+  }
   if(isset($values['data']['group_id']) && $values['data']['group_id'] != '') {
     $group['group_id'] = $values['data']['group_id'];
     $is_new = FALSE;
   }
-  if(isset($values['data']['recipients'])) {
+  if(isset($values['data']['recipients']) && !$errors) {
     $group['recipients'] = $values['data']['recipients'];
     module_load_include('inc', 'springboard_target', 'includes/springboard_target.api_calls');
     $group_id = springboard_target_api_save_target_group($group, $is_new);
