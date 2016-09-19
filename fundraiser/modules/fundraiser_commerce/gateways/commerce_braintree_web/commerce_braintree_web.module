@@ -624,6 +624,11 @@ function commerce_braintree_web_submit_form_submit($payment_method, $pane_form, 
     $order_data = unserialize(decrypt($order->data['fundraiser_commerce']));
     if (isset($order_data['cardonfile'])){
       $cardonfile = commerce_cardonfile_load($order_data['cardonfile']);
+      // Fail now if it is no longer available or the card is inactive.
+      if (empty($cardonfile) || $cardonfile->status == 0) {
+        drupal_set_message(t('The requested card on file is no longer valid.'), 'error');
+        return FALSE;
+      }
       $token = $cardonfile->remote_id;
     }
 
