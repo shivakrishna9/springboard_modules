@@ -1186,16 +1186,9 @@
         $('#springboard-advocacy-target-recipients-content').text('');
         recipients = recipients.replace(/&quot;/g, '"');
         $.each(JSON.parse(recipients), function(id, obj) {
-            var query = JSON.stringify(obj)
-                .replace(/"/g, '')
-                .replace(/,/g, '&')
-                .replace(/:/g, '=')
-                .replace('{', '')
-                .replace('}', '')
-                .split('&');
-
+            var query = $.map(obj, function(value, name) { return name + '=' + value });
             var readable = Sba.buildReadableQuery(query);
-             Sba.buildDiv(id, readable, query, 'reload');
+            Sba.buildDiv(id, readable, query, 'reload');
         });
         //reverse the display order so newest are at top.
         var content = $('#springboard-advocacy-target-recipients-content');
