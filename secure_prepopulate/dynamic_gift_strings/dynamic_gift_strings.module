@@ -256,7 +256,8 @@ function dynamic_gift_strings_node_load($nodes, $types) {
         $parts = drupal_parse_url($redirect_url);
         if (!isset($parts['query']['gs'])) {
           $num = count($parts['query']);
-          $qstring = $num <= 1 ? '?gs=' . $_GET['gs'] : '&gs=' . $_GET['gs'];
+          $gs = urlencode($_GET['gs']);
+          $qstring = $num <= 1 ? '?gs=' . $gs : '&gs=' . $gs;
           $node->webform['redirect_url'] = $node->webform['redirect_url'] . $qstring;
         }
       }
