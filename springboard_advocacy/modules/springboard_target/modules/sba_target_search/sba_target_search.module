@@ -166,7 +166,7 @@ function sba_target_search_add_target_search_form($form, &$form_state, $entity =
   $form['data']['#tree'] = TRUE;
   $recipients = '';
   $type = '';
-  if($entity->type == 'sba_message_action_message') {
+  if (!empty($entity->type) && $entity->type == 'sba_message_action_message') {
     $type = t("Message");
   }
   else {
