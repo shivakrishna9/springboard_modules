@@ -131,12 +131,23 @@ class springboard_advocacy_views_plugin_query extends views_plugin_query {
         $items = $response->data->targets;
       }
       else if(isset($response->data->groups)) {
+        // To prevent recursion on group create/edit pages, we will find the
+        // parent group ID and filter that result if it is present.
+        $parent_group_id = -1;
+        if(arg(4) == "custom-groups" && is_numeric(arg(5))) {
+          $parent_group_id = arg(5);
+        }
         $groups = $response->data->groups;
         foreach($groups as $key => $item) {
-          $items[$key] = new stdClass();
-          $items[$key]->group_name = $item->name;
-          $items[$key]->id = $key;
-          $response->data->groups->$key->id = $key;
+          if($key != $parent_group_id) {
+            $items[$key] = new stdClass();
+            $items[$key]->group_name = $item->name;
+            $items[$key]->id = $key;
+            $response->data->groups->$key->id = $key;
+          }
+          else {
+            unset($response->data->groups->$key);
+          }
         }
       }
       if (!empty($items)) {

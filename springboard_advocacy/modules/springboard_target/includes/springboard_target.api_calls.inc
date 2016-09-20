@@ -84,6 +84,13 @@ function springboard_target_api_save_target_group($group, $is_new = TRUE) {
     }
   }
 
+  // Check child groups for recursion
+  foreach ($child_ids as $child_id) {
+    if(_springboard_target_api_check_group_recursion($child_id, $group['group_id'])) {
+      return false;
+    }
+  }
+
   // If there are gender or social pseudo-groups in use, retrieve the actual
   // individual target IDs @TODO shouldn't need this anymore
    if (!empty($has_gender_or_social)) {
@@ -303,5 +310,27 @@ function springboard_target_api_delete_target_group ($entity) {
 
   if (isset($response->data)) {
     drupal_set_message(t("The group was deleted."));
+  }
+}
+
+function _springboard_target_api_get_target_group($group_id) {
+  $api_call = springboard_advocacy_api_call();
+  $response = $api_call->invokeClientMethod('getTargetGroup', $group_id);
+
+  return $response;
+}
+
+function _springboard_target_api_check_group_recursion($group_id, $parent_id, $parent_name = '') {
+  $group = _springboard_target_api_get_target_group($group_id);
+  if(isset($group->data->groups)) {
+    foreach ($group->data->groups as $nested_group) {
+      if($nested_group->target_group_group_id == $parent_id) {
+        drupal_set_message('The custom group "' . ($parent_name != '' ? $parent_name : $group->data->name) . '" cannot be added to this group because it contains this group as a member.', 'error');
+        return true;
+      }
+      else {
+        return _springboard_target_api_check_group_recursion($nested_group->target_group_group_id, $parent_id, ($parent_name != '' ? $parent_name : $group->data->name));
+      }
+    }
   }
 }
