@@ -3781,7 +3781,7 @@ function fundraiser_update_billing_form($form, &$form_state, $data) {
     'fundraiser_update_billing_form',
   );
   if (!empty($data['calling module'])) {
-    sprintf('fundraiser_update_billing_form__%s', $data['calling module']);
+    $functions[] = sprintf('fundraiser_update_billing_form__%s_', $data['calling module']);
   }
   foreach ($functions as $function) {
     drupal_alter($function, $form, $form_state, $data);
@@ -3789,6 +3789,7 @@ function fundraiser_update_billing_form($form, &$form_state, $data) {
 
   // Ensure the validation and submit functions from commerce_cardonfile are
   // loaded.
+  form_load_include($form_state, 'inc', 'commerce_cardonfile', 'includes/commerce_cardonfile.pages');
   $form['#validate'][] = '_fundraiser_update_billing_form_validate_prepare_cardonfile';
   $form['#validate'][] = 'commerce_cardonfile_card_form_validate';
   $form['#validate'][] = 'fundraiser_update_billing_form_validate';
@@ -3838,7 +3839,6 @@ function fundraiser_update_billing_form_after_build($form, &$form_state) {
  * Validate function to move values for cardonfile.
  */
 function _fundraiser_update_billing_form_validate_prepare_cardonfile(&$form, &$form_state) {
-  module_load_include('inc', 'commerce_cardonfile', 'includes/commerce_cardonfile.pages');
   $values = &$form_state['values'];
   $values['credit_card']['owner'] = $values['first_name'] . ' ' . $values['last_name'];
   $values['credit_card']['exp_month'] = sprintf('%02d', $values['payment_fields']['credit']['expiration_date']['card_expiration_month']);

@@ -2556,7 +2556,9 @@ function _fundraiser_commerce_charge_submit_form_process($success, $method_insta
   if ($success && module_exists('commerce_cardonfile') && !empty($pane_values[$form_key]['cardonfile_store'])) {
     // Load up the cardonfile record for this donation and save it
     $card = _fundraiser_commerce_donation_cardonfile_card($donation);
-    $donation->data['cardonfile'] = $card->card_id;
+    if (!empty($card)) {
+      $donation->data['cardonfile'] = $card->card_id;
+    }
   }
 }
 
