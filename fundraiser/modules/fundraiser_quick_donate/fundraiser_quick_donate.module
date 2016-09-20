@@ -438,3 +438,33 @@ function fundraiser_quick_donate_webform_user_send_mail_alter(&$options) {
     }
   }
 }
+
+/**
+ * Helper function to return the QD record for the specified card id.
+ *
+ * @param int $card_id
+ *   The card ID.
+ *
+ * @return array
+ *   The QD field record.
+ */
+function _fundraiser_quick_donate_get_payment_info_for_card_id($card_id) {
+  $query = db_query('SELECT * FROM {fundraiser_quick_donate_cardonfile} WHERE card_id = :card_id', array(
+    ':card_id' => $card_id,
+  ));
+  return $query->fetchField();
+}
+
+/**
+ * Implements hook_fundraiser_commerce_cardonfile_used_by().
+ *
+ * Used to inform fundraiser_commerce_cardonfile if the card is used for Quick
+ * Donations.
+ */
+function fundraiser_quick_donate_fundraiser_commerce_cardonfile_used_by($card_id) {
+  $result = _fundraiser_quick_donate_get_payment_info_for_card_id($card_id);
+  if (empty($result)) {
+    return;
+  }
+  return t('Quick Donate');
+}
