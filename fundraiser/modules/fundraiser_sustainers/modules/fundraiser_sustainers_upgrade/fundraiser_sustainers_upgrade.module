@@ -80,16 +80,22 @@ function fundraiser_sustainers_upgrade_springboard_hmac_allowed_actions_alter(&$
  */
 function fundraiser_sustainers_upgrade_springboard_hmac_success($payload) {
   if ($payload['action'] == 'su') {
+    $parts = drupal_parse_url(request_uri());
+    $query = array();
+    if (!empty($parts['query'])) {
+      $query = $parts['query'];
+    }
     if (isset($payload[2]) && is_numeric($payload[2])) {
       $node = node_load($payload[2]);
       if (!empty($node->type) && $node->type == 'sustainers_upgrade_form') {
-        drupal_goto('node/' . $node->nid);
+
+        drupal_goto('node/' . $node->nid, array('query' => $query));
       }
     }
     // If there's no form in the payload, try the default form.
     $nid = variable_get('fundraiser_sustainers_upgrade_default_form', '');
     if (!empty($nid)) {
-      drupal_goto('node/' . $nid);
+      drupal_goto('node/' . $nid, array('query' => $query));
     }
   }
 }
