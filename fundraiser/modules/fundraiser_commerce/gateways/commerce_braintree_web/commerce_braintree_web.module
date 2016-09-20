@@ -424,6 +424,7 @@ function commerce_braintree_web_submit_form_validate($payment_method, $pane_form
  * @see CALLBACK_commerce_payment_method_submit_form_submit().
  */
 function commerce_braintree_web_submit_form_submit($payment_method, $pane_form, $pane_values, $order, $form_parents = array()) {
+
   global $user;
 
   braintree_initialize($payment_method['settings']);
@@ -447,8 +448,6 @@ function commerce_braintree_web_submit_form_submit($payment_method, $pane_form, 
     $merchant_account_id = commerce_braintree_web_get_merchant_account_id($payment_method, $charge['currency_code']);
   }
 
-  // $customer_id = (module_exists('braintree_vault')) ? braintree_customer_id() : NULL;
-
   // Get the customer's braintree customer_id from the Drupal User, if it has
   // been previously saved.
   if (module_exists('braintree_vault')) {
@@ -468,14 +467,24 @@ function commerce_braintree_web_submit_form_submit($payment_method, $pane_form, 
 
   $flag_update_default_method = FALSE;
 
-  if ($customer_id) {
+  if ($customer_id && $pane_values['cardonfile'] == 'new') {
     // Create a new payment method.
     if (isset($nonce)) {
       $_payment_method = array(
         'customerId' => $customer_id,
         'paymentMethodNonce' => $nonce,
+        'billingAddress' => array(
+          'countryCodeAlpha2' => $country,
+          'streetAddress' => $thoroughfare,
+          'firstName' => $first_name,
+          'lastName' => $last_name,
+          'locality' => $locality,
+          'postalCode' => $postal_code,
+          'region' => $administrative_area,
+        ),
       );
       $_payment_method_context = ['op' => 'add'];
+
       $result = braintree_vault_payment_method_save($_payment_method, $_payment_method_context, $error_message);
 
       if ($result === FALSE) {
@@ -586,6 +595,7 @@ function commerce_braintree_web_submit_form_submit($payment_method, $pane_form, 
         'options' => array(
           'submitForSettlement' => TRUE,
           'storeInVaultOnSuccess' => TRUE,
+          'addBillingAddressToPaymentMethod' => TRUE,
         ),
       );
 
