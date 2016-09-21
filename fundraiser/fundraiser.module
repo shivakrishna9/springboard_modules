@@ -1953,7 +1953,7 @@ function fundraiser_donation_update($donation, $vocal_mode = TRUE) {
     $donation_record['form_url'] = $donation->form_url;
   }
   if (isset($donation->data['cardonfile']) && !empty($donation->data['cardonfile']) && $donation->status == 'payment_received') {
-    $donation_record['cardonfile'] = $donation->data['cardonfile'];
+    $donation_record['card_id'] = $donation->data['cardonfile'];
   }
   $donation_record['changed'] = REQUEST_TIME;
   _fundraiser_update_donation($donation_record);
