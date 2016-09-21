@@ -1301,13 +1301,12 @@
                 return true;
             }
             segments[0] = segments[0].SbaUcfirst();
-          if(segments[0] != 'Search_committee') {
+          if(segments[0] != 'Search_committee' && segments[0] != 'Committee_id' && segments[0] != 'Class_name') {
                 segments[1] = segments[1].replace(/%7C/g, '|');
                 queryObj[segments[0]] = segments[1].split('|');
             }
             // If this is a legislative group...
-            else {
-
+            else if(segments[0] == 'Search_committee') {
               segments[1] = segments[1].replace(/%7C/g, ' ');
                 queryObj['Committee'] = segments[1];
             }
