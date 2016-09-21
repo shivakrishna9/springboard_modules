@@ -788,7 +788,7 @@ function springboard_advocacy_preprocess_views_view_table(&$vars)
  * Implements hook_preprocess_hook().
  */
 function springboard_advocacy_preprocess_pager(&$variables, $hook) {
-  if (isset($variables['parameters']['search_state'])) {
+  if (isset($variables['parameters']['search_state']) || isset($variables['parameters']['group_name'])) {
     $variables['tags'][0] = '<<';
     $variables['tags'][1] = '<';
     $variables['tags'][3] = '>';
