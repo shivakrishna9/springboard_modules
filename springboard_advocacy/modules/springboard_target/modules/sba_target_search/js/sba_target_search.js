@@ -1186,7 +1186,17 @@
         $('#springboard-advocacy-target-recipients-content').text('');
         recipients = recipients.replace(/&quot;/g, '"');
         $.each(JSON.parse(recipients), function(id, obj) {
-            var query = $.map(obj, function(value, name) { return name + '=' + value });
+            var query = $.map(obj, function(value, name) {
+                if (!obj.hasOwnProperty('search_committee')) {
+                    return name + '=' + value
+                }
+                // Make pre-groups committees into group-era committees
+                else if(obj.hasOwnProperty('search_committee') && name != 'ids') {
+                    var com_id = value.match("id%3A[0-9]*");
+                    com_id = com_id[0].replace('id%3A', '');
+                    return ["committee=" + value, "committee_id=" + com_id ]
+                }
+            });
             var readable = Sba.buildReadableQuery(query);
             Sba.buildDiv(id, readable, query, 'reload');
         });
