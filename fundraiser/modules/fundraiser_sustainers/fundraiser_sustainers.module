@@ -2680,7 +2680,7 @@ function fundraiser_sustainers_fundraiser_update_billing_form__fundraiser_sustai
   );
 
   $form['#validate'][] = 'fundraiser_sustainers_update_billing_form_validate';
-  $form['submit']['#submit'][] = 'fundraiser_sustainers_update_billing_form_submit';
+  $form['actions']['submit']['#submit'][] = 'fundraiser_sustainers_update_billing_form_submit';
 }
 
 /**
