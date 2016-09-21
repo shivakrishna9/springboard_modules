@@ -116,37 +116,33 @@ class springboard_advocacy_views_plugin_query extends views_plugin_query {
       }
 
       // Get the targets.
-      // Custom Group search
-      if(isset($fields['class_name']) && $fields['class_name'] == 'Group') {
+      // Custom Group search.
+      if (isset($fields['class_name']) && $fields['class_name'] == 'Group') {
         $params = $fields;
         unset($params['class_name']);
-         $response = $api_call->invokeClientMethod('searchTargetGroups', $params);
+        $response = $api_call->invokeClientMethod('searchTargetGroups', $params);
       }
-      // Legislative and custom individuals
+      // Legislative and custom individuals.
       else {
-         $response = $api_call->invokeClientMethod('searchTargets', $fields);
+        $response = $api_call->invokeClientMethod('searchTargets', $fields);
       }
       $items = array();
-      if(isset($response->data->targets)) {
+      if (isset($response->data->targets)) {
         $items = $response->data->targets;
       }
-      else if(isset($response->data->groups)) {
+      elseif (isset($response->data->groups)) {
         // To prevent recursion on group create/edit pages, we will find the
         // parent group ID and filter that result if it is present.
         $parent_group_id = -1;
-        if(arg(4) == "custom-groups" && is_numeric(arg(5))) {
+        if (arg(4) == "custom-groups" && is_numeric(arg(5))) {
           $parent_group_id = arg(5);
         }
         $groups = $response->data->groups;
-        foreach($groups as $key => $item) {
-          if($key != $parent_group_id) {
-            $items[$key] = new stdClass();
-            $items[$key]->group_name = $item->name;
-            $items[$key]->id = $key;
-            $response->data->groups->$key->id = $key;
-          }
-          else {
-            unset($response->data->groups->$key);
+        foreach ($groups as $key => $item) {
+          if ($item->id != $parent_group_id) {
+            $items[$item->id] = new stdClass();
+            $items[$item->id]->group_name = $item->name;
+            $items[$item->id]->id = $item->id;
           }
         }
       }
