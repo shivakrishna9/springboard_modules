@@ -1631,6 +1631,11 @@ function _fundraiser_sustainers_recurs_monthly_field_component_alter($fundraiser
         if ($component['pid'] != $old_component['pid']) {
           // Preserve the existing title.
           $component['name'] = $old_component['name'];
+          // Preserve the existing items and default too, IF the old and new components are checkbox.
+          if ($component['extra']['multiple'] && $old_component['extra']['multiple']) {
+            $component['extra']['items'] = $old_component['extra']['items'];
+            $component['value'] = $old_component['value'];
+          }
           // To change the component's pid, delete it and let fundraiser_webform recreate.
           _fundraiser_webform_delete_component($fundraiser->nid, 'recurs_monthly');
         }
