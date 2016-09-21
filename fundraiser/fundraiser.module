@@ -3841,8 +3841,18 @@ function fundraiser_update_billing_form_after_build($form, &$form_state) {
 function _fundraiser_update_billing_form_validate_prepare_cardonfile(&$form, &$form_state) {
   $values = &$form_state['values'];
   $values['credit_card']['owner'] = $values['first_name'] . ' ' . $values['last_name'];
-  $values['credit_card']['exp_month'] = sprintf('%02d', $values['payment_fields']['credit']['expiration_date']['card_expiration_month']);
-  $values['credit_card']['exp_year'] = $values['payment_fields']['credit']['expiration_date']['card_expiration_year'];
+  if (!empty($values['payment_fields']['credit']['expiration_date'])) {
+    $values['credit_card']['exp_month'] = sprintf('%02d', $values['payment_fields']['credit']['expiration_date']['card_expiration_month']);
+    $values['credit_card']['exp_year'] = $values['payment_fields']['credit']['expiration_date']['card_expiration_year'];
+  }
+  else {
+    if (!empty($values['payment_fields']['credit']['card_expiration_month'])) {
+      $values['credit_card']['exp_month'] = sprintf('%02d', $values['payment_fields']['credit']['card_expiration_month']);
+    }
+    if (!empty($values['payment_fields']['credit']['card_expiration_year'])) {
+      $values['credit_card']['exp_year'] = $values['payment_fields']['credit']['card_expiration_year'];
+    }
+  }
 
   $form['credit_card']['number']['#default_value'] = $form_state['card']->card_number;
   if (!empty($values['payment_fields']['credit']['card_number'])) {
