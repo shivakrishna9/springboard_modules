@@ -298,6 +298,60 @@ function springboard_target_views_default_views() {
   $handler->display->display_options['use_ajax'] = TRUE;
   $handler->display->display_options['defaults']['exposed_form'] = FALSE;
   $handler->display->display_options['exposed_form']['type'] = 'basic';
+  $handler->display->display_options['defaults']['style_plugin'] = FALSE;
+  $handler->display->display_options['style_plugin'] = 'table';
+  $handler->display->display_options['style_options']['columns'] = array(
+    'salutation' => 'salutation',
+    'first_name' => 'first_name',
+    'last_name' => 'last_name',
+    'organization' => 'organization',
+    'title' => 'title',
+    'target_actions' => 'target_actions',
+  );
+  $handler->display->display_options['style_options']['default'] = 'last_name';
+  $handler->display->display_options['style_options']['info'] = array(
+    'salutation' => array(
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
+    'first_name' => array(
+      'sortable' => 1,
+      'default_sort_order' => 'asc',
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
+    'last_name' => array(
+      'sortable' => 1,
+      'default_sort_order' => 'asc',
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
+    'organization' => array(
+      'sortable' => 1,
+      'default_sort_order' => 'asc',
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
+    'title' => array(
+      'sortable' => 1,
+      'default_sort_order' => 'asc',
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
+    'target_actions' => array(
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
+  );
+  $handler->display->display_options['defaults']['style_options'] = FALSE;
+  $handler->display->display_options['defaults']['row_plugin'] = FALSE;
+  $handler->display->display_options['defaults']['row_options'] = FALSE;
   $handler->display->display_options['defaults']['fields'] = FALSE;
   /* Field: Advocacy: Salutation */
   $handler->display->display_options['fields']['salutation']['id'] = 'salutation';
@@ -311,7 +365,6 @@ function springboard_target_views_default_views() {
   $handler->display->display_options['fields']['last_name']['id'] = 'last_name';
   $handler->display->display_options['fields']['last_name']['table'] = 'advocacy';
   $handler->display->display_options['fields']['last_name']['field'] = 'last_name';
-  $handler->display->display_options['fields']['last_name']['label'] = 'Name';
   /* Field: Advocacy: Organization */
   $handler->display->display_options['fields']['organization']['id'] = 'organization';
   $handler->display->display_options['fields']['organization']['table'] = 'advocacy';
@@ -332,6 +385,12 @@ function springboard_target_views_default_views() {
     'delete' => 'delete',
     'view' => 0,
   );
+  $handler->display->display_options['defaults']['sorts'] = FALSE;
+  /* Sort criterion: Broken/missing handler */
+  $handler->display->display_options['sorts']['last_name']['id'] = 'last_name';
+  $handler->display->display_options['sorts']['last_name']['table'] = 'advocacy';
+  $handler->display->display_options['sorts']['last_name']['field'] = 'last_name';
+  $handler->display->display_options['sorts']['last_name']['order'] = 'DESC';
   $handler->display->display_options['defaults']['filter_groups'] = FALSE;
   $handler->display->display_options['defaults']['filters'] = FALSE;
   /* Filter criterion: Advocacy: Search Multiple Target Fields by Keywords */
@@ -520,6 +579,30 @@ function springboard_target_views_default_views() {
   $handler->display->display_options['pager']['options']['offset'] = '0';
   $handler->display->display_options['pager']['options']['id'] = '1';
   $handler->display->display_options['pager']['options']['quantity'] = '9';
+  $handler->display->display_options['defaults']['style_plugin'] = FALSE;
+  $handler->display->display_options['style_plugin'] = 'table';
+  $handler->display->display_options['style_options']['columns'] = array(
+    'group_name' => 'group_name',
+    'group_actions' => 'group_actions',
+  );
+  $handler->display->display_options['style_options']['default'] = '-1';
+  $handler->display->display_options['style_options']['info'] = array(
+    'group_name' => array(
+      'sortable' => 1,
+      'default_sort_order' => 'asc',
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
+    'group_actions' => array(
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
+  );
+  $handler->display->display_options['defaults']['style_options'] = FALSE;
+  $handler->display->display_options['defaults']['row_plugin'] = FALSE;
+  $handler->display->display_options['defaults']['row_options'] = FALSE;
   $handler->display->display_options['defaults']['empty'] = FALSE;
   /* No results behavior: Global: Text area */
   $handler->display->display_options['empty']['area']['id'] = 'area';
