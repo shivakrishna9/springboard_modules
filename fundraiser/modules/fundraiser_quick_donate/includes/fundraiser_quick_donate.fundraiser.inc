@@ -179,7 +179,7 @@ function fundraiser_quick_donate_fundraiser_donation_form($form, $form_state) {
     $force_instance_default = empty($stored_cards);
     $form['submitted']['payment_information']['payment_fields'][$gateway_type]['cardonfile_instance_default'] = array(
       '#type' => 'checkbox',
-      '#title' => t('Set as your default payment method for all future donations?'),
+      '#title' => variable_get('fundraiser_quick_donate_default_default_message', t('Set as your default payment method?')),
       '#default_value' => $instance_default_default_value || $force_instance_default,
       '#disabled' => $force_instance_default,
       '#states' => array(
