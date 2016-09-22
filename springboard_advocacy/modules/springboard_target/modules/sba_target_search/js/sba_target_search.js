@@ -158,7 +158,7 @@
         var state = $('#edit-search-state');
         var searchSub = $('#edit-submit-targets');
         state.ajaxComplete(function() {
-            searchSub.prop('disabled', false).css({'cursor': 'pointer'});;
+            searchSub.prop('disabled', false).css({'cursor': 'pointer'});
         });
 
         // if only some states are allowed, or federal and and some states,
@@ -431,7 +431,7 @@
             }
             Sba.setElStates();
         });
-    }
+    };
 
     // Define click events for add target links
     Sba.buildTargetLinkEvent = function (context) {
@@ -475,7 +475,7 @@
         $('select[name="search_district_name"]', context).once('advocacy-district-reloaded', function() {
             Sba.setElStates();
             $('#views-exposed-form-targets-block-3 input, #views-exposed-form-targets-block-3 select').on('change', function(){
-                if(this.type != 'button' && this.type !='hidden') {
+                if(this.type !== 'button' && this.type !== 'hidden') {
                     if($('div.view-targets').is(':visible')) {
                         Sba.reset();
                     }
@@ -491,7 +491,7 @@
     Sba.comboSearchUpdater = function () {
         var combineField = $('#edit-combine');
         //placeholder text
-        if (combineField.text().length == 0) {
+        if (combineField.text().length === 0) {
             var desc = $('.description', '#edit-combine-wrapper');
             var placeholder = desc.text().trim();
             desc.hide();
@@ -506,7 +506,7 @@
         combineField.on('keyup', function() {
             clearTimeout(combine);
             var newVal = $(this).val();
-            if (oldVal != newVal) {
+            if (oldVal !== newVal) {
                 combine = setTimeout(function() {
                     oldVal = newVal;
                     if($('div.view-targets').is(':visible')) {
@@ -791,6 +791,7 @@
                     notGroupable = true;
                     if (nm.indexOf('district') != -1) {
                         hasDistrict = true;
+                        notGroupable = false;
                     }
                 }
                 if(nm.indexOf('district') != -1 && district.val() == 'All') {
@@ -861,7 +862,7 @@
             }
         }
         //update quick target button based on meta-variables
-        if( notGroupable == true || hasDistrict == true || (groupable == false && hasState == false)) {
+        if( notGroupable == true || (groupable == false && hasState == false)) {
             if(window.search_state != 'committee') {
                 $('.views-targets-button-wrapper')
                     .prop("disabled", true)
@@ -879,7 +880,7 @@
                     .addClass('cancel-hover');
             }
         }
-        else if((groupable == true || hasState == true)  && window.search_state != 'committee' && hasDistrict == false && notGroupable == false) {
+        else if((groupable == true || hasState == true)  && window.search_state != 'committee' && notGroupable == false) {
             $('.views-targets-button-wrapper').prop("disabled", false).fadeIn(200).css({'cursor': 'pointer'}).removeClass('cancel-hover');
             $('.views-targets-button-wrapper input').prop("disabled", false).fadeIn(200).css({'cursor': 'pointer'}).removeClass('cancel-hover');
         }
@@ -957,10 +958,12 @@
         var socials = [];
         var committee = [];
         var committee_id = [];
+        var districts = [];
 
         //iterate through the form elements and build arrays of checked/selected items
         $('#views-exposed-form-targets-block-3 input[type="checkbox"], #views-exposed-form-targets-block-3 select, #edit-search-committee').each(function(){
-            if ($(this).prop('checked') || (this.name == 'search_state' && this.value != "All") || (this.name == 'search_committee' && this.value != '')) {
+
+            if ($(this).prop('checked') || (this.name == 'search_state' && this.value != "All") || (this.name == 'search_district_name' && this.value != "All")  || (this.name == 'search_committee' && this.value != '')) {
                 var nm = this.name;
                 var v = this.value;
                 if (nm.indexOf('search_committee') != -1) {
@@ -977,6 +980,9 @@
                 else if (nm.indexOf('state') != -1) {
                     states.push(v);
                 }
+                else if (nm.indexOf('district') != -1) {
+                    districts.push(v);
+                }
                 else if (nm.indexOf('gender') != -1) {
                     genders.push(v);
                 }
@@ -992,6 +998,7 @@
         states = states.toString().replace(/,/g, '|');
         genders = genders.toString().replace(/,/g, '|');
         socials = socials.toString().replace(/,/g, '|');
+        districts = districts.toString();
 
         var query = [];
         if(committee.length > 0) {
@@ -1013,12 +1020,14 @@
         if(socials.length > 0) {
             query.push('social=' + socials);
         }
+        if(districts.length > 0) {
+            query.push('district_name=' + districts);
+        }
         return query;
     };
 
     // add target
     Sba.addTarget = function (type, query) {
-
         if (type == 'search') {
             var qArr = $(query).attr('href').replace('add-all?', '').replace('add-target?', '').split('&');
         }
@@ -1304,12 +1313,14 @@
       var queryObj = {};
         $(query).each(function(index, value) {
             var segments = value.split('=');
-          if (segments[0] == 'ids') {
-                return false;
+            console.log(segments)
+            if (segments[0] == 'ids') {
+              return false;
             }
-            if(typeof(segments[1]) == "undefined") {
+            if (typeof(segments[1]) == "undefined") {
                 return true;
             }
+
             segments[0] = segments[0].SbaUcfirst();
           if(segments[0] != 'Search_committee' && segments[0] != 'Committee_id' && segments[0] != 'Class_name') {
                 segments[1] = segments[1].replace(/%7C/g, '|');
@@ -1440,6 +1451,7 @@
 
         // If this is a queried group (rather than an editable group entity)
         //
+        console.log(queryObj)
         var cleanUp = JSON.stringify(queryObj).SbaJsonToReadable();
         if (typeof(queryObj.Fields) !== 'undefined' || typeof(queryObj.Genderxxxx) !== 'undefined'
             || typeof(queryObj.Socialxxxx) !== 'undefined' ||  typeof(queryObj.District) !== 'undefined') {
@@ -1553,6 +1565,7 @@
             .replace(/%28/g, '(')
             .replace(/%29/g, ')')
             .replace(/%3A/g, ':')
+            .replace('District_name', 'District')
             .replace(/\}/g, '');
     };
 
