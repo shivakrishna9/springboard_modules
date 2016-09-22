@@ -173,6 +173,14 @@ function springboard_advocacy_views_data() {
     ),
   );
 
+  $data['advocacy']['matching_targets'] = array(
+    'title' => t('Matching targets'),
+    'help' => t('Display matching targets in a group keyword search.'),
+    'field' => array(
+      'click sortable' => TRUE,
+      'handler' => 'springboard_advocacy_views_handler_field',
+    ),
+  );
 
   // Organization title returned by the API request.
   $data['advocacy']['title'] = array(

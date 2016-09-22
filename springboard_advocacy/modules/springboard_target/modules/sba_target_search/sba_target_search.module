@@ -259,3 +259,36 @@ function sba_target_search_convert_recipients($group) {
 
   return json_encode($recipients);
 }
+
+function sba_target_search_process_matches($matches) {
+  $output = '';
+  if (!empty($matches)) {
+    $output = '';
+    $names = array();
+    foreach ($matches as $match) {
+      $names[] = sba_target_search_match_details($match);
+    }
+    $output .= check_plain(implode(' | ', $names));
+  }
+  return $output;
+}
+
+function sba_target_search_match_details($match) {
+  $output = array();
+  $target = (array) $match;
+  $title = isset($target['salutation']) ? ' ' . $target['salutation'] : '';
+  $person = $title . ' ' . $target['first_name'] . ' ' . $target['last_name'];
+  $output[] = $person;
+  $party = isset($target['party']) ? ' (' . $target['party'] . ')' : '';
+  if (!empty($party)) {
+    $output[] = $party;
+  }
+  $organization = !empty($target['organization']) ? $target['organization'] : '';
+  if (!empty($organization)) {
+    $output[] = ', ' . $organization;
+  }
+  if (!empty($target['state'])) {
+    $output[] = ', ' . $target['state'];
+  }
+  return implode(' ', $output);
+}

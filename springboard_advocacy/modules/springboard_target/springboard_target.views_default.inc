@@ -307,8 +307,9 @@ function springboard_target_views_default_views() {
     'organization' => 'organization',
     'title' => 'title',
     'target_actions' => 'target_actions',
+    'updated_at' => 'updated_at',
   );
-  $handler->display->display_options['style_options']['default'] = 'last_name';
+  $handler->display->display_options['style_options']['default'] = 'updated_at';
   $handler->display->display_options['style_options']['info'] = array(
     'salutation' => array(
       'align' => '',
@@ -348,6 +349,13 @@ function springboard_target_views_default_views() {
       'separator' => '',
       'empty_column' => 0,
     ),
+    'updated_at' => array(
+      'sortable' => 1,
+      'default_sort_order' => 'desc',
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
   );
   $handler->display->display_options['defaults']['style_options'] = FALSE;
   $handler->display->display_options['defaults']['row_plugin'] = FALSE;
@@ -375,6 +383,11 @@ function springboard_target_views_default_views() {
   $handler->display->display_options['fields']['title']['table'] = 'advocacy';
   $handler->display->display_options['fields']['title']['field'] = 'title';
   $handler->display->display_options['fields']['title']['label'] = 'Title/Role';
+  /* Field: Advocacy: Updated Date */
+  $handler->display->display_options['fields']['updated_at']['id'] = 'updated_at';
+  $handler->display->display_options['fields']['updated_at']['table'] = 'advocacy';
+  $handler->display->display_options['fields']['updated_at']['field'] = 'updated_at';
+  $handler->display->display_options['fields']['updated_at']['label'] = 'Updated';
   /* Field: Advocacy: Target Actions */
   $handler->display->display_options['fields']['target_actions']['id'] = 'target_actions';
   $handler->display->display_options['fields']['target_actions']['table'] = 'advocacy';
@@ -386,11 +399,6 @@ function springboard_target_views_default_views() {
     'view' => 0,
   );
   $handler->display->display_options['defaults']['sorts'] = FALSE;
-  /* Sort criterion: Broken/missing handler */
-  $handler->display->display_options['sorts']['last_name']['id'] = 'last_name';
-  $handler->display->display_options['sorts']['last_name']['table'] = 'advocacy';
-  $handler->display->display_options['sorts']['last_name']['field'] = 'last_name';
-  $handler->display->display_options['sorts']['last_name']['order'] = 'DESC';
   $handler->display->display_options['defaults']['filter_groups'] = FALSE;
   $handler->display->display_options['defaults']['filters'] = FALSE;
   /* Filter criterion: Advocacy: Search Multiple Target Fields by Keywords */
@@ -583,13 +591,21 @@ function springboard_target_views_default_views() {
   $handler->display->display_options['style_plugin'] = 'table';
   $handler->display->display_options['style_options']['columns'] = array(
     'group_name' => 'group_name',
+    'updated_at' => 'updated_at',
     'group_actions' => 'group_actions',
   );
-  $handler->display->display_options['style_options']['default'] = '-1';
+  $handler->display->display_options['style_options']['default'] = 'updated_at';
   $handler->display->display_options['style_options']['info'] = array(
     'group_name' => array(
       'sortable' => 1,
       'default_sort_order' => 'asc',
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
+    'updated_at' => array(
+      'sortable' => 1,
+      'default_sort_order' => 'desc',
       'align' => '',
       'separator' => '',
       'empty_column' => 0,
@@ -619,11 +635,20 @@ function springboard_target_views_default_views() {
   $handler->display->display_options['fields']['group_name']['table'] = 'advocacy';
   $handler->display->display_options['fields']['group_name']['field'] = 'group_name';
   $handler->display->display_options['fields']['group_name']['element_label_colon'] = FALSE;
+  /* Field: Advocacy: Matching targets */
+  $handler->display->display_options['fields']['matching_targets']['id'] = 'matching_targets';
+  $handler->display->display_options['fields']['matching_targets']['table'] = 'advocacy';
+  $handler->display->display_options['fields']['matching_targets']['field'] = 'matching_targets';
+  /* Field: Advocacy: Updated Date */
+  $handler->display->display_options['fields']['updated_at']['id'] = 'updated_at';
+  $handler->display->display_options['fields']['updated_at']['table'] = 'advocacy';
+  $handler->display->display_options['fields']['updated_at']['field'] = 'updated_at';
+  $handler->display->display_options['fields']['updated_at']['label'] = 'Updated';
   /* Field: Advocacy: Group Actions */
   $handler->display->display_options['fields']['group_actions']['id'] = 'group_actions';
   $handler->display->display_options['fields']['group_actions']['table'] = 'advocacy';
   $handler->display->display_options['fields']['group_actions']['field'] = 'group_actions';
-  $handler->display->display_options['fields']['group_actions']['label'] = '';
+  $handler->display->display_options['fields']['group_actions']['label'] = 'Actions';
   $handler->display->display_options['fields']['group_actions']['element_label_colon'] = FALSE;
   $handler->display->display_options['fields']['group_actions']['which_links'] = array(
     0 => 'view',
