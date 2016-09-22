@@ -282,7 +282,7 @@ function springboard_node_expire_node_load($nodes, $types) {
   $arg = arg();
   // If viewing or editing a node, load some required expiration information and
   // attach it to the node.
-  if ($arg[0] == 'node' && intval($arg[1]) != 0 && _springboard_node_expire_node_type_expirable($types)) {
+  if ($arg[0] == 'node' && !empty($arg[1]) && intval($arg[1]) != 0 && _springboard_node_expire_node_type_expirable($types)) {
     $nids = array_keys($nodes);
     $query = db_select('node_expire', 'ne')
       ->fields('ne', array(
