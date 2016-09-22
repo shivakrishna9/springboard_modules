@@ -84,10 +84,12 @@ function springboard_target_api_save_target_group($group, $is_new = TRUE) {
     }
   }
 
-  // Check child groups for recursion
-  foreach ($child_ids as $child_id) {
-    if(_springboard_target_api_check_group_recursion($child_id, $group['group_id'])) {
-      return false;
+  // Check child groups for recursion.
+  if (!empty($group['group_id'])) {
+    foreach ($child_ids as $child_id) {
+      if (_springboard_target_api_check_group_recursion($child_id, $group['group_id'])) {
+        return FALSE;
+      }
     }
   }
 
