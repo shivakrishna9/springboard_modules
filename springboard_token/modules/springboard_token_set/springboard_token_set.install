@@ -132,6 +132,29 @@ function springboard_token_set_schema() {
     ),
   );
 
+  $schema['springboard_token_set_field_map'] = array(
+    'description' => 'Maps token sets to form fields.',
+    'fields' => array(
+      'tsid' => array(
+        'description' => 'Unique ID of the token set.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'form_id' => array(
+        'description' => 'The target form.',
+        'type' => 'varchar',
+        'length' => '128',
+        'not null' => TRUE,
+      ),
+      'field_name' => array(
+        'description' => 'The machine name of the target field.',
+        'type' => 'varchar',
+        'length' => '128',
+        'not null' => TRUE,
+      ),
+    ),
+  );
   return $schema;
 }
 

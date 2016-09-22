@@ -3,8 +3,7 @@
     attach: function (context, settings) {
       // Add token click handler to form elements with token set IDs:
       $(".form-wrapper, #webform-component-edit-form #edit-value, #webform-component-edit-form #edit-extra-description").each(function() {
-        var token_set_id = $(this).data("token-set-id");
-        if (typeof token_set_id !== typeof undefined) {
+        if ($(this).hasClass('token-ui-field')) {
           $(this).addClass("has-token-data");
           var targetElement = $(this).find("textarea");
           if (targetElement.length == 0) {
@@ -102,47 +101,42 @@
             $(this).removeAttr('sb-selection-end-pos');
           }
         });
-
         var targetElementID = $(element).attr('id');
-        var token_set_id = element.closest(".has-token-data").data("token-set-id");
-        if (Drupal.settings["token_sets_" + token_set_id] == undefined) {
-          var tokens = Drupal.settings.token_sets[token_set_id];
+        var tokenFieldKey = element.closest('.has-token-data').attr("token_key");
+        if (Drupal.settings['field_token_sets__' + tokenFieldKey] != undefined) {
+          var tokens = Drupal.settings["field_token_sets__" + tokenFieldKey];
         }
         else {
-          var tokens = Drupal.settings["token_sets_" + token_set_id];
+          return;
         }
-
         // Generate tokens markup.
         var last_token_type = '';
-
-        var headerHTML = '<div class="token-ui-selector"><select>' +
+        var headerHTML = '';
+        /*headerHTML += '<div class="token-ui-selector"><select>' +
           '<option value="">- Browse Token Sets -</option><option value="all">- View All Tokens -</option>';
         for (var tsid in Drupal.settings.token_sets_list) {
           headerHTML += '<option value="' + tsid + '">' + Drupal.settings.token_sets_list[tsid] + '</option>';
         }
-        headerHTML += '</select></div>';
-        headerHTML += '<div class="token-ui-header">';
+        headerHTML += '</select></div>'; */
+        headerHTML += '<div class="token-ui-header">'; 
         var html = '<fieldset id="token-set-tokens" class="form-wrapper">';
         html += '<div class="token-set-tokens-spike">&nbsp;</div>';
         html += '<div class="token-set-tokens-inner">';
         html += '<legend><span class="fieldset-legend">Tokens</span></legend>';
         html += '<div class="fieldset-wrapper token-set-wrapper">';
         html += '<div class="token-list">';
-        var firstTokenSet = ' first-token-set';
+        var firstTokenSet = ' first-token-set token-set-expanded';
         var tokenTabsAdded = [];
         var tokensAdded = [];
+        var tokenSetNames = Drupal.settings['token_set_names'];
         for (var i = 0; i < tokens.length; i++) {
-          if (tokens[i].token_type !== last_token_type && jQuery.inArray(tokens[i].token_type, tokenTabsAdded) == -1) {
-            tokenTabsAdded.push(tokens[i].token_type);
-            headerHTML += '<a class="token-set-expand' + firstTokenSet + '" data-type="' + tokens[i].token_type.replace(' ', '-') + 
-              '" data-expanded="0" href="#">' + tokens[i].token_type + '</a>';
-            last_token_type = tokens[i].token_type;
-          }
+          var tsid = tokens[i];
+          var tokenSetName = tokenSetNames[tsid];
+          tokenTabsAdded.push(tokenSetName);
+          headerHTML += '<a class="token-set-expand' + firstTokenSet + '" tsid="' + tsid + '" ' +
+          'data-expanded="0" href="#">' + tokenSetName + '</a>';
+
           firstTokenSet = '';
-          if (jQuery.inArray(tokens[i].token, tokensAdded) == -1) {
-            html += renderToken(tokens[i]);
-            tokensAdded.push(tokens[i].token);
-          }
         }
         headerHTML += '</div>';
         
@@ -153,28 +147,23 @@
         $('#token-set-tokens').attr('target-element-id', targetElementID);
         $('#token-set-tokens legend').after(headerHTML);
 
-        $('#token-set-tokens .token-ui-selector select').change(function () {
-          if ($(this).val() == '') {
-            $('.token-ui-header .token-set-expand:first').click();
-            return;
-          }
+
+        var fetchTokenSet = function (tsid) {
           $.ajax({
-            url: '/sb-token-set-ajax/' + $(this).val(),
+            url: '/sb-token-set-ajax/' + tsid,
             dataType: 'json',
             context: document.body,
             success: function(data) {
               var token = '';
               var rowHTML = '';
               var tokenExists;
-              $('.token-ui-header .token-set-expand').each(function () {
-                $(this).removeClass('token-set-expanded');
-              });
               $('.token-list .token-set-token-row').hide();
               for (var i = 0; i < data.length; i++) {
                 tokenExists = false;
                 token = {
                   token: data[i]['token'],
                   token_type: data[i]['token_type'],
+                  tsid: tsid,
                   token_description: data[i]['token_description']
                 };
                 $('.token-list .token-set-token-row').each(function() {
@@ -200,17 +189,26 @@
               }
             }
           });
-        });
+        };
 
         $(".token-set-expand").each(function() {
           $(this).click(function(event) {
-            
             event.preventDefault();
-            var token_type = $(this).data("type");
-            $(".token-set-token-row").hide();
-            $(".token-set-token-type-" + token_type.replace(' ', '-')).show();
+            var targetTsid = $(this).attr('tsid');
             $(".token-set-expand").removeClass("token-set-expanded");
-            $(this).addClass("token-set-expanded");
+            $(this).addClass('token-set-expanded');
+            if ($(this).hasClass('ajax-fetch-complete')) {
+              $('.token-set-token-row').each(function() {
+                if ($(this).attr('tsid') == targetTsid) {
+                  $(this).show();
+                } else {
+                  $(this).hide();
+                }
+              });  
+            } else {
+              fetchTokenSet(targetTsid);
+              $(this).addClass('ajax-fetch-complete');
+            }
           });
         });
 
@@ -230,7 +228,8 @@
 
 
       var renderToken = function (token) {
-        var html = '<div class="token-set-token-row token-set-token-type-' + token.token_type.replace(' ', '-') + '" data-token="' + token.token + '">';
+        var html = '<div class="token-set-token-row token-set-token-type-' + token.token_type.replace(' ', '-') + '" ' +
+          'tsid="' + token.tsid + '" data-token="' + token.token + '">';
         html += '<div class="token-col token-machine">' + token.token + '</div>';
         html += '<div class="token-col token-descr">' + token.token_description + '</div>';
         html += '<div class="token-col token-use">use token</div>';

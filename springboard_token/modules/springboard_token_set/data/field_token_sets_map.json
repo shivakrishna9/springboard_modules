@@ -1,0 +1,20 @@
+{   
+  "webform_configure_form": [
+    {"confirmation": [
+        "Form Specific Upsell Content",
+        "A token set"
+      ]
+    },
+    {"submit_description": [
+        "Form Specific Upsell Content",
+        "A token set"
+      ]
+    }
+  ],
+  "webform_email_edit_form": [
+    {"template": [
+        "A token set"
+      ]
+    }
+  ]
+}
