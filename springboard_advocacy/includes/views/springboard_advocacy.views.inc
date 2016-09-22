@@ -152,6 +152,28 @@ function springboard_advocacy_views_data() {
     ),
   );
 
+  $data['advocacy']['created_at'] = array(
+    'title' => t('Created'),
+    'help' => t('Creation date'),
+    'field' => array(
+      'click sortable' => TRUE,
+      'handler' => 'springboard_advocacy_views_handler_field',
+    ),
+  );
+
+  $data['advocacy']['updated_at'] = array(
+    'title' => t('Updated Date'),
+    'help' => t('Last Update'),
+    'field' => array(
+      'click sortable' => TRUE,
+      'handler' => 'springboard_advocacy_views_handler_field',
+    ),
+    'sort' => array(
+      'handler' => 'views_handler_sort_date',
+    ),
+  );
+
+
   // Organization title returned by the API request.
   $data['advocacy']['title'] = array(
     'title' => t('Organization title'),
