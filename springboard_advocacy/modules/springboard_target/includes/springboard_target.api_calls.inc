@@ -224,12 +224,16 @@ function _springboard_target_api_build_chambers($unstructured_chambers) {
   $chamber_rows_container = array();
 
   foreach ($unstructured_chambers as $chamber_id => $chamber_fields) {
-
-    //create a new container to rewrap our chambers
+    // Create a new container to rewrap our chambers.
     $chamber_rows_container[$chamber_id] = array();
 
     foreach ($chamber_fields as $field_name => $chamber_field_values) {
-      $chamber_field_values = explode('|', $chamber_field_values);
+      if ($field_name != 'fields' && $field_name != 'values') {
+        $chamber_field_values = explode('|', $chamber_field_values);
+      }
+      else {
+        $chamber_field_values = array($chamber_field_values);
+      }
       if ($field_name == 'role') {
         $field_name = 'chamber';
       }
@@ -244,7 +248,8 @@ function _springboard_target_api_build_chambers($unstructured_chambers) {
             $i++;
           }
         }
-      } else {
+      }
+      else {
         foreach ($chamber_field_values as $value) {
           _springboard_target_api_build_chambers_shmoosher($chamber_rows_container, $chamber_id, $i, $field_name, $value);
           $i++;
@@ -254,7 +259,7 @@ function _springboard_target_api_build_chambers($unstructured_chambers) {
   }
 
   $chamber_rows = array();
-  foreach ($chamber_rows_container as $container)  {
+  foreach ($chamber_rows_container as $container) {
     $chamber_rows = array_merge($chamber_rows, $container);
   }
   return $chamber_rows;
@@ -278,14 +283,21 @@ function _springboard_target_api_build_chambers_shmoosher(&$chamber_rows_contain
   $state = isset($chamber_field['state']) ? $chamber_field['state'] : '';
   $gender = isset($chamber_field['gender']) ? $chamber_field['gender'] : '';
   $committee_id = isset($chamber_field['committee_id']) ? $chamber_field['committee_id'] : NULL;
+  $keywords = isset($chamber_field['keywords']) ? $chamber_field['keywords'] : NULL;
 
   $chamber_rows_container[$chamber_id][$i]['chamber'] = $chamber;
   $chamber_rows_container[$chamber_id][$i]['party'] = $party;
   $chamber_rows_container[$chamber_id][$i]['state'] = $state;
   $chamber_rows_container[$chamber_id][$i]['gender'] = $gender;
   $chamber_rows_container[$chamber_id][$i]['committee_id'] = $committee_id;
+  $chamber_rows_container[$chamber_id][$i]['keywords'] = $keywords;
 
-  $chamber_rows_container[$chamber_id][$i][$field_name] = $value;
+  if ($field_name == 'fields' || $field_name == 'values') {
+    $chamber_rows_container[$chamber_id][$i]['keywords'][$field_name] = $value;
+  }
+  else {
+    $chamber_rows_container[$chamber_id][$i][$field_name] = $value;
+  }
 }
 
 /**

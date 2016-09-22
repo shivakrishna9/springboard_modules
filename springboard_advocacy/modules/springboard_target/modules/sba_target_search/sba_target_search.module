@@ -213,7 +213,7 @@ function sba_target_search_add_target_search_form($form, &$form_state, $entity =
 
 function sba_target_search_convert_recipients($group) {
   $recipients = array();
-  foreach($group->chambers as $chamber) {
+  foreach ($group->chambers as $chamber) {
     $recipient = array();
     if (isset($chamber->committee_id) && $chamber->committee_id != '0' && $chamber->committee_id != '') {
       $recipient['committee_id'] = $chamber->committee_id;
@@ -222,7 +222,15 @@ function sba_target_search_convert_recipients($group) {
     else {
       foreach ($chamber as $field_name => $value) {
         if ($value != '') {
-          $recipient[$field_name] = $value;
+          if ($field_name != 'keywords') {
+            $recipient[$field_name] = $value;
+          }
+          else {
+            $fields = unserialize($value);
+            foreach ($fields as $name => $content) {
+              $recipient[$name] = $content;
+            }
+          }
         }
       }
     }
