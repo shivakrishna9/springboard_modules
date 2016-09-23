@@ -10,7 +10,7 @@
  */
 function commerce_braintree_web_fundraiser_commerce_fundraiser_gateway_info() {
   return array(
-    'payment_method' => array('credit', 'paypal'),
+    'payment_method' => array('braintree_hostedfields' => 'credit', 'braintree_paypal' => 'paypal'),
     'allow_recurring' => array('credit', 'paypal'),
     'allow_refund' => array('credit', 'paypal'),
     'form callback' => 'commerce_braintree_web_fundraiser_commerce_form',
