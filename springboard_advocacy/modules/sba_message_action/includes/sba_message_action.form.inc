@@ -422,6 +422,7 @@ function sba_message_action_form_submit($form, &$form_state) {
   $_SESSION['form_details'] = array();
   $_SESSION['action_sid'] = FALSE;
   $_SESSION['success_messages'] = array();
+  $_SESSION['springboard_advocacy_action_webform_data'] = array();
 
   // Create array of messages to submit for target resolution.
   if (isset($form_state['values']['sba_messages'])) {
@@ -469,11 +470,20 @@ function sba_message_action_form_submit_success($form, &$form_state) {
   $node = $form['#node'];
   $sid = !empty($_SESSION['webform_confirmations_sid']) ? $_SESSION['webform_confirmations_sid'] : FALSE;
 
-  springboard_advocacy_success($_SESSION['springboard_dw']['node_data'], $_SESSION['springboard_dw']['contact_data'], $_SESSION['springboard_dw']['response_data'], $sid);
+  // Fire the advocacy success hook only if we are not submitting a
+  // multi-flow action. (multi-flow actions submit after the preview
+  // confirmation in the method sba_message_action_preview_form_submit() in
+  // the file: springboard/springboard_advocacy/modules/sba_message_action
+  ///includes/sba_message_action.preview.inc
+  if (!empty($_SESSION['springboard_advocacy_action_webform_data
+  ']['is_multiflow_action']) &&
+  $_SESSION['springboard_advocacy_action_webform_data']['is_multiflow_action'] == FALSE) {
+    springboard_advocacy_success($_SESSION['springboard_advocacy_action_webform_data']['node_data'], $_SESSION['springboard_advocacy_action_webform_data']['contact_data'], $_SESSION['springboard_advocacy_action_webform_data']['response_data'], $sid);
+  }
 
   // Cleanup the session data now that it has been used for the advocacy
   // success hook call and is no longer needed.
-  unset($_SESSION['springboard_dw']);
+  unset($_SESSION['springboard_advocacy_action_webform_data']);
 }
 /**
  * Helper function to build message bodies.

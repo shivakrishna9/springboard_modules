@@ -250,6 +250,7 @@ function sba_message_action_node_insert($node) {
         drupal_write_record('sba_message_action_confirm', $record);
       }
     }
+    springboard_advocacy_node_form_post_save($node);
   }
 }
 
@@ -259,6 +260,7 @@ function sba_message_action_node_insert($node) {
 function sba_message_action_node_update($node) {
   if ($node->type == 'sba_message_action') {
     sba_message_action_update_multiflow_component($node);
+    springboard_advocacy_node_form_post_save($node);
   }
 }
 
@@ -673,9 +675,7 @@ function sba_message_action_form_sba_message_action_node_form_alter(&$form, &$fo
     '#weight' => -4,
   );
 
-  $form['actions']['submit']['#validate'][] = 'sba_message_action_form_sba_message_action_node_form_validate';
-  $form['actions']['submit']['#submit'][] = 'sba_message_action_form_sba_message_action_node_form_submit';
-
+  $form['#validate'][] = 'sba_message_action_form_sba_message_action_node_form_validate';
 }
 
 /**
@@ -710,39 +710,6 @@ function sba_message_action_form_sba_message_action_node_form_validate(&$form, &
     }
   }
 }
-
-/**
- * Redirect to the messages tab instead of webform tab.
- *
- * @param $form
- * @param $form_state
- */
-function sba_message_action_form_sba_message_action_node_form_submit(&$form, &$form_state) {
-  $data = array(
-    'nid' => $form_state['values']['nid'],
-    'visibility' => $form_state['values']['show_participants']
-  );
-  $visibility = db_query('select visibility from {springboard_action_opt_in_block} WHERE nid=:nid', array(':nid' => $form_state['values']['nid']))->fetchCol();
-  if (empty($visibility)) {
-    drupal_write_record('springboard_action_opt_in_block', $data);
-  }
-  else {
-    drupal_write_record('springboard_action_opt_in_block', $data, 'nid');
-  }
-
-  $submit = array(
-    'nid' => $form_state['values']['nid'],
-    'submit_text' => $form_state['values']['action_submit_button_text']
-  );
-
-  drupal_write_record('webform', $submit, 'nid');
-
-  if (empty($form['#node']->nid)) {
-    $path = 'node/'.$form_state['nid'].'/messages';
-    $form_state['redirect'] = $path;
-  }
-}
-
 
 /**
  * Implements hook_FORMID_form_alter().

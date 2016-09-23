@@ -343,7 +343,6 @@ function springboard_advocacy_views_api() {
        }
      }
    }
-
  }
 
 
@@ -976,4 +975,38 @@ function springboard_advocacy_update_multistep_components($sid, $node, $changed)
  */
 function springboard_advocacy_success($node, $contact, $data, $sid) {
   module_invoke_all('action_success', $node, $contact, $data, $sid);
+}
+
+
+function springboard_advocacy_node_form_post_save($node) {
+  if (!empty($node->show_my_name)) {
+    $data = array(
+      'nid' => $node->nid,
+      'visibility' => $node->show_my_name,
+    );
+
+    $visibility = db_query('select visibility from {springboard_action_opt_in_block} WHERE nid=:nid', array(':nid' => $node->nid))->fetchCol();
+
+    if (empty($visibility)) {
+      drupal_write_record('springboard_action_opt_in_block', $data);
+    }
+    else {
+      drupal_write_record('springboard_action_opt_in_block', $data, 'nid');
+    }
+  }
+
+  if (!empty($node->action_submit_button_text) || !empty($node->social_submit_button_text)) {
+    $text = empty($node->action_submit_button_text) ? $node->social_submit_button_text : $node->action_submit_button_text;
+    $submit = array(
+      'nid' => $node->nid,
+      'submit_text' => $text,
+    );
+
+    drupal_write_record('webform', $submit, 'nid');
+  }
+
+  if (!empty($node->is_new)) {
+    $path = 'node/' . $node->nid . '/messages';
+    $form_state['redirect'] = $path;
+  }
 }

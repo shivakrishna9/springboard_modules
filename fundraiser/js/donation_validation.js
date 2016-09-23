@@ -126,7 +126,7 @@
                 // Previously submitted, don't submit again.
                 event.preventDefault();
               } else {
-                $('.fundraiser-donation-form #edit-submit').hide();
+                $('.fundraiser-donation-form #edit-submit').hide().next('span.cancel').hide();
                 $('.fundraiser_submit_message').hide();
                 $('.fundraiser-donation-form #edit-submit').after('<div class="donation-processing-wrapper">' +
                   '<p class="donation-processing">Processing' +

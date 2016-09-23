@@ -10,7 +10,7 @@
  */
 function springboard_hmac_menu() {
   $items['hmac/%/%'] = array(
-    'title' => 'Authorization Request',
+    'title' => '',
     'description' => 'Endpoint to verify hmac encoded payloads',
     'page callback' => 'springboard_hmac_verify_page',
     'page arguments' => array(1, 2),
@@ -49,7 +49,8 @@ function springboard_hmac_permission() {
  *   An array of allowed actions, e.g. "su" for sustainer upgrades.
  */
 function springboard_hmac_allowed_actions() {
-  $actions = module_invoke_all('springboard_hmac_allowed_actions');
+  $actions = array();
+  drupal_alter('springboard_hmac_allowed_actions', $actions);
   return $actions;
 }
 
@@ -71,14 +72,23 @@ function springboard_hmac_allowed_actions() {
  */
 function springboard_hmac_verify_page($payload, $hmac) {
   $verify = springboard_hmac_verify($payload, $hmac);
-  $output = '';
+  $text = '';
+  $format = NULL;
   if (!empty($verify)) {
-    $output = variable_get('springboard_hmac_error_message', t('An error occurred and we could not complete the operation.'));
+    drupal_set_title(variable_get('springboard_hmac_error_title', ''));
+    $message = variable_get('springboard_hmac_error_message', array('value' => t('An error occurred and we could not complete the operation.'), 'format' => NULL));
+    if (is_array($message)) {
+      $text = $message['value'];
+      $format = $message['format'];
+    }
+    else {
+      $text = $message;
+    }
     if (user_access('administer springboard hmac')) {
       drupal_set_message($verify, 'error');
     }
   }
-  return $output;
+  return check_markup($text, $format);
 }
 
 /**
@@ -156,7 +166,7 @@ function springboard_hmac_verify_payload($parsed_payload) {
 
   // Check the action to see if the action is valid.
   $allowed_actions = springboard_hmac_allowed_actions();
-  if (empty($parsed_payload['action']) || (!in_array($parsed_payload['action'], $allowed_actions))) {
+  if (empty($parsed_payload['action']) || empty($allowed_actions) || !in_array($parsed_payload['action'], $allowed_actions)) {
     return t('Unknown action.');
   }
 
@@ -169,29 +179,37 @@ function springboard_hmac_verify_payload($parsed_payload) {
   if (empty($parsed_payload['uid'])) {
     return t('User ID is missing.');
   }
-  else {
-    // Does the account not exist?
-    $account = user_load($parsed_payload['uid']);
-    if (empty($account->uid)) {
-      return t('Invalid User ID.');
+
+  // Does the account not exist?
+  $account = user_load($parsed_payload['uid']);
+  if (empty($account->uid)) {
+    return t('Invalid User ID.');
+  }
+
+  // Is there a non-anonymous session and
+  // does the user id not match the payload ID?
+  global $user;
+  if (!user_access('administer springboard hmac') && ($user->uid > 0 && $user->uid != $parsed_payload['uid'])) {
+    return t('Payload User ID does not match User ID.');
+  }
+
+  // Allow other modules to do their own verification.
+  $hook_name = 'springboard_hmac_verify_payload';
+  foreach (module_implements($hook_name) as $module) {
+    $reason = module_invoke($module, $hook_name, $parsed_payload);
+    if (!empty($reason)) {
+      return $reason;
     }
-    else {
-      // Is there a non-anonymous session and
-      // does the user id not match the payload ID?
-      global $user;
-      if (!user_access('administer springboard hmac') && ($user->uid > 0 && $user->uid != $parsed_payload['uid'])) {
-        return t('Payload User ID does not match User ID.');
-      }
-      // Is there a springboard cookie and
-      // does the cookie user id not match the payload ID?
+  }
+
+  // Is there a springboard cookie and
+  // does the cookie user id not match the payload ID?
 //      if (module_exists('springboard_cookie')) {
 //        $cookie = springboard_cookie_get_cookie();
 //        if (!user_access('administer springboard hmac') && isset($cookie['uid']) && $parsed_payload['uid'] != $cookie['uid']) {
 //          return t('Payload User ID does not match Springboard Cookie User ID.');
 //        }
 //      }
-    }
-  }
   return NULL;
 }
 
@@ -358,10 +376,45 @@ function springboard_hmac_create_payload_session($payload, $hmac) {
 }
 
 /**
- * Implements hook_springboard_hmac_allowed_actions().
+ * Implements hook_springboard_admin_admin_menu_items_alter().
  */
-function springboard_hmac_springboard_hmac_allowed_actions() {
-  return 'lr';
+function springboard_hmac_springboard_admin_admin_menu_items_alter(&$items) {
+  if (user_access('administer springboard hmac')) {
+    $items['admin/springboard/settings']['_children']['admin/springboard/settings/config']['_children']['admin/config/hmac'] = array(
+      'link_path' => 'admin/config/hmac',
+      'link_title' => 'Springboard HMAC Settings',
+      'menu_name' => 'springboard_admin_menu',
+      'expanded' => 0,
+      'customized' => 1,
+      'weight' => -2,
+    );
+  }
+}
+
+/**
+ * Implements hook_springboard_admin_alias_patterns().
+ */
+function springboard_hmac_springboard_admin_alias_patterns() {
+  return array(
+    // Springboard Social config page.
+    'admin/config/hmac' => array(
+      'path' => array(
+        'regex' => '|^/admin/config/hmac$|',
+        'replacement' => 'admin/config/hmac',
+      ),
+      'alias' => array(
+        'regex' => '|^springboard/hmac$|',
+        'replacement' => 'springboard/hmac',
+      ),
+    ),
+  );
+}
+
+/**
+ * Implements hook_springboard_hmac_allowed_actions_alter().
+ */
+function springboard_hmac_springboard_hmac_allowed_actions_alter(&$actions) {
+  $actions[] = 'lr';
 }
 
 /**
@@ -382,6 +435,7 @@ function springboard_hmac_springboard_hmac_success($payload) {
         } else {
           $path = $param;
         }
+        $query = array_merge($query, drupal_get_query_parameters());  // Preserve any query string parameters from outside the HMAC.
         $goto = array($path, array('query' => $query));
 
         // Log in the user, if not logged in already.
