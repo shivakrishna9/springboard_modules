@@ -81,6 +81,33 @@ Drupal.behaviors.sbTranslateManagerBehavior = {
         $(this).parent().addClass('active');
       });
     });
+    // Display a prompt if the user tries to leave the form when any of the fields have been modified:
+    window.onload = function() {
+      window.addEventListener("beforeunload", function (e) {
+        var test = '';
+        var isDirty = false;
+        $('#sb-translation-manager td.translated-string input').each(function () {
+          if ($(this).attr('value') != $(this).attr('initial')) {
+            alert($(this).attr('value') + '|' + $(this).attr('initial'));
+            
+            test = $(this).val();
+            isDirty = true;
+            return;
+          }
+        });
+	if (isDirty == false) {
+          return undefined;
+        }
+
+        var confirmationMessage = '"' + test + '"' + 'Some translations have been changed. '
+                                + 'If you leave before saving, your changes will be lost!';
+        (e || window.event).returnValue = confirmationMessage; //Gecko + IE
+        return confirmationMessage; //Gecko + Webkit, Safari, Chrome etc.
+      });
+    }; 
+    
+    
+    // Display the first tab's contents on load:
     $('#edit-translation-manager .sb-textgroup-tabs a:first').click();
   })(jQuery); }
   
