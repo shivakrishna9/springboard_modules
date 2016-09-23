@@ -39,7 +39,7 @@
           $quickdonate.find('input[type=checkbox]').attr('disabled', 'disabled').attr('checked', false);
           $quickdonate.nextAll('.form-item, .form-wrapper').hide();
           if ($quickdonate.next('.note').length == 0) {
-            $quickdonate.after('<div class="note"><strong>Note:</strong> Quick donations are not available for one or more of the payment processors you have selected: <ul><li>' + $option_name + '</li></ul>You\'ll need to configure the <a href="/admin/commerce/config/payment-methods">different payment methods</a> to utilize the quick donation functionality.<br/><br/></div>');
+            $quickdonate.after('<div class="note"><strong>Note:</strong> One or more of the payment gateways you have selected are not compatible with or configured for Quick Donate. Please finish configuring or remove the gateway(s) below in order to enable Quick Donate on this form: <ul><li>' + $option_name + '</li></ul><br/><br/></div>');
           }
           else {
             $quickdonate.next('.note').find('ul').append('<li>$option_name</li>');
