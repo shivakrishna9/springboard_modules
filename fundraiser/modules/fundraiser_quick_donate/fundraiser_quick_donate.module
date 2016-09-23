@@ -450,6 +450,26 @@ function fundraiser_quick_donate_form_user_profile_form_alter(&$form, $form_stat
 }
 
 /**
+ * Implements hook_user_view_alter().
+ *
+ * Re-weight the profile fields so they appear in the correct order.
+ */
+function fundraiser_quick_donate_user_view_alter(&$build) {
+  $ordered_fields = array(
+    'first_name',
+    'last_name',
+    'address',
+    'address_line_2',
+    'city',
+    'state',
+    'country',
+  );
+  foreach ($ordered_fields as $weight => $field) {
+    $build['sbp_' . $field]['#weight'] = $weight;
+  }
+}
+
+/**
  * Implements hook_webform_user_send_mail_alter().
  */
 function fundraiser_quick_donate_webform_user_send_mail_alter(&$options) {
