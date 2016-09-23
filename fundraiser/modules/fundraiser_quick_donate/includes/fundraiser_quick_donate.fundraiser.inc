@@ -122,6 +122,9 @@ function fundraiser_quick_donate_fundraiser_donation_form($form, $form_state) {
 
             // Move instance default to the top of the list.
             $card_option_label = $card_options[$card_id];
+            $card_option_label = t('Use your @card', array(
+              '@card' => str_replace(' (default)', '', $card_option_label),
+            ));
             unset($card_options[$card_id]);
             $card_options = array($card_id => $card_option_label) + $card_options;
             break;
@@ -131,7 +134,7 @@ function fundraiser_quick_donate_fundraiser_donation_form($form, $form_state) {
         // Create options element.
         $cardonfile_options_form = array(
           '#type' => $card_option_element_type,
-          '#title' => t('Select a stored card'),
+          '#title' => NULL,
           '#options' => $card_options,
           '#default_value' => $card_options_default_value,
           '#weight' => -10,
