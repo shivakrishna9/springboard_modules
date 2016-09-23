@@ -1,7 +1,8 @@
 <?php
+
 /**
+ * Save the target message data to the API server.
  *
- * Save the target message data to the API server
  * @param stdClass $group
  *   ->group_name string
  *   ->group_id int
@@ -37,9 +38,8 @@
  *      ),
  *   )
  */
-
 function springboard_target_api_save_target_group($group, $is_new = TRUE) {
-  // Set up target components for the Group
+  // Set up target components for the .
   $indvds = array();
   $child_ids = array();
   $multi_indvds = array();
@@ -57,27 +57,27 @@ function springboard_target_api_save_target_group($group, $is_new = TRUE) {
     $recipients = urldecode($recipients);
     $targets = json_decode($recipients);
     foreach ($targets as $target) {
-      // group targets
+      // Group targets.
       if (isset($target->id) && $target->type == 'group') {
         $child_ids[$target->id] = $target->id;
       }
-      // single individual target
+      // Single individual target.
       elseif (isset($target->id)) {
         $indvds[$target->id] = $target->id;
       }
-      // multiple individual targets
-      elseif (isset($target->ids) && !isset($target->search_committee)) { // @TODO - need a  way to actually save committees as pseudo-groups
-        $multi_indvds =  array_merge($multi_indvds, explode('|', $target->ids));
+      // Multiple individual targets.
+      elseif (isset($target->ids) && !isset($target->search_committee)) {
+        $multi_indvds = array_merge($multi_indvds, explode('|', $target->ids));
       }
-      // gender or social media pseudo-groups
+      // Gender or social media pseudo-groups.
       elseif (isset($target->gender) || isset($target->social)) {
         $has_gender_or_social[] = $target;
       }
-      // legislative pseudo-groups
-      else if(isset($target->search_committee)) {
+      // Legislative pseudo-groups.
+      elseif (isset($target->search_committee)) {
         $committees[] = $target;
       }
-      // we should never get here
+      // We should never get here.
       else {
         $unstructured_chambers[] = $target;
       }
@@ -94,12 +94,13 @@ function springboard_target_api_save_target_group($group, $is_new = TRUE) {
   }
 
   // If there are gender or social pseudo-groups in use, retrieve the actual
-  // individual target IDs @TODO shouldn't need this anymore
-   if (!empty($has_gender_or_social)) {
+  // individual target IDs.
+  // @TODO shouldn't need this anymore.
+  if (!empty($has_gender_or_social)) {
     $gender_or_social_rows = _springboard_target_api_get_gender_or_social_ids($has_gender_or_social);
   }
-  // merge the gender/social rows and chambers
-  //@TODO this can be simplified in the if statements above.
+  // Merge the gender/social rows and chambers.
+  // @TODO this can be simplified in the if statements above.
   $unstructured_chambers = array_merge($unstructured_chambers, $has_gender_or_social, $committees);
   // Format the legislative group targets into the API-expected format.
   if (!empty($unstructured_chambers)) {
@@ -115,9 +116,8 @@ function springboard_target_api_save_target_group($group, $is_new = TRUE) {
   $group['target_ids'] = $indvds;
   $group['custom_group_ids'] = $child_ids;
 
-  //dummy content
-  //$group['chambers'] = array();
-  //$group['target_ids'] = json_encode(array('8', '10', '111'));
+  // $group['chambers'] = array();
+  // $group['target_ids'] = json_encode(array('8', '10', '111'));
   $api_call = springboard_advocacy_api_call();
   $group_id = isset($group['group_id']) ? $group['group_id'] : NULL;
 
@@ -149,7 +149,7 @@ function springboard_target_api_save_target_group($group, $is_new = TRUE) {
     else {
       $response = $api_call->invokeClientMethod('updateTargetGroup', $group, $group['group_id']);
     }
-    // set the group ID based on the API response.
+    // Set the group ID based on the API response.
     if (!empty($response->data->id)) {
       $group_id = $response->data->id;
     }
@@ -162,11 +162,12 @@ function springboard_target_api_save_target_group($group, $is_new = TRUE) {
 
 /**
  * @param $target_fields
+ *
  * @return array
+ *
  * @TODO this should be obsolete after updating the chambers to include addt'l attributes
 */
 function _springboard_target_api_get_gender_or_social_ids($target_fields) {
-
   $api_call = springboard_advocacy_api_call();
 
   $ids = array();
@@ -179,7 +180,7 @@ function _springboard_target_api_get_gender_or_social_ids($target_fields) {
     }
   }
   return $ids;
-} 
+}
 
 /**
  * Take the chambers form input and format it for the API callback.
@@ -266,7 +267,8 @@ function _springboard_target_api_build_chambers($unstructured_chambers) {
 }
 
 /**
- * Helper function to build chamber rows
+ * Helper function to build chamber rows.
+ *
  * @param $chamber_rows_container
  * @param $chamber_id
  * @param $i
@@ -276,7 +278,7 @@ function _springboard_target_api_build_chambers($unstructured_chambers) {
  */
 function _springboard_target_api_build_chambers_shmoosher(&$chamber_rows_container, $chamber_id, $i, $field_name, $value, $chamber_field = array()) {
 
-  // the container is passed by reference
+  // The container is passed by reference
   // make sure that values that are already set, get maintained.
   $chamber = isset($chamber_field['chamber']) ? $chamber_field['chamber'] : '';
   $party = isset($chamber_field['party']) ? $chamber_field['party'] : '';
@@ -301,12 +303,15 @@ function _springboard_target_api_build_chambers_shmoosher(&$chamber_rows_contain
 }
 
 /**
+ * Failsafe group lookup.
+ *
  * If a group ID is missing in an existing message entity
  * try to retrieve it via the message id. This would happen if the
  * group creation fails or if the creation response was interrupted.
  *
  * @param $api_call
  * @param $message_id
+ *
  * @return mixed
  */
 function _springboard_target_api_get_group_by_message_id($api_call, $message_id) {
@@ -315,10 +320,13 @@ function _springboard_target_api_get_group_by_message_id($api_call, $message_id)
 }
 
 /**
- * @param $entity
+ * Delete a group.
+ *
+ * @param object $entity
+ *   A pseudo entity.
  */
-function springboard_target_api_delete_target_group ($entity) {
-  //delete the remote API message group.
+function springboard_target_api_delete_target_group($entity) {
+  // Delete the remote API message group.
   $api_call = springboard_advocacy_api_call();
   $response = $api_call->invokeClientMethod('deleteTargetGroup', $entity->data['group_id']);
 
@@ -327,6 +335,15 @@ function springboard_target_api_delete_target_group ($entity) {
   }
 }
 
+/**
+ * Retrieve a single target group.
+ *
+ * @param int $group_id
+ *   The group id.
+ *
+ * @return mixed
+ *   The API server response.
+ */
 function _springboard_target_api_get_target_group($group_id) {
   $api_call = springboard_advocacy_api_call();
   $response = $api_call->invokeClientMethod('getTargetGroup', $group_id);
@@ -334,13 +351,26 @@ function _springboard_target_api_get_target_group($group_id) {
   return $response;
 }
 
+/**
+ * Prevent infinite recursion of group parentage.
+ *
+ * @param int $group_id
+ *   The group id.
+ * @param int $parent_id
+ *   The parent group id.
+ * @param string $parent_name
+ *   The parent group name.
+ *
+ * @return bool
+ *   Whether the group can be nested.
+ */
 function _springboard_target_api_check_group_recursion($group_id, $parent_id, $parent_name = '') {
   $group = _springboard_target_api_get_target_group($group_id);
-  if(isset($group->data->groups)) {
+  if (isset($group->data->groups)) {
     foreach ($group->data->groups as $nested_group) {
-      if($nested_group->target_group_group_id == $parent_id) {
+      if ($nested_group->target_group_group_id == $parent_id) {
         drupal_set_message('The custom group "' . ($parent_name != '' ? $parent_name : $group->data->name) . '" cannot be added to this group because it contains this group as a member.', 'error');
-        return true;
+        return TRUE;
       }
       else {
         return _springboard_target_api_check_group_recursion($nested_group->target_group_group_id, $parent_id, ($parent_name != '' ? $parent_name : $group->data->name));
