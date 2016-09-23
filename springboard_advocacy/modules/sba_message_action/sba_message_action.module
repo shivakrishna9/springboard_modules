@@ -237,10 +237,21 @@ function sba_message_action_node_insert($node) {
     sba_message_action_insert_components($node);
     sba_message_action_update_multiflow_component($node);
 
-    // If this is a cloned node, save the cloned confirmation message data.
-    // We cannot do with with hook_clone_node_alter() because the nid of the new
-    // node is not yet available when that hook is fired.
+    // Handle cloning:
     if (isset($node->clone_from_original_nid)) {
+      // Copy the original node's success message:
+      if (isset($node->custom_success_message)) {
+         db_query("UPDATE {webform} SET confirmation = :confirmation WHERE nid = :nid",
+           array(
+             ':confirmation' => $node->custom_success_message,
+             ':nid' => $node->nid,
+           )
+         );
+      } 
+
+      // Save the cloned confirmation message data.
+      // We cannot do with with hook_clone_node_alter() because the nid of the new
+      // node is not yet available when that hook is fired.
       if (isset($node->custom_confirmation)) {
         $record = array(
           'nid' => $node->nid,
@@ -325,6 +336,11 @@ function sba_message_action_node_load($nodes, $types) {
         if (!empty($confirm_fail[0]->custom_confirmation) && isset($confirm_fail[0]->fail_message)) {
           $node->custom_fail_message = $confirm_fail[0]->fail_message;
         }
+      }
+
+      // Add the confirmation success message to the node object so it can be cloned:
+      if (isset($node->webform['confirmation'])) {
+        $node->custom_success_message = $node->webform['confirmation'];
       }
 
       // Add the precedence value to the node object.
