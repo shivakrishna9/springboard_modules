@@ -81,7 +81,7 @@ function fundraiser_quick_donate_fundraiser_donation_form($form, $form_state) {
     );
 
     $stored_cards = array();
-    if (!variable_get('fundraiser_quick_donate_allow_multiple_cards', FALSE) && $quick_donate_card_id > 0 && $instance_id == $quick_donate_card['instance_id']) {
+    if (!variable_get('fundraiser_quick_donate_allow_multiple_cards', FALSE) && $quick_donate_card_id > 0 && $instance_id == $quick_donate_card->instance_id) {
       $stored_cards = array($quick_donate_card_id => $quick_donate_card);
     }
     else {
