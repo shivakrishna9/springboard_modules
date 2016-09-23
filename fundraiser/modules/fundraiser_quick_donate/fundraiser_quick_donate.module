@@ -375,6 +375,18 @@ function fundraiser_quick_donate_form_commerce_cardonfile_card_form_alter(&$form
   ) + $form;
   $form['#attached']['js'][3]['data']['fundraiser']['js_validation_settings']['card_cvv']->required = FALSE;
   $form['#attached']['js'][3]['data']['fundraiser']['js_validation_settings']['card_number']->required = FALSE;
+
+  if (!empty($form_state['card'])) {
+    $gateway_type = $form['payment_method']['#value'];
+    $enabled = db_query('SELECT card_id FROM {fundraiser_quick_donate_cardonfile} WHERE card_id = :card_id AND status = 1', array(
+      ':card_id' => $form_state['card']->card_id,
+    ))->fetchField();
+    $form['payment_fields'][$gateway_type]['quickdonate'] = array(
+      '#type' => 'checkbox',
+      '#title' => t('Make this my default Quick Donate card.'),
+      '#default_value' => (bool) $enabled,
+    );
+  }
 }
 
 /**
@@ -383,12 +395,13 @@ function fundraiser_quick_donate_form_commerce_cardonfile_card_form_alter(&$form
  * Updates the billing update form on cardonfile card edit pages to redirect
  * back to the cards overview page.
  */
-function fundraiser_quick_donate_fundraiser_update_billing_form_alter(&$form, &$form_state) {
+function fundraiser_quick_donate_fundraiser_update_billing_form__fundraiser_quick_donate__alter(&$form, &$form_state) {
   $args = arg();
-  if (!empty($form_state['input']) && $args[2] == 'cards') {
+  if ($args[2] == 'cards') {
     $form_state['op'] = 'update';
     $form['#validate'][] = '_fundraiser_quick_donate_form_commerce_cardonfile_card_form_alter_validate';
     $form['#validate'][] = 'commerce_cardonfile_card_form_validate';
+    $form['actions']['submit']['#submit'][] = '_fundraiser_quick_donate_set_new_qd_cof';
     $form['actions']['submit']['#submit'][] = 'commerce_cardonfile_card_form_submit';
 
     $card = $form_state['card'];
@@ -396,6 +409,88 @@ function fundraiser_quick_donate_fundraiser_update_billing_form_alter(&$form, &$
       '#markup' => '<span class="cancel"> or ' . l(t('Cancel'), 'user/' . $card->uid . '/cards') . '</span>',
       '#weight' => 20,
     );
+  }
+}
+
+/**
+ * Submission handler to update {fundraiser_quick_donate_cardonfile}.
+ *
+ * Updated when user selects "Make this my default Quick Donate card" on the
+ * user's stored cards page.
+ *
+ * @see fundraiser_quick_donate_fundraiser_update_billing_form__fundraiser_quick_donate__alter()
+ * @see fundraiser_update_billing_form()
+ */
+function _fundraiser_quick_donate_set_new_qd_cof($form, $form_state) {
+  $values = $form_state['values'];
+  $payment_fields = $values['payment_fields'];
+  $payment_method = $values['payment_method'];
+
+  // First reset all existing cards' status to 0.
+  db_query('UPDATE {fundraiser_quick_donate_cardonfile} SET status = 0 WHERE uid = :uid', array(
+    ':uid' => $values['uid'],
+  ));
+
+  // If the checkbox was left unchecked, we can return early.
+  if (empty($payment_fields[$payment_method]['quickdonate'])) {
+    return;
+  }
+
+  // Check if the card has a corresponding record in
+  // {fundraiser_quick_donate_cardonfile}, if it does just update that one.
+  // Otherwise we'll need to create one.
+  $existing_card_id = db_query('SELECT card_id FROM {fundraiser_quick_donate_cardonfile} WHERE card_id = :card_id', array(
+    ':card_id' => $form_state['card']->card_id,
+  ))->fetchField();
+
+  if (empty($existing_card_id)) {
+    // Need a node id, query the table for any pre-existing ones the user has
+    // opted into.
+    $nid = db_query('SELECT nid FROM {fundraiser_quick_donate_cardonfile} WHERE uid = :uid LIMIT 1', array(
+      ':uid' => $values['uid'],
+    ))->fetchField();
+
+    // If the user isn't currently opted into any quick donation forms, select
+    // one from {fundraiser_quick_donate}.
+    if (empty($nid)) {
+      $nid = db_query('SELECT fundraiser_nid FROM {fundraiser_quick_donate} LIMIT 1')->fetchField();
+    }
+
+    // If no quick donation forms exist, we'll need to exit prematurely.
+    if (empty($nid)) {
+      return;
+    }
+
+    $did = db_query('SELECT did FROM fundraiser_donation WHERE nid = :nid LIMIT 1', array(
+      ':nid' => $nid,
+    ))->fetchField();
+
+    // Set all existing cards to status=0.
+    db_query('UPDATE {fundraiser_quick_donate_cardonfile} SET status = 0 WHERE uid = :uid', array(
+      ':uid' => $values['uid'],
+    ));
+
+    // Set the opted in card to status=1. Using db_merge in case card doesn't
+    // exist in table yet.
+    db_insert('fundraiser_quick_donate_cardonfile')
+      ->fields(array(
+        'uid' => $values['uid'],
+        'status' => 1,
+        'card_id' => $form_state['card']->card_id,
+        'optin_date' => time(),
+        'ms' => 'default_ms',
+        'cid' => NULL,
+        'nid' => $nid,
+        'did' => $did,
+        'gateway' => $form_state['card']->instance_id,
+      ))
+      ->execute();
+  }
+  else {
+    db_query('UPDATE {fundraiser_quick_donate_cardonfile} SET status = 1, optin_date = :time WHERE card_id = :card_id', array(
+      ':time' => time(),
+      ':card_id' => $form_state['card']->card_id,
+    ));
   }
 }
 
@@ -450,27 +545,6 @@ function fundraiser_quick_donate_form_user_profile_form_alter(&$form, $form_stat
 }
 
 /**
- * Implements hook_user_view_alter().
- *
- * Re-weight the profile fields so they appear in the correct order.
- */
-function fundraiser_quick_donate_user_view_alter(&$build) {
-  $ordered_fields = array(
-    'first_name',
-    'last_name',
-    'address',
-    'address_line_2',
-    'city',
-    'state',
-    'country',
-  );
-  foreach ($ordered_fields as $weight => $field) {
-    $build['sbp_' . $field]['#weight'] = $weight;
-  }
-  $build['summary']['#weight'] = $weight++;
-}
-
-/**
  * Implements hook_webform_user_send_mail_alter().
  */
 function fundraiser_quick_donate_webform_user_send_mail_alter(&$options) {
@@ -511,6 +585,27 @@ function _fundraiser_quick_donate_get_payment_info_for_card_id($card_id) {
     ':card_id' => $card_id,
   ));
   return $query->fetchField();
+}
+
+/**
+ * Implements hook_user_view_alter().
+ *
+ * Re-weight the profile fields so they appear in the correct order.
+ */
+function fundraiser_quick_donate_user_view_alter(&$build) {
+  $ordered_fields = array(
+    'first_name',
+    'last_name',
+    'address',
+    'address_line_2',
+    'city',
+    'state',
+    'country',
+  );
+  foreach ($ordered_fields as $weight => $field) {
+    $build['sbp_' . $field]['#weight'] = $weight;
+  }
+  $build['summary']['#weight'] = $weight++;
 }
 
 /**
