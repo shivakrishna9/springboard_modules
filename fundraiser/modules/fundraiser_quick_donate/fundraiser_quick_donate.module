@@ -467,6 +467,7 @@ function fundraiser_quick_donate_user_view_alter(&$build) {
   foreach ($ordered_fields as $weight => $field) {
     $build['sbp_' . $field]['#weight'] = $weight;
   }
+  $build['summary']['#weight'] = $weight++;
 }
 
 /**
