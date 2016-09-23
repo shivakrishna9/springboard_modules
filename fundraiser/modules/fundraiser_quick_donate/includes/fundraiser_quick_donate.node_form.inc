@@ -21,13 +21,13 @@ function fundraiser_quick_donate_form_node_form_alter(&$form, &$form_state, $for
 
   $form['payment_methods']['quickdonate'] = array(
     '#type' => 'checkbox',
-    '#title' => t('Enable quick donations on this form?'),
-    '#description' => t('When enabled, the "quick donation" option will be offered to users, which saves their payment information for faster payments in the future.'),
+    '#title' => t('Enable Quick Donate on this form?'),
+    '#description' => t('Enabling Quick Donate will allow users to save their payment information for future use, login and use their saved card if they have one, and makes the form compatible with secure Quick Donate links.'),
     '#default_value' => isset($form['#node']->quickdonate) ? $form['#node']->quickdonate : FALSE,
   );
 
   if (!count(variable_get(FUNDRAISER_QUICK_DONATE_DEFAULT_FORM_PREFIX . 'default', array()))) {
-    $form['payment_methods']['quickdonate']['#suffix'] = t('<strong>Warning:</strong> since no default form is set on the !config_page, a user might not end up in the right place when coming from an HMAC URL.<br/><br/>', array(
+    $form['payment_methods']['quickdonate']['#suffix'] = t("Reminder: Don't forget to set default forms on the !config_page so donors can be directed to the right place when following a secure Quick Donate link.<br/><br/>", array(
       '!config_page' => l(t('Quick Donate configuration page'), 'springboard/options/fundraiser/fundraiser_quick_donate'),
     ));
   }
@@ -59,7 +59,7 @@ function fundraiser_quick_donate_form_node_form_alter(&$form, &$form_state, $for
       $payment_method = commerce_payment_method_instance_load($gateway);
 
       // Skip if payment method is not capable of card on file.
-      if (!_commerce_cardonfile_capable_payment_method_check($payment_method)) {
+      if (!_commerce_cardonfile_capable_payment_method_check($payment_method) || !isset($payment_method['settings']['cardonfile']) || (isset($payment_method['settings']['cardonfile']) && !$payment_method['settings']['cardonfile'])) {
         continue;
       }
 
@@ -142,7 +142,7 @@ function fundraiser_quick_donate_form_node_form_alter(&$form, &$form_state, $for
   }
 
   $form['actions']['submit']['#submit'][] = '_fundraiser_quick_donate_node_form_submit';
-  $form['#attached']['js'][] = drupal_get_path('module', 'fundraiser_quick_donate') . '/js/fundraiser_quick_donate.js';
+  $form['#attached']['js'][] = drupal_get_path('module', 'fundraiser_quick_donate') . '/js/fundraiser_quick_donate.node_form.js';
 }
 
 /**

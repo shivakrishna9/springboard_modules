@@ -269,6 +269,10 @@ function fundraiser_quick_donate_springboard_hmac_failure($reason, $payload) {
  * Implements hook_springboard_hmac_verify_payload().
  */
 function fundraiser_quick_donate_springboard_hmac_verify_payload($payload) {
+  if ($payload['action'] != 'qd') {
+    return;
+  }
+
   $payload = _fundraiser_quick_donate_hmac_mapping($payload);
   // If the card id isn't available or doesn't belong to the user we can't
   // continue.

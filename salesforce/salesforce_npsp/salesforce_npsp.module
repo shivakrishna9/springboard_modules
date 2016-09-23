@@ -57,6 +57,10 @@ function salesforce_npsp_user_load($users) {
  * Implements hook_user_view().
  */
 function salesforce_npsp_user_view($account) {
+  if (!variable_get('salesforce_npsp_user_profile', TRUE)) {
+    return;
+  }
+
   if (!empty($account->salesforce_contact_id) && !empty($account->salesforce_account_id)) {
     $account->content['summary']['salesforce_contact_id'] = array(
       '#type' => 'user_profile_item',
@@ -261,7 +265,7 @@ function salesforce_npsp_save_account_ids($account_ids) {
 function salesforce_npsp_salesforce_sync_fail_item($item, $message, $result) {
 
   // If sync fails because LastName is empty, item lastname to standard value
-  if (!empty($item->sobject->fields) && array_key_exists('LastName', $item->sobject->fields) 
+  if (!empty($item->sobject->fields) && array_key_exists('LastName', $item->sobject->fields)
     && $result->errors[0]->message == "Required fields are missing: [LastName]"
   ) {
     $lastname = variable_get('salesforce_npsp_lastname', SALESFORCE_NPSP_DEFAULT_LASTNAME);

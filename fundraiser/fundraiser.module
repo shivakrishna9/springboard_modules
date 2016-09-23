@@ -1955,6 +1955,9 @@ function fundraiser_donation_update($donation, $vocal_mode = TRUE) {
   if (isset($donation->form_url) && !empty($donation->form_url)) {
     $donation_record['form_url'] = $donation->form_url;
   }
+  if (isset($donation->data['cardonfile']) && !empty($donation->data['cardonfile']) && $donation->status == 'payment_received') {
+    $donation_record['card_id'] = $donation->data['cardonfile'];
+  }
   $donation_record['changed'] = REQUEST_TIME;
   _fundraiser_update_donation($donation_record);
   // Refresh the cache. No need to change the donation object passed in, but stored values should be zapped.
@@ -3769,6 +3772,9 @@ function fundraiser_update_billing_form($form, &$form_state, $data) {
 
   $form['#validate'][] = 'fundraiser_update_billing_form_validate';
   $form['actions']['submit']['#submit'][] = 'fundraiser_update_billing_form_submit';
+
+  $form['#calling_module'] = empty($data['calling module']) ? 'fundraiser' : $data['calling module'];
+  fundraiser_display_form_fields(empty($data['calling module']) ? 'fundraiser' : $data['calling module'], $form, $form_state);
 
   return $form;
 }
