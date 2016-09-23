@@ -106,7 +106,7 @@ class springboard_advocacy_views_plugin_query extends views_plugin_query {
       }
 
       $fields['limit'] = $this->pager->options['items_per_page'];
-      $fields['offset'] = $this->offset;
+      $fields['offset7.'] = $this->offset;
 
       if (isset($this->orderby)) {
         $fields['sort'] = $this->orderby[0]['field'];
