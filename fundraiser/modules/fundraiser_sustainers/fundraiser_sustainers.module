@@ -4315,9 +4315,10 @@ function fundraiser_sustainers_fundraiser_commerce_cardonfile_used_by($card_id) 
   if (empty($result)) {
     return;
   }
-  return t('Recurring @type donation (@amount, charged on the @day)', array(
+  return t('Recurring @type donation (@amount@spacecharged on the @day)', array(
     '@type' => strtolower($result->npsp_installment_period),
-    '@amount' => empty($result->amount) ? 'unknown amount' : $result->amount,
+    '@amount' => empty($result->amount) ? '' : '$' . $result->amount . ',',
+    '@space' => empty($result->amount) ? '' : ' ',
     '@day' => date("jS", $result->npsp_next_payment_date),
   ));
 }

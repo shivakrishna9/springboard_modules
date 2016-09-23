@@ -319,3 +319,13 @@ function _fundraiser_quick_donate_card_belongs_to_user($uid, $card_id) {
   $card_owner = db_query("SELECT uid FROM {commerce_cardonfile} WHERE card_id = :card_id", array(':card_id' => $card_id))->fetchField();
   return $card_owner == $uid;
 }
+
+/**
+ * Implements hook_fundraiser_commerce_cardonfile_used_by().
+ */
+function fundraiser_quick_donate_fundraiser_commerce_cardonfile_used_by($card_id) {
+  $query = db_query('SELECT card_id FROM {fundraiser_quick_donate_cardonfile} WHERE card_id = :card_id AND status = 1', array(
+    ':card_id' => $card_id,
+  ))->fetchField();
+  return !empty($query) ? 'Quick Donate' : NULL;
+}
