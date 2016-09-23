@@ -81,7 +81,7 @@ function fundraiser_quick_donate_fundraiser_donation_form($form, $form_state) {
     );
 
     $stored_cards = array();
-    if (!variable_get('fundraiser_quick_donate_allow_multiple_cards', FALSE) && $quick_donate_card_id > 0 && $instance_id == $quick_donate_card->instance_id) {
+    if (!variable_get('fundraiser_quick_donate_allow_multiple_cards', FALSE) && $quick_donate_card_id > 0 && !empty($quick_donate_card) && $instance_id == $quick_donate_card->instance_id) {
       $stored_cards = array($quick_donate_card_id => $quick_donate_card);
     }
     else {
@@ -422,7 +422,7 @@ function _fundraiser_quick_donate_users_latest_cardid($uid = NULL) {
     $uid = $user->uid;
   }
 
-  return db_query('SELECT card_id FROM {commerce_cardonfile} WHERE uid = :uid ORDER BY card_id LIMIT 1', array(
+  return db_query('SELECT card_id FROM {commerce_cardonfile} WHERE uid = :uid ORDER BY card_id DESC LIMIT 1', array(
     ':uid' => $uid,
   ))->fetchField();
 }
