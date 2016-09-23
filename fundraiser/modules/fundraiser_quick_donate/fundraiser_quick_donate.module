@@ -514,15 +514,13 @@ function _fundraiser_quick_donate_get_payment_info_for_card_id($card_id) {
 }
 
 /**
- * Implements hook_fundraiser_commerce_cardonfile_used_by().
+ * Implements hook_field_extra_fields_display_alter().
  *
- * Used to inform fundraiser_commerce_cardonfile if the card is used for Quick
- * Donations.
+ * Moves the summary field for the user profile so that it appears below every-
+ * thing else.
  */
-function fundraiser_quick_donate_fundraiser_commerce_cardonfile_used_by($card_id) {
-  $result = _fundraiser_quick_donate_get_payment_info_for_card_id($card_id);
-  if (empty($result)) {
-    return;
+function fundraiser_quick_donate_field_extra_fields_display_alter(&$displays, $context) {
+  if (!empty($displays['summary'])) {
+    $displays['summary']['weight'] = 8;
   }
-  return t('Quick Donate');
 }
