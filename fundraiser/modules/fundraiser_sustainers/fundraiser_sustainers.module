@@ -4319,6 +4319,6 @@ function fundraiser_sustainers_fundraiser_commerce_cardonfile_used_by($card_id) 
     '@type' => strtolower($result->npsp_installment_period),
     '@amount' => empty($result->amount) ? '' : '$' . $result->amount . ',',
     '@space' => empty($result->amount) ? '' : ' ',
-    '@day' => date("jS", $result->npsp_next_payment_date),
+    '@day' => date("jS", strtotime($result->npsp_next_payment_date)),
   ));
 }
