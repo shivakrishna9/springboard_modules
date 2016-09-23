@@ -43,8 +43,6 @@ function springboard_target_api_save_target_group($group, $is_new = TRUE) {
   $indvds = array();
   $child_ids = array();
   $multi_indvds = array();
-  $has_gender_or_social = array();
-  $gender_or_social_rows = array();
   $committees = array();
   $chamber_rows = array();
   $unstructured_chambers = array();
@@ -69,15 +67,7 @@ function springboard_target_api_save_target_group($group, $is_new = TRUE) {
       elseif (isset($target->ids) && !isset($target->search_committee)) {
         $multi_indvds = array_merge($multi_indvds, explode('|', $target->ids));
       }
-      // Gender or social media pseudo-groups.
-      elseif (isset($target->gender) || isset($target->social)) {
-        $has_gender_or_social[] = $target;
-      }
-      // Legislative pseudo-groups.
-      elseif (isset($target->search_committee)) {
-        $committees[] = $target;
-      }
-      // We should never get here.
+      // All others.
       else {
         $unstructured_chambers[] = $target;
       }
@@ -92,17 +82,7 @@ function springboard_target_api_save_target_group($group, $is_new = TRUE) {
       }
     }
   }
-
-  // If there are gender or social pseudo-groups in use, retrieve the actual
-  // individual target IDs.
-  // @TODO shouldn't need this anymore.
-  if (!empty($has_gender_or_social)) {
-    $gender_or_social_rows = _springboard_target_api_get_gender_or_social_ids($has_gender_or_social);
-  }
-  // Merge the gender/social rows and chambers.
-  // @TODO this can be simplified in the if statements above.
-  $unstructured_chambers = array_merge($unstructured_chambers, $has_gender_or_social, $committees);
-  // Format the legislative group targets into the API-expected format.
+  
   if (!empty($unstructured_chambers)) {
     $chamber_rows = _springboard_target_api_build_chambers($unstructured_chambers);
   }
@@ -158,28 +138,6 @@ function springboard_target_api_save_target_group($group, $is_new = TRUE) {
     }
   }
   return $group_id;
-}
-
-/**
- * @param $target_fields
- *
- * @return array
- *
- * @TODO this should be obsolete after updating the chambers to include addt'l attributes
-*/
-function _springboard_target_api_get_gender_or_social_ids($target_fields) {
-  $api_call = springboard_advocacy_api_call();
-
-  $ids = array();
-  foreach ($target_fields as $fields) {
-    $fields->limit = 1;
-    $response = $api_call->invokeClientMethod('searchTargets', (array) $fields);
-
-    if (!empty($response->data->ids)) {
-      $ids = array_unique(array_merge($ids, $response->data->ids));
-    }
-  }
-  return $ids;
 }
 
 /**
@@ -277,21 +235,24 @@ function _springboard_target_api_build_chambers($unstructured_chambers) {
  * @param array $chamber_field
  */
 function _springboard_target_api_build_chambers_shmoosher(&$chamber_rows_container, $chamber_id, $i, $field_name, $value, $chamber_field = array()) {
-
   // The container is passed by reference
   // make sure that values that are already set, get maintained.
   $chamber = isset($chamber_field['chamber']) ? $chamber_field['chamber'] : '';
   $party = isset($chamber_field['party']) ? $chamber_field['party'] : '';
   $state = isset($chamber_field['state']) ? $chamber_field['state'] : '';
   $gender = isset($chamber_field['gender']) ? $chamber_field['gender'] : '';
+  $social = isset($chamber_field['social']) ? $chamber_field['social'] : '';
   $committee_id = isset($chamber_field['committee_id']) ? $chamber_field['committee_id'] : NULL;
+  $district_name = isset($chamber_field['district_name']) ? $chamber_field['district_name'] : NULL;
   $keywords = isset($chamber_field['keywords']) ? $chamber_field['keywords'] : NULL;
 
   $chamber_rows_container[$chamber_id][$i]['chamber'] = $chamber;
   $chamber_rows_container[$chamber_id][$i]['party'] = $party;
   $chamber_rows_container[$chamber_id][$i]['state'] = $state;
   $chamber_rows_container[$chamber_id][$i]['gender'] = $gender;
+  $chamber_rows_container[$chamber_id][$i]['social'] = $social;
   $chamber_rows_container[$chamber_id][$i]['committee_id'] = $committee_id;
+  $chamber_rows_container[$chamber_id][$i]['district_name'] = $district_name;
   $chamber_rows_container[$chamber_id][$i]['keywords'] = $keywords;
 
   if ($field_name == 'fields' || $field_name == 'values') {
