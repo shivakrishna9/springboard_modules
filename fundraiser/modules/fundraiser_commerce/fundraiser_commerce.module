@@ -955,7 +955,6 @@ function fundraiser_commerce_fundraiser_donation_get_donation($donation) {
     // This order data was stored during hook_fundraiser_donation_process(), and scrubbed by the gateway.
     if (!empty($order->data)) {
       $data = _fundraiser_commerce_order_data_retrieve($order->data['fundraiser_commerce']);
-
       // Put data stored data into the right places.
       $donation->donation['payment_method'] = isset($data['payment_method']) ? $data['payment_method'] : '';
       $donation->donation['payment_fields'] = isset($data['payment_fields']) ? $data['payment_fields'] : array();

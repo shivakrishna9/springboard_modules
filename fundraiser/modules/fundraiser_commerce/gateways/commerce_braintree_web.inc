@@ -229,9 +229,6 @@ function commerce_braintree_web_fundraiser_commerce_form($payment_method, $confi
  * Callback function, charge gateway.
  */
 function commerce_braintree_web_fundraiser_commerce_charge($method_instance, $donation) {
-
-  // Translate from donation settings to the correct values for the plugin.
-  // module_load_include('inc', 'fundraiser_commerce', 'includes/fundraiser_commerce.credit_card');
   $order = commerce_order_load($donation->did);
   $wrapper = entity_metadata_wrapper('commerce_order', $order);
   $charge = $wrapper->commerce_order_total->value();
@@ -245,10 +242,7 @@ function commerce_braintree_web_fundraiser_commerce_charge($method_instance, $do
   // $pane_values['braintree']['payment_method_token']
   // $pane_values['braintree']['default_method_token'].
 
-  // @TODO this function won't work b/c it is looking at CC field values that
-  // do not exist with hosted fields.
-  // $pane_values = _fundraiser_commerce_credit_card_pane_values($donation);
-    $pane_values = array();
+  $pane_values = array();
 
   _fundraiser_commerce_submit_handler_pane_values($pane_values, $donation);
 
@@ -261,13 +255,23 @@ function commerce_braintree_web_fundraiser_commerce_charge($method_instance, $do
   if (isset($result->card_id)) {
     $donation->data['cardonfile'] = $result->card_id;
   }
+
+  // Setting payment_fields here, because we don't have this data until after
+  // the playload from the braintree sale is returned to us.
   if (isset($result->transaction->paymentInstrumentType) && $result->transaction->paymentInstrumentType == 'credit_card') {
-    $donation->donation['payment_fields'] = array(
+    $donation->data['payment_fields'] = array(
       'credit' => array(
         'card_number' => $result->transaction->creditCard['last4'],
         'card_type' => $result->transaction->creditCard['cardType'],
         'card_expiration_month' => $result->transaction->creditCard['expirationMonth'],
         'card_expiration_year' => $result->transaction->creditCard['expirationYear'],
+      ),
+    );
+  }
+  elseif (isset($result->transaction->paymentInstrumentType) && $result->transaction->paymentInstrumentType == 'paypal_account') {
+    $donation->data['payment_fields'] = array(
+      'paypal' => array(
+        'payer_email' => $result->transaction->paypal['payerEmail'],
       ),
     );
   }
@@ -300,14 +304,8 @@ function commerce_braintree_web_fundraiser_commerce_charge($method_instance, $do
       }
     }
   }
-
-// _fundraiser_commerce_charge_submit_form_process needs $pane_values[$form_key]['cardonfile_store']
-// .... calls _fundraiser_commerce_donation_cardonfile_card($donation)
-// ... looks at $donation->data['cardonfile'] and loads the cardonfile.
-
   // Perform post processing functions.
   _fundraiser_commerce_charge_submit_form_process($success, $method_instance, $pane_values, $donation);
 
   return $success;
-
 }
