@@ -373,20 +373,20 @@ function fundraiser_quick_donate_form_commerce_cardonfile_card_form_alter(&$form
       '#markup' => $title . $card_title . $expires,
     ),
   ) + $form;
+
   $form['#attached']['js'][3]['data']['fundraiser']['js_validation_settings']['card_cvv']->required = FALSE;
   $form['#attached']['js'][3]['data']['fundraiser']['js_validation_settings']['card_number']->required = FALSE;
 
-  if (!empty($form_state['card'])) {
-    $gateway_type = $form['payment_method']['#value'];
-    $enabled = db_query('SELECT card_id FROM {fundraiser_quick_donate_cardonfile} WHERE card_id = :card_id AND status = 1', array(
-      ':card_id' => $form_state['card']->card_id,
-    ))->fetchField();
-    $form['payment_fields'][$gateway_type]['quickdonate'] = array(
-      '#type' => 'checkbox',
-      '#title' => t('Make this my default Quick Donate card.'),
-      '#default_value' => (bool) $enabled,
-    );
-  }
+  $gateway_type = $form['payment_method']['#value'];
+  $enabled = db_query('SELECT card_id FROM {fundraiser_quick_donate_cardonfile} WHERE card_id = :card_id AND status = 1', array(
+    ':card_id' => $form_state['card']->card_id,
+  ))->fetchField();
+
+  $form['payment_fields'][$gateway_type]['quickdonate'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Make this my default Quick Donate card.'),
+    '#default_value' => (bool) $enabled,
+  );
 }
 
 /**
@@ -581,10 +581,24 @@ function fundraiser_quick_donate_webform_user_send_mail_alter(&$options) {
  *   The QD field record.
  */
 function _fundraiser_quick_donate_get_payment_info_for_card_id($card_id) {
-  $query = db_query('SELECT * FROM {fundraiser_quick_donate_cardonfile} WHERE card_id = :card_id', array(
+  $query = db_query('SELECT * FROM {fundraiser_quick_donate_cardonfile} WHERE card_id = :card_id AND status = 1', array(
     ':card_id' => $card_id,
   ));
   return $query->fetchField();
+}
+
+/**
+ * Implements hook_fundraiser_commerce_cardonfile_used_by().
+ *
+ * Used to inform fundraiser_commerce_cardonfile if the card is used for Quick
+ * Donations.
+ */
+function fundraiser_quick_donate_fundraiser_commerce_cardonfile_used_by($card_id) {
+  $result = _fundraiser_quick_donate_get_payment_info_for_card_id($card_id);
+  if (empty($result)) {
+    return;
+  }
+  return t('Quick Donate');
 }
 
 /**
