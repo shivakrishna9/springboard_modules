@@ -26,7 +26,7 @@ function commerce_braintree_web_commerce_payment_method_info() {
   );
 
   $payment_methods['braintree_paypal'] = array(
-    'base' => 'commerce_braintree_web',
+    'base' => 'commerce_braintree_paypal',
     'title' => t('Braintree - PayPal'),
     'short_title' => t('Braintree - PayPal'),
     'display_title' => t('PayPal'),
@@ -189,11 +189,36 @@ function commerce_braintree_web_form_alter(&$form, &$form_state, $form_id) {
 }
 
 /**
+ * Payment method callback: Braintree PayPal settings form.
+ *
+ * Adds paypal-specific field to the settings form, in addition to those added
+ * with commerce_braintree_web_settings_form().
+ *
+ * @see CALLBACK_commerce_payment_method_settings_form().
+ */
+function commerce_braintree_paypal_settings_form($settings = array()) {
+  $form = commerce_braintree_web_settings_form($settings);
+  $form['autofill'] = array(
+    '#type' => 'radios',
+    '#title' => t('Populate User and Billing fields with data from the donor\'s PayPal account?'),
+    '#options' => array(
+      'never' => t('Never'),
+      'if_blank' => t('Only if all User/Billing fields are blank'),
+      'always' => t('Always'),
+    ),
+    '#default_value' => isset($settings['autofill']) ? $settings['autofill'] : 'if_blank',
+  );
+  return $form;
+}
+
+
+/**
  * Payment method callback: Braintree Web settings form.
  *
  * @see CALLBACK_commerce_payment_method_settings_form().
  */
 function commerce_braintree_web_settings_form($settings = array()) {
+
 //  // Reuse the transparent redirect settings form.
 //  $form = commerce_braintree_web_settings_form($settings);
 
@@ -317,17 +342,6 @@ function commerce_braintree_web_settings_form($settings = array()) {
     '#title' => t('Channel/Parter ID'),
     '#type' => 'textfield',
     '#default_value' => isset($settings['production']['channel']) ? $settings['production']['channel'] : NULL,
-  );
-
-  $form['autofill'] = array(
-    '#type' => 'radios',
-    '#title' => t('Populate User and Billing fields with data from the donor\'s PayPal account?'),
-    '#options' => array(
-      'never' => t('Never'),
-      'if_blank' => t('Only if all User/Billing fields are blank'),
-      'always' => t('Always'),
-    ),
-    '#default_value' => isset($settings['autofill']) ? $settings['autofill'] : 'if_blank',
   );
 
   $form['single_settlement_currency'] = array(
