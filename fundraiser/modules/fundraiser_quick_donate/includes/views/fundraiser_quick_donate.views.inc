@@ -100,6 +100,15 @@ function fundraiser_quick_donate_views_default_views_alter(&$views) {
   $handler->display->display_options['fields']['sbp_zip']['alter']['alter_text'] = TRUE;
   $handler->display->display_options['fields']['sbp_zip']['alter']['text'] = '[sbp_city], [sbp_state] [sbp_zip]';
   $handler->display->display_options['fields']['sbp_zip']['element_label_colon'] = FALSE;
+  if (module_exists('fundraiser_commerce_cardonfile')) {
+    /* Field: Commerce Card on File: Used By */
+    $handler->display->display_options['fields']['used_by']['id'] = 'used_by';
+    $handler->display->display_options['fields']['used_by']['table'] = 'commerce_cardonfile';
+    $handler->display->display_options['fields']['used_by']['field'] = 'used_by';
+    $handler->display->display_options['fields']['used_by']['element_type'] = 'div';
+    $handler->display->display_options['fields']['used_by']['element_label_type'] = 'span';
+    $handler->display->display_options['fields']['used_by']['hide_empty'] = TRUE;
+  }
   /* Field: Commerce Card on File: Operations links */
   $handler->display->display_options['fields']['operations']['id'] = 'operations';
   $handler->display->display_options['fields']['operations']['table'] = 'commerce_cardonfile';
