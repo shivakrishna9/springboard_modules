@@ -228,7 +228,7 @@ function fundraiser_quick_donate_payment_method_fields_alter(&$element, &$paymen
 
   $element['quickdonate'] = array(
     '#type' => 'hidden',
-    '#value' => 'false',
+    '#value' => FALSE,
     '#states' => array(
       'visible' => $element['#states']['visible'],
     ),
@@ -532,7 +532,7 @@ function fundraiser_quick_donate_webform_user_send_mail_alter(&$options) {
     $payment_info = $params['form_state']['values']['submitted_tree']['payment_information'];
     if (isset($payment_info['payment_method']) && isset($payment_info['payment_fields'][$payment_info['payment_method']])) {
       $payment_method = $payment_info['payment_fields'][$payment_info['payment_method']];
-      if (isset($payment_method['quickdonate']) && $payment_method['quickdonate']) {
+      if (!empty($payment_method['quickdonate'])) {
         $options['send'] = TRUE;
       }
     }
