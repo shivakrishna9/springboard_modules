@@ -3899,7 +3899,7 @@ function fundraiser_update_billing_form($form, &$form_state, $data) {
       $form['actions']['submit']['#submit'][] = 'commerce_cardonfile_card_form_submit';
     }
     else {
-      drupal_set_message(t('A request to update a cardonfile card was made but no card was available.'), 'error', FALSE);
+      drupal_set_message(t('A request to access a cardonfile card was made but no matching card was available.'), 'error', FALSE);
     }
   }
 
