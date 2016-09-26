@@ -15,6 +15,7 @@
       })(jQuery);
 
       $(window).ready(function(){
+
         // Turn autocomplete off on CC and CVV form elements.
         $('input[name*="card_number"], input[name*="card_cvv"]').attr('autocomplete','off');
 
@@ -116,35 +117,74 @@
           donationValidate.element('#' + $(this).attr('id'));
         });
 
+        // Track isValid status of each Braintree hosted field, if we are using that payment method.
+        if($('.braintree-hosted-field').length) {
+          var braintreeFields = {'number' : false, 'expirationMonth' : false , 'expirationYear' : false , 'cvv' : false };
+          $(document).on('braintree.fieldEvent', function(event, param) {
+            braintreeFields[param.target.fieldKey] = param.isValid;
+          });
+        }
+
         // On submission hide the button and replace it with a new value.
         // Wrap the click in a once trigger to be sure that we bind it the one time.
         $('.fundraiser-donation-form').once(function() {
-          $('.fundraiser-donation-form').submit(function( event ) {
+          $('.fundraiser-donation-form').submit(function() {
             // Validate the form
-            if (donationValidate.form()) {
-              if ($('.fundraiser-donation-form').data('submitted') === true) {
-                // Previously submitted, don't submit again.
-                event.preventDefault();
-              } else {
-                $('.fundraiser-donation-form #edit-submit').hide().next('span.cancel').hide();
-                $('.fundraiser_submit_message').hide();
-                $('.fundraiser-donation-form #edit-submit').after('<div class="donation-processing-wrapper">' +
-                  '<p class="donation-processing">Processing' +
-                  '<span class="donation-processing-spinner"></span>' +
-                  '</p>' +
-                  '</div>');
-                // Mark it as submitted so that the next submit can be ignored.
-                $('.fundraiser-donation-form').data('submitted', true);
-              }
+            if (formIsValid()) {
+              $('.fundraiser-donation-form #edit-submit').hide();
+              $('.fundraiser_submit_message').hide();
+              $('.fundraiser-donation-form #edit-submit').after('<div class="donation-processing-wrapper">' +
+                '<p class="donation-processing">Processing' +
+                '<span class="donation-processing-spinner"></span>' +
+                '</p>' +
+                '</div>');
+              return true;
             }
+            return false;
           });
         });
-        // Iterate validation settings and apply rules.
-        for ($key in Drupal.settings.fundraiser.js_validation_settings) {
-          if ($('input[name*="' + $key + '"]')[0]) {
-            $('input[name*="' + $key + '"]').rules("add", Drupal.settings.fundraiser.js_validation_settings[$key]);
+
+        function formIsValid() {
+          // If we are using Braintree, both the braintree form and the drupal
+          // fields must validate.
+          if (typeof Drupal.myBraintreeIntegration === 'undefined') {
+            return donationValidate.form();
+          } else {
+            if (Drupal.settings.braintree.integration === 'custom') {
+              if (donationValidate.form() && braintreeFieldsAreValid()) {
+                return true;
+              } else {
+                return false;
+              }
+            } else if (Drupal.settings.braintree.integration === 'paypal') {
+              if (donationValidate.form() && $('input[name=payment_method_nonce]').length > 0) {
+                return true;
+              } else {
+                return false;
+              }
+            }
           }
         }
+
+        function braintreeFieldsAreValid() {
+          var returnValue = true;
+          $.each(braintreeFields, function( index, value ) {
+            if (value == false) {
+              returnValue = false;
+            }
+          });
+          return returnValue;
+        }
+
+        // Iterate validation settings and apply rules.
+        if (Drupal.settings.fundraiser && Drupal.settings.fundraiser.js_validation_settings) {
+          for ($key in Drupal.settings.fundraiser.js_validation_settings) {
+            if ($('input[name*="' + $key + '"]')[0]) {
+              $('input[name*="' + $key + '"]').rules("add", Drupal.settings.fundraiser.js_validation_settings[$key]);
+            }
+          }
+        }
+
         // Other Amount
         if ($('input[name*="other_amount"]')[0]) {
           $('input[name*="other_amount"]').each(function() {
