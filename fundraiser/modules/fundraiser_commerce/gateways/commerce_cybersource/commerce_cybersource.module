@@ -173,6 +173,14 @@ function commerce_cybersource_soap_cc_settings_form($settings = NULL) {
     '#default_value' => $settings['log'],
   );
 
+  if (module_exists('commerce_cardonfile')) {
+    $form['cardonfile'] = array(
+      '#type' => 'checkbox',
+      '#title' => t('Enable card on file to store credit card information.'),
+      '#default_value' => $settings['cardonfile'],
+    );
+  }
+
   $form['credit_card'] = array(
     '#type' => 'fieldset',
     '#title' => t('Credit card service settings'),
@@ -195,14 +203,6 @@ function commerce_cybersource_soap_cc_settings_form($settings = NULL) {
     '#default_value' => $settings['credit_card']['submit_itemized_order'],
   );
 
-  //https://www.drupal.org/files/1740346-cardonfile.patch
-  if (module_exists('commerce_cardonfile')) {
-    $form['credit_card']['cardonfile'] = array(
-      '#type' => 'checkbox',
-      '#title' => t('Enable card on file to store credit card information.'),
-      '#default_value' => $settings['credit_card']['cardonfile'],
-    );
-  }
   $form['credit_card']['card_types'] = array(
     '#type' => 'checkboxes',
     '#title' => t('Limit accepted credit cards to the following types'),
@@ -515,7 +515,7 @@ function commerce_cybersource_soap_cc_submit_form_submit($payment_method, $pane_
       return FALSE;
     }
     $request->recurringSubscriptionInfo = (object) array('subscriptionID' => $card_data->remote_id);
-  } 
+  }
   else {
     // Add the billing information.
     $request->billTo = commerce_cybersource_address('billing', $order, 'commerce_customer_billing');

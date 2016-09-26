@@ -2099,12 +2099,15 @@ function fundraiser_donation_cancel($donation) {
   $username = isset($user->name) ? $user->name : 'Anonymous';
   fundraiser_donation_comment($donation, 'This donation was cancelled on @date by @username.',
     array('@date' => format_date(strtotime('now')), '@username' => $username));
-  // And save the donation as it is at this stage since it was created.
-  // This makes sure that any changes made stay in place.
-  fundraiser_donation_update($donation, FALSE);
 
-  // Allow other modules to respond to the cancel. Including Ubercart, etc.
+  // Allow other modules such as Ubercart to respond to cancellation and
+  // and update the commernce order status to reflect cancellation so that
+  // the fundraiser_donation table's status will be correct when it is updated.
   module_invoke_all('fundraiser_donation_cancel', $donation);
+
+  // Finally, save changes to the donation, updating this donation's status in the
+  // fundraiser_donation table to reflect the status set within the commerce_order table:
+  fundraiser_donation_update($donation, FALSE);
 }
 
 /**
@@ -2192,6 +2195,13 @@ function fundraiser_donation_get_donation($did, $refresh = FALSE, $donation_reco
   $donations[$did] = $donation;
 
   return $donation;
+}
+
+/**
+ * Provide a menu router autoloader wrapper for fundraiser_donation_get_donation().
+ */
+function fundraiser_donation_load($did) {
+  return fundraiser_donation_get_donation($did);
 }
 
 /**
@@ -2495,6 +2505,7 @@ function _fundraiser_refund_form_submit($form, &$form_state) {
   $refund->amount = commerce_currency_amount_to_decimal($amount, $donation->currency);
   $refund->currency = $donation->currency;
   $refund->reason = $form_state['values']['refund_notes'];
+  $refund->rid = time();  // Use a timestamp to avoid PayPal error 11607 (duplicate MSGSUBID value)
   $refund = fundraiser_refund_create($refund);
   // Then process it.
   $refund->new_status = $new_status;
@@ -3775,6 +3786,10 @@ function fundraiser_update_billing_form($form, &$form_state, $data) {
 
   $form['#donation'] = $data['donation'];
 
+  // Make the card number and cvv optional by default.
+  $form['#attached']['js'][3]['data']['fundraiser']['js_validation_settings']['card_cvv']->required = FALSE;
+  $form['#attached']['js'][3]['data']['fundraiser']['js_validation_settings']['card_number']->required = FALSE;
+
   // If the "update cardonfile" element is non-empty, add the cardonfile
   // validation and submission handlers.
   if ($data['update cardonfile']) {
@@ -3810,8 +3825,10 @@ function fundraiser_update_billing_form($form, &$form_state, $data) {
   // finish with our own stuff.
   $functions = array(
     'fundraiser_update_billing_form',
-    sprintf('fundraiser_update_billing_form__%s_', $data['calling module']),
   );
+  if (!empty($data['calling module'])) {
+    $functions[] = sprintf('fundraiser_update_billing_form__%s_', $data['calling module']);
+  }
   foreach ($functions as $function) {
     drupal_alter($function, $form, $form_state, $data);
   }

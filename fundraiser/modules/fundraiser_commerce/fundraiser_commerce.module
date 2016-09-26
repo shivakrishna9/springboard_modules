@@ -936,7 +936,7 @@ function fundraiser_commerce_fundraiser_donation_get_donation($donation) {
         if (isset($map[$field_name])) {
           $order_name = $map[$field_name];
           $donation->donation[$field_name] = isset($profile->data[$order_name]) ?
-            $profile->data[$order_name] : '';
+            $profile->data[$order_name] : $profile->commerce_customer_address[LANGUAGE_NONE][0][$order_name];
         }
       }
     }
@@ -1769,7 +1769,9 @@ function fundraiser_commerce_fundraiser_donation_update($donation) {
   }
 
   // Add the status data.
-  $donation->status = $donation->status_label = isset($order->status) ? $order->status : 'unknown';
+  $new_donation_status = isset($order->status) ? $order->status : 'unknown';
+  $new_donation_status = ($donation->status == 'auto_canceled') ? 'auto_canceled' : $new_donation_status;
+  $donation->status = $donation->status_label = $new_donation_status;
   if (!empty($order->status)) {
     $donation->status_label = _fundraiser_commerce_get_label_by_status($order->status);
     $donation->status_charged = _fundraiser_commerce_get_charged_by_status($order->status);
@@ -2554,7 +2556,9 @@ function _fundraiser_commerce_charge_submit_form_process($success, $method_insta
   if ($success && module_exists('commerce_cardonfile') && !empty($pane_values[$form_key]['cardonfile_store'])) {
     // Load up the cardonfile record for this donation and save it
     $card = _fundraiser_commerce_donation_cardonfile_card($donation);
-    $donation->data['cardonfile'] = $card->card_id;
+    if (!empty($card)) {
+      $donation->data['cardonfile'] = $card->card_id;
+    }
   }
 }
 
@@ -2674,6 +2678,7 @@ function fundraiser_commerce_commerce_authnet_cim_request_alter($api_request_ele
     $config = $donation->gateway['gateway_details']['settings'];
     $extra = (string) $api_request_element->extraOptions;
     $extra = substr($extra, 9, -3);
+    module_load_include('inc', 'fundraiser_commerce', 'gateways/commerce_authnet');
     $fields = _commerce_authnet_extra_fields();
     unset($fields[0]);
     $i = 1;

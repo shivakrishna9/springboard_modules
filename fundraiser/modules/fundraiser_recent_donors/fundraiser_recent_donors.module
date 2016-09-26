@@ -44,6 +44,18 @@ function fundraiser_recent_donors_form_alter(&$form, &$form_state, $form_id) {
       '#collapsible' => TRUE,
       '#collapsed' => FALSE,
     );
+
+    // Display a helpful message about form layouts being required at the content type level if it is not enabled there:
+    $form_layouts_is_enabled = variable_get('form_layouts_' . $form['#node']->type, 0);
+    if (!$form_layouts_is_enabled && !$opt_in_enabled) {
+      $type_settings_path = 'admin/structure/types/manage/' . str_replace('_', '-', $form['#node']->type);
+      $type_name = node_type_get_name($form['#node']->type);
+      $form['springboard_display']['recent_donors_list']['#description'] =
+        t('The Recent Donors List requires Form Layouts') . ' ' .
+        l('to be enabled', $type_settings_path) . ' ' . t('on the ' . $type_name . ' content type settings form.');
+      return;
+    }
+
     $form['springboard_display']['recent_donors_list']['allow_recent_donations_opt_in'] = array(
       '#type' => 'checkbox',
       '#title' => t('Allow donors to opt-in and show the recent, opt-in donors list.'),
@@ -163,6 +175,15 @@ function fundraiser_recent_donors_commerce_paypal_ipn_process($order, $payment_m
  * Form validation for the "Recent Donors List" node edit form fields:
  */
 function _fundraiser_recent_donors_node_edit_validate($form, &$form_state) {
+  $form_layouts_is_enabled = variable_get('form_layouts_' . $form['#node']->type, 0);
+  $recent_donors_is_enabled = $form_state['values']['allow_recent_donations_opt_in'];
+  if (!$form_layouts_is_enabled && $form_state['values']['allow_recent_donations_opt_in']) {
+    $type_settings_path = 'admin/structure/types/manage/' . str_replace('_', '-', $form['#node']->type);
+    $type_name = node_type_get_name($form['#node']->type);
+    form_set_error('allow_recent_donations_opt_in',
+      t('The Recent Donors List requires Form Layouts') . ' ' .
+      l('to be enabled', $type_settings_path) . ' ' . t('on the ' . $type_name . ' content type settings form.'));
+  }
   if (isset($form_state['values']['show_recent_donation_greater_than'])) {
     $min_amount = $form_state['values']['show_recent_donation_greater_than'];
     if (!is_numeric($min_amount) || $min_amount < 0) {

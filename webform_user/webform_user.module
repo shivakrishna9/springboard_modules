@@ -576,9 +576,20 @@ function webform_user_webform_submit($form, &$form_state) {
     }
     // Anonymous user, new email to Drupal.
     elseif ($form_state['redirect']) {
+      if (module_exists('email_registration')) {
+        // Strip off everything after the @ sign.
+        $name = preg_replace('/@.*$/', '', $fields['mail']);
+        $name = email_registration_cleanup_username($name);
+        $name = email_registration_unique_username($name);
+      }
+      else {
+        // If email_registration is not enabled, fall back to using email for
+        // the drupal username.
+        $name = $fields['mail'];
+      }
       $account = new stdClass();
       $account->is_new = TRUE;
-      $account->name = $fields['mail'];
+      $account->name = $name;
       $account->status = TRUE;
       // Create the new user account.
       $account = _webform_user_save_profile_map($account, $map, $form, $form_state);
