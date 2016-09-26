@@ -2167,7 +2167,8 @@ function fundraiser_sustainers_edit_form($did) {
     $next_donation = fundraiser_donation_get_donation($remaining[0]->did);
   }
 
-  $payment_info = fundraiser_sustainers_donation_payment_info($next_donation, $did);
+  $cardonfile = commerce_cardonfile_load($next_donation->data['cardonfile']);
+  $payment_info = fundraiser_sustainers_donation_payment_info($next_donation, $did, $cardonfile);
 
   $billing_info = '<div id="billing-info">' .
   '<h2>Billing Address</h2>' .
@@ -2288,7 +2289,9 @@ function fundraiser_sustainers_edit_form($did) {
       'donation' => $next_donation,
       'calling module' => 'fundraiser_sustainers',
       'update billing' => FALSE,
-      'payment_fields' => array(
+    );
+    if (!empty($cardonfile)) {
+      $data['payment_fields'] = array(
         'credit' => array(
           'expiration_date' => array(
             'card_expiration_month' => array(
@@ -2299,8 +2302,8 @@ function fundraiser_sustainers_edit_form($did) {
             ),
           ),
         ),
-      ),
-    );
+      );
+    }
     $billing_update_form_array = drupal_get_form('fundraiser_update_billing_form', $data);
     $billing_update_form_array['#attached']['js'][3]['data']['fundraiser']['js_validation_settings']['card_cvv']->required = FALSE;
     $billing_update_form_array['#attached']['js'][3]['data']['fundraiser']['js_validation_settings']['card_number']->required = FALSE;
@@ -2336,17 +2339,14 @@ function fundraiser_sustainers_edit_form($did) {
   return implode('', $parts);
 }
 
-function fundraiser_sustainers_donation_payment_info($next_donation, $master_did) {
+function fundraiser_sustainers_donation_payment_info($next_donation, $master_did, $cardonfile = NULL) {
   $number = '';
   $type = '';
 
   // Use next donation in case it has differnt info than the master donation.
-  if (!empty($next_donation->data['cardonfile']) && module_exists('commerce_cardonfile')) {
-    $cardonfile = commerce_cardonfile_load($next_donation->data['cardonfile']);
-    if (!empty($cardonfile)) {
-      $number = '**** **** **** '  . $cardonfile->card_number;
-      $type = t('Card');
-    }
+  if (!empty($cardonfile) && module_exists('commerce_cardonfile')) {
+    $number = '**** **** **** '  . $cardonfile->card_number;
+    $type = t('Card');
   }
 
   // Gather further donation data.
@@ -3457,11 +3457,13 @@ function fundraiser_sustainers_billing_update_form($form, &$form_state, $donatio
     '#prefix' => '<div id="recurring-series-info">',
     '#suffix' => '</div>',
   );
+
+  $cardonfile = commerce_cardonfile_load($donation->data['cardonfile']);
   $form['series-info']['recurring-payment-info'] = array(
-    '#markup' => fundraiser_sustainers_donation_payment_info($donation, $donation->did),
+    '#markup' => fundraiser_sustainers_donation_payment_info($donation, $donation->did, $cardonfile),
   );
   $form['series-info']['recurring-payment-link'] = array(
-    '#markup' => l("Edit Recurring Donation", "user/{$donation->uid}/recurring_overview/{$donation->did}"),
+    '#markup' => l(t("Edit Recurring Donation"), "user/{$donation->uid}/recurring_overview/{$donation->did}"),
     '#prefix' => '<div id="payment-edit-link">',
     '#suffix' => '</div>',
   );
@@ -3470,7 +3472,22 @@ function fundraiser_sustainers_billing_update_form($form, &$form_state, $donatio
   $data = array(
     'donation' => $donation,
     'calling module' => 'fundraiser_sustainers',
+    'update billing' => FALSE,
   );
+  if (!empty($cardonfile)) {
+    $data['payment_fields'] = array(
+      'credit' => array(
+        'expiration_date' => array(
+          'card_expiration_month' => array(
+            '#default_value' => $cardonfile->card_exp_month,
+          ),
+          'card_expiration_year' => array(
+            '#default_value' => $cardonfile->card_exp_year,
+          ),
+        ),
+      ),
+    );
+  }
   $form = fundraiser_update_billing_form($form, $form_state, $data);
   return $form;
 }

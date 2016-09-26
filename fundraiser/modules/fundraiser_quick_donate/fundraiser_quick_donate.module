@@ -373,9 +373,6 @@ function fundraiser_quick_donate_form_commerce_cardonfile_card_form_alter(&$form
     ),
   ) + $form;
 
-  $form['#attached']['js'][3]['data']['fundraiser']['js_validation_settings']['card_cvv']->required = FALSE;
-  $form['#attached']['js'][3]['data']['fundraiser']['js_validation_settings']['card_number']->required = FALSE;
-
   $gateway_type = $form['payment_method']['#value'];
   $enabled = db_query('SELECT card_id FROM {fundraiser_quick_donate_cardonfile} WHERE card_id = :card_id AND status = 1', array(
     ':card_id' => $form_state['card']->card_id,
