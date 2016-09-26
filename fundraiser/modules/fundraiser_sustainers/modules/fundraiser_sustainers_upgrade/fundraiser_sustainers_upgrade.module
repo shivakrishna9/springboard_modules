@@ -209,7 +209,7 @@ function fundraiser_sustainers_upgrade_form_fundraiser_admin_settings_alter(&$fo
  * Show/Hide the default failure message and failure reason based on
  * donation status result.
  */
-function fundraiser_sustainers_upgrade_node_view($node) {
+function fundraiser_sustainers_upgrade_node_view($node, $view_mode, $langcode) {
   if ($node->type == 'sustainers_upgrade_form') {
 
     // Set an error message if SPP is not configured.
@@ -299,10 +299,7 @@ function fundraiser_sustainers_upgrade_form_webform_client_form_alter(&$form, &$
 
     // Get the session values created by springboard_hmac.module.
     $payload = fundraiser_sustainers_upgrade_get_session_payload();
-    if (!user_access('administer fundraiser sustainers upgrade') && empty($payload)) {
-      drupal_access_denied();
-      drupal_exit();
-    }
+
     // If there are no session values, stop everything and
     // display a failure message, even on auto-submit forms.
     // Get the appropriate status messages and donation objects
@@ -1280,4 +1277,55 @@ function fundraiser_sustainers_upgrade_springboard_admin_admin_menu_items_alter(
       'create sustainers_upgrade_form content',
     ),
   );
+}
+
+
+/**
+ * Implements hook_TAG_query_alter().
+ *
+ * Hide sustainer upgrade forms from search results.
+ */
+function fundraiser_sustainers_upgrade_query_node_access_alter(QueryAlterableInterface $query) {
+
+  if (user_access('administer fundraiser sustainer upgrades') || empty($query->alterTags['search_node'])) {
+    return;
+  }
+  $search = FALSE;
+  $node = FALSE;
+
+  foreach ($query->getTables() as $alias => $table) {
+    if ($table['table'] == 'search_index') {
+      $search = $alias;
+    }
+    elseif ($table['table'] == 'node') {
+      $node = $alias;
+    }
+  }
+
+  if ($node && $search) {
+    $excluded_content_types = array('sustainers_upgrade_form');
+
+    if (!empty($excluded_content_types)) {
+      $query->condition($node . '.type', array($excluded_content_types), 'NOT IN');
+    }
+  }
+}
+
+
+/**
+ * Implements hook_node_access().
+ *
+ * Deny access if theres no payload.
+ */
+function fundraiser_sustainers_upgrade_node_access($node, $op, $account) {
+  $type = is_string($node) ? $node : $node->type;
+
+  if ($type == 'sustainers_upgrade_form') {
+    $payload = fundraiser_sustainers_upgrade_get_session_payload();
+    if (!user_access('administer fundraiser sustainers upgrade') && empty($payload) && $op == 'view') {
+      return NODE_ACCESS_DENY;
+    }
+  }
+  // Returning nothing from this function would have the same effect.
+  return NODE_ACCESS_IGNORE;
 }

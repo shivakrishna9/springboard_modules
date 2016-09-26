@@ -204,6 +204,7 @@ function fundraiser_tokens($type, $tokens, $data = array(), $options = array()) 
   $sanitize = !empty($options['sanitize']);
 
   if ($type == 'donation' && !empty($data['donation'])) {
+
     $donation = $data['donation'];
     // All set fields.
     $data = is_array($donation->donation) ? $donation->donation : array();
@@ -3652,6 +3653,87 @@ function fundraiser_springboard_node_expire_node_view_alter(&$node) {
 }
 
 /**
+ * Load the card on file card data for a donation.
+ *
+ * @param object $donation
+ *   Fundraiser donation object.
+ * @param bool $active
+ *   Flag to select only active cards, defaults to TRUE.
+ *
+ * @return object
+ *   Card on file card entity
+ *
+ * @todo This is just a copy of `_fundraiser_commerce_donation_cardonfile_card`
+ * which needs to be removed and any instances replaced with this function.
+ */
+function _fundraiser_donation_cardonfile_card($donation, $active = TRUE) {
+  // If this donation has the cardonfile value set in its data array, load the
+  // card data from that.
+  if (!empty($donation->data['cardonfile'])) {
+    return commerce_cardonfile_load($donation->data['cardonfile']);
+  }
+
+  // Allow modules to provide their own card on file profile field values.
+  if (!empty($donation->gateway['cardonfile callback'])) {
+    $cardonfile_fields = $donation->gateway['cardonfile callback']($donation);
+  }
+  // If this is a credit purchase use the default credit function.
+  elseif ($donation->donation['payment_method'] == 'credit') {
+    module_load_include('inc', 'fundraiser_commerce', 'includes/fundraiser_commerce.credit_card');
+    $cardonfile_fields = _fundraiser_commerce_credit_card_cardonfile_fields($donation);
+  }
+
+  if (empty($cardonfile_fields)) {
+    return FALSE;
+  }
+
+  return _fundraiser_cardonfile_match($cardonfile_fields, $active);
+}
+
+/**
+ * Search the card on file table for a record.
+ *
+ * @param array $fields
+ *    Array of fields to search card on file table.
+ *
+ * @return object
+ *    Card on file card entity or FALSE if no record.
+ *
+ * @todo This is a copy of `_fundraiser_commerce_cardonfile_match` which needs
+ * to be removed and any instances replaced with this function.
+ */
+function _fundraiser_cardonfile_match($fields, $active = TRUE) {
+  // Query for the card on file profile using the provided values.
+  $query = new EntityFieldQuery();
+  $query->entityCondition('entity_type', 'commerce_cardonfile')
+    ->propertyCondition('uid', $fields['uid'])
+    ->propertyCondition('instance_id', $fields['instance_id'])
+    ->propertyCondition('card_number', $fields['card_number']);
+
+  if (!empty($fields['card_exp_month'])) {
+    $query->propertyCondition('card_exp_month', $fields['card_exp_month']);
+  }
+
+  if (!empty($fields['card_exp_year'])) {
+    $query->propertyCondition('card_exp_year', $fields['card_exp_year']);
+  }
+
+  if ($active) {
+    $query->propertyCondition('status', TRUE);
+  }
+
+  $result = $query->execute();
+
+  if (isset($result['commerce_cardonfile'])) {
+    $ids = array_keys($result['commerce_cardonfile']);
+    return commerce_cardonfile_load($ids[0]);
+  }
+  else {
+    return FALSE;
+  }
+}
+
+/**
  * Returns a form for updating billing information.
  *
  * @param array $form
@@ -3675,7 +3757,7 @@ function fundraiser_springboard_node_expire_node_view_alter(&$node) {
  *   alter, and postprocess hooks called by this function.
  *   - "donation": (object|required) The donation object.
  *   - "payment fields": (array|optional) A form render array which will replace
- *   the "payment fields"
+ *   the "payment fields".
  *
  * @return array
  *   The form element.
@@ -3798,8 +3880,8 @@ function fundraiser_update_billing_form($form, &$form_state, $data) {
       $form_state['card'] = $data['card'];
       $use_cardonfile = TRUE;
     }
-    elseif (empty($data['card']) && !empty($data['donation']->data['cardonfile'])) {
-      $form_state['card'] = $data['card'] = commerce_cardonfile_load($data['donation']->data['cardonfile']);
+    elseif (($card = _fundraiser_donation_cardonfile_card($data['donation'])) !== FALSE) {
+      $form_state['card'] = $data['card'] = $card;
       $use_cardonfile = TRUE;
     }
 
@@ -3817,7 +3899,7 @@ function fundraiser_update_billing_form($form, &$form_state, $data) {
       $form['actions']['submit']['#submit'][] = 'commerce_cardonfile_card_form_submit';
     }
     else {
-      drupal_set_message(t('A request to update a cardonfile card was made but no card was available.'), 'error', FALSE);
+      drupal_set_message(t('A request to access a cardonfile card was made but no matching card was available.'), 'error', FALSE);
     }
   }
 

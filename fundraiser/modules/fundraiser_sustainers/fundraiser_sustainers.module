@@ -2167,7 +2167,12 @@ function fundraiser_sustainers_edit_form($did) {
     $next_donation = fundraiser_donation_get_donation($remaining[0]->did);
   }
 
-  $cardonfile = commerce_cardonfile_load($next_donation->data['cardonfile']);
+  if (!empty($next_donation->data['cardonfile'])) {
+    $cardonfile = commerce_cardonfile_load($next_donation->data['cardonfile']);
+  }
+  else {
+    $cardonfile = _fundraiser_donation_cardonfile_card($next_donation);
+  }
   $payment_info = fundraiser_sustainers_donation_payment_info($next_donation, $did, $cardonfile);
 
   $billing_info = '<div id="billing-info">' .
