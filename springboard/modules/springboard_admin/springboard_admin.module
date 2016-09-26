@@ -71,22 +71,30 @@ function springboard_admin_form_alter(&$form, &$form_state, $form_id) {
     // need to override VBO's handling of the form's action URL. VBO uses the
     // path set in the views configuration, which will wrongly bypass the
     // aliased URL.
-    if('/' . $_GET['q'] != request_uri()  && preg_match('|^/springboard/(.*)?|', request_uri())) {
+    if ('/' . $_GET['q'] != request_uri()  && preg_match('|^/springboard/(.*)?|', request_uri())) {
       $form['#action'] = request_uri();
     }
   }
 
   switch ($form_id) {
-    case 'clone_node_confirm' :
+    case 'user_account_form':
+    case 'user_profile_form':
+      $roles = array_map('check_plain', user_roles(TRUE));
+      $form['account']['roles']['#access'] = $roles && (user_access('assign user roles') || user_access('administer permissions'));
+      break;
+
+    case 'clone_node_confirm':
       $form['#submit'][] = 'springboard_node_clone_form_submit';
       break;
-    case 'node_delete_confirm' :
+
+    case 'node_delete_confirm':
       $form['actions']['delete']['#submit'][] = 'springboard_admin_node_delete';
       break;
-    case 'views_form_p2p_categories_page' :
-    case 'views_form_p2p_campaigns_page' :
-    case 'views_form_p2p_personal_campaigns_admin_page' :
-    case 'views_form_p2p_landing_pages_page' :
+
+    case 'views_form_p2p_categories_page':
+    case 'views_form_p2p_campaigns_page':
+    case 'views_form_p2p_personal_campaigns_admin_page':
+    case 'views_form_p2p_landing_pages_page':
       $form['select']['#type'] = '';
       $form['select']['#prefix'] = '<div class="vbo-widget"><label>' . t('Edit Options') . '</label>';
       $form['select']['#suffix'] = '</div>';
@@ -503,6 +511,10 @@ function springboard_admin_permission() {
     'administer springboard theme' => array(
       'title' => t('Administer the Springboard theme'),
       'description' => t('Administer configurations related to the display of the springboard_backend theme.'),
+    ),
+    'assign user roles' => array(
+      'title' => t('Assign user roles'),
+      'description' => t('Assign roles to users'),
     ),
   );
 }
@@ -1072,6 +1084,19 @@ function springboard_admin_springboard_admin_alias_patterns() {
         'replacement' => 'springboard/user/$1$2',
       ),
     ),
+
+    // User creation page
+    'admin/people/create' => array(
+      'path' => array(
+        'regex' => '|^/admin/people/create$|',
+        'replacement' => 'admin/people/create',
+      ),
+      'alias' => array(
+        'regex' => '|^springboard/settings/administrators/add$|',
+        'replacement' => 'springboard/settings/administrators/add',
+      ),
+    ),
+
     // Donation reports.
     'admin/reports/salesforce/donations' => array(
       'path' => array(

@@ -167,6 +167,10 @@ function fundraiser_schema() {
         'not null' => TRUE,
         'default' => 0,
       ),
+      'card_id' => array(
+        'description' => 'The cardonfile card ID used to process this donation',
+        'type' => 'int',
+      ),
       // @todo Add transaction information here with the gateway.
     ),
     'primary key' => array('did'),
@@ -543,4 +547,16 @@ function fundraiser_update_7009() {
       }
     }
   }
+}
+
+/**
+ * Add card_id field to fundraiser_donation.
+ */
+function fundraiser_update_7010() {
+  $field = array(
+    'description' => 'The cardonfile card ID used to process this donation',
+    'type' => 'int',
+  );
+  db_add_field('fundraiser_donation', 'card_id', $field);
+  db_add_index('fundraiser_donation', 'card_id', array('card_id'));
 }

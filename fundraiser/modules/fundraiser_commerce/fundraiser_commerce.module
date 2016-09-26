@@ -936,7 +936,7 @@ function fundraiser_commerce_fundraiser_donation_get_donation($donation) {
         if (isset($map[$field_name])) {
           $order_name = $map[$field_name];
           $donation->donation[$field_name] = isset($profile->data[$order_name]) ?
-            $profile->data[$order_name] : '';
+            $profile->data[$order_name] : $profile->commerce_customer_address[LANGUAGE_NONE][0][$order_name];
         }
       }
     }
@@ -2556,7 +2556,9 @@ function _fundraiser_commerce_charge_submit_form_process($success, $method_insta
   if ($success && module_exists('commerce_cardonfile') && !empty($pane_values[$form_key]['cardonfile_store'])) {
     // Load up the cardonfile record for this donation and save it
     $card = _fundraiser_commerce_donation_cardonfile_card($donation);
-    $donation->data['cardonfile'] = $card->card_id;
+    if (!empty($card)) {
+      $donation->data['cardonfile'] = $card->card_id;
+    }
   }
 }
 
