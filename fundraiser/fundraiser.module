@@ -1930,7 +1930,8 @@ function fundraiser_donation_update($donation, $vocal_mode = TRUE) {
   }
   if (isset($donation->amount) && !empty($donation->amount)) {
     $donation_record['amount'] = $donation->amount;
-  } else if (!empty($donation->donation['amount'])) {
+  }
+  elseif (!empty($donation->donation['amount'])) {
     $donation_record['amount'] = $donation->donation['amount'];
     // was a quantity (of > 1) specified? (legacy forms)
     if (isset($donation->donation['quantity']) && $donation->donation['quantity'] > 1) {
@@ -3646,13 +3647,39 @@ function fundraiser_springboard_node_expire_node_view_alter(&$node) {
  *   The form.
  * @param array &$form_state
  *   The form state.
- * @param array $default_data
- *   An array of default values.
+ * @param array $data
+ *   An array of data values:
+ *   - "update billing": (boolean|optional) TRUE if you want this module to
+ *   handle the validation and updating of billing information. If FALSE, the
+ *   module calling this function is expected to handle the billing updating
+ *   information itself.
+ *   - "update cardonfile": (boolean|optional) TRUE if you would like to
+ *   automatically add the necessary validation and submission handlers for
+ *   updating a cardonfile card.
+ *   - "card": (object|optional) The card object used to update the cardonfile
+ *   card record. Useful if you want to override the card that will be updated
+ *   as determined by $form_state['card'].
+ *   - "calling module": (string|optional) The name of the module calling this
+ *   function. Required if you would like to use the more granular preprocess,
+ *   alter, and postprocess hooks called by this function.
+ *   - "donation": (object|required) The donation object.
+ *   - "payment fields": (array|optional) A form render array which will replace
+ *   the "payment fields"
  *
  * @return array
  *   The form element.
  */
 function fundraiser_update_billing_form($form, &$form_state, $data) {
+  // Merge defaults with $data.
+  $defaults = array(
+    'update billing' => TRUE,
+    'update cardonfile' => TRUE,
+    'calling module' => 'fundraiser',
+    'donation' => NULL,
+    'card' => NULL,
+  );
+  $data = array_replace_recursive($defaults, $data);
+
   // Allow other modules to stop the process if something doesn't meet one of
   // their conditions. If return value is empty, we assume we can continue.
   // Otherwise we expect a form render array to return to the calling method.
@@ -3661,9 +3688,9 @@ function fundraiser_update_billing_form($form, &$form_state, $data) {
   );
   // If the 'calling module' array element is set, also provide a more granular
   // hook for modules to hook into. This granular hook name will be
-  // `fundraiser_update_billing_form_preprocess__{calling module}`.
+  // `fundraiser_update_billing_form__{calling module}__preprocess`.
   if (isset($data['calling module']) && !empty($data['calling module'])) {
-    $functions[] = sprintf('fundraiser_update_billing_form_preprocess__%s', $data['calling module']);
+    $functions[] = sprintf('fundraiser_update_billing_form__%s__preprocess', $data['calling module']);
   }
   foreach ($functions as $function) {
     $continue = module_invoke_all($function, $form, $form_state, $data);
@@ -3740,9 +3767,7 @@ function fundraiser_update_billing_form($form, &$form_state, $data) {
     $form['payment_fields'] = array_replace_recursive($form['payment_fields'], $data['payment_fields']);
   }
 
-  if (isset($data['card'])) {
-    $form_state['card'] = $data['card'];
-  }
+  $form_state['op'] = 'update';
 
   $form['actions']['submit']['#type'] = 'submit';
   $form['actions']['submit']['#value'] = t('Save changes');
@@ -3750,7 +3775,39 @@ function fundraiser_update_billing_form($form, &$form_state, $data) {
 
   $form['#donation'] = $data['donation'];
 
-  // Allow other modules to alter this form.
+  // If the "update cardonfile" element is non-empty, add the cardonfile
+  // validation and submission handlers.
+  if ($data['update cardonfile']) {
+    $use_cardonfile = FALSE;
+    if (!empty($data['card'])) {
+      $form_state['card'] = $data['card'];
+      $use_cardonfile = TRUE;
+    }
+    elseif (empty($data['card']) && !empty($data['donation']->data['cardonfile'])) {
+      $form_state['card'] = $data['card'] = commerce_cardonfile_load($data['donation']->data['cardonfile']);
+      $use_cardonfile = TRUE;
+    }
+
+    if ($use_cardonfile) {
+      // Using this instead of form_load_include because if this function isn't
+      // called from a form constructor (fundraiser_sustainers), the include
+      // isn't included.
+      $form_state['build_info']['files']["commerce_cardonfile:includes/commerce_cardonfile.pages.inc"] = array(
+        'type' => 'inc',
+        'module' => 'commerce_cardonfile',
+        'name' => 'includes/commerce_cardonfile.pages',
+      );
+      $form['#validate'][] = '_fundraiser_update_billing_form_commerce_cardonfile_card_form_alter_validate';
+      $form['#validate'][] = 'commerce_cardonfile_card_form_validate';
+      $form['actions']['submit']['#submit'][] = 'commerce_cardonfile_card_form_submit';
+    }
+    else {
+      drupal_set_message(t('A request to update a cardonfile card was made but no card was available.'), 'error', FALSE);
+    }
+  }
+
+  // Allow other modules to make any further alterations to this form before we
+  // finish with our own stuff.
   $functions = array(
     'fundraiser_update_billing_form',
     sprintf('fundraiser_update_billing_form__%s_', $data['calling module']),
@@ -3759,13 +3816,55 @@ function fundraiser_update_billing_form($form, &$form_state, $data) {
     drupal_alter($function, $form, $form_state, $data);
   }
 
-  $form['#validate'][] = 'fundraiser_update_billing_form_validate';
-  $form['actions']['submit']['#submit'][] = 'fundraiser_update_billing_form_submit';
+  // If the "update billing" element is non-empty, add validation and submission
+  // handlers that will validate and update the billing information. This
+  // defaults to TRUE and is only FALSE if the calling module will handle this
+  // itself.
+  if ($data['update billing']) {
+    $form['#validate'][] = 'fundraiser_update_billing_form_validate';
+    $form['actions']['submit']['#submit'][] = 'fundraiser_update_billing_form_submit';
+  }
 
   $form['#calling_module'] = empty($data['calling module']) ? 'fundraiser' : $data['calling module'];
   fundraiser_display_form_fields(empty($data['calling module']) ? 'fundraiser' : $data['calling module'], $form, $form_state);
 
+  // And finally, call a post process hook for any modules that want to alter
+  // the final output of the form, knowing we won't alter anything they do from
+  // here on out.
+  $functions = array(
+    'fundraiser_update_billing_form_postprocess',
+    sprintf('fundraiser_update_billing_form__%s__postprocess', $data['calling module']),
+  );
+  foreach ($functions as $function) {
+    module_invoke_all($function, $form, $form_state, $data);
+  }
+
   return $form;
+}
+
+/**
+ * Validation handler for commerce_cardonfile handling.
+ *
+ * Sets some array elements so the cardonfile module can correctly validate and
+ * submit.
+ *
+ * @see fundraiser_quick_donate_form_commerce_cardonfile_card_form_alter
+ */
+function _fundraiser_update_billing_form_commerce_cardonfile_card_form_alter_validate(&$form, &$form_state) {
+  $input = $form_state['input'];
+  $values = &$form_state['values'];
+  $values['credit_card']['owner'] = $input['first_name'] . ' ' . $input['last_name'];
+  $values['credit_card']['exp_month'] = $values['payment_fields']['credit']['expiration_date']['card_expiration_month'] = sprintf('%02d', $input['payment_fields']['credit']['expiration_date']['card_expiration_month']);
+  $values['credit_card']['exp_year'] = $values['payment_fields']['credit']['expiration_date']['card_expiration_year'] = $input['payment_fields']['credit']['expiration_date']['card_expiration_year'];
+
+  $form['credit_card']['number']['#default_value'] = $form_state['card']->card_number;
+  if (!empty($values['payment_fields']['credit']['card_number'])) {
+    $_SESSION['card_number'] = $values['credit_card']['number'] = $values['payment_fields']['credit']['card_number'];
+  }
+  else {
+    $_SESSION['card_number'] = $values['credit_card']['number'] = $form_state['card']->card_number;
+  }
+  $values['credit_card']['cardonfile_instance_default'] = $form_state['card']->instance_default;
 }
 
 /**

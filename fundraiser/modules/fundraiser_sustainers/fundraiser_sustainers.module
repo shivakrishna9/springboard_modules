@@ -2306,6 +2306,19 @@ function fundraiser_sustainers_edit_form($did) {
     $data = array(
       'donation' => $next_donation,
       'calling module' => 'fundraiser_sustainers',
+      'update billing' => FALSE,
+      'payment_fields' => array(
+        'credit' => array(
+          'expiration_date' => array(
+            'card_expiration_month' => array(
+              '#default_value' => $cardonfile->card_exp_month,
+            ),
+            'card_expiration_year' => array(
+              '#default_value' => $cardonfile->card_exp_year,
+            ),
+          ),
+        ),
+      ),
     );
     $billing_update_form_array = drupal_get_form('fundraiser_update_billing_form', $data);
     $billing_update_form_array['#attached']['js'][3]['data']['fundraiser']['js_validation_settings']['card_cvv']->required = FALSE;
@@ -2340,6 +2353,72 @@ function fundraiser_sustainers_edit_form($did) {
   drupal_set_title(t('Recurring donation #@did', array('@did' => $did)));
   $parts = array($payment_info, $billing_info, $future_orders, $donation_amount_form, $donation_date_form, $billing_update_form, $cancel_form);
   return implode('', $parts);
+}
+
+/**
+ * Implements hook_fundraiser_update_billing_form__CALLING_MODULE__preprocess().
+ */
+function fundraiser_sustainers_fundraiser_update_billing_form__fundraiser_sustainers__preprocess($form, $form_state, $data) {
+  // Abort if the gateway does not support recurring payments.
+  $info = _fundraiser_get_donation_gateway($data['donation']->did);
+  if (!_fundraiser_sustainers_supports_recurring($info['allow_recurring'], $data['donation']->donation['payment_method'])) {
+    $form['fundraiser-sustainer-billing'] = array(
+      '#markup' => '<div class="fundraiser-sustainer-no-recur-support">' . t('This payment gateway does not support recurring donations and cannot be updated.') . '</div>',
+    );
+    return $form;
+  }
+}
+
+/**
+ * Implements hook_fundraiser_update_billing_form__CALLING_MODULE__alter().
+ */
+function fundraiser_sustainers_fundraiser_update_billing_form__fundraiser_sustainers__alter(&$form, &$form_state, $data) {
+  $form['master_did'] = array(
+    '#type' => 'hidden',
+    '#value' => $data['donation']->recurring->master_did,
+  );
+
+  $form['#validate'][] = 'fundraiser_sustainers_update_billing_form_validate';
+  $form['actions']['submit']['#submit'][] = 'fundraiser_sustainers_update_billing_form_submit';
+}
+
+/**
+ * Form validation handler for billing address update form.
+ */
+function fundraiser_sustainers_update_billing_form_validate($form, &$form_state) {
+  // Clean up the gateway information as needed on validation.
+  if (isset($form['#donation']->gateway)) {
+    $form_state['values'] = fundraiser_sustainers_gateway_cleanup($form['#donation']->gateway, $form_state['values']);
+  }
+}
+
+/**
+ * Form submit handler for billing address update form.
+ */
+function fundraiser_sustainers_update_billing_form_submit($form, &$form_state) {
+  $master_did = $form_state['values']['master_did'];
+  $submission_fields = $form_state['values'];
+
+  // Remove unnecessary values.
+  unset($submission_fields['master_did']);
+  unset($submission_fields['uid']);
+
+  global $user;
+  $username = isset($user->name) ? $user->name : 'Anonymous';
+  // We only update donations to come, not ones already processed.
+  $donations = _fundraiser_sustainers_get_donations_recurr_remaining($master_did);
+  fundraiser_sustainers_update_billing_info_in_series($donations, $submission_fields, $username);
+
+  // Use the first future donation for a template of new future donations.
+  $source_donation = reset($donations);
+
+  // Load the master donation.
+  $master_donation = fundraiser_donation_get_donation($master_did);
+  $source_donation = fundraiser_donation_get_donation($source_donation->did);
+
+  fundraiser_sustainers_update_billing_info_create_new_donations($master_donation, $source_donation, $submission_fields);
+
+  drupal_set_message(t('Billing information successfully updated'));
 }
 
 /**
@@ -2634,33 +2713,6 @@ function _fundraiser_sustainers_explode_date($timestamp) {
 }
 
 /**
- * Implements hook_fundraiser_update_billing_form_pre_process().
- */
-function fundraiser_sustainers_fundraiser_update_billing_form_preprocess__fundraiser_sustainers($form, $form_state, $data) {
-  // Abort if the gateway does not support recurring payments.
-  $info = _fundraiser_get_donation_gateway($data['donation']->did);
-  if (!_fundraiser_sustainers_supports_recurring($info['allow_recurring'], $data['donation']->donation['payment_method'])) {
-    $form['fundraiser-sustainer-billing'] = array(
-      '#markup' => '<div class="fundraiser-sustainer-no-recur-support">' . t('This payment gateway does not support recurring donations and cannot be updated.') . '</div>',
-    );
-    return $form;
-  }
-}
-
-/**
- * Implements hook_fundraiser_update_billing_form_alter().
- */
-function fundraiser_sustainers_fundraiser_update_billing_form__fundraiser_sustainers__alter(&$form, &$form_state, $data) {
-  $form['master_did'] = array(
-    '#type' => 'hidden',
-    '#value' => $data['donation']->recurring->master_did,
-  );
-
-  $form['#validate'][] = 'fundraiser_sustainers_update_billing_form_validate';
-  $form['submit']['#submit'][] = 'fundraiser_sustainers_update_billing_form_submit';
-}
-
-/**
  * Calls the gateway cleanup callback.
  *
  * @param array $gateway
@@ -2680,50 +2732,6 @@ function fundraiser_sustainers_gateway_cleanup($gateway, $submission_fields) {
   }
 
   return $submission_fields;
-}
-
-/**
- * Form validation handler for billing address update form.
- */
-function fundraiser_sustainers_update_billing_form_validate($form, &$form_state) {
-  // Clean up the gateway information as needed on validation.
-  if (isset($form['#donation']->gateway)) {
-    $form_state['values'] = fundraiser_sustainers_gateway_cleanup($form['#donation']->gateway, $form_state['values']);
-  }
-}
-
-/**
- * Form submit handler for billing address update form.
- */
-function fundraiser_sustainers_update_billing_form_submit($form, &$form_state) {
-  $master_did = $form_state['values']['master_did'];
-  $submission_fields = $form_state['values'];
-
-  // Clean up the gateway information.
-  if (isset($form['#donation']->gateway)) {
-    $submission_fields = fundraiser_sustainers_gateway_cleanup($form['#donation']->gateway, $submission_fields);
-  }
-
-  // Remove unnecessary values.
-  unset($submission_fields['master_did']);
-  unset($submission_fields['uid']);
-
-  global $user;
-  $username = isset($user->name) ? $user->name : 'Anonymous';
-  // We only update donations to come, not ones already processed.
-  $donations = _fundraiser_sustainers_get_donations_recurr_remaining($master_did);
-  fundraiser_sustainers_update_billing_info_in_series($donations, $submission_fields, $username);
-
-  // Use the first future donation for a template of new future donations.
-  $source_donation = reset($donations);
-
-  // Load the master donation.
-  $master_donation = fundraiser_donation_get_donation($master_did);
-  $source_donation = fundraiser_donation_get_donation($source_donation->did);
-
-  fundraiser_sustainers_update_billing_info_create_new_donations($master_donation, $source_donation, $submission_fields);
-
-  drupal_set_message(t('Billing information successfully updated'));
 }
 
 /**
