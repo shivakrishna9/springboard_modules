@@ -3458,38 +3458,43 @@ function fundraiser_sustainers_billing_update_form($form, &$form_state, $donatio
     '#prefix' => '<div id="recurring-series-info">',
     '#suffix' => '</div>',
   );
-
-  $cardonfile = commerce_cardonfile_load($donation->data['cardonfile']);
   $form['series-info']['recurring-payment-info'] = array(
-    '#markup' => fundraiser_sustainers_donation_payment_info($donation, $donation->did, $cardonfile),
+    '#markup' => fundraiser_sustainers_donation_payment_info($donation, $donation->did),
   );
   $form['series-info']['recurring-payment-link'] = array(
-    '#markup' => l(t("Edit Recurring Donation"), "user/{$donation->uid}/recurring_overview/{$donation->did}"),
+    '#markup' => l("Edit Recurring Donation", "user/{$donation->uid}/recurring_overview/{$donation->did}"),
     '#prefix' => '<div id="payment-edit-link">',
     '#suffix' => '</div>',
   );
 
-  // Build the generic billing update form.
-  $data = array(
-    'donation' => $donation,
-    'calling module' => 'fundraiser_sustainers',
-    'update billing' => FALSE,
-  );
-  if (!empty($cardonfile)) {
-    $data['payment_fields'] = array(
-      'credit' => array(
-        'expiration_date' => array(
-          'card_expiration_month' => array(
-            '#default_value' => $cardonfile->card_exp_month,
-          ),
-          'card_expiration_year' => array(
-            '#default_value' => $cardonfile->card_exp_year,
-          ),
-        ),
-      ),
+  // Build the generic billing update form, unless it's expired or cancelled.
+  $remaining = _fundraiser_sustainers_get_donations_recurr_remaining($donation->did);
+  $next_donation = $remaining ? fundraiser_donation_get_donation($remaining[0]->did) : $donation;
+  $cancelled = isset($next_donation->recurring->cancellation_reason) ? $next_donation->recurring->cancellation_reason : '';
+  if (!empty($cancelled)) {
+    $form['closed-message'] = array(
+      '#type' => 'container',
+    );
+    $form['closed-message']['message'] = array(
+      '#markup' => t("This recurring donation has been cancelled."),
     );
   }
-  $form = fundraiser_update_billing_form($form, $form_state, $data);
+  else if (empty($remaining)) {
+    $form['closed-message'] = array(
+      '#type' => 'container',
+    );
+    $form['closed-message']['message'] = array(
+      '#markup' => t("There are no further charges for this recurring donation."),
+    );
+  }
+  else {
+    $data = array(
+      'donation' => $donation,
+      'calling module' => 'fundraiser_sustainers',
+    );
+    $form = fundraiser_update_billing_form($form, $form_state, $data);
+  }
+
   return $form;
 }
 
