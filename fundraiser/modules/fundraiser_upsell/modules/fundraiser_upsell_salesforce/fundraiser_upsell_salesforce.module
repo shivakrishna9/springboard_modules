@@ -646,7 +646,7 @@ function fundraiser_upsell_salesforce_upsell_is_exported($sobject) {
   $item = array(
     'module' => 'fundraiser_upsell_salesforce',
     'delta' => 'upsell',
-    'drupal_id' => $sobject->fields['Upsell_Order_Id__c'],
+    'drupal_id' => $sobject->fields['Original_Order_Id__c'],
     'object_type' => 'Donation_Upsell__c',
   );
 
