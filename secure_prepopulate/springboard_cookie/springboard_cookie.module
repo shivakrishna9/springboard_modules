@@ -19,7 +19,53 @@ function springboard_cookie_menu() {
     'type' => MENU_CALLBACK,
   );
 
+  $items['user/%/springboard_cookie'] = array(
+    'title' => 'Springboard cookie',
+    'page callback' => 'springboard_cookie_inspect',
+    'page arguments' => array(1),
+    'access callback' => 'user_access',
+    'access arguments' => array('inspect springboard cookie'),
+    'type' => MENU_LOCAL_TASK,
+  );
+
   return $items;
+}
+
+/**
+ * Implements hook_permission().
+ */
+function springboard_cookie_permission() {
+  return array(
+    'inspect springboard cookie' => array(
+      'title' => t('Inspect Springboard cookie'),
+      'description' => t('Inspect the content of the Springboard cookie for the current user.'),
+    ),
+  );
+}
+
+/**
+ * Renders information stored in the current computer's
+ * Springboard cookie.
+ */
+function springboard_cookie_inspect($uid) {
+  $cookie = springboard_cookie_get_cookie();
+  $output = array();
+  
+  $output['header'] = array(
+    '#type' => 'markup',
+    '#markup' => 'Springboard cookie debug info',
+    '#prefix' => '<h2>',
+    '#suffix' => '</h2>',
+  );
+
+  $output['cookie'] = array(
+    '#type' => 'markup',
+    '#markup' => print_r($cookie, TRUE),
+    '#prefix' => '<pre>',
+    '#suffix' => '</pre>',
+  );
+
+  return $output;  
 }
 
 /**
@@ -89,7 +135,8 @@ function springboard_cookie_user_login(&$edit, $account) {
     'last_login' => time(),
   ));
 
-  // TODO: When a user logs in rehydrate the entire cookie if needed.
+  // When a user logs in rehydrate the entire cookie.
+  springboard_cookie_add_profile_values($account);
 }
 
 /**
@@ -153,6 +200,23 @@ function springboard_cookie_action_success($node, $contact, $data, $sid) {
  * Implements hook_user_update().
  */
 function springboard_cookie_user_update(&$edit, $account, $category) {
+  global $user;
+
+  // This should prevent the cookie from being updated with someone
+  // elses information when using the user edit feature.
+  if ($user->uid == $account->uid) {
+    springboard_cookie_add_profile_values($account);
+  }
+}
+
+/**
+ * Extracts data from the account object and adds it to the profile
+ * array in the Springboard cookie.
+ *
+ * @param $account
+ *   The user account from which to extract profile values.
+ */
+function springboard_cookie_add_profile_values($account) {
   $profile_data = array('profile' => array());
   try {
     $user_wrapper = entity_metadata_wrapper('user', $account);
