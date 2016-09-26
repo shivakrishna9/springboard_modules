@@ -135,6 +135,11 @@ function fundraiser_quick_donate_node_prepare($node) {
  *   The modified node object.
  */
 function _fundraiser_quick_donate_attach_quick_donate_fields(&$node) {
+  // Return early if node already has quickdonate information.
+  if (isset($node->quickdonate)) {
+    return;
+  }
+
   if (!isset($node->nid) || empty($results = db_query('SELECT quickdonate_optin_message, quickdonate_help_message_format, quickdonate_help_message, quickdonate_login_message, quickdonate_login_link_message FROM {fundraiser_quick_donate} WHERE fundraiser_nid = :nid', array(
     ':nid' => $node->nid,
   ))->fetchAssoc())) {
@@ -157,6 +162,38 @@ function _fundraiser_quick_donate_attach_quick_donate_fields(&$node) {
   }
 
   return $node;
+}
+
+/**
+ * Implements hook_node_insert().
+ */
+function fundraiser_quick_donate_node_insert($node) {
+  if (!empty($node->quickdonate)) {
+    $fields = array(
+      'fundraiser_nid' => $node->nid,
+      'quickdonate_optin_message' => $node->quickdonate_optin_message,
+      'quickdonate_help_message_format' => $node->quickdonate_help_message_format,
+      'quickdonate_help_message' => $node->quickdonate_help_message,
+      'quickdonate_login_message' => $node->quickdonate_login_message,
+      'quickdonate_login_link_message' => $node->quickdonate_login_link_message,
+    );
+
+    db_merge('fundraiser_quick_donate')
+      ->key(array('fundraiser_nid' => $fields['fundraiser_nid']))
+      ->fields($fields)
+      ->execute();
+  }
+}
+
+/**
+ * Implements hook_node_delete().
+ */
+function fundraiser_quick_donate_node_delete($node) {
+  if (!empty($node->quickdonate)) {
+    db_delete('fundraiser_quick_donate')
+      ->condition('fundraiser_nid', $node->nid)
+      ->execute();
+  }
 }
 
 /**
@@ -226,6 +263,10 @@ function _fundraiser_quick_donate_payment_method_fields_alter_states($states, $k
  * Implements hook_webform_user_save_profile_map_alter().
  */
 function fundraiser_quick_donate_webform_user_save_profile_map_alter(&$account, $form, $form_state) {
+  if (empty($form['#node']->type) || !fundraiser_is_donation_type($form['#node']->type)) {
+    return;
+  }
+
   $values = $form_state['values']['submitted_tree']['payment_information'];
   if (isset($form['#node']->quickdonate) && $form['#node']->quickdonate && $values['payment_fields'][$values['payment_method']]['quickdonate']) {
     $account->field_quick_donate_opt_in = array(
@@ -433,4 +474,34 @@ function fundraiser_quick_donate_webform_user_send_mail_alter(&$options) {
       }
     }
   }
+}
+
+/**
+ * Helper function to return the QD record for the specified card id.
+ *
+ * @param int $card_id
+ *   The card ID.
+ *
+ * @return array
+ *   The QD field record.
+ */
+function _fundraiser_quick_donate_get_payment_info_for_card_id($card_id) {
+  $query = db_query('SELECT * FROM {fundraiser_quick_donate_cardonfile} WHERE card_id = :card_id', array(
+    ':card_id' => $card_id,
+  ));
+  return $query->fetchField();
+}
+
+/**
+ * Implements hook_fundraiser_commerce_cardonfile_used_by().
+ *
+ * Used to inform fundraiser_commerce_cardonfile if the card is used for Quick
+ * Donations.
+ */
+function fundraiser_quick_donate_fundraiser_commerce_cardonfile_used_by($card_id) {
+  $result = _fundraiser_quick_donate_get_payment_info_for_card_id($card_id);
+  if (empty($result)) {
+    return;
+  }
+  return t('Quick Donate');
 }

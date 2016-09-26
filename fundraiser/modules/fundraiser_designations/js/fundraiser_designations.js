@@ -41,7 +41,7 @@
     if (cartVals.length > 0) {
       cartVals = JSON.parse(cartVals);
       $.each(cartVals, function(i, item){
-        self.repop(item);
+        self.repopCart(item);
       });
     }
     else if(cook = $.cookie('designations_' + Drupal.settings.fdNid)) {
@@ -49,15 +49,16 @@
       cook = cook.replace(/&quot;/g, '"');
       if (cook.length > 0) {
         cook = JSON.parse(cook);
-        $.each(cook, function(i, item){
-          self.repop(item);
+        $.each(cook.cart, function(i, item){
+          self.repopCart(item);
         });
+        self.repopForm(cook.recurs);
       }
     }
     // Landing page query params are present in Drupal.settings.
     else if(typeof(settings.fundraiser_designations) != "undefined") {
       var sfd = settings.fundraiser_designations;
-      self.repop(sfd);
+      self.repopCart(sfd);
       $('select#funds-select-' + sfd.fundGroup + ' option[value=' + sfd.fundId +']').prop('selected', true)
       if (typeof(sfd.recurs) != 'undefined') {
         var rcr = $('input[name*="[recurs_monthly]"]');
@@ -104,7 +105,7 @@
       otherAmt.keyup(function() {
         $('input[type="radio"]', fundGroup).each(function(){
           $(this).prop('checked', false);
-        })
+        });
       });
 
       otherAmt.blur(function() {
@@ -199,6 +200,19 @@
     self.newRow(displayAmt, displayQuant, type, fundId, amt, quant, fundName, fundGroupId);
   };
 
+  Drupal.fundraiserDesignations.prototype.repopForm = function(item) {
+    var dual = Drupal.settings.fdIsDualAsk;
+
+    if (dual === 1) {
+      var rcr = $('input[name*="[recurs_monthly]"]');
+      rcr.each(function(){
+        if ($(this).val() === item) {
+          $(this).prop('checked', true);
+        }
+      });
+    }
+  };
+
   /**
    * @param {
    * {fundAmount:string},
@@ -209,7 +223,7 @@
    * {addonId:string}
    * } item
    */
-  Drupal.fundraiserDesignations.prototype.repop = function(item) {
+  Drupal.fundraiserDesignations.prototype.repopCart = function(item) {
     var self = this;
 
     // Grab amount.
@@ -302,13 +316,29 @@
   // Attaches JSONified data attributes of the funds to a hidden form field.
   Drupal.fundraiserDesignations.prototype.setFormValue = function () {
     var obj = {};
-    $('.cart-fund-row:not(".cart-fund-empty")').each(function(i) {
-      obj[i] = $(this).data();
-    });
-    var lineItems = JSON.stringify(obj).replace(/"/g, '&quot;');
+    obj.cart = {};
+    obj.recurs = {};
 
+    $('.cart-fund-row:not(".cart-fund-empty")').each(function(i) {
+      obj.cart[i] = $(this).data();
+    });
+
+    var lineItems = JSON.stringify(obj.cart).replace(/"/g, '&quot;');
     $('input[name$="[fund_catcher]"]').val(lineItems);
-    $.cookie('designations_' + Drupal.settings.fdNid, lineItems);
+
+
+    var dual = Drupal.settings.fdIsDualAsk;
+    if (dual === 1) {
+      var rcr = $('input[name*="[recurs_monthly]"]');
+      rcr.each(function(){
+        if ($(this).prop("checked")) {
+          obj.recurs = $(this).val();
+        }
+      });
+    }
+
+    var savedForm = JSON.stringify(obj).replace(/"/g, '&quot;');
+    $.cookie('designations_' + Drupal.settings.fdNid, savedForm);
   };
 
   Drupal.fundraiserDesignations.prototype.validateOtherAmt = function(groupId) {
@@ -402,15 +432,19 @@
     var dual = Drupal.settings.fdIsDualAsk;
     if (dual == 1) {
       var rcr = $('input[name*="[recurs_monthly]"]');
+      rcr.attr('readonly', false);
       if(state == 1) {
-        rcr.attr('disabled', 'disabled');
+        rcr.attr('readonly', 'readonly');
+        rcr.bind( "click.stopClick", function() {
+          return false;
+        });
         rcr.siblings('.description').children('.checkbox-locked').remove();
         rcr.siblings('.description').prepend('<span class="checkbox-locked"> This value cannot be changed while items are in the cart. <br /></span>');
         rcr.siblings('.description').children('.checkbox-locked').hide();
         rcr.siblings('.description').children('.checkbox-locked').show(300);
       }
       else {
-        rcr.attr('disabled', false);
+        rcr.unbind( ".stopClick" );
         rcr.siblings('.description').children('.checkbox-locked').hide(100);
       }
     }

@@ -1343,7 +1343,7 @@ function fundraiser_sustainers_user_overview($user, $did = NULL) {
     else {
       // Else display the list.
       // Get the whole set of user donations (in case there's more than just this one). IIF the user owns this one.
-      $donations_header = array('Amount', 'Start Date', 'Next Charge Date', 'Expire Date', 'Status');
+      $donations_header = array('Amount', 'Start Date', 'Next Charge Date', 'Final Charge Date', 'Status');
       $donations_rows = array();
       foreach ($donations as $master_donation) {
         $this_donation = fundraiser_donation_get_donation($master_donation->master_did);
@@ -2380,11 +2380,12 @@ function fundraiser_sustainers_donation_amount_form($form, &$form_state, $donati
   );
   $form['min_amount'] = array(
     '#type' => 'hidden',
-    '#value' => isset($donation->node->minimum_donation_amount) ? $donation->node->minimum_donation_amount : 0,
+    '#value' => isset($donation->node->recurring_minimum_donation_amount) ? $donation->node->recurring_minimum_donation_amount : (isset($donation->node->minimum_donation_amount) ? $donation->node->minimum_donation_amount : 0),
   );
 
   $node_currency = fundraiser_get_currency_from_node($donation->node);
-  $formatted_minimum = commerce_currency_format($donation->node->minimum_donation_amount, $node_currency['code'], NULL, FALSE);
+  $min_amount = isset($donation->node->recurring_minimum_donation_amount) ? $donation->node->recurring_minimum_donation_amount : (isset($donation->node->minimum_donation_amount) ? $donation->node->minimum_donation_amount : variable_get('fundraiser_default_minimum', 10.00));
+  $formatted_minimum = commerce_currency_format($min_amount, $node_currency['code'], NULL, FALSE);
 
   $form['formatted_minimum'] = array(
     '#type' => 'value',
@@ -2668,12 +2669,6 @@ function fundraiser_sustainers_fundraiser_update_billing_form_preprocess__fundra
  * Implements hook_fundraiser_update_billing_form_alter().
  */
 function fundraiser_sustainers_fundraiser_update_billing_form__fundraiser_sustainers__alter(&$form, &$form_state, $data) {
-  // Modify form displays according to callback settings.
-  // This allows any other systems to modify the available options with
-  // callbacks.
-  $form['#calling_module'] = 'fundraiser_sustainers';
-  fundraiser_display_form_fields('fundraiser_sustainers', $form, $form_state);
-
   $form['master_did'] = array(
     '#type' => 'hidden',
     '#value' => $data['donation']->recurring->master_did,
@@ -4312,4 +4307,39 @@ function _fundraiser_sustainers_calculate_installments($donation) {
   }
 
   return $installments;
+}
+
+/**
+ * Helper function to return the QD record for the specified card id.
+ *
+ * @param int $card_id
+ *   The card ID.
+ *
+ * @return array
+ *   The QD field record.
+ */
+function _fundraiser_sustainers_get_payment_info_for_card_id($card_id) {
+  $query = db_query('SELECT * FROM {fundraiser_donation} fd LEFT JOIN {fundraiser_sustainers_series} fss ON fd.did = fss.did WHERE card_id = :card_id AND status = :status', array(
+    ':card_id' => $card_id,
+    ':status' => 'payment_received',
+  ));
+  return $query->fetch();
+}
+
+/**
+ * Implements hook_fundraiser_commerce_cardonfile_used_by().
+ *
+ * Used to inform fundraiser_commerce_cardonfile if the card is used for Quick
+ * Donations.
+ */
+function fundraiser_sustainers_fundraiser_commerce_cardonfile_used_by($card_id) {
+  $result = _fundraiser_sustainers_get_payment_info_for_card_id($card_id);
+  if (empty($result)) {
+    return;
+  }
+  return t('Recurring @type donation (@amount, charged on the @day)', array(
+    '@type' => strtolower($result->npsp_installment_period),
+    '@amount' => empty($result->amount) ? 'unknown amount' : $result->amount,
+    '@day' => date("jS", $result->npsp_next_payment_date),
+  ));
 }

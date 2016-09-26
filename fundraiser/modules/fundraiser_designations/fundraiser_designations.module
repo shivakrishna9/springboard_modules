@@ -369,7 +369,7 @@ function fundraiser_designations_form_commerce_product_ui_product_delete_form_al
   $product = entity_load_single('commerce_product', $pid);
   if (!empty($product->type) && $product->type == 'fundraiser_designation') {
     $form['actions']['cancel']['#href'] = 'springboard/settings/config/designations';
-    $in_use = db_query("SELECT field_ffg_fd_reference_target_id FROM {field_data_field_ffg_fd_reference} WHERE fund_id = :pid", array(':pid' => $pid))->fetchField();
+    $in_use = db_query("SELECT field_ffg_fd_reference_target_id FROM {field_data_field_ffg_fd_reference} WHERE field_ffg_fd_reference_target_id = :pid", array(':pid' => $pid))->fetchField();
     if (!empty($in_use)) {
       $form['actions']['submit']['#access'] = FALSE;
       $form['actions']['cancel']['#title'] = 'Go back';

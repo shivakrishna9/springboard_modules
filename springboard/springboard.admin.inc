@@ -1923,7 +1923,7 @@ function _springboard_default_user_profile($mode = 'commerce') {
     'field_name' => 'sbp_referrer',
     'type' => 'text',
     'widget' => array(
-      'type' => 'text_textfield',
+      'type' => 'text_textarea',
     ),
     'display' => array(
       'default' => array(
@@ -1937,7 +1937,7 @@ function _springboard_default_user_profile($mode = 'commerce') {
     'field_name' => 'sbp_initial_referrer',
     'type' => 'text',
     'widget' => array(
-      'type' => 'text_textfield',
+      'type' => 'text_textarea',
     ),
     'display' => array(
       'default' => array(
