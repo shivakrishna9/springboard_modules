@@ -232,31 +232,33 @@ function sba_message_edit_form($form, &$form_state, $sba_message) {
         '#attributes' => array('id' => 'edit-save-target-group-save-target-group-name_val'),
 
       );
-      $form['save_target_group'] = array(
-        '#tree' => true,
-        '#type' => 'container',
-        '#title' => 'save target group',
-        '#weight' => 99,
-      );
-      $form['save_target_group']['save_target_group_toggle'] = array(
-        '#type' => 'checkbox',
-        '#title' => t('Save these targets as a custom group.'),
-        '#weight' => 0,
-      );
-      $form['save_target_group']['save_target_group_name'] = array(
-        '#type' => 'textfield',
-        '#title' => t('Group name'),
-        '#weight' => 1,
-        '#states' => array(
-          'invisible' => array(
-            ':input[name="save_target_group[save_target_group_toggle]"]' => array('checked' => FALSE),
+      if ($sba_message->type != 'sba_social_action_twitter_message') {
+        $form['save_target_group'] = array(
+          '#tree' => TRUE,
+          '#type' => 'container',
+          '#title' => 'save target group',
+          '#weight' => 99,
+        );
+        $form['save_target_group']['save_target_group_toggle'] = array(
+          '#type' => 'checkbox',
+          '#title' => t('Save these targets as a custom group.'),
+          '#weight' => 0,
+        );
+        $form['save_target_group']['save_target_group_name'] = array(
+          '#type' => 'textfield',
+          '#title' => t('Group name'),
+          '#weight' => 1,
+          '#states' => array(
+            'invisible' => array(
+              ':input[name="save_target_group[save_target_group_toggle]"]' => array('checked' => FALSE),
+            ),
+            'required' => array(
+              ':input[name="save_target_group[save_target_group_toggle]"]' => array('checked' => TRUE),
+            ),
           ),
-          'required' => array(
-            ':input[name="save_target_group[save_target_group_toggle]"]' => array('checked' => TRUE),
-          ),
-        ),
-      );
-      $form['#validate'][] = 'sba_message_save_target_group_validate';
+        );
+        $form['#validate'][] = 'sba_message_save_target_group_validate';
+      }
     }
   }
 

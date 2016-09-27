@@ -199,9 +199,11 @@
         $('.view-targets').once('advocacy-search-tabs', function () {
             var finder = $('.view-targets', '#springboard-advocacy-find-targets-container');
             // create faux sub-tabs for custom targets
-            finder.prepend('<div class="faux-subtab-container"><div class="faux-tab custom-individual"' +
-                '><a href ="#custom-individual" class="custom-search custom-individual-subsearch">Individuals</a></div><' +
-                'div class="faux-tab custom-groups"><a href ="#custom-groups" class="custom-groups-subsearch">Groups</a></div></div>');
+            finder.prepend('<div class="faux-subtab-container"><div class="faux-tab custom-individual"><a href ="#custom-individual" class="custom-search custom-individual-subsearch">Individuals</a></div>');
+            var isSocial = $('div[id*="edit-field-sba-twitter-message"]');
+            if (isSocial.length === 0) {
+                $('.faux-subtab-container').append('<div class="faux-tab custom-groups"><a href ="#custom-groups" class="custom-groups-subsearch">Groups</a></div></div>');
+            }
             // create faux primary tabs
             finder.prepend('<div class="faux-tab-container"><div class="faux-tab legislative"' +
                 '><a href ="#full" class="legislative-search">Legislative Targets</a></div><' +
