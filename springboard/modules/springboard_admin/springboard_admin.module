@@ -82,6 +82,12 @@ function springboard_admin_form_alter(&$form, &$form_state, $form_id) {
     case 'user_register_form':
       if (!empty($form['account']['roles'])) {
         $roles = array_map('check_plain', user_roles(TRUE));
+        unset($roles[DRUPAL_AUTHENTICATED_RID]);
+        $admin = array_search("Administrator", $roles);
+        if (!empty($admin) && (user_access('assign user roles') && !user_access('administer permissions'))) {
+          unset($roles[$admin]);
+        }
+        $form['account']['roles']['#options'] = $roles;
         $form['account']['roles']['#access'] = $roles && (user_access('assign user roles') || user_access('administer permissions'));
       }
       break;
