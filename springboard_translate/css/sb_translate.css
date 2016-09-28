@@ -24,13 +24,20 @@
   border: none;
   padding: 1px 3px 1px 3px;
 }
+#sb-translation-manager td.field-name,
 #sb-translation-manager td.sub-field {
   font-size: 10px;
-  text-align: right;
+}
+#sb-translation-manager td.field-name {
+  width: 325px;
+}
+#sb-translation-manager td.sub-field {
+  text-align: left;
   width: 50px;
 }
 #sb-translation-manager td.source-string {
-  width: 42%;
+  font-size: 10px;
+  width: 38%;
 }
 #sb-translation-manager td.label-row {
   background-color: #f4f3ee;
@@ -47,7 +54,12 @@
   height: 36px;
 }
 #sb-translation-manager tr {
-  background: #fff;
+}
+#sb-translation-manager tr.row-odd td {
+  background: #fdfdfd;
+}
+#sb-translation-manager tr.row-even td {
+  background: #f7f7f7; 
 }
 #sb-translaion-manager .trans-manager-state-selector {
   padding: 2px 4px;

@@ -106,15 +106,6 @@ function sb_translate_translation_manager_form() {
     }
   }
 
-  // Allow includes to alter the data before form elements are created:
-  $includes = _sb_translate_load_includes();
-  foreach ($includes as $include) {
-    $sb_translate_manager_form_data_alter_function = $include . '_sb_translate_manager_form_data_alter';
-    if (function_exists($sb_translate_manager_form_data_alter_function)) {
-      $sb_translate_manager_form_data_alter_function($form, $view_data, $view, $node);
-    }
-  }
-
   // Build the form elements:
   foreach ($view_data as $field_key => $data) {
     if (isset($node->webform['components'][$data['cid']]['form_key'])) {
@@ -223,7 +214,7 @@ function _sb_translate_update_translations($form, &$form_state) {
       }
     }
   }
-  drupal_set_message('Translated have been updated.');
+  drupal_set_message('Translations have been updated.');
 }
 
 /**
@@ -251,6 +242,7 @@ function theme_sb_translate_table_theme($form) {
 
   $last_row_id = '';
   $rows = array();
+  $current_row_class = 'row-even';
   foreach ($form['rows'] as $row_key => $row_data) {
     if (!is_array($row_data) || !isset($row_data['#type']) || $row_data['#type'] != 'fieldset') {
       continue;
@@ -267,31 +259,10 @@ function theme_sb_translate_table_theme($form) {
       continue;
     }
 
-    // Add a label row before each new field:
+    // Provide zebra stripes based on field id:
     if ($last_row_id != $id) {
+      $current_row_class = ($current_row_class == 'row-even') ? 'row-odd' : 'row-even';
       $last_row_id = $id;
-      $row_label = '';
-      if (isset($form['#translation_field_data'][$id]['form_key']) && isset($form['#translation_field_data'][$id]['textgroup'])) {
-        $row_label = $form['#translation_field_data'][$id]['form_key'];
-        // Allow includes to alter the row label:
-        $includes = _sb_translate_load_includes();
-        foreach ($includes as $include) {
-          $sb_translate_manager_row_label_alter_function = $include . '_sb_translate_manager_row_label_alter';
-          if (function_exists($sb_translate_manager_row_label_alter_function)) {
-            $sb_translate_manager_row_label_alter_function($form, $id, $row_label);
-          }
-        }
-      }
-      else {
-        $row_label = 'N/A';
-      }
-      $label_row_class = array('label-row', $textgroup_class);
-      if (count($rows) == 0) {
-        $label_row_class[] = 'label-row-first';
-      }
-      if ($form['#translation_field_data'][$id]['form_key'] == 'state') {
-        $rows[] = array('data' => array(array('data' => $row_label, 'class' => $label_row_class, 'colspan' => 4)));
-      }
     }
 
     // Prepare data for each row:
@@ -309,28 +280,20 @@ function theme_sb_translate_table_theme($form) {
         }
       }
 
-      // Allow includes to alter this item prior to rendering:
-      $includes = _sb_translate_load_includes();
-      foreach ($includes as $include) {
-        $sb_translate_manager_row_pre_render_function = $include . '_sb_translate_manager_row_pre_render';
-        if (function_exists($sb_translate_manager_row_pre_render_function)) {
-          $sb_translate_manager_row_pre_render_function($form, $id, $sub_field, $item);
-        }
-      }
-
       if ($language_code == 'source') {
-        $cell_class = array('source-string');
+        $cell_class = ($language_code == 'source' ? array('source-string') : array('translated-string', $language_code . '-string'));
       }
       else {
         $cell_class = array('translated-string', $language_code . '-string');
       }
-     
       $cell_class[] = $textgroup_class;
+
       if (!in_array($form['#translation_field_data'][$id]['textgroup'], $textgroups)) {
         $textgroups[$textgroup_class] = $form['#translation_field_data'][$id]['textgroup'];
       }
       
       $row['data'][] = array('class' => $cell_class, 'data' => drupal_render($item));
+      $row['class'] = array($current_row_class);
     }
 
     // Add the row:
@@ -433,26 +396,9 @@ function _sb_translate_webform_register_component($component) {
     );
   }
 
-  // Pull state values from the "addressfield" module if it is enabled:
+  // Ignore the state field as its translation will not be managed at the node level:
   if ($component['form_key'] == 'state' && $component['type'] == 'select') {
-    if (module_exists('addressfield')) {
-      module_load_include('inc', 'addressfield', 'addressfield.administrative_areas');
-      $countries = _sb_translate_get_enabled_countries();
-      foreach ($countries as $country_code => $country) {
-        $states_data = addressfield_get_administrative_areas($country_code);
-        foreach ($states_data as $state_code => $state_name) {
-          if ($state_name == '--') {
-            continue;
-          }
-          i18n_string_update(
-            'Addressfield State' . ':' . $location . ':option;' . $country_code . ';' . $state_code,
-            $state_name,
-            array()
-          );
-        }
-      }
-      return;
-    }
+    return;
   }
 
   // Register checkbox or radio options:
@@ -540,35 +486,6 @@ function sb_translate_form_node_type_form_alter(&$form, &$form_state) {
     '#default_value' => isset($sb_translate_node_type_settings[$form['#node_type']->type]['enabled']) ? 
       $sb_translate_node_type_settings[$form['#node_type']->type]['enabled'] : 0,
   );
-  $form['sb_translate']['sb_translate_includes'] = array(
-    '#type' => 'fieldset',
-    '#title' => t('Toggle translation support'),
-    '#states' => array(
-      'invisible' => array(
-        ':input[name="sb_translate_status"]' => array('checked' => FALSE),
-      ),
-    ),
-  );
-  // Iterate of includes directory contents to provide settings here:
-  $files = file_scan_directory(drupal_get_path('module', 'sb_translate') . '/includes', '/.*?\.inc$/');
-  $enabled_includes = array();
-  foreach ($files as $abs => $file) {
-    module_load_include('inc', 'sb_translate', 'includes/' . $file->name);
-    $hook_sb_translate_include_info = $file->name . '_sb_translate_include_info';
-    if (!function_exists($hook_sb_translate_include_info)) {
-      continue;
-    }
-    $include_info = $hook_sb_translate_include_info();
-    if (isset($include_info['description'])) {
-      $form['sb_translate']['sb_translate_includes']['sb_translate_include_' . $file->name] = array(
-        '#type' => 'checkbox',
-        '#title' => $include_info['description'],
-        '#default_value' => isset($sb_translate_node_type_settings[$form['#node_type']->type]['data'][$file->name]) ? 1 : 0,
-      );
-      $enabled_includes[] = $file->name;
-    }
-  }
-  $form['#enabled_sb_translate_includes'] = $enabled_includes;
   $form['#submit'][] = '_sb_translate_form_node_type_form_save_settings';
 }
 
@@ -583,19 +500,9 @@ function _sb_translate_form_node_type_form_save_settings($form, &$form_state) {
   $sb_translate_node_type_settings = variable_get('sb_translate_node_type_settings', array());
   if (isset($form_state['input']['sb_translate_status']) && $form_state['input']['sb_translate_status'] == TRUE) {
     $sb_translate_node_type_settings[$node_type] = array('enabled' => TRUE);
-    if (isset($form['#enabled_sb_translate_includes'])) {
-      foreach ($form['#enabled_sb_translate_includes'] as $include_name) {
-        if (isset($form_state['input']['sb_translate_include_' . $include_name])
-          && $form_state['input']['sb_translate_include_' . $include_name] == TRUE) {
-          $sb_translate_node_type_settings[$node_type]['data'][$include_name] = $include_name; 
-        } else {
-          unset($sb_translate_node_type_settings[$node_type]['data'][$include_name]);
-        }
-      }
-    }
   }
   else {
-    $sb_translate_node_type_settings[$node_type]['enabled'] = FALSE;
+    $sb_translate_node_type_settings[$node_type] = array('enabled' => FALSE);
   }
   variable_set('sb_translate_node_type_settings', $sb_translate_node_type_settings);
 }
@@ -691,14 +598,6 @@ function sb_translate_form_alter(&$form, &$form_state, $form_id) {
       );
       $form['submit']['#suffix'] = str_replace($default_submit_string, $translated_submit_string, $form['submit']['#suffix']);
     }
-    // Form submit button: - TODO - find out where this is being updated / might need to use jQuery
-    /* if (isset($form['actions']['submit']['#value'])) {
-      $result = i18n_string_translate(
-        'Fundraiser' . ':' . $nid . ':' . 'submitbutton' . ':' . 'label',
-        $form['actions']['submit']['#value'], 
-        array()
-      );
-    } */
     // Webform state component options based on current country:
     if (isset($form['submitted']['billing_information']['state'])) {
       $state_data = $form['submitted']['billing_information']['state'];
@@ -740,9 +639,8 @@ function sb_translate_form_alter(&$form, &$form_state, $form_id) {
       );
       $string = str_replace("'", "\\'", $string);
      
-     // alert($string);
-      dpm($field_key);
-      dpm($string);
+      // dpm($field_key);
+      // dpm($string);
       $validation_js .= "jQuery.validator.messages." . $field_key . " = '" . $string . "';\n"; 
       //$validation_js .= "alert(jQuery.validator.messages." . $field_key . ");\n"; 
     }
@@ -859,6 +757,7 @@ function _sb_translate_register_node_edit_fundraiser_strings($form, &$form_state
     'cvv' => 'CVV',
     'submitmessage' => 'By clicking SUBMIT your credit card will be securely processed.',
     'submitbutton' => 'Submit',
+    'custom_help_text' => 'By clicking %submit_text your credit card will be securely processed.',
     'js-amount' => 'Enter a valid amount',
     'js-required' => 'This field is required',
     'js-remote' => 'Please fix this field',
@@ -886,6 +785,20 @@ function _sb_translate_register_node_edit_fundraiser_strings($form, &$form_state
     i18n_string_update(
       $textgroup . ':' . $nid . ':' . $key . ':' . 'label',
       $label, 
+      array()
+    );
+  }
+  // Add fundraiser ticket fields:
+  $ticket_info = array(
+    'table_title' => 'Tickets',
+    'table_type' => 'Type',
+    'table_quantity' => 'Quantity',
+    'table_amount' => 'Amount',
+  );
+  foreach ($ticket_info as $key => $label) {
+    i18n_string_update(
+      'Fundraiser Tickets' . ':' . $nid . ':' . $key . ':' . 'label',
+      $label,
       array()
     );
   }
@@ -960,43 +873,3 @@ function sb_translate_webform_component_render_alter(&$element, &$component) {
     }
   }
 }
-
-
-// Helper functions:
-
-/**
- * Loads all available includes if they have not already been laoded.
- *
- * Also returns an array of all includes present in the sb_translate/includes directory.
- */
-function _sb_translate_load_includes() {
-  $files = file_scan_directory(drupal_get_path('module', 'sb_translate') . '/includes', '/.*?\.inc$/');
-  $includes = array();
-  foreach ($files as $abs => $file) {
-    module_load_include('inc', 'sb_translate', 'includes/' . $file->name);
-    $includes[] = str_replace('.inc', '', $file->name);
-  }
-  return $includes;
-}
-
-
-/**
- * Returns enabled countries.
- */
-function _sb_translate_get_enabled_countries() {
-  if (!function_exists('fundraiser_commerce_get_countries') ||
-    !function_exists('fundraiser_commerce_get_country_options')) {
-    return array();
-  }
-  $countries = fundraiser_commerce_get_countries();
-  $include_all_countries = variable_get('fundraiser_all_countries', 0);
-  if ($include_all_countries) {
-    $default_available = array();
-  }
-  else {
-    $default_available = array('US', 'CA');
-  }
-  return fundraiser_commerce_get_country_options($countries->countries, $default_available);
-}
-
-
