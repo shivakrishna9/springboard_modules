@@ -814,7 +814,9 @@ function fundraiser_sustainers_upgrade_get_session_payload() {
  * Clear the session.
  */
 function fundraiser_sustainers_upgrade_clear_session_payload() {
-  unset($_SESSION['springboard_hmac']);
+  if (!empty($_SESSION) && isset($_SESSION['springboard_hmac'])) {
+    unset($_SESSION['springboard_hmac']);
+  }
 }
 
 /**
