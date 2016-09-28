@@ -8,7 +8,7 @@
 /**
  * Default select SOQL query.
  */
-define('SALESFORCE_DONATION_HISTORY_DEFAULT_SOQL', "SELECT Id, CloseDate, Amount, CC_Type__c, CC_Last_4__c FROM Opportunity WHERE AccountId = ':accountId'");
+define('SALESFORCE_DONATION_HISTORY_DEFAULT_SOQL', "SELECT Id, StageName, CloseDate, Amount, CC_Type__c, CC_Last_4__c FROM Opportunity WHERE AccountId = ':accountId'");
 /**
  * Default StageName values on Opportunity object.
  */

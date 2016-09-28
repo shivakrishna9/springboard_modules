@@ -28,6 +28,8 @@ function salesforce_donation_history_install() {
     // Provide sensible defaults for custom labels and visibility.
     module_load_include('inc', 'salesforce_donation_history', 'includes/salesforce_donation_history.admin');
     $form_state = array();
+    $form_state['values']['salesforce_donation_history_field_settings']['Opportunity-StageName']['label'] = 'Status';
+    $form_state['values']['salesforce_donation_history_field_settings']['Opportunity-StageName']['show_on_tab'] = 1;
     $form_state['values']['salesforce_donation_history_field_settings']['Opportunity-CloseDate']['label'] = 'Date';
     $form_state['values']['salesforce_donation_history_field_settings']['Opportunity-CloseDate']['show_on_tab'] = 1;
     $form_state['values']['salesforce_donation_history_field_settings']['Opportunity-Amount']['show_on_tab'] = 1;
