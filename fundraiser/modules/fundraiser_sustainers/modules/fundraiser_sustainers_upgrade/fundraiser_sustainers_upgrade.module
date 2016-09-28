@@ -1066,7 +1066,9 @@ function fundraiser_sustainers_upgrade_tokenize_confirmation($status, $confirmat
  * Clear the session payload after the confirmation has been built.
  */
 function fundraiser_sustainers_process_webform_confirmation(&$vars) {
-  fundraiser_sustainers_upgrade_clear_session_payload();
+  if (!empty($vars['node']->type) && $vars['node']->type == 'sustainers_upgrade_form') {
+    fundraiser_sustainers_upgrade_clear_session_payload();
+  }
 }
 
 /**
