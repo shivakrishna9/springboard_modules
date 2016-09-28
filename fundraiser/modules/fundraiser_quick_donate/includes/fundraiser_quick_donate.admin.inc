@@ -86,15 +86,17 @@ function fundraiser_quick_donate_admin_settings($form, $form_state) {
     '#default_value' => variable_get('fundraiser_quick_donate_default_default_message', t('Set as your default payment method?')),
   );
 
-  $form['other'] = array(
-    '#type' => 'fieldset',
-    '#title' => t('Other options'),
-  );
-  $form['other']['fundraiser_quick_donate_allow_multiple_cards'] = array(
-    '#type' => 'checkbox',
-    '#title' => t('Allow multiple stored cards to be configured for quick donations'),
-    '#default_value' => variable_get('fundraiser_quick_donate_allow_multiple_cards', FALSE),
-  );
+  // @todo Uncomment the following when we're ready to allow multiple cards to
+  // be used for quick donating.
+  // $form['other'] = array(
+  //   '#type' => 'fieldset',
+  //   '#title' => t('Other options'),
+  // );
+  // $form['other']['fundraiser_quick_donate_allow_multiple_cards'] = array(
+  //   '#type' => 'checkbox',
+  //   '#title' => t('Allow multiple stored cards to be configured for quick donations'),
+  //   '#default_value' => variable_get('fundraiser_quick_donate_allow_multiple_cards', FALSE),
+  // );
 
   $form['#submit'][] = 'fundraiser_quick_donate_admin_settings_submit';
 
