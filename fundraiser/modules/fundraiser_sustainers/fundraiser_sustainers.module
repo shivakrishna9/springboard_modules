@@ -3484,7 +3484,7 @@ function fundraiser_sustainers_billing_update_form($form, &$form_state, $donatio
       '#markup' => t("This recurring donation has been cancelled."),
     );
   }
-  else if (empty($remaining)) {
+  elseif (empty($remaining)) {
     $form['closed-message'] = array(
       '#type' => 'container',
     );
@@ -3493,10 +3493,26 @@ function fundraiser_sustainers_billing_update_form($form, &$form_state, $donatio
     );
   }
   else {
+    $cardonfile = _fundraiser_donation_cardonfile_card($next_donation);
     $data = array(
-      'donation' => $donation,
+      'donation' => $next_donation,
       'calling module' => 'fundraiser_sustainers',
+      'update billing' => FALSE,
     );
+    if (!empty($cardonfile)) {
+      $data['payment_fields'] = array(
+        'credit' => array(
+          'expiration_date' => array(
+            'card_expiration_month' => array(
+              '#default_value' => $cardonfile->card_exp_month,
+            ),
+            'card_expiration_year' => array(
+              '#default_value' => $cardonfile->card_exp_year,
+            ),
+          ),
+        ),
+      );
+    }
     $form = fundraiser_update_billing_form($form, $form_state, $data);
   }
 
