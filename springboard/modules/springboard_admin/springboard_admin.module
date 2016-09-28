@@ -79,8 +79,11 @@ function springboard_admin_form_alter(&$form, &$form_state, $form_id) {
   switch ($form_id) {
     case 'user_account_form':
     case 'user_profile_form':
-      $roles = array_map('check_plain', user_roles(TRUE));
-      $form['account']['roles']['#access'] = $roles && (user_access('assign user roles') || user_access('administer permissions'));
+    case 'user_register_form':
+      if (!empty($form['account']['roles'])) {
+        $roles = array_map('check_plain', user_roles(TRUE));
+        $form['account']['roles']['#access'] = $roles && (user_access('assign user roles') || user_access('administer permissions'));
+      }
       break;
 
     case 'clone_node_confirm':
