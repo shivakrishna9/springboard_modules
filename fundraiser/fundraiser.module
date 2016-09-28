@@ -3911,9 +3911,7 @@ function fundraiser_update_billing_form($form, &$form_state, $data) {
   if (!empty($data['calling module'])) {
     $functions[] = sprintf('fundraiser_update_billing_form__%s_', $data['calling module']);
   }
-  foreach ($functions as $function) {
-    drupal_alter($function, $form, $form_state, $data);
-  }
+  drupal_alter($functions, $form, $form_state, $data);
 
   // If the "update billing" element is non-empty, add validation and submission
   // handlers that will validate and update the billing information. This
@@ -3961,7 +3959,7 @@ function _fundraiser_update_billing_form_commerce_cardonfile_card_form_alter_val
     $_SESSION['card_number'] = $values['credit_card']['number'] = $values['payment_fields']['credit']['card_number'];
   }
   else {
-    $_SESSION['card_number'] = $values['credit_card']['number'] = $form_state['card']->card_number;
+    $_SESSION['card_number'] = $values['credit_card']['number'] = $values['payment_fields']['credit']['card_number'] = $form_state['card']->card_number;
   }
   $values['credit_card']['cardonfile_instance_default'] = $form_state['card']->instance_default;
 }

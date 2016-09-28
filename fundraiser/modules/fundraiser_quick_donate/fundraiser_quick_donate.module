@@ -58,6 +58,19 @@ function fundraiser_quick_donate_menu() {
 }
 
 /**
+ * Implements hook_menu_alter().
+ */
+function fundraiser_quick_donate_menu_alter(&$items) {
+  if (module_exists('commerce_cardonfile')) {
+    $items['user/%user/cards/%commerce_cardonfile/edit'] += array(
+      'page callback' => 'fundraiser_quick_donate_form_commerce_cardonfile_card_form',
+      'page arguments' => array(3, 1),
+    );
+  }
+  return $items;
+}
+
+/**
  * Implements hook_springboard_admin_admin_menu_items_alter().
  */
 function fundraiser_quick_donate_springboard_admin_admin_menu_items_alter(&$items) {
@@ -312,12 +325,9 @@ function fundraiser_quick_donate_fundraiser_field_info_alter(&$fields) {
 /**
  * Implements hook_form_FORM_ID_alter().
  */
-function fundraiser_quick_donate_form_commerce_cardonfile_card_form_alter(&$form, &$form_state) {
-  $card = $form_state['card'];
-  $uid = $card->uid;
-
+function fundraiser_quick_donate_form_commerce_cardonfile_card_form($card, $user) {
   // Load the user's newest donation for the card's gateway.
-  $donation = fundraiser_donation_get_donations_by_uid($uid, 1, 'DESC', $card->instance_id);
+  $donation = fundraiser_donation_get_donations_by_uid($user->uid, 1, 'DESC', $card->instance_id);
   if (empty($donation)) {
     return;
   }
@@ -340,8 +350,19 @@ function fundraiser_quick_donate_form_commerce_cardonfile_card_form_alter(&$form
       ),
     ),
   );
-  $form = array();
-  $form = drupal_get_form('fundraiser_update_billing_form', $data);
+
+  return drupal_get_form('fundraiser_update_billing_form', $data);
+}
+
+/**
+ * Implements hook_fundraiser_update_billing_form_alter().
+ *
+ * Updates the billing update form on cardonfile card edit pages to redirect
+ * back to the cards overview page.
+ */
+function fundraiser_quick_donate_form_fundraiser_update_billing_form_alter(&$form, &$form_state) {
+  $card = $form_state['card'];
+
   $title = array(
     '#type' => 'html_tag',
     '#tag' => 'h4',
@@ -375,7 +396,7 @@ function fundraiser_quick_donate_form_commerce_cardonfile_card_form_alter(&$form
 
   $gateway_type = $form['payment_method']['#value'];
   $enabled = db_query('SELECT card_id FROM {fundraiser_quick_donate_cardonfile} WHERE card_id = :card_id AND status = 1', array(
-    ':card_id' => $form_state['card']->card_id,
+    ':card_id' => $card->card_id,
   ))->fetchField();
 
   $form['payment_fields'][$gateway_type]['quickdonate'] = array(
@@ -383,25 +404,13 @@ function fundraiser_quick_donate_form_commerce_cardonfile_card_form_alter(&$form
     '#title' => t('Make this my default Quick Donate card.'),
     '#default_value' => (bool) $enabled,
   );
-}
 
-/**
- * Implements hook_fundraiser_update_billing_form_alter().
- *
- * Updates the billing update form on cardonfile card edit pages to redirect
- * back to the cards overview page.
- */
-function fundraiser_quick_donate_fundraiser_update_billing_form__fundraiser_quick_donate__alter(&$form, &$form_state) {
-  $args = arg();
-  if ($args[2] == 'cards') {
-    $form['actions']['submit']['#submit'][] = '_fundraiser_quick_donate_set_new_qd_cof';
+  $form['actions']['submit']['#submit'][] = '_fundraiser_quick_donate_set_new_qd_cof';
 
-    $card = $form_state['card'];
-    $form['actions']['cancel'] = array(
-      '#markup' => '<span class="cancel"> or ' . l(t('Cancel'), 'user/' . $card->uid . '/cards') . '</span>',
-      '#weight' => 20,
-    );
-  }
+  $form['actions']['cancel'] = array(
+    '#markup' => '<span class="cancel"> or ' . l(t('Cancel'), 'user/' . $card->uid . '/cards') . '</span>',
+    '#weight' => 20,
+  );
 }
 
 /**
