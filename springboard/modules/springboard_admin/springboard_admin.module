@@ -77,16 +77,34 @@ function springboard_admin_form_alter(&$form, &$form_state, $form_id) {
   }
 
   switch ($form_id) {
+    // Allow users with the custom "assign user roles"
+    // permission to assign user roles to every role except administrator.
     case 'user_account_form':
     case 'user_profile_form':
     case 'user_register_form':
+
       if (!empty($form['account']['roles']) && user_access('assign user roles')) {
+        // Get the roles.
         $roles = array_map('check_plain', user_roles(TRUE));
+        // Unset authenticated role like user.module does.
         unset($roles[DRUPAL_AUTHENTICATED_RID]);
+        // Find the administrator role so we can disable it.
         $admin = array_search("Administrator", $roles);
+        // Do the same disabling of admin role checkbox that
+        // user.module does to the authenticated role checkbox.
         if (!empty($admin) && (user_access('assign user roles') && !user_access('administer permissions'))) {
+          $admin_checkbox = array(
+            '#type' => 'checkbox',
+            '#title' => $roles[$admin],
+            '#default_value' => in_array($admin, $form['account']['roles']['#default_value']),
+            '#disabled' => TRUE,
+          );
+          // Remove admin from the regular set of checkboxes.
           unset($roles[$admin]);
+          // Add it back separately.
+          $form['account']['roles'][$admin] = $admin_checkbox;
         }
+        // Override user.module with our new roles and permission check.
         $form['account']['roles']['#options'] = $roles;
         $form['account']['roles']['#access'] = $roles && (user_access('assign user roles') || user_access('administer permissions'));
       }
