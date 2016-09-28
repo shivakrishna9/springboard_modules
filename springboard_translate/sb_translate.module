@@ -182,36 +182,30 @@ function _sb_translate_update_translations($form, &$form_state) {
   $languages =  locale_language_list('name');
   // TO DO - PROPERLY DETECT SOURCE LANGAUGE:
   unset($languages['en']);
+
   foreach ($form['translation_manager']['#translation_field_data'] as $cid => $translation_field_data) {
     $textgroup = $translation_field_data['textgroup'];
     foreach ($form_state['values'] as $input_key => $input_string) {
-      // Handle item lists such as select options:
-      if (strpos($input_key, $nid . '_' . $cid . '_') === FALSE) {
+      if (strpos($input_key, $nid . ':' . $cid . ':') === FALSE) {
+        continue;
+      }
+      list($nid, $cid, $sub_field, $language_code) = explode(':', $input_key);
+      if (!isset($form_state['values'][$nid . ':' . $cid . ':' . $sub_field . ':' . $language_code])
+        || !isset($form_state['values'][$nid . ':' . $cid . ':' . $sub_field . ':source'])) {
         continue;
       }
 
-      if (strpos($input_key, $nid . '_' . $cid . '_option_') !== FALSE) {
-        list($nid, $cid, $sub_field, $option_key, $language_code) = explode('_', $input_key);
-        $sub_field = $sub_field . '_' . $option_key;
-        $is_option = TRUE;
-      }
-      else {
-        list($nid, $cid, $sub_field, $language_code) = explode('_', $input_key);
-        $is_option = FALSE;
-      }
       // Update the translation:
-      if (isset($form_state['values'][$nid . '_' . $cid . '_' . $sub_field . '_' . $language_code])
-        && isset($form_state['values'][$nid . '_' . $cid . '_' . $sub_field . '_source'])) {
-        $translated_string = $form_state['values'][$nid . '_' . $cid . '_' . $sub_field . '_' . $language_code];
-        $source_string = $form_state['values'][$nid . '_' . $cid . '_' . $sub_field . '_source'];
-        $location = $nid . ':' . $cid . ':' . $sub_field;
-        i18n_string_translation_update(
-          $textgroup . ':' . $location,
-          str_replace('$', '\$', $translated_string),
-          $language_code,
-          $source_string
-        );
-      }
+      $translated_string = $form_state['values'][$nid . ':' . $cid . ':' . $sub_field . ':' . $language_code];
+      $source_string = $form_state['values'][$nid . ':' . $cid . ':' . $sub_field . ':source'];
+      $location = $nid . ':' . $cid . ':' . $sub_field;
+      i18n_string_translation_update(
+        $textgroup . ':' . $location,
+        str_replace('$', '\$', $translated_string),
+        $language_code,
+        $source_string
+      );
+      
     }
   }
   drupal_set_message('Translations have been updated.');
