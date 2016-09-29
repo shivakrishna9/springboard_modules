@@ -49,9 +49,7 @@ function springboard_hmac_permission() {
  *   An array of allowed actions, e.g. "su" for sustainer upgrades.
  */
 function springboard_hmac_allowed_actions() {
-  $actions = array();
-  drupal_alter('springboard_hmac_allowed_actions', $actions);
-  return $actions;
+  return module_invoke_all('springboard_hmac_allowed_actions');
 }
 
 /**
