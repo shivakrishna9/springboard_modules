@@ -36,8 +36,9 @@ function sb_translate_access_check($node) {
  */
 function _sb_translate_render_node_translation_manager($node) {
   global $language;
+  $default_language_code = language_default('language');
   drupal_set_title(drupal_get_title() . ' - ' . 'Translation Manager' . 
-    ($language->language != 'en' ? ' - ' . $language->name : '')); 
+    ($language->language != $default_language_code ? ' - ' . $language->name : '')); 
 
   $view = views_get_view('webform_translate_translation_manager'); // TODO - rename view to sb_translate_translation_manager
   $view->set_display('default');
@@ -53,7 +54,8 @@ function _sb_translate_render_node_translation_manager($node) {
 function sb_translate_translation_manager_form() {
   global $language;
   $languages =  locale_language_list('name');
-  unset($languages['en']); // TO DO - PROPERLY HANDLE SOURCE LANGAUGE
+  $default_language_code = language_default('language');
+  unset($languages[$default_language_code]);
 
   $view = views_get_view('webform_translate_translation_manager');
   $view->set_display('default');
@@ -180,8 +182,8 @@ function _sb_translate_update_translations($form, &$form_state) {
     return;
   }
   $languages =  locale_language_list('name');
-  // TO DO - PROPERLY DETECT SOURCE LANGAUGE:
-  unset($languages['en']);
+  $default_language_code = language_default('language');
+  unset($languages[$default_language_code]);
 
   foreach ($form['translation_manager']['#translation_field_data'] as $cid => $translation_field_data) {
     $textgroup = $translation_field_data['textgroup'];
@@ -297,7 +299,8 @@ function theme_sb_translate_table_theme($form) {
 
   // Populate the header based on results returned:
   $languages =  locale_language_list('name');
-  unset($languages['en']); // TO DO - PROPERLY DETECT SOURCE LANGAUGE:
+  $default_language_code = language_default('language');
+  unset($languages[$default_language_code]);
 
   $header = array('Field', '', t('Untranslated String'));
   $header[] = $language->name . ' ' . t('Translation');
@@ -652,7 +655,8 @@ function sb_translate_form_alter(&$form, &$form_state, $form_id) {
   elseif (isset($form_state['view']->name) && $form_state['view']->name == 'webform_translate_translation_manager'
     && $form_id == 'views_exposed_form') {
     $languages =  locale_language_list('name');
-    unset($languages['en']);
+    $default_language_code = language_default('language');
+    unset($languages[$default_language_code]);
     global $language;
     $switcher_js = "Drupal.behaviors.sbTranslateManagerFiltersBehavior = {
       attach: function(context) { (function($) {
@@ -664,7 +668,7 @@ function sb_translate_form_alter(&$form, &$form_state, $form_id) {
             '<label for=\"edit-language\">Select language</label>' +
             '<div class=\"views-widget\">' +
             '<div class=\"form-item form-type-select form-item-language control-group\">' +
-              '<select id=\"translation-manager-lang\">' +";
+              '<select id=\"translation-manager-lang\"><option value=\"\">- Select a language -</option>' +";
     foreach ($languages as $lang_code => $lang_name) {
       $is_current_lang = FALSE;
       if ($language->language == $lang_code) {
@@ -676,6 +680,9 @@ function sb_translate_form_alter(&$form, &$form_state, $form_id) {
     // Reload the page with a different language set for the current user on change:
     $switcher_js .= "
       $('.view-webform-translate-translation-manager #translation-manager-lang').change(function () {
+        if ($(this).val() == '' || $(this).val() == '" . $language->language . "') {
+          return;
+        }
         $('.view-webform-translate-translation-manager .views-reset-button,' +
           '.view-webform-translate-translation-manager .views-submit-button').hide();
         window.location = '/" . current_path() . "?language=' + $(this).val();
