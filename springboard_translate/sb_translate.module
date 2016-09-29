@@ -749,8 +749,18 @@ function _sb_translate_register_node_edit_fundraiser_strings($form, &$form_state
       }
     }
   }
-  // Define hardcoded, Fundraiser-related translations:
-  $payment_info = array(
+
+  // Add the node title:
+  if (isset($form['title']['#value'])) {
+    i18n_string_update(
+      'Webform Component' . ':' . $nid . ':' . 'node_title' . ':' . 'label',
+      $form['title']['#value'],
+      array()
+    );
+  }
+
+  // Add additional translations:
+  $key_source_map = array(
     'paymentmethod' => 'Payment Method',
     'ccnumber' => 'Credit card number',
     'expdate' => 'Expiration date',
@@ -781,7 +791,7 @@ function _sb_translate_register_node_edit_fundraiser_strings($form, &$form_state
     'js-processing' => 'Processing',
     'js-total' => 'Total',
   );
-  foreach ($payment_info as $key => $label) {
+  foreach ($key_source_map as $key => $label) {
     i18n_string_update(
       $textgroup . ':' . $nid . ':' . $key . ':' . 'label',
       $label, 
@@ -872,6 +882,23 @@ function sb_translate_webform_component_render_alter(&$element, &$component) {
       );
     }
   }
+}
+
+/**
+ * Implements hook_node_view().
+ * 
+ * Translate this node's title.
+ */
+function sb_translate_node_view($node, $view_mode, $langcode) {
+  if ($view_mode != 'full') {
+    return;
+  }
+  $title = i18n_string_translate(
+    'Webform Component' . ':' . $node->nid . ':' . 'node_title' . ':' . 'label',
+    $node->title,
+    array()
+  ); 
+  drupal_set_title($title);
 }
 
 /**
