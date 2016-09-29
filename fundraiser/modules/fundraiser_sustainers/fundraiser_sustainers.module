@@ -2400,6 +2400,25 @@ function fundraiser_sustainers_fundraiser_update_billing_form__fundraiser_sustai
     '#value' => $data['donation']->recurring->master_did,
   );
 
+  // Add Market Source fields for the benefit of new future payment records.
+  if (module_exists('market_source')) {
+    $market_source_keys = array_keys(_market_source_build_qs_keys());
+    $form['market_source_codes'] = array(
+      '#type' => 'container',
+      '#tree' => TRUE,
+    );
+    foreach ($data['donation']->node->webform['components'] as $component) {
+      if (in_array($component['form_key'], $market_source_keys) && $component['type'] == 'hidden') {
+        // Simply provide a hidden field and let Market Source do the rest.
+        $form['market_source_codes'][$component['form_key']] = array(
+          '#type' => 'hidden',
+          '#default_value' => $component['value'],
+        );
+      }
+    }
+    $form['#after_build'][] = 'market_source_webform_after_build';
+  }
+
   $form['#validate'][] = 'fundraiser_sustainers_update_billing_form_validate';
   $form['actions']['submit']['#submit'][] = 'fundraiser_sustainers_update_billing_form_submit';
 }
@@ -2437,6 +2456,11 @@ function fundraiser_sustainers_update_billing_form_submit($form, &$form_state) {
   // Load the master donation.
   $master_donation = fundraiser_donation_get_donation($master_did);
   $source_donation = fundraiser_donation_get_donation($source_donation->did);
+
+  // If Market Source codes were given, put those on the new donation objects.
+  if (!empty($submission_fields['market_source_codes'])) {
+    $source_donation->new_submission_data = $submission_fields['market_source_codes'];   
+  }
 
   fundraiser_sustainers_update_billing_info_create_new_donations($master_donation, $source_donation, $submission_fields);
 
@@ -2974,6 +2998,10 @@ function _fundraiser_sustainers_create_future_orders($donation, $month, $year, $
 
       // Load up the new donation so that all it's properties are set correctly.
       $created_donation = fundraiser_donation_get_donation($new_donation->did, TRUE);
+      // Merge Market Source code overrides if provided.
+      if (!empty($source_donation->new_submission_data)) {
+        $created_donation->submission_data = array_merge($created_donation->submission_data, $source_donation->new_submission_data);
+      }
       // Fire a hook to allow other modules to respond to the future order being created.
       module_invoke_all('fundraiser_sustainers_future_order_insert', $created_donation);
 
