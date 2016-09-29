@@ -34,7 +34,7 @@ function sb_translate_access_check($node) {
 /**
  * Translation manager page content.
  */
-function _sb_translate_render_node_translation_manager($node) {
+function _sb_translate_render_node_translation_manager($nid) {
   global $language;
   $default_language_code = language_default('language');
   drupal_set_title(drupal_get_title() . ' - ' . 'Translation Manager' . 
@@ -642,18 +642,10 @@ function sb_translate_form_alter(&$form, &$form_state, $form_id) {
         array()
       );
       $string = str_replace("'", "\\'", $string);
-     
-      // dpm($field_key);
-      // dpm($string);
       $validation_js .= "jQuery.validator.messages." . $field_key . " = '" . $string . "';\n"; 
-      //$validation_js .= "alert(jQuery.validator.messages." . $field_key . ");\n"; 
     }
-    
-    //$validation_js .= "alert(JSON.stringify($('#edit-submitted-payment-information-payment-fields-credit-card-number input').settings.messages));\n";
     $validation_js .= "});})(jQuery);}}";
-    
     drupal_add_js($validation_js, array('type' => 'inline', 'scope' => 'footer', 'cache' => FALSE));
-
 
     return;
   } // End node view form translations.
@@ -877,6 +869,57 @@ function sb_translate_webform_component_render_alter(&$element, &$component) {
         $textgroup . ':' . $nid . ':' . $component['cid'] . ':option_' . $option_key,
         $option_value,
         array()
+      );
+    }
+  }
+}
+
+/**
+ * Implements hook_node_insert().
+ *
+ * Ths duplicates a node's translation data when the node is cloned.
+ */
+function sb_translate_node_insert($node) {
+  $node_type_settings = variable_get('sb_translate_node_type_settings', array());
+  if (!isset($node->type) || !isset($node_type_settings[$node->type]['enabled'])
+    || !$node_type_settings[$node->type]['enabled']
+    || !isset($node->clone_from_original_nid)) {
+    return;
+  }
+  _sb_translate_clone_translations($node->clone_from_original_nid, $node->nid);
+}
+
+/**
+ * Clone translations from an original node to a new, target node.
+ *
+ * @param $original_nid
+ *   The ID of the node being cloned.
+ * @param $new_nid
+ *   The NID of the newly cloned node.
+ */
+function _sb_translate_clone_translations($original_nid, $new_nid) {
+  $source_strings_query = db_query("SELECT lid, location, source source_string FROM {locales_source} " .
+    "WHERE location LIKE :location", array(':location' => '%:' . $original_nid . '%:%:%'));
+  foreach ($source_strings_query as $source_data) {
+    list($textgroup, $original_node_id, $field, $sub_field) = explode(':', $source_data->location);
+    $new_location = $textgroup . ':' . $new_nid . ':' . $field . ':' . $sub_field;
+
+    // Register the source string for translation:
+    i18n_string_update(
+      $new_location,
+      $source_data->source_string,
+      array()
+    ); 
+
+    // Save any existing translations:
+    $translations_query = db_query("SELECT language, translation FROM {locales_target} " .
+      "WHERE language != 'source' AND lid = :lid", array(':lid' => $source_data->lid));
+    foreach ($translations_query as $translation_data) {
+      i18n_string_translation_update(
+        $new_location,
+        $translation_data->translation,
+        $translation_data->language,
+        $source_data->source_string
       );
     }
   }
