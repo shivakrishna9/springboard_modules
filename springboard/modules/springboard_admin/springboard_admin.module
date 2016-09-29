@@ -254,12 +254,13 @@ function springboard_admin_form_springboard_admin_settings_alter(&$form, &$form_
     );
     if (user_access('administer permissions')) {
       $allowed_roles = array_map('check_plain', user_roles(TRUE));
+      unset($allowed_roles[DRUPAL_AUTHENTICATED_RID]);
       $admin = array_search("Administrator", $allowed_roles);
       $default = $admin ? $admin : '';
       $form['admin']['springboard_disallowed_roles'] = array(
         '#type' => 'checkboxes',
         '#title' => t('Disallowed role assignments'),
-        '#description' => t('Choose which roles are disallowed when users with the "assign user roles" permission assign roles to users.'),
+        '#description' => t('Choose which roles are disallowed when administrators with the "assign user roles" permission assign roles to users. Administrators with the "administer permissions" permission are exempt from this limitation.'),
         '#options' => $allowed_roles,
         '#default_value' => variable_get('springboard_disallowed_roles', array($default)),
       );
