@@ -228,6 +228,13 @@ function sb_translate_theme() {
 function theme_sb_translate_table_theme($form) {
   $output = '';
   global $language;
+
+  // Don't display the table if the user is using the default language:
+  $default_language_code = language_default('language');
+  if ($language->language == $default_language_code) {
+    return '<div class="no-target-language">' . t('Please select a target language to manage translations.') . '</div>';
+  }
+
   $form = array_shift($form);
   $attributes = array();
   $results_language_codes = array();

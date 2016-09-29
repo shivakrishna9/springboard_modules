@@ -1,3 +1,9 @@
+#sb-translate-translation-manager-form .no-target-language {
+  font-size: 18px;
+  padding-bottom: 40px;
+  padding-top: 10px;
+  text-align: center;
+}
 #sb-translate-translation-manager-form ul.tabs.secondary {
   background-color: #f4f3ee;
   position: static;

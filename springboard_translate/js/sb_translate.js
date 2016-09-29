@@ -82,8 +82,12 @@ Drupal.behaviors.sbTranslateManagerBehavior = {
       });
     });
     // Display a prompt if the user tries to leave the form when any of the fields have been modified:
+    var allowFormSubmit = false;
     window.onload = function() {
       window.addEventListener("beforeunload", function (e) {
+        if (allowFormSubmit == true) {
+          return;
+        }
         var test = '';
         var isDirty = false;
         $('#sb-translation-manager td.translated-string input').each(function () {
@@ -105,7 +109,9 @@ Drupal.behaviors.sbTranslateManagerBehavior = {
         return confirmationMessage; //Gecko + Webkit, Safari, Chrome etc.
       });
     }; 
-    
+    $('#sb-translate-translation-manager-form #edit-update-translations').click(function () {
+      allowFormSubmit = true;
+    })
     
     // Display the first tab's contents on load:
     $('#edit-translation-manager .sb-textgroup-tabs a:first').click();
