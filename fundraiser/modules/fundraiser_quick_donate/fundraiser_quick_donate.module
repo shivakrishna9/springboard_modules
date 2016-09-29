@@ -360,7 +360,7 @@ function fundraiser_quick_donate_form_commerce_cardonfile_card_form($card, $user
  * Updates the billing update form on cardonfile card edit pages to redirect
  * back to the cards overview page.
  */
-function fundraiser_quick_donate_fundraiser_update_billing_form__fundraiser_quick_donate__preprocess(&$form, &$form_state) {
+function fundraiser_quick_donate_fundraiser_update_billing_form__fundraiser_quick_donate__alter(&$form, $form_state) {
   $card = $form_state['card'];
 
   $title = array(

@@ -3911,7 +3911,9 @@ function fundraiser_update_billing_form($form, &$form_state, $data) {
   if (!empty($data['calling module'])) {
     $functions[] = sprintf('fundraiser_update_billing_form__%s_', $data['calling module']);
   }
-  drupal_alter($functions, $form, $form_state, $data);
+  foreach ($functions as $function) {
+    drupal_alter($function, $form, $form_state, $data);
+  }
 
   // If the "update billing" element is non-empty, add validation and submission
   // handlers that will validate and update the billing information. This
