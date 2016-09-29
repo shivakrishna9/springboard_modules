@@ -78,7 +78,7 @@ function springboard_admin_form_alter(&$form, &$form_state, $form_id) {
 
   switch ($form_id) {
     // Allow users with the custom "assign user roles"
-    // permission to assign user roles to every role except disallowed roles.
+    // permission to assign users to every role except disallowed roles.
     case 'user_account_form':
     case 'user_profile_form':
     case 'user_register_form':
@@ -94,7 +94,7 @@ function springboard_admin_form_alter(&$form, &$form_state, $form_id) {
         $disallowed = array_filter(variable_get('springboard_disallowed_roles', array($default)));
         // Do the same disabling of disallowed role checkbox that
         // user.module does to the authenticated role checkbox.
-        if (!empty($admin) && (user_access('assign user roles') && !user_access('administer permissions'))) {
+        if (user_access('assign user roles') && !user_access('administer permissions')) {
           foreach ($disallowed as $role_id) {
             $admin_checkbox = array(
               '#type' => 'checkbox',
@@ -109,10 +109,10 @@ function springboard_admin_form_alter(&$form, &$form_state, $form_id) {
             // Add it back separately.
             $form['account']['roles'][$role_id] = $admin_checkbox;
           }
+          // Override user.module with our new roles and permission check.
+          $form['account']['roles']['#options'] = $roles;
+          $form['account']['roles']['#access'] = $roles && (user_access('assign user roles') || user_access('administer permissions'));
         }
-        // Override user.module with our new roles and permission check.
-        $form['account']['roles']['#options'] = $roles;
-        $form['account']['roles']['#access'] = $roles && (user_access('assign user roles') || user_access('administer permissions'));
       }
       break;
 
