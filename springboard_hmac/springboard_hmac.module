@@ -409,10 +409,10 @@ function springboard_hmac_springboard_admin_alias_patterns() {
 }
 
 /**
- * Implements hook_springboard_hmac_allowed_actions_alter().
+ * Implements hook_springboard_hmac_allowed_actions().
  */
-function springboard_hmac_springboard_hmac_allowed_actions_alter(&$actions) {
-  $actions[] = 'lr';
+function springboard_hmac_springboard_hmac_allowed_actions() {
+  return 'lr';
 }
 
 /**
