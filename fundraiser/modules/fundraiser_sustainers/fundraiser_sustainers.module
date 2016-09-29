@@ -2459,7 +2459,7 @@ function fundraiser_sustainers_update_billing_form_submit($form, &$form_state) {
 
   // If Market Source codes were given, put those on the new donation objects.
   if (!empty($submission_fields['market_source_codes'])) {
-    $source_donation->new_submission_data = $submission_fields['market_source_codes'];   
+    $source_donation->new_submission_data = $submission_fields['market_source_codes'];
   }
 
   fundraiser_sustainers_update_billing_info_create_new_donations($master_donation, $source_donation, $submission_fields);
@@ -3491,18 +3491,22 @@ function fundraiser_sustainers_billing_update_form($form, &$form_state, $donatio
     '#prefix' => '<div id="recurring-series-info">',
     '#suffix' => '</div>',
   );
+
+  $remaining = _fundraiser_sustainers_get_donations_recurr_remaining($donation->did);
+  $next_donation = $remaining ? fundraiser_donation_get_donation($remaining[0]->did) : $donation;
+  $cardonfile = _fundraiser_donation_cardonfile_card($next_donation);
+
   $form['series-info']['recurring-payment-info'] = array(
-    '#markup' => fundraiser_sustainers_donation_payment_info($donation, $donation->did),
+    '#markup' => fundraiser_sustainers_donation_payment_info($donation, $donation->did, $cardonfile),
   );
+
   $form['series-info']['recurring-payment-link'] = array(
-    '#markup' => l("Edit Recurring Donation", "user/{$donation->uid}/recurring_overview/{$donation->did}"),
+    '#markup' => l(t("Edit Recurring Donation"), "user/{$donation->uid}/recurring_overview/{$donation->did}"),
     '#prefix' => '<div id="payment-edit-link">',
     '#suffix' => '</div>',
   );
 
   // Build the generic billing update form, unless it's expired or cancelled.
-  $remaining = _fundraiser_sustainers_get_donations_recurr_remaining($donation->did);
-  $next_donation = $remaining ? fundraiser_donation_get_donation($remaining[0]->did) : $donation;
   $cancelled = isset($next_donation->recurring->cancellation_reason) ? $next_donation->recurring->cancellation_reason : '';
   if (!empty($cancelled)) {
     $form['closed-message'] = array(
@@ -3521,7 +3525,6 @@ function fundraiser_sustainers_billing_update_form($form, &$form_state, $donatio
     );
   }
   else {
-    $cardonfile = _fundraiser_donation_cardonfile_card($next_donation);
     $data = array(
       'donation' => $next_donation,
       'calling module' => 'fundraiser_sustainers',
