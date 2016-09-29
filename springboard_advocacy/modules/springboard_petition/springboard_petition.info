@@ -5,3 +5,4 @@ package = Springboard Advocacy
 dependencies[] = springboard_advocacy
 dependencies[] = webform_user
 dependencies[] = email_wrappers
+dependencies[] = form_layouts
