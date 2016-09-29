@@ -143,11 +143,11 @@ function _fundraiser_quick_donate_springboard_hmac_check_user($goto_nid, $payloa
  *   The fundraiser ID or an invokation of `springboard_hmac_failure`.
  */
 function _fundraiser_quick_donate_get_nid($payload) {
-  $parameters = drupal_get_query_parameters();
   if (!isset($payload['card_id'])) {
     $payload = _fundraiser_quick_donate_hmac_mapping($payload);
   }
 
+  $parameters = drupal_get_query_parameters();
   // Look up the gateway's instance id based on the stored card.
   $card_on_file = commerce_cardonfile_load($payload['card_id']);
   $gateway_id = $card_on_file->instance_id;
@@ -240,6 +240,10 @@ function fundraiser_quick_donate_user_is_opted_in($uid) {
  * Redirect to the donation form if hmac not validated.
  */
 function fundraiser_quick_donate_springboard_hmac_failure($reason, $payload) {
+  if ($payload['action'] != 'qd') {
+    return;
+  }
+
   $payload = _fundraiser_quick_donate_hmac_mapping($payload);
   $goto_nid = _fundraiser_quick_donate_get_nid($payload);
 
