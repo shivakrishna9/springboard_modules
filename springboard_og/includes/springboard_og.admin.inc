@@ -74,19 +74,64 @@ function springboard_og_settings_form() {
   );
 
 
-//  $options = array();
-//  foreach (entity_get_info() as $entity_type => $entity_info) {
-//    if (empty($entity_info['fieldable'])) {
-//      continue;
-//    }
-//    foreach ($entity_info['bundles'] as $bundle_name => $bundle) {
-//      // Prefix the bundle name with the entity type.
-//      $entity_name = check_plain("$entity_info[label] ($entity_type)");
-//      $options[$entity_name][$entity_type . ':' . $bundle_name] = filter_xss($bundle['label']);
-//    }
-//  }
+  $options = array();
+  foreach (entity_get_info() as $entity_type => $entity_info) {
+    if (empty($entity_info['fieldable'])) {
+      continue;
+    }
+    foreach ($entity_info['bundles'] as $bundle_name => $bundle) {
+      // Prefix the bundle name with the entity type.
+      $entity_name = check_plain("$entity_info[label] ($entity_type)");
+      $options[$entity_name][$entity_type . ':' . $bundle_name] = filter_xss($bundle['label']);
+    }
+  }
 
+  foreach ($options as $key => $type) {
+    foreach($type as $info => $name) {
+      if (strpos($info, 'node') === FALSE && strpos($info, 'og_') === FALSE && strpos($info, 'line_item') === FALSE) {
+        $entity_type_options[$info] = $name . ' (' . substr($info, 0, strpos($info, ':')) . ')';
+      }
+    }
+  }
 
+  $form['springboard_og_entities'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Entity types'),
+    '#collapsible' => TRUE,
+    '#description' => t('Make these entities eligible for grouping'),
+  );
+
+  foreach ($field_enabled as $entity_type => $bundle_group) {
+    if ($entity_type != 'node') {
+      foreach ($bundle_group as $bundle => $field) {
+        $defaults[] = $entity_type . ':' . $bundle;
+      }
+    }
+  }
+
+  $form['springboard_og_entities']['springboard_og_grouped_entities'] = array(
+    '#title' => t(''),
+    '#type' => 'checkboxes',
+    '#options' => $entity_type_options,
+    '#default_value' => $defaults,
+  );
+
+  foreach ($field_enabled as $entity_type => $bundle_group) {
+    if ($entity_type != 'node') {
+      foreach ($bundle_group as $bundle => $field) {
+        $form['springboard_og_entities']['springboard_og_grouped_entities'][$entity_type . ':' . $bundle] = array(
+          '#disabled' => TRUE,
+          '#description' => l(t('Remove from groups'), "admin/config/group/fields/" . $entity_type . "/" . $bundle . "/og_group_ref/delete", array('query' => array('destination' => 'admin/config/springboard-groups'))),
+        );
+      }
+    }
+  }
+
+  $form['springboard_og_entities']['actions'] = array(
+    '#type' => 'submit',
+    '#value' => 'Add',
+    '#submit' => array('springboard_og_entities_settings_form_submit'),
+  );
 
   return $form;
 }
@@ -99,3 +144,14 @@ function springboard_og_settings_form_submit($form, $form_state) {
     }
   }
 }
+
+function springboard_og_entities_settings_form_submit($form, $form_state) {
+  foreach ($form_state['values']['springboard_og_grouped_entities'] as $key => $status) {
+    if (!empty($status)) {
+      list($entity_type, $bundle) = explode(':', $key);
+      $og_field = og_fields_info('og_group_ref');
+      og_create_field('og_group_ref', $entity_type, $bundle, $og_field);
+    }
+  }
+}
+

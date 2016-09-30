@@ -14,6 +14,22 @@ function springboard_og_menu() {
     'file' => 'includes/springboard_og.admin.inc',
     'type' => MENU_NORMAL_ITEM,
   );
+
+  $items['group/%/%/admin/people/all'] = array(
+    'title' => 'People',
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+  );
+
+  $items['group/%/%/admin/people/bulk-add'] = array(
+    'page callback' => 'springboard_og_bulk_add',
+    'page arguments' => array(1, 2),
+    'type' => MENU_LOCAL_TASK,
+    'weight' => 100,
+    'title' => 'Bulk Add Members',
+    'access callback' => 'og_ui_user_access_group',
+    'access arguments' => array('add user', 1, 2),
+  );
+
   return $items;
 }
 
@@ -90,5 +106,104 @@ function springboard_og_form_og_ui_field_delete_form_alter(&$form, &$form_state)
   if ($_GET['destination'] = 'admin/config/springboard-groups') {
     $form['actions']['cancel']['#markup'] = l('cancel', 'admin/config/springboard-groups');
     $form['description']['#markup'] = t('All group associations for this content type will be deleted. This cannot be undone.');
+  }
+}
+
+/**
+ * Implements hook_springboard_admin_alias_patterns().
+ *
+ */
+function springboard_og_springboard_admin_alias_patterns() {
+  return array(
+    'group/node/%/admin/people' => array(
+      'path' => array(
+        'regex' => '|^/group/node/([0-9]+)/admin/people|',
+        'replacement' => 'group/node/$1/admin/people',
+      ),
+      'alias' => array(
+        'regex' => '|^springboard/group/node/([0-9]+)/admin/people|',
+        'replacement' => 'springboard/group/node/$1/admin/people',
+      ),
+    ),
+    'group/node/%/admin/people/add-user' => array(
+      'path' => array(
+        'regex' => '|^/group/node/([0-9]+)/admin/people/add-user|',
+        'replacement' => 'group/node/$1/admin/people/add-user',
+      ),
+      'alias' => array(
+        'regex' => '|^springboard/group/node/([0-9]+)/admin/people/add-user|',
+        'replacement' => 'springboard/group/node/$1/admin/people/add-user',
+      ),
+    ),
+    'group/node/%/admin/people/bulk-add' => array(
+      'path' => array(
+        'regex' => '|^/group/node/([0-9]+)/admin/people/bulk-add|',
+        'replacement' => 'group/node/$1/admin/people/bulk-add',
+      ),
+      'alias' => array(
+        'regex' => '|^springboard/group/node/([0-9]+)/admin/people/bulk-add|',
+        'replacement' => 'springboard/group/node/$1/admin/people/bulk-add',
+      ),
+    ),
+    'group/node/%/admin/roles' => array(
+      'path' => array(
+        'regex' => '|^/group/node/([0-9]+)/admin/roles|',
+        'replacement' => 'group/node/$1/admin/roles',
+      ),
+      'alias' => array(
+        'regex' => '|^springboard/group/node/([0-9]+)/admin/roles|',
+        'replacement' => 'springboard/group/node/$1/admin/roles',
+      ),
+    ),
+    'group/node/%/admin/people/permissions' => array(
+      'path' => array(
+        'regex' => '|^/group/node/([0-9]+)/admin/permissions|',
+        'replacement' => 'group/node/$1/admin/permissions',
+      ),
+      'alias' => array(
+        'regex' => '|^springboard/group/node/([0-9]+)/admin/permissions|',
+        'replacement' => 'springboard/group/node/$1/admin/permissions',
+      ),
+    ),
+  );
+}
+
+function springboard_og_default_rules_configuration() {
+  $items['rules_springboard_og_bulk_add'] = entity_import('rules_config', '{ "rules_springboard_og_bulk_add" : {
+    "LABEL" : "add_og_membership",
+    "PLUGIN" : "action set",
+    "REQUIRES" : [ "og", "rules" ],
+    "ACCESS_EXPOSED" : "1",
+    "USES VARIABLES" : { "user" : { "label" : "user", "type" : "user" } },
+    "ACTION SET" : [
+      { "og_group_content_add" : { "entity" : [ "user" ], "group" : [ "site:og-context--node" ] } },
+      { "drupal_message" : { "message" : "User [user:name] added to group" } }
+    ]
+  }
+}');
+
+  return $items;
+}
+
+function springboard_og_bulk_add($group_type, $group_id) {
+
+  // check if user has access to view user profiles which is needed
+  if (!user_access('View user profiles')) {
+    drupal_set_message(t('You need to have access to view user profiles in
+      order to add users to groups. Please configure the needed permission'),
+      'error');
+    return '';
+  }
+  else {
+    if (is_numeric($group_id)) {
+      og_set_breadcrumb($group_type, $group_id, array(l(t('Group'), "$group_type/$group_id/group")));
+      $view = views_get_view('springboard_og_bulk_add');
+      $view->set_arguments(array($group_id));
+      $view->set_display('block_1');
+      $view->pre_execute();
+      $view->execute();
+      $content = $view->render();
+      return $content;
+    }
   }
 }
