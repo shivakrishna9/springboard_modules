@@ -604,10 +604,12 @@ function salesforce_donation_salesforce_genmap_map_fields(stdClass $donation, En
     if (is_array($donation->refunds)) {
       // Get the latest reason and amount.
       foreach ($donation->refunds as $refund) {
-        $fields['Cancellation_Reason__c'] = $refund->reason;
-        $fields['Amount'] = $fields['Amount'] - $refund->amount;
-        $fields['Transaction_Date_Time__c']  = gmdate('c', $refund->changed);
-        $fields['CloseDate']  = gmdate('c', $refund->changed);
+        if ($refund->status != 'failed_refund') {
+          $fields['Cancellation_Reason__c'] = $refund->reason;
+          $fields['Amount'] = $fields['Amount'] - $refund->amount;
+          $fields['Transaction_Date_Time__c']  = gmdate('c', $refund->changed);
+          $fields['CloseDate']  = gmdate('c', $refund->changed);
+        }
       }
 
       //$fields['Parent_Donation__c'] = '[Opportunity:donation:' . $donation->did . ']';
