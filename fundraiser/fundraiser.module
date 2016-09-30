@@ -2519,11 +2519,7 @@ function fundraiser_refund_get_refunds_by_did($did, $refresh = FALSE) {
   if (!$refresh && isset($refunds[$did])) {
     return $refunds[$did];
   }
-  $refund_set = array();
-  $found_refunds = _fundraiser_get_refunds_by_did($did);
-  foreach ($found_refunds as $found_refund) {
-    $refund_set[] = fundraiser_refund_get_refund($found_refund->rid);
-  }
+  $refund_set = _fundraiser_get_refunds_by_did($did);
   // Store the refunds information into the cache by did.
   $refunds[$did] = $refund_set;
   return $refund_set;
