@@ -4341,6 +4341,15 @@ function fundraiser_sustainers_action_info() {
       'triggers' => array('any'),
       'permissions' => array('administrate recurring donations'),
     ),
+    'fundraiser_sustainers_omit_sustainer_action' => array(
+      'type' => 'fundraiser_sustainer_record',
+      'label' => t('Permanently Omit Sustainer'),
+      'behavior' => array('changes_property'),
+      'configurable' => FALSE,
+      'vbo_configurable' => FALSE,
+      'triggers' => array('any'),
+      'permissions' => array('administrate recurring donations'),
+    ),
   );
 }
 
@@ -4397,6 +4406,57 @@ function fundraiser_sustainers_unlock_sustainer_action(&$sustainer_record, $cont
       break;
   }
 
+}
+/**
+ * The omit sustainer action.
+ *
+ * Note that I'm including all gateway_resp cases in case this action gets used
+ * in other situations besides the stuck sustainer VBO.
+ *
+ * Also note that drupal saves the sustainer record entity on its own so that's
+ * why it's not happening here.
+ *
+ * @param Entity $sustainer_record
+ *   The fundraiser_sustainer_record entity.
+ */
+function fundraiser_sustainers_omit_sustainer_action(&$sustainer_record, $context) {
+  $replacements = array(
+    '%did' => $sustainer_record->did,
+    '%status' => $sustainer_record->gateway_resp,
+  );
+
+  $log = fundraiser_sustainers_log();
+
+  switch ($sustainer_record->gateway_resp) {
+    case FUNDRAISER_SUSTAINERS_PROCESSING_STATUS:
+      $sustainer_record->gateway_resp = FUNDRAISER_SUSTAINERS_OMITTED_STATUS;
+      $log->logOmittedDonation($sustainer_record->did, $sustainer_record->gateway_resp);
+      drupal_set_message(t('Omitted sustainer %did and changed its status from %status to Omitted.', $replacements));
+      break;
+
+    // Include support for the NULL value, default value of gateway_resp.
+    case NULL:
+      $replacements['%status'] = FUNDRAISER_SUSTAINERS_OMITTED_STATUS;
+    case FUNDRAISER_SUSTAINERS_SCHEDULED_STATUS:
+      // Fall through.
+    case FUNDRAISER_SUSTAINERS_RETRY_STATUS:
+      $sustainer_record->gateway_resp = FUNDRAISER_SUSTAINERS_OMITTED_STATUS;
+      $log->logOmittedDonation($sustainer_record->did, $sustainer_record->gateway_resp);
+      drupal_set_message(t('Omitted sustainer %did and left its status at %status', $replacements));
+      break;
+
+    case FUNDRAISER_SUSTAINERS_SUCCESS_STATUS:
+      // Fall through.
+    case FUNDRAISER_SUSTAINERS_FAILED_STATUS:
+      // Fall through.
+    case FUNDRAISER_SUSTAINERS_SKIPPED_STATUS:
+      // Fall through.
+    case FUNDRAISER_SUSTAINERS_CANCELED_STATUS:
+      // Fall through.
+    default:
+      drupal_set_message(t('Cannot unlock the sustainer %did because its status is %status', $replacements));
+      break;
+  }
 }
 
 /**
