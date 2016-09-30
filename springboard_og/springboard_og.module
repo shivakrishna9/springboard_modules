@@ -207,3 +207,18 @@ function springboard_og_bulk_add($group_type, $group_id) {
     }
   }
 }
+
+function springboard_og_node_info() {
+  $items = array(
+    'springboard_group' => array(
+      'name' => t('Springboard Group'),
+      'base' => 'node_content',
+      'description' => '',
+      'has_title' => '1',
+      'title_label' => t('Title'),
+      'help' => '',
+    ),
+  );
+  return $items;
+}
+

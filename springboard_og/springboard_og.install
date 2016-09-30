@@ -1,0 +1,6 @@
+<?php
+
+function springboard_og_install() {
+  module_load_include('inc', 'springboard_og', 'includes/install/springboard_og.install_content_type');
+  _springboard_og_install_content_type();
+}
