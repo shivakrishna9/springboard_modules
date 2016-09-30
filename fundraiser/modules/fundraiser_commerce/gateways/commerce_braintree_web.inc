@@ -97,7 +97,14 @@ function commerce_braintree_web_fundraiser_donation_form_config_check($node) {
  */
 function commerce_braintree_web_fundraiser_commerce_expire($submission_fields) {
   $expires = array();
-  if (isset($submission_fields['txn_id'])) {
+  // We may already have the expiration dates in the payment_fields if this is an upsell.
+  if(isset($submission_fields['payment_fields']['credit']['card_expiration_month']) && !empty($submission_fields['payment_fields']['credit']['card_expiration_month'])) {
+    $expires['month'] = $submission_fields['payment_fields']['credit']['card_expiration_month'];
+    $expires['year'] = $submission_fields['payment_fields']['credit']['card_expiration_year'];
+  }
+  // If we don't find them in payment_fields, look in the payload returned from
+  // the braintree transaction sale.
+  elseif (isset($submission_fields['txn_id'])) {
     $payload = db_query("SELECT payload FROM {commerce_payment_transaction} WHERE remote_id = :txn_id LIMIT 1", array(':txn_id' => $submission_fields['txn_id']))->fetchField();
     if (isset($payload)) {
       $braintree_response_object = unserialize($payload);
