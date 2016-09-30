@@ -26,7 +26,7 @@ function fundraiser_quick_donate_form_node_form_alter(&$form, &$form_state, $for
     '#default_value' => isset($form['#node']->quickdonate) ? $form['#node']->quickdonate : FALSE,
   );
 
-  if (!count(variable_get(FUNDRAISER_QUICK_DONATE_DEFAULT_FORM_PREFIX . 'default', array()))) {
+  if (empty(variable_get(FUNDRAISER_QUICK_DONATE_DEFAULT_FORM_PREFIX . 'default', array()))) {
     $form['payment_methods']['quickdonate']['#suffix'] = t("Reminder: Don't forget to set default forms on the !config_page so donors can be directed to the right place when following a secure Quick Donate link.<br/><br/>", array(
       '!config_page' => l(t('Quick Donate configuration page'), 'springboard/options/fundraiser/fundraiser_quick_donate'),
     ));

@@ -6,13 +6,20 @@
         return;
       }
 
-      var $gateways = {'credit': $('#edit-gateways-credit-id'), bank: $('#edit-gateways-bank-account-id')};
+      var $gateways = {
+        'credit': $('#edit-gateways-credit-id'),
+        'bank': $('#edit-gateways-bank-account-id')
+      };
+
       var $gateways_enabled;
       var $quickdonate = $('.form-item-quickdonate');
       var gateway_available = {'credit': true, 'bank': true};
 
       var gateways_enabled = function() {
-        $gateways_enabled = {'credit': $('#edit-gateways-credit-status').is(':checked'), 'bank': $('#edit-gateways-bank-account-status').is(':checked')};
+        $gateways_enabled = {
+          'credit': $('#edit-gateways-credit-status').is(':checked'),
+          'bank': $('#edit-gateways-bank-account-status').is(':checked')
+        };
       };
       gateways_enabled();
 
@@ -21,12 +28,10 @@
       var checkGateway = function($this, type) {
         gateways_enabled();
 
-        var $option_name = $gateways[type].find('option[value="' + $this.value + '"]').text();
-        var $option_value = this.value;
-        if (undefined == $option_value) {
-          $option_name = $gateways[type].find('option:selected').text();
-          $option_value = $gateways[type].find('option:selected').val();
-        }
+        var $selected = $gateways[type].find('option:selected');
+        var $option_name = $selected.text();
+        var $option_value = $selected.val();
+
         if (!$gateways_enabled.credit && !$gateways_enabled.bank) {
           $quickdonate.after('<div class="note"><strong>Note:</strong> Quick donation functionality is only available when using one of the supported payment processors above.<br/></div>');
           $quickdonate.find('input[type=checkbox]').attr('disabled', 'disabled');
@@ -42,12 +47,15 @@
             $quickdonate.after('<div class="note"><strong>Note:</strong> One or more of the payment gateways you have selected are not compatible with or configured for Quick Donate. Donors will not be able to opt-in to Quick Donate when using this payment method: <ul><li>' + $option_name + '</li></ul><br/><br/></div>');
           }
           else {
-            $quickdonate.next('.note').find('ul').append('<li>$option_name</li>');
+            $quickdonate.next('.note').find('ul').append('<li>' + $option_name + '</li>');
           }
           gateway_available[type] = false;
         }
         else if (!disabled) {
-          $quickdonate.find('input[type=checkbox]').removeAttr('disabled').attr('checked', wasChecked);
+          $quickdonate.find('input[type=checkbox]').removeAttr('disabled')
+          if (wasChecked) {
+            $quickdonate.find('input[type=checkbox]').attr('checked', wasChecked);
+          }
           $quickdonate.nextAll('.form-item, .form-wrapper').show();
           $quickdonate.next('.note').remove();
           gateway_available[type] = true;
@@ -68,6 +76,12 @@
           $('#edit-quickdonate-message-container').show();
         }
       };
+
+      $quickdonate.find('input[type=checkbox]').on('change', function() {
+        if ($(this).is(':checked')) {
+          wasChecked = true;
+        }
+      })
 
       $gateways['credit'].add('#edit-gateways-credit-status').on('change', function() {
         $quickdonate.next('.note').remove();
