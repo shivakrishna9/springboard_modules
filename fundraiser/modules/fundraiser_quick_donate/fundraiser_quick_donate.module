@@ -326,8 +326,17 @@ function fundraiser_quick_donate_fundraiser_field_info_alter(&$fields) {
  * Implements hook_form_FORM_ID_alter().
  */
 function fundraiser_quick_donate_form_commerce_cardonfile_card_form($card, $user) {
+  // Load the cardonfile's quick donation record, return early if empty.
+  $qd = _fundraiser_quick_donate_get_payment_info_for_card_id($card->card_id, FALSE);
+  if (!empty($qd)) {
+    $card_id = $qd['card_id'];
+  }
+  else {
+    $card_id = $card->card_id;
+  }
+
   // Load the user's newest donation for the card's gateway.
-  $donation = fundraiser_donation_get_donations_by_uid($user->uid, 1, 'DESC', $card->instance_id);
+  $donation = fundraiser_donation_get_donations_by_uid($user->uid, 1, 'DESC', $qd['instance_id'], $card_id);
   if (empty($donation)) {
     return;
   }
@@ -402,7 +411,7 @@ function fundraiser_quick_donate_fundraiser_update_billing_form__fundraiser_quic
   $form['payment_fields'][$gateway_type]['quickdonate'] = array(
     '#type' => 'checkbox',
     '#title' => t('Make this my default Quick Donate card.'),
-    '#default_value' => (bool) $enabled,
+    '#default_value' => !!$enabled,
   );
 
   $form['actions']['submit']['#submit'][] = '_fundraiser_quick_donate_set_new_qd_cof';
@@ -557,11 +566,14 @@ function fundraiser_quick_donate_webform_user_send_mail_alter(&$options) {
  * @return array
  *   The QD field record.
  */
-function _fundraiser_quick_donate_get_payment_info_for_card_id($card_id) {
-  $query = db_query('SELECT * FROM {fundraiser_quick_donate_cardonfile} WHERE card_id = :card_id AND status = 1', array(
-    ':card_id' => $card_id,
-  ));
-  return $query->fetchField();
+function _fundraiser_quick_donate_get_payment_info_for_card_id($card_id, $status = TRUE) {
+  $query = db_select('fundraiser_quick_donate_cardonfile', 'fqdc')
+    ->fields('fqdc')
+    ->condition('card_id', $card_id, '=');
+  if ($status) {
+    $query->condition('status', TRUE, '=');
+  }
+  return $query->execute()->fetchAssoc();
 }
 
 /**

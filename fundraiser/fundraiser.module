@@ -4028,12 +4028,15 @@ function fundraiser_update_billing_form_submit($form, &$form_state) {
 /**
  * Helper function to get donation IDs by user ID.
  */
-function fundraiser_donation_get_donations_by_uid($uid, $limit = 0, $order_by = 'DESC', $gateway = NULL) {
+function fundraiser_donation_get_donations_by_uid($uid, $limit = 0, $order_by = 'DESC', $gateway = NULL, $card_id = NULL) {
   $query = db_select('fundraiser_donation', 'fd')
     ->fields('fd')
     ->condition('uid', $uid, '=');
   if (!empty($gateway)) {
     $query->condition('gateway', $gateway, '=');
+  }
+  if (!empty($card_id)) {
+    $query->condition('card_id', $card_id, '=');
   }
   $query = $query->range(0, $limit)
     ->orderBy('did', $order_by)
