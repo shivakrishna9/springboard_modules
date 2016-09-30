@@ -82,9 +82,26 @@ function springboard_node_expire_form_alter(&$form, &$form_state, $form_id) {
       if ($condition) {
         $options = 'options1';
       }
-      $form['expiration_settings']['expire'] = $form[$options]['expire'];
-      $form['expiration_settings']['expire']['#date_label_position'] = 'none';
-      $form['expiration_settings']['expire']['#description'] = t('Date on which this page will expire.');
+      $defaults = array(
+        '#title' => t('Expiration date'),
+        '#description' => t('Date on which this page will expire.'),
+        '#type' => 'textfield',
+        '#maxlength' => 25,
+        '#required' => FALSE,
+        '#date_label_position' => 'none',
+        '#default_value' => '',
+      );
+      if (variable_get('node_expire_date_entry_elements', 0) == 1) {
+        $defaults = array_merge($defaults, array(
+          '#type' => 'date_popup',
+          '#date_format' => 'Y-m-d',
+        ));
+      }
+      $form['expiration_settings']['expire'] = array_merge($defaults, $form[$options]['expire']);
+      if ($form['expiration_settings']['expire']['#type'] == 'value') {
+        $form['expiration_settings']['expire']['#type'] = $defaults['#type'];
+        unset($form['expiration_settings']['expire']['#value']);
+      }
       unset($form[$options]['expire']);
       if ($condition) {
         unset($form[$options]);
