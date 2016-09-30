@@ -38,7 +38,7 @@ function fundraiser_quick_donate_create_link($payload, $rollback = FALSE) {
 /**
  * Implements hook_springboard_hmac_allowed_actions().
  */
-function fundraiser_quick_donate_springboard_hmac_allowed_actions_alter(&$actions) {
+function fundraiser_quick_donate_springboard_hmac_allowed_actions(&$actions) {
   return 'qd';
 }
 
