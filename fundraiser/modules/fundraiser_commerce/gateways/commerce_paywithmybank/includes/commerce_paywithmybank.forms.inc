@@ -26,7 +26,7 @@ function commerce_paywithmybank_checkout_form($payment_method, $order, $show_wid
   $payment_parameters = array(
     'accessId' => $access_id,
     'merchantId' => $merchant_id,
-    'description' => 'Order from' . variable_get('site_name'),
+    'description' => "Amount: $" . $order_amount,
     'currency' => $order_total['currency_code'],
     'amount' => $order_amount,
     'merchantReference' => $order->order_id,

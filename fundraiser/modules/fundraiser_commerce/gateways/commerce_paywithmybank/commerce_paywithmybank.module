@@ -108,31 +108,35 @@ function commerce_paywithmybank_fundraiser_donation_update($donation) {
       $master_donation = fundraiser_donation_get_donation($donation->recurring->master_did);
 
       if (!empty($master_donation)) {
-        // Update expiration date and generate the next donation.
-        $cards_on_file = commerce_cardonfile_load_multiple_by_remote_id($master_donation->auth_txn_id);
+          // If the next recurring series entry doesn't exist, create one.
+          if (($donation->status <> 'failed') && _fundraiser_sustainers_count_donations_recurr_remaining($donation->recurring->master_did) < 1) {
 
-        if (!empty($cards_on_file)) {
-          $card_data = current($cards_on_file);
+          // Update expiration date and generate the next donation.
+          $cards_on_file = commerce_cardonfile_load_multiple_by_remote_id($master_donation->auth_txn_id);
 
-          // Move card expiration date ahead one month.
-          $new_expire_time = mktime(0, 0, 0, ($card_data->card_exp_month + 1), 1, $card_data->card_exp_year);
+          if (!empty($cards_on_file)) {
+            $card_data = current($cards_on_file);
 
-          $card_data->card_exp_month = date('m', $new_expire_time);
-          $card_data->card_exp_year = date('Y', $new_expire_time);
+            // Move card expiration date ahead one month.
+            $new_expire_time = mktime(0, 0, 0, ($card_data->card_exp_month + 1), 1, $card_data->card_exp_year);
 
-          // Update card using master donation so transaction ID is available.
-          commerce_paywithmybank_fundraiser_commerce_update($master_donation, $card_data);
+            $card_data->card_exp_month = date('m', $new_expire_time);
+            $card_data->card_exp_year = date('Y', $new_expire_time);
 
-          $submission_fields = array(
-            'payment_fields' => array(
-              'bank account' => array(
-                'card_expiration_month' => $card_data->card_exp_month,
-                'card_expiration_year' => $card_data->card_exp_year,
+            // Update card using master donation so transaction ID is available.
+            commerce_paywithmybank_fundraiser_commerce_update($master_donation, $card_data);
+
+            $submission_fields = array(
+              'payment_fields' => array(
+                'bank account' => array(
+                  'card_expiration_month' => $card_data->card_exp_month,
+                  'card_expiration_year' => $card_data->card_exp_year,
+                ),
               ),
-            ),
-          );
+            );
 
-          fundraiser_sustainers_update_billing_info_create_new_donations($master_donation, $donation, $submission_fields);
+            fundraiser_sustainers_update_billing_info_create_new_donations($master_donation, $donation, $submission_fields);
+          }
         }
       }
     }
@@ -232,6 +236,7 @@ function commerce_paywithmybank_return() {
   $api_transaction = $api->getTransaction($transaction_id);
 
   $order = commerce_order_load($api_transaction->merchantReference);
+  entity_get_controller('commerce_order')->resetCache(array($order->order_id));
 
   $success = (($api_transaction->status == PayWithMyBank::TRANSACTION_STATUS_ON_HOLD) || ($api_transaction->status == PayWithMyBank::TRANSACTION_STATUS_AUTHORIZED));
 
@@ -281,7 +286,13 @@ function commerce_paywithmybank_notify() {
       commerce_paywithmybank_log_notification($object_type, $object_id, $api_transaction);
     }
 
+    // In some cases, commerce_order_load fails due to locking. See: https://www.drupal.org/node/1608294
     $order = commerce_order_load($api_transaction->merchantReference);
+    // PWMB fails to set merchant references for reversals.
+    if (empty($order) && $api_transaction->transactionType == PayWithMyBank::TRANSACTION_TYPE_REVERSE) {
+      $order = commerce_order_load($api_transaction->payment->merchantReference);
+    }
+    entity_get_controller('commerce_order')->resetCache(array($order->order_id));
 
     if (empty($order)) {
       echo 'Fail';
@@ -294,25 +305,53 @@ function commerce_paywithmybank_notify() {
       // requiring a donation status update in Springboard. These notifications
       // are ignored here.
 
-      // Completed transactions.
-      if (($api_transaction->status == PayWithMyBank::TRANSACTION_STATUS_COMPLETED) && ($order->status == 'payment_received')) {
+      // Completed transactions or transactions pending refund.
+      if (($api_transaction->status == PayWithMyBank::TRANSACTION_STATUS_COMPLETED) && ($order->status == 'payment_received' || $order->status == 'refund_pending' || $order->status == 'partially_refunded' || $order->status == 'refunded' || $order->status == 'failed_refund')) {
         $ignore_notification = TRUE;
       }
 
-      // Reversed transactions.
-      if (($api_transaction->status == PayWithMyBank::TRANSACTION_STATUS_REVERSED) && ($order->status == 'refunded')) {
-        $ignore_notification = TRUE;
+      // We want to ignore all REFUNDED and REVERSED transactions. We only want to log refunds once they're completed or denied.
+      switch ($api_transaction->status) {
+        case PayWithMyBank::TRANSACTION_STATUS_REVERSED:
+        case PayWithMyBank::TRANSACTION_STATUS_REFUNDED:
+        case PayWithMyBank::TRANSACTION_STATUS_PARTIALLY_REFUNDED:
+          $ignore_notification = TRUE;
+          break;
       }
 
-      // Refunded transactions.
-      if (($api_transaction->status == PayWithMyBank::TRANSACTION_STATUS_REFUNDED) && ($order->status == 'refunded')) {
+      // Ignore all refund transactions, we'll handle these below
+      if ($api_transaction->transactionType == PayWithMyBank::TRANSACTION_TYPE_REFUND || $api_transaction->transactionType == PayWithMyBank::TRANSACTION_TYPE_REVERSE) {
         $ignore_notification = TRUE;
       }
 
       if (!$ignore_notification) {
         commerce_paywithmybank_create_payment_transaction($api_transaction, $payment_method, $order);
       }
+
+      // PWMB's refund workflow is such that we will recieve a notification for the original transaction that confirms it is refunded.
+      // Sadly, this doesn't mean it's really been refunded. For that, a new transaction is created. We want to ignore the 'refunded' message
+      // for the original transaction once it's created in Drupal.
+      // From PWMB: "Once the refund is started, the original transaction (Capture or Pay) is set to a status of
+      // ‘Refunded’ to identify that the refund process started, and that is a final status, independent of the result of the refund process.
+      // A new transaction (refund type transaction) is created and linked to the original. This new transaction will have its own lifecycle until
+      // reaches a final status (e. g. Completed, Denied)."
+
+      // Unlike refunds, reversals come through as "pay" type transactions until they're completed, then they switch.
+      if (($api_transaction->transactionType == PayWithMyBank::TRANSACTION_TYPE_REFUND || $api_transaction->transactionType == PayWithMyBank::TRANSACTION_TYPE_REVERSE) || ($api_transaction->transactionType == PayWithMyBank::TRANSACTION_TYPE_PAY && $api_transaction->status == PayWithMyBank::TRANSACTION_STATUS_REVERSED)) {
+        if (_fundraiser_get_refund_by_txn_id($api_transaction->originalTransactionId) || _fundraiser_get_refund_by_txn_id($api_transaction->transactionId)) {
+          // In this case, a refund exists, update it with new transaction id and fire refund success or failure hooks.
+          _commerce_paywithmybank_drupal_refund($order, $api_transaction);
+        }
+        else {
+          // Otherwise, it must have come from the uat, pass it to that hook so refund will be created.
+          // Duplicate notifications for refunds will be passed to this hook, it should filter them.
+          _commerce_paywithmybank_uat_refund($order, $api_transaction);
+        }
+      // End refund handling
+      }
+    // End 'order found'
     }
+  // End transaction handling
   }
   else {
     // Log the notification.
@@ -334,6 +373,8 @@ function commerce_paywithmybank_notify_access() {
 
   // Stop here if the authorization header is obviously not valid.
   if ($auth_header_parts[0] != 'Basic') {
+    $post_body = file_get_contents('php://input');
+    watchdog('commerce_paywithmybank', 'Notification failed due to bad auth header: ' . $auth_header . ' / ' . $post_body, array(), WATCHDOG_ERROR);
     return FALSE;
   }
 
@@ -521,12 +562,7 @@ function commerce_paywithmybank_validate_notification($access_id, $access_key, $
  *   The Commerce payment transaction object.
  */
 function commerce_paywithmybank_create_payment_transaction($api_transaction, $payment_method, $order) {
-  // Ignore negative paid amounts that are not refund transactions.
-  // These are just the stages of a PWMB refund and don't need to be logged.
   $paid_amount = commerce_currency_decimal_to_amount($api_transaction->paid, $api_transaction->currency);
-  if (($paid_amount < 0) && ($api_transaction->status != PayWithMyBank::TRANSACTION_STATUS_PARTIALLY_REFUNDED) && ($api_transaction->status != PayWithMyBank::TRANSACTION_STATUS_REFUNDED)) {
-    return NULL;
-  }
 
   // Create a Commerce transaction for this PayWithMyBank transaction.
   $transaction = commerce_payment_transaction_new($payment_method['method_id'], $order->order_id);
@@ -549,7 +585,6 @@ function commerce_paywithmybank_create_payment_transaction($api_transaction, $pa
 
     case PayWithMyBank::TRANSACTION_STATUS_AUTHORIZED:
       $transaction->status = COMMERCE_PAYMENT_STATUS_PENDING;
-
       if ($paid_amount < 0) {
         // This is an authorization for a refund.
         $transaction->amount = $paid_amount;
@@ -560,23 +595,16 @@ function commerce_paywithmybank_create_payment_transaction($api_transaction, $pa
       }
       break;
 
-    case PayWithMyBank::TRANSACTION_STATUS_REVERSED:
-      $transaction->status = COMMERCE_PAYMENT_STATUS_SUCCESS;
-
-      $transaction->amount = (commerce_currency_decimal_to_amount($api_transaction->reversed, $api_transaction->currency) * -1);
-      break;
-
-    case PayWithMyBank::TRANSACTION_STATUS_PARTIALLY_REFUNDED:
-    case PayWithMyBank::TRANSACTION_STATUS_REFUNDED:
-      $transaction->status = COMMERCE_PAYMENT_STATUS_SUCCESS;
-
-      $transaction->amount = (commerce_currency_decimal_to_amount($api_transaction->refunded, $api_transaction->currency) * -1);
-      break;
-
     case PayWithMyBank::TRANSACTION_STATUS_COMPLETED:
+      // "Completed" could mean that a refund was completed. Check for that here.
       $transaction->status = COMMERCE_PAYMENT_STATUS_SUCCESS;
-
+      // No need for special handling, this will reflect refunds accurately as-is
       $transaction->amount = commerce_currency_decimal_to_amount($api_transaction->paid, $api_transaction->currency);
+      // "Completed" could mean that a refund was completed. Check for that here.
+      if ($api_transaction->transactionType == PayWithMyBank::TRANSACTION_TYPE_REFUND || $api_transaction->transactionType == PayWithMyBank::TRANSACTION_TYPE_REVERSE) {
+        // Completed refund transactions need a refunded message.
+        $transaction->message = 'Refunded';
+      }
       break;
 
     case PayWithMyBank::TRANSACTION_STATUS_VOIDED:
@@ -587,6 +615,7 @@ function commerce_paywithmybank_create_payment_transaction($api_transaction, $pa
     case PayWithMyBank::TRANSACTION_STATUS_EXPIRED:
     case PayWithMyBank::TRANSACTION_STATUS_CANCELED:
     case PayWithMyBank::TRANSACTION_STATUS_DENIED:
+        // TODO "Denied" could mean that a refund was denied. Check for that here.
       $transaction->status = COMMERCE_PAYMENT_STATUS_FAILURE;
       break;
   }
@@ -597,19 +626,21 @@ function commerce_paywithmybank_create_payment_transaction($api_transaction, $pa
   // Update order and donation status for PayWithMyBank-specific states.
   $updated_donation_status = NULL;
 
+  $donation = fundraiser_donation_get_donation($order->order_id);
+
   switch ($api_transaction->status) {
     case PayWithMyBank::TRANSACTION_STATUS_AUTHORIZED:
       $updated_donation_status = 'authorized';
       break;
     case PayWithMyBank::TRANSACTION_STATUS_COMPLETED:
-      $updated_donation_status = 'payment_received';
-      break;
-    case PayWithMyBank::TRANSACTION_STATUS_PARTIALLY_REFUNDED:
-      $updated_donation_status = 'partially_refunded';
-      break;
-    case PayWithMyBank::TRANSACTION_STATUS_REFUNDED:
-    case PayWithMyBank::TRANSACTION_STATUS_REVERSED:
-      $updated_donation_status = 'refunded';
+      // "Completed" could mean that a refund was completed. Check for that here.
+      if ($api_transaction->transactionType == PayWithMyBank::TRANSACTION_TYPE_REFUND || $api_transaction->transactionType == PayWithMyBank::TRANSACTION_TYPE_REVERSE) {
+        // We'll set this to NULL here because we'll handle the update in our refund callbacks.
+        $updated_donation_status = NULL;
+      }
+      else {
+        $updated_donation_status = 'payment_received';
+      }
       break;
     case PayWithMyBank::TRANSACTION_STATUS_VOIDED:
       $updated_donation_status = 'void';
@@ -620,21 +651,90 @@ function commerce_paywithmybank_create_payment_transaction($api_transaction, $pa
     case PayWithMyBank::TRANSACTION_STATUS_DENIED:
       $updated_donation_status = 'failed';
       break;
+    case PayWithMyBank::TRANSACTION_STATUS_PROCESSED:
+      // Don't update donations that are "processed"
+      $updated_donation_status = NULL;
+      break;
     default:
       $updated_donation_status = 'pending_future_payment';
   }
 
   // Update the order status.
-  _fundraiser_commerce_update_order_status($updated_donation_status, $order->order_id);
+  if ($updated_donation_status) {
+    _fundraiser_commerce_update_order_status($updated_donation_status, $order->order_id);
+  }
 
-  $donation = fundraiser_donation_get_donation($order->order_id);
-
-  $donation->status = $updated_donation_status;
-  $donation->status_label = _fundraiser_commerce_get_label_by_status($updated_donation_status);
-  $donation->status_charged = _fundraiser_commerce_get_charged_by_status($updated_donation_status);
+  if ($updated_donation_status) {
+    $donation->status = $updated_donation_status;
+    $donation->status_label = _fundraiser_commerce_get_label_by_status($updated_donation_status);
+    $donation->status_charged = _fundraiser_commerce_get_charged_by_status($updated_donation_status);
+  }
 
   // Update donation transaction ID.
   $donation->txn_id = $api_transaction->transactionId;
+
+  // Set sustainers entries to appropriate statuses
+  if (module_exists('fundraiser_sustainers') && isset($donation->recurring) && !empty($donation->recurring)) {
+    $recurring_update = FALSE;
+    if ($donation->status == 'authorized') {
+      // If order is authorized, set sustainers to processing
+      $recurring_update = array(
+        'did' => $donation->did,
+        'gateway_resp' => FUNDRAISER_SUSTAINERS_PROCESSING_STATUS,
+        'lock_id' => 0
+      );
+    }
+    elseif ($donation->status == 'failed') {
+      // Determine how many times this donation has been processed and compare it against the
+      // maximum allowed attempts.
+      $donation->attempts = fundraiser_sustainers_charge_attempt_count($donation->did);
+      $max_processing_attempts = variable_get('fundraiser_sustainers_max_processing_attempts', 3);
+      // When current attempts equals maximum attempts the donation will be set as a failure.
+      // We also want to fail the originating donation the first time and cancel the rest of the series if the master fails once
+      if ($donation->attempts == $max_processing_attempts || !isset($donation->recurring->master_did) || $donation->recurring->master_did == $donation->did) {
+        // Call auto-cancel hook to cancel series on max failures
+        fundraiser_sustainers_fundraiser_sustainers_donation_fail($donation);
+        $recurring_update = array(
+          'did' => $donation->did,
+          'gateway_resp' => FUNDRAISER_SUSTAINERS_FAILED_STATUS,
+          'lock_id' => 0,
+        );
+        // If this the first donation in a recurring series, cancel the rest without waiting for donation threshold
+        if (!isset($donation->recurring->master_did) || $donation->recurring->master_did == $donation->did) {
+          _commerce_paywithmybank_auto_cancel($donation);
+        }
+      }
+      elseif ($donation->attempts < $max_processing_attempts && $donation->recurring->master_did <> $donation->did) {
+        // If order is failed but it's not the originating donation and we still have some attempts set sustainers to retry
+        $donation->recurring->next_charge = strtotime('+1 day');
+        $recurring_update = array(
+          'did' => $donation->did,
+          'gateway_resp' => FUNDRAISER_SUSTAINERS_RETRY_STATUS,
+          'lock_id' => 0,
+          'next_charge' => $donation->recurring->next_charge,
+        );
+        // We also need to set the donation status to pending_future_payment so it won't sync as failed
+        $new_donation_status = 'pending_future_payment';
+        $donation->status = $new_donation_status;
+        $donation->status_label = _fundraiser_commerce_get_label_by_status($new_donation_status);
+        $donation->status_charged = _fundraiser_commerce_get_charged_by_status($new_donation_status);
+        _fundraiser_commerce_update_order_status($new_donation_status, $order->order_id);
+      }
+    }
+    elseif ($donation->status == 'payment_received') {
+      // If order is successful, set sustainers to success
+      $recurring_update = array(
+        'did' => $donation->did,
+        'gateway_resp' => FUNDRAISER_SUSTAINERS_SUCCESS_STATUS,
+        'lock_id' => 0
+      );
+    }
+
+    if ($recurring_update) {
+      // Update recurring donation if necessary
+      _fundraiser_sustainers_update_recurring($recurring_update);
+    }
+  }
 
   fundraiser_donation_update($donation);
 
@@ -718,4 +818,330 @@ function commerce_paywithmybank_log_notification($object_type, $object_id, $tran
   );
 
   watchdog('commerce_paywithmybank', 'PayWithMyBank notification: !param', array('!param' => '<pre>' . check_plain(print_r($log, TRUE)) . '</pre>'), WATCHDOG_DEBUG);
+}
+
+/**
+ * Implements hook_mail_alter().
+ */
+function commerce_paywithmybank_mail_alter(&$message) {
+  // Suppress expiration emails for pwmb transactions
+  if ($message['id'] == 'fundraiser_sustainers_fundraiser_cc_notification') {
+    $params = $message['params'];
+    if ($params && array_key_exists('fundraiser_sustainers_token_set', $params) && array_key_exists('donation', $params['fundraiser_sustainers_token_set'])) {
+      $donation = $params['fundraiser_sustainers_token_set']['donation'];
+      if ($donation && $donation->gateway['id'] == 'commerce_paywithmybank_bank|commerce_payment_commerce_paywithmybank_bank') {
+        // Suppress email and log
+        watchdog('commerce_paywithmybank', 'Credit card expiration email suppressed for donation ID @did', array('@did' => $donation->did), WATCHDOG_INFO);
+        $message['send'] = FALSE;
+      }
+    }
+  }
+}
+
+
+/**
+ * Implements hook_tokens_alter
+ *
+ * Hack to add card_type to "PayWithMyBank"
+ */
+function commerce_paywithmybank_tokens_alter(&$replacements, $context) {
+  // Make sure we have a donation to work with
+  if ($context['type'] == 'donation' && !empty($context['data']['donation'])) {
+    $donation = $context['data']['donation'];
+    // If this is a pwmb donation, replace card_type with "PayWithMyBank/Check"
+    if ($donation->gateway['id'] == 'commerce_paywithmybank_bank|commerce_payment_commerce_paywithmybank_bank') {
+      $replacements['[donation:card_type]'] = "PayWithMyBank/Check";
+    }
+  }
+}
+
+/**
+ * Cancel a recurring donation series. See: fundraiser_sustainers_auto_cancel
+ *
+ * @param $donation
+ *   The donation object.
+ */
+function _commerce_paywithmybank_auto_cancel($donation) {
+  if (module_exists('fundraiser_sustainers')) {
+    // If we're cancelling based on the master donation, it may not be set as master_did yet.
+    $master_did = $donation->did;
+    // If the master did is set, use it.
+    if (isset($donation->recurring->master_did)) {
+      $master_did = $donation->recurring->master_did;
+    }
+    $now = time();
+    $reason = t('Automatically canceled on @date because of initial pwmb donation failure.', array('@date' => format_date($now)));
+    // Cancel the donations.
+    $sustainer_donations = _fundraiser_sustainers_get_donations_recurr_remaining($master_did);
+    foreach ($sustainer_donations as $sustainer_donation) {
+      $donation = fundraiser_donation_get_donation($sustainer_donation->did);
+
+      // Add the cancel reason to the donation's recurring object.
+      $donation->recurring->cancellation_reason = $reason;
+
+      // Flag the donation as auto_canceled.
+      $donation->recurring->auto_canceled = 'auto_canceled';
+
+      // Cancel the donation.
+      // @see fundraiser_sustainers_fundraiser_donation_cancel().
+      fundraiser_donation_cancel($donation);
+
+      // Update the order's status to reflect auto-cancellation:
+      _fundraiser_commerce_update_order_status('auto_canceled', $donation->did);
+
+      // Add a watchdog entry with the did and reason.
+      watchdog('commerce_paywithmybank', 'Donation cancelled for #@did. Reason: @reason',
+        array('@did' => $donation->did, '@reason' => $reason));
+
+      // Add a log message into the subsequent revision caused when the main order's status is updated:
+      db_query("UPDATE {commerce_order_revision} SET log = :reason, revision_uid = 1 " .
+        "WHERE order_id=:order_id AND status='auto_canceled'", array(
+          ':reason' => $reason,
+          ':order_id' => $donation->did,
+       )
+      );
+    }
+  }
+}
+
+
+/**
+ * Callback function to record fundraiser_refund items when refund initiated
+ * from PayWithMyBank dashboard (instead of through Springboard). This hook should only fire
+ * the first time we get information from PWMB about a refund that doesn't yet exist in Drupal.
+ *
+ * @param $order
+ *   The order object.
+ * @param $api_transaction
+ *   The api transaction object.
+ *
+ * See: _fundraiser_commerce_ipn_refund
+ * See: _fundraiser_refund_form_submit
+ * See: _commerce_paywithmybank_drupal_refund
+ */
+function _commerce_paywithmybank_uat_refund($order, $api_transaction) {
+  // If the fundraiser_refund record has already been saved, we don't need to continue as
+  // this should be handled by _commerce_paywithmybank_drupal_refund.
+  // This is mostly here to catch duplicate notifications.
+  if (_fundraiser_get_refund_by_txn_id($api_transaction->transactionId) || _fundraiser_get_refund_by_txn_id($api_transaction->originalTransactionId)) {
+    return;
+  }
+
+  $donation = fundraiser_donation_get_donation($order->order_id);
+
+  // Set up the refund.
+  $already_refunded = fundraiser_refund_get_refunds_by_did($donation->did, TRUE);
+  $refunded_total = 0;
+
+  // Add existing partial refunds
+  if(!empty($already_refunded)) {
+    foreach ($already_refunded as $prior) {
+      // Omit the same refund transaction, if submitted through Springboard.
+      if ($prior->txn_id != $api_transaction->originalTransactionId && $prior->status != "failed_refund") {
+        $refunded_total += ($prior->amount * -1);
+      }
+    }
+  }
+
+  $able_to_refund = ($donation->donation['amount'] + $refunded_total);
+  $amount = $api_transaction->amount;
+  $new_status = 'partially_refunded';
+  // Partial refund
+  if ($amount == $able_to_refund) {
+    $new_status = 'refunded';
+  }
+
+  $refund = new stdClass();
+  $refund->did = $donation->did;
+  $refund->amount =  $amount;
+  $refund->currency = $donation->currency;
+  $refund = fundraiser_refund_create($refund);
+  $refund->reason = "UAT-originated PWMB Refund";
+
+  // Process the refund
+  $refund->new_status = $new_status;
+  $refund->uat = TRUE;
+  $refund->txn_id = $api_transaction->transactionId;
+  fundraiser_refund_process($refund);
+  // At this point $donation->result is set and responses can be handled.
+  if (!isset($refund->result['message'])) {
+    $refund->result['message'] = '';
+  }
+
+  // If this is a for a completed or denied refund, we need to take additional action here
+  if ($api_transaction->status == PayWithMyBank::TRANSACTION_STATUS_COMPLETED) {
+    // Completed refunds
+    // Update the order status.
+    _fundraiser_commerce_update_order_status($new_status, $order->order_id);
+    $donation->status = $new_status;
+    $donation->status_label = _fundraiser_commerce_get_label_by_status($new_status);
+    $donation->status_charged = _fundraiser_commerce_get_charged_by_status($new_status);
+    // Update the donation.
+    fundraiser_donation_update($donation);
+    // Log transaction
+    $payment_method = commerce_payment_method_instance_load('commerce_paywithmybank_bank|commerce_payment_commerce_paywithmybank_bank');
+    commerce_paywithmybank_create_payment_transaction($api_transaction, $payment_method, $order);
+    // Call refund success hooks
+    fundraiser_refund_success($refund);
+  }
+  elseif ($api_transaction->status == PayWithMyBank::TRANSACTION_STATUS_DENIED) {
+    // Denied refunds
+    // If we're emulating existing gateway behavior, we don't need to log a denied refund.
+    $donation->result['success'] = FALSE;
+    fundraiser_refund_decline($refund);
+    watchdog('commerce_paywithmybank', 'UAT-originated refund failed for transaction ID %transaction_id', array(
+      '%transaction_id' => $api_transaction->transactionId,
+      ), WATCHDOG_ERROR);
+  }
+  else {
+    // For all other statuses, set refund as pending
+
+    // Update the order
+    _fundraiser_commerce_update_order_status('refund_pending', $order->order_id);
+
+    // Update the donation
+    $donation->status = 'refund_pending';
+    $donation->status_label = _fundraiser_commerce_get_label_by_status('refund_pending');
+    $donation->status_charged = _fundraiser_commerce_get_charged_by_status('refund_pending');
+    fundraiser_donation_update($donation);
+
+    // Add to queue
+    if (module_exists('salesforce_genmap')) {
+      $donation = $refund->donation;
+      salesforce_genmap_send_object_to_queue('salesforce_donation', 'update', $donation->node, $donation->did, $donation, 'donation');
+    }
+
+    // Update the refund
+    $refund->new_status = $refund->status = 'refund_pending';
+    fundraiser_refund_update($refund);
+  }
+}
+
+/**
+ * Callback function to record fundraiser_refund items when refund initiated
+ * from PayWithMyBank dashboard (instead of through Springboard) or a pending refund
+ * has already been created by _commerce_paywithmybank_uat_refund.
+ *
+ * @param $order
+ *   The order object.
+ * @param $api_transaction
+ *   The api transaction object.
+ *
+ * See: _fundraiser_commerce_ipn_refund
+ * See: _fundraiser_refund_form_submit
+ * See: _commerce_paywithmybank_uat_refund
+ */
+function _commerce_paywithmybank_drupal_refund($order, $api_transaction) {
+  // We only care about completing or denying refunds here. Abort if status isn't completed or denied.
+  if ($api_transaction->status != PayWithMyBank::TRANSACTION_STATUS_COMPLETED && $api_transaction->status != PayWithMyBank::TRANSACTION_STATUS_DENIED) {
+    return;
+  }
+
+  $refunded_total = 0;
+  $already_refunded = fundraiser_refund_get_refunds_by_did($order->order_id, TRUE);
+  // If we have a pending refund, use it to complete transaction
+  $refund = end($already_refunded);
+  if ($refund->status == 'refund_pending') {
+    // Get the existing refund from the return of fundraiser_refund_get_refunds_by_did
+    $donation = fundraiser_donation_get_donation($refund->did);
+    // Determine whether to assign full or partial status to the refund
+    foreach ($already_refunded as $prior) {
+      // Omit the same refund transaction, if submitted through Springboard.
+      if ($prior->rid != $refund->rid && $prior->status != "failed_refund") {
+        $refunded_total += ($prior->amount * -1);
+      }
+    }
+    $able_to_refund = ($donation->donation['amount'] + $refunded_total);
+    $new_status = 'partially_refunded';
+    // Prevent a refund of more than the amount paid.
+    if ($refund->amount == $able_to_refund) {
+      $new_status = 'refunded';
+    }
+  }
+  else {
+    // If a refund_pending refund didn't already exist, abort. This should be handled by _commerce_paywithmybank_uat_refund.
+    return;
+  }
+
+  // Process the refund
+  $refund->new_status = $new_status;
+  $refund->status = $new_status;
+  $refund->uat = TRUE;
+  $refund->txn_id = $api_transaction->transactionId;
+  fundraiser_refund_process($refund);
+  // At this point $donation->result is set and responses can be handled.
+  if (!isset($refund->result['message'])) {
+    $refund->result['message'] = '';
+  }
+
+  if ($api_transaction->status == PayWithMyBank::TRANSACTION_STATUS_COMPLETED) {
+    // Update the order status.
+    _fundraiser_commerce_update_order_status($new_status, $order->order_id);
+    $donation->status = $new_status;
+    $donation->status_label = _fundraiser_commerce_get_label_by_status($new_status);
+    $donation->status_charged = _fundraiser_commerce_get_charged_by_status($new_status);
+    // Update the donation.
+    fundraiser_donation_update($donation);
+    // Log transaction
+    $payment_method = commerce_payment_method_instance_load('commerce_paywithmybank_bank|commerce_payment_commerce_paywithmybank_bank');
+    commerce_paywithmybank_create_payment_transaction($api_transaction, $payment_method, $order);
+    // Call refund success hooks
+    fundraiser_refund_success($refund);
+  }
+  elseif ($api_transaction->status == PayWithMyBank::TRANSACTION_STATUS_DENIED) {
+    // If we're emulating existing gateway behavior, we don't need to log a denied refund.
+    $donation->result['success'] = FALSE;
+    fundraiser_refund_decline($refund);
+    watchdog('commerce_paywithmybank', 'Drupal-originated refund failed for transaction ID %transaction_id', array(
+      '%transaction_id' => $api_transaction->transactionId,
+      ), WATCHDOG_ERROR);
+  }
+}
+
+/**
+ * Implements hook_fundraiser_refund_success(). Special processing for PWMB refunds.
+ *
+ * See: commerce_paywithmybank_fundraiser_commerce_refund
+ * See: _commerce_paywithmybank_uat_refund
+ * See: _commerce_paywithmybank_drupal_refund
+ */
+function commerce_paywithmybank_fundraiser_refund_success($refund) {
+  // If a commerce transaction doesn't exist for this refund, set order status to refund_pending
+  if ($refund->donation->gateway['id'] == 'commerce_paywithmybank_bank|commerce_payment_commerce_paywithmybank_bank') {
+    // Check to see if a refunded transaction exists for this donation
+    $transaction_count = db_select('commerce_payment_transaction')
+  ->condition('order_id', $refund->did, '=')
+  ->condition('remote_id', $refund->txn_id, '=')
+  ->condition('message', 'Refunded', '=')
+  ->countQuery()
+  ->execute()
+  ->fetchField();
+
+    // If we don't have a corresponding refund transaction, use the existing refund
+    if ($transaction_count == 0) {
+      _fundraiser_commerce_update_order_status('refund_pending', $refund->did);
+      $refund->new_status = $refund->status = 'refund_pending';
+      $refund->donation->status = 'refund_pending';
+      $refund->donation->status_label = _fundraiser_commerce_get_label_by_status('refund_pending');
+      $refund->donation->status_charged = _fundraiser_commerce_get_charged_by_status('refund_pending');
+      // Add to queue
+      if (module_exists('salesforce_genmap')) {
+        $donation = $refund->donation;
+        salesforce_genmap_send_object_to_queue('salesforce_donation', 'update', $donation->node, $donation->did, $donation, 'donation');
+      }
+    }
+  }
+}
+
+/**
+ * Implements hook_module_implements_alter().
+ *
+ */
+function commerce_paywithmybank_module_implements_alter(&$implementations, $hook) {
+  if ($hook == 'fundraiser_refund_success') {
+    // Move commerce_paywithmybank_fundraiser_refund_success() to the end of the list.
+    $group = $implementations['commerce_paywithmybank'];
+    unset($implementations['commerce_paywithmybank']);
+    $implementations['commerce_paywithmybank'] = $group;
+  }
 }

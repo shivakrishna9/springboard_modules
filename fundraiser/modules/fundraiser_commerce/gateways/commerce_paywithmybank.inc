@@ -75,7 +75,7 @@ function commerce_paywithmybank_fundraiser_commerce_redirect($method_instance, $
   $payment_parameters = array(
     'accessId' => $access_id,
     'merchantId' => $merchant_id,
-    'description' => 'Order from' . variable_get('site_name'),
+    'description' => "Amount: $" . $order_amount,
     'currency' => $order_total['currency_code'],
     'amount' => $order_amount,
     'merchantReference' => $order->order_id,
@@ -84,7 +84,7 @@ function commerce_paywithmybank_fundraiser_commerce_redirect($method_instance, $
 
 
   // Set up payment parameters for recurring payments.
-  if (isset($donation->submission_data['recurs_monthly']) && !empty($donation->submission_data['recurs_monthly']) && $donation->submission_data['recurs_monthly'] != 'false') {
+  if (isset($donation->submission_data['recurs_monthly']) && !empty($donation->submission_data['recurs_monthly']) && $donation->submission_data['recurs_monthly'] != 'false' && $donation->submission_data['recurs_monthly'] != 'NO_RECURR') {
     // Start / end dates must be UNIX timestamps in milliseconds.
     $start_time = round(microtime(true) * 1000);
 
@@ -162,7 +162,7 @@ function commerce_paywithmybank_fundraiser_commerce_redirect_submit($method_inst
     if ($success) {
       $pane_values = commerce_paywithmybank_pane_values($donation);
 
-      if (isset($donation->submission_data['recurs_monthly']) && !empty($donation->submission_data['recurs_monthly']) && $donation->submission_data['recurs_monthly'] != 'false') {
+      if (isset($donation->submission_data['recurs_monthly']) && !empty($donation->submission_data['recurs_monthly']) && $donation->submission_data['recurs_monthly'] != 'false' && $donation->submission_data['recurs_monthly'] != 'NO_RECURR') {
         $donation->donation['recurs_monthly'] = TRUE;
 
         // Donation is recurring, so create a card on file record.
@@ -274,6 +274,7 @@ function commerce_paywithmybank_fundraiser_commerce_update($donation, $card_data
   elseif ($action == 'new') {
     $card_name = '';
     $order = commerce_order_load($donation->did);
+    entity_get_controller('commerce_order')->resetCache(array($order->order_id));
     $order_wrapper = entity_metadata_wrapper('commerce_order', $order);
 
     if ($order_wrapper->commerce_customer_billing->value()) {
@@ -289,7 +290,7 @@ function commerce_paywithmybank_fundraiser_commerce_update($donation, $card_data
       $card_data->payment_method = $payment_method['method_id'];
       $card_data->instance_id = $payment_method['instance_id'];
       $card_data->remote_id = $donation->auth_txn_id;
-      $card_data->card_type = '';
+      $card_data->card_type = 'PayWithMyBank/Check';
       $card_data->card_name = $card_name;
       $card_data->card_number = $cardonfile_fields['card_number'];
       $card_data->card_exp_month = $expires['month'];
@@ -328,8 +329,8 @@ function commerce_paywithmybank_fundraiser_commerce_expire($submission_fields) {
     $expires['year'] = $submission_fields['payment_fields']['bank account']['card_expiration_year'];
   }
   else {
-    // If no expiration date given, use current date.
-    $expire_time = time();
+    // If no expiration date given, use current date + 1 month
+    $expire_time = strtotime("now + 1 month");
 
     $expires['month'] = date('m', $expire_time);
     $expires['year'] = date('Y', $expire_time);
@@ -348,6 +349,7 @@ function commerce_paywithmybank_fundraiser_commerce_expire($submission_fields) {
 function commerce_paywithmybank_fundraiser_commerce_charge($method_instance, $donation) {
   // Translate donation settings to the correct values for the commerce gateway.
   $order = commerce_order_load($donation->did);
+  entity_get_controller('commerce_order')->resetCache(array($order->order_id));
   $order_wrapper = entity_metadata_wrapper('commerce_order', $order);
   $charge = $order_wrapper->commerce_order_total->value();
   $amount = substr(commerce_currency_format($charge['amount'], $charge['currency_code']), 1);
@@ -403,27 +405,29 @@ function commerce_paywithmybank_fundraiser_commerce_charge($method_instance, $do
   $cards_on_file = commerce_cardonfile_load_multiple_by_remote_id($master_donation->auth_txn_id);
 
   if (!empty($cards_on_file)) {
-    $card_data = current($cards_on_file);
+    // If the next recurring series entry doesn't exist, create one.
+    if (($donation->status <> 'failed') && _fundraiser_sustainers_count_donations_recurr_remaining($donation->recurring->master_did) < 1) {
+      $card_data = current($cards_on_file);
 
-    // Move card expiration date ahead one month.
-    $new_expire_time = mktime(0, 0, 0, ($card_data->card_exp_month + 1), 1, $card_data->card_exp_year);
+      // Move card expiration date ahead one month.
+      $new_expire_time = mktime(0, 0, 0, ($card_data->card_exp_month + 1), 1, $card_data->card_exp_year);
 
-    $card_data->card_exp_month = date('m', $new_expire_time);
-    $card_data->card_exp_year = date('Y', $new_expire_time);
+      $card_data->card_exp_month = date('m', $new_expire_time);
+      $card_data->card_exp_year = date('Y', $new_expire_time);
 
-    // Update card using master donation so transaction ID is available.
-    commerce_paywithmybank_fundraiser_commerce_update($master_donation, $card_data);
+      // Update card using master donation so transaction ID is available.
+      commerce_paywithmybank_fundraiser_commerce_update($master_donation, $card_data);
 
-    $submission_fields = array(
-      'payment_fields' => array(
-        'bank account' => array(
-          'card_expiration_month' => $card_data->card_exp_month,
-          'card_expiration_year' => $card_data->card_exp_year,
+      $submission_fields = array(
+        'payment_fields' => array(
+          'bank account' => array(
+            'card_expiration_month' => $card_data->card_exp_month,
+            'card_expiration_year' => $card_data->card_exp_year,
+          ),
         ),
-      ),
-    );
-
-    fundraiser_sustainers_update_billing_info_create_new_donations($master_donation, $donation, $submission_fields);
+      );
+      fundraiser_sustainers_update_billing_info_create_new_donations($master_donation, $donation, $submission_fields);
+    }
   }
 
   return $success;
@@ -433,19 +437,34 @@ function commerce_paywithmybank_fundraiser_commerce_charge($method_instance, $do
  * Callback function, refund the gateway.
  */
 function commerce_paywithmybank_fundraiser_commerce_refund($payment_method, $refund) {
+  // Bypass capture request to PWMB if this is triggered by _commerce_paywithmybank_uat_refund().
+  if (!empty($refund->uat) && $refund->uat == TRUE) {
+    return TRUE;
+  }
   // Process the refund.
   $api = commerce_paywithmybank_get_api($payment_method);
   $amount = commerce_currency_decimal_to_amount($refund->amount, $refund->currency);
   $formatted_amount = substr(commerce_currency_format($amount, $refund->currency), 1);
-  $transaction = $api->refundTransaction($refund->donation->txn_id, $refund->did, $formatted_amount);
+
+  // We can't use blindly use $refund->donation->txn_id here, as it's always the last transaction.
+  // We need to find the txn_id of the charge and use it.
+  $payment_transaction = db_select('commerce_payment_transaction')
+  ->fields('commerce_payment_transaction', array('remote_id'))
+  ->condition('order_id', $refund->did, '=')
+  ->condition('message', 'Completed', '=')
+  ->execute()
+  ->fetchField();
+
+  $refund->txn_id = $payment_transaction;
+  $transaction = $api->refundTransaction($payment_transaction, $refund->did, $formatted_amount);
 
   // Log the refund.
   if ($payment_method['settings']['commerce_paywithmybank_settings_log']['request']) {
-    commerce_paywithmybank_log_request('refund', $refund->donation->txn_id, $refund->did, $formatted_amount);
+    commerce_paywithmybank_log_request('refund', $payment_transaction, $refund->did, $formatted_amount);
   }
 
   if ($transaction == NULL) {
-    commerce_paywithmybank_log_errors($refund->donation->txn_id, $api->getLastErrors());
+    commerce_paywithmybank_log_errors($payment_transaction, $api->getLastErrors());
     return FALSE;
   }
 
@@ -477,6 +496,8 @@ function commerce_paywithmybank_fundraiser_commerce_response_save($donation) {
       case 'New':
       case 'Pending':
       case 'OnHold':
+      case 'Denied':
+        // TODO "Denied" could mean that a refund was denied. Check for that here.
         $new_status = 'pending_future_payment';
         break;
       case 'Authorized':
