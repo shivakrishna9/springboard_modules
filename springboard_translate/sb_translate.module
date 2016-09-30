@@ -516,8 +516,8 @@ function _sb_translate_form_node_type_form_save_settings($form, &$form_state) {
  *
  * - Adds submit function for registering non-component fundraiser strings for translation.
  * - Implements language filtering via a non-view-based exposed filter.
- * - Translates state component webform output.
  * - Translates Fundraiser form validation messages.
+ * - Translates the webform Submit button.
  * 
  */
 function sb_translate_form_alter(&$form, &$form_state, $form_id) {
@@ -647,6 +647,24 @@ function sb_translate_form_alter(&$form, &$form_state, $form_id) {
     $validation_js .= "});})(jQuery);}}";
     drupal_add_js($validation_js, array('type' => 'inline', 'scope' => 'footer', 'cache' => FALSE));
 
+    // Translate the submit button:
+    foreach ($form['#attached']['js'] as $key => $attached_data) {
+      if (!isset($attached_data['data']['fundraiser'])) {
+        continue;
+      }
+      foreach ($attached_data['data']['fundraiser'] as $gateway_key => $gateway_data) {
+        if (isset($gateway_data['text'])) {
+          $original_submit_button = $form['#attached']['js'][$key]['data']['fundraiser'][$gateway_key]['text'];
+          $translated_submit_button = i18n_string_translate(
+            'Fundraiser' . ':' . $nid . ':' . 'submitbutton' . ':' . 'label' . ';' . $gateway_key,
+            $original_submit_button,
+            array()
+          );
+          $form['#attached']['js'][$key]['data']['fundraiser'][$gateway_key]['text'] = $translated_submit_button;
+        }
+      }
+    }
+
     return;
   } // End node view form translations.
 
@@ -737,13 +755,33 @@ function _sb_translate_register_node_edit_fundraiser_strings($form, &$form_state
       array()
     );
   }
-  // Payment method gateway labels:
+  // Payment method gateway labels and gateway-related submit buttons
   if (isset($values['gateways'])) {
     foreach($values['gateways'] as $gateway_key => $gateway_data) {
       if (isset($gateway_data['label'])) {
         i18n_string_update(
           $textgroup . ':' . $nid . ':' . 'gateway' . ':' . 'option' . ';' . $gateway_key,
           $gateway_data['label'],
+          array()
+        );
+      }
+      if (isset($gateway_data['id'])) {
+        $gateway_rule_name = substr($gateway_data['id'], strpos($gateway_data['id'], "|") + 1);
+        $gateway_rule = rules_config_load($gateway_rule_name);
+        $gateway_rule_actions = $gateway_rule->actions();
+        foreach ($gateway_rule_actions as $gateway_rule_action) {
+          $gateway_settings = $gateway_rule_action->settings;
+        }
+        if (isset($gateway_settings['payment_method']['settings']['submit_text']) &&
+          !empty($gateway_settings['payment_method']['settings']['submit_text'])) {
+          $original_submit_button = $gateway_settings['payment_method']['settings']['submit_text'];
+        }
+        else {
+          $original_submit_button = 'Submit';
+        }
+        i18n_string_update(
+          'Fundraiser' . ':' . $nid . ':' . 'submitbutton' . ':' . 'label' . ';' . $gateway_key,
+          $original_submit_button,
           array()
         );
       }
@@ -766,7 +804,6 @@ function _sb_translate_register_node_edit_fundraiser_strings($form, &$form_state
     'expdate' => 'Expiration date',
     'cvv' => 'CVV',
     'submitmessage' => 'By clicking SUBMIT your credit card will be securely processed.',
-    'submitbutton' => 'Submit',
     'custom_help_text' => 'By clicking %submit_text your credit card will be securely processed.',
     'js-amount' => 'Enter a valid amount',
     'js-required' => 'This field is required',
@@ -798,6 +835,7 @@ function _sb_translate_register_node_edit_fundraiser_strings($form, &$form_state
       array()
     );
   }
+
   // Add fundraiser ticket fields:
   $ticket_info = array(
     'table_title' => 'Tickets',
