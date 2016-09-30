@@ -1,0 +1,8 @@
+name = Springboard Organic Groups
+description = Integrate Springboard with Orgnanic Groups
+core = 7.x
+package = Springboard
+dependencies[] = og
+dependencies[] = og_massadd
+dependencies[] = og_ui
+

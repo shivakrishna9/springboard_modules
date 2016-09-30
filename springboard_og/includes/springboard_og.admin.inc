@@ -1,0 +1,101 @@
+<?php
+
+
+function springboard_og_settings_page() {
+  $build = array();
+  $build['content'] = array(
+    'page_description' => array(
+      '#id' => 'springboard-advocacy-settings-page',
+      '#type' => 'markup',
+      '#markup' => '<p>' . t('Configure settings for Springboard Groups.') . '</p>',
+      '#prefix' => '<div class="springboard-groups-settings-page"><H2>' . t('Springboard Groups Settings') . '</H2>',
+      '#suffix' => '</div>',
+    ),
+    'springboard_og_settings_form' => drupal_get_form('springboard_og_settings_form'),
+  );
+  return $build;
+}
+
+
+/**
+ * Configuration settings form for Springboard advocacy.
+ */
+function springboard_og_settings_form() {
+  $form = array();
+
+  $form['#attached']['css'][] = drupal_get_path('module', 'springboard_og') . '/css/springboard-og-admin.css';
+
+  $form['springboard_og_node'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Node types'),
+    '#collapsible' => TRUE,
+    '#description' => t('Make these content types eligible for grouping'),
+  );
+
+  $options = node_type_get_types();
+  foreach ($options as $key => $type) {
+    if ($type->type != 'springboard_group') {
+      $content_type_options[$type->type] = $type->name;
+    }
+  }
+
+  $field_enabled = array();
+  $og_fields = og_fields_info();
+  $og_fields_name = array_keys($og_fields);
+  // Get the fields that exist in the bundle.
+  foreach (field_info_fields() as $field_name => $field) {
+    if (in_array($field_name, $og_fields_name) && !empty($field['bundles'])) {
+      foreach ($field['bundles'] as $entity_type => $bundles) {
+        foreach ($bundles as $bundle) {
+          $field_enabled[$entity_type][$bundle][] = $field_name;
+        }
+      }
+    }
+  }
+
+  $form['springboard_og_node']['springboard_og_grouped_content'] = array(
+    '#title' => t(''),
+    '#type' => 'checkboxes',
+    '#options' => $content_type_options,
+    '#default_value' => array_keys($field_enabled['node']),
+  );
+
+  foreach (array_keys($field_enabled['node']) as $key) {
+    $form['springboard_og_node']['springboard_og_grouped_content'][$key] = array(
+      '#disabled' => TRUE,
+      '#description' => l(t('Remove from groups'), "admin/config/group/fields/node/$key/og_group_ref/delete", array('query' => array('destination' => 'admin/config/springboard-groups'))),
+    );
+  }
+
+  $form['springboard_og_node']['actions'] = array(
+    '#type' => 'submit',
+    '#value' => 'Add',
+    '#submit' => array('springboard_og_settings_form_submit'),
+  );
+
+
+//  $options = array();
+//  foreach (entity_get_info() as $entity_type => $entity_info) {
+//    if (empty($entity_info['fieldable'])) {
+//      continue;
+//    }
+//    foreach ($entity_info['bundles'] as $bundle_name => $bundle) {
+//      // Prefix the bundle name with the entity type.
+//      $entity_name = check_plain("$entity_info[label] ($entity_type)");
+//      $options[$entity_name][$entity_type . ':' . $bundle_name] = filter_xss($bundle['label']);
+//    }
+//  }
+
+
+
+  return $form;
+}
+
+function springboard_og_settings_form_submit($form, $form_state) {
+  foreach ($form_state['values']['springboard_og_grouped_content'] as $type => $status) {
+    if (!empty($status)) {
+      $og_field = og_fields_info('og_group_ref');
+      og_create_field('og_group_ref', 'node', $type, $og_field);
+    }
+  }
+}

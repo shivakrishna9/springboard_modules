@@ -1,0 +1,94 @@
+<?php
+
+/**
+ * Implements hook_menu().
+ */
+function springboard_og_menu() {
+  $items = array();
+
+  $items['admin/springboard/groups/settings'] = array(
+    'title' => 'Springboard Groups Settings',
+    'description' => 'Configuration settings for Springboard Group features',
+    'page callback' => 'springboard_og_settings_page',
+    'access arguments' => array('administer springboard groups'),
+    'file' => 'includes/springboard_og.admin.inc',
+    'type' => MENU_NORMAL_ITEM,
+  );
+  return $items;
+}
+
+/**
+ * Implements hook_springboard_admin_admin_menu_items_alter().
+ *
+ * Add the advocacy links to springboard admin.
+ */
+function springboard_og_springboard_admin_admin_menu_items_alter(&$items) {
+
+  // Top Level: Springboard Advocacy.
+  $items['admin/springboard/groups'] = array(
+    'link_path' => 'admin/springboard/groups',
+    'link_title' => t('Groups'),
+    'menu_name' => 'springboard_admin_menu',
+    'expanded' => 1,
+    'customized' => 1,
+    'weight' => 3,
+    '_children' => array(),
+  );
+
+  $items['admin/springboard/groups']['_children']['admin/springboard/groups'] = array(
+    'link_path' => 'admin/springboard/groups',
+    'link_title' => 'View All Groups',
+    'menu_name' => 'springboard_admin_menu',
+    'expanded' => 1,
+    'customized' => 1,
+    'weight' => -5,
+  );
+
+  $items['admin/springboard/groups']['_children']['admin/springboard/groups/my'] = array(
+    'link_path' => 'admin/springboard/groups/my',
+    'link_title' => 'My Groups',
+    'menu_name' => 'springboard_admin_menu',
+    'expanded' => 1,
+    'customized' => 1,
+    'weight' => -4,
+  );
+
+  $items['admin/springboard/groups']['_children']['admin/springboard/groups/settings'] = array(
+    'link_path' => 'admin/springboard/groups/settings',
+    'link_title' => 'Groups Settings',
+    'menu_name' => 'springboard_admin_menu',
+    'expanded' => 1,
+    'customized' => 1,
+    'weight' => 0,
+  );
+}
+
+/**
+ * Implements hook_views_api().
+ */
+function springboard_og_views_api() {
+  return array(
+    'api' => 3.0,
+    'path' => drupal_get_path('module', 'springboard_og') . '/includes/views',
+  );
+}
+
+/**
+ * Implements hook_permission().
+ */
+function springboard_og_permission() {
+  return array(
+    'administer springboard groups' => array(
+      'title' => t('Administer Springboard Groups'),
+      'description' => t('Perform administration tasks for Springboard Groups.'),
+    ),
+  );
+}
+
+
+function springboard_og_form_og_ui_field_delete_form_alter(&$form, &$form_state) {
+  if ($_GET['destination'] = 'admin/config/springboard-groups') {
+    $form['actions']['cancel']['#markup'] = l('cancel', 'admin/config/springboard-groups');
+    $form['description']['#markup'] = t('All group associations for this content type will be deleted. This cannot be undone.');
+  }
+}
