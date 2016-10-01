@@ -410,7 +410,7 @@ function fundraiser_quick_donate_fundraiser_update_billing_form__fundraiser_quic
 
   $form['payment_fields'][$gateway_type]['quickdonate'] = array(
     '#type' => 'checkbox',
-    '#title' => t('Make this my default Quick Donate card.'),
+    '#title' => '&nbsp;' . t('Make this my default Quick Donate card.'),
     '#default_value' => !!$enabled,
   );
 
