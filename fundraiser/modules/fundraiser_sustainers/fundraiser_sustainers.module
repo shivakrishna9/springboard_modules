@@ -2955,7 +2955,7 @@ function _fundraiser_sustainers_create_future_orders($donation, $month, $year, $
     if (!isset($existing_recurring[$increment])) {
       // Create a new one donation from the source or master donation
       $new_donation = !empty($source_donation) ? _fundraiser_donation_copy($source_donation) : _fundraiser_donation_copy($donation);
-      $new_donation->sid = 0; // Not actually submitted, it's automated, so no sid.
+      $new_donation->sid = $donation->sid; // Not actually submitted, it's automated, so no sid.
       // Create the new donation object, but do not process it. Processing doesn't occur till cron.
       // New donation has all of the old donation information already loaded.
 
@@ -4437,11 +4437,29 @@ function _fundraiser_sustainers_calculate_installments($donation) {
  *   The QD field record.
  */
 function _fundraiser_sustainers_get_payment_info_for_card_id($card_id) {
-  $query = db_query('SELECT * FROM {fundraiser_donation} fd LEFT JOIN {fundraiser_sustainers_series} fss ON fd.did = fss.did WHERE card_id = :card_id AND status = :status', array(
+  $data = db_query('SELECT * FROM {fundraiser_donation} fd LEFT JOIN {fundraiser_sustainers_series} fss ON fd.did = fss.did WHERE fd.did = fss.did AND fd.card_id = :card_id', array(
     ':card_id' => $card_id,
-    ':status' => 'payment_received',
-  ));
-  return $query->fetch();
+  ))->fetchAll();
+
+  if (empty($data)) {
+    return;
+  }
+
+  foreach ($data as $key => $row) {
+    $query = db_query('SELECT * FROM {fundraiser_donation} fd WHERE fd.sid = :sid AND fd.status = :status ORDER BY fd.did LIMIT 1', array(
+      ':sid' => $row->sid,
+      ':status' => 'pending_future_payment',
+    ))->fetchAssoc();
+
+    if (empty($query)) {
+      unset($data[$key]);
+      continue;
+    }
+
+    $data[$key] = array_merge((array) $data[$key], $query);
+  }
+
+  return $data;
 }
 
 /**
@@ -4451,14 +4469,22 @@ function _fundraiser_sustainers_get_payment_info_for_card_id($card_id) {
  * Donations.
  */
 function fundraiser_sustainers_fundraiser_commerce_cardonfile_used_by($card_id) {
-  $result = _fundraiser_sustainers_get_payment_info_for_card_id($card_id);
-  if (empty($result)) {
+  $results = _fundraiser_sustainers_get_payment_info_for_card_id($card_id);
+
+  if (empty($results)) {
     return;
   }
-  return t('Recurring @type donation (@amount@spacecharged on the @day)', array(
-    '@type' => strtolower($result->npsp_installment_period),
-    '@amount' => empty($result->amount) ? '' : '$' . $result->amount . ',',
-    '@space' => empty($result->amount) ? '' : ' ',
-    '@day' => date("jS", strtotime($result->npsp_next_payment_date)),
-  ));
+
+  $used_by = array();
+
+  foreach ($results as $result) {
+    $used_by[] = t('Recurring @type donation (@amount@spacecharged on the @day)', array(
+      '@type' => strtolower($result['npsp_installment_period']),
+      '@amount' => empty($result['amount']) ? '' : '$' . $result['amount'] . ',',
+      '@space' => empty($result['amount']) ? '' : ' ',
+      '@day' => date("jS", strtotime($result['npsp_next_payment_date'])),
+    ));
+  }
+
+  return $used_by;
 }

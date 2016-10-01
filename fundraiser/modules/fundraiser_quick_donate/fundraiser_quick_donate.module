@@ -336,7 +336,7 @@ function fundraiser_quick_donate_form_commerce_cardonfile_card_form($card, $user
   }
 
   // Load the user's newest donation for the card's gateway.
-  $donation = fundraiser_donation_get_donations_by_uid($user->uid, 1, 'DESC', $qd['instance_id'], $card_id);
+  $donation = fundraiser_donation_get_donations_by_uid($user->uid, 1, 'DESC', $qd['gateway'], $card_id);
   if (empty($donation)) {
     return;
   }
