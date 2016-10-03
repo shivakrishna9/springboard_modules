@@ -1,0 +1,9 @@
+#edit-us-states  {
+  -webkit-column-count: 3; /* Chrome, Safari, Opera */
+  -moz-column-count: 3; /* Firefox */
+  column-count: 3;
+}
+
+.form-type-radios.control-group, .form-type-checkboxes.control-group {
+  /*margin-bottom: 2em;*/
+}

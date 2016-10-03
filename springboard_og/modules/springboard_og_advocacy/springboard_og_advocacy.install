@@ -1,4 +1,41 @@
 <?php
 
-// install the fields needed for advocacy on group nodes
-// subscription level chooser or perhaps just a state indicator.
+
+/**
+ * Implements hook_schema().
+ */
+function springboard_og_advocacy_schema() {
+
+  $schema['sb_og_advocacy'] = array(
+    'description' => 'Store group subscription information.',
+    'fields' => array(
+      'gid' => array(
+        'description' => 'group id',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'group_subscription_type' => array(
+        'description' => 'type of subscription',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+      ),
+      'master_subscription_type' => array(
+        'description' => 'master subscription type',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+      ),
+      'allowed_states' => array(
+        'type' => 'blob',
+        'not null' => FALSE,
+        'size' => 'normal',
+        'serialize' => TRUE,
+        'description' => 'A serialized array of additional allowed states.',
+      ),
+    ),
+    'primary key' => array('gid'),
+  );
+  return $schema;
+}

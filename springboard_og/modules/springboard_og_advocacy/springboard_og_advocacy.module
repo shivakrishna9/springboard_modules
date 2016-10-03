@@ -1,1 +1,244 @@
 <?php
+
+function springboard_og_advocacy_form_node_form_alter(&$form, &$form_state) {
+  if ($form['#node']->type == 'springboard_group') {
+
+    $unconfigured = springboard_advocacy_api_unconfigured('springboard');
+    if ($unconfigured) {
+      $items = implode(', ', $unconfigured);
+      $message = t('Please <a href="!url">configure</a> the Springboard Advocacy API settings. There are empty values in :items. This feature will not function without required configuration.', array(
+        '!url' => url('admin/config/services/advocacy'),
+        ':items' => $items,
+      ));
+      return $form['advocacy_settings']['not_configured']['#markup'] = $message;
+    }
+
+    $api_call = springboard_advocacy_api_call();
+    $subscription = $api_call->getSubscription();
+    if ($subscription) {
+      springboard_og_advocacy_build_subscription_form($form, $subscription);
+    }
+  }
+}
+
+
+function springboard_og_advocacy_build_subscription_form(&$form, $subscription) {
+
+  $form['#attached']['css'][] = drupal_get_path('module', 'springboard_og_advocacy') . '/css/sb-og-advocacy.css';
+  $options = array(
+    'federal-and-states' => 'Federal + All States',
+    'federal-only' => 'Federal Only',
+    'state-only' => 'All States',
+    'federal-and-states-selected' => 'One or More States (Plus Federal)',
+    'states-selected' => 'One or More States (No Federal)',
+  );
+
+  $state_options = springboard_og_advocacy_us_states();
+
+  // If the main API account is not Federal plus All States, we need to
+  // limit the options presented on the group node according to the main API
+  // account options.
+  switch ($subscription['subscription_type']) {
+    case 'federal-only':
+      unset($options['federal-and-states']);
+      unset($options['state-only']);
+      unset($options['federal-and-states-selected']);
+      unset($options['states-selected']);
+      break;
+
+    case 'state-only':
+      unset($options['federal-and-states']);
+      unset($options['federal-only']);
+      unset($options['federal-and-states-selected']);
+      break;
+
+    case 'federal-and-states-selected':
+      unset($options['federal-and-states']);
+      unset($options['state-only']);
+      $state_options = springboard_og_advocacy_get_available_states($subscription);
+      break;
+
+    case 'states-selected':
+      unset($options['federal-and-states']);
+      unset($options['state-only']);
+      unset($options['federal-only']);
+      unset($options['federal-and-states-selected']);
+      $state_options = springboard_og_advocacy_get_available_states($subscription);
+      break;
+  }
+
+  $conflict = FALSE;
+  if (!empty($form['#node']->nid)) {
+    $settings = db_query('select * from {sb_og_advocacy} where gid = :gid', (array(':gid' => $form['#node']->nid)))->fetchAssoc();
+    if (!empty($settings['master_subscription_type']) && $settings['master_subscription_type'] != $subscription['subscription_type']) {
+      if (!in_array( $settings['group_subscription_type'], array_keys($options))) {
+        $conflict = TRUE;
+        drupal_set_message(t("This group's advocacy subscription setting is out of date. The master subscription on the API server is @level. The master subscription when this group was last updated was @oldlevel. Please update the group subscription level.", array(
+          '@level' => check_plain($subscription['subscription_type']),
+          '@oldlevel' => check_plain($settings['master_subscription_type']),
+        )));
+      }
+    }
+  }
+
+  $default = [];
+  if (!empty($settings['group_subscription_type'])  && $conflict == FALSE) {
+    $default = $settings['group_subscription_type'];
+  }
+  elseif (count($options) == 1 && $conflict == FALSE) {
+    $default = array_keys($options)[0];
+  }
+
+  $form['advocacy_settings'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Advocacy settings'),
+    '#collapsible' => FALSE,
+    '#group' => 'additional_settings',
+  );
+
+  $form['advocacy_settings']['master_subscription_type'] = array(
+    '#type' => 'value',
+    '#value' => $subscription['subscription_type'],
+  );
+
+  $form['advocacy_settings']['group_subscription_type'] = array(
+    '#type' => 'radios',
+    '#title' => t('Subscription Level'),
+    '#options' => $options,
+    '#default_value' => $default,
+  );
+
+  $default_states = array();
+  if (!empty($settings['allowed_states']) && $conflict == FALSE) {
+    $default_states = unserialize($settings['allowed_states']);
+  }
+
+  $form['advocacy_settings']['us_states'] = array(
+    '#type' => 'checkboxes',
+    '#title' => t('Available states'),
+    '#options' => $state_options,
+    '#default_value' => $default_states,
+    '#states' => array(
+      'visible' => array(
+        array(
+          array(':input[name*="group_subscription_type"]' => array('value' => 'federal-and-states-selected')),
+          array(':input[name*="group_subscription_type"]' => array('value' => 'states-selected')),
+        ),
+      ),
+    ),
+  );
+
+  $form['#validate'][] = 'springboard_og_advocacy_form_validate';
+}
+
+function springboard_og_advocacy_form_validate($form, $form_state) {
+  $api_call = springboard_advocacy_api_call();
+  $subscription = $api_call->getSubscription();
+  if ($subscription) {
+    if (empty($form_state['values']['group_subscription_type'])) {
+      form_set_error('group_subscription_type', t('Advocacy Group Subscription Level cannot be empty.'));
+    }
+  }
+}
+
+function springboard_og_advocacy_get_available_states($subscription) {
+  $arr = array_reverse($subscription['states_custom'], TRUE);
+  $subscription['states_custom'] = array_reverse($arr, TRUE);
+  $states = springboard_og_advocacy_us_states();
+  $state_options = array_flip(
+    array_intersect(
+      array_flip($states),
+      $subscription['states_custom']
+    )
+  );
+
+  return $state_options;
+}
+
+function springboard_og_advocacy_us_states() {
+  return array(
+    'AL' => 'Alabama',
+    'AK' => 'Alaska',
+    'AZ' => 'Arizona',
+    'AR' => 'Arkansas',
+    'CA' => 'California',
+    'CO' => 'Colorado',
+    'CT' => 'Connecticut',
+    'DE' => 'Delaware',
+    'DC' => 'District of Columbia',
+    'FL' => 'Florida',
+    'GA' => 'Georgia',
+    'HI' => 'Hawaii',
+    'ID' => 'Idaho',
+    'IL' => 'Illinois',
+    'IN' => 'Indiana',
+    'IA' => 'Iowa',
+    'KS' => 'Kansas',
+    'KY' => 'Kentucky',
+    'LA' => 'Louisiana',
+    'ME' => 'Maine',
+    'MD' => 'Maryland',
+    'MA' => 'Massachusetts',
+    'MI' => 'Michigan',
+    'MN' => 'Minnesota',
+    'MS' => 'Mississippi',
+    'MO' => 'Missouri',
+    'MT' => 'Montana',
+    'NE' => 'Nebraska',
+    'NV' => 'Nevada',
+    'NH' => 'New Hampshire',
+    'NJ' => 'New Jersey',
+    'NM' => 'New Mexico',
+    'NY' => 'New York',
+    'NC' => 'North Carolina',
+    'ND' => 'North Dakota',
+    'OH' => 'Ohio',
+    'OK' => 'Oklahoma',
+    'OR' => 'Oregon',
+    'PA' => 'Pennsylvania',
+    'RI' => 'Rhode Island',
+    'SC' => 'South Carolina',
+    'SD' => 'South Dakota',
+    'TN' => 'Tennessee',
+    'TX' => 'Texas',
+    'UT' => 'Utah',
+    'VT' => 'Vermont',
+    'VA' => 'Virginia',
+    'WA' => 'Washington',
+    'WV' => 'West Virginia',
+    'WI' => 'Wisconsin',
+    'WY' => 'Wyoming',
+  );
+}
+
+function springboard_og_advocacy_node_insert($node) {
+  if ($node->type == 'springboard_group') {
+    springboard_og_advocacy_save($node);
+  }
+}
+
+function springboard_og_advocacy_node_update($node) {
+  if ($node->type == 'springboard_group') {
+    springboard_og_advocacy_save($node);
+  }
+}
+
+function springboard_og_advocacy_save($node) {
+  $exists = db_query('select gid from {sb_og_advocacy} where gid = :gid', (array(':gid' => $node->nid)))->fetchField();
+
+  $allowed_states = $node->group_subscription_type != 'federal-and-states' && $node->group_subscription_type != 'states-only' ? array_filter($node->us_states) : [];
+
+  $data = array(
+    'gid' => $node->nid,
+    "allowed_states" => $allowed_states,
+    'master_subscription_type' => $node->master_subscription_type,
+    'group_subscription_type' => $node->group_subscription_type,
+  );
+
+  if (!empty($exists)) {
+    drupal_write_record('sb_og_advocacy', $data, array('gid'));
+  }
+  else {
+    drupal_write_record('sb_og_advocacy', $data);
+  }
+}
