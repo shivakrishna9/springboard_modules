@@ -618,6 +618,23 @@ function fundraiser_update_7011(&$sandbox) {
       $card_id = $data['cardonfile'];
     }
 
+    if (empty($card_id)) {
+      // Worst case time-wise, since the card_id wasn't set in the order for
+      // some reason, we'll need to try a last-ditch effort to load the donation
+      // and get the card_id from a fundraiser_commerce function.
+      $donation = fundraiser_donation_get_donation($row->did);
+      $card = _fundraiser_commerce_donation_cardonfile_card($donation);
+      if (empty($card)) {
+        // Nothing found, we'll have to skip this donation.
+        watchdog('fundraiser', 'No card was found for donation @did while updating {fundraiser} for update 7011.', array(
+          '@did' => $row->did,
+        ), WATCHDOG_NOTICE);
+        continue;
+      }
+      // Otherwise set $card_id and let the loop finish.
+      $card_id = $card->card_id;
+    }
+
     db_query('UPDATE {fundraiser_donation} SET card_id = :card_id WHERE did = :did', array(
       ':card_id' => $card_id,
       ':did' => $row->did,
