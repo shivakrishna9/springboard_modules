@@ -560,3 +560,80 @@ function fundraiser_update_7010() {
   db_add_field('fundraiser_donation', 'card_id', $field);
   db_add_index('fundraiser_donation', 'card_id', array('card_id'));
 }
+
+/**
+ * Batch update records to add card_id field.
+ */
+function fundraiser_update_7011(&$sandbox) {
+  $ret = array();
+  $cards = &drupal_static(__FUNCTION__);
+
+  if (!isset($sandbox['progress'])) {
+    // The count of donations visited so far.
+    $sandbox['progress'] = 0;
+    // Total donations that must be visited. Select donations that have a status
+    // of "payment_received" but no card_id.
+    $sandbox['max'] = db_query('SELECT COUNT(did) FROM {fundraiser_donation} WHERE card_id IS NULL AND status = :status', array(
+      ':status' => 'payment_received',
+    ))->fetchField();
+    // A place to store messages during the run.
+    $sandbox['messages'] = array();
+    // Last donation read via the query.
+    $sandbox['current_donation'] = -1;
+  }
+
+  // Process donations by groups of 25 (arbitrary value).
+  $limit = 25;
+
+  // Retrieve the next group of nids.
+  $result = db_select('fundraiser_donation', 'fd')
+    ->fields('fd', array('did', 'uid'))
+    ->orderBy('fd.did', 'ASC')
+    ->where('(fd.did > :did) AND (fd.card_id IS NULL)', array(
+      ':did' => $sandbox['current_donation'],
+    ))
+    ->extend('PagerDefault')
+    ->limit($limit)
+    ->execute();
+
+  foreach ($result as $row) {
+    if (empty($cards[$row->uid])) {
+      $user_cards = commerce_cardonfile_load_multiple_by_uid($row->uid);
+    }
+    else {
+      $user_cards = $cards[$row->uid];
+    }
+    $cards_n = count($user_cards);
+
+    if ($cards_n == 1) {
+      // If the user only has one card, we can just set it on the donation
+      // record right away.
+      $card = array_shift($user_cards);
+      $card_id = $card->card_id;
+    }
+    else {
+      // Otherwise we'll need to grab the card_id from the order record.
+      $order = commerce_order_load($row->did);
+      $data = _fundraiser_commerce_order_data_retrieve($order->data['fundraiser_commerce']);
+      $card_id = $data['cardonfile'];
+    }
+
+    db_query('UPDATE {fundraiser_donation} SET card_id = :card_id WHERE did = :did', array(
+      ':card_id' => $card_id,
+      ':did' => $row->did,
+    ));
+
+    // Update our progress information.
+    $sandbox['progress']++;
+    $sandbox['current_donation'] = $row->did;
+  }
+
+  // Set the "finished" status, to tell batch engine whether this function
+  // needs to run again. If you set a float, this will indicate the progress
+  // of the batch so the progress bar will update.
+  $sandbox['#finished'] = ($sandbox['progress'] >= $sandbox['max']) ? TRUE : ($sandbox['progress'] / $sandbox['max']);
+
+  if ($sandbox['#finished']) {
+    return t("Donations have been updated with their card_id value's.");
+  }
+}
