@@ -3530,6 +3530,7 @@ function fundraiser_sustainers_billing_update_form($form, &$form_state, $donatio
       'calling module' => 'fundraiser_sustainers',
       'update billing' => FALSE,
     );
+
     if (!empty($cardonfile)) {
       $data['payment_fields'] = array(
         'credit' => array(

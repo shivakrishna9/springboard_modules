@@ -3855,11 +3855,6 @@ function fundraiser_update_billing_form($form, &$form_state, $data) {
     }
   }
 
-  // Set any payment information from the $data variable.
-  if (isset($data['payment_fields'])) {
-    $form['payment_fields'] = array_replace_recursive($form['payment_fields'], $data['payment_fields']);
-  }
-
   $form_state['op'] = 'update';
 
   $form['actions']['submit']['#type'] = 'submit';
@@ -3898,9 +3893,26 @@ function fundraiser_update_billing_form($form, &$form_state, $data) {
       $form['#validate'][] = 'commerce_cardonfile_card_form_validate';
       $form['actions']['submit']['#submit'][] = 'commerce_cardonfile_card_form_submit';
     }
-    else {
-      drupal_set_message(t('A request to access a cardonfile card was made but no matching card was available.'), 'error', FALSE);
+    elseif (empty($cardonfile)) {
+      if (!function_exists('_fundraiser_commerce_credit_card_pane_values')) {
+        module_load_include('module', 'fundraiser_commerce');
+      }
+
+      $stored_card = _fundraiser_commerce_credit_card_pane_values($data['donation']);
+
+      if (empty($stored_card)) {
+        drupal_set_message(t("A request to access a cardonfile card was made but either no matching card was available, or the card's gateway does not support the cardonfile module."), 'warning', FALSE);
+      }
+      else {
+        $data['payment_fields']['credit']['expiration_date']['card_expiration_month']['#default_value'] = $stored_card['credit_card']['exp_month'];
+        $data['payment_fields']['credit']['expiration_date']['card_expiration_year']['#default_value'] = $stored_card['credit_card']['exp_year'];
+      }
     }
+  }
+
+  // Set any payment information from the $data variable.
+  if (isset($data['payment_fields'])) {
+    $form['payment_fields'] = array_replace_recursive($form['payment_fields'], $data['payment_fields']);
   }
 
   // Allow other modules to make any further alterations to this form before we
