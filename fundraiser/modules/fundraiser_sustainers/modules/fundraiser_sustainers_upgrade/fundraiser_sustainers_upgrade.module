@@ -798,7 +798,7 @@ function fundraiser_sustainers_upgrade_get_session_payload() {
   $payload = &drupal_static(__FUNCTION__);
   if (!isset($payload)) {
     $payload = array();
-    if (isset($_SESSION['springboard_hmac'])) {
+    if (!empty($_SESSION['springboard_hmac']['action']) && $_SESSION['springboard_hmac']['action'] == 'su') {
       $payload['timestamp'] = $_SESSION['springboard_hmac']['timestamp'];
       $payload['uid'] = $_SESSION['springboard_hmac']['uid'];
       $payload['amount'] = $_SESSION['springboard_hmac']['0'];
