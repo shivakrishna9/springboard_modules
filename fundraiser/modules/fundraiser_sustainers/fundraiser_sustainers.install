@@ -1067,7 +1067,6 @@ function fundraiser_update_7018(&$sandbox) {
   foreach ($query as $record) {
     $sandbox['progress']++;
     $master_did = $record->master_did;
-    print_r($master_did);
 
     $row = db_select('fundraiser_donation', 'fd')
       ->fields('fd', array('did', 'uid', 'created', 'sid', 'card_id'))
