@@ -1043,7 +1043,7 @@ function fundraiser_update_7018(&$sandbox) {
     $sandbox['progress'] = 0;
     // Total donations that must be visited. Select donations that have a status
     // of "payment_received" but no card_id.
-    $sandbox['max'] = db_query('SELECT COUNT(master_did) FROM {fundraiser_sustainers}', array(
+    $sandbox['max'] = db_query('SELECT COUNT(DISTINCT master_did) FROM {fundraiser_sustainers}', array(
       ':status' => 'payment_received',
     ))->fetchField();
     // A place to store messages during the run.
@@ -1057,12 +1057,13 @@ function fundraiser_update_7018(&$sandbox) {
 
   // Retrieve the next group of donations to update.
   $query = db_select('fundraiser_sustainers', 'fs')
+    ->distinct()
     ->fields('fs', array('master_did'))
     ->condition('fs.master_did', $sandbox['current_donation'], '>')
     ->orderBy('fs.master_did', 'ASC')
-    ->extend('PagerDefault')
-    ->limit($limit)
-    ->execute();
+    ->range(0, $limit)
+    ->execute()
+    ->fetchAll();
 
   $rows = &drupal_static(__FUNCTION__);
 
