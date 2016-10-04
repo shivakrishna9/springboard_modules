@@ -606,22 +606,22 @@ function webform_user_webform_submit($form, &$form_state) {
       }
     }
     module_invoke_all('webform_user_submission_insert', $node, $submission, $account);
-  }
 
-  // This won't necessarily send a new email, but does allow other modules to
-  // hook into the email that would be sent, modify it, and set it to be sent.
-  webform_user_send_mail(array(
-    'module' => 'user',
-    'key' => 'register_no_approval_required',
-    'to' => $account->mail,
-    'parameters' => array(
-      'account' => $account,
-      'node' => $node,
-      'form' => $form,
-      'form_state' => $form_state,
-    ),
-    'send' => $node->send_new_user_email,
-  ));
+    // This won't necessarily send a new email, but does allow other modules to
+    // hook into the email that would be sent, modify it, and set it to be sent.
+    webform_user_send_mail(array(
+      'module' => 'user',
+      'key' => 'register_no_approval_required',
+      'to' => $account->mail,
+      'parameters' => array(
+        'account' => $account,
+        'node' => $node,
+        'form' => $form,
+        'form_state' => $form_state,
+      ),
+      'send' => !empty($node->send_new_user_email) ? $node->send_new_user_email : FALSE,
+    ));
+  }
 }
 
 /**

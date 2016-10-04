@@ -240,7 +240,7 @@ function fundraiser_quick_donate_user_is_opted_in($uid) {
  * Redirect to the donation form if hmac not validated.
  */
 function fundraiser_quick_donate_springboard_hmac_failure($reason, $payload) {
-  if ($payload['action'] != 'qd') {
+  if (empty($payload['action']) || $payload['action'] != 'qd') {
     return;
   }
 
@@ -302,6 +302,10 @@ function fundraiser_quick_donate_springboard_hmac_verify_payload($payload) {
  *   A map of hmac types to their corresponding keys.
  */
 function _fundraiser_quick_donate_hmac_mapping($payload) {
+  if (empty($payload)) {
+    return array();
+  }
+
   return array(
     'uid' => $payload['uid'],
     'card_id' => $payload[0],
