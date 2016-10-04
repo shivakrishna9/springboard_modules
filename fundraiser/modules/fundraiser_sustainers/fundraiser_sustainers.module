@@ -4503,7 +4503,7 @@ function _fundraiser_sustainers_get_payment_info_for_card_id($card_id) {
   ))->fetchAll();
 
   if (empty($data)) {
-    return;
+    return array();
   }
 
   foreach ($data as $key => $row) {

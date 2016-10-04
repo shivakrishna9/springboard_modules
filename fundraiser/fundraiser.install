@@ -585,7 +585,7 @@ function fundraiser_update_7011(&$sandbox) {
   // Process donations by groups of 25 (arbitrary value).
   $limit = 25;
 
-  // Retrieve the next group of nids.
+  // Retrieve the next group of donations to update.
   $result = db_select('fundraiser_donation', 'fd')
     ->fields('fd', array('did', 'uid'))
     ->orderBy('fd.did', 'ASC')
@@ -597,6 +597,7 @@ function fundraiser_update_7011(&$sandbox) {
     ->execute();
 
   foreach ($result as $row) {
+    $sandbox['progress']++;
     $card_id = NULL;
 
     if (empty($cards[$row->uid])) {
@@ -636,13 +637,9 @@ function fundraiser_update_7011(&$sandbox) {
       watchdog('fundraiser', 'No card was found for donation @did while updating {fundraiser} for update 7011.', array(
         '@did' => $row->did,
       ), WATCHDOG_NOTICE);
-      $sandbox['progress']++;
       $sandbox['current_donation'] = $row->did;
       continue;
     }
-
-    // Otherwise set $card_id and let the loop finish.
-    $card_id = $card->card_id;
 
     db_query('UPDATE {fundraiser_donation} SET card_id = :card_id WHERE did = :did', array(
       ':card_id' => $card_id,
@@ -650,7 +647,6 @@ function fundraiser_update_7011(&$sandbox) {
     ));
 
     // Update our progress information.
-    $sandbox['progress']++;
     $sandbox['current_donation'] = $row->did;
   }
 
@@ -660,6 +656,6 @@ function fundraiser_update_7011(&$sandbox) {
   $sandbox['#finished'] = ($sandbox['progress'] >= $sandbox['max']) ? TRUE : ($sandbox['progress'] / $sandbox['max']);
 
   if ($sandbox['#finished']) {
-    return t("Donations have been updated with their card_id value's.");
+    return t("Donations have been updated with their card_id values.");
   }
 }
