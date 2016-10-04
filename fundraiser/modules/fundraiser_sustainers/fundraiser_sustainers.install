@@ -1085,7 +1085,7 @@ function fundraiser_update_7018(&$sandbox) {
 
     db_update('fundraiser_donation')
       ->fields(array(
-        'card_id' => $card_id,
+        'card_id' => $row->card_id,
         'sid' => $row->sid,
       ))
       ->condition('created', $row->created, '=')
