@@ -1,5 +1,8 @@
 <?php
 
+/**
+ * Field bases.
+ */
 function springboard_og_field_default_field_bases() {
   $field_bases = array();
 
@@ -61,6 +64,9 @@ function springboard_og_field_default_field_bases() {
 }
 
 
+/**
+ * Field Instances,
+ */
 function springboard_og_field_default_field_instances() {
   $field_instances = array();
 
@@ -108,7 +114,7 @@ function springboard_og_field_default_field_instances() {
     ),
   );
 
-// Exported field_instance: 'node-springboard_group-group_group'
+  // Exported field_instance: 'node-springboard_group-group_group'.
   $field_instances['group_group'] = array(
     'bundle' => 'springboard_group',
     'default_value' => array(
@@ -166,16 +172,13 @@ function springboard_og_field_default_field_instances() {
     ),
   );
 
-// Translatables
-// Included for use with string extractors like potx.
-  t('Body');
-  t('Determine if this is an OG group.');
-  t('Group');
-
   return $field_instances;
 }
 
 
+/**
+ * Install the group node fields.
+ */
 function springboard_og_install_fields() {
   $fields = springboard_og_field_default_field_bases();
   $instances = springboard_og_field_default_field_instances();

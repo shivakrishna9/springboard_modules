@@ -3,6 +3,8 @@
 
 /**
  * Implements hook_schema().
+ *
+ * Store a group's subscription info.
  */
 function springboard_og_advocacy_schema() {
 
