@@ -6,4 +6,5 @@ dependencies[] = og
 dependencies[] = og_ui
 dependencies[] = views_bulk_operations
 dependencies[] = rules
+dependencies[] = ctools
 
