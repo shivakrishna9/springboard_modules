@@ -260,7 +260,7 @@ function fundraiser_quick_donate_fundraiser_quick_donate_fundraiser_donation_for
   }
 
   if (isset($parameters['ms'])) {
-    $form['submitted']['ms']['#default_value'] = $form['submitted']['ms']['#webform_component']['value'] = $parameters['amount'];
+    $form['submitted']['ms']['#default_value'] = $form['submitted']['ms']['#webform_component']['value'] = $parameters['ms'];
   }
 
   if (isset($parameters['cid'])) {
