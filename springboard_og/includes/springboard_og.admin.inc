@@ -45,6 +45,7 @@ function springboard_og_node_settings_form() {
   );
 
   // Get all node types. Remove the springboard_group node type from the list.
+  $content_type_options = [];
   $options = node_type_get_types();
   foreach ($options as $key => $type) {
     if ($type->type != 'springboard_group') {
@@ -54,18 +55,19 @@ function springboard_og_node_settings_form() {
 
   // Get the already groups-enabled node types.
   $groups_enabled_types = springboard_og_get_grouped_types();
+  $node_defaults = !empty($groups_enabled_types['node']) ? array_keys($groups_enabled_types['node']) : [];
 
   // Build the checkboxes.
   $form['springboard_og_node']['springboard_og_grouped_content'] = array(
     '#title' => '',
     '#type' => 'checkboxes',
     '#options' => $content_type_options,
-    '#default_value' => array_keys($groups_enabled_types['node']),
+    '#default_value' => $node_defaults,
   );
 
   // Disable the checkboxes on the already enabled node types and add a link to
   // remove group field.
-  foreach (array_keys($groups_enabled_types['node']) as $key) {
+  foreach ($node_defaults as $key) {
     $form['springboard_og_node']['springboard_og_grouped_content'][$key] = array(
       '#disabled' => TRUE,
       '#description' => l(t('Remove from groups'), "admin/config/group/fields/node/$key/og_group_ref/delete", array('query' => array('destination' => 'admin/config/springboard-groups'))),
@@ -124,8 +126,9 @@ function springboard_og_entity_settings_form() {
 
   // Get the already-enabled entities.
   $groups_enabled_types = springboard_og_get_grouped_types();
+  $entity_defaults = !empty($groups_enabled_types) ? $groups_enabled_types : [];
   $group_enabled_entities = [];
-  foreach ($groups_enabled_types as $entity_type => $bundle_group) {
+  foreach ($entity_defaults as $entity_type => $bundle_group) {
     if ($entity_type != 'node') {
       foreach ($bundle_group as $bundle => $field) {
         $group_enabled_entities[] = $entity_type . ':' . $bundle;
@@ -143,7 +146,7 @@ function springboard_og_entity_settings_form() {
 
   // Disable the checkboxes on types that are already enabled.
   // Add a link to remove the group field.
-  foreach ($groups_enabled_types as $entity_type => $bundle_group) {
+  foreach ($entity_defaults as $entity_type => $bundle_group) {
     if ($entity_type != 'node') {
       foreach ($bundle_group as $bundle => $field) {
         $form['springboard_og_entities']['springboard_og_grouped_entities'][$entity_type . ':' . $bundle] = array(
