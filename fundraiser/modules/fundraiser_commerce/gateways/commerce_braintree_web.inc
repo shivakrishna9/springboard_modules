@@ -10,14 +10,14 @@
  */
 function commerce_braintree_web_fundraiser_commerce_fundraiser_gateway_info() {
   return array(
-    'payment_method' => array('credit', 'paypal'),
+    'payment_method' => array('braintree_hostedfields' => 'credit', 'braintree_paypal' => 'paypal'),
     'allow_recurring' => array('credit', 'paypal'),
     'allow_refund' => array('credit', 'paypal'),
     'form callback' => 'commerce_braintree_web_fundraiser_commerce_form',
     // 'cleanup callback' => 'commerce_authnet_fundraiser_commerce_cleanup',
     // 'scrub callback' => 'commerce_authnet_fundraiser_commerce_scrub',
     'expire callback' => 'commerce_braintree_web_fundraiser_commerce_expire',
-    // 'validate callback' => 'commerce_authnet_fundraiser_commerce_validate',
+    'validate callback' => 'commerce_braintree_web_fundraiser_commerce_validate',
     'charge callback' => 'commerce_braintree_web_fundraiser_commerce_charge',
     // 'update callback' => 'commerce_authnet_fundraiser_commerce_update',
     'refund callback' => 'commerce_braintree_web_fundraiser_commerce_refund',
@@ -25,6 +25,16 @@ function commerce_braintree_web_fundraiser_commerce_fundraiser_gateway_info() {
     // 'response fields callback' => 'commerce_authnet_fundraiser_commerce_response_fields',
     // 'response save callback' => 'commerce_authnet_fundraiser_commerce_response_save',
   );
+}
+
+/**
+ * Validate the submitted values with the commerce validate function.
+ */
+function commerce_braintree_web_fundraiser_commerce_validate($submission_fields, $payment_fields, $payment_method) {
+  // Because user input is handled client-side by braintree, all we can and
+  // should do is check for the existence of a value in the hidden nonce field.
+  commerce_braintree_web_submit_form_validate(NULL, $submission_fields, $payment_fields, NULL);
+  return $submission_fields;
 }
 
 /**
@@ -87,7 +97,14 @@ function commerce_braintree_web_fundraiser_donation_form_config_check($node) {
  */
 function commerce_braintree_web_fundraiser_commerce_expire($submission_fields) {
   $expires = array();
-  if (isset($submission_fields['txn_id'])) {
+  // We may already have the expiration dates in the payment_fields if this is an upsell.
+  if(isset($submission_fields['payment_fields']['credit']['card_expiration_month']) && !empty($submission_fields['payment_fields']['credit']['card_expiration_month'])) {
+    $expires['month'] = $submission_fields['payment_fields']['credit']['card_expiration_month'];
+    $expires['year'] = $submission_fields['payment_fields']['credit']['card_expiration_year'];
+  }
+  // If we don't find them in payment_fields, look in the payload returned from
+  // the braintree transaction sale.
+  elseif (isset($submission_fields['txn_id'])) {
     $payload = db_query("SELECT payload FROM {commerce_payment_transaction} WHERE remote_id = :txn_id LIMIT 1", array(':txn_id' => $submission_fields['txn_id']))->fetchField();
     if (isset($payload)) {
       $braintree_response_object = unserialize($payload);
@@ -219,9 +236,6 @@ function commerce_braintree_web_fundraiser_commerce_form($payment_method, $confi
  * Callback function, charge gateway.
  */
 function commerce_braintree_web_fundraiser_commerce_charge($method_instance, $donation) {
-
-  // Translate from donation settings to the correct values for the plugin.
-  // module_load_include('inc', 'fundraiser_commerce', 'includes/fundraiser_commerce.credit_card');
   $order = commerce_order_load($donation->did);
   $wrapper = entity_metadata_wrapper('commerce_order', $order);
   $charge = $wrapper->commerce_order_total->value();
@@ -235,10 +249,7 @@ function commerce_braintree_web_fundraiser_commerce_charge($method_instance, $do
   // $pane_values['braintree']['payment_method_token']
   // $pane_values['braintree']['default_method_token'].
 
-  // @TODO this function won't work b/c it is looking at CC field values that
-  // do not exist with hosted fields.
-  // $pane_values = _fundraiser_commerce_credit_card_pane_values($donation);
-    $pane_values = array();
+  $pane_values = array();
 
   _fundraiser_commerce_submit_handler_pane_values($pane_values, $donation);
 
@@ -251,13 +262,23 @@ function commerce_braintree_web_fundraiser_commerce_charge($method_instance, $do
   if (isset($result->card_id)) {
     $donation->data['cardonfile'] = $result->card_id;
   }
+
+  // Setting payment_fields here, because we don't have this data until after
+  // the playload from the braintree sale is returned to us.
   if (isset($result->transaction->paymentInstrumentType) && $result->transaction->paymentInstrumentType == 'credit_card') {
-    $donation->donation['payment_fields'] = array(
+    $donation->data['payment_fields'] = array(
       'credit' => array(
         'card_number' => $result->transaction->creditCard['last4'],
         'card_type' => $result->transaction->creditCard['cardType'],
         'card_expiration_month' => $result->transaction->creditCard['expirationMonth'],
         'card_expiration_year' => $result->transaction->creditCard['expirationYear'],
+      ),
+    );
+  }
+  elseif (isset($result->transaction->paymentInstrumentType) && $result->transaction->paymentInstrumentType == 'paypal_account') {
+    $donation->data['payment_fields'] = array(
+      'paypal' => array(
+        'payer_email' => $result->transaction->paypal['payerEmail'],
       ),
     );
   }
@@ -290,14 +311,8 @@ function commerce_braintree_web_fundraiser_commerce_charge($method_instance, $do
       }
     }
   }
-
-// _fundraiser_commerce_charge_submit_form_process needs $pane_values[$form_key]['cardonfile_store']
-// .... calls _fundraiser_commerce_donation_cardonfile_card($donation)
-// ... looks at $donation->data['cardonfile'] and loads the cardonfile.
-
   // Perform post processing functions.
   _fundraiser_commerce_charge_submit_form_process($success, $method_instance, $pane_values, $donation);
 
   return $success;
-
 }

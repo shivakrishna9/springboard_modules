@@ -514,10 +514,7 @@ function braintree_vault_payment_method_save($payment_method, $context = array()
       $result = Braintree_PaymentMethod::update($payment_method['paymentMethodToken'], $params);
     }
     else {
-      $params['customerId'] = $payment_method['customerId'];
-      $params['paymentMethodNonce'] = $payment_method['paymentMethodNonce'];
-
-      $result = Braintree_PaymentMethod::create($params);
+      $result = Braintree_PaymentMethod::create($payment_method);
     }
   }
   catch (Exception $e) {

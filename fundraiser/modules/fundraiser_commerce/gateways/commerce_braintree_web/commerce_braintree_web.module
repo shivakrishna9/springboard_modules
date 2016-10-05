@@ -26,13 +26,16 @@ function commerce_braintree_web_commerce_payment_method_info() {
   );
 
   $payment_methods['braintree_paypal'] = array(
-    'base' => 'commerce_braintree_web',
+    'base' => 'commerce_braintree_paypal',
     'title' => t('Braintree - PayPal'),
     'short_title' => t('Braintree - PayPal'),
     'display_title' => t('PayPal'),
     'description' => t('Integrates with Braintree web for PayPal.'),
     'terminal' => FALSE,
     'offsite' => FALSE,
+    'cardonfile' => array(
+      'delete callback' => 'commerce_braintree_web_cardonfile_delete',
+    ),
   );
 
   return $payment_methods;
@@ -186,11 +189,36 @@ function commerce_braintree_web_form_alter(&$form, &$form_state, $form_id) {
 }
 
 /**
+ * Payment method callback: Braintree PayPal settings form.
+ *
+ * Adds paypal-specific field to the settings form, in addition to those added
+ * with commerce_braintree_web_settings_form().
+ *
+ * @see CALLBACK_commerce_payment_method_settings_form().
+ */
+function commerce_braintree_paypal_settings_form($settings = array()) {
+  $form = commerce_braintree_web_settings_form($settings);
+  $form['autofill'] = array(
+    '#type' => 'radios',
+    '#title' => t('Populate User and Billing fields with data from the donor\'s PayPal account?'),
+    '#options' => array(
+      'never' => t('Never'),
+      'if_blank' => t('Only if all User/Billing fields are blank'),
+      'always' => t('Always'),
+    ),
+    '#default_value' => isset($settings['autofill']) ? $settings['autofill'] : 'if_blank',
+  );
+  return $form;
+}
+
+
+/**
  * Payment method callback: Braintree Web settings form.
  *
  * @see CALLBACK_commerce_payment_method_settings_form().
  */
 function commerce_braintree_web_settings_form($settings = array()) {
+
 //  // Reuse the transparent redirect settings form.
 //  $form = commerce_braintree_web_settings_form($settings);
 
@@ -316,17 +344,6 @@ function commerce_braintree_web_settings_form($settings = array()) {
     '#default_value' => isset($settings['production']['channel']) ? $settings['production']['channel'] : NULL,
   );
 
-  $form['autofill'] = array(
-    '#type' => 'radios',
-    '#title' => t('Populate User and Billing fields with data from the donor\'s PayPal account?'),
-    '#options' => array(
-      'never' => t('Never'),
-      'if_blank' => t('Only if all User/Billing fields are blank'),
-      'always' => t('Always'),
-    ),
-    '#default_value' => isset($settings['autofill']) ? $settings['autofill'] : 'if_blank',
-  );
-
   $form['single_settlement_currency'] = array(
     '#type' => 'checkbox',
     '#title' => t('Single settlement currency'),
@@ -421,6 +438,7 @@ function commerce_braintree_web_submit_form_validate($payment_method, $pane_form
  * @see CALLBACK_commerce_payment_method_submit_form_submit().
  */
 function commerce_braintree_web_submit_form_submit($payment_method, $pane_form, $pane_values, $order, $form_parents = array()) {
+
   global $user;
 
   braintree_initialize($payment_method['settings']);
@@ -444,8 +462,6 @@ function commerce_braintree_web_submit_form_submit($payment_method, $pane_form, 
     $merchant_account_id = commerce_braintree_web_get_merchant_account_id($payment_method, $charge['currency_code']);
   }
 
-  // $customer_id = (module_exists('braintree_vault')) ? braintree_customer_id() : NULL;
-
   // Get the customer's braintree customer_id from the Drupal User, if it has
   // been previously saved.
   if (module_exists('braintree_vault')) {
@@ -465,14 +481,24 @@ function commerce_braintree_web_submit_form_submit($payment_method, $pane_form, 
 
   $flag_update_default_method = FALSE;
 
-  if ($customer_id) {
+  if ($customer_id && $pane_values['cardonfile'] == 'new') {
     // Create a new payment method.
     if (isset($nonce)) {
       $_payment_method = array(
         'customerId' => $customer_id,
         'paymentMethodNonce' => $nonce,
+        'billingAddress' => array(
+          'countryCodeAlpha2' => $country,
+          'streetAddress' => $thoroughfare,
+          'firstName' => $first_name,
+          'lastName' => $last_name,
+          'locality' => $locality,
+          'postalCode' => $postal_code,
+          'region' => $administrative_area,
+        ),
       );
       $_payment_method_context = ['op' => 'add'];
+
       $result = braintree_vault_payment_method_save($_payment_method, $_payment_method_context, $error_message);
 
       if ($result === FALSE) {
@@ -583,6 +609,7 @@ function commerce_braintree_web_submit_form_submit($payment_method, $pane_form, 
         'options' => array(
           'submitForSettlement' => TRUE,
           'storeInVaultOnSuccess' => TRUE,
+          'addBillingAddressToPaymentMethod' => TRUE,
         ),
       );
 
@@ -624,6 +651,11 @@ function commerce_braintree_web_submit_form_submit($payment_method, $pane_form, 
     $order_data = unserialize(decrypt($order->data['fundraiser_commerce']));
     if (isset($order_data['cardonfile'])){
       $cardonfile = commerce_cardonfile_load($order_data['cardonfile']);
+      // Fail now if it is no longer available or the card is inactive.
+      if (empty($cardonfile) || $cardonfile->status == 0) {
+        drupal_set_message(t('The requested card on file is no longer valid.'), 'error');
+        return FALSE;
+      }
       $token = $cardonfile->remote_id;
     }
 
@@ -662,7 +694,7 @@ function commerce_braintree_web_submit_form_submit($payment_method, $pane_form, 
         $card->instance_id = $payment_method['instance_id'];
         $card->remote_id = $braintree_result->transaction->creditCardDetails->token;
         $card->card_type = $braintree_result->transaction->creditCardDetails->cardType;
-        $card->card_name = $braintree_result->transaction->billingDetails->firstName . ' ' . $braintree_result->transaction->billingDetails->lastName;
+        $card->card_name = $braintree_result->transaction->creditCardDetails->cardholderName;
         $card->card_number = $braintree_result->transaction->creditCardDetails->last4;
         $card->card_exp_month = $braintree_result->transaction->creditCardDetails->expirationMonth;
         $card->card_exp_year = $braintree_result->transaction->creditCardDetails->expirationYear;
@@ -674,6 +706,10 @@ function commerce_braintree_web_submit_form_submit($payment_method, $pane_form, 
           $paypal_exp_date = strtotime("now +" . variable_get('commerce_braintree_web_sustainer_series_count', 24) . " months");
           $card->card_exp_month = date('m', $paypal_exp_date);
           $card->card_exp_year = date('Y', $paypal_exp_date);
+          $card->card_type = 'PayPal';
+          $card->card_name = $braintree_result->transaction->paypalDetails->payerEmail;
+          $card->card_number = 'N/A';
+
         }
 
         // Save and log the creation of the new card on file.
