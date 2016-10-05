@@ -2,29 +2,23 @@
   Drupal.behaviors.SpringboardTokenSet = {
     attach: function (context, settings) {
       // Add token click handler to form elements with token set IDs:
-      $(".form-wrapper, #webform-component-edit-form #edit-value, #webform-component-edit-form #edit-extra-description").each(function() {
+      $(".form-item input, .form-item textarea, #webform-component-edit-form #edit-value, #webform-component-edit-form #edit-extra-description").each(function() {
         if ($(this).hasClass('token-ui-field')) {
           $(this).addClass("has-token-data");
-          //var targetElement = $(this).find("textarea");
-          //if (targetElement.length == 0) {
-          //  targetElement = $(this);
-          //}
           var targetElement = $(this);
-          //targetElement.filter('textarea').each(function () {
-            targetElement.after('<div class="sb-tokens-expander"><a href="#">+ View tokens</a></div>');
-            var targetTextarea = $(this);
-            targetTextarea.parent().children('.sb-tokens-expander').children('a').click(function (e) {
-              e.preventDefault();
-              if (typeof targetTextarea.attr('sb-selection-start-pos') != 'undefined') {
-                targetTextarea.attr('sb-token-initial-cursor-pos', targetTextarea.attr('sb-selection-start-pos'));
-              }
-              else {
-                var endPosition = targetTextarea.val().length;
-                targetTextarea.attr('sb-token-initial-cursor-pos', endPosition);
-              }
-              targetTextarea.click();
-            });
-          //});
+          targetElement.after('<div class="sb-tokens-expander"><a href="#">+ View tokens</a></div>');
+          var targetTextarea = $(this);
+          targetTextarea.parent().children('.sb-tokens-expander').children('a').click(function (e) {
+            e.preventDefault();
+            if (typeof targetTextarea.attr('sb-selection-start-pos') != 'undefined') {
+              targetTextarea.attr('sb-token-initial-cursor-pos', targetTextarea.attr('sb-selection-start-pos'));
+            }
+            else {
+              var endPosition = targetTextarea.val().length;
+              targetTextarea.attr('sb-token-initial-cursor-pos', endPosition);
+            }
+            targetTextarea.click();
+          });
 
           targetElement.keypress(function () {
             if (typeof $(this)[0].selectionStart != 'undefined') {
@@ -69,6 +63,14 @@
             $(this).siblings('#token-set-tokens').each(function () {
               tokensContainer = $(this);
             });
+            // Remove the token set tab if there is only one token set for this field:
+            var tokensetCount = 0;
+            tokensContainer.find('.token-set-expand').each(function() {
+              tokensetCount++;
+            });
+            if (tokensetCount == 1) {
+              tokensContainer.find('.token-set-expand').hide();
+            }
             $(this).parent().children(".description").each(function () {
               $(this).insertAfter(tokensContainer);
             });
@@ -123,7 +125,7 @@
         var html = '<fieldset id="token-set-tokens" class="form-wrapper">';
         html += '<div class="token-set-tokens-spike">&nbsp;</div>';
         html += '<div class="token-set-tokens-inner">';
-        html += '<legend><span class="fieldset-legend">Tokens</span></legend>';
+        html += '<legend><span class="fieldset-legend tokenui-title">Tokens</span></legend>';
         html += '<div class="fieldset-wrapper token-set-wrapper">';
         html += '<div class="token-list">';
         var firstTokenSet = ' first-token-set token-set-expanded';
@@ -148,6 +150,10 @@
         $('#token-set-tokens').attr('target-element-id', targetElementID);
         $('#token-set-tokens legend').after(headerHTML);
 
+        // Update the TokensUI widget title to match the first enabled token set, if there is only one token set:
+        if (tokens.length == 1) {
+          $('#token-set-tokens .tokenui-title').text(tokenSetName + ' ' + 'Tokens');
+        }
 
         var fetchTokenSet = function (tsid) {
           $.ajax({
@@ -261,7 +267,7 @@
           cursorEndPos = cursorPos; 
         }
         
-        // Reset the textarea's content with the selection replaced with this token:
+        // Reset the token-enabled field's content with the selection replaced with this token:
         element.value = element.value.substring(0, cursorPos)
           + token
           + element.value.substring(cursorEndPos, element.value.length);
