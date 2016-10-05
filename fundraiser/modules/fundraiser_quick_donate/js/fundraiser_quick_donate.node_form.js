@@ -32,7 +32,7 @@
         var $option_name = $selected.text();
         var $option_value = $selected.val();
 
-        if (!$gateways_enabled.credit && !$gateways_enabled.bank) {
+        if (!$gateways_enabled.credit/* && !$gateways_enabled.bank*/) {
           $quickdonate.after('<div class="note"><strong>Note:</strong> Quick donation functionality is only available when using one of the supported payment processors above.<br/></div>');
           $quickdonate.find('input[type=checkbox]').attr('disabled', 'disabled');
           $quickdonate.nextAll('.form-item, .form-wrapper').hide();
@@ -67,9 +67,9 @@
 
         // Only hide the quick donation message settings if both processing
         // types are unavailable.
-        if (!$gateways_enabled.credit && !$gateways_enabled.bank
-          || $gateways_enabled.credit && !gateway_available.credit && !$gateways_enabled.bank
-          || $gateways_enabled.bank && !gateway_available.bank && !$gateways_enabled.credit) {
+        if (!$gateways_enabled.credit/* && !$gateways_enabled.bank*/
+          || $gateways_enabled.credit && !gateway_available.credit/* && !$gateways_enabled.bank*/
+          /*|| $gateways_enabled.bank && !gateway_available.bank && !$gateways_enabled.credit*/) {
           $('#edit-quickdonate-message-container').hide();
         }
         else {
@@ -92,14 +92,14 @@
         checkGateway(this, 'credit');
       }
 
-      $gateways['bank'].add('#edit-gateways-bank-account-status').on('change', function() {
+      /*$gateways['bank'].add('#edit-gateways-bank-account-status').on('change', function() {
         $quickdonate.next('.note').remove();
         disabled = false;
         checkGateway(this, 'bank');
       });
       if ($gateways_enabled.bank) {
         checkGateway(this, 'bank');
-      }
+      }*/
     }
   };
 })(jQuery);

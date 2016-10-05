@@ -46,7 +46,7 @@ function fundraiser_quick_donate_fundraiser_donation_form($form, $form_state) {
 
   // Load user's stored cardonfile cards for each gateway.
   foreach ($form['#node']->gateways as $gateway_type => $gateway) {
-    if (empty($gateway['status']) || empty($gateway['id']) || $gateway['method'] !== 'credit' || $gateway['method'] == 'bank account') {
+    if (empty($gateway['status']) || empty($gateway['id']) || $gateway['method'] !== 'credit'/* || $gateway['method'] == 'bank account'*/) {
       continue;
     }
 

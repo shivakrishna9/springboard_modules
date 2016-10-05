@@ -32,7 +32,7 @@ function fundraiser_quick_donate_form_node_form_alter(&$form, &$form_state, $for
     ));
   }
 
-  $usable_paypment_processors = array('credit' => array(), 'bank' => array());
+  $usable_paypment_processors = array('credit' => array()/*, 'bank' => array()*/);
   if (!empty($form['payment_methods']['gateways']['credit'])) {
     foreach ($form['payment_methods']['gateways']['credit']['id']['#options'] as $gateway => $value) {
       // Check to see if the currently selected payment method is Card on
@@ -52,7 +52,7 @@ function fundraiser_quick_donate_form_node_form_alter(&$form, &$form_state, $for
     }
   }
 
-  if (!empty($form['payment_methods']['gateways']['bank account'])) {
+  /*if (!empty($form['payment_methods']['gateways']['bank account'])) {
     foreach ($form['payment_methods']['gateways']['bank account']['id']['#options'] as $gateway => $value) {
       // Check to see if the currently selected payment method is Card on
       // File enabled (via the cardonfile boolean in its info array).
@@ -69,9 +69,9 @@ function fundraiser_quick_donate_form_node_form_alter(&$form, &$form_state, $for
         $usable_paypment_processors['bank'][] = $gateway;
       }
     }
-  }
+  }*/
 
-  if (empty($usable_paypment_processors['credit']) && empty($usable_paypment_processors['bank'])) {
+  if (empty($usable_paypment_processors['credit'])/* && empty($usable_paypment_processors['bank'])*/) {
     // If no usable payment processors are available, disable the checkbox
     // and display a note to the user.
     $form['payment_methods']['quickdonate']['#attributes']['disabled'] = TRUE;
