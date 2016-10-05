@@ -4430,7 +4430,8 @@ function fundraiser_sustainers_omit_sustainer_action(&$sustainer_record, $contex
 
   switch ($sustainer_record->gateway_resp) {
     case FUNDRAISER_SUSTAINERS_PROCESSING_STATUS:
-      $sustainer_record->gateway_resp = FUNDRAISER_SUSTAINERS_OMITTED_STATUS;
+    case FUNDRAISER_SUSTAINERS_LOCKED_STATUS:
+    $sustainer_record->gateway_resp = FUNDRAISER_SUSTAINERS_OMITTED_STATUS;
       $log->logOmittedDonation($sustainer_record->did, $sustainer_record->gateway_resp);
       drupal_set_message(t('Omitted sustainer %did and changed its status from %status to Omitted.', $replacements));
       break;
