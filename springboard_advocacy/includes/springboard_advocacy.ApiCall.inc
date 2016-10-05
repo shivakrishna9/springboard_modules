@@ -101,6 +101,7 @@ class AdvocacyApiCall {
         variable_set('sba_subscription', array('subscription_type' => $response->data->subscription_type, 'states_custom' => isset($response->data->states_custom) ? $response->data->states_custom : NULL));
       }
     }
+    drupal_alter('springboard_advocacy_subscription', $subscription);
     return $subscription;
   }
 

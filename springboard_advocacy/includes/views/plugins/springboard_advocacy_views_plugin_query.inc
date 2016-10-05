@@ -38,6 +38,7 @@ class springboard_advocacy_views_plugin_query extends views_plugin_query {
     $view->build_info['springboard_advocacy_request'] = $this->apiCall;
     $view->build_info['target_ids'] = array();
     // Helpful for the "add all link".
+    drupal_alter('springboard_advocacy_views_plugin_query', $view->query);
     if (isset($view->query->search_terms)) {
       $view->build_info['springboard_advocacy_search'] = $view->query->search_terms;
     }

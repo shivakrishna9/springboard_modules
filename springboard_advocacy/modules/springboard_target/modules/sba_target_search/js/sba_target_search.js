@@ -965,7 +965,7 @@
         //iterate through the form elements and build arrays of checked/selected items
         $('#views-exposed-form-targets-block-3 input[type="checkbox"], #views-exposed-form-targets-block-3 select, #edit-search-committee').each(function(){
 
-            if ($(this).prop('checked') || (this.name == 'search_state' && this.value != "All") || (this.name == 'search_district_name' && this.value != "All")  || (this.name == 'search_committee' && this.value != '')) {
+            if ($(this).prop('checked') || this.name == 'search_state' || (this.name == 'search_district_name' && this.value != "All")  || (this.name == 'search_committee' && this.value != '')) {
                 var nm = this.name;
                 var v = this.value;
                 if (nm.indexOf('search_committee') != -1) {
@@ -980,7 +980,15 @@
                     parties.push(v);
                 }
                 else if (nm.indexOf('state') != -1) {
-                    states.push(v);
+                    if (Drupal.settings.sbaSubscriptionIsGrouped && this.value == "All") {
+                        allowedStates = Drupal.settings.sbaAllowedStates;
+                        $(allowedStates).each(function(){
+                            states.push(this);
+                          });
+                    }
+                    if(this.value != "All") {
+                        states.push(v);
+                    }
                 }
                 else if (nm.indexOf('district') != -1) {
                     districts.push(v);
@@ -1320,7 +1328,6 @@
       var queryObj = {};
         $(query).each(function(index, value) {
             var segments = value.split('=');
-            console.log(segments)
             if (segments[0] == 'ids') {
               return false;
             }
@@ -1458,7 +1465,6 @@
 
         // If this is a queried group (rather than an editable group entity)
         //
-        console.log(queryObj)
         var cleanUp = JSON.stringify(queryObj).SbaJsonToReadable();
         if (typeof(queryObj.Fields) !== 'undefined' || typeof(queryObj.Genderxxxx) !== 'undefined'
             || typeof(queryObj.Socialxxxx) !== 'undefined' ||  typeof(queryObj.District) !== 'undefined') {
