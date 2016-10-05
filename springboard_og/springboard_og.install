@@ -7,3 +7,44 @@ function springboard_og_install() {
   module_load_include('inc', 'springboard_og', 'includes/install/springboard_og.install_content_type');
   _springboard_og_install_content_type();
 }
+
+function springboard_og_field_schema($field) {
+  $columns = array(
+    'url' => array('type' => 'varchar', 'length' => 255, 'not null' => FALSE),
+    'fid' => array(
+      'description' => 'The {file_managed}.fid being referenced in this field.',
+      'type' => 'int',
+      'not null' => FALSE,
+      'unsigned' => TRUE,
+    ),
+    'alt' => array(
+      'description' => "Alternative image text, for the image's 'alt' attribute.",
+      'type' => 'varchar',
+      'length' => 512,
+      'not null' => FALSE,
+    ),
+    'title' => array(
+      'description' => "Image title text, for the image's 'title' attribute.",
+      'type' => 'varchar',
+      'length' => 1024,
+      'not null' => FALSE,
+    ),
+    'width' => array(
+      'description' => 'The width of the image in pixels.',
+      'type' => 'int',
+      'unsigned' => TRUE,
+    ),
+    'height' => array(
+      'description' => 'The height of the image in pixels.',
+      'type' => 'int',
+      'unsigned' => TRUE,
+    ),
+  );
+  $indexes = array(
+    'url' => array('url'),
+  );
+  return array(
+    'columns' => $columns,
+    'indexes' => $indexes,
+  );
+}
