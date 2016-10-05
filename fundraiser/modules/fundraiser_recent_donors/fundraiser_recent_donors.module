@@ -51,8 +51,7 @@ function fundraiser_recent_donors_form_alter(&$form, &$form_state, $form_id) {
       $type_settings_path = 'admin/structure/types/manage/' . str_replace('_', '-', $form['#node']->type);
       $type_name = node_type_get_name($form['#node']->type);
       $form['springboard_display']['recent_donors_list']['#description'] =
-        t('The Recent Donors List requires Form Layouts') . ' ' .
-        l('to be enabled', $type_settings_path) . ' ' . t('on the ' . $type_name . ' content type settings form.');
+        t('The Recent Donors List requires Form Layouts to be enabled on the') . ' ' . $type_name . ' ' . t('content type settings form.');
       return;
     }
 
