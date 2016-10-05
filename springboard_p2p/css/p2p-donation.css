@@ -403,6 +403,15 @@ div.donation-processing-wrapper,
   padding: 5px 0 22px 20px;
 }
 
+/* Override P2P styling for quicksign form */
+#edit-submitted-sba-quicksign-children-submit + .webform-user-wrapper,
+#edit-submitted-sba-quicksign-children-submit + .webform-user-wrapper p {
+  padding: 0;
+  margin: 0;
+  font-size: 16px;
+  clear: both;  
+}
+
 /* confirmation page */
 
 .pane-p2p-confirmation table tr td.first {
