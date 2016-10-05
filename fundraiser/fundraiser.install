@@ -589,15 +589,17 @@ function fundraiser_update_7011(&$sandbox) {
   $result = db_select('fundraiser_donation', 'fd')
     ->fields('fd', array('did', 'uid'))
     ->orderBy('fd.did', 'ASC')
-    ->where('(fd.did > :did) AND (fd.card_id IS NULL)', array(
-      ':did' => $sandbox['current_donation'],
-    ))
-    ->extend('PagerDefault')
-    ->limit($limit)
-    ->execute();
+    ->condition('fd.did', $sandbox['current_donation'], '>')
+    ->condition('fd.status', 'payment_received', '=')
+    ->isNull('card_id')
+    ->range(0, $limit)
+    ->execute()
+    ->fetchAll();
 
   foreach ($result as $row) {
     $sandbox['progress']++;
+    $sandbox['current_donation'] = $row->did;
+
     $card_id = NULL;
 
     if (empty($cards[$row->uid])) {
@@ -632,12 +634,11 @@ function fundraiser_update_7011(&$sandbox) {
       }
     }
 
-    if (empty($card_id) || !is_int($card_id)) {
+    if (empty($card_id) || !is_numeric($card_id)) {
       // Nothing found, we'll have to skip this donation.
       watchdog('fundraiser', 'No card was found for donation @did while updating {fundraiser} for update 7011.', array(
         '@did' => $row->did,
       ), WATCHDOG_NOTICE);
-      $sandbox['current_donation'] = $row->did;
       continue;
     }
 
@@ -645,9 +646,6 @@ function fundraiser_update_7011(&$sandbox) {
       ':card_id' => $card_id,
       ':did' => $row->did,
     ));
-
-    // Update our progress information.
-    $sandbox['current_donation'] = $row->did;
   }
 
   // Set the "finished" status, to tell batch engine whether this function

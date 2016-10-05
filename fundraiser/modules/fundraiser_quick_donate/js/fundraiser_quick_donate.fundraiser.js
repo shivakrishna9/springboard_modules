@@ -21,7 +21,7 @@
                 $.each(group, function(childIndex, childId) {
                   if (childId.indexOf('value:') < 0) {
                     var $child = $('#edit-submitted-' + parentId + '-' + childId);
-                    if ($child.parent().hasClass('form-type-radios')) {
+                    if ($child.children('.form-type-radio').length) {
                       var $value = $child.find('input:checked').next('label').text();
                       $div.append($('<span/>', {class: childId}).text($value));
                     }
