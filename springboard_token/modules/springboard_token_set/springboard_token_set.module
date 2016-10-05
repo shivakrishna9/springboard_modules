@@ -332,10 +332,9 @@ function springboard_token_set_save_field($form, &$form_state) {
  * Implements hook_form_alter().
  */
 function springboard_token_set_form_alter(&$form, &$form_state, $form_id) {
+  dpm($form_id);
 
-
-  // Handle non-entity forms first:
-  if (!isset($form['#entity_type'])) {
+//  if (!isset($form['#entity_type'])) {
 
 
     $token_set_names = array();
@@ -362,9 +361,10 @@ function springboard_token_set_form_alter(&$form, &$form_state, $form_id) {
     }
     
     return;
-  }
+//  }
 
   // TODO: Check user access for ability to use tokens.
+/*
   $fields = field_info_instances($form['#entity_type'], $form['#bundle']);
 
   // Store token set and field data for JS settings.
@@ -391,7 +391,8 @@ function springboard_token_set_form_alter(&$form, &$form_state, $form_id) {
   }
 
   // Add the jQuery and CSS for the token UI:
-  springboard_token_set_attach_token_ui($form, $token_sets);
+  springboard_token_set_attach_token_ui($form, $token_sets); 
+  */
 }
 
 /**
@@ -406,25 +407,48 @@ function springboard_token_set_form_alter(&$form, &$form_state, $form_id) {
  * @param $target_form_keys
  *   The form keys that should receive the Token Set selector.
  */
-function _springboard_token_set_attach_to_target_form_keys(&$element, $target_fields_tokens) {
+function _springboard_token_set_attach_to_target_form_keys(&$element, $target_fields_tokens, $parent_key = NULL) {
   $children = element_children($element);
   $token_field_types = array('textfield', 'textarea', 'text_format'); // TODO - why does the confirmation textarea has a type of text_format?
   foreach ($children as $key) {
     $child = &$element[$key];
-    if (is_array($child)) {
-      if (isset($child['#type']) && in_array($child['#type'], $token_field_types) && isset($target_fields_tokens[$key])) {
-        $child['#attributes']['class'][] = 'form-wrapper';
-        $child['#attributes']['class'][] = 'token-ui-field';
-        $child['#attributes']['token_key'] = $key;
-        $child['#attached']['js'][] = array(
-          'data' => array('field_token_sets__' . $key => $target_fields_tokens[$key]), 'type' => 'setting');
-        // $element['extra']['description']['#attributes']['data-token-set-id'] = $tsid;
-        //springboard_token_set_attach_token_ui($child, $tsid);
-      } else {
-        _springboard_token_set_attach_to_target_form_keys($child, $target_fields_tokens);
-      }
+    if (!is_array($child)) {
+      continue;
     }
-    unset($child);
+    if (isset($child['#type'])) {
+      unset($target_token_set_id);
+      // If a token set ID is available for this element then set it:
+      if (isset($target_fields_tokens[$key])) {
+        $target_token_set_id = $target_fields_tokens[$key];
+      }
+      // If a child of this element may have a token set ID then recur:
+      else {
+        foreach ($target_fields_tokens as $target_key => $target_fields_tokens_data) {
+          if (strpos($target_key, '|') !== FALSE) { // Only check target keys that are | delimited
+            $keys_list = explode('|', $target_key);
+            if (in_array($key, $keys_list)) {
+              $this_child_key = $keys_list[count($keys_list) - 1];
+              $this_parent_key = $keys_list[count($keys_list) - 2];
+              if ($this_child_key == $key && $this_parent_key == $parent_key) {
+                $target_token_set_id = $target_fields_tokens[$target_key];
+              }
+            }
+          }
+        }
+      }
+      if (isset($target_token_set_id) && in_array($child['#type'], $token_field_types)) {
+          $child['#attributes']['class'][] = 'form-wrapper';
+          $child['#attributes']['class'][] = 'token-ui-field';
+          $child['#attributes']['token_key'] = $key;
+          $child['#attached']['js'][] = array(
+            'data' => array('field_token_sets__' . $key => $target_token_set_id), 'type' => 'setting');
+      }
+      else {
+        _springboard_token_set_attach_to_target_form_keys($child, $target_fields_tokens, $key);
+      }
+    } else {
+      _springboard_token_set_attach_to_target_form_keys($child, $target_fields_tokens, $key);
+    }
   }
 }
 
@@ -432,6 +456,7 @@ function _springboard_token_set_attach_to_target_form_keys(&$element, $target_fi
  * Page callback for tokens admin form.
  */
 function springboard_token_set_tokens_admin_form($form, &$form_state) {
+  dpm(token_info());
   $tokens = springboard_token_set_get_tokens();
 
   $form = array();
@@ -946,7 +971,10 @@ function springboard_token_set_attach_token_ui(&$form, $token_sets) {
   $token_sets = springboard_token_set_get_token_sets_list();
   $enabled_sets = array();
   foreach ($token_sets as $token_set) {
-    $enabled_sets[$token_set] = $token_sets[$token_set];
+    // TODO - does his code make sense, it was producing undefined index errors so it wrapped it in an if:
+    if (isset($token_sets[$token_set])) {
+      $enabled_sets[$token_set] = $token_sets[$token_set];
+    }
   }
   $form['#attached']['js'][] = array(
     'data' => array(
