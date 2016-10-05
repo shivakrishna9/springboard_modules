@@ -5,12 +5,13 @@
       $(".form-wrapper, #webform-component-edit-form #edit-value, #webform-component-edit-form #edit-extra-description").each(function() {
         if ($(this).hasClass('token-ui-field')) {
           $(this).addClass("has-token-data");
-          var targetElement = $(this).find("textarea");
-          if (targetElement.length == 0) {
-            targetElement = $(this);
-          }
-          targetElement.filter('textarea').each(function () {
-            $(this).after('<div class="sb-tokens-expander"><a href="#">+ View tokens</a></div>');
+          //var targetElement = $(this).find("textarea");
+          //if (targetElement.length == 0) {
+          //  targetElement = $(this);
+          //}
+          var targetElement = $(this);
+          //targetElement.filter('textarea').each(function () {
+            targetElement.after('<div class="sb-tokens-expander"><a href="#">+ View tokens</a></div>');
             var targetTextarea = $(this);
             targetTextarea.parent().children('.sb-tokens-expander').children('a').click(function (e) {
               e.preventDefault();
@@ -23,16 +24,16 @@
               }
               targetTextarea.click();
             });
-          });
+          //});
 
-          targetElement.filter("textarea").keypress(function () {
+          targetElement.keypress(function () {
             if (typeof $(this)[0].selectionStart != 'undefined') {
               $(this).attr('sb-selection-start-pos', $(this)[0].selectionStart + 1);
               $(this).attr('sb-selection-end-pos', $(this)[0].selectionStart + 1);
             }
           });
 
-          targetElement.filter("textarea").select(function() {
+          targetElement.select(function() {
             if (typeof $(this)[0].selectionStart != 'undefined') {
               $(this).attr('sb-selection-start-pos', $(this)[0].selectionStart);
             }
@@ -44,7 +45,7 @@
             }
           });       
  
-          targetElement.filter("textarea").click(function() {
+          targetElement.click(function() {
             $('.sb-tokens-expander, .sb-tokens-expander a').each(function () {
               $(this).show(); 
             });
@@ -58,7 +59,7 @@
               $(this).attr('sb-selection-start-pos', $(this)[0].selectionStart);
               $(this).attr('sb-selection-end-pos', $(this)[0].selectionEnd);
             }
-            $(this).addClass('sb-token-textarea');
+            $(this).addClass('sb-token-field');
 
             Drupal.settings.token_set_last_selected_field = this;
             showTokens($(this));
@@ -77,7 +78,7 @@
                 e.preventDefault();
                 $(this).parent().parent().children('.sb-tokens-expander').show();
                 $('#token-set-tokens').remove();
-                $('.sb-token-textarea').each(function () {
+                $('.sb-token-field').each(function () {
                   $(this).parent().removeAttr('sb-selection-start-pos');
                   $(this).parent().removeAttr('sb-selection-end-pos');
                 });
@@ -95,7 +96,7 @@
         }
         $('#token-set-tokens').remove();
         $('.sb-tokens-contractor').remove();
-        $('.sb-token-textarea').each(function () {
+        $('.sb-token-field').each(function () {
           if (!$(this).is(element)) {
             $(this).removeAttr('sb-selection-start-pos');
             $(this).removeAttr('sb-selection-end-pos');
