@@ -42,21 +42,6 @@
         var unusable = false;
         var partial = false;
 
-        if (!$gateways_enabled.credit/* && !$gateways_enabled.bank*/) {
-          unusable = true;
-          if (!$note.children('.unusable').length) {
-            $note.append('<span class="unusable">Quick donation functionality is only available when using one of the supported payment processors above.<br/></span>');
-          }
-        }
-        else if (($gateways_enabled.credit && !gateway_available.credit/* && !$gateways_enabled.bank)
-          || ($gateways_enabled.bank && !gateway_available.bank && !$gateways_enabled.credit*/)) {
-          unusable = true;
-        }
-        else {
-          unusable = false;
-          $note.children('.unusable').remove();
-        }
-
         var class_name = $option_value.replace('|', '_');
         if ($gateways_enabled[type] && Drupal.settings.fundraiser_quick_donate.usable_paypment_processors[type].indexOf($option_value) < 0) {
           // Remove any previous notices.
@@ -81,8 +66,23 @@
           gateway_available[type] = false;
         }
 
+        if (!$gateways_enabled.credit/* && !$gateways_enabled.bank*/) {
+          unusable = true;
+          if (!$note.children('.unusable').length) {
+            $note.append('<span class="unusable">Quick donation functionality is only available when using one of the supported payment processors above.<br/></span>');
+          }
+        }
+        else if (($gateways_enabled.credit && !gateway_available.credit/* && !$gateways_enabled.bank)
+          || ($gateways_enabled.bank && !gateway_available.bank && !$gateways_enabled.credit*/)) {
+          unusable = true;
+        }
+        else {
+          unusable = false;
+          $note.children('.unusable').remove();
+        }
+
         if (unusable
-          || $gateways_enabled.credit && !gateway_available.credit/* && !$gateways_enabled.bank
+          /*|| $gateways_enabled.credit && !gateway_available.credit && !$gateways_enabled.bank
           || $gateways_enabled.bank && !gateway_available.bank && !$gateways_enabled.credit*/
           /*|| ($gateways_enabled.credit && $gateways_enabled.bank && !gateway_available.credit && !gateway_available.bank)*/) {
           // Disable the QD checkbox and hide all succeeding elements.
@@ -109,6 +109,11 @@
           else {
             $note.hide();
           }
+        }
+
+        if (!$('#edit-quickdonate').is(':checked')) {
+          $quickdonate.nextAll('.form-item, .form-wrapper').hide();
+          $('#edit-quickdonate-message-container').hide();
         }
       };
 
