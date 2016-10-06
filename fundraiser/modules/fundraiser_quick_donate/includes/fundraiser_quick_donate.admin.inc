@@ -18,8 +18,19 @@ function fundraiser_quick_donate_admin_settings($form, $form_state) {
   );
 
   $gateways = _fundraiser_gateway_info();
-  $gateways = array_filter($gateways, function($element) {
-    return !empty($element['gateway_details']['cardonfile']);
+  // List of payment gateways that shouldn't be configured ever.
+  $blacklist = array(
+    'commerce_sage_payments_eft|commerce_payment_commerce_sage_payments_eft',
+    'authnet_echeck|commerce_payment_authnet_echeck',
+    'commerce_litle_echeck|commerce_payment_commerce_litle_echeck',
+    'commerce_psi_eft|commerce_payment_commerce_psi_eft',
+    'commerce_sage_payments_eft|commerce_payment_commerce_sage_payments_eft',
+    // @todo Remove once braintree is supported.
+    'braintree_hostedfields|commerce_payment_braintree_hostedfields',
+    'authnet_echeck|rules_authorize_net_echeck_net_avv_2016_authorize_net_sandbox_',
+  );
+  $gateways = array_filter($gateways, function($element) use ($blacklist) {
+    return !empty($element['gateway_details']['cardonfile']) && !in_array($element['id'], $blacklist);
   });
   $gateways = array_keys($gateways);
   foreach ($gateways as $gateway_key) {
