@@ -2312,10 +2312,15 @@ function fundraiser_sustainers_edit_form($did) {
         ),
       );
     }
-    $billing_update_form_array = drupal_get_form('fundraiser_update_billing_form', $data);
-    $billing_update_form_array['#attached']['js'][3]['data']['fundraiser']['js_validation_settings']['card_cvv']->required = FALSE;
-    $billing_update_form_array['#attached']['js'][3]['data']['fundraiser']['js_validation_settings']['card_number']->required = FALSE;
-    $billing_update_form = drupal_render($billing_update_form_array);
+    // Display the billing update form only if the update callback for the
+    // gatway has been defined.
+    $billing_update_form = '';
+    if (isset($donation->gateway['update callback'])) {
+      $billing_update_form_array = drupal_get_form('fundraiser_update_billing_form', $data);
+      $billing_update_form_array['#attached']['js'][3]['data']['fundraiser']['js_validation_settings']['card_cvv']->required = FALSE;
+      $billing_update_form_array['#attached']['js'][3]['data']['fundraiser']['js_validation_settings']['card_number']->required = FALSE;
+      $billing_update_form = drupal_render($billing_update_form_array);
+    }
   }
   elseif ($remaining_donation_count == 0) {
     $billing_update_form = $no_remaining_message;
@@ -2323,7 +2328,9 @@ function fundraiser_sustainers_edit_form($did) {
   else {
     $billing_update_form = t('This recurring donation has been cancelled.');
   }
-  $billing_update_form = '<div id="donation-billing-form"><h2>Update Your Payment Information</h2>' . $billing_update_form . '</div>';
+  if (!empty($billing_update_form)) {
+    $billing_update_form = '<div id="donation-billing-form"><h2>Update Your Payment Information</h2>' . $billing_update_form . '</div>';
+  }
 
   if ($remaining_donation_count > 0 && empty($cancelled)) {
     $cancel_form_array = drupal_get_form('fundraiser_sustainers_cancel_form', $next_donation);
