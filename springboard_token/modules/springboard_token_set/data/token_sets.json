@@ -89,7 +89,7 @@
   ],
   "token_sets": [
     {
-      "name": "Form Specific Upsell Content",
+      "name": "Form Specific Upsell",
       "tokens": [
         "[donation:address]",
         "[donation:address_line_2]",
@@ -114,7 +114,7 @@
       ]
     },
     {
-      "name": "Upsell Thank You Content",
+      "name": "Upsell",
       "tokens": [
         "[donation:address]",
         "[donation:address_line_2]",
@@ -148,42 +148,7 @@
       ]
     },
     {
-      "name": "Upsell Confirmation Email Settings",
-      "tokens": [
-        "[donation:address]",
-        "[donation:address_line_2]",
-        "[donation:city]",
-        "[donation:country]",
-        "[donation:amount]",
-        "[donation:card_expiration_month]",
-        "[donation:card_expiration_year]",
-        "[donation:card_type]",
-        "[donation:currency:code]",
-        "[donation:currency:name]",
-        "[donation:currency:symbol]",
-        "[donation:did]",
-        "[donation:mail]",
-        "[donation:first_name]",
-        "[donation:card_number]",
-        "[donation:last_name]",
-        "[donation:payment_method]",
-        "[donation:recurs_monthly]",
-        "[donation:state]",
-        "[donation:zip]",
-        "[sb_social:email_message]",
-        "[sb_social:email_share_link]",
-        "[sb_social:email_subject]",
-        "[sb_social:facebook_share_link]",
-        "[sb_social:facebook_description]",
-        "[sb_social:facebook_image]",
-        "[sb_social:facebook_title]",
-        "[sb_social:share_links]",
-        "[sb_social:twitter_share_link]",
-        "[sb_social:twitter_message]"
-      ]
-    },
-    {
-      "name": "Social Share FB Description (all form types)",
+      "name": "Social Share",
       "tokens": [
         "[donation:amount_formatted]",
         "[site:mail]",
@@ -195,106 +160,7 @@
       ]
     },
     {
-      "name": "Social Share Email Subject (all form types)",
-      "tokens": [
-        "[donation:amount_formatted]",
-        "[site:mail]",
-        "[site:login-url]",
-        "[site:name]",
-        "[site:slogan]",
-        "[site:url]",
-        "[site:url-brief]"
-      ]
-    },
-    {
-      "name": "Social Share Email Message (all form types)",
-      "tokens": [
-        "[donation:amount_formatted]",
-        "[site:mail]",
-        "[site:login-url]",
-        "[site:name]",
-        "[site:slogan]",
-        "[site:url]",
-        "[site:url-brief]"
-      ]
-    },
-    {
-      "name": "Social Share Twitter Message (all form types)",
-      "tokens": [
-        "[donation:amount_formatted]",
-        "[site:mail]",
-        "[site:login-url]",
-        "[site:name]",
-        "[site:slogan]",
-        "[site:url]",
-        "[site:url-brief]"
-      ]
-    },
-    {
-      "name": "Donation Email Confirmation (HTML & Text)",
-      "tokens": [
-        "[donation:address]",
-        "[donation:address_line_2]",
-        "[donation:city]",
-        "[donation:country]",
-        "[donation:user]",
-        "[donation:amount]",
-        "[donation:card_expiration_month]",
-        "[donation:card_expiration_year]",
-        "[donation:card_type]",
-        "[donation:currency:code]",
-        "[donation:currency:name]",
-        "[donation:currency:symbol]",
-        "[current-date:custom:?]",
-        "[current-date:long]",
-        "[current-date:medium]",
-        "[current-date:short]",
-        "[donation:did]",
-        "[donation:order:commerce_customer_billing]",
-        "[donation:order:created]",
-        "[donation:order:created:custom:?]",
-        "[donation:order:created:long]",
-        "[donation:order:created:medium]",
-        "[donation:order:created:short]",
-        "[donation:order:commerce-line-items]",
-        "[donation:order:commerce-line-items:1]",
-        "[donation:order:commerce-line-items:2]",
-        "[donation:order:commerce-line-items:3]",
-        "[donation:order:status-title]",
-        "[donation:payment-transaction:remote-id]",
-        "[donation:payment-transaction:remote-status]",
-        "[donation:payment-transaction:status]",
-        "[donation:payment-transaction:transaction-id]",
-        "[donation:mail]",
-        "[donation:first_name]",
-        "[donation:amount_formatted]",
-        "[donation:card_number]",
-        "[donation:last_name]",
-        "[donation:payment_method]",
-        "[donation:frequency]",
-        "[donation:recurs_monthly]",
-        "[donation:state]",
-        "[donation:zip]",
-        "[sb_social:email_message]",
-        "[sb_social:email_share_link]",
-        "[sb_social:email_subject]",
-        "[sb_social:facebook_share_link]",
-        "[sb_social:facebook_description]",
-        "[sb_social:facebook_image]",
-        "[sb_social:facebook_title]",
-        "[sb_social:share_links]",
-        "[sb_social:twitter_share_link]",
-        "[sb_social:twitter_message]",
-        "[site:mail]",
-        "[site:login-url]",
-        "[site:name]",
-        "[site:slogan]",
-        "[site:url]",
-        "[site:url-brief]"
-      ]
-    },
-    {
-      "name": "Donation Confirmation Page Message",
+      "name": "Donation",
       "tokens": [
         "[donation:address]",
         "[donation:address_line_2]",
@@ -373,7 +239,7 @@
       ]
     },
     {
-      "name": "Message Actions Confirmation Email Template",
+      "name": "Message Actions Email Template",
       "tokens": [
         "[sb_social:email_message]",
         "[sb_social:email_share_link]",
@@ -396,7 +262,7 @@
       ]
     },
     {
-      "name": "Message Action Confirmation Page Success Message",
+      "name": "Message Action Confirmation",
       "tokens": [
         "[current-date:custom:?]",
         "[current-date:long]",
@@ -427,31 +293,7 @@
       ]
     },
     {
-      "name": "Message Action Confirmation Page Failure Message?",
-      "tokens": [
-        "[sb_social:email_message]",
-        "[sb_social:email_share_link]",
-        "[sb_social:email_subject]",
-        "[sb_social:facebook_share_link]",
-        "[sb_social:facebook_description]",
-        "[sb_social:facebook_image]",
-        "[sb_social:facebook_title]",
-        "[sb_social:share_links]",
-        "[sb_social:twitter_share_link]",
-        "[sb_social:twitter_message]",
-        "[site:mail]",
-        "[site:login-url]",
-        "[site:name]",
-        "[site:slogan]",
-        "[site:url]",
-        "[site:url-brief]",
-        "[contact:first_name]",
-        "[contact:last_name]",
-        "[contact:address]"
-      ]
-    },
-    {
-      "name": "Petitions Email Confirmation (HTML & text)",
+      "name": "Petitions Email Confirmation",
       "tokens": [
         "[sb_social:email_message]",
         "[sb_social:email_share_link]",
@@ -498,7 +340,7 @@
       ]
     },
     {
-      "name": "Social Actions Confirmation Email Template",
+      "name": "Social Action",
       "tokens": [
         "[sb_social:email_message]",
         "[sb_social:email_share_link]",
@@ -519,49 +361,7 @@
       ]
     },
     {
-      "name": "Social Actions Confirmation Success Message",
-      "tokens": [
-        "[sb_social:email_message]",
-        "[sb_social:email_share_link]",
-        "[sb_social:email_subject]",
-        "[sb_social:facebook_share_link]",
-        "[sb_social:facebook_description]",
-        "[sb_social:facebook_image]",
-        "[sb_social:facebook_title]",
-        "[sb_social:share_links]",
-        "[sb_social:twitter_share_link]",
-        "[sb_social:twitter_message]",
-        "[site:mail]",
-        "[site:login-url]",
-        "[site:name]",
-        "[site:slogan]",
-        "[site:url]",
-        "[site:url-brief]"
-      ]
-    },
-    {
-      "name": "Social Actions Confirmation Failure Message",
-      "tokens": [
-        "[sb_social:email_message]",
-        "[sb_social:email_share_link]",
-        "[sb_social:email_subject]",
-        "[sb_social:facebook_share_link]",
-        "[sb_social:facebook_description]",
-        "[sb_social:facebook_image]",
-        "[sb_social:facebook_title]",
-        "[sb_social:share_links]",
-        "[sb_social:twitter_share_link]",
-        "[sb_social:twitter_message]",
-        "[site:mail]",
-        "[site:login-url]",
-        "[site:name]",
-        "[site:slogan]",
-        "[site:url]",
-        "[site:url-brief]"
-      ]
-    },
-    {
-      "name": "Springboard Goals Template",
+      "name": "Goal",
       "tokens": [
         "[goal:progress-starter]",
         "[goal:target]",
@@ -570,7 +370,7 @@
       ]
     },
     {
-      "name": "Springboard Tags",
+      "name": "Springboard Tag",
       "tokens": [
         "[donation:amount]",
         "[donation:currency:code]",
