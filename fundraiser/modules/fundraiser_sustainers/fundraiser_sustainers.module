@@ -2312,10 +2312,15 @@ function fundraiser_sustainers_edit_form($did) {
         ),
       );
     }
-    $billing_update_form_array = drupal_get_form('fundraiser_update_billing_form', $data);
-    $billing_update_form_array['#attached']['js'][3]['data']['fundraiser']['js_validation_settings']['card_cvv']->required = FALSE;
-    $billing_update_form_array['#attached']['js'][3]['data']['fundraiser']['js_validation_settings']['card_number']->required = FALSE;
-    $billing_update_form = drupal_render($billing_update_form_array);
+    // Display the billing update form only if the update callback for the
+    // gatway has been defined.
+    $billing_update_form = '';
+    if (isset($donation->gateway['update callback'])) {
+      $billing_update_form_array = drupal_get_form('fundraiser_update_billing_form', $data);
+      $billing_update_form_array['#attached']['js'][3]['data']['fundraiser']['js_validation_settings']['card_cvv']->required = FALSE;
+      $billing_update_form_array['#attached']['js'][3]['data']['fundraiser']['js_validation_settings']['card_number']->required = FALSE;
+      $billing_update_form = drupal_render($billing_update_form_array);
+    }
   }
   elseif ($remaining_donation_count == 0) {
     $billing_update_form = $no_remaining_message;
@@ -2323,7 +2328,9 @@ function fundraiser_sustainers_edit_form($did) {
   else {
     $billing_update_form = t('This recurring donation has been cancelled.');
   }
-  $billing_update_form = '<div id="donation-billing-form"><h2>Update Your Payment Information</h2>' . $billing_update_form . '</div>';
+  if (!empty($billing_update_form)) {
+    $billing_update_form = '<div id="donation-billing-form"><h2>Update Your Payment Information</h2>' . $billing_update_form . '</div>';
+  }
 
   if ($remaining_donation_count > 0 && empty($cancelled)) {
     $cancel_form_array = drupal_get_form('fundraiser_sustainers_cancel_form', $next_donation);
@@ -3489,13 +3496,17 @@ function fundraiser_sustainers_auto_cancel($donation) {
  * Creates a form for donation amount update.
  */
 function fundraiser_sustainers_billing_update_form($form, &$form_state, $donation) {
+  // Make sure we have the master donation ID.
+  $sustainers_record = _fundraiser_sustainers_get_recurring_by_did($donation->did);
+  if (empty($sustainers_record->master_did)) return false;
+
   // Include some extra info to provide context.
   $form['series-info'] = array(
     '#prefix' => '<div id="recurring-series-info">',
     '#suffix' => '</div>',
   );
 
-  $remaining = _fundraiser_sustainers_get_donations_recurr_remaining($donation->did);
+  $remaining = _fundraiser_sustainers_get_donations_recurr_remaining($sustainers_record->master_did);
   $next_donation = $remaining ? fundraiser_donation_get_donation($remaining[0]->did) : $donation;
   $cardonfile = _fundraiser_donation_cardonfile_card($next_donation);
 
@@ -3504,7 +3515,7 @@ function fundraiser_sustainers_billing_update_form($form, &$form_state, $donatio
   );
 
   $form['series-info']['recurring-payment-link'] = array(
-    '#markup' => l(t("Edit Recurring Donation"), "user/{$donation->uid}/recurring_overview/{$donation->did}"),
+    '#markup' => l(t("Edit Recurring Donation"), "user/{$donation->uid}/recurring_overview/{$sustainers_record->master_did}"),
     '#prefix' => '<div id="payment-edit-link">',
     '#suffix' => '</div>',
   );
@@ -4475,6 +4486,9 @@ function fundraiser_sustainers_omit_sustainer_action(&$sustainer_record, $contex
 function _fundraiser_sustainers_calculate_installments($donation) {
   $info = _fundraiser_get_donation_gateway($donation->did);
   $installments = 0;
+  // Copy txn_id into the donation array to make it available inside the expire
+  // callback. Needed for Braintree hosted fields sustainer series creation.
+  $donation->donation['txn_id'] = $donation->txn_id;
   if (isset($info['expire callback'])) {
     $expiration_func = $info['expire callback'];
     $expires = $expiration_func($donation->donation);
