@@ -8,6 +8,7 @@
  * each view.
  */
 ?>
+<div id = "sba-dashboard">
 <?php foreach ($sections as $section): ?>
   <?php if (isset($section['css'])):
     drupal_add_css($section['css']); ?>
@@ -33,3 +34,4 @@
     <?php endif; ?>
   </div>
 <?php endforeach; ?>
+</div>

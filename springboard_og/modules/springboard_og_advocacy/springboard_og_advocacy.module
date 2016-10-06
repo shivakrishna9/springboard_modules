@@ -329,7 +329,17 @@ function springboard_og_springboard_advocacy_subscription_alter(&$subscription) 
   if (!empty($group_context['gid'])) {
     // Get the current node to check that it is not itself a group.
     $node = menu_get_object();
+
     if (!empty($node->nid) && !og_is_group('node', $node->nid)) {
+      // We're on a message add or edit page.
+      $group_subscription = springboard_og_advocacy_get_group_subscription($group_context['gid']);
+      $states = unserialize($group_subscription['allowed_states']);
+      $subscription['states_custom'] = !empty($states) ? array_keys($states) : [];
+      $subscription['subscription_type'] = $group_subscription['group_subscription_type'];
+      $subscription['is_grouped'] = TRUE;
+    }
+    elseif (empty($node)) {
+      // We're on the custom groups add or edit pages.
       $group_subscription = springboard_og_advocacy_get_group_subscription($group_context['gid']);
       $states = unserialize($group_subscription['allowed_states']);
       $subscription['states_custom'] = !empty($states) ? array_keys($states) : [];
@@ -353,11 +363,19 @@ function springboard_og_springboard_advocacy_views_plugin_query_alter(&$query) {
   // Check for a node context.
   $node = menu_get_object();
   if (!empty($node->nid) && !og_is_group('node', $node->nid)) {
-
     $wrapper = entity_metadata_wrapper('node', $node);
     $group = $wrapper->og_group_ref->value();
-
-    $group_subscription = springboard_og_advocacy_get_group_subscription($group[0]->nid);
+    $gid = $group[0]->nid;
+  }
+  else {
+    //check for session value
+    //    $context = og_context('node');
+    //    $gid = $context['gid']; does not work because path is system/ajax
+    // when searching on custom groups page...
+    $gid = $_SESSION['springboard_og_advocacy_working_group'];
+  }
+  if (!empty($gid)) {
+    $group_subscription = springboard_og_advocacy_get_group_subscription($gid);
     if (in_array($group_subscription['group_subscription_type'], array(
       'states-selected',
       'federal-and-states-selected',
@@ -368,9 +386,6 @@ function springboard_og_springboard_advocacy_views_plugin_query_alter(&$query) {
       }
     }
   }
-
-  // Check for a user context.
-
 
 }
 
@@ -395,11 +410,11 @@ function springboard_og_advocacy_get_group_subscription($gid) {
  * file to use while searching and adding targets.
  */
 function springboard_og_advocacy_form_alter(&$form, &$form_state, $form_id) {
-  //$context = og_context();
-  $types = array('sba_message_edit_form', 'springboard_target_edit_custom_groups_form');
+  $types = array('sba_message_edit_form', 'springboard_target_edit_custom_groups_form', 'springboard_target_create_custom_groups_form');
   if (in_array($form_id, $types)) {
     $api_call = springboard_advocacy_api_call();
     $subscription = $api_call->getSubscription();
+
     if (!empty($subscription['is_grouped'])) {
       $group_settings = array(
         'sbaSubscriptionIsGrouped' => TRUE,
@@ -417,9 +432,11 @@ function springboard_og_advocacy_form_alter(&$form, &$form_state, $form_id) {
 
 }
 
-
 /**
  * Implements hook_og_context_negotiation_info().
+ *
+ * Fires off a context negotiator on non-node advocacy paths, so we can figure
+ * out what group we're currently working in.
  */
 function springboard_og_advocacy_og_context_negotiation_info() {
   $providers = array();
@@ -428,26 +445,158 @@ function springboard_og_advocacy_og_context_negotiation_info() {
     'description' => t("Determine context for API subscriptions"),
     'callback' => 'springboard_og_advocacy_og_context_handler',
     'menu path' => array(
-      'admin/springboard/advocacy/targets/custom-groups/%/edit',
       'admin/springboard/advocacy/targets',
-      'admin/springboard/advocacy/targets/custom-groups',
-      'admin/springboard/advocacy/targets/custom-groups/add',
-      'admin/springboard/advocacy/targets/custom-targets',
-      'admin/springboard/advocacy/targets/custom-targets/add',
     ),
   );
 
   return $providers;
 }
 
-
 /**
- * @return array
+ * OG_context handler.
+ *
+ * On non-node pages, figure out the current group context, or set it.
  */
-function springboard_og_advocacy_og_context_handler() {
-  $groups = og_get_groups_by_user();
-  return array(
-    'node' => $groups['node'],
-  );
+function springboard_og_advocacy_og_context_handler($item = NULL) {
+  $path = current_path();
+  unset($_SESSION['og_context']);
+  if (strpos($path, '/edit') !== FALSE) {
+    // @todo get the group from the target ID.
+    //return array('node' => array($gid);
+  }
+  global $user;
+  $ret = array();
+  if ($user->uid) {
+    $groups = og_get_groups_by_user();
+    if (!empty($groups['node'])) {
+
+      // If the user only belongs to one group, return it.
+      if (count($groups['node']) === 1) {
+        $gid = reset($groups['node']);
+        $ret = array('node' => array($gid));
+      }
+      // If the user has multiple groups and there is not a currently selected
+      // working group, set the first group as the working group, and set
+      // springboard_og_context_multiple so that the dashboard knows we need a
+      // selector.
+      elseif (!isset($_SESSION['springboard_og_advocacy_working_group'])) {
+
+        $_SESSION['springboard_og_context_multiple'] = array_values($groups['node']);
+        $gid = reset($groups['node']);
+        $_SESSION['springboard_og_advocacy_working_group'] = $gid;
+        $ret = array('node' => array($gid));
+      }
+      else {
+        // There's already a working group, return it as the context and
+        // tell the dashboard we need a selector.
+        $_SESSION['springboard_og_context_multiple'] = array_values($groups['node']);
+        $ret = array('node' => array($_SESSION['springboard_og_advocacy_working_group']));
+      }
+    }
+  }
+
+  return $ret;
 }
 
+/**
+ * Implements hook_boot().
+ *
+ * Clear the context value. Not sure we need this.
+ */
+function springboard_og_advocacy_boot() {
+  if (isset($_SESSION['springboard_og_context_multiple'])) {
+    unset($_SESSION['springboard_og_context_multiple']);
+  }
+}
+
+/**
+ * Implements hook_preprocess_page().
+ *
+ * Add the group selector to the advocacy dashboard pages.
+ * @todo There's a better way.
+ */
+function springboard_og_preprocess_page(&$vars) {
+  $path = current_path();
+  $omit = strpos($path, '/add') !== FALSE ? TRUE : strpos($path, '/edit') !== FALSE;
+  if (!$omit && isset($_SESSION['springboard_og_context_multiple'])) {
+    $build = array(
+      'selector' => drupal_get_form('springboard_og_advocacy_group_selector_form', $_SESSION['springboard_og_context_multiple']),
+    );
+    $vars['page']['content']['system_main']['main']['#markup'] = render($build) . $vars['page']['content']['system_main']['main']['#markup'];
+  }
+}
+
+/**
+ * Build the group selector form for advocacy dashboard page.
+ *
+ * @param $form
+ * @param $form_state
+ * @param $groups
+ *
+ * @return array
+ */
+function springboard_og_advocacy_group_selector_form($form, &$form_state, $groups) {
+
+  $form = [];
+  $form['title']['#markup'] = '<strong>' . t('Choose an affiliate group to work in:') . '</strong>';
+
+  // Build the selector form from groups found in user session.
+  $options = [];
+  foreach ($groups as $nid) {
+    $node = node_load($nid);
+    $options[$nid] = check_plain($node->title);
+  }
+
+  $form['groups'] = array(
+    '#type' => 'select',
+    '#options' => $options,
+    '#default_value' => $_SESSION['og_context'],
+    '#ajax' => array(
+      'callback' => 'springboard_og_advocacy_group_selector',
+      'wrapper' => 'sba-dashboard',
+      'method' => 'replace',
+      'effect' => 'fade',
+    ),
+    '#prefix' => '<div id="group-selector-div">',
+    '#suffix' => '</div>',
+  );
+
+  // Get the page argument that the dashboard callback expects.
+  if (isset($form_state['values']['path'])) {
+    $path = $form_state['values']['path'];
+  }
+  else {
+    $item = menu_get_item();
+    $path = $item['page_arguments'][0];
+  }
+  $form['path'] = array(
+    '#type' => 'value',
+    '#value' => $path,
+  );
+
+  return $form;
+}
+
+
+/**
+ * AJAX callback for group selector form.
+ *
+ * @param $form
+ * @param $form_state
+ * @return mixed
+ */
+function springboard_og_advocacy_group_selector($form, &$form_state) {
+  // Put the chosen group into session, so it can be retrieved by
+  // springboard_og_advocacy_og_context_handler().
+  $_SESSION['springboard_og_advocacy_working_group'] = $form_state['values']['groups'];
+
+  // Reload the dashboard so the views result can filter by the selected group.
+  $dashboard = springboard_advocacy_dashboard($form_state['values']['path']);
+  return $dashboard;
+}
+
+// Alternate menu paths to the advocacy dashboard from group nodes with
+// group unique
+// permissions might be better/simpler than using
+// session negotiation when user has
+// multiple groups.

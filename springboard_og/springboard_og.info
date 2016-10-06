@@ -4,9 +4,9 @@ core = 7.x
 package = Springboard
 dependencies[] = og
 dependencies[] = og_ui
+dependencies[] = og_context
 dependencies[] = views_bulk_operations
 dependencies[] = rules
 dependencies[] = ctools
 dependencies[] = addressfield
 dependencies[] = image
-
