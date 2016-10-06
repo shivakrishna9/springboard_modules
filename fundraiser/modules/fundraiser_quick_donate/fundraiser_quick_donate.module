@@ -185,8 +185,8 @@ function fundraiser_quick_donate_node_insert($node) {
     $fields = array(
       'fundraiser_nid' => $node->nid,
       'quickdonate_optin_message' => $node->quickdonate_optin_message,
-      'quickdonate_help_message' => $node->quickdonate_help_message['value'],
-      'quickdonate_help_message_format' => $node->quickdonate_help_message['format'],
+      'quickdonate_help_message' => isset($node->quickdonate_help_message_format) ? $node->quickdonate_help_message : $node->quickdonate_help_message['value'],
+      'quickdonate_help_message_format' => isset($node->quickdonate_help_message_format) ? $node->quickdonate_help_message_format : $node->quickdonate_help_message['format'],
       'quickdonate_login_message' => $node->quickdonate_login_message,
       'quickdonate_login_link_message' => $node->quickdonate_login_link_message,
     );
