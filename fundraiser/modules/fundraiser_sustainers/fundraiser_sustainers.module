@@ -3489,13 +3489,17 @@ function fundraiser_sustainers_auto_cancel($donation) {
  * Creates a form for donation amount update.
  */
 function fundraiser_sustainers_billing_update_form($form, &$form_state, $donation) {
+  // Make sure we have the master donation ID.
+  $sustainers_record = _fundraiser_sustainers_get_recurring_by_did($donation->did);
+  if (empty($sustainers_record->master_did)) return false;
+
   // Include some extra info to provide context.
   $form['series-info'] = array(
     '#prefix' => '<div id="recurring-series-info">',
     '#suffix' => '</div>',
   );
 
-  $remaining = _fundraiser_sustainers_get_donations_recurr_remaining($donation->did);
+  $remaining = _fundraiser_sustainers_get_donations_recurr_remaining($sustainers_record->master_did);
   $next_donation = $remaining ? fundraiser_donation_get_donation($remaining[0]->did) : $donation;
   $cardonfile = _fundraiser_donation_cardonfile_card($next_donation);
 
@@ -3504,7 +3508,7 @@ function fundraiser_sustainers_billing_update_form($form, &$form_state, $donatio
   );
 
   $form['series-info']['recurring-payment-link'] = array(
-    '#markup' => l(t("Edit Recurring Donation"), "user/{$donation->uid}/recurring_overview/{$donation->did}"),
+    '#markup' => l(t("Edit Recurring Donation"), "user/{$donation->uid}/recurring_overview/{$sustainers_record->master_did}"),
     '#prefix' => '<div id="payment-edit-link">',
     '#suffix' => '</div>',
   );
