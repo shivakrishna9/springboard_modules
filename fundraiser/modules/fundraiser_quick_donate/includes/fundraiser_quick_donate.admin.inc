@@ -17,7 +17,11 @@ function fundraiser_quick_donate_admin_settings($form, $form_state) {
     '#collapsed' => FALSE,
   );
 
-  $gateways = array_keys(_fundraiser_gateway_info());
+  $gateways = _fundraiser_gateway_info();
+  $gateways = array_filter($gateways, function($element) {
+    return !empty($element['gateway_details']['cardonfile']);
+  });
+  $gateways = array_keys($gateways);
   foreach ($gateways as $gateway_key) {
     $default = '';
     $data = variable_get(FUNDRAISER_QUICK_DONATE_DEFAULT_FORM_PREFIX . $gateway_key, array());
