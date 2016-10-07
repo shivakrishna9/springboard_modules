@@ -88,16 +88,6 @@ function springboard_token_set_menu() {
 function springboard_token_set_fields_admin_form($form, &$form_state) {
   $form = array();
 
-  // Gather a list of form ids where tokens could be attached:
-  $forms_list = array('- Select a form -');
-  $token_fields_query = db_query("SELECT form_id, field_name, tsid FROM {springboard_token_set_field_map} ORDER BY form_id, field_name");
-  foreach ($token_fields_query as $token_fields_data) {
-    if (!in_array($token_fields_data->form_id, $forms_list)) {
-      $forms_list[$token_fields_data->form_id] = $token_fields_data->form_id;
-    }
-  } 
-
-  // Add AJAXified fields for adding/removing a default token set to a field:
   $form['token-fields']['text-blurb'] = array(
     '#type' => 'markup',
     '#markup' => 'Add one or more token sets to a given field; remove all token sets from a field to disable the token selection widget.',
@@ -106,16 +96,16 @@ function springboard_token_set_fields_admin_form($form, &$form_state) {
     '#type' => 'container',
   );
   $form['token-fields']['add-mapping']['target_form_id'] = array(
-    '#type' => 'select',
+    '#type' => 'textfield',
     '#title' => 'Target form',
-    '#options' => $forms_list,
+    '#size' => 32,
   );
   $form['token-fields']['add-mapping']['field_key'] = array(
-    '#type' => 'select',
+    '#type' => 'textfield',
     //'#disabled' => TRUE,
     '#validated' => TRUE,
     '#title' => 'Target field',
-    '#options' => array('- First, please select a target form. -'),
+    //'#options' => array('- First, please select a target form. -'),
   );
   $token_sets = array('- None -');
   $token_sets_data = springboard_token_set_get_sets();

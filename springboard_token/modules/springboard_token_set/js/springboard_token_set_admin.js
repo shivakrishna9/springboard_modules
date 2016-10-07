@@ -2,6 +2,7 @@
   Drupal.behaviors.SpringboardTokenSetFieldsAdmin = {
     attach: function (context, settings) {
       var submitButton = $('#springboard-token-set-fields-admin-form #edit-token-add');
+      var formSelect = $('#springboard-token-set-fields-admin-form #edit-target-form-id');
       var fieldSelect = $('#springboard-token-set-fields-admin-form #edit-field-key');
       var tokenSetSelect = $('#springboard-token-set-fields-admin-form #edit-token-set');
       fieldSelect.attr('disabled', 'disabled');
@@ -9,36 +10,49 @@
       tokenSetSelect.attr('disabled', 'disabled');
       tokenSetSelect.parent().addClass('form-disabled');
       submitButton.hide();
-      $('#springboard-token-set-fields-admin-form #edit-target-form-id').change(function () {
-        if ($(this).val() == 0) {
+      formSelect.keyup(function () {
+        if ($(this).val() == '') {
           fieldSelect.attr('disabled', 'disabled');
           fieldSelect.parent().addClass('form-disabled');
-          fieldSelect.empty();
+          fieldSelect.val('');
           tokenSetSelect.attr('disabled', 'disabled');
           tokenSetSelect.parent().addClass('form-disabled');
-          fieldSelect.append('<option value="0">- First, please select a target form. -</option>' + "\n");
+          tokenSetSelect.val('');
           submitButton.hide();
-          return;
         }
-        $.ajax({
-          url: '/sb-admin-token-fields-ajax/' + $(this).val(),
-          dataType: 'json',
-          context: document.body, 
-          success: function(data) {
-            fieldSelect.empty();
-            fieldSelect.removeAttr('disabled'); 
-            fieldSelect.parent().removeClass('form-disabled'); 
-            tokenSetSelect.removeAttr('disabled'); 
-            tokenSetSelect.parent().removeClass('form-disabled');
+        else {
+          fieldSelect.removeAttr('disabled');
+          fieldSelect.parent().removeClass('form-disabled');
+          if (fieldSelect.val() != '' && tokenSetSelect.val() > 0) {
             submitButton.show();
-            for (var i = 0; i < data.length; i++) {
-               fieldSelect.append('<option value="' + data[i]['key']  + '">' + data[i]['label'] + '</option>' + "\n");
-            }
-          }
-        });
+          } 
+        }
+      });
+      fieldSelect.keyup(function () {
+        if ($(this).val() == '') {
+          tokenSetSelect.attr('disabled', 'disabled');
+          tokenSetSelect.parent().addClass('form-disabled');
+          tokenSetSelect.val('');
+          submitButton.hide();
+        }
+        else {
+          tokenSetSelect.removeAttr('disabled');
+          tokenSetSelect.parent().removeClass('form-disabled');
+          if (fieldSelect.val() != '' && tokenSetSelect.val() > 0) {
+            submitButton.show();
+          }          
+        }
+      });
+      tokenSetSelect.change(function () {
+        if (tokenSetSelect.val() == 0 || !tokenSetSelect.val()) {
+          submitButton.hide();
+        }
+        else {
+          submitButton.show();
+        }
       });
       $('#springboard-token-set-fields-admin-form').submit(function (e) {
-        if ($('#springboard-token-set-fields-admin-form #edit-field-key').val() == 0) {
+        if (formSelect.val() == '' || fieldSelect.val() == '' || tokenSetSelect.val() == '0' || !tokenSetSelect.val()) {
           e.preventDefault();
         }
       });
