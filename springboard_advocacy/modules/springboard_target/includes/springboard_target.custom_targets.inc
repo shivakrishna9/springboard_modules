@@ -308,6 +308,13 @@ function springboard_target_form($target_id = NULL) {
     '#value' => 'Target',
   );
 
+  if (!empty($target)) {
+    $form['target'] = array(
+      '#type' => 'value',
+      '#value' => $target,
+    );
+  }
+
   return $form;
 }
 

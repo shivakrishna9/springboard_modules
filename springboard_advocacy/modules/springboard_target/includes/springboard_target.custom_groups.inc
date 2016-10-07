@@ -57,6 +57,11 @@ function springboard_target_group_form($group_id = NULL) {
     '#attributes' => array('class' => array('group-add', 'group-name')),
   );
 
+  $form['group'] = array(
+    '#type' => 'value',
+    '#default_value' => $group,
+  );
+
   $form['data']['group_id'] = array(
     '#type' => 'hidden',
     '#default_value' => $group_id,

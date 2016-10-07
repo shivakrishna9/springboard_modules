@@ -348,6 +348,7 @@ function springboard_og_springboard_advocacy_subscription_alter(&$subscription) 
     }
   }
   else {
+    //@todo  sometimes we get here afer ajax reload of page elements.
     $subscription['is_grouped'] = FALSE;
   }
 }
@@ -364,25 +365,47 @@ function springboard_og_springboard_advocacy_views_plugin_query_alter(&$query) {
   $node = menu_get_object();
   if (!empty($node->nid) && !og_is_group('node', $node->nid)) {
     $wrapper = entity_metadata_wrapper('node', $node);
-    $group = $wrapper->og_group_ref->value();
-    $gid = $group[0]->nid;
+    foreach ($node as $key => $property) {
+      if (strpos($key, 'og_group_ref') !== FALSE) {
+        $group = $wrapper->$key->value();
+        $gid = $group->nid;
+      }
+    }
   }
   else {
     //check for session value
     //    $context = og_context('node');
-    //    $gid = $context['gid']; does not work because path is system/ajax
+    //    $gid = $context['gid']; does not work because...
     // when searching on custom groups page...
     $gid = $_SESSION['springboard_og_advocacy_working_group'];
   }
   if (!empty($gid)) {
     $group_subscription = springboard_og_advocacy_get_group_subscription($gid);
+    // If this group is limited to particular states, add state values to the
+    // search query, if none are present.
     if (in_array($group_subscription['group_subscription_type'], array(
       'states-selected',
       'federal-and-states-selected',
     ))) {
       if (!empty($query->search_terms) && empty($query->search_terms['states'])) {
-        $states = unserialize($group_subscription['allowed_states']);
-        $query->search_terms['state'] = $states;
+        if ($query->search_terms['class_name'][0] != 'Target' && $query->search_terms['class_name'][0] != 'Group') {
+          $states = unserialize($group_subscription['allowed_states']);
+          $query->search_terms['state'] = $states;
+        }
+      }
+    }
+    // If there's a group id, only return results for that group when searching
+    // custom targets or custom groups.
+    if (!empty($query->search_terms) && ($query->search_terms['class_name'][0] == 'Target' || $query->search_terms['class_name'][0] == 'Group')) {
+      $query->search_terms['affiliate_id'] = $gid;
+    }
+  }
+  else {
+    //@todo not implemented do we need this?
+    // There's no group id.
+    if (!empty($query->search_terms) && ($query->search_terms['class_name'][0] == 'Target' || $query->search_terms['class_name'][0] == 'Group')) {
+      if (user_access('access all springboard_groups')) {
+        //$query->search_terms['affiliate_id'] = 'all';
       }
     }
   }
@@ -600,3 +623,66 @@ function springboard_og_advocacy_group_selector($form, &$form_state) {
 // permissions might be better/simpler than using
 // session negotiation when user has
 // multiple groups.
+
+
+function springboard_og_advocacy_springboard_target_api_save_target_group_alter(&$group) {
+  // @todo add the og_gid as "affiliate_id" as to the group array.
+}
+
+function springboard_og_advocacy_form_springboard_target_create_custom_groups_form_alter(&$form, &$form_state) {
+  springboard_og_advocacy_create_og_form_elements($form);
+}
+function springboard_og_advocacy_form_springboard_target_edit_custom_groups_form_alter(&$form, &$form_state) {
+  springboard_og_advocacy_create_og_form_elements($form);
+}
+
+function springboard_og_advocacy_form_springboard_target_create_custom_targets_form_alter(&$form, &$form_state) {
+  springboard_og_advocacy_create_og_form_elements($form);
+}
+function springboard_og_advocacy_form_springboard_target_edit_custom_targets_form_alter(&$form, &$form_state) {
+  springboard_og_advocacy_create_og_form_elements($form);
+}
+
+function springboard_og_advocacy_create_og_form_elements(&$form) {
+  $session_gid = NULL;
+  if (!empty($_SESSION['og_context']['gid']) && $_SESSION['og_context']['group_type'] == 'node') {
+    $session_gid = $_SESSION['og_context']['gid'];
+  }
+
+  if (strpos($form['#form_id'], 'custom_targets') !== FALSE) {
+    $type = 'target';
+  }
+  else {
+    $type = 'group';
+  }
+  if (!empty($form[$type])) {
+    $gid = $form[$type]['#value']->affiliate_id;
+    if ($gid != $session_gid && !is_null($session_gid)) {
+      drupal_set_message('Session affiliate ID does not match saved affiliate ID.');
+      //@todo Deny access if gid is not in users groups.
+    }
+  }
+  else {
+    $gid = $session_gid;
+  }
+
+  $title = 'None';
+  if (!empty($gid)) {
+    $group = node_load($gid);
+    $title = $group->title;
+  }
+    $form['context_hint'] = array(
+      '#markup' => t('Editing custom @type for Springboard Group "@group_title"', array(
+        '@type' => $type,
+        '@group_title' => check_plain($title),
+      )),
+      '#weight' => -100,
+    );
+
+    $form['affiliate_id'] = array(
+      '#type' => 'value',
+      '#value' => $gid,
+    );
+
+
+}

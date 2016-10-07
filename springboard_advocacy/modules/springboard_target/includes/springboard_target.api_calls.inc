@@ -95,6 +95,8 @@ function springboard_target_api_save_target_group($group, $is_new = TRUE) {
   $group['chambers'] = $chamber_rows;
   $group['target_ids'] = $indvds;
   $group['custom_group_ids'] = $child_ids;
+  // Allow other modules to modify group info (springboard_og_advocacy).
+  drupal_alter('springboard_target_api_save_target_group', $group);
 
   // $group['chambers'] = array();
   // $group['target_ids'] = json_encode(array('8', '10', '111'));
