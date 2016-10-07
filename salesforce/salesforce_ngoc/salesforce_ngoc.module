@@ -1,0 +1,28 @@
+<?php
+
+/**
+ * @file
+ * Provides Salesforce integration functionality specific to NGOC.
+ */
+
+
+/**
+ * Implements hook_salesforce_genmap_map_fields_alter().
+ */
+function salesforce_ngoc_salesforce_genmap_map_fields_alter(&$fields, $context) {
+  // The batch upload object needs some system flags set correct in order
+  // to do it's thing. Let's do that here instead of implementing in the
+  // mapping interface because these flags have no donation counterpart.
+  if ($context['module'] == 'salesforce_donation' && $context['map']->salesforce_object_type == 'rC_Connect__Batch_Upload__c') {
+    $fields['rC_Connect__Giving_Paid__c'] = TRUE;
+    $fields['rC_Connect__Contact_1_Email_Type__c'] = 'Home'; //TODO: make setting
+    $fields['rC_Connect__Address_Type__c'] = 'Home'; //TODO: make setting
+    $fields['rC_Connect__Giving_Transaction_Type__c'] = 'Payment'; //TODO: make setting
+    $fields['rC_Connect__Giving_Payment_Frequency__c'] = 'One Payment'; // Depends on one-time or recurring gift.
+    $fields['rC_Connect__Payment_Method_Payment_Type__c'] = 'Third Party Charge';
+    $fields['rC_Connect__Disable_Merchant_Messages__c'] = TRUE; // Prevents NGOC from trying to process the payment.
+    $fields['rC_Connect__Giving_Giving_Frequency__c'] = 'One Payment'; // Depends on one-time or recurring gift.
+    $fields['rC_Connect__Giving_Record_Type__c'] = 'Donation'; //TODO: Probably a setting???
+    $fields['rC_Connect__Batch_Upload_Campaign_Matched__c'] = '70163000000A9RwAAK'; //TODO: Either a setting or cid field.
+  }
+}
