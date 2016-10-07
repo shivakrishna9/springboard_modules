@@ -183,3 +183,16 @@ function springboard_token_set_install() {
     }
   }
 }
+
+/**
+ * Implements hook_enable().
+ */
+function springboard_token_set_enable() {
+  // Ensure this module runs after other modules since those module may add form elements or data
+  // that will require the Token UI:
+  db_update('system')
+    ->fields(array('weight' => 500))
+    ->condition('type', 'module')
+    ->condition('name', 'springboard_token_set')
+    ->execute();
+}
