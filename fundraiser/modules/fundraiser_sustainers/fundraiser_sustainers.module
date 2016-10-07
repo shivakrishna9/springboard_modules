@@ -3511,7 +3511,7 @@ function fundraiser_sustainers_billing_update_form($form, &$form_state, $donatio
   $cardonfile = _fundraiser_donation_cardonfile_card($next_donation);
 
   $form['series-info']['recurring-payment-info'] = array(
-    '#markup' => fundraiser_sustainers_donation_payment_info($donation, $donation->did, $cardonfile),
+    '#markup' => fundraiser_sustainers_donation_payment_info($donation, $sustainers_record->master_did, $cardonfile),
   );
 
   $form['series-info']['recurring-payment-link'] = array(
