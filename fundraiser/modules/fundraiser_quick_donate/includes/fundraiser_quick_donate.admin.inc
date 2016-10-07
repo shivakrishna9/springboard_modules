@@ -32,8 +32,9 @@ function fundraiser_quick_donate_admin_settings($form, $form_state) {
   $gateways = array_filter($gateways, function($element) use ($blacklist) {
     return !empty($element['gateway_details']['cardonfile']) && !in_array($element['id'], $blacklist);
   });
-  $gateways = array_keys($gateways);
-  foreach ($gateways as $gateway_key) {
+  
+  $gateway_keys = array_keys($gateways);
+  foreach ($gateway_keys as $gateway_key) {
     $default = '';
     $data = variable_get(FUNDRAISER_QUICK_DONATE_DEFAULT_FORM_PREFIX . $gateway_key, array());
     if (!empty($data)) {
@@ -43,7 +44,7 @@ function fundraiser_quick_donate_admin_settings($form, $form_state) {
     $form['default_forms'][FUNDRAISER_QUICK_DONATE_DEFAULT_FORM_PREFIX . $gateway_key] = array(
       '#type' => 'textfield',
       '#title' => t('Default node ID for @gateway', array(
-        '@gateway' => $gateway_key,
+        '@gateway' => isset($gateways[$gateway_key]['title']) ? $gateways[$gateway_key]['title'] : $gateway_key, 
       )),
       '#description' => t('The node ID of the form you want to be used as default.'),
       '#autocomplete_path' => 'admin/springboard/options/fundraiser/fundraiser_quick_donate/autocomplete/' . $gateway_key,
