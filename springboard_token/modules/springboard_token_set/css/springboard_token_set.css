@@ -105,11 +105,10 @@ a.token-set-expand.token-set-expanded {
 }
 .token-set-wrapper .token-list .token-set-token-row .token-machine {
   color: #08c;
-  min-width: 176px;
+  min-width: 220px;
 }
 .token-set-wrapper .token-list .token-set-token-row .token-descr {
   max-width: 364px;
-  overflow: hidden;
 }
 .token-set-wrapper .token-list .token-set-token-row .token-use {
   color: #08c;
@@ -138,7 +137,7 @@ a.token-set-expand.token-set-expanded {
   }
   body .token-set-wrapper .token-list .token-set-token-row .token-descr {
     letter-spacing: -0.3px;
-    max-width: 312px;
+    max-width: 322px;
   }
   body .token-set-wrapper .token-list .token-set-token-row .token-machine {
     min-width: 210px;
