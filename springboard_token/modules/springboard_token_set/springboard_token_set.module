@@ -370,7 +370,8 @@ function springboard_token_set_form_alter(&$form, &$form_state, $form_id) {
  * @param $target_form_keys
  *   The form keys that should receive the Token Set selector.
  */
-function _springboard_token_set_attach_to_target_form_keys(&$element, $target_fields_tokens, $parent_key = NULL, $ancestor_key = NULL, $count = 0) {
+function _springboard_token_set_attach_to_target_form_keys(&$element, $target_fields_tokens, $parent_key = NULL, $ancestor_key = NULL) {
+  static $token_field_count = 0;
   $children = element_children($element);
   $token_field_types = array('textfield', 'textarea', 'text_format'); // TODO - why does the confirmation textarea has a type of text_format?
   foreach ($children as $key) {
@@ -409,18 +410,18 @@ function _springboard_token_set_attach_to_target_form_keys(&$element, $target_fi
         }
       }
       if (isset($target_token_set_id) && in_array($child['#type'], $token_field_types)) {
+          $token_field_count++;
           $child['#attributes']['class'][] = 'form-wrapper';
           $child['#attributes']['class'][] = 'token-ui-field';
-          $child['#attributes']['token_key'] = $count;
+          $child['#attributes']['token_key'] = $token_field_count;
           $child['#attached']['js'][] = array(
-            'data' => array('field_token_sets___' . $count => $target_token_set_id), 'type' => 'setting');
-          $count++;
+            'data' => array('field_token_sets___' . $token_field_count => $target_token_set_id), 'type' => 'setting');
       }
       else {
-        _springboard_token_set_attach_to_target_form_keys($child, $target_fields_tokens, $key, $ancestor_key, $count);
+        _springboard_token_set_attach_to_target_form_keys($child, $target_fields_tokens, $key, $ancestor_key);
       }
     } else {
-      _springboard_token_set_attach_to_target_form_keys($child, $target_fields_tokens, $key, $count);
+      _springboard_token_set_attach_to_target_form_keys($child, $target_fields_tokens, $key);
     }
   }
 }

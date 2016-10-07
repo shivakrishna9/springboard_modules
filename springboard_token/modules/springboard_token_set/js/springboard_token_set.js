@@ -166,15 +166,15 @@
               var tokenExists;
               $('.token-list .token-set-token-row').hide();
               for (var i = 0; i < data.length; i++) {
-                tokenExists = false;
                 token = {
                   token: data[i]['token'],
                   token_type: data[i]['token_type'],
                   tsid: tsid,
                   token_description: data[i]['token_description']
                 };
+                tokenExists = false;
                 $('.token-list .token-set-token-row').each(function() {
-                  if ($(this).attr('data-token') == data[i]['token']) {
+                  if ($(this).attr('tsid') == tsid && $(this).attr('data-token') == data[i]['token']) {
                     tokenExists = true;
                     $(this).show();
                   }
@@ -183,7 +183,7 @@
                   rowHTML = renderToken(token);
                   $('.token-list').prepend(rowHTML);
                   $('.token-list .token-set-token-row').each(function() {
-                    if ($(this).attr('data-token') == data[i]['token']) {
+                    if ($(this).attr('tsid') == tsid && $(this).attr('data-token') == data[i]['token']) {
                       $(this).show();
                       $(this).click(function(event) {
                         event.preventDefault();
