@@ -98,7 +98,13 @@ function springboard_og_permission() {
       'title' => t('Administer Springboard Groups'),
       'description' => t('Perform administration tasks for Springboard Groups.'),
     ),
+
+    'access all springboard groups' => array(
+      'title' => t('Access all springboard groups'),
+      'description' => t('Access all groups'),
+    ),
   );
+
 }
 
 
@@ -261,7 +267,7 @@ function springboard_og_get_grouped_types() {
   if (!isset($groups_enabled)) {
     // Get the fields that exist in the bundle.
     foreach (field_info_fields() as $field_name => $field) {
-      if ($field_name == 'og_group_ref' && !empty($field['bundles'])) {
+      if ($field['type'] == 'entityreference' && $field['settings']['handler'] == 'og' && !empty($field['bundles'])) {
         foreach ($field['bundles'] as $entity_type => $bundles) {
           foreach ($bundles as $bundle) {
             $groups_enabled[$entity_type][$bundle][] = $field_name;

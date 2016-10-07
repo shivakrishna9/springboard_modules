@@ -56,7 +56,6 @@ function springboard_og_node_settings_form() {
   // Get the already groups-enabled node types.
   $groups_enabled_types = springboard_og_get_grouped_types();
   $node_defaults = !empty($groups_enabled_types['node']) ? array_keys($groups_enabled_types['node']) : [];
-
   // Build the checkboxes.
   $form['springboard_og_node']['springboard_og_grouped_content'] = array(
     '#title' => '',
@@ -68,9 +67,10 @@ function springboard_og_node_settings_form() {
   // Disable the checkboxes on the already enabled node types and add a link to
   // remove group field.
   foreach ($node_defaults as $key) {
+    $og_field = $groups_enabled_types['node'][$key][0];
     $form['springboard_og_node']['springboard_og_grouped_content'][$key] = array(
       '#disabled' => TRUE,
-      '#description' => l(t('Remove from groups'), "admin/config/group/fields/node/$key/og_group_ref/delete", array('query' => array('destination' => 'admin/config/springboard-groups'))),
+      '#description' => l(t('Remove from groups'), "admin/config/group/fields/node/$key/" . $og_field . "/delete", array('query' => array('destination' => 'admin/config/springboard-groups'))),
     );
   }
 
@@ -151,7 +151,7 @@ function springboard_og_entity_settings_form() {
       foreach ($bundle_group as $bundle => $field) {
         $form['springboard_og_entities']['springboard_og_grouped_entities'][$entity_type . ':' . $bundle] = array(
           '#disabled' => TRUE,
-          '#description' => l(t('Remove from groups'), "admin/config/group/fields/" . $entity_type . "/" . $bundle . "/og_group_ref/delete", array('query' => array('destination' => 'admin/config/springboard-groups'))),
+          '#description' => l(t('Remove from groups'), "admin/config/group/fields/" . $entity_type . "/" . $bundle . "/" . $field[0] . "/delete", array('query' => array('destination' => 'springboard/groups/settings'))),
         );
       }
     }
@@ -173,7 +173,7 @@ function springboard_og_settings_form_submit($form, $form_state) {
   foreach ($form_state['values']['springboard_og_grouped_content'] as $type => $status) {
     if (!empty($status)) {
       $og_field = og_fields_info('og_group_ref');
-      og_create_field('og_group_ref', 'node', $type, $og_field);
+      og_create_field('og_group_ref_' . substr($type, 0, 19), 'node', $type, $og_field);
     }
   }
 }
@@ -186,7 +186,7 @@ function springboard_og_entities_settings_form_submit($form, $form_state) {
     if (!empty($status)) {
       list($entity_type, $bundle) = explode(':', $key);
       $og_field = og_fields_info('og_group_ref');
-      og_create_field('og_group_ref', $entity_type, $bundle, $og_field);
+      og_create_field('og_group_ref_'. substr($bundle, 0, 19), $entity_type, $bundle, $og_field);
     }
   }
 }
