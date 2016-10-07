@@ -61,12 +61,6 @@ function springboard_token_set_menu() {
     'access arguments' => array('administer springboard'),
     'type' => MENU_CALLBACK,
   );
-  $items['sb-admin-token-fields-ajax'] = array(
-    'page callback' => '_springboard_token_set_token_field_manager_ajax',
-    'page arguments' => array(1),
-    'access arguments' => array('administer springboard'),
-    'type' => MENU_CALLBACK,
-  );
   $items['sb-admin-token-fields-remove-ajax'] = array(
     'page callback' => '_springboard_token_set_token_field_manager_remove_ajax',
     'page arguments' => array(1),
@@ -102,10 +96,9 @@ function springboard_token_set_fields_admin_form($form, &$form_state) {
   );
   $form['token-fields']['add-mapping']['field_key'] = array(
     '#type' => 'textfield',
-    //'#disabled' => TRUE,
     '#validated' => TRUE,
     '#title' => 'Target field',
-    //'#options' => array('- First, please select a target form. -'),
+    '#size' => 44,
   );
   $token_sets = array('- None -');
   $token_sets_data = springboard_token_set_get_sets();
@@ -402,12 +395,6 @@ function _springboard_token_set_attach_to_target_form_keys(&$element, $target_fi
               $ancestor_key = $keys_list[0];
               $this_child_key = $keys_list[count($keys_list) - 1];
               $this_parent_key = $keys_list[count($keys_list) - 2];
-              /* if ($this_child_key == $key && $this_parent_key == $parent_key) {
-                dpm('this_parent_key = "' . $this_parent_key . '" parent_key ="' . $parent_key . '"');
-                dpm('this_child_key = "' . $this_child_key . '" key ="' . $key . '"');
-                dpm('ancestory_key = "' . $ancestor_key);
-                dpm($child);
-              } */
               if ($this_child_key == $key && $this_parent_key == $parent_key) {
                 // Handle entity-based fields:
                 if ($key != 'value' || !is_numeric($parent_key) || (isset($child['#field_name']) && $child['#field_name'] == $ancestor_key)) {
@@ -926,42 +913,6 @@ function springboard_token_set_get_token_sets_list() {
 }
 
 /**
- * Add the token UI JS and CSS to a particular form.
- *
- * @param $form
- *   The form in question.
- * @param $token_sets
- *   The token data to be used by jQuery.
- */
-function springboard_token_set_attach_token_ui(&$form, $token_sets) {
-  if (empty($form['#attached']['js'])) {
-    $form['#attached']['js'] = array();
-  }
-  $form['#attached']['js'][] = array(
-    'data' => drupal_get_path('module', 'springboard_token_set') . '/js/springboard_token_set.js',
-    'type' => 'file',
-  );
-  $token_sets = springboard_token_set_get_token_sets_list();
-  $enabled_sets = array();
-  foreach ($token_sets as $token_set) {
-    // TODO - does his code make sense, it was producing undefined index errors so it wrapped it in an if:
-    if (isset($token_sets[$token_set])) {
-      $enabled_sets[$token_set] = $token_sets[$token_set];
-    }
-  }
-  $form['#attached']['js'][] = array(
-    'data' => array(
-      'token_sets_list' => $enabled_sets,
-    ),
-    'type' => 'setting',
-  );
-  $form['#attached']['css'] = array(
-    'data' => drupal_get_path('module', 'springboard_token_set') . '/css/springboard_token_set.css',
-    'type' => 'file',
-  );
-}
-
-/**
  * AJAX callback for fetching a token set's data.
  *
  * @param $tsid
@@ -1089,34 +1040,6 @@ function _springboard_token_set_admin_add_token_ajax() {
 
   // Tell jQuery the tid of the newly added token row:
   echo $tid;
-}
-/**
- * AJAX callback for the token field manager, accepting a form ID and returning a list of
- * form keys to which the token UI can be attached.
- *
- * @param $form_id
- *   The form ID from which tokenizable form field keys should be returned.
- */
-function _springboard_token_set_token_field_manager_ajax($form_id) {
-  $keys_list = array();
-/*  $token_fields = _springboard_token_set_get_tokenizable_form_data();
-  if (isset($token_fields[$form_id])) {
-    foreach ($token_fields[$form_id] as $key => $label) {
-      $keys_list[] = array(
-        'key' => $key,
-        'label' => $label,
-      );
-    }
-  } */
-  $form_fields_query = db_query("SELECT field_name FROM {springboard_token_set_field_map} " .
-    "WHERE form_id = :form_id ORDER BY field_name", array(':form_id' => $form_id));
-  foreach ($form_fields_query as $form_fields_data) {
-    $keys_list[] = array(
-      'key' => $form_fields_data->field_name,
-      'label' => $form_fields_data->field_name,
-    );
-  }
-  echo  drupal_json_output($keys_list);
 }
 
 /**
