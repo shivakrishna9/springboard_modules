@@ -106,8 +106,8 @@
         });
         var targetElementID = $(element).attr('id');
         var tokenFieldKey = element.closest('.has-token-data').attr("token_key");
-        if (Drupal.settings['field_token_sets__' + tokenFieldKey] != undefined) {
-          var tokens = Drupal.settings["field_token_sets__" + tokenFieldKey];
+        if (Drupal.settings['field_token_sets___' + tokenFieldKey] != undefined) {
+          var tokens = Drupal.settings["field_token_sets___" + tokenFieldKey];
         }
         else {
           return;

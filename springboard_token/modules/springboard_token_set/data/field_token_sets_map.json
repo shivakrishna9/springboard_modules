@@ -48,7 +48,7 @@
     }
   ],
   "sba_message_edit_form": [
-    {"field_sba_signature|und|0|value": [
+    {"field_sba_signature|LANGUAGE|0|value": [
        "Message Actions Signature"
      ]
     }
