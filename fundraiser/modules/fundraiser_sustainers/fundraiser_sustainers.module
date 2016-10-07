@@ -492,6 +492,18 @@ function fundraiser_sustainers_salesforce_queue_create_item_alter(&$item) {
 }
 
 /**
+ * Implements hook_genmap_field_info_alter().
+ *
+ * Makes recurring donation flag and payment token mappable.
+ */
+function fundraiser_sustainers_salesforce_genmap_map_field_info_alter(&$fields, $node, $module) {
+  if ($module == 'salesforce_donation') {
+    $fields['salesforce_donation_map']['#fields']['is_recurring_donation'] = 'Is Recurring Donation';
+    $fields['salesforce_donation_map']['#fields']['payment_token'] = 'Payment Token';
+  }
+}
+
+/**
  * Implements hook_salesforce_genmap_map_fields_alter().
  */
 function fundraiser_sustainers_salesforce_genmap_map_fields_alter(&$fields, $context) {
@@ -501,18 +513,28 @@ function fundraiser_sustainers_salesforce_genmap_map_fields_alter(&$fields, $con
     $info = _fundraiser_get_donation_gateway($donation->did);
     $offsite_recurring = _fundraiser_sustainers_offsite_recurring($info['offsite_recurring'], $donation->donation['payment_method']);
     $map = $context['map'];
-
-    // Add recurring item marker if recurring or not.
-    $fields['Is_Recurring_Donation__c'] = FALSE;
-    if ($donation->donation['recurs_monthly'] == TRUE) {
-      $fields['Is_Recurring_Donation__c'] = TRUE;
+ 
+    $is_recurring = $donation->donation['recurs_monthly'] ? TRUE : FALSE;
+    // Check to see if the is recurring donation field was mapped.
+    if (array_key_exists('is_recurring_donation', $map->field_map['salesforce_donation_map'])) {
+      $fields[$context['map']->field_map['salesforce_donation_map']['is_recurring_donation']] = $is_recurring;
+    }
+    else {
+      // Support for legacy hard-coded field.
+      $fields['Is_Recurring_Donation__c'] = FALSE;
     }
 
     // Add the card-on-file token if available.
     if (module_exists('fundraiser_commerce') && module_exists('commerce_cardonfile')) {
       $cardonfile_data = _fundraiser_commerce_donation_cardonfile_card($donation, FALSE);
       if (!empty($cardonfile_data)) {
-        $fields['Card_On_File_Token__c'] = $cardonfile_data->remote_id;
+        if (array_key_exists('payment_token', $map->field_map['salesforce_donation_map'])) {
+          $fields[$context['map']->field_map['salesforce_donation_map']['payment_token']] = $cardonfile_data->remote_id;
+        }
+        else {
+          // Support for legacy hard-coded field.
+          $fields['Card_On_File_Token__c'] = $cardonfile_data->remote_id;
+        }
       }
     }
 
