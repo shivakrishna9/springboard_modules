@@ -1,6 +1,0 @@
-name = Springboard Token Set Wildcard
-description = Adds Springboard Token Sets as needed based on current path and current form field.
-package = Jackson River Springboard - extras
-dependencies[] = springboard_token_set
-files[] = springboard_token_set_wildcard.settings.inc
-core = 7.x
