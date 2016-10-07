@@ -5,17 +5,8 @@
  */
 function springboard_token_set_menu() {
   $items = array();
-  $items['admin/config/content/tokens'] = array(
-    'title' => 'Springboard Tokens',
-    'description' => 'Manage tokens.',
-    'page callback' => 'drupal_get_form',
-    'page arguments' => array('springboard_token_set_tokens_admin_form'),
-    'access arguments' => array('administer springboard'),
-    'type' => MENU_NORMAL_ITEM,
-    'weight' => 0,
-  );
   $items['admin/config/content/token-set-fields'] = array(
-    'title' => 'Springboard Token Fields',
+    'title' => 'Springboard Token Set Fields',
     'description' => 'Enable/disable tokens for a given form field.',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('springboard_token_set_fields_admin_form'),
@@ -24,7 +15,7 @@ function springboard_token_set_menu() {
     'weight' => 0,
   ); 
   $items['admin/config/content/token-set-fields/revert'] = array(
-    'title' => 'Revert token set field settings',
+    'title' => 'Restore default token set to field mappings',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('springboard_token_set_fields_admin_revert_form'),
     'access arguments' => array('administer springboard'),
@@ -50,6 +41,13 @@ function springboard_token_set_menu() {
     'title' => 'Delete token set',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('springboard_token_set_delete_token_set_admin_form'),
+    'access arguments' => array('administer springboard'),
+    'type' => MENU_CALLBACK,
+  );
+  $items['admin/config/content/token-sets/revert'] = array(
+    'title' => 'Revert to default token set settings',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('springboard_token_set_sets_admin_revert_form'),
     'access arguments' => array('administer springboard'),
     'type' => MENU_CALLBACK,
   );
@@ -89,15 +87,21 @@ function springboard_token_set_menu() {
  */
 function springboard_token_set_fields_admin_form($form, &$form_state) {
   $form = array();
+
+  // Gather a list of form ids where tokens could be attached:
   $forms_list = array('- Select a form -');
-  $token_fields = _springboard_token_set_get_tokenizable_form_data(); 
-  foreach ($token_fields as $form_id => $fields_data) {
-    if (is_array($fields_data) && !empty($fields_data)) {
-      $forms_list[$form_id] = $form_id;
+  $token_fields_query = db_query("SELECT form_id, field_name, tsid FROM {springboard_token_set_field_map} ORDER BY form_id, field_name");
+  foreach ($token_fields_query as $token_fields_data) {
+    if (!in_array($token_fields_data->form_id, $forms_list)) {
+      $forms_list[$token_fields_data->form_id] = $token_fields_data->form_id;
     }
-  }
+  } 
 
   // Add AJAXified fields for adding/removing a default token set to a field:
+  $form['token-fields']['text-blurb'] = array(
+    '#type' => 'markup',
+    '#markup' => 'Add one or more token sets to a given field; remove all token sets from a field to disable the token selection widget.',
+  );
   $form['token-fields']['add-mapping'] = array(
     '#type' => 'container',
   );
@@ -132,7 +136,7 @@ function springboard_token_set_fields_admin_form($form, &$form_state) {
     '#value' => 'Submit',
   );
   $form['token-fields']['#suffix'] = _springboard_token_set_fields_form_table_render() .
-    l('Revert to this form\'s default settings', 'admin/config/content/token-set-fields/revert', array(
+    l('Restore this form\'s default settings', 'admin/config/content/token-set-fields/revert', array(
       'query' => array('destination' => 'admin/config/content/token-set-fields'),
       'attributes' => array('class' => array('revert-link'))));
   $form['#attached']['css'] = array(
@@ -207,7 +211,7 @@ function _springboard_fetch_default_token_set_field_mappings() {
 function _springboard_token_set_fields_form_table_render() {
   $output = '';
 
-  $header = array('Form', 'Field', 'Token Sets', '&nbsp;');
+  $header = array('Form', 'Field', 'Enabled Token Sets', '&nbsp;');
   $rows = array();
 
   $token_fields = _springboard_token_set_get_tokenizable_form_data();
@@ -426,77 +430,6 @@ function _springboard_token_set_attach_to_target_form_keys(&$element, $target_fi
 }
 
 /**
- * Page callback for tokens admin form.
- */
-function springboard_token_set_tokens_admin_form($form, &$form_state) {
-  dpm(token_info());
-  $tokens = springboard_token_set_get_tokens();
-
-  $form = array();
-
-  $form['tokens'] = array(
-    '#type' => 'container',
-    '#tree' => TRUE,
-  );
-
-  foreach ($tokens as $token) {
-    $form['tokens']['token-' . $token->tid] = array(
-      '#type' => 'container',
-    );
-
-    $form['tokens']['token-' . $token->tid]['tid'] = array(
-      '#type' => 'hidden',
-      '#default_value' => $token->tid,
-    );
-
-    $form['tokens']['token-' . $token->tid]['token'] = array(
-      '#type' => 'textfield',
-      '#disabled' => TRUE,
-      '#size' => 40,
-      '#default_value' => $token->token,
-    );
-
-    $form['tokens']['token-' . $token->tid]['token_description'] = array(
-      '#type' => 'textfield',
-      '#default_value' => $token->token_description,
-    );
-
-    $form['tokens']['token-' . $token->tid]['delete'] = array(
-      '#type' => 'checkbox',
-      '#title' => 'Remove token',
-    );
-  }
-
-  $form['submit-button'] = array(
-    '#type' => 'submit',
-    '#value' => 'Submit',
-  );
-
-  $form['#submit'] = array('springboard_token_set_tokens_admin_form_submit');
-
-  $form['#attached']['css'] = array(
-    'data' => drupal_get_path('module', 'springboard_token_set') . '/css/springboard_token_set_admin.css',
-    'type' => 'file',
-  );
-
-  return $form;
-}
-
-/**
- * Submit handler for tokens admin form.
- */
-function springboard_token_set_tokens_admin_form_submit($form, $form_state) {
-  foreach ($form_state['values']['tokens'] as $submitted_token) {
-    if ($submitted_token['delete'] == 1) {
-      springboard_token_set_delete_token($submitted_token['tid']);
-    }
-    else {
-      springboard_token_set_update_token($submitted_token['tid'], $submitted_token['token'], $submitted_token['token_description']);
-    }
-  }
-}
-
-/**
  * Page callback for token sets admin form.
  */
 function springboard_token_set_sets_admin_form($form, &$form_state) {
@@ -580,6 +513,12 @@ function springboard_token_set_sets_admin_form($form, &$form_state) {
       ),
     );
   }
+  $form['revert-token-sets'] = array(
+    '#markup' => l('Restore this form\'s default settings', 'admin/config/content/token-sets/revert', array(
+      'query' => array('destination' => 'admin/config/content/token-sets'),
+      'attributes' => array('class' => array('revert-token-sets')))
+    ),
+  );
 
   $form['#attached']['css'] = array(
     'data' => drupal_get_path('module', 'springboard_token_set') . '/css/springboard_token_set_admin.css',
@@ -684,6 +623,61 @@ function springboard_token_set_delete_token_set_admin_form_submit($form, &$form_
   drupal_set_message('Token set "' . $token_set_name . '" has been deleted!');
 }
 
+/**
+ * Token sets revert confirmation form.
+ */
+function springboard_token_set_sets_admin_revert_form($form, &$form_state) {
+  drupal_set_title(t('Are you sure you want to revert to default token set settings?'));
+  $form['delete-token-set']['submit'] = array(
+    '#prefix' => '<div id="ts-field-delete-blurb">Any fields mapped to non-default token sets will need to be remapped. This action cannot be undone.</div><br />',
+    '#suffix' => l('Cancel', 'admin/config/content/token-sets'),
+    '#type' => 'submit',
+    '#value' => 'Revert',
+  );
+  return $form;
+}
+
+/**
+ * Token sets revert confirmation form submit.
+ */
+function springboard_token_set_sets_admin_revert_form_submit($form, &$form_state) {
+  $token_data = json_decode(file_get_contents(drupal_get_path('module', 'springboard_token_set') . '/data/token_sets.json'));
+
+  // Delete all token to token set mappings:
+  db_query("TRUNCATE {springboard_token_set_tokens}");
+
+  // Delete all token sets that are not part of the defaults as defined in the JSON:
+  $current_token_sets_query = db_query("SELECT tsid, name FROM {springboard_token_sets}");
+  foreach ($current_token_sets_query as $current_token_set) {
+    $token_set_is_default = FALSE;
+    foreach ($token_data->token_sets as $default_token_set) {
+      if ($default_token_set->name == $current_token_set->name) {
+        $token_set_is_default = TRUE;
+        break;
+      }
+    }
+    if (!$token_set_is_default) {
+      db_query("DELETE FROM {springboard_token_sets} WHERE tsid = :tsid", array(':tsid' => $current_token_set->tsid));
+    }
+  }
+
+  foreach ($token_data->token_sets as $token_set) {
+    // Get the token set ID for this token set if it already exists; otherwise, add the new set and get its ID:
+    $tsid = db_query("SELECT tsid FROM {springboard_token_sets} WHERE name = :name", array(':name' => $token_set->name))->fetchField();
+    if (!$tsid) {
+      $tsid = springboard_token_set_add_set($token_set->name);
+    }
+
+    // Restore default token to token set mappings if those mappings are not already present:
+    foreach ($token_set->tokens as $token_string) {
+      $tid = db_query("SELECT tid FROM {springboard_tokens} WHERE token = :token", array(':token' => $token_string))->fetchField();
+      if (!empty($tid)) {
+        springboard_token_set_add_token_to_set($tsid, $tid);
+      }
+    }
+  }
+  dpm('Default token sets have been restored.');
+}
 
 /**
  * Gets an array of field types that can be used with tokens.
@@ -1093,9 +1087,13 @@ function _springboard_token_set_admin_add_token_ajax() {
 /**
  * AJAX callback for the token field manager, accepting a form ID and returning a list of
  * form keys to which the token UI can be attached.
+ *
+ * @param $form_id
+ *   The form ID from which tokenizable form field keys should be returned.
  */
 function _springboard_token_set_token_field_manager_ajax($form_id) {
-  $token_fields = _springboard_token_set_get_tokenizable_form_data();
+  $keys_list = array();
+/*  $token_fields = _springboard_token_set_get_tokenizable_form_data();
   if (isset($token_fields[$form_id])) {
     foreach ($token_fields[$form_id] as $key => $label) {
       $keys_list[] = array(
@@ -1103,6 +1101,14 @@ function _springboard_token_set_token_field_manager_ajax($form_id) {
         'label' => $label,
       );
     }
+  } */
+  $form_fields_query = db_query("SELECT field_name FROM {springboard_token_set_field_map} " .
+    "WHERE form_id = :form_id ORDER BY field_name", array(':form_id' => $form_id));
+  foreach ($form_fields_query as $form_fields_data) {
+    $keys_list[] = array(
+      'key' => $form_fields_data->field_name,
+      'label' => $form_fields_data->field_name,
+    );
   }
   echo  drupal_json_output($keys_list);
 }

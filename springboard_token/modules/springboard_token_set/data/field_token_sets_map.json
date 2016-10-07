@@ -71,6 +71,12 @@
      ]
     }
   ],
+  "ctools_export_ui_edit_item_form": [
+    {"tag": [
+       "Springboard Tag"
+     ]
+    }
+  ],
   "webform_goals_add": [
     {"starter_message": [
        "Goal"
