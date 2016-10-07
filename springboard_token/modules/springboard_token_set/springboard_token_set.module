@@ -402,8 +402,17 @@ function _springboard_token_set_attach_to_target_form_keys(&$element, $target_fi
               $ancestor_key = $keys_list[0];
               $this_child_key = $keys_list[count($keys_list) - 1];
               $this_parent_key = $keys_list[count($keys_list) - 2];
-              if ($this_child_key == $key && $this_parent_key == $parent_key && isset($ancestor_key) && $child['#field_name'] == $ancestor_key) {
-                $target_token_set_id = $target_fields_tokens[$target_key];
+              /* if ($this_child_key == $key && $this_parent_key == $parent_key) {
+                dpm('this_parent_key = "' . $this_parent_key . '" parent_key ="' . $parent_key . '"');
+                dpm('this_child_key = "' . $this_child_key . '" key ="' . $key . '"');
+                dpm('ancestory_key = "' . $ancestor_key);
+                dpm($child);
+              } */
+              if ($this_child_key == $key && $this_parent_key == $parent_key) {
+                // Handle entity-based fields:
+                if ($key != 'value' || !is_numeric($parent_key) || (isset($child['#field_name']) && $child['#field_name'] == $ancestor_key)) {
+                  $target_token_set_id = $target_fields_tokens[$target_key];
+                }
               }
             }
           }
