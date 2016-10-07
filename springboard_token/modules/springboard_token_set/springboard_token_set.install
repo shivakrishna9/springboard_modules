@@ -182,6 +182,9 @@ function springboard_token_set_install() {
       }
     }
   }
+
+  // Add default token set to field mappings:
+  _springboard_token_set_restore_default_token_set_field_mappings();
 }
 
 /**

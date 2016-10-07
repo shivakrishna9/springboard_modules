@@ -167,6 +167,14 @@ function springboard_token_set_fields_admin_revert_form($form, &$form_state) {
  * Token set fields revert confirmation form submission.
  */
 function springboard_token_set_fields_admin_revert_form_submit($form, &$form_state) {
+  _springboard_token_set_restore_default_token_set_field_mappings();
+  drupal_set_message('Default token set field mappings have been restored.');
+}
+
+/*
+ * Restore to default token set to field mappings.
+ */
+function _springboard_token_set_restore_default_token_set_field_mappings() {
   db_query("TRUNCATE {springboard_token_set_field_map}");
   $default_settings = _springboard_fetch_default_token_set_field_mappings();
   foreach ($default_settings as $target_form_id => $field_keys) {
@@ -177,8 +185,7 @@ function springboard_token_set_fields_admin_revert_form_submit($form, &$form_sta
           array(':tsid' => $tsid, ':form_id' => $target_form_id, ':field_name' => $field_key));
       }
     }
-  }
-  drupal_set_message('Default token set field mappings have been restored.');
+  }  
 }
 
 /**
