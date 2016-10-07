@@ -6,7 +6,7 @@
 function springboard_token_set_menu() {
   $items = array();
   $items['admin/config/content/token-set-fields'] = array(
-    'title' => 'Springboard Token Set Fields',
+    'title' => 'Springboard Token Fields',
     'description' => 'Enable/disable tokens for a given form field.',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('springboard_token_set_fields_admin_form'),
