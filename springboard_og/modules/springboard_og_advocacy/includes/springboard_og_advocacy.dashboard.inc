@@ -3,11 +3,11 @@
 /**
  * Build the group selector form for advocacy dashboard page.
  *
- * @param $form
- * @param $form_state
- * @param $groups
+ * @param array $groups
+ *   The current user's possible groups.
  *
  * @return array
+ *   The form.
  */
 function springboard_og_advocacy_group_selector_form($form, &$form_state, $groups) {
 
@@ -21,6 +21,10 @@ function springboard_og_advocacy_group_selector_form($form, &$form_state, $group
     $options[$nid] = check_plain($node->title);
   }
 
+  // The ajax enabled group selector which will reload the dashboard
+  // subsequent to a group choice. The group ID will get put into session,
+  // where the search query plugin will pick it up and filter the group listing
+  // by group ID.
   $form['groups'] = array(
     '#type' => 'select',
     '#options' => $options,
@@ -36,6 +40,7 @@ function springboard_og_advocacy_group_selector_form($form, &$form_state, $group
   );
 
   // Get the page argument that the dashboard callback expects.
+  // We'll need it later when we  reload the dashboard via ajax.
   if (isset($form_state['values']['path'])) {
     $path = $form_state['values']['path'];
   }
@@ -69,35 +74,66 @@ function springboard_og_advocacy_group_selector($form, &$form_state) {
   return $dashboard;
 }
 
+/**
+ * Implements hook_springboard_target_api_save_target_group_alter().
+ */
 function springboard_og_advocacy_springboard_target_api_save_target_group_alter(&$group) {
   // @todo add the og_gid as "affiliate_id" as to the group array.
 }
 
+/**
+ * Implements hook_form_FORM_ID_alter().
+ *
+ * Add the extra form elements we need to the advocacy CRUD forms.
+ */
 function springboard_og_advocacy_form_springboard_target_create_custom_groups_form_alter(&$form, &$form_state) {
   springboard_og_advocacy_create_og_form_elements($form);
 }
 
+/**
+ * Implements hook_form_FORM_ID_alter().
+ *
+ * Add the extra form elements we need to the advocacy CRUD forms.
+ */
 function springboard_og_advocacy_form_springboard_target_edit_custom_groups_form_alter(&$form, &$form_state) {
   springboard_og_advocacy_create_og_form_elements($form);
 }
 
+/**
+ * Implements hook_form_FORM_ID_alter().
+ *
+ * Add the extra form elements we need to the advocacy CRUD forms.
+ */
 function springboard_og_advocacy_form_springboard_target_create_custom_targets_form_alter(&$form, &$form_state) {
   springboard_og_advocacy_create_og_form_elements($form);
 }
 
+/**
+ * Implements hook_form_FORM_ID_alter().
+ *
+ * Add the extra form elements we need to the advocacy CRUD forms.
+ */
 function springboard_og_advocacy_form_springboard_target_edit_custom_targets_form_alter(&$form, &$form_state) {
   springboard_og_advocacy_create_og_form_elements($form);
 }
 
+/**
+ * Helper function to add OG-required elements to advocacy forms.
+ */
 function springboard_og_advocacy_create_og_form_elements(&$form) {
+
+  // Get the current user's current group affiliation.
   $session_gid = springboard_og_advocacy_get_group_context();
 
+  // Check which form we're on.
   if (strpos($form['#form_id'], 'custom_targets') !== FALSE) {
     $type = 'target';
   }
   else {
     $type = 'group';
   }
+
+  // If this is an edit form get the API object's affiliate_id (group id).
   if (!empty($form[$type]['#default_value'])) {
     $gid = $form[$type]['#default_value']->affiliate_id;
     if ($gid != $session_gid && !is_null($session_gid)) {
@@ -106,6 +142,7 @@ function springboard_og_advocacy_create_og_form_elements(&$form) {
     }
   }
   else {
+    // There's no default value, use the group id from session.
     $gid = $session_gid;
   }
 
@@ -114,6 +151,7 @@ function springboard_og_advocacy_create_og_form_elements(&$form) {
     $group = node_load($gid);
     $title = $group->title;
   }
+
   $form['context_hint'] = array(
     '#markup' => t('Editing custom @type for Springboard Group "@group_title"', array(
       '@type' => $type,

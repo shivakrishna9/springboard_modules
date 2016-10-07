@@ -15,6 +15,7 @@ require_once __DIR__ . '/./includes/springboard_og_advocacy.subscription.inc';
 function springboard_og_springboard_advocacy_views_plugin_query_alter(&$query) {
 
   // Check for a node context.
+  // @todo - move this node lookup to springboard_og_advocacy_get_group_context().
   $node = menu_get_object();
   if (!empty($node->nid) && !og_is_group('node', $node->nid)) {
     $wrapper = entity_metadata_wrapper('node', $node);
