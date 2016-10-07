@@ -622,3 +622,20 @@ function fundraiser_quick_donate_field_extra_fields_display_alter(&$displays, $c
     $displays['summary']['weight'] = 8;
   }
 }
+
+/**
+ * Implements hook_views_pre_render().
+ *
+ * Remove cards that have no used by entries.
+ */
+function fundraiser_quick_donate_views_pre_render(&$view) {
+  if ($view->name != 'commerce_card_on_file_user_cards') {
+    return;
+  }
+
+  foreach ($view->result as $key => $result) {
+    if (empty($result->used_by)) {
+      unset($view->result[$key]);
+    }
+  }
+}
