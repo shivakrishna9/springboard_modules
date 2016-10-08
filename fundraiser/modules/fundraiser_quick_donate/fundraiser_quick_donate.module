@@ -634,8 +634,19 @@ function fundraiser_quick_donate_views_pre_render(&$view) {
   }
 
   foreach ($view->result as $key => $result) {
+    // If this card isn't being used by quick donate or for a recurring donation
+    // unset it.
     if (empty($result->used_by)) {
       unset($view->result[$key]);
+      continue;
+    }
+
+    // If this card isn't of type "credit", unset it.
+    $card = commerce_cardonfile_load($result->card_id);
+    $gateway = _fundraiser_gateway_info($card->instance_id);
+    if ($gateway['payment_method'][0] != 'credit') {
+      unset($view->result[$key]);
+      continue;
     }
   }
 }
