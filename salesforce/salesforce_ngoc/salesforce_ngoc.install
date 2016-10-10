@@ -4,3 +4,25 @@
  * @file
  * Install hooks for the Salesforce NGOC module.
  */
+
+/**
+ * Implements hook_uninstall().
+ */
+function salesforce_ngoc_install() {
+  // Remove default Drupal user to Contact mapping provided by Springboard.
+  $user_to_contact_mapping = salesforce_mapping_load('user_to_contact');
+  if ($user_to_contact_mapping !== FALSE) {
+    entity_delete('salesforce_mapping', $user_to_contact_mapping->salesforce_mapping_id);
+  }
+
+  // @TODO This also appears in salesforce_npsp_uninstall(). Should we require
+  // that salesforce_npsp module be uninstalled instead?
+  // Remove NPSP Salesforce mapping for fundraiser sustainers series.
+  $sustainers_series_mapping = salesforce_mapping_load('fundraiser_sustainers_series_npsp');
+  if (!empty($sustainers_series_mapping)) {
+    entity_delete('salesforce_mapping', $sustainers_series_mapping->salesforce_mapping_id);
+  }
+
+  // Remove default donation mapping provided by Springboard.
+  salesforce_genmap_delete_map(-1, 'salesforce_donation');
+}
