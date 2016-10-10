@@ -27,13 +27,13 @@ function fundraiser_quick_donate_admin_settings($form, $form_state) {
     'commerce_sage_payments_eft|commerce_payment_commerce_sage_payments_eft',
     // @todo Remove once braintree is supported.
     'braintree_hostedfields|commerce_payment_braintree_hostedfields',
-    'braintree-paypal|commerce-payment-braintree-paypal',
+    'braintree_paypal|commerce_payment_braintree_paypal',
     'authnet_echeck|rules_authorize_net_echeck_net_avv_2016_authorize_net_sandbox_',
   );
   $gateways = array_filter($gateways, function($element) use ($blacklist) {
-    return !empty($element['gateway_details']['cardonfile']) && !in_array($element['id'], $blacklist);
+    return (!empty($element['gateway_details']['cardonfile']) && !in_array($element['id'], $blacklist)) || !in_array($element['id'], $blacklist);
   });
-  
+
   $gateway_keys = array_keys($gateways);
   foreach ($gateway_keys as $gateway_key) {
     $default = '';
@@ -45,7 +45,7 @@ function fundraiser_quick_donate_admin_settings($form, $form_state) {
     $form['default_forms'][FUNDRAISER_QUICK_DONATE_DEFAULT_FORM_PREFIX . $gateway_key] = array(
       '#type' => 'textfield',
       '#title' => t('Default node ID for @gateway', array(
-        '@gateway' => isset($gateways[$gateway_key]['title']) ? $gateways[$gateway_key]['title'] : $gateway_key, 
+        '@gateway' => isset($gateways[$gateway_key]['title']) ? $gateways[$gateway_key]['title'] : $gateway_key,
       )),
       '#description' => t('The node ID of the form you want to be used as default.'),
       '#autocomplete_path' => 'admin/springboard/options/fundraiser/fundraiser_quick_donate/autocomplete/' . $gateway_key,
