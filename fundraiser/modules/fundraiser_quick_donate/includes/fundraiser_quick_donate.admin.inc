@@ -31,7 +31,7 @@ function fundraiser_quick_donate_admin_settings($form, $form_state) {
     'authnet_echeck|rules_authorize_net_echeck_net_avv_2016_authorize_net_sandbox_',
   );
   $gateways = array_filter($gateways, function($element) use ($blacklist) {
-    return (!empty($element['gateway_details']['cardonfile']) && !in_array($element['id'], $blacklist)) || !in_array($element['id'], $blacklist);
+    return !(in_array($element['id'], $blacklist) || empty($element['gateway_details']['cardonfile']));
   });
 
   $gateway_keys = array_keys($gateways);
