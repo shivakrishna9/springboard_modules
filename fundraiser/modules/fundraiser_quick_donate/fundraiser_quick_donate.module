@@ -641,8 +641,20 @@ function fundraiser_quick_donate_views_pre_render(&$view) {
       continue;
     }
 
-    // If this card isn't of type "credit", unset it.
+    // Array of payment gateways used by cards that should not be displayed.
+    $blacklist = array(
+      'braintree_hostedfields|commerce_payment_braintree_hostedfields',
+      'commerce_psi_credit|commerce_payment_commerce_psi_credit',
+    );
+
+    // If the payment gateway is in the blacklist, unset this card.
     $card = commerce_cardonfile_load($result->card_id);
+    if (in_array($card->instance_id, $blacklist)) {
+      unset($view->result[$key]);
+      continue;
+    }
+
+    // If this card isn't of type "credit", unset it.
     $gateway = _fundraiser_gateway_info($card->instance_id);
     if ($gateway['payment_method'][0] != 'credit') {
       unset($view->result[$key]);
