@@ -1118,6 +1118,24 @@ function fundraiser_sustainers_node_presave($node) {
     $node->recurring_minimum_donation_amount = is_numeric($node->recurring_amount_wrapper['recurring_minimum_donation_amount']) ?
       $node->recurring_amount_wrapper['recurring_minimum_donation_amount'] : variable_get('fundraiser_default_minimum', 10.00);
     unset($node->recurring_amount_wrapper);
+
+    // Is the form being configured to dual-ask?
+    if (!empty($node->recurring_dual_ask_amounts) && is_array($node->recurring_donation_type_options)) {
+      // If option keys were set to anything non-standard (or very old Springboard),
+      // the dual-ask UX will break, so we force them to be standard.
+      foreach ($node->recurring_donation_type_options as $index => $option) {
+        $pipe_pos = strpos($option, '|');
+        $key = substr($option, 0, $pipe_pos);
+        if ($key != 'recurs' && $key != 'NO_RECURR') {
+          // Assume it should be NO_RECURR. This is safest.
+          $node->recurring_donation_type_options[$index] = 'NO_RECURR' . substr($option, $pipe_pos);
+          // If it's the default, standardize that too.
+          if ($node->recurring_default_donation_type == $key) {
+            $node->recurring_default_donation_type = 'NO_RECURR';
+          }
+        }
+      }
+    }
   }
 }
 
