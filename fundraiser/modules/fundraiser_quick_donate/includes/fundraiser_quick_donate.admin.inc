@@ -27,6 +27,7 @@ function fundraiser_quick_donate_admin_settings($form, $form_state) {
     'commerce_sage_payments_eft|commerce_payment_commerce_sage_payments_eft',
     // @todo Remove once braintree is supported.
     'braintree_hostedfields|commerce_payment_braintree_hostedfields',
+    'braintree-paypal|commerce-payment-braintree-paypal',
     'authnet_echeck|rules_authorize_net_echeck_net_avv_2016_authorize_net_sandbox_',
   );
   $gateways = array_filter($gateways, function($element) use ($blacklist) {
