@@ -697,6 +697,11 @@ function fundraiser_commerce_salesforce_genmap_map_fields_alter(&$fields, $conte
  *   An array with form key and error message.
  */
 function fundraiser_commerce_generic_credit_card_validate($value) {
+  // If using a stored card, return early.
+  if (!empty($value['credit']['cardonfile']) && $value['credit']['cardonfile'] != 'new') {
+    return array();
+  }
+
   // @todo This should probably be driven down to the gateway level.
   // Include the file with the validation info.
   module_load_include('inc', 'commerce_payment', 'includes/commerce_payment.credit_card');
