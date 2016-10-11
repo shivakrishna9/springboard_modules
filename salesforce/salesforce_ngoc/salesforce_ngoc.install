@@ -86,6 +86,7 @@ function salesforce_ngoc_create_donation_mapping() {
       'card_expiration_year' => 'rC_Connect__Payment_Method_Card_Expiration_Year__c',
       'card_type' => 'rC_Connect__Payment_Method_Card_Issuer__c',
       'is_recurring_donation' => 'rC_Connect__Giving_Is_Sustainer__c',
+      'payment_token' => 'rC_Connect__Payment_Method_Card_GUID__c',
     ),
     'salesforce_webform_map' => array (
       'cid' => 'rC_Connect__Batch_Upload_Campaign_Matched__c',

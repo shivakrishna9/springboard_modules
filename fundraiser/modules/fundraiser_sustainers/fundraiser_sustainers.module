@@ -513,7 +513,6 @@ function fundraiser_sustainers_salesforce_genmap_map_fields_alter(&$fields, $con
     $info = _fundraiser_get_donation_gateway($donation->did);
     $offsite_recurring = _fundraiser_sustainers_offsite_recurring($info['offsite_recurring'], $donation->donation['payment_method']);
     $map = $context['map'];
- 
     $is_recurring = $donation->donation['recurs_monthly'] ? TRUE : FALSE;
     // Check to see if the is recurring donation field was mapped.
     if (array_key_exists('is_recurring_donation', $map->field_map['salesforce_donation_map'])) {
