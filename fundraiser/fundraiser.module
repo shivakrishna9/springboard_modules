@@ -3965,8 +3965,8 @@ function _fundraiser_update_billing_form_commerce_cardonfile_card_form_alter_val
   $input = $form_state['input'];
   $values = &$form_state['values'];
   $values['credit_card']['owner'] = $input['first_name'] . ' ' . $input['last_name'];
-  $values['credit_card']['exp_month'] = $values['payment_fields']['credit']['expiration_date']['card_expiration_month'] = sprintf('%02d', $input['payment_fields']['credit']['expiration_date']['card_expiration_month']);
-  $values['credit_card']['exp_year'] = $values['payment_fields']['credit']['expiration_date']['card_expiration_year'] = $input['payment_fields']['credit']['expiration_date']['card_expiration_year'];
+  $values['credit_card']['exp_month'] = $values['payment_fields']['credit']['card_expiration_month'] = $values['payment_fields']['credit']['expiration_date']['card_expiration_month'] = sprintf('%02d', $input['payment_fields']['credit']['expiration_date']['card_expiration_month']);
+  $values['credit_card']['exp_year'] = $values['payment_fields']['credit']['expiration_date']['card_expiration_year'] = $values['payment_fields']['credit']['card_expiration_year'] = $input['payment_fields']['credit']['expiration_date']['card_expiration_year'];
 
   $form['credit_card']['number']['#default_value'] = $form_state['card']->card_number;
   if (!empty($values['payment_fields']['credit']['card_number'])) {
