@@ -77,19 +77,24 @@ function springboard_og_advocacy_og_context_handler($item = NULL) {
  * @return mixed
  */
 function springboard_og_advocacy_get_group_context() {
+
   $gid = NULL;
-  // This would have been set by the above hooks.
+
+  // This would have been set by springboard_og_advocacy_og_context_handler().
   $group_context = og_context('node');
   if (!empty($group_context['gid'])) {
-    $gid = $group_context['gid'];
+    return $group_context['gid'];
   }
+
   // @todo Sometimes group context is empty after ajax refresh on
   // advocacy search pages.  Figure out why.
-  elseif (!empty($_SESSION['springboard_og_advocacy_working_group'])) {
-    $gid = $_SESSION['springboard_og_advocacy_working_group'];
+  if (!empty($_SESSION['springboard_og_advocacy_working_group'])) {
+    return $_SESSION['springboard_og_advocacy_working_group'];
   }
-  elseif (!empty($_SESSION['og_context']['gid'] && $_SESSION['og_context']['group_type'] == 'node')) {
-    $gid = $_SESSION['og_context']['gid'];
+
+  // If all else fails, try this.
+  if (!empty($_SESSION['og_context']['gid'] && $_SESSION['og_context']['group_type'] == 'node')) {
+    return $_SESSION['og_context']['gid'];
   }
 
   return $gid;
