@@ -2367,7 +2367,7 @@ function fundraiser_sustainers_donation_payment_info($next_donation, $master_did
   // Gather further donation data.
   $remaining_donation_count = _fundraiser_sustainers_count_donations_recurr_remaining($master_did);
   $payment_info = '<div id="payment-info">' .
-    '<h2>Recurring Payment Info</h2>' .
+    '<h2>Recurring Donation Summary</h2>' .
     '<dl>' .
     '<dt>Recurring Donation Amount</dt>' .
     '<dd>' . $next_donation->donation['amount_formatted'] . '</dd>' .
@@ -3505,6 +3505,7 @@ function fundraiser_sustainers_billing_update_form($form, &$form_state, $donatio
   $form['series-info'] = array(
     '#prefix' => '<div id="recurring-series-info">',
     '#suffix' => '</div>',
+    '#type' => 'fieldset',
   );
 
   $remaining = _fundraiser_sustainers_get_donations_recurr_remaining($sustainers_record->master_did);
@@ -3516,7 +3517,7 @@ function fundraiser_sustainers_billing_update_form($form, &$form_state, $donatio
   );
 
   $form['series-info']['recurring-payment-link'] = array(
-    '#markup' => l(t("Edit Recurring Donation"), "user/{$donation->uid}/recurring_overview/{$sustainers_record->master_did}"),
+    '#markup' => '<p>' . l(t("View details"), "user/{$donation->uid}/recurring_overview/{$sustainers_record->master_did}") . '</p>',
     '#prefix' => '<div id="payment-edit-link">',
     '#suffix' => '</div>',
   );
@@ -3561,6 +3562,18 @@ function fundraiser_sustainers_billing_update_form($form, &$form_state, $donatio
       );
     }
     $form = fundraiser_update_billing_form($form, $form_state, $data);
+
+    // Make the header consistent.
+    if (!empty($form['billing_information'])) {
+      $form['billing_information']['#prefix'] = '<div id="recurring-billing-info"><h2>' . $form['billing_information']['#title'] . '</h2>';
+      $form['billing_information']['#suffix'] = '</div>';
+      unset($form['billing_information']['#title']);
+    }
+    if (!empty($form['payment_fields'])) {
+      $form['payment_fields']['#prefix'] = '<div id="recurring-payment-info"><h2>' . $form['payment_fields']['#title'] . '</h2>';
+      $form['payment_fields']['#suffix'] = '</div>';
+      unset($form['payment_fields']['#title']);
+    }
   }
 
   return $form;
