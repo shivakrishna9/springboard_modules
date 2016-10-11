@@ -1,10 +1,10 @@
 <?php
 
-require_once __DIR__ . '/./includes/springboard_og_advocacy.dashboard.inc';
-require_once __DIR__ . '/./includes/springboard_og_advocacy.node.inc';
-require_once __DIR__ . '/./includes/springboard_og_advocacy.node_form.inc';
-require_once __DIR__ . '/./includes/springboard_og_advocacy.og_context.inc';
-require_once __DIR__ . '/./includes/springboard_og_advocacy.subscription.inc';
+require_once __DIR__ . '/includes/springboard_og_advocacy.dashboard.inc';
+require_once __DIR__ . '/includes/springboard_og_advocacy.node.inc';
+require_once __DIR__ . '/includes/springboard_og_advocacy.node_form.inc';
+require_once __DIR__ . '/includes/springboard_og_advocacy.og_context.inc';
+require_once __DIR__ . '/includes/springboard_og_advocacy.subscription.inc';
 
 /**
  * Implements hook_springboard_advocacy_views_plugin_query_alter().
