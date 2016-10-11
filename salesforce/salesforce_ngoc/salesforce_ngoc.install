@@ -25,4 +25,79 @@ function salesforce_ngoc_install() {
 
   // Remove default donation mapping provided by Springboard.
   salesforce_genmap_delete_map(-1, 'salesforce_donation');
+
+  // Create default NGOC Donation mapping.
+  $donation_mapping_result = salesforce_ngoc_create_donation_mapping();
+  if ($donation_mapping_result !== FALSE) {
+    drupal_set_message(t('Donations have been mapped to NGOC Batch Upload object.'));
+  }
+}
+
+/**
+ * Implements hook_uninstall().
+ */
+function salesforce_ngoc_uninstall(){
+
+}
+
+/**
+ * Creates a mapping between donations and the Batch Upload object in Salesforce
+ * NGOC.
+ */
+function salesforce_ngoc_create_donation_mapping() {
+  $map = array();
+  $map = entity_create('salesforce_genmap_map', $map);
+  $map->nid = -1;
+  $map->map_handler = 'salesforce_donation';
+  $map->salesforce_object_type = 'rC_Connect__Batch_Upload__c';
+  // @TODO Unclear what this was doing in salesforce_luminate_install().
+  // $object_type = '';
+  // module_load_include('inc', 'salesforce_genmap', 'includes/salesforce_genmap.map');
+  // if (function_exists('salesforce_get_api')) {
+  //   $sfapi = salesforce_get_api();
+  //   if ($sfapi->isAuthorized()) {
+  //     if (function_exists('_sfw_salesforce_record_type_list')) {
+  //       $sf_records = _sfw_salesforce_record_type_list($sfapi, 'Opportunity');
+  //       $sf_records = array_flip($sf_records);
+  //       $object_type = $sf_records['Donation'];
+  //     }
+  //   }
+  // }
+  // $map->salesforce_record_type = $object_type;
+  $map->field_map = array (
+    'salesforce_donation_map' =>
+    array (
+      'close_date' => 'rC_Connect__Giving_Close_Date__c',
+      'transaction_date' => 'rC_Connect__Giving_Close_Date_Time__c',
+      'full_name' => 'Name',
+      'amount' => 'rC_Connect__Giving_Giving_Amount__c',
+      'currency' => 'rC_Connect__Giving_Entered_Currency__c',
+      'first_name' => 'rC_Connect__Contact_1_First_Name__c',
+      'last_name' => 'rC_Connect__Contact_1_Last_Name__c',
+      'mail' => 'rC_Connect__Contact_1_Email__c',
+      'address' => 'rC_Connect__Address_Street_Line_1__c',
+      'address_line_2' => 'rC_Connect__Address_Street_Line_2__c',
+      'city' => 'rC_Connect__Address_City__c',
+      'country' => 'rC_Connect__Address_Country__c',
+      'state' => 'rC_Connect__Address_State__c',
+      'zip' => 'rC_Connect__Address_Postal_Code__c',
+      'card_number' => 'rC_Connect__Payment_Method_Card_Last_Four_Digits__c',
+      'card_expiration_month' => 'rC_Connect__Payment_Method_Card_Expiration_Month__c',
+      'card_expiration_year' => 'rC_Connect__Payment_Method_Card_Expiration_Year__c',
+      'card_type' => 'rC_Connect__Payment_Method_Card_Issuer__c',
+      'is_recurring_donation' => 'rC_Connect__Giving_Is_Sustainer__c',
+    ),
+    'salesforce_webform_map' => array (
+      'cid' => 'rC_Connect__Batch_Upload_Campaign_Matched__c',
+    ),
+  );
+  $map->sync_options = array(
+    'insert' => 'insert',
+    'update' => 'update',
+    'delete' => 'delete',
+  );
+  $map->status = 1;
+  $map->module = 'salesforce_donation';
+
+  return salesforce_genmap_save_map($map, 'salesforce_donation');
 }
