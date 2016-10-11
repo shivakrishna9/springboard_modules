@@ -78,6 +78,21 @@ function springboard_og_advocacy_get_group_context() {
 
   $gid = NULL;
 
+  // First check if we're on a grouped node.
+  $node = menu_get_object();
+  if (!empty($node->nid) && !empty($node->vid) && !og_is_group('node', $node->nid)) {
+    $wrapper = entity_metadata_wrapper('node', $node);
+    foreach ($node as $key => $property) {
+      if (strpos($key, 'og_group_ref') !== FALSE) {
+        $group = $wrapper->$key->value();
+        $gid = $group->nid;
+      }
+    }
+    if (!empty($gid)) {
+      return $gid;
+    }
+  }
+
   // This would have been set by springboard_og_advocacy_og_context_handler().
   $group_context = og_context('node');
   if (!empty($group_context['gid'])) {
