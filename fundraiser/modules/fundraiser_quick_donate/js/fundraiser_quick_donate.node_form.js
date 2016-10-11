@@ -41,93 +41,42 @@
           }).html('<strong>Please note</strong>, donors will not be able to opt-in to Quick Donate when using a bank account or PayPal.');
           $quickdonate.after($pleasenote);
         }
+        if ($gateways_enabled.bank || $gateways_enabled.paypal) {
+          $pleasenote.show();
+        }
+        else {
+          $pleasenote.hide();
+        }
         if (!$note.length) {
           $note = $('<div/>', {
             class: 'note'
-          }).html('<strong>Note:</strong> ');
+          }).html('Please select a compatible credit gateway in order to enable Quick Donate.');
           $pleasenote.after($note);
         }
-        /*var othertype = type == 'credit' ? 'bank' : 'credit';*/
-        var unusable = false;
-        var partial = false;
 
         if (type == 'credit') {
-          var class_name = $option_value.replace('|', '_');
-          if ($gateways_enabled[type] && Drupal.settings.fundraiser_quick_donate.usable_paypment_processors[type].indexOf($option_value) < 0) {
-            // Remove any previous notices.
-            $note.find('li.' + type).remove();
-
-            if (!$note.children('.invalid-processor').length) {
-              $note.append('<span class="invalid-processor">One or more of the payment gateways you have selected are not compatible with or configured for Quick Donate. Donors will not be able to opt-in to Quick Donate when using this payment method: <ul></ul></span>');
-            }
-
-            if (!$note.find('li.' + class_name).length) {
-              $note.find('ul').append('<li class="' + type + ' ' + class_name + '">' + $option_name + '</li>');
-            }
-
+          if (!$gateways_enabled[type] || $gateways_enabled[type] && Drupal.settings.fundraiser_quick_donate.usable_paypment_processors[type].indexOf($option_value) < 0) {
             gateway_available[type] = false;
           }
           else if ($gateways_enabled[type] && Drupal.settings.fundraiser_quick_donate.usable_paypment_processors[type].indexOf($option_value) >= 0) {
             gateway_available[type] = true;
-            $note.find('li.' + type).remove();
-          }
-          else if (!$gateways_enabled[type]) {
-            $note.find('li.' + class_name).remove();
-            gateway_available[type] = false;
           }
         }
 
-        if (!$gateways_enabled.credit/* && !$gateways_enabled.bank*/) {
-          unusable = true;
-          if (!$note.children('.unusable').length) {
-            $note.find('.invalid-processor').remove();
-            $note.append('<span class="unusable">Quick donation functionality is only available when using one of the supported payment processors above.<br/></span>');
-          }
-        }
-        else if (($gateways_enabled.credit && !gateway_available.credit/* && !$gateways_enabled.bank)
-          || ($gateways_enabled.bank && !gateway_available.bank && !$gateways_enabled.credit*/)) {
-          unusable = true;
-        }
-        else {
-          unusable = false;
-          $note.children('.unusable').remove();
-        }
-
-        if (unusable
-          /*|| $gateways_enabled.credit && !gateway_available.credit && !$gateways_enabled.bank
-          || $gateways_enabled.bank && !gateway_available.bank && !$gateways_enabled.credit*/
-          /*|| ($gateways_enabled.credit && $gateways_enabled.bank && !gateway_available.credit && !gateway_available.bank)*/) {
-          // Disable the QD checkbox and hide all succeeding elements.
+        if (!$gateways_enabled.credit || ($gateways_enabled.credit && !gateway_available.credit)) {
           $quickdonate.find('input[type=checkbox]').attr('disabled', 'disabled');
           $quickdonate.nextAll('.form-item, .form-wrapper').hide();
           $('#edit-quickdonate-message-container').hide();
-
           $note.show();
         }
-        else if (!unusable
-          || ($gateways_enabled[type] && gateway_available[type]
-          /*|| $gateways_enabled[othertype] && gateway_available[othertype]*/)) {
+        else {
           $quickdonate.find('input[type=checkbox]').removeAttr('disabled');
           if (wasChecked) {
             $quickdonate.find('input[type=checkbox]').attr('checked', wasChecked);
           }
           $quickdonate.nextAll('.form-item, .form-wrapper').show();
           $('#edit-quickdonate-message-container').show();
-
-          if ($gateways_enabled.credit && !gateway_available.credit
-            /*|| $gateways_enabled.bank && !gateway_available.bank*/) {
-            $note.show();
-          }
-          else {
-            $note.hide();
-          }
-        }
-
-        if ($gateways_enabled.bank || $gateways_enabled.paypal) {
-          $pleasenote.show();
-        }
-        else {
-          $pleasenote.hide();
+          $note.hide();
         }
 
         if (!$('#edit-quickdonate').is(':checked')) {
