@@ -170,10 +170,9 @@ function springboard_og_entity_settings_form() {
  * Submits the groupable node type form.
  */
 function springboard_og_settings_form_submit($form, $form_state) {
-  foreach ($form_state['values']['springboard_og_grouped_content'] as $type => $status) {
+  foreach ($form_state['values']['springboard_og_grouped_content'] as $node_type => $status) {
     if (!empty($status)) {
-      $og_field = og_fields_info('og_group_ref');
-      og_create_field('og_group_ref_' . substr($type, 0, 19), 'node', $type, $og_field);
+      springboard_og_add_group_reference_field($node_type, 'node');
     }
   }
 }
@@ -185,9 +184,24 @@ function springboard_og_entities_settings_form_submit($form, $form_state) {
   foreach ($form_state['values']['springboard_og_grouped_entities'] as $key => $status) {
     if (!empty($status)) {
       list($entity_type, $bundle) = explode(':', $key);
-      $og_field = og_fields_info('og_group_ref');
-      // @todo alter field info so it's not multiple select by default. Remove other groups option if possible.
-      og_create_field('og_group_ref_'. substr($bundle, 0, 19), $entity_type, $bundle, $og_field);
+      springboard_og_add_group_reference_field($bundle, $entity_type);
     }
   }
+}
+
+
+/**
+ * @param string $bundle
+ *   The bundle name.
+ * @param string $type
+ *   The entity type name.
+ */
+function springboard_og_add_group_reference_field($bundle, $type, $multiple = NULL) {
+  $og_field = og_fields_info('og_group_ref');
+  if (empty($multiple)) {
+    $og_field['field']['cardinality'] = 1;
+  }
+  $og_field['field']['settings']['target_bundles'] = array('springboard_group' => 'springboard_group');
+  $og_field['instance']['settings']['behaviors']['og_widget']['admin']['widget_type'] = 'options_select';
+  og_create_field('og_group_ref_' . substr($bundle, 0, 19), $type, $bundle, $og_field);
 }

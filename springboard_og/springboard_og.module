@@ -114,3 +114,25 @@ function springboard_og_form_node_form_alter(&$form, &$form_state) {
     }
   }
 }
+
+
+/**
+ * Implements hook_field_widget_form_alter().
+ *
+ * Instead of having a separate "mock" field for "groups you don't belong to"
+ * we'll put all options in the main widget for sufficiently permissioned
+ * national group admin. Need to do this because we're not allowing unlimited
+ * cardinality (multiple selections) on the group reference fields.
+ *
+ * @see og_field_widget_form()
+ */
+function springboard_og_field_widget_form_alter(&$element, &$form_state, $context) {
+  //&& $context['field']['cardinality'] == 1
+  // @todo add the other groups options to main group options,
+  // based on a custom permission for national group admins. Rename widget
+  // from "my groups" to something else.
+  // $element['#other_groups_ids']
+  if ($context['field']['settings']['handler'] == 'og') {
+    $element['admin']['#access'] = FALSE;
+  }
+}
