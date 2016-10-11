@@ -186,6 +186,7 @@ function springboard_og_entities_settings_form_submit($form, $form_state) {
     if (!empty($status)) {
       list($entity_type, $bundle) = explode(':', $key);
       $og_field = og_fields_info('og_group_ref');
+      // @todo alter field info so it's not multiple select by default. Remove other groups option if possible.
       og_create_field('og_group_ref_'. substr($bundle, 0, 19), $entity_type, $bundle, $og_field);
     }
   }

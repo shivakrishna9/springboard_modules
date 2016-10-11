@@ -1,240 +1,9 @@
 <?php
 
-/**
- * Implements hook_menu().
- */
-function springboard_og_menu() {
-  $items = array();
-
-  $items['admin/springboard/groups/settings'] = array(
-    'title' => 'Springboard Groups Settings',
-    'description' => 'Configuration settings for Springboard Group features',
-    'page callback' => 'springboard_og_settings_page',
-    'access arguments' => array('administer springboard groups'),
-    'file' => 'includes/springboard_og.admin.inc',
-    'type' => MENU_NORMAL_ITEM,
-  );
-
-  // OG module doesn't define a default tab. We help it here.
-  $items['group/%/%/admin/people/all'] = array(
-    'title' => 'People',
-    'type' => MENU_DEFAULT_LOCAL_TASK,
-  );
-
-  $items['group/%/%/admin/people/bulk-add'] = array(
-    'page callback' => 'springboard_og_bulk_add',
-    'page arguments' => array(1, 2),
-    'type' => MENU_LOCAL_TASK,
-    'weight' => 100,
-    'title' => 'Bulk Add Members',
-    'access callback' => 'og_ui_user_access_group',
-    'access arguments' => array('add user', 1, 2),
-  );
-
-  return $items;
-}
-
-/**
- * Implements hook_springboard_admin_admin_menu_items_alter().
- *
- * Add the springboard group links to springboard admin.
- */
-function springboard_og_springboard_admin_admin_menu_items_alter(&$items) {
-
-  $items['admin/springboard/groups'] = array(
-    'link_path' => 'admin/springboard/groups',
-    'link_title' => t('Groups'),
-    'menu_name' => 'springboard_admin_menu',
-    'expanded' => 1,
-    'customized' => 1,
-    'weight' => 3,
-    '_children' => array(),
-  );
-
-  $items['admin/springboard/groups']['_children']['admin/springboard/groups'] = array(
-    'link_path' => 'admin/springboard/groups',
-    'link_title' => 'View All Groups',
-    'menu_name' => 'springboard_admin_menu',
-    'expanded' => 1,
-    'customized' => 1,
-    'weight' => -5,
-  );
-
-  $items['admin/springboard/groups']['_children']['admin/springboard/groups/my'] = array(
-    'link_path' => 'admin/springboard/groups/my',
-    'link_title' => 'My Groups',
-    'menu_name' => 'springboard_admin_menu',
-    'expanded' => 1,
-    'customized' => 1,
-    'weight' => -4,
-  );
-
-  $items['admin/springboard/groups']['_children']['admin/springboard/groups/settings'] = array(
-    'link_path' => 'admin/springboard/groups/settings',
-    'link_title' => 'Groups Settings',
-    'menu_name' => 'springboard_admin_menu',
-    'expanded' => 1,
-    'customized' => 1,
-    'weight' => 0,
-  );
-}
-
-/**
- * Implements hook_views_api().
- */
-function springboard_og_views_api() {
-  return array(
-    'api' => 3.0,
-    'path' => drupal_get_path('module', 'springboard_og') . '/includes/views',
-  );
-}
-
-/**
- * Implements hook_permission().
- */
-function springboard_og_permission() {
-  return array(
-    'administer springboard groups' => array(
-      'title' => t('Administer Springboard Groups'),
-      'description' => t('Perform administration tasks for Springboard Groups.'),
-    ),
-
-    'access all springboard groups' => array(
-      'title' => t('Access all springboard groups'),
-      'description' => t('Access all groups'),
-    ),
-  );
-
-}
-
-
-/**
- * Implements hook_form_FORMID_alter().
- *
- * Change the default text on og_group_ref field deletion confirm page. That is
- * when making an entity un-groupable.
- */
-function springboard_og_form_og_ui_field_delete_form_alter(&$form, &$form_state) {
-  if ($_GET['destination'] = 'admin/config/springboard-groups') {
-    $form['actions']['cancel']['#markup'] = l(t('cancel'), 'admin/config/springboard-groups');
-    $form['description']['#markup'] = t('All group associations for this content type will be deleted. This cannot be undone.');
-  }
-}
-
-/**
- * Implements hook_springboard_admin_alias_patterns().
- *
- * Put groups paths under springboard backend theme.
- */
-function springboard_og_springboard_admin_alias_patterns() {
-  return array(
-    'group/node/%/admin/people' => array(
-      'path' => array(
-        'regex' => '|^/group/node/([0-9]+)/admin/people|',
-        'replacement' => 'group/node/$1/admin/people',
-      ),
-      'alias' => array(
-        'regex' => '|^springboard/group/node/([0-9]+)/admin/people|',
-        'replacement' => 'springboard/group/node/$1/admin/people',
-      ),
-    ),
-    'group/node/%/admin/people/add-user' => array(
-      'path' => array(
-        'regex' => '|^/group/node/([0-9]+)/admin/people/add-user|',
-        'replacement' => 'group/node/$1/admin/people/add-user',
-      ),
-      'alias' => array(
-        'regex' => '|^springboard/group/node/([0-9]+)/admin/people/add-user|',
-        'replacement' => 'springboard/group/node/$1/admin/people/add-user',
-      ),
-    ),
-    'group/node/%/admin/people/bulk-add' => array(
-      'path' => array(
-        'regex' => '|^/group/node/([0-9]+)/admin/people/bulk-add|',
-        'replacement' => 'group/node/$1/admin/people/bulk-add',
-      ),
-      'alias' => array(
-        'regex' => '|^springboard/group/node/([0-9]+)/admin/people/bulk-add|',
-        'replacement' => 'springboard/group/node/$1/admin/people/bulk-add',
-      ),
-    ),
-    'group/node/%/admin/roles' => array(
-      'path' => array(
-        'regex' => '|^/group/node/([0-9]+)/admin/roles|',
-        'replacement' => 'group/node/$1/admin/roles',
-      ),
-      'alias' => array(
-        'regex' => '|^springboard/group/node/([0-9]+)/admin/roles|',
-        'replacement' => 'springboard/group/node/$1/admin/roles',
-      ),
-    ),
-    'group/node/%/admin/people/permissions' => array(
-      'path' => array(
-        'regex' => '|^/group/node/([0-9]+)/admin/permissions|',
-        'replacement' => 'group/node/$1/admin/permissions',
-      ),
-      'alias' => array(
-        'regex' => '|^springboard/group/node/([0-9]+)/admin/permissions|',
-        'replacement' => 'springboard/group/node/$1/admin/permissions',
-      ),
-    ),
-  );
-}
-
-/**
- * Implements hook_rules_configuration().
- *
- * A rule which enables builk adding of users to a group.
- */
-function springboard_og_default_rules_configuration() {
-  $items['rules_springboard_og_bulk_add'] = entity_import('rules_config', '{ "rules_springboard_og_bulk_add" : {
-    "LABEL" : "add_og_membership",
-    "PLUGIN" : "action set",
-    "REQUIRES" : [ "og", "rules" ],
-    "ACCESS_EXPOSED" : "1",
-    "USES VARIABLES" : { "user" : { "label" : "user", "type" : "user" } },
-    "ACTION SET" : [
-      { "og_group_content_add" : { "entity" : [ "user" ], "group" : [ "site:og-context--node" ] } },
-      { "drupal_message" : { "message" : "User [user:name] added to group" } }
-    ]
-  }
-}');
-
-  return $items;
-}
-
-/**
- * Bulk add users to a group.
- *
- * @param string $group_type
- * @param int $group_id
- *
- * @return mixed
- *   An empty string if permissions are lacking, the bulk add view
- *   if permissions exist.
- */
-function springboard_og_bulk_add($group_type, $group_id) {
-
-  // check if user has access to view user profiles which is needed
-  if (!user_access('View user profiles')) {
-    drupal_set_message(t('You need to have access to view user profiles in
-      order to add users to groups. Please configure the needed permission'),
-      'error');
-    return '';
-  }
-  else {
-    if (is_numeric($group_id)) {
-      og_set_breadcrumb($group_type, $group_id, array(l(t('Group'), "$group_type/$group_id/group")));
-      $view = views_get_view('springboard_og_bulk_add');
-      $view->set_arguments(array($group_id));
-      $view->set_display('block_1');
-      $view->pre_execute();
-      $view->execute();
-      $content = $view->render();
-      return $content;
-    }
-  }
-}
+require_once __DIR__ . '/includes/springboard_og.field_groups.inc';
+require_once __DIR__ . '/includes/springboard_og.fields.inc';
+require_once __DIR__ . '/includes/springboard_og.menu.inc';
+require_once __DIR__ . '/includes/springboard_og.rules.inc';
 
 /**
  * Implements hook_node_info().
@@ -255,9 +24,61 @@ function springboard_og_node_info() {
 }
 
 /**
+ * Implements hook_views_api().
+ */
+function springboard_og_views_api() {
+  return array(
+    'api' => 3.0,
+    'path' => drupal_get_path('module', 'springboard_og') . '/includes/views',
+  );
+}
+
+/**
+ * @param null $module
+ * @param null $api
+ * @return array
+ */
+function springboard_og_ctools_plugin_api($module = NULL, $api = NULL) {
+  if ($module == "field_group" && $api == "field_group") {
+    return array("version" => "1");
+  }
+}
+
+/**
+ * Implements hook_permission().
+ */
+function springboard_og_permission() {
+  return array(
+    'administer springboard groups' => array(
+      'title' => t('Administer Springboard Groups'),
+      'description' => t('Perform administration tasks for Springboard Groups.'),
+    ),
+
+    'access all springboard groups' => array(
+      'title' => t('Access all springboard groups'),
+      'description' => t('Access all groups'),
+    ),
+  );
+}
+
+/**
+ * Implements hook_form_FORM_ID_alter().
+ *
+ * Change the default text on og_group_ref field deletion confirm page. That is
+ * when making an entity un-groupable.
+ */
+function springboard_og_form_og_ui_field_delete_form_alter(&$form, &$form_state) {
+  // @todo use the alias path?
+  if ($_GET['destination'] = 'admin/config/springboard-groups') {
+    $form['actions']['cancel']['#markup'] = l(t('cancel'), 'admin/config/springboard-groups');
+    $form['description']['#markup'] = t('All group associations for this content type will be deleted. This cannot be undone.');
+  }
+}
+
+/**
  * Get a list of groupable entity types.
  *
- * Checks to see what entity types have an og_group_ref field.
+ * Checks to see what entity types have an OG group reference field.
  *
  * @return array
  *   An array of groupable entites.
@@ -279,78 +100,12 @@ function springboard_og_get_grouped_types() {
   return $groups_enabled;
 }
 
-function springboard_og_field_group_info() {
-  $export = array();
-
-  $field_group = new stdClass();
-  $field_group->disabled = FALSE; /* Edit this to true to make a default field_group disabled initially */
-  $field_group->api_version = 1;
-  $field_group->identifier = 'group_sb_group_contact|node|springboard_group|form';
-  $field_group->group_name = 'group_sb_group_contact';
-  $field_group->entity_type = 'node';
-  $field_group->bundle = 'springboard_group';
-  $field_group->mode = 'form';
-  $field_group->parent_name = 'group_sb_group_details';
-  $field_group->data = array(
-    'label' => 'Contact',
-    'weight' => '7',
-    'children' => array(
-      0 => 'field_sb_group_cname',
-      1 => 'field_sb_group_cemail',
-    ),
-    'format_type' => 'fieldset',
-    'format_settings' => array(
-      'formatter' => 'collapsible',
-      'instance_settings' => array(
-        'description' => '',
-        'classes' => 'group-sb-group-contact field-group-fieldset',
-        'required_fields' => 1,
-        'collapsed' => 1,
-      ),
-    ),
-  );
-  $export['group_sb_group_contact|node|springboard_group|form'] = $field_group;
-
-  $field_group = new stdClass();
-  $field_group->disabled = FALSE; /* Edit this to true to make a default field_group disabled initially */
-  $field_group->api_version = 1;
-  $field_group->identifier = 'group_sb_group_details|node|springboard_group|form';
-  $field_group->group_name = 'group_sb_group_details';
-  $field_group->entity_type = 'node';
-  $field_group->bundle = 'springboard_group';
-  $field_group->mode = 'form';
-  $field_group->parent_name = '';
-  $field_group->data = array(
-    'label' => 'Group Details',
-    'weight' => '2',
-    'children' => array(
-      0 => 'field_sb_group_address',
-      1 => 'field_sb_group_logo',
-      2 => 'group_sb_group_contact',
-    ),
-    'format_type' => 'fieldset',
-    'format_settings' => array(
-      'formatter' => 'collapsible',
-      'instance_settings' => array(
-        'description' => '',
-        'classes' => 'group-sb-group-details field-group-fieldset',
-        'required_fields' => 1,
-      ),
-    ),
-  );
-  $export['group_sb_group_details|node|springboard_group|form'] = $field_group;
-
-  return $export;
-}
-
-function springboard_og_ctools_plugin_api($module = NULL, $api = NULL) {
-  if ($module == "field_group" && $api == "field_group") {
-    return array("version" => "1");
-  }
-}
-
+/**
+ * Implements hook_form_node_form_alter().
+ */
 function springboard_og_form_node_form_alter(&$form, &$form_state) {
   if ($form['#node']->type == 'springboard_group') {
+    // Change some of the defaults on the addressfield.
     if (!empty($form['field_sb_group_address'])) {
       $form['field_sb_group_address']['#type'] = 'fieldset';
       $form['field_sb_group_address']['#collapsible'] = TRUE;
@@ -359,110 +114,4 @@ function springboard_og_form_node_form_alter(&$form, &$form_state) {
       $form['field_sb_group_address'][$form['field_sb_group_address']['#language']][0]['#title'] = '';
     }
   }
-}
-
-function springboard_og_field_info() {
-  return array(
-    // We name our field as the associative name of the array.
-    'field_springboard_og_social' => array(
-      'label' => t('Social Media Links'),
-      'description' => t('Creates a field for social media links and icon'),
-      'default_widget' => 'field_springboard_og_social_widget',
-      'default_formatter' => 'field_springboard_og_social_formatter',
-      'settings' => array(
-        'uri_scheme' => variable_get('file_default_scheme', 'public'),
-        'default_image' => 0,
-      ),
-      'instance_settings' => array(
-        'file_extensions' => 'png gif jpg jpeg',
-        'file_directory' => '',
-        'max_filesize' => '',
-        'alt_field' => 0,
-        'title_field' => 0,
-        'max_resolution' => '',
-        'min_resolution' => '',
-        'default_image' => 0,
-      ),
-    ),
-  );
-}
-
-function springboard_og_field_formatter_info() {
-  return array(
-    'field_springboard_og_social_formatter' => array(
-      'label' => t('xxx'),
-      'field types' => array('field_springboard_og_social'),
-    ),
-  );
-}
-
-
-function springboard_og_field_widget_info() {
-  return array(
-    'field_springboard_og_social_widget' => array(
-      'label' => t('Social media links fields'),
-      'field types' => array('field_springboard_og_social'),
-      'settings' => array(
-        'progress_indicator' => 'throbber',
-        'preview_image_style' => 'thumbnail',
-      ),
-      'behaviors' => array(
-        'multiple values' => FIELD_BEHAVIOR_CUSTOM,
-        'default value' => FIELD_BEHAVIOR_NONE,
-      ),
-    ),
-  );
-}
-
-function springboard_og_field_widget_form(&$form, &$form_state, $field, $instance, $langcode, $items, $delta, $element) {
-  $elements['#delta'] = $delta;
-  switch ($instance['widget']['type']) {
-    case 'field_springboard_og_social_widget':
-      //$field['settings']['display_field'] = 0;
-      $elements += array(
-        '#type' => 'fieldset',
-        '#title' => '',
-        //'#element_validate' => array('springboard_og_social_widget_validate'),
-        '#delta' => $delta,
-        '#collapsible' => FALSE,
-      );
-
-      $elements += image_field_widget_form($form, $form_state, $field, $instance, $langcode, $items, $delta, $element);
-      foreach (element_children($elements) as $delta) {
-        $value = isset($items[$delta]['url']) ? $items[$delta]['url'] : '';
-        $elements[$delta]['url'] = array(
-          '#type' => 'textfield',
-          '#title' => t('URL'),
-          '#size' => 60,
-          '#maxlength' => 255,
-          '#default_value' => $value,
-          '#description' => '',
-        );
-
-        if ($instance['required'] == 1) {
-          $elements['url']['#required'] = 1;
-        }
-      }
-      break;
-  }
-
-  $elements['#file_upload_title'] = t('Add new social media link');
-  $element = $elements;
-  return $element;
-}
-
-
-function springboard_og_field_is_empty($item, $field) {
-  return empty($item['url']);
-}
-
-function springboard_og_field_instance_settings_form($field, $instance) {
-  if ($field['type'] == 'field_springboard_og_social') {
-    return file_field_instance_settings_form($field, $instance);
-  }
-}
-
-function springboard_og_field_widget_settings_form($field, $instance) {
-  $form = image_field_widget_settings_form($field, $instance);
-  return $form;
 }
