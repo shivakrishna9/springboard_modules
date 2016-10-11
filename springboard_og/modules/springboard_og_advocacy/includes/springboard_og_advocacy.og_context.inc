@@ -106,7 +106,7 @@ function springboard_og_advocacy_get_group_context() {
   }
 
   // If all else fails, try this.
-  if (!empty($_SESSION['og_context']['gid'] && $_SESSION['og_context']['group_type'] == 'node')) {
+  if (!empty($_SESSION['og_context']['gid']) && $_SESSION['og_context']['group_type'] == 'node') {
     return $_SESSION['og_context']['gid'];
   }
 
