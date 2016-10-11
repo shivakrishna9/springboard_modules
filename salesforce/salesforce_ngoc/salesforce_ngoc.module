@@ -5,6 +5,34 @@
  * Provides Salesforce integration functionality specific to NGOC.
  */
 
+/**
+ * Implements hook_menu().
+ */
+function salesforce_ngoc_menu() {
+// Settings page.
+  $items['admin/config/salesforce/salesforce-ngoc'] = array(
+    'title' => 'Salesforce NGO Connect',
+    'description' => 'Configuration settings for the Salesforce NGO Connect',
+    'page callback' => 'salesforce_ngoc_admin_page',
+    'access arguments' => array('administer salesforce ngoc'),
+    'type' => MENU_NORMAL_ITEM,
+    'file' => 'includes/salesforce_ngoc.admin.inc',
+  );
+  return $items;
+}
+
+/**
+ * Implements hook_permission().
+ */
+function salesforce_ngoc_permission() {
+  return array(
+    'administer salesforce ngoc' => array(
+      'description' => t('Configure settings for the Salesforce NGO Connect.'),
+      'title' => t('Configure Salesforce NGOC'),
+      'restrict access' => TRUE,
+    ),
+  );
+}
 
 /**
  * Implements hook_salesforce_genmap_map_fields_alter().

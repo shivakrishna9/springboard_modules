@@ -6,3 +6,5 @@ version = 7.x-4.x-dev
 
 dependencies[] = salesforce
 dependencies[] = salesforce_genmap
+
+configure = admin/config/salesforce/salesforce-ngoc
