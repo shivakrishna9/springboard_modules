@@ -108,7 +108,8 @@ function springboard_og_advocacy_form_alter(&$form, &$form_state, $form_id) {
 function springboard_og_preprocess_page(&$vars) {
   $path = current_path();
   $omit = strpos($path, '/add') !== FALSE ? TRUE : strpos($path, '/edit') !== FALSE;
-  if (!$omit && isset($_SESSION['springboard_og_context_multiple'])) {
+  $og_paths = springboard_og_advocacy_context_menu_paths();
+  if (in_array($path, $og_paths) && !$omit && isset($_SESSION['springboard_og_context_multiple'])) {
     $build = array(
       'selector' => drupal_get_form('springboard_og_advocacy_group_selector_form', $_SESSION['springboard_og_context_multiple']),
     );

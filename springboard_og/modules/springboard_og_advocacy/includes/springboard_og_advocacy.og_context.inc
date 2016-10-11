@@ -13,9 +13,7 @@ function springboard_og_advocacy_og_context_negotiation_info() {
     'name' => t('Springboard OG Advocacy'),
     'description' => t("Determine context for API subscriptions"),
     'callback' => 'springboard_og_advocacy_og_context_handler',
-    'menu path' => array(
-      'admin/springboard/advocacy/targets',
-    ),
+    'menu path' => springboard_og_advocacy_context_menu_paths(),
   );
 
   return $providers;
@@ -98,4 +96,10 @@ function springboard_og_advocacy_get_group_context() {
   }
 
   return $gid;
+}
+
+function springboard_og_advocacy_context_menu_paths() {
+  return array(
+    'admin/springboard/advocacy/target',
+  );
 }
