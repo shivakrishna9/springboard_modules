@@ -4560,7 +4560,7 @@ function fundraiser_sustainers_fundraiser_commerce_cardonfile_used_by($card_id) 
   foreach ($results as $result) {
     $used_by[] = t('Recurring @type donation (@amount@spacecharged on the @day)', array(
       '@type' => strtolower($result['npsp_installment_period']),
-      '@amount' => empty($result['amount']) ? '' : '$' . $result['amount'] . ',',
+      '@amount' => empty($result['amount']) ? '' : '$' . number_format($result['amount'], 2, '.', '') . ',',
       '@space' => empty($result['amount']) ? '' : ' ',
       '@day' => date("jS", strtotime($result['npsp_next_payment_date'])),
     ));
