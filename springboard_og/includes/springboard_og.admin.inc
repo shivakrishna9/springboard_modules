@@ -70,7 +70,7 @@ function springboard_og_node_settings_form() {
     $og_field = $groups_enabled_types['node'][$key][0];
     $form['springboard_og_node']['springboard_og_grouped_content'][$key] = array(
       '#disabled' => TRUE,
-      '#description' => l(t('Remove from groups'), "admin/config/group/fields/node/$key/" . $og_field . "/delete", array('query' => array('destination' => 'admin/config/springboard-groups'))),
+      '#description' => l(t('Remove from groups'), "admin/config/group/fields/node/$key/" . $og_field . "/delete", array('query' => array('destination' => 'admin/springboard/groups/settings'))),
     );
   }
 

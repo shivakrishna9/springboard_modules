@@ -68,10 +68,9 @@ function springboard_og_permission() {
  * when making an entity un-groupable.
  */
 function springboard_og_form_og_ui_field_delete_form_alter(&$form, &$form_state) {
-  // @todo use the alias path?
-  if ($_GET['destination'] = 'admin/config/springboard-groups') {
-    $form['actions']['cancel']['#markup'] = l(t('cancel'), 'admin/config/springboard-groups');
-    $form['description']['#markup'] = t('All group associations for this content type will be deleted. This cannot be undone.');
+  if ($_GET['destination'] = 'admin/springboard/groups/settings') {
+    $form['actions']['cancel']['#markup'] = l(t('cancel'), 'admin/springboard/groups/settings');
+    $form['description']['#markup'] = t('All group associations for the @type content type will be deleted. This cannot be undone.', array('@type' => arg(5)));
   }
 }
 
