@@ -4,6 +4,7 @@ require_once __DIR__ . '/includes/springboard_og.field_groups.inc';
 require_once __DIR__ . '/includes/springboard_og.fields.inc';
 require_once __DIR__ . '/includes/springboard_og.menu.inc';
 require_once __DIR__ . '/includes/springboard_og.rules.inc';
+require_once __DIR__ . '/includes/springboard_og.permissions.inc';
 
 /**
  * Implements hook_node_info().
@@ -42,23 +43,6 @@ function springboard_og_ctools_plugin_api($module = NULL, $api = NULL) {
   if ($module == "field_group" && $api == "field_group") {
     return array("version" => "1");
   }
-}
-
-/**
- * Implements hook_permission().
- */
-function springboard_og_permission() {
-  return array(
-    'administer springboard groups' => array(
-      'title' => t('Administer Springboard Groups'),
-      'description' => t('Perform administration tasks for Springboard Groups.'),
-    ),
-
-    'access all springboard groups' => array(
-      'title' => t('Access all springboard groups'),
-      'description' => t('Access all groups'),
-    ),
-  );
 }
 
 /**
@@ -132,7 +116,7 @@ function springboard_og_field_widget_form_alter(&$element, &$form_state, $contex
   // based on a custom permission for national group admins. Rename widget
   // from "my groups" to something else.
   // $element['#other_groups_ids']
-  if ($context['field']['settings']['handler'] == 'og') {
+  if (isset($context['field']['settings']['handler']) && $context['field']['settings']['handler'] == 'og') {
     $element['admin']['#access'] = FALSE;
   }
 }

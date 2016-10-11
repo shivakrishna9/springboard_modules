@@ -27,7 +27,6 @@ function springboard_og_advocacy_node_update($node) {
 function springboard_og_advocacy_save($node) {
 
   // Is there an existing subscription record?
-  // @todo Safe to use is_new instead?
   $exists = db_query('select gid from {sb_og_advocacy} where gid = :gid', (array(':gid' => $node->nid)))->fetchField();
 
   // If the subscription level permits state subscriptions, save them;

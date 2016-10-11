@@ -119,6 +119,8 @@ function springboard_og_advocacy_form_springboard_target_edit_custom_targets_for
 
 /**
  * Helper function to add OG-required elements to advocacy forms.
+ *
+ * Modifies the custom target and custom group add/edit forms.
  */
 function springboard_og_advocacy_create_og_form_elements(&$form) {
 
