@@ -3891,7 +3891,7 @@ function fundraiser_update_billing_form($form, &$form_state, $data) {
       );
       $form['#validate'][] = '_fundraiser_update_billing_form_commerce_cardonfile_card_form_alter_validate';
       $form['#validate'][] = 'commerce_cardonfile_card_form_validate';
-      $form['actions']['submit']['#submit'][] = 'commerce_cardonfile_card_form_submit';
+      $form['actions']['submit']['#submit'][] = '_fundraiser_update_billing_form_commerce_cardonfile_card_form_submit';
     }
     elseif (empty($cardonfile)) {
       if (!function_exists('_fundraiser_commerce_credit_card_pane_values')) {
@@ -3976,6 +3976,62 @@ function _fundraiser_update_billing_form_commerce_cardonfile_card_form_alter_val
     $_SESSION['card_number'] = $values['credit_card']['number'] = $values['payment_fields']['credit']['card_number'] = $form_state['card']->card_number;
   }
   $values['credit_card']['cardonfile_instance_default'] = $form_state['card']->instance_default;
+}
+
+/**
+ * Submit callback for fundraiser_update_billing_form().
+ *
+ * Copy of commerce_cardonfile_card_form_submit() from commerce_cardonfile.pages
+ * .inc, needed to support some functionality for the billing update form.
+ *
+ * @see commerce_cardonfile_card_form_submit()
+ */
+function _fundraiser_update_billing_form_commerce_cardonfile_card_form_submit($form, &$form_state) {
+  $op = $form_state['op'];
+  $card = $form_state['card'];
+
+  $card->card_name = $form_state['values']['credit_card']['owner'];
+  $card->card_exp_month = $form_state['values']['credit_card']['exp_month'];
+  $card->card_exp_year = $form_state['values']['credit_card']['exp_year'];
+  if ($op == 'create') {
+    $card->card_number = substr($form_state['values']['credit_card']['number'], -4);
+    $card->card_type = $form_state['values']['credit_card']['type'];
+  }
+  $card->instance_default = $form_state['values']['credit_card']['cardonfile_instance_default'];
+
+  // Invoke the payment method's card create/update callback.
+  $payment_method = commerce_payment_method_instance_load($card->instance_id);
+  $callback = $payment_method['cardonfile'][$op . ' callback'];
+  $success = FALSE;
+
+  if (function_exists($callback)) {
+    $callback_return = $callback($form, $form_state, $payment_method, $card);
+    if ($callback_return) {
+      if ($op == 'create') {
+        $card_save = $callback_return;
+        $confirm_message = t('A new card has been added.');
+      }
+      else {
+        $card_save = $card;
+        $confirm_message = t('The card has been updated.');
+      }
+      commerce_cardonfile_save($card_save);
+      drupal_set_message($confirm_message);
+      $form_state['values']['cardonfile']['old_card'] = clone $card;
+      $form_state['values']['cardonfile']['card'] = $card_save;
+      $success = TRUE;
+    }
+  }
+
+  if (!$success) {
+    if ($op == 'create') {
+      drupal_set_message(t('We encountered an error attempting to save your card data. Please try again and contact us if this error persists.'), 'error');
+    }
+    else {
+      drupal_set_message(t('We encountered an error attempting to update your card data. Please try again and contact us if this error persists.'), 'error');
+    }
+  }
+  $form_state['redirect'] = 'user/' . $card->uid . '/cards';
 }
 
 /**
