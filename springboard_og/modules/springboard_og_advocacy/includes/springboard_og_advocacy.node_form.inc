@@ -18,12 +18,14 @@ function springboard_og_advocacy_form_node_form_alter(&$form, &$form_state) {
       ));
       $form['advocacy_settings']['not_configured']['#markup'] = $message;
     }
-    // Get the subscription info.
-    $api_call = springboard_advocacy_api_call();
-    $subscription = $api_call->getSubscription();
-    if ($subscription) {
-      // Add the form.
-      springboard_og_advocacy_build_subscription_form($form, $subscription);
+    else {
+      // Get the subscription info.
+      $api_call = springboard_advocacy_api_call();
+      $subscription = $api_call->getSubscription();
+      if ($subscription) {
+        // Add the form.
+        springboard_og_advocacy_build_subscription_form($form, $subscription);
+      }
     }
   }
 
@@ -102,7 +104,7 @@ function springboard_og_advocacy_build_subscription_form(&$form, $subscription) 
 
   if (!empty($form['#node']->nid)) {
     // Retrieve stored subscription settings for this node.
-    $settings = springboard_og_advocacy_get_group_subscription($form['#node']->nid);
+    $settings = springboard_og_advocacy_get_saved_group_subscription($form['#node']->nid);
     if (!empty($settings['master_subscription_type']) && $settings['master_subscription_type'] != $subscription['subscription_type']) {
       // If the subscription level is stored in this node is incompatible
       // with the master subscription, set a warning.
