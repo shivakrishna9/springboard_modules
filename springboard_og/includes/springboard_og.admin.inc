@@ -56,6 +56,7 @@ function springboard_og_node_settings_form() {
   // Get the already groups-enabled node types.
   $groups_enabled_types = springboard_og_get_grouped_types();
   $node_defaults = !empty($groups_enabled_types['node']) ? array_keys($groups_enabled_types['node']) : [];
+  dpm($groups_enabled_types);
   // Build the checkboxes.
   $form['springboard_og_node']['springboard_og_grouped_content'] = array(
     '#title' => '',
@@ -111,7 +112,7 @@ function springboard_og_entity_settings_form() {
   $entity_type_options = [];
   foreach ($fieldable_entities as $key => $type) {
     foreach ($type as $info => $name) {
-      if (strpos($info, 'node') === FALSE && strpos($info, 'og_') === FALSE && strpos($info, 'line_item') === FALSE) {
+      if (strpos($info, 'node') === FALSE && strpos($info, 'og_') === FALSE && strpos($info, 'line_item') === FALSE && strpos($info, 'user') === FALSE && strpos($info, 'user') === FALSE) {
         $entity_type_options[$info] = $name . ' (' . substr($info, 0, strpos($info, ':')) . ')';
       }
     }
@@ -196,12 +197,12 @@ function springboard_og_entities_settings_form_submit($form, $form_state) {
  * @param string $type
  *   The entity type name.
  */
-function springboard_og_add_group_reference_field($bundle, $type, $multiple = NULL) {
+function springboard_og_add_group_reference_field($bundle, $type) {
   $og_field = og_fields_info('og_group_ref');
-  if (empty($multiple)) {
-    $og_field['field']['cardinality'] = 1;
-  }
   $og_field['field']['settings']['target_bundles'] = array('springboard_group' => 'springboard_group');
   $og_field['instance']['settings']['behaviors']['og_widget']['admin']['widget_type'] = 'options_select';
+  $og_field['field']['settings']['handler'] = 'og_springboard_og';
+  $og_field['instance']['display']['default']['type'] = 'hidden';
+  $og_field['instance']['display']['teaser']['type'] = 'hidden';
   og_create_field('og_group_ref_' . substr($bundle, 0, 19), $type, $bundle, $og_field);
 }

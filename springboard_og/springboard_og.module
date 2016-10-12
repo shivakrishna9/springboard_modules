@@ -71,7 +71,7 @@ function springboard_og_get_grouped_types() {
   if (!isset($groups_enabled)) {
     // Get the fields that exist in the bundle.
     foreach (field_info_fields() as $field_name => $field) {
-      if ($field['type'] == 'entityreference' && $field['settings']['handler'] == 'og' && !empty($field['bundles'])) {
+      if ($field['type'] == 'entityreference' && $field['settings']['handler'] == 'og_springboard_og' && !empty($field['bundles'])) {
         foreach ($field['bundles'] as $entity_type => $bundles) {
           foreach ($bundles as $bundle) {
             $groups_enabled[$entity_type][$bundle][] = $field_name;
@@ -97,6 +97,24 @@ function springboard_og_form_node_form_alter(&$form, &$form_state) {
       $form['field_sb_group_address'][$form['field_sb_group_address']['#language']][0]['#title'] = '';
     }
   }
+
+  // Change the group field from a multiple select to a single select.
+  // Doing it here instead of in field config allows us to preserve an
+  // unlimited cardinality, which OG basically always assumes is the case.
+  // Limiting the cardinality to 1 would cause errors when different users
+  // attempt to reassign a node to a different group when it has a membership
+  // already assigned by different user, even though the original record in the
+  // og_membership table would be removed.
+  $fields = og_get_group_audience_fields('node', $form['#node']->type, 'node', 'springboard_group');
+  if (!empty($fields)) {
+    foreach ($fields as $key => $field) {
+      $field_name = $key;
+      if ($field_name == 'og_group_ref_' . substr($form['#node']->type, 0, 19)) {
+        // @todo change widget display title.
+        $form[$field_name][$form[$field_name]['#language']][0]['default']['#multiple'] = FALSE;
+      }
+    }
+  }
 }
 
 
@@ -105,18 +123,43 @@ function springboard_og_form_node_form_alter(&$form, &$form_state) {
  *
  * Instead of having a separate "mock" field for "groups you don't belong to"
  * we'll put all options in the main widget for sufficiently permissioned
- * national group admin. Need to do this because we're not allowing unlimited
- * cardinality (multiple selections) on the group reference fields.
+ * national group admin. Need to do this because we're not allowing
+ * multiple selections on the group reference fields.
  *
+ * @see OgSpringboardOgSelectionHandler
  * @see og_field_widget_form()
  */
 function springboard_og_field_widget_form_alter(&$element, &$form_state, $context) {
-  //&& $context['field']['cardinality'] == 1
-  // @todo add the other groups options to main group options,
-  // based on a custom permission for national group admins. Rename widget
-  // from "my groups" to something else.
-  // $element['#other_groups_ids']
-  if (isset($context['field']['settings']['handler']) && $context['field']['settings']['handler'] == 'og') {
+
+  if (isset($context['field']['settings']['handler']) && $context['field']['settings']['handler'] == 'og_springboard_og') {
+    // If the og reference field is using our custom selection handler,
+    // remove the admin "groups you are not of member of"  field.
     $element['admin']['#access'] = FALSE;
+    // Set the value of the default field to the default value of the admin
+    // field if there are values present.
+    if (!empty($element['admin']['#default_value']) && empty($element['default']['#default_value'])) {
+      $element['default']['#default_value'] = $element['admin']['#default_value'];
+    }
+    $element['admin']['#default_value'] = [];
   }
+}
+
+
+/**
+ * Implements hook_ctools_plugin_directory().
+ *
+ * Extend Class OgSelectionHandler, so that admins can get groups
+ * they aren't a member of displayed in the default group selector instead
+ * of the "groups you aren't a member of" selector.
+ */
+function springboard_og_ctools_plugin_directory($module, $plugin) {
+  if ($module == 'entityreference') {
+    return "plugins/entityreference/$plugin";
+  }
+}
+
+function springboard_og_og_membership_presave(OgMembership $og_membership) {
+  // @todo we may want to delete any existing records for an entity in the
+  // og_membership table prior to saving a new record, to prevent accidental
+  // multiple group assignments.
 }
