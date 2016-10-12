@@ -331,9 +331,11 @@ function springboard_cookie_webform_user_webform_submit($form, &$form_state) {
     $fields = _webform_user_flatten_tree($form_state['values']['submitted_tree'], $node->nid);
     $email = trim($fields['mail']);
     $new_data = array('email' => $email);
-    if ($account = user_load_by_mail($email)) {
+    $account = user_load_by_mail($email);
+    if ($account) {
       $new_data['uid'] = $account->uid;
     }
+    springboard_cookie_add_profile_values($account);
     springboard_cookie_tag_client($new_data);
   }
 }
