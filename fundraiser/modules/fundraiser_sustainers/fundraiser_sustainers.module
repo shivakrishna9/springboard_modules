@@ -2297,8 +2297,10 @@ function fundraiser_sustainers_edit_form($did) {
       'donation' => $next_donation,
       'calling module' => 'fundraiser_sustainers',
       'update billing' => FALSE,
+      'update cardonfile' => FALSE,
     );
     if (!empty($cardonfile)) {
+      $data['card'] = $cardonfile;
       $data['payment_fields'] = array(
         'credit' => array(
           'expiration_date' => array(
@@ -2405,6 +2407,10 @@ function fundraiser_sustainers_fundraiser_update_billing_form__fundraiser_sustai
  * Implements hook_fundraiser_update_billing_form__CALLING_MODULE__alter().
  */
 function fundraiser_sustainers_fundraiser_update_billing_form__fundraiser_sustainers__alter(&$form, &$form_state, $data) {
+  if (empty($form_state['card']) && !empty($data['donation']->data['cardonfile'])) {
+    $form_state['card'] = commerce_cardonfile_load($data['donation']->data['cardonfile']);
+  }
+
   $form['master_did'] = array(
     '#type' => 'hidden',
     '#value' => $data['donation']->recurring->master_did,
@@ -2429,6 +2435,9 @@ function fundraiser_sustainers_fundraiser_update_billing_form__fundraiser_sustai
     $form['#after_build'][] = 'market_source_webform_after_build';
   }
 
+  // Add a validation hook which will move some of the form elements, needed for
+  // commerce cardonfile.
+  $form['#validate'][] = '_fundraiser_update_billing_form_commerce_cardonfile_card_form_alter_validate';
   $form['#validate'][] = 'fundraiser_sustainers_update_billing_form_validate';
   $form['actions']['submit']['#submit'][] = 'fundraiser_sustainers_update_billing_form_submit';
 }
