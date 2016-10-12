@@ -65,8 +65,8 @@ function salesforce_ngoc_create_donation_mapping() {
   // }
   // $map->salesforce_record_type = $object_type;
   $map->field_map = array (
-    'salesforce_donation_map' =>
-    array (
+    'salesforce_donation_map' => array (
+      'did' => 'SB_Donation_Id__c',
       'close_date' => 'rC_Connect__Giving_Close_Date__c',
       'transaction_date' => 'rC_Connect__Giving_Close_Date_Time__c',
       'full_name' => 'Name',
@@ -89,7 +89,24 @@ function salesforce_ngoc_create_donation_mapping() {
       'payment_token' => 'rC_Connect__Payment_Method_Card_GUID__c',
     ),
     'salesforce_webform_map' => array (
+      'ms' => 'SB_Market_Source__c',
       'cid' => 'rC_Connect__Batch_Upload_Campaign_Matched__c',
+      'referrer' => 'SB_Referrer__c',
+      'initial_referrer' => 'SB_Initial_Referrer__c',
+      'search_engine' => 'SB_Search_Engine__c',
+      'search_string' => 'SB_Search_String__c',
+      'user_agent' => 'SB_User_Agent__c',
+      'device_type' => 'SB_Device_Type__c',
+      'device_name' => 'SB_Device_Name__c',
+      'device_os' => 'SB_Device_OS__c',
+      'device_browser' => 'SB_Device_Browser__c',
+    ),
+    'salesforce_node_map' => array (
+      'nid' => 'SB_Donation_Form_Id__c',
+      'internal_name' => 'SB_Donation_Form_Title__c',
+    ),
+    'salesforce_user_map' => array (
+      'uid' => 'SB_User_Id__c',
     ),
   );
   $map->sync_options = array(
