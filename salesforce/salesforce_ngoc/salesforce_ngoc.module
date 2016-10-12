@@ -5,6 +5,13 @@
  * Provides Salesforce integration functionality specific to NGOC.
  */
 
+define('SALESFORCE_NGOC_DEFAULT_EMAIL_TYPE', 'Home');
+define('SALESFORCE_NGOC_DEFAULT_ADDRESS_TYPE', 'Home');
+define('SALESFORCE_NGOC_DEFAULT_PAYMENT_METHOD_TYPE', 'Third Party Charge');
+define('SALESFORCE_NGOC_DEFAULT_RECORD_TYPE', 'Donation');
+define('SALESFORCE_NGOC_DEFAULT_TRANSACTION_TYPE', 'Payment');
+define('SALESFORCE_NGOC_DEFAULT_FREQUENCY', 'One Payment');
+
 /**
  * Implements hook_menu().
  */
@@ -13,7 +20,8 @@ function salesforce_ngoc_menu() {
   $items['admin/config/salesforce/salesforce-ngoc'] = array(
     'title' => 'Salesforce NGO Connect',
     'description' => 'Configuration settings for the Salesforce NGO Connect',
-    'page callback' => 'salesforce_ngoc_admin_page',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('salesforce_ngoc_admin_form'),
     'access arguments' => array('administer salesforce ngoc'),
     'type' => MENU_NORMAL_ITEM,
     'file' => 'includes/salesforce_ngoc.admin.inc',
@@ -43,14 +51,14 @@ function salesforce_ngoc_salesforce_genmap_map_fields_alter(&$fields, $context) 
   // mapping interface because these flags have no donation counterpart.
   if ($context['module'] == 'salesforce_donation' && $context['map']->salesforce_object_type == 'rC_Connect__Batch_Upload__c') {
     $fields['rC_Connect__Giving_Paid__c'] = TRUE;
-    $fields['rC_Connect__Contact_1_Email_Type__c'] = 'Home'; //TODO: make setting
-    $fields['rC_Connect__Address_Type__c'] = 'Home'; //TODO: make setting
-    $fields['rC_Connect__Giving_Transaction_Type__c'] = 'Payment'; //TODO: make setting
-    $fields['rC_Connect__Giving_Payment_Frequency__c'] = 'One Payment'; // Depends on one-time or recurring gift.
-    $fields['rC_Connect__Payment_Method_Payment_Type__c'] = 'Third Party Charge';
+    $fields['rC_Connect__Contact_1_Email_Type__c'] = variable_get('salesforce_ngoc_default_email_type', SALESFORCE_NGOC_DEFAULT_EMAIL_TYPE);
+    $fields['rC_Connect__Address_Type__c'] = variable_get('salesforce_ngoc_default_address_type', SALESFORCE_NGOC_DEFAULT_ADDRESS_TYPE);
+    $fields['rC_Connect__Giving_Transaction_Type__c'] = variable_get('salesforce_ngoc_default_transaction_type', SALESFORCE_NGOC_DEFAULT_TRANSACTION_TYPE);
+    $fields['rC_Connect__Giving_Payment_Frequency__c'] = variable_get('salesforce_ngoc_default_frequency', SALESFORCE_NGOC_DEFAULT_FREQUENCY);
+    $fields['rC_Connect__Payment_Method_Payment_Type__c'] = variable_get('salesforce_ngoc_default_payment_method_type', SALESFORCE_NGOC_DEFAULT_PAYMENT_METHOD_TYPE);
     $fields['rC_Connect__Disable_Merchant_Messages__c'] = TRUE; // Prevents NGOC from trying to process the payment.
     $fields['rC_Connect__Giving_Giving_Frequency__c'] = 'One Payment'; // Depends on one-time or recurring gift.
-    $fields['rC_Connect__Giving_Record_Type__c'] = 'Donation'; //TODO: Probably a setting???
+    $fields['rC_Connect__Giving_Record_Type__c'] = variable_get('salesforce_ngoc_default_record_type', SALESFORCE_NGOC_DEFAULT_RECORD_TYPE);
     $fields['rC_Connect__Batch_Upload_Campaign_Matched__c'] = '70163000000A9RwAAK'; //TODO: Either a setting or cid field.
   }
 }
