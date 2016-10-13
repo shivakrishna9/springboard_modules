@@ -188,10 +188,10 @@ function fundraiser_quick_donate_node_insert($node) {
     $fields = array(
       'fundraiser_nid' => $node->nid,
       'quickdonate_optin_message_new_user' => $node->quickdonate_optin_message_new_user,
-      'quickdonate_help_message_new_user' => isset($node->quickdonate_help_message_new_user) ? $node->quickdonate_help_message_new_user : $node->quickdonate_help_message_new_user['value'],
+      'quickdonate_help_message_new_user' => !is_array($node->quickdonate_help_message_new_user) ? $node->quickdonate_help_message_new_user : $node->quickdonate_help_message_new_user['value'],
       'quickdonate_help_message_new_user_format' => isset($node->quickdonate_help_message_new_user_format) ? $node->quickdonate_help_message_new_user_format : $node->quickdonate_help_message_new_user['format'],
       'quickdonate_optin_message_existing_user' => $node->quickdonate_optin_message_existing_user,
-      'quickdonate_help_message_existing_user' => isset($node->quickdonate_help_message_existing_user) ? $node->quickdonate_help_message_existing_user : $node->quickdonate_help_message_existing_user['value'],
+      'quickdonate_help_message_existing_user' => !is_array($node->quickdonate_help_message_existing_user) ? $node->quickdonate_help_message_existing_user : $node->quickdonate_help_message_existing_user['value'],
       'quickdonate_help_message_existing_user_format' => isset($node->quickdonate_help_message_existing_user_format) ? $node->quickdonate_help_message_existing_user_format : $node->quickdonate_help_message_existing_user['format'],
       'quickdonate_login_message' => $node->quickdonate_login_message,
       'quickdonate_login_link_message' => $node->quickdonate_login_link_message,
@@ -522,7 +522,7 @@ function _fundraiser_quick_donate_set_new_qd_cof($form, $form_state) {
 
 /**
  * Returns a user's quick donate card or FALSE if they have none.
- * 
+ *
  * @param $uid
  *   The id of the user whose quick donate card you want to retreive.
  */
