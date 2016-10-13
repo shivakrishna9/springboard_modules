@@ -3,12 +3,12 @@
 /**
  * Implements hook_install().
  */
-function springboard_og_install() {
-  module_load_include('inc', 'springboard_og', 'includes/install/springboard_og.install_content_type');
-  _springboard_og_install_content_type();
+function springboard_group_install() {
+  module_load_include('inc', 'springboard_group', 'includes/install/springboard_group.install_content_type');
+  _springboard_group_install_content_type();
 }
 
-function springboard_og_field_schema($field) {
+function springboard_group_field_schema($field) {
   $columns = array(
     'url' => array('type' => 'varchar', 'length' => 255, 'not null' => FALSE),
     'fid' => array(
@@ -49,7 +49,7 @@ function springboard_og_field_schema($field) {
   );
 }
 
-function springboard_og_enable() {
+function springboard_group_enable() {
   $page = page_manager_get_page_cache('node_view');
   $function = ctools_plugin_get_function($page->subtask, "enable callback");
   $function($page, FALSE);

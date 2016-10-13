@@ -6,14 +6,14 @@
  *
  * Field definition for the group social media fields.
  */
-function springboard_og_field_info() {
+function springboard_group_field_info() {
   return array(
     // We name our field as the associative name of the array.
-    'field_springboard_og_social' => array(
+    'field_springboard_group_social' => array(
       'label' => t('Social Media Links'),
       'description' => t('Creates a field for social media links and icon'),
-      'default_widget' => 'field_springboard_og_social_widget',
-      'default_formatter' => 'field_springboard_og_social_formatter',
+      'default_widget' => 'field_springboard_group_social_widget',
+      'default_formatter' => 'field_springboard_group_social_formatter',
       'settings' => array(
         'uri_scheme' => variable_get('file_default_scheme', 'public'),
         'default_image' => 0,
@@ -35,11 +35,11 @@ function springboard_og_field_info() {
 /**
  * @return array
  */
-function springboard_og_field_formatter_info() {
+function springboard_group_field_formatter_info() {
   return array(
-    'field_springboard_og_social_formatter' => array(
+    'field_springboard_group_social_formatter' => array(
       'label' => t('xxx'),
-      'field types' => array('field_springboard_og_social'),
+      'field types' => array('field_springboard_group_social'),
     ),
   );
 }
@@ -48,11 +48,11 @@ function springboard_og_field_formatter_info() {
 /**
  * Implements hook_field_widget_info().
  */
-function springboard_og_field_widget_info() {
+function springboard_group_field_widget_info() {
   return array(
-    'field_springboard_og_social_widget' => array(
+    'field_springboard_group_social_widget' => array(
       'label' => t('Social media links fields'),
-      'field types' => array('field_springboard_og_social'),
+      'field types' => array('field_springboard_group_social'),
       'settings' => array(
         'progress_indicator' => 'throbber',
         'preview_image_style' => 'thumbnail',
@@ -68,15 +68,15 @@ function springboard_og_field_widget_info() {
 /**
  * Implements hook_field_widget_form().
  */
-function springboard_og_field_widget_form(&$form, &$form_state, $field, $instance, $langcode, $items, $delta, $element) {
+function springboard_group_field_widget_form(&$form, &$form_state, $field, $instance, $langcode, $items, $delta, $element) {
   $elements['#delta'] = $delta;
   switch ($instance['widget']['type']) {
-    case 'field_springboard_og_social_widget':
+    case 'field_springboard_group_social_widget':
       //$field['settings']['display_field'] = 0;
       $elements += array(
         '#type' => 'fieldset',
         '#title' => '',
-        //'#element_validate' => array('springboard_og_social_widget_validate'),
+        //'#element_validate' => array('springboard_group_social_widget_validate'),
         '#delta' => $delta,
         '#collapsible' => FALSE,
       );
@@ -111,15 +111,15 @@ function springboard_og_field_widget_form(&$form, &$form_state, $field, $instanc
  * @param $field
  * @return bool
  */
-function springboard_og_field_is_empty($item, $field) {
+function springboard_group_field_is_empty($item, $field) {
   return empty($item['url']);
 }
 
 /**
  * Implements hook_field_instance_settings_form().
  */
-function springboard_og_field_instance_settings_form($field, $instance) {
-  if ($field['type'] == 'field_springboard_og_social') {
+function springboard_group_field_instance_settings_form($field, $instance) {
+  if ($field['type'] == 'field_springboard_group_social') {
     return file_field_instance_settings_form($field, $instance);
   }
 }
@@ -127,7 +127,7 @@ function springboard_og_field_instance_settings_form($field, $instance) {
 /**
  * Implements hook_field_widget_settings_form().
  */
-function springboard_og_field_widget_settings_form($field, $instance) {
+function springboard_group_field_widget_settings_form($field, $instance) {
   $form = image_field_widget_settings_form($field, $instance);
   return $form;
 }

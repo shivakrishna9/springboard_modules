@@ -1,13 +1,13 @@
 <?php
 /**
  * @file
- * springboard_og.pages_default.inc
+ * springboard_group.pages_default.inc
  */
 
 /**
  * Implements hook_default_page_manager_handlers().
  */
-function springboard_og_default_page_manager_handlers() {
+function springboard_group_default_page_manager_handlers() {
   $export = array();
 
   $handler = new stdClass();
@@ -61,7 +61,7 @@ function springboard_og_default_page_manager_handlers() {
   $pane->pid = 'new-758a4fc7-fa64-4550-befc-dd43c908ee43';
   $pane->panel = 'left';
   $pane->type = 'views_panes';
-  $pane->subtype = 'springboard_og_content_pane-panel_pane_1';
+  $pane->subtype = 'springboard_group_content_pane-panel_pane_1';
   $pane->shown = TRUE;
   $pane->access = array();
   $pane->configuration = array(

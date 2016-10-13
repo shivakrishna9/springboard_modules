@@ -6,7 +6,7 @@
  *
  * Store a group's subscription info.
  */
-function springboard_og_advocacy_schema() {
+function springboard_group_advocacy_schema() {
 
   $schema['sb_og_advocacy'] = array(
     'description' => 'Store group subscription information.',

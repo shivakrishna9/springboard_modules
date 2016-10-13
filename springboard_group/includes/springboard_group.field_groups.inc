@@ -6,7 +6,7 @@
  *
  * Add field groups to the springboard_group node add/edit form.
  */
-function springboard_og_field_group_info() {
+function springboard_group_field_group_info() {
   $export = array();
 
   // Group contact field group.

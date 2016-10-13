@@ -5,7 +5,7 @@
 /**
  * Implements hook_permission().
  */
-function springboard_og_permission() {
+function springboard_group_permission() {
   return array(
     'administer springboard groups' => array(
       'title' => t('Administer Springboard Groups'),
@@ -30,7 +30,7 @@ function springboard_og_permission() {
 
 /**
  * Implements hook_og_permission().
-function springboard_og_og_permission() {
+function springboard_group_og_permission() {
   return array(
     'subscribe' => array(
       'title' => t('Subscribe user to group'),
@@ -52,7 +52,7 @@ function springboard_og_og_permission() {
  * Remove the option for a non-member to request a subscription on the
  * group node page.
  */
-function springboard_og_og_permission_alter(&$perms) {
+function springboard_group_og_permission_alter(&$perms) {
   $perms['subscribe']['default role'] = array();
   $perms['unsubscribe']['default role'] = array();
 }
@@ -63,7 +63,7 @@ function springboard_og_og_permission_alter(&$perms) {
  * Make groups that user is not subscribed to appear in the dropdown selector
  * if they have the correct permission.
  */
-function springboard_og_og_user_access_alter(&$perm, $context) {
+function springboard_group_og_user_access_alter(&$perm, $context) {
   if (user_access('assign content to any springboard group')) {
     $perm['update any page content'] = TRUE;
     $perm['administer group'] = TRUE;

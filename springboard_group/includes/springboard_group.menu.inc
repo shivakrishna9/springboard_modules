@@ -4,15 +4,15 @@
 /**
  * Implements hook_menu().
  */
-function springboard_og_menu() {
+function springboard_group_menu() {
   $items = array();
 
   $items['admin/springboard/groups/settings'] = array(
     'title' => 'Springboard Groups Settings',
     'description' => 'Configuration settings for Springboard Group features',
-    'page callback' => 'springboard_og_settings_page',
+    'page callback' => 'springboard_group_settings_page',
     'access arguments' => array('administer springboard groups'),
-    'file' => 'includes/springboard_og.admin.inc',
+    'file' => 'includes/springboard_group.admin.inc',
     'type' => MENU_NORMAL_ITEM,
   );
 
@@ -23,14 +23,14 @@ function springboard_og_menu() {
   );
 
   $items['group/%/%/admin/people/bulk-add'] = array(
-    'page callback' => 'springboard_og_bulk_add_page',
+    'page callback' => 'springboard_group_bulk_add_page',
     'page arguments' => array(1, 2),
     'type' => MENU_LOCAL_TASK,
     'weight' => 100,
     'title' => 'Bulk Add Members',
     'access callback' => 'og_ui_user_access_group',
     'access arguments' => array('add user', 1, 2),
-    'file' => 'includes/springboard_og.pages.inc',
+    'file' => 'includes/springboard_group.pages.inc',
   );
 
   return $items;
@@ -41,7 +41,7 @@ function springboard_og_menu() {
  *
  * Add the springboard group links to springboard admin.
  */
-function springboard_og_springboard_admin_admin_menu_items_alter(&$items) {
+function springboard_group_springboard_admin_admin_menu_items_alter(&$items) {
 
   $items['admin/springboard/groups'] = array(
     'link_path' => 'admin/springboard/groups',
@@ -87,7 +87,7 @@ function springboard_og_springboard_admin_admin_menu_items_alter(&$items) {
  *
  * Put groups paths under springboard backend theme.
  */
-function springboard_og_springboard_admin_alias_patterns() {
+function springboard_group_springboard_admin_alias_patterns() {
   return array(
     'group/node/%/admin/people' => array(
       'path' => array(

@@ -6,7 +6,7 @@
  * @return array
  *   A page render array.
  */
-function springboard_og_settings_page() {
+function springboard_group_settings_page() {
 
   $build = array();
   $build['content'] = array(
@@ -17,9 +17,9 @@ function springboard_og_settings_page() {
       '#prefix' => '<div class="springboard-groups-settings-page"><H2>' . t('Springboard Groups Settings') . '</H2>',
       '#suffix' => '</div>',
     ),
-    //'springboard_og_system_settings_form' => drupal_get_form('springboard_og_system_settings_form'),
-    'springboard_og_node_settings_form' => drupal_get_form('springboard_og_node_settings_form'),
-    'springboard_og_entity_settings_form' => drupal_get_form('springboard_og_entity_settings_form'),
+    //'springboard_group_system_settings_form' => drupal_get_form('springboard_group_system_settings_form'),
+    'springboard_group_node_settings_form' => drupal_get_form('springboard_group_node_settings_form'),
+    'springboard_group_entity_settings_form' => drupal_get_form('springboard_group_entity_settings_form'),
 
   );
   return $build;
@@ -32,25 +32,25 @@ function springboard_og_settings_page() {
  * @return array
  *   The eligible node type form.
  */
-function springboard_og_system_settings_form() {
+function springboard_group_system_settings_form() {
   $form = array();
 
 
-  $form['springboard_og_system_settings'] = array(
+  $form['springboard_group_system_settings'] = array(
     '#type' => 'fieldset',
     '#title' => t('General'),
     '#collapsible' => TRUE,
     '#description' => '',
   );
 
-  $form['springboard_og_system_settings']['springboard_og_name'] =  array(
+  $form['springboard_group_system_settings']['springboard_group_name'] =  array(
     '#type' => 'textfield',
-    '#default_value' => variable_get('springboard_og_name', t('Springboard Groups')),
+    '#default_value' => variable_get('springboard_group_name', t('Springboard Groups')),
     '#title' => t('Group designation'),
     '#description' => 'Enter the string used to refer to groups in the Admin UI; e.g. "Chapters", "Affiliates", "Groups"',
   );
 
-  $form['springboard_og_system_settings']['submit_settings'] = array(
+  $form['springboard_group_system_settings']['submit_settings'] = array(
     '#type' => 'submit',
     '#value' => 'Save',
     '#submit' => array('system_settings_form_submit'),
@@ -67,12 +67,12 @@ function springboard_og_system_settings_form() {
  * @return array
  *   The eligible node type form.
  */
-function springboard_og_node_settings_form() {
+function springboard_group_node_settings_form() {
   $form = array();
 
-  $form['#attached']['css'][] = drupal_get_path('module', 'springboard_og') . '/css/springboard-og-admin.css';
+  $form['#attached']['css'][] = drupal_get_path('module', 'springboard_group') . '/css/springboard-og-admin.css';
 
-  $form['springboard_og_node'] = array(
+  $form['springboard_group_node'] = array(
     '#type' => 'fieldset',
     '#title' => t('Node types'),
     '#collapsible' => TRUE,
@@ -89,10 +89,10 @@ function springboard_og_node_settings_form() {
   }
 
   // Get the already groups-enabled node types.
-  $groups_enabled_types = springboard_og_get_grouped_types();
+  $groups_enabled_types = springboard_group_get_grouped_types();
   $node_defaults = !empty($groups_enabled_types['node']) ? array_keys($groups_enabled_types['node']) : [];
   // Build the checkboxes.
-  $form['springboard_og_node']['springboard_og_grouped_content'] = array(
+  $form['springboard_group_node']['springboard_group_grouped_content'] = array(
     '#title' => '',
     '#type' => 'checkboxes',
     '#options' => $content_type_options,
@@ -103,16 +103,16 @@ function springboard_og_node_settings_form() {
   // remove group field.
   foreach ($node_defaults as $key) {
     $og_field = $groups_enabled_types['node'][$key][0];
-    $form['springboard_og_node']['springboard_og_grouped_content'][$key] = array(
+    $form['springboard_group_node']['springboard_group_grouped_content'][$key] = array(
       '#disabled' => TRUE,
       '#description' => l(t('Remove from groups'), "admin/config/group/fields/node/$key/" . $og_field . "/delete", array('query' => array('destination' => 'admin/springboard/groups/settings'))),
     );
   }
 
-  $form['springboard_og_node']['submit_node'] = array(
+  $form['springboard_group_node']['submit_node'] = array(
     '#type' => 'submit',
     '#value' => 'Add',
-    '#submit' => array('springboard_og_settings_form_submit'),
+    '#submit' => array('springboard_group_settings_form_submit'),
   );
 
   return $form;
@@ -124,10 +124,10 @@ function springboard_og_node_settings_form() {
  * @return array
  *   The eligible entity and node type forms.
  */
-function springboard_og_entity_settings_form() {
+function springboard_group_entity_settings_form() {
 
   $form = array();
-  $form['#attached']['css'][] = drupal_get_path('module', 'springboard_og') . '/css/springboard-og-admin.css';
+  $form['#attached']['css'][] = drupal_get_path('module', 'springboard_group') . '/css/springboard-og-admin.css';
 
   // Get an array of fieldable entities.
   $fieldable_entities = array();
@@ -152,7 +152,7 @@ function springboard_og_entity_settings_form() {
     }
   }
 
-  $form['springboard_og_entities'] = array(
+  $form['springboard_group_entities'] = array(
     '#type' => 'fieldset',
     '#title' => t('Entity types'),
     '#collapsible' => TRUE,
@@ -160,7 +160,7 @@ function springboard_og_entity_settings_form() {
   );
 
   // Get the already-enabled entities.
-  $groups_enabled_types = springboard_og_get_grouped_types();
+  $groups_enabled_types = springboard_group_get_grouped_types();
   $entity_defaults = !empty($groups_enabled_types) ? $groups_enabled_types : [];
   $group_enabled_entities = [];
   foreach ($entity_defaults as $entity_type => $bundle_group) {
@@ -172,7 +172,7 @@ function springboard_og_entity_settings_form() {
   }
 
   // Build the checkboxes from the list.
-  $form['springboard_og_entities']['springboard_og_grouped_entities'] = array(
+  $form['springboard_group_entities']['springboard_group_grouped_entities'] = array(
     '#title' => '',
     '#type' => 'checkboxes',
     '#options' => $entity_type_options,
@@ -184,7 +184,7 @@ function springboard_og_entity_settings_form() {
   foreach ($entity_defaults as $entity_type => $bundle_group) {
     if ($entity_type != 'node') {
       foreach ($bundle_group as $bundle => $field) {
-        $form['springboard_og_entities']['springboard_og_grouped_entities'][$entity_type . ':' . $bundle] = array(
+        $form['springboard_group_entities']['springboard_group_grouped_entities'][$entity_type . ':' . $bundle] = array(
           '#disabled' => TRUE,
           '#description' => l(t('Remove from groups'), "admin/config/group/fields/" . $entity_type . "/" . $bundle . "/" . $field[0] . "/delete", array('query' => array('destination' => 'springboard/groups/settings'))),
         );
@@ -192,10 +192,10 @@ function springboard_og_entity_settings_form() {
     }
   }
 
-  $form['springboard_og_entities']['actions'] = array(
+  $form['springboard_group_entities']['actions'] = array(
     '#type' => 'submit',
     '#value' => 'Add',
-    '#submit' => array('springboard_og_entities_settings_form_submit'),
+    '#submit' => array('springboard_group_entities_settings_form_submit'),
   );
 
   return $form;
@@ -204,10 +204,10 @@ function springboard_og_entity_settings_form() {
 /**
  * Submits the groupable node type form.
  */
-function springboard_og_settings_form_submit($form, $form_state) {
-  foreach ($form_state['values']['springboard_og_grouped_content'] as $node_type => $status) {
+function springboard_group_settings_form_submit($form, $form_state) {
+  foreach ($form_state['values']['springboard_group_grouped_content'] as $node_type => $status) {
     if (!empty($status)) {
-      springboard_og_add_group_reference_field($node_type, 'node');
+      springboard_group_add_group_reference_field($node_type, 'node');
     }
   }
 }
@@ -215,11 +215,11 @@ function springboard_og_settings_form_submit($form, $form_state) {
 /**
  * Submits the groupable entity type form.
  */
-function springboard_og_entities_settings_form_submit($form, $form_state) {
-  foreach ($form_state['values']['springboard_og_grouped_entities'] as $key => $status) {
+function springboard_group_entities_settings_form_submit($form, $form_state) {
+  foreach ($form_state['values']['springboard_group_grouped_entities'] as $key => $status) {
     if (!empty($status)) {
       list($entity_type, $bundle) = explode(':', $key);
-      springboard_og_add_group_reference_field($bundle, $entity_type);
+      springboard_group_add_group_reference_field($bundle, $entity_type);
     }
   }
 }
@@ -231,11 +231,11 @@ function springboard_og_entities_settings_form_submit($form, $form_state) {
  * @param string $type
  *   The entity type name.
  */
-function springboard_og_add_group_reference_field($bundle, $type) {
+function springboard_group_add_group_reference_field($bundle, $type) {
   $og_field = og_fields_info('og_group_ref');
   $og_field['field']['settings']['target_bundles'] = array('springboard_group' => 'springboard_group');
   $og_field['instance']['settings']['behaviors']['og_widget']['admin']['widget_type'] = 'options_select';
-  $og_field['field']['settings']['handler'] = 'og_springboard_og';
+  $og_field['field']['settings']['handler'] = 'og_springboard_group';
   $og_field['instance']['display']['default']['type'] = 'hidden';
   $og_field['instance']['display']['teaser']['type'] = 'hidden';
   // Enable Entity reference prepopulate.

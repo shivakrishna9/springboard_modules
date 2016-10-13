@@ -9,7 +9,7 @@
  * @return array
  *   The form.
  */
-function springboard_og_advocacy_group_selector_form($form, &$form_state, $groups) {
+function springboard_group_advocacy_group_selector_form($form, &$form_state, $groups) {
 
   $form = [];
   $form['title']['#markup'] = '<strong>' . t('Choose an affiliate group to work in:') . '</strong>';
@@ -28,9 +28,9 @@ function springboard_og_advocacy_group_selector_form($form, &$form_state, $group
   $form['groups'] = array(
     '#type' => 'select',
     '#options' => $options,
-    '#default_value' => springboard_og_advocacy_get_group_context(),
+    '#default_value' => springboard_group_advocacy_get_group_context(),
     '#ajax' => array(
-      'callback' => 'springboard_og_advocacy_group_selector',
+      'callback' => 'springboard_group_advocacy_group_selector',
       'wrapper' => 'sba-dashboard',
       'method' => 'replace',
       'effect' => 'fade',
@@ -64,10 +64,10 @@ function springboard_og_advocacy_group_selector_form($form, &$form_state, $group
  * @param $form_state
  * @return mixed
  */
-function springboard_og_advocacy_group_selector($form, &$form_state) {
+function springboard_group_advocacy_group_selector($form, &$form_state) {
   // Put the chosen group into session, so it can be retrieved by
-  // springboard_og_advocacy_og_context_handler().
-  $_SESSION['springboard_og_advocacy_working_group'] = $form_state['values']['groups'];
+  // springboard_group_advocacy_og_context_handler().
+  $_SESSION['springboard_group_advocacy_working_group'] = $form_state['values']['groups'];
 
   // Reload the dashboard so the views result can filter by the selected group.
   $dashboard = springboard_advocacy_dashboard($form_state['values']['path']);
@@ -77,7 +77,7 @@ function springboard_og_advocacy_group_selector($form, &$form_state) {
 /**
  * Implements hook_springboard_target_api_save_target_group_alter().
  */
-function springboard_og_advocacy_springboard_target_api_save_target_group_alter(&$group) {
+function springboard_group_advocacy_springboard_target_api_save_target_group_alter(&$group) {
   // @todo add the og_gid as "affiliate_id" as to the group array.
 }
 
@@ -86,8 +86,8 @@ function springboard_og_advocacy_springboard_target_api_save_target_group_alter(
  *
  * Add the extra form elements we need to the advocacy CRUD forms.
  */
-function springboard_og_advocacy_form_springboard_target_create_custom_groups_form_alter(&$form, &$form_state) {
-  springboard_og_advocacy_create_og_form_elements($form);
+function springboard_group_advocacy_form_springboard_target_create_custom_groups_form_alter(&$form, &$form_state) {
+  springboard_group_advocacy_create_og_form_elements($form);
 }
 
 /**
@@ -95,8 +95,8 @@ function springboard_og_advocacy_form_springboard_target_create_custom_groups_fo
  *
  * Add the extra form elements we need to the advocacy CRUD forms.
  */
-function springboard_og_advocacy_form_springboard_target_edit_custom_groups_form_alter(&$form, &$form_state) {
-  springboard_og_advocacy_create_og_form_elements($form);
+function springboard_group_advocacy_form_springboard_target_edit_custom_groups_form_alter(&$form, &$form_state) {
+  springboard_group_advocacy_create_og_form_elements($form);
 }
 
 /**
@@ -104,8 +104,8 @@ function springboard_og_advocacy_form_springboard_target_edit_custom_groups_form
  *
  * Add the extra form elements we need to the advocacy CRUD forms.
  */
-function springboard_og_advocacy_form_springboard_target_create_custom_targets_form_alter(&$form, &$form_state) {
-  springboard_og_advocacy_create_og_form_elements($form);
+function springboard_group_advocacy_form_springboard_target_create_custom_targets_form_alter(&$form, &$form_state) {
+  springboard_group_advocacy_create_og_form_elements($form);
 }
 
 /**
@@ -113,8 +113,8 @@ function springboard_og_advocacy_form_springboard_target_create_custom_targets_f
  *
  * Add the extra form elements we need to the advocacy CRUD forms.
  */
-function springboard_og_advocacy_form_springboard_target_edit_custom_targets_form_alter(&$form, &$form_state) {
-  springboard_og_advocacy_create_og_form_elements($form);
+function springboard_group_advocacy_form_springboard_target_edit_custom_targets_form_alter(&$form, &$form_state) {
+  springboard_group_advocacy_create_og_form_elements($form);
 }
 
 /**
@@ -122,10 +122,10 @@ function springboard_og_advocacy_form_springboard_target_edit_custom_targets_for
  *
  * Modifies the custom target and custom group add/edit forms.
  */
-function springboard_og_advocacy_create_og_form_elements(&$form) {
+function springboard_group_advocacy_create_og_form_elements(&$form) {
 
   // Get the current user's current group affiliation.
-  $session_gid = springboard_og_advocacy_get_group_context();
+  $session_gid = springboard_group_advocacy_get_group_context();
 
   // Check which form we're on.
   if (strpos($form['#form_id'], 'custom_targets') !== FALSE) {

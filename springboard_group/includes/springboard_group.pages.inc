@@ -13,7 +13,7 @@
  *   An empty string if permissions are lacking, the bulk add view
  *   if permissions exist.
  */
-function springboard_og_bulk_add_page($group_type, $group_id) {
+function springboard_group_bulk_add_page($group_type, $group_id) {
 
   if (!user_access('View user profiles')) {
     drupal_set_message(t('You need to have access to view user profiles in
@@ -25,7 +25,7 @@ function springboard_og_bulk_add_page($group_type, $group_id) {
     $content = '';
     if (is_numeric($group_id)) {
       og_set_breadcrumb($group_type, $group_id, array(l(t('Group'), "$group_type/$group_id/group")));
-      $view = views_get_view('springboard_og_bulk_add');
+      $view = views_get_view('springboard_group_bulk_add');
       $view->set_arguments(array($group_id));
       $view->set_display('block_1');
       $view->pre_execute();

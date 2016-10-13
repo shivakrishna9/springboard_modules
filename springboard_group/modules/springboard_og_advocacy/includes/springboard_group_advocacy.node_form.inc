@@ -5,7 +5,7 @@
  *
  * Add the advocacy settings to the goup node's vertical tab.
  */
-function springboard_og_advocacy_form_node_form_alter(&$form, &$form_state) {
+function springboard_group_advocacy_form_node_form_alter(&$form, &$form_state) {
 
   if ($form['#node']->type == 'springboard_group') {
     // First check if advocacy is configured.
@@ -24,7 +24,7 @@ function springboard_og_advocacy_form_node_form_alter(&$form, &$form_state) {
       $subscription = $api_call->getSubscription();
       if ($subscription) {
         // Add the form.
-        springboard_og_advocacy_build_subscription_form($form, $subscription);
+        springboard_group_advocacy_build_subscription_form($form, $subscription);
       }
     }
   }
@@ -46,9 +46,9 @@ function springboard_og_advocacy_form_node_form_alter(&$form, &$form_state) {
  * @param array $subscription
  *   The advocacy subscription details.
  */
-function springboard_og_advocacy_build_subscription_form(&$form, $subscription) {
+function springboard_group_advocacy_build_subscription_form(&$form, $subscription) {
 
-  $form['#attached']['css'][] = drupal_get_path('module', 'springboard_og_advocacy') . '/css/sb-og-advocacy.css';
+  $form['#attached']['css'][] = drupal_get_path('module', 'springboard_group_advocacy') . '/css/sb-og-advocacy.css';
 
   // Complete set of subscription options prior to subscription  check.
   $options = array(
@@ -60,7 +60,7 @@ function springboard_og_advocacy_build_subscription_form(&$form, $subscription) 
   );
 
   // All states. Can be subject to filtering later.
-  $state_options = springboard_og_advocacy_get_all_states();
+  $state_options = springboard_group_advocacy_get_all_states();
 
   // If the main API account is not Federal plus All States, we need to
   // limit the options presented on the group node according to the main API
@@ -83,7 +83,7 @@ function springboard_og_advocacy_build_subscription_form(&$form, $subscription) 
       unset($options['federal-and-states']);
       unset($options['state-only']);
       // Get the allowed states for this subscription level.
-      $state_options = springboard_og_advocacy_get_allowed_states($subscription);
+      $state_options = springboard_group_advocacy_get_allowed_states($subscription);
       break;
 
     case 'states-selected':
@@ -92,7 +92,7 @@ function springboard_og_advocacy_build_subscription_form(&$form, $subscription) 
       unset($options['federal-only']);
       unset($options['federal-and-states-selected']);
       // Get the allowed states for this subscription level.
-      $state_options = springboard_og_advocacy_get_allowed_states($subscription);
+      $state_options = springboard_group_advocacy_get_allowed_states($subscription);
       break;
   }
 
@@ -104,7 +104,7 @@ function springboard_og_advocacy_build_subscription_form(&$form, $subscription) 
 
   if (!empty($form['#node']->nid)) {
     // Retrieve stored subscription settings for this node.
-    $settings = springboard_og_advocacy_get_saved_group_subscription($form['#node']->nid);
+    $settings = springboard_group_advocacy_get_saved_group_subscription($form['#node']->nid);
     if (!empty($settings['master_subscription_type']) && $settings['master_subscription_type'] != $subscription['subscription_type']) {
       // If the subscription level is stored in this node is incompatible
       // with the master subscription, set a warning.
@@ -171,13 +171,13 @@ function springboard_og_advocacy_build_subscription_form(&$form, $subscription) 
     ),
   );
 
-  $form['#validate'][] = 'springboard_og_advocacy_form_validate';
+  $form['#validate'][] = 'springboard_group_advocacy_form_validate';
 }
 
 /**
  * Form validation handler.
  */
-function springboard_og_advocacy_form_validate($form, $form_state) {
+function springboard_group_advocacy_form_validate($form, $form_state) {
   $api_call = springboard_advocacy_api_call();
   $subscription = $api_call->getSubscription();
   if ($subscription) {
@@ -196,10 +196,10 @@ function springboard_og_advocacy_form_validate($form, $form_state) {
  * @return array
  *   An array of US states allowed for this subscription.
  */
-function springboard_og_advocacy_get_allowed_states($subscription) {
+function springboard_group_advocacy_get_allowed_states($subscription) {
   $arr = array_reverse($subscription['states_custom'], TRUE);
   $subscription['states_custom'] = array_reverse($arr, TRUE);
-  $states = springboard_og_advocacy_get_all_states();
+  $states = springboard_group_advocacy_get_all_states();
   $state_options = array_flip(
     array_intersect(
       array_flip($states),
@@ -215,7 +215,7 @@ function springboard_og_advocacy_get_allowed_states($subscription) {
  * @return array
  *   All US states.
  */
-function springboard_og_advocacy_get_all_states() {
+function springboard_group_advocacy_get_all_states() {
   return array(
     'AL' => 'Alabama',
     'AK' => 'Alaska',

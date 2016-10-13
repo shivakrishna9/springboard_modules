@@ -3,18 +3,18 @@
 /**
  * Implements hook_node_insert().
  */
-function springboard_og_advocacy_node_insert($node) {
+function springboard_group_advocacy_node_insert($node) {
   if ($node->type == 'springboard_group') {
-    springboard_og_advocacy_save($node);
+    springboard_group_advocacy_save($node);
   }
 }
 
 /**
  * Implements hook_node_update().
  */
-function springboard_og_advocacy_node_update($node) {
+function springboard_group_advocacy_node_update($node) {
   if ($node->type == 'springboard_group') {
-    springboard_og_advocacy_save($node);
+    springboard_group_advocacy_save($node);
   }
 }
 
@@ -24,7 +24,7 @@ function springboard_og_advocacy_node_update($node) {
  * @param object $node
  *   The Springboard Group node.
  */
-function springboard_og_advocacy_save($node) {
+function springboard_group_advocacy_save($node) {
 
   // Is there an existing subscription record?
   $exists = db_query('select gid from {sb_og_advocacy} where gid = :gid', (array(':gid' => $node->nid)))->fetchField();

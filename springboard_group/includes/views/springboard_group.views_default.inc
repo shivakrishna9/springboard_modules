@@ -8,7 +8,7 @@
 /**
  * Implements hook_views_default_views().
  */
-function springboard_og_views_default_views() {
+function springboard_group_views_default_views() {
 
   /*
    *
@@ -16,7 +16,7 @@ function springboard_og_views_default_views() {
    *
    */
   $view = new view();
-  $view->name = 'springboard_groups';
+  $view->name = 'springboard_group';
   $view->description = '';
   $view->tag = 'Springboard OG';
   $view->base_table = 'node';
@@ -247,7 +247,7 @@ function springboard_og_views_default_views() {
    *
    */
   $view = new view();
-  $view->name = 'springboard_og_my_groups';
+  $view->name = 'springboard_group_my_groups';
   $view->description = 'Show groups of a user.';
   $view->tag = 'Springboard OG';
   $view->base_table = 'og_membership';
@@ -423,7 +423,7 @@ function springboard_og_views_default_views() {
    *
    */
   $view = new view();
-  $view->name = 'springboard_og_bulk_add';
+  $view->name = 'springboard_group_bulk_add';
   $view->description = '';
   $view->tag = 'Springboard OG';
   $view->base_table = 'users';
@@ -485,7 +485,7 @@ function springboard_og_views_default_views() {
   $handler->display->display_options['fields']['views_bulk_operations']['vbo_settings']['force_single'] = 0;
   $handler->display->display_options['fields']['views_bulk_operations']['vbo_settings']['entity_load_capacity'] = '10';
   $handler->display->display_options['fields']['views_bulk_operations']['vbo_operations'] = array(
-    'rules_component::rules_springboard_og_bulk_add' => array(
+    'rules_component::rules_springboard_group_bulk_add' => array(
       'selected' => 1,
       'skip_confirmation' => 0,
       'override_label' => 1,
@@ -558,7 +558,7 @@ function springboard_og_views_default_views() {
   $views[$view->name] = $view;
 
   $view = new view();
-  $view->name = 'springboard_og_content_pane';
+  $view->name = 'springboard_group_content_pane';
   $view->description = 'Show all content of a group.';
   $view->tag = 'Springboard OG';
   $view->base_table = 'node';

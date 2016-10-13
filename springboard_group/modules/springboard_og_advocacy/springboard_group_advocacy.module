@@ -1,10 +1,10 @@
 <?php
 
-require_once __DIR__ . '/includes/springboard_og_advocacy.dashboard.inc';
-require_once __DIR__ . '/includes/springboard_og_advocacy.node.inc';
-require_once __DIR__ . '/includes/springboard_og_advocacy.node_form.inc';
-require_once __DIR__ . '/includes/springboard_og_advocacy.og_context.inc';
-require_once __DIR__ . '/includes/springboard_og_advocacy.subscription.inc';
+require_once __DIR__ . '/includes/springboard_group_advocacy.dashboard.inc';
+require_once __DIR__ . '/includes/springboard_group_advocacy.node.inc';
+require_once __DIR__ . '/includes/springboard_group_advocacy.node_form.inc';
+require_once __DIR__ . '/includes/springboard_group_advocacy.og_context.inc';
+require_once __DIR__ . '/includes/springboard_group_advocacy.subscription.inc';
 
 /**
  * Implements hook_springboard_advocacy_views_plugin_query_alter().
@@ -12,11 +12,11 @@ require_once __DIR__ . '/includes/springboard_og_advocacy.subscription.inc';
  * Alter the query plugin so it only returns results for allowed states
  * if the state selector is set to "All" while searching.
  */
-function springboard_og_springboard_advocacy_views_plugin_query_alter(&$query) {
+function springboard_group_springboard_advocacy_views_plugin_query_alter(&$query) {
 
-  $gid = springboard_og_advocacy_get_group_context();
+  $gid = springboard_group_advocacy_get_group_context();
   if (!empty($gid)) {
-    $group_subscription = springboard_og_advocacy_get_saved_group_subscription($gid);
+    $group_subscription = springboard_group_advocacy_get_saved_group_subscription($gid);
     // If this group is limited to particular states, add state values to the
     // search query, if none are present.
     if (in_array($group_subscription['group_subscription_type'], array(
@@ -54,7 +54,7 @@ function springboard_og_springboard_advocacy_views_plugin_query_alter(&$query) {
  * Add additional group-specific drupal settings for the sba_target_search.js
  * file to use while searching and adding targets.
  */
-function springboard_og_advocacy_form_alter(&$form, &$form_state, $form_id) {
+function springboard_group_advocacy_form_alter(&$form, &$form_state, $form_id) {
 
   $types = array(
     'sba_message_edit_form',
@@ -90,13 +90,13 @@ function springboard_og_advocacy_form_alter(&$form, &$form_state, $form_id) {
  * Add the group selector to the advocacy dashboard pages.
  * @todo There's a better way.
  */
-function springboard_og_preprocess_page(&$vars) {
+function springboard_group_preprocess_page(&$vars) {
   $path = current_path();
   $omit = strpos($path, '/add') !== FALSE ? TRUE : strpos($path, '/edit') !== FALSE;
-  $og_paths = springboard_og_advocacy_context_menu_paths();
-  if (in_array($path, $og_paths) && !$omit && isset($_SESSION['springboard_og_context_multiple'])) {
+  $og_paths = springboard_group_advocacy_context_menu_paths();
+  if (in_array($path, $og_paths) && !$omit && isset($_SESSION['springboard_group_context_multiple'])) {
     $build = array(
-      'selector' => drupal_get_form('springboard_og_advocacy_group_selector_form', $_SESSION['springboard_og_context_multiple']),
+      'selector' => drupal_get_form('springboard_group_advocacy_group_selector_form', $_SESSION['springboard_group_context_multiple']),
     );
     $vars['page']['content']['system_main']['main']['#markup'] = render($build) . $vars['page']['content']['system_main']['main']['#markup'];
   }

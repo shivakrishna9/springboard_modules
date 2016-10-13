@@ -3,7 +3,7 @@
 /**
  * Field bases.
  */
-function springboard_og_field_default_field_bases() {
+function springboard_group_field_default_field_bases() {
   $field_bases = array();
 
 // Exported field_base: 'group_group'
@@ -143,7 +143,7 @@ function springboard_og_field_default_field_bases() {
 /**
  * Field Instances,
  */
-function springboard_og_field_default_field_instances() {
+function springboard_group_field_default_field_instances() {
   $field_instances = array();
 
   // Exported field_instance: 'node-springboard_group-group_group'.
@@ -397,9 +397,9 @@ function springboard_og_field_default_field_instances() {
 /**
  * Install the group node fields.
  */
-function springboard_og_install_fields() {
-  $fields = springboard_og_field_default_field_bases();
-  $instances = springboard_og_field_default_field_instances();
+function springboard_group_install_fields() {
+  $fields = springboard_group_field_default_field_bases();
+  $instances = springboard_group_field_default_field_instances();
   foreach ($fields as $key => $values) {
     $instance = $instances[$key];
     $base = field_info_field($key);

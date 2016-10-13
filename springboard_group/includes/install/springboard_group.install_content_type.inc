@@ -3,9 +3,9 @@
 /**
  * Install the springboard_group content type.
  */
-function _springboard_og_install_content_type() {
+function _springboard_group_install_content_type() {
 
-  module_load_include('inc', 'springboard_og', 'includes/install/springboard_og.install_fields');
+  module_load_include('inc', 'springboard_group', 'includes/install/springboard_group.install_fields');
 
   $type = node_type_set_defaults();
   $type->name = t('Springboard Group');
@@ -16,14 +16,14 @@ function _springboard_og_install_content_type() {
   $type->base = 'node_content';
   $type->custom = TRUE;
   $type->modified = TRUE;
-  $type->module = 'springboard_og';
+  $type->module = 'springboard_group';
   $type->locked = TRUE;
 
   node_type_save($type);
   node_types_rebuild();
-  springboard_og_install_fields();
+  springboard_group_install_fields();
 
   drupal_set_message(t('The content type Springboard Group has been added.'));
-  watchdog('springboard_og', 'Added content type Springboard Group.');
+  watchdog('springboard_group', 'Added content type Springboard Group.');
 
 }
