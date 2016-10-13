@@ -48,3 +48,10 @@ function springboard_og_field_schema($field) {
     'indexes' => $indexes,
   );
 }
+
+function springboard_og_enable() {
+  $page = page_manager_get_page_cache('node_view');
+  $function = ctools_plugin_get_function($page->subtask, "enable callback");
+  $function($page, FALSE);
+  menu_rebuild();
+}
