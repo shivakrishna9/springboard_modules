@@ -3501,11 +3501,11 @@ function fundraiser_sustainers_billing_update_form($form, &$form_state, $donatio
   );
 
   $remaining = _fundraiser_sustainers_get_donations_recurr_remaining($sustainers_record->master_did);
-  $next_donation = $remaining ? fundraiser_donation_get_donation($remaining[0]->did) : $donation;
+  $next_donation = !empty($remaining) ? fundraiser_donation_get_donation($remaining[0]->did) : $donation;
   $cardonfile = _fundraiser_donation_cardonfile_card($next_donation);
 
   $form['series-info']['recurring-payment-info'] = array(
-    '#markup' => fundraiser_sustainers_donation_payment_info($donation, $sustainers_record->master_did, $cardonfile),
+    '#markup' => fundraiser_sustainers_donation_payment_info($next_donation, $sustainers_record->master_did, $cardonfile),
   );
 
   $form['series-info']['recurring-payment-link'] = array(
