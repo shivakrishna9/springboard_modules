@@ -1,6 +1,5 @@
 <?php
 
-
 /**
  * Create the groups admin page.
  *
@@ -56,7 +55,6 @@ function springboard_og_node_settings_form() {
   // Get the already groups-enabled node types.
   $groups_enabled_types = springboard_og_get_grouped_types();
   $node_defaults = !empty($groups_enabled_types['node']) ? array_keys($groups_enabled_types['node']) : [];
-  dpm($groups_enabled_types);
   // Build the checkboxes.
   $form['springboard_og_node']['springboard_og_grouped_content'] = array(
     '#title' => '',

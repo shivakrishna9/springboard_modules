@@ -32,8 +32,6 @@ function springboard_og_field_default_field_bases() {
     'type' => 'list_boolean',
   );
 
-  $field_bases = array();
-
   // Exported field_base: 'field_sb_group_address'
   $field_bases['field_sb_group_address'] = array(
     'active' => 1,
