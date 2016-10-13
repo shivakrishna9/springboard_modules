@@ -199,3 +199,14 @@ function fundraiser_fund_group_update_7001() {
   );
   db_add_field('fundraiser_fund_group_addon', 'cart_text', $field);
 }
+
+/**
+ * Update ffg_image field to not restrict image size.
+ */
+function fundraiser_fund_group_update_7002() {
+  // Update just the default created Fund Group bundle.
+  $instance_info = field_info_instance('fundraiser_fund_group', 'field_ffg_image', 'fundraiser_fund_group_default');
+  $instance_info['settings']['max_resolution'] = '';
+  $instance_info['settings']['min_resolution'] = '';
+  field_update_instance($instance_info);
+}

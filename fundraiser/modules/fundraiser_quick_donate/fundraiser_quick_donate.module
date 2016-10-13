@@ -442,6 +442,16 @@ function _fundraiser_quick_donate_set_new_qd_cof($form, $form_state) {
   $payment_fields = $values['payment_fields'];
   $payment_method = $values['payment_method'];
 
+  // See if the user currently has a default card.
+  $default_card = fundraiser_quick_donate_get_default_card($values['uid']);
+  if ($default_card && $default_card == $form_state['card']->card_id) {
+    // If quickdonate is not true the user is opting this card out.
+    if (!$payment_fields['credit']['quickdonate']) {
+      // Invoke quick donate opt-out hook.
+      module_invoke_all('fundraiser_quick_donate_optout', $form_state['card']->card_id, $values['uid']);
+    }
+  }
+
   // First reset all existing cards' status to 0.
   db_query('UPDATE {fundraiser_quick_donate_cardonfile} SET status = 0 WHERE uid = :uid', array(
     ':uid' => $values['uid'],
@@ -508,6 +518,16 @@ function _fundraiser_quick_donate_set_new_qd_cof($form, $form_state) {
       ':card_id' => $form_state['card']->card_id,
     ));
   }
+}
+
+/**
+ * Returns a user's quick donate card or FALSE if they have none.
+ * 
+ * @param $uid
+ *   The id of the user whose quick donate card you want to retreive.
+ */
+function fundraiser_quick_donate_get_default_card($uid) {
+  return db_query('SELECT card_id FROM {fundraiser_quick_donate_cardonfile} WHERE status = 1 and uid = :uid', array(':uid' => $uid))->fetchField();
 }
 
 /**
