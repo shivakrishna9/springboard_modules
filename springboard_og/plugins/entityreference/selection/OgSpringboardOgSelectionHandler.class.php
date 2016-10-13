@@ -21,7 +21,7 @@ class OgSpringboardOgSelectionHandler extends OgSelectionHandler {
 
     global $user;
     $query = parent::buildEntityFieldQuery($match, $match_operator);
-    if ($user->uid == 1 || user_access('administer group') || user_access('Administer all springboard group content')) {
+    if ($user->uid == 1 || user_access('administer group') || user_access('assign content to any springboard group')) {
       unset($query->propertyConditions[0]);
     }
     return $query;

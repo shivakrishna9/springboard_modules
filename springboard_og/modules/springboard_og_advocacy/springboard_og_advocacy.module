@@ -40,7 +40,7 @@ function springboard_og_springboard_advocacy_views_plugin_query_alter(&$query) {
     // @todo not implemented do we need this?
     // There's no group id.
     if (!empty($query->search_terms) && ($query->search_terms['class_name'][0] == 'Target' || $query->search_terms['class_name'][0] == 'Group')) {
-      if (user_access('access all springboard_groups')) {
+      if (user_access('assign content to any springboard group')) {
         //$query->search_terms['affiliate_id'] = 'all';
       }
     }

@@ -64,7 +64,7 @@ function springboard_og_og_permission_alter(&$perms) {
  * if they have the correct permission.
  */
 function springboard_og_og_user_access_alter(&$perm, $context) {
-  if (user_access('Administer all springboard groups')) {
+  if (user_access('assign content to any springboard group')) {
     $perm['update any page content'] = TRUE;
     $perm['administer group'] = TRUE;
   }
