@@ -204,5 +204,12 @@ function springboard_og_add_group_reference_field($bundle, $type) {
   $og_field['field']['settings']['handler'] = 'og_springboard_og';
   $og_field['instance']['display']['default']['type'] = 'hidden';
   $og_field['instance']['display']['teaser']['type'] = 'hidden';
+  // Enable Entity reference prepopulate.
+  $og_field['instance']['settings']['behaviors']['prepopulate'] = array(
+    'status' => TRUE,
+    'action' => 'none',
+    'fallback' => 'none',
+    'skip_perm' => FALSE,
+  );
   og_create_field('og_group_ref_' . substr($bundle, 0, 19), $type, $bundle, $og_field);
 }
