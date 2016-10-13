@@ -17,12 +17,48 @@ function springboard_og_settings_page() {
       '#prefix' => '<div class="springboard-groups-settings-page"><H2>' . t('Springboard Groups Settings') . '</H2>',
       '#suffix' => '</div>',
     ),
+    //'springboard_og_system_settings_form' => drupal_get_form('springboard_og_system_settings_form'),
     'springboard_og_node_settings_form' => drupal_get_form('springboard_og_node_settings_form'),
     'springboard_og_entity_settings_form' => drupal_get_form('springboard_og_entity_settings_form'),
 
   );
   return $build;
 }
+
+
+/**
+ * Build a form listing group-eligible node types.
+ *
+ * @return array
+ *   The eligible node type form.
+ */
+function springboard_og_system_settings_form() {
+  $form = array();
+
+
+  $form['springboard_og_system_settings'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('General'),
+    '#collapsible' => TRUE,
+    '#description' => '',
+  );
+
+  $form['springboard_og_system_settings']['springboard_og_name'] =  array(
+    '#type' => 'textfield',
+    '#default_value' => variable_get('springboard_og_name', t('Springboard Groups')),
+    '#title' => t('Group designation'),
+    '#description' => 'Enter the string used to refer to groups in the Admin UI; e.g. "Chapters", "Affiliates", "Groups"',
+  );
+
+  $form['springboard_og_system_settings']['submit_settings'] = array(
+    '#type' => 'submit',
+    '#value' => 'Save',
+    '#submit' => array('system_settings_form_submit'),
+  );
+
+  return $form;
+}
+
 
 
 /**
