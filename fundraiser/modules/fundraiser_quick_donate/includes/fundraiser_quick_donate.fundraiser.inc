@@ -194,7 +194,8 @@ function fundraiser_quick_donate_fundraiser_donation_form($form, $form_state) {
 
     // If the following variable is TRUE, the following form element will be
     // checked and disabled (ie it WILL be set as default).
-    $force_instance_default = empty($stored_cards);
+    // @todo Uncomment the following code when multiple cards are supported.
+    /*$force_instance_default = empty($stored_cards);
     $form['submitted']['payment_information']['payment_fields'][$gateway_type]['cardonfile_instance_default'] = array(
       '#type' => 'checkbox',
       '#title' => variable_get('fundraiser_quick_donate_default_default_message', t('Set as your default payment method?')),
@@ -206,7 +207,7 @@ function fundraiser_quick_donate_fundraiser_donation_form($form, $form_state) {
           ':input[name$="[' . $gateway_type . '][quickdonate]"]' => array('checked' => TRUE),
         ),
       ),
-    );
+    );*/
 
     // If the user isn't logged in, present a message asking if they already
     // have an account and stored card, and to log in.
@@ -369,7 +370,8 @@ function _fundraiser_quick_donate_checkout_form_submit($form, &$form_state) {
 
   $card_id = 0;
 
-  if (!empty($payment_fields[$method]['cardonfile_instance_default'])) {
+  // @todo Uncomment the following code when multiple cards are supported.
+  /*if (!empty($payment_fields[$method]['cardonfile_instance_default'])) {
     if ($payment_fields[$method]['cardonfile'] != 'new') {
       // Get card on file value.
       $card_id = intval($payment_fields[$method]['cardonfile']);
@@ -383,7 +385,7 @@ function _fundraiser_quick_donate_checkout_form_submit($form, &$form_state) {
       $card_id = _fundraiser_quick_donate_users_latest_cardid($account->uid);
       commerce_cardonfile_set_default_card($card_id);
     }
-  }
+  }*/
 
   // In the case that the card id is still set to 0, retrieve user's latest
   // card on file.
