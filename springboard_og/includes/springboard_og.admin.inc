@@ -246,4 +246,5 @@ function springboard_og_add_group_reference_field($bundle, $type) {
     'skip_perm' => FALSE,
   );
   og_create_field('og_group_ref_' . substr($bundle, 0, 19), $type, $bundle, $og_field);
+  //@todo update og_role_permission.
 }
