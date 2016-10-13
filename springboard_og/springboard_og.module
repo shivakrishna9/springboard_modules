@@ -5,7 +5,7 @@ require_once __DIR__ . '/includes/springboard_og.fields.inc';
 require_once __DIR__ . '/includes/springboard_og.menu.inc';
 require_once __DIR__ . '/includes/springboard_og.rules.inc';
 require_once __DIR__ . '/includes/springboard_og.permissions.inc';
-require_once __DIR__ . '/includes/springboard_og.panels.inc';
+require_once __DIR__ . '/includes/springboard_og.pages_default.inc';
 
 
 /**
@@ -37,9 +37,7 @@ function springboard_og_views_api() {
 }
 
 /**
- * @param null $module
- * @param null $api
- * @return array
+ * Implements hook_ctools_plugin_api().
  */
 function springboard_og_ctools_plugin_api($module = NULL, $api = NULL) {
   if ($module == "field_group" && $api == "field_group") {
