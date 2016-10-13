@@ -73,12 +73,22 @@ function fundraiser_quick_donate_fundraiser_donation_form($form, $form_state) {
       '#type' => 'value',
       '#value' => 'true',
     );
-    $form['submitted']['payment_information']['payment_fields'][$gateway_type]['quickdonate'] = array(
-      '#type' => 'checkbox',
-      '#title' => isset($form['#node']->quickdonate_optin_message) ? format_string($form['#node']->quickdonate_optin_message, array('@type' => $type)) : format_string(variable_get('fundraiser_quick_donate_default_optin_message', 'Save this @type for future use?'), array('@type' => $type)),
-      '#default_value' => FALSE,
-      '#description' => isset($form['#node']->quickdonate_help_message) ? check_markup(format_string($form['#node']->quickdonate_help_message, array('@type' => $type)), $form['#node']->quickdonate_help_message_format) : format_string(variable_get('fundraiser_quick_donate_default_help_message', 'Save your @type details and donate faster next time. We may email you from time to time with quick donate opportunities. You can update your @type details or cancel your enrollment at any time.'), array('@type' => $type)),
-    );
+    if (empty($quick_donate_card)) {
+      $form['submitted']['payment_information']['payment_fields'][$gateway_type]['quickdonate'] = array(
+        '#type' => 'checkbox',
+        '#title' => isset($form['#node']->quickdonate_optin_message_new_user) ? format_string($form['#node']->quickdonate_optin_message_new_user, array('@type' => $type)) : format_string(variable_get('fundraiser_quick_donate_default_optin_message_new_user', 'Save this @type for future use?'), array('@type' => $type)),
+        '#default_value' => FALSE,
+        '#description' => isset($form['#node']->quickdonate_help_message_new_user) ? check_markup(format_string($form['#node']->quickdonate_help_message_new_user, array('@type' => $type)), $form['#node']->quickdonate_help_message_new_user_format) : format_string(variable_get('fundraiser_quick_donate_default_help_message_new_user', 'Save your @type details and donate faster next time. We may email you from time to time with quick donate opportunities. You can update your @type details or cancel your enrollment at any time.'), array('@type' => $type)),
+      );
+    }
+    else {
+      $form['submitted']['payment_information']['payment_fields'][$gateway_type]['quickdonate'] = array(
+        '#type' => 'checkbox',
+        '#title' => isset($form['#node']->quickdonate_optin_message_existing_user) ? format_string($form['#node']->quickdonate_optin_message_existing_user, array('@type' => $type)) : format_string(variable_get('fundraiser_quick_donate_default_optin_message_existing_user', 'Update your saved @type?'), array('@type' => $type)),
+        '#default_value' => FALSE,
+        '#description' => isset($form['#node']->quickdonate_help_message_existing_user) ? check_markup(format_string($form['#node']->quickdonate_help_message_existing_user, array('@type' => $type)), $form['#node']->quickdonate_help_message_existing_user_format) : format_string(variable_get('fundraiser_quick_donate_default_help_message_existing_user', 'Check this box if you want to make this new @type your default for future donations.'), array('@type' => $type)),
+      );
+    }
 
     $stored_cards = array();
     if (!variable_get('fundraiser_quick_donate_allow_multiple_cards', FALSE) && $quick_donate_card_id > 0 && !empty($quick_donate_card) && $instance_id == $quick_donate_card->instance_id) {

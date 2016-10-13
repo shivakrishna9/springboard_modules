@@ -150,17 +150,20 @@ function fundraiser_quick_donate_node_prepare($node) {
 function _fundraiser_quick_donate_attach_quick_donate_fields(&$node) {
   // Return early if node already has quickdonate information.
   if (isset($node->quickdonate)) {
-    return;
+    return array();
   }
 
-  if (!isset($node->nid) || empty($results = db_query('SELECT quickdonate_optin_message, quickdonate_help_message_format, quickdonate_help_message, quickdonate_login_message, quickdonate_login_link_message FROM {fundraiser_quick_donate} WHERE fundraiser_nid = :nid', array(
+  if (!isset($node->nid) || empty($results = db_query('SELECT quickdonate_optin_message_new_user, quickdonate_help_message_new_user_format, quickdonate_help_message_new_user, quickdonate_optin_message_existing_user, quickdonate_help_message_existing_user_format, quickdonate_help_message_existing_user, quickdonate_login_message, quickdonate_login_link_message FROM {fundraiser_quick_donate} WHERE fundraiser_nid = :nid', array(
     ':nid' => $node->nid,
   ))->fetchAssoc())) {
     // Set default values.
     $results = array(
-      'quickdonate_optin_message' => variable_get('fundraiser_quick_donate_default_optin_message', 'Save this @type for future use?'),
-      'quickdonate_help_message_format' => 'filtered_html',
-      'quickdonate_help_message' => variable_get('fundraiser_quick_donate_default_help_message', 'Save your @type details and donate faster next time. We may email you from time to time with quick donate opportunities. You can update your @type details or cancel your enrollment at any time.'),
+      'quickdonate_optin_message_new_user' => variable_get('fundraiser_quick_donate_default_optin_message_new_user', 'Save this @type for future use?'),
+      'quickdonate_help_message_new_user_format' => 'filtered_html',
+      'quickdonate_help_message_new_user' => variable_get('fundraiser_quick_donate_default_help_message_new_user', 'Save your @type details and donate faster next time. We may email you from time to time with quick donate opportunities. You can update your @type details or cancel your enrollment at any time.'),
+      'quickdonate_optin_message_existing_user' => variable_get('fundraiser_quick_donate_default_optin_message_existing_user', 'Update your saved @type?'),
+      'quickdonate_help_message_existing_user_format' => 'filtered_html',
+      'quickdonate_help_message_existing_user' => variable_get('fundraiser_quick_donate_default_help_message_existing_user', 'Check this box if you want to make this new @type your default for future donations.'),
       'quickdonate_login_message' => variable_get('fundraiser_quick_donate_default_login_message', t('Already have a saved @type?')),
       'quickdonate_login_link_message' => variable_get('fundraiser_quick_donate_default_login_link_message', t('Click here to login')),
       'quickdonate' => FALSE,
@@ -184,9 +187,12 @@ function fundraiser_quick_donate_node_insert($node) {
   if (!empty($node->quickdonate)) {
     $fields = array(
       'fundraiser_nid' => $node->nid,
-      'quickdonate_optin_message' => $node->quickdonate_optin_message,
-      'quickdonate_help_message' => isset($node->quickdonate_help_message_format) ? $node->quickdonate_help_message : $node->quickdonate_help_message['value'],
-      'quickdonate_help_message_format' => isset($node->quickdonate_help_message_format) ? $node->quickdonate_help_message_format : $node->quickdonate_help_message['format'],
+      'quickdonate_optin_message_new_user' => $node->quickdonate_optin_message_new_user,
+      'quickdonate_help_message_new_user' => isset($node->quickdonate_help_message_new_user) ? $node->quickdonate_help_message_new_user : $node->quickdonate_help_message_new_user['value'],
+      'quickdonate_help_message_new_user_format' => isset($node->quickdonate_help_message_new_user_format) ? $node->quickdonate_help_message_new_user_format : $node->quickdonate_help_message_new_user['format'],
+      'quickdonate_optin_message_existing_user' => $node->quickdonate_optin_message_existing_user,
+      'quickdonate_help_message_existing_user' => isset($node->quickdonate_help_message_existing_user) ? $node->quickdonate_help_message_existing_user : $node->quickdonate_help_message_existing_user['value'],
+      'quickdonate_help_message_existing_user_format' => isset($node->quickdonate_help_message_existing_user_format) ? $node->quickdonate_help_message_existing_user_format : $node->quickdonate_help_message_existing_user['format'],
       'quickdonate_login_message' => $node->quickdonate_login_message,
       'quickdonate_login_link_message' => $node->quickdonate_login_link_message,
     );
@@ -650,8 +656,7 @@ function fundraiser_quick_donate_views_pre_render(&$view) {
     // If the payment gateway is in the blacklist, unset this card.
     $card = commerce_cardonfile_load($result->card_id);
     if (in_array($card->instance_id, $blacklist)) {
-      unset($view->result[$key]);
-      continue;
+      return;
     }
 
     // If this card isn't of type "credit", unset it.

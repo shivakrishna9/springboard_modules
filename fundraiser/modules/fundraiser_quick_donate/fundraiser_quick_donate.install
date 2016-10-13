@@ -21,18 +21,35 @@ function fundraiser_quick_donate_schema() {
         'description' => 'The {node}.nid of the fundraiser.',
         'default' => 0,
       ),
-      'quickdonate_optin_message' => array(
-        'description' => 'The opt-in message to display to end users if the fundraiser has quick payments enabled.',
+      'quickdonate_optin_message_new_user' => array(
+        'description' => 'The opt-in message to display to end users (who have not opted into Quick Donate) if the fundraiser has quick payments enabled.',
         'type' => 'text',
         'not null' => FALSE,
       ),
-      'quickdonate_help_message' => array(
-        'description' => 'The help message to display to end users if the fundraiser has quick payments enabled.',
+      'quickdonate_help_message_new_user' => array(
+        'description' => 'The help message to display to end users (who have not opted into Quick Donate) if the fundraiser has quick payments enabled.',
         'type' => 'text',
         'not null' => FALSE,
       ),
-      'quickdonate_help_message_format' => array(
-        'description' => 'The format of the help message.',
+      'quickdonate_help_message_new_user_format' => array(
+        'description' => 'The format of the help message for users not opted into Quick Donate.',
+        'type' => 'varchar',
+        'length' => '255',
+        'not null' => FALSE,
+        'default' => 'plain_text',
+      ),
+      'quickdonate_optin_message_existing_user' => array(
+        'description' => 'The opt-in message to display to end users (who have already opted into Quick Donate) if the fundraiser has quick payments enabled.',
+        'type' => 'text',
+        'not null' => FALSE,
+      ),
+      'quickdonate_help_message_existing_user' => array(
+        'description' => 'The help message to display to end users (who have already opted into Quick Donate) if the fundraiser has quick payments enabled.',
+        'type' => 'text',
+        'not null' => FALSE,
+      ),
+      'quickdonate_help_message_existing_user_format' => array(
+        'description' => 'The format of the help message for existing quick donate users.',
         'type' => 'varchar',
         'length' => '255',
         'not null' => FALSE,
@@ -229,4 +246,55 @@ function fundraiser_quick_donate_uninstall() {
 
   field_delete_field($field_name);
   field_purge_batch(100);
+}
+
+/**
+ * Implements hook_update_N().
+ *
+ * Change the 'quickdonate_option_message' to 'quickdonate_option_message_new_
+ * user', 'quickdonate_help_message' to 'quickdonate_help_message_new_user', and
+ * 'quickdonate_help_message_form' to 'quickdonate_help_message_new_user_
+ * format'. Also add three new fields, 'quickdonate_optin_message_existing_
+ * _user', 'quickdonate_help_message_existing_user', and 'quickdonate_help_
+ * message_existing_user_format'.
+ */
+function fundraiser_quick_donate_update_7001() {
+  // If one of the old field definition exists, we assume they all exist and all
+  // must be changed.
+  if (db_field_exists('fundraiser_quick_donate', 'quickdonate_optin_message')) {
+    db_change_field('fundraiser_quick_donate', 'quickdonate_optin_message', 'quickdonate_optin_message_new_user', array(
+      'description' => 'The opt-in message to display to end users (who have not opted into Quick Donate) if the fundraiser has quick payments enabled.',
+      'type' => 'text',
+      'not null' => FALSE,
+    ));
+    db_change_field('fundraiser_quick_donate', 'quickdonate_help_message', 'quickdonate_help_message_new_user', array(
+      'description' => 'The help message to display to end users (who have not opted into Quick Donate) if the fundraiser has quick payments enabled.',
+      'type' => 'text',
+      'not null' => FALSE,
+    ));
+    db_change_field('fundraiser_quick_donate', 'quickdonate_help_message_format', 'quickdonate_help_message_new_user_format', array(
+      'description' => 'The format of the help message for users not opted into Quick Donate.',
+      'type' => 'varchar',
+      'length' => '255',
+      'not null' => FALSE,
+      'default' => 'plain_text',
+    ));
+    db_add_field('fundraiser_quick_donate', 'quickdonate_optin_message_existing_user', array(
+      'description' => 'The opt-in message to display to end users (who have already opted into Quick Donate) if the fundraiser has quick payments enabled.',
+      'type' => 'text',
+      'not null' => FALSE,
+    ));
+    db_add_field('fundraiser_quick_donate', 'quickdonate_help_message_existing_user', array(
+      'description' => 'The help message to display to end users (who have already opted into Quick Donate) if the fundraiser has quick payments enabled.',
+      'type' => 'text',
+      'not null' => FALSE,
+    ));
+    db_add_field('fundraiser_quick_donate', 'quickdonate_help_message_existing_user_format', array(
+      'description' => 'The format of the help message for existing quick donate users.',
+      'type' => 'varchar',
+      'length' => '255',
+      'not null' => FALSE,
+      'default' => 'plain_text',
+    ));
+  }
 }
