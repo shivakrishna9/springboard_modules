@@ -87,7 +87,7 @@ function springboard_group_get_grouped_types() {
   if (!isset($groups_enabled)) {
     // Get the fields that exist in the bundle.
     foreach (field_info_fields() as $field_name => $field) {
-      if ($field['type'] == 'entityreference' && $field['settings']['handler'] == 'og_springboard_group' && !empty($field['bundles'])) {
+      if ($field['type'] == 'entityreference' && $field['settings']['handler'] == 'og_springboard_og' && !empty($field['bundles'])) {
         foreach ($field['bundles'] as $entity_type => $bundles) {
           foreach ($bundles as $bundle) {
             $groups_enabled[$entity_type][$bundle][] = $field_name;
@@ -153,7 +153,7 @@ function springboard_group_form_node_form_alter(&$form, &$form_state) {
  */
 function springboard_group_field_widget_form_alter(&$element, &$form_state, $context) {
 
-  if (isset($context['field']['settings']['handler']) && $context['field']['settings']['handler'] == 'og_springboard_group') {
+  if (isset($context['field']['settings']['handler']) && $context['field']['settings']['handler'] == 'og_springboard_og') {
     // If the og reference field is using our custom selection handler,
     // remove the admin "groups you are not of member of"  field.
     $element['admin']['#access'] = FALSE;
