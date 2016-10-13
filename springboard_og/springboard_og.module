@@ -128,7 +128,13 @@ function springboard_og_form_node_form_alter(&$form, &$form_state) {
     foreach ($fields as $key => $field) {
       $field_name = $key;
       if ($field_name == 'og_group_ref_' . substr($form['#node']->type, 0, 19)) {
-        // @todo change widget display title.
+        $form[$field_name]['#type'] = 'fieldset';
+        $form[$field_name]['#collapsible'] = TRUE;
+        $form[$field_name]['#collapsed'] = FALSE;
+        $form[$field_name]['#title'] = t('Springboard Groups');
+        $form[$field_name][$form[$field_name]['#language']]['#title'] = '';
+        $form[$field_name][$form[$field_name]['#language']][0]['default']['#title'] = t('Group');
+        $form[$field_name][$form[$field_name]['#language']][0]['default']['#description'] = t('Associate this content with a group.');
         $form[$field_name][$form[$field_name]['#language']][0]['default']['#multiple'] = FALSE;
       }
     }
