@@ -5,6 +5,8 @@ require_once __DIR__ . '/includes/springboard_og.fields.inc';
 require_once __DIR__ . '/includes/springboard_og.menu.inc';
 require_once __DIR__ . '/includes/springboard_og.rules.inc';
 require_once __DIR__ . '/includes/springboard_og.permissions.inc';
+require_once __DIR__ . '/includes/springboard_og.panels.inc';
+
 
 /**
  * Implements hook_node_info().
@@ -42,6 +44,22 @@ function springboard_og_views_api() {
 function springboard_og_ctools_plugin_api($module = NULL, $api = NULL) {
   if ($module == "field_group" && $api == "field_group") {
     return array("version" => "1");
+  }
+  if ($module == "page_manager" && $api == "pages_default") {
+    return array("version" => "1");
+  }
+}
+
+/**
+ * Implements hook_ctools_plugin_directory().
+ *
+ * Extend Class OgSelectionHandler, so that admins can get groups
+ * they aren't a member of displayed in the default group selector instead
+ * of the "groups you aren't a member of" selector.
+ */
+function springboard_og_ctools_plugin_directory($module, $plugin) {
+  if ($module == 'entityreference') {
+    return "plugins/entityreference/$plugin";
   }
 }
 
@@ -141,20 +159,6 @@ function springboard_og_field_widget_form_alter(&$element, &$form_state, $contex
       $element['default']['#default_value'] = $element['admin']['#default_value'];
     }
     $element['admin']['#default_value'] = [];
-  }
-}
-
-
-/**
- * Implements hook_ctools_plugin_directory().
- *
- * Extend Class OgSelectionHandler, so that admins can get groups
- * they aren't a member of displayed in the default group selector instead
- * of the "groups you aren't a member of" selector.
- */
-function springboard_og_ctools_plugin_directory($module, $plugin) {
-  if ($module == 'entityreference') {
-    return "plugins/entityreference/$plugin";
   }
 }
 
