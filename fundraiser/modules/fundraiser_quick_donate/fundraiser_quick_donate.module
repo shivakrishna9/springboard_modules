@@ -622,3 +622,43 @@ function fundraiser_quick_donate_field_extra_fields_display_alter(&$displays, $c
     $displays['summary']['weight'] = 8;
   }
 }
+
+/**
+ * Implements hook_views_pre_render().
+ *
+ * Remove cards that have no used by entries.
+ */
+function fundraiser_quick_donate_views_pre_render(&$view) {
+  if ($view->name != 'commerce_card_on_file_user_cards') {
+    return;
+  }
+
+  foreach ($view->result as $key => $result) {
+    // If this card isn't being used by quick donate or for a recurring donation
+    // unset it.
+    if (empty($result->used_by)) {
+      unset($view->result[$key]);
+      continue;
+    }
+
+    // Array of payment gateways used by cards that should not be displayed.
+    $blacklist = array(
+      'braintree_hostedfields|commerce_payment_braintree_hostedfields',
+      'commerce_psi_credit|commerce_payment_commerce_psi_credit',
+    );
+
+    // If the payment gateway is in the blacklist, unset this card.
+    $card = commerce_cardonfile_load($result->card_id);
+    if (in_array($card->instance_id, $blacklist)) {
+      unset($view->result[$key]);
+      continue;
+    }
+
+    // If this card isn't of type "credit", unset it.
+    $gateway = _fundraiser_gateway_info($card->instance_id);
+    if ($gateway['payment_method'][0] != 'credit') {
+      unset($view->result[$key]);
+      continue;
+    }
+  }
+}
