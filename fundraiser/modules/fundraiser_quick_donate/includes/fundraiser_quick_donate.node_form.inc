@@ -186,9 +186,12 @@ function _fundraiser_quick_donate_node_form_submit($form, &$form_state) {
     // Quick Donate checkbox is checked, save QD settings.
     $fields = array(
       'fundraiser_nid' => $form_state['nid'],
-      'quickdonate_optin_message' => $form_state['values']['quickdonate_optin_message'],
-      'quickdonate_help_message_format' => $form_state['values']['quickdonate_help_message']['format'],
-      'quickdonate_help_message' => $form_state['values']['quickdonate_help_message']['value'],
+      'quickdonate_optin_message_new_user' => $form_state['values']['quickdonate_optin_message_new_user'],
+      'quickdonate_help_message_new_user_format' => $form_state['values']['quickdonate_help_message_new_user']['format'],
+      'quickdonate_help_message_new_user' => $form_state['values']['quickdonate_help_message_new_user']['value'],
+      'quickdonate_optin_message_existing_user' => $form_state['values']['quickdonate_optin_message_existing_user'],
+      'quickdonate_help_message_existing_user_format' => $form_state['values']['quickdonate_help_message_existing_user']['format'],
+      'quickdonate_help_message_existing_user' => $form_state['values']['quickdonate_help_message_existing_user']['value'],
       'quickdonate_login_message' => $form_state['values']['quickdonate_login_message'],
       'quickdonate_login_link_message' => $form_state['values']['quickdonate_login_link_message'],
     );
