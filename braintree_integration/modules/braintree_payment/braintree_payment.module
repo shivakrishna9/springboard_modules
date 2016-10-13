@@ -128,7 +128,7 @@ function _braintree_payment_form_element(&$element, &$form, &$form_state, $payme
   else {
     $element['number'] = array(
       '#type' => 'item',
-      '#title' => t('Card number'),
+      '#title' => t('Credit card number'),
       '#markup' => '<div id="card-number" class="braintree-hosted-field required"></div>',
       '#id' => 'braintree-field-card-number',
       '#prefix' => '<div class="control-group">',
@@ -144,7 +144,7 @@ function _braintree_payment_form_element(&$element, &$form, &$form_state, $payme
 
     $element['expiration']['month'] = array(
       '#type' => 'item',
-      '#title' => t('Expiry Month'),
+      '#title' => t('Expiration Month'),
       '#markup' => '<div id="expiration-month" class="braintree-hosted-field control-group required"></div>',
     );
 
