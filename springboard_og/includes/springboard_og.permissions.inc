@@ -12,9 +12,14 @@ function springboard_og_permission() {
       'description' => t('Perform administration tasks for Springboard Groups.'),
     ),
 
-    'access all springboard groups' => array(
-      'title' => t('Access All Springboard Groups'),
-      'description' => t('Access all groups'),
+    'access springboard groups dashboard' => array(
+      'title' => t('Access Springboard Groups Dashboard'),
+      'description' => t('Access Springboard Groups Dashboard'),
+    ),
+
+    'assign content to any springboard group' => array(
+      'title' => t('Assign content to any springboard group'),
+      'description' => t('assign content to any springboard group, evcen if not a group member.'),
     ),
   );
 }

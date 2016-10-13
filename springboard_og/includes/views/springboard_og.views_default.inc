@@ -10,6 +10,11 @@
  */
 function springboard_og_views_default_views() {
 
+  /*
+   *
+   * All Groups view.
+   *
+   */
   $view = new view();
   $view->name = 'springboard_groups';
   $view->description = '';
@@ -25,23 +30,56 @@ function springboard_og_views_default_views() {
   $handler->display->display_options['title'] = 'Springboard Groups';
   $handler->display->display_options['use_more_always'] = FALSE;
   $handler->display->display_options['access']['type'] = 'perm';
-  $handler->display->display_options['access']['perm'] = 'administer springboard groups';
+  $handler->display->display_options['access']['perm'] = 'access springboard groups dashboard';
   $handler->display->display_options['cache']['type'] = 'none';
   $handler->display->display_options['query']['type'] = 'views_query';
   $handler->display->display_options['exposed_form']['type'] = 'basic';
+  $handler->display->display_options['exposed_form']['options']['submit_button'] = 'Go';
   $handler->display->display_options['pager']['type'] = 'full';
   $handler->display->display_options['pager']['options']['items_per_page'] = '10';
   $handler->display->display_options['style_plugin'] = 'table';
   $handler->display->display_options['style_options']['columns'] = array(
+    'nid_1' => 'nid_1',
     'title' => 'title',
+    'field_sb_group_cemail' => 'field_sb_group_cname',
+    'field_sb_group_cname' => 'field_sb_group_cname',
+    'field_sb_group_address' => 'field_sb_group_address',
     'edit_node' => 'edit_node',
     'nid' => 'nid',
-    'nothing' => 'edit_node',
+    'view_node' => 'edit_node',
   );
   $handler->display->display_options['style_options']['default'] = 'title';
   $handler->display->display_options['style_options']['info'] = array(
+    'nid_1' => array(
+      'sortable' => 1,
+      'default_sort_order' => 'asc',
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
     'title' => array(
       'sortable' => 1,
+      'default_sort_order' => 'asc',
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
+    'field_sb_group_cemail' => array(
+      'sortable' => 0,
+      'default_sort_order' => 'asc',
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
+    'field_sb_group_cname' => array(
+      'sortable' => 0,
+      'default_sort_order' => 'asc',
+      'align' => '',
+      'separator' => ' | ',
+      'empty_column' => 0,
+    ),
+    'field_sb_group_address' => array(
+      'sortable' => 0,
       'default_sort_order' => 'asc',
       'align' => '',
       'separator' => '',
@@ -59,12 +97,21 @@ function springboard_og_views_default_views() {
       'separator' => '',
       'empty_column' => 0,
     ),
-    'nothing' => array(
+    'view_node' => array(
       'align' => '',
       'separator' => '',
       'empty_column' => 0,
     ),
   );
+  /* Relationship: OG membership: OG membership from Node */
+  $handler->display->display_options['relationships']['og_membership_rel']['id'] = 'og_membership_rel';
+  $handler->display->display_options['relationships']['og_membership_rel']['table'] = 'node';
+  $handler->display->display_options['relationships']['og_membership_rel']['field'] = 'og_membership_rel';
+  /* Field: Content: Nid */
+  $handler->display->display_options['fields']['nid_1']['id'] = 'nid_1';
+  $handler->display->display_options['fields']['nid_1']['table'] = 'node';
+  $handler->display->display_options['fields']['nid_1']['field'] = 'nid';
+  $handler->display->display_options['fields']['nid_1']['label'] = 'ID';
   /* Field: Content: Title */
   $handler->display->display_options['fields']['title']['id'] = 'title';
   $handler->display->display_options['fields']['title']['table'] = 'node';
@@ -72,6 +119,26 @@ function springboard_og_views_default_views() {
   $handler->display->display_options['fields']['title']['label'] = 'Group Name';
   $handler->display->display_options['fields']['title']['alter']['word_boundary'] = FALSE;
   $handler->display->display_options['fields']['title']['alter']['ellipsis'] = FALSE;
+  /* Field: Content: Contact email */
+  $handler->display->display_options['fields']['field_sb_group_cemail']['id'] = 'field_sb_group_cemail';
+  $handler->display->display_options['fields']['field_sb_group_cemail']['table'] = 'field_data_field_sb_group_cemail';
+  $handler->display->display_options['fields']['field_sb_group_cemail']['field'] = 'field_sb_group_cemail';
+  /* Field: Content: Contact Name */
+  $handler->display->display_options['fields']['field_sb_group_cname']['id'] = 'field_sb_group_cname';
+  $handler->display->display_options['fields']['field_sb_group_cname']['table'] = 'field_data_field_sb_group_cname';
+  $handler->display->display_options['fields']['field_sb_group_cname']['field'] = 'field_sb_group_cname';
+  $handler->display->display_options['fields']['field_sb_group_cname']['label'] = 'Contact';
+  /* Field: Content: Address */
+  $handler->display->display_options['fields']['field_sb_group_address']['id'] = 'field_sb_group_address';
+  $handler->display->display_options['fields']['field_sb_group_address']['table'] = 'field_data_field_sb_group_address';
+  $handler->display->display_options['fields']['field_sb_group_address']['field'] = 'field_sb_group_address';
+  $handler->display->display_options['fields']['field_sb_group_address']['click_sort_column'] = 'country';
+  $handler->display->display_options['fields']['field_sb_group_address']['settings'] = array(
+    'use_widget_handlers' => 1,
+    'format_handlers' => array(
+      'address' => 'address',
+    ),
+  );
   /* Field: Content: Edit link */
   $handler->display->display_options['fields']['edit_node']['id'] = 'edit_node';
   $handler->display->display_options['fields']['edit_node']['table'] = 'views_entity_node';
@@ -85,13 +152,12 @@ function springboard_og_views_default_views() {
   $handler->display->display_options['fields']['nid']['label'] = '';
   $handler->display->display_options['fields']['nid']['exclude'] = TRUE;
   $handler->display->display_options['fields']['nid']['element_label_colon'] = FALSE;
-  /* Field: Global: Custom text */
-  $handler->display->display_options['fields']['nothing']['id'] = 'nothing';
-  $handler->display->display_options['fields']['nothing']['table'] = 'views';
-  $handler->display->display_options['fields']['nothing']['field'] = 'nothing';
-  $handler->display->display_options['fields']['nothing']['label'] = '';
-  $handler->display->display_options['fields']['nothing']['alter']['text'] = '<a href ="/node/[nid]/group">Manage</a>';
-  $handler->display->display_options['fields']['nothing']['element_label_colon'] = FALSE;
+  /* Field: Content: Link */
+  $handler->display->display_options['fields']['view_node']['id'] = 'view_node';
+  $handler->display->display_options['fields']['view_node']['table'] = 'views_entity_node';
+  $handler->display->display_options['fields']['view_node']['field'] = 'view_node';
+  $handler->display->display_options['fields']['view_node']['label'] = '';
+  $handler->display->display_options['fields']['view_node']['element_label_colon'] = FALSE;
   /* Sort criterion: Content: Post date */
   $handler->display->display_options['sorts']['created']['id'] = 'created';
   $handler->display->display_options['sorts']['created']['table'] = 'node';
@@ -111,14 +177,75 @@ function springboard_og_views_default_views() {
   $handler->display->display_options['filters']['type']['value'] = array(
     'springboard_group' => 'springboard_group',
   );
+  $handler->display->display_options['filters']['type']['group'] = 1;
+  /* Filter criterion: Content: Title */
+  $handler->display->display_options['filters']['title']['id'] = 'title';
+  $handler->display->display_options['filters']['title']['table'] = 'node';
+  $handler->display->display_options['filters']['title']['field'] = 'title';
+  $handler->display->display_options['filters']['title']['operator'] = 'contains';
+  $handler->display->display_options['filters']['title']['group'] = 1;
+  $handler->display->display_options['filters']['title']['exposed'] = TRUE;
+  $handler->display->display_options['filters']['title']['expose']['operator_id'] = 'title_op';
+  $handler->display->display_options['filters']['title']['expose']['label'] = 'Title';
+  $handler->display->display_options['filters']['title']['expose']['operator'] = 'title_op';
+  $handler->display->display_options['filters']['title']['expose']['identifier'] = 'title';
+  $handler->display->display_options['filters']['title']['expose']['remember_roles'] = array(
+    2 => '2',
+    1 => 0,
+    3 => 0,
+    4 => 0,
+    5 => 0,
+  );
+  /* Filter criterion: Content: Address - Locality (i.e. City) */
+  $handler->display->display_options['filters']['field_sb_group_address_locality']['id'] = 'field_sb_group_address_locality';
+  $handler->display->display_options['filters']['field_sb_group_address_locality']['table'] = 'field_data_field_sb_group_address';
+  $handler->display->display_options['filters']['field_sb_group_address_locality']['field'] = 'field_sb_group_address_locality';
+  $handler->display->display_options['filters']['field_sb_group_address_locality']['operator'] = 'word';
+  $handler->display->display_options['filters']['field_sb_group_address_locality']['group'] = 1;
+  $handler->display->display_options['filters']['field_sb_group_address_locality']['exposed'] = TRUE;
+  $handler->display->display_options['filters']['field_sb_group_address_locality']['expose']['operator_id'] = 'field_sb_group_address_locality_op';
+  $handler->display->display_options['filters']['field_sb_group_address_locality']['expose']['label'] = 'City';
+  $handler->display->display_options['filters']['field_sb_group_address_locality']['expose']['operator'] = 'field_sb_group_address_locality_op';
+  $handler->display->display_options['filters']['field_sb_group_address_locality']['expose']['identifier'] = 'field_sb_group_address_locality';
+  $handler->display->display_options['filters']['field_sb_group_address_locality']['expose']['remember_roles'] = array(
+    2 => '2',
+    1 => 0,
+    3 => 0,
+    4 => 0,
+    5 => 0,
+  );
+  /* Filter criterion: Content: Address - Administrative area (i.e. State / Province) */
+  $handler->display->display_options['filters']['field_sb_group_address_administrative_area']['id'] = 'field_sb_group_address_administrative_area';
+  $handler->display->display_options['filters']['field_sb_group_address_administrative_area']['table'] = 'field_data_field_sb_group_address';
+  $handler->display->display_options['filters']['field_sb_group_address_administrative_area']['field'] = 'field_sb_group_address_administrative_area';
+  $handler->display->display_options['filters']['field_sb_group_address_administrative_area']['operator'] = 'word';
+  $handler->display->display_options['filters']['field_sb_group_address_administrative_area']['group'] = 1;
+  $handler->display->display_options['filters']['field_sb_group_address_administrative_area']['exposed'] = TRUE;
+  $handler->display->display_options['filters']['field_sb_group_address_administrative_area']['expose']['operator_id'] = 'field_sb_group_address_administrative_area_op';
+  $handler->display->display_options['filters']['field_sb_group_address_administrative_area']['expose']['label'] = 'State / Province';
+  $handler->display->display_options['filters']['field_sb_group_address_administrative_area']['expose']['operator'] = 'field_sb_group_address_administrative_area_op';
+  $handler->display->display_options['filters']['field_sb_group_address_administrative_area']['expose']['identifier'] = 'field_sb_group_address_administrative_area';
+  $handler->display->display_options['filters']['field_sb_group_address_administrative_area']['expose']['remember_roles'] = array(
+    2 => '2',
+    1 => 0,
+    3 => 0,
+    4 => 0,
+    5 => 0,
+  );
 
   /* Display: Page */
   $handler = $view->new_display('page', 'Page', 'page');
   $handler->display->display_options['path'] = 'admin/springboard/groups';
 
+
   $views[$view->name] = $view;
 
 
+  /*
+   *
+   * My Groups view.
+   *
+   */
   $view = new view();
   $view->name = 'springboard_og_my_groups';
   $view->description = 'Show groups of a user.';
@@ -133,6 +260,7 @@ function springboard_og_views_default_views() {
   $handler = $view->new_display('default', 'Master', 'default');
   $handler->display->display_options['use_more_always'] = FALSE;
   $handler->display->display_options['access']['type'] = 'perm';
+  $handler->display->display_options['access']['perm'] = 'access springboard groups dashboard';
   $handler->display->display_options['cache']['type'] = 'none';
   $handler->display->display_options['query']['type'] = 'views_query';
   $handler->display->display_options['query']['options']['query_comment'] = FALSE;
@@ -140,22 +268,56 @@ function springboard_og_views_default_views() {
   $handler->display->display_options['pager']['type'] = 'full';
   $handler->display->display_options['style_plugin'] = 'table';
   $handler->display->display_options['style_options']['columns'] = array(
+    'nid' => 'nid',
     'title' => 'title',
-    'state' => 'state',
+    'field_sb_group_cname' => 'field_sb_group_cname',
+    'field_sb_group_cemail' => 'field_sb_group_cname',
+    'field_sb_group_address' => 'field_sb_group_address',
+    'created' => 'created',
   );
-  $handler->display->display_options['style_options']['default'] = '-1';
+  $handler->display->display_options['style_options']['default'] = 'title';
   $handler->display->display_options['style_options']['info'] = array(
-    'title' => array(
-      'sortable' => 0,
+    'nid' => array(
+      'sortable' => 1,
       'default_sort_order' => 'asc',
       'align' => '',
       'separator' => '',
+      'empty_column' => 0,
     ),
-    'state' => array(
+    'title' => array(
+      'sortable' => 1,
+      'default_sort_order' => 'asc',
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
+    'field_sb_group_cname' => array(
       'sortable' => 0,
       'default_sort_order' => 'asc',
       'align' => '',
       'separator' => '',
+      'empty_column' => 0,
+    ),
+    'field_sb_group_cemail' => array(
+      'sortable' => 0,
+      'default_sort_order' => 'asc',
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
+    'field_sb_group_address' => array(
+      'sortable' => 0,
+      'default_sort_order' => 'asc',
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
+    'created' => array(
+      'sortable' => 0,
+      'default_sort_order' => 'asc',
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
     ),
   );
   /* No results behavior: Global: Text area */
@@ -167,6 +329,12 @@ function springboard_og_views_default_views() {
   $handler->display->display_options['relationships']['og_membership_related_node_group']['id'] = 'og_membership_related_node_group';
   $handler->display->display_options['relationships']['og_membership_related_node_group']['table'] = 'og_membership';
   $handler->display->display_options['relationships']['og_membership_related_node_group']['field'] = 'og_membership_related_node_group';
+  /* Field: Content: Nid */
+  $handler->display->display_options['fields']['nid']['id'] = 'nid';
+  $handler->display->display_options['fields']['nid']['table'] = 'node';
+  $handler->display->display_options['fields']['nid']['field'] = 'nid';
+  $handler->display->display_options['fields']['nid']['relationship'] = 'og_membership_related_node_group';
+  $handler->display->display_options['fields']['nid']['label'] = 'ID';
   /* Field: Content: Title */
   $handler->display->display_options['fields']['title']['id'] = 'title';
   $handler->display->display_options['fields']['title']['table'] = 'node';
@@ -181,6 +349,29 @@ function springboard_og_views_default_views() {
   $handler->display->display_options['fields']['created']['label'] = 'Member since';
   $handler->display->display_options['fields']['created']['hide_alter_empty'] = FALSE;
   $handler->display->display_options['fields']['created']['date_format'] = 'time ago';
+  /* Field: Content: Contact Name */
+  $handler->display->display_options['fields']['field_sb_group_cname']['id'] = 'field_sb_group_cname';
+  $handler->display->display_options['fields']['field_sb_group_cname']['table'] = 'field_data_field_sb_group_cname';
+  $handler->display->display_options['fields']['field_sb_group_cname']['field'] = 'field_sb_group_cname';
+  $handler->display->display_options['fields']['field_sb_group_cname']['relationship'] = 'og_membership_related_node_group';
+  $handler->display->display_options['fields']['field_sb_group_cname']['label'] = 'Contact';
+  /* Field: Content: Contact email */
+  $handler->display->display_options['fields']['field_sb_group_cemail']['id'] = 'field_sb_group_cemail';
+  $handler->display->display_options['fields']['field_sb_group_cemail']['table'] = 'field_data_field_sb_group_cemail';
+  $handler->display->display_options['fields']['field_sb_group_cemail']['field'] = 'field_sb_group_cemail';
+  $handler->display->display_options['fields']['field_sb_group_cemail']['relationship'] = 'og_membership_related_node_group';
+  /* Field: Content: Address */
+  $handler->display->display_options['fields']['field_sb_group_address']['id'] = 'field_sb_group_address';
+  $handler->display->display_options['fields']['field_sb_group_address']['table'] = 'field_data_field_sb_group_address';
+  $handler->display->display_options['fields']['field_sb_group_address']['field'] = 'field_sb_group_address';
+  $handler->display->display_options['fields']['field_sb_group_address']['relationship'] = 'og_membership_related_node_group';
+  $handler->display->display_options['fields']['field_sb_group_address']['click_sort_column'] = 'country';
+  $handler->display->display_options['fields']['field_sb_group_address']['settings'] = array(
+    'use_widget_handlers' => 1,
+    'format_handlers' => array(
+      'address' => 'address',
+    ),
+  );
   /* Sort criterion: Content: Title */
   $handler->display->display_options['sorts']['title']['id'] = 'title';
   $handler->display->display_options['sorts']['title']['table'] = 'node';
@@ -224,9 +415,13 @@ function springboard_og_views_default_views() {
   $handler = $view->new_display('page', 'Page', 'page_1');
   $handler->display->display_options['path'] = 'admin/springboard/groups/my';
 
-
   $views[$view->name] = $view;
 
+  /*
+   *
+   * Bulk add members view.
+   *
+   */
   $view = new view();
   $view->name = 'springboard_og_bulk_add';
   $view->description = '';
