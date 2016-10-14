@@ -1,10 +1,15 @@
 <?php
+/**
+ * @file
+ * Node hooks for Springboard Group Advocacy.
+ */
 
 /**
  * Implements hook_node_insert().
  */
 function springboard_group_advocacy_node_insert($node) {
   if ($node->type == 'springboard_group') {
+    // Save the advocacy group subscription config.
     springboard_group_advocacy_save($node);
   }
 }
@@ -14,6 +19,7 @@ function springboard_group_advocacy_node_insert($node) {
  */
 function springboard_group_advocacy_node_update($node) {
   if ($node->type == 'springboard_group') {
+    // Save the advocacy group subscription config.
     springboard_group_advocacy_save($node);
   }
 }

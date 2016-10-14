@@ -1,5 +1,8 @@
 <?php
-
+/**
+ * @file
+ * Install functions for Springboard Group field groups.
+ */
 
 /**
  * Implements hook_field_group_info().

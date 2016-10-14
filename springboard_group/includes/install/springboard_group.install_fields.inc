@@ -1,4 +1,8 @@
 <?php
+/**
+ * @file
+ * Install functions for Springboard Group node fields.
+ */
 
 /**
  * Field bases.

@@ -1,5 +1,8 @@
 <?php
-
+/**
+ * @file
+ * Install functions for Springboard Group Advocacy.
+ */
 
 /**
  * Implements hook_schema().

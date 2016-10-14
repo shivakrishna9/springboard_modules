@@ -1,4 +1,8 @@
 <?php
+/**
+ * @file
+ * Config functions for Springboard Group.
+ */
 
 /**
  * Create the groups admin page.

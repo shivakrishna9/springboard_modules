@@ -1,5 +1,8 @@
 <?php
-
+/**
+ * @file
+ * Drupal and Springboard Menu hooks for Springboard Groups.
+ */
 
 /**
  * Implements hook_menu().

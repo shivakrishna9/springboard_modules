@@ -1,6 +1,8 @@
 <?php
-
-
+/**
+ * @file
+ * Drupal and OG permission hooks.
+ */
 
 /**
  * Implements hook_permission().
@@ -19,7 +21,7 @@ function springboard_group_permission() {
 
     'assign content to any springboard group' => array(
       'title' => t('Assign content to any springboard group'),
-      'description' => t('assign content to any springboard group, evcen if not a group member.'),
+      'description' => t('Assign content to any springboard group, even if not a group member.'),
     ),
   );
 }

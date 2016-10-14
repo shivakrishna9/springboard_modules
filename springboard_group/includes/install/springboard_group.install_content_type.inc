@@ -1,4 +1,8 @@
 <?php
+/**
+ * @file
+ * Install functions for Springboard Group content type.
+ */
 
 /**
  * Install the springboard_group content type.

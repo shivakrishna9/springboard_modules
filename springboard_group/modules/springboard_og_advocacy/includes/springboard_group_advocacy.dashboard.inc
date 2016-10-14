@@ -1,7 +1,16 @@
 <?php
 
 /**
+ * @file
+ * Modifications to the Advocacy Dashboard for groups.
+ */
+
+/**
  * Build the group selector form for advocacy dashboard page.
+ *
+ * Pages without a node context need a way of determining which group is
+ * active. This adds a selector to the advocacy dashboard to choose which group
+ * context to work in.
  *
  * @param array $groups
  *   The current user's possible groups.

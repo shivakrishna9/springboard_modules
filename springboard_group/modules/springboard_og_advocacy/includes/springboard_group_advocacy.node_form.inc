@@ -1,6 +1,11 @@
 <?php
 
 /**
+ * @file
+ * Form hooks & builders for Springboard Group Advocacy.
+ */
+
+/**
  * Implements hook_node_form_alter().
  *
  * Add the advocacy settings to the goup node's vertical tab.

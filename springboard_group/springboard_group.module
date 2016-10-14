@@ -1,12 +1,16 @@
 <?php
 
+/**
+ * @file
+ * Springboard Group integration with Organic Groups.
+ */
+
 require_once __DIR__ . '/includes/springboard_group.field_groups.inc';
 require_once __DIR__ . '/includes/springboard_group.fields.inc';
 require_once __DIR__ . '/includes/springboard_group.menu.inc';
 require_once __DIR__ . '/includes/springboard_group.rules.inc';
 require_once __DIR__ . '/includes/springboard_group.permissions.inc';
 require_once __DIR__ . '/includes/springboard_group.pages_default.inc';
-
 
 /**
  * Implements hook_node_info().

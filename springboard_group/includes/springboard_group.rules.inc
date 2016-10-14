@@ -1,9 +1,13 @@
 <?php
+/**
+ * @file
+ * Rule definitions for Springboard Group.
+ */
 
 /**
  * Implements hook_rules_configuration().
  *
- * A rule which enables builk adding of users to a group. Uses native OG rule
+ * A rule which enables bulk adding of users to a group. Uses native OG rule
  * "og_group_content_add".
  */
 function springboard_group_default_rules_configuration() {

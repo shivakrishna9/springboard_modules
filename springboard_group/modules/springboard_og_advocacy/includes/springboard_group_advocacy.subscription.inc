@@ -1,4 +1,8 @@
 <?php
+/**
+ * @file
+ * Functions which replace the site's Advocacy API details with the group's.
+ */
 
 /**
  * Get a particular group's subscription data.

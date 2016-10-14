@@ -1,5 +1,10 @@
 <?php
 
+/**
+ * @file
+ * Integrate Springboard Groups with Springboard Advocacy.
+ */
+
 require_once __DIR__ . '/includes/springboard_group_advocacy.dashboard.inc';
 require_once __DIR__ . '/includes/springboard_group_advocacy.node.inc';
 require_once __DIR__ . '/includes/springboard_group_advocacy.node_form.inc';
@@ -90,7 +95,7 @@ function springboard_group_advocacy_form_alter(&$form, &$form_state, $form_id) {
  * Add the group selector to the advocacy dashboard pages.
  * @todo There's a better way.
  */
-function springboard_group_preprocess_page(&$vars) {
+function springboard_group_advocacy_preprocess_page(&$vars) {
   $path = current_path();
   $omit = strpos($path, '/add') !== FALSE ? TRUE : strpos($path, '/edit') !== FALSE;
   $og_paths = springboard_group_advocacy_context_menu_paths();

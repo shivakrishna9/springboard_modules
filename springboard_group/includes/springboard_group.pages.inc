@@ -1,5 +1,8 @@
 <?php
-
+/**
+ * @file
+ * Menu callback functions.
+ */
 
 /**
  * Bulk add users to a group.

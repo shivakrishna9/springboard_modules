@@ -2,6 +2,8 @@
 /**
  * @file
  * springboard_group.pages_default.inc
+ *
+ * Panels/Page manager integration.
  */
 
 /**

@@ -1,5 +1,8 @@
 <?php
-
+/**
+ * @file
+ * Field definitions for Springboard Group.
+ */
 
 /**
  * Implements hook_field_info().
