@@ -54,4 +54,7 @@ function springboard_group_enable() {
   $function = ctools_plugin_get_function($page->subtask, "enable callback");
   $function($page, FALSE);
   menu_rebuild();
+  variable_set('og_group_manager_full_access', FALSE);
+  variable_set('og_group_manager_default_rids_node_springboard_group', array(3 => 3));
+  variable_set('og_node_access_strict', 1);
 }
