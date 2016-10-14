@@ -3991,6 +3991,8 @@ function _fundraiser_update_billing_form_commerce_cardonfile_card_form_alter_val
   else {
     $_SESSION['card_number'] = $values['credit_card']['number'] = $values['payment_fields']['credit']['card_number'] = $form_state['card']->card_number;
   }
+
+  $form['credit_card']['code'] = $values['payment_fields']['credit']['card_cvv'];
   $values['credit_card']['cardonfile_instance_default'] = $form_state['card']->instance_default;
 }
 
