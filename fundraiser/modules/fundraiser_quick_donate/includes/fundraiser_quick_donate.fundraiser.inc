@@ -44,7 +44,8 @@ function fundraiser_quick_donate_fundraiser_donation_form($form, $form_state) {
     $quick_donate_card = commerce_cardonfile_load($quick_donate_card_id);
   }
 
-  // Load user's stored cardonfile cards for each gateway.
+  // Load user's stored cardonfile cards for each gateway, if configured to do
+  // so.
   foreach ($form['#node']->gateways as $gateway_type => $gateway) {
     if (empty($gateway['status']) || empty($gateway['id']) || $gateway['method'] !== 'credit'/* || $gateway['method'] == 'bank account'*/) {
       continue;
@@ -94,7 +95,7 @@ function fundraiser_quick_donate_fundraiser_donation_form($form, $form_state) {
     if (!variable_get('fundraiser_quick_donate_allow_multiple_cards', FALSE) && $quick_donate_card_id > 0 && !empty($quick_donate_card) && $instance_id == $quick_donate_card->instance_id) {
       $stored_cards = array($quick_donate_card_id => $quick_donate_card);
     }
-    else {
+    elseif (variable_get('fundraiser_quick_donate_allow_multiple_cards', FALSE)) {
       // Load existing active cards for the payment method instance and user.
       $stored_cards = commerce_cardonfile_load_multiple_by_uid($user->uid, $payment_method['instance_id']);
     }
