@@ -3951,7 +3951,9 @@ function fundraiser_update_billing_form($form, &$form_state, $data) {
     sprintf('fundraiser_update_billing_form__%s__postprocess', $data['calling module']),
   );
   foreach ($functions as $function) {
-    module_invoke_all($function, $form, $form_state, $data);
+    if (count(module_implements($function))) {
+      $form = module_invoke_all($function, $form, $form_state, $data);
+    }
   }
 
   return $form;
