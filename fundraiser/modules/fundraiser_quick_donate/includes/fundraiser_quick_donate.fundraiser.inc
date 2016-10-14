@@ -289,7 +289,7 @@ function fundraiser_quick_donate_fundraiser_quick_donate_fundraiser_donation_for
  *   The user's quick donation payment information.
  */
 function _fundraiser_quick_donate_get_payment_info_for_uid($uid) {
-  return db_query('SELECT card_id FROM {fundraiser_quick_donate_cardonfile} WHERE uid = :uid', array(
+  return db_query('SELECT card_id FROM {fundraiser_quick_donate_cardonfile} WHERE uid = :uid AND status = 1', array(
     ':uid' => $uid,
   ))->fetchField();
 }
