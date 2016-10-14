@@ -487,8 +487,9 @@ function _fundraiser_quick_donate_set_new_qd_cof($form, $form_state) {
       return;
     }
 
-    $did = db_query('SELECT did FROM fundraiser_donation WHERE nid = :nid LIMIT 1', array(
+    $did = db_query('SELECT did FROM fundraiser_donation WHERE nid = :nid AND uid = :uid LIMIT 1', array(
       ':nid' => $nid,
+      ':uid' => $values['uid'],
     ))->fetchField();
 
     // Set all existing cards to status=0.
