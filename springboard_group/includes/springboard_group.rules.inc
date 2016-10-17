@@ -85,11 +85,16 @@ function springboard_group_form_rules_ui_form_edit_rules_config_alter(&$form, &$
       return;
     }
 
-
     $form['rule_entity'] = array(
       '#type' => 'value',
       '#value' => $rule,
     );
+
+    $fields = og_get_group_audience_fields('rules_config', 'rules_config', 'node', 'springboard_group');
+
+    if (!empty($fields)) {
+      springboard_group_set_single_selector($form, $fields);
+    }
 
     $form['#validate'][] = 'springboard_group_validate_payment';
     $form['#submit'][] = 'springboard_group_submit_payment';

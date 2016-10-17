@@ -91,18 +91,14 @@ function springboard_group_advocacy_form_alter(&$form, &$form_state, $form_id) {
 /**
  * Implements hook_preprocess_page().
  *
- * Add the group selector to the advocacy dashboard pages.
- * @todo There's a better way.
+ * Remove the group selector from the edit pages.
  */
 function springboard_group_advocacy_preprocess_page(&$vars) {
   $path = current_path();
   $omit = strpos($path, '/add') !== FALSE ? TRUE : strpos($path, '/edit') !== FALSE;
   $og_paths = springboard_group_advocacy_springboard_group_context_menu_paths();
-  if (in_array($path, $og_paths) && !$omit && isset($_SESSION['springboard_group_context_multiple'])) {
-    $build = array(
-      'selector' => drupal_get_form('springboard_group_advocacy_group_selector_form', $_SESSION['springboard_group_context_multiple']),
-    );
-    $vars['page']['content']['system_main']['main']['#markup'] = render($build) . $vars['page']['content']['system_main']['main']['#markup'];
+  if ((!in_array($path, $og_paths) || $omit) && isset($_SESSION['springboard_group_context_multiple'])) {
+    unset($vars['page']['content']['system_main']['selector']);
   }
 }
 
@@ -115,6 +111,6 @@ function springboard_group_advocacy_preprocess_page(&$vars) {
  */
 function springboard_group_advocacy_springboard_group_context_menu_paths() {
   return array(
-    'admin/springboard/advocacy/target',
+    'admin/springboard/advocacy/targets',
   );
 }

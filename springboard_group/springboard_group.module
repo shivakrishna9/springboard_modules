@@ -120,27 +120,9 @@ function springboard_group_form_node_form_alter(&$form, &$form_state) {
   }
 
   // Change the group field from a multiple select to a single select.
-  // Doing it here instead of in field config allows us to preserve an
-  // unlimited cardinality, which OG basically always assumes is the case.
-  // Limiting the cardinality to 1 would cause errors when different users
-  // attempt to reassign a node to a different group when it has a membership
-  // already assigned by different user, even though the original record in the
-  // og_membership table would be removed.
   $fields = og_get_group_audience_fields('node', $form['#node']->type, 'node', 'springboard_group');
   if (!empty($fields)) {
-    foreach ($fields as $key => $field) {
-      $field_name = $key;
-      if ($field_name == 'og_group_ref_' . substr($form['#node']->type, 0, 19)) {
-        $form[$field_name]['#type'] = 'fieldset';
-        $form[$field_name]['#collapsible'] = TRUE;
-        $form[$field_name]['#collapsed'] = FALSE;
-        $form[$field_name]['#title'] = variable_get('springboard_group_name', t('Springboard Groups'));
-        $form[$field_name][$form[$field_name]['#language']]['#title'] = '';
-        $form[$field_name][$form[$field_name]['#language']][0]['default']['#title'] = t('Group');
-        $form[$field_name][$form[$field_name]['#language']][0]['default']['#description'] = t('Associate this content with a group.');
-        $form[$field_name][$form[$field_name]['#language']][0]['default']['#multiple'] = FALSE;
-      }
-    }
+    springboard_group_set_single_selector($form, $fields);
   }
 }
 
@@ -168,4 +150,124 @@ function springboard_group_field_widget_form_alter(&$element, &$form_state, $con
     }
     $element['admin']['#default_value'] = [];
   }
+}
+
+
+/**
+ * Change the group field from a multiple select to a single select.
+ *
+ * Doing it here instead of in field config allows us to preserve an
+ * unlimited cardinality, which OG basically always assumes is the case.
+ * Limiting the cardinality to 1 would cause errors when different users
+ * attempt to reassign a node to a different group when it has a membership
+ * already assigned by different user, even though the original record in the
+ * og_membership table would be removed.
+ *
+ * @param array $form
+ *   The form on which the group selector appears.
+ * @param array $fields
+ *   An array of group reference fields.
+ */
+function springboard_group_set_single_selector(&$form, $fields) {
+  foreach ($fields as $key => $field) {
+    $field_name = $key;
+    $grouped_entities = springboard_group_get_grouped_types();
+    foreach ($grouped_entities as $entity => $bundle) {
+      foreach ($bundle as $og_field) {
+        if (in_array($key, $og_field)) {
+          $form[$field_name]['#type'] = 'fieldset';
+          $form[$field_name]['#collapsible'] = TRUE;
+          $form[$field_name]['#collapsed'] = FALSE;
+          $form[$field_name]['#title'] = variable_get('springboard_group_name', t('Springboard Groups'));
+          $form[$field_name][$form[$field_name]['#language']]['#title'] = '';
+          $form[$field_name][$form[$field_name]['#language']][0]['default']['#title'] = t('Group');
+          $form[$field_name][$form[$field_name]['#language']][0]['default']['#description'] = t('Associate this content with a group.');
+          $form[$field_name][$form[$field_name]['#language']][0]['default']['#multiple'] = FALSE;
+        }
+      }
+    }
+  }
+}
+
+function springboard_group_preprocess_page(&$vars) {
+  $path = current_path();
+  $og_paths = springboard_group_context_menu_paths();
+  if (in_array($path, $og_paths) && isset($_SESSION['springboard_group_context_multiple'])) {
+    $build = array(
+      'selector' => drupal_get_form('springboard_group_group_selector_form', $_SESSION['springboard_group_context_multiple']),
+    );
+    $vars['page']['content']['system_main']['selector']['#markup'] = render($build);
+    $vars['page']['content']['system_main']['selector']['#weight'] = -10;
+    $vars['page']['content']['system_main']['selector']['#prefix'] = '<div id="sb-og-group-selector">';
+    $vars['page']['content']['system_main']['selector']['#suffix'] = '</div>';
+
+  }
+}
+
+/**
+ * Build the group selector form.
+ *
+ * Pages without a node context need a way of determining which group is
+ * active. This adds a selector to choose which group
+ * context to work in.
+ *
+ * @param array $groups
+ *   The current user's possible groups.
+ *
+ * @return array
+ *   The form.
+ */
+function springboard_group_group_selector_form($form, &$form_state, $groups) {
+
+  $form = [];
+  $form['title']['#markup'] = '<strong>' . t('Choose an affiliate group to work in:') . '</strong>';
+
+  // Build the selector form from groups found in user session.
+  $options = [];
+  if (user_access('administer group')) {
+    $options['_none'] = '- None -';
+  }
+  foreach ($groups as $nid) {
+    $node = node_load($nid);
+    $options[$nid] = check_plain($node->title);
+  }
+
+  // The ajax enabled group selector which will reload the page
+  // subsequent to a group choice. The group ID will get put into session.
+  $form['groups'] = array(
+    '#type' => 'select',
+    '#options' => $options,
+    '#default_value' => springboard_group_get_group_context(),
+    '#ajax' => array(
+      'callback' => 'springboard_group_group_selector',
+      'wrapper' => 'sb-og-group-selector',
+      'method' => 'replace',
+      'effect' => 'fade',
+    ),
+    '#prefix' => '<div id="group-selector-div">',
+    '#suffix' => '</div>',
+  );
+
+  return $form;
+}
+
+
+/**
+ * AJAX callback for group selector form.
+ *
+ * @param $form
+ * @param $form_state
+ * @return mixed
+ */
+function springboard_group_group_selector($form, &$form_state) {
+  // Put the chosen group into session, so it can be retrieved by
+  // springboard_group_advocacy_og_context_handler().
+    $_SESSION['springboard_group_working_group'] = $form_state['values']['groups'];
+
+  // Reload the page.
+  ctools_include('ajax');
+  ctools_add_js('ajax-responder');
+  $commands[] = ctools_ajax_command_reload();
+  print ajax_render($commands);
+  drupal_exit();
 }
