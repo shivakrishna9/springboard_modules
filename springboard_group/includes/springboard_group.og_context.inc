@@ -10,13 +10,13 @@
  * Fires off a context negotiator on non-node advocacy paths, so we can figure
  * out what group we're currently working in.
  */
-function springboard_group_advocacy_og_context_negotiation_info() {
+function springboard_group_og_context_negotiation_info() {
   $providers = array();
-  $providers['springboard_group_advocacy'] = array(
-    'name' => t('Springboard OG Advocacy'),
-    'description' => t("Determine context for API subscriptions"),
-    'callback' => 'springboard_group_advocacy_og_context_handler',
-    'menu path' => springboard_group_advocacy_context_menu_paths(),
+  $providers['springboard_group'] = array(
+    'name' => t('Springboard Groups'),
+    'description' => t("Determine context for Springboard Groups"),
+    'callback' => 'springboard_group_og_context_handler',
+    'menu path' => springboard_group_context_menu_paths(),
   );
 
   return $providers;
@@ -27,7 +27,7 @@ function springboard_group_advocacy_og_context_negotiation_info() {
  *
  * On non-node pages, figure out the current group context, or set it.
  */
-function springboard_group_advocacy_og_context_handler($item = NULL) {
+function springboard_group_og_context_handler($item = NULL) {
 
   // @todo or not @todo: Alternate menu paths to the advocacy dashboard
   // from group nodes with
@@ -36,7 +36,7 @@ function springboard_group_advocacy_og_context_handler($item = NULL) {
 
   $path = current_path();
   unset($_SESSION['og_context']);
-  if (strpos($path, '/edit') !== FALSE) {
+  if (strpos($path, '/edit') !== FALSE && strpos($path, 'advocacy/target' !== FALSE)) {
     // @todo get the group from the target ID.
     //return array('node' => array($gid);
   }
@@ -55,18 +55,18 @@ function springboard_group_advocacy_og_context_handler($item = NULL) {
       // working group, set the first group as the working group, and set
       // springboard_group_context_multiple so that the dashboard knows
       // we need a selector.
-      elseif (!isset($_SESSION['springboard_group_advocacy_working_group'])) {
+      elseif (!isset($_SESSION['springboard_group_working_group'])) {
 
         $_SESSION['springboard_group_context_multiple'] = array_values($groups['node']);
         $gid = reset($groups['node']);
-        $_SESSION['springboard_group_advocacy_working_group'] = $gid;
+        $_SESSION['springboard_group_working_group'] = $gid;
         $ret = array('node' => array($gid));
       }
       else {
         // There's already a working group, return it as the context and
         // tell the dashboard we need a selector.
         $_SESSION['springboard_group_context_multiple'] = array_values($groups['node']);
-        $ret = array('node' => array($_SESSION['springboard_group_advocacy_working_group']));
+        $ret = array('node' => array($_SESSION['springboard_group_working_group']));
       }
     }
   }
@@ -79,29 +79,31 @@ function springboard_group_advocacy_og_context_handler($item = NULL) {
  *
  * @return mixed
  */
-function springboard_group_advocacy_get_group_context() {
+function springboard_group_get_group_context() {
 
   $gid = NULL;
 
   // First check if we're on a grouped node.
   // BTW, this only happens (so far) in an administrative context,
   // so no big deal performance-wise.
-  $node = menu_get_object();
-  if (!empty($node->nid) && !empty($node->vid) && !og_is_group('node', $node->nid)) {
-    $wrapper = entity_metadata_wrapper('node', $node);
-    foreach ($node as $key => $property) {
-      if (strpos($key, 'og_group_ref') !== FALSE) {
-        $group = $wrapper->$key->value();
-        $gid = $group->nid;
+  if (arg(0) == 'node') {
+    $node = menu_get_object();
+    if (!empty($node->nid) && !empty($node->vid) && !og_is_group('node', $node->nid)) {
+      $wrapper = entity_metadata_wrapper('node', $node);
+      foreach ($node as $key => $property) {
+        if (strpos($key, 'og_group_ref') !== FALSE) {
+          $group = $wrapper->$key->value();
+          $gid = $group->nid;
+        }
       }
-    }
-    if (!empty($gid)) {
-      return $gid;
+      if (!empty($gid)) {
+        return $gid;
+      }
     }
   }
 
   // This would have been set by
-  // springboard_group_advocacy_og_context_handler().
+  // springboard_group_og_context_handler().
   $group_context = og_context('node');
   if (!empty($group_context['gid'])) {
     return $group_context['gid'];
@@ -109,8 +111,8 @@ function springboard_group_advocacy_get_group_context() {
 
   // @todo Sometimes group context is empty after ajax refresh on
   // advocacy search pages. Figure out why.
-  if (!empty($_SESSION['springboard_group_advocacy_working_group'])) {
-    return $_SESSION['springboard_group_advocacy_working_group'];
+  if (!empty($_SESSION['springboard_group_working_group'])) {
+    return $_SESSION['springboard_group_working_group'];
   }
 
   // If all else fails, try this.
@@ -121,15 +123,10 @@ function springboard_group_advocacy_get_group_context() {
   return $gid;
 }
 
-
-/**
- * Define the context paths for hook_og_context_negotiation_info().
- *
- * Also called from springboard_group_advocacy_preprocess_page(). Which is why
- * it's broken out into a helper, ATM.
- */
-function springboard_group_advocacy_context_menu_paths() {
-  return array(
-    'admin/springboard/advocacy/target',
+function springboard_group_context_menu_paths() {
+  $paths = array(
+    'admin/commerce/config/payment-methods',
   );
+  $paths = array_merge($paths, module_invoke_all('springboard_group_context_menu_paths'));
+  return $paths;
 }

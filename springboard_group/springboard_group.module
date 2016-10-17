@@ -11,6 +11,7 @@ require_once __DIR__ . '/includes/springboard_group.menu.inc';
 require_once __DIR__ . '/includes/springboard_group.rules.inc';
 require_once __DIR__ . '/includes/springboard_group.permissions.inc';
 require_once __DIR__ . '/includes/springboard_group.pages_default.inc';
+require_once __DIR__ . '/includes/springboard_group.og_context.inc';
 
 /**
  * Implements hook_node_info().
@@ -143,7 +144,6 @@ function springboard_group_form_node_form_alter(&$form, &$form_state) {
   }
 }
 
-
 /**
  * Implements hook_field_widget_form_alter().
  *
@@ -159,7 +159,7 @@ function springboard_group_field_widget_form_alter(&$element, &$form_state, $con
 
   if (isset($context['field']['settings']['handler']) && $context['field']['settings']['handler'] == 'og_springboard_og') {
     // If the og reference field is using our custom selection handler,
-    // remove the admin "groups you are not of member of"  field.
+    // remove the admin "groups you are not of member of" field.
     $element['admin']['#access'] = FALSE;
     // Set the value of the default field to the default value of the admin
     // field if there are values present.
@@ -168,10 +168,4 @@ function springboard_group_field_widget_form_alter(&$element, &$form_state, $con
     }
     $element['admin']['#default_value'] = [];
   }
-}
-
-function springboard_group_og_membership_presave(OgMembership $og_membership) {
-  // @todo we may want to delete any existing records for an entity in the
-  // og_membership table prior to saving a new record, to prevent accidental
-  // multiple group assignments.
 }

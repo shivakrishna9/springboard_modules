@@ -37,7 +37,7 @@ function springboard_group_advocacy_group_selector_form($form, &$form_state, $gr
   $form['groups'] = array(
     '#type' => 'select',
     '#options' => $options,
-    '#default_value' => springboard_group_advocacy_get_group_context(),
+    '#default_value' => springboard_group_get_group_context(),
     '#ajax' => array(
       'callback' => 'springboard_group_advocacy_group_selector',
       'wrapper' => 'sba-dashboard',
@@ -76,7 +76,7 @@ function springboard_group_advocacy_group_selector_form($form, &$form_state, $gr
 function springboard_group_advocacy_group_selector($form, &$form_state) {
   // Put the chosen group into session, so it can be retrieved by
   // springboard_group_advocacy_og_context_handler().
-  $_SESSION['springboard_group_advocacy_working_group'] = $form_state['values']['groups'];
+  $_SESSION['springboard_group_working_group'] = $form_state['values']['groups'];
 
   // Reload the dashboard so the views result can filter by the selected group.
   $dashboard = springboard_advocacy_dashboard($form_state['values']['path']);
@@ -134,7 +134,7 @@ function springboard_group_advocacy_form_springboard_target_edit_custom_targets_
 function springboard_group_advocacy_create_og_form_elements(&$form) {
 
   // Get the current user's current group affiliation.
-  $session_gid = springboard_group_advocacy_get_group_context();
+  $session_gid = springboard_group_get_group_context();
 
   // Check which form we're on.
   if (strpos($form['#form_id'], 'custom_targets') !== FALSE) {
@@ -175,6 +175,5 @@ function springboard_group_advocacy_create_og_form_elements(&$form) {
     '#type' => 'value',
     '#value' => $gid,
   );
-
 
 }
