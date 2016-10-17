@@ -49,6 +49,19 @@ function dynamic_gift_strings_menu() {
 function dynamic_gift_strings_test_url_generator_form($form, &$form_state) {
   drupal_set_title('Secure Prepopulate Test Generator');
   $form = array();
+
+  // Do not display the form if either the Encryption Key or Initialization vector are missing:
+  $encryption_key = variable_get('secure_prepopulate_key', '');
+  $init_vector = variable_get('secure_prepopulate_iv', '');
+  if (!$encryption_key || !$init_vector) {
+    $form['missing_fields'] = array(
+      '#type' => 'markup',
+      '#markup' => t('Please ensure both the Encryption Key and the Initialization Vector are set on the Secure Prepopulate settings page.'),
+    );
+    return $form;
+  }
+
+
   $form_defaults = _dynamic_gift_string_get_test_generator_defaults();
   $target_form_prefix = variable_get('dync_gift_test_get_url_prefix', 'springboard/node/2');
   // List the test URLs:
@@ -57,7 +70,6 @@ function dynamic_gift_strings_test_url_generator_form($form, &$form_state) {
     '#type' => 'fieldset',
     '#description' => _dynamic_gift_string_generate_test_urls($target_form_prefix),
   );
-
 
   // Allow the secure prepopulate used in the test URLs to be changed:
   $form['sec_pop_values'] = array(
