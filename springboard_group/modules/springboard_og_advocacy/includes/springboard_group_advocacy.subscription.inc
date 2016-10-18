@@ -29,7 +29,7 @@ function springboard_group_advocacy_springboard_advocacy_subscription_alter(&$su
   // Check for a group context from session.
   $gid = springboard_group_get_group_context();
 
-  if (!empty($gid)) {
+  if (!empty($gid) && $gid !='_none') {
     // Get the current node to check that it is not itself a group.
     $node = menu_get_object();
     // @todo do we need this elseif?

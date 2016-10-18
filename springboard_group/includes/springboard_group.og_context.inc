@@ -29,11 +29,6 @@ function springboard_group_og_context_negotiation_info() {
  */
 function springboard_group_og_context_handler($item = NULL) {
 
-  // @todo or not @todo: Alternate menu paths to the advocacy dashboard
-  // from group nodes with
-  // group unique permissions might be better/simpler than using
-  // session negotiation when user has multiple groups.
-
   $path = current_path();
   unset($_SESSION['og_context']);
   if (strpos($path, '/edit') !== FALSE && strpos($path, 'advocacy/target' !== FALSE)) {
@@ -45,22 +40,25 @@ function springboard_group_og_context_handler($item = NULL) {
   if ($user->uid) {
     $groups = og_get_groups_by_user();
     if (!empty($groups['node'])) {
-
       // If the user only belongs to one group, return it.
       if (count($groups['node']) === 1) {
         $gid = reset($groups['node']);
         $ret = array('node' => array($gid));
       }
+
       // If the user has multiple groups and there is not a currently selected
       // working group, set the first group as the working group, and set
       // springboard_group_context_multiple so that the dashboard knows
       // we need a selector.
       elseif (!isset($_SESSION['springboard_group_working_group'])) {
-
         $_SESSION['springboard_group_context_multiple'] = array_values($groups['node']);
         $gid = reset($groups['node']);
         $_SESSION['springboard_group_working_group'] = $gid;
         $ret = array('node' => array($gid));
+      }
+      elseif ($_SESSION['springboard_group_working_group'] == '_none') {
+        $_SESSION['springboard_group_context_multiple'] = array_values($groups['node']);
+        $ret = array('_none' => array('_none'));
       }
       else {
         // There's already a working group, return it as the context and
@@ -102,6 +100,7 @@ function springboard_group_get_group_context() {
     }
   }
 
+
   // This would have been set by
   // springboard_group_og_context_handler().
   $group_context = og_context('node');
@@ -109,8 +108,7 @@ function springboard_group_get_group_context() {
     return $group_context['gid'];
   }
 
-  // @todo Sometimes group context is empty after ajax refresh on
-  // advocacy search pages. Figure out why.
+  // "_none".
   if (!empty($_SESSION['springboard_group_working_group'])) {
     return $_SESSION['springboard_group_working_group'];
   }
@@ -119,7 +117,6 @@ function springboard_group_get_group_context() {
   if (!empty($_SESSION['og_context']['gid']) && $_SESSION['og_context']['group_type'] == 'node') {
     return $_SESSION['og_context']['gid'];
   }
-
   return $gid;
 }
 

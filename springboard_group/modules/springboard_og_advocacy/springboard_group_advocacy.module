@@ -20,17 +20,19 @@ function springboard_group_springboard_advocacy_views_plugin_query_alter(&$query
 
   $gid = springboard_group_get_group_context();
   if (!empty($gid)) {
-    $group_subscription = springboard_group_advocacy_get_saved_group_subscription($gid);
-    // If this group is limited to particular states, add state values to the
-    // search query, if none are present.
-    if (in_array($group_subscription['group_subscription_type'], array(
-      'states-selected',
-      'federal-and-states-selected',
-    ))) {
-      if (!empty($query->search_terms) && empty($query->search_terms['states'])) {
-        if ($query->search_terms['class_name'][0] != 'Target' && $query->search_terms['class_name'][0] != 'Group') {
-          $states = unserialize($group_subscription['allowed_states']);
-          $query->search_terms['state'] = $states;
+    if ($gid != '_none') {
+      $group_subscription = springboard_group_advocacy_get_saved_group_subscription($gid);
+      // If this group is limited to particular states, add state values to the
+      // search query, if none are present.
+      if (in_array($group_subscription['group_subscription_type'], array(
+        'states-selected',
+        'federal-and-states-selected',
+      ))) {
+        if (!empty($query->search_terms) && empty($query->search_terms['states'])) {
+          if ($query->search_terms['class_name'][0] != 'Target' && $query->search_terms['class_name'][0] != 'Group') {
+            $states = unserialize($group_subscription['allowed_states']);
+            $query->search_terms['state'] = $states;
+          }
         }
       }
     }

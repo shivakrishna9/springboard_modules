@@ -79,11 +79,10 @@ function springboard_group_advocacy_create_og_form_elements(&$form) {
     $gid = $session_gid;
   }
 
-  $title = 'None';
-  if (!empty($gid)) {
+  if (!empty($gid) && $gid != '_none') {
     $group = node_load($gid);
     $title = $group->title;
-  }
+
 
   $form['context_hint'] = array(
     '#markup' => t('Editing custom @type for Springboard Group "@group_title"', array(
@@ -91,11 +90,13 @@ function springboard_group_advocacy_create_og_form_elements(&$form) {
       '@group_title' => check_plain($title),
     )),
     '#weight' => -100,
-  );
+    );
+  }
 
-  $form['affiliate_id'] = array(
-    '#type' => 'value',
-    '#value' => $gid,
-  );
+   $form['affiliate_id'] = array(
+     '#type' => 'value',
+     '#value' => $gid,
+   );
+
 
 }
