@@ -565,7 +565,7 @@ function fundraiser_update_7010() {
  * Batch update records to add card_id field.
  */
 function fundraiser_update_7011(&$sandbox) {
-  // No action necessary if cardonfile isn't enabled 
+  // No action necessary if cardonfile isn't enabled
   if (!module_exists('commerce_cardonfile')) {
     return;
   }
@@ -624,7 +624,9 @@ function fundraiser_update_7011(&$sandbox) {
       // Otherwise we'll need to grab the card_id from the order record.
       $order = commerce_order_load($row->did);
       $data = _fundraiser_commerce_order_data_retrieve($order->data['fundraiser_commerce']);
-      $card_id = $data['cardonfile'];
+      if (!empty($data)) {
+        $card_id = $data['cardonfile'];
+      }
     }
 
     if (empty($card_id)) {
