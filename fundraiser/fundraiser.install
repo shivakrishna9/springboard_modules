@@ -565,6 +565,10 @@ function fundraiser_update_7010() {
  * Batch update records to add card_id field.
  */
 function fundraiser_update_7011(&$sandbox) {
+  // No action necessary if cardonfile isn't enabled 
+  if (!module_exists('commerce_cardonfile')) {
+    return;
+  }
   $ret = array();
   $cards = &drupal_static(__FUNCTION__);
 
