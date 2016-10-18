@@ -716,7 +716,8 @@ function fundraiser_quick_donate_field_extra_fields_display_alter(&$displays, $c
 /**
  * Implements hook_views_pre_render().
  *
- * Remove cards that have no used by entries.
+ * Remove cards that have no used by entries; remove card name and billing
+ * profile label if the card name is the same as the billing profile name.
  */
 function fundraiser_quick_donate_views_pre_render(&$view) {
   if ($view->name != 'commerce_card_on_file_user_cards') {
@@ -748,6 +749,13 @@ function fundraiser_quick_donate_views_pre_render(&$view) {
     if ($gateway['payment_method'][0] != 'credit') {
       unset($view->result[$key]);
       continue;
+    }
+
+    // Unset the card name and billing profile label if the card name and name
+    // on the billing profile is the same.
+    if (strpos($result->field_commerce_cardonfile_profile[0]['rendered']['#markup'], $result->commerce_cardonfile_card_name) !== FALSE) {
+      unset($view->field['card_name']);
+      $view->field['commerce_cardonfile_profile']->options['label'] = '';
     }
   }
 }

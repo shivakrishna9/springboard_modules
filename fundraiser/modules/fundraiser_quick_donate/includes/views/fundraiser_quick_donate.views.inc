@@ -64,62 +64,11 @@ function fundraiser_quick_donate_views_default_views_alter(&$views) {
   $handler->display->display_options['fields']['card_name']['label'] = '';
   $handler->display->display_options['fields']['card_name']['element_label_colon'] = FALSE;
   $handler->display->display_options['fields']['card_name']['element_default_classes'] = FALSE;
-  /* Field: User: Address */
-  /**
-   * @todo Add back in once multiple address handling (1303) is done.
-   */
-  /*
-  $handler->display->display_options['fields']['sbp_address']['id'] = 'sbp_address';
-  $handler->display->display_options['fields']['sbp_address']['table'] = 'field_data_sbp_address';
-  $handler->display->display_options['fields']['sbp_address']['field'] = 'sbp_address';
-  $handler->display->display_options['fields']['sbp_address']['relationship'] = 'user';
-  $handler->display->display_options['fields']['sbp_address']['label'] = '';
-  $handler->display->display_options['fields']['sbp_address']['alter']['alter_text'] = TRUE;
-  $handler->display->display_options['fields']['sbp_address']['alter']['text'] = '[sbp_address]
-    ';
-  $handler->display->display_options['fields']['sbp_address']['element_label_colon'] = FALSE;
-  $handler->display->display_options['fields']['sbp_address']['element_default_classes'] = FALSE;
-  */
-  /* Field: User: City */
-  /**
-   * @todo Add back in once multiple address handling (1303) is done.
-   */
-  /*
-  $handler->display->display_options['fields']['sbp_city']['id'] = 'sbp_city';
-  $handler->display->display_options['fields']['sbp_city']['table'] = 'field_data_sbp_city';
-  $handler->display->display_options['fields']['sbp_city']['field'] = 'sbp_city';
-  $handler->display->display_options['fields']['sbp_city']['relationship'] = 'user';
-  $handler->display->display_options['fields']['sbp_city']['label'] = '';
-  $handler->display->display_options['fields']['sbp_city']['exclude'] = TRUE;
-  $handler->display->display_options['fields']['sbp_city']['element_label_colon'] = FALSE;
-  */
-  /* Field: User: State/Province */
-  /**
-   * @todo Add back in once multiple address handling (1303) is done.
-   */
-  /*
-  $handler->display->display_options['fields']['sbp_state']['id'] = 'sbp_state';
-  $handler->display->display_options['fields']['sbp_state']['table'] = 'field_data_sbp_state';
-  $handler->display->display_options['fields']['sbp_state']['field'] = 'sbp_state';
-  $handler->display->display_options['fields']['sbp_state']['relationship'] = 'user';
-  $handler->display->display_options['fields']['sbp_state']['label'] = '';
-  $handler->display->display_options['fields']['sbp_state']['exclude'] = TRUE;
-  $handler->display->display_options['fields']['sbp_state']['element_label_colon'] = FALSE;
-  */
-  /* Field: User: Postal Code */
-  /**
-   * @todo Add back in once multiple address handling (1303) is done.
-   */
-  /*
-  $handler->display->display_options['fields']['sbp_zip']['id'] = 'sbp_zip';
-  $handler->display->display_options['fields']['sbp_zip']['table'] = 'field_data_sbp_zip';
-  $handler->display->display_options['fields']['sbp_zip']['field'] = 'sbp_zip';
-  $handler->display->display_options['fields']['sbp_zip']['relationship'] = 'user';
-  $handler->display->display_options['fields']['sbp_zip']['label'] = '';
-  $handler->display->display_options['fields']['sbp_zip']['alter']['alter_text'] = TRUE;
-  $handler->display->display_options['fields']['sbp_zip']['alter']['text'] = '[sbp_city], [sbp_state] [sbp_zip]';
-  $handler->display->display_options['fields']['sbp_zip']['element_label_colon'] = FALSE;
-  */
+  /* Field: Commerce Card on File: Billing Profile */
+  $handler->display->display_options['fields']['commerce_cardonfile_profile']['id'] = 'commerce_cardonfile_profile';
+  $handler->display->display_options['fields']['commerce_cardonfile_profile']['table'] = 'field_data_commerce_cardonfile_profile';
+  $handler->display->display_options['fields']['commerce_cardonfile_profile']['field'] = 'commerce_cardonfile_profile';
+  $handler->display->display_options['fields']['commerce_cardonfile_profile']['label'] = 'Billing Information';
   if (module_exists('fundraiser_commerce_cardonfile')) {
     /* Field: Commerce Card on File: Used By */
     $handler->display->display_options['fields']['used_by']['id'] = 'used_by';
