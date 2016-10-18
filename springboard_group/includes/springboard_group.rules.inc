@@ -1,7 +1,7 @@
 <?php
 /**
  * @file
- * Rule definitions for Springboard Group.
+ * Rule definitions and hooks for Springboard Group.
  */
 
 /**
@@ -48,7 +48,7 @@ function springboard_group_rules_config_access($op, $rules_config = NULL, $accou
 /**
  * Implements hook_form_FORMID_alter().
  *
- * Contortions to get field api working on rules config.
+ * Contortions required to get field api working on rules config.
  */
 function springboard_group_form_rules_ui_form_edit_rules_config_alter(&$form, &$form_state, $form_id) {
   // We need the rule name to proceed.
@@ -64,10 +64,10 @@ function springboard_group_form_rules_ui_form_edit_rules_config_alter(&$form, &$
     $rule = rules_config_load('rules_' . $rule_name);
   }
 
-  // Add the rule enoty to the form so we can use it in validate and submit.
+  // Only add the OG field to commerce rules.
   if (!empty($rule) && $rule->module == 'commerce_payment' || in_array('commerce_payment', $rule->dependencies)) {
 
-    // Rules config entities are fiedable but rules module does not attach
+    // Rules config entities are fieldable but rules module does not attach
     // fields, yet...
     field_attach_form('rules_config', $rule, $form, $form_state);
 
@@ -85,13 +85,17 @@ function springboard_group_form_rules_ui_form_edit_rules_config_alter(&$form, &$
       return;
     }
 
+    // Add the rule entity to the form so we can use it in validate and submit.
     $form['rule_entity'] = array(
       '#type' => 'value',
       '#value' => $rule,
     );
 
+    // Convert the multiple select widget to a single selection widget.
+    // See springboard_group_field_widget_form_alter() and
+    // springboard_group_set_single_selector() for details about
+    // why this is necessary.
     $fields = og_get_group_audience_fields('rules_config', 'rules_config', 'node', 'springboard_group');
-
     if (!empty($fields)) {
       springboard_group_set_single_selector($form, $fields);
     }
@@ -103,9 +107,6 @@ function springboard_group_form_rules_ui_form_edit_rules_config_alter(&$form, &$
 
 /**
  * Run field attach validation.
- *
- * @param $form
- * @param $form_state
  */
 function springboard_group_validate_payment($form, &$form_state) {
   field_attach_form_validate('rules_config', $form_state['values']['rule_entity'], $form, $form_state);
@@ -113,20 +114,10 @@ function springboard_group_validate_payment($form, &$form_state) {
 
 /**
  * Run field attach save functions.
- *
- * @param $form
- * @param $form_state
  */
 function springboard_group_submit_payment($form, &$form_state) {
   $rule = $form_state['values']['rule_entity'];
   field_attach_submit('rules_config', $rule, $form, $form_state);
-
-  // In function og_group() we find
-  // $id = $wrapper->getIdentifier();
-  // But rules.core overrides entity api's getIdentifier method and returns the
-  // rule name instead!
-  //$rule->name = $rule->id;
-  // THis should be ok, not change the actual entity.
   field_attach_insert('rules_config', $rule);
 }
 

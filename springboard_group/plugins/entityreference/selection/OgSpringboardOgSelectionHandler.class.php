@@ -3,9 +3,21 @@
 
 /**
  * @file
- * OG example selection handler.
+ * OG selection handler.
+ *
+ * Entity reference selection handlers are presented as configuration
+ * options in the Field management UI.
  */
 
+
+/**
+ * Extend OgSelectionHandler.
+ *
+ * If a user has administer groups permissions, place the groups he is not
+ * subscribed to in the default OG select widget instead of the admin select
+ * widget. We only want to present one widget to the user, not the twin
+ * selection fields that OG presents by default.
+ */
 class OgSpringboardOgSelectionHandler extends OgSelectionHandler {
   /**
    * Overrides OgSelectionHandler::getInstance().
@@ -21,6 +33,7 @@ class OgSpringboardOgSelectionHandler extends OgSelectionHandler {
 
     global $user;
     $query = parent::buildEntityFieldQuery($match, $match_operator);
+    // Show all groups to admins in the default widget.
     if ($user->uid == 1 || user_access('administer group') || user_access('assign content to any springboard group')) {
       unset($query->propertyConditions[0]);
     }

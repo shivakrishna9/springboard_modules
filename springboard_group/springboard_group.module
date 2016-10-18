@@ -251,7 +251,6 @@ function springboard_group_group_selector_form($form, &$form_state, $groups) {
   return $form;
 }
 
-
 /**
  * AJAX callback for group selector form.
  *
@@ -262,7 +261,7 @@ function springboard_group_group_selector_form($form, &$form_state, $groups) {
 function springboard_group_group_selector($form, &$form_state) {
   // Put the chosen group into session, so it can be retrieved by
   // springboard_group_advocacy_og_context_handler().
-    $_SESSION['springboard_group_working_group'] = $form_state['values']['groups'];
+  $_SESSION['springboard_group_working_group'] = $form_state['values']['groups'];
 
   // Reload the page.
   ctools_include('ajax');
