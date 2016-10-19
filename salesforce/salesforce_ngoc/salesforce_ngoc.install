@@ -40,6 +40,28 @@ function salesforce_ngoc_install() {
 }
 
 /**
+ * Implements hook_requirements().
+ */
+function salesforce_ngoc_requirements($phase) {
+  $requirements = array();
+  // Ensure translations don't break at install time.
+  $t = get_t();
+  if ($phase == 'install' || $phase == 'runtime') {
+    $requirements['salesforce_gnoc'] = array(
+      'title' => $t('Salesforce NGOC'),
+      'description' => $t('The Salesforce NGOC module requires that the Salesforce NPSP module is disabled.'),
+      'value' => $t('NPSP Disabled'),
+      'severtiy' => REQUIREMENT_OK,
+    );
+    if (module_exists('salesforce_npsp')) {
+      $requirements['salesforce_gnoc']['value'] = 'NPSP Enabled';
+      $requirements['salesforce_gnoc']['severity'] = REQUIREMENT_ERROR;
+    }
+  }
+  return $requirements;
+}
+
+/**
  * Implements hook_uninstall().
  */
 function salesforce_ngoc_uninstall(){
