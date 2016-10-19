@@ -2117,7 +2117,13 @@ function fundraiser_donation_cancel($donation) {
  * Generally, not called, but it does happen.
  */
 function fundraiser_donation_delete($donation) {
-  // Make a log entry
+  if (is_numeric($donation)) {
+    $donation = fundraiser_donation_get_donation($donation);
+  }
+
+  $donation->deleted = TRUE;
+
+  // Make a log entry.
   watchdog('fundraiser', 'Donation @id was deleted.',
     array('@id' => $donation->did), WATCHDOG_DEBUG, NULL);
   // Show gateay message if appropriate.
