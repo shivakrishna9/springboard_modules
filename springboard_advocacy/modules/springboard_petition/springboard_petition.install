@@ -118,6 +118,9 @@ function springboard_petition_add_content_type() {
   // This ensures that the user id in webform_submissions has been updated by
   // Webform User before we get to it.
   db_query('UPDATE {system} SET weight = :weight WHERE name = :name', array(':weight' => 1000, ':name' => 'springboard_petition'));
+
+  // Enable form layouts for this content type by default:
+  variable_set('form_layouts_' . 'springboard_petition', 1);
 }
 
 /**
@@ -166,6 +169,29 @@ function springboard_petition_schema() {
     ),
     'primary key' => array('sid'),
   );
+
+  // Opt in tracking table.
+  $schema['springboard_petition_opt_in_block'] = array(
+    'description' => 'Store petition opt-in.',
+    'fields' => array(
+      'nid' => array(
+        'description' => 'Petition node ID',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'visibility' => array(
+        'description' => 'Toggle display of both the user opt-in checkbox and the associated recent signers list.',
+        'type' => 'int',
+        'size' => 'tiny',
+        'not null' => FALSE,
+        'default' => 0,
+      ),
+    ),
+    'primary key' => array('nid'),
+  );
+
   return $schema;
 }
 
@@ -176,6 +202,7 @@ function springboard_petition_add_example_petition() {
   $node->language = LANGUAGE_NONE;
   $node->uid = 1;
   $node->title = 'Example Petition Form';
+  $node->field_webform_user_internal_name = array($node->language => array(0 => array('value' => 'Example Petition Form')));
   $node->status = 1;
   $node->promote = 0;
   $node->body[LANGUAGE_NONE][0]['value'] = 'Donec placerat. Nullam nibh dolor, blandit sed, fermentum id, ' .
@@ -266,7 +293,7 @@ function springboard_petition_email_wrapper_add() {
   $node->type = 'email_wrapper';
   $node->language = LANGUAGE_NONE;
   $node->uid = 1;
-  $node->title = 'Example Petition Email Wrapper';
+  $node->title = 'Example Petition Email Template';
   $node->status = 0;
   $node->promote = 0;
   $node->email_wrapper_from_name[LANGUAGE_NONE][0] = array(
@@ -397,5 +424,42 @@ function springboard_petition_update_7004() {
   if ($instance_info) {
     $instance_info['widget']['weight'] = 1;
     field_update_instance($instance_info);
+  }
+}
+
+/**
+ * Add the springboard_petition_opt_in_block table if it does not exist. 
+ */
+function springboard_petition_update_7005() {
+  $schema = module_invoke('springboard_petition', 'schema');
+  if(db_table_exists('springboard_petition_opt_in_block') == FALSE) {
+    db_create_table('springboard_petition_opt_in_block', $schema['springboard_petition_opt_in_block']);
+  }
+}
+
+
+/**
+ * Create a new record, if one does not exist, for each petition node with its recent signers opt-in setting enabled.
+ */
+function springboard_petition_update_7006() {
+  $petitions_data = db_select('node', 'n')
+    ->fields(n, array('nid'))
+    ->condition('type', 'springboard_petition', '=')
+    ->execute();
+  foreach ($petitions_data as $petition_data) {
+    $petition_record_exists = db_select('springboard_petition_opt_in_block', 'p')
+      ->fields('p', array('nid'))
+      ->condition('nid', $petition_data->nid, '=')
+      ->execute()
+      ->fetchField();
+    if (!$petition_record_exists) {
+      db_insert('springboard_petition_opt_in_block')
+        ->fields(
+          array(
+            'nid' => $petition_data->nid,
+            'visibility' => TRUE,
+          ))
+        ->execute();
+    }
   }
 }

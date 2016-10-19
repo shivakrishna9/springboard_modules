@@ -215,7 +215,7 @@ function _fundraiser_tickets_sanitize_webform_field($element, &$form_state) {
 function theme_fundraiser_tickets_webform_table($variables) {
 
   $element = $variables['element'];
-
+  $currency_code = '';
   $addon_donation_exists = FALSE;
   $node = node_load($element['#webform_component']['nid']);
   $node_currency = fundraiser_get_currency_from_node($node);
@@ -322,6 +322,10 @@ function theme_fundraiser_tickets_webform_table($variables) {
       );
       $rows[] = $row;
     }
+  }
+
+  if (empty($rows)) {
+    return t('No tickets are available at this time.');
   }
 
   $rows[] = $last_row;

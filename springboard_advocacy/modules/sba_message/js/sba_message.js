@@ -29,7 +29,7 @@
           if ($('#springboard-advocacy-find-targets-container')) {
                $('#edit-save-target-group').once(function(){
                     var groupSave = $('#edit-save-target-group').detach();
-                    $('#springboard-advocacy-target-recipients-container .inner').append(groupSave);
+                    $('#springboard-advocacy-target-recipients > h3').after(groupSave);
                });
                // Events to populate the real hidden form elements with values from
                // the visible UI form inputs (because they need to be moved outside

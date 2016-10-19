@@ -42,7 +42,7 @@ class springboard_advocacy_views_handler_field_target_actions extends views_hand
       '#options' => drupal_map_assoc(array(t('edit'), t('delete'), t('add'))),
       '#title' => t('Which links should show'),
       '#default_value' => $this->options['which_links'],
-      '#description' => t('Select whether view, edit and/or delete links are visible. Edit and Delete links will only be visible on custom targets, and to properly permissioned users.')
+      '#description' => t('Select whether view, edit and/or delete links are visible. Edit and Delete links will only be visible on custom targets, and to properly permissioned users.'),
     );
     parent::options_form($form, $form_state);
   }
@@ -61,7 +61,8 @@ class springboard_advocacy_views_handler_field_target_actions extends views_hand
   /**
    * Render Helper.
    *
-   * Display links based on option choices, result class type and user permission.
+   * Display links based on option choices, result class
+   * type and user permission.
    *
    * @param $values
    * @return string
@@ -73,7 +74,7 @@ class springboard_advocacy_views_handler_field_target_actions extends views_hand
       case "Legislator":
         $path = 'springboard/advocacy/targets/legislator';
         $type = "legislator";
-      break;
+        break;
       case "group":
         $path = 'springboard/advocacy/targets/custom-groups';
         $type = "group";
@@ -85,11 +86,12 @@ class springboard_advocacy_views_handler_field_target_actions extends views_hand
     }
 
     $links  = array();
-    // Add Target to Action Link used in message entity's target search form results.
+    // Add Target to Action Link used in message entity's
+    // target search form results.
     if (!empty($this->options['which_links']['add'])) {
       $query = array();
-      // Groups do not use the class_name attribute
-      if(!isset($values->class_name) && user_access('add group to action')) {
+      // Groups do not use the class_name attribute.
+      if (!isset($values->class_name) && user_access('add group to action')) {
         $query = array(
           'id' => $values->id,
           'type' => 'group',
@@ -97,7 +99,7 @@ class springboard_advocacy_views_handler_field_target_actions extends views_hand
         );
       }
       else {
-        if(user_access('add target to action')) {
+        if (user_access('add target to action')) {
           $query = array(
             'id' => $values->id,
             'type' => !empty($values->class_name) ? $values->class_name : '',
@@ -111,6 +113,7 @@ class springboard_advocacy_views_handler_field_target_actions extends views_hand
             'title' => !empty($values->title) ? $values->title : '',
             'state' => !empty($values->state) ? $values->state : '',
             'district' => !empty($values->district_name) ? $values->district_name : '',
+            'role' => !empty($values->role) ? $values->role : '',
 
             // Need to send an empty string if the last query segment is empty
             // so that the query string
@@ -122,9 +125,9 @@ class springboard_advocacy_views_handler_field_target_actions extends views_hand
       $links[] = l(t('add'), 'add-target', array(
         'external' => TRUE,
         'attributes' => array(
-          'class' => array('advocacy-add-target')
+          'class' => array('advocacy-add-target'),
         ),
-          'query' => $query,
+        'query' => $query,
       ));
     }
 
@@ -141,5 +144,3 @@ class springboard_advocacy_views_handler_field_target_actions extends views_hand
     return implode(' | ', $links);
   }
 }
-
-
