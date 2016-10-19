@@ -151,9 +151,16 @@ function webform_ab_test_webforms($node) {
   $rows = array();
   if (!empty($node->included_webforms) && is_array($node->included_webforms)) {
     foreach ($node->included_webforms as $webform_nid => $webform_details) {
+      $webform_node = node_load($webform_nid);
+      if ($internal_name = _webform_ab_get_internal_name($webform_details['webform_nid'])) {
+        $title = $internal_name;
+      }
+      else {
+        $title = $webform_details['title'];
+      }
       $removal_link = l(t('remove from test'), 'node/' . $node->nid . '/webforms/remove/' . $webform_nid);
       $rows[] = array(
-        $webform_details['title'],
+        l($title, 'node/' . $webform_nid),
         $status_labels[$webform_details['status']],
         l(t('view'), 'node/' . $webform_nid) . ' ' .
         l(t('edit'), 'node/' . $webform_nid . '/edit') . ' ' .
