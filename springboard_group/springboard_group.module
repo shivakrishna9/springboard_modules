@@ -126,6 +126,27 @@ function springboard_group_form_node_form_alter(&$form, &$form_state) {
   if (!empty($fields)) {
     springboard_group_set_single_selector($form, $fields);
   }
+
+
+  //      if (module_exists('og') && variable_get('page_wrappers_filter_by_og', FALSE)) {
+//        // Add an ajax event to the group select box, so we can filter
+//        // available page wrappers by group selection.
+//        $language = $form['og_group_ref']['#language'];
+//        $form['og_group_ref'][$language][0]['default']['#ajax'] = array(
+//          'callback' => 'page_wrappers_og_ajax_callback',
+//          'wrapper' => 'page-wrappers-wrapper-options',
+//        );
+//
+//        // If a group has been selected limit available wrappers to
+//        // ones assigned to the selected group.
+//        if (isset($form_state['values']['og_group_ref'][$language][0]['target_id'])) {
+//          $nid = $form_state['values']['og_group_ref'][$language][0]['target_id'];
+//          $filtered_wrappers = _page_wrappers_list_wrappers_by_group($nid);
+//          $wrappers = array_merge(array(t('-- Select --')), $filtered_wrappers);
+//        }
+//      }
+
+
 }
 
 /**
