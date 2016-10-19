@@ -8,8 +8,31 @@
  * Implements hook_install().
  */
 function springboard_group_install() {
+
   module_load_include('inc', 'springboard_group', 'includes/install/springboard_group.install_content_type');
   _springboard_group_install_content_type();
+
+  // Add the og_user_node field to the user profile's springboard admin group.
+  $field_group = field_group_load_field_group('group_profile_admin', 'user', 'user', 'form');
+  $table = 'field_group';
+  if ($field_group) {
+    $field_group->children[] = 'og_user_node';
+    ctools_export_crud_save($table, $field_group);
+  }
+
+  // Update og_user_node field so that display is set to
+  // hidden for webform user component creation.
+  $instance_info = field_info_instance(
+    'user',
+    'og_user_node',
+    'user'
+  );
+  foreach ($instance_info['display'] as &$display) {
+    $display['label'] = 'hidden';
+    $display['type'] = 'hidden';
+  }
+  field_update_instance($instance_info);
+
 }
 
 function springboard_group_field_schema($field) {

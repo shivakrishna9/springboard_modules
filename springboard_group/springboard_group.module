@@ -12,6 +12,7 @@ require_once __DIR__ . '/includes/springboard_group.rules.inc';
 require_once __DIR__ . '/includes/springboard_group.permissions.inc';
 require_once __DIR__ . '/includes/springboard_group.pages_default.inc';
 require_once __DIR__ . '/includes/springboard_group.og_context.inc';
+require_once __DIR__ . '/includes/springboard_group.webform_ab.inc';
 
 /**
  * Implements hook_node_info().
@@ -35,6 +36,7 @@ function springboard_group_node_info() {
  * Implements hook_views_api().
  */
 function springboard_group_views_api() {
+
   return array(
     'api' => 3.0,
     'path' => drupal_get_path('module', 'springboard_group') . '/includes/views',
@@ -196,11 +198,10 @@ function springboard_group_preprocess_page(&$vars) {
     $build = array(
       'selector' => drupal_get_form('springboard_group_group_selector_form', $_SESSION['springboard_group_context_multiple']),
     );
-    $vars['page']['content']['system_main']['selector']['#markup'] = render($build);
-    $vars['page']['content']['system_main']['selector']['#weight'] = -10;
-    $vars['page']['content']['system_main']['selector']['#prefix'] = '<div id="sb-og-group-selector">';
-    $vars['page']['content']['system_main']['selector']['#suffix'] = '</div>';
-
+    $vars['page']['content']['system_main']['group_selector']['#markup'] = render($build);
+    $vars['page']['content']['system_main']['group_selector']['#weight'] = -10;
+    $vars['page']['content']['system_main']['group_selector']['#prefix'] = '<div id="sb-og-group-group_selector">';
+    $vars['page']['content']['system_main']['group_selector']['#suffix'] = '</div>';
   }
 }
 

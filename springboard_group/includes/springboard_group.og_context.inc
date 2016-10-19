@@ -123,6 +123,14 @@ function springboard_group_get_group_context() {
 function springboard_group_context_menu_paths() {
   $paths = array(
     'admin/commerce/config/payment-methods',
+    'admin/springboard',
+    'admin/springboard/asset-library',
+    'admin/content/webform_ab',
+    'admin/springboard/asset-library/page_wrapper',
+    'admin/springboard/asset-library/email_wrapper',
+    'admin/springboard/donation-forms/all',
+    'admin/springboard/forms/all'
+
   );
   $paths = array_merge($paths, module_invoke_all('springboard_group_context_menu_paths'));
   return $paths;

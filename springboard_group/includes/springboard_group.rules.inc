@@ -31,7 +31,6 @@ function springboard_group_default_rules_configuration() {
  * Implements hook_rules_config_access().
  */
 function springboard_group_rules_config_access($op, $rules_config = NULL, $account = NULL) {
-
   if ($op == 'update') {
     $group = og_get_entity_groups('rules_config', $rules_config);
     if (!empty($group)) {
@@ -42,6 +41,9 @@ function springboard_group_rules_config_access($op, $rules_config = NULL, $accou
       }
     }
   }
+
+  //@todo something like this: https://app.assembla.com/spaces/springboard/tickets/1275/details?
+
 }
 
 
@@ -120,4 +122,3 @@ function springboard_group_submit_payment($form, &$form_state) {
   field_attach_submit('rules_config', $rule, $form, $form_state);
   field_attach_insert('rules_config', $rule);
 }
-
