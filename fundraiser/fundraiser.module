@@ -1227,7 +1227,6 @@ function _fundraiser_amount_field_create($fundraiser, $field) {
 
   // If donation amounts don't exist, use amount as is.
   if (empty($fundraiser->donation_amounts) || !is_array($fundraiser->donation_amounts)) {
-    //$field['#extra']['description'] = 'Minimum payment [currency-symbol][minimum-donation-amount].';
     return $field;
   }
   // Else we want a select field.
