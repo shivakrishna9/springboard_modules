@@ -342,6 +342,7 @@ function fundraiser_quick_donate_form_commerce_cardonfile_card_form($card, $user
   $data = array(
     'calling module' => 'fundraiser_quick_donate',
     'donation' => $donation,
+    'card' => $card,
     'payment_fields' => array(
       'credit' => array(
         'expiration_date' => array(
