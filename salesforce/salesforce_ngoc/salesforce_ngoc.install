@@ -65,7 +65,13 @@ function salesforce_ngoc_requirements($phase) {
  * Implements hook_uninstall().
  */
 function salesforce_ngoc_uninstall(){
-
+  // Remove user_to_batch_upload salesforce mapping.
+  $user_mapping = salesforce_mapping_load('user_to_batch_upload');
+  if (!empty($user_mapping)) {
+    entity_delete('salesforce_mapping', $user_mapping->salesforce_mapping_id);
+  }
+  // Remove default donation mapping provided by salesforce_ngoc.
+  salesforce_genmap_delete_map(-1, 'salesforce_donation');
 }
 
 /**
