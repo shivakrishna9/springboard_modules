@@ -13,6 +13,8 @@ require_once __DIR__ . '/includes/springboard_group.permissions.inc';
 require_once __DIR__ . '/includes/springboard_group.pages_default.inc';
 require_once __DIR__ . '/includes/springboard_group.og_context.inc';
 require_once __DIR__ . '/includes/springboard_group.webform_ab.inc';
+require_once __DIR__ . '/includes/springboard_group.page_wrappers.inc';
+
 
 /**
  * Implements hook_node_info().
