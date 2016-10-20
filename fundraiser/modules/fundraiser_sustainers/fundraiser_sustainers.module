@@ -1434,6 +1434,8 @@ function _fundraiser_sustainers_amount_field_create($fundraiser, $field) {
   // If the donation type is recurring-only ("always"), then use recurring ask amounts
   // for the main "amount" field.
   if ($fundraiser->recurring_setting == 'always') {
+    // NOTE: Changing this could break site customizations based on Springboard's dual-ask functionality.
+    // See https://docs.google.com/document/d/1EbUt8vetgaj0DAmkNfYKclX03m35QKfB3waUDnNvYLk/edit
     $field = _fundraiser_sustainers_recurring_amount_field_create($fundraiser, $field);
   }
   // Otherwise, pass through to fundraiser.module.
