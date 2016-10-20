@@ -14,10 +14,14 @@ require_once __DIR__ . '/includes/springboard_group.pages_default.inc';
 require_once __DIR__ . '/includes/springboard_group.og_context.inc';
 require_once __DIR__ . '/includes/springboard_group.webform_ab.inc';
 require_once __DIR__ . '/includes/springboard_group.page_wrappers.inc';
-
+require_once __DIR__ . '/includes/springboard_group.fundraiser.inc';
 
 /**
  * Implements hook_node_info().
+ *
+ * Define the content type Springboard Group. OG let's you turn any entity
+ * into a group, but Springboard Groups is specifically geared to this
+ * content type.
  */
 function springboard_group_node_info() {
   $items = array(
@@ -38,7 +42,6 @@ function springboard_group_node_info() {
  * Implements hook_views_api().
  */
 function springboard_group_views_api() {
-
   return array(
     'api' => 3.0,
     'path' => drupal_get_path('module', 'springboard_group') . '/includes/views',
@@ -49,9 +52,13 @@ function springboard_group_views_api() {
  * Implements hook_ctools_plugin_api().
  */
 function springboard_group_ctools_plugin_api($module = NULL, $api = NULL) {
+  // Needed for automatic field group installation on Springboard Group
+  // content type.
   if ($module == "field_group" && $api == "field_group") {
     return array("version" => "1");
   }
+  // Needed for automatic panels installation on Springboard Group
+  // content type.
   if ($module == "page_manager" && $api == "pages_default") {
     return array("version" => "1");
   }
@@ -62,7 +69,7 @@ function springboard_group_ctools_plugin_api($module = NULL, $api = NULL) {
  *
  * Extend Class OgSelectionHandler, so that admins can get groups
  * they aren't a member of displayed in the default group selector instead
- * of the "groups you aren't a member of" selector.
+ * of the "groups you aren't a member of" selector that is default with OG.
  */
 function springboard_group_ctools_plugin_directory($module, $plugin) {
   if ($module == 'entityreference') {
@@ -127,29 +134,43 @@ function springboard_group_form_node_form_alter(&$form, &$form_state) {
   $fields = og_get_group_audience_fields('node', $form['#node']->type, 'node', 'springboard_group');
   if (!empty($fields)) {
     springboard_group_set_single_selector($form, $fields);
+
+    // Add ajax callback to the groups field.
+    $language = $form['og_group_ref_' . $form['#node']->type]['#language'];
+    $form['og_group_ref_' . $form['#node']->type][$language][0]['default']['#ajax'] = array(
+      'callback' => 'springboard_group_ajax_callback',
+    );
+
+    // Farm out our donation form alterations to a helper.
+    if (fundraiser_is_donation_type($form['#node']->type)) {
+      springboard_group_fundraiser_node_form_gateway_update($form, $form_state);
+    }
+  }
+}
+
+/**
+ * Ajax Callback.
+ *
+ * Handles pagewrappers and payment gateway selector updates when group
+ * selector is changed.
+ */
+function springboard_group_ajax_callback($form, $form_state) {
+
+  $ajax = array(
+    '#type' => 'ajax',
+    '#commands' => array(),
+  );
+
+  if (!empty($form['springboard_display']['page_wrappers_settings']['page_wrappers'])) {
+    $ajax['#commands'][] = ajax_command_replace("#page-wrappers-assignments", render($form['springboard_display']['page_wrappers_settings']['page_wrappers']));
+  }
+  if (!empty($form['payment_methods']['gateways'])) {
+    $ajax['#commands'][] = ajax_command_replace("#springboard-groups-payment-ajax-wrapper", render($form['payment_methods']['gateways']));
   }
 
-
-  //      if (module_exists('og') && variable_get('page_wrappers_filter_by_og', FALSE)) {
-//        // Add an ajax event to the group select box, so we can filter
-//        // available page wrappers by group selection.
-//        $language = $form['og_group_ref']['#language'];
-//        $form['og_group_ref'][$language][0]['default']['#ajax'] = array(
-//          'callback' => 'page_wrappers_og_ajax_callback',
-//          'wrapper' => 'page-wrappers-wrapper-options',
-//        );
-//
-//        // If a group has been selected limit available wrappers to
-//        // ones assigned to the selected group.
-//        if (isset($form_state['values']['og_group_ref'][$language][0]['target_id'])) {
-//          $nid = $form_state['values']['og_group_ref'][$language][0]['target_id'];
-//          $filtered_wrappers = _page_wrappers_list_wrappers_by_group($nid);
-//          $wrappers = array_merge(array(t('-- Select --')), $filtered_wrappers);
-//        }
-//      }
-
-
+  return $ajax;
 }
+
 
 /**
  * Implements hook_field_widget_form_alter().
@@ -176,7 +197,6 @@ function springboard_group_field_widget_form_alter(&$element, &$form_state, $con
     $element['admin']['#default_value'] = [];
   }
 }
-
 
 /**
  * Change the group field from a multiple select to a single select.
@@ -214,6 +234,13 @@ function springboard_group_set_single_selector(&$form, $fields) {
   }
 }
 
+/**
+ * Implements hook_preprocess_page().
+ *
+ * Adds a group dropdown selector to designated non-node pages when a user
+ * has multiple group affilaitions. See springboard_group_context_menu_paths()
+ * for a list of paths this is active on.
+ */
 function springboard_group_preprocess_page(&$vars) {
   $path = current_path();
   $og_paths = springboard_group_context_menu_paths();
@@ -277,17 +304,13 @@ function springboard_group_group_selector_form($form, &$form_state, $groups) {
 
 /**
  * AJAX callback for group selector form.
- *
- * @param $form
- * @param $form_state
- * @return mixed
  */
 function springboard_group_group_selector($form, &$form_state) {
   // Put the chosen group into session, so it can be retrieved by
   // springboard_group_advocacy_og_context_handler().
   $_SESSION['springboard_group_working_group'] = $form_state['values']['groups'];
 
-  // Reload the page.
+  // Reload the page to get the new grouped content.
   ctools_include('ajax');
   ctools_add_js('ajax-responder');
   $commands[] = ctools_ajax_command_reload();

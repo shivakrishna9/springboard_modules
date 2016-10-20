@@ -11,16 +11,12 @@ function springboard_group_page_wrappers_node_settings_form_alter(&$wrappers, &$
   // If the pagewrapper content type is group enabled,
   // alter the available options.
   if ($wrappers_are_grouped) {
-    // Add an ajax event to the group select box, so we can filter
-    // available page wrappers by group selection.
-    $language = $form['og_group_ref_' . $form['#node']->type]['#language'];
-    $form['og_group_ref_' . $form['#node']->type][$language][0]['default']['#ajax'] = array(
-      'callback' => 'springboard_group_page_wrappers_og_ajax_callback',
-      'wrapper' => 'page-wrappers-assignments',
-    );
+
     // If a group has been selected limit available wrappers to
     // ones assigned to the selected group.
+    // @see springboard_group_ajax_callback().
     if (!empty($form_state['values'])) {
+      $language = $form['og_group_ref_' . $form['#node']->type]['#language'];
       $option = $form_state['values']['og_group_ref_' . $form['#node']->type][$language];
       $gid = isset($option[0]['target_id']) ? $option[0]['target_id'] : NULL;
       $filtered_wrappers = springboard_group_page_wrappers_list_wrappers_by_group($gid);
@@ -43,13 +39,6 @@ function springboard_group_page_wrappers_node_settings_form_alter(&$wrappers, &$
       $wrappers = springboard_group_page_wrappers_list_wrappers_by_group($gid);
     }
   }
-}
-
-/**
- * Ajax Callback.
- */
-function springboard_group_page_wrappers_og_ajax_callback($form, $form_state) {
-  return $form['springboard_display']['page_wrappers_settings']['page_wrappers'];
 }
 
 /**
