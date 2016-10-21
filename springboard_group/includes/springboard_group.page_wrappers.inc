@@ -18,25 +18,29 @@ function springboard_group_page_wrappers_node_settings_form_alter(&$wrappers, &$
     if (!empty($form_state['values'])) {
       $language = $form['og_group_ref_' . $form['#node']->type]['#language'];
       $option = $form_state['values']['og_group_ref_' . $form['#node']->type][$language];
-      $gid = isset($option[0]['target_id']) ? $option[0]['target_id'] : NULL;
-      $filtered_wrappers = springboard_group_page_wrappers_list_wrappers_by_group($gid);
+      $gids = isset($option[0]['target_id']) ? $option : NULL;
+      foreach ($gids as $key => $gid) {
+        $gids[$key] = $gid['target_id'];
+      }
+
+      $filtered_wrappers = springboard_group_page_wrappers_list_wrappers_by_group($gids);
       $wrappers = $filtered_wrappers;
     }
     else {
       // We're on a freshly loaded page.
-      $gid = NULL;
+      $gids = NULL;
       $node = $form['#node'];
       if (!empty($node->nid)) {
         // Check if the node we want to wrap is in a group.
         $node_groups = og_get_entity_groups('node', $node);
         // If the node has a group, set the $gid.
         if (!empty($node_groups['node'])) {
-          $gid = reset($node_groups['node']);
+          $gids = $node_groups['node'];
           // @todo we need some js/ajax here to deal with page reloads/validation reloads after the group selector has been changed.
         }
       }
       // Alter the form options.
-      $wrappers = springboard_group_page_wrappers_list_wrappers_by_group($gid);
+      $wrappers = springboard_group_page_wrappers_list_wrappers_by_group($gids);
     }
   }
 }
@@ -50,20 +54,21 @@ function springboard_group_page_wrappers_node_settings_form_alter(&$wrappers, &$
  * @return array
  *   Associative array of page wrapper titles keyed by node id or FALSE.
  */
-function springboard_group_page_wrappers_list_wrappers_by_group($gid) {
+function springboard_group_page_wrappers_list_wrappers_by_group($gids) {
   $wrappers = array();
   $query = db_select('node', 'n');
   $query->addField('n', 'nid', 'nid');
   $query->addField('n', 'title', 'title');
   $query->leftJoin('og_membership', 'o', 'o.etid=n.nid');
   $query->condition('n.type', 'page_wrapper');
-  if (!empty($gid)) {
-    $query->condition(db_or()->condition('o.gid', $gid)->IsNull('o.etid'));
+  if (!empty($gids)) {
+    $query->condition('o.gid', $gids);
     $query->groupBy('n.nid');
   }
   else {
     $query->IsNull('o.etid');
   }
+  dpq($query);
   $results = $query->execute();
   while ($record = $results->fetchAssoc()) {
     $wrappers[$record['nid']] = $record['title'];

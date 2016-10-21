@@ -19,7 +19,7 @@ require_once __DIR__ . '/includes/springboard_group.fundraiser.inc';
 /**
  * Implements hook_node_info().
  *
- * Define the content type Springboard Group. OG let's you turn any entity
+ * Define the content type Springboard Group. OG lets you turn any entity
  * into a group, but Springboard Groups is specifically geared to this
  * content type.
  */
