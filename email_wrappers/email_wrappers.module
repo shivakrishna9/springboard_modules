@@ -687,6 +687,10 @@ function _email_wrappers_list_templates() {
   while ($record = $results->fetchAssoc()) {
     $options[$record['nid']] = $record['title'];
   }
+
+  // Allow other modules to alter the list of templates.
+  drupal_alter('email_wrappers_templates_list', $options);
+
   return $options;
 }
 

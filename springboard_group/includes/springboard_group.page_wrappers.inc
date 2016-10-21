@@ -68,7 +68,6 @@ function springboard_group_page_wrappers_list_wrappers_by_group($gids) {
   else {
     $query->IsNull('o.etid');
   }
-  dpq($query);
   $results = $query->execute();
   while ($record = $results->fetchAssoc()) {
     $wrappers[$record['nid']] = $record['title'];
@@ -77,3 +76,31 @@ function springboard_group_page_wrappers_list_wrappers_by_group($gids) {
   return count($wrappers) ? $wrappers : array();
 }
 
+
+/**
+ * Implements hook_email_wrappers_templates_list_alter().
+ */
+function springboard_group_email_wrappers_templates_list_alter(&$templates) {
+  $wrappers_are_grouped = og_get_group_type('node', 'email_wrapper', 'group content');
+  if ($wrappers_are_grouped) {
+    $webform = node_load(arg(1));
+    $webform_groups = og_get_entity_groups('node', $webform);
+    foreach ($templates as $nid => $name) {
+      if ($nid != 0) {
+        $wrapper = node_load($nid);
+        $wrapper_groups = og_get_entity_groups('node', $wrapper);
+        if (empty($webform_groups['node']) && !empty($wrapper_groups['node'])) {
+          unset($templates[$nid]);
+        }
+        elseif (!empty($webform_groups['node']) && empty($wrapper_groups['node'])) {
+          unset($templates[$nid]);
+        }
+        elseif (!empty($webform_groups['node']) && !empty($wrapper_groups['node'])) {
+          if (!array_intersect($webform_groups['node'], $wrapper_groups['node'])) {
+            unset($templates[$nid]);
+          }
+        }
+      }
+    }
+  }
+}
