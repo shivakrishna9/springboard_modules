@@ -29,7 +29,6 @@ function springboard_group_settings_page() {
   return $build;
 }
 
-
 /**
  * Build a form listing group-eligible node types.
  *
@@ -38,8 +37,6 @@ function springboard_group_settings_page() {
  */
 function springboard_group_system_settings_form() {
   $form = array();
-
-
   $form['springboard_group_system_settings'] = array(
     '#type' => 'fieldset',
     '#title' => t('General'),
@@ -47,7 +44,7 @@ function springboard_group_system_settings_form() {
     '#description' => '',
   );
 
-  $form['springboard_group_system_settings']['springboard_group_name'] =  array(
+  $form['springboard_group_system_settings']['springboard_group_name'] = array(
     '#type' => 'textfield',
     '#default_value' => variable_get('springboard_group_name', t('Springboard Groups')),
     '#title' => t('Group designation'),
@@ -63,8 +60,6 @@ function springboard_group_system_settings_form() {
   return $form;
 }
 
-
-
 /**
  * Build a form listing group-eligible node types.
  *
@@ -78,7 +73,7 @@ function springboard_group_node_settings_form() {
 
   $form['springboard_group_node'] = array(
     '#type' => 'fieldset',
-    '#title' => t('Node types'),
+    '#title' => t('Content types'),
     '#collapsible' => TRUE,
     '#description' => t('Make these content types eligible for grouping'),
     '#tree' => TRUE,
@@ -214,8 +209,9 @@ function springboard_group_entity_settings_form() {
       'commerce_customer_profile:billing',
       'commerce_order:commerce_order',
     );
+
     if (!in_array($type, $disallowed) && !in_array($type, $disallowed_multiple)) {
-      list($entity_type, $bundle) = explode(':', $type);
+      list(, $bundle) = explode(':', $type);
       $form['springboard_group_entities'][$type]['og_' . $type . '_multiple'] = array(
         '#title' => 'Allow multiple group selections.',
         '#type' => 'checkbox',
@@ -285,8 +281,9 @@ function springboard_group_entities_settings_form_submit($form, $form_state) {
   }
 }
 
-
 /**
+ * Creates the og reference field.
+ *
  * @param string $bundle
  *   The bundle name.
  * @param string $type

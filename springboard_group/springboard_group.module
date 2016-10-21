@@ -84,9 +84,16 @@ function springboard_group_ctools_plugin_directory($module, $plugin) {
  * when making an entity un-groupable.
  */
 function springboard_group_form_og_ui_field_delete_form_alter(&$form, &$form_state) {
-  if ($_GET['destination'] = 'admin/springboard/groups/settings') {
+  if ($_GET['destination'] == 'admin/springboard/groups/settings') {
     $form['actions']['cancel']['#markup'] = l(t('cancel'), 'admin/springboard/groups/settings');
     $form['description']['#markup'] = t('All group associations for the @type content type will be deleted. This cannot be undone.', array('@type' => arg(5)));
+    $form['#submit'][] = 'springboard_group_form_og_ui_field_delete_submit';
+  }
+}
+
+function springboard_group_form_og_ui_field_delete_submit($form, $form_state) {
+  if ($_GET['destination'] == 'admin/springboard/groups/settings') {
+    variable_del('og_' . $form_state['values']['bundle'] . '_multiple');
   }
 }
 
