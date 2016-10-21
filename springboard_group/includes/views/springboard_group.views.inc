@@ -37,6 +37,7 @@ function springboard_group_views_query_alter(&$view, &$query) {
       else {
         $condition->condition('og_membership.gid', $context);
       }
+      $condition->condition('og_membership.entity_type', 'node');
 
       // Help views understand what we're doing. Adding the table without
       // the join explicitly defined makes the query messy.

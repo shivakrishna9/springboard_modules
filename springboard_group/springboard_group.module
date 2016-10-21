@@ -218,7 +218,7 @@ function springboard_group_set_single_selector(&$form, $fields) {
     $field_name = $key;
     $grouped_entities = springboard_group_get_grouped_types();
     foreach ($grouped_entities as $entity => $bundle) {
-      foreach ($bundle as $og_field) {
+      foreach ($bundle as $bundle_name => $og_field) {
         if (in_array($key, $og_field)) {
           $form[$field_name]['#type'] = 'fieldset';
           $form[$field_name]['#collapsible'] = TRUE;
@@ -227,7 +227,7 @@ function springboard_group_set_single_selector(&$form, $fields) {
           $form[$field_name][$form[$field_name]['#language']]['#title'] = '';
           $form[$field_name][$form[$field_name]['#language']][0]['default']['#title'] = t('Group');
           $form[$field_name][$form[$field_name]['#language']][0]['default']['#description'] = t('Associate this content with a group.');
-          $form[$field_name][$form[$field_name]['#language']][0]['default']['#multiple'] = FALSE;
+          $form[$field_name][$form[$field_name]['#language']][0]['default']['#multiple'] = variable_get('og_' . $bundle_name . '_multiple', 0);
         }
       }
     }

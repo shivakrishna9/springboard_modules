@@ -81,6 +81,7 @@ function springboard_group_node_settings_form() {
     '#title' => t('Node types'),
     '#collapsible' => TRUE,
     '#description' => t('Make these content types eligible for grouping'),
+    '#tree' => TRUE,
   );
 
   // Get all node types. Remove the springboard_group node type from the list.
@@ -96,21 +97,33 @@ function springboard_group_node_settings_form() {
   $groups_enabled_types = springboard_group_get_grouped_types();
   $node_defaults = !empty($groups_enabled_types['node']) ? array_keys($groups_enabled_types['node']) : [];
   // Build the checkboxes.
-  $form['springboard_group_node']['springboard_group_grouped_content'] = array(
-    '#title' => '',
-    '#type' => 'checkboxes',
-    '#options' => $content_type_options,
-    '#default_value' => $node_defaults,
-  );
-
-  // Disable the checkboxes on the already enabled node types and add a link to
-  // remove group field.
-  foreach ($node_defaults as $key) {
-    $og_field = $groups_enabled_types['node'][$key][0];
-    $form['springboard_group_node']['springboard_group_grouped_content'][$key] = array(
-      '#disabled' => TRUE,
-      '#description' => l(t('Remove from groups'), "admin/config/group/fields/node/$key/" . $og_field . "/delete", array('query' => array('destination' => 'admin/springboard/groups/settings'))),
+  foreach ($content_type_options as $type => $name) {
+    $form['springboard_group_node'][$type][$type] = array(
+      '#title' => $name,
+      '#type' => 'checkbox',
+      '#default_value' => in_array($type, $node_defaults),
     );
+    $disallowed = array('sba_message_action', 'sba_social_action');
+    if (!in_array($type, $disallowed)) {
+      $form['springboard_group_node'][$type]['og_' . $type . '_multiple'] = array(
+        '#title' => 'Allow multiple group selections.',
+        '#type' => 'checkbox',
+        '#default_value' => variable_get('og_' . $type . '_multiple', 0),
+        '#attributes' => array('class' => array('multiple')),
+        '#states' => array(
+          'visible' => array(
+            ':input[name*="' . $type . ']"]' => array('checked' => TRUE),
+          ),
+        ),
+      );
+    }
+    // Disable the checkboxes on the already enabled node types and
+    // add a link to remove group field.
+    if (in_array($type, $node_defaults)) {
+      $og_field = $groups_enabled_types['node'][$type][0];
+      $form['springboard_group_node'][$type][$type]['#disabled'] = TRUE;
+      $form['springboard_group_node'][$type][$type]['#description'] = l(t('Remove from groups'), "admin/config/group/fields/node/$type/" . $og_field . "/delete", array('query' => array('destination' => 'admin/springboard/groups/settings')));
+    }
   }
 
   $form['springboard_group_node']['submit_node'] = array(
@@ -161,6 +174,7 @@ function springboard_group_entity_settings_form() {
     '#title' => t('Entity types'),
     '#collapsible' => TRUE,
     '#description' => t('Make these entities eligible for grouping'),
+    '#tree' => TRUE,
   );
 
   // Get the already-enabled entities.
@@ -175,23 +189,54 @@ function springboard_group_entity_settings_form() {
     }
   }
 
-  // Build the checkboxes from the list.
-  $form['springboard_group_entities']['springboard_group_grouped_entities'] = array(
-    '#title' => '',
-    '#type' => 'checkboxes',
-    '#options' => $entity_type_options,
-    '#default_value' => $group_enabled_entities,
+  $disallowed = array(
+    'sba_message:sba_message_action_message',
+    'taxonomy_term:tags',
+    'taxonomy_term:sba_legislative_issues',
+    'commerce_cardonfile:commerce_cardonfile',
+    'commerce_customer_profile:billing',
+    'commerce_order:commerce_order',
   );
+
+  foreach ($entity_type_options as $type => $name) {
+    if (!in_array($type, $disallowed)) {
+      $name = str_replace('Rules configuration', 'Payment Gateways', $name);
+      $form['springboard_group_entities'][$type][$type] = array(
+        '#title' => $name,
+        '#type' => 'checkbox',
+        '#default_value' => in_array($type, $group_enabled_entities),
+      );
+    }
+
+    $disallowed_multiple = array(
+      'rules_config:rules_config',
+      'commerce_cardonfile:commerce_cardonfile',
+      'commerce_customer_profile:billing',
+      'commerce_order:commerce_order',
+    );
+    if (!in_array($type, $disallowed) && !in_array($type, $disallowed_multiple)) {
+      list($entity_type, $bundle) = explode(':', $type);
+      $form['springboard_group_entities'][$type]['og_' . $type . '_multiple'] = array(
+        '#title' => 'Allow multiple group selections.',
+        '#type' => 'checkbox',
+        '#default_value' => variable_get('og_' . $bundle . '_multiple', 0),
+        '#attributes' => array('class' => array('multiple')),
+        '#states' => array(
+          'visible' => array(
+            ':input[name*="' . $type . ']"]' => array('checked' => TRUE),
+          ),
+        ),
+      );
+    }
+  }
 
   // Disable the checkboxes on types that are already enabled.
   // Add a link to remove the group field.
   foreach ($entity_defaults as $entity_type => $bundle_group) {
     if ($entity_type != 'node') {
       foreach ($bundle_group as $bundle => $field) {
-        $form['springboard_group_entities']['springboard_group_grouped_entities'][$entity_type . ':' . $bundle] = array(
-          '#disabled' => TRUE,
-          '#description' => l(t('Remove from groups'), "admin/config/group/fields/" . $entity_type . "/" . $bundle . "/" . $field[0] . "/delete", array('query' => array('destination' => 'springboard/groups/settings'))),
-        );
+        $form['springboard_group_entities'][$entity_type . ':' . $bundle][$entity_type . ':' . $bundle]['#disabled'] = TRUE;
+        $form['springboard_group_entities'][$entity_type . ':' . $bundle][$entity_type . ':' . $bundle]['#description'] = l(t('Remove from groups'), "admin/config/group/fields/" . $entity_type . "/" . $bundle . "/" . $field[0] . "/delete", array('query' => array('destination' => 'springboard/groups/settings')));
       }
     }
   }
@@ -209,9 +254,15 @@ function springboard_group_entity_settings_form() {
  * Submits the groupable node type form.
  */
 function springboard_group_settings_form_submit($form, $form_state) {
-  foreach ($form_state['values']['springboard_group_grouped_content'] as $node_type => $status) {
-    if (!empty($status)) {
+  foreach ($form_state['values']['springboard_group_node'] as $node_type => $status) {
+    if ($node_type == 'submit_node') {
+      continue;
+    }
+    if (!empty($status[$node_type]) && !empty($form_state['input']['springboard_group_node'][$node_type])) {
       springboard_group_add_group_reference_field($node_type, 'node');
+    }
+    if (isset($form_state['values']['springboard_group_node'][$node_type]['og_' . $node_type . '_multiple'])) {
+      variable_set('og_' . $node_type . '_multiple', $form_state['values']['springboard_group_node'][$node_type]['og_' . $node_type . '_multiple']);
     }
   }
 }
@@ -220,10 +271,16 @@ function springboard_group_settings_form_submit($form, $form_state) {
  * Submits the groupable entity type form.
  */
 function springboard_group_entities_settings_form_submit($form, $form_state) {
-  foreach ($form_state['values']['springboard_group_grouped_entities'] as $key => $status) {
-    if (!empty($status)) {
-      list($entity_type, $bundle) = explode(':', $key);
+  foreach ($form_state['values']['springboard_group_entities'] as $key => $status) {
+    if ($key == 'actions') {
+      continue;
+    }
+    list($entity_type, $bundle) = explode(':', $key);
+    if (!empty($status[$key]) && !empty($form_state['input']['springboard_group_entities'][$key])) {
       springboard_group_add_group_reference_field($bundle, $entity_type);
+    }
+    if ($key != 'actions') {
+      variable_set('og_' . $bundle . '_multiple', $form_state['values']['springboard_group_entities'][$key]['og_' . $key . '_multiple']);
     }
   }
 }
@@ -236,6 +293,7 @@ function springboard_group_entities_settings_form_submit($form, $form_state) {
  *   The entity type name.
  */
 function springboard_group_add_group_reference_field($bundle, $type) {
+
   $og_field = og_fields_info('og_group_ref');
   $og_field['field']['settings']['target_bundles'] = array('springboard_group' => 'springboard_group');
   $og_field['instance']['settings']['behaviors']['og_widget']['admin']['widget_type'] = 'options_select';
