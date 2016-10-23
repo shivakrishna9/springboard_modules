@@ -545,6 +545,9 @@ function webform_user_webform_submit($form, &$form_state) {
   if ($form_state['values']['op'] == $submit_op && _webform_user_is_webform_user_node($node)) {
     $fields = _webform_user_flatten_tree($form_state['values']['submitted_tree'], $node->nid);
     $map = _webform_user_get_map($form_state['values']['details']['nid'], $fields);
+    // Track the content type that created or last updated the user by setting
+    // sbp_created_via user profile field.
+    $map['sbp_created_via'] = $form['#node']->type;
     $fields['mail'] = trim($fields['mail']);
     // Return object or FALSE if none found.
     $account = user_load_by_mail($fields['mail']);

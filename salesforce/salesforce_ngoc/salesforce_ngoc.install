@@ -37,6 +37,12 @@ function salesforce_ngoc_install() {
   if ($user_mapping_result !== FALSE) {
     drupal_set_message(t('Drupal user entity has been mapped to NGOC Batch Upload object.'));
   }
+
+  // Add profile field to track which module created a user.
+  $field_creating_result = salesforce_ngoc_create_user_created_via_field();
+  if ($user_mapping_result !== FALSE) {
+    drupal_set_message(t('Drupal user profile field sbp_created_via has been created.'));
+  }
 }
 
 /**
@@ -72,6 +78,59 @@ function salesforce_ngoc_uninstall(){
   }
   // Remove default donation mapping provided by salesforce_ngoc.
   salesforce_genmap_delete_map(-1, 'salesforce_donation');
+}
+
+/**
+ * Creates the sbp_created_via field.
+ *
+ * Used to track what action created the user.
+ */
+function salesforce_ngoc_create_user_created_via_field() {
+  $success = FALSE;
+  $created_via = array(
+    'label' => t('Created Via'),
+    'field_name' => 'sbp_created_via',
+    'type' => 'text',
+    'widget' => array(
+      'type' => 'text_textfield',
+    ),
+    'display' => array(
+      'default' => array(
+        'label' => 'hidden',
+        'type' => 'hidden',
+      ),
+      'teaser' => array(
+        'label' => 'hidden',
+        'type' => 'hidden',
+      ),
+    ),
+  );
+
+  $field_exists = field_info_field('sbp_created_via');
+
+  if (empty($field_exists)) {
+    field_create_field($created_via);
+  }
+
+  $instance_exists = field_info_instance('user', 'sbp_created_via', 'user');
+  if (empty($instance_exists)) {
+    $instance = array(
+      'entity_type' => 'user',
+      'bundle' => 'user',
+    );
+    $instance = array_merge($created_via, $instance);
+    field_create_instance($instance);
+  }
+
+  $field_group = field_group_load_field_group('group_profile_admin', 'user', 'user', 'form');
+  $table = 'field_group';
+
+  // If the group exists make sure its not disabled.
+  if ($field_group) {
+    $field_group->children[] = 'sbp_created_via';
+    $success = ctools_export_crud_save($table, $field_group);
+  }
+  return $success;
 }
 
 /**
@@ -2460,19 +2519,19 @@ function salesforce_ngoc_create_donation_mapping() {
   $map->map_handler = 'salesforce_donation';
   $map->salesforce_object_type = 'rC_Connect__Batch_Upload__c';
   // @TODO Unclear what this was doing in salesforce_luminate_install().
-  // $object_type = '';
-  // module_load_include('inc', 'salesforce_genmap', 'includes/salesforce_genmap.map');
-  // if (function_exists('salesforce_get_api')) {
-  //   $sfapi = salesforce_get_api();
-  //   if ($sfapi->isAuthorized()) {
-  //     if (function_exists('_sfw_salesforce_record_type_list')) {
-  //       $sf_records = _sfw_salesforce_record_type_list($sfapi, 'Opportunity');
-  //       $sf_records = array_flip($sf_records);
-  //       $object_type = $sf_records['Donation'];
-  //     }
-  //   }
-  // }
-  // $map->salesforce_record_type = $object_type;
+  $object_type = '';
+  module_load_include('inc', 'salesforce_genmap', 'includes/salesforce_genmap.map');
+  if (function_exists('salesforce_get_api')) {
+    $sfapi = salesforce_get_api();
+    if ($sfapi->isAuthorized()) {
+      if (function_exists('_sfw_salesforce_record_type_list')) {
+        $sf_records = _sfw_salesforce_record_type_list($sfapi, 'Opportunity');
+        $sf_records = array_flip($sf_records);
+        $object_type = $sf_records['Donation'];
+      }
+    }
+  }
+  $map->salesforce_record_type = $object_type;
   $map->field_map = array (
     'salesforce_donation_map' => array (
       'did' => 'SB_Donation_Id__c',
