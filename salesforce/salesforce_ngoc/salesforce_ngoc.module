@@ -62,3 +62,17 @@ function salesforce_ngoc_salesforce_genmap_map_fields_alter(&$fields, $context) 
     $fields['rC_Connect__Batch_Upload_Campaign_Matched__c'] = '70163000000A9RwAAK'; //TODO: Either a setting or cid field.
   }
 }
+
+/**
+ * Implements hook_salesforce_mapping_confirm_entity_for_queue().
+ */
+function salesforce_ngoc_salesforce_mapping_confirm_entity_for_queue($entity, $entity_type, $op){
+  // Suppress creation of user salesforce sync item if the user was created by
+  // submitting a donation form because the user data is included in the
+  // batch_upload salesforce sync item.
+  if($entity_type = 'user' && $op == 'CREATE') {
+    if(!empty($entity->sbp_created_via['und']['0']['value']) && fundraiser_is_donation_type($entity->sbp_created_via['und']['0']['value'])) {
+      return FALSE;
+    }
+  }
+}
