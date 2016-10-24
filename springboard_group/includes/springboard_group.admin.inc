@@ -188,6 +188,7 @@ function springboard_group_entity_settings_form() {
     'sba_message:sba_message_action_message',
     'taxonomy_term:tags',
     'taxonomy_term:sba_legislative_issues',
+    'taxonomy_term:sba_organization_issues',
     'commerce_cardonfile:commerce_cardonfile',
     'commerce_customer_profile:billing',
     'commerce_order:commerce_order',
