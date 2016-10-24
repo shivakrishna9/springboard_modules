@@ -542,6 +542,7 @@ function webform_user_webform_submit($form, &$form_state) {
 
   // Only process if the form is completed and it's a webform_user form.
   $submit_op = empty($node->webform['submit_text']) ? t('Submit') : $node->webform['submit_text'];
+  $new_user = FALSE;
   if ($form_state['values']['op'] == $submit_op && _webform_user_is_webform_user_node($node)) {
     $fields = _webform_user_flatten_tree($form_state['values']['submitted_tree'], $node->nid);
     $map = _webform_user_get_map($form_state['values']['details']['nid'], $fields);
@@ -579,6 +580,7 @@ function webform_user_webform_submit($form, &$form_state) {
     }
     // Anonymous user, new email to Drupal.
     elseif ($form_state['redirect']) {
+      $new_user = TRUE;
       if (module_exists('email_registration')) {
         // Strip off everything after the @ sign.
         $name = preg_replace('/@.*$/', '', $fields['mail']);
@@ -608,6 +610,11 @@ function webform_user_webform_submit($form, &$form_state) {
         _webform_user_session_set($node->nid, $map);
       }
     }
+
+    if (!$new_user && empty($account->pass)) {
+      $new_user = TRUE;
+    }
+
     module_invoke_all('webform_user_submission_insert', $node, $submission, $account);
 
     // This won't necessarily send a new email, but does allow other modules to
@@ -622,7 +629,7 @@ function webform_user_webform_submit($form, &$form_state) {
         'form' => $form,
         'form_state' => $form_state,
       ),
-      'send' => !empty($node->send_new_user_email) ? $node->send_new_user_email : FALSE,
+      'send' => !empty($node->send_new_user_email) ? $node->send_new_user_email && $new_user : FALSE,
     ));
   }
 }

@@ -1743,12 +1743,17 @@ function fundraiser_commerce_fundraiser_donation_update($donation) {
     // Update the gateway's stored data.
     // Gateways that allow recurring donation will have an update callback
     $update_callback = isset($donation->gateway['update callback']) && function_exists($donation->gateway['update callback']) ? $donation->gateway['update callback'] : FALSE;
-
     // If we're in a sustainer update, and this is the first record update the stored payment information
     if (!empty($donation->sustainer_update) && !empty($donation->sustainer_update_first) && $update_callback) {
       // Load the current card data for updating
       $card_data = _fundraiser_commerce_donation_cardonfile_card($donation);
-      $update_callback($donation, $card_data);
+      if (!empty($card_data)) {
+        // Ensure the expiration values are copied correctly.
+        $card_data = $update_callback($donation, $card_data);
+        if (!empty($card_data)) {
+          $donation->data['cardonfile'] = $card_data->card_id;
+        }
+      }
     }
     // Sustainer update, update remaining donations with the first record's cardonfile id
     // This avoids calling the APIs for each donation
@@ -1775,7 +1780,6 @@ function fundraiser_commerce_fundraiser_donation_update($donation) {
     $donation->status_label = _fundraiser_commerce_get_label_by_status($order->status);
     $donation->status_charged = _fundraiser_commerce_get_charged_by_status($order->status);
   }
-
   // Save the updated data array to the order's data column
   $order->data['fundraiser_commerce'] = _fundraiser_commerce_order_data_prepare($donation->data);
 
@@ -2573,6 +2577,10 @@ function _fundraiser_commerce_charge_submit_form_process($success, $method_insta
  */
 function _fundraiser_commerce_donation_cardonfile_card($donation, $active = TRUE) {
   // If this donation has the cardonfile value set in its data array, load the card data from that
+  if (!empty($donation->donation['cardonfile']['card'])) {
+    return $donation->donation['cardonfile']['card'];
+  }
+
   if (!empty($donation->data['cardonfile'])) {
     return commerce_cardonfile_load($donation->data['cardonfile']);
   }

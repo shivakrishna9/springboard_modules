@@ -1455,6 +1455,8 @@ function _fundraiser_sustainers_amount_field_create($fundraiser, $field) {
   // If the donation type is recurring-only ("always"), then use recurring ask amounts
   // for the main "amount" field.
   if ($fundraiser->recurring_setting == 'always') {
+    // NOTE: Changing this could break site customizations based on Springboard's dual-ask functionality.
+    // See https://docs.google.com/document/d/1EbUt8vetgaj0DAmkNfYKclX03m35QKfB3waUDnNvYLk/edit
     $field = _fundraiser_sustainers_recurring_amount_field_create($fundraiser, $field);
   }
   // Otherwise, pass through to fundraiser.module.
@@ -2318,8 +2320,10 @@ function fundraiser_sustainers_edit_form($did) {
       'donation' => $next_donation,
       'calling module' => 'fundraiser_sustainers',
       'update billing' => FALSE,
+      'update cardonfile' => FALSE,
     );
     if (!empty($cardonfile)) {
+      $data['card'] = $cardonfile;
       $data['payment_fields'] = array(
         'credit' => array(
           'expiration_date' => array(
@@ -2388,7 +2392,7 @@ function fundraiser_sustainers_donation_payment_info($next_donation, $master_did
   // Gather further donation data.
   $remaining_donation_count = _fundraiser_sustainers_count_donations_recurr_remaining($master_did);
   $payment_info = '<div id="payment-info">' .
-    '<h2>Recurring Payment Info</h2>' .
+    '<h2>Recurring Donation Summary</h2>' .
     '<dl>' .
     '<dt>Recurring Donation Amount</dt>' .
     '<dd>' . $next_donation->donation['amount_formatted'] . '</dd>' .
@@ -2426,6 +2430,10 @@ function fundraiser_sustainers_fundraiser_update_billing_form__fundraiser_sustai
  * Implements hook_fundraiser_update_billing_form__CALLING_MODULE__alter().
  */
 function fundraiser_sustainers_fundraiser_update_billing_form__fundraiser_sustainers__alter(&$form, &$form_state, $data) {
+  if (empty($form_state['card']) && !empty($data['donation']->data['cardonfile'])) {
+    $form_state['card'] = commerce_cardonfile_load($data['donation']->data['cardonfile']);
+  }
+
   $form['master_did'] = array(
     '#type' => 'hidden',
     '#value' => $data['donation']->recurring->master_did,
@@ -2450,6 +2458,9 @@ function fundraiser_sustainers_fundraiser_update_billing_form__fundraiser_sustai
     $form['#after_build'][] = 'market_source_webform_after_build';
   }
 
+  // Add a validation hook which will move some of the form elements, needed for
+  // commerce cardonfile.
+  $form['#validate'][] = '_fundraiser_update_billing_form_commerce_cardonfile_card_form_alter_validate';
   $form['#validate'][] = 'fundraiser_sustainers_update_billing_form_validate';
   $form['actions']['submit']['#submit'][] = 'fundraiser_sustainers_update_billing_form_submit';
 }
@@ -2496,6 +2507,7 @@ function fundraiser_sustainers_update_billing_form_submit($form, &$form_state) {
   fundraiser_sustainers_update_billing_info_create_new_donations($master_donation, $source_donation, $submission_fields);
 
   drupal_set_message(t('Billing information successfully updated'));
+  $form_state['redirect'] = current_path();
 }
 
 /**
@@ -3525,18 +3537,19 @@ function fundraiser_sustainers_billing_update_form($form, &$form_state, $donatio
   $form['series-info'] = array(
     '#prefix' => '<div id="recurring-series-info">',
     '#suffix' => '</div>',
+    '#type' => 'fieldset',
   );
 
   $remaining = _fundraiser_sustainers_get_donations_recurr_remaining($sustainers_record->master_did);
-  $next_donation = $remaining ? fundraiser_donation_get_donation($remaining[0]->did) : $donation;
+  $next_donation = !empty($remaining) ? fundraiser_donation_get_donation($remaining[0]->did) : $donation;
   $cardonfile = _fundraiser_donation_cardonfile_card($next_donation);
 
   $form['series-info']['recurring-payment-info'] = array(
-    '#markup' => fundraiser_sustainers_donation_payment_info($donation, $sustainers_record->master_did, $cardonfile),
+    '#markup' => fundraiser_sustainers_donation_payment_info($next_donation, $sustainers_record->master_did, $cardonfile),
   );
 
   $form['series-info']['recurring-payment-link'] = array(
-    '#markup' => l(t("Edit Recurring Donation"), "user/{$donation->uid}/recurring_overview/{$sustainers_record->master_did}"),
+    '#markup' => '<p>' . l(t("View details"), "user/{$donation->uid}/recurring_overview/{$sustainers_record->master_did}") . '</p>',
     '#prefix' => '<div id="payment-edit-link">',
     '#suffix' => '</div>',
   );
@@ -3581,6 +3594,18 @@ function fundraiser_sustainers_billing_update_form($form, &$form_state, $donatio
       );
     }
     $form = fundraiser_update_billing_form($form, $form_state, $data);
+
+    // Make the header consistent.
+    if (!empty($form['billing_information'])) {
+      $form['billing_information']['#prefix'] = '<div id="recurring-billing-info"><h2>' . $form['billing_information']['#title'] . '</h2>';
+      $form['billing_information']['#suffix'] = '</div>';
+      unset($form['billing_information']['#title']);
+    }
+    if (!empty($form['payment_fields'])) {
+      $form['payment_fields']['#prefix'] = '<div id="recurring-payment-info"><h2>' . $form['payment_fields']['#title'] . '</h2>';
+      $form['payment_fields']['#suffix'] = '</div>';
+      unset($form['payment_fields']['#title']);
+    }
   }
 
   return $form;
@@ -4537,8 +4562,9 @@ function _fundraiser_sustainers_calculate_installments($donation) {
  *   The QD field record.
  */
 function _fundraiser_sustainers_get_payment_info_for_card_id($card_id) {
-  $data = db_query('SELECT * FROM {fundraiser_donation} fd LEFT JOIN {fundraiser_sustainers_series} fss ON fd.did = fss.did WHERE fd.did = fss.did AND fd.card_id = :card_id', array(
+  $data = db_query('SELECT fd.*, fs.master_did, fss.* FROM {fundraiser_donation} fd, {fundraiser_sustainers} fs LEFT JOIN {fundraiser_sustainers_series} fss ON fss.did = fs.master_did WHERE fd.status = :status AND fd.card_id = :card_id AND fd.did = fs.did GROUP BY fs.master_did', array(
     ':card_id' => $card_id,
+    ':status' => 'pending_future_payment',
   ))->fetchAll();
 
   if (empty($data)) {
@@ -4580,7 +4606,7 @@ function fundraiser_sustainers_fundraiser_commerce_cardonfile_used_by($card_id) 
   foreach ($results as $result) {
     $used_by[] = t('Recurring @type donation (@amount@spacecharged on the @day)', array(
       '@type' => strtolower($result['npsp_installment_period']),
-      '@amount' => empty($result['amount']) ? '' : '$' . $result['amount'] . ',',
+      '@amount' => empty($result['amount']) ? '' : '$' . number_format($result['amount'], 2, '.', '') . ',',
       '@space' => empty($result['amount']) ? '' : ' ',
       '@day' => date("jS", strtotime($result['npsp_next_payment_date'])),
     ));

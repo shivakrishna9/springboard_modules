@@ -564,7 +564,14 @@ function fundraiser_update_7010() {
 /**
  * Batch update records to add card_id field.
  */
+/** Commented out because this update takes too long
+    to run in a site with a lot of donations. We'll
+    examine a real-time approach in the next release.
 function fundraiser_update_7011(&$sandbox) {
+  // No action necessary if cardonfile isn't enabled 
+  if (!module_exists('commerce_cardonfile')) {
+    return;
+  }
   $ret = array();
   $cards = &drupal_static(__FUNCTION__);
 
@@ -657,3 +664,4 @@ function fundraiser_update_7011(&$sandbox) {
     return t("Donations have been updated with their card_id values.");
   }
 }
+*/
