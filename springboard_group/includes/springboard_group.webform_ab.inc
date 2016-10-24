@@ -41,7 +41,6 @@ function springboard_group_webform_ab_get_groups($webforms, $webform_ab) {
 
     $webform_groups = og_get_entity_groups('node', $webform);
 
-
     // If the test has a group, and the testable form has
     // the same group, allow it in the form options.
     if ($gids && !empty($webform_groups['node'])) {
@@ -99,6 +98,99 @@ function springboard_group_webform_ab_remove_form_from_test($webform) {
               ->execute();
           }
         }
+      }
+    }
+  }
+}
+
+/**
+ * Check if group selection removes configured email wrappers.
+ *
+ * Called from springboard_group_form_node_form_alter(). If an email wrapper
+ * is no longer eligible due to group restrictions after changing the groups
+ * selector on a node form, add a message which is displayed in a cTools modal
+ * triggered by the ajax callback on the groups selector. Also delete the bad
+ * wrapper on form submit.
+ */
+function springboard_group_node_form_webform_ab_validate(&$form, &$form_state) {
+  $form['#submit'][] = 'springboard_group_webform_ab_ineligible_tests';
+
+  // An ajax reload has occurred.
+  // Make sure this is nt a new node. New nodes can't have email wrappers,
+  // yet.
+  if (!empty($form_state['values']) && !empty($form['#node']->nid)) {
+    $included = $form['#node']->included_webforms;
+    if (!empty($included)) {
+      $test_gids = [];
+      $included_to_delete = [];
+      // Get the group IDs from the form values.
+      $language = $form['og_group_ref_' . $form['#node']->type]['#language'];
+      $options = $form_state['values']['og_group_ref_' . $form['#node']->type][$language];
+      foreach ($options as $option) {
+        $test_gids[] = $option['target_id'];
+      }
+
+      foreach ($included as $webform) {
+        $grouped = springboard_group_webform_ab_get_grouped($test_gids, $webform);
+        if (count($grouped) == 0) {
+          $included_to_delete[] = $webform;
+        }
+      }
+
+      $form_state['included_to_delete'] = $included_to_delete;
+
+      // Set the message.
+      if (!empty($included_to_delete)) {
+        $count = count($included_to_delete);
+        $format = format_plural($count, 'form', 'form');
+        $form_state['group_ajax_messages'][] = t('@count @format belonging to ineligible groups will be removed when this form is saved. Please update your included webforms after saving.', array(
+          '@count' => $count,
+          '@format' => $format,
+        ));
+      }
+    }
+  }
+
+}
+
+/**
+ * Check if a wrapper is in a set of gids.
+ *
+ * @param array $gids
+ *   Group Ids.
+ * @param array $setting
+ *   Email wrapper setting.
+ *
+ * @return array
+ *   An array containing active group config.
+ */
+function springboard_group_webform_ab_get_grouped($gids, $webform) {
+  $grouped = [];
+  foreach ($gids as $gid) {
+    $in_group = og_get_membership('node', $gid, 'node', $webform['webform_nid']);
+    if ($in_group) {
+      $grouped[$gid][$webform['webform_nid']] = $in_group;
+    }
+  }
+  return $grouped;
+}
+
+/**
+ * Delete ineligible email wrappers on node form submssion.
+ */
+function springboard_group_webform_ab_ineligible_tests($form, $form_state) {
+  if (!empty($form_state['included_to_delete'])) {
+    foreach ($form_state['included_to_delete'] as $webform) {
+      $tables_to_update = array(
+        'webform_ab_forms',
+        'webform_ab_conversion',
+        'webform_ab_hits',
+      );
+      foreach ($tables_to_update as $table_name) {
+        db_delete($table_name)
+          ->condition('test_nid', $form['#node']->nid)
+          ->condition('webform_nid', $webform['webform_nid'])
+          ->execute();
       }
     }
   }

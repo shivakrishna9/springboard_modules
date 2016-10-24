@@ -162,6 +162,7 @@ function springboard_group_form_node_form_alter(&$form, &$form_state) {
       'callback' => 'springboard_group_ajax_callback',
     );
 
+    //@todo check that these node types are actually groupable first.
     // Farm out our donation form alterations to a helper.
     if (fundraiser_is_donation_type($form['#node']->type)) {
       springboard_group_fundraiser_node_form_gateway_update($form, $form_state);
@@ -172,6 +173,9 @@ function springboard_group_form_node_form_alter(&$form, &$form_state) {
     $webform_types = variable_get('webform_node_types');
     if (module_exists('email_wrappers') && in_array($form['#node']->type, $webform_types)) {
       springboard_group_node_form_email_wrappers_validate($form, $form_state);
+    }
+    if (module_exists('webform_ab') && in_array($form['#node']->type, array('webform_ab'))) {
+      springboard_group_node_form_webform_ab_validate($form, $form_state);
     }
   }
 }

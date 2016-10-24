@@ -32,12 +32,13 @@ function springboard_group_views_query_alter(&$view, &$query) {
         else {
           $all_groups = og_get_all_group();
           $condition->condition('og_membership.gid', $all_groups, 'IN');
+          $condition->condition('og_membership.entity_type', 'node');
         }
       }
       else {
         $condition->condition('og_membership.gid', $context);
+        $condition->condition('og_membership.entity_type', 'node');
       }
-      $condition->condition('og_membership.entity_type', 'node');
 
       // Help views understand what we're doing. Adding the table without
       // the join explicitly defined makes the query messy.
@@ -82,9 +83,15 @@ function springboard_group_views_query_check_content_type($query) {
           if (user_access('administer content')) {
             drupal_set_message('multipe node types in views query', 'error');
           }
+          return TRUE;
         }
       }
     }
   }
   return $is_grouped;
+}
+
+
+function springboard_group_views_pre_execute(&$view) {
+  //dpq($view->build_info['query']);
 }
