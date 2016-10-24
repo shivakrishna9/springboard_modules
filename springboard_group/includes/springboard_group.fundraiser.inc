@@ -36,6 +36,7 @@ function springboard_group_fundraiser_node_form_gateway_update(&$form, &$form_st
     // Get the group ID from the form values.
     $language = $form['og_group_ref_' . $form['#node']->type]['#language'];
     $option = $form_state['values']['og_group_ref_' . $form['#node']->type][$language];
+    //@todo update for multiple groups, if needed
     $gid = isset($option[0]['target_id']) ? $option[0]['target_id'] : 'none';
 
     // Get the gateways and filter them by group ownership.
@@ -45,8 +46,10 @@ function springboard_group_fundraiser_node_form_gateway_update(&$form, &$form_st
     // Rebuild the gateway fieldset. This code block is lifted directly from
     // _fundraiser_donation_settings_form() without change.
     if (empty($gateways)) {
+      $message = t('There are no gateways configured for this group. Please create some gateways in the store configuration.');
+      $form_state['group_ajax_messages'][] = $message;
       $form['payment_methods']['gateways'] = array(
-        '#markup' => '<div>' . t('There are no gateways configured for this group. Please create some gateways in the store configuration.') . '</div>',
+        '#markup' => '<div>' . $message . '</div>',
       );
     }
     else {

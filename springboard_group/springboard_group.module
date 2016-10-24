@@ -142,6 +142,19 @@ function springboard_group_form_node_form_alter(&$form, &$form_state) {
   if (!empty($fields)) {
     springboard_group_set_single_selector($form, $fields);
 
+    ctools_include('modal');
+    ctools_modal_add_js();
+    $settings['CToolsModal']['modalSize'] = array(
+      'type' => 'fixed',
+      'width' => 550,
+      'height' => 350,
+    );
+    $settings['CToolsModal']['modalOptions'] = array(
+      'opacity' => '.55',
+      'background' => '#ccc',
+    );
+    drupal_add_js($settings, 'setting');
+    $form_state['group_ajax_messages'] = [];
     // Add ajax callback to the groups field.
     $language = $form['og_group_ref_' . $form['#node']->type]['#language'];
     $form['og_group_ref_' . $form['#node']->type][$language][0]['default']['#ajax'] = array(
@@ -152,6 +165,13 @@ function springboard_group_form_node_form_alter(&$form, &$form_state) {
     if (fundraiser_is_donation_type($form['#node']->type)) {
       springboard_group_fundraiser_node_form_gateway_update($form, $form_state);
     }
+    if (module_exists('page_wrappers') && _page_wrappers_enabled_type($form['#node'])) {
+      springboard_group_node_form_page_wrappers_validate($form, $form_state);
+    }
+    $webform_types = variable_get('webform_node_types');
+    if (module_exists('email_wrappers') && in_array($form['#node']->type, $webform_types)) {
+      springboard_group_node_form_email_wrappers_validate($form, $form_state);
+    }
   }
 }
 
@@ -161,7 +181,7 @@ function springboard_group_form_node_form_alter(&$form, &$form_state) {
  * Handles pagewrappers and payment gateway selector updates when group
  * selector is changed.
  */
-function springboard_group_ajax_callback($form, $form_state) {
+function springboard_group_ajax_callback(&$form, &$form_state) {
 
   $ajax = array(
     '#type' => 'ajax',
@@ -173,6 +193,12 @@ function springboard_group_ajax_callback($form, $form_state) {
   }
   if (!empty($form['payment_methods']['gateways'])) {
     $ajax['#commands'][] = ajax_command_replace("#springboard-groups-payment-ajax-wrapper", render($form['payment_methods']['gateways']));
+  }
+
+  $messages = $form_state['group_ajax_messages'];
+  if (!empty($messages)) {
+    $list = implode('<br /><br />', $form_state['group_ajax_messages']);
+    $ajax['#commands'][] = ctools_modal_command_display(t('Notice'), $list);
   }
 
   return $ajax;
