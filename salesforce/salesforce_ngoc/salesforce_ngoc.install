@@ -43,6 +43,16 @@ function salesforce_ngoc_install() {
   if ($user_mapping_result !== FALSE) {
     drupal_set_message(t('Drupal user profile field sbp_created_via has been created.'));
   }
+
+  // Add 'hold' to list of tracked queues.
+  $default_queues = array(
+    'new' => 'new',
+    'retry' => 'retry',
+  );
+  $tracked_queues = variable_get('salesforce_queue_tracked_queues', $default_queues);
+  $tracked_queues['hold'] = 'hold';
+  variable_set('salesforce_queue_tracked_queues', $tracked_queues);
+
 }
 
 /**
