@@ -118,6 +118,15 @@ function webform_user_create_missing_users_batch_process($chunk, $node_id, $oper
     // Remove empty string values from submission to avoid datatype exceptions.
     $submission = array_filter($submission, 'strlen');
     if (empty($account)) {
+        if (module_exists('email_registration')) {
+          // Strip off everything after the @ sign.
+          $name = preg_replace('/@.*$/', '', $submission['mail']);
+          $name = email_registration_cleanup_username($name);
+          $name = email_registration_unique_username($name);
+        }
+        else {
+          $name = $submission['mail'];
+        }
       $user_fields = array(
         'name' => $submission['mail'],
         'mail' => $submission['mail'],

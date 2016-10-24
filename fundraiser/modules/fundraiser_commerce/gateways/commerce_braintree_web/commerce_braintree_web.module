@@ -686,8 +686,7 @@ function commerce_braintree_web_submit_form_submit($payment_method, $pane_form, 
       }
 
       // If cardonfile is enabled and this appears to be a new card.
-      if (module_exists('commerce_cardonfile') && empty(commerce_cardonfile_load_multiple_by_remote_id($braintree_result->transaction->creditCardDetails->token))) {
-
+      if (module_exists('commerce_cardonfile') && empty(commerce_cardonfile_load_multiple(array(), array('remote_id' => $braintree_result->transaction->creditCardDetails->token)))) {
         // Store the token with cardonfile.
         $card = commerce_cardonfile_new();
         $card->uid = $order->uid;

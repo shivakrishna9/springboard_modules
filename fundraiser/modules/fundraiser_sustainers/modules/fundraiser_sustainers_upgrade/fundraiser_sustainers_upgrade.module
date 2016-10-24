@@ -80,16 +80,22 @@ function fundraiser_sustainers_upgrade_springboard_hmac_allowed_actions() {
  */
 function fundraiser_sustainers_upgrade_springboard_hmac_success($payload) {
   if ($payload['action'] == 'su') {
+    $parts = drupal_parse_url(request_uri());
+    $query = array();
+    if (!empty($parts['query'])) {
+      $query = $parts['query'];
+    }
     if (isset($payload[2]) && is_numeric($payload[2])) {
       $node = node_load($payload[2]);
       if (!empty($node->type) && $node->type == 'sustainers_upgrade_form') {
-        drupal_goto('node/' . $node->nid);
+
+        drupal_goto('node/' . $node->nid, array('query' => $query));
       }
     }
     // If there's no form in the payload, try the default form.
     $nid = variable_get('fundraiser_sustainers_upgrade_default_form', '');
     if (!empty($nid)) {
-      drupal_goto('node/' . $nid);
+      drupal_goto('node/' . $nid, array('query' => $query));
     }
   }
 }
@@ -792,7 +798,7 @@ function fundraiser_sustainers_upgrade_get_session_payload() {
   $payload = &drupal_static(__FUNCTION__);
   if (!isset($payload)) {
     $payload = array();
-    if (isset($_SESSION['springboard_hmac'])) {
+    if (!empty($_SESSION['springboard_hmac']['action']) && $_SESSION['springboard_hmac']['action'] == 'su') {
       $payload['timestamp'] = $_SESSION['springboard_hmac']['timestamp'];
       $payload['uid'] = $_SESSION['springboard_hmac']['uid'];
       $payload['amount'] = $_SESSION['springboard_hmac']['0'];
@@ -808,7 +814,9 @@ function fundraiser_sustainers_upgrade_get_session_payload() {
  * Clear the session.
  */
 function fundraiser_sustainers_upgrade_clear_session_payload() {
-  unset($_SESSION['springboard_hmac']);
+  if (!empty($_SESSION) && isset($_SESSION['springboard_hmac'])) {
+    unset($_SESSION['springboard_hmac']);
+  }
 }
 
 /**
@@ -1058,7 +1066,9 @@ function fundraiser_sustainers_upgrade_tokenize_confirmation($status, $confirmat
  * Clear the session payload after the confirmation has been built.
  */
 function fundraiser_sustainers_process_webform_confirmation(&$vars) {
-  fundraiser_sustainers_upgrade_clear_session_payload();
+  if (!empty($vars['node']->type) && $vars['node']->type == 'sustainers_upgrade_form') {
+    fundraiser_sustainers_upgrade_clear_session_payload();
+  }
 }
 
 /**

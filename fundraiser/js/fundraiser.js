@@ -2,11 +2,12 @@ Drupal.behaviors.fundraiserBehavior = {
   attach: function(context, settings) { (function($) {
 
   // Auto-populate the internal name field
-  $("#edit-title").blur(function() {
-    var title = $(this).attr('value');
-    var currently = $("#edit-internal-name").attr('value');
-    if (currently.length === 0) {
-      $("#edit-internal-name").val(title);
+  $('#edit-title').blur(function() {
+    var title = $(this).val();
+    var internalNameField = $('.form-item input[name*="field_fundraiser_internal_name"]');
+    var currently = internalNameField.val();
+    if (typeof currently != 'undefined' && currently.length === 0) {
+      internalNameField.val(title);
     }
   });
 
