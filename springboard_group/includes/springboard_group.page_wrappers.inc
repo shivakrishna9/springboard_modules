@@ -1,4 +1,8 @@
 <?php
+/**
+ * @file
+ * Page wrapper functions for springboard groups.
+ */
 
 /**
  * Implements hook_page_wrappers_node_settings_form_alter().
@@ -47,7 +51,7 @@ function springboard_group_page_wrappers_node_settings_form_alter(&$wrappers, &$
 /**
  * List page wrappers by group.
  *
- * @param int $gid
+ * @param int $gids
  *   Group id.
  *
  * @return array
@@ -75,35 +79,9 @@ function springboard_group_page_wrappers_list_wrappers_by_group($gids) {
   return count($wrappers) ? $wrappers : array();
 }
 
-
 /**
- * Implements hook_email_wrappers_templates_list_alter().
+ * Display a message about ineligible page wrappers when switching groups.
  */
-function springboard_group_email_wrappers_templates_list_alter(&$templates) {
-  $wrappers_are_grouped = og_get_group_type('node', 'email_wrapper', 'group content');
-  if ($wrappers_are_grouped && arg(1) != 'ajax') {
-    $webform = node_load(arg(1));
-    $webform_groups = og_get_entity_groups('node', $webform);
-    foreach ($templates as $nid => $name) {
-      if ($nid != 0) {
-        $wrapper = node_load($nid);
-        $wrapper_groups = og_get_entity_groups('node', $wrapper);
-        if (empty($webform_groups['node']) && !empty($wrapper_groups['node'])) {
-          unset($templates[$nid]);
-        }
-        elseif (!empty($webform_groups['node']) && empty($wrapper_groups['node'])) {
-          unset($templates[$nid]);
-        }
-        elseif (!empty($webform_groups['node']) && !empty($wrapper_groups['node'])) {
-          if (!array_intersect($webform_groups['node'], $wrapper_groups['node'])) {
-            unset($templates[$nid]);
-          }
-        }
-      }
-    }
-  }
-}
-
 function springboard_group_node_form_page_wrappers_validate(&$form, &$form_state) {
 
   // An ajax reload has occurred.
@@ -119,51 +97,8 @@ function springboard_group_node_form_page_wrappers_validate(&$form, &$form_state
       elseif (in_array($default, array_keys($options))) {
         $form_state['input']['page_wrappers'][$key]['wrapper_nid'] = $default;
       }
+      $x++;
     }
   }
 }
 
-function springboard_group_node_form_email_wrappers_validate(&$form, &$form_state) {
-  $form['#submit'][] = 'springboard_group_delete_email_wrappers';
-
-  // An ajax reload has occurred.
-  if (!empty($form_state['values'])) {
-
-    // Get the group ID from the form values.
-    $language = $form['og_group_ref_' . $form['#node']->type]['#language'];
-    $option = $form_state['values']['og_group_ref_' . $form['#node']->type][$language];
-    $gids = isset($option[0]['target_id']) ? $option[0]['target_id'] : [];
-
-    $settings = email_wrappers_load_settings($form['#node']->nid);
-    $wrappers_to_delete = [];
-    $grouped = [];
-    foreach ($settings as $setting) {
-      foreach ($gids as $gid) {
-        $in_group = og_get_membership('node', $gid, 'node', $setting['tid']);
-        if ($in_group) {
-          $grouped[] = $in_group;
-        }
-      }
-      if (count($grouped) == 0) {
-        $wrappers_to_delete[] = $setting;
-      }
-    }
-    $form_state['wrappers_to_delete'] = $wrappers_to_delete;
-    if (!empty($wrappers_to_delete)) {
-      $count = count($wrappers_to_delete);
-      $format = format_plural($count, 'email wrapper', 'email wrappers');
-      $form_state['group_ajax_messages'][] = t('@count @format belonging to ineligible groups will be removed when this form is saved. Please update your email wrappers after saving.', array(
-        '@count' => $count,
-        '@format' => $format,
-      ));
-    }
-  }
-}
-
-function springboard_group_delete_email_wrappers($form, $form_state) {
-  if (!empty($form_state['wrappers_to_delete'])) {
-    foreach ($form_state['wrappers_to_delete'] as $settings) {
-      email_wrappers_delete_settings($settings['nid'], $settings['eid']);
-    }
-  }
-}
