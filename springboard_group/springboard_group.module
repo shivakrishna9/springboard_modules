@@ -167,7 +167,7 @@ function springboard_group_form_node_form_alter(&$form, &$form_state) {
     if (fundraiser_is_donation_type($form['#node']->type)) {
       springboard_group_fundraiser_node_form_gateway_update($form, $form_state);
     }
-    if (module_exists('page_wrappers') && _page_wrappers_enabled_type($form['#node'])) {
+    if (module_exists('page_wrappers') && (_page_wrappers_enabled_type($form['#node']) || $form['#node']->type == 'page_wrapper')) {
       springboard_group_node_form_page_wrappers_validate($form, $form_state);
     }
     $webform_types = variable_get('webform_node_types');

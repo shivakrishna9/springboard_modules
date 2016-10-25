@@ -83,8 +83,21 @@ function springboard_group_page_wrappers_list_wrappers_by_group($gids) {
  * Display a message about ineligible page wrappers when switching groups.
  */
 function springboard_group_node_form_page_wrappers_validate(&$form, &$form_state) {
+  if ($form['#node']->type != 'page_wrapper') {
+    springboard_group_node_form_page_wrappers_validate_wrapped_node($form, $form_state);
+  }
+  elseif (!empty($form_state['values'] && $form['#node']->type == 'page_wrapper')) {
+    springboard_group_node_form_page_wrappers_validate_wrapper($form, $form_state);
+  }
+}
 
-  // An ajax reload has occurred.
+/**
+ * Validate wrappers used on a node.
+ *
+ * Check if a previously configured wrapper is compatible with the new group
+ * when switching groups on a wrapped node.
+ */
+function springboard_group_node_form_page_wrappers_validate_wrapped_node(&$form, &$form_state) {
   if (!empty($form_state['values']['page_wrappers'])) {
     $x = 0;
     foreach ($form_state['values']['page_wrappers'] as $key => $wrapper) {
@@ -100,5 +113,66 @@ function springboard_group_node_form_page_wrappers_validate(&$form, &$form_state
       $x++;
     }
   }
+}
+
+/**
+ * Validate nodes used by a wrapper.
+ *
+ * Check if nodes belonging to incompatible groups use a wrapper
+ * when switching groups on a wrapper.
+ */
+function springboard_group_node_form_page_wrappers_validate_wrapper(&$form, &$form_state) {
+  $node_page_wrappers = db_query('SELECT * FROM {node_page_wrappers}')->fetchAll(PDO::FETCH_ASSOC);
+  $language = $form['og_group_ref_' . $form['#node']->type]['#language'];
+  $option = $form_state['values']['og_group_ref_' . $form['#node']->type][$language];
+  $gids = isset($option[0]['target_id']) ? $option : NULL;
+  foreach ($gids as $key => $gid) {
+    $gids[$key] = $gid['target_id'];
+  }
+
+  if (!empty($node_page_wrappers)) {
+    foreach ($node_page_wrappers as $node_page_wrapper) {
+      $grouped = _springboard_group_page_wrappers_get_grouped($gids, (array) $node_page_wrapper);
+      if (count($grouped) == 0) {
+        $in_use[] = (array) $node_page_wrapper;
+      }
+    }
+  }
+
+  if (!empty($in_use)) {
+    $count = count($in_use);
+    $format = format_plural($count, 'node', 'nodes');
+    $rows = [];
+    foreach ($in_use as $wrapped) {
+      $node = node_load($wrapped['nid']);
+      $rows[] = l(check_plain($node->title), 'node/' . $wrapped['nid']);
+    }
+
+    $message = t('@count @format belonging to an incompatible group use this page wrapper.', array(
+      '@count' => $count,
+      '@format' => $format,
+    ));
+
+    if ($count < 11) {
+      $message .= theme('item_list', array('items' => $rows));
+    }
+    $form_state['group_ajax_messages'][] = $message;
+  }
+}
+
+/**
+ * @param $gids
+ * @param $node_page_wrapper
+ * @return array
+ */
+function _springboard_group_page_wrappers_get_grouped($gids, $node_page_wrapper) {
+  $grouped = [];
+  foreach ($gids as $gid) {
+    $in_group = og_get_membership('node', $gid, 'node', $node_page_wrapper['nid']);
+    if ($in_group) {
+      $grouped[$gid][$node_page_wrapper['nid']] = $in_group;
+    }
+  }
+  return $grouped;
 }
 
