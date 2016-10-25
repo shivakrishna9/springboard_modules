@@ -42,51 +42,63 @@ function springboard_group_email_wrappers_templates_list_alter(&$templates) {
 }
 
 /**
- * Check if group selection removes configured email wrappers.
+ * Check if group selection is incompatible with already
+ * configured wrappers or wrapped nodes.
  *
- * Called from springboard_group_form_node_form_alter(). If an email wrapper
- * is no longer eligible due to group restrictions after changing the groups
- * selector on a node form, add a message which is displayed in a cTools modal
- * triggered by the ajax callback on the groups selector. Also delete the bad
- * wrapper on form submit.
+ * Called from springboard_group_form_node_form_alter().
  */
 function springboard_group_node_form_email_wrappers_validate(&$form, &$form_state) {
 
-  // An ajax reload has occurred.
-  // Make sure this is nt a new node. New nodes can't have email wrappers,
-  // yet.
-  if (!empty($form_state['values']) && !empty($form['#node']->nid)) {
-    $form['#submit'][] = 'springboard_group_delete_email_wrappers';
-    $settings = email_wrappers_load_settings($form['#node']->nid);
-    if ($settings) {
-      $gids = [];
-      $wrappers_to_delete = [];
-      // Get the group IDs from the form values.
-      $language = $form['og_group_ref_' . $form['#node']->type]['#language'];
-      $options = $form_state['values']['og_group_ref_' . $form['#node']->type][$language];
-      foreach ($options as $option) {
-        $gids[] = $option['target_id'];
+  // We're editing a *wrapped* node and need to validate the wrapper's groups.
+  if (!empty($form_state['values']) && !empty($form['#node']->nid) && $form['#node']->type != 'email_wrapper') {
+    _springboard_group_email_wrappers_validate_wrapped($form, $form_state);
+  }
+  // We on a *wrapper* and need to validate nodes that are
+  // already wrapped.
+  elseif (!empty($form_state['values']) && !empty($form['#node']->nid) && $form['#node']->type == 'email_wrapper') {
+    springboard_group_wrapper_validation_helper($form, $form_state, 'email_wrapper_webform');
+  }
+}
+
+
+/**
+ * We're editing a *wrapped* node and need to validate the wrapper's groups.
+ * If an email wrapper is no longer eligible due to group restrictions after
+ * changing the groups selector on a node form, add a message which is
+ * displayed in a cTools modal triggered by the ajax callback on the groups
+ * selector. Also delete the bad wrapper on form submit.
+ */
+function _springboard_group_email_wrappers_validate_wrapped(&$form, &$form_state) {
+  $form['#submit'][] = 'springboard_group_delete_email_wrappers';
+  $settings = email_wrappers_load_settings($form['#node']->nid);
+  if ($settings) {
+    $gids = [];
+    $wrappers_to_delete = [];
+    // Get the group IDs from the form values.
+    $language = $form['og_group_ref_' . $form['#node']->type]['#language'];
+    $options = $form_state['values']['og_group_ref_' . $form['#node']->type][$language];
+    foreach ($options as $option) {
+      $gids[] = $option['target_id'];
+    }
+    // Get the existing settings. Check the group membership for each wrapper
+    // in the setting and compare it to each eligible group.
+    foreach ($settings as $setting) {
+      $grouped = springboard_group_email_wrappers_get_grouped($gids, $setting);
+      // If the wrapper is not in any of the current groups, add it to
+      // the removal list.
+      if (count($grouped) == 0) {
+        $wrappers_to_delete[] = $setting;
       }
-      // Get the existing settings. Check the group membership for each wrapper
-      // in the setting and compare it to each eligible group.
-      foreach ($settings as $setting) {
-        $grouped = springboard_group_email_wrappers_get_grouped($gids, $setting);
-        // If the wrapper is not in any of the current groups, add it to
-        // the removal list.
-        if (count($grouped) == 0) {
-          $wrappers_to_delete[] = $setting;
-        }
-      }
-      $form_state['wrappers_to_delete'] = $wrappers_to_delete;
-      // Set the message.
-      if (!empty($wrappers_to_delete)) {
-        $count = count($wrappers_to_delete);
-        $format = format_plural($count, 'email wrapper', 'email wrappers');
-        $form_state['group_ajax_messages'][] = t('@count @format belonging to ineligible groups will be removed when this form is saved. Please update your email wrappers after saving.', array(
-          '@count' => $count,
-          '@format' => $format,
-        ));
-      }
+    }
+    $form_state['wrappers_to_delete'] = $wrappers_to_delete;
+    // Set the message.
+    if (!empty($wrappers_to_delete)) {
+      $count = count($wrappers_to_delete);
+      $format = format_plural($count, 'email wrapper', 'email wrappers');
+      $form_state['group_ajax_messages'][] = t('@count @format belonging to ineligible groups will be removed when this form is saved. Please update your email wrappers after saving.', array(
+        '@count' => $count,
+        '@format' => $format,
+      ));
     }
   }
 }
