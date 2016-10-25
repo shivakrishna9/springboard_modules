@@ -228,7 +228,9 @@ function salesforce_genmap_send_object_to_queue($module, $op, $node, $oid, $drup
     );
     drupal_alter('salesforce_genmap_map_item', $item, $drupal_object);
     _salesforce_genmap_alter_operation($item);
-    $queue = salesforce_queue_load();
+    $queue_name = '';
+    drupal_alter('salesforce_genmap_destination_queue', $queue_name, $item, $drupal_object);
+    $queue = salesforce_queue_load($queue_name);
     $result = $queue->createItem($item);
     if (!$result) {
       // salesforce_set_message() is a wrapper for drupal_set_message() that

@@ -15,6 +15,10 @@ function hook_salesforce_genmap_delete_map($nid, $module) {
 
 }
 
+function hook_salesforce_genmap_destination_queue_alter($queue_name, $item, $drupal_object) {
+
+}
+
 function hook_salesforce_genmap_info() {
 
 }
@@ -30,7 +34,6 @@ function hook_salesforce_genmap_map_field_info($node) {
 function hook_salesforce_genmap_map_field_info_alter($fields, $node, $module) {
 
 }
-
 
 function hook_salesforce_genmap_map_fields($object, $map, $node, $op) {
 
@@ -49,6 +52,9 @@ function hook_salesforce_genmap_map_object_alter($sobject) {
 }
 
 function hook_salesforce_genmap_permission() {
+
+}
+function hook_salesforce_mapping_destination_queue_alter($queue_name, $item) {
 
 }
 

@@ -555,7 +555,9 @@ function salesforce_mapping_send_entity_to_queue($entity, $entity_type, $op) {
   _salesforce_genmap_alter_operation($item);
 
   // Send to queue.
-  $queue = salesforce_queue_load();
+  $queue_name = '';
+  drupal_alter('salesforce_mapping_destination_queue', $queue_name, $item);
+  $queue = salesforce_queue_load($queue_name);
   $result = $queue->createItem($item);
   if (!$result) {
     // salesforce_set_message() is a wrapper for drupal_set_message() that will
