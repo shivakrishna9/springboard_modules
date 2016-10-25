@@ -67,7 +67,7 @@ function springboard_group_webform_ab_get_groups($webforms, $webform_ab) {
  * displayed in a cTools modal triggered by the ajax callback on the groups
  * selector. Also remove the bad forms from the test on form submit.
  */
-function springboard_group_node_form_webform_ab_validate(&$form, &$form_state, $validate_form = FALSE) {
+function springboard_group_node_form_webform_ab_validate(&$form, &$form_state) {
   $form['#submit'][] = 'springboard_group_webform_ab_ineligible_tests';
   // An ajax reload has occurred.
   // Make sure this is not a new node. New nodes can't child forms,
