@@ -146,9 +146,9 @@ function springboard_group_form_node_form_alter(&$form, &$form_state) {
     ctools_include('modal');
     ctools_modal_add_js();
     $settings['CToolsModal']['modalSize'] = array(
-      'type' => 'fixed',
-      'width' => 550,
-      'height' => 350,
+      'type' => 'scale',
+      'width' => .8,
+      'height' => .8,
     );
     $settings['CToolsModal']['modalOptions'] = array(
       'opacity' => '.55',
@@ -173,6 +173,7 @@ function springboard_group_form_node_form_alter(&$form, &$form_state) {
     $webform_types = variable_get('webform_node_types');
     if (module_exists('email_wrappers') && in_array($form['#node']->type, $webform_types)) {
       springboard_group_node_form_email_wrappers_validate($form, $form_state);
+      springboard_group_node_form_webform_ab_validate($form, $form_state, TRUE);
     }
     if (module_exists('webform_ab') && in_array($form['#node']->type, array('webform_ab'))) {
       springboard_group_node_form_webform_ab_validate($form, $form_state);
