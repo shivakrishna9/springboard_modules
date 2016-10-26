@@ -56,13 +56,13 @@ function springboard_group_og_context_handler($item = NULL) {
       // springboard_group_context_multiple so that the dashboard knows
       // we need a selector.
       elseif (!isset($_SESSION['springboard_group_working_group'])) {
-        $_SESSION['springboard_group_context_multiple'] = array_values($groups['node']);
+        $_SESSION['springboard_group_context_multiple'] = array_values($groups);
         $gid = reset($groups['node']);
         $_SESSION['springboard_group_working_group'] = $gid;
         $ret = array('node' => array($gid));
       }
       elseif ($_SESSION['springboard_group_working_group'] == '_none') {
-        $_SESSION['springboard_group_context_multiple'] = array_values($groups['node']);
+        $_SESSION['springboard_group_context_multiple'] = array_values($groups);
         $ret = array('_none' => array('_none'));
       }
       else {
