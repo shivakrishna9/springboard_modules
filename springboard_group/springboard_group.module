@@ -79,6 +79,42 @@ function springboard_group_ctools_plugin_directory($module, $plugin) {
 }
 
 /**
+ * Implements hook_ctools_plugin_post_alter().
+ */
+function springboard_group_ctools_plugin_post_alter(&$plugin, &$info) {
+
+  if (
+    $plugin['plugin module'] == 'entityreference'
+    && $plugin['plugin type'] == 'selection'
+    && $plugin['class'] == 'EntityReference_SelectionHandler_Generic'
+  ) {
+    $plugin = array(
+      'class' => 'SpringboardGroup_EntityReference_SelectionHandler_Generic',
+      'module' => 'springboard_group',
+      'path' => drupal_get_path('module', 'springboard_group') . '/includes',
+      'file' => 'springboard_group.entityreference.inc',
+    ) + $plugin;
+  }
+}
+
+/**
+ * Implements hook_node_access().
+ *
+ * @todo This probably belongs elsewhere.
+ */
+function springboard_group_node_access($node, $op, $account) {
+  if (isset($node->type) && strpos($node->type, 'sba_') !== FALSE) {
+    if ($node->status == 0
+      && user_access('create ' . $node->type . ' content')
+      && $op == 'view'
+    ) {
+      return NODE_ACCESS_ALLOW;
+    }
+  }
+  return NODE_ACCESS_IGNORE;
+}
+
+/**
  * Implements hook_form_FORM_ID_alter().
  *
  * Change the default text on og_group_ref field deletion confirm page. That is
