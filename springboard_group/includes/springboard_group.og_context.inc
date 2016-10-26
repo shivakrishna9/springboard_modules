@@ -91,13 +91,13 @@ function springboard_group_get_group_context() {
       foreach ($node as $key => $property) {
         if (strpos($key, 'og_group_ref') !== FALSE) {
           $group = $wrapper->$key->value();
-          $gid = $group->nid;
+          $gid = !empty($group->nid) ? $group->nid : FALSE;
         }
       }
-      if (!empty($gid)) {
-        return $gid;
-      }
+      // GID can be false if the node is not grouped.
+      return $gid;
     }
+    // @todo - deal with node/add.
   }
 
 
