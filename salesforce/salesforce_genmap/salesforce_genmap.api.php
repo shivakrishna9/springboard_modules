@@ -54,7 +54,7 @@ function hook_salesforce_genmap_map_object_alter($sobject) {
 function hook_salesforce_genmap_permission() {
 
 }
-function hook_salesforce_mapping_destination_queue_alter($queue_name, $item) {
+function hook_salesforce_mapping_destination_queue_alter($queue_name, $item, $entity) {
 
 }
 

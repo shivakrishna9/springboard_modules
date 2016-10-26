@@ -556,7 +556,7 @@ function salesforce_mapping_send_entity_to_queue($entity, $entity_type, $op) {
 
   // Send to queue.
   $queue_name = '';
-  drupal_alter('salesforce_mapping_destination_queue', $queue_name, $item);
+  drupal_alter('salesforce_mapping_destination_queue', $queue_name, $item, $entity);
   $queue = salesforce_queue_load($queue_name);
   $result = $queue->createItem($item);
   if (!$result) {

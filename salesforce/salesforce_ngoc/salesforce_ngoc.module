@@ -76,3 +76,86 @@ function salesforce_ngoc_salesforce_mapping_confirm_entity_for_queue($entity, $e
     }
   }
 }
+
+/**
+ * Determine if item has "parent" records that have not been processed in SF.
+ *
+ * Salesforce queue items of records that reference "parent" objects which are
+ * created via a batch_upload object (Contact and Opportunity) must go in
+ * the hold queue until such time that the batch_upload object has been
+ * processed and the Contact and/or Opportunity objects have been created. This
+ * allows the child objects to reference the parent objecs using the parent's
+ * sfid.
+ *
+ * We determine that those parents have been processed by looking for them in
+ * the salesforce_sync_map table.
+ *
+ * Objects that have parent Contact and Opportunity objects are:
+ * - sb_Actions_Taken__c
+ * - social_share__c
+ * - Donation_Upsell__c
+ * - P2P_Personal_Campaign__c
+ * - Sustainers_Upgrade__c
+ *
+ * @param array $item
+ *   A salesforce_mapping or salesforce_genmap queue item.
+ * @param object $drupal_object
+ *   An object or drupal entity containing data for finding parent records.
+ *
+ * @return bool
+ */
+function salesforce_ngoc_has_unsyncd_parents($item, $drupal_object){
+  $unsyncd_parents_found = FALSE;
+  $salesforce_ngoc_parent_objects = variable_get('salesforce_ngoc_parent_objects');
+  $object_type = $item['object_type'];
+  // If this is an object with known parents that are created
+  if (isset($salesforce_ngoc_parent_objects[$object_type])) {
+    foreach ($salesforce_ngoc_parent_objects[$object_type] as $parent_object_type => $delta) {
+      // Gotta find the drupal_id of the parent object.
+      if ($parent_object_type == 'Contact') {
+        if (!empty($drupal_object->uid)) {
+          $drupal_id = $drupal_object->uid;
+        }
+      }
+      elseif ($parent_object_type == 'Opportunity') {
+        if (!empty($drupal_object->uid)) {
+          $drupal_id = $drupal_object->uid;
+        }
+      }
+      $result = db_query('SELECT sfid FROM {salesforce_sync_map} WHERE
+        object_type = :parent_object_type AND
+        delta = :delta AND
+        drupal_id = :drupal_id',
+        array(
+          ':parent_object_type' => $parent_object_type,
+          ':delta' => $delta,
+          ':drupal_id' => $drupal_id,
+        )
+      );
+      if ($result->rowCount() == 0) {
+        watchdog('salesforce_ngoc', 'Unsynd parent found:' . $parent_object_type);
+        $unsyncd_parents_found = TRUE;
+      }
+      unset($result);
+    }
+  }
+  return $unsyncd_parents_found;
+}
+
+/**
+ * Implements hook_salesforce_mapping_destination_queue_alter().
+ */
+function salesforce_ngoc_salesforce_mapping_destination_queue_alter(&$queue_name, $item, $entity) {
+  if (salesforce_ngoc_has_unsyncd_parents($item, $entity)) {
+    $queue_name = 'hold';
+  }
+}
+
+/**
+ * Implements hook_salesforce_genmap_destination_queue_alter().
+ */
+function salesforce_ngoc_salesforce_genmap_destination_queue_alter(&$queue_name, $item, $drupal_object) {
+  if (salesforce_ngoc_has_unsyncd_parents($item, $drupal_object)) {
+    $queue_name = 'hold';
+  }
+}

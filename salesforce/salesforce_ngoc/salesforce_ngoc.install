@@ -53,6 +53,29 @@ function salesforce_ngoc_install() {
   $tracked_queues['hold'] = 'hold';
   variable_set('salesforce_queue_tracked_queues', $tracked_queues);
 
+  // Create default parent object data structure. This is used when determining
+  // which queue items have un-sync'd parents and thus should be put in the
+  // 'hold' queue rather than the 'new' queue until the parent has been
+  // processed.
+  $salesforce_ngoc_default_parent_objects = array(
+    'sb_Actions_Taken__c' => array(
+      'Contact' => 'user',
+    ),
+    'Social_Share__c' => array(
+      'Opportunity' => 'donation',
+      'Contact' => 'user',
+    ),
+    'Donation_Upsell__c' => array(
+      'Opportunity' => 'donation',
+    ),
+    'P2P_Personal_Campaign__c' => array(
+      'Contact' => 'user',
+    ),
+    'Sustainers_Upgrade__c' => array(
+      'Contact' => 'user',
+    ),
+  );
+  variable_set('salesforce_ngoc_parent_objects', $salesforce_ngoc_default_parent_objects);
 }
 
 /**
