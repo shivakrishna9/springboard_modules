@@ -57,7 +57,7 @@ function springboard_group_og_context_handler($item = NULL) {
       // we need a selector.
       elseif (!isset($_SESSION['springboard_group_working_group'])) {
         $_SESSION['springboard_group_context_multiple'] = array_values($groups);
-        $gid = reset($groups['node']);
+        $gid = reset($groups);
         $_SESSION['springboard_group_working_group'] = $gid;
         $ret = array('node' => array($gid));
       }
@@ -79,6 +79,10 @@ function springboard_group_og_context_handler($item = NULL) {
 /**
  * Iterative getter of group IDs.
  *
+ * This should only be called from contexts where you are expecting a single
+ * group ID to be returned - i.e., non-node pages and nodes on which only
+ * a single group selection is allowed (advocacy).
+ *
  * @return mixed
  */
 function springboard_group_get_group_context() {
@@ -95,7 +99,7 @@ function springboard_group_get_group_context() {
       foreach ($node as $key => $property) {
         if (strpos($key, 'og_group_ref') !== FALSE) {
           $group = $wrapper->$key->value();
-          $gid = !empty($group->nid) ? $group->nid : FALSE;
+          $gid = !empty($group[0]->nid) ? $group[0]->nid : FALSE;
         }
       }
       // GID can be false if the node is not grouped.
