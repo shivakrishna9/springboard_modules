@@ -101,6 +101,48 @@ function salesforce_ngoc_requirements($phase) {
 }
 
 /**
+ * Implements hook_schema().
+ */
+function salesforce_ngoc_schema() {
+  $schema['salesforce_ngoc_hold_queue_items'] = array(
+    'description' => 'TODO: please describe this table!',
+    'fields' => array(
+      'drupal_id' => array(
+        'description' => 'drupal_id of the held queue item from the salesforce_queue table',
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'object_type' => array(
+        'description' => 'object_id of the held queue item in the salesforce_queue table',
+        'type' => 'varchar',
+        'length' => '255',
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'parent_type' => array(
+        'description' => 'object_type of the parent record',
+        'type' => 'varchar',
+        'length' => '255',
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'parent_drupal_id' => array(
+        'description' => 'drupal_id of the parent record',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+    ),
+    'primary key' => array('drupal_id'),
+    'indexes' => array(
+      'parent_type' => array('parent_type', 'parent_drupal_id'),
+    ),
+  );
+  return $schema;
+}
+
+/**
  * Implements hook_uninstall().
  */
 function salesforce_ngoc_uninstall(){
