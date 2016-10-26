@@ -38,11 +38,16 @@ function springboard_group_og_context_handler($item = NULL) {
   global $user;
   $ret = array();
   if ($user->uid) {
-    $groups = og_get_groups_by_user();
-    if (!empty($groups['node'])) {
+    if (user_access('administer group')) {
+      $groups = og_get_all_group();
+    }
+    else {
+      $groups = og_get_groups_by_user(NULL, 'node');
+    }
+    if (!empty($groups)) {
       // If the user only belongs to one group, return it.
-      if (count($groups['node']) === 1) {
-        $gid = reset($groups['node']);
+      if (count($groups) === 1) {
+        $gid = reset($groups);
         $ret = array('node' => array($gid));
       }
 
@@ -63,12 +68,11 @@ function springboard_group_og_context_handler($item = NULL) {
       else {
         // There's already a working group, return it as the context and
         // tell the dashboard we need a selector.
-        $_SESSION['springboard_group_context_multiple'] = array_values($groups['node']);
+        $_SESSION['springboard_group_context_multiple'] = array_values($groups);
         $ret = array('node' => array($_SESSION['springboard_group_working_group']));
       }
     }
   }
-
   return $ret;
 }
 
