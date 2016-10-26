@@ -289,6 +289,7 @@ function sba_message_save_target_group_validate(&$form, &$form_state) {
         'recipients' => $values['data']['recipients'],
         'name' => $values['save_target_group_name_val'],
         'is_template' => 1,
+        'affiliate_id' => isset($values['affiliate_id']) ? $values['affiliate_id'] : '',
       );
       module_load_include('inc', 'springboard_target', 'includes/springboard_target.api_calls');
       $group_id = springboard_target_api_save_target_group($group, true);

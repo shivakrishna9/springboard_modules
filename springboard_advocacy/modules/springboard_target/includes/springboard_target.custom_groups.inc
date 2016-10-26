@@ -86,6 +86,7 @@ function springboard_target_group_form_validate($form, &$form_state) {
     'recipients' => '',
     'name' => '',
     'is_template' => 1,
+    'affiliate_id' => isset($values['affiliate_id']) ? $values['affiliate_id'] : '',
   );
   $errors = FALSE;
   if(isset($values['group_group_name']) && $values['group_group_name'] != '') {

@@ -6,13 +6,6 @@
  */
 
 /**
- * Implements hook_springboard_target_api_save_target_group_alter().
- */
-function springboard_group_advocacy_springboard_target_api_save_target_group_alter(&$group) {
-  // @todo add the og_gid as "affiliate_id" as to the group array.
-}
-
-/**
  * Implements hook_form_FORM_ID_alter().
  *
  * Add the extra form elements we need to the advocacy CRUD forms.
@@ -20,6 +13,15 @@ function springboard_group_advocacy_springboard_target_api_save_target_group_alt
 function springboard_group_advocacy_form_springboard_target_create_custom_groups_form_alter(&$form, &$form_state) {
   springboard_group_advocacy_create_og_form_elements($form);
 }
+
+function springboard_group_advocacy_form_sba_message_edit_form_alter(&$form, &$form_state) {
+  $session_gid = springboard_group_get_group_context();
+  $form['affiliate_id'] = array(
+    '#type' => 'hidden',
+    '#value' => $session_gid,
+  );
+}
+
 
 /**
  * Implements hook_form_FORM_ID_alter().
