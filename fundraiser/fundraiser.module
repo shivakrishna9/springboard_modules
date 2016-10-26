@@ -458,7 +458,7 @@ function fundraiser_node_update($node) {
   if (fundraiser_is_donation_type($node->type)) {
     _fundraiser_update_fundraiser($node);
 
-    // Update recurring/non-recurring other components' descriptions on node save, if the legacy default value is present:
+    // Update recurring/non-recurring other components' descriptions on node save, if needed:
     _fundraiser_update_other_amount_component_descr($node);
   }
 }
@@ -4170,6 +4170,8 @@ function fundraiser_donation_get_newest_donation_by_uid($uid) {
  * The new value provides a token for the current minimum payment so the description can be overwritten;
  * previously, it was updated after the node edit form was submitted, based on the specified value.
  *
+ * If this description is empty then that emptiness is maintained, as otherwise, it is overwritten with the default value.
+ *
  * @param $node
  *   The node object.
  */
@@ -4192,10 +4194,10 @@ function _fundraiser_update_other_amount_component_descr($node) {
     }
     $old_default = 'Minimum payment [currency-symbol]' . $current_min_amount .  '.';
 
-    // Replace the old default value, if present, with the new default value:
+    // Replace the old default value, if present, with the new default value; or, if the new value is empty, maintain it:
     $current_descr = $component['extra']['description'];
-    $new_default = 'Minimum payment [currency-symbol][minimum-donation-amount].';
-    if ($current_descr == $old_default) {
+    if ($current_descr == $old_default || $current_descr == '') {
+      $new_default = ($current_descr == $old_default ? 'Minimum payment [currency-symbol][minimum-donation-amount].' : '');
       $current_extra = db_query("SELECT extra FROM {webform_component} WHERE nid = :nid AND cid = :cid", array(':nid' => $node->nid, ':cid' => $cid))
         ->fetchField();
       if ($current_extra != FALSE) {
