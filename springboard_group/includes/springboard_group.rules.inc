@@ -41,11 +41,38 @@ function springboard_group_rules_config_access($op, $rules_config = NULL, $accou
       }
     }
   }
-
-  //@todo something like this: https://app.assembla.com/spaces/springboard/tickets/1275/details?
-
 }
 
+/**
+ * Implements hook_page_alter().
+ *
+ * Filter the payment methods overview table by group context.
+ */
+function springboard_group_page_alter(&$page) {
+  if (!empty($page['content']['system_main']['#page_callback']) &&
+    $page['content']['system_main']['#page_callback'] == 'commerce_payment_ui_admin_page'
+  ) {
+    $group_context = springboard_group_get_group_context();
+    foreach (array('enabled', 'disabled') as $key) {
+      foreach ($page['content']['system_main'][$key]['rules']['#rows'] as $row_key => &$row) {
+        $machine_name = (str_replace('Machine name: ', '', $row[0]['data']['description']['settings']['machine_name']['#markup']));
+        $rule = rules_config_load($machine_name);
+        if (!empty($rule)) {
+          $group = og_get_entity_groups('rules_config', $rule);
+          if (!empty($group)) {
+            $gid = reset($group['node']);
+          }
+          else {
+            $gid = '_none';
+          }
+          if ($group_context != $gid) {
+            unset($page['content']['system_main'][$key]['rules']['#rows'][$row_key]);
+          }
+        }
+      }
+    }
+  }
+}
 
 /**
  * Implements hook_form_FORMID_alter().
