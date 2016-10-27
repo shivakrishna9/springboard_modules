@@ -1091,7 +1091,6 @@ function fundraiser_fundraiser_field_info() {
     '#type' => 'textfield',
     '#required' => 0,
     '#extra' => array(
-      //'description' => t('Minimum payment [currency-symbol][min-donation-amount].'),
       'description' => '',
       'width' => 10,
       'field_prefix' => '$',
@@ -1293,6 +1292,17 @@ function _fundraiser_other_amount_field_create($fundraiser, $field) {
   // If the show other options is disallowed, unset it.
   if (!$fundraiser->show_other_amount) {
     return FALSE; // FALSE as opposed to empty, means we delete this field if it exists.
+  }
+
+  // Set default descriptions:
+  if (isset($field['#create_callback'])) {
+    // Is it recurring or not:
+    if ($field['#create_callback'] == '_fundraiser_other_amount_field_create') {
+      $field['#extra']['description'] = 'Minimum payment [currency-symbol][min-donation-amount].';
+    }
+    elseif ($field['#create_callback'] == '_fundraiser_sustainers_other_amount_field_create') {
+      $field['#extra']['description'] = 'Minimum payment [currency-symbol][min-recurring-donation-amount].';
+    }
   }
 
   // Return the field to be created.
