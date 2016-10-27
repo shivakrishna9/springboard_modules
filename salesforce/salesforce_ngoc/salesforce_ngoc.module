@@ -102,10 +102,10 @@ function salesforce_ngoc_salesforce_mapping_confirm_entity_for_queue($entity, $e
  * @param object $drupal_object
  *   An object or drupal entity containing data for finding parent records.
  *
- * @return bool
+ * @return array
  */
 function salesforce_ngoc_has_unsyncd_parents($item, $drupal_object){
-  $unsyncd_parents_found = FALSE;
+  $unsyncd_parents_found = array();
   $salesforce_ngoc_parent_objects = variable_get('salesforce_ngoc_parent_objects');
   $object_type = $item['object_type'];
   // If this is an object with known parents that are created
@@ -122,19 +122,20 @@ function salesforce_ngoc_has_unsyncd_parents($item, $drupal_object){
           $drupal_id = $drupal_object->uid;
         }
       }
-      $result = db_query('SELECT sfid FROM {salesforce_sync_map} WHERE
-        object_type = :parent_object_type AND
-        delta = :delta AND
-        drupal_id = :drupal_id',
-        array(
-          ':parent_object_type' => $parent_object_type,
-          ':delta' => $delta,
-          ':drupal_id' => $drupal_id,
-        )
-      );
-      if ($result->rowCount() == 0) {
-        watchdog('salesforce_ngoc', 'Unsynd parent found:' . $parent_object_type);
-        $unsyncd_parents_found = TRUE;
+      if(!empty($drupal_id) && !empty($delta) && !empty($parent_object_type)) {
+        $result = db_query('SELECT sfid FROM {salesforce_sync_map} WHERE
+          object_type = :parent_object_type AND
+          delta = :delta AND
+          drupal_id = :drupal_id',
+          array(
+            ':parent_object_type' => $parent_object_type,
+            ':delta' => $delta,
+            ':drupal_id' => $drupal_id,
+          )
+        );
+        if ($result->rowCount() == 0) {
+          $unsyncd_parents_found[] = array($parent_object_type => $drupal_id);
+        }
       }
       unset($result);
     }
@@ -146,8 +147,9 @@ function salesforce_ngoc_has_unsyncd_parents($item, $drupal_object){
  * Implements hook_salesforce_mapping_destination_queue_alter().
  */
 function salesforce_ngoc_salesforce_mapping_destination_queue_alter(&$queue_name, $item, $entity) {
-  if (salesforce_ngoc_has_unsyncd_parents($item, $entity)) {
+  if ($parents = salesforce_ngoc_has_unsyncd_parents($item, $entity)) {
     $queue_name = 'hold';
+    salesforce_ngoc_write_hold_queue_items($item, $parents);
   }
 }
 
@@ -155,7 +157,29 @@ function salesforce_ngoc_salesforce_mapping_destination_queue_alter(&$queue_name
  * Implements hook_salesforce_genmap_destination_queue_alter().
  */
 function salesforce_ngoc_salesforce_genmap_destination_queue_alter(&$queue_name, $item, $drupal_object) {
-  if (salesforce_ngoc_has_unsyncd_parents($item, $drupal_object)) {
+  if ($parents = salesforce_ngoc_has_unsyncd_parents($item, $drupal_object)) {
     $queue_name = 'hold';
+    salesforce_ngoc_write_hold_queue_items($item, $parents);
+  }
+}
+
+/**
+ * Records which hold queue items have parent items pending processing in SF.
+ *
+ * @param array $item
+ *   A salesforce_mapping or salesforce_genmap queue item.
+ * @param array $parents
+ */
+function salesforce_ngoc_write_hold_queue_items($item, $parents) {
+  foreach ($parents as $parent) {
+    reset($parent);
+    $key = key($parent);
+    $record = array(
+      'drupal_id' => $item['drupal_id'],
+      'object_type' => $item['object_type'],
+      'parent_type' => $key,
+      'parent_drupal_id' => $parent[$key],
+    );
+    drupal_write_record('salesforce_ngoc_hold_queue_items', $record);
   }
 }
