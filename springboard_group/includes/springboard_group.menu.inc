@@ -14,7 +14,7 @@ function springboard_group_menu() {
     'title' => 'Springboard Groups Settings',
     'description' => 'Configuration settings for Springboard Group features',
     'page callback' => 'springboard_group_settings_page',
-    'access arguments' => array('administer springboard groups'),
+    'access arguments' => array('configure springboard groups'),
     'file' => 'includes/springboard_group.admin.inc',
     'type' => MENU_NORMAL_ITEM,
   );
@@ -38,6 +38,30 @@ function springboard_group_menu() {
 
   return $items;
 }
+
+/**
+ * Implements hook_menu_alter().
+ *
+ * Decouple the OG 'administer group' permission from the OG configuration
+ * pages, so the perm only applies in a group node context. That is, hide the
+ * OG administration pages from users with the permission 'Administer Group',
+ * but still allow them full access to configuring all group nodes.
+ *
+ * To grant access to the native OG admin pages, use the permission
+ * 'access og default admin ui' instead.
+ */
+function springboard_group_menu_alter(&$items) {
+  foreach ($items as $path => $item) {
+    if (strpos($path, 'admin/config/group') !== FALSE && isset($item['access arguments'])) {
+      foreach ($item['access arguments'] as $key => $argument) {
+        if ($argument == 'administer group' && (isset($item['title']) && $item['title'] != "Delete")) {
+          $items[$path]['access arguments'][$key] = 'access og default admin ui';
+        }
+      }
+    }
+  }
+}
+
 
 /**
  * Implements hook_springboard_admin_admin_menu_items_alter().

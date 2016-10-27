@@ -18,8 +18,8 @@
  */
 function springboard_group_bulk_add_page($group_type, $group_id) {
 
-  if (!user_access('View user profiles')) {
-    drupal_set_message(t('You need to have access to view user profiles in
+  if (!user_access('administer group')) {
+    drupal_set_message(t('You need to have access to administer group in
       order to add users to groups. Please configure the needed permission'),
       'error');
     return '';

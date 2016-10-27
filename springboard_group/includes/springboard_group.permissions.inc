@@ -9,16 +9,27 @@
  */
 function springboard_group_permission() {
   return array(
-    'administer springboard groups' => array(
-      'title' => t('Administer Springboard Groups'),
-      'description' => t('Perform administration tasks for Springboard Groups.'),
+    // Grants access to our custom groups admin ui.
+    'configure springboard groups' => array(
+      'title' => t('Configure Springboard Groups'),
+      'description' => t('Allows a user to designate entire content types as groupable.'),
+    ),
+    // Grants access to the native OG admin UI, which we have re-permissioned
+    // access to using hook_menu_alter, to hide it becasue it's confusing.
+    // You need this permission to access it rather than
+    // 'administer group'.
+    'access og default admin ui' => array(
+      'title' => t('Access Organic Groups Default Administration Screens'),
+      'description' => t('Access organic groups default configuration pages which are normally simplified and overridden by the Springboard Groups administration pages.'),
     ),
 
+    // Access the Springboard Menu items.
     'access springboard groups dashboard' => array(
       'title' => t('Access Springboard Groups Dashboard'),
-      'description' => t('Access Springboard Groups Dashboard'),
+      'description' => t('Access Springboard Groups Dashboard. Group Admins and Group members who are not admins should have, at least, this permission.'),
     ),
 
+    // @todo remove this.
     'assign content to any springboard group' => array(
       'title' => t('Assign content to any springboard group'),
       'description' => t('Assign content to any springboard group, even if not a group member.'),
