@@ -4,8 +4,6 @@
  * Provides Braintree payment form functions.
  */
 
-define('BRAINTREE_WEB_JS', 'https://js.braintreegateway.com/js/braintree-2.21.0.min.js');
-define('BRAINTREE_PAYPAL_LOGGED_OUT_STATE', '<a id="braintree-paypal-button" href="#"><img src="https://checkout.paypal.com/pwpp/2.21.0/images/pay-with-paypal.png" alt="Pay with PayPal"></a>');
 /**
  * Implements hook_library().
  */
@@ -16,9 +14,10 @@ function braintree_payment_library() {
     'title' => 'Braintree Web js',
     'version' => '2.21.0',
     'js' => array(
-      BRAINTREE_WEB_JS => array(
-        'type' => 'external',
-      ),
+      $path . '/lib/braintree-web/client.js' => array(),
+      $path . '/lib/braintree-web/hosted-fields.js' => array(),
+      $path . '/lib/braintree-web/paypal.js' => array(),
+      $path . '/lib/braintree-web/data-collector.js' => array(),
       $path . '/braintree_payment.js' => array(),
     ),
     'css' => array(
@@ -30,7 +29,7 @@ function braintree_payment_library() {
 }
 
 /**
- * Briantree payment method form element.
+ * Braintree payment method form element.
  *
  * @param $form
  * @param $form_state
@@ -200,27 +199,33 @@ function _braintree_payment_form_element(&$element, &$form, &$form_state, $payme
     $js_settings['hostedFields'] = array(
       'number' => array(
         'selector' => '#card-number',
+        'placeholder' => '1111 1111 1111 1111',
       ),
       'cvv' => array(
         'selector' => '#cvv',
+        'placeholder' => '123',
       ),
       'expirationMonth' => array(
         'selector' => '#expiration-month',
+        'placeholder' => 'MM',
+        'select' => TRUE,
       ),
       'expirationYear' => array(
         'selector' => '#expiration-year',
+        'placeholder' => 'YYYY',
+        'select' => TRUE,
       ),
     );
   }
 
-  // Add fraud protection - ZVT-25
-  // Set Kount environment same as braintree environment
-  // Get payment rule settings
+  // Add fraud protection - ZVT-25.
   $kount_env = NULL;
+  // Get payment rule settings.
   $braintree_settings = variable_get('braintree_settings', array());
   if (isset($braintree_settings['environment'])) {
     $kount_env = $braintree_settings['environment'];
   }
+  // Set the Kount environment to the same as the Braintree environment.
   if ($kount_env) {
     $js_settings['dataCollector']['kount']['environment'] = $kount_env;
   }
@@ -249,32 +254,21 @@ function _braintree_payment_form_validate($form, &$form_state) {
   }
 }
 
-function _braintree_payment_form_submit($form, &$form_state) {
-  // braintree_initialize();
-}
-
 /**
  * Return custom styles for Braintree Hosted Fields.
  *
  * @return array
+ *   An array of styles to use.
  *
  * @see https://developers.braintreepayments.com/javascript+php/guides/hosted-fields/styling
  */
 function braintree_hostedfields_styles() {
   $styles = array(
-    // Style all elements
     'input' => array(
       'font-size' => '12px',
       'color' => '#222',
       'font-family' => 'sans-serif',
     ),
-
-    // Styling a specific field
-    //".number" => array(
-    //  "font-family" =>  "sans-serif"
-    //),
-
-    // Styling element state
     ':focus' => array(
       'color' => '#222',
     ),
@@ -282,7 +276,7 @@ function braintree_hostedfields_styles() {
       'color' => 'green',
     ),
     '.invalid' => array(
-      'color' => 'red'
+      'color' => 'red',
     ),
   );
 

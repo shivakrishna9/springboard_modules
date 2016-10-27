@@ -1,496 +1,411 @@
 (function($) {
+  var error = function() {
+    return !!console && console.error.apply(this, arguments);
+  };
 
-  Drupal.behaviors.braintreePaymentMethodChange = {
-    attach: function(context, settings) {
-      // var $paymentMethod = $('input[name="commerce_payment[payment_method]"], input[name="payment_method"]', context);
-      var $paymentMethod = $('input[name="submitted[payment_information][payment_method]"]', context);
-
-      if ($paymentMethod.length > 0) {
-        var formId = settings.braintree.formId;
-        var $form = $('#' + formId);
-
-        $paymentMethod.bind('change', function(event) {
-          // Clean up process.
-          Drupal.myBraintree && Drupal.myBraintree.cleanUp();
-          // Destroy Braintree integration.
-          Drupal.myBraintreeIntegration && Drupal.myBraintreeIntegration.teardown($.proxy(Drupal.myBraintree.teardown, Drupal.myBraintree));
-          // Boot new integration.
-          Drupal.myBraintree.bootstrap();
-        });
-      }
-    }
-  }
-
-  Drupal.behaviors.braintreePaymentForm = {
-    attach: function(context, settings) {
-      // Only continue when first page load or context has id payment-details.
-      if (context != document && $(context).attr('id') != 'payment-details') {
-        return;
-      }
-
-      var $body = $('body');
-
-      var bootstrapBraintree = function() {
-        if (typeof settings.braintree != 'undefined' && typeof braintree != 'undefined') {
-          var $form = $('#' + settings.braintree.formId);
-          Drupal.myBraintree = new Drupal.braintree($form, settings.braintree);
-
-          // Give other modules a chance to override functions.
-          setTimeout(function () {
-            Drupal.myBraintree.bootstrap();
-            // Hide spinning icon.
-            $('.checkout-processing', this.$form).addClass('element-invisible');
-          }, 20);
-
-          $body.trigger('drupal.braintree.bootstrap');
-        }
-      }
-
-      var destroyBraintree = function() {
-        Drupal.myBraintreeIntegration && Drupal.myBraintreeIntegration.teardown($.proxy(Drupal.myBraintree.teardown, Drupal.myBraintree));
-      }
-
-      var $usingExistingPaymentMethod = $('input[name$="[braintree][using_existing_payment_method]"]');
-      if ($usingExistingPaymentMethod.length > 0) {
-
-        var _class = 'using-existing-payment-method';
-
-        var text1 = Drupal.t('Add new payment method');
-        var text2 = Drupal.t('Use saved payment method');
-        var $toggleLinkWrapper = $('<div class="braintree-payment-toggle-link"><a href="#" class="arrow-right arrow-before"></a></div>');
-        var $toggleLink = $toggleLinkWrapper.find('a');
-
-        if ($usingExistingPaymentMethod.val() == 1) {
-          $body.addClass(_class);
-          $toggleLink.text(text1);
-        }
-        else {
-          $toggleLink.text(text2);
-          bootstrapBraintree();
-        }
-
-        $toggleLink.click(function() {
-          if ($body.hasClass(_class)) {
-            $body.removeClass(_class);
-            $toggleLink.text(text2);
-
-            $usingExistingPaymentMethod.val(0);
-
-            bootstrapBraintree();
-          }
-          else {
-            $body.addClass(_class);
-            $toggleLink.text(text1);
-
-            $usingExistingPaymentMethod.val(1);
-
-            destroyBraintree();
-          }
-
-          return false;
-        });
-
-        var $existingPaymentMethod = $('div[class$="-payment-details-braintree-payment-method-token"]');
-        $existingPaymentMethod.after($toggleLinkWrapper);
-
-      }
-      else {
-        bootstrapBraintree();
-      }
-
-      // Braintree hijacks all submit buttons for this form. Tear down
-      // Braintree integration to continue.
-      $('.checkout-cancel, .checkout-back, #edit-prev', context).click(destroyBraintree);
-
-    },
-
-    detach: function (context, settings) {
-      //if ($('#payment-details', context).length > 0) {
-      //  Drupal.myBraintreeIntegration && Drupal.myBraintreeIntegration.teardown($.proxy(Drupal.myBraintree.teardown, Drupal.myBraintree));
-      //}
-    }
-  }
-
-  Drupal.braintree = function($form, settings) {
+  var BraintreePayment = function(settings) {
+    console.log(settings);
     this.settings = settings;
-    this.$form = $form;
-    this.formId = this.$form.attr('id');
-    this.$submit = this.$form.find('#edit-continue, #edit-submit, #edit-next');  // don't add all submits. Some go back, we only want to disable forwards.
+    this.$form = $('#' + settings.formId);
+    this.$submit = this.$form.find('input[type=submit]');
+    this.$nonce = this.$form.find('input[name=payment_method_nonce]');
+    this.clientInstance = null;
+    this.hostedFieldsInstance = null;
+    this.paypalInstance = null;
+    this.$amount = this.$form.find('input[name="submitted[donation][amount]"]');
+    this.amount = 0;
+    this.deviceData = null;
+    this.$deviceDataInput = $('<input name="device_data" type="hidden"/>');
 
-    return this;
-  }
+    var parent = this;
 
-  Drupal.braintree.prototype.bootstrap = function() {
-    // If more than one payment method is enabled on this form, make sure we
-    // bootstrap braintree using the correct integration.
-    var $paymentMethod = $('input[name="submitted[payment_information][payment_method]"]').filter(':checked').val();
-    if (typeof $paymentMethod !== 'undefined') {
-      // If the selected payment method is a NOT a Braintree payment method,
-      // bail out without a bootstrap.
-      if ($.inArray($paymentMethod, this.settings.enabledMethods) == -1) {
-        this.settings.integration = null;
+    this.updateAmount = function() {
+      parent.amount = parent.$amount.filter(':checked').val();
+
+      if (undefined == parent.amount) {
         return;
       }
-      if ($paymentMethod == 'paypal') {
-        this.settings.integration = 'paypal';
+
+      if (parent.amount == 'other') {
+        $('input[name="submitted[donation][other_amount]"]').on('change', function() {
+          parent.amount = $(this).val();
+        });
       }
-      else if ($paymentMethod == 'credit') {
-        this.settings.integration = 'custom';
-      }
-    }
-    var options = this.getOptions(this.settings.integration);
-
-    braintree.setup(this.settings.clientToken, this.settings.integration, options);
-
-    if (this.settings.integration == 'paypal') {
-      this.bootstrapPaypal();
-    }
-  }
-
-  Drupal.braintree.prototype.bootstrapPaypal = function() {
-    // Bind initAuthFlow button to paypal-container
-    this.$submit.on('click', this.handlePayPalClick);
-  }
-
-  Drupal.braintree.prototype.handlePayPalClick = function(event) {
-    // If the nonce has not been set by a prevous click of the submit button,
-    // fire off initAuythFlow().
-    if ($('input[name=payment_method_nonce]').val() == '') {
-      event.preventDefault();
-      Drupal.myBraintreeIntegration.paypal.initAuthFlow();
-    }
-  }
-
-  Drupal.braintree.prototype.resetSubmitBtn = function() {
-    $('.checkout-processing', this.$form).addClass('element-invisible');
-
-    // Remove disbabled attribute added by commerce_checkout.js
-    this.$submit.next('.checkout-continue').removeAttr('disabled');
-
-    // Reset submit button.
-    if (Drupal.behaviors.hideSubmitBlockit) {
-      $.event.trigger('clientsideValidationFormHasErrors', this.$form);
-    }
-  }
-
-  Drupal.braintree.prototype.jsValidateErrorHandler = function(response) {
-    var message = this.errorMsg(response);
-    this.showError(message);
-  }
-
-  Drupal.braintree.prototype.errorMsg = function(response) {
-    var message;
-
-    switch (response.message) {
-      case 'User did not enter a payment method':
-        message = Drupal.t('Please enter your credit card details.');
-        break;
-
-      case 'Some payment method input fields are invalid.':
-        var fieldName = '';
-        var fields = [];
-        var invalidFields = this.$form.find('.braintree-hosted-fields-invalid');
-
-        function getFieldName(id) {
-          return id.replace('-', ' ');
-        }
-
-        if (invalidFields.length > 0) {
-          invalidFields.each(function(index) {
-            var id = $(this).attr('id');
-
-            fields.push(Drupal.t(getFieldName(id)));
-          });
-
-          if (fields.length > 1) {
-            var last = fields.pop()
-            fieldName = fields.join(', ');
-            fieldName += ' and ' + Drupal.t(last);
-            message = Drupal.t('The @field you entered are invalid', {'@field': fieldName});
-          }
-          else {
-            fieldName = fields.pop();
-            message = Drupal.t('The @field you entered is invalid', {'@field': fieldName});
-          }
-
-        }
-        else {
-          message = Drupal.t('The payment details you entered are invalid');
-        }
-
-        message += Drupal.t(', please check your details and try again.');
-
-        break;
-
-      default:
-        message = response.message;
-    }
-
-    return message;
-  }
-
-  Drupal.braintree.prototype.showError = function(message) {
-    this.resetSubmitBtn();
-
-    if (Drupal.myClientsideValidation) {
-      if (typeof this.validator == 'undefined') {
-        this.validator = Drupal.myClientsideValidation.validators[this.formId];
-      }
-
-      var errors = {
-        'braintree[errors]' : message
-      };
-
-      this.validator.showErrors(errors);
-    }
-  }
-
-  /**
-   * Dismiss error messages generated by clientside_validation module.
-   *
-   * @see Drupal.clientsideValidation.prototype.bindRules()
-   */
-  Drupal.braintree.prototype.dismissErrors = function() {
-    // We can only hide this box.
-    $(".clientside-error").hide();
-  }
-
-  /**
-   * Clean up process triggered after changing payment method.
-   */
-  Drupal.braintree.prototype.cleanUp = function() {
-    this.dismissErrors();
-    // Remove hidden input op generated by hide_submit module.
-    // If op value is submitted, $form_state['trigger_element'] will be
-    // replaced.
-    this.$submit.next('input[type=hidden][name=op]').remove();
-  }
-
-  Drupal.braintree.prototype.getOptions = function(integration) {
-    var self = this;
-
-    var options = {
-      onReady: $.proxy(self.onReady, self),
-      onError: $.proxy(self.onError, self)
-    }
-
-    var getCustomOptions = function() {
-      options.id = self.formId;
-      options.hostedFields = {};
-
-      // Set up hosted fields selector
-      options.hostedFields = $.extend(options.hostedFields, self.settings.hostedFields);
-      options.hostedFields.styles = self.settings.fieldsStyles;
-      options.hostedFields.onFieldEvent = self.onFieldEvent;
-
-      return options;
-    }
-
-    var getPayPalOptions = function() {
-      options.headless = true;
-      options.container = self.settings.paypalContainer;
-      options.onPaymentMethodReceived = $.proxy(self.onPaymentMethodReceived, self);
-
-      if (typeof self.settings.displayName != 'undefined') {
-        options.displayName = self.settings.displayName;
-      }
-
-      if (typeof self.settings.singleUse != 'undefined' && self.settings.singleUse) {
-        options.singleUse = self.settings.singleUse;
-        options.amount = self.settings.amount;
-        options.currency = self.settings.currency;
-      }
-
-      return options;
-    }
-
-    if (integration == 'paypal') {
-      options = getPayPalOptions();
-    }
-    else {
-      options = getCustomOptions();
-    }
-
-    // Add fraud protection - ZVT-25
-    // For CC transactions, and Paypal non-recurring vault transactions
-    // see https://developers.braintreepayments.com/guides/paypal/vault/javascript/v2#collecting-device-data
-    // Just CC for now (we don't use any Paypal non-recurring vault transxns?)
-    if (integration == 'custom') {
-      options.dataCollector = self.settings.dataCollector;
-    }
-    else {
-      // Not sure if have to delete both of these or just from options?
-      delete options.dataCollector;
-      delete self.settings.dataCollector;
-    }
-
-    return options;
-  }
-
-  // Global event callback
-
-  Drupal.braintree.prototype.onReady = function (braintreeInstance) {
-    Drupal.myBraintreeIntegration = braintreeInstance;
-
-    // Add fraud protection - ZVT-25
-    if (this.settings.integration == 'custom') {
-      var form = document.getElementById(this.formId);
-      var deviceDataInput = form['device_data'];
-      if (deviceDataInput == null) {
-        deviceDataInput = document.createElement('input');
-        deviceDataInput.name = 'device_data';
-        deviceDataInput.type = 'hidden';
-        form.appendChild(deviceDataInput);
-      }
-
-      deviceDataInput.value = braintreeInstance.deviceData;
-    }
-  }
-
-  Drupal.braintree.prototype.onError = function (response) {
-    if (response.type == 'VALIDATION') {
-      this.jsValidateErrorHandler(response);
-    }
-    else {
-      !console && console.log('Other error', arguments);
-    }
-  }
-
-  // Hosted Fields event callback
-
-  /**
-   * You can subscribe to events using the onFieldEvent callback. This
-   * allows you to hook into focus, blur, and fieldStateChange.
-   *
-   * @param event
-   *
-   * @see https://developers.braintreepayments.com/javascript+php/guides/hosted-fields/events
-   */
-  Drupal.braintree.prototype.onFieldEvent = function (event) {
-    if (event.type === "focus") {
-     // Handle focus
-    } else if (event.type === "blur") {
-     // Handle blur
-    } else if (event.type === "fieldStateChange") {
-     // Handle a change in validation.
-     $(document).triggerHandler('braintree.fieldEvent', event);
-    }
-  }
-
-  // PayPal event callback
-
-  /**
-   * A successful completion of the PayPal flow by your customer will result in
-   * certain information being returned to you, depending on the client
-   * options you have set.
-   *
-   * @param response
-   *
-   * @see https://developers.braintreepayments.com/javascript+php/guides/paypal/client-side
-   */
-  Drupal.braintree.prototype.onPaymentMethodReceived = function (obj) {
-    var self = this;
-
-    $('#braintree-paypal-loggedin').show();
-    $('#bt-pp-email').text(obj.details.email);
-
-    $('input[name=payment_method_nonce]').val(obj.nonce);
-
-    // Bind cancel button to restore PayPal form.
-    $('#bt-pp-cancel').click(function( event ) {
-      event.preventDefault();
-      self.$submit.attr('disabled', 'disabled');
-      // Clean up process.
-      Drupal.myBraintree && Drupal.myBraintree.cleanUp();
-      // Destroy Braintree integration.
-      Drupal.myBraintreeIntegration && Drupal.myBraintreeIntegration.teardown($.proxy(Drupal.myBraintree.teardown, Drupal.myBraintree));
-      // Boot new integration.
-      Drupal.myBraintree.bootstrap();
-    });
-
-    var autofilled = self.autofill(obj);
-    // Auto-submit the form if no fields were auto-filled from the values in the
-    // onPaymentMethodReceived obj.
-    if (!autofilled) {
-      $('#'+self.formId).submit();
-    }
-  }
-
-  /**
-   * Braintree integration teardown callback.
-   */
-  Drupal.braintree.prototype.teardown = function () {
-    delete Drupal.myBraintreeIntegration;
-
-    // Reset submit button.
-    this.$submit.removeAttr('disabled');
-
-    // Remove device_data if added
-    var form = document.getElementById(this.formId);
-    var deviceDataInput = form['device_data'];
-    if (typeof deviceDataInput !== 'undefined') {
-      form.removeChild(deviceDataInput);
-    }
-
-    if (this.settings.integration == 'paypal') {
-      this.teardownPaypal();
-    }
-
-  }
-
-  /**
-   * Reset paypal-specific elements and data
-   */
-  Drupal.braintree.prototype.teardownPaypal = function() {
-    $('input[name=payment_method_nonce]').val('');
-    $('#braintree-paypal-loggedin').hide();
-    $('#bt-pp-email').text('');
-    this.$submit.off('click', this.handlePayPalClick);
-  }
-
-  /**
-   * Fill user and billing fields from onPaymentMethodReceived response.
-   */
-  Drupal.braintree.prototype.autofill = function(obj) {
-    autofill = this.settings.autofill;
-    var fieldsHaveBeenAutoFilled = false;
-    var field_mapping = {
-      'submitted[donor_information][first_name]': obj.details.firstName,
-      'submitted[donor_information][last_name]': obj.details.lastName,
-      'submitted[donor_information][mail]': obj.details.email,
-      'submitted[billing_information][address]': obj.details.billingAddress.streetAddress,
-      'submitted[billing_information][address_line_2]': obj.details.billingAddress.extendedAddress,
-      'submitted[billing_information][city]': obj.details.billingAddress.locality,
-      'submitted[billing_information][country]': obj.details.billingAddress.countryCodeAlpha2,
-      'submitted[billing_information][state]': obj.details.billingAddress.region,
-      'submitted[billing_information][zip]': obj.details.billingAddress.postalCode,
     };
 
-    function allFieldsAreEmpty(field_mapping) {
-      var fieldsAreEmpty = true;
-      $.each( field_mapping, function( key, value ) {
-        var $field = jQuery('[name="'+key+'"]');
-        if( $field.val() != '') {
-          // Special exemption for Country, because it always has a default val.
-          if (key != 'submitted[billing_information][country]') {
-            fieldsAreEmpty = false;
-          }
+    /**
+     * Initializes the Braintree client.
+     */
+    this.bootstrap = function() {
+      braintree.client.create({
+        authorization: this.settings.clientToken
+      }, function(error_message, clientInstance) {
+        if (error_message) {
+          error(error_message);
+          return;
         }
+
+        if (parent.creditEnabled()) {
+          parent.createHostedFields(clientInstance);
+        }
+        if (parent.paypalEnabled()) {
+          parent.createPaypalFields(clientInstance);
+        }
+
+        parent.resetDeviceData();
       });
-      return fieldsAreEmpty;
+
+      parent.updateAmount();
+      parent.$amount.on('change', parent.updateAmount);
+
+      return this;
+    };
+
+    this.resetDeviceData = function() {
+      if (null !== parent.deviceData) {
+        parent.deviceData.teardown();
+      }
+
+      parent.deviceData = null;
+      parent.$deviceDataInput.val('');
+      // Add fraud protection.
+      if (parent.settings.currentPaymentMethod == 'paypal') {
+        braintree.dataCollector.create({
+          client: parent.clientInstance,
+          paypal: true
+        }, function (error_message, dataCollectorInstance) {
+          if (error_message) {
+            error(error_message);
+            return;
+          }
+          // At this point, you should access the
+          // dataCollectorInstance.deviceData value and provide it to your
+          // server, e.g. by injecting it into your form as a hidden input.
+          parent.deviceData = dataCollectorInstance.deviceData;
+          parent.$deviceDataInput.val(parent.deviceData);
+        });
+      }
     }
 
-    if (autofill !== 'never') {
-      var fieldsAreEmpty = allFieldsAreEmpty(field_mapping);
-      $.each( field_mapping, function( key, value ) {
-        var $field = jQuery('[name="'+key+'"]');
+    this.setCurrentPaymentMethod = function(paymentMethod) {
+      if (parent.settings.currentPaymentMethod == paymentMethod) {
+        return;
+      }
+
+      parent.settings.currentPaymentMethod = paymentMethod;
+      if (paymentMethod == 'credit') {
+        parent.disablePaypalFieldsSubmit().resetHostedFieldsSubmit();
+      }
+      else {
+        parent.disableHostedFieldsSubmit().resetPaypalFieldsSubmit();
+      }
+
+      parent.resetDeviceData();
+      return this;
+    };
+
+    /**
+     * Helper function to determine if credit payment method is enabled.
+     */
+    this.creditEnabled = function() {
+      return this.settings.enabledMethods.indexOf('credit') >= 0;
+    };
+
+    this.setClientInstance = function(clientInstance) {
+      this.clientInstance = clientInstance;
+      return this;
+    };
+
+    this.enableHostedFieldsEvents = function() {
+      parent.hostedFieldsInstance.on('validityChange', function(event) {
+        $(document).trigger('braintree.fieldEvent', [event]);
+      });
+      parent.hostedFieldsInstance.on('inputSubmitRequest', function(event) {
+        parent.$submit.click();
+      });
+      return this;
+    };
+
+    this.disableHostedFieldsEvents = function() {
+      parent.hostedFieldsInstance.off('validityChange');
+      parent.hostedFieldsInstance.off('inputSubmitRequest');
+      return this;
+    };
+
+    this.enableHostedFieldsSubmit = function() {
+      parent.$form.on('submit.braintree_hosted', parent.submitHostedFields);
+      return this;
+    };
+
+    this.disableHostedFieldsSubmit = function() {
+      parent.$form.off('submit.braintree_hosted');
+      return this;
+    };
+
+    this.resetHostedFieldsSubmit = function() {
+      parent.disableHostedFieldsSubmit().enableHostedFieldsSubmit();
+      return this;
+    };
+
+    /**
+     * Creates hosted fields.
+     * @param clientInstance
+     *   The client instance.
+     */
+    this.createHostedFields = function(clientInstance) {
+      this.setClientInstance(clientInstance);
+      braintree.hostedFields.create({
+        client: this.clientInstance,
+        styles: this.settings.fieldsStyles,
+        fields: this.settings.hostedFields
+      }, function(error_message, hostedFieldsInstance) {
+        if (error_message) {
+          error(error_message);
+          return;
+        }
+        parent.hostedFieldsInstance = hostedFieldsInstance;
+        parent.resetHostedFieldsSubmit();
+        parent.enableHostedFieldsEvents();
+      });
+
+      return this;
+    };
+
+    /**
+     * Tears down hosted fields.
+     * @param event
+     *   The event parameter from the listener that called this function.
+     */
+    this.submitHostedFields = function(event) {
+      if (parent.settings.currentPaymentMethod != 'credit') {
+        return;
+      }
+
+      if (!parent.$nonce.val().length) {
+        event.preventDefault();
+        var triggerBraintreeFieldEvent = function() {
+          var state = parent.hostedFieldsInstance.getState();
+          for (field in state.fields) {
+            state.emittedBy = field;
+            $(document).trigger('braintree.fieldEvent', [state]);
+          }
+        };
+        parent.hostedFieldsInstance.tokenize(function(error_message, payload) {
+          if (error_message) {
+            switch (error_message.code) {
+              case 'HOSTED_FIELDS_FIELDS_EMPTY':
+                triggerBraintreeFieldEvent();
+                error('All fields are empty! Please fill out the form.');
+                break;
+              case 'HOSTED_FIELDS_FIELDS_INVALID':
+                triggerBraintreeFieldEvent();
+                error('Some fields are invalid:', error_message.details.invalidFieldKeys);
+                break;
+              case 'HOSTED_FIELDS_FAILED_TOKENIZATION':
+                error('Tokenization failed server side. Is the card valid?');
+                break;
+              case 'HOSTED_FIELDS_TOKENIZATION_NETWORK_ERROR':
+                error('Network error occurred when tokenizing.');
+                break;
+              default:
+                error('Something bad happened!', error_message);
+            }
+            parent.$submit.show().next('.donation-processing-wrapper').remove();
+            return;
+          }
+          parent.$nonce.val(payload.nonce);
+          parent.$form.off('submit.braintree_hosted').submit();
+        });
+      }
+
+      return this;
+    };
+
+    /**
+     * Helper function to determine if bank payment method is enabled.
+     */
+    this.paypalEnabled = function() {
+      return this.settings.enabledMethods.indexOf('paypal') >= 0;
+    };
+
+    this.setPaypalInstance = function(paypalInstance) {
+      this.paypalInstance = paypalInstance;
+      return this;
+    };
+
+    this.enablePaypalEvents = function() {
+      parent.paypalInstance.on('validityChange', function(event) {
+        console.log(event);
+      });
+      return this;
+    };
+
+    this.disablePaypalEvents = function() {
+      parent.paypalInstance.off('validityChange');
+      return this;
+    }
+
+    this.enablePaypalFieldsSubmit = function() {
+      parent.$submit.on('click.braintree_paypal', parent.submitPaypalFields);
+      return this;
+    };
+
+    this.disablePaypalFieldsSubmit = function() {
+      parent.$submit.off('click.braintree_paypal');
+      return this;
+    };
+
+    this.resetPaypalFieldsSubmit = function() {
+      parent.disablePaypalFieldsSubmit().enablePaypalFieldsSubmit();
+      return this;
+    };
+
+    this.createPaypalFields = function(clientInstance) {
+      this.setClientInstance(clientInstance);
+      braintree.paypal.create({
+        client: this.clientInstance
+      }, function (error_message, paypalInstance) {
+        if (error_message) {
+          error(error_message);
+          return;
+        }
+
+        parent.setPaypalInstance(paypalInstance);
+        parent.resetPaypalFieldsSubmit();
+      });
+      return this;
+    };
+
+    this.submitPaypalFields = function(event) {
+      if (parent.settings.currentPaymentMethod != 'paypal') {
+        return;
+      }
+
+      if (parent.amount == undefined || parent.amount == '') {
+        // Select the amount first.
+        alert('Please select a donation amount.');
+        event.preventDefault();
+        return;
+      }
+
+      if (!parent.$nonce.val().length) {
+        event.preventDefault();
+        parent.paypalInstance.tokenize({
+          flow: 'vault',
+          amount: parent.amount,
+          currency: 'USD',
+          locale: 'en_us',
+          enableShippingAddress: false
+        }, function (error_message, payload) {
+          if (error_message) {
+            error(error_message);
+            return;
+          }
+
+          // Tokenization succeeded!
+          parent.$nonce.val(payload.nonce);
+          $('#braintree-paypal-loggedin').show();
+          $('#bt-pp-email').text(payload.details.email);
+
+          // Bind cancel button to restore PayPal form.
+          $('#bt-pp-cancel').on('click', function(event) {
+            event.preventDefault();
+            parent.reset();
+          });
+
+          var autofilled = parent.autofill(payload);
+          // Auto-submit the form if no fields were auto-filled from the values
+          // in the payload object.
+          if (!autofilled) {
+            parent.$form.submit();
+          }
+
+          parent.$form.off('submit.braintree_paypal');
+        });
+      }
+    };
+
+    this.reset = function() {
+      parent.$nonce.val('');
+
+      // Reset submit button.
+      this.$submit.removeAttr('disabled');
+
+      // Remove device_data if added.
+      var deviceDataInput = this.$form[0]['device_data'];
+      if (undefined !== deviceDataInput) {
+        this.$form.removeChild(deviceDataInput);
+      }
+
+      if (this.settings.currentPaymentMethod == 'paypal') {
+        $('#braintree-paypal-loggedin').hide();
+        $('#bt-pp-email').text('');
+      }
+
+      return this;
+    };
+
+    this.autofill = function(obj) {
+      var autofill = this.settings.autofill;
+      if (autofill == 'never') {
+        return false;
+      }
+
+      var fieldsHaveBeenAutoFilled = false;
+      var field_mapping = {
+        'submitted[donor_information][first_name]': obj.details.firstName,
+        'submitted[donor_information][last_name]': obj.details.lastName,
+        'submitted[donor_information][mail]': obj.details.email,
+        'submitted[billing_information][address]': obj.details.billingAddress.line1,
+        'submitted[billing_information][address_line_2]': obj.details.billingAddress.line2,
+        'submitted[billing_information][city]': obj.details.billingAddress.city,
+        'submitted[billing_information][country]': obj.details.billingAddress.countryCode,
+        'submitted[billing_information][state]': obj.details.billingAddress.state,
+        'submitted[billing_information][zip]': obj.details.billingAddress.postalCode,
+      };
+
+      var fieldsAreEmpty = (function(field_mapping) {
+        return $(field_mapping).filter(function(index, value) {
+          return index != 'submitted[billing_information][country]' && $('[name="' + index + '"]').val() != '';
+        }).get().length > 0;
+      })(field_mapping);
+
+      $.each(field_mapping, function(key, value) {
+        var $field = $('[name="' + key + '"]');
         if (autofill == 'always' || (autofill == 'if_blank' && fieldsAreEmpty)) {
           $field.val(value);
           fieldsHaveBeenAutoFilled = true;
         }
       });
-    }
-    return fieldsHaveBeenAutoFilled;
-  }
 
+      return fieldsHaveBeenAutoFilled;
+    }
+
+    return this.bootstrap();
+  };
+
+  Drupal.behaviors.braintree = {
+    attach: function(context, settings) {
+      settings = settings.braintree;
+
+      var $paymentMethod = $('input[name="submitted[payment_information][payment_method]"]');
+      if ($paymentMethod.length) {
+        settings.currentPaymentMethod = $paymentMethod.filter(':checked').val();
+        // Get the available payment methods.
+        settings.availableMethods = $paymentMethod.map(function() {
+          return this.value;
+        }).get();
+
+        // Filter out the unavailable payment methods.
+        settings.enabledMethods = $(settings.enabledMethods).filter(function(index, value) {
+          return $.inArray(value, settings.availableMethods) >= 0;
+        }).get();
+
+        Drupal.braintreeInstance = new BraintreePayment(settings);
+        $paymentMethod.on('change', function() {
+          Drupal.braintreeInstance.setCurrentPaymentMethod($(this).val());
+        });
+      }
+    }
+  };
 })(jQuery);
