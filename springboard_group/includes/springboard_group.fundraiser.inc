@@ -31,7 +31,9 @@ function springboard_group_fundraiser_node_form_gateway_update(&$form, &$form_st
   $form['payment_methods']['gateways']['#suffix'] = '</div>';
 
   // An ajax reload has occurred.
-  if (!empty($form_state['values'])) {
+  if (!empty($form_state['triggering_element']['#ajax']['callback'])
+    && $form_state['triggering_element']['#ajax']['callback'] == 'springboard_group_ajax_callback'
+  ) {
 
     // Get the group ID from the form values.
     $language = $form['og_group_ref_' . $form['#node']->type]['#language'];
