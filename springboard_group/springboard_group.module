@@ -101,10 +101,11 @@ function springboard_group_ctools_plugin_post_alter(&$plugin, &$info) {
 
 /**
  * Implements hook_node_access().
- *
- * @todo This probably belongs elsewhere.
  */
 function springboard_group_node_access($node, $op, $account) {
+
+  // Allow access to unpublished access so that messages can be
+  // assigned to them via entity reference prepopulate.
   if (isset($node->type) && strpos($node->type, 'sba_') !== FALSE) {
     if ($node->status == 0
       && user_access('create ' . $node->type . ' content')
@@ -113,6 +114,13 @@ function springboard_group_node_access($node, $op, $account) {
       return NODE_ACCESS_ALLOW;
     }
   }
+
+  if (isset($node->type) && $node->type == 'springboard_group') {
+    if (empty(og_get_groups_by_user()) && !user_access('administer group') && !user_access('create springboard_group content')) {
+      return NODE_ACCESS_DENY;
+    }
+  }
+
   return NODE_ACCESS_IGNORE;
 }
 
@@ -203,23 +211,28 @@ function springboard_group_form_node_form_alter(&$form, &$form_state) {
       'callback' => 'springboard_group_ajax_callback',
     );
 
-    //@todo check that these node types are actually groupable first.
     // Farm out our donation form alterations to a helper.
     if (fundraiser_is_donation_type($form['#node']->type)) {
       springboard_group_fundraiser_node_form_gateway_update($form, $form_state);
     }
-    if (module_exists('page_wrappers') && (_page_wrappers_enabled_type($form['#node']) || $form['#node']->type == 'page_wrapper')) {
-      springboard_group_node_form_page_wrappers_validate($form, $form_state);
-    }
-    $webform_types = variable_get('webform_node_types');
-    if (module_exists('email_wrappers') && in_array($form['#node']->type, $webform_types)) {
-      springboard_group_node_form_email_wrappers_validate($form, $form_state);
-    }
-    if (module_exists('webform_ab') && ($form['#node']->type == 'webform_ab' || in_array($form['#node']->type, $webform_types))) {
-      springboard_group_node_form_webform_ab_validate($form, $form_state);
-    }
-    if (module_exists('springboard_group_advocacy') && springboard_advocacy_is_action_type($form['#node']->type)) {
-      springboard_group_advocacy_action_targets_validate($form, $form_state);
+
+    // Post AJAX validations when group membership is switched.
+    if (!empty($form_state['triggering_element']['#ajax']['callback'])
+      && $form_state['triggering_element']['#ajax']['callback'] == 'springboard_group_ajax_callback'
+    ) {
+      if (module_exists('page_wrappers') && (_page_wrappers_enabled_type($form['#node']) || $form['#node']->type == 'page_wrapper')) {
+        springboard_group_node_form_page_wrappers_validate($form, $form_state);
+      }
+      $webform_types = variable_get('webform_node_types');
+      if (module_exists('email_wrappers') && in_array($form['#node']->type, $webform_types)) {
+        springboard_group_node_form_email_wrappers_validate($form, $form_state);
+      }
+      if (module_exists('webform_ab') && ($form['#node']->type == 'webform_ab' || in_array($form['#node']->type, $webform_types))) {
+        springboard_group_node_form_webform_ab_validate($form, $form_state);
+      }
+      if (module_exists('springboard_group_advocacy') && springboard_advocacy_is_action_type($form['#node']->type)) {
+        springboard_group_advocacy_action_targets_validate($form, $form_state);
+      }
     }
   }
 }
@@ -402,4 +415,36 @@ function springboard_group_group_selector($form, &$form_state) {
   $commands[] = ctools_ajax_command_reload();
   print ajax_render($commands);
   drupal_exit();
+}
+
+/**
+ * Implements hook_TAG_query_alter().
+ *
+ * Don't allow groups in search results for unprivileged users.
+ */
+function springboard_group_query_node_access_alter(QueryAlterableInterface $query) {
+
+  if (!empty(og_get_groups_by_user()) || user_access('administer group') || empty($query->alterTags['search_node'])) {
+    return;
+  }
+
+  $search = FALSE;
+  $node = FALSE;
+
+  foreach ($query->getTables() as $alias => $table) {
+    if ($table['table'] == 'search_index') {
+      $search = $alias;
+    }
+    elseif ($table['table'] == 'node') {
+      $node = $alias;
+    }
+  }
+
+  if ($node && $search) {
+    $excluded_content_types = array('springboard_group');
+
+    if (!empty($excluded_content_types)) {
+      $query->condition($node . '.type', array($excluded_content_types), 'NOT IN');
+    }
+  }
 }
