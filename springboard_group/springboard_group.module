@@ -80,6 +80,8 @@ function springboard_group_ctools_plugin_directory($module, $plugin) {
 
 /**
  * Implements hook_ctools_plugin_post_alter().
+ *
+ * Allow entity reference fields to reference unpublished items,
  */
 function springboard_group_ctools_plugin_post_alter(&$plugin, &$info) {
 
@@ -128,6 +130,9 @@ function springboard_group_form_og_ui_field_delete_form_alter(&$form, &$form_sta
   }
 }
 
+/**
+ * Delete multiple choice varible when deleting its owner field.
+ */
 function springboard_group_form_og_ui_field_delete_submit($form, $form_state) {
   if ($_GET['destination'] == 'admin/springboard/groups/settings') {
     variable_del('og_' . $form_state['values']['bundle'] . '_multiple');
@@ -212,6 +217,9 @@ function springboard_group_form_node_form_alter(&$form, &$form_state) {
     }
     if (module_exists('webform_ab') && ($form['#node']->type == 'webform_ab' || in_array($form['#node']->type, $webform_types))) {
       springboard_group_node_form_webform_ab_validate($form, $form_state);
+    }
+    if (module_exists('springboard_group_advocacy') && springboard_advocacy_is_action_type($form['#node']->type)) {
+      springboard_group_advocacy_action_targets_validate($form, $form_state);
     }
   }
 }

@@ -33,9 +33,7 @@ function springboard_group_advocacy_form_node_form_alter(&$form, &$form_state) {
       }
     }
   }
-
 }
-
 
 /**
  * Builds the subscription form based on allowed subscription levels.
@@ -274,4 +272,47 @@ function springboard_group_advocacy_get_all_states() {
     'WI' => 'Wisconsin',
     'WY' => 'Wyoming',
   );
+}
+
+function springboard_group_advocacy_action_targets_validate(&$form, &$form_state) {
+  //$form['#submit'][] = 'springboard_group_delete_email_wrappers';
+
+  // Get messages from action node
+  // iterate through messages and check targets.
+  // identify ineleiigble targets and put them in an array keyed by message id
+  // on form submit, remove the ineligible targets from local drupal db
+  // then update the targets on the api server.
+//  if (!empty($form['#node']->messages)) {
+//    $messages = $form['#node']->messages;
+//    $gids = [];
+//    $targets_to_delete = [];
+//    // Get the group IDs from the form values.
+//    $language = $form['og_group_ref_' . $form['#node']->type]['#language'];
+//    $options = $form_state['values']['og_group_ref_' . $form['#node']->type][$language];
+//    foreach ($options as $option) {
+//      $gids[] = $option['target_id'];
+//    }
+//    // Get the existing settings. Check the group membership for each wrapper
+//    // in the setting and compare it to each eligible group.
+//    foreach ($messages as $uuid => $message) {
+//      $targets = json_decode($message->data['recipients']);
+//      $grouped = springboard_group_email_wrappers_get_grouped($gids, $message);
+//      // If the wrapper is not in any of the current groups, add it to
+//      // the removal list.
+//      if (count($grouped) == 0) {
+//        $targets_to_delete[] = $message;
+//      }
+//    }
+//    $form_state['targets_to_delete'] = $targets_to_delete;
+    // Set the message.
+ //   if (!empty($targets_to_delete)) {
+//      $count = count($targets_to_delete);
+//      $format = format_plural($count, 'target', 'targets');
+//      $form_state['group_ajax_messages'][] = t('@count @format belonging to ineligible groups will be removed when this form is saved. Please update your targets after saving.', array(
+//        '@count' => $count,
+//        '@format' => $format,
+//      ));
+      $form_state['group_ajax_messages'][] = t('This is the message we show when you change the group on an action. We are still deciding what to do if that happens.');
+ //   }
+ // }
 }
