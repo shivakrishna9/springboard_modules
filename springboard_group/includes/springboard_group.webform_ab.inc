@@ -93,6 +93,12 @@ function springboard_group_node_form_webform_ab_validate(&$form, &$form_state) {
   }
 }
 
+/**
+ * Validate ab tests when they are edited.
+ *
+ * When changing the group ownership of an ab test, make sure any child forms
+ * are still in eligible groups.
+ */
 function _springboard_group_webform_ab_valdiate_test(&$form, &$form_state, $gids) {
   $included_to_delete = [];
   $included = $form['#node']->included_webforms;
@@ -118,6 +124,12 @@ function _springboard_group_webform_ab_valdiate_test(&$form, &$form_state, $gids
   }
 }
 
+/**
+ * Validate child forms when they are edited.
+ *
+ * Validate a form that is included in a test if the group affiliation on the
+ * form is changed, to see if it still eligble to be included in the test.
+ */
 function _springboard_group_webform_ab_validate_child_form(&$form, &$form_state, $gids) {
   $ineligible_tests = [];
   $included_in_tests = db_query('SELECT * FROM {webform_ab_forms} f WHERE f.webform_nid = :webform_nid ',

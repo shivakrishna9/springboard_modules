@@ -24,7 +24,7 @@ function springboard_group_fundraiser_gateway_info_alter(&$gateways) {
  *
  * Called from springboard_group_node_form_alter().
  */
-function springboard_group_fundraiser_node_form_gateway_update(&$form, &$form_state) {
+function springboard_group_fundraiser_node_form_gateway_validate(&$form, &$form_state) {
 
   // Add the ajax wrapper to the form prior to Ajax reload.
   $form['payment_methods']['gateways']['#prefix'] = '<div id = "springboard-groups-payment-ajax-wrapper">';
@@ -38,7 +38,7 @@ function springboard_group_fundraiser_node_form_gateway_update(&$form, &$form_st
     // Get the group ID from the form values.
     $language = $form['og_group_ref_' . $form['#node']->type]['#language'];
     $option = $form_state['values']['og_group_ref_' . $form['#node']->type][$language];
-    //@todo update for multiple groups, if needed
+    // @todo update for multiple groups, if needed.
     $gid = isset($option[0]['target_id']) ? $option[0]['target_id'] : 'none';
 
     // Get the gateways and filter them by group ownership.
@@ -114,6 +114,7 @@ function springboard_group_fundraiser_filter_gateways($gateways, $gid = NULL) {
       // Remove gateways not belonging to the group, but allow admins to
       // access gateways belonging to no groups if "none"
       // is selected.
+      // @todo should this be '_none'?
       elseif ($gid != 'none' && $gid != $rule_gid) {
         unset($gateways[$key]);
       }
