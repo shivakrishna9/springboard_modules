@@ -4212,7 +4212,7 @@ function _fundraiser_update_other_amount_component_descr($node) {
     }
 
     // If the current description is empty and the min-value hasn't changed, maintain the empty description:
-    if ($current_descr == '' && $current_min_amount == $previous_min_amount) {
+    if ($current_descr == '' && (int) $current_min_amount == (int) $previous_min_amount) {
       _fundraiser_update_webform_component_descr($node->nid, $cid, '');
       continue;
     }
