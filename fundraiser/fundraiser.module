@@ -4202,17 +4202,17 @@ function _fundraiser_update_other_amount_component_descr($node) {
     $currency_symbol = isset($currency['symbol']) ? $currency['symbol'] : '$';
     if ($form_key == 'other_amount') {
       $previous_min_amount = isset($node->original->minimum_donation_amount) ? $node->original->minimum_donation_amount : '';
-      $current_min_amount = _fundraiser_get_min_donation_amount($node->nid);
+      $current_min_amount = isset($node->minimum_donation_amount) ? $node->minimum_donation_amount : ''; 
       $min_amount_token = '[min-donation-amount]';
     }
     elseif ($form_key == 'recurring_other_amount') {
       $previous_min_amount = isset($node->original->recurring_minimum_donation_amount) ? $node->original->recurring_minimum_donation_amount : '';
-      $current_min_amount = _fundraiser_get_min_recurring_donation_amount($node->nid);
+      $current_min_amount = isset($node->recurring_minimum_donation_amount) ? $node->recurring_minimum_donation_amount : '';
       $min_amount_token = '[min-recurring-donation-amount]';
     }
 
     // If the current description is empty and the min-value hasn't changed, maintain the empty description:
-    if ($current_descr == '' && (int) $current_min_amount == (int) $previous_min_amount) {
+    if ($current_descr == '' && ($current_min_amount - $previous_min_amount == 0)) {
       _fundraiser_update_webform_component_descr($node->nid, $cid, '');
       continue;
     }
