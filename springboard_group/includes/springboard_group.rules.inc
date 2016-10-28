@@ -44,11 +44,11 @@ function springboard_group_rules_config_access($op, $rules_config = NULL, $accou
 }
 
 /**
- * Implements hook_page_alter().
- *
  * Filter the payment methods overview table by group context.
+ *
+ * Called from hook_page_alter().
  */
-function springboard_group_page_alter(&$page) {
+function springboard_group_rules_page_filter_payment_rules(&$page) {
   if (!empty($page['content']['system_main']['#page_callback']) &&
     $page['content']['system_main']['#page_callback'] == 'commerce_payment_ui_admin_page'
   ) {

@@ -11,12 +11,32 @@ function springboard_group_menu() {
   $items = array();
 
   $items['admin/springboard/groups/settings'] = array(
-    'title' => 'Springboard Groups Settings',
-    'description' => 'Configuration settings for Springboard Group features',
+    'title' => 'Groups Content',
+    'description' => 'Configuration settings for Springboard Group content',
     'page callback' => 'springboard_group_settings_page',
     'access arguments' => array('configure springboard groups'),
     'file' => 'includes/springboard_group.admin.inc',
     'type' => MENU_NORMAL_ITEM,
+  );
+
+  $items['admin/springboard/groups/settings/groups'] = array(
+    'title' => 'Groups Content',
+    'description' => 'Configuration settings for Springboard Group features',
+    'weight' => -10,
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+  );
+
+
+  $items["admin/springboard/groups/settings/permissions"] = array(
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('og_ui_admin_global_permissions', 'node', '0', 'springboard_group'),
+    'title' => 'Groups Permissions',
+    'access arguments' => array('configure springboard groups'),
+    'description' => 'Configure Organic groups group type permissions.',
+    'weight' => -9,
+    'file' => 'og_ui.admin.inc',
+    'file path' => drupal_get_path('module', 'og_ui'),
+    'type' => MENU_LOCAL_TASK,
   );
 
   // OG module doesn't define a default tab. We help it here.

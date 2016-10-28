@@ -17,8 +17,8 @@ function springboard_group_settings_page() {
     'page_description' => array(
       '#id' => 'springboard-advocacy-settings-page',
       '#type' => 'markup',
-      '#markup' => '<p>' . t('Configure settings for Springboard Groups.') . '</p>',
-      '#prefix' => '<div class="springboard-groups-settings-page"><H2>' . t('Springboard Groups Settings') . '</H2>',
+      '#markup' => '<p>' . t('Choose which content types and entity types are eligible to be grouped.') . '</p>',
+      '#prefix' => '<div class="springboard-groups-settings-page">',
       '#suffix' => '</div>',
     ),
     //'springboard_group_system_settings_form' => drupal_get_form('springboard_group_system_settings_form'),

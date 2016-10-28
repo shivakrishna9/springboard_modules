@@ -16,6 +16,7 @@ require_once __DIR__ . '/includes/springboard_group.webform_ab.inc';
 require_once __DIR__ . '/includes/springboard_group.page_wrappers.inc';
 require_once __DIR__ . '/includes/springboard_group.email_wrappers.inc';
 require_once __DIR__ . '/includes/springboard_group.fundraiser.inc';
+require_once __DIR__ . '/includes/springboard_group.entityreference.inc';
 
 /**
  * Implements hook_node_info().
@@ -84,7 +85,6 @@ function springboard_group_ctools_plugin_directory($module, $plugin) {
  * Allow entity reference fields to reference unpublished items,
  */
 function springboard_group_ctools_plugin_post_alter(&$plugin, &$info) {
-
   if (
     $plugin['plugin module'] == 'entityreference'
     && $plugin['plugin type'] == 'selection'
@@ -104,20 +104,20 @@ function springboard_group_ctools_plugin_post_alter(&$plugin, &$info) {
  */
 function springboard_group_node_access($node, $op, $account) {
 
-  // Allow access to unpublished actions so that messages can be
-  // assigned to them via entity reference prepopulate.
-  if (isset($node->type) && strpos($node->type, 'sba_') !== FALSE) {
-    if ($node->status == 0
-      && user_access('create ' . $node->type . ' content')
-      && $op == 'view'
-    ) {
-      return NODE_ACCESS_ALLOW;
+  if ($op == 'view') {
+    // Allow access to unpublished actions so that messages can be
+    // assigned to them via entity reference prepopulate.
+    if (strpos($node->type, 'sba_') !== FALSE) {
+      if ($node->status == 0 && user_access('create ' . $node->type . ' content')) {
+        return NODE_ACCESS_ALLOW;
+      }
     }
-  }
 
-  if (isset($node->type) && $node->type == 'springboard_group') {
-    if (empty(og_get_groups_by_user()) && !user_access('administer group') && !user_access('create springboard_group content')) {
-      return NODE_ACCESS_DENY;
+    // Limit view access to group nodes.
+    if ($node->type == 'springboard_group') {
+      if (empty(og_get_groups_by_user()) && !user_access('administer group') && !user_access('create springboard_group content')) {
+        return NODE_ACCESS_DENY;
+      }
     }
   }
 
@@ -475,4 +475,24 @@ function springboard_group_query_node_access_alter(QueryAlterableInterface $quer
       $query->condition($node . '.type', array($excluded_content_types), 'NOT IN');
     }
   }
+}
+
+/**
+ * Implements hook_og_ui_get_group_admin().
+ *
+ * Remove the permissions and roles links for the group node's group tab.
+ */
+function springboard_group_og_ui_get_group_admin_alter(&$data, $context) {
+  if ($context['entity_type'] == 'node') {
+    $node = node_load($context['etid']);
+    if ($node->type == 'springboard_group') {
+      unset($data['permissions']);
+      unset($data['roles']);
+    }
+  }
+}
+
+function springboard_group_page_alter(&$page) {
+  springboard_group_rules_page_filter_payment_rules($page);
+  springboard_group_permissions_overview_page($page);
 }
