@@ -128,9 +128,36 @@ function springboard_group_permissions_overview_page(&$page) {
   if (!empty($page['content']['system_main']['#form_id']) &&
     $page['content']['system_main']['#form_id'] == 'og_ui_admin_global_permissions'
   ) {
+
+    $strict = variable_get('og_node_access_strict', TRUE);
+    if ($strict) {
+      $strict_message = t('Strict access control is enabled. Groups permissions will override Springboard Permissions.');
+    }
+    else {
+      $strict_message = t('Strict access control is not enabled. Groups permissions will not override Springboard Permissions.');
+    }
+
+    $roles = user_roles();
+    $role_permissions = user_role_permissions($roles);
+    $bypass = [];
+    foreach ($role_permissions as $rid => $permissions) {
+      foreach ($permissions as $key => $permission) {
+        if ($key == 'bypass node access' && $permission == 1) {
+          $bypass[] = $roles[$rid];
+        }
+      }
+    }
+
+    $bypass_message = '';
+    if (!empty($bypass)) {
+      $bypass = implode(', ', $bypass);
+      $bypass_message = t('The following Springboard roles have "bypass content access control" permission and will not be affected by these settings: @bypass', array('@bypass' => $bypass));
+    }
+
+    $message = t("Administrator members inherit all permissions granted to members.");
     $help = array(
       'help_message' => array(
-        '#markup' => t("Administrator members inherit all permissions granted to members."),
+        '#markup' => $message . '<br />' . $strict_message . '<br />' . $bypass_message,
         '#weight' => -10,
         '#prefix' => '<br /><p>',
       ),

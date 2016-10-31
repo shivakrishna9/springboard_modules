@@ -311,3 +311,15 @@ function springboard_group_add_group_reference_field($bundle, $type) {
   og_create_field('og_group_ref_' . substr($bundle, 0, 19), $type, $bundle, $og_field);
   //@todo update og_role_permission.
 }
+
+function springboard_group_advanced_settings() {
+  $form = array();
+  $form['og_node_access_strict'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Strict node access permissions'),
+    '#description' => t('Allow groups permissions to override Springboard Permissions. Example: If strict access is not enabled, and a user or role does not have permission to CRUD the article content type in Drupal, granting CRUD rights to the article type inside groups will have no effect for that user or role. If strict access is enabled, granting CRUD rights inside the group would allow the user to CRUD the article type even without the Drupal permission to do so. Another example: with strict access enabled, a content editor with the global Drupal permission “Edit any page content” who is not a member of a group would be denied access to modifying page content if that page is already in that group.'),
+    '#default_value' => variable_get('og_node_access_strict', TRUE),
+  );
+
+  return system_settings_form($form);
+}

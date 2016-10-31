@@ -11,7 +11,7 @@ function springboard_group_menu() {
   $items = array();
 
   $items['admin/springboard/groups/settings'] = array(
-    'title' => 'Groups Content',
+    'title' => 'Springboard Groups',
     'description' => 'Configuration settings for Springboard Group content',
     'page callback' => 'springboard_group_settings_page',
     'access arguments' => array('configure springboard groups'),
@@ -26,16 +26,26 @@ function springboard_group_menu() {
     'type' => MENU_DEFAULT_LOCAL_TASK,
   );
 
-
   $items["admin/springboard/groups/settings/permissions"] = array(
     'page callback' => 'drupal_get_form',
     'page arguments' => array('og_ui_admin_global_permissions', 'node', '0', 'springboard_group'),
     'title' => 'Groups Permissions',
     'access arguments' => array('configure springboard groups'),
-    'description' => 'Configure Organic groups group type permissions.',
+    'description' => 'Configure Sprnigboard Groups permissions.',
     'weight' => -9,
     'file' => 'og_ui.admin.inc',
     'file path' => drupal_get_path('module', 'og_ui'),
+    'type' => MENU_LOCAL_TASK,
+  );
+
+  $items["admin/springboard/groups/settings/settings"] = array(
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('springboard_group_advanced_settings'),
+    'title' => 'Settings',
+    'access arguments' => array('configure springboard groups'),
+    'description' => 'Configure Springboard Groups advanced settings.',
+    'weight' => -8,
+    'file' => 'includes/springboard_group.admin.inc',
     'type' => MENU_LOCAL_TASK,
   );
 
