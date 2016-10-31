@@ -771,6 +771,16 @@ function springboard_dw_entity_insert($entity, $type) {
 }
 
 /**
+ * Implements hook_views_api().
+ */
+function springboard_dw_views_api() {
+  return array(
+    'api' => 3.0,
+    'path' => drupal_get_path('module', 'springboard_dw') . '/includes/views',
+  );
+}
+
+/**
  * Map a sync map item to an array formatted for an API call.
  *
  * @param object $submission

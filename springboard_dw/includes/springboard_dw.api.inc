@@ -82,19 +82,29 @@ function springboard_dw_api_prep_call($item) {
 function springboard_dw_api_call($endpoint_route, $params, $method = 'POST') {
   // Define the endpoint.
   $endpoint = springboard_dw_api_endpoint($endpoint_route);
-
+dpm($endpoint);
+dpm($params);
+dpm($method);
   // Instantiate an API client instance.
   $api_client = springboard_dw_api_client();
 
   // Clean up the item and add authentication to the form params.
   $params = springboard_dw_api_prep_call($params);
-
+dpm($params);
   try {
     // Attempt Guzzle client request.
+
+    if ($method == 'GET') {
+      $request_params = array('query' => $params);
+    }
+    else {
+      $request_params = array('form_params' => $params);  
+    }
+
     $api_response = $api_client->request(
-      $method, $endpoint, array(
-        'form_params' => $params,
-      )
+      $method,
+      $endpoint,
+      $request_params
     );
 
     // Setup an array of the API call details prepped for logging.
