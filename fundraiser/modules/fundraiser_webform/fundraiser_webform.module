@@ -57,6 +57,21 @@ function fundraiser_webform_admin_content() {
       ->execute()
       ->fetchAllAssoc('nid');
   }
+
+  // metrics/donation/count:
+  $method = 'GET';
+  //$endpoint = 'https://dw.gospringboard.io/metrics/donation/count';
+  $endpoint = 'metrics/donation/count?authenticationToken=crsQhccUXCwLRhiKJpvG9ZPVqaL2GodV';
+  $params = array('authenticationToken' => 'crsQhccUXCwLRhiKJpvG9ZPVqaL2GodV', 'formId' => '10');
+
+  $api_client = springboard_dw_api_client();
+  $response = springboard_dw_api_call($endpoint, $params, $method);
+
+  $test = (string) $response->getBody();
+  drupal_set_message('<pre>' . print_r($test, 1) . '</pre>');
+
+
+
   return theme('webform_admin_content', array('nodes' => $nodes));
 }
 
