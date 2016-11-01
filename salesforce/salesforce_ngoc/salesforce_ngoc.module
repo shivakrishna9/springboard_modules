@@ -13,6 +13,22 @@ define('SALESFORCE_NGOC_DEFAULT_TRANSACTION_TYPE', 'Payment');
 define('SALESFORCE_NGOC_DEFAULT_FREQUENCY', 'One Payment');
 
 /**
+ * Implements hook_entity_info().
+ */
+function salesforce_ngoc_entity_info() {
+  return array(
+    'salesforce_ngoc_sync_map' => array(
+      'label' => t('NGOC Batch Upload Sync Map'),
+      'base table' => 'salesforce_ngoc_sync_map',
+      'entity keys' => array(
+        'id' => 'id',
+      ),
+    ),
+  );
+}
+
+
+/**
  * Implements hook_menu().
  */
 function salesforce_ngoc_menu() {
@@ -182,4 +198,21 @@ function salesforce_ngoc_write_hold_queue_items($item, $parents) {
     );
     drupal_write_record('salesforce_ngoc_hold_queue_items', $record);
   }
+}
+
+/**
+ * Load a single record.
+ *
+ * @param $id
+ *    The id representing the record we want to load.
+ */
+function salesforce_ngoc_sync_map_load($id, $reset = FALSE) {
+  return salesforce_ngoc_load_multiple(array($id), array(), $reset);
+}
+
+/**
+ * Load multiple records.
+ */
+function salesforce_ngoc_sync_map_load_multiple($ids = array(), $conditions = array(), $reset = FALSE) {
+  return entity_load('salesforce_ngoc_sync_map', $ids, $conditions, $reset);
 }

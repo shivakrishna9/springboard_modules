@@ -104,6 +104,96 @@ function salesforce_ngoc_requirements($phase) {
  * Implements hook_schema().
  */
 function salesforce_ngoc_schema() {
+  $schema['salesforce_ngoc_sync_map'] = array(
+    'description' => 'Salesforce batch_upload to Drupal record mappings',
+    'fields' => array(
+      'id' => array(
+        'description' => 'Record primary ID.',
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'batch_upload_sfid' => array(
+        'description' => 'The Salesforce id of the batch upload object that was created',
+        'type' => 'varchar',
+        'length' => '50',
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'sf_status' => array(
+        'description' => 'Batch Upload status as reported by SF.',
+        'type' => 'varchar',
+        'length' => '50',
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'drupal_id' => array(
+        'description' => 'The drupal id of the item that was exported',
+        'type' => 'int',
+        'not null' => TRUE,
+      ),
+      'module' => array(
+        'description' => 'The high-level module that was responsible for creating the item',
+        'type' => 'varchar',
+        'length' => '255',
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'delta' => array(
+        'description' => 'The specific drupal type',
+        'type' => 'varchar',
+        'length' => '255',
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'contact_sfid' => array(
+        'description' => 'The Salesforce id of the contact that was created via the batch upload',
+        'type' => 'varchar',
+        'length' => '50',
+        'not null' => FALSE,
+      ),
+      'account_sfid' => array(
+        'description' => 'The Salesforce id of the account that was created via the batch upload',
+        'type' => 'varchar',
+        'length' => '50',
+        'not null' => FALSE,
+      ),
+      'opportunity_sfid' => array(
+        'description' => 'The Salesforce id of the opportunity (gift) that was created via the batch upload',
+        'type' => 'varchar',
+        'length' => '50',
+        'not null' => FALSE,
+      ),
+      'transaction_sfid' => array(
+        'description' => 'The Salesforce id of the opportunity (transaction) that was created via the batch upload',
+        'type' => 'varchar',
+        'length' => '50',
+        'not null' => FALSE,
+      ),
+      'created' => array(
+        'description' => 'Datetime batch_upload object was synced to SF.',
+        'type' => 'int',
+        'not null' => TRUE,
+      ),
+      'lasted_polled' => array(
+        'description' => 'Datetime batch_upload object was checked for presence of account/opportunity/transaction ids.',
+        'type' => 'int',
+        'not null' => FALSE,
+      ),
+      'polling_attempts' => array(
+        'description' => 'Number of times batch_upload object has been polled',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+    ),
+    'primary key' => array('id'),
+    'indexes' => array(
+      'delta_drupal_module' => array('delta', 'drupal_id', 'module'),
+    ),
+  );
+
   $schema['salesforce_ngoc_hold_queue_items'] = array(
     'description' => 'Tracks items in the hold queue that have parent objects in SF that must be processed before releasing.',
     'fields' => array(
