@@ -1,0 +1,28 @@
+#sb-og-group-group_selector select,
+#sb-og-group-group_selector div.selector,
+#sb-og-group-group_selector div.selector span {
+  width: auto;
+  -webkit-border-radius: 4px;
+  -moz-border-radius: 4px;
+  border-radius: 4px;
+  background-color: #fff;
+  border: solid 1px #ccc;
+  padding: 8px 20px 8px 15px;
+  display: block;
+  margin-right: 20px;
+  font-size: 14px;
+  -webkit-box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  box-sizing: border-box;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  color: #6c6c6c;
+  height: auto;
+  backgroud-color: #fff;
+}
+
+#sb-og-group-group_selector option {
+  padding: 4px 10px 4px 10px;
+  display: block;
+}

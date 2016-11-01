@@ -408,6 +408,7 @@ function springboard_group_preprocess_page(&$vars) {
 function springboard_group_group_selector_form($form, &$form_state, $groups) {
 
   $form = [];
+  $form['#attached']['css'][] = drupal_get_path('module', 'springboard_group') . '/css/springboard-group-selector.css';
   $form['title']['#markup'] = '<strong>' . t('Choose an affiliate group to work in:') . '</strong>';
 
   // Build the selector form from groups found in user session.
