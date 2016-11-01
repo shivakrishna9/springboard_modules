@@ -91,15 +91,29 @@ function springboard_group_node_settings_form() {
   // Get the already groups-enabled node types.
   $groups_enabled_types = springboard_group_get_grouped_types();
   $node_defaults = !empty($groups_enabled_types['node']) ? array_keys($groups_enabled_types['node']) : [];
-  // Build the checkboxes.
+
+  $disallowed_content_types = array(
+    'p2p_campaign',
+    'p2p_campaign_landing',
+    'p2p_category',
+    'p2p_donation_form',
+    'p2p_personal_campaign',
+  );
+
   foreach ($content_type_options as $type => $name) {
+    if (!module_exists('springboard_groups_advocacy') && in_array($type, array('sba_message_action', 'sba_social_action'))) {
+      continue;
+    }
+    if (in_array($type, $disallowed_content_types)) {
+      continue;
+    }
     $form['springboard_group_node'][$type][$type] = array(
       '#title' => $name,
       '#type' => 'checkbox',
       '#default_value' => in_array($type, $node_defaults),
     );
-    $disallowed = array('sba_message_action', 'sba_social_action');
-    if (!in_array($type, $disallowed)) {
+    $disallowed_multiple = array('sba_message_action', 'sba_social_action');
+    if (!in_array($type, $disallowed_multiple)) {
       $form['springboard_group_node'][$type]['og_' . $type . '_multiple'] = array(
         '#title' => 'Allow multiple group selections.',
         '#type' => 'checkbox',
