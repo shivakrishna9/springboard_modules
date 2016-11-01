@@ -28,12 +28,6 @@ function springboard_group_permission() {
       'title' => t('Access Springboard Groups Dashboard'),
       'description' => t('Access Springboard Groups Dashboard. Group Admins and Group members who are not admins should have, at least, this permission.'),
     ),
-
-    // @todo remove this.
-    'assign content to any springboard group' => array(
-      'title' => t('Assign content to any springboard group'),
-      'description' => t('Assign content to any springboard group, even if not a group member.'),
-    ),
   );
 }
 
@@ -54,8 +48,8 @@ function springboard_group_og_permission_alter(&$perms) {
  * if they have the correct permission.
  */
 function springboard_group_og_user_access_alter(&$perm, $context) {
-  if (user_access('assign content to any springboard group')) {
-    $perm['update any page content'] = TRUE;
+  if (user_access('administer group')) {
+    // @todo don't need this probably.
     $perm['administer group'] = TRUE;
   }
 }
