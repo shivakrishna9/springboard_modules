@@ -101,7 +101,7 @@ function springboard_group_node_settings_form() {
   );
 
   foreach ($content_type_options as $type => $name) {
-    if (!module_exists('springboard_groups_advocacy') && in_array($type, array('sba_message_action', 'sba_social_action'))) {
+    if (!module_exists('springboard_group_advocacy') && in_array($type, array('sba_message_action', 'sba_social_action'))) {
       continue;
     }
     if (in_array($type, $disallowed_content_types)) {
