@@ -4,7 +4,6 @@
   };
 
   var BraintreePayment = function(settings) {
-    console.log(settings);
     this.settings = settings;
     this.$form = $('#' + settings.formId);
     this.$submit = this.$form.find('input[type=submit]');
@@ -14,7 +13,7 @@
     this.paypalInstance = null;
     this.$amount = this.$form.find('input[name="submitted[donation][amount]"]');
     this.amount = 0;
-    this.deviceData = null;
+    this.deviceDataInstance = null;
     this.$deviceDataInput = $('<input name="device_data" type="hidden"/>');
 
     var parent = this;
@@ -62,11 +61,11 @@
     };
 
     this.resetDeviceData = function() {
-      if (null !== parent.deviceData) {
-        parent.deviceData.teardown();
+      if (null !== parent.deviceDataInstance) {
+        parent.deviceDataInstance.teardown();
       }
 
-      parent.deviceData = null;
+      parent.deviceDataInstance = null;
       parent.$deviceDataInput.val('');
       // Add fraud protection.
       if (parent.settings.currentPaymentMethod == 'paypal') {
@@ -81,8 +80,8 @@
           // At this point, you should access the
           // dataCollectorInstance.deviceData value and provide it to your
           // server, e.g. by injecting it into your form as a hidden input.
-          parent.deviceData = dataCollectorInstance.deviceData;
-          parent.$deviceDataInput.val(parent.deviceData);
+          parent.deviceDataInstance = dataCollectorInstance;
+          parent.$deviceDataInput.val(parent.deviceDataInstance.deviceData);
         });
       }
     }
@@ -235,7 +234,7 @@
 
     this.enablePaypalEvents = function() {
       parent.paypalInstance.on('validityChange', function(event) {
-        console.log(event);
+
       });
       return this;
     };
