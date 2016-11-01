@@ -9,20 +9,22 @@
  */
 function springboard_group_views_query_alter(&$view, &$query) {
   // Array of alterable views. @todo make config?
+  static $views = [];
   $alter = array(
     'sbv_forms',
     'sbv_pagewrappers',
     'sbv_assets',
     'webform_ab_tests',
   );
-
   if (in_array($view->name, $alter)) {
+
     // First check if the query is selecting a groupable entity. If it isn't,
     // we skip the query alteration.
-    $grouped = springboard_group_views_query_check_content_type($query);
-    if ($grouped) {
-      // Get the current active group ID.
-      $context = springboard_group_get_group_context();
+    //$grouped = springboard_group_views_query_check_content_type($query);
+
+    // Get the current active group ID.
+    $context = springboard_group_get_group_context();
+    if (!empty($context)) {
       // Build the query.
       $condition = db_and();
       if ($context == '_none' || $context == '_all') {
@@ -30,9 +32,11 @@ function springboard_group_views_query_alter(&$view, &$query) {
           $condition->isNull('og_membership.gid');
         }
         else {
-          $all_groups = og_get_all_group();
-          $condition->condition('og_membership.gid', $all_groups, 'IN');
-          $condition->condition('og_membership.entity_type', 'node');
+          if ($context == '_all') {
+            $all_groups = og_get_all_group();
+            $condition->condition('og_membership.gid', $all_groups, 'IN');
+            $condition->condition('og_membership.entity_type', 'node');
+          }
         }
       }
       else {
@@ -50,6 +54,13 @@ function springboard_group_views_query_alter(&$view, &$query) {
       );
       $join = new views_join();
       $join->definition = $def;
+      $join->extra = array(
+        array(
+          'field' => 'entity_type',
+          'value' => 'node',
+        ),
+      );
+
       $join->construct();
       $join->adjusted = TRUE;
 
@@ -93,5 +104,5 @@ function springboard_group_views_query_check_content_type($query) {
 
 
 function springboard_group_views_pre_execute(&$view) {
-  //dpq($view->build_info['query']);
+//  dpq($view->build_info['query']);
 }
