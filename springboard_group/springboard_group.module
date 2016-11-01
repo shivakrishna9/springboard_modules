@@ -174,6 +174,8 @@ function springboard_group_get_grouped_types() {
 
 /**
  * Implements hook_form_FORMID_alter().
+ *
+ * Alter the form on the springboard group content type.
  */
 function springboard_group_form_springboard_group_node_form_alter(&$form, &$form_state) {
   // Change some of the defaults on the addressfield.
@@ -199,16 +201,19 @@ function springboard_group_form_node_form_alter(&$form, &$form_state) {
 
     // Add ajax callback to the groups field so we can validate newly
     // selected groups.
-    $language = $form['og_group_ref_' . $form['#node']->type]['#language'];
-    $form['og_group_ref_' . $form['#node']->type][$language][0]['default']['#ajax'] = array(
+    $language = $form['og_group_ref_' . substr($form['#node']->type, 0, 19)]['#language'];
+    $form['og_group_ref_' . substr($form['#node']->type, 0, 19)][$language][0]['default']['#ajax'] = array(
       'callback' => 'springboard_group_ajax_callback',
     );
+
+    springboard_group_entityreference_context($form, $form_state);
 
     // Set up the validation modal window parameters.
     springboard_group_prepare_validation_modal($form, $form_state);
 
     // Add the validation handler to the form.
     springboard_group_load_ajax_validation_handlers($form, $form_state);
+
   }
 }
 
@@ -238,6 +243,10 @@ function springboard_group_ajax_callback(&$form, &$form_state) {
   if (!empty($form['payment_methods']['gateways'])) {
     $ajax['#commands'][] = ajax_command_replace("#springboard-groups-payment-ajax-wrapper", render($form['payment_methods']['gateways']));
   }
+
+//  if (!empty($form['#fieldgroups']['group_tabs'])) {
+//    $ajax['#commands'][] = ajax_command_replace("#field-group-htabs-wrapper ", render($form['#fieldgroups']['group_tabs']));
+//  }
 
   // Show messages about conflicting page assets after a new group is selected.
   $messages = $form_state['group_ajax_messages'];

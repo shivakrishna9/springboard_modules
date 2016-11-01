@@ -38,4 +38,37 @@ class SpringboardGroup_EntityReference_SelectionHandler_Generic extends EntityRe
   }
 }
 
+function springboard_group_query_entityreference_alter(&$query) {
+  if (isset($query->alterTags['entityreference'])) {
+
+    $referencefields = array();
+
+    if (in_array($query->alterMetaData['field']['field_name'], $referencefields)) {
+
+      // Get the current active group IDs.
+      $context = (array) $_SESSION['springboard_group_entityreference_context'];
+      if (!empty($context)) {
+        // Build the query.
+        $condition = db_and();
+        if ($context == '_none' || $context == '_all') {
+          if ($context == '_none') {
+            $condition->isNull('og_membership.gid');
+          }
+          else {
+            $all_groups = og_get_all_group();
+            $condition->condition('og_membership.gid', $all_groups, 'IN');
+            $condition->condition('og_membership.entity_type', 'node');
+          }
+        }
+        else {
+          $condition->condition('og.gid', $context, 'IN');
+          $condition->condition('og.entity_type', 'node');
+        }
+
+        $query->join('og_membership', 'og', 'node.nid = og.etid');
+        $query->condition($condition);
+      }
+    }
+  }
+}
 

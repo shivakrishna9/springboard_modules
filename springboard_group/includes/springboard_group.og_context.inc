@@ -86,9 +86,7 @@ function springboard_group_og_context_handler($item = NULL) {
  * @return mixed
  */
 function springboard_group_get_group_context() {
-
   $gid = NULL;
-
   // First check if we're on a grouped node.
   // BTW, this only happens (so far) in an administrative context,
   // so no big deal performance-wise.
@@ -107,7 +105,6 @@ function springboard_group_get_group_context() {
     }
     // @todo - deal with node/add.
   }
-
 
   // This would have been set by
   // springboard_group_og_context_handler().
@@ -141,4 +138,20 @@ function springboard_group_context_menu_paths() {
   );
   $paths = array_merge($paths, module_invoke_all('springboard_group_context_menu_paths'));
   return $paths;
+}
+
+function springboard_group_entityreference_context($form, $form_state) {
+  $field = $form['og_group_ref_' . substr($form['#node']->type, 0, 19)];
+  $language = $field['#language'];
+  if (empty($form_state['values'])) {
+    $gids = $field[$language][0]['default']['#default_value'];
+  }
+  else {
+    $options = $form_state['values']['og_group_ref_' . substr($form['#node']->type, 0, 19)][$language];
+    foreach ($options as $option) {
+      $gids[] = $option['target_id'];
+    }
+  }
+  $_SESSION['springboard_group_entityreference_context'] = $gids;
+  return $gids;
 }
