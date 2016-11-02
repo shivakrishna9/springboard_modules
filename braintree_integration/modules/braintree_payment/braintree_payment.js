@@ -537,7 +537,7 @@
    * Fill user and billing fields from onPaymentMethodReceived response.
    */
   Drupal.braintree.prototype.autofill = function(obj) {
-    if (this.settings.hasOwnProperty('paypal') && this.paypal.compact) {
+    if (this.settings.hasOwnProperty('paypal') && this.settings.paypal.compact) {
       autofill = 'always';
     }
     else {
