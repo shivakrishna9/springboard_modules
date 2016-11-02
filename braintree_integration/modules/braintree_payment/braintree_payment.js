@@ -124,6 +124,9 @@
     // If more than one payment method is enabled on this form, make sure we
     // bootstrap braintree using the correct integration.
     var $paymentMethod = $('input[name="submitted[payment_information][payment_method]"]').filter(':checked').val();
+    if ($paymentMethod != 'paypal') {
+      this.compactPaypal(false);
+    }
     if (typeof $paymentMethod !== 'undefined') {
       // If the selected payment method is a NOT a Braintree payment method,
       // bail out without a bootstrap.
@@ -145,11 +148,72 @@
     if (this.settings.integration == 'paypal') {
       this.bootstrapPaypal();
     }
+
   }
 
   Drupal.braintree.prototype.bootstrapPaypal = function() {
+    this.compactPaypal(true);
     // Bind initAuthFlow button to paypal-container
     this.$submit.on('click', this.handlePayPalClick);
+  }
+  
+  Drupal.braintree.prototype.compactPaypal = function (collapse) {
+    if (this.settings.paypal && this.settings.paypal.compact && this.hasDefaultFields()) {
+      var currentState = this.settings.paypal.collapsed;
+      var layout = this.settings.paypal.form_layout || false;
+      if (collapse) {
+        if (layout == 'two_column_donation') {
+          $('#left').hide();
+        }
+        $('#webform-component-donor-information').hide();
+        $('#webform-component-billing-information').hide();
+        this.settings.paypal.collapsed = true;
+      }
+      else {
+        if (layout == 'two_column_donation') {
+          $('#left').show();
+        }
+        $('#webform-component-donor-information').show();
+        $('#webform-component-billing-information').show();
+        this.settings.paypal.collapsed = false;
+      }
+    }
+  }
+  
+  Drupal.braintree.prototype.hasDefaultFields = function() {
+    var fundraiserDefaultFields = {
+      donorDefaults: [
+        'submitted[donor_information][first_name]',
+        'submitted[donor_information][last_name]',
+        'submitted[donor_information][mail]',
+      ],
+      billingDefaults: [
+        'submitted[billing_information][address]',
+        'submitted[billing_information][address_line_2]',
+        'submitted[billing_information][city]',
+        'submitted[billing_information][country]',
+        'submitted[billing_information][state]',
+        'submitted[billing_information][zip]',
+      ],
+    };
+    var donorInfo = $('#webform-component-donor-information :input');
+    var billingInfo = $('#webform-component-billing-information :input');
+    var onlyDefaults = true;
+    var donorIsDefault = $.each( donorInfo, function( key, value ) {
+      var n = $(value).attr('name');
+      if ($.inArray(n, fundraiserDefaultFields.donorDefaults) < 0) {
+        onlyDefaults = false;
+        return;
+      }
+    });
+    var billingIsDefault = $.each( billingInfo, function( key, value ) {
+       var n = $(value).attr('name');
+       if ($.inArray(n, fundraiserDefaultFields.billingDefaults) < 0) {
+        onlyDefaults = false;
+        return;
+       }
+    });
+    return onlyDefaults;
   }
 
   Drupal.braintree.prototype.handlePayPalClick = function(event) {
@@ -407,8 +471,13 @@
       // Boot new integration.
       Drupal.myBraintree.bootstrap();
     });
-
     var autofilled = self.autofill(obj);
+    if (this.settings.hasOwnProperty('paypal') && this.settings.paypal.compact) {
+      if (this.verifyPaypalFields(obj)) {
+        $('#'+self.formId).submit();
+        return;
+      }
+    }
     // Auto-submit the form if no fields were auto-filled from the values in the
     // onPaymentMethodReceived obj.
     if (!autofilled) {
@@ -447,12 +516,33 @@
     $('#bt-pp-email').text('');
     this.$submit.off('click', this.handlePayPalClick);
   }
-
+  
+  Drupal.braintree.prototype.verifyPaypalFields = function(obj) {
+    var remoteDonorFields = ['email', 'firstName', 'lastName'];
+    var remoteBillingFields = ['countryCodeAlpha2', 'locality', 'postalCode', 'region', 'streetAddress'];
+    for (var i=0; i < remoteDonorFields.length; i++) {
+      if (!obj.details.hasOwnProperty(remoteDonorFields[i]) || !obj.details[remoteDonorFields[i]]) {
+        return false;
+      }
+    }
+    for (var i=0; i < remoteBillingFields.length; i++) {
+      if (!obj.details.billingAddress.hasOwnProperty(remoteBillingFields[i]) || !obj.details.billingAddress[remoteBillingFields[i]]) {
+        return false;
+      }
+    }
+    return true;
+  }
+  
   /**
    * Fill user and billing fields from onPaymentMethodReceived response.
    */
   Drupal.braintree.prototype.autofill = function(obj) {
-    autofill = this.settings.autofill;
+    if (this.settings.hasOwnProperty('paypal') && this.paypal.compact) {
+      autofill = 'always';
+    }
+    else {
+      autofill = this.settings.autofill;
+    }
     var fieldsHaveBeenAutoFilled = false;
     var field_mapping = {
       'submitted[donor_information][first_name]': obj.details.firstName,

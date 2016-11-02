@@ -4,6 +4,8 @@
  * Provides Braintree payment form functions.
  */
 
+require_once 'includes/braintree_payment.node_form.inc';
+
 define('BRAINTREE_WEB_JS', 'https://js.braintreegateway.com/js/braintree-2.21.0.min.js');
 define('BRAINTREE_PAYPAL_LOGGED_OUT_STATE', '<a id="braintree-paypal-button" href="#"><img src="https://checkout.paypal.com/pwpp/2.21.0/images/pay-with-paypal.png" alt="Pay with PayPal"></a>');
 /**
@@ -128,7 +130,7 @@ function _braintree_payment_form_element(&$element, &$form, &$form_state, $payme
   else {
     $element['number'] = array(
       '#type' => 'item',
-      '#title' => t('Credit card number'),
+      '#title' => t('Card number'),
       '#markup' => '<div id="card-number" class="braintree-hosted-field required"></div>',
       '#id' => 'braintree-field-card-number',
       '#prefix' => '<div class="control-group">',
@@ -144,7 +146,7 @@ function _braintree_payment_form_element(&$element, &$form, &$form_state, $payme
 
     $element['expiration']['month'] = array(
       '#type' => 'item',
-      '#title' => t('Expiration Month'),
+      '#title' => t('Expiry Month'),
       '#markup' => '<div id="expiration-month" class="braintree-hosted-field control-group required"></div>',
     );
 
