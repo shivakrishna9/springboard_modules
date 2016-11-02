@@ -186,6 +186,20 @@ function springboard_group_form_springboard_group_node_form_alter(&$form, &$form
     $form['field_sb_group_address']['#title'] = t('Address');
     $form['field_sb_group_address'][$form['field_sb_group_address']['#language']][0]['#title'] = '';
   }
+  $form['#validate'][] = 'springboard_group_node_form_validate';
+}
+
+/**
+ * Validate the emial address.
+ */
+function springboard_group_node_form_validate($form, &$form_state) {
+  $email = $form_state['values']['field_sb_group_cemail'][$form['field_sb_group_cemail']['#language']][0];
+  if (!empty($email)) {
+    $valid = valid_email_address($email);
+    if (!$valid) {
+      form_set_error('field_sb_group_cemail', t('Invalid email address in contact field.'));
+    }
+  }
 }
 
 /**
@@ -502,7 +516,12 @@ function springboard_group_og_ui_get_group_admin_alter(&$data, $context) {
   }
 }
 
+/**
+ * Implements hook_page_alter().
+ */
 function springboard_group_page_alter(&$page) {
+  // Remove ineligible payment methods from the payments overview page.
   springboard_group_rules_page_filter_payment_rules($page);
+  // Add help text to the permissions overview.
   springboard_group_permissions_overview_page($page);
 }
