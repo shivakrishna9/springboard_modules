@@ -87,4 +87,11 @@ function springboard_group_enable() {
   $context = variable_get('og_context_negotiation_group_context', array());
   $context = array_merge($context, array('springboard_group' => array()));
   variable_set('og_context_negotiation_group_context', $context);
+  $alter = array(
+    'sbv_forms',
+    'sbv_pagewrappers',
+    'sbv_assets',
+    'webform_ab_tests',
+  );
+  variable_set('group_restricted_views', $context);
 }

@@ -9,13 +9,8 @@
  */
 function springboard_group_views_query_alter(&$view, &$query) {
   // Array of alterable views. @todo make config?
-  static $views = [];
-  $alter = array(
-    'sbv_forms',
-    'sbv_pagewrappers',
-    'sbv_assets',
-    'webform_ab_tests',
-  );
+  $alter = variable_get('group_restricted_views', []);
+  dpm($alter);
   if (in_array($view->name, $alter)) {
 
     // First check if the query is selecting a groupable entity. If it isn't,
