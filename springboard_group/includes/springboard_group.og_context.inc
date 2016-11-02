@@ -106,13 +106,17 @@ function springboard_group_get_group_context() {
     // @todo - deal with node/add.
   }
 
+  $paths = springboard_group_context_menu_paths();
+  if (!in_array(current_path(), $paths)) {
+    return [];
+  }
+
   // This would have been set by
   // springboard_group_og_context_handler().
   $group_context = og_context('node');
   if (!empty($group_context['gid'])) {
     return $group_context['gid'];
   }
-
   // "_none".
   if (!empty($_SESSION['springboard_group_working_group'])) {
     return $_SESSION['springboard_group_working_group'];
