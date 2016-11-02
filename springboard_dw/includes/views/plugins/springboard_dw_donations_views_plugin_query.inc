@@ -49,7 +49,7 @@ class springboard_dw_donations_views_plugin_query extends views_plugin_query {
   
     // Add filters to the request:
     if ($request_type == 'multi_donation' && isset($view->exposed_data)) {
-      $filter_values_to_skip = array('submit', 'items_per_page', 'form_build_id', 'form_token', 'form_id');
+      $filter_values_to_skip = array('submit', 'form_build_id', 'form_token', 'form_id');
       foreach ($view->exposed_data as $filter_key => $filter_value) {
         if (empty($filter_value) || empty($filter_key) || in_array($filter_key, $filter_values_to_skip)) {
           continue;
@@ -60,17 +60,32 @@ class springboard_dw_donations_views_plugin_query extends views_plugin_query {
           }
           continue;
         }
+        if ($filter_key == 'items_per_page') {
+          $filter_key = 'perPage';
+        }
         $params[$filter_key] = $filter_value;
       }
 
-      // Apply view sorting to the request:
+      // Apply view click sorting to the request:
       if (isset($view->exposed_input['order']) && !empty($view->exposed_input['order'])) {
         $params['orderBy'] = $view->exposed_input['order'];
       }
       if (isset($view->exposed_input['sort']) && !empty($view->exposed_input['sort'])) {
         $params['order'] = $view->exposed_input['sort'];
       }
+
+      // If click sorting is not being used then use the view's default sort order, if available:
+      if (!isset($params['orderBy']) && !isset($params['order']) && isset($view->sort) && is_array($view->sort)) {
+        $sort = array_values($view->sort)[0];
+        if (isset($sort->field)) {
+          $params['orderBy'] = $sort->field;
+        }
+        if (isset($sort->opions['order'])) {
+          $params['order'] = strtolower($sort->opions['order']);
+        }
+      }
     }
+
 
     // Submit the request to the Data Warehouse and get the response:
     $response = springboard_dw_api_call($endpoint, $params, $method);
