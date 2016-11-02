@@ -38,7 +38,6 @@ function springboard_group_menu() {
     'type' => MENU_LOCAL_TASK,
   );
 
-
   // Custom path for user permissions.
   $items['admin/springboard/groups/settings/springboard-permissions'] = array(
     'title' => 'Springboard Permissions',
@@ -51,7 +50,6 @@ function springboard_group_menu() {
     'type' => MENU_LOCAL_TASK,
     'weight' => -8,
   );
-
 
   $items["admin/springboard/groups/settings/settings"] = array(
     'page callback' => 'drupal_get_form',
