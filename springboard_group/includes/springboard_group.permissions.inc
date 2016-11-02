@@ -172,12 +172,12 @@ function springboard_group_form_user_admin_permissions_alter(&$form, $form_state
     $form['permission']['administer group']['#markup'] = ' Administer Organic groups.';
     $form['permission']['administer group']['#description'] = 'Administer and post in all groups.';
   }
+  
   foreach ($form['permission'] as $key => $perm) {
     if (strpos($key, 'springboard_group') !== FALSE) {
       $form['permission'][$key]['#markup'] = str_replace('content', 'Springboard Group', $form['permission'][$key]['#markup']);
     }
-   }
-
+  }
 
   if (arg(1) == 'springboard' && arg(2) == 'groups') {
     $path = drupal_get_path('module', 'springboard_group') . '/js/springboard-groups-permissions.js';

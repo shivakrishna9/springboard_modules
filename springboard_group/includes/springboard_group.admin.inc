@@ -107,6 +107,10 @@ function springboard_group_node_settings_form() {
     if (in_array($type, $disallowed_content_types)) {
       continue;
     }
+    $form['springboard_group_node'][$type] = array(
+      '#type' => 'container',
+      '#attributes' => array('class' => array('group-content-wrapper'))
+    );
     $form['springboard_group_node'][$type][$type] = array(
       '#title' => $name,
       '#type' => 'checkbox',
@@ -211,6 +215,10 @@ function springboard_group_entity_settings_form() {
   foreach ($entity_type_options as $type => $name) {
     if (!in_array($type, $disallowed)) {
       $name = str_replace('Rules configuration', 'Payment Gateways', $name);
+      $form['springboard_group_entities'][$type] = array(
+        '#type' => 'container',
+        '#attributes' => array('class' => array('group-content-wrapper')),
+      );
       $form['springboard_group_entities'][$type][$type] = array(
         '#title' => $name,
         '#type' => 'checkbox',
@@ -354,7 +362,7 @@ function springboard_group_advanced_settings() {
   $form['altered_views'] = array(
     '#type' => 'fieldset',
     '#title' => 'Groups-enabled Springboard views',
-    '#description' => t('Restrict results for these views based on group context.'),
+    '#description' => t('Restrict results for these views based on group context. This will be updated automatically when new content types are made groupable.'),
     '#collapsible' => TRUE,
   );
 
