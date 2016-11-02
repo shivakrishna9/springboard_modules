@@ -82,6 +82,9 @@ function springboard_group_node_settings_form() {
   // Get all node types. Remove the springboard_group node type from the list.
   $content_type_options = [];
   $options = node_type_get_types();
+  usort($options, function($a, $b) {
+    return strcmp($a->name, $b->name);
+  });
   foreach ($options as $key => $type) {
     if ($type->type != 'springboard_group') {
       $content_type_options[$type->type] = $type->name;
@@ -187,7 +190,7 @@ function springboard_group_entity_settings_form() {
       }
     }
   }
-
+  asort($entity_type_options);
   $form['springboard_group_entities'] = array(
     '#type' => 'fieldset',
     '#title' => t('Entity types'),
@@ -372,7 +375,7 @@ function springboard_group_advanced_settings() {
   $form['altered_views'] = array(
     '#type' => 'fieldset',
     '#title' => 'Groups-enabled Springboard views',
-    '#description' => t("Restrict results for these views based on group context. Enabling this option will cause the view query to be altered, filtering the result based on the value of the groups context selector. These options will be updated automatically when new content types are made groupable."),
+    '#description' => t("Restrict results for these views based on group context. Enabling this option will cause the view query to be altered, filtering the result based on the value of the groups context selector. For users who only belong to one group, the context selector is not displayed and the group ID is pulled directly from the user session. These options will be updated automatically when new content types are made groupable."),
     '#collapsible' => TRUE,
   );
 
