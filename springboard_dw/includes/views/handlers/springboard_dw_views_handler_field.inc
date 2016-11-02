@@ -36,8 +36,7 @@ class springboard_dw_views_handler_field extends views_handler_field
    */
   function get_value($values, $field = NULL) {
     $alias = isset($field) ? $this->aliases[$field] : $this->field_alias;
-
-    return $values->{$alias};
+    return $values->{$alias}; 
   }
 
   /**
@@ -51,6 +50,23 @@ class springboard_dw_views_handler_field extends views_handler_field
 
     $alias = isset($field) ? $this->aliases[$field] : $this->field_alias;
 
+    // Replace transaction ID value with on-site link, if available:
+    if ($alias == 'transaction_id') {
+      if (!is_numeric($value)) {
+        $value = 'N/A';
+      }
+      else {
+        $value = l($value, '<front>');
+      }
+    }
+    // Replace the form name with on-site link, if available:
+    elseif ($alias == 'form_name') {
+      $value = l($value, '<front>');
+    }
+    elseif ($alias == 'recurs_monthly') {
+      $value = ($value == 'recurs' ? 'Yes' : 'No');
+      $value = l($value, '<front>');
+    }
     return $value;
   }
 }
