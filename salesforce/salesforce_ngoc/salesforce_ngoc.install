@@ -2696,11 +2696,13 @@ function salesforce_ngoc_create_donation_mapping() {
     }
   }
   $map->salesforce_record_type = $object_type;
-  $map->field_map = array (
-    'salesforce_donation_map' => array (
+  $map->field_map = array(
+    'salesforce_donation_map' => array(
       'did' => 'SB_Donation_Id__c',
+      'gateway_name' => 'rC_Connect__Payment_Processor__c',
       'close_date' => 'rC_Connect__Giving_Close_Date__c',
       'transaction_date' => 'rC_Connect__Giving_Close_Date_Time__c',
+      'form_URL' => 'SB_Acquisition_Form_URL__c',
       'full_name' => 'Name',
       'amount' => 'rC_Connect__Giving_Giving_Amount__c',
       'currency' => 'rC_Connect__Giving_Entered_Currency__c',
@@ -2720,24 +2722,22 @@ function salesforce_ngoc_create_donation_mapping() {
       'is_recurring_donation' => 'rC_Connect__Giving_Is_Sustainer__c',
       'payment_token' => 'rC_Connect__Payment_Method_Card_GUID__c',
     ),
-    'salesforce_webform_map' => array (
-      'ms' => 'SB_Market_Source__c',
+    'salesforce_webform_map' => array(
+      'ms' => 'SB_Acquisition_Market_source__c',
       'cid' => 'rC_Connect__Batch_Upload_Campaign_Matched__c',
-      'referrer' => 'SB_Referrer__c',
-      'initial_referrer' => 'SB_Initial_Referrer__c',
-      'search_engine' => 'SB_Search_Engine__c',
-      'search_string' => 'SB_Search_String__c',
-      'user_agent' => 'SB_User_Agent__c',
-      'device_type' => 'SB_Device_Type__c',
-      'device_name' => 'SB_Device_Name__c',
-      'device_os' => 'SB_Device_OS__c',
-      'device_browser' => 'SB_Device_Browser__c',
+      'search_engine' => 'SB_Acquisition_Search_Engine__c',
+      'search_string' => 'SB_Acquisition_Search_String__c',
+      'user_agent' => 'SB_Acquisition_User_Agent__c',
+      'device_type' => 'SB_Acquisition_Device_Type__c',
+      'device_name' => 'SB_Acquisition_Device_Name__c',
+      'device_os' => 'SB_Acquisition_Device_OS__c',
+      'device_browser' => 'SB_Acquisition_Device_Browser__c',
     ),
-    'salesforce_node_map' => array (
-      'nid' => 'SB_Donation_Form_Id__c',
-      'internal_name' => 'SB_Donation_Form_Title__c',
+    'salesforce_node_map' => array(
+      'nid' => 'SB_Acquisition_Form_ID__c',
+      'internal_name' => 'SB_Acquisition_Form_Internal_Name__c',
     ),
-    'salesforce_user_map' => array (
+    'salesforce_user_map' => array(
       'uid' => 'SB_User_Id__c',
     ),
   );
