@@ -6,6 +6,13 @@
   -moz-border-radius: 4px;
   -webkit-border-radius: 4px;
   border-radius: 4px;
+  float: left;
+  width: 45%;
+  min-height: 6em;
+}
+
+fieldset .fieldset-wrapper .control-group.form-type-item label {
+  font-weight: bold;
 }
 
 .form-type-checkbox .description {
@@ -32,6 +39,8 @@ font-size: 0.9em;
   margin-bottom: 1em;
 }
 
-#edit-springboard-group-node-submit-node {
+#edit-springboard-group-node-submit-node,
+#edit-springboard-group-entities-actions {
   clear: left;
+  display:block;
 }
