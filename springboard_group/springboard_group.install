@@ -83,5 +83,8 @@ function springboard_group_enable() {
   menu_rebuild();
   variable_set('og_group_manager_full_access', FALSE);
   variable_set('og_group_manager_default_rids_node_springboard_group', array(3 => 3));
-  variable_set('og_node_access_strict', 1);
+  variable_set('og_node_access_strict', 0);
+  $context = variable_get('og_context_negotiation_group_context', array());
+  $context = array_merge($context, array('springboard_group' => array()));
+  variable_set('og_context_negotiation_group_context', $context);
 }
