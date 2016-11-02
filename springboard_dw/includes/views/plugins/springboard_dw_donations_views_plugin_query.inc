@@ -31,20 +31,24 @@ class springboard_dw_donations_views_plugin_query extends views_plugin_query {
   function execute(&$view) {
     $start = microtime(TRUE);
     $method = 'GET';
-    $endpoint = 'donations';
-    //  $endpoint = 'metrics/donation/count';
-    //  $endpoint = 'donation/item/74251';
-    //dpm($view);
-    $params = array(
-   //   'search' => 'jen',
-    //  'createdAtStart' => '2015-01-17 0:0:0',
-  //    'search' => 'Olivia',
-      'page' => empty($view->query->pager->current_page) ? 0 : $view->query->pager->current_page,
-      'perPage' => empty($view->query->limit) ? 10 : $view->query->limit,
-    );
+    $params = array();
 
-    // Apply any global keyword filtering:
-    if (isset($view->exposed_data)) {
+    // Determine endpoint based on whether there's a donation_id contextual filter:
+    if (isset($view->args[0]) && is_numeric($view->args[0])) {
+      $request_type = 'single_donation';
+      $endpoint = 'donation/item/' . $view->args[0];
+    }
+    else {
+      $request_type = 'multi_donation';
+      $endpoint = 'donations';
+    }
+
+    // $endpoint = 'metrics/donation/count';
+
+    // $request_type = 'multi_donation';
+  
+    // Add filters to the request:
+    if ($request_type == 'multi_donation' && isset($view->exposed_data)) {
       $filter_values_to_skip = array('submit', 'items_per_page', 'form_build_id', 'form_token', 'form_id');
       foreach ($view->exposed_data as $filter_key => $filter_value) {
         if (empty($filter_value) || empty($filter_key) || in_array($filter_key, $filter_values_to_skip)) {
@@ -58,36 +62,41 @@ class springboard_dw_donations_views_plugin_query extends views_plugin_query {
         }
         $params[$filter_key] = $filter_value;
       }
+
+      // Apply view sorting to the request:
+      if (isset($view->exposed_input['order']) && !empty($view->exposed_input['order'])) {
+        $params['orderBy'] = $view->exposed_input['order'];
+      }
+      if (isset($view->exposed_input['sort']) && !empty($view->exposed_input['sort'])) {
+        $params['order'] = $view->exposed_input['sort'];
+      }
     }
 
-    // Apply view sorting to the request
-    if (isset($view->exposed_input['order']) && !empty($view->exposed_input['order'])) {
-      $params['orderBy'] = $view->exposed_input['order'];
-    }
-    if (isset($view->exposed_input['sort']) && !empty($view->exposed_input['sort'])) {
-      $params['order'] = $view->exposed_input['sort'];
-    }
-
-    // Submit the request to the Data Warehouse:
+    // Submit the request to the Data Warehouse and get the response:
     $response = springboard_dw_api_call($endpoint, $params, $method);
-    $response_data = (string) $response->getBody();
+    $response_data = json_decode((string) $response->getBody());
+    // dpm($response_data);
 
-    $response_data = json_decode($response_data);
-    $view->result = $response_data->donation->data;
-    //dpm($response_data);
-    //$view->result = array((object) array('count' => $result));
+    // Handle results from the donations endpoint:
+    if ($request_type == 'multi_donation' && isset($response_data->donation->data)) {
+      $view->result = $response_data->donation->data;
+      // Build the pager.
+      $this->pager->total_items = $response_data->donation->total;
+      $this->pager->update_page_info();
+      $this->pager->post_execute($view->result);
+      if ($this->pager->use_pager()) {
+         $view->total_rows = $response_data->donation->total;
+      }
 
-    // Build the pager.
-    $this->pager->total_items = $response_data->donation->total;
-    $this->pager->update_page_info();
-    $this->pager->post_execute($view->result);
-    if ($this->pager->use_pager()) {
       $view->total_rows = $response_data->donation->total;
     }
-
-      $view->total_rows = $response_data->donation->total;
-
-
+    elseif ($request_type == 'single_donation' && isset($response_data->donation)) {
+      $view->result = array($response_data->donation);
+    }
+    else {
+      $view->result = array();
+    }
+    // dpm($view->result);
 
     $view->execute_time = microtime(TRUE) - $start;
   }

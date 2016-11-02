@@ -34,10 +34,11 @@ class springboard_dw_views_handler_field extends views_handler_field
    * @param null $field
    * @return string
    */
-  function get_value($values, $field = NULL) {
+  /* function get_value($values, $field = NULL) {
+    
     $alias = isset($field) ? $this->aliases[$field] : $this->field_alias;
     return $values->{$alias}; 
-  }
+  } */
 
   /**
    * Override parent render.

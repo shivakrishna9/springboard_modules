@@ -87,6 +87,16 @@ function springboard_dw_views_data() {
     );
   }
 
+  if (isset($data['sp_dw_donations_psudo']['donation_id'])) {
+    $data['sp_dw_donations_psudo']['donation_id']['argument'] = array(
+      'title' => t('Donation ID'),
+      'help' => t('Fetches a single donation record by Donation ID.'),
+      'argument' => array(
+        'handler' => 'views_handler_argument_numeric',
+      ), 
+    );
+  }
+
   // Add field-agnostic data warehouse search filter:
   $data['sp_dw_donations_psudo']['dw_global_search'] = array(
     'title' => t('Data Warehouse Search'),
@@ -134,4 +144,15 @@ function springboard_dw_views_handlers() {
     ),
   );
   return $handlers;
+}
+
+/**
+ * Implements hook_form_alter()
+ */
+function springboard_dw_form_views_exposed_form_alter(&$form, &$form_state) {
+  if (isset($form['#id']) && $form['#id'] == 'views-exposed-form-springboard-dw-donations-report-page') {
+    // Attached CSS and jQuery related to the exposed filters:
+    $form['#attached']['css'][] = drupal_get_path('module', 'springboard_dw') . '/css/springboard_dw.css';
+    $form['#attached']['js'][] = drupal_get_path('module', 'springboard_dw') . '/js/springboard_dw.js';
+  }
 }
