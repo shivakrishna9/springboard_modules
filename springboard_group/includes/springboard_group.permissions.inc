@@ -159,3 +159,10 @@ function springboard_group_permissions_overview_page(&$page) {
     array_unshift($page['content'], $help);
   }
 }
+
+function springboard_group_form_user_admin_permissions_alter(&$form, $form_state) {
+  if ( arg(1) == 'springboard' && arg(2) == 'groups') {
+    $path = drupal_get_path('module', 'springboard_group')  . '/js/springboard-groups-permissions.js';
+    $form['#attached']['js'][] = $path;
+  }
+}

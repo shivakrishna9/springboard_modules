@@ -38,16 +38,32 @@ function springboard_group_menu() {
     'type' => MENU_LOCAL_TASK,
   );
 
+
+  // Custom path for user permissions.
+  $items['admin/springboard/groups/settings/springboard-permissions'] = array(
+    'title' => 'Springboard Permissions',
+    'description' => 'Permissions for springboard taxonomy.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('user_admin_permissions'),
+    'access arguments' => array('administer permissions'),
+    'file path' => drupal_get_path('module', 'user'),
+    'file' => 'user.admin.inc',
+    'type' => MENU_LOCAL_TASK,
+    'weight' => -8,
+  );
+
+
   $items["admin/springboard/groups/settings/settings"] = array(
     'page callback' => 'drupal_get_form',
     'page arguments' => array('springboard_group_advanced_settings'),
     'title' => 'Settings',
     'access arguments' => array('configure springboard groups'),
     'description' => 'Configure Springboard Groups advanced settings.',
-    'weight' => -8,
+    'weight' => -7,
     'file' => 'includes/springboard_group.admin.inc',
     'type' => MENU_LOCAL_TASK,
   );
+
 
   // OG module doesn't define a default tab. We help it here.
   $items['group/%/%/admin/people/all'] = array(
