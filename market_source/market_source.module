@@ -62,7 +62,7 @@ function market_source_menu() {
   return $items;
 }
 
-/** 
+/**
  * Implements hook_springboard_admin_alias_patterns().
  */
 function market_source_springboard_admin_alias_patterns() {
@@ -94,7 +94,7 @@ function market_source_springboard_admin_admin_menu_items_alter(&$items) {
     'customized' => 1,
     'weight' => 3,
   );
-  
+
   // Settings > Settings > Source Codes.
   $items['admin/springboard/settings']['_children']['admin/springboard/settings/config']['_children']['admin/config/search/market-source'] = array(
     'link_path' => 'admin/config/search/market-source',
@@ -114,7 +114,7 @@ function market_source_permission() {
     'administer market source' => array(
       'title' => t("Administer Market Source"),
       'description' => t('Configure the Market Source module, create and edit source codes.'),
-    ),    
+    ),
   );
 }
 

@@ -75,7 +75,6 @@ function salesforce_ngoc_salesforce_genmap_map_fields_alter(&$fields, $context) 
     $fields['rC_Connect__Disable_Merchant_Messages__c'] = TRUE; // Prevents NGOC from trying to process the payment.
     $fields['rC_Connect__Giving_Giving_Frequency__c'] = 'One Payment'; // Depends on one-time or recurring gift.
     $fields['rC_Connect__Giving_Record_Type__c'] = variable_get('salesforce_ngoc_default_record_type', SALESFORCE_NGOC_DEFAULT_RECORD_TYPE);
-    $fields['rC_Connect__Batch_Upload_Campaign_Matched__c'] = '70163000000A9RwAAK'; //TODO: Either a setting or cid field.
   }
 }
 
