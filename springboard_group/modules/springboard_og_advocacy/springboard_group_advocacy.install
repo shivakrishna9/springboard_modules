@@ -44,3 +44,12 @@ function springboard_group_advocacy_schema() {
   );
   return $schema;
 }
+
+function springboard_group_advocacy_enable() {
+  $alter = array(
+    'sba_actions',
+  );
+  $restrict = variable_get('group_restricted_views', array());
+  $restrict = array_merge($restrict, $alter);
+  variable_set('group_restricted_views', $restrict);
+}

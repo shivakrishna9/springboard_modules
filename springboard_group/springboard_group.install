@@ -93,5 +93,5 @@ function springboard_group_enable() {
     'sbv_assets',
     'webform_ab_tests',
   );
-  variable_set('group_restricted_views', $context);
+  variable_set('group_restricted_views', $alter);
 }

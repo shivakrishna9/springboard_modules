@@ -112,7 +112,22 @@ function springboard_group_advocacy_preprocess_page(&$vars) {
  * Also called from springboard_group_advocacy_preprocess_page().
  */
 function springboard_group_advocacy_springboard_group_context_menu_paths() {
-  return array(
-    'admin/springboard/advocacy/targets',
-  );
+
+  $paths = &drupal_static(__FUNCTION__);
+  if (!isset($paths)) {
+    $groups_enabled_types = springboard_group_get_grouped_types();
+    $paths = array();
+    if (isset($groups_enabled_types['node']['sba_message_action']) || isset($groups_enabled_types['node']['sba_social_action'])) {
+      array_push($paths, 'admin/springboard/advocacy/targets');
+      array_push($paths, 'admin/springboard/advocacy/actions');
+    }
+    if (isset($groups_enabled_types['node']['sba_message_action'])) {
+      array_push($paths, 'admin/springboard/advocacy/message-actions/all');
+    }
+    if (isset($groups_enabled_types['node']['sba_social_action'])) {
+      array_push($paths, 'admin/springboard/advocacy/social-actions/all');
+    }
+  }
+
+  return $paths;
 }

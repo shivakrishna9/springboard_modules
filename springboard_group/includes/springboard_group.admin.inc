@@ -354,6 +354,7 @@ function springboard_group_advanced_settings() {
     'sbv_pagewrappers',
     'sbv_assets',
     'webform_ab_tests',
+    'sba_actions',
   );
 
   $form['altered_views']['group_restricted_views'] = array(
