@@ -125,18 +125,50 @@ function springboard_group_get_group_context() {
   return $gid;
 }
 
+/**
+ * Determines which non-node paths are group enabled.
+ *
+ * Used by the context handler hook and the groups dropdown selector function
+ * to determine which paths the selector should appear on.
+ *
+ * @return array
+ *   An array of paths the context selector will appear on.
+ */
 function springboard_group_context_menu_paths() {
-  $paths = array(
-    'admin/commerce/config/payment-methods',
-    'admin/springboard',
-    'admin/springboard/asset-library',
-    'admin/content/webform_ab',
-    'admin/springboard/asset-library/page_wrapper',
-    'admin/springboard/asset-library/email_wrapper',
-    'admin/springboard/donation-forms/all',
-    'admin/springboard/forms/all',
-  );
-  $paths = array_merge($paths, module_invoke_all('springboard_group_context_menu_paths'));
+  $paths = &drupal_static(__FUNCTION__);
+
+  if (!isset($paths)) {
+    $groups_enabled_types = springboard_group_get_grouped_types();
+    $paths = array();
+
+    if (isset($groups_enabled_types['rules_config'])) {
+      array_push($paths, 'admin/commerce/config/payment-methods');
+    }
+    if (isset($groups_enabled_types['node']['page_wrapper'])) {
+      array_push($paths, 'admin/springboard/asset-library/page_wrapper');
+    }
+    if (isset($groups_enabled_types['node']['email_wrapper'])) {
+      array_push($paths, 'admin/springboard/asset-library/email_wrapper');
+    }
+    if (isset($groups_enabled_types['node']['page_wrapper']) || isset($groups_enabled_types['node']['email_wrapper'])) {
+      array_push($paths, 'admin/springboard/asset-library');
+    }
+    if (isset($groups_enabled_types['node']['webform_ab'])) {
+      array_push($paths, 'admin/content/webform_ab');
+    }
+    foreach ($groups_enabled_types['node'] as $type => $field) {
+      if (fundraiser_is_donation_type($type)) {
+        array_push($paths, 'admin/springboard');
+        array_push($paths, 'admin/springboard/donation-forms/all');
+      }
+      if (in_array($type, webform_variable_get('webform_node_types'))) {
+        array_push($paths, 'admin/springboard');
+        array_push($paths, 'admin/springboard/forms/all');
+        array_push($paths, 'admin/springboard/forms/' . $type);
+      }
+    }
+    $paths = array_merge($paths, module_invoke_all('springboard_group_context_menu_paths'));
+  }
   return $paths;
 }
 
