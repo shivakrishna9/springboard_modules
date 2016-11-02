@@ -1,6 +1,5 @@
 <?php
 
-
 /**
  * Implements hook_views_query_alter().
  *
@@ -8,7 +7,7 @@
  * the content type is in a group.
  */
 function springboard_group_views_query_alter(&$view, &$query) {
-  // Array of alterable views. @todo make config?
+  // Array of alterable views.
   $alter = variable_get('group_restricted_views', []);
   if (in_array($view->name, $alter)) {
 

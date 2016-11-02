@@ -27,3 +27,5 @@
   padding: 2px 10px 2px 10px;
   display: block;
 }
+
+.ajax-progress-throbber { display: none}
