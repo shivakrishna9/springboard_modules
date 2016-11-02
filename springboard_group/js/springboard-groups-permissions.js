@@ -7,7 +7,6 @@
       // Hide everything but the rows necessary to administer organization issues.
       rows.each(function(){
         var id = $(this).children('td:first').attr('id');
-        console.log(id);
         if ($(this).children('td:first').hasClass('module') && (id !== 'springboard-group' && id !== 'module-springboard_group' && id !== 'module-og' && id !== 'module-node')) {
           hidem = true;
         }
