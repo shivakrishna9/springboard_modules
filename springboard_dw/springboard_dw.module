@@ -692,6 +692,9 @@ function springboard_dw_webform_submission_insert($node, $submission) {
 
     // Log the queue item.
     springboard_dw_log_queue_item($submission_item);
+
+    // Mark the item as queued.
+    springboard_dw_track_item_warehouse_queued('submission', $submission->sid);
   }
 }
 
@@ -736,6 +739,9 @@ function springboard_dw_webform_user_submission_insert($node, $submission, $acco
 
     // Log the queue item.
     springboard_dw_log_queue_item($submission_item);
+
+    // Mark the item as queued.
+    springboard_dw_track_item_warehouse_queued('submission', $submission->sid);
   }
 }
 
@@ -765,7 +771,7 @@ function springboard_dw_entity_insert($entity, $type) {
       springboard_dw_log_queue_item($sb_vendor_mapping_item);
 
       // Mark item as tracked.
-      springboard_dw_track_item_warehouse_queued('salesforce_sync', $entity->rmid);
+      springboard_dw_track_item_warehouse_queued('salesforce sync', $entity->rmid);
     }
   }
 }
