@@ -271,6 +271,7 @@ function springboard_group_settings_form_submit($form, $form_state) {
     }
     if (!empty($status[$node_type]) && !empty($form_state['input']['springboard_group_node'][$node_type])) {
       springboard_group_add_group_reference_field($node_type, 'node');
+      springboard_group_add_group_activate_views_alter($node_type);
     }
     if (isset($form_state['values']['springboard_group_node'][$node_type]['og_' . $node_type . '_multiple'])) {
       variable_set('og_' . $node_type . '_multiple', $form_state['values']['springboard_group_node'][$node_type]['og_' . $node_type . '_multiple']);
@@ -363,6 +364,7 @@ function springboard_group_advanced_settings() {
     'sbv_assets',
     'webform_ab_tests',
     'sba_actions',
+    'sbv_email_templates',
   );
 
   $form['altered_views']['group_restricted_views'] = array(
@@ -372,4 +374,42 @@ function springboard_group_advanced_settings() {
   );
 
   return system_settings_form($form);
+}
+
+/**
+ * Activate views hook_query_alter for views whose node types are grouped.
+ *
+ * @param string $type
+ *   The node type.
+ */
+function springboard_group_add_group_activate_views_alter($type) {
+  $restricted = variable_get('group_restricted_views', array());
+  switch ($type) {
+    case 'page_wrapper':
+      $restricted = array_merge($restricted, drupal_map_assoc(array('sbv_pagewrappers', 'sbv_assets')));
+      break;
+
+    case 'email_wrapper':
+      $restricted = array_merge($restricted, drupal_map_assoc(array('sbv_email_templates', 'sbv_assets')));
+      break;
+
+    case 'webform_ab':
+      $restricted = array_merge($restricted, drupal_map_assoc(array('webform_ab_tests')));
+      break;
+
+    case 'sba_message_action':
+    case 'sba_social_action':
+      $restricted = array_merge($restricted, drupal_map_assoc(array('sba_actions')));
+      break;
+
+    default:
+      if (fundraiser_is_donation_type($type)) {
+        $restricted = array_merge($restricted, drupal_map_assoc(array('sbv_forms')));
+      }
+      if (in_array($type, webform_variable_get('webform_node_types'))) {
+        $restricted = array_merge($restricted, drupal_map_assoc(array('sbv_forms')));
+      }
+  }
+
+  variable_set('group_restricted_views', $restricted);
 }
