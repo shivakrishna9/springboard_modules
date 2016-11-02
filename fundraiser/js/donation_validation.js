@@ -78,7 +78,7 @@
         }, "Enter a valid zipcode");
 
         // Instantiate Form Validation
-        var donationValidate = $('.fundraiser-donation-form').validate({
+        Drupal.donationValidate = $('.fundraiser-donation-form').validate({
           // Custom keyup function checking for tab key (9) and when value is empty
           onkeyup: function (element, event) {
             if ($(element).next('.error')[0]){
@@ -114,14 +114,22 @@
 
         // On change and keyup check form status
         $(".fundraiser-donation-form :input.key-validate").bind('change keyup', function() {
-          donationValidate.element('#' + $(this).attr('id'));
+          Drupal.donationValidate.element('#' + $(this).attr('id'));
         });
 
         // Track isValid status of each Braintree hosted field, if we are using that payment method.
-        if($('.braintree-hosted-field').length) {
+        if ($('.braintree-hosted-field').length) {
           var braintreeFields = {'number' : false, 'expirationMonth' : false , 'expirationYear' : false , 'cvv' : false };
           $(document).on('braintree.fieldEvent', function(event, param) {
-            braintreeFields[param.target.fieldKey] = param.isValid;
+            var field = param.fields[param.emittedBy];
+            var $field = $(field.container);
+            braintreeFields[param.emittedBy] = field.isValid;
+            if (!field.isValid) {
+              $field.closest('.control-group').removeClass('success').addClass('error');
+            }
+            else {
+              $field.closest('.control-group').removeClass('error').addClass('success');
+            }
           });
         }
 
@@ -131,13 +139,15 @@
           $('.fundraiser-donation-form').submit(function() {
             // Validate the form
             if (formIsValid()) {
-              $('.fundraiser-donation-form #edit-submit').hide();
-              $('.fundraiser_submit_message').hide();
-              $('.fundraiser-donation-form #edit-submit').after('<div class="donation-processing-wrapper">' +
-                '<p class="donation-processing">Processing' +
-                '<span class="donation-processing-spinner"></span>' +
-                '</p>' +
-                '</div>');
+              if (!$('.donation-processing-wrapper').length) {
+                $('.fundraiser-donation-form #edit-submit').hide();
+                $('.fundraiser_submit_message').hide();
+                $('.fundraiser-donation-form #edit-submit').after('<div class="donation-processing-wrapper">' +
+                  '<p class="donation-processing">Processing' +
+                  '<span class="donation-processing-spinner"></span>' +
+                  '</p>' +
+                  '</div>');
+              }
               return true;
             }
             return false;
@@ -147,17 +157,17 @@
         function formIsValid() {
           // If we are using Braintree, both the braintree form and the drupal
           // fields must validate.
-          if (typeof Drupal.myBraintreeIntegration === 'undefined') {
-            return donationValidate.form();
+          if (undefined === Drupal.braintreeInstance) {
+            return Drupal.donationValidate.form();
           } else {
-            if (Drupal.settings.braintree.integration === 'custom') {
-              if (donationValidate.form() && braintreeFieldsAreValid()) {
+            if (Drupal.settings.braintree.currentPaymentMethod == 'credit') {
+              if (Drupal.donationValidate.form() && braintreeFieldsAreValid()) {
                 return true;
               } else {
                 return false;
               }
-            } else if (Drupal.settings.braintree.integration === 'paypal') {
-              if (donationValidate.form() && $('input[name=payment_method_nonce]').length > 0) {
+            } else if (Drupal.settings.braintree.currentPaymentMethod == 'paypal') {
+              if (Drupal.donationValidate.form() && $('input[name=payment_method_nonce]').length > 0) {
                 return true;
               } else {
                 return false;
@@ -168,7 +178,7 @@
 
         function braintreeFieldsAreValid() {
           var returnValue = true;
-          $.each(braintreeFields, function( index, value ) {
+          $.each(braintreeFields, function(index, value) {
             if (value == false) {
               returnValue = false;
             }
