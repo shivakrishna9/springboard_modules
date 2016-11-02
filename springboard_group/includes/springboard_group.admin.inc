@@ -338,8 +338,16 @@ function springboard_group_advanced_settings() {
   $form['access']['og_node_access_strict'] = array(
     '#type' => 'checkbox',
     '#title' => t('Strict node access permissions'),
-    '#description' => t('Allow groups permissions to override Springboard Permissions. Example: If strict access is not enabled, and a user or role does not have permission to CRUD the article content type in Drupal, granting CRUD rights to the article type inside groups will have no effect for that user or role. If strict access is enabled, granting CRUD rights inside the group would allow the user to CRUD the article type even without the Drupal permission to do so. Another example: with strict access enabled, a content editor with the global Drupal permission “Edit any page content” who is not a member of a group would be denied access to modifying page content if that page is already in that group.'),
     '#default_value' => variable_get('og_node_access_strict', TRUE),
+  );
+  $form['access']['help'] = array(
+    '#markup' => '<p>'
+    . t('Allow groups permissions to override Springboard Permissions.')
+    . '</p><p>'
+    . t("Example: If strict access is not enabled, and a user is not in a Springboard role that has permission to create article content, granting create rights for the article content type to the user's role inside the group will have no effect for that user - they will not be able to create new articles. If strict access is enabled, granting create rights inside the group would allow the user to create the article type even without the Springboard role permission to do so.")
+    . '</p><p>'
+    . t('Another example: with strict access enabled, a content editor with the global Springboard permission “Edit any page content” would be denied access to modifying page content if that page is in a group to which he does not belong, or in which he does not have edit rights.')
+    . '</p>',
   );
 
   $form['altered_views'] = array(
