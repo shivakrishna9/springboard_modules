@@ -372,7 +372,7 @@ function springboard_group_advanced_settings() {
   $form['altered_views'] = array(
     '#type' => 'fieldset',
     '#title' => 'Groups-enabled Springboard views',
-    '#description' => t('Restrict results for these views based on group context. This will be updated automatically when new content types are made groupable.'),
+    '#description' => t("Restrict results for these views based on group context. Enabling this option will cause the view query to be altered, filtering the result based on the value of the groups context selector. These options will be updated automatically when new content types are made groupable."),
     '#collapsible' => TRUE,
   );
 

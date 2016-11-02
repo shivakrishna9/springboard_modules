@@ -160,6 +160,20 @@ function springboard_group_permissions_overview_page(&$page) {
     );
     array_unshift($page['content'], $help);
   }
+    if (!empty($page['content']['system_main']['#form_id']) &&
+      $page['content']['system_main']['#form_id'] == 'user_admin_permissions'
+    ) {
+      $help = array(
+        'help_message' => array(
+          '#markup' => t('This is a subset of the global permissions normally found on the !link page which are relevant to Springboard Groups.', array('!link' => l('user permissions', 'admin/people/permissions'))),
+          '#weight' => -10,
+          '#prefix' => '<br /><p>',
+        ),
+      );
+
+
+    array_unshift($page['content'], $help);
+  }
 }
 
 /**
@@ -172,13 +186,12 @@ function springboard_group_form_user_admin_permissions_alter(&$form, $form_state
     $form['permission']['administer group']['#markup'] = ' Administer Organic groups.';
     $form['permission']['administer group']['#description'] = 'Administer and post in all groups.';
   }
-  
+
   foreach ($form['permission'] as $key => $perm) {
     if (strpos($key, 'springboard_group') !== FALSE) {
       $form['permission'][$key]['#markup'] = str_replace('content', 'Springboard Group', $form['permission'][$key]['#markup']);
     }
   }
-
   if (arg(1) == 'springboard' && arg(2) == 'groups') {
     $path = drupal_get_path('module', 'springboard_group') . '/js/springboard-groups-permissions.js';
     $form['#attached']['js'][] = $path;
