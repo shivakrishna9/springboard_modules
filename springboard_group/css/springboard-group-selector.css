@@ -1,13 +1,11 @@
-#sb-og-group-group_selector select,
-#sb-og-group-group_selector div.selector,
-#sb-og-group-group_selector div.selector span {
+#sb-og-group-group_selector select {
   width: auto;
+  min-width: 200px;
   -webkit-border-radius: 4px;
   -moz-border-radius: 4px;
   border-radius: 4px;
-  background-color: #fff;
   border: solid 1px #ccc;
-  padding: 8px 20px 8px 15px;
+  padding: 8px 10px 8px 10px;
   display: block;
   margin-right: 20px;
   font-size: 14px;
@@ -19,10 +17,13 @@
   appearance: none;
   color: #6c6c6c;
   height: auto;
-  backgroud-color: #fff;
+}
+
+#sb-og-group-group_selector div.selector {
+  background-color: #fff;
 }
 
 #sb-og-group-group_selector option {
-  padding: 4px 10px 4px 10px;
+  padding: 2px 10px 2px 10px;
   display: block;
 }
