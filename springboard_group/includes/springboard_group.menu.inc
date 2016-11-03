@@ -31,7 +31,7 @@ function springboard_group_menu() {
     'page arguments' => array('og_ui_admin_global_permissions', 'node', '0', 'springboard_group'),
     'title' => 'Groups Permissions',
     'access arguments' => array('configure springboard groups'),
-    'description' => 'Configure Sprnigboard Groups permissions.',
+    'description' => 'Configure Springboard Groups permissions.',
     'weight' => -9,
     'file' => 'og_ui.admin.inc',
     'file path' => drupal_get_path('module', 'og_ui'),

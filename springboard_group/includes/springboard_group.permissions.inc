@@ -159,7 +159,7 @@ function springboard_group_permissions_overview_page(&$page) {
     $message = t("Administrator members inherit all permissions granted to members.");
     $help = array(
       'help_message' => array(
-        '#markup' => $message . '<br />' . $strict_message . '<br />' . $bypass_message . '<br />' . $help_message,
+        '#markup' => $message . '<br />' . $strict_message . '<br />' . $help_message,
         '#weight' => -10,
         '#prefix' => '<br /><p>',
       ),

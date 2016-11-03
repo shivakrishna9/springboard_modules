@@ -48,3 +48,7 @@ font-size: 0.9em;
 #springboard-group-help {
   max-width: 720px;
 }
+
+#springboard-group-help ul {
+  margin-left:2em;
+}

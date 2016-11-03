@@ -438,21 +438,31 @@ function springboard_group_help() {
   $build['#markup'] = <<<EOT
  <h2>Permissions</h2>
 
+<p>There are two types of permissions: those granted by Springboard roles,
+ and those granted by Group roles.
+
 <h3>Administer Groups Permissions</h3>
 
+<p>The the ability to create and/or administer all groups is conferred by
+Springboard role permissions.
+
 <p>A user in a Springboard role with the permission "Administer Organic Groups"
-may post and edit content in any group, and administer all groups.</p>
+may post and edit content in any group, and administer all groups. He does
+not need to be a member of the group.</p>
 
 <p>A user in a Springboard role with the permission "Create/Edit/Delete
-Springboard Group" may create and edit springboard groups. The user who
-creates the group is also automatically added to the role
-"Administrator Member" within that group.</p>
+Springboard Group" may create and edit Springboard Groups. The user who
+creates the group is also automatically added to the Group role
+"Administrator Member."</p>
 
 <H3>Content Permissions</h3>
 
-Please note that users with the "Administer Organic Groups" or
-"Bypass content access control" permissions are
-exempt from the following content permissions.
+<p>The ability to create or edit content is conferred by
+Springboard role permissions and by Group role permissions.
+
+<p>Please note that users with the "Administer Organic Groups" or
+"Bypass content access control" Springboard role permissions are
+exempt from Group content permissions.
 
 <h4>Create Content Permissions</h4>
 
@@ -475,21 +485,33 @@ post to a group.
 
 <h4>Edit and Delete Content Permissions</h4>
 
-<b>Strict access enabled</b>:<br>
-Example: A content editor with the global Springboard permission “Edit any
-page content” or "edit own page content" would be denied access to
+<b>Strict access enabled</b>
+<p>Group permissions override Springboard permissions.
+This is the recommended setting.
+<p>Examples:
+<ul><li>A content editor with the global Springboard permission “Edit any
+page content” would be denied access to
 modifying page content if that page is in a group to which he does
-not belong, or in which he does not have edit rights.
- This is the recommended setting.<br>
-<br>
-<b>Strict access disabled</b>: <br>
-Example: A content editor with the global Springboard permission “Edit any
-page content” or "edit own page content" would be not be denied
-access to modifying page content if that page is in a group to which
-he does not belong, or in which he does not have edit rights. If the
-content editor were to save the page, it would be removed from the
-group to which he does not belong or have edit rights.
+not belong, or in which he does not have edit rights.</li>
+ <li>A content editor with the global Springboard permission “Edit own page content”
+ would be denied access to modifying his own page content if that page has been
+  added to a group to which he does not belong, or in which
+  he does not have edit rights.</li>
+ </ul>
 
+<b>Strict access disabled</b>: <br>
+<p>Group permissions do not override Springboard permissions.
+<p>Examples:
+<ul><li>A content editor with the global Springboard permission “Edit any
+page content” would be able to modify any page content even if that page is
+in a group to which he does not belong. The page would be removed from
+the group when re-saved.</li>
+
+<li>A content editor with the global Springboard permission “Edit own page content”
+ would be able to modify his own page content if that page has been
+  added to a group to which he does not belong. The page would be removed
+  from the group when re-saved.</li>
+ </ul>
 <h4>Super-user Permissions</h4>
 
 <p>Any user in a Springboard role with the "Bypass content access control"
