@@ -176,6 +176,16 @@ function springboard_group_context_menu_paths() {
   return $paths;
 }
 
+/**
+ * Get the group context for entity reference field queries.
+ *
+ * Not currently used, but would be required for p2p autocompletes
+ * or other uses of non-OG entity reference fields which reference grouped
+ * content.
+ *
+ * @return array
+ *   The current user's groups.
+ */
 function springboard_group_entityreference_context($form, $form_state) {
   $field = $form['og_group_ref_' . substr($form['#node']->type, 0, 19)];
   $language = $field['#language'];
