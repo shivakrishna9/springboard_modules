@@ -23,7 +23,7 @@ class SpringboardGroup_EntityReference_SelectionHandler_Generic extends EntityRe
     }
 
     // Springboard Group:
-    // Skip the generic node processor that prevents unpusblished nodes
+    // Skip the generic node processor that prevents unpublished nodes
     // from being referenced.
     if ($field['field_name'] == 'field_sba_action_id') {
       return new EntityReference_SelectionHandler_Generic($field, $instance, $entity_type, $entity);
@@ -38,6 +38,13 @@ class SpringboardGroup_EntityReference_SelectionHandler_Generic extends EntityRe
   }
 }
 
+
+/**
+ * Implements hook_query_TAG_alter().
+ *
+ * Not currently used but would be required for p2p autocompletes and other
+ * entity reference fields.
+ */
 function springboard_group_query_entityreference_alter(&$query) {
   if (isset($query->alterTags['entityreference'])) {
 
