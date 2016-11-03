@@ -36,6 +36,9 @@ function springboard_group_rules_config_access($op, $rules_config = NULL, $accou
     if (!empty($group)) {
       $gid = reset($group['node']);
       $group_context = springboard_group_get_group_context();
+      if ($roles = og_get_user_roles('node', $gid, $account->uid)) {
+        $role_permissions = og_role_permissions($roles);
+      }
       if ($group_context != $gid && !user_access('administer group')) {
         return FALSE;
       }

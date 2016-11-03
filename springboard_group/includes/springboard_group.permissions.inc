@@ -33,6 +33,17 @@ function springboard_group_permission() {
   );
 }
 
+function springboard_group_og_permission() {
+  return array(
+//    'edit payment method' => array(
+//      'title' => t('Edit payment methods'),
+//      'description' => t("User must have administer payment method permission in Springboard."),
+//      'roles' => array(OG_AUTHENTICATED_ROLE),
+//      'default role' => array(),
+//    ),
+  );
+}
+
 /**
  * Implements hook_og_permission_alter().
  */
@@ -127,10 +138,10 @@ function springboard_group_permissions_overview_page(&$page) {
 
     $strict = variable_get('og_node_access_strict', TRUE);
     if ($strict) {
-      $strict_message = t('Strict access control is enabled. Groups permissions will override Springboard Permissions.');
+      $strict_message = t("Strict access control is enabled. Non-member's edit and delete permissions will override Springboard Permissions.");
     }
     else {
-      $strict_message = t('Strict access control is not enabled. Groups permissions will not override Springboard Permissions.');
+      $strict_message = t("Strict access control is not enabled. Non-member's edit and delete permissions will not override Springboard Permissions.");
     }
 
     $roles = user_roles();
@@ -160,18 +171,17 @@ function springboard_group_permissions_overview_page(&$page) {
     );
     array_unshift($page['content'], $help);
   }
-    if (!empty($page['content']['system_main']['#form_id']) &&
-      $page['content']['system_main']['#form_id'] == 'user_admin_permissions'
-    ) {
-      $help = array(
-        'help_message' => array(
-          '#markup' => t('This is a subset of the global permissions normally found on the !link page which are relevant to Springboard Groups.', array('!link' => l('user permissions', 'admin/people/permissions'))),
-          '#weight' => -10,
-          '#prefix' => '<br /><p>',
-        ),
-      );
 
-
+  if (!empty($page['content']['system_main']['#form_id']) &&
+    $page['content']['system_main']['#form_id'] == 'user_admin_permissions'
+  ) {
+    $help = array(
+      'help_message' => array(
+        '#markup' => t('This is a subset of the global permissions normally found on the !link page which are relevant to Springboard Groups.', array('!link' => l(t('user permissions'), 'admin/people/permissions'))),
+        '#weight' => -10,
+        '#prefix' => '<br /><p>',
+      ),
+    );
     array_unshift($page['content'], $help);
   }
 }
