@@ -2319,7 +2319,7 @@ function fundraiser_sustainers_edit_form($did) {
     // Display the billing update form only if the update callback for the
     // gatway has been defined.
     $billing_update_form = '';
-    if (isset($donation->gateway['update callback'])) {
+    if (isset($next_donation->gateway['update callback'])) {
       $billing_update_form_array = drupal_get_form('fundraiser_update_billing_form', $data);
       $billing_update_form_array['#attached']['js'][3]['data']['fundraiser']['js_validation_settings']['card_cvv']->required = FALSE;
       $billing_update_form_array['#attached']['js'][3]['data']['fundraiser']['js_validation_settings']['card_number']->required = FALSE;
