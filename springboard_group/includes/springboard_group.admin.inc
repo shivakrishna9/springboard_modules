@@ -459,11 +459,19 @@ exempt from the following content permissions.
 <p>Behavior can vary depending on settings with Groups Permissions
 and within Springboard Permissions.</p>
 
-<p>Example: If a user has "create page content" permission inside a group
+<p>Examples:
+<div class="item-list">
+<ul>
+<li>If a user has "create page content" permission inside a group
 but not in Springboard, the user will only be able to create page
-content for that group. If a user has "create page content"
+content for that group.
+<li>If a user has "create page content"
 permission in Springboard and within a group, the user can choose to
-post to the group or outside the group.<br>
+post to the group or outside the group.
+<li>If a user has "create page content"
+permission in Springboard but not within a group, the user cannot
+post to a group.
+</ul></div>
 
 <h4>Edit and Delete Content Permissions</h4>
 
@@ -471,8 +479,8 @@ post to the group or outside the group.<br>
 Example: A content editor with the global Springboard permission “Edit any
 page content” or "edit own page content" would be denied access to
 modifying page content if that page is in a group to which he does
-not belong, or in which he does not have edit rights, and if he does not
-have "administer organic groups permissions. This is the recommended setting.<br>
+not belong, or in which he does not have edit rights.
+ This is the recommended setting.<br>
 <br>
 <b>Strict access disabled</b>: <br>
 Example: A content editor with the global Springboard permission “Edit any

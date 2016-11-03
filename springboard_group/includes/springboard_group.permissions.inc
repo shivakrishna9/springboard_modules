@@ -33,15 +33,18 @@ function springboard_group_permission() {
   );
 }
 
+/**
+ * Implements hook_og_permission().
+ */
 function springboard_group_og_permission() {
-  return array(
-//    'edit payment method' => array(
-//      'title' => t('Edit payment methods'),
-//      'description' => t("User must have administer payment method permission in Springboard."),
-//      'roles' => array(OG_AUTHENTICATED_ROLE),
-//      'default role' => array(),
-//    ),
-  );
+//  return array(
+////    'edit payment method' => array(
+////      'title' => t('Edit payment methods'),
+////      'description' => t("User must have administer payment method permission in Springboard."),
+////      'roles' => array(OG_AUTHENTICATED_ROLE),
+////      'default role' => array(),
+////    ),
+//  );
 }
 
 /**
@@ -144,16 +147,7 @@ function springboard_group_permissions_overview_page(&$page) {
       $strict_message = t("Strict access control is not enabled.");
     }
 
-    $roles = user_roles();
-    $role_permissions = user_role_permissions($roles);
-    $bypass = [];
-    foreach ($role_permissions as $rid => $permissions) {
-      foreach ($permissions as $key => $permission) {
-        if ($key == 'bypass node access' && $permission == 1) {
-          $bypass[] = $roles[$rid];
-        }
-      }
-    }
+    $bypass = springboard_group_check_role_conflicts();
 
     $bypass_message = '';
     if (!empty($bypass)) {
@@ -176,16 +170,54 @@ function springboard_group_permissions_overview_page(&$page) {
   if (!empty($page['content']['system_main']['#form_id']) &&
     $page['content']['system_main']['#form_id'] == 'user_admin_permissions'
   ) {
-    $help_message = t('More information about permissions is available on the help tab');
-    $help = array(
-      'help_message' => array(
-        '#markup' => t('This is a subset of the global permissions normally found on the !link page which are relevant to Springboard Groups.', array('!link' => l(t('user permissions'), 'admin/people/permissions'))) . '<br />' . $help_message,
-        '#weight' => -10,
-        '#prefix' => '<br /><p>',
-      ),
-    );
-    array_unshift($page['content'], $help);
+    springboard_group_check_role_conflicts();
+    if (current_path() == 'admin/springboard/groups/settings/springboard-permissions') {
+      $help_message = t('More information about permissions is available on the help tab');
+      $help = array(
+        'help_message' => array(
+          '#markup' => t('This is a subset of the global permissions normally found on the !link page which are relevant to Springboard Groups.', array('!link' => l(t('user permissions'), 'admin/people/permissions'))) . '<br />' . $help_message,
+          '#weight' => -10,
+          '#prefix' => '<br /><p>',
+        ),
+      );
+      array_unshift($page['content'], $help);
+    }
   }
+}
+
+/**
+ * Check for "bypass content access control" conflicts.
+ *
+ * @return array
+ *   Roles with by permission.
+ */
+function springboard_group_check_role_conflicts() {
+  $roles = user_roles();
+  $role_permissions = user_role_permissions($roles);
+  $bypass = [];
+  $administer = [];
+  foreach ($role_permissions as $rid => $permissions) {
+    foreach ($permissions as $key => $permission) {
+      if ($key == 'bypass node access' && $permission == 1) {
+        $bypass[$rid] = $roles[$rid];
+      }
+      if ($key == 'administer group' && $permission == 1) {
+        $administer[$rid] = $roles[$rid];
+      }
+    }
+  }
+
+  $problem = array_diff($bypass, $administer);
+  if (!empty($problem)) {
+    $count = count($problem);
+    $word = format_plural($count, 'role', 'roles');
+    $bad_roles = implode(', ', $problem);
+    drupal_set_message(t('Warning! Some roles have the "bypass content access control" permission, but not the "administer organic groups" permissions. This will cause problems. Please fix the following @word: @bad_roles.', array(
+      '@word' => $word,
+      '@bad_roles' => $bad_roles,
+    )), 'error');
+  }
+  return $bypass;
 }
 
 /**
