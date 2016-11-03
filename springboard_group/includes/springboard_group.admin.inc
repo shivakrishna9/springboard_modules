@@ -363,13 +363,7 @@ function springboard_group_advanced_settings() {
     '#default_value' => variable_get('og_node_access_strict', TRUE),
   );
   $form['access']['help'] = array(
-    '#markup' => '<p>'
-    . t('Allow groups permissions to override Springboard Permissions.')
-    . '</p><p>'
-    . t("Example: If strict access is not enabled, and a user is not in a Springboard role that has permission to create article content, granting create rights for the article content type to the user's role inside the group will have no effect for that user - they will not be able to create new articles. If strict access is enabled, granting create rights inside the group would allow the user to create the article type even without the Springboard role permission to do so.")
-    . '</p><p>'
-    . t('Another example: with strict access enabled, a content editor with the global Springboard permission “Edit any page content” would be denied access to modifying page content if that page is in a group to which he does not belong, or in which he does not have edit rights.')
-    . '</p>',
+    '#markup' => '<p>' . t('Allow groups permissions to override Springboard Permissions.')
   );
 
   $form['altered_views'] = array(
@@ -433,4 +427,70 @@ function springboard_group_add_group_activate_views_alter($type) {
   }
 
   variable_set('group_restricted_views', $restricted);
+}
+
+function springboard_group_help() {
+  $build = [];
+  $build['#prefix'] = '<div id="springboard-group-help">';
+  $build['#suffix'] = '</div>';
+  $build['#attached']['css'][] = drupal_get_path('module', 'springboard_group') . '/css/springboard-og-admin.css';
+
+  $build['#markup'] = <<<EOT
+ <h2>Permissions</h2>
+
+<h3>Administer Groups Permissions</h3>
+
+<p>A user in a Springboard role with the permission "Administer Organic Groups"
+may post and edit content in any group, and administer all groups.</p>
+
+<p>A user in a Springboard role with the permission "Create/Edit/Delete
+Springboard Group" may create and edit springboard groups. The user who
+creates the group is also automatically added to the role
+"Administrator Member" within that group.</p>
+
+<H3>Content Permissions</h3>
+
+Please note that users with the "Administer Organic Groups" or
+"Bypass content access control" permissions are
+exempt from the following content permissions.
+
+<h4>Create Content Permissions</h4>
+
+<p>Behavior can vary depending on settings with Groups Permissions
+and within Springboard Permissions.</p>
+
+<p>Example: If a user has "create page content" permission inside a group
+but not in Springboard, the user will only be able to create page
+content for that group. If a user has "create page content"
+permission in Springboard and within a group, the user can choose to
+post to the group or outside the group.<br>
+
+<h4>Edit and Delete Content Permissions</h4>
+
+<b>Strict access enabled</b>:<br>
+Example: A content editor with the global Springboard permission “Edit any
+page content” or "edit own page content" would be denied access to
+modifying page content if that page is in a group to which he does
+not belong, or in which he does not have edit rights, and if he does not
+have "administer organic groups permissions. This is the recommended setting.<br>
+<br>
+<b>Strict access disabled</b>: <br>
+Example: A content editor with the global Springboard permission “Edit any
+page content” or "edit own page content" would be not be denied
+access to modifying page content if that page is in a group to which
+he does not belong, or in which he does not have edit rights. If the
+content editor were to save the page, it would be removed from the
+group to which he does not belong or have edit rights.
+
+<h4>Super-user Permissions</h4>
+
+<p>Any user in a Springboard role with the "Bypass content access control"
+permission will be exempt from group access control. To prevent conflicts
+with group ownership when saving content, every role that has
+"Bypass content access control" must also have "Administer Organic groups"
+permissions.</p><br />
+
+EOT;
+
+  return $build;
 }

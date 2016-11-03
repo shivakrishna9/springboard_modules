@@ -62,6 +62,16 @@ function springboard_group_menu() {
     'type' => MENU_LOCAL_TASK,
   );
 
+  $items["admin/springboard/groups/settings/help"] = array(
+    'page callback' => 'springboard_group_help',
+    'title' => 'Help',
+    'access arguments' => array('configure springboard groups'),
+    'description' => 'Configure Springboard Groups advanced settings.',
+    'weight' => -6,
+    'file' => 'includes/springboard_group.admin.inc',
+    'type' => MENU_LOCAL_TASK,
+  );
+
 
   // OG module doesn't define a default tab. We help it here.
   $items['group/%/%/admin/people/all'] = array(

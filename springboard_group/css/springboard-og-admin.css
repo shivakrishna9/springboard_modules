@@ -44,3 +44,7 @@ font-size: 0.9em;
   clear: left;
   display:block;
 }
+
+#springboard-group-help {
+  max-width: 720px;
+}

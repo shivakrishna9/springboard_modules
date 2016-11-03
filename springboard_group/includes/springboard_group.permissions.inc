@@ -138,10 +138,10 @@ function springboard_group_permissions_overview_page(&$page) {
 
     $strict = variable_get('og_node_access_strict', TRUE);
     if ($strict) {
-      $strict_message = t("Strict access control is enabled. Non-member's edit and delete permissions will override Springboard Permissions.");
+      $strict_message = t("Strict access control is enabled.");
     }
     else {
-      $strict_message = t("Strict access control is not enabled. Non-member's edit and delete permissions will not override Springboard Permissions.");
+      $strict_message = t("Strict access control is not enabled.");
     }
 
     $roles = user_roles();
@@ -161,10 +161,11 @@ function springboard_group_permissions_overview_page(&$page) {
       $bypass_message = t('The following Springboard roles have "bypass content access control" permission and will not be affected by these settings: @bypass', array('@bypass' => $bypass));
     }
 
+    $help_message = t('More information about permissions is available on the help tab');
     $message = t("Administrator members inherit all permissions granted to members.");
     $help = array(
       'help_message' => array(
-        '#markup' => $message . '<br />' . $strict_message . '<br />' . $bypass_message,
+        '#markup' => $message . '<br />' . $strict_message . '<br />' . $bypass_message . '<br />' . $help_message,
         '#weight' => -10,
         '#prefix' => '<br /><p>',
       ),
@@ -175,9 +176,10 @@ function springboard_group_permissions_overview_page(&$page) {
   if (!empty($page['content']['system_main']['#form_id']) &&
     $page['content']['system_main']['#form_id'] == 'user_admin_permissions'
   ) {
+    $help_message = t('More information about permissions is available on the help tab');
     $help = array(
       'help_message' => array(
-        '#markup' => t('This is a subset of the global permissions normally found on the !link page which are relevant to Springboard Groups.', array('!link' => l(t('user permissions'), 'admin/people/permissions'))),
+        '#markup' => t('This is a subset of the global permissions normally found on the !link page which are relevant to Springboard Groups.', array('!link' => l(t('user permissions'), 'admin/people/permissions'))) . '<br />' . $help_message,
         '#weight' => -10,
         '#prefix' => '<br /><p>',
       ),
