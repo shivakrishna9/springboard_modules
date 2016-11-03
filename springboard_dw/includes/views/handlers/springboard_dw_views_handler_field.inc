@@ -52,21 +52,32 @@ class springboard_dw_views_handler_field extends views_handler_field
     $alias = isset($field) ? $this->aliases[$field] : $this->field_alias;
 
     // Replace transaction ID value with on-site link, if available:
-    if ($alias == 'transaction_id') {
+    if ($alias == 'transaction_id' || $alias == 'payment_link') {
       if (!is_numeric($value)) {
         $value = 'N/A';
       }
       else {
-        $value = l($value, '<front>');
+        $order_id_exists = db_query("SELECT order_id FROM {commerce_order} WHERE order_id = :transaction_id",
+          array(':transaction_id' => $value))->fetchField();
+        if ($order_id_exists) {
+          $label = ($alias == 'transaction_id' ? $value : 'Payment');
+          $value = l($label, 'admin/commerce/orders/' . $value);
+        }
+        else {
+          $value = ($alias == 'transaction_id' ? $value : 'N/A');  
+        }
       }
     }
     // Replace the form name with on-site link, if available:
     elseif ($alias == 'form_name') {
-      $value = l($value, '<front>');
+      $donation_node_data = db_query("SELECT nid, type FROM {node} WHERE title = :title", array(':title' => $value))
+        ->fetchObject();
+      if ($donation_node_data && fundraiser_is_donation_type($donation_node_data->type)) {
+        $value = l($value, 'node/' . $donation_node_data->nid);
+      }
     }
     elseif ($alias == 'recurs_monthly') {
       $value = ($value == 'recurs' ? 'Yes' : 'No');
-      $value = l($value, '<front>');
     }
     return $value;
   }

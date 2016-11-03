@@ -106,6 +106,16 @@ function springboard_dw_views_data() {
     ),
   );
 
+  // Add "Payment" link:
+  $data['sp_dw_donations_psudo']['payment_link'] = array(
+    'title' => t('Payment'),
+    'help' => t('Provides a link to a payment, if it currently exists in the Drupal DB.'),
+    'field' => array(
+      'handler' => 'springboard_dw_views_handler_field',
+      'click sortable' => FALSE,
+    ),
+  );
+
   return $data;
 }
 

@@ -49,7 +49,7 @@ class springboard_dw_donations_views_plugin_query extends views_plugin_query {
   
     // Add filters to the request:
     if ($request_type == 'multi_donation' && isset($view->exposed_data)) {
-      $filter_values_to_skip = array('submit', 'form_build_id', 'form_token', 'form_id');
+      $filter_values_to_skip = array('submit', 'form_build_id', 'form_token', 'form_id', 'reset');
       foreach ($view->exposed_data as $filter_key => $filter_value) {
         if (empty($filter_value) || empty($filter_key) || in_array($filter_key, $filter_values_to_skip)) {
           continue;
@@ -73,7 +73,6 @@ class springboard_dw_donations_views_plugin_query extends views_plugin_query {
       if (isset($view->exposed_input['sort']) && !empty($view->exposed_input['sort'])) {
         $params['order'] = $view->exposed_input['sort'];
       }
-
       // If click sorting is not being used then use the view's default sort order, if available:
       if (!isset($params['orderBy']) && !isset($params['order']) && isset($view->sort) && is_array($view->sort)) {
         $sort = array_values($view->sort)[0];
@@ -84,8 +83,12 @@ class springboard_dw_donations_views_plugin_query extends views_plugin_query {
           $params['order'] = strtolower($sort->opions['order']);
         }
       }
-    }
 
+      // Set the current page:
+      if (isset($_GET['page']) && is_numeric($_GET['page'])) {
+        $params['page'] = $_GET['page'];
+      }
+    }
 
     // Submit the request to the Data Warehouse and get the response:
     $response = springboard_dw_api_call($endpoint, $params, $method);
@@ -111,7 +114,16 @@ class springboard_dw_donations_views_plugin_query extends views_plugin_query {
     else {
       $view->result = array();
     }
-    // dpm($view->result);
+
+    // Populate the payment link with the transaction_id value, so it can become a link:
+    foreach ($view->result as $key => $result) {
+      if ($view->result[$key]->transaction_id == '8725208570') {
+        $view->result[$key]->transaction_id = '1001996';
+      }
+      if (isset($view->result[$key]->transaction_id) && is_numeric($view->result[$key]->transaction_id)) {
+        $view->result[$key]->payment_link = $view->result[$key]->transaction_id;
+      }
+    }
 
     $view->execute_time = microtime(TRUE) - $start;
   }
