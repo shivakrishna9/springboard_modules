@@ -117,9 +117,6 @@ class springboard_dw_donations_views_plugin_query extends views_plugin_query {
 
     // Populate the payment link with the transaction_id value, so it can become a link:
     foreach ($view->result as $key => $result) {
-      if ($view->result[$key]->transaction_id == '8725208570') {
-        $view->result[$key]->transaction_id = '1001996';
-      }
       if (isset($view->result[$key]->transaction_id) && is_numeric($view->result[$key]->transaction_id)) {
         $view->result[$key]->payment_link = $view->result[$key]->transaction_id;
       }
