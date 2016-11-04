@@ -10,6 +10,39 @@
 function springboard_group_menu() {
   $items = array();
 
+  // User listing pages.
+  $items['node/%/group/people'] = array(
+    'title' => 'People',
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+  );
+
+  // User listing pages.
+  $items['node/%/group/add-people'] = array(
+    'page callback' => 'drupal_get_form',
+    'title' => 'Add members',
+    'page arguments' => array('og_ui_add_users', 0, 1),
+    'type' => MENU_LOCAL_TASK,
+    'file path' => drupal_get_path('module', 'og_ui'),
+    'file' => 'og_ui.admin.inc',
+    'weight' => 5,
+    'access callback' => 'og_ui_user_access_group',
+    'access arguments' => array('add user', 0, 1),
+  );
+
+
+  // User listing pages.
+  $items['node/%/group/bulk-add-people'] = array(
+    'page callback' => 'springboard_group_bulk_add_page',
+    'page arguments' => array(0, 1),
+    'weight' => 100,
+    'title' => 'Bulk Add Members',
+    'access callback' => 'og_ui_user_access_group',
+    'access arguments' => array('add user', 0,1),
+    'file' => 'includes/springboard_group.pages.inc',
+    'type' => MENU_LOCAL_TASK,
+  );
+
+
   $items['admin/springboard/groups/settings'] = array(
     'title' => 'Springboard Groups',
     'description' => 'Configuration settings for Springboard Group content',
@@ -79,17 +112,6 @@ function springboard_group_menu() {
     'type' => MENU_DEFAULT_LOCAL_TASK,
   );
 
-  $items['group/%/%/admin/people/bulk-add'] = array(
-    'page callback' => 'springboard_group_bulk_add_page',
-    'page arguments' => array(1, 2),
-    'type' => MENU_LOCAL_TASK,
-    'weight' => 100,
-    'title' => 'Bulk Add Members',
-    'access callback' => 'og_ui_user_access_group',
-    'access arguments' => array('add user', 1, 2),
-    'file' => 'includes/springboard_group.pages.inc',
-  );
-
   return $items;
 }
 
@@ -112,6 +134,9 @@ function springboard_group_menu_alter(&$items) {
           $items[$path]['access arguments'][$key] = 'access og default admin ui';
         }
       }
+    }
+    if (strpos($path, 'node/%/group') !== FALSE && $item['page callback'] == 'og_ui_group_admin_overview') {
+      $items[$path]['page callback'] = 'springboard_group_og_ui_group_admin_overview';
     }
   }
 }
