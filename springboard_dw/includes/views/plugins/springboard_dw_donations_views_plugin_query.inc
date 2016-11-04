@@ -123,10 +123,16 @@ class springboard_dw_donations_views_plugin_query extends views_plugin_query {
       $view->result = array();
     }
 
-    // Populate the payment link with the transaction_id value, so it can become a link:
+    // Alter result data:
     foreach ($view->result as $key => $result) {
+      // Populate the payment link with the transaction_id value, so it can become a link:
       if (isset($view->result[$key]->transaction_id) && is_numeric($view->result[$key]->transaction_id)) {
         $view->result[$key]->payment_link = $view->result[$key]->transaction_id;
+      }
+
+      // Prefix the donation amount with the appropriate currency symbol:
+      if (isset($view->result[$key]->amount) && is_numeric($view->result[$key]->amount) && isset($view->result[$key]->currency)) {
+        $view->result[$key]->amount = commerce_currency_format($view->result[$key]->amount, $view->result[$key]->currency, NULL, FALSE);
       }
     }
 
