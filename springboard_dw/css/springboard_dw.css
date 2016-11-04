@@ -1,7 +1,14 @@
+
 .view-springboard-dw-donations-report .view-header p {
   margin: 1px 0;
 }
-
+.view-springboard-dw-donations-report {
+  font-size: 10px;
+}
+.view-springboard-dw-donations-report table th,
+.view-springboard-dw-donations-report table td {
+  padding: 1px 3px;
+}
 #views-exposed-form-springboard-dw-donations-report-page .views-exposed-form .views-submit-button,
 #views-exposed-form-springboard-dw-donations-report-page .views-exposed-form .views-reset-button {
   float: right;
