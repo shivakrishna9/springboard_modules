@@ -1302,9 +1302,11 @@
         }
 
         $('.remove-all-targets').click(function() {
-          // @todo show 'save as group' on messages here
+
             $('.target-recipient').remove();
             $('.targeting-count, .remove-all-targets').remove();
+            // Reveal 'save as group' option if present.
+            $('#edit-save-target-group').show().removeClass('hidden');
             Sba.setUpdateMessage('');
             Sba.setFormValue();
         });

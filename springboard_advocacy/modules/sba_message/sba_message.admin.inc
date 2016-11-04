@@ -220,8 +220,7 @@ function sba_message_edit_form($form, &$form_state, $sba_message) {
     // If the message current has no recipients, give the option to save the
     // recipients as a re-usable custom group.
     $recipients = isset($sba_message->data['recipients']) ? json_decode($sba_message->data['recipients'], TRUE) : '';
-    if(empty($recipients)){
-      $form['save_target_group_toggle_val'] = array(
+    $form['save_target_group_toggle_val'] = array(
         '#type' => 'hidden',
         '#value' => '',
         '#attributes' => array('id' => 'edit-save-target-group-save-target-group-toggle_val'),
@@ -244,6 +243,10 @@ function sba_message_edit_form($form, &$form_state, $sba_message) {
           '#title' => t('Save these targets as a custom group.'),
           '#weight' => 0,
         );
+        // If recipients are already set, hide the option to save as target group.
+        if(!empty($recipients)) {
+          $form['save_target_group']['#attributes']['class'] = array('hidden');
+        }
         $form['save_target_group']['save_target_group_name'] = array(
           '#type' => 'textfield',
           '#title' => t('Group name'),
@@ -260,7 +263,7 @@ function sba_message_edit_form($form, &$form_state, $sba_message) {
         $form['#validate'][] = 'sba_message_save_target_group_validate';
       }
     }
-  }
+
 
   $form['#attached']['js'][] = drupal_get_path('module', 'sba_message') . '/js/sba_message.js';
   $form['#attached']['css'][] = drupal_get_path('module', 'sba_message') . '/css/sba_message.css';
