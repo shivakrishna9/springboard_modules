@@ -82,7 +82,7 @@ function springboard_group_ctools_plugin_directory($module, $plugin) {
 /**
  * Implements hook_ctools_plugin_post_alter().
  *
- * Allow entity reference fields to reference unpublished items,
+ * Allow entity reference fields to reference unpublished items.
  */
 function springboard_group_ctools_plugin_post_alter(&$plugin, &$info) {
   if (
@@ -97,6 +97,50 @@ function springboard_group_ctools_plugin_post_alter(&$plugin, &$info) {
       'file' => 'springboard_group.entityreference.inc',
     ) + $plugin;
   }
+
+  // Make the create content links pane recognize sb groups field name.
+  if ($info['type'] == 'content_types' && $plugin['render callback'] == 'og_node_create_links_content_type_render') {
+    $plugin['render callback'] = 'springboard_group_og_node_create_links_content_type_render';
+  }
+}
+
+/**
+ * Make the create content links pane recognize sb groups field name.
+ *
+ * Overrides og_node_create_links_content_type_render().
+ *
+ * @param $subtype
+ * @param $conf
+ * @param $args
+ * @param $context
+ *
+ * @return bool|\stdClass
+ */
+function springboard_group_og_node_create_links_content_type_render($subtype, $conf, $args, $context) {
+  if (empty($context->data)) {
+    return FALSE;
+  }
+  $node = $context->data;
+  $types = !empty($conf['types']) ? $conf['types'] : array_keys(node_type_get_types());
+  $links = [];
+  foreach ($types as $type) {
+    if ($context->data->type == 'springboard_group') {
+      $links[] = og_node_create_links('node', $node->nid, 'og_group_ref_' . substr($type, 0, 19));
+    }
+    else {
+      $links[] = og_node_create_links('node', $node->nid, $conf['field_name'], NULL, !empty($conf['types']) ? $conf['types'] : NULL);
+    }
+  }
+  if (empty($links)) {
+    return FALSE;
+  }
+  $module = 'og';
+  $block = new stdClass();
+  $block->module = $module;
+  $block->title = t('Content create links');
+
+  $block->content = $links;
+  return $block;
 }
 
 /**
@@ -530,6 +574,11 @@ function springboard_group_page_alter(&$page) {
 }
 
 
+/**
+ * @param $entity_type
+ * @param $etid
+ * @return bool|string
+ */
 function springboard_group_og_ui_group_admin_overview($entity_type, $etid) {
   $content = '';
   og_set_breadcrumb($entity_type, $etid);
@@ -553,3 +602,4 @@ function springboard_group_og_ui_group_admin_overview($entity_type, $etid) {
   }
   return $content;
 }
+
