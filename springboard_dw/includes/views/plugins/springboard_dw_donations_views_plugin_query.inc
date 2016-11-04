@@ -145,5 +145,7 @@ class springboard_dw_donations_views_plugin_query extends views_plugin_query {
     );
   }
 
+  function add_field() {}
+
   function add_where() {}
 }
