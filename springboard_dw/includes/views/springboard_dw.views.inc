@@ -175,6 +175,7 @@ function springboard_dw_views_handlers() {
 function springboard_dw_form_views_exposed_form_alter(&$form, &$form_state) {
   if (isset($form['#id']) && $form['#id'] == 'views-exposed-form-springboard-dw-donations-report-page') {
     // Attached CSS and jQuery related to the exposed filters:
+    drupal_add_css('//maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.css', array('type' => 'external'));
     $form['#attached']['css'][] = drupal_get_path('module', 'springboard_dw') . '/css/springboard_dw.css';
     $form['#attached']['js'][] = drupal_get_path('module', 'springboard_dw') . '/js/springboard_dw.js';
   }
