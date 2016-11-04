@@ -135,7 +135,7 @@ function springboard_group_menu_alter(&$items) {
         }
       }
     }
-    if (strpos($path, 'node/%/group') !== FALSE && $item['page callback'] == 'og_ui_group_admin_overview') {
+    if (strpos($path, 'node/%/group') !== FALSE && isset($item['page callback']) && $item['page callback'] == 'og_ui_group_admin_overview') {
       $items[$path]['page callback'] = 'springboard_group_og_ui_group_admin_overview';
     }
   }
