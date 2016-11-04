@@ -3,10 +3,48 @@
 /**
  * Implements hook_views_query_alter().
  *
+ * Fix the bulk add view to display only non-members.
+ *
  * Add a join for og_membership table on dashboard views when
  * the content type is in a group.
  */
 function springboard_group_views_query_alter(&$view, &$query) {
+
+  if ($view->name == 'springboard_group_bulk_add') {
+    foreach ($query->where as $key => &$condition_group) {
+      foreach ($condition_group['conditions'] as &$condition) {
+        if (strpos($condition['field'], 'og_membership.gid') !== FALSE) {
+          // Unset the where clause from the context filter, and
+          // grab it's value and add it to a join instead.
+          $gid = $condition['value'][':og_membership_gid'];
+          unset($query->where[$key]);
+          $join = new views_join();
+          $join->table = 'og_membership';
+          $join->field = 'etid';
+          $join->left_table = 'users';
+          $join->left_field = 'uid';
+          $join->type = 'left';
+          $join->extra = array(
+            array(
+              'field' => 'entity_type',
+              'value' => 'user',
+            ),
+            array(
+              'field' => 'gid',
+              'value' => $gid,
+            ),
+          );
+          $join->construct();
+          $join->adjusted = TRUE;
+          $query->add_relationship('og_membership', $join, 'user');
+          $condition = db_and();
+          $condition->isNull('og_membership.etid');
+          $query->add_where(0, $condition);
+        }
+      }
+    }
+  }
+
   // Array of alterable views.
   $alter = variable_get('group_restricted_views', []);
 
@@ -97,5 +135,5 @@ function springboard_group_views_query_check_content_type($query) {
 
 
 function springboard_group_views_pre_execute(&$view) {
-//  dpq($view->build_info['query']);
+  //dpq($view->build_info['query']);
 }
