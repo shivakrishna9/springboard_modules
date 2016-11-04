@@ -16,6 +16,9 @@ Drupal.behaviors.springboardDataWarehouseViews = {
       $(this).hide();
     });
 
+    // Alter date range filter markup:
+    $('#views-exposed-form-springboard-dw-donations-report-page #edit-transaction-date-min input').after('<span id="dw-date-range-separator">and</span>');
+
     // Rework presentation of the items per page element:
     var itemsPerPage = $('#views-exposed-form-springboard-dw-donations-report-page #edit-items-per-page');
     itemsPerPage.parent().parent().hide();

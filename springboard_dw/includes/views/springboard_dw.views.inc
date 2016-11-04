@@ -87,6 +87,7 @@ function springboard_dw_views_data() {
     );
   }
 
+  // Add exposed filter support to the donation_id field:
   if (isset($data['sp_dw_donations_psudo']['donation_id'])) {
     $data['sp_dw_donations_psudo']['donation_id']['argument'] = array(
       'title' => t('Donation ID'),
@@ -104,6 +105,18 @@ function springboard_dw_views_data() {
     'filter' => array(
       'handler' => 'springboard_dw_views_handler_filter',
     ),
+  );
+
+  // Add support for date filtering:
+  $data['sp_dw_donations_psudo']['transaction_date']['field'] = array(
+    'handler' => 'springboard_dw_views_handler_date_field',
+    'click sortable' => TRUE,
+    'is_date' => TRUE,
+  );
+  $data['sp_dw_donations_psudo']['transaction_date']['filter'] = array(
+    'handler' => 'springboard_dw_views_handler_date_filter',
+    'empty_field_name' => 'Undated',
+    'is_date' => TRUE,
   );
 
   // Add "Payment" link:
@@ -165,4 +178,13 @@ function springboard_dw_form_views_exposed_form_alter(&$form, &$form_state) {
     $form['#attached']['css'][] = drupal_get_path('module', 'springboard_dw') . '/css/springboard_dw.css';
     $form['#attached']['js'][] = drupal_get_path('module', 'springboard_dw') . '/js/springboard_dw.js';
   }
+
+  // Alter date filter value format:
+  if (isset($form['transaction_date']['min']['#date_format'])) {
+    $form['transaction_date']['min']['#date_format'] = 'm/d/Y';
+  }
+  if (isset($form['transaction_date']['max']['#date_format'])) {
+    $form['transaction_date']['max']['#date_format'] = 'm/d/Y';
+  }
+
 }
