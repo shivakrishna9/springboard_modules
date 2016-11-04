@@ -4359,8 +4359,8 @@ function fundraiser_sustainers_preprocess_html(&$vars) {
  *   Part of the sustainer record for additional logging.
  */
 function fundraiser_sustainers_processing_exception(Exception $e, $sustainer) {
-  $message = 'Exception thrown while processing a sustainer. Sustainer ID: %did. %type: !message in %function (line %line of %file).';
-  $variables = array('%did' => $sustainer->did);
+  $message = 'Exception thrown while processing a sustainer - did=%did, gateway=%gateway, uid=%uid, %type=!message in %function (line %line of %file).';
+  $variables = array('%did' => $sustainer->did, '%gateway' => $sustainer->gateway, '%uid' => $sustainer->uid);
   watchdog_exception('fundraiser_sustainers', $e, $message, $variables);
 }
 
