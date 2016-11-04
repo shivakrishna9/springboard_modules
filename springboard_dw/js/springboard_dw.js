@@ -12,7 +12,7 @@ Drupal.behaviors.springboardDataWarehouseViews = {
     $('#sb-dw-donations-report-help').click(function (e) {
       e.preventDefault();
       donationsReportTable.before('<div id="sb-dw-donations-report-help-text">' +
-        'Use this form to search archived Donation data.  Please note that it take up to 16 minutes for website donation data to appear in this archive.</div>');
+        'Use this form to search archived Donation data.  Please note that it take up to 15 minutes for website donation data to appear in this archive.</div>');
       $(this).hide();
     });
 

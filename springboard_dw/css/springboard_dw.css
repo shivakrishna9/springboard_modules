@@ -1,3 +1,7 @@
+.view-springboard-dw-donations-report .view-header p {
+  margin: 1px 0;
+}
+
 #views-exposed-form-springboard-dw-donations-report-page .views-exposed-form .views-submit-button,
 #views-exposed-form-springboard-dw-donations-report-page .views-exposed-form .views-reset-button {
   float: right;
@@ -9,4 +13,7 @@
 #views-exposed-form-springboard-dw-donations-report-page #edit-transaction-date-min-wrapper,
 #views-exposed-form-springboard-dw-donations-report-page #edit-transaction-date-max-wrapper {
   float: left;
+}
+#views-exposed-form-springboard-dw-donations-report-page #edit-dw-global-search-wrapper .views-widget {
+  padding-top: 16px;
 }

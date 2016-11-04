@@ -43,12 +43,9 @@ class springboard_dw_donations_views_plugin_query extends views_plugin_query {
       $endpoint = 'donations';
     }
 
-    // $endpoint = 'metrics/donation/count';
-
-    // $request_type = 'multi_donation';
-  
-    // Add filters to the request:
     if ($request_type == 'multi_donation' && isset($view->exposed_data)) {
+
+      // Add filters to the request:
       $filter_values_to_skip = array('submit', 'form_build_id', 'form_token', 'form_id', 'reset');
       foreach ($view->exposed_data as $filter_key => $filter_value) {
         if (empty($filter_value) || empty($filter_key) || in_array($filter_key, $filter_values_to_skip)) {
@@ -65,6 +62,17 @@ class springboard_dw_donations_views_plugin_query extends views_plugin_query {
         }
         $params[$filter_key] = $filter_value;
       }
+
+      // Re-format date range filtering:
+      if (isset($params['transaction_date']['min'])) {
+        $params['transactionDateRangeStart'] = date('m/d/Y', strtotime($params['transaction_date']['min']));
+        unset($params['transaction_date']['min']);
+      }
+      if (isset($params['transaction_date']['max'])) {
+        $params['transactionDateRangeEnd'] = date('m/d/Y', strtotime($params['transaction_date']['max']));
+        unset($params['transaction_date']['max']);
+      }
+      unset($params['transaction_date']);
 
       // Apply view click sorting to the request:
       if (isset($view->exposed_input['order']) && !empty($view->exposed_input['order'])) {
@@ -148,4 +156,6 @@ class springboard_dw_donations_views_plugin_query extends views_plugin_query {
   function add_field() {}
 
   function add_where() {}
+  
+  function ensure_table() {}
 }
