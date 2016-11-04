@@ -1191,20 +1191,19 @@ function fundraiser_sustainers_fundraiser_donation_delete($donation) {
 /**
  * Helper function, kick off recurring donations for payment. Called on cron usually.
  */
-function fundraiser_sustainers_process_recurring_donations() {
+function fundraiser_sustainers_process_recurring_donations($limit = 200) {
   // Provide a hook to allow for modules to respond.
   module_invoke_all('fundraiser_donation_recurring');
   $log = array(
     'successes' => 0,
     'fails' => 0,
   );
-  $donations = _fundraiser_sustainers_cron_get_recurring();
+  $donations = _fundraiser_sustainers_cron_get_recurring($limit);
   $sustainer_key = fundraiser_sustainers_get_sustainer_key_value();
 
   // Loop over the found orders
   foreach ($donations as $recurring) {
     try {
-
       fundraiser_sustainers_process_single_recurring_donation($log, $recurring, $sustainer_key);
     }
     catch (Exception $e) {
