@@ -47,6 +47,17 @@ function springboard_group_rules_config_access($op, $rules_config = NULL, $accou
         return FALSE;
       }
     }
+    else {
+      if ($rules_config->module == 'commerce_payment') {
+        // Groups are enabled but no group on this rule.
+        $fields = og_get_group_audience_fields('rules_config', 'rules_config', 'node', 'springboard_group');
+        if (!empty($fields)) {
+          if ((user_access('administer rules') || user_access('administer payment methods')) && !user_access('administer group')) {
+            return FALSE;
+          }
+        }
+      }
+    }
   }
 }
 
@@ -59,7 +70,14 @@ function springboard_group_rules_page_filter_payment_rules(&$page) {
   if (!empty($page['content']['system_main']['#page_callback']) &&
     $page['content']['system_main']['#page_callback'] == 'commerce_payment_ui_admin_page'
   ) {
+    $role_permissions = array();
     $group_context = springboard_group_get_group_context();
+    if (!empty($group_context) && $group_context != '_none') {
+      $roles = og_get_user_roles('node', $group_context);
+      $perms = og_role_permissions($roles);
+      $role_permissions = array_keys(array_filter(reset($perms)));
+    }
+
     foreach (array('enabled', 'disabled') as $key) {
       foreach ($page['content']['system_main'][$key]['rules']['#rows'] as $row_key => &$row) {
         $machine_name = (str_replace('Machine name: ', '', $row[0]['data']['description']['settings']['machine_name']['#markup']));
@@ -72,7 +90,7 @@ function springboard_group_rules_page_filter_payment_rules(&$page) {
           else {
             $gid = '_none';
           }
-          if ($group_context != $gid) {
+          if ($group_context != $gid || (!user_access('administer group') && !in_array('edit payment method', $role_permissions))) {
             unset($page['content']['system_main'][$key]['rules']['#rows'][$row_key]);
           }
         }

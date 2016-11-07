@@ -514,10 +514,21 @@ the group when re-saved.</li>
  </ul>
 <h4>Super-user Permissions</h4>
 
-<p>Any user in a Springboard role with the "Bypass content access control"
-permission will be exempt from group access control. To prevent conflicts
+
+<p><strong>Content access</strong>: any user in a Springboard role with the "Bypass content access control"
+permission will be exempt from content access control. To prevent conflicts
 with group ownership when saving content, every role that has
 "Bypass content access control" must also have "Administer Organic groups"
+permissions.</p>
+<p><strong>Rules access: </strong> any user in a Springboard role with the "Bypass rules access control"
+permission will be exempt from rules access control. To prevent conflicts
+with group ownership when saving payment methods, every role that has
+"Bypass rules access control" should also have "Administer Organic groups"
+permissions.</p>
+<p>Any user in a Springboard role with the "Administer rules configurations"
+permission will be exempt from rules access control. To prevent conflicts
+with group ownership when saving payment methods, every role that has
+"Administer rules configurations" should also have "Administer Organic groups"
 permissions.</p><br />
 
 EOT;

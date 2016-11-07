@@ -39,7 +39,7 @@ function springboard_group_permission() {
 function springboard_group_og_permission() {
   return array(
     'edit payment method' => array(
-      'title' => t('Edit payment methods'),
+      'title' => t('Administer group payment methods'),
       'description' => t("Edit a group's payments methods."),
       'roles' => array(OG_AUTHENTICATED_ROLE),
       'default role' => array(),
@@ -69,7 +69,6 @@ function springboard_group_og_user_access_alter(&$perm, $context) {
     $perm['administer group'] = TRUE;
   }
 }
-
 
 /**
  * Implements hook_preprocess_TAG().
@@ -155,7 +154,7 @@ function springboard_group_permissions_overview_page(&$page) {
       $strict_message = t("Strict access control is not enabled.");
     }
 
-    $bypass = springboard_group_check_role_conflicts();
+    //$bypass = springboard_group_check_role_conflicts();
 
     $bypass_message = '';
     if (!empty($bypass)) {
@@ -202,30 +201,49 @@ function springboard_group_permissions_overview_page(&$page) {
 function springboard_group_check_role_conflicts() {
   $roles = user_roles();
   $role_permissions = user_role_permissions($roles);
-  $bypass = [];
-  $administer = [];
+  $bypass_node_access = [];
+  $bypass_rules_access = [];
+  $admin_rules = [];
+  $administer_groups = [];
   foreach ($role_permissions as $rid => $permissions) {
     foreach ($permissions as $key => $permission) {
       if ($key == 'bypass node access' && $permission == 1) {
-        $bypass[$rid] = $roles[$rid];
+        $bypass_node_access[$rid] = $roles[$rid];
+      }
+      if ($key == 'administer payment methods' && $permission == 1) {
+        $admin_payment[$rid] = $roles[$rid];
+      }
+      if ($key == 'bypass rules access' && $permission == 1) {
+        $bypass_rules_access[$rid] = $roles[$rid];
       }
       if ($key == 'administer group' && $permission == 1) {
-        $administer[$rid] = $roles[$rid];
+        $administer_groups[$rid] = $roles[$rid];
       }
     }
   }
 
-  $problem = array_diff($bypass, $administer);
-  if (!empty($problem)) {
-    $count = count($problem);
-    $word = format_plural($count, 'role', 'roles');
-    $bad_roles = implode(', ', $problem);
-    drupal_set_message(t('Warning! Some roles have the "bypass content access control" permission, but not the "administer organic groups" permissions. This will cause problems. Please fix the following @word: @bad_roles.', array(
-      '@word' => $word,
-      '@bad_roles' => $bad_roles,
-    )), 'error');
+  $node_problem = array_diff($bypass_node_access, $administer_groups);
+  if (!empty($node_problem)) {
+    springboard_group_permissions_problem_message($node_problem, 'bypass node access');
   }
-  return $bypass;
+
+  $rules_bypass_problem = array_diff($bypass_rules_access, $administer_groups);
+  if (!empty($rules_bypass_problem)) {
+    springboard_group_permissions_problem_message($rules_bypass_problem, 'bypass rules access');
+
+  }
+
+}
+
+function springboard_group_permissions_problem_message($problem, $type) {
+  $count = count($problem);
+  $word = format_plural($count, 'role', 'roles');
+  $bad_roles = implode(', ', $problem);
+  drupal_set_message(t('Warning! Some Springboard roles have the "@type" permission, but not the "administer organic groups" permissions. This can cause problems. Please fix the following @word: @bad_roles.', array(
+    '@word' => $word,
+    '@bad_roles' => $bad_roles,
+    '@type' => $type,
+  )), 'error');
 }
 
 /**

@@ -135,12 +135,29 @@ function springboard_group_menu_alter(&$items) {
         }
       }
     }
+    // Swap out OG's group landing page for our own.
     if (strpos($path, 'node/%/group') !== FALSE && isset($item['page callback']) && $item['page callback'] == 'og_ui_group_admin_overview') {
       $items[$path]['page callback'] = 'springboard_group_og_ui_group_admin_overview';
+    }
+    // Custom access for payment method overview page.
+    if ($path == 'admin/commerce/config/payment-methods') {
+      $items[$path]['access callback'] = 'springboard_group_rules_payment_method_overview_access';
     }
   }
 }
 
+function springboard_group_rules_payment_method_overview_access($orig_args) {
+  $group_context = springboard_group_get_group_context();
+  $role_permissions = array();
+  if (!empty($group_context) && $group_context != '_none') {
+    $roles = og_get_user_roles('node', $group_context);
+    $perms = og_role_permissions($roles);
+    $role_permissions = array_keys(array_filter(reset($perms)));
+  }
+  if (user_access($orig_args) || in_array('edit payment method', $role_permissions)) {
+    return TRUE;
+  }
+}
 
 /**
  * Implements hook_springboard_admin_admin_menu_items_alter().
