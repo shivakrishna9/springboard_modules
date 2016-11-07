@@ -52,7 +52,7 @@ function drush_springboard_dw_export_queue_process() {
     // Process the items in the queue.
     $counter = springboard_dw_process_queue();
     if (!is_null($counter)) {
-      drush_log('Processed !counter items in Springboard data warehouse export queue.', 'ok');
+      drush_log(dt('Processed !counter items in Springboard data warehouse export queue.', array('!counter' => $counter)), 'ok');
     }
 
     // Log to the command line with an OK status.
