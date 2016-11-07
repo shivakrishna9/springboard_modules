@@ -32,24 +32,26 @@ function springboard_group_advocacy_node_update($node) {
  */
 function springboard_group_advocacy_save($node) {
 
-  // Is there an existing subscription record?
-  $exists = db_query('select gid from {sb_og_advocacy} where gid = :gid', (array(':gid' => $node->nid)))->fetchField();
+  if (user_access('administer springboard_advocacy') || user_access('administer advocacy group subscription')) {
+    // Is there an existing subscription record?
+    $exists = db_query('select gid from {sb_og_advocacy} where gid = :gid', (array(':gid' => $node->nid)))->fetchField();
 
-  // If the subscription level permits state subscriptions, save them;
-  // otherwise, remove any previously existing state data.
-  $allowed_states = $node->group_subscription_type != 'federal-and-states' && $node->group_subscription_type != 'states-only' ? array_filter($node->us_states) : [];
+    // If the subscription level permits state subscriptions, save them;
+    // otherwise, remove any previously existing state data.
+    $allowed_states = $node->group_subscription_type != 'federal-and-states' && $node->group_subscription_type != 'states-only' ? array_filter($node->us_states) : [];
 
-  $data = array(
-    'gid' => $node->nid,
-    "allowed_states" => $allowed_states,
-    'master_subscription_type' => $node->master_subscription_type,
-    'group_subscription_type' => $node->group_subscription_type,
-  );
+    $data = array(
+      'gid' => $node->nid,
+      "allowed_states" => $allowed_states,
+      'master_subscription_type' => $node->master_subscription_type,
+      'group_subscription_type' => $node->group_subscription_type,
+    );
 
-  if (!empty($exists)) {
-    drupal_write_record('sb_og_advocacy', $data, array('gid'));
-  }
-  else {
-    drupal_write_record('sb_og_advocacy', $data);
+    if (!empty($exists)) {
+      drupal_write_record('sb_og_advocacy', $data, array('gid'));
+    }
+    else {
+      drupal_write_record('sb_og_advocacy', $data);
+    }
   }
 }

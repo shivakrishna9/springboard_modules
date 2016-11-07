@@ -131,3 +131,17 @@ function springboard_group_advocacy_springboard_group_context_menu_paths() {
 
   return $paths;
 }
+
+/**
+ * Implements hook_og_permission().
+ */
+function springboard_group_advocacy_og_permission() {
+  return array(
+    'administer advocacy group subscription' => array(
+      'title' => t('Administer advocacy subscription'),
+      'description' => t("Change the advocacy subscription level of a group."),
+      'roles' => array(OG_AUTHENTICATED_ROLE),
+      'default role' => array(),
+    ),
+  );
+}

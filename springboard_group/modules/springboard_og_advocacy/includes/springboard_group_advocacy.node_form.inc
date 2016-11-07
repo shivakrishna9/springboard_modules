@@ -12,7 +12,7 @@
  */
 function springboard_group_advocacy_form_node_form_alter(&$form, &$form_state) {
 
-  if ($form['#node']->type == 'springboard_group') {
+  if ($form['#node']->type == 'springboard_group' && (user_access('administer springboard advocacy') || user_access('administer advocacy group subscription'))) {
     // First check if advocacy is configured.
     $unconfigured = springboard_advocacy_api_unconfigured('springboard');
     if ($unconfigured) {

@@ -87,6 +87,7 @@ function springboard_group_og_context_handler($item = NULL) {
  */
 function springboard_group_get_group_context() {
   $gid = NULL;
+
   // First check if we're on a grouped node.
   // BTW, this only happens (so far) in an administrative context,
   // so no big deal performance-wise.
@@ -107,7 +108,13 @@ function springboard_group_get_group_context() {
   }
 
   $paths = springboard_group_context_menu_paths();
-  if (!in_array(current_path(), $paths)) {
+  $has_path = FALSE;
+  foreach ($paths as $path) {
+    if (strpos(current_path(), $path) !== FALSE) {
+      $has_path = TRUE;
+    }
+   }
+  if (!$has_path) {
     return [];
   }
 
@@ -171,6 +178,7 @@ function springboard_group_context_menu_paths() {
         array_push($paths, 'admin/springboard/forms/' . $type);
       }
     }
+
     $paths = array_merge($paths, module_invoke_all('springboard_group_context_menu_paths'));
   }
   return $paths;

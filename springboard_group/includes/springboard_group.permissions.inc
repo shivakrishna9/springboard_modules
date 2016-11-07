@@ -37,14 +37,14 @@ function springboard_group_permission() {
  * Implements hook_og_permission().
  */
 function springboard_group_og_permission() {
-//  return array(
-////    'edit payment method' => array(
-////      'title' => t('Edit payment methods'),
-////      'description' => t("User must have administer payment method permission in Springboard."),
-////      'roles' => array(OG_AUTHENTICATED_ROLE),
-////      'default role' => array(),
-////    ),
-//  );
+  return array(
+    'edit payment method' => array(
+      'title' => t('Edit payment methods'),
+      'description' => t("Edit a group's payments methods."),
+      'roles' => array(OG_AUTHENTICATED_ROLE),
+      'default role' => array(),
+    ),
+  );
 }
 
 /**
@@ -100,15 +100,23 @@ function springboard_group_preprocess_og_ui_admin_permissions(&$vars) {
       // Rename the categories.
       switch ($vars['form']['permission'][$key]['#id']) {
         case 'og':
-          $vars['form']['permission'][$key]['#markup'] = t('Springboard Groups Content');
+          $vars['form']['permission'][$key]['#markup'] = t('Groups Content');
           break;
 
         case 'og_ui':
-          $vars['form']['permission'][$key]['#markup'] = t('Springboard Groups Members');
+          $vars['form']['permission'][$key]['#markup'] = t('Groups Members');
           break;
 
         case 'publishcontent':
-          $vars['form']['permission'][$key]['#markup'] = t('Content Publication Status');
+          $vars['form']['permission'][$key]['#markup'] = t('Publication Status');
+          break;
+
+        case 'springboard_group':
+          $vars['form']['permission'][$key]['#markup'] = t('Other');
+          break;
+
+        case 'springboard_group_advocacy':
+          $vars['form']['permission'][$key]['#markup'] = t('Advocacy');
           break;
       }
     }

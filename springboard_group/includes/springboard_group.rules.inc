@@ -36,8 +36,12 @@ function springboard_group_rules_config_access($op, $rules_config = NULL, $accou
     if (!empty($group)) {
       $gid = reset($group['node']);
       $group_context = springboard_group_get_group_context();
-      if ($roles = og_get_user_roles('node', $gid, $account->uid)) {
-        $role_permissions = og_role_permissions($roles);
+      if ($roles = og_get_user_roles('node', $gid)) {
+        $perms = og_role_permissions($roles);
+        $role_permissions = array_keys(array_filter(reset($perms)));
+        if ($group_context == $gid && in_array('edit payment method', $role_permissions)) {
+          return TRUE;
+        }
       }
       if ($group_context != $gid && !user_access('administer group')) {
         return FALSE;
@@ -128,6 +132,7 @@ function springboard_group_form_rules_ui_form_edit_rules_config_alter(&$form, &$
     // springboard_group_set_single_selector() for details about
     // why this is necessary.
     $fields = og_get_group_audience_fields('rules_config', 'rules_config', 'node', 'springboard_group');
+
     if (!empty($fields)) {
       springboard_group_set_single_selector($form, $fields);
     }
@@ -142,6 +147,9 @@ function springboard_group_form_rules_ui_form_edit_rules_config_alter(&$form, &$
  */
 function springboard_group_validate_payment($form, &$form_state) {
   field_attach_form_validate('rules_config', $form_state['values']['rule_entity'], $form, $form_state);
+  if (empty($target) && !user_access('administer group')) {
+    form_set_error('og_group_ref_rules_config', t('You must select a group.'));
+  }
 }
 
 /**
