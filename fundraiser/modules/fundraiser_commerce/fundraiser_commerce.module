@@ -1970,6 +1970,9 @@ function _fundraiser_commerce_get_cc_type($cardnumber) {
   elseif ( $len == 16 && drupal_substr($cardnumber, 0, 1) == '5' ) {
     $cardtype = 'mc';
   }
+  elseif ( $len == 16 && (int)drupal_substr($cardnumber, 0, 6) >= 222100 && (int)drupal_substr($cardnumber, 0, 6) <= 272099) {
+    $cardtype = 'mc';
+  }
   elseif ( ($len == 16 || $len == 13) && drupal_substr($cardnumber, 0, 1) == '4' ) {
     $cardtype = 'visa';
   }
