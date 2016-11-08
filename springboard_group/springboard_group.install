@@ -3,7 +3,6 @@
  * @file
  * Install functions for Springboard Group.
  */
-
 /**
  * Implements hook_install().
  */
@@ -88,4 +87,92 @@ function springboard_group_enable() {
   $context = variable_get('og_context_negotiation_group_context', array());
   $context = array_merge($context, array('springboard_group' => array()));
   variable_set('og_context_negotiation_group_context', $context);
+
+  $roles = array('Affiliate editor');
+  foreach ($roles as $role) {
+    if (!user_role_load_by_name($role)) {
+      $role = new stdClass();
+      $role->name = $role;
+      user_role_save($role);
+    }
+  }
+
+  $permissions = springboard_group_default_permissions();
+  $roles = [];
+  $roles[] = user_role_load_by_name('Administrator');
+  $roles[] = user_role_load_by_name('Springboard administrator');
+  $roles[] = user_role_load_by_name('Springboard editor');
+  $roles[] = user_role_load_by_name('Affiliate editor');
+  foreach ($roles as $role) {
+    foreach ($permissions as $name => $perm) {
+      if (isset($perm['roles'][$role->name])) {
+        user_role_grant_permissions($role->rid, array($name));
+      }
+    }
+  }
+}
+
+function springboard_group_default_permissions() {
+  $permissions = array();
+
+  $permissions['clone node'] = array(
+    'roles' => array(
+      'Affiliate editor' => 'Affiliate editor',
+    ),
+  );
+
+  $permissions['access contextual links'] = array(
+    'roles' => array(
+      'Affiliate editor' => 'Affiliate editor',
+    ),
+  );
+
+  $permissions['access draggableviews'] = array(
+    'roles' => array(
+      'Affiliate editor' => 'Affiliate editor',
+    ),
+  );
+
+  $permissions['use text format filtered_html'] = array(
+    'name' => 'use text format filtered_html',
+    'roles' => array(
+      'Affiliate editor' => 'Affiliate editor',
+    ),
+  );
+
+  $permissions['use text format full_html'] = array(
+    'roles' => array(
+      'Affiliate editor' => 'Affiliate editor',
+    ),
+  );
+
+  $permissions['create url aliases'] = array(
+    'roles' => array(
+      'Affiliate editor' => 'Affiliate editor',
+    ),
+  );
+
+  $permissions['access springboard dashboard'] = array(
+    'roles' => array(
+      'Affiliate editor' => 'Affiliate editor',
+    ),
+  );
+
+  $permissions['access springboard groups dashboard'] = array(
+    'roles' => array(
+      'Affiliate editor' => 'Affiliate editor',
+      'Administrator' => 'Administrator',
+      'Springboard admin' => 'Springboard admin',
+      'Springboard editor' => 'Springboard editor',
+    ),
+  );
+
+  $permissions['configure springboard groups'] = array(
+    'roles' => array(
+      'Administrator' => 'Administrator',
+      'Springboard admin' => 'Springboard admin',
+    ),
+  );
+
+  return $permissions;
 }

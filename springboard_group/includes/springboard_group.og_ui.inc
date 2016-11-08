@@ -20,7 +20,7 @@ function springboard_group_og_ui_get_group_admin_alter(&$data, $context) {
  * when making an entity un-groupable.
  */
 function springboard_group_form_og_ui_field_delete_form_alter(&$form, &$form_state) {
-  if ($_GET['destination'] == 'admin/springboard/groups/settings') {
+  if (isset($_GET['destination']) && $_GET['destination'] == 'admin/springboard/groups/settings') {
     $form['actions']['cancel']['#markup'] = l(t('cancel'), 'admin/springboard/groups/settings');
     $form['description']['#markup'] = t('All group associations for the @type content type will be deleted. This cannot be undone.', array('@type' => arg(5)));
     $form['#submit'][] = 'springboard_group_form_og_ui_field_delete_submit';

@@ -55,49 +55,52 @@ function springboard_group_views_query_alter(&$view, &$query) {
 
     // Get the current active group ID.
     $context = springboard_group_get_group_context();
-    if (!empty($context)) {
-      // Build the query.
-      $condition = db_and();
-      if ($context == '_none' || $context == '_all') {
-        if ($context == '_none') {
-          $condition->isNull('og_membership.gid');
-        }
-        else {
-          if ($context == '_all') {
-            $all_groups = og_get_all_group();
-            $condition->condition('og_membership.gid', $all_groups, 'IN');
-            $condition->condition('og_membership.entity_type', 'node');
-          }
-        }
+    if (empty($context)) {
+      // This gets sent to the query as the "gid", causing no result.
+      $context = '_you_will_see_nothing';
+    }
+    // Build the query.
+    $condition = db_and();
+    if (($context == '_none' || $context == '_all') && (user_access('administer group') || user_access('bypass node access'))) {
+      if ($context == '_none') {
+        $condition->isNull('og_membership.gid');
       }
       else {
-        $condition->condition('og_membership.gid', $context);
-        $condition->condition('og_membership.entity_type', 'node');
+        if ($context == '_all') {
+          $all_groups = og_get_all_group();
+          $condition->condition('og_membership.gid', $all_groups, 'IN');
+          $condition->condition('og_membership.entity_type', 'node');
+        }
       }
-
-      // Help views understand what we're doing. Adding the table without
-      // the join explicitly defined makes the query messy.
-      $def = array(
-        'left_table' => 'node',
-        'left_field' => 'nid',
-        'table' => 'og_membership',
-        'field' => 'etid',
-      );
-      $join = new views_join();
-      $join->definition = $def;
-      $join->extra = array(
-        array(
-          'field' => 'entity_type',
-          'value' => 'node',
-        ),
-      );
-
-      $join->construct();
-      $join->adjusted = TRUE;
-
-      $query->add_table('og_membership', 'node', $join);
-      $query->add_where(0, $condition);
     }
+    else {
+      $condition->condition('og_membership.gid', $context);
+      $condition->condition('og_membership.entity_type', 'node');
+    }
+
+    // Help views understand what we're doing. Adding the table without
+    // the join explicitly defined makes the query messy.
+    $def = array(
+      'left_table' => 'node',
+      'left_field' => 'nid',
+      'table' => 'og_membership',
+      'field' => 'etid',
+    );
+    $join = new views_join();
+    $join->definition = $def;
+    $join->extra = array(
+      array(
+        'field' => 'entity_type',
+        'value' => 'node',
+      ),
+    );
+
+    $join->construct();
+    $join->adjusted = TRUE;
+
+    $query->add_table('og_membership', 'node', $join);
+    $query->add_where(0, $condition);
+
   }
 }
 

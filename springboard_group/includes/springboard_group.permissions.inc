@@ -37,14 +37,51 @@ function springboard_group_permission() {
  * Implements hook_og_permission().
  */
 function springboard_group_og_permission() {
-  return array(
-    'edit payment method' => array(
-      'title' => t('Administer group payment methods'),
-      'description' => t("Edit a group's payments methods."),
-      'roles' => array(OG_AUTHENTICATED_ROLE),
-      'default role' => array(),
-    ),
+
+  $items = array();
+
+  $items['edit payment method'] = array(
+    'title' => t('Administer group payment methods'),
+    'description' => t("Edit a group's payments methods."),
+    'roles' => array(OG_AUTHENTICATED_ROLE),
+    'default role' => array(),
   );
+
+  $items['access all webform results'] = array(
+    'title' => t('Access all webform results in group'),
+    'description' => t('Grants access to the "Results" tab on all webforms in this group. Generally a group admin permission.'),
+    'roles' => array(OG_AUTHENTICATED_ROLE, OG_ADMINISTRATOR_ROLE),
+  );
+
+  $items['edit all webform submissions'] = array(
+    'title' => t('Edit all webform submissions in group'),
+    'description' => t('Allows editing of any webform submission by any user in this group. Generally a group admin permission.'),
+    'roles' => array(OG_AUTHENTICATED_ROLE, OG_ADMINISTRATOR_ROLE),
+  );
+
+  $items['delete all webform submissions'] = array(
+    'title' => t('Delete all webform submissions in group'),
+    'description' => t('Allows deleting of any webform submission by any user in this group. Generally a group admin permission.'),
+    'roles' => array(OG_AUTHENTICATED_ROLE, OG_ADMINISTRATOR_ROLE),
+  );
+
+  $items['access own webform submissions'] = array(
+    'title' => t('Access own webform submissions'),
+    'roles' => array(OG_AUTHENTICATED_ROLE, OG_ADMINISTRATOR_ROLE),
+  );
+
+  $items['edit own webform submissions'] = array(
+    'title' => t('Edit own webform submissions'),
+    'roles' => array(OG_AUTHENTICATED_ROLE, OG_ADMINISTRATOR_ROLE),
+  );
+
+  $items['delete own webform submissions'] = array(
+    'title' => t('Delete own webform submissions'),
+    'roles' => array(OG_AUTHENTICATED_ROLE, OG_ADMINISTRATOR_ROLE),
+  );
+
+  return $items;
+
 }
 
 /**
@@ -227,6 +264,10 @@ function springboard_group_check_role_conflicts() {
   }
 }
 
+/**
+ * @param $problem
+ * @param $type
+ */
 function springboard_group_permissions_problem_message($problem, $type) {
   $count = count($problem);
   $word = format_plural($count, 'role', 'roles');
@@ -260,3 +301,7 @@ function springboard_group_form_user_admin_permissions_alter(&$form, $form_state
     $form['#attached']['js'][] = $path;
   }
 }
+
+/**
+ * Implements hook_user_default_permissions().
+ */

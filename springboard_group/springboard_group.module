@@ -17,6 +17,8 @@ require_once __DIR__ . '/includes/springboard_group.page_wrappers.inc';
 require_once __DIR__ . '/includes/springboard_group.email_wrappers.inc';
 require_once __DIR__ . '/includes/springboard_group.fundraiser.inc';
 require_once __DIR__ . '/includes/springboard_group.entityreference.inc';
+require_once __DIR__ . '/includes/springboard_group.ctools.inc';
+require_once __DIR__ . '/includes/springboard_group.og_ui.inc';
 
 /**
  * Implements hook_node_info().
@@ -51,102 +53,6 @@ function springboard_group_views_api() {
 }
 
 /**
- * Implements hook_ctools_plugin_api().
- */
-function springboard_group_ctools_plugin_api($module = NULL, $api = NULL) {
-  // Needed for automatic field group installation on Springboard Group
-  // content type.
-  if ($module == "field_group" && $api == "field_group") {
-    return array("version" => "1");
-  }
-  // Needed for automatic panels installation on Springboard Group
-  // content type.
-  if ($module == "page_manager" && $api == "pages_default") {
-    return array("version" => "1");
-  }
-}
-
-/**
- * Implements hook_ctools_plugin_directory().
- *
- * Extend Class OgSelectionHandler, so that admins can get groups
- * they aren't a member of displayed in the default group selector instead
- * of the "groups you aren't a member of" selector that is default with OG.
- */
-function springboard_group_ctools_plugin_directory($module, $plugin) {
-  if ($module == 'entityreference') {
-    return "plugins/entityreference/$plugin";
-  }
-}
-
-/**
- * Implements hook_ctools_plugin_post_alter().
- *
- * Allow entity reference fields to reference unpublished items.
- */
-function springboard_group_ctools_plugin_post_alter(&$plugin, &$info) {
-  if (
-    $plugin['plugin module'] == 'entityreference'
-    && $plugin['plugin type'] == 'selection'
-    && $plugin['class'] == 'EntityReference_SelectionHandler_Generic'
-  ) {
-    $plugin = array(
-      'class' => 'SpringboardGroup_EntityReference_SelectionHandler_Generic',
-      'module' => 'springboard_group',
-      'path' => drupal_get_path('module', 'springboard_group') . '/includes',
-      'file' => 'springboard_group.entityreference.inc',
-    ) + $plugin;
-  }
-
-  // Make the create content links pane recognize sb groups field name.
-  if ($info['type'] == 'content_types' && $plugin['render callback'] == 'og_node_create_links_content_type_render') {
-    $plugin['render callback'] = 'springboard_group_og_node_create_links_content_type_render';
-  }
-}
-
-/**
- * Make the create content links pane recognize sb groups field name.
- *
- * Overrides og_node_create_links_content_type_render().
- *
- * @param $subtype
- * @param $conf
- * @param $args
- * @param $context
- *
- * @return bool|\stdClass
- */
-function springboard_group_og_node_create_links_content_type_render($subtype, $conf, $args, $context) {
-  if (empty($context->data)) {
-    return FALSE;
-  }
-  $node = $context->data;
-  // This is where we alter og version.
-  $types = !empty($conf['types']) ? $conf['types'] : array_keys(node_type_get_types());
-  $links = [];
-  foreach ($types as $type) {
-    if ($context->data->type == 'springboard_group') {
-      // Use our custom field name if springboard group.
-      $links[] = og_node_create_links('node', $node->nid, 'og_group_ref_' . substr($type, 0, 19));
-    }
-    else {
-      $links[] = og_node_create_links('node', $node->nid, $conf['field_name'], NULL, !empty($conf['types']) ? $conf['types'] : NULL);
-    }
-  }
-  if (empty($links)) {
-    return FALSE;
-  }
-  // Alteration end.
-  $module = 'og';
-  $block = new stdClass();
-  $block->module = $module;
-  $block->title = t('Content create links');
-
-  $block->content = $links;
-  return $block;
-}
-
-/**
  * Implements hook_node_access().
  */
 function springboard_group_node_access($node, $op, $account) {
@@ -169,29 +75,6 @@ function springboard_group_node_access($node, $op, $account) {
   }
 
   return NODE_ACCESS_IGNORE;
-}
-
-/**
- * Implements hook_form_FORM_ID_alter().
- *
- * Change the default text on og_group_ref field deletion confirm page. That is
- * when making an entity un-groupable.
- */
-function springboard_group_form_og_ui_field_delete_form_alter(&$form, &$form_state) {
-  if ($_GET['destination'] == 'admin/springboard/groups/settings') {
-    $form['actions']['cancel']['#markup'] = l(t('cancel'), 'admin/springboard/groups/settings');
-    $form['description']['#markup'] = t('All group associations for the @type content type will be deleted. This cannot be undone.', array('@type' => arg(5)));
-    $form['#submit'][] = 'springboard_group_form_og_ui_field_delete_submit';
-  }
-}
-
-/**
- * Delete multiple choice variable when deleting its owner field.
- */
-function springboard_group_form_og_ui_field_delete_submit($form, $form_state) {
-  if ($_GET['destination'] == 'admin/springboard/groups/settings') {
-    variable_del('og_' . $form_state['values']['bundle'] . '_multiple');
-  }
 }
 
 /**
@@ -241,10 +124,10 @@ function springboard_group_form_springboard_group_node_form_alter(&$form, &$form
  */
 function springboard_group_node_form_validate($form, &$form_state) {
   $email = $form_state['values']['field_sb_group_cemail'][$form['field_sb_group_cemail']['#language']][0];
-  if (!empty($email)) {
-    $valid = valid_email_address($email);
+  if (!empty($email['value'])) {
+    $valid = valid_email_address($email['value']);
     if (!$valid) {
-      //form_set_error('field_sb_group_cemail', t('Invalid email address in contact field.'));
+      form_set_error('field_sb_group_cemail', t('Invalid email address in contact field.'));
     }
   }
 }
@@ -264,14 +147,14 @@ function springboard_group_form_node_form_alter(&$form, &$form_state) {
     // selected groups.
     $language = $form['og_group_ref_' . substr($form['#node']->type, 0, 19)]['#language'];
     $form['og_group_ref_' . substr($form['#node']->type, 0, 19)][$language][0]['default']['#ajax'] = array(
-      'callback' => 'springboard_group_ajax_callback',
+      'callback' => 'springboard_group_og_group_field_ajax_callback',
     );
 
     // Set the context for any entity reference fields on this form.
     // Not currently used, but would be required for p2p or any other
     // content type that uses entity reference fields (apart from actions
     // and wrappers) to reference grouped content.
-    springboard_group_entityreference_context($form, $form_state);
+    springboard_group_context_entityreference($form, $form_state);
 
     // Set up the validation modal window parameters.
     springboard_group_prepare_validation_modal($form, $form_state);
@@ -292,7 +175,7 @@ function springboard_group_form_node_form_alter(&$form, &$form_state) {
  * with an entity's grouped-owned assets: page wrappers, email wrappers, message
  * targets, ab tests, and vice versa.
  */
-function springboard_group_ajax_callback(&$form, &$form_state) {
+function springboard_group_og_group_field_ajax_callback(&$form, &$form_state) {
 
   $ajax = array(
     '#type' => 'ajax',
@@ -309,6 +192,7 @@ function springboard_group_ajax_callback(&$form, &$form_state) {
     $ajax['#commands'][] = ajax_command_replace("#springboard-groups-payment-ajax-wrapper", render($form['payment_methods']['gateways']));
   }
 
+  // p2p
 //  if (!empty($form['#fieldgroups']['group_tabs'])) {
 //    $ajax['#commands'][] = ajax_command_replace("#field-group-htabs-wrapper ", render($form['#fieldgroups']['group_tabs']));
 //  }
@@ -323,7 +207,6 @@ function springboard_group_ajax_callback(&$form, &$form_state) {
   return $ajax;
 }
 
-
 /**
  * Prepare the validation modal window.
  */
@@ -334,8 +217,8 @@ function springboard_group_prepare_validation_modal(&$form, &$form_state) {
   ctools_modal_add_js();
   $settings['CToolsModal']['modalSize'] = array(
     'type' => 'scale',
-    'width' => .8,
-    'height' => .8,
+    'width' => .6,
+    'height' => .6,
   );
   $settings['CToolsModal']['modalOptions'] = array(
     'opacity' => '.55',
@@ -357,7 +240,7 @@ function springboard_group_load_ajax_validation_handlers(&$form, &$form_state) {
     springboard_group_fundraiser_node_form_gateway_validate($form, $form_state);
   }
 
-  if ($callback == 'springboard_group_ajax_callback') {
+  if ($callback == 'springboard_group_og_group_field_ajax_callback') {
     if (module_exists('page_wrappers') && (_page_wrappers_enabled_type($form['#node']) || $type == 'page_wrapper')) {
       springboard_group_node_form_page_wrappers_validate($form, $form_state);
     }
@@ -401,10 +284,10 @@ function springboard_group_field_widget_form_alter(&$element, &$form_state, $con
 }
 
 /**
- * Change the group field from a multiple select to a single select.
+ * Change the OG group field from a multiple select to a single select.
  *
- * Doing it here instead of in field config allows us to preserve an
- * unlimited cardinality, which OG basically always assumes is the case.
+ * On node forms. Doing it here instead of in field config allows us to preserve
+ * an unlimited cardinality, which OG basically always assumes is the case.
  * Limiting the cardinality to 1 would cause errors when different users
  * attempt to reassign a node to a different group when it has a membership
  * already assigned by different user, even though the original record in the
@@ -438,87 +321,9 @@ function springboard_group_set_single_selector(&$form, $fields) {
 
 /**
  * Implements hook_preprocess_page().
- *
- * Adds a group dropdown selector to designated non-node pages when a user
- * has multiple group affilaitions. See springboard_group_context_menu_paths()
- * for a list of paths this is active on.
  */
 function springboard_group_preprocess_page(&$vars) {
-  $path = current_path();
-  $og_paths = springboard_group_context_menu_paths();
-  if (in_array($path, $og_paths) && isset($_SESSION['springboard_group_context_multiple'])) {
-    $build = array(
-      'selector' => drupal_get_form('springboard_group_group_selector_form', $_SESSION['springboard_group_context_multiple']),
-    );
-    $vars['page']['content']['system_main']['group_selector']['#markup'] = render($build);
-    $vars['page']['content']['system_main']['group_selector']['#weight'] = -10;
-    $vars['page']['content']['system_main']['group_selector']['#prefix'] = '<div id="sb-og-group-group_selector">';
-    $vars['page']['content']['system_main']['group_selector']['#suffix'] = '</div>';
-  }
-}
-
-/**
- * Build the group selector form.
- *
- * Pages without a node context need a way of determining which group is
- * active. This adds a selector to choose which group
- * context to work in.
- *
- * @param array $groups
- *   The current user's possible groups.
- *
- * @return array
- *   The form.
- */
-function springboard_group_group_selector_form($form, &$form_state, $groups) {
-
-  $form = [];
-  $form['#attached']['css'][] = drupal_get_path('module', 'springboard_group') . '/css/springboard-group-selector.css';
-  $form['title']['#markup'] = '<strong>' . t('Choose a group to work in:') . '</strong>';
-
-  // Build the selector form from groups found in user session.
-  $options = [];
-  if (user_access('administer group')) {
-    $options['_none'] = '- None -';
-  }
-  foreach ($groups as $nid) {
-    $node = node_load($nid);
-    $options[$nid] = check_plain($node->title);
-  }
-
-  // The ajax enabled group selector which will reload the page
-  // subsequent to a group choice. The group ID will get put into session.
-  $form['groups'] = array(
-    '#type' => 'select',
-    '#options' => $options,
-    '#default_value' => springboard_group_get_group_context(),
-    '#ajax' => array(
-      'callback' => 'springboard_group_group_selector',
-      'wrapper' => 'sb-og-group-selector',
-      'method' => 'replace',
-      'effect' => 'fade',
-    ),
-    '#prefix' => '<div id="group-selector-div">',
-    '#suffix' => '</div>',
-  );
-
-  return $form;
-}
-
-/**
- * AJAX callback for group selector form.
- */
-function springboard_group_group_selector($form, &$form_state) {
-  // Put the chosen group into session, so it can be retrieved by
-  // springboard_group_advocacy_og_context_handler().
-  $_SESSION['springboard_group_working_group'] = $form_state['values']['groups'];
-
-  // Reload the page to get the new grouped content.
-  ctools_include('ajax');
-  ctools_add_js('ajax-responder');
-  $commands[] = ctools_ajax_command_reload();
-  print ajax_render($commands);
-  drupal_exit();
+  springboard_group_context_selector__preprocess_page($vars);
 }
 
 /**
@@ -553,59 +358,134 @@ function springboard_group_query_node_access_alter(QueryAlterableInterface $quer
 }
 
 /**
- * Implements hook_og_ui_get_group_admin().
- *
- * Remove the permissions and roles links for the group node's group tab.
- */
-function springboard_group_og_ui_get_group_admin_alter(&$data, $context) {
-  if ($context['entity_type'] == 'node') {
-    $node = node_load($context['etid']);
-    if ($node->type == 'springboard_group') {
-
-    }
-  }
-}
-
-/**
  * Implements hook_page_alter().
+ *
+ * Alter miscellaneous pages.
  */
 function springboard_group_page_alter(&$page) {
   // Remove ineligible payment methods from the payments overview page.
-  springboard_group_rules_page_filter_payment_rules($page);
+  springboard_group_rules_payment_rules_overview__page_alter($page);
   // Add help text to the permissions overview.
-  springboard_group_permissions_overview_page($page);
+  springboard_group_permissions_overview__page_alter($page);
 }
-
 
 /**
- * @param $entity_type
- * @param $etid
- * @return bool|string
+ * Implements hook_help().
  */
-function springboard_group_og_ui_group_admin_overview($entity_type, $etid) {
-  $content = '';
-  og_set_breadcrumb($entity_type, $etid);
-  $items = og_ui_get_group_admin($entity_type, $etid);
-  if ($entity_type == 'node') {
-    $node = node_load($etid);
-  }
-  if (empty($node) || $node->type != 'springboard_group') {
-    foreach ($items as &$item) {
-      $item['href'] = "group/$entity_type/$etid/" . $item['href'];
-      $item['localized_options'] = array();
-    }
-    $form['admin_block_content'] = array(
-      '#theme' => 'admin_block_content',
-      '#content' => $items,
-    );
-    $content = $form;
-  }
-  elseif (og_ui_user_access_group('manage members', $entity_type, $etid)) {
-    $content = og_ui_admin_account($entity_type, $etid);
-  }
-  return $content;
-}
+function springboard_group_help($path, $arg) {
 
-function springboard_group_form_og_ui_add_users_alter(&$form, $form_state) {
-  $form['membership_fields']['og_membership_request']['#access'] = FALSE;;
+  $build = [];
+  $build['#prefix'] = '<div id="springboard-group-help">';
+  $build['#suffix'] = '</div>';
+  $build['#attached']['css'][] = drupal_get_path('module', 'springboard_group') . '/css/springboard-og-admin.css';
+
+  $build['#markup'] = <<<EOT
+ <h2>Permissions</h2>
+
+<p>There are two types of permissions: those granted by Springboard roles,
+ and those granted by Group roles.
+
+<h3>Administer Groups Permissions</h3>
+
+<p>The the ability to create and/or administer all groups is conferred by
+Springboard role permissions.
+
+<p>A user in a Springboard role with the permission "Administer Organic Groups"
+may post and edit content in any group, and administer all groups. He does
+not need to be a member of the group.</p>
+
+<p>A user in a Springboard role with the permission "Create/Edit/Delete
+Springboard Group" may create and edit Springboard Groups. The user who
+creates the group is also automatically added to the Group role
+"Administrator Member."</p>
+
+<H3>Content Permissions</h3>
+
+<p>The ability to create or edit content is conferred by
+Springboard role permissions and by Group role permissions.
+
+<p>Please note that users with the "Administer Organic Groups" or
+"Bypass content access control" Springboard role permissions are
+exempt from Group content permissions.
+
+<h4>Create Content Permissions</h4>
+
+<p>Behavior can vary depending on settings with Groups Permissions
+and within Springboard Permissions.</p>
+
+<p>Examples:
+<div class="item-list">
+<ul>
+<li>If a user has "create page content" permission inside a group
+but not in Springboard, the user will only be able to create page
+content for that group.
+<li>If a user has "create page content"
+permission in Springboard and within a group, the user can choose to
+post to the group or outside the group.
+<li>If a user has "create page content"
+permission in Springboard but not within a group, the user cannot
+post to a group.
+</ul></div>
+
+<h4>Edit and Delete Content Permissions</h4>
+
+<b>Strict access enabled</b>
+<p>Group permissions override Springboard permissions.
+This is the recommended setting.
+<p>Examples:
+<ul><li>A content editor with the global Springboard permission “Edit any
+page content” would be denied access to
+modifying page content if that page is in a group to which he does
+not belong, or in which he does not have edit rights.</li>
+ <li>A content editor with the global Springboard permission “Edit own page content”
+ would be denied access to modifying his own page content if that page has been
+  added to a group to which he does not belong, or in which
+  he does not have edit rights.</li>
+ </ul>
+
+<b>Strict access disabled</b>: <br>
+<p>Group permissions do not override Springboard permissions.
+<p>Examples:
+<ul><li>A content editor with the global Springboard permission “Edit any
+page content” would be able to modify any page content even if that page is
+in a group to which he does not belong. The page would be removed from
+the group when re-saved.</li>
+
+<li>A content editor with the global Springboard permission “Edit own page content”
+ would be able to modify his own page content if that page has been
+  added to a group to which he does not belong. The page would be removed
+  from the group when re-saved.</li>
+ </ul>
+<h4>Super-user Permissions</h4>
+
+
+<p><strong>Content access</strong>: any user in a Springboard role with the "Bypass content access control"
+permission will be exempt from content access control. To prevent conflicts
+with group ownership when saving content, every role that has
+"Bypass content access control" must also have "Administer Organic groups"
+permissions.</p>
+<p><strong>Rules access: </strong> any user in a Springboard role with the "Bypass rules access control"
+permission will be exempt from rules access control. To prevent conflicts
+with group ownership when saving payment methods, every role that has
+"Bypass rules access control" should also have "Administer Organic groups"
+permissions.</p>
+<p>Any user in a Springboard role with the "Administer rules configurations"
+permission will be exempt from rules access control. To prevent conflicts
+with group ownership when saving payment methods, every role that has
+"Administer rules configurations" should also have "Administer Organic groups"
+permissions.</p><br />
+
+EOT;
+
+  $output = '';
+  switch ($path) {
+    case 'admin/help#springboard_group':
+      $output = drupal_render($build);
+      break;
+
+    case 'admin/springboard/groups/settings/help':
+      $output = $build;
+      break;
+  }
+  return $output;
 }
