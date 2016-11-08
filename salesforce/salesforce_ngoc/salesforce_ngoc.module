@@ -179,6 +179,18 @@ function salesforce_ngoc_salesforce_genmap_destination_queue_alter(&$queue_name,
 }
 
 /**
+ * Implements hook_salesforce_sync_save_map_alter().
+ */
+function salesforce_ngoc_salesforce_sync_save_map_alter($record) {
+  if ($record->object_type == 'rC_Connect__Batch_Upload__c') {
+    // Prevents batch_upload record from being saved to salesforce_sync_map.
+    $record->prevent_save = TRUE;
+    // @TODO write record to salesforce_ngoc_sync_map.
+    //
+  }
+}
+
+/**
  * Records which hold queue items have parent items pending processing in SF.
  *
  * @param array $item

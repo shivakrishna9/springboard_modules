@@ -227,7 +227,13 @@ function salesforce_sync_save_map($record) {
       $record = entity_create('salesforce_sync_map', $record);
     }
   }
+  drupal_alter('salesforce_sync_save_map', $record);
   if ($record->entityType() == 'salesforce_sync_map') {
+    // If prevent_save has been set, do not write the record to the DB but
+    // continue as a success.
+    if($record->prevent_save == TRUE) {
+      return SAVED_NEW;
+    }
     // Adds the data to the database.
     return entity_save('salesforce_sync_map', $record);
   }

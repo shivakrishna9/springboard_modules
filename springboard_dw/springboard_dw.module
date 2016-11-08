@@ -904,7 +904,6 @@ function springboard_dw_extract_submission_extra_props($submitted_data, $submiss
  * @internal param object $donation
  */
 function springboard_dw_map_advocacy_action_item($message_action) {
-
   // Get the Advocacy action object details and prep for
   // warehousing (sb_action).
   $advocacy_item = array();
