@@ -49,34 +49,19 @@ function springboard_group_og_permission() {
 
   $items['access all webform results'] = array(
     'title' => t('Access all webform results in group'),
-    'description' => t('Grants access to the "Results" tab on all webforms in this group. Generally a group admin permission.'),
+    'description' => t('Grants access to the "Results" tab on all webforms in this group.'),
     'roles' => array(OG_AUTHENTICATED_ROLE, OG_ADMINISTRATOR_ROLE),
   );
 
   $items['edit all webform submissions'] = array(
     'title' => t('Edit all webform submissions in group'),
-    'description' => t('Allows editing of any webform submission by any user in this group. Generally a group admin permission.'),
+    'description' => t('Allows editing of any webform submission in this group.'),
     'roles' => array(OG_AUTHENTICATED_ROLE, OG_ADMINISTRATOR_ROLE),
   );
 
   $items['delete all webform submissions'] = array(
     'title' => t('Delete all webform submissions in group'),
-    'description' => t('Allows deleting of any webform submission by any user in this group. Generally a group admin permission.'),
-    'roles' => array(OG_AUTHENTICATED_ROLE, OG_ADMINISTRATOR_ROLE),
-  );
-
-  $items['access own webform submissions'] = array(
-    'title' => t('Access own webform submissions'),
-    'roles' => array(OG_AUTHENTICATED_ROLE, OG_ADMINISTRATOR_ROLE),
-  );
-
-  $items['edit own webform submissions'] = array(
-    'title' => t('Edit own webform submissions'),
-    'roles' => array(OG_AUTHENTICATED_ROLE, OG_ADMINISTRATOR_ROLE),
-  );
-
-  $items['delete own webform submissions'] = array(
-    'title' => t('Delete own webform submissions'),
+    'description' => t('Allows deleting of any webform submission in this group.'),
     'roles' => array(OG_AUTHENTICATED_ROLE, OG_ADMINISTRATOR_ROLE),
   );
 
