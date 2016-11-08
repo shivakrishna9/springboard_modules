@@ -1527,6 +1527,7 @@ function fundraiser_webform_webform_submission_render_alter(&$renderable) {
  */
 function _fundraiser_webform_results_page_content($node) {
   $output = '';
+  $form = array();
 
   // Add the DW-based, lifetime performance stats at the top:
   $view = views_get_view('springboard_dw_donation_stats_report');
@@ -1536,20 +1537,29 @@ function _fundraiser_webform_results_page_content($node) {
     $view->execute();
     $title = isset($view->build_info['title']) ? $view->build_info['title'] : t('Lifetime Performance');
     $view_content = $view->render();
-    $fieldset = array('#type' => 'fieldset', '#title' => $title, '#description' => $view_content);
-    $output .= drupal_render($fieldset);
+    $form['springboard_dw_donation_stats_content'] = array(
+      '#type' => 'fieldset',
+      '#title' => $title,
+      '#description' => $view_content
+    );
   }
 
+  $view = views_get_view('sbv_donations');
   if (isset($view) && $view != FALSE && is_object($view)) {
-    $view = views_get_view('sbv_donations');
     $view->set_display('page_2');
     $view->pre_execute(array($node->nid));
     $view->execute();
     $title = isset($view->build_info['title']) ? $view->build_info['title'] : t('Filter Recent Submissions - past 90 days');
     $view_content = $view->render();
-    $fieldset = array('#type' => 'fieldset', '#title' => $title, '#description' => $view_content);
-    $output .= drupal_render($fieldset);
+    $form['sbv_donations_content'] = array(
+      '#type' => 'fieldset',
+      '#title' => $title,
+      '#description' => $view_content
+    );
   }
-
+  if (!empty($form)) {
+    $form['#attached']['css'] = array(drupal_get_path('module', 'fundraiser_webform') . '/css/donation-results-tab.css');
+    $output = drupal_render($form);
+  }
   return $output;
 }
