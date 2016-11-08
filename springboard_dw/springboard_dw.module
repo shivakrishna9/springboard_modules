@@ -1078,7 +1078,6 @@ function springboard_dw_map_petition_item($petition) {
  */
 function springboard_dw_map_petition_submission_item($petition,
                                                      $petition_unique_id) {
-
   // Get the Advocacy petition object details and prep
   // for warehousing (sb_action).
   $message_item = array();
@@ -1093,6 +1092,8 @@ function springboard_dw_map_petition_submission_item($petition,
   $message_item['user_edited'] = '';
   $message_item['created_at'] = $petition->node->created;
   $message_item['updated_at'] = $petition->node->changed;
+  $message_item['contact_id'] = $petition->contact->uid;
+  $message_item['contact_email'] = $petition->contact->mail;
 
   $dw_extra_props = array();
 
