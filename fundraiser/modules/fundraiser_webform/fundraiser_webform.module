@@ -20,6 +20,16 @@ function fundraiser_webform_menu_alter(&$items) {
     'description' => 'View and edit all the available webforms on your site.',
     'type' => MENU_LOCAL_TASK,
   );
+  // Override webform's original results tab with Views-based results.
+  $items['node/%node/webform-results'] = array(
+    'title' => 'Results',
+    'page callback' => '_fundraiser_webform_results_page_content',
+    'page arguments' => array(1),
+    'access callback' => 'user_access',
+    'access arguments' => array('access all webform results'),
+    'description' => 'Browse recent webform results.',
+    'type' => MENU_LOCAL_TASK,
+  );
 }
 
 /**
@@ -1510,4 +1520,36 @@ function fundraiser_webform_webform_submission_render_alter(&$renderable) {
     }
   }
   $renderable['amount']['#markup'] = $markup;
+}
+
+/**
+ * Markup for the overwritten webform result page:
+ */
+function _fundraiser_webform_results_page_content($node) {
+  $output = '';
+
+  // Add the DW-based, lifetime performance stats at the top:
+  $view = views_get_view('springboard_dw_donation_stats_report');
+  if (isset($view) && $view != FALSE && is_object($view)) {
+    $view->set_display('block_1');
+    $view->pre_execute(array($node->nid));
+    $view->execute();
+    $title = isset($view->build_info['title']) ? $view->build_info['title'] : t('Lifetime Performance');
+    $view_content = $view->render();
+    $fieldset = array('#type' => 'fieldset', '#title' => $title, '#description' => $view_content);
+    $output .= drupal_render($fieldset);
+  }
+
+  if (isset($view) && $view != FALSE && is_object($view)) {
+    $view = views_get_view('sbv_donations');
+    $view->set_display('page_2');
+    $view->pre_execute(array($node->nid));
+    $view->execute();
+    $title = isset($view->build_info['title']) ? $view->build_info['title'] : t('Filter Recent Submissions - past 90 days');
+    $view_content = $view->render();
+    $fieldset = array('#type' => 'fieldset', '#title' => $title, '#description' => $view_content);
+    $output .= drupal_render($fieldset);
+  }
+
+  return $output;
 }
