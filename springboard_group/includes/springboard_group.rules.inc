@@ -66,7 +66,7 @@ function springboard_group_rules_config_access($op, $rules_config = NULL, $accou
  *
  * Called from hook_page_alter().
  */
-function springboard_group_rules_page_filter_payment_rules(&$page) {
+function springboard_group_rules_payment_rules_overview__page_alter(&$page) {
   if (!empty($page['content']['system_main']['#page_callback']) &&
     $page['content']['system_main']['#page_callback'] == 'commerce_payment_ui_admin_page'
   ) {

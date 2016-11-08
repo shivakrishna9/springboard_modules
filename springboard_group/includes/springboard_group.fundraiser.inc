@@ -18,7 +18,6 @@ function springboard_group_fundraiser_gateway_info_alter(&$gateways) {
   }
 }
 
-
 /**
  * Update the gateway form after AJAX reload triggered by group selection.
  *
@@ -32,7 +31,7 @@ function springboard_group_fundraiser_node_form_gateway_validate(&$form, &$form_
 
   // An ajax reload has occurred.
   if (!empty($form_state['triggering_element']['#ajax']['callback'])
-    && $form_state['triggering_element']['#ajax']['callback'] == 'springboard_group_ajax_callback'
+    && $form_state['triggering_element']['#ajax']['callback'] == 'springboard_group_og_group_field_ajax_callback'
   ) {
 
     // Get the group ID from the form values.

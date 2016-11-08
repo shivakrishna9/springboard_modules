@@ -42,6 +42,21 @@ function springboard_group_menu() {
     'type' => MENU_LOCAL_TASK,
   );
 
+  // If per group permission is enabled add permissions tab.
+  if (field_info_instance('node', OG_DEFAULT_ACCESS_FIELD, 'springboard_group')) {
+    $items['node/%/group/permissions'] = array(
+      'title' => 'Permissions',
+      'description' => 'Determine access to features by selecting permissions for roles.',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('og_ui_admin_permissions', 0, 1),
+      'access callback' => 'og_ui_user_access_group',
+      'access arguments' => array('manage permissions', 0, 1),
+      'file' => 'og_ui.admin.inc',
+      'file path' => drupal_get_path('module', 'og_ui'),
+      'weight' => 200,
+      'type' => MENU_LOCAL_TASK,
+    );
+  }
 
   $items['admin/springboard/groups/settings'] = array(
     'title' => 'Springboard Groups',
@@ -97,6 +112,7 @@ function springboard_group_menu() {
 
   $items["admin/springboard/groups/settings/help"] = array(
     'page callback' => 'springboard_group_help',
+    'page arguments' => array('admin/springboard/groups/settings/help', NULL),
     'title' => 'Help',
     'access arguments' => array('configure springboard groups'),
     'description' => 'Configure Springboard Groups advanced settings.',

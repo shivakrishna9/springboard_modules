@@ -21,43 +21,10 @@ function springboard_group_settings_page() {
       '#prefix' => '<div class="springboard-groups-settings-page">',
       '#suffix' => '</div>',
     ),
-    //'springboard_group_system_settings_form' => drupal_get_form('springboard_group_system_settings_form'),
     'springboard_group_node_settings_form' => drupal_get_form('springboard_group_node_settings_form'),
     'springboard_group_entity_settings_form' => drupal_get_form('springboard_group_entity_settings_form'),
-
   );
   return $build;
-}
-
-/**
- * Build a form listing group-eligible node types.
- *
- * @return array
- *   The eligible node type form.
- */
-function springboard_group_system_settings_form() {
-  $form = array();
-  $form['springboard_group_system_settings'] = array(
-    '#type' => 'fieldset',
-    '#title' => t('General'),
-    '#collapsible' => TRUE,
-    '#description' => '',
-  );
-
-  $form['springboard_group_system_settings']['springboard_group_name'] = array(
-    '#type' => 'textfield',
-    '#default_value' => variable_get('springboard_group_name', t('Springboard Groups')),
-    '#title' => t('Group designation'),
-    '#description' => 'Enter the string used to refer to groups in the Admin UI; e.g. "Chapters", "Affiliates", "Groups"',
-  );
-
-  $form['springboard_group_system_settings']['submit_settings'] = array(
-    '#type' => 'submit',
-    '#value' => 'Save',
-    '#submit' => array('system_settings_form_submit'),
-  );
-
-  return $form;
 }
 
 /**
@@ -104,6 +71,8 @@ function springboard_group_node_settings_form() {
   );
 
   foreach ($content_type_options as $type => $name) {
+    // Require springboard group advocacy module be enabled before allowing
+    // groupable actions.
     if (!module_exists('springboard_group_advocacy') && in_array($type, array('sba_message_action', 'sba_social_action'))) {
       continue;
     }
@@ -125,6 +94,8 @@ function springboard_group_node_settings_form() {
       '#type' => 'checkbox',
       '#default_value' => in_array($type, $node_defaults),
     );
+
+    // Add the multiple selection option.
     $disallowed_multiple = array('sba_message_action', 'sba_social_action');
     if (!in_array($type, $disallowed_multiple)) {
       $form['springboard_group_node'][$type]['og_' . $type . '_multiple'] = array(
@@ -139,6 +110,7 @@ function springboard_group_node_settings_form() {
         ),
       );
     }
+
     // Disable the checkboxes on the already enabled node types and
     // add a link to remove group field.
     if (in_array($type, $node_defaults)) {
@@ -150,7 +122,7 @@ function springboard_group_node_settings_form() {
 
   $form['springboard_group_node']['submit_node'] = array(
     '#type' => 'submit',
-    '#value' => 'Add',
+    '#value' => t('Save'),
     '#submit' => array('springboard_group_settings_form_submit'),
   );
 
@@ -190,6 +162,7 @@ function springboard_group_entity_settings_form() {
       }
     }
   }
+
   asort($entity_type_options);
   $form['springboard_group_entities'] = array(
     '#type' => 'fieldset',
@@ -275,7 +248,7 @@ function springboard_group_entity_settings_form() {
 
   $form['springboard_group_entities']['actions'] = array(
     '#type' => 'submit',
-    '#value' => 'Add',
+    '#value' => t('Save'),
     '#submit' => array('springboard_group_entities_settings_form_submit'),
   );
 
@@ -347,6 +320,12 @@ function springboard_group_add_group_reference_field($bundle, $type) {
   og_create_field('og_group_ref_' . substr($bundle, 0, 19), $type, $bundle, $og_field);
 }
 
+/**
+ * Advanced config options for groups.
+ *
+ * @return mixed
+ *   A system settings form.
+ */
 function springboard_group_advanced_settings() {
   $form = array();
 
@@ -363,7 +342,7 @@ function springboard_group_advanced_settings() {
     '#default_value' => variable_get('og_node_access_strict', TRUE),
   );
   $form['access']['help'] = array(
-    '#markup' => '<p>' . t('Allow groups permissions to override Springboard Permissions.')
+    '#markup' => '<p>' . t('Allow groups permissions to override Springboard Permissions.'),
   );
 
   $form['altered_views'] = array(
@@ -373,6 +352,8 @@ function springboard_group_advanced_settings() {
     '#collapsible' => TRUE,
   );
 
+  // Enable disabling/enabling of the views_query_alter hook per form.
+  // Useful for debugging.
   $alter = array(
     'sbv_forms',
     'sbv_pagewrappers',
@@ -427,111 +408,4 @@ function springboard_group_add_group_activate_views_alter($type) {
   }
 
   variable_set('group_restricted_views', $restricted);
-}
-
-function springboard_group_help() {
-  $build = [];
-  $build['#prefix'] = '<div id="springboard-group-help">';
-  $build['#suffix'] = '</div>';
-  $build['#attached']['css'][] = drupal_get_path('module', 'springboard_group') . '/css/springboard-og-admin.css';
-
-  $build['#markup'] = <<<EOT
- <h2>Permissions</h2>
-
-<p>There are two types of permissions: those granted by Springboard roles,
- and those granted by Group roles.
-
-<h3>Administer Groups Permissions</h3>
-
-<p>The the ability to create and/or administer all groups is conferred by
-Springboard role permissions.
-
-<p>A user in a Springboard role with the permission "Administer Organic Groups"
-may post and edit content in any group, and administer all groups. He does
-not need to be a member of the group.</p>
-
-<p>A user in a Springboard role with the permission "Create/Edit/Delete
-Springboard Group" may create and edit Springboard Groups. The user who
-creates the group is also automatically added to the Group role
-"Administrator Member."</p>
-
-<H3>Content Permissions</h3>
-
-<p>The ability to create or edit content is conferred by
-Springboard role permissions and by Group role permissions.
-
-<p>Please note that users with the "Administer Organic Groups" or
-"Bypass content access control" Springboard role permissions are
-exempt from Group content permissions.
-
-<h4>Create Content Permissions</h4>
-
-<p>Behavior can vary depending on settings with Groups Permissions
-and within Springboard Permissions.</p>
-
-<p>Examples:
-<div class="item-list">
-<ul>
-<li>If a user has "create page content" permission inside a group
-but not in Springboard, the user will only be able to create page
-content for that group.
-<li>If a user has "create page content"
-permission in Springboard and within a group, the user can choose to
-post to the group or outside the group.
-<li>If a user has "create page content"
-permission in Springboard but not within a group, the user cannot
-post to a group.
-</ul></div>
-
-<h4>Edit and Delete Content Permissions</h4>
-
-<b>Strict access enabled</b>
-<p>Group permissions override Springboard permissions.
-This is the recommended setting.
-<p>Examples:
-<ul><li>A content editor with the global Springboard permission “Edit any
-page content” would be denied access to
-modifying page content if that page is in a group to which he does
-not belong, or in which he does not have edit rights.</li>
- <li>A content editor with the global Springboard permission “Edit own page content”
- would be denied access to modifying his own page content if that page has been
-  added to a group to which he does not belong, or in which
-  he does not have edit rights.</li>
- </ul>
-
-<b>Strict access disabled</b>: <br>
-<p>Group permissions do not override Springboard permissions.
-<p>Examples:
-<ul><li>A content editor with the global Springboard permission “Edit any
-page content” would be able to modify any page content even if that page is
-in a group to which he does not belong. The page would be removed from
-the group when re-saved.</li>
-
-<li>A content editor with the global Springboard permission “Edit own page content”
- would be able to modify his own page content if that page has been
-  added to a group to which he does not belong. The page would be removed
-  from the group when re-saved.</li>
- </ul>
-<h4>Super-user Permissions</h4>
-
-
-<p><strong>Content access</strong>: any user in a Springboard role with the "Bypass content access control"
-permission will be exempt from content access control. To prevent conflicts
-with group ownership when saving content, every role that has
-"Bypass content access control" must also have "Administer Organic groups"
-permissions.</p>
-<p><strong>Rules access: </strong> any user in a Springboard role with the "Bypass rules access control"
-permission will be exempt from rules access control. To prevent conflicts
-with group ownership when saving payment methods, every role that has
-"Bypass rules access control" should also have "Administer Organic groups"
-permissions.</p>
-<p>Any user in a Springboard role with the "Administer rules configurations"
-permission will be exempt from rules access control. To prevent conflicts
-with group ownership when saving payment methods, every role that has
-"Administer rules configurations" should also have "Administer Organic groups"
-permissions.</p><br />
-
-EOT;
-
-  return $build;
 }

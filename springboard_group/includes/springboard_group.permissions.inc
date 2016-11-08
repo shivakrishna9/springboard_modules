@@ -49,6 +49,8 @@ function springboard_group_og_permission() {
 
 /**
  * Implements hook_og_permission_alter().
+ *
+ * Remove some default permissions for features we're not using.
  */
 function springboard_group_og_permission_alter(&$perms) {
   $perms['subscribe']['default role'] = array();
@@ -141,7 +143,7 @@ function springboard_group_preprocess_og_ui_admin_permissions(&$vars) {
  *
  * Called from springboard_group_page_alter().
  */
-function springboard_group_permissions_overview_page(&$page) {
+function springboard_group_permissions_overview__page_alter(&$page) {
   if (!empty($page['content']['system_main']['#form_id']) &&
     $page['content']['system_main']['#form_id'] == 'og_ui_admin_global_permissions'
   ) {
@@ -152,14 +154,6 @@ function springboard_group_permissions_overview_page(&$page) {
     }
     else {
       $strict_message = t("Strict access control is not enabled.");
-    }
-
-    //$bypass = springboard_group_check_role_conflicts();
-
-    $bypass_message = '';
-    if (!empty($bypass)) {
-      $bypass = implode(', ', $bypass);
-      $bypass_message = t('The following Springboard roles have "bypass content access control" permission and will not be affected by these settings: @bypass', array('@bypass' => $bypass));
     }
 
     $help_message = t('More information about permissions is available on the help tab');
@@ -193,7 +187,7 @@ function springboard_group_permissions_overview_page(&$page) {
 }
 
 /**
- * Check for "bypass content access control" conflicts.
+ * Check for "bypass content access control" and other conflicts.
  *
  * @return array
  *   Roles with by permission.
@@ -203,7 +197,6 @@ function springboard_group_check_role_conflicts() {
   $role_permissions = user_role_permissions($roles);
   $bypass_node_access = [];
   $bypass_rules_access = [];
-  $admin_rules = [];
   $administer_groups = [];
   foreach ($role_permissions as $rid => $permissions) {
     foreach ($permissions as $key => $permission) {
@@ -232,7 +225,6 @@ function springboard_group_check_role_conflicts() {
     springboard_group_permissions_problem_message($rules_bypass_problem, 'bypass rules access');
 
   }
-
 }
 
 function springboard_group_permissions_problem_message($problem, $type) {
@@ -249,7 +241,8 @@ function springboard_group_permissions_problem_message($problem, $type) {
 /**
  * Implements hook_form_FORM_ID_alter().
  *
- * Add the js which hides non-group permissions.
+ * Add the js which hides non-group permissions to our alternate version
+ * of Drupal's permissions overview form. Alters some descriptions too.
  */
 function springboard_group_form_user_admin_permissions_alter(&$form, $form_state) {
   if (isset($form['permission']['administer group'])) {

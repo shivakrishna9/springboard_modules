@@ -194,7 +194,7 @@ function springboard_group_context_menu_paths() {
  * @return array
  *   The current user's groups.
  */
-function springboard_group_entityreference_context($form, $form_state) {
+function springboard_group_context_entityreference($form, $form_state) {
   $field = $form['og_group_ref_' . substr($form['#node']->type, 0, 19)];
   $language = $field['#language'];
   if (empty($form_state['values'])) {
@@ -208,4 +208,89 @@ function springboard_group_entityreference_context($form, $form_state) {
   }
   $_SESSION['springboard_group_entityreference_context'] = $gids;
   return $gids;
+}
+
+/**
+ * Called from springboard_group_preprocess_page().
+ *
+ * Adds a group dropdown selector to designated non-node pages when a user
+ * has multiple group affiliations. See springboard_group_context_menu_paths()
+ * for a list of paths this is active on.
+ */
+function springboard_group_context_selector__preprocess_page(&$vars) {
+  $path = current_path();
+  $og_paths = springboard_group_context_menu_paths();
+  if (in_array($path, $og_paths) && isset($_SESSION['springboard_group_context_multiple'])) {
+    $build = array(
+      'selector' => drupal_get_form('springboard_group_context_selector_form', $_SESSION['springboard_group_context_multiple']),
+    );
+    $vars['page']['content']['system_main']['group_selector']['#markup'] = render($build);
+    $vars['page']['content']['system_main']['group_selector']['#weight'] = -10;
+    $vars['page']['content']['system_main']['group_selector']['#prefix'] = '<div id="sb-og-group-group_selector">';
+    $vars['page']['content']['system_main']['group_selector']['#suffix'] = '</div>';
+  }
+}
+
+/**
+ * Build the group selector form.
+ *
+ * Pages without a node context need a way of determining which group is
+ * active. This adds a selector to choose which group
+ * context to work in.
+ *
+ * @param array $groups
+ *   The current user's possible groups.
+ *
+ * @return array
+ *   The form.
+ */
+function springboard_group_context_selector_form($form, &$form_state, $groups) {
+
+  $form = [];
+  $form['#attached']['css'][] = drupal_get_path('module', 'springboard_group') . '/css/springboard-group-selector.css';
+  $form['title']['#markup'] = '<strong>' . t('Choose a group to work in:') . '</strong>';
+
+  // Build the selector form from groups found in user session.
+  $options = [];
+  if (user_access('administer group')) {
+    $options['_none'] = '- None -';
+  }
+  foreach ($groups as $nid) {
+    $node = node_load($nid);
+    $options[$nid] = check_plain($node->title);
+  }
+
+  // The ajax enabled group selector which will reload the page
+  // subsequent to a group choice. The group ID will get put into session.
+  $form['groups'] = array(
+    '#type' => 'select',
+    '#options' => $options,
+    '#default_value' => springboard_group_get_group_context(),
+    '#ajax' => array(
+      'callback' => 'springboard_group_context_selector_ajax_callback',
+      'wrapper' => 'sb-og-group-selector',
+      'method' => 'replace',
+      'effect' => 'fade',
+    ),
+    '#prefix' => '<div id="group-selector-div">',
+    '#suffix' => '</div>',
+  );
+
+  return $form;
+}
+
+/**
+ * AJAX callback for group selector form.
+ */
+function springboard_group_context_selector_ajax_callback($form, &$form_state) {
+  // Put the chosen group into session, so it can be retrieved by
+  // springboard_group_advocacy_og_context_handler().
+  $_SESSION['springboard_group_working_group'] = $form_state['values']['groups'];
+
+  // Reload the page to get the new grouped content.
+  ctools_include('ajax');
+  ctools_add_js('ajax-responder');
+  $commands[] = ctools_ajax_command_reload();
+  print ajax_render($commands);
+  drupal_exit();
 }
