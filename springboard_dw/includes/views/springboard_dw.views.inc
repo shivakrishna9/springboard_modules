@@ -7,9 +7,75 @@
 
 /**
  * Implements hook_views_data().
+ *
+ * Defines pseudo-DB tables for creating views that fetch their data from the remote data warehouse.
  */
 function springboard_dw_views_data() {
-  // Define a pseudo-DB table and assign the custom query handler which queries the remote API server:
+  // Defines a view type which displays lifetime performance of a given donation form from the warehouse:
+  $data['sp_dw_donation_stats_psudo']['table'] = array(
+    'group' => t('Springboard DW Donation Stats'),
+    'base' => array(
+      'title' => t('Springboard DW Donation Stats'),
+      'help' => t('Fetches lifetime performance statistic from the data warehouse for a single, contextually filtered donation form.'),
+      'query class' => 'springboard_dw_donation_stats_views_plugin_query', 
+    ),
+  );
+  // Define the fields:
+  $data['sp_dw_donation_stats_psudo']['raised'] = array(
+    'title' => t('Total Amount Donated'),
+    'help' => t('Fetches the total amount donated from this donation form.'),
+    'field' => array(
+      'handler' => 'springboard_dw_views_handler_field',
+    ),
+  );
+  $data['sp_dw_donation_stats_psudo']['gifts'] = array(
+    'title' => t('Total Donations'),
+    'help' => t('Fetches the total number of donations submitted from this donation form.'),
+    'field' => array(
+      'handler' => 'springboard_dw_views_handler_field',
+    ),
+  );
+  $data['sp_dw_donation_stats_psudo']['sustainers'] = array(
+    'title' => t('Total Recurring Donations'),
+    'help' => t('Fetches the total number of recurring donations submitted from this donation form.'),
+    'field' => array(
+      'handler' => 'springboard_dw_views_handler_field',
+    ),
+  );
+  $data['sp_dw_donation_stats_psudo']['first_time_donors'] = array(
+    'title' => t('Total First Time Donations'),
+    'help' => t('Fetches the total number of first-time donations submitted from this donation form.'),
+    'field' => array(
+      'handler' => 'springboard_dw_views_handler_field',
+    ),
+  );
+  $data['sp_dw_donation_stats_psudo']['first_submission'] = array(
+    'title' => t('First Donation Date'),
+    'help' => t('Fetches the date when the first donation to this form was submitted.'),
+    'field' => array(
+      'handler' => 'springboard_dw_views_handler_field',
+    ),
+  );
+  $data['sp_dw_donation_stats_psudo']['latest_submission'] = array(
+    'title' => t('Last Donation Date'),
+    'help' => t('Fetches the date when the most recent donation to this form was submitted.'),
+    'field' => array(
+      'handler' => 'springboard_dw_views_handler_field',
+    ),
+  );
+  $data['sp_dw_donation_stats_psudo']['donation_id'] = array(
+    'title' => t('Donation ID'),
+    'help' => t('The ID of the donation form from which statistics will be fetched.'),
+    'field' => array(
+      'handler' => 'springboard_dw_views_handler_field',
+    ),
+    'argument' => array(
+      'handler' => 'views_handler_argument_numeric',
+    ),
+  );
+  // End DW Life Donation Stats view type
+
+  // Defines a view type which displays donations data from the warehouse:
   $data['sp_dw_donations_psudo']['table'] = array(
     'group' => t('Springboard DW Donations'),
     'base' => array(
@@ -128,6 +194,7 @@ function springboard_dw_views_data() {
       'click sortable' => FALSE,
     ),
   );
+  // End DW donations view type
 
   return $data;
 }
@@ -145,6 +212,12 @@ function springboard_dw_views_plugins() {
         'title' => t('Springboard Data Warehouse Donations API Request'),
         'help' => t('Uses Guzzle for querying remote donation data'),
         'handler' => 'springboard_dw_donations_views_plugin_query',
+        'path' => drupal_get_path('module', 'springboard_dw') . '/includes/views/plugins',
+      ),
+      'springboard_dw_donation_stats_views_plugin_query' => array(
+        'title' => t('Springboard Data Warehouse Donation Statistics API Request'),
+        'help' => t('Uses Guzzle for querying remote donation data'),
+        'handler' => 'springboard_dw_donation_stats_views_plugin_query',
         'path' => drupal_get_path('module', 'springboard_dw') . '/includes/views/plugins',
       ),
     ),

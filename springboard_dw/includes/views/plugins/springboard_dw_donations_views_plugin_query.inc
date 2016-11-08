@@ -1,10 +1,10 @@
 <?php
 /**
- * @file springboard_advocacy_views_plugin_query.inc
+ * @file springboard_dw_donations_views_plugin_query.inc
  */
 
 /**
- * Class springboard_dw_views_plugin_query
+ * Class springboard_dw_donations_views_plugin_query
  * Override views default db query with data warehouse guzzle request.
  */
 class springboard_dw_donations_views_plugin_query extends views_plugin_query {

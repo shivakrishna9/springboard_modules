@@ -36,8 +36,16 @@ class springboard_dw_views_handler_field extends views_handler_field
   function render($values) {
     $value = $this->get_value($values);
     $value = $this->sanitize_value($value);
-
     $alias = isset($field) ? $this->aliases[$field] : $this->field_alias;
+
+    if (!$value && isset($values[$alias])) {
+      $value = $values[$alias];
+    }
+
+    // Re-format donation stats first and last donation date values:
+    if ($alias == 'first_submission' || $alias == 'latest_submission') {
+      $value = date('m/d/Y H:i', strtotime($value));
+    }
 
     // Replace transaction ID value with on-site link, if available:
     if ($alias == 'transaction_id' || $alias == 'payment_link') {
