@@ -87,6 +87,13 @@ function springboard_dw_views_data() {
       'handler' => 'views_handler_argument_numeric',
     ),
   );
+  $data['sp_dw_donation_stats_psudo']['latest_fetch'] = array(
+    'title' => t('Latest fetch'),
+    'help' => t('Displays a message detailing how long ago this data was fetched from the warehouse.'),
+    'field' => array(
+      'handler' => 'springboard_dw_views_handler_field',
+    ),    
+  );
   // End DW Life Donation Stats view type
 
   // Defines a view type which displays donations data from the warehouse:

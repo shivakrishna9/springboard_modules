@@ -36,7 +36,8 @@
   position: relative;
 }
 .view-springboard-dw-donation-stats-report .views-field-first-submission-date,
-.view-springboard-dw-donation-stats-report .views-field-latest-submission-date {
+.view-springboard-dw-donation-stats-report .views-field-latest-submission-date, 
+.view-springboard-dw-donation-stats-report .views-field-latest-fetch {
   display: block;
   font-size: 10px;
   position: absolute;
@@ -49,4 +50,9 @@
 .view-springboard-dw-donation-stats-report .views-field-latest-submission-date .field-content {
   position: relative;
   top: 22px;
+}
+.view-springboard-dw-donation-stats-report .views-field-latest-fetch .field-content {
+  color: #ccc;
+  position: relative;
+  bottom: 64px;
 }

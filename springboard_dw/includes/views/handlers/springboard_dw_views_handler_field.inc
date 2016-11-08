@@ -47,6 +47,19 @@ class springboard_dw_views_handler_field extends views_handler_field
       $value = date('m/d/Y H:i', strtotime($value));
     }
 
+    // Format donation stats latest fetch value:
+    if ($alias == 'latest_fetch') {
+      // Round down to the nearest 15 minutes if the fetch was recent; otherwise, use the exact fetch time:
+      if (time() - $value > (60 * 15)) {
+        $sync_time = $value;
+      }
+      else {
+        $seconds = $value;
+        $sync_time = floor($seconds / (15 * 60)) * (15 * 60);
+      }
+      $value = format_interval(time() - $sync_time);
+    }
+
     // Replace transaction ID value with on-site link, if available:
     if ($alias == 'transaction_id' || $alias == 'payment_link') {
       if (!is_numeric($value)) {

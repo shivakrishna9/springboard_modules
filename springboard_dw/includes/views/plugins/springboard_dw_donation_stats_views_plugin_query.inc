@@ -54,6 +54,7 @@ class springboard_dw_donation_stats_views_plugin_query extends views_plugin_quer
           unset($response_data[$response_key]);
         }
       }
+      $response_data['latest_fetch'] = time();
       $view->result[] = $response_data;
     }
 
