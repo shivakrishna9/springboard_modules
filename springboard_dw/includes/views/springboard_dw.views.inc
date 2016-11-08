@@ -49,15 +49,29 @@ function springboard_dw_views_data() {
       'handler' => 'springboard_dw_views_handler_field',
     ),
   );
-  $data['sp_dw_donation_stats_psudo']['first_submission'] = array(
-    'title' => t('First Donation Date'),
-    'help' => t('Fetches the date when the first donation to this form was submitted.'),
+  $data['sp_dw_donation_stats_psudo']['first_donation_id'] = array(
+    'title' => t('First Donation ID'),
+    'help' => t('Fetches the Donation ID of the oldest donation submitted to the DW from this form.'),
     'field' => array(
       'handler' => 'springboard_dw_views_handler_field',
     ),
   );
-  $data['sp_dw_donation_stats_psudo']['latest_submission'] = array(
-    'title' => t('Last Donation Date'),
+  $data['sp_dw_donation_stats_psudo']['latest_donation_id'] = array(
+    'title' => t('Latest Donation ID'),
+    'help' => t('Fetches the Donation ID of the most recent donation submitted to the DW from this form.'),
+    'field' => array(
+      'handler' => 'springboard_dw_views_handler_field',
+    ),
+  );
+  $data['sp_dw_donation_stats_psudo']['first_submission_date'] = array(
+    'title' => t('First Donation Date'),
+    'help' => t('Fetches the date when the oldest donation to this form was submitted.'),
+    'field' => array(
+      'handler' => 'springboard_dw_views_handler_field',
+    ),
+  );
+  $data['sp_dw_donation_stats_psudo']['latest_submission_date'] = array(
+    'title' => t('Latest Donation Date'),
     'help' => t('Fetches the date when the most recent donation to this form was submitted.'),
     'field' => array(
       'handler' => 'springboard_dw_views_handler_field',

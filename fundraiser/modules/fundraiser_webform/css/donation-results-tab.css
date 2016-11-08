@@ -35,18 +35,18 @@
   font-size: 24px;
   position: relative;
 }
-.view-springboard-dw-donation-stats-report .views-field-first-submission,
-.view-springboard-dw-donation-stats-report .views-field-latest-submission {
+.view-springboard-dw-donation-stats-report .views-field-first-submission-date,
+.view-springboard-dw-donation-stats-report .views-field-latest-submission-date {
   display: block;
   font-size: 10px;
   position: absolute;
   right: 4px;
 }
-.view-springboard-dw-donation-stats-report .views-field-latest-submission {
+.view-springboard-dw-donation-stats-report .views-field-latest-submission-date {
   margin-top: 12px;
 }
-.view-springboard-dw-donation-stats-report .views-field-first-submission .field-content,
-.view-springboard-dw-donation-stats-report .views-field-latest-submission .field-content {
+.view-springboard-dw-donation-stats-report .views-field-first-submission-date .field-content,
+.view-springboard-dw-donation-stats-report .views-field-latest-submission-date .field-content {
   position: relative;
   top: 22px;
 }

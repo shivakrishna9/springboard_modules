@@ -38,7 +38,7 @@ class springboard_dw_views_handler_field extends views_handler_field
     $value = $this->sanitize_value($value);
     $alias = isset($field) ? $this->aliases[$field] : $this->field_alias;
 
-    if (!$value && isset($values[$alias])) {
+    if (!$value && is_array($values) && isset($values[$alias])) {
       $value = $values[$alias];
     }
 

@@ -35,16 +35,32 @@ class springboard_dw_donation_stats_views_plugin_query extends views_plugin_quer
     // Fetch the statistics
     $endpoint = 'metrics/donation/count';
     $response = springboard_dw_api_call($endpoint, $params, $method);
-    $response_data = json_decode((string) $response->getBody());
-
+    $response_data = json_decode((string) $response->getBody(), TRUE);
     if (!empty($response_data)) {
+      foreach ($response_data as $response_key => $value) {
+        if (!is_array($value)) {
+          continue;
+        }
+        // Break up first/latest donation data into individual fields:
+        if (isset($value['donation_id']) && isset($value['transaction_date'])) {
+          if ($response_key == 'first_submission') {
+            $response_data['first_donation_id'] = $value['donation_id'];
+            $response_data['first_submission_date'] = $value['transaction_date'];
+          }
+          elseif ($response_key == 'latest_submission') {
+            $response_data['latest_donation_id'] = $value['donation_id'];
+            $response_data['latest_submission_date'] = $value['transaction_date'];
+          }
+          unset($response_data[$response_key]);
+        }
+      }
       $view->result[] = $response_data;
     }
 
     // Add currency symbol to amount raised:
-    if (isset($view->result[0]->raised)) {
+    if (isset($view->result[0]['raised'])) {
       $default_currency_code = variable_get('commerce_default_currency', 'USD');
-      $view->result[0]->raised = commerce_currency_format($view->result[0]->raised, $default_currency_code, NULL, FALSE);
+      $view->result[0]['raised'] = commerce_currency_format($view->result[0]['raised'], $default_currency_code, NULL, FALSE);
     }
 
     $view->execute_time = microtime(TRUE) - $start;
