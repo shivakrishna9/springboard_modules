@@ -94,6 +94,13 @@ function springboard_dw_views_data() {
       'handler' => 'springboard_dw_views_handler_field',
     ),    
   );
+  $data['sp_dw_donation_stats_psudo']['node_status'] = array(
+    'title' => t('Node Status'),
+    'help' => t('The current donation form\'s node status.'),
+    'field' => array(
+      'handler' => 'springboard_dw_views_handler_field',
+    ),
+  );
   // End DW Life Donation Stats view type
 
   // Defines a view type which displays donations data from the warehouse:

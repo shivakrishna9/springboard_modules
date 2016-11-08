@@ -21,14 +21,15 @@ class springboard_dw_donation_stats_views_plugin_query extends views_plugin_quer
    * @param view $view
    */
   function execute(&$view) {
-/*    if (!isset($view->args[0]) || !is_numeric($view->args[0])) {
+    if (!isset($view->args[0]) || !is_numeric($view->args[0])) {
       $view->result = array();
       return;    
-    } */
+    } 
 
     $start = microtime(TRUE);
     $method = 'GET';
-    $target_donation_id = 10; // $target_donation_id = $view->args[0];
+    $target_donation_id = 10;
+    //$target_donation_id = $view->args[0];
     $params = array('formId' => $target_donation_id);
     $view->result = array();
 
@@ -55,6 +56,16 @@ class springboard_dw_donation_stats_views_plugin_query extends views_plugin_quer
         }
       }
       $response_data['latest_fetch'] = time();
+
+      // Populate the status based on donation ID:
+      $node_status = db_query("SELECT status FROM {node} WHERE nid = :nid", array(':nid' => $target_donation_id))
+        ->fetchField();
+      if ($node_status){
+        $response_data['node_status'] = $node_status == 0 ? t('Not Published') : t('Published');
+      }
+      else {
+        $response_data['node_status'] = t('N/A');
+      }
       $view->result[] = $response_data;
     }
 

@@ -56,6 +56,8 @@ class springboard_dw_views_handler_field extends views_handler_field
       else {
         $seconds = $value;
         $sync_time = floor($seconds / (15 * 60)) * (15 * 60);
+        // Pad with 1 extra minute:
+        $sync_time -= 60;
       }
       $value = format_interval(time() - $sync_time);
     }

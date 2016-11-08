@@ -1,10 +1,12 @@
 .page-node-webform-results fieldset {
   border: 2px solid #e1e9db;
-  border-top: 2px solid #e1e9db;
+  border-top: none;
 }
 .page-node-webform-results fieldset legend {
-  top: 14px;
-  left: -4px;
+  top: 20px;
+  font-size 16px;
+  left: -18px;
+  margin-bottom: 17px;
 }
 .page-node-webform-results table td {
   font-size: 11px;
@@ -14,12 +16,19 @@
   font-size: 11px;
   min-width: 500px;
 }
+.view-springboard-dw-donation-stats-report .views-field-node-status {
+  color: #888;
+  font-size: 10px;
+  left: 6px;
+  margin-top: 42px;
+  position: absolute;
+}
 .view-springboard-dw-donation-stats-report .views-field-raised,
 .view-springboard-dw-donation-stats-report .views-field-gifts,
 .view-springboard-dw-donation-stats-report .views-field-sustainers,
 .view-springboard-dw-donation-stats-report .views-field-first-time-donors {
   float: left;
-  padding-bottom: 4px;
+  padding-bottom: 11px;
   text-align: center;
   width: 23%;
 }
@@ -30,9 +39,9 @@
 .view-springboard-dw-donation-stats-report .views-field-gifts .field-content,
 .view-springboard-dw-donation-stats-report .views-field-sustainers .field-content,
 .view-springboard-dw-donation-stats-report .views-field-first-time-donors .field-content {
-  bottom: 44px;
+  bottom: 45px;
   display: block;
-  font-size: 24px;
+  font-size: 25px;
   position: relative;
 }
 .view-springboard-dw-donation-stats-report .views-field-first-submission-date,
@@ -41,7 +50,7 @@
   display: block;
   font-size: 10px;
   position: absolute;
-  right: 4px;
+  right: 5px;
 }
 .view-springboard-dw-donation-stats-report .views-field-latest-submission-date {
   margin-top: 12px;
@@ -49,10 +58,10 @@
 .view-springboard-dw-donation-stats-report .views-field-first-submission-date .field-content,
 .view-springboard-dw-donation-stats-report .views-field-latest-submission-date .field-content {
   position: relative;
-  top: 22px;
+  top: 30px;
 }
 .view-springboard-dw-donation-stats-report .views-field-latest-fetch .field-content {
-  color: #ccc;
+  color: #ddd;
   position: relative;
-  bottom: 64px;
+  bottom: 73px;
 }
