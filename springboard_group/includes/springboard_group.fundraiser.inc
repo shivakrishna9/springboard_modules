@@ -36,10 +36,9 @@ function springboard_group_fundraiser_node_form_gateway_validate(&$form, &$form_
 
     // Get the group ID from the form values.
     $language = $form['og_group_ref_' . $form['#node']->type]['#language'];
-    $option = $form_state['values']['og_group_ref_' . $form['#node']->type][$language];
+    $option = $form_state['values']['og_group_ref_' . substr($form['#node']->type, 0, 19)][$language];
     // @todo update for multiple groups, if needed.
     $gid = isset($option[0]['target_id']) ? $option[0]['target_id'] : 'none';
-
     // Get the gateways and filter them by group ownership.
     $all_gateways = _fundraiser_gateway_info();
     $gateways = springboard_group_fundraiser_filter_gateways($all_gateways, $gid);

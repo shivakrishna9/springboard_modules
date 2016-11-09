@@ -162,7 +162,10 @@ function springboard_group_form_node_form_alter(&$form, &$form_state) {
     if (!empty($form_state['triggering_element']['#ajax']['callback'])
       && $form_state['triggering_element']['#ajax']['callback'] == 'springboard_group_og_group_field_ajax_callback'
     ) {
-      $arr = explode(',', $form_state['input']['og_group_ref_' . substr($form['#node']->type, 0, 19)]['und'][0]['default'][0]);
+      $value = $form_state['input']['og_group_ref_' . substr($form['#node']->type, 0, 19)]['und'][0]['default'];
+      if (is_array($value)) {
+        $arr = explode(',', $value[0]);
+      }
       if (!empty($arr)) {
         $form['og_group_ref_' . substr($form['#node']->type, 0, 19)][$language][0]['default']['#value'] = $arr;
         foreach ($arr as $key => $gid) {
@@ -376,7 +379,7 @@ function springboard_group_set_single_selector(&$form, $fields) {
  * If not, remove the "_none" option.
  *
  * @param array $form
- *  The form array.
+ *   The form array.
  *
  * @return bool
  *   Whether the user can use the "none" selection option.
