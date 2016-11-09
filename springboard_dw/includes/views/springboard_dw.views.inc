@@ -288,5 +288,74 @@ function springboard_dw_form_views_exposed_form_alter(&$form, &$form_state) {
   if (isset($form['transaction_date']['max']['#date_format'])) {
     $form['transaction_date']['max']['#date_format'] = 'm/d/Y';
   }
-
 }
+
+/**
+ * Implements hook_views_post_render().
+ *
+ * Alter presentation for the single donation display:
+ */
+function springboard_dw_views_post_render(&$view, &$output, &$cache) {
+  $output = '<div id="dw-donation-detail">';
+  if (!isset($view->result[0])) {
+    $output = 'No data available.';
+    return;
+  }
+  $data = $view->result[0];
+  dpm($data);
+
+  $fields_groups = array(
+    'order' => array(
+      'label' => t('Transaction'),
+      'fields' => array(
+        'amount_formatted' => t('Donation Amount'),
+        'donation_id' => t('Donation ID'),
+        'transaction_id' => t('Transaction ID'), 
+        'transaction_date' => t('Transaction Date'),
+        'form_id' => t('Form ID'),
+        'status' => t('Transaction Status'),
+      ),
+    ),
+    'contact' => array(
+      'label' => t('Contact'),
+      'fields' => array(
+        'contact_id' => t('Contact ID'),
+        'email' => t('Email Address'),
+        'first_name' => t('First Name'),
+        'last_name' => t('Last Name'),
+        'address' => t('Address'),
+        'address_line_2' => t('Address 2'),
+        'city' => t('City'),
+        'state' => t('State'),
+        'zip' => t('Postal Code'),
+        'country' => t('Country'),
+      ),
+    ),
+    'payment' => array(
+      'label' => t('Payment'),
+      'fields' => array(
+        'gateway' => t('Gateway'),
+        'payment_method' => t('Payment Method'),
+        'card_type' => t('Card Type'),
+        'card_last_4' => t('Card Last 4'),
+        'card_expiration_month' => t('Card Exp. Month'),
+        'card_expiration_year' => t('Card Exp. Year'),
+        'bank_account_mask' => t('Bank Account Mask'),
+      ),   
+    ),
+  );
+  foreach ($fields_groups as $group_key => $field_group) {
+    $output .= '<div class="dw-field-group-container dw-field-group-container-' . $group_key . '">';
+    $output .= '<h2>' . $field_group['label'] . '</h2>';
+    $output .= '<table class="dw-field-group dw-field-group-' . $group_key . '"><tbody>';
+    foreach ($field_group['fields'] as $field_key => $field_label) {
+      if (isset($data->$field_key)) {
+        $output .= '<tr><td class="label">' . $field_label . ':</td><td class="value"> ' . $data->$field_key . '</td></tr>';
+      }
+    }
+    $output .= '</tbody></table></div>';
+  }
+  $output .= '</div>';
+  drupal_add_css(drupal_get_path('module', 'springboard_dw') . '/css/springboard_dw.css');
+}
+

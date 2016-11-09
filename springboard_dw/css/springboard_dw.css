@@ -48,3 +48,8 @@
 #views-exposed-form-springboard-dw-donations-report-page .form-item-transaction-date-max-date i {
   cursor: pointer;
 }
+// DW Donation Detail:
+#dw-donation-detail .dw-field-group-container {
+  float: left;
+  width: 50%;
+}
