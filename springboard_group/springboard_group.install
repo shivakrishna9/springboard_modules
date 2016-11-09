@@ -9,7 +9,10 @@
 function springboard_group_install() {
 
   module_load_include('inc', 'springboard_group', 'includes/install/springboard_group.install_content_type');
+  module_load_include('inc', 'springboard_group', 'includes/install/springboard_group.install_permissions');
+
   _springboard_group_install_content_type();
+  _springboard_group_install_permissions();
 
   // Add the og_user_node field to the user profile's springboard admin group.
   $field_group = field_group_load_field_group('group_profile_admin', 'user', 'user', 'form');
@@ -20,7 +23,7 @@ function springboard_group_install() {
   }
 
   // Update og_user_node field so that display is set to
-  // hidden for webform user component creation.
+  // hidden so it doesn't cause a problemfor webform user component creation.
   $instance_info = field_info_instance(
     'user',
     'og_user_node',
@@ -34,6 +37,11 @@ function springboard_group_install() {
 
 }
 
+/**
+ * Implements hook_field_schema().
+ *
+ * @todo For social media icons if wee implement a field type.
+ */
 function springboard_group_field_schema($field) {
   $columns = array(
     'url' => array('type' => 'varchar', 'length' => 255, 'not null' => FALSE),
@@ -75,104 +83,29 @@ function springboard_group_field_schema($field) {
   );
 }
 
+/**
+ * Implements hook_enable().
+ */
 function springboard_group_enable() {
+
+  // Set up the page manager template for group nodes.
   $page = page_manager_get_page_cache('node_view');
   $function = ctools_plugin_get_function($page->subtask, "enable callback");
   $function($page, FALSE);
   menu_rebuild();
+
+  // Set some default OG variables.
+  // Don't let group manager be exempt from group content access permissions.
   variable_set('og_group_manager_full_access', FALSE);
+  // Gives the group author manager permissions in the group.
   variable_set('og_group_manager_default_rids_node_springboard_group', array(3 => 3));
+  // Sets OG node access as strict.
   variable_set('og_node_access_strict', 1);
+  // Sets a custom view as the default member administration view.
   variable_set('og_ui_admin_people_view', 'springboard_group_member_admin:default');
+
+  // Activate Springboard Group's custom og_context negotiator.
   $context = variable_get('og_context_negotiation_group_context', array());
   $context = array_merge($context, array('springboard_group' => array()));
   variable_set('og_context_negotiation_group_context', $context);
-
-  $roles = array('Affiliate editor');
-  foreach ($roles as $role) {
-    if (!user_role_load_by_name($role)) {
-      $role = new stdClass();
-      $role->name = $role;
-      user_role_save($role);
-    }
-  }
-
-  $permissions = springboard_group_default_permissions();
-  $roles = [];
-  $roles[] = user_role_load_by_name('Administrator');
-  $roles[] = user_role_load_by_name('Springboard administrator');
-  $roles[] = user_role_load_by_name('Springboard editor');
-  $roles[] = user_role_load_by_name('Affiliate editor');
-  foreach ($roles as $role) {
-    foreach ($permissions as $name => $perm) {
-      if (isset($perm['roles'][$role->name])) {
-        user_role_grant_permissions($role->rid, array($name));
-      }
-    }
-  }
-}
-
-function springboard_group_default_permissions() {
-  $permissions = array();
-
-  $permissions['clone node'] = array(
-    'roles' => array(
-      'Affiliate editor' => 'Affiliate editor',
-    ),
-  );
-
-  $permissions['access contextual links'] = array(
-    'roles' => array(
-      'Affiliate editor' => 'Affiliate editor',
-    ),
-  );
-
-  $permissions['access draggableviews'] = array(
-    'roles' => array(
-      'Affiliate editor' => 'Affiliate editor',
-    ),
-  );
-
-  $permissions['use text format filtered_html'] = array(
-    'name' => 'use text format filtered_html',
-    'roles' => array(
-      'Affiliate editor' => 'Affiliate editor',
-    ),
-  );
-
-  $permissions['use text format full_html'] = array(
-    'roles' => array(
-      'Affiliate editor' => 'Affiliate editor',
-    ),
-  );
-
-  $permissions['create url aliases'] = array(
-    'roles' => array(
-      'Affiliate editor' => 'Affiliate editor',
-    ),
-  );
-
-  $permissions['access springboard dashboard'] = array(
-    'roles' => array(
-      'Affiliate editor' => 'Affiliate editor',
-    ),
-  );
-
-  $permissions['access springboard groups dashboard'] = array(
-    'roles' => array(
-      'Affiliate editor' => 'Affiliate editor',
-      'Administrator' => 'Administrator',
-      'Springboard admin' => 'Springboard admin',
-      'Springboard editor' => 'Springboard editor',
-    ),
-  );
-
-  $permissions['configure springboard groups'] = array(
-    'roles' => array(
-      'Administrator' => 'Administrator',
-      'Springboard admin' => 'Springboard admin',
-    ),
-  );
-
-  return $permissions;
 }
