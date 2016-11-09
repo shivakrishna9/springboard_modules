@@ -151,6 +151,27 @@ function springboard_group_form_node_form_alter(&$form, &$form_state) {
       'callback' => 'springboard_group_og_group_field_ajax_callback',
     );
 
+    // During the ajax callback, when multiple selections are enabled,
+    // the value of $form_state['input']['og_group_ref_{name}'] is, for some
+    // unknown reason, a comma-separated string of group IDs instead of an
+    // indexed array. This causes an illegal choice error. Here we reset it
+    // as an array in the #value property so that _form_validate() does
+    // not choke. @todo explore why this is happening.
+    // Also, form state values has only a single entry instead of multiple.
+    // Fix that during our ajax call too.
+    if (!empty($form_state['triggering_element']['#ajax']['callback'])
+      && $form_state['triggering_element']['#ajax']['callback'] == 'springboard_group_og_group_field_ajax_callback'
+    ) {
+      $arr = explode(',', $form_state['input']['og_group_ref_' . substr($form['#node']->type, 0, 19)]['und'][0]['default'][0]);
+      if (!empty($arr)) {
+        $form['og_group_ref_' . substr($form['#node']->type, 0, 19)][$language][0]['default']['#value'] = $arr;
+        foreach ($arr as $key => $gid) {
+          $form_state['values']['og_group_ref_' . substr($form['#node']->type, 0, 19)][$language][$key]['target_id'] = $gid;
+          $form_state['values']['og_group_ref_' . substr($form['#node']->type, 0, 19)][$language][$key]['field_mode'] = 'default';
+        }
+      }
+    }
+
     // Set the context for any entity reference fields on this form.
     // Not currently used, but would be required for p2p or any other
     // content type that uses entity reference fields (apart from actions
@@ -294,13 +315,15 @@ function springboard_group_field_widget_form_alter(&$element, &$form_state, $con
   if (isset($context['field']['settings']['handler']) && $context['field']['settings']['handler'] == 'og_springboard_og') {
     // If the og reference field is using our custom selection handler,
     // remove the admin "groups you are not of member of" field.
-    $element['admin']['#access'] = FALSE;
-    // Set the value of the default field to the default value of the admin
-    // field if there are values present.
-    if (!empty($element['admin']['#default_value']) && empty($element['default']['#default_value'])) {
-      $element['default']['#default_value'] = $element['admin']['#default_value'];
+    if (user_access('administer group')) {
+      $element['admin']['#access'] = FALSE;
+      // Set the value of the default field to the default value of the admin
+      // field if there are values present.
+      if (!empty($element['admin']['#default_value']) && empty($element['default']['#default_value'])) {
+        $element['default']['#default_value'] = $element['admin']['#default_value'];
+      }
+      $element['admin']['#default_value'] = [];
     }
-    $element['admin']['#default_value'] = [];
   }
 }
 
@@ -320,9 +343,11 @@ function springboard_group_field_widget_form_alter(&$element, &$form_state, $con
  *   An array of group reference fields.
  */
 function springboard_group_set_single_selector(&$form, $fields) {
+  $grouped_entities = springboard_group_get_grouped_types();
+  $has_admin = user_access('administer group');
+  $is_strict = variable_get('og_node_access_strict', FALSE);
   foreach ($fields as $key => $field) {
     $field_name = $key;
-    $grouped_entities = springboard_group_get_grouped_types();
     foreach ($grouped_entities as $entity => $bundle) {
       foreach ($bundle as $bundle_name => $og_field) {
         if (in_array($key, $og_field)) {
@@ -334,6 +359,12 @@ function springboard_group_set_single_selector(&$form, $fields) {
           $form[$field_name][$form[$field_name]['#language']][0]['default']['#title'] = t('Group');
           $form[$field_name][$form[$field_name]['#language']][0]['default']['#description'] = t('Associate this content with a group.');
           $form[$field_name][$form[$field_name]['#language']][0]['default']['#multiple'] = variable_get('og_' . $bundle_name . '_multiple', 0);
+          $options =& $form[$field_name][$form[$field_name]['#language']][0]['default']['#options'];
+          if (count($options) > 1 && isset($options['_none'])) {
+            if ($is_strict && !$has_admin) {
+              //unset($options['_none']);
+            }
+          }
         }
       }
     }

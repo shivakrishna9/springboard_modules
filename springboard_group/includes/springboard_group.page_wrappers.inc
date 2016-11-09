@@ -131,7 +131,7 @@ function springboard_group_wrapper_validation_helper(&$form, &$form_state, $tabl
 
   // Get the active groups selection from the form_state.
   $language = $form['og_group_ref_' . $form['#node']->type]['#language'];
-  $option = $form_state['values']['og_group_ref_' . $form['#node']->type][$language];
+  $option = $form_state['values']['og_group_ref_' . substr($form['#node']->type, 0, 19)][$language];
   $gids = isset($option[0]['target_id']) ? $option : NULL;
   foreach ($gids as $key => $gid) {
     $gids[$key] = $gid['target_id'];

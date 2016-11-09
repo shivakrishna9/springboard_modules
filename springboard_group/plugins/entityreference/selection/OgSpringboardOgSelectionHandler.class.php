@@ -34,7 +34,7 @@ class OgSpringboardOgSelectionHandler extends OgSelectionHandler {
     global $user;
     $query = parent::buildEntityFieldQuery($match, $match_operator);
     // Show all groups to admins in the default widget.
-    if ($user->uid == 1 || user_access('administer group')) {
+    if (user_access('administer group')) {
       unset($query->propertyConditions[0]);
     }
     return $query;
