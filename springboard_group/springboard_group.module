@@ -344,8 +344,7 @@ function springboard_group_field_widget_form_alter(&$element, &$form_state, $con
  */
 function springboard_group_set_single_selector(&$form, $fields) {
   $grouped_entities = springboard_group_get_grouped_types();
-  $has_admin = user_access('administer group');
-  $is_strict = variable_get('og_node_access_strict', FALSE);
+  $show_none = springboard_group_check_none_option($form);
   foreach ($fields as $key => $field) {
     $field_name = $key;
     foreach ($grouped_entities as $entity => $bundle) {
@@ -361,14 +360,60 @@ function springboard_group_set_single_selector(&$form, $fields) {
           $form[$field_name][$form[$field_name]['#language']][0]['default']['#multiple'] = variable_get('og_' . $bundle_name . '_multiple', 0);
           $options =& $form[$field_name][$form[$field_name]['#language']][0]['default']['#options'];
           if (count($options) > 1 && isset($options['_none'])) {
-            if ($is_strict && !$has_admin) {
-              //unset($options['_none']);
+            if (!$show_none) {
+              unset($options['_none']);
             }
           }
         }
       }
     }
   }
+}
+
+/**
+ * Check if the user can post outside of the group context.
+ *
+ * If not, remove the "_none" option.
+ *
+ * @param array $form
+ *  The form array.
+ *
+ * @return bool
+ *   Whether the user can use the "none" selection option.
+ */
+function springboard_group_check_none_option($form) {
+  global $user;
+  $show_none_option = TRUE;
+  $entity_type = $form['#entity_type'];
+
+  $account = user_load($user->uid);
+  $bundle = $form['#bundle'];
+  $entity = $form['#entity'];
+  list($id) = entity_extract_ids($entity_type, $entity);
+
+  $op = empty($id) ? 'create' : 'update';
+
+  if ($entity_type == 'node') {
+    $node = empty($id) ? $bundle : $entity;
+    // We call node_node_access() directly as we just want to check the
+    // permissions using user_acces().
+    if (node_node_access($node, $op, $account)) {
+      // User has site-wide permissions to create or edit the node.
+      return $show_none_option;
+    }
+  }
+  elseif (entity_access($op, $entity_type, $entity, $account)) {
+    // User has site-wide permissions to create or edit the entity.
+    return $show_none_option;
+  }
+
+  foreach (array_keys(og_get_group_audience_fields($entity_type, $bundle)) as $field_name) {
+    // If there is at least one group selected, return.
+    if (!empty($form_state['values'][$field_name][LANGUAGE_NONE])) {
+      return $show_none_option;
+    }
+  }
+  return FALSE;
 }
 
 /**
