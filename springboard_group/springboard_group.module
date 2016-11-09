@@ -258,6 +258,26 @@ function springboard_group_load_ajax_validation_handlers(&$form, &$form_state) {
   }
 }
 
+
+/**
+ * Implements hook_form_FORM_ID_alter().
+ */
+function springboard_group_form_user_profile_form_alter(&$form, &$form_state) {
+  // We don't need to see the group membership field on the user edit page.
+  // It is large and obstructive and not very useful.
+  $form['og_user_node']['#access'] = FALSE;
+  $account = user_load(arg(1));
+  $groups = og_get_entity_groups('user', $account);
+  $titles = [];
+  if (!empty($groups['node'])) {
+    foreach ($groups['node'] as $group_id) {
+      $group = node_load($group_id);
+      $titles[] = check_plain($group->title);
+    }
+  $form['user_group_display']['#markup'] = theme('item_list', array('items' => $titles, 'title' => 'Springboard Groups'));
+  }
+}
+
 /**
  * Implements hook_field_widget_form_alter().
  *
