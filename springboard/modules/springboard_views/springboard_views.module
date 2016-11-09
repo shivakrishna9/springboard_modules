@@ -9,9 +9,31 @@ function springboard_views_views_api() {
 
 /**
  * Implements hook_views_pre_render().
- * When rendering one of our own views, insert a count into the header.
+ * - When rendering one of our own views, insert a count into the header.
+ * - Output adjustments for sbv_donations.
  */
 function springboard_views_views_pre_render(&$view) {
+  // Adjust output for the site-wide donations view:
+  if ($view->name == 'sbv_donations') {
+    $payment_methods = commerce_payment_methods();
+    foreach ($view->result as $key => $result) {
+      // Make the gateway field display its human-readable version:
+      if (isset($result->fundraiser_donation_gateway)) {
+        $current_method_info = explode('|', $result->fundraiser_donation_gateway);
+        if (isset($current_method_info[0]) && isset($payment_methods[$current_method_info[0]]['short_title'])) {
+          $result->fundraiser_donation_gateway = $payment_methods[$current_method_info[0]]['short_title'];
+        }
+      }
+      // Adjust the Recur. field output:
+      if (isset($result->commerce_order_fundraiser_donation_order_id)) {
+        $recur_output = isset($result->fundraiser_sustainers_sustainer_key) ? t('Yes') : t('No');
+        $result->fundraiser_sustainers_sustainer_key = $recur_output;
+      } 
+      // Alter action links:
+      drupal_add_js(drupal_get_path('module', 'springboard_views') . '/js/springboard_views.js');
+    }
+  }
+
   // An array of view names and a pretty name for the status of the items
   $sbv_views = array(
     'sbv_batch' => 'Batched',
