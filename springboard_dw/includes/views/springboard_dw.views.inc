@@ -296,6 +296,10 @@ function springboard_dw_form_views_exposed_form_alter(&$form, &$form_state) {
  * Alter presentation for the single donation display:
  */
 function springboard_dw_views_post_render(&$view, &$output, &$cache) {
+  if ($view->name != 'springboard_dw_donations_report' || !isset($view->args[0]) || !is_numeric($view->args[0])) {
+    return;
+  }
+
   $output = '<div id="dw-donation-detail">';
   if (!isset($view->result[0])) {
     $output = 'No data available.';
