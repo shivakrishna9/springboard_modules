@@ -19,14 +19,18 @@ function salesforce_ngoc_entity_info() {
   return array(
     'salesforce_ngoc_sync_map' => array(
       'label' => t('NGOC Batch Upload Sync Map'),
+      'entity class' => 'Entity',
+      'controller class' => 'EntityAPIController',
       'base table' => 'salesforce_ngoc_sync_map',
       'entity keys' => array(
         'id' => 'id',
       ),
+      'fieldable' => FALSE,
+      'exportable' => FALSE,
+      'module' => 'salesforce_ngoc',
     ),
   );
 }
-
 
 /**
  * Implements hook_menu().
@@ -183,10 +187,20 @@ function salesforce_ngoc_salesforce_genmap_destination_queue_alter(&$queue_name,
  */
 function salesforce_ngoc_salesforce_sync_save_map_alter($record) {
   if ($record->object_type == 'rC_Connect__Batch_Upload__c') {
-    // Prevents batch_upload record from being saved to salesforce_sync_map.
-    $record->prevent_save = TRUE;
-    // @TODO write record to salesforce_ngoc_sync_map.
-    //
+    if ($record->is_new == TRUE) {
+      // Save record in salesforce_ngoc_sync_map.
+      $ngoc_record = array(
+        'batch_upload_sfid' => $record->sfid,
+        'sf_status' => 'new',
+        'drupal_id' => $record->drupal_id,
+        'module' => $record->module,
+        'delta' => $record->delta,
+        'created' => REQUEST_TIME,
+      );
+      salesforce_ngoc_sync_save_map($ngoc_record);
+      // Prevents batch_upload record from being saved to salesforce_sync_map.
+      $record->prevent_save = TRUE;
+    }
   }
 }
 
@@ -212,18 +226,87 @@ function salesforce_ngoc_write_hold_queue_items($item, $parents) {
 }
 
 /**
- * Load a single record.
+ * Creates and saves a Salesforce NGOC record map.
  *
- * @param $id
- *    The id representing the record we want to load.
+ * @param mixed $record
+ *   Can be an array of values or a salesforce_ngoc_sync_map entity object
+ *
+ * @return bool
+ *   SAVED_NEW or SAVED_UPDATED depending on the operation performed. Otherwise,
+ *   FALSE is returned if the record could not be saved.
  */
-function salesforce_ngoc_sync_map_load($id, $reset = FALSE) {
-  return salesforce_ngoc_load_multiple(array($id), array(), $reset);
+function salesforce_ngoc_sync_save_map($record) {
+  if (is_array($record)) {
+    // Allow sending an array and updating an existing entity with the values.
+    $entity = salesforce_ngoc_sync_load_map($record);
+    if ($entity) {
+      foreach ($record as $key => $value) {
+        $entity->$key = $value;
+      }
+      $record = $entity;
+    }
+    else {
+      // Create a new entity object, but does not yet add to the database.
+      $record = entity_create('salesforce_ngoc_sync_map', $record);
+    }
+  }
+  if ($record->entityType() == 'salesforce_ngoc_sync_map' ) {
+    // Adds the data to the database.
+    $result = entity_save('salesforce_ngoc_sync_map', $record);
+  }
+  return FALSE;
 }
 
 /**
- * Load multiple records.
+ * Retreives a Salesforce NGOC record map.
+ *
+ * @param mixed $record
+ *   Can be an array of values or a salesforce_ngoc_sync_map entity object
+ *
+ * @return bool|object
+ *   The entity object you requested
  */
-function salesforce_ngoc_sync_map_load_multiple($ids = array(), $conditions = array(), $reset = FALSE) {
-  return entity_load('salesforce_ngoc_sync_map', $ids, $conditions, $reset);
+function salesforce_ngoc_sync_load_map($record) {
+  $id = _salesforce_ngoc_sync_get_id($record);
+  if (!empty($id)) {
+    $entities = entity_load('salesforce_ngoc_sync_map', array($id));
+    if (isset($entities[$id])) {
+      return $entities[$id];
+    }
+  }
+  return FALSE;
 }
+
+
+/**
+ * Helper to grab the record id of a map.
+ */
+function _salesforce_ngoc_sync_get_id($item) {
+  if (isset($item->id) && !empty($item->id)) {
+    return $item->id;
+  }
+  if (is_object($item)) {
+    $record = (array) clone($item);
+  }
+  else {
+    $record = $item;
+  }
+  if (isset($record['sobject']->Id)) {
+    return db_select('salesforce_ngoc_sync_map', 'm')
+      ->fields('m', array('id'))
+      ->condition('sfid', $record['sobject']->Id)
+      ->execute()
+      ->fetchField();
+  }
+  else {
+    return db_select('salesforce_ngoc_sync_map', 'm')
+      ->fields('m', array('id'))
+      ->condition('module', $record['module'])
+      ->condition('delta', $record['delta'])
+      ->condition('drupal_id', $record['drupal_id'])
+      ->execute()
+      ->fetchField();
+  }
+}
+
+
