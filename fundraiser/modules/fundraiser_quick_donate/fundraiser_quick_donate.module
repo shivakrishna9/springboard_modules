@@ -477,6 +477,7 @@ function fundraiser_quick_donate_fundraiser_update_billing_form__fundraiser_quic
     ':card_id' => $card->card_id,
   ))->fetchField();
 
+  $form_state['card']->quickdonate = !!$enabled;
   $form['payment_fields'][$gateway_type]['quickdonate'] = array(
     '#type' => 'checkbox',
     '#title' => '&nbsp;' . t('Make this my default Quick Donate card.'),
@@ -508,8 +509,9 @@ function _fundraiser_quick_donate_set_new_qd_cof($form, $form_state) {
   // See if the user currently has a default card.
   $default_card = fundraiser_quick_donate_get_default_card($values['uid']);
   if ($default_card && $default_card == $form_state['card']->card_id) {
-    // If quickdonate is not true the user is opting this card out.
-    if (!$payment_fields['credit']['quickdonate']) {
+    // If quickdonate is not true but the quickdonate property on the card is
+    // TRUE, the user is opting this card out.
+    if (!$payment_fields['credit']['quickdonate'] && $form_state['card']->quickdonate) {
       // Invoke quick donate opt-out hook.
       module_invoke_all('fundraiser_quick_donate_optout', $form_state['card']->card_id, $values['uid']);
     }
@@ -587,7 +589,7 @@ function _fundraiser_quick_donate_set_new_qd_cof($form, $form_state) {
 /**
  * Returns a user's quick donate card or FALSE if they have none.
  *
- * @param $uid
+ * @param int $uid
  *   The id of the user whose quick donate card you want to retreive.
  */
 function fundraiser_quick_donate_get_default_card($uid) {
@@ -749,5 +751,19 @@ function fundraiser_quick_donate_views_pre_render(&$view) {
       unset($view->result[$key]);
       continue;
     }
+  }
+}
+
+/**
+ * Implements hook_entity_delete().
+ */
+function fundraiser_quick_donate_entity_delete($entity, $type) {
+  if ($type != 'commerce_cardonfile') {
+    return;
+  }
+
+  if ($entity->status) {
+    // Invoke quick donate opt-out hook.
+    module_invoke_all('fundraiser_quick_donate_optout', $entity->card_id, $entity->uid);
   }
 }
