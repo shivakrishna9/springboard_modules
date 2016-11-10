@@ -1747,8 +1747,13 @@ function fundraiser_commerce_fundraiser_donation_update($donation) {
     if (!empty($donation->sustainer_update) && !empty($donation->sustainer_update_first) && $update_callback) {
       // Load the current card data for updating
       $card_data = _fundraiser_commerce_donation_cardonfile_card($donation);
-      $card_data = $update_callback($donation, $card_data);
-      $donation->data['cardonfile'] = $card_data->card_id;
+      if (!empty($card_data)) {
+        // Ensure the expiration values are copied correctly.
+        $card_data = $update_callback($donation, $card_data);
+        if (!empty($card_data)) {
+          $donation->data['cardonfile'] = $card_data->card_id;
+        }
+      }
     }
     // Sustainer update, update remaining donations with the first record's cardonfile id
     // This avoids calling the APIs for each donation

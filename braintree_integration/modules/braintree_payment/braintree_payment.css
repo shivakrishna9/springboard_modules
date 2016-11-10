@@ -40,7 +40,7 @@
 #edit-submitted-payment-information-payment-fields-credit-braintree-new-expiration-month,
 #edit-submitted-payment-information-payment-fields-credit-braintree-new-expiration-year {
   display: inline-block;
-  width: 8em;
+  width: 10em;
   clear:none;
   float: none;
 }

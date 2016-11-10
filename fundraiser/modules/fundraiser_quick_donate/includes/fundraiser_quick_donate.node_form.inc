@@ -83,11 +83,13 @@ function fundraiser_quick_donate_form_node_form_alter(&$form, &$form_state, $for
         'usable_paypment_processors' => $usable_paypment_processors,
       ),
     ), 'setting');
-    $form['payment_methods']['quickdonate_optin_message'] = array(
+
+    // Help text for new users.
+    $form['payment_methods']['quickdonate_optin_message_new_user'] = array(
       '#type' => 'textfield',
-      '#title' => t('"Quick Donation" opt-in text'),
+      '#title' => t('"Quick Donation" opt-in text (for users not currently set up with Quick Donate)'),
       '#description' => t('This is the title of the opt-in checkbox. The "@type" placeholder can be used to specify the type of payment method (either credit card or bank account). Defaults to "Save this @type for future use".'),
-      '#default_value' => isset($form['#node']->quickdonate_optin_message) ? $form['#node']->quickdonate_optin_message : variable_get('fundraiser_quick_donate_default_optin_message', t('Save this @type for future use')),
+      '#default_value' => isset($form['#node']->quickdonate_optin_message_new_user) ? $form['#node']->quickdonate_optin_message_new_user : variable_get('fundraiser_quick_donate_default_optin_message_new_user', t('Save this @type for future use')),
       '#states' => array(
         'visible' => array(
           ':input[name="quickdonate"]' => array('checked' => TRUE),
@@ -100,7 +102,7 @@ function fundraiser_quick_donate_form_node_form_alter(&$form, &$form_state, $for
     // in a container and apply the #states property to the container
     // instead.
     // See https://www.drupal.org/node/997826 for more info.
-    $form['payment_methods']['quickdonate_help_container'] = array(
+    $form['payment_methods']['quickdonate_help_container_new_user'] = array(
       '#type' => 'container',
       '#states' => array(
         'visible' => array(
@@ -108,12 +110,41 @@ function fundraiser_quick_donate_form_node_form_alter(&$form, &$form_state, $for
         ),
       ),
     );
-    $form['payment_methods']['quickdonate_help_container']['quickdonate_help_message'] = array(
+    $form['payment_methods']['quickdonate_help_container_new_user']['quickdonate_help_message_new_user'] = array(
       '#type' => 'text_format',
-      '#title' => t('"Quick Donation" help text'),
+      '#title' => t('"Quick Donation" help text (for users not currently set up with Quick Donate)'),
       '#description' => t('This message will be shown to users to provide information about quick donations. Use !type to print the type of payment method, which will be either credit or bank account.<br/><br/>', array('!type' => '<strong>@type</strong>')),
-      '#default_value' => isset($form['#node']->quickdonate_help_message) ? $form['#node']->quickdonate_help_message : variable_get('fundraiser_quick_donate_default_help_message', t('Save your @type details and donate faster next time. We may email you from time to time with quick donate opportunities. You can update your @type details or cancel your enrollment at any time.')),
-      '#format' => isset($form['#node']->quickdonate_help_message_format) ? $form['#node']->quickdonate_help_message_format : variable_get('fundraiser_quick_donate_default_help_message_format', 'plain_text'),
+      '#default_value' => isset($form['#node']->quickdonate_help_message_new_user) ? $form['#node']->quickdonate_help_message_new_user : variable_get('fundraiser_quick_donate_default_help_message_new_user', t('Save your @type details and donate faster next time. We may email you from time to time with quick donate opportunities. You can update your @type details or cancel your enrollment at any time.')),
+      '#format' => isset($form['#node']->quickdonate_help_message_new_user_format) ? $form['#node']->quickdonate_help_message_new_user_format : variable_get('fundraiser_quick_donate_default_help_message_new_user_format', 'plain_text'),
+    );
+
+    // Help text for existing users.
+    $form['payment_methods']['quickdonate_optin_message_existing_user'] = array(
+      '#type' => 'textfield',
+      '#title' => t('"Quick Donation" opt-in text (for users already set up with Quick Donate)'),
+      '#description' => t('This is the title of the opt-in checkbox. The "@type" placeholder can be used to specify the type of payment method (either credit card or bank account). Defaults to "Save this @type for future use".'),
+      '#default_value' => isset($form['#node']->quickdonate_optin_message_existing_user) ? $form['#node']->quickdonate_optin_message_existing_user : variable_get('fundraiser_quick_donate_default_optin_message_existing_user', t('Update your saved @type?')),
+      '#states' => array(
+        'visible' => array(
+          ':input[name="quickdonate"]' => array('checked' => TRUE),
+        ),
+      ),
+    );
+
+    $form['payment_methods']['quickdonate_help_container_existing_user'] = array(
+      '#type' => 'container',
+      '#states' => array(
+        'visible' => array(
+          ':input[name="quickdonate"]' => array('checked' => TRUE),
+        ),
+      ),
+    );
+    $form['payment_methods']['quickdonate_help_container_existing_user']['quickdonate_help_message_existing_user'] = array(
+      '#type' => 'text_format',
+      '#title' => t('"Quick Donation" help text (for users already set up with Quick Donate)'),
+      '#description' => t('This message will be shown to users to provide information about quick donations. Use !type to print the type of payment method, which will be either credit or bank account.<br/><br/>', array('!type' => '<strong>@type</strong>')),
+      '#default_value' => isset($form['#node']->quickdonate_help_message_existing_user) ? $form['#node']->quickdonate_help_message_existing_user : variable_get('fundraiser_quick_donate_default_help_message_existing_user', t('Check this box if you want to make this new @type your default for future donations.')),
+      '#format' => isset($form['#node']->quickdonate_help_message_existing_user_format) ? $form['#node']->quickdonate_help_message_existing_user_format : variable_get('fundraiser_quick_donate_default_help_message_existing_user_format', 'plain_text'),
     );
 
     $form['payment_methods']['quickdonate_login_message'] = array(
@@ -155,9 +186,12 @@ function _fundraiser_quick_donate_node_form_submit($form, &$form_state) {
     // Quick Donate checkbox is checked, save QD settings.
     $fields = array(
       'fundraiser_nid' => $form_state['nid'],
-      'quickdonate_optin_message' => $form_state['values']['quickdonate_optin_message'],
-      'quickdonate_help_message_format' => $form_state['values']['quickdonate_help_message']['format'],
-      'quickdonate_help_message' => $form_state['values']['quickdonate_help_message']['value'],
+      'quickdonate_optin_message_new_user' => $form_state['values']['quickdonate_optin_message_new_user'],
+      'quickdonate_help_message_new_user_format' => $form_state['values']['quickdonate_help_message_new_user']['format'],
+      'quickdonate_help_message_new_user' => $form_state['values']['quickdonate_help_message_new_user']['value'],
+      'quickdonate_optin_message_existing_user' => $form_state['values']['quickdonate_optin_message_existing_user'],
+      'quickdonate_help_message_existing_user_format' => $form_state['values']['quickdonate_help_message_existing_user']['format'],
+      'quickdonate_help_message_existing_user' => $form_state['values']['quickdonate_help_message_existing_user']['value'],
       'quickdonate_login_message' => $form_state['values']['quickdonate_login_message'],
       'quickdonate_login_link_message' => $form_state['values']['quickdonate_login_link_message'],
     );

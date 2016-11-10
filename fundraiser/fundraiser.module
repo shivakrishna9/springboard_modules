@@ -1887,6 +1887,7 @@ function fundraiser_donation_create($donation) {
     'form_url' => $form_url,
     'created' => REQUEST_TIME,
     'changed' => REQUEST_TIME,
+    'card_id' => !empty($donation->data['cardonfile']) ? $donation->data['cardonfile'] : NULL,
   );
   if (is_string($donation->gateway)) {
     $donation_record['gateway'] = $donation->gateway;
@@ -1957,7 +1958,7 @@ function fundraiser_donation_update($donation, $vocal_mode = TRUE) {
   if (isset($donation->form_url) && !empty($donation->form_url)) {
     $donation_record['form_url'] = $donation->form_url;
   }
-  if (isset($donation->data['cardonfile']) && !empty($donation->data['cardonfile']) && $donation->status == 'payment_received') {
+  if (!empty($donation->data['cardonfile'])) {
     $donation_record['card_id'] = $donation->data['cardonfile'];
   }
   $donation_record['changed'] = REQUEST_TIME;
@@ -3867,12 +3868,15 @@ function fundraiser_update_billing_form($form, &$form_state, $data) {
   $form['#attached']['js'][3]['data']['fundraiser']['js_validation_settings']['card_cvv']->required = FALSE;
   $form['#attached']['js'][3]['data']['fundraiser']['js_validation_settings']['card_number']->required = FALSE;
 
+  if (!empty($data['card'])) {
+    $form_state['card'] = $data['card'];
+  }
+
   // If the "update cardonfile" element is non-empty, add the cardonfile
   // validation and submission handlers.
   if ($data['update cardonfile']) {
     $use_cardonfile = FALSE;
     if (!empty($data['card'])) {
-      $form_state['card'] = $data['card'];
       $use_cardonfile = TRUE;
     }
     elseif (($card = _fundraiser_donation_cardonfile_card($data['donation'])) !== FALSE) {
@@ -3915,6 +3919,10 @@ function fundraiser_update_billing_form($form, &$form_state, $data) {
     $form['payment_fields'] = array_replace_recursive($form['payment_fields'], $data['payment_fields']);
   }
 
+  if (empty($form_state['donation'])) {
+    $form_state['donation'] = $data['donation'];
+  }
+
   // Allow other modules to make any further alterations to this form before we
   // finish with our own stuff.
   $functions = array(
@@ -3947,7 +3955,9 @@ function fundraiser_update_billing_form($form, &$form_state, $data) {
     sprintf('fundraiser_update_billing_form__%s__postprocess', $data['calling module']),
   );
   foreach ($functions as $function) {
-    module_invoke_all($function, $form, $form_state, $data);
+    if (count(module_implements($function))) {
+      $form = module_invoke_all($function, $form, $form_state, $data);
+    }
   }
 
   return $form;
@@ -3964,6 +3974,18 @@ function fundraiser_update_billing_form($form, &$form_state, $data) {
 function _fundraiser_update_billing_form_commerce_cardonfile_card_form_alter_validate(&$form, &$form_state) {
   $input = $form_state['input'];
   $values = &$form_state['values'];
+
+  $card = $form_state['card'];
+  // Ensure card number and cvv are set if expiration is changed.
+  if ($card->card_exp_month != $values['payment_fields']['credit']['expiration_date']['card_expiration_month'] || $card->card_exp_year != $values['payment_fields']['credit']['expiration_date']['card_expiration_year']) {
+    if (empty($values['payment_fields']['credit']['card_number'])) {
+      form_set_error('payment_fields][credit][card_number', t('Please verify your card number to change the expiration date.'));
+    }
+    if (empty($values['payment_fields']['credit']['card_cvv'])) {
+      form_set_error('payment_fields][credit][card_cvv', t('Please verify your card CVV to change the expiration date.'));
+    }
+  }
+
   $values['credit_card']['owner'] = $input['first_name'] . ' ' . $input['last_name'];
   $values['credit_card']['exp_month'] = $values['payment_fields']['credit']['card_expiration_month'] = $values['payment_fields']['credit']['expiration_date']['card_expiration_month'] = sprintf('%02d', $input['payment_fields']['credit']['expiration_date']['card_expiration_month']);
   $values['credit_card']['exp_year'] = $values['payment_fields']['credit']['expiration_date']['card_expiration_year'] = $values['payment_fields']['credit']['card_expiration_year'] = $input['payment_fields']['credit']['expiration_date']['card_expiration_year'];
@@ -3975,6 +3997,8 @@ function _fundraiser_update_billing_form_commerce_cardonfile_card_form_alter_val
   else {
     $_SESSION['card_number'] = $values['credit_card']['number'] = $values['payment_fields']['credit']['card_number'] = $form_state['card']->card_number;
   }
+
+  $form['credit_card']['code'] = $values['payment_fields']['credit']['card_cvv'];
   $values['credit_card']['cardonfile_instance_default'] = $form_state['card']->instance_default;
 }
 
@@ -3989,6 +4013,7 @@ function _fundraiser_update_billing_form_commerce_cardonfile_card_form_alter_val
 function _fundraiser_update_billing_form_commerce_cardonfile_card_form_submit($form, &$form_state) {
   $op = $form_state['op'];
   $card = $form_state['card'];
+  $values = $form_state['values'];
 
   $card->card_name = $form_state['values']['credit_card']['owner'];
   $card->card_exp_month = $form_state['values']['credit_card']['exp_month'];
@@ -4004,7 +4029,13 @@ function _fundraiser_update_billing_form_commerce_cardonfile_card_form_submit($f
   $callback = $payment_method['cardonfile'][$op . ' callback'];
   $success = FALSE;
 
-  if (function_exists($callback)) {
+  // If updating and CC number is empty, mark $success as TRUE since the
+  // callback function shouldn't be called.
+  if ($op == 'update' && (empty($values['credit_card']['number']) || $values['credit_card']['number'] == $card->card_number)) {
+    $success = TRUE;
+  }
+
+  if (function_exists($callback) && !$success) {
     $callback_return = $callback($form, $form_state, $payment_method, $card);
     if ($callback_return) {
       if ($op == 'create') {

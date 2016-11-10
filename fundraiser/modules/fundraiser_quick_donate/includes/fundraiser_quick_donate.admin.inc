@@ -71,18 +71,31 @@ function fundraiser_quick_donate_admin_settings($form, $form_state) {
     '#title' => t('Default Messages'),
     '#description' => t('Configure the default quick donate messages that will be displayed to the end user.'),
   );
-  $form['default_messages']['fundraiser_quick_donate_default_optin_message'] = array(
+  $form['default_messages']['fundraiser_quick_donate_default_optin_message_new_user'] = array(
     '#type' => 'textfield',
-    '#title' => t('"Quick Donation" opt-in text'),
+    '#title' => t('"Quick Donation" opt-in text (for users not already set up with Quick Donate)'),
     '#description' => t('This is the title of the opt-in checkbox. The "@type" placeholder can be used to specify the type of payment method (either credit card or bank account). Defaults to "Save this @type for future use".'),
-    '#default_value' => variable_get('fundraiser_quick_donate_default_optin_message', t('Save this @type for future use')),
+    '#default_value' => variable_get('fundraiser_quick_donate_default_optin_message_new_user', t('Save this @type for future use')),
   );
-  $form['default_messages']['fundraiser_quick_donate_default_help_message'] = array(
+  $form['default_messages']['fundraiser_quick_donate_default_help_message_new_user'] = array(
     '#type' => 'text_format',
-    '#title' => t('"Quick Donation" help text'),
+    '#title' => t('"Quick Donation" help text (for users not already set up with Quick Donate)'),
     '#description' => t('This message will be shown to users to provide information about quick donations. Use !type to print the type of payment method, which will be either credit or bank account.<br/><br/>', array('!type' => '<strong>@type</strong>')),
-    '#default_value' => variable_get('fundraiser_quick_donate_default_help_message', t('Save your @type details and donate faster next time. We may email you from time to time with quick donate opportunities. You can update your @type details or cancel your enrollment at any time.')),
-    '#format' => variable_get('fundraiser_quick_donate_default_help_message_format', 'plain_text'),
+    '#default_value' => variable_get('fundraiser_quick_donate_default_help_message_new_user', t('Save your @type details and donate faster next time. We may email you from time to time with quick donate opportunities. You can update your @type details or cancel your enrollment at any time.')),
+    '#format' => variable_get('fundraiser_quick_donate_default_help_message_new_user_format', 'plain_text'),
+  );
+  $form['default_messages']['fundraiser_quick_donate_default_optin_message_existing_user'] = array(
+    '#type' => 'textfield',
+    '#title' => t('"Quick Donation" opt-in text (for users already set up with Quick Donate)'),
+    '#description' => t('This is the title of the opt-in checkbox. The "@type" placeholder can be used to specify the type of payment method (either credit card or bank account). Defaults to "Save this @type for future use".'),
+    '#default_value' => variable_get('fundraiser_quick_donate_default_optin_message_existing_user', t('Update your saved @type?')),
+  );
+  $form['default_messages']['fundraiser_quick_donate_default_help_message_existing_user'] = array(
+    '#type' => 'text_format',
+    '#title' => t('"Quick Donation" help text (for users already set up with Quick Donate)'),
+    '#description' => t('This message will be shown to users to provide information about quick donations. Use !type to print the type of payment method, which will be either credit or bank account.<br/><br/>', array('!type' => '<strong>@type</strong>')),
+    '#default_value' => variable_get('fundraiser_quick_donate_default_help_message_existing_user', t('Check this box if you want to make this new @type your default for future donations.')),
+    '#format' => variable_get('fundraiser_quick_donate_default_help_message_existing_user_format', 'plain_text'),
   );
   $form['default_messages']['fundraiser_quick_donate_default_login_message'] = array(
     '#type' => 'textfield',
@@ -96,12 +109,12 @@ function fundraiser_quick_donate_admin_settings($form, $form_state) {
     '#description' => t('This is the title of the log-in checkbox. Defaults to "Click here to login".'),
     '#default_value' => variable_get('fundraiser_quick_donate_default_login_link_message', t('Click here to login')),
   );
-  $form['default_messages']['fundraiser_quick_donate_default_default_message'] = array(
+  /*$form['default_messages']['fundraiser_quick_donate_default_default_message'] = array(
     '#type' => 'textfield',
     '#title' => t('"Set as default card" text'),
     '#description' => t('The text of the "Set as default card" checkbox, which asks users if they want this card they are adding to be their default card for future payments. Defaults to "Set as your default payment method?"'),
     '#default_value' => variable_get('fundraiser_quick_donate_default_default_message', t('Set as your default payment method?')),
-  );
+  );*/
 
   // @todo Uncomment the following when we're ready to allow multiple cards to
   // be used for quick donating.

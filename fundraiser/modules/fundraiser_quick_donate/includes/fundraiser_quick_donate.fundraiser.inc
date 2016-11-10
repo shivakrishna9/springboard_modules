@@ -44,7 +44,8 @@ function fundraiser_quick_donate_fundraiser_donation_form($form, $form_state) {
     $quick_donate_card = commerce_cardonfile_load($quick_donate_card_id);
   }
 
-  // Load user's stored cardonfile cards for each gateway.
+  // Load user's stored cardonfile cards for each gateway, if configured to do
+  // so.
   foreach ($form['#node']->gateways as $gateway_type => $gateway) {
     if (empty($gateway['status']) || empty($gateway['id']) || $gateway['method'] !== 'credit'/* || $gateway['method'] == 'bank account'*/) {
       continue;
@@ -73,18 +74,28 @@ function fundraiser_quick_donate_fundraiser_donation_form($form, $form_state) {
       '#type' => 'value',
       '#value' => 'true',
     );
-    $form['submitted']['payment_information']['payment_fields'][$gateway_type]['quickdonate'] = array(
-      '#type' => 'checkbox',
-      '#title' => isset($form['#node']->quickdonate_optin_message) ? format_string($form['#node']->quickdonate_optin_message, array('@type' => $type)) : format_string(variable_get('fundraiser_quick_donate_default_optin_message', 'Save this @type for future use?'), array('@type' => $type)),
-      '#default_value' => FALSE,
-      '#description' => isset($form['#node']->quickdonate_help_message) ? check_markup(format_string($form['#node']->quickdonate_help_message, array('@type' => $type)), $form['#node']->quickdonate_help_message_format) : format_string(variable_get('fundraiser_quick_donate_default_help_message', 'Save your @type details and donate faster next time. We may email you from time to time with quick donate opportunities. You can update your @type details or cancel your enrollment at any time.'), array('@type' => $type)),
-    );
+    if (empty($quick_donate_card)) {
+      $form['submitted']['payment_information']['payment_fields'][$gateway_type]['quickdonate'] = array(
+        '#type' => 'checkbox',
+        '#title' => isset($form['#node']->quickdonate_optin_message_new_user) ? format_string($form['#node']->quickdonate_optin_message_new_user, array('@type' => $type)) : format_string(variable_get('fundraiser_quick_donate_default_optin_message_new_user', 'Save this @type for future use?'), array('@type' => $type)),
+        '#default_value' => FALSE,
+        '#description' => isset($form['#node']->quickdonate_help_message_new_user) ? check_markup(format_string($form['#node']->quickdonate_help_message_new_user, array('@type' => $type)), $form['#node']->quickdonate_help_message_new_user_format) : format_string(variable_get('fundraiser_quick_donate_default_help_message_new_user', 'Save your @type details and donate faster next time. We may email you from time to time with quick donate opportunities. You can update your @type details or cancel your enrollment at any time.'), array('@type' => $type)),
+      );
+    }
+    else {
+      $form['submitted']['payment_information']['payment_fields'][$gateway_type]['quickdonate'] = array(
+        '#type' => 'checkbox',
+        '#title' => isset($form['#node']->quickdonate_optin_message_existing_user) ? format_string($form['#node']->quickdonate_optin_message_existing_user, array('@type' => $type)) : format_string(variable_get('fundraiser_quick_donate_default_optin_message_existing_user', 'Update your saved @type?'), array('@type' => $type)),
+        '#default_value' => FALSE,
+        '#description' => isset($form['#node']->quickdonate_help_message_existing_user) ? check_markup(format_string($form['#node']->quickdonate_help_message_existing_user, array('@type' => $type)), $form['#node']->quickdonate_help_message_existing_user_format) : format_string(variable_get('fundraiser_quick_donate_default_help_message_existing_user', 'Check this box if you want to make this new @type your default for future donations.'), array('@type' => $type)),
+      );
+    }
 
     $stored_cards = array();
     if (!variable_get('fundraiser_quick_donate_allow_multiple_cards', FALSE) && $quick_donate_card_id > 0 && !empty($quick_donate_card) && $instance_id == $quick_donate_card->instance_id) {
       $stored_cards = array($quick_donate_card_id => $quick_donate_card);
     }
-    else {
+    elseif (variable_get('fundraiser_quick_donate_allow_multiple_cards', FALSE)) {
       // Load existing active cards for the payment method instance and user.
       $stored_cards = commerce_cardonfile_load_multiple_by_uid($user->uid, $payment_method['instance_id']);
     }
@@ -184,7 +195,8 @@ function fundraiser_quick_donate_fundraiser_donation_form($form, $form_state) {
 
     // If the following variable is TRUE, the following form element will be
     // checked and disabled (ie it WILL be set as default).
-    $force_instance_default = empty($stored_cards);
+    // @todo Uncomment the following code when multiple cards are supported.
+    /*$force_instance_default = empty($stored_cards);
     $form['submitted']['payment_information']['payment_fields'][$gateway_type]['cardonfile_instance_default'] = array(
       '#type' => 'checkbox',
       '#title' => variable_get('fundraiser_quick_donate_default_default_message', t('Set as your default payment method?')),
@@ -196,7 +208,7 @@ function fundraiser_quick_donate_fundraiser_donation_form($form, $form_state) {
           ':input[name$="[' . $gateway_type . '][quickdonate]"]' => array('checked' => TRUE),
         ),
       ),
-    );
+    );*/
 
     // If the user isn't logged in, present a message asking if they already
     // have an account and stored card, and to log in.
@@ -278,7 +290,7 @@ function fundraiser_quick_donate_fundraiser_quick_donate_fundraiser_donation_for
  *   The user's quick donation payment information.
  */
 function _fundraiser_quick_donate_get_payment_info_for_uid($uid) {
-  return db_query('SELECT card_id FROM {fundraiser_quick_donate_cardonfile} WHERE uid = :uid', array(
+  return db_query('SELECT card_id FROM {fundraiser_quick_donate_cardonfile} WHERE uid = :uid AND status = 1', array(
     ':uid' => $uid,
   ))->fetchField();
 }
@@ -359,7 +371,8 @@ function _fundraiser_quick_donate_checkout_form_submit($form, &$form_state) {
 
   $card_id = 0;
 
-  if (!empty($payment_fields[$method]['cardonfile_instance_default'])) {
+  // @todo Uncomment the following code when multiple cards are supported.
+  /*if (!empty($payment_fields[$method]['cardonfile_instance_default'])) {
     if ($payment_fields[$method]['cardonfile'] != 'new') {
       // Get card on file value.
       $card_id = intval($payment_fields[$method]['cardonfile']);
@@ -373,7 +386,7 @@ function _fundraiser_quick_donate_checkout_form_submit($form, &$form_state) {
       $card_id = _fundraiser_quick_donate_users_latest_cardid($account->uid);
       commerce_cardonfile_set_default_card($card_id);
     }
-  }
+  }*/
 
   // In the case that the card id is still set to 0, retrieve user's latest
   // card on file.
@@ -383,6 +396,13 @@ function _fundraiser_quick_donate_checkout_form_submit($form, &$form_state) {
     if ($card_id === FALSE) {
       return;
     }
+  }
+
+  // Does the user already have a default quick donate card
+  $is_card_replacement = FALSE;
+  $existing_quick_donate_card_id = fundraiser_quick_donate_get_default_card($account->uid);
+  if ($card_id != $existing_quick_donate_card_id) {
+    $is_card_replacement = TRUE;
   }
 
   db_merge('fundraiser_quick_donate_cardonfile')
@@ -400,7 +420,12 @@ function _fundraiser_quick_donate_checkout_form_submit($form, &$form_state) {
     ))
     ->execute();
 
-  module_invoke_all('springboard_quick_donate_optin_create', $account, $donation, $card_id);
+  if ($is_card_replacement) {
+    module_invoke_all('fundraiser_quick_donate_optin_update', $account, $donation, $existing_quick_donate_card_id, $card_id);
+  }
+  else {
+    module_invoke_all('fundraiser_quick_donate_optin_create', $account, $donation, $card_id);
+  }
 }
 
 /**
