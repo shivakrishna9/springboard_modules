@@ -373,106 +373,17 @@ function page_wrappers_node_delete($node) {
 }
 
 /**
- * Implements hook_form_BASE_FORM_ID_alter.
+ * Implements hook_form_BASE_FORM_ID_alter().
  */
 function page_wrappers_form_node_form_alter(&$form, $form_state, $form_id) {
-
-  // add the list of available wrappers to the node form
+  // Add the list of available wrappers to the node form.
   if (_page_wrappers_enabled_type($form['#node'])) {
+
     $form['#attached']['js'][] = drupal_get_path('module', 'page_wrappers') . '/js/page_wrappers.admin.js';
-
     $wrappers = _page_wrappers_available_wrappers($form['#node']);
-
     if (count($wrappers)) {
-
-      $rulesets = _page_wrapper_available_rulesets();
-
-      // If this is a new node use the default configuration.
-      if (!empty($form['#node']->nid)) {
-        $configurations = !empty($form_state['node']->page_wrappers) ? $form_state['node']->page_wrappers : array();
-      }
-      else {
-        $configurations = array_values(variable_get('page_wrapper_default_node_config', array()));
-      }
-
       drupal_alter('page_wrappers_node_settings_form', $wrappers, $form, $form_state);
-
-      // Get a count of the wrappers, wrappers_count value is passed from
-      // the ajax function.
-      if (isset($form_state['wrappers_count'])) {
-        $wrappers_count = $form_state['wrappers_count'];
-      }
-      else {
-        $wrappers_count = empty($configurations) ? 1 : count($configurations);
-      }
-
-      // Share the "Display" fieldset with related modules (e.g., Form Layouts).
-      if (empty($form['springboard_display'])) {
-        $form['springboard_display'] = array(
-          '#type' => 'fieldset',
-          '#title' => t('Display settings'),
-          '#collapsible' => TRUE,
-          '#collapsed' => FALSE,
-          '#group' => 'additional_settings',
-        );
-      }
-
-      $form['springboard_display']['page_wrappers_settings'] = array(
-        '#type' => 'fieldset',
-        '#title' => t('Page wrapper settings'),
-        '#description' => t('Add, remove and configure page wrappers for this node.'),
-        '#collapsible' => TRUE,
-        '#collapsed' => FALSE,
-        '#tree' => FALSE,
-      );
-
-      // Container for just the poll choices.
-      $form['springboard_display']['page_wrappers_settings']['page_wrappers'] = array(
-        '#prefix' => '<div id="page-wrappers-assignments">',
-        '#suffix' => '</div>',
-        '#theme' => 'page_wrappers_node_assignments',
-      );
-
-      // Let the ajax functions know which field group to update.
-      $form['#page_wrapper_config_parent'] = 'page_wrappers';
-
-      // Add existing wrapper configurations.
-      $delta = 0;
-      $weight = 0;
-      if (!empty($configurations)) {
-        $delta = count($configurations);
-        foreach ($configurations as $pwid => $config) {
-          $key = 'pwid:' . $pwid;
-          $form['springboard_display']['page_wrappers_settings']['page_wrappers'][$key] = _page_wrappers_assignment_fields($key, $config, $wrappers, $rulesets, $config['weight'], $wrappers_count);
-          $weight = max($config['weight'], $weight);
-        }
-      }
-
-      // Add more.
-      $existing_delta = $delta;
-      for ($delta; $delta < $wrappers_count; $delta++) {
-        $key = 'new:' . ($delta - $existing_delta);
-        $weight++;
-        $form['springboard_display']['page_wrappers_settings']['page_wrappers'][$key] = _page_wrappers_assignment_fields($key, array(), $wrappers, $rulesets, $weight, $wrappers_count);
-      }
-
-      // If we have configured rulesets add the add more button.
-      if (!empty($rulesets)) {
-        $form['springboard_display']['page_wrappers_settings']['page_wrappers_more'] = array(
-          '#type' => 'submit',
-          '#value' => t('Add Another'),
-          '#weight' => 1,
-          '#limit_validation_errors' => array(array('page_wrappers')),
-          '#submit' => array('page_wrapper_add_assignment_submit'),
-          '#ajax' => array(
-            'callback' => '_page_wrappers_add_js',
-            'wrapper' => 'page-wrappers-assignments',
-            'effect' => 'fade',
-          ),
-        );
-        // Add a flag to the page wrapper fieldset that we have rulesets.
-        $form['springboard_display']['page_wrappers_settings']['page_wrappers']['#has_rulesets'] = TRUE;
-      }
+      page_wrappers_build_node_form($form, $form_state, $wrappers);
     }
   }
 
@@ -485,15 +396,118 @@ function page_wrappers_form_node_form_alter(&$form, $form_state, $form_id) {
     $form['body'][$lang][0]['#prefix'] .= t('Use the placeholder <strong>[content]</strong> to denote where the body content should be output, and <strong>[title]</strong> where the page title should appear, and <strong>[messages]</strong> where the error messages should appear.');
     $form['body'][$lang][0]['#prefix'] .= '</p>';
 
-    // Remove themes from the CSS list based on settings in springboard_admin
-    if(module_exists('springboard_admin') && _springboard_admin_apply_treatment($GLOBALS['user'])) {
-      $listed_themes = variable_get('springboard_listed_themes', array('springboard_base', 'springboard_backend', 'springboard_frontend'));
-      foreach($form['page_wrappers_theme_css'][$lang]['#options'] as $key=>$theme) {
-        if(!in_array($key, $listed_themes)) {
+    // Remove themes from the CSS list based on settings in springboard_admin.
+    if (module_exists('springboard_admin') && _springboard_admin_apply_treatment($GLOBALS['user'])) {
+      $listed_themes = variable_get('springboard_listed_themes', array(
+        'springboard_base',
+        'springboard_backend',
+        'springboard_frontend',
+      ));
+      foreach ($form['page_wrappers_theme_css'][$lang]['#options'] as $key => $theme) {
+        if (!in_array($key, $listed_themes)) {
           unset($form['page_wrappers_theme_css'][$lang]['#options'][$key]);
         }
       }
     }
+  }
+}
+
+/**
+ * Build the page wrapper form elements for the node edit form.
+ *
+ * @param array $form
+ *   The node eidt form.
+ * @param array $form_state
+ *   The node eidt form state.
+ * @param array $wrappers
+ *   The available wrappers.
+ */
+function page_wrappers_build_node_form(&$form, &$form_state, $wrappers) {
+  $rulesets = _page_wrapper_available_rulesets();
+
+  // If this is a new node use the default configuration.
+  if (!empty($form['#node']->nid)) {
+    $configurations = !empty($form_state['node']->page_wrappers) ? $form_state['node']->page_wrappers : array();
+  }
+  else {
+    $configurations = array_values(variable_get('page_wrapper_default_node_config', array()));
+  }
+
+  // Get a count of the wrappers, wrappers_count value is passed from
+  // the ajax function.
+  if (isset($form_state['wrappers_count'])) {
+    $wrappers_count = $form_state['wrappers_count'];
+  }
+  else {
+    $wrappers_count = empty($configurations) ? 1 : count($configurations);
+  }
+
+  // Share the "Display" fieldset with related modules (e.g., Form Layouts).
+  if (empty($form['springboard_display'])) {
+    $form['springboard_display'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Display settings'),
+      '#collapsible' => TRUE,
+      '#collapsed' => FALSE,
+      '#group' => 'additional_settings',
+    );
+  }
+
+  $form['springboard_display']['page_wrappers_settings'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Page wrapper settings'),
+    '#description' => t('Add, remove and configure page wrappers for this node.'),
+    '#collapsible' => TRUE,
+    '#collapsed' => FALSE,
+    '#tree' => FALSE,
+  );
+
+  // Container for just the poll choices.
+  $form['springboard_display']['page_wrappers_settings']['page_wrappers'] = array(
+    '#prefix' => '<div id="page-wrappers-assignments">',
+    '#suffix' => '</div>',
+    '#theme' => 'page_wrappers_node_assignments',
+  );
+
+  // Let the ajax functions know which field group to update.
+  $form['#page_wrapper_config_parent'] = 'page_wrappers';
+
+  // Add existing wrapper configurations.
+  $delta = 0;
+  $weight = 0;
+  if (!empty($configurations)) {
+    $delta = count($configurations);
+    foreach ($configurations as $pwid => $config) {
+      $key = 'pwid:' . $pwid;
+      $form['springboard_display']['page_wrappers_settings']['page_wrappers'][$key] = _page_wrappers_assignment_fields($key, $config, $wrappers, $rulesets, $config['weight'], $wrappers_count);
+      $weight = max($config['weight'], $weight);
+    }
+  }
+
+  // Add more.
+  $existing_delta = $delta;
+  for ($delta; $delta < $wrappers_count; $delta++) {
+    $key = 'new:' . ($delta - $existing_delta);
+    $weight++;
+    $form['springboard_display']['page_wrappers_settings']['page_wrappers'][$key] = _page_wrappers_assignment_fields($key, array(), $wrappers, $rulesets, $weight, $wrappers_count);
+  }
+
+  // If we have configured rulesets add the add more button.
+  if (!empty($rulesets)) {
+    $form['springboard_display']['page_wrappers_settings']['page_wrappers_more'] = array(
+      '#type' => 'submit',
+      '#value' => t('Add Another'),
+      '#weight' => 1,
+      '#limit_validation_errors' => array(array('page_wrappers')),
+      '#submit' => array('page_wrapper_add_assignment_submit'),
+      '#ajax' => array(
+        'callback' => '_page_wrappers_add_js',
+        'wrapper' => 'page-wrappers-assignments',
+        'effect' => 'fade',
+      ),
+    );
+    // Add a flag to the page wrapper fieldset that we have rulesets.
+    $form['springboard_display']['page_wrappers_settings']['page_wrappers']['#has_rulesets'] = TRUE;
   }
 }
 
