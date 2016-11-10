@@ -10,9 +10,13 @@
  */
 function commerce_braintree_web_fundraiser_commerce_fundraiser_gateway_info() {
   return array(
-    'payment_method' => array('braintree_hostedfields' => 'credit', 'braintree_paypal' => 'paypal'),
-    'allow_recurring' => array('credit', 'paypal'),
-    'allow_refund' => array('credit', 'paypal'),
+    'payment_method' => array(
+      'braintree_hostedfields' => 'credit',
+      'braintree_paypal' => 'paypal',
+      'braintree_apple_pay' => 'applepay',
+    ),
+    'allow_recurring' => array('credit', 'paypal', 'applepay'),
+    'allow_refund' => array('credit', 'paypal', 'applepay'),
     'form callback' => 'commerce_braintree_web_fundraiser_commerce_form',
     // 'cleanup callback' => 'commerce_authnet_fundraiser_commerce_cleanup',
     // 'scrub callback' => 'commerce_authnet_fundraiser_commerce_scrub',
@@ -98,7 +102,7 @@ function commerce_braintree_web_fundraiser_donation_form_config_check($node) {
 function commerce_braintree_web_fundraiser_commerce_expire($submission_fields) {
   $expires = array();
   // We may already have the expiration dates in the payment_fields if this is an upsell.
-  if(isset($submission_fields['payment_fields']['credit']['card_expiration_month']) && !empty($submission_fields['payment_fields']['credit']['card_expiration_month'])) {
+  if (isset($submission_fields['payment_fields']['credit']['card_expiration_month']) && !empty($submission_fields['payment_fields']['credit']['card_expiration_month'])) {
     $expires['month'] = $submission_fields['payment_fields']['credit']['card_expiration_month'];
     $expires['year'] = $submission_fields['payment_fields']['credit']['card_expiration_year'];
   }
@@ -160,75 +164,14 @@ function commerce_braintree_web_fundraiser_commerce_refund($payment_method, $ref
 
 /**
  * Callback function, use this form for the given gateway.
+ *
+ * @param string $payment_method
+ *   The payment method ID.
+ * @param array $config
+ *   The payment method configuration.
  */
 function commerce_braintree_web_fundraiser_commerce_form($payment_method, $config) {
-  $payment_method_instance = commerce_payment_method_instance_load($config['id']);
-  braintree_initialize($payment_method_instance['settings']);
-  // @TODO Possibily replace with _braintree_payment_form().
-
-  global $user;
-  $using_existing = FALSE;
-
-  $form = array();
-  $form['#attached']['library'][] = array('braintree_payment', 'braintree.js');
-
-  $form['braintree'] = array(
-    '#type' => 'container',
-    '#id' => 'payment-details',
-  );
-
-  $form['braintree']['new'] = array(
-    '#type' => 'container',
-    '#attributes' => array(
-      'class' => array('braintree-payment-form'),
-    ),
-    '#prefix' => '<div id="braintree-payment-form-outer">',
-    '#suffix' => '</div>',
-  );
-
-  _braintree_payment_form_element($form['braintree']['new'], $form, $form_state, $payment_method_instance);
-
-  if ($using_existing && ($user->uid > 0) && module_exists('braintree_vault') && ($customer = braintree_customer_load_by_account($user))) {
-    $default_method = braintree_customer_default_payment_method($customer);
-    $options = braintree_payment_method_options($customer->paymentMethods);
-
-    if (count($options) > 0) {
-      $form['braintree']['using_existing_payment_method'] = array(
-        '#type' => 'hidden',
-        '#default_value' => 1,
-      );
-
-      if (!empty($form_state['values'])) {
-        $parent_array[] = 'payment_details';
-        $parent_array[] = 'braintree';
-        $parent_array[] = 'using_existing_payment_method';
-
-        if ($default_value = drupal_array_get_nested_value($form_state['values'], $parent_array)) {
-          $form['braintree']['using_existing_payment_method']['#default_value'] = $default_value;
-        }
-
-      }
-
-      $form['braintree']['payment_method_token'] = array(
-        '#type' => 'select',
-        //'#title' => t('Choose your default payment method'),
-        '#options' => $options,
-        '#default_value' => $default_method->token,
-        '#attributes' => array(
-          'class' => array('braintree-primary-payment-method'),
-        ),
-      );
-
-      $form['braintree']['default_method_token'] = array(
-        '#type' => 'value',
-        '#value' => $default_method->token,
-      );
-    }
-  }
-
-  $form['#validate'][] = '_braintree_payment_form_validate';
-  $form['#submit'][] = '_braintree_payment_form_submit';
-
+  $form = drupal_get_form('braintree_payment_form', $payment_method, $config);
   return $form;
 }
 

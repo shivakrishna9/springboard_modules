@@ -4,237 +4,126 @@
  * Provides Braintree payment form functions.
  */
 
+require_once 'inc/hosted.braintree_payment.inc';
+require_once 'inc/paypal.braintree_payment.inc';
+
 /**
  * Implements hook_library().
+ *
+ * Defines the Braintree Javascript library.
  */
 function braintree_payment_library() {
   $path = drupal_get_path('module', 'braintree_payment');
 
   $libraries['braintree.js'] = array(
     'title' => 'Braintree Web js',
-    'version' => '2.21.0',
+    'version' => '3.5.0',
     'js' => array(
       $path . '/lib/braintree-web/client.js' => array(),
       $path . '/lib/braintree-web/hosted-fields.js' => array(),
       $path . '/lib/braintree-web/paypal.js' => array(),
+      $path . '/lib/braintree-web/apple-pay.js' => array(),
       $path . '/lib/braintree-web/data-collector.js' => array(),
-      $path . '/braintree_payment.js' => array(),
+      $path . '/js/braintree_payment.js' => array(),
     ),
     'css' => array(
-      $path . '/braintree_payment.css' => array(),
+      $path . '/css/braintree_payment.css' => array(),
     ),
   );
 
   return $libraries;
 }
 
+// @codingStandardsIgnoreStart
+// Ignore coding standards to supress warnings about providing the extra
+// parameters below.
 /**
- * Braintree payment method form element.
+ * Implements hook_form().
  *
- * @param $form
- * @param $form_state
- * @param string $payment_method
- * @param array $parent_array
- * @param bool $using_existing
+ * Provides the Braintree payment form.
+ *
+ * @param string $payment_type
+ *   The type of payment, ie "paypal" or "credit".
+ * @param array $config
+ *   The payment method configuration.
+ *
+ * @codingStandardsIgnoreEnd
  */
-function _braintree_payment_form(&$form, &$form_state, $payment_method = 'braintree_paypal', $parent_array = array(), $using_existing = FALSE) {
-
+function braintree_payment_form($form, &$form_state, $payment_type, $config) {
   global $user;
+  $js_settings = array();
 
-  $form['#attached']['library'][] = array('braintree_payment', 'braintree.js');
+  if (empty($form['#braintree_form_processed'])) {
+    $form['#attached']['library'][] = array('braintree_payment', 'braintree.js');
 
-  $form['braintree'] = array(
-    '#type' => 'container',
-  );
-
-  $form['braintree']['new'] = array(
-    '#type' => 'container',
-    '#attributes' => array(
-      'class' => array('braintree-payment-form'),
-    ),
-    '#prefix' => '<div id="braintree-payment-form-outer">',
-    '#suffix' => '</div>',
-  );
-
-  _braintree_payment_form_element($form['braintree']['new'], $form, $form_state, $payment_method);
-
-  if ($using_existing && ($user->uid > 0) && module_exists('braintree_vault') && ($customer = braintree_customer_load_by_account($user))) {
-    $default_method = braintree_customer_default_payment_method($customer);
-    $options = braintree_payment_method_options($customer->paymentMethods);
-
-    if (count($options) > 0) {
-      $form['braintree']['using_existing_payment_method'] = array(
-        '#type' => 'hidden',
-        '#default_value' => 1,
-      );
-
-      if (!empty($form_state['values'])) {
-        $parent_array[] = 'payment_details';
-        $parent_array[] = 'braintree';
-        $parent_array[] = 'using_existing_payment_method';
-
-        if ($default_value = drupal_array_get_nested_value($form_state['values'], $parent_array)) {
-          $form['braintree']['using_existing_payment_method']['#default_value'] = $default_value;
-        }
-
-      }
-
-      $form['braintree']['payment_method_token'] = array(
-        '#type' => 'select',
-        //'#title' => t('Choose your default payment method'),
-        '#options' => $options,
-        '#default_value' => $default_method->token,
-        '#attributes' => array(
-          'class' => array('braintree-primary-payment-method'),
-        ),
-      );
-
-      $form['braintree']['default_method_token'] = array(
-        '#type' => 'value',
-        '#value' => $default_method->token,
-      );
-    }
-  }
-
-  $form['#validate'][] = '_braintree_payment_form_validate';
-  $form['#submit'][] = '_braintree_payment_form_submit';
-}
-
-function _braintree_payment_form_element(&$element, &$form, &$form_state, $payment_method_instance) {
-  // Define our own parents to make it consistent and easy to use in JavaScript.
-  $element['errors'] = array(
-    '#type' => 'hidden',
-    '#parents' => array('braintree', 'errors'),
-  );
-
-  if ($payment_method_instance['method_id'] == 'braintree_paypal') {
-    $element['paypal'] = array(
+    $form['braintree'] = array(
       '#type' => 'container',
-      '#id' => 'paypal-container',
+      '#id' => 'payment-details',
     );
-    $element['paypal']['nonce'] = array(
-      '#type' => 'hidden',
-      '#name' => 'payment_method_nonce',
-    );
-    $element['paypal']['loggedin'] = array(
+    $form['braintree']['new'] = array(
       '#type' => 'container',
-      '#id' => 'braintree-paypal-loggedin',
-    );
-    $element['paypal']['loggedin']['contents'] = array(
-      '#markup' => '<span id="bt-pp-name">PayPal</span><span id="bt-pp-email"></span><button id="bt-pp-cancel">Cancel</button>',
-    );
-  }
-  else {
-    $element['number'] = array(
-      '#type' => 'item',
-      '#title' => t('Credit card number'),
-      '#markup' => '<div id="card-number" class="braintree-hosted-field required"></div>',
-      '#id' => 'braintree-field-card-number',
-      '#prefix' => '<div class="control-group">',
+      '#attributes' => array(
+        'class' => array('braintree-payment-form'),
+      ),
+      '#prefix' => '<div id="braintree-payment-form-outer">',
       '#suffix' => '</div>',
     );
 
-    $element['expiration'] = array(
-      '#type' => 'container',
-      '#attributes' => array(
-        'class' => array('braintree-card-expiration'),
-      ),
+    $form['errors'] = array(
+      '#type' => 'hidden',
+      '#parents' => array('braintree', 'errors'),
     );
 
-    $element['expiration']['month'] = array(
-      '#type' => 'item',
-      '#title' => t('Expiration Month'),
-      '#markup' => '<div id="expiration-month" class="braintree-hosted-field control-group required"></div>',
-    );
+    // Add Kount fraud protection.
+    $kount_env = NULL;
+    // Get payment rule settings.
+    $braintree_settings = variable_get('braintree_settings', array());
+    if (!empty($braintree_settings['environment'])) {
+      $js_settings['dataCollector']['kount']['environment'] = $braintree_settings['environment'];
+    }
 
-    $element['expiration']['divider'] = array(
-      '#markup' => '<span class="braintree-month-year-divider">/</span>',
-    );
-
-    $element['expiration']['year'] = array(
-      '#type' => 'item',
-      '#title' => t('Year'),
-      '#markup' => '<div id="expiration-year" class="braintree-hosted-field control-group required"></div>',
-    );
-
-    $element['cvv'] = array(
-      '#title' => '<a href="#" class="tooltip"><div class="tooltip__text">' . t('The 3 or 4 digit security code on your card') . '</div></a>',
-      '#type' => 'item',
-      '#title' => t('CVV'),
-      '#markup' => '<div id="cvv" class="braintree-hosted-field control-group required"></div>',
-      '#id' => 'braintree-field-card-cvv',
-    );
+    $form['#validate'][] = '_braintree_payment_form_validate';
+    $form['#braintree_form_processed'] = TRUE;
   }
 
-  $js_settings = array();
+  $payment_method_instance = commerce_payment_method_instance_load($config['id']);
+  braintree_initialize($payment_method_instance['settings']);
+
+  $context = array(
+    'form' => &$form,
+    'form_state' => &$form_state,
+    'payment_method_instance' => &$payment_method_instance,
+    'js_settings' => &$js_settings,
+  );
+  $hooks = array(
+    sprintf('braintree_payment_form__%s_', $payment_type),
+    'braintree_payment_form',
+  );
+  foreach ($hooks as $hook) {
+    drupal_alter($hook, $context);
+  }
+
+  $token = NULL;
   $arguments = array();
 
-  // Initialize Braintree and create a token.
-  // No need of 'customerId' when generate token as it only applies to the
-  // Drop-in UI and is not needed for custom integrations.
-  // @see https://developers.braintreepayments.com/javascript+php/reference/request/client-token/generate#customer_id
+  // Try to generate a Braintree token.
   try {
     $token = Braintree_ClientToken::generate($arguments);
+    $js_settings['clientToken'] = $token;
   }
   catch (Exception $e) {
-    $token = '';
-    $error_message = braintree_exception_error_message($e, TRUE);
-    $message = t('Braintree token generation failed: @message. Please check Braintree gateway configuration.', array(
-      '@message' => $error_message));
+    $error_message = braintree_report_error($e);
+    $message = t('Braintree token generation failed: @message. Please check Braintree gateway configuration.', array('@message' => $error_message));
     drupal_set_message($message, 'error');
+    return;
   }
 
-  $js_settings['clientToken'] = $token;
-  if ($payment_method_instance['method_id'] == 'braintree_paypal') {
-    $js_settings['integration'] = 'paypal';
-    $js_settings['paypalContainer'] = 'paypal-container';
-    $js_settings['enabledMethods'][] = 'paypal';
-    $js_settings['autofill'] = $payment_method_instance['settings']['autofill'];
-
-  }
-  else {
-    $js_settings['enabledMethods'][] = 'credit';
-    $js_settings['integration'] = 'custom';
-    $js_settings['fieldsStyles'] = braintree_hostedfields_styles();
-    $js_settings['hostedFields'] = array(
-      'number' => array(
-        'selector' => '#card-number',
-        'placeholder' => '1111 1111 1111 1111',
-      ),
-      'cvv' => array(
-        'selector' => '#cvv',
-        'placeholder' => '123',
-      ),
-      'expirationMonth' => array(
-        'selector' => '#expiration-month',
-        'placeholder' => 'MM',
-        'select' => TRUE,
-      ),
-      'expirationYear' => array(
-        'selector' => '#expiration-year',
-        'placeholder' => 'YYYY',
-        'select' => TRUE,
-      ),
-    );
-  }
-
-  // Add fraud protection - ZVT-25.
-  $kount_env = NULL;
-  // Get payment rule settings.
-  $braintree_settings = variable_get('braintree_settings', array());
-  if (isset($braintree_settings['environment'])) {
-    $kount_env = $braintree_settings['environment'];
-  }
-  // Set the Kount environment to the same as the Braintree environment.
-  if ($kount_env) {
-    $js_settings['dataCollector']['kount']['environment'] = $kount_env;
-  }
-
-  // The custom token is required to generate the Drop-in payment form.
-  $element['#attached']['js'][] = array(
+  $form['#attached']['js'][] = array(
     'data' => array('braintree' => $js_settings),
     'type' => 'setting',
   );
+
+  return $form;
 }
 
 /**

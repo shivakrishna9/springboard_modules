@@ -1,4 +1,4 @@
-(function($) {
+;(function($) {
   var error = function() {
     return !!console && console.error.apply(this, arguments);
   };
@@ -11,6 +11,7 @@
     this.clientInstance = null;
     this.hostedFieldsInstance = null;
     this.paypalInstance = null;
+    this.applePayInstance = null;
     this.$amount = this.$form.find('input[name="submitted[donation][amount]"]');
     this.amount = 0;
     this.deviceDataInstance = null;
@@ -49,6 +50,9 @@
         }
         if (parent.paypalEnabled()) {
           parent.createPaypalFields(clientInstance);
+        }
+        if (parent.applePayEnabled()) {
+          parent.createApplePayFields(clientInstance);
         }
 
         parent.resetDeviceData();
@@ -93,10 +97,13 @@
 
       parent.settings.currentPaymentMethod = paymentMethod;
       if (paymentMethod == 'credit') {
-        parent.disablePaypalFieldsSubmit().resetHostedFieldsSubmit();
+        parent.disablePaypalFieldsSubmit().disableApplePayFieldsSubmit().resetHostedFieldsSubmit();
       }
-      else {
-        parent.disableHostedFieldsSubmit().resetPaypalFieldsSubmit();
+      else if (paymentMethod == 'paypal') {
+        parent.disableHostedFieldsSubmit().disableApplePayFieldsSubmit().resetPaypalFieldsSubmit();
+      }
+      else if (paymentMethod == 'applepay') {
+        parent.disableHostedFieldsSubmit().disablePaypalFieldsSubmit().resetApplePayFieldsSubmit();
       }
 
       parent.resetDeviceData();
@@ -146,12 +153,8 @@
       return this;
     };
 
-    /**
-     * Creates hosted fields.
-     * @param clientInstance
-     *   The client instance.
-     */
     this.createHostedFields = function(clientInstance) {
+      console.log('create hoted');
       this.setClientInstance(clientInstance);
       braintree.hostedFields.create({
         client: this.clientInstance,
@@ -170,11 +173,6 @@
       return this;
     };
 
-    /**
-     * Tears down hosted fields.
-     * @param event
-     *   The event parameter from the listener that called this function.
-     */
     this.submitHostedFields = function(event) {
       if (parent.settings.currentPaymentMethod != 'credit') {
         return;
@@ -220,9 +218,6 @@
       return this;
     };
 
-    /**
-     * Helper function to determine if bank payment method is enabled.
-     */
     this.paypalEnabled = function() {
       return this.settings.enabledMethods.indexOf('paypal') >= 0;
     };
@@ -324,6 +319,102 @@
       }
     };
 
+    /**
+     * Helper function to determine if bank payment method is enabled.
+     */
+    this.applePayEnabled = function() {
+      return this.settings.enabledMethods.indexOf('applepay') >= 0;
+    };
+
+    this.setApplePayInstance = function(applePayInstance) {
+      this.applePayInstance = applePayInstance;
+      return this;
+    };
+
+    this.enableApplePayFieldsSubmit = function() {
+      parent.$form.on('submit.braintree_applepay', parent.submitApplePayFields);
+      return this;
+    };
+
+    this.disableApplePayFieldsSubmit = function() {
+      parent.$form.off('submit.braintree_applepay');
+      return this;
+    };
+
+    this.resetApplePayFieldsSubmit = function() {
+      parent.disableApplePayFieldsSubmit().enableApplePayFieldsSubmit();
+      return this;
+    };
+
+    this.submitApplePayFields = function(event) {
+      if (parent.settings.currentPaymentMethod != 'applepay') {
+        return;
+      }
+
+      var paymentRequest = applePayInstance.createPaymentRequest({
+        total: {
+          label: 'My Store',
+          amount: parent.amount
+        }
+      });
+
+      var session = new ApplePaySession(1, paymentRequest);
+
+      session.onvalidatemerchant = function(event) {
+        applePayInstance.performValidation({
+          validationURL: event.validationURL,
+          displayName: 'My Store'
+        }, function (validationErr, merchantSession) {
+          if (validationErr) {
+            // You should show an error to the user, e.g. 'Apple Pay failed to load.'
+            error('Error validating merchant:', validationErr);
+            session.abort();
+            return;
+          }
+          session.completeMerchantValidation(merchantSession);
+        });
+      };
+
+      session.onpaymentauthorized = function (event) {
+        applePayInstance.tokenize({
+          token: event.payment.token
+        }, function(tokenizeErr, payload) {
+          if (tokenizeErr) {
+            error('Error tokenizing Apple Pay:', tokenizeErr);
+            session.completePayment(ApplePaySession.STATUS_FAILURE);
+            return;
+          }
+          session.completePayment(ApplePaySession.STATUS_SUCCESS);
+
+          parent.$nonce.val(payload.nonce);
+        });
+      };
+
+      session.begin();
+    };
+
+    this.createApplePayFields = function(clientInstance) {
+      this.setClientInstance(clientInstance);
+      braintree.applePay.create({
+        client: this.clientInstance
+      }, function (error_message, applePayInstance) {
+        if (error_message) {
+          error(error_message);
+          return;
+        }
+
+        parent.setApplePayInstance(applePayInstance);
+
+        var promise = ApplePaySession.canMakePaymentsWithActiveCard(applePayInstance.merchantIdentifier);
+        promise.then(function(canMakePaymentsWithActiveCard) {
+          if (canMakePaymentsWithActiveCard) {
+            parent.resetApplePayFieldsSubmit();
+          }
+        });
+      });
+      return this;
+    };
+
     this.reset = function() {
       parent.$nonce.val('');
 
@@ -404,6 +495,32 @@
         $paymentMethod.on('change', function() {
           Drupal.braintreeInstance.setCurrentPaymentMethod($(this).val());
         });
+
+        // If Apple Pay is enabled, check if the browser supports it.
+        if ($.inArray('applepay', settings.enabledMethods)) {
+          var supports_applepay = true;
+          if (!window.ApplePaySession) {
+            error('This device does not support Apple Pay.');
+            supports_applepay = false;
+          }
+          if (supports_applepay && !ApplePaySession.canMakePayments()) {
+            error('This device is not capable of making Apple Pay payments.');
+            supports_applepay = false;
+          }
+          if (!supports_applepay) {
+            // Remove the Apple Pay option.
+            settings.availableMethods.splice($.inArray('applepay', settings.availableMethods), 1);
+            var $applepay_input = $('input[name="submitted[payment_information][payment_method]"][value="applepay"]');
+            if ($applepay_input.is(':checked')) {
+              // If this method is currently checked, check the first payment
+              // method instead.
+              var $first_payment_method = $applepay_input.parent('.form-item').siblings('.form-item').eq(0).find('input[name="submitted[payment_information][payment_method]"]');
+              $first_payment_method.attr('checked', 'checked');
+              Drupal.braintreeInstance.setCurrentPaymentMethod($first_payment_method.val());
+            }
+            $applepay_input.parent('.form-item').remove();
+          }
+        }
       }
     }
   };

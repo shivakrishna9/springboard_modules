@@ -1,51 +1,25 @@
 <?php
 /**
  * @file
- * Provides integration with Braintree vault functions.
+ * Provides integration with Braintree Vault.
  */
-
-/**
- * Implements hook_help().
- */
-function braintree_vault_help($path, $arg) {
-  switch ($path) {
-    // Main module help for admin settings page
-    case BRAINTREE_ADMIN_PATH . '/vault':
-      return '<p>' . t('Store customer ID of Braintree vault in the custom form.') . '</p>';
-  }
-}
-
-/**
- * Implements hook_init().
- */
-function braintree_vault_init() {
-  if (strpos(current_path(), braintree_payment_method_base_url()) === 0) {
-    // braintree_initialize();
-  }
-}
 
 /**
  * Implements hook_menu().
  */
 function braintree_vault_menu() {
   $items[BRAINTREE_ADMIN_PATH . '/vault'] = array(
-    'title' => t('Braintree vault'),
-    'description' => t('Setup up Braintree vault ID.'),
+    'title' => 'Braintree vault',
+    'description' => 'Setup up Braintree vault ID.',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('braintree_vault_admin_settings'),
     'access arguments' => array('administer braintree settings'),
-    'file' => 'braintree_vault.admin.inc',
+    'file' => 'inc/braintree_vault.admin.inc',
     'type' => MENU_LOCAL_TASK,
     'weight' => 10,
   );
 
   $base_url = braintree_payment_method_base_url();
-
-  // This is just here for the sake of people searching the code for these paths
-  // dashboard/payment_methods/%/edit
-  // dashboard/payment_methods/add
-  // dashboard/payment_methods/%/remove
-  // dashboard/payment_methods/%/make_default
 
   if (empty($base_url)) {
     drupal_set_message('Braintee payment method base URL is not right, click <a href="@url">here</a> to fix it.', array(
@@ -60,28 +34,32 @@ function braintree_vault_menu() {
       'page callback' => 'drupal_get_form',
       'page arguments' => array('braintree_payment_method_form', 'add'),
       'access arguments' => array('manage braintree payment method'),
-      'file' => 'braintree_vault.pages.inc',
+      'file' => 'inc/braintree_vault.pages.inc',
     );
     $items[$base_url . '/%/edit'] = array(
       'title' => 'Edit payment method',
       'page callback' => 'drupal_get_form',
-      'page arguments' => array('braintree_payment_method_form', 'edit', $position),
+      'page arguments' => array(
+        'braintree_payment_method_form',
+        'edit',
+        $position,
+      ),
       'access arguments' => array('manage braintree payment method'),
-      'file' => 'braintree_vault.pages.inc',
+      'file' => 'inc/braintree_vault.pages.inc',
     );
     $items[$base_url . '/%/remove'] = array(
       'title' => 'Remove payment method',
       'page callback' => 'drupal_get_form',
       'page arguments' => array('braintree_payment_method_remove_form', $position),
       'access arguments' => array('manage braintree payment method'),
-      'file' => 'braintree_vault.pages.inc',
+      'file' => 'inc/braintree_vault.pages.inc',
     );
     $items[$base_url . '/%/make_default'] = array(
       'title' => 'Make primary payment method',
       'page callback' => 'drupal_get_form',
       'page arguments' => array('braintree_payment_method_make_default_form', $position),
       'access arguments' => array('manage braintree payment method'),
-      'file' => 'braintree_vault.pages.inc',
+      'file' => 'inc/braintree_vault.pages.inc',
     );
 
     if (variable_get('braintree_use_payment_methods_page', TRUE)) {
@@ -89,7 +67,7 @@ function braintree_vault_menu() {
         'title' => 'Payment details',
         'page callback' => 'braintree_payment_methods_page',
         'access arguments' => array('manage braintree payment method'),
-        'file' => 'braintree_vault.pages.inc',
+        'file' => 'inc/braintree_vault.pages.inc',
       );
     }
   }
@@ -115,27 +93,27 @@ function braintree_vault_theme($existing, $type, $theme, $path) {
   return array(
     'braintree_payment_methods' => array(
       'variables' => array(
-        'customer' => NULL
+        'customer' => NULL,
       ),
-      'template' => 'braintree-payment-methods',
-      'file' => 'braintree_vault.theme.inc',
+      'template' => 'tpl/braintree-payment-methods',
+      'file' => 'inc/braintree_vault.theme.inc',
     ),
     'braintree_payment_method' => array(
       'variables' => array(
         'payment_method' => NULL,
         'delta' => NULL,
         'is_default' => FALSE,
-        'has_links' => FALSE
+        'has_links' => FALSE,
       ),
-      'template' => 'braintree-payment-method',
-      'file' => 'braintree_vault.theme.inc',
+      'template' => 'tpl/braintree-payment-method',
+      'file' => 'inc/braintree_vault.theme.inc',
     ),
     'braintree_payment_method_label' => array(
       'variables' => array(
         'payment_method' => NULL,
-        'delta' => NULL
+        'delta' => NULL,
       ),
-      'file' => 'braintree_vault.theme.inc',
+      'file' => 'inc/braintree_vault.theme.inc',
     ),
   );
 }
@@ -169,36 +147,42 @@ function braintree_vault_hook_info() {
  * @return bool|\Braintree_Customer
  */
 function braintree_customer_load_by_account($account, $reset = FALSE) {
-  // return static_cache_get('braintree_customer_cache', $account->uid, $reset, function() use ($account) {
-    if ($customer_id = braintree_customer_id($account)) {
-      $customer = braintree_customer_load($customer_id);
-      return $customer;
-    }
+  if ($customer_id = braintree_customer_id($account)) {
+    $customer = braintree_customer_load($customer_id);
+    return $customer;
+  }
 
-    return FALSE;
-  // });
+  return FALSE;
 }
 
 /**
- * Look up Braintree customer object bu customer ID.
+ * Look up Braintree customer object by customer ID.
  *
- * @param $customer_id
+ * @param int $customer_id
+ *   The customer ID.
  *
- * @return bool|\Braintree_Customer
+ * @return bool|\Braintree\Customer
+ *   The Braintree\Customer object or FALSE if not found.
  */
 function braintree_customer_load($customer_id) {
-  // braintree_initialize();
-  $customer = Braintree_Customer::find($customer_id);
+  try {
+    $customer = Braintree_Customer::find($customer_id);
+  }
+  catch (Exception $e) {
+    $customer = FALSE;
+  }
+
   return $customer;
 }
 
 /**
  * Manually reset customer cache data.
  *
- * @param $uid
+ * @param int $uid
+ *   The user ID.
  */
 function braintree_customer_cache_reset($uid) {
-  $customers =& drupal_static('braintree_customer_cache', array());
+  $customers = &drupal_static('braintree_customer_cache', array());
   $customers[$uid] = NULL;
 }
 
@@ -499,7 +483,7 @@ function braintree_vault_customer_save($customer_data, $context = array(), &$err
  * @param string $error_message
  * @return bool|mixed
  */
-function braintree_vault_payment_method_save($payment_method, $context = array(), &$error_message = '') {
+function braintree_vault_payment_method_save($payment_method, $context = array()) {
   drupal_alter('braintree_payment_method', $payment_method, $context);
 
   try {
@@ -518,8 +502,8 @@ function braintree_vault_payment_method_save($payment_method, $context = array()
     }
   }
   catch (Exception $e) {
-    $error_message = braintree_exception_error_message($e);
-    return FALSE;
+    $error_message = braintree_report_error($e);
+    return array(FALSE, $error_message);
   }
 
   if ($result->success) {
@@ -532,11 +516,11 @@ function braintree_vault_payment_method_save($payment_method, $context = array()
       $function($result, $context);
     }
 
-    return $result;
+    return array(TRUE, $result);
   }
 
-  $error_message = braintree_result_error_message($result);
-  return FALSE;
+  $error_message = braintree_report_result($result);
+  return array(FALSE, $error_message);
 }
 
 /**
@@ -700,4 +684,12 @@ function braintree_find_default_subscription($payment_methods) {
   }
 
   return $find;
+}
+
+/**
+ * Implements hook_commerce_braintree_web_submit_form_customer_alter().
+ */
+function braintree_vault_commerce_braintree_web_submit_form_customer_alter(&$customer) {
+  $customer['customer'] = user_load_by_mail($customer['customer_mail']);
+  $customer['id'] = braintree_customer_id($customer['customer']);
 }
