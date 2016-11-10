@@ -202,7 +202,7 @@ function sba_quicksign_form_validate(&$form, &$form_state) {
       $sb_cookie = springboard_cookie_get_cookie();
       // If the submitted email doesn't match the cookie email, then we have
       // the wrong data in the cookie and will revert to the standard user lookup.
-      if(($sb_cookie['email'] != $mail) || empty($sb_cookie['profile'])) {
+      if((isset($sb_cookie['email']) && $sb_cookie['email'] != $mail) || empty($sb_cookie['profile'])) {
         $sb_cookie = FALSE;
       }
     }
