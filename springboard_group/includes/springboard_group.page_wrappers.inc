@@ -10,7 +10,6 @@
  * Alter the wrappers again via an ajax form element.
  */
 function springboard_group_page_wrappers_node_settings_form_alter(&$wrappers, &$form, &$form_state) {
-
   $wrappers_are_grouped = og_get_group_type('node', 'page_wrapper', 'group content');
   // If the pagewrapper content type is group enabled,
   // alter the available options.
@@ -20,6 +19,7 @@ function springboard_group_page_wrappers_node_settings_form_alter(&$wrappers, &$
     // ones assigned to the selected group.
     // @see springboard_group_ajax_callback().
     if (!empty($form_state['values'])) {
+
       $language = $form['og_group_ref_' . $form['#node']->type]['#language'];
       $option = $form_state['values']['og_group_ref_' . $form['#node']->type][$language];
       $gids = isset($option[0]['target_id']) ? $option : NULL;
@@ -82,10 +82,21 @@ function springboard_group_page_wrappers_list_wrappers_by_group($gids) {
 /**
  * Display a message about ineligible page wrappers when switching groups.
  */
-function springboard_group_node_form_page_wrappers_validate(&$form, &$form_state) {
+function springboard_group_node_form_page_wrappers__alter(&$form, &$form_state, $callback) {
   // We're editing a *wrapped* node and need to validate the wrapper's groups.
+  if ($form['#node']->type != 'page_wrapper') {
+    $form['#validate'][] = 'springboard_group_node_form_page_wrappers_validate_submission';
+  }
   if (!empty($form_state['values']['page_wrappers']) && $form['#node']->type != 'page_wrapper') {
-    springboard_group_node_form_page_wrappers_validate_wrapped_node($form, $form_state);
+    if ($callback != 'springboard_group_og_group_field_ajax_callback') {
+      return;
+    }
+
+    $wrappers = _page_wrappers_available_wrappers($form['#node']);
+    springboard_group_page_wrappers_node_settings_form_alter($wrappers, $form, $form_state);
+    page_wrappers_build_node_form($form, $form_state, $wrappers);
+
+    springboard_group_node_form_page_wrappers_validate_wrapped_node_ajax_reload($form, $form_state);
   }
   // We on a page *wrapper* and need to validate nodes that are
   // already wrapped.
@@ -100,7 +111,7 @@ function springboard_group_node_form_page_wrappers_validate(&$form, &$form_state
  * Check if a previously configured wrapper is compatible with the new group
  * when switching groups on a wrapped node.
  */
-function springboard_group_node_form_page_wrappers_validate_wrapped_node(&$form, &$form_state) {
+function springboard_group_node_form_page_wrappers_validate_wrapped_node_ajax_reload(&$form, &$form_state) {
   $x = 0;
   foreach ($form_state['values']['page_wrappers'] as $key => $wrapper) {
     $current_wrapper = !empty($form_state['values']['page_wrappers'][$key]['wrapper_nid']) ? $form_state['values']['page_wrappers'][$key]['wrapper_nid'] : NULL;
@@ -113,6 +124,31 @@ function springboard_group_node_form_page_wrappers_validate_wrapped_node(&$form,
       $form_state['input']['page_wrappers'][$key]['wrapper_nid'] = $default;
     }
     $x++;
+  }
+}
+
+function springboard_group_node_form_page_wrappers_validate_submission(&$form, &$form_state) {
+  if (!empty($form_state['triggering_element']['#ajax']['callback'] )) {
+    return;
+  }
+  $language = $form['og_group_ref_' . $form['#node']->type]['#language'];
+  $option = $form_state['values']['og_group_ref_' . $form['#node']->type][$language];
+  $gids = isset($option[0]['target_id']) ? $option : NULL;
+  foreach ($gids as $key => $gid) {
+    $gids[$key] = $gid['target_id'];
+  }
+  $allowed_wrappers = springboard_group_page_wrappers_list_wrappers_by_group($gids);
+  $error = FALSE;
+  foreach ($form_state['values']['page_wrappers'] as $key => $wrapper) {
+    if (!empty($wrapper['wrapper_nid']) && !isset($allowed_wrappers[$wrapper['wrapper_nid']])) {
+      form_set_error('page_wrappers', 'wrong wrapper');
+      $error = TRUE;
+    }
+  }
+  if ($error) {
+    $wrappers = _page_wrappers_available_wrappers($form['#node']);
+    springboard_group_page_wrappers_node_settings_form_alter($wrappers, $form, $form_state);
+    page_wrappers_build_node_form($form, $form_state, $wrappers);
   }
 }
 
