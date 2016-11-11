@@ -178,7 +178,7 @@ function fundraiser_quick_donate_fundraiser_donation_form($form, $form_state) {
     }
     else {
       $form['submitted']['payment_information']['payment_fields'][$gateway_type]['cardonfile'] = array(
-        '#type' => 'value',
+        '#type' => 'hidden',
         '#value' => 'new',
       );
     }
