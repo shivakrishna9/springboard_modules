@@ -47,7 +47,7 @@ function springboard_group_email_wrappers_templates_list_alter(&$templates) {
  *
  * Called from springboard_group_form_node_form_alter().
  */
-function springboard_group_node_form_email_wrappers_validate(&$form, &$form_state) {
+function springboard_group_email_wrappers_node_form__alter(&$form, &$form_state) {
 
   // We're editing a *wrapped* node and need to validate the wrapper's groups.
   if (!empty($form_state['values']) && !empty($form['#node']->nid) && $form['#node']->type != 'email_wrapper') {
@@ -56,7 +56,7 @@ function springboard_group_node_form_email_wrappers_validate(&$form, &$form_stat
   // We on a *wrapper* and need to validate nodes that are
   // already wrapped.
   elseif (!empty($form_state['values']) && !empty($form['#node']->nid) && $form['#node']->type == 'email_wrapper') {
-    springboard_group_wrapper_validation_helper($form, $form_state, 'email_wrapper_webform');
+    springboard_group_wrappers_common_validation_helper($form, $form_state, 'email_wrapper_webform');
   }
 }
 
@@ -72,14 +72,9 @@ function _springboard_group_email_wrappers_validate_wrapped(&$form, &$form_state
   $form['#submit'][] = 'springboard_group_delete_email_wrappers';
   $settings = email_wrappers_load_settings($form['#node']->nid);
   if ($settings) {
-    $gids = [];
     $wrappers_to_delete = [];
     // Get the group IDs from the form values.
-    $language = $form['og_group_ref_' . $form['#node']->type]['#language'];
-    $options = $form_state['values']['og_group_ref_' . $form['#node']->type][$language];
-    foreach ($options as $option) {
-      $gids[] = $option['target_id'];
-    }
+    $gids = springboard_group_get_gids_from_element($form, $form_state);
     // Get the existing settings. Check the group membership for each wrapper
     // in the setting and compare it to each eligible group.
     foreach ($settings as $setting) {

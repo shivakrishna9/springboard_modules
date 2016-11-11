@@ -113,7 +113,7 @@ function springboard_group_get_group_context() {
     if (strpos(current_path(), $path) !== FALSE) {
       $has_path = TRUE;
     }
-   }
+  }
   if (!$has_path) {
     return [];
   }
@@ -201,10 +201,7 @@ function springboard_group_context_entityreference($form, $form_state) {
     $gids = $field[$language][0]['default']['#default_value'];
   }
   else {
-    $options = $form_state['values']['og_group_ref_' . substr($form['#node']->type, 0, 19)][$language];
-    foreach ($options as $option) {
-      $gids[] = $option['target_id'];
-    }
+    $gids = springboard_group_get_gids_from_element($form, $form_state);
   }
   $_SESSION['springboard_group_entityreference_context'] = $gids;
   return $gids;

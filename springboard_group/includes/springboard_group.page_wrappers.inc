@@ -42,7 +42,7 @@ function springboard_group_page_wrappers_node_form__alter(&$form, &$form_state, 
   // We on a page *wrapper* and need to validate nodes that are
   // already wrapped.
   elseif (!empty($form_state['values']) && $form['#node']->type == 'page_wrapper') {
-    springboard_group_wrapper_validation_helper($form, $form_state, 'node_page_wrappers');
+    springboard_group_wrappers_common_validation_helper($form, $form_state, 'node_page_wrappers');
   }
 }
 
@@ -79,7 +79,7 @@ function springboard_group_page_wrappers_validate_submission(&$form, &$form_stat
     return;
   }
 
-  $gids = springboard_group_page_wrappers_get_gids($form, $form_state);
+  $gids = springboard_group_get_gids_from_element($form, $form_state);
   $allowed_wrappers = springboard_group_page_wrappers_list_wrappers_by_group($gids);
   $error = FALSE;
   foreach ($form_state['values']['page_wrappers'] as $key => $wrapper) {
@@ -108,7 +108,7 @@ function springboard_group_page_wrappers_filter(&$wrappers, $form, $form_state) 
     // ones assigned to the selected group.
     // @see springboard_group_ajax_callback().
     if (!empty($form_state['values'])) {
-      $gids = springboard_group_page_wrappers_get_gids($form, $form_state);
+      $gids = springboard_group_get_gids_from_element($form, $form_state);
       $wrappers = springboard_group_page_wrappers_list_wrappers_by_group($gids);
     }
     else {
@@ -130,18 +130,6 @@ function springboard_group_page_wrappers_filter(&$wrappers, $form, $form_state) 
   return $wrappers;
 }
 
-/**
- * Get the group ids from the OG form element.
- */
-function springboard_group_page_wrappers_get_gids($form, $form_state) {
-  $language = $form['og_group_ref_' . $form['#node']->type]['#language'];
-  $option = $form_state['values']['og_group_ref_' . substr($form['#node']->type, 0, 19)][$language];
-  $gids = isset($option[0]['target_id']) ? $option : NULL;
-  foreach ($gids as $key => $gid) {
-    $gids[$key] = $gid['target_id'];
-  }
-  return $gids;
-}
 
 /**
  * List page wrappers by group.
@@ -172,76 +160,4 @@ function springboard_group_page_wrappers_list_wrappers_by_group($gids) {
   }
 
   return count($wrappers) ? $wrappers : array();
-}
-
-/**
- * Validates group switching on page wrapper & email wrapper nodes.
- *
- * Check to see what nodes are using this wrapper, and if the wrapper's
- * new group is incompatible with any of the wrapped items,
- * display a message.
- */
-function springboard_group_wrapper_validation_helper(&$form, &$form_state, $table = 'node_page_wrapper') {
-
-  // Get all wrappers.
-  $wrappers = db_select($table)->fields($table)->execute()
-    ->fetchAll(PDO::FETCH_ASSOC);
-
-  // Get the active groups selection from the form_state.
-  $gids = springboard_group_page_wrappers_get_gids($form, $form_state);
-
-  // Compare the wrapped node's ownership with the new group selection.
-  if (!empty($wrappers)) {
-    foreach ($wrappers as $wrapper) {
-      $grouped = _springboard_group_wrappers_get_grouped_nodes($gids, (array) $wrapper);
-      if (count($grouped) == 0) {
-        $in_use[] = (array) $wrapper;
-      }
-    }
-  }
-
-  // If we have incompatible nodes already using this wrapper,
-  // display a message.
-  if (!empty($in_use)) {
-    $count = count($in_use);
-    $format = format_plural($count, 'node', 'nodes');
-    $rows = [];
-    foreach ($in_use as $wrapped) {
-      $node = node_load($wrapped['nid']);
-      $rows[] = l(check_plain($node->title), 'node/' . $wrapped['nid']);
-    }
-
-    $message = t('@count @format belonging to an incompatible group use this wrapper.', array(
-      '@count' => $count,
-      '@format' => $format,
-    ));
-
-    if ($count < 11) {
-      $message .= theme('item_list', array('items' => $rows));
-    }
-    $form_state['group_ajax_messages'][] = $message;
-  }
-}
-
-/**
- * Given a set of $gids, determine if a wrapped node belongs in them.
- *
- * @param array $gids
- *   The group ids of the current wrapper.
- * @param array $wrapper
- *   A node's wrapper table record.
- *
- * @return array
- *   An array of group objects for wrapped nodes belonging to the
- *   wrapper's $gids.
- */
-function _springboard_group_wrappers_get_grouped_nodes($gids, $wrapper) {
-  $grouped = [];
-  foreach ($gids as $gid) {
-    $in_group = og_get_membership('node', $gid, 'node', $wrapper['nid']);
-    if ($in_group) {
-      $grouped[$gid][$wrapper['nid']] = $in_group;
-    }
-  }
-  return $grouped;
 }
