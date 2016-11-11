@@ -30,7 +30,9 @@ function springboard_group_og_context_negotiation_info() {
 function springboard_group_og_context_handler($item = NULL) {
 
   $path = current_path();
-  unset($_SESSION['og_context']);
+  if (!empty($_SESSION['og_context'])) {
+    unset($_SESSION['og_context']);
+  }
   if (strpos($path, '/edit') !== FALSE && strpos($path, 'advocacy/target' !== FALSE)) {
     // @todo get the group from the target ID.
     //return array('node' => array($gid);
@@ -152,34 +154,36 @@ function springboard_group_context_menu_paths() {
     $groups_enabled_types = springboard_group_get_grouped_types();
     $paths = array();
 
-    if (isset($groups_enabled_types['rules_config'])) {
-      array_push($paths, 'admin/commerce/config/payment-methods');
-    }
-    if (isset($groups_enabled_types['node']['page_wrapper'])) {
-      array_push($paths, 'admin/springboard/asset-library/page_wrapper');
-    }
-    if (isset($groups_enabled_types['node']['email_wrapper'])) {
-      array_push($paths, 'admin/springboard/asset-library/email_wrapper');
-    }
-    if (isset($groups_enabled_types['node']['page_wrapper']) || isset($groups_enabled_types['node']['email_wrapper'])) {
-      array_push($paths, 'admin/springboard/asset-library');
-    }
-    if (isset($groups_enabled_types['node']['webform_ab'])) {
-      array_push($paths, 'admin/content/webform_ab');
-    }
-    foreach ($groups_enabled_types['node'] as $type => $field) {
-      if (fundraiser_is_donation_type($type)) {
-        array_push($paths, 'admin/springboard');
-        array_push($paths, 'admin/springboard/donation-forms/all');
+    if (!empty($groups_enabled_types['node'])) {
+      if (isset($groups_enabled_types['rules_config'])) {
+        array_push($paths, 'admin/commerce/config/payment-methods');
       }
-      if (in_array($type, webform_variable_get('webform_node_types'))) {
-        array_push($paths, 'admin/springboard');
-        array_push($paths, 'admin/springboard/forms/all');
-        array_push($paths, 'admin/springboard/forms/' . $type);
+      if (isset($groups_enabled_types['node']['page_wrapper'])) {
+        array_push($paths, 'admin/springboard/asset-library/page_wrapper');
+      }
+      if (isset($groups_enabled_types['node']['email_wrapper'])) {
+        array_push($paths, 'admin/springboard/asset-library/email_wrapper');
+      }
+      if (isset($groups_enabled_types['node']['page_wrapper']) || isset($groups_enabled_types['node']['email_wrapper'])) {
+        array_push($paths, 'admin/springboard/asset-library');
+      }
+      if (isset($groups_enabled_types['node']['webform_ab'])) {
+        array_push($paths, 'admin/content/webform_ab');
+      }
+      foreach ($groups_enabled_types['node'] as $type => $field) {
+        if (fundraiser_is_donation_type($type)) {
+          array_push($paths, 'admin/springboard');
+          array_push($paths, 'admin/springboard/donation-forms/all');
+        }
+        if (in_array($type, webform_variable_get('webform_node_types'))) {
+          array_push($paths, 'admin/springboard');
+          array_push($paths, 'admin/springboard/forms/all');
+          array_push($paths, 'admin/springboard/forms/' . $type);
+        }
       }
     }
-
     $paths = array_merge($paths, module_invoke_all('springboard_group_context_menu_paths'));
+
   }
   return $paths;
 }

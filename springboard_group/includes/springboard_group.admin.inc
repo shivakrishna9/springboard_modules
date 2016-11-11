@@ -97,6 +97,8 @@ function springboard_group_node_settings_form() {
 
     // Add the multiple selection option.
     $disallowed_multiple = array('sba_message_action', 'sba_social_action');
+    $donation_types = array_flip(array_filter(fundraiser_get_donation_types()));
+    $disallowed_multiple = array_merge($disallowed_multiple, $donation_types);
     if (!in_array($type, $disallowed_multiple)) {
       $form['springboard_group_node'][$type]['og_' . $type . '_multiple'] = array(
         '#title' => 'Allow multiple group selections.',
@@ -278,14 +280,16 @@ function springboard_group_settings_form_submit($form, $form_state) {
  */
 function springboard_group_entities_settings_form_submit($form, $form_state) {
   foreach ($form_state['values']['springboard_group_entities'] as $key => $status) {
-    if ($key == 'actions') {
+    if (in_array($key, array('rules_config:rules_config', 'actions'))) {
       continue;
     }
+
     list($entity_type, $bundle) = explode(':', $key);
     if (!empty($status[$key]) && !empty($form_state['input']['springboard_group_entities'][$key])) {
       springboard_group_add_group_reference_field($bundle, $entity_type);
     }
-    if ($key != 'actions') {
+
+    if (in_array($key, array('rules_config:rules_config', 'actions'))) {
       variable_set('og_' . $bundle . '_multiple', $form_state['values']['springboard_group_entities'][$key]['og_' . $key . '_multiple']);
     }
   }

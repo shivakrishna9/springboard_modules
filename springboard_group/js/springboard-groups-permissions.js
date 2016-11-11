@@ -56,8 +56,10 @@
           'module-node',
           'module-publishcontent',
           'module-rules',
-          'module-commerce_payment'
-
+          'module-commerce_payment',
+          'module-springboard_target',
+          'module-contextual',
+          'module-filter',
         ];
         if ($(this).children('td:first').hasClass('module') && $.inArray(id, allow) === -1) {
           hidem = true;
@@ -80,6 +82,7 @@
           $(this).children('td:first:contains("content overview page")').parents('tr').hide();
           $(this).children('td:first:contains("View published content")').parents('tr').hide();
           $(this).children('td:first:contains("Access the Rules debug log")').parents('tr').hide();
+          $(this).children('td:first:contains("Administer text format")').parents('tr').hide();
           $(this).children('td:first:contains("payments")').parents('tr').hide();
           $(this).children('td:first:contains("Use Rules component add_og_membership")').parents('tr').hide();
           $(this).children('td:first:contains("View own unpublished")').parents('tr').hide();
