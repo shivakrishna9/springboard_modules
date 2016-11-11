@@ -271,6 +271,7 @@ function _fundraiser_designations_build_child_elements($id, &$element, $amounts,
     $child['#id'] = 'fd-other-' . $id;
     $child['#extra']['group_id'] = $id;
     $child['#title'] = 'Other amount';
+    $child['#description'] = 'Minimum payment ' . ($node->field_fundraiser_currency['und'][0]['value'] == 'USD' ? '$' : '') . number_format($node->minimum_donation_amount, 2) . '.';
     $element[$id]['fd_other_' . $id] = $child;
   }
 
