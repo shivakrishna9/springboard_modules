@@ -380,9 +380,9 @@ function page_wrappers_form_node_form_alter(&$form, $form_state, $form_id) {
   if (_page_wrappers_enabled_type($form['#node'])) {
 
     $form['#attached']['js'][] = drupal_get_path('module', 'page_wrappers') . '/js/page_wrappers.admin.js';
-    $wrappers = _page_wrappers_available_wrappers($form['#node']);
+    $wrappers = _page_wrappers_available_wrappers();
     if (count($wrappers)) {
-      drupal_alter('page_wrappers_node_settings_form', $wrappers, $form, $form_state);
+      drupal_alter('page_wrappers_node_settings_form_wrappers', $wrappers, $form, $form_state);
       page_wrappers_build_node_form($form, $form_state, $wrappers);
     }
   }
@@ -734,8 +734,7 @@ function _page_wrappers_enabled_type($node, $preview = FALSE) {
 /**
  * Gets all configured wrappers.
  */
-function _page_wrappers_available_wrappers($node) {
-  global $user;
+function _page_wrappers_available_wrappers() {
   $wrappers = array();
 
   $result = db_query("SELECT n.title, n.nid FROM {node} n WHERE type = 'page_wrapper'")->fetchAll();
@@ -745,8 +744,6 @@ function _page_wrappers_available_wrappers($node) {
     }
   }
 
-  // Allow other modules to alter the array of available templates.
-  drupal_alter('available_page_wrappers', $wrappers, $node);
   return $wrappers;
 }
 

@@ -257,7 +257,7 @@ function springboard_group_load_ajax_validation_handlers(&$form, &$form_state) {
   }
 
   if (module_exists('page_wrappers') && (_page_wrappers_enabled_type($form['#node']) || $type == 'page_wrapper')) {
-    springboard_group_node_form_page_wrappers__alter($form, $form_state, $callback);
+    springboard_group_page_wrappers_node_form__alter($form, $form_state, $callback);
   }
 
   if (!empty($form_state['values'])) {
