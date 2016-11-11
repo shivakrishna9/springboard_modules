@@ -103,9 +103,9 @@ function springboard_dw_watchdog_log($watchdog_string) {
 }
 
 /**
- * Success hook for advocacy actions and submissions.
+ * Implements hook_advocacy_success().
  *
- * Implements advocacy_hook_success()
+ * Success hook for advocacy actions and submissions.
  *
  * @param object $node
  *   The node object supplied by the advocacy success hook.
