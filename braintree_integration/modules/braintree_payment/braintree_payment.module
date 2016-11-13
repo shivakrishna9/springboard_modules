@@ -34,26 +34,24 @@ function braintree_payment_library() {
   return $libraries;
 }
 
-// @codingStandardsIgnoreStart
-// Ignore coding standards to supress warnings about providing the extra
-// parameters below.
 /**
- * Implements hook_form().
- *
- * Provides the Braintree payment form.
+ * Helper function to provide form elements for different Braintree payments.
  *
  * @param string $payment_type
  *   The type of payment, ie "paypal" or "credit".
  * @param array $config
  *   The payment method configuration.
- *
- * @codingStandardsIgnoreEnd
  */
-function braintree_payment_form($form, &$form_state, $payment_type, $config) {
+function braintree_form_elements($payment_type, $config) {
   global $user;
   $js_settings = array();
+  $form = array();
+  $form_processed = &drupal_static(__FUNCTION__);
 
-  if (empty($form['#braintree_form_processed'])) {
+  $payment_method_instance = commerce_payment_method_instance_load($config['id']);
+  braintree_initialize($payment_method_instance['settings']);
+
+  if (empty($form_processed)) {
     $form['#attached']['library'][] = array('braintree_payment', 'braintree.js');
 
     $form['braintree'] = array(
@@ -83,11 +81,23 @@ function braintree_payment_form($form, &$form_state, $payment_type, $config) {
     }
 
     $form['#validate'][] = '_braintree_payment_form_validate';
-    $form['#braintree_form_processed'] = TRUE;
-  }
 
-  $payment_method_instance = commerce_payment_method_instance_load($config['id']);
-  braintree_initialize($payment_method_instance['settings']);
+    $token = NULL;
+    $arguments = array();
+    // Try to generate a Braintree token.
+    try {
+      $token = Braintree_ClientToken::generate($arguments);
+      $js_settings['clientToken'] = $token;
+    }
+    catch (Exception $e) {
+      $error_message = braintree_report_error($e);
+      $message = t('Braintree token generation failed: @message. Please check Braintree gateway configuration.', array('@message' => $error_message));
+      drupal_set_message($message, 'error');
+      return;
+    }
+
+    $form_processed = TRUE;
+  }
 
   $context = array(
     'form' => &$form,
@@ -101,21 +111,6 @@ function braintree_payment_form($form, &$form_state, $payment_type, $config) {
   );
   foreach ($hooks as $hook) {
     drupal_alter($hook, $context);
-  }
-
-  $token = NULL;
-  $arguments = array();
-
-  // Try to generate a Braintree token.
-  try {
-    $token = Braintree_ClientToken::generate($arguments);
-    $js_settings['clientToken'] = $token;
-  }
-  catch (Exception $e) {
-    $error_message = braintree_report_error($e);
-    $message = t('Braintree token generation failed: @message. Please check Braintree gateway configuration.', array('@message' => $error_message));
-    drupal_set_message($message, 'error');
-    return;
   }
 
   $form['#attached']['js'][] = array(

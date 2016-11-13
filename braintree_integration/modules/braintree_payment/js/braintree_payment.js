@@ -18,6 +18,11 @@
     this.$deviceDataInput = $('<input name="device_data" type="hidden"/>');
 
     var parent = this;
+    var processed = false;
+
+    this.hostedFieldsCreated = false;
+    this.paypalFieldsCreated = false;
+    this.applepayFieldsCreated = false;
 
     this.updateAmount = function() {
       parent.amount = parent.$amount.filter(':checked').val();
@@ -45,17 +50,9 @@
           return;
         }
 
-        if (parent.creditEnabled()) {
-          parent.createHostedFields(clientInstance);
-        }
-        if (parent.paypalEnabled()) {
-          parent.createPaypalFields(clientInstance);
-        }
-        if (parent.applePayEnabled()) {
-          parent.createApplePayFields(clientInstance);
-        }
-
+        parent.setClientInstance(clientInstance);
         parent.resetDeviceData();
+        parent.setCurrentPaymentMethod(parent.settings.currentPaymentMethod);
       });
 
       parent.updateAmount();
@@ -91,22 +88,31 @@
     }
 
     this.setCurrentPaymentMethod = function(paymentMethod) {
-      if (parent.settings.currentPaymentMethod == paymentMethod) {
-        return;
+      if (parent.settings.currentPaymentMethod == paymentMethod && processed) {
+        return this;
       }
 
       parent.settings.currentPaymentMethod = paymentMethod;
-      if (paymentMethod == 'credit') {
+      if (paymentMethod == 'credit' && parent.creditEnabled()) {
+        parent.createHostedFields(parent.clientInstance);
         parent.disablePaypalFieldsSubmit().disableApplePayFieldsSubmit().resetHostedFieldsSubmit();
       }
-      else if (paymentMethod == 'paypal') {
+      else if (paymentMethod == 'paypal' && parent.paypalEnabled()) {
+        parent.createPaypalFields(parent.clientInstance);
         parent.disableHostedFieldsSubmit().disableApplePayFieldsSubmit().resetPaypalFieldsSubmit();
       }
-      else if (paymentMethod == 'applepay') {
+      else if (paymentMethod == 'applepay' && parent.applePayEnabled()) {
+        parent.createApplePayFields(parent.clientInstance);
         parent.disableHostedFieldsSubmit().disablePaypalFieldsSubmit().resetApplePayFieldsSubmit();
       }
 
       parent.resetDeviceData();
+      processed = true;
+      return this;
+    };
+
+    this.setClientInstance = function(clientInstance) {
+      this.clientInstance = clientInstance;
       return this;
     };
 
@@ -115,11 +121,6 @@
      */
     this.creditEnabled = function() {
       return this.settings.enabledMethods.indexOf('credit') >= 0;
-    };
-
-    this.setClientInstance = function(clientInstance) {
-      this.clientInstance = clientInstance;
-      return this;
     };
 
     this.enableHostedFieldsEvents = function() {
@@ -154,12 +155,15 @@
     };
 
     this.createHostedFields = function(clientInstance) {
-      console.log('create hoted');
-      this.setClientInstance(clientInstance);
+      parent.setClientInstance(clientInstance);
+      if (parent.hostedFieldsCreated) {
+        return this;
+      }
+
       braintree.hostedFields.create({
-        client: this.clientInstance,
-        styles: this.settings.fieldsStyles,
-        fields: this.settings.hostedFields
+        client: parent.clientInstance,
+        styles: parent.settings.fieldsStyles,
+        fields: parent.settings.hostedFields
       }, function(error_message, hostedFieldsInstance) {
         if (error_message) {
           error(error_message);
@@ -168,6 +172,7 @@
         parent.hostedFieldsInstance = hostedFieldsInstance;
         parent.resetHostedFieldsSubmit();
         parent.enableHostedFieldsEvents();
+        parent.hostedFieldsCreated = true;
       });
 
       return this;
@@ -255,7 +260,11 @@
     };
 
     this.createPaypalFields = function(clientInstance) {
-      this.setClientInstance(clientInstance);
+      parent.setClientInstance(clientInstance);
+      if (parent.paypalFieldsCreated) {
+        return this;
+      }
+
       braintree.paypal.create({
         client: this.clientInstance
       }, function (error_message, paypalInstance) {
@@ -266,7 +275,9 @@
 
         parent.setPaypalInstance(paypalInstance);
         parent.resetPaypalFieldsSubmit();
+        parent.paypalFieldsCreated = true;
       });
+
       return this;
     };
 
@@ -351,7 +362,7 @@
         return;
       }
 
-      var paymentRequest = applePayInstance.createPaymentRequest({
+      var paymentRequest = parent.applePayInstance.createPaymentRequest({
         total: {
           label: 'My Store',
           amount: parent.amount
@@ -361,7 +372,7 @@
       var session = new ApplePaySession(1, paymentRequest);
 
       session.onvalidatemerchant = function(event) {
-        applePayInstance.performValidation({
+        parent.applePayInstance.performValidation({
           validationURL: event.validationURL,
           displayName: 'My Store'
         }, function (validationErr, merchantSession) {
@@ -394,9 +405,13 @@
     };
 
     this.createApplePayFields = function(clientInstance) {
-      this.setClientInstance(clientInstance);
+      parent.setClientInstance(clientInstance);
+      if (parent.applepayFieldsCreated) {
+        return this;
+      }
+
       braintree.applePay.create({
-        client: this.clientInstance
+        client: parent.clientInstance
       }, function (error_message, applePayInstance) {
         if (error_message) {
           error(error_message);
@@ -409,6 +424,7 @@
         promise.then(function(canMakePaymentsWithActiveCard) {
           if (canMakePaymentsWithActiveCard) {
             parent.resetApplePayFieldsSubmit();
+            parent.applepayFieldsCreated = true;
           }
         });
       });

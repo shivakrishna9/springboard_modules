@@ -171,7 +171,7 @@ function commerce_braintree_web_fundraiser_commerce_refund($payment_method, $ref
  *   The payment method configuration.
  */
 function commerce_braintree_web_fundraiser_commerce_form($payment_method, $config) {
-  $form = drupal_get_form('braintree_payment_form', $payment_method, $config);
+  $form = braintree_form_elements($payment_method, $config);
   return $form;
 }
 
