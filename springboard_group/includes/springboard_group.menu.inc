@@ -99,7 +99,7 @@ function springboard_group_menu() {
     'weight' => -8,
   );
 
-  $items["admin/springboard/groups/settings/settings"] = array(
+  $items["admin/springboard/groups/settings/advanced"] = array(
     'page callback' => 'drupal_get_form',
     'page arguments' => array('springboard_group_advanced_settings'),
     'title' => 'Settings',

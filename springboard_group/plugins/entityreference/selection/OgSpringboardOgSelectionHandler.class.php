@@ -30,9 +30,8 @@ class OgSpringboardOgSelectionHandler extends OgSelectionHandler {
    * Overrides OgSelectionHandler::buildEntityFieldQuery().
    */
   public function buildEntityFieldQuery($match = NULL, $match_operator = 'CONTAINS') {
-
-    global $user;
     $query = parent::buildEntityFieldQuery($match, $match_operator);
+
     // Show all groups to admins in the default widget.
     if (user_access('administer group')) {
       unset($query->propertyConditions[0]);

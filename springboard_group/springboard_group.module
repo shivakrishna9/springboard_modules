@@ -111,6 +111,10 @@ function springboard_group_get_grouped_types() {
 
 /**
  * Get the group ids from the OG form element.
+ *
+ * Used during Ajax requests triggered by the OG element and in validation
+ * hooks. GIDs are pulled from form_state['values'] not from the
+ * form element's #default_value.
  */
 function springboard_group_get_gids_from_element($form, $form_state) {
   $language = $form['og_group_ref_' . $form['#node']->type]['#language'];
@@ -137,6 +141,7 @@ function springboard_group_form_springboard_group_node_form_alter(&$form, &$form
     $form['field_sb_group_address']['#title'] = t('Address');
     $form['field_sb_group_address'][$form['field_sb_group_address']['#language']][0]['#title'] = '';
   }
+  // Add a valdiate hook.
   $form['#validate'][] = 'springboard_group_springboard_group_node_form_validate';
 }
 
@@ -155,13 +160,17 @@ function springboard_group_springboard_group_node_form_validate($form, &$form_st
 
 /**
  * Implements hook_form_node_form_alter().
+ *
+ * Intervene on the node add/edit forms of all types that use the
+ * springboard group OG widget.
  */
 function springboard_group_form_node_form_alter(&$form, &$form_state) {
 
   $fields = og_get_group_audience_fields('node', $form['#node']->type, 'node', 'springboard_group');
   if (!empty($fields)) {
 
-    // Change the group field from a multiple select to a single select.
+    // Change the group field from a multiple select to a single select,
+    // if single select is enabled in Springboard Group settings.
     springboard_group_set_single_selector($form, $fields);
 
     // Add ajax callback to the groups field so we can validate newly
@@ -180,7 +189,7 @@ function springboard_group_form_node_form_alter(&$form, &$form_state) {
     // Set up the validation modal window parameters.
     springboard_group_prepare_validation_modal($form, $form_state);
 
-    // Add the validation handler to the form.
+    // Add the validation handlers to the form.
     springboard_group_load_ajax_validation_handlers($form, $form_state);
 
     $form['#validate'][] = 'springboard_group_node_form_validate';
@@ -191,6 +200,7 @@ function springboard_group_form_node_form_alter(&$form, &$form_state) {
  * Validate the node form submission.
  */
 function springboard_group_node_form_validate(&$form, &$form_state) {
+  // Minor tweak to default OG language.
   if (isset($_SESSION['messages']['error'])) {
     foreach ($_SESSION['messages']['error'] as $key => $message) {
       if (strpos($message, 'You must select one or more groups for this content') != FALSE) {
@@ -320,8 +330,7 @@ function springboard_group_form_user_profile_form_alter(&$form, &$form_state) {
  *
  * Instead of having a separate "mock" field for "groups you don't belong to"
  * we'll put all options in the main widget for sufficiently permissioned
- * national group admin. Need to do this because we're not allowing
- * multiple selections on the group reference fields.
+ * national group admin.
  *
  * @see OgSpringboardOgSelectionHandler
  * @see og_field_widget_form()
@@ -404,8 +413,8 @@ function springboard_group_element_after_build($element, &$form_state) {
  * already assigned by different user, even though the original record in the
  * og_membership table would be removed.
  *
- * Also, change the title and description, and unset the "none" option
- * if the user only belngs to one group is not not an og administrator.
+ * Also, we change the title and description, and unset the "none" option
+ * if the user only belongs to one group is not not an og administrator.
  *
  * @param array $form
  *   The form on which the group selector appears.
@@ -443,7 +452,8 @@ function springboard_group_set_single_selector(&$form, $fields) {
 /**
  * Check if the user can post outside of the group context.
  *
- * If not, remove the "_none" option.
+ * If not, remove the "_none" option, which would cause a validation error
+ * in any case. Saves an "oops" step in node creation.
  *
  * @param array $form
  *   The form array.
@@ -490,6 +500,7 @@ function springboard_group_check_none_option($form) {
  * Implements hook_preprocess_page().
  */
 function springboard_group_preprocess_page(&$vars) {
+  // Add the group context selector to pages.
   springboard_group_context_selector__preprocess_page($vars);
 }
 
