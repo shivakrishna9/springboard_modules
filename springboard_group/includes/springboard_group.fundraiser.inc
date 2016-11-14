@@ -63,7 +63,7 @@ function springboard_group_fundraiser_check_gateways($form, $form_state) {
   }
   else {
     $option = $form['og_group_ref_' . substr($form['#node']->type, 0, 19)][$language][0]['default'];
-    $gid = !empty($option['#default_value']) ? $option['#default_value'] : '_none';
+    $gid = !empty($option['#default_value'][0]) ? $option['#default_value'][0] : '_none';
   }
   // Get the gateways and filter them by group ownership.
   $all_gateways = _fundraiser_gateway_info();
@@ -145,7 +145,6 @@ function springboard_group_fundraiser_filter_gateways($gateways, $gid = NULL) {
     if (!empty($rule->og_group_ref_rules_config[LANGUAGE_NONE][0]['target_id'])) {
       $rule_gid = $rule->og_group_ref_rules_config[LANGUAGE_NONE][0]['target_id'];
     }
-
     if ($gid == '_none' && !empty($rule_gid)) {
       unset($gateways[$key]);
     }
