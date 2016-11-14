@@ -74,6 +74,9 @@ function springboard_group_views_query_alter(&$view, &$query) {
       }
     }
     else {
+      if ($context == '_all') {
+        $context = $_SESSION['springboard_group_context_multiple'];
+      }
       $condition->condition('og_membership.gid', $context);
       $condition->condition('og_membership.entity_type', 'node');
     }

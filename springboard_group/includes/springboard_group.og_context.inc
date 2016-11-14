@@ -52,7 +52,6 @@ function springboard_group_og_context_handler($item = NULL) {
         $gid = reset($groups);
         $ret = array('node' => array($gid));
       }
-
       // If the user has multiple groups and there is not a currently selected
       // working group, set the first group as the working group, and set
       // springboard_group_context_multiple so that the dashboard knows
@@ -67,7 +66,19 @@ function springboard_group_og_context_handler($item = NULL) {
         $_SESSION['springboard_group_context_multiple'] = array_values($groups);
         $ret = array('_none' => array('_none'));
       }
+      elseif ($_SESSION['springboard_group_working_group'] == '_all') {
+        if (strpos(current_path(), 'advocacy/targets') === FALSE) {
+          $_SESSION['springboard_group_context_multiple'] = array_values($groups);
+          $ret = array('_all' => array('_all'));
+        }
+        else {
+          $_SESSION['springboard_group_working_group'] = '_none';
+          $_SESSION['springboard_group_context_multiple'] = array_values($groups);
+          $ret = array('_none' => array('_none'));
+        }
+      }
       else {
+
         // There's already a working group, return it as the context and
         // tell the dashboard we need a selector.
         $_SESSION['springboard_group_context_multiple'] = array_values($groups);
@@ -255,6 +266,9 @@ function springboard_group_context_selector_form($form, &$form_state, $groups) {
   $options = [];
   if (user_access('administer group')) {
     $options['_none'] = '- None -';
+  }
+  if (count($groups > 1) && strpos(current_path(), 'advocacy/targets') === FALSE) {
+    $options['_all'] = 'All Groups';
   }
   foreach ($groups as $nid) {
     $node = node_load($nid);
