@@ -1530,7 +1530,12 @@ function springboard_views_views_default_views() {
   $handler->display->display_options['query']['options']['distinct'] = TRUE;
   $handler->display->display_options['exposed_form']['type'] = 'basic';
   $handler->display->display_options['pager']['type'] = 'full';
-  $handler->display->display_options['pager']['options']['items_per_page'] = '35';
+  $handler->display->display_options['pager']['options']['items_per_page'] = '20';
+  $handler->display->display_options['pager']['options']['offset'] = '0';
+  $handler->display->display_options['pager']['options']['id'] = '0';
+  $handler->display->display_options['pager']['options']['quantity'] = '9';
+  $handler->display->display_options['pager']['options']['expose']['items_per_page'] = TRUE;
+  $handler->display->display_options['pager']['options']['expose']['items_per_page_options'] = '20, 50, 100';
   $handler->display->display_options['style_plugin'] = 'table';
   $handler->display->display_options['style_options']['columns'] = array(
     'order_id' => 'order_id',
@@ -1657,11 +1662,39 @@ function springboard_views_views_default_views() {
   $handler->display->display_options['relationships']['sid_2']['id'] = 'sid_2';
   $handler->display->display_options['relationships']['sid_2']['table'] = 'fundraiser_donation';
   $handler->display->display_options['relationships']['sid_2']['field'] = 'sid';
-  /* Field: Commerce Order: Order ID */
+  /* Relationship: Commerce Order: Payment Transaction */
+  $handler->display->display_options['relationships']['payment_transaction']['id'] = 'payment_transaction';
+  $handler->display->display_options['relationships']['payment_transaction']['table'] = 'commerce_order';
+  $handler->display->display_options['relationships']['payment_transaction']['field'] = 'payment_transaction';
+  $handler->display->display_options['relationships']['payment_transaction']['relationship'] = 'did';
+  $handler->display->display_options['relationships']['payment_transaction']['required'] = TRUE;
+  /* Field: Order ID (hidden value) */
   $handler->display->display_options['fields']['order_id']['id'] = 'order_id';
   $handler->display->display_options['fields']['order_id']['table'] = 'commerce_order';
   $handler->display->display_options['fields']['order_id']['field'] = 'order_id';
   $handler->display->display_options['fields']['order_id']['relationship'] = 'did';
+  $handler->display->display_options['fields']['order_id']['ui_name'] = 'Order ID (hidden value)';
+  $handler->display->display_options['fields']['order_id']['label'] = '';
+  $handler->display->display_options['fields']['order_id']['exclude'] = TRUE;
+  $handler->display->display_options['fields']['order_id']['element_label_colon'] = FALSE;
+  $handler->display->display_options['fields']['order_id']['element_default_classes'] = FALSE;
+  /* Field: (hidden value) */
+  $handler->display->display_options['fields']['transaction_id']['id'] = 'transaction_id';
+  $handler->display->display_options['fields']['transaction_id']['table'] = 'commerce_payment_transaction';
+  $handler->display->display_options['fields']['transaction_id']['field'] = 'transaction_id';
+  $handler->display->display_options['fields']['transaction_id']['relationship'] = 'payment_transaction';
+  $handler->display->display_options['fields']['transaction_id']['ui_name'] = '(hidden value)';
+  $handler->display->display_options['fields']['transaction_id']['label'] = '';
+  $handler->display->display_options['fields']['transaction_id']['exclude'] = TRUE;
+  $handler->display->display_options['fields']['transaction_id']['element_label_colon'] = FALSE;
+  $handler->display->display_options['fields']['transaction_id']['element_default_classes'] = FALSE;
+  $handler->display->display_options['fields']['transaction_id']['separator'] = '';
+  /* Field: Commerce Order: Order ID */
+  $handler->display->display_options['fields']['order_id_1']['id'] = 'order_id_1';
+  $handler->display->display_options['fields']['order_id_1']['table'] = 'commerce_order';
+  $handler->display->display_options['fields']['order_id_1']['field'] = 'order_id';
+  $handler->display->display_options['fields']['order_id_1']['relationship'] = 'did';
+  $handler->display->display_options['fields']['order_id_1']['link_to_order'] = 'admin';
   /* Field: Commerce Order: Created date */
   $handler->display->display_options['fields']['created']['id'] = 'created';
   $handler->display->display_options['fields']['created']['table'] = 'commerce_order';
@@ -1681,19 +1714,26 @@ function springboard_views_views_default_views() {
   $handler->display->display_options['fields']['commerce_order_total']['settings'] = array(
     'calculation' => FALSE,
   );
+  /* Field: Commerce Order: Order status */
+  $handler->display->display_options['fields']['status']['id'] = 'status';
+  $handler->display->display_options['fields']['status']['table'] = 'commerce_order';
+  $handler->display->display_options['fields']['status']['field'] = 'status';
+  $handler->display->display_options['fields']['status']['relationship'] = 'did';
+  /* Field: Fundraiser donations: Gateway */
+  $handler->display->display_options['fields']['gateway']['id'] = 'gateway';
+  $handler->display->display_options['fields']['gateway']['table'] = 'fundraiser_donation';
+  $handler->display->display_options['fields']['gateway']['field'] = 'gateway';
+  $handler->display->display_options['fields']['gateway']['label'] = 'Payment Method';
   /* Field: User: First name */
-  $handler->display->display_options['fields']['sbp_first_name']['id'] = 'sbp_first_name';
-  $handler->display->display_options['fields']['sbp_first_name']['table'] = 'field_data_sbp_first_name';
-  $handler->display->display_options['fields']['sbp_first_name']['field'] = 'sbp_first_name';
-  $handler->display->display_options['fields']['sbp_first_name']['relationship'] = 'uid';
-  $handler->display->display_options['fields']['sbp_first_name']['label'] = 'Name';
+  $handler->display->display_options['fields']['sbp_first_name_1']['id'] = 'sbp_first_name_1';
+  $handler->display->display_options['fields']['sbp_first_name_1']['table'] = 'field_data_sbp_first_name';
+  $handler->display->display_options['fields']['sbp_first_name_1']['field'] = 'sbp_first_name';
+  $handler->display->display_options['fields']['sbp_first_name_1']['relationship'] = 'uid_1';
   /* Field: User: Last name */
-  $handler->display->display_options['fields']['sbp_last_name']['id'] = 'sbp_last_name';
-  $handler->display->display_options['fields']['sbp_last_name']['table'] = 'field_data_sbp_last_name';
-  $handler->display->display_options['fields']['sbp_last_name']['field'] = 'sbp_last_name';
-  $handler->display->display_options['fields']['sbp_last_name']['relationship'] = 'uid';
-  $handler->display->display_options['fields']['sbp_last_name']['label'] = 'Last Name';
-  $handler->display->display_options['fields']['sbp_last_name']['element_label_colon'] = FALSE;
+  $handler->display->display_options['fields']['sbp_last_name_1']['id'] = 'sbp_last_name_1';
+  $handler->display->display_options['fields']['sbp_last_name_1']['table'] = 'field_data_sbp_last_name';
+  $handler->display->display_options['fields']['sbp_last_name_1']['field'] = 'sbp_last_name';
+  $handler->display->display_options['fields']['sbp_last_name_1']['relationship'] = 'uid_1';
   /* Field: User: E-mail */
   $handler->display->display_options['fields']['mail']['id'] = 'mail';
   $handler->display->display_options['fields']['mail']['table'] = 'users';
@@ -1712,18 +1752,24 @@ function springboard_views_views_default_views() {
   $handler->display->display_options['fields']['field_fundraiser_internal_name']['relationship'] = 'nid';
   $handler->display->display_options['fields']['field_fundraiser_internal_name']['label'] = 'Form';
   $handler->display->display_options['fields']['field_fundraiser_internal_name']['alter']['alter_text'] = TRUE;
-  $handler->display->display_options['fields']['field_fundraiser_internal_name']['alter']['text'] = '[title] ([field_fundraiser_internal_name-value])';
-  /* Field: Commerce Order: Order status */
-  $handler->display->display_options['fields']['status']['id'] = 'status';
-  $handler->display->display_options['fields']['status']['table'] = 'commerce_order';
-  $handler->display->display_options['fields']['status']['field'] = 'status';
-  $handler->display->display_options['fields']['status']['relationship'] = 'did';
+  $handler->display->display_options['fields']['field_fundraiser_internal_name']['alter']['text'] = '[title]: ([field_fundraiser_internal_name-value])';
+  /* Field: Fundraiser sustainer record: Sustainer key */
+  $handler->display->display_options['fields']['sustainer_key']['id'] = 'sustainer_key';
+  $handler->display->display_options['fields']['sustainer_key']['table'] = 'fundraiser_sustainers';
+  $handler->display->display_options['fields']['sustainer_key']['field'] = 'sustainer_key';
+  $handler->display->display_options['fields']['sustainer_key']['label'] = 'Recur.';
+  /* Field: Webform submissions: Remote address */
+  $handler->display->display_options['fields']['remote_addr']['id'] = 'remote_addr';
+  $handler->display->display_options['fields']['remote_addr']['table'] = 'webform_submissions';
+  $handler->display->display_options['fields']['remote_addr']['field'] = 'remote_addr';
+  $handler->display->display_options['fields']['remote_addr']['relationship'] = 'sid_2';
+  $handler->display->display_options['fields']['remote_addr']['label'] = 'IP Address';
   /* Field: Global: Custom text */
   $handler->display->display_options['fields']['nothing']['id'] = 'nothing';
   $handler->display->display_options['fields']['nothing']['table'] = 'views';
   $handler->display->display_options['fields']['nothing']['field'] = 'nothing';
   $handler->display->display_options['fields']['nothing']['label'] = 'Actions';
-  $handler->display->display_options['fields']['nothing']['alter']['text'] = '<a href="/springboard/donations/[order_id]">View Order</a> | <a href="/springboard/donations/[order_id]/payment">Payments</a>';
+  $handler->display->display_options['fields']['nothing']['alter']['text'] = '<a href="/springboard/donations/[order_id]/payment" class="action-payment-link">Payment</a><span class="bar"> | </span><a href="/springboard/donations/[order_id]/payment/[transaction_id]/refund" class="action-refund-link">Refund</a>';
   $handler->display->display_options['fields']['nothing']['element_class'] = 'table-actions';
   /* Sort criterion: Commerce Order: Created date */
   $handler->display->display_options['sorts']['created']['id'] = 'created';
@@ -1803,6 +1849,26 @@ function springboard_views_views_default_views() {
     5 => 0,
   );
   $handler->display->display_options['filters']['status']['expose']['reduce'] = TRUE;
+  /* Filter criterion: Content: Internal Name (field_fundraiser_internal_name) */
+  $handler->display->display_options['filters']['field_fundraiser_internal_name_value']['id'] = 'field_fundraiser_internal_name_value';
+  $handler->display->display_options['filters']['field_fundraiser_internal_name_value']['table'] = 'field_data_field_fundraiser_internal_name';
+  $handler->display->display_options['filters']['field_fundraiser_internal_name_value']['field'] = 'field_fundraiser_internal_name_value';
+  $handler->display->display_options['filters']['field_fundraiser_internal_name_value']['relationship'] = 'nid';
+  $handler->display->display_options['filters']['field_fundraiser_internal_name_value']['operator'] = 'contains';
+  $handler->display->display_options['filters']['field_fundraiser_internal_name_value']['group'] = 1;
+  $handler->display->display_options['filters']['field_fundraiser_internal_name_value']['exposed'] = TRUE;
+  $handler->display->display_options['filters']['field_fundraiser_internal_name_value']['expose']['operator_id'] = 'field_fundraiser_internal_name_value_op';
+  $handler->display->display_options['filters']['field_fundraiser_internal_name_value']['expose']['label'] = 'Internal Form Name';
+  $handler->display->display_options['filters']['field_fundraiser_internal_name_value']['expose']['operator'] = 'field_fundraiser_internal_name_value_op';
+  $handler->display->display_options['filters']['field_fundraiser_internal_name_value']['expose']['identifier'] = 'field_fundraiser_internal_name_value';
+  $handler->display->display_options['filters']['field_fundraiser_internal_name_value']['expose']['remember_roles'] = array(
+    2 => '2',
+    1 => 0,
+    3 => 0,
+    4 => 0,
+    5 => 0,
+    6 => 0,
+  );
   /* Filter criterion: Date: Date (commerce_order) */
   $handler->display->display_options['filters']['date_filter']['id'] = 'date_filter';
   $handler->display->display_options['filters']['date_filter']['table'] = 'commerce_order';
@@ -1825,6 +1891,24 @@ function springboard_views_views_default_views() {
   $handler->display->display_options['filters']['date_filter']['date_fields'] = array(
     'commerce_order.created' => 'commerce_order.created',
   );
+  /* Filter criterion: Content: Nid */
+  $handler->display->display_options['filters']['nid']['id'] = 'nid';
+  $handler->display->display_options['filters']['nid']['table'] = 'node';
+  $handler->display->display_options['filters']['nid']['field'] = 'nid';
+  $handler->display->display_options['filters']['nid']['relationship'] = 'nid';
+  $handler->display->display_options['filters']['nid']['exposed'] = TRUE;
+  $handler->display->display_options['filters']['nid']['expose']['operator_id'] = 'nid_op';
+  $handler->display->display_options['filters']['nid']['expose']['label'] = 'Nid';
+  $handler->display->display_options['filters']['nid']['expose']['operator'] = 'nid_op';
+  $handler->display->display_options['filters']['nid']['expose']['identifier'] = 'nid';
+  $handler->display->display_options['filters']['nid']['expose']['remember_roles'] = array(
+    2 => '2',
+    1 => 0,
+    3 => 0,
+    4 => 0,
+    5 => 0,
+    6 => 0,
+  );
 
   /* Display: Unfiltered Page */
   $handler = $view->new_display('page', 'Unfiltered Page', 'page');
@@ -1841,11 +1925,11 @@ function springboard_views_views_default_views() {
   $handler->display->display_options['defaults']['use_ajax'] = FALSE;
   $handler->display->display_options['defaults']['hide_admin_links'] = FALSE;
   $handler->display->display_options['pager']['type'] = 'some';
-  $handler->display->display_options['pager']['options']['items_per_page'] = '0';
+  $handler->display->display_options['pager']['options']['items_per_page'] = '50000';
   $handler->display->display_options['pager']['options']['offset'] = '0';
   $handler->display->display_options['style_plugin'] = 'views_data_export_csv';
   $handler->display->display_options['style_options']['attach_text'] = 'Download as .CSV';
-  $handler->display->display_options['style_options']['provide_file'] = 1;
+  $handler->display->display_options['style_options']['provide_file'] = 0;
   $handler->display->display_options['style_options']['filename'] = 'donation-export-%timestamp-full.csv';
   $handler->display->display_options['style_options']['parent_sort'] = 1;
   $handler->display->display_options['style_options']['quote'] = 1;
@@ -1853,74 +1937,111 @@ function springboard_views_views_default_views() {
   $handler->display->display_options['style_options']['replace_newlines'] = 0;
   $handler->display->display_options['style_options']['header'] = 1;
   $handler->display->display_options['style_options']['keep_html'] = 0;
+  $handler->display->display_options['defaults']['relationships'] = FALSE;
+  /* Relationship: Fundraiser donations: Fundraiser node */
+  $handler->display->display_options['relationships']['nid']['id'] = 'nid';
+  $handler->display->display_options['relationships']['nid']['table'] = 'fundraiser_donation';
+  $handler->display->display_options['relationships']['nid']['field'] = 'nid';
+  /* Relationship: Fundraiser donations: Commerce order */
+  $handler->display->display_options['relationships']['did']['id'] = 'did';
+  $handler->display->display_options['relationships']['did']['table'] = 'fundraiser_donation';
+  $handler->display->display_options['relationships']['did']['field'] = 'did';
   $handler->display->display_options['defaults']['fields'] = FALSE;
-  /* Field: Commerce Order: Order ID */
+  /* Field: order_id (hidden) */
   $handler->display->display_options['fields']['order_id']['id'] = 'order_id';
   $handler->display->display_options['fields']['order_id']['table'] = 'commerce_order';
   $handler->display->display_options['fields']['order_id']['field'] = 'order_id';
   $handler->display->display_options['fields']['order_id']['relationship'] = 'did';
-  /* Field: Commerce Order: Created date */
-  $handler->display->display_options['fields']['created']['id'] = 'created';
-  $handler->display->display_options['fields']['created']['table'] = 'commerce_order';
-  $handler->display->display_options['fields']['created']['field'] = 'created';
-  $handler->display->display_options['fields']['created']['relationship'] = 'did';
-  $handler->display->display_options['fields']['created']['label'] = 'Date';
-  $handler->display->display_options['fields']['created']['date_format'] = 'custom';
-  $handler->display->display_options['fields']['created']['custom_date_format'] = 'n/j/Y';
-  /* Field: Commerce Order: Order total */
-  $handler->display->display_options['fields']['commerce_order_total']['id'] = 'commerce_order_total';
-  $handler->display->display_options['fields']['commerce_order_total']['table'] = 'field_data_commerce_order_total';
-  $handler->display->display_options['fields']['commerce_order_total']['field'] = 'commerce_order_total';
-  $handler->display->display_options['fields']['commerce_order_total']['relationship'] = 'did';
-  $handler->display->display_options['fields']['commerce_order_total']['label'] = 'Amount';
-  $handler->display->display_options['fields']['commerce_order_total']['click_sort_column'] = 'amount';
-  $handler->display->display_options['fields']['commerce_order_total']['settings'] = array(
-    'calculation' => FALSE,
-  );
-  /* Field: User: First name */
-  $handler->display->display_options['fields']['sbp_first_name']['id'] = 'sbp_first_name';
-  $handler->display->display_options['fields']['sbp_first_name']['table'] = 'field_data_sbp_first_name';
-  $handler->display->display_options['fields']['sbp_first_name']['field'] = 'sbp_first_name';
-  $handler->display->display_options['fields']['sbp_first_name']['relationship'] = 'uid';
-  $handler->display->display_options['fields']['sbp_first_name']['label'] = 'First Name';
-  /* Field: User: Last name */
-  $handler->display->display_options['fields']['sbp_last_name']['id'] = 'sbp_last_name';
-  $handler->display->display_options['fields']['sbp_last_name']['table'] = 'field_data_sbp_last_name';
-  $handler->display->display_options['fields']['sbp_last_name']['field'] = 'sbp_last_name';
-  $handler->display->display_options['fields']['sbp_last_name']['relationship'] = 'uid';
-  $handler->display->display_options['fields']['sbp_last_name']['label'] = 'Last Name';
-  $handler->display->display_options['fields']['sbp_last_name']['element_label_colon'] = FALSE;
-  /* Field: User: E-mail */
-  $handler->display->display_options['fields']['mail']['id'] = 'mail';
-  $handler->display->display_options['fields']['mail']['table'] = 'users';
-  $handler->display->display_options['fields']['mail']['field'] = 'mail';
-  $handler->display->display_options['fields']['mail']['relationship'] = 'uid';
-  $handler->display->display_options['fields']['mail']['link_to_user'] = 'user';
+  $handler->display->display_options['fields']['order_id']['ui_name'] = 'order_id (hidden)';
+  $handler->display->display_options['fields']['order_id']['label'] = 'order_id';
+  $handler->display->display_options['fields']['order_id']['exclude'] = TRUE;
+  $handler->display->display_options['fields']['order_id']['element_label_colon'] = FALSE;
+  /* Field: order status (hidden) */
+  $handler->display->display_options['fields']['status']['id'] = 'status';
+  $handler->display->display_options['fields']['status']['table'] = 'commerce_order';
+  $handler->display->display_options['fields']['status']['field'] = 'status';
+  $handler->display->display_options['fields']['status']['relationship'] = 'did';
+  $handler->display->display_options['fields']['status']['ui_name'] = 'order status (hidden)';
+  $handler->display->display_options['fields']['status']['label'] = '';
+  $handler->display->display_options['fields']['status']['exclude'] = TRUE;
+  $handler->display->display_options['fields']['status']['element_label_colon'] = FALSE;
+  /* Field: Fundraiser donations: Unique ID */
+  $handler->display->display_options['fields']['unique_id']['id'] = 'unique_id';
+  $handler->display->display_options['fields']['unique_id']['table'] = 'fundraiser_donation';
+  $handler->display->display_options['fields']['unique_id']['field'] = 'unique_id';
+  $handler->display->display_options['fields']['unique_id']['label'] = 'unique_id';
+  $handler->display->display_options['fields']['unique_id']['element_label_colon'] = FALSE;
+  $handler->display->display_options['fields']['unique_id']['element_default_classes'] = FALSE;
+  /* Field: Content: Nid */
+  $handler->display->display_options['fields']['nid']['id'] = 'nid';
+  $handler->display->display_options['fields']['nid']['table'] = 'node';
+  $handler->display->display_options['fields']['nid']['field'] = 'nid';
+  $handler->display->display_options['fields']['nid']['relationship'] = 'nid';
+  $handler->display->display_options['fields']['nid']['label'] = 'form_id';
+  $handler->display->display_options['fields']['nid']['element_label_colon'] = FALSE;
+  $handler->display->display_options['fields']['nid']['element_default_classes'] = FALSE;
+  /* Field: Global: Custom text */
+  $handler->display->display_options['fields']['nothing_1']['id'] = 'nothing_1';
+  $handler->display->display_options['fields']['nothing_1']['table'] = 'views';
+  $handler->display->display_options['fields']['nothing_1']['field'] = 'nothing';
+  $handler->display->display_options['fields']['nothing_1']['label'] = 'group_id';
+  $handler->display->display_options['fields']['nothing_1']['element_label_colon'] = FALSE;
+  /* Field: Global: Custom text */
+  $handler->display->display_options['fields']['nothing_2']['id'] = 'nothing_2';
+  $handler->display->display_options['fields']['nothing_2']['table'] = 'views';
+  $handler->display->display_options['fields']['nothing_2']['field'] = 'nothing';
+  $handler->display->display_options['fields']['nothing_2']['label'] = 'form_type';
+  $handler->display->display_options['fields']['nothing_2']['alter']['text'] = 'donation_form';
+  $handler->display->display_options['fields']['nothing_2']['element_default_classes'] = FALSE;
   /* Field: Content: Title */
   $handler->display->display_options['fields']['title']['id'] = 'title';
   $handler->display->display_options['fields']['title']['table'] = 'node';
   $handler->display->display_options['fields']['title']['field'] = 'title';
   $handler->display->display_options['fields']['title']['relationship'] = 'nid';
-  $handler->display->display_options['fields']['title']['exclude'] = TRUE;
+  $handler->display->display_options['fields']['title']['label'] = 'name';
+  $handler->display->display_options['fields']['title']['element_label_colon'] = FALSE;
+  $handler->display->display_options['fields']['title']['link_to_node'] = FALSE;
   /* Field: Content: Internal Name */
   $handler->display->display_options['fields']['field_fundraiser_internal_name']['id'] = 'field_fundraiser_internal_name';
   $handler->display->display_options['fields']['field_fundraiser_internal_name']['table'] = 'field_data_field_fundraiser_internal_name';
   $handler->display->display_options['fields']['field_fundraiser_internal_name']['field'] = 'field_fundraiser_internal_name';
   $handler->display->display_options['fields']['field_fundraiser_internal_name']['relationship'] = 'nid';
-  $handler->display->display_options['fields']['field_fundraiser_internal_name']['label'] = 'Form';
+  $handler->display->display_options['fields']['field_fundraiser_internal_name']['label'] = 'internal_name';
   $handler->display->display_options['fields']['field_fundraiser_internal_name']['alter']['alter_text'] = TRUE;
   $handler->display->display_options['fields']['field_fundraiser_internal_name']['alter']['text'] = '<span class="form-name-title truncate">[title]</span> <span class="form-internal-name">([field_fundraiser_internal_name-value])</span>';
-  /* Field: Commerce Order: Order status */
-  $handler->display->display_options['fields']['status']['id'] = 'status';
-  $handler->display->display_options['fields']['status']['table'] = 'commerce_order';
-  $handler->display->display_options['fields']['status']['field'] = 'status';
-  $handler->display->display_options['fields']['status']['relationship'] = 'did';
-  /* Field: Content: Nid */
-  $handler->display->display_options['fields']['nid']['id'] = 'nid';
-  $handler->display->display_options['fields']['nid']['table'] = 'node';
-  $handler->display->display_options['fields']['nid']['field'] = 'nid';
-  $handler->display->display_options['fields']['nid']['relationship'] = 'sid_2';
-  $handler->display->display_options['fields']['nid']['exclude'] = TRUE;
+  $handler->display->display_options['fields']['field_fundraiser_internal_name']['element_label_colon'] = FALSE;
+  /* Field: Content: Path */
+  $handler->display->display_options['fields']['path']['id'] = 'path';
+  $handler->display->display_options['fields']['path']['table'] = 'node';
+  $handler->display->display_options['fields']['path']['field'] = 'path';
+  $handler->display->display_options['fields']['path']['relationship'] = 'nid';
+  $handler->display->display_options['fields']['path']['label'] = 'url';
+  $handler->display->display_options['fields']['path']['element_label_colon'] = FALSE;
+  /* Field: Commerce Order: Created date */
+  $handler->display->display_options['fields']['created']['id'] = 'created';
+  $handler->display->display_options['fields']['created']['table'] = 'commerce_order';
+  $handler->display->display_options['fields']['created']['field'] = 'created';
+  $handler->display->display_options['fields']['created']['relationship'] = 'did';
+  $handler->display->display_options['fields']['created']['label'] = 'created_at';
+  $handler->display->display_options['fields']['created']['element_label_colon'] = FALSE;
+  $handler->display->display_options['fields']['created']['date_format'] = 'custom';
+  $handler->display->display_options['fields']['created']['custom_date_format'] = 'n/j/Y H/i/s';
+  $handler->display->display_options['fields']['created']['second_date_format'] = 'long';
+  /* Field: Commerce Order: Updated date */
+  $handler->display->display_options['fields']['changed']['id'] = 'changed';
+  $handler->display->display_options['fields']['changed']['table'] = 'commerce_order';
+  $handler->display->display_options['fields']['changed']['field'] = 'changed';
+  $handler->display->display_options['fields']['changed']['relationship'] = 'did';
+  $handler->display->display_options['fields']['changed']['label'] = 'updated_at';
+  $handler->display->display_options['fields']['changed']['element_label_colon'] = FALSE;
+  $handler->display->display_options['fields']['changed']['date_format'] = 'custom';
+  $handler->display->display_options['fields']['changed']['custom_date_format'] = 'n/j/Y H/i/s';
+  $handler->display->display_options['fields']['changed']['second_date_format'] = 'long';
+  /* Field: Fundraiser donations: Extra Props */
+  $handler->display->display_options['fields']['extra_props']['id'] = 'extra_props';
+  $handler->display->display_options['fields']['extra_props']['table'] = 'fundraiser_donation';
+  $handler->display->display_options['fields']['extra_props']['field'] = 'extra_props';
+  $handler->display->display_options['fields']['extra_props']['label'] = 'extra_props';
   $handler->display->display_options['defaults']['arguments'] = FALSE;
   $handler->display->display_options['path'] = 'admin/reports/salesforce/donations/export';
   $handler->display->display_options['displays'] = array(
@@ -1928,8 +2049,6 @@ function springboard_views_views_default_views() {
     'page_1' => 'page_1',
     'default' => 0,
   );
-  $handler->display->display_options['use_batch'] = 'batch';
-  $handler->display->display_options['return_path'] = 'admin/reports/salesforce/donations';
   $handler->display->display_options['segment_size'] = '100';
 
   /* Display: Filtered Page */
@@ -2031,6 +2150,174 @@ function springboard_views_views_default_views() {
   $handler->display->display_options['arguments']['nid']['summary']['format'] = 'default_summary';
   $handler->display->display_options['arguments']['nid']['summary_options']['items_per_page'] = '25';
   $handler->display->display_options['path'] = 'admin/reports/salesforce/donations/%';
+
+  /* Display: Webform Results Tab */
+  $handler = $view->new_display('page', 'Webform Results Tab', 'page_2');
+  $handler->display->display_options['defaults']['title'] = FALSE;
+  $handler->display->display_options['title'] = 'Filter Recent Submissions - past 90 days';
+  $handler->display->display_options['defaults']['fields'] = FALSE;
+  /* Field: Content: Nid */
+  $handler->display->display_options['fields']['nid']['id'] = 'nid';
+  $handler->display->display_options['fields']['nid']['table'] = 'node';
+  $handler->display->display_options['fields']['nid']['field'] = 'nid';
+  $handler->display->display_options['fields']['nid']['relationship'] = 'nid';
+  $handler->display->display_options['fields']['nid']['label'] = '';
+  $handler->display->display_options['fields']['nid']['exclude'] = TRUE;
+  $handler->display->display_options['fields']['nid']['element_label_colon'] = FALSE;
+  $handler->display->display_options['fields']['nid']['element_default_classes'] = FALSE;
+  /* Field: Unlinked, hidden order_id value */
+  $handler->display->display_options['fields']['order_id_1']['id'] = 'order_id_1';
+  $handler->display->display_options['fields']['order_id_1']['table'] = 'commerce_order';
+  $handler->display->display_options['fields']['order_id_1']['field'] = 'order_id';
+  $handler->display->display_options['fields']['order_id_1']['relationship'] = 'did';
+  $handler->display->display_options['fields']['order_id_1']['ui_name'] = 'Unlinked, hidden order_id value';
+  $handler->display->display_options['fields']['order_id_1']['label'] = '';
+  $handler->display->display_options['fields']['order_id_1']['exclude'] = TRUE;
+  $handler->display->display_options['fields']['order_id_1']['element_label_colon'] = FALSE;
+  /* Field: Commerce Order: Order ID */
+  $handler->display->display_options['fields']['order_id']['id'] = 'order_id';
+  $handler->display->display_options['fields']['order_id']['table'] = 'commerce_order';
+  $handler->display->display_options['fields']['order_id']['field'] = 'order_id';
+  $handler->display->display_options['fields']['order_id']['relationship'] = 'did';
+  $handler->display->display_options['fields']['order_id']['element_label_colon'] = FALSE;
+  $handler->display->display_options['fields']['order_id']['link_to_order'] = 'admin';
+  /* Field: Webform submissions: Sid */
+  $handler->display->display_options['fields']['sid']['id'] = 'sid';
+  $handler->display->display_options['fields']['sid']['table'] = 'webform_submissions';
+  $handler->display->display_options['fields']['sid']['field'] = 'sid';
+  $handler->display->display_options['fields']['sid']['relationship'] = 'sid_2';
+  $handler->display->display_options['fields']['sid']['label'] = 'Submission ID';
+  $handler->display->display_options['fields']['sid']['alter']['make_link'] = TRUE;
+  $handler->display->display_options['fields']['sid']['alter']['path'] = 'node/[nid]/submission/[sid]';
+  $handler->display->display_options['fields']['sid']['separator'] = '';
+  /* Field: Commerce Order: Created date */
+  $handler->display->display_options['fields']['created']['id'] = 'created';
+  $handler->display->display_options['fields']['created']['table'] = 'commerce_order';
+  $handler->display->display_options['fields']['created']['field'] = 'created';
+  $handler->display->display_options['fields']['created']['relationship'] = 'did';
+  $handler->display->display_options['fields']['created']['label'] = 'Submitted On';
+  $handler->display->display_options['fields']['created']['date_format'] = 'custom';
+  $handler->display->display_options['fields']['created']['custom_date_format'] = 'n/j/Y - G:i';
+  $handler->display->display_options['fields']['created']['second_date_format'] = 'long';
+  /* Field: User: E-mail */
+  $handler->display->display_options['fields']['mail']['id'] = 'mail';
+  $handler->display->display_options['fields']['mail']['table'] = 'users';
+  $handler->display->display_options['fields']['mail']['field'] = 'mail';
+  $handler->display->display_options['fields']['mail']['relationship'] = 'uid';
+  /* Field: Commerce Order: Uid */
+  $handler->display->display_options['fields']['uid']['id'] = 'uid';
+  $handler->display->display_options['fields']['uid']['table'] = 'commerce_order';
+  $handler->display->display_options['fields']['uid']['field'] = 'uid';
+  $handler->display->display_options['fields']['uid']['relationship'] = 'did';
+  $handler->display->display_options['fields']['uid']['label'] = 'User ID';
+  $handler->display->display_options['fields']['uid']['link_to_user'] = FALSE;
+  /* Field: Webform submissions: Remote address */
+  $handler->display->display_options['fields']['remote_addr']['id'] = 'remote_addr';
+  $handler->display->display_options['fields']['remote_addr']['table'] = 'webform_submissions';
+  $handler->display->display_options['fields']['remote_addr']['field'] = 'remote_addr';
+  $handler->display->display_options['fields']['remote_addr']['relationship'] = 'sid_2';
+  $handler->display->display_options['fields']['remote_addr']['label'] = 'IP Address';
+  /* Field: Global: Custom text */
+  $handler->display->display_options['fields']['nothing']['id'] = 'nothing';
+  $handler->display->display_options['fields']['nothing']['table'] = 'views';
+  $handler->display->display_options['fields']['nothing']['field'] = 'nothing';
+  $handler->display->display_options['fields']['nothing']['label'] = 'Operations';
+  $handler->display->display_options['fields']['nothing']['alter']['text'] = '<a href="/springboard/donations/[order_id_1]">View</a> | <a href="/springboard/donations/[order_id_1]/edit">Edit</a> | <a href="/springboard/donations/[order_id_1]/delete">Delete</a>';
+  $handler->display->display_options['fields']['nothing']['element_class'] = 'table-actions';
+  $handler->display->display_options['defaults']['arguments'] = FALSE;
+  /* Contextual filter: Content: Nid */
+  $handler->display->display_options['arguments']['nid']['id'] = 'nid';
+  $handler->display->display_options['arguments']['nid']['table'] = 'node';
+  $handler->display->display_options['arguments']['nid']['field'] = 'nid';
+  $handler->display->display_options['arguments']['nid']['relationship'] = 'nid';
+  $handler->display->display_options['arguments']['nid']['default_action'] = 'default';
+  $handler->display->display_options['arguments']['nid']['default_argument_type'] = 'node';
+  $handler->display->display_options['arguments']['nid']['summary']['number_of_records'] = '0';
+  $handler->display->display_options['arguments']['nid']['summary']['format'] = 'default_summary';
+  $handler->display->display_options['arguments']['nid']['summary_options']['items_per_page'] = '25';
+  $handler->display->display_options['defaults']['filter_groups'] = FALSE;
+  $handler->display->display_options['defaults']['filters'] = FALSE;
+  /* Filter criterion: Webform submissions: Sid */
+  $handler->display->display_options['filters']['sid']['id'] = 'sid';
+  $handler->display->display_options['filters']['sid']['table'] = 'webform_submissions';
+  $handler->display->display_options['filters']['sid']['field'] = 'sid';
+  $handler->display->display_options['filters']['sid']['relationship'] = 'sid_2';
+  $handler->display->display_options['filters']['sid']['group'] = 1;
+  $handler->display->display_options['filters']['sid']['exposed'] = TRUE;
+  $handler->display->display_options['filters']['sid']['expose']['operator_id'] = 'sid_op';
+  $handler->display->display_options['filters']['sid']['expose']['label'] = 'Submission ID';
+  $handler->display->display_options['filters']['sid']['expose']['operator'] = 'sid_op';
+  $handler->display->display_options['filters']['sid']['expose']['identifier'] = 'sid';
+  $handler->display->display_options['filters']['sid']['expose']['remember_roles'] = array(
+    2 => '2',
+    1 => 0,
+    3 => 0,
+    4 => 0,
+    5 => 0,
+    6 => 0,
+  );
+  /* Filter criterion: User: The user ID */
+  $handler->display->display_options['filters']['uid_raw']['id'] = 'uid_raw';
+  $handler->display->display_options['filters']['uid_raw']['table'] = 'users';
+  $handler->display->display_options['filters']['uid_raw']['field'] = 'uid_raw';
+  $handler->display->display_options['filters']['uid_raw']['relationship'] = 'uid';
+  $handler->display->display_options['filters']['uid_raw']['group'] = 1;
+  $handler->display->display_options['filters']['uid_raw']['exposed'] = TRUE;
+  $handler->display->display_options['filters']['uid_raw']['expose']['operator_id'] = 'uid_raw_op';
+  $handler->display->display_options['filters']['uid_raw']['expose']['label'] = 'User ID';
+  $handler->display->display_options['filters']['uid_raw']['expose']['operator'] = 'uid_raw_op';
+  $handler->display->display_options['filters']['uid_raw']['expose']['identifier'] = 'uid_raw';
+  $handler->display->display_options['filters']['uid_raw']['expose']['remember_roles'] = array(
+    2 => '2',
+    1 => 0,
+    3 => 0,
+    4 => 0,
+    5 => 0,
+    6 => 0,
+  );
+  /* Filter criterion: Date: Date (commerce_order) */
+  $handler->display->display_options['filters']['date_filter']['id'] = 'date_filter';
+  $handler->display->display_options['filters']['date_filter']['table'] = 'commerce_order';
+  $handler->display->display_options['filters']['date_filter']['field'] = 'date_filter';
+  $handler->display->display_options['filters']['date_filter']['relationship'] = 'did';
+  $handler->display->display_options['filters']['date_filter']['operator'] = 'between';
+  $handler->display->display_options['filters']['date_filter']['group'] = 1;
+  $handler->display->display_options['filters']['date_filter']['exposed'] = TRUE;
+  $handler->display->display_options['filters']['date_filter']['expose']['operator_id'] = 'date_filter_op';
+  $handler->display->display_options['filters']['date_filter']['expose']['operator'] = 'date_filter_op';
+  $handler->display->display_options['filters']['date_filter']['expose']['identifier'] = 'date_filter';
+  $handler->display->display_options['filters']['date_filter']['expose']['remember_roles'] = array(
+    2 => '2',
+    1 => 0,
+    3 => 0,
+    4 => 0,
+    5 => 0,
+  );
+  $handler->display->display_options['filters']['date_filter']['form_type'] = 'date_popup';
+  $handler->display->display_options['filters']['date_filter']['date_fields'] = array(
+    'commerce_order.created' => 'commerce_order.created',
+  );
+  /* Filter criterion: Commerce Order: E-mail */
+  $handler->display->display_options['filters']['mail']['id'] = 'mail';
+  $handler->display->display_options['filters']['mail']['table'] = 'commerce_order';
+  $handler->display->display_options['filters']['mail']['field'] = 'mail';
+  $handler->display->display_options['filters']['mail']['relationship'] = 'did';
+  $handler->display->display_options['filters']['mail']['operator'] = 'contains';
+  $handler->display->display_options['filters']['mail']['group'] = 1;
+  $handler->display->display_options['filters']['mail']['exposed'] = TRUE;
+  $handler->display->display_options['filters']['mail']['expose']['operator_id'] = 'mail_op';
+  $handler->display->display_options['filters']['mail']['expose']['label'] = 'Email Address';
+  $handler->display->display_options['filters']['mail']['expose']['operator'] = 'mail_op';
+  $handler->display->display_options['filters']['mail']['expose']['identifier'] = 'mail';
+  $handler->display->display_options['filters']['mail']['expose']['remember_roles'] = array(
+    2 => '2',
+    1 => 0,
+    3 => 0,
+    4 => 0,
+    5 => 0,
+    6 => 0,
+  );
+  $handler->display->display_options['path'] = 'node/%/donation-results';
   $views[$view->name] = $view;
 
   // End sbv_donations.
