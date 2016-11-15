@@ -45,8 +45,8 @@ function springboard_group_ctools_plugin_post_alter(&$plugin, &$info) {
     $plugin = array(
       'class' => 'SpringboardGroup_EntityReference_SelectionHandler_Generic',
       'module' => 'springboard_group',
-      'path' => drupal_get_path('module', 'springboard_group') . '/includes',
-      'file' => 'springboard_group.entityreference.inc',
+      'path' => drupal_get_path('module', 'springboard_group') . '/plugins/entityreference/selection',
+      'file' => 'SpringboardGroup_EntityReference_SelectionHandler_Generic.class.php',
     ) + $plugin;
   }
 
