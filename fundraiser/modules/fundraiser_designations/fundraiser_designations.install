@@ -1,6 +1,13 @@
 <?php
-
 /**
  * @file
  * Install, update and uninstall functions.
  */
+
+/**
+ * Add the lock checkbox to the designations vocabulary.
+ */
+function fundraiser_designations_update_7002() {
+  module_load_include('inc', 'fundraiser_designations', 'includes/fundraiser_designations.taxonomy');
+  _fundraiser_designations_install_lock_fields();
+}
