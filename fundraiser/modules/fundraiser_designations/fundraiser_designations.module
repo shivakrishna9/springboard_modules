@@ -583,21 +583,26 @@ function fundraiser_designations_form_fundraiser_sustainers_donation_amount_form
     $line_items =& $form['commerce_line_items'][$form['commerce_line_items']['#language']]['line_items'];
 
     foreach ($line_items as $key => $item) {
-      $item_wrapper = entity_metadata_wrapper('commerce_line_item', $item['line_item']['#value']);
-      $product_id = $item_wrapper->commerce_product->value()->product_id;
-      $product = commerce_product_load($product_id);
-      $product_wrapper = entity_metadata_wrapper('commerce_product', $product);
-      $terms = $product_wrapper->field_fd_designation_categories->value();
       $lock_it = FALSE;
-      foreach ($terms as $term) {
-        $term_wrapper = entity_metadata_wrapper('taxonomy_term', $term);
-        $locked = $term_wrapper->field_fd_lock_donation_amount->value();
-        if (!empty($locked[0]) && $locked[0] == 1) {
-          $lock_it = TRUE;
-          break;
+      if (!empty($item['line_item']['#value'])) {
+        $item_wrapper = entity_metadata_wrapper('commerce_line_item', $item['line_item']['#value']);
+        if (!empty($item_wrapper->commerce_product->value()->product_id)) {
+          $product_id = $item_wrapper->commerce_product->value()->product_id;
+          $product = commerce_product_load($product_id);
+          if (!empty($product)) {
+            $product_wrapper = entity_metadata_wrapper('commerce_product', $product);
+            $terms = $product_wrapper->field_fd_designation_categories->value();
+            foreach ($terms as $term) {
+              $term_wrapper = entity_metadata_wrapper('taxonomy_term', $term);
+              $locked = $term_wrapper->field_fd_lock_donation_amount->value();
+              if (!empty($locked[0]) && $locked[0] == 1) {
+                $lock_it = TRUE;
+                break;
+              }
+            }
+          }
         }
       }
-
       $line_items[$key]['remove']['#disabled'] = TRUE;
       $line_items[$key]['remove']['#description'] = 'N/A';
       if ($lock_it) {
