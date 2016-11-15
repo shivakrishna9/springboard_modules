@@ -5,8 +5,7 @@
       (function($){
         $.fn.clearEle = function() {
           return this.each(function() {
-            $(this).removeClass('valid');
-            $(this).next('label').remove();
+            $(this).removeClass('valid').next('label').remove();
             $(this).parents('.success').removeClass('success');
             $(this).parents('.error').removeClass('error');
             this.value = '';
@@ -14,10 +13,9 @@
         }
       })(jQuery);
 
-      $(window).ready(function(){
-
+      $(document).ready(function(){
         // Turn autocomplete off on CC and CVV form elements.
-        $('input[name*="card_number"], input[name*="card_cvv"]').attr('autocomplete','off');
+        $('input[name*="card_number"], input[name*="card_cvv"]').attr('autocomplete', 'off');
 
         // Helper function, provides the total display.
         function _recalculate_quantity_total() {
@@ -26,38 +24,24 @@
           if (amount == 'other') {
             amount = $('input[name*="other_amount"]').val();
           }
-          // prevent total from displaying NaN if other amount input is incorrectly formatted.
-          if (isNaN(amount) === true) {
-            var total = 0.00;
-          }
-          else {
+          // Prevent total from displaying NaN if other amount input is
+          // incorrectly formatted.
+          var total = 0.00;
+          if (!isNaN(amount)) {
             var total = $('select[name*="quantity"]').val() * amount;
           }
           $('select[name*="quantity"]').after('<span id="quantity-total">Total: ' + Drupal.settings.fundraiser.currency.symbol + total + '</span>');
         }
 
         // When the amount changes, change the displayed total.
-        $('select[name*="quantity"]').change(function() {
-          _recalculate_quantity_total();
-        });
-        // And do the same if the amount is changed
-        $('input[name*="amount"]').change(function() {
-          _recalculate_quantity_total();
-        });
-        // And do the same if the other_amout is changed
-        $('input[name*="other_amount"]').change(function() {
-          _recalculate_quantity_total();
-        });
-        // And do the same if Fundraiser Sustainers is active and the user switches donation types.
-        $('input[name*="recurs_monthly"]').change(function() {
-          _recalculate_quantity_total();
-        });
+        $('select[name*="quantity"], input[name*="amount"], input[name*="other_amount"], input[name*="recurs_monthly"]').change(_recalculate_quantity_total());
 
         // Custom Validation Regex rules: AMEX, VISA, MASTERCARD, DISCOVER, Diner's Club, JCB
         $.validator.addMethod('creditcard', function(value, element) {
           return this.optional(element) || /^(?:4[0-9]{12}(?:[0-9]{3})?|5[1-5][0-9]{14}|6(?:011|5[0-9][0-9])[0-9]{12}|3[47][0-9]{13}|3(?:0[0-5]|[68][0-9])[0-9]{11}|(?:2131|1800|35\d{3})\d{11})$/i.test(value);
-          // Doesn't work for Australian Bankcard, Dankort (PBS) cards or Switch/Solo (Paymentech)
-          // Bankcard regexp below needs fixing
+          // Doesn't work for Australian Bankcard, Dankort (PBS) cards or
+          // Switch/Solo (Paymentech).
+          // Bankcard regexp below needs fixing:
           //^5610\5[6-9]d{2}\d{4}\d{4}$
         }, "Enter a valid credit card number");
 
@@ -78,10 +62,10 @@
         }, "Enter a valid zipcode");
 
         // Instantiate Form Validation
-        Drupal.donationValidate = $('.fundraiser-donation-form').validate({
+        Drupal.settings.fundraiser.donationValidate = $('.fundraiser-donation-form').validate({
           // Custom keyup function checking for tab key (9) and when value is empty
           onkeyup: function (element, event) {
-            if ($(element).next('.error')[0]){
+            if ($(element).next('.error').length){
               if (event.which === 9 && element.value === "") {
                 return;
               } else {
@@ -90,16 +74,20 @@
             }
           },
           onfocusout: function (element) {
-            // Callback for real-time onfocusout of form elements
+            if (typeof validateKeyCallback == 'undefined') {
+              return;
+            }
+
+            // Callback for real-time onfocusout of form elements.
             var isValid = $(element).valid();
-            //
-            if (typeof validateKeyCallback != "undefined" && isValid == 0) {
-              // Set status to 0
-              window.validateKeyCallback.status = 0;
+            if (isValid == 0) {
+              // Set status to 0.
+              validateKeyCallback.status = 0;
               validateKeyCallback.error(element);
-            } else if (typeof validateKeyCallback != "undefined" && isValid == 1) {
-              // Set status to 1
-              window.validateKeyCallback.status = 1;
+            }
+            else if (isValid == 1) {
+              // Set status to 1.
+              validateKeyCallback.status = 1;
               validateKeyCallback.success(element);
             }
           },
@@ -114,40 +102,31 @@
 
         // On change and keyup check form status
         $(".fundraiser-donation-form :input.key-validate").bind('change keyup', function() {
-          Drupal.donationValidate.element('#' + $(this).attr('id'));
+          Drupal.settings.fundraiser.element('#' + $(this).attr('id'));
         });
 
         // Track isValid status of each Braintree hosted field, if we are using that payment method.
-        if ($('.braintree-hosted-field').length) {
+        if($('.braintree-hosted-field').length) {
           var braintreeFields = {'number' : false, 'expirationMonth' : false , 'expirationYear' : false , 'cvv' : false };
           $(document).on('braintree.fieldEvent', function(event, param) {
-            var field = param.fields[param.emittedBy];
-            var $field = $(field.container);
-            braintreeFields[param.emittedBy] = field.isValid;
-            if (!field.isValid) {
-              $field.closest('.control-group').removeClass('success').addClass('error');
-            }
-            else {
-              $field.closest('.control-group').removeClass('error').addClass('success');
-            }
+            braintreeFields[param.target.fieldKey] = param.isValid;
           });
         }
 
         // On submission hide the button and replace it with a new value.
-        // Wrap the click in a once trigger to be sure that we bind it the one time.
+        // Wrap the click in a once trigger to be sure that we bind it only
+        // once.
         $('.fundraiser-donation-form').once(function() {
           $('.fundraiser-donation-form').submit(function() {
             // Validate the form
             if (formIsValid()) {
-              if (!$('.donation-processing-wrapper').length) {
-                $('.fundraiser-donation-form #edit-submit').hide();
-                $('.fundraiser_submit_message').hide();
-                $('.fundraiser-donation-form #edit-submit').after('<div class="donation-processing-wrapper">' +
-                  '<p class="donation-processing">Processing' +
-                  '<span class="donation-processing-spinner"></span>' +
-                  '</p>' +
-                  '</div>');
-              }
+              $('.fundraiser-donation-form #edit-submit').hide();
+              $('.fundraiser_submit_message').hide();
+              $('.fundraiser-donation-form #edit-submit').after('<div class="donation-processing-wrapper">' +
+                '<p class="donation-processing">Processing' +
+                '<span class="donation-processing-spinner"></span>' +
+                '</p>' +
+                '</div>');
               return true;
             }
             return false;
@@ -157,17 +136,17 @@
         function formIsValid() {
           // If we are using Braintree, both the braintree form and the drupal
           // fields must validate.
-          if (undefined === Drupal.braintreeInstance) {
-            return Drupal.donationValidate.form();
+          if (typeof Drupal.myBraintreeIntegration === 'undefined') {
+            return Drupal.settings.fundraiser.donationValidate.form();
           } else {
-            if (Drupal.settings.braintree.currentPaymentMethod == 'credit') {
-              if (Drupal.donationValidate.form() && braintreeFieldsAreValid()) {
+            if (Drupal.settings.braintree.integration === 'custom') {
+              if (Drupal.settings.fundraiser.donationValidate.form() && braintreeFieldsAreValid()) {
                 return true;
               } else {
                 return false;
               }
-            } else if (Drupal.settings.braintree.currentPaymentMethod == 'paypal') {
-              if (Drupal.donationValidate.form() && $('input[name=payment_method_nonce]').length > 0) {
+            } else if (Drupal.settings.braintree.currentPaymentMethod == 'paypal' || Drupal.settings.braintree.currentPaymentMethod == 'applepay') {
+              if (Drupal.settings.fundraiser.donationValidate.form() && $('input[name=payment_method_nonce]').length > 0 && $('input[type="radio"][name$="[amount]"]:checked').length) {
                 return true;
               } else {
                 return false;
@@ -178,7 +157,7 @@
 
         function braintreeFieldsAreValid() {
           var returnValue = true;
-          $.each(braintreeFields, function(index, value) {
+          $.each(braintreeFields, function( index, value ) {
             if (value == false) {
               returnValue = false;
             }
@@ -189,33 +168,29 @@
         // Iterate validation settings and apply rules.
         if (Drupal.settings.fundraiser && Drupal.settings.fundraiser.js_validation_settings) {
           for ($key in Drupal.settings.fundraiser.js_validation_settings) {
-            if ($('input[name*="' + $key + '"]')[0]) {
-              $('input[name*="' + $key + '"]').rules("add", Drupal.settings.fundraiser.js_validation_settings[$key]);
+            if ($('input[name*="' + $key + '"]').length) {
+              $('input[name*="' + $key + '"]').rules('add', Drupal.settings.fundraiser.js_validation_settings[$key]);
             }
           }
         }
 
         // Other Amount
-        if ($('input[name*="other_amount"]')[0]) {
-          $('input[name*="other_amount"]').each(function() {
-            $(this).rules("add", {
-            required: {
-              depends: function(element) {
-                if ($('input[type="radio"][name$="[amount]"][value="other"]:visible').is(":checked"))
-                  return true;
-                else
-                  return false;
+        var $other_amount = $('input[name*="other_amount"][type!="hidden"]');
+        if ($other_amount.length) {
+          $($other_amount).each(function() {
+            $(this).rules('add', {
+              required: function(element) {
+                return $('input[type="radio"][name$="[amount]"]:checked').length == 0 || $('input[type="radio"][name$="[amount]"][value="other"]:visible').is(":checked");
+              },
+              amount: true,
+              min: parseFloat(Drupal.settings.fundraiserWebform.minimum_donation_amount),
+              messages: {
+                required: "This field is required",
+                amount: "Enter a valid amount",
+                min: "The amount entered is less than the minimum donation amount."
               }
-            },
-            amount: true,
-            min: parseFloat(Drupal.settings.fundraiserWebform.minimum_donation_amount),
-            messages: {
-              required: "This field is required",
-              amount: "Enter a valid amount",
-              min: "The amount entered is less than the minimum donation amount."
-            }
+            });
           });
-        });
         }
 
         // Focus and Blur conditional functions for non-recurring other amount
@@ -226,9 +201,11 @@
             $('input[name*="[other_amount]"]').clearEle();
           }
         });
+
         $('input[name*="[other_amount]"]').focus(function(){
           $('input[type="radio"][name*="[amount]"][value="other"]').attr('checked', 'checked');
         });
+
         // Focus and Blur conditional functions for recurring other amount
         $('input[type="radio"][name*="[recurring_amount]"]').change(function(){
           if ($(this).val() == 'other') {
@@ -237,6 +214,7 @@
             $('input[name*="[recurring_other_amount]"]').clearEle();
           }
         });
+
         $('input[name*="[recurring_other_amount]"]').focus(function(){
           $('input[type="radio"][name*="[recurring_amount]"][value="other"]').attr('checked', 'checked');
         });
@@ -245,9 +223,9 @@
         $('input[name*="other_amount"]').blur(function(){
           var value = this.value;
           // check for custom validation function object
-          if (typeof(window.customValidation) === 'undefined') {
+          if (undefined == window.customValidation) {
             // If the value has length and includes at least one integer
-            if (value.length > 0 && this.value.match(/\d/g)) {
+            if (value.length && this.value.match(/\d/g)) {
               // if no period period
               if (!value.match(/\./)) {
                 // no decimals: strip all other chars, add decimal and 00
@@ -302,12 +280,14 @@
           max: jQuery.validator.format("Enter a value less than or equal to {0}"),
           min: jQuery.validator.format("Enter a value greater than or equal to {0}")
         });
+
         // Small helper item
         $('select').each(function(){
           if ($(this).next().is('select')) {
             $(this).next().addClass('spacer');
           }
         });
+
         // Implementing our own alert close
         // Bootstrap.js uses the .on method, not added until jQuery 1.7
         $('.close').click(function(){

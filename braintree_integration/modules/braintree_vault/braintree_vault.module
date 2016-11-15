@@ -193,7 +193,7 @@ function braintree_customer_cache_reset($uid) {
  * @return bool
  */
 function braintree_customer_id($account = NULL) {
-  if (is_null($account)) {
+  if (empty($account)) {
     global $user;
     $account = $user;
   }
@@ -205,8 +205,8 @@ function braintree_customer_id($account = NULL) {
   $customer_id = FALSE;
 
   if ($vault_field = variable_get('braintree_vault_field', '')) {
-    $userWrapper = entity_metadata_wrapper('user', $account);
-    $customer_id = $userWrapper->{$vault_field}->value();
+    $user_wrapper = entity_metadata_wrapper('user', $account);
+    $customer_id = $user_wrapper->{$vault_field}->value();
   }
 
   drupal_alter('braintree_customer_id', $customer_id, $account);
@@ -480,11 +480,12 @@ function braintree_vault_customer_save($customer_data, $context = array(), &$err
  *
  * @param $payment_method
  * @param array $context
- * @param string $error_message
  * @return bool|mixed
  */
-function braintree_vault_payment_method_save($payment_method, $context = array()) {
+function braintree_vault_payment_method_save($payment_method, $context = array(), $settings = array()) {
   drupal_alter('braintree_payment_method', $payment_method, $context);
+
+  braintree_initialize($settings);
 
   try {
     $params = array();
@@ -690,6 +691,8 @@ function braintree_find_default_subscription($payment_methods) {
  * Implements hook_commerce_braintree_web_submit_form_customer_alter().
  */
 function braintree_vault_commerce_braintree_web_submit_form_customer_alter(&$customer) {
-  $customer['customer'] = user_load_by_mail($customer['customer_mail']);
-  $customer['id'] = braintree_customer_id($customer['customer']);
+  if (!empty($customer['customer_mail'])) {
+    $customer['customer'] = user_load_by_mail($customer['customer_mail']);
+    $customer['id'] = braintree_customer_id($customer['customer']);
+  }
 }

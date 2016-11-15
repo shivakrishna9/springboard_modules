@@ -78,8 +78,7 @@ function braintree_transaction_find($transaction_id) {
  *
  * @return array|bool
  */
-function braintree_transaction_sale(&$sale_data, &$context, $settings = array()) {
-  braintree_initialize($settings);
+function braintree_transaction_sale(&$sale_data, &$context) {
   // Allow other modules to alter the sale before sending it to Braintree.
   drupal_alter('braintree_transaction_sale_data', $sale_data, $context);
 
@@ -133,12 +132,11 @@ function braintree_transaction_sale(&$sale_data, &$context, $settings = array())
  *   was FALSE) or the \Braintree\Result object (if the success condition was
  *   TRUE).
  */
-function braintree_update_card($card_id, $params, $settings = array()) {
+function braintree_update_card($card_id, $params) {
   if (!is_int($card_id)) {
     return array(FALSE, t('Invalid card ID provided.'));
   }
 
-  braintree_initialize($payment_method['settings']);
   try {
     $result = Braintree_PaymentMethod::update($card, $params);
   }
@@ -153,8 +151,7 @@ function braintree_update_card($card_id, $params, $settings = array()) {
 /**
  * Deletes a customer's stored Braintree information.
  */
-function braintree_delete_card($card_id, $settings = array()) {
-  braintree_initialize($settings);
+function braintree_delete_card($card_id) {
   try {
     $result = Braintree_PaymentMethod::delete($card_id);
   }

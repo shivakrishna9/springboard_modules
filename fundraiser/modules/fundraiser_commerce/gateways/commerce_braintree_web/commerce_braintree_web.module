@@ -38,18 +38,20 @@ function commerce_braintree_web_commerce_payment_method_info() {
     ),
   );
 
-  $payment_methods['braintree_apple_pay'] = array(
-    'base' => 'commerce_braintree_apple_pay',
-    'title' => t('Braintree - Apple Pay'),
-    'short_title' => t('Braintree - Apple Pay'),
-    'display_title' => t('Apple Pay'),
-    'description' => t('Integrates with Braintree web for Apple Pay.'),
-    'terminal' => FALSE,
-    'offsite' => FALSE,
-    'cardonfile' => array(
-      'delete callback' => 'commerce_braintree_web_cardonfile_delete',
-    ),
-  );
+  if (module_exists('braintree_applepay')) {
+    $payment_methods['braintree_applepay'] = array(
+      'base' => 'commerce_braintree_applepay',
+      'title' => t('Braintree - Apple Pay'),
+      'short_title' => t('Braintree - Apple Pay'),
+      'display_title' => t('Apple Pay'),
+      'description' => t('Integrates with Braintree web for Apple Pay.'),
+      'terminal' => FALSE,
+      'offsite' => FALSE,
+      'cardonfile' => array(
+        'delete callback' => 'commerce_braintree_web_cardonfile_delete',
+      ),
+    );
+  }
 
   return $payment_methods;
 }
@@ -205,7 +207,7 @@ function commerce_braintree_paypal_settings_form($settings = array()) {
  *
  * @see CALLBACK_commerce_payment_method_settings_form()
  */
-function commerce_braintree_apple_pay_settings_form($settings = array()) {
+function commerce_braintree_applepay_settings_form($settings = array()) {
   $form = commerce_braintree_web_settings_form($settings);
   $form['domain_association_file'] = array(
     '#type' => 'markup',
@@ -446,6 +448,7 @@ function commerce_braintree_web_submit_form_validate($payment_method, $pane_form
  * @see CALLBACK_commerce_payment_method_submit_form_submit()
  */
 function commerce_braintree_web_submit_form_submit($payment_method, $pane_form, $pane_values, $order, $form_parents = array()) {
+  braintree_initialize($payment_method['settings']);
   global $user;
 
   list($amount, $customer_name, $first_name, $last_name, $country, $thoroughfare, $locality, $postal_code, $administrative_area, $customer_mail) = _commerce_braintree_web_get_transaction_informations($order);
@@ -538,7 +541,7 @@ function commerce_braintree_web_submit_form_submit($payment_method, $pane_form, 
       ),
     );
 
-    if ($customer_id) {
+    if ($customer['id']) {
       // @todo update billing address.
       $sale_data += array(
         'customerId' => $customer_id,

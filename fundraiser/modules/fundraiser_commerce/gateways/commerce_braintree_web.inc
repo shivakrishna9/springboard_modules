@@ -13,7 +13,7 @@ function commerce_braintree_web_fundraiser_commerce_fundraiser_gateway_info() {
     'payment_method' => array(
       'braintree_hostedfields' => 'credit',
       'braintree_paypal' => 'paypal',
-      'braintree_apple_pay' => 'applepay',
+      'braintree_applepay' => 'applepay',
     ),
     'allow_recurring' => array('credit', 'paypal', 'applepay'),
     'allow_refund' => array('credit', 'paypal', 'applepay'),

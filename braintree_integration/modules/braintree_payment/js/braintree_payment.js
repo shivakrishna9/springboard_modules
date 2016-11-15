@@ -11,7 +11,6 @@
     this.clientInstance = null;
     this.hostedFieldsInstance = null;
     this.paypalInstance = null;
-    this.applePayInstance = null;
     this.$amount = this.$form.find('input[name="submitted[donation][amount]"]');
     this.amount = 0;
     this.deviceDataInstance = null;
@@ -22,7 +21,29 @@
 
     this.hostedFieldsCreated = false;
     this.paypalFieldsCreated = false;
-    this.applepayFieldsCreated = false;
+
+    var paymentMethods = {};
+
+    this.addPaymentMethod = function(id, callbacks) {
+      paymentMethods[id] = callbacks;
+    };
+
+    this.removePaymentMethod = function(id, inputId) {
+      if (undefined == inputId) {
+        inputId = id;
+      }
+
+      parent.settings.availableMethods.splice($.inArray(id, parent.settings.availableMethods), 1);
+      var $input = $('input[name="submitted[payment_information][payment_method]"][value="' + inputId + '"]');
+      if ($input.is(':checked')) {
+        // If this method is currently checked, check the first payment
+        // method instead.
+        var $first_payment_method = $input.parent('.form-item').siblings('.form-item').eq(0).find('input[name="submitted[payment_information][payment_method]"]');
+        $first_payment_method.attr('checked', 'checked');
+        parent.settings.currentPaymentMethod = $first_payment_method.val();
+      }
+      $input.parent('.form-item').remove();
+    };
 
     this.updateAmount = function() {
       parent.amount = parent.$amount.filter(':checked').val();
@@ -42,6 +63,17 @@
      * Initializes the Braintree client.
      */
     this.bootstrap = function() {
+      for (paymentMethod in paymentMethods) {
+        if (undefined !== paymentMethods[paymentMethod].preboot) {
+          paymentMethods[paymentMethod].preboot.call(this);
+        }
+      }
+
+      // Filter out the unavailable payment methods.
+      parent.settings.enabledMethods = $(parent.settings.enabledMethods).filter(function(index, value) {
+        return $.inArray(value, parent.settings.availableMethods) >= 0;
+      }).get();
+
       braintree.client.create({
         authorization: this.settings.clientToken
       }, function(error_message, clientInstance) {
@@ -57,6 +89,12 @@
 
       parent.updateAmount();
       parent.$amount.on('change', parent.updateAmount);
+
+      for (paymentMethod in paymentMethods) {
+        if (undefined !== paymentMethod.postboot) {
+          paymentMethod.postboot.call(this);
+        }
+      }
 
       return this;
     };
@@ -92,18 +130,25 @@
         return this;
       }
 
+      var oldMethod = parent.settings.currentPaymentMethod;
+
       parent.settings.currentPaymentMethod = paymentMethod;
+      for (p in paymentMethods) {
+        if (undefined !== paymentMethods[p].disableFieldsSubmit) {
+          paymentMethods[p].disableFieldsSubmit.call(this);
+        }
+      }
       if (paymentMethod == 'credit' && parent.creditEnabled()) {
         parent.createHostedFields(parent.clientInstance);
-        parent.disablePaypalFieldsSubmit().disableApplePayFieldsSubmit().resetHostedFieldsSubmit();
+        parent.disablePaypalFieldsSubmit().resetHostedFieldsSubmit();
       }
       else if (paymentMethod == 'paypal' && parent.paypalEnabled()) {
         parent.createPaypalFields(parent.clientInstance);
-        parent.disableHostedFieldsSubmit().disableApplePayFieldsSubmit().resetPaypalFieldsSubmit();
+        parent.disableHostedFieldsSubmit().resetPaypalFieldsSubmit();
       }
-      else if (paymentMethod == 'applepay' && parent.applePayEnabled()) {
-        parent.createApplePayFields(parent.clientInstance);
-        parent.disableHostedFieldsSubmit().disablePaypalFieldsSubmit().resetApplePayFieldsSubmit();
+      else if (undefined !== paymentMethods[paymentMethod] && paymentMethods[paymentMethod].isEnabled()) {
+        paymentMethods[paymentMethod].createFields(parent.clientInstance);
+        // parent.disableHostedFieldsSubmit().disablePaypalFieldsSubmit().resetApplePayFieldsSubmit();
       }
 
       parent.resetDeviceData();
@@ -286,10 +331,7 @@
         return;
       }
 
-      if (parent.amount == undefined || parent.amount == '') {
-        // Select the amount first.
-        alert('Please select a donation amount.');
-        event.preventDefault();
+      if (Drupal.settings.fundraiser.donationValidate.element('#edit-submitted-donation-other-amount') === false) {
         return;
       }
 
@@ -330,107 +372,6 @@
       }
     };
 
-    /**
-     * Helper function to determine if bank payment method is enabled.
-     */
-    this.applePayEnabled = function() {
-      return this.settings.enabledMethods.indexOf('applepay') >= 0;
-    };
-
-    this.setApplePayInstance = function(applePayInstance) {
-      this.applePayInstance = applePayInstance;
-      return this;
-    };
-
-    this.enableApplePayFieldsSubmit = function() {
-      parent.$form.on('submit.braintree_applepay', parent.submitApplePayFields);
-      return this;
-    };
-
-    this.disableApplePayFieldsSubmit = function() {
-      parent.$form.off('submit.braintree_applepay');
-      return this;
-    };
-
-    this.resetApplePayFieldsSubmit = function() {
-      parent.disableApplePayFieldsSubmit().enableApplePayFieldsSubmit();
-      return this;
-    };
-
-    this.submitApplePayFields = function(event) {
-      if (parent.settings.currentPaymentMethod != 'applepay') {
-        return;
-      }
-
-      var paymentRequest = parent.applePayInstance.createPaymentRequest({
-        total: {
-          label: 'My Store',
-          amount: parent.amount
-        }
-      });
-
-      var session = new ApplePaySession(1, paymentRequest);
-
-      session.onvalidatemerchant = function(event) {
-        parent.applePayInstance.performValidation({
-          validationURL: event.validationURL,
-          displayName: 'My Store'
-        }, function (validationErr, merchantSession) {
-          if (validationErr) {
-            // You should show an error to the user, e.g. 'Apple Pay failed to load.'
-            error('Error validating merchant:', validationErr);
-            session.abort();
-            return;
-          }
-          session.completeMerchantValidation(merchantSession);
-        });
-      };
-
-      session.onpaymentauthorized = function (event) {
-        applePayInstance.tokenize({
-          token: event.payment.token
-        }, function(tokenizeErr, payload) {
-          if (tokenizeErr) {
-            error('Error tokenizing Apple Pay:', tokenizeErr);
-            session.completePayment(ApplePaySession.STATUS_FAILURE);
-            return;
-          }
-          session.completePayment(ApplePaySession.STATUS_SUCCESS);
-
-          parent.$nonce.val(payload.nonce);
-        });
-      };
-
-      session.begin();
-    };
-
-    this.createApplePayFields = function(clientInstance) {
-      parent.setClientInstance(clientInstance);
-      if (parent.applepayFieldsCreated) {
-        return this;
-      }
-
-      braintree.applePay.create({
-        client: parent.clientInstance
-      }, function (error_message, applePayInstance) {
-        if (error_message) {
-          error(error_message);
-          return;
-        }
-
-        parent.setApplePayInstance(applePayInstance);
-
-        var promise = ApplePaySession.canMakePaymentsWithActiveCard(applePayInstance.merchantIdentifier);
-        promise.then(function(canMakePaymentsWithActiveCard) {
-          if (canMakePaymentsWithActiveCard) {
-            parent.resetApplePayFieldsSubmit();
-            parent.applepayFieldsCreated = true;
-          }
-        });
-      });
-      return this;
-    };
-
     this.reset = function() {
       parent.$nonce.val('');
 
@@ -452,7 +393,7 @@
     };
 
     this.autofill = function(obj) {
-      var autofill = this.settings.autofill;
+      var autofill = parent.settings.autofill;
       if (autofill == 'never') {
         return false;
       }
@@ -478,7 +419,7 @@
 
       $.each(field_mapping, function(key, value) {
         var $field = $('[name="' + key + '"]');
-        if (autofill == 'always' || (autofill == 'if_blank' && fieldsAreEmpty)) {
+        if (autofill == 'always' || (autofill == 'if_blank' && $field.val() == '')) {
           $field.val(value);
           fieldsHaveBeenAutoFilled = true;
         }
@@ -486,6 +427,9 @@
 
       return fieldsHaveBeenAutoFilled;
     }
+
+    // Allow other modules to add their own payment methods.
+    $(document).trigger('BraintreePaymentInstance', [this, error]);
 
     return this.bootstrap();
   };
@@ -497,46 +441,16 @@
       var $paymentMethod = $('input[name="submitted[payment_information][payment_method]"]');
       if ($paymentMethod.length) {
         settings.currentPaymentMethod = $paymentMethod.filter(':checked').val();
+
         // Get the available payment methods.
         settings.availableMethods = $paymentMethod.map(function() {
           return this.value;
-        }).get();
-
-        // Filter out the unavailable payment methods.
-        settings.enabledMethods = $(settings.enabledMethods).filter(function(index, value) {
-          return $.inArray(value, settings.availableMethods) >= 0;
         }).get();
 
         Drupal.braintreeInstance = new BraintreePayment(settings);
         $paymentMethod.on('change', function() {
           Drupal.braintreeInstance.setCurrentPaymentMethod($(this).val());
         });
-
-        // If Apple Pay is enabled, check if the browser supports it.
-        if ($.inArray('applepay', settings.enabledMethods)) {
-          var supports_applepay = true;
-          if (!window.ApplePaySession) {
-            error('This device does not support Apple Pay.');
-            supports_applepay = false;
-          }
-          if (supports_applepay && !ApplePaySession.canMakePayments()) {
-            error('This device is not capable of making Apple Pay payments.');
-            supports_applepay = false;
-          }
-          if (!supports_applepay) {
-            // Remove the Apple Pay option.
-            settings.availableMethods.splice($.inArray('applepay', settings.availableMethods), 1);
-            var $applepay_input = $('input[name="submitted[payment_information][payment_method]"][value="applepay"]');
-            if ($applepay_input.is(':checked')) {
-              // If this method is currently checked, check the first payment
-              // method instead.
-              var $first_payment_method = $applepay_input.parent('.form-item').siblings('.form-item').eq(0).find('input[name="submitted[payment_information][payment_method]"]');
-              $first_payment_method.attr('checked', 'checked');
-              Drupal.braintreeInstance.setCurrentPaymentMethod($first_payment_method.val());
-            }
-            $applepay_input.parent('.form-item').remove();
-          }
-        }
       }
     }
   };

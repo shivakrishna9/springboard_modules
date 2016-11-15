@@ -1,7 +1,7 @@
 <?php
 /**
  * @file
- * Module file for braintree_apple_pay.
+ * Module file for braintree_applepay.
  */
 
 /**
@@ -9,10 +9,12 @@
  */
 function braintree_payment_braintree_payment_form__applepay__alter(&$context) {
   $payment_method_instance = $context['payment_method_instance'];
-  if ($payment_method_instance['method_id'] != 'braintree_apple_pay') {
+  if ($payment_method_instance['method_id'] != 'braintree_applepay') {
     return;
   }
 
   $js_settings = &$context['js_settings'];
   $js_settings['enabledMethods'][] = 'applepay';
+
+  $context['form']['#attached']['js'][] = drupal_get_path('module', 'braintree_applepay') . '/js/braintree_applepay.js';
 }
