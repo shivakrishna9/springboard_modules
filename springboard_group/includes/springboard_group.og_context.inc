@@ -184,6 +184,7 @@ function springboard_group_context_menu_paths() {
       foreach ($groups_enabled_types['node'] as $type => $field) {
         if (fundraiser_is_donation_type($type)) {
           array_push($paths, 'admin/springboard');
+          array_push($paths, 'admin/springboard/donation-forms/' . $type);
           array_push($paths, 'admin/springboard/donation-forms/all');
         }
         if (in_array($type, webform_variable_get('webform_node_types'))) {
