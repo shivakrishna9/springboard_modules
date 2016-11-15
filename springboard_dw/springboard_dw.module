@@ -1838,10 +1838,11 @@ function springboard_dw_map_form_item($node, $update = FALSE) {
  */
 function springboard_dw_convert_submission_to_keyvalue($submission, $components) {
   $key_value_data = array();
-
-  foreach ($submission->data as $cid => $submittted_value) {
-    if (array_key_exists($cid, $components)) {
-      $key_value_data[$components[$cid]['form_key']] = $submission->data[$cid]['value'][0];
+  if (is_array($components) && isset($submission->data) && is_array($submission->data)) {
+    foreach ($submission->data as $cid => $submittted_value) {
+      if (array_key_exists($cid, $components)) {
+        $key_value_data[$components[$cid]['form_key']] = $submission->data[$cid]['value'][0];
+      }
     }
   }
 
