@@ -183,32 +183,32 @@
   Drupal.braintree.prototype.hasDefaultFields = function() {
     var fundraiserDefaultFields = {
       donorDefaults: [
-        'submitted[donor_information][first_name]',
-        'submitted[donor_information][last_name]',
-        'submitted[donor_information][mail]',
+        'first_name',
+        'last_name',
+        'mail',
       ],
       billingDefaults: [
-        'submitted[billing_information][address]',
-        'submitted[billing_information][address_line_2]',
-        'submitted[billing_information][city]',
-        'submitted[billing_information][country]',
-        'submitted[billing_information][state]',
-        'submitted[billing_information][zip]',
+        'address',
+        'address_line_2',
+        'city',
+        'country',
+        'state',
+        'zip',
       ],
     };
     var donorInfo = $('#webform-component-donor-information :input');
     var billingInfo = $('#webform-component-billing-information :input');
     var onlyDefaults = true;
     var donorIsDefault = $.each( donorInfo, function( key, value ) {
-      var n = $(value).attr('name');
-      if ($.inArray(n, fundraiserDefaultFields.donorDefaults) < 0) {
+      var n = $(value).attr('name').match(/[^[\]]+(?=])/g)[1];
+      if ($.inArray(n, fundraiserDefaultFields.donorDefaults) < 0 && n != 'sbp_phone') {
         onlyDefaults = false;
         return;
       }
     });
     var billingIsDefault = $.each( billingInfo, function( key, value ) {
-       var n = $(value).attr('name');
-       if ($.inArray(n, fundraiserDefaultFields.billingDefaults) < 0) {
+       var n = $(value).attr('name').match(/[^[\]]+(?=])/g)[1];
+       if ($.inArray(n, fundraiserDefaultFields.billingDefaults) < 0 && n != 'sbp_phone') {
         onlyDefaults = false;
         return;
        }
@@ -537,12 +537,7 @@
    * Fill user and billing fields from onPaymentMethodReceived response.
    */
   Drupal.braintree.prototype.autofill = function(obj) {
-    if (this.settings.hasOwnProperty('paypal') && this.settings.paypal.compact) {
-      autofill = 'always';
-    }
-    else {
-      autofill = this.settings.autofill;
-    }
+   
     var fieldsHaveBeenAutoFilled = false;
     var field_mapping = {
       'submitted[donor_information][first_name]': obj.details.firstName,
@@ -555,7 +550,29 @@
       'submitted[billing_information][state]': obj.details.billingAddress.region,
       'submitted[billing_information][zip]': obj.details.billingAddress.postalCode,
     };
-
+    if (this.settings.hasOwnProperty('paypal') && this.settings.paypal.compact) {
+      if (obj.details.hasOwnProperty('phone')) {
+        var phone = null;
+        var bf = $("#webform-component-billing-information input[name$='sbp_phone]']");
+        if (bf.length) {
+          phone = $(bf).attr('name');
+        }
+        else {
+          var df = $("#webform-component-donor-information input[name$='sbp_phone]']");
+          if (df.length) {
+            phone = $(df).attr('name');
+          }
+        }
+        if (phone) {
+          field_mapping[phone] = obj.details.phone;
+        }
+      }
+      autofill = 'always';
+    }
+    else {
+      autofill = this.settings.autofill;
+    }
+    
     function allFieldsAreEmpty(field_mapping) {
       var fieldsAreEmpty = true;
       $.each( field_mapping, function( key, value ) {
