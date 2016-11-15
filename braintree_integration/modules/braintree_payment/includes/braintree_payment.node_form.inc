@@ -88,6 +88,83 @@ function _braintree_payment_node_form_submit($form, &$form_state) {
  * @see https://api.drupal.org/comment/53678#comment-53678
  */
 function braintree_payment_form_alter(&$form, &$form_state, $form_id) {
+  if ($form_id == 'webform_component_edit_form') {
+    if (isset($form['nid']) && isset($form['nid']['#value'])) {
+      $node = node_load($form['nid']['#value']);
+      if (_braintree_payment_paypal_method_is_option($node) && _braintree_payment_paypal_method_is_enabled($node)) {
+        $form['#validate'][] = '_braintree_payment_webform_components_validate';
+      }
+     }
+  }
+}
+/**
+ * Implements hook_form_FORM_ID_alter().
+ */
+function braintree_payment_form_webform_components_form_alter(&$form, &$form_state) {
+  if (isset($form['#node'])) {
+   if (_braintree_payment_paypal_method_is_option($form['#node']) && _braintree_payment_paypal_method_is_enabled($form['#node'])) {
+     $form['#validate'][] = '_braintree_payment_webform_components_validate';
+   }
+  }
+}
+
+function _braintree_payment_webform_components_validate($form, &$form_state) {
+  if ($form['#form_id'] == 'webform_component_edit_form') {
+    $node = node_load($form['nid']['#value']);
+    $billing_cid = webform_get_cid($node, 'billing_information', 0);
+    $donor_cid = webform_get_cid($node, 'donor_information', 0);
+    if (isset($form_state['values']['pid']) && ($form_state['values']['pid'] == $billing_cid || $form_state['values']['pid'] == $donor_cid) && isset($form_state['values']['type'])  && $form_state['values']['type'] != 'hidden' && $form_state['values']['form_key'] != 'sbp_phone') {
+      form_set_error($form_state['values']['form_key'], t('The component <em>@key</em> cannot be added to this fieldset when Paypal compact flow is enabled', array('@key' => $form_state['values']['form_key'])));
+    }
+    return;
+  }
+  $default_fundraiser_fields = array(
+    'first_name',
+    'last_name',
+    'mail',
+    'address',
+    'address_line_2',
+    'city',
+    'zip',
+    'country',
+    'state',
+    'sbp_phone',
+  );
+
+  $billing_cid = webform_get_cid($form['#node'], 'billing_information', 0);
+  $billing_children = _braintree_payment_webform_components_find_parent_children($billing_cid, $form_state['values']['components']);
+  $donor_cid = webform_get_cid($form['#node'], 'donor_information', 0);
+  $donor_children = _braintree_payment_webform_components_find_parent_children($donor_cid, $form_state['values']['components']);
+  $children = array_merge($donor_children, $billing_children);
+  
+  foreach ($children as $cid) {
+    $component = _braintree_payment_webform_get_component_by_cid($form['#node']->nid, $cid);
+    if (!in_array($component->form_key, $default_fundraiser_fields) && $component->type != 'hidden') {
+      form_set_error($component->form_key, t('The component <em>@key</em> cannot be added to this fieldset when Paypal compact flow is enabled', array('@key' => $component->form_key)));
+    }
+  }
+}
+
+function _braintree_payment_webform_components_get_children($nid, $form_key) {
+  
+}
+
+function _braintree_payment_webform_components_find_parent_children($pid, $components) {
+  $children = array();
+  foreach ($components as $cid => $component) {
+    if ($component['pid'] == $pid) {
+      $children[] = $component['cid'];
+    }
+  }
+  return $children;
+}
+
+function _braintree_payment_webform_get_component_by_cid($nid, $cid) {
+  $query = db_select('webform_component', 'c')
+    ->fields('c', array('form_key', 'type'))
+    ->condition('nid', $nid)
+    ->condition('cid', $cid);
+  return $query->execute()->fetch();
 }
 
 /**
@@ -150,12 +227,12 @@ function braintree_payment_node_insert($node) {
   }
 }
 
-function _braintree_payment_paypal_method_is_option($node) {
+function _braintree_payment_paypal_method_is_option($node, $form = NULL) {
   if (empty($node->type) || !fundraiser_is_donation_type($node->type)) {
     return FALSE;
   }
   if (isset($node->gateways) && isset($node->gateways['paypal']) &&
-      $node->gateways['paypal']['id'] == ' braintree_paypal|commerce_payment_braintree_paypal') {
+      $node->gateways['paypal']['id'] == 'braintree_paypal|commerce_payment_braintree_paypal') {
     return TRUE;  
   }
   return FALSE;
