@@ -141,5 +141,36 @@ function springboard_group_views_query_check_content_type($query) {
 
 
 function springboard_group_views_pre_execute(&$view) {
-  //dpq($view->build_info['query']);
+ // dpq($view->build_info['query']);
+}
+
+/**
+ * Implements hook_views_default_views_alter().
+ *
+ * Add a group title field to springboard dashboard views.
+ */
+function springboard_group_views_default_views_alter(&$views) {
+
+  $alter = array_filter(variable_get('group_restricted_views', []));
+  foreach ($alter as $view_name => $value) {
+    $displays = $views[$view_name]->display;
+    foreach ($displays as $display_name => $display) {
+      $handler =& $views[$view_name]->display[$display_name]->handler;
+      /* Field: Content: Title */
+      if (!empty($handler->display->display_options['fields'])) {
+        $handler->display->display_options['relationships']['og_membership_related_node_group']['id'] = 'og_membership_related_node_group';
+        $handler->display->display_options['relationships']['og_membership_related_node_group']['table'] = 'og_membership';
+        $handler->display->display_options['relationships']['og_membership_related_node_group']['field'] = 'og_membership_related_node_group';
+        $fields =& $handler->display->display_options['fields'];
+        $group_field = [];
+        $group_field['title_1']['id'] = 'title_1';
+        $group_field['title_1']['table'] = 'node';
+        $group_field['title_1']['field'] = 'title';
+        $group_field['title_1']['label'] = 'Group';
+        $group_field['title_1']['relationship'] = 'og_membership_related_node_group';
+        array_splice($fields, 2, 0, $group_field);
+      }
+    }
+  }
+
 }
