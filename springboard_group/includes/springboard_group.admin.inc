@@ -360,7 +360,7 @@ function springboard_group_advanced_settings() {
   // Useful for debugging.
   $alter = array(
     'sbv_forms',
-    'sbv_pagewrappers',
+    'sbv_page_wrappers',
     'sbv_assets',
     'webform_ab_tests',
     'sba_actions',
@@ -386,7 +386,7 @@ function springboard_group_add_group_activate_views_alter($type) {
   $restricted = variable_get('group_restricted_views', array());
   switch ($type) {
     case 'page_wrapper':
-      $restricted = array_merge($restricted, drupal_map_assoc(array('sbv_pagewrappers', 'sbv_assets')));
+      $restricted = array_merge($restricted, drupal_map_assoc(array('sbv_page_wrappers', 'sbv_assets')));
       break;
 
     case 'email_wrapper':
