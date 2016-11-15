@@ -987,9 +987,8 @@ function springboard_dw_map_advocacy_action_item($message_action) {
   $advocacy_item['legislative_issues'] = $legislative_issues;
   $advocacy_item['organization_issues'] = $organizational_issues;
 
-  $advocacy_item['created_at'] = $message_action->node->created;
-  $advocacy_item['updated_at'] = $message_action->node->changed;
-
+  $advocacy_item['created_at'] = springboard_dw_get_submission_timestamp($message_action->sid);
+  $advocacy_item['updated_at'] = $advocacy_item['created_at'];
 
   return $advocacy_item;
 }
@@ -1092,8 +1091,8 @@ function springboard_dw_map_petition_submission_item($petition,
   $message_item['subject'] = $petition->node->title;
   $message_item['body'] = '';
   $message_item['user_edited'] = '';
-  $message_item['created_at'] = $petition->node->created;
-  $message_item['updated_at'] = $petition->node->changed;
+  $message_item['created_at'] = springboard_dw_get_submission_timestamp($petition->sid);
+  $message_item['updated_at'] = $message_item['created_at'];
   $message_item['contact_id'] = $petition->contact->uid;
   $message_item['contact_email'] = $petition->contact->mail;
   $message_item['submission_id'] = $petition->sid;
@@ -1732,8 +1731,8 @@ function springboard_dw_map_social_action_item($message, $action, $node,
   $message_item['target_district_name'] = $message['targets']->district_name;
   $message_item['target_role'] = $message['targets']->role;
   $message_item['target_person_id'] = $message['targets']->person_id;
-  $message_item['created_at'] = date('U');
-  $message_item['updated_at'] = date('U');
+  $message_item['created_at'] = springboard_dw_get_submission_timestamp($action->sid);
+  $message_item['updated_at'] = $message_item['created_at'];
   $message_item['submission_id'] = $action->sid;
 
   // Add the extra props attributes.
@@ -2138,3 +2137,4 @@ function springboard_dw_vendor($item) {
 function springboard_dw_generate_queue_item_response($status_code) {
   return $status_code == 200 ? TRUE : FALSE;
 }
+
