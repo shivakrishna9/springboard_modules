@@ -115,14 +115,38 @@ function springboard_group_rules_payment_rules_overview__page_alter(&$page) {
  *
  * Contortions required to get field api working on rules config.
  */
+function springboard_group_form_rules_ui_edit_element_alter(&$form, &$form_state, $form_id) {
+  // We need the rule name to proceed.
+  $rule_name = arg(6);
+  springboard_group_rules_add_group_widget($form, $form_state, $rule_name);
+
+}
+
+/**
+ * Implements hook_form_FORMID_alter().
+ *
+ * Contortions required to get field api working on rules config.
+ */
 function springboard_group_form_rules_ui_form_edit_rules_config_alter(&$form, &$form_state, $form_id) {
   // We need the rule name to proceed.
   if (empty($form['settings']['name']['#default_value'])) {
     return;
   }
 
-  // Get the rule config entity.
   $rule_name = $form['settings']['name']['#default_value'];
+  springboard_group_rules_add_group_widget($form, $form_state, $rule_name);
+
+}
+
+/**
+ * Add the group widget to the rules config form.
+ *
+ * @param $form
+ * @param $form_state
+ * @param $rule_name
+ */
+function springboard_group_rules_add_group_widget(&$form, &$form_state, $rule_name) {
+
   $rule = rules_config_load($rule_name);
   if (empty($rule)) {
     // It's a custom UI managed rule.
@@ -170,6 +194,7 @@ function springboard_group_form_rules_ui_form_edit_rules_config_alter(&$form, &$
     $form['#submit'][] = 'springboard_group_submit_payment';
   }
 }
+
 
 /**
  * Run field attach validation.
