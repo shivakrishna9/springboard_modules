@@ -13,6 +13,14 @@ define('SALESFORCE_NGOC_DEFAULT_TRANSACTION_TYPE', 'Payment');
 define('SALESFORCE_NGOC_DEFAULT_FREQUENCY', 'One Payment');
 
 /**
+ * Implements hook_cron().
+ */
+function salesforce_ngoc_cron() {
+  watchdog('salesforce_ngoc', 'Standard cron run.', NULL, WATCHDOG_INFO);
+  salesforce_ngoc_poll_batch_upload();
+}
+
+/**
  * Implements hook_entity_info().
  */
 function salesforce_ngoc_entity_info() {
@@ -36,7 +44,6 @@ function salesforce_ngoc_entity_info() {
  * Implements hook_menu().
  */
 function salesforce_ngoc_menu() {
-// Settings page.
   $items['admin/config/salesforce/salesforce-ngoc'] = array(
     'title' => 'Salesforce NGO Connect',
     'description' => 'Configuration settings for the Salesforce NGO Connect',
@@ -45,6 +52,11 @@ function salesforce_ngoc_menu() {
     'access arguments' => array('administer salesforce ngoc'),
     'type' => MENU_NORMAL_ITEM,
     'file' => 'includes/salesforce_ngoc.admin.inc',
+  );
+  $items['salesforce_ngoc_cron'] = array(
+    'page callback' => 'salesforce_ngoc_standalone_cron',
+    'access callback' => 'salesforce_ngoc_standalone_cron_access',
+    'type' => MENU_CALLBACK,
   );
   return $items;
 }
@@ -277,7 +289,6 @@ function salesforce_ngoc_sync_load_map($record) {
   return FALSE;
 }
 
-
 /**
  * Helper to grab the record id of a map.
  */
@@ -309,4 +320,27 @@ function _salesforce_ngoc_sync_get_id($item) {
   }
 }
 
+/**
+ * Menu callback for the standalone cron.
+ */
+function salesforce_ngoc_standalone_cron() {
+  drupal_page_is_cacheable(FALSE);
+  watchdog('salesforce_ngoc', 'Standalone cron run.', NULL, WATCHDOG_INFO);
+  salesforce_ngoc_poll_batch_upload();
+}
 
+/**
+ * Access callback for standalone cron.
+ *
+ * @todo make configurable.
+ */
+function salesforce_ngoc_standalone_cron_access() {
+  return TRUE;
+}
+
+/**
+ * Queries SF batch_upload objects for change in processing status.
+ */
+function salesforce_ngoc_poll_batch_upload() {
+
+}
