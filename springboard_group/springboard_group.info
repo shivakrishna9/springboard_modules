@@ -15,4 +15,3 @@ dependencies[] = page_manager
 dependencies[] = views_content
 dependencies[] = list
 dependencies[] = entityreference_prepopulate
-files[] = includes/views/springboard_group_handler_groupname.inc
