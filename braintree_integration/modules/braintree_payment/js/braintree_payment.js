@@ -140,7 +140,7 @@
 
       parent.settings.currentPaymentMethod = paymentMethod;
       for (p in paymentMethods) {
-        if (undefined !== paymentMethods[p].disableFieldsSubmit) {
+        if (undefined !== paymentMethods[p].disableFieldsSubmit && p != paymentMethod) {
           paymentMethods[p].disableFieldsSubmit.call(this);
         }
       }
@@ -154,7 +154,10 @@
       }
       else if (undefined !== paymentMethods[paymentMethod] && paymentMethods[paymentMethod].isEnabled()) {
         paymentMethods[paymentMethod].createFields(parent.clientInstance);
-        // parent.disableHostedFieldsSubmit().disablePaypalFieldsSubmit().resetApplePayFieldsSubmit();
+        parent.disableHostedFieldsSubmit().disablePaypalFieldsSubmit();
+        if (undefined !== paymentMethods[paymentMethod].resetFieldsSubmit) {
+          paymentMethods[paymentMethod].resetFieldsSubmit.call(this);
+        }
       }
 
       parent.resetDeviceData();

@@ -35,7 +35,7 @@
       };
 
       BIAP.enableFieldsSubmit = function() {
-        BI.$form.on('submit.braintree_applepay', BIAP.submitApplePayFields);
+        BI.$form.on('submit.braintree_applepay', BIAP.submitFields);
         return BIAP;
       };
 
@@ -43,8 +43,9 @@
         BI.$form.off('submit.braintree_applepay');
         return BIAP;
       };
+
       BIAP.resetFieldsSubmit = function() {
-        BIAP.disableApplePayFieldsSubmit().enableApplePayFieldsSubmit();
+        BIAP.disableFieldsSubmit().enableFieldsSubmit();
         return BIAP;
       };
 
@@ -53,43 +54,48 @@
           return;
         }
 
-        var paymentRequest = BIAP.applePayInstance.createPaymentRequest({
-          total: {
-            label: 'My Store',
-            amount: BI.amount
+        if (!BI.$nonce.val().length) {
+          event.preventDefault();
+          var paymentRequest = BIAP.applePayInstance.createPaymentRequest({
+            total: {
+              label: 'Jackson River',
+              amount: BI.amount
+            }
+          });
+
+          var session = new ApplePaySession(1, paymentRequest);
+
+          session.onvalidatemerchant = function(event) {
+            console.log(event);
+            BIAP.applePayInstance.performValidation({
+              validationURL: event.validationURL,
+              displayName: 'Jackson River'
+            }, function (validationErr, merchantSession) {
+              if (validationErr) {
+                // You should show an error to the user, e.g. 'Apple Pay failed to
+                // load.'
+                error('Error validating merchant:', validationErr);
+                session.abort();
+                return;
+              }
+              session.completeMerchantValidation(merchantSession);
+            });
+          };
+
+          session.onpaymentauthorized = function (event) {
+            BIAP.applePayInstance.tokenize({
+              token: event.payment.token
+            }, function(tokenizeErr, payload) {
+              if (tokenizeErr) {
+                error('Error tokenizing Apple Pay:', tokenizeErr);
+                session.completePayment(ApplePaySession.STATUS_FAILURE);
+                return;
+              }
+              session.completePayment(ApplePaySession.STATUS_SUCCESS);
+
+              BI.$nonce.val(payload.nonce);
+            });
           }
-        });
-
-        var session = new ApplePaySession(1, paymentRequest);
-
-        session.onvalidatemerchant = function(event) {
-          BIAP.applePayInstance.performValidation({
-            validationURL: event.validationURL,
-            displayName: 'My Store'
-          }, function (validationErr, merchantSession) {
-            if (validationErr) {
-              // You should show an error to the user, e.g. 'Apple Pay failed to load.'
-              error('Error validating merchant:', validationErr);
-              session.abort();
-              return;
-            }
-            session.completeMerchantValidation(merchantSession);
-          });
-        };
-
-        session.onpaymentauthorized = function (event) {
-          BIAP.applePayInstance.tokenize({
-            token: event.payment.token
-          }, function(tokenizeErr, payload) {
-            if (tokenizeErr) {
-              error('Error tokenizing Apple Pay:', tokenizeErr);
-              session.completePayment(ApplePaySession.STATUS_FAILURE);
-              return;
-            }
-            session.completePayment(ApplePaySession.STATUS_SUCCESS);
-
-            BI.$nonce.val(payload.nonce);
-          });
         };
 
         session.begin();
@@ -114,7 +120,7 @@
           var promise = ApplePaySession.canMakePaymentsWithActiveCard(applePayInstance.merchantIdentifier);
           promise.then(function(canMakePaymentsWithActiveCard) {
             if (canMakePaymentsWithActiveCard) {
-              BIAP.resetApplePayFieldsSubmit();
+              BIAP.resetFieldsSubmit();
               BIAP.applepayFieldsCreated = true;
             }
           });
