@@ -72,12 +72,11 @@ function springboard_group_rules_payment_rules_overview__page_alter(&$page) {
   ) {
     $role_permissions = array();
     $group_context = springboard_group_get_group_context();
-    if (!empty($group_context) && $group_context != '_none') {
+    if (!empty($group_context) && $group_context != '_none' && $group_context != '_all') {
       $roles = og_get_user_roles('node', $group_context);
       $perms = og_role_permissions($roles);
       $role_permissions = array_keys(array_filter(reset($perms)));
     }
-
     foreach (array('enabled', 'disabled') as $key) {
       foreach ($page['content']['system_main'][$key]['rules']['#rows'] as $row_key => &$row) {
         $machine_name = (str_replace('Machine name: ', '', $row[0]['data']['description']['settings']['machine_name']['#markup']));
@@ -88,9 +87,21 @@ function springboard_group_rules_payment_rules_overview__page_alter(&$page) {
             $gid = reset($group['node']);
           }
           else {
-            $gid = '_none';
+            $gid = !is_numeric($group_context) ? $group_context : NULL;
           }
-          if ($group_context != $gid || (!user_access('administer group') && !in_array('edit payment method', $role_permissions))) {
+          if ($group_context == '_all') {
+            $gids = og_get_all_group('node');
+            if (!in_array($gid, $gids)) {
+              $invalid = TRUE;
+            }
+            else {
+              $invalid = FALSE;
+            }
+          }
+          else {
+            $invalid = $group_context != $gid;
+          }
+          if ($invalid || (!user_access('administer group') && !in_array('edit payment method', $role_permissions))) {
             unset($page['content']['system_main'][$key]['rules']['#rows'][$row_key]);
           }
         }

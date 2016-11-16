@@ -88,11 +88,20 @@ function _springboard_group_email_wrappers_validate_wrapped(&$form, &$form_state
     $form_state['wrappers_to_delete'] = $wrappers_to_delete;
     // Set the message.
     if (!empty($wrappers_to_delete)) {
-      $count = count($wrappers_to_delete);
-      $format = format_plural($count, 'email wrapper', 'email wrappers');
-      $form_state['group_ajax_messages'][] = t('@count @format belonging to ineligible groups will be removed when this form is saved. Please update your email wrappers after saving.', array(
-        '@count' => $count,
-        '@format' => $format,
+      $num = count($wrappers_to_delete);
+      $wrp_fmt = format_plural(count($wrappers_to_delete), 'wrapper', 'wrappers');
+      $list = [];
+      foreach ($wrappers_to_delete as $wrapper) {
+        $wrapper_node = node_load($wrapper['tid']);
+        if (!empty($wrapper_node->title)) {
+          $list[] = l(check_plain($wrapper_node->title), 'node/' . $wrapper_node->nid, array('attributes' => array('target' => '_blank')));
+        }
+      }
+      $wrapper_message = theme('item_list', array('items' => $list));
+      $form_state['group_ajax_messages']['email_wrappers'] = t('@num email @wrp_fmt selection will be removed: !wrapper_message', array(
+        '@num' => $num,
+        '@wrp_fmt' => $wrp_fmt,
+        '!wrapper_message' => $wrapper_message,
       ));
     }
   }

@@ -74,7 +74,7 @@ function springboard_group_page_wrappers_validate_group_switch(&$form, &$form_st
     foreach ($lost_wrappers as $wrapper) {
       $wrapper_node = node_load($wrapper);
       if (!empty($wrapper_node->title)) {
-        $list[] = check_plain($wrapper_node->title);
+        $list[] = l(check_plain($wrapper_node->title), 'node/' . $wrapper_node->nid, array('attributes' => array('target' => '_blank')));
       }
     }
     $wrapper_message = theme('item_list', array('items' => $list));

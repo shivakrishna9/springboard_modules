@@ -110,7 +110,7 @@ function springboard_group_fundraiser_rebuild_form(&$form, &$form_state) {
         list(, $name) = explode('|', $lost_gateway['id']);
         $rule = rules_config_load($name);
         if (!empty($rule)) {
-          $list[] = check_plain($rule->label);
+          $list[] = l(check_plain($rule->label), 'admin/commerce/config/payment-methods/manage/' . $rule->id,  array('attributes' => array('target' => '_blank')));
         }
       }
       $gateways_message = theme('item_list', array('items' => $list));
