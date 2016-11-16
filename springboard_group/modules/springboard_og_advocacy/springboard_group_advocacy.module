@@ -20,7 +20,7 @@ function springboard_group_springboard_advocacy_views_plugin_query_alter(&$query
 
   $gid = springboard_group_get_group_context();
   if (!empty($gid)) {
-    if ($gid != '_none') {
+    if ($gid != '_none' && $gid != '_all') {
       $group_subscription = springboard_group_advocacy_get_saved_group_subscription($gid);
       // If this group is limited to particular states, add state values to the
       // search query, if none are present.
@@ -47,7 +47,7 @@ function springboard_group_springboard_advocacy_views_plugin_query_alter(&$query
     // There's no group id.
     if (!empty($query->search_terms) && ($query->search_terms['class_name'][0] == 'Target' || $query->search_terms['class_name'][0] == 'Group')) {
       if (user_access('administer group')) {
-        //$query->search_terms['affiliate_id'] = 'all';
+        $query->search_terms['affiliate_id'] = 'all';
       }
     }
   }
@@ -120,6 +120,9 @@ function springboard_group_advocacy_springboard_group_context_menu_paths() {
     if (isset($groups_enabled_types['node']['sba_message_action']) || isset($groups_enabled_types['node']['sba_social_action'])) {
       array_push($paths, 'admin/springboard/advocacy/targets');
       array_push($paths, 'admin/springboard/advocacy/actions');
+      array_push($paths, 'admin/springboard/advocacy/targets/custom-targets');
+      array_push($paths, 'admin/springboard/advocacy/targets/custom-groups');
+
     }
     if (isset($groups_enabled_types['node']['sba_message_action'])) {
       array_push($paths, 'admin/springboard/advocacy/message-actions/all');
@@ -144,4 +147,86 @@ function springboard_group_advocacy_og_permission() {
       'default role' => array(),
     ),
   );
+}
+
+/**
+ * Implements hook_views_data_alter().
+ *
+ * Add data array for Affiliate ID field returned by API query.
+ * Call it Affiliate Name because we convert to the group name in
+ * springboard_group_preprocess_views_view_table().
+ */
+function springboard_group_advocacy_views_data_alter(&$data) {
+  // Target ID returned by the API request.
+  $data['advocacy']['affiliate_id'] = array(
+    'title' => t('Affiliate name'),
+    'help' => t('Affiliate Name'),
+    'field' => array(
+      'click sortable' => TRUE,
+      'handler' => 'springboard_advocacy_views_handler_field',
+    ),
+  );
+}
+
+/**
+ * Implements hook_views_preprocess_views_view_table().
+ *
+ * Change the Affiliate ID field to display the affiliate name, and make the
+ * affilaite name sortable.
+ */
+function springboard_group_preprocess_views_view_table(&$vars) {
+  $view = $vars['view'];
+  if ($view->name == 'sba_custom_targets') {
+    foreach ($vars['rows'] as $key => $row) {
+      foreach ($row as $field_name => $value) {
+        if ($field_name == 'affiliate_id') {
+          if (is_numeric($value)) {
+            $group = node_load($value);
+            if (!empty($group->nid) && !empty($group->type) && $group->type == 'springboard_group') {
+              $vars['rows'][$key][$field_name] = check_plain($group->title);
+            }
+            elseif (empty($group->nid) && empty($group->type)) {
+              $vars['rows'][$key][$field_name] = "Group deleted";
+            }
+          }
+        }
+      }
+    }
+  }
+  if (isset($_GET['order']) && $_GET['order'] == 'affiliate_id') {
+    usort($vars['rows'], function ($a, $b) {
+      if ($_GET['sort'] == 'desc') {
+        return strcmp($b['affiliate_id'], $a['affiliate_id']);
+      }
+      else {
+        return strcmp($a['affiliate_id'], $b['affiliate_id']);
+      }
+    });
+  }
+}
+
+/**
+ * Implements hook_views_default_views_alter().
+ *
+ * Add the Affilaite Group Field to Advocacy dashboard views.
+ */
+function springboard_group_advocacy_views_default_views_alter(&$views) {
+  $displays = $views['sba_custom_targets']->display;
+  foreach ($displays as $display_name => $display) {
+    $handler =& $views['sba_custom_targets']->display[$display_name]->handler;
+    if (!empty($handler->display->display_options['fields'])) {
+      $fields =& $handler->display->display_options['fields'];
+      $group_field = [];
+      $group_field['affiliate_name']['id'] = 'affiliate_id';
+      $group_field['affiliate_name']['table'] = 'advocacy';
+      $group_field['affiliate_name']['field'] = 'affiliate_id';
+      $group_field['affiliate_name']['label'] = 'Affiliate Group';
+      if ($display_name == 'block_1') {
+        array_splice($fields, 3, 0, $group_field);
+      }
+      else {
+        array_splice($fields, 2, 0, $group_field);
+      }
+    }
+  }
 }

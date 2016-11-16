@@ -67,15 +67,9 @@ function springboard_group_og_context_handler($item = NULL) {
         $ret = array('_none' => array('_none'));
       }
       elseif ($_SESSION['springboard_group_working_group'] == '_all') {
-        if (strpos(current_path(), 'advocacy/targets') === FALSE) {
-          $_SESSION['springboard_group_context_multiple'] = array_values($groups);
-          $ret = array('_all' => array('_all'));
-        }
-        else {
-          $_SESSION['springboard_group_working_group'] = '_none';
-          $_SESSION['springboard_group_context_multiple'] = array_values($groups);
-          $ret = array('_none' => array('_none'));
-        }
+        $_SESSION['springboard_group_working_group'] = '_all';
+        $_SESSION['springboard_group_context_multiple'] = array_values($groups);
+        $ret = array('_all' => array('_all'));
       }
       else {
 
@@ -268,7 +262,7 @@ function springboard_group_context_selector_form($form, &$form_state, $groups) {
   if (user_access('administer group')) {
     $options['_none'] = '- None -';
   }
-  if (count($groups > 1) && strpos(current_path(), 'advocacy/targets') === FALSE) {
+  if (count($groups) > 1) {
     $options['_all'] = 'All Groups';
   }
   foreach ($groups as $nid) {

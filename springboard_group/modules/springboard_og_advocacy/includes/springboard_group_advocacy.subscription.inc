@@ -29,7 +29,7 @@ function springboard_group_advocacy_springboard_advocacy_subscription_alter(&$su
   // Check for a group context from session.
   $gid = springboard_group_get_group_context();
 
-  if (!empty($gid) && $gid != '_none') {
+  if (!empty($gid) && ($gid != '_none' && $gid != '_all')) {
     // Get the current node to check that it is not itself a group.
     $node = menu_get_object();
     if (!empty($node->nid) && !og_is_group('node', $node->nid)) {
