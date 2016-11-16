@@ -1,0 +1,99 @@
+
+.view-sbv-donations,
+#ui-datepicker-div {
+   zoom: 0.75;
+  -moz-transform: scale(0.75);
+}
+#ui-datepicker-div {
+  margin-top: 54px;
+}
+#views-exposed-form-sbv-donations-page #sb-db-donations-report-help,
+#views-exposed-form-sbv-donations-page-2 #sb-db-donations-report-help {
+  cursor: pointer;
+  position: relative;
+  top: -1px;
+}
+#views-exposed-form-sbv-donations-page #sb-db-donations-report-help-popup,
+#views-exposed-form-sbv-donations-page-2 #sb-db-donations-report-help-popup {
+  background: #fff;
+  box-shadow: 4px 4px 11px 0px #aaa;
+  padding: 4px 9px;
+  cursor: pointer;
+  position: absolute;
+  right: 20px;
+  top: -56px;
+  width: 320px;
+  z-index: 10;
+}
+#views-exposed-form-sbv-donations-page #edit-combine-wrapper label,
+#views-exposed-form-sbv-donations-page #edit-status-wrapper label,
+#views-exposed-form-sbv-donations-page #edit-field-fundraiser-internal-name-value-wrapper label,
+#views-exposed-form-sbv-donations-page #edit-date-filter-min-inside-wrapper .container-inline-date label,
+#views-exposed-form-sbv-donations-page #edit-date-filter-max-inside-wrapper .container-inline-date label {
+  display: none;
+}
+#views-exposed-form-sbv-donations-page-2 #edit-order-id-wrapper label,
+#views-exposed-form-sbv-donations-page-2 #edit-sid-wrapper label,
+#views-exposed-form-sbv-donations-page-2 #edit-uid-raw-wrapper label,
+#views-exposed-form-sbv-donations-page-2 #edit-mail-wrapper label,
+#views-exposed-form-sbv-donations-page-2 #edit-date-filter-min-inside-wrapper .container-inline-date label,
+#views-exposed-form-sbv-donations-page-2 #edit-date-filter-max-inside-wrapper .container-inline-date label {
+  display: none;
+}
+#views-exposed-form-sbv-donations-page-2 #edit-date-filter-wrapper {
+  margin-top: -25px;
+}
+#views-exposed-form-sbv-donations-page #edit-combine-wrapper input,
+#views-exposed-form-sbv-donations-page-2 #edit-combine-wrapper input {
+  width: 220px;
+}
+#views-exposed-form-sbv-donations-page #edit-status,
+#views-exposed-form-sbv-donations-page-2 #edit-status {
+  width: 160px;
+}
+#views-exposed-form-sbv-donations-page-2 .views-submit-button {
+  margin-top: -9px;
+}
+#views-exposed-form-sbv-donations-page .views-submit-button input,
+#views-exposed-form-sbv-donations-page-2 .views-submit-button input {
+  width: 34px;
+}
+#views-exposed-form-sbv-donations-page .views-submit-button::before,
+#views-exposed-form-sbv-donations-page-2 .views-submit-button::before {
+  content: '';
+}
+.view-sbv-donations a.views-data-export {
+  margin-top: -46px;
+  position: absolute;
+  right: 0;
+  top: inherit;
+}
+body.page-node-webform-results .view-sbv-donations a.views-data-export {
+  right: 49px;
+  padding-top: 2px;
+  margin-top: -41px;
+}
+#views-exposed-form-sbv-donations-page #edit-combine-wrapper,
+#views-exposed-form-sbv-donations-page #edit-field-fundraiser-internal-name-value-wrapper {
+  margin-top: 25px;
+}
+#views-exposed-form-sbv-donations-page #edit-status-wrapper,
+#views-exposed-form-sbv-donations-page-2 #edit-status-wrapper {
+  margin-top: 23px;
+}
+#views-exposed-form-sbv-donations-page .views-exposed-form .views-reset-button {
+  margin-top: 17px;
+  margin-left: 4px;
+}
+#views-exposed-form-sbv-donations-page-2 .views-exposed-form .views-reset-button {
+  margin-top: -9px;
+}
+.view-sbv-donations table.views-table th {
+  font-size: 11px;
+  padding: 3px 5px;
+}
+.view-sbv-donations table.views-table td {
+  font-size: 11px;
+  padding: 1px 2px;
+}
+
