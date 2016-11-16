@@ -160,7 +160,7 @@ function braintree_report_error($exception) {
  *   The error message.
  */
 function braintree_report_result($result) {
-  if (empty(result) || !is_object($result) || !property_exists($result, 'message')) {
+  if (empty($result) || !is_object($result) || !property_exists($result, 'message')) {
     return;
   }
 
@@ -356,5 +356,5 @@ function braintree_check_fraud(&$context) {
     }
   }
 
-  return TRUE;
+  return array(TRUE, TRUE);
 }

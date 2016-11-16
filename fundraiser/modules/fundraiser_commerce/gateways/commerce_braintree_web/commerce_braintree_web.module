@@ -530,41 +530,39 @@ function commerce_braintree_web_submit_form_submit($payment_method, $pane_form, 
     'merchant_account_id' => $merchant_account_id,
   );
 
-  if (module_exists('braintree_vault') && variable_get('braintree_use_vault', 0)) {
-    $sale_data = array(
-      'amount' => $total_amount,
-      'merchantAccountId' => $merchant_account_id,
-      'options' => array(
-        'submitForSettlement' => TRUE,
-        'storeInVaultOnSuccess' => TRUE,
-        'addBillingAddressToPaymentMethod' => TRUE,
+  $sale_data = array(
+    'amount' => $total_amount,
+    'merchantAccountId' => $merchant_account_id,
+    'options' => array(
+      'submitForSettlement' => TRUE,
+      'storeInVaultOnSuccess' => TRUE,
+      'addBillingAddressToPaymentMethod' => TRUE,
+    ),
+  );
+
+  if ($customer['id']) {
+    // @todo update billing address.
+    $sale_data += array(
+      'customerId' => $customer_id,
+    );
+  }
+  else {
+    $sale_data += array(
+      'customer' => array(
+        'firstName' => $first_name,
+        'lastName' => $last_name,
+        'email' => $customer_mail,
+      ),
+      'billing' => array(
+        'countryCodeAlpha2' => $country,
+        'streetAddress' => $thoroughfare,
+        'firstName' => $first_name,
+        'lastName' => $last_name,
+        'locality' => $locality,
+        'postalCode' => $postal_code,
+        'region' => $administrative_area,
       ),
     );
-
-    if ($customer['id']) {
-      // @todo update billing address.
-      $sale_data += array(
-        'customerId' => $customer_id,
-      );
-    }
-    else {
-      $sale_data += array(
-        'customer' => array(
-          'firstName' => $first_name,
-          'lastName' => $last_name,
-          'email' => $customer_mail,
-        ),
-        'billing' => array(
-          'countryCodeAlpha2' => $country,
-          'streetAddress' => $thoroughfare,
-          'firstName' => $first_name,
-          'lastName' => $last_name,
-          'locality' => $locality,
-          'postalCode' => $postal_code,
-          'region' => $administrative_area,
-        ),
-      );
-    }
   }
 
   $order_data = unserialize(decrypt($order->data['fundraiser_commerce']));
@@ -592,13 +590,12 @@ function commerce_braintree_web_submit_form_submit($payment_method, $pane_form, 
   $active_settings = braintree_settings($payment_method['settings']);
   $sale_data['channel'] = $active_settings['channel'];
 
-  list($success, $result) = braintree_transaction_sale($sale_data, $context);
-  $braintree_result = $context['result'];
+  list($success, $braintree_result) = braintree_transaction_sale($sale_data, $context);
 
   if ($success) {
     // Save returned braintree customer id, if it has not been previously saved.
     $return_customer_id = $braintree_result->transaction->customerDetails->id;
-    if (empty($customer_id) && $return_customer_id) {
+    if (empty($customer_id) && $return_customer_id && module_exists('braintree_vault')) {
       braintree_customer_id_save($customer, $return_customer_id);
     }
 
@@ -662,9 +659,8 @@ function commerce_braintree_web_submit_form_submit($payment_method, $pane_form, 
   if ($success) {
     return $braintree_result;
   }
-  else {
-    return FALSE;
-  }
+
+  return FALSE;
 }
 
 /**

@@ -100,9 +100,9 @@ function braintree_transaction_sale(&$sale_data, &$context) {
     return array(FALSE, $error_message);
   }
 
-  list($approved, $message) = $result = braintree_check_fraud($context);
-  if (!braintree_check_fraud($context)) {
-    return $result;
+  list($approved, $message) = braintree_check_fraud($context);
+  if (!$approved) {
+    return $message;
   }
 
   if ($context['result']->success) {
@@ -111,7 +111,7 @@ function braintree_transaction_sale(&$sale_data, &$context) {
       $function = $module . '_braintree_transaction_sale_complete';
       $function($result, $context);
     }
-    return TRUE;
+    return array(TRUE, $context['result']);
   }
 
   $error_message = braintree_report_result($result);

@@ -46,7 +46,13 @@
     };
 
     this.updateAmount = function() {
-      parent.amount = parent.$amount.filter(':checked').val();
+      var checked = parent.$amount.filter(':checked');
+      if (!checked.length) {
+        parent.amount = 0;
+        return;
+      }
+
+      parent.amount = checked.val();
 
       if (undefined == parent.amount) {
         return;
