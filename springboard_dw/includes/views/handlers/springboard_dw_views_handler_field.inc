@@ -90,6 +90,14 @@ class springboard_dw_views_handler_field extends views_handler_field
     elseif ($alias == 'recurs_monthly') {
       $value = ($value == 'recurs' ? 'Yes' : 'No');
     }
+    elseif ($alias == 'gateway') {
+      if (strpos($value, '|') !== FALSE) {
+        list($gateway_machine, $gateway_machine2) = explode('|', $value);
+        if ($gateway_title = commerce_payment_method_get_title('title', $gateway_machine)) {
+          $value = $gateway_title;
+        }
+      }
+    }
     return $value;
   }
 }
