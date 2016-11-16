@@ -27,6 +27,19 @@ function springboard_views_views_handlers() {
 }
 
 /**
+ * Implements hook_form_FORM_ID_aler().
+ */
+function springboard_views_form_views_exposed_form_alter(&$form, &$form_state) {
+  if (isset($form['#id'])
+    && ($form['#id'] == 'views-exposed-form-sbv-donations-page' || $form['#id'] == 'views-exposed-form-sbv-donations-page-2')) {
+    // Attached CSS and jQuery related to the exposed filters:
+    drupal_add_css('//maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.css', array('type' => 'external'));
+    $form['#attached']['css'][] = drupal_get_path('module', 'springboard_views') . '/css/springboard_views.css';
+    $form['#attached']['js'][] = drupal_get_path('module', 'springboard_views') . '/js/springboard_views.js';
+  }
+}
+
+/**
  * Implements hook_views_data().
  */
 function springboard_views_views_data() {

@@ -96,5 +96,49 @@ Drupal.behaviors.springboardDataWarehouseViews = {
         searchFilter.val('');
       }
     });
+
+    // Inline date picker label behavior:
+    var subIDAFilter = $('#views-exposed-form-springboard-dw-donations-report-page input#edit-transaction-date-min-datepicker-popup-0');
+    var subIDABlurb = 'mm/dd/yy';
+    if (subIDAFilter.val() == '') {
+      subIDAFilter.val(subIDABlurb);
+    } 
+    subIDAFilter.focus(function () { 
+      if ($(this).val() == subIDABlurb) {
+        $(this).val('');
+      }
+    });
+    subIDAFilter.blur(function () {
+      if ($(this).val() == '') {
+        $(this).val(subIDABlurb);
+      }
+    });
+    $('#views-exposed-form-springboard-dw-donations-report-page').submit(function () {
+      if (subIDAFilter.val() == subIDABlurb) {
+        subIDAFilter.val('');
+      }
+    });
+    var subIDBFilter = $('#views-exposed-form-springboard-dw-donations-report-page input#edit-transaction-date-max-datepicker-popup-0');
+    var subIDBBlurb = 'mm/dd/yy';
+    if (subIDBFilter.val() == '') {
+      subIDBFilter.val(subIDBBlurb);
+    }
+    subIDBFilter.focus(function () {
+      if ($(this).val() == subIDBBlurb) {
+        $(this).val('');
+      }
+    });
+    subIDBFilter.blur(function () {
+      if ($(this).val() == '') {
+        $(this).val(subIDBBlurb);
+      }
+    });
+    $('#views-exposed-form-springboard-dw-donations-report-page').submit(function () {
+      if (subIDBFilter.val() == subIDBBlurb) {
+        subIDBFilter.val('');
+      }
+    });
+
+
   })(jQuery); }
 }

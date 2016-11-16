@@ -2,8 +2,9 @@
 .view-springboard-dw-donations-report .view-header p {
   margin: 1px 0;
 }
-.view-springboard-dw-donations-report {
-  font-size: 10px;
+.view-springboard-dw-donations-report table {
+   zoom: 0.75;
+  -moz-transform: scale(0.75);
 }
 .view-springboard-dw-donations-report table th,
 .view-springboard-dw-donations-report table td {
@@ -48,6 +49,8 @@
 #views-exposed-form-springboard-dw-donations-report-page .form-item-transaction-date-max-date i {
   cursor: pointer;
 }
+
+
 // DW Donation Detail:
 #dw-donation-detail .dw-field-group-container {
   float: left;

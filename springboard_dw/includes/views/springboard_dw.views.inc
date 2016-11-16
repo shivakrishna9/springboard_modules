@@ -257,7 +257,7 @@ function springboard_dw_views_post_render(&$view, &$output, &$cache) {
     return;
   }
   $data = $view->result[0];
-  dpm($data);
+  //dpm($data);
 
   $fields_groups = array(
     'order' => array(
@@ -298,6 +298,13 @@ function springboard_dw_views_post_render(&$view, &$output, &$cache) {
         'bank_account_mask' => t('Bank Account Mask'),
       ),   
     ),
+    'misc' => array(
+      'label' => t('Other values'),
+      'fields' => array(
+        'submission_id' => t('Submission ID'),
+        'extra_props' => t('Extra Props'),
+      ),
+    ),
   );
   foreach ($fields_groups as $group_key => $field_group) {
     $output .= '<div class="dw-field-group-container dw-field-group-container-' . $group_key . '">';
@@ -306,6 +313,9 @@ function springboard_dw_views_post_render(&$view, &$output, &$cache) {
     foreach ($field_group['fields'] as $field_key => $field_label) {
       if (isset($data->$field_key)) {
         $output .= '<tr><td class="label">' . $field_label . ':</td><td class="value"> ' . $data->$field_key . '</td></tr>';
+      }
+      else {
+        $output .= '<tr><td class="label">' . $field_label . ':</td><td class="value"> ' . 'N/A' . '</td></tr>';
       }
     }
     $output .= '</tbody></table></div>';
