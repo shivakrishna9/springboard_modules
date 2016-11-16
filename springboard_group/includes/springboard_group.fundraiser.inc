@@ -76,11 +76,11 @@ function springboard_group_fundraiser_rebuild_form(&$form, &$form_state) {
   $gateways = springboard_group_fundraiser_check_gateways($form, $form_state);
 
   $node = $form['#node'];
-  $lost_a_gateway = FALSE;
+  $lost_gateways = [];
   if (!empty($node->gateways)) {
     foreach ($node->gateways as $key => $gateway) {
       if (isset($gateway['id']) && !in_array($gateway['id'], $gateways)) {
-        $lost_a_gateway = TRUE;
+        $lost_gateways[] = $gateway;
       }
     }
   }
@@ -102,8 +102,19 @@ function springboard_group_fundraiser_rebuild_form(&$form, &$form_state) {
     );
   }
   else {
-    if ($lost_a_gateway) {
-      $message = t('A payment method will be removed. Please review your payment method configuration.');
+    if (!empty($lost_gateways)) {
+      $num = count($lost_gateways);
+      $method = format_plural(count($lost_gateways), 'method', 'methods');
+      $list = [];
+      foreach ($lost_gateways as $lost_gateway) {
+        list(, $name) = explode('|', $lost_gateway['id']);
+        $rule = rules_config_load($name);
+        if (!empty($rule)) {
+          $list[] = check_plain($rule->label);
+        }
+      }
+      $gateways_message = theme('item_list', array('items' => $list));
+      $message = t('@num payment @method will be removed: !gateways', array('@num' => $num, '@method' => $method, '!gateways' => $gateways_message));
       $form_state['group_ajax_messages'][] = $message;
     }
     $fieldset = array(

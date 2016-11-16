@@ -56,7 +56,7 @@ function springboard_group_email_wrappers_node_form__alter(&$form, &$form_state)
   // We on a *wrapper* and need to validate nodes that are
   // already wrapped.
   elseif (!empty($form_state['values']) && !empty($form['#node']->nid) && $form['#node']->type == 'email_wrapper') {
-    springboard_group_wrappers_common_validation_helper($form, $form_state, 'email_wrapper_webform');
+    springboard_group_wrappers_common_validation_helper($form, $form_state, 'email_wrappers_webform');
   }
 }
 

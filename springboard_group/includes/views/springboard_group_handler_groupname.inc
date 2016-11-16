@@ -31,7 +31,6 @@ class springboard_group_handler_groupname extends views_handler_field {
   }
 
   function click_sort($order) {
-    dpm($this);
     if (isset($this->field_alias)) {
 
     }

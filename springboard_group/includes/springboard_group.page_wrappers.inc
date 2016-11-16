@@ -54,17 +54,35 @@ function springboard_group_page_wrappers_node_form__alter(&$form, &$form_state, 
  */
 function springboard_group_page_wrappers_validate_group_switch(&$form, &$form_state) {
   $x = 0;
+  $lost_wrappers = [];
   foreach ($form_state['values']['page_wrappers'] as $key => $wrapper) {
     $current_wrapper = !empty($form_state['values']['page_wrappers'][$key]['wrapper_nid']) ? $form_state['values']['page_wrappers'][$key]['wrapper_nid'] : NULL;
     $default = !empty($form['#node']->page_wrappers[$x]['wrapper_nid']) ? $form['#node']->page_wrappers[$x]['wrapper_nid'] : NULL;
     $options = $form['springboard_display']['page_wrappers_settings']['page_wrappers'][$key]['wrapper_nid']['#options'];
     if (!in_array($current_wrapper, array_keys($options))) {
-      $form_state['group_ajax_messages']['page_wrappers'] = t('A page wrapper selection is not eligible for this group. Please update your page wrapper settings prior to saving this form.');
+      $lost_wrappers[] = $current_wrapper;
     }
     elseif (in_array($default, array_keys($options))) {
       $form_state['input']['page_wrappers'][$key]['wrapper_nid'] = $default;
     }
     $x++;
+  }
+  if (!empty($lost_wrappers)) {
+    $num = count($lost_wrappers);
+    $wrp_fmt = format_plural(count($lost_wrappers), 'wrapper', 'wrappers');
+    $list = [];
+    foreach ($lost_wrappers as $wrapper) {
+      $wrapper_node = node_load($wrapper);
+      if (!empty($wrapper_node->title)) {
+        $list[] = check_plain($wrapper_node->title);
+      }
+    }
+    $wrapper_message = theme('item_list', array('items' => $list));
+    $form_state['group_ajax_messages']['page_wrappers'] = t('@num page @wrp_fmt selection will be removed: !wrapper_message', array(
+      '@num' => $num,
+      '@wrp_fmt' => $wrp_fmt,
+      '!wrapper_message' => $wrapper_message,
+    ));
   }
 }
 

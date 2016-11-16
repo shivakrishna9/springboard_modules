@@ -9,19 +9,42 @@
  */
 function springboard_group_wrappers_common_validation_helper(&$form, &$form_state, $table = 'node_page_wrapper') {
 
-  // Get all wrappers.
-  $wrappers = db_select($table)->fields($table)->execute()
+  // Get all wrapper records.
+  $all_wrapper_data = db_select($table)->fields($table)->execute()
     ->fetchAll(PDO::FETCH_ASSOC);
 
+  // Get the wrapper's current groups.
+  $this_wrapper_old_gids = og_get_entity_groups('node', $form['#node']);
+
   // Get the active groups selection from the form_state.
-  $gids = springboard_group_get_gids_from_element($form, $form_state);
+  $this_wrapper_new_gids = springboard_group_get_gids_from_element($form, $form_state);
 
   // Compare the wrapped node's ownership with the new group selection.
-  if (!empty($wrappers)) {
-    foreach ($wrappers as $wrapper) {
-      $grouped = _springboard_group_wrappers_common_get_grouped_nodes($gids, (array) $wrapper);
-      if (count($grouped) == 0) {
-        $in_use[] = (array) $wrapper;
+  if (!empty($all_wrapper_data)) {
+    foreach ($all_wrapper_data as $wrapper_item) {
+      // If the wrapper data belongs to this wrapper.
+      $wrapper_nid = isset($wrapper_item['wrapper_nid']) ? $wrapper_item['wrapper_nid'] : $wrapper_item['tid'];
+      if ($wrapper_nid == $form['#node']->nid) {
+
+        // Get the wrapped node so we can get its groups.
+        $wrapped_node = node_load($wrapper_item['nid']);
+        $wrapped_node_groups = og_get_entity_groups('node', $wrapped_node);
+        // Compare the wrapped nodes groups to this wrappers new groups.
+        if (!empty($this_wrapper_old_gids)) {
+          $valid = array_intersect($this_wrapper_new_gids, $wrapped_node_groups['node']);
+          if (empty($valid)) {
+            $in_use[] = (array) $wrapped_node;
+          }
+        }
+        else {
+          // This wrapper had no group to begin with.
+          $valid = !empty($wrapped_node_groups['node']);
+          // If there's no match we have a problem.
+          if (empty($valid) && !empty($this_wrapper_new_gids)) {
+            $in_use[] = (array) $wrapped_node;
+          }
+        }
+
       }
     }
   }
@@ -31,15 +54,17 @@ function springboard_group_wrappers_common_validation_helper(&$form, &$form_stat
   if (!empty($in_use)) {
     $count = count($in_use);
     $format = format_plural($count, 'node', 'nodes');
+    $uses = format_plural($count, 'uses', 'use');
     $rows = [];
     foreach ($in_use as $wrapped) {
       $node = node_load($wrapped['nid']);
-      $rows[] = l(check_plain($node->title), 'node/' . $wrapped['nid']);
+      $rows[] = l(check_plain($node->title), 'node/' . $wrapped['nid'], array('attributes' => array('target' => '_blank')));
     }
 
-    $message = t('@count @format belonging to an incompatible group use this wrapper.', array(
+    $message = t('@count @format belonging to an incompatible group @use this wrapper.', array(
       '@count' => $count,
       '@format' => $format,
+      '@use' => $uses,
     ));
 
     if ($count < 11) {
@@ -47,27 +72,4 @@ function springboard_group_wrappers_common_validation_helper(&$form, &$form_stat
     }
     $form_state['group_ajax_messages'][] = $message;
   }
-}
-
-/**
- * Given a set of $gids, determine if a wrapped node belongs in them.
- *
- * @param array $gids
- *   The group ids of the current wrapper.
- * @param array $wrapper
- *   A node's wrapper table record.
- *
- * @return array
- *   An array of group objects for wrapped nodes belonging to the
- *   wrapper's $gids.
- */
-function _springboard_group_wrappers_common_get_grouped_nodes($gids, $wrapper) {
-  $grouped = [];
-  foreach ($gids as $gid) {
-    $in_group = og_get_membership('node', $gid, 'node', $wrapper['nid']);
-    if ($in_group) {
-      $grouped[$gid][$wrapper['nid']] = $in_group;
-    }
-  }
-  return $grouped;
 }
