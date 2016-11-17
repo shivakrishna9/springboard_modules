@@ -30,7 +30,7 @@ function _springboard_views_drush_export_donations_csv() {
   global $user; 
   drupal_save_session(FALSE); 
   $user = user_load(1);
-  $output = '';
+  $output_path = 'temporary://'; // Default output path if it is not overwritten.
   $current_page = 0;
   $total_results = 0;
   $default_items_per_page = 250000; // If the view returns all results
@@ -76,19 +76,24 @@ function _springboard_views_drush_export_donations_csv() {
         continue;
       }
       // Collect ordering data:
-      if ($option_name == 'order') {
+      elseif ($option_name == 'order') {
         $order = strtoupper($option_value);
         continue;
       }
       // Collect the complete message email:
-      if ($option_name == 'export_email') {
+      elseif ($option_name == 'export_email') {
         $export_email = $option_value;
         continue;
       }
       // Check for debug mode where files don't get created:
-      if ($option_name == 'debug') {
+      elseif ($option_name == 'debug') {
         $debug = TRUE;
         continue; 
+      }
+      // Check for a target output path:
+      elseif ($option_name == 'output_path') {
+        $output_path = $option_value;
+        continue;
       }
 
       // Support an array value if transaction date filtering is done:
@@ -137,11 +142,11 @@ function _springboard_views_drush_export_donations_csv() {
     // Save the output to a file, if results were returned; otherwise stop:
     if (isset($view->result) && count($view->result) > 0) {
       $output = $view->render();
-      $temp_name = drupal_tempnam('temporary://', date('Y-m-d--H-i-s') . '-donations-export-page-' . ($current_page + 1) . '--');
-      $file_paths[] = $temp_name;
+      $filename = $output_path . '/' . date('Y-m-d--H-i-s') . '-donations-export-page-' . ($current_page + 1) . '.csv';
+      $file_paths[] = $filename;
       $total_results += count($view->result); 
       if (!$debug) {
-        if (!file_put_contents($temp_name . '.csv', $output)) {
+        if (!file_put_contents($filename, $output)) {
           echo json_encode(array('error' => 'Export failed for file: "' . $temp_name . '"; aborting.'));
           return;
         }
