@@ -1,4 +1,5 @@
 <?php
+
 require_once drupal_get_path('module', 'entityreference') . '/plugins/selection/EntityReference_SelectionHandler_Generic.class.php';
 
 

@@ -5,7 +5,7 @@ It does this by both limiting and extending the functionality of the Organic Gro
 Limiting:
 
 Organic groups allows almost any entity type to be a group. Springboard Groups only
-interacts with a single group content type, the "springboard_group" node.
+interacts with a single group content type, the "springboard_group" content type.
 
 Organic groups allows almost any entity type to be a group content. Springboard Groups disallows
 some specific entities from being groupable within Springboard Groups.
@@ -17,16 +17,17 @@ Organic Groups' group selector widget is complex, with multiple input fields and
 
 Organic groups allows for a myriad of configuration options for group types, group content,
 group roles, group fields and group permissions. Springboard Groups provides a stripped down admin UI,
-and menu alters the default OG configuration pages to be hidden with a custom access permission. Springboard
+and menu alters the native OG configuration pages to be hidden with a custom access permission. Springboard
 Groups does not provide a UI for custom roles, custom fields, multiple group types, etc.
 
 Extending:
 
 Springboard Groups adds a Group Context selector which appears on non-node pages, such as
 the Springboard Dashboard view, which allows content listings on those pages to be filtered by a group
-selection. Filtering is done via views query and page alter hooks.
+selection. Filtering is done via views query and page alter hooks. Filtering for users who belong to a
+single group is done in the background, without a context selector.
 
-Springboard Groups integrates with the Springboard Advocacy API, allwoing remote content on the API server
+Springboard Groups integrates with the Springboard Advocacy API, allowing remote content on the API server
 to belong to Springboard Groups, and individual Springboard Groups to have custom Advocacy subscription settings.
 
 Springboard Groups integrates with email wrappers, page wrappers, payment methods, and webform ab tests,
