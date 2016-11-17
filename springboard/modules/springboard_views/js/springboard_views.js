@@ -300,15 +300,28 @@
       // Re-position the download link and add ajax callback when it is clicked; hide on no results:
       $(document).ready(function() {
         var downloadButton = $('.view-sbv-donations a.views-data-export');
+        $('#sb-db-items-per-page').before('<span id="sbv-export-download-msg"></span>');
         downloadButton.click(function (e) {
-
+          $('#sbv-export-download-msg').text('Working...');
+          // Gather data:
+          var viewParams = {};
+          viewParams['status'] = $('#views-exposed-form-sbv-donations-page #edit-status').val();
           downloadButton.hide();
           e.preventDefault();
           $.ajax({
+            type: 'POST',
             url: "/sbv-export-queue-ajax",
+            dataType: 'json',
+            data: {"export_params" : Drupal.settings.sbvDonationsExport},
             context: document.body,
             success: function(data) {
-              alert('Your export has been queued; you will be emailed a download link when it is ready.');
+              if (data.status == 'success') {
+                $('#sbv-export-download-msg').text('Your export has been queued; you will be emailed a download link when it is ready.');
+              }
+              else {
+                $('#sbv-export-download-msg').text('Export failed.');
+                alert('There was an error; the export file was not generated.');
+              }
             }
           });
         });

@@ -525,6 +525,20 @@ function springboard_views_views_query_alter(&$view, &$query) {
  * sbv_donations data export queue AJAX callback.
  */
 function _springboad_views_data_export_queue() {
-  global $user;
-  echo '!';  
+  if (!isset($_POST['export_params'])) {
+    drupal_json_output(array('status' => 'fail'));
+    return;
+  }
+
+  $data = $_POST['export_params'];
+  $recipients = array(
+    'josh.estep@jacksonriver.com',
+  );
+
+  // Queue the data export job:
+  $success = TRUE;
+  //$success = springboard_dw_csv_export_insert('Drupal', $data, $recipients);
+
+  // Return status to jQuery:
+  drupal_json_output(array('status' => $success ? 'success' : 'fail'));
 }

@@ -186,6 +186,6 @@ function _springboard_views_drush_export_donations_dw_key_map() {
   return array(
     'status' => 'status',
     'internal_name' => 'field_fundraiser_internal_name_value',
-    'transaction_date' => 'transaction_date',
+    'transaction_date' => 'date_filter',
   );
 }

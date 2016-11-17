@@ -32,6 +32,35 @@ function springboard_views_views_handlers() {
 function springboard_views_form_views_exposed_form_alter(&$form, &$form_state) {
   if (isset($form['#id'])
     && ($form['#id'] == 'views-exposed-form-sbv-donations-page' || $form['#id'] == 'views-exposed-form-sbv-donations-page-2')) {
+    // Pass filtering and sorting data to jQuery:
+    if (isset($form_state['input']) && !empty($form_state['input'])) {
+      module_load_include('inc', 'springboard_views', 'springboard_views.drush');
+      $vals = $form_state['input'];
+      $dw_drupal_key_map = _springboard_views_drush_export_donations_dw_key_map();
+      $dw_drupal_key_map = array_flip($dw_drupal_key_map);
+      $view_data = array();
+      foreach ($vals as $drupal_field_key => $value) {
+        if (empty($value)) {
+          continue;
+        }
+
+        // Handle date filtering:
+        if ($drupal_field_key == 'date_filter') {
+        }
+  
+        // Account for status option select behavior:
+        if ($drupal_field_key == 'status' && $value == 'All') {
+          $value = '';
+        }
+        if (array_key_exists($drupal_field_key, $dw_drupal_key_map)) {
+          $view_data[$dw_drupal_key_map[$drupal_field_key]] = $value;
+        }
+      }
+      $form['#attached']['js'][] = array(
+        'type' => 'setting',
+        'data' => array('sbvDonationsExport' => $view_data),
+      );
+    }
     // Attached CSS and jQuery related to the exposed filters:
     drupal_add_css('//maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.css', array('type' => 'external'));
     $form['#attached']['css'][] = drupal_get_path('module', 'springboard_views') . '/css/springboard_views.css';
