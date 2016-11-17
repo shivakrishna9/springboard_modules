@@ -297,15 +297,20 @@
       });
 
 
-
-
-
       // Re-position the download link and add ajax callback when it is clicked; hide on no results:
       $(document).ready(function() {
         var downloadButton = $('.view-sbv-donations a.views-data-export');
         downloadButton.click(function (e) {
+
+          downloadButton.hide();
           e.preventDefault();
-          alert('Queue of CSV export request happens now.');
+          $.ajax({
+            url: "/sbv-export-queue-ajax",
+            context: document.body,
+            success: function(data) {
+              alert('Your export has been queued; you will be emailed a download link when it is ready.');
+            }
+          });
         });
         donationsReportTable.before(downloadButton);
         if ($('.view-empty').length) {

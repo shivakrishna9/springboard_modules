@@ -219,6 +219,22 @@ function springboard_views_springboard_admin_alias_patterns() {
   );
 }
 
+/**
+ * Implements hook_menu().
+ */
+function springboard_views_menu() {
+  $items = array();
+  $items['sbv-export-queue-ajax'] = array(
+    'title' => 'AJAX callback',
+    'page callback' => '_springboad_views_data_export_queue',
+    'access callback' => 'user_access',
+    'access argument' => 'administer fundraiser',
+    'type' => MENU_CALLBACK,
+  );
+  return $items;
+}
+
+
 function springboard_views_springboard_admin_admin_menu_items_alter(&$items) {
   // Top Level: Reports.
   $items['admin/springboard/reports'] = array(
@@ -503,4 +519,12 @@ function springboard_views_views_query_alter(&$view, &$query) {
     'args' => array(),
     'type' => 'AND',
   );
+}
+
+/**
+ * sbv_donations data export queue AJAX callback.
+ */
+function _springboad_views_data_export_queue() {
+  global $user;
+  echo '!';  
 }
