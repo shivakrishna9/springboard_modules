@@ -41,7 +41,7 @@ function springboard_group_og_context_handler($item = NULL) {
   $ret = array();
   if ($user->uid) {
     if (user_access('administer group')) {
-      $groups = og_get_all_group();
+      $groups = springboard_group_get_all_springboard_groups();
     }
     else {
       $groups = og_get_groups_by_user(NULL, 'node');

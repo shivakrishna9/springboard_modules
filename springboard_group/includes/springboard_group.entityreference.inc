@@ -23,7 +23,7 @@ function springboard_group_query_entityreference_alter(&$query) {
             $condition->isNull('og_membership.gid');
           }
           else {
-            $all_groups = og_get_all_group();
+            $all_groups = springboard_group_get_all_springboard_groups();
             $condition->condition('og_membership.gid', $all_groups, 'IN');
             $condition->condition('og_membership.entity_type', 'node');
           }

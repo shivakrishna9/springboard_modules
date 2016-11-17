@@ -67,7 +67,7 @@ function springboard_group_views_query_alter(&$view, &$query) {
       }
       else {
         if ($context == '_all') {
-          $all_groups = og_get_all_group();
+          $all_groups = springboard_group_get_all_springboard_groups();
           $condition->condition('og_membership.gid', $all_groups, 'IN');
           $condition->condition('og_membership.entity_type', 'node');
         }

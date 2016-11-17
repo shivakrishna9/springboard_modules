@@ -21,7 +21,6 @@ require_once __DIR__ . '/includes/springboard_group.rules.inc';
 require_once __DIR__ . '/includes/springboard_group.webform.inc';
 require_once __DIR__ . '/includes/springboard_group.webform_ab.inc';
 require_once __DIR__ . '/includes/springboard_group.wrappers_common.inc';
-
 /**
  * Implements hook_node_info().
  *
@@ -107,6 +106,24 @@ function springboard_group_get_grouped_types() {
     }
   }
   return $groups_enabled;
+}
+
+/**
+ * Return all groups of the "springboard_group" bundle.
+ */
+function springboard_group_get_all_springboard_groups() {
+  if (!field_info_field(OG_GROUP_FIELD)) {
+    return array();
+  }
+
+  $query = new EntityFieldQuery();
+  $return = $query
+    ->entityCondition('entity_type', 'node')
+    ->entityCondition('bundle', 'springboard_group')
+    ->fieldCondition(OG_GROUP_FIELD, 'value', 1, '=')
+    ->execute();
+
+  return !empty($return['node']) ? array_keys($return['node']) : array();
 }
 
 /**
