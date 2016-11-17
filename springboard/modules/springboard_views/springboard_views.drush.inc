@@ -33,10 +33,14 @@ function _springboard_views_drush_export_donations_csv() {
   $output = '';
   $current_page = 0;
   $total_results = 0;
-  $default_items_per_page = 50000; // If the view returns all results
+  $default_items_per_page = 250000; // If the view returns all results
   $max_page = 100; // Primarily for testing; secondarily to avoid an infinite loop.
+  $debug = FALSE; // Set this to true to prevent CSV export file generation.
 
   // Export each page of results into its own CSV file:
+  $drush_options = (array) json_decode(drush_get_option('json'));
+  $dw_drupal_key_map = _springboard_views_drush_export_donations_dw_key_map();
+  echo "\n\n" . print_r($drush_options, 1) . "\n\n";
   while ($current_page < $max_page) {
     // Load the view.
     $view = views_get_view('sbv_donations');
@@ -59,8 +63,10 @@ function _springboard_views_drush_export_donations_csv() {
     }
     $view->set_offset($current_page * $items_per_page);
 
+
+
+
     // Apply filtering, sorting, and ordering:  
-    $drush_options = (array) json_decode(drush_get_option('json'));
     $order = 'ASC';
     unset($sort);
     foreach ($drush_options as $option_name => $option_value) {
@@ -79,17 +85,52 @@ function _springboard_views_drush_export_donations_csv() {
         $export_email = $option_value;
         continue;
       }
+      // Check for debug mode where files don't get created:
+      if ($option_name == 'debug') {
+        $debug = TRUE;
+        continue; 
+      }
+
+      // Support an array value if transaction date filtering is done:
+      if ($option_name == 'transaction_date') {
+        unset($min_date); unset($max_date);
+        $expected_date_format = 'L, F j, Y';
+        if (isset($option_value->min) && isset($option_value->max)) {
+          $min_date = strtotime($option_value->min);
+          $max_date = strtotime($option_value->max);
+        }
+        elseif (isset($option_value->min)) {
+          $min_date = strtotime($option_value->min);
+          $max_date = date("m/d/Y", time() + (60*60*24));
+        }
+        elseif (isset($option_value->max)) {
+          $min_date = strtotime('1/1/1980');
+          $max_date = strtotime($option_value->max);
+        }
+        if (isset($min_date) && isset($max_date)) {
+          $view->exposed_input['date_filter']['min']['date'] = date($expected_date_format, $min_date);
+          $view->exposed_input['date_filter']['max']['date'] = date($expected_date_format, $max_date);
+        }
+        continue;
+      }
+    
       // Apply filters:
-      $filter = $view->get_item($display_id, 'filter', $option_name);
-      $filter['value']['value'] = $option_value;
-      $view->set_item($display_id, 'filter', $option_name, $filter);
+      if (isset($dw_drupal_key_map[$option_name])) {
+        echo '"' . $option_value . '"';
+        $filter_key = $dw_drupal_key_map[$option_name];
+        $view->exposed_input[$filter_key] = $option_value;
+      }
+      else {
+        echo json_encode(array('error' => 'Bad filter \'' . $option_name . '\'; aborting'));
+        return;
+      }
     }
 
     // Apply sort and order, if specified:
     if (isset($sort)) {
       // how ???
     }
-
+    echo "\n\n" . print_r($view->exposed_input, 1) . "\n\n";
     $view->pre_execute();
     $view->execute();
 
@@ -97,13 +138,13 @@ function _springboard_views_drush_export_donations_csv() {
     if (isset($view->result) && count($view->result) > 0) {
       $output = $view->render();
       $temp_name = drupal_tempnam('temporary://', date('Y-m-d--H-i-s') . '-donations-export-page-' . ($current_page + 1) . '--');
-      if (file_put_contents($temp_name . '.csv', $output)) {
-        $file_paths[] = $temp_name;
-        $total_results += count($view->result); 
-      }
-      else {
-        echo json_encode(array('error' => 'Export failed for file: "' . $temp_name . '"; aborting.'));
-        return;
+      $file_paths[] = $temp_name;
+      $total_results += count($view->result); 
+      if (!$debug) {
+        if (!file_put_contents($temp_name . '.csv', $output)) {
+          echo json_encode(array('error' => 'Export failed for file: "' . $temp_name . '"; aborting.'));
+          return;
+        }
       }
     }
     else {  
@@ -122,7 +163,24 @@ function _springboard_views_drush_export_donations_csv() {
     'export_file_count' => count($file_paths),
     'export_file_paths' => $file_paths,
   );
+  if ($debug) {
+    $export_summary['file_gen_disabled'] = 1;
+  }
   echo "\n\n"; print_r($export_summary);echo "\n\n";
 
   echo json_encode($export_summary);
+
+  echo "\n\n"; 
+}
+
+/**
+ * Helper function which returns an array that maps data warehouse field keys 
+ * to the export donation view's fields used for filtering and sorting:
+ */
+function _springboard_views_drush_export_donations_dw_key_map() {
+  return array(
+    'status' => 'status',
+    'internal_name' => 'field_fundraiser_internal_name_value',
+    'transaction_date' => 'transaction_date',
+  );
 }
