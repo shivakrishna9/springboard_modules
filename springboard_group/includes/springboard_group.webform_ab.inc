@@ -103,18 +103,29 @@ function _springboard_group_webform_ab_valdiate_test(&$form, &$form_state, $gids
         $included_to_delete[] = $webform;
       }
     }
+  }
+  $form_state['included_to_delete'] = $included_to_delete;
 
-    $form_state['included_to_delete'] = $included_to_delete;
-
-    // Set the message.
-    if (!empty($included_to_delete)) {
-      $count = count($included_to_delete);
-      $format = format_plural($count, 'form', 'form');
-      $form_state['group_ajax_messages'][] = t('@count @format belonging to ineligible groups will be removed when this form is saved. Please update your included webforms after saving.', array(
-        '@count' => $count,
-        '@format' => $format,
-      ));
+  if (!empty($included_to_delete)) {
+    $count = count($included_to_delete);
+    $format = format_plural($count, 'webform', 'webforms');
+    $uses = format_plural($count, 'is', 'are');
+    $rows = [];
+    foreach ($included_to_delete as $included) {
+      $node = node_load($included['webform_nid']);
+      $rows[] = l(check_plain($node->title), 'node/' . $included['webform_nid'], array('attributes' => array('target' => '_blank')));
     }
+
+    $message = t('@count @format belonging to an incompatible group @use included in this test, and will be removed when this form is saved.', array(
+      '@count' => $count,
+      '@format' => $format,
+      '@use' => $uses,
+    ));
+
+    if ($count < 11) {
+      $message .= theme('item_list', array('items' => $rows));
+    }
+    $form_state['group_ajax_messages'][] = $message;
   }
 }
 
@@ -134,24 +145,34 @@ function _springboard_group_webform_ab_validate_child_form(&$form, &$form_state,
       $ineligible_tests[] = (array) $webform;
     }
   }
-  $form_state['included_to_delete'] = $ineligible_tests;
 
+  $form_state['included_to_delete'] = $ineligible_tests;
   // Set the message.
   if (!empty($ineligible_tests)) {
     $count = count($ineligible_tests);
     $format = format_plural($count, 'test', 'tests');
-    $form_state['group_ajax_messages'][] = t(
-      'This form will be removed from @count multivariate @format belonging to ineligible groups when this form is saved.',
-      array(
-        '@count' => $count,
-        '@format' => $format,
-      ));
+    $uses = format_plural($count, 'is', 'are');
+    $rows = [];
+    foreach ($ineligible_tests as $ineligible) {
+      $node = node_load($ineligible['test_nid']);
+      $rows[] = l(check_plain($node->title), 'node/' . $ineligible['test_nid'], array('attributes' => array('target' => '_blank')));
+    }
+    $message = t('This form will be removed from @count multivariate @format belonging to ineligible groups when this form is saved.', array(
+      '@count' => $count,
+      '@format' => $format,
+      '@use' => $uses,
+    ));
+
+    if ($count < 11) {
+      $message .= theme('item_list', array('items' => $rows));
+    }
+    $form_state['group_ajax_messages'][] = $message;
   }
 }
 
 
 /**
- * Check if a wrapper is in a set of gids.
+ * Check if a test is in a set of gids.
  *
  * @param array $gids
  *   Group Ids.
@@ -163,12 +184,13 @@ function _springboard_group_webform_ab_validate_child_form(&$form, &$form_state,
  */
 function springboard_group_webform_ab_get_grouped($gids, $webform, $type = 'test') {
   $grouped = [];
-  if ('type' == 'test') {
+  if ($type == 'test') {
     $id = $webform['webform_nid'];
   }
   else {
     $id = $webform['test_nid'];
   }
+
   foreach ($gids as $gid) {
     $in_group = og_get_membership('node', $gid, 'node', $id);
     if ($in_group) {
