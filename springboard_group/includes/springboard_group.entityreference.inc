@@ -1,5 +1,7 @@
 <?php
 
+// Needed for SpringboardGroup_EntityReference_SelectionHandler_Generic.class.php
+require_once drupal_get_path('module', 'entityreference') . '/plugins/selection/EntityReference_SelectionHandler_Generic.class.php';
 /**
  * Implements hook_query_TAG_alter().
  *
