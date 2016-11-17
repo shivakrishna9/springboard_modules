@@ -540,5 +540,6 @@ function _springboad_views_data_export_queue() {
   //$success = springboard_dw_csv_export_insert('Drupal', $data, $recipients);
 
   // Return status to jQuery:
+  
   drupal_json_output(array('status' => $success ? 'success' : 'fail'));
 }
