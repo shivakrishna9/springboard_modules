@@ -40,7 +40,9 @@ function springboard_views_drush_export_donations_csv() {
   // Export each page of results into its own CSV file:
   $drush_options = (array) json_decode(drush_get_option('json'));
   $dw_drupal_key_map = _springboard_views_drush_export_donations_dw_key_map();
-  echo "\n\n" . print_r($drush_options, 1) . "\n\n";
+  if ($debug) {
+    echo "\n\n" . print_r($drush_options, 1) . "\n\n";
+  }
   while ($current_page < $max_page) {
     // Load the view.
     $view = views_get_view('sbv_donations');
@@ -121,12 +123,16 @@ function springboard_views_drush_export_donations_csv() {
     
       // Apply filters:
       if (isset($dw_drupal_key_map[$option_name])) {
-        echo '"' . $option_value . '"';
+        if ($debug) {
+          echo '"' . $option_value . '"';
+        }
         $filter_key = $dw_drupal_key_map[$option_name];
         $view->exposed_input[$filter_key] = $option_value;
       }
       else {
-        echo json_encode(array('error' => 'Bad filter \'' . $option_name . '\'; aborting'));
+        if ($debug) {
+          echo json_encode(array('error' => 'Bad filter \'' . $option_name . '\'; aborting'));
+        }
         return;
       }
     }
@@ -135,7 +141,9 @@ function springboard_views_drush_export_donations_csv() {
     if (isset($sort)) {
       // how ???
     }
-    echo "\n\n" . print_r($view->exposed_input, 1) . "\n\n";
+    if ($debug) {
+      echo "\n\n" . print_r($view->exposed_input, 1) . "\n\n";
+    }
     $view->pre_execute();
     $view->execute();
 
@@ -170,12 +178,15 @@ function springboard_views_drush_export_donations_csv() {
   );
   if ($debug) {
     $export_summary['file_gen_disabled'] = 1;
+
+    echo "\n\n"; print_r($export_summary);echo "\n\n";
   }
-  echo "\n\n"; print_r($export_summary);echo "\n\n";
 
   echo json_encode($export_summary);
 
-  echo "\n\n"; 
+  if ($debug) {
+    echo "\n\n";
+  }
 }
 
 /**
