@@ -23,7 +23,7 @@ function springboard_views_drush_command() {
 /**
  * Callback for sb-export-donations-csv.
  */
-function springboard_views_drush_export_donations_csv() {
+function _springboard_views_drush_export_donations_csv() {
   // Grant full access so the view can be executed:
   $file_paths = array();
   $start = time();
@@ -69,17 +69,20 @@ function springboard_views_drush_export_donations_csv() {
 
 
     // Apply filtering, sorting, and ordering:  
-    $order = 'ASC';
-    unset($sort);
+    $sort = 'asc';
+    unset($order_by);
     foreach ($drush_options as $option_name => $option_value) {
       // Collect sorting data:
-      if ($option_name == 'sort') {
-        $sort = $option_value;
+      if ($option_name == 'order') {
+        $order_by = $option_value;
         continue;
       }
       // Collect ordering data:
-      elseif ($option_name == 'order') {
-        $order = strtoupper($option_value);
+      elseif ($option_name == 'sort') {
+        $sort = strtolower($option_value);
+        if ($sort != 'desc' && $sort != 'asc') {
+          $sort = 'asc';
+        }
         continue;
       }
       // Collect the complete message email:
@@ -97,7 +100,6 @@ function springboard_views_drush_export_donations_csv() {
         $output_path = $option_value;
         continue;
       }
-
       // Support an array value if transaction date filtering is done:
       if ($option_name == 'transaction_date') {
         unset($min_date); unset($max_date);
@@ -130,17 +132,17 @@ function springboard_views_drush_export_donations_csv() {
         $view->exposed_input[$filter_key] = $option_value;
       }
       else {
-        if ($debug) {
-          echo json_encode(array('error' => 'Bad filter \'' . $option_name . '\'; aborting'));
-        }
+        echo json_encode(array('error' => 'Bad filter \'' . $option_name . '\'; aborting'));
         return;
       }
     }
 
-    // Apply sort and order, if specified:
-    if (isset($sort)) {
-      // how ???
+    // Apply sort and order, if specified; these are applied via query alter:
+    if (isset($order_by)) {
+      $view->drush_sort = $sort;
+      $view->drush_order = $order_by;
     }
+
     if ($debug) {
       echo "\n\n" . print_r($view->exposed_input, 1) . "\n\n";
     }
@@ -150,6 +152,7 @@ function springboard_views_drush_export_donations_csv() {
     // Save the output to a file, if results were returned; otherwise stop:
     if (isset($view->result) && count($view->result) > 0) {
       $output = $view->render();
+      //echo "\n\n" . $output . "\n\n\n";
       $filename = $output_path . '/' . date('Y-m-d--H-i-s') . '-donations-export-page-' . ($current_page + 1) . '.csv';
       $file_paths[] = $filename;
       $total_results += count($view->result); 
@@ -202,9 +205,10 @@ function _springboard_views_drush_export_donations_dw_key_map() {
     'form_id' => 'nid',
     'gateway' => 'gateway',
     'internal_name' => 'field_fundraiser_internal_name_value',
+    'order_id' => 'order_id',
     'status' => 'status',
     'transaction_id' => 'txn_id',
-    'transaction_date' => 'date_filter',
+    'transaction_date' => 'transaction_date',
     'updated_at' => 'changed',
   );
 }

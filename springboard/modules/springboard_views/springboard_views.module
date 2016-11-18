@@ -490,6 +490,17 @@ function springboard_views_views_query_alter(&$view, &$query) {
   if ($view->name != 'sbv_donations' || $view->current_display != 'views_data_export_1') {
     return;
   }
+
+  // Apply drush-based filters fom the drush sb-export-donations-csv (drush sb-edc) command:
+  if (isset($view->drush_order) && isset($view->drush_sort)) {
+    $sort = $view->drush_sort;
+    $order_by = $view->drush_order;
+    $view->query->orderby = array(array(
+      'field' => $order_by,
+      'direction' => $sort,
+    ));
+  }
+
   $min_date = ''; $max_date = '';
   if (isset($view->exposed_input['date_filter']['min']['date'])) {
     $min_date = date('Y-m-d', strtotime($view->exposed_input['date_filter']['min']['date']));
