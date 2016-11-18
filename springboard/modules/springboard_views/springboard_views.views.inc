@@ -65,6 +65,14 @@ function springboard_views_views_data() {
     ),
   );
 
+  $data['node']['springboard_type'] = array (
+    'title' => 'Springboard content type',
+    'help' => 'Sort by various Springboard-contextual groupings of content types',
+    'filter' => array (
+      'handler' => 'springboard_views_handler_node_springboard_type',
+    ),
+  );
+
   return $data;
 }
 

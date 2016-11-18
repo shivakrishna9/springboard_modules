@@ -491,3 +491,75 @@ function springboard_modules_enabled($modules) {
     }
   }
 }
+
+function springboard_get_springboard_content_groups() {
+  $types = array(
+    'sb_fundraiser' => array(
+      '#name' => "Fundraiser",
+      '#description' => "Content types utilizing Springboard fundraiser.",
+      '#types' => array(
+        'donation_form' => "Donation Form",
+        'p2p_donation_form' => "Peer to Peer Donation Form"
+      ),
+    ),
+    'sb_advocacy' => array(
+      '#name' => "Advocacy",
+      '#description' => '',
+      '#types' => array(
+        'sba_message_action' => "Message Action",
+        'sba_social_action' => "Social Action",
+        'springboard_petition' => "Petition",
+      ),
+    ),
+    'sb_webformuser' => array (
+      '#name' => "Custom forms",
+      '#description' => "All  webform types not utilizing fundraiser",
+      '#types' => array(
+        'webform' => "Webform",
+      ),
+    ),
+    'sb_p2p' => array (
+      '#name' => "Peer to peer",
+      '#description' => '',
+      '#types' => array (
+        'p2p_campaign' => "Peer to Peer Campaign",
+        'p2p_donation_form' => "Peer to Peer Donation Form",
+        'p2p_personal_campaign' => "Peer to Peer Personal Campaign",
+        'p2p_campaign_landing' => "Peer to Peer Campaign Landing",
+        'p2p_category' => "Peer to Peer Category",
+
+      ),
+    ),
+    'sb_content' => array(
+      '#name' => "Content", // @TODO match term with IA decisions
+      '#description' => '',
+      '#types' => array(
+        'page_wrapper' => "Page Wrapper",
+        'email_wrapper' => "Email Wrapper",
+        'page' => "Basic Page",
+
+      )
+    ),
+  ); //@TODO create better function with alter hook for modules to add their own types.
+
+  return $types;
+}
+
+function springboard_get_springboard_content_types($groups = array()) {
+  $types = array();
+  $groups_available = springboard_get_springboard_content_groups();
+  if (empty($groups)) {
+    $groups = array_keys($groups_available);
+  }
+  else {
+    $groups = array_keys($groups);
+  }
+
+    foreach($groups_available as $machine_name => $info) {
+      if(in_array($machine_name, $groups)) {
+        $types += $info['#types'];
+      }
+    }
+
+  return array_keys($types);
+}
