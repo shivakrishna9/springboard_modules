@@ -23,7 +23,7 @@ function springboard_views_drush_command() {
 /**
  * Callback for sb-export-donations-csv.
  */
-function _springboard_views_drush_export_donations_csv() {
+function springboard_views_drush_export_donations_csv() {
   // Grant full access so the view can be executed:
   $file_paths = array();
   $start = time();
