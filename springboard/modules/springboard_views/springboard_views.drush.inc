@@ -184,8 +184,16 @@ function _springboard_views_drush_export_donations_csv() {
  */
 function _springboard_views_drush_export_donations_dw_key_map() {
   return array(
-    'status' => 'status',
+    'amount' => 'amount',
+    'currency' => 'currency',
+    'created_at' => 'created',
+    'email' => 'mail',
+    'form_id' => 'nid',
+    'gateway' => 'gateway',
     'internal_name' => 'field_fundraiser_internal_name_value',
+    'status' => 'status',
+    'transaction_id' => 'txn_id',
     'transaction_date' => 'date_filter',
+    'updated_at' => 'changed',
   );
 }
