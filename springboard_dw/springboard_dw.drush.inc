@@ -68,3 +68,14 @@ function drush_springboard_dw_export_queue_process() {
     springboard_dw_watchdog_log('Running springboard-dw-export-queue-process');
   }
 }
+
+/**
+ * Callback function for drush springboard-dw-export-queue-process.
+ *
+ * Processes the Springboard data warehouse export queue.
+ */
+function drush_springboard_dw_csv_reports_queue_process() {
+
+  // Process the items in the CSV export queue.
+  springboard_dw_process_csv_export_queue();
+}
