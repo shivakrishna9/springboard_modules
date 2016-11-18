@@ -13,6 +13,9 @@ function springboard_dw_drush_help($command) {
   switch ($command) {
     case 'drush:springboard-dw-export-queue-process':
       return dt('Processes the Springboard data warehouse export queue.');
+    case 'drush:springboard-dw-csv-reports-queue-process':
+      return dt('Processes the Springboard data warehouse CSV reports export
+      queue.');
   }
 }
 
@@ -24,12 +27,20 @@ function springboard_dw_drush_command() {
   $items = array();
   $items['springboard-dw-export-queue-process'] = array(
     'description' => dt('Processes the Springboard data warehouse export queue.'),
-    'examples' => array(
+    'examples'    => array(
       'Standard example' => 'springboard-dw-export-queue-process',
     ),
-    'aliases' => array('sb-dw-export'),
+    'aliases'     => array('sb-dw-export'),
   );
 
+  $items['springboard-dw-csv-reports-queue-process'] = array(
+    'description' => dt('Processes the Springboard data warehouse CSV reports export
+      queue.'),
+    'examples'    => array(
+      'Standard example' => 'springboard-dw-csv-reports-queue-process',
+    ),
+    'aliases'     => array('sb-dw-csv-export'),
+  );
   return $items;
 }
 
@@ -56,4 +67,15 @@ function drush_springboard_dw_export_queue_process() {
     drush_log('Running springboard-dw-export-queue-process', 'ok');
     springboard_dw_watchdog_log('Running springboard-dw-export-queue-process');
   }
+}
+
+/**
+ * Callback function for drush springboard-dw-export-queue-process.
+ *
+ * Processes the Springboard data warehouse export queue.
+ */
+function drush_springboard_dw_csv_reports_queue_process() {
+
+  // Process the items in the CSV export queue.
+  springboard_dw_process_csv_export_queue();
 }
