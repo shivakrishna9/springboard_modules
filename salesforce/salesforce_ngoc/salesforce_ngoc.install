@@ -164,12 +164,6 @@ function salesforce_ngoc_schema() {
         'length' => '50',
         'not null' => FALSE,
       ),
-      'transaction_sfid' => array(
-        'description' => 'The Salesforce id of the opportunity (transaction) that was created via the batch upload',
-        'type' => 'varchar',
-        'length' => '50',
-        'not null' => FALSE,
-      ),
       'created' => array(
         'description' => 'Datetime batch_upload object was synced to SF.',
         'type' => 'int',

@@ -11,6 +11,7 @@ define('SALESFORCE_NGOC_DEFAULT_PAYMENT_METHOD_TYPE', 'Third Party Charge');
 define('SALESFORCE_NGOC_DEFAULT_RECORD_TYPE', 'Donation');
 define('SALESFORCE_NGOC_DEFAULT_TRANSACTION_TYPE', 'Payment');
 define('SALESFORCE_NGOC_DEFAULT_FREQUENCY', 'One Payment');
+define('SALESFORCE_NGOC_DEFAULT_POLL_RECORD_LIMIT', 2000);
 
 /**
  * Implements hook_cron().
@@ -88,8 +89,10 @@ function salesforce_ngoc_salesforce_genmap_map_fields_alter(&$fields, $context) 
     $fields['rC_Connect__Giving_Transaction_Type__c'] = variable_get('salesforce_ngoc_default_transaction_type', SALESFORCE_NGOC_DEFAULT_TRANSACTION_TYPE);
     $fields['rC_Connect__Giving_Payment_Frequency__c'] = variable_get('salesforce_ngoc_default_frequency', SALESFORCE_NGOC_DEFAULT_FREQUENCY);
     $fields['rC_Connect__Payment_Method_Payment_Type__c'] = variable_get('salesforce_ngoc_default_payment_method_type', SALESFORCE_NGOC_DEFAULT_PAYMENT_METHOD_TYPE);
-    $fields['rC_Connect__Disable_Merchant_Messages__c'] = TRUE; // Prevents NGOC from trying to process the payment.
-    $fields['rC_Connect__Giving_Giving_Frequency__c'] = 'One Payment'; // Depends on one-time or recurring gift.
+    // Prevents NGOC from trying to process the payment.
+    $fields['rC_Connect__Disable_Merchant_Messages__c'] = TRUE;
+    // Depends on one-time or recurring gift.
+    $fields['rC_Connect__Giving_Giving_Frequency__c'] = 'One Payment';
     $fields['rC_Connect__Giving_Record_Type__c'] = variable_get('salesforce_ngoc_default_record_type', SALESFORCE_NGOC_DEFAULT_RECORD_TYPE);
   }
 }
@@ -203,13 +206,13 @@ function salesforce_ngoc_salesforce_sync_save_map_alter($record) {
       // Save record in salesforce_ngoc_sync_map.
       $ngoc_record = array(
         'batch_upload_sfid' => $record->sfid,
-        'sf_status' => 'new',
+        'sf_status' => 'New',
         'drupal_id' => $record->drupal_id,
         'module' => $record->module,
         'delta' => $record->delta,
         'created' => REQUEST_TIME,
       );
-      salesforce_ngoc_sync_save_map($ngoc_record);
+      salesforce_ngoc_sync_map_save($ngoc_record);
       // Prevents batch_upload record from being saved to salesforce_sync_map.
       $record->prevent_save = TRUE;
     }
@@ -238,20 +241,24 @@ function salesforce_ngoc_write_hold_queue_items($item, $parents) {
 }
 
 /**
- * Creates and saves a Salesforce NGOC record map.
+ * Creates or updates a Salesforce NGOC sync map record.
  *
  * @param mixed $record
- *   Can be an array of values or a salesforce_ngoc_sync_map entity object
+ *   Can be an array of values or a salesforce_ngoc_sync_map entity object.
  *
- * @return bool
+ * @return mixed
  *   SAVED_NEW or SAVED_UPDATED depending on the operation performed. Otherwise,
  *   FALSE is returned if the record could not be saved.
  */
-function salesforce_ngoc_sync_save_map($record) {
+function salesforce_ngoc_sync_map_save($record) {
   if (is_array($record)) {
-    // Allow sending an array and updating an existing entity with the values.
-    $entity = salesforce_ngoc_sync_load_map($record);
-    if ($entity) {
+    // Allow sending an array and updating an existing entity.
+    $id = _salesforce_ngoc_sync_get_id($record);
+    if (!empty($id)) {
+      $entity = salesforce_ngoc_sync_map_load($id);
+    }
+    // Adds array values to the loaded entity.
+    if (isset($entity)) {
       foreach ($record as $key => $value) {
         $entity->$key = $value;
       }
@@ -262,7 +269,7 @@ function salesforce_ngoc_sync_save_map($record) {
       $record = entity_create('salesforce_ngoc_sync_map', $record);
     }
   }
-  if ($record->entityType() == 'salesforce_ngoc_sync_map' ) {
+  if ($record->entityType() == 'salesforce_ngoc_sync_map') {
     // Adds the data to the database.
     $result = entity_save('salesforce_ngoc_sync_map', $record);
   }
@@ -270,27 +277,48 @@ function salesforce_ngoc_sync_save_map($record) {
 }
 
 /**
- * Retreives a Salesforce NGOC record map.
- *
- * @param mixed $record
- *   Can be an array of values or a salesforce_ngoc_sync_map entity object
- *
- * @return bool|object
- *   The entity object you requested
+ * Creates and/or updates Salesforce NGOC sync map record(s).
+ * @param array $records
+ *   An array of salesforce_ngoc_sync_map records.
  */
-function salesforce_ngoc_sync_load_map($record) {
-  $id = _salesforce_ngoc_sync_get_id($record);
-  if (!empty($id)) {
-    $entities = entity_load('salesforce_ngoc_sync_map', array($id));
-    if (isset($entities[$id])) {
-      return $entities[$id];
-    }
+function salesforce_ngoc_sync_map_save_multiple($records) {
+  foreach ($records as $record) {
+    salesforce_ngoc_sync_map_save((array) $record);
   }
-  return FALSE;
+}
+
+/**
+ * Load a single salesforce_ngoc_sync_map record.
+ *
+ * @param int $id
+ *    The id representing the record we want to load.
+ * @param bool $reset
+ *    Whether to reset the internal cache for the requested entity type.
+ *
+ * @return mixed
+ *    The Entity Object on success or FALSE.
+ */
+function salesforce_ngoc_sync_map_load($id, $reset = FALSE) {
+  $entities = salesforce_ngoc_sync_map_load_multiple(array($id), array(), $reset);
+  // entity_load() returns an array. We want the entity itself.
+  if (!isset($entities[$id])) {
+    return FALSE;
+  }
+  return $entities[$id];
+}
+
+/**
+ * Load multiple salesforce_ngoc_sync_map records.
+ */
+function salesforce_ngoc_sync_map_load_multiple($ids = array(), $conditions = array(), $reset = FALSE) {
+  return entity_load('salesforce_ngoc_sync_map', $ids, $conditions, $reset);
 }
 
 /**
  * Helper to grab the record id of a map.
+ *
+ * @param mixed $item
+ *   Can be an array of values or an entity object.
  */
 function _salesforce_ngoc_sync_get_id($item) {
   if (isset($item->id) && !empty($item->id)) {
@@ -342,5 +370,100 @@ function salesforce_ngoc_standalone_cron_access() {
  * Queries SF batch_upload objects for change in processing status.
  */
 function salesforce_ngoc_poll_batch_upload() {
+  // Get records from {salesforce_ngoc_sync_map}, oldest first.
+  $ngoc_sync_map_records = db_query_range("SELECT * FROM {salesforce_ngoc_sync_map} WHERE sf_status != 'Committed' ORDER BY created DESC", 0, SALESFORCE_NGOC_DEFAULT_POLL_RECORD_LIMIT)->fetchAllAssoc('batch_upload_sfid');
+  $sf_ids = array_keys($ngoc_sync_map_records);
+  // Get corresponding batch upload objects from SF.
+  $batch_upload_sobjects = salesforce_ngoc_get_batch_upload_sobjects($sf_ids);
+  // Compare values from SF to those in {salesforce_ngoc_sync_map}.
+  if (count($batch_upload_sobjects)) {
+    $changed_records = salesforce_ngoc_batch_upload_compare($ngoc_sync_map_records, $batch_upload_sobjects);
+  }
+  // Save {salesforce_ngoc_sync_map} records with updated values.
+  salesforce_ngoc_sync_map_save_multiple($changed_records);
+  // Update polling_attempts and last_polled values. This is bad form to update
+  // entity values directly, but it also seems undesirable to load 2,000
+  // entities just to changes these values. This may cause issues with caching,
+  // so attempting to flush manually afterwards.
+  db_update('salesforce_ngoc_sync_map')
+    ->fields(array('lasted_polled' => time()))
+    ->expression('polling_attempts', 'polling_attempts + :one', array(':one' => 1))
+    ->condition('batch_upload_sfid', $sf_ids, 'IN')
+    ->execute();
+  entity_get_controller('salesforce_ngoc_sync_map')->resetCache($sf_ids);
+}
 
+/**
+ * Compares array of salesforce_ngoc_sync_map records to their SObject Objects.
+ *
+ * @param array $ngoc_sync_map_records
+ *   An assoc array of stdClass Objects (as returened by fetchAllAssoc())
+ *   containing salesforce_ngoc_sync_map record values, keyed by sf id.
+ * @param array $batch_upload_sobjects
+ *   An indexed array of SObject Objects as returned from retrieve() method.
+ *
+ * @return array
+ *   An array containing salesforce_ngoc_sync_map records that have changed,
+ *   and their new values.
+ */
+function salesforce_ngoc_batch_upload_compare($ngoc_sync_map_records, $batch_upload_sobjects) {
+  $changed_records = array();
+  $compare_fields = array(
+    'rC_Connect__Batch_Upload_Status__c' => 'sf_status',
+    'rC_Connect__Batch_Upload_Contact_1_Matched__c' => 'contact_sfid',
+    'rC_Connect__Batch_Upload_Account_Matched__c' => 'account_sfid',
+    'rC_Connect__Batch_Upload_Giving_Matched__c' => 'opportunity_sfid',
+  );
+  // For each batch_upload object retrieved form SF, see if the values are
+  // different than the ones stored in {salesforce_ngoc_sync_map}
+  foreach ($batch_upload_sobjects as $batch_upload_sobject) {
+    $values_have_changed = FALSE;
+    $ngoc_sync_map_record = $ngoc_sync_map_records[$batch_upload_sobject->Id];
+    foreach ($compare_fields as $sf_field => $sb_field) {
+      $new_ngoc_sync_map_record = $ngoc_sync_map_record;
+      if ($batch_upload_sobject->fields->{$sf_field} !== $ngoc_sync_map_record->{$sb_field}) {
+        $values_have_changed = TRUE;
+        $new_ngoc_sync_map_record->{$sb_field} = $batch_upload_sobject->fields->{$sf_field};
+      }
+    }
+    if ($values_have_changed) {
+      $changed_records[] = $new_ngoc_sync_map_record;
+    }
+  }
+  return $changed_records;
+}
+
+/**
+ * Uses SF's retrieve method to get get batch upload SF objects.
+ *
+ * @param array $sf_ids
+ *   An array of salesforce ids to retrieve.
+ *
+ * @return array
+ *   An array containing SObject objects
+ */
+function salesforce_ngoc_get_batch_upload_sobjects($sf_ids) {
+  $sobjects = array();
+  $sf_fields = array(
+    'Id',
+    'rC_Connect__Batch_Upload_Giving_Matched__c',
+    'rC_Connect__Batch_Upload_Account_Matched__c',
+    'rC_Connect__Batch_Upload_Contact_1_Matched__c',
+    'rC_Connect__Account_Status__c',
+    'rC_Connect__Contact1_Status__c',
+    'rC_Connect__Opportunity_Status__c',
+    'rC_Connect__Payment_Method_Status__c',
+    'rC_Connect__Batch_Upload_Status__c',
+    'SB_User_Id__c',
+    'SB_Donation_Id__c',
+  );
+  try {
+    $sfapi = salesforce_get_api();
+    $soap = new SalesforceSoapPartner($sfapi);
+    $sobjects = $soap->retrieve(implode(',', $sf_fields), "rC_Connect__Batch_Upload__c", $sf_ids);
+  }
+  catch (Exception $e) {
+    watchdog('salesforce_ngoc', $e->getMessage(), NULL, WATCHDOG_ERROR);
+  }
+  return $sobjects;
 }
