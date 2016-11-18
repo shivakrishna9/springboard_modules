@@ -234,7 +234,7 @@ function braintree_customer_id_save($account, $customer_id) {
   if (is_array($account)) {
     $account = (object) $account;
   }
-  if (user_load_by_name($account['mail']) !== FALSE) {
+  if (user_load_by_name($account->mail) !== FALSE) {
     return;
   }
 
