@@ -13,6 +13,9 @@ function springboard_dw_drush_help($command) {
   switch ($command) {
     case 'drush:springboard-dw-export-queue-process':
       return dt('Processes the Springboard data warehouse export queue.');
+    case 'drush:springboard-dw-csv-reports-queue-process':
+      return dt('Processes the Springboard data warehouse CSV reports export
+      queue.');
   }
 }
 
