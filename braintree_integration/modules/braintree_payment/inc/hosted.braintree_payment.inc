@@ -88,7 +88,6 @@ function braintree_payment_braintree_payment_form__credit__alter(&$context) {
 function braintree_payment_form_alter(&$form, &$form_state, $form_id) {
   $braintree = !empty($form['submitted']['payment_information']['payment_fields']['credit']['braintree']);
   $offline = !empty($form['#node']->fundraiser_offline);
-  dpm($form);
   if ($braintree && $offline) {
     $form['submitted']['payment_information']['payment_fields']['credit']['braintree']['new']['number']['#required'] = TRUE;
     $form['submitted']['payment_information']['payment_fields']['credit']['braintree']['new']['expiration']['month']['#required'] = TRUE;
