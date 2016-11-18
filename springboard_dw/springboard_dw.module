@@ -6,6 +6,7 @@
 
 require_once 'includes/springboard_dw.api.inc';
 require_once 'includes/springboard_dw.queue.inc';
+require_once 'includes/springboard_dw.csvexport.queue.inc';
 require_once 'includes/springboard_dw.utility.inc';
 require_once 'includes/springboard_dw.transaction.inc';
 
