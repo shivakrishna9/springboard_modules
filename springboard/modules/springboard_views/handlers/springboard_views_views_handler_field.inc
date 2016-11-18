@@ -35,7 +35,7 @@ class springboard_views_views_handler_field extends views_handler_field
 
     // Extract extra props:
     if ($field_key == 'unique_id') {
-      return uniqid($order_id + rand(1,100), TRUE); 
+      return $order_id . '-' . uniqid($order_id + rand(1,100), TRUE); 
     }
     elseif ($field_key == 'extra_props') {
       static $node_components = array();
