@@ -182,7 +182,7 @@ function springboard_views_drush_export_donations_csv() {
     echo "\n\n"; print_r($export_summary);echo "\n\n";
   }
 
-  echo json_encode($export_summary);
+  return json_encode($export_summary);
 
   if ($debug) {
     echo "\n\n";
