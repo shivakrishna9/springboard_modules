@@ -4,6 +4,8 @@
  * Provides integration with Braintree Vault.
  */
 
+define('BRAINTREE_ADMIN_PATH', 'admin/config/services/braintree');
+
 /**
  * Implements hook_menu().
  */
@@ -193,7 +195,7 @@ function braintree_customer_cache_reset($uid) {
  * @return bool
  */
 function braintree_customer_id($account = NULL) {
-  if (empty($account)) {
+  if (is_null($account)) {
     global $user;
     $account = $user;
   }
@@ -204,7 +206,8 @@ function braintree_customer_id($account = NULL) {
 
   $customer_id = FALSE;
 
-  if ($vault_field = variable_get('braintree_vault_field', '')) {
+  $vault_field = variable_get('braintree_vault_field', '');
+  if (!empty($vault_field)) {
     $user_wrapper = entity_metadata_wrapper('user', $account);
     $customer_id = $user_wrapper->{$vault_field}->value();
   }
@@ -225,8 +228,19 @@ function braintree_customer_id($account = NULL) {
  * @TODO need refactor
  */
 function braintree_customer_id_save($account, $customer_id) {
+  if (!is_numeric($customer_id)) {
+    return FALSE;
+  }
+  if (is_array($account)) {
+    $account = (object) $account;
+  }
+  if (user_load_by_name($account['mail']) !== FALSE) {
+    return;
+  }
+
+  $customer_id = intval($customer_id);
   $user_wrapper = entity_metadata_wrapper('user', $account);
-  if ($vault_field = variable_get('braintree_vault_field', '')) {
+  if ($vault_field = variable_get('braintree_vault_field', '') && !empty($customer_id)) {
     $user_wrapper->{$vault_field}->set($customer_id);
     $user_wrapper->save();
     return TRUE;
@@ -691,8 +705,8 @@ function braintree_find_default_subscription($payment_methods) {
  * Implements hook_commerce_braintree_web_submit_form_customer_alter().
  */
 function braintree_vault_commerce_braintree_web_submit_form_customer_alter(&$customer) {
-  if (!empty($customer['customer_mail'])) {
-    $customer['customer'] = user_load_by_mail($customer['customer_mail']);
+  if (!empty($customer['mail'])) {
+    $customer['customer'] = user_load_by_mail($customer['mail']);
     $customer['id'] = braintree_customer_id($customer['customer']);
   }
 }

@@ -65,7 +65,7 @@ function commerce_braintree_web_fundraiser_sustainers_series_end_date_alter(&$en
   // use the "stubbed" expiration date (defaults to) 24 months out.
   if (!empty($context['source_donation'])) {
     $master_donation = $context['master_donation'];
-    if ($master_donation->gateway['gateway_details']['method_id'] == 'braintree_paypal') {
+    if ($master_donation->gateway['gateway_details']['method_id'] == 'braintree_paypal' || $master_donation->gateway['gateway_details']['method_id'] == 'braintree_applepay') {
       // Because paypal doesn't return expiration dates, using the cardonfile
       // date isn't a reliable way to increment a series.
       // Get the count of series entries.
@@ -145,13 +145,14 @@ function commerce_braintree_web_form_alter(&$form, &$form_state, $form_id) {
 
   $is_credit = isset($form['#node']->gateways['credit']['id']) && strstr($form['#node']->gateways['credit']['id'], 'braintree_hostedfields');
   $is_paypal = isset($form['#node']->gateways['paypal']['id']) && strstr($form['#node']->gateways['paypal']['id'], 'braintree_paypal');
+  $is_applepay = isset($form['#node']->gateways['applepay']['id']) && strstr($form['#node']->gateways['applepay']['id'], 'braintree_applepay');
   $gateway_is_braintree = isset($form['#donation']->gateway['gateway_details']['module']) && $form['#donation']->gateway['gateway_details']['module'] == 'commerce_braintree_web';
 
   // Use form alter to make sure the external javsacript is always loaded.
   // Attaching in the payment method submit form isn't consistent.
   // Only continue when we're using braintree_hostedfields, braintree_paypal, or
   // when we're on the "Edit Donation Set" tab and Braintree is the gateway.
-  if (!$is_credit && !$is_paypal && !$gateway_is_braintree) {
+  if (!$is_credit && !$is_paypal && !$is_applepay && !$gateway_is_braintree) {
     return;
   }
 
@@ -543,7 +544,7 @@ function commerce_braintree_web_submit_form_submit($payment_method, $pane_form, 
   if ($customer['id']) {
     // @todo update billing address.
     $sale_data += array(
-      'customerId' => $customer_id,
+      'customerId' => $customer['id'],
     );
   }
   else {
@@ -595,7 +596,7 @@ function commerce_braintree_web_submit_form_submit($payment_method, $pane_form, 
   if ($success) {
     // Save returned braintree customer id, if it has not been previously saved.
     $return_customer_id = $braintree_result->transaction->customerDetails->id;
-    if (empty($customer_id) && $return_customer_id && module_exists('braintree_vault')) {
+    if (empty($customer['id']) && $return_customer_id && module_exists('braintree_vault')) {
       braintree_customer_id_save($customer, $return_customer_id);
     }
 
@@ -617,11 +618,17 @@ function commerce_braintree_web_submit_form_submit($payment_method, $pane_form, 
       // If expiration dates are empty, this must have been paypal, so stub
       // an expiration date 24 months in the future.
       if (empty($card->card_exp_month) && empty($card->card_exp_month)) {
-        $paypal_exp_date = strtotime("now +" . variable_get('commerce_braintree_web_sustainer_series_count', 24) . " months");
-        $card->card_exp_month = date('m', $paypal_exp_date);
-        $card->card_exp_year = date('Y', $paypal_exp_date);
-        $card->card_type = 'PayPal';
-        $card->card_name = $braintree_result->transaction->paypalDetails->payerEmail;
+        $noncc_exp_date = strtotime("now +" . variable_get('commerce_braintree_web_sustainer_series_count', 24) . " months");
+        $card->card_exp_month = date('m', $noncc_exp_date);
+        $card->card_exp_year = date('Y', $noncc_exp_date);
+        if ($card->payment_method == 'braintree_paypal') {
+          $card->card_type = 'PayPal';
+          $card->card_name = $braintree_result->transaction->paypalDetails->payerEmail;
+        }
+        elseif ($card->payment_method == 'braintree_applepay') {
+          $card->card_type = 'Apple Pay';
+          $card->card_name = $braintree_result->transaction->applePayCardDetails->cardholderName;
+        }
         $card->card_number = 'N/A';
       }
 

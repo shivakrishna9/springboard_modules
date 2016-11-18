@@ -94,11 +94,14 @@
               session.completePayment(ApplePaySession.STATUS_SUCCESS);
 
               BI.$nonce.val(payload.nonce);
-            });
-          }
-        };
 
-        session.begin();
+              BI.$form.submit();
+              BI.$form.off('submit.braintree_applepay');
+            });
+          };
+
+          session.begin();
+        }
       };
 
       BIAP.createFields = function(clientInstance) {
