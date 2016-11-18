@@ -82,11 +82,14 @@ function springboard_group_og_node_create_links_content_type_render($subtype, $c
   if (empty($links)) {
     return FALSE;
   }
+  if (empty(array_filter($links))) {
+    return FALSE;
+  }
   // Alteration end.
   $module = 'og';
   $block = new stdClass();
   $block->module = $module;
-  $block->title = t('Content create links');
+  $block->title = t('Create Content');
 
   $block->content = $links;
   return $block;
