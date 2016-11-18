@@ -37,7 +37,6 @@ function springboard_dw_process_queue() {
       }
     }
     else {
-
       // Generate the error logging string.
       $item_id = $item->item_id;
       $error_log_string = "<pre>Bad API call, releasing queue item
