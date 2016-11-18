@@ -86,3 +86,20 @@ function springboard_group_og_ui_group_admin_overview($entity_type, $etid) {
   }
   return $content;
 }
+
+/**
+ * Implements hook_form_alter().
+ */
+function springboard_group_form_og_ui_delete_membership_alter(&$form, &$form_state, $form_id) {
+  $form['#submit'][] = 'springboard_group_delete_membership_submit';
+}
+
+function springboard_group_delete_membership_submit($form, &$form_state) {
+  if (arg(1) == 'node') {
+    $membership = $form_state['og_membership'];
+    $node = node_load($membership->gid);
+    if ($node->type == 'springboard_group') {
+      $form_state['redirect'] = 'node/' . $membership->gid . '/group';
+    }
+  }
+}
