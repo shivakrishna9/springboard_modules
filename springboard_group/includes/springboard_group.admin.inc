@@ -243,7 +243,7 @@ function springboard_group_entity_settings_form() {
     if ($entity_type != 'node') {
       foreach ($bundle_group as $bundle => $field) {
         $form['springboard_group_entities'][$entity_type . ':' . $bundle][$entity_type . ':' . $bundle]['#disabled'] = TRUE;
-        $form['springboard_group_entities'][$entity_type . ':' . $bundle][$entity_type . ':' . $bundle]['#description'] = l(t('Disable grouping'), "admin/config/group/fields/" . $entity_type . "/" . $bundle . "/" . $field[0] . "/delete", array('query' => array('destination' => 'springboard/groups/settings')));
+        $form['springboard_group_entities'][$entity_type . ':' . $bundle][$entity_type . ':' . $bundle]['#description'] = l(t('Disable grouping'), "admin/config/group/fields/" . $entity_type . "/" . $bundle . "/" . $field[0] . "/delete", array('query' => array('destination' => 'admin/springboard/groups/settings')));
       }
     }
   }
