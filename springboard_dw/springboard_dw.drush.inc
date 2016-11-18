@@ -27,12 +27,20 @@ function springboard_dw_drush_command() {
   $items = array();
   $items['springboard-dw-export-queue-process'] = array(
     'description' => dt('Processes the Springboard data warehouse export queue.'),
-    'examples' => array(
+    'examples'    => array(
       'Standard example' => 'springboard-dw-export-queue-process',
     ),
-    'aliases' => array('sb-dw-export'),
+    'aliases'     => array('sb-dw-export'),
   );
 
+  $items['springboard-dw-csv-reports-queue-process'] = array(
+    'description' => dt('Processes the Springboard data warehouse CSV reports export
+      queue.'),
+    'examples'    => array(
+      'Standard example' => 'springboard-dw-csv-reports-queue-process',
+    ),
+    'aliases'     => array('sb-dw-csv-export'),
+  );
   return $items;
 }
 
