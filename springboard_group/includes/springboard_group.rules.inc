@@ -88,14 +88,14 @@ function springboard_group_rules_payment_rules_overview__page_alter(&$page) {
         if (!empty($rule)) {
           $group = og_get_entity_groups('rules_config', $rule);
           if (!empty($group)) {
-            $rule_gid = reset($group['node']);
+            $gid = reset($group['node']);
           }
           else {
-            $rule_gid = !is_numeric($context_gid) ? $context_gid : NULL;
+            $gid = !is_numeric($context_gid) ? $context_gid : NULL;
           }
           if ($context_gid == '_all') {
-            $all_gids = springboard_group_get_all_springboard_groups();
-            if (!in_array($rule_gid, $all_gids)) {
+            $all_gids = og_get_all_group('node');
+            if (!in_array($gid, $all_gids)) {
               $invalid = TRUE;
             }
             else {
@@ -103,7 +103,7 @@ function springboard_group_rules_payment_rules_overview__page_alter(&$page) {
             }
           }
           else {
-            $invalid = $context_gid != $rule_gid;
+            $invalid = $context_gid != $gid;
           }
           if ($invalid || (!user_access('administer group') && !in_array('edit payment method', $role_permissions))) {
             unset($page['content']['system_main'][$key]['rules']['#rows'][$row_key]);
@@ -192,6 +192,19 @@ function springboard_group_rules_add_group_widget(&$form, &$form_state, $rule_na
 
     if (!empty($fields)) {
       springboard_group_set_single_selector($form, $fields);
+
+      // Add ajax callback to the groups field so we can validate newly
+      // selected groups.
+      $language = $form['og_group_ref_' . 'rules_config']['#language'];
+      $form['og_group_ref_' . 'rules_config'][$language][0]['default']['#ajax'] = array(
+        'callback' => 'springboard_group_og_group_field_ajax_callback',
+      );
+
+      // Set up the validation modal window parameters.
+      springboard_group_prepare_validation_modal($form, $form_state);
+
+      // Add the validation handlers to the form.
+      springboard_group_load_ajax_validation_handlers($form, $form_state);
     }
 
     $form['#validate'][] = 'springboard_group_validate_payment';
@@ -217,4 +230,82 @@ function springboard_group_submit_payment($form, &$form_state) {
   $rule = $form_state['values']['rule_entity'];
   field_attach_submit('rules_config', $rule, $form, $form_state);
   field_attach_insert('rules_config', $rule);
+}
+
+function springboard_group_rules_config_form__validate($form, &$form_state, $callback = NULL) {
+  if ($callback != 'springboard_group_og_group_field_ajax_callback') {
+    return;
+  }
+
+  $rule_name = $form['settings']['name']['#default_value'];
+  $rule = rules_config_load($rule_name);
+  if (empty($rule)) {
+    // It's a custom UI managed rule.
+    $rule = rules_config_load('rules_' . $rule_name);
+  }
+
+  $this_rule_old_gids = og_get_entity_groups('rules_config', $rule);
+  $this_rule_new_gids = springboard_group_get_gids_from_element($form, $form_state);
+
+  // Select all records so we can search inside the serizalied gateways field.
+  $donation_forms = db_query("SELECT nid, gateways FROM {fundraiser}");
+  if ($donation_forms) {
+    // Compile list of forms to use when building the message to the user.
+    $matching_donation_forms = array();
+    while ($donation_form = $donation_forms->fetchAssoc()) {
+      $gateways = unserialize($donation_form['gateways']);
+      foreach ($gateways as $gateway) {
+        if (!empty($gateway['id'])) {
+          if (strpos($gateway['id'], $rule->name) && $gateway['status'] == 1) {
+            $matching_donation_forms[] = $donation_form['nid'];
+          }
+        }
+      }
+    }
+    if (!empty($matching_donation_forms)) {
+      $matching_nodes = db_select('node', 'n')
+        ->condition('nid', $matching_donation_forms, 'IN')
+        ->fields('n', array('nid', 'title'))
+        ->execute();
+      while ($matching_node = $matching_nodes->fetchAssoc()) {
+        // Get the wrapped node so we can get its groups.
+        // @todo can we fold this into the common functions that wrappers use?
+        $wrapped_node = node_load($matching_node['nid']);
+        $wrapped_node_groups = og_get_entity_groups('node', $wrapped_node);
+        if (!empty($this_rule_old_gids)) {
+          $valid = array_intersect($this_rule_new_gids, $wrapped_node_groups['node']);
+          if (empty($valid)) {
+            $in_use[] = (array) $wrapped_node;
+          }
+        }
+        else {
+          // This rule had no group to begin with.
+          $valid = !empty($wrapped_node_groups['node']);
+          // If there's no match we have a problem.
+          if (empty($valid) && !empty($this_rule_new_gids)) {
+            $in_use[] = (array) $wrapped_node;
+          }
+        }
+      }
+    }
+  }
+  if (!empty($in_use)) {
+    $count = count($in_use);
+    $format = format_plural($count, 'node', 'nodes');
+    $uses = format_plural($count, 'uses', 'use');
+    $rows = [];
+    foreach ($in_use as $wrapped) {
+      $node = node_load($wrapped['nid']);
+      $rows[] = l(check_plain($node->title), 'node/' . $wrapped['nid'], array('attributes' => array('target' => '_blank')));
+    }
+    $message = t('@count @format belonging to an incompatible group @use this rule.', array(
+      '@count' => $count,
+      '@format' => $format,
+      '@use' => $uses,
+    ));
+    if ($count < 11) {
+      $message .= theme('item_list', array('items' => $rows));
+    }
+    $form_state['group_ajax_messages'][] = $message;
+  }
 }
