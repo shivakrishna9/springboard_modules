@@ -215,7 +215,7 @@ function springboard_group_entity_settings_form() {
     }
 
     $disallowed_multiple = array(
-      'rules_config:rules_config',
+      //'rules_config:rules_config',
       'commerce_cardonfile:commerce_cardonfile',
       'commerce_customer_profile:billing',
       'commerce_order:commerce_order',
@@ -280,7 +280,7 @@ function springboard_group_settings_form_submit($form, $form_state) {
  */
 function springboard_group_entities_settings_form_submit($form, $form_state) {
   foreach ($form_state['values']['springboard_group_entities'] as $key => $status) {
-    if (in_array($key, array('rules_config:rules_config', 'actions'))) {
+    if (in_array($key, array('', 'actions'))) {
       continue;
     }
 
@@ -289,7 +289,7 @@ function springboard_group_entities_settings_form_submit($form, $form_state) {
       springboard_group_add_group_reference_field($bundle, $entity_type);
     }
 
-    if (in_array($key, array('rules_config:rules_config', 'actions'))) {
+    if (isset($form_state['values']['springboard_group_entities'][$key]['og_' . $key . '_multiple'])) {
       variable_set('og_' . $bundle . '_multiple', $form_state['values']['springboard_group_entities'][$key]['og_' . $key . '_multiple']);
     }
   }
