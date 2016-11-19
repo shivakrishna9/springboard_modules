@@ -86,6 +86,13 @@ function salesforce_ngoc_admin_form() {
     '#type' => 'textfield',
     '#default_value' => variable_get('salesforce_ngoc_default_record_type', SALESFORCE_NGOC_DEFAULT_RECORD_TYPE),
   );
+  $form['salesforce_ngoc_poll_record_limit'] = array(
+    '#title' => t('Poll Record Limit'),
+    '#type' => 'textfield',
+    '#default_value' => variable_get('salesforce_ngoc_poll_record_limit', SALESFORCE_NGOC_DEFAULT_POLL_RECORD_LIMIT),
+    '#description' => 'The maximum number of Salesforce Batch Upload objects that will be retrieved in one job. The Salesforce Retrieve command has a max of 2,000 objects.',
+
+  );
   return system_settings_form($form);
 }
 

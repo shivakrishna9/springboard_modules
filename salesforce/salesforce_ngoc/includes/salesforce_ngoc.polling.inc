@@ -9,7 +9,7 @@
  */
 function salesforce_ngoc_poll_batch_upload() {
   // Get records from {salesforce_ngoc_sync_map}, oldest first.
-  $ngoc_sync_map_records = db_query_range("SELECT * FROM {salesforce_ngoc_sync_map} WHERE sf_status != 'Committed' ORDER BY created DESC", 0, SALESFORCE_NGOC_DEFAULT_POLL_RECORD_LIMIT)->fetchAllAssoc('batch_upload_sfid');
+  $ngoc_sync_map_records = db_query_range("SELECT * FROM {salesforce_ngoc_sync_map} WHERE sf_status != 'Committed' ORDER BY created DESC", 0, variable_get('salesforce_ngoc_poll_record_limit', SALESFORCE_NGOC_DEFAULT_POLL_RECORD_LIMIT))->fetchAllAssoc('batch_upload_sfid');
   $sf_ids = array_keys($ngoc_sync_map_records);
   // Get corresponding batch upload objects from SF.
   $batch_upload_sobjects = salesforce_ngoc_get_batch_upload_sobjects($sf_ids);
