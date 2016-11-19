@@ -8,14 +8,23 @@
 function springboard_views_drush_command() {
   return array(
     'sb-export-donations-csv' => array(
-      'aliases' => array('sb-edc'),
-      'description' => t('Exports a CSV file containing donation data from the Drupal DB.'),
-      'callback' => '_springboard_views_drush_export_donations_csv',
-      'options' => array(
+      'aliases'             => array('sb-edc'),
+      'description'         => t('Exports a CSV file containing donation data from the Drupal DB.'),
+      'callback'            => 'springboard_views_drush_export_donations_csv',
+      'options'             => array(
         'json' => t('JSON any key/value search filters, sort (the field on which to sort), and order (asc or desc).'),
       ),
-      'drupal dependencies' => array('views', 'commerce', 'commerce_order', 'webform', 'fundraiser_webform', 'fundraiser_commerce', 'fundraiser', 'springboard_views'),
-      'bootstrap' => DRUSH_BOOTSTRAP_DRUPAL_FULL,
+      'drupal dependencies' => array(
+        'views',
+        'commerce',
+        'commerce_order',
+        'webform',
+        'fundraiser_webform',
+        'fundraiser_commerce',
+        'fundraiser',
+        'springboard_views'
+      ),
+      'bootstrap'           => DRUSH_BOOTSTRAP_DRUPAL_FULL,
     ),
   );
 }
@@ -23,14 +32,45 @@ function springboard_views_drush_command() {
 /**
  * Callback for sb-export-donations-csv.
  */
-function _springboard_views_drush_export_donations_csv() {
+function springboard_views_drush_export_donations_csv() {
+  // Composer Vendor autoload.
+  if (function_exists('drush_autoload')) {
+    drush_autoload("sites/all/libraries/springboard_composer/vendor/autoload.php");
+  }
+  else {
+    include_once "sites/all/libraries/springboard_composer/vendor/autoload.php";
+  }
+
+  // Enable Garbage Collection.
+  gc_enable();
+
+  // Setup the S3 config.
+  $s3_config = array(
+    'region'      => variable_get
+    ('springboard_dw_reports_export_S3_region', NULL),
+    'version'     => '2006-03-01',
+    'credentials' => array(
+      'key'    => variable_get
+      ('springboard_dw_reports_export_S3_key', NULL),
+      'secret' => variable_get
+      ('springboard_dw_reports_export_S3_secret', NULL),
+    )
+  );
+
+  // Create an S3 client instance.
+  $s3_client = new \Aws\S3\S3Client($s3_config);
+
+  // Register the stream wrapper.
+  $s3_client->registerStreamWrapper();
+
   // Grant full access so the view can be executed:
   $file_paths = array();
   $start = time();
-  global $user; 
-  drupal_save_session(FALSE); 
+  global $user;
+  drupal_save_session(FALSE);
   $user = user_load(1);
-  $output_path = 'temporary://'; // Default output path if it is not overwritten.
+  $output_path = variable_get('springboard_dw_reports_export_path',
+    'temporary://'); // Default output path if it is not overwritten.
   $current_page = 0;
   $total_results = 0;
   $default_items_per_page = 250000; // If the view returns all results
@@ -40,6 +80,7 @@ function _springboard_views_drush_export_donations_csv() {
   // Export each page of results into its own CSV file:
   $drush_options = (array) json_decode(drush_get_option('json'));
   $dw_drupal_key_map = _springboard_views_drush_export_donations_dw_key_map();
+
   if ($debug) {
     echo "\n\n" . print_r($drush_options, 1) . "\n\n";
   }
@@ -54,6 +95,9 @@ function _springboard_views_drush_export_donations_csv() {
     $view->set_display($display_id);
     $view->init_handlers();
 
+    # TODO: This doesn't default to the $default_items_per_page but instead
+    # the pager amount, should we change this?
+
     // Set the appropriate offset; if items per page is missing then assume 25K/page:
     $pager = $view->display_handler->get_option('pager');
     if (isset($pager['options']['items_per_page']) && $pager['options']['items_per_page'] > 0) {
@@ -63,12 +107,10 @@ function _springboard_views_drush_export_donations_csv() {
       $items_per_page = $default_items_per_page;
       $view->set_items_per_page($items_per_page);
     }
+
     $view->set_offset($current_page * $items_per_page);
 
-
-
-
-    // Apply filtering, sorting, and ordering:  
+    // Apply filtering, sorting, and ordering:
     $sort = 'asc';
     unset($order_by);
     foreach ($drush_options as $option_name => $option_value) {
@@ -93,7 +135,7 @@ function _springboard_views_drush_export_donations_csv() {
       // Check for debug mode where files don't get created:
       elseif ($option_name == 'debug') {
         $debug = TRUE;
-        continue; 
+        continue;
       }
       // Check for a target output path:
       elseif ($option_name == 'output_path') {
@@ -102,7 +144,8 @@ function _springboard_views_drush_export_donations_csv() {
       }
       // Support an array value if transaction date filtering is done:
       if ($option_name == 'transaction_date') {
-        unset($min_date); unset($max_date);
+        unset($min_date);
+        unset($max_date);
         $expected_date_format = 'L, F j, Y';
         if (isset($option_value->min) && isset($option_value->max)) {
           $min_date = strtotime($option_value->min);
@@ -110,7 +153,7 @@ function _springboard_views_drush_export_donations_csv() {
         }
         elseif (isset($option_value->min)) {
           $min_date = strtotime($option_value->min);
-          $max_date = date("m/d/Y", time() + (60*60*24));
+          $max_date = date("m/d/Y", time() + (60 * 60 * 24));
         }
         elseif (isset($option_value->max)) {
           $min_date = strtotime('1/1/1980');
@@ -122,7 +165,7 @@ function _springboard_views_drush_export_donations_csv() {
         }
         continue;
       }
-    
+
       // Apply filters:
       if (isset($dw_drupal_key_map[$option_name])) {
         if ($debug) {
@@ -155,60 +198,141 @@ function _springboard_views_drush_export_donations_csv() {
       //echo "\n\n" . $output . "\n\n\n";
       $filename = $output_path . '/' . date('Y-m-d--H-i-s') . '-donations-export-page-' . ($current_page + 1) . '.csv';
       $file_paths[] = $filename;
-      $total_results += count($view->result); 
+      $total_results += count($view->result);
       if (!$debug) {
         if (!file_put_contents($filename, $output)) {
-          echo json_encode(array('error' => 'Export failed for file: "' . $temp_name . '"; aborting.'));
+          echo json_encode(array('error' => 'Export failed for file: "' . $filename . '"; aborting.'));
           return;
         }
       }
     }
-    else {  
-      break; 
-    } 
+    else {
+      break;
+    }
 
-    // Increment the page number: 
+    // Increment the page number:
     $current_page++;
   }
+
+  // Create new array shells to track the S3 uploads.
+  $s3_uploaded_files = array();
+  $s3_failed_files = array();
+  $s3_pre_signed_urls = array();
+
+  // Upload each file to S3 and return the pre-signed S3 URL.
+  foreach ($file_paths as $key => $path):
+    $local_file_to_upload = $path;
+    $new_s3_file_key = end(explode('/', $path));
+
+    // Try the S3 upload, if it fails track the failure.
+    try {
+      // Instantiate a multi-part uploader.
+      $uploader = new \Aws\S3\MultipartUploader($s3_client, $local_file_to_upload, [
+        'bucket' => variable_get('springboard_dw_reports_export_S3_bucket', NULL),
+        'key'    => $new_s3_file_key,
+      ]);
+
+      // Do the S3 upload.
+      $result = $uploader->upload();
+
+      // Debug the completed upload.
+      _springboard_views_drush_export_guard_debug_output($debug, "Upload complete: {$result['ObjectURL']}\n");
+
+      // Track the upload success.
+      $s3_uploaded_files[] = $path;
+
+      // Add the GetObject client method so we can retrieve a pre-signed request.
+      $cmd = $s3_client->getCommand('GetObject', [
+        'Bucket' => variable_get
+        ('springboard_dw_reports_export_S3_bucket', NULL),
+        'Key'    => $new_s3_file_key,
+      ]);
+
+      // Create the pre-signed request and get the url.
+      $request = $s3_client->createPresignedRequest($cmd, '+180 minutes');
+      $presignedUrl = (string) $request->getUri();
+
+      // Add the pre-signed url to the array to add back to the export summary.
+      $s3_pre_signed_urls[] = $presignedUrl;
+
+    } catch (Aws\Exception\MultipartUploadException $e) {
+      // Track the upload failure.
+      $s3_failed_files[] = $path;
+
+      // Build out the error details to log to watchdog.
+      $error_details = array(
+        'exception' => $e->getMessage(),
+        'file'      => $local_file_to_upload,
+      );
+
+      // Construct the watchdog string.
+      $watchdog_string = "<pre>Springboard reports S3 upload error: \n" . print_r($error_details, TRUE) . "</pre>";
+
+      watchdog_exception('Drupal reports export', $watchdog_string);
+    }
+  endforeach;
+
   $duration = (time() - $start) . 's';
   $export_summary = array(
-    'start' => date('Y-m-d - H:i:s', $start),
-    'end' => date('Y-m-d - H:i:s'),
-    'duration' => $duration,
+    'start'                  => date('Y-m-d - H:i:s', $start),
+    'end'                    => date('Y-m-d - H:i:s'),
+    'duration'               => $duration,
     'total_results_exported' => $total_results,
-    'export_file_count' => count($file_paths),
-    'export_file_paths' => $file_paths,
+    'export_file_count'      => count($s3_pre_signed_urls),
+    'export_file_paths'      => $s3_pre_signed_urls,
   );
   if ($debug) {
     $export_summary['file_gen_disabled'] = 1;
 
-    echo "\n\n"; print_r($export_summary);echo "\n\n";
-  }
-
-  return json_encode($export_summary);
-
-  if ($debug) {
+    echo "\n\n";
+    print_r($export_summary);
     echo "\n\n";
   }
+
+  // Merge the arrays of uploaded and failed because we will want to remove
+  // the local CSV export for both since it will change the next attempt.
+  $all_files = array_merge($s3_uploaded_files, $s3_failed_files);
+
+  // Remove the local file.
+  foreach ($all_files as $local_file):
+    unset($local_file);
+  endforeach;
+
+  _springboard_views_drush_export_guard_debug_output($debug, "\n\n");
+
+  // Return the job summary.
+  return json_encode($export_summary);
 }
 
 /**
- * Helper function which returns an array that maps data warehouse field keys 
+ * Helper function which returns an array that maps data warehouse field keys
  * to the export donation view's fields used for filtering and sorting:
  */
 function _springboard_views_drush_export_donations_dw_key_map() {
   return array(
-    'amount' => 'amount',
-    'currency' => 'currency',
-    'created_at' => 'created',
-    'email' => 'mail',
-    'form_id' => 'nid',
-    'gateway' => 'gateway',
-    'internal_name' => 'field_fundraiser_internal_name_value',
-    'order_id' => 'order_id',
-    'status' => 'status',
-    'transaction_id' => 'txn_id',
+    'amount'           => 'amount',
+    'currency'         => 'currency',
+    'created_at'       => 'created',
+    'email'            => 'mail',
+    'form_id'          => 'nid',
+    'gateway'          => 'gateway',
+    'internal_name'    => 'field_fundraiser_internal_name_value',
+    'order_id'         => 'order_id',
+    'status'           => 'status',
+    'transaction_id'   => 'txn_id',
     'transaction_date' => 'transaction_date',
-    'updated_at' => 'changed',
+    'updated_at'       => 'changed',
   );
+}
+
+/**
+ * Only output debug information if the debug flag is set for the CSV
+ * processing.
+ * @param $output
+ */
+function _springboard_views_drush_export_guard_debug_output
+($debug_flag, $output) {
+  if ($debug_flag) {
+    drush_print_r($output);
+  }
 }
