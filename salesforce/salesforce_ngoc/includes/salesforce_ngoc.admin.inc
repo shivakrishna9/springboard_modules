@@ -2,11 +2,13 @@
 
 /**
  * @file
- * Administration page callbacks for the salesforce nonprofit starter pack module.
+ * Admin page callbacks and helper functions for Salesforce NGOC.
  */
 
 /**
  * Page callback for the admin form.
+ *
+ * @see salesforce_ngoc_menu()
  */
 function salesforce_ngoc_admin_page() {
   $build = array();
@@ -25,6 +27,8 @@ function salesforce_ngoc_admin_page() {
 
 /**
  * Configuration form for ngoc admin options.
+ *
+ * @see salesforce_ngoc_menu()
  */
 function salesforce_ngoc_admin_form() {
   $form = array();
