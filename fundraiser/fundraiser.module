@@ -4045,7 +4045,15 @@ function _fundraiser_update_billing_form_commerce_cardonfile_card_form_submit($f
       else {
         $card_save = $card;
         $confirm_message = t('The card has been updated.');
+
+        // Ensure the card type is correct.
+        list($cim_customer_profile_id, $cim_payment_profile_id) = explode('|', $card->remote_id);
+        $payment_profile_xml = commerce_authnet_cim_get_customer_payment_profile_request($payment_method, $cim_customer_profile_id, $cim_payment_profile_id);
+        if (!empty($payment_profile_xml->paymentProfile->payment->creditCard)) {
+          $card_save->card_type = $payment_profile_xml->paymentProfile->payment->creditCard->cardType;
+        }
       }
+
       commerce_cardonfile_save($card_save);
       drupal_set_message($confirm_message);
       $form_state['values']['cardonfile']['old_card'] = clone $card;
