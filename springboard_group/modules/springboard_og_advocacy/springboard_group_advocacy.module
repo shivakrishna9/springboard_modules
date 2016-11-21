@@ -17,23 +17,42 @@ require_once __DIR__ . '/includes/springboard_group_advocacy.subscription.inc';
  * if the state selector is set to "All" while searching.
  */
 function springboard_group_springboard_advocacy_views_plugin_query_alter(&$query) {
-
   $gid = springboard_group_get_group_context();
   if (!empty($gid)) {
     if ($gid != '_none' && $gid != '_all') {
       $group_subscription = springboard_group_advocacy_get_saved_group_subscription($gid);
-      // If this group is limited to particular states, add state values to the
-      // search query, if none are present.
-      if (in_array($group_subscription['group_subscription_type'], array(
-        'states-selected',
-        'federal-and-states-selected',
-      ))) {
-        if (!empty($query->search_terms) && empty($query->search_terms['states'])) {
-          if ($query->search_terms['class_name'][0] != 'Target' && $query->search_terms['class_name'][0] != 'Group') {
-            $states = unserialize($group_subscription['allowed_states']);
-            $query->search_terms['state'] = $states;
+      $type = $group_subscription['group_subscription_type'];
+      switch ($type) {
+        case 'states-selected':
+        case'federal-and-states-selected':
+          if (!empty($query->search_terms) && $query->search_terms['class_name'][0] == 'Legislator') {
+            if (empty($query->search_terms['states'])) {
+              $states = unserialize($group_subscription['allowed_states']);
+              $query->search_terms['state'] = $states;
+            }
+            if ($type == 'states-selected') {
+              if (empty($query->search_terms['role'])) {
+                $query->search_terms['role'][] = 'SR|SS|GOVNR';
+              }
+            }
           }
-        }
+          break;
+
+        case 'state-only':
+          if (!empty($query->search_terms) && $query->search_terms['class_name'][0] == 'Legislator') {
+            if (empty($query->search_terms['role'])) {
+              $query->search_terms['role'][] = 'SR|SS|GOVNR';
+            }
+          }
+          break;
+
+        case 'federal-only':
+          if (!empty($query->search_terms) && $query->search_terms['class_name'][0] == 'Legislator') {
+            if (empty($query->search_terms['role'])) {
+              $query->search_terms['role'][] = 'FR|FS|PRES01|PRES02|PRES03';
+            }
+          }
+          break;
       }
     }
     // If there's a group id, only return results for that group when searching
@@ -51,7 +70,6 @@ function springboard_group_springboard_advocacy_views_plugin_query_alter(&$query
       }
     }
   }
-
 }
 
 /**
