@@ -103,7 +103,10 @@ function braintree_payment_form_alter(&$form, &$form_state, $form_id) {
 function braintree_payment_form_webform_components_form_alter(&$form, &$form_state) {
   if (isset($form['#node'])) {
    if (_braintree_payment_paypal_method_is_option($form['#node']) && _braintree_payment_paypal_method_is_enabled($form['#node'])) {
-     $form['#validate'][] = '_braintree_payment_webform_components_validate';
+    if (!empty($form_state['input'])) {
+      drupal_add_js(drupal_get_path('module', 'braintree_payment') . '/includes/braintree_paypal_compact.js');
+    }
+    $form['#validate'][] = '_braintree_payment_webform_components_validate';
    }
   }
 }
@@ -130,18 +133,20 @@ function _braintree_payment_webform_components_validate($form, &$form_state) {
     'state',
     'sbp_phone',
   );
-
   $billing_cid = webform_get_cid($form['#node'], 'billing_information', 0);
   $billing_children = _braintree_payment_webform_components_find_parent_children($billing_cid, $form_state['values']['components']);
   $donor_cid = webform_get_cid($form['#node'], 'donor_information', 0);
   $donor_children = _braintree_payment_webform_components_find_parent_children($donor_cid, $form_state['values']['components']);
   $children = array_merge($donor_children, $billing_children);
-  
   foreach ($children as $cid) {
     $component = _braintree_payment_webform_get_component_by_cid($form['#node']->nid, $cid);
     if (!in_array($component->form_key, $default_fundraiser_fields) && $component->type != 'hidden') {
-      form_set_error($component->form_key, t('The component <em>@key</em> cannot be added to this fieldset when Paypal compact flow is enabled', array('@key' => $component->form_key)));
+      form_set_error('components][' . $component->cid, t('The component <em>@key</em> cannot be added to this fieldset when Paypal compact flow is enabled', array('@key' => $component->form_key)));
+       $errors[] = $component;
     }
+  }
+  if (isset($errors) && !empty($errors)) {
+    drupal_add_js(array('paypalCompactErrors' => $errors),'setting');
   }
 }
 
@@ -161,7 +166,7 @@ function _braintree_payment_webform_components_find_parent_children($pid, $compo
 
 function _braintree_payment_webform_get_component_by_cid($nid, $cid) {
   $query = db_select('webform_component', 'c')
-    ->fields('c', array('form_key', 'type'))
+    ->fields('c', array('form_key', 'type', 'pid', 'cid', 'weight'))
     ->condition('nid', $nid)
     ->condition('cid', $cid);
   return $query->execute()->fetch();
@@ -175,8 +180,34 @@ function braintree_payment_form_webform_client_form_alter(&$form, &$form_state) 
   if (empty($form['#node']->type) || !fundraiser_is_donation_type($form['#node']->type)) {
     return;
   }
-  $enabled_form_ids = variable_get('braintree_paypal_compact', array());
-  if (in_array($form['#node']->nid, $enabled_form_ids)) {
+  if (_braintree_payment_paypal_method_is_enabled($form['#node'])) {
+    // TODO: refactor this duplicate code from validation.
+    $default_fundraiser_fields = array(
+      'first_name',
+      'last_name',
+      'mail',
+      'address',
+      'address_line_2',
+      'city',
+      'zip',
+      'country',
+      'state',
+      'sbp_phone',
+      );
+    $billing_cid = webform_get_cid($form['#node'], 'billing_information', 0);
+    $donor_cid = webform_get_cid($form['#node'], 'donor_information', 0);
+    $billing_children = _braintree_payment_webform_components_find_parent_children($billing_cid, $form['#node']->webform['components']);
+    $donor_children = _braintree_payment_webform_components_find_parent_children($donor_cid, $form['#node']->webform['components']);
+    $children = array_merge($donor_children, $billing_children);
+    foreach ($children as $cid) {
+      $component = _braintree_payment_webform_get_component_by_cid($form['#node']->nid, $cid);
+      if (!in_array($component->form_key, $default_fundraiser_fields) && $component->type != 'hidden') {
+        if (user_access('edit any donation form')) {
+          drupal_set_message(t('The component <em>@key</em> in its current position will prevent the Paypal compact flow from displaying properly.', array('@key' => $component->form_key)), 'error');
+        }
+       
+      }
+    }
     $settings = array(
      'paypal' => array(
         'compact' => TRUE,

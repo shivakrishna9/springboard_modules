@@ -196,21 +196,31 @@
         'zip',
       ],
     };
-    var donorInfo = $('#webform-component-donor-information :input');
-    var billingInfo = $('#webform-component-billing-information :input');
+    var notHidden = function () {
+      return $(this).attr('type') != 'hidden';
+    };
+    var donorInfo = $('#webform-component-donor-information :input').filter(notHidden);
+    console.log(donorInfo);
+    
+    var billingInfo = $('#webform-component-billing-information :input').filter(notHidden);
+    console.log(billingInfo);
     var onlyDefaults = true;
-    var donorIsDefault = $.each( donorInfo, function( key, value ) {
+   $.each( donorInfo, function( key, value ) {
       var n = $(value).attr('name').match(/[^[\]]+(?=])/g)[1];
       if ($.inArray(n, fundraiserDefaultFields.donorDefaults) < 0 && n != 'sbp_phone') {
-        onlyDefaults = false;
-        return;
+        //if ($(value).attr('type') != 'hidden') {
+          onlyDefaults = false;
+          return;
+        //}
       }
     });
-    var billingIsDefault = $.each( billingInfo, function( key, value ) {
+    $.each( billingInfo, function( key, value ) {
        var n = $(value).attr('name').match(/[^[\]]+(?=])/g)[1];
        if ($.inArray(n, fundraiserDefaultFields.billingDefaults) < 0 && n != 'sbp_phone') {
-        onlyDefaults = false;
-        return;
+       // if ($(value).attr('type') != 'hidden') {
+          onlyDefaults = false;
+          return;
+        //}
        }
     });
     return onlyDefaults;
