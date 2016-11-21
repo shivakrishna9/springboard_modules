@@ -66,6 +66,7 @@ function salesforce_ngoc_salesforce_mapping_destination_queue_alter(&$queue_name
 function salesforce_ngoc_salesforce_sync_save_map_alter($record) {
   if ($record->object_type == 'rC_Connect__Batch_Upload__c') {
     if ($record->is_new == TRUE) {
+      // @todo Can we save uid and did here?
       // Save record in salesforce_ngoc_sync_map.
       $ngoc_record = array(
         'batch_upload_sfid' => $record->sfid,

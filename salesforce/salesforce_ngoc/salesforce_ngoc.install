@@ -132,6 +132,16 @@ function salesforce_ngoc_schema() {
         'type' => 'int',
         'not null' => TRUE,
       ),
+      'uid' => array(
+        'description' => 'The id of the corresponding drupal user',
+        'type' => 'int',
+        'not null' => FALSE,
+      ),
+      'did' => array(
+        'description' => 'The id of the corresponding donation',
+        'type' => 'int',
+        'not null' => FALSE,
+      ),
       'module' => array(
         'description' => 'The high-level module that was responsible for creating the item',
         'type' => 'varchar',
