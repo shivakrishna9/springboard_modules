@@ -34,20 +34,66 @@ function sba_target_search_views_api() {
  * @param string $chamber
  *   The value of the chamber field.
  */
-function _sba_target_search_committee_autocomplete($name, $state, $chamber) {
-  $matches = array();
+function _sba_target_search_committee_autocomplete($name, $state, $chamber, $subscription, $states) {
 
   // Retrieve committee list from cache or via API call if not cached.
   $api_call = springboard_advocacy_api_call();
   $committee_list = $api_call->getCommittees();
 
+  // Filter the list by subscription.
+  $filter_committee_list = [];
+  if ($subscription) {
+    switch ($subscription) {
+      case 'federal-and-states':
+        $filter_committee_list = $committee_list;
+        break;
+
+      case 'federal-only':
+        $allowed = array('(FS)', '(FH)');
+        foreach ($allowed as $item) {
+          $chamber_pattern = '/\(' . $item . '\)/i';
+          $filter_committee_list += preg_grep($chamber_pattern, $committee_list);
+        }
+        break;
+
+      case 'state-only':
+        $allowed = array('(SS)', '(SH');
+        foreach ($allowed as $item) {
+          $chamber_pattern = '/\(' . $item . '\)/i';
+          $filter_committee_list += preg_grep($chamber_pattern, $committee_list);
+        }
+        break;
+
+      case 'federal-and-states-selected':
+        $state_allowed = explode(',', $states);
+        foreach ($state_allowed as $state_item) {
+          $state_pattern = '/\(' . $state_item . '\)/i';
+          $filter_committee_list += preg_grep($state_pattern, $committee_list);
+        }
+        $allowed = array('(FS)', '(FH)');
+        foreach ($allowed as $item) {
+          $chamber_pattern = '/\(' . $item . '\)/i';
+          $filter_committee_list += preg_grep($chamber_pattern, $committee_list);
+        }
+        break;
+
+      case 'states-selected':
+        $allowed = explode(',', $states);
+        foreach ($allowed as $item) {
+          $state_pattern = '/\(' . $item . '\)/i';
+          $filter_committee_list += preg_grep($state_pattern, $committee_list);
+        }
+        break;
+    }
+  }
+
+  $matches = array();
   // Grep the results using patterns based on form input.
   $name_pattern = '/' . $name . '/i';
   $state_pattern = '/\(' . $state . '\)/i';
   $chamber_pattern = '/\(' . $chamber . '\)/i';
-
-  if (!empty($committee_list)) {
-    $results = preg_grep($name_pattern, $committee_list);
+  if (!empty($filter_committee_list)) {
+    $results = preg_grep($name_pattern, $filter_committee_list);
     if ($state != 'All') {
       $results = preg_grep($state_pattern, $results);
     }

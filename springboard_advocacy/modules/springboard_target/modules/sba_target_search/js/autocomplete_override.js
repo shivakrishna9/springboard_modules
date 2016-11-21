@@ -102,9 +102,13 @@
         }
         this.timer = setTimeout(function () {
             db.owner.setStatus('begin');
+            var states = '';
+            if(typeof(Drupal.settings.sbaAllowedStates) !== "undefined") {
+                states = Drupal.settings.sbaAllowedStates;
+            }
             $.ajax({
                 type: 'GET',
-                url: db.uri + '/' + Drupal.encodePath(searchString),
+                url: db.uri + '/' + Drupal.encodePath(searchString) + '/' + Drupal.settings.sbaSubscriptionLevel + '/' + states,
                 dataType: 'json',
                 success: function (matches) {
                     if (typeof matches.status == 'undefined' || matches.status != 0) {
