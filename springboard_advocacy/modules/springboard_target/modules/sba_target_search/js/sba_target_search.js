@@ -1528,7 +1528,16 @@
         $('.view-content').fadeOut(333);
         $('.attachment').fadeOut(333);
         $('div.view-targets .item-list').fadeOut(333);
-        $('select[name="search_district_name"]').prop('disabled', true).addClass('disabled');
+
+        // Don't disable the district field if there's only one state in the subscription level.
+        var skip = false;
+        if(typeof(Drupal.settings.sbaAllowedStates) !== "undefined" && Drupal.settings.sbaAllowedStates.length == 1) {
+            skip = true;
+        }
+        if (!skip) {
+            $('select[name="search_district_name"]').prop('disabled', true).addClass('disabled');
+        }
+
         if(window.search_state == 'committee') {
             Sba.CommitteeElStates(true);
         }

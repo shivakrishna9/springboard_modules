@@ -967,7 +967,13 @@ function  _springboard_advocacy_remove_unsubscribed_elements(&$form, &$form_stat
 
         // Remove disallowed US states from the state dropdown.
         $arr = array_reverse($subscription['states_custom'], TRUE);
-        $arr['- Any -'] = 'All';
+        if (count($subscription['states_custom']) > 1) {
+          $arr['- Any -'] = 'All';
+        }
+        else {
+          $form['search_state']['#value'] = '';
+        }
+
         $subscription['states_custom'] = array_reverse($arr, TRUE);
         $form['search_state']['#options'] = array_flip(
           array_intersect(
@@ -1013,16 +1019,11 @@ function springboard_advocacy_update_districts_field_options($form, $form_state)
     else {
       $state = $form_state['input']['search_state'];
     }
-
-    //hmmmm.
-    if ($subscription['subscription_type'] == 'federal-and-states-selected') {
-      $options = $api_call->getDistricts($state);
-    }
-    elseif ($subscription['subscription_type'] != 'federal-and-states-selected') {
-      $options = $api_call->getDistricts($state);
-    }
+    $options = $api_call->getDistricts($state);
   }
-
+  elseif (!empty($subscription['states_custom']) && count($subscription['states_custom']) == 1) {
+    $options = $api_call->getDistricts($subscription['states_custom'][0]);
+  }
   return $options;
 }
 
