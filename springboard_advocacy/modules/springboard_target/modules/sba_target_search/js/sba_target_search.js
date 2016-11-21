@@ -213,9 +213,6 @@
             $("#edit-search-class-name-wrapper").hide();
         });
 
-        // Set the default search type
-        Sba.setTargetType("Legislator");
-
         // Legislative target specific search elements
         var legWidgets = $('#edit-search-role-1-wrapper, #edit-search-party-wrapper, #edit-search-social-wrapper, #edit-search-gender-wrapper, #edit-search-district-name-wrapper, #edit-combine-wrapper');
         // Legislative committee specific search elements
@@ -1312,9 +1309,12 @@
             $('#springboard-advocacy-target-recipients-content').append(counter);
         }
 
-        $('.remove-all-targets').click(function(){
+        $('.remove-all-targets').click(function() {
+
             $('.target-recipient').remove();
             $('.targeting-count, .remove-all-targets').remove();
+            // Reveal 'save as group' option if present.
+            $('#edit-save-target-group').show().removeClass('hidden');
             Sba.setUpdateMessage('');
             Sba.setFormValue();
         });
@@ -1504,7 +1504,7 @@
 
         var allInputs = $('#views-exposed-form-targets-block-3 input[type="checkbox"], #views-exposed-form-targets-block-3 input[type="text"], #views-exposed-form-targets-block-3 select');
         allInputs.each(function () {
-            if ($(this).prop('tagName') == "SELECT") {
+            if ($(this).prop('tagName') == "SELECT" && $(this).prop('id') != 'edit-search-class-name') {
                 $(this).prop('selectedIndex', 0);
                 if ($.isFunction($.fn.uniform)) {
                     $.uniform.restore(this);
