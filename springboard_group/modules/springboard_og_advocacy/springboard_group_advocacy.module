@@ -24,17 +24,21 @@ function springboard_group_springboard_advocacy_views_plugin_query_alter(&$query
       $type = $group_subscription['group_subscription_type'];
       switch ($type) {
         case 'states-selected':
-        case'federal-and-states-selected':
           if (!empty($query->search_terms) && $query->search_terms['class_name'][0] == 'Legislator') {
             if (empty($query->search_terms['states'])) {
               $states = unserialize($group_subscription['allowed_states']);
               $query->search_terms['state'] = $states;
             }
-            if ($type == 'states-selected') {
-              if (empty($query->search_terms['role'])) {
-                $query->search_terms['role'][] = 'SR|SS|GOVNR';
-              }
+            if (empty($query->search_terms['role'])) {
+              $query->search_terms['role'][] = 'SR|SS|GOVNR';
             }
+          }
+          break;
+
+        case'federal-and-states-selected':
+          if (!empty($query->search_terms) && $query->search_terms['class_name'][0] == 'Legislator') {
+            $states = unserialize($group_subscription['allowed_states']);
+            $query->search_terms['affiliate_allowed_state'] = $states;
           }
           break;
 
