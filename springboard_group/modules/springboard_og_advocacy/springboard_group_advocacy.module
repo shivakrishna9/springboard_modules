@@ -239,15 +239,15 @@ function springboard_group_advocacy_views_default_views_alter(&$views) {
     if (!empty($handler->display->display_options['fields'])) {
       $fields =& $handler->display->display_options['fields'];
       $group_field = [];
-      $group_field['affiliate_name']['id'] = 'affiliate_id';
-      $group_field['affiliate_name']['table'] = 'advocacy';
-      $group_field['affiliate_name']['field'] = 'affiliate_id';
-      $group_field['affiliate_name']['label'] = 'Affiliate Group';
+      $group_field['affiliate_id']['id'] = 'affiliate_id';
+      $group_field['affiliate_id']['table'] = 'advocacy';
+      $group_field['affiliate_id']['field'] = 'affiliate_id';
+      $group_field['affiliate_id']['label'] = 'Affiliate Group';
       if ($display_name == 'block_1') {
-        array_splice($fields, 3, 0, $group_field);
+        springboard_group_views_add_group_field($fields, 3, $group_field);
       }
       else {
-        array_splice($fields, 2, 0, $group_field);
+        springboard_group_views_add_group_field($fields, 2, $group_field);
       }
     }
   }
@@ -283,21 +283,23 @@ function springboard_group_advocacy_user_can_create_advocacy_type() {
   $access = springboard_advocacy_user_can_create_advocacy_type();
   if ($access == FALSE) {
     $groups = og_get_entity_groups();
-    foreach ($groups['node'] as $gid) {
-      if ($roles = og_get_user_roles('node', $gid)) {
-        $perms = og_role_permissions($roles);
-        $role_permissions = [];
-        foreach ($perms as $perm) {
-          $role_permissions = array_merge($role_permissions, array_keys(array_filter($perm)));
-        }
-        $content_perms = array(
-          'create sba_message_action content',
-          'create sba_social_action content',
-          'create sba_springboard petition content',
-        );
-        foreach ($content_perms as $content_perm) {
-          if (in_array($content_perm, $role_permissions)) {
-            $access = TRUE;
+    if (!empty($groups['node'])) {
+      foreach ($groups['node'] as $gid) {
+        if ($roles = og_get_user_roles('node', $gid)) {
+          $perms = og_role_permissions($roles);
+          $role_permissions = [];
+          foreach ($perms as $perm) {
+            $role_permissions = array_merge($role_permissions, array_keys(array_filter($perm)));
+          }
+          $content_perms = array(
+            'create sba_message_action content',
+            'create sba_social_action content',
+            'create sba_springboard petition content',
+          );
+          foreach ($content_perms as $content_perm) {
+            if (in_array($content_perm, $role_permissions)) {
+              $access = TRUE;
+            }
           }
         }
       }

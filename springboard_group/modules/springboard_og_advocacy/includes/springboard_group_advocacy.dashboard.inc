@@ -62,17 +62,21 @@ function springboard_group_advocacy_create_og_form_elements(&$form) {
   // Check which form we're on.
   if (strpos($form['#form_id'], 'custom_targets') !== FALSE) {
     $type = 'target';
-    $gid = $form[$type]['#value']->affiliate_id;
+    if (!empty($form[$type]['#value']->affiliate_id)) {
+      $gid = $form[$type]['#value']->affiliate_id;
+    }
     // @todo make this unecessary somehow.
     unset($form[$type]);
   }
   else {
     $type = 'group';
-    $gid = $form[$type]['#default_value']->affiliate_id;
+    if (!empty($form[$type]['#default_value']->affiliate_id)) {
+      $gid = $form[$type]['#default_value']->affiliate_id;
+    }
     unset($form[$type]);
   }
   // If this is an edit form get the API object's affiliate_id (group id).
-  if ($gid) {
+  if (!empty($gid)) {
     if ($gid != $session_gid && !is_null($session_gid) && ($session_gid != '_none' && $session_gid != '_all')) {
       drupal_set_message('Session affiliate ID does not match saved affiliate ID.');
       // @todo Deny access if gid is not in users groups.

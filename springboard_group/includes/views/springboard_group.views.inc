@@ -163,14 +163,30 @@ function springboard_group_views_default_views_alter(&$views) {
         $handler->display->display_options['relationships']['og_membership_related_node_group']['field'] = 'og_membership_related_node_group';
         $fields =& $handler->display->display_options['fields'];
         $group_field = [];
-        $group_field['title_1']['id'] = 'title_1';
-        $group_field['title_1']['table'] = 'node';
-        $group_field['title_1']['field'] = 'title';
-        $group_field['title_1']['label'] = 'Group';
-        $group_field['title_1']['relationship'] = 'og_membership_related_node_group';
-        array_splice($fields, 2, 0, $group_field);
+        $group_field['title_sb_group']['id'] = 'title_sb_group';
+        $group_field['title_sb_group']['table'] = 'node';
+        $group_field['title_sb_group']['field'] = 'title';
+        $group_field['title_sb_group']['label'] = 'Group';
+        $group_field['title_sb_group']['relationship'] = 'og_membership_related_node_group';
+        springboard_group_views_add_group_field($fields, 2, $group_field);
       }
     }
   }
+}
 
+
+/**
+ * Inserts the group name display field in a view.
+ *
+ * @param array $fields
+ *   The field array found in $handler->display->display_options['fields'].
+ * @param int $position
+ *   The point at which to insert after.
+ * @param array $group_field
+ *   The field to insert.
+ */
+function springboard_group_views_add_group_field(&$fields, $position, $group_field) {
+  $pre = array_slice($fields, 0, $position, TRUE);
+  $post = array_slice($fields, $position, NULL, TRUE);
+  $fields = array_merge($pre, $group_field, $post);
 }
