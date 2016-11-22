@@ -21,4 +21,6 @@ files[] = handlers/queue_api_handler_field_batch_id.inc
 files[] = handlers/springboard_webform_hidden_component_values.inc
 files[] = handlers/fundraiser_handler_filter_fundraiser_gateways.inc
 files[] = handlers/springboard_views_handler_node_springboard_type.inc
+files[] = handlers/springboard_views_handler_webform_field_submission_date.inc
+files[] = handlers/springboard_views_handler_webform_filter_submission_date.inc
 files[] = tests/springboard_views.test

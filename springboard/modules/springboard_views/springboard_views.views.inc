@@ -67,9 +67,21 @@ function springboard_views_views_data() {
 
   $data['node']['springboard_type'] = array (
     'title' => 'Springboard content type',
-    'help' => 'Sort by various Springboard-contextual groupings of content types',
+    'help' => t('Sort by various Springboard-contextual groupings of content types.'),
     'filter' => array (
       'handler' => 'springboard_views_handler_node_springboard_type',
+    ),
+  );
+
+  $data['webform']['last_submitted'] = array (
+    'title' => 'Last webform submission time',
+    'help' => t('The last time this webform was submitted.'),
+    'field' => array (
+      'handler' => 'springboard_views_handler_webform_field_submission_date',
+      'click_sortable' => TRUE,
+    ),
+    'filter' => array (
+      'handler' => 'springboard_views_handler_webform_filter_submission_date',
     ),
   );
 
