@@ -24,6 +24,21 @@ function springboard_group_webform_submission_access($node, $submission, $op = '
   $delete_submission = FALSE;
   $access_all = FALSE;
   if (og_is_group_content_type('node', $node->type) && $groups = og_get_entity_groups('node', $node)) {
+
+    // Global group admins.
+    if (user_access('administer group')) {
+      if (user_access('access all webform results')) {
+        $access_all = TRUE;
+      }
+      if (user_access('delete all webform submissions')) {
+        $delete_submission = TRUE;
+      }
+      if (user_access('edit all webform submissions')) {
+        $edit_submission = TRUE;
+      }
+    }
+
+    // Springboard Group members.
     foreach ($groups as $group_type => $gids) {
       foreach ($gids as $gid) {
         // Only need access in one of the associated groups.
@@ -74,7 +89,7 @@ function springboard_group_webform_results_access($node, $account = NULL) {
   if (og_is_group_content_type('node', $node->type) && $groups = og_get_entity_groups('node', $node)) {
     foreach ($groups as $group_type => $gids) {
       foreach ($gids as $gid) {
-        if (og_user_access($group_type, $gid, 'access all webform results', $account)) {
+        if ((user_access('administer group') && user_access('access all webform results')) || og_user_access($group_type, $gid, 'access all webform results', $account)) {
           return TRUE;
         }
       }
@@ -93,7 +108,7 @@ function springboard_group_webform_results_clear_access($node, $account = NULL) 
   if (og_is_group_content_type('node', $node->type) && $groups = og_get_entity_groups('node', $node)) {
     foreach ($groups as $group_type => $gids) {
       foreach ($gids as $gid) {
-        if (og_user_access($group_type, $gid, 'delete all webform submissions', $account)) {
+        if ((user_access('administer group') && user_access('delete all webform submissions')) || og_user_access($group_type, $gid, 'delete all webform submissions', $account)) {
           return springboard_group_webform_results_access($node, $account);
         }
       }
