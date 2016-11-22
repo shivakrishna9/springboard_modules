@@ -8,10 +8,10 @@
 function springboard_views_drush_command() {
   return array(
     'sb-export-donations-csv' => array(
-      'aliases'             => array('sb-edc'),
-      'description'         => t('Exports a CSV file containing donation data from the Drupal DB.'),
-      'callback'            => 'springboard_views_drush_export_donations_csv',
-      'options'             => array(
+      'aliases' => array('sb-edc'),
+      'description' => t('Exports a CSV file containing donation data from the Drupal DB.'),
+      'callback' => 'springboard_views_drush_export_donations_csv',
+      'options' => array(
         'json' => t('JSON any key/value search filters, sort (the field on which to sort), and order (asc or desc).'),
       ),
       'drupal dependencies' => array(
@@ -24,7 +24,7 @@ function springboard_views_drush_command() {
         'fundraiser',
         'springboard_views'
       ),
-      'bootstrap'           => DRUSH_BOOTSTRAP_DRUPAL_FULL,
+      'bootstrap' => DRUSH_BOOTSTRAP_DRUPAL_FULL,
     ),
   );
 }
@@ -33,47 +33,16 @@ function springboard_views_drush_command() {
  * Callback for sb-export-donations-csv.
  */
 function springboard_views_drush_export_donations_csv() {
-  // Composer Vendor autoload.
-  if (function_exists('drush_autoload')) {
-    drush_autoload("sites/all/libraries/springboard_composer/vendor/autoload.php");
-  }
-  else {
-    include_once "sites/all/libraries/springboard_composer/vendor/autoload.php";
-  }
-
-  // Enable Garbage Collection.
-  gc_enable();
-
-  // Setup the S3 config.
-  $s3_config = array(
-    'region'      => variable_get
-    ('springboard_dw_reports_export_S3_region', NULL),
-    'version'     => '2006-03-01',
-    'credentials' => array(
-      'key'    => variable_get
-      ('springboard_dw_reports_export_S3_key', NULL),
-      'secret' => variable_get
-      ('springboard_dw_reports_export_S3_secret', NULL),
-    )
-  );
-
-  // Create an S3 client instance.
-  $s3_client = new \Aws\S3\S3Client($s3_config);
-
-  // Register the stream wrapper.
-  $s3_client->registerStreamWrapper();
-
   // Grant full access so the view can be executed:
   $file_paths = array();
   $start = time();
   global $user;
   drupal_save_session(FALSE);
   $user = user_load(1);
-  $output_path = variable_get('springboard_dw_reports_export_path',
-    'temporary://'); // Default output path if it is not overwritten.
+  $output_path = variable_get('springboard_dw_reports_export_path', 'temporary://'); // Default output path if it is not overwritten.
   $current_page = 0;
   $total_results = 0;
-  $default_items_per_page = 250000; // If the view returns all results
+  $items_per_page = variable_get('springboard_dw_reports_batch_count', 30); // This determines the number of results per file.
   $max_page = 100; // Primarily for testing; secondarily to avoid an infinite loop.
   $debug = FALSE; // Set this to true to prevent CSV export file generation.
 
@@ -95,18 +64,8 @@ function springboard_views_drush_export_donations_csv() {
     $view->set_display($display_id);
     $view->init_handlers();
 
-    # TODO: This doesn't default to the $default_items_per_page but instead
-    # the pager amount, should we change this?
-
     // Set the appropriate offset; if items per page is missing then assume 25K/page:
-    $pager = $view->display_handler->get_option('pager');
-    if (isset($pager['options']['items_per_page']) && $pager['options']['items_per_page'] > 0) {
-      $items_per_page = $pager['options']['items_per_page'];
-    }
-    else {
-      $items_per_page = $default_items_per_page;
-      $view->set_items_per_page($items_per_page);
-    }
+    $view->set_items_per_page($items_per_page);
 
     $view->set_offset($current_page * $items_per_page);
 
@@ -193,6 +152,9 @@ function springboard_views_drush_export_donations_csv() {
     $view->execute();
 
     // Save the output to a file, if results were returned; otherwise stop:
+
+$output_path = '/tmp';
+
     if (isset($view->result) && count($view->result) > 0) {
       $output = $view->render();
       //echo "\n\n" . $output . "\n\n\n";
@@ -214,13 +176,99 @@ function springboard_views_drush_export_donations_csv() {
     $current_page++;
   }
 
+  // Upload each file to S3 and return the pre-signed S3 URL.
+  $s3_pre_signed_urls = array();
+  // $s3_pre_signed_urls = _springboard_views_drush_export_aws_files_upload($file_paths)
+
+  $duration = (time() - $start) . 's';
+  $export_summary = array(
+    'start' => date('Y-m-d - H:i:s', $start),
+    'end' => date('Y-m-d - H:i:s'),
+    'duration' => $duration,
+    'total_results_exported' => $total_results,
+    'internal_file_paths' => $file_paths,
+    'export_file_count' => count($s3_pre_signed_urls),
+    'export_file_paths' => $s3_pre_signed_urls,
+  );
+
+  if ($debug) {
+    $export_summary['file_gen_disabled'] = 1;
+    echo "\n\n";
+    print_r($export_summary);
+    echo "\n\n";
+  }
+
+  // Return the job summary.
+  //return json_encode($export_summary);
+  echo json_encode($export_summary);
+
+  if ($debug) {
+    echo "\n\n";
+  }
+}
+
+/**
+ * Helper function which returns an array that maps data warehouse field keys
+ * to the export donation view's fields used for filtering and sorting:
+ */
+function _springboard_views_drush_export_donations_dw_key_map() {
+  return array(
+    'amount'           => 'amount',
+    'currency'         => 'currency',
+    'created_at'       => 'created',
+    'email'            => 'mail',
+    'form_id'          => 'nid',
+    'gateway'          => 'gateway',
+    'internal_name'    => 'field_fundraiser_internal_name_value',
+    'order_id'         => 'order_id',
+    'status'           => 'status',
+    'transaction_id'   => 'txn_id',
+    'transaction_date' => 'transaction_date',
+    'updated_at'       => 'changed',
+  );
+}
+
+/**
+ * AWS code:
+ */
+function _springboard_views_drush_export_aws_files_upload($file_paths) {
+  // Composer Vendor autoload.
+  if (function_exists('drush_autoload')) {
+    drush_autoload("sites/all/libraries/springboard_composer/vendor/autoload.php");
+  }
+  else {
+    include_once "sites/all/libraries/springboard_composer/vendor/autoload.php";
+  }
+
+  // Enable Garbage Collection.
+  gc_enable();
+
+  // Setup the S3 config.
+  $s3_config = array(
+    'region'      => variable_get
+    ('springboard_dw_reports_export_S3_region', NULL),
+    'version'     => '2006-03-01',
+    'credentials' => array(
+      'key'    => variable_get
+      ('springboard_dw_reports_export_S3_key', NULL),
+      'secret' => variable_get
+      ('springboard_dw_reports_export_S3_secret', NULL),
+    )
+  );
+
+  // Create an S3 client instance.
+  $s3_client = new \Aws\S3\S3Client($s3_config);
+
+  // Register the stream wrapper.
+  $s3_client->registerStreamWrapper();
+
   // Create new array shells to track the S3 uploads.
   $s3_uploaded_files = array();
   $s3_failed_files = array();
   $s3_pre_signed_urls = array();
 
   // Upload each file to S3 and return the pre-signed S3 URL.
-  foreach ($file_paths as $key => $path):
+  foreach ($file_paths as $key => $path) {
     $local_file_to_upload = $path;
     $new_s3_file_key = end(explode('/', $path));
 
@@ -270,23 +318,6 @@ function springboard_views_drush_export_donations_csv() {
 
       watchdog_exception('Drupal reports export', $watchdog_string);
     }
-  endforeach;
-
-  $duration = (time() - $start) . 's';
-  $export_summary = array(
-    'start'                  => date('Y-m-d - H:i:s', $start),
-    'end'                    => date('Y-m-d - H:i:s'),
-    'duration'               => $duration,
-    'total_results_exported' => $total_results,
-    'export_file_count'      => count($s3_pre_signed_urls),
-    'export_file_paths'      => $s3_pre_signed_urls,
-  );
-  if ($debug) {
-    $export_summary['file_gen_disabled'] = 1;
-
-    echo "\n\n";
-    print_r($export_summary);
-    echo "\n\n";
   }
 
   // Merge the arrays of uploaded and failed because we will want to remove
@@ -294,45 +325,9 @@ function springboard_views_drush_export_donations_csv() {
   $all_files = array_merge($s3_uploaded_files, $s3_failed_files);
 
   // Remove the local file.
-  foreach ($all_files as $local_file):
+  foreach ($all_files as $local_file) {
     unset($local_file);
-  endforeach;
-
-  _springboard_views_drush_export_guard_debug_output($debug, "\n\n");
-
-  // Return the job summary.
-  return json_encode($export_summary);
-}
-
-/**
- * Helper function which returns an array that maps data warehouse field keys
- * to the export donation view's fields used for filtering and sorting:
- */
-function _springboard_views_drush_export_donations_dw_key_map() {
-  return array(
-    'amount'           => 'amount',
-    'currency'         => 'currency',
-    'created_at'       => 'created',
-    'email'            => 'mail',
-    'form_id'          => 'nid',
-    'gateway'          => 'gateway',
-    'internal_name'    => 'field_fundraiser_internal_name_value',
-    'order_id'         => 'order_id',
-    'status'           => 'status',
-    'transaction_id'   => 'txn_id',
-    'transaction_date' => 'transaction_date',
-    'updated_at'       => 'changed',
-  );
-}
-
-/**
- * Only output debug information if the debug flag is set for the CSV
- * processing.
- * @param $output
- */
-function _springboard_views_drush_export_guard_debug_output
-($debug_flag, $output) {
-  if ($debug_flag) {
-    drush_print_r($output);
   }
+
+  return $s3_pre_signed_urls;
 }
