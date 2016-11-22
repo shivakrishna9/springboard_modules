@@ -1,4 +1,8 @@
 <?php
+/**
+ * @file
+ * Provide a field handler for the last submission date on a webform.
+ */
 
 class springboard_views_handler_webform_field_submission_date extends views_handler_field_date {
 

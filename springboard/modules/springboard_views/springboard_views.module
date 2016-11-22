@@ -392,10 +392,11 @@ function springboard_views_springboard_dashboard_panes() {
   $node_types = node_type_get_types();
   $fundraiser_types = array();
   $webform_types = array();
-  foreach($node_types as $type) {
+  foreach ($node_types as $type) {
     if (fundraiser_is_donation_type($type->type)) {
       $fundraiser_types[] = $type->type;
-    } else if (_webform_user_is_webform_user_node_type($type->type) && !fundraiser_is_donation_type($type->type)) {
+    }
+    elseif (_webform_user_is_webform_user_node_type($type->type) && !fundraiser_is_donation_type($type->type)) {
       $webform_types[] = $type->type;
     }
   }
@@ -405,7 +406,7 @@ function springboard_views_springboard_dashboard_panes() {
   $panes['springboard_recent_donation_forms'] = array(
    'label' => t('Recent donation forms'),
    'description' => t('Configuration and submissions summary for recently created or updated springboard donation forms.'),
-   'content' => '<h2>' . t('Recent donation forms ') .  '</h2>' .
+   'content' => '<h2>' . t('Recent donation forms') . '</h2>' .
      (module_exists('webform') ? l(t('Create donation form'), $base_url . '/node/add/donation-form', array('attributes' => array('class' => array('button', 'add-button')))) : '' ) .
      (module_exists('views') ? views_embed_view('sbv_forms', 'block_4', implode('+', $fundraiser_types)) : t('Please enable the Views module to improve your Springboard experience.')) .
      l(t('View All Donation Forms'), 'admin/springboard/donation-forms/all', array('attributes' => array('class' => array('more-link button more-button')))),
@@ -415,8 +416,8 @@ function springboard_views_springboard_dashboard_panes() {
   $panes['springboard_recent_forms'] = array(
     'label' => t('Recent forms'),
     'description' => t('Configuration and submissions summary for recently created or updated springboard forms.'),
-    'content' => '<h2>' . t('Recent forms ') .   '</h2>' .
-      (module_exists('fundraiser') ? l(t('Create form'), $base_url . '/node/add/webform', array('attributes' => array('class' => array('button', 'add-button')))) : '')  .
+    'content' => '<h2>' . t('Recent forms') .  '</h2>' .
+      (module_exists('fundraiser') ? l(t('Create form'), $base_url . '/node/add/webform', array('attributes' => array('class' => array('button', 'add-button')))) : '') .
       (module_exists('views') ? views_embed_view('sbv_forms', 'block_3', implode('+', $webform_types)) : t('Please enable the Views module to improve your Springboard experience.')) .
       l(t('View All Forms'), 'admin/springboard/forms/all', array('attributes' => array('class' => array('more-link button more-button')))),
     'position' => 'column_left',

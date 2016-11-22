@@ -1,5 +1,10 @@
 <?php
 
+/**
+ * @file
+ * Provide a handler for Springboard content type groupings.
+ */
+
 class springboard_views_handler_node_springboard_type extends views_handler_filter_in_operator  {
 
   function operators() {

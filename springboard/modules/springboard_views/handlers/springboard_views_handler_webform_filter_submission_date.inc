@@ -1,5 +1,8 @@
 <?php
-
+/**
+ * @file
+ * Provide a filter handler for the last submission date on a webform.
+ */
 
 class springboard_views_handler_webform_filter_submission_date extends views_handler_filter_date {
   function query() {
@@ -22,20 +25,23 @@ class springboard_views_handler_webform_filter_submission_date extends views_han
     $this->table_alias = 'webform_submissions_time';
     $this->field_alias = "last_submitted";
 
-    // Adding the `submitted` field on {webform_submissions} using the MAX() sql function.
-    //$this->query->add_field(NULL, "{$this->table_alias}.{$this->real_field}", $this->field_alias, array('function' => 'max'));
+    // Different handling of the query structure based on views_handler_filter_date.
     if (isset($this->options['value']['value']) && $this->options['value']['value'] != '') {
       $this->op_simple();
     }
-    else if ($this->options['value']['max'] != '' || $this->options['value']['min'] != '') {
+    elseif ($this->options['value']['max'] != '' || $this->options['value']['min'] != '') {
       $this->op_between();
     }
 
     // Adding the join we created above.
     $this->query->add_relationship($this->table_alias, $join, 'node');
   }
-  
-  function op_between() {
+
+  /**
+   * Overriding views_handler_filter_date::op_between.
+   * Since we are using the MAX() formula, we use a HAVING expression rather than a WHERE expression.
+   */
+  function op_between($field) {
     // Use the substitutions to ensure a consistent timestamp.
     $query_substitutions = views_views_query_substitutions($this->view);
     $a = intval(strtotime($this->value['min'], $query_substitutions['***CURRENT_TIME***']));
@@ -46,10 +52,13 @@ class springboard_views_handler_webform_filter_submission_date extends views_han
     $operator = strtoupper($this->operator);
     $this->query->add_having_expression($this->options['group'], "MAX($this->table_alias.$this->real_field) $operator $a AND $b");
 
-    //$this->query->add_where_expression($this->options['group'], "$field $operator $a AND $b");
   }
 
-  function op_simple() {
+  /**
+   * Overriding views_handler_filter_date::op_simple.
+   * Since we are using the MAX() formula, we use a HAVING expression rather than a WHERE expression.
+   */
+  function op_simple($field) {
     // Use the substitutions to ensure a consistent timestamp.
     $query_substitutions = views_views_query_substitutions($this->view);
     $value = intval(strtotime($this->value['value'], $query_substitutions['***CURRENT_TIME***']));
@@ -59,6 +68,5 @@ class springboard_views_handler_webform_filter_submission_date extends views_han
     $operator = strtoupper($this->operator);
     $this->query->add_having_expression($this->options['group'], "MAX($this->table_alias.$this->real_field) $operator $value");
 
-    //$this->query->add_where_expression($this->options['group'], "$field $this->operator $value");
   }
 }
